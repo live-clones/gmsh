@@ -10790,20 +10790,20 @@ const get_total_memory = getTotalMemory
 
 Return last error message, if any.
 
-Return `error`.
+Return `message`.
 
 Types:
- - `error`: string
+ - `message`: string
 """
 function getLastError()
-    api_error_ = Ref{Ptr{Cchar}}()
+    api_message_ = Ref{Ptr{Cchar}}()
     ierr = Ref{Cint}()
     ccall((:gmshLoggerGetLastError, gmsh.lib), Cvoid,
           (Ptr{Ptr{Cchar}}, Ptr{Cint}),
-          api_error_, ierr)
+          api_message_, ierr)
     ierr[] != 0 && error("Could not get last error")
-    error = unsafe_string(api_error_[])
-    return error
+    message = unsafe_string(api_message_[])
+    return message
 end
 const get_last_error = getLastError
 

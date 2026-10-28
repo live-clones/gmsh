@@ -10,19 +10,19 @@
 typedef unsigned long intptr_t;
 #endif
 #include <string>
-#include <regex>
 #include <sstream>
 #include <algorithm>
 #include <map>
 #include <vector>
 #include <string.h>
-#include <FL/Fl_Tabs.H>
+#include "accentTabs.h"
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Return_Button.H>
 #include "GmshConfig.h"
 #include "FlGui.h"
 #include "drawContext.h"
 #include "visibilityWindow.h"
+#include "hintInput.h"
 #include "paletteWindow.h"
 #include "contextWindow.h"
 #include "graphicWindow.h"
@@ -72,20 +72,7 @@ public:
       sstream << " " << getType() << " " << getTag() << " " << getName();
     return sstream.str();
   }
-  bool match(const std::string &pattern)
-  {
-    if(pattern.empty()) return true;
-    std::string line(getBrowserLine(false));
-    try {
-      // icase for case-insensitive search
-      if(std::regex_search(line,
-                           std::regex(pattern, std::regex_constants::icase)))
-        return true;
-    } catch(...) {
-      return false;
-    }
-    return false;
-  }
+  bool match(const searchFilter &f) { return f.matches(getBrowserLine(false)); }
 };
 
 class VisModel : public Vis {
@@ -324,7 +311,7 @@ public:
     }
   };
   // repopulate the list with current data of the given type
-  void update(VisibilityType type, const std::string &search)
+  void update(VisibilityType type, const searchFilter &search)
   {
     std::map<int, std::string> oldLabels;
 #if defined(HAVE_PARSER)
@@ -475,8 +462,10 @@ static void _rebuild_list_browser()
   default: type = VisibilityList::ElementaryEntities; break;
   }
 
-  std::string search = FlGui::instance()->visibility->search->value();
-  VisibilityList::instance()->update(type, search);
+  FlGui::instance()->visibility->filter.set(
+    FlGui::instance()->visibility->search);
+  VisibilityList::instance()->update(type,
+                                     FlGui::instance()->visibility->filter);
 
   for(int i = 0; i < VisibilityList::instance()->getNumEntities(); i++) {
     FlGui::instance()->visibility->browser->add(
@@ -1302,7 +1291,6 @@ static void browser_cb(Fl_Widget *w, void *data)
 
 static void tree_cb(Fl_Widget *w, void *data)
 {
-#if(FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION >= 4)
   Fl_Tree *tree = (Fl_Tree *)w;
   if(tree->callback_reason() == FL_TREE_REASON_RESELECTED &&
      Fl::event_clicks()) {
@@ -1318,7 +1306,13 @@ static void tree_cb(Fl_Widget *w, void *data)
     }
     if(ge) FlGui::instance()->onelabContext->show(ge->dim(), ge->tag());
   }
-#endif
+}
+
+static void visibility_tab_cb(Fl_Widget *w, void *data)
+{
+  Fl_Tabs *t = (Fl_Tabs *)w;
+  int i = t->find(t->value());
+  ((paletteWindow *)t->window())->leastHeight(((int *)data)[i]);
 }
 
 visibilityWindow::visibilityWindow(int deltaFontSize)
@@ -1327,8 +1321,10 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
 
   int CC = BB;
 
-  static int cols[5] = {3 * WB, CC, CC, 2 * CC, 0};
-  int width = cols[0] + cols[1] + cols[2] + cols[3] + 4 * WB;
+  // as narrow as the option window; the last column takes what is left
+  int width = TW;
+  static int cols[5] = {3 * WB, CC, CC, 0, 0};
+  cols[3] = width - 4 * WB - cols[0] - cols[1] - cols[2];
   int height = 18 * BH;
   int brw = width - 4 * WB;
 
@@ -1338,7 +1334,13 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
                           CTX::instance()->visOffset);
   win->box(GMSH_WINDOW_BOX);
 
-  Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);
+  Fl_Tabs *o = new accentTabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);
+  // the least height: three rows of the list, tree or windows, all of the
+  // numeric and interactive tabs
+  static int least[5];
+  least[0] = least[1] = least[4] = 7 * BH + 6 * WB;
+  least[2] = least[3] = 15 * BH + 5 * WB;
+  o->callback(visibility_tab_cb, least);
   {
     Fl_Group *g = new Fl_Group(WB, WB + BH, width - 2 * WB,
                                height - 3 * WB - 2 * BH, "List");
@@ -1419,18 +1421,12 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     browser_type = new Fl_Choice(2 * WB, height - 2 * BH - 3 * WB, w1, BH);
     browser_type->menu(browser_type_table);
 
-    Fl_Group *o =
-      new Fl_Group(2 * WB + w1 + WB, height - 2 * BH - 3 * WB, w2, BH);
-    o->tooltip("Filter list using regular expression");
-    o->box(FL_DOWN_BOX);
-    o->color(FL_BACKGROUND2_COLOR);
-    search = new Fl_Input(2 * WB + w1 + WB + BH, height - 2 * BH - 3 * WB + 2,
-                          w2 - BH - 2, BH - 4, "@gmsh_search");
-    search->box(FL_FLAT_BOX);
-    search->callback(visibility_cb, (void *)"list_only");
-    search->when(FL_WHEN_CHANGED);
-    o->resizable(search);
-    o->end();
+    search = searchBox(
+      2 * WB + w1 + WB, height - 2 * BH - 3 * WB, w2, BH, "Filter list",
+      "Show only the entries matching the regular expression,\n"
+      "whatever the case",
+      visibility_cb);
+    search->user_data((void *)"list_only");
 
     Fl_Return_Button *b1 = new Fl_Return_Button(
       width - 2 * WB - w3, height - 2 * BH - 3 * WB, w3, BH, "Apply");
@@ -1447,9 +1443,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     tree->labelsize(FL_NORMAL_SIZE - 1);
     tree->selectmode(FL_TREE_SELECT_MULTI);
     tree->connectorstyle(FL_TREE_CONNECTOR_SOLID);
-#if(FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION >= 4)
     tree->item_reselect_mode(FL_TREE_SELECTABLE_ALWAYS); // for double-clicks
-#endif
     tree->callback(tree_cb);
     tree->hide();
 
@@ -1638,7 +1632,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
   o->end();
 
   win->resizable(o);
-  win->size_range(width, 15 * BH + 5 * WB);
+  ((paletteWindow *)win)->sizeRange(width, least[0]);
 
   {
     int aw = (int)(3.5 * FL_NORMAL_SIZE);

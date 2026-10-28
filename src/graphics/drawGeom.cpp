@@ -507,14 +507,15 @@ static void drawGeomSurface(drawContext *ctx, GFace *f, bool sel)
 {
   CTX *c = CTX::instance();
   bool shown = c->geom.surfaces || f->getSelection() == GEntity::SelectShow;
-  if(shown && c->geom.surfaceType > 0) f->fillVertexArray();
-  if((shown && c->geom.surfaceType == 0) || c->geom.surfaceLabels ||
-     c->geom.normals)
+  // wireframe and solid need a triangulation, which a surface of the
+  // built-in kernel only has once it is meshed: a cross until then
+  bool filled = shown && c->geom.surfaceType > 0 && f->fillVertexArray();
+  if((shown && !filled) || c->geom.surfaceLabels || c->geom.normals)
     f->buildRepresentationCross();
 
   if(shown) {
     VertexArray *va = f->va_geom_triangles;
-    if(c->geom.surfaceType > 0 && va) {
+    if(filled) {
       // already in the merged array, unless selected: then drawn again on
       // top, which needs the depth test to accept equal depths
       bool merged = _kept && c->geom.surfaces;

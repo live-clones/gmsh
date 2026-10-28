@@ -7572,13 +7572,13 @@ namespace gmsh { // Top-level functions
     // gmsh::logger::getLastError
     //
     // Return last error message, if any.
-    inline void getLastError(std::string & error)
+    inline void getLastError(std::string & message)
     {
       int ierr = 0;
-      char *api_error_;
-      gmshLoggerGetLastError(&api_error_, &ierr);
+      char *api_message_;
+      gmshLoggerGetLastError(&api_message_, &ierr);
       if(ierr) throw std::runtime_error("Could not get last error");
-      error = std::string(api_error_); gmshFree(api_error_);
+      message = std::string(api_message_); gmshFree(api_message_);
     }
 
   } // namespace logger

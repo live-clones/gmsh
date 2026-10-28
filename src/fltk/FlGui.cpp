@@ -4,6 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "GmshConfig.h"
+#include <algorithm>
 #include <sstream>
 #include <string.h>
 #include <FL/Fl.H>
@@ -13,6 +14,10 @@
 #include <FL/fl_draw.H>
 #include <FL/fl_ask.H>
 #include "FlGui.h"
+#include "gmshScheme.h"
+#include "desktop.h"
+#include "mainWindow.h"
+#include "icons.h"
 #include "drawContextFltk.h"
 #include "graphicWindow.h"
 #include "optionWindow.h"
@@ -22,6 +27,9 @@
 #include "visibilityWindow.h"
 #include "highOrderToolsWindow.h"
 #include "clippingWindow.h"
+#include "partitionDialog.h"
+#include "paletteWindow.h"
+#include "classificationEditor.h"
 #include "manipWindow.h"
 #include "contextWindow.h"
 #include "onelabContextWindow.h"
@@ -42,6 +50,7 @@
 #include "XpmIcon.h"
 #include "Options.h"
 #include "CommandLine.h"
+#include "Shortcuts.h"
 #include "Context.h"
 #include "StringUtils.h"
 #include "gl2ps.h"
@@ -50,10 +59,6 @@
 
 #if defined(HAVE_MESH)
 #include "Field.h"
-#endif
-
-#if defined(HAVE_TOUCHBAR)
-#include "touchBar.h"
 #endif
 
 #if defined(HAVE_3M)
@@ -287,6 +292,24 @@ static void gmsh_measure(Fl_Color c)
   bl; vv(0.38, -0.28); vv(0.46, -0.15); el;
 }
 
+// a window with its side pane filled: the tree, shown or hidden
+static void gmsh_sidebar(Fl_Color c)
+{
+  fl_color(c);
+  bl;
+  vv(-0.8, -0.8);
+  vv(0.8, -0.8);
+  vv(0.8, 0.8);
+  vv(-0.8, 0.8);
+  el;
+  fl_begin_polygon();
+  vv(-0.8, -0.8);
+  vv(-0.3, -0.8);
+  vv(-0.3, 0.8);
+  vv(-0.8, 0.8);
+  fl_end_polygon();
+}
+
 static void gmsh_models(Fl_Color c)
 {
   fl_color(c);
@@ -408,25 +431,48 @@ static void gamepad_handler(void *data)
   }
 }
 
+// the windows inside a window (the docked tools, the graphics), which a
+// redraw of the window does not reach
+static void redrawWindowsIn(Fl_Group *g)
+{
+  for(int i = 0; i < g->children(); i++) {
+    Fl_Widget *c = g->child(i);
+    if(Fl_Window *w = c->as_window()) {
+      w->redraw();
+      redrawWindowsIn(w);
+    }
+    else if(Fl_Group *gg = c->as_group()) {
+      redrawWindowsIn(gg);
+    }
+  }
+}
+
 void FlGui::applyColorScheme(bool redraw)
 {
   static int first = true;
-  int N = 4 + FL_NUM_GRAY;
-  static std::vector<unsigned char> r(N, 0), g(N, 0), b(N, 0);
+  static unsigned char r[3], g[3], b[3];
 
   if(first) {
     // store default (OS-dependent) interface colors:
     Fl::get_system_colors();
-    Fl::get_color(FL_BACKGROUND_COLOR, r[0], g[0], b[0]);
-    Fl::get_color(FL_BACKGROUND2_COLOR, r[1], g[1], b[1]);
-    Fl::get_color(FL_FOREGROUND_COLOR, r[2], g[2], b[2]);
-    Fl::get_color(FL_SELECTION_COLOR, r[3], g[3], b[3]);
-    for(int i = 0; i < FL_NUM_GRAY; i++) {
-      Fl::get_color(fl_gray_ramp(i), r[4 + i], g[4 + i], b[4 + i]);
-    }
+    Fl::get_color(FL_BACKGROUND2_COLOR, r[0], g[0], b[0]);
+    Fl::get_color(FL_FOREGROUND_COLOR, r[1], g[1], b[1]);
+    Fl::get_color(FL_SELECTION_COLOR, r[2], g[2], b[2]);
   }
 
-  if(CTX::instance()->guiColorScheme == 1) { // dark mode
+  // the tooltips of FLTK, pale yellow with black text; the gmsh theme sets
+  // its own
+  Fl_Tooltip::color(
+    fl_color_cube(FL_NUM_RED - 1, FL_NUM_GREEN - 1, FL_NUM_BLUE - 2));
+  Fl_Tooltip::textcolor(FL_BLACK);
+
+  // the interface drawn dark: asked for, or the desktop's when following it
+  int scheme = CTX::instance()->guiColorScheme;
+  CTX::instance()->guiDark =
+    (scheme == 1) || (scheme == 2 && desktopDark() == 1);
+
+  if(gmshScheme()) { applyGmshColors(CTX::instance()->guiDark); }
+  else if(CTX::instance()->guiDark) { // dark mode
     Fl::set_color(FL_BACKGROUND_COLOR, 20, 20, 20);
     Fl::set_color(FL_BACKGROUND2_COLOR, 70, 70, 70);
     Fl::set_color(FL_FOREGROUND_COLOR, 220, 220, 220);
@@ -437,19 +483,18 @@ void FlGui::applyColorScheme(bool redraw)
     }
     Fl::set_color(FL_SELECTION_COLOR, 200, 200, 200);
   }
-  else if(!first && available() && CTX::instance()->guiColorScheme == 0) {
-    // retore default colors (only if not calling the routine from the
-    // constructor)
-    Fl::set_color(FL_BACKGROUND_COLOR, r[0], g[0], b[0]);
-    Fl::set_color(FL_BACKGROUND2_COLOR, r[1], g[1], b[1]);
-    Fl::set_color(FL_FOREGROUND_COLOR, r[2], g[2], b[2]);
-    for(int i = 0; i < FL_NUM_GRAY; i++) {
-      Fl::set_color(fl_gray_ramp(i), r[4 + i], g[4 + i], b[4 + i]);
-    }
-    Fl::set_color(FL_SELECTION_COLOR, r[3], g[3], b[3]);
+  else { // light mode
+    Fl::set_color(FL_BACKGROUND2_COLOR, r[0], g[0], b[0]);
+    Fl::set_color(FL_FOREGROUND_COLOR, r[1], g[1], b[1]);
+    Fl::set_color(FL_SELECTION_COLOR, r[2], g[2], b[2]);
+    // the grey of the desktop (macOS, Qt), lighter than the one FLTK gives;
+    // the ramp of greys for the frames follows
+    Fl::background(236, 236, 236);
   }
 
   first = false;
+
+  if(gmshScheme()) applyGmshScheme();
 
   // also change default box type here (to thin versions)
   Fl::set_boxtype(FL_UP_BOX, FL_THIN_UP_BOX);
@@ -461,11 +506,38 @@ void FlGui::applyColorScheme(bool redraw)
   Fl::scrollbar_size(std::max(10, FL_NORMAL_SIZE));
 
   if(redraw && available()) {
+    gmshIconsRecolor();
+    help->resetText();
     updateViews(true, true);
     for(Fl_Window *win = Fl::first_window(); win; win = Fl::next_window(win)) {
       win->redraw();
+      redrawWindowsIn(win);
+      titleBarColor(win);
     }
   }
+}
+
+// The desktop switched between light and dark, or may have: the interface
+// follows when asked to (General.FltkColorScheme = 2)
+void FlGui::desktopChanged()
+{
+  if(CTX::instance()->guiColorScheme != 2 || !available()) return;
+  bool dark = (desktopDark() == 1);
+  if(dark == (bool)CTX::instance()->guiDark) return;
+  applyColorScheme(true);
+  // drawn now: the notification came while the loop waited for events, and
+  // the windows inside the main one are only painted by a flush
+  Fl::flush();
+}
+
+static void desktop_changed_cb() { FlGui::instance()->desktopChanged(); }
+
+static void watchDesktop()
+{
+  watchDesktopAppearance(desktop_changed_cb);
+  // and whenever a window of Gmsh gets the focus back, where the system does
+  // not tell (Linux)
+  mainWindow::focusHook = desktop_changed_cb;
 }
 
 static void default_error_handler(const char *fmt, ...)
@@ -547,16 +619,16 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   FL_NORMAL_SIZE = drawContext::global()->getFontSize();
 
   // handle themes and tooltip options
-  if(CTX::instance()->guiTheme.size())
-    Fl::scheme(CTX::instance()->guiTheme.c_str());
+  // the gmsh scheme is ours, not one of FLTK (see gmshScheme.h)
+  // one of the schemes of FLTK, or its stock look ("fltk")
+  if(!gmshScheme())
+    Fl::scheme(CTX::instance()->guiTheme == "fltk" ?
+                 "base" :
+                 CTX::instance()->guiTheme.c_str());
   Fl_Tooltip::size(FL_NORMAL_SIZE);
 
   // use retina resolution if available
-#if(FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3) && (FL_PATCH_VERSION >= 4)
   Fl::use_high_res_GL(CTX::instance()->highResolutionGraphics);
-#elif(FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION >= 4)
-  Fl::use_high_res_GL(CTX::instance()->highResolutionGraphics);
-#endif
 
   // register image formats not in core fltk library (jpeg/png)
   fl_register_images();
@@ -568,6 +640,7 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   fl_add_symbol("gmsh_pause", gmsh_pause, 1);
   fl_add_symbol("gmsh_forward", gmsh_forward, 1);
   fl_add_symbol("gmsh_rotate", gmsh_rotate, 1);
+  fl_add_symbol("gmsh_sidebar", gmsh_sidebar, 1);
   fl_add_symbol("gmsh_models", gmsh_models, 1);
   fl_add_symbol("gmsh_query", gmsh_query, 1);
   fl_add_symbol("gmsh_measure", gmsh_measure, 1);
@@ -610,6 +683,8 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   // re-apply color scheme (necessary after open_display to get the selection
   // color and boxtypes right)
   applyColorScheme();
+  // the interface follows the desktop between light and dark when asked to
+  watchDesktop();
 
   // graphic window should have the initial focus (so we can e.g. directly loop
   // through time steps with the keyboard)
@@ -642,6 +717,8 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   visibility = new visibilityWindow(CTX::instance()->deltaFontSize);
   highordertools = new highOrderToolsWindow(CTX::instance()->deltaFontSize);
   clipping = new clippingWindow(CTX::instance()->deltaFontSize);
+  partition = new partitionWindow(CTX::instance()->deltaFontSize);
+  classify = new classificationEditor(CTX::instance()->deltaFontSize);
   manip = new manipWindow(CTX::instance()->deltaFontSize);
   elementaryContext =
     new elementaryContextWindow(CTX::instance()->deltaFontSize);
@@ -656,12 +733,42 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
     for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
       graph[i]->gl[j]->redraw();
 
+  // the tool windows dock, and are named for General.FloatingTools
+  const std::pair<Fl_Window *, const char *> tools[] = {
+    {options->win, "options"},
+    {plugins->win, "plugins"},
+    {fields->win, "fields"},
+    {visibility->win, "visibility"},
+    {clipping->win, "clipping"},
+    {manip->win, "manipulator"},
+    {stats->win, "statistics"},
+    {highordertools->win, "highorder"},
+    {elementaryContext->win, "elementary"},
+    {physicalContext->win, "physical"},
+    {transformContext->win, "transform"},
+    {meshContext->win, "mesh"},
+    {onelabContext->win, "onelab"},
+    {classify->window, "reclassify"},
+    {partition->win, "partition"}};
+  for(auto &t : tools) {
+    if(!t.first) continue;
+    paletteWindow *p = (paletteWindow *)t.first;
+    p->dockable(true);
+    p->name(t.second);
+  }
+  applyFloatingTools();
+  // what docked tools skip while hidden, refreshed when shown again
+  ((paletteWindow *)visibility->win)
+    ->whenRevealed(
+      [](void *) { visibility_cb(nullptr, (void *)"redraw_only"); }, nullptr);
+  ((paletteWindow *)stats->win)
+    ->whenRevealed([](void *) { FlGui::instance()->stats->compute(false); },
+                   nullptr);
+  ((paletteWindow *)manip->win)
+    ->whenRevealed([](void *) { FlGui::instance()->manip->update(); }, nullptr);
+
   if(CTX::instance()->showOptionsOnStartup) options->win->show();
   if(CTX::instance()->showMessagesOnStartup) graph[0]->showMessages();
-
-#if defined(HAVE_TOUCHBAR)
-  showTouchBar();
-#endif
 }
 
 FlGui::~FlGui()
@@ -688,6 +795,8 @@ FlGui::~FlGui()
   delete visibility;
   delete highordertools;
   delete clipping;
+  delete partition;
+  delete classify;
   delete manip;
   delete elementaryContext;
   delete transformContext;
@@ -753,10 +862,6 @@ int FlGui::run(const std::string &optionFileName)
   // draw the scene
   drawContext::global()->draw(false);
 
-#if defined(HAVE_TOUCHBAR)
-  updateTouchBar();
-#endif
-
   int ret = Fl::run();
 
   if(optionFileName.size()) {
@@ -770,381 +875,71 @@ int FlGui::run(const std::string &optionFileName)
   return ret;
 }
 
+// the FLTK code of a shortcut of the table
+static int fltkCode(const Shortcut &s)
+{
+  int k = s.key;
+  if(k >= KeyF1 && k < KeyF1 + 12)
+    k = FL_F + 1 + (k - KeyF1);
+  else if(k == KeyEscape)
+    k = FL_Escape;
+  else if(k == KeyLeft)
+    k = FL_Left;
+  else if(k == KeyRight)
+    k = FL_Right;
+  else if(k == KeyUp)
+    k = FL_Up;
+  else if(k == KeyDown)
+    k = FL_Down;
+  else if(k == KeyPageUp)
+    k = FL_Page_Up;
+  else if(k == KeyPageDown)
+    k = FL_Page_Down;
+  if(s.mods & ModCommand) k += FL_COMMAND;
+  if(s.mods & ModShift) k += FL_SHIFT;
+  if(s.mods & ModAlt) k += FL_ALT;
+  return k;
+}
+
+int fltkShortcut(const char *action, bool systemBar)
+{
+  for(const ShortcutEntry &e : GetShortcuts())
+    if(!strcmp(e.action, action))
+      return (systemBar && e.inWindowBarOnly) ? 0 : fltkCode(e.shortcut);
+  Msg::Error("Unknown shortcut action '%s'", action);
+  return 0;
+}
+
+// the event is this shortcut
+static bool fltkTest(const Shortcut &s)
+{
+  if(s.mods & AnyModifiers)
+    return Fl::event_key() == (fltkCode(s) & FL_KEY_MASK);
+  return Fl::test_shortcut(fltkCode(s));
+}
+
 int FlGui::testGlobalShortcuts(int event)
 {
   // we only handle shortcuts here
   if(event != FL_SHORTCUT) return 0;
 
   int status = 0;
-
-  if(Fl::test_shortcut('0')) {
-    geometry_reload_cb(nullptr, nullptr);
+  if(graph[0]->runMenuShortcut()) {
+    // a shortcut of the menus is its entry, also when the system menu bar
+    // did not take it
     status = 1;
   }
-  if(Fl::test_shortcut(FL_CTRL + '0') || Fl::test_shortcut(FL_META + '0') ||
-     Fl::test_shortcut('9')) { // for Bruno
-    onelab_reload_cb(nullptr, nullptr);
-    status = 1;
-  }
-  else if(Fl::test_shortcut('1') || Fl::test_shortcut(FL_F + 1)) {
-    mesh_1d_cb(nullptr, nullptr);
-    status = 1;
-  }
-  else if(Fl::test_shortcut('2') || Fl::test_shortcut(FL_F + 2)) {
-    mesh_2d_cb(nullptr, nullptr);
-    status = 1;
-  }
-  else if(Fl::test_shortcut('3') || Fl::test_shortcut(FL_F + 3)) {
-    mesh_3d_cb(nullptr, nullptr);
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_CTRL + 'q') ||
-          Fl::test_shortcut(FL_META + 'q')) {
-    // only necessary when using the system menu bar, but hey, it cannot hurt...
-    file_quit_cb(nullptr, nullptr);
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_CTRL + 't') ||
-          Fl::test_shortcut(FL_META + 't')) {
-    onelab_cb(nullptr,  (void *)"compute");
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_CTRL + FL_ALT + 't') ||
-          Fl::test_shortcut(FL_META + FL_ALT + 't')) {
-    show_hide_menu_cb(nullptr, nullptr);
-    status = 1;
-  }
-  else if(Fl::test_shortcut('g')) {
-    FlGui::toggleModule("Geometry");
-    status = 1;
-  }
-  else if(Fl::test_shortcut('m')) {
-    FlGui::toggleModule("Mesh");
-    status = 1;
-  }
-  else if(Fl::test_shortcut('s')) {
-    FlGui::toggleModule("Solver");
-    status = 1;
-  }
-  else if(Fl::test_shortcut('p')) {
-    FlGui::toggleModule("Post-processing");
-    status = 1;
-  }
-  else if(Fl::test_shortcut('w')) {
-    file_watch_cb(nullptr, nullptr);
-    status = 1;
-  }
-  else if(Fl::test_shortcut('e')) {
-    for(std::size_t i = 0; i < graph.size(); i++)
-      for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
-        graph[i]->gl[j]->endSelection = 1;
-    status = 0; // trick: do as if we didn't use it
-  }
-  else if(Fl::test_shortcut('u')) {
-    for(std::size_t i = 0; i < graph.size(); i++)
-      for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
-        graph[i]->gl[j]->undoSelection = 1;
-    status = 0; // trick: do as if we didn't use it
-  }
-  else if(Fl::test_shortcut('i')) {
-    for(std::size_t i = 0; i < graph.size(); i++)
-      for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
-        graph[i]->gl[j]->invertSelection = 1;
-    status = 0; // trick: do as if we didn't use it
-  }
-  else if(Fl::test_shortcut('q')) {
-    for(std::size_t i = 0; i < graph.size(); i++)
-      for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
-        graph[i]->gl[j]->quitSelection = 1;
-    status = 0; // trick: do as if we didn't use it
-  }
-  else if(Fl::test_shortcut('-')) {
-    for(std::size_t i = 0; i < graph.size(); i++)
-      for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
-        graph[i]->gl[j]->invertSelection = 1;
-    status = 0; // trick: do as if we didn't use it
-  }
-  else if(Fl::test_shortcut('x')) {
-    elementaryContext->butt[0]->value(!elementaryContext->butt[0]->value());
-    status = 1;
-  }
-  else if(Fl::test_shortcut('y')) {
-    elementaryContext->butt[1]->value(!elementaryContext->butt[1]->value());
-    status = 1;
-  }
-  else if(Fl::test_shortcut('z')) {
-    elementaryContext->butt[2]->value(!elementaryContext->butt[2]->value());
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_SHIFT + 'x')) {
-    elementaryContext->butt[0]->value(0);
-    elementaryContext->butt[1]->value(1);
-    elementaryContext->butt[2]->value(1);
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_SHIFT + 'y')) {
-    elementaryContext->butt[0]->value(1);
-    elementaryContext->butt[1]->value(0);
-    elementaryContext->butt[2]->value(1);
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_SHIFT + 'z')) {
-    elementaryContext->butt[0]->value(1);
-    elementaryContext->butt[1]->value(1);
-    elementaryContext->butt[2]->value(0);
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_Escape) ||
-          Fl::test_shortcut(FL_META + FL_Escape) ||
-          Fl::test_shortcut(FL_SHIFT + FL_Escape) ||
-          Fl::test_shortcut(FL_CTRL + FL_Escape) ||
-          Fl::test_shortcut(FL_ALT + FL_Escape)) {
-    if(fullscreen->shown()) {
-      window_cb(nullptr, (void *)"fullscreen");
-      status = 1;
-    }
-    else {
-      bool lasso = false;
-      for(std::size_t i = 0; i < graph.size(); i++)
-        for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
-          if(graph[i]->gl[j]->lassoMode) lasso = true;
-      if(lasso) {
-        for(std::size_t i = 0; i < graph.size(); i++)
-          for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
-            graph[i]->gl[j]->lassoMode = false;
-        status = 2;
-      }
-      else {
-        status_options_cb(nullptr, (void *)"S");
-        status = 1;
-      }
+  else {
+    for(const ShortcutEntry &e : GetShortcuts()) {
+      if(!fltkTest(e.shortcut)) continue;
+      int st = runShortcut(e.action);
+      if(!st) continue; // a menu entry, or not for this build
+      // a key passed on is handled, but as if it had not been: what is
+      // under the mouse reads it too
+      status = e.passOn ? 0 : st;
+      break;
     }
   }
-  else if(Fl::test_shortcut(FL_SHIFT + 'a')) {
-    window_cb(nullptr, (void *)"front");
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_SHIFT + 'o')) {
-    general_options_cb(nullptr, nullptr);
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_SHIFT + 'g')) {
-    geometry_options_cb(nullptr, nullptr);
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_SHIFT + 'm')) {
-    mesh_options_cb(nullptr, nullptr);
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_SHIFT + 's')) {
-    solver_options_cb(nullptr, nullptr);
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_SHIFT + 'p')) {
-    post_options_cb(nullptr, nullptr);
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_SHIFT + 'w')) {
-    view_options_cb(nullptr, (void *)-1);
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_SHIFT + 'u')) {
-    if(PView::list.size()) {
-      if(options->view.index >= 0 &&
-         options->view.index < (int)PView::list.size())
-        plugins->show(options->view.index);
-      else
-        plugins->show(0);
-    }
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'f')) {
-    opt_general_fast_redraw(0, GMSH_SET | GMSH_GUI,
-                            !opt_general_fast_redraw(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'b')) {
-    opt_general_draw_bounding_box(
-      0, GMSH_SET | GMSH_GUI, !opt_general_draw_bounding_box(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'i')) {
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_show_scale(i, GMSH_SET | GMSH_GUI,
-                            !opt_view_show_scale(i, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'c')) {
-    opt_general_color_scheme(0, GMSH_SET | GMSH_GUI,
-                             opt_general_color_scheme(0, GMSH_GET, 0) + 1);
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'c')) {
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_colormap_number(i, GMSH_SET | GMSH_GUI,
-                                 opt_view_colormap_number(i, GMSH_GET, 0) + 1);
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'w')) {
-    opt_geometry_light(0, GMSH_SET | GMSH_GUI,
-                       !opt_geometry_light(0, GMSH_GET, 0));
-    opt_mesh_light(0, GMSH_SET | GMSH_GUI, !opt_mesh_light(0, GMSH_GET, 0));
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_light(i, GMSH_SET | GMSH_GUI, !opt_view_light(i, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'x') ||
-          Fl::test_shortcut(FL_ALT + FL_SHIFT + 'x')) {
-    status_xyz1p_cb(nullptr, (void *)"x");
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'y') ||
-          Fl::test_shortcut(FL_ALT + FL_SHIFT + 'y')) {
-    status_xyz1p_cb(nullptr, (void *)"y");
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'z') ||
-          Fl::test_shortcut(FL_ALT + FL_SHIFT + 'z')) {
-    status_xyz1p_cb(nullptr, (void *)"z");
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_ALT + '1') ||
-          Fl::test_shortcut(FL_ALT + FL_SHIFT + '1') ||
-          Fl::test_shortcut(FL_ALT + FL_CTRL + '1') ||
-          Fl::test_shortcut(FL_ALT + FL_META + '1')) {
-    status_xyz1p_cb(nullptr, (void *)"1:1");
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'o')) {
-    status_options_cb(nullptr, (void *)"p");
-    status = 1;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'a')) {
-    opt_general_axes(0, GMSH_SET | GMSH_GUI,
-                     opt_general_axes(0, GMSH_GET, 0) + 1);
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_axes(i, GMSH_SET | GMSH_GUI,
-                      opt_view_axes(i, GMSH_GET, 0) + 1);
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'a')) {
-    opt_general_small_axes(0, GMSH_SET | GMSH_GUI,
-                           !opt_general_small_axes(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'p')) {
-    opt_geometry_points(0, GMSH_SET | GMSH_GUI,
-                        !opt_geometry_points(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'l')) {
-    opt_geometry_curves(0, GMSH_SET | GMSH_GUI,
-                        !opt_geometry_curves(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 's')) {
-    opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI,
-                          !opt_geometry_surfaces(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'v')) {
-    opt_geometry_volumes(0, GMSH_SET | GMSH_GUI,
-                         !opt_geometry_volumes(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'p')) {
-    opt_mesh_nodes(0, GMSH_SET | GMSH_GUI, !opt_mesh_nodes(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'l')) {
-    opt_mesh_lines(0, GMSH_SET | GMSH_GUI, !opt_mesh_lines(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 's')) {
-    opt_mesh_surface_edges(0, GMSH_SET | GMSH_GUI,
-                           !opt_mesh_surface_edges(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'v')) {
-    opt_mesh_volume_edges(0, GMSH_SET | GMSH_GUI,
-                          !opt_mesh_volume_edges(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'd')) {
-    opt_geometry_surface_type(0, GMSH_SET | GMSH_GUI,
-                              opt_geometry_surface_type(0, GMSH_GET, 0) + 1);
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'd')) {
-    opt_mesh_surface_faces(0, GMSH_SET | GMSH_GUI,
-                           !opt_mesh_surface_faces(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'b')) {
-    opt_mesh_volume_faces(0, GMSH_SET | GMSH_GUI,
-                          !opt_mesh_volume_faces(0, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'm')) {
-    quick_access_cb(nullptr, (void *)"mesh_toggle");
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 't')) {
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0)) {
-        int t = opt_view_intervals_type(i, GMSH_GET, 0) + 1;
-        if(t == 4) t = 1; // skip numeric display
-        opt_view_intervals_type(i, GMSH_SET | GMSH_GUI, t);
-      }
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 't')) {
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_intervals_type(i, GMSH_SET | GMSH_GUI,
-                                opt_view_intervals_type(i, GMSH_GET, 0) + 1);
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'r')) {
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_range_type(i, GMSH_SET | GMSH_GUI,
-                            opt_view_range_type(i, GMSH_GET, 0) + 1);
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'n')) {
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_draw_strings(i, GMSH_SET | GMSH_GUI,
-                              !opt_view_draw_strings(i, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'e') ||
-          Fl::test_shortcut(FL_ALT + FL_SHIFT + 'e')) {
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_show_element(i, GMSH_SET | GMSH_GUI,
-                              !opt_view_show_element(i, GMSH_GET, 0));
-    status = 2;
-  }
-  else if(Fl::test_shortcut(FL_ALT + 'h')) {
-    static int show = 0;
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      opt_view_visible(i, GMSH_SET | GMSH_GUI, show);
-    show = !show;
-    status = 2;
-  }
-  else if(testArrowShortcuts()) {
-    status = 1;
-  }
-
-#if defined(HAVE_TOUCHBAR)
-  updateTouchBar();
-#endif
 
   if(status == 2) {
     drawContext::global()->draw();
@@ -1158,32 +953,300 @@ int FlGui::testGlobalShortcuts(int event)
 
 int FlGui::testArrowShortcuts()
 {
-  if(Fl::test_shortcut(FL_Left)) {
+  // the keys the 3D view handles itself when it has the focus
+  static const char *keys[] = {"time_step_prev", "time_step_next", "view_prev",
+                               "view_next",      "page_prev",      "page_next"};
+  for(const ShortcutEntry &e : GetShortcuts()) {
+    bool arrow = false;
+    for(const char *k : keys)
+      if(!strcmp(e.action, k)) arrow = true;
+    if(arrow && fltkTest(e.shortcut)) return runShortcut(e.action) ? 1 : 0;
+  }
+  return 0;
+}
+
+// what each action of the shortcut table does; the entries of the menus are
+// run by the menus (see graphicWindow::runMenuShortcut()), those of the quick
+// access menu of the status bar by its callback. Returns 0 for an action not
+// handled here, 1 when done, 2 when the scene must be drawn again
+int FlGui::runShortcut(const std::string &a)
+{
+  // --- reloading and meshing
+  if(a == "geometry_reload") {
+    geometry_reload_cb(nullptr, nullptr);
+    return 1;
+  }
+  if(a == "project_reload") {
+    onelab_reload_cb(nullptr, nullptr);
+    return 1;
+  }
+  if(a == "mesh_1d") {
+    mesh_1d_cb(nullptr, nullptr);
+    return 1;
+  }
+  if(a == "mesh_2d") {
+    mesh_2d_cb(nullptr, nullptr);
+    return 1;
+  }
+  if(a == "mesh_3d") {
+    mesh_3d_cb(nullptr, nullptr);
+    return 1;
+  }
+  if(a == "solver_run") {
+    onelab_cb(nullptr, (void *)"compute");
+    return 1;
+  }
+  if(a == "quit") {
+    // only necessary when using the system menu bar, but hey, it cannot hurt
+    file_quit_cb(nullptr, nullptr);
+    return 1;
+  }
+  if(a == "watch") {
+    file_watch_cb(nullptr, nullptr);
+    return 1;
+  }
+  // --- the modules of the tree
+  if(a == "module_geometry") {
+    FlGui::toggleModule("Geometry");
+    return 1;
+  }
+  if(a == "module_mesh") {
+    FlGui::toggleModule("Mesh");
+    return 1;
+  }
+  if(a == "module_solver") {
+    FlGui::toggleModule("Solver");
+    return 1;
+  }
+  if(a == "module_post") {
+    FlGui::toggleModule("Post-processing");
+    return 1;
+  }
+  // --- a selection under way
+  if(a == "selection_end" || a == "selection_undo" || a == "selection_invert" ||
+     a == "selection_quit") {
+    for(std::size_t i = 0; i < graph.size(); i++)
+      for(std::size_t j = 0; j < graph[i]->gl.size(); j++) {
+        openglWindow *gl = graph[i]->gl[j];
+        if(a == "selection_end") gl->endSelection = 1;
+        if(a == "selection_undo") gl->undoSelection = 1;
+        if(a == "selection_invert") gl->invertSelection = 1;
+        if(a == "selection_quit") gl->quitSelection = 1;
+      }
+    return 1;
+  }
+  // --- placing an elementary entity with the mouse: the axes it may move
+  // along, one at a time or all but one
+  if(a == "freeze_x" || a == "freeze_y" || a == "freeze_z") {
+    int i = a[7] - 'x';
+    elementaryContext->butt[i]->value(!elementaryContext->butt[i]->value());
+    return 1;
+  }
+  if(a == "freeze_but_x" || a == "freeze_but_y" || a == "freeze_but_z") {
+    int i = a[11] - 'x';
+    for(int j = 0; j < 3; j++) elementaryContext->butt[j]->value(j != i);
+    return 1;
+  }
+  if(a == "escape") {
+    if(fullscreen->shown()) {
+      window_cb(nullptr, (void *)"fullscreen");
+      return 1;
+    }
+    bool lasso = false;
+    for(std::size_t i = 0; i < graph.size(); i++)
+      for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
+        if(graph[i]->gl[j]->lassoMode) lasso = true;
+    if(lasso) {
+      for(std::size_t i = 0; i < graph.size(); i++)
+        for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
+          graph[i]->gl[j]->lassoMode = false;
+      return 2;
+    }
+    status_options_cb(nullptr, (void *)"S");
+    return 1;
+  }
+  // --- the windows
+  if(a == "window_front") {
+    window_cb(nullptr, (void *)"front");
+    return 1;
+  }
+  if(a == "options_general") {
+    general_options_cb(nullptr, nullptr);
+    return 1;
+  }
+  if(a == "options_geometry") {
+    geometry_options_cb(nullptr, nullptr);
+    return 1;
+  }
+  if(a == "options_mesh") {
+    mesh_options_cb(nullptr, nullptr);
+    return 1;
+  }
+  if(a == "options_solver") {
+    solver_options_cb(nullptr, nullptr);
+    return 1;
+  }
+  if(a == "options_post") {
+    post_options_cb(nullptr, nullptr);
+    return 1;
+  }
+  if(a == "options_view") {
+    view_options_cb(nullptr, (void *)-1);
+    return 1;
+  }
+  if(a == "plugins_view") {
+    if(PView::list.size()) {
+      if(options->view.index >= 0 &&
+         options->view.index < (int)PView::list.size())
+        plugins->show(options->view.index);
+      else
+        plugins->show(0);
+    }
+    return 1;
+  }
+  // --- the display: what the quick access menu of the status bar does too
+  if(a == "geometry_points" || a == "geometry_curves" ||
+     a == "geometry_surfaces" || a == "geometry_volumes" || a == "mesh_nodes" ||
+     a == "mesh_lines" || a == "mesh_surface_edges" ||
+     a == "mesh_surface_faces" || a == "mesh_volume_edges" ||
+     a == "mesh_volume_faces" || a == "mesh_toggle") {
+    quick_access_cb(nullptr, (void *)a.c_str());
+    return 2;
+  }
+  if(a == "fast_redraw") {
+    opt_general_fast_redraw(0, GMSH_SET | GMSH_GUI,
+                            !opt_general_fast_redraw(0, GMSH_GET, 0));
+    return 2;
+  }
+  if(a == "bounding_boxes") {
+    opt_general_draw_bounding_box(
+      0, GMSH_SET | GMSH_GUI, !opt_general_draw_bounding_box(0, GMSH_GET, 0));
+    return 2;
+  }
+  if(a == "view_scales") {
+    for(std::size_t i = 0; i < PView::list.size(); i++)
+      if(opt_view_visible(i, GMSH_GET, 0))
+        opt_view_show_scale(i, GMSH_SET | GMSH_GUI,
+                            !opt_view_show_scale(i, GMSH_GET, 0));
+    return 2;
+  }
+  if(a == "color_scheme") {
+    opt_general_color_scheme(0, GMSH_SET | GMSH_GUI,
+                             opt_general_color_scheme(0, GMSH_GET, 0) + 1);
+    return 2;
+  }
+  if(a == "colormaps") {
+    for(std::size_t i = 0; i < PView::list.size(); i++)
+      if(opt_view_visible(i, GMSH_GET, 0))
+        opt_view_colormap_number(i, GMSH_SET | GMSH_GUI,
+                                 opt_view_colormap_number(i, GMSH_GET, 0) + 1);
+    return 2;
+  }
+  if(a == "lighting") {
+    opt_geometry_light(0, GMSH_SET | GMSH_GUI,
+                       !opt_geometry_light(0, GMSH_GET, 0));
+    opt_mesh_light(0, GMSH_SET | GMSH_GUI, !opt_mesh_light(0, GMSH_GET, 0));
+    for(std::size_t i = 0; i < PView::list.size(); i++)
+      if(opt_view_visible(i, GMSH_GET, 0))
+        opt_view_light(i, GMSH_SET | GMSH_GUI, !opt_view_light(i, GMSH_GET, 0));
+    return 2;
+  }
+  // the view callback reads Shift and Ctrl itself (-X, reset, sync)
+  if(a == "view_x" || a == "view_y" || a == "view_z") {
+    status_xyz1p_cb(nullptr, (void *)(a == "view_x" ? "x" :
+                                      a == "view_y" ? "y" :
+                                                      "z"));
+    return 1;
+  }
+  if(a == "view_1_1") {
+    status_xyz1p_cb(nullptr, (void *)"1:1");
+    return 1;
+  }
+  if(a == "projection") {
+    status_options_cb(nullptr, (void *)"p");
+    return 1;
+  }
+  if(a == "axes_loop") {
+    opt_general_axes(0, GMSH_SET | GMSH_GUI,
+                     opt_general_axes(0, GMSH_GET, 0) + 1);
+    for(std::size_t i = 0; i < PView::list.size(); i++)
+      if(opt_view_visible(i, GMSH_GET, 0))
+        opt_view_axes(i, GMSH_SET | GMSH_GUI,
+                      opt_view_axes(i, GMSH_GET, 0) + 1);
+    return 2;
+  }
+  if(a == "small_axes") {
+    opt_general_small_axes(0, GMSH_SET | GMSH_GUI,
+                           !opt_general_small_axes(0, GMSH_GET, 0));
+    return 2;
+  }
+  if(a == "surface_type") {
+    opt_geometry_surface_type(0, GMSH_SET | GMSH_GUI,
+                              opt_geometry_surface_type(0, GMSH_GET, 0) + 1);
+    return 2;
+  }
+  if(a == "view_intervals" || a == "view_intervals_all") {
+    for(std::size_t i = 0; i < PView::list.size(); i++)
+      if(opt_view_visible(i, GMSH_GET, 0)) {
+        int t = opt_view_intervals_type(i, GMSH_GET, 0) + 1;
+        if(t == 4 && a == "view_intervals") t = 1; // skip numeric display
+        opt_view_intervals_type(i, GMSH_SET | GMSH_GUI, t);
+      }
+    return 2;
+  }
+  if(a == "view_range") {
+    for(std::size_t i = 0; i < PView::list.size(); i++)
+      if(opt_view_visible(i, GMSH_GET, 0))
+        opt_view_range_type(i, GMSH_SET | GMSH_GUI,
+                            opt_view_range_type(i, GMSH_GET, 0) + 1);
+    return 2;
+  }
+  if(a == "view_annotations") {
+    for(std::size_t i = 0; i < PView::list.size(); i++)
+      if(opt_view_visible(i, GMSH_GET, 0))
+        opt_view_draw_strings(i, GMSH_SET | GMSH_GUI,
+                              !opt_view_draw_strings(i, GMSH_GET, 0));
+    return 2;
+  }
+  if(a == "view_elements") {
+    for(std::size_t i = 0; i < PView::list.size(); i++)
+      if(opt_view_visible(i, GMSH_GET, 0))
+        opt_view_show_element(i, GMSH_SET | GMSH_GUI,
+                              !opt_view_show_element(i, GMSH_GET, 0));
+    return 2;
+  }
+  if(a == "views_hide_show") {
+    static int show = 0;
+    for(std::size_t i = 0; i < PView::list.size(); i++)
+      opt_view_visible(i, GMSH_SET | GMSH_GUI, show);
+    show = !show;
+    return 2;
+  }
+  // --- the time steps and the views, on the arrows
+  if(a == "time_step_prev") {
     status_play_manual(1, -CTX::instance()->post.animStep);
     return 1;
   }
-  else if(Fl::test_shortcut(FL_Right)) {
+  if(a == "time_step_next") {
     status_play_manual(1, CTX::instance()->post.animStep);
     return 1;
   }
-  else if(Fl::test_shortcut(FL_Up)) {
+  if(a == "view_prev") {
     status_play_manual(0, -CTX::instance()->post.animStep);
     return 1;
   }
-  else if(Fl::test_shortcut(FL_Down)) {
+  if(a == "view_next") {
     status_play_manual(0, CTX::instance()->post.animStep);
     return 1;
   }
 #if defined(HAVE_POPPLER)
-  else if(Fl::test_shortcut('u') || Fl::test_shortcut(FL_Page_Up)) {
+  if(a == "page_prev") {
     gmshPopplerWrapper::setCurrentPageDown();
-    drawContext::global()->draw();
-    return 1;
+    return 2;
   }
-  else if(Fl::test_shortcut('d') || Fl::test_shortcut(FL_Page_Down)) {
+  if(a == "page_next") {
     gmshPopplerWrapper::setCurrentPageUp();
-    drawContext::global()->draw();
-    return 1;
+    return 2;
   }
 #endif
   return 0;
@@ -1386,7 +1449,7 @@ void FlGui::setLastStatus(int col)
   if(Msg::GetThreadNum() > 0) return;
   for(std::size_t i = 0; i < graph.size(); i++) {
     if(col >= 0 && graph[0]->getMessageHeight() < FL_NORMAL_SIZE) {
-      if(CTX::instance()->guiColorScheme) // dark
+      if(CTX::instance()->guiDark) // dark
         graph[i]->getProgress()->color(col);
       else
         graph[i]->getProgress()->labelcolor(col);
@@ -1414,6 +1477,75 @@ void FlGui::setProgress(const std::string &msg, double val, double min,
   setStatus(msg);
 }
 
+std::vector<Fl_Window *> FlGui::toolWindows()
+{
+  std::vector<Fl_Window *> tools = {
+    options->win,         plugins->win,          fields->win,
+    visibility->win,      clipping->win,         manip->win,
+    stats->win,           highordertools->win,   elementaryContext->win,
+    physicalContext->win, transformContext->win, meshContext->win,
+    onelabContext->win,   classify->window};
+  if(partition->win) tools.push_back(partition->win);
+  return tools;
+}
+
+void FlGui::applyFloatingTools()
+{
+  std::string names = "," + CTX::instance()->floatingTools + ",";
+  names.erase(std::remove(names.begin(), names.end(), ' '), names.end());
+  for(auto w : toolWindows()) {
+    paletteWindow *p = (paletteWindow *)w;
+    bool floating = names.find("," + p->name() + ",") != std::string::npos;
+    if(floating != p->floating()) setToolFloating(p, floating);
+  }
+}
+
+void FlGui::setToolFloating(paletteWindow *p, bool floating)
+{
+  p->floating(floating);
+  if(!p->isOpen()) return;
+  // an open tool moves: a docked one leaves the dock when hidden, and a tool
+  // on the desktop joins it when shown
+  if(floating && p->parent()) p->hide();
+  p->show();
+}
+
+void FlGui::toggleCurrentTool()
+{
+  // the tool holding the focus, else the one shown in the dock used last
+  paletteWindow *p = nullptr;
+  for(Fl_Widget *w = Fl::focus(); w && !p; w = w->parent()) {
+    p = dynamic_cast<paletteWindow *>(w);
+    if(p && !p->dockable()) p = nullptr;
+  }
+  if(!p) p = graph[0]->currentDockedTool();
+  if(!p || !p->isOpen()) return;
+  setToolFloating(p, p->parent() != nullptr);
+  storeFloatingTools();
+}
+
+void FlGui::storeFloatingTools()
+{
+  std::string names;
+  for(auto w : toolWindows()) {
+    paletteWindow *p = (paletteWindow *)w;
+    if(!p->floating()) continue;
+    names += (names.empty() ? "" : ",") + p->name();
+  }
+  CTX::instance()->floatingTools = names;
+}
+
+void FlGui::dockTools(bool dock)
+{
+  std::string names;
+  if(!dock)
+    for(auto w : toolWindows()) {
+      paletteWindow *p = (paletteWindow *)w;
+      names += (names.empty() ? "" : ",") + p->name();
+    }
+  opt_general_floating_tools(0, GMSH_SET | GMSH_GUI, names);
+}
+
 void FlGui::storeCurrentWindowsInfo()
 {
   CTX::instance()->glPosition[0] = graph[0]->getWindow()->x();
@@ -1432,16 +1564,20 @@ void FlGui::storeCurrentWindowsInfo()
   else
     CTX::instance()->detachedMenu = 0;
   storeWindowOffset(options->win, CTX::instance()->optOffset);
+  CTX::instance()->optHeight = ((paletteWindow *)options->win)->desktopH();
   storeWindowOffset(plugins->win, CTX::instance()->pluginOffset);
-  CTX::instance()->pluginSize[0] = plugins->win->w();
-  CTX::instance()->pluginSize[1] = plugins->win->h();
+  CTX::instance()->pluginSize[0] = ((paletteWindow *)plugins->win)->desktopW();
+  CTX::instance()->pluginSize[1] = ((paletteWindow *)plugins->win)->desktopH();
   storeWindowOffset(fields->win, CTX::instance()->fieldOffset);
-  CTX::instance()->fieldSize[0] = fields->win->w();
-  CTX::instance()->fieldSize[1] = fields->win->h();
+  CTX::instance()->fieldSize[0] = ((paletteWindow *)fields->win)->desktopW();
+  CTX::instance()->fieldSize[1] = ((paletteWindow *)fields->win)->desktopH();
   storeWindowOffset(stats->win, CTX::instance()->statOffset);
   storeWindowOffset(visibility->win, CTX::instance()->visOffset);
   storeWindowOffset(highordertools->win, CTX::instance()->hotOffset);
   storeWindowOffset(clipping->win, CTX::instance()->clipOffset);
+  if(partition->win)
+    storeWindowOffset(partition->win, CTX::instance()->partOffset);
+  storeWindowOffset(classify->window, CTX::instance()->reclassifyOffset);
   storeWindowOffset(manip->win, CTX::instance()->manipOffset);
   Fl_Window *ctx = (lastContextWindow == 4) ? onelabContext->win :
                    (lastContextWindow == 3) ? physicalContext->win :
@@ -1466,25 +1602,14 @@ void window_cb(Fl_Widget *w, void *data)
   std::string str((const char *)data);
 
   if(str == "minimize") {
-    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-      if(FlGui::instance()->graph[i]->getWindow()->shown())
-        FlGui::instance()->graph[i]->getWindow()->iconize();
-    if(FlGui::instance()->options->win->shown())
-      FlGui::instance()->options->win->iconize();
-    if(FlGui::instance()->plugins->win->shown())
-      FlGui::instance()->plugins->win->iconize();
-    if(FlGui::instance()->fields->win->shown())
-      FlGui::instance()->fields->win->iconize();
-    if(FlGui::instance()->visibility->win->shown())
-      FlGui::instance()->visibility->win->iconize();
-    if(FlGui::instance()->highordertools->win->shown())
-      FlGui::instance()->highordertools->win->iconize();
-    if(FlGui::instance()->clipping->win->shown())
-      FlGui::instance()->clipping->win->iconize();
-    if(FlGui::instance()->manip->win->shown())
-      FlGui::instance()->manip->win->iconize();
-    if(FlGui::instance()->stats->win->shown())
-      FlGui::instance()->stats->win->iconize();
+    // the docked tool windows go with the main window
+    auto iconize = [](Fl_Window *w) {
+      if(w->shown() && !w->parent()) w->iconize();
+    };
+    FlGui *g = FlGui::instance();
+    for(std::size_t i = 0; i < g->graph.size(); i++)
+      iconize(g->graph[i]->getWindow());
+    for(Fl_Window *w : g->toolWindows()) iconize(w);
   }
   else if(str == "zoom") {
     if(!zoom) {
@@ -1542,35 +1667,12 @@ void window_cb(Fl_Widget *w, void *data)
     }
   }
   else if(str == "front") {
-    // the order is important!
-    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-      FlGui::instance()->graph[i]->getWindow()->show();
-    if(FlGui::instance()->options->win->shown())
-      FlGui::instance()->options->win->show();
-    if(FlGui::instance()->plugins->win->shown())
-      FlGui::instance()->plugins->win->show();
-    if(FlGui::instance()->fields->win->shown())
-      FlGui::instance()->fields->win->show();
-    if(FlGui::instance()->elementaryContext->win->shown())
-      FlGui::instance()->elementaryContext->win->show();
-    if(FlGui::instance()->transformContext->win->shown())
-      FlGui::instance()->transformContext->win->show();
-    if(FlGui::instance()->physicalContext->win->shown())
-      FlGui::instance()->physicalContext->win->show();
-    if(FlGui::instance()->onelabContext->win->shown())
-      FlGui::instance()->onelabContext->win->show();
-    if(FlGui::instance()->meshContext->win->shown())
-      FlGui::instance()->meshContext->win->show();
-    if(FlGui::instance()->visibility->win->shown())
-      FlGui::instance()->visibility->win->show();
-    if(FlGui::instance()->highordertools->win->shown())
-      FlGui::instance()->highordertools->win->show();
-    if(FlGui::instance()->clipping->win->shown())
-      FlGui::instance()->clipping->win->show();
-    if(FlGui::instance()->manip->win->shown())
-      FlGui::instance()->manip->win->show();
-    if(FlGui::instance()->stats->win->shown())
-      FlGui::instance()->stats->win->show();
+    // the order is important; the docked tool windows come with the main one
+    FlGui *g = FlGui::instance();
+    for(std::size_t i = 0; i < g->graph.size(); i++)
+      g->graph[i]->getWindow()->show();
+    for(Fl_Window *w : g->toolWindows())
+      if(w->shown() && !w->parent()) w->show();
   }
 }
 

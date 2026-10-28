@@ -545,6 +545,7 @@ int discreteFace::createGeometry()
   stl_vertices_xyz.clear();
   stl_curvatures.clear();
   stl_triangles.clear();
+  stl_from_mesh = false;
   if(triangles.empty()) return 0;
 
 

@@ -10,6 +10,7 @@
 #include <vector>
 #include <atomic>
 #include "SPoint2.h"
+#include "gmshScheme.h"
 
 #define GMSH_WINDOW_BOX FL_FLAT_BOX
 #define GMSH_SIMPLE_RIGHT_BOX (Fl_Boxtype)(FL_FREE_BOXTYPE + 1)
@@ -17,10 +18,21 @@
 
 #define IW (10 * FL_NORMAL_SIZE) // input field width
 #define BB (7 * FL_NORMAL_SIZE) // width of a button with internal label
-#define BH (2 * FL_NORMAL_SIZE + 1) // button height
-#define WB (5) // window border
+// the button height and the window border, a little larger under the gmsh
+// theme (see gmshScheme.h): the air between the widgets
+#define BH (2 * FL_NORMAL_SIZE + 1 + gmshAir())
+#define WB (5 + gmshAir())
+// least width of the tool windows: that of the option window, i.e. 28 em of
+// fields with a scrollbar beside them
+#define TW (28 * FL_NORMAL_SIZE + 2 * WB + Fl::scrollbar_size())
 
+class paletteWindow;
+class Fl_Window;
 class graphicWindow;
+
+// the FLTK code of the shortcut of an action of the table in Shortcuts.h, for
+// the menus; 0 for one not bound on the macOS system menu bar
+int fltkShortcut(const char *action, bool systemBar = false);
 class openglWindow;
 class optionWindow;
 class onelabWindow;
@@ -30,6 +42,8 @@ class statisticsWindow;
 class visibilityWindow;
 class highOrderToolsWindow;
 class clippingWindow;
+class partitionWindow;
+class classificationEditor;
 class manipWindow;
 class elementaryContextWindow;
 class transformContextWindow;
@@ -75,6 +89,20 @@ public:
   visibilityWindow *visibility;
   highOrderToolsWindow *highordertools;
   clippingWindow *clipping;
+  partitionWindow *partition;
+  classificationEditor *classify;
+  // the tool windows, docked while the main window has a dock
+  std::vector<Fl_Window *> toolWindows();
+  // the ones kept on the desktop, from and to General.FloatingTools: the
+  // open ones move when the option changes
+  void applyFloatingTools();
+  void storeFloatingTools();
+  // a tool kept on the desktop or docked, moved if open
+  void setToolFloating(paletteWindow *p, bool floating);
+  // docks or undocks every tool, or the one holding the focus (else the one
+  // shown in the dock)
+  void dockTools(bool dock);
+  void toggleCurrentTool();
   manipWindow *manip;
   elementaryContextWindow *elementaryContext;
   transformContextWindow *transformContext;
@@ -122,6 +150,8 @@ public:
   static bool getFinishedProcessingCommandLine();
   // test application-level keyboard shortcuts
   int testGlobalShortcuts(int event);
+  // runs an action of the shortcut table (src/common/Shortcuts.h) by name
+  int runShortcut(const std::string &action);
   // test the arrow shortcuts (not in the application-level shortcuts)
   // since it is used elsewhere (where we want to override widget
   // navigation). This is necessary since FLTK 1.1.
@@ -173,6 +203,8 @@ public:
   void closeTreeItem(const std::string &name);
   // apply color scheme to widgets
   void applyColorScheme(bool redraw = false);
+  // the interface follows the desktop between light and dark when asked to
+  void desktopChanged();
   // should the quit callback exit the app, or just close all windows?
   bool quitShouldExit() { return _quitShouldExit; }
   // show onelab context window for the given entity

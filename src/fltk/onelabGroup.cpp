@@ -34,6 +34,8 @@ typedef unsigned long intptr_t;
 #include "onelabGroup.h"
 #include "GmshGlobal.h"
 #include "FlGui.h"
+#include "gmshScheme.h"
+#include "icons.h"
 #include "Context.h"
 #include "GModel.h"
 #include "GmshDefines.h"
@@ -479,11 +481,48 @@ static unsigned char gear_bits[] = {
   0xf8, 0x1f, 0xfc, 0x3f, 0x8c, 0x31, 0x80, 0x01, 0x80, 0x01};
 #endif
 
+// the background of the tree: under the gmsh theme between the one of the
+// window, as the tools, and the one of the lists, which it is otherwise,
+// closer to the latter
+static Fl_Color treeColor()
+{
+  if(!gmshScheme()) return FL_BACKGROUND2_COLOR;
+  return fl_color_average(FL_BACKGROUND2_COLOR, FL_BACKGROUND_COLOR, 0.55f);
+}
+
+// the lines joining the items: under the gmsh theme fainter than the
+// triangles, which carry the structure
+static Fl_Color connectorColor()
+{
+  if(!gmshScheme()) return FL_INACTIVE_COLOR;
+  return fl_color_average(treeColor(), FL_FOREGROUND_COLOR, 0.68f);
+}
+
+// a click on the row of a branch, not only on its triangle, opens or closes
+// it; the names of the view groups and of the physical groups are buttons
+// with an action of their own
+class onelabTree : public Fl_Tree {
+public:
+  onelabTree(int x, int y, int w, int h) : Fl_Tree(x, y, w, h) {}
+  int handle(int event) override
+  {
+    int ret = Fl_Tree::handle(event);
+    if(event == FL_PUSH && Fl::event_button() == FL_LEFT_MOUSE) {
+      Fl_Tree_Item *item = find_clicked(0);
+      if(item && item->has_children() &&
+         !item->event_on_collapse_icon(prefs()) &&
+         !dynamic_cast<Fl_Button *>(item->widget()))
+        open_toggle(item);
+    }
+    return ret;
+  }
+};
+
 onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
   : Fl_Group(x, y, w, h, l), _stop(false), _enableTreeWidgetResize(false),
     _firstBuild(true), _hasContext(false)
 {
-  int col = FL_BACKGROUND2_COLOR;
+  Fl_Color col = treeColor();
   color(col);
 
   box(GMSH_SIMPLE_RIGHT_BOX);
@@ -492,16 +531,19 @@ onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
   int dw = Fl::box_dw(box());
   int dh = Fl::box_dh(box());
 
-  _tree = new Fl_Tree(x + dx, y + dy, w - dw, h - dh - BH - 2 * WB);
+  _tree = new onelabTree(x + dx, y + dy, w - dw, h - dh - BH - 2 * WB);
   _tree->color(col);
   _tree->callback(onelab_tree_cb);
   _tree->connectorstyle(FL_TREE_CONNECTOR_SOLID);
+  _tree->connectorcolor(connectorColor());
   // _tree->marginleft(0);
   // _tree->usericonmarginleft(0);
   // _tree->labelmarginleft(0);
   // _tree->connectorwidth(15);
   _tree->showroot(0);
   _tree->box(FL_FLAT_BOX);
+  // under the gmsh theme the items are spaced out more than its widgets
+  _tree->linespacing(2 * gmshAir());
   // _tree->resizable(0);
   _tree->end();
 
@@ -522,11 +564,15 @@ onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
   _butt[1]->callback(onelab_cb, (void *)"compute");
 
   _gear = new Fl_Menu_Button(x + w - WB - BB2, y + h - WB - BH, BB2, BH);
+  if(gmshScheme())
+    gmshIcon(_gear, "gear", FL_NORMAL_SIZE + 2);
+  else {
 #if defined(__APPLE__)
-  _gear->label("@-1gmsh_gear");
+    _gear->label("@-1gmsh_gear");
 #else
-  _gear->image(new Fl_Bitmap(gear_bits, gear_width, gear_height));
+    _gear->image(new Fl_Bitmap(gear_bits, gear_width, gear_height));
 #endif
+  }
   _gear->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
   _gear->add("Reset database", 0, onelab_cb, (void *)"reset");
   _gear->add("Save database...", 0, onelab_cb, (void *)"save");
@@ -613,7 +659,7 @@ template <class T> void onelabGroup::_addParameter(T &p)
   n->labelsize(FL_NORMAL_SIZE + 4);
   _tree->begin();
   int ww = (int)(_baseWidth - (n->depth() + 1) * _indent);
-  int hh = n->labelsize() + 4;
+  int hh = n->labelsize() + 4 + gmshAir();
   Fl_Group *grp = new Fl_Group(1, 1, ww, hh);
   Fl_Widget *widget =
     addParameterWidget(p, 1, 1, ww * _widgetLabelRatio, hh, _widgetLabelRatio,
@@ -641,7 +687,7 @@ void onelabGroup::_addMenu(const std::string &path, Fl_Callback *callback,
   }
   _tree->begin();
   int ww = (int)(_baseWidth - (n->depth() + 1) * _indent);
-  int hh = n->labelsize() + 4;
+  int hh = n->labelsize() + 4 + gmshAir();
   Fl_Group *grp = new Fl_Group(1, 1, ww, hh);
   Fl_Button *but = new Fl_Button(1, 1, ww, hh);
   but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
@@ -670,7 +716,7 @@ void onelabGroup::_addSolverMenu(int num)
     return;
   }
   int ww = (int)(_baseWidth - (n->depth() + 1) * _indent);
-  int hh = n->labelsize() + 4;
+  int hh = n->labelsize() + 4 + gmshAir();
   _tree->begin();
   Fl_Group *grp = new Fl_Group(1, 1, ww, hh);
   new solverButton(1, 1, ww, hh, num, _tree->color());
@@ -691,7 +737,7 @@ void onelabGroup::_addViewMenu(int num)
     return;
   }
   int ww = (int)(_baseWidth - (n->depth() + 1) * _indent);
-  int hh = n->labelsize() + 4;
+  int hh = n->labelsize() + 4 + gmshAir();
   _tree->begin();
   Fl_Group *grp = new Fl_Group(1, 1, ww, hh);
   new viewButton(1, 1, ww, hh, num, _tree->color());
@@ -1438,7 +1484,11 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
 
   _tree->clear();
 
-  if(CTX::instance()->guiColorScheme) {
+  // the colours follow the colour scheme, which may have changed
+  color(treeColor());
+  _tree->color(treeColor());
+  _tree->connectorcolor(connectorColor());
+  if(CTX::instance()->guiDark) {
     _tree->openicon(&open_pixmap_dark);
     _tree->closeicon(&close_pixmap_dark);
   }
@@ -1502,7 +1552,7 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
   for(Fl_Tree_Item *n = _tree->first(); n; n = n->next()) {
     if(n->has_children()) {
       int ww = (int)(_baseWidth - (n->depth() + 1) * _indent);
-      int hh = n->labelsize() + 4;
+      int hh = n->labelsize() + 4 + gmshAir();
       _tree->begin();
       Fl_Widget *but;
 #if 0 // FIXME this can crash FLTK when submenus are intially closed (somehow

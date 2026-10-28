@@ -26,6 +26,7 @@
 #include "MQuadrangle.h"
 #include "MTetrahedron.h"
 #include "Context.h"
+#include "ExtrudeParams.h"
 #include "OS.h"
 #if !defined(HAVE_NO_STDINT_H)
 #include <stdint.h>
@@ -952,14 +953,12 @@ namespace tetgenBR {
     return err;
   }
 
-  bool meshGRegionBoundaryRecovery(GRegion *gr, splitQuadRecovery *sqr,
-                                   const initialTetrahedralization *init)
+  bool meshGRegionBoundaryRecovery(GRegion *gr, splitQuadRecovery *sqr)
   {
     double t_start = Cpu(), w_start = TimeOfDay();
     std::vector<MVertex *> _vertices;
     // Get the set of vertices from GRegion.
-    if(init) { _vertices = init->vertices; }
-    else {
+    {
       std::set<MVertex *, MVertexPtrLessThan> all;
       std::vector<GFace *> const &f = gr->faces();
       for(auto it = f.begin(); it != f.end(); ++it) {
@@ -979,7 +978,12 @@ namespace tetgenBR {
             MVertex *v2 = gf->quadrangles[i]->getVertex(2);
             MVertex *v3 = gf->quadrangles[i]->getVertex(3);
             MFace mf = gf->quadrangles[i]->getFace(0);
-            if(sqr->doWeCreatePyramids()) {
+            auto it = sqr->getQuad().find(mf);
+            if(it != sqr->getQuad().end()) {
+              // already split by the caller: keep its apex
+              if(it->second) all.insert(it->second);
+            }
+            else if(sqr->doWeCreatePyramids()) {
               SPoint3 p((v0->x() + v1->x() + v2->x() + v3->x()) * 0.25,
                         (v0->y() + v1->y() + v2->y() + v3->y()) * 0.25,
                         (v0->z() + v1->z() + v2->z() + v3->z()) * 0.25);
@@ -1030,12 +1034,7 @@ namespace tetgenBR {
     // function delaunayTriangulation
     std::map<MVertex *, SPoint3> originalCoordinates;
     boundaryRecoveryInput in;
-    if(init) {
-      in.tetNode = init->tetNode;
-      in.tetNeighbors = init->neighbors;
-      in.carve = false; // the caller sorts out the exterior
-    }
-    else {
+    {
       for(std::size_t i = 0; i < _vertices.size(); i++) {
         MVertex *v = _vertices[i];
         originalCoordinates[v] = v->point();
@@ -1098,7 +1097,68 @@ namespace tetgenBR {
     }
 
     boundaryRecoveryOutput out;
-    const int err = runCore(in, out);
+    int err = runCore(in, out);
+
+    // The vertices are perturbed at random before the initial
+    // tetrahedralization (Mesh.RandomFactor3D). Nodes coplanar to rounding
+    // (e.g. the rings of nodes of extruded layers) then give nearly flat tets,
+    // which can block the recovery for one perturbation and not for another,
+    // or leave Steiner points on a surface whose mesh cannot change (a
+    // quadrangle, periodic or structured surface mesh, shared with an already
+    // meshed volume). Retry with other perturbations in these cases.
+    //
+    // FIXME: this is quite ad-hoc and should eventually be replaced by a more
+    // robust solution.
+    auto fixedMesh = [&](int ftag) {
+      for(GFace *gf : f_list) {
+        if(gf->tag() != ftag) continue;
+        if(gf->quadrangles.size() || gf->getMeshMaster() != gf ||
+           gf->meshAttributes.method == MESH_TRANSFINITE ||
+           (gf->meshAttributes.extrude &&
+            gf->meshAttributes.extrude->geo.Mode == EXTRUDED_ENTITY))
+          return true;
+        for(auto it = gr->model()->firstFace(); it != gr->model()->lastFace();
+            ++it)
+          if((*it)->getMeshMaster() == gf && *it != gf) return true;
+      }
+      return false;
+    };
+    for(int retry = 1; retry <= CTX::instance()->mesh.maxRetries; retry++) {
+      bool steinerOnFixedMesh = false;
+      if(err == 0)
+        for(auto ftag : out.changedFaces)
+          if(fixedMesh(ftag)) steinerOnFixedMesh = true;
+      if(err != 2 && !steinerOnFixedMesh) break;
+      Msg::Info(" - %s, retrying with another perturbation (%d/%d)",
+                err ? "Boundary recovery failed" :
+                      "Steiner points on a surface whose mesh cannot change",
+                retry, CTX::instance()->mesh.maxRetries);
+      for(auto &vc : originalCoordinates)
+        vc.first->setXYZ(vc.second.x(), vc.second.y(), vc.second.z());
+      // the 8 enclosing box vertices are created again
+      for(std::size_t i = nv - 8; i < nv; i++) delete _vertices[i];
+      _vertices.resize(nv - 8);
+      std::vector<MTetrahedron *> tets;
+      delaunayMeshIn3D(_vertices, tets, false, &in.tetNeighbors);
+      if(Msg::GetErrorCount()) break;
+      for(std::size_t i = 0; i < nv; i++) _vertices[i]->setIndex((long)i);
+      in.tetNode.resize(4 * tets.size());
+      for(std::size_t i = 0; i < tets.size(); i++) {
+        for(int j = 0; j < 4; j++)
+          in.tetNode[4 * i + j] =
+            (std::uint32_t)tets[i]->getVertex(j)->getIndex();
+        delete tets[i];
+      }
+      for(std::size_t i = 0; i < nv; i++) {
+        in.xyz[3 * i] = _vertices[i]->x();
+        in.xyz[3 * i + 1] = _vertices[i]->y();
+        in.xyz[3 * i + 2] = _vertices[i]->z();
+        _vertices[i]->setIndex(i + 1);
+      }
+      out = boundaryRecoveryOutput();
+      err = runCore(in, out);
+    }
+
     bool ret = false;
     if(err == 0) {
       // Write mesh into to GRegion.
@@ -1296,7 +1356,7 @@ namespace tetgenBR {
       vIter->first->setXYZ(coordinates.x(), coordinates.y(), coordinates.z());
     }
     // delete 8 new enclosing box vertices added in delaunayMeshIn3d
-    if(!init && ret) {
+    if(ret) {
       for(std::size_t i = _vertices.size() - 8; i < _vertices.size(); i++)
         delete _vertices[i];
     }
@@ -1349,8 +1409,7 @@ namespace tetgenBR {
 
 #else
 
-bool meshGRegionBoundaryRecovery(GRegion *gr, splitQuadRecovery *sqr,
-                                 const initialTetrahedralization *init)
+bool meshGRegionBoundaryRecovery(GRegion *gr, splitQuadRecovery *sqr)
 {
   return false;
 }

@@ -7,6 +7,7 @@
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Return_Button.H>
 #include "FlGui.h"
+#include "accentTabs.h"
 #include "drawContext.h"
 #include "contextWindow.h"
 #include "paletteWindow.h"
@@ -650,7 +651,7 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
 
-  int width = 34 * FL_NORMAL_SIZE;
+  int width = TW;
   int height = 5 * WB + 10 * BH;
 
   win = new paletteWindow(width, height,
@@ -659,7 +660,7 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
                           CTX::instance()->ctxOffset);
   win->box(GMSH_WINDOW_BOX);
   {
-    tab1 = new Fl_Tabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);
+    tab1 = new accentTabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);
     // 0: Parameter
     {
       group[0] = new Fl_Group(WB, WB + BH, width - 2 * WB,
@@ -789,15 +790,15 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
     {
       group[5] = new Fl_Group(WB, WB + BH, width - 2 * WB,
                               height - 3 * WB - 2 * BH, "Rectangle");
-      input[26] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "X");
+      input[26] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Corner X");
       input[26]->value("0");
-      input[27] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Y");
+      input[27] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Corner Y");
       input[27]->value("0");
-      input[28] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Z");
+      input[28] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Corner Z");
       input[28]->value("0");
-      input[29] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "DX");
+      input[29] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Size X");
       input[29]->value("1");
-      input[30] = new Fl_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "DY");
+      input[30] = new Fl_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Size Y");
       input[30]->value("0.5");
       input[31] =
         new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Rounded radius");
@@ -816,7 +817,7 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
     tab1->end();
   }
   {
-    tab2 = new Fl_Tabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);
+    tab2 = new accentTabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);
     // 6: Sphere
     {
       group[6] = new Fl_Group(WB, WB + BH, width - 2 * WB,
@@ -884,17 +885,17 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
     {
       group[8] = new Fl_Group(WB, WB + BH, width - 2 * WB,
                               height - 3 * WB - 2 * BH, "Box");
-      input[47] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "X");
+      input[47] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Corner X");
       input[47]->value("0");
-      input[48] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Y");
+      input[48] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Corner Y");
       input[48]->value("0");
-      input[49] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Z");
+      input[49] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Corner Z");
       input[49]->value("0");
-      input[50] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "DX");
+      input[50] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Size X");
       input[50]->value("1");
-      input[51] = new Fl_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "DY");
+      input[51] = new Fl_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Size Y");
       input[51]->value("1");
-      input[52] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "DZ");
+      input[52] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Size Z");
       input[52]->value("1");
       for(int i = 47; i < 53; i++) {
         input[i]->align(FL_ALIGN_RIGHT);
@@ -977,19 +978,19 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
     {
       group[11] = new Fl_Group(WB, WB + BH, width - 2 * WB,
                                height - 3 * WB - 2 * BH, "Wedge");
-      input[68] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "X");
+      input[68] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Corner X");
       input[68]->value("0");
-      input[69] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Y");
+      input[69] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Corner Y");
       input[69]->value("0");
-      input[70] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Z");
+      input[70] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Corner Z");
       input[70]->value("0");
-      input[71] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "DX");
+      input[71] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Size X");
       input[71]->value("0.5");
-      input[72] = new Fl_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "DY");
+      input[72] = new Fl_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Size Y");
       input[72]->value("0.5");
-      input[73] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "DZ");
+      input[73] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Size Z");
       input[73]->value("0.5");
-      input[74] = new Fl_Input(2 * WB, 2 * WB + 7 * BH, IW, BH, "Top DX");
+      input[74] = new Fl_Input(2 * WB, 2 * WB + 7 * BH, IW, BH, "Top size X");
       input[74]->value("0");
       for(int i = 68; i < 75; i++) {
         input[i]->align(FL_ALIGN_RIGHT);
@@ -1010,23 +1011,24 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
     o->callback(elementary_switch_tabs_cb);
   }
   {
-    value[0] = new Fl_Value_Input(WB, height - WB - BH, IW / 3, BH, "X");
-    value[1] =
-      new Fl_Value_Input(WB + IW / 2, height - WB - BH, IW / 3, BH, "Y");
+    // the snap fields on the left (3 em each, an em for X and Y), the freeze
+    // check buttons on the right, WB apart or their focus boxes touch
+    int sw = 3 * FL_NORMAL_SIZE, sp = sw + 2 * WB + FL_NORMAL_SIZE;
+    value[0] = new Fl_Value_Input(WB, height - WB - BH, sw, BH, "X");
+    value[1] = new Fl_Value_Input(WB + sp, height - WB - BH, sw, BH, "Y");
     value[2] =
-      new Fl_Value_Input(WB + IW, height - WB - BH, IW / 3, BH, "Z snap");
+      new Fl_Value_Input(WB + 2 * sp, height - WB - BH, sw, BH, "Z snap");
     for(int i = 0; i < 3; i++) {
       value[i]->align(FL_ALIGN_RIGHT);
       value[i]->callback(elementary_snap_cb);
     }
-    butt[0] =
-      new Fl_Check_Button(width - 6 * BH, height - WB - BH, 1.2 * BH, BH, "X");
+    int cw = 1.2 * BH, zw = 3 * BH, bx = width - WB - 2 * cw - 2 * WB - zw;
+    butt[0] = new Fl_Check_Button(bx, height - WB - BH, cw, BH, "X");
     butt[0]->tooltip("Toggle (x) or exclusive unselect (Shift+x)");
-    butt[1] = new Fl_Check_Button(width - 6 * BH + 1.2 * BH, height - WB - BH,
-                                  1.2 * BH, BH, "Y");
+    butt[1] = new Fl_Check_Button(bx + cw + WB, height - WB - BH, cw, BH, "Y");
     butt[1]->tooltip("Toggle (y) or exclusive unselect (Shift+y)");
-    butt[2] = new Fl_Check_Button(width - 6 * BH + 2.4 * BH, height - WB - BH,
-                                  (6 - 2 * 1.2) * BH - WB, BH, "Z freeze");
+    butt[2] = new Fl_Check_Button(bx + 2 * (cw + WB), height - WB - BH, zw, BH,
+                                  "Z freeze");
     butt[2]->tooltip("Toggle (z) or exclusive unselect (Shift+z)");
   }
 
@@ -1034,6 +1036,8 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
   tab2->hide();
 
   win->end();
+  // of fixed height, as narrow as the option window, wider as one likes
+  ((paletteWindow *)win)->fixedLayout(width, height, 2 * WB);
 
   FL_NORMAL_SIZE += deltaFontSize;
 }
@@ -1114,7 +1118,7 @@ static void physical_add_cb(Fl_Widget *w, void *data)
 
   if(existingName.size() || existingTag) {
     // change color to warn that the group exists
-    Fl_Color c = (!CTX::instance()->guiColorScheme ? FL_DARK_BLUE : FL_BLUE);
+    Fl_Color c = (!CTX::instance()->guiDark ? FL_DARK_BLUE : FL_BLUE);
     pc->input[0]->textcolor(c);
     pc->value[0]->textcolor(c);
     if(what != "Name" && !strlen(pc->input[0]->value()))
@@ -1163,7 +1167,7 @@ physicalContextWindow::physicalContextWindow(int deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
 
-  int width = 30 * FL_NORMAL_SIZE;
+  int width = TW;
   int height = 5 * WB + 4 * BH;
 
   win = new paletteWindow(width, height,
@@ -1173,13 +1177,13 @@ physicalContextWindow::physicalContextWindow(int deltaFontSize)
   win->box(GMSH_WINDOW_BOX);
 
   {
-    tab = new Fl_Tabs(WB, WB, width - 2 * WB, 4 * BH + 3 * WB);
+    tab = new accentTabs(WB, WB, width - 2 * WB, 4 * BH + 3 * WB);
     // 0: Add
     {
       group[0] =
         new Fl_Group(WB, WB + BH, width - 2 * WB, 3 * BH + 3 * WB, "Add");
 
-      box[0] = new Fl_Box(2 * WB, 2 * WB + 1 * BH, width, BH);
+      box[0] = new Fl_Box(2 * WB, 2 * WB + 1 * BH, width - 4 * WB, BH);
       box[0]->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
 
       input[0] = new Fl_Input_Choice(2 * WB, 2 * WB + 2 * BH,
@@ -1209,7 +1213,7 @@ physicalContextWindow::physicalContextWindow(int deltaFontSize)
       group[1] =
         new Fl_Group(WB, WB + BH, width - 2 * WB, 3 * BH + 3 * WB, "Remove");
 
-      box[1] = new Fl_Box(2 * WB, 2 * WB + 1 * BH, width, BH);
+      box[1] = new Fl_Box(2 * WB, 2 * WB + 1 * BH, width - 4 * WB, BH);
       box[1]->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
 
       choice[0] =
@@ -1223,6 +1227,8 @@ physicalContextWindow::physicalContextWindow(int deltaFontSize)
   }
 
   win->end();
+  // of fixed height, as narrow as the option window, wider as one likes
+  ((paletteWindow *)win)->fixedLayout(width, height, 2 * WB);
 
   FL_NORMAL_SIZE += deltaFontSize;
 }
@@ -1357,7 +1363,7 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
 
-  int width = 36 * FL_NORMAL_SIZE;
+  int width = TW;
   int height = 5 * WB + 10 * BH;
 
   win = new paletteWindow(width, height,
@@ -1366,16 +1372,16 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
                           CTX::instance()->ctxOffset);
   win->box(GMSH_WINDOW_BOX);
   {
-    Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);
+    Fl_Tabs *o = new accentTabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);
     // 0: Translate
     {
       group[0] = new Fl_Group(WB, WB + BH, width - 2 * WB,
                               height - 3 * WB - 2 * BH, "Translate");
-      input[0] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "DX");
+      input[0] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Translation X");
       input[0]->value("0");
-      input[1] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "DY");
+      input[1] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Translation Y");
       input[1]->value("0");
-      input[2] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "DZ");
+      input[2] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Translation Z");
       input[2]->value("1");
       for(int i = 0; i < 3; i++) { input[i]->align(FL_ALIGN_RIGHT); }
       butt[0] = new Fl_Check_Button(2 * WB, 2 * WB + 4 * BH, width - 4 * WB, BH,
@@ -1387,8 +1393,9 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
       input[21] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Mesh layers");
       input[21]->value("5");
       input[21]->align(FL_ALIGN_RIGHT);
-      butt[8] = new Fl_Check_Button(width / 2 + 2 * WB, 2 * WB + 6 * BH,
-                                    width / 2 - 4 * WB, BH, "Recombine");
+      // on a row of its own, as the label of the layers takes half the width
+      butt[8] = new Fl_Check_Button(2 * WB, 2 * WB + 7 * BH, width - 4 * WB, BH,
+                                    "Recombine");
       butt[8]->value(1);
       group[0]->end();
     }
@@ -1396,35 +1403,36 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
     {
       group[1] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH,
                               "Rotate");
-      input[3] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Axis point X");
-      input[3]->value("0");
-      input[4] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Axis point Y");
-      input[4]->value("0");
-      input[5] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Axis point Z");
-      input[5]->value("0");
-      input[6] =
-        new Fl_Input(width / 2 + 2 * WB, 2 * WB + 1 * BH, IW/2, BH, "Axis direction DX");
-      input[6]->value("0");
-      input[7] =
-        new Fl_Input(width / 2 + 2 * WB, 2 * WB + 2 * BH, IW/2, BH, "Axis direction DY");
-      input[7]->value("1");
-      input[8] =
-        new Fl_Input(width / 2 + 2 * WB, 2 * WB + 3 * BH, IW/2, BH, "Axis direction DZ");
-      input[8]->value("0");
-      input[9] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Angle");
+      // the axis point and direction, each as one row of three fields
+      static const char *tips[6] = {"Axis point X",      "Axis point Y",
+                                    "Axis point Z",      "Axis direction DX",
+                                    "Axis direction DY", "Axis direction DZ"};
+      static const char *values[6] = {"0", "0", "0", "0", "1", "0"};
+      for(int i = 0; i < 6; i++) {
+        int row = i / 3, col = i % 3;
+        int x = 2 * WB + col * IW / 3;
+        int w = (col < 2) ? IW / 3 : IW - 2 * (IW / 3);
+        input[3 + i] = new Fl_Input(
+          x, 2 * WB + (1 + row) * BH, w, BH,
+          (col < 2) ? nullptr : (row ? "Axis direction" : "Axis point"));
+        input[3 + i]->tooltip(tips[i]);
+        input[3 + i]->value(values[i]);
+      }
+      input[9] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Angle");
       input[9]->value("Pi/4");
       for(int i = 3; i < 10; i++) { input[i]->align(FL_ALIGN_RIGHT); }
-      butt[1] = new Fl_Check_Button(2 * WB, 2 * WB + 5 * BH, width - 4 * WB, BH,
+      butt[1] = new Fl_Check_Button(2 * WB, 2 * WB + 4 * BH, width - 4 * WB, BH,
                                     "Apply rotation on copy");
       butt[1]->value(0);
-      butt[9] = new Fl_Check_Button(2 * WB, 2 * WB + 6 * BH, width - 4 * WB, BH,
+      butt[9] = new Fl_Check_Button(2 * WB, 2 * WB + 5 * BH, width - 4 * WB, BH,
                                     "Extrude mesh");
       butt[9]->value(0);
-      input[22] = new Fl_Input(2 * WB, 2 * WB + 7 * BH, IW, BH, "Mesh layers");
+      input[22] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Mesh layers");
       input[22]->value("5");
       input[22]->align(FL_ALIGN_RIGHT);
-      butt[10] = new Fl_Check_Button(width / 2 + 2 * WB, 2 * WB + 7 * BH,
-                                     width / 2 - 4 * WB, BH, "Recombine");
+      // on a row of its own, as the label of the layers takes half the width
+      butt[10] = new Fl_Check_Button(2 * WB, 2 * WB + 7 * BH, width - 4 * WB,
+                                     BH, "Recombine");
       butt[10]->value(1);
       group[1]->end();
     }
@@ -1510,6 +1518,8 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
   choice->callback(selection_mode_cb);
 
   win->end();
+  // of fixed height, as narrow as the option window, wider as one likes
+  ((paletteWindow *)win)->fixedLayout(width, height, 2 * WB);
 
   FL_NORMAL_SIZE += deltaFontSize;
 }
@@ -1561,7 +1571,7 @@ meshContextWindow::meshContextWindow(int deltaFontSize)
                                            {"Alternated", 0, nullptr, nullptr},
                                            {nullptr}};
 
-  int width = 29 * FL_NORMAL_SIZE;
+  int width = TW;
   int height = 4 * WB + 4 * BH;
 
   win = new paletteWindow(width, height, CTX::instance()->nonModalWindows,
@@ -1569,7 +1579,7 @@ meshContextWindow::meshContextWindow(int deltaFontSize)
                           CTX::instance()->ctxOffset);
   win->box(GMSH_WINDOW_BOX);
   {
-    Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 2 * WB);
+    Fl_Tabs *o = new accentTabs(WB, WB, width - 2 * WB, height - 2 * WB);
     // 0: Element size at points
     {
       group[0] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH,
@@ -1621,6 +1631,8 @@ meshContextWindow::meshContextWindow(int deltaFontSize)
   }
 
   win->end();
+  // of fixed height, as narrow as the option window, wider as one likes
+  ((paletteWindow *)win)->fixedLayout(width, height, 2 * WB);
 
   FL_NORMAL_SIZE += deltaFontSize;
 }

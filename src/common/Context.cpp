@@ -74,6 +74,7 @@ void CTX::init()
   geom.autoExtrude = 0; // FIXME: temporary for auto-extrude testing
 
   glFontEnum = 0; // Helvetica
+  guiDark = 0;
   forcedBBox = 0;
   hideUnselected = 0;
   numWindows = numTiles = 1;
