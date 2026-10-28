@@ -2066,8 +2066,14 @@ optionWindow::optionWindow(int deltaFontSize)
       general.value[36]->align(FL_ALIGN_RIGHT);
       general.value[36]->callback(general_options_ok_cb);
 
-      general.sphere = new spherePositionWidget(L + width - 2 * BH - 2 * WB,
-                                                2 * WB + 1 * BH, 2 * BH);
+      // the ball beside the two rows, after the longer of their labels
+      fl_font(FL_HELVETICA, FL_NORMAL_SIZE);
+      int xs = L + 2 * WB + IW + WB +
+               (int)std::max(fl_width(general.value[4]->label()),
+                             fl_width(general.value[36]->label()));
+      int ws = std::min(2 * BH, L + width - 2 * WB - xs);
+      general.sphere =
+        new spherePositionWidget(L + width - 2 * WB - ws, 2 * WB + 1 * BH, ws);
       general.sphere->callback(general_options_ok_cb, (void *)"light_sphere");
 
       general.value[1] =

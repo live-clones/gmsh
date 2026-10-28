@@ -7,27 +7,52 @@
 #define SPHERE_POSITION_WIDGET_H
 
 #include <cmath>
+#include <algorithm>
+#include <vector>
 #include <FL/Fl_Widget.H>
 #include <FL/fl_draw.H>
 #include <FL/Fl.H>
 
-// A small 2D widget to set the coordinates of a point on the unit
-// sphere.
+// A ball lit from a point of the unit sphere, dragged around to set the
+// coordinates of the point (the light direction)
 class spherePositionWidget : public Fl_Widget {
 private:
   double _x, _y, _z;
+  // the ball, as large as fits
+  int _d() const { return std::min(w(), h()) - 4; }
+  int _x0() const { return x() + (w() - _d()) / 2; }
+  int _y0() const { return y() + (h() - _d()) / 2; }
   void draw()
   {
     draw_box(box(), color());
-    int x1 = x() + 3;
-    int y1 = y() + 3;
-    int w1 = w() - 6;
-    int h1 = h() - 6;
+    int d = _d(), x0 = _x0(), y0 = _y0();
+    // the ball shaded pixel by pixel: ambient, diffuse and a highlight
+    unsigned char r, g, b;
+    Fl::get_color(color(), r, g, b);
+    std::vector<unsigned char> img(3 * d * d);
+    for(int j = 0; j < d; j++) {
+      for(int i = 0; i < d; i++) {
+        unsigned char *p = &img[3 * (j * d + i)];
+        double X = (i + 0.5) / (0.5 * d) - 1., Y = 1. - (j + 0.5) / (0.5 * d);
+        double rr = X * X + Y * Y;
+        if(rr > 1.) {
+          p[0] = r, p[1] = g, p[2] = b;
+          continue;
+        }
+        double s = std::max(0., X * _x + Y * _y + sqrt(1. - rr) * _z);
+        double v = 0.2 + 0.6 * s + 0.2 * pow(s, 32);
+        p[0] = p[1] = p[2] = (unsigned char)(40 + 200 * v);
+      }
+    }
+    fl_draw_image(&img[0], x0, y0, d, d, 3);
     fl_color(FL_FOREGROUND_COLOR);
-    fl_arc(x1, y1, w1, h1, 0, 360);
-    int px = int(x1 + 0.5 * w1 * (1 + _x));
-    int py = int(y1 + 0.5 * h1 * (1 - _y));
-    draw_box(FL_UP_BOX, px - 3, py - 3, 6, 6, FL_FOREGROUND_COLOR);
+    fl_arc(x0, y0, d, d, 0, 360);
+    // the light
+    int px = int(x0 + 0.5 * d * (1 + _x)), py = int(y0 + 0.5 * d * (1 - _y));
+    fl_color(FL_SELECTION_COLOR);
+    fl_pie(px - 4, py - 4, 8, 8, 0, 360);
+    fl_color(FL_BACKGROUND2_COLOR);
+    fl_arc(px - 4, py - 4, 8, 8, 0, 360);
   }
   int handle(int event)
   {
@@ -35,12 +60,9 @@ private:
     case FL_PUSH:
     case FL_DRAG:
     case FL_RELEASE: {
-      int x1 = x() + 3;
-      int y1 = y() + 3;
-      int w1 = w() - 6;
-      int h1 = h() - 6;
-      double xx = (Fl::event_x() - x1) / (0.5 * w1) - 1.;
-      double yy = -((Fl::event_y() - y1) / (0.5 * h1) - 1.);
+      int d = _d();
+      double xx = (Fl::event_x() - _x0()) / (0.5 * d) - 1.;
+      double yy = -((Fl::event_y() - _y0()) / (0.5 * d) - 1.);
       if(xx != _x || yy != _y) {
         double norm = sqrt(xx * xx + yy * yy);
         if(norm > 1.) {
@@ -67,6 +89,7 @@ public:
   {
     box(FL_FLAT_BOX);
     align(FL_ALIGN_BOTTOM);
+    tooltip("Drag the light around the ball");
   }
   void getValue(double &x, double &y, double &z) const
   {
