@@ -26,7 +26,13 @@
 #include "FlGui.h" // the box types of Gmsh
 #include "Context.h"
 
-bool gmshScheme() { return CTX::instance()->guiTheme == "gmsh"; }
+// the default theme, which an empty name also selects: the session files of
+// older versions store an empty theme, and their users get the new look too
+bool gmshScheme()
+{
+  return CTX::instance()->guiTheme == "gmsh" ||
+         CTX::instance()->guiTheme.empty();
+}
 
 int gmshAir()
 {

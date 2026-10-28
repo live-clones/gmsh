@@ -637,8 +637,11 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
 
   // handle themes and tooltip options
   // the gmsh scheme is ours, not one of FLTK (see gmshScheme.h)
-  if(CTX::instance()->guiTheme.size() && !gmshScheme())
-    Fl::scheme(CTX::instance()->guiTheme.c_str());
+  // one of the schemes of FLTK, or its stock look ("fltk")
+  if(!gmshScheme())
+    Fl::scheme(CTX::instance()->guiTheme == "fltk" ?
+                 "base" :
+                 CTX::instance()->guiTheme.c_str());
   Fl_Tooltip::size(FL_NORMAL_SIZE);
 
   // use retina resolution if available

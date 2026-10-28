@@ -77,7 +77,7 @@ Default value: @code{""}@*
 Saved in: @code{General.SessionFileName}
 
 @item General.FltkTheme
-FLTK user interface theme: gmsh (the font of the desktop, a neutral palette, buttons highlighted under the pointer, no dashed focus rectangle), one of FLTK (plastic, gtk+, gleam, oxy), or empty for the stock look of FLTK@*
+FLTK user interface theme: gmsh (the font of the desktop, a neutral palette, buttons highlighted under the pointer, no dashed focus rectangle; the default, which an empty string selects too), fltk (the stock look of FLTK), or one of the schemes of FLTK (plastic, gtk+, gleam, oxy)@*
 Default value: @code{"gmsh"}@*
 Saved in: @code{General.SessionFileName}
 

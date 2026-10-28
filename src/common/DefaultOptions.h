@@ -72,9 +72,10 @@ StringXString GeneralOptions_String[] = {
     "Tool Windows moves them all)" },
   { F|S, "FltkTheme" , opt_general_gui_theme , "gmsh" ,
     "FLTK user interface theme: gmsh (the font of the desktop, a neutral "
-    "palette, buttons highlighted under the pointer, no dashed focus rectangle), "
-    "one of FLTK (plastic, gtk+, gleam, oxy), or empty for the stock look of "
-    "FLTK" },
+    "palette, buttons highlighted under the pointer, no dashed focus "
+    "rectangle; the default, which an empty string selects too), fltk (the "
+    "stock look of FLTK), or one of the schemes of FLTK (plastic, gtk+, gleam, "
+    "oxy)" },
 
   { F|O, "GraphicsFont" , opt_general_graphics_font , "Helvetica" ,
     "Font used in the graphic window" },
