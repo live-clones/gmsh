@@ -1,0 +1,20 @@
+// The volume elements of a hex-dominant mesh by type: green hexahedra, blue
+// prisms, yellow pyramids, red tetrahedra and purple trihedra, whole elements
+// clipped by plane 0 (set by the .geo files). On a saved mesh:
+// gmsh piquage.msh -option hexdom_view.opt
+Geometry.Points = 0;
+Geometry.Curves = 0;
+Geometry.Surfaces = 0;
+Mesh.ColorCarousel = 0;
+Mesh.Color.Hexahedra = {40, 170, 60};
+Mesh.Color.Prisms = {60, 120, 220};
+Mesh.Color.Pyramids = {230, 200, 40};
+Mesh.Color.Tetrahedra = {220, 60, 50};
+Mesh.Color.Trihedra = {150, 80, 200};
+Mesh.SurfaceFaces = 0;
+Mesh.SurfaceEdges = 0;
+Mesh.VolumeFaces = 1;
+Mesh.VolumeEdges = 1;
+Mesh.Clip = 1;
+General.ClipWholeElements = 1;
+General.ClipOnlyVolume = 1;
