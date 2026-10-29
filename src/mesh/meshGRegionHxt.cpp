@@ -248,11 +248,17 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
       double *xyz = &m->vertices.coord[4 * i0];
       // FIXME compute true coordinates
       c2v[i0] = new MEdgeVertex(xyz[0], xyz[1], xyz[2], ge->second, 0);
+      // new vertex (Steiner point of the boundary recovery): register it on
+      // its curve, otherwise it is saved without a tag (node 0)
+      ge->second->mesh_vertices.push_back(c2v[i0]);
     }
     if(!c2v[i1]) {
       // FIXME compute true coordinates
       double *xyz = &m->vertices.coord[4 * i1];
       c2v[i1] = new MEdgeVertex(xyz[0], xyz[1], xyz[2], ge->second, 0);
+      // new vertex (Steiner point of the boundary recovery): register it on
+      // its curve, otherwise it is saved without a tag (node 0)
+      ge->second->mesh_vertices.push_back(c2v[i1]);
     }
     ge->second->lines.push_back(new MLine(c2v[i0], c2v[i1]));
   }
@@ -277,16 +283,19 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
       // FIXME compute true coordinates
       double *xyz = &m->vertices.coord[4 * i0];
       c2v[i0] = new MFaceVertex(xyz[0], xyz[1], xyz[2], gf->second, 0, 0);
+      gf->second->mesh_vertices.push_back(c2v[i0]); // idem, on its surface
     }
     if(!c2v[i1]) {
       // FIXME compute true coordinates
       double *xyz = &m->vertices.coord[4 * i1];
       c2v[i1] = new MFaceVertex(xyz[0], xyz[1], xyz[2], gf->second, 0, 0);
+      gf->second->mesh_vertices.push_back(c2v[i1]); // idem, on its surface
     }
     if(!c2v[i2]) {
       // FIXME compute true coordinates
       double *xyz = &m->vertices.coord[4 * i2];
       c2v[i2] = new MFaceVertex(xyz[0], xyz[1], xyz[2], gf->second, 0, 0);
+      gf->second->mesh_vertices.push_back(c2v[i2]); // idem, on its surface
     }
     gf->second->triangles.push_back(new MTriangle(c2v[i0], c2v[i1], c2v[i2]));
   }

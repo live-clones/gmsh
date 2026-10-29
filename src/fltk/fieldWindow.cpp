@@ -9,11 +9,11 @@
 
 #include <sstream>
 #include <FL/Fl_Input.H>
-#include <FL/Fl_Tabs.H>
 #include <FL/Fl_Return_Button.H>
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Round_Button.H>
 #include <FL/Fl_Value_Input.H>
+#include <algorithm>
 #include <FL/fl_draw.H>
 #include "GmshConfig.h"
 #include "GmshDefines.h"
@@ -100,29 +100,32 @@ static void field_select_file_cb(Fl_Widget *w, void *data)
   }
 }
 
+static void field_help_cb(Fl_Widget *w, void *data)
+{ FlGui::instance()->fields->toggleHelp(); }
+
+static void field_resized_cb(void *data)
+{ FlGui::instance()->fields->layout(); }
+
 #endif
 
-fieldWindow::fieldWindow(int deltaFontSize) : _deltaFontSize(deltaFontSize)
+fieldWindow::fieldWindow(int deltaFontSize)
+  : _deltaFontSize(deltaFontSize), _helpOpen(false)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
 
-  int width0 = 34 * FL_NORMAL_SIZE + WB;
-  int height0 = 12 * BH + 4 * WB;
-  int width = (CTX::instance()->fieldSize[0] < width0) ?
-                width0 :
-                CTX::instance()->fieldSize[0];
-  int height = (CTX::instance()->fieldSize[1] < height0) ?
-                 height0 :
-                 CTX::instance()->fieldSize[1];
+  // as narrow as the option window: the fields on top, the one chosen below
+  int width0 = TW;
+  int height0 = 20 * BH;
+  int width = std::max(CTX::instance()->fieldSize[0], width0);
+  int height = std::max(CTX::instance()->fieldSize[1], height0);
 
   win = new paletteWindow(width, height,
                           CTX::instance()->nonModalWindows ? true : false,
-                          "Size fields",
-                          CTX::instance()->fieldOffset);
+                          "Size fields", CTX::instance()->fieldOffset);
   win->box(GMSH_WINDOW_BOX);
 
 #if defined(HAVE_MESH)
-  int x = WB, y = WB, w = (int)(1.5 * BB), h = height - 2 * WB - 3 * BH;
+  int x = WB, y = WB, w = (width - 4 * WB) / 3;
 
   Fl_Menu_Button *new_btn = new Fl_Menu_Button(x, y, w, BH, "New");
   FieldManager &fields = *GModel::current()->getFields();
@@ -131,25 +134,25 @@ fieldWindow::fieldWindow(int deltaFontSize) : _deltaFontSize(deltaFontSize)
     new_btn->add(it->first.c_str());
   new_btn->callback(field_new_cb);
 
-  y += BH;
-  browser = new Fl_Hold_Browser(x, y + WB, w, h - 2 * WB);
-  browser->callback(field_browser_cb);
-
-  y += h;
-  delete_btn = new Fl_Button(x, y, w, BH, "Delete");
+  delete_btn = new Fl_Button(x + w + WB, y, w, BH, "Delete");
   delete_btn->callback(field_delete_cb, this);
 
-  y += BH;
-  put_on_view_btn = new Fl_Menu_Button(x, y, w, BH, "Visualize");
+  put_on_view_btn = new Fl_Menu_Button(
+    x + 2 * (w + WB), y, width - 2 * WB - 2 * (w + WB), BH, "Visualize");
   put_on_view_btn->callback(field_put_on_view_cb, this);
 
-  x += w + WB;
-  y = WB;
-  w = width - x - WB;
-  h = height - y - WB;
+  y += BH + WB;
+  fl_font(FL_HELVETICA, FL_NORMAL_SIZE);
+  int hb = 5 * (fl_height() + 2) + 4;
+  browser = new Fl_Hold_Browser(x, y, width - 2 * WB, hb);
+  browser->callback(field_browser_cb);
+
+  y += hb + WB;
+  w = width - 2 * WB;
+  int h = height - y - WB;
   empty_message = new Fl_Box(x, y, w, h,
                              "Create a new field\n\n"
-                             "- or -\n\nSelect a field in the browser");
+                             "- or -\n\nSelect a field in the list");
   empty_message->align(FL_ALIGN_CENTER);
 
   editor_group = new Fl_Group(x, y, w, h);
@@ -157,47 +160,42 @@ fieldWindow::fieldWindow(int deltaFontSize) : _deltaFontSize(deltaFontSize)
   title = new Fl_Box(x, y, w, BH, "field_name");
   title->labelfont(FL_BOLD);
   title->labelsize(FL_NORMAL_SIZE + 3);
+  title->align(FL_ALIGN_INSIDE | FL_ALIGN_LEFT);
 
   y += BH + WB;
   h -= BH + WB;
-  Fl_Tabs *tabs = new Fl_Tabs(x, y, w, h);
-  y += BH;
-  h -= BH;
-  x += WB;
-  w -= 2 * WB;
-
-  Fl_Group *options_tab = new Fl_Group(x, y, w, h, "Options");
-
-  options_scroll = new Fl_Scroll(x, y + WB, w, h - BH - 3 * WB);
+  options_scroll = new Fl_Scroll(x, y, w, h - BH - WB);
+  options_scroll->type(Fl_Scroll::VERTICAL);
+  options_group = new Fl_Group(x, y, w, 0);
+  options_group->end();
+  help_header = new Fl_Button(x, y, w, BH);
+  help_header->box(FL_FLAT_BOX);
+  help_header->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+  help_header->labelfont(FL_BOLD);
+  help_header->clear_visible_focus();
+  help_header->callback(field_help_cb);
+  // in full, in the flow of the options
+  help = new Fl_Box(x, y, w, BH);
+  help->align(FL_ALIGN_WRAP | FL_ALIGN_TOP | FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+  help->hide();
   options_scroll->end();
 
   Fl_Button *apply_btn =
-    new Fl_Return_Button(x + w - BB, y + h - BH - WB, BB, BH, "Apply");
+    new Fl_Return_Button(x + w - BB, y + h - BH, BB, BH, "Apply");
   apply_btn->callback(field_apply_cb, this);
 
-  background_btn = new Fl_Round_Button(x, y + h - BH - WB, w - BB - WB, BH,
+  background_btn = new Fl_Round_Button(x, y + h - BH, w - BB - WB, BH,
                                        "Set as background field");
-  options_tab->end();
 
-  Fl_Group *help_tab = new Fl_Group(x, y, w, h, "Help");
-  help_display = new Fl_Help_View(x, y + WB, w, h - 2 * WB);
-  help_display->textfont(FL_HELVETICA);
-  help_display->textsize(FL_NORMAL_SIZE);
-  help_tab->end();
-
-  tabs->end();
-
+  // the options take the room, Apply stays at the bottom right
+  editor_group->resizable(new Fl_Box(x + IW, y, w - IW - BB - WB, h - BH - WB));
   editor_group->end();
 
-  win->resizable(new Fl_Box((int)(1.5 * BB) + 2 * WB, BH + 2 * WB,
-                            width - 3 * WB - (int)(1.5 * BB),
-                            height - 3 * BH - 5 * WB));
-  editor_group->resizable(tabs);
-  tabs->resizable(options_tab);
-  options_tab->resizable(new Fl_Box(3 * BB + 4 * WB, BH + 2 * WB,
-                                    width - 9 * WB - 5 * BB,
-                                    height - 3 * BH - 5 * WB));
-  win->size_range(width0, height0);
+  // the buttons and the list widen, the editor takes the height
+  win->resizable(new Fl_Box(2 * WB, y, width - 4 * WB, h - BH - WB));
+  // the least height leaves three rows of field options
+  ((paletteWindow *)win)->sizeRange(width0, 7 * WB + 6 * BH + hb);
+  ((paletteWindow *)win)->whenResized(field_resized_cb, nullptr);
 
 #endif
 
@@ -207,6 +205,38 @@ fieldWindow::fieldWindow(int deltaFontSize) : _deltaFontSize(deltaFontSize)
 
   loadFieldViewList();
   editField(nullptr);
+}
+
+void fieldWindow::toggleHelp()
+{
+  _helpOpen = !_helpOpen;
+  layout();
+}
+
+void fieldWindow::layout()
+{
+#if defined(HAVE_MESH)
+  // the help under the options, kept where it was scrolled to
+  Fl_Scroll *s = options_scroll;
+  int ypos = s->yposition();
+  s->scroll_to(0, 0);
+  int x = s->x(), w = s->w() - Fl::scrollbar_size() - WB;
+  int y = options_group->y() + options_group->h();
+  help_header->copy_label(_helpOpen ? "@-22> Help" : "@-2> Help");
+  help_header->resize(x, y, w, BH);
+  if(_helpOpen) {
+    help->resize(x, y + BH, w, wrappedHeight(help, w));
+    help->show();
+  }
+  else {
+    help->hide();
+    help->resize(x, y, w, 0);
+  }
+  int end = help->visible() ? help->y() + help->h() : y + BH;
+  s->scroll_to(0, std::min(ypos, std::max(0, end - s->y() - s->h())));
+  s->init_sizes();
+  s->redraw();
+#endif
 }
 
 void fieldWindow::loadFieldViewList()
@@ -405,24 +435,22 @@ void fieldWindow::editField(Field *f)
   editor_group->show();
   editor_group->user_data(f);
   title->label(f->getName());
-  options_scroll->clear();
+  options_scroll->scroll_to(0, 0);
+  options_group->clear();
   options_widget.clear();
-  options_scroll->begin();
-  int xx = options_scroll->x();
-  int yy = options_scroll->y();
+  options_group->begin();
+  int xx = options_group->x() + WB;
+  int yy = options_group->y();
 
-  std::string help = f->getDescription();
-  ConvertToHTML(help);
-  if(!f->options.empty())
-    help += std::string("<p><center><b>Options</b></center>");
+  std::string str = f->getDescription();
+  if(!f->options.empty()) str += "\n\nOptions:";
   for(auto it = f->options.begin(); it != f->options.end(); it++) {
     FieldOption *option = it->second;
     if(!option) continue;
     if(option->isDeprecated()) continue;
     Fl_Widget *input;
-    help += std::string("<p><b>") + it->first + "</b>";
-    help += " (<em>" + option->getTypeName() + "</em>): ";
-    help += option->getDescription();
+    str += "\n\n" + it->first + " (" + option->getTypeName() +
+           "): " + option->getDescription();
     switch(option->getType()) {
     case FIELD_OPTION_INT:
     case FIELD_OPTION_DOUBLE:
@@ -454,23 +482,27 @@ void fieldWindow::editField(Field *f)
     options_widget.push_back(input);
     yy += BH;
   }
-  if(!f->callbacks.empty())
-    help += std::string("<p><center><b>Actions</b></center>");
+  if(!f->callbacks.empty()) str += "\n\nActions:";
   for(auto it = f->callbacks.begin(); it != f->callbacks.end(); it++) {
     Fl_Widget *btn;
-    help += std::string("<p><b>") + it->first + "</b>: ";
-    help += it->second->getDescription();
+    str += "\n\n" + it->first + ": " + it->second->getDescription();
     btn = new Fl_Button(xx, yy, IW, BH, it->first.c_str());
     btn->callback(field_callback_cb, it->second);
     yy += BH;
   }
-  help_display->value(help.c_str());
-  options_scroll->end();
+  options_group->end();
+  // its children are placed: only the box of the group changes
+  options_group->Fl_Widget::resize(options_group->x(), options_group->y(),
+                                   options_group->w(),
+                                   yy - options_group->y() + WB);
+  // a label, where '@' would start a symbol
+  ReplaceSubStringInPlace("@", "@@", str);
+  help->copy_label(str.c_str());
 
   FL_NORMAL_SIZE += _deltaFontSize;
 
   loadFieldOptions();
-  options_scroll->damage(1);
+  layout();
   put_on_view_btn->activate();
   delete_btn->activate();
   loadFieldList();

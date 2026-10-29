@@ -11,15 +11,8 @@
 #include <FL/Fl_Gl_Window.H>
 #include <FL/Fl_Box.H>
 #include "drawContext.h"
-
-class GEntity;
+#include "sceneView.h"
 #include "Navigator.h"
-
-class GVertex;
-class GEdge;
-class GFace;
-class GRegion;
-class MElement;
 
 // the FLTK visual the graphic windows ask for; changing it recreates the
 // OpenGL context
@@ -27,57 +20,19 @@ int openglWindowMode();
 // give the graphic windows that visual
 void resetOpenglMode();
 
-class openglWindow : public Fl_Gl_Window {
+// An Fl_Gl_Window showing a scene: it draws the frames (the studio
+// accumulation, the prints, the fire), and hands the events of FLTK to the
+// interaction it inherits from sceneView, whose host it is.
+class openglWindow : public Fl_Gl_Window, public sceneView {
 private:
   static openglWindow *_lastHandled;
   static void _setLastHandled(openglWindow *);
+  // some drawing routines can create data (STL triangulations, etc.), which
+  // can fire draw() while we are already drawing, e.g. due to an impromptu
+  // Fl::check(); the same lock keeps the picking passes out of the frames
   bool _lock;
   bool _drawn;
-  mousePosition _click, _curr, _prev;
-  drawContext *_ctx;
-  double _point[3];
-  int _selection, _trySelection, _trySelectionXYWH[4];
-  // whether the last click asked to add a query to those on the picture
-  // (Ctrl+click in query mode) rather than to replace them
-  bool _addQuery;
-  // what the cursor is over, in a box by it or in the status bar
-  void _hover();
-  // and drawn as selected while it is: the entity, what its selection was
-  // before, and the change of one for the other (which redraws)
-  GEntity *_highlighted;
-  char _highlightedWas;
-  void _highlight(GEntity *e);
-  // step through what is under the cursor, once per press or notch: see
-  // _stepPick() for the several ways one of them arrives twice
-  double _pickStepTime;
-  bool _stepping;
-  // where the cursor was when it last stepped: a trackpad nudges the pointer
-  // while two fingers are dragged over it, and a pixel of that must not
-  // throw away the place in the stack
-  double _stepAnchor[2];
-  void _stepPick(int direction, bool rateLimited);
   void _drawScreenMessage();
-  // What the cursor is over, written in a box in the picture rather than in
-  // a window of its own, which some window managers showed and hid with a
-  // flicker on every move: the text, where the cursor was when it was last
-  // placed (window coordinates, from the top left), and where the box was
-  // last drawn (left, bottom, width, height, in the pixel coordinates of
-  // draw2d, from the bottom left)
-  std::string _hoverText;
-  double _hoverAnchor[2], _hoverBox[4];
-  // what the queries found, each in a box hanging from the point it asked
-  // about, kept until a click replaces them all, under what the cursor is
-  // over
-  struct pinnedNote {
-    std::string text;
-    double xyz[3];
-  };
-  std::vector<pinnedNote> _pinned;
-  // whether something stands behind what the cursor is over, which costs a
-  // picking pass: asked once per entity, the information that names it
-  std::string _hoverBehindFor;
-  bool _hoverBehind = false;
-  bool _probeBehind();
   void _drawBorder();
   // The accumulation of the studio frames: whether the timer asked for the
   // next draw, whether this draw is one of them, the modelview of this
@@ -101,25 +56,29 @@ private:
   void _cameraMatrices();
   void _studioFrame();
   static void _studioSampleCb(void *data);
-  // a model spun hard enough catches fire: the speed of the drag, smoothed,
-  // the path drawn since it was last measured and when that was, and how
-  // long it has stayed fast; how much is alight and when that was last drawn
-  double _spin, _spinFrom, _spinPath, _spinHot, _fire, _fireTime;
+  // the fire lit by spinning the model (see sceneView), drawn over the scene;
   // sameFrame: the other eye of a stereo pair, drawn at the level the first
   // of them left
   void _burn(bool sameFrame = false);
   static void _fireCb(void *data);
-  bool _select(int type, bool multiple, bool mesh, bool post, int x, int y,
-               int w, int h, std::vector<GVertex *> &vertices,
-               std::vector<GEdge *> &edges, std::vector<GFace *> &faces,
-               std::vector<GRegion *> &regions,
-               std::vector<MElement *> &elements, std::vector<SPoint2> &points,
-               std::vector<PView *> &views);
-  // should a double click be processed?
-  bool _processDoubleClick(std::size_t num, const std::string &what);
+
 protected:
   void draw();
   int handle(int);
+  // what the interaction asks of its window
+  void hostRedraw();
+  void hostClicked();
+  void hostViewChanged();
+  void hostCursor(bool cross);
+  bool hostBeginGL();
+  void hostEndGL();
+  bool hostQueryMode();
+  bool hostMeasureMode();
+  bool hostFrozenCoordinate(int coord);
+  void hostPointMoved(const double p[3], int mode);
+  bool hostHasOnelabContext();
+  void hostShowOnelabContext(int dim, int tag);
+  void hostQuickAccess();
 
 public:
   int pixel_w();
@@ -132,33 +91,16 @@ public:
   }
   time_t rawtime, prev_rawtime;
   double response_frequency;
-  int addPointMode;
-  bool lassoMode, selectionMode;
-  int endSelection, undoSelection, invertSelection, quitSelection,
-    changeSelection;
-  std::string screenMessage[2];
   openglWindow(int x, int y, int w, int h);
   ~openglWindow();
   void show();
-  drawContext *getDrawContext() { return _ctx; }
   // draw into a picture of the given size (pixels) instead of the window,
   // at supersampling times the scale of the window; false if it cannot be
   // done
   bool printTo(int width, int height, int supersampling, unsigned int format,
                unsigned int type, void *pixels);
-  // run one picking pass at the given position (window coordinates) and
-  // return what a click there would select, without waiting for a click
-  bool pick(int type, bool mesh, bool post, int x, int y, int w, int h,
-            std::vector<GVertex *> &vertices, std::vector<GEdge *> &edges,
-            std::vector<GFace *> &faces, std::vector<GRegion *> &regions,
-            std::vector<MElement *> &elements, std::vector<SPoint2> &points,
-            std::vector<PView *> &views)
-  {
-    // the kept image was drawn around the pointer, not around this position
-    _ctx->invalidatePickCache();
-    return _select(type, false, mesh, post, x, y, w, h, vertices, edges, faces,
-                   regions, elements, points, views);
-  }
+  // wait for a selection (see sceneView::selectionStep() for what is
+  // returned)
   char selectEntity(int type, std::vector<GVertex *> &vertices,
                     std::vector<GEdge *> &edges, std::vector<GFace *> &faces,
                     std::vector<GRegion *> &regions,
@@ -170,27 +112,9 @@ public:
   // rather than drawn again
   void setAgain(bool again) { _again = again; }
   static void setLastHandled(openglWindow *w) { _lastHandled = w; }
-  // show the text in a box by the cursor, or take the box away
-  // where the last selection looked, in the units of the window
-  void lastSelection(int xywh[4])
-  {
-    for(int i = 0; i < 4; i++) xywh[i] = _trySelectionXYWH[i];
-  }
-  void drawTooltip(const std::string &text);
-  // the same box, pinned to the point xyz of the model: it replaces the
-  // boxes pinned before, or is added to them; an empty text removes them all
-  void pinTooltip(const std::string &text, const double *xyz = nullptr,
-                  bool add = false);
-  bool addQuery() const { return _addQuery; }
   double frequency;
   void moveWithGamepad();
   Navigator *Nautilus;
-  void setPoint(double x, double y, double z)
-  {
-    _point[0] = x;
-    _point[1] = y;
-    _point[2] = z;
-  }
 };
 
 #endif

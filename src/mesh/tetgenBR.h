@@ -1161,6 +1161,7 @@ public:
   void flip41(triface *, int, flipconstraints *fc);
 
   // A generalized edge flip.
+  int degeneratesflip(point, point, point, point);
   int flipnm(triface *, int n, int level, int, flipconstraints *fc);
   int flipnm_post(triface *, int n, int nn, int, flipconstraints *fc);
 

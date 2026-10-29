@@ -9,16 +9,25 @@
 #include <FL/Fl.H>
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Browser.H>
+#include <FL/Fl_Help_View.H>
+
+#include "hintInput.h"
 
 class helpWindow {
 public:
   Fl_Window *about, *basic, *options;
+  Fl_Help_View *aboutView, *basicView;
+  Fl_Input *basicSearch;
+  searchFilter usageFilter;
   Fl_Check_Button *modified, *showhelp;
   Fl_Input *search;
+  searchFilter filter;
   Fl_Browser *browser;
 
 public:
   helpWindow();
+  // the texts of the about and usage windows, in the colours of the scheme
+  void resetText();
   ~helpWindow()
   {
     Fl::delete_widget(about);
