@@ -253,6 +253,16 @@ module gmsh
         gmshViewSetVisibilityPerWindow
   end type gmsh_view_t
 
+  type, public :: gmsh_model_discrete_t
+    contains
+    procedure, nopass :: addBox => &
+        gmshModelDiscreteAddBox
+    procedure, nopass :: addSphere => &
+        gmshModelDiscreteAddSphere
+    procedure, nopass :: synchronize => &
+        gmshModelDiscreteSynchronize
+  end type gmsh_model_discrete_t
+
   type, public :: gmsh_model_occ_mesh_t
     contains
     procedure, nopass :: setSize => &
@@ -786,6 +796,7 @@ module gmsh
     type(gmsh_model_mesh_t) :: mesh
     type(gmsh_model_geo_t) :: geo
     type(gmsh_model_occ_t) :: occ
+    type(gmsh_model_discrete_t) :: discrete
     contains
     procedure, nopass :: add => &
         gmshModelAdd
@@ -14383,6 +14394,128 @@ module gmsh
          size=real(size, c_double), &
          ierr_=ierr)
   end subroutine gmshModelOccMeshSetSize
+
+  !> Add a parallelepipedic box in the discrete CAD representation, defined by a
+  !! point (`x', `y', `z') and the extents along the x-, y- and z-axes. Its 6
+  !! surfaces are triangulated exactly, with 2 triangles each. If `tag' is
+  !! positive, set the tag explicitly; otherwise a new tag is selected
+  !! automatically. Return the tag of the box.
+  function gmshModelDiscreteAddBox(x, &
+                                   y, &
+                                   z, &
+                                   dx, &
+                                   dy, &
+                                   dz, &
+                                   tag, &
+                                   ierr)
+    interface
+    function C_API(x, &
+                   y, &
+                   z, &
+                   dx, &
+                   dy, &
+                   dz, &
+                   tag, &
+                   ierr_) &
+      bind(C, name="gmshModelDiscreteAddBox")
+      use, intrinsic :: iso_c_binding
+      integer(c_int) :: C_API
+      real(c_double), value, intent(in) :: x
+      real(c_double), value, intent(in) :: y
+      real(c_double), value, intent(in) :: z
+      real(c_double), value, intent(in) :: dx
+      real(c_double), value, intent(in) :: dy
+      real(c_double), value, intent(in) :: dz
+      integer(c_int), value, intent(in) :: tag
+      integer(c_int), intent(out), optional :: ierr_
+    end function C_API
+    end interface
+    integer(c_int) :: gmshModelDiscreteAddBox
+    real(c_double), intent(in) :: x
+    real(c_double), intent(in) :: y
+    real(c_double), intent(in) :: z
+    real(c_double), intent(in) :: dx
+    real(c_double), intent(in) :: dy
+    real(c_double), intent(in) :: dz
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
+    gmshModelDiscreteAddBox = C_API(x=real(x, c_double), &
+                              y=real(y, c_double), &
+                              z=real(z, c_double), &
+                              dx=real(dx, c_double), &
+                              dy=real(dy, c_double), &
+                              dz=real(dz, c_double), &
+                              tag=optval_c_int(-1, tag), &
+                              ierr_=ierr)
+  end function gmshModelDiscreteAddBox
+
+  !> Add a sphere of center (`xc', `yc', `zc') and radius `radius' in the
+  !! discrete CAD representation. Its 2 surfaces, the hemispheres, are
+  !! triangulated at most `tolerance' away from the exact sphere
+  !! (`Geometry.DiscreteTolerance' times the radius if `tolerance' is not
+  !! positive). If `tag' is positive, set the tag explicitly; otherwise a new
+  !! tag is selected automatically. Return the tag of the sphere.
+  function gmshModelDiscreteAddSphere(xc, &
+                                      yc, &
+                                      zc, &
+                                      radius, &
+                                      tag, &
+                                      tolerance, &
+                                      ierr)
+    interface
+    function C_API(xc, &
+                   yc, &
+                   zc, &
+                   radius, &
+                   tag, &
+                   tolerance, &
+                   ierr_) &
+      bind(C, name="gmshModelDiscreteAddSphere")
+      use, intrinsic :: iso_c_binding
+      integer(c_int) :: C_API
+      real(c_double), value, intent(in) :: xc
+      real(c_double), value, intent(in) :: yc
+      real(c_double), value, intent(in) :: zc
+      real(c_double), value, intent(in) :: radius
+      integer(c_int), value, intent(in) :: tag
+      real(c_double), value, intent(in) :: tolerance
+      integer(c_int), intent(out), optional :: ierr_
+    end function C_API
+    end interface
+    integer(c_int) :: gmshModelDiscreteAddSphere
+    real(c_double), intent(in) :: xc
+    real(c_double), intent(in) :: yc
+    real(c_double), intent(in) :: zc
+    real(c_double), intent(in) :: radius
+    integer, intent(in), optional :: tag
+    real(c_double), intent(in), optional :: tolerance
+    integer(c_int), intent(out), optional :: ierr
+    gmshModelDiscreteAddSphere = C_API(xc=real(xc, c_double), &
+                                 yc=real(yc, c_double), &
+                                 zc=real(zc, c_double), &
+                                 radius=real(radius, c_double), &
+                                 tag=optval_c_int(-1, tag), &
+                                 tolerance=optval_c_double(-1., tolerance), &
+                                 ierr_=ierr)
+  end function gmshModelDiscreteAddSphere
+
+  !> Synchronize the discrete CAD representation with the current Gmsh model:
+  !! its points, curves, surfaces and volumes become discrete entities of the
+  !! model, whose geometry is their polylines and triangulations, and replace
+  !! the entities of the previous synchronization. Without synchronization the
+  !! entities in the discrete CAD representation are not available to any
+  !! function outside of the discrete CAD modeler functions.
+  subroutine gmshModelDiscreteSynchronize(ierr)
+    interface
+    subroutine C_API(ierr_) &
+      bind(C, name="gmshModelDiscreteSynchronize")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(ierr_=ierr)
+  end subroutine gmshModelDiscreteSynchronize
 
   !> Add a new post-processing view, with name `name'. If `tag' is positive use
   !! it (and remove the view with that tag if it already exists), otherwise

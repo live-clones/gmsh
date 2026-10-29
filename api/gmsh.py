@@ -10029,6 +10029,103 @@ class model:
             set_size = setSize
 
 
+    class discrete:
+        """
+        Discrete CAD modeler functions
+        """
+
+        @staticmethod
+        def addBox(x, y, z, dx, dy, dz, tag=-1):
+            """
+            gmsh.model.discrete.addBox(x, y, z, dx, dy, dz, tag=-1)
+
+            Add a parallelepipedic box in the discrete CAD representation, defined by a
+            point (`x', `y', `z') and the extents along the x-, y- and z-axes. Its 6
+            surfaces are triangulated exactly, with 2 triangles each. If `tag' is
+            positive, set the tag explicitly; otherwise a new tag is selected
+            automatically. Return the tag of the box.
+
+            Return an integer.
+
+            Types:
+            - `x': double
+            - `y': double
+            - `z': double
+            - `dx': double
+            - `dy': double
+            - `dz': double
+            - `tag': integer
+            """
+            ierr = c_int()
+            api_result_ = lib.gmshModelDiscreteAddBox(
+                c_double(x),
+                c_double(y),
+                c_double(z),
+                c_double(dx),
+                c_double(dy),
+                c_double(dz),
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return api_result_
+        add_box = addBox
+
+        @staticmethod
+        def addSphere(xc, yc, zc, radius, tag=-1, tolerance=-1.):
+            """
+            gmsh.model.discrete.addSphere(xc, yc, zc, radius, tag=-1, tolerance=-1.)
+
+            Add a sphere of center (`xc', `yc', `zc') and radius `radius' in the
+            discrete CAD representation. Its 2 surfaces, the hemispheres, are
+            triangulated at most `tolerance' away from the exact sphere
+            (`Geometry.DiscreteTolerance' times the radius if `tolerance' is not
+            positive). If `tag' is positive, set the tag explicitly; otherwise a new
+            tag is selected automatically. Return the tag of the sphere.
+
+            Return an integer.
+
+            Types:
+            - `xc': double
+            - `yc': double
+            - `zc': double
+            - `radius': double
+            - `tag': integer
+            - `tolerance': double
+            """
+            ierr = c_int()
+            api_result_ = lib.gmshModelDiscreteAddSphere(
+                c_double(xc),
+                c_double(yc),
+                c_double(zc),
+                c_double(radius),
+                c_int(tag),
+                c_double(tolerance),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return api_result_
+        add_sphere = addSphere
+
+        @staticmethod
+        def synchronize():
+            """
+            gmsh.model.discrete.synchronize()
+
+            Synchronize the discrete CAD representation with the current Gmsh model:
+            its points, curves, surfaces and volumes become discrete entities of the
+            model, whose geometry is their polylines and triangulations, and replace
+            the entities of the previous synchronization. Without synchronization the
+            entities in the discrete CAD representation are not available to any
+            function outside of the discrete CAD modeler functions.
+            """
+            ierr = c_int()
+            lib.gmshModelDiscreteSynchronize(
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+
+
 class view:
     """
     Post-processing view functions

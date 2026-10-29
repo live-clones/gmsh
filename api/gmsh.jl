@@ -8881,6 +8881,96 @@ end # end of module mesh
 
 end # end of module occ
 
+"""
+    module gmsh.model.discrete
+
+Discrete CAD modeler functions
+"""
+module discrete
+
+import ...gmsh
+
+"""
+    gmsh.model.discrete.addBox(x, y, z, dx, dy, dz, tag = -1)
+
+Add a parallelepipedic box in the discrete CAD representation, defined by a
+point (`x`, `y`, `z`) and the extents along the x-, y- and z-axes. Its 6
+surfaces are triangulated exactly, with 2 triangles each. If `tag` is positive,
+set the tag explicitly; otherwise a new tag is selected automatically. Return
+the tag of the box.
+
+Return an integer.
+
+Types:
+ - `x`: double
+ - `y`: double
+ - `z`: double
+ - `dx`: double
+ - `dy`: double
+ - `dz`: double
+ - `tag`: integer
+"""
+function addBox(x, y, z, dx, dy, dz, tag = -1)
+    ierr = Ref{Cint}()
+    api_result_ = ccall((:gmshModelDiscreteAddBox, gmsh.lib), Cint,
+          (Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cint, Ptr{Cint}),
+          x, y, z, dx, dy, dz, tag, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return api_result_
+end
+const add_box = addBox
+
+"""
+    gmsh.model.discrete.addSphere(xc, yc, zc, radius, tag = -1, tolerance = -1.)
+
+Add a sphere of center (`xc`, `yc`, `zc`) and radius `radius` in the discrete
+CAD representation. Its 2 surfaces, the hemispheres, are triangulated at most
+`tolerance` away from the exact sphere (`Geometry.DiscreteTolerance` times the
+radius if `tolerance` is not positive). If `tag` is positive, set the tag
+explicitly; otherwise a new tag is selected automatically. Return the tag of the
+sphere.
+
+Return an integer.
+
+Types:
+ - `xc`: double
+ - `yc`: double
+ - `zc`: double
+ - `radius`: double
+ - `tag`: integer
+ - `tolerance`: double
+"""
+function addSphere(xc, yc, zc, radius, tag = -1, tolerance = -1.)
+    ierr = Ref{Cint}()
+    api_result_ = ccall((:gmshModelDiscreteAddSphere, gmsh.lib), Cint,
+          (Cdouble, Cdouble, Cdouble, Cdouble, Cint, Cdouble, Ptr{Cint}),
+          xc, yc, zc, radius, tag, tolerance, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return api_result_
+end
+const add_sphere = addSphere
+
+"""
+    gmsh.model.discrete.synchronize()
+
+Synchronize the discrete CAD representation with the current Gmsh model: its
+points, curves, surfaces and volumes become discrete entities of the model,
+whose geometry is their polylines and triangulations, and replace the entities
+of the previous synchronization. Without synchronization the entities in the
+discrete CAD representation are not available to any function outside of the
+discrete CAD modeler functions.
+"""
+function synchronize()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelDiscreteSynchronize, gmsh.lib), Cvoid,
+          (Ptr{Cint},),
+          ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+
+end # end of module discrete
+
 end # end of module model
 
 """

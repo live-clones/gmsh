@@ -4569,6 +4569,43 @@ GMSH_API void gmshModelOccMeshSetSize(const int * dimTags, const size_t dimTags_
   }
 }
 
+GMSH_API int gmshModelDiscreteAddBox(const double x, const double y, const double z, const double dx, const double dy, const double dz, const int tag, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::model::discrete::addBox(x, y, z, dx, dy, dz, tag);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+  return result_api_;
+}
+
+GMSH_API int gmshModelDiscreteAddSphere(const double xc, const double yc, const double zc, const double radius, const int tag, const double tolerance, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::model::discrete::addSphere(xc, yc, zc, radius, tag, tolerance);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+  return result_api_;
+}
+
+GMSH_API void gmshModelDiscreteSynchronize(int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::discrete::synchronize();
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API int gmshViewAdd(const char * name, const int tag, int * ierr)
 {
   int result_api_ = 0;

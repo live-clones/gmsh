@@ -1042,6 +1042,19 @@ mesh.add('setSize', doc, None, ivectorpair('dimTags'), idouble('size'))
 
 ################################################################################
 
+discrete = model.add_module('discrete', 'discrete CAD modeler functions')
+
+doc = '''Add a parallelepipedic box in the discrete CAD representation, defined by a point (`x', `y', `z') and the extents along the x-, y- and z-axes. Its 6 surfaces are triangulated exactly, with 2 triangles each. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the box.'''
+discrete.add('addBox', doc, oint, idouble('x'), idouble('y'), idouble('z'), idouble('dx'), idouble('dy'), idouble('dz'), iint('tag', '-1'))
+
+doc = '''Add a sphere of center (`xc', `yc', `zc') and radius `radius' in the discrete CAD representation. Its 2 surfaces, the hemispheres, are triangulated at most `tolerance' away from the exact sphere (`Geometry.DiscreteTolerance' times the radius if `tolerance' is not positive). If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the sphere.'''
+discrete.add('addSphere', doc, oint, idouble('xc'), idouble('yc'), idouble('zc'), idouble('radius'), iint('tag', '-1'), idouble('tolerance', '-1.'))
+
+doc = '''Synchronize the discrete CAD representation with the current Gmsh model: its points, curves, surfaces and volumes become discrete entities of the model, whose geometry is their polylines and triangulations, and replace the entities of the previous synchronization. Without synchronization the entities in the discrete CAD representation are not available to any function outside of the discrete CAD modeler functions.'''
+discrete.add('synchronize', doc, None)
+
+################################################################################
+
 view = gmsh.add_module('view', 'post-processing view functions')
 
 doc = '''Add a new post-processing view, with name `name'. If `tag' is positive use it (and remove the view with that tag if it already exists), otherwise associate a new tag. Return the view tag.'''

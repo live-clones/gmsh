@@ -3397,6 +3397,42 @@ GMSH_API void gmshModelOccMeshSetSize(const int * dimTags, const size_t dimTags_
                                       const double size,
                                       int * ierr);
 
+/* Add a parallelepipedic box in the discrete CAD representation, defined by a
+ * point (`x', `y', `z') and the extents along the x-, y- and z-axes. Its 6
+ * surfaces are triangulated exactly, with 2 triangles each. If `tag' is
+ * positive, set the tag explicitly; otherwise a new tag is selected
+ * automatically. Return the tag of the box. */
+GMSH_API int gmshModelDiscreteAddBox(const double x,
+                                     const double y,
+                                     const double z,
+                                     const double dx,
+                                     const double dy,
+                                     const double dz,
+                                     const int tag,
+                                     int * ierr);
+
+/* Add a sphere of center (`xc', `yc', `zc') and radius `radius' in the
+ * discrete CAD representation. Its 2 surfaces, the hemispheres, are
+ * triangulated at most `tolerance' away from the exact sphere
+ * (`Geometry.DiscreteTolerance' times the radius if `tolerance' is not
+ * positive). If `tag' is positive, set the tag explicitly; otherwise a new
+ * tag is selected automatically. Return the tag of the sphere. */
+GMSH_API int gmshModelDiscreteAddSphere(const double xc,
+                                        const double yc,
+                                        const double zc,
+                                        const double radius,
+                                        const int tag,
+                                        const double tolerance,
+                                        int * ierr);
+
+/* Synchronize the discrete CAD representation with the current Gmsh model:
+ * its points, curves, surfaces and volumes become discrete entities of the
+ * model, whose geometry is their polylines and triangulations, and replace
+ * the entities of the previous synchronization. Without synchronization the
+ * entities in the discrete CAD representation are not available to any
+ * function outside of the discrete CAD modeler functions. */
+GMSH_API void gmshModelDiscreteSynchronize(int * ierr);
+
 /* Add a new post-processing view, with name `name'. If `tag' is positive use
  * it (and remove the view with that tag if it already exists), otherwise
  * associate a new tag. Return the view tag. */

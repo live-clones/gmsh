@@ -121,6 +121,11 @@ Display width of lines (in pixels)@*
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.DiscreteTolerance
+Maximum distance between the triangulations of the discrete CAD modeler and the exact surfaces, relative to the size of the primitive, when no tolerance is given@*
+Default value: @code{0.001}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.DoubleClickedEntityTag
 Tag of last double-clicked geometrical entity@*
 Default value: @code{0}@*

@@ -6327,6 +6327,67 @@ namespace gmsh { // Top-level functions
 
     } // namespace occ
 
+    namespace discrete { // Discrete CAD modeler functions
+
+      // gmsh::model::discrete::addBox
+      //
+      // Add a parallelepipedic box in the discrete CAD representation, defined by
+      // a point (`x', `y', `z') and the extents along the x-, y- and z-axes. Its 6
+      // surfaces are triangulated exactly, with 2 triangles each. If `tag' is
+      // positive, set the tag explicitly; otherwise a new tag is selected
+      // automatically. Return the tag of the box.
+      inline int addBox(const double x,
+                        const double y,
+                        const double z,
+                        const double dx,
+                        const double dy,
+                        const double dz,
+                        const int tag = -1)
+      {
+        int ierr = 0;
+        int result_api_ = gmshModelDiscreteAddBox(x, y, z, dx, dy, dz, tag, &ierr);
+        if(ierr) throwLastError();
+        return result_api_;
+      }
+
+      // gmsh::model::discrete::addSphere
+      //
+      // Add a sphere of center (`xc', `yc', `zc') and radius `radius' in the
+      // discrete CAD representation. Its 2 surfaces, the hemispheres, are
+      // triangulated at most `tolerance' away from the exact sphere
+      // (`Geometry.DiscreteTolerance' times the radius if `tolerance' is not
+      // positive). If `tag' is positive, set the tag explicitly; otherwise a new
+      // tag is selected automatically. Return the tag of the sphere.
+      inline int addSphere(const double xc,
+                           const double yc,
+                           const double zc,
+                           const double radius,
+                           const int tag = -1,
+                           const double tolerance = -1.)
+      {
+        int ierr = 0;
+        int result_api_ = gmshModelDiscreteAddSphere(xc, yc, zc, radius, tag, tolerance, &ierr);
+        if(ierr) throwLastError();
+        return result_api_;
+      }
+
+      // gmsh::model::discrete::synchronize
+      //
+      // Synchronize the discrete CAD representation with the current Gmsh model:
+      // its points, curves, surfaces and volumes become discrete entities of the
+      // model, whose geometry is their polylines and triangulations, and replace
+      // the entities of the previous synchronization. Without synchronization the
+      // entities in the discrete CAD representation are not available to any
+      // function outside of the discrete CAD modeler functions.
+      inline void synchronize()
+      {
+        int ierr = 0;
+        gmshModelDiscreteSynchronize(&ierr);
+        if(ierr) throwLastError();
+      }
+
+    } // namespace discrete
+
   } // namespace model
 
   namespace view { // Post-processing view functions

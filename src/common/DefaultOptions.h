@@ -1070,6 +1070,10 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "CurveWidth" , opt_geometry_curve_width , 2. ,
     "Display width of lines (in pixels)" },
 
+  { F|O, "DiscreteTolerance" , opt_geometry_discrete_tolerance, 1.e-3 ,
+    "Maximum distance between the triangulations of the discrete CAD modeler "
+    "and the exact surfaces, relative to the size of the primitive, when no "
+    "tolerance is given" },
   { F, "DoubleClickedEntityTag" , opt_geometry_double_clicked_entity_tag, 0. ,
     "Tag of last double-clicked geometrical entity" },
 

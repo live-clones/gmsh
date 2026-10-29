@@ -30,6 +30,7 @@ template <class scalar> class simpleFunction;
 
 class GEO_Internals;
 class OCC_Internals;
+class DiscreteCAD_Internals;
 class ACIS_Internals;
 class Parasolid_Internals;
 class smooth_normals;
@@ -138,6 +139,8 @@ protected:
   ACIS_Internals *_acis_internals;
   // Parasolid model internal data
   Parasolid_Internals *_parasolid_internals;
+  // discrete CAD modeler internal data
+  DiscreteCAD_Internals *_discreteCAD_internals;
 
   // characteristic length (mesh size) fields
   FieldManager *_fields;
@@ -388,6 +391,13 @@ public:
   GEO_Internals *getGEOInternals() { return _geo_internals; }
   ACIS_Internals *getACISInternals() { return _acis_internals; }
   Parasolid_Internals *getParasolidInternals() { return _parasolid_internals; }
+  void createDiscreteCADInternals();
+  void deleteDiscreteCADInternals();
+  void resetDiscreteCADInternals();
+  DiscreteCAD_Internals *getDiscreteCADInternals()
+  {
+    return _discreteCAD_internals;
+  }
   void deleteGEOInternals();
   void deleteOCCInternals();
   void resetOCCInternals();

@@ -4778,6 +4778,12 @@ double opt_geometry_tolerance(OPT_ARGS_NUM)
   return CTX::instance()->geom.tolerance;
 }
 
+double opt_geometry_discrete_tolerance(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.discreteTolerance = val;
+  return CTX::instance()->geom.discreteTolerance;
+}
+
 double opt_geometry_tolerance_boolean(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->geom.toleranceBoolean = val;
