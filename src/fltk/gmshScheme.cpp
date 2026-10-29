@@ -272,8 +272,11 @@ static void boxWhileHovered(Fl_Widget *w)
 static int hover_dispatch(int event, Fl_Window *win)
 {
   installBoxes();
+  // zeroed if the event deletes it: Cmd+Q from the API destroys the windows
   Fl_Widget *before = Fl::belowmouse();
+  Fl::watch_widget_pointer(before);
   int ret = Fl::handle_(event, win);
+  Fl::release_widget_pointer(before);
   Fl_Widget *after = Fl::belowmouse();
   static Fl_Widget *lastTab = nullptr;
   if(before != after) {
