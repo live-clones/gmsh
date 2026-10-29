@@ -269,6 +269,12 @@ module gmsh
         gmshModelDiscreteAddCone
     procedure, nopass :: addTorus => &
         gmshModelDiscreteAddTorus
+    procedure, nopass :: fuse => &
+        gmshModelDiscreteFuse
+    procedure, nopass :: intersect => &
+        gmshModelDiscreteIntersect
+    procedure, nopass :: cut => &
+        gmshModelDiscreteCut
     procedure, nopass :: synchronize => &
         gmshModelDiscreteSynchronize
   end type gmsh_model_discrete_t
@@ -14836,6 +14842,258 @@ module gmsh
                                 tolerance=optval_c_double(-1., tolerance), &
                                 ierr_=ierr)
   end function gmshModelDiscreteAddTorus
+
+  !> Compute the boolean union (the fusion) of the volumes `objectDimTags' and
+  !! `toolDimTags' (vectors of (dim, tag) pairs) in the discrete CAD
+  !! representation, with the exact mesh booleans of libigl. The surfaces of the
+  !! result keep the parameters of those they come from. Return the resulting
+  !! volumes in `outDimTags', and the correspondance between input and resulting
+  !! entities in `outDimTagsMap'. If `tag' is positive, try to set the tag
+  !! explicitly (only valid if the boolean operation results in a single
+  !! entity). Remove the object if `removeObject' is set. Remove the tool if
+  !! `removeTool' is set.
+  subroutine gmshModelDiscreteFuse(objectDimTags, &
+                                   toolDimTags, &
+                                   outDimTags, &
+                                   outDimTagsMap, &
+                                   outDimTagsMap_n, &
+                                   tag, &
+                                   removeObject, &
+                                   removeTool, &
+                                   ierr)
+    interface
+    subroutine C_API(api_objectDimTags_, &
+                     api_objectDimTags_n_, &
+                     api_toolDimTags_, &
+                     api_toolDimTags_n_, &
+                     api_outDimTags_, &
+                     api_outDimTags_n_, &
+                     api_outDimTagsMap_, &
+                     api_outDimTagsMap_n_, &
+                     api_outDimTagsMap_nn_, &
+                     tag, &
+                     removeObject, &
+                     removeTool, &
+                     ierr_) &
+      bind(C, name="gmshModelDiscreteFuse")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), dimension(*) :: api_objectDimTags_
+      integer(c_size_t), value, intent(in) :: api_objectDimTags_n_
+      integer(c_int), dimension(*) :: api_toolDimTags_
+      integer(c_size_t), value, intent(in) :: api_toolDimTags_n_
+      type(c_ptr), intent(out) :: api_outDimTags_
+      integer(c_size_t), intent(out) :: api_outDimTags_n_
+      type(c_ptr), intent(out) :: api_outDimTagsMap_
+      type(c_ptr), intent(out) :: api_outDimTagsMap_n_
+      integer(c_size_t) :: api_outDimTagsMap_nn_
+      integer(c_int), value, intent(in) :: tag
+      integer(c_int), value, intent(in) :: removeObject
+      integer(c_int), value, intent(in) :: removeTool
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer(c_int), dimension(:,:), intent(in) :: objectDimTags
+    integer(c_int), dimension(:,:), intent(in) :: toolDimTags
+    integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
+    integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTagsMap
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: outDimTagsMap_n
+    integer, intent(in), optional :: tag
+    logical, intent(in), optional :: removeObject
+    logical, intent(in), optional :: removeTool
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_outDimTags_
+    integer(c_size_t) :: api_outDimTags_n_
+    type(c_ptr) :: api_outDimTagsMap_, api_outDimTagsMap_n_
+    integer(c_size_t) :: api_outDimTagsMap_nn_
+    call C_API(api_objectDimTags_=objectDimTags, &
+         api_objectDimTags_n_=size_gmsh_pair(objectDimTags), &
+         api_toolDimTags_=toolDimTags, &
+         api_toolDimTags_n_=size_gmsh_pair(toolDimTags), &
+         api_outDimTags_=api_outDimTags_, &
+         api_outDimTags_n_=api_outDimTags_n_, &
+         api_outDimTagsMap_=api_outDimTagsMap_, &
+         api_outDimTagsMap_n_=api_outDimTagsMap_n_, &
+         api_outDimTagsMap_nn_=api_outDimTagsMap_nn_, &
+         tag=optval_c_int(-1, tag), &
+         removeObject=optval_c_bool(.true., removeObject), &
+         removeTool=optval_c_bool(.true., removeTool), &
+         ierr_=ierr)
+    outDimTags = ovectorpair_(api_outDimTags_, &
+      api_outDimTags_n_)
+    call ovectorvectorpair_(api_outDimTagsMap_, &
+      api_outDimTagsMap_n_, &
+      api_outDimTagsMap_nn_, &
+      outDimTagsMap, &
+      outDimTagsMap_n)
+  end subroutine gmshModelDiscreteFuse
+
+  !> Compute the boolean intersection (the common parts) of the volumes
+  !! `objectDimTags' and `toolDimTags' (vectors of (dim, tag) pairs) in the
+  !! discrete CAD representation, with the exact mesh booleans of libigl. The
+  !! surfaces of the result keep the parameters of those they come from. Return
+  !! the resulting volumes in `outDimTags', and the correspondance between input
+  !! and resulting entities in `outDimTagsMap'. If `tag' is positive, try to set
+  !! the tag explicitly (only valid if the boolean operation results in a single
+  !! entity). Remove the object if `removeObject' is set. Remove the tool if
+  !! `removeTool' is set.
+  subroutine gmshModelDiscreteIntersect(objectDimTags, &
+                                        toolDimTags, &
+                                        outDimTags, &
+                                        outDimTagsMap, &
+                                        outDimTagsMap_n, &
+                                        tag, &
+                                        removeObject, &
+                                        removeTool, &
+                                        ierr)
+    interface
+    subroutine C_API(api_objectDimTags_, &
+                     api_objectDimTags_n_, &
+                     api_toolDimTags_, &
+                     api_toolDimTags_n_, &
+                     api_outDimTags_, &
+                     api_outDimTags_n_, &
+                     api_outDimTagsMap_, &
+                     api_outDimTagsMap_n_, &
+                     api_outDimTagsMap_nn_, &
+                     tag, &
+                     removeObject, &
+                     removeTool, &
+                     ierr_) &
+      bind(C, name="gmshModelDiscreteIntersect")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), dimension(*) :: api_objectDimTags_
+      integer(c_size_t), value, intent(in) :: api_objectDimTags_n_
+      integer(c_int), dimension(*) :: api_toolDimTags_
+      integer(c_size_t), value, intent(in) :: api_toolDimTags_n_
+      type(c_ptr), intent(out) :: api_outDimTags_
+      integer(c_size_t), intent(out) :: api_outDimTags_n_
+      type(c_ptr), intent(out) :: api_outDimTagsMap_
+      type(c_ptr), intent(out) :: api_outDimTagsMap_n_
+      integer(c_size_t) :: api_outDimTagsMap_nn_
+      integer(c_int), value, intent(in) :: tag
+      integer(c_int), value, intent(in) :: removeObject
+      integer(c_int), value, intent(in) :: removeTool
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer(c_int), dimension(:,:), intent(in) :: objectDimTags
+    integer(c_int), dimension(:,:), intent(in) :: toolDimTags
+    integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
+    integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTagsMap
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: outDimTagsMap_n
+    integer, intent(in), optional :: tag
+    logical, intent(in), optional :: removeObject
+    logical, intent(in), optional :: removeTool
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_outDimTags_
+    integer(c_size_t) :: api_outDimTags_n_
+    type(c_ptr) :: api_outDimTagsMap_, api_outDimTagsMap_n_
+    integer(c_size_t) :: api_outDimTagsMap_nn_
+    call C_API(api_objectDimTags_=objectDimTags, &
+         api_objectDimTags_n_=size_gmsh_pair(objectDimTags), &
+         api_toolDimTags_=toolDimTags, &
+         api_toolDimTags_n_=size_gmsh_pair(toolDimTags), &
+         api_outDimTags_=api_outDimTags_, &
+         api_outDimTags_n_=api_outDimTags_n_, &
+         api_outDimTagsMap_=api_outDimTagsMap_, &
+         api_outDimTagsMap_n_=api_outDimTagsMap_n_, &
+         api_outDimTagsMap_nn_=api_outDimTagsMap_nn_, &
+         tag=optval_c_int(-1, tag), &
+         removeObject=optval_c_bool(.true., removeObject), &
+         removeTool=optval_c_bool(.true., removeTool), &
+         ierr_=ierr)
+    outDimTags = ovectorpair_(api_outDimTags_, &
+      api_outDimTags_n_)
+    call ovectorvectorpair_(api_outDimTagsMap_, &
+      api_outDimTagsMap_n_, &
+      api_outDimTagsMap_nn_, &
+      outDimTagsMap, &
+      outDimTagsMap_n)
+  end subroutine gmshModelDiscreteIntersect
+
+  !> Compute the boolean difference between the volumes `objectDimTags' and
+  !! `toolDimTags' (vectors of (dim, tag) pairs) in the discrete CAD
+  !! representation, with the exact mesh booleans of libigl. The surfaces of the
+  !! result keep the parameters of those they come from. Return the resulting
+  !! volumes in `outDimTags', and the correspondance between input and resulting
+  !! entities in `outDimTagsMap'. If `tag' is positive, try to set the tag
+  !! explicitly (only valid if the boolean operation results in a single
+  !! entity). Remove the object if `removeObject' is set. Remove the tool if
+  !! `removeTool' is set.
+  subroutine gmshModelDiscreteCut(objectDimTags, &
+                                  toolDimTags, &
+                                  outDimTags, &
+                                  outDimTagsMap, &
+                                  outDimTagsMap_n, &
+                                  tag, &
+                                  removeObject, &
+                                  removeTool, &
+                                  ierr)
+    interface
+    subroutine C_API(api_objectDimTags_, &
+                     api_objectDimTags_n_, &
+                     api_toolDimTags_, &
+                     api_toolDimTags_n_, &
+                     api_outDimTags_, &
+                     api_outDimTags_n_, &
+                     api_outDimTagsMap_, &
+                     api_outDimTagsMap_n_, &
+                     api_outDimTagsMap_nn_, &
+                     tag, &
+                     removeObject, &
+                     removeTool, &
+                     ierr_) &
+      bind(C, name="gmshModelDiscreteCut")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), dimension(*) :: api_objectDimTags_
+      integer(c_size_t), value, intent(in) :: api_objectDimTags_n_
+      integer(c_int), dimension(*) :: api_toolDimTags_
+      integer(c_size_t), value, intent(in) :: api_toolDimTags_n_
+      type(c_ptr), intent(out) :: api_outDimTags_
+      integer(c_size_t), intent(out) :: api_outDimTags_n_
+      type(c_ptr), intent(out) :: api_outDimTagsMap_
+      type(c_ptr), intent(out) :: api_outDimTagsMap_n_
+      integer(c_size_t) :: api_outDimTagsMap_nn_
+      integer(c_int), value, intent(in) :: tag
+      integer(c_int), value, intent(in) :: removeObject
+      integer(c_int), value, intent(in) :: removeTool
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer(c_int), dimension(:,:), intent(in) :: objectDimTags
+    integer(c_int), dimension(:,:), intent(in) :: toolDimTags
+    integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
+    integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTagsMap
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: outDimTagsMap_n
+    integer, intent(in), optional :: tag
+    logical, intent(in), optional :: removeObject
+    logical, intent(in), optional :: removeTool
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_outDimTags_
+    integer(c_size_t) :: api_outDimTags_n_
+    type(c_ptr) :: api_outDimTagsMap_, api_outDimTagsMap_n_
+    integer(c_size_t) :: api_outDimTagsMap_nn_
+    call C_API(api_objectDimTags_=objectDimTags, &
+         api_objectDimTags_n_=size_gmsh_pair(objectDimTags), &
+         api_toolDimTags_=toolDimTags, &
+         api_toolDimTags_n_=size_gmsh_pair(toolDimTags), &
+         api_outDimTags_=api_outDimTags_, &
+         api_outDimTags_n_=api_outDimTags_n_, &
+         api_outDimTagsMap_=api_outDimTagsMap_, &
+         api_outDimTagsMap_n_=api_outDimTagsMap_n_, &
+         api_outDimTagsMap_nn_=api_outDimTagsMap_nn_, &
+         tag=optval_c_int(-1, tag), &
+         removeObject=optval_c_bool(.true., removeObject), &
+         removeTool=optval_c_bool(.true., removeTool), &
+         ierr_=ierr)
+    outDimTags = ovectorpair_(api_outDimTags_, &
+      api_outDimTags_n_)
+    call ovectorvectorpair_(api_outDimTagsMap_, &
+      api_outDimTagsMap_n_, &
+      api_outDimTagsMap_nn_, &
+      outDimTagsMap, &
+      outDimTagsMap_n)
+  end subroutine gmshModelDiscreteCut
 
   !> Synchronize the discrete CAD representation with the current Gmsh model:
   !! its points, curves, surfaces and volumes become discrete entities of the

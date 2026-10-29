@@ -4066,6 +4066,22 @@ Boolean :
           (-1, (OCC_Internals::BooleanOperator)$1, object, tool, out, outMap, $4, $8);
         VectorOfPairs2ListOfShapes(out, $$);
       }
+#if defined(HAVE_DISCRETECAD)
+      else if(gmsh_yyfactory == "Discrete" &&
+              GModel::current()->getDiscreteCADInternals()){
+        std::vector<std::pair<int, int > > object, tool, out;
+        std::vector<std::vector<std::pair<int, int > > > outMap;
+        ListOfShapes2VectorOfPairs($3, object);
+        ListOfShapes2VectorOfPairs($7, tool);
+        if($1 > OCC_Internals::Difference)
+          yymsg(0, "Only BooleanUnion, BooleanIntersection and BooleanDifference "
+                "available with the Discrete geometry kernel");
+        else
+          r = GModel::current()->getDiscreteCADInternals()->booleanOperation
+            ($1, object, tool, out, outMap, -1, $4, $8);
+        VectorOfPairs2ListOfShapes(out, $$);
+      }
+#endif
       else{
         yymsg(0, "Boolean operators only available with OpenCASCADE geometry kernel");
       }
@@ -4107,6 +4123,21 @@ BooleanShape :
         r = GModel::current()->getOCCInternals()->booleanOperator
           ((int)$3, (OCC_Internals::BooleanOperator)$1, object, tool, out, outMap, $8, $12);
       }
+#if defined(HAVE_DISCRETECAD)
+      else if(gmsh_yyfactory == "Discrete" &&
+              GModel::current()->getDiscreteCADInternals()){
+        std::vector<std::pair<int, int> > object, tool, out;
+        std::vector<std::vector<std::pair<int, int > > > outMap;
+        ListOfShapes2VectorOfPairs($7, object);
+        ListOfShapes2VectorOfPairs($11, tool);
+        if($1 > OCC_Internals::Difference)
+          yymsg(0, "Only BooleanUnion, BooleanIntersection and BooleanDifference "
+                "available with the Discrete geometry kernel");
+        else
+          r = GModel::current()->getDiscreteCADInternals()->booleanOperation
+            ($1, object, tool, out, outMap, (int)$3, $8, $12);
+      }
+#endif
       if(!r) yymsg(0, "Could not apply boolean operator");
       List_Delete($7);
       List_Delete($11);

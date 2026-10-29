@@ -3516,6 +3516,60 @@ GMSH_API int gmshModelDiscreteAddTorus(const double x,
                                        const double tolerance,
                                        int * ierr);
 
+/* Compute the boolean union (the fusion) of the volumes `objectDimTags' and
+ * `toolDimTags' (vectors of (dim, tag) pairs) in the discrete CAD
+ * representation, with the exact mesh booleans of libigl. The surfaces of the
+ * result keep the parameters of those they come from. Return the resulting
+ * volumes in `outDimTags', and the correspondance between input and resulting
+ * entities in `outDimTagsMap'. If `tag' is positive, try to set the tag
+ * explicitly (only valid if the boolean operation results in a single
+ * entity). Remove the object if `removeObject' is set. Remove the tool if
+ * `removeTool' is set. */
+GMSH_API void gmshModelDiscreteFuse(const int * objectDimTags, const size_t objectDimTags_n,
+                                    const int * toolDimTags, const size_t toolDimTags_n,
+                                    int ** outDimTags, size_t * outDimTags_n,
+                                    int *** outDimTagsMap, size_t ** outDimTagsMap_n, size_t *outDimTagsMap_nn,
+                                    const int tag,
+                                    const int removeObject,
+                                    const int removeTool,
+                                    int * ierr);
+
+/* Compute the boolean intersection (the common parts) of the volumes
+ * `objectDimTags' and `toolDimTags' (vectors of (dim, tag) pairs) in the
+ * discrete CAD representation, with the exact mesh booleans of libigl. The
+ * surfaces of the result keep the parameters of those they come from. Return
+ * the resulting volumes in `outDimTags', and the correspondance between input
+ * and resulting entities in `outDimTagsMap'. If `tag' is positive, try to set
+ * the tag explicitly (only valid if the boolean operation results in a single
+ * entity). Remove the object if `removeObject' is set. Remove the tool if
+ * `removeTool' is set. */
+GMSH_API void gmshModelDiscreteIntersect(const int * objectDimTags, const size_t objectDimTags_n,
+                                         const int * toolDimTags, const size_t toolDimTags_n,
+                                         int ** outDimTags, size_t * outDimTags_n,
+                                         int *** outDimTagsMap, size_t ** outDimTagsMap_n, size_t *outDimTagsMap_nn,
+                                         const int tag,
+                                         const int removeObject,
+                                         const int removeTool,
+                                         int * ierr);
+
+/* Compute the boolean difference between the volumes `objectDimTags' and
+ * `toolDimTags' (vectors of (dim, tag) pairs) in the discrete CAD
+ * representation, with the exact mesh booleans of libigl. The surfaces of the
+ * result keep the parameters of those they come from. Return the resulting
+ * volumes in `outDimTags', and the correspondance between input and resulting
+ * entities in `outDimTagsMap'. If `tag' is positive, try to set the tag
+ * explicitly (only valid if the boolean operation results in a single
+ * entity). Remove the object if `removeObject' is set. Remove the tool if
+ * `removeTool' is set. */
+GMSH_API void gmshModelDiscreteCut(const int * objectDimTags, const size_t objectDimTags_n,
+                                   const int * toolDimTags, const size_t toolDimTags_n,
+                                   int ** outDimTags, size_t * outDimTags_n,
+                                   int *** outDimTagsMap, size_t ** outDimTagsMap_n, size_t *outDimTagsMap_nn,
+                                   const int tag,
+                                   const int removeObject,
+                                   const int removeTool,
+                                   int * ierr);
+
 /* Synchronize the discrete CAD representation with the current Gmsh model:
  * its points, curves, surfaces and volumes become discrete entities of the
  * model, whose geometry is their polylines and triangulations, and replace

@@ -7906,6 +7906,105 @@ export function wrapGmsh(Module) {
   };
 
   /**
+   * gmsh.model.discrete.fuse(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true)
+   *
+   * Compute the boolean union (the fusion) of the volumes `objectDimTags' and
+   * `toolDimTags' (vectors of (dim, tag) pairs) in the discrete CAD
+   * representation, with the exact mesh booleans of libigl. The surfaces of
+   * the result keep the parameters of those they come from. Return the
+   * resulting volumes in `outDimTags', and the correspondance between input
+   * and resulting entities in `outDimTagsMap'. If `tag' is positive, try to
+   * set the tag explicitly (only valid if the boolean operation results in a
+   * single entity). Remove the object if `removeObject' is set. Remove the
+   * tool if `removeTool' is set.
+   *
+   * Return `outDimTags', `outDimTagsMap'.
+   */
+  gmsh.model.discrete.fuse = function(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true) {
+    const tmp = [];
+    try {
+      const [api_objectDimTags_, api_objectDimTags_n] = _ivectorpair(objectDimTags, tmp);
+      const [api_toolDimTags_, api_toolDimTags_n] = _ivectorpair(toolDimTags, tmp);
+      const api_outDimTags_ = _alloc(8, tmp);
+      const api_outDimTagsMap_ = _alloc(12, tmp);
+      M._gmshModelDiscreteFuse(api_objectDimTags_, api_objectDimTags_n, api_toolDimTags_, api_toolDimTags_n, api_outDimTags_, api_outDimTags_ + 4, api_outDimTagsMap_, api_outDimTagsMap_ + 4, api_outDimTagsMap_ + 8, tag, removeObject ? 1 : 0, removeTool ? 1 : 0, ierr);
+      _check();
+      return [
+        _ovectorpair(api_outDimTags_),
+        _ovectorvector(api_outDimTagsMap_, 'int', true)];
+    }
+    finally {
+      tmp.forEach((p) => M._free(p));
+    }
+  };
+
+  /**
+   * gmsh.model.discrete.intersect(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true)
+   *
+   * Compute the boolean intersection (the common parts) of the volumes
+   * `objectDimTags' and `toolDimTags' (vectors of (dim, tag) pairs) in the
+   * discrete CAD representation, with the exact mesh booleans of libigl. The
+   * surfaces of the result keep the parameters of those they come from.
+   * Return the resulting volumes in `outDimTags', and the correspondance
+   * between input and resulting entities in `outDimTagsMap'. If `tag' is
+   * positive, try to set the tag explicitly (only valid if the boolean
+   * operation results in a single entity). Remove the object if
+   * `removeObject' is set. Remove the tool if `removeTool' is set.
+   *
+   * Return `outDimTags', `outDimTagsMap'.
+   */
+  gmsh.model.discrete.intersect = function(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true) {
+    const tmp = [];
+    try {
+      const [api_objectDimTags_, api_objectDimTags_n] = _ivectorpair(objectDimTags, tmp);
+      const [api_toolDimTags_, api_toolDimTags_n] = _ivectorpair(toolDimTags, tmp);
+      const api_outDimTags_ = _alloc(8, tmp);
+      const api_outDimTagsMap_ = _alloc(12, tmp);
+      M._gmshModelDiscreteIntersect(api_objectDimTags_, api_objectDimTags_n, api_toolDimTags_, api_toolDimTags_n, api_outDimTags_, api_outDimTags_ + 4, api_outDimTagsMap_, api_outDimTagsMap_ + 4, api_outDimTagsMap_ + 8, tag, removeObject ? 1 : 0, removeTool ? 1 : 0, ierr);
+      _check();
+      return [
+        _ovectorpair(api_outDimTags_),
+        _ovectorvector(api_outDimTagsMap_, 'int', true)];
+    }
+    finally {
+      tmp.forEach((p) => M._free(p));
+    }
+  };
+
+  /**
+   * gmsh.model.discrete.cut(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true)
+   *
+   * Compute the boolean difference between the volumes `objectDimTags' and
+   * `toolDimTags' (vectors of (dim, tag) pairs) in the discrete CAD
+   * representation, with the exact mesh booleans of libigl. The surfaces of
+   * the result keep the parameters of those they come from. Return the
+   * resulting volumes in `outDimTags', and the correspondance between input
+   * and resulting entities in `outDimTagsMap'. If `tag' is positive, try to
+   * set the tag explicitly (only valid if the boolean operation results in a
+   * single entity). Remove the object if `removeObject' is set. Remove the
+   * tool if `removeTool' is set.
+   *
+   * Return `outDimTags', `outDimTagsMap'.
+   */
+  gmsh.model.discrete.cut = function(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true) {
+    const tmp = [];
+    try {
+      const [api_objectDimTags_, api_objectDimTags_n] = _ivectorpair(objectDimTags, tmp);
+      const [api_toolDimTags_, api_toolDimTags_n] = _ivectorpair(toolDimTags, tmp);
+      const api_outDimTags_ = _alloc(8, tmp);
+      const api_outDimTagsMap_ = _alloc(12, tmp);
+      M._gmshModelDiscreteCut(api_objectDimTags_, api_objectDimTags_n, api_toolDimTags_, api_toolDimTags_n, api_outDimTags_, api_outDimTags_ + 4, api_outDimTagsMap_, api_outDimTagsMap_ + 4, api_outDimTagsMap_ + 8, tag, removeObject ? 1 : 0, removeTool ? 1 : 0, ierr);
+      _check();
+      return [
+        _ovectorpair(api_outDimTags_),
+        _ovectorvector(api_outDimTagsMap_, 'int', true)];
+    }
+    finally {
+      tmp.forEach((p) => M._free(p));
+    }
+  };
+
+  /**
    * gmsh.model.discrete.synchronize()
    *
    * Synchronize the discrete CAD representation with the current Gmsh model:

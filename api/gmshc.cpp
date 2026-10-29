@@ -4663,6 +4663,81 @@ GMSH_API int gmshModelDiscreteAddTorus(const double x, const double y, const dou
   return result_api_;
 }
 
+GMSH_API void gmshModelDiscreteFuse(const int * objectDimTags, const size_t objectDimTags_n, const int * toolDimTags, const size_t toolDimTags_n, int ** outDimTags, size_t * outDimTags_n, int *** outDimTagsMap, size_t ** outDimTagsMap_n, size_t *outDimTagsMap_nn, const int tag, const int removeObject, const int removeTool, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_objectDimTags_(objectDimTags_n/2);
+    for(size_t i = 0; i < objectDimTags_n/2; ++i){
+      api_objectDimTags_[i].first = objectDimTags[i * 2 + 0];
+      api_objectDimTags_[i].second = objectDimTags[i * 2 + 1];
+    }
+    gmsh::vectorpair api_toolDimTags_(toolDimTags_n/2);
+    for(size_t i = 0; i < toolDimTags_n/2; ++i){
+      api_toolDimTags_[i].first = toolDimTags[i * 2 + 0];
+      api_toolDimTags_[i].second = toolDimTags[i * 2 + 1];
+    }
+    gmsh::vectorpair api_outDimTags_;
+    std::vector<gmsh::vectorpair >api_outDimTagsMap_;
+    gmsh::model::discrete::fuse(api_objectDimTags_, api_toolDimTags_, api_outDimTags_, api_outDimTagsMap_, tag, removeObject, removeTool);
+    vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
+    vectorvectorpair2intptrptr(api_outDimTagsMap_, outDimTagsMap, outDimTagsMap_n, outDimTagsMap_nn);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelDiscreteIntersect(const int * objectDimTags, const size_t objectDimTags_n, const int * toolDimTags, const size_t toolDimTags_n, int ** outDimTags, size_t * outDimTags_n, int *** outDimTagsMap, size_t ** outDimTagsMap_n, size_t *outDimTagsMap_nn, const int tag, const int removeObject, const int removeTool, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_objectDimTags_(objectDimTags_n/2);
+    for(size_t i = 0; i < objectDimTags_n/2; ++i){
+      api_objectDimTags_[i].first = objectDimTags[i * 2 + 0];
+      api_objectDimTags_[i].second = objectDimTags[i * 2 + 1];
+    }
+    gmsh::vectorpair api_toolDimTags_(toolDimTags_n/2);
+    for(size_t i = 0; i < toolDimTags_n/2; ++i){
+      api_toolDimTags_[i].first = toolDimTags[i * 2 + 0];
+      api_toolDimTags_[i].second = toolDimTags[i * 2 + 1];
+    }
+    gmsh::vectorpair api_outDimTags_;
+    std::vector<gmsh::vectorpair >api_outDimTagsMap_;
+    gmsh::model::discrete::intersect(api_objectDimTags_, api_toolDimTags_, api_outDimTags_, api_outDimTagsMap_, tag, removeObject, removeTool);
+    vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
+    vectorvectorpair2intptrptr(api_outDimTagsMap_, outDimTagsMap, outDimTagsMap_n, outDimTagsMap_nn);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelDiscreteCut(const int * objectDimTags, const size_t objectDimTags_n, const int * toolDimTags, const size_t toolDimTags_n, int ** outDimTags, size_t * outDimTags_n, int *** outDimTagsMap, size_t ** outDimTagsMap_n, size_t *outDimTagsMap_nn, const int tag, const int removeObject, const int removeTool, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_objectDimTags_(objectDimTags_n/2);
+    for(size_t i = 0; i < objectDimTags_n/2; ++i){
+      api_objectDimTags_[i].first = objectDimTags[i * 2 + 0];
+      api_objectDimTags_[i].second = objectDimTags[i * 2 + 1];
+    }
+    gmsh::vectorpair api_toolDimTags_(toolDimTags_n/2);
+    for(size_t i = 0; i < toolDimTags_n/2; ++i){
+      api_toolDimTags_[i].first = toolDimTags[i * 2 + 0];
+      api_toolDimTags_[i].second = toolDimTags[i * 2 + 1];
+    }
+    gmsh::vectorpair api_outDimTags_;
+    std::vector<gmsh::vectorpair >api_outDimTagsMap_;
+    gmsh::model::discrete::cut(api_objectDimTags_, api_toolDimTags_, api_outDimTags_, api_outDimTagsMap_, tag, removeObject, removeTool);
+    vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
+    vectorvectorpair2intptrptr(api_outDimTagsMap_, outDimTagsMap, outDimTagsMap_n, outDimTagsMap_nn);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelDiscreteSynchronize(int * ierr)
 {
   if(ierr) *ierr = 0;

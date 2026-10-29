@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cmath>
 #include "DiscreteCADModeler.h"
+#include "DiscreteCADBoolean.h"
 #include "GmshMessage.h"
 #include "Context.h"
 #include "GModel.h"
@@ -614,10 +615,11 @@ bool DiscreteCAD_Internals::addCone(int &tag, double x, double y, double z,
       sf.uv.push_back({{developed(t[0], theta[0]), developed(t[1], theta[1]),
                         developed(t[2], theta[2])}});
     }
-    sf.seam = seam;
+    // (the seam used forwards at the angle 2 pi)
+    auto &sides = sf.seams[seam];
     for(int n : column) {
-      sf.seamUV[0].push_back(developed(n, 0.));
-      sf.seamUV[1].push_back(developed(n, 2. * pi));
+      sides[0].push_back(developed(n, 2. * pi));
+      sides[1].push_back(developed(n, 0.));
     }
   }
   if(r1 > 0.) {
@@ -754,6 +756,519 @@ bool DiscreteCAD_Internals::addTorus(int &tag, double x, double y, double z,
     volume.surfaces.push_back(half);
   }
   _volumes[tag] = volume;
+  return true;
+}
+
+void DiscreteCAD_Internals::_removeVolume(int tag)
+{
+  auto vit = _volumes.find(tag);
+  if(vit == _volumes.end()) return;
+  const std::vector<int> surfaces = vit->second.surfaces;
+  _volumes.erase(vit);
+  // the entities still used
+  std::set<int> usedSurfaces, usedCurves, usedVertices;
+  for(auto &v : _volumes)
+    for(int s : v.second.surfaces) usedSurfaces.insert(std::abs(s));
+  for(int s : surfaces)
+    if(!usedSurfaces.count(std::abs(s))) _surfaces.erase(std::abs(s));
+  for(auto &s : _surfaces) {
+    for(int c : s.second.curves) usedCurves.insert(std::abs(c));
+    for(int v : s.second.embeddedVertices) usedVertices.insert(v);
+  }
+  for(auto it = _curves.begin(); it != _curves.end();) {
+    if(!usedCurves.count(it->first)) it = _curves.erase(it);
+    else {
+      usedVertices.insert(it->second.v0);
+      usedVertices.insert(it->second.v1);
+      ++it;
+    }
+  }
+  for(auto it = _vertices.begin(); it != _vertices.end();) {
+    if(!usedVertices.count(it->first)) it = _vertices.erase(it);
+    else ++it;
+  }
+  _changed = true;
+}
+
+bool DiscreteCAD_Internals::booleanOperation(
+  int op, const std::vector<std::pair<int, int> > &objectDimTags,
+  const std::vector<std::pair<int, int> > &toolDimTags,
+  std::vector<std::pair<int, int> > &outDimTags,
+  std::vector<std::vector<std::pair<int, int> > > &outDimTagsMap, int tag,
+  bool removeObject, bool removeTool)
+{
+  outDimTags.clear();
+  outDimTagsMap.clear();
+
+  // the triangles of the volumes of each operand, oriented outwards, with the
+  // input entity, surface and triangle they come from
+  struct Origin {
+    int input, surface;
+    std::size_t triangle;
+  };
+  std::vector<Origin> origins;
+  std::vector<double> xyz[2];
+  std::vector<int> tri[2];
+  std::map<std::array<double, 3>, int> nodeOf;
+  const std::vector<std::pair<int, int> > *operands[2] = {&objectDimTags,
+                                                          &toolDimTags};
+  int input = 0;
+  std::vector<int> inputTag, inputOperand;
+  for(int o = 0; o < 2; o++) {
+    std::map<int, int> local;
+    for(auto &dt : *operands[o]) {
+      inputTag.push_back(dt.second);
+      inputOperand.push_back(o);
+      if(dt.first != 3 || !_volumes.count(dt.second)) {
+        Msg::Error("Discrete CAD boolean operations apply to volumes: no "
+                   "discrete CAD volume (%d, %d)",
+                   dt.first, dt.second);
+        return false;
+      }
+      for(int s : _volumes[dt.second].surfaces) {
+        const Surface &sf = _surfaces[std::abs(s)];
+        for(std::size_t i = 0; i < sf.triangles.size(); i++) {
+          std::array<int, 3> t = sf.triangles[i];
+          if(s < 0) std::swap(t[1], t[2]);
+          for(int n : t) {
+            auto it = local.find(n);
+            if(it == local.end()) {
+              it = local.insert({n, (int)local.size()}).first;
+              xyz[o].insert(xyz[o].end(), _nodes[n].begin(), _nodes[n].end());
+              nodeOf[_nodes[n]] = n;
+            }
+            tri[o].push_back(it->second);
+          }
+          origins.push_back({input, std::abs(s), i});
+        }
+      }
+      input++;
+    }
+  }
+  std::vector<double> rxyz;
+  std::vector<int> rtri, birth;
+  if(!meshBooleanLibigl(op, xyz[0], tri[0], xyz[1], tri[1], rxyz, rtri,
+                        birth))
+    return false;
+
+  // the nodes of the result: those of the operands kept, new ones elsewhere
+  std::vector<int> rnode(rxyz.size() / 3);
+  for(std::size_t v = 0; v < rnode.size(); v++) {
+    const std::array<double, 3> p = {
+      {rxyz[3 * v], rxyz[3 * v + 1], rxyz[3 * v + 2]}};
+    auto it = nodeOf.find(p);
+    rnode[v] = it != nodeOf.end() ? it->second : _addNode(p[0], p[1], p[2]);
+  }
+  const std::size_t nt = birth.size();
+  std::vector<std::array<int, 3> > triangles(nt);
+  for(std::size_t i = 0; i < nt; i++)
+    for(int k = 0; k < 3; k++) triangles[i][k] = rnode[rtri[3 * i + k]];
+
+  // the parameters of the corners: those of the nodes of the triangle each
+  // one comes from, if its surface has parameters, or interpolated in it
+  // (along its longest edge if it is degenerate)
+  std::vector<std::array<std::array<double, 2>, 3> > uv(nt);
+  std::vector<char> hasUV(nt, 0);
+  for(std::size_t i = 0; i < nt; i++) {
+    const Origin &og = origins[birth[i]];
+    const Surface &sf = _surfaces[og.surface];
+    if(sf.uv.empty()) continue;
+    hasUV[i] = 1;
+    const std::array<int, 3> &t = sf.triangles[og.triangle];
+    const std::array<std::array<double, 2>, 3> &tuv = sf.uv[og.triangle];
+    double e1[3], e2[3], e3[3];
+    for(int k = 0; k < 3; k++) {
+      e1[k] = _nodes[t[1]][k] - _nodes[t[0]][k];
+      e2[k] = _nodes[t[2]][k] - _nodes[t[0]][k];
+      e3[k] = _nodes[t[2]][k] - _nodes[t[1]][k];
+    }
+    const double a11 = e1[0] * e1[0] + e1[1] * e1[1] + e1[2] * e1[2];
+    const double a12 = e1[0] * e2[0] + e1[1] * e2[1] + e1[2] * e2[2];
+    const double a22 = e2[0] * e2[0] + e2[1] * e2[1] + e2[2] * e2[2];
+    const double a33 = e3[0] * e3[0] + e3[1] * e3[1] + e3[2] * e3[2];
+    const double det = a11 * a22 - a12 * a12;
+    const double longest = std::max({a11, a22, a33});
+    for(int k = 0; k < 3; k++) {
+      const int n = triangles[i][k];
+      int j = 0;
+      while(j < 3 && t[j] != n) j++;
+      if(j < 3) {
+        uv[i][k] = tuv[j];
+        continue;
+      }
+      if(det > 1.e-20 * longest * longest) {
+        double d[3];
+        for(int m = 0; m < 3; m++) d[m] = _nodes[n][m] - _nodes[t[0]][m];
+        const double b1 = d[0] * e1[0] + d[1] * e1[1] + d[2] * e1[2];
+        const double b2 = d[0] * e2[0] + d[1] * e2[1] + d[2] * e2[2];
+        const double l1 = (a22 * b1 - a12 * b2) / det;
+        const double l2 = (a11 * b2 - a12 * b1) / det;
+        for(int m = 0; m < 2; m++)
+          uv[i][k][m] = (1. - l1 - l2) * tuv[0][m] + l1 * tuv[1][m] +
+                        l2 * tuv[2][m];
+        continue;
+      }
+      const int a = longest == a11 ? 0 : longest == a22 ? 0 : 1;
+      const int b = longest == a11 ? 1 : 2;
+      double l = 0., d2 = 0.;
+      for(int m = 0; m < 3; m++) {
+        const double e = _nodes[t[b]][m] - _nodes[t[a]][m];
+        l += (_nodes[n][m] - _nodes[t[a]][m]) * e;
+        d2 += e * e;
+      }
+      l = d2 ? std::min(1., std::max(0., l / d2)) : 0.;
+      for(int m = 0; m < 2; m++)
+        uv[i][k][m] = (1. - l) * tuv[a][m] + l * tuv[b][m];
+    }
+  }
+
+  // the surfaces: the triangles coming from the same surface, connected
+  std::map<std::pair<int, int>, std::vector<std::size_t> > edgeTriangles;
+  for(std::size_t i = 0; i < nt; i++)
+    for(int k = 0; k < 3; k++)
+      edgeTriangles[std::minmax(triangles[i][k], triangles[i][(k + 1) % 3])]
+        .push_back(i);
+  std::vector<std::size_t> parent(nt);
+  for(std::size_t i = 0; i < nt; i++) parent[i] = i;
+  std::function<std::size_t(std::size_t)> find = [&](std::size_t i) {
+    while(parent[i] != i) i = parent[i] = parent[parent[i]];
+    return i;
+  };
+  for(auto &e : edgeTriangles)
+    if(e.second.size() == 2 && origins[birth[e.second[0]]].surface ==
+                                 origins[birth[e.second[1]]].surface)
+      parent[find(e.second[0])] = find(e.second[1]);
+  std::map<std::size_t, int> surfaceOfRoot;
+  std::vector<int> surfaceOf(nt);
+  for(std::size_t i = 0; i < nt; i++) {
+    const std::size_t r = find(i);
+    auto it = surfaceOfRoot.find(r);
+    if(it == surfaceOfRoot.end()) {
+      int t = -1;
+      _assignTag(2, t);
+      _surfaces[t] = Surface();
+      it = surfaceOfRoot.insert({r, t}).first;
+    }
+    surfaceOf[i] = it->second;
+    _surfaces[it->second].triangles.push_back(triangles[i]);
+  }
+
+  // the edges of the curves: between different surfaces, or where the
+  // parameters of a surface jump (its seam)
+  auto cornerUV = [&](std::size_t i, int n) {
+    int k = 0;
+    while(k < 2 && triangles[i][k] != n) k++;
+    return uv[i][k];
+  };
+  auto jumps = [&](std::size_t i, std::size_t j, int a, int b) {
+    if(!hasUV[i] || !hasUV[j]) return false;
+    for(int n : {a, b}) {
+      const std::array<double, 2> p = cornerUV(i, n), q = cornerUV(j, n);
+      const double d = std::abs(p[0] - q[0]) + std::abs(p[1] - q[1]);
+      if(d > 1.e-9 * (1. + std::abs(p[0]) + std::abs(p[1]))) return true;
+    }
+    return false;
+  };
+  // the parameters made continuous across the seam of a surface that does not
+  // go around it: the pieces of the surface on both sides of the seam (the
+  // connected triangles with continuous parameters) moved onto each other by
+  // the isometry of the plane given by the seam
+  std::vector<std::size_t> piece(nt);
+  for(std::size_t i = 0; i < nt; i++) piece[i] = i;
+  std::function<std::size_t(std::size_t)> findPiece = [&](std::size_t i) {
+    while(piece[i] != i) i = piece[i] = piece[piece[i]];
+    return i;
+  };
+  struct Link {
+    std::size_t a, b;
+    int na, nb;
+    double length;
+  };
+  std::vector<Link> links;
+  for(auto &e : edgeTriangles) {
+    const std::vector<std::size_t> &t = e.second;
+    if(t.size() != 2 || surfaceOf[t[0]] != surfaceOf[t[1]] || !hasUV[t[0]])
+      continue;
+    if(!jumps(t[0], t[1], e.first.first, e.first.second))
+      piece[findPiece(t[0])] = findPiece(t[1]);
+    else {
+      const std::array<double, 2> p = cornerUV(t[0], e.first.first),
+                                  q = cornerUV(t[0], e.first.second);
+      links.push_back({t[0], t[1], e.first.first, e.first.second,
+                       std::hypot(q[0] - p[0], q[1] - p[1])});
+    }
+  }
+  std::sort(links.begin(), links.end(), [](const Link &l, const Link &m) {
+    return l.length > m.length;
+  });
+  std::map<std::size_t, std::vector<std::size_t> > trianglesOfPiece;
+  for(std::size_t i = 0; i < nt; i++)
+    if(hasUV[i]) trianglesOfPiece[findPiece(i)].push_back(i);
+  std::map<std::size_t, std::vector<const Link *> > linksOfPiece;
+  for(auto &l : links) {
+    linksOfPiece[findPiece(l.a)].push_back(&l);
+    linksOfPiece[findPiece(l.b)].push_back(&l);
+  }
+  std::set<std::size_t> placed;
+  std::vector<std::pair<std::size_t, std::size_t> > pieces; // size, root
+  for(auto &p : trianglesOfPiece) pieces.push_back({p.second.size(), p.first});
+  std::sort(pieces.rbegin(), pieces.rend());
+  for(auto &p : pieces) {
+    if(placed.count(p.second)) continue;
+    placed.insert(p.second);
+    std::vector<std::size_t> queue = {p.second};
+    while(!queue.empty()) {
+      const std::size_t c = queue.back();
+      queue.pop_back();
+      for(const Link *l : linksOfPiece[c]) {
+        // the triangle along the link on the placed side, and on the other
+        const bool aPlaced = findPiece(l->a) == c;
+        const std::size_t ti = aPlaced ? l->a : l->b, tj = aPlaced ? l->b : l->a;
+        const std::size_t d = findPiece(tj);
+        if(placed.count(d)) continue;
+        const std::array<double, 2> pa = cornerUV(ti, l->na),
+                                    pb = cornerUV(ti, l->nb),
+                                    qa = cornerUV(tj, l->na),
+                                    qb = cornerUV(tj, l->nb);
+        const double angle =
+          std::atan2(pb[1] - pa[1], pb[0] - pa[0]) -
+          std::atan2(qb[1] - qa[1], qb[0] - qa[0]);
+        const double c0 = std::cos(angle), s0 = std::sin(angle);
+        const double tx = pa[0] - (c0 * qa[0] - s0 * qa[1]);
+        const double ty = pa[1] - (s0 * qa[0] + c0 * qa[1]);
+        for(std::size_t i : trianglesOfPiece[d])
+          for(auto &q : uv[i])
+            q = {{c0 * q[0] - s0 * q[1] + tx, s0 * q[0] + c0 * q[1] + ty}};
+        placed.insert(d);
+        queue.push_back(d);
+      }
+    }
+  }
+  for(auto &s : surfaceOfRoot) _surfaces[s.second].uv.clear();
+  for(std::size_t i = 0; i < nt; i++)
+    if(hasUV[i]) _surfaces[surfaceOf[i]].uv.push_back(uv[i]);
+  for(auto &s : surfaceOfRoot) {
+    Surface &sf = _surfaces[s.second];
+    if(sf.uv.size() != sf.triangles.size()) sf.uv.clear();
+  }
+
+  std::map<std::pair<int, int>, bool> special; // edge -> is a seam
+  std::map<int, std::vector<int> > neighbors;
+  for(auto &e : edgeTriangles) {
+    const std::vector<std::size_t> &t = e.second;
+    bool feature = t.size() != 2 || surfaceOf[t[0]] != surfaceOf[t[1]];
+    bool seam = !feature && jumps(t[0], t[1], e.first.first, e.first.second);
+    if(!feature && !seam) continue;
+    special[e.first] = seam;
+    neighbors[e.first.first].push_back(e.first.second);
+    neighbors[e.first.second].push_back(e.first.first);
+  }
+
+  // the curves: chains of these edges between the nodes where more or less
+  // than two of them meet, closed chains split in two arcs
+  std::map<int, int> vertexOf;
+  auto vertex = [&](int n) {
+    auto it = vertexOf.find(n);
+    if(it == vertexOf.end()) it = vertexOf.insert({n, _addVertex(n)}).first;
+    return it->second;
+  };
+  std::set<std::pair<int, int> > visited;
+  std::map<std::pair<int, int>, int> curveOfEdge; // directed edge -> +-curve
+  auto addChain = [&](const std::vector<int> &nodes) {
+    const int c =
+      _addCurve(vertex(nodes.front()), vertex(nodes.back()), nodes);
+    for(std::size_t j = 0; j + 1 < nodes.size(); j++) {
+      curveOfEdge[{nodes[j], nodes[j + 1]}] = c;
+      curveOfEdge[{nodes[j + 1], nodes[j]}] = -c;
+    }
+  };
+  auto walk = [&](int a, int b) {
+    std::vector<int> nodes = {a, b};
+    visited.insert(std::minmax(a, b));
+    while(neighbors[nodes.back()].size() == 2 && nodes.back() != nodes.front()) {
+      const int last = nodes.back(), previous = nodes[nodes.size() - 2];
+      const int next = neighbors[last][0] == previous ? neighbors[last][1] :
+                                                       neighbors[last][0];
+      if(visited.count(std::minmax(last, next))) break;
+      visited.insert(std::minmax(last, next));
+      nodes.push_back(next);
+    }
+    return nodes;
+  };
+  for(auto &nb : neighbors) {
+    if(nb.second.size() == 2) continue;
+    for(int b : nb.second)
+      if(!visited.count(std::minmax(nb.first, b)))
+        addChain(walk(nb.first, b));
+  }
+  for(auto &nb : neighbors)
+    for(int b : nb.second)
+      if(!visited.count(std::minmax(nb.first, b))) {
+        std::vector<int> loop = walk(nb.first, b);
+        const std::size_t h = loop.size() / 2;
+        addChain(std::vector<int>(loop.begin(), loop.begin() + h + 1));
+        addChain(std::vector<int>(loop.begin() + h, loop.end()));
+      }
+
+  // the curves of the surfaces, oriented as their triangles, their seams
+  // twice, with their parameters on their two sides: from the triangles along
+  // them in their direction (side 0) and in the other one
+  for(auto &s : surfaceOfRoot) {
+    Surface &sf = _surfaces[s.second];
+    std::set<int> curves;
+    for(std::size_t i = 0; i < nt; i++) {
+      if(surfaceOf[i] != s.second) continue;
+      for(int k = 0; k < 3; k++) {
+        const int a = triangles[i][k], b = triangles[i][(k + 1) % 3];
+        auto it = curveOfEdge.find({a, b});
+        if(it == curveOfEdge.end()) continue;
+        const int c = std::abs(it->second);
+        if(!curves.insert(c).second) continue;
+        if(special[std::minmax(a, b)]) {
+          sf.curves.push_back(c);
+          sf.curves.push_back(-c);
+          sf.seams[c];
+        }
+        else
+          sf.curves.push_back(it->second);
+      }
+    }
+    for(auto &sm : sf.seams) {
+      const std::vector<int> &n = _curves[sm.first].nodes;
+      for(int side = 0; side < 2; side++) sm.second[side].resize(n.size());
+      for(std::size_t j = 0; j + 1 < n.size(); j++)
+        for(std::size_t i : edgeTriangles[std::minmax(n[j], n[j + 1])]) {
+          int k = 0;
+          while(k < 3 && triangles[i][k] != n[j]) k++;
+          const int side = triangles[i][(k + 1) % 3] == n[j + 1] ? 0 : 1;
+          sm.second[side][j] = cornerUV(i, n[j]);
+          sm.second[side][j + 1] = cornerUV(i, n[j + 1]);
+        }
+    }
+  }
+
+  // the operands removed before the volumes are created (one of them can
+  // take the tag of an operand)
+  if(removeObject)
+    for(auto &dt : objectDimTags) _removeVolume(dt.second);
+  if(removeTool)
+    for(auto &dt : toolDimTags) _removeVolume(dt.second);
+
+  // the volumes: the connected shells of surfaces, a shell of negative volume
+  // being a cavity of the shell around it
+  std::map<int, int> shellParent;
+  for(auto &s : surfaceOfRoot) shellParent[s.second] = s.second;
+  std::function<int(int)> findShell = [&](int s) {
+    while(shellParent[s] != s) s = shellParent[s] = shellParent[shellParent[s]];
+    return s;
+  };
+  for(auto &e : edgeTriangles)
+    for(std::size_t j = 1; j < e.second.size(); j++)
+      shellParent[findShell(surfaceOf[e.second[0]])] =
+        findShell(surfaceOf[e.second[j]]);
+  std::map<int, std::vector<int> > shells;
+  for(auto &s : surfaceOfRoot) shells[findShell(s.second)].push_back(s.second);
+  auto signedVolume = [&](const std::vector<int> &surfaces) {
+    double v = 0.;
+    for(int s : surfaces)
+      for(auto &t : _surfaces[s].triangles) {
+        const std::array<double, 3> &a = _nodes[t[0]], &b = _nodes[t[1]],
+                                    &c = _nodes[t[2]];
+        v += (a[0] * (b[1] * c[2] - b[2] * c[1]) -
+              a[1] * (b[0] * c[2] - b[2] * c[0]) +
+              a[2] * (b[0] * c[1] - b[1] * c[0])) / 6.;
+      }
+    return v;
+  };
+  // the winding number of a shell around a point
+  auto winding = [&](const std::vector<int> &surfaces, const double p[3]) {
+    double w = 0.;
+    for(int s : surfaces)
+      for(auto &t : _surfaces[s].triangles) {
+        double a[3], b[3], c[3];
+        for(int k = 0; k < 3; k++) {
+          a[k] = _nodes[t[0]][k] - p[k];
+          b[k] = _nodes[t[1]][k] - p[k];
+          c[k] = _nodes[t[2]][k] - p[k];
+        }
+        const double la = std::sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
+        const double lb = std::sqrt(b[0] * b[0] + b[1] * b[1] + b[2] * b[2]);
+        const double lc = std::sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2]);
+        const double det = a[0] * (b[1] * c[2] - b[2] * c[1]) -
+                           a[1] * (b[0] * c[2] - b[2] * c[0]) +
+                           a[2] * (b[0] * c[1] - b[1] * c[0]);
+        const double den = la * lb * lc +
+                           (a[0] * b[0] + a[1] * b[1] + a[2] * b[2]) * lc +
+                           (a[0] * c[0] + a[1] * c[1] + a[2] * c[2]) * lb +
+                           (b[0] * c[0] + b[1] * c[1] + b[2] * c[2]) * la;
+        w += 2. * std::atan2(det, den);
+      }
+    return w / (4. * pi);
+  };
+  std::vector<int> outer, cavities;
+  for(auto &sh : shells)
+    (signedVolume(sh.second) > 0. ? outer : cavities).push_back(sh.first);
+  // their tags: the one given for the first, or that of the only removed
+  // object they come from, or else of the only removed tool
+  std::map<int, std::set<int> > inputsOfSurface;
+  for(std::size_t i = 0; i < nt; i++)
+    inputsOfSurface[surfaceOf[i]].insert(origins[birth[i]].input);
+  std::map<int, int> volumeOfShell;
+  for(int sh : outer) {
+    int t = (tag > 0 && outDimTags.empty()) ? tag : -1;
+    std::set<int> from;
+    for(int s : shells[sh])
+      from.insert(inputsOfSurface[s].begin(), inputsOfSurface[s].end());
+    for(int o = 0; o < 2 && t < 0; o++) {
+      if(!(o ? removeTool : removeObject)) continue;
+      std::set<int> tags;
+      for(int i : from)
+        if(inputOperand[i] == o) tags.insert(inputTag[i]);
+      if(tags.size() == 1 && !_exists(3, *tags.begin())) t = *tags.begin();
+    }
+    if(!_assignTag(3, t)) {
+      t = -1;
+      _assignTag(3, t);
+    }
+    _volumes[t] = Volume();
+    for(int s : shells[sh]) _volumes[t].surfaces.push_back(s);
+    volumeOfShell[sh] = t;
+    outDimTags.push_back({3, t});
+  }
+  for(int cv : cavities) {
+    const std::array<double, 3> &q =
+      _nodes[_surfaces[shells[cv][0]].triangles[0][0]];
+    const double p[3] = {q[0], q[1], q[2]};
+    int around = 0;
+    double smallest = 1e300;
+    for(int sh : outer) {
+      const double v = signedVolume(shells[sh]);
+      if(v < smallest && winding(shells[sh], p) > 0.5) {
+        smallest = v;
+        around = sh;
+      }
+    }
+    if(!around) {
+      Msg::Warning("Discrete CAD boolean: a cavity outside the result");
+      continue;
+    }
+    for(int s : shells[cv]) _volumes[volumeOfShell[around]].surfaces.push_back(s);
+  }
+
+  // the resulting volumes coming from each input entity
+  outDimTagsMap.resize(input);
+  std::map<int, int> volumeOfSurface;
+  for(auto &v : outDimTags)
+    for(int s : _volumes[v.second].surfaces) volumeOfSurface[s] = v.second;
+  std::vector<std::set<int> > from(input);
+  for(std::size_t i = 0; i < nt; i++) {
+    auto it = volumeOfSurface.find(surfaceOf[i]);
+    if(it != volumeOfSurface.end()) from[origins[birth[i]].input].insert(it->second);
+  }
+  for(int i = 0; i < input; i++)
+    for(int v : from[i]) outDimTagsMap[i].push_back({3, v});
+
+  _changed = true;
   return true;
 }
 
@@ -894,39 +1409,68 @@ void DiscreteCAD_Internals::synchronize(GModel *model)
       while(k < 2 && sf.triangles[i][k] != n) k++;
       return SPoint2(sf.uv[i][k][0], flip * sf.uv[i][k][1]);
     };
+    // (the parameters along each use of a curve, in its direction)
+    std::vector<std::vector<SPoint2> > along;
     for(int c : sf.curves) {
       const int tag = std::abs(c);
+      along.push_back(std::vector<SPoint2>());
       discreteEdge *de = dynamic_cast<discreteEdge *>(model->getEdgeByTag(tag));
       if(!de) continue;
-      if(tag == sf.seam) {
+      auto sm = sf.seams.find(tag);
+      if(sm != sf.seams.end()) {
         std::vector<SPoint2> side[2];
         for(int k = 0; k < 2; k++)
-          for(const std::array<double, 2> &p : sf.seamUV[k])
+          for(const std::array<double, 2> &p : sm->second[k])
             side[k].push_back(SPoint2(p[0], flip * p[1]));
         de->setReparamOnFace(gf, side[0], side[1]);
-        continue;
+        along.back() = side[c > 0 ? 0 : 1];
       }
-      const std::vector<int> &n = _curves[tag].nodes;
-      std::vector<SPoint2> p(n.size());
-      bool found = true;
-      for(std::size_t j = 0; j + 1 < n.size() && found; j++) {
-        auto it = triangleOf.find(std::minmax(n[j], n[j + 1]));
-        if(it == triangleOf.end()) found = false;
-        else {
-          p[j] = corner(it->second, n[j]);
-          p[j + 1] = corner(it->second, n[j + 1]);
+      else {
+        const std::vector<int> &n = _curves[tag].nodes;
+        std::vector<SPoint2> p(n.size());
+        bool found = true;
+        for(std::size_t j = 0; j + 1 < n.size() && found; j++) {
+          auto it = triangleOf.find(std::minmax(n[j], n[j + 1]));
+          if(it == triangleOf.end()) found = false;
+          else {
+            p[j] = corner(it->second, n[j]);
+            p[j + 1] = corner(it->second, n[j + 1]);
+          }
+        }
+        if(!found) continue;
+        de->setReparamOnFace(gf, p);
+        along.back() = p;
+      }
+      if(c < 0) std::reverse(along.back().begin(), along.back().end());
+    }
+    if(sf.seams.empty()) continue;
+    // the loops of a surface with seams, the curves in their order (the
+    // mesher of periodic surfaces follows them), chained by their parameters
+    gf->edgeLoops.clear();
+    std::vector<bool> used(sf.curves.size(), false);
+    for(std::size_t first = 0; first < sf.curves.size(); first++) {
+      if(used[first]) continue;
+      GEdgeLoop loop;
+      std::size_t current = first;
+      while(current < sf.curves.size()) {
+        used[current] = true;
+        const int c = sf.curves[current];
+        loop.add(c > 0 ? 1 : -1, model->getEdgeByTag(std::abs(c)));
+        if(along[current].empty() || along[first].empty()) break;
+        const SPoint2 &end = along[current].back();
+        double best = end.distance(along[first].front());
+        current = sf.curves.size();
+        for(std::size_t j = 0; j < sf.curves.size(); j++) {
+          if(used[j] || along[j].empty()) continue;
+          const double d = end.distance(along[j].front());
+          if(d < best) {
+            best = d;
+            current = j;
+          }
         }
       }
-      if(found) de->setReparamOnFace(gf, p);
+      gf->edgeLoops.push_back(loop);
     }
-    if(!sf.seam) continue;
-    // the loop of a surface with a seam, in its order (the mesher of periodic
-    // surfaces follows it)
-    GEdgeLoop loop;
-    for(int c : sf.curves)
-      loop.add(c > 0 ? 1 : -1, model->getEdgeByTag(std::abs(c)));
-    gf->edgeLoops.clear();
-    gf->edgeLoops.push_back(loop);
   }
   for(GEntity *e : created) e->deleteMesh();
   model->resetMaxVertexNumber(maxVertex);

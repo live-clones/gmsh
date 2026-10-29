@@ -10324,6 +10324,144 @@ class model:
         add_torus = addTorus
 
         @staticmethod
+        def fuse(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True):
+            """
+            gmsh.model.discrete.fuse(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True)
+
+            Compute the boolean union (the fusion) of the volumes `objectDimTags' and
+            `toolDimTags' (vectors of (dim, tag) pairs) in the discrete CAD
+            representation, with the exact mesh booleans of libigl. The surfaces of the
+            result keep the parameters of those they come from. Return the resulting
+            volumes in `outDimTags', and the correspondance between input and resulting
+            entities in `outDimTagsMap'. If `tag' is positive, try to set the tag
+            explicitly (only valid if the boolean operation results in a single
+            entity). Remove the object if `removeObject' is set. Remove the tool if
+            `removeTool' is set.
+
+            Return `outDimTags', `outDimTagsMap'.
+
+            Types:
+            - `objectDimTags': vector of pairs of integers
+            - `toolDimTags': vector of pairs of integers
+            - `outDimTags': vector of pairs of integers
+            - `outDimTagsMap': vector of vectors of pairs of integers
+            - `tag': integer
+            - `removeObject': boolean
+            - `removeTool': boolean
+            """
+            api_objectDimTags_, api_objectDimTags_n_ = _ivectorpair(objectDimTags)
+            api_toolDimTags_, api_toolDimTags_n_ = _ivectorpair(toolDimTags)
+            api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
+            api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_ = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelDiscreteFuse(
+                api_objectDimTags_, api_objectDimTags_n_,
+                api_toolDimTags_, api_toolDimTags_n_,
+                byref(api_outDimTags_), byref(api_outDimTags_n_),
+                byref(api_outDimTagsMap_), byref(api_outDimTagsMap_n_), byref(api_outDimTagsMap_nn_),
+                c_int(tag),
+                c_int(bool(removeObject)),
+                c_int(bool(removeTool)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return (
+                _ovectorpair(api_outDimTags_, api_outDimTags_n_.value),
+                _ovectorvectorpair(api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_))
+
+        @staticmethod
+        def intersect(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True):
+            """
+            gmsh.model.discrete.intersect(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True)
+
+            Compute the boolean intersection (the common parts) of the volumes
+            `objectDimTags' and `toolDimTags' (vectors of (dim, tag) pairs) in the
+            discrete CAD representation, with the exact mesh booleans of libigl. The
+            surfaces of the result keep the parameters of those they come from. Return
+            the resulting volumes in `outDimTags', and the correspondance between input
+            and resulting entities in `outDimTagsMap'. If `tag' is positive, try to set
+            the tag explicitly (only valid if the boolean operation results in a single
+            entity). Remove the object if `removeObject' is set. Remove the tool if
+            `removeTool' is set.
+
+            Return `outDimTags', `outDimTagsMap'.
+
+            Types:
+            - `objectDimTags': vector of pairs of integers
+            - `toolDimTags': vector of pairs of integers
+            - `outDimTags': vector of pairs of integers
+            - `outDimTagsMap': vector of vectors of pairs of integers
+            - `tag': integer
+            - `removeObject': boolean
+            - `removeTool': boolean
+            """
+            api_objectDimTags_, api_objectDimTags_n_ = _ivectorpair(objectDimTags)
+            api_toolDimTags_, api_toolDimTags_n_ = _ivectorpair(toolDimTags)
+            api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
+            api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_ = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelDiscreteIntersect(
+                api_objectDimTags_, api_objectDimTags_n_,
+                api_toolDimTags_, api_toolDimTags_n_,
+                byref(api_outDimTags_), byref(api_outDimTags_n_),
+                byref(api_outDimTagsMap_), byref(api_outDimTagsMap_n_), byref(api_outDimTagsMap_nn_),
+                c_int(tag),
+                c_int(bool(removeObject)),
+                c_int(bool(removeTool)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return (
+                _ovectorpair(api_outDimTags_, api_outDimTags_n_.value),
+                _ovectorvectorpair(api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_))
+
+        @staticmethod
+        def cut(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True):
+            """
+            gmsh.model.discrete.cut(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True)
+
+            Compute the boolean difference between the volumes `objectDimTags' and
+            `toolDimTags' (vectors of (dim, tag) pairs) in the discrete CAD
+            representation, with the exact mesh booleans of libigl. The surfaces of the
+            result keep the parameters of those they come from. Return the resulting
+            volumes in `outDimTags', and the correspondance between input and resulting
+            entities in `outDimTagsMap'. If `tag' is positive, try to set the tag
+            explicitly (only valid if the boolean operation results in a single
+            entity). Remove the object if `removeObject' is set. Remove the tool if
+            `removeTool' is set.
+
+            Return `outDimTags', `outDimTagsMap'.
+
+            Types:
+            - `objectDimTags': vector of pairs of integers
+            - `toolDimTags': vector of pairs of integers
+            - `outDimTags': vector of pairs of integers
+            - `outDimTagsMap': vector of vectors of pairs of integers
+            - `tag': integer
+            - `removeObject': boolean
+            - `removeTool': boolean
+            """
+            api_objectDimTags_, api_objectDimTags_n_ = _ivectorpair(objectDimTags)
+            api_toolDimTags_, api_toolDimTags_n_ = _ivectorpair(toolDimTags)
+            api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
+            api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_ = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelDiscreteCut(
+                api_objectDimTags_, api_objectDimTags_n_,
+                api_toolDimTags_, api_toolDimTags_n_,
+                byref(api_outDimTags_), byref(api_outDimTags_n_),
+                byref(api_outDimTagsMap_), byref(api_outDimTagsMap_n_), byref(api_outDimTagsMap_nn_),
+                c_int(tag),
+                c_int(bool(removeObject)),
+                c_int(bool(removeTool)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return (
+                _ovectorpair(api_outDimTags_, api_outDimTags_n_.value),
+                _ovectorvectorpair(api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_))
+
+        @staticmethod
         def synchronize():
             """
             gmsh.model.discrete.synchronize()

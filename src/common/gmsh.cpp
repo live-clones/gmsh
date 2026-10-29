@@ -7680,6 +7680,54 @@ GMSH_API int gmsh::model::discrete::addTorus(const double x, const double y,
 #endif
 }
 
+static void _discreteBoolean(int op, const gmsh::vectorpair &objectDimTags,
+                             const gmsh::vectorpair &toolDimTags,
+                             gmsh::vectorpair &outDimTags,
+                             std::vector<gmsh::vectorpair> &outDimTagsMap,
+                             const int tag, const bool removeObject,
+                             const bool removeTool)
+{
+  outDimTags.clear();
+  outDimTagsMap.clear();
+#if defined(HAVE_DISCRETECAD)
+  _discreteCAD()->booleanOperation(op, objectDimTags, toolDimTags, outDimTags,
+                                   outDimTagsMap, tag, removeObject,
+                                   removeTool);
+#else
+  Msg::Error("Discrete CAD modeler not available");
+#endif
+}
+
+GMSH_API void gmsh::model::discrete::fuse(
+  const vectorpair &objectDimTags, const vectorpair &toolDimTags,
+  vectorpair &outDimTags, std::vector<vectorpair> &outDimTagsMap,
+  const int tag, const bool removeObject, const bool removeTool)
+{
+  if(!_checkInit()) return;
+  _discreteBoolean(0, objectDimTags, toolDimTags, outDimTags, outDimTagsMap,
+                   tag, removeObject, removeTool);
+}
+
+GMSH_API void gmsh::model::discrete::intersect(
+  const vectorpair &objectDimTags, const vectorpair &toolDimTags,
+  vectorpair &outDimTags, std::vector<vectorpair> &outDimTagsMap,
+  const int tag, const bool removeObject, const bool removeTool)
+{
+  if(!_checkInit()) return;
+  _discreteBoolean(1, objectDimTags, toolDimTags, outDimTags, outDimTagsMap,
+                   tag, removeObject, removeTool);
+}
+
+GMSH_API void gmsh::model::discrete::cut(
+  const vectorpair &objectDimTags, const vectorpair &toolDimTags,
+  vectorpair &outDimTags, std::vector<vectorpair> &outDimTagsMap,
+  const int tag, const bool removeObject, const bool removeTool)
+{
+  if(!_checkInit()) return;
+  _discreteBoolean(2, objectDimTags, toolDimTags, outDimTags, outDimTagsMap,
+                   tag, removeObject, removeTool);
+}
+
 GMSH_API void gmsh::model::discrete::synchronize()
 {
   if(!_checkInit()) return;

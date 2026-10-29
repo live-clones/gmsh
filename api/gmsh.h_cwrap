@@ -6504,6 +6504,102 @@ namespace gmsh { // Top-level functions
         return result_api_;
       }
 
+      // gmsh::model::discrete::fuse
+      //
+      // Compute the boolean union (the fusion) of the volumes `objectDimTags' and
+      // `toolDimTags' (vectors of (dim, tag) pairs) in the discrete CAD
+      // representation, with the exact mesh booleans of libigl. The surfaces of
+      // the result keep the parameters of those they come from. Return the
+      // resulting volumes in `outDimTags', and the correspondance between input
+      // and resulting entities in `outDimTagsMap'. If `tag' is positive, try to
+      // set the tag explicitly (only valid if the boolean operation results in a
+      // single entity). Remove the object if `removeObject' is set. Remove the
+      // tool if `removeTool' is set.
+      inline void fuse(const gmsh::vectorpair & objectDimTags,
+                       const gmsh::vectorpair & toolDimTags,
+                       gmsh::vectorpair & outDimTags,
+                       std::vector<gmsh::vectorpair> & outDimTagsMap,
+                       const int tag = -1,
+                       const bool removeObject = true,
+                       const bool removeTool = true)
+      {
+        int ierr = 0;
+        int *api_objectDimTags_; size_t api_objectDimTags_n_; vectorpair2intptr(objectDimTags, &api_objectDimTags_, &api_objectDimTags_n_);
+        int *api_toolDimTags_; size_t api_toolDimTags_n_; vectorpair2intptr(toolDimTags, &api_toolDimTags_, &api_toolDimTags_n_);
+        int *api_outDimTags_; size_t api_outDimTags_n_;
+        int **api_outDimTagsMap_; size_t *api_outDimTagsMap_n_, api_outDimTagsMap_nn_;
+        gmshModelDiscreteFuse(api_objectDimTags_, api_objectDimTags_n_, api_toolDimTags_, api_toolDimTags_n_, &api_outDimTags_, &api_outDimTags_n_, &api_outDimTagsMap_, &api_outDimTagsMap_n_, &api_outDimTagsMap_nn_, tag, (int)removeObject, (int)removeTool, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_objectDimTags_);
+        gmshFree(api_toolDimTags_);
+        outDimTags.resize(api_outDimTags_n_ / 2); for(size_t i = 0; i < api_outDimTags_n_ / 2; ++i){ outDimTags[i].first = api_outDimTags_[i * 2 + 0]; outDimTags[i].second = api_outDimTags_[i * 2 + 1]; } gmshFree(api_outDimTags_);
+        outDimTagsMap.resize(api_outDimTagsMap_nn_); for(size_t i = 0; i < api_outDimTagsMap_nn_; ++i){ outDimTagsMap[i].resize(api_outDimTagsMap_n_[i] / 2); for(size_t j = 0; j < api_outDimTagsMap_n_[i] / 2; ++j){ outDimTagsMap[i][j].first = api_outDimTagsMap_[i][j * 2 + 0]; outDimTagsMap[i][j].second = api_outDimTagsMap_[i][j * 2 + 1]; } gmshFree(api_outDimTagsMap_[i]); } gmshFree(api_outDimTagsMap_); gmshFree(api_outDimTagsMap_n_);
+      }
+
+      // gmsh::model::discrete::intersect
+      //
+      // Compute the boolean intersection (the common parts) of the volumes
+      // `objectDimTags' and `toolDimTags' (vectors of (dim, tag) pairs) in the
+      // discrete CAD representation, with the exact mesh booleans of libigl. The
+      // surfaces of the result keep the parameters of those they come from. Return
+      // the resulting volumes in `outDimTags', and the correspondance between
+      // input and resulting entities in `outDimTagsMap'. If `tag' is positive, try
+      // to set the tag explicitly (only valid if the boolean operation results in
+      // a single entity). Remove the object if `removeObject' is set. Remove the
+      // tool if `removeTool' is set.
+      inline void intersect(const gmsh::vectorpair & objectDimTags,
+                            const gmsh::vectorpair & toolDimTags,
+                            gmsh::vectorpair & outDimTags,
+                            std::vector<gmsh::vectorpair> & outDimTagsMap,
+                            const int tag = -1,
+                            const bool removeObject = true,
+                            const bool removeTool = true)
+      {
+        int ierr = 0;
+        int *api_objectDimTags_; size_t api_objectDimTags_n_; vectorpair2intptr(objectDimTags, &api_objectDimTags_, &api_objectDimTags_n_);
+        int *api_toolDimTags_; size_t api_toolDimTags_n_; vectorpair2intptr(toolDimTags, &api_toolDimTags_, &api_toolDimTags_n_);
+        int *api_outDimTags_; size_t api_outDimTags_n_;
+        int **api_outDimTagsMap_; size_t *api_outDimTagsMap_n_, api_outDimTagsMap_nn_;
+        gmshModelDiscreteIntersect(api_objectDimTags_, api_objectDimTags_n_, api_toolDimTags_, api_toolDimTags_n_, &api_outDimTags_, &api_outDimTags_n_, &api_outDimTagsMap_, &api_outDimTagsMap_n_, &api_outDimTagsMap_nn_, tag, (int)removeObject, (int)removeTool, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_objectDimTags_);
+        gmshFree(api_toolDimTags_);
+        outDimTags.resize(api_outDimTags_n_ / 2); for(size_t i = 0; i < api_outDimTags_n_ / 2; ++i){ outDimTags[i].first = api_outDimTags_[i * 2 + 0]; outDimTags[i].second = api_outDimTags_[i * 2 + 1]; } gmshFree(api_outDimTags_);
+        outDimTagsMap.resize(api_outDimTagsMap_nn_); for(size_t i = 0; i < api_outDimTagsMap_nn_; ++i){ outDimTagsMap[i].resize(api_outDimTagsMap_n_[i] / 2); for(size_t j = 0; j < api_outDimTagsMap_n_[i] / 2; ++j){ outDimTagsMap[i][j].first = api_outDimTagsMap_[i][j * 2 + 0]; outDimTagsMap[i][j].second = api_outDimTagsMap_[i][j * 2 + 1]; } gmshFree(api_outDimTagsMap_[i]); } gmshFree(api_outDimTagsMap_); gmshFree(api_outDimTagsMap_n_);
+      }
+
+      // gmsh::model::discrete::cut
+      //
+      // Compute the boolean difference between the volumes `objectDimTags' and
+      // `toolDimTags' (vectors of (dim, tag) pairs) in the discrete CAD
+      // representation, with the exact mesh booleans of libigl. The surfaces of
+      // the result keep the parameters of those they come from. Return the
+      // resulting volumes in `outDimTags', and the correspondance between input
+      // and resulting entities in `outDimTagsMap'. If `tag' is positive, try to
+      // set the tag explicitly (only valid if the boolean operation results in a
+      // single entity). Remove the object if `removeObject' is set. Remove the
+      // tool if `removeTool' is set.
+      inline void cut(const gmsh::vectorpair & objectDimTags,
+                      const gmsh::vectorpair & toolDimTags,
+                      gmsh::vectorpair & outDimTags,
+                      std::vector<gmsh::vectorpair> & outDimTagsMap,
+                      const int tag = -1,
+                      const bool removeObject = true,
+                      const bool removeTool = true)
+      {
+        int ierr = 0;
+        int *api_objectDimTags_; size_t api_objectDimTags_n_; vectorpair2intptr(objectDimTags, &api_objectDimTags_, &api_objectDimTags_n_);
+        int *api_toolDimTags_; size_t api_toolDimTags_n_; vectorpair2intptr(toolDimTags, &api_toolDimTags_, &api_toolDimTags_n_);
+        int *api_outDimTags_; size_t api_outDimTags_n_;
+        int **api_outDimTagsMap_; size_t *api_outDimTagsMap_n_, api_outDimTagsMap_nn_;
+        gmshModelDiscreteCut(api_objectDimTags_, api_objectDimTags_n_, api_toolDimTags_, api_toolDimTags_n_, &api_outDimTags_, &api_outDimTags_n_, &api_outDimTagsMap_, &api_outDimTagsMap_n_, &api_outDimTagsMap_nn_, tag, (int)removeObject, (int)removeTool, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_objectDimTags_);
+        gmshFree(api_toolDimTags_);
+        outDimTags.resize(api_outDimTags_n_ / 2); for(size_t i = 0; i < api_outDimTags_n_ / 2; ++i){ outDimTags[i].first = api_outDimTags_[i * 2 + 0]; outDimTags[i].second = api_outDimTags_[i * 2 + 1]; } gmshFree(api_outDimTags_);
+        outDimTagsMap.resize(api_outDimTagsMap_nn_); for(size_t i = 0; i < api_outDimTagsMap_nn_; ++i){ outDimTagsMap[i].resize(api_outDimTagsMap_n_[i] / 2); for(size_t j = 0; j < api_outDimTagsMap_n_[i] / 2; ++j){ outDimTagsMap[i][j].first = api_outDimTagsMap_[i][j * 2 + 0]; outDimTagsMap[i][j].second = api_outDimTagsMap_[i][j * 2 + 1]; } gmshFree(api_outDimTagsMap_[i]); } gmshFree(api_outDimTagsMap_); gmshFree(api_outDimTagsMap_n_);
+      }
+
       // gmsh::model::discrete::synchronize
       //
       // Synchronize the discrete CAD representation with the current Gmsh model:

@@ -65,6 +65,7 @@
 #cmakedefine HAVE_POPPLER
 #cmakedefine HAVE_QUADTRI
 #cmakedefine HAVE_DISCRETECAD
+#cmakedefine HAVE_LIBIGL
 #cmakedefine HAVE_QUADMESHINGTOOLS
 #cmakedefine HAVE_SALOME
 #cmakedefine HAVE_SGEOM

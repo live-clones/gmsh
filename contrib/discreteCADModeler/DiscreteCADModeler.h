@@ -36,16 +36,15 @@ public:
   // a triangulation (oriented outwards for the surfaces of a volume) bounded
   // by loops of curves, a negative tag for a curve used backwards, the
   // vertices inside it, the parameters of the corners of its triangles
-  // (computed from the triangulation by synchronize if empty), and its seam
-  // (0 if none): a curve used twice in its loop, with the parameters of its
-  // nodes on its two sides
+  // (computed from the triangulation by synchronize if empty), and its seams:
+  // the curves used twice in its loops, with the parameters of their nodes on
+  // their two sides (the side of the curve used forwards first)
   struct Surface {
     std::vector<int> curves;
     std::vector<std::array<int, 3> > triangles;
     std::vector<int> embeddedVertices;
     std::vector<std::array<std::array<double, 2>, 3> > uv;
-    int seam;
-    std::vector<std::array<double, 2> > seamUV[2];
+    std::map<int, std::array<std::vector<std::array<double, 2> >, 2> > seams;
   };
   // a closed shell of surfaces, a negative tag for a surface used reversed
   struct Volume {
@@ -92,6 +91,9 @@ private:
   // the axes eu, ev from o
   void _planarUV(int surface, const double o[3], const double eu[3],
                  const double ev[3]);
+  // remove a volume, and its surfaces, curves and vertices that no other
+  // entity uses
+  void _removeVolume(int tag);
   std::vector<std::array<int, 3> > _fillEllipse(const Frame &f, double rx,
                                                 double ry, double w,
                                                 const std::vector<int> &ring);
@@ -129,6 +131,17 @@ public:
   // center circle and r2 of its section
   bool addTorus(int &tag, double x, double y, double z, double r1, double r2,
                 const std::vector<double> &zAxis, double tolerance);
+  // the boolean operation op (0: union, 1: intersection, 2: difference) of
+  // the volumes objectDimTags and toolDimTags, with libigl: the resulting
+  // volumes in outDimTags (the first one with the tag tag if positive), and
+  // those coming from each input entity in outDimTagsMap; the surfaces of the
+  // result keep the parameters of those they come from
+  bool booleanOperation(
+    int op, const std::vector<std::pair<int, int> > &objectDimTags,
+    const std::vector<std::pair<int, int> > &toolDimTags,
+    std::vector<std::pair<int, int> > &outDimTags,
+    std::vector<std::vector<std::pair<int, int> > > &outDimTagsMap, int tag,
+    bool removeObject, bool removeTool);
   // the entities copied into the model, replacing those of the previous call
   void synchronize(GModel *model);
 };
