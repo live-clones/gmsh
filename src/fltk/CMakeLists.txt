@@ -5,6 +5,9 @@
 
 set(SRC
   FlGui.cpp
+    gmshScheme.cpp
+    desktop.cpp
+    icons.cpp
     graphicWindow.cpp
       openglWindow.cpp
     optionWindow.cpp
@@ -25,6 +28,9 @@ set(SRC
     fileDialogs.cpp
     extraDialogs.cpp
     windowPlacement.cpp
+    widthRules.cpp
+    toolDock.cpp
+    targetList.cpp
     classificationEditor.cpp
     partitionDialog.cpp
     inputValue.cpp

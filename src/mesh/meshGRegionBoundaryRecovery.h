@@ -17,16 +17,6 @@ class GRegion;
 class MVertex;
 class splitQuadRecovery;
 
-// A Delaunay tetrahedralization of the vertices of the boundary mesh of a
-// region, computed by the caller: tetNode holds 4 positions in vertices per
-// tet, and neighbors[4 * t + f] the tet across the facet opposite node f, or -1
-// on the convex hull
-struct initialTetrahedralization {
-  std::vector<MVertex *> vertices;
-  std::vector<std::uint32_t> tetNode;
-  std::vector<std::int64_t> neighbors;
-};
-
 // The boundary recovery on flat arrays: the tetrahedralization of the
 // vertices (4 positions per tet in tetNode, tetNeighbors[4 * t + f] the tet
 // across the facet opposite node f or -1), the triangles and segments to
@@ -88,10 +78,8 @@ MVertex *newSteinerVertex(const boundaryRecoveryOutput &out, std::size_t k,
 // in a Delaunay tetrahedralization of its vertices with TetGen's algorithm,
 // inserting Steiner points if needed (the curve and surface meshes are then
 // updated, and the new boundary vertices added to their curve or surface). The
-// tetrahedra are stored in gr->tetrahedra. The initial tetrahedralization is
-// computed here unless init is given: the tetrahedra then cover its convex
-// hull, otherwise those outside the surfaces are removed
-bool meshGRegionBoundaryRecovery(GRegion *gr, splitQuadRecovery *sqr = nullptr,
-                                 const initialTetrahedralization *init = nullptr);
+// tetrahedra are stored in gr->tetrahedra, those outside the surfaces removed.
+// A quadrangle already in sqr keeps its apex, otherwise one is created
+bool meshGRegionBoundaryRecovery(GRegion *gr, splitQuadRecovery *sqr = nullptr);
 
 #endif

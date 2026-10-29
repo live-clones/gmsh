@@ -4,9 +4,11 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <FL/Fl_Tabs.H>
+#include <FL/Fl_Scroll.H>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Return_Button.H>
 #include "FlGui.h"
+#include "accentTabs.h"
 #include "drawContext.h"
 #include "statisticsWindow.h"
 #include "paletteWindow.h"
@@ -105,21 +107,25 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
   FL_NORMAL_SIZE -= deltaFontSize;
 
   int num = 0;
-  int width = 26 * FL_NORMAL_SIZE;
+  int width = TW;
   int height = 6 * WB + 19 * BH;
+  // the right margin, clear of the scrollbar of a short window
+  int right = width - 2 * WB - Fl::scrollbar_size();
 
   win = new paletteWindow(width, height,
                           CTX::instance()->nonModalWindows ? true : false,
                           "Statistics",
                           CTX::instance()->statOffset);
   win->box(GMSH_WINDOW_BOX);
+  Fl_Tabs *tabs;
   {
-    Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);
+    Fl_Tabs *o = tabs =
+      new accentTabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);
     {
-      group[0] = new Fl_Group(WB, WB + BH, width - 2 * WB,
-                              height - 3 * WB - 2 * BH, "Geometry");
+      group[0] = new Fl_Scroll(WB, WB + BH, width - 2 * WB,
+                               height - 3 * WB - 2 * BH, "Geometry");
       // the elementary entities, and the physical groups, by dimension
-      int cw = 8 * FL_NORMAL_SIZE;
+      int cw = IW;
       new Fl_Box(2 * WB, 2 * WB + 1 * BH, cw, 2 * BH, "Elementary\nentities");
       new Fl_Box(3 * WB + cw, 2 * WB + 1 * BH, cw, 2 * BH, "Physical\ngroups");
       const char *rows[4] = {"Points", "Curves", "Surfaces", "Volumes"};
@@ -129,14 +135,14 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
         value[num++] =
           new Fl_Output(3 * WB + cw, 2 * WB + (r + 3) * BH, cw, BH);
         Fl_Box *b = new Fl_Box(3 * WB + 2 * cw, 2 * WB + (r + 3) * BH,
-                               width - 5 * WB - 2 * cw, BH, rows[r]);
+                               right - 3 * WB - 2 * cw, BH, rows[r]);
         b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
       }
       group[0]->end();
     }
     {
-      group[1] = new Fl_Group(WB, WB + BH, width - 2 * WB,
-                              height - 3 * WB - 2 * BH, "Mesh");
+      group[1] = new Fl_Scroll(WB, WB + BH, width - 2 * WB,
+                               height - 3 * WB - 2 * BH, "Mesh");
       const char *rows[12] = {"Nodes",      "Points",      "Lines",
                               "Triangles",  "Quadrangles", "Polygons",
                               "Tetrahedra", "Hexahedra",   "Prisms",
@@ -164,12 +170,12 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
 
       for(int i = 0; i < 3; i++) {
         int ww = 3 * FL_NORMAL_SIZE;
-        new Fl_Box(FL_NO_BOX, width - 3 * ww - 2 * WB, 2 * WB + (14 + i) * BH,
-                   ww, BH, "Plot");
-        butt[2 * i] = new Fl_Button(width - 2 * ww - 2 * WB,
-                                    2 * WB + (14 + i) * BH, ww, BH, "X-Y");
-        butt[2 * i + 1] = new Fl_Button(width - ww - 2 * WB,
-                                        2 * WB + (14 + i) * BH, ww, BH, "3D");
+        new Fl_Box(FL_NO_BOX, right - 3 * ww, 2 * WB + (14 + i) * BH, ww, BH,
+                   "Plot");
+        butt[2 * i] =
+          new Fl_Button(right - 2 * ww, 2 * WB + (14 + i) * BH, ww, BH, "X-Y");
+        butt[2 * i + 1] =
+          new Fl_Button(right - ww, 2 * WB + (14 + i) * BH, ww, BH, "3D");
       }
       static const QM_HISTO qmh0 = QMH_SICN_XY, qmh1 = QMH_SICN_3D,
                             qmh2 = QMH_GAMMA_XY, qmh3 = QMH_GAMMA_3D,
@@ -182,17 +188,17 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
       butt[5]->callback(statistics_histogram_cb, (void *)&qmh5);
 
       visible =
-        new Fl_Check_Button(2 * WB, 2 * WB + 17 * BH + WB, width - 4 * WB, BH,
+        new Fl_Check_Button(2 * WB, 2 * WB + 17 * BH + WB, right - 2 * WB, BH,
                             "Compute statistics for visible entities only");
 
       group[1]->end();
     }
     {
-      group[2] = new Fl_Group(WB, WB + BH, width - 2 * WB,
-                              height - 3 * WB - 2 * BH, "Post-processing");
+      group[2] = new Fl_Scroll(WB, WB + BH, width - 2 * WB,
+                               height - 3 * WB - 2 * BH, "Post-processing");
       // the data as given, and the elements the adaptive views are refined
       // into
-      int cw = 8 * FL_NORMAL_SIZE;
+      int cw = IW;
       new Fl_Box(2 * WB, 2 * WB + 1 * BH, cw, BH, "Data");
       new Fl_Box(3 * WB + cw, 2 * WB + 1 * BH, cw, BH, "Adapted");
       const char *rows[13] = {
@@ -208,12 +214,19 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
                               "those refined apart where clipping planes cut");
         // (apart from the fields, which are greyed out when empty)
         Fl_Box *b = new Fl_Box(3 * WB + 2 * cw, 2 * WB + (r + 2) * BH,
-                               width - 5 * WB - 2 * cw, BH, rows[r]);
+                               right - 3 * WB - 2 * cw, BH, rows[r]);
         b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
       }
       group[2]->end();
     }
     o->end();
+    // taller, the tabs stretch and their content stays at the top; shorter,
+    // it scrolls
+    o->resizable(group[0]);
+    for(int i = 0; i < 3; i++) {
+      group[i]->resizable(nullptr);
+      ((Fl_Scroll *)group[i])->type(Fl_Scroll::VERTICAL);
+    }
   }
 
   for(int i = 0; i < num; i++) {
@@ -231,6 +244,14 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
   }
 
   win->end();
+  // as narrow as the option window, wider as the window is widened: the names
+  // of the rows widen, the plot buttons (from 9 em before the right margin)
+  // and Update follow the right margin
+  ((paletteWindow *)win)->followWidth(right - 9 * FL_NORMAL_SIZE, right);
+  // as tall as one likes: the tabs take the height, the row below them stays
+  // at the bottom
+  win->resizable(tabs);
+  ((paletteWindow *)win)->sizeRange(width, 7 * BH + 3 * WB);
 
   FL_NORMAL_SIZE += deltaFontSize;
 }

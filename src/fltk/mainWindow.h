@@ -10,6 +10,7 @@
 #include <FL/Fl_Double_Window.H>
 #include <FL/fl_ask.H>
 #include "windowPlacement.h"
+#include "paletteWindow.h"
 
 // Derive the main window from Fl_Window (it shows up faster that way)
 class mainWindow : public Fl_Window {
@@ -18,6 +19,15 @@ private:
   int *_offset;
 
 public:
+  // set while tool windows are docked: closes the one shown in window w, or
+  // returns false
+  inline static bool (*closeToolHook)(Fl_Window *w) = nullptr;
+  // called when a window gets the focus (the desktop may have switched
+  // between light and dark meanwhile, see FlGui)
+  inline static void (*focusHook)() = nullptr;
+  // set by the main window while it has a dock: the drag of a tool to the
+  // dock over the main window, and its drop
+  inline static int (*dropHook)(int event) = nullptr;
   mainWindow(int w, int h, bool nonModal, const char *l = nullptr,
              int *offset = nullptr)
     : Fl_Window(w, h, l), _offset(offset)
@@ -28,6 +38,19 @@ public:
   virtual int handle(int event)
   {
     switch(event) {
+    case FL_FOCUS:
+      if(focusHook) focusHook();
+      break;
+    case FL_PUSH:
+      paletteWindow::dragged = nullptr; // see paletteWindow::handle()
+      break;
+    case FL_DND_ENTER:
+    case FL_DND_DRAG:
+    case FL_DND_LEAVE:
+    case FL_DND_RELEASE:
+    case FL_PASTE:
+      if(dropHook && paletteWindow::dragged) return dropHook(event);
+      break;
     case FL_SHORTCUT:
     case FL_KEYBOARD:
 #if defined(__APPLE__)
@@ -36,6 +59,9 @@ public:
       if(Fl::test_shortcut(FL_ALT + FL_F + 4)) {
 #else
       if(Fl::test_shortcut(FL_CTRL + 'w')) {
+#endif
+#if !defined(WIN32) // Cmd-W or Ctrl-W, not Alt-F4
+        if(closeToolHook && closeToolHook(this)) return 1;
 #endif
         if(fl_choice("Do you really want to quit?", "Cancel", "Quit", nullptr))
           do_callback();
@@ -54,6 +80,7 @@ public:
     if(_offset) placeWindow(this, _offset);
     if(non_modal() && !shown()) Fl_Window::show(); // fix ordering
     Fl_Window::show();
+    titleBarColor(this);
   }
 };
 

@@ -19,12 +19,14 @@ Mesh lines
 Mesh surfaces
 @item 3 or F3
 Mesh volumes
-@item Escape
-Cancel lasso zoom/selection, toggle mouse selection ON/OFF
+@item Escape (with any modifier)
+Leave full screen, cancel a lasso, or toggle mouse selection on/off
 @item e
 End/accept selection in geometry creation mode
 @item g
 Go to geometry module
+@item i or -
+Invert selection in geometry creation mode
 @item m
 Go to mesh module
 @item p
@@ -33,6 +35,10 @@ Go to post-processing module
 Abort selection in geometry creation mode
 @item s
 Go to solver module
+@item u
+Undo last selection in geometry creation mode
+@item w
+Merge the files matching the watch pattern
 @item x
 Toggle x coordinate freeze in geometry creation mode
 @item y
@@ -61,14 +67,16 @@ Move only along x coordinate in geometry creation mode
 Move only along y coordinate in geometry creation mode
 @item Shift+z
 Move only along z coordinate in geometry creation mode
-@item Shift+Escape
-Enable full mouse selection
 @item Ctrl+d
-Attach/detach menu
+Dock/undock current tool window
+@item Shift+Ctrl+d
+Dock/undock all tool windows
 @item Ctrl+e
 Export project
 @item Ctrl+f
 Enter full screen
+@item Ctrl+h
+Show keyboard and mouse usage
 @item Ctrl+i
 Show statistics window
 @item Ctrl+j
@@ -113,6 +121,8 @@ Loop through axes modes
 Hide/show bounding boxes
 @item Alt+c
 Loop through predefined color schemes
+@item Alt+d
+Loop through geometry surface display modes
 @item Alt+e
 Hide/Show element outlines for visible post-pro views
 @item Alt+f
@@ -157,6 +167,8 @@ Hide/show mesh volume faces
 Loop through predefined colormaps
 @item Alt+Shift+d
 Hide/show mesh surface faces
+@item Alt+Shift+e
+Hide/Show element outlines for visible post-pro views
 @item Alt+Shift+l
 Hide/show mesh lines
 @item Alt+Shift+p
@@ -175,6 +187,8 @@ Set -Y view
 Set -Z view
 @item Alt+Shift+1
 Reset bounding box around visible entities
-@item Alt+Ctrl++1
+@item Alt+Ctrl+1
 Sync scale between viewports
+@item Alt+Ctrl+t
+Show/hide menu
 @end table

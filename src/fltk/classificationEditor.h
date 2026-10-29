@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <set>
+#include <FL/Fl.H>
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Value_Input.H>
@@ -47,8 +48,9 @@ public:
 #else
   std::vector<double> edges_detected, edges_lonly;
 #endif
-  classificationEditor();
-  void show() { window->show(); }
+  classificationEditor(int deltaFontSize);
+  ~classificationEditor() { Fl::delete_widget(window); }
+  void show();
 };
 
 void mesh_classify_cb(Fl_Widget *w, void *data);

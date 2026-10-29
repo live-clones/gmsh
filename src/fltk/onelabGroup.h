@@ -7,11 +7,12 @@
 #define ONELAB_GROUP_H
 
 #include <vector>
+#include <set>
+#include <functional>
 #include <FL/Fl.H>
 #include <FL/Fl_Tree.H>
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Menu_Button.H>
-#include <FL/Fl_Input.H>
 #include "onelab.h"
 
 class viewButton;
@@ -27,12 +28,18 @@ private:
   bool _stop;
   double _baseWidth, _indent;
   int _minWindowWidth, _minWindowHeight;
-  double _widgetLabelRatio;
   std::set<std::string> _manuallyClosed;
-  bool _enableTreeWidgetResize;
+  // the submenus of the modules are closed when the tree is first built
   bool _firstBuild;
   bool _hasContext;
   void _computeWidths();
+  // the width left for the widget of an item at its depth
+  int _rowWidth(Fl_Tree_Item *n);
+  // the widget of an item, built by make() in a group of the width left at
+  // its depth and the height of a row, which the tree places; the groups are
+  // deleted at the next rebuild (see rebuildTree())
+  void _addRow(Fl_Tree_Item *n,
+               const std::function<void(int ww, int hh)> &make);
   template <class T> void _addParameter(T &p);
   void _addMenu(const std::string &path, Fl_Callback *callback, void *data);
   void _addSolverMenu(int num);
@@ -45,7 +52,6 @@ public:
   void updateGearMenu();
   void rebuildSolverList();
   void rebuildTree(bool deleteWidgets);
-  void enableTreeWidgetResize(bool value) { _enableTreeWidgetResize = value; }
   void redrawTree() { _tree->redraw(); }
   void openTreeItem(const std::string &name);
   void closeTreeItem(const std::string &name);

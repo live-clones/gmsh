@@ -117,35 +117,16 @@ public:
     glColor4fv(color);
     gl_draw(str);
   }
-// FLTK draws a string as a texture, kept in a pile of a fixed height, from
-// 1.4 on and on macOS before that; the pile is where the three calls below
-// go, and where they do nothing at all otherwise
-#if((FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION >= 4)) || defined(__APPLE__)
-#define GMSH_FLTK_STRING_TEXTURES 1
-#endif
-
-  bool keepsStringTextures()
-  {
-#if defined(GMSH_FLTK_STRING_TEXTURES)
-    return true;
-#else
-    return false;
-#endif
-  }
+  // FLTK draws a string as a texture, kept in a pile of a fixed height
+  bool keepsStringTextures() { return true; }
   void resetFontTextures()
   {
-#if defined(GMSH_FLTK_STRING_TEXTURES)
     // the strings are drawn again: their textures are made again with them
     gl_texture_pile_height(gl_texture_pile_height());
-#endif
   }
   void reserveStringTextures(std::size_t n)
   {
-#if defined(GMSH_FLTK_STRING_TEXTURES)
     if(gl_texture_pile_height() < (int)n) gl_texture_pile_height((int)n);
-#else
-    (void)n;
-#endif
   }
   bool mouseIsPressed() { return Fl::pushed() ? true : false; }
   std::string getName() { return "Fltk"; }

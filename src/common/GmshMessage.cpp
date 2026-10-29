@@ -520,11 +520,11 @@ void Msg::Error(const char *fmt, ...)
     if(_client) _client->Error(str);
 #if defined(HAVE_FLTK)
     if(FlGui::available()){
-      std::string tmp = std::string(CTX::instance()->guiColorScheme ? "@B72@." : "@C1@.")
+      std::string tmp = std::string(CTX::instance()->guiDark ? "@B72@." : "@C1@.")
         + "Error   : " + str;
       FlGui::instance()->addMessage(tmp.c_str());
       FlGui::instance()->setLastStatus
-        (CTX::instance()->guiColorScheme ? FL_DARK_RED : FL_RED);
+        (CTX::instance()->guiDark ? FL_DARK_RED : FL_RED);
       FlGui::check(true);
     }
 #endif
@@ -577,7 +577,7 @@ void Msg::Warning(const char *fmt, ...)
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    std::string tmp = std::string(CTX::instance()->guiColorScheme ? "@B152@." : "@C5@.")
+    std::string tmp = std::string(CTX::instance()->guiDark ? "@B152@." : "@C5@.")
       + "Warning : " + str;
     FlGui::instance()->addMessage(tmp.c_str());
     if(_firstWarning.empty()) _firstWarning = str;
@@ -676,7 +676,7 @@ void Msg::Direct(const char *fmt, ...)
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    std::string tmp = std::string(CTX::instance()->guiColorScheme ? "@B136@." : "@C4@.")
+    std::string tmp = std::string(CTX::instance()->guiDark ? "@B136@." : "@C4@.")
       + str;
     FlGui::instance()->addMessage(tmp.c_str());
     FlGui::check(true);
@@ -899,8 +899,8 @@ void Msg::PrintErrorCounter(const char *title)
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
     std::string col = GetErrorCount() ?
-      std::string(CTX::instance()->guiColorScheme ? "@B72@." : "@C1@.") :
-      std::string(CTX::instance()->guiColorScheme ? "@B152@." : "@C5@.");
+      std::string(CTX::instance()->guiDark ? "@B72@." : "@C1@.") :
+      std::string(CTX::instance()->guiDark ? "@B152@." : "@C5@.");
     FlGui::instance()->addMessage((col + prefix + line).c_str());
     FlGui::instance()->addMessage((col + prefix + title).c_str());
     FlGui::instance()->addMessage((col + prefix + warn).c_str());

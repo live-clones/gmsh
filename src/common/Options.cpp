@@ -1255,6 +1255,16 @@ std::string opt_general_executable_filename(OPT_ARGS_STR)
   return CTX::instance()->exeFileName;
 }
 
+std::string opt_general_floating_tools(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET) CTX::instance()->floatingTools = val;
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->applyFloatingTools();
+#endif
+  return CTX::instance()->floatingTools;
+}
+
 std::string opt_general_default_filename(OPT_ARGS_STR)
 {
   if(action & GMSH_SET) CTX::instance()->defaultFileName = val;
@@ -2326,7 +2336,7 @@ double opt_general_gui_color_scheme(OPT_ARGS_NUM)
   if(action & GMSH_SET) CTX::instance()->guiColorScheme = (int)val;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI)) {
-    FlGui::instance()->options->general.butt[21]->value(
+    FlGui::instance()->options->general.choice[9]->value(
       CTX::instance()->guiColorScheme);
   }
   if(action & GMSH_SET && FlGui::available()) {
@@ -2523,6 +2533,12 @@ double opt_general_detached_menu(OPT_ARGS_NUM)
   return CTX::instance()->detachedMenu;
 }
 
+double opt_general_dock_width(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->dockWidth = (int)val;
+  return CTX::instance()->dockWidth;
+}
+
 double opt_general_detached_process(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->detachedProcess = (int)val;
@@ -2537,7 +2553,10 @@ double opt_general_menu_size0(OPT_ARGS_NUM)
   }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI)) {
-    FlGui::instance()->graph[0]->setMenuWidth(CTX::instance()->menuSize[0]);
+    if(CTX::instance()->menuSize[0] > 0)
+      FlGui::instance()->graph[0]->setMenuWidth(CTX::instance()->menuSize[0]);
+    else
+      FlGui::instance()->graph[0]->hideMenu();
   }
 #endif
   return CTX::instance()->menuSize[0];
@@ -2574,6 +2593,12 @@ double opt_general_option_offset1(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->optOffset[1] = (int)val;
   return CTX::instance()->optOffset[1];
+}
+
+double opt_general_option_height(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->optHeight = (int)val;
+  return CTX::instance()->optHeight;
 }
 
 double opt_general_plugin_offset0(OPT_ARGS_NUM)
@@ -2682,6 +2707,30 @@ double opt_general_clip_offset1(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipOffset[1] = (int)val;
   return CTX::instance()->clipOffset[1];
+}
+
+double opt_general_partition_offset0(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->partOffset[0] = (int)val;
+  return CTX::instance()->partOffset[0];
+}
+
+double opt_general_partition_offset1(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->partOffset[1] = (int)val;
+  return CTX::instance()->partOffset[1];
+}
+
+double opt_general_reclassify_offset0(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->reclassifyOffset[0] = (int)val;
+  return CTX::instance()->reclassifyOffset[0];
+}
+
+double opt_general_reclassify_offset1(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->reclassifyOffset[1] = (int)val;
+  return CTX::instance()->reclassifyOffset[1];
 }
 
 double opt_general_manip_offset0(OPT_ARGS_NUM)

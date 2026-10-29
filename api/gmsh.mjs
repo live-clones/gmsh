@@ -9432,16 +9432,16 @@ export function wrapGmsh(Module) {
    *
    * Return last error message, if any.
    *
-   * Return `error'.
+   * Return `message'.
    */
   gmsh.logger.getLastError = function() {
     const tmp = [];
     try {
-      const api_error_ = _alloc(8, tmp);
-      M._gmshLoggerGetLastError(api_error_, ierr);
+      const api_message_ = _alloc(8, tmp);
+      M._gmshLoggerGetLastError(api_message_, ierr);
       if(M.HEAP32[ierr >> 2])
         throw new Error('Could not get last error');
-      return _ostring(api_error_);
+      return _ostring(api_message_);
     }
     finally {
       tmp.forEach((p) => M._free(p));

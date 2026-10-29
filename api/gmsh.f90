@@ -16917,23 +16917,23 @@ module gmsh
   end function gmshLoggerGetTotalMemory
 
   !> Return last error message, if any.
-  subroutine gmshLoggerGetLastError(error, &
+  subroutine gmshLoggerGetLastError(message, &
                                     ierr)
     interface
-    subroutine C_API(api_error_, &
+    subroutine C_API(api_message_, &
                      ierr_) &
       bind(C, name="gmshLoggerGetLastError")
       use, intrinsic :: iso_c_binding
-      type(c_ptr), intent(out) :: api_error_
+      type(c_ptr), intent(out) :: api_message_
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    character(len=:), allocatable, intent(out) :: error
+    character(len=:), allocatable, intent(out) :: message
     integer(c_int), intent(out), optional :: ierr
-    type(c_ptr) :: api_error_
-    call C_API(api_error_=api_error_, &
+    type(c_ptr) :: api_message_
+    call C_API(api_message_=api_message_, &
          ierr_=ierr)
-    error = ostring_(api_error_)
+    message = ostring_(api_message_)
   end subroutine gmshLoggerGetLastError
 
   ! ----------------------------------------------------------------------------

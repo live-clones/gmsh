@@ -25,7 +25,9 @@
 #include "meshGFaceDelaunay.h"
 #endif
 
-static void NoElementsSelectedMode(classificationEditor *e)
+// without update only the buttons change, as when the editor is built at
+// start-up
+static void NoElementsSelectedMode(classificationEditor *e, bool update = true)
 {
   e->buttons[CLASS_BUTTON_SELECT_ELEMENTS]->activate();
   e->buttons[CLASS_BUTTON_SELECT_ALL_ELEMENTS]->activate();
@@ -35,6 +37,7 @@ static void NoElementsSelectedMode(classificationEditor *e)
   e->toggles[CLASS_TOGGLE_BOUNDARY]->deactivate();
   e->inputs[CLASS_VALUE_ANGLE]->deactivate();
   e->buttons[CLASS_BUTTON_CLASSIFY]->deactivate();
+  if(!update) return;
 
   CTX::instance()->meshChanged();
   CTX::instance()->pickElements = 0;
@@ -303,26 +306,26 @@ static void classify_cb(Fl_Widget *w, void *data)
     GModel::current()->createGeometryOfDiscreteEntities();
 
   NoElementsSelectedMode(e);
+  // the entities changed: the visibility list held the old ones
+  FlGui::instance()->resetVisibility();
 }
 
-classificationEditor::classificationEditor() : selected(nullptr)
+classificationEditor::classificationEditor(int deltaFontSize)
+  : selected(nullptr)
 {
-  opt_mesh_lines(0, GMSH_SET | GMSH_GUI, 1.);
-
-  drawContext::global()->draw();
-
+  FL_NORMAL_SIZE -= deltaFontSize;
   int BBB = (int)(1.4 * BB);
-  const int width = (int)(3.15 * BBB), height = (int)(10.5 * BH);
+  const int width = TW, height = (int)(10.5 * BH);
 
-  window = new paletteWindow(width, height,
-                             CTX::instance()->nonModalWindows ? true : false,
-                             "Reclassify 2D");
+  window = new paletteWindow(
+    width, height, CTX::instance()->nonModalWindows ? true : false,
+    "Reclassify 2D", CTX::instance()->reclassifyOffset);
   window->box(GMSH_WINDOW_BOX);
 
   int x = WB, y = WB;
   {
     Fl_Box *b =
-      new Fl_Box(x, y, width, BH,
+      new Fl_Box(x, y, width - 2 * WB, BH,
                  "1. Select mesh elements on which to perform edge detection");
     b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
 
@@ -353,7 +356,8 @@ classificationEditor::classificationEditor() : selected(nullptr)
   }
   {
     y += BH;
-    Fl_Box *b = new Fl_Box(x, y, width, BH, "2. Fine-tune edge selection");
+    Fl_Box *b =
+      new Fl_Box(x, y, width - 2 * WB, BH, "2. Fine-tune edge selection");
     b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
 
     x += WB;
@@ -401,7 +405,7 @@ classificationEditor::classificationEditor() : selected(nullptr)
   }
   {
     y += BH;
-    Fl_Box *b = new Fl_Box(x, y, width, BH,
+    Fl_Box *b = new Fl_Box(x, y, width - 2 * WB, BH,
                            "3. Reclassify surfaces using selected edges");
     b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
 
@@ -414,8 +418,9 @@ classificationEditor::classificationEditor() : selected(nullptr)
       FL_TOGGLE_BUTTON);
 
     y += BH;
-    buttons[CLASS_BUTTON_CLASSIFY] = new Fl_Return_Button(
-      (int)(x /*+ 1.5 * BBB + WB*/), y, BBB, BH, "Reclassify");
+    // on the right, as the action buttons of the other tools
+    buttons[CLASS_BUTTON_CLASSIFY] =
+      new Fl_Return_Button(width - 2 * WB - BBB, y, BBB, BH, "Reclassify");
     buttons[CLASS_BUTTON_CLASSIFY]->callback(classify_cb, this);
     buttons[CLASS_BUTTON_CLASSIFY]->activate();
 
@@ -423,15 +428,20 @@ classificationEditor::classificationEditor() : selected(nullptr)
   }
 
   window->end();
-  window->hotspot(window);
+  // of fixed height, as narrow as the option window, wider as one likes
+  ((paletteWindow *)window)->fixedLayout(width, height, 2 * WB);
 
-  NoElementsSelectedMode(this);
+  NoElementsSelectedMode(this, false);
+  FL_NORMAL_SIZE += deltaFontSize;
+}
+
+void classificationEditor::show()
+{
+  // the edges are what is selected
+  opt_mesh_lines(0, GMSH_SET | GMSH_GUI, 1.);
+  drawContext::global()->draw();
+  window->show();
 }
 
 void mesh_classify_cb(Fl_Widget *w, void *data)
-{
-  // create the (static) editor
-  static classificationEditor *editor = nullptr;
-  if(!editor) editor = new classificationEditor();
-  editor->show();
-}
+{ FlGui::instance()->classify->show(); }

@@ -9,6 +9,7 @@
 // and Andre Battaiola.
 
 #include <FL/fl_draw.H>
+#include <FL/Fl_Input_.H>
 #include "colorbarWindow.h"
 #include "ColorTable.h"
 #include "Context.h"
@@ -16,7 +17,7 @@
 #define EPS 1.e-10
 
 colorbarWindow::colorbarWindow(int x, int y, int w, int h, const char *l)
-  : Fl_Window(x, y, w, h, l)
+  : Fl_Widget(x, y, w, h, l)
 {
   ct = nullptr;
   label = nullptr;
@@ -76,6 +77,7 @@ void colorbarWindow::redraw_range(int a, int b)
   int x1, y1, x2, y2;
   int intensity = 0;
   double H, S, V;
+  int ox = Fl_Widget::x(), oy = Fl_Widget::y();
 
   if(a < 0) a = 0;
   if(b >= ct->size) b = ct->size - 1;
@@ -88,7 +90,7 @@ void colorbarWindow::redraw_range(int a, int b)
 
   // erase region
   fl_color(color_bg);
-  fl_rectf(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
+  fl_rectf(ox + x1, oy + y1, x2 - x1 + 1, y2 - y1 + 1);
 
   // redraw region of entries in interval [a,b]
   if(a > 0) a--;
@@ -108,7 +110,7 @@ void colorbarWindow::redraw_range(int a, int b)
     y = intensity_to_y(intensity);
     if(i != a) {
       fl_color(FL_RED);
-      fl_line(px, py, x, y);
+      fl_line(ox + px, oy + py, ox + x, oy + y);
     }
     px = x;
     py = y;
@@ -128,7 +130,7 @@ void colorbarWindow::redraw_range(int a, int b)
     y = intensity_to_y(intensity);
     if(i != a) {
       fl_color(FL_GREEN);
-      fl_line(px, py, x, y);
+      fl_line(ox + px, oy + py, ox + x, oy + y);
     }
     px = x;
     py = y;
@@ -148,7 +150,7 @@ void colorbarWindow::redraw_range(int a, int b)
     y = intensity_to_y(intensity);
     if(i != a) {
       fl_color(FL_BLUE);
-      fl_line(px, py, x, y);
+      fl_line(ox + px, oy + py, ox + x, oy + y);
     }
     px = x;
     py = y;
@@ -160,7 +162,7 @@ void colorbarWindow::redraw_range(int a, int b)
     y = intensity_to_y(CTX::instance()->unpackAlpha(ct->table[i]));
     if(i != a) {
       fl_color(fl_contrast(FL_BLACK, color_bg));
-      fl_line(px, py, x, y);
+      fl_line(ox + px, oy + py, ox + x, oy + y);
     }
     px = x;
     py = y;
@@ -176,7 +178,7 @@ void colorbarWindow::redraw_range(int a, int b)
     g = CTX::instance()->unpackGreen(color);
     b = CTX::instance()->unpackBlue(color);
     fl_color(r, g, b);
-    fl_line(x, wedge_y, x, wedge_y + wedge_height - 1);
+    fl_line(ox + x, oy + wedge_y, ox + x, oy + wedge_y + wedge_height - 1);
   }
 
   // print colortable mode and help
@@ -184,7 +186,7 @@ void colorbarWindow::redraw_range(int a, int b)
   fl_color(fl_contrast(FL_BLACK, color_bg));
 
   int fh = font_height + 1;
-  int xx0 = 6, xx1 = 11 * fh, yy0 = 6;
+  int xx0 = ox + 6, xx1 = ox + 11 * fh, yy0 = oy + 6;
   if(help_flag) {
     i = 0;
     fl_draw("0-9, Ctrl+0-9, F1-F7", xx0, yy0 + (i + 1) * fh);
@@ -251,26 +253,35 @@ void colorbarWindow::redraw_marker()
   int x, y0, y1;
   char str[50];
   double val;
+  int ox = Fl_Widget::x(), oy = Fl_Widget::y();
 
   y0 = marker_y;
   y1 = h() - 1;
 
   fl_color(color_bg);
-  fl_rectf(0, y0, w(), y1 - y0 + 1);
+  fl_rectf(ox, oy + y0, w(), y1 - y0 + 1);
 
   // draw marker below color wedge
   x = index_to_x(marker_pos);
   fl_color(fl_contrast(FL_BLACK, color_bg));
-  fl_line(x, marker_y, x, marker_y + marker_height);
-  fl_line(x, marker_y, x - 3, marker_y + 6);
-  fl_line(x, marker_y, x + 3, marker_y + 6);
+  fl_line(ox + x, oy + marker_y, ox + x, oy + marker_y + marker_height);
+  fl_line(ox + x, oy + marker_y, ox + x - 3, oy + marker_y + 6);
+  fl_line(ox + x, oy + marker_y, ox + x + 3, oy + marker_y + 6);
 
   // draw marker value
   fl_font(FL_HELVETICA, font_height);
   val =
     minval + (maxval - minval) * ((double)marker_pos / (double)(ct->size - 1));
   sprintf(str, "%g", val);
-  fl_draw(str, 10, label_y);
+  fl_draw(str, ox + 10, oy + label_y);
+}
+
+int colorbarWindow::helpHeight() const
+{
+  // the 16 lines of the help, from 6 pixels below the top, then the wedge, the
+  // marker and its value
+  int fh = font_height + 1;
+  return 6 + 16 * fh + fh / 2 + wedge_height + marker_height + font_height + 5;
 }
 
 void colorbarWindow::draw()
@@ -285,8 +296,10 @@ void colorbarWindow::draw()
     CTX::instance()->unpackGreen(CTX::instance()->color.bg) * FL_NUM_GREEN /
       256,
     CTX::instance()->unpackBlue(CTX::instance()->color.bg) * FL_NUM_BLUE / 256);
+  fl_push_clip(x(), y(), w(), h());
   redraw_range(0, ct->size - 1);
   redraw_marker();
+  fl_pop_clip();
 }
 
 void colorbarWindow::update(const char *name, double min, double max,
@@ -302,7 +315,7 @@ void colorbarWindow::update(const char *name, double min, double max,
 
 int colorbarWindow::handle(int event)
 {
-  if(!ct) return Fl_Window::handle(event);
+  if(!ct) return Fl_Widget::handle(event);
 
   static int p1 = 0, p2 = 0, p3 = 0, p4 = 0;
   static int pentry, move_marker;
@@ -316,7 +329,8 @@ int colorbarWindow::handle(int event)
   case FL_UNFOCUS: return 1;
 
   case FL_ENTER:
-    take_focus(); // force keyboard focus as soon as the mouse enters
+    // the keyboard as soon as the mouse enters, unless typing in a field
+    if(!dynamic_cast<Fl_Input_ *>(Fl::focus())) take_focus();
     return 1;
 
   case FL_LEAVE: return 1;
@@ -537,7 +551,7 @@ int colorbarWindow::handle(int event)
       compute = 1;
     }
     else {
-      return Fl_Window::handle(event);
+      return Fl_Widget::handle(event);
     }
 
     if(compute) {
@@ -550,8 +564,8 @@ int colorbarWindow::handle(int event)
 
   case FL_PUSH:
     ibut = Fl::event_button();
-    xpos = Fl::event_x();
-    ypos = Fl::event_y();
+    xpos = Fl::event_x() - x();
+    ypos = Fl::event_y() - y();
     if(help_flag) {
       help_flag = 0;
       redraw();
@@ -577,8 +591,8 @@ int colorbarWindow::handle(int event)
 
   case FL_RELEASE:
     ibut = Fl::event_button();
-    xpos = Fl::event_x();
-    ypos = Fl::event_y();
+    xpos = Fl::event_x() - x();
+    ypos = Fl::event_y() - y();
     p1 = 0;
     p2 = 0;
     p3 = 0;
@@ -588,14 +602,14 @@ int colorbarWindow::handle(int event)
 
   case FL_DRAG:
     ibut = Fl::event_button();
-    xpos = Fl::event_x();
-    ypos = Fl::event_y();
+    xpos = Fl::event_x() - x();
+    ypos = Fl::event_y() - y();
     modify = 1;
     break;
 
   default:
     // don't know what to do with the event: passing it to parent
-    return Fl_Window::handle(event);
+    return Fl_Widget::handle(event);
   }
 
   // Modify one or more of the color curves
