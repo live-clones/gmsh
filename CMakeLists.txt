@@ -2333,7 +2333,8 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
   include(CTest)
   file(GLOB_RECURSE ALLFILES
        tutorials/*.geo examples/*.geo benchmarks/?d/*.geo benchmarks/extrude/*.geo
-       benchmarks/occ/*.geo benchmarks/io_msh/polytopes.geo
+       benchmarks/occ/*.geo benchmarks/hexdom/*.geo
+       benchmarks/io_msh/polytopes.geo
        benchmarks/io_msh/read_back.geo benchmarks/io_msh/faces.geo
        benchmarks/io_msh/views.geo
        benchmarks/io_vtk/*.geo)
