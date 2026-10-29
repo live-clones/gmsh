@@ -48,6 +48,9 @@ static const char *strokes(const std::string &name)
            "<path d='m16.95 7.05 2.12-2.12M7.05 16.95l-2.12 2.12'/>";
   if(name == "search")
     return "<circle cx='11' cy='11' r='7'/><path d='m21 21-4.3-4.3'/>";
+  if(name == "eye")
+    return "<path d='M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z'/>"
+           "<circle cx='12' cy='12' r='3'/>";
   return "";
 }
 

@@ -501,11 +501,14 @@ private:
       return item;
     return nullptr;
   }
-  // the branch under the pointer, if the pointer is in the tree
+  // the branch under the pointer, if the pointer is in the tree and not on
+  // a button of the row, which tints itself (the switch of a group of views)
   Fl_Tree_Item *_branchBelowMouse()
   {
     Fl_Widget *b = Fl::belowmouse();
-    return (b && contains(b)) ? _branchAtEvent() : nullptr;
+    if(!b || !contains(b)) return nullptr;
+    if(b != this && dynamic_cast<Fl_Button *>(b)) return nullptr;
+    return _branchAtEvent();
   }
   void draw() override
   {
@@ -519,6 +522,9 @@ private:
         Fl_Widget *box = item->widget();
         int right =
           box ? box->x() + box->w() : x() + w() - 1.1 * FL_NORMAL_SIZE;
+        // up to the switch of a group of views, which tints on its own
+        if(Fl_Group *g = box ? box->as_group() : nullptr)
+          if(g->children() > 1) right = g->child(g->children() - 1)->x();
         fl_color(hoverHighlight(color()));
         fl_rectf(item->label_x(), item->y(), right - item->label_x(),
                  item->h());
@@ -541,8 +547,13 @@ public:
     switch(event) {
     case FL_PUSH:
       if(Fl::event_button() == FL_LEFT_MOUSE) {
+        // not when a widget of the row took the click (the switch of a group
+        // of views): FLTK has noted it as pushed
+        Fl_Widget *p = Fl::pushed();
+        bool onWidget = p && p != this && contains(p);
         Fl_Tree_Item *item = _branchAtEvent();
-        if(item && !item->event_on_collapse_icon(prefs())) open_toggle(item);
+        if(item && !onWidget && !item->event_on_collapse_icon(prefs()))
+          open_toggle(item);
       }
       break;
     case FL_ENTER:
@@ -1570,21 +1581,32 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
   onelab::server::instance()->getParameterNames(names, "ONELAB Context");
   setContext(!names.empty());
 
-  // the label of a branch, without the digits that sort it, in a box: a
-  // button on a group of views or a physical group
+  // the label of a branch, without the digits that sort it, in a box; a
+  // group of views has a switch of their visibility beside it, where the
+  // views have their menu arrow; a physical group is a button
   for(Fl_Tree_Item *n = _tree->first(); n; n = n->next()) {
     if(n->has_children()) {
       int ww = _rowWidth(n), hh = rowHeight();
       _tree->begin();
-      Fl_Widget *but;
+      Fl_Widget *but, *row = nullptr;
       if(getPath(n).find("0Modules/Post-processing") != std::string::npos) {
-        but = new Fl_Button(1, 1, ww, hh);
-        but->box(FL_NO_BOX);
+        int bw = FL_NORMAL_SIZE + 2;
+        row = new Fl_Group(1, 1, ww, hh);
+        but = new Fl_Box(1, 1, ww - bw, hh);
         but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
-        but->tooltip("Toggle visibility of child views");
+        Fl_Button *sw = new Fl_Button(1 + ww - bw, 1, bw, hh);
+        sw->box(FL_NO_BOX);
+        sw->color(_tree->color());
+        sw->selection_color(_tree->color());
+        sw->tooltip("Toggle visibility of child views");
+        if(gmshScheme())
+          gmshIcon(sw, "eye", FL_NORMAL_SIZE);
+        else
+          sw->label("@circle");
         char *group = strdup(getPath(n).substr(24).c_str());
         _treeStrings.push_back(group);
-        but->callback(view_group_cb, (void *)group);
+        sw->callback(view_group_cb, (void *)group);
+        ((Fl_Group *)row)->end();
       }
       else if(getPath(n).find("Physical group: ") != std::string::npos) {
         but = new Fl_Button(1, 1, ww, hh);
@@ -1600,10 +1622,11 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
         but = new Fl_Box(1, 1, ww, hh);
         but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
       }
-      _treeWidgets.push_back(but);
+      if(!row) row = but;
+      _treeWidgets.push_back(row);
       onelab::string o(n->label());
       but->copy_label(o.getShortName().c_str());
-      n->widget(but);
+      n->widget(row);
       _tree->end();
     }
   }
