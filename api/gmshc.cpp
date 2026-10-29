@@ -4595,6 +4595,74 @@ GMSH_API int gmshModelDiscreteAddSphere(const double xc, const double yc, const 
   return result_api_;
 }
 
+GMSH_API int gmshModelDiscreteAddRectangle(const double x, const double y, const double z, const double dx, const double dy, const int tag, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::model::discrete::addRectangle(x, y, z, dx, dy, tag);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+  return result_api_;
+}
+
+GMSH_API int gmshModelDiscreteAddDisk(const double xc, const double yc, const double zc, const double rx, const double ry, const int tag, const double * zAxis, const size_t zAxis_n, const double * xAxis, const size_t xAxis_n, const double tolerance, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_zAxis_(zAxis, zAxis + zAxis_n);
+    std::vector<double> api_xAxis_(xAxis, xAxis + xAxis_n);
+    result_api_ = gmsh::model::discrete::addDisk(xc, yc, zc, rx, ry, tag, api_zAxis_, api_xAxis_, tolerance);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+  return result_api_;
+}
+
+GMSH_API int gmshModelDiscreteAddCylinder(const double x, const double y, const double z, const double dx, const double dy, const double dz, const double r, const int tag, const double tolerance, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::model::discrete::addCylinder(x, y, z, dx, dy, dz, r, tag, tolerance);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+  return result_api_;
+}
+
+GMSH_API int gmshModelDiscreteAddCone(const double x, const double y, const double z, const double dx, const double dy, const double dz, const double r1, const double r2, const int tag, const double tolerance, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::model::discrete::addCone(x, y, z, dx, dy, dz, r1, r2, tag, tolerance);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+  return result_api_;
+}
+
+GMSH_API int gmshModelDiscreteAddTorus(const double x, const double y, const double z, const double r1, const double r2, const int tag, const double * zAxis, const size_t zAxis_n, const double tolerance, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_zAxis_(zAxis, zAxis + zAxis_n);
+    result_api_ = gmsh::model::discrete::addTorus(x, y, z, r1, r2, tag, api_zAxis_, tolerance);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+  return result_api_;
+}
+
 GMSH_API void gmshModelDiscreteSynchronize(int * ierr)
 {
   if(ierr) *ierr = 0;

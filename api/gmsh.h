@@ -3825,6 +3825,103 @@ namespace gmsh { // Top-level functions
                              const int tag = -1,
                              const double tolerance = -1.);
 
+      // gmsh::model::discrete::addRectangle
+      //
+      // Add a rectangle in the discrete CAD representation, defined by a point
+      // (`x', `y', `z') and the extents along the x- and y-axes, triangulated
+      // exactly with 2 triangles. If `tag' is positive, set the tag explicitly;
+      // otherwise a new tag is selected automatically. Return the tag of the
+      // rectangle.
+      GMSH_API int addRectangle(const double x,
+                                const double y,
+                                const double z,
+                                const double dx,
+                                const double dy,
+                                const int tag = -1);
+
+      // gmsh::model::discrete::addDisk
+      //
+      // Add a disk in the discrete CAD representation, defined by the center
+      // (`xc', `yc', `zc') and the radius `rx' along the x-axis and `ry' along the
+      // y-axis. If a vector `zAxis' of size 3 is provided, use it as the normal to
+      // the disk; if a vector `xAxis' of size 3 is provided, use it to define the
+      // x-axis. Its boundary, split into 2 arcs, is at most `tolerance' away from
+      // the exact ellipse (`Geometry.DiscreteTolerance' times the largest radius
+      // if `tolerance' is not positive). If `tag' is positive, set the tag
+      // explicitly; otherwise a new tag is selected automatically. Return the tag
+      // of the disk.
+      GMSH_API int addDisk(const double xc,
+                           const double yc,
+                           const double zc,
+                           const double rx,
+                           const double ry,
+                           const int tag = -1,
+                           const std::vector<double> & zAxis = std::vector<double>(),
+                           const std::vector<double> & xAxis = std::vector<double>(),
+                           const double tolerance = -1.);
+
+      // gmsh::model::discrete::addCylinder
+      //
+      // Add a cylinder in the discrete CAD representation, defined by the center
+      // (`x', `y', `z') of its first circular face, the 3 components (`dx', `dy',
+      // `dz') of the vector defining its axis and its radius `r'. Its 4 surfaces,
+      // the 2 disks and the 2 halves of its lateral surface, are triangulated at
+      // most `tolerance' away from the exact cylinder
+      // (`Geometry.DiscreteTolerance' times `r' if `tolerance' is not positive).
+      // If `tag' is positive, set the tag explicitly; otherwise a new tag is
+      // selected automatically. Return the tag of the cylinder.
+      GMSH_API int addCylinder(const double x,
+                               const double y,
+                               const double z,
+                               const double dx,
+                               const double dy,
+                               const double dz,
+                               const double r,
+                               const int tag = -1,
+                               const double tolerance = -1.);
+
+      // gmsh::model::discrete::addCone
+      //
+      // Add a cone in the discrete CAD representation, defined by the center (`x',
+      // `y', `z') of its first circular face, the 3 components of the vector
+      // (`dx', `dy', `dz') defining its axis and the two radii `r1' and `r2' of
+      // the faces (one of them can be zero, giving an apex). Its surfaces, the
+      // disks and the 2 halves of its lateral surface, are triangulated at most
+      // `tolerance' away from the exact cone (`Geometry.DiscreteTolerance' times
+      // the largest radius if `tolerance' is not positive). If `tag' is positive,
+      // set the tag explicitly; otherwise a new tag is selected automatically.
+      // Return the tag of the cone.
+      GMSH_API int addCone(const double x,
+                           const double y,
+                           const double z,
+                           const double dx,
+                           const double dy,
+                           const double dz,
+                           const double r1,
+                           const double r2,
+                           const int tag = -1,
+                           const double tolerance = -1.);
+
+      // gmsh::model::discrete::addTorus
+      //
+      // Add a torus in the discrete CAD representation, defined by its center
+      // (`x', `y', `z') and its 2 radii `r1' (of its center circle) and `r2' (of
+      // its section), with r2 < r1. If a vector `zAxis' of size 3 is provided, use
+      // it as the axis of the torus (instead of the z-axis). Its 4 surfaces,
+      // bounded by 2 meridians and 2 parallels, are triangulated at most
+      // `tolerance' away from the exact torus (`Geometry.DiscreteTolerance' times
+      // `r2' if `tolerance' is not positive). If `tag' is positive, set the tag
+      // explicitly; otherwise a new tag is selected automatically. Return the tag
+      // of the torus.
+      GMSH_API int addTorus(const double x,
+                            const double y,
+                            const double z,
+                            const double r1,
+                            const double r2,
+                            const int tag = -1,
+                            const std::vector<double> & zAxis = std::vector<double>(),
+                            const double tolerance = -1.);
+
       // gmsh::model::discrete::synchronize
       //
       // Synchronize the discrete CAD representation with the current Gmsh model:

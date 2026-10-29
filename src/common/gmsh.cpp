@@ -7591,6 +7591,95 @@ GMSH_API int gmsh::model::discrete::addSphere(const double xc,
 #endif
 }
 
+GMSH_API int gmsh::model::discrete::addRectangle(const double x,
+                                                 const double y,
+                                                 const double z,
+                                                 const double dx,
+                                                 const double dy,
+                                                 const int tag)
+{
+  if(!_checkInit()) return -1;
+#if defined(HAVE_DISCRETECAD)
+  int outTag = tag;
+  if(!_discreteCAD()->addRectangle(outTag, x, y, z, dx, dy)) return -1;
+  return outTag;
+#else
+  Msg::Error("Discrete CAD modeler not available");
+  return -1;
+#endif
+}
+
+GMSH_API int gmsh::model::discrete::addDisk(
+  const double xc, const double yc, const double zc, const double rx,
+  const double ry, const int tag, const std::vector<double> &zAxis,
+  const std::vector<double> &xAxis, const double tolerance)
+{
+  if(!_checkInit()) return -1;
+#if defined(HAVE_DISCRETECAD)
+  int outTag = tag;
+  if(!_discreteCAD()->addDisk(outTag, xc, yc, zc, rx, ry, zAxis, xAxis,
+                              tolerance))
+    return -1;
+  return outTag;
+#else
+  Msg::Error("Discrete CAD modeler not available");
+  return -1;
+#endif
+}
+
+GMSH_API int gmsh::model::discrete::addCylinder(
+  const double x, const double y, const double z, const double dx,
+  const double dy, const double dz, const double r, const int tag,
+  const double tolerance)
+{
+  if(!_checkInit()) return -1;
+#if defined(HAVE_DISCRETECAD)
+  int outTag = tag;
+  if(!_discreteCAD()->addCylinder(outTag, x, y, z, dx, dy, dz, r, tolerance))
+    return -1;
+  return outTag;
+#else
+  Msg::Error("Discrete CAD modeler not available");
+  return -1;
+#endif
+}
+
+GMSH_API int gmsh::model::discrete::addCone(
+  const double x, const double y, const double z, const double dx,
+  const double dy, const double dz, const double r1, const double r2,
+  const int tag, const double tolerance)
+{
+  if(!_checkInit()) return -1;
+#if defined(HAVE_DISCRETECAD)
+  int outTag = tag;
+  if(!_discreteCAD()->addCone(outTag, x, y, z, dx, dy, dz, r1, r2,
+                              tolerance))
+    return -1;
+  return outTag;
+#else
+  Msg::Error("Discrete CAD modeler not available");
+  return -1;
+#endif
+}
+
+GMSH_API int gmsh::model::discrete::addTorus(const double x, const double y,
+                                             const double z, const double r1,
+                                             const double r2, const int tag,
+                                             const std::vector<double> &zAxis,
+                                             const double tolerance)
+{
+  if(!_checkInit()) return -1;
+#if defined(HAVE_DISCRETECAD)
+  int outTag = tag;
+  if(!_discreteCAD()->addTorus(outTag, x, y, z, r1, r2, zAxis, tolerance))
+    return -1;
+  return outTag;
+#else
+  Msg::Error("Discrete CAD modeler not available");
+  return -1;
+#endif
+}
+
 GMSH_API void gmsh::model::discrete::synchronize()
 {
   if(!_checkInit()) return;

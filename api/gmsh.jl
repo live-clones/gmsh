@@ -8951,6 +8951,173 @@ end
 const add_sphere = addSphere
 
 """
+    gmsh.model.discrete.addRectangle(x, y, z, dx, dy, tag = -1)
+
+Add a rectangle in the discrete CAD representation, defined by a point (`x`,
+`y`, `z`) and the extents along the x- and y-axes, triangulated exactly with 2
+triangles. If `tag` is positive, set the tag explicitly; otherwise a new tag is
+selected automatically. Return the tag of the rectangle.
+
+Return an integer.
+
+Types:
+ - `x`: double
+ - `y`: double
+ - `z`: double
+ - `dx`: double
+ - `dy`: double
+ - `tag`: integer
+"""
+function addRectangle(x, y, z, dx, dy, tag = -1)
+    ierr = Ref{Cint}()
+    api_result_ = ccall((:gmshModelDiscreteAddRectangle, gmsh.lib), Cint,
+          (Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cint, Ptr{Cint}),
+          x, y, z, dx, dy, tag, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return api_result_
+end
+const add_rectangle = addRectangle
+
+"""
+    gmsh.model.discrete.addDisk(xc, yc, zc, rx, ry, tag = -1, zAxis = Cdouble[], xAxis = Cdouble[], tolerance = -1.)
+
+Add a disk in the discrete CAD representation, defined by the center (`xc`,
+`yc`, `zc`) and the radius `rx` along the x-axis and `ry` along the y-axis. If a
+vector `zAxis` of size 3 is provided, use it as the normal to the disk; if a
+vector `xAxis` of size 3 is provided, use it to define the x-axis. Its boundary,
+split into 2 arcs, is at most `tolerance` away from the exact ellipse
+(`Geometry.DiscreteTolerance` times the largest radius if `tolerance` is not
+positive). If `tag` is positive, set the tag explicitly; otherwise a new tag is
+selected automatically. Return the tag of the disk.
+
+Return an integer.
+
+Types:
+ - `xc`: double
+ - `yc`: double
+ - `zc`: double
+ - `rx`: double
+ - `ry`: double
+ - `tag`: integer
+ - `zAxis`: vector of doubles
+ - `xAxis`: vector of doubles
+ - `tolerance`: double
+"""
+function addDisk(xc, yc, zc, rx, ry, tag = -1, zAxis = Cdouble[], xAxis = Cdouble[], tolerance = -1.)
+    ierr = Ref{Cint}()
+    api_result_ = ccall((:gmshModelDiscreteAddDisk, gmsh.lib), Cint,
+          (Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cint, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Cdouble, Ptr{Cint}),
+          xc, yc, zc, rx, ry, tag, convert(Vector{Cdouble}, zAxis), length(zAxis), convert(Vector{Cdouble}, xAxis), length(xAxis), tolerance, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return api_result_
+end
+const add_disk = addDisk
+
+"""
+    gmsh.model.discrete.addCylinder(x, y, z, dx, dy, dz, r, tag = -1, tolerance = -1.)
+
+Add a cylinder in the discrete CAD representation, defined by the center (`x`,
+`y`, `z`) of its first circular face, the 3 components (`dx`, `dy`, `dz`) of the
+vector defining its axis and its radius `r`. Its 4 surfaces, the 2 disks and the
+2 halves of its lateral surface, are triangulated at most `tolerance` away from
+the exact cylinder (`Geometry.DiscreteTolerance` times `r` if `tolerance` is not
+positive). If `tag` is positive, set the tag explicitly; otherwise a new tag is
+selected automatically. Return the tag of the cylinder.
+
+Return an integer.
+
+Types:
+ - `x`: double
+ - `y`: double
+ - `z`: double
+ - `dx`: double
+ - `dy`: double
+ - `dz`: double
+ - `r`: double
+ - `tag`: integer
+ - `tolerance`: double
+"""
+function addCylinder(x, y, z, dx, dy, dz, r, tag = -1, tolerance = -1.)
+    ierr = Ref{Cint}()
+    api_result_ = ccall((:gmshModelDiscreteAddCylinder, gmsh.lib), Cint,
+          (Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cint, Cdouble, Ptr{Cint}),
+          x, y, z, dx, dy, dz, r, tag, tolerance, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return api_result_
+end
+const add_cylinder = addCylinder
+
+"""
+    gmsh.model.discrete.addCone(x, y, z, dx, dy, dz, r1, r2, tag = -1, tolerance = -1.)
+
+Add a cone in the discrete CAD representation, defined by the center (`x`, `y`,
+`z`) of its first circular face, the 3 components of the vector (`dx`, `dy`,
+`dz`) defining its axis and the two radii `r1` and `r2` of the faces (one of
+them can be zero, giving an apex). Its surfaces, the disks and the 2 halves of
+its lateral surface, are triangulated at most `tolerance` away from the exact
+cone (`Geometry.DiscreteTolerance` times the largest radius if `tolerance` is
+not positive). If `tag` is positive, set the tag explicitly; otherwise a new tag
+is selected automatically. Return the tag of the cone.
+
+Return an integer.
+
+Types:
+ - `x`: double
+ - `y`: double
+ - `z`: double
+ - `dx`: double
+ - `dy`: double
+ - `dz`: double
+ - `r1`: double
+ - `r2`: double
+ - `tag`: integer
+ - `tolerance`: double
+"""
+function addCone(x, y, z, dx, dy, dz, r1, r2, tag = -1, tolerance = -1.)
+    ierr = Ref{Cint}()
+    api_result_ = ccall((:gmshModelDiscreteAddCone, gmsh.lib), Cint,
+          (Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cint, Cdouble, Ptr{Cint}),
+          x, y, z, dx, dy, dz, r1, r2, tag, tolerance, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return api_result_
+end
+const add_cone = addCone
+
+"""
+    gmsh.model.discrete.addTorus(x, y, z, r1, r2, tag = -1, zAxis = Cdouble[], tolerance = -1.)
+
+Add a torus in the discrete CAD representation, defined by its center (`x`, `y`,
+`z`) and its 2 radii `r1` (of its center circle) and `r2` (of its section), with
+r2 < r1. If a vector `zAxis` of size 3 is provided, use it as the axis of the
+torus (instead of the z-axis). Its 4 surfaces, bounded by 2 meridians and 2
+parallels, are triangulated at most `tolerance` away from the exact torus
+(`Geometry.DiscreteTolerance` times `r2` if `tolerance` is not positive). If
+`tag` is positive, set the tag explicitly; otherwise a new tag is selected
+automatically. Return the tag of the torus.
+
+Return an integer.
+
+Types:
+ - `x`: double
+ - `y`: double
+ - `z`: double
+ - `r1`: double
+ - `r2`: double
+ - `tag`: integer
+ - `zAxis`: vector of doubles
+ - `tolerance`: double
+"""
+function addTorus(x, y, z, r1, r2, tag = -1, zAxis = Cdouble[], tolerance = -1.)
+    ierr = Ref{Cint}()
+    api_result_ = ccall((:gmshModelDiscreteAddTorus, gmsh.lib), Cint,
+          (Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cint, Ptr{Cdouble}, Csize_t, Cdouble, Ptr{Cint}),
+          x, y, z, r1, r2, tag, convert(Vector{Cdouble}, zAxis), length(zAxis), tolerance, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return api_result_
+end
+const add_torus = addTorus
+
+"""
     gmsh.model.discrete.synchronize()
 
 Synchronize the discrete CAD representation with the current Gmsh model: its

@@ -40,6 +40,10 @@ public:
   struct Volume {
     std::vector<int> surfaces;
   };
+  // an orthonormal frame: origin o and axes e[0], e[1], e[2]
+  struct Frame {
+    double o[3], e[3][3];
+  };
 
 private:
   std::vector<std::array<double, 3> > _nodes;
@@ -58,6 +62,18 @@ private:
   int _addCurve(int v0, int v1, const std::vector<int> &nodes);
   int _addSurface(const std::vector<int> &curves,
                   const std::vector<std::array<int, 3> > &triangles);
+  // the n nodes (n even, or 1 for the center) of the ellipse of radii rx, ry
+  // in the plane w of frame f, at the angles 2 pi i / n
+  std::vector<int> _addRing(const Frame &f, double rx, double ry, double w,
+                            int n);
+  // the vertices at the angles 0 and pi of a ring, and its two arcs: a from 0
+  // to pi, b from pi to 2 pi
+  void _addArcs(const std::vector<int> &ring, int &a, int &b);
+  // the rings filling the ellipse of radii rx, ry, from its boundary ring
+  // inwards, and their triangles, oriented along e[2]
+  std::vector<std::array<int, 3> > _fillEllipse(const Frame &f, double rx,
+                                                double ry, double w,
+                                                const std::vector<int> &ring);
 
 public:
   DiscreteCAD_Internals();
@@ -70,6 +86,27 @@ public:
   // surface (Geometry.DiscreteTolerance times the radius if tolerance <= 0)
   bool addSphere(int &tag, double xc, double yc, double zc, double radius,
                  double tolerance);
+  // a rectangle in the plane z with a corner at (x, y, z) and extents dx, dy;
+  // tag is the tag of the surface
+  bool addRectangle(int &tag, double x, double y, double z, double dx,
+                    double dy);
+  // a disk (an ellipse of radii rx along xAxis, ry, normal to zAxis; the x
+  // and z axes if empty), its boundary at most tolerance away from the exact
+  // ellipse; tag is the tag of the surface
+  bool addDisk(int &tag, double xc, double yc, double zc, double rx, double ry,
+               const std::vector<double> &zAxis,
+               const std::vector<double> &xAxis, double tolerance);
+  // a cylinder of axis (dx, dy, dz) from (x, y, z) and radius r
+  bool addCylinder(int &tag, double x, double y, double z, double dx,
+                   double dy, double dz, double r, double tolerance);
+  // a cone of axis (dx, dy, dz) from (x, y, z), radius r1 at (x, y, z) and r2
+  // at the other end (one of them can be zero)
+  bool addCone(int &tag, double x, double y, double z, double dx, double dy,
+               double dz, double r1, double r2, double tolerance);
+  // a torus of center (x, y, z) and axis zAxis (z if empty), radius r1 of its
+  // center circle and r2 of its section
+  bool addTorus(int &tag, double x, double y, double z, double r1, double r2,
+                const std::vector<double> &zAxis, double tolerance);
   // the entities copied into the model, replacing those of the previous call
   void synchronize(GModel *model);
 };

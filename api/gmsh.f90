@@ -259,6 +259,16 @@ module gmsh
         gmshModelDiscreteAddBox
     procedure, nopass :: addSphere => &
         gmshModelDiscreteAddSphere
+    procedure, nopass :: addRectangle => &
+        gmshModelDiscreteAddRectangle
+    procedure, nopass :: addDisk => &
+        gmshModelDiscreteAddDisk
+    procedure, nopass :: addCylinder => &
+        gmshModelDiscreteAddCylinder
+    procedure, nopass :: addCone => &
+        gmshModelDiscreteAddCone
+    procedure, nopass :: addTorus => &
+        gmshModelDiscreteAddTorus
     procedure, nopass :: synchronize => &
         gmshModelDiscreteSynchronize
   end type gmsh_model_discrete_t
@@ -14498,6 +14508,333 @@ module gmsh
                                  tolerance=optval_c_double(-1., tolerance), &
                                  ierr_=ierr)
   end function gmshModelDiscreteAddSphere
+
+  !> Add a rectangle in the discrete CAD representation, defined by a point
+  !! (`x', `y', `z') and the extents along the x- and y-axes, triangulated
+  !! exactly with 2 triangles. If `tag' is positive, set the tag explicitly;
+  !! otherwise a new tag is selected automatically. Return the tag of the
+  !! rectangle.
+  function gmshModelDiscreteAddRectangle(x, &
+                                         y, &
+                                         z, &
+                                         dx, &
+                                         dy, &
+                                         tag, &
+                                         ierr)
+    interface
+    function C_API(x, &
+                   y, &
+                   z, &
+                   dx, &
+                   dy, &
+                   tag, &
+                   ierr_) &
+      bind(C, name="gmshModelDiscreteAddRectangle")
+      use, intrinsic :: iso_c_binding
+      integer(c_int) :: C_API
+      real(c_double), value, intent(in) :: x
+      real(c_double), value, intent(in) :: y
+      real(c_double), value, intent(in) :: z
+      real(c_double), value, intent(in) :: dx
+      real(c_double), value, intent(in) :: dy
+      integer(c_int), value, intent(in) :: tag
+      integer(c_int), intent(out), optional :: ierr_
+    end function C_API
+    end interface
+    integer(c_int) :: gmshModelDiscreteAddRectangle
+    real(c_double), intent(in) :: x
+    real(c_double), intent(in) :: y
+    real(c_double), intent(in) :: z
+    real(c_double), intent(in) :: dx
+    real(c_double), intent(in) :: dy
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
+    gmshModelDiscreteAddRectangle = C_API(x=real(x, c_double), &
+                                    y=real(y, c_double), &
+                                    z=real(z, c_double), &
+                                    dx=real(dx, c_double), &
+                                    dy=real(dy, c_double), &
+                                    tag=optval_c_int(-1, tag), &
+                                    ierr_=ierr)
+  end function gmshModelDiscreteAddRectangle
+
+  !> Add a disk in the discrete CAD representation, defined by the center (`xc',
+  !! `yc', `zc') and the radius `rx' along the x-axis and `ry' along the y-axis.
+  !! If a vector `zAxis' of size 3 is provided, use it as the normal to the
+  !! disk; if a vector `xAxis' of size 3 is provided, use it to define the
+  !! x-axis. Its boundary, split into 2 arcs, is at most `tolerance' away from
+  !! the exact ellipse (`Geometry.DiscreteTolerance' times the largest radius if
+  !! `tolerance' is not positive). If `tag' is positive, set the tag explicitly;
+  !! otherwise a new tag is selected automatically. Return the tag of the disk.
+  function gmshModelDiscreteAddDisk(xc, &
+                                    yc, &
+                                    zc, &
+                                    rx, &
+                                    ry, &
+                                    tag, &
+                                    zAxis, &
+                                    xAxis, &
+                                    tolerance, &
+                                    ierr)
+    interface
+    function C_API(xc, &
+                   yc, &
+                   zc, &
+                   rx, &
+                   ry, &
+                   tag, &
+                   api_zAxis_, &
+                   api_zAxis_n_, &
+                   api_xAxis_, &
+                   api_xAxis_n_, &
+                   tolerance, &
+                   ierr_) &
+      bind(C, name="gmshModelDiscreteAddDisk")
+      use, intrinsic :: iso_c_binding
+      integer(c_int) :: C_API
+      real(c_double), value, intent(in) :: xc
+      real(c_double), value, intent(in) :: yc
+      real(c_double), value, intent(in) :: zc
+      real(c_double), value, intent(in) :: rx
+      real(c_double), value, intent(in) :: ry
+      integer(c_int), value, intent(in) :: tag
+      real(c_double), dimension(*), optional :: api_zAxis_
+      integer(c_size_t), value, intent(in) :: api_zAxis_n_
+      real(c_double), dimension(*), optional :: api_xAxis_
+      integer(c_size_t), value, intent(in) :: api_xAxis_n_
+      real(c_double), value, intent(in) :: tolerance
+      integer(c_int), intent(out), optional :: ierr_
+    end function C_API
+    end interface
+    integer(c_int) :: gmshModelDiscreteAddDisk
+    real(c_double), intent(in) :: xc
+    real(c_double), intent(in) :: yc
+    real(c_double), intent(in) :: zc
+    real(c_double), intent(in) :: rx
+    real(c_double), intent(in) :: ry
+    integer, intent(in), optional :: tag
+    real(c_double), dimension(:), intent(in), optional :: zAxis
+    real(c_double), dimension(:), intent(in), optional :: xAxis
+    real(c_double), intent(in), optional :: tolerance
+    integer(c_int), intent(out), optional :: ierr
+    gmshModelDiscreteAddDisk = C_API(xc=real(xc, c_double), &
+                               yc=real(yc, c_double), &
+                               zc=real(zc, c_double), &
+                               rx=real(rx, c_double), &
+                               ry=real(ry, c_double), &
+                               tag=optval_c_int(-1, tag), &
+                               api_zAxis_=zAxis, &
+                               api_zAxis_n_=size_gmsh_double(zAxis), &
+                               api_xAxis_=xAxis, &
+                               api_xAxis_n_=size_gmsh_double(xAxis), &
+                               tolerance=optval_c_double(-1., tolerance), &
+                               ierr_=ierr)
+  end function gmshModelDiscreteAddDisk
+
+  !> Add a cylinder in the discrete CAD representation, defined by the center
+  !! (`x', `y', `z') of its first circular face, the 3 components (`dx', `dy',
+  !! `dz') of the vector defining its axis and its radius `r'. Its 4 surfaces,
+  !! the 2 disks and the 2 halves of its lateral surface, are triangulated at
+  !! most `tolerance' away from the exact cylinder (`Geometry.DiscreteTolerance'
+  !! times `r' if `tolerance' is not positive). If `tag' is positive, set the
+  !! tag explicitly; otherwise a new tag is selected automatically. Return the
+  !! tag of the cylinder.
+  function gmshModelDiscreteAddCylinder(x, &
+                                        y, &
+                                        z, &
+                                        dx, &
+                                        dy, &
+                                        dz, &
+                                        r, &
+                                        tag, &
+                                        tolerance, &
+                                        ierr)
+    interface
+    function C_API(x, &
+                   y, &
+                   z, &
+                   dx, &
+                   dy, &
+                   dz, &
+                   r, &
+                   tag, &
+                   tolerance, &
+                   ierr_) &
+      bind(C, name="gmshModelDiscreteAddCylinder")
+      use, intrinsic :: iso_c_binding
+      integer(c_int) :: C_API
+      real(c_double), value, intent(in) :: x
+      real(c_double), value, intent(in) :: y
+      real(c_double), value, intent(in) :: z
+      real(c_double), value, intent(in) :: dx
+      real(c_double), value, intent(in) :: dy
+      real(c_double), value, intent(in) :: dz
+      real(c_double), value, intent(in) :: r
+      integer(c_int), value, intent(in) :: tag
+      real(c_double), value, intent(in) :: tolerance
+      integer(c_int), intent(out), optional :: ierr_
+    end function C_API
+    end interface
+    integer(c_int) :: gmshModelDiscreteAddCylinder
+    real(c_double), intent(in) :: x
+    real(c_double), intent(in) :: y
+    real(c_double), intent(in) :: z
+    real(c_double), intent(in) :: dx
+    real(c_double), intent(in) :: dy
+    real(c_double), intent(in) :: dz
+    real(c_double), intent(in) :: r
+    integer, intent(in), optional :: tag
+    real(c_double), intent(in), optional :: tolerance
+    integer(c_int), intent(out), optional :: ierr
+    gmshModelDiscreteAddCylinder = C_API(x=real(x, c_double), &
+                                   y=real(y, c_double), &
+                                   z=real(z, c_double), &
+                                   dx=real(dx, c_double), &
+                                   dy=real(dy, c_double), &
+                                   dz=real(dz, c_double), &
+                                   r=real(r, c_double), &
+                                   tag=optval_c_int(-1, tag), &
+                                   tolerance=optval_c_double(-1., tolerance), &
+                                   ierr_=ierr)
+  end function gmshModelDiscreteAddCylinder
+
+  !> Add a cone in the discrete CAD representation, defined by the center (`x',
+  !! `y', `z') of its first circular face, the 3 components of the vector (`dx',
+  !! `dy', `dz') defining its axis and the two radii `r1' and `r2' of the faces
+  !! (one of them can be zero, giving an apex). Its surfaces, the disks and the
+  !! 2 halves of its lateral surface, are triangulated at most `tolerance' away
+  !! from the exact cone (`Geometry.DiscreteTolerance' times the largest radius
+  !! if `tolerance' is not positive). If `tag' is positive, set the tag
+  !! explicitly; otherwise a new tag is selected automatically. Return the tag
+  !! of the cone.
+  function gmshModelDiscreteAddCone(x, &
+                                    y, &
+                                    z, &
+                                    dx, &
+                                    dy, &
+                                    dz, &
+                                    r1, &
+                                    r2, &
+                                    tag, &
+                                    tolerance, &
+                                    ierr)
+    interface
+    function C_API(x, &
+                   y, &
+                   z, &
+                   dx, &
+                   dy, &
+                   dz, &
+                   r1, &
+                   r2, &
+                   tag, &
+                   tolerance, &
+                   ierr_) &
+      bind(C, name="gmshModelDiscreteAddCone")
+      use, intrinsic :: iso_c_binding
+      integer(c_int) :: C_API
+      real(c_double), value, intent(in) :: x
+      real(c_double), value, intent(in) :: y
+      real(c_double), value, intent(in) :: z
+      real(c_double), value, intent(in) :: dx
+      real(c_double), value, intent(in) :: dy
+      real(c_double), value, intent(in) :: dz
+      real(c_double), value, intent(in) :: r1
+      real(c_double), value, intent(in) :: r2
+      integer(c_int), value, intent(in) :: tag
+      real(c_double), value, intent(in) :: tolerance
+      integer(c_int), intent(out), optional :: ierr_
+    end function C_API
+    end interface
+    integer(c_int) :: gmshModelDiscreteAddCone
+    real(c_double), intent(in) :: x
+    real(c_double), intent(in) :: y
+    real(c_double), intent(in) :: z
+    real(c_double), intent(in) :: dx
+    real(c_double), intent(in) :: dy
+    real(c_double), intent(in) :: dz
+    real(c_double), intent(in) :: r1
+    real(c_double), intent(in) :: r2
+    integer, intent(in), optional :: tag
+    real(c_double), intent(in), optional :: tolerance
+    integer(c_int), intent(out), optional :: ierr
+    gmshModelDiscreteAddCone = C_API(x=real(x, c_double), &
+                               y=real(y, c_double), &
+                               z=real(z, c_double), &
+                               dx=real(dx, c_double), &
+                               dy=real(dy, c_double), &
+                               dz=real(dz, c_double), &
+                               r1=real(r1, c_double), &
+                               r2=real(r2, c_double), &
+                               tag=optval_c_int(-1, tag), &
+                               tolerance=optval_c_double(-1., tolerance), &
+                               ierr_=ierr)
+  end function gmshModelDiscreteAddCone
+
+  !> Add a torus in the discrete CAD representation, defined by its center (`x',
+  !! `y', `z') and its 2 radii `r1' (of its center circle) and `r2' (of its
+  !! section), with r2 < r1. If a vector `zAxis' of size 3 is provided, use it
+  !! as the axis of the torus (instead of the z-axis). Its 4 surfaces, bounded
+  !! by 2 meridians and 2 parallels, are triangulated at most `tolerance' away
+  !! from the exact torus (`Geometry.DiscreteTolerance' times `r2' if
+  !! `tolerance' is not positive). If `tag' is positive, set the tag explicitly;
+  !! otherwise a new tag is selected automatically. Return the tag of the torus.
+  function gmshModelDiscreteAddTorus(x, &
+                                     y, &
+                                     z, &
+                                     r1, &
+                                     r2, &
+                                     tag, &
+                                     zAxis, &
+                                     tolerance, &
+                                     ierr)
+    interface
+    function C_API(x, &
+                   y, &
+                   z, &
+                   r1, &
+                   r2, &
+                   tag, &
+                   api_zAxis_, &
+                   api_zAxis_n_, &
+                   tolerance, &
+                   ierr_) &
+      bind(C, name="gmshModelDiscreteAddTorus")
+      use, intrinsic :: iso_c_binding
+      integer(c_int) :: C_API
+      real(c_double), value, intent(in) :: x
+      real(c_double), value, intent(in) :: y
+      real(c_double), value, intent(in) :: z
+      real(c_double), value, intent(in) :: r1
+      real(c_double), value, intent(in) :: r2
+      integer(c_int), value, intent(in) :: tag
+      real(c_double), dimension(*), optional :: api_zAxis_
+      integer(c_size_t), value, intent(in) :: api_zAxis_n_
+      real(c_double), value, intent(in) :: tolerance
+      integer(c_int), intent(out), optional :: ierr_
+    end function C_API
+    end interface
+    integer(c_int) :: gmshModelDiscreteAddTorus
+    real(c_double), intent(in) :: x
+    real(c_double), intent(in) :: y
+    real(c_double), intent(in) :: z
+    real(c_double), intent(in) :: r1
+    real(c_double), intent(in) :: r2
+    integer, intent(in), optional :: tag
+    real(c_double), dimension(:), intent(in), optional :: zAxis
+    real(c_double), intent(in), optional :: tolerance
+    integer(c_int), intent(out), optional :: ierr
+    gmshModelDiscreteAddTorus = C_API(x=real(x, c_double), &
+                                y=real(y, c_double), &
+                                z=real(z, c_double), &
+                                r1=real(r1, c_double), &
+                                r2=real(r2, c_double), &
+                                tag=optval_c_int(-1, tag), &
+                                api_zAxis_=zAxis, &
+                                api_zAxis_n_=size_gmsh_double(zAxis), &
+                                tolerance=optval_c_double(-1., tolerance), &
+                                ierr_=ierr)
+  end function gmshModelDiscreteAddTorus
 
   !> Synchronize the discrete CAD representation with the current Gmsh model:
   !! its points, curves, surfaces and volumes become discrete entities of the
