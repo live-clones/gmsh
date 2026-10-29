@@ -4155,15 +4155,28 @@ public:
   }
 };
 
+// the message of the status bar, a progress bar while something runs; a click
+// on it shows or hides the message console, and it is tinted under the
+// pointer like the other controls of the bar (the theme does not take a
+// progress bar for one)
 class mainWindowProgress : public Fl_Progress {
 public:
   mainWindowProgress(int x, int y, int w, int h, const char *l = nullptr)
     : Fl_Progress(x, y, w, h, l)
+  { tooltip("Show or hide the message console"); }
+  void draw()
   {
+    Fl_Color c = color();
+    color(hoverHighlight(this, c));
+    Fl_Progress::draw();
+    color(c);
   }
   int handle(int event)
   {
-    if(event == FL_PUSH) {
+    switch(event) {
+    case FL_ENTER:
+    case FL_LEAVE: redraw(); return 1;
+    case FL_PUSH:
       if(FlGui::available()) {
         for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
           FlGui::instance()->graph[i]->showHideMessages();
