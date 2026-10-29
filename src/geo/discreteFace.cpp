@@ -582,6 +582,19 @@ int discreteFace::createGeometry()
   return 0;
 }
 
+void discreteFace::setParametrization(const std::vector<SPoint2> &uv,
+                                      const std::vector<SPoint3> &xyz,
+                                      const std::vector<int> &triangles)
+{
+  stl_vertices_uv = uv;
+  stl_vertices_xyz = xyz;
+  stl_triangles = triangles;
+  stl_curvatures.clear();
+  stl_from_mesh = false;
+  _computeSTLNormals();
+  _createGeometryFromSTL();
+}
+
 void discreteFace::_computeSTLNormals()
 {
   stl_normals.clear();

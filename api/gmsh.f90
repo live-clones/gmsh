@@ -14633,12 +14633,12 @@ module gmsh
 
   !> Add a cylinder in the discrete CAD representation, defined by the center
   !! (`x', `y', `z') of its first circular face, the 3 components (`dx', `dy',
-  !! `dz') of the vector defining its axis and its radius `r'. Its 4 surfaces,
-  !! the 2 disks and the 2 halves of its lateral surface, are triangulated at
-  !! most `tolerance' away from the exact cylinder (`Geometry.DiscreteTolerance'
-  !! times `r' if `tolerance' is not positive). If `tag' is positive, set the
-  !! tag explicitly; otherwise a new tag is selected automatically. Return the
-  !! tag of the cylinder.
+  !! `dz') of the vector defining its axis and its radius `r'. Its 3 surfaces,
+  !! the lateral surface and the 2 disks, are triangulated at most `tolerance'
+  !! away from the exact cylinder (`Geometry.DiscreteTolerance' times `r' if
+  !! `tolerance' is not positive). If `tag' is positive, set the tag explicitly;
+  !! otherwise a new tag is selected automatically. Return the tag of the
+  !! cylinder.
   function gmshModelDiscreteAddCylinder(x, &
                                         y, &
                                         z, &
@@ -14701,12 +14701,12 @@ module gmsh
   !> Add a cone in the discrete CAD representation, defined by the center (`x',
   !! `y', `z') of its first circular face, the 3 components of the vector (`dx',
   !! `dy', `dz') defining its axis and the two radii `r1' and `r2' of the faces
-  !! (one of them can be zero, giving an apex). Its surfaces, the disks and the
-  !! 2 halves of its lateral surface, are triangulated at most `tolerance' away
-  !! from the exact cone (`Geometry.DiscreteTolerance' times the largest radius
-  !! if `tolerance' is not positive). If `tag' is positive, set the tag
-  !! explicitly; otherwise a new tag is selected automatically. Return the tag
-  !! of the cone.
+  !! (one of them can be zero, giving an apex). Its surfaces, the lateral
+  !! surface (holding the apex, if any) and the disks, are triangulated at most
+  !! `tolerance' away from the exact cone (`Geometry.DiscreteTolerance' times
+  !! the largest radius if `tolerance' is not positive). If `tag' is positive,
+  !! set the tag explicitly; otherwise a new tag is selected automatically.
+  !! Return the tag of the cone.
   function gmshModelDiscreteAddCone(x, &
                                     y, &
                                     z, &
@@ -14774,11 +14774,12 @@ module gmsh
   !> Add a torus in the discrete CAD representation, defined by its center (`x',
   !! `y', `z') and its 2 radii `r1' (of its center circle) and `r2' (of its
   !! section), with r2 < r1. If a vector `zAxis' of size 3 is provided, use it
-  !! as the axis of the torus (instead of the z-axis). Its 4 surfaces, bounded
-  !! by 2 meridians and 2 parallels, are triangulated at most `tolerance' away
-  !! from the exact torus (`Geometry.DiscreteTolerance' times `r2' if
-  !! `tolerance' is not positive). If `tag' is positive, set the tag explicitly;
-  !! otherwise a new tag is selected automatically. Return the tag of the torus.
+  !! as the axis of the torus (instead of the z-axis). Its 2 surfaces, the
+  !! halves on either side of its equatorial plane bounded by its outer and
+  !! inner equators, are triangulated at most `tolerance' away from the exact
+  !! torus (`Geometry.DiscreteTolerance' times `r2' if `tolerance' is not
+  !! positive). If `tag' is positive, set the tag explicitly; otherwise a new
+  !! tag is selected automatically. Return the tag of the torus.
   function gmshModelDiscreteAddTorus(x, &
                                      y, &
                                      z, &

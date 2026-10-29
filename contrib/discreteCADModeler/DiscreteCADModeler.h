@@ -18,8 +18,10 @@ class GModel;
 // triangulations, copied into the model as discrete vertices, curves,
 // surfaces and volumes by synchronize(). The nodes are shared: the
 // triangulations of two surfaces with a common curve use the nodes of its
-// polyline. Every surface is a topological disk, as its parametrization
-// requires: a sphere has two surfaces.
+// polyline. The modeler gives the parameters of the nodes of its surfaces:
+// coordinates in their plane, stereographic projections of the two halves of
+// a sphere, conformal maps of lateral surfaces and of the two halves of a
+// torus onto annuli.
 class DiscreteCAD_Internals {
 public:
   struct Vertex {
@@ -31,10 +33,14 @@ public:
     std::vector<int> nodes;
   };
   // a triangulation (oriented outwards for the surfaces of a volume) bounded
-  // by a loop of curves, a negative tag for a curve used backwards
+  // by loops of curves, a negative tag for a curve used backwards, the
+  // vertices inside it (as the apex of a cone), and the parameters of its
+  // nodes (computed from the triangulation by synchronize if empty)
   struct Surface {
     std::vector<int> curves;
     std::vector<std::array<int, 3> > triangles;
+    std::vector<int> embeddedVertices;
+    std::map<int, std::array<double, 2> > uv;
   };
   // a closed shell of surfaces, a negative tag for a surface used reversed
   struct Volume {
@@ -73,6 +79,10 @@ private:
   void _addArcs(const std::vector<int> &ring, int &a, int &b);
   // the rings filling the ellipse of radii rx, ry, from its boundary ring
   // inwards, and their triangles, oriented along e[2]
+  // the parameters of the nodes of a planar surface: their coordinates along
+  // the axes eu, ev from o
+  void _planarUV(int surface, const double o[3], const double eu[3],
+                 const double ev[3]);
   std::vector<std::array<int, 3> > _fillEllipse(const Frame &f, double rx,
                                                 double ry, double w,
                                                 const std::vector<int> &ring);

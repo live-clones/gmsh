@@ -81,6 +81,12 @@ public:
   virtual void secondDer(const SPoint2 &param, SVector3 &dudu, SVector3 &dvdv,
                          SVector3 &dudv) const;
   int createGeometry();
+  // the geometry and parametrization from a triangulation (3 node indices per
+  // triangle) whose nodes have the coordinates xyz and the parameters uv,
+  // instead of those computed from the mesh by createGeometry()
+  void setParametrization(const std::vector<SPoint2> &uv,
+                          const std::vector<SPoint3> &xyz,
+                          const std::vector<int> &triangles);
   virtual bool haveParametrization() { return !_param.empty(); }
   virtual void mesh(bool verbose);
   int trianglePosition(double par1, double par2, double &u, double &v) const;

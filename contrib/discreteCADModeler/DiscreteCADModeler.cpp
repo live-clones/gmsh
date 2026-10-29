@@ -18,6 +18,8 @@
 #include "MVertex.h"
 #include "MLine.h"
 #include "MTriangle.h"
+#include "SPoint2.h"
+#include "SPoint3.h"
 
 namespace {
   const char *entityName(int dim)
@@ -278,8 +280,18 @@ bool DiscreteCAD_Internals::addBox(int &tag, double x, double y, double z,
     }
     int n[4];
     for(int k = 0; k < 4; k++) n[k] = _vertices[corner[f[k]]].node;
-    volume.surfaces.push_back(
-      _addSurface(loop, {{{n[0], n[1], n[2]}}, {{n[0], n[2], n[3]}}}));
+    const int face =
+      _addSurface(loop, {{{n[0], n[1], n[2]}}, {{n[0], n[2], n[3]}}});
+    // along the edges from the first corner
+    double eu[3], ev[3];
+    for(int k = 0; k < 3; k++) {
+      eu[k] = _nodes[n[1]][k] - _nodes[n[0]][k];
+      ev[k] = _nodes[n[3]][k] - _nodes[n[0]][k];
+    }
+    normalize(eu);
+    normalize(ev);
+    _planarUV(face, _nodes[n[0]].data(), eu, ev);
+    volume.surfaces.push_back(face);
   }
   _volumes[tag] = volume;
   return true;
@@ -356,6 +368,18 @@ bool DiscreteCAD_Internals::addSphere(int &tag, double xc, double yc,
   Volume volume;
   volume.surfaces.push_back(_addSurface({a, b}, north));
   volume.surfaces.push_back(_addSurface({-b, -a}, south));
+  // the stereographic projections from the opposite poles, on the unit disk
+  for(int h = 0; h < 2; h++) {
+    Surface &sf = _surfaces[volume.surfaces[h]];
+    for(auto &t : sf.triangles)
+      for(int n : t) {
+        const std::array<double, 3> &x = _nodes[n];
+        const double q[3] = {(x[0] - xc) / radius, (x[1] - yc) / radius,
+                             (x[2] - zc) / radius};
+        const double d = 1. + (h ? -q[2] : q[2]);
+        sf.uv[n] = {{q[0] / d, q[1] / d}};
+      }
+  }
   _volumes[tag] = volume;
   return true;
 }
@@ -412,6 +436,19 @@ DiscreteCAD_Internals::_fillEllipse(const Frame &f, double rx, double ry,
   return triangles;
 }
 
+void DiscreteCAD_Internals::_planarUV(int surface, const double o[3],
+                                      const double eu[3], const double ev[3])
+{
+  Surface &sf = _surfaces[surface];
+  for(auto &t : sf.triangles)
+    for(int n : t) {
+      const std::array<double, 3> &x = _nodes[n];
+      const double d[3] = {x[0] - o[0], x[1] - o[1], x[2] - o[2]};
+      sf.uv[n] = {{d[0] * eu[0] + d[1] * eu[1] + d[2] * eu[2],
+                   d[0] * ev[0] + d[1] * ev[1] + d[2] * ev[2]}};
+    }
+}
+
 bool DiscreteCAD_Internals::addRectangle(int &tag, double x, double y,
                                          double z, double dx, double dy)
 {
@@ -438,6 +475,8 @@ bool DiscreteCAD_Internals::addRectangle(int &tag, double x, double y,
     c[k] = _addCurve(v[k], v[(k + 1) % 4], {n[k], n[(k + 1) % 4]});
   _surfaces[tag] = {{c[0], c[1], c[2], c[3]},
                     {{{n[0], n[1], n[2]}}, {{n[0], n[2], n[3]}}}};
+  const double eu[3] = {1., 0., 0.}, ev[3] = {0., 1., 0.};
+  _planarUV(tag, _nodes[n[0]].data(), eu, ev);
   return true;
 }
 
@@ -463,6 +502,7 @@ bool DiscreteCAD_Internals::addDisk(int &tag, double xc, double yc, double zc,
   int a, b;
   _addArcs(ring, a, b);
   _surfaces[tag] = {{a, b}, _fillEllipse(f, rx, ry, 0., ring)};
+  _planarUV(tag, f.o, f.e[0], f.e[1]);
   return true;
 }
 
@@ -500,52 +540,67 @@ bool DiscreteCAD_Internals::addCone(int &tag, double x, double y, double z,
     const double r = r1 + (r2 - r1) * k / m;
     rings[k] = _addRing(f, r, r, h * k / m, r > 0. ? circleDivisions(r, tolerance) : 1);
   }
-  // the circles (two arcs each) or apexes at the ends, and the two seams of
-  // the lateral surface at the angles 0 and pi
-  int a1 = 0, b1 = 0, a2 = 0, b2 = 0, v1[2], v2[2];
-  if(r1 > 0.) {
-    _addArcs(rings[0], a1, b1);
-    v1[0] = _curves[a1].v0;
-    v1[1] = _curves[a1].v1;
-  }
-  else
-    v1[0] = v1[1] = _addVertex(rings[0][0]);
-  if(r2 > 0.) {
-    _addArcs(rings[m], a2, b2);
-    v2[0] = _curves[a2].v0;
-    v2[1] = _curves[a2].v1;
-  }
-  else
-    v2[0] = v2[1] = _addVertex(rings[m][0]);
-  std::vector<int> column[2];
-  for(int k = 0; k <= m; k++) {
-    column[0].push_back(rings[k][0]);
-    column[1].push_back(rings[k][rings[k].size() / 2]);
-  }
-  const int seam0 = _addCurve(v1[0], v2[0], column[0]);
-  const int seamPi = _addCurve(v1[1], v2[1], column[1]);
-  // the two halves of the lateral surface, and the disks at the ends, their
-  // loops counterclockwise seen from outside
+  // the lateral surface, bounded by the circles at its ends (two arcs each)
+  // or holding an apex, and the disks at the ends; their loops
+  // counterclockwise seen from outside
+  int a1 = 0, b1 = 0, a2 = 0, b2 = 0;
+  if(r1 > 0.) _addArcs(rings[0], a1, b1);
+  if(r2 > 0.) _addArcs(rings[m], a2, b2);
+  std::vector<std::array<int, 3> > triangles;
+  for(int k = 0; k < m; k++)
+    for(int half = 0; half < 2; half++)
+      zipHalf(rings[k], rings[k + 1], half, triangles);
+  std::vector<int> loops;
+  if(r1 > 0.) loops.insert(loops.end(), {a1, b1});
+  if(r2 > 0.) loops.insert(loops.end(), {-b2, -a2});
   Volume volume;
-  for(int half = 0; half < 2; half++) {
-    std::vector<std::array<int, 3> > triangles;
-    for(int k = 0; k < m; k++) zipHalf(rings[k], rings[k + 1], half, triangles);
-    std::vector<int> loop;
-    if(r1 > 0.) loop.push_back(half ? b1 : a1);
-    loop.push_back(half ? seam0 : seamPi);
-    if(r2 > 0.) loop.push_back(half ? -b2 : -a2);
-    loop.push_back(half ? -seamPi : -seam0);
-    volume.surfaces.push_back(_addSurface(loop, triangles));
+  const int lateral = _addSurface(loops, triangles);
+  volume.surfaces.push_back(lateral);
+  // its parameters: the angle around the axis, and a radius growing along
+  // the axis, exp(t) with dt = ds / r along a generatrix (a conformal map of
+  // the lateral surface onto an annulus), its range limited to a factor 4;
+  // r / rmax with an apex
+  {
+    const double maxRange = std::log(4.);
+    Surface &sf = _surfaces[lateral];
+    const double range =
+      (!r1 || !r2) ? 0. :
+      (r1 == r2 ? h / r1 : std::abs(slant / (r2 - r1) * std::log(r2 / r1)));
+    const double lambda = range > maxRange ? maxRange / range : 1.;
+    for(auto &tri : sf.triangles)
+      for(int n : tri) {
+        const std::array<double, 3> &x = _nodes[n];
+        const double d[3] = {x[0] - f.o[0], x[1] - f.o[1], x[2] - f.o[2]};
+        double c[3];
+        for(int k = 0; k < 3; k++)
+          c[k] = d[0] * f.e[k][0] + d[1] * f.e[k][1] + d[2] * f.e[k][2];
+        // the radius of the ring of the node, from its position on the axis
+        const double r = r1 + (r2 - r1) * c[2] / h;
+        double rho;
+        if(!r1 || !r2) rho = r / rmax;
+        else if(r1 == r2) rho = std::exp(lambda * c[2] / r1);
+        else rho = std::exp(lambda * slant / (r2 - r1) * std::log(r / r1));
+        const double theta = std::atan2(c[1], c[0]);
+        sf.uv[n] = {{rho * std::cos(theta), rho * std::sin(theta)}};
+      }
   }
+  if(!r1 || !r2)
+    _surfaces[lateral].embeddedVertices.push_back(
+      _addVertex(r1 > 0. ? rings[m][0] : rings[0][0]));
   if(r1 > 0.) {
-    std::vector<std::array<int, 3> > triangles =
+    std::vector<std::array<int, 3> > bottom =
       _fillEllipse(f, r1, r1, 0., rings[0]);
-    reverse(triangles);
-    volume.surfaces.push_back(_addSurface({-b1, -a1}, triangles));
+    reverse(bottom);
+    const int disk = _addSurface({-b1, -a1}, bottom);
+    _planarUV(disk, f.o, f.e[0], f.e[1]);
+    volume.surfaces.push_back(disk);
   }
-  if(r2 > 0.)
-    volume.surfaces.push_back(
-      _addSurface({a2, b2}, _fillEllipse(f, r2, r2, h, rings[m])));
+  if(r2 > 0.) {
+    const int disk =
+      _addSurface({a2, b2}, _fillEllipse(f, r2, r2, h, rings[m]));
+    _planarUV(disk, f.o, f.e[0], f.e[1]);
+    volume.surfaces.push_back(disk);
+  }
   _volumes[tag] = volume;
   return true;
 }
@@ -614,48 +669,56 @@ bool DiscreteCAD_Internals::addTorus(int &tag, double x, double y, double z,
       grid[i * np + j] = _addNode(p[0], p[1], p[2]);
     }
   auto node = [&](int i, int j) { return grid[(i % nt) * np + j % np]; };
-  // the vertices at theta, phi in {0, pi}, the arcs of the parallels (phi =
-  // 0, pi) and of the meridians (theta = 0, pi) between them
-  int vertex[2][2];
+  // the vertices at theta in {0, pi} on the outer (phi = 0) and inner (phi =
+  // pi) equators, the arcs of the equators between them
+  int vertex[2][2], equator[2][2];
   for(int a = 0; a < 2; a++)
     for(int b = 0; b < 2; b++)
       vertex[a][b] = _addVertex(node(a * nt / 2, b * np / 2));
-  int parallel[2][2], meridian[2][2];
   for(int b = 0; b < 2; b++)
     for(int h = 0; h < 2; h++) {
       std::vector<int> nodes;
       for(int i = h * nt / 2; i <= (h + 1) * nt / 2; i++)
         nodes.push_back(node(i, b * np / 2));
-      parallel[b][h] =
-        _addCurve(vertex[h][b], vertex[(h + 1) % 2][b], nodes);
+      equator[b][h] = _addCurve(vertex[h][b], vertex[(h + 1) % 2][b], nodes);
     }
-  for(int a = 0; a < 2; a++)
-    for(int h = 0; h < 2; h++) {
-      std::vector<int> nodes;
-      for(int j = h * np / 2; j <= (h + 1) * np / 2; j++)
-        nodes.push_back(node(a * nt / 2, j));
-      meridian[a][h] =
-        _addCurve(vertex[a][h], vertex[a][(h + 1) % 2], nodes);
-    }
-  // the 4 patches theta in [ht pi, (ht + 1) pi], phi in [hp pi, (hp + 1) pi],
-  // their triangles oriented outwards (d/dtheta x d/dphi) and their loops
-  // counterclockwise in (theta, phi)
+  // the two halves phi in [hp pi, (hp + 1) pi], their triangles oriented
+  // outwards (d/dtheta x d/dphi), their loops counterclockwise in (theta, phi),
+  // and their parameters: the angle theta and a radius exp(s), with s the
+  // conformal coordinate of phi, ds = r2 dphi / (r1 + r2 cos phi) (a
+  // conformal map of the half onto an annulus), its range limited to a factor
+  // 4
+  const double c = std::sqrt(r1 * r1 - r2 * r2);
+  const double range = pi * r2 / c, maxRange = std::log(4.);
+  const double lambda = range > maxRange ? maxRange / range : 1.;
+  auto conformal = [&](double phi) {
+    // phi in [-pi, pi]
+    return std::abs(2. * r2 / c *
+                    std::atan(std::sqrt((r1 - r2) / (r1 + r2)) *
+                              std::tan(phi / 2.)));
+  };
   Volume volume;
-  for(int ht = 0; ht < 2; ht++)
-    for(int hp = 0; hp < 2; hp++) {
-      std::vector<std::array<int, 3> > triangles;
-      for(int i = ht * nt / 2; i < (ht + 1) * nt / 2; i++)
-        for(int j = hp * np / 2; j < (hp + 1) * np / 2; j++) {
-          triangles.push_back(
-            {{node(i, j), node(i + 1, j), node(i + 1, j + 1)}});
-          triangles.push_back(
-            {{node(i, j), node(i + 1, j + 1), node(i, j + 1)}});
-        }
-      const std::vector<int> loop = {
-        parallel[hp][ht], meridian[(ht + 1) % 2][hp],
-        -parallel[(hp + 1) % 2][ht], -meridian[ht][hp]};
-      volume.surfaces.push_back(_addSurface(loop, triangles));
-    }
+  for(int hp = 0; hp < 2; hp++) {
+    std::vector<std::array<int, 3> > triangles;
+    for(int i = 0; i < nt; i++)
+      for(int j = hp * np / 2; j < (hp + 1) * np / 2; j++) {
+        triangles.push_back({{node(i, j), node(i + 1, j), node(i + 1, j + 1)}});
+        triangles.push_back({{node(i, j), node(i + 1, j + 1), node(i, j + 1)}});
+      }
+    const std::vector<int> loops = {
+      equator[hp][0], equator[hp][1], -equator[(hp + 1) % 2][1],
+      -equator[(hp + 1) % 2][0]};
+    const int half = _addSurface(loops, triangles);
+    Surface &sf = _surfaces[half];
+    for(int i = 0; i < nt; i++)
+      for(int j = hp * np / 2; j <= (hp + 1) * np / 2; j++) {
+        const double theta = 2. * pi * i / nt;
+        const double phi = 2. * pi * j / np - (hp ? 2. * pi : 0.);
+        const double rho = std::exp(lambda * conformal(phi));
+        sf.uv[node(i, j)] = {{rho * std::cos(theta), rho * std::sin(theta)}};
+      }
+    volume.surfaces.push_back(half);
+  }
   _volumes[tag] = volume;
   return true;
 }
@@ -726,11 +789,17 @@ void DiscreteCAD_Internals::synchronize(GModel *model)
       signs.push_back(c > 0 ? 1 : -1);
     }
     gf->setBoundEdges(tags, signs);
+    for(int v : it.second.embeddedVertices) {
+      GVertex *gv = model->getVertexByTag(v);
+      if(gv) gf->addEmbeddedVertex(gv);
+    }
     gf->setNativeType(GEntity::DiscreteCADModel);
     model->add(gf);
-    for(auto &t : it.second.triangles)
-      gf->triangles.push_back(
-        new MTriangle(node(t[0], gf), node(t[1], gf), node(t[2], gf)));
+    // without parameters, the parametrization is computed from the mesh
+    if(it.second.uv.empty())
+      for(auto &t : it.second.triangles)
+        gf->triangles.push_back(
+          new MTriangle(node(t[0], gf), node(t[1], gf), node(t[2], gf)));
     created.push_back(gf);
   }
   for(auto &it : _volumes) {
@@ -748,6 +817,37 @@ void DiscreteCAD_Internals::synchronize(GModel *model)
   }
   for(GEntity *e : created) _synchronized.push_back({e->dim(), e->tag()});
   model->createGeometryOfDiscreteEntities(_synchronized);
+  // the parametrizations given with the surfaces, positively oriented
+  for(GEntity *e : created) {
+    if(e->dim() != 2) continue;
+    const Surface &sf = _surfaces[e->tag()];
+    if(sf.uv.empty()) continue;
+    std::map<int, int> local;
+    std::vector<SPoint2> uv;
+    std::vector<SPoint3> xyz;
+    std::vector<int> triangles;
+    double area = 0.;
+    for(auto &t : sf.triangles) {
+      for(int n : t) {
+        auto it = local.find(n);
+        if(it == local.end()) {
+          it = local.insert({n, (int)uv.size()}).first;
+          const std::array<double, 2> &p = sf.uv.at(n);
+          uv.push_back(SPoint2(p[0], p[1]));
+          xyz.push_back(SPoint3(_nodes[n][0], _nodes[n][1], _nodes[n][2]));
+        }
+        triangles.push_back(it->second);
+      }
+      const SPoint2 &a = uv[triangles[triangles.size() - 3]],
+                    &b = uv[triangles[triangles.size() - 2]],
+                    &c = uv[triangles.back()];
+      area += (b.x() - a.x()) * (c.y() - a.y()) -
+              (b.y() - a.y()) * (c.x() - a.x());
+    }
+    if(area < 0.)
+      for(SPoint2 &p : uv) p = SPoint2(p.x(), -p.y());
+    static_cast<discreteFace *>(e)->setParametrization(uv, xyz, triangles);
+  }
   for(GEntity *e : created) e->deleteMesh();
   model->resetMaxVertexNumber(maxVertex);
   model->resetMaxElementNumber(maxElement);
