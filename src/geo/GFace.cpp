@@ -38,8 +38,8 @@
 #endif
 
 GFace::GFace(GModel *model, int tag)
-  : GEntity(model, tag), r1(nullptr), r2(nullptr), va_geom_triangles(nullptr),
-    compoundSurface(nullptr)
+  : GEntity(model, tag), r1(nullptr), r2(nullptr), stl_from_mesh(false),
+    va_geom_triangles(nullptr), compoundSurface(nullptr)
 {
   meshStatistics.status = GFace::PENDING;
   meshStatistics.refineAllEdges = false;
@@ -163,6 +163,13 @@ void GFace::deleteMesh()
   correspondingVertices.clear();
   correspondingHighOrderVertices.clear();
   deleteVertexArrays();
+  // an STL mesh taken from the mesh is stale, and so is what is drawn of it
+  if(stl_from_mesh) {
+    stl_vertices_xyz.clear();
+    stl_triangles.clear();
+    stl_from_mesh = false;
+    deleteGeometryVertexArrays();
+  }
 }
 
 void GFace::deleteGeometryVertexArrays()
@@ -1510,6 +1517,7 @@ bool GFace::buildSTLTriangulation(bool force)
   stl_vertices_uv.clear();
   stl_vertices_xyz.clear();
   stl_triangles.clear();
+  stl_from_mesh = false;
 
   if(triangles.size()) {
     // if a mesh exists, import it as the STL representation
@@ -1528,6 +1536,7 @@ bool GFace::buildSTLTriangulation(bool force)
         stl_triangles.push_back(nodes[triangles[i]->getVertex(j)]);
       }
     }
+    stl_from_mesh = true;
     return true;
   }
   else if(geomType() == ParametricSurface) {

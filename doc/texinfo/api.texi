@@ -6249,7 +6249,7 @@ Return last error message, if any.
 @item Input:
 -
 @item Output:
-@code{error} (string)
+@code{message} (string)
 @item Return:
 -
 @item Language-specific definition:

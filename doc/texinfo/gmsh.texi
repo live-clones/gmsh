@@ -1724,8 +1724,12 @@ menu bar is on the top of the screen -- this can be changed with the
 @code{General.SystemMenuBar} option, see @ref{General options}), a tree
 menu on the left (which by default contains a `Modules' entry with three
 children: `Geometry', `Mesh' and `Solver'), a graphic area on the right,
-and a status bar with some shortcut buttons at the bottom. (You can
-detach the tree menu using `Window->Attach/Detach Menu'.)
+and a status bar with some shortcut buttons at the bottom. (You can hide
+the tree menu with the first button of the status bar, and detach it
+using `Window->Attach/Detach Menu'.) The interface uses the font of the
+desktop and follows its light or dark mode; see the
+@code{General.FltkTheme} and @code{General.FltkColorScheme} options in
+@ref{General options} to change this.
 
 @iftex
 @sp 1
@@ -1736,9 +1740,10 @@ To create a new geometrical model, use the `File->New' menu to create a
 new model file, and choose for example @file{mymodel.geo} as file
 name. Then in the tree menu, successively open the `Geometry',
 `Elementary entities' and `Add' submenus, and click for example on
-`Rectangle'. A context window with parameters will pop up: you can enter
-some parameters in this window (e.g. the width and height of the
-rectangle) and move the mouse to place it on the canvas. If you don't
+`Rectangle'. A context window with parameters will open, docked on the
+right of the graphic area: you can enter some parameters in this window
+(e.g. the width and height of the rectangle) and move the mouse to place
+it on the canvas. If you don't
 want to place the rectangle with the mouse, select `X', `Y' and `Z
 freeze' in the window and enter the coordinates manually in the context
 window. Once you are done, either press @kbd{e} (see the status message
@@ -1790,7 +1795,8 @@ with the `File->Export' menu. The default mesh file name is based on the
 name of the current active model, with an appended extension depending
 on the mesh format.  Note that most interactive commands have keyboard
 shortcuts: see @ref{Keyboard shortcuts}, or select `Help->Keyboard and
-Mouse Usage' in the menu. For example, to quickly generate the 2D mesh
+Mouse Usage' in the menu (which has a search box to find them). For
+example, to quickly generate the 2D mesh
 and save a mesh, you can first press @kbd{2}, then @kbd{Ctrl+Shift+s}.
 
 A double-click in the graphic window will pop up a quick shortcut menu,
@@ -1798,22 +1804,44 @@ which can be used e.g. to quickly toggle the visibility of mesh entities
 (like surface faces), reset the viewport, select the rotation center,
 display axes, or access the full module options (from the
 `Tools->Options' menu). The shortcut buttons on the bottom left of the
-status bar can be used to quickly adjust the viewport: `X', `Y', `Z' set
-viewports with the corresponding axis perpendicular to graphic plane;
-the rotation button rotates the view by 90 degrees; and `1:1' resets the
-scale. The crosshair button switches `Query' on: every click then says what
+status bar give access to the same things: the first three show or hide
+the tree menu, select the active model and open the quick shortcut menu;
+`X', `Y', `Z' set viewports with the corresponding axis perpendicular to
+graphic plane; the rotation button rotates the view by 90 degrees; `1:1'
+resets the scale; and `S' switches the mouse selection on or off. The
+crosshair button switches `Query' on: every click then says what
 the model holds where it hit, i.e. the geometrical entity, the mesh element
 and the node there, and the value of every visible post-processing view.
 The ruler button next to it switches `Measure' on: two clicks then draw the
 line between the points they hit and give its length. Both stay on until you
 press @kbd{q} (@kbd{Escape} suspends the mouse selection instead, as
 everywhere else, to move the view without clicking on the model). (Both are
-also available in the quick shortcut menu.)
+also available in the quick shortcut menu.) The last four buttons step
+through the time steps of the post-processing views, when there are any.
 
 @iftex
 @sp 1
 @end iftex
 @center@image{images/gui_mesh,10.5cm,,Meshing in the GUI}
+
+The tool windows opened from the `Tools' menu---`Options', `Plugins',
+`Visibility', `Clipping', `Manipulator' and `Statistics'---dock on the
+right of the graphic area, as the context windows of the modules do. The
+tools whose height is free share the dock as tabs, the one shown being
+marked by a bar along the top of its tab; those of fixed height stack
+above the tabs, under a title that folds and unfolds them with a
+click. Drag a tab or a title to reorder the tools, or drag it out of the
+dock to get a window of its own, which can be dragged back onto the dock
+(the `Window->Dock/Undock Tool Window' and `Dock/Undock All Tool Windows'
+menus do the same). The width of the dock can be adjusted by dragging its
+left edge. The option window gathers all the options of the modules in
+tabs, each split in sections that fold; the search box at its top only
+keeps the options whose name matches.
+
+@iftex
+@sp 1
+@end iftex
+@center@image{images/gui_tools,10.5cm,,Tool windows docked in the GUI}
 
 Several files can be loaded simultaneously. When specified on the
 command line, the first one defines the active model (in the same way as
@@ -1859,11 +1887,6 @@ The two next sections describe the mouse actions in the GUI, as well as
 all the predefined keyboard shortcuts. Screencasts explaining how to use
 the Gmsh GUI are available online at the following address:
 @uref{https://gmsh.info/screencasts/}.
-
-@c TODO: add section describing the main windows in the GUI, with a
-@c screenshot for each one: Tools->Options, Tools->Plugins,
-@c Tools->Visibility, Tools->Clipping, Tools->Manipulator,
-@c Tools->Statistics and Tools->Message console
 
 @c -------------------------------------------------------------------------
 @c Mouse actions

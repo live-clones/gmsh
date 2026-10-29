@@ -46,6 +46,9 @@ void glMaterialf(GLenum face, GLenum pname, GLfloat param) {}
 void glMaterialfv(GLenum face, GLenum pname, const GLfloat *params) {}
 void glShadeModel(GLenum mode) {}
 void glPolygonMode(GLenum face, GLenum mode) {}
+// a picking pass draws into the back buffer, which is where a canvas draws
+// anyway (the single draw buffer of a framebuffer is not chosen in ES 3.0)
+void glDrawBuffer(GLenum mode) {}
 void glClipPlane(GLenum plane, const GLdouble *equation) {}
 void glLineStipple(GLint factor, GLushort pattern) {}
 void glLoadMatrixd(const GLdouble *m) {}

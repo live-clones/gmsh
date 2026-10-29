@@ -4514,7 +4514,7 @@ namespace gmsh { // Top-level functions
     // gmsh::logger::getLastError
     //
     // Return last error message, if any.
-    GMSH_API void getLastError(std::string & error);
+    GMSH_API void getLastError(std::string & message);
 
   } // namespace logger
 

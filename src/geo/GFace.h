@@ -375,6 +375,9 @@ public:
   std::vector<SVector3> stl_normals;
   std::vector<SVector3> stl_curvatures;
   std::vector<int> stl_triangles;
+  // whether the STL mesh was taken from the mesh of the surface (see
+  // buildSTLTriangulation()), in which case it goes when the mesh does
+  bool stl_from_mesh;
 
   // a vertex array containing a geometrical representation of the
   // surface

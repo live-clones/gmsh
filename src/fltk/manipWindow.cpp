@@ -36,47 +36,43 @@ manipWindow::manipWindow(int deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
 
-  int width = 4 * BB + 2 * WB;
+  int width = TW;
   int height = 5 * BH + 3 * WB;
 
   win = new paletteWindow(width, height,
                           CTX::instance()->nonModalWindows ? true : false,
-                          "Manipulator",
-                          CTX::instance()->manipOffset);
+                          "Manipulator", CTX::instance()->manipOffset);
   win->box(GMSH_WINDOW_BOX);
 
-  Fl_Box *top[3], *left[3];
-  top[0] = new Fl_Box(WB + 1 * BB, 1 * WB + 0 * BH, BB, BH, "X");
-  top[1] = new Fl_Box(WB + 2 * BB, 1 * WB + 0 * BH, BB, BH, "Y");
-  top[2] = new Fl_Box(WB + 3 * BB, 1 * WB + 0 * BH, BB, BH, "Z");
-  left[0] = new Fl_Box(WB + 0 * BB, 1 * WB + 1 * BH, BB, BH, "Rotation");
-  left[1] = new Fl_Box(WB + 0 * BB, 1 * WB + 2 * BH, BB, BH, "Translation");
-  left[2] = new Fl_Box(WB + 0 * BB, 1 * WB + 3 * BH, BB, BH, "Scale");
-  for(int i = 0; i < 3; i++) {
-    top[i]->align(FL_ALIGN_INSIDE | FL_ALIGN_CENTER);
-    left[i]->align(FL_ALIGN_INSIDE | FL_ALIGN_CENTER);
+  // the names of the rows, then X, Y and Z sharing what is left; each line of
+  // three is a row, which widens as one
+  int x0 = WB + BB, w0 = width - 2 * WB - BB, cw = w0 / 3;
+  static const char *names[4] = {"", "Rotation", "Translation", "Scale"};
+  static const char *xyz[3] = {"X", "Y", "Z"};
+  static const char *tips[9] = {
+    "General.RotationX",    "General.RotationY",    "General.RotationZ",
+    "General.TranslationX", "General.TranslationY", "General.TranslationZ",
+    "General.ScaleX",       "General.ScaleY",       "General.ScaleZ"};
+  for(int r = 0; r < 4; r++) {
+    int y = WB + r * BH;
+    if(r) {
+      Fl_Box *b = new Fl_Box(WB, y, BB, BH, names[r]);
+      b->align(FL_ALIGN_INSIDE | FL_ALIGN_CENTER);
+    }
+    Fl_Group *row = new Fl_Group(x0, y, w0, BH);
+    for(int c = 0; c < 3; c++) {
+      int x = x0 + c * cw, w = (c < 2) ? cw : w0 - 2 * cw;
+      if(!r) {
+        Fl_Box *b = new Fl_Box(x, y, w, BH, xyz[c]);
+        b->align(FL_ALIGN_INSIDE | FL_ALIGN_CENTER);
+      }
+      else {
+        value[3 * (r - 1) + c] = new Fl_Value_Input(x, y, w, BH);
+        value[3 * (r - 1) + c]->tooltip(tips[3 * (r - 1) + c]);
+      }
+    }
+    row->end();
   }
-
-  value[0] = new Fl_Value_Input(WB + 1 * BB, 1 * WB + 1 * BH, BB, BH);
-  value[0]->tooltip("General.RotationX");
-  value[1] = new Fl_Value_Input(WB + 2 * BB, 1 * WB + 1 * BH, BB, BH);
-  value[1]->tooltip("General.RotationY");
-  value[2] = new Fl_Value_Input(WB + 3 * BB, 1 * WB + 1 * BH, BB, BH);
-  value[2]->tooltip("General.RotationZ");
-
-  value[3] = new Fl_Value_Input(WB + 1 * BB, 1 * WB + 2 * BH, BB, BH);
-  value[3]->tooltip("General.TranslationX");
-  value[4] = new Fl_Value_Input(WB + 2 * BB, 1 * WB + 2 * BH, BB, BH);
-  value[4]->tooltip("General.TranslationY");
-  value[5] = new Fl_Value_Input(WB + 3 * BB, 1 * WB + 2 * BH, BB, BH);
-  value[5]->tooltip("General.TranslationZ");
-
-  value[6] = new Fl_Value_Input(WB + 1 * BB, 1 * WB + 3 * BH, BB, BH);
-  value[6]->tooltip("General.ScaleX");
-  value[7] = new Fl_Value_Input(WB + 2 * BB, 1 * WB + 3 * BH, BB, BH);
-  value[7]->tooltip("General.ScaleY");
-  value[8] = new Fl_Value_Input(WB + 3 * BB, 1 * WB + 3 * BH, BB, BH);
-  value[8]->tooltip("General.ScaleZ");
 
   for(int i = 0; i < 9; i++) {
     if(i < 3) {
@@ -100,6 +96,9 @@ manipWindow::manipWindow(int deltaFontSize)
   }
 
   win->end();
+  // as narrow as the option window, wider as the window is widened
+  ((paletteWindow *)win)->followWidth(width / 2, width - WB);
+  ((paletteWindow *)win)->sizeRange(width, height, 0, height);
 
   FL_NORMAL_SIZE += deltaFontSize;
 }

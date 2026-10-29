@@ -7,6 +7,7 @@
 #define COMMAND_LINE_H
 
 #include <string>
+#include "Shortcuts.h" // GetShortcutsUsage()
 
 int GetGmshMajorVersion();
 int GetGmshMinorVersion();
@@ -20,9 +21,7 @@ const char *GetGmshBuildOS();
 const char *GetGmshShortLicense();
 const char *GetGmshBuildOptions();
 
-std::vector<std::pair<std::string, std::string> > GetUsage();
-std::vector<std::pair<std::string, std::string> >
-GetShortcutsUsage(const std::string &ctrl = "");
+std::vector<std::pair<std::string, std::string>> GetUsage();
 std::vector<std::pair<std::string, std::string> > GetMouseUsage();
 void PrintUsage(const std::string &name);
 std::vector<std::string> GetBuildInfo();

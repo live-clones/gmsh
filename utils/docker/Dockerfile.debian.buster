@@ -55,31 +55,26 @@ RUN curl -L -O http://download.savannah.gnu.org/releases/freetype/freetype-2.10.
 # HDF5
 # -----------------------
 
-#old:
-RUN curl -L -O https://support.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.10.5.tar.gz && tar zxvf hdf5-1.10.5.tar.gz && cd hdf5-1.10.5 && ./configure --disable-shared --prefix=/usr/local && make && make install && cd .. && rm -rf hdf5-1.10.5.tar.gz hdf5-1.10.5
+RUN wget https://github.com/HDFGroup/hdf5/releases/download/hdf5_1.14.6/hdf5-1.14.6.tar.gz && tar zxvf hdf5-1.14.6.tar.gz && cd hdf5-1.14.6 && ./configure --disable-shared --prefix=/usr/local && make && make install && cd .. && rm -rf hdf5-1.14.6.tar.gz hdf5-1.14.6
 
-# new:
-# RUN wget https://github.com/HDFGroup/hdf5/releases/download/hdf5_1.14.6/hdf5-1.14.6.tar.gz && tar zxvf hdf5-1.14.6.tar.gz && cd hdf5-1.14.6 && ./configure --disable-shared --prefix=/usr/local && make && make install && cd .. && rm -rf hdf5-1.14.6.tar.gz hdf5-1.14.6
+# -----------------------
+# CMake
+# -----------------------
+
+# system cmake on buster is too old for CGNS 4.5 and OCC 8: install a newer version (removed after OCC)
+RUN apt-get install -y libssl-dev && apt-get clean && git clone --branch v3.31.9 --single-branch https://github.com/Kitware/CMake.git && cd CMake && ./bootstrap --prefix=/tmp/cmake --parallel=4 && make && make install && cd .. && rm -rf CMake
 
 # -----------------------
 # CGNS
 # -----------------------
 
-# old:
-RUN git clone https://github.com/CGNS/CGNS.git && cd CGNS && git checkout v3.4.0 && mkdir build && cd build && cmake -DCGNS_BUILD_SHARED=0 -DCGNS_ENABLE_HDF5=1 -DHDF5_VERSION=1.10.5 .. && make && make install && cd ../.. && rm -rf CGNS
-
-# new
-# RUN git clone https://github.com/CGNS/CGNS.git && cd CGNS && git checkout v3.4.0 && mkdir build && cd build && cmake -DCGNS_BUILD_SHARED=0 -DCGNS_ENABLE_HDF5=1 -DHDF5_VERSION=1.14.6 .. && make && make install && cd ../.. && rm -rf CGNS
+RUN git clone https://github.com/CGNS/CGNS.git && cd CGNS && git checkout v4.5.2 && perl -0pi -e 's/(\s*)(find_package \(HDF5 NAMES)/$1find_package (ZLIB REQUIRED)$1$2/' CMakeLists.txt && mkdir build && cd build && /tmp/cmake/bin/cmake -DCGNS_BUILD_SHARED=0 -DCGNS_ENABLE_HDF5=1 -DHDF5_VERSION=1.14.6 .. && make && make install && cd ../.. && rm -rf CGNS
 
 # -----------------------
 # MED
 # -----------------------
 
-# old:
-RUN curl -L -O https://src.fedoraproject.org/lookaside/pkgs/med/med-4.1.0.tar.gz/sha512/94d07663c2f6a3cd497f54b480c3d742476d2a25172feb567980c9e75d49f4661aa2c6aaf570470938265997154e348bc1608065b86d42afda52d4e6361fedf8/med-4.1.0.tar.gz && tar zxf med-4.1.0.tar.gz && cd med-4.1.0 && LIBS=-ldl ./configure --with-hdf5=/usr/local --enable-build-static --disable-shared --disable-python --disable-fortran --disable-tests --with-med_int=long && make -i install && cd .. && rm -rf med-4.1.0.tar.gz med-4.1.0
-
-# new:
-# RUN wget https://github.com/chennes/med/archive/refs/tags/v6.0.1.tar.gz && tar zxf v6.0.1.tar.gz && cd med-6.0.1 && LIBS=-ldl ./configure --with-hdf5=/usr/local --enable-build-static --disable-shared --disable-python --disable-fortran --disable-tests --with-med_int=long && make -i install && cd .. && rm -rf v6.0.1.tar.gz med-6.0.1
+RUN wget https://github.com/chennes/med/archive/refs/tags/v6.0.1.tar.gz && tar zxf v6.0.1.tar.gz && cd med-6.0.1 && LIBS=-ldl ./configure --with-hdf5=/usr/local --enable-build-static --disable-shared --disable-python --disable-fortran --disable-tests --with-med_int=long && make -i install && cd .. && rm -rf v6.0.1.tar.gz med-6.0.1
 
 # -----------------------
 # PETSc
@@ -120,9 +115,6 @@ RUN cd ${SLEPC_DIR} && ./configure && make
 # -----------------------
 # OpenCASCADE
 # -----------------------
-
-# system cmake on buster is too old for OCC 8: install a newer version
-RUN apt-get install -y libssl-dev && apt-get clean && git clone --branch v3.31.9 --single-branch https://github.com/Kitware/CMake.git && cd CMake && ./bootstrap --prefix=/tmp/cmake --parallel=4 && make && make install && cd .. && rm -rf CMake
 
 RUN git clone --branch V8_0_1 --single-branch https://github.com/Open-Cascade-SAS/OCCT.git && cd OCCT && mkdir build && cd build && CXXFLAGS="-fPIC -DIGNORE_NO_ATOMICS" /tmp/cmake/bin/cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_LIBRARY_TYPE=Static -DBUILD_MODULE_Draw=0 -DBUILD_MODULE_Visualization=0 -DBUILD_MODULE_ApplicationFramework=0 .. && make -i -j 4 install && cd ../.. && rm -rf OCCT
 
