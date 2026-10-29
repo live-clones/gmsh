@@ -338,8 +338,8 @@ static unsigned int markColor()
                       (int)(shade * c->unpackBlue(c->color.query)), 255);
 }
 
-// a cross of fourteen pixels and a sphere half again the size of a point, so
-// that the point is visible whatever is drawn around it
+// a cross of fourteen pixels and a sphere twice the size of a point, so that
+// the point is visible whatever is drawn around it
 void drawContext::drawMark(const double xyz[3], bool sphere)
 {
   double d = 14 * pixel_equiv_x / s[0];
@@ -351,8 +351,8 @@ void drawContext::drawMark(const double xyz[3], bool sphere)
   gmshVertex3d(xyz[0], xyz[1], xyz[2] - d);
   gmshVertex3d(xyz[0], xyz[1], xyz[2] + d);
   gmshEnd();
-  if(sphere) drawSphere(1.5 * CTX::instance()->pointSize, xyz[0], xyz[1],
-                        xyz[2], 1);
+  if(sphere)
+    drawSphere(2. * CTX::instance()->pointSize, xyz[0], xyz[1], xyz[2], 1);
 }
 
 void drawContext::drawMarks()
