@@ -72,7 +72,6 @@ struct contextMeshOptions {
   int packCleanupMethod, pack3D, packSizemapMethod,
     packPatterns, packRecombination;
   double packIntrinsicEdgeLengthFactor;
-  int saveDebugFiles;
   int oldInitialDelaunay2D;
   // mesh IO
   int fileFormat, firstElementTag, firstNodeTag;

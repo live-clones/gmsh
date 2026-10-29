@@ -761,11 +761,6 @@ Allow surface meshers to subdivide the boundary mesh and retry when recovering b
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.SaveDebugFiles
-Write optional meshing and optimization debug meshes, background fields, point views and statistics JSON, independently of verbosity@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Mesh.PackCleanupMethod
 Cavity optimizer after packing of parallelograms when PackRecombination is 0. 1: enabled (0 is also accepted for compatibility), 2: disabled@*
 Default value: @code{1}@*

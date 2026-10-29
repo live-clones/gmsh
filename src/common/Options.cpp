@@ -7430,12 +7430,6 @@ double opt_mesh_quadqs_sizemap_method(OPT_ARGS_NUM)
   return CTX::instance()->mesh.quadqsSizemapMethod;
 }
 
-double opt_mesh_save_debug_files(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET) CTX::instance()->mesh.saveDebugFiles = val != 0.;
-  return CTX::instance()->mesh.saveDebugFiles;
-}
-
 double opt_mesh_pack_cleanup_method(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.packCleanupMethod = (int)val;

@@ -1548,7 +1548,7 @@ void buildBackgroundMesh(GFace *gf, bool crossFieldClosestPoint,
       backgroundMesh::setCrossFieldsByDistance(gf); // faster for delquad
     else
       backgroundMesh::set(gf); // will solve PDE
-    if(CTX::instance()->mesh.saveDebugFiles) {
+    if(Msg::GetVerbosity() == 99) {
       char name[256];
       sprintf(name, "bgm-%d.pos", gf->tag());
       backgroundMesh::current()->print(name, gf);
