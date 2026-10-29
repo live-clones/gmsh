@@ -531,11 +531,18 @@ void FlGui::desktopChanged()
   Fl::flush();
 }
 
-static void desktop_changed_cb() { FlGui::instance()->desktopChanged(); }
+// the GUI may be gone when the desktop switches: not brought back by this
+static void desktop_changed_cb()
+{
+  if(FlGui::available()) FlGui::instance()->desktopChanged();
+}
 
 static void watchDesktop()
 {
-  watchDesktopAppearance(desktop_changed_cb);
+  // the system is asked once, whatever the number of GUIs created
+  static bool watched = false;
+  if(!watched) watchDesktopAppearance(desktop_changed_cb);
+  watched = true;
   // and whenever a window of Gmsh gets the focus back, where the system does
   // not tell (Linux)
   mainWindow::focusHook = desktop_changed_cb;

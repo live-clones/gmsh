@@ -272,7 +272,10 @@ static void boxWhileHovered(Fl_Widget *w)
 static int hover_dispatch(int event, Fl_Window *win)
 {
   installBoxes();
-  // zeroed if the event deletes it: Cmd+Q from the API destroys the windows
+  // the event may delete the widget the pointer was over, through a callback
+  // (Cmd+Q from the API destroys every window, a tree widget rebuilds the
+  // tree): FLTK then clears its own pointers to it, but not this copy, so it
+  // is watched for the span of the event and zeroed by the deletion
   Fl_Widget *before = Fl::belowmouse();
   Fl::watch_widget_pointer(before);
   int ret = Fl::handle_(event, win);

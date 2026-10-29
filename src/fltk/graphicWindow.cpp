@@ -4897,6 +4897,7 @@ void graphicWindow::setDocking(bool docking)
     paletteWindow::dragHook = nullptr;
     mainWindow::dropHook = nullptr;
     toolDock::tornOutHook = nullptr;
+    paletteWindow::dragged = nullptr;
     theDocking = nullptr;
     mainWindow::closeToolHook = nullptr;
     paletteWindow::resizedHook = nullptr;

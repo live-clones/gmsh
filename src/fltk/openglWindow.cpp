@@ -99,6 +99,7 @@ openglWindow::openglWindow(int x, int y, int w, int h)
 
 openglWindow::~openglWindow()
 {
+  Fl::remove_timeout(navigator_handler, this);
   Fl::remove_timeout(_studioSampleCb, this);
   Fl::remove_timeout(_fireCb, this);
   delete _ctx;

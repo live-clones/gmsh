@@ -65,6 +65,7 @@ static void clip_update_cb(Fl_Widget *w, void *data)
 
 static void clip_update(bool adjusting)
 {
+  if(!FlGui::available()) return; // a timer firing after the GUI is gone
   if(FlGui::instance()->clipping->group[0]->visible()) { // plane tab
     int idx = FlGui::instance()->clipping->choice->value();
     CTX::instance()->geom.clip &= ~(1 << idx);
