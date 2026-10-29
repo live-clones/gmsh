@@ -4321,7 +4321,6 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
 
   if(main && !detachedMenu) {
     _onelab = new onelabGroup(0, mh, twidth, height - mh - sh);
-    _onelab->enableTreeWidgetResize(false);
   }
   else {
     _onelab = nullptr;
@@ -4521,7 +4520,6 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
     _menuwin->callback(file_quit_cb);
     _menuwin->box(GMSH_WINDOW_BOX);
     _onelab = new onelabGroup(0, 0, _menuwin->w(), _menuwin->h());
-    _onelab->enableTreeWidgetResize(true);
     _menuwin->resizable(_onelab);
     _menuwin->size_range(_onelab->getMinWindowWidth(),
                          _onelab->getMinWindowHeight());
@@ -4588,7 +4586,6 @@ void graphicWindow::detachMenu()
   _menuwin->end();
   _menuwin->show();
 
-  _onelab->enableTreeWidgetResize(true);
   _onelab->rebuildTree(true);
 }
 
@@ -4615,7 +4612,6 @@ void graphicWindow::attachMenu()
   _onelab->resize(_tile->x(), _tile->y(), w, _tile->h());
   _tile->redraw();
 
-  _onelab->enableTreeWidgetResize(false);
   _onelab->rebuildTree(true);
 }
 

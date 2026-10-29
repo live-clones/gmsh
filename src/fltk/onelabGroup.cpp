@@ -445,24 +445,6 @@ static void onelab_tree_cb(Fl_Widget *w, void *data)
   setOpenedClosed(item, tree->callback_reason());
 }
 
-#if 0 // FIXME until the FLTK bug with widgets is solved
-static void onelab_subtree_cb(Fl_Widget *w, void *data)
-{
-  Fl_Tree_Item *n = (Fl_Tree_Item*)data;
-  int reason;
-  if(n->is_open()){
-    reason = FL_TREE_REASON_CLOSED;
-    n->close();
-  }
-  else{
-    reason = FL_TREE_REASON_OPENED;
-    n->open();
-  }
-  setOpenedClosed(n, reason);
-  FlGui::instance()->onelab->redrawTree();
-}
-#endif
-
 void onelabGroup::_computeWidths()
 {
   // "- 1.1 * FL_NORMAL_SIZE" to have space for a scrollbar to the right
@@ -577,8 +559,7 @@ public:
 };
 
 onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
-  : Fl_Group(x, y, w, h, l), _stop(false), _enableTreeWidgetResize(false),
-    _firstBuild(true), _hasContext(false)
+  : Fl_Group(x, y, w, h, l), _stop(false), _firstBuild(true), _hasContext(false)
 {
   Fl_Color col = treeColor();
   color(col);
@@ -594,17 +575,10 @@ onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
   _tree->callback(onelab_tree_cb);
   _tree->connectorstyle(FL_TREE_CONNECTOR_SOLID);
   _tree->connectorcolor(connectorColor());
-  // _tree->marginleft(0);
-  // _tree->usericonmarginleft(0);
-  // _tree->labelmarginleft(0);
-  // _tree->connectorwidth(15);
   _tree->showroot(0);
   // under the gmsh theme the items are spaced out more than its widgets
   _tree->linespacing(2 * gmshAir());
-  // _tree->resizable(0);
   _tree->end();
-
-  _widgetLabelRatio = 0.5;
 
   // dummy values for now; will be updated with _computeWidths()
   _baseWidth = _tree->w() - _tree->marginleft();
@@ -703,6 +677,23 @@ static void autoCheck(const T &pold, const T &pnew, bool force = false)
   }
 }
 
+int onelabGroup::_rowWidth(Fl_Tree_Item *n)
+{ return (int)(_baseWidth - (n->depth() + 1) * _indent); }
+
+void onelabGroup::_addRow(Fl_Tree_Item *n,
+                          const std::function<void(int ww, int hh)> &make)
+{
+  int ww = _rowWidth(n), hh = rowHeight();
+  _tree->begin();
+  Fl_Group *grp = new Fl_Group(1, 1, ww, hh);
+  make(ww, hh);
+  grp->end();
+  grp->resizable(nullptr); // the widgets keep their size
+  _tree->end();
+  _treeWidgets.push_back(grp);
+  n->widget(grp);
+}
+
 template <class T> void onelabGroup::_addParameter(T &p)
 {
   bool highlight = false;
@@ -713,24 +704,19 @@ template <class T> void onelabGroup::_addParameter(T &p)
     Msg::Debug("Could not add item '%s' in tree", p.getName().c_str());
     return;
   }
-  _tree->begin();
-  int ww = (int)(_baseWidth - (n->depth() + 1) * _indent);
-  int hh = rowHeight();
-  Fl_Group *grp = new Fl_Group(1, 1, ww, hh);
-  Fl_Widget *widget =
-    addParameterWidget(p, 1, 1, ww * _widgetLabelRatio, hh, _widgetLabelRatio,
-                       getPath(n), highlight, c, _tree->color(), _treeStrings);
-  grp->end();
-  if(!_enableTreeWidgetResize) grp->resizable(nullptr);
-  _treeWidgets.push_back(grp);
-  widget->copy_label(p.getShortName().c_str());
-  std::string help = p.getHelp();
-  if(help.empty()) help = p.getLabel();
-  if(help.empty()) help = p.getShortName();
-  ReplaceSubStringInPlace("\r", "", help); // remove carriage return characters
-  widget->copy_tooltip(help.c_str());
-  n->widget(grp);
-  _tree->end();
+  _addRow(n, [&](int ww, int hh) {
+    const double labelRatio = 0.5; // the field, then its label
+    Fl_Widget *widget =
+      addParameterWidget(p, 1, 1, ww * labelRatio, hh, labelRatio, getPath(n),
+                         highlight, c, _tree->color(), _treeStrings);
+    widget->copy_label(p.getShortName().c_str());
+    std::string help = p.getHelp();
+    if(help.empty()) help = p.getLabel();
+    if(help.empty()) help = p.getShortName();
+    ReplaceSubStringInPlace("\r", "",
+                            help); // remove carriage return characters
+    widget->copy_tooltip(help.c_str());
+  });
 }
 
 void onelabGroup::_addMenu(const std::string &path, Fl_Callback *callback,
@@ -741,25 +727,18 @@ void onelabGroup::_addMenu(const std::string &path, Fl_Callback *callback,
     Msg::Debug("Could not add item '%s' in tree", path.c_str());
     return;
   }
-  _tree->begin();
-  int ww = (int)(_baseWidth - (n->depth() + 1) * _indent);
-  int hh = rowHeight();
-  Fl_Group *grp = new Fl_Group(1, 1, ww, hh);
-  Fl_Button *but = new Fl_Button(1, 1, ww, hh);
-  but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
-  but->callback(callback, data);
-  but->box(FL_FLAT_BOX);
-  but->color(_tree->color());
-  but->selection_color(_tree->color());
-  grp->end();
-  if(!_enableTreeWidgetResize) grp->resizable(nullptr);
-  _treeWidgets.push_back(grp);
-  std::string label = path;
-  std::string::size_type last = path.find_last_of('/');
-  if(last != std::string::npos) label = path.substr(last + 1);
-  but->copy_label(label.c_str());
-  n->widget(grp);
-  _tree->end();
+  _addRow(n, [&](int ww, int hh) {
+    Fl_Button *but = new Fl_Button(1, 1, ww, hh);
+    but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
+    but->callback(callback, data);
+    but->box(FL_FLAT_BOX);
+    but->color(_tree->color());
+    but->selection_color(_tree->color());
+    std::string label = path;
+    std::string::size_type last = path.find_last_of('/');
+    if(last != std::string::npos) label = path.substr(last + 1);
+    but->copy_label(label.c_str());
+  });
 }
 
 void onelabGroup::_addSolverMenu(int num)
@@ -771,16 +750,9 @@ void onelabGroup::_addSolverMenu(int num)
     Msg::Debug("Could not add item '%s' in tree", path.str().c_str());
     return;
   }
-  int ww = (int)(_baseWidth - (n->depth() + 1) * _indent);
-  int hh = rowHeight();
-  _tree->begin();
-  Fl_Group *grp = new Fl_Group(1, 1, ww, hh);
-  new solverButton(1, 1, ww, hh, num, _tree->color());
-  grp->end();
-  if(!_enableTreeWidgetResize) grp->resizable(nullptr);
-  _treeWidgets.push_back(grp);
-  n->widget(grp);
-  _tree->end();
+  _addRow(n, [&](int ww, int hh) {
+    new solverButton(1, 1, ww, hh, num, _tree->color());
+  });
 }
 
 void onelabGroup::_addViewMenu(int num)
@@ -792,16 +764,9 @@ void onelabGroup::_addViewMenu(int num)
     Msg::Debug("Could not add item '%s' in tree", path.c_str());
     return;
   }
-  int ww = (int)(_baseWidth - (n->depth() + 1) * _indent);
-  int hh = rowHeight();
-  _tree->begin();
-  Fl_Group *grp = new Fl_Group(1, 1, ww, hh);
-  new viewButton(1, 1, ww, hh, num, _tree->color());
-  grp->end();
-  if(!_enableTreeWidgetResize) grp->resizable(nullptr);
-  _treeWidgets.push_back(grp);
-  n->widget(grp);
-  _tree->end();
+  _addRow(n, [&](int ww, int hh) {
+    new viewButton(1, 1, ww, hh, num, _tree->color());
+  });
   if(PView::list[num]->getOptions()->closed) n->parent()->close();
 }
 
@@ -1605,21 +1570,13 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
   onelab::server::instance()->getParameterNames(names, "ONELAB Context");
   setContext(!names.empty());
 
+  // the label of a branch, without the digits that sort it, in a box: a
+  // button on a group of views or a physical group
   for(Fl_Tree_Item *n = _tree->first(); n; n = n->next()) {
     if(n->has_children()) {
-      int ww = (int)(_baseWidth - (n->depth() + 1) * _indent);
-      int hh = rowHeight();
+      int ww = _rowWidth(n), hh = rowHeight();
       _tree->begin();
       Fl_Widget *but;
-#if 0 // FIXME this can crash FLTK when submenus are intially closed (somehow
-      // the widget is badly positioned and overlaps the open icon, leading to
-      // a corrupted Fl_Tree_Item)
-      but = new Fl_Button(1, 1, ww, hh);
-      but->box(FL_NO_BOX);
-      but->clear_visible_focus();
-      but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
-      but->callback(onelab_subtree_cb, (void*)n);
-#else
       if(getPath(n).find("0Modules/Post-processing") != std::string::npos) {
         but = new Fl_Button(1, 1, ww, hh);
         but->box(FL_NO_BOX);
@@ -1643,7 +1600,6 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
         but = new Fl_Box(1, 1, ww, hh);
         but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
       }
-#endif
       _treeWidgets.push_back(but);
       onelab::string o(n->label());
       but->copy_label(o.getShortName().c_str());
@@ -1665,17 +1621,10 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
   if(deleteWidgets) {
     // this needs to be performed after FlGui::check()
     Msg::Debug("Deleting onelabGroup widgets (%d)", (int)_treeWidgets.size());
-    // Fl::focus(0); // tentative fix for crash reported in #955
     for(std::size_t i = 0; i < delWidgets.size(); i++)
       Fl::delete_widget(delWidgets[i]);
     for(std::size_t i = 0; i < delStrings.size(); i++) free(delStrings[i]);
   }
-
-#if 0 // test
-  std::ifstream t("test.db.json");
-  std::string str((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
-  onelab::server::instance()->fromJSON(str);
-#endif
 }
 
 void onelabGroup::openTreeItem(const std::string &name)
