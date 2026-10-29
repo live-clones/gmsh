@@ -2323,6 +2323,10 @@ macro(filter_tests IN OUT)
       file(STRINGS ${FILE} BAD2 REGEX ".*occ.*synchronize.*")
       file(STRINGS ${FILE} BAD3 REGEX ".*[mM]erge.*brep.*")
     endif()
+    # discrete CAD modeler
+    if(NOT HAVE_DISCRETECAD AND NOT BAD1 AND NOT BAD2 AND NOT BAD3)
+      file(STRINGS ${FILE} BAD1 REGEX "^SetFactory.*Discrete.*")
+    endif()
     # Metis
     if(NOT HAVE_METIS AND NOT BAD1 AND NOT BAD2 AND NOT BAD3)
       file(STRINGS ${FILE} BAD1 REGEX ".*PartitionMesh.*")
@@ -2341,7 +2345,8 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
   include(CTest)
   file(GLOB_RECURSE ALLFILES
        tutorials/*.geo examples/*.geo benchmarks/?d/*.geo benchmarks/extrude/*.geo
-       benchmarks/occ/*.geo benchmarks/io_msh/polytopes.geo
+       benchmarks/occ/*.geo benchmarks/discrete/*.geo
+       benchmarks/io_msh/polytopes.geo
        benchmarks/io_msh/read_back.geo benchmarks/io_msh/faces.geo
        benchmarks/io_msh/views.geo
        benchmarks/io_vtk/*.geo)

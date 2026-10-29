@@ -52,6 +52,8 @@ private:
   std::map<int, Surface> _surfaces;
   std::map<int, Volume> _volumes;
   int _maxTag[4];
+  // entities added since the last synchronize
+  bool _changed;
   // the entities copied into the model by the last synchronize
   std::vector<std::pair<int, int> > _synchronized;
   bool _exists(int dim, int tag) const;
@@ -78,6 +80,7 @@ private:
 public:
   DiscreteCAD_Internals();
   void reset();
+  bool getChanged() const { return _changed; }
   // a box with a corner at (x, y, z) and extents dx, dy, dz; tag is the tag
   // of the volume (a new one if tag <= 0)
   bool addBox(int &tag, double x, double y, double z, double dx, double dy,

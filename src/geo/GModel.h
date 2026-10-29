@@ -398,6 +398,9 @@ public:
   {
     return _discreteCAD_internals;
   }
+  // copy the entities of the discrete CAD modeler into the model, if they
+  // changed
+  void synchronizeDiscreteCADInternals();
   void deleteGEOInternals();
   void deleteOCCInternals();
   void resetOCCInternals();

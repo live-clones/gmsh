@@ -159,6 +159,7 @@ void DiscreteCAD_Internals::reset()
   _volumes.clear();
   for(int dim = 0; dim < 4; dim++) _maxTag[dim] = 0;
   _synchronized.clear();
+  _changed = false;
 }
 
 bool DiscreteCAD_Internals::_exists(int dim, int tag) const
@@ -189,6 +190,7 @@ bool DiscreteCAD_Internals::_assignTag(int dim, int &tag)
     tag++;
   }
   _maxTag[dim] = std::max(_maxTag[dim], tag);
+  _changed = true;
   // the other kernels number their new entities after it
   if(geo) geo->setMaxTag(dim, std::max(geo->getMaxTag(dim), tag));
   if(occ) occ->setMaxTag(dim, tag);
@@ -749,4 +751,5 @@ void DiscreteCAD_Internals::synchronize(GModel *model)
   for(GEntity *e : created) e->deleteMesh();
   model->resetMaxVertexNumber(maxVertex);
   model->resetMaxElementNumber(maxElement);
+  _changed = false;
 }

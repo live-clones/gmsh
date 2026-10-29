@@ -3841,6 +3841,7 @@ int GModel::readGEO(const std::string &name)
   // that should also be applied to entities from OCC_Internals
   if(GModel::current()->getOCCInternals())
     GModel::current()->getOCCInternals()->synchronize(GModel::current());
+  GModel::current()->synchronizeDiscreteCADInternals();
   GModel::current()->getGEOInternals()->synchronize(GModel::current());
   return 1;
 }
@@ -4088,5 +4089,13 @@ void GModel::resetDiscreteCADInternals()
 {
 #if defined(HAVE_DISCRETECAD)
   if(_discreteCAD_internals) _discreteCAD_internals->reset();
+#endif
+}
+
+void GModel::synchronizeDiscreteCADInternals()
+{
+#if defined(HAVE_DISCRETECAD)
+  if(_discreteCAD_internals && _discreteCAD_internals->getChanged())
+    _discreteCAD_internals->synchronize(this);
 #endif
 }
