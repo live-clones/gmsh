@@ -432,8 +432,8 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.SurfaceType
-Surface display type (0: cross, 1: wireframe, 2: solid). Wireframe and solid are not available with the built-in geometry kernel.@*
-Default value: @code{0}@*
+Surface display type (0: cross, 1: wireframe, 2: solid). A surface of the built-in geometry kernel is drawn as a cross until it is meshed.@*
+Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.Tangents

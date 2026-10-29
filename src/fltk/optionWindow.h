@@ -6,8 +6,11 @@
 #ifndef OPTION_WINDOW_H
 #define OPTION_WINDOW_H
 
+#include <string>
 #include <vector>
 #include <FL/Fl.H>
+#include <FL/Fl_Scroll.H>
+#include <FL/Fl_Tabs.H>
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Value_Slider.H>
 #include <FL/Fl_Multi_Browser.H>
@@ -23,13 +26,49 @@
 #include "spherePositionWidget.h"
 #include "colorbarWindow.h"
 #include "gamepadWindow.h"
+#include "widthRules.h"
+#include "targetList.h"
+#include "hintInput.h"
 
 extern Fl_Menu_Item menu_font_names[];
 
 class optionWindow {
+private:
+  // rows of overlapping widgets of a section, which the search shows or hides
+  // together; y and h are relative to the top of the section, as built
+  struct block {
+    int y, h;
+    std::vector<Fl_Widget *> widgets;
+    std::vector<int> dy; // offset of each widget below the top of the block
+  };
+  // the tabs of the categories are folding sections
+  struct section {
+    std::string name;
+    Fl_Button *header;
+    Fl_Group *group;
+    bool open;
+    std::vector<block> blocks;
+    // how its widgets follow a wider window
+    widthRules rules;
+  };
+  std::vector<section> _sections[6];
+  Fl_Group *_category[6];
+  // the tabs of the categories: empty, the view list and the scroll lie in
+  // their frame
+  Fl_Tabs *_tabs;
+  Fl_Group *_categoryTab[6];
+  // _width is the width the sections are laid out for, the least there is
+  int _current, _rowHeight, _width, _buttonWidth;
+  std::vector<Fl_Widget *> _hiddenBySearch;
+  searchFilter _filter;
+  void _makeSections(int category);
+  bool _searching();
+
 public:
   Fl_Window *win;
-  Fl_Multi_Browser *browser;
+  Fl_Input *search;
+  Fl_Scroll *scroll;
+  targetList *viewList;
   Fl_Return_Button *redraw;
   gamepadWindow *gmpdoption;
 
@@ -97,6 +136,13 @@ public:
   void resetExternalViewList();
   void updateViewGroup(int index);
   void activate(const char *what);
+  void toggleSection(int category, int section);
+  // the tab clicked
+  void categoryChosen();
+  void selectViews(const std::string &which);
+  void updateViewTargets();
+  // keepPosition keeps the scroll where it is, e.g. when a section is folded
+  void layout(bool keepPosition);
 };
 
 void options_cb(Fl_Widget *w, void *data);

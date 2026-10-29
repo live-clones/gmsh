@@ -68,5 +68,24 @@ void storeWindowOffset(Fl_Window *win, int offset[2]);
 void centerWindow(Fl_Window *win);
 // forget about a window that is being deleted
 void forgetWindow(Fl_Window *win);
+// whether the positions of the top-level windows on the screen are known:
+// Wayland hides them from the application
+bool screenPositionsKnown();
+// whether the primary mouse button is held, asked of the system since FLTK
+// gets no mouse events while the window manager drags a window by its title
+// bar: 1, 0, or -1 where it cannot say
+int mouseButtonDown();
+// whether the Shift key is held, asked of the system likewise
+bool shiftKeyDown();
+
+// the title bar of a top-level window drawn dark or light as the interface,
+// where the desktop needs telling (Windows); called when the window is shown
+// and when the interface switches
+void titleBarColor(Fl_Window *w);
+
+// the moves of a floating tool window reported to paletteWindow::movedHook
+// where a move is not a resize (Windows); called when the window is shown
+class paletteWindow;
+void watchMoves(paletteWindow *w);
 
 #endif

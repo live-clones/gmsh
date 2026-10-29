@@ -8,6 +8,7 @@
 #include <FL/Fl_Return_Button.H>
 #include <algorithm>
 #include "FlGui.h"
+#include "accentTabs.h"
 #include "drawContext.h"
 #include "clippingWindow.h"
 #include "paletteWindow.h"
@@ -179,8 +180,16 @@ static void clip_update(bool adjusting)
     Fl::add_timeout(Fl::event() == FL_DRAG ? 0.1 : 0.5,
                     Fl::event() == FL_DRAG ? clip_drag_cb : clip_settle_cb);
 
+  FlGui::instance()->clipping->updateCount();
   CTX::instance()->drawBBox = adjusting ? 1 : 0;
   drawContext::global()->draw();
+}
+
+static void clip_targets_cb(Fl_Widget *w, void *data)
+{
+  // the views follow the geometry and the mesh, always visible
+  FlGui::instance()->clipping->targets->selectViews((const char *)data, 2);
+  clip_update(false);
 }
 
 static void clip_invert_cb(Fl_Widget *w, void *data)
@@ -228,46 +237,41 @@ clippingWindow::clippingWindow(int deltaFontSize)
                                         {"Plane 5", 0, nullptr},
                                         {nullptr}};
 
-  int width = 26 * FL_NORMAL_SIZE;
-  int height = 11 * BH + 5 * WB;
-  int L = 7 * FL_NORMAL_SIZE;
+  int width = TW;
+  int height = 9 * BH + 5 * WB;
 
   win = new paletteWindow(
     width, height, CTX::instance()->nonModalWindows ? true : false, "Clipping",
                           CTX::instance()->clipOffset);
   win->box(GMSH_WINDOW_BOX);
 
-  browser = new Fl_Multi_Browser(0, 0, L, height);
+  // what the current plane (or the box) clips; the rest of the window is
+  // built at the top and moved under the list by _placeTargets()
+  targets = new targetList(WB, WB, width - 2 * WB, BH,
+                           {"All", "Visible", "None"}, clip_targets_cb);
+  browser = targets->browser;
   browser->callback(clip_update_cb);
-  browser->box(GMSH_SIMPLE_RIGHT_BOX);
 
-  Fl_Tabs *o =
-    new Fl_Tabs(L + WB, WB, width - L - 2 * WB, height - 3 * WB - 5 * BH);
+  Fl_Tabs *o = new accentTabs(WB, WB, width - 2 * WB, height - 3 * WB - 3 * BH);
   {
-    group[0] = new Fl_Group(L + WB, WB + BH, width - L - 2 * WB,
-                            height - 3 * WB - 6 * BH, "Planes");
+    group[0] = new Fl_Group(WB, WB + BH, width - 2 * WB,
+                            height - 3 * WB - 4 * BH, "Planes");
 
-    int BW = width - L - 4 * WB - 4 * FL_NORMAL_SIZE;
-
-    choice = new Fl_Choice(L + 2 * WB, 2 * WB + 1 * BH, BW, BH);
+    choice = new Fl_Choice(2 * WB, 2 * WB + 1 * BH, IW, BH);
     choice->menu(plane_number);
     choice->callback(clip_num_cb);
 
     Fl_Button *invert =
-      new Fl_Button(L + 2 * WB, 2 * WB + 2 * BH, FL_NORMAL_SIZE, 4 * BH, "-");
-    invert->box(FL_THIN_UP_BOX);
+      new Fl_Button(3 * WB + IW, 2 * WB + 1 * BH, BB, BH, "Invert");
     invert->callback(clip_invert_cb);
-    invert->tooltip("Invert orientation");
+    invert->tooltip("Invert the orientation of the plane");
 
-    plane[0] = new Fl_Value_Input(L + 2 * WB + FL_NORMAL_SIZE, 2 * WB + 2 * BH,
-                                  BW - FL_NORMAL_SIZE, BH, "A");
-    plane[1] = new Fl_Value_Input(L + 2 * WB + FL_NORMAL_SIZE, 2 * WB + 3 * BH,
-                                  BW - FL_NORMAL_SIZE, BH, "B");
-    plane[2] = new Fl_Value_Input(L + 2 * WB + FL_NORMAL_SIZE, 2 * WB + 4 * BH,
-                                  BW - FL_NORMAL_SIZE, BH, "C");
-    plane[3] = new Fl_Value_Input(L + 2 * WB + FL_NORMAL_SIZE, 2 * WB + 5 * BH,
-                                  BW - FL_NORMAL_SIZE, BH, "D");
+    // the coefficients of the plane, with what they are
+    static const char *labels[4] = {"A (normal X)", "B (normal Y)",
+                                    "C (normal Z)", "D (offset)"};
     for(int j = 0; j < 4; j++) {
+      plane[j] =
+        new Fl_Value_Input(2 * WB, 2 * WB + (2 + j) * BH, IW, BH, labels[j]);
       plane[j]->align(FL_ALIGN_RIGHT);
       plane[j]->callback(clip_update_cb);
       // also called on release and on Enter, changed or not, so that the full
@@ -280,20 +284,35 @@ clippingWindow::clippingWindow(int deltaFontSize)
     group[0]->end();
   }
   {
-    group[1] = new Fl_Group(L + WB, WB + BH, width - L - 2 * WB,
-                            height - 3 * WB - 6 * BH, "Box");
+    group[1] = new Fl_Group(WB, WB + BH, width - 2 * WB,
+                            height - 3 * WB - 4 * BH, "Box");
     group[1]->hide();
 
-    int w2 = (width - L - 4 * WB) / 2;
-    int BW = w2 - 2 * FL_NORMAL_SIZE;
-    box[0] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 1 * BH, BW, BH, "X");
-    box[1] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Y");
-    box[2] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 3 * BH, BW, BH, "Z");
-    box[3] = new Fl_Value_Input(L + 2 * WB + w2, 2 * WB + 1 * BH, BW, BH, "DX");
-    box[4] = new Fl_Value_Input(L + 2 * WB + w2, 2 * WB + 2 * BH, BW, BH, "DY");
-    box[5] = new Fl_Value_Input(L + 2 * WB + w2, 2 * WB + 3 * BH, BW, BH, "DZ");
+    // the center and the size of the box, X, Y and Z in columns: each line
+    // of three is a row, which widens as one
+    int x0 = 2 * WB + BB, w0 = width - 4 * WB - BB, cw = w0 / 3;
+    static const char *rows[3] = {"", "Center", "Size"};
+    static const char *xyz[3] = {"X", "Y", "Z"};
+    for(int r = 0; r < 3; r++) {
+      int y = 2 * WB + (1 + r) * BH;
+      if(r) {
+        Fl_Box *b = new Fl_Box(2 * WB, y, BB, BH, rows[r]);
+        b->align(FL_ALIGN_INSIDE | FL_ALIGN_CENTER);
+      }
+      Fl_Group *row = new Fl_Group(x0, y, w0, BH);
+      for(int c = 0; c < 3; c++) {
+        int x = x0 + c * cw, w = (c < 2) ? cw : w0 - 2 * cw;
+        if(!r) {
+          Fl_Box *b = new Fl_Box(x, y, w, BH, xyz[c]);
+          b->align(FL_ALIGN_INSIDE | FL_ALIGN_CENTER);
+        }
+        else
+          box[3 * (r - 1) + c] = new Fl_Value_Input(x, y, w, BH);
+      }
+      row->end();
+    }
     for(int i = 0; i < 6; i++) {
-      box[i]->align(FL_ALIGN_RIGHT);
+      box[i]->tooltip(i < 3 ? "Center of the box" : "Size of the box");
       box[i]->callback(clip_update_cb);
       box[i]->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY |
                    FL_WHEN_NOT_CHANGED);
@@ -304,16 +323,17 @@ clippingWindow::clippingWindow(int deltaFontSize)
   o->callback(clip_update_cb); // force update when we switch tabs
   o->end();
 
-  butt[0] = new Fl_Check_Button(L + WB, 3 * WB + 6 * BH, width - L - 2 * WB, BH,
-                                "Cap volumes");
+  // two columns: the volume-only options, active together, on the right
+  int cw = (width - 3 * WB) / 2, cx = width - WB - cw;
+  butt[0] = new Fl_Check_Button(WB, 3 * WB + 6 * BH, cw, BH, "Cap volumes");
   butt[0]->tooltip("General.ClipCapping");
-  butt[1] = new Fl_Check_Button(L + WB, 3 * WB + 7 * BH, width - L - 2 * WB, BH,
-                                "Keep whole elements");
+  butt[1] =
+    new Fl_Check_Button(WB, 3 * WB + 7 * BH, cw, BH, "Keep whole elements");
   butt[1]->tooltip("General.ClipWholeElements");
-  butt[2] = new Fl_Check_Button(L + WB, 3 * WB + 8 * BH, width - L - 2 * WB, BH,
-                                "Only draw volume layer");
+  butt[2] =
+    new Fl_Check_Button(cx, 3 * WB + 6 * BH, cw, BH, "Only draw volume layer");
   butt[2]->tooltip("General.ClipOnlyDrawIntersectingVolume");
-  butt[3] = new Fl_Check_Button(L + WB, 3 * WB + 9 * BH, width - L - 2 * WB, BH,
+  butt[3] = new Fl_Check_Button(cx, 3 * WB + 7 * BH, cw, BH,
                                 "Only clip volume elements");
   butt[3]->tooltip("General.ClipOnlyVolume");
 
@@ -322,9 +342,6 @@ clippingWindow::clippingWindow(int deltaFontSize)
     butt[i]->callback(clip_update_cb);
   }
 
-  activateButtons();
-  resetBrowser();
-
   {
     Fl_Button *o =
       new Fl_Button(width - BB - WB, height - BH - WB, BB, BH, "Reset");
@@ -332,6 +349,12 @@ clippingWindow::clippingWindow(int deltaFontSize)
   }
 
   win->end();
+  _width = width;
+  _targetsHeight = 0;
+  activateButtons();
+  resetBrowser();
+  // as narrow as the option window, wider as the window is widened
+  ((paletteWindow *)win)->followWidth(width / 2, width - 2 * WB);
 
   FL_NORMAL_SIZE += deltaFontSize;
 }
@@ -356,16 +379,42 @@ void clippingWindow::activateButtons()
   }
 }
 
+void clippingWindow::_placeTargets()
+{
+  // the list as tall as its entries, and what follows it below
+  int h = targets->heightFor(browser->size()) + WB;
+  int dy = h - _targetsHeight;
+  if(dy) {
+    for(int i = 0; i < win->children(); i++) {
+      Fl_Widget *w = win->child(i);
+      if(w != targets) w->position(w->x(), w->y() + dy);
+    }
+    _targetsHeight = h;
+    int wh = win->h() + dy;
+    ((paletteWindow *)win)->sizeRange(_width, wh, 0, wh);
+    win->size(win->w(), wh);
+  }
+  targets->resize(WB, WB, win->w() - 2 * WB, h - WB);
+}
+
+void clippingWindow::updateCount()
+{
+  int n = targets->selectedCount();
+  std::string str = group[0]->visible() ?
+                      "Plane " + std::to_string(choice->value()) + " clips " :
+                      "The box clips ";
+  str += std::to_string(n) + " of " + std::to_string(browser->size());
+  targets->count->copy_label(str.c_str());
+}
+
 void clippingWindow::resetBrowser()
 {
-  char str[128];
   browser->clear();
   browser->add("Geometry");
   browser->add("Mesh");
-  for(std::size_t i = 0; i < PView::list.size(); i++) {
-    sprintf(str, "View [%zu]", i);
-    browser->add(str);
-  }
+  for(std::size_t i = 0; i < PView::list.size(); i++)
+    browser->add(targetList::viewName(i).c_str());
+  _placeTargets();
 
   int idx = choice->value();
 
@@ -403,6 +452,7 @@ void clippingWindow::resetBrowser()
     box[i]->minimum(-val1);
     box[i]->maximum(val1);
   }
+  updateCount();
 }
 
 void clippingWindow::fillBoxValuesFromPlaneValues()

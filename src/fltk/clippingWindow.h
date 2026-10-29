@@ -13,11 +13,19 @@
 #include <FL/Fl_Value_Input.H>
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Group.H>
+#include "targetList.h"
 
 class clippingWindow {
+private:
+  // the least width of the window, and the height the target list takes
+  int _width, _targetsHeight;
+  void _placeTargets();
+
 public:
   Fl_Window *win;
   Fl_Choice *choice;
+  targetList *targets;
+  // the browser of the target list
   Fl_Multi_Browser *browser;
   Fl_Value_Input *plane[4];
   Fl_Value_Input *box[6];
@@ -30,6 +38,7 @@ public:
   ~clippingWindow() { Fl::delete_widget(win); }
   void activateButtons();
   void resetBrowser();
+  void updateCount();
   void show();
 };
 

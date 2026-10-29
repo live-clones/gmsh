@@ -5534,13 +5534,13 @@ GMSH_API double gmshLoggerGetTotalMemory(int * ierr)
   return result_api_;
 }
 
-GMSH_API void gmshLoggerGetLastError(char ** error, int * ierr)
+GMSH_API void gmshLoggerGetLastError(char ** message, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::string api_error_;
-    gmsh::logger::getLastError(api_error_);
-    *error = strdup(api_error_.c_str());
+    std::string api_message_;
+    gmsh::logger::getLastError(api_message_);
+    *message = strdup(api_message_.c_str());
   }
   catch(...){
     if(ierr) *ierr = 1;

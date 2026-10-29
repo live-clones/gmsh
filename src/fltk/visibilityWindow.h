@@ -16,6 +16,8 @@
 #include <FL/Fl_Input.H>
 #include <FL/Fl_Tree.H>
 
+#include "hintInput.h"
+
 class visibilityWindow {
 public:
   Fl_Window *win;
@@ -28,6 +30,7 @@ public:
   Fl_Button *push[2];
   Fl_Input *input[10];
   Fl_Input *search;
+  searchFilter filter;
 
 public:
   visibilityWindow(int deltaFontSize = 0);
