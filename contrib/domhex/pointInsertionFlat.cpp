@@ -307,6 +307,18 @@ bool isFinitePoint(double h, const double m[9])
   return true;
 }
 
+
+// the verbosity lowered to the warnings (unless debugging) during its life
+class QuietMessages {
+  const int _verbosity;
+
+public:
+  QuietMessages() : _verbosity(Msg::GetVerbosity())
+  {
+    if(_verbosity < 99) Msg::SetVerbosity(std::min(_verbosity, 3));
+  }
+  ~QuietMessages() { Msg::SetVerbosity(_verbosity); }
+};
 } // namespace
 
 void fillRegionFlat(GRegion *gr, CombineFrames *frames)
@@ -740,13 +752,13 @@ void fillRegionFlat(GRegion *gr, CombineFrames *frames)
       xyz[3 * i + 2] = pts[interior[i]].z;
     }
     std::vector<MVertex *> vertices;
-    // the messages of the tetrahedralizer are for its debugging here
-    const int verbosity = Msg::GetVerbosity();
-    if(verbosity < 99) Msg::SetVerbosity(std::min(verbosity, 3));
     const double t1 = TimeOfDay(), c1 = Cpu();
-    const bool ok =
-      !meshGRegionParallelDelaunayWithPoints(gr, xyz, vertices, true);
-    Msg::SetVerbosity(verbosity);
+    bool ok;
+    {
+      // the messages of the tetrahedralizer are for its debugging here
+      QuietMessages quiet;
+      ok = !meshGRegionParallelDelaunayWithPoints(gr, xyz, vertices, true);
+    }
     AddMeshStageTime("tetrahedralization", TimeOfDay() - t1, Cpu() - c1);
     if(ok) {
       Msg::Info("Region %d: %zu tetrahedra (pdel3d, optimized, Wall %gs)",
@@ -764,7 +776,9 @@ void fillRegionFlat(GRegion *gr, CombineFrames *frames)
   // the legacy Delaunay, the points as embedded vertices
   std::vector<GVertex *> oldEmbedded = gr->embeddedVertices();
   std::vector<Vertex *> newVertex;
+  std::vector<gmshVertex *> newEmbedded;
   newVertex.reserve(interior.size());
+  newEmbedded.reserve(interior.size());
   for(std::size_t i : interior) {
     const FlatPoint &p = pts[i];
     MVertex *v = new MVertex(p.x, p.y, p.z, gr, 0);
@@ -776,6 +790,7 @@ void fillRegionFlat(GRegion *gr, CombineFrames *frames)
     v->setEntity(gr);
     gr->mesh_vertices.push_back(v);
     gr->addEmbeddedVertex(newV);
+    newEmbedded.push_back(newV);
   }
   std::vector<GRegion *> regions;
   regions.push_back(gr);
@@ -783,6 +798,11 @@ void fillRegionFlat(GRegion *gr, CombineFrames *frames)
 
   gr->embeddedVertices() = oldEmbedded;
 
+  // their mesh vertex belongs to the region
+  for(gmshVertex *gv : newEmbedded) {
+    gv->mesh_vertices.clear();
+    delete gv;
+  }
   for(Vertex *vv : newVertex) delete vv;
 
   Frame_field::clear();
