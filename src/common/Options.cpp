@@ -7344,12 +7344,6 @@ double opt_mesh_repair_self_intersecting_1d_mesh(OPT_ARGS_NUM)
   return CTX::instance()->mesh.repairSelfIntersecting1dMesh;
 }
 
-double opt_mesh_save_debug_files(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET) CTX::instance()->mesh.saveDebugFiles = val != 0.;
-  return CTX::instance()->mesh.saveDebugFiles;
-}
-
 double opt_mesh_pack_3d(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
