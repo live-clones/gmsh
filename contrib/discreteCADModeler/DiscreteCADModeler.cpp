@@ -536,11 +536,11 @@ bool DiscreteCAD_Internals::addCone(int &tag, double x, double y, double z,
   const double rmax = std::max(r1, r2);
   if(tolerance <= 0.) tolerance = CTX::instance()->geom.discreteTolerance * rmax;
   const Frame f = frame(x, y, z, {dx, dy, dz}, {});
-  // the rings of the lateral surface, its cells about as long as wide; a zero
-  // radius gives an apex
-  const int n = circleDivisions(rmax, tolerance);
+  // the rings at the ends of the lateral surface, ruled: a single band of
+  // triangles between them is within the tolerance; a zero radius gives an
+  // apex
   const double slant = std::sqrt(h * h + (r2 - r1) * (r2 - r1));
-  const int m = std::max(1, (int)std::lround(slant * n / (2. * pi * rmax)));
+  const int m = 1;
   std::vector<std::vector<int> > rings(m + 1);
   for(int k = 0; k <= m; k++) {
     const double r = r1 + (r2 - r1) * k / m;
@@ -859,14 +859,78 @@ bool DiscreteCAD_Internals::booleanOperation(
     auto it = nodeOf.find(p);
     rnode[v] = it != nodeOf.end() ? it->second : _addNode(p[0], p[1], p[2]);
   }
+  // the nodes closer than the rounding of the exact result merged (the oldest
+  // kept): its clusters of nodes where the operands touch each other, which
+  // would make the triangles of the next operations degenerate; the
+  // triangles degenerate or folded onto each other then removed
+  double lo[3] = {1e300, 1e300, 1e300}, hi[3] = {-1e300, -1e300, -1e300};
+  for(std::size_t v = 0; v < rnode.size(); v++)
+    for(int k = 0; k < 3; k++) {
+      lo[k] = std::min(lo[k], rxyz[3 * v + k]);
+      hi[k] = std::max(hi[k], rxyz[3 * v + k]);
+    }
+  const double merge =
+    1.e-12 * std::sqrt((hi[0] - lo[0]) * (hi[0] - lo[0]) +
+                       (hi[1] - lo[1]) * (hi[1] - lo[1]) +
+                       (hi[2] - lo[2]) * (hi[2] - lo[2]));
+  std::map<int, int> merged;
+  std::function<int(int)> representative = [&](int n) {
+    auto it = merged.find(n);
+    if(it == merged.end() || it->second == n) return n;
+    return it->second = representative(it->second);
+  };
+  for(std::size_t i = 0; i < rtri.size() / 3; i++)
+    for(int k = 0; k < 3; k++) {
+      int a = representative(rnode[rtri[3 * i + k]]);
+      int b = representative(rnode[rtri[3 * i + (k + 1) % 3]]);
+      if(a == b) continue;
+      const std::array<double, 3> &x = _nodes[a], &y = _nodes[b];
+      if(std::abs(x[0] - y[0]) + std::abs(x[1] - y[1]) +
+           std::abs(x[2] - y[2]) > merge)
+        continue;
+      if(a > b) std::swap(a, b);
+      merged[b] = a;
+    }
+  std::vector<std::array<int, 3> > triangles;
+  std::vector<int> kept;
+  std::map<std::array<int, 3>, std::size_t> sorted;
+  for(std::size_t i = 0; i < birth.size(); i++) {
+    std::array<int, 3> t;
+    for(int k = 0; k < 3; k++) t[k] = representative(rnode[rtri[3 * i + k]]);
+    if(t[0] == t[1] || t[1] == t[2] || t[2] == t[0]) continue;
+    std::array<int, 3> key = t;
+    std::sort(key.begin(), key.end());
+    auto it = sorted.find(key);
+    if(it != sorted.end()) {
+      // a triangle folded onto another one: both removed if they are
+      // opposite
+      const std::array<int, 3> &u = triangles[it->second];
+      int k = 0;
+      while(u[k] != t[0]) k++;
+      if(u[(k + 1) % 3] != t[1]) kept[it->second] = -1;
+      continue;
+    }
+    sorted[key] = triangles.size();
+    triangles.push_back(t);
+    kept.push_back(birth[i]);
+  }
+  {
+    std::size_t j = 0;
+    for(std::size_t i = 0; i < triangles.size(); i++) {
+      if(kept[i] < 0) continue;
+      triangles[j] = triangles[i];
+      kept[j++] = kept[i];
+    }
+    triangles.resize(j);
+    kept.resize(j);
+    birth = kept;
+  }
   const std::size_t nt = birth.size();
-  std::vector<std::array<int, 3> > triangles(nt);
-  for(std::size_t i = 0; i < nt; i++)
-    for(int k = 0; k < 3; k++) triangles[i][k] = rnode[rtri[3 * i + k]];
 
   // the parameters of the corners: those of the nodes of the triangle each
-  // one comes from, if its surface has parameters, or interpolated in it
-  // (along its longest edge if it is degenerate)
+  // one comes from, if its surface has parameters, or interpolated along its
+  // edge the corner is on (the same on both sides of the edge, whatever the
+  // shape of the triangles), or else inside it
   std::vector<std::array<std::array<double, 2>, 3> > uv(nt);
   std::vector<char> hasUV(nt, 0);
   for(std::size_t i = 0; i < nt; i++) {
@@ -876,49 +940,69 @@ bool DiscreteCAD_Internals::booleanOperation(
     hasUV[i] = 1;
     const std::array<int, 3> &t = sf.triangles[og.triangle];
     const std::array<std::array<double, 2>, 3> &tuv = sf.uv[og.triangle];
-    double e1[3], e2[3], e3[3];
+    double longest = 0.;
     for(int k = 0; k < 3; k++) {
-      e1[k] = _nodes[t[1]][k] - _nodes[t[0]][k];
-      e2[k] = _nodes[t[2]][k] - _nodes[t[0]][k];
-      e3[k] = _nodes[t[2]][k] - _nodes[t[1]][k];
+      const std::array<double, 3> &x = _nodes[t[k]], &y = _nodes[t[(k + 1) % 3]];
+      longest = std::max(longest, std::sqrt((y[0] - x[0]) * (y[0] - x[0]) +
+                                            (y[1] - x[1]) * (y[1] - x[1]) +
+                                            (y[2] - x[2]) * (y[2] - x[2])));
     }
-    const double a11 = e1[0] * e1[0] + e1[1] * e1[1] + e1[2] * e1[2];
-    const double a12 = e1[0] * e2[0] + e1[1] * e2[1] + e1[2] * e2[2];
-    const double a22 = e2[0] * e2[0] + e2[1] * e2[1] + e2[2] * e2[2];
-    const double a33 = e3[0] * e3[0] + e3[1] * e3[1] + e3[2] * e3[2];
-    const double det = a11 * a22 - a12 * a12;
-    const double longest = std::max({a11, a22, a33});
     for(int k = 0; k < 3; k++) {
       const int n = triangles[i][k];
+      const std::array<double, 3> &p = _nodes[n];
       int j = 0;
       while(j < 3 && t[j] != n) j++;
       if(j < 3) {
         uv[i][k] = tuv[j];
         continue;
       }
-      if(det > 1.e-20 * longest * longest) {
-        double d[3];
-        for(int m = 0; m < 3; m++) d[m] = _nodes[n][m] - _nodes[t[0]][m];
-        const double b1 = d[0] * e1[0] + d[1] * e1[1] + d[2] * e1[2];
-        const double b2 = d[0] * e2[0] + d[1] * e2[1] + d[2] * e2[2];
-        const double l1 = (a22 * b1 - a12 * b2) / det;
-        const double l2 = (a11 * b2 - a12 * b1) / det;
+      // the nearest edge, its nodes in increasing order
+      double nearest = 1e300, along = 0.;
+      int a = 0, b = 1;
+      for(int e = 0; e < 3; e++) {
+        int ea = e, eb = (e + 1) % 3;
+        if(t[ea] > t[eb]) std::swap(ea, eb);
+        const std::array<double, 3> &x = _nodes[t[ea]], &y = _nodes[t[eb]];
+        double l = 0., d2 = 0.;
+        for(int m = 0; m < 3; m++) {
+          l += (p[m] - x[m]) * (y[m] - x[m]);
+          d2 += (y[m] - x[m]) * (y[m] - x[m]);
+        }
+        l = d2 ? std::min(1., std::max(0., l / d2)) : 0.;
+        double d = 0.;
+        for(int m = 0; m < 3; m++) {
+          const double q = x[m] + l * (y[m] - x[m]) - p[m];
+          d += q * q;
+        }
+        if(d < nearest) {
+          nearest = d;
+          along = l;
+          a = ea;
+          b = eb;
+        }
+      }
+      if(std::sqrt(nearest) <= 1.e-9 * longest) {
         for(int m = 0; m < 2; m++)
-          uv[i][k][m] = (1. - l1 - l2) * tuv[0][m] + l1 * tuv[1][m] +
-                        l2 * tuv[2][m];
+          uv[i][k][m] = (1. - along) * tuv[a][m] + along * tuv[b][m];
         continue;
       }
-      const int a = longest == a11 ? 0 : longest == a22 ? 0 : 1;
-      const int b = longest == a11 ? 1 : 2;
-      double l = 0., d2 = 0.;
+      double e1[3], e2[3], d[3];
       for(int m = 0; m < 3; m++) {
-        const double e = _nodes[t[b]][m] - _nodes[t[a]][m];
-        l += (_nodes[n][m] - _nodes[t[a]][m]) * e;
-        d2 += e * e;
+        e1[m] = _nodes[t[1]][m] - _nodes[t[0]][m];
+        e2[m] = _nodes[t[2]][m] - _nodes[t[0]][m];
+        d[m] = p[m] - _nodes[t[0]][m];
       }
-      l = d2 ? std::min(1., std::max(0., l / d2)) : 0.;
+      const double a11 = e1[0] * e1[0] + e1[1] * e1[1] + e1[2] * e1[2];
+      const double a12 = e1[0] * e2[0] + e1[1] * e2[1] + e1[2] * e2[2];
+      const double a22 = e2[0] * e2[0] + e2[1] * e2[1] + e2[2] * e2[2];
+      const double b1 = d[0] * e1[0] + d[1] * e1[1] + d[2] * e1[2];
+      const double b2 = d[0] * e2[0] + d[1] * e2[1] + d[2] * e2[2];
+      const double det = a11 * a22 - a12 * a12;
+      const double l1 = det ? (a22 * b1 - a12 * b2) / det : 0.;
+      const double l2 = det ? (a11 * b2 - a12 * b1) / det : 0.;
       for(int m = 0; m < 2; m++)
-        uv[i][k][m] = (1. - l) * tuv[a][m] + l * tuv[b][m];
+        uv[i][k][m] =
+          (1. - l1 - l2) * tuv[0][m] + l1 * tuv[1][m] + l2 * tuv[2][m];
     }
   }
 
