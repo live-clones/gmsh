@@ -754,6 +754,15 @@ static int partitionGraphMtMetis(Graph &graph, const idx_t *metisOptions,
 // success, 1 = error, 2 = exception thrown.
 static int partitionGraph(Graph &graph, bool verbose)
 {
+  // A single part needs no partitioner (METIS k-way divides by log2(nparts));
+  // the dual graph is still built, as the partition topology walks it
+  if(graph.nparts() == 1) {
+    graph.createDualGraph(false);
+    graph.partition(std::vector<idx_t>(graph.ne(), 0));
+    if(verbose) Msg::Info("1 partition, skipping METIS");
+    return 0;
+  }
+
 #ifdef HAVE_METIS
   std::stringstream opt;
   try {
