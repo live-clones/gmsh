@@ -9,6 +9,8 @@
 #include "GmshMessage.h"
 #include "Context.h"
 #include "GModel.h"
+#include "GModelIO_GEO.h"
+#include "GModelIO_OCC.h"
 #include "discreteVertex.h"
 #include "discreteEdge.h"
 #include "discreteFace.h"
@@ -83,19 +85,25 @@ bool DiscreteCAD_Internals::_exists(int dim, int tag) const
 
 bool DiscreteCAD_Internals::_assignTag(int dim, int &tag)
 {
-  if(tag > 0) {
-    if(_exists(dim, tag)) {
-      Msg::Error("Discrete CAD %s %d already exists", entityName(dim), tag);
-      return false;
-    }
+  if(tag > 0 && _exists(dim, tag)) {
+    Msg::Error("Discrete CAD %s %d already exists", entityName(dim), tag);
+    return false;
   }
-  else {
+  GModel *model = GModel::current();
+  GEO_Internals *geo = model ? model->getGEOInternals() : nullptr;
+  OCC_Internals *occ = model ? model->getOCCInternals() : nullptr;
+  if(tag <= 0) {
+    // after the entities of the model and of the other kernels
     tag = _maxTag[dim];
-    if(GModel::current())
-      tag = std::max(tag, GModel::current()->getMaxElementaryNumber(dim));
+    if(model) tag = std::max(tag, model->getMaxElementaryNumber(dim));
+    if(geo) tag = std::max(tag, geo->getMaxTag(dim));
+    if(occ) tag = std::max(tag, occ->getMaxTag(dim));
     tag++;
   }
   _maxTag[dim] = std::max(_maxTag[dim], tag);
+  // the other kernels number their new entities after it
+  if(geo) geo->setMaxTag(dim, std::max(geo->getMaxTag(dim), tag));
+  if(occ) occ->setMaxTag(dim, tag);
   return true;
 }
 
@@ -302,6 +310,7 @@ void DiscreteCAD_Internals::synchronize(GModel *model)
     const std::array<double, 3> &x = _nodes[it.second.node];
     discreteVertex *gv =
       new discreteVertex(model, it.first, x[0], x[1], x[2], false);
+    gv->setNativeType(GEntity::DiscreteCADModel);
     model->add(gv);
     node(it.second.node, gv);
     created.push_back(gv);
@@ -311,6 +320,7 @@ void DiscreteCAD_Internals::synchronize(GModel *model)
     discreteEdge *ge = new discreteEdge(
       model, it.first, model->getVertexByTag(it.second.v0),
       model->getVertexByTag(it.second.v1), false);
+    ge->setNativeType(GEntity::DiscreteCADModel);
     model->add(ge);
     const std::vector<int> &n = it.second.nodes;
     for(std::size_t i = 0; i + 1 < n.size(); i++)
@@ -326,6 +336,7 @@ void DiscreteCAD_Internals::synchronize(GModel *model)
       signs.push_back(c > 0 ? 1 : -1);
     }
     gf->setBoundEdges(tags, signs);
+    gf->setNativeType(GEntity::DiscreteCADModel);
     model->add(gf);
     for(auto &t : it.second.triangles)
       gf->triangles.push_back(
@@ -341,6 +352,7 @@ void DiscreteCAD_Internals::synchronize(GModel *model)
       signs.push_back(s > 0 ? 1 : -1);
     }
     gr->setBoundFaces(tags, signs);
+    gr->setNativeType(GEntity::DiscreteCADModel);
     model->add(gr);
     created.push_back(gr);
   }

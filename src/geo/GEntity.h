@@ -87,7 +87,8 @@ public:
     GmshModel,
     OpenCascadeModel,
     AcisModel,
-    ParasolidModel
+    ParasolidModel,
+    DiscreteCADModel
   };
 
   // all known entity types

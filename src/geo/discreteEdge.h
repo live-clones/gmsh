@@ -13,6 +13,7 @@ class discreteEdge : public GEdge {
 private:
   std::vector<double> _pars;
   std::vector<SPoint3> _discretization;
+  ModelType _nativeType = UnknownModel;
   bool _getLocalParameter(const double &t, int &iEdge, double &tLoc) const;
 
 public:
@@ -36,6 +37,11 @@ public:
   virtual SPoint2 reparamOnFace(const GFace *face, double epar, int dir) const;
   bool writeParametrization(FILE *fp, bool binary);
   bool readParametrization(FILE *fp, bool binary);
+  // UnknownModel, or the modeler that created the entity (the discrete CAD
+  // modeler); a GEO synchronize removes the discrete entities of unknown
+  // origin that the GEO internals do not hold
+  void setNativeType(ModelType type) { _nativeType = type; }
+  virtual ModelType getNativeType() const { return _nativeType; }
 };
 
 #endif

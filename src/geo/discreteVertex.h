@@ -18,6 +18,7 @@ private:
   // the position, when it is not held by a point of the GEO internals
   bool _hasPosition;
   double _position[3];
+  ModelType _nativeType = UnknownModel;
 
 public:
   // (geo: also create the point in the GEO internals, so that scripts can
@@ -31,6 +32,11 @@ public:
   virtual double y() const;
   virtual double z() const;
   virtual void setPosition(GPoint &p);
+  // UnknownModel, or the modeler that created the entity (the discrete CAD
+  // modeler); a GEO synchronize removes the discrete entities of unknown
+  // origin that the GEO internals do not hold
+  void setNativeType(ModelType type) { _nativeType = type; }
+  virtual ModelType getNativeType() const { return _nativeType; }
 };
 
 #endif
