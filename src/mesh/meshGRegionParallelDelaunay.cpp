@@ -5200,7 +5200,7 @@ static int meshRegions(std::vector<GRegion *> &regions, splitQuadRecovery &sqr,
     }
   }
   double t3 = TimeOfDay();
-  Msg::Info("Done refining (Wall %gs)", t3 - t2);
+  if(!points) Msg::Info("Done refining (Wall %gs)", t3 - t2);
   if(Msg::GetVerbosity() > 5) m.verify(false);
   if((!points || optimizeTopology) && CTX::instance()->mesh.optimize > 0 &&
      CTX::instance()->mesh.optimizeThreshold > 0.) {
