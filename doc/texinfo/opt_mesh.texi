@@ -926,11 +926,6 @@ Save all elements, even if they don't belong to physical groups (for some mesh f
 Default value: @code{0}@*
 Saved in: @code{-}
 
-@item Mesh.SaveDebugFiles
-Write optional meshing and optimization debug meshes, background fields, point views and statistics JSON, independently of verbosity@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Mesh.SaveElementTagType
 Type of the element tag saved in mesh formats that don't support saving physical or partition ids (1: elementary, 2: physical, 3: partition)@*
 Default value: @code{1}@*

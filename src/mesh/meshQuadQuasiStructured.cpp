@@ -76,7 +76,7 @@ const std::string BMESH_NAME = "bmesh_quadqs";
 
 constexpr bool PARANO_QUALITY = false;
 constexpr bool PARANO_VALIDITY = false;
-
+constexpr bool DBG_EXPORT = false;
 constexpr bool SHOW_DQR = false;
 
 /* scaling applied on integer values stored in view (background field),
@@ -180,7 +180,8 @@ int buildBackgroundField(
 
   gm->getFields()->setGuidingField(view->getIndex());
 
-  if(CTX::instance()->mesh.saveDebugFiles) {
+  const bool exportBGM = false;
+  if(exportBGM || Msg::GetVerbosity() >= 99) {
     std::string name = gm->getName() + "_bgm.pos";
     Msg::Warning("Exporting background field to '%s'", name.c_str());
     view->write(name, PView::POS_ASCII);
@@ -1660,7 +1661,7 @@ int RefineMeshWithBackgroundMeshProjectionSimple(GModel *gm)
     errorAndAbortIfInvalidVertexInModel(gm, "after refine + proj");
   }
 
-  if(CTX::instance()->mesh.saveDebugFiles) { gm->writeMSH("qqs_subdiv.msh", 4.1); }
+  if(DBG_EXPORT) { gm->writeMSH("qqs_subdiv.msh", 4.1); }
 
   //  optimizeGeometryQuadqs(gm);
 
@@ -1704,7 +1705,7 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
     GeoLog::add(elements, "qqs_quadtri");
     GeoLog::flush();
   }
-  if(CTX::instance()->mesh.saveDebugFiles) { gm->writeMSH("qqs_init.msh", 4.1); }
+  if(DBG_EXPORT) { gm->writeMSH("qqs_init.msh", 4.1); }
 
   Msg::Info(
     "Refine mesh (midpoint subdivision, with background projection) ...");
@@ -1716,7 +1717,7 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
     std::unordered_map<std::string, double> stats;
     appendQuadMeshStatistics(gm, stats, "MPS_");
     printStatistics(stats, "Quad mesh after subdivision, before projection:");
-    if(CTX::instance()->mesh.saveDebugFiles) { gm->writeMSH("qqs_subdiv_noproj.msh", 4.1); }
+    if(DBG_EXPORT) { gm->writeMSH("qqs_subdiv_noproj.msh", 4.1); }
   }
 
   /* Convert vertex types:
@@ -1953,7 +1954,7 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
     errorAndAbortIfInvalidVertexInModel(gm, "after refine + proj");
   }
 
-  if(CTX::instance()->mesh.saveDebugFiles) { gm->writeMSH("qqs_subdiv.msh", 4.1); }
+  if(DBG_EXPORT) { gm->writeMSH("qqs_subdiv.msh", 4.1); }
 
   return 0;
 }
@@ -2117,8 +2118,7 @@ int optimizeTopologyWithCavityRemeshing(GModel *gm)
   appendQuadMeshStatistics(gm, stats, "Mesh_");
   printStatistics(stats, "Quad mesh after cavity remeshing:");
 
-  if(CTX::instance()->mesh.saveDebugFiles)
-    writeStatistics(stats, "quadqs_statistics.json");
+  if(Msg::GetVerbosity() > 5) writeStatistics(stats, "quadqs_statistics.json");
 
   if(PARANO_VALIDITY) {
     errorAndAbortIfInvalidVertexInModel(gm,
@@ -2127,7 +2127,7 @@ int optimizeTopologyWithCavityRemeshing(GModel *gm)
 
   GeoLog::flush();
 
-  if(CTX::instance()->mesh.saveDebugFiles) { gm->writeMSH("qqs_cavrmsh.msh", 4.1); }
+  if(DBG_EXPORT) { gm->writeMSH("qqs_cavrmsh.msh", 4.1); }
 
   return 0;
 }

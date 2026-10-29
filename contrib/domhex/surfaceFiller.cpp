@@ -267,7 +267,7 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed)
   }
 
   FILE *debug = nullptr;
-  if(CTX::instance()->mesh.saveDebugFiles) {
+  if(Msg::GetVerbosity() == 99) {
     char filename[256];
     sprintf(filename, "points3d%d.pos", gf->tag());
     debug = Fopen(filename, "w");

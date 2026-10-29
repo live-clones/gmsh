@@ -1695,8 +1695,6 @@ StringXNumber MeshOptions_Number[] = {
       "2: cross-field + CAD small features adaptation,"
       "3: from background mesh (e.g. sizes in current triangulation),"
       "4: cross-field + CAD small features adaptation (clamped by background mesh)" },
-  { F|O, "SaveDebugFiles", opt_mesh_save_debug_files, 0,
-    "Write optional meshing and optimization debug meshes, background fields, point views and statistics JSON (independent of verbosity)" },
   { F|O, "PackSizemapMethod", opt_mesh_pack_sizemap_method, 3,
     "Size map for the PACK guiding field (same methods as QuadqsSizemapMethod, configured independently)" },
   { F|O, "Pack3D" , opt_mesh_pack_3d, 1 ,
