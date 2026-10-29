@@ -7,6 +7,7 @@
 #define DISCRETE_CAD_MODELER_H
 
 #include <array>
+#include <functional>
 #include <map>
 #include <set>
 #include <utility>
@@ -34,13 +35,17 @@ public:
   };
   // a triangulation (oriented outwards for the surfaces of a volume) bounded
   // by loops of curves, a negative tag for a curve used backwards, the
-  // vertices inside it (as the apex of a cone), and the parameters of its
-  // nodes (computed from the triangulation by synchronize if empty)
+  // vertices inside it, the parameters of the corners of its triangles
+  // (computed from the triangulation by synchronize if empty), and its seam
+  // (0 if none): a curve used twice in its loop, with the parameters of its
+  // nodes on its two sides
   struct Surface {
     std::vector<int> curves;
     std::vector<std::array<int, 3> > triangles;
     std::vector<int> embeddedVertices;
-    std::map<int, std::array<double, 2> > uv;
+    std::vector<std::array<std::array<double, 2>, 3> > uv;
+    int seam;
+    std::vector<std::array<double, 2> > seamUV[2];
   };
   // a closed shell of surfaces, a negative tag for a surface used reversed
   struct Volume {
@@ -79,6 +84,10 @@ private:
   void _addArcs(const std::vector<int> &ring, int &a, int &b);
   // the rings filling the ellipse of radii rx, ry, from its boundary ring
   // inwards, and their triangles, oriented along e[2]
+  // the parameters of the corners of the triangles of a surface without seam,
+  // from those of their nodes
+  void _setUV(int surface,
+              const std::function<std::array<double, 2>(int)> &uvOfNode);
   // the parameters of the nodes of a planar surface: their coordinates along
   // the axes eu, ev from o
   void _planarUV(int surface, const double o[3], const double eu[3],

@@ -32,6 +32,9 @@ public:
   virtual double y() const;
   virtual double z() const;
   virtual void setPosition(GPoint &p);
+  // the parameters on a surface from those of a curve of it ending at the
+  // vertex (its seam first, on the side dir)
+  virtual SPoint2 reparamOnFace(const GFace *gf, int dir) const;
   // UnknownModel, or the modeler that created the entity (the discrete CAD
   // modeler); a GEO synchronize removes the discrete entities of unknown
   // origin that the GEO internals do not hold

@@ -6,6 +6,7 @@
 #ifndef DISCRETE_EDGE_H
 #define DISCRETE_EDGE_H
 
+#include <map>
 #include "GModel.h"
 #include "GEdge.h"
 
@@ -13,6 +14,9 @@ class discreteEdge : public GEdge {
 private:
   std::vector<double> _pars;
   std::vector<SPoint3> _discretization;
+  // the parameters of the points of the discretization on surfaces, on both
+  // sides of those of which the curve is a seam
+  std::map<const GFace *, std::vector<SPoint2> > _onFace[2];
   ModelType _nativeType = UnknownModel;
   bool _getLocalParameter(const double &t, int &iEdge, double &tLoc) const;
 
@@ -35,6 +39,16 @@ public:
   int minimumDrawSegments() const { return 2 * _pars.size(); }
   virtual int minimumMeshSegments() const;
   virtual SPoint2 reparamOnFace(const GFace *face, double epar, int dir) const;
+  // the parameters of the points of the discretization on the surface face,
+  // instead of their closest points; on its two sides (dir 1 and any other
+  // value for reparamOnFace) if the curve is a seam of the surface
+  void setReparamOnFace(const GFace *face, const std::vector<SPoint2> &uv,
+                        const std::vector<SPoint2> &otherSide =
+                          std::vector<SPoint2>());
+  virtual bool isSeam(const GFace *face) const
+  {
+    return _onFace[1].count(face) > 0;
+  }
   bool writeParametrization(FILE *fp, bool binary);
   bool readParametrization(FILE *fp, bool binary);
   // UnknownModel, or the modeler that created the entity (the discrete CAD

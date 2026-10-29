@@ -20,6 +20,7 @@
 #include "MTriangle.h"
 #include "SPoint2.h"
 #include "SPoint3.h"
+#include "GEdgeLoop.h"
 
 namespace {
   const char *entityName(int dim)
@@ -369,17 +370,14 @@ bool DiscreteCAD_Internals::addSphere(int &tag, double xc, double yc,
   volume.surfaces.push_back(_addSurface({a, b}, north));
   volume.surfaces.push_back(_addSurface({-b, -a}, south));
   // the stereographic projections from the opposite poles, on the unit disk
-  for(int h = 0; h < 2; h++) {
-    Surface &sf = _surfaces[volume.surfaces[h]];
-    for(auto &t : sf.triangles)
-      for(int n : t) {
-        const std::array<double, 3> &x = _nodes[n];
-        const double q[3] = {(x[0] - xc) / radius, (x[1] - yc) / radius,
-                             (x[2] - zc) / radius};
-        const double d = 1. + (h ? -q[2] : q[2]);
-        sf.uv[n] = {{q[0] / d, q[1] / d}};
-      }
-  }
+  for(int h = 0; h < 2; h++)
+    _setUV(volume.surfaces[h], [&](int n) {
+      const std::array<double, 3> &x = _nodes[n];
+      const double q[3] = {(x[0] - xc) / radius, (x[1] - yc) / radius,
+                           (x[2] - zc) / radius};
+      const double d = 1. + (h ? -q[2] : q[2]);
+      return std::array<double, 2>{{q[0] / d, q[1] / d}};
+    });
   _volumes[tag] = volume;
   return true;
 }
@@ -436,17 +434,24 @@ DiscreteCAD_Internals::_fillEllipse(const Frame &f, double rx, double ry,
   return triangles;
 }
 
+void DiscreteCAD_Internals::_setUV(
+  int surface, const std::function<std::array<double, 2>(int)> &uvOfNode)
+{
+  Surface &sf = _surfaces[surface];
+  sf.uv.clear();
+  for(auto &t : sf.triangles)
+    sf.uv.push_back({{uvOfNode(t[0]), uvOfNode(t[1]), uvOfNode(t[2])}});
+}
+
 void DiscreteCAD_Internals::_planarUV(int surface, const double o[3],
                                       const double eu[3], const double ev[3])
 {
-  Surface &sf = _surfaces[surface];
-  for(auto &t : sf.triangles)
-    for(int n : t) {
-      const std::array<double, 3> &x = _nodes[n];
-      const double d[3] = {x[0] - o[0], x[1] - o[1], x[2] - o[2]};
-      sf.uv[n] = {{d[0] * eu[0] + d[1] * eu[1] + d[2] * eu[2],
-                   d[0] * ev[0] + d[1] * ev[1] + d[2] * ev[2]}};
-    }
+  _setUV(surface, [&](int n) {
+    const std::array<double, 3> &x = _nodes[n];
+    const double d[3] = {x[0] - o[0], x[1] - o[1], x[2] - o[2]};
+    return std::array<double, 2>{{d[0] * eu[0] + d[1] * eu[1] + d[2] * eu[2],
+                                  d[0] * ev[0] + d[1] * ev[1] + d[2] * ev[2]}};
+  });
 }
 
 bool DiscreteCAD_Internals::addRectangle(int &tag, double x, double y,
@@ -541,52 +546,80 @@ bool DiscreteCAD_Internals::addCone(int &tag, double x, double y, double z,
     rings[k] = _addRing(f, r, r, h * k / m, r > 0. ? circleDivisions(r, tolerance) : 1);
   }
   // the lateral surface, bounded by the circles at its ends (two arcs each)
-  // or holding an apex, and the disks at the ends; their loops
-  // counterclockwise seen from outside
+  // and, without apex, by its seam at the angle 0, used twice; and the disks
+  // at the ends. Their loops counterclockwise seen from outside
+  const bool apex = !r1 || !r2;
   int a1 = 0, b1 = 0, a2 = 0, b2 = 0;
   if(r1 > 0.) _addArcs(rings[0], a1, b1);
   if(r2 > 0.) _addArcs(rings[m], a2, b2);
+  std::vector<int> column;
+  int seam = 0;
+  if(!apex) {
+    for(int k = 0; k <= m; k++) column.push_back(rings[k][0]);
+    seam = _addCurve(_curves[a1].v0, _curves[a2].v0, column);
+  }
   std::vector<std::array<int, 3> > triangles;
   for(int k = 0; k < m; k++)
     for(int half = 0; half < 2; half++)
       zipHalf(rings[k], rings[k + 1], half, triangles);
-  std::vector<int> loops;
-  if(r1 > 0.) loops.insert(loops.end(), {a1, b1});
-  if(r2 > 0.) loops.insert(loops.end(), {-b2, -a2});
+  std::vector<int> loop;
+  if(r1 > 0.) loop.insert(loop.end(), {a1, b1});
+  if(seam) loop.push_back(seam);
+  if(r2 > 0.) loop.insert(loop.end(), {-b2, -a2});
+  if(seam) loop.push_back(-seam);
   Volume volume;
-  const int lateral = _addSurface(loops, triangles);
+  const int lateral = _addSurface(loop, triangles);
   volume.surfaces.push_back(lateral);
-  // its parameters: the angle around the axis, and a radius growing along
-  // the axis, exp(t) with dt = ds / r along a generatrix (a conformal map of
-  // the lateral surface onto an annulus), its range limited to a factor 4;
-  // r / rmax with an apex
-  {
-    const double maxRange = std::log(4.);
-    Surface &sf = _surfaces[lateral];
-    const double range =
-      (!r1 || !r2) ? 0. :
-      (r1 == r2 ? h / r1 : std::abs(slant / (r2 - r1) * std::log(r2 / r1)));
-    const double lambda = range > maxRange ? maxRange / range : 1.;
-    for(auto &tri : sf.triangles)
-      for(int n : tri) {
-        const std::array<double, 3> &x = _nodes[n];
-        const double d[3] = {x[0] - f.o[0], x[1] - f.o[1], x[2] - f.o[2]};
-        double c[3];
-        for(int k = 0; k < 3; k++)
-          c[k] = d[0] * f.e[k][0] + d[1] * f.e[k][1] + d[2] * f.e[k][2];
-        // the radius of the ring of the node, from its position on the axis
-        const double r = r1 + (r2 - r1) * c[2] / h;
-        double rho;
-        if(!r1 || !r2) rho = r / rmax;
-        else if(r1 == r2) rho = std::exp(lambda * c[2] / r1);
-        else rho = std::exp(lambda * slant / (r2 - r1) * std::log(r / r1));
-        const double theta = std::atan2(c[1], c[0]);
-        sf.uv[n] = {{rho * std::cos(theta), rho * std::sin(theta)}};
-      }
-  }
-  if(!r1 || !r2)
+  // with an apex, a disk: the parameters (r / rmax) (cos(theta), sin(theta)),
+  // the apex at the center as an embedded vertex
+  if(apex) {
     _surfaces[lateral].embeddedVertices.push_back(
       _addVertex(r1 > 0. ? rings[m][0] : rings[0][0]));
+    _setUV(lateral, [&](int n) {
+      const std::array<double, 3> &x = _nodes[n];
+      double c[3];
+      for(int k = 0; k < 3; k++)
+        c[k] = (x[0] - f.o[0]) * f.e[k][0] + (x[1] - f.o[1]) * f.e[k][1] +
+               (x[2] - f.o[2]) * f.e[k][2];
+      return std::array<double, 2>{{c[0] / rmax, c[1] / rmax}};
+    });
+  }
+  // without apex, its developed parameters, an isometry: (r theta, z) for a
+  // cylinder, s (cos(theta sin(beta)), sin(theta sin(beta))) for a cone, s
+  // the distance to its apex and beta its half angle; the angles of the nodes
+  // of a triangle across the seam from 0 to 2 pi
+  else {
+    std::map<int, double> angle;
+    for(auto &ring : rings)
+      for(std::size_t i = 0; i < ring.size(); i++)
+        angle[ring[i]] = 2. * pi * i / ring.size();
+    const double sinBeta = std::abs(r2 - r1) / slant;
+    auto developed = [&](int n, double theta) {
+      const std::array<double, 3> &x = _nodes[n];
+      const double w = (x[0] - f.o[0]) * f.e[2][0] +
+                       (x[1] - f.o[1]) * f.e[2][1] + (x[2] - f.o[2]) * f.e[2][2];
+      if(r1 == r2) return std::array<double, 2>{{r1 * theta, w}};
+      const double s = (r1 + (r2 - r1) * w / h) / sinBeta;
+      return std::array<double, 2>{
+        {s * std::cos(theta * sinBeta), s * std::sin(theta * sinBeta)}};
+    };
+    Surface &sf = _surfaces[lateral];
+    for(auto &t : sf.triangles) {
+      double theta[3];
+      for(int k = 0; k < 3; k++) theta[k] = angle[t[k]];
+      if(std::max({theta[0], theta[1], theta[2]}) -
+           std::min({theta[0], theta[1], theta[2]}) > pi)
+        for(int k = 0; k < 3; k++)
+          if(theta[k] < pi) theta[k] += 2. * pi;
+      sf.uv.push_back({{developed(t[0], theta[0]), developed(t[1], theta[1]),
+                        developed(t[2], theta[2])}});
+    }
+    sf.seam = seam;
+    for(int n : column) {
+      sf.seamUV[0].push_back(developed(n, 0.));
+      sf.seamUV[1].push_back(developed(n, 2. * pi));
+    }
+  }
   if(r1 > 0.) {
     std::vector<std::array<int, 3> > bottom =
       _fillEllipse(f, r1, r1, 0., rings[0]);
@@ -709,14 +742,15 @@ bool DiscreteCAD_Internals::addTorus(int &tag, double x, double y, double z,
       equator[hp][0], equator[hp][1], -equator[(hp + 1) % 2][1],
       -equator[(hp + 1) % 2][0]};
     const int half = _addSurface(loops, triangles);
-    Surface &sf = _surfaces[half];
+    std::map<int, std::array<double, 2> > uv;
     for(int i = 0; i < nt; i++)
       for(int j = hp * np / 2; j <= (hp + 1) * np / 2; j++) {
         const double theta = 2. * pi * i / nt;
         const double phi = 2. * pi * j / np - (hp ? 2. * pi : 0.);
         const double rho = std::exp(lambda * conformal(phi));
-        sf.uv[node(i, j)] = {{rho * std::cos(theta), rho * std::sin(theta)}};
+        uv[node(i, j)] = {{rho * std::cos(theta), rho * std::sin(theta)}};
       }
+    _setUV(half, [&](int n) { return uv.at(n); });
     volume.surfaces.push_back(half);
   }
   _volumes[tag] = volume;
@@ -817,36 +851,82 @@ void DiscreteCAD_Internals::synchronize(GModel *model)
   }
   for(GEntity *e : created) _synchronized.push_back({e->dim(), e->tag()});
   model->createGeometryOfDiscreteEntities(_synchronized);
-  // the parametrizations given with the surfaces, positively oriented
+  // the parametrizations given with the surfaces, positively oriented (the
+  // nodes of a seam twice, with their parameters on each side)
   for(GEntity *e : created) {
     if(e->dim() != 2) continue;
+    discreteFace *gf = static_cast<discreteFace *>(e);
     const Surface &sf = _surfaces[e->tag()];
     if(sf.uv.empty()) continue;
-    std::map<int, int> local;
+    std::map<std::pair<int, std::array<double, 2> >, int> local;
     std::vector<SPoint2> uv;
     std::vector<SPoint3> xyz;
     std::vector<int> triangles;
     double area = 0.;
-    for(auto &t : sf.triangles) {
-      for(int n : t) {
-        auto it = local.find(n);
+    for(std::size_t i = 0; i < sf.triangles.size(); i++) {
+      for(int k = 0; k < 3; k++) {
+        const int n = sf.triangles[i][k];
+        const std::array<double, 2> &p = sf.uv[i][k];
+        auto it = local.find({n, p});
         if(it == local.end()) {
-          it = local.insert({n, (int)uv.size()}).first;
-          const std::array<double, 2> &p = sf.uv.at(n);
+          it = local.insert({{n, p}, (int)uv.size()}).first;
           uv.push_back(SPoint2(p[0], p[1]));
           xyz.push_back(SPoint3(_nodes[n][0], _nodes[n][1], _nodes[n][2]));
         }
         triangles.push_back(it->second);
       }
-      const SPoint2 &a = uv[triangles[triangles.size() - 3]],
-                    &b = uv[triangles[triangles.size() - 2]],
-                    &c = uv[triangles.back()];
-      area += (b.x() - a.x()) * (c.y() - a.y()) -
-              (b.y() - a.y()) * (c.x() - a.x());
+      const std::array<double, 2> &a = sf.uv[i][0], &b = sf.uv[i][1],
+                                  &c = sf.uv[i][2];
+      area += (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
     }
-    if(area < 0.)
-      for(SPoint2 &p : uv) p = SPoint2(p.x(), -p.y());
-    static_cast<discreteFace *>(e)->setParametrization(uv, xyz, triangles);
+    const double flip = area < 0. ? -1. : 1.;
+    for(SPoint2 &p : uv) p = SPoint2(p.x(), flip * p.y());
+    gf->setParametrization(uv, xyz, triangles);
+    // the parameters of its curves on it, from the triangles along them (the
+    // two sides of the seam given)
+    std::map<std::pair<int, int>, std::size_t> triangleOf;
+    for(std::size_t i = 0; i < sf.triangles.size(); i++)
+      for(int k = 0; k < 3; k++)
+        triangleOf[std::minmax(sf.triangles[i][k],
+                               sf.triangles[i][(k + 1) % 3])] = i;
+    auto corner = [&](std::size_t i, int n) {
+      int k = 0;
+      while(k < 2 && sf.triangles[i][k] != n) k++;
+      return SPoint2(sf.uv[i][k][0], flip * sf.uv[i][k][1]);
+    };
+    for(int c : sf.curves) {
+      const int tag = std::abs(c);
+      discreteEdge *de = dynamic_cast<discreteEdge *>(model->getEdgeByTag(tag));
+      if(!de) continue;
+      if(tag == sf.seam) {
+        std::vector<SPoint2> side[2];
+        for(int k = 0; k < 2; k++)
+          for(const std::array<double, 2> &p : sf.seamUV[k])
+            side[k].push_back(SPoint2(p[0], flip * p[1]));
+        de->setReparamOnFace(gf, side[0], side[1]);
+        continue;
+      }
+      const std::vector<int> &n = _curves[tag].nodes;
+      std::vector<SPoint2> p(n.size());
+      bool found = true;
+      for(std::size_t j = 0; j + 1 < n.size() && found; j++) {
+        auto it = triangleOf.find(std::minmax(n[j], n[j + 1]));
+        if(it == triangleOf.end()) found = false;
+        else {
+          p[j] = corner(it->second, n[j]);
+          p[j + 1] = corner(it->second, n[j + 1]);
+        }
+      }
+      if(found) de->setReparamOnFace(gf, p);
+    }
+    if(!sf.seam) continue;
+    // the loop of a surface with a seam, in its order (the mesher of periodic
+    // surfaces follows it)
+    GEdgeLoop loop;
+    for(int c : sf.curves)
+      loop.add(c > 0 ? 1 : -1, model->getEdgeByTag(std::abs(c)));
+    gf->edgeLoops.clear();
+    gf->edgeLoops.push_back(loop);
   }
   for(GEntity *e : created) e->deleteMesh();
   model->resetMaxVertexNumber(maxVertex);

@@ -627,6 +627,10 @@ void discreteFace::_createGeometryFromSTL()
 
   _param.clear();
 
+  // the bounds of the parameters (the unit disk of the parametrizations
+  // computed from the mesh, any domain for those given)
+  _param.umin = _param.vmin = 1e200;
+  _param.umax = _param.vmax = -1e200;
   for(size_t i = 0; i < stl_vertices_uv.size(); i++) {
     _param.v2d.push_back(
       MVertex(stl_vertices_uv[i].x(), stl_vertices_uv[i].y(), 0.0));
@@ -634,6 +638,10 @@ void discreteFace::_createGeometryFromSTL()
                                  stl_vertices_xyz[i].y(),
                                  stl_vertices_xyz[i].z()));
     _param.bbox += _param.v3d.back().point();
+    _param.umin = std::min(_param.umin, stl_vertices_uv[i].x());
+    _param.umax = std::max(_param.umax, stl_vertices_uv[i].x());
+    _param.vmin = std::min(_param.vmin, stl_vertices_uv[i].y());
+    _param.vmax = std::max(_param.vmax, stl_vertices_uv[i].y());
   }
 
   for(size_t i = 0; i < stl_triangles.size() / 3; i++) {

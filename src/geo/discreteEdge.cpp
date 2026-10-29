@@ -96,9 +96,37 @@ SVector3 discreteEdge::firstDer(double par) const
   return der;
 }
 
+void discreteEdge::setReparamOnFace(const GFace *face,
+                                    const std::vector<SPoint2> &uv,
+                                    const std::vector<SPoint2> &otherSide)
+{
+  if(uv.size() != _discretization.size() ||
+     (!otherSide.empty() && otherSide.size() != _discretization.size())) {
+    Msg::Error("Wrong number of parameters of curve %d on surface %d", tag(),
+               face->tag());
+    return;
+  }
+  _onFace[0][face] = uv;
+  if(otherSide.empty())
+    _onFace[1].erase(face);
+  else
+    _onFace[1][face] = otherSide;
+}
+
 SPoint2 discreteEdge::reparamOnFace(const GFace *face, double epar,
                                     int dir) const
 {
+  // as OpenCASCADE: dir 1 for one side of a seam, any other for the other
+  const int side = (dir != 1 && isSeam(face)) ? 1 : 0;
+  auto it = _onFace[side].find(face);
+  if(it != _onFace[side].end()) {
+    const std::vector<SPoint2> &uv = it->second;
+    double tLoc;
+    int i;
+    if(!_getLocalParameter(epar, i, tLoc))
+      return epar <= 0. ? uv.front() : uv.back();
+    return uv[i] + (uv[i + 1] - uv[i]) * tLoc;
+  }
   GPoint p = point(epar);
   double guess[2];
   GPoint ps = face->closestPoint(SPoint3(p.x(), p.y(), p.z()), guess);
