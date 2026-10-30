@@ -1453,7 +1453,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "HighOrderThresholdMax", opt_mesh_ho_threshold_max, 2.0,
     "Maximum threshold for high-order element optimization"},
   { F|O, "HighOrderFastCurvingNewAlgo", opt_mesh_ho_fast_new_algo, 0,
-    "Curve boundary layer with new \"fast curving\" algorithm (experimental)"},
+    "Curve boundary layer with \"fast curving\" algorithm"},
   { F|O, "HighOrderCurveOuterBL", opt_mesh_ho_curve_outer_BL, 0,
     "Curve also the outer surface of the boundary layer in the fast curving "
     "algorithm (0 = do not curve, 1 = curve according to boundary, 2 = curve "
@@ -1519,7 +1519,7 @@ StringXNumber MeshOptions_Number[] = {
     "pending mesh; also controls maximum number of recursive subdivisions when "
     "self-intersecting 1D meshes are detected"},
   { F|O, "MeshOnlyVisible" , opt_mesh_mesh_only_visible, 0. ,
-    "Mesh only visible entities (experimental)" },
+    "Mesh only visible entities" },
   { F|O, "MeshOnlyEmpty" , opt_mesh_mesh_only_empty, 0. ,
     "Mesh only entities that have no existing mesh" },
   { F|O, "MeshSizeExtendFromBoundary" , opt_mesh_lc_extend_from_boundary, 1. ,
@@ -1620,7 +1620,7 @@ StringXNumber MeshOptions_Number[] = {
     "Number of triangles in the current mesh (read-only)" },
   { F|O, "NewtonConvergenceTestXYZ" , opt_mesh_newton_convergence_test_xyz , 0. ,
     "Force inverse surface mapping algorithm (Newton-Raphson) to converge in real "
-    "coordinates (experimental)" },
+    "coordinates" },
   { F|O, "Nodes" , opt_mesh_nodes , 0. ,
     "Display mesh nodes?" },
   { F|O, "NodeLabels" , opt_mesh_node_labels , 0. ,
@@ -1796,7 +1796,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "ReparamMaxTriangles" , opt_mesh_reparam_max_triangles , 250000 ,
     "Maximum number of triangles in a single parametrization patch" },
   { F|O, "Reproducible" , opt_mesh_reproducible , 0 ,
-    "Try to produce reproducible meshes even when multi-threaded (experimental)" },
+    "Try to produce reproducible meshes even when multi-threaded" },
 
   { F,   "SaveAll" , opt_mesh_save_all , 0. ,
     "Save all elements, even if they don't belong to physical groups (for some "

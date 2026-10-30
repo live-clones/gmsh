@@ -1,21 +1,20 @@
 5.0.0 (Work-in-progress): improved performance of default meshing algorithms;
-new experimental parallel 3D Delaunay algorithm; improved graphics performance
-and entity selection; new shader rendering pipeline with order-independent
-transparency and studio shading; redesigned GUI, with tools docked to the right
-of the graphics window by default and automatic dark mode; new capping
-visualization mode in clipping tool; new interactive model query and
-measurement; improved colorbars and 2D plots; new predefined colormaps and
-symmetric log scale; new built-in fonts used by default (removed ZapfDingbats);
-new headless image and movie export (replaces deprecated OSMesa); export MP4
-movies with FFmpeg; new experimental JavaScript API and WebGL viewer; new faster
-homology solver (with periodicity connection handling); improved performance of
-mesh partitioning pipeline and added support for partition overlaps; new ability
-to save only the local partitioned Brep; improved performance of high-order
-element generation (now also for prisms of any order) and adaptive view
-visualization (with target error relative to range); Thread-safe
-MathEval/MathEvalAniso/Param mesh size fields; new MSH4.2 revision of the MSH
-file format with support for embedded entities in $Entities and
-$PartitionedEntities, efficient blocked $NodeData, $ElementData,
+new parallel 3D Delaunay algorithm; improved graphics performance and entity
+selection; new shader rendering pipeline with order-independent transparency and
+studio shading; redesigned GUI, with tools docked to the right of the graphics
+window by default and automatic dark mode; new experimental JavaScript API and
+WebGL viewer; new capping visualization mode in clipping tool; new interactive
+model query and measurement; improved colorbars and 2D plots; new predefined
+colormaps and symmetric log scale; new built-in fonts used by default (removed
+ZapfDingbats); new headless image and movie export (replaces deprecated OSMesa;
+MP4 export with Fmpeg); new faster homology solver (with periodicity connection
+handling); improved performance of mesh partitioning pipeline and added support
+for partition overlaps; new ability to save only the local partitioned Brep;
+improved performance of high-order element generation (now also for prisms of
+any order) and adaptive view visualization (with target error relative to
+range); Thread-safe MathEval/MathEvalAniso/Param mesh size fields; new MSH4.2
+revision of the MSH file format with support for embedded entities in $Entities
+and $PartitionedEntities, efficient blocked $NodeData, $ElementData,
 $ElementNodeData and $GhostElements sections, and support for $Edges and $Faces
 sections (see the reference manual for detailed changes); new polytope
 implementation with support in the API and MSH4.2 format, which replaces the old
@@ -35,10 +34,10 @@ extruded and subdivided meshes (periodicity constraints no longer need to be
 redefined after meshing); boolean operations now return the entities of the
 result that are not on the boundary of other ones (including embedded ones),
 plus the arguments left unchanged, each once and regardless of
-Geometry.OCCBooleanPreserveNumbering; Gmsh now requires C++17 and CMake 3.10,
-and uses Eigen 5.0 by default; added support for OCC 8; official binary builds
-now use OCC 8.0.1 and FLTK 1.4.5 (Linux/Windows) or 1.5.0-dev (macOS); FLTK
-1.4.0 or higher is now required to build the GUI; bug fixes.
+Geometry.OCCBooleanPreserveNumbering; Gmsh now requires C++17, CMake 3.10 and
+FLTK 1.4.0, and uses Eigen 5.0 by default; added support for OCC 8; official
+binary builds now use OCC 8.0.1 and FLTK 1.4.5 (Linux/Windows) or 1.5.0-dev
+(macOS); bug fixes.
 
 * New API functions: mesh/createOverlaps, mesh/getPartitionEntities,
   mesh/getOverlapBoundary, mesh/getOverlapInterfaceBoundary,

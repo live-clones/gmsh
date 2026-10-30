@@ -2164,7 +2164,7 @@ optionWindow::optionWindow(int deltaFontSize)
       o->hide();
 
       general.butt[18] = new Fl_Check_Button(
-        L + 2 * WB, 2 * WB + 1 * BH, BW, BH, "Enable camera (experimental)");
+        L + 2 * WB, 2 * WB + 1 * BH, BW, BH, "Enable camera");
       general.butt[18]->tooltip("General.Camera");
       general.butt[18]->type(FL_TOGGLE_BUTTON);
       general.butt[18]->value(opt_general_camera_mode(0, GMSH_GET, 0));
@@ -2173,7 +2173,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       general.butt[17] =
         new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW, BH,
-                            "Enable stereo rendering (experimental)");
+                            "Enable stereo rendering");
       general.butt[17]->tooltip("General.Stereo");
       general.butt[17]->type(FL_TOGGLE_BUTTON);
       general.butt[17]->value(opt_general_stereo_mode(0, GMSH_GET, 0));
@@ -2633,15 +2633,15 @@ optionWindow::optionWindow(int deltaFontSize)
         {"MeshAdapt", 0, nullptr, nullptr},
         {"Delaunay", 0, nullptr, nullptr},
         {"Frontal-Delaunay", 0, nullptr, nullptr},
-        {"BAMG (experimental)", 0, nullptr, nullptr},
+        {"BAMG", 0, nullptr, nullptr},
         {"Frontal-Delaunay for Quads (experimental)", 0, nullptr, nullptr},
         {"Packing of parallelograms (experimental)", 0, nullptr, nullptr},
         {"Quasi-Structured Quad (experimental)", 0, nullptr, nullptr},
-        {"Initial Mesh Only (no node insertion)", 0, nullptr, nullptr},
+        {"Initial Mesh Only", 0, nullptr, nullptr},
         {nullptr}};
       static Fl_Menu_Item menu_3d_algo[] = {
         {"Delaunay", 0, nullptr, nullptr},
-        {"Parallel Delaunay (experimental)", 0, nullptr, nullptr},
+        {"Parallel Delaunay", 0, nullptr, nullptr},
         {"Frontal", 0, nullptr, nullptr},
         {"HXT (experimental)", 0, nullptr, nullptr},
         {"MMG3D (experimental)", 0, nullptr, nullptr},

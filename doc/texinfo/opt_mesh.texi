@@ -267,7 +267,7 @@ Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.HighOrderFastCurvingNewAlgo
-Curve boundary layer with new "fast curving" algorithm (experimental)@*
+Curve boundary layer with "fast curving" algorithm@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -392,7 +392,7 @@ Default value: @code{10}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MeshOnlyVisible
-Mesh only visible entities (experimental)@*
+Mesh only visible entities@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -577,7 +577,7 @@ Default value: @code{0}@*
 Saved in: @code{-}
 
 @item Mesh.NewtonConvergenceTestXYZ
-Force inverse surface mapping algorithm (Newton-Raphson) to converge in real coordinates (experimental)@*
+Force inverse surface mapping algorithm (Newton-Raphson) to converge in real coordinates@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -887,7 +887,7 @@ Default value: @code{250000}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Reproducible
-Try to produce reproducible meshes even when multi-threaded (experimental)@*
+Try to produce reproducible meshes even when multi-threaded@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
