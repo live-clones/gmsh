@@ -3926,11 +3926,11 @@ namespace gmsh { // Top-level functions
       //
       // Compute the boolean union (the fusion) of the volumes `objectDimTags' and
       // `toolDimTags' (vectors of (dim, tag) pairs) in the discrete CAD
-      // representation, with the exact mesh booleans of libigl. The surfaces of
-      // the result keep the parameters of those they come from. Return the
-      // resulting volumes in `outDimTags', and the correspondance between input
-      // and resulting entities in `outDimTagsMap'. If `tag' is positive, try to
-      // set the tag explicitly (only valid if the boolean operation results in a
+      // representation, exactly on their triangulations. The surfaces of the
+      // result keep the parameters of those they come from. Return the resulting
+      // volumes in `outDimTags', and the correspondance between input and
+      // resulting entities in `outDimTagsMap'. If `tag' is positive, try to set
+      // the tag explicitly (only valid if the boolean operation results in a
       // single entity). Remove the object if `removeObject' is set. Remove the
       // tool if `removeTool' is set.
       GMSH_API void fuse(const gmsh::vectorpair & objectDimTags,
@@ -3945,12 +3945,12 @@ namespace gmsh { // Top-level functions
       //
       // Compute the boolean intersection (the common parts) of the volumes
       // `objectDimTags' and `toolDimTags' (vectors of (dim, tag) pairs) in the
-      // discrete CAD representation, with the exact mesh booleans of libigl. The
-      // surfaces of the result keep the parameters of those they come from. Return
-      // the resulting volumes in `outDimTags', and the correspondance between
-      // input and resulting entities in `outDimTagsMap'. If `tag' is positive, try
-      // to set the tag explicitly (only valid if the boolean operation results in
-      // a single entity). Remove the object if `removeObject' is set. Remove the
+      // discrete CAD representation, exactly on their triangulations. The surfaces
+      // of the result keep the parameters of those they come from. Return the
+      // resulting volumes in `outDimTags', and the correspondance between input
+      // and resulting entities in `outDimTagsMap'. If `tag' is positive, try to
+      // set the tag explicitly (only valid if the boolean operation results in a
+      // single entity). Remove the object if `removeObject' is set. Remove the
       // tool if `removeTool' is set.
       GMSH_API void intersect(const gmsh::vectorpair & objectDimTags,
                               const gmsh::vectorpair & toolDimTags,
@@ -3964,11 +3964,11 @@ namespace gmsh { // Top-level functions
       //
       // Compute the boolean difference between the volumes `objectDimTags' and
       // `toolDimTags' (vectors of (dim, tag) pairs) in the discrete CAD
-      // representation, with the exact mesh booleans of libigl. The surfaces of
-      // the result keep the parameters of those they come from. Return the
-      // resulting volumes in `outDimTags', and the correspondance between input
-      // and resulting entities in `outDimTagsMap'. If `tag' is positive, try to
-      // set the tag explicitly (only valid if the boolean operation results in a
+      // representation, exactly on their triangulations. The surfaces of the
+      // result keep the parameters of those they come from. Return the resulting
+      // volumes in `outDimTags', and the correspondance between input and
+      // resulting entities in `outDimTagsMap'. If `tag' is positive, try to set
+      // the tag explicitly (only valid if the boolean operation results in a
       // single entity). Remove the object if `removeObject' is set. Remove the
       // tool if `removeTool' is set.
       GMSH_API void cut(const gmsh::vectorpair & objectDimTags,

@@ -286,6 +286,8 @@ Remove the current model.
 -
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L199,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L162,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L611,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L376,Julia}, @url{@value{GITLAB-PREFIX}/api/gmsh.f90#L1346,Fortran}
+@item Examples:
+Python (@url{@value{GITLAB-PREFIX}/examples/api/discrete_booleans.py#L24,discrete_booleans.py})
 @end table
 
 @item gmsh/model/list
@@ -1645,7 +1647,7 @@ Get the elements classified on the entity of dimension @code{dim} and tag @code{
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L1068,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L933,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L3077,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L2685,Julia}, @url{@value{GITLAB-PREFIX}/api/gmsh.f90#L4532,Fortran}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/x1.cpp#L84,x1.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/x1.py#L73,x1.py}, @url{@value{GITLAB-PREFIX}/examples/api/copy_mesh.py#L21,copy_mesh.py}, @url{@value{GITLAB-PREFIX}/examples/api/cylinderFFD.py#L47,cylinderFFD.py}, @url{@value{GITLAB-PREFIX}/examples/api/discrete_primitives.py#L32,discrete_primitives.py}, @url{@value{GITLAB-PREFIX}/examples/api/explore.py#L24,explore.py}, ...), Julia (@url{@value{GITLAB-PREFIX}/tutorials/julia/x1.jl#L72,x1.jl}, @url{@value{GITLAB-PREFIX}/examples/api/explore.jl#L22,explore.jl})
+C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/x1.cpp#L84,x1.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/x1.py#L73,x1.py}, @url{@value{GITLAB-PREFIX}/examples/api/copy_mesh.py#L21,copy_mesh.py}, @url{@value{GITLAB-PREFIX}/examples/api/cylinderFFD.py#L47,cylinderFFD.py}, @url{@value{GITLAB-PREFIX}/examples/api/discrete_booleans.py#L38,discrete_booleans.py}, @url{@value{GITLAB-PREFIX}/examples/api/discrete_primitives.py#L32,discrete_primitives.py}, ...), Julia (@url{@value{GITLAB-PREFIX}/tutorials/julia/x1.jl#L72,x1.jl}, @url{@value{GITLAB-PREFIX}/examples/api/explore.jl#L22,explore.jl})
 @end table
 
 @item gmsh/model/mesh/getElement
@@ -1815,7 +1817,7 @@ Get the quality @code{elementQualities} of the elements with tags @code{elementT
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L1224,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1076,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L3475,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3030,Julia}, @url{@value{GITLAB-PREFIX}/api/gmsh.f90#L5129,Fortran}
 @item Examples:
-Python (@url{@value{GITLAB-PREFIX}/examples/api/mesh_quality.py#L12,mesh_quality.py}, @url{@value{GITLAB-PREFIX}/examples/api/min_edge.py#L7,min_edge.py}, @url{@value{GITLAB-PREFIX}/examples/api/view_element_size.py#L16,view_element_size.py})
+Python (@url{@value{GITLAB-PREFIX}/examples/api/discrete_booleans.py#L39,discrete_booleans.py}, @url{@value{GITLAB-PREFIX}/examples/api/mesh_quality.py#L12,mesh_quality.py}, @url{@value{GITLAB-PREFIX}/examples/api/min_edge.py#L7,min_edge.py}, @url{@value{GITLAB-PREFIX}/examples/api/view_element_size.py#L16,view_element_size.py})
 @end table
 
 @item gmsh/model/mesh/addElements
@@ -4885,7 +4887,7 @@ Get the mass of the OpenCASCADE entity of dimension @code{dim} and tag @code{tag
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L3737,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3353,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L9851,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L8724,Julia}, @url{@value{GITLAB-PREFIX}/api/gmsh.f90#L14221,Fortran}
 @item Examples:
-Python (@url{@value{GITLAB-PREFIX}/examples/api/step_assembly.py#L28,step_assembly.py}, @url{@value{GITLAB-PREFIX}/examples/api/volume.py#L9,volume.py})
+Python (@url{@value{GITLAB-PREFIX}/examples/api/discrete_booleans.py#L23,discrete_booleans.py}, @url{@value{GITLAB-PREFIX}/examples/api/step_assembly.py#L28,step_assembly.py}, @url{@value{GITLAB-PREFIX}/examples/api/volume.py#L9,volume.py})
 @end table
 
 @item gmsh/model/occ/getCenterOfMass
@@ -5091,7 +5093,7 @@ integer
 @end table
 
 @item gmsh/model/discrete/fuse
-Compute the boolean union (the fusion) of the volumes @code{objectDimTags} and @code{toolDimTags} (vectors of (dim, tag) pairs) in the discrete CAD representation, with the exact mesh booleans of libigl. The surfaces of the result keep the parameters of those they come from. Return the resulting volumes in @code{outDimTags}, and the correspondance between input and resulting entities in @code{outDimTagsMap}. If @code{tag} is positive, try to set the tag explicitly (only valid if the boolean operation results in a single entity). Remove the object if @code{removeObject} is set. Remove the tool if @code{removeTool} is set.
+Compute the boolean union (the fusion) of the volumes @code{objectDimTags} and @code{toolDimTags} (vectors of (dim, tag) pairs) in the discrete CAD representation, exactly on their triangulations. The surfaces of the result keep the parameters of those they come from. Return the resulting volumes in @code{outDimTags}, and the correspondance between input and resulting entities in @code{outDimTagsMap}. If @code{tag} is positive, try to set the tag explicitly (only valid if the boolean operation results in a single entity). Remove the object if @code{removeObject} is set. Remove the tool if @code{removeTool} is set.
 
 @table @asis
 @item Input:
@@ -5105,7 +5107,7 @@ Compute the boolean union (the fusion) of the volumes @code{objectDimTags} and @
 @end table
 
 @item gmsh/model/discrete/intersect
-Compute the boolean intersection (the common parts) of the volumes @code{objectDimTags} and @code{toolDimTags} (vectors of (dim, tag) pairs) in the discrete CAD representation, with the exact mesh booleans of libigl. The surfaces of the result keep the parameters of those they come from. Return the resulting volumes in @code{outDimTags}, and the correspondance between input and resulting entities in @code{outDimTagsMap}. If @code{tag} is positive, try to set the tag explicitly (only valid if the boolean operation results in a single entity). Remove the object if @code{removeObject} is set. Remove the tool if @code{removeTool} is set.
+Compute the boolean intersection (the common parts) of the volumes @code{objectDimTags} and @code{toolDimTags} (vectors of (dim, tag) pairs) in the discrete CAD representation, exactly on their triangulations. The surfaces of the result keep the parameters of those they come from. Return the resulting volumes in @code{outDimTags}, and the correspondance between input and resulting entities in @code{outDimTagsMap}. If @code{tag} is positive, try to set the tag explicitly (only valid if the boolean operation results in a single entity). Remove the object if @code{removeObject} is set. Remove the tool if @code{removeTool} is set.
 
 @table @asis
 @item Input:
@@ -5119,7 +5121,7 @@ Compute the boolean intersection (the common parts) of the volumes @code{objectD
 @end table
 
 @item gmsh/model/discrete/cut
-Compute the boolean difference between the volumes @code{objectDimTags} and @code{toolDimTags} (vectors of (dim, tag) pairs) in the discrete CAD representation, with the exact mesh booleans of libigl. The surfaces of the result keep the parameters of those they come from. Return the resulting volumes in @code{outDimTags}, and the correspondance between input and resulting entities in @code{outDimTagsMap}. If @code{tag} is positive, try to set the tag explicitly (only valid if the boolean operation results in a single entity). Remove the object if @code{removeObject} is set. Remove the tool if @code{removeTool} is set.
+Compute the boolean difference between the volumes @code{objectDimTags} and @code{toolDimTags} (vectors of (dim, tag) pairs) in the discrete CAD representation, exactly on their triangulations. The surfaces of the result keep the parameters of those they come from. Return the resulting volumes in @code{outDimTags}, and the correspondance between input and resulting entities in @code{outDimTagsMap}. If @code{tag} is positive, try to set the tag explicitly (only valid if the boolean operation results in a single entity). Remove the object if @code{removeObject} is set. Remove the tool if @code{removeTool} is set.
 
 @table @asis
 @item Input:
@@ -5145,7 +5147,7 @@ Synchronize the discrete CAD representation with the current Gmsh model: its poi
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L3990,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3579,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L10465,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L9284,Julia}, @url{@value{GITLAB-PREFIX}/api/gmsh.f90#L15104,Fortran}
 @item Examples:
-Python (@url{@value{GITLAB-PREFIX}/examples/api/discrete_primitives.py#L17,discrete_primitives.py})
+Python (@url{@value{GITLAB-PREFIX}/examples/api/discrete_booleans.py#L28,discrete_booleans.py}, @url{@value{GITLAB-PREFIX}/examples/api/discrete_primitives.py#L17,discrete_primitives.py})
 @end table
 
 @end ftable

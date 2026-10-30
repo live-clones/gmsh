@@ -7,6 +7,7 @@
 #include <cmath>
 #include "DiscreteCADModeler.h"
 #include "DiscreteCADBoolean.h"
+#include "DiscreteCADMeshBoolean.h"
 #include "GmshMessage.h"
 #include "Context.h"
 #include "GModel.h"
@@ -800,22 +801,24 @@ bool DiscreteCAD_Internals::booleanOperation(
   outDimTags.clear();
   outDimTagsMap.clear();
 
-  // the triangles of the volumes of each operand, oriented outwards, with the
-  // input entity, surface and triangle they come from
+  // the triangulations of the volumes of each operand, oriented outwards,
+  // with the input entity, surface and triangle each triangle comes from
   struct Origin {
     int input, surface;
     std::size_t triangle;
   };
   std::vector<Origin> origins;
-  std::vector<double> xyz[2];
-  std::vector<int> tri[2];
+  struct Triangulation {
+    std::vector<double> xyz;
+    std::vector<int> tri, origin;
+  };
+  std::vector<Triangulation> volumes[2];
   std::map<std::array<double, 3>, int> nodeOf;
   const std::vector<std::pair<int, int> > *operands[2] = {&objectDimTags,
                                                           &toolDimTags};
   int input = 0;
   std::vector<int> inputTag, inputOperand;
   for(int o = 0; o < 2; o++) {
-    std::map<int, int> local;
     for(auto &dt : *operands[o]) {
       inputTag.push_back(dt.second);
       inputOperand.push_back(o);
@@ -825,6 +828,8 @@ bool DiscreteCAD_Internals::booleanOperation(
                    dt.first, dt.second);
         return false;
       }
+      Triangulation v;
+      std::map<int, int> local;
       for(int s : _volumes[dt.second].surfaces) {
         const Surface &sf = _surfaces[std::abs(s)];
         for(std::size_t i = 0; i < sf.triangles.size(); i++) {
@@ -834,22 +839,76 @@ bool DiscreteCAD_Internals::booleanOperation(
             auto it = local.find(n);
             if(it == local.end()) {
               it = local.insert({n, (int)local.size()}).first;
-              xyz[o].insert(xyz[o].end(), _nodes[n].begin(), _nodes[n].end());
+              v.xyz.insert(v.xyz.end(), _nodes[n].begin(), _nodes[n].end());
               nodeOf[_nodes[n]] = n;
             }
-            tri[o].push_back(it->second);
+            v.tri.push_back(it->second);
           }
+          v.origin.push_back((int)origins.size());
           origins.push_back({input, std::abs(s), i});
         }
       }
+      volumes[o].push_back(v);
       input++;
     }
   }
+  if(volumes[0].empty() || volumes[1].empty()) return false;
+
+  // the boolean operation of two triangulations: the volumes of each operand
+  // fused first (each operation then has operands without
+  // self-intersections), then the operation
+  std::string error;
+  auto boolean = [&](int o, const Triangulation &a, const Triangulation &b,
+                     Triangulation &r) {
+    std::vector<int> birth;
+    if(!meshBoolean(o, a.xyz, a.tri, b.xyz, b.tri, r.xyz, r.tri, birth,
+                    error))
+      return false;
+    const std::size_t na = a.tri.size() / 3;
+    r.origin.resize(birth.size());
+    for(std::size_t i = 0; i < birth.size(); i++)
+      r.origin[i] = (std::size_t)birth[i] < na ? a.origin[birth[i]] :
+                                                 b.origin[birth[i] - na];
+    return true;
+  };
+  Triangulation operand[2], result;
+  bool ok = true;
+  for(int o = 0; o < 2 && ok; o++) {
+    operand[o] = volumes[o][0];
+    for(std::size_t k = 1; k < volumes[o].size() && ok; k++) {
+      Triangulation r;
+      ok = boolean(0, operand[o], volumes[o][k], r);
+      operand[o] = r;
+    }
+  }
+  if(ok) ok = boolean(op, operand[0], operand[1], result);
   std::vector<double> rxyz;
   std::vector<int> rtri, birth;
-  if(!meshBooleanLibigl(op, xyz[0], tri[0], xyz[1], tri[1], rxyz, rtri,
-                        birth))
+  if(ok) {
+    rxyz = result.xyz;
+    rtri = result.tri;
+    birth = result.origin;
+  }
+  else {
+#if defined(HAVE_LIBIGL)
+    // with libigl, on all the triangles of each operand
+    Msg::Warning("Discrete CAD boolean operation: %s, computed with libigl",
+                 error.c_str());
+    Triangulation all[2];
+    for(int o = 0; o < 2; o++)
+      for(Triangulation &v : volumes[o]) {
+        const int offset = (int)all[o].xyz.size() / 3;
+        all[o].xyz.insert(all[o].xyz.end(), v.xyz.begin(), v.xyz.end());
+        for(int n : v.tri) all[o].tri.push_back(n + offset);
+      }
+    if(!meshBooleanLibigl(op, all[0].xyz, all[0].tri, all[1].xyz, all[1].tri,
+                          rxyz, rtri, birth))
+      return false;
+#else
+    Msg::Error("Discrete CAD boolean operation: %s", error.c_str());
     return false;
+#endif
+  }
 
   // the nodes of the result: those of the operands kept, new ones elsewhere
   std::vector<int> rnode(rxyz.size() / 3);
