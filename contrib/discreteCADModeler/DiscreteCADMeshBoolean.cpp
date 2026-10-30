@@ -15,6 +15,8 @@
 #include <utility>
 #include <vector>
 #include "DiscreteCADMeshBoolean.h"
+#include "meshPolyMesh.h"
+#include "robustPredicates.h"
 
 namespace {
 
@@ -581,7 +583,10 @@ namespace {
                               std::back_inserter(common[o]));
         if(common[o].empty()) return false;
       }
-      return true;
+      for(int ra : common[0])
+        for(int rb : common[1])
+          if(!_coplanar(ra, rb)) return true;
+      return false;
     }
 
     // the side of a point relative to the plane of a triangle: positive
@@ -1002,7 +1007,24 @@ namespace {
           if((db[0] > 0 && db[1] > 0 && db[2] > 0) ||
              (db[0] < 0 && db[1] < 0 && db[2] < 0))
             return;
-          const bool coplanar = !da[0] && !da[1] && !da[2];
+          if(!da[0] && !da[1] && !da[2]) {
+            // coplanar: the edges of each one clipped by the other,
+            // constraints of both
+            for(int k = 0; k < 6; k++) {
+              uint64_t l[2];
+              const int m =
+                k < 3 ? _intersect(_triEdges[3 * ta + k], tb, l) :
+                        _intersect(_triEdges[3 * tb + k - 3], ta, l);
+              if(!m) continue;
+              const int p0 = _point(l[0]);
+              if(m == 2) {
+                const int p1 = _point(l[1]);
+                _constraints[ta].push_back({p0, p1, tb});
+                _constraints[tb].push_back({p0, p1, ta});
+              }
+            }
+            return;
+          }
           uint64_t labels[12];
           int n = 0;
           for(int k = 0; k < 3; k++)
@@ -1012,10 +1034,6 @@ namespace {
           std::sort(labels, labels + n);
           n = (int)(std::unique(labels, labels + n) - labels);
           if(!n) return;
-          if(coplanar) {
-            error = "overlapping coplanar triangles are not handled yet";
-            return;
-          }
           if(n > 2) {
             error = "inconsistent intersection of two triangles";
             return;
@@ -1031,169 +1049,220 @@ namespace {
       return error.empty();
     }
 
-    // the triangulation of a triangle with the points on its edges and
-    // inside it, and its constraints
+    // the constrained Delaunay triangulation (gmsh's PolyMesh) of a triangle
+    // with the points on its edges and inside it, and its constraints: the
+    // Delaunay criterion on approximate coordinates in an orthonormal frame
+    // of its plane, the validity of the triangulation (locations, convexity
+    // of the flips, crossings of the constraints) decided exactly
     class Face {
+      typedef PolyMesh::Vertex Vertex;
+      typedef PolyMesh::HalfEdge HalfEdge;
       const MeshBoolean &_m;
       int _k, _o;
-      std::vector<int> _global;
-      std::unordered_map<int, int> _local;
-      std::vector<std::array<int, 3> > _tris;
-      std::vector<char> _alive;
-      std::unordered_map<uint64_t, int> _owner;
-      std::vector<int> _vertexTri;
+      PolyMesh _pm;
+      double _origin[3], _e1[3], _e2[3];
+      std::unordered_map<int, Vertex *> _vertexOf;
+      PolyMesh::Face *_last = nullptr;
       unsigned _random = 12345;
+      // the orientation of points (their global ids), positive
+      // counterclockwise on the triangle
       int _orient(int a, int b, int c) const
       {
-        return _o * _m._orient2d(_global[a], _global[b], _global[c], _k);
+        return _o * _m._orient2d(a, b, c, _k);
       }
-      int _ownerOf(int a, int b) const
+      int _orient(const Vertex *a, const Vertex *b, const Vertex *c) const
       {
-        auto it = _owner.find(edgeKey(a, b));
-        return it == _owner.end() ? -1 : it->second;
+        return _orient(a->data, b->data, c->data);
       }
-      void _add(int a, int b, int c)
+      // the coordinates of a point in the frame of the triangle
+      SVector3 _position(int g) const
       {
-        const int t = (int)_tris.size();
-        _tris.push_back({a, b, c});
-        _alive.push_back(1);
-        _owner[edgeKey(a, b)] = t;
-        _owner[edgeKey(b, c)] = t;
-        _owner[edgeKey(c, a)] = t;
-        _vertexTri[a] = _vertexTri[b] = _vertexTri[c] = t;
-      }
-      void _remove(int t)
-      {
-        _alive[t] = 0;
-        for(int i = 0; i < 3; i++) {
-          auto it = _owner.find(edgeKey(_tris[t][i], _tris[t][(i + 1) % 3]));
-          if(it != _owner.end() && it->second == t) _owner.erase(it);
+        Approx c[3];
+        _m._coords(g, c);
+        double d[3], x = 0., y = 0.;
+        for(int k = 0; k < 3; k++) {
+          d[k] = c[k].v - _origin[k];
+          x += d[k] * _e1[k];
+          y += d[k] * _e2[k];
         }
+        return SVector3(x, y, 0.);
       }
-      // the vertex of t after a, b
-      int _third(int t, int a, int b) const
+      // gmsh's Delaunay criterion, a flip only if it is valid
+      static int _flip(HalfEdge *he, void *data)
       {
-        const std::array<int, 3> &T = _tris[t];
-        for(int i = 0; i < 3; i++)
-          if(T[i] == a && T[(i + 1) % 3] == b) return T[(i + 2) % 3];
-        return -1;
+        const Face *f = (const Face *)data;
+        if(!he->opposite || he->data >= 0) return 0;
+        Vertex *a = he->v, *b = he->next->v, *c = he->next->next->v,
+               *d = he->opposite->next->next->v;
+        const double pa[2] = {a->position.x(), a->position.y()};
+        const double pb[2] = {b->position.x(), b->position.y()};
+        const double pc[2] = {c->position.x(), c->position.y()};
+        const double pd[2] = {d->position.x(), d->position.y()};
+        if(robustPredicates::incircle(pa, pb, pc, pd) <= 0.) return 0;
+        return f->_orient(a, d, c) > 0 && f->_orient(d, b, c) > 0 ? 1 : 0;
       }
-      void _splitEdge(int a, int b, int x)
+      // the flips propagated from some edges (as in PolyMesh::split_triangle)
+      void _cascade(std::vector<HalfEdge *> stack)
       {
-        const int t1 = _ownerOf(a, b), t2 = _ownerOf(b, a);
-        if(t1 >= 0) {
-          const int c = _third(t1, a, b);
-          _remove(t1);
-          _add(a, x, c);
-          _add(x, b, c);
-        }
-        if(t2 >= 0) {
-          const int d = _third(t2, b, a);
-          _remove(t2);
-          _add(b, x, d);
-          _add(x, a, d);
-        }
-      }
-      void _splitTriangle(int t, int x)
-      {
-        const std::array<int, 3> T = _tris[t];
-        _remove(t);
-        _add(T[0], T[1], x);
-        _add(T[1], T[2], x);
-        _add(T[2], T[0], x);
-      }
-      void _flip(int a, int b)
-      {
-        const int t1 = _ownerOf(a, b), t2 = _ownerOf(b, a);
-        const int c = _third(t1, a, b), d = _third(t2, b, a);
-        _remove(t1);
-        _remove(t2);
-        _add(a, d, c);
-        _add(d, b, c);
-      }
-      // the insertion of a point inside the triangle
-      bool _insert(int x)
-      {
-        int t = -1;
-        for(int i = (int)_tris.size() - 1; i >= 0 && t < 0; i--)
-          if(_alive[i]) t = i;
-        const int limit = 4 * (int)_tris.size() + 100;
-        int steps = 0;
-        while(true) {
-          const std::array<int, 3> T = _tris[t];
-          int next = -1;
-          _random = _random * 1103515245u + 12345u;
-          const int r = (int)((_random >> 16) % 3);
-          for(int m = 0; m < 3 && next < 0; m++) {
-            const int i = (r + m) % 3;
-            if(_orient(T[i], T[(i + 1) % 3], x) < 0)
-              next = _ownerOf(T[(i + 1) % 3], T[i]);
+        std::vector<HalfEdge *> touched;
+        std::size_t guard = 0;
+        while(!stack.empty() && ++guard < 1000000) {
+          HalfEdge *he = stack.back();
+          stack.pop_back();
+          touched.push_back(he);
+          he->touched = 1;
+          if(_flip(he, this) != 1) continue;
+          _pm.swap_edge(he);
+          HalfEdge *H[2] = {he, he->opposite};
+          for(int k = 0; k < 2; k++) {
+            HalfEdge *b = H[k]->next, *c = b->next;
+            if(!b->touched && !(b->opposite && b->opposite->touched))
+              stack.push_back(b);
+            if(!c->touched && !(c->opposite && c->opposite->touched))
+              stack.push_back(c);
           }
-          if(next < 0 || ++steps > limit) break;
-          t = next;
         }
-        // the triangle containing x (if the walk failed: by a search)
-        auto contains = [&](int u, int o[3]) {
-          for(int i = 0; i < 3; i++) {
-            o[i] = _orient(_tris[u][i], _tris[u][(i + 1) % 3], x);
+        for(HalfEdge *he : touched) he->touched = 0;
+      }
+      // the half-edges leaving a vertex
+      void _star(Vertex *v, std::vector<HalfEdge *> &out) const
+      {
+        out.clear();
+        HalfEdge *h = v->he;
+        do {
+          out.push_back(h);
+          h = h->opposite ? h->opposite->next : nullptr;
+        } while(h && h != v->he);
+        if(h == v->he) return;
+        h = v->he->prev->opposite;
+        while(h) {
+          out.push_back(h);
+          h = h->prev->opposite;
+        }
+      }
+      HalfEdge *_edge(Vertex *a, Vertex *b) const
+      {
+        std::vector<HalfEdge *> star;
+        _star(a, star);
+        for(HalfEdge *h : star)
+          if(h->next->v == b) return h;
+        _star(b, star);
+        for(HalfEdge *h : star)
+          if(h->next->v == a) return h;
+        return nullptr;
+      }
+      // the split of the boundary edge h at a new vertex, the next part of
+      // the boundary
+      HalfEdge *_splitBoundary(HalfEdge *h, int g)
+      {
+        HalfEdge *h1 = h->next, *h2 = h1->next;
+        Vertex *a = h->v, *b = h1->v, *c = h2->v;
+        const SVector3 p = _position(g);
+        Vertex *m = new Vertex(p.x(), p.y(), 0., g);
+        _pm.vertices.push_back(m);
+        _vertexOf[g] = m;
+        HalfEdge *hmc = new HalfEdge(m), *hmb = new HalfEdge(m),
+                 *hcm = new HalfEdge(c);
+        _pm.hedges.push_back(hmc);
+        _pm.hedges.push_back(hmb);
+        _pm.hedges.push_back(hcm);
+        hmc->opposite = hcm;
+        hcm->opposite = hmc;
+        PolyMesh::Face *f = new PolyMesh::Face(hmb);
+        _pm.faces.push_back(f);
+        _pm.createFace(h->f, a, m, c, h, hmc, h2);
+        _pm.createFace(f, m, b, c, hmb, h1, hcm);
+        _cascade({h1, h2});
+        return hmb;
+      }
+      // the face containing a point (exact walk, or search), the orientations
+      // relative to its edges
+      PolyMesh::Face *_locate(int g, int o[3])
+      {
+        PolyMesh::Face *f = _last ? _last : _pm.faces.back();
+        const int limit = 4 * (int)_pm.faces.size() + 100;
+        for(int steps = 0; steps < limit; steps++) {
+          HalfEdge *he = f->he;
+          _random = _random * 1103515245u + 12345u;
+          for(int r = (int)((_random >> 16) % 3); r > 0; r--) he = he->next;
+          PolyMesh::Face *next = nullptr;
+          for(int i = 0; i < 3 && !next; i++, he = he->next)
+            if(he->opposite && _orient(he->v->data, he->next->v->data, g) < 0)
+              next = he->opposite->f;
+          if(!next) break;
+          f = next;
+        }
+        auto inside = [&](PolyMesh::Face *u) {
+          HalfEdge *he = u->he;
+          for(int i = 0; i < 3; i++, he = he->next) {
+            o[i] = _orient(he->v->data, he->next->v->data, g);
             if(o[i] < 0) return false;
           }
           return true;
         };
+        if(inside(f)) return f;
+        for(PolyMesh::Face *u : _pm.faces)
+          if(inside(u)) return u;
+        return nullptr;
+      }
+      // the insertion of a point inside the triangle
+      bool _insert(int g)
+      {
         int o[3];
-        if(!contains(t, o)) {
-          t = -1;
-          for(int u = 0; u < (int)_tris.size() && t < 0; u++)
-            if(_alive[u] && contains(u, o)) t = u;
-          if(t < 0) return false;
-        }
+        PolyMesh::Face *f = _locate(g, o);
+        if(!f) return false;
         const int zeros = (o[0] == 0) + (o[1] == 0) + (o[2] == 0);
-        if(zeros == 0)
-          _splitTriangle(t, x);
-        else if(zeros == 1) {
-          int i = 0;
-          while(o[i]) i++;
-          _splitEdge(_tris[t][i], _tris[t][(i + 1) % 3], x);
+        if(zeros == 0) {
+          // split, then the flips of its edges (the new vertex known)
+          const SVector3 p = _position(g);
+          HalfEdge *h0 = f->he, *h1 = h0->next, *h2 = h1->next;
+          _pm.split_triangle(-1, p.x(), p.y(), 0., f);
+          _pm.vertices.back()->data = g;
+          _vertexOf[g] = _pm.vertices.back();
+          _cascade({h0, h1, h2});
+          _last = f;
+          return true;
         }
-        else {
+        HalfEdge *he = f->he;
+        int i = 0;
+        while(o[i]) {
+          i++;
+          he = he->next;
+        }
+        if(zeros == 2) {
           // at a vertex (input vertices at the same place): identified
-          int i = 0;
-          while(o[i] || o[(i + 1) % 3]) i++;
-          _local[_global[x]] = _tris[t][(i + 1) % 3];
+          _vertexOf[g] = o[(i + 1) % 3] ? he->v : he->next->v;
+          return true;
         }
+        if(!he->opposite) {
+          _splitBoundary(he, g);
+          return true;
+        }
+        _pm.split_edge(he, _position(g), g);
+        Vertex *m = _pm.vertices.back();
+        _vertexOf[g] = m;
+        std::vector<HalfEdge *> star, outer;
+        _star(m, star);
+        for(HalfEdge *h : star) outer.push_back(h->next);
+        _cascade(outer);
+        _last = f;
         return true;
       }
-      // the recovery of the constraint ab by flips (Sloan), split at the
-      // vertices on it
-      bool _recover(int a, int b, std::vector<std::pair<int, int> > &pieces)
+      // the recovery of the constraint ab by flips, split at the vertices on
+      // it
+      bool _recover(Vertex *a, Vertex *b,
+                    std::vector<std::pair<Vertex *, Vertex *> > &pieces)
       {
         if(a == b) return true;
-        if(_ownerOf(a, b) >= 0 || _ownerOf(b, a) >= 0) {
+        if(_edge(a, b)) {
           pieces.push_back({a, b});
           return true;
         }
-        // the triangle around a in the direction of b: from the first one
-        // clockwise (the boundary, or any one), counterclockwise
-        const int start = _vertexTri[a];
-        if(start < 0 || !_alive[start]) return false;
-        int t = start, first = start, u = -1, w = -1, guard = 0;
-        while(true) {
-          const std::array<int, 3> &T = _tris[t];
-          int i = 0;
-          while(T[i] != a) i++;
-          const int previous = _ownerOf(T[(i + 1) % 3], a);
-          if(previous < 0 || previous == start || ++guard > 100000) break;
-          t = first = previous;
-        }
-        t = first;
-        guard = 0;
-        int crossR = -1, crossL = -1;
-        while(true) {
-          const std::array<int, 3> &T = _tris[t];
-          int i = 0;
-          while(T[i] != a) i++;
-          u = T[(i + 1) % 3];
-          w = T[(i + 2) % 3];
+        std::vector<HalfEdge *> star;
+        _star(a, star);
+        HalfEdge *crossed = nullptr;
+        for(HalfEdge *h : star) {
+          Vertex *u = h->next->v, *w = h->next->next->v;
           const int o1 = _orient(a, u, b), o2 = _orient(a, w, b);
           if(o1 == 0 && o2 < 0) {
             pieces.push_back({a, u});
@@ -1204,54 +1273,42 @@ namespace {
             return _recover(w, b, pieces);
           }
           if(o1 > 0 && o2 < 0) {
-            crossR = u;
-            crossL = w;
+            crossed = h->next;
             break;
           }
-          const int next = _ownerOf(a, w);
-          if(next < 0 || next == first || ++guard > 10000) return false;
-          t = next;
         }
-        // the edges crossed by ab, to the vertex of ab after a
-        std::deque<std::pair<int, int> > crossed;
-        crossed.push_back({crossR, crossL});
-        int r = crossR, l = crossL, end = b;
-        guard = 0;
-        while(true) {
-          const int n = _ownerOf(l, r);
-          if(n < 0 || ++guard > 100000) return false;
-          const int x = _third(n, l, r);
+        if(!crossed) return false;
+        // the edges crossed by ab (from its right to its left), to the
+        // vertex of ab after a
+        std::deque<HalfEdge *> list(1, crossed);
+        Vertex *end = b;
+        for(int guard = 0;; guard++) {
+          HalfEdge *o = crossed->opposite;
+          if(!o || guard > 1000000) return false;
+          Vertex *x = o->next->next->v;
           if(x == b) break;
           const int ox = _orient(a, b, x);
           if(ox == 0) {
             end = x;
             break;
           }
-          if(ox > 0)
-            l = x;
-          else
-            r = x;
-          crossed.push_back({r, l});
+          crossed = ox > 0 ? o->next : o->next->next;
+          list.push_back(crossed);
         }
-        // the flips
-        guard = 0;
-        while(!crossed.empty()) {
-          if(++guard > 1000000) return false;
-          const std::pair<int, int> e = crossed.front();
-          crossed.pop_front();
-          const int t1 = _ownerOf(e.first, e.second),
-                    t2 = _ownerOf(e.second, e.first);
-          if(t1 < 0 || t2 < 0) return false;
-          const int c = _third(t1, e.first, e.second),
-                    d = _third(t2, e.second, e.first);
-          if(_orient(e.first, d, c) > 0 && _orient(d, e.second, c) > 0) {
-            _flip(e.first, e.second);
+        for(int guard = 0; !list.empty(); guard++) {
+          if(guard > 1000000) return false;
+          HalfEdge *he = list.front();
+          list.pop_front();
+          Vertex *p = he->v, *q = he->next->v, *c = he->next->next->v,
+                 *d = he->opposite->next->next->v;
+          if(_orient(p, d, c) > 0 && _orient(d, q, c) > 0) {
+            _pm.swap_edge(he);
             if(c != a && c != end && d != a && d != end &&
                _orient(a, end, c) * _orient(a, end, d) < 0)
-              crossed.push_back({c, d});
+              list.push_back(he);
           }
           else
-            crossed.push_back(e);
+            list.push_back(he);
         }
         pieces.push_back({a, end});
         if(end != b) return _recover(end, b, pieces);
@@ -1266,53 +1323,87 @@ namespace {
         _k = m._axis[t];
         _o = m._orientation[t];
       }
-      int local(int g)
-      {
-        auto it = _local.find(g);
-        if(it != _local.end()) return it->second;
-        const int l = (int)_global.size();
-        _global.push_back(g);
-        _vertexTri.push_back(-1);
-        _local[g] = l;
-        return l;
-      }
       bool triangulate(int t)
       {
         const int *v = &_m._tri[3 * t];
-        for(int i = 0; i < 3; i++) local(v[i]);
-        _add(0, 1, 2);
-        // the points on the edges, in their order
+        // the frame of the triangle
+        const double *x0 = _m.X(v[0]), *x1 = _m.X(v[1]), *x2 = _m.X(v[2]);
+        double n[3], l1 = 0., l2 = 0.;
+        for(int k = 0; k < 3; k++) {
+          _origin[k] = x0[k];
+          _e1[k] = x1[k] - x0[k];
+        }
+        const double u[3] = {x2[0] - x0[0], x2[1] - x0[1], x2[2] - x0[2]};
+        n[0] = _e1[1] * u[2] - _e1[2] * u[1];
+        n[1] = _e1[2] * u[0] - _e1[0] * u[2];
+        n[2] = _e1[0] * u[1] - _e1[1] * u[0];
+        _e2[0] = n[1] * _e1[2] - n[2] * _e1[1];
+        _e2[1] = n[2] * _e1[0] - n[0] * _e1[2];
+        _e2[2] = n[0] * _e1[1] - n[1] * _e1[0];
+        for(int k = 0; k < 3; k++) {
+          l1 += _e1[k] * _e1[k];
+          l2 += _e2[k] * _e2[k];
+        }
+        l1 = std::sqrt(l1);
+        l2 = std::sqrt(l2);
+        for(int k = 0; k < 3; k++) {
+          _e1[k] /= l1;
+          _e2[k] /= l2;
+        }
+        // the triangle, its edges split at their points in their order
+        Vertex *w[3];
+        for(int i = 0; i < 3; i++) {
+          const SVector3 p = _position(v[i]);
+          w[i] = new Vertex(p.x(), p.y(), 0., v[i]);
+          _pm.vertices.push_back(w[i]);
+          _vertexOf[v[i]] = w[i];
+          // (a vertex of B at a vertex of A: the points there have its id)
+          _vertexOf[_m._alias[v[i]]] = w[i];
+        }
+        HalfEdge *h[3];
+        for(int i = 0; i < 3; i++) {
+          h[i] = new HalfEdge(w[i]);
+          _pm.hedges.push_back(h[i]);
+        }
+        PolyMesh::Face *f = new PolyMesh::Face(h[0]);
+        _pm.faces.push_back(f);
+        _pm.createFace(f, w[0], w[1], w[2], h[0], h[1], h[2]);
         for(int i = 0; i < 3; i++) {
           const int e = _m._triEdges[3 * t + i];
           const std::vector<OnEdge> &on = _m._onEdge[e];
-          if(on.empty()) continue;
           const bool reverse = v[i] != _m._edges[e][0];
-          int prev = local(v[i]);
-          const int last = local(v[(i + 1) % 3]);
-          for(std::size_t j = 0; j < on.size(); j++) {
-            const int g = on[reverse ? on.size() - 1 - j : j].point;
-            const int x = local(g);
-            _splitEdge(prev, last, x);
-            prev = x;
-          }
+          HalfEdge *b = h[i];
+          for(std::size_t j = 0; j < on.size(); j++)
+            b = _splitBoundary(b, on[reverse ? on.size() - 1 - j : j].point);
         }
         // the points inside
         for(int g : _m._inside[t])
-          if(!_insert(local(g))) return false;
+          if(!_insert(g)) return false;
         // the constraints
         for(const Constraint &c : _m._constraints[t]) {
-          std::vector<std::pair<int, int> > pieces;
-          if(!_recover(local(c.a), local(c.b), pieces)) return false;
+          std::vector<std::pair<Vertex *, Vertex *> > pieces;
+          auto a = _vertexOf.find(c.a), b = _vertexOf.find(c.b);
+          if(a == _vertexOf.end() || b == _vertexOf.end()) return false;
+          if(!_recover(a->second, b->second, pieces)) return false;
           for(auto &p : pieces) {
-            const int a = std::min(_global[p.first], _global[p.second]);
-            const int b = std::max(_global[p.first], _global[p.second]);
+            HalfEdge *e = _edge(p.first, p.second);
+            if(!e) return false;
+            e->data = 1;
+            if(e->opposite) e->opposite->data = 1;
+            const int a = std::min(p.first->data, p.second->data);
+            const int b = std::max(p.first->data, p.second->data);
             constrained[edgeKey(a, b)].push_back(c.other);
           }
         }
-        for(std::size_t i = 0; i < _tris.size(); i++)
-          if(_alive[i])
-            triangles.push_back({_global[_tris[i][0]], _global[_tris[i][1]],
-                                 _global[_tris[i][2]]});
+        // the Delaunay criterion everywhere else
+        std::vector<HalfEdge *> all;
+        for(HalfEdge *he : _pm.hedges)
+          if(he->opposite && he->data < 0 && he < he->opposite)
+            all.push_back(he);
+        _cascade(all);
+        for(PolyMesh::Face *u : _pm.faces)
+          triangles.push_back({u->he->v->data, u->he->next->v->data,
+                               u->he->next->next->v->data});
         return true;
       }
     };
@@ -1381,27 +1472,56 @@ namespace {
       return true;
     }
 
-    // inside the other operand, by a local test along the triangles of the
-    // other operand (two of them sharing an edge: their dihedral angle), 0
-    // if undecided
-    int _insideAlong(const Final &f, int i) const
+    // triangles in the same plane
+    bool _coplanar(int t, int u) const
     {
-      const std::vector<int> &others = _alongs[f.along[i]];
-      const int z = f.v[(i + 2) % 3];
-      std::vector<int> o = others;
+      const int *v = &_tri[3 * t], *w = &_tri[3 * u];
+      for(int j = 0; j < 3; j++)
+        if(orient3d(X(v[0]), X(v[1]), X(v[2]), X(w[j]))) return false;
+      return true;
+    }
+
+    // the state of a final triangle relative to the other operand, from the
+    // triangles of the other operand along its edge i: 1 inside, -1 outside
+    // (locally, two of them sharing an edge: by their dihedral angle), 2 on
+    // a coplanar triangle of the same orientation, 3 of the opposite
+    // orientation, 0 if undecided
+    int _state(const Final &f, int i) const
+    {
+      std::vector<int> o = _alongs[f.along[i]];
       std::sort(o.begin(), o.end());
       o.erase(std::unique(o.begin(), o.end()), o.end());
-      if(o.size() == 1) return _side(o[0], z);
-      if(o.size() != 2) return 0;
-      const int s1 = _side(o[0], z), s2 = _side(o[1], z);
+      const int t = f.birth, k = _axis[t];
+      const int u = f.v[i], w = f.v[(i + 1) % 3], z = f.v[(i + 2) % 3];
+      std::vector<int> transversal;
+      for(int c : o) {
+        if(!_coplanar(t, c)) {
+          transversal.push_back(c);
+          continue;
+        }
+        // on it, if on the side of its interior
+        const int *v = &_tri[3 * c];
+        const int sc = orient2d(X(v[0]), X(v[1]), X(v[2]), k);
+        bool on = true;
+        for(int j = 0; j < 3 && on; j++) {
+          const int a = v[j], b = v[(j + 1) % 3];
+          if(!_orient2d(a, b, u, k) && !_orient2d(a, b, w, k) &&
+             sc * _orient2d(a, b, z, k) <= 0)
+            on = false;
+        }
+        if(on) return sc == _orientation[t] ? 2 : 3;
+      }
+      if(transversal.size() == 1) return _side(transversal[0], z);
+      if(transversal.size() != 2) return 0;
+      const int s1 = _side(transversal[0], z), s2 = _side(transversal[1], z);
       if(!s1 || !s2) return 0;
       // the vertex of the second one not on the first one
-      const int *v1 = &_tri[3 * o[0]], *v2 = &_tri[3 * o[1]];
-      int w = -1;
+      const int *v1 = &_tri[3 * transversal[0]], *v2 = &_tri[3 * transversal[1]];
+      int x = -1;
       for(int j = 0; j < 3; j++)
-        if(v2[j] != v1[0] && v2[j] != v1[1] && v2[j] != v1[2]) w = v2[j];
-      if(w < 0) return 0;
-      const bool convex = _side(o[0], w) > 0;
+        if(v2[j] != v1[0] && v2[j] != v1[1] && v2[j] != v1[2]) x = v2[j];
+      if(x < 0) return 0;
+      const bool convex = _side(transversal[0], x) > 0;
       if(convex) return (s1 > 0 && s2 > 0) ? 1 : -1;
       return (s1 > 0 || s2 > 0) ? 1 : -1;
     }
@@ -1458,7 +1578,8 @@ namespace {
       return 0;
     }
 
-    // the classification of the final triangles of the operand o
+    // the classification of the final triangles of the operand o: their
+    // states
     bool _classify(int o, std::vector<int> &inside)
     {
       std::vector<Final> &F = _final[o];
@@ -1490,12 +1611,12 @@ namespace {
         }
         if(!e.second[2]) parent[find(e.second[0])] = find(e.second[1]);
       }
-      std::unordered_map<int, int> patch; // root -> inside
+      std::unordered_map<int, int> patch; // root -> state
       for(int i = 0; i < n; i++)
         for(int k = 0; k < 3; k++) {
           if(F[i].along[k] < 0) continue;
           const int r = find(i);
-          const int s = _insideAlong(F[i], k);
+          const int s = _state(F[i], k);
           if(!s) continue;
           auto it = patch.find(r);
           if(it == patch.end())
@@ -1526,7 +1647,7 @@ namespace {
           }
           it = patch.emplace(r, s).first;
         }
-        inside[i] = it->second > 0;
+        inside[i] = it->second;
       }
       return true;
     }
@@ -1550,9 +1671,14 @@ namespace {
       for(int o = 0; o < 2; o++)
         for(std::size_t i = 0; i < _final[o].size(); i++) {
           const Final &f = _final[o][i];
-          const bool in = inside[o][i];
+          const int state = inside[o][i];
+          const bool in = state == 1;
           bool keep, flip = false;
-          if(op == 0)
+          if(state == 2) // on the other one, oriented the same way: A once
+            keep = o == 0 && op != 2;
+          else if(state == 3) // oriented the opposite way
+            keep = o == 0 && op == 2;
+          else if(op == 0)
             keep = !in;
           else if(op == 1)
             keep = in;

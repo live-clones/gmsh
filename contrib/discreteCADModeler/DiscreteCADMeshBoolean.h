@@ -14,11 +14,14 @@
 // self-intersections (3 coordinates per vertex, 3 vertex indices per
 // triangle), exact and without dependencies: the intersection points are
 // identified by the vertices, edges and triangles of both operands they lie
-// in, all the decisions are taken with exact predicates. The result, oriented
-// outwards, and for each of its triangles the triangle it lies in (those of A
-// first, then those of B). Returns false, with the reason in error, if it
-// cannot compute it (overlapping coplanar triangles, intersecting
-// constraints of operands that are not valid).
+// in, all the decisions are taken with exact predicates, degenerate
+// configurations included (vertices on edges or triangles, edges along
+// planes, coplanar overlapping triangles); the triangles cut are triangulated
+// by gmsh's constrained Delaunay (PolyMesh). The result, oriented outwards,
+// and for each of its triangles the triangle it lies in (those of A first,
+// then those of B). Returns false, with the reason in error, if it cannot
+// compute it (operands that are not closed manifold triangulations without
+// self-intersections).
 bool meshBoolean(int op, const std::vector<double> &xyzA,
                  const std::vector<int> &triA,
                  const std::vector<double> &xyzB,
