@@ -199,7 +199,10 @@ windows_official_release:
 
 windows-sdk_official_snapshot:
   variables:
-    EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
+    # not stripped: the debug info of the default RelWithDebInfo build is kept
+    # in the dev SDK (and the dev Python wheel built from it), so that crashes
+    # on Windows give function names and line numbers
+    EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1 -DENABLE_PACKAGE_STRIP=0"
   <<: *windows_official
   tags:
     - windows64
