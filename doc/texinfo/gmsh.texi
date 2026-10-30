@@ -37,9 +37,11 @@
 @c merge function index into type index
 @syncodeindex fn tp
 
-@c remove \Underfull \hbox warnings
+@c remove \Underfull \hbox warnings, and end a page short rather than
+@c stretch it when what follows does not fit (e.g. a large image)
 @tex
 \global\hbadness=10000
+\catcode`\@=11 \global\let\ifr@ggedbottom\iftrue \catcode`\@=0
 @end tex
 
 @c =========================================================================
@@ -55,6 +57,7 @@ post-processing facilities
 @noindent
 This is the @cite{Gmsh Reference Manual} for Gmsh @value{GMSH-VERSION}
 (@today{}).
+
 @noindent
 Copyright @value{COPYRIGHT}
 @end ifinfo
@@ -2419,14 +2422,6 @@ See @ref{t3}, for an example of the use of color expressions.
 @c .........................................................................
 @c Operators
 @c .........................................................................
-
-@menu
-* Operators::
-* Built-in functions::
-* User-defined macros::
-* Loops and conditionals::
-* Other general commands::
-@end menu
 
 @node Operators, Built-in functions, Color expressions, General scripting commands
 @subsection Operators
