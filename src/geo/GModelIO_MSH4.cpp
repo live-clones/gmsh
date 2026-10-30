@@ -1838,36 +1838,53 @@ static bool readMSH4Overlaps(GModel *const model, FILE *fp, bool binary)
                    dim, coveredTag, coveredEntity->getTypeString().c_str());
         return false;
       }
-      auto overlapEntity = new typename EntityTraits<dim>::OverlapEntity(
-        model, covered, partition);
-      overlapEntity->setTag(tag);
 
       auto foundEntity = model->getEntityByTag(dim, tag);
-      if(foundEntity) {
-        Msg::Error("Volume overlap with tag %d already exists in model, "
-                   "and is of type %s",
-                   tag, foundEntity->getTypeString().c_str());
-        delete overlapEntity;
-        return false;
-      }
+      auto existing =
+        dynamic_cast<typename EntityTraits<dim>::OverlapEntity *>(foundEntity);
 
-      // Register in the manager only once the model owns the entity, so the
-      // failure path does not leave a dangling pointer in the manager
-      if(!model->add(overlapEntity)) {
-        Msg::Error("Could not add volume overlap with tag %d to model", tag);
-        delete overlapEntity;
-        return false;
-      }
-      mgr->addOverlap(overlapEntity);
-
-      for(size_t i = 0; i < numElements; i++) {
-        size_t elementTag = 0;
-        if(binary) {
-          if(fread(&elementTag, sizeof(size_t), 1, fp) != 1) { return false; }
+      // If an overlap exists with correct covered entity and partition,
+      // we assume it was already loaded and its elements can be skipped.
+      const bool reread = existing && existing->getCovered() == covered &&
+                          existing->owningPartition() == partition;
+      typename EntityTraits<dim>::OverlapEntity *overlapEntity = existing;
+      if(!reread) {
+        if(foundEntity) {
+          // Tag taken by a non-overlap entity
+          // or an overlap with wrong covered entity or partition.
+          Msg::Error("Volume overlap with tag %d already exists in model, "
+                     "and is of type %s",
+                     tag, foundEntity->getTypeString().c_str());
+          return false;
         }
-        else {
+        overlapEntity = new typename EntityTraits<dim>::OverlapEntity(
+          model, covered, partition);
+        overlapEntity->setTag(tag);
+
+        if(!model->add(overlapEntity)) {
+          Msg::Error("Could not add volume overlap with tag %d to model", tag);
+          delete overlapEntity;
+          return false;
+        }
+        mgr->addOverlap(overlapEntity);
+      }
+
+      std::vector<size_t> elementTags(numElements);
+      if(binary) {
+        if(fread(elementTags.data(), sizeof(size_t), numElements, fp) !=
+           numElements) {
+          return false;
+        }
+      }
+      else {
+        for(auto &elementTag : elementTags) {
           if(fscanf(fp, "%zu", &elementTag) != 1) { return false; }
         }
+      }
+      // Refill an overlap emptied by clearing the mesh since it was read
+      if(reread && overlapEntity->getNumMeshElements()) continue;
+
+      for(size_t elementTag : elementTags) {
         MElement *element = model->getMeshElementByTag(elementTag);
 
         if(!element) {
