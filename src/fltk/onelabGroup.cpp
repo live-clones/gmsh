@@ -532,6 +532,10 @@ private:
     }
     Fl_Tree::draw();
   }
+  // the branch tinted, compared only (a rebuild of the tree deletes the
+  // items), and its row, redrawn when the tint goes
+  Fl_Tree_Item *_hovered = nullptr;
+  int _hoverY = 0, _hoverH = 0;
 
 public:
   onelabTree(int x, int y, int w, int h) : Fl_Tree(x, y, w, h)
@@ -541,8 +545,6 @@ public:
   }
   int handle(int event) override
   {
-    // compared only: a rebuild of the tree deletes the items
-    static Fl_Tree_Item *hovered = nullptr;
     int ret = Fl_Tree::handle(event);
     switch(event) {
     case FL_PUSH:
@@ -559,9 +561,17 @@ public:
     case FL_ENTER:
     case FL_MOVE:
     case FL_LEAVE:
-      if(_branchBelowMouse() != hovered) {
-        hovered = _branchBelowMouse();
-        redraw();
+      // only the rows whose tint changes are drawn again: the whole tree
+      // would flicker on Windows, where the window is not double buffered
+      if(_branchBelowMouse() != _hovered) {
+        _hovered = _branchBelowMouse();
+        if(_hoverH) damage(FL_DAMAGE_ALL, x(), _hoverY, w(), _hoverH);
+        _hoverH = 0;
+        if(_hovered) {
+          _hoverY = _hovered->y();
+          _hoverH = _hovered->h();
+          damage(FL_DAMAGE_ALL, x(), _hoverY, w(), _hoverH);
+        }
       }
       break;
     }
