@@ -661,6 +661,16 @@ Reconnect the tetrahedra that the parallel 3D optimizer could not improve otherw
 Default value: @code{0.5}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.Pack3D
+Deprecated compatibility option, fixed to 1: PACK always uses tangent-frame propagation and oriented exclusion cubes in 3D@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PackSizemapMethod
+Size map for the PACK guiding field (same methods as QuadqsSizemapMethod, configured independently)@*
+Default value: @code{3}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.PartitionHexWeight
 Weight of hexahedral element for METIS load balancing (-1: automatic)@*
 Default value: @code{-1}@*
@@ -878,6 +888,11 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Renumber
 Renumber nodes and elements in a continuous sequence after mesh generation@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.RepairSelfIntersecting1DMesh
+Allow surface meshers to subdivide the boundary mesh and retry when recovering boundary edges fails (0: mark the surface as failed and preserve the existing curve mesh without subdivision or retries)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 

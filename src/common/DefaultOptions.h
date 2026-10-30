@@ -1518,6 +1518,11 @@ StringXNumber MeshOptions_Number[] = {
     "Maximum number of times meshing is retried on curves and surfaces with a "
     "pending mesh; also controls maximum number of recursive subdivisions when "
     "self-intersecting 1D meshes are detected"},
+  { F|O, "RepairSelfIntersecting1DMesh" ,
+    opt_mesh_repair_self_intersecting_1d_mesh, 1 ,
+    "Allow surface meshers to subdivide the boundary mesh and retry when "
+    "recovering boundary edges fails (0: mark the surface as failed and "
+    "preserve the existing curve mesh without subdivision or retries)" },
   { F|O, "MeshOnlyVisible" , opt_mesh_mesh_only_visible, 0. ,
     "Mesh only visible entities (experimental)" },
   { F|O, "MeshOnlyEmpty" , opt_mesh_mesh_only_empty, 0. ,
@@ -1720,6 +1725,11 @@ StringXNumber MeshOptions_Number[] = {
       "2: cross-field + CAD small features adaptation,"
       "3: from background mesh (e.g. sizes in current triangulation),"
       "4: cross-field + CAD small features adaptation (clamped by background mesh)" },
+  { F|O, "PackSizemapMethod", opt_mesh_pack_sizemap_method, 3,
+    "Size map for the PACK guiding field (same methods as QuadqsSizemapMethod, configured independently)" },
+  { F|O, "Pack3D" , opt_mesh_pack_3d, 1 ,
+    "Deprecated compatibility option, fixed to 1: PACK always uses "
+      "tangent-frame propagation and oriented exclusion cubes in 3D" },
   { F|O, "QuadqsTopologyOptimizationMethods" , opt_mesh_quadqs_topo_optim_methods, 0. ,
     "Topology optimization methods in QuadQuasiStructured. 0: default (all),"
       "100: pattern-based CAD faces,"
