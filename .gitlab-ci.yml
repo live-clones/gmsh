@@ -177,6 +177,7 @@ linux-nox-sdk_official_release:
     - c:\cygwin64\bin\bash -c "/usr/bin/cmake -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local;/usr/x86_64-w64-mingw32/sys-root/mingw' -DCMAKE_C_COMPILER=/usr/bin/x86_64-w64-mingw32-gcc.exe -DCMAKE_CXX_COMPILER=/usr/bin/x86_64-w64-mingw32-g++.exe -DCMAKE_Fortran_COMPILER=/usr/bin/x86_64-w64-mingw32-gfortran.exe -DCMAKE_RC_COMPILER=/usr/bin/x86_64-w64-mingw32-windres.exe -DENABLE_OS_SPECIFIC_INSTALL=1 -DENABLE_PETSC=1 -DPETSC_ARCH=real_mumps_seq -DPETSC_DIR=/home/geuzaine/src/petsc ${EXTRA_OPTION} .."
     - c:\cygwin64\bin\bash -c "/usr/bin/make package -j 4"
     - c:\cygwin64\bin\bash -c "/usr/bin/scp -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa gmsh-*.zip geuzaine@gmsh.info:.wwwgmsh/bin/Windows/"
+    - c:\cygwin64\bin\bash -c "test -z ${DEBUG_LIBRARY} || /usr/bin/bash ../utils/misc/upload_debug_library.sh"
     - c:\cygwin64\bin\bash -c "/usr/bin/ctest -j 4 --timeout 600 --output-on-failure"
 
 windows_official_snapshot:
@@ -199,10 +200,9 @@ windows_official_release:
 
 windows-sdk_official_snapshot:
   variables:
-    # not stripped: the debug info of the default RelWithDebInfo build is kept
-    # in the dev SDK (and the dev Python wheel built from it), so that crashes
-    # on Windows give function names and line numbers
-    EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1 -DENABLE_PACKAGE_STRIP=0"
+    EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
+    # keep the unstripped library on the server, to read crash reports
+    DEBUG_LIBRARY: "1"
   <<: *windows_official
   tags:
     - windows64

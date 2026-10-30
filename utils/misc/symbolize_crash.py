@@ -8,18 +8,23 @@
 # Turns the frames of a Gmsh crash report on Windows (see SetCrashReport() in
 # src/common/OS.cpp) into functions, files and lines:
 #
-#   symbolize_crash.py gmsh-crash-report.txt path/to/gmsh-5.0.dll
+#   symbolize_crash.py gmsh-crash-report.txt [library]
 #
-# The library must be the unstripped one of the very build that crashed: the
-# dev SDK, or the dev Python wheel made from it, of the commit the report
-# names. Needs llvm-addr2line (e.g. Homebrew's llvm) or the MinGW addr2line.
+# The library must be the unstripped one of the very build that crashed. The
+# Windows dev builds keep it on the server (see upload_debug_library.sh), from
+# where it is downloaded when none is given; it can also be given as a file,
+# gzipped or not. Needs llvm-addr2line (e.g. Homebrew's llvm) or the MinGW
+# addr2line.
 
+import gzip
 import os
 import re
 import shutil
 import struct
 import subprocess
 import sys
+import tempfile
+import urllib.request
 
 
 def image_base(path):
@@ -42,32 +47,56 @@ def find_tool():
     sys.exit('Need llvm-addr2line or x86_64-w64-mingw32-addr2line')
 
 
-def main():
-    if len(sys.argv) != 3:
-        sys.exit('Usage: symbolize_crash.py report.txt library.dll')
-    report, lib = sys.argv[1], sys.argv[2]
-    text = open(report, errors='replace').read()
+URL = 'https://gmsh.info/bin/Windows/debug/gmsh-%s-Windows64.dll.gz'
 
+
+def main():
+    if len(sys.argv) not in [2, 3]:
+        sys.exit('Usage: symbolize_crash.py report.txt [library]')
+    text = open(sys.argv[1], errors='replace').read()
     # the report names the build: the library must be of the same one
     m = re.search(r'Gmsh (\S+) crash report', text)
-    if m:
+    version = m.group(1) if m else None
+
+    tmp = tempfile.TemporaryDirectory()
+    if len(sys.argv) == 3:
+        lib = sys.argv[2]
+    elif version:
+        lib = os.path.join(tmp.name, os.path.basename(URL % version))
+        print('Downloading %s' % (URL % version))
+        try:
+            urllib.request.urlretrieve(URL % version, lib)
+        except Exception as e:
+            sys.exit('Could not download the library of %s (%s): only the two '
+                     'most recent dev builds are kept' % (version, e))
+    else:
+        sys.exit('No Gmsh version in the report: give the library')
+    if lib.endswith('.gz'):
+        out = os.path.join(tmp.name, 'gmsh.dll')
+        with gzip.open(lib, 'rb') as f, open(out, 'wb') as g:
+            shutil.copyfileobj(f, g)
+        lib = out
+
+    if version:
         with open(lib, 'rb') as f:
-            if m.group(1).encode() not in f.read():
-                print('Warning: %s is not of the build of the report (%s): '
-                      'the lines below are wrong' % (lib, m.group(1)))
+            if version.encode() not in f.read():
+                print('Warning: the library is not of the build of the report '
+                      '(%s): the lines below are wrong' % version)
 
     frames = re.findall(r'#\s*(\d+)\s+(\S+)\+0x([0-9a-fA-F]+)', text)
     base = image_base(lib)
-    name = os.path.basename(lib).lower()
     wanted = []
     for i, module, offset in frames:
-        if module.lower() == name:
+        # the frames of the Gmsh library (gmsh-5.0.dll), or of the executable
+        # given in its place
+        if (re.match(r'gmsh-[\d.]+\.dll$', module, re.I) or
+            module.lower() == os.path.basename(sys.argv[-1]).lower()):
             # a return address points after the call: the line of the call
             # is that of the byte before
             addr = base + int(offset, 16) - (1 if int(i) > 0 else 0)
             wanted.append((i, addr))
     if not wanted:
-        sys.exit('No frame of %s in the report' % name)
+        sys.exit('No frame of the Gmsh library in the report')
 
     out = subprocess.run([find_tool(), '-e', lib, '-f', '-C', '-i', '-a'] +
                          ['0x%x' % a for _, a in wanted],
