@@ -12,8 +12,11 @@
 #include "windowPlacement.h"
 #include "paletteWindow.h"
 
-// Derive the main window from Fl_Window (it shows up faster that way)
-class mainWindow : public Fl_Window {
+// The main graphic window, double buffered like the tool windows: drawn
+// straight to the screen it flickered on Windows and on X11 without a
+// compositor (the dock, the tree, the status bar); the OpenGL subwindow has
+// buffers of its own
+class mainWindow : public Fl_Double_Window {
 private:
   // position relative to the main graphic window, applied when shown
   int *_offset;
@@ -30,7 +33,7 @@ public:
   inline static int (*dropHook)(int event) = nullptr;
   mainWindow(int w, int h, bool nonModal, const char *l = nullptr,
              int *offset = nullptr)
-    : Fl_Window(w, h, l), _offset(offset)
+    : Fl_Double_Window(w, h, l), _offset(offset)
   {
     if(nonModal) set_non_modal();
   }
@@ -69,17 +72,15 @@ public:
       }
       break;
     }
-    return Fl_Window::handle(event);
+    return Fl_Double_Window::handle(event);
   }
   virtual void resize(int X, int Y, int W, int H)
-  {
-    Fl_Window::resize(X, Y, W, H);
-  }
+  { Fl_Double_Window::resize(X, Y, W, H); }
   virtual void show()
   {
     if(_offset) placeWindow(this, _offset);
-    if(non_modal() && !shown()) Fl_Window::show(); // fix ordering
-    Fl_Window::show();
+    if(non_modal() && !shown()) Fl_Double_Window::show(); // fix ordering
+    Fl_Double_Window::show();
     titleBarColor(this);
   }
 };
