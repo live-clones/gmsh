@@ -8,6 +8,7 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "discreteEdge.h"
+#include "SVector3.h"
 #include "MLine.h"
 #include "MEdge.h"
 #include "GModelIO_GEO.h"
@@ -135,6 +136,20 @@ SPoint2 discreteEdge::reparamOnFace(const GFace *face, double epar,
 
 int discreteEdge::minimumMeshSegments() const
 {
+  // a straight discretization: as a line
+  bool straight = _discretization.size() >= 2;
+  if(straight) {
+    const SPoint3 &a = _discretization.front(), &b = _discretization.back();
+    const SVector3 ab(a, b);
+    const double l = ab.norm();
+    for(std::size_t i = 1; i + 1 < _discretization.size() && straight; i++) {
+      const SVector3 ap(a, _discretization[i]);
+      if(l == 0. || crossprod(ab, ap).norm() > 1.e-10 * l * l) straight = false;
+    }
+  }
+  if(straight)
+    return std::max(CTX::instance()->mesh.minLineNodes - 1,
+                    meshAttributes.minimumMeshSegments);
   return std::max(CTX::instance()->mesh.minCurveNodes,
                   meshAttributes.minimumMeshSegments);
 }

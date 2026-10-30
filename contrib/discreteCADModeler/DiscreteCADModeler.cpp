@@ -13,6 +13,7 @@
 #include "GModel.h"
 #include "GModelIO_GEO.h"
 #include "GModelIO_OCC.h"
+#include "OpenFile.h"
 #include "discreteVertex.h"
 #include "discreteEdge.h"
 #include "discreteFace.h"
@@ -1619,4 +1620,7 @@ void DiscreteCAD_Internals::synchronize(GModel *model)
   model->resetMaxVertexNumber(maxVertex);
   model->resetMaxElementNumber(maxElement);
   _changed = false;
+  // the bounding box of the model (and its characteristic length), as the
+  // other kernels
+  SetBoundingBox();
 }
