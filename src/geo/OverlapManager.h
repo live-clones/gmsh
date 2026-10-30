@@ -9,6 +9,7 @@
 #ifndef OVERLAP_MANAGER_H
 #define OVERLAP_MANAGER_H
 
+#include <algorithm>
 #include <tuple>
 #include <unordered_map>
 #include <vector>
@@ -25,6 +26,12 @@ class GEdge;
 
 class OverlapManager {
 private:
+  // Boundaries are listed once, even when a merged file reads them again
+  template <class T> static void _addOnce(std::vector<T *> &v, T *e)
+  {
+    if(std::find(v.begin(), v.end(), e) == v.end()) v.push_back(e);
+  }
+
   int _tag;
   int _layers;
 
@@ -74,34 +81,34 @@ public:
 
   void addInnerBoundary(GFace *f, partitionEdge *e)
   {
-    _overlapInnerBoundaries2D[f].push_back(e);
+    _addOnce(_overlapInnerBoundaries2D[f], e);
   }
   void addInnerBoundary(GRegion *r, partitionFace *f)
   {
-    _overlapInnerBoundaries3D[r].push_back(f);
+    _addOnce(_overlapInnerBoundaries3D[r], f);
   }
 
   void addOverlapOfBoundary(GEdge *e, partitionEdge *pe, GFace *parent)
   {
-    _overlapOfBoundaries2D[e].push_back(pe);
+    _addOnce(_overlapOfBoundaries2D[e], pe);
     std::get<0>(_boundaryOfOverlapCreators)[pe] = parent;
   }
   void addOverlapOfBoundary(GFace *f, partitionFace *pf, GRegion *parent)
   {
-    _overlapOfBoundaries3D[f].push_back(pf);
+    _addOnce(_overlapOfBoundaries3D[f], pf);
     std::get<1>(_boundaryOfOverlapCreators)[pf] = parent;
   }
 
   void addInnerBoundaryOnInterface(GEdge *iface, partitionEdge *pe,
                                    GFace *parent)
   {
-    _innerBoundariesOnInterface2D[iface].push_back(pe);
+    _addOnce(_innerBoundariesOnInterface2D[iface], pe);
     std::get<0>(_boundaryOfOverlapCreators)[pe] = parent;
   }
   void addInnerBoundaryOnInterface(GFace *iface, partitionFace *pf,
                                    GRegion *parent)
   {
-    _innerBoundariesOnInterface3D[iface].push_back(pf);
+    _addOnce(_innerBoundariesOnInterface3D[iface], pf);
     std::get<1>(_boundaryOfOverlapCreators)[pf] = parent;
   }
 
