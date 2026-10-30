@@ -19,7 +19,6 @@ set(SRC
     algorithms.cpp
     candidate_cell.cpp
     compute_candidate_cells.cpp
-    hxt_combine_c_api.cpp
     hxt_combine_cpp_api.cpp
     tet_mesh.cpp
     hxt_quality.cpp
@@ -31,7 +30,6 @@ set(SRC
     cell_types.h
     combine_quality.h
     compute_candidate_cells.h
-    hxt_combine_c_api.h
     hxt_combine_cell.h
     hxt_combine_cpp_api.h
     tet_mesh.h

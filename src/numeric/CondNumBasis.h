@@ -21,6 +21,15 @@ private:
 
   int _nCondNumNodes;
   int _nMapNodes, _nPrimMapNodes;
+  // for the 3D elements with at most 8 mapping nodes: the mapping nodes of
+  // nonzero shape function gradients at each condition number node, in
+  // increasing order, from _stencil[_stencilStart[i]], with the gradients
+  struct StencilTerm {
+    int node;
+    double dX, dY, dZ;
+  };
+  std::vector<int> _stencilStart;
+  std::vector<StencilTerm> _stencil;
 
 public:
   CondNumBasis(int tag, int cnOrder = -1);
@@ -52,6 +61,19 @@ public:
                                _gradBasis->dShapeIdealMat_dZ, nodesXYZ, normals,
                                invCond);
   }
+  // The range of the signed inverse condition number of a 3D element with at
+  // most 8 mapping nodes, as getSignedInvCondNum but without allocating and
+  // multiplying dynamic matrices, which dominates for such small elements
+  // (the vertex relocation of hex-dominant meshes). Returns false for other
+  // elements.
+  bool getSignedInvCondNumRange3D(const double (*nodesXYZ)[3], double &iCNMin,
+                                  double &iCNMax) const;
+  // The minimum of the signed inverse condition number of such an element
+  // at the condition number nodes depending on mapping node 'node' (with),
+  // or at the others (!with); 1.e22 if none. With both, the minimum of
+  // getSignedInvCondNumRange3D.
+  bool getSignedInvCondNumMin3D(const double (*nodesXYZ)[3], int node,
+                                bool with, double &iCNMin) const;
   inline void getInvCondNumAndGradients(const fullMatrix<double> &nodesXYZ,
                                         fullMatrix<double> &IDI) const
   {

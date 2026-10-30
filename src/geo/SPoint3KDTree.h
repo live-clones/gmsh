@@ -83,6 +83,20 @@ public:
     double xyz[3] = {p.x(), p.y(), p.z()};
     return _tree->knnSearch(xyz, k, idx, dist2);
   }
+  // the same, among the points at a squared distance smaller than maxDist2:
+  // the search prunes everything farther, and finds the points nearest()
+  // finds (in the same order) when they are at least k in that ball
+  std::size_t nearestWithin(const SPoint3 &p, std::size_t k, std::size_t *idx,
+                            double *dist2, double maxDist2) const
+  {
+    if(!_tree || !k) return 0;
+    double xyz[3] = {p.x(), p.y(), p.z()};
+    nanoflann::KNNResultSet<double> result(k);
+    result.init(idx, dist2);
+    dist2[k - 1] = maxDist2;
+    _tree->findNeighbors(result, xyz, nanoflann::SearchParams());
+    return result.size();
+  }
   // the closest point, or size() if there is none
   std::size_t nearest(const SPoint3 &p, double *dist2 = nullptr) const
   {

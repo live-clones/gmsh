@@ -43,11 +43,11 @@ static void computeOrderedVertices(const HXTCombineCell& cell, vector<VertexInde
 */
 class ComparatorCellVertices {
 private:
-  const std::vector<HXTCombineCell>& cells_;
+  const HXTCombineCellArray& cells_;
   const std::vector<vector<VertexIndex>>& orderedVertices_;
   
 public:
-  ComparatorCellVertices(const std::vector<HXTCombineCell>& cells,
+  ComparatorCellVertices(const HXTCombineCellArray& cells,
     const std::vector<vector<VertexIndex>>& orderedVertices)
     :cells_(cells), orderedVertices_(orderedVertices)
   {}
@@ -69,12 +69,12 @@ public:
 */
 struct EqualCellVertices {
 private:
-  const std::vector<HXTCombineCell>& cells_;
+  const HXTCombineCellArray& cells_;
   const std::vector<vector<VertexIndex>>& orderedVertices_;
 
 public:
   EqualCellVertices(
-    const std::vector<HXTCombineCell>& cells,
+    const HXTCombineCellArray& cells,
     const std::vector<vector<VertexIndex>>& orderedVertices) 
     :cells_(cells), orderedVertices_(orderedVertices)
   {}
@@ -91,7 +91,7 @@ public:
 };
 
 
-void uniqueCells(const vector<HXTCombineCell>& cells, vector<unsigned int>& indices)
+void uniqueCells(const HXTCombineCellArray& cells, vector<unsigned int>& indices)
 {
   size_t nb = cells.size();
   indices.resize(nb);

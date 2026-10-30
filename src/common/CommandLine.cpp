@@ -85,8 +85,13 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
                  "then exit"));
   s.push_back(mp("-reclassify angle", "Reclassify surface mesh, then exit"));
   s.push_back(mp("-reparam angle", "Reparametrize surface mesh, then exit"));
-  s.push_back(mp("-hybrid", "generate a hybrid hex-tet mesh with trihedron for "
-                 "transitions"));
+  s.push_back(mp("-hybrid", "Generate a hex-dominant mesh with prisms, "
+                 "pyramids and trihedra (sets Mesh.Algorithm=9, "
+                 "Mesh.Algorithm3D=9, Mesh.RecombineAll=1, "
+                 "Mesh.Recombine3DAll=1, Mesh.Recombine3DPrisms=1, "
+                 "Mesh.Recombine3DPyramids=1, Mesh.Smoothing=3, "
+                 "Mesh.MeshSizeExtendFromBoundary=0; the options given after "
+                 "it override these)"));
   s.push_back(mp("-part int", "Partition after batch mesh generation "
                  "(Mesh.NbPartitions)"));
   s.push_back(mp("-part_weight [tri,quad,tet,hex,pri,pyr,trih] int",
@@ -932,6 +937,15 @@ static bool GetMeshOption(const std::vector<std::string> &argv,
     opt_mesh_recombine3d_all(0,GMSH_SET, 1);
     opt_mesh_algo3d(0, GMSH_SET, ALGO_3D_RTREE);
     opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_PACK_PRLGRMS);
+    // PACK recombined into quads, and the sizes of the filler not extended
+    // from the boundary (the hex-dominant filler meshes its regions itself)
+    opt_mesh_recombine_all(0, GMSH_SET, 1);
+    opt_mesh_lc_extend_from_boundary(0, GMSH_SET, 0);
+    // hexahedra and prisms, conforming through pyramids and trihedra, and
+    // the surface meshes smoothed as for the reference hex-dominant meshes
+    opt_mesh_recombine3d_prisms(0, GMSH_SET, 1);
+    opt_mesh_recombine3d_pyramids(0, GMSH_SET, 1);
+    opt_mesh_nb_smoothing(0, GMSH_SET, 3);
     i++;
   }
   else if(argv[i] == "-format" || argv[i] == "-f") {
