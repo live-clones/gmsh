@@ -31,6 +31,11 @@ int SystemCall(const std::string &command, bool blocking = false);
 int SystemCallExe(const std::string &exe, const std::string &argsOrCommand,
                   bool blocking = false);
 void RedirectIOToConsole();
+// on Windows (x64), print the stack of a crash (access violation, illegal
+// instruction, division by zero) as modules and offsets, on stderr and in
+// gmsh-crash-report.txt in the temporary directory; installed by
+// GmshInitialize and removed by GmshFinalize
+void SetCrashReport(bool on);
 void UnzipFile(const std::string &fileName, const std::string &prependDir = "");
 
 #endif

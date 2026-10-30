@@ -77,6 +77,7 @@ int GmshInitialize(int argc, char **argv, bool readConfigFiles,
 #if defined(HAVE_FLTK)
   RedirectIOToConsole();
 #endif
+  SetCrashReport(true);
 
   // we need at least one model during option parsing
   GModel *dummy = nullptr;
@@ -267,6 +268,7 @@ int GmshFinalize()
   }
 #endif
   Msg::Finalize();
+  SetCrashReport(false);
   isInitialized = false;
   return 1;
 }
