@@ -7,14 +7,14 @@ WebGL viewer; new capping visualization mode in clipping tool; new interactive
 model query and measurement; improved colorbars and 2D plots; new predefined
 colormaps and symmetric log scale; new built-in fonts used by default (removed
 ZapfDingbats); new headless image and movie export (replaces deprecated OSMesa;
-MP4 export with Fmpeg); new faster homology solver (with periodicity connection
-handling); improved performance of mesh partitioning pipeline and added support
-for partition overlaps; new ability to save only the local partitioned Brep;
-improved performance of high-order element generation (now also for prisms of
-any order) and adaptive view visualization (with target error relative to
-range); Thread-safe MathEval/MathEvalAniso/Param mesh size fields; new MSH4.2
-revision of the MSH file format with support for embedded entities in $Entities
-and $PartitionedEntities, efficient blocked $NodeData, $ElementData,
+optional MP4 export with FFmpeg); new faster homology solver (with periodicity
+connection handling); improved performance of mesh partitioning pipeline and
+added support for partition overlaps; new ability to save only the local
+partitioned Brep; improved performance of high-order element generation (now
+also for prisms of any order) and adaptive view visualization (with target error
+relative to range); Thread-safe MathEval/MathEvalAniso/Param mesh size fields;
+new MSH4.2 revision of the MSH file format with support for embedded entities in
+$Entities and $PartitionedEntities, efficient blocked $NodeData, $ElementData,
 $ElementNodeData and $GhostElements sections, and support for $Edges and $Faces
 sections (see the reference manual for detailed changes); new polytope
 implementation with support in the API and MSH4.2 format, which replaces the old
