@@ -45,7 +45,7 @@ opt(CGNS "Enable CGNS import/export (experimental)" ${DEFAULT})
 opt(CGNS_CPEX0045 "Enable high-order CGNS import/export following CPEX0045 (experimental)" OFF)
 opt(COVERAGE "Enable code coverage instrumentation (GCC/Clang only)" OFF)
 opt(DISCRETECAD "Enable the discrete CAD modeler" ${DEFAULT})
-opt(LIBIGL "Enable libigl (LIBIGL_DIR), with CGAL, GMP and MPFR, as a fallback of the boolean operations of the discrete CAD modeler" OFF)
+opt(LIBIGL "Enable libigl, if installed (LIBIGL_DIR) with CGAL, GMP and MPFR, as a fallback of the boolean operations of the discrete CAD modeler" ${DEFAULT})
 opt(DOMHEX "Enable experimental DOMHEX code" ${DEFAULT})
 opt(EIGEN "Enable Eigen for linear algebra (instead of Blas/Lapack)" ON)
 opt(FFMPEG "Enable FFmpeg for MP4 movie export" ${DEFAULT})
@@ -976,21 +976,55 @@ if(HAVE_MESH)
     add_subdirectory(contrib/discreteCADModeler)
     include_directories(contrib/discreteCADModeler)
     set_config_option(HAVE_DISCRETECAD "DiscreteCAD")
-    # its boolean operations with libigl (header only, LIBIGL_DIR), whose mesh
-    # booleans use CGAL (header only) with GMP and MPFR
+    # its boolean operations fall back on libigl only if it is installed
+    # (header only, in the standard locations or in LIBIGL_DIR) with CGAL
+    # (header only, or in CGAL_DIR), GMP and MPFR, and if its mesh booleans
+    # compile and link with them; otherwise they only use Gmsh's own
+    set(LIBIGL_FALLBACK "none, libigl not installed")
     if(ENABLE_LIBIGL AND HAVE_EIGEN)
       find_path(LIBIGL_INC "igl/copyleft/cgal/mesh_boolean.h"
                 HINTS ${LIBIGL_DIR} $ENV{LIBIGL_DIR} PATH_SUFFIXES include)
-      find_path(CGAL_INC "CGAL/version.h")
+      find_path(CGAL_INC "CGAL/version.h"
+                HINTS ${CGAL_DIR} $ENV{CGAL_DIR} PATH_SUFFIXES include)
       find_path(GMP_INC "gmp.h")
       find_library(GMP_LIB gmp)
       find_library(MPFR_LIB mpfr)
       if(LIBIGL_INC AND CGAL_INC AND GMP_INC AND GMP_LIB AND MPFR_LIB)
-        list(APPEND EXTERNAL_INCLUDES ${LIBIGL_INC} ${CGAL_INC} ${GMP_INC})
-        list(APPEND EXTERNAL_LIBRARIES ${MPFR_LIB} ${GMP_LIB})
-        set_config_option(HAVE_LIBIGL "libigl")
+        if(EIGEN_INC)
+          set(LIBIGL_EIGEN_INC ${EIGEN_INC})
+        else()
+          set(LIBIGL_EIGEN_INC ${CMAKE_CURRENT_SOURCE_DIR}/contrib/eigen)
+        endif()
+        set(CMAKE_REQUIRED_INCLUDES ${LIBIGL_INC} ${CGAL_INC} ${GMP_INC}
+            ${LIBIGL_EIGEN_INC})
+        set(CMAKE_REQUIRED_LIBRARIES ${MPFR_LIB} ${GMP_LIB})
+        check_cxx_source_compiles("
+#include <igl/copyleft/cgal/mesh_boolean.h>
+int main()
+{
+  Eigen::MatrixXd V;
+  Eigen::MatrixXi F;
+  Eigen::VectorXi J;
+  igl::copyleft::cgal::mesh_boolean(V, F, V, F, igl::MESH_BOOLEAN_TYPE_UNION,
+                                    V, F, J);
+  return 0;
+}" HAVE_LIBIGL_MESH_BOOLEAN)
+        unset(CMAKE_REQUIRED_INCLUDES)
+        unset(CMAKE_REQUIRED_LIBRARIES)
+        if(HAVE_LIBIGL_MESH_BOOLEAN)
+          list(APPEND EXTERNAL_INCLUDES ${LIBIGL_INC} ${CGAL_INC} ${GMP_INC})
+          list(APPEND EXTERNAL_LIBRARIES ${MPFR_LIB} ${GMP_LIB})
+          set_config_option(HAVE_LIBIGL "libigl")
+          set(LIBIGL_FALLBACK "libigl in ${LIBIGL_INC}")
+        else()
+          set(LIBIGL_FALLBACK
+              "none, libigl in ${LIBIGL_INC} does not compile with CGAL in ${CGAL_INC}")
+        endif()
       endif()
+    elseif(NOT ENABLE_LIBIGL)
+      set(LIBIGL_FALLBACK "none, libigl disabled")
     endif()
+    message(STATUS "Fallback of the discrete CAD booleans: ${LIBIGL_FALLBACK}")
   endif()
 
   if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadTri AND ENABLE_QUADTRI)
