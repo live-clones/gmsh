@@ -3570,6 +3570,40 @@ GMSH_API void gmshModelDiscreteCut(const int * objectDimTags, const size_t objec
                                    const int removeTool,
                                    int * ierr);
 
+/* Import the triangulations of the surfaces of the mesh file `fileName' (STL,
+ * MSH, OBJ, PLY, OFF, VTK or MESH format) in the discrete CAD representation,
+ * and build their topology: the surfaces are the triangles of the same
+ * surface of the file connected across edges shared by two triangles whose
+ * normals make an angle smaller than `angle' (in radians), the curves are
+ * along the edges between two surfaces, the boundary edges (of one triangle)
+ * and the non-manifold edges (of more than two triangles), split where more
+ * or less than two of them meet and, if `curveAngle' is less than Pi, where
+ * they turn by more than `curveAngle', and the volumes are the cells of space
+ * bounded by the surfaces (the cells of a connected piece of the
+ * triangulation inside a cell of another one are volumes if its triangles
+ * point out of them, holes if they point into them, as STL normals point out
+ * of solids). Each surface is oriented outwards of a volume whose outer
+ * boundary it is on, if any (the included volume for the boundary of an
+ * inclusion). Return the volumes and the surfaces bounding no volume in
+ * `outDimTags'. */
+GMSH_API void gmshModelDiscreteImportShapes(const char * fileName,
+                                            const double angle,
+                                            int ** outDimTags, size_t * outDimTags_n,
+                                            const double curveAngle,
+                                            int * ierr);
+
+/* Add the triangulation given by the coordinates `coord' of its nodes
+ * (concatenated: [n1x, n1y, n1z, n2x, ...]) and its triangles `triangles'
+ * (the indices of their 3 nodes, from 0, concatenated) in the discrete CAD
+ * representation, and build its topology as `importShapes'. Return the
+ * volumes and the surfaces bounding no volume in `outDimTags'. */
+GMSH_API void gmshModelDiscreteAddTriangulation(const double * coord, const size_t coord_n,
+                                                const size_t * triangles, const size_t triangles_n,
+                                                const double angle,
+                                                int ** outDimTags, size_t * outDimTags_n,
+                                                const double curveAngle,
+                                                int * ierr);
+
 /* Synchronize the discrete CAD representation with the current Gmsh model:
  * its points, curves, surfaces and volumes become discrete entities of the
  * model, whose geometry is their polylines and triangulations, and replace

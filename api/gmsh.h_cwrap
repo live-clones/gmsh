@@ -6600,6 +6600,60 @@ namespace gmsh { // Top-level functions
         outDimTagsMap.resize(api_outDimTagsMap_nn_); for(size_t i = 0; i < api_outDimTagsMap_nn_; ++i){ outDimTagsMap[i].resize(api_outDimTagsMap_n_[i] / 2); for(size_t j = 0; j < api_outDimTagsMap_n_[i] / 2; ++j){ outDimTagsMap[i][j].first = api_outDimTagsMap_[i][j * 2 + 0]; outDimTagsMap[i][j].second = api_outDimTagsMap_[i][j * 2 + 1]; } gmshFree(api_outDimTagsMap_[i]); } gmshFree(api_outDimTagsMap_); gmshFree(api_outDimTagsMap_n_);
       }
 
+      // gmsh::model::discrete::importShapes
+      //
+      // Import the triangulations of the surfaces of the mesh file `fileName'
+      // (STL, MSH, OBJ, PLY, OFF, VTK or MESH format) in the discrete CAD
+      // representation, and build their topology: the surfaces are the triangles
+      // of the same surface of the file connected across edges shared by two
+      // triangles whose normals make an angle smaller than `angle' (in radians),
+      // the curves are along the edges between two surfaces, the boundary edges
+      // (of one triangle) and the non-manifold edges (of more than two triangles),
+      // split where more or less than two of them meet and, if `curveAngle' is
+      // less than Pi, where they turn by more than `curveAngle', and the volumes
+      // are the cells of space bounded by the surfaces (the cells of a connected
+      // piece of the triangulation inside a cell of another one are volumes if its
+      // triangles point out of them, holes if they point into them, as STL normals
+      // point out of solids). Each surface is oriented outwards of a volume whose
+      // outer boundary it is on, if any (the included volume for the boundary of
+      // an inclusion). Return the volumes and the surfaces bounding no volume in
+      // `outDimTags'.
+      inline void importShapes(const std::string & fileName,
+                               const double angle,
+                               gmsh::vectorpair & outDimTags,
+                               const double curveAngle = M_PI)
+      {
+        int ierr = 0;
+        int *api_outDimTags_; size_t api_outDimTags_n_;
+        gmshModelDiscreteImportShapes(fileName.c_str(), angle, &api_outDimTags_, &api_outDimTags_n_, curveAngle, &ierr);
+        if(ierr) throwLastError();
+        outDimTags.resize(api_outDimTags_n_ / 2); for(size_t i = 0; i < api_outDimTags_n_ / 2; ++i){ outDimTags[i].first = api_outDimTags_[i * 2 + 0]; outDimTags[i].second = api_outDimTags_[i * 2 + 1]; } gmshFree(api_outDimTags_);
+      }
+
+      // gmsh::model::discrete::addTriangulation
+      //
+      // Add the triangulation given by the coordinates `coord' of its nodes
+      // (concatenated: [n1x, n1y, n1z, n2x, ...]) and its triangles `triangles'
+      // (the indices of their 3 nodes, from 0, concatenated) in the discrete CAD
+      // representation, and build its topology as `importShapes'. Return the
+      // volumes and the surfaces bounding no volume in `outDimTags'.
+      inline void addTriangulation(const std::vector<double> & coord,
+                                   const std::vector<std::size_t> & triangles,
+                                   const double angle,
+                                   gmsh::vectorpair & outDimTags,
+                                   const double curveAngle = M_PI)
+      {
+        int ierr = 0;
+        double *api_coord_; size_t api_coord_n_; vector2ptr(coord, &api_coord_, &api_coord_n_);
+        size_t *api_triangles_; size_t api_triangles_n_; vector2ptr(triangles, &api_triangles_, &api_triangles_n_);
+        int *api_outDimTags_; size_t api_outDimTags_n_;
+        gmshModelDiscreteAddTriangulation(api_coord_, api_coord_n_, api_triangles_, api_triangles_n_, angle, &api_outDimTags_, &api_outDimTags_n_, curveAngle, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_coord_);
+        gmshFree(api_triangles_);
+        outDimTags.resize(api_outDimTags_n_ / 2); for(size_t i = 0; i < api_outDimTags_n_ / 2; ++i){ outDimTags[i].first = api_outDimTags_[i * 2 + 0]; outDimTags[i].second = api_outDimTags_[i * 2 + 1]; } gmshFree(api_outDimTags_);
+      }
+
       // gmsh::model::discrete::synchronize
       //
       // Synchronize the discrete CAD representation with the current Gmsh model:

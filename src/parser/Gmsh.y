@@ -123,6 +123,8 @@ void ListOfDouble2Vector(List_T *list, std::vector<int> &v);
 void ListOfDouble2Vector(List_T *list, std::vector<double> &v);
 void ListOfShapes2VectorOfPairs(List_T *list, std::vector<std::pair<int, int> > &v);
 void VectorOfPairs2ListOfShapes(const std::vector<std::pair<int, int> > &v, List_T *list);
+void DiscreteShapeFromFile(const char *fileName, double angle,
+                           double curveAngle, List_T *shapes);
 void addPeriodicEdge(int, int, const std::vector<double>&);
 void addPeriodicFace(int, int, const std::map<int, int>&);
 void addPeriodicFace(int, int, const std::vector<double>&);
@@ -4105,6 +4107,18 @@ Boolean :
       if(!r) yymsg(0, "Could import shape");
       Free($3);
     }
+  | tShapeFromFile '(' StringExprVar ',' FExpr ')'
+    {
+      $$ = List_Create(2, 1, sizeof(Shape));
+      DiscreteShapeFromFile($3, $5, M_PI, $$);
+      Free($3);
+    }
+  | tShapeFromFile '(' StringExprVar ',' FExpr ',' FExpr ')'
+    {
+      $$ = List_Create(2, 1, sizeof(Shape));
+      DiscreteShapeFromFile($3, $5, $7, $$);
+      Free($3);
+    }
 ;
 
 BooleanShape :
@@ -6890,6 +6904,28 @@ void VectorOfPairs2ListOfShapes(const std::vector<std::pair<int, int> > &v, List
     s.Num = tag;
     List_Add(list, &s);
   }
+}
+
+// the triangulations of a mesh file imported in the discrete CAD modeler, and
+// their topology (surfaces split where the normals turn by more than angle,
+// curves where they turn by more than curveAngle)
+void DiscreteShapeFromFile(const char *fileName, double angle,
+                           double curveAngle, List_T *shapes)
+{
+#if defined(HAVE_DISCRETECAD)
+  if(gmsh_yyfactory == "Discrete" &&
+     GModel::current()->getDiscreteCADInternals()){
+    std::vector<std::pair<int, int> > out;
+    std::string tmp = FixRelativePath(gmsh_yyname, fileName);
+    if(!GModel::current()->getDiscreteCADInternals()->importShapes
+       (tmp, angle, curveAngle, out))
+      yymsg(0, "Could not import shape");
+    VectorOfPairs2ListOfShapes(out, shapes);
+    return;
+  }
+#endif
+  yymsg(0, "ShapeFromFile with angles only available with Discrete geometry "
+        "kernel");
 }
 
 void yyerror(const char *s)

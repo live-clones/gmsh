@@ -10,6 +10,7 @@
 #include <functional>
 #include <map>
 #include <set>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -97,6 +98,31 @@ private:
   std::vector<std::array<int, 3> > _fillEllipse(const Frame &f, double rx,
                                                 double ry, double w,
                                                 const std::vector<int> &ring);
+  // the surfaces, curves and vertices of a triangulation of nodes: a surface
+  // for each set of triangles of the same label connected across edges of
+  // two triangles, curves along the other edges (between two surfaces, of one
+  // triangle or of more than two) and along the seams of the surfaces (where
+  // the parameters of the corners of their triangles jump, for those with
+  // hasUV), split where more or less than two of them meet and where they
+  // turn by more than curveAngle, the closed ones in two arcs; the parameters
+  // made continuous across the seams of the surfaces that do not go around
+  // them. The surface of each triangle in surfaceOf.
+  void _addTopology(const std::vector<std::array<int, 3> > &triangles,
+                    const std::vector<int> &label,
+                    std::vector<std::array<std::array<double, 2>, 3> > &uv,
+                    const std::vector<char> &hasUV, double curveAngle,
+                    std::vector<int> &surfaceOf);
+  // the volumes bounded by the surfaces of a triangulation (the surface of
+  // each triangle in surfaceOf): the cells of space between them, found by
+  // turning around their edges; those of a connected piece of the
+  // triangulation inside no cell of another one are volumes, those of a piece
+  // inside a cell are volumes if its triangles point out of it, holes if they
+  // point into it, and the shell around the piece bounds the cell. For each
+  // volume its shells of signed surfaces (negative for a surface oriented
+  // inwards), the outer one first.
+  std::vector<std::vector<std::vector<int> > >
+  _cells(const std::vector<std::array<int, 3> > &triangles,
+         const std::vector<int> &surfaceOf) const;
 
 public:
   DiscreteCAD_Internals();
@@ -143,6 +169,27 @@ public:
     std::vector<std::pair<int, int> > &outDimTags,
     std::vector<std::vector<std::pair<int, int> > > &outDimTagsMap, int tag,
     bool removeObject, bool removeTool);
+  // a triangulation (3 coordinates per node, 3 node indices from 0 per
+  // triangle, and for each triangle the piece of the input it belongs to, if
+  // not empty) and its topology: its surfaces, the triangles connected across
+  // edges of two triangles whose normals make an angle smaller than angle (in
+  // the same piece), the curves between them, along its boundaries and its
+  // non-manifold edges, split where they turn by more than curveAngle, and
+  // its volumes, the cells of space they bound (see _cells), every surface
+  // oriented outwards of the first volume whose outer shell it is on, or else
+  // of the first volume it bounds. The volumes and the surfaces bounding none
+  // in outDimTags.
+  bool addTriangulation(const std::vector<double> &coord,
+                        const std::vector<std::size_t> &triangles,
+                        const std::vector<int> &pieces, double angle,
+                        double curveAngle,
+                        std::vector<std::pair<int, int> > &outDimTags);
+  // the triangulations of the surfaces of a mesh file (STL, MSH, OBJ, PLY,
+  // OFF, VTK, MESH), each surface of the file a piece, and their topology
+  // (see addTriangulation)
+  bool importShapes(const std::string &fileName, double angle,
+                    double curveAngle,
+                    std::vector<std::pair<int, int> > &outDimTags);
   // the entities copied into the model, replacing those of the previous call
   void synchronize(GModel *model);
 };

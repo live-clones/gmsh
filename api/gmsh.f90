@@ -275,6 +275,10 @@ module gmsh
         gmshModelDiscreteIntersect
     procedure, nopass :: cut => &
         gmshModelDiscreteCut
+    procedure, nopass :: importShapes => &
+        gmshModelDiscreteImportShapes
+    procedure, nopass :: addTriangulation => &
+        gmshModelDiscreteAddTriangulation
     procedure, nopass :: synchronize => &
         gmshModelDiscreteSynchronize
   end type gmsh_model_discrete_t
@@ -15094,6 +15098,116 @@ module gmsh
       outDimTagsMap, &
       outDimTagsMap_n)
   end subroutine gmshModelDiscreteCut
+
+  !> Import the triangulations of the surfaces of the mesh file `fileName' (STL,
+  !! MSH, OBJ, PLY, OFF, VTK or MESH format) in the discrete CAD representation,
+  !! and build their topology: the surfaces are the triangles of the same
+  !! surface of the file connected across edges shared by two triangles whose
+  !! normals make an angle smaller than `angle' (in radians), the curves are
+  !! along the edges between two surfaces, the boundary edges (of one triangle)
+  !! and the non-manifold edges (of more than two triangles), split where more
+  !! or less than two of them meet and, if `curveAngle' is less than Pi, where
+  !! they turn by more than `curveAngle', and the volumes are the cells of space
+  !! bounded by the surfaces (the cells of a connected piece of the
+  !! triangulation inside a cell of another one are volumes if its triangles
+  !! point out of them, holes if they point into them, as STL normals point out
+  !! of solids). Each surface is oriented outwards of a volume whose outer
+  !! boundary it is on, if any (the included volume for the boundary of an
+  !! inclusion). Return the volumes and the surfaces bounding no volume in
+  !! `outDimTags'.
+  subroutine gmshModelDiscreteImportShapes(fileName, &
+                                           angle, &
+                                           outDimTags, &
+                                           curveAngle, &
+                                           ierr)
+    interface
+    subroutine C_API(fileName, &
+                     angle, &
+                     api_outDimTags_, &
+                     api_outDimTags_n_, &
+                     curveAngle, &
+                     ierr_) &
+      bind(C, name="gmshModelDiscreteImportShapes")
+      use, intrinsic :: iso_c_binding
+      character(len=1, kind=c_char), dimension(*), intent(in) :: fileName
+      real(c_double), value, intent(in) :: angle
+      type(c_ptr), intent(out) :: api_outDimTags_
+      integer(c_size_t), intent(out) :: api_outDimTags_n_
+      real(c_double), value, intent(in) :: curveAngle
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    character(len=*), intent(in) :: fileName
+    real(c_double), intent(in) :: angle
+    integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
+    real(c_double), intent(in), optional :: curveAngle
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_outDimTags_
+    integer(c_size_t) :: api_outDimTags_n_
+    call C_API(fileName=istring_(fileName), &
+         angle=real(angle, c_double), &
+         api_outDimTags_=api_outDimTags_, &
+         api_outDimTags_n_=api_outDimTags_n_, &
+         curveAngle=optval_c_double(M_PI, curveAngle), &
+         ierr_=ierr)
+    outDimTags = ovectorpair_(api_outDimTags_, &
+      api_outDimTags_n_)
+  end subroutine gmshModelDiscreteImportShapes
+
+  !> Add the triangulation given by the coordinates `coord' of its nodes
+  !! (concatenated: [n1x, n1y, n1z, n2x, ...]) and its triangles `triangles'
+  !! (the indices of their 3 nodes, from 0, concatenated) in the discrete CAD
+  !! representation, and build its topology as `importShapes'. Return the
+  !! volumes and the surfaces bounding no volume in `outDimTags'.
+  subroutine gmshModelDiscreteAddTriangulation(coord, &
+                                               triangles, &
+                                               angle, &
+                                               outDimTags, &
+                                               curveAngle, &
+                                               ierr)
+    interface
+    subroutine C_API(api_coord_, &
+                     api_coord_n_, &
+                     api_triangles_, &
+                     api_triangles_n_, &
+                     angle, &
+                     api_outDimTags_, &
+                     api_outDimTags_n_, &
+                     curveAngle, &
+                     ierr_) &
+      bind(C, name="gmshModelDiscreteAddTriangulation")
+      use, intrinsic :: iso_c_binding
+      real(c_double), dimension(*) :: api_coord_
+      integer(c_size_t), value, intent(in) :: api_coord_n_
+      integer(c_size_t), dimension(*) :: api_triangles_
+      integer(c_size_t), value, intent(in) :: api_triangles_n_
+      real(c_double), value, intent(in) :: angle
+      type(c_ptr), intent(out) :: api_outDimTags_
+      integer(c_size_t), intent(out) :: api_outDimTags_n_
+      real(c_double), value, intent(in) :: curveAngle
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    real(c_double), dimension(:), intent(in) :: coord
+    integer(c_size_t), dimension(:), intent(in) :: triangles
+    real(c_double), intent(in) :: angle
+    integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
+    real(c_double), intent(in), optional :: curveAngle
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_outDimTags_
+    integer(c_size_t) :: api_outDimTags_n_
+    call C_API(api_coord_=coord, &
+         api_coord_n_=size_gmsh_double(coord), &
+         api_triangles_=triangles, &
+         api_triangles_n_=size_gmsh_size(triangles), &
+         angle=real(angle, c_double), &
+         api_outDimTags_=api_outDimTags_, &
+         api_outDimTags_n_=api_outDimTags_n_, &
+         curveAngle=optval_c_double(M_PI, curveAngle), &
+         ierr_=ierr)
+    outDimTags = ovectorpair_(api_outDimTags_, &
+      api_outDimTags_n_)
+  end subroutine gmshModelDiscreteAddTriangulation
 
   !> Synchronize the discrete CAD representation with the current Gmsh model:
   !! its points, curves, surfaces and volumes become discrete entities of the

@@ -9272,6 +9272,79 @@ function cut(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTo
 end
 
 """
+    gmsh.model.discrete.importShapes(fileName, angle, curveAngle = pi)
+
+Import the triangulations of the surfaces of the mesh file `fileName` (STL, MSH,
+OBJ, PLY, OFF, VTK or MESH format) in the discrete CAD representation, and build
+their topology: the surfaces are the triangles of the same surface of the file
+connected across edges shared by two triangles whose normals make an angle
+smaller than `angle` (in radians), the curves are along the edges between two
+surfaces, the boundary edges (of one triangle) and the non-manifold edges (of
+more than two triangles), split where more or less than two of them meet and, if
+`curveAngle` is less than Pi, where they turn by more than `curveAngle`, and the
+volumes are the cells of space bounded by the surfaces (the cells of a connected
+piece of the triangulation inside a cell of another one are volumes if its
+triangles point out of them, holes if they point into them, as STL normals point
+out of solids). Each surface is oriented outwards of a volume whose outer
+boundary it is on, if any (the included volume for the boundary of an
+inclusion). Return the volumes and the surfaces bounding no volume in
+`outDimTags`.
+
+Return `outDimTags`.
+
+Types:
+ - `fileName`: string
+ - `angle`: double
+ - `outDimTags`: vector of pairs of integers
+ - `curveAngle`: double
+"""
+function importShapes(fileName, angle, curveAngle = pi)
+    api_outDimTags_ = Ref{Ptr{Cint}}()
+    api_outDimTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelDiscreteImportShapes, gmsh.lib), Cvoid,
+          (Ptr{Cchar}, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cdouble, Ptr{Cint}),
+          fileName, angle, api_outDimTags_, api_outDimTags_n_, curveAngle, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own = true)
+    outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
+    return outDimTags
+end
+const import_shapes = importShapes
+
+"""
+    gmsh.model.discrete.addTriangulation(coord, triangles, angle, curveAngle = pi)
+
+Add the triangulation given by the coordinates `coord` of its nodes
+(concatenated: [n1x, n1y, n1z, n2x, ...]) and its triangles `triangles` (the
+indices of their 3 nodes, from 0, concatenated) in the discrete CAD
+representation, and build its topology as `importShapes`. Return the volumes and
+the surfaces bounding no volume in `outDimTags`.
+
+Return `outDimTags`.
+
+Types:
+ - `coord`: vector of doubles
+ - `triangles`: vector of sizes
+ - `angle`: double
+ - `outDimTags`: vector of pairs of integers
+ - `curveAngle`: double
+"""
+function addTriangulation(coord, triangles, angle, curveAngle = pi)
+    api_outDimTags_ = Ref{Ptr{Cint}}()
+    api_outDimTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelDiscreteAddTriangulation, gmsh.lib), Cvoid,
+          (Ptr{Cdouble}, Csize_t, Ptr{Csize_t}, Csize_t, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cdouble, Ptr{Cint}),
+          convert(Vector{Cdouble}, coord), length(coord), convert(Vector{Csize_t}, triangles), length(triangles), angle, api_outDimTags_, api_outDimTags_n_, curveAngle, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own = true)
+    outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
+    return outDimTags
+end
+const add_triangulation = addTriangulation
+
+"""
     gmsh.model.discrete.synchronize()
 
 Synchronize the discrete CAD representation with the current Gmsh model: its
