@@ -603,14 +603,14 @@ static const SBoundingBox3d &volumeBounds(GRegion *r)
   return v.bb;
 }
 
-// size: that of a point, the marker being twice as large
+// size: that of a point, the marker being three times as large
 static void drawGeomVolume(drawContext *ctx, GRegion *r, double size)
 {
   CTX *c = CTX::instance();
   bool shown = c->geom.volumes || r->getSelection() == GEntity::SelectShow;
   bool label = c->geom.volumeLabels || r->getSelection() == GEntity::SelectShow;
   if(!shown && !label) return;
-  size *= 2.;
+  size *= 3.;
   const SBoundingBox3d &bb = volumeBounds(r);
   double x = bb.center().x(), y = bb.center().y(), z = bb.center().z();
   double d = bb.diag() / 50.;
@@ -618,9 +618,9 @@ static void drawGeomVolume(drawContext *ctx, GRegion *r, double size)
   if(shown) {
     if(c->geom.volumeType == 0) {
       if(glyphList *g = geomGlyphs(ctx))
-        g->addSphere(ctx, size, x, y, z, glyphCurrentColor());
+        g->addSphere(ctx, size, x, y, z, glyphCurrentColor(), true);
       else
-        ctx->drawSphere(size, x, y, z, c->geom.light);
+        ctx->drawSphere(size, x, y, z, c->geom.light, true);
     }
     else {
       // three squares in the planes of the axes
