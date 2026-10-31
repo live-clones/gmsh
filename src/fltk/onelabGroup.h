@@ -64,7 +64,6 @@ public:
   // once the events are handled (see FlGui::_dispatch())
   void deleteRetiredWidgets();
   void rebuildTree(bool deleteWidgets);
-  void redrawTree() { _tree->redraw(); }
   void openTreeItem(const std::string &name);
   void closeTreeItem(const std::string &name);
   bool isTreeItemOpen(const std::string &name);
@@ -90,7 +89,6 @@ public:
   void openCloseViewButton(int num);
   void addSolver(const std::string &name, const std::string &exe,
                  const std::string &hostName, int index);
-  void removeSolver(const std::string &name);
   void checkForErrors(const std::string &client);
   bool stop() { return _stop; }
   void stop(bool val) { _stop = val; }

@@ -334,7 +334,7 @@ int colorbarWindow::handle(int event)
     if(event == FL_RELEASE) p1 = p2 = p3 = p4 = 0;
     return Fl_Widget::handle(event);
   }
-  int i, ibut, xpos, ypos, modify, entry, compute;
+  int i, ibut, xpos, ypos, modify, entry, compute, map;
 
   modify = 0;
   compute = 0;
@@ -352,122 +352,18 @@ int colorbarWindow::handle(int event)
 
   case FL_SHORTCUT:
   case FL_KEYBOARD:
-    if(Fl::test_shortcut('0')) {
-      ColorTable_InitParam(0, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut('1')) {
-      ColorTable_InitParam(1, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut('2')) {
-      ColorTable_InitParam(2, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut('3')) {
-      ColorTable_InitParam(3, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut('4')) {
-      ColorTable_InitParam(4, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut('5')) {
-      ColorTable_InitParam(5, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut('6')) {
-      ColorTable_InitParam(6, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut('7')) {
-      ColorTable_InitParam(7, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut('8')) {
-      ColorTable_InitParam(8, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut('9')) {
-      ColorTable_InitParam(9, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut(FL_CTRL + '0') ||
-            Fl::test_shortcut(FL_META + '0')) {
-      ColorTable_InitParam(10, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut(FL_CTRL + '1') ||
-            Fl::test_shortcut(FL_META + '1')) {
-      ColorTable_InitParam(11, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut(FL_CTRL + '2') ||
-            Fl::test_shortcut(FL_META + '2')) {
-      ColorTable_InitParam(12, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut(FL_CTRL + '3') ||
-            Fl::test_shortcut(FL_META + '3')) {
-      ColorTable_InitParam(13, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut(FL_CTRL + '4') ||
-            Fl::test_shortcut(FL_META + '4')) {
-      ColorTable_InitParam(14, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut(FL_CTRL + '5') ||
-            Fl::test_shortcut(FL_META + '5')) {
-      ColorTable_InitParam(15, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut(FL_CTRL + '6') ||
-            Fl::test_shortcut(FL_META + '6')) {
-      ColorTable_InitParam(16, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut(FL_CTRL + '7') ||
-            Fl::test_shortcut(FL_META + '7')) {
-      ColorTable_InitParam(17, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut(FL_CTRL + '8') ||
-            Fl::test_shortcut(FL_META + '8')) {
-      ColorTable_InitParam(18, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut(FL_CTRL + '9') ||
-            Fl::test_shortcut(FL_META + '9')) {
-      ColorTable_InitParam(19, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut(FL_F + 1)) {
-      ColorTable_InitParam(20, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut(FL_F + 2)) {
-      ColorTable_InitParam(21, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut(FL_F + 3)) {
-      ColorTable_InitParam(22, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut(FL_F + 4)) {
-      ColorTable_InitParam(23, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut(FL_F + 5)) {
-      ColorTable_InitParam(24, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut(FL_F + 6)) {
-      ColorTable_InitParam(25, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut(FL_F + 7)) {
-      ColorTable_InitParam(26, ct);
+    // the colour maps: 0-9, Ctrl or Cmd + 0-9, then F1-F7
+    map = -1;
+    for(int k = 0; k < 10 && map < 0; k++)
+      if(Fl::test_shortcut('0' + k)) map = k;
+    for(int k = 0; k < 10 && map < 0; k++)
+      if(Fl::test_shortcut(FL_CTRL + '0' + k) ||
+         Fl::test_shortcut(FL_META + '0' + k))
+        map = 10 + k;
+    for(int k = 1; k <= 7 && map < 0; k++)
+      if(Fl::test_shortcut(FL_F + k)) map = 19 + k;
+    if(map >= 0) {
+      ColorTable_InitParam(map, ct);
       compute = 1;
     }
     else if(Fl::test_shortcut(FL_CTRL + 'c') ||

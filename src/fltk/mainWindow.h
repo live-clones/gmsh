@@ -74,8 +74,6 @@ public:
     }
     return Fl_Double_Window::handle(event);
   }
-  virtual void resize(int X, int Y, int W, int H)
-  { Fl_Double_Window::resize(X, Y, W, H); }
   virtual void show()
   {
     if(_offset) placeWindow(this, _offset);

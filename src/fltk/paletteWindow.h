@@ -24,7 +24,8 @@ private:
   int _width;
   void (*_resized)(void *);
   void *_resizedData;
-  // the least and greatest sizes, kept here as FLTK 1.3 cannot give them back
+  // the least and greatest sizes, kept here for the const accessors below
+  // (Fl_Window::get_size_range() is not const in FLTK 1.4)
   int _minW, _minH, _maxW, _maxH;
   // a tool window, docked in the main window while it has a dock, unless it
   // was dragged out of the dock: then it stays on the desktop until dragged

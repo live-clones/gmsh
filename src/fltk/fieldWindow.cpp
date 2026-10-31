@@ -497,7 +497,6 @@ void fieldWindow::editField(Field *f)
       break;
     case FIELD_OPTION_BOOL:
       input = new Fl_Check_Button(xx, yy, 2 * BB, BH, it->first.c_str());
-      input->type(FL_TOGGLE_BUTTON);
       break;
     case FIELD_OPTION_PATH: {
       input = new Fl_Input(xx, yy, IW, BH, it->first.c_str());

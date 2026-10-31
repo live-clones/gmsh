@@ -17,6 +17,7 @@
 #include <FL/Fl_Menu_Button.H>
 #include <FL/Fl_Multiline_Output.H>
 #include "inputValue.h"
+#include "graphMenu.h"
 #include "extraDialogs.h"
 #include "Context.h"
 
@@ -176,29 +177,7 @@ private:
   {
     _graph_val = val;
     _graph_val.resize(36, '0');
-    if(update_menu) {
-      int index[36] = {1,  2,  3,  4,  7,  8,  9,  10, 13, 14, 15, 16,
-                       19, 20, 21, 22, 25, 26, 27, 28, 31, 32, 33, 34,
-                       37, 38, 39, 40, 43, 44, 45, 46, 49, 50, 51, 52};
-      for(int i = 0; i < 36; i++) {
-        if(_graph_val[i] != '0')
-          ((Fl_Menu_Item *)_graph_menu->menu())[index[i]].set();
-        else
-          ((Fl_Menu_Item *)_graph_menu->menu())[index[i]].clear();
-      }
-    }
-    bool yellow = false;
-    for(int i = 0; i < 36; i++)
-      if(_graph_val[i] != '0') yellow = true;
-    if(yellow) {
-      _graph_butt->value(1);
-      _graph_butt->selection_color(FL_YELLOW);
-    }
-    else {
-      _graph_butt->value(0);
-      _graph_butt->selection_color(_graph_butt->color());
-    }
-    _graph_butt->redraw();
+    showGraphValue(_graph_val, _graph_butt, _graph_menu, update_menu);
   }
   static void _input_cb(Fl_Widget *w, void *data)
   {
@@ -231,25 +210,14 @@ private:
   static void _graph_menu_cb(Fl_Widget *w, void *data)
   {
     inputRange *b = (inputRange *)data;
-    std::string v;
-    v.resize(36, '0');
-    int index[36] = {1,  2,  3,  4,  7,  8,  9,  10, 13, 14, 15, 16,
-                     19, 20, 21, 22, 25, 26, 27, 28, 31, 32, 33, 34,
-                     37, 38, 39, 40, 43, 44, 45, 46, 49, 50, 51, 52};
-    for(int i = 0; i < 36; i++) {
-      // 1=iso, 2=continuous, 3=discrete, 4=numeric
-      v[i] = b->_graph_menu->menu()[index[i]].value() ? '3' : '0';
-    }
-    b->_set_graph_value(v, false);
+    b->_set_graph_value(graphMenuValue(b->_graph_menu), false);
     b->doCallbackOnValues(false);
     b->do_callback();
   }
   static void _graph_menu_reset_cb(Fl_Widget *w, void *data)
   {
     inputRange *b = (inputRange *)data;
-    std::string v;
-    v.resize(36, '0');
-    b->_set_graph_value(v.c_str());
+    b->_set_graph_value(std::string(36, '0'));
     b->doCallbackOnValues(false);
     b->do_callback();
   }
@@ -293,49 +261,7 @@ public:
     _graph_menu =
       new Fl_Menu_Button(x + input_w + dot_w + loop_w, y, graph_w, h);
     _graph_menu->type(Fl_Menu_Button::POPUP123);
-    _graph_menu->add("Top Left/X ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Top Left/Y ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Top Left/X ' ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Top Left/Y ' ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Top Right/X ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Top Right/Y ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Top Right/X ' ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Top Right/Y ' ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Bottom Left/X ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Bottom Left/Y ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Bottom Left/X ' ", 0, _graph_menu_cb, this,
-                     FL_MENU_TOGGLE);
-    _graph_menu->add("Bottom Left/Y ' ", 0, _graph_menu_cb, this,
-                     FL_MENU_TOGGLE);
-    _graph_menu->add("Bottom Right/X ", 0, _graph_menu_cb, this,
-                     FL_MENU_TOGGLE);
-    _graph_menu->add("Bottom Right/Y ", 0, _graph_menu_cb, this,
-                     FL_MENU_TOGGLE);
-    _graph_menu->add("Bottom Right/X ' ", 0, _graph_menu_cb, this,
-                     FL_MENU_TOGGLE);
-    _graph_menu->add("Bottom Right/Y ' ", 0, _graph_menu_cb, this,
-                     FL_MENU_TOGGLE);
-    _graph_menu->add("Top/X ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Top/Y ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Top/X ' ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Top/Y ' ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Bottom/X ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Bottom/Y ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Bottom/X ' ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Bottom/Y ' ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Left/X ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Left/Y ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Left/X ' ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Left/Y ' ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Right/X ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Right/Y ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Right/X ' ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Right/Y ' ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Full/X ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Full/Y ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Full/X ' ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Full/Y ' ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("None", 0, _graph_menu_reset_cb, this);
+    addGraphMenu(_graph_menu, _graph_menu_cb, _graph_menu_reset_cb, this);
 
     end(); // close the group
     resizable(_input);

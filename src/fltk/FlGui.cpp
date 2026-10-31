@@ -764,6 +764,7 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
     paletteWindow *p = (paletteWindow *)t.first;
     p->dockable(true);
     p->name(t.second);
+    _tools.push_back(p);
   }
   applyFloatingTools();
   // what docked tools skip while hidden, refreshed when shown again
@@ -1552,24 +1553,11 @@ void FlGui::setProgress(const std::string &msg, double val, double min,
   setStatus(msg);
 }
 
-std::vector<Fl_Window *> FlGui::toolWindows()
-{
-  std::vector<Fl_Window *> tools = {
-    options->win,         plugins->win,          fields->win,
-    visibility->win,      clipping->win,         manip->win,
-    stats->win,           highordertools->win,   elementaryContext->win,
-    physicalContext->win, transformContext->win, meshContext->win,
-    onelabContext->win,   classify->window};
-  if(partition->win) tools.push_back(partition->win);
-  return tools;
-}
-
 void FlGui::applyFloatingTools()
 {
   std::string names = "," + CTX::instance()->floatingTools + ",";
   names.erase(std::remove(names.begin(), names.end(), ' '), names.end());
-  for(auto w : toolWindows()) {
-    paletteWindow *p = (paletteWindow *)w;
+  for(paletteWindow *p : toolWindows()) {
     bool floating = names.find("," + p->name() + ",") != std::string::npos;
     if(floating != p->floating()) setToolFloating(p, floating);
   }
@@ -1602,8 +1590,7 @@ void FlGui::toggleCurrentTool()
 void FlGui::storeFloatingTools()
 {
   std::string names;
-  for(auto w : toolWindows()) {
-    paletteWindow *p = (paletteWindow *)w;
+  for(paletteWindow *p : toolWindows()) {
     if(!p->floating()) continue;
     names += (names.empty() ? "" : ",") + p->name();
   }
@@ -1614,10 +1601,8 @@ void FlGui::dockTools(bool dock)
 {
   std::string names;
   if(!dock)
-    for(auto w : toolWindows()) {
-      paletteWindow *p = (paletteWindow *)w;
+    for(paletteWindow *p : toolWindows())
       names += (names.empty() ? "" : ",") + p->name();
-    }
   opt_general_floating_tools(0, GMSH_SET | GMSH_GUI, names);
 }
 
@@ -1682,7 +1667,7 @@ void window_cb(Fl_Widget *w, void *data)
     FlGui *g = FlGui::instance();
     for(std::size_t i = 0; i < g->graph.size(); i++)
       iconize(g->graph[i]->getWindow());
-    for(Fl_Window *w : g->toolWindows()) iconize(w);
+    for(paletteWindow *p : g->toolWindows()) iconize(p);
   }
   else if(str == "zoom") {
     // the window manager's maximization: it fills the work area title bar
@@ -1757,8 +1742,8 @@ void window_cb(Fl_Widget *w, void *data)
     FlGui *g = FlGui::instance();
     for(std::size_t i = 0; i < g->graph.size(); i++)
       g->graph[i]->getWindow()->show();
-    for(Fl_Window *w : g->toolWindows())
-      if(w->shown() && !w->parent()) w->show();
+    for(paletteWindow *p : g->toolWindows())
+      if(p->shown() && !p->parent()) p->show();
   }
 }
 

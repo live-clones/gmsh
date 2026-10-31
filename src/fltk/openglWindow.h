@@ -91,11 +91,8 @@ public:
     _studioAsked = false;
     Fl_Gl_Window::redraw();
   }
-  time_t rawtime, prev_rawtime;
-  double response_frequency;
   openglWindow(int x, int y, int w, int h);
   ~openglWindow();
-  void show();
   // draw into a picture of the given size (pixels) instead of the window,
   // at supersampling times the scale of the window; false if it cannot be
   // done
@@ -115,7 +112,6 @@ public:
   void setAgain(bool again) { _again = again; }
   // which also brings the per-window visibility list up to date
   static void setLastHandled(openglWindow *w);
-  double frequency;
   void moveWithGamepad();
   Navigator *Nautilus;
 };

@@ -7,6 +7,7 @@
 //   Stephen Guzik
 //   Sebastian Eiser
 
+#include <functional>
 #include <limits>
 #include <sstream>
 #include <errno.h>
@@ -217,6 +218,53 @@ void fileChooserStoreOffset(int offset[2])
   }
 }
 
+// the modal window of an export dialog
+static Fl_Double_Window *dialogWindow(int w, int h, const char *title = nullptr)
+{
+  Fl_Double_Window *window = new Fl_Double_Window(w, h, title);
+  window->box(GMSH_WINDOW_BOX);
+  window->set_modal();
+  return window;
+}
+
+// its OK and Cancel buttons, bw wide under y, which end the window
+static void okCancelButtons(Fl_Window *window, int y, int bw, Fl_Button *&ok,
+                            Fl_Button *&cancel)
+{
+  ok = new Fl_Return_Button(WB, y + WB, bw, BH, "OK");
+  cancel = new Fl_Button(2 * WB + bw, y + WB, bw, BH, "Cancel");
+  window->end();
+  window->hotspot(window);
+}
+
+// shows the dialog until OK, which calls apply() and returns 1, or Cancel or
+// the close button, which return 0; other(o) is told first of every widget
+// whose callback ran
+static int runDialog(Fl_Window *window, Fl_Widget *ok, Fl_Widget *cancel,
+                     const std::function<void()> &apply,
+                     const std::function<void(Fl_Widget *)> &other = nullptr)
+{
+  window->show();
+  while(window->shown()) {
+    Fl::wait();
+    for(;;) {
+      Fl_Widget *o = Fl::readqueue();
+      if(!o) break;
+      if(other) other(o);
+      if(o == ok) {
+        apply();
+        window->hide();
+        return 1;
+      }
+      if(o == window || o == cancel) {
+        window->hide();
+        return 0;
+      }
+    }
+  }
+  return 0;
+}
+
 // Generic save bitmap dialog
 
 int genericBitmapFileDialog(const char *name, const char *title, int format)
@@ -233,29 +281,23 @@ int genericBitmapFileDialog(const char *name, const char *title, int format)
   if(!dialog) {
     dialog = new _genericBitmapFileDialog;
     int h = 3 * WB + 9 * BH, w = 2 * BB + 3 * WB, y = WB;
-    dialog->window = new Fl_Double_Window(w, h);
-    dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->window->set_modal();
+    dialog->window = dialogWindow(w, h);
     dialog->b[0] =
       new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Print text strings");
     dialog->b[0]->tooltip("Print.Text");
     y += BH;
-    dialog->b[0]->type(FL_TOGGLE_BUTTON);
     dialog->b[1] =
       new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Print background");
     dialog->b[1]->tooltip("Print.Background");
     y += BH;
-    dialog->b[1]->type(FL_TOGGLE_BUTTON);
     dialog->b[2] =
       new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Composite all window tiles");
     dialog->b[2]->tooltip("Print.CompositeWindows");
     y += BH;
-    dialog->b[2]->type(FL_TOGGLE_BUTTON);
     dialog->b[3] =
       new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Scale sizes with the picture");
     dialog->b[3]->tooltip("Print.ScalePixelSizes");
     y += BH;
-    dialog->b[3]->type(FL_TOGGLE_BUTTON);
     dialog->v[0] = new Fl_Value_Input(WB, y, BB / 2, BH);
     dialog->v[0]->tooltip("Print.Width");
     dialog->v[0]->minimum(-1);
@@ -292,10 +334,7 @@ int genericBitmapFileDialog(const char *name, const char *title, int format)
     dialog->s[1]->minimum(0);
     dialog->s[1]->maximum(100);
     if(CTX::instance()->inputScrolling) dialog->s[1]->step(1);
-    dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
-    dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
-    dialog->window->end();
-    dialog->window->hotspot(dialog->window);
+    okCancelButtons(dialog->window, y, BB, dialog->ok, dialog->cancel);
   }
 
   if(format == FORMAT_JPEG) {
@@ -317,40 +356,21 @@ int genericBitmapFileDialog(const char *name, const char *title, int format)
   dialog->v[0]->value(opt_print_width(0, GMSH_GET, 0));
   dialog->v[1]->value(opt_print_height(0, GMSH_GET, 0));
   dialog->v[2]->value(opt_print_supersampling(0, GMSH_GET, 0));
-  dialog->window->show();
-
-  while(dialog->window->shown()) {
-    Fl::wait();
-    for(;;) {
-      Fl_Widget *o = Fl::readqueue();
-      if(!o) break;
-      if(o == dialog->ok) {
-        opt_print_jpeg_quality(0, GMSH_SET | GMSH_GUI,
-                               (int)dialog->s[0]->value());
-        opt_print_jpeg_smoothing(0, GMSH_SET | GMSH_GUI,
-                                 (int)dialog->s[1]->value());
-        opt_print_text(0, GMSH_SET | GMSH_GUI, (int)dialog->b[0]->value());
-        opt_print_background(0, GMSH_SET | GMSH_GUI,
-                             (int)dialog->b[1]->value());
-        opt_print_composite_windows(0, GMSH_SET | GMSH_GUI,
-                                    (int)dialog->b[2]->value());
-        opt_print_scale_pixel_sizes(0, GMSH_SET | GMSH_GUI,
-                                    (int)dialog->b[3]->value());
-        opt_print_width(0, GMSH_SET | GMSH_GUI, (int)dialog->v[0]->value());
-        opt_print_height(0, GMSH_SET | GMSH_GUI, (int)dialog->v[1]->value());
-        opt_print_supersampling(0, GMSH_SET | GMSH_GUI,
-                                (int)dialog->v[2]->value());
-        CreateOutputFile(name, format);
-        dialog->window->hide();
-        return 1;
-      }
-      if(o == dialog->window || o == dialog->cancel) {
-        dialog->window->hide();
-        return 0;
-      }
-    }
-  }
-  return 0;
+  return runDialog(dialog->window, dialog->ok, dialog->cancel, [&]() {
+    opt_print_jpeg_quality(0, GMSH_SET | GMSH_GUI, (int)dialog->s[0]->value());
+    opt_print_jpeg_smoothing(0, GMSH_SET | GMSH_GUI,
+                             (int)dialog->s[1]->value());
+    opt_print_text(0, GMSH_SET | GMSH_GUI, (int)dialog->b[0]->value());
+    opt_print_background(0, GMSH_SET | GMSH_GUI, (int)dialog->b[1]->value());
+    opt_print_composite_windows(0, GMSH_SET | GMSH_GUI,
+                                (int)dialog->b[2]->value());
+    opt_print_scale_pixel_sizes(0, GMSH_SET | GMSH_GUI,
+                                (int)dialog->b[3]->value());
+    opt_print_width(0, GMSH_SET | GMSH_GUI, (int)dialog->v[0]->value());
+    opt_print_height(0, GMSH_SET | GMSH_GUI, (int)dialog->v[1]->value());
+    opt_print_supersampling(0, GMSH_SET | GMSH_GUI, (int)dialog->v[2]->value());
+    CreateOutputFile(name, format);
+  });
 }
 
 // pgf dialog
@@ -369,23 +389,18 @@ int pgfBitmapFileDialog(const char *name, const char *title, int format)
   if(!dialog) {
     dialog = new _pgfBitmapFileDialog;
     int h = 3 * WB + 5 * BH, w = 2 * BB + 3 * WB, y = WB;
-    dialog->window = new Fl_Double_Window(w, h);
-    dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->window->set_modal();
+    dialog->window = dialogWindow(w, h);
     dialog->b[0] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Flat graphics");
     dialog->b[0]->tooltip("Print.PgfTwoDim");
     y += BH;
-    dialog->b[0]->type(FL_TOGGLE_BUTTON);
     dialog->b[1] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH,
                                        "Export axis (for entire fig)");
     dialog->b[1]->tooltip("Print.PgfExportAxis");
     y += BH;
-    dialog->b[1]->type(FL_TOGGLE_BUTTON);
     dialog->b[2] =
       new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Horizontal colorbar");
     dialog->b[2]->tooltip("Print.PgfHorizontalBar");
     y += BH;
-    dialog->b[2]->type(FL_TOGGLE_BUTTON);
     dialog->v[0] = new Fl_Value_Input(WB, y, BB / 2, BH);
     dialog->v[0]->tooltip("Print.Width");
     dialog->v[0]->minimum(-1);
@@ -399,10 +414,7 @@ int pgfBitmapFileDialog(const char *name, const char *title, int format)
     dialog->v[1]->maximum(5000);
     if(CTX::instance()->inputScrolling) dialog->v[1]->step(1);
     dialog->v[1]->align(FL_ALIGN_RIGHT);
-    dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
-    dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
-    dialog->window->end();
-    dialog->window->hotspot(dialog->window);
+    okCancelButtons(dialog->window, y, BB, dialog->ok, dialog->cancel);
   }
 
   dialog->window->label(title);
@@ -411,38 +423,20 @@ int pgfBitmapFileDialog(const char *name, const char *title, int format)
   dialog->b[2]->value(opt_print_pgf_horiz_bar(0, GMSH_GET, 0));
   dialog->v[0]->value(opt_print_width(0, GMSH_GET, 0));
   dialog->v[1]->value(opt_print_height(0, GMSH_GET, 0));
-  dialog->window->show();
-
-  while(dialog->window->shown()) {
-    Fl::wait();
-    for(;;) {
-      Fl_Widget *o = Fl::readqueue();
-      if(!o) break;
-      if(o == dialog->ok) {
-        opt_print_text(0, GMSH_SET | GMSH_GUI, 0); // never print any text
-        opt_print_background(0, GMSH_SET | GMSH_GUI,
-                             0); // never print background
-        opt_print_pgf_two_dim(0, GMSH_SET | GMSH_GUI,
-                              (int)dialog->b[0]->value());
-        opt_print_pgf_export_axis(0, GMSH_SET | GMSH_GUI,
-                                  (int)dialog->b[1]->value());
-        opt_print_pgf_horiz_bar(0, GMSH_SET | GMSH_GUI,
-                                (int)dialog->b[2]->value());
-        opt_print_composite_windows(0, GMSH_SET | GMSH_GUI,
-                                    0); // never do compositing print
-        opt_print_width(0, GMSH_SET | GMSH_GUI, (int)dialog->v[0]->value());
-        opt_print_height(0, GMSH_SET | GMSH_GUI, (int)dialog->v[1]->value());
-        CreateOutputFile(name, format);
-        dialog->window->hide();
-        return 1;
-      }
-      if(o == dialog->window || o == dialog->cancel) {
-        dialog->window->hide();
-        return 0;
-      }
-    }
-  }
-  return 0;
+  return runDialog(dialog->window, dialog->ok, dialog->cancel, [&]() {
+    opt_print_text(0, GMSH_SET | GMSH_GUI, 0); // never print any text
+    opt_print_background(0, GMSH_SET | GMSH_GUI,
+                         0); // never print background
+    opt_print_pgf_two_dim(0, GMSH_SET | GMSH_GUI, (int)dialog->b[0]->value());
+    opt_print_pgf_export_axis(0, GMSH_SET | GMSH_GUI,
+                              (int)dialog->b[1]->value());
+    opt_print_pgf_horiz_bar(0, GMSH_SET | GMSH_GUI, (int)dialog->b[2]->value());
+    opt_print_composite_windows(0, GMSH_SET | GMSH_GUI,
+                                0); // never do compositing print
+    opt_print_width(0, GMSH_SET | GMSH_GUI, (int)dialog->v[0]->value());
+    opt_print_height(0, GMSH_SET | GMSH_GUI, (int)dialog->v[1]->value());
+    CreateOutputFile(name, format);
+  });
 }
 
 // TeX dialog
@@ -460,18 +454,14 @@ int latexFileDialog(const char *name)
   if(!dialog) {
     dialog = new _latexFileDialog;
     int h = 3 * WB + 4 * BH, w = 2 * BB + 3 * WB, y = WB;
-    dialog->window = new Fl_Double_Window(w, h, "LaTeX Options");
-    dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->window->set_modal();
+    dialog->window = dialogWindow(w, h, "LaTeX Options");
     dialog->b[0] =
       new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Print strings as equations");
     dialog->b[0]->tooltip("Print.TexAsEquation");
-    dialog->b[0]->type(FL_TOGGLE_BUTTON);
     y += BH;
     dialog->b[1] =
       new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Force font size");
     dialog->b[1]->tooltip("Print.TexForceFontSize");
-    dialog->b[1]->type(FL_TOGGLE_BUTTON);
     y += BH;
     dialog->v = new Fl_Value_Input(WB, y, BB / 2, BH, "Graphics width in mm");
     dialog->v->tooltip("Print.TexWidthInMm (Set value to 0 to use the natural "
@@ -481,39 +471,20 @@ int latexFileDialog(const char *name)
     if(CTX::instance()->inputScrolling) dialog->v->step(1);
     dialog->v->align(FL_ALIGN_RIGHT);
     y += BH;
-    dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
-    dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
-    dialog->window->end();
-    dialog->window->hotspot(dialog->window);
+    okCancelButtons(dialog->window, y, BB, dialog->ok, dialog->cancel);
   }
 
   dialog->b[0]->value(opt_print_tex_as_equation(0, GMSH_GET, 0));
   dialog->b[1]->value(opt_print_tex_force_fontsize(0, GMSH_GET, 0));
   dialog->v->value(opt_print_tex_width_in_mm(0, GMSH_GET, 0));
-  dialog->window->show();
-
-  while(dialog->window->shown()) {
-    Fl::wait();
-    for(;;) {
-      Fl_Widget *o = Fl::readqueue();
-      if(!o) break;
-      if(o == dialog->ok) {
-        opt_print_tex_as_equation(0, GMSH_SET | GMSH_GUI,
-                                  (int)dialog->b[0]->value());
-        opt_print_tex_force_fontsize(0, GMSH_SET | GMSH_GUI,
-                                     (int)dialog->b[1]->value());
-        opt_print_tex_width_in_mm(0, GMSH_SET | GMSH_GUI, dialog->v->value());
-        CreateOutputFile(name, FORMAT_TEX);
-        dialog->window->hide();
-        return 1;
-      }
-      if(o == dialog->window || o == dialog->cancel) {
-        dialog->window->hide();
-        return 0;
-      }
-    }
-  }
-  return 0;
+  return runDialog(dialog->window, dialog->ok, dialog->cancel, [&]() {
+    opt_print_tex_as_equation(0, GMSH_SET | GMSH_GUI,
+                              (int)dialog->b[0]->value());
+    opt_print_tex_force_fontsize(0, GMSH_SET | GMSH_GUI,
+                                 (int)dialog->b[1]->value());
+    opt_print_tex_width_in_mm(0, GMSH_SET | GMSH_GUI, dialog->v->value());
+    CreateOutputFile(name, FORMAT_TEX);
+  });
 }
 
 // Save mpeg dialog
@@ -603,18 +574,15 @@ int mpegFileDialog(const char *name, int format)
     dialog->c[0] = new Fl_Check_Button(WB, y, ww, BH, "Print background");
     dialog->c[0]->tooltip("Print.Background");
     y += BH;
-    dialog->c[0]->type(FL_TOGGLE_BUTTON);
 
     dialog->c[1] =
       new Fl_Check_Button(WB, y, ww, BH, "Composite all window tiles");
     dialog->c[1]->tooltip("Print.CompositeWindows");
     y += BH;
-    dialog->c[1]->type(FL_TOGGLE_BUTTON);
 
     dialog->c[2] = new Fl_Check_Button(WB, y, ww, BH, "Delete temporary files");
     dialog->c[2]->tooltip("Print.DeleteTemporaryFiles");
     y += BH;
-    dialog->c[2]->type(FL_TOGGLE_BUTTON);
 
     dialog->buttons = new Fl_Group(WB, y + WB, ww, BH);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
@@ -647,56 +615,38 @@ int mpegFileDialog(const char *name, int format)
   dialog->v[3]->value(opt_print_parameter_last(0, GMSH_GET, 0));
   dialog->v[4]->value(opt_print_parameter_steps(0, GMSH_GET, 0));
 
-  dialog->window->show();
+  auto save = [&](bool preview) {
+    opt_post_anim_cycle(0, GMSH_SET | GMSH_GUI,
+                        dialog->b[2]->value() ? 2 :
+                        dialog->b[1]->value() ? 1 :
+                                                0);
+    opt_post_anim_delay(0, GMSH_SET | GMSH_GUI, dialog->v[0]->value());
+    opt_post_anim_step(0, GMSH_SET | GMSH_GUI, (int)dialog->v[1]->value());
 
-  while(dialog->window->shown()) {
-    Fl::wait();
-    for(;;) {
-      Fl_Widget *o = Fl::readqueue();
-      if(!o) break;
+    opt_print_parameter_command(0, GMSH_SET | GMSH_GUI, dialog->p->value());
+    opt_print_parameter_first(0, GMSH_SET | GMSH_GUI, dialog->v[2]->value());
+    opt_print_parameter_last(0, GMSH_SET | GMSH_GUI, dialog->v[3]->value());
+    opt_print_parameter_steps(0, GMSH_SET | GMSH_GUI, dialog->v[4]->value());
+    opt_print_background(0, GMSH_SET | GMSH_GUI, (int)dialog->c[0]->value());
+    opt_print_composite_windows(0, GMSH_SET | GMSH_GUI,
+                                (int)dialog->c[1]->value());
+    opt_print_delete_tmp_files(0, GMSH_SET | GMSH_GUI,
+                               (int)dialog->c[2]->value());
+    dialog->buttons->deactivate();
+    CreateOutputFile(name, preview ? FORMAT_MPEG_PREVIEW : format, !preview);
+    dialog->buttons->activate();
+  };
+  return runDialog(
+    dialog->window, dialog->ok, dialog->cancel, [&]() { save(false); },
+    [&](Fl_Widget *o) {
       if(o == dialog->b[0] || o == dialog->b[1] || o == dialog->b[2]) {
         if(dialog->b[2]->value())
           dialog->param->activate();
         else
           dialog->param->deactivate();
       }
-      if(o == dialog->ok || o == dialog->preview) {
-        opt_post_anim_cycle(0, GMSH_SET | GMSH_GUI,
-                            dialog->b[2]->value() ? 2 :
-                            dialog->b[1]->value() ? 1 :
-                                                    0);
-        opt_post_anim_delay(0, GMSH_SET | GMSH_GUI, dialog->v[0]->value());
-        opt_post_anim_step(0, GMSH_SET | GMSH_GUI, (int)dialog->v[1]->value());
-
-        opt_print_parameter_command(0, GMSH_SET | GMSH_GUI, dialog->p->value());
-        opt_print_parameter_first(0, GMSH_SET | GMSH_GUI,
-                                  dialog->v[2]->value());
-        opt_print_parameter_last(0, GMSH_SET | GMSH_GUI, dialog->v[3]->value());
-        opt_print_parameter_steps(0, GMSH_SET | GMSH_GUI,
-                                  dialog->v[4]->value());
-        opt_print_background(0, GMSH_SET | GMSH_GUI,
-                             (int)dialog->c[0]->value());
-        opt_print_composite_windows(0, GMSH_SET | GMSH_GUI,
-                                    (int)dialog->c[1]->value());
-        opt_print_delete_tmp_files(0, GMSH_SET | GMSH_GUI,
-                                   (int)dialog->c[2]->value());
-        dialog->buttons->deactivate();
-        CreateOutputFile(name,
-                         (o == dialog->preview) ? FORMAT_MPEG_PREVIEW : format,
-                         o == dialog->ok);
-        dialog->buttons->activate();
-        if(o == dialog->ok) {
-          dialog->window->hide();
-          return 1;
-        }
-      }
-      if(o == dialog->window || o == dialog->cancel) {
-        dialog->window->hide();
-        return 0;
-      }
-    }
-  }
-  return 0;
+      if(o == dialog->preview) save(true);
+    });
 }
 
 // Save gif dialog
@@ -713,9 +663,7 @@ int gifFileDialog(const char *name)
   if(!dialog) {
     dialog = new _gifFileDialog;
     int h = 3 * WB + 8 * BH, w = 2 * BB + 3 * WB, y = WB;
-    dialog->window = new Fl_Double_Window(w, h, "GIF Options");
-    dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->window->set_modal();
+    dialog->window = dialogWindow(w, h, "GIF Options");
     dialog->b[0] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Dither");
     dialog->b[0]->tooltip("Print.GifDither");
     y += BH;
@@ -741,11 +689,7 @@ int gifFileDialog(const char *name)
       new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Composite all window tiles");
     dialog->b[6]->tooltip("Print.CompositeWindows");
     y += BH;
-    for(int i = 0; i < 7; i++) { dialog->b[i]->type(FL_TOGGLE_BUTTON); }
-    dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
-    dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
-    dialog->window->end();
-    dialog->window->hotspot(dialog->window);
+    okCancelButtons(dialog->window, y, BB, dialog->ok, dialog->cancel);
   }
 
   dialog->b[0]->value(opt_print_gif_dither(0, GMSH_GET, 0));
@@ -755,34 +699,16 @@ int gifFileDialog(const char *name)
   dialog->b[4]->value(opt_print_text(0, GMSH_GET, 0));
   dialog->b[5]->value(opt_print_background(0, GMSH_GET, 0));
   dialog->b[6]->value(opt_print_composite_windows(0, GMSH_GET, 0));
-  dialog->window->show();
-
-  while(dialog->window->shown()) {
-    Fl::wait();
-    for(;;) {
-      Fl_Widget *o = Fl::readqueue();
-      if(!o) break;
-      if(o == dialog->ok) {
-        opt_print_gif_dither(0, GMSH_SET | GMSH_GUI, dialog->b[0]->value());
-        opt_print_gif_interlace(0, GMSH_SET | GMSH_GUI, dialog->b[1]->value());
-        opt_print_gif_sort(0, GMSH_SET | GMSH_GUI, dialog->b[2]->value());
-        opt_print_gif_transparent(0, GMSH_SET | GMSH_GUI,
-                                  dialog->b[3]->value());
-        opt_print_text(0, GMSH_SET | GMSH_GUI, dialog->b[4]->value());
-        opt_print_background(0, GMSH_SET | GMSH_GUI, dialog->b[5]->value());
-        opt_print_composite_windows(0, GMSH_SET | GMSH_GUI,
-                                    dialog->b[6]->value());
-        CreateOutputFile(name, FORMAT_GIF);
-        dialog->window->hide();
-        return 1;
-      }
-      if(o == dialog->window || o == dialog->cancel) {
-        dialog->window->hide();
-        return 0;
-      }
-    }
-  }
-  return 0;
+  return runDialog(dialog->window, dialog->ok, dialog->cancel, [&]() {
+    opt_print_gif_dither(0, GMSH_SET | GMSH_GUI, dialog->b[0]->value());
+    opt_print_gif_interlace(0, GMSH_SET | GMSH_GUI, dialog->b[1]->value());
+    opt_print_gif_sort(0, GMSH_SET | GMSH_GUI, dialog->b[2]->value());
+    opt_print_gif_transparent(0, GMSH_SET | GMSH_GUI, dialog->b[3]->value());
+    opt_print_text(0, GMSH_SET | GMSH_GUI, dialog->b[4]->value());
+    opt_print_background(0, GMSH_SET | GMSH_GUI, dialog->b[5]->value());
+    opt_print_composite_windows(0, GMSH_SET | GMSH_GUI, dialog->b[6]->value());
+    CreateOutputFile(name, FORMAT_GIF);
+  });
 }
 
 // Save ps/eps/pdf dialog
@@ -841,9 +767,7 @@ int gl2psFileDialog(const char *name, const char *title, int format)
   if(!dialog) {
     dialog = new _gl2psFileDialog;
     int h = 3 * WB + 8 * BH, w = 2 * BB + 3 * WB, y = WB;
-    dialog->window = new Fl_Double_Window(w, h);
-    dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->window->set_modal();
+    dialog->window = dialogWindow(w, h);
     dialog->c = new Fl_Choice(WB, y, BB + WB + BB / 2, BH, "Type");
     dialog->c->tooltip("Print.EpsQuality");
     y += BH;
@@ -872,11 +796,7 @@ int gl2psFileDialog(const char *name, const char *title, int format)
       new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Print background");
     dialog->b[5]->tooltip("Print.Background");
     y += BH;
-    for(int i = 0; i < 6; i++) { dialog->b[i]->type(FL_TOGGLE_BUTTON); }
-    dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
-    dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
-    dialog->window->end();
-    dialog->window->hotspot(dialog->window);
+    okCancelButtons(dialog->window, y, BB, dialog->ok, dialog->cancel);
   }
 
   dialog->window->label(title);
@@ -891,37 +811,23 @@ int gl2psFileDialog(const char *name, const char *title, int format)
   activate_gl2ps_choices(format, opt_print_eps_quality(0, GMSH_GET, 0),
                          dialog->b);
 
-  dialog->window->show();
-
-  while(dialog->window->shown()) {
-    Fl::wait();
-    for(;;) {
-      Fl_Widget *o = Fl::readqueue();
-      if(!o) break;
-
-      if(o == dialog->c) {
+  return runDialog(
+    dialog->window, dialog->ok, dialog->cancel,
+    [&]() {
+      opt_print_eps_quality(0, GMSH_SET | GMSH_GUI, dialog->c->value());
+      opt_print_eps_compress(0, GMSH_SET | GMSH_GUI, dialog->b[0]->value());
+      opt_print_eps_occlusion_culling(0, GMSH_SET | GMSH_GUI,
+                                      dialog->b[1]->value());
+      opt_print_eps_best_root(0, GMSH_SET | GMSH_GUI, dialog->b[2]->value());
+      opt_print_eps_ps3shading(0, GMSH_SET | GMSH_GUI, dialog->b[3]->value());
+      opt_print_text(0, GMSH_SET | GMSH_GUI, dialog->b[4]->value());
+      opt_print_background(0, GMSH_SET | GMSH_GUI, dialog->b[5]->value());
+      CreateOutputFile(name, format);
+    },
+    [&](Fl_Widget *o) {
+      if(o == dialog->c)
         activate_gl2ps_choices(format, dialog->c->value(), dialog->b);
-      }
-      if(o == dialog->ok) {
-        opt_print_eps_quality(0, GMSH_SET | GMSH_GUI, dialog->c->value());
-        opt_print_eps_compress(0, GMSH_SET | GMSH_GUI, dialog->b[0]->value());
-        opt_print_eps_occlusion_culling(0, GMSH_SET | GMSH_GUI,
-                                        dialog->b[1]->value());
-        opt_print_eps_best_root(0, GMSH_SET | GMSH_GUI, dialog->b[2]->value());
-        opt_print_eps_ps3shading(0, GMSH_SET | GMSH_GUI, dialog->b[3]->value());
-        opt_print_text(0, GMSH_SET | GMSH_GUI, dialog->b[4]->value());
-        opt_print_background(0, GMSH_SET | GMSH_GUI, dialog->b[5]->value());
-        CreateOutputFile(name, format);
-        dialog->window->hide();
-        return 1;
-      }
-      if(o == dialog->window || o == dialog->cancel) {
-        dialog->window->hide();
-        return 0;
-      }
-    }
-  }
-  return 0;
+    });
 }
 
 // Save options dialog
@@ -938,47 +844,24 @@ int optionsFileDialog(const char *name)
   if(!dialog) {
     dialog = new _optionsFileDialog;
     int h = 3 * WB + 3 * BH, w = 2 * BB + 3 * WB, y = WB;
-    dialog->window = new Fl_Double_Window(w, h, "Options");
-    dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->window->set_modal();
+    dialog->window = dialogWindow(w, h, "Options");
     dialog->b[0] =
       new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Save only modified options");
     y += BH;
     dialog->b[0]->value(1);
-    dialog->b[0]->type(FL_TOGGLE_BUTTON);
     dialog->b[1] =
       new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Print help strings");
     y += BH;
     dialog->b[1]->value(0);
-    dialog->b[1]->type(FL_TOGGLE_BUTTON);
-    dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
-    dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
-    dialog->window->end();
-    dialog->window->hotspot(dialog->window);
+    okCancelButtons(dialog->window, y, BB, dialog->ok, dialog->cancel);
   }
 
-  dialog->window->show();
-
-  while(dialog->window->shown()) {
-    Fl::wait();
-    for(;;) {
-      Fl_Widget *o = Fl::readqueue();
-      if(!o) break;
-      if(o == dialog->ok) {
-        Msg::StatusBar(true, "Writing '%s'...", name);
-        PrintOptions(0, GMSH_FULLRC, dialog->b[0]->value(),
-                     dialog->b[1]->value(), name);
-        Msg::StatusBar(true, "Done writing '%s'", name);
-        dialog->window->hide();
-        return 1;
-      }
-      if(o == dialog->window || o == dialog->cancel) {
-        dialog->window->hide();
-        return 0;
-      }
-    }
-  }
-  return 0;
+  return runDialog(dialog->window, dialog->ok, dialog->cancel, [&]() {
+    Msg::StatusBar(true, "Writing '%s'...", name);
+    PrintOptions(0, GMSH_FULLRC, dialog->b[0]->value(), dialog->b[1]->value(),
+                 name);
+    Msg::StatusBar(true, "Done writing '%s'", name);
+  });
 }
 
 // geo dialog
@@ -995,50 +878,26 @@ int geoFileDialog(const char *name)
   if(!dialog) {
     dialog = new _geoFileDialog;
     int h = 3 * WB + 3 * BH, w = 2 * BB + 3 * WB, y = WB;
-    dialog->window = new Fl_Double_Window(w, h, "GEO Options");
-    dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->window->set_modal();
+    dialog->window = dialogWindow(w, h, "GEO Options");
     dialog->b[0] =
       new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Save physical group labels");
     dialog->b[0]->tooltip("Print.GeoLabels");
     y += BH;
-    dialog->b[0]->type(FL_TOGGLE_BUTTON);
     dialog->b[1] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH,
                                        "Only save physical entities");
     dialog->b[1]->tooltip("Print.GeoOnlyPhysicals");
     y += BH;
-    dialog->b[1]->type(FL_TOGGLE_BUTTON);
-    dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
-    dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
-    dialog->window->end();
-    dialog->window->hotspot(dialog->window);
+    okCancelButtons(dialog->window, y, BB, dialog->ok, dialog->cancel);
   }
 
   dialog->b[0]->value(opt_print_geo_labels(0, GMSH_GET, 0));
   dialog->b[1]->value(opt_print_geo_only_physicals(0, GMSH_GET, 0));
-  dialog->window->show();
-
-  while(dialog->window->shown()) {
-    Fl::wait();
-    for(;;) {
-      Fl_Widget *o = Fl::readqueue();
-      if(!o) break;
-      if(o == dialog->ok) {
-        opt_print_geo_labels(0, GMSH_SET | GMSH_GUI,
-                             dialog->b[0]->value() ? 1 : 0);
-        opt_print_geo_only_physicals(0, GMSH_SET | GMSH_GUI,
-                                     dialog->b[1]->value() ? 1 : 0);
-        CreateOutputFile(name, FORMAT_GEO);
-        dialog->window->hide();
-        return 1;
-      }
-      if(o == dialog->window || o == dialog->cancel) {
-        dialog->window->hide();
-        return 0;
-      }
-    }
-  }
-  return 0;
+  return runDialog(dialog->window, dialog->ok, dialog->cancel, [&]() {
+    opt_print_geo_labels(0, GMSH_SET | GMSH_GUI, dialog->b[0]->value() ? 1 : 0);
+    opt_print_geo_only_physicals(0, GMSH_SET | GMSH_GUI,
+                                 dialog->b[1]->value() ? 1 : 0);
+    CreateOutputFile(name, FORMAT_GEO);
+  });
 }
 
 int meshStatFileDialog(const char *name)
@@ -1055,9 +914,7 @@ int meshStatFileDialog(const char *name)
   if(!dialog) {
     dialog = new _meshStatFileDialog;
     int h = 3 * WB + 9 * BH, w = 2 * BBB + 3 * WB, y = WB;
-    dialog->window = new Fl_Double_Window(w, h, "POS Options");
-    dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->window->set_modal();
+    dialog->window = dialogWindow(w, h, "POS Options");
     dialog->b[0] =
       new Fl_Check_Button(WB, y, 2 * BBB + WB, BH, "Save all elements");
     dialog->b[0]->tooltip("Mesh.SaveAll");
@@ -1090,11 +947,7 @@ int meshStatFileDialog(const char *name)
                                        "Print Disto quality measure");
     dialog->b[7]->tooltip("Print.PostDisto");
     y += BH;
-    for(int i = 0; i < 6; i++) dialog->b[i]->type(FL_TOGGLE_BUTTON);
-    dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
-    dialog->cancel = new Fl_Button(2 * WB + BBB, y + WB, BBB, BH, "Cancel");
-    dialog->window->end();
-    dialog->window->hotspot(dialog->window);
+    okCancelButtons(dialog->window, y, BBB, dialog->ok, dialog->cancel);
   }
 
   dialog->b[0]->value(opt_mesh_save_all(0, GMSH_GET, 0));
@@ -1105,41 +958,19 @@ int meshStatFileDialog(const char *name)
   dialog->b[5]->value(opt_print_pos_gamma(0, GMSH_GET, 0));
   dialog->b[6]->value(opt_print_pos_eta(0, GMSH_GET, 0));
   dialog->b[7]->value(opt_print_pos_disto(0, GMSH_GET, 0));
-  dialog->window->show();
-
-  while(dialog->window->shown()) {
-    Fl::wait();
-    for(;;) {
-      Fl_Widget *o = Fl::readqueue();
-      if(!o) break;
-      if(o == dialog->ok) {
-        opt_mesh_save_all(0, GMSH_SET | GMSH_GUI,
-                          dialog->b[0]->value() ? 1 : 0);
-        opt_print_pos_elementary(0, GMSH_SET | GMSH_GUI,
-                                 dialog->b[1]->value() ? 1 : 0);
-        opt_print_pos_element(0, GMSH_SET | GMSH_GUI,
-                              dialog->b[2]->value() ? 1 : 0);
-        opt_print_pos_SICN(0, GMSH_SET | GMSH_GUI,
-                           dialog->b[3]->value() ? 1 : 0);
-        opt_print_pos_SIGE(0, GMSH_SET | GMSH_GUI,
-                           dialog->b[4]->value() ? 1 : 0);
-        opt_print_pos_gamma(0, GMSH_SET | GMSH_GUI,
-                            dialog->b[5]->value() ? 1 : 0);
-        opt_print_pos_eta(0, GMSH_SET | GMSH_GUI,
-                          dialog->b[6]->value() ? 1 : 0);
-        opt_print_pos_disto(0, GMSH_SET | GMSH_GUI,
-                            dialog->b[7]->value() ? 1 : 0);
-        CreateOutputFile(name, FORMAT_POS);
-        dialog->window->hide();
-        return 1;
-      }
-      if(o == dialog->window || o == dialog->cancel) {
-        dialog->window->hide();
-        return 0;
-      }
-    }
-  }
-  return 0;
+  return runDialog(dialog->window, dialog->ok, dialog->cancel, [&]() {
+    opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b[0]->value() ? 1 : 0);
+    opt_print_pos_elementary(0, GMSH_SET | GMSH_GUI,
+                             dialog->b[1]->value() ? 1 : 0);
+    opt_print_pos_element(0, GMSH_SET | GMSH_GUI,
+                          dialog->b[2]->value() ? 1 : 0);
+    opt_print_pos_SICN(0, GMSH_SET | GMSH_GUI, dialog->b[3]->value() ? 1 : 0);
+    opt_print_pos_SIGE(0, GMSH_SET | GMSH_GUI, dialog->b[4]->value() ? 1 : 0);
+    opt_print_pos_gamma(0, GMSH_SET | GMSH_GUI, dialog->b[5]->value() ? 1 : 0);
+    opt_print_pos_eta(0, GMSH_SET | GMSH_GUI, dialog->b[6]->value() ? 1 : 0);
+    opt_print_pos_disto(0, GMSH_SET | GMSH_GUI, dialog->b[7]->value() ? 1 : 0);
+    CreateOutputFile(name, FORMAT_POS);
+  });
 }
 
 // the choice of the views to save with the mesh (Mesh.SaveViews): with views
@@ -1183,9 +1014,7 @@ int mshFileDialog(const char *name)
   if(!dialog) {
     dialog = new _mshFileDialog;
     int h = 3 * WB + 8 * BH, w = 2 * BBB + 3 * WB, y = WB;
-    dialog->window = new Fl_Double_Window(w, h, "MSH Options");
-    dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->window->set_modal();
+    dialog->window = dialogWindow(w, h, "MSH Options");
     dialog->c = new Fl_Choice(WB, y, BBB + BBB / 2, BH, "Format");
     dialog->c->tooltip("Mesh.MshFileVersion, Mesh.Binary");
     y += BH;
@@ -1201,32 +1030,24 @@ int mshFileDialog(const char *name)
       new Fl_Check_Button(WB, y, 2 * BBB + WB, BH, "Save all elements");
     dialog->b[0]->tooltip("Mesh.SaveAll");
     y += BH;
-    dialog->b[0]->type(FL_TOGGLE_BUTTON);
     dialog->b[1] = new Fl_Check_Button(WB, y, 2 * BBB + WB, BH,
                                        "Save parametric coordinates");
     dialog->b[1]->tooltip("Mesh.SaveParametric");
     y += BH;
-    dialog->b[1]->type(FL_TOGGLE_BUTTON);
     dialog->b[2] = new Fl_Check_Button(WB, y, 2 * BBB + WB, BH,
                                        "Save one file per partition");
     dialog->b[2]->tooltip("Mesh.PartitionSplitMeshFiles");
     y += BH;
-    dialog->b[2]->type(FL_TOGGLE_BUTTON);
     dialog->b[3] = new Fl_Check_Button(WB, y, 2 * BBB + WB, BH,
                                        "Save partition topology file");
     dialog->b[3]->tooltip("Mesh.PartitionTopologyFile");
     y += BH;
-    dialog->b[3]->type(FL_TOGGLE_BUTTON);
     dialog->b[4] = new Fl_Check_Button(WB, y, 2 * BBB + WB, BH,
                                        "Save high order views refined");
     dialog->b[4]->tooltip("PostProcessing.SaveAdapted");
     y += BH;
-    dialog->b[4]->type(FL_TOGGLE_BUTTON);
 
-    dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
-    dialog->cancel = new Fl_Button(2 * WB + BBB, y + WB, BBB, BH, "Cancel");
-    dialog->window->end();
-    dialog->window->hotspot(dialog->window);
+    okCancelButtons(dialog->window, y, BBB, dialog->ok, dialog->cancel);
   }
 
   if(opt_mesh_msh_file_version(0, GMSH_GET, 0) == 1.0)
@@ -1238,14 +1059,6 @@ int mshFileDialog(const char *name)
   else
     dialog->c->value(!opt_mesh_binary(0, GMSH_GET, 0) ? 5 : 6);
   dialog->views->value(_viewsToSave());
-  if(PView::list.empty() || dialog->c->value() == 0) {
-    dialog->views->deactivate();
-    dialog->b[4]->deactivate();
-  }
-  else {
-    dialog->views->activate();
-    dialog->b[4]->activate();
-  }
   dialog->b[0]->value(opt_mesh_save_all(0, GMSH_GET, 0) ? 1 : 0);
   dialog->b[1]->value(opt_mesh_save_parametric(0, GMSH_GET, 0) ? 1 : 0);
   dialog->b[4]->value(opt_post_save_adapted(0, GMSH_GET, 0) ? 1 : 0);
@@ -1255,46 +1068,28 @@ int mshFileDialog(const char *name)
     opt_mesh_partition_save_topology_file(0, GMSH_GET, 0) ? 1 : 0);
   // what the format and the model allow, each time the dialog is shown
   format_cb(nullptr, dialog);
-  dialog->window->show();
-
-  while(dialog->window->shown()) {
-    Fl::wait();
-    for(;;) {
-      Fl_Widget *o = Fl::readqueue();
-      if(!o) break;
-      if(o == dialog->ok) {
-        opt_mesh_msh_file_version(0, GMSH_SET | GMSH_GUI,
-                                  (dialog->c->value() == 0) ? 1.0 :
-                                  (dialog->c->value() <= 2) ? 2.2 :
-                                  (dialog->c->value() <= 4) ? 4.1 :
-                                                              4.2);
-        opt_mesh_binary(0, GMSH_SET | GMSH_GUI,
-                        (dialog->c->value() && !(dialog->c->value() % 2)) ? 1 :
-                                                                            0);
-        if(dialog->views->active()) {
-          opt_mesh_save_views(0, GMSH_SET | GMSH_GUI, dialog->views->value());
-          opt_post_save_adapted(0, GMSH_SET | GMSH_GUI,
-                                dialog->b[4]->value() ? 1 : 0);
-        }
-        opt_mesh_save_all(0, GMSH_SET | GMSH_GUI,
-                          dialog->b[0]->value() ? 1 : 0);
-        opt_mesh_save_parametric(0, GMSH_SET | GMSH_GUI,
-                                 dialog->b[1]->value() ? 1 : 0);
-        opt_mesh_partition_split_mesh_files(0, GMSH_SET | GMSH_GUI,
-                                            dialog->b[2]->value() ? 1 : 0);
-        opt_mesh_partition_save_topology_file(0, GMSH_SET | GMSH_GUI,
-                                              dialog->b[3]->value() ? 1 : 0);
-        CreateOutputFile(name, FORMAT_MSH);
-        dialog->window->hide();
-        return 1;
-      }
-      if(o == dialog->window || o == dialog->cancel) {
-        dialog->window->hide();
-        return 0;
-      }
+  return runDialog(dialog->window, dialog->ok, dialog->cancel, [&]() {
+    opt_mesh_msh_file_version(0, GMSH_SET | GMSH_GUI,
+                              (dialog->c->value() == 0) ? 1.0 :
+                              (dialog->c->value() <= 2) ? 2.2 :
+                              (dialog->c->value() <= 4) ? 4.1 :
+                                                          4.2);
+    opt_mesh_binary(0, GMSH_SET | GMSH_GUI,
+                    (dialog->c->value() && !(dialog->c->value() % 2)) ? 1 : 0);
+    if(dialog->views->active()) {
+      opt_mesh_save_views(0, GMSH_SET | GMSH_GUI, dialog->views->value());
+      opt_post_save_adapted(0, GMSH_SET | GMSH_GUI,
+                            dialog->b[4]->value() ? 1 : 0);
     }
-  }
-  return 0;
+    opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b[0]->value() ? 1 : 0);
+    opt_mesh_save_parametric(0, GMSH_SET | GMSH_GUI,
+                             dialog->b[1]->value() ? 1 : 0);
+    opt_mesh_partition_split_mesh_files(0, GMSH_SET | GMSH_GUI,
+                                        dialog->b[2]->value() ? 1 : 0);
+    opt_mesh_partition_save_topology_file(0, GMSH_SET | GMSH_GUI,
+                                          dialog->b[3]->value() ? 1 : 0);
+    CreateOutputFile(name, FORMAT_MSH);
+  });
 }
 
 void format_cb(Fl_Widget *widget, void *data)
@@ -1337,65 +1132,41 @@ int unvinpFileDialog(const char *name, const char *title, int format)
   if(!dialog) {
     dialog = new _unvFileDialog;
     int h = 3 * WB + 3 * BH, w = 2 * BBB + 3 * WB, y = WB;
-    dialog->window = new Fl_Double_Window(w, h, title);
-    dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->window->set_modal();
+    dialog->window = dialogWindow(w, h, title);
     dialog->b[0] =
       new Fl_Check_Button(WB, y, 2 * BBB + WB, BH, "Save all elements");
     dialog->b[0]->tooltip("Mesh.SaveAll");
     y += BH;
-    dialog->b[0]->type(FL_TOGGLE_BUTTON);
     dialog->b[1] =
       new Fl_Check_Button(WB, y, 2 * BBB + WB, BH, "Save groups of nodes");
     dialog->b[1]->tooltip("Mesh.SaveGroupsOfNodes");
     y += BH;
-    dialog->b[1]->type(FL_TOGGLE_BUTTON);
-    dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
-    dialog->cancel = new Fl_Button(2 * WB + BBB, y + WB, BBB, BH, "Cancel");
-    dialog->window->end();
-    dialog->window->hotspot(dialog->window);
+    okCancelButtons(dialog->window, y, BBB, dialog->ok, dialog->cancel);
   }
 
   dialog->b[0]->value(opt_mesh_save_all(0, GMSH_GET, 0) ? 1 : 0);
   dialog->b[1]->value(opt_mesh_save_groups_of_nodes(0, GMSH_GET, 0) ? 1 : 0);
   // shared by the UNV and the INP exports
   dialog->window->label(title);
-  dialog->window->show();
-
-  while(dialog->window->shown()) {
-    Fl::wait();
-    for(;;) {
-      Fl_Widget *o = Fl::readqueue();
-      if(!o) break;
-      if(o == dialog->ok) {
-        opt_mesh_save_all(0, GMSH_SET | GMSH_GUI,
-                          dialog->b[0]->value() ? 1 : 0);
-        opt_mesh_save_groups_of_nodes(0, GMSH_SET | GMSH_GUI,
-                                      dialog->b[1]->value() ? 1 : 0);
-        CreateOutputFile(name, format);
-        dialog->window->hide();
-        return 1;
-      }
-      if(o == dialog->window || o == dialog->cancel) {
-        dialog->window->hide();
-        return 0;
-      }
-    }
-  }
-  return 0;
+  return runDialog(dialog->window, dialog->ok, dialog->cancel, [&]() {
+    opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b[0]->value() ? 1 : 0);
+    opt_mesh_save_groups_of_nodes(0, GMSH_SET | GMSH_GUI,
+                                  dialog->b[1]->value() ? 1 : 0);
+    CreateOutputFile(name, format);
+  });
 }
 
-// key mesh dialog
+// LSDYNA KEY and RADIOSS mesh dialog
 
-int keyFileDialog(const char *name, const char *title, int format)
+int keyRadFileDialog(const char *name, const char *title, int format)
 {
-  struct _keyFileDialog {
+  struct _keyRadFileDialog {
     Fl_Window *window;
     Fl_Choice *c[3];
     Fl_Check_Button *b[2];
     Fl_Button *ok, *cancel;
   };
-  static _keyFileDialog *dialog = nullptr;
+  static _keyRadFileDialog *dialog = nullptr;
 
   static Fl_Menu_Item beammenu[] = {{"Physical groups", 0, nullptr, nullptr},
                                     {"Save all", 0, nullptr, nullptr},
@@ -1415,11 +1186,9 @@ int keyFileDialog(const char *name, const char *title, int format)
   int BBB = BB + 16; // labels too long
 
   if(!dialog) {
-    dialog = new _keyFileDialog;
+    dialog = new _keyRadFileDialog;
     int h = 3 * WB + 6 * BH, w = 2 * BBB + 3 * WB, y = WB;
-    dialog->window = new Fl_Double_Window(w, h, title);
-    dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->window->set_modal();
+    dialog->window = dialogWindow(w, h, title);
     dialog->c[0] = new Fl_Choice(WB, y, BBB + BBB / 4, BH, "Line");
     y += BH;
     dialog->c[0]->menu(beammenu);
@@ -1436,18 +1205,14 @@ int keyFileDialog(const char *name, const char *title, int format)
       new Fl_Check_Button(WB, y, 2 * BBB + WB, BH, "Save groups of elements");
     dialog->b[0]->tooltip("Mesh.SaveGroupsOfNodes");
     y += BH;
-    dialog->b[0]->type(FL_TOGGLE_BUTTON);
     dialog->b[1] =
       new Fl_Check_Button(WB, y, 2 * BBB + WB, BH, "Save groups of nodes");
     dialog->b[1]->tooltip("Mesh.SaveGroupsOfNodes");
     y += BH;
-    dialog->b[1]->type(FL_TOGGLE_BUTTON);
-    dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
-    dialog->cancel = new Fl_Button(2 * WB + BBB, y + WB, BBB, BH, "Cancel");
-    dialog->window->end();
-    dialog->window->hotspot(dialog->window);
+    okCancelButtons(dialog->window, y, BBB, dialog->ok, dialog->cancel);
   }
 
+  dialog->window->label(title);
   dialog->c[0]->value(((int)opt_mesh_save_all(0, GMSH_GET, 0) & 4) ? 1 :
                       ((int)opt_mesh_save_all(0, GMSH_GET, 0) & 8) ? 2 :
                                                                      0);
@@ -1461,136 +1226,15 @@ int keyFileDialog(const char *name, const char *title, int format)
     (int)opt_mesh_save_groups_of_nodes(0, GMSH_GET, 0) & 2 ? 1 : 0);
   dialog->b[1]->value(
     (int)opt_mesh_save_groups_of_nodes(0, GMSH_GET, 0) & 1 ? 1 : 0);
-  dialog->window->show();
-
-  while(dialog->window->shown()) {
-    Fl::wait();
-    for(;;) {
-      Fl_Widget *o = Fl::readqueue();
-      if(!o) break;
-      if(o == dialog->ok) {
-        opt_mesh_save_all(0, GMSH_SET | GMSH_GUI,
-                          dialog->c[0]->value() * 4 +
-                            dialog->c[1]->value() * 16 +
-                            dialog->c[2]->value() * 64);
-        opt_mesh_save_groups_of_nodes(0, GMSH_SET | GMSH_GUI,
-                                      (dialog->b[0]->value() ? 2 : 0) +
-                                        (dialog->b[1]->value() ? 1 : 0));
-        CreateOutputFile(name, format);
-        dialog->window->hide();
-        return 1;
-      }
-      if(o == dialog->window || o == dialog->cancel) {
-        dialog->window->hide();
-        return 0;
-      }
-    }
-  }
-  return 0;
-}
-
-// rad mesh dialog
-
-int radFileDialog(const char *name, const char *title, int format)
-{
-  struct _radFileDialog {
-    Fl_Window *window;
-    Fl_Choice *c[3];
-    Fl_Check_Button *b[2];
-    Fl_Button *ok, *cancel;
-  };
-  static _radFileDialog *dialog = nullptr;
-
-  static Fl_Menu_Item beammenu[] = {{"Physical groups", 0, nullptr, nullptr},
-                                    {"Save all", 0, nullptr, nullptr},
-                                    {"Ignore", 0, nullptr, nullptr},
-                                    {nullptr}};
-
-  static Fl_Menu_Item shellmenu[] = {{"Physical groups", 0, nullptr, nullptr},
-                                     {"Save all", 0, nullptr, nullptr},
-                                     {"Ignore", 0, nullptr, nullptr},
-                                     {nullptr}};
-
-  static Fl_Menu_Item solidmenu[] = {{"Physical groups", 0, nullptr, nullptr},
-                                     {"Save all", 0, nullptr, nullptr},
-                                     {"Ignore", 0, nullptr, nullptr},
-                                     {nullptr}};
-
-  int BBB = BB + 16; // labels too long
-
-  if(!dialog) {
-    dialog = new _radFileDialog;
-    int h = 3 * WB + 6 * BH, w = 2 * BBB + 3 * WB, y = WB;
-    dialog->window = new Fl_Double_Window(w, h, title);
-    dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->window->set_modal();
-    dialog->c[0] = new Fl_Choice(WB, y, BBB + BBB / 4, BH, "Line");
-    y += BH;
-    dialog->c[0]->menu(beammenu);
-    dialog->c[0]->align(FL_ALIGN_RIGHT);
-    dialog->c[1] = new Fl_Choice(WB, y, BBB + BBB / 4, BH, "Surface");
-    y += BH;
-    dialog->c[1]->menu(shellmenu);
-    dialog->c[1]->align(FL_ALIGN_RIGHT);
-    dialog->c[2] = new Fl_Choice(WB, y, BBB + BBB / 4, BH, "Volume");
-    y += BH;
-    dialog->c[2]->menu(solidmenu);
-    dialog->c[2]->align(FL_ALIGN_RIGHT);
-    dialog->b[0] =
-      new Fl_Check_Button(WB, y, 2 * BBB + WB, BH, "Save groups of elements");
-    dialog->b[0]->tooltip("Mesh.SaveGroupsOfNodes");
-    y += BH;
-    dialog->b[0]->type(FL_TOGGLE_BUTTON);
-    dialog->b[1] =
-      new Fl_Check_Button(WB, y, 2 * BBB + WB, BH, "Save groups of nodes");
-    dialog->b[1]->tooltip("Mesh.SaveGroupsOfNodes");
-    y += BH;
-    dialog->b[1]->type(FL_TOGGLE_BUTTON);
-    dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
-    dialog->cancel = new Fl_Button(2 * WB + BBB, y + WB, BBB, BH, "Cancel");
-    dialog->window->end();
-    dialog->window->hotspot(dialog->window);
-  }
-
-  dialog->c[0]->value(((int)opt_mesh_save_all(0, GMSH_GET, 0) & 4) ? 1 :
-                      ((int)opt_mesh_save_all(0, GMSH_GET, 0) & 8) ? 2 :
-                                                                     0);
-  dialog->c[1]->value(((int)opt_mesh_save_all(0, GMSH_GET, 0) & 16) ? 1 :
-                      ((int)opt_mesh_save_all(0, GMSH_GET, 0) & 32) ? 2 :
-                                                                      0);
-  dialog->c[2]->value(((int)opt_mesh_save_all(0, GMSH_GET, 0) & 64)  ? 1 :
-                      ((int)opt_mesh_save_all(0, GMSH_GET, 0) & 128) ? 2 :
-                                                                       0);
-  dialog->b[0]->value(
-    (int)opt_mesh_save_groups_of_nodes(0, GMSH_GET, 0) & 2 ? 1 : 0);
-  dialog->b[1]->value(
-    (int)opt_mesh_save_groups_of_nodes(0, GMSH_GET, 0) & 1 ? 1 : 0);
-  dialog->window->show();
-
-  while(dialog->window->shown()) {
-    Fl::wait();
-    for(;;) {
-      Fl_Widget *o = Fl::readqueue();
-      if(!o) break;
-      if(o == dialog->ok) {
-        opt_mesh_save_all(0, GMSH_SET | GMSH_GUI,
-                          dialog->c[0]->value() * 4 +
-                            dialog->c[1]->value() * 16 +
-                            dialog->c[2]->value() * 64);
-        opt_mesh_save_groups_of_nodes(0, GMSH_SET | GMSH_GUI,
-                                      (dialog->b[0]->value() ? 2 : 0) +
-                                        (dialog->b[1]->value() ? 1 : 0));
-        CreateOutputFile(name, format);
-        dialog->window->hide();
-        return 1;
-      }
-      if(o == dialog->window || o == dialog->cancel) {
-        dialog->window->hide();
-        return 0;
-      }
-    }
-  }
-  return 0;
+  return runDialog(dialog->window, dialog->ok, dialog->cancel, [&]() {
+    opt_mesh_save_all(0, GMSH_SET | GMSH_GUI,
+                      dialog->c[0]->value() * 4 + dialog->c[1]->value() * 16 +
+                        dialog->c[2]->value() * 64);
+    opt_mesh_save_groups_of_nodes(0, GMSH_SET | GMSH_GUI,
+                                  (dialog->b[0]->value() ? 2 : 0) +
+                                    (dialog->b[1]->value() ? 1 : 0));
+    CreateOutputFile(name, format);
+  });
 }
 
 // Save bdf dialog
@@ -1620,9 +1264,7 @@ int bdfFileDialog(const char *name)
   if(!dialog) {
     dialog = new _bdfFileDialog;
     int h = 3 * WB + 4 * BH, w = 2 * BBB + 3 * WB, y = WB;
-    dialog->window = new Fl_Double_Window(w, h, "BDF Options");
-    dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->window->set_modal();
+    dialog->window = dialogWindow(w, h, "BDF Options");
     dialog->c = new Fl_Choice(WB, y, BBB + BBB / 4, BH, "Format");
     dialog->c->tooltip("Mesh.BdfFieldFormat");
     y += BH;
@@ -1637,11 +1279,7 @@ int bdfFileDialog(const char *name)
       new Fl_Check_Button(WB, y, 2 * BBB + WB, BH, "Save all elements");
     dialog->b->tooltip("Mesh.SaveAll");
     y += BH;
-    dialog->b->type(FL_TOGGLE_BUTTON);
-    dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
-    dialog->cancel = new Fl_Button(2 * WB + BBB, y + WB, BBB, BH, "Cancel");
-    dialog->window->end();
-    dialog->window->hotspot(dialog->window);
+    okCancelButtons(dialog->window, y, BBB, dialog->ok, dialog->cancel);
   }
 
   dialog->c->value(opt_mesh_bdf_field_format(0, GMSH_GET, 0));
@@ -1649,29 +1287,13 @@ int bdfFileDialog(const char *name)
                    (opt_mesh_save_element_tag_type(0, GMSH_GET, 0) == 2) ? 1 :
                                                                            0);
   dialog->b->value(opt_mesh_save_all(0, GMSH_GET, 0) ? 1 : 0);
-  dialog->window->show();
-
-  while(dialog->window->shown()) {
-    Fl::wait();
-    for(;;) {
-      Fl_Widget *o = Fl::readqueue();
-      if(!o) break;
-      if(o == dialog->ok) {
-        opt_mesh_bdf_field_format(0, GMSH_SET | GMSH_GUI, dialog->c->value());
-        opt_mesh_save_element_tag_type(0, GMSH_SET | GMSH_GUI,
-                                       dialog->d->value() + 1);
-        opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
-        CreateOutputFile(name, FORMAT_BDF);
-        dialog->window->hide();
-        return 1;
-      }
-      if(o == dialog->window || o == dialog->cancel) {
-        dialog->window->hide();
-        return 0;
-      }
-    }
-  }
-  return 0;
+  return runDialog(dialog->window, dialog->ok, dialog->cancel, [&]() {
+    opt_mesh_bdf_field_format(0, GMSH_SET | GMSH_GUI, dialog->c->value());
+    opt_mesh_save_element_tag_type(0, GMSH_SET | GMSH_GUI,
+                                   dialog->d->value() + 1);
+    opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
+    CreateOutputFile(name, FORMAT_BDF);
+  });
 }
 
 // Generic mesh dialog
@@ -1699,9 +1321,7 @@ int stlFileDialog(const char *name)
   if(!dialog) {
     dialog = new _stlFileDialog;
     int h = 3 * WB + 4 * BH, w = 2 * BBB + 3 * WB, y = WB;
-    dialog->window = new Fl_Double_Window(w, h, "STL Options");
-    dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->window->set_modal();
+    dialog->window = dialogWindow(w, h, "STL Options");
     dialog->c[0] = new Fl_Choice(WB, y, BBB + BBB / 4, BH, "Format");
     dialog->c[0]->tooltip("Mesh.Binary");
     y += BH;
@@ -1711,16 +1331,12 @@ int stlFileDialog(const char *name)
       new Fl_Check_Button(WB, y, 2 * BBB + WB, BH, "Save all elements");
     dialog->b->tooltip("Mesh.SaveAll");
     y += BH;
-    dialog->b->type(FL_TOGGLE_BUTTON);
     dialog->c[1] = new Fl_Choice(WB, y, BBB + BBB / 4, BH, "Solid");
     dialog->c[1]->tooltip("Mesh.StlOneSolidPerSurface");
     y += BH;
     dialog->c[1]->menu(solidmenu);
     dialog->c[1]->align(FL_ALIGN_RIGHT);
-    dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
-    dialog->cancel = new Fl_Button(2 * WB + BBB, y + WB, BBB, BH, "Cancel");
-    dialog->window->end();
-    dialog->window->hotspot(dialog->window);
+    okCancelButtons(dialog->window, y, BBB, dialog->ok, dialog->cancel);
   }
 
   dialog->c[0]->value(opt_mesh_binary(0, GMSH_GET, 0) ? 1 : 0);
@@ -1735,35 +1351,22 @@ int stlFileDialog(const char *name)
   else
     dialog->b->activate();
 
-  dialog->window->show();
-
-  while(dialog->window->shown()) {
-    Fl::wait();
-    for(;;) {
-      Fl_Widget *o = Fl::readqueue();
-      if(!o) break;
-      if(o == dialog->c[1]) {
-        if(dialog->c[1]->value() == 2)
-          dialog->b->deactivate();
-        else
-          dialog->b->activate();
-      }
-      if(o == dialog->ok) {
-        opt_mesh_binary(0, GMSH_SET | GMSH_GUI, dialog->c[0]->value());
-        opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
-        opt_mesh_stl_one_solid_per_surface(0, GMSH_SET | GMSH_GUI,
-                                           dialog->c[1]->value());
-        CreateOutputFile(name, FORMAT_STL);
-        dialog->window->hide();
-        return 1;
-      }
-      if(o == dialog->window || o == dialog->cancel) {
-        dialog->window->hide();
-        return 0;
-      }
-    }
-  }
-  return 0;
+  return runDialog(
+    dialog->window, dialog->ok, dialog->cancel,
+    [&]() {
+      opt_mesh_binary(0, GMSH_SET | GMSH_GUI, dialog->c[0]->value());
+      opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
+      opt_mesh_stl_one_solid_per_surface(0, GMSH_SET | GMSH_GUI,
+                                         dialog->c[1]->value());
+      CreateOutputFile(name, FORMAT_STL);
+    },
+    [&](Fl_Widget *o) {
+      if(o != dialog->c[1]) return;
+      if(dialog->c[1]->value() == 2)
+        dialog->b->deactivate();
+      else
+        dialog->b->activate();
+    });
 }
 
 // Generic mesh dialog
@@ -1792,9 +1395,7 @@ int genericMeshFileDialog(const char *name, const char *title, int format,
   if(!dialog) {
     dialog = new _genericMeshFileDialog;
     int h = 3 * WB + 4 * BH, w = 2 * BBB + 3 * WB, y = WB;
-    dialog->window = new Fl_Double_Window(w, h);
-    dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->window->set_modal();
+    dialog->window = dialogWindow(w, h);
     dialog->c = new Fl_Choice(WB, y, BBB + BBB / 4, BH, "Format");
     dialog->c->tooltip("Mesh.Binary");
     y += BH;
@@ -1809,11 +1410,7 @@ int genericMeshFileDialog(const char *name, const char *title, int format,
       new Fl_Check_Button(WB, y, 2 * BBB + WB, BH, "Save all elements");
     dialog->b->tooltip("Mesh.SaveAll");
     y += BH;
-    dialog->b->type(FL_TOGGLE_BUTTON);
-    dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
-    dialog->cancel = new Fl_Button(2 * WB + BBB, y + WB, BBB, BH, "Cancel");
-    dialog->window->end();
-    dialog->window->hotspot(dialog->window);
+    okCancelButtons(dialog->window, y, BBB, dialog->ok, dialog->cancel);
   }
 
   dialog->window->label(title);
@@ -1830,29 +1427,13 @@ int genericMeshFileDialog(const char *name, const char *title, int format,
   else
     dialog->d->deactivate();
   dialog->b->value(opt_mesh_save_all(0, GMSH_GET, 0) ? 1 : 0);
-  dialog->window->show();
-
-  while(dialog->window->shown()) {
-    Fl::wait();
-    for(;;) {
-      Fl_Widget *o = Fl::readqueue();
-      if(!o) break;
-      if(o == dialog->ok) {
-        opt_mesh_binary(0, GMSH_SET | GMSH_GUI, dialog->c->value());
-        opt_mesh_save_element_tag_type(0, GMSH_SET | GMSH_GUI,
-                                       dialog->d->value() + 1);
-        opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
-        CreateOutputFile(name, format);
-        dialog->window->hide();
-        return 1;
-      }
-      if(o == dialog->window || o == dialog->cancel) {
-        dialog->window->hide();
-        return 0;
-      }
-    }
-  }
-  return 0;
+  return runDialog(dialog->window, dialog->ok, dialog->cancel, [&]() {
+    opt_mesh_binary(0, GMSH_SET | GMSH_GUI, dialog->c->value());
+    opt_mesh_save_element_tag_type(0, GMSH_SET | GMSH_GUI,
+                                   dialog->d->value() + 1);
+    opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
+    CreateOutputFile(name, format);
+  });
 }
 
 int medFileDialog(const char *name)
@@ -1875,9 +1456,7 @@ int medFileDialog(const char *name)
   if(!dialog) {
     dialog = new _medFileDialog;
     int h = 3 * WB + 3 * BH, w = 2 * BBB + 3 * WB, y = WB;
-    dialog->window = new Fl_Double_Window(w, h, "MED Options");
-    dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->window->set_modal();
+    dialog->window = dialogWindow(w, h, "MED Options");
     dialog->views = new Fl_Choice(WB, y, BBB + BBB / 4, BH, "Views");
     dialog->views->tooltip("Mesh.SaveViews");
     y += BH;
@@ -1887,11 +1466,7 @@ int medFileDialog(const char *name)
       new Fl_Check_Button(WB, y, 2 * BBB + WB, BH, "Save all elements");
     dialog->b->tooltip("Mesh.SaveAll");
     y += BH;
-    dialog->b->type(FL_TOGGLE_BUTTON);
-    dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
-    dialog->cancel = new Fl_Button(2 * WB + BBB, y + WB, BBB, BH, "Cancel");
-    dialog->window->end();
-    dialog->window->hotspot(dialog->window);
+    okCancelButtons(dialog->window, y, BBB, dialog->ok, dialog->cancel);
   }
 
   dialog->views->value(_viewsToSave());
@@ -1900,28 +1475,12 @@ int medFileDialog(const char *name)
   else
     dialog->views->activate();
   dialog->b->value(opt_mesh_save_all(0, GMSH_GET, 0) ? 1 : 0);
-  dialog->window->show();
-
-  while(dialog->window->shown()) {
-    Fl::wait();
-    for(;;) {
-      Fl_Widget *o = Fl::readqueue();
-      if(!o) break;
-      if(o == dialog->ok) {
-        if(dialog->views->active())
-          opt_mesh_save_views(0, GMSH_SET | GMSH_GUI, dialog->views->value());
-        opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
-        CreateOutputFile(name, FORMAT_MED);
-        dialog->window->hide();
-        return 1;
-      }
-      if(o == dialog->window || o == dialog->cancel) {
-        dialog->window->hide();
-        return 0;
-      }
-    }
-  }
-  return 0;
+  return runDialog(dialog->window, dialog->ok, dialog->cancel, [&]() {
+    if(dialog->views->active())
+      opt_mesh_save_views(0, GMSH_SET | GMSH_GUI, dialog->views->value());
+    opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
+    CreateOutputFile(name, FORMAT_MED);
+  });
 }
 
 int vtuFileDialog(const char *name)
@@ -1946,9 +1505,7 @@ int vtuFileDialog(const char *name)
   if(!dialog) {
     dialog = new _vtuFileDialog;
     int h = 3 * WB + 5 * BH, w = 2 * BBB + 3 * WB, y = WB;
-    dialog->window = new Fl_Double_Window(w, h, "VTU Options");
-    dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->window->set_modal();
+    dialog->window = dialogWindow(w, h, "VTU Options");
     dialog->c = new Fl_Choice(WB, y, BBB + BBB / 4, BH, "Format");
     dialog->c->tooltip("Mesh.Binary");
     y += BH;
@@ -1963,16 +1520,11 @@ int vtuFileDialog(const char *name)
       new Fl_Check_Button(WB, y, 2 * BBB + WB, BH, "Save all elements");
     dialog->b->tooltip("Mesh.SaveAll");
     y += BH;
-    dialog->b->type(FL_TOGGLE_BUTTON);
     dialog->adapted = new Fl_Check_Button(WB, y, 2 * BBB + WB, BH,
                                           "Save high order views refined");
     dialog->adapted->tooltip("PostProcessing.SaveAdapted");
     y += BH;
-    dialog->adapted->type(FL_TOGGLE_BUTTON);
-    dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
-    dialog->cancel = new Fl_Button(2 * WB + BBB, y + WB, BBB, BH, "Cancel");
-    dialog->window->end();
-    dialog->window->hotspot(dialog->window);
+    okCancelButtons(dialog->window, y, BBB, dialog->ok, dialog->cancel);
   }
 
   dialog->c->value(opt_mesh_binary(0, GMSH_GET, 0) ? 1 : 0);
@@ -1987,32 +1539,16 @@ int vtuFileDialog(const char *name)
   }
   dialog->b->value(opt_mesh_save_all(0, GMSH_GET, 0) ? 1 : 0);
   dialog->adapted->value(opt_post_save_adapted(0, GMSH_GET, 0) ? 1 : 0);
-  dialog->window->show();
-
-  while(dialog->window->shown()) {
-    Fl::wait();
-    for(;;) {
-      Fl_Widget *o = Fl::readqueue();
-      if(!o) break;
-      if(o == dialog->ok) {
-        opt_mesh_binary(0, GMSH_SET | GMSH_GUI, dialog->c->value());
-        if(dialog->views->active()) {
-          opt_mesh_save_views(0, GMSH_SET | GMSH_GUI, dialog->views->value());
-          opt_post_save_adapted(0, GMSH_SET | GMSH_GUI,
-                                dialog->adapted->value() ? 1 : 0);
-        }
-        opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
-        CreateOutputFile(name, FORMAT_VTU);
-        dialog->window->hide();
-        return 1;
-      }
-      if(o == dialog->window || o == dialog->cancel) {
-        dialog->window->hide();
-        return 0;
-      }
+  return runDialog(dialog->window, dialog->ok, dialog->cancel, [&]() {
+    opt_mesh_binary(0, GMSH_SET | GMSH_GUI, dialog->c->value());
+    if(dialog->views->active()) {
+      opt_mesh_save_views(0, GMSH_SET | GMSH_GUI, dialog->views->value());
+      opt_post_save_adapted(0, GMSH_SET | GMSH_GUI,
+                            dialog->adapted->value() ? 1 : 0);
     }
-  }
-  return 0;
+    opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
+    CreateOutputFile(name, FORMAT_VTU);
+  });
 }
 
 // POS format post-processing export dialog
@@ -2075,9 +1611,7 @@ int posFileDialog(const char *name)
   if(!dialog) {
     dialog = new _posFileDialog;
     int h = 3 * WB + 4 * BH, w = 2 * BBB + 3 * WB, y = WB;
-    dialog->window = new Fl_Double_Window(w, h, "POS Options");
-    dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->window->set_modal();
+    dialog->window = dialogWindow(w, h, "POS Options");
     dialog->c[0] = new Fl_Choice(WB, y, BBB + BBB / 2, BH, "View(s)");
     y += BH;
     dialog->c[0]->menu(viewmenu);
@@ -2090,39 +1624,19 @@ int posFileDialog(const char *name)
                                           "Save high order views refined");
     dialog->adapted->tooltip("PostProcessing.SaveAdapted");
     y += BH;
-    dialog->adapted->type(FL_TOGGLE_BUTTON);
-    dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
-    dialog->cancel = new Fl_Button(2 * WB + BBB, y + WB, BBB, BH, "Cancel");
-    dialog->window->end();
-    dialog->window->hotspot(dialog->window);
+    okCancelButtons(dialog->window, y, BBB, dialog->ok, dialog->cancel);
   }
 
   dialog->adapted->value(opt_post_save_adapted(0, GMSH_GET, 0) ? 1 : 0);
-  dialog->window->show();
-
-  while(dialog->window->shown()) {
-    Fl::wait();
-    for(;;) {
-      Fl_Widget *o = Fl::readqueue();
-      if(!o) break;
-      if(o == dialog->ok) {
-        const int formats[] = {PView::POS_PARSED, PView::POS_ASCII,
-                               PView::POS_BINARY};
-        int format = formats[dialog->c[1]->value()];
-        bool canAppend = (format == PView::POS_PARSED);
-        opt_post_save_adapted(0, GMSH_SET | GMSH_GUI,
-                              dialog->adapted->value() ? 1 : 0);
-        _saveViews(name, dialog->c[0]->value(), format, canAppend);
-        dialog->window->hide();
-        return 1;
-      }
-      if(o == dialog->window || o == dialog->cancel) {
-        dialog->window->hide();
-        return 0;
-      }
-    }
-  }
-  return 0;
+  return runDialog(dialog->window, dialog->ok, dialog->cancel, [&]() {
+    const int formats[] = {PView::POS_PARSED, PView::POS_ASCII,
+                           PView::POS_BINARY};
+    int format = formats[dialog->c[1]->value()];
+    bool canAppend = (format == PView::POS_PARSED);
+    opt_post_save_adapted(0, GMSH_SET | GMSH_GUI,
+                          dialog->adapted->value() ? 1 : 0);
+    _saveViews(name, dialog->c[0]->value(), format, canAppend);
+  });
 }
 
 int x3dViewFileDialog(const char *name, const char *title, int format)
@@ -2146,9 +1660,7 @@ int x3dViewFileDialog(const char *name, const char *title, int format)
   if(!dialog) {
     dialog = new _viewFileDialog;
     int h = 6 * BH + 3 * WB, w = 2 * BBB + 3 * WB, y = WB;
-    dialog->window = new Fl_Double_Window(w, h);
-    dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->window->set_modal();
+    dialog->window = dialogWindow(w, h);
     dialog->c = new Fl_Choice(WB, y, BBB + BBB / 2, BH, "View(s)");
     y += BH;
     dialog->c->menu(viewmenu);
@@ -2157,7 +1669,6 @@ int x3dViewFileDialog(const char *name, const char *title, int format)
       new Fl_Check_Button(WB, y, w - 2 * WB, BH, "Remove inner borders");
     dialog->e[0]->tooltip("Print.X3dRemoveInnerBorders");
     y += BH;
-    dialog->e[0]->type(FL_TOGGLE_BUTTON);
     dialog->input[0] = new Fl_Value_Input(WB, y, BB, BH, "Log10(Precision)");
     dialog->input[0]->tooltip("Print.X3dPrecision");
     y += BH;
@@ -2176,46 +1687,25 @@ int x3dViewFileDialog(const char *name, const char *title, int format)
                                        "High compatibility (no scale)");
     dialog->e[1]->tooltip("Print.X3dCompatibility");
     y += BH;
-    dialog->e[1]->type(FL_TOGGLE_BUTTON);
-    dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
-    dialog->cancel = new Fl_Button(2 * WB + BBB, y + WB, BBB, BH, "Cancel");
-    dialog->window->end();
-    dialog->window->hotspot(dialog->window);
+    okCancelButtons(dialog->window, y, BBB, dialog->ok, dialog->cancel);
   }
 
   dialog->window->label(title);
-  dialog->window->show();
-
   dialog->input[0]->value(log10(opt_print_x3d_precision(0, GMSH_GET, 0)));
   dialog->input[1]->value(opt_print_x3d_transparency(0, GMSH_GET, 0));
   dialog->e[0]->value(opt_print_x3d_remove_inner_borders(0, GMSH_GET, 0));
   dialog->e[1]->value(opt_print_x3d_compatibility(0, GMSH_GET, 0));
 
-  while(dialog->window->shown()) {
-    Fl::wait();
-    for(;;) {
-      Fl_Widget *o = Fl::readqueue();
-      if(!o) break;
-      if(o == dialog->ok) {
-        opt_print_x3d_precision(0, GMSH_SET | GMSH_GUI,
-                                pow(10., dialog->input[0]->value()));
-        opt_print_x3d_transparency(0, GMSH_SET | GMSH_GUI,
-                                   dialog->input[1]->value());
-        opt_print_x3d_remove_inner_borders(0, GMSH_SET | GMSH_GUI,
-                                           dialog->e[0]->value());
-        opt_print_x3d_compatibility(0, GMSH_SET | GMSH_GUI,
-                                    dialog->e[1]->value());
-        _saveViews(name, dialog->c->value(), format, false);
-        dialog->window->hide();
-        return 1;
-      }
-      if(o == dialog->window || o == dialog->cancel) {
-        dialog->window->hide();
-        return 0;
-      }
-    }
-  }
-  return 0;
+  return runDialog(dialog->window, dialog->ok, dialog->cancel, [&]() {
+    opt_print_x3d_precision(0, GMSH_SET | GMSH_GUI,
+                            pow(10., dialog->input[0]->value()));
+    opt_print_x3d_transparency(0, GMSH_SET | GMSH_GUI,
+                               dialog->input[1]->value());
+    opt_print_x3d_remove_inner_borders(0, GMSH_SET | GMSH_GUI,
+                                       dialog->e[0]->value());
+    opt_print_x3d_compatibility(0, GMSH_SET | GMSH_GUI, dialog->e[1]->value());
+    _saveViews(name, dialog->c->value(), format, false);
+  });
 }
 
 int genericViewFileDialog(const char *name, const char *title, int format)
@@ -2237,39 +1727,18 @@ int genericViewFileDialog(const char *name, const char *title, int format)
   if(!dialog) {
     dialog = new _viewFileDialog;
     int h = 3 * WB + 2 * BH, w = 2 * BBB + 3 * WB, y = WB;
-    dialog->window = new Fl_Double_Window(w, h);
-    dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->window->set_modal();
+    dialog->window = dialogWindow(w, h);
     dialog->c[0] = new Fl_Choice(WB, y, BBB + BBB / 2, BH, "View(s)");
     y += BH;
     dialog->c[0]->menu(viewmenu);
     dialog->c[0]->align(FL_ALIGN_RIGHT);
-    dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
-    dialog->cancel = new Fl_Button(2 * WB + BBB, y + WB, BBB, BH, "Cancel");
-    dialog->window->end();
-    dialog->window->hotspot(dialog->window);
+    okCancelButtons(dialog->window, y, BBB, dialog->ok, dialog->cancel);
   }
 
   dialog->window->label(title);
-  dialog->window->show();
-
-  while(dialog->window->shown()) {
-    Fl::wait();
-    for(;;) {
-      Fl_Widget *o = Fl::readqueue();
-      if(!o) break;
-      if(o == dialog->ok) {
-        _saveViews(name, dialog->c[0]->value(), format, false);
-        dialog->window->hide();
-        return 1;
-      }
-      if(o == dialog->window || o == dialog->cancel) {
-        dialog->window->hide();
-        return 0;
-      }
-    }
-  }
-  return 0;
+  return runDialog(dialog->window, dialog->ok, dialog->cancel, [&]() {
+    _saveViews(name, dialog->c[0]->value(), format, false);
+  });
 }
 
 int cgnsFileDialog(const char *filename)

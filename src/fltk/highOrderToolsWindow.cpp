@@ -306,14 +306,12 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   butt[1] =
     new Fl_Check_Button(x, y, width - 4 * WB, BH,
                         "Only apply high-order tools to visible entities");
-  butt[1]->type(FL_TOGGLE_BUTTON);
   butt[1]->value(1);
 
   y += BH;
 
   butt[3] =
     new Fl_Check_Button(x, y, width - 4 * WB, BH, "Show detailed log messages");
-  butt[3]->type(FL_TOGGLE_BUTTON);
   butt[3]->value(0);
 
   {
@@ -343,7 +341,6 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
 
   butt[0] = new Fl_Check_Button(x, y, width - 4 * WB, BH,
                                 "Generate incomplete elements");
-  butt[0]->type(FL_TOGGLE_BUTTON);
   butt[0]->value(!complete);
   // AJ: This is bad a design. Add a proper Fl_Button to toggle between
   // completeness if needed. Plus: only 2d version implemented for now
@@ -353,7 +350,6 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
 
   butt[2] = new Fl_Check_Button(x, y, width - 4 * WB, BH,
                                 "Use CAD model to curve mesh");
-  butt[2]->type(FL_TOGGLE_BUTTON);
   butt[2]->value(1);
 
   y += BH;
@@ -519,15 +515,7 @@ void highOrderToolsWindow::show(bool redrawOnly)
 }
 
 void highordertools_cb(Fl_Widget *w, void *data)
-{
-  // get the visibility info from the model, and update the browser
-  // accordingly
-  const char *str = (const char *)data;
-  if(str && !strcmp(str, "redraw_only"))
-    FlGui::instance()->highordertools->show(true);
-  else
-    FlGui::instance()->highordertools->show(false);
-}
+{ FlGui::instance()->highordertools->show(false); }
 
 #else // HAVE_MESH
 

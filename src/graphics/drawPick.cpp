@@ -21,10 +21,6 @@
 
 bool drawContext::_pickColorActive = false;
 
-// The mesh element of an entity under the point a pick hit: the identifiers
-// name entities, not elements, so the element is looked up geometrically, in
-// the octree of the model (nullptr is not an error: the mesh may not be there,
-// or the point may have missed it).
 // The mesh element of a picked entity at the point the pick read back: for a
 // curve or a surface, the closest within a few pixels, as the point is off it
 // by the depth a pixel spans when it is seen obliquely; for a volume, one that

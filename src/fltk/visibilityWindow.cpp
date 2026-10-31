@@ -930,19 +930,12 @@ void visibility_save(const std::string &fileName)
 {
   // get the whole visibility information in geo format
   std::vector<int> state[4][2];
-  GModel *m = GModel::current();
-  for(auto it = m->firstVertex(); it != m->lastVertex(); it++)
-    (*it)->getVisibility() ? state[0][1].push_back((*it)->tag()) :
-                             state[0][0].push_back((*it)->tag());
-  for(auto it = m->firstEdge(); it != m->lastEdge(); it++)
-    (*it)->getVisibility() ? state[1][1].push_back((*it)->tag()) :
-                             state[1][0].push_back((*it)->tag());
-  for(auto it = m->firstFace(); it != m->lastFace(); it++)
-    (*it)->getVisibility() ? state[2][1].push_back((*it)->tag()) :
-                             state[2][0].push_back((*it)->tag());
-  for(auto it = m->firstRegion(); it != m->lastRegion(); it++)
-    (*it)->getVisibility() ? state[3][1].push_back((*it)->tag()) :
-                             state[3][0].push_back((*it)->tag());
+  for(int dim = 0; dim < 4; dim++) {
+    std::vector<GEntity *> entities;
+    GModel::current()->getEntities(entities, dim);
+    for(GEntity *ge : entities)
+      state[dim][ge->getVisibility() ? 1 : 0].push_back(ge->tag());
+  }
   std::vector<std::pair<int, int> > entities;
   int mode = 0, on = 0, off = 0;
   for(int i = 0; i < 4; i++) {
@@ -1005,46 +998,28 @@ static void _set_visibility_by_number(int what, int num, char val,
           }
         }
         break;
-      case 2: // point
-        for(auto it = m->firstVertex(); it != m->lastVertex(); it++)
-          if(all || (*it)->tag() == num) (*it)->setVisibility(val, recursive);
+      case 2: // points, curves, surfaces, volumes
+      case 3:
+      case 4:
+      case 5:
+      case 6: // physical points, curves, surfaces, volumes
+      case 7:
+      case 8:
+      case 9: {
+        bool physical = (what >= 6);
+        std::vector<GEntity *> dimEntities;
+        m->getEntities(dimEntities, physical ? what - 6 : what - 2);
+        for(GEntity *ge : dimEntities) {
+          if(!physical) {
+            if(all || ge->tag() == num) ge->setVisibility(val, recursive);
+            continue;
+          }
+          for(std::size_t i = 0; i < ge->physicals.size(); i++)
+            if(all || std::abs(ge->physicals[i]) == num)
+              ge->setVisibility(val, recursive);
+        }
         break;
-      case 3: // line
-        for(auto it = m->firstEdge(); it != m->lastEdge(); it++)
-          if(all || (*it)->tag() == num) (*it)->setVisibility(val, recursive);
-        break;
-      case 4: // surface
-        for(auto it = m->firstFace(); it != m->lastFace(); it++)
-          if(all || (*it)->tag() == num) (*it)->setVisibility(val, recursive);
-        break;
-      case 5: // volume
-        for(auto it = m->firstRegion(); it != m->lastRegion(); it++)
-          if(all || (*it)->tag() == num) (*it)->setVisibility(val, recursive);
-        break;
-      case 6: // physical point
-        for(auto it = m->firstVertex(); it != m->lastVertex(); it++)
-          for(std::size_t i = 0; i < (*it)->physicals.size(); i++)
-            if(all || std::abs((*it)->physicals[i]) == num)
-              (*it)->setVisibility(val, recursive);
-        break;
-      case 7: // physical line
-        for(auto it = m->firstEdge(); it != m->lastEdge(); it++)
-          for(std::size_t i = 0; i < (*it)->physicals.size(); i++)
-            if(all || std::abs((*it)->physicals[i]) == num)
-              (*it)->setVisibility(val, recursive);
-        break;
-      case 8: // physical surface
-        for(auto it = m->firstFace(); it != m->lastFace(); it++)
-          for(std::size_t i = 0; i < (*it)->physicals.size(); i++)
-            if(all || std::abs((*it)->physicals[i]) == num)
-              (*it)->setVisibility(val, recursive);
-        break;
-      case 9: // physical volume
-        for(auto it = m->firstRegion(); it != m->lastRegion(); it++)
-          for(std::size_t i = 0; i < (*it)->physicals.size(); i++)
-            if(all || std::abs((*it)->physicals[i]) == num)
-              (*it)->setVisibility(val, recursive);
-        break;
+      }
       }
     }
   }
@@ -1689,12 +1664,10 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
 
     butt[0] = new Fl_Check_Button(WB + aw + WB, height - BH - WB, 2 * aw, BH,
                                   "recursively");
-    butt[0]->type(FL_TOGGLE_BUTTON);
     butt[0]->value(1);
 
     butt[1] = new Fl_Check_Button(WB + 3 * aw + 2 * WB, height - BH - WB,
                                   3 * aw, BH, "to all models");
-    butt[1]->type(FL_TOGGLE_BUTTON);
     butt[1]->value(1);
 
     g->end();

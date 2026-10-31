@@ -84,543 +84,138 @@ static void draw_stl(std::vector<SPoint3> &vertices,
   gmshPolygonFill(fill);
 }
 
-static void elementary_add_parameter_cb(Fl_Widget *w, void *data)
+// the inputs of each pane of the elementary context window: the first one and
+// how many
+static const int paneFirst[12] = {0, 4, 8, 14, 21, 26, 32, 39, 47, 53, 59, 68};
+static const int paneSize[12] = {4, 4, 6, 7, 5, 6, 7, 8, 6, 6, 9, 7};
+
+// the values of the first inputs of a pane (all by default), if they evaluate
+static bool paneValues(int pane, double *v, int count = -1)
 {
-  scriptAddParameter(FlGui::instance()->elementaryContext->input[0]->value(),
-                     FlGui::instance()->elementaryContext->input[1]->value(),
-                     FlGui::instance()->elementaryContext->input[2]->value(),
-                     FlGui::instance()->elementaryContext->input[3]->value(),
-                     GModel::current()->getFileName());
-  FlGui::instance()->resetVisibility();
-  FlGui::instance()->rebuildTree(true);
+  elementaryContextWindow *e = FlGui::instance()->elementaryContext;
+  if(count < 0) count = paneSize[pane];
+  for(int i = 0; i < count; i++)
+    if(!getval(e->input[paneFirst[pane] + i]->value(), v[i])) return false;
+  return true;
 }
 
 static void elementary_draw_point_cb(Fl_Widget *w, void *data)
 {
   if(data) return; // we are here from do_callback()
-  double x, y, z;
-  if(!getval(FlGui::instance()->elementaryContext->input[4]->value(), x))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[5]->value(), y))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[6]->value(), z))
-    return;
-  FlGui::instance()->getCurrentOpenglWindow()->setPoint(x, y, z);
+  double v[3]; // x, y, z, whatever the mesh size
+  if(!paneValues(1, v, 3)) return;
+  FlGui::instance()->getCurrentOpenglWindow()->setPoint(v[0], v[1], v[2]);
   drawContext::global()->draw();
 }
 
-static void elementary_add_point_cb(Fl_Widget *w, void *data)
+static void draw_arc(double xc, double yc, double zc, double rx, double ry,
+                     double angle1, double angle2)
 {
-  scriptAddPoint(GModel::current()->getFileName(),
-                 FlGui::instance()->elementaryContext->input[4]->value(),
-                 FlGui::instance()->elementaryContext->input[5]->value(),
-                 FlGui::instance()->elementaryContext->input[6]->value(),
-                 FlGui::instance()->elementaryContext->input[7]->value());
-  FlGui::instance()->resetVisibility();
-  GModel::current()->setSelection(0);
-  SetBoundingBox();
-  drawContext::global()->draw();
-}
-
-static void draw_circle(void *context)
-{
-  if(!GModel::current()->getOCCInternals())
-    GModel::current()->createOCCInternals();
-  double xc, yc, zc, r, angle1, angle2;
-  if(!getval(FlGui::instance()->elementaryContext->input[8]->value(), xc))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[9]->value(), yc))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[10]->value(), zc))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[11]->value(), r))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[12]->value(), angle1))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[13]->value(), angle2))
-    return;
-
   if(angle2 <= angle1) return;
   gmshColor4ubv((GLubyte *)&CTX::instance()->color.geom.highlight[0]);
   gmshBegin(GL_LINE_STRIP);
   const int N = 30;
   for(int i = 0; i < N; i++) {
     double t = angle1 + (double)i / (double)(N - 1) * (angle2 - angle1);
-    double x = xc + r * cos(t);
-    double y = yc + r * sin(t);
-    double z = zc;
-    gmshVertex3d(x, y, z);
+    gmshVertex3d(xc + rx * cos(t), yc + ry * sin(t), zc);
   }
   gmshEnd();
 }
 
-static void elementary_draw_circle_cb(Fl_Widget *w, void *data)
+// the shapes OpenCASCADE triangulates for the preview
+static bool makeSTL(int pane, const double *v, std::vector<SPoint3> &p,
+                    std::vector<SVector3> &n, std::vector<int> &t)
 {
-  drawContext::setDrawGeomTransientFunction(draw_circle);
-  if(!data) drawContext::global()->draw();
-}
-
-static void elementary_add_circle_cb(Fl_Widget *w, void *data)
-{
-  scriptAddCircle(GModel::current()->getFileName(),
-                  FlGui::instance()->elementaryContext->input[8]->value(),
-                  FlGui::instance()->elementaryContext->input[9]->value(),
-                  FlGui::instance()->elementaryContext->input[10]->value(),
-                  FlGui::instance()->elementaryContext->input[11]->value(),
-                  FlGui::instance()->elementaryContext->input[12]->value(),
-                  FlGui::instance()->elementaryContext->input[13]->value());
-  FlGui::instance()->resetVisibility();
-  GModel::current()->setSelection(0);
-  SetBoundingBox();
-  drawContext::global()->draw();
-}
-
-static void draw_ellipse(void *context)
-{
-  if(!GModel::current()->getOCCInternals())
-    GModel::current()->createOCCInternals();
-  double xc, yc, zc, rx, ry, angle1, angle2;
-  if(!getval(FlGui::instance()->elementaryContext->input[14]->value(), xc))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[15]->value(), yc))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[16]->value(), zc))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[17]->value(), rx))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[18]->value(), ry))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[19]->value(), angle1))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[20]->value(), angle2))
-    return;
-  if(angle2 <= angle1) return;
-  gmshColor4ubv((GLubyte *)&CTX::instance()->color.geom.highlight[0]);
-  gmshBegin(GL_LINE_STRIP);
-  const int N = 30;
-  for(int i = 0; i < N; i++) {
-    double t = angle1 + (double)i / (double)(N - 1) * (angle2 - angle1);
-    double x = xc + rx * cos(t);
-    double y = yc + ry * sin(t);
-    double z = zc;
-    gmshVertex3d(x, y, z);
+  OCC_Internals *o = GModel::current()->getOCCInternals();
+  switch(pane) {
+  case 4: return o->makeDiskSTL(v[0], v[1], v[2], v[3], v[4], p, n, t);
+  case 5:
+    return o->makeRectangleSTL(v[0], v[1], v[2], v[3], v[4], v[5], p, n, t);
+  case 6:
+    return o->makeSphereSTL(v[0], v[1], v[2], v[3], v[4], v[5], v[6], p, n, t);
+  case 7:
+    return o->makeCylinderSTL(v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], p,
+                              n, t);
+  case 8: return o->makeBoxSTL(v[0], v[1], v[2], v[3], v[4], v[5], p, n, t);
+  case 9: return o->makeTorusSTL(v[0], v[1], v[2], v[3], v[4], v[5], p, n, t);
+  case 10:
+    return o->makeConeSTL(v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], v[8],
+                          p, n, t);
+  case 11:
+    return o->makeWedgeSTL(v[0], v[1], v[2], v[3], v[4], v[5], v[6], p, n, t);
   }
-  gmshEnd();
+  return false;
 }
 
-static void elementary_draw_ellipse_cb(Fl_Widget *w, void *data)
-{
-  drawContext::setDrawGeomTransientFunction(draw_ellipse);
-  if(!data) drawContext::global()->draw();
-}
+static int previewPane = 2; // the pane draw_preview() draws
 
-static void elementary_add_ellipse_cb(Fl_Widget *w, void *data)
-{
-  scriptAddEllipse(GModel::current()->getFileName(),
-                   FlGui::instance()->elementaryContext->input[14]->value(),
-                   FlGui::instance()->elementaryContext->input[15]->value(),
-                   FlGui::instance()->elementaryContext->input[16]->value(),
-                   FlGui::instance()->elementaryContext->input[17]->value(),
-                   FlGui::instance()->elementaryContext->input[18]->value(),
-                   FlGui::instance()->elementaryContext->input[19]->value(),
-                   FlGui::instance()->elementaryContext->input[20]->value());
-  FlGui::instance()->resetVisibility();
-  GModel::current()->setSelection(0);
-  SetBoundingBox();
-  drawContext::global()->draw();
-}
-
-static void draw_disk(void *context)
+static void draw_preview(void *context)
 {
   if(!GModel::current()->getOCCInternals())
     GModel::current()->createOCCInternals();
-  double xc, yc, zc, rx, ry;
-  if(!getval(FlGui::instance()->elementaryContext->input[21]->value(), xc))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[22]->value(), yc))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[23]->value(), zc))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[24]->value(), rx))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[25]->value(), ry))
-    return;
-  std::vector<SPoint3> vertices;
-  std::vector<SVector3> normals;
-  std::vector<int> triangles;
-  if(!GModel::current()->getOCCInternals()->makeDiskSTL(
-       xc, yc, zc, rx, ry, vertices, normals, triangles))
-    return;
-  draw_stl(vertices, normals, triangles);
+  double v[9];
+  if(!paneValues(previewPane, v)) return;
+  if(previewPane == 2)
+    draw_arc(v[0], v[1], v[2], v[3], v[3], v[4], v[5]);
+  else if(previewPane == 3)
+    draw_arc(v[0], v[1], v[2], v[3], v[4], v[5], v[6]);
+  else {
+    std::vector<SPoint3> vertices;
+    std::vector<SVector3> normals;
+    std::vector<int> triangles;
+    if(makeSTL(previewPane, v, vertices, normals, triangles))
+      draw_stl(vertices, normals, triangles);
+  }
 }
 
-static void elementary_draw_disk_cb(Fl_Widget *w, void *data)
+// the preview of the pane of the input, redrawn unless we are here from
+// updatePoint()
+static void elementary_draw_cb(Fl_Widget *w, void *data)
 {
-  drawContext::setDrawGeomTransientFunction(draw_disk);
+  elementaryContextWindow *e = FlGui::instance()->elementaryContext;
+  for(int k = 2; k < 12; k++)
+    if(w->parent() == e->group[k]) previewPane = k;
+  drawContext::setDrawGeomTransientFunction(draw_preview);
   if(!data) drawContext::global()->draw();
 }
 
-static void elementary_add_disk_cb(Fl_Widget *w, void *data)
+void elementaryContextWindow::addShape(int pane)
 {
-  scriptAddDisk(GModel::current()->getFileName(),
-                FlGui::instance()->elementaryContext->input[21]->value(),
-                FlGui::instance()->elementaryContext->input[22]->value(),
-                FlGui::instance()->elementaryContext->input[23]->value(),
-                FlGui::instance()->elementaryContext->input[24]->value(),
-                FlGui::instance()->elementaryContext->input[25]->value());
+  std::vector<std::string> v;
+  for(int i = 0; i < paneSize[pane]; i++)
+    v.push_back(input[paneFirst[pane] + i]->value());
+  const std::string &f = GModel::current()->getFileName();
+  switch(pane) {
+  case 0: scriptAddParameter(v[0], v[1], v[2], v[3], f); break;
+  case 1: scriptAddPoint(f, v[0], v[1], v[2], v[3]); break;
+  case 2: scriptAddCircle(f, v[0], v[1], v[2], v[3], v[4], v[5]); break;
+  case 3: scriptAddEllipse(f, v[0], v[1], v[2], v[3], v[4], v[5], v[6]); break;
+  case 4: scriptAddDisk(f, v[0], v[1], v[2], v[3], v[4]); break;
+  case 5: scriptAddRectangle(f, v[0], v[1], v[2], v[3], v[4], v[5]); break;
+  case 6: scriptAddSphere(f, v[0], v[1], v[2], v[3], v[4], v[5], v[6]); break;
+  case 7:
+    scriptAddCylinder(f, v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7]);
+    break;
+  case 8: scriptAddBox(f, v[0], v[1], v[2], v[3], v[4], v[5]); break;
+  case 9: scriptAddTorus(f, v[0], v[1], v[2], v[3], v[4], v[5]); break;
+  case 10:
+    scriptAddCone(f, v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], v[8]);
+    break;
+  case 11: scriptAddWedge(f, v[0], v[1], v[2], v[3], v[4], v[5], v[6]); break;
+  }
+}
+
+static void elementary_add_cb(Fl_Widget *w, void *data)
+{
+  int pane = (int)(intptr_t)data;
+  FlGui::instance()->elementaryContext->addShape(pane);
   FlGui::instance()->resetVisibility();
+  if(pane == 0) {
+    FlGui::instance()->rebuildTree(true);
+    return;
+  }
   GModel::current()->setSelection(0);
-  SetBoundingBox();
-  drawContext::global()->draw();
-}
-
-static void draw_rectangle(void *context)
-{
-  if(!GModel::current()->getOCCInternals())
-    GModel::current()->createOCCInternals();
-  double x, y, z, dx, dy, r;
-  if(!getval(FlGui::instance()->elementaryContext->input[26]->value(), x))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[27]->value(), y))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[28]->value(), z))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[29]->value(), dx))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[30]->value(), dy))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[31]->value(), r))
-    return;
-  std::vector<SPoint3> vertices;
-  std::vector<SVector3> normals;
-  std::vector<int> triangles;
-  if(!GModel::current()->getOCCInternals()->makeRectangleSTL(
-       x, y, z, dx, dy, r, vertices, normals, triangles))
-    return;
-  draw_stl(vertices, normals, triangles);
-}
-
-static void elementary_draw_rectangle_cb(Fl_Widget *w, void *data)
-{
-  drawContext::setDrawGeomTransientFunction(draw_rectangle);
-  if(!data) drawContext::global()->draw();
-}
-
-static void elementary_add_rectangle_cb(Fl_Widget *w, void *data)
-{
-  scriptAddRectangle(GModel::current()->getFileName(),
-                     FlGui::instance()->elementaryContext->input[26]->value(),
-                     FlGui::instance()->elementaryContext->input[27]->value(),
-                     FlGui::instance()->elementaryContext->input[28]->value(),
-                     FlGui::instance()->elementaryContext->input[29]->value(),
-                     FlGui::instance()->elementaryContext->input[30]->value(),
-                     FlGui::instance()->elementaryContext->input[31]->value());
-  FlGui::instance()->resetVisibility();
-  GModel::current()->setSelection(0);
-  SetBoundingBox();
-  drawContext::global()->draw();
-}
-
-static void draw_sphere(void *context)
-{
-  if(!GModel::current()->getOCCInternals())
-    GModel::current()->createOCCInternals();
-  double xc, yc, zc, r, angle1, angle2, angle3;
-  if(!getval(FlGui::instance()->elementaryContext->input[32]->value(), xc))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[33]->value(), yc))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[34]->value(), zc))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[35]->value(), r))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[36]->value(), angle1))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[37]->value(), angle2))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[38]->value(), angle3))
-    return;
-  std::vector<SPoint3> vertices;
-  std::vector<SVector3> normals;
-  std::vector<int> triangles;
-  if(!GModel::current()->getOCCInternals()->makeSphereSTL(
-       xc, yc, zc, r, angle1, angle2, angle3, vertices, normals, triangles))
-    return;
-  draw_stl(vertices, normals, triangles);
-}
-
-static void elementary_draw_sphere_cb(Fl_Widget *w, void *data)
-{
-  drawContext::setDrawGeomTransientFunction(draw_sphere);
-  if(!data) drawContext::global()->draw();
-}
-
-static void elementary_add_sphere_cb(Fl_Widget *w, void *data)
-{
-  scriptAddSphere(GModel::current()->getFileName(),
-                  FlGui::instance()->elementaryContext->input[32]->value(),
-                  FlGui::instance()->elementaryContext->input[33]->value(),
-                  FlGui::instance()->elementaryContext->input[34]->value(),
-                  FlGui::instance()->elementaryContext->input[35]->value(),
-                  FlGui::instance()->elementaryContext->input[36]->value(),
-                  FlGui::instance()->elementaryContext->input[37]->value(),
-                  FlGui::instance()->elementaryContext->input[38]->value());
-  FlGui::instance()->resetVisibility();
-  GModel::current()->setSelection(0);
-  drawContext::setDrawGeomTransientFunction(nullptr);
-  SetBoundingBox();
-  drawContext::global()->draw();
-}
-
-static void draw_cylinder(void *context)
-{
-  if(!GModel::current()->getOCCInternals())
-    GModel::current()->createOCCInternals();
-  double xc, yc, zc, dx, dy, dz, r, angle;
-  if(!getval(FlGui::instance()->elementaryContext->input[39]->value(), xc))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[40]->value(), yc))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[41]->value(), zc))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[42]->value(), dx))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[43]->value(), dy))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[44]->value(), dz))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[45]->value(), r))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[46]->value(), angle))
-    return;
-  std::vector<SPoint3> vertices;
-  std::vector<SVector3> normals;
-  std::vector<int> triangles;
-  if(!GModel::current()->getOCCInternals()->makeCylinderSTL(
-       xc, yc, zc, dx, dy, dz, r, angle, vertices, normals, triangles))
-    return;
-  draw_stl(vertices, normals, triangles);
-}
-
-static void elementary_draw_cylinder_cb(Fl_Widget *w, void *data)
-{
-  drawContext::setDrawGeomTransientFunction(draw_cylinder);
-  if(!data) drawContext::global()->draw();
-}
-
-static void elementary_add_cylinder_cb(Fl_Widget *w, void *data)
-{
-  scriptAddCylinder(GModel::current()->getFileName(),
-                    FlGui::instance()->elementaryContext->input[39]->value(),
-                    FlGui::instance()->elementaryContext->input[40]->value(),
-                    FlGui::instance()->elementaryContext->input[41]->value(),
-                    FlGui::instance()->elementaryContext->input[42]->value(),
-                    FlGui::instance()->elementaryContext->input[43]->value(),
-                    FlGui::instance()->elementaryContext->input[44]->value(),
-                    FlGui::instance()->elementaryContext->input[45]->value(),
-                    FlGui::instance()->elementaryContext->input[46]->value());
-  FlGui::instance()->resetVisibility();
-  GModel::current()->setSelection(0);
-  SetBoundingBox();
-  drawContext::global()->draw();
-}
-
-static void draw_box(void *context)
-{
-  if(!GModel::current()->getOCCInternals())
-    GModel::current()->createOCCInternals();
-  double x, y, z, dx, dy, dz;
-  if(!getval(FlGui::instance()->elementaryContext->input[47]->value(), x))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[48]->value(), y))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[49]->value(), z))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[50]->value(), dx))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[51]->value(), dy))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[52]->value(), dz))
-    return;
-  std::vector<SPoint3> vertices;
-  std::vector<SVector3> normals;
-  std::vector<int> triangles;
-  if(!GModel::current()->getOCCInternals()->makeBoxSTL(
-       x, y, z, dx, dy, dz, vertices, normals, triangles))
-    return;
-  draw_stl(vertices, normals, triangles);
-}
-
-static void elementary_draw_box_cb(Fl_Widget *w, void *data)
-{
-  drawContext::setDrawGeomTransientFunction(draw_box);
-  if(!data) drawContext::global()->draw();
-}
-
-static void elementary_add_box_cb(Fl_Widget *w, void *data)
-{
-  scriptAddBox(GModel::current()->getFileName(),
-               FlGui::instance()->elementaryContext->input[47]->value(),
-               FlGui::instance()->elementaryContext->input[48]->value(),
-               FlGui::instance()->elementaryContext->input[49]->value(),
-               FlGui::instance()->elementaryContext->input[50]->value(),
-               FlGui::instance()->elementaryContext->input[51]->value(),
-               FlGui::instance()->elementaryContext->input[52]->value());
-  FlGui::instance()->resetVisibility();
-  GModel::current()->setSelection(0);
-  SetBoundingBox();
-  drawContext::global()->draw();
-}
-
-static void draw_torus(void *context)
-{
-  if(!GModel::current()->getOCCInternals())
-    GModel::current()->createOCCInternals();
-  double xc, yc, zc, r1, r2, angle;
-  if(!getval(FlGui::instance()->elementaryContext->input[53]->value(), xc))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[54]->value(), yc))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[55]->value(), zc))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[56]->value(), r1))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[57]->value(), r2))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[58]->value(), angle))
-    return;
-  std::vector<SPoint3> vertices;
-  std::vector<SVector3> normals;
-  std::vector<int> triangles;
-  if(!GModel::current()->getOCCInternals()->makeTorusSTL(
-       xc, yc, zc, r1, r2, angle, vertices, normals, triangles))
-    return;
-  draw_stl(vertices, normals, triangles);
-}
-
-static void elementary_draw_torus_cb(Fl_Widget *w, void *data)
-{
-  drawContext::setDrawGeomTransientFunction(draw_torus);
-  if(!data) drawContext::global()->draw();
-}
-
-static void elementary_add_torus_cb(Fl_Widget *w, void *data)
-{
-  scriptAddTorus(GModel::current()->getFileName(),
-                 FlGui::instance()->elementaryContext->input[53]->value(),
-                 FlGui::instance()->elementaryContext->input[54]->value(),
-                 FlGui::instance()->elementaryContext->input[55]->value(),
-                 FlGui::instance()->elementaryContext->input[56]->value(),
-                 FlGui::instance()->elementaryContext->input[57]->value(),
-                 FlGui::instance()->elementaryContext->input[58]->value());
-  FlGui::instance()->resetVisibility();
-  GModel::current()->setSelection(0);
-  SetBoundingBox();
-  drawContext::global()->draw();
-}
-
-static void draw_cone(void *context)
-{
-  if(!GModel::current()->getOCCInternals())
-    GModel::current()->createOCCInternals();
-  double xc, yc, zc, dx, dy, dz, r1, r2, angle;
-  if(!getval(FlGui::instance()->elementaryContext->input[59]->value(), xc))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[60]->value(), yc))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[61]->value(), zc))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[62]->value(), dx))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[63]->value(), dy))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[64]->value(), dz))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[65]->value(), r1))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[66]->value(), r2))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[67]->value(), angle))
-    return;
-  std::vector<SPoint3> vertices;
-  std::vector<SVector3> normals;
-  std::vector<int> triangles;
-  if(!GModel::current()->getOCCInternals()->makeConeSTL(
-       xc, yc, zc, dx, dy, dz, r1, r2, angle, vertices, normals, triangles))
-    return;
-  draw_stl(vertices, normals, triangles);
-}
-
-static void elementary_draw_cone_cb(Fl_Widget *w, void *data)
-{
-  drawContext::setDrawGeomTransientFunction(draw_cone);
-  if(!data) drawContext::global()->draw();
-}
-
-static void elementary_add_cone_cb(Fl_Widget *w, void *data)
-{
-  scriptAddCone(GModel::current()->getFileName(),
-                FlGui::instance()->elementaryContext->input[59]->value(),
-                FlGui::instance()->elementaryContext->input[60]->value(),
-                FlGui::instance()->elementaryContext->input[61]->value(),
-                FlGui::instance()->elementaryContext->input[62]->value(),
-                FlGui::instance()->elementaryContext->input[63]->value(),
-                FlGui::instance()->elementaryContext->input[64]->value(),
-                FlGui::instance()->elementaryContext->input[65]->value(),
-                FlGui::instance()->elementaryContext->input[66]->value(),
-                FlGui::instance()->elementaryContext->input[67]->value());
-  FlGui::instance()->resetVisibility();
-  GModel::current()->setSelection(0);
-  SetBoundingBox();
-  drawContext::global()->draw();
-}
-
-static void draw_wedge(void *context)
-{
-  if(!GModel::current()->getOCCInternals())
-    GModel::current()->createOCCInternals();
-  double x, y, z, dx, dy, dz, ltx;
-  if(!getval(FlGui::instance()->elementaryContext->input[68]->value(), x))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[69]->value(), y))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[70]->value(), z))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[71]->value(), dx))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[72]->value(), dy))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[73]->value(), dz))
-    return;
-  if(!getval(FlGui::instance()->elementaryContext->input[74]->value(), ltx))
-    return;
-  std::vector<SPoint3> vertices;
-  std::vector<SVector3> normals;
-  std::vector<int> triangles;
-  if(!GModel::current()->getOCCInternals()->makeWedgeSTL(
-       x, y, z, dx, dy, dz, ltx, vertices, normals, triangles))
-    return;
-  draw_stl(vertices, normals, triangles);
-}
-
-static void elementary_draw_wedge_cb(Fl_Widget *w, void *data)
-{
-  drawContext::setDrawGeomTransientFunction(draw_wedge);
-  if(!data) drawContext::global()->draw();
-}
-
-static void elementary_add_wedge_cb(Fl_Widget *w, void *data)
-{
-  scriptAddWedge(GModel::current()->getFileName(),
-                 FlGui::instance()->elementaryContext->input[68]->value(),
-                 FlGui::instance()->elementaryContext->input[69]->value(),
-                 FlGui::instance()->elementaryContext->input[70]->value(),
-                 FlGui::instance()->elementaryContext->input[71]->value(),
-                 FlGui::instance()->elementaryContext->input[72]->value(),
-                 FlGui::instance()->elementaryContext->input[73]->value(),
-                 FlGui::instance()->elementaryContext->input[74]->value());
-  FlGui::instance()->resetVisibility();
-  GModel::current()->setSelection(0);
+  if(pane == 6) drawContext::setDrawGeomTransientFunction(nullptr);
   SetBoundingBox();
   drawContext::global()->draw();
 }
@@ -677,7 +272,7 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       {
         Fl_Button *o = new Fl_Button(width - BB - 2 * WB,
                                      height - 3 * WB - 2 * BH, BB, BH, "Add");
-        o->callback(elementary_add_parameter_cb);
+        o->callback(elementary_add_cb, (void *)0);
       }
       group[0]->end();
     }
@@ -701,7 +296,7 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       {
         Fl_Button *o = new Fl_Button(width - BB - 2 * WB,
                                      height - 3 * WB - 2 * BH, BB, BH, "Add");
-        o->callback(elementary_add_point_cb);
+        o->callback(elementary_add_cb, (void *)1);
       }
       group[1]->end();
     }
@@ -723,12 +318,12 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       input[13]->value("2*Pi");
       for(int i = 8; i < 14; i++) {
         input[i]->align(FL_ALIGN_RIGHT);
-        input[i]->callback(elementary_draw_circle_cb);
+        input[i]->callback(elementary_draw_cb);
       }
       {
         Fl_Button *o = new Fl_Button(width - BB - 2 * WB,
                                      height - 3 * WB - 2 * BH, BB, BH, "Add");
-        o->callback(elementary_add_circle_cb);
+        o->callback(elementary_add_cb, (void *)2);
       }
       group[2]->end();
     }
@@ -752,12 +347,12 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       input[20]->value("2*Pi");
       for(int i = 14; i < 21; i++) {
         input[i]->align(FL_ALIGN_RIGHT);
-        input[i]->callback(elementary_draw_ellipse_cb);
+        input[i]->callback(elementary_draw_cb);
       }
       {
         Fl_Button *o = new Fl_Button(width - BB - 2 * WB,
                                      height - 3 * WB - 2 * BH, BB, BH, "Add");
-        o->callback(elementary_add_ellipse_cb);
+        o->callback(elementary_add_cb, (void *)3);
       }
       group[3]->end();
     }
@@ -777,12 +372,12 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       input[25]->value("0.25");
       for(int i = 21; i < 26; i++) {
         input[i]->align(FL_ALIGN_RIGHT);
-        input[i]->callback(elementary_draw_disk_cb);
+        input[i]->callback(elementary_draw_cb);
       }
       {
         Fl_Button *o = new Fl_Button(width - BB - 2 * WB,
                                      height - 3 * WB - 2 * BH, BB, BH, "Add");
-        o->callback(elementary_add_disk_cb);
+        o->callback(elementary_add_cb, (void *)4);
       }
       group[4]->end();
     }
@@ -805,12 +400,12 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       input[31]->value("0");
       for(int i = 26; i < 32; i++) {
         input[i]->align(FL_ALIGN_RIGHT);
-        input[i]->callback(elementary_draw_rectangle_cb);
+        input[i]->callback(elementary_draw_cb);
       }
       {
         Fl_Button *o = new Fl_Button(width - BB - 2 * WB,
                                      height - 3 * WB - 2 * BH, BB, BH, "Add");
-        o->callback(elementary_add_rectangle_cb);
+        o->callback(elementary_add_cb, (void *)5);
       }
       group[5]->end();
     }
@@ -838,12 +433,12 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       input[38]->value("2*Pi");
       for(int i = 32; i < 39; i++) {
         input[i]->align(FL_ALIGN_RIGHT);
-        input[i]->callback(elementary_draw_sphere_cb);
+        input[i]->callback(elementary_draw_cb);
       }
       {
         Fl_Button *o = new Fl_Button(width - BB - 2 * WB,
                                      height - 3 * WB - 2 * BH, BB, BH, "Add");
-        o->callback(elementary_add_sphere_cb);
+        o->callback(elementary_add_cb, (void *)6);
       }
       group[6]->end();
     }
@@ -872,12 +467,12 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       input[46]->value("2*Pi");
       for(int i = 39; i < 47; i++) {
         input[i]->align(FL_ALIGN_RIGHT);
-        input[i]->callback(elementary_draw_cylinder_cb);
+        input[i]->callback(elementary_draw_cb);
       }
       {
         Fl_Button *o = new Fl_Button(width - BB - 2 * WB,
                                      height - 3 * WB - 2 * BH, BB, BH, "Add");
-        o->callback(elementary_add_cylinder_cb);
+        o->callback(elementary_add_cb, (void *)7);
       }
       group[7]->end();
     }
@@ -899,12 +494,12 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       input[52]->value("1");
       for(int i = 47; i < 53; i++) {
         input[i]->align(FL_ALIGN_RIGHT);
-        input[i]->callback(elementary_draw_box_cb);
+        input[i]->callback(elementary_draw_cb);
       }
       {
         Fl_Button *o = new Fl_Button(width - BB - 2 * WB,
                                      height - 3 * WB - 2 * BH, BB, BH, "Add");
-        o->callback(elementary_add_box_cb);
+        o->callback(elementary_add_cb, (void *)8);
       }
       group[8]->end();
     }
@@ -926,12 +521,12 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       input[58]->value("2*Pi");
       for(int i = 53; i < 59; i++) {
         input[i]->align(FL_ALIGN_RIGHT);
-        input[i]->callback(elementary_draw_torus_cb);
+        input[i]->callback(elementary_draw_cb);
       }
       {
         Fl_Button *o = new Fl_Button(width - BB - 2 * WB,
                                      height - 3 * WB - 2 * BH, BB, BH, "Add");
-        o->callback(elementary_add_torus_cb);
+        o->callback(elementary_add_cb, (void *)9);
       }
       group[9]->end();
     }
@@ -965,12 +560,12 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       input[67]->value("2*Pi");
       for(int i = 59; i < 68; i++) {
         input[i]->align(FL_ALIGN_RIGHT);
-        input[i]->callback(elementary_draw_cone_cb);
+        input[i]->callback(elementary_draw_cb);
       }
       {
         Fl_Button *o = new Fl_Button(width - BB - 2 * WB,
                                      height - 3 * WB - 2 * BH, BB, BH, "Add");
-        o->callback(elementary_add_cone_cb);
+        o->callback(elementary_add_cb, (void *)10);
       }
       group[10]->end();
     }
@@ -994,12 +589,12 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       input[74]->value("0");
       for(int i = 68; i < 75; i++) {
         input[i]->align(FL_ALIGN_RIGHT);
-        input[i]->callback(elementary_draw_wedge_cb);
+        input[i]->callback(elementary_draw_cb);
       }
       {
         Fl_Button *o = new Fl_Button(width - BB - 2 * WB,
                                      height - 3 * WB - 2 * BH, BB, BH, "Add");
-        o->callback(elementary_add_wedge_cb);
+        o->callback(elementary_add_cb, (void *)11);
       }
       group[11]->end();
     }
@@ -1055,12 +650,11 @@ void elementaryContextWindow::updatePoint(double pt[3], int which)
       char str[32];
       sprintf(str, "%g", pt[i]);
       if(which == 1) {
-        int start[11] = {4, 8, 14, 21, 26, 32, 39, 47, 53, 59, 68};
-        for(int k = 0; k < 11; k++) {
-          input[start[k] + i]->value(str);
-          if(input[start[k] + i]->parent()->active()) {
-            input[start[k] + i]->do_callback(nullptr, (void *)"no_redraw");
-          }
+        for(int k = 1; k < 12; k++) {
+          // the callback finds the pane from the widget
+          Fl_Input *in = input[paneFirst[k] + i];
+          in->value(str);
+          if(in->parent()->active()) in->do_callback(in, (void *)"no_redraw");
         }
       }
     }

@@ -338,10 +338,7 @@ clippingWindow::clippingWindow(int deltaFontSize)
                                 "Only clip volume elements");
   butt[3]->tooltip("General.ClipOnlyVolume");
 
-  for(int i = 0; i < 4; i++) {
-    butt[i]->type(FL_TOGGLE_BUTTON);
-    butt[i]->callback(clip_update_cb);
-  }
+  for(int i = 0; i < 4; i++) butt[i]->callback(clip_update_cb);
 
   {
     Fl_Button *o =

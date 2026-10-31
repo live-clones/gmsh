@@ -111,21 +111,6 @@ openglWindow::~openglWindow()
   if(Nautilus) delete Nautilus;
 }
 
-void openglWindow::show()
-{
-  Fl_Gl_Window::show();
-  /* You can uncomment this if you cannot use the very latest FLTK 1.4 version
-     patched for macOS mojave
-
-#if defined(__APPLE__) && (MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_14)
-  Msg::Info("OpenGL hack for macOS 10.14: see http://www.fltk.org/str.php?L3496");
-  resize(x(), y(), w()+1, h());
-  resize(x(), y(), w()-1, h());
-#endif
-
-  */
-}
-
 // the messages of a selection (Msg::StatusGl) at the top of the window, and
 // what the cursor is over by the cursor, both in boxes over the picture and
 // neither in a print

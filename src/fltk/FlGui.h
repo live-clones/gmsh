@@ -84,6 +84,8 @@ private:
   static int _dispatch(int event, Fl_Window *win);
   std::string _lastStatus;
   bool _quitShouldExit;
+  // the tool windows, named for General.FloatingTools
+  std::vector<paletteWindow *> _tools;
 
 public:
   std::vector<GVertex *> selectedVertices;
@@ -106,7 +108,7 @@ public:
   partitionWindow *partition;
   classificationEditor *classify;
   // the tool windows, docked while the main window has a dock
-  std::vector<Fl_Window *> toolWindows();
+  const std::vector<paletteWindow *> &toolWindows() const { return _tools; }
   // the ones kept on the desktop, from and to General.FloatingTools: the
   // open ones move when the option changes
   void applyFloatingTools();

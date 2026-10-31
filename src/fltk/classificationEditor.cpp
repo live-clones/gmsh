@@ -420,7 +420,6 @@ classificationEditor::classificationEditor(int deltaFontSize)
     toggles[CLASS_TOGGLE_HIDE] = new Fl_Check_Button(
       (int)(x + 1.5 * BBB + WB), y, (int)(width - 1.5 * BBB - x - 2 * WB), BH,
       "Hide unselected elements");
-    toggles[CLASS_TOGGLE_HIDE]->type(FL_TOGGLE_BUTTON);
     toggles[CLASS_TOGGLE_HIDE]->callback(hide_cb, this);
 
     x -= WB;
@@ -452,13 +451,11 @@ classificationEditor::classificationEditor(int deltaFontSize)
     toggles[CLASS_TOGGLE_SHOW_ONLY_EDGES] = new Fl_Check_Button(
       (int)(x + 1.5 * BBB + WB), y, (int)(width - x - 1.5 * BBB - 2 * WB), BH,
       "Show only edges");
-    toggles[CLASS_TOGGLE_SHOW_ONLY_EDGES]->type(FL_TOGGLE_BUTTON);
     toggles[CLASS_TOGGLE_SHOW_ONLY_EDGES]->callback(show_only_edges_cb, this);
 
     y += BH;
     toggles[CLASS_TOGGLE_BOUNDARY] = new Fl_Check_Button(
       x, y, width - x - 2 * WB, BH, "Include edges on boundary (closure)");
-    toggles[CLASS_TOGGLE_BOUNDARY]->type(FL_TOGGLE_BUTTON);
     toggles[CLASS_TOGGLE_BOUNDARY]->callback(update_edges_cb, this);
 
     y += BH;

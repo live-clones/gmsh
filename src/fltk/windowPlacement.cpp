@@ -15,8 +15,6 @@
 #include <ApplicationServices/ApplicationServices.h>
 #elif defined(WIN32)
 #include <windows.h>
-#elif defined(FLTK_USE_X11)
-#include <FL/platform.H>
 #endif
 
 bool screenPositionsKnown()
@@ -26,6 +24,20 @@ bool screenPositionsKnown()
 #endif
   return true;
 }
+
+#if !defined(__APPLE__) && !defined(WIN32) && defined(FLTK_USE_X11)
+// the state of the buttons and modifier keys, false without an X display
+// (Wayland)
+static bool pointerMask(unsigned int &mask)
+{
+  Display *d = fl_x11_display();
+  if(!d) return false;
+  Window root, child;
+  int rx, ry, x, y;
+  return XQueryPointer(d, DefaultRootWindow(d), &root, &child, &rx, &ry, &x, &y,
+                       &mask);
+}
+#endif
 
 int mouseButtonDown()
 {
@@ -37,14 +49,8 @@ int mouseButtonDown()
 #elif defined(WIN32)
   return (GetAsyncKeyState(VK_LBUTTON) & 0x8000) ? 1 : 0;
 #elif defined(FLTK_USE_X11)
-  Display *d = fl_x11_display();
-  if(!d) return -1; // Wayland
-  Window root, child;
-  int rx, ry, x, y;
   unsigned int mask;
-  if(!XQueryPointer(d, DefaultRootWindow(d), &root, &child, &rx, &ry, &x, &y,
-                    &mask))
-    return -1;
+  if(!pointerMask(mask)) return -1; // or Wayland
   return (mask & Button1Mask) ? 1 : 0;
 #else
   return -1;
@@ -59,14 +65,8 @@ bool shiftKeyDown()
 #elif defined(WIN32)
   return (GetAsyncKeyState(VK_SHIFT) & 0x8000) ? true : false;
 #elif defined(FLTK_USE_X11)
-  Display *d = fl_x11_display();
-  if(!d) return false;
-  Window root, child;
-  int rx, ry, x, y;
   unsigned int mask;
-  if(!XQueryPointer(d, DefaultRootWindow(d), &root, &child, &rx, &ry, &x, &y,
-                    &mask))
-    return false;
+  if(!pointerMask(mask)) return false;
   return (mask & ShiftMask) ? true : false;
 #else
   return false;

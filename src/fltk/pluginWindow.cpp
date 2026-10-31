@@ -402,7 +402,6 @@ pluginWindow::pluginWindow(int deltaFontSize)
   views->browser->callback(plugin_browser_cb);
 
   record = new Fl_Check_Button(WB, height - BH - WB, BB, BH, "Record");
-  record->type(FL_TOGGLE_BUTTON);
   record->tooltip(
     "Append scripting command to file options when plugin is run");
   run = new Fl_Return_Button(width - BB - WB, height - BH - WB, BB, BH, "Run");

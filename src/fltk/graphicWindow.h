@@ -79,8 +79,6 @@ public:
   Fl_Button *getMeasureButton() { return _butt[13]; }
   messageBrowser *getMessageBrowser() { return _browser; }
   std::vector<std::string> &getMessages() { return _messages; }
-  int getMinWidth() { return _minWidth; }
-  int getMinHeight() { return _minHeight; }
   void setAutoScroll(bool val) { _autoScrollMessages = val; }
   bool getAutoScroll() { return _autoScrollMessages; }
   void setTitle(const std::string &str);
@@ -132,7 +130,6 @@ public:
   void saveMessages(const char *filename);
   void copySelectedMessagesToClipboard();
   void setMessageFontSize(int size);
-  void changeMessageFontSize(int incr);
   void fillRecentHistoryMenu();
 };
 

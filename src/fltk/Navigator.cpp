@@ -29,25 +29,6 @@ Navigator::Navigator(double _freq, drawContext *_ctx)
 
 Navigator::~Navigator(){};
 
-void Navigator::setDrawContext(drawContext *_ctx)
-{
-  ctx = _ctx;
-  ctx->camera.init();
-}
-
-void Navigator::setFrequency(double _freq)
-{
-  frequency = _freq;
-  reference_angle = 3.14 * frequency / 5.;
-  reference_speed = 1.5 * frequency * (ctx->camera.Lc) / 100.;
-}
-
-void Navigator::setResponseFrequency(double _freq)
-{
-  reference_angle = 3.14 * frequency / 5. * (_freq / .01);
-  reference_speed = 1.5 * frequency * (ctx->camera.Lc) / 100. * (_freq / .01);
-}
-
 void Navigator::drawIcons()
 {
   double l = CTX::instance()->smallAxesSize;

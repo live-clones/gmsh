@@ -44,11 +44,7 @@ public:
 
 public:
   Navigator(double _freq, drawContext *_ctx);
-  Navigator();
   ~Navigator();
-  void setFrequency(double _freq);
-  void setResponseFrequency(double _freq);
-  void setDrawContext(drawContext *_ctx);
   void move();
   void drawIcons();
 };

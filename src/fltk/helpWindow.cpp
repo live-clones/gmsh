@@ -520,12 +520,10 @@ helpWindow::helpWindow()
     int BW = (width - 4 * WB) / 3;
 
     modified = new Fl_Check_Button(WB, WB, BW, BH, "Only show modified");
-    modified->type(FL_TOGGLE_BUTTON);
     modified->callback(help_options_cb);
     modified->tooltip("Show only values different from defaults");
 
     showhelp = new Fl_Check_Button(2 * WB + BW, WB, BW, BH, "Show help");
-    showhelp->type(FL_TOGGLE_BUTTON);
     showhelp->callback(help_options_cb);
     showhelp->tooltip("Show help strings");
 
