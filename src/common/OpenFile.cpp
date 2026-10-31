@@ -536,6 +536,8 @@ int MergeFile(const std::string &fileName, bool errorIfMissing,
 #if defined(HAVE_POST)
     else if(!strncmp(header, "$PostFormat", 11) ||
             !strncmp(header, "$View", 5)) {
+      // views only: the model can be drawn meanwhile
+      CTX::instance()->geom.draw = 1;
       status = PView::readPOS(fileName);
     }
 #endif
@@ -630,14 +632,39 @@ int MergePostProcessingFile(const std::string &fileName, int showViews,
   // if there is a mesh, create a new model to store it (don't merge elements in
   // the current mesh!)
   GModel *old = GModel::current();
+  GModel *m = nullptr;
   if(haveMesh) {
-    GModel *m = new GModel();
+    m = new GModel();
     GModel::setCurrent(m);
+    // shown again at once, not after the reading, which redraws: a new model
+    // hides the others (the geometry would blink at every merge of results)
+    old->setVisibility(1);
+    // the mesh of the results is not drawn (their views are), unless it is
+    // all the file holds (see below)
+    m->setVisibility(0);
   }
-  int ret =
-    MergeFile(fileName, errorIfMissing, old->bounds().empty() ? true : false);
+  // the new views hidden while they are read, which redraws: those shown are
+  // chosen below
+  int ret = 0;
+  int refVisible = PViewOptions::reference()->visible;
+  {
+    // given back however the reading ends
+    struct restore {
+      int visible;
+      ~restore() { PViewOptions::reference()->visible = visible; }
+    } restored{refVisible};
+    if(showViews != 1) PViewOptions::reference()->visible = 0;
+    ret = MergeFile(fileName, errorIfMissing,
+                    old->bounds().empty() ? true : false);
+  }
   GModel::setCurrent(old);
   old->setVisibility(1);
+  if(m) {
+    bool hasData = false;
+    for(PView *v : PView::list)
+      if(v->getData()->hasModel(m)) hasData = true;
+    if(!hasData) m->setVisibility(1);
+  }
 
   // hide everything except onelab X-Y graphs and views with attribute
   // "AlwaysVisible"
@@ -649,14 +676,32 @@ int MergePostProcessingFile(const std::string &fileName, int showViews,
         PView::list[i]->getOptions()->visible = 0;
     }
   }
-  else if(showViews == 2 && n < PView::list.size()) {
-    // if we created new views, assume we only want to see those (and the
+  else if(showViews == 2) {
+    // a new view replaces the older ones of its name (e.g. the same field at
+    // the previous time step): shown as the last of them was, which are
+    // hidden; one of a new name is shown, the older views hidden (but the
     // onelab X-Y graphs)
-    for(std::size_t i = 0; i < n; i++) {
-      if(PView::list[i]->getData()->getFileName().substr(0, 6) != "ONELAB" &&
-         PView::list[i]->getOptions()->attributes.find("AlwaysVisible") ==
-         std::string::npos)
-        PView::list[i]->getOptions()->visible = 0;
+    auto hideable = [](PView *o) {
+      return o->getData()->getFileName().substr(0, 6) != "ONELAB" &&
+             o->getOptions()->attributes.find("AlwaysVisible") ==
+               std::string::npos;
+    };
+    for(std::size_t j = n; j < PView::list.size(); j++) {
+      PView *v = PView::list[j];
+      bool replaces = false;
+      for(std::size_t i = 0; i < n; i++) {
+        PView *o = PView::list[i];
+        if(o->getData()->getName() != v->getData()->getName() || !hideable(o))
+          continue;
+        v->getOptions()->visible = o->getOptions()->visible;
+        o->getOptions()->visible = 0;
+        replaces = true;
+      }
+      if(!replaces) {
+        for(std::size_t i = 0; i < n; i++)
+          if(hideable(PView::list[i])) PView::list[i]->getOptions()->visible = 0;
+        v->getOptions()->visible = refVisible;
+      }
     }
   }
 

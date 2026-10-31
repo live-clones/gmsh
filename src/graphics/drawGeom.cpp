@@ -724,8 +724,6 @@ void drawContext::drawGeom()
     return;
   if(transparencyPass == TRANSPARENCY_TRANSPARENT && !geometryIsTransparent())
     return;
-  if(!CTX::instance()->geom.draw) return;
-
   // draw any transient geometry stuff
   if(drawGeomTransient) (*drawGeomTransient)(this);
 
@@ -737,6 +735,10 @@ void drawContext::drawGeom()
   bool pick = (render_mode == GMSH_SELECT);
   for(std::size_t i = 0; i < GModel::list.size(); i++) {
     GModel *m = GModel::list[i];
+    // not the model a file is being read into (see MergeFile()), the others
+    // still: results read into models of their own while a solver runs would
+    // make the geometry blink
+    if(!c->geom.draw && m == GModel::current()) continue;
     if(m->getVisibility() && isVisible(m)) {
       // Each dimension is drawn from what is kept of it - for the picture,
       // or with the identifiers for a picking pass - and entity by entity
