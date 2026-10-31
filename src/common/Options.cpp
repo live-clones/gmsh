@@ -9535,6 +9535,21 @@ double opt_view_line_width(OPT_ARGS_NUM)
 #endif
 }
 
+double opt_view_outline_width(OPT_ARGS_NUM)
+{
+#if defined(HAVE_POST)
+  GET_VIEWo(0.);
+  if(action & GMSH_SET) opt->outlineWidth = val;
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num))
+    FlGui::instance()->options->view.value[80]->value(opt->outlineWidth);
+#endif
+  return opt->outlineWidth;
+#else
+  return 0.;
+#endif
+}
+
 double opt_view_point_type(OPT_ARGS_NUM)
 {
 #if defined(HAVE_POST)

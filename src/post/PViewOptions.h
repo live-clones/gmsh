@@ -110,7 +110,7 @@ public:
     drawPolyhedra;
   int drawScalars, drawVectors, drawTensors;
   int boundary, pointType, lineType, drawSkinOnly, drawSkinEdgesOnly;
-  double pointSize, lineWidth;
+  double pointSize, lineWidth, outlineWidth;
   GmshColorTable colorTable;
   // multiplies the alpha of the colormap (applied by the shader)
   double transparency;

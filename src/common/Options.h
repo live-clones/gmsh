@@ -848,6 +848,7 @@ double opt_view_glyph_location(OPT_ARGS_NUM);
 double opt_view_center_glyphs(OPT_ARGS_NUM);
 double opt_view_point_size(OPT_ARGS_NUM);
 double opt_view_line_width(OPT_ARGS_NUM);
+double opt_view_outline_width(OPT_ARGS_NUM);
 double opt_view_point_type(OPT_ARGS_NUM);
 double opt_view_line_type(OPT_ARGS_NUM);
 double opt_view_clip(OPT_ARGS_NUM);

@@ -107,7 +107,8 @@ class drawTarget {
 public:
   PView *view;
   PViewOptions *opt;
-  VertexArray *va_points, *va_lines, *va_triangles, *va_vectors, *va_ellipses;
+  VertexArray *va_points, *va_lines, *va_outlines, *va_triangles, *va_vectors,
+    *va_ellipses;
   smooth_normals *normals;
   // the entity it belongs to
   int ent;
@@ -130,11 +131,11 @@ public:
   double isosMin, isosMax;
   drawTarget(PView *p)
     : view(p), opt(p->getOptions()), va_points(p->va_points),
-      va_lines(p->va_lines), va_triangles(p->va_triangles),
-      va_vectors(p->va_vectors), va_ellipses(p->va_ellipses),
-      normals(p->normals), ent(0), collect(COLLECT_ALL),
-      skinMask(-1), skinShape(nullptr), skin(nullptr), element(0), isosNum(-1),
-      isosMin(0.), isosMax(0.)
+      va_lines(p->va_lines), va_outlines(p->va_outlines),
+      va_triangles(p->va_triangles), va_vectors(p->va_vectors),
+      va_ellipses(p->va_ellipses), normals(p->normals), ent(0),
+      collect(COLLECT_ALL), skinMask(-1), skinShape(nullptr), skin(nullptr),
+      element(0), isosNum(-1), isosMin(0.), isosMax(0.)
   {
   }
 };
@@ -512,7 +513,7 @@ static void addOutlineLine(drawTarget *p, double **xyz, unsigned int color,
   }
   SVector3 n[2];
   getLineNormal(p, x, y, z, nullptr, n, true);
-  p->va_lines->add(x, y, z, n, col, true);
+  p->va_outlines->add(x, y, z, n, col, true);
 }
 
 static void addScalarLine(drawTarget *p, double **xyz, double **val, bool pre,
@@ -603,7 +604,7 @@ static void addOutlineEdge(drawTarget *p, double **xyz, unsigned int color,
   }
   unsigned int col[2] = {color, color};
   getLineNormal(p, x, y, z, nullptr, n, false);
-  if(!pre) p->va_lines->add(x, y, z, n, col, true);
+  if(!pre) p->va_outlines->add(x, y, z, n, col, true);
 }
 
 // the edges of a face of n corners
@@ -1433,7 +1434,7 @@ static void addCapOutline(drawTarget *p, double **xyz, unsigned int color,
                           SVector3(n[0], n[1], n[2])};
         unsigned int col[2] = {color, color};
         getLineNormal(p, x, y, z, nullptr, nl, false);
-        p->va_lines->add(x, y, z, nl, col, true);
+        p->va_outlines->add(x, y, z, nl, col, true);
       }
     });
   }
@@ -2287,15 +2288,13 @@ void PView::invalidateClipVertexArrays() { _viewClipToken.erase(this); }
 
 // walk the elements and draw them into vertex arrays: the view's own, or
 // for the passes building what the clipping planes add, a subset of the
-// elements into the two arrays given (everything else those passes produce
+// elements into the three arrays given (everything else those passes produce
 // is thrown away)
-static void addElementsInArrays(PView *p, bool preprocessNormalsOnly,
-                                int collect = drawTarget::COLLECT_ALL,
-                                VertexArray *vaL = nullptr,
-                                VertexArray *vaT = nullptr,
-                                smooth_normals *normals = nullptr,
-                                const elementSpheres *spheres = nullptr,
-                                const viewSkinFaces *skin = nullptr)
+static void addElementsInArrays(
+  PView *p, bool preprocessNormalsOnly, int collect = drawTarget::COLLECT_ALL,
+  VertexArray *vaL = nullptr, VertexArray *vaO = nullptr,
+  VertexArray *vaT = nullptr, smooth_normals *normals = nullptr,
+  const elementSpheres *spheres = nullptr, const viewSkinFaces *skin = nullptr)
 {
   // use adaptive data if available
   PViewData *data = p->getData(true);
@@ -2318,6 +2317,7 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly,
     if(!own) {
       t.collect = collect;
       t.va_lines = vaL;
+      t.va_outlines = vaO;
       t.va_triangles = vaT;
       t.va_points = &points;
       t.va_vectors = &vectors;
@@ -2346,6 +2346,9 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly,
     d->va_points = new VertexArray(1, n / 4);
     d->va_lines = new VertexArray(2, n / 4);
     d->va_lines->setUniqueFilter((own ? p->va_lines : vaL)->getUniqueFilter(true));
+    d->va_outlines = new VertexArray(2, n / 4);
+    d->va_outlines->setUniqueFilter(
+      (own ? p->va_outlines : vaO)->getUniqueFilter(true));
     d->va_triangles = new VertexArray(3, 4 * n);
     d->va_triangles->setUniqueFilter(
       (own ? p->va_triangles : vaT)->getUniqueFilter(true));
@@ -2366,6 +2369,7 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly,
     if(own) {
       p->va_points->merge(targets[t]->va_points);
       p->va_lines->merge(targets[t]->va_lines);
+      p->va_outlines->merge(targets[t]->va_outlines);
       p->va_triangles->merge(targets[t]->va_triangles);
       p->va_vectors->merge(targets[t]->va_vectors);
       p->va_ellipses->merge(targets[t]->va_ellipses);
@@ -2374,10 +2378,12 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly,
     }
     else {
       vaL->merge(targets[t]->va_lines);
+      vaO->merge(targets[t]->va_outlines);
       vaT->merge(targets[t]->va_triangles);
     }
     delete targets[t]->va_points;
     delete targets[t]->va_lines;
+    delete targets[t]->va_outlines;
     delete targets[t]->va_triangles;
     delete targets[t]->va_vectors;
     delete targets[t]->va_ellipses;
@@ -2420,6 +2426,21 @@ private:
   {
     return _estimate(p, p->getData(true)->getNumLines(p->getOptions()->timeStep),
                      false, 10000);
+  }
+  // the edges of the elements, each shared by a few: only shown with
+  // View.ShowElement
+  std::size_t _estimateNumOutlines(PView *p)
+  {
+    PViewData *data = p->getData(true);
+    PViewOptions *opt = p->getOptions();
+    if(!opt->showElement) return 100;
+    int s = opt->timeStep;
+    std::size_t edges =
+      data->getNumLines(s) + 2 * data->getNumTriangles(s) +
+      2 * data->getNumQuadrangles(s) + 2 * data->getNumTetrahedra(s) +
+      3 * data->getNumPrisms(s) + 2 * data->getNumPyramids(s) +
+      3 * data->getNumHexahedra(s);
+    return _estimate(p, edges, true, 10000);
   }
   std::size_t _estimateNumTriangles(PView *p)
   {
@@ -2497,6 +2518,7 @@ public:
 
     p->va_points = new VertexArray(1, _estimateNumPoints(p));
     p->va_lines = new VertexArray(2, _estimateNumLines(p));
+    p->va_outlines = new VertexArray(2, _estimateNumOutlines(p));
     p->va_triangles = new VertexArray(3, _estimateNumTriangles(p));
     p->va_vectors = new VertexArray(2, _estimateNumVectors(p));
     p->va_ellipses = new VertexArray(4, _estimateNumEllipses(p));
@@ -2516,12 +2538,13 @@ public:
 
     if(opt->smoothNormals)
       addElementsInArrays(p, true, drawTarget::COLLECT_ALL, nullptr, nullptr,
-                          nullptr, nullptr, skin);
+                          nullptr, nullptr, nullptr, skin);
     addElementsInArrays(p, false, drawTarget::COLLECT_ALL, nullptr, nullptr,
-                        nullptr, nullptr, skin);
+                        nullptr, nullptr, nullptr, skin);
 
     p->va_points->finalize();
     p->va_lines->finalize();
+    p->va_outlines->finalize();
     p->va_triangles->finalize();
     p->va_vectors->finalize();
     p->va_ellipses->finalize();
@@ -2529,11 +2552,11 @@ public:
     Msg::Debug(
       "%d vertices in vertex arrays (%g MB)",
       p->va_points->getNumVertices() + p->va_lines->getNumVertices() +
-        p->va_triangles->getNumVertices() + p->va_vectors->getNumVertices() +
-        p->va_ellipses->getNumVertices(),
+        p->va_outlines->getNumVertices() + p->va_triangles->getNumVertices() +
+        p->va_vectors->getNumVertices() + p->va_ellipses->getNumVertices(),
       p->va_points->getMemoryInMB() + p->va_lines->getMemoryInMB() +
-        p->va_triangles->getMemoryInMB() + p->va_vectors->getMemoryInMB() +
-        p->va_ellipses->getMemoryInMB());
+        p->va_outlines->getMemoryInMB() + p->va_triangles->getMemoryInMB() +
+        p->va_vectors->getMemoryInMB() + p->va_ellipses->getMemoryInMB());
 
     VertexArray::printStats();
 
@@ -2585,6 +2608,7 @@ bool PView::fillClipVertexArrays()
 
   double t1 = TimeOfDay();
   va_clip_lines = new VertexArray(2, 100);
+  va_clip_outlines = new VertexArray(2, 100);
   va_clip_triangles = new VertexArray(3, 1000);
 
   // the elements the planes may cut, without reading the others
@@ -2599,18 +2623,20 @@ bool PView::fillClipVertexArrays()
     findSkin(this, flat, true, spheres, getSkin(this, data, opt, flat),
              cutSkin);
   // the same walk as for the view's own arrays, into the clip arrays
-  addElementsInArrays(this, false,
-                      whole ? drawTarget::COLLECT_CUT :
-                              drawTarget::COLLECT_CAPS,
-                      va_clip_lines, va_clip_triangles, nullptr, spheres,
-                      skinFound ? &cutSkin : nullptr);
+  addElementsInArrays(
+    this, false, whole ? drawTarget::COLLECT_CUT : drawTarget::COLLECT_CAPS,
+    va_clip_lines, va_clip_outlines, va_clip_triangles, nullptr, spheres,
+    skinFound ? &cutSkin : nullptr);
 
   va_clip_lines->finalize();
+  va_clip_outlines->finalize();
   va_clip_triangles->finalize();
-  if(va_clip_lines->getNumVertices() || va_clip_triangles->getNumVertices())
-    Msg::Debug("View[%d] %s: %d lines, %d triangles in %g s", getIndex(),
-               whole ? "cut elements" : "section",
+  if(va_clip_lines->getNumVertices() || va_clip_outlines->getNumVertices() ||
+     va_clip_triangles->getNumVertices())
+    Msg::Debug("View[%d] %s: %d lines, %d outlines, %d triangles in %g s",
+               getIndex(), whole ? "cut elements" : "section",
                va_clip_lines->getNumVertices(),
+               va_clip_outlines->getNumVertices(),
                va_clip_triangles->getNumVertices(), TimeOfDay() - t1);
   return true;
 }
@@ -2692,6 +2718,11 @@ void PView::fillVertexArray(onelab::localNetworkClient *remote, int length,
     if(p->va_ellipses) delete p->va_ellipses;
     p->va_ellipses = new VertexArray(4, 100);
     p->va_ellipses->fromChar(length, bytes, swap);
+    break;
+  case 6:
+    if(p->va_outlines) delete p->va_outlines;
+    p->va_outlines = new VertexArray(2, 100);
+    p->va_outlines->fromChar(length, bytes, swap);
     break;
   default: Msg::Error("Cannot fill vertex array of type %d", type); return;
   }

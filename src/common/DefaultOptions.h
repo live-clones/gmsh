@@ -2252,6 +2252,8 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "Opacity" , opt_view_opacity , 1. ,
     "Opacity factor applied to the colormap (1: unchanged, 0: fully "
     "transparent)" },
+  { F|O, "OutlineWidth" , opt_view_outline_width , 1.0 ,
+    "Display width of the element outlines (in pixels, see View.ShowElement)" },
   { F|O, "PointSize" , opt_view_point_size , 6. ,
     "Display size of points (in pixels)" },
   { F|O, "PointType" , opt_view_point_type , 0. ,

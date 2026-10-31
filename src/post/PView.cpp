@@ -37,8 +37,9 @@ void PView::_init(int tag)
   _changed = true;
   _aliasOf = -1;
   _eye = SPoint3(0., 0., 0.);
-  va_points = va_lines = va_triangles = va_vectors = va_ellipses = nullptr;
-  va_clip_lines = va_clip_triangles = nullptr;
+  va_points = va_lines = va_outlines = va_triangles = va_vectors = va_ellipses =
+    nullptr;
+  va_clip_lines = va_clip_outlines = va_clip_triangles = nullptr;
   normals = nullptr;
   _clipAdaptive = nullptr;
   _clipLayer = nullptr;
@@ -211,6 +212,8 @@ void PView::deleteClipVertexArrays()
 {
   if(va_clip_lines) delete va_clip_lines;
   va_clip_lines = nullptr;
+  if(va_clip_outlines) delete va_clip_outlines;
+  va_clip_outlines = nullptr;
   if(va_clip_triangles) delete va_clip_triangles;
   va_clip_triangles = nullptr;
 }
@@ -221,6 +224,8 @@ void PView::deleteVertexArrays()
   va_points = nullptr;
   if(va_lines) delete va_lines;
   va_lines = nullptr;
+  if(va_outlines) delete va_outlines;
+  va_outlines = nullptr;
   if(va_triangles) delete va_triangles;
   va_triangles = nullptr;
   if(va_vectors) delete va_vectors;
@@ -617,6 +622,7 @@ double PView::getMemoryInMB()
   double mem = 0;
   if(va_points) mem += va_points->getMemoryInMB();
   if(va_lines) mem += va_lines->getMemoryInMB();
+  if(va_outlines) mem += va_outlines->getMemoryInMB();
   if(va_triangles) mem += va_triangles->getMemoryInMB();
   if(va_vectors) mem += va_vectors->getMemoryInMB();
   if(va_ellipses) mem += va_ellipses->getMemoryInMB();

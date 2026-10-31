@@ -894,6 +894,7 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
   // would put the map it still shows back
   if(w == o->view.colorbar) o->view.choice[17]->value(colormap_number);
   double line_width = opt_view_line_width(current, GMSH_GET, 0);
+  double outline_width = opt_view_outline_width(current, GMSH_GET, 0);
   double explode = opt_view_explode(current, GMSH_GET, 0);
   double angle_smooth_normals =
     opt_view_angle_smooth_normals(current, GMSH_GET, 0);
@@ -1224,6 +1225,10 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
 
       val = o->view.value[62]->value();
       if(force || (val != line_width)) opt_view_line_width(i, GMSH_SET, val);
+
+      val = o->view.value[80]->value();
+      if(force || (val != outline_width))
+        opt_view_outline_width(i, GMSH_SET, val);
 
       val = o->view.value[12]->value();
       if(force || (val != explode)) opt_view_explode(i, GMSH_SET, val);
@@ -3483,9 +3488,14 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
                                   "View.Stipple", view_options_ok_cb);
 
       view.value[62] =
-        valueInput(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Line width",
+        valueInput(L + 2 * WB, 2 * WB + 5 * BH, IW / 2, BH, nullptr,
                    "View.LineWidth", 0.1, 50, 0.1, view_options_ok_cb);
       view.value[62]->align(FL_ALIGN_RIGHT);
+      view.value[80] =
+        valueInput(L + 2 * WB + IW / 2, 2 * WB + 5 * BH, IW - IW / 2, BH,
+                   "Line / outline width", "View.OutlineWidth", 0.1, 50, 0.1,
+                   view_options_ok_cb);
+      view.value[80]->align(FL_ALIGN_RIGHT);
 
       {
         static Fl_Menu_Item menu_vectype[] = {
@@ -4201,6 +4211,7 @@ void optionWindow::updateViewGroup(int index)
   opt_view_point_size(index, GMSH_GUI, 0);
   opt_view_point_type(index, GMSH_GUI, 0);
   opt_view_line_width(index, GMSH_GUI, 0);
+  opt_view_outline_width(index, GMSH_GUI, 0);
   opt_view_line_type(index, GMSH_GUI, 0);
   opt_view_vector_type(index, GMSH_GUI, 0);
   opt_view_arrow_size_min(index, GMSH_GUI, 0);

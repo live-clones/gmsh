@@ -265,6 +265,22 @@ static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
   gmshLighting(false);
 }
 
+// the outlines of the elements, at their own width and as lines, whatever the
+// lines of the field are drawn with
+static void drawOutlineArray(PView *p, VertexArray *va, bool light)
+{
+  if(!va || !va->getNumVertices()) return;
+  PViewOptions *opt = p->getOptions();
+  double factor = CTX::instance()->print.epsLineWidthFactor;
+  gmshLineWidth((float)opt->outlineWidth);
+  gl2psLineWidth((float)(opt->outlineWidth * factor));
+  drawVertexArray(va, GL_LINES,
+                  (light ? GMSH_DRAW_LIGHT : 0) | GMSH_DRAW_COLORS);
+  gmshLighting(false);
+  gmshLineWidth((float)opt->lineWidth);
+  gl2psLineWidth((float)(opt->lineWidth * factor));
+}
+
 // the ellipse or ellipsoid of the tensor at one point (thread safe: only
 // reads the view)
 static void addEllipseFor(drawContext *ctx, PViewOptions *opt, VertexArray *va,
@@ -766,12 +782,14 @@ public:
 
     drawArrays(_ctx, p, p->va_points, GL_POINTS, false);
     drawArrays(_ctx, p, p->va_lines, GL_LINES, opt->light && opt->lightLines);
+    drawOutlineArray(p, p->va_outlines, opt->light && opt->lightLines);
 
-    // the outlines of the cut elements, on the side the planes cut off; in
-    // capping mode those of the section, clipped like everything else
+    // the lines and outlines of the cut elements, on the side the planes cut
+    // off; in capping mode those of the section, clipped like everything else
     if(whole) setViewClipOutside(opt, true);
     drawArrays(_ctx, p, p->va_clip_lines, GL_LINES,
                opt->light && opt->lightLines, true);
+    drawOutlineArray(p, p->va_clip_outlines, opt->light && opt->lightLines);
     if(whole) setViewClipOutside(opt, false);
 
     if(opt->lightTwoSide) gmshLightTwoSide(true);
