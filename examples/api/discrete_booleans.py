@@ -1,4 +1,4 @@
-# The boolean operations of the discrete CAD modeler (with libigl): a tube
+# The boolean operations of the discrete CAD modeler: a tube
 # drilled across the seams of its cylinders, its volume compared with the one
 # computed by OpenCASCADE
 

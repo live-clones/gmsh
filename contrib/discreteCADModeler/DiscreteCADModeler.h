@@ -132,9 +132,9 @@ public:
   bool addTorus(int &tag, double x, double y, double z, double r1, double r2,
                 const std::vector<double> &zAxis, double tolerance);
   // the boolean operation op (0: union, 1: intersection, 2: difference) of
-  // the volumes objectDimTags and toolDimTags, exact on their triangulations
-  // (with libigl for the cases not handled yet, if available): the resulting
-  // volumes in outDimTags (the first one with the tag tag if positive), and
+  // the volumes objectDimTags and toolDimTags, exact on their
+  // triangulations: the resulting volumes in outDimTags (the first one with
+  // the tag tag if positive), and
   // those coming from each input entity in outDimTagsMap; the surfaces of the
   // result keep the parameters of those they come from
   bool booleanOperation(

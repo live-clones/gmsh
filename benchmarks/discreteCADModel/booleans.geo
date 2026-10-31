@@ -1,6 +1,6 @@
 // The boolean operations of the discrete CAD modeler: exact on the
-// triangulations of the volumes (with libigl), the surfaces of the results
-// keeping the parametrizations of those they come from
+// triangulations of the volumes, the surfaces of the results keeping the
+// parametrizations of those they come from
 SetFactory("Discrete");
 Geometry.DiscreteTolerance = 1e-3;
 

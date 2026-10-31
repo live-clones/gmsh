@@ -6,7 +6,6 @@
 #include <algorithm>
 #include <cmath>
 #include "DiscreteCADModeler.h"
-#include "DiscreteCADBoolean.h"
 #include "DiscreteCADMeshBoolean.h"
 #include "GmshMessage.h"
 #include "Context.h"
@@ -883,33 +882,12 @@ bool DiscreteCAD_Internals::booleanOperation(
     }
   }
   if(ok) ok = boolean(op, operand[0], operand[1], result);
-  std::vector<double> rxyz;
-  std::vector<int> rtri, birth;
-  if(ok) {
-    rxyz = result.xyz;
-    rtri = result.tri;
-    birth = result.origin;
-  }
-  else {
-#if defined(HAVE_LIBIGL)
-    // with libigl, on all the triangles of each operand
-    Msg::Warning("Discrete CAD boolean operation: %s, computed with libigl",
-                 error.c_str());
-    Triangulation all[2];
-    for(int o = 0; o < 2; o++)
-      for(Triangulation &v : volumes[o]) {
-        const int offset = (int)all[o].xyz.size() / 3;
-        all[o].xyz.insert(all[o].xyz.end(), v.xyz.begin(), v.xyz.end());
-        for(int n : v.tri) all[o].tri.push_back(n + offset);
-      }
-    if(!meshBooleanLibigl(op, all[0].xyz, all[0].tri, all[1].xyz, all[1].tri,
-                          rxyz, rtri, birth))
-      return false;
-#else
+  if(!ok) {
     Msg::Error("Discrete CAD boolean operation: %s", error.c_str());
     return false;
-#endif
   }
+  std::vector<double> rxyz = result.xyz;
+  std::vector<int> rtri = result.tri, birth = result.origin;
 
   // the nodes of the result: those of the operands kept, new ones elsewhere
   std::vector<int> rnode(rxyz.size() / 3);

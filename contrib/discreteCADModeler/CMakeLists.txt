@@ -5,7 +5,6 @@
 
 set(SRC
   DiscreteCADModeler.cpp
-  DiscreteCADBoolean.cpp
   DiscreteCADMeshBoolean.cpp
 )
 
