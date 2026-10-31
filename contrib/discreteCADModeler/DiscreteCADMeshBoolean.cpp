@@ -294,8 +294,10 @@ namespace {
     std::vector<double> _x;
     std::vector<int> _tri;
     int _nvA, _ntA, _nv, _nt;
-    // the edges: their vertices (the smallest first), their 2 triangles
-    std::vector<std::array<int, 2> > _edges, _edgeTriangles;
+    // the edges: their vertices (the smallest first), their triangles (2, or
+    // more along the edges where the solids of an operand touch)
+    std::vector<std::array<int, 2> > _edges;
+    std::vector<std::vector<int> > _edgeTriangles;
     std::vector<int> _triEdges; // 3 per triangle: edge (v_k, v_k+1)
     int _neA;
     // the triangles around the vertices
@@ -699,9 +701,9 @@ namespace {
         for(int t : _edgeTriangles[f])
           if(plane(t, r)) return r;
         // g in the planes of both triangles of f
-        const int t = _degenerate[_edgeTriangles[f][0]] ?
-                        _edgeTriangles[f][1] :
-                        _edgeTriangles[f][0];
+        int t = _edgeTriangles[f][0];
+        for(int u : _edgeTriangles[f])
+          if(!_degenerate[u]) t = u;
         return Ratio{p, q, _edges[f][0], _edges[f][1], -_axis[t] - 1};
       }
       const int w = index(s);
@@ -799,7 +801,8 @@ namespace {
       _x.insert(_x.end(), xyzB.begin(), xyzB.end());
       _tri = triA;
       for(int v : triB) _tri.push_back(v + _nvA);
-      // the edges, each operand closed and manifold
+      // the edges, each operand closed and oriented (the triangles along an
+      // edge in both directions, as many: 2, or more where its solids touch)
       std::vector<std::array<int, 4> > half(3 * _nt);
       for(int t = 0; t < _nt; t++)
         for(int k = 0; k < 3; k++) {
@@ -813,15 +816,20 @@ namespace {
         while(j < half.size() && half[j][0] == half[i][0] &&
               half[j][1] == half[i][1])
           j++;
-        if(j - i != 2) {
-          error = "an operand is not a closed manifold triangulation";
+        int forward = 0;
+        for(std::size_t h = i; h < j; h++)
+          if(_tri[3 * half[h][2] + half[h][3]] == half[h][0]) forward++;
+        if(2 * forward != (int)(j - i)) {
+          error = "an operand is not a closed oriented triangulation";
           return false;
         }
         const int e = (int)_edges.size();
         _edges.push_back({half[i][0], half[i][1]});
-        _edgeTriangles.push_back({half[i][2], half[i + 1][2]});
-        _triEdges[3 * half[i][2] + half[i][3]] = e;
-        _triEdges[3 * half[i + 1][2] + half[i + 1][3]] = e;
+        _edgeTriangles.push_back(std::vector<int>());
+        for(std::size_t h = i; h < j; h++) {
+          _edgeTriangles.back().push_back(half[h][2]);
+          _triEdges[3 * half[h][2] + half[h][3]] = e;
+        }
         i = j;
       }
       // the edges of A first (the vertices of A come first)
@@ -872,9 +880,8 @@ namespace {
           stack.pop_back();
           if(_degenerate[u]) continue;
           const int *v = &_tri[3 * u];
-          for(int k = 0; k < 3; k++) {
-            const std::array<int, 2> &n = _edgeTriangles[_triEdges[3 * u + k]];
-            const int w = n[0] == u ? n[1] : n[0];
+          for(int k = 0; k < 3; k++)
+            for(int w : _edgeTriangles[_triEdges[3 * u + k]]) {
             if(_region[w] >= 0 || _degenerate[w]) continue;
             const int *x = &_tri[3 * w];
             int opposite = x[0];
@@ -1414,12 +1421,8 @@ namespace {
       o.erase(std::unique(o.begin(), o.end()), o.end());
       const int t = f.birth, k = _axis[t];
       const int u = f.v[i], w = f.v[(i + 1) % 3], z = f.v[(i + 2) % 3];
-      std::vector<int> transversal;
       for(int c : o) {
-        if(!_coplanar(t, c)) {
-          transversal.push_back(c);
-          continue;
-        }
+        if(!_coplanar(t, c)) continue;
         // on it, if on the side of its interior
         const int *v = &_tri[3 * c];
         const int sc = orient2d(X(v[0]), X(v[1]), X(v[2]), k);
@@ -1432,19 +1435,32 @@ namespace {
         }
         if(on) return sc == _orientation[t] ? 2 : 3;
       }
-      if(transversal.size() == 1) return _side(transversal[0], z);
-      if(transversal.size() != 2) return 0;
-      const int s1 = _side(transversal[0], z), s2 = _side(transversal[1], z);
-      if(!s1 || !s2) return 0;
-      // the vertex of the second one not on the first one
-      const int *v1 = &_tri[3 * transversal[0]], *v2 = &_tri[3 * transversal[1]];
+      // locally inside the other operand: below its triangle, or, along an
+      // edge of two of its triangles (only them: not where solids touch),
+      // below both if their dihedral angle is convex, below one of them if
+      // it is reflex (on the plane of one of them: not below it)
+      if(o.size() == 1) return _side(o[0], z);
+      if(o.size() != 2) return 0;
+      int shared = -1;
+      for(int i1 = 0; i1 < 3; i1++)
+        for(int i2 = 0; i2 < 3; i2++)
+          if(_triEdges[3 * o[0] + i1] == _triEdges[3 * o[1] + i2])
+            shared = _triEdges[3 * o[0] + i1];
+      if(shared < 0 || _edgeTriangles[shared].size() != 2) return 0;
+      const int *v1 = &_tri[3 * o[0]], *v2 = &_tri[3 * o[1]];
       int x = -1;
       for(int j = 0; j < 3; j++)
         if(v2[j] != v1[0] && v2[j] != v1[1] && v2[j] != v1[2]) x = v2[j];
       if(x < 0) return 0;
-      const bool convex = _side(transversal[0], x) > 0;
-      if(convex) return (s1 > 0 && s2 > 0) ? 1 : -1;
-      return (s1 > 0 || s2 > 0) ? 1 : -1;
+      const int s1 = _side(o[0], z), s2 = _side(o[1], z);
+      const int dihedral = _side(o[0], x);
+      if(dihedral == 0) return s1; // flat
+      if(dihedral > 0) { // convex
+        if(s1 > 0 && s2 > 0) return 1;
+        return (s1 < 0 || s2 < 0 || (s1 == 0) != (s2 == 0)) ? -1 : 0;
+      }
+      if(s1 > 0 || s2 > 0) return 1; // reflex
+      return (s1 < 0 || s2 < 0) ? -1 : 0;
     }
 
     // inside the other operand, by the parity of the crossings of rays
@@ -1511,27 +1527,33 @@ namespace {
         while(parent[i] != i) i = parent[i] = parent[parent[i]];
         return i;
       };
+      // the edges: a triangle along them, their number of triangles (even),
+      // constrained or not; the patches across the edges not constrained
+      // (whatever their number of triangles: an edge not crossed by the other
+      // operand is on one side of it)
       std::unordered_map<uint64_t, std::array<int, 3> > edgeOf;
       edgeOf.reserve(3 * n);
+      auto key = [&](int i, int k) {
+        return edgeKey(std::min(F[i].v[k], F[i].v[(k + 1) % 3]),
+                       std::max(F[i].v[k], F[i].v[(k + 1) % 3]));
+      };
       for(int i = 0; i < n; i++)
         for(int k = 0; k < 3; k++) {
-          const int a = std::min(F[i].v[k], F[i].v[(k + 1) % 3]);
-          const int b = std::max(F[i].v[k], F[i].v[(k + 1) % 3]);
-          auto &e = edgeOf.emplace(edgeKey(a, b), std::array<int, 3>{-1, -1, 0})
+          auto &e = edgeOf.emplace(key(i, k), std::array<int, 3>{i, 0, 0})
                       .first->second;
-          if(e[0] < 0)
-            e[0] = i;
-          else
-            e[1] = i;
+          e[1]++;
           if(F[i].along[k] >= 0) e[2] = 1;
         }
-      for(auto &e : edgeOf) {
-        if(e.second[1] < 0) {
+      for(auto &e : edgeOf)
+        if(e.second[1] % 2) {
           error = "the result is not closed";
           return false;
         }
-        if(!e.second[2]) parent[find(e.second[0])] = find(e.second[1]);
-      }
+      for(int i = 0; i < n; i++)
+        for(int k = 0; k < 3; k++) {
+          const std::array<int, 3> &e = edgeOf[key(i, k)];
+          if(!e[2]) parent[find(i)] = find(e[0]);
+        }
       std::unordered_map<int, int> patch; // root -> state
       for(int i = 0; i < n; i++)
         for(int k = 0; k < 3; k++) {
@@ -1579,7 +1601,17 @@ namespace {
                  const std::vector<int> &triB, std::vector<double> &xyz,
                  std::vector<int> &tri, std::vector<int> &birth)
     {
-      if(!_setup(xyzA, triA, xyzB, triB)) return false;
+      // the operands cleaned first (an exact result rounded can have
+      // clusters of points closer than its rounding, and folded slivers
+      // between them), their triangles kept
+      std::vector<double> xA = xyzA, xB = xyzB;
+      std::vector<int> tA = triA, tB = triB;
+      std::vector<double> all = xyzA;
+      all.insert(all.end(), xyzB.begin(), xyzB.end());
+      const double delta = _collapseLength(all);
+      const std::vector<int> keptA = _collapse(xA, tA, delta);
+      const std::vector<int> keptB = _collapse(xB, tB, delta);
+      if(!_setup(xA, tA, xB, tB)) return false;
       if(!_intersectAll()) return false;
       if(!_triangulateAll()) return false;
       std::vector<int> inside[2];
@@ -1622,25 +1654,48 @@ namespace {
           birth.push_back(f.birth);
         }
       _clean(xyz, tri, birth);
+      const int ntA = (int)tA.size() / 3, ntA0 = (int)triA.size() / 3;
+      for(int &b : birth) b = b < ntA ? keptA[b] : ntA0 + keptB[b - ntA];
       return true;
     }
 
-    // the edges whose ends are rounded to the same coordinates (the exact
-    // intersection points can be closer than the rounding) collapsed, if the
-    // ends have no other common neighbors than the vertices opposite to the
-    // edge (the result stays manifold); the others left as they are
-    static void _clean(std::vector<double> &xyz, std::vector<int> &tri,
-                       std::vector<int> &birth)
+    // the length below which edges are collapsed: far below any geometric
+    // feature, above the distances between the points of an exact result
+    // rounded to doubles
+    static double _collapseLength(const std::vector<double> &xyz)
+    {
+      double lo[3] = {1e300, 1e300, 1e300}, hi[3] = {-1e300, -1e300, -1e300};
+      for(std::size_t i = 0; i < xyz.size(); i++) {
+        lo[i % 3] = std::min(lo[i % 3], xyz[i]);
+        hi[i % 3] = std::max(hi[i % 3], xyz[i]);
+      }
+      double d = 0.;
+      for(int k = 0; k < 3 && !xyz.empty(); k++)
+        d += (hi[k] - lo[k]) * (hi[k] - lo[k]);
+      return 1.e-12 * std::sqrt(d);
+    }
+
+    // the edges shorter than delta (points of an exact result closer than its
+    // rounding) collapsed, if their ends have no other common neighbors than
+    // the vertices opposite to them (the triangulation stays manifold), the
+    // others left as they are: the triangles kept, as the indices of the
+    // original ones
+    static std::vector<int> _collapse(std::vector<double> &xyz,
+                                      std::vector<int> &tri, double delta)
     {
       const int nv = (int)xyz.size() / 3, nt = (int)tri.size() / 3;
+      std::vector<int> kept(nt);
+      for(int t = 0; t < nt; t++) kept[t] = t;
       auto same = [&](int a, int b) {
-        return std::equal(&xyz[3 * a], &xyz[3 * a + 3], &xyz[3 * b]);
+        return std::abs(xyz[3 * a] - xyz[3 * b]) +
+                 std::abs(xyz[3 * a + 1] - xyz[3 * b + 1]) +
+                 std::abs(xyz[3 * a + 2] - xyz[3 * b + 2]) <= delta;
       };
       bool any = false;
       for(int t = 0; t < nt && !any; t++)
         for(int k = 0; k < 3; k++)
           if(same(tri[3 * t + k], tri[3 * t + (k + 1) % 3])) any = true;
-      if(!any) return;
+      if(!any) return kept;
       std::vector<std::vector<int> > around(nv);
       for(int t = 0; t < nt; t++)
         for(int k = 0; k < 3; k++) around[tri[3 * t + k]].push_back(t);
@@ -1689,8 +1744,9 @@ namespace {
           }
         }
       }
-      std::vector<int> t2, b2, used(nv, -1);
+      std::vector<int> t2, used(nv, -1);
       std::vector<double> x;
+      kept.clear();
       for(int t = 0; t < nt; t++) {
         if(dead[t]) continue;
         for(int k = 0; k < 3; k++) {
@@ -1702,11 +1758,21 @@ namespace {
           }
           t2.push_back(v);
         }
-        b2.push_back(birth[t]);
+        kept.push_back(t);
       }
       xyz = x;
       tri = t2;
-      birth = b2;
+      return kept;
+    }
+
+    // the result cleaned: its edges shorter than the rounding collapsed
+    static void _clean(std::vector<double> &xyz, std::vector<int> &tri,
+                       std::vector<int> &birth)
+    {
+      const std::vector<int> kept = _collapse(xyz, tri, _collapseLength(xyz));
+      std::vector<int> b(kept.size());
+      for(std::size_t i = 0; i < kept.size(); i++) b[i] = birth[kept[i]];
+      birth = b;
     }
   };
 
