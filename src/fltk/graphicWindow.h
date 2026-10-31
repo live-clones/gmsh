@@ -47,6 +47,9 @@ private:
   int _iconSize;
   // the width of the menu while it is hidden, to show it again
   int _menuWidth;
+  // a press on the tiles, which may start the drag of an edge: where, and
+  // the sizes of the menu and the messages then (see tileReleased())
+  int _pushX, _pushY, _pushMenuWidth, _pushMessageHeight;
   std::vector<std::string> _messages;
   // the column of docked tool windows on the right of the tiles, the edge
   // dragged to change its width, and the box that says what resizes
@@ -88,6 +91,9 @@ public:
   int getGlHeight();
   void setGlHeight(int h);
   int getMenuWidth();
+  // a press on the tiles, and an edge of the tiles released
+  void tilePushed();
+  void tileReleased();
   void setMenuWidth(int w);
   int getMenuHeight();
   void showMenu();

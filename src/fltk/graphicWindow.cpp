@@ -3510,13 +3510,37 @@ static void message_menu_copy_cb(Fl_Widget *w, void *data)
   g->copySelectedMessagesToClipboard();
 }
 
+// the tiles of the main window, which also call their callback when pressed,
+// as Fl_Tile does only when an edge moves and when it is released
+class mainTile : public Fl_Tile {
+public:
+  mainTile(int x, int y, int w, int h) : Fl_Tile(x, y, w, h) {}
+  int handle(int event)
+  {
+    if(event == FL_PUSH) do_callback(FL_REASON_SELECTED);
+    return Fl_Tile::handle(event);
+  }
+};
+
 static void tile_cb(Fl_Widget *w, void *data)
 {
+  if(Fl::callback_reason() == FL_REASON_SELECTED) {
+    getGraphicWindow(w)->tilePushed();
+    return;
+  }
   if(Fl::event() == FL_RELEASE) {
-    // rebuild the tree when we relase the mouse after resizing
+    getGraphicWindow(w)->tileReleased();
+    // rebuild the tree when we release the mouse after resizing
     FlGui::instance()->rebuildTree(true);
   }
 }
+
+// the least sizes of the menu and the messages in the tiles: their edges
+// could not be grabbed again at the border of the tile, where the graphics,
+// subwindows, take the events; the menu as wide as its Check, Run and gear
+// buttons (see onelabGroup)
+static int minMenuWidth() { return 3 * (BB / 2 + 4) + 4 * WB; }
+static int minMessageHeight() { return 2 * BH; }
 
 // The menu bar of the window, when it is not the system's: the title under
 // the pointer is highlighted, as the bars of the desktops do (FLTK draws the
@@ -3653,7 +3677,8 @@ public:
 };
 
 graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
-  : _autoScrollMessages(true)
+  : _autoScrollMessages(true), _pushX(0), _pushY(0), _pushMenuWidth(0),
+    _pushMessageHeight(0)
 {
   int mh = main ? BH : 0; // menu bar height
 #if defined(__APPLE__)
@@ -3745,7 +3770,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   _resbox = resbox;
 
   // tiled windows (tree menu, opengl, messages)
-  _tile = new Fl_Tile(0, mh, glwidth + twidth, glheight + mheight);
+  _tile = new mainTile(0, mh, glwidth + twidth, glheight + mheight);
 
   int w2 = glwidth / 2, h2 = glheight / 2;
   if(numTiles == 2) {
@@ -3805,11 +3830,11 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   }
 
   // the edges are dragged within the resizable box: the tree and the messages
-  // keep a least size, as at the border of the tile their edge could not be
-  // grabbed again (next to it the graphics, subwindows, take the events)
+  // keep their least size, and are hidden when released well past it (see
+  // tileReleased())
   {
-    int minw = _onelab ? 3 * BB / 2 + 4 * WB : 0;
-    int minh = _browser ? 2 * BH : 0;
+    int minw = _onelab ? minMenuWidth() : 0;
+    int minh = _browser ? minMessageHeight() : 0;
     dummyBox *drag =
       new dummyBox(minw, mh, _tile->w() - minw, _tile->h() - minh);
     _tile->insert(*drag, 0);
@@ -3835,11 +3860,9 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   // resize the tiles to match the prescribed sizes
   _tile->position(0, mh + glheight, 0, mh + CTX::instance()->glSize[1]);
 
-  // if the tree widget is too small it will not be rebuilt correctly (probably
-  // a bug)... so impose minimum width, the least it can be dragged to; a width
-  // of 0 means that the menu is hidden: built at its least width, hidden at
-  // the end
-  int minw = 3 * BB / 2 + 4 * WB;
+  // the menu at least at its least width; a width of 0 means that the menu is
+  // hidden: built at its least width, hidden at the end
+  int minw = minMenuWidth();
   int mw = CTX::instance()->menuSize[0];
   bool hiddenMenu = (mw <= 0);
   if(mw < minw) mw = minw;
@@ -4008,7 +4031,10 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   }
 
   if(main) setDocking(true);
-  if(main && hiddenMenu) hideMenu();
+  if(main && hiddenMenu) {
+    hideMenu();
+    _menuWidth = 0; // shown again at its default width (see showMenu())
+  }
 }
 
 static void dropped_cb(void *data);
@@ -4133,6 +4159,44 @@ void graphicWindow::hideMenu()
   if(_onelab->w() > 0) _menuWidth = _onelab->w();
   CTX::instance()->menuSize[0] = 0;
   setMenuWidth(0);
+}
+
+void graphicWindow::tilePushed()
+{
+  _pushX = Fl::event_x();
+  _pushY = Fl::event_y();
+  _pushMenuWidth = getMenuWidth();
+  _pushMessageHeight = getMessageHeight();
+}
+
+// an edge of the tiles released: a menu or messages dragged well past their
+// least size, towards the border of the tile, are hidden as their toggles
+// hide them, and the toggles show them again at the size they had before the
+// drag
+void graphicWindow::tileReleased()
+{
+  int mx = Fl::event_x(), my = Fl::event_y();
+  const int grab = 5; // the grab area of Fl_Tile, and a pixel
+  int minw = minMenuWidth(), minh = minMessageHeight();
+  // a menu or messages shown when pressed (else Fl_Tile may take a press at
+  // the border for their edge)
+  if(_onelab && !_menuwin && _pushMenuWidth >= FL_NORMAL_SIZE &&
+     _onelab->w() <= minw &&
+     std::abs(_pushX - (_onelab->x() + _pushMenuWidth)) <= grab &&
+     mx < _onelab->x() + minw / 2) {
+    hideMenu();
+    _menuWidth = (_pushMenuWidth > minw) ? _pushMenuWidth : 0;
+  }
+  if(_browser && _pushMessageHeight >= FL_NORMAL_SIZE &&
+     _browser->h() <= minh) {
+    int bottom = _browser->y() + _browser->h();
+    if(std::abs(_pushY - (bottom - _pushMessageHeight)) <= grab &&
+       my > bottom - minh / 2) {
+      hideMessages();
+      CTX::instance()->msgSize =
+        (_pushMessageHeight > minh) ? _pushMessageHeight : 0;
+    }
+  }
 }
 
 void graphicWindow::showHideMenu()
