@@ -16,6 +16,7 @@
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Menu_Button.H>
 #include "extraDialogs.h"
+#include "inputValue.h"
 
 class outputRange : public Fl_Group {
 private:
@@ -195,14 +196,7 @@ public:
   void value(double val)
   {
     char buffer[256];
-    if(_number_format.empty()) { sprintf(buffer, "%g", val); }
-    else {
-      if(_number_format.find("d") != std::string::npos ||
-         _number_format.find("u") != std::string::npos)
-        sprintf(buffer, _number_format.c_str(), (int)val);
-      else
-        sprintf(buffer, _number_format.c_str(), val);
-    }
+    formatNumber(buffer, sizeof(buffer), _number_format, val);
     _output->value(buffer);
   }
   void choices(const std::vector<double> &val)

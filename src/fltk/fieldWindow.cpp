@@ -75,6 +75,7 @@ static void field_put_on_view_cb(Fl_Widget *w, void *data)
 {
   Fl_Menu_Button *mb = ((Fl_Menu_Button *)w);
   Field *field = (Field *)FlGui::instance()->fields->editor_group->user_data();
+  if(!field) return;
   field->update();
   if(mb->value() == 0)
     field->putOnNewView();
@@ -95,7 +96,7 @@ static void field_select_file_cb(Fl_Widget *w, void *data)
   Fl_Input *input = (Fl_Input *)data;
   int ret = fileChooser(FILE_CHOOSER_SINGLE, "Choose", "", input->value());
   if(ret) {
-    input->value(fileChooserGetName(0).c_str());
+    input->value(fileChooserGetName(1).c_str());
     input->set_changed();
   }
 }
@@ -244,7 +245,11 @@ void fieldWindow::loadFieldViewList()
 #if defined(HAVE_MESH)
   put_on_view_btn->clear();
   put_on_view_btn->add("Create new view");
-  put_on_view_btn->activate();
+  // only for a field being edited
+  if(editor_group->user_data())
+    put_on_view_btn->activate();
+  else
+    put_on_view_btn->deactivate();
   for(std::size_t i = 0; i < PView::list.size(); i++) {
     std::ostringstream s;
     s << "Put on View [" << i << "]";

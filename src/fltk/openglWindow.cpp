@@ -816,6 +816,9 @@ char openglWindow::selectEntity(int type, std::vector<GVertex *> &vertices,
   take_focus();
   beginSelection(type);
 
+  // the events processed while waiting may delete this window (unsplit, the
+  // closing of a graphic window), or the whole GUI
+  Fl_Widget_Tracker alive(this);
   while(1) {
     if(!FlGui::available()) return 'q';
     vertices.clear();
@@ -823,8 +826,10 @@ char openglWindow::selectEntity(int type, std::vector<GVertex *> &vertices,
     faces.clear();
     regions.clear();
     elements.clear();
+    points.clear();
+    views.clear();
     FlGui::wait();
-    if(!FlGui::available()) return 'q';
+    if(!FlGui::available() || alive.deleted()) return 'q';
     char ret = selectionStep(vertices, edges, faces, regions, elements, points,
                              views);
     if(ret) return ret;

@@ -38,7 +38,8 @@ static void highordertools_runp_cb(Fl_Widget *w, void *data)
 {
   highOrderToolsWindow *o = FlGui::instance()->highordertools;
 
-  int order = (int)o->value[0]->value();
+  // at least 1, the order of no mesh being -1
+  int order = std::max(1, (int)o->value[0]->value());
   bool linear = !(bool)o->butt[2]->value();
   bool incomplete = (bool)o->butt[0]->value();
   bool onlyVisible = (bool)o->butt[1]->value();
@@ -328,7 +329,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   value[0]->maximum(10);
   if(CTX::instance()->inputScrolling) value[0]->step(1);
   value[0]->align(FL_ALIGN_RIGHT);
-  value[0]->value(meshOrder);
+  value[0]->value(std::max(1, meshOrder));
 
   y += BH;
 
@@ -495,7 +496,7 @@ void highOrderToolsWindow::show(bool redrawOnly)
   if(win->shown() && redrawOnly)
     win->redraw();
   else {
-    value[0]->value(meshOrder);
+    value[0]->value(std::max(1, meshOrder));
     butt[0]->value(!complete);
     if(CAD) {
       box->label("CAD model is available");

@@ -124,7 +124,8 @@ int FlGui::locked() { return _locked; }
 
 static void awake_cb(void *data)
 {
-  if(data) FlGui::instance()->updateViews(true, false);
+  // without a GUI, nothing to update (instance() would create one)
+  if(data && FlGui::available()) FlGui::instance()->updateViews(true, false);
 }
 
 void FlGui::awake(const std::string &action)
@@ -602,8 +603,11 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   Fl_Mac_App_Menu::print = ""; // this sometimes crashes
 #endif
 
-  // tell fltk we're (potentially) in multi-threaded mode
-  Fl::lock();
+  // tell fltk we're (potentially) in multi-threaded mode, once: the lock is
+  // recursive, and Fl::wait() only releases one level of it
+  static bool locked = false;
+  if(!locked) Fl::lock();
+  locked = true;
   _mainThread = std::this_thread::get_id();
 
   // set X display
@@ -818,6 +822,11 @@ FlGui::~FlGui()
   delete meshContext;
   delete help;
   delete fullscreen;
+
+  // what was registered for this GUI, which a new one registers again
+  Fl::remove_handler(globalShortcut);
+  Fl::remove_timeout(gamepad_handler);
+  drawContext::setDrawGeomTransientFunction(nullptr);
 }
 
 bool FlGui::available() { return _instance != nullptr; }
@@ -1618,7 +1627,7 @@ void redraw_cb(Fl_Widget *w, void *data) { drawContext::global()->draw(); }
 
 void window_cb(Fl_Widget *w, void *data)
 {
-  static int oldx = 0, oldy = 0, oldw = 0, oldh = 0, zoom = 0, fullscreen = 0;
+  static int oldx = 0, oldy = 0, oldw = 0, oldh = 0, zoom = 0;
 
   std::string str((const char *)data);
 
@@ -1649,7 +1658,7 @@ void window_cb(Fl_Widget *w, void *data)
     }
   }
   else if(str == "fullscreen") {
-    if(!fullscreen) {
+    if(!FlGui::instance()->fullscreen->shown()) {
       // resize to the size of the screen of the current graphic window first,
       // in case fullscreen does not work
       int x, y, w, h;
@@ -1669,7 +1678,6 @@ void window_cb(Fl_Widget *w, void *data)
       for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
         FlGui::instance()->graph[i]->getWindow()->hide();
       drawContext::global()->draw();
-      fullscreen = 1;
     }
     else {
       for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
@@ -1684,7 +1692,6 @@ void window_cb(Fl_Widget *w, void *data)
       FlGui::instance()->fullscreen->fullscreen_off();
       FlGui::instance()->fullscreen->hide();
       drawContext::global()->draw();
-      fullscreen = 0;
     }
   }
   else if(str == "front") {

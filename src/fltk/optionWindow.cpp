@@ -764,7 +764,7 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
 {
   int current = FlGui::instance()->options->view.index;
 
-  if(current < 0) return;
+  if(current < 0 || current >= (int)PView::list.size()) return;
 
   optionWindow *o = FlGui::instance()->options;
   o->activate((const char *)data);
@@ -4420,8 +4420,8 @@ void optionWindow::updateViewTargets()
     if(i == view.index || viewList->browser->selected(i + 1)) n++;
     std::string str =
       (i == view.index ? "@b@." : "@.") + targetList::viewName(i);
-    if(str != viewList->browser->text(i + 1))
-      viewList->browser->text(i + 1, str.c_str());
+    const char *text = viewList->browser->text(i + 1);
+    if(!text || str != text) viewList->browser->text(i + 1, str.c_str());
   }
   std::string str = (n > 1) ? "Applies to " + std::to_string(n) + " views" :
                               "Applies to this view only";

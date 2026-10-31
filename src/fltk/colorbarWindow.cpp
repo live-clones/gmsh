@@ -43,6 +43,8 @@ int colorbarWindow::x_to_index(int x)
 int colorbarWindow::index_to_x(int index)
 {
   int x;
+  // a table of one colour: its entry at the left edge (see redraw_range())
+  if(ct->size < 2) return 0;
   x = (int)(index * (double)w() / (double)(ct->size - 1));
   if(x >= w()) x = w() - 1;
   return x;
@@ -85,6 +87,7 @@ void colorbarWindow::redraw_range(int a, int b)
   // calculate region to update
   x1 = index_to_x(a);
   x2 = index_to_x(b);
+  if(ct->size < 2) x2 = w() - 1; // a table of one colour fills the bar
   y1 = intensity_to_y(255);
   y2 = intensity_to_y(0);
 
@@ -270,8 +273,9 @@ void colorbarWindow::redraw_marker()
 
   // draw marker value
   fl_font(FL_HELVETICA, font_height);
-  val =
-    minval + (maxval - minval) * ((double)marker_pos / (double)(ct->size - 1));
+  val = minval;
+  if(ct->size > 1)
+    val += (maxval - minval) * ((double)marker_pos / (double)(ct->size - 1));
   sprintf(str, "%g", val);
   fl_draw(str, ox + 10, oy + label_y);
 }
@@ -286,7 +290,7 @@ int colorbarWindow::helpHeight() const
 
 void colorbarWindow::draw()
 {
-  if(!ct) return;
+  if(!ct || ct->size < 1) return;
 
   label_y = h() - 5;
   marker_y = label_y - marker_height - font_height;
@@ -315,7 +319,7 @@ void colorbarWindow::update(const char *name, double min, double max,
 
 int colorbarWindow::handle(int event)
 {
-  if(!ct) return Fl_Widget::handle(event);
+  if(!ct || ct->size < 1) return Fl_Widget::handle(event);
 
   static int p1 = 0, p2 = 0, p3 = 0, p4 = 0;
   static int pentry, move_marker;

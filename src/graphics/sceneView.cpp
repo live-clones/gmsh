@@ -350,6 +350,7 @@ void sceneView::_lassoZoom()
     Camera *cam = &(_ctx->camera);
     double dy = fabs(-_click.win[1] + _curr.win[1]);
     double dx = fabs(-_click.win[0] + _curr.win[0]);
+    if(dx == 0. || dy == 0.) return;
     double factx = _w / fabs(dx);
     double facty = _h / fabs(dy);
     double fact = .8 * std::min(factx, facty);

@@ -736,7 +736,8 @@ void Msg::StatusBar(bool log, const char *fmt, ...)
 
   if(_infoCpu || _infoMem){
     std::string res = PrintResources(false, _infoCpu, _infoCpu, _infoMem);
-    strcat(str, res.c_str());
+    if(strlen(str) + res.size() < 5000)
+      strcat(str, res.c_str());
   }
 
   if(log && _logFile) fprintf(_logFile, "Info    : %s\n", str);

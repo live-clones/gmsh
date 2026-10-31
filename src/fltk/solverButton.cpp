@@ -99,8 +99,7 @@ solverButton::solverButton(int x, int y, int w, int h, int num, Fl_Color col)
   std::string name = opt_solver_name(num, GMSH_GET, "");
   _butt[0]->copy_label(name.c_str());
   std::string exe = opt_solver_executable(num, GMSH_GET, "");
-  strcpy(_tooltip, exe.c_str());
-  _butt[0]->tooltip(_tooltip);
+  _butt[0]->copy_tooltip(exe.c_str());
 
   _butt[1] = new Fl_Button(x + w - popw, y, popw, h, "@>");
   _butt[1]->align(FL_ALIGN_RIGHT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);

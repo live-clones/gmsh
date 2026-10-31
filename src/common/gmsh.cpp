@@ -106,8 +106,11 @@ extern "C" {
 }
 
 static int _initialized = 0;
+// copies of the arguments given to initialize(): the caller's go when it
+// returns (Python's are temporaries), and the GUI reads them when created
 static int _argc = 0;
 static char **_argv = nullptr;
+static std::vector<std::string> _argvStrings;
 
 static bool _checkInit()
 {
@@ -140,8 +143,10 @@ GMSH_API void gmsh::initialize(int argc, char **argv,
   if(GmshInitialize(argc, argv, readConfigFiles, false)) {
     _initialized = 1;
     _argc = argc;
+    _argvStrings.assign(argv, argv + argc);
     _argv = new char *[_argc + 1];
-    for(int i = 0; i < argc; i++) _argv[i] = argv[i];
+    for(int i = 0; i < argc; i++) _argv[i] = &_argvStrings[i][0];
+    _argv[_argc] = nullptr;
 
 #if defined(HAVE_FLTK)
     // if the GUI is already running (rare case, but could happen), we're done
@@ -179,6 +184,7 @@ GMSH_API void gmsh::finalize()
     _argc = 0;
     if(_argv) delete[] _argv;
     _argv = nullptr;
+    _argvStrings.clear();
     _initialized = 0;
     return;
   }

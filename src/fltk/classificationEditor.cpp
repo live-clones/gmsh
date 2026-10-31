@@ -118,6 +118,11 @@ static void select_elements_cb(Fl_Widget *w, void *data)
                     "[Press 'e' to end selection or 'q' to abort]");
 
       char ib = FlGui::instance()->selectEntity(ENT_ALL);
+      // the editor goes with the GUI
+      if(!FlGui::available()) {
+        CTX::instance()->pickElements = 0;
+        return;
+      }
       if(ib == 'l') {
         for(std::size_t i = 0; i < FlGui::instance()->selectedElements.size();
             i++) {
@@ -132,9 +137,9 @@ static void select_elements_cb(Fl_Widget *w, void *data)
         for(std::size_t i = 0; i < FlGui::instance()->selectedElements.size();
             i++) {
           MElement *me = FlGui::instance()->selectedElements[i];
-          if(me->getVisibility() == 2)
-            e->elements.erase(
-              std::find(e->elements.begin(), e->elements.end(), me));
+          auto it = std::find(e->elements.begin(), e->elements.end(), me);
+          if(me->getVisibility() == 2 && it != e->elements.end())
+            e->elements.erase(it);
           me->setVisibility(1);
         }
       }
@@ -206,6 +211,11 @@ static void delete_edge_cb(Fl_Widget *w, void *data)
                   "[Press 'e' to end selection or 'q' to abort]");
 
     char ib = FlGui::instance()->selectEntity(ENT_ALL);
+    // the editor goes with the GUI
+    if(!FlGui::available()) {
+      CTX::instance()->pickElements = 0;
+      return;
+    }
     if(ib == 'l') {
       for(std::size_t i = 0; i < FlGui::instance()->selectedElements.size();
           i++) {
@@ -220,8 +230,8 @@ static void delete_edge_cb(Fl_Widget *w, void *data)
       for(std::size_t i = 0; i < FlGui::instance()->selectedElements.size();
           i++) {
         MElement *me = FlGui::instance()->selectedElements[i];
-        if(me->getVisibility() == 2)
-          ele.erase(std::find(ele.begin(), ele.end(), me));
+        auto it = std::find(ele.begin(), ele.end(), me);
+        if(me->getVisibility() == 2 && it != ele.end()) ele.erase(it);
         me->setVisibility(1);
       }
     }

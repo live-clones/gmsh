@@ -283,11 +283,9 @@ viewButton::viewButton(int x, int y, int w, int h, int num, Fl_Color col)
   _toggle->callback(view_toggle_cb, (void *)(intptr_t)num);
   _toggle->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
   _toggle->value(opt->visible);
-  char tmp[256];
-  sprintf(tmp, "[%d] %s", num, data->getName().c_str());
-  _toggle->copy_label(tmp);
-  strcpy(_tooltip, data->getFileName().c_str());
-  _toggle->tooltip(_tooltip);
+  std::string label = "[" + std::to_string(num) + "] " + data->getName();
+  _toggle->copy_label(label.c_str());
+  _toggle->copy_tooltip(data->getFileName().c_str());
 
   _butt = new Fl_Button(x + w - popw, y, popw, h, "@>");
   _butt->align(FL_ALIGN_RIGHT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);

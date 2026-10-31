@@ -1359,6 +1359,8 @@ void ColorTable_Copy(GmshColorTable *ct)
 
 void ColorTable_Paste(GmshColorTable *ct)
 {
+  // nothing copied yet
+  if(!clip.size) return;
   ct->size = clip.size;
   memcpy(ct->table, clip.table, clip.size * sizeof(unsigned int));
   memcpy(ct->ipar, clip.ipar, COLORTABLE_NBMAX_PARAM * sizeof(int));

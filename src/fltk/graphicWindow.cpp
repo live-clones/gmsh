@@ -178,6 +178,8 @@ static void file_open_merge_cb(Fl_Widget *w, void *data)
       else
         MergeFile(fileChooserGetName(i));
     }
+    // the GUI may have been closed while the files were read
+    if(!FlGui::available()) return;
     if(n != (int)PView::list.size())
       FlGui::instance()->openModule("Post-processing");
     if(CTX::instance()->launchSolverAtStartup >= 0)
@@ -195,6 +197,8 @@ static void file_open_recent_cb(Fl_Widget *w, void *data)
   std::string str((const char *)data);
   int n = PView::list.size();
   OpenProject(str);
+  // the GUI may have been closed while the file was read
+  if(!FlGui::available()) return;
   drawContext::global()->draw();
   if(n != (int)PView::list.size())
     FlGui::instance()->openModule("Post-processing");
@@ -748,7 +752,11 @@ void file_quit_cb(Fl_Widget *w, void *data)
   }
 
   if(FlGui::instance()->quitShouldExit()) { Msg::Exit(0); }
-  else { FlGui::destroy(); }
+  else {
+    // once the event that asked for it is over: the widget it came through (a
+    // menu bar, a button) goes with the windows, while its code still runs
+    Fl::add_timeout(0., [](void *) { FlGui::destroy(); });
+  }
 }
 
 void file_watch_cb(Fl_Widget *w, void *data)
@@ -998,8 +1006,9 @@ static void add_new_point_based_entity(const std::string &what, int pane)
     }
   }
 
-  FlGui::instance()->elementaryContext->hide();
   drawContext::setDrawGeomTransientFunction(nullptr);
+  if(!FlGui::available()) return;
+  FlGui::instance()->elementaryContext->hide();
 
   // at the end, not during creation to avoid having things jumping around
   SetBoundingBox();
@@ -2020,6 +2029,7 @@ static void geometry_elementary_boolean_cb(Fl_Widget *w, void *data)
     }
   }
 
+  if(!FlGui::available()) return;
   FlGui::instance()->transformContext->hide();
   drawContext::global()->draw();
   Msg::StatusGl("");
@@ -2114,6 +2124,7 @@ static void geometry_elementary_fillet_cb(Fl_Widget *w, void *data)
     }
   }
 
+  if(!FlGui::available()) return;
   FlGui::instance()->transformContext->hide();
   drawContext::global()->draw();
   Msg::StatusGl("");
@@ -2213,25 +2224,31 @@ void mesh_save_cb(Fl_Widget *w, void *data)
   CreateOutputFile(name, CTX::instance()->mesh.fileFormat);
 }
 
+// after an operation on the mesh, which processes events: the GUI may have
+// been closed meanwhile
+static void afterMeshOperation()
+{
+  if(!FlGui::available()) return;
+  drawContext::global()->draw();
+  FlGui::instance()->updateStatistics();
+}
+
 void mesh_1d_cb(Fl_Widget *w, void *data)
 {
   GModel::current()->mesh(1);
-  drawContext::global()->draw();
-  FlGui::instance()->updateStatistics();
+  afterMeshOperation();
 }
 
 void mesh_2d_cb(Fl_Widget *w, void *data)
 {
   GModel::current()->mesh(2);
-  drawContext::global()->draw();
-  FlGui::instance()->updateStatistics();
+  afterMeshOperation();
 }
 
 void mesh_3d_cb(Fl_Widget *w, void *data)
 {
   GModel::current()->mesh(3);
-  drawContext::global()->draw();
-  FlGui::instance()->updateStatistics();
+  afterMeshOperation();
 }
 
 #if defined(HAVE_MESH)
@@ -2376,8 +2393,7 @@ static void mesh_modify_parts(Fl_Widget *w, void *data,
 
   CTX::instance()->meshChanged();
   CTX::instance()->pickElements = 0;
-  drawContext::global()->draw();
-  FlGui::instance()->updateStatistics();
+  afterMeshOperation();
   Msg::StatusGl("");
 }
 
@@ -2409,8 +2425,7 @@ static void mesh_optimize_cb(Fl_Widget *w, void *data)
   CTX::instance()->lock = 1;
   GModel::current()->optimizeMesh("");
   CTX::instance()->lock = 0;
-  drawContext::global()->draw();
-  FlGui::instance()->updateStatistics();
+  afterMeshOperation();
 }
 
 static void mesh_optimize_quad_topo_cb(Fl_Widget *w, void *data)
@@ -2418,8 +2433,7 @@ static void mesh_optimize_quad_topo_cb(Fl_Widget *w, void *data)
   CTX::instance()->lock = 1;
   GModel::current()->optimizeMesh("QuadQuasiStructured");
   CTX::instance()->lock = 0;
-  drawContext::global()->draw();
-  FlGui::instance()->updateStatistics();
+  afterMeshOperation();
 }
 
 static void mesh_untangle_cb(Fl_Widget *w, void *data)
@@ -2427,8 +2441,7 @@ static void mesh_untangle_cb(Fl_Widget *w, void *data)
   CTX::instance()->lock = 1;
   GModel::current()->optimizeMesh("UntangleMeshGeometry");
   CTX::instance()->lock = 0;
-  drawContext::global()->draw();
-  FlGui::instance()->updateStatistics();
+  afterMeshOperation();
 }
 
 static void mesh_cross_compute_cb(Fl_Widget *w, void *data)
@@ -2446,8 +2459,7 @@ static void mesh_refine_cb(Fl_Widget *w, void *data)
                                 CTX::instance()->mesh.algoSubdivide == 1,
                                 CTX::instance()->mesh.algoSubdivide == 2,
                                 CTX::instance()->mesh.algoSubdivide == 3);
-  drawContext::global()->draw();
-  FlGui::instance()->updateStatistics();
+  afterMeshOperation();
 }
 
 static void mesh_smooth_cb(Fl_Widget *w, void *data)
@@ -2459,8 +2471,7 @@ static void mesh_smooth_cb(Fl_Widget *w, void *data)
 static void mesh_recombine_cb(Fl_Widget *w, void *data)
 {
   GModel::current()->recombineMesh();
-  drawContext::global()->draw();
-  FlGui::instance()->updateStatistics();
+  afterMeshOperation();
 }
 
 #if defined(HAVE_NETGEN)
@@ -2473,8 +2484,7 @@ static void mesh_optimize_netgen_cb(Fl_Widget *w, void *data)
   CTX::instance()->lock = 1;
   GModel::current()->optimizeMesh("Netgen");
   CTX::instance()->lock = 0;
-  drawContext::global()->draw();
-  FlGui::instance()->updateStatistics();
+  afterMeshOperation();
 }
 #endif
 
@@ -2511,7 +2521,7 @@ static void mesh_define_length_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->meshContext->show(0);
   action_point_line_surface_volume(8, "Point");
-  FlGui::instance()->meshContext->hide();
+  if(FlGui::available()) FlGui::instance()->meshContext->hide();
 }
 
 static void mesh_define_recombine_cb(Fl_Widget *w, void *data)
@@ -2688,14 +2698,14 @@ static void mesh_define_transfinite_line_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->meshContext->show(1);
   mesh_define_transfinite(1);
-  FlGui::instance()->meshContext->hide();
+  if(FlGui::available()) FlGui::instance()->meshContext->hide();
 }
 
 static void mesh_define_transfinite_surface_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->meshContext->show(2);
   mesh_define_transfinite(2);
-  FlGui::instance()->meshContext->hide();
+  if(FlGui::available()) FlGui::instance()->meshContext->hide();
 }
 
 static void mesh_define_transfinite_volume_cb(Fl_Widget *w, void *data)
@@ -2829,6 +2839,7 @@ static void mesh_define_embedded_cb(Fl_Widget *w, void *data)
     }
   }
 
+  if(!FlGui::available()) return;
   FlGui::instance()->transformContext->hide();
   drawContext::global()->draw();
   Msg::StatusGl("");
@@ -4546,8 +4557,12 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   if(main && hiddenMenu) hideMenu();
 }
 
+static void dropped_cb(void *data);
+
 graphicWindow::~graphicWindow()
 {
+  // a tool dropped on the dock, docked at the next event: it goes with the GUI
+  Fl::remove_timeout(dropped_cb);
   // the docked tool windows are not ours to delete
   if(_dock) {
     Fl::remove_timeout(_drop_cb, this);
@@ -5288,20 +5303,17 @@ void graphicWindow::fillRecentHistoryMenu()
   if(CTX::instance()->systemMenuBar) table = systemBarTable();
 #endif
 
-  static char recent[10][256];
+  static std::string recent[10];
   for(int i = 0; i < 10; i++) {
+    recent[i].clear();
     if(i < (int)CTX::instance()->recentFiles.size()) {
       if(check_utf8(CTX::instance()->recentFiles[i]))
-        strcpy(recent[i], CTX::instance()->recentFiles[i].c_str());
-      else {
+        recent[i] = CTX::instance()->recentFiles[i];
+      else
         Msg::Info("Ignoring invalid General.RecentFile%d", i);
-        strcpy(recent[i], "");
-      }
     }
-    else
-      strcpy(recent[i], "");
-    table[4 + i].text = recent[i];
-    table[4 + i].user_data_ = (void *)recent[i];
+    table[4 + i].text = recent[i].c_str();
+    table[4 + i].user_data_ = (void *)recent[i].c_str();
   }
 
 #if defined(__APPLE__)

@@ -183,6 +183,8 @@ int fileChooser(FILE_CHOOSER_TYPE type, const char *message, const char *filter,
 
 std::string fileChooserGetName(int num)
 {
+  // the names are numbered from 1
+  if(num < 1) return "";
   if(CTX::instance()->nativeFileChooser) {
     if(!nfc) return "";
     return std::string(nfc->filename(num - 1));
