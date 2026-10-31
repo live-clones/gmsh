@@ -7730,12 +7730,13 @@ GMSH_API void gmsh::model::discrete::cut(
 
 GMSH_API void gmsh::model::discrete::importShapes(
   const std::string &fileName, const double angle, vectorpair &outDimTags,
-  const double curveAngle)
+  const double curveAngle, const double tolerance)
 {
   if(!_checkInit()) return;
   outDimTags.clear();
 #if defined(HAVE_DISCRETECAD)
-  _discreteCAD()->importShapes(fileName, angle, curveAngle, outDimTags);
+  _discreteCAD()->importShapes(fileName, angle, curveAngle, tolerance,
+                               outDimTags);
 #else
   Msg::Error("Discrete CAD modeler not available");
 #endif
@@ -7743,13 +7744,14 @@ GMSH_API void gmsh::model::discrete::importShapes(
 
 GMSH_API void gmsh::model::discrete::addTriangulation(
   const std::vector<double> &coord, const std::vector<std::size_t> &triangles,
-  const double angle, vectorpair &outDimTags, const double curveAngle)
+  const double angle, vectorpair &outDimTags, const double curveAngle,
+  const double tolerance)
 {
   if(!_checkInit()) return;
   outDimTags.clear();
 #if defined(HAVE_DISCRETECAD)
   _discreteCAD()->addTriangulation(coord, triangles, std::vector<int>(),
-                                   angle, curveAngle, outDimTags);
+                                   angle, curveAngle, tolerance, outDimTags);
 #else
   Msg::Error("Discrete CAD modeler not available");
 #endif

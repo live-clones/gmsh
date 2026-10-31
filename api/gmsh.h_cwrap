@@ -6616,16 +6616,23 @@ namespace gmsh { // Top-level functions
       // triangles point out of them, holes if they point into them, as STL normals
       // point out of solids). Each surface is oriented outwards of a volume whose
       // outer boundary it is on, if any (the included volume for the boundary of
-      // an inclusion). Return the volumes and the surfaces bounding no volume in
+      // an inclusion). The surfaces whose nodes are at most `tolerance' away from
+      // a plane, a sphere, a cylinder, a cone or a torus
+      // (`Geometry.DiscreteTolerance' times the size of the triangulation if
+      // `tolerance' is not positive) are recognized as such and get the parameters
+      // of the corresponding primitives (with a seam, or split in two halves,
+      // where needed); the others are split into pieces that a single map can
+      // parametrize. Return the volumes and the surfaces bounding no volume in
       // `outDimTags'.
       inline void importShapes(const std::string & fileName,
                                const double angle,
                                gmsh::vectorpair & outDimTags,
-                               const double curveAngle = M_PI)
+                               const double curveAngle = M_PI,
+                               const double tolerance = -1.)
       {
         int ierr = 0;
         int *api_outDimTags_; size_t api_outDimTags_n_;
-        gmshModelDiscreteImportShapes(fileName.c_str(), angle, &api_outDimTags_, &api_outDimTags_n_, curveAngle, &ierr);
+        gmshModelDiscreteImportShapes(fileName.c_str(), angle, &api_outDimTags_, &api_outDimTags_n_, curveAngle, tolerance, &ierr);
         if(ierr) throwLastError();
         outDimTags.resize(api_outDimTags_n_ / 2); for(size_t i = 0; i < api_outDimTags_n_ / 2; ++i){ outDimTags[i].first = api_outDimTags_[i * 2 + 0]; outDimTags[i].second = api_outDimTags_[i * 2 + 1]; } gmshFree(api_outDimTags_);
       }
@@ -6641,13 +6648,14 @@ namespace gmsh { // Top-level functions
                                    const std::vector<std::size_t> & triangles,
                                    const double angle,
                                    gmsh::vectorpair & outDimTags,
-                                   const double curveAngle = M_PI)
+                                   const double curveAngle = M_PI,
+                                   const double tolerance = -1.)
       {
         int ierr = 0;
         double *api_coord_; size_t api_coord_n_; vector2ptr(coord, &api_coord_, &api_coord_n_);
         size_t *api_triangles_; size_t api_triangles_n_; vector2ptr(triangles, &api_triangles_, &api_triangles_n_);
         int *api_outDimTags_; size_t api_outDimTags_n_;
-        gmshModelDiscreteAddTriangulation(api_coord_, api_coord_n_, api_triangles_, api_triangles_n_, angle, &api_outDimTags_, &api_outDimTags_n_, curveAngle, &ierr);
+        gmshModelDiscreteAddTriangulation(api_coord_, api_coord_n_, api_triangles_, api_triangles_n_, angle, &api_outDimTags_, &api_outDimTags_n_, curveAngle, tolerance, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_coord_);
         gmshFree(api_triangles_);

@@ -8005,7 +8005,7 @@ export function wrapGmsh(Module) {
   };
 
   /**
-   * gmsh.model.discrete.importShapes(fileName, angle, curveAngle = Math.PI)
+   * gmsh.model.discrete.importShapes(fileName, angle, curveAngle = Math.PI, tolerance = -1.)
    *
    * Import the triangulations of the surfaces of the mesh file `fileName'
    * (STL, MSH, OBJ, PLY, OFF, VTK or MESH format) in the discrete CAD
@@ -8021,17 +8021,23 @@ export function wrapGmsh(Module) {
    * are volumes if its triangles point out of them, holes if they point into
    * them, as STL normals point out of solids). Each surface is oriented
    * outwards of a volume whose outer boundary it is on, if any (the included
-   * volume for the boundary of an inclusion). Return the volumes and the
-   * surfaces bounding no volume in `outDimTags'.
+   * volume for the boundary of an inclusion). The surfaces whose nodes are at
+   * most `tolerance' away from a plane, a sphere, a cylinder, a cone or a
+   * torus (`Geometry.DiscreteTolerance' times the size of the triangulation
+   * if `tolerance' is not positive) are recognized as such and get the
+   * parameters of the corresponding primitives (with a seam, or split in two
+   * halves, where needed); the others are split into pieces that a single map
+   * can parametrize. Return the volumes and the surfaces bounding no volume
+   * in `outDimTags'.
    *
    * Return `outDimTags'.
    */
-  gmsh.model.discrete.importShapes = function(fileName, angle, curveAngle = Math.PI) {
+  gmsh.model.discrete.importShapes = function(fileName, angle, curveAngle = Math.PI, tolerance = -1.) {
     const tmp = [];
     try {
       const api_fileName_ = _istring(fileName, tmp);
       const api_outDimTags_ = _alloc(8, tmp);
-      M._gmshModelDiscreteImportShapes(api_fileName_, angle, api_outDimTags_, api_outDimTags_ + 4, curveAngle, ierr);
+      M._gmshModelDiscreteImportShapes(api_fileName_, angle, api_outDimTags_, api_outDimTags_ + 4, curveAngle, tolerance, ierr);
       _check();
       return _ovectorpair(api_outDimTags_);
     }
@@ -8041,7 +8047,7 @@ export function wrapGmsh(Module) {
   };
 
   /**
-   * gmsh.model.discrete.addTriangulation(coord, triangles, angle, curveAngle = Math.PI)
+   * gmsh.model.discrete.addTriangulation(coord, triangles, angle, curveAngle = Math.PI, tolerance = -1.)
    *
    * Add the triangulation given by the coordinates `coord' of its nodes
    * (concatenated: [n1x, n1y, n1z, n2x, ...]) and its triangles `triangles'
@@ -8051,13 +8057,13 @@ export function wrapGmsh(Module) {
    *
    * Return `outDimTags'.
    */
-  gmsh.model.discrete.addTriangulation = function(coord, triangles, angle, curveAngle = Math.PI) {
+  gmsh.model.discrete.addTriangulation = function(coord, triangles, angle, curveAngle = Math.PI, tolerance = -1.) {
     const tmp = [];
     try {
       const [api_coord_, api_coord_n] = _ivector(coord, 'double', tmp);
       const [api_triangles_, api_triangles_n] = _ivector(triangles, 'size', tmp);
       const api_outDimTags_ = _alloc(8, tmp);
-      M._gmshModelDiscreteAddTriangulation(api_coord_, api_coord_n, api_triangles_, api_triangles_n, angle, api_outDimTags_, api_outDimTags_ + 4, curveAngle, ierr);
+      M._gmshModelDiscreteAddTriangulation(api_coord_, api_coord_n, api_triangles_, api_triangles_n, angle, api_outDimTags_, api_outDimTags_ + 4, curveAngle, tolerance, ierr);
       _check();
       return _ovectorpair(api_outDimTags_);
     }

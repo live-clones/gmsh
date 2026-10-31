@@ -15113,12 +15113,19 @@ module gmsh
   !! point out of them, holes if they point into them, as STL normals point out
   !! of solids). Each surface is oriented outwards of a volume whose outer
   !! boundary it is on, if any (the included volume for the boundary of an
-  !! inclusion). Return the volumes and the surfaces bounding no volume in
+  !! inclusion). The surfaces whose nodes are at most `tolerance' away from a
+  !! plane, a sphere, a cylinder, a cone or a torus
+  !! (`Geometry.DiscreteTolerance' times the size of the triangulation if
+  !! `tolerance' is not positive) are recognized as such and get the parameters
+  !! of the corresponding primitives (with a seam, or split in two halves, where
+  !! needed); the others are split into pieces that a single map can
+  !! parametrize. Return the volumes and the surfaces bounding no volume in
   !! `outDimTags'.
   subroutine gmshModelDiscreteImportShapes(fileName, &
                                            angle, &
                                            outDimTags, &
                                            curveAngle, &
+                                           tolerance, &
                                            ierr)
     interface
     subroutine C_API(fileName, &
@@ -15126,6 +15133,7 @@ module gmsh
                      api_outDimTags_, &
                      api_outDimTags_n_, &
                      curveAngle, &
+                     tolerance, &
                      ierr_) &
       bind(C, name="gmshModelDiscreteImportShapes")
       use, intrinsic :: iso_c_binding
@@ -15134,6 +15142,7 @@ module gmsh
       type(c_ptr), intent(out) :: api_outDimTags_
       integer(c_size_t), intent(out) :: api_outDimTags_n_
       real(c_double), value, intent(in) :: curveAngle
+      real(c_double), value, intent(in) :: tolerance
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
@@ -15141,6 +15150,7 @@ module gmsh
     real(c_double), intent(in) :: angle
     integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
     real(c_double), intent(in), optional :: curveAngle
+    real(c_double), intent(in), optional :: tolerance
     integer(c_int), intent(out), optional :: ierr
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
@@ -15149,6 +15159,7 @@ module gmsh
          api_outDimTags_=api_outDimTags_, &
          api_outDimTags_n_=api_outDimTags_n_, &
          curveAngle=optval_c_double(M_PI, curveAngle), &
+         tolerance=optval_c_double(-1., tolerance), &
          ierr_=ierr)
     outDimTags = ovectorpair_(api_outDimTags_, &
       api_outDimTags_n_)
@@ -15164,6 +15175,7 @@ module gmsh
                                                angle, &
                                                outDimTags, &
                                                curveAngle, &
+                                               tolerance, &
                                                ierr)
     interface
     subroutine C_API(api_coord_, &
@@ -15174,6 +15186,7 @@ module gmsh
                      api_outDimTags_, &
                      api_outDimTags_n_, &
                      curveAngle, &
+                     tolerance, &
                      ierr_) &
       bind(C, name="gmshModelDiscreteAddTriangulation")
       use, intrinsic :: iso_c_binding
@@ -15185,6 +15198,7 @@ module gmsh
       type(c_ptr), intent(out) :: api_outDimTags_
       integer(c_size_t), intent(out) :: api_outDimTags_n_
       real(c_double), value, intent(in) :: curveAngle
+      real(c_double), value, intent(in) :: tolerance
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
@@ -15193,6 +15207,7 @@ module gmsh
     real(c_double), intent(in) :: angle
     integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
     real(c_double), intent(in), optional :: curveAngle
+    real(c_double), intent(in), optional :: tolerance
     integer(c_int), intent(out), optional :: ierr
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
@@ -15204,6 +15219,7 @@ module gmsh
          api_outDimTags_=api_outDimTags_, &
          api_outDimTags_n_=api_outDimTags_n_, &
          curveAngle=optval_c_double(M_PI, curveAngle), &
+         tolerance=optval_c_double(-1., tolerance), &
          ierr_=ierr)
     outDimTags = ovectorpair_(api_outDimTags_, &
       api_outDimTags_n_)

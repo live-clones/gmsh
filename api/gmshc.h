@@ -3584,12 +3584,19 @@ GMSH_API void gmshModelDiscreteCut(const int * objectDimTags, const size_t objec
  * point out of them, holes if they point into them, as STL normals point out
  * of solids). Each surface is oriented outwards of a volume whose outer
  * boundary it is on, if any (the included volume for the boundary of an
- * inclusion). Return the volumes and the surfaces bounding no volume in
+ * inclusion). The surfaces whose nodes are at most `tolerance' away from a
+ * plane, a sphere, a cylinder, a cone or a torus
+ * (`Geometry.DiscreteTolerance' times the size of the triangulation if
+ * `tolerance' is not positive) are recognized as such and get the parameters
+ * of the corresponding primitives (with a seam, or split in two halves, where
+ * needed); the others are split into pieces that a single map can
+ * parametrize. Return the volumes and the surfaces bounding no volume in
  * `outDimTags'. */
 GMSH_API void gmshModelDiscreteImportShapes(const char * fileName,
                                             const double angle,
                                             int ** outDimTags, size_t * outDimTags_n,
                                             const double curveAngle,
+                                            const double tolerance,
                                             int * ierr);
 
 /* Add the triangulation given by the coordinates `coord' of its nodes
@@ -3602,6 +3609,7 @@ GMSH_API void gmshModelDiscreteAddTriangulation(const double * coord, const size
                                                 const double angle,
                                                 int ** outDimTags, size_t * outDimTags_n,
                                                 const double curveAngle,
+                                                const double tolerance,
                                                 int * ierr);
 
 /* Synchronize the discrete CAD representation with the current Gmsh model:

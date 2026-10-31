@@ -1,6 +1,8 @@
 // An STL triangulation in the discrete CAD modeler: its surfaces are split
 // where the normals of its triangles turn by more than 40 degrees, its curves
-// are along these edges, and its volume is the space they bound. It is then
+// are along these edges, and its volume is the space they bound; its planes
+// and spheres are recognized (their nodes are within Geometry.DiscreteTolerance
+// times its size of them) and get the parameters of the primitives. It is then
 // drilled by a boolean difference.
 
 SetFactory("Discrete");

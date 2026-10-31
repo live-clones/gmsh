@@ -8,6 +8,7 @@
 #include <cmath>
 #include "DiscreteCADModeler.h"
 #include "DiscreteCADMeshBoolean.h"
+#include "DiscreteCADRecognition.h"
 #include "GmshMessage.h"
 #include "Context.h"
 #include "GModel.h"
@@ -1636,7 +1637,7 @@ DiscreteCAD_Internals::_cells(const std::vector<std::array<int, 3> > &triangles,
 bool DiscreteCAD_Internals::addTriangulation(
   const std::vector<double> &coord, const std::vector<std::size_t> &triangles,
   const std::vector<int> &pieces, double angle, double curveAngle,
-  std::vector<std::pair<int, int> > &outDimTags)
+  double tolerance, std::vector<std::pair<int, int> > &outDimTags)
 {
   outDimTags.clear();
   const std::size_t nn = coord.size() / 3;
@@ -1770,9 +1771,78 @@ bool DiscreteCAD_Internals::addTriangulation(
   std::vector<int> label(nt);
   for(std::size_t i = 0; i < nt; i++) label[i] = (int)find(i);
 
-  // the surfaces split into pieces that a single map can parametrize, as
-  // classifySurfaces does (in a temporary model, a discrete surface for each
-  // surface)
+  // the analytic surfaces: the planes, spheres, cylinders, cones and tori
+  // within the tolerance of the nodes of the surfaces, with the parameters of
+  // the primitives (a sphere or a torus split in two halves if needed, the
+  // apex of a cone inside its surface an embedded vertex)
+  if(tolerance <= 0.) {
+    double lo[3] = {1e300, 1e300, 1e300}, hi[3] = {-1e300, -1e300, -1e300};
+    for(auto &t : tri)
+      for(int n : t)
+        for(int k = 0; k < 3; k++) {
+          lo[k] = std::min(lo[k], _nodes[n][k]);
+          hi[k] = std::max(hi[k], _nodes[n][k]);
+        }
+    tolerance = CTX::instance()->geom.discreteTolerance *
+                std::sqrt((hi[0] - lo[0]) * (hi[0] - lo[0]) +
+                          (hi[1] - lo[1]) * (hi[1] - lo[1]) +
+                          (hi[2] - lo[2]) * (hi[2] - lo[2]));
+  }
+  std::vector<std::array<std::array<double, 2>, 3> > uv(nt);
+  std::vector<char> hasUV(nt, 0);
+  std::vector<int> apexes;
+  int recognized[6] = {0, 0, 0, 0, 0, 0};
+  {
+    std::map<int, std::vector<std::size_t> > trianglesOf;
+    for(std::size_t i = 0; i < nt; i++) trianglesOf[label[i]].push_back(i);
+    int next = (int)nt;
+    for(auto &tl : trianglesOf) {
+      std::map<int, int> local;
+      std::vector<std::array<double, 3> > x;
+      std::vector<std::array<int, 3> > lt;
+      std::vector<int> global;
+      for(std::size_t i : tl.second) {
+        std::array<int, 3> t;
+        for(int k = 0; k < 3; k++) {
+          auto it = local.insert({tri[i][k], (int)x.size()});
+          if(it.second) {
+            x.push_back(_nodes[tri[i][k]]);
+            global.push_back(tri[i][k]);
+          }
+          t[k] = it.first->second;
+        }
+        lt.push_back(t);
+      }
+      const DiscreteCADAnalyticSurface as =
+        recognizeSurface(x, lt, tolerance, angle);
+      if(as.type == DiscreteCADAnalyticSurface::NONE) continue;
+      recognized[as.type]++;
+      double deviation = 0.;
+      for(auto &p : x) deviation = std::max(deviation, std::abs(as.distance(p.data())));
+      static const char *names[6] = {"", "plane", "sphere", "cylinder", "cone",
+                                     "torus"};
+      Msg::Debug("Discrete CAD triangulation: %lu triangles on a %s (%g, %g, "
+                 "%g), axis (%g, %g, %g), %g, %g, at most %g away",
+                 tl.second.size(), names[as.type], as.o[0], as.o[1], as.o[2],
+                 as.axis[0], as.axis[1], as.axis[2], as.r1, as.r2, deviation);
+      std::vector<std::array<std::array<double, 2>, 3> > luv;
+      std::vector<int> half;
+      int apex;
+      analyticParameters(as, x, lt, tolerance, luv, half, apex);
+      const int second = next++;
+      for(std::size_t j = 0; j < tl.second.size(); j++) {
+        const std::size_t i = tl.second[j];
+        uv[i] = luv[j];
+        hasUV[i] = 1;
+        if(half[j]) label[i] = second;
+      }
+      if(apex >= 0) apexes.push_back(global[apex]);
+    }
+  }
+
+  // the other surfaces split into pieces that a single map can parametrize,
+  // as classifySurfaces does (in a temporary model, a discrete surface for
+  // each surface)
   std::set<std::pair<int, int> > cuts;
   {
     TemporaryModel tmp;
@@ -1780,6 +1850,7 @@ bool DiscreteCAD_Internals::addTriangulation(
     std::map<std::pair<int, int>, MVertex *> vertexOf; // (label, node)
     std::map<MVertex *, int> nodeOf;
     for(std::size_t i = 0; i < nt; i++) {
+      if(hasUV[i]) continue;
       discreteFace *&gf = faceOf[label[i]];
       if(!gf) {
         gf = new discreteFace(tmp.model, (int)faceOf.size(), false);
@@ -1817,12 +1888,11 @@ bool DiscreteCAD_Internals::addTriangulation(
 
   // their parameters, computed on their triangulations as createGeometry
   // would (the boolean operations then interpolate them)
-  std::vector<std::array<std::array<double, 2>, 3> > uv(nt);
-  std::vector<char> hasUV(nt, 0);
   {
     TemporaryModel tmp;
     std::map<int, std::vector<std::size_t> > trianglesOf;
-    for(std::size_t i = 0; i < nt; i++) trianglesOf[label[i]].push_back(i);
+    for(std::size_t i = 0; i < nt; i++)
+      if(!hasUV[i]) trianglesOf[label[i]].push_back(i);
     for(auto &tl : trianglesOf) {
       std::map<int, MVertex *> vertexOf;
       std::vector<MTriangle *> ts;
@@ -1861,6 +1931,18 @@ bool DiscreteCAD_Internals::addTriangulation(
   std::vector<int> surfaceOf;
   _addTopology(tri, label, uv, hasUV, curveAngle, surfaceOf);
   std::vector<std::vector<std::vector<int> > > cells = _cells(tri, surfaceOf);
+  // (the apexes of the cones inside their surfaces)
+  for(int a : apexes) {
+    std::size_t i = 0;
+    while(i < nt && tri[i][0] != a && tri[i][1] != a && tri[i][2] != a) i++;
+    if(i == nt) continue;
+    Surface &sf = _surfaces[surfaceOf[i]];
+    bool inside = true;
+    for(int c : sf.curves)
+      for(int n : _curves[std::abs(c)].nodes)
+        if(n == a) inside = false;
+    if(inside) sf.embeddedVertices.push_back(_addVertex(a));
+  }
 
   // the surfaces oriented outwards of the first volume whose outer shell they
   // are on, or else of the first volume they bound
@@ -1875,6 +1957,7 @@ bool DiscreteCAD_Internals::addTriangulation(
     Surface &sf = _surfaces[sg.first];
     for(auto &t : sf.triangles) std::swap(t[1], t[2]);
     for(auto &q : sf.uv) std::swap(q[1], q[2]);
+    for(auto &sm : sf.seams) std::swap(sm.second[0], sm.second[1]);
     for(int &c : sf.curves) c = -c;
   }
   for(auto &cell : cells) {
@@ -1897,13 +1980,20 @@ bool DiscreteCAD_Internals::addTriangulation(
             cells.size(), cells.size() == 1 ? "" : "s", surfaces.size(),
             surfaces.size() == 1 ? "" : "s", curves.size(),
             curves.size() == 1 ? "" : "s");
+  Msg::Info("Discrete CAD triangulation: %d plane%s, %d sphere%s, %d "
+            "cylinder%s, %d cone%s and %d tor%s recognized (tolerance %g)",
+            recognized[1], recognized[1] == 1 ? "" : "s", recognized[2],
+            recognized[2] == 1 ? "" : "s", recognized[3],
+            recognized[3] == 1 ? "" : "s", recognized[4],
+            recognized[4] == 1 ? "" : "s", recognized[5],
+            recognized[5] == 1 ? "us" : "i", tolerance);
   _changed = true;
   return true;
 }
 
 bool DiscreteCAD_Internals::importShapes(
   const std::string &fileName, double angle, double curveAngle,
-  std::vector<std::pair<int, int> > &outDimTags)
+  double tolerance, std::vector<std::pair<int, int> > &outDimTags)
 {
   outDimTags.clear();
   std::string ext = SplitFileName(fileName)[2];
@@ -1968,7 +2058,7 @@ bool DiscreteCAD_Internals::importShapes(
     return false;
   }
   return addTriangulation(coord, triangles, pieces, angle, curveAngle,
-                          outDimTags);
+                          tolerance, outDimTags);
 }
 
 void DiscreteCAD_Internals::synchronize(GModel *model)

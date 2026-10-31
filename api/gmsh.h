@@ -3995,12 +3995,19 @@ namespace gmsh { // Top-level functions
       // triangles point out of them, holes if they point into them, as STL normals
       // point out of solids). Each surface is oriented outwards of a volume whose
       // outer boundary it is on, if any (the included volume for the boundary of
-      // an inclusion). Return the volumes and the surfaces bounding no volume in
+      // an inclusion). The surfaces whose nodes are at most `tolerance' away from
+      // a plane, a sphere, a cylinder, a cone or a torus
+      // (`Geometry.DiscreteTolerance' times the size of the triangulation if
+      // `tolerance' is not positive) are recognized as such and get the parameters
+      // of the corresponding primitives (with a seam, or split in two halves,
+      // where needed); the others are split into pieces that a single map can
+      // parametrize. Return the volumes and the surfaces bounding no volume in
       // `outDimTags'.
       GMSH_API void importShapes(const std::string & fileName,
                                  const double angle,
                                  gmsh::vectorpair & outDimTags,
-                                 const double curveAngle = M_PI);
+                                 const double curveAngle = M_PI,
+                                 const double tolerance = -1.);
 
       // gmsh::model::discrete::addTriangulation
       //
@@ -4013,7 +4020,8 @@ namespace gmsh { // Top-level functions
                                      const std::vector<std::size_t> & triangles,
                                      const double angle,
                                      gmsh::vectorpair & outDimTags,
-                                     const double curveAngle = M_PI);
+                                     const double curveAngle = M_PI,
+                                     const double tolerance = -1.);
 
       // gmsh::model::discrete::synchronize
       //

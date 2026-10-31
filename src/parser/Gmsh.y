@@ -124,7 +124,8 @@ void ListOfDouble2Vector(List_T *list, std::vector<double> &v);
 void ListOfShapes2VectorOfPairs(List_T *list, std::vector<std::pair<int, int> > &v);
 void VectorOfPairs2ListOfShapes(const std::vector<std::pair<int, int> > &v, List_T *list);
 void DiscreteShapeFromFile(const char *fileName, double angle,
-                           double curveAngle, List_T *shapes);
+                           double curveAngle, double tolerance,
+                           List_T *shapes);
 void addPeriodicEdge(int, int, const std::vector<double>&);
 void addPeriodicFace(int, int, const std::map<int, int>&);
 void addPeriodicFace(int, int, const std::vector<double>&);
@@ -4110,13 +4111,19 @@ Boolean :
   | tShapeFromFile '(' StringExprVar ',' FExpr ')'
     {
       $$ = List_Create(2, 1, sizeof(Shape));
-      DiscreteShapeFromFile($3, $5, M_PI, $$);
+      DiscreteShapeFromFile($3, $5, M_PI, -1., $$);
       Free($3);
     }
   | tShapeFromFile '(' StringExprVar ',' FExpr ',' FExpr ')'
     {
       $$ = List_Create(2, 1, sizeof(Shape));
-      DiscreteShapeFromFile($3, $5, $7, $$);
+      DiscreteShapeFromFile($3, $5, $7, -1., $$);
+      Free($3);
+    }
+  | tShapeFromFile '(' StringExprVar ',' FExpr ',' FExpr ',' FExpr ')'
+    {
+      $$ = List_Create(2, 1, sizeof(Shape));
+      DiscreteShapeFromFile($3, $5, $7, $9, $$);
       Free($3);
     }
 ;
@@ -6908,9 +6915,11 @@ void VectorOfPairs2ListOfShapes(const std::vector<std::pair<int, int> > &v, List
 
 // the triangulations of a mesh file imported in the discrete CAD modeler, and
 // their topology (surfaces split where the normals turn by more than angle,
-// curves where they turn by more than curveAngle)
+// curves where they turn by more than curveAngle, analytic surfaces
+// recognized within tolerance)
 void DiscreteShapeFromFile(const char *fileName, double angle,
-                           double curveAngle, List_T *shapes)
+                           double curveAngle, double tolerance,
+                           List_T *shapes)
 {
 #if defined(HAVE_DISCRETECAD)
   if(gmsh_yyfactory == "Discrete" &&
@@ -6918,7 +6927,7 @@ void DiscreteShapeFromFile(const char *fileName, double angle,
     std::vector<std::pair<int, int> > out;
     std::string tmp = FixRelativePath(gmsh_yyname, fileName);
     if(!GModel::current()->getDiscreteCADInternals()->importShapes
-       (tmp, angle, curveAngle, out))
+       (tmp, angle, curveAngle, tolerance, out))
       yymsg(0, "Could not import shape");
     VectorOfPairs2ListOfShapes(out, shapes);
     return;

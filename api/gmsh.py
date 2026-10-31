@@ -10462,9 +10462,9 @@ class model:
                 _ovectorvectorpair(api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_))
 
         @staticmethod
-        def importShapes(fileName, angle, curveAngle=pi):
+        def importShapes(fileName, angle, curveAngle=pi, tolerance=-1.):
             """
-            gmsh.model.discrete.importShapes(fileName, angle, curveAngle=pi)
+            gmsh.model.discrete.importShapes(fileName, angle, curveAngle=pi, tolerance=-1.)
 
             Import the triangulations of the surfaces of the mesh file `fileName' (STL,
             MSH, OBJ, PLY, OFF, VTK or MESH format) in the discrete CAD representation,
@@ -10480,7 +10480,13 @@ class model:
             point out of them, holes if they point into them, as STL normals point out
             of solids). Each surface is oriented outwards of a volume whose outer
             boundary it is on, if any (the included volume for the boundary of an
-            inclusion). Return the volumes and the surfaces bounding no volume in
+            inclusion). The surfaces whose nodes are at most `tolerance' away from a
+            plane, a sphere, a cylinder, a cone or a torus
+            (`Geometry.DiscreteTolerance' times the size of the triangulation if
+            `tolerance' is not positive) are recognized as such and get the parameters
+            of the corresponding primitives (with a seam, or split in two halves, where
+            needed); the others are split into pieces that a single map can
+            parametrize. Return the volumes and the surfaces bounding no volume in
             `outDimTags'.
 
             Return `outDimTags'.
@@ -10490,6 +10496,7 @@ class model:
             - `angle': double
             - `outDimTags': vector of pairs of integers
             - `curveAngle': double
+            - `tolerance': double
             """
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
@@ -10498,6 +10505,7 @@ class model:
                 c_double(angle),
                 byref(api_outDimTags_), byref(api_outDimTags_n_),
                 c_double(curveAngle),
+                c_double(tolerance),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
@@ -10505,9 +10513,9 @@ class model:
         import_shapes = importShapes
 
         @staticmethod
-        def addTriangulation(coord, triangles, angle, curveAngle=pi):
+        def addTriangulation(coord, triangles, angle, curveAngle=pi, tolerance=-1.):
             """
-            gmsh.model.discrete.addTriangulation(coord, triangles, angle, curveAngle=pi)
+            gmsh.model.discrete.addTriangulation(coord, triangles, angle, curveAngle=pi, tolerance=-1.)
 
             Add the triangulation given by the coordinates `coord' of its nodes
             (concatenated: [n1x, n1y, n1z, n2x, ...]) and its triangles `triangles'
@@ -10523,6 +10531,7 @@ class model:
             - `angle': double
             - `outDimTags': vector of pairs of integers
             - `curveAngle': double
+            - `tolerance': double
             """
             api_coord_, api_coord_n_ = _ivectordouble(coord)
             api_triangles_, api_triangles_n_ = _ivectorsize(triangles)
@@ -10534,6 +10543,7 @@ class model:
                 c_double(angle),
                 byref(api_outDimTags_), byref(api_outDimTags_n_),
                 c_double(curveAngle),
+                c_double(tolerance),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())

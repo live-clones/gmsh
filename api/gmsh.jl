@@ -9272,7 +9272,7 @@ function cut(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTo
 end
 
 """
-    gmsh.model.discrete.importShapes(fileName, angle, curveAngle = pi)
+    gmsh.model.discrete.importShapes(fileName, angle, curveAngle = pi, tolerance = -1.)
 
 Import the triangulations of the surfaces of the mesh file `fileName` (STL, MSH,
 OBJ, PLY, OFF, VTK or MESH format) in the discrete CAD representation, and build
@@ -9287,7 +9287,12 @@ piece of the triangulation inside a cell of another one are volumes if its
 triangles point out of them, holes if they point into them, as STL normals point
 out of solids). Each surface is oriented outwards of a volume whose outer
 boundary it is on, if any (the included volume for the boundary of an
-inclusion). Return the volumes and the surfaces bounding no volume in
+inclusion). The surfaces whose nodes are at most `tolerance` away from a plane,
+a sphere, a cylinder, a cone or a torus (`Geometry.DiscreteTolerance` times the
+size of the triangulation if `tolerance` is not positive) are recognized as such
+and get the parameters of the corresponding primitives (with a seam, or split in
+two halves, where needed); the others are split into pieces that a single map
+can parametrize. Return the volumes and the surfaces bounding no volume in
 `outDimTags`.
 
 Return `outDimTags`.
@@ -9297,14 +9302,15 @@ Types:
  - `angle`: double
  - `outDimTags`: vector of pairs of integers
  - `curveAngle`: double
+ - `tolerance`: double
 """
-function importShapes(fileName, angle, curveAngle = pi)
+function importShapes(fileName, angle, curveAngle = pi, tolerance = -1.)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelDiscreteImportShapes, gmsh.lib), Cvoid,
-          (Ptr{Cchar}, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cdouble, Ptr{Cint}),
-          fileName, angle, api_outDimTags_, api_outDimTags_n_, curveAngle, ierr)
+          (Ptr{Cchar}, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cdouble, Cdouble, Ptr{Cint}),
+          fileName, angle, api_outDimTags_, api_outDimTags_n_, curveAngle, tolerance, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own = true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
@@ -9313,7 +9319,7 @@ end
 const import_shapes = importShapes
 
 """
-    gmsh.model.discrete.addTriangulation(coord, triangles, angle, curveAngle = pi)
+    gmsh.model.discrete.addTriangulation(coord, triangles, angle, curveAngle = pi, tolerance = -1.)
 
 Add the triangulation given by the coordinates `coord` of its nodes
 (concatenated: [n1x, n1y, n1z, n2x, ...]) and its triangles `triangles` (the
@@ -9329,14 +9335,15 @@ Types:
  - `angle`: double
  - `outDimTags`: vector of pairs of integers
  - `curveAngle`: double
+ - `tolerance`: double
 """
-function addTriangulation(coord, triangles, angle, curveAngle = pi)
+function addTriangulation(coord, triangles, angle, curveAngle = pi, tolerance = -1.)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelDiscreteAddTriangulation, gmsh.lib), Cvoid,
-          (Ptr{Cdouble}, Csize_t, Ptr{Csize_t}, Csize_t, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cdouble, Ptr{Cint}),
-          convert(Vector{Cdouble}, coord), length(coord), convert(Vector{Csize_t}, triangles), length(triangles), angle, api_outDimTags_, api_outDimTags_n_, curveAngle, ierr)
+          (Ptr{Cdouble}, Csize_t, Ptr{Csize_t}, Csize_t, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cdouble, Cdouble, Ptr{Cint}),
+          convert(Vector{Cdouble}, coord), length(coord), convert(Vector{Csize_t}, triangles), length(triangles), angle, api_outDimTags_, api_outDimTags_n_, curveAngle, tolerance, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own = true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]

@@ -177,18 +177,23 @@ public:
   // non-manifold edges, split where they turn by more than curveAngle, and
   // its volumes, the cells of space they bound (see _cells), every surface
   // oriented outwards of the first volume whose outer shell it is on, or else
-  // of the first volume it bounds. The volumes and the surfaces bounding none
-  // in outDimTags.
+  // of the first volume it bounds. The surfaces whose nodes are at most
+  // tolerance away from a plane, a sphere, a cylinder, a cone or a torus
+  // (Geometry.DiscreteTolerance times the size of the triangulation if
+  // tolerance <= 0) get the parameters of the primitives (see
+  // analyticParameters), the others are split into pieces that a single map
+  // can parametrize (as classifySurfaces does). The volumes and the surfaces
+  // bounding none in outDimTags.
   bool addTriangulation(const std::vector<double> &coord,
                         const std::vector<std::size_t> &triangles,
                         const std::vector<int> &pieces, double angle,
-                        double curveAngle,
+                        double curveAngle, double tolerance,
                         std::vector<std::pair<int, int> > &outDimTags);
   // the triangulations of the surfaces of a mesh file (STL, MSH, OBJ, PLY,
   // OFF, VTK, MESH), each surface of the file a piece, and their topology
   // (see addTriangulation)
   bool importShapes(const std::string &fileName, double angle,
-                    double curveAngle,
+                    double curveAngle, double tolerance,
                     std::vector<std::pair<int, int> > &outDimTags);
   // the entities copied into the model, replacing those of the previous call
   void synchronize(GModel *model);
