@@ -1334,7 +1334,7 @@ namespace tetgenBR {
 #if defined(HAVE_POST)
         new PView("Boundary mesh issue", x, y, z, val);
 #if defined(HAVE_FLTK)
-        if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+        if(FlGui::available()) FlGui::instance()->updateViews(true);
         drawContext::global()->draw();
 #endif
 #endif

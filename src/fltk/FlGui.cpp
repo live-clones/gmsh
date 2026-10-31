@@ -115,7 +115,7 @@ void FlGui::unlock() { Fl::unlock(); }
 static void awake_cb(void *data)
 {
   // without a GUI, nothing to update (instance() would create one)
-  if(data && FlGui::available()) FlGui::instance()->updateViews(true, false);
+  if(data && FlGui::available()) FlGui::instance()->updateViews(true);
 }
 
 void FlGui::awake(const std::string &action)
@@ -504,7 +504,7 @@ void FlGui::applyColorScheme(bool redraw)
   if(redraw && available()) {
     gmshIconsRecolor();
     help->resetText();
-    updateViews(true, true);
+    updateViews(true);
     for(Fl_Window *win = Fl::first_window(); win; win = Fl::next_window(win)) {
       win->redraw();
       redrawWindowsIn(win);
@@ -884,7 +884,7 @@ FlGui *FlGui::instance(int argc, char **argv, bool quitShouldExit,
     PrintBuildInfo();
     Msg::Direct("-------------------------------------------------------");
     // update views (in case the GUI is created after some data has been loaded)
-    _instance->updateViews(true, true);
+    _instance->updateViews(true);
     // set global bounding box in CTX (necessary if we run the gui without any
     // model/post-processing data)
     SetBoundingBox();
@@ -1332,11 +1332,11 @@ void FlGui::setGraphicTitle(const std::string &title)
   }
 }
 
-void FlGui::updateViews(bool numberOfViewsHasChanged, bool deleteWidgets)
+void FlGui::updateViews(bool numberOfViewsHasChanged)
 {
   for(std::size_t i = 0; i < graph.size(); i++) graph[i]->checkAnimButtons();
   if(numberOfViewsHasChanged) {
-    rebuildTree(deleteWidgets);
+    rebuildTree();
     // this GUI may have been destroyed by the events the rebuild processed
     if(_instance != this) return;
     visibility->updatePerWindow();
@@ -1788,12 +1788,12 @@ void FlGui::saveMessages(const char *fileName)
   FlGui::instance()->graph[0]->saveMessages(fileName);
 }
 
-void FlGui::rebuildTree(bool deleteWidgets)
+void FlGui::rebuildTree()
 {
-  if(onelab) onelab->rebuildTree(deleteWidgets);
+  if(onelab) onelab->rebuildTree();
   // this GUI may have been destroyed by the events the rebuild processed
   if(_instance != this) return;
-  if(onelabContext) onelabContext->rebuild(deleteWidgets);
+  if(onelabContext) onelabContext->rebuild();
 }
 
 void FlGui::toggleModule(const std::string &name)

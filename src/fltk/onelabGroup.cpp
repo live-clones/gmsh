@@ -115,7 +115,7 @@ void onelab_cb(Fl_Widget *w, void *data)
 
   if(action == "refresh") {
     onelabUtils::updateGraphs();
-    FlGui::instance()->rebuildTree(true);
+    FlGui::instance()->rebuildTree();
     return;
   }
 
@@ -258,7 +258,7 @@ void onelab_cb(Fl_Widget *w, void *data)
 
     if(action != "initialize") {
       onelabUtils::updateGraphs();
-      FlGui::instance()->rebuildTree(action == "compute");
+      FlGui::instance()->rebuildTree();
       if(!FlGui::available()) return;
     }
 
@@ -317,7 +317,7 @@ void onelab_option_cb(Fl_Widget *w, void *data)
     CTX::instance()->solver.autoShowLastStep = val;
   else if(what == "invisible") {
     CTX::instance()->solver.showInvisibleParameters = val;
-    FlGui::instance()->onelab->rebuildTree(true);
+    FlGui::instance()->onelab->rebuildTree();
   }
 }
 
@@ -580,8 +580,7 @@ public:
 
 onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
   : Fl_Group(x, y, w, h, l), _rebuilding(false), _rebuildAgain(false),
-    _rebuildAgainDelete(false), _stop(false), _firstBuild(true),
-    _hasContext(false)
+    _stop(false), _firstBuild(true), _hasContext(false)
 {
   Fl_Color col = treeColor();
   color(col);
@@ -823,7 +822,7 @@ static bool serverAction(const std::string &action)
   if(action == "ResetDatabase") {
     // reset the onelab db
     onelabUtils::resetDb(false);
-    FlGui::instance()->rebuildTree(false);
+    FlGui::instance()->rebuildTree();
     return true;
   }
   else if(action == "Reset") {
@@ -832,7 +831,7 @@ static bool serverAction(const std::string &action)
     for(int i = PView::list.size() - 1; i >= 0; i--) delete PView::list[i];
     for(int i = GModel::list.size() - 1; i >= 0; i--)
       if(GModel::list[i] != GModel::current()) delete GModel::list[i];
-    FlGui::instance()->rebuildTree(false);
+    FlGui::instance()->rebuildTree();
     return true;
   }
   else if(!action.compare(0, 5, "Reset")) {
@@ -844,7 +843,7 @@ static bool serverAction(const std::string &action)
       Msg::Debug("Clearing variable '%s'", var.c_str());
       onelab::server::instance()->clear(var);
     }
-    FlGui::instance()->rebuildTree(false);
+    FlGui::instance()->rebuildTree();
     return true;
   }
   return false;
@@ -1497,7 +1496,7 @@ static void highlight_physical_group_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
-void onelabGroup::rebuildTree(bool deleteWidgets)
+void onelabGroup::rebuildTree()
 {
   // only in the thread of the GUI (e.g. not from a thread of an API program
   // that holds the lock)
@@ -1507,7 +1506,6 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
   // once this rebuild is over
   if(_rebuilding) {
     _rebuildAgain = true;
-    _rebuildAgainDelete = _rebuildAgainDelete || deleteWidgets;
     return;
   }
   // this tree may be gone after the events processed (the GUI closed); not
@@ -1522,16 +1520,14 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
       if(alive.exists()) rebuilding = false;
     }
   } done{alive, _rebuilding};
-  bool d = deleteWidgets;
   do {
-    _rebuildAgain = _rebuildAgainDelete = false;
-    _rebuildTree(d);
+    _rebuildAgain = false;
+    _rebuildTree();
     if(!alive.exists()) return;
-    d = _rebuildAgainDelete;
   } while(_rebuildAgain);
 }
 
-void onelabGroup::_rebuildTree(bool deleteWidgets)
+void onelabGroup::_rebuildTree()
 {
   _rebuilding = true;
 
@@ -1922,7 +1918,7 @@ void onelabGroup::rebuildSolverList()
     }
   }
 
-  rebuildTree(true);
+  rebuildTree();
 }
 
 static bool needToChooseExe(const std::string &exe)

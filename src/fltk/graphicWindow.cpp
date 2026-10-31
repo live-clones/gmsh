@@ -260,7 +260,7 @@ static void file_remote_cb(Fl_Widget *w, void *data)
       server->SendString(GmshSocket::GMSH_PARSE_STRING, "Delete All;");
       for(int i = PView::list.size() - 1; i >= 0; i--)
         if(PView::list[i]->getData()->isRemote()) delete PView::list[i];
-      FlGui::instance()->updateViews(true, true);
+      FlGui::instance()->updateViews(true);
       drawContext::global()->draw();
     }
     else if(str == "test") {
@@ -3531,7 +3531,7 @@ static void tile_cb(Fl_Widget *w, void *data)
   if(Fl::event() == FL_RELEASE) {
     getGraphicWindow(w)->tileReleased();
     // rebuild the tree when we release the mouse after resizing
-    FlGui::instance()->rebuildTree(true);
+    FlGui::instance()->rebuildTree();
   }
 }
 
@@ -4097,7 +4097,7 @@ void graphicWindow::detachMenu()
   _menuwin->end();
   _menuwin->show();
 
-  _onelab->rebuildTree(true);
+  _onelab->rebuildTree();
 }
 
 void graphicWindow::attachMenu()
@@ -4123,7 +4123,7 @@ void graphicWindow::attachMenu()
   _onelab->resize(_tile->x(), _tile->y(), w, _tile->h());
   _tile->redraw();
 
-  _onelab->rebuildTree(true);
+  _onelab->rebuildTree();
 }
 
 void graphicWindow::attachDetachMenu()
@@ -4147,7 +4147,7 @@ void graphicWindow::showMenu()
     setMenuWidth(width);
     CTX::instance()->menuSize[0] = width;
     // necessary until resizing of 0-sized groups works
-    _onelab->rebuildTree(true);
+    _onelab->rebuildTree();
   }
 }
 

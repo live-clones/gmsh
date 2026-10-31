@@ -154,7 +154,7 @@ int buildBackgroundField(
 
 #if defined(HAVE_FLTK)
   view->getOptions()->visible = 0;
-  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+  if(FlGui::available()) FlGui::instance()->updateViews(true);
 #endif
 
   /* singularities */
@@ -2380,7 +2380,7 @@ int quadqsCleanup(GModel *gm)
   PView *view = PView::getViewByName("guiding_field");
   delete view;
 #if defined(HAVE_FLTK)
-  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+  if(FlGui::available()) FlGui::instance()->updateViews(true);
 #endif
 #endif
   return 0;

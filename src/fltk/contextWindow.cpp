@@ -211,7 +211,7 @@ static void elementary_add_cb(Fl_Widget *w, void *data)
   FlGui::instance()->elementaryContext->addShape(pane);
   FlGui::instance()->resetVisibility();
   if(pane == 0) {
-    FlGui::instance()->rebuildTree(true);
+    FlGui::instance()->rebuildTree();
     return;
   }
   GModel::current()->setSelection(0);

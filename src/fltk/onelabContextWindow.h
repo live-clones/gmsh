@@ -44,11 +44,11 @@ private:
   std::vector<Fl_Widget *> _onelabWidgets, _retiredWidgets;
   // a rebuild asked for during a rebuild (hiding an edited input runs its
   // callback): done once the current one is over
-  bool _rebuilding, _rebuildAgain, _rebuildAgainDelete;
+  bool _rebuilding, _rebuildAgain;
   // false once this window is deleted, which the code still running after
   // events were processed (e.g. the GUI closed) reads
   std::shared_ptr<bool> _alive;
-  void _rebuild(bool deleteWidgets);
+  void _rebuild();
   template <class T>
   void
   _addOnelabWidget(T &p, const std::string &pattern,
@@ -76,7 +76,7 @@ public:
   ~onelabContextWindow();
   void show(int dim, int tag);
   void hide();
-  void rebuild(bool deleteWidgets);
+  void rebuild();
   // once the events are handled (see FlGui::_dispatch())
   void deleteRetiredWidgets();
   void highlightSelection();

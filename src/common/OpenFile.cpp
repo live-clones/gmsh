@@ -229,7 +229,7 @@ int ParseFile(const std::string &fileName, bool close, bool errorIfMissing)
 
 #if defined(HAVE_FLTK) && defined(HAVE_POST)
   if(FlGui::available()) {
-    FlGui::instance()->updateViews(true, false);
+    FlGui::instance()->updateViews(true);
   }
 #endif
 
@@ -573,8 +573,7 @@ int MergeFile(const std::string &fileName, bool errorIfMissing,
       opt_view_timestep(i, GMSH_SET | GMSH_GUI,
                         PView::list[i]->getData()->getFirstNonEmptyTimeStep(
                           opt_view_timestep(i, GMSH_GET, 0)));
-    FlGui::instance()->updateViews(numViewsBefore != (int)PView::list.size(),
-                                   false);
+    FlGui::instance()->updateViews(numViewsBefore != (int)PView::list.size());
   }
 #endif
 
@@ -724,7 +723,7 @@ void ClearProject()
 #if defined(HAVE_FLTK)
   if(FlGui::available()) {
     FlGui::instance()->resetVisibility();
-    FlGui::instance()->updateViews(true, true);
+    FlGui::instance()->updateViews(true);
     FlGui::instance()->updateFields();
     GModel::current()->setSelection(0);
   }
@@ -811,7 +810,7 @@ void OpenProject(const std::string &fileName, bool errorIfMissing)
   if(FlGui::available()) {
     file_watch_cb(nullptr, nullptr);
     FlGui::instance()->resetVisibility();
-    FlGui::instance()->updateViews(true, false);
+    FlGui::instance()->updateViews(true);
     FlGui::instance()->updateFields();
     GModel::current()->setSelection(0);
   }

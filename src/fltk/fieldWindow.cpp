@@ -87,7 +87,7 @@ static void field_put_on_view_cb(Fl_Widget *w, void *data)
     field->putOnNewView();
   else if(mb->value() - 1 < (int)PView::list.size())
     field->putOnView(PView::list[mb->value() - 1]);
-  FlGui::instance()->updateViews(mb->value() == 0, true);
+  FlGui::instance()->updateViews(mb->value() == 0);
   drawContext::global()->draw();
 }
 

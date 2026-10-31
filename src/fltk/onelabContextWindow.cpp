@@ -138,7 +138,7 @@ static void onelab_context_resized_cb(void *data)
 
 static void choice_cb(Fl_Widget *w, void *data)
 {
-  FlGui::instance()->onelabContext->rebuild(false);
+  FlGui::instance()->onelabContext->rebuild();
   FlGui::instance()->onelabContext->highlightSelection();
   // allow the solver code to react to the selection of the elementary or
   // physical group
@@ -152,7 +152,7 @@ onelabContextWindow::onelabContextWindow(int deltaFontSize)
   FL_NORMAL_SIZE -= deltaFontSize;
 
   _dim = _tag = -1;
-  _rebuilding = _rebuildAgain = _rebuildAgainDelete = false;
+  _rebuilding = _rebuildAgain = false;
 
   // as narrow as the option window, wider as the window is widened
   _width = TW;
@@ -220,7 +220,7 @@ void onelabContextWindow::show(int dim, int tag)
   if(menu.size() > 1) _choice->value(menu.size() - 2); // last physical
 
   std::shared_ptr<bool> alive = _alive;
-  rebuild(true);
+  rebuild();
   if(!*alive) return;
   highlightSelection();
 
@@ -230,13 +230,12 @@ void onelabContextWindow::show(int dim, int tag)
 
 void onelabContextWindow::hide() { win->hide(); }
 
-void onelabContextWindow::rebuild(bool deleteWidgets)
+void onelabContextWindow::rebuild()
 {
   // only in the thread of the GUI, as the tree (see onelabGroup::rebuildTree())
   if(!FlGui::onMainThread()) return;
   if(_rebuilding) {
     _rebuildAgain = true;
-    _rebuildAgainDelete = _rebuildAgainDelete || deleteWidgets;
     return;
   }
   _rebuilding = true;
@@ -251,12 +250,10 @@ void onelabContextWindow::rebuild(bool deleteWidgets)
       if(*alive) rebuilding = false;
     }
   } done{alive, _rebuilding};
-  bool d = deleteWidgets;
   do {
-    _rebuildAgain = _rebuildAgainDelete = false;
-    _rebuild(d);
+    _rebuildAgain = false;
+    _rebuild();
     if(!*alive) return;
-    d = _rebuildAgainDelete;
   } while(_rebuildAgain);
 }
 
@@ -267,7 +264,7 @@ void onelabContextWindow::deleteRetiredWidgets()
   _retiredStrings.clear();
 }
 
-void onelabContextWindow::_rebuild(bool deleteWidgets)
+void onelabContextWindow::_rebuild()
 {
   // no entity selected, or not any more: its parameters go with it
   if(!GModel::current()->getEntityByTag(_dim, _tag)) {

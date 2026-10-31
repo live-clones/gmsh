@@ -433,7 +433,7 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
 #if defined(HAVE_FLTK)
       drawContext::global()->draw();
       if(FlGui::available() && n != PView::list.size()) {
-        FlGui::instance()->rebuildTree(true);
+        FlGui::instance()->rebuildTree();
         FlGui::instance()->openModule("Post-processing");
       }
 #endif
@@ -462,7 +462,7 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
 #endif
 #if defined(HAVE_FLTK)
     if(FlGui::available())
-      FlGui::instance()->updateViews(n != (int)PView::list.size(), true);
+      FlGui::instance()->updateViews(n != (int)PView::list.size());
     drawContext::global()->draw();
 #endif
   } break;

@@ -33,8 +33,8 @@ private:
   std::list<std::string> _treeStrings, _retiredStrings;
   // a rebuild asked for during a rebuild (hiding an edited input runs its
   // callback, which may rebuild the tree): done once the current one is over
-  bool _rebuilding, _rebuildAgain, _rebuildAgainDelete;
-  void _rebuildTree(bool deleteWidgets);
+  bool _rebuilding, _rebuildAgain;
+  void _rebuildTree();
   bool _stop;
   double _baseWidth, _indent;
   int _minWindowWidth, _minWindowHeight;
@@ -47,7 +47,7 @@ private:
   int _rowWidth(Fl_Tree_Item *n);
   // the widget of an item, built by make() in a group of the width left at
   // its depth and the height of a row, which the tree places; the groups are
-  // deleted after the next rebuild (see _rebuildTree())
+  // deleted at the next rebuild (see _rebuildTree())
   void _addRow(Fl_Tree_Item *n,
                const std::function<void(int ww, int hh)> &make);
   template <class T> void _addParameter(T &p);
@@ -63,7 +63,7 @@ public:
   void rebuildSolverList();
   // once the events are handled (see FlGui::_dispatch())
   void deleteRetiredWidgets();
-  void rebuildTree(bool deleteWidgets);
+  void rebuildTree();
   void openTreeItem(const std::string &name);
   void closeTreeItem(const std::string &name);
   bool isTreeItemOpen(const std::string &name);

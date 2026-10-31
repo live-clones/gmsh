@@ -187,7 +187,7 @@ public:
   // set the title of the graphic windows
   void setGraphicTitle(const std::string &title);
   // update the GUI when views get modified, added or deleted
-  void updateViews(bool numberOfViewsHasChanged, bool deleteWidgets);
+  void updateViews(bool numberOfViewsHasChanged);
   // update the GUI when fields change
   void updateFields();
   // reset the visibility window
@@ -223,7 +223,7 @@ public:
   // save messages to file
   void saveMessages(const char *fileName);
   // rebuild the tree
-  void rebuildTree(bool deleteWidgets);
+  void rebuildTree();
   // toggles the module open or closed based on its current state
   void toggleModule(const std::string &name);
   // open module in tree
