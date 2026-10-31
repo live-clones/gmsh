@@ -4675,7 +4675,7 @@ void graphicWindow::showMessages()
     if(height > maxh) height = maxh / 2;
     setMessageHeight(height);
   }
-  if(_autoScrollMessages) _browser->bottomline(_browser->size());
+  if(_autoScrollMessages) _browser->scrollToEnd();
 }
 
 void graphicWindow::hideMessages()
@@ -4714,7 +4714,7 @@ void graphicWindow::addMessage(const char *msg)
   _messages.push_back(msg);
   _browser->add(msg);
   if(_autoScrollMessages && _win->shown() && _browser->h() >= FL_NORMAL_SIZE)
-    _browser->bottomline(_browser->size());
+    _browser->scrollToEnd();
 }
 
 void graphicWindow::clearMessages()
