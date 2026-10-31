@@ -171,7 +171,7 @@ GModel *GModel::findByName(const std::string &name, const std::string &fileName)
 
 void GModel::destroy(bool keepName)
 {
-  CTX::instance()->geomChanged();
+  CTX::instance()->entitiesChanged();
   Msg::Debug("Destroying model %s", getName().c_str());
 
   if(!keepName) {
@@ -517,31 +517,31 @@ std::vector<int> GModel::getTagsForPhysicalName(int dim,
 
 bool GModel::add(GRegion *r)
 {
-  CTX::instance()->geomChanged();
+  CTX::instance()->entitiesChanged();
   return regions.insert(r).second;
 }
 
 bool GModel::add(GFace *f)
 {
-  CTX::instance()->geomChanged();
+  CTX::instance()->entitiesChanged();
   return faces.insert(f).second;
 }
 
 bool GModel::add(GEdge *e)
 {
-  CTX::instance()->geomChanged();
+  CTX::instance()->entitiesChanged();
   return edges.insert(e).second;
 }
 
 bool GModel::add(GVertex *v)
 {
-  CTX::instance()->geomChanged();
+  CTX::instance()->entitiesChanged();
   return vertices.insert(v).second;
 }
 
 bool GModel::remove(GRegion *r)
 {
-  CTX::instance()->geomChanged();
+  CTX::instance()->entitiesChanged();
   // the container is sorted by tag, so look the entity up instead of scanning
   // (this is O(#entities) per removal otherwise, which dominates on models
   // with many partition entities); fall back to a scan in case a tag was
@@ -562,7 +562,7 @@ bool GModel::remove(GRegion *r)
 
 bool GModel::remove(GFace *f)
 {
-  CTX::instance()->geomChanged();
+  CTX::instance()->entitiesChanged();
   // the container is sorted by tag, so look the entity up instead of scanning
   // (this is O(#entities) per removal otherwise, which dominates on models
   // with many partition entities); fall back to a scan in case a tag was
@@ -583,7 +583,7 @@ bool GModel::remove(GFace *f)
 
 bool GModel::remove(GEdge *e)
 {
-  CTX::instance()->geomChanged();
+  CTX::instance()->entitiesChanged();
   // the container is sorted by tag, so look the entity up instead of scanning
   // (this is O(#entities) per removal otherwise, which dominates on models
   // with many partition entities); fall back to a scan in case a tag was
@@ -604,7 +604,7 @@ bool GModel::remove(GEdge *e)
 
 bool GModel::remove(GVertex *v)
 {
-  CTX::instance()->geomChanged();
+  CTX::instance()->entitiesChanged();
   // the container is sorted by tag, so look the entity up instead of scanning
   // (this is O(#entities) per removal otherwise, which dominates on models
   // with many partition entities); fall back to a scan in case a tag was

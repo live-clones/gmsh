@@ -249,6 +249,18 @@ int GmshWriteFile(const std::string &fileName)
 
 int GmshFinalize()
 {
+#if defined(HAVE_FLTK)
+  // the GUI shows the models, views, fields and plugins deleted below, and
+  // would point to them after a new initialization: it goes first, from its
+  // own thread only
+  if(FlGui::available()) {
+    if(FlGui::onMainThread())
+      FlGui::destroy();
+    else
+      Msg::Warning("Finalizing outside the thread of the GUI, which stays");
+  }
+#endif
+
   // delete all models and views
   DeleteAllModelsAndViews();
 

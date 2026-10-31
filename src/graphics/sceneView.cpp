@@ -22,17 +22,24 @@
 
 sceneView::sceneView(drawContext *ctx)
   : _w(1), _h(1), _selection(ENT_NONE), _trySelection(0), _addQuery(false),
-    _highlighted(nullptr), _highlightedWas(0), _pickStepTime(0.),
-    _stepping(false), _hoverBehind(false), _spin(0.), _spinFrom(0.),
-    _spinPath(0.), _spinHot(0.), _ctx(ctx), _fire(0.), _fireTime(0.),
-    addPointMode(0), lassoMode(false), selectionMode(false), endSelection(0),
-    undoSelection(0), invertSelection(0), quitSelection(0), changeSelection(0)
+    _highlightedDim(-1), _highlightedTag(0), _highlightedWas(0),
+    _pickStepTime(0.), _stepping(false), _hoverBehind(false), _spin(0.),
+    _spinFrom(0.), _spinPath(0.), _spinHot(0.), _ctx(ctx), _fire(0.),
+    _fireTime(0.), addPointMode(0), lassoMode(false), selectionMode(false),
+    endSelection(0), undoSelection(0), invertSelection(0), quitSelection(0),
+    changeSelection(0)
 {
   for(int i = 0; i < 3; i++) _point[i] = 0.;
   for(int i = 0; i < 4; i++) _trySelectionXYWH[i] = 0;
   _stepAnchor[0] = _stepAnchor[1] = 0.;
   _hoverAnchor[0] = _hoverAnchor[1] = 0.;
   for(int i = 0; i < 4; i++) _hoverBox[i] = 0.;
+}
+
+sceneView::~sceneView()
+{
+  GEntity *was = _highlightedEntity();
+  if(was) was->setSelection(_highlightedWas);
 }
 
 bool sceneView::_select(int type, bool multiple, bool mesh, bool post, int x,
@@ -96,6 +103,20 @@ bool sceneView::_probeBehind()
   return behind;
 }
 
+// The highlighted entity, if it still is: looked up by its tag in the models,
+// as it may have been deleted since, and still drawn as highlighted, as
+// something else may have changed its selection since (or a new entity may
+// have its tag)
+GEntity *sceneView::_highlightedEntity() const
+{
+  if(_highlightedDim < 0) return nullptr;
+  for(GModel *m : GModel::list) {
+    GEntity *e = m->getEntityByTag(_highlightedDim, _highlightedTag);
+    if(e && e->getSelection() == GEntity::SelectHover) return e;
+  }
+  return nullptr;
+}
+
 // The entity the cursor is over, drawn as a selected one until the cursor is
 // over something else. The picture changes, so this redraws; what is drawn is
 // the same geometry in another colour, so the identifier image a pick is read
@@ -103,12 +124,17 @@ bool sceneView::_probeBehind()
 void sceneView::_highlight(GEntity *e)
 {
   if(!CTX::instance()->mouseHoverHighlight) e = nullptr;
-  if(e == _highlighted) return;
-  // put back what it was, unless something else has changed it since
-  if(_highlighted && _highlighted->getSelection() == GEntity::SelectHover)
-    _highlighted->setSelection(_highlightedWas);
+  if(!e && _highlightedDim < 0) return;
+  GEntity *was = _highlightedEntity();
+  if(e && e == was) return;
+  // not one already chosen, drawn as such: it would lose its marker and label
+  // and no longer read as chosen to what picks it (see getSelection())
+  if(e && e->getSelection()) e = nullptr;
+  // put back what it was
+  if(was) was->setSelection(_highlightedWas);
   _highlightedWas = e ? e->getSelection() : 0;
-  _highlighted = e;
+  _highlightedDim = e ? e->dim() : -1;
+  _highlightedTag = e ? e->tag() : 0;
   // selected as far as the drawing is concerned, so that it is drawn again
   // on top of the merged arrays, but in the highlight colour and without the
   // marker and label a chosen entity shows (see getSelectionColor())

@@ -449,6 +449,34 @@ public:
 
 VisibilityList *VisibilityList::_instance = nullptr;
 
+// The list and the tree hold pointers to the entities and the models they
+// were built from, deleted with them (by the API, a script merged, a
+// synchronization): what they are used for first checks that none was created
+// or deleted since, else rebuilds them, the selection made in them being then
+// out of date. The rebuild is deferred: the checks run inside the event
+// handling of the browser and the tree, which still use their lines and items
+// once the callback returns
+static int _listStamp = -1, _treeStamp = -1;
+
+static void _rebuild_cb(void *)
+{
+  if(FlGui::available()) visibility_cb(nullptr, nullptr);
+}
+
+static bool _changed(int stamp)
+{
+  if(stamp == CTX::instance()->entitiesStamp) return false;
+  if(!Fl::has_timeout(_rebuild_cb)) {
+    Msg::Info("The model changed: the visibility lists are rebuilt");
+    Fl::add_timeout(0., _rebuild_cb);
+  }
+  return true;
+}
+
+static bool _listChanged() { return _changed(_listStamp); }
+
+static bool _treeChanged() { return _changed(_treeStamp); }
+
 static void _rebuild_list_browser()
 {
   FlGui::instance()->visibility->browser->clear();
@@ -466,6 +494,7 @@ static void _rebuild_list_browser()
     FlGui::instance()->visibility->search);
   VisibilityList::instance()->update(type,
                                      FlGui::instance()->visibility->filter);
+  _listStamp = CTX::instance()->entitiesStamp;
 
   for(int i = 0; i < VisibilityList::instance()->getNumEntities(); i++) {
     FlGui::instance()->visibility->browser->add(
@@ -477,6 +506,7 @@ static void _rebuild_list_browser()
 
 static void visibility_browser_apply_cb(Fl_Widget *w, void *data)
 {
+  if(_listChanged()) return;
   // if the browser is not empty, get the selections made in the
   // browser and apply them into the model
   if(VisibilityList::instance()->getNumEntities()) {
@@ -722,6 +752,7 @@ static void _rebuild_tree_browser(bool force)
   FlGui::instance()->visibility->tree_create->hide();
   FlGui::instance()->visibility->tree->show();
   FlGui::instance()->visibility->tree->clear();
+  _treeStamp = CTX::instance()->entitiesStamp;
 
   for(std::size_t i = 0; i < GModel::list.size(); i++) {
     GModel *m = GModel::list[i];
@@ -813,6 +844,7 @@ static void _recur_update_selected(Fl_Tree_Item *n)
 
 static void visibility_tree_apply_cb(Fl_Widget *w, void *data)
 {
+  if(_treeChanged()) return;
   CTX::instance()->meshChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
   bool recursive =
     FlGui::instance()->visibility->butt[0]->value() ? true : false;
@@ -1209,7 +1241,20 @@ static void visibility_interactive_cb(Fl_Widget *w, void *data)
     Msg::StatusGl("Select %s\n[Press %s'q' to abort]", str.c_str(),
                   mode ? "" : "'u' to undo or ");
 
+    int entities = CTX::instance()->entitiesStamp;
+    int mesh = CTX::instance()->meshContentStamp;
     char ib = FlGui::instance()->selectEntity(what);
+    if(!FlGui::available()) break;
+    // the model or its mesh changed while waiting: what an undo would show
+    // again may be gone
+    if(entities != CTX::instance()->entitiesStamp ||
+       mesh != CTX::instance()->meshContentStamp) {
+      vertices.clear();
+      edges.clear();
+      faces.clear();
+      regions.clear();
+      elements.clear();
+    }
     if(ib == 'l') {
       // store for possible undo later
       vertices = FlGui::instance()->selectedVertices;
@@ -1271,6 +1316,7 @@ static void visibility_per_window_cb(Fl_Widget *w, void *data)
 static void browser_cb(Fl_Widget *w, void *data)
 {
   if(Fl::event_clicks()) {
+    if(_listChanged()) return;
     int n = FlGui::instance()->visibility->browser->value() - 1;
     if(n >= 0 && n < VisibilityList::instance()->getNumEntities()) {
       int dim = VisibilityList::instance()->getDim(n);
@@ -1295,6 +1341,7 @@ static void tree_cb(Fl_Widget *w, void *data)
   if(tree->callback_reason() == FL_TREE_REASON_RESELECTED &&
      Fl::event_clicks()) {
     // double click
+    if(_treeChanged()) return;
     Fl_Tree_Item *item = (Fl_Tree_Item *)tree->callback_item();
     GEntity *ge = nullptr;
     if(item) {

@@ -4462,8 +4462,10 @@ void optionWindow::resetBrowser()
   // the view shown, kept or the nearest left
   if(n)
     updateViewGroup(std::max(0, std::min(view.index, n - 1)));
-  else
+  else {
     view.index = -1;
+    view.colorbar->update(-1, 0., 0.);
+  }
   if(n)
     _categoryTab[5]->activate();
   else
@@ -4499,7 +4501,6 @@ void optionWindow::updateViewGroup(int index)
 
   PView *v = PView::list[index];
   PViewData *data = v->getData();
-  PViewOptions *opt = v->getOptions();
 
   double maxval = std::max(fabs(data->getMin()), fabs(data->getMax()));
   if(!maxval) maxval = 1.;
@@ -4703,8 +4704,7 @@ void optionWindow::updateViewGroup(int index)
   opt_view_color_axes(index, GMSH_GUI, 0);
   opt_view_color_background2d(index, GMSH_GUI, 0);
 
-  view.colorbar->update(data->getName().c_str(), data->getMin(), data->getMax(),
-                        &opt->colorTable, &v->getChanged());
+  view.colorbar->update(v->getTag(), data->getMin(), data->getMax());
 }
 
 void optionWindow::activate(const char *what)

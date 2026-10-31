@@ -150,7 +150,6 @@ onelabContextWindow::onelabContextWindow(int deltaFontSize)
   FL_NORMAL_SIZE -= deltaFontSize;
 
   _dim = _tag = -1;
-  _entity = nullptr;
 
   // as narrow as the option window, wider as the window is widened
   _width = TW;
@@ -181,17 +180,13 @@ void onelabContextWindow::show(int dim, int tag)
   _dim = dim;
   _tag = tag;
   _name = GModel::current()->getElementaryName(dim, tag);
-  _entity = GModel::current()->getEntityByTag(dim, tag);
+  GEntity *entity = GModel::current()->getEntityByTag(dim, tag);
   _physicalGroups.clear();
-  _physicalGroupEntities.clear();
-  if(_entity) {
-    std::map<int, std::vector<GEntity *> > groups;
-    GModel::current()->getPhysicalGroups(_dim, groups);
-    for(auto &p : _entity->physicals) {
+  if(entity) {
+    for(auto &p : entity->physicals) {
       int n = std::abs(p); // can be < 0 to switch orientation
       _physicalGroups.push_back(
         std::make_pair(n, GModel::current()->getPhysicalName(dim, n)));
-      _physicalGroupEntities.push_back(groups[n]);
     }
   }
 
@@ -235,7 +230,8 @@ void onelabContextWindow::hide() { win->hide(); }
 
 void onelabContextWindow::rebuild(bool deleteWidgets)
 {
-  if(!_entity) return; // no entity selected
+  // no entity selected, or not any more
+  if(!GModel::current()->getEntityByTag(_dim, _tag)) return;
 
   // hide old widgets and record if one had the focus
   std::string focus;
@@ -335,16 +331,20 @@ int onelabContextWindow::place(int w)
 
 void onelabContextWindow::highlightSelection()
 {
-  if(!_entity) return;
+  GEntity *entity = GModel::current()->getEntityByTag(_dim, _tag);
+  if(!entity) return;
 
   GModel::current()->setSelection(0);
   if(_choice->value() == 0) { // elementary
-    _entity->setVisibility(1);
-    _entity->setSelection(2);
+    entity->setVisibility(1);
+    entity->setSelection(2);
   }
   else { // physical
-    if(_choice->value() - 1 < (int)_physicalGroupEntities.size()) {
-      for(auto e : _physicalGroupEntities[_choice->value() - 1]) {
+    int i = _choice->value() - 1;
+    if(i < (int)_physicalGroups.size()) {
+      std::map<int, std::vector<GEntity *>> groups;
+      GModel::current()->getPhysicalGroups(_dim, groups);
+      for(auto e : groups[_physicalGroups[i].first]) {
         e->setVisibility(1);
         e->setSelection(2);
       }

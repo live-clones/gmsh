@@ -2137,7 +2137,8 @@ static void geometry_elementary_split_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
   Msg::StatusGl("Select curve to split\n"
                 "[Press 'q' to abort]");
-  GEdge *edge_to_split = nullptr;
+  // by its tag, as the model may change while the points are chosen
+  int edgeTag = -1;
   while(1) {
     if(!FlGui::available()) return;
 
@@ -2145,8 +2146,8 @@ static void geometry_elementary_split_cb(Fl_Widget *w, void *data)
     if(!FlGui::available()) return;
     if(ib == 'q') { break; }
     if(!FlGui::instance()->selectedEdges.empty()) {
-      edge_to_split = FlGui::instance()->selectedEdges[0];
-      edge_to_split->setSelection(1);
+      edgeTag = FlGui::instance()->selectedEdges[0]->tag();
+      FlGui::instance()->selectedEdges[0]->setSelection(1);
       break;
     }
   }
@@ -2158,14 +2159,11 @@ static void geometry_elementary_split_cb(Fl_Widget *w, void *data)
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   drawContext::global()->draw();
   while(1) {
-    if(!FlGui::available()) return;
-
     char ib = FlGui::instance()->selectEntity(ENT_POINT);
-    if(!FlGui::available()) return;
+    if(!FlGui::available()) break;
     if(ib == 'q') { break; }
-    if(ib == 'e' && edge_to_split) {
-      scriptSplitCurve(edge_to_split->tag(), List1,
-                       GModel::current()->getFileName());
+    if(ib == 'e' && edgeTag >= 0) {
+      scriptSplitCurve(edgeTag, List1, GModel::current()->getFileName());
       break;
     }
     for(std::size_t i = 0; i < FlGui::instance()->selectedVertices.size();
@@ -2176,6 +2174,8 @@ static void geometry_elementary_split_cb(Fl_Widget *w, void *data)
       FlGui::instance()->selectedVertices[i]->setSelection(1);
     }
   }
+  List_Delete(List1);
+  if(!FlGui::available()) return;
   Msg::StatusGl("");
   FlGui::instance()->resetVisibility();
   GModel::current()->setSelection(0);
@@ -2298,8 +2298,17 @@ static void mesh_modify_parts(Fl_Widget *w, void *data,
                     "[Press 'e' to end selection or 'q' to abort]",
                     str);
 
+    int entities = CTX::instance()->entitiesStamp;
+    int mesh = CTX::instance()->meshContentStamp;
     char ib = FlGui::instance()->selectEntity(what);
     if(!FlGui::available()) return;
+    // the model or its mesh changed while waiting: what was selected before
+    // may be gone
+    if(entities != CTX::instance()->entitiesStamp ||
+       mesh != CTX::instance()->meshContentStamp) {
+      ele.clear();
+      ent.clear();
+    }
     if(ib == 'l') {
       if(CTX::instance()->pickElements) {
         for(std::size_t i = 0; i < FlGui::instance()->selectedElements.size();

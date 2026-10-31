@@ -43,11 +43,23 @@ public:
   Fl_Check_Button *toggles[4];
   Fl_Value_Input *inputs[1];
   GEdge *selected;
+  // where the curve was added, to find it again without reading it
+  GModel *selectedModel;
+  int selectedTag;
+  // the curve of the selection, created in the current model if needed
+  void createSelected();
 #if defined(HAVE_MESH)
   std::vector<edge_angle> edges_detected, edges_lonly;
 #else
   std::vector<double> edges_detected, edges_lonly;
 #endif
+  // the model's stamps when the editor last changed its selection: the edge,
+  // the elements and the edges found point into the model and its mesh, which
+  // a reload, a clear or a remeshing deletes
+  int entitiesStamp, meshStamp;
+  void recordStamps();
+  // forgets a selection whose model or mesh changed since; returns true then
+  bool forgetIfChanged();
   classificationEditor(int deltaFontSize);
   ~classificationEditor() { Fl::delete_widget(window); }
   void show();

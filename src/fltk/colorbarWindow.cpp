@@ -13,14 +13,17 @@
 #include "colorbarWindow.h"
 #include "ColorTable.h"
 #include "Context.h"
+#include "PView.h"
+#include "PViewOptions.h"
 
 #define EPS 1.e-10
 
 colorbarWindow::colorbarWindow(int x, int y, int w, int h, const char *l)
   : Fl_Widget(x, y, w, h, l)
 {
+  _viewTag = -1;
   ct = nullptr;
-  label = nullptr;
+  viewchanged = nullptr;
   help_flag = 0;
   font_height = FL_NORMAL_SIZE - 1; // use slightly smaller font
   marker_height = font_height;
@@ -288,9 +291,17 @@ int colorbarWindow::helpHeight() const
   return 6 + 16 * fh + fh / 2 + wedge_height + marker_height + font_height + 5;
 }
 
+bool colorbarWindow::lookup()
+{
+  PView *v = (_viewTag < 0) ? nullptr : PView::getViewByTag(_viewTag);
+  ct = v ? &v->getOptions()->colorTable : nullptr;
+  viewchanged = v ? &v->getChanged() : nullptr;
+  return ct && ct->size > 0;
+}
+
 void colorbarWindow::draw()
 {
-  if(!ct || ct->size < 1) return;
+  if(!lookup()) return;
 
   label_y = h() - 5;
   marker_y = label_y - marker_height - font_height;
@@ -306,12 +317,9 @@ void colorbarWindow::draw()
   fl_pop_clip();
 }
 
-void colorbarWindow::update(const char *name, double min, double max,
-                            GmshColorTable *table, bool *changed)
+void colorbarWindow::update(int viewTag, double min, double max)
 {
-  label = name;
-  ct = table;
-  viewchanged = changed;
+  _viewTag = viewTag;
   minval = min;
   maxval = max;
   redraw();
@@ -319,10 +327,13 @@ void colorbarWindow::update(const char *name, double min, double max,
 
 int colorbarWindow::handle(int event)
 {
-  if(!ct || ct->size < 1) return Fl_Widget::handle(event);
-
   static int p1 = 0, p2 = 0, p3 = 0, p4 = 0;
   static int pentry, move_marker;
+  if(!lookup()) {
+    // the view gone during a drag: the next press starts afresh
+    if(event == FL_RELEASE) p1 = p2 = p3 = p4 = 0;
+    return Fl_Widget::handle(event);
+  }
   int i, ibut, xpos, ypos, modify, entry, compute;
 
   modify = 0;

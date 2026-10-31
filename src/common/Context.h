@@ -216,6 +216,14 @@ public:
     for(int d = 0; d < 4; d++)
       if(ents & (1 << d)) geom.stamp[d]++;
   }
+  // entities were created or deleted (GModel::add(), remove(), destroy()):
+  // what keeps pointers to entities, as the lists of the GUI do, compares it
+  int entitiesStamp;
+  void entitiesChanged()
+  {
+    entitiesStamp++;
+    geomChanged();
+  }
   void entityColorsChanged() { entityColorsStamp++; }
   void entityVisibilityChanged() { entityVisibilityStamp++; }
 

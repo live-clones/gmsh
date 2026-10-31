@@ -41,11 +41,11 @@ private:
   _addOnelabWidget(T &p, const std::string &pattern,
                    std::set<std::pair<std::string, Fl_Widget *> > &widgets);
   Fl_Choice *_choice;
+  // the entity, and its physical groups, by their tags: the model may change
+  // while the window is shown (a script reloaded, gmsh.model.occ.fragment)
   int _dim, _tag;
-  GEntity *_entity;
   std::string _name;
-  std::vector<std::pair<int, std::string> > _physicalGroups;
-  std::vector<std::vector<GEntity *> > _physicalGroupEntities;
+  std::vector<std::pair<int, std::string>> _physicalGroups;
   // the widgets of the parameters, with the codes of where they go
   struct placed {
     Fl_Widget *widget;

@@ -1260,6 +1260,9 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter, doub
     std::for_each(m->firstRegion(), m->lastRegion(),
                   EmbeddedCompatibilityTest());
 
+  // elements were deleted or replaced
+  m->destroyMeshCaches();
+
   double t2 = Cpu(), w2 = TimeOfDay();
   Msg::StatusBar(true, "Done optimizing mesh (Wall %gs, CPU %gs)", w2 - w1,
                  t2 - t1);
@@ -1274,6 +1277,9 @@ void AdaptMesh(GModel *m)
 
   for(int i = 0; i < 10; i++)
     std::for_each(m->firstRegion(), m->lastRegion(), adaptMeshGRegion());
+
+  // elements were deleted or replaced
+  m->destroyMeshCaches();
 
   double t2 = Cpu(), w2 = TimeOfDay();
   Msg::StatusBar(true, "Done adaptating 3D mesh (Wall %gs, CPU %gs)", w2 - w1,
@@ -1301,6 +1307,9 @@ void RecombineMesh(GModel *m)
       recombineIntoQuads(gf, blossom, topo, repos, minqual);
     }
   }
+
+  // elements were deleted or replaced
+  m->destroyMeshCaches();
 
   double t2 = Cpu(), w2 = TimeOfDay();
   Msg::StatusBar(true, "Done recombining 2D mesh (Wall %gs, CPU %gs)", w2 - w1,

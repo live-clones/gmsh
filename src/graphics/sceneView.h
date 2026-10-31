@@ -66,9 +66,12 @@ private:
   // what the cursor is over, in a box by it or in the status bar
   void _hover();
   // and drawn as selected while it is: the entity, what its selection was
-  // before, and the change of one for the other (which redraws)
-  GEntity *_highlighted;
+  // before, and the change of one for the other (which redraws). The entity
+  // is kept by its dimension and tag, not by a pointer: a clear, a reload or
+  // a synchronization deletes it while it is highlighted
+  int _highlightedDim, _highlightedTag;
   char _highlightedWas;
+  GEntity *_highlightedEntity() const;
   void _highlight(GEntity *e);
   // step through what is under the cursor, once per press or notch: see
   // _stepPick() for the several ways one of them arrives twice
@@ -169,7 +172,8 @@ public:
   std::string screenMessage[2];
 
   sceneView(drawContext *ctx);
-  virtual ~sceneView() {}
+  // puts back the entity it highlights, e.g. when a window goes on unsplit
+  virtual ~sceneView();
   drawContext *getDrawContext() { return _ctx; }
   void setDrawContext(drawContext *ctx) { _ctx = ctx; }
 

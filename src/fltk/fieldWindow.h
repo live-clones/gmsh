@@ -38,7 +38,10 @@ public:
   Fl_Button *help_header;
   Fl_Box *help;
   Fl_Button *delete_btn;
+  // the field being edited, by its id and its type: it may be deleted while
+  // edited (with its model, by a script), and another field take its id
   int selected_id;
+  std::string _editedType;
 
 public:
   fieldWindow(int deltaFontSize = 0);
@@ -48,6 +51,8 @@ public:
   void saveFieldOptions();
   void loadFieldOptions();
   void editField(Field *f);
+  // the field being edited if it still exists, or null
+  Field *editedField();
   void toggleHelp();
   void layout();
 };

@@ -13,15 +13,19 @@
 class colorbarWindow : public Fl_Widget {
 private:
   int font_height, marker_height, wedge_height;
-  const char *label;
   double minval, maxval; // min and max data values
   int wedge_y; // top coord of color wedge
   int marker_y; // top coord of marker arrow
   int label_y; // y coord of text labels
   int help_flag; // if nonzero, print help message
   int marker_pos; // position of marker as index into table
-  GmshColorTable *ct; // pointer to the color table (allocated in the view)
-  bool *viewchanged; // pointer to changed bit in view
+  // the view shown, by its tag, as it may be deleted while shown (by a script,
+  // the API); its color table and changed bit, looked up at each draw and
+  // event by lookup(), which says whether there is one
+  int _viewTag;
+  GmshColorTable *ct;
+  bool *viewchanged;
+  bool lookup();
   Fl_Color color_bg;
   // convert widget X coordinate to color table index
   int x_to_index(int x);
@@ -42,8 +46,8 @@ public:
   int handle(int);
   // the least height that shows the help above the color wedge
   int helpHeight() const;
-  void update(const char *name, double min, double max, GmshColorTable *ct,
-              bool *changed);
+  // the view of the given tag (-1 for none), with the range of its values
+  void update(int viewTag, double min, double max);
 };
 
 #endif
