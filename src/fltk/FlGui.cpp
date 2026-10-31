@@ -498,8 +498,10 @@ void FlGui::applyColorScheme(bool redraw)
   Fl::set_boxtype(FL_UP_FRAME, FL_THIN_UP_FRAME);
   Fl::set_boxtype(FL_DOWN_FRAME, FL_THIN_DOWN_FRAME);
 
-  // thinner scrollbars
-  Fl::scrollbar_size(std::max(10, FL_NORMAL_SIZE));
+  // thinner scrollbars; in the gmsh theme thinner than FLTK draws the arrow
+  // buttons at either end (see applyGmshScheme())
+  Fl::scrollbar_size(gmshScheme() ? gmshScrollbarSize :
+                                    std::max(10, FL_NORMAL_SIZE));
 
   if(redraw && available()) {
     gmshIconsRecolor();

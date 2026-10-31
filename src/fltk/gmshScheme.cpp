@@ -9,6 +9,7 @@
 #include <typeinfo>
 #include <FL/Fl.H>
 #include <FL/Fl_Button.H>
+#include <FL/Fl_Group.H>
 #include <FL/Fl_Input_.H>
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Menu_.H>
@@ -306,6 +307,45 @@ int gmshSchemeHandle(int event, Fl_Window *win)
   return ret;
 }
 
+// The scrollbars: a track of the colour of what they scroll and a rounded
+// thumb, without the arrows FLTK no longer draws at this width (see
+// gmshScrollbarSize). They are the members of the widgets that scroll, which
+// FLTK creates, so they are styled before the windows holding them are drawn
+// (anything shown or rebuilt is), and drawn again if that changed them.
+static void thumbBox(int x, int y, int w, int h, Fl_Color c)
+{
+  fl_color(c);
+  fl_rounded_rectf(x, y, w, h, std::min(w, h) / 2);
+}
+
+static void styleScrollbar(Fl_Scrollbar *s)
+{
+  Fl_Color track = s->parent() ? s->parent()->color() : FL_BACKGROUND_COLOR;
+  Fl_Color thumb = fl_color_average(FL_FOREGROUND_COLOR, track, 0.35f);
+  if(s->box() == FL_FLAT_BOX && s->color() == track &&
+     s->slider() == GMSH_THUMB_BOX && s->selection_color() == thumb)
+    return;
+  s->box(FL_FLAT_BOX);
+  s->color(track);
+  s->slider(GMSH_THUMB_BOX);
+  s->selection_color(thumb);
+  s->redraw();
+}
+
+static void styleScrollbarsIn(Fl_Widget *w)
+{
+  if(Fl_Scrollbar *s = dynamic_cast<Fl_Scrollbar *>(w)) styleScrollbar(s);
+  if(Fl_Group *g = w->as_group())
+    for(int i = 0; i < g->children(); i++) styleScrollbarsIn(g->child(i));
+}
+
+static void styleScrollbars(void *)
+{
+  if(!gmshScheme()) return;
+  for(Fl_Window *win = Fl::first_window(); win; win = Fl::next_window(win))
+    if(win->damage()) styleScrollbarsIn(win);
+}
+
 void applyGmshScheme()
 {
   // the font of the desktop, where FLTK can be told its name
@@ -341,6 +381,9 @@ void applyGmshScheme()
 #endif
 
   installBoxes();
+
+  Fl::set_boxtype(GMSH_THUMB_BOX, thumbBox, 0, 0, 0, 0);
+  if(!Fl::has_check(styleScrollbars)) Fl::add_check(styleScrollbars);
 
   // no dashed rectangle on the widget with the focus
   Fl::visible_focus(0);

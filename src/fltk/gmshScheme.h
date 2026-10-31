@@ -23,8 +23,11 @@ void applyGmshColors(bool dark);
 // the markers of the dock): brighter than the selection of the lists, which
 // stays muted (the selection colour of FLTK when the theme is off)
 Fl_Color gmshAccent();
-// the font, the boxes and the hover
+// the font, the boxes, the scrollbars and the hover
 void applyGmshScheme();
+// the width of the scrollbars of the theme: under 7 pixels, FLTK neither draws
+// nor handles the arrow buttons at their ends, which nobody uses
+const int gmshScrollbarSize = 6;
 // an event handled with the hover of the scheme: the widget the pointer leaves
 // and the one it enters are drawn again (see FlGui::_dispatch())
 int gmshSchemeHandle(int event, Fl_Window *win);

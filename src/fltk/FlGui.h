@@ -15,6 +15,8 @@
 #define GMSH_WINDOW_BOX FL_FLAT_BOX
 #define GMSH_SIMPLE_RIGHT_BOX (Fl_Boxtype)(FL_FREE_BOXTYPE + 1)
 #define GMSH_SIMPLE_TOP_BOX (Fl_Boxtype)(FL_FREE_BOXTYPE + 2)
+// the thumb of the scrollbars of the gmsh theme (see gmshScheme.cpp)
+#define GMSH_THUMB_BOX (Fl_Boxtype)(FL_FREE_BOXTYPE + 3)
 
 #define IW (10 * FL_NORMAL_SIZE) // input field width
 #define BB (7 * FL_NORMAL_SIZE) // width of a button with internal label
