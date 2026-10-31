@@ -150,6 +150,7 @@ onelabContextWindow::onelabContextWindow(int deltaFontSize)
   FL_NORMAL_SIZE -= deltaFontSize;
 
   _dim = _tag = -1;
+  _rebuilding = _rebuildAgain = _rebuildAgainDelete = false;
 
   // as narrow as the option window, wider as the window is widened
   _width = TW;
@@ -171,7 +172,13 @@ onelabContextWindow::onelabContextWindow(int deltaFontSize)
   FL_NORMAL_SIZE += deltaFontSize;
 }
 
-onelabContextWindow::~onelabContextWindow() { Fl::delete_widget(win); }
+onelabContextWindow::~onelabContextWindow()
+{
+  // the widgets deleted now, which a rebuild still running sees (see
+  // rebuild()), the window at the next event
+  win->clear();
+  Fl::delete_widget(win);
+}
 
 void onelabContextWindow::show(int dim, int tag)
 {
@@ -230,14 +237,39 @@ void onelabContextWindow::hide() { win->hide(); }
 
 void onelabContextWindow::rebuild(bool deleteWidgets)
 {
+  // only in the thread of the GUI, as the tree (see onelabGroup::rebuildTree())
+  if(!FlGui::onMainThread()) return;
+  if(_rebuilding) {
+    _rebuildAgain = true;
+    _rebuildAgainDelete = _rebuildAgainDelete || deleteWidgets;
+    return;
+  }
+  _rebuilding = true;
+  // this window may be gone after the callbacks run (the GUI closed)
+  Fl_Widget_Tracker alive(win);
+  _rebuild(deleteWidgets);
+  while(alive.exists() && _rebuildAgain) {
+    bool d = _rebuildAgainDelete;
+    _rebuildAgain = _rebuildAgainDelete = false;
+    _rebuild(d);
+  }
+  if(alive.exists()) _rebuilding = false;
+}
+
+void onelabContextWindow::_rebuild(bool deleteWidgets)
+{
   // no entity selected, or not any more
   if(!GModel::current()->getEntityByTag(_dim, _tag)) return;
 
-  // hide old widgets and record if one had the focus
+  // hide old widgets and record if one had the focus; hiding an edited input
+  // runs its callback, which may rebuild (see rebuild()) or close the GUI
   std::string focus;
-  for(auto &w : _onelabWidgets) {
-    if(w == Fl::focus()) focus = w->label();
+  std::vector<Fl_Widget *> old = _onelabWidgets;
+  Fl_Widget_Tracker alive(win);
+  for(auto w : old) {
+    if(w == Fl::focus() && w->label()) focus = w->label();
     w->hide();
+    if(!alive.exists()) return;
   }
 
   // delete widgets if requested (as this is called every time the main ONELAB

@@ -60,6 +60,8 @@ static void view_reload(int index)
       return;
     }
 
+    // not during another operation on the model, which reading may change
+    if(modelBusy()) return;
     int n = PView::list.size();
 
     // FIXME: use fileIndex

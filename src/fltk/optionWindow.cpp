@@ -4714,12 +4714,12 @@ void optionWindow::activate(const char *what)
   // activate/deactivate parts of the option window depending on the
   // user's choices (or the option settings)
   if(!strcmp(what, "fast_redraw")) {
+    // (no drawing here: this is also called by the option setter)
     if(general.butt[2]->value())
       redraw->show();
     else
       redraw->hide();
     layout(true);
-    drawContext::global()->draw();
   }
   else if(!strcmp(what, "shaders")) {
     // studio shading takes the direction of light 0 alone

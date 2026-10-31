@@ -28,9 +28,12 @@ private:
   static openglWindow *_lastHandled;
   static void _setLastHandled(openglWindow *);
   // some drawing routines can create data (STL triangulations, etc.), which
-  // can fire draw() while we are already drawing, e.g. due to an impromptu
-  // Fl::check(); the same lock keeps the picking passes out of the frames
+  // can fire draw() while we are already drawing, through an Fl::check() or
+  // Fl::wait() of FLTK itself (FlGui::check() refuses while drawing); the
+  // same lock keeps the picking passes out of the frames
   bool _lock;
+  // which also says to FlGui that a window draws (see FlGui::drawing)
+  void _setLock(bool on);
   bool _drawn;
   void _drawScreenMessage();
   void _drawBorder();

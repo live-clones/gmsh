@@ -90,7 +90,7 @@ void CTX::init()
   for(int d = 0; d < 4; d++) mesh.stamp[d] = 0;
   for(int d = 0; d < 4; d++) geom.stamp[d] = 0;
   entityColorsStamp = entityVisibilityStamp = meshContentStamp = 0;
-  entitiesStamp = 0;
+  entitiesStamp = meshElementsStamp = 0;
   mesh.qualityInf = mesh.qualitySup = mesh.qualityType = 0;
   mesh.radiusInf = mesh.radiusSup = 0;
   mesh.lines = mesh.triangles = mesh.tetrahedra = mesh.quadrangles = 0;
@@ -181,4 +181,11 @@ int CTX::numThreadsFor(std::size_t num, std::size_t worthIt) const
 {
   if(num < worthIt) return 1;
   return numThreads ? numThreads : Msg::GetMaxThreads();
+}
+
+bool modelBusy()
+{
+  if(!CTX::instance()->lock) return false;
+  Msg::Info("I'm busy! Ask me that later...");
+  return true;
 }

@@ -102,6 +102,10 @@ protected:
   // the name of the model
   std::string _name;
 
+  // a number no other model of the run has: a new model may get the address
+  // of one deleted
+  std::size_t _serial;
+
   // the name of the file the model was read from
   std::string _fileName;
   std::set<std::string> _fileNames;
@@ -400,6 +404,9 @@ public:
   // get/set the model name
   void setName(const std::string &name) { _name = name; }
   std::string getName() const { return _name; }
+
+  // the number of the model, unique in the run
+  std::size_t getSerial() const { return _serial; }
 
   // get/set the model file name
   void setFileName(const std::string &fileName);
@@ -759,7 +766,9 @@ public:
   smooth_normals *normals;
 
   // mesh the model
-  int mesh(int dimension);
+  // not while another operation holds the lock on the model, unless nested in
+  // the operation holding it (see modelLock)
+  int mesh(int dimension, bool nested = false);
 
   // adapt 3d mesh
   int adaptMesh();

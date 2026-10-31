@@ -54,20 +54,12 @@ static void ElementsSelectedMode(classificationEditor *e)
   e->buttons[CLASS_BUTTON_CLASSIFY]->activate();
 }
 
-void classificationEditor::recordStamps()
-{
-  entitiesStamp = CTX::instance()->entitiesStamp;
-  meshStamp = CTX::instance()->meshContentStamp;
-}
-
 bool classificationEditor::forgetIfChanged()
 {
-  if(entitiesStamp == CTX::instance()->entitiesStamp &&
-     meshStamp == CTX::instance()->meshContentStamp)
-    return false;
+  if(!stamps.changed()) return false;
   if(!selected && elements.empty() && edges_detected.empty() &&
      edges_lonly.empty()) { // nothing to forget
-    recordStamps();
+    stamps.record();
     return false;
   }
   // the curve, still in its model (compared by address, as it may have been
@@ -75,7 +67,8 @@ bool classificationEditor::forgetIfChanged()
   // may be gone
   if(selected) {
     for(GModel *m : GModel::list) {
-      if(m == selectedModel && m->getEdgeByTag(selectedTag) == selected) {
+      if(m->getSerial() == selectedSerial &&
+         m->getEdgeByTag(selectedTag) == selected) {
         m->remove(selected);
         delete selected;
         break;
@@ -88,7 +81,7 @@ bool classificationEditor::forgetIfChanged()
   edges_lonly.clear();
   Msg::Info("The model changed: the selection of the classification is reset");
   NoElementsSelectedMode(this);
-  recordStamps();
+  stamps.record();
   return true;
 }
 
@@ -96,6 +89,7 @@ void classificationEditor::createSelected()
 {
   if(selected) return;
   selectedModel = GModel::current();
+  selectedSerial = selectedModel->getSerial();
   selectedTag = selectedModel->getMaxElementaryNumber(1) + 1;
   selected = new discreteEdge(selectedModel, selectedTag, nullptr, nullptr);
   selectedModel->add(selected);
@@ -104,6 +98,8 @@ void classificationEditor::createSelected()
 static void update_edges_cb(Fl_Widget *w, void *data)
 {
   classificationEditor *e = (classificationEditor *)data;
+  // the selection is in the model: not during another operation on it
+  if(modelBusy()) return;
 
   if(e->forgetIfChanged() || !e->selected) return;
 
@@ -132,19 +128,21 @@ static void update_edges_cb(Fl_Widget *w, void *data)
             (int)e->selected->lines.size());
 
   CTX::instance()->meshChanged();
-  e->recordStamps();
+  e->stamps.record();
   drawContext::global()->draw();
 }
 
 static void select_elements_cb(Fl_Widget *w, void *data)
 {
   classificationEditor *e = (classificationEditor *)data;
+  // the selection is in the model: not during another operation on it
+  if(modelBusy()) return;
   bool all = (w == e->buttons[CLASS_BUTTON_SELECT_ALL_ELEMENTS]);
   e->forgetIfChanged();
 
   // allocate discrete edge to hold the selected mesh segments
   e->createSelected();
-  e->recordStamps();
+  e->stamps.record();
 
   if(all) {
     for(auto it = GModel::current()->firstFace();
@@ -211,7 +209,7 @@ static void select_elements_cb(Fl_Widget *w, void *data)
 #endif
 
   ElementsSelectedMode(e);
-  e->recordStamps();
+  e->stamps.record();
   update_edges_cb(nullptr, data);
   Msg::StatusGl("");
 }
@@ -219,10 +217,12 @@ static void select_elements_cb(Fl_Widget *w, void *data)
 static void hide_cb(Fl_Widget *w, void *data)
 {
   classificationEditor *e = (classificationEditor *)data;
+  // the selection is in the model: not during another operation on it
+  if(modelBusy()) return;
   e->forgetIfChanged();
   CTX::instance()->hideUnselected = !CTX::instance()->hideUnselected;
   CTX::instance()->meshChanged();
-  e->recordStamps();
+  e->stamps.record();
   drawContext::global()->draw();
 }
 
@@ -248,6 +248,8 @@ static void show_only_edges_cb(Fl_Widget *w, void *data)
 static void delete_edge_cb(Fl_Widget *w, void *data)
 {
   classificationEditor *e = (classificationEditor *)data;
+  // the selection is in the model: not during another operation on it
+  if(modelBusy()) return;
 
   if(e->forgetIfChanged() || !e->selected) return;
 
@@ -266,7 +268,11 @@ static void delete_edge_cb(Fl_Widget *w, void *data)
       CTX::instance()->pickElements = 0;
       return;
     }
-    if(e->forgetIfChanged()) return;
+    // a reclassification may also have taken the curve meanwhile
+    if(e->forgetIfChanged() || !e->selected) {
+      CTX::instance()->pickElements = 0;
+      return;
+    }
     if(ib == 'l') {
       for(std::size_t i = 0; i < FlGui::instance()->selectedElements.size();
           i++) {
@@ -312,7 +318,7 @@ static void delete_edge_cb(Fl_Widget *w, void *data)
 
   CTX::instance()->meshChanged();
   CTX::instance()->pickElements = 0;
-  e->recordStamps();
+  e->stamps.record();
   drawContext::global()->draw();
   Msg::StatusGl("");
 
@@ -323,6 +329,8 @@ static void delete_edge_cb(Fl_Widget *w, void *data)
 static void reset_selection_cb(Fl_Widget *w, void *data)
 {
   classificationEditor *e = (classificationEditor *)data;
+  // the selection is in the model: not during another operation on it
+  if(modelBusy()) return;
   if(e->forgetIfChanged() || !e->selected) return;
   for(std::size_t i = 0; i < e->selected->lines.size(); i++)
     delete e->selected->lines[i];
@@ -331,48 +339,56 @@ static void reset_selection_cb(Fl_Widget *w, void *data)
   e->elements.clear();
   e->edges_detected.clear();
   NoElementsSelectedMode(e);
-  e->recordStamps();
+  e->stamps.record();
 }
 
 static void classify_cb(Fl_Widget *w, void *data)
 {
   classificationEditor *e = (classificationEditor *)data;
-  e->forgetIfChanged();
+  if(modelBusy()) return;
+  modelLock lock;
+  // the selection made on a model that changed since is gone
+  if(e->forgetIfChanged()) return;
 
   e->createSelected();
 
-  computeDiscreteCurvatures(GModel::current());
-  if(e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value())
-    computeEdgeCut(GModel::current(), e->selected->lines,  CTX::instance()->mesh.reparamMaxTriangles);
-  computeNonManifoldEdges(GModel::current(), e->selected->lines, true);
+  // what the editor holds, read before the operations: they process events,
+  // during which the GUI, and the editor with it, may be closed
+  bool parametrizable =
+    e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value();
   double threshold = e->inputs[CLASS_VALUE_ANGLE]->value() / 180. * M_PI;
-  classifyFaces(GModel::current(), threshold);
+  GEdge *selected = e->selected;
+  GModel *m = e->selectedModel;
+  e->selected = nullptr;
+
+  computeDiscreteCurvatures(m);
+  if(parametrizable)
+    computeEdgeCut(m, selected->lines,
+                   CTX::instance()->mesh.reparamMaxTriangles);
+  computeNonManifoldEdges(m, selected->lines, true);
+  classifyFaces(m, threshold);
 
   // remove selected, but do not delete its elements
-  if(e->selected) {
-    GModel::current()->remove(e->selected);
-    e->selected->lines.clear();
-    delete e->selected;
-    e->selected = nullptr;
-  }
+  m->remove(selected);
+  selected->lines.clear();
+  delete selected;
 
-  GModel::current()->pruneMeshVertexAssociations();
+  m->pruneMeshVertexAssociations();
 
+  if(parametrizable) m->createGeometryOfDiscreteEntities();
+
+  if(!FlGui::available()) return;
   e->elements.clear();
   e->edges_detected.clear();
-
-  if(e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value())
-    GModel::current()->createGeometryOfDiscreteEntities();
-
   NoElementsSelectedMode(e);
-  e->recordStamps();
+  e->stamps.record();
   // the entities changed: the visibility list held the old ones
   FlGui::instance()->resetVisibility();
 }
 
 classificationEditor::classificationEditor(int deltaFontSize)
-  : selected(nullptr), selectedModel(nullptr), selectedTag(0),
-    entitiesStamp(-1), meshStamp(-1)
+  : selected(nullptr), selectedModel(nullptr), selectedSerial(0),
+    selectedTag(0)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
   int BBB = (int)(1.4 * BB);
@@ -498,7 +514,8 @@ classificationEditor::classificationEditor(int deltaFontSize)
 
 void classificationEditor::show()
 {
-  forgetIfChanged();
+  // not during another operation on the model, which the selection is in
+  if(!CTX::instance()->lock) forgetIfChanged();
   // the edges are what is selected
   opt_mesh_lines(0, GMSH_SET | GMSH_GUI, 1.);
   drawContext::global()->draw();

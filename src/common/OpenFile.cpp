@@ -333,6 +333,10 @@ int MergeFile(const std::string &fileName, bool errorIfMissing,
   }
 
   CTX::instance()->geom.draw = 0; // don't try to draw the model while reading
+  // and drawn again however the reading ends, e.g. by an error thrown
+  struct drawAgain {
+    ~drawAgain() { CTX::instance()->geom.draw = 1; }
+  } drawAgain;
 
 #if defined(HAVE_FLTK) && defined(HAVE_POST)
   int numViewsBefore = PView::list.size();
@@ -732,14 +736,9 @@ void ClearProject()
   Msg::ResetErrorCounter();
 }
 
-void OpenProject(const std::string &fileName, bool errorIfMissing)
+// the reading proper, under the lock on the model
+static void openProjectLocked(const std::string &fileName, bool errorIfMissing)
 {
-  if(CTX::instance()->lock) {
-    Msg::Info("I'm busy! Ask me that later...");
-    return;
-  }
-  CTX::instance()->lock = 1;
-
   Msg::ResetErrorCounter();
 
   if(GModel::current()->empty()) {
@@ -795,8 +794,18 @@ void OpenProject(const std::string &fileName, bool errorIfMissing)
     for(std::size_t i = 0; i < openedFiles.size(); i++) fclose(openedFiles[i]);
     openedFiles.clear();
   }
+}
 
-  CTX::instance()->lock = 0;
+void OpenProject(const std::string &fileName, bool errorIfMissing)
+{
+  if(modelBusy()) return;
+  {
+    // released however the reading ends, e.g. by the exception a script error
+    // throws (Msg::Error), which would otherwise leave every later open and
+    // meshing refused
+    modelLock lock;
+    openProjectLocked(fileName, errorIfMissing);
+  }
 
   // FIXME: temporary for auto-extrude testing
   if(CTX::instance()->geom.autoExtrude)

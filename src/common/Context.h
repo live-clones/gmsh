@@ -219,6 +219,10 @@ public:
   // entities were created or deleted (GModel::add(), remove(), destroy()):
   // what keeps pointers to entities, as the lists of the GUI do, compares it
   int entitiesStamp;
+  // the elements and nodes of a mesh deleted or replaced (see
+  // GModel::destroyMeshCaches()), not merely shown otherwise as
+  // meshChanged() says: what keeps pointers to them compares it
+  int meshElementsStamp;
   void entitiesChanged()
   {
     entitiesStamp++;
@@ -558,6 +562,42 @@ public:
   int unpackGreen(unsigned int X);
   int unpackBlue(unsigned int X);
   int unpackAlpha(unsigned int X);
+};
+
+// The lock on the model (CTX::lock) for the span of an operation, given back as
+// it was however the operation ends (an exception: Msg::Error throws without
+// the GUI when General.AbortOnError is 2, the default of the API, and the
+// meshers throw): a part of an operation locking it again, as the meshing a
+// script asks for while it is read, leaves it held. Taken by whoever found the
+// lock free (modelBusy()), or by a part of the operation holding it.
+class modelLock {
+  int _previous;
+
+public:
+  modelLock() : _previous(CTX::instance()->lock) { CTX::instance()->lock = 1; }
+  ~modelLock() { CTX::instance()->lock = _previous; }
+};
+
+// Whether an operation holds the lock on the model (the GUI processes events
+// during it), saying so if it does: what would change the model does nothing.
+bool modelBusy();
+
+// The stamps of the entities and of the mesh elements when pointers to them
+// were kept (by a selection, an editor of the GUI): whether either changed
+// since says whether the pointers may dangle.
+struct modelStamps {
+  int entities, mesh;
+  modelStamps() { record(); }
+  void record()
+  {
+    entities = CTX::instance()->entitiesStamp;
+    mesh = CTX::instance()->meshElementsStamp;
+  }
+  bool changed() const
+  {
+    return entities != CTX::instance()->entitiesStamp ||
+           mesh != CTX::instance()->meshElementsStamp;
+  }
 };
 
 #endif

@@ -97,8 +97,15 @@ openglWindow::openglWindow(int x, int y, int w, int h)
     Fl::add_timeout(.5, navigator_handler, (void *)this);
 }
 
+void openglWindow::_setLock(bool on)
+{
+  if(on != _lock) FlGui::drawing += on ? 1 : -1;
+  _lock = on;
+}
+
 openglWindow::~openglWindow()
 {
+  _setLock(false);
   Fl::remove_timeout(navigator_handler, this);
   Fl::remove_timeout(_studioSampleCb, this);
   Fl::remove_timeout(_fireCb, this);
@@ -222,11 +229,16 @@ void openglWindow::draw()
   if(!_studioTimer) _ctx->studioSample = 0;
   // some drawing routines can create data (STL triangulations, etc.): make sure
   // that we don't fire draw() while we are already drawing, e.g. due to an
-  // impromptu Fl::check(). The same lock is also used in _select to guarantee
-  // that we don't mix GL_RENDER and GL_SELECT rendering passes.
+  // Fl::check() (FlGui::check() refuses while drawing). The same lock is held
+  // by the picking passes (hostBeginGL()).
   _drawn = true;
   if(_lock) return;
-  _lock = true;
+  _setLock(true);
+  // given back however the drawing ends (an error may throw)
+  struct unlock {
+    openglWindow *w;
+    ~unlock() { w->_setLock(false); }
+  } unlocked{this};
 
   Msg::Debug("openglWindow::draw()");
   double start = TimeOfDay();
@@ -249,7 +261,6 @@ void openglWindow::draw()
     if(CTX::instance()->shaders && !glShader::available() &&
        (mode() & FL_OPENGL3) && !glShader::wanted()) {
       Fl::add_timeout(0., [](void *) { resetOpenglMode(); });
-      _lock = false;
       return;
     }
   }
@@ -474,7 +485,6 @@ void openglWindow::draw()
   }
   glImmediate::flush();
   drawContext::global()->flushString();
-  _lock = false;
   _studioTimer = false;
   // (read by the graphics tests, benchmarks/graphics)
   Msg::Debug("openglWindow::draw() done in %g s", TimeOfDay() - start);
@@ -753,18 +763,18 @@ void openglWindow::hostCursor(bool cross)
 }
 
 // the same lock as in draw(): no picking pass in the middle of a frame (an
-// impromptu Fl::check() can deliver the event there), and the pass reads the
-// buffers of this window
+// Fl::check() of FLTK itself can deliver the event there), and the pass reads
+// the buffers of this window
 bool openglWindow::hostBeginGL()
 {
   if(_lock) return false;
-  _lock = true;
+  _setLock(true);
   make_current();
   glShader::setContext(context());
   return true;
 }
 
-void openglWindow::hostEndGL() { _lock = false; }
+void openglWindow::hostEndGL() { _setLock(false); }
 
 bool openglWindow::hostQueryMode() { return queryMode(); }
 

@@ -365,43 +365,37 @@ bool generateMeshWithSpecialParameters(GModel *gm,
 {
   Msg::Debug("build background triangulation ...");
 
-  /* Unlock if called from GenerateMesh() */
-  bool shouldLock = false;
-  if(CTX::instance()->lock) {
-    CTX::instance()->lock = 0;
-    shouldLock = true;
-  }
-
   /* Change meshing parameters to build a good triangulation
-   * for cross field */
+   * for cross field, restored however the meshing ends */
   /* - the triangulation must be a bit more refined than the quad mesh */
-  int minCurveNodes = CTX::instance()->mesh.minCurveNodes;
-  int minCircleNodes = CTX::instance()->mesh.minCircleNodes;
-  double lcFactor = CTX::instance()->mesh.lcFactor;
-  int recombineAll = CTX::instance()->mesh.recombineAll;
-  int algoRecombine = CTX::instance()->mesh.algoRecombine;
-  int algo = CTX::instance()->mesh.algo2d;
-  CTX::instance()->mesh.minCurveNodes = std::min(minCurveNodes, 5);
-  CTX::instance()->mesh.minCircleNodes = std::min(minCircleNodes, 30);
-  CTX::instance()->mesh.lcFactor = lcFactor * scalingOnTriangulation;
+  struct savedParameters {
+    int minCurveNodes = CTX::instance()->mesh.minCurveNodes;
+    int minCircleNodes = CTX::instance()->mesh.minCircleNodes;
+    double lcFactor = CTX::instance()->mesh.lcFactor;
+    int recombineAll = CTX::instance()->mesh.recombineAll;
+    int algoRecombine = CTX::instance()->mesh.algoRecombine;
+    int algo = CTX::instance()->mesh.algo2d;
+    ~savedParameters()
+    {
+      CTX::instance()->mesh.minCurveNodes = minCurveNodes;
+      CTX::instance()->mesh.minCircleNodes = minCircleNodes;
+      CTX::instance()->mesh.lcFactor = lcFactor;
+      CTX::instance()->mesh.recombineAll = recombineAll;
+      CTX::instance()->mesh.algoRecombine = algoRecombine;
+      CTX::instance()->mesh.algo2d = algo;
+    }
+  } saved;
+  CTX::instance()->mesh.minCurveNodes = std::min(saved.minCurveNodes, 5);
+  CTX::instance()->mesh.minCircleNodes = std::min(saved.minCircleNodes, 30);
+  CTX::instance()->mesh.lcFactor = saved.lcFactor * scalingOnTriangulation;
   CTX::instance()->mesh.recombineAll = 0;
   CTX::instance()->mesh.algoRecombine = 0;
   CTX::instance()->mesh.algo2d = ALGO_2D_FRONTAL;
   //    ALGO_2D_MESHADAPT; /* slow but frontal does not always work */
 
-  /* Generate the triangulation with standard gmsh pipeline */
-  GenerateMesh(gm, 2);
-
-  /* Restore parameters */
-  CTX::instance()->mesh.minCurveNodes = minCurveNodes;
-  CTX::instance()->mesh.minCircleNodes = minCircleNodes;
-  CTX::instance()->mesh.lcFactor = lcFactor;
-  CTX::instance()->mesh.recombineAll = recombineAll;
-  CTX::instance()->mesh.algoRecombine = algoRecombine;
-  CTX::instance()->mesh.algo2d = algo;
-
-  /* Lock again before going back to GenerateMesh() */
-  if(shouldLock) CTX::instance()->lock = 1;
+  /* Generate the triangulation with standard gmsh pipeline, as part of the
+   * meshing that called this, which holds the lock on the model */
+  GenerateMesh(gm, 2, true);
 
   return true;
 }

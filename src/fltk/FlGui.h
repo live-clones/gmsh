@@ -8,7 +8,6 @@
 
 #include <string>
 #include <vector>
-#include <atomic>
 #include <thread>
 #include "SPoint2.h"
 #include "gmshScheme.h"
@@ -73,7 +72,6 @@ private:
   static FlGui *_instance;
   static std::string _openedThroughMacFinder;
   static bool _finishedProcessingCommandLine;
-  static std::atomic<int> _locked;
   // the thread that created the GUI, the only one that may touch it
   static std::thread::id _mainThread;
   std::string _lastStatus;
@@ -137,6 +135,9 @@ public:
   // whether the caller is the thread that runs the GUI: the others (OpenMP
   // workers, the threads of an API program) must not touch it
   static bool onMainThread();
+  // a graphic window draws or runs a picking pass: the messages it prints do
+  // not process events meanwhile, which could delete what it draws
+  static int drawing;
   // run the GUI until there's no window left
   static int run(const std::string &optionFileName="");
   // check if there are any pending events, and process them (if rateLimited is
@@ -147,13 +148,12 @@ public:
   static void wait(bool force = false);
   // wait (at most time seconds) for any events, then process them
   static void wait(double time, bool force = false);
-  // lock/unlock child threads
+  // lock/unlock child threads (FLTK's lock: the thread of the GUI holds it
+  // except while it waits for events)
   static void lock();
   static void unlock();
   // trigger event loop in main thread
   static void awake(const std::string &action);
-  // is locked
-  static int locked();
   // is a file opened through the Mac Finder?
   static void setOpenedThroughMacFinder(const std::string &name);
   static std::string getOpenedThroughMacFinder();

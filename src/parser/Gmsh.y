@@ -3097,15 +3097,13 @@ Command :
 	yymsg(0, "Surface remeshing must be reinterfaced");
       }
       else if(!strcmp($1, "Mesh")) {
-	int lock = CTX::instance()->lock;
-	CTX::instance()->lock = 0;
+        // part of the operation reading the script, which may hold the lock
         if(GModel::current()->getOCCInternals() &&
            GModel::current()->getOCCInternals()->getChanged())
           GModel::current()->getOCCInternals()->synchronize(GModel::current());
         if(GModel::current()->getGEOInternals()->getChanged())
           GModel::current()->getGEOInternals()->synchronize(GModel::current());
-	GModel::current()->mesh((int)$2);
-	CTX::instance()->lock = lock;
+	GModel::current()->mesh((int)$2, true);
       }
       else if(!strcmp($1, "SetOrder")) {
 #if defined(HAVE_MESH)

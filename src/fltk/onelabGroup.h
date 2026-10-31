@@ -25,6 +25,10 @@ private:
   int _gearOptionsStart, _gearOptionsEnd;
   std::vector<Fl_Widget *> _treeWidgets;
   std::vector<char *> _treeStrings;
+  // a rebuild asked for during a rebuild (hiding an edited input runs its
+  // callback, which may rebuild the tree): done once the current one is over
+  bool _rebuilding, _rebuildAgain, _rebuildAgainDelete;
+  void _rebuildTree(bool deleteWidgets);
   bool _stop;
   double _baseWidth, _indent;
   int _minWindowWidth, _minWindowHeight;

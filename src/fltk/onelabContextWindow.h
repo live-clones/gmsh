@@ -36,6 +36,10 @@ private:
   int _width, _height;
   std::vector<char *> _toFree;
   std::vector<Fl_Widget *> _onelabWidgets;
+  // a rebuild asked for during a rebuild (hiding an edited input runs its
+  // callback): done once the current one is over
+  bool _rebuilding, _rebuildAgain, _rebuildAgainDelete;
+  void _rebuild(bool deleteWidgets);
   template <class T>
   void
   _addOnelabWidget(T &p, const std::string &pattern,

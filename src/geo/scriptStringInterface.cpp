@@ -35,6 +35,9 @@ static void scriptAddCommand(const std::string &text,
     if(!text.empty()) printf("%s: %s\n", lang.c_str(), text.c_str());
     return;
   }
+  // the command changes the model: not during another operation on it, which
+  // the GUI processes events of
+  if(modelBusy()) return;
 
   const std::string &fileName = fileNameOrEmpty;
   if(fileName.empty()) {
@@ -97,26 +100,43 @@ static void scriptAddCommand(const std::string &text,
   }
 
 #if defined(HAVE_PARSER)
-  std::string tmpFileName =
-    CTX::instance()->homeDir + CTX::instance()->tmpFileName;
-  FILE *gmsh_yyin_old = gmsh_yyin;
-  FILE *tmp_file;
-  if(!(tmp_file = Fopen(tmpFileName.c_str(), "w"))) {
-    Msg::Error("Unable to open temporary file '%s'", tmpFileName.c_str());
-    return;
-  }
-  fprintf(tmp_file, "%s\n", text.c_str());
-  fclose(tmp_file);
-  gmsh_yyin = Fopen(tmpFileName.c_str(), "r");
-  while(!feof(gmsh_yyin)) { gmsh_yyparse(); }
-  fclose(gmsh_yyin);
-  gmsh_yyin = gmsh_yyin_old;
+  {
+    // the parsing and the synchronizations under the lock on the model, which
+    // an operation started from the dialogs above may hold
+    if(modelBusy()) return;
+    modelLock lock;
+    std::string tmpFileName =
+      CTX::instance()->homeDir + CTX::instance()->tmpFileName;
+    FILE *tmp_file;
+    if(!(tmp_file = Fopen(tmpFileName.c_str(), "w"))) {
+      Msg::Error("Unable to open temporary file '%s'", tmpFileName.c_str());
+      return;
+    }
+    fprintf(tmp_file, "%s\n", text.c_str());
+    fclose(tmp_file);
+    // the input of the parser given back however the parsing ends (an error
+    // may throw)
+    struct parserInput {
+      FILE *previous = gmsh_yyin;
+      ~parserInput()
+      {
+        if(gmsh_yyin && gmsh_yyin != previous) fclose(gmsh_yyin);
+        gmsh_yyin = previous;
+      }
+    } input;
+    gmsh_yyin = Fopen(tmpFileName.c_str(), "r");
+    if(!gmsh_yyin) {
+      Msg::Error("Unable to open temporary file '%s'", tmpFileName.c_str());
+      return;
+    }
+    while(!feof(gmsh_yyin)) { gmsh_yyparse(); }
 
-  GModel::current()->getGEOInternals()->synchronize(GModel::current());
-  if(GModel::current()->getOCCInternals())
-    GModel::current()->getOCCInternals()->synchronize(GModel::current());
-  GModel::current()->setName(split[1]);
-  CTX::instance()->meshChanged();
+    GModel::current()->getGEOInternals()->synchronize(GModel::current());
+    if(GModel::current()->getOCCInternals())
+      GModel::current()->getOCCInternals()->synchronize(GModel::current());
+    GModel::current()->setName(split[1]);
+    CTX::instance()->meshChanged();
+  }
 
   FILE *fp = Fopen(fileName.c_str(), "a");
   if(!fp) {
@@ -147,6 +167,8 @@ static void scriptAddCommand(const std::string &text,
 
 void scriptRemoveLastCommand(const std::string &fileName)
 {
+  // the project is read again: not during another operation on the model
+  if(modelBusy()) return;
   if(StatFile(fileName)) return;
   // FIXME: make this work with compressed files
   std::ifstream t;

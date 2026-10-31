@@ -10381,15 +10381,13 @@ yyreduce:
 	yymsg(0, "Surface remeshing must be reinterfaced");
       }
       else if(!strcmp((yyvsp[(1) - (3)].c), "Mesh")) {
-	int lock = CTX::instance()->lock;
-	CTX::instance()->lock = 0;
+        // part of the operation reading the script, which may hold the lock
         if(GModel::current()->getOCCInternals() &&
            GModel::current()->getOCCInternals()->getChanged())
           GModel::current()->getOCCInternals()->synchronize(GModel::current());
         if(GModel::current()->getGEOInternals()->getChanged())
           GModel::current()->getGEOInternals()->synchronize(GModel::current());
-	GModel::current()->mesh((int)(yyvsp[(2) - (3)].d));
-	CTX::instance()->lock = lock;
+	GModel::current()->mesh((int)(yyvsp[(2) - (3)].d), true);
       }
       else if(!strcmp((yyvsp[(1) - (3)].c), "SetOrder")) {
 #if defined(HAVE_MESH)

@@ -307,6 +307,13 @@ bool sceneView::_processDoubleClick(std::size_t num, const std::string &what)
   return true;
 }
 
+// the command of a double click, which may change the model: not during
+// another operation on it
+static void runCommand(const std::string &command)
+{
+  if(!modelBusy()) ParseString(command, true);
+}
+
 // what was double clicked runs its command (General.DoubleClicked*Command),
 // shows its ONELAB parameters, or, when there is nothing, the quick access
 // menu
@@ -328,7 +335,7 @@ void sceneView::_doubleClick(const paneInput &in)
     if(CTX::instance()->geom.doubleClickedPointCommand == "ONELAB")
       hostShowOnelabContext(0, vertices[0]->tag());
     else
-      ParseString(CTX::instance()->geom.doubleClickedPointCommand, true);
+      runCommand(CTX::instance()->geom.doubleClickedPointCommand);
   }
   else if(_processDoubleClick(edges.size(),
                               CTX::instance()->geom.doubleClickedCurveCommand)) {
@@ -336,7 +343,7 @@ void sceneView::_doubleClick(const paneInput &in)
     if(CTX::instance()->geom.doubleClickedCurveCommand == "ONELAB")
       hostShowOnelabContext(1, edges[0]->tag());
     else
-      ParseString(CTX::instance()->geom.doubleClickedCurveCommand, true);
+      runCommand(CTX::instance()->geom.doubleClickedCurveCommand);
   }
   else if(_processDoubleClick(faces.size(),
                               CTX::instance()->geom.doubleClickedSurfaceCommand)) {
@@ -344,7 +351,7 @@ void sceneView::_doubleClick(const paneInput &in)
     if(CTX::instance()->geom.doubleClickedSurfaceCommand == "ONELAB")
       hostShowOnelabContext(2, faces[0]->tag());
     else
-      ParseString(CTX::instance()->geom.doubleClickedSurfaceCommand, true);
+      runCommand(CTX::instance()->geom.doubleClickedSurfaceCommand);
   }
   else if(_processDoubleClick(regions.size(),
                               CTX::instance()->geom.doubleClickedVolumeCommand)) {
@@ -352,17 +359,17 @@ void sceneView::_doubleClick(const paneInput &in)
     if(CTX::instance()->geom.doubleClickedVolumeCommand == "ONELAB")
       hostShowOnelabContext(3, regions[0]->tag());
     else
-      ParseString(CTX::instance()->geom.doubleClickedVolumeCommand, true);
+      runCommand(CTX::instance()->geom.doubleClickedVolumeCommand);
   }
   else if(views.size() && views[0]->getOptions()->doubleClickedCommand.size()) {
     CTX::instance()->post.doubleClickedView = views[0]->getIndex();
-    ParseString(views[0]->getOptions()->doubleClickedCommand, true);
+    runCommand(views[0]->getOptions()->doubleClickedCommand);
   }
   else if(points.size() &&
           CTX::instance()->post.doubleClickedGraphPointCommand.size()) {
     CTX::instance()->post.doubleClickedGraphPointX = points[0].x();
     CTX::instance()->post.doubleClickedGraphPointY = points[0].y();
-    ParseString(CTX::instance()->post.doubleClickedGraphPointCommand, true);
+    runCommand(CTX::instance()->post.doubleClickedGraphPointCommand);
   }
   else { // popup quick access menu
     hostQuickAccess();
@@ -405,7 +412,7 @@ void sceneView::_lassoZoom()
   tmp.recenter(_ctx);
 
   _ctx->initPosition(false);
-  drawContext::global()->draw();
+  hostRedraw();
   hostViewChanged();
 }
 

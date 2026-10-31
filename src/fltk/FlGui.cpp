@@ -70,15 +70,15 @@
 FlGui *FlGui::_instance = nullptr;
 std::string FlGui::_openedThroughMacFinder = "";
 bool FlGui::_finishedProcessingCommandLine = false;
-std::atomic<int> FlGui::_locked(0);
 std::thread::id FlGui::_mainThread;
+int FlGui::drawing = 0;
 
 bool FlGui::onMainThread() { return std::this_thread::get_id() == _mainThread; }
 
 // check (now!) if there are any pending events, and process them
 void FlGui::check(bool rateLimited)
 {
-  if(!onMainThread() || _locked > 0) return;
+  if(!onMainThread() || drawing > 0) return;
 
   static double lastRefresh = 0.;
   double start = TimeOfDay();
@@ -97,30 +97,20 @@ void FlGui::check(bool rateLimited)
 // wait (possibly indefinitely) for any events, then process them
 void FlGui::wait(bool force)
 {
-  if((!onMainThread() || _locked > 0) && !force) return;
+  if((!onMainThread() || drawing > 0) && !force) return;
   Fl::wait();
 }
 
 // wait (at most time seconds) for any events, then process them
 void FlGui::wait(double time, bool force)
 {
-  if((!onMainThread() || _locked > 0) && !force) return;
+  if((!onMainThread() || drawing > 0) && !force) return;
   Fl::wait(time);
 }
 
-void FlGui::lock()
-{
-  _locked++;
-  Fl::lock();
-}
+void FlGui::lock() { Fl::lock(); }
 
-void FlGui::unlock()
-{
-  _locked--;
-  Fl::unlock();
-}
-
-int FlGui::locked() { return _locked; }
+void FlGui::unlock() { Fl::unlock(); }
 
 static void awake_cb(void *data)
 {
@@ -1300,8 +1290,9 @@ void FlGui::updateViews(bool numberOfViewsHasChanged, bool deleteWidgets)
 {
   for(std::size_t i = 0; i < graph.size(); i++) graph[i]->checkAnimButtons();
   if(numberOfViewsHasChanged) {
-    if(onelab) onelab->rebuildTree(deleteWidgets);
-    if(onelabContext) onelabContext->rebuild(deleteWidgets);
+    rebuildTree(deleteWidgets);
+    // this GUI may have been destroyed by the events the rebuild processed
+    if(_instance != this) return;
     options->resetBrowser();
     options->resetExternalViewList();
     fields->loadFieldViewList();
@@ -1748,6 +1739,8 @@ void FlGui::saveMessages(const char *fileName)
 void FlGui::rebuildTree(bool deleteWidgets)
 {
   if(onelab) onelab->rebuildTree(deleteWidgets);
+  // this GUI may have been destroyed by the events the rebuild processed
+  if(_instance != this) return;
   if(onelabContext) onelabContext->rebuild(deleteWidgets);
 }
 

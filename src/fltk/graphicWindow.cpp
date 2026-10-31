@@ -167,6 +167,7 @@ static const char *input_formats =
 static void file_open_merge_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
+  if(modelBusy()) return;
   std::string mode((char *)data);
   int n = PView::list.size();
   int f = fileChooser(FILE_CHOOSER_MULTI, (mode == "open") ? "Open" : "Merge",
@@ -194,6 +195,7 @@ static void file_open_merge_cb(Fl_Widget *w, void *data)
 static void file_open_recent_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
+  if(modelBusy()) return;
   std::string str((const char *)data);
   int n = PView::list.size();
   OpenProject(str);
@@ -211,7 +213,8 @@ static void file_open_recent_cb(Fl_Widget *w, void *data)
 
 static void file_clear_cb(Fl_Widget *w, void *data)
 {
-  if(CTX::instance()->lock || FlGui::instance()->onelab->isBusy()) {
+  if(modelBusy()) return;
+  if(FlGui::instance()->onelab->isBusy()) {
     Msg::Info("I'm busy! Ask me that later...");
     return;
   }
@@ -764,6 +767,9 @@ void file_watch_cb(Fl_Widget *w, void *data)
   if(w) CTX::instance()->watchFilePattern = patternChooser();
 
   if(CTX::instance()->watchFilePattern.empty()) return;
+  // the files are merged when no other operation is on the model (silently:
+  // the animation asks at each step)
+  if(CTX::instance()->lock) return;
 
   std::string pattern = FixRelativePath(GModel::current()->getFileName(),
                                         CTX::instance()->watchFilePattern);
@@ -829,7 +835,8 @@ static void geometry_edit_cb(Fl_Widget *w, void *data)
 
 void onelab_reload_cb(Fl_Widget *w, void *data)
 {
-  if(CTX::instance()->lock || FlGui::instance()->onelab->isBusy()) {
+  if(modelBusy()) return;
+  if(FlGui::instance()->onelab->isBusy()) {
     Msg::Info("I'm busy! Ask me that later...");
     return;
   }
@@ -2152,17 +2159,19 @@ static void geometry_elementary_split_cb(Fl_Widget *w, void *data)
     }
   }
   Msg::StatusGl("");
-  if(FlGui::instance()->selectedEdges.empty()) return;
+  if(edgeTag < 0) return; // no curve picked
   List_T *List1 = List_Create(5, 5, sizeof(int));
   Msg::StatusGl("Select break points\n"
                 "[Press 'e' to end selection or 'q' to abort]");
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   drawContext::global()->draw();
   while(1) {
+    // the drawing processes events, among which the GUI may be closed
+    if(!FlGui::available()) break;
     char ib = FlGui::instance()->selectEntity(ENT_POINT);
     if(!FlGui::available()) break;
     if(ib == 'q') { break; }
-    if(ib == 'e' && edgeTag >= 0) {
+    if(ib == 'e') {
       scriptSplitCurve(edgeTag, List1, GModel::current()->getFileName());
       break;
     }
@@ -2229,8 +2238,9 @@ void mesh_save_cb(Fl_Widget *w, void *data)
 static void afterMeshOperation()
 {
   if(!FlGui::available()) return;
-  drawContext::global()->draw();
+  // (before the drawing, which processes events)
   FlGui::instance()->updateStatistics();
+  drawContext::global()->draw();
 }
 
 void mesh_1d_cb(Fl_Widget *w, void *data)
@@ -2256,6 +2266,9 @@ void mesh_3d_cb(Fl_Widget *w, void *data)
 static void mesh_modify_parts(Fl_Widget *w, void *data,
                               const std::string &action)
 {
+  // the parts are deleted or reversed: not during another operation on the
+  // model (nor the picking mode changed then)
+  if(modelBusy()) return;
   const char *str = (const char *)data;
   int what;
 
@@ -2280,6 +2293,9 @@ static void mesh_modify_parts(Fl_Widget *w, void *data,
 
   std::vector<MElement *> ele;
   std::vector<GEntity *> ent;
+  // when they were picked: the draws below process events, which may change
+  // the model or its mesh
+  modelStamps before;
 
   while(1) {
     if(!FlGui::available()) return;
@@ -2298,17 +2314,15 @@ static void mesh_modify_parts(Fl_Widget *w, void *data,
                     "[Press 'e' to end selection or 'q' to abort]",
                     str);
 
-    int entities = CTX::instance()->entitiesStamp;
-    int mesh = CTX::instance()->meshContentStamp;
     char ib = FlGui::instance()->selectEntity(what);
     if(!FlGui::available()) return;
-    // the model or its mesh changed while waiting: what was selected before
-    // may be gone
-    if(entities != CTX::instance()->entitiesStamp ||
-       mesh != CTX::instance()->meshContentStamp) {
+    // the model or its mesh changed meanwhile: what was selected before may
+    // be gone
+    if(before.changed()) {
       ele.clear();
       ent.clear();
     }
+    before.record();
     if(ib == 'l') {
       if(CTX::instance()->pickElements) {
         for(std::size_t i = 0; i < FlGui::instance()->selectedElements.size();
@@ -2374,6 +2388,9 @@ static void mesh_modify_parts(Fl_Widget *w, void *data,
       }
     }
     if(ib == 'e') {
+      // the lock held meanwhile (by an API program on another thread): the
+      // parts stay picked, to try again
+      if(modelBusy()) continue;
       if(CTX::instance()->pickElements) {
         for(std::size_t i = 0; i < ele.size(); i++)
           if(ele[i]->getVisibility() == 2) ele[i]->setVisibility(0);
@@ -2385,6 +2402,7 @@ static void mesh_modify_parts(Fl_Widget *w, void *data,
             ent[i]->setSelection(0);
           }
       }
+      modelLock lock;
       if(action == "delete")
         GModel::current()->removeInvisibleElements();
       else if(action == "reverse")
@@ -2418,6 +2436,8 @@ static void mesh_reverse_parts_cb(Fl_Widget *w, void *data)
 
 static void mesh_degree_cb(Fl_Widget *w, void *data)
 {
+  if(modelBusy()) return;
+  modelLock lock;
   int degree = (intptr_t)data;
   GModel::current()->setOrderN(degree, CTX::instance()->mesh.secondOrderLinear,
                                CTX::instance()->mesh.secondOrderIncomplete,
@@ -2425,45 +2445,41 @@ static void mesh_degree_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
-static void mesh_optimize_cb(Fl_Widget *w, void *data)
+static void optimizeMesh(const std::string &how)
 {
-  if(CTX::instance()->lock) {
-    Msg::Info("I'm busy! Ask me that later...");
-    return;
+  if(modelBusy()) return;
+  {
+    modelLock lock;
+    GModel::current()->optimizeMesh(how);
   }
-  CTX::instance()->lock = 1;
-  GModel::current()->optimizeMesh("");
-  CTX::instance()->lock = 0;
   afterMeshOperation();
 }
+
+static void mesh_optimize_cb(Fl_Widget *w, void *data) { optimizeMesh(""); }
 
 static void mesh_optimize_quad_topo_cb(Fl_Widget *w, void *data)
-{
-  CTX::instance()->lock = 1;
-  GModel::current()->optimizeMesh("QuadQuasiStructured");
-  CTX::instance()->lock = 0;
-  afterMeshOperation();
-}
+{ optimizeMesh("QuadQuasiStructured"); }
 
 static void mesh_untangle_cb(Fl_Widget *w, void *data)
-{
-  CTX::instance()->lock = 1;
-  GModel::current()->optimizeMesh("UntangleMeshGeometry");
-  CTX::instance()->lock = 0;
-  afterMeshOperation();
-}
+{ optimizeMesh("UntangleMeshGeometry"); }
 
 static void mesh_cross_compute_cb(Fl_Widget *w, void *data)
 {
+  if(modelBusy()) return;
 #if defined(HAVE_MESH)
-  std::vector<int> tags;
-  computeCrossField(GModel::current(), tags);
+  {
+    modelLock lock;
+    std::vector<int> tags;
+    computeCrossField(GModel::current(), tags);
+  }
 #endif
   drawContext::global()->draw();
 }
 
 static void mesh_refine_cb(Fl_Widget *w, void *data)
 {
+  if(modelBusy()) return;
+  modelLock lock;
   GModel::current()->refineMesh(CTX::instance()->mesh.secondOrderLinear,
                                 CTX::instance()->mesh.algoSubdivide == 1,
                                 CTX::instance()->mesh.algoSubdivide == 2,
@@ -2472,38 +2488,36 @@ static void mesh_refine_cb(Fl_Widget *w, void *data)
 }
 
 static void mesh_smooth_cb(Fl_Widget *w, void *data)
-{
-  GModel::current()->optimizeMesh("Laplace2D");
-  drawContext::global()->draw();
-}
+{ optimizeMesh("Laplace2D"); }
 
 static void mesh_recombine_cb(Fl_Widget *w, void *data)
 {
-  GModel::current()->recombineMesh();
+  if(modelBusy()) return;
+  {
+    modelLock lock;
+    GModel::current()->recombineMesh();
+  }
   afterMeshOperation();
 }
 
 #if defined(HAVE_NETGEN)
 static void mesh_optimize_netgen_cb(Fl_Widget *w, void *data)
-{
-  if(CTX::instance()->lock) {
-    Msg::Info("I'm busy! Ask me that later...");
-    return;
-  }
-  CTX::instance()->lock = 1;
-  GModel::current()->optimizeMesh("Netgen");
-  CTX::instance()->lock = 0;
-  afterMeshOperation();
-}
+{ optimizeMesh("Netgen"); }
 #endif
 
 static void mesh_partition_cb(Fl_Widget *w, void *data) { partition_dialog(); }
 
 static void mesh_unpartition_cb(Fl_Widget *w, void *data)
 {
-  int ier = GModel::current()->unpartitionMesh();
+  if(modelBusy()) return;
+  int ier;
+  {
+    modelLock lock;
+    ier = GModel::current()->unpartitionMesh();
+  }
 
-  // Update the screen
+  // Update the screen, if still there
+  if(!FlGui::available()) return;
   if(!ier) {
     opt_mesh_zone_definition(0, GMSH_SET, 0.);
     opt_mesh_color_carousel(0, GMSH_SET | GMSH_GUI, 1.);
@@ -2515,9 +2529,15 @@ static void mesh_unpartition_cb(Fl_Widget *w, void *data)
 
 static void mesh_convert_old_partitioning_cb(Fl_Widget *w, void *data)
 {
-  int ier = GModel::current()->convertOldPartitioningToNewOne();
+  if(modelBusy()) return;
+  int ier;
+  {
+    modelLock lock;
+    ier = GModel::current()->convertOldPartitioningToNewOne();
+  }
 
-  // Update the screen
+  // Update the screen, if still there
+  if(!FlGui::available()) return;
   if(!ier) {
     opt_mesh_zone_definition(0, GMSH_SET, 0.);
     opt_mesh_color_carousel(0, GMSH_SET | GMSH_GUI, 1.);
@@ -3872,8 +3892,6 @@ void status_options_cb(Fl_Widget *w, void *data)
   }
 }
 
-static int stop_anim = 0;
-
 void status_play_manual(int time, int incr, bool redraw)
 {
   // avoid firing this routine recursively (can happen e.g when
@@ -3892,28 +3910,37 @@ void status_play_manual(int time, int incr, bool redraw)
   busy = false;
 }
 
+// the animation: a step every PostProcessing.AnimationDelay seconds, from a
+// timer, the events being processed by the event loop between the steps;
+// playing until paused (a pause handled while a step runs cannot remove the
+// timer, which re-arms itself)
+static bool animPlaying = false;
+
+static void animate_cb(void *)
+{
+  if(!FlGui::available() || !animPlaying) return;
+  // no step while another operation holds the model (the timer runs in the
+  // event loops of the operations too)
+  if(!CTX::instance()->lock)
+    status_play_manual(!CTX::instance()->post.animCycle,
+                       CTX::instance()->post.animStep);
+  // not again if a pause then a play during the step started another timer
+  if(animPlaying && !Fl::has_timeout(animate_cb))
+    Fl::repeat_timeout(CTX::instance()->post.animDelay, animate_cb);
+}
+
 static void status_play_cb(Fl_Widget *w, void *data)
 {
-  static double anim_time;
   getGraphicWindow(w)->setAnimButtons(0);
-  stop_anim = 0;
-  anim_time = TimeOfDay();
-  while(1) {
-    if(!FlGui::available()) return;
-
-    if(stop_anim) break;
-    if(TimeOfDay() - anim_time > CTX::instance()->post.animDelay) {
-      anim_time = TimeOfDay();
-      status_play_manual(!CTX::instance()->post.animCycle,
-                         CTX::instance()->post.animStep);
-    }
-    FlGui::check();
-  }
+  if(animPlaying) return;
+  animPlaying = true;
+  Fl::add_timeout(CTX::instance()->post.animDelay, animate_cb);
 }
 
 static void status_pause_cb(Fl_Widget *w, void *data)
 {
-  stop_anim = 1;
+  animPlaying = false;
+  Fl::remove_timeout(animate_cb);
   getGraphicWindow(w)->setAnimButtons(1);
 }
 
@@ -4570,10 +4597,13 @@ static void dropped_cb(void *data);
 
 graphicWindow::~graphicWindow()
 {
-  // a tool dropped on the dock, docked at the next event: it goes with the GUI
-  Fl::remove_timeout(dropped_cb);
-  // the docked tool windows are not ours to delete
+  // the main window: a tool dropped on its dock, docked at the next event,
+  // and the animation go with it, and the docked tool windows are not its to
+  // delete
   if(_dock) {
+    Fl::remove_timeout(dropped_cb);
+    animPlaying = false;
+    Fl::remove_timeout(animate_cb);
     Fl::remove_timeout(_drop_cb, this);
     _dock->undockAll(false);
     setDocking(false);

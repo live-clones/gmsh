@@ -1234,6 +1234,9 @@ static void visibility_interactive_cb(Fl_Widget *w, void *data)
   std::vector<GFace *> faces;
   std::vector<GRegion *> regions;
   std::vector<MElement *> elements;
+  // when they were picked: the draws below process events, which may change
+  // the model or its mesh
+  modelStamps before;
 
   while(1) {
     if(what == ENT_ALL) CTX::instance()->meshChanged();
@@ -1241,20 +1244,18 @@ static void visibility_interactive_cb(Fl_Widget *w, void *data)
     Msg::StatusGl("Select %s\n[Press %s'q' to abort]", str.c_str(),
                   mode ? "" : "'u' to undo or ");
 
-    int entities = CTX::instance()->entitiesStamp;
-    int mesh = CTX::instance()->meshContentStamp;
     char ib = FlGui::instance()->selectEntity(what);
     if(!FlGui::available()) break;
-    // the model or its mesh changed while waiting: what an undo would show
-    // again may be gone
-    if(entities != CTX::instance()->entitiesStamp ||
-       mesh != CTX::instance()->meshContentStamp) {
+    // the model or its mesh changed meanwhile: what an undo would show again
+    // may be gone
+    if(before.changed()) {
       vertices.clear();
       edges.clear();
       faces.clear();
       regions.clear();
       elements.clear();
     }
+    before.record();
     if(ib == 'l') {
       // store for possible undo later
       vertices = FlGui::instance()->selectedVertices;

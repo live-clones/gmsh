@@ -9,7 +9,9 @@
 class GModel;
 class GRegion;
 
-void GenerateMesh(GModel *m, int dimension);
+// returns false if another operation holds the lock on the model, unless
+// nested in the operation holding it (see modelLock)
+bool GenerateMesh(GModel *m, int dimension, bool nested = false);
 void OptimizeMesh(GModel *m, const std::string &how = "", bool force = false,
                   int niter = 1, double quality = 0.0);
 void RecombineMesh(GModel *m);

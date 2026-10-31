@@ -118,10 +118,15 @@ void partition_partition_cb(Fl_Widget *widget, void *data)
   dlg->write_all_options();
 
   // Partition the mesh
-  int ier =
-    GModel::current()->partitionMesh(CTX::instance()->mesh.numPartitions);
+  if(modelBusy()) return;
+  int ier;
+  {
+    modelLock lock;
+    ier = GModel::current()->partitionMesh(CTX::instance()->mesh.numPartitions);
+  }
 
-  // Update the screen
+  // Update the screen, if still there
+  if(!FlGui::available()) return;
   if(!ier) {
     opt_mesh_zone_definition(0, GMSH_SET, 2.); // Define zone by partition
     opt_mesh_color_carousel(0, GMSH_SET | GMSH_GUI, 3.);

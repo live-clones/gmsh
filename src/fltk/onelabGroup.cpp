@@ -57,6 +57,13 @@ typedef unsigned long intptr_t;
 void solver_cb(Fl_Widget *w, void *data)
 {
   if(!FlGui::instance()->onelab) return;
+  // choosing a solver deletes the clients, among which the one running; one
+  // asked for by a file opened meanwhile is not launched by a later one
+  if(FlGui::instance()->onelab->isBusy()) {
+    Msg::Info("I'm busy! Ask me that later...");
+    CTX::instance()->launchSolverAtStartup = -1;
+    return;
+  }
 
   int num = (intptr_t)data;
   if(num >= 0) {
@@ -79,19 +86,16 @@ void solver_cb(Fl_Widget *w, void *data)
     }
   }
 
-  if(FlGui::instance()->onelab->isBusy())
-    FlGui::instance()->onelab->show();
-  else {
-    if(CTX::instance()->launchSolverAtStartup >= 0) {
-      onelab_cb(nullptr, (void *)"reset");
-      onelabUtils::setFirstComputationFlag(true);
-    }
-    else if(num >= 0)
-      onelab_cb(nullptr, (void *)"check");
-    else
-      onelab_cb(nullptr, (void *)"refresh");
-    FlGui::instance()->onelab->updateGearMenu();
+  if(CTX::instance()->launchSolverAtStartup >= 0) {
+    onelab_cb(nullptr, (void *)"reset");
+    onelabUtils::setFirstComputationFlag(true);
   }
+  else if(num >= 0)
+    onelab_cb(nullptr, (void *)"check");
+  else
+    onelab_cb(nullptr, (void *)"refresh");
+  // (the GUI may have been closed meanwhile)
+  if(FlGui::available()) FlGui::instance()->onelab->updateGearMenu();
 
   CTX::instance()->launchSolverAtStartup = -1;
 }
@@ -181,6 +185,9 @@ void onelab_cb(Fl_Widget *w, void *data)
     Msg::Info("I'm busy! Ask me that later...");
     return;
   }
+  // the rest reads the project again or meshes it: not during another
+  // operation on the model
+  if(modelBusy()) return;
 
   if(action == "load") {
     std::string db =
@@ -214,6 +221,9 @@ void onelab_cb(Fl_Widget *w, void *data)
     // run Gmsh client for non-metamodels
     if(onelabUtils::runGmshClient(action, CTX::instance()->solver.autoMesh))
       drawContext::global()->draw();
+    // the GUI may have been closed while the events were processed (not
+    // FlGui::instance(), which would build it again)
+    if(!FlGui::available()) return;
 
     if(action == "compute") FlGui::instance()->onelab->checkForErrors("Gmsh");
     if(FlGui::instance()->onelab->stop()) break;
@@ -240,6 +250,7 @@ void onelab_cb(Fl_Widget *w, void *data)
       // if(action != "compute" ||
       // onelab::server::instance()->getChanged(c->getName()))
       c->run();
+      if(!FlGui::available()) return;
       if(action == "compute") {
         // after computing with this solver, mark the parameters as unchanged
         // for this solver
@@ -252,6 +263,7 @@ void onelab_cb(Fl_Widget *w, void *data)
     if(action != "initialize") {
       onelabUtils::updateGraphs();
       FlGui::instance()->rebuildTree(action == "compute");
+      if(!FlGui::available()) return;
     }
 
   } while(action == "compute" && !FlGui::instance()->onelab->stop() &&
@@ -273,6 +285,7 @@ void onelab_cb(Fl_Widget *w, void *data)
     if(CTX::instance()->solver.autoArchiveOutputFiles)
       onelabUtils::archiveOutputFiles(db);
     if(CTX::instance()->solver.autoSaveDatabase) onelabUtils::saveDb(db);
+    if(!FlGui::available()) return;
   }
 
   FlGui::instance()->onelab->stop(false);
@@ -570,7 +583,9 @@ public:
 };
 
 onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
-  : Fl_Group(x, y, w, h, l), _stop(false), _firstBuild(true), _hasContext(false)
+  : Fl_Group(x, y, w, h, l), _rebuilding(false), _rebuildAgain(false),
+    _rebuildAgainDelete(false), _stop(false), _firstBuild(true),
+    _hasContext(false)
 {
   Fl_Color col = treeColor();
   color(col);
@@ -1167,6 +1182,9 @@ static void onelab_string_button_cb(Fl_Widget *w, void *data)
   std::vector<onelab::string> strings;
   onelab::server::instance()->get(strings, name);
   if(strings.size()) {
+    // a script parsed or a file merged change the model: not during another
+    // operation on it
+    if(strings[0].getAttribute("Macro") != "Action" && modelBusy()) return;
     if(strings[0].getAttribute("Macro") == "GmshParseString") {
       // parse string directly
       ParseString(strings[0].getValue());
@@ -1256,6 +1274,7 @@ static void onelab_input_choice_file_edit_cb(Fl_Widget *w, void *data)
 
 static void onelab_input_choice_file_merge_cb(Fl_Widget *w, void *data)
 {
+  if(modelBusy()) return;
   Fl_Input_Choice *but = (Fl_Input_Choice *)w->parent();
   std::string file = FixWindowsPath(but->value());
   MergeFile(file);
@@ -1504,10 +1523,30 @@ static void highlight_physical_group_cb(Fl_Widget *w, void *data)
 
 void onelabGroup::rebuildTree(bool deleteWidgets)
 {
-  // rebuilding the tree does not work in a child thread (it should, as we don't
-  // show/hide windows, but it crashes - at least on macOS)
-  if(FlGui::locked()) return;
+  // only in the thread of the GUI (e.g. not from a thread of an API program
+  // that holds the lock)
+  if(!FlGui::onMainThread()) return;
 
+  if(_rebuilding) {
+    _rebuildAgain = true;
+    _rebuildAgainDelete = _rebuildAgainDelete || deleteWidgets;
+    return;
+  }
+  _rebuilding = true;
+  // this tree may be gone after the events processed (the GUI closed); not
+  // FlGui::available(), false while the GUI is built, with its tree
+  Fl_Widget_Tracker alive(this);
+  _rebuildTree(deleteWidgets);
+  while(alive.exists() && _rebuildAgain) {
+    bool d = _rebuildAgainDelete;
+    _rebuildAgain = _rebuildAgainDelete = false;
+    _rebuildTree(d);
+  }
+  if(alive.exists()) _rebuilding = false;
+}
+
+void onelabGroup::_rebuildTree(bool deleteWidgets)
+{
   setButtonVisibility();
 
   FL_NORMAL_SIZE -= CTX::instance()->deltaFontSize;
@@ -1533,8 +1572,14 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
   _computeWidths();
 
   // hide all the widgets we have added in the tree to make sure they don't get
-  // spurious events (until they are deleted)
-  for(std::size_t i = 0; i < _treeWidgets.size(); i++) _treeWidgets[i]->hide();
+  // spurious events (until they are deleted); hiding an edited input runs its
+  // callback, which may ask for a rebuild (see rebuildTree()) or close the GUI
+  Fl_Widget_Tracker alive(this);
+  std::vector<Fl_Widget *> old = _treeWidgets;
+  for(auto w : old) {
+    w->hide();
+    if(!alive.exists()) return;
+  }
 
   // we don't delete widgets everytime the tree is rebuilt to minimize potential
   // race conditions (e.g. during heavy user interaction with autoCheck, with
@@ -1640,6 +1685,12 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
   FL_NORMAL_SIZE += CTX::instance()->deltaFontSize;
 
   FlGui::check(true); // necessary e.g. on windows to avoid "ghosting"
+
+  // the GUI may have been closed during the check, its widgets with it
+  if(!alive.exists()) {
+    for(std::size_t i = 0; i < delStrings.size(); i++) free(delStrings[i]);
+    return;
+  }
 
   if(deleteWidgets) {
     // this needs to be performed after FlGui::check()

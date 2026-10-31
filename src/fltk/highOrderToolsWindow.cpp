@@ -36,6 +36,8 @@
 
 static void highordertools_runp_cb(Fl_Widget *w, void *data)
 {
+  if(modelBusy()) return;
+  modelLock lock;
   highOrderToolsWindow *o = FlGui::instance()->highordertools;
 
   // at least 1, the order of no mesh being -1
@@ -61,6 +63,8 @@ static void highordertools_runp_cb(Fl_Widget *w, void *data)
   */
 
   CTX::instance()->meshChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
+  // the GUI may have been closed while the mesh was changed
+  if(!FlGui::available()) return;
   drawContext::global()->draw();
 }
 
@@ -151,6 +155,8 @@ static void chooseopti_strategy(Fl_Widget *w, void *data)
 
 static void highordertools_runopti_cb(Fl_Widget *w, void *data)
 {
+  if(modelBusy()) return;
+  modelLock lock;
   highOrderToolsWindow *o = FlGui::instance()->highordertools;
 
   if(o->butt[3]->value()) FlGui::instance()->graph[0]->showMessages();
@@ -234,6 +240,8 @@ static void highordertools_runopti_cb(Fl_Widget *w, void *data)
   FixPeriodicMesh(GModel::current());
 
   CTX::instance()->meshChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
+  // the GUI may have been closed while the mesh was changed
+  if(!FlGui::available()) return;
   drawContext::global()->draw();
 }
 
