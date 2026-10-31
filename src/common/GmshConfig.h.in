@@ -42,9 +42,7 @@
 #cmakedefine HAVE_NETGEN
 #cmakedefine HAVE_NII2MESH
 #cmakedefine HAVE_NUMPY
-#cmakedefine HAVE_NO_INTPTR_T
 #cmakedefine HAVE_NO_SOCKLEN_T
-#cmakedefine HAVE_NO_STDINT_H
 #cmakedefine HAVE_NO_VSNPRINTF
 #cmakedefine HAVE_OCC
 #cmakedefine HAVE_OCC_CAF
