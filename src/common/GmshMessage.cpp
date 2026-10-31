@@ -51,6 +51,13 @@
 #include "extraDialogs.h"
 #endif
 
+#if defined(HAVE_FLTK)
+// The GUI is there and this thread may touch it: only the thread that runs it
+// may. The others (OpenMP workers, the threads of an API program) leave it
+// alone, their messages being queued for it by FlGui::addMessage().
+static bool guiHere() { return FlGui::available() && FlGui::onMainThread(); }
+#endif
+
 #if defined(HAVE_OCC)
 #include <Standard_Version.hxx>
 #endif
@@ -335,7 +342,7 @@ void Msg::StopProgressMeter()
   _progressMeterCurrent = -1;
   _progressMeterTotal = 0;
 #if defined(HAVE_FLTK)
-  if(FlGui::available()){
+  if(guiHere()){
     FlGui::instance()->setProgress("", 0, 0, 1);
     FlGui::check(true);
   }
@@ -522,7 +529,9 @@ void Msg::Error(const char *fmt, ...)
     if(FlGui::available()){
       std::string tmp = std::string(CTX::instance()->guiDark ? "@B72@." : "@C1@.")
         + "Error   : " + str;
-      FlGui::instance()->addMessage(tmp.c_str());
+      FlGui::addMessage(tmp.c_str());
+    }
+    if(guiHere()){
       FlGui::instance()->setLastStatus
         (CTX::instance()->guiDark ? FL_DARK_RED : FL_RED);
       FlGui::check(true);
@@ -579,8 +588,11 @@ void Msg::Warning(const char *fmt, ...)
   if(FlGui::available()){
     std::string tmp = std::string(CTX::instance()->guiDark ? "@B152@." : "@C5@.")
       + "Warning : " + str;
-    FlGui::instance()->addMessage(tmp.c_str());
+    FlGui::addMessage(tmp.c_str());
+#pragma omp critical(MsgWarning)
     if(_firstWarning.empty()) _firstWarning = str;
+  }
+  if(guiHere()){
     FlGui::instance()->setLastStatus();
     FlGui::check(true);
   }
@@ -633,9 +645,9 @@ void Msg::Info(const char *fmt, ...)
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
     std::string tmp = std::string("Info    : ") + str;
-    FlGui::instance()->addMessage(tmp.c_str());
-    FlGui::check(true);
+    FlGui::addMessage(tmp.c_str());
   }
+  if(guiHere()) FlGui::check(true);
 #endif
 
   if(CTX::instance()->terminal) {
@@ -678,9 +690,9 @@ void Msg::Direct(const char *fmt, ...)
   if(FlGui::available()){
     std::string tmp = std::string(CTX::instance()->guiDark ? "@B136@." : "@C4@.")
       + str;
-    FlGui::instance()->addMessage(tmp.c_str());
-    FlGui::check(true);
+    FlGui::addMessage(tmp.c_str());
   }
+  if(guiHere()) FlGui::check(true);
 #endif
 
   if(CTX::instance()->terminal){
@@ -732,14 +744,14 @@ void Msg::StatusBar(bool log, const char *fmt, ...)
   if(log && _client) _client->Info(str);
 
 #if defined(HAVE_FLTK)
-  if(FlGui::available()){
+  if(log && FlGui::available()){
+    std::string tmp = std::string("Info    : ") + str;
+    FlGui::addMessage(tmp.c_str());
+  }
+  if(guiHere()){
     if(!log || GetVerbosity() > 4)
       FlGui::instance()->setStatus(str);
-    if(log){
-      std::string tmp = std::string("Info    : ") + str;
-      FlGui::instance()->addMessage(tmp.c_str());
-      FlGui::check(true);
-    }
+    if(log) FlGui::check(true);
   }
 #endif
 
@@ -763,7 +775,7 @@ void Msg::StatusGl(const char *fmt, ...)
   va_end(args);
   int l = strlen(str); if(l > 0 && str[l - 1] == '\n') str[l - 1] = '\0';
 
-  if(FlGui::available())
+  if(guiHere())
     FlGui::instance()->setStatus(str, true);
 #endif
 }
@@ -771,7 +783,7 @@ void Msg::StatusGl(const char *fmt, ...)
 void Msg::SetWindowTitle(const std::string &title)
 {
 #if defined(HAVE_FLTK)
-  if(FlGui::available()){
+  if(guiHere()){
     FlGui::instance()->setGraphicTitle(title);
   }
 #endif
@@ -795,7 +807,7 @@ void Msg::Debug(const char *fmt, ...)
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
     std::string tmp = std::string("Debug   : ") + str;
-    FlGui::instance()->addMessage(tmp.c_str());
+    FlGui::addMessage(tmp.c_str());
   }
 #endif
 
@@ -834,7 +846,7 @@ void Msg::ProgressMeter(int n, bool log, const char *fmt, ...)
     if(_client) _client->Progress(str2);
 
 #if defined(HAVE_FLTK)
-    if(FlGui::available() && GetVerbosity() > 4){
+    if(guiHere() && GetVerbosity() > 4){
       FlGui::instance()->setProgress(str, (n > N - 1) ? 0 : n, 0, N);
       FlGui::check(true);
     }
@@ -880,7 +892,7 @@ void Msg::ResetErrorCounter()
   _warningCount = 0; _errorCount = 0;
   _firstWarning.clear(); _firstError.clear(); _lastError.clear();
 #if defined(HAVE_FLTK)
-  if(FlGui::available()) FlGui::instance()->setLastStatus();
+  if(guiHere()) FlGui::instance()->setLastStatus();
 #endif
 }
 
@@ -901,13 +913,13 @@ void Msg::PrintErrorCounter(const char *title)
     std::string col = GetErrorCount() ?
       std::string(CTX::instance()->guiDark ? "@B72@." : "@C1@.") :
       std::string(CTX::instance()->guiDark ? "@B152@." : "@C5@.");
-    FlGui::instance()->addMessage((col + prefix + line).c_str());
-    FlGui::instance()->addMessage((col + prefix + title).c_str());
-    FlGui::instance()->addMessage((col + prefix + warn).c_str());
-    FlGui::instance()->addMessage((col + prefix + err).c_str());
-    FlGui::instance()->addMessage((col + prefix + help).c_str());
-    FlGui::instance()->addMessage((col + prefix + line).c_str());
-    if(GetErrorCount()) fl_beep();
+    FlGui::addMessage((col + prefix + line).c_str());
+    FlGui::addMessage((col + prefix + title).c_str());
+    FlGui::addMessage((col + prefix + warn).c_str());
+    FlGui::addMessage((col + prefix + err).c_str());
+    FlGui::addMessage((col + prefix + help).c_str());
+    FlGui::addMessage((col + prefix + line).c_str());
+    if(GetErrorCount() && FlGui::onMainThread()) fl_beep();
   }
 #endif
 
@@ -933,6 +945,8 @@ double Msg::GetValue(const char *text, double defaultval)
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
+    // no dialog off the GUI's thread
+    if(!FlGui::onMainThread()) return defaultval;
     char defaultstr[256];
     sprintf(defaultstr, "%.16g", defaultval);
     const char *ret = fl_input(text, defaultstr, "");
@@ -960,6 +974,8 @@ std::string Msg::GetString(const char *text, const std::string &defaultval)
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
+    // no dialog off the GUI's thread
+    if(!FlGui::onMainThread()) return defaultval;
     const char *ret = fl_input(text, defaultval.c_str(), "");
     if(!ret)
       return defaultval;
@@ -985,8 +1001,11 @@ int Msg::GetAnswer(const char *question, int defaultval, const char *zero,
   if(CTX::instance()->noPopup || _callback) return defaultval;
 
 #if defined(HAVE_FLTK)
-  if(FlGui::available())
+  if(FlGui::available()){
+    // no dialog off the GUI's thread
+    if(!FlGui::onMainThread()) return defaultval;
     return fl_choice(question, zero, one, two, "");
+  }
 #endif
 
   if(two)
@@ -1601,7 +1620,7 @@ void Msg::ImportPhysicalGroupsInOnelab()
     }
 
 #if defined(HAVE_FLTK)
-    if(FlGui::available()){
+    if(guiHere()){
       FlGui::instance()->resetVisibility();
       FlGui::instance()->rebuildTree(false);
     }

@@ -5,6 +5,7 @@
 
 #include "GmshConfig.h"
 #include <algorithm>
+#include <mutex>
 #include <sstream>
 #include <string.h>
 #include <FL/Fl.H>
@@ -70,11 +71,14 @@ FlGui *FlGui::_instance = nullptr;
 std::string FlGui::_openedThroughMacFinder = "";
 bool FlGui::_finishedProcessingCommandLine = false;
 std::atomic<int> FlGui::_locked(0);
+std::thread::id FlGui::_mainThread;
+
+bool FlGui::onMainThread() { return std::this_thread::get_id() == _mainThread; }
 
 // check (now!) if there are any pending events, and process them
 void FlGui::check(bool rateLimited)
 {
-  if(Msg::GetThreadNum() > 0 || _locked > 0) return;
+  if(!onMainThread() || _locked > 0) return;
 
   static double lastRefresh = 0.;
   double start = TimeOfDay();
@@ -93,14 +97,14 @@ void FlGui::check(bool rateLimited)
 // wait (possibly indefinitely) for any events, then process them
 void FlGui::wait(bool force)
 {
-  if((Msg::GetThreadNum() > 0 || _locked > 0) && !force) return;
+  if((!onMainThread() || _locked > 0) && !force) return;
   Fl::wait();
 }
 
 // wait (at most time seconds) for any events, then process them
 void FlGui::wait(double time, bool force)
 {
-  if((Msg::GetThreadNum() > 0 || _locked > 0) && !force) return;
+  if((!onMainThread() || _locked > 0) && !force) return;
   Fl::wait(time);
 }
 
@@ -600,6 +604,7 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
 
   // tell fltk we're (potentially) in multi-threaded mode
   Fl::lock();
+  _mainThread = std::this_thread::get_id();
 
   // set X display
   if(CTX::instance()->display.size())
@@ -1419,7 +1424,7 @@ char FlGui::selectEntity(int type)
 
 void FlGui::setStatus(const std::string &msg, bool opengl)
 {
-  if(Msg::GetThreadNum() > 0) return;
+  if(!onMainThread()) return;
   if(!opengl) {
     _lastStatus = msg;
     static char buff[1024];
@@ -1462,7 +1467,7 @@ void FlGui::setStatus(const std::string &msg, bool opengl)
 
 void FlGui::setLastStatus(int col)
 {
-  if(Msg::GetThreadNum() > 0) return;
+  if(!onMainThread()) return;
   for(std::size_t i = 0; i < graph.size(); i++) {
     if(col >= 0 && graph[0]->getMessageHeight() < FL_NORMAL_SIZE) {
       if(CTX::instance()->guiDark) // dark
@@ -1481,7 +1486,7 @@ void FlGui::setLastStatus(int col)
 void FlGui::setProgress(const std::string &msg, double val, double min,
                         double max)
 {
-  if(Msg::GetThreadNum() > 0) return;
+  if(!onMainThread()) return;
   for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++) {
     if(FlGui::instance()->graph[i]->getProgress()->value() != val)
       FlGui::instance()->graph[i]->getProgress()->value(val);
@@ -1692,11 +1697,40 @@ void window_cb(Fl_Widget *w, void *data)
   }
 }
 
+// The lines of the other threads, waiting for the GUI's thread to add them
+// to the consoles, and whether it has been asked to (Fl::awake())
+static std::mutex pendingMutex;
+static std::vector<std::string> pendingMessages;
+static bool pendingAsked = false;
+
+static void addPendingMessages(void *)
+{
+  std::vector<std::string> msgs;
+  {
+    std::lock_guard<std::mutex> lock(pendingMutex);
+    msgs.swap(pendingMessages);
+    pendingAsked = false;
+  }
+  for(auto &m : msgs) FlGui::addMessage(m.c_str());
+}
+
 void FlGui::addMessage(const char *msg)
 {
-  for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++) {
-    FlGui::instance()->graph[i]->addMessage(msg);
+  if(!onMainThread()) {
+    std::lock_guard<std::mutex> lock(pendingMutex);
+    // no more than the consoles keep (see graphicWindow::addMessage()), the
+    // oldest tenth going
+    const std::size_t maxPending = 50000;
+    if(pendingMessages.size() >= maxPending)
+      pendingMessages.erase(pendingMessages.begin(),
+                            pendingMessages.begin() + maxPending / 10);
+    pendingMessages.push_back(msg);
+    if(!pendingAsked) pendingAsked = (Fl::awake(addPendingMessages) == 0);
+    return;
   }
+  if(!_instance) return;
+  for(std::size_t i = 0; i < _instance->graph.size(); i++)
+    _instance->graph[i]->addMessage(msg);
 }
 
 void FlGui::saveMessages(const char *fileName)

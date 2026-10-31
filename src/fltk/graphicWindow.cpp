@@ -5164,26 +5164,21 @@ int graphicWindow::getMessageHeight()
   return _browser->h();
 }
 
+// on the GUI's thread only: the other threads' lines are queued for it by
+// FlGui::addMessage()
 void graphicWindow::addMessage(const char *msg)
 {
   if(!_browser) return;
-
-    // this routine can be called from multiple threads, e.g. via Msg::Info
-    // calls in meshGFace(). We should use FlGui::lock/unlock, but currently
-    // this does not seem to work (17/02/2017)
-#pragma omp critical(addMessage)
-  {
-    // the console keeps the last 50000 messages: beyond, the oldest tenth goes
-    const std::size_t maxMessages = 50000;
-    if(_messages.size() >= maxMessages) {
-      _messages.erase(_messages.begin(), _messages.begin() + maxMessages / 10);
-      _browser->rebuild(_messages);
-    }
-    _messages.push_back(msg);
-    _browser->add(msg);
-    if(_autoScrollMessages && _win->shown() && _browser->h() >= FL_NORMAL_SIZE)
-      _browser->bottomline(_browser->size());
+  // the console keeps the last 50000 messages: beyond, the oldest tenth goes
+  const std::size_t maxMessages = 50000;
+  if(_messages.size() >= maxMessages) {
+    _messages.erase(_messages.begin(), _messages.begin() + maxMessages / 10);
+    _browser->rebuild(_messages);
   }
+  _messages.push_back(msg);
+  _browser->add(msg);
+  if(_autoScrollMessages && _win->shown() && _browser->h() >= FL_NORMAL_SIZE)
+    _browser->bottomline(_browser->size());
 }
 
 void graphicWindow::clearMessages()

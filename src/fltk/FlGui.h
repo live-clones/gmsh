@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 #include <atomic>
+#include <thread>
 #include "SPoint2.h"
 #include "gmshScheme.h"
 
@@ -73,6 +74,8 @@ private:
   static std::string _openedThroughMacFinder;
   static bool _finishedProcessingCommandLine;
   static std::atomic<int> _locked;
+  // the thread that created the GUI, the only one that may touch it
+  static std::thread::id _mainThread;
   std::string _lastStatus;
   bool _quitShouldExit;
 
@@ -131,6 +134,9 @@ public:
   static void destroy();
   // check if the GUI is available
   static bool available();
+  // whether the caller is the thread that runs the GUI: the others (OpenMP
+  // workers, the threads of an API program) must not touch it
+  static bool onMainThread();
   // run the GUI until there's no window left
   static int run(const std::string &optionFileName="");
   // check if there are any pending events, and process them (if rateLimited is
@@ -192,8 +198,9 @@ public:
   void setLastStatus(int col = -1);
   // display status message and update progress bar
   void setProgress(const std::string &msg, double val, double min, double max);
-  // add line in message console
-  void addMessage(const char *msg);
+  // add line in message console; from another thread than the GUI's, the line
+  // is queued and added by the GUI's thread when it next processes events
+  static void addMessage(const char *msg);
   // save messages to file
   void saveMessages(const char *fileName);
   // rebuild the tree
