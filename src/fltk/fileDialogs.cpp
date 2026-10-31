@@ -727,7 +727,7 @@ int gifFileDialog(const char *name)
     y += BH;
     dialog->b[3] =
       new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Transparent background");
-    dialog->b[3]->tooltip("Print.Transparent");
+    dialog->b[3]->tooltip("Print.GifTransparent");
     y += BH;
     dialog->b[4] =
       new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Print text strings");
@@ -850,7 +850,7 @@ int gl2psFileDialog(const char *name, const char *title, int format)
     dialog->c->menu(sortmenu);
     dialog->c->align(FL_ALIGN_RIGHT);
     dialog->b[0] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Compress");
-    dialog->b[0]->tooltip("EpsCompress");
+    dialog->b[0]->tooltip("Print.EpsCompress");
     y += BH;
     dialog->b[1] =
       new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Remove hidden primitives");
@@ -1253,10 +1253,8 @@ int mshFileDialog(const char *name)
                                                                             0);
   dialog->b[3]->value(
     opt_mesh_partition_save_topology_file(0, GMSH_GET, 0) ? 1 : 0);
-  if(GModel::current()->getNumPartitions() == 0) {
-    dialog->b[2]->deactivate();
-    dialog->b[3]->deactivate();
-  }
+  // what the format and the model allow, each time the dialog is shown
+  format_cb(nullptr, dialog);
   dialog->window->show();
 
   while(dialog->window->shown()) {
@@ -1311,9 +1309,9 @@ void format_cb(Fl_Widget *widget, void *data)
     dialog->views->deactivate();
     dialog->b[4]->deactivate();
   }
-  if((dialog->c->value() == 3 || dialog->c->value() == 4 ||
-      dialog->c->value() == 1 || dialog->c->value() == 2) &&
-     GModel::current()->getNumPartitions() > 0) {
+  // the partitions in files of their own, and their topology, in every
+  // version after 1
+  if(dialog->c->value() != 0 && GModel::current()->getNumPartitions() > 0) {
     dialog->b[2]->activate();
     dialog->b[3]->activate();
   }
@@ -1360,6 +1358,8 @@ int unvinpFileDialog(const char *name, const char *title, int format)
 
   dialog->b[0]->value(opt_mesh_save_all(0, GMSH_GET, 0) ? 1 : 0);
   dialog->b[1]->value(opt_mesh_save_groups_of_nodes(0, GMSH_GET, 0) ? 1 : 0);
+  // shared by the UNV and the INP exports
+  dialog->window->label(title);
   dialog->window->show();
 
   while(dialog->window->shown()) {
@@ -1434,7 +1434,7 @@ int keyFileDialog(const char *name, const char *title, int format)
     dialog->c[2]->align(FL_ALIGN_RIGHT);
     dialog->b[0] =
       new Fl_Check_Button(WB, y, 2 * BBB + WB, BH, "Save groups of elements");
-    dialog->b[0]->tooltip("Mesh.SaveAll");
+    dialog->b[0]->tooltip("Mesh.SaveGroupsOfNodes");
     y += BH;
     dialog->b[0]->type(FL_TOGGLE_BUTTON);
     dialog->b[1] =
@@ -1538,7 +1538,7 @@ int radFileDialog(const char *name, const char *title, int format)
     dialog->c[2]->align(FL_ALIGN_RIGHT);
     dialog->b[0] =
       new Fl_Check_Button(WB, y, 2 * BBB + WB, BH, "Save groups of elements");
-    dialog->b[0]->tooltip("Mesh.SaveAll");
+    dialog->b[0]->tooltip("Mesh.SaveGroupsOfNodes");
     y += BH;
     dialog->b[0]->type(FL_TOGGLE_BUTTON);
     dialog->b[1] =

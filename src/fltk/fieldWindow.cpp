@@ -55,7 +55,10 @@ static void field_new_cb(Fl_Widget *w, void *data)
   FieldManager *fields = GModel::current()->getFields();
   int id = fields->newId();
   scriptAddField(id, mb->text(), GModel::current()->getFileName());
-  if((*fields)[id]) FlGui::instance()->fields->editField((*fields)[id]);
+  // the script may not have created it (model busy, cancelled, parse error):
+  // look it up without inserting a null field
+  Field *f = GModel::current()->getFields()->get(id);
+  if(f) FlGui::instance()->fields->editField(f);
 }
 
 static void field_apply_cb(Fl_Widget *w, void *data)

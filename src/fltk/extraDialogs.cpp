@@ -473,7 +473,6 @@ int simpleTextEditor(const char *title, const std::string &help,
     Fl_Text_Editor *edit;
     Fl_Button *apply, *cancel;
     Fl_Box *help;
-    char *help_text;
   };
   static _editor *editor = nullptr;
 
@@ -482,8 +481,7 @@ int simpleTextEditor(const char *title, const std::string &help,
     editor->window =
       new paletteWindow(4 * BB + 2 * WB, 7 * BH + 3 * WB,
                         CTX::instance()->nonModalWindows ? true : false);
-    editor->help_text = strdup(help.c_str());
-    editor->help = new Fl_Box(WB, WB / 2, 4 * BB, BH, editor->help_text);
+    editor->help = new Fl_Box(WB, WB / 2, 4 * BB, BH);
     editor->help->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
     editor->buff = new Fl_Text_Buffer();
     editor->edit = new Fl_Text_Editor(WB, WB + BH, 4 * BB, 5 * BH);
@@ -498,6 +496,7 @@ int simpleTextEditor(const char *title, const std::string &help,
     editor->window->resizable(resize);
   }
   editor->window->label(title);
+  editor->help->copy_label(help.c_str());
   editor->buff->text(text.c_str());
   editor->window->hotspot(editor->window);
   editor->window->show();

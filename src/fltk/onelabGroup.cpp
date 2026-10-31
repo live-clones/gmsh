@@ -854,42 +854,51 @@ static bool serverAction(const std::string &action)
   return false;
 }
 
+// the value of a "Set" action, for a number or a string
+static void setValueFromString(onelab::number &p, const std::string &val)
+{ p.setValue(atof(val.c_str())); }
+
+static void setValueFromString(onelab::string &p, const std::string &val)
+{ p.setValue(val); }
+
+// Show, Hide, ReadOnly, ReadWrite or Set on the parameter of the given name, if
+// it is a T (a number or a string), stored back in the server
+template <class T>
+static void applyServerAction(const std::string &var, const std::string &action,
+                              const std::string &val)
+{
+  std::vector<T> ps;
+  onelab::server::instance()->get(ps, var);
+  if(ps.empty()) return;
+  if(action == "Set")
+    setValueFromString(ps[0], val);
+  else if(action == "Show")
+    ps[0].setVisible(true);
+  else if(action == "Hide")
+    ps[0].setVisible(false);
+  else if(action == "ReadOnly")
+    ps[0].setReadOnly(true);
+  else if(action == "ReadWrite")
+    ps[0].setReadOnly(false);
+  onelab::server::instance()->set(ps[0]);
+}
+
+// the actions named "...Match", on the parameters whose names match a regex
 static bool serverActionMatch(const std::string &action,
                               const std::string &match)
 {
   std::vector<std::string> names;
   onelab::server::instance()->getParameterNames(names, match);
+  // the same as the action without "Match"
+  std::string a = action.substr(0, action.size() - 5);
 
   for(auto &var : names) {
     Msg::Debug("Performing action '%s' on variable '%s'", action.c_str(),
                var.c_str());
-    if(action == "ResetMatch") { onelab::server::instance()->clear(var); }
+    if(a == "Reset") { onelab::server::instance()->clear(var); }
     else {
-      std::vector<onelab::string> ps;
-      onelab::server::instance()->get(ps, var);
-      if(ps.size()) {
-        if(action == "HideMatch")
-          ps[0].setVisible(false);
-        else if(action == "ShowMatch")
-          ps[0].setVisible(true);
-        else if(action == "ReadOnlyMatch")
-          ps[0].setReadOnly(true);
-        else if(action == "ReadWriteMatch")
-          ps[0].setReadOnly(false);
-      }
-      std::vector<onelab::number> pn;
-      onelab::server::instance()->get(pn, var);
-      if(pn.size()) {
-        if(action == "HideMatch")
-          pn[0].setVisible(false);
-        else if(action == "ShowMatch")
-          pn[0].setVisible(true);
-        else if(action == "ReadOnlyMatch")
-          pn[0].setReadOnly(true);
-        else if(action == "ReadWriteMatch")
-          pn[0].setReadOnly(false);
-        onelab::server::instance()->set(pn[0]);
-      }
+      applyServerAction<onelab::string>(var, a, "");
+      applyServerAction<onelab::number>(var, a, "");
     }
   }
 
@@ -924,36 +933,8 @@ static bool serverActionList(const std::string &path, const std::string &action,
         val = onelab::parameter::trim(what[i + 1]);
         i++;
       }
-      std::vector<onelab::string> ps;
-      onelab::server::instance()->get(ps, var);
-      if(ps.size()) {
-        if(action == "Set")
-          ps[0].setValue(val);
-        else if(action == "Show")
-          ps[0].setVisible(true);
-        else if(action == "Hide")
-          ps[0].setVisible(false);
-        else if(action == "ReadOnly")
-          ps[0].setReadOnly(true);
-        else if(action == "ReadWrite")
-          ps[0].setReadOnly(false);
-        onelab::server::instance()->set(ps[0]);
-      }
-      std::vector<onelab::number> pn;
-      onelab::server::instance()->get(pn, var);
-      if(pn.size()) {
-        if(action == "Set")
-          pn[0].setValue(atof(val.c_str()));
-        else if(action == "Show")
-          pn[0].setVisible(true);
-        else if(action == "Hide")
-          pn[0].setVisible(false);
-        else if(action == "ReadOnly")
-          pn[0].setReadOnly(true);
-        else if(action == "ReadWrite")
-          pn[0].setReadOnly(false);
-        onelab::server::instance()->set(pn[0]);
-      }
+      applyServerAction<onelab::string>(var, action, val);
+      applyServerAction<onelab::number>(var, action, val);
     }
   }
 

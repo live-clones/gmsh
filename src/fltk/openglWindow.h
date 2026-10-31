@@ -26,7 +26,6 @@ void resetOpenglMode();
 class openglWindow : public Fl_Gl_Window, public sceneView {
 private:
   static openglWindow *_lastHandled;
-  static void _setLastHandled(openglWindow *);
   // some drawing routines can create data (STL triangulations, etc.), which
   // can fire draw() while we are already drawing, through an Fl::check() or
   // Fl::wait() of FLTK itself (FlGui::check() refuses while drawing); the
@@ -114,7 +113,8 @@ public:
   // PixelBuffer::fill): the studio frames that one accumulated are put back
   // rather than drawn again
   void setAgain(bool again) { _again = again; }
-  static void setLastHandled(openglWindow *w) { _lastHandled = w; }
+  // which also brings the per-window visibility list up to date
+  static void setLastHandled(openglWindow *w);
   double frequency;
   void moveWithGamepad();
   Navigator *Nautilus;

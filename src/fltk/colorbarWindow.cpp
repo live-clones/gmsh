@@ -476,9 +476,12 @@ int colorbarWindow::handle(int event)
     }
     else if(Fl::test_shortcut(FL_CTRL + 'v') ||
             Fl::test_shortcut(FL_META + 'v')) {
+      // as computed below, but the table pasted as it is (its entries may have
+      // been edited by hand, which a recomputation from its parameters drops)
       ColorTable_Paste(ct);
       redraw();
       *viewchanged = true;
+      do_callback();
     }
     else if(Fl::test_shortcut('h')) {
       help_flag = !help_flag;

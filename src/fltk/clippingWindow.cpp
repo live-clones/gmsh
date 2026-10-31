@@ -211,7 +211,7 @@ static void clip_reset_cb(Fl_Widget *w, void *data)
   // Warning: for consistency these reset values should match the
   // default values for the associated options
   for(int i = 0; i < 6; i++)
-    for(int j = 0; j < 4; j++) CTX::instance()->clipPlane[0][0] = 0.;
+    for(int j = 0; j < 4; j++) CTX::instance()->clipPlane[i][j] = 0.;
   CTX::instance()->clipPlane[0][0] = 1.;
   CTX::instance()->clipPlane[1][1] = 1.;
   CTX::instance()->clipPlane[2][2] = 1.;

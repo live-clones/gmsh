@@ -574,7 +574,7 @@ static void default_fatal_error_handler(const char *fmt, ...)
 
 FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
              void (*error_handler)(const char *fmt, ...))
-  : _quitShouldExit(quitShouldExit), lastContextWindow(0)
+  : _quitShouldExit(quitShouldExit), lastContextWindow(0), fullscreen(nullptr)
 {
   if(error_handler) {
     Fl::error = error_handler;
@@ -1045,14 +1045,12 @@ int FlGui::runShortcut(const std::string &a)
   // --- a selection under way
   if(a == "selection_end" || a == "selection_undo" || a == "selection_invert" ||
      a == "selection_quit") {
-    for(std::size_t i = 0; i < graph.size(); i++)
-      for(std::size_t j = 0; j < graph[i]->gl.size(); j++) {
-        openglWindow *gl = graph[i]->gl[j];
-        if(a == "selection_end") gl->endSelection = 1;
-        if(a == "selection_undo") gl->undoSelection = 1;
-        if(a == "selection_invert") gl->invertSelection = 1;
-        if(a == "selection_quit") gl->quitSelection = 1;
-      }
+    for(openglWindow *gl : openglWindows()) {
+      if(a == "selection_end") gl->endSelection = 1;
+      if(a == "selection_undo") gl->undoSelection = 1;
+      if(a == "selection_invert") gl->invertSelection = 1;
+      if(a == "selection_quit") gl->quitSelection = 1;
+    }
     return 1;
   }
   // --- placing an elementary entity with the mouse: the axes it may move
@@ -1073,13 +1071,10 @@ int FlGui::runShortcut(const std::string &a)
       return 1;
     }
     bool lasso = false;
-    for(std::size_t i = 0; i < graph.size(); i++)
-      for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
-        if(graph[i]->gl[j]->lassoMode) lasso = true;
+    for(openglWindow *gl : openglWindows())
+      if(gl->lassoMode) lasso = true;
     if(lasso) {
-      for(std::size_t i = 0; i < graph.size(); i++)
-        for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
-          graph[i]->gl[j]->lassoMode = false;
+      for(openglWindow *gl : openglWindows()) gl->lassoMode = false;
       return 2;
     }
     status_options_cb(nullptr, (void *)"S");
@@ -1293,6 +1288,7 @@ void FlGui::updateViews(bool numberOfViewsHasChanged, bool deleteWidgets)
     rebuildTree(deleteWidgets);
     // this GUI may have been destroyed by the events the rebuild processed
     if(_instance != this) return;
+    visibility->updatePerWindow();
     options->resetBrowser();
     options->resetExternalViewList();
     fields->loadFieldViewList();
@@ -1319,6 +1315,14 @@ void FlGui::resetVisibility()
 void FlGui::updateStatistics(bool qualities)
 {
   if(stats->win->shown()) stats->compute(qualities);
+}
+
+std::vector<openglWindow *> FlGui::openglWindows()
+{
+  std::vector<openglWindow *> all;
+  for(auto g : graph) all.insert(all.end(), g->gl.begin(), g->gl.end());
+  if(fullscreen) all.push_back(fullscreen);
+  return all;
 }
 
 openglWindow *FlGui::getCurrentOpenglWindow()
@@ -1618,8 +1622,6 @@ void redraw_cb(Fl_Widget *w, void *data) { drawContext::global()->draw(); }
 
 void window_cb(Fl_Widget *w, void *data)
 {
-  static int oldx = 0, oldy = 0, oldw = 0, oldh = 0, zoom = 0;
-
   std::string str((const char *)data);
 
   if(str == "minimize") {
@@ -1633,22 +1635,25 @@ void window_cb(Fl_Widget *w, void *data)
     for(Fl_Window *w : g->toolWindows()) iconize(w);
   }
   else if(str == "zoom") {
-    if(!zoom) {
-      oldx = FlGui::instance()->graph[0]->getWindow()->x();
-      oldy = FlGui::instance()->graph[0]->getWindow()->y();
-      oldw = FlGui::instance()->graph[0]->getWindow()->w();
-      oldh = FlGui::instance()->graph[0]->getWindow()->h();
-      int x, y, w, h;
-      windowWorkArea(FlGui::instance()->graph[0]->getWindow(), x, y, w, h);
-      FlGui::instance()->graph[0]->getWindow()->resize(x, y, w, h);
-      zoom = 1;
-    }
-    else {
-      FlGui::instance()->graph[0]->getWindow()->resize(oldx, oldy, oldw, oldh);
-      zoom = 0;
-    }
+    // the window manager's maximization: it fills the work area title bar
+    // included (a resize to the work area sizes the inside of the window, and
+    // the title bar then pushes its bottom off the screen), and it remembers
+    // the size to go back to
+    Fl_Window *win = FlGui::instance()->graph[0]->getWindow();
+    if(win->maximize_active())
+      win->un_maximize();
+    else
+      win->maximize();
   }
   else if(str == "fullscreen") {
+    // a switch waits for the windows to be drawn, processing events: another
+    // one asked for meanwhile is ignored
+    static bool switching = false;
+    if(switching) return;
+    struct switched {
+      ~switched() { switching = false; }
+    } switched;
+    switching = true;
     if(!FlGui::instance()->fullscreen->shown()) {
       // resize to the size of the screen of the current graphic window first,
       // in case fullscreen does not work
@@ -1662,7 +1667,11 @@ void window_cb(Fl_Widget *w, void *data)
       FlGui::instance()->fullscreen->valid(0);
       FlGui::instance()->fullscreen->show();
       FlGui::instance()->fullscreen->fullscreen();
-      while(!FlGui::instance()->fullscreen->valid()) FlGui::wait();
+      // (not drawn at all if closed meanwhile)
+      while(FlGui::available() && FlGui::instance()->fullscreen->shown() &&
+            !FlGui::instance()->fullscreen->valid())
+        FlGui::wait();
+      if(!FlGui::available() || !FlGui::instance()->fullscreen->shown()) return;
       FlGui::instance()->fullscreen->getDrawContext()->copyViewAttributes(
         FlGui::instance()->getCurrentOpenglWindow()->getDrawContext());
       openglWindow::setLastHandled(FlGui::instance()->fullscreen);
@@ -1675,8 +1684,16 @@ void window_cb(Fl_Widget *w, void *data)
         FlGui::instance()->graph[i]->gl[0]->valid(0);
       for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
         FlGui::instance()->graph[i]->getWindow()->show();
-      for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-        while(!FlGui::instance()->graph[i]->gl[0]->valid()) FlGui::wait();
+      // (a graphic window may be closed meanwhile)
+      auto waiting = [](std::size_t i) {
+        FlGui *g = FlGui::instance();
+        return i < g->graph.size() && g->graph[i]->getWindow()->shown() &&
+               !g->graph[i]->gl[0]->valid();
+      };
+      for(std::size_t i = 0;
+          FlGui::available() && i < FlGui::instance()->graph.size(); i++)
+        while(FlGui::available() && waiting(i)) FlGui::wait();
+      if(!FlGui::available()) return;
       FlGui::instance()->graph[0]->gl[0]->getDrawContext()->copyViewAttributes(
         FlGui::instance()->getCurrentOpenglWindow()->getDrawContext());
       openglWindow::setLastHandled(FlGui::instance()->graph[0]->gl[0]);

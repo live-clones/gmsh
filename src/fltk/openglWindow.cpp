@@ -78,10 +78,7 @@ void resetOpenglMode()
 {
   if(!FlGui::available()) return;
   int mode = openglWindowMode();
-  for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-    for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
-      FlGui::instance()->graph[i]->gl[j]->mode(mode);
-  if(FlGui::instance()->fullscreen) FlGui::instance()->fullscreen->mode(mode);
+  for(openglWindow *gl : FlGui::instance()->openglWindows()) gl->mode(mode);
 }
 
 openglWindow::openglWindow(int x, int y, int w, int h)
@@ -105,6 +102,7 @@ void openglWindow::_setLock(bool on)
 
 openglWindow::~openglWindow()
 {
+  if(_lastHandled == this) _lastHandled = nullptr;
   _setLock(false);
   Fl::remove_timeout(navigator_handler, this);
   Fl::remove_timeout(_studioSampleCb, this);
@@ -665,10 +663,14 @@ void openglWindow::_fireCb(void *data) { ((openglWindow *)data)->redraw(); }
 
 openglWindow *openglWindow::_lastHandled = nullptr;
 
-void openglWindow::_setLastHandled(openglWindow *w)
+void openglWindow::setLastHandled(openglWindow *w)
 {
+  bool changed = (w != _lastHandled);
   _lastHandled = w;
-  FlGui::instance()->visibility->updatePerWindow();
+  // not without a GUI (FlGui::instance() would build one), nor for no window,
+  // which ~graphicWindow sets while the GUI is destroyed
+  if(changed && w && FlGui::available())
+    FlGui::instance()->visibility->updatePerWindow();
 }
 
 // One step through the entities under the cursor for one press or one notch,
@@ -751,7 +753,7 @@ void openglWindow::hostRedraw() { redraw(); }
 
 void openglWindow::hostClicked()
 {
-  _setLastHandled(this);
+  setLastHandled(this);
   take_focus(); // force keyboard focus when we click in the window
 }
 

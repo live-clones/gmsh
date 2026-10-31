@@ -53,21 +53,24 @@ static void view_reload(int index)
 {
   if(index >= 0 && index < (int)PView::list.size()) {
     PView *p = PView::list[index];
+    // copied: reading processes events, during which the view may go
+    std::string fileName = p->getData()->getFileName();
 
-    if(StatFile(p->getData()->getFileName())) {
-      Msg::Error("File '%s' does not exist",
-                 p->getData()->getFileName().c_str());
+    if(StatFile(fileName)) {
+      Msg::Error("File '%s' does not exist", fileName.c_str());
       return;
     }
 
     // not during another operation on the model, which reading may change
     if(modelBusy()) return;
+    int tag = p->getTag();
     int n = PView::list.size();
 
     // FIXME: use fileIndex
-    MergeFile(p->getData()->getFileName());
+    MergeFile(fileName);
 
-    if((int)PView::list.size() > n) { // we loaded a new view
+    p = PView::getViewByTag(tag);
+    if(p && (int)PView::list.size() > n) { // we loaded a new view
       // delete old data and replace with new
       delete p->getData();
       p->setData(PView::list.back()->getData());

@@ -36,7 +36,8 @@ public:
   visibilityWindow(int deltaFontSize = 0);
   ~visibilityWindow() { Fl::delete_widget(win); }
   void show(bool redrawOnly);
-  void updatePerWindow(bool force = false);
+  // the list of what the current graphic window shows
+  void updatePerWindow();
 };
 
 void visibility_cb(Fl_Widget *w, void *data);

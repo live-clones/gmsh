@@ -1353,9 +1353,8 @@ static void selection_mode_cb(Fl_Widget *w, void *data)
     opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
     break;
   }
-  for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-    for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
-      FlGui::instance()->graph[i]->gl[j]->changeSelection = mode;
+  for(openglWindow *gl : FlGui::instance()->openglWindows())
+    gl->changeSelection = mode;
   drawContext::global()->draw();
 }
 

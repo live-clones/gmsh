@@ -923,7 +923,7 @@ void visibility_cb(Fl_Widget *w, void *data)
 
   if(tmp.find("list_only") == std::string::npos) _rebuild_tree_browser(false);
 
-  FlGui::instance()->visibility->updatePerWindow(true);
+  FlGui::instance()->visibility->updatePerWindow();
 }
 
 void visibility_save(const std::string &fileName)
@@ -1302,12 +1302,8 @@ static void visibility_per_window_cb(Fl_Widget *w, void *data)
     }
   }
   else if(what == "reset_all") {
-    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++) {
-      for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++) {
-        drawContext *ctx = FlGui::instance()->graph[i]->gl[j]->getDrawContext();
-        ctx->showAll();
-      }
-    }
+    for(openglWindow *gl : FlGui::instance()->openglWindows())
+      gl->getDrawContext()->showAll();
     for(int i = 0; i < FlGui::instance()->visibility->per_window->size(); i++)
       FlGui::instance()->visibility->per_window->select(i + 1);
   }
@@ -1727,12 +1723,9 @@ void visibilityWindow::show(bool redrawOnly)
   }
 }
 
-void visibilityWindow::updatePerWindow(bool force)
+void visibilityWindow::updatePerWindow()
 {
-  static openglWindow *gl = nullptr;
-  if(!force && gl == FlGui::instance()->getCurrentOpenglWindow()) return;
-
-  gl = FlGui::instance()->getCurrentOpenglWindow();
+  openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
   drawContext *ctx = gl->getDrawContext();
 
   per_window->clear();

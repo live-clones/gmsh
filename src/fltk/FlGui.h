@@ -179,6 +179,8 @@ public:
   void updateStatistics(bool qualities = false);
   // store current window positions and sizes in CTX
   void storeCurrentWindowsInfo();
+  // every graphic window, the fullscreen one included
+  std::vector<openglWindow *> openglWindows();
   // get the last opengl window that received an event
   openglWindow *getCurrentOpenglWindow();
   // get the draw context from the last opengl window that received an event

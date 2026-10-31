@@ -877,9 +877,8 @@ static void add_new_point_based_entity(const std::string &what, int pane)
   while(1) {
     if(!FlGui::available()) return;
 
-    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-      for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
-        FlGui::instance()->graph[i]->gl[j]->addPointMode = 1;
+    for(openglWindow *gl : FlGui::instance()->openglWindows())
+      gl->addPointMode = 1;
     std::string name = what;
     std::transform(name.begin(), name.end(), name.begin(), ::tolower);
     Msg::StatusGl(
@@ -1006,9 +1005,8 @@ static void add_new_point_based_entity(const std::string &what, int pane)
       drawContext::global()->draw();
     }
     if(ib == 'q') {
-      for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-        for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
-          FlGui::instance()->graph[i]->gl[j]->addPointMode = 0;
+      for(openglWindow *gl : FlGui::instance()->openglWindows())
+        gl->addPointMode = 0;
       break;
     }
   }
@@ -1768,7 +1766,6 @@ static void action_point_line_surface_volume(int action,
             param, "ONELAB Context/" + what + " Template");
           if(tags.size() && param.size() && action == 7) {
             FlGui::instance()->getCurrentOpenglWindow()->quitSelection = 1;
-            FlGui::instance()->getCurrentOpenglWindow()->selectionMode = false;
             GModel::current()->setSelection(0);
             FlGui::instance()->onelabContext->show(dim, tags[0]);
             ib = 'z';
@@ -3448,9 +3445,8 @@ void status_query_cb(Fl_Widget *w, void *data)
   if(!FlGui::available()) return;
 
   if(_queryMode) { // asked to stop while a query is waiting for a click
-    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-      for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
-        FlGui::instance()->graph[i]->gl[j]->quitSelection = 1;
+    for(openglWindow *gl : FlGui::instance()->openglWindows())
+      gl->quitSelection = 1;
     return;
   }
   if(measureMode()) { // stop the measurement, and take over when it is over
@@ -3565,11 +3561,10 @@ void status_query_cb(Fl_Widget *w, void *data)
   setQueryButtons(false);
   if(FlGui::available()) {
     GModel::current()->setSelection(0);
-    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-      for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++) {
-        FlGui::instance()->graph[i]->gl[j]->getDrawContext()->clearMarks();
-        FlGui::instance()->graph[i]->gl[j]->pinTooltip("");
-      }
+    for(openglWindow *gl : FlGui::instance()->openglWindows()) {
+      gl->getDrawContext()->clearMarks();
+      gl->pinTooltip("");
+    }
     drawContext::global()->draw();
     Msg::StatusGl("");
   }
@@ -3589,9 +3584,8 @@ void status_measure_cb(Fl_Widget *w, void *data)
   if(!FlGui::available()) return;
 
   if(_measureMode) { // asked to stop while a measurement waits for a click
-    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-      for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
-        FlGui::instance()->graph[i]->gl[j]->quitSelection = 1;
+    for(openglWindow *gl : FlGui::instance()->openglWindows())
+      gl->quitSelection = 1;
     return;
   }
   if(queryMode()) { // stop the query, and take over when it is over
@@ -3650,11 +3644,10 @@ void status_measure_cb(Fl_Widget *w, void *data)
   setQueryButtons(false, true);
   if(FlGui::available()) {
     GModel::current()->setSelection(0);
-    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-      for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++) {
-        FlGui::instance()->graph[i]->gl[j]->getDrawContext()->clearMarks();
-        FlGui::instance()->graph[i]->gl[j]->pinTooltip("");
-      }
+    for(openglWindow *gl : FlGui::instance()->openglWindows()) {
+      gl->getDrawContext()->clearMarks();
+      gl->pinTooltip("");
+    }
     drawContext::global()->draw();
     Msg::StatusGl("");
   }
@@ -3882,10 +3875,8 @@ void status_options_cb(Fl_Widget *w, void *data)
   else if(what == "S") { // mouse selection
     if(CTX::instance()->mouseSelection) {
       opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 0);
-      for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-        for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
-          FlGui::instance()->graph[i]->gl[j]->cursor(FL_CURSOR_DEFAULT,
-                                                     FL_BLACK, FL_WHITE);
+      for(openglWindow *gl : FlGui::instance()->openglWindows())
+        gl->cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
     }
     else
       opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 1);
@@ -5242,6 +5233,15 @@ void graphicWindow::clearMessages()
   _browser->clear();
 }
 
+// a line of the console without its colour: the codes FLTK reads at its start,
+// up to "@." (e.g. "@C1@." or, in dark mode, "@B152@.")
+static const char *withoutFormat(const char *c)
+{
+  if(c[0] != '@') return c;
+  const char *end = strstr(c, "@.");
+  return end ? end + 2 : c;
+}
+
 void graphicWindow::saveMessages(const char *filename)
 {
   if(!_browser) return;
@@ -5255,11 +5255,7 @@ void graphicWindow::saveMessages(const char *filename)
 
   Msg::StatusBar(true, "Writing '%s'...", filename);
   for(int i = 1; i <= _browser->size(); i++) {
-    const char *c = _browser->text(i);
-    if(c[0] == '@')
-      fprintf(fp, "%s\n", &c[5]);
-    else
-      fprintf(fp, "%s\n", c);
+    fprintf(fp, "%s\n", withoutFormat(_browser->text(i)));
   }
   Msg::StatusBar(true, "Done writing '%s'", filename);
   fclose(fp);
@@ -5276,12 +5272,7 @@ void graphicWindow::copySelectedMessagesToClipboard()
   std::string buff;
   for(int i = 1; i <= _browser->size(); i++) {
     if(!any || _browser->selected(i)) {
-      const char *c = _browser->text(i);
-      if(strlen(c) > 5 && c[0] == '@')
-        buff += std::string(&c[5]);
-      else
-        buff += std::string(c);
-      buff += "\n";
+      buff += std::string(withoutFormat(_browser->text(i))) + "\n";
     }
   }
   // bof bof bof
@@ -5545,7 +5536,7 @@ void onelabGroup::_addGmshMenus()
              static_modules[i].arg);
 
   // add dynamic solver module items
-  for(int i = 0; i < 5; i++) {
+  for(int i = 0; i < NUM_SOLVERS; i++) {
     std::string name = opt_solver_name(i, GMSH_GET, "");
     if(name.size()) _addSolverMenu(i);
   }

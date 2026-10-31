@@ -755,16 +755,23 @@ char sceneView::selectionStep(std::vector<GVertex *> &vertices,
     hostCursor(false);
     return 'q';
   }
+  // the selection is over, as in every other return below (beginSelection()
+  // starts the next)
   if(endSelection) {
     _selection = ENT_NONE;
+    selectionMode = false;
     endSelection = 0;
     return 'e';
   }
   if(undoSelection) {
+    _selection = ENT_NONE;
+    selectionMode = false;
     undoSelection = 0;
     return 'u';
   }
   if(invertSelection) {
+    _selection = ENT_NONE;
+    selectionMode = false;
     invertSelection = 0;
     return 'i';
   }

@@ -362,7 +362,7 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
   if(!haveWindow()) return getOffscreenPixelBuffer(format, type);
 
 #if defined(HAVE_FLTK)
-  openglWindow *newg = nullptr;
+  openglWindow *newg = nullptr, *previous = nullptr;
 
   // a picture of any size is drawn into a buffer of its own (a window could
   // not be larger than the screen), and possibly at a multiple of its size,
@@ -401,6 +401,8 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
     newg->getDrawContext()->copyViewAttributes
       (FlGui::instance()->getCurrentOpenglWindow()->getDrawContext());
     newg->show();
+    // the window the picture comes from, handled again afterwards
+    previous = openglWindow::getLastHandled();
     openglWindow::setLastHandled(newg);
     // waiting for the OS to really make the window visible and to call the
     // draw() function on (some ?) linux; if we do not wait here, the window is
@@ -454,7 +456,12 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
   }
 
   if(newg){
-    openglWindow::setLastHandled(nullptr);
+    // unless it went while the window was waited for
+    std::vector<openglWindow *> gls;
+    if(FlGui::available()) gls = FlGui::instance()->openglWindows();
+    if(std::find(gls.begin(), gls.end(), previous) == gls.end())
+      previous = nullptr;
+    openglWindow::setLastHandled(previous);
     newg->hide();
     delete newg;
   }

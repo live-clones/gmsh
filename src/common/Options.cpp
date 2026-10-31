@@ -6693,13 +6693,16 @@ double opt_mesh_quasi_transfinite(OPT_ARGS_NUM)
 double opt_mesh_algo_subdivide(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
+    // 0 to 3 (none, all quadrangles, all hexahedra, barycentric)
+    int algo = (int)val;
+    if(algo < 0 || algo > 3) {
+      Msg::Warning("Unknown subdivision algorithm %d: using 0 (none)", algo);
+      algo = 0;
+    }
     if(!(action & GMSH_SET_DEFAULT) &&
-       (int)val != CTX::instance()->mesh.algoSubdivide)
+       algo != CTX::instance()->mesh.algoSubdivide)
       Msg::SetOnelabChanged(2);
-    CTX::instance()->mesh.algoSubdivide = (int)val;
-    if(CTX::instance()->mesh.algoSubdivide < 0 &&
-       CTX::instance()->mesh.algoSubdivide > 2)
-      CTX::instance()->mesh.algoSubdivide = 0;
+    CTX::instance()->mesh.algoSubdivide = algo;
   }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI)) {

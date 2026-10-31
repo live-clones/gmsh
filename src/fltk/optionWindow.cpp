@@ -588,7 +588,11 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_optimize(0, GMSH_SET, o->mesh.butt[2]->value());
   opt_mesh_optimize_netgen(0, GMSH_SET, o->mesh.butt[24]->value());
   opt_mesh_order(0, GMSH_SET, o->mesh.value[3]->value());
-  opt_mesh_ho_optimize(0, GMSH_SET, o->mesh.butt[3]->value() ? 2 : 0);
+  // a check box for one of the five values (2), written only when this
+  // widget was changed (FLTK clears the flag after its callback), so that the
+  // other values, set elsewhere, are kept
+  if(o->mesh.butt[3]->changed())
+    opt_mesh_ho_optimize(0, GMSH_SET, o->mesh.butt[3]->value() ? 2 : 0);
   opt_mesh_second_order_incomplete(0, GMSH_SET, o->mesh.butt[4]->value());
   opt_mesh_nodes(0, GMSH_SET, o->mesh.butt[6]->value());
   opt_mesh_lines(0, GMSH_SET, o->mesh.butt[7]->value());
@@ -634,23 +638,28 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_angle_smooth_normals(0, GMSH_SET, o->mesh.value[18]->value());
 
   opt_mesh_node_type(0, GMSH_SET, o->mesh.choice[0]->value());
-  opt_mesh_algo2d(0, GMSH_SET,
-                  (o->mesh.choice[2]->value() == 1) ? ALGO_2D_MESHADAPT :
-                  (o->mesh.choice[2]->value() == 2) ? ALGO_2D_DELAUNAY :
-                  (o->mesh.choice[2]->value() == 3) ? ALGO_2D_FRONTAL :
-                  (o->mesh.choice[2]->value() == 4) ? ALGO_2D_BAMG :
-                  (o->mesh.choice[2]->value() == 5) ? ALGO_2D_FRONTAL_QUAD :
-                  (o->mesh.choice[2]->value() == 6) ? ALGO_2D_PACK_PRLGRMS :
-                  (o->mesh.choice[2]->value() == 7) ? ALGO_2D_QUAD_QUASI_STRUCT :
-                  (o->mesh.choice[2]->value() == 8) ? ALGO_2D_INITIAL_ONLY :
-                  ALGO_2D_AUTO);
-  opt_mesh_algo3d(0, GMSH_SET,
-                  (o->mesh.choice[3]->value() == 1) ? ALGO_3D_PDEL3D :
-                  (o->mesh.choice[3]->value() == 2) ? ALGO_3D_FRONTAL :
-                  (o->mesh.choice[3]->value() == 3) ? ALGO_3D_HXT :
-                  (o->mesh.choice[3]->value() == 4) ? ALGO_3D_MMG3D :
-                  (o->mesh.choice[3]->value() == 5) ? ALGO_3D_INITIAL_ONLY :
-                                                      ALGO_3D_DELAUNAY);
+  // the algorithm menus do not list every value (10 in 2D, the R-tree in 3D):
+  // written only when changed, as the high-order optimization above
+  if(o->mesh.choice[2]->changed())
+    opt_mesh_algo2d(
+      0, GMSH_SET,
+      (o->mesh.choice[2]->value() == 1) ? ALGO_2D_MESHADAPT :
+      (o->mesh.choice[2]->value() == 2) ? ALGO_2D_DELAUNAY :
+      (o->mesh.choice[2]->value() == 3) ? ALGO_2D_FRONTAL :
+      (o->mesh.choice[2]->value() == 4) ? ALGO_2D_BAMG :
+      (o->mesh.choice[2]->value() == 5) ? ALGO_2D_FRONTAL_QUAD :
+      (o->mesh.choice[2]->value() == 6) ? ALGO_2D_PACK_PRLGRMS :
+      (o->mesh.choice[2]->value() == 7) ? ALGO_2D_QUAD_QUASI_STRUCT :
+      (o->mesh.choice[2]->value() == 8) ? ALGO_2D_INITIAL_ONLY :
+                                          ALGO_2D_AUTO);
+  if(o->mesh.choice[3]->changed())
+    opt_mesh_algo3d(0, GMSH_SET,
+                    (o->mesh.choice[3]->value() == 1) ? ALGO_3D_PDEL3D :
+                    (o->mesh.choice[3]->value() == 2) ? ALGO_3D_FRONTAL :
+                    (o->mesh.choice[3]->value() == 3) ? ALGO_3D_HXT :
+                    (o->mesh.choice[3]->value() == 4) ? ALGO_3D_MMG3D :
+                    (o->mesh.choice[3]->value() == 5) ? ALGO_3D_INITIAL_ONLY :
+                                                        ALGO_3D_DELAUNAY);
   opt_mesh_algo_recombine(0, GMSH_SET, o->mesh.choice[1]->value());
   opt_mesh_algo_subdivide(0, GMSH_SET, o->mesh.choice[5]->value());
   opt_mesh_color_carousel(0, GMSH_SET, o->mesh.choice[4]->value());
@@ -1873,7 +1882,7 @@ optionWindow::optionWindow(int deltaFontSize)
       general.value[27] =
         new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 10 * BH, IW / 2, BH,
                            "Small axes position");
-      general.value[26]->tooltip("General.SmallAxesPositionY");
+      general.value[27]->tooltip("General.SmallAxesPositionY");
       general.value[27]->align(FL_ALIGN_RIGHT);
       general.value[27]->minimum(-2000);
       general.value[27]->maximum(2000);
@@ -2292,7 +2301,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       geo.butt[13] =
         new Fl_Check_Button(L + 2 * WB, 2 * WB + 7 * BH, BW, BH, "Sew faces");
-      geo.butt[13]->tooltip("Geometry.OCCFixSewFaces");
+      geo.butt[13]->tooltip("Geometry.OCCSewFaces");
       geo.butt[13]->type(FL_TOGGLE_BUTTON);
       geo.butt[13]->callback(geometry_options_ok_cb);
 
@@ -2658,6 +2667,7 @@ optionWindow::optionWindow(int deltaFontSize)
         {"None", 0, nullptr, nullptr},
         {"All Quads", 0, nullptr, nullptr},
         {"All Hexas", 0, nullptr, nullptr},
+        {"Barycentric", 0, nullptr, nullptr},
         {nullptr}};
 
       mesh.choice[2] =
@@ -3171,7 +3181,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
         solver.value[0] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 2 * BH, IW,
                                              BH, "Timeout (in seconds)");
-        solver.value[0]->tooltip("Solver.Timout");
+        solver.value[0]->tooltip("Solver.Timeout");
         solver.value[0]->align(FL_ALIGN_RIGHT);
         solver.value[0]->callback(solver_options_ok_cb);
 
@@ -3559,6 +3569,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       view.value[20] =
         new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW / 2, BH);
+      view.value[20]->tooltip("View.PositionX");
       view.value[20]->minimum(-2000);
       view.value[20]->maximum(2000);
       if(CTX::instance()->inputScrolling) view.value[20]->step(0.5);
@@ -3566,6 +3577,7 @@ optionWindow::optionWindow(int deltaFontSize)
       view.value[21] =
         new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 9 * BH, IW / 2, BH,
                            "2D axes/value scale position");
+      view.value[21]->tooltip("View.PositionY");
       view.value[21]->align(FL_ALIGN_RIGHT);
       view.value[21]->minimum(-2000);
       view.value[21]->maximum(2000);
@@ -3574,7 +3586,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       view.value[22] =
         new Fl_Value_Input(L + 2 * WB, 2 * WB + 10 * BH, IW / 2, BH);
-      view.value[22]->tooltip("View.PositionX");
+      view.value[22]->tooltip("View.Width");
       view.value[22]->minimum(0);
       view.value[22]->maximum(2000);
       if(CTX::instance()->inputScrolling) view.value[22]->step(0.5);
@@ -3582,7 +3594,7 @@ optionWindow::optionWindow(int deltaFontSize)
       view.value[23] =
         new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 10 * BH, IW / 2, BH,
                            "2D axes/value scale size");
-      view.value[23]->tooltip("View.PositionY");
+      view.value[23]->tooltip("View.Height");
       view.value[23]->align(FL_ALIGN_RIGHT);
       view.value[23]->minimum(0);
       view.value[23]->maximum(2000);
@@ -3745,7 +3757,8 @@ optionWindow::optionWindow(int deltaFontSize)
         view.value[70 + i] =
           new Fl_Value_Input(L + 3 * WB + IW + i * w, 2 * WB + 10 * BH,
                              (i < 8) ? w : W - 8 * w, BH);
-        view.value[70 + i]->tooltip("View.ComponentMap");
+        view.value[70 + i]->copy_tooltip(
+          ("View.ComponentMap" + std::to_string(i)).c_str());
         view.value[70 + i]->minimum(-1);
         view.value[70 + i]->maximum(9);
         if(CTX::instance()->inputScrolling) view.value[70 + i]->step(1);
@@ -3810,17 +3823,17 @@ optionWindow::optionWindow(int deltaFontSize)
 
       view.value[43] = new inputValueFloat(L + 2 * WB + 2 * IW - 3 * WB,
                                            2 * WB + 2 * BH, 7 * IW / 10, BH);
-      view.value[43]->tooltip("View.RaizeX");
+      view.value[43]->tooltip("View.RaiseX");
       view.value[44] = new inputValueFloat(L + 2 * WB + 2 * IW - 3 * WB,
                                            2 * WB + 3 * BH, 7 * IW / 10, BH);
-      view.value[44]->tooltip("View.RaizeY");
+      view.value[44]->tooltip("View.RaiseY");
       view.value[45] = new inputValueFloat(L + 2 * WB + 2 * IW - 3 * WB,
                                            2 * WB + 4 * BH, 7 * IW / 10, BH);
-      view.value[45]->tooltip("View.RaizeZ");
+      view.value[45]->tooltip("View.RaiseZ");
       table->end();
       view.value[46] = new inputValueFloat(L + 2 * WB, 2 * WB + 5 * BH, 3 * ss,
                                            BH, "Normal raise");
-      view.value[46]->tooltip("View.NormalRaize");
+      view.value[46]->tooltip("View.NormalRaise");
 
       for(int i = 40; i <= 46; i++) {
         view.value[i]->align(FL_ALIGN_RIGHT);
