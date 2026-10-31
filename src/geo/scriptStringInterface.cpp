@@ -112,6 +112,7 @@ static void scriptAddCommand(const std::string &text,
   fclose(gmsh_yyin);
   gmsh_yyin = gmsh_yyin_old;
 
+  GModel::current()->synchronizeDiscreteCADInternals();
   GModel::current()->getGEOInternals()->synchronize(GModel::current());
   if(GModel::current()->getOCCInternals())
     GModel::current()->getOCCInternals()->synchronize(GModel::current());
@@ -260,6 +261,39 @@ static void checkOCC(std::ostringstream &sstream, const std::string &lang)
     return;
   }
 #endif
+}
+
+// the discrete CAD factory, kept for its primitives whose options are those
+// of the whole solids (full angles, no rounded corners) and for its boolean
+// operations; the other commands switch to OpenCASCADE, as with the built-in
+// factory
+static bool discreteFactory(const std::string &lang)
+{
+#if defined(HAVE_PARSER) && defined(HAVE_DISCRETECAD)
+  return lang == "geo" && gmsh_yyfactory == "Discrete";
+#else
+  return false;
+#endif
+}
+
+static bool defaultOption(const std::string &value, const std::string &def)
+{
+  std::string v;
+  for(char c : value)
+    if(c != ' ') v += c;
+  return v.empty() || v == def;
+}
+
+static bool checkDiscrete(std::ostringstream &sstream, const std::string &lang,
+                          bool wholeSolid, const std::string &what)
+{
+  if(discreteFactory(lang)) {
+    if(wholeSolid) return true;
+    Msg::Info("%s not available with the Discrete geometry kernel: "
+              "OpenCASCADE used", what.c_str());
+  }
+  checkOCC(sstream, lang);
+  return false;
 }
 
 void scriptSetFactory(const std::string &factory, const std::string &fileName)
@@ -780,7 +814,7 @@ void scriptAddDisk(const std::string &fileName, const std::string &x,
 {
   for(auto &lang : CTX::instance()->scriptLang) {
     std::ostringstream sstream;
-    checkOCC(sstream, lang);
+    checkDiscrete(sstream, lang, true, "Disk");
     if(lang == "geo") {
       sstream << "Disk(" << GModel::current()->getMaxElementaryNumber(2) + 1
               << ") = {" << x << ", " << y << ", " << z << ", " << rx << ", "
@@ -800,12 +834,13 @@ void scriptAddRectangle(const std::string &fileName, const std::string &x,
 {
   for(auto &lang : CTX::instance()->scriptLang) {
     std::ostringstream sstream;
-    checkOCC(sstream, lang);
+    const bool discrete = checkDiscrete(
+      sstream, lang, defaultOption(roundedRadius, "0"), "Rounded rectangle");
     if(lang == "geo") {
       sstream << "Rectangle("
               << GModel::current()->getMaxElementaryNumber(2) + 1 << ") = {"
               << x << ", " << y << ", " << z << ", " << dx << ", " << dy;
-      if(roundedRadius.size()) sstream << ", " << roundedRadius;
+      if(roundedRadius.size() && !discrete) sstream << ", " << roundedRadius;
       sstream << "};";
     }
     else {
@@ -822,8 +857,17 @@ void scriptAddSphere(const std::string &fileName, const std::string &x,
 {
   for(auto &lang : CTX::instance()->scriptLang) {
     std::ostringstream sstream;
-    checkOCC(sstream, lang);
-    if(lang == "geo") {
+    const bool discrete =
+      checkDiscrete(sstream, lang,
+                    defaultOption(alpha1, "-Pi/2") &&
+                      defaultOption(alpha2, "Pi/2") &&
+                      defaultOption(alpha3, "2*Pi"),
+                    "Sphere with angles");
+    if(lang == "geo" && discrete) {
+      sstream << "Sphere(" << GModel::current()->getMaxElementaryNumber(3) + 1
+              << ") = {" << x << ", " << y << ", " << z << ", " << r << "};";
+    }
+    else if(lang == "geo") {
       sstream << "Sphere(" << GModel::current()->getMaxElementaryNumber(3) + 1
               << ") = {" << x << ", " << y << ", " << z << ", " << r;
       if(alpha1.size()) sstream << ", " << alpha1;
@@ -847,12 +891,13 @@ void scriptAddCylinder(const std::string &fileName, const std::string &x,
 {
   for(auto &lang : CTX::instance()->scriptLang) {
     std::ostringstream sstream;
-    checkOCC(sstream, lang);
+    const bool discrete = checkDiscrete(
+      sstream, lang, defaultOption(alpha, "2*Pi"), "Cylinder with an angle");
     if(lang == "geo") {
       sstream << "Cylinder(" << GModel::current()->getMaxElementaryNumber(3) + 1
               << ") = {" << x << ", " << y << ", " << z << ", " << dx << ", "
               << dy << ", " << dz << ", " << r;
-      if(alpha.size()) sstream << ", " << alpha;
+      if(alpha.size() && !discrete) sstream << ", " << alpha;
       sstream << "};";
     }
     else {
@@ -869,7 +914,7 @@ void scriptAddBox(const std::string &fileName, const std::string &x,
 {
   for(auto &lang : CTX::instance()->scriptLang) {
     std::ostringstream sstream;
-    checkOCC(sstream, lang);
+    checkDiscrete(sstream, lang, true, "Box");
     if(lang == "geo") {
       sstream << "Box(" << GModel::current()->getMaxElementaryNumber(3) + 1
               << ") = {" << x << ", " << y << ", " << z << ", " << dx << ", "
@@ -889,12 +934,13 @@ void scriptAddTorus(const std::string &fileName, const std::string &x,
 {
   for(auto &lang : CTX::instance()->scriptLang) {
     std::ostringstream sstream;
-    checkOCC(sstream, lang);
+    const bool discrete = checkDiscrete(
+      sstream, lang, defaultOption(alpha, "2*Pi"), "Torus with an angle");
     if(lang == "geo") {
       sstream << "Torus(" << GModel::current()->getMaxElementaryNumber(3) + 1
               << ") = {" << x << ", " << y << ", " << z << ", " << r1 << ", "
               << r2;
-      if(alpha.size()) sstream << ", " << alpha;
+      if(alpha.size() && !discrete) sstream << ", " << alpha;
       sstream << "};";
     }
     else {
@@ -912,12 +958,13 @@ void scriptAddCone(const std::string &fileName, const std::string &x,
 {
   for(auto &lang : CTX::instance()->scriptLang) {
     std::ostringstream sstream;
-    checkOCC(sstream, lang);
+    const bool discrete = checkDiscrete(
+      sstream, lang, defaultOption(alpha, "2*Pi"), "Cone with an angle");
     if(lang == "geo") {
       sstream << "Cone(" << GModel::current()->getMaxElementaryNumber(3) + 1
               << ") = {" << x << ", " << y << ", " << z << ", " << dx << ", "
               << dy << ", " << dz << ", " << r1 << ", " << r2;
-      if(alpha.size()) sstream << ", " << alpha;
+      if(alpha.size() && !discrete) sstream << ", " << alpha;
       sstream << "};";
     }
     else {
@@ -1134,7 +1181,7 @@ void scriptBoolean(const std::string &fileName, const std::string &op,
 {
   for(auto &lang : CTX::instance()->scriptLang) {
     std::ostringstream sstream;
-    checkOCC(sstream, lang);
+    if(!discreteFactory(lang)) checkOCC(sstream, lang);
     if(lang == "geo") {
       sstream << op << "{ " << dimTags2String(object, lang);
       if(deleteObject) sstream << "Delete; ";
