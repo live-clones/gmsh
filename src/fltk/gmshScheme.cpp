@@ -268,8 +268,7 @@ static void boxWhileHovered(Fl_Widget *w)
   }
 }
 
-// the widget the pointer leaves and the one it enters are drawn again
-static int hover_dispatch(int event, Fl_Window *win)
+int gmshSchemeHandle(int event, Fl_Window *win)
 {
   installBoxes();
   // the event may delete the widget the pointer was over, through a callback
@@ -342,7 +341,6 @@ void applyGmshScheme()
 #endif
 
   installBoxes();
-  Fl::event_dispatch(hover_dispatch);
 
   // no dashed rectangle on the widget with the focus
   Fl::visible_focus(0);

@@ -239,6 +239,21 @@ static void plugin_views_cb(Fl_Widget *w, void *data)
   plugin_browser_cb(nullptr, nullptr);
 }
 
+pluginWindow::~pluginWindow()
+{
+  // the dialog boxes of the plugins: the one shown is in the scroll, deleted
+  // with the window; the others belong to no window
+  for(auto it = PluginManager::instance()->begin();
+      it != PluginManager::instance()->end(); ++it) {
+    GMSH_Plugin *p = it->second;
+    if(!p->dialogBox) continue;
+    if(p != _shown) delete p->dialogBox->group;
+    delete p->dialogBox;
+    p->dialogBox = nullptr;
+  }
+  Fl::delete_widget(win);
+}
+
 static void plugin_resized_cb(void *data)
 { FlGui::instance()->plugins->layout(); }
 
@@ -248,11 +263,13 @@ void pluginWindow::_createDialogBox(GMSH_Plugin *p)
   PluginDialogBox *d = p->dialogBox = new PluginDialogBox;
   d->group = new Fl_Group(0, 0, 10 * BH, 10 * BH);
 
-  d->title = new Fl_Box(0, 0, IW, BH, strdup(p->getName().c_str()));
+  d->title = new Fl_Box(0, 0, IW, BH);
+  d->title->copy_label(p->getName().c_str());
   d->title->labelfont(FL_BOLD);
   d->title->labelsize(FL_NORMAL_SIZE + 3);
   d->title->align(FL_ALIGN_INSIDE | FL_ALIGN_LEFT);
-  d->about = new Fl_Box(0, 0, IW, BH, strdup(p->getShortHelp().c_str()));
+  d->about = new Fl_Box(0, 0, IW, BH);
+  d->about->copy_label(p->getShortHelp().c_str());
   d->about->align(FL_ALIGN_WRAP | FL_ALIGN_TOP | FL_ALIGN_LEFT |
                   FL_ALIGN_INSIDE);
 

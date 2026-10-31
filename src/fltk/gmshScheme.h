@@ -9,6 +9,7 @@
 #include <FL/Enumerations.H>
 
 class Fl_Widget;
+class Fl_Window;
 
 // The look of General.FltkTheme = "gmsh": the widgets of FLTK with the font
 // of the desktop, a neutral palette, the buttons highlighted under the pointer,
@@ -24,6 +25,9 @@ void applyGmshColors(bool dark);
 Fl_Color gmshAccent();
 // the font, the boxes and the hover
 void applyGmshScheme();
+// an event handled with the hover of the scheme: the widget the pointer leaves
+// and the one it enters are drawn again (see FlGui::_dispatch())
+int gmshSchemeHandle(int event, Fl_Window *win);
 // the colour of a widget drawing itself: highlighted while the pointer is over
 // it and the scheme is on (the boxes of the widgets of FLTK get this on their
 // own); and the highlight alone, for a part of a widget under the pointer

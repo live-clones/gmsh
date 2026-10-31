@@ -4,6 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <stdlib.h>
+#include <set>
 #include <FL/Fl_Box.H>
 #include "GModel.h"
 #include "Context.h"
@@ -118,7 +119,7 @@ void onelabContextWindow::_addOnelabWidget(
       ww = w3;
     }
     Fl_Widget *w = addParameterWidget(n, xx, yy, ww, BH, 1., n.getName(),
-                                      highlight, c, win->color(), _toFree);
+                                      highlight, c, win->color(), _strings);
     w->copy_label(n.getShortName().c_str());
     std::string help = n.getHelp();
     if(help.empty()) help = n.getLabel();
@@ -146,6 +147,7 @@ static void choice_cb(Fl_Widget *w, void *data)
 }
 
 onelabContextWindow::onelabContextWindow(int deltaFontSize)
+  : _alive(std::make_shared<bool>(true))
 {
   FL_NORMAL_SIZE -= deltaFontSize;
 
@@ -174,9 +176,8 @@ onelabContextWindow::onelabContextWindow(int deltaFontSize)
 
 onelabContextWindow::~onelabContextWindow()
 {
-  // the widgets deleted now, which a rebuild still running sees (see
-  // rebuild()), the window at the next event
-  win->clear();
+  *_alive = false;
+  // the widgets are the window's
   Fl::delete_widget(win);
 }
 
@@ -200,24 +201,16 @@ void onelabContextWindow::show(int dim, int tag)
   // create menu with possible entities (elementary and all associated
   // physicals)
   std::vector<Fl_Menu_Item> menu;
-  static std::vector<char *> toFree;
-  for(std::size_t i = 0; i < toFree.size(); i++) free(toFree[i]);
-  toFree.clear();
-  {
-    std::string label = getDimName(_dim) + " " + std::to_string(_tag);
-    if(_name.size()) label += ": " + _name;
-    char *str = strdup(label.c_str());
-    Fl_Menu_Item item = {str, 0, nullptr, nullptr, 0};
-    toFree.push_back(str);
-    menu.push_back(item);
-  }
+  _labels.clear();
+  _labels.push_back(getDimName(_dim) + " " + std::to_string(_tag));
+  if(_name.size()) _labels.back() += ": " + _name;
   for(auto &p : _physicalGroups) {
-    std::string label =
-      "Physical " + getDimName(_dim) + " " + std::to_string(p.first);
-    if(p.second.size()) label += ": " + p.second;
-    char *str = strdup(label.c_str());
-    Fl_Menu_Item item = {str, 0, nullptr, nullptr, 0};
-    toFree.push_back(str);
+    _labels.push_back("Physical " + getDimName(_dim) + " " +
+                      std::to_string(p.first));
+    if(p.second.size()) _labels.back() += ": " + p.second;
+  }
+  for(auto &l : _labels) {
+    Fl_Menu_Item item = {l.c_str(), 0, nullptr, nullptr, 0};
     menu.push_back(item);
   }
   Fl_Menu_Item item = {nullptr};
@@ -226,7 +219,9 @@ void onelabContextWindow::show(int dim, int tag)
 
   if(menu.size() > 1) _choice->value(menu.size() - 2); // last physical
 
+  std::shared_ptr<bool> alive = _alive;
   rebuild(true);
+  if(!*alive) return;
   highlightSelection();
 
   if(!win->shown()) win->show();
@@ -246,40 +241,72 @@ void onelabContextWindow::rebuild(bool deleteWidgets)
   }
   _rebuilding = true;
   // this window may be gone after the callbacks run (the GUI closed)
-  Fl_Widget_Tracker alive(win);
-  _rebuild(deleteWidgets);
-  while(alive.exists() && _rebuildAgain) {
-    bool d = _rebuildAgainDelete;
+  std::shared_ptr<bool> alive = _alive;
+  // not rebuilding any more however a rebuild ends, e.g. by an exception
+  struct rebuilt {
+    std::shared_ptr<bool> &alive;
+    bool &rebuilding;
+    ~rebuilt()
+    {
+      if(*alive) rebuilding = false;
+    }
+  } done{alive, _rebuilding};
+  bool d = deleteWidgets;
+  do {
     _rebuildAgain = _rebuildAgainDelete = false;
     _rebuild(d);
-  }
-  if(alive.exists()) _rebuilding = false;
+    if(!*alive) return;
+    d = _rebuildAgainDelete;
+  } while(_rebuildAgain);
+}
+
+void onelabContextWindow::deleteRetiredWidgets()
+{
+  for(auto w : _retiredWidgets) Fl::delete_widget(w);
+  _retiredWidgets.clear();
+  _retiredStrings.clear();
 }
 
 void onelabContextWindow::_rebuild(bool deleteWidgets)
 {
-  // no entity selected, or not any more
-  if(!GModel::current()->getEntityByTag(_dim, _tag)) return;
+  // no entity selected, or not any more: its parameters go with it
+  if(!GModel::current()->getEntityByTag(_dim, _tag)) {
+    win->hide();
+    return;
+  }
+
+  // the widgets an event being handled was sent to, found before they are
+  // hidden, which takes the focus away (see below)
+  std::vector<Fl_Widget *> old = _onelabWidgets;
+  std::set<Fl_Widget *> inEvent;
+  for(auto w : old)
+    if(FlGui::inEvent(w)) inEvent.insert(w);
 
   // hide old widgets and record if one had the focus; hiding an edited input
   // runs its callback, which may rebuild (see rebuild()) or close the GUI
   std::string focus;
-  std::vector<Fl_Widget *> old = _onelabWidgets;
-  Fl_Widget_Tracker alive(win);
+  std::shared_ptr<bool> alive = _alive;
   for(auto w : old) {
     if(w == Fl::focus() && w->label()) focus = w->label();
     w->hide();
-    if(!alive.exists()) return;
+    if(!*alive) return;
   }
 
-  // delete widgets if requested (as this is called every time the main ONELAB
-  // tree is rebuilt)
-  if(deleteWidgets) {
-    for(auto &w : _onelabWidgets) Fl::delete_widget(w);
-    _onelabWidgets.clear();
-    for(std::size_t i = 0; i < _toFree.size(); i++) free(_toFree[i]);
-    _toFree.clear();
+  // delete the widgets (this is called every time the main ONELAB tree is
+  // rebuilt), but retire one an event being handled was sent to until the
+  // events are handled, as the tree does
+  bool retired = false;
+  for(auto w : _onelabWidgets) {
+    if(inEvent.count(w)) {
+      _retiredWidgets.push_back(w);
+      retired = true;
+    }
+    else
+      Fl::delete_widget(w);
   }
+  if(retired) _retiredStrings.splice(_retiredStrings.end(), _strings);
+  _onelabWidgets.clear();
+  _strings.clear();
 
   // get all ONELAB parameters
   std::vector<onelab::number> pn, fpn;

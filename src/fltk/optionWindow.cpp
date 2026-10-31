@@ -166,8 +166,13 @@ static void view_color_cb(Fl_Widget *w, void *data)
 
 void general_gmpdcf_cb(Fl_Widget *w, void *data)
 {
-  FlGui::instance()->options->gmpdoption = new gamepadWindow;
-  FlGui::instance()->options->gmpdoption->win->show();
+  // built once there is a gamepad, which may be connected later
+  optionWindow *o = FlGui::instance()->options;
+  if(!o->gmpdoption || !o->gmpdoption->win) {
+    delete o->gmpdoption;
+    o->gmpdoption = new gamepadWindow;
+  }
+  o->gmpdoption->show();
 }
 
 void options_cb(Fl_Widget *w, void *data)
@@ -1431,7 +1436,7 @@ static void view_options_max_recursion_cb(Fl_Widget *w, void *data)
   view_options_ok_cb(nullptr, nullptr);
 }
 
-optionWindow::optionWindow(int deltaFontSize)
+optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
 {
   general.butt.resize(50, nullptr);
   general.push.resize(50, nullptr);

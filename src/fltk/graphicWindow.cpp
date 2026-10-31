@@ -734,6 +734,16 @@ static void file_delete_cb(Fl_Widget *w, void *data)
   }
 }
 
+// not while an event is handled (the timer runs in the event loops of its
+// callbacks too, e.g. of a computation), its widgets' code still running
+static void destroyGui(void *)
+{
+  if(FlGui::handlingEvent())
+    Fl::repeat_timeout(0.1, destroyGui);
+  else
+    FlGui::destroy();
+}
+
 void file_quit_cb(Fl_Widget *w, void *data)
 {
   // save persistent info to disk
@@ -758,7 +768,7 @@ void file_quit_cb(Fl_Widget *w, void *data)
   else {
     // once the event that asked for it is over: the widget it came through (a
     // menu bar, a button) goes with the windows, while its code still runs
-    Fl::add_timeout(0., [](void *) { FlGui::destroy(); });
+    Fl::add_timeout(0., destroyGui);
   }
 }
 
@@ -3910,9 +3920,10 @@ static bool animPlaying = false;
 static void animate_cb(void *)
 {
   if(!FlGui::available() || !animPlaying) return;
-  // no step while another operation holds the model (the timer runs in the
-  // event loops of the operations too)
-  if(!CTX::instance()->lock)
+  // no step during another operation (the timer runs in its event loops too),
+  // e.g. an export of the animation, which steps the views itself, as the
+  // animation paused when it ran its own loop
+  if(!CTX::instance()->lock && !FlGui::handlingEvent())
     status_play_manual(!CTX::instance()->post.animCycle,
                        CTX::instance()->post.animStep);
   // not again if a pause then a play during the step started another timer

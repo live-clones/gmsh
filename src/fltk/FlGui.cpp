@@ -619,6 +619,8 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   // add global shortcuts
   Fl::add_handler(globalShortcut);
 
+  Fl::event_dispatch(_dispatch);
+
   // make sure a global drawing context is setup
   if(!drawContext::global()) drawContext::setGlobal(new drawContextFltk);
 
@@ -815,11 +817,56 @@ FlGui::~FlGui()
 
   // what was registered for this GUI, which a new one registers again
   Fl::remove_handler(globalShortcut);
+  Fl::event_dispatch(nullptr);
   Fl::remove_timeout(gamepad_handler);
   drawContext::setDrawGeomTransientFunction(nullptr);
 }
 
 bool FlGui::available() { return _instance != nullptr; }
+
+bool FlGui::inEvent(Fl_Widget *w)
+{
+  if(_eventWidgets.empty()) return false;
+  for(Fl_Widget *t : {Fl::focus(), Fl::pushed(), Fl::belowmouse()})
+    if(t && w->contains(t)) return true;
+  for(Fl_Widget **targets : _eventWidgets)
+    for(int i = 0; i < 3; i++)
+      if(targets[i] && w->contains(targets[i])) return true;
+  return false;
+}
+
+std::vector<Fl_Widget **> FlGui::_eventWidgets;
+
+int FlGui::_dispatch(int event, Fl_Window *win)
+{
+  Fl_Widget *targets[3] = {Fl::focus(), Fl::pushed(), Fl::belowmouse()};
+  // however the event ends, e.g. by an exception the API catches
+  struct handled {
+    Fl_Widget **targets;
+    handled(Fl_Widget **t) : targets(t)
+    {
+      for(int i = 0; i < 3; i++) Fl::watch_widget_pointer(targets[i]);
+      _eventWidgets.push_back(targets);
+    }
+    ~handled()
+    {
+      _eventWidgets.pop_back();
+      for(int i = 0; i < 3; i++) Fl::release_widget_pointer(targets[i]);
+    }
+  };
+  int ret;
+  {
+    handled h(targets);
+    ret = gmshScheme() ? gmshSchemeHandle(event, win) : Fl::handle_(event, win);
+  }
+  // the GUI may have been closed by the event
+  if(_eventWidgets.empty() && _instance) {
+    if(_instance->onelab) _instance->onelab->deleteRetiredWidgets();
+    if(_instance->onelabContext)
+      _instance->onelabContext->deleteRetiredWidgets();
+  }
+  return ret;
+}
 
 FlGui *FlGui::instance(int argc, char **argv, bool quitShouldExit,
                        void (*error_handler)(const char *fmt, ...))
@@ -858,6 +905,9 @@ void FlGui::destroy()
 
   // process remaining events
   Fl::check();
+  // then delete the widgets they scheduled for deletion, as the windows,
+  // deleting their children, would not take them off the list
+  Fl::do_widget_deletion();
 
   delete _instance;
   _instance = nullptr;

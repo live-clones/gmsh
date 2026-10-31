@@ -469,7 +469,7 @@ helpWindow::helpWindow()
     Fl_Box *logoBox = new Fl_Box(0, 3 * WB, width, logo);
     Fl_SVG_Image *logoImage = new Fl_SVG_Image(nullptr, logoSvg);
     logoImage->resize(logo, logo);
-    logoBox->image(logoImage);
+    logoBox->bind_image(logoImage); // deleted with the box
 
     aboutView = new Fl_Help_View(2 * WB, logo + 3 * WB, width - 4 * WB,
                                  height - logo - 3 * WB);

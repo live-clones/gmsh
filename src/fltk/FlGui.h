@@ -74,6 +74,14 @@ private:
   static bool _finishedProcessingCommandLine;
   // the thread that created the GUI, the only one that may touch it
   static std::thread::id _mainThread;
+  // every event goes through _dispatch(), with the hover of the scheme, which
+  // keeps the widgets the events being handled were sent to (the one with the
+  // focus, the pushed one, the one under the pointer), watched (zeroed if
+  // deleted); the callbacks they run handle more. Once the first one is
+  // handled, no widget code is running, and the widgets the ONELAB tree
+  // retired are deleted
+  static std::vector<Fl_Widget **> _eventWidgets;
+  static int _dispatch(int event, Fl_Window *win);
   std::string _lastStatus;
   bool _quitShouldExit;
 
@@ -135,6 +143,13 @@ public:
   // whether the caller is the thread that runs the GUI: the others (OpenMP
   // workers, the threads of an API program) must not touch it
   static bool onMainThread();
+  // whether w is or holds a widget an event being handled was sent to, or one
+  // it has moved to since (a click gives the focus to an input, whose code
+  // goes on once the input that had it has run its callback): its code may be
+  // running (see onelabGroup::_rebuildTree())
+  static bool inEvent(Fl_Widget *w);
+  // whether an event is being handled: the code of its widgets is running
+  static bool handlingEvent() { return !_eventWidgets.empty(); }
   // a graphic window draws or runs a picking pass: the messages it prints do
   // not process events meanwhile, which could delete what it draws
   static int drawing;

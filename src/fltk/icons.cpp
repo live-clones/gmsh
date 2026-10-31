@@ -90,6 +90,17 @@ static Fl_SVG_Image *image(const std::string &name, int size, bool active)
 
 void gmshIcon(Fl_Widget *w, const char *name, int size)
 {
+  // the holders of deleted widgets go (FLTK cleared their pointers, which it
+  // watches until released)
+  for(auto it = holders.begin(); it != holders.end();) {
+    if((*it)->widget) {
+      ++it;
+      continue;
+    }
+    Fl::release_widget_pointer((*it)->widget);
+    delete *it;
+    it = holders.erase(it);
+  }
   icon *h = nullptr;
   for(icon *i : holders)
     if(i->widget == w) h = i;

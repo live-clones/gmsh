@@ -1068,10 +1068,10 @@ static void onelab_number_output_range_cb(Fl_Widget *w, void *data)
 Fl_Widget *addParameterWidget(onelab::number &p, int xx, int yy, int ww, int hh,
                               double labelRatio, const std::string &ppath,
                               bool highlight, Fl_Color c, Fl_Color bgc,
-                              std::vector<char *> &stringsToFree)
+                              std::list<std::string> &strings)
 {
-  char *path = strdup(ppath.c_str());
-  stringsToFree.push_back(path);
+  strings.push_back(ppath);
+  const char *path = strings.back().c_str();
 
   // enumeration (display choices as value labels, not numbers)
   if(p.getChoices().size() &&
@@ -1081,9 +1081,8 @@ Fl_Widget *addParameterWidget(onelab::number &p, int xx, int yy, int ww, int hh,
     std::vector<double> choices = p.getChoices();
     std::map<double, std::string> labels(p.getValueLabels());
     for(std::size_t i = 0; i < choices.size(); i++) {
-      char *str = strdup(labels[choices[i]].c_str());
-      stringsToFree.push_back(str);
-      Fl_Menu_Item menuItem = {str, 0, nullptr, nullptr, 0};
+      strings.push_back(labels[choices[i]]);
+      Fl_Menu_Item menuItem = {strings.back().c_str(), 0, nullptr, nullptr, 0};
       if(highlight) menuItem.labelcolor(c);
       menu.push_back(menuItem);
     }
@@ -1322,10 +1321,10 @@ static void multiple_selection_menu_none_cb(Fl_Widget *w, void *data)
 Fl_Widget *addParameterWidget(onelab::string &p, int xx, int yy, int ww, int hh,
                               double labelRatio, const std::string &ppath,
                               bool highlight, Fl_Color c, Fl_Color bgc,
-                              std::vector<char *> &stringsToFree)
+                              std::list<std::string> &strings)
 {
-  char *path = strdup(ppath.c_str());
-  stringsToFree.push_back(path);
+  strings.push_back(ppath);
+  const char *path = strings.back().c_str();
 
   // macro button
   if(p.getAttribute("Macro") == "Gmsh" ||
@@ -1395,8 +1394,8 @@ Fl_Widget *addParameterWidget(onelab::string &p, int xx, int yy, int ww, int hh,
     but->menubutton()->callback(multiple_selection_menu_cb, but);
   std::vector<Fl_Menu_Item> menu;
   for(std::size_t j = 0; j < p.getChoices().size(); j++) {
-    char *str = strdup(p.getChoices()[j].c_str());
-    stringsToFree.push_back(str);
+    strings.push_back(p.getChoices()[j]);
+    const char *str = strings.back().c_str();
     bool divider = ((p.getKind() == "file" || multipleSelection.size()) &&
                     j == p.getChoices().size() - 1);
     int choice = multipleSelection.size() ? FL_MENU_TOGGLE : 0;
@@ -1508,29 +1507,74 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
   // that holds the lock)
   if(!FlGui::onMainThread()) return;
 
+  // asked for while the tree is emptied and built (see _rebuildTree()): done
+  // once this rebuild is over
   if(_rebuilding) {
     _rebuildAgain = true;
     _rebuildAgainDelete = _rebuildAgainDelete || deleteWidgets;
     return;
   }
-  _rebuilding = true;
   // this tree may be gone after the events processed (the GUI closed); not
   // FlGui::available(), false while the GUI is built, with its tree
   Fl_Widget_Tracker alive(this);
-  _rebuildTree(deleteWidgets);
-  while(alive.exists() && _rebuildAgain) {
-    bool d = _rebuildAgainDelete;
+  // not rebuilding any more however a rebuild ends, e.g. by an exception
+  struct rebuilt {
+    Fl_Widget_Tracker &alive;
+    bool &rebuilding;
+    ~rebuilt()
+    {
+      if(alive.exists()) rebuilding = false;
+    }
+  } done{alive, _rebuilding};
+  bool d = deleteWidgets;
+  do {
     _rebuildAgain = _rebuildAgainDelete = false;
     _rebuildTree(d);
-  }
-  if(alive.exists()) _rebuilding = false;
+    if(!alive.exists()) return;
+    d = _rebuildAgainDelete;
+  } while(_rebuildAgain);
 }
 
 void onelabGroup::_rebuildTree(bool deleteWidgets)
 {
-  setButtonVisibility();
+  _rebuilding = true;
 
-  FL_NORMAL_SIZE -= CTX::instance()->deltaFontSize;
+  // The widgets are deleted after FlGui::check() below, but a row an event
+  // being handled was sent to (e.g. an edited value, whose autoCheck may
+  // rebuild the tree more than once): its code may still be running, so it is
+  // retired, with the strings of its build, kept hidden until the events are
+  // handled (see deleteRetiredWidgets()); found before the rows are hidden,
+  // which takes the focus away
+  std::vector<Fl_Widget *> delWidgets;
+  std::list<std::string> delStrings; // freed when the rebuild is over
+  bool retired = false;
+  std::vector<Fl_Widget *> old = _treeWidgets;
+  for(Fl_Widget *w : old) {
+    if(FlGui::inEvent(w)) {
+      _retiredWidgets.push_back(w);
+      retired = true;
+    }
+    else
+      delWidgets.push_back(w);
+  }
+  if(retired)
+    _retiredStrings.splice(_retiredStrings.end(), _treeStrings);
+  else
+    delStrings.swap(_treeStrings);
+  _treeWidgets.clear();
+  _treeStrings.clear();
+
+  // hide all the widgets we have added in the tree to make sure they don't get
+  // spurious events (until they are deleted); hiding an edited input runs its
+  // callback, which may ask for a rebuild (see rebuildTree()) or close the GUI,
+  // and may run a computation meanwhile: the tree still has its items then
+  Fl_Widget_Tracker alive(this);
+  for(auto w : old) {
+    w->hide();
+    if(!alive.exists()) return;
+  }
+
+  setButtonVisibility();
 
   std::set<std::string> closed = _getClosedGmshMenus();
 
@@ -1550,29 +1594,9 @@ void onelabGroup::_rebuildTree(bool deleteWidgets)
   }
   _tree->sortorder(FL_TREE_SORT_ASCENDING);
   _tree->selectmode(FL_TREE_SELECT_NONE);
-  _computeWidths();
 
-  // hide all the widgets we have added in the tree to make sure they don't get
-  // spurious events (until they are deleted); hiding an edited input runs its
-  // callback, which may ask for a rebuild (see rebuildTree()) or close the GUI
-  Fl_Widget_Tracker alive(this);
-  std::vector<Fl_Widget *> old = _treeWidgets;
-  for(auto w : old) {
-    w->hide();
-    if(!alive.exists()) return;
-  }
-
-  // we don't delete widgets everytime the tree is rebuilt to minimize potential
-  // race conditions (e.g. during heavy user interaction with autoCheck, with
-  // risks to call handle() or focus() on deleted widgets)
-  std::vector<Fl_Widget *> delWidgets;
-  std::vector<char *> delStrings;
-  if(deleteWidgets) {
-    delWidgets = _treeWidgets;
-    delStrings = _treeStrings;
-    _treeWidgets.clear();
-    _treeStrings.clear();
-  }
+  FL_NORMAL_SIZE -= CTX::instance()->deltaFontSize;
+  _computeWidths(); // at the font size of the tree
 
   if(CTX::instance()->showModuleMenu) _addGmshMenus();
 
@@ -1629,9 +1653,8 @@ void onelabGroup::_rebuildTree(bool deleteWidgets)
           gmshIcon(sw, "eye", FL_NORMAL_SIZE);
         else
           sw->label("@circle");
-        char *group = strdup(getPath(n).substr(24).c_str());
-        _treeStrings.push_back(group);
-        sw->callback(view_group_cb, (void *)group);
+        _treeStrings.push_back(getPath(n).substr(24));
+        sw->callback(view_group_cb, (void *)_treeStrings.back().c_str());
         ((Fl_Group *)row)->end();
       }
       else if(getPath(n).find("Physical group: ") != std::string::npos) {
@@ -1640,9 +1663,9 @@ void onelabGroup::_rebuildTree(bool deleteWidgets)
         but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
         but->tooltip("Toggle highlight of physical group");
         std::string::size_type pos = getPath(n).find("Physical group: ");
-        char *group = strdup(getPath(n).substr(pos + 16).c_str());
-        _treeStrings.push_back(group);
-        but->callback(highlight_physical_group_cb, (void *)group);
+        _treeStrings.push_back(getPath(n).substr(pos + 16));
+        but->callback(highlight_physical_group_cb,
+                      (void *)_treeStrings.back().c_str());
       }
       else {
         but = new Fl_Box(1, 1, ww, hh);
@@ -1665,21 +1688,24 @@ void onelabGroup::_rebuildTree(bool deleteWidgets)
 
   FL_NORMAL_SIZE += CTX::instance()->deltaFontSize;
 
+  // built: a rebuild asked for by the events processed below is done at once
+  // (e.g. while a computation started by one of them runs)
+  _rebuilding = false;
   FlGui::check(true); // necessary e.g. on windows to avoid "ghosting"
 
   // the GUI may have been closed during the check, its widgets with it
-  if(!alive.exists()) {
-    for(std::size_t i = 0; i < delStrings.size(); i++) free(delStrings[i]);
-    return;
-  }
+  if(!alive.exists()) return;
 
-  if(deleteWidgets) {
-    // this needs to be performed after FlGui::check()
-    Msg::Debug("Deleting onelabGroup widgets (%d)", (int)_treeWidgets.size());
-    for(std::size_t i = 0; i < delWidgets.size(); i++)
-      Fl::delete_widget(delWidgets[i]);
-    for(std::size_t i = 0; i < delStrings.size(); i++) free(delStrings[i]);
-  }
+  // this needs to be performed after FlGui::check()
+  Msg::Debug("Deleting onelabGroup widgets (%d)", (int)delWidgets.size());
+  for(Fl_Widget *w : delWidgets) Fl::delete_widget(w);
+}
+
+void onelabGroup::deleteRetiredWidgets()
+{
+  for(Fl_Widget *w : _retiredWidgets) Fl::delete_widget(w);
+  _retiredWidgets.clear();
+  _retiredStrings.clear();
 }
 
 void onelabGroup::openTreeItem(const std::string &name)
