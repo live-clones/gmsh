@@ -6608,20 +6608,23 @@ namespace gmsh { // Top-level functions
       // of the same surface of the file connected across edges shared by two
       // triangles whose normals make an angle smaller than `angle' (in radians),
       // the curves are along the edges between two surfaces, the boundary edges
-      // (of one triangle) and the non-manifold edges (of more than two triangles),
-      // split where more or less than two of them meet and, if `curveAngle' is
-      // less than Pi, where they turn by more than `curveAngle', and the volumes
-      // are the cells of space bounded by the surfaces (the cells of a connected
-      // piece of the triangulation inside a cell of another one are volumes if its
-      // triangles point out of them, holes if they point into them, as STL normals
-      // point out of solids). Each surface is oriented outwards of a volume whose
-      // outer boundary it is on, if any (the included volume for the boundary of
-      // an inclusion). The surfaces whose nodes are at most `tolerance' away from
-      // a plane, a sphere, a cylinder, a cone or a torus
+      // (of one triangle), the non-manifold edges (of more than two triangles) and
+      // the sharp edges inside a surface (embedded in it), split where more or
+      // less than two of them meet and, if `curveAngle' is less than Pi, where
+      // they turn by more than `curveAngle', and the volumes are the cells of
+      // space bounded by the surfaces (the cells of a connected piece of the
+      // triangulation inside a cell of another one are volumes if its triangles
+      // point out of them, holes if they point into them, as STL normals point out
+      // of solids). Each surface is oriented outwards of a volume whose outer
+      // boundary it is on, if any (the included volume for the boundary of an
+      // inclusion). The surfaces whose nodes are at most `tolerance' away from a
+      // plane, a sphere, a cylinder, a cone or a torus
       // (`Geometry.DiscreteTolerance' times the size of the triangulation if
       // `tolerance' is not positive) are recognized as such and get the parameters
       // of the corresponding primitives (with a seam, or split in two halves,
-      // where needed); the others are split into pieces that a single map can
+      // where needed); the others are split into their pieces on such surfaces up
+      // to the precision of the coordinates of their nodes (for a part whose faces
+      // meet tangentially), the rest into pieces that a single map can
       // parametrize. Return the volumes and the surfaces bounding no volume in
       // `outDimTags'.
       inline void importShapes(const std::string & fileName,

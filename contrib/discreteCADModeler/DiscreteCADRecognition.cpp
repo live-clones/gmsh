@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cmath>
 #include <functional>
+#include <map>
 #include "DiscreteCADRecognition.h"
 
 namespace {
@@ -161,8 +162,10 @@ namespace {
     Residuals;
 
   // the parameters p minimizing the sum of the squares of the residuals
-  // (Levenberg-Marquardt, the Jacobian by central differences)
-  void minimize(std::vector<double> &p, const Residuals &residuals)
+  // (Levenberg-Marquardt, the Jacobian by central differences), stopped when
+  // it stagnates above target (the residuals cannot all get below it)
+  void minimize(std::vector<double> &p, const Residuals &residuals,
+                double target)
   {
     const int np = (int)p.size();
     std::vector<double> r, rq, q;
@@ -175,7 +178,7 @@ namespace {
     };
     double cost = sum(r), lambda = 1.e-3;
     std::vector<double> jac(n * np), plus, minus;
-    for(int it = 0; it < 100; it++) {
+    for(int it = 0; it < 50; it++) {
       for(int j = 0; j < np; j++) {
         const double h = 1.e-7 * (1. + std::abs(p[j]));
         q = p;
@@ -218,6 +221,8 @@ namespace {
         lambda *= 10.;
       }
       if(!improved || previous - cost <= 1.e-14 * previous) break;
+      if(previous - cost < 1.e-2 * previous && cost > n * target * target)
+        break;
     }
   }
 
@@ -324,11 +329,12 @@ recognizeSurface(const std::vector<std::array<double, 3> > &x,
     if(area[t] > 0.) normalize(w);
     normal[t] = {{w[0], w[1], w[2]}};
   }
-  // the nodes the fits use (at most about 1000)
+  // the nodes the fits use (at most about 500)
   std::vector<std::size_t> sample;
-  const std::size_t stride = std::max<std::size_t>(1, n / 1000);
+  const std::size_t stride = std::max<std::size_t>(1, n / 500);
   for(std::size_t i = 0; i < n; i += stride) sample.push_back(i);
   const std::size_t ns = sample.size();
+  const double scaledTolerance = tolerance / size;
 
   // the surfaces fitted in the scaled coordinates, candidates if they are
   // within the tolerance of all the nodes and their normals agree with those
@@ -412,7 +418,7 @@ recognizeSurface(const std::vector<std::array<double, 3> > &x,
                              (z[2] - q[2]) * (z[2] - q[2])) -
                    q[3];
           }
-        });
+        }, scaledTolerance);
         Analytic s;
         s.type = Analytic::SPHERE;
         for(int k = 0; k < 3; k++) s.o[k] = p[k];
@@ -441,6 +447,14 @@ recognizeSurface(const std::vector<std::array<double, 3> > &x,
             area[t] * (normal[t][i] - c[i]) * (normal[t][j] - c[j]);
     eigen(cov, w, axes);
   }
+  // the residuals fixing the free parameters of an axis (point p[0..2],
+  // direction p[3..5]) from res[i]: the norm of its direction and, for a
+  // cylinder, the position of its point along it
+  auto gauge = [](const std::vector<double> &p, std::vector<double> &res,
+                  std::size_t i, bool cylinder) {
+    res[i] = p[3] * p[3] + p[4] * p[4] + p[5] * p[5] - 1.;
+    if(cylinder) res[i + 1] = p[0] * p[3] + p[1] * p[4] + p[2] * p[5];
+  };
   // the distance of y to the axis of point p[i..i+2] and direction p[j..j+2]
   // and its height along it
   auto axial = [](const std::array<double, 3> &z, const std::vector<double> &p,
@@ -474,11 +488,12 @@ recognizeSurface(const std::vector<std::array<double, 3> > &x,
       }
       p[6] = r;
       minimize(p, [&](const std::vector<double> &q, std::vector<double> &res) {
-        res.resize(ns);
+        res.resize(ns + 2);
         double h;
         for(std::size_t j = 0; j < ns; j++)
           res[j] = axial(y[sample[j]], q, 0, 3, h) - q[6];
-      });
+        gauge(q, res, ns, true);
+      }, scaledTolerance);
       Analytic s;
       s.type = Analytic::CYLINDER;
       direction(p, 3, s.axis);
@@ -522,13 +537,14 @@ recognizeSurface(const std::vector<std::array<double, 3> > &x,
       }
       std::vector<double> p = {rhs[0], rhs[1], rhs[2], a[0], a[1], a[2], half};
       minimize(p, [&](const std::vector<double> &q, std::vector<double> &res) {
-        res.resize(ns);
+        res.resize(ns + 1);
         double h;
         for(std::size_t j = 0; j < ns; j++) {
           const double rho = axial(y[sample[j]], q, 0, 3, h);
           res[j] = rho * std::cos(q[6]) - h * std::sin(q[6]);
         }
-      });
+        gauge(q, res, ns, false);
+      }, scaledTolerance);
       if(!(p[6] > 0. && p[6] < pi / 2.)) continue;
       Analytic s;
       s.type = Analytic::CONE;
@@ -595,14 +611,15 @@ recognizeSurface(const std::vector<std::array<double, 3> > &x,
                                  q[2] + z0 * a[2], a[0], a[1], a[2], r0, r};
         minimize(p,
                  [&](const std::vector<double> &pq, std::vector<double> &res) {
-                   res.resize(ns);
+                   res.resize(ns + 1);
                    double z;
                    for(std::size_t j = 0; j < ns; j++) {
                      const double d = axial(y[sample[j]], pq, 0, 3, z);
                      res[j] = std::sqrt((d - pq[6]) * (d - pq[6]) + z * z) -
                               pq[7];
                    }
-                 });
+                   gauge(pq, res, ns, false);
+                 }, scaledTolerance);
         if(p[7] > 0. && p[6] > p[7]) {
           Analytic s;
           s.type = Analytic::TORUS;
@@ -616,6 +633,271 @@ recognizeSurface(const std::vector<std::array<double, 3> > &x,
     }
   }
   return choice();
+}
+
+double coordinatePrecision(const std::vector<std::array<double, 3> > &x)
+{
+  // the decimals and significant digits of the coordinates, if they all have
+  // a finite decimal expansion
+  bool single = true, decimal = true;
+  int decimals = 0, digits = 0;
+  for(auto &p : x)
+    for(double v : p) {
+      if(v == 0.) continue;
+      if((double)(float)v != v) single = false;
+      if(!decimal) continue;
+      int d = 0;
+      double t = v;
+      while(std::abs(t - std::round(t)) > 1.e-14 * std::max(1., std::abs(t))) {
+        t *= 10.;
+        if(++d > 17 || std::abs(t) >= 1.e15) break;
+      }
+      if(d > 17 || std::abs(t) >= 1.e15) {
+        decimal = false;
+        continue;
+      }
+      decimals = std::max(decimals, d);
+      digits = std::max(digits, d + (int)std::floor(std::log10(std::abs(v))) + 1);
+    }
+  // written with few decimals or significant digits (as text), or else
+  // single or double precision floats
+  if(decimal && std::min(decimals, digits) > 9) decimal = false;
+  double q = 0.;
+  for(auto &p : x)
+    for(double v : p) {
+      if(v == 0.) continue;
+      double qv = std::abs(v) * (single ? std::ldexp(1., -24) : std::ldexp(1., -53));
+      if(decimal)
+        qv = std::max(qv, std::min(std::pow(10., -decimals),
+                                   std::pow(10., std::floor(std::log10(std::abs(v))) +
+                                                   1 - digits)) / 2.);
+      q = std::max(q, qv);
+    }
+  return std::sqrt(3.) * q;
+}
+
+void segmentSurface(const std::vector<std::array<double, 3> > &x,
+                    const std::vector<std::array<int, 3> > &triangles,
+                    const std::vector<std::vector<int> > &neighbors,
+                    double tolerance, double precision, double angle,
+                    std::vector<int> &piece,
+                    std::vector<DiscreteCADAnalyticSurface> &surfaces)
+{
+  typedef DiscreteCADAnalyticSurface Analytic;
+  const std::size_t n = x.size(), nt = triangles.size();
+  piece.assign(nt, -1);
+  surfaces.clear();
+  if(!nt) return;
+  double lo[3] = {1e300, 1e300, 1e300}, hi[3] = {-1e300, -1e300, -1e300};
+  for(auto &p : x)
+    for(int k = 0; k < 3; k++) {
+      lo[k] = std::min(lo[k], p[k]);
+      hi[k] = std::max(hi[k], p[k]);
+    }
+  double size = 0.;
+  for(int k = 0; k < 3; k++) size += (hi[k] - lo[k]) * (hi[k] - lo[k]);
+  // the regions are on analytic surfaces up to the precision of the
+  // coordinates
+  const double tau =
+    std::min(tolerance, 2. * precision + 1.e-12 * std::sqrt(size));
+  const double cosAngle = std::cos(angle);
+  // the unit normals, areas and centroids of the triangles
+  std::vector<std::array<double, 3> > normal(nt), centroid(nt);
+  std::vector<double> area(nt);
+  for(std::size_t t = 0; t < nt; t++) {
+    const std::array<double, 3> &a = x[triangles[t][0]], &b = x[triangles[t][1]],
+                                &c = x[triangles[t][2]];
+    double u[3], v[3], w[3];
+    for(int k = 0; k < 3; k++) {
+      u[k] = b[k] - a[k];
+      v[k] = c[k] - a[k];
+      centroid[t][k] = (a[k] + b[k] + c[k]) / 3.;
+    }
+    cross(u, v, w);
+    area[t] = norm(w) / 2.;
+    if(area[t] > 0.) normalize(w);
+    normal[t] = {{w[0], w[1], w[2]}};
+  }
+  // the analytic surface within tol of the nodes of a set of triangles
+  auto fit = [&](const std::vector<int> &set, double tol) {
+    std::map<int, int> local;
+    std::vector<std::array<double, 3> > lx;
+    std::vector<std::array<int, 3> > lt;
+    for(int t : set) {
+      std::array<int, 3> l;
+      for(int k = 0; k < 3; k++) {
+        auto it = local.insert({triangles[t][k], (int)lx.size()});
+        if(it.second) lx.push_back(x[triangles[t][k]]);
+        l[k] = it.first->second;
+      }
+      lt.push_back(l);
+    }
+    return recognizeSurface(lx, lt, tol, angle);
+  };
+  // whether the normal of a triangle makes an angle smaller than angle with
+  // that of a surface at its centroid, on the side side (the first one if 0)
+  auto agrees = [&](int t, const Analytic &s, int &side) {
+    if(!(area[t] > 0.)) return true;
+    double sn[3];
+    s.normal(centroid[t].data(), sn);
+    const double d = dot(sn, normal[t].data());
+    if(!(std::abs(d) >= cosAngle)) return false;
+    const int sd = d > 0. ? 1 : -1;
+    if(side && sd != side) return false;
+    side = sd;
+    return true;
+  };
+  auto on = [&](int t, const Analytic &s, double tol, int &side) {
+    for(int k = 0; k < 3; k++)
+      if(!(std::abs(s.distance(x[triangles[t][k]].data())) <= tol))
+        return false;
+    return agrees(t, s, side);
+  };
+
+  // the regions grown from the seeds
+  std::vector<int> stamp(nt, 0), nodeStamp(n, 0), order(nt);
+  std::vector<char> tried(nt, 0);
+  int current = 0;
+  for(std::size_t t = 0; t < nt; t++) order[t] = (int)t;
+  std::stable_sort(order.begin(), order.end(),
+                   [&](int a, int b) { return area[a] > area[b]; });
+  for(int seed : order) {
+    if(piece[seed] >= 0 || tried[seed]) continue;
+    // the rings around the seed (at least 2 rings, 30 triangles and 16 nodes),
+    // fewer if no surface fits them (a small face)
+    current++;
+    std::vector<int> region = {seed}, best;
+    std::vector<std::pair<std::size_t, std::size_t> > rings; // triangles, nodes
+    stamp[seed] = current;
+    std::size_t nodes = 0, front = 0;
+    for(int ring = 0; ring < 10; ring++) {
+      for(std::size_t j = front; j < region.size(); j++)
+        for(int k = 0; k < 3; k++) {
+          int &ns = nodeStamp[triangles[region[j]][k]];
+          if(ns != current) {
+            ns = current;
+            nodes++;
+          }
+        }
+      rings.push_back({region.size(), nodes});
+      if(ring >= 2 && region.size() >= 30 && nodes >= 16) break;
+      const std::size_t end = region.size();
+      for(std::size_t j = front; j < end; j++)
+        for(int u : neighbors[region[j]])
+          if(piece[u] < 0 && stamp[u] != current) {
+            stamp[u] = current;
+            region.push_back(u);
+          }
+      front = end;
+      if(region.size() == end) break;
+    }
+    // (the triangles of the smallest one tested are no other seeds)
+    Analytic s;
+    std::size_t smallest = 1;
+    for(std::size_t r = rings.size(); r-- > 0 && rings[r].second >= 16;) {
+      smallest = rings[r].first;
+      std::vector<int> seedRegion(region.begin(), region.begin() + smallest);
+      s = fit(seedRegion, tau);
+      if(s.type == Analytic::NONE) continue;
+      best = seedRegion;
+      break;
+    }
+    for(std::size_t j = 0; j < smallest; j++) tried[region[j]] = 1;
+    if(best.empty()) continue;
+    // the region grown on the surface, refitted as it grows
+    current++;
+    region = best;
+    int side = 0;
+    for(int t : region) {
+      stamp[t] = current;
+      agrees(t, s, side);
+    }
+    for(int pass = 0; pass < 20; pass++) {
+      const std::size_t before = region.size();
+      std::vector<int> queue = region;
+      while(!queue.empty()) {
+        const int t = queue.back();
+        queue.pop_back();
+        for(int u : neighbors[t]) {
+          if(piece[u] >= 0 || stamp[u] == current || !on(u, s, tau, side))
+            continue;
+          stamp[u] = current;
+          region.push_back(u);
+          queue.push_back(u);
+        }
+      }
+      if(region.size() == before) break;
+      const Analytic r = fit(region, tau);
+      if(r.type == Analytic::NONE) break;
+      s = r;
+    }
+    for(int t : region) piece[t] = (int)surfaces.size();
+    surfaces.push_back(s);
+  }
+  if(surfaces.empty()) return;
+
+  // the triangles between pieces moved to the piece whose surface is the
+  // nearest to their centroid
+  for(int pass = 0; pass < 10; pass++) {
+    int moved = 0;
+    for(std::size_t t = 0; t < nt; t++) {
+      if(piece[t] < 0) continue;
+      int best = piece[t];
+      double nearest = std::abs(surfaces[best].distance(centroid[t].data()));
+      for(int u : neighbors[t]) {
+        const int p = piece[u];
+        if(p < 0 || p == best) continue;
+        int side = 0;
+        if(!agrees((int)t, surfaces[p], side)) continue;
+        const double d = std::abs(surfaces[p].distance(centroid[t].data()));
+        if(d < nearest) {
+          nearest = d;
+          best = p;
+        }
+      }
+      if(best != piece[t]) {
+        piece[t] = best;
+        moved++;
+      }
+    }
+    if(!moved) break;
+  }
+  // the components of free triangles all along pieces added to them
+  std::vector<char> seen(nt, 0);
+  for(std::size_t t0 = 0; t0 < nt; t0++) {
+    if(piece[t0] >= 0 || seen[t0]) continue;
+    std::vector<int> component = {(int)t0};
+    seen[t0] = 1;
+    bool band = true;
+    for(std::size_t j = 0; j < component.size(); j++) {
+      bool along = false;
+      for(int u : neighbors[component[j]]) {
+        if(piece[u] >= 0) along = true;
+        else if(!seen[u]) {
+          seen[u] = 1;
+          component.push_back(u);
+        }
+      }
+      if(!along) band = false;
+    }
+    if(!band) continue;
+    std::vector<int> joined(component.size(), -1);
+    for(std::size_t j = 0; j < component.size(); j++) {
+      const int t = component[j];
+      double nearest = 1e300;
+      for(int u : neighbors[t]) {
+        const int p = piece[u];
+        if(p < 0) continue;
+        const double d = std::abs(surfaces[p].distance(centroid[t].data()));
+        if(d < nearest) {
+          nearest = d;
+          joined[j] = p;
+        }
+      }
+    }
+    for(std::size_t j = 0; j < component.size(); j++)
+      piece[component[j]] = joined[j];
+  }
 }
 
 void analyticParameters(const DiscreteCADAnalyticSurface &s,

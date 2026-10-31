@@ -36,6 +36,28 @@ recognizeSurface(const std::vector<std::array<double, 3> > &x,
                  const std::vector<std::array<int, 3> > &triangles,
                  double tolerance, double angle);
 
+// the largest distance by which the nodes x were moved when their coordinates
+// were rounded: written as text with few decimals or significant digits, or
+// as single or double precision floats
+double coordinatePrecision(const std::vector<std::array<double, 3> > &x);
+
+// the triangulation of a smooth surface (neighbors: the triangles across its
+// edges) split into pieces on analytic surfaces, for a part whose faces meet
+// tangentially: from seed triangles (by decreasing area, with the rings around
+// them, fewer for a small face, if an analytic surface is within twice the
+// precision of the coordinates of their nodes, and within tolerance), the
+// regions grown on the surface, refitted as they grow (a freeform surface has
+// no seeds); then the triangles between the pieces moved to the piece whose
+// surface is the nearest to their centroid, the bands of free triangles one
+// triangle wide along them added to them. The piece of each triangle (-1 for
+// none) and the surface of each piece.
+void segmentSurface(const std::vector<std::array<double, 3> > &x,
+                    const std::vector<std::array<int, 3> > &triangles,
+                    const std::vector<std::vector<int> > &neighbors,
+                    double tolerance, double precision, double angle,
+                    std::vector<int> &piece,
+                    std::vector<DiscreteCADAnalyticSurface> &surfaces);
+
 // the parameters of the corners of the triangles on an analytic surface, as
 // those of the primitives of the discrete CAD modeler: the coordinates in the
 // plane; the developed cylinder (r theta, z) and cone s (cos(theta sin(a)),

@@ -1,16 +1,32 @@
 # Triangulations in the discrete CAD modeler, and the topology built from their
 # triangles: an STL file, split where the normals of its triangles turn by more
-# than 40 degrees, and two cubes sharing a face, given by their nodes and
+# than 40 degrees; two cubes sharing a face, given by their nodes and
 # triangles, whose curves are along the sharp edges and along the edges of the
 # common face (shared by three surfaces), and whose volumes are the two cells
-# of space they bound
+# of space they bound; and the triangulation of a box with rounded edges, whose
+# faces meet tangentially, split into its planes, cylinders and spheres
 
 import gmsh
 import math
 import os
 import sys
+import tempfile
 
 gmsh.initialize(sys.argv)
+
+# the triangulation of a box with rounded edges, made with OpenCASCADE
+gmsh.model.add("rounded")
+box = gmsh.model.occ.addBox(0, 0, -50, 40, 20, 20)
+gmsh.model.occ.fillet([box], [e for _, e in gmsh.model.occ.getEntities(1)],
+                      [4])
+gmsh.model.occ.synchronize()
+gmsh.option.setNumber("Mesh.MeshSizeMax", 1.5)
+gmsh.model.mesh.generate(2)
+rounded = os.path.join(tempfile.mkdtemp(), "rounded.stl")
+gmsh.write(rounded)
+gmsh.model.remove()
+gmsh.option.setNumber("Mesh.MeshSizeMax", 1e22)
+
 gmsh.model.add("discrete_import")
 
 path = os.path.dirname(os.path.abspath(__file__))
@@ -39,7 +55,8 @@ for i in range(3):
     square(node(i, 0, 0), node(i, 0, 1), node(i, 1, 1), node(i, 1, 0))
 cubes = gmsh.model.discrete.addTriangulation(coord, triangles,
                                              40 * math.pi / 180)
-print("STL:", stl, "cubes:", cubes)
+box = gmsh.model.discrete.importShapes(rounded, 40 * math.pi / 180)
+print("STL:", stl, "cubes:", cubes, "rounded box:", box)
 
 gmsh.model.discrete.synchronize()
 for dim in range(4):

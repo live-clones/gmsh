@@ -37,15 +37,17 @@ public:
   // a triangulation (oriented outwards for the surfaces of a volume) bounded
   // by loops of curves, a negative tag for a curve used backwards, the
   // vertices inside it, the parameters of the corners of its triangles
-  // (computed from the triangulation by synchronize if empty), and its seams:
-  // the curves used twice in its loops, with the parameters of their nodes on
-  // their two sides (the side of the curve used forwards first)
+  // (computed from the triangulation by synchronize if empty), its seams: the
+  // curves used twice in its loops, with the parameters of their nodes on
+  // their two sides (the side of the curve used forwards first), and the
+  // curves inside it (its creases)
   struct Surface {
     std::vector<int> curves;
     std::vector<std::array<int, 3> > triangles;
     std::vector<int> embeddedVertices;
     std::vector<std::array<std::array<double, 2>, 3> > uv;
     std::map<int, std::array<std::vector<std::array<double, 2> >, 2> > seams;
+    std::vector<int> embeddedCurves;
   };
   // a closed shell of surfaces, a negative tag for a surface used reversed
   struct Volume {
@@ -103,15 +105,17 @@ private:
   // two triangles, curves along the other edges (between two surfaces, of one
   // triangle or of more than two) and along the seams of the surfaces (where
   // the parameters of the corners of their triangles jump, for those with
-  // hasUV), split where more or less than two of them meet and where they
-  // turn by more than curveAngle, the closed ones in two arcs; the parameters
-  // made continuous across the seams of the surfaces that do not go around
-  // them. The surface of each triangle in surfaceOf.
+  // hasUV) and along the creases inside the surfaces (embedded curves), split
+  // where more or less than two of them meet, where their kind changes and
+  // where they turn by more than curveAngle, the closed ones in two arcs; the
+  // parameters made continuous across the seams of the surfaces that do not
+  // go around them. The surface of each triangle in surfaceOf.
   void _addTopology(const std::vector<std::array<int, 3> > &triangles,
                     const std::vector<int> &label,
                     std::vector<std::array<std::array<double, 2>, 3> > &uv,
-                    const std::vector<char> &hasUV, double curveAngle,
-                    std::vector<int> &surfaceOf);
+                    const std::vector<char> &hasUV,
+                    const std::set<std::pair<int, int> > &creases,
+                    double curveAngle, std::vector<int> &surfaceOf);
   // the volumes bounded by the surfaces of a triangulation (the surface of
   // each triangle in surfaceOf): the cells of space between them, found by
   // turning around their edges; those of a connected piece of the
@@ -173,17 +177,19 @@ public:
   // triangle, and for each triangle the piece of the input it belongs to, if
   // not empty) and its topology: its surfaces, the triangles connected across
   // edges of two triangles whose normals make an angle smaller than angle (in
-  // the same piece), the curves between them, along its boundaries and its
-  // non-manifold edges, split where they turn by more than curveAngle, and
+  // the same piece), the curves between them, along its boundaries, its
+  // non-manifold edges and its sharp edges inside a surface (embedded in it),
+  // split where they turn by more than curveAngle, and
   // its volumes, the cells of space they bound (see _cells), every surface
   // oriented outwards of the first volume whose outer shell it is on, or else
   // of the first volume it bounds. The surfaces whose nodes are at most
   // tolerance away from a plane, a sphere, a cylinder, a cone or a torus
   // (Geometry.DiscreteTolerance times the size of the triangulation if
   // tolerance <= 0) get the parameters of the primitives (see
-  // analyticParameters), the others are split into pieces that a single map
-  // can parametrize (as classifySurfaces does). The volumes and the surfaces
-  // bounding none in outDimTags.
+  // analyticParameters), the others are split into their pieces on such
+  // surfaces up to the precision of the coordinates (see segmentSurface), the
+  // rest into pieces that a single map can parametrize (as classifySurfaces
+  // does). The volumes and the surfaces bounding none in outDimTags.
   bool addTriangulation(const std::vector<double> &coord,
                         const std::vector<std::size_t> &triangles,
                         const std::vector<int> &pieces, double angle,
