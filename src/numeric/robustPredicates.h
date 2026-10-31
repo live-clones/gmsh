@@ -45,6 +45,37 @@ double orient2d(
   const double* const __restrict__ pb,
   const double* const __restrict__ pc);
 
+// orient3d without its static filter (only valid for coordinates in the
+// ranges given to exactinit): the exact sign whatever the coordinates
+double orient3dDynamic(
+  const double* const __restrict__ pa,
+  const double* const __restrict__ pb,
+  const double* const __restrict__ pc,
+  const double* const __restrict__ pd);
+// the exact values of orient2d and orient3d as expansions (sums of
+// nonoverlapping components by increasing magnitude, of the sign of the last
+// one) in h, at most 12 and 96 components: the number of components
+int orient2dExact(
+  const double* const __restrict__ pa,
+  const double* const __restrict__ pb,
+  const double* const __restrict__ pc,
+  double* const __restrict__ h);
+int orient3dExact(
+  const double* const __restrict__ pa,
+  const double* const __restrict__ pb,
+  const double* const __restrict__ pc,
+  const double* const __restrict__ pd,
+  double* const __restrict__ h);
+// the sum of the expansions e and f, the product of the expansion e (at
+// least one component) by b, in h (neither e nor f): the number of
+// components of h, at most elen + flen and 2 elen
+int fast_expansion_sum_zeroelim(
+  const int elen, const double* const __restrict__ e,
+  const int flen, const double* const __restrict__ f,
+  double* const __restrict__ h);
+int scale_expansion_zeroelim(
+  const int elen, const double* const __restrict__ e, const double b,
+  double* const __restrict__ h);
 } // namespace robustPredicates
 
 #endif

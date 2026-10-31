@@ -21,60 +21,16 @@
 namespace {
 
   // exact arithmetic: expansions (Shewchuk), sums of nonoverlapping
-  // components by increasing magnitude, of the sign of the last one
+  // components by increasing magnitude, of the sign of the last one, with
+  // the routines of gmsh's robust predicates
 
   typedef std::vector<double> Expansion;
 
-  const double epsilon = 1.1102230246251565e-16; // 2^-53
-
-  inline void twoSum(double a, double b, double &x, double &y)
-  {
-    x = a + b;
-    const double bv = x - a, av = x - bv;
-    y = (a - av) + (b - bv);
-  }
-
-  inline void fastTwoSum(double a, double b, double &x, double &y)
-  {
-    x = a + b;
-    y = b - (x - a);
-  }
-
-  inline void twoProduct(double a, double b, double &x, double &y)
-  {
-    x = a * b;
-    y = std::fma(a, b, -x);
-  }
-
-  Expansion difference(double a, double b)
-  {
-    double x, y;
-    twoSum(a, -b, x, y);
-    if(y == 0.) return Expansion(1, x);
-    return Expansion{y, x};
-  }
-
-  // e + f, both strongly nonoverlapping (fast_expansion_sum_zeroelim): their
-  // components merged by increasing magnitude, accumulated
   Expansion sum(const Expansion &e, const Expansion &f)
   {
-    Expansion g(e.size() + f.size()), h;
-    std::merge(e.begin(), e.end(), f.begin(), f.end(), g.begin(),
-               [](double a, double b) { return std::abs(a) < std::abs(b); });
-    h.reserve(g.size());
-    double q = g[0];
-    if(g.size() > 1) {
-      double s, r;
-      fastTwoSum(g[1], q, s, r);
-      q = s;
-      if(r != 0.) h.push_back(r);
-      for(std::size_t k = 2; k < g.size(); k++) {
-        twoSum(q, g[k], s, r);
-        q = s;
-        if(r != 0.) h.push_back(r);
-      }
-    }
-    if(q != 0. || h.empty()) h.push_back(q);
+    Expansion h(e.size() + f.size());
+    h.resize(robustPredicates::fast_expansion_sum_zeroelim(
+      (int)e.size(), e.data(), (int)f.size(), f.data(), h.data()));
     return h;
   }
 
@@ -88,21 +44,9 @@ namespace {
   // e b
   Expansion scale(const Expansion &e, double b)
   {
-    if(b == 0.) return Expansion(1, 0.);
-    Expansion h;
-    h.reserve(2 * e.size());
-    double q, r;
-    twoProduct(e[0], b, q, r);
-    if(r != 0.) h.push_back(r);
-    for(std::size_t i = 1; i < e.size(); i++) {
-      double p1, p0, s;
-      twoProduct(e[i], b, p1, p0);
-      twoSum(q, p0, s, r);
-      if(r != 0.) h.push_back(r);
-      fastTwoSum(p1, s, q, r);
-      if(r != 0.) h.push_back(r);
-    }
-    if(q != 0. || h.empty()) h.push_back(q);
+    Expansion h(2 * e.size());
+    h.resize(robustPredicates::scale_expansion_zeroelim((int)e.size(),
+                                                        e.data(), b, h.data()));
     return h;
   }
 
@@ -164,45 +108,42 @@ namespace {
   // are counterclockwise in the projection along the axis k, i.e. on the
   // axes k + 1, k + 2 (that of positive normals along k)
 
-  const double o3dErrBound = (7. + 56. * epsilon) * epsilon;
-  const double o2dErrBound = (3. + 16. * epsilon) * epsilon;
+  // of input points: the exact signs and values of gmsh's robust predicates
+  // (orient3d without the static filter that depends on the coordinate
+  // ranges given to exactinit)
+
+  inline int orient3d(const double *a, const double *b, const double *c,
+                      const double *d)
+  {
+    return sign(robustPredicates::orient3dDynamic(a, b, c, d));
+  }
 
   Expansion orient3dExact(const double *a, const double *b, const double *c,
                           const double *d)
   {
-    Expansion ad[3], bd[3], cd[3];
-    for(int k = 0; k < 3; k++) {
-      ad[k] = difference(a[k], d[k]);
-      bd[k] = difference(b[k], d[k]);
-      cd[k] = difference(c[k], d[k]);
-    }
-    const Expansion m0 = sub(product(bd[1], cd[2]), product(bd[2], cd[1]));
-    const Expansion m1 = sub(product(bd[0], cd[2]), product(bd[2], cd[0]));
-    const Expansion m2 = sub(product(bd[0], cd[1]), product(bd[1], cd[0]));
-    return sum(sub(product(ad[0], m0), product(ad[1], m1)),
-               product(ad[2], m2));
+    Expansion h(96);
+    h.resize(robustPredicates::orient3dExact(a, b, c, d, h.data()));
+    return h;
   }
 
-  int orient3d(const double *a, const double *b, const double *c,
-               const double *d)
+  inline int orient2d(const double *a, const double *b, const double *c, int k)
   {
-    const double adx = a[0] - d[0], bdx = b[0] - d[0], cdx = c[0] - d[0];
-    const double ady = a[1] - d[1], bdy = b[1] - d[1], cdy = c[1] - d[1];
-    const double adz = a[2] - d[2], bdz = b[2] - d[2], cdz = c[2] - d[2];
-    const double bdxcdy = bdx * cdy, cdxbdy = cdx * bdy;
-    const double cdxady = cdx * ady, adxcdy = adx * cdy;
-    const double adxbdy = adx * bdy, bdxady = bdx * ady;
-    const double det = adz * (bdxcdy - cdxbdy) + bdz * (cdxady - adxcdy) +
-                       cdz * (adxbdy - bdxady);
-    const double permanent =
-      (std::abs(bdxcdy) + std::abs(cdxbdy)) * std::abs(adz) +
-      (std::abs(cdxady) + std::abs(adxcdy)) * std::abs(bdz) +
-      (std::abs(adxbdy) + std::abs(bdxady)) * std::abs(cdz);
-    const double bound = o3dErrBound * permanent;
-    if(det > bound) return 1;
-    if(-det > bound) return -1;
-    return sign(orient3dExact(a, b, c, d));
+    const int i = (k + 1) % 3, j = (k + 2) % 3;
+    const double A[2] = {a[i], a[j]}, B[2] = {b[i], b[j]}, C[2] = {c[i], c[j]};
+    return sign(robustPredicates::orient2d(A, B, C));
   }
+
+  Expansion orient2dExact(const double *a, const double *b, const double *c,
+                          int k)
+  {
+    const int i = (k + 1) % 3, j = (k + 2) % 3;
+    const double A[2] = {a[i], a[j]}, B[2] = {b[i], b[j]}, C[2] = {c[i], c[j]};
+    Expansion h(12);
+    h.resize(robustPredicates::orient2dExact(A, B, C, h.data()));
+    return h;
+  }
+
+  // of points with approximate coordinates
 
   Approx orient3dApprox(const Approx *a, const Approx *b, const Approx *c,
                         const Approx *d)
@@ -216,26 +157,6 @@ namespace {
     return ad[0] * (bd[1] * cd[2] - bd[2] * cd[1]) -
            ad[1] * (bd[0] * cd[2] - bd[2] * cd[0]) +
            ad[2] * (bd[0] * cd[1] - bd[1] * cd[0]);
-  }
-
-  Expansion orient2dExact(const double *a, const double *b, const double *c,
-                          int k)
-  {
-    const int i = (k + 1) % 3, j = (k + 2) % 3;
-    return sub(product(difference(a[i], c[i]), difference(b[j], c[j])),
-               product(difference(a[j], c[j]), difference(b[i], c[i])));
-  }
-
-  int orient2d(const double *a, const double *b, const double *c, int k)
-  {
-    const int i = (k + 1) % 3, j = (k + 2) % 3;
-    const double l = (a[i] - c[i]) * (b[j] - c[j]);
-    const double r = (a[j] - c[j]) * (b[i] - c[i]);
-    const double det = l - r;
-    const double bound = o2dErrBound * (std::abs(l) + std::abs(r));
-    if(det > bound) return 1;
-    if(-det > bound) return -1;
-    return sign(orient2dExact(a, b, c, k));
   }
 
   Approx orient2dApprox(const Approx *a, const Approx *b, const Approx *c,
