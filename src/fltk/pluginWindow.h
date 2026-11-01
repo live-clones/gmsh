@@ -47,7 +47,7 @@ public:
 
 public:
   pluginWindow(int deltaFontSize = 0);
-  ~pluginWindow() { Fl::delete_widget(win); }
+  ~pluginWindow();
   void show(int viewIndex);
   void resetViewBrowser();
   // the plugin chosen in the list, if any

@@ -154,7 +154,7 @@ int buildBackgroundField(
 
 #if defined(HAVE_FLTK)
   view->getOptions()->visible = 0;
-  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+  if(FlGui::available()) FlGui::instance()->updateViews(true);
 #endif
 
   /* singularities */
@@ -365,43 +365,37 @@ bool generateMeshWithSpecialParameters(GModel *gm,
 {
   Msg::Debug("build background triangulation ...");
 
-  /* Unlock if called from GenerateMesh() */
-  bool shouldLock = false;
-  if(CTX::instance()->lock) {
-    CTX::instance()->lock = 0;
-    shouldLock = true;
-  }
-
   /* Change meshing parameters to build a good triangulation
-   * for cross field */
+   * for cross field, restored however the meshing ends */
   /* - the triangulation must be a bit more refined than the quad mesh */
-  int minCurveNodes = CTX::instance()->mesh.minCurveNodes;
-  int minCircleNodes = CTX::instance()->mesh.minCircleNodes;
-  double lcFactor = CTX::instance()->mesh.lcFactor;
-  int recombineAll = CTX::instance()->mesh.recombineAll;
-  int algoRecombine = CTX::instance()->mesh.algoRecombine;
-  int algo = CTX::instance()->mesh.algo2d;
-  CTX::instance()->mesh.minCurveNodes = std::min(minCurveNodes, 5);
-  CTX::instance()->mesh.minCircleNodes = std::min(minCircleNodes, 30);
-  CTX::instance()->mesh.lcFactor = lcFactor * scalingOnTriangulation;
+  struct savedParameters {
+    int minCurveNodes = CTX::instance()->mesh.minCurveNodes;
+    int minCircleNodes = CTX::instance()->mesh.minCircleNodes;
+    double lcFactor = CTX::instance()->mesh.lcFactor;
+    int recombineAll = CTX::instance()->mesh.recombineAll;
+    int algoRecombine = CTX::instance()->mesh.algoRecombine;
+    int algo = CTX::instance()->mesh.algo2d;
+    ~savedParameters()
+    {
+      CTX::instance()->mesh.minCurveNodes = minCurveNodes;
+      CTX::instance()->mesh.minCircleNodes = minCircleNodes;
+      CTX::instance()->mesh.lcFactor = lcFactor;
+      CTX::instance()->mesh.recombineAll = recombineAll;
+      CTX::instance()->mesh.algoRecombine = algoRecombine;
+      CTX::instance()->mesh.algo2d = algo;
+    }
+  } saved;
+  CTX::instance()->mesh.minCurveNodes = std::min(saved.minCurveNodes, 5);
+  CTX::instance()->mesh.minCircleNodes = std::min(saved.minCircleNodes, 30);
+  CTX::instance()->mesh.lcFactor = saved.lcFactor * scalingOnTriangulation;
   CTX::instance()->mesh.recombineAll = 0;
   CTX::instance()->mesh.algoRecombine = 0;
   CTX::instance()->mesh.algo2d = ALGO_2D_FRONTAL;
   //    ALGO_2D_MESHADAPT; /* slow but frontal does not always work */
 
-  /* Generate the triangulation with standard gmsh pipeline */
-  GenerateMesh(gm, 2);
-
-  /* Restore parameters */
-  CTX::instance()->mesh.minCurveNodes = minCurveNodes;
-  CTX::instance()->mesh.minCircleNodes = minCircleNodes;
-  CTX::instance()->mesh.lcFactor = lcFactor;
-  CTX::instance()->mesh.recombineAll = recombineAll;
-  CTX::instance()->mesh.algoRecombine = algoRecombine;
-  CTX::instance()->mesh.algo2d = algo;
-
-  /* Lock again before going back to GenerateMesh() */
-  if(shouldLock) CTX::instance()->lock = 1;
+  /* Generate the triangulation with standard gmsh pipeline, as part of the
+   * meshing that called this, which holds the lock on the model */
+  GenerateMesh(gm, 2, true);
 
   return true;
 }
@@ -570,6 +564,7 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
   std::vector<std::pair<MVertex *, double>> global_size_map;
   std::vector<std::array<double, 5>>
     global_singularity_list; /* format: gf->tag(), index, x, y, z */
+  int failedCrossFields = 0;
   /* Per GFace computations, in parallel */
   {
     Msg::Info(
@@ -593,8 +588,11 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
     global_triangles.reserve(ntris);
     global_size_map.reserve(3 * ntris);
 
-    int nthreads = getNumThreads();
-#pragma omp parallel for schedule(dynamic) num_threads(nthreads)
+    int nthreads = crossFieldHeatSolverUsesMumps() ? 1 : getNumThreads();
+    const double tCrossFields = TimeOfDay();
+    int nbCrossFields = 0;
+    std::size_t nbCrossFieldTriangles = 0;
+#pragma omp parallel for schedule(dynamic) num_threads(nthreads) reduction(+ : failedCrossFields, nbCrossFields, nbCrossFieldTriangles)
     for(size_t f = 0; f < faces.size(); ++f) {
       GFace *gf = faces[f];
 
@@ -623,15 +621,19 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
       double thresholdNormConvergence = 1.e-2;
       int nbBoundaryExtensionLayer = 1;
       int verbosity = 0;
-      Msg::Info("- Face %i/%li: compute cross field (%li triangles, %li B.C. "
-                "edges, %i diffusion levels) ...",
-                gf->tag(), faces.size(), triangles.size(), lines.size(),
-                nbDiffusionLevels);
+      Msg::Debug("- Face %i/%li: compute cross field (%li triangles, %li B.C. "
+                 "edges, %i diffusion levels) ...",
+                 gf->tag(), faces.size(), triangles.size(), lines.size(),
+                 nbDiffusionLevels);
+      nbCrossFields++;
+      nbCrossFieldTriangles += triangles.size();
       int scf = computeCrossFieldWithHeatEquation(
         N, triangles, lines, triEdgeTheta, nbDiffusionLevels,
         thresholdNormConvergence, nbBoundaryExtensionLayer, verbosity);
       if(scf != 0) {
         Msg::Warning("- Face %i: failed to compute cross field", gf->tag());
+        ++failedCrossFields;
+        continue;
       }
 
       /* Cross field singularities */
@@ -757,6 +759,17 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
         //    localSizemap, "sizemap_f"+std::to_string(gf->tag()));
       }
     }
+    Msg::Info("Cross field on %d surface%s (%zu triangles, %zu singularities, "
+              "Wall %gs)",
+              nbCrossFields, nbCrossFields == 1 ? "" : "s",
+              nbCrossFieldTriangles, global_singularity_list.size(),
+              TimeOfDay() - tCrossFields);
+  }
+
+  if(failedCrossFields) {
+    Msg::Error("Could not compute cross field on %i surface(s); "
+               "guiding field not built", failedCrossFields);
+    return -1;
   }
 
   sort_unique(global_size_map);
@@ -972,6 +985,7 @@ bool getSingularitiesFromNewCrossFieldComputation(
     thresholdNormConvergence, nbBoundaryExtensionLayer, verbosity);
   if(scf != 0) {
     Msg::Warning("- Face %i: failed to compute cross field", gf->tag());
+    return false;
   }
 
   /* Cross field singularities */
@@ -2051,7 +2065,9 @@ int optimizeTopologyWithCavityRemeshing(GModel *gm)
 
   GlobalBackgroundMesh &bmesh = getBackgroundMesh(BMESH_NAME);
 
-  int nthreads = getNumThreads();
+  // A missing stored field triggers a new PETSc/MUMPS solve below. Keep it
+  // on the host thread, as in the initial guiding-field construction.
+  int nthreads = crossFieldHeatSolverUsesMumps() ? 1 : getNumThreads();
 #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
   for(size_t f = 0; f < faces.size(); ++f) {
     GFace *gf = faces[f];
@@ -2071,6 +2087,7 @@ int optimizeTopologyWithCavityRemeshing(GModel *gm)
         getSingularitiesFromNewCrossFieldComputation(bmesh, gf, singularities);
       if(!okg) {
         Msg::Warning("- Face %i: failed to get singularities", gf->tag());
+        continue;
       }
     }
 
@@ -2363,7 +2380,7 @@ int quadqsCleanup(GModel *gm)
   PView *view = PView::getViewByName("guiding_field");
   delete view;
 #if defined(HAVE_FLTK)
-  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+  if(FlGui::available()) FlGui::instance()->updateViews(true);
 #endif
 #endif
   return 0;

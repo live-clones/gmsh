@@ -22,17 +22,24 @@
 
 sceneView::sceneView(drawContext *ctx)
   : _w(1), _h(1), _selection(ENT_NONE), _trySelection(0), _addQuery(false),
-    _highlighted(nullptr), _highlightedWas(0), _pickStepTime(0.),
-    _stepping(false), _hoverBehind(false), _spin(0.), _spinFrom(0.),
-    _spinPath(0.), _spinHot(0.), _ctx(ctx), _fire(0.), _fireTime(0.),
-    addPointMode(0), lassoMode(false), selectionMode(false), endSelection(0),
-    undoSelection(0), invertSelection(0), quitSelection(0), changeSelection(0)
+    _highlightedDim(-1), _highlightedTag(0), _highlightedWas(0),
+    _pickStepTime(0.), _stepping(false), _hoverBehind(false), _spin(0.),
+    _spinFrom(0.), _spinPath(0.), _spinHot(0.), _ctx(ctx), _fire(0.),
+    _fireTime(0.), addPointMode(0), lassoMode(false), selectionMode(false),
+    endSelection(0), undoSelection(0), invertSelection(0), quitSelection(0),
+    changeSelection(0)
 {
   for(int i = 0; i < 3; i++) _point[i] = 0.;
   for(int i = 0; i < 4; i++) _trySelectionXYWH[i] = 0;
   _stepAnchor[0] = _stepAnchor[1] = 0.;
   _hoverAnchor[0] = _hoverAnchor[1] = 0.;
   for(int i = 0; i < 4; i++) _hoverBox[i] = 0.;
+}
+
+sceneView::~sceneView()
+{
+  GEntity *was = _highlightedEntity();
+  if(was) was->setSelection(_highlightedWas);
 }
 
 bool sceneView::_select(int type, bool multiple, bool mesh, bool post, int x,
@@ -96,6 +103,20 @@ bool sceneView::_probeBehind()
   return behind;
 }
 
+// The highlighted entity, if it still is: looked up by its tag in the models,
+// as it may have been deleted since, and still drawn as highlighted, as
+// something else may have changed its selection since (or a new entity may
+// have its tag)
+GEntity *sceneView::_highlightedEntity() const
+{
+  if(_highlightedDim < 0) return nullptr;
+  for(GModel *m : GModel::list) {
+    GEntity *e = m->getEntityByTag(_highlightedDim, _highlightedTag);
+    if(e && e->getSelection() == GEntity::SelectHover) return e;
+  }
+  return nullptr;
+}
+
 // The entity the cursor is over, drawn as a selected one until the cursor is
 // over something else. The picture changes, so this redraws; what is drawn is
 // the same geometry in another colour, so the identifier image a pick is read
@@ -103,12 +124,17 @@ bool sceneView::_probeBehind()
 void sceneView::_highlight(GEntity *e)
 {
   if(!CTX::instance()->mouseHoverHighlight) e = nullptr;
-  if(e == _highlighted) return;
-  // put back what it was, unless something else has changed it since
-  if(_highlighted && _highlighted->getSelection() == GEntity::SelectHover)
-    _highlighted->setSelection(_highlightedWas);
+  if(!e && _highlightedDim < 0) return;
+  GEntity *was = _highlightedEntity();
+  if(e && e == was) return;
+  // not one already chosen, drawn as such: it would lose its marker and label
+  // and no longer read as chosen to what picks it (see getSelection())
+  if(e && e->getSelection()) e = nullptr;
+  // put back what it was
+  if(was) was->setSelection(_highlightedWas);
   _highlightedWas = e ? e->getSelection() : 0;
-  _highlighted = e;
+  _highlightedDim = e ? e->dim() : -1;
+  _highlightedTag = e ? e->tag() : 0;
   // selected as far as the drawing is concerned, so that it is drawn again
   // on top of the merged arrays, but in the highlight colour and without the
   // marker and label a chosen entity shows (see getSelectionColor())
@@ -281,6 +307,13 @@ bool sceneView::_processDoubleClick(std::size_t num, const std::string &what)
   return true;
 }
 
+// the command of a double click, which may change the model: not during
+// another operation on it
+static void runCommand(const std::string &command)
+{
+  if(!modelBusy()) ParseString(command, true);
+}
+
 // what was double clicked runs its command (General.DoubleClicked*Command),
 // shows its ONELAB parameters, or, when there is nothing, the quick access
 // menu
@@ -302,7 +335,7 @@ void sceneView::_doubleClick(const paneInput &in)
     if(CTX::instance()->geom.doubleClickedPointCommand == "ONELAB")
       hostShowOnelabContext(0, vertices[0]->tag());
     else
-      ParseString(CTX::instance()->geom.doubleClickedPointCommand, true);
+      runCommand(CTX::instance()->geom.doubleClickedPointCommand);
   }
   else if(_processDoubleClick(edges.size(),
                               CTX::instance()->geom.doubleClickedCurveCommand)) {
@@ -310,7 +343,7 @@ void sceneView::_doubleClick(const paneInput &in)
     if(CTX::instance()->geom.doubleClickedCurveCommand == "ONELAB")
       hostShowOnelabContext(1, edges[0]->tag());
     else
-      ParseString(CTX::instance()->geom.doubleClickedCurveCommand, true);
+      runCommand(CTX::instance()->geom.doubleClickedCurveCommand);
   }
   else if(_processDoubleClick(faces.size(),
                               CTX::instance()->geom.doubleClickedSurfaceCommand)) {
@@ -318,7 +351,7 @@ void sceneView::_doubleClick(const paneInput &in)
     if(CTX::instance()->geom.doubleClickedSurfaceCommand == "ONELAB")
       hostShowOnelabContext(2, faces[0]->tag());
     else
-      ParseString(CTX::instance()->geom.doubleClickedSurfaceCommand, true);
+      runCommand(CTX::instance()->geom.doubleClickedSurfaceCommand);
   }
   else if(_processDoubleClick(regions.size(),
                               CTX::instance()->geom.doubleClickedVolumeCommand)) {
@@ -326,17 +359,17 @@ void sceneView::_doubleClick(const paneInput &in)
     if(CTX::instance()->geom.doubleClickedVolumeCommand == "ONELAB")
       hostShowOnelabContext(3, regions[0]->tag());
     else
-      ParseString(CTX::instance()->geom.doubleClickedVolumeCommand, true);
+      runCommand(CTX::instance()->geom.doubleClickedVolumeCommand);
   }
   else if(views.size() && views[0]->getOptions()->doubleClickedCommand.size()) {
     CTX::instance()->post.doubleClickedView = views[0]->getIndex();
-    ParseString(views[0]->getOptions()->doubleClickedCommand, true);
+    runCommand(views[0]->getOptions()->doubleClickedCommand);
   }
   else if(points.size() &&
           CTX::instance()->post.doubleClickedGraphPointCommand.size()) {
     CTX::instance()->post.doubleClickedGraphPointX = points[0].x();
     CTX::instance()->post.doubleClickedGraphPointY = points[0].y();
-    ParseString(CTX::instance()->post.doubleClickedGraphPointCommand, true);
+    runCommand(CTX::instance()->post.doubleClickedGraphPointCommand);
   }
   else { // popup quick access menu
     hostQuickAccess();
@@ -350,6 +383,7 @@ void sceneView::_lassoZoom()
     Camera *cam = &(_ctx->camera);
     double dy = fabs(-_click.win[1] + _curr.win[1]);
     double dx = fabs(-_click.win[0] + _curr.win[0]);
+    if(dx == 0. || dy == 0.) return;
     double factx = _w / fabs(dx);
     double facty = _h / fabs(dy);
     double fact = .8 * std::min(factx, facty);
@@ -378,7 +412,7 @@ void sceneView::_lassoZoom()
   tmp.recenter(_ctx);
 
   _ctx->initPosition(false);
-  drawContext::global()->draw();
+  hostRedraw();
   hostViewChanged();
 }
 
@@ -721,16 +755,23 @@ char sceneView::selectionStep(std::vector<GVertex *> &vertices,
     hostCursor(false);
     return 'q';
   }
+  // the selection is over, as in every other return below (beginSelection()
+  // starts the next)
   if(endSelection) {
     _selection = ENT_NONE;
+    selectionMode = false;
     endSelection = 0;
     return 'e';
   }
   if(undoSelection) {
+    _selection = ENT_NONE;
+    selectionMode = false;
     undoSelection = 0;
     return 'u';
   }
   if(invertSelection) {
+    _selection = ENT_NONE;
+    selectionMode = false;
     invertSelection = 0;
     return 'i';
   }

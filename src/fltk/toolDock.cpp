@@ -196,6 +196,9 @@ toolDock::toolDock(int x, int y, int w, int h, int rowHeight)
   end();
 }
 
+// the ghost of a drag is a window of its own
+toolDock::~toolDock() { delete _ghost; }
+
 // the label of a tab: FLTK draws the close cross right before it, so it
 // starts with a space
 static std::string tabLabel(paletteWindow *pw)

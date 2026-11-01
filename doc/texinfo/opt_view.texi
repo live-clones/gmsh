@@ -596,6 +596,11 @@ Opacity factor applied to the colormap (1: unchanged, 0: fully transparent)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item View.OutlineWidth
+Display width of the element outlines (in pixels, see View.ShowElement)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item View.PointSize
 Display size of points (in pixels)@*
 Default value: @code{6}@*

@@ -4,6 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <limits>
+#include <memory>
 #include <stdlib.h>
 #include <set>
 #include <stack>
@@ -601,10 +602,7 @@ static void Mesh1D(GModel *m)
       }
       if(!nIter) Msg::ProgressMeter(localPending, false, "Meshing 1D...");
     }
-    if(exceptions) {
-      CTX::instance()->lock = 0;
-      throw std::runtime_error(Msg::GetLastError());
-    }
+    if(exceptions) throw std::runtime_error(Msg::GetLastError());
     if(!nPending) break;
     if(nIter++ > CTX::instance()->mesh.maxRetries) break;
   }
@@ -731,6 +729,15 @@ static void Mesh2D(GModel *m)
        (*it)->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR)
       nthreads = 1;
 
+#if defined(HAVE_QUADMESHINGTOOLS)
+    // Compound surfaces can compute a fresh cross field inside GFace::mesh.
+    // PETSc/MUMPS must run on the host thread that initialized MPI.
+    if(crossFieldHeatSolverUsesMumps() && !(*it)->compound.empty() &&
+       ((*it)->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS ||
+        (*it)->getMeshingAlgo() == ALGO_2D_QUAD_QUASI_STRUCT))
+      nthreads = 1;
+#endif
+
     // Periodic meshing is not yet thread-safe
     if((*it)->getMeshMaster() != *it) nthreads = 1;
 
@@ -789,10 +796,7 @@ static void Mesh2D(GModel *m)
 #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
       for(size_t K = 0; K < temp.size(); K++) meshOne(temp[K]);
       for(GFace *gf : members) meshOne(gf);
-      if(exceptions) {
-        CTX::instance()->lock = 0;
-        throw std::runtime_error(Msg::GetLastError());
-      }
+      if(exceptions) throw std::runtime_error(Msg::GetLastError());
       if(!nPending) break;
       // iter == 2 is for meshing re-parametrized surfaces; after that, we
       // serialize (self-intersections of 1D meshes are not thread safe)!
@@ -1251,6 +1255,9 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter, doub
     std::for_each(m->firstRegion(), m->lastRegion(),
                   EmbeddedCompatibilityTest());
 
+  // elements were deleted or replaced
+  m->destroyMeshCaches();
+
   double t2 = Cpu(), w2 = TimeOfDay();
   Msg::StatusBar(true, "Done optimizing mesh (Wall %gs, CPU %gs)", w2 - w1,
                  t2 - t1);
@@ -1265,6 +1272,9 @@ void AdaptMesh(GModel *m)
 
   for(int i = 0; i < 10; i++)
     std::for_each(m->firstRegion(), m->lastRegion(), adaptMeshGRegion());
+
+  // elements were deleted or replaced
+  m->destroyMeshCaches();
 
   double t2 = Cpu(), w2 = TimeOfDay();
   Msg::StatusBar(true, "Done adaptating 3D mesh (Wall %gs, CPU %gs)", w2 - w1,
@@ -1292,6 +1302,9 @@ void RecombineMesh(GModel *m)
       recombineIntoQuads(gf, blossom, topo, repos, minqual);
     }
   }
+
+  // elements were deleted or replaced
+  m->destroyMeshCaches();
 
   double t2 = Cpu(), w2 = TimeOfDay();
   Msg::StatusBar(true, "Done recombining 2D mesh (Wall %gs, CPU %gs)", w2 - w1,
@@ -1639,14 +1652,12 @@ static bool quantize1DIfNeeded(GModel *m)
   return true;
 }
 
-void GenerateMesh(GModel *m, int ask)
+bool GenerateMesh(GModel *m, int ask, bool nested)
 {
   // ProfilerStart("gmsh.prof");
-  if(CTX::instance()->lock) {
-    Msg::Info("I'm busy! Ask me that later...");
-    return;
-  }
-  CTX::instance()->lock = 1;
+  if(!nested && modelBusy()) return false;
+  // released however this ends, e.g. by an exception thrown by Msg::Error
+  modelLock lock;
 
   Msg::ResetErrorCounter();
 
@@ -1663,7 +1674,7 @@ void GenerateMesh(GModel *m, int ask)
 
   // Some meshing algorithms require a global background mesh
   // and a guiding field (e.g. cross field + size map)
-  QuadqsContextUpdater *qqs = nullptr;
+  std::unique_ptr<QuadqsContextUpdater> qqs;
   if(CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS ||
      CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
     int old = m->getMeshStatus(false);
@@ -1709,7 +1720,7 @@ void GenerateMesh(GModel *m, int ask)
       // note: the creation of QuadqsContextUpdater modifies many meshing
       // parameters; current parameter values are saved and will be restored at
       // the destruction of qqs
-      qqs = new QuadqsContextUpdater();
+      qqs.reset(new QuadqsContextUpdater());
     }
 
     if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
@@ -1816,13 +1827,13 @@ void GenerateMesh(GModel *m, int ask)
 
   Msg::PrintErrorCounter("Mesh generation error summary");
 
-  if(qqs != nullptr) delete qqs;
+  qqs.reset();
 
   // FIXME TEST
   if(backgroundMeshAndGuidingFieldExists(m)) {
     removeAllMeshEntitiesThatHaveSmallEdges();
   }
 
-  CTX::instance()->lock = 0;
   // ProfilerStop();
+  return true;
 }

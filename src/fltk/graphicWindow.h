@@ -47,6 +47,9 @@ private:
   int _iconSize;
   // the width of the menu while it is hidden, to show it again
   int _menuWidth;
+  // a press on the tiles, which may start the drag of an edge: where, and
+  // the sizes of the menu and the messages then (see tileReleased())
+  int _pushX, _pushY, _pushMenuWidth, _pushMessageHeight;
   std::vector<std::string> _messages;
   // the column of docked tool windows on the right of the tiles, the edge
   // dragged to change its width, and the box that says what resizes
@@ -79,8 +82,6 @@ public:
   Fl_Button *getMeasureButton() { return _butt[13]; }
   messageBrowser *getMessageBrowser() { return _browser; }
   std::vector<std::string> &getMessages() { return _messages; }
-  int getMinWidth() { return _minWidth; }
-  int getMinHeight() { return _minHeight; }
   void setAutoScroll(bool val) { _autoScrollMessages = val; }
   bool getAutoScroll() { return _autoScrollMessages; }
   void setTitle(const std::string &str);
@@ -90,6 +91,9 @@ public:
   int getGlHeight();
   void setGlHeight(int h);
   int getMenuWidth();
+  // a press on the tiles, and an edge of the tiles released
+  void tilePushed();
+  void tileReleased();
   void setMenuWidth(int w);
   int getMenuHeight();
   void showMenu();
@@ -132,7 +136,6 @@ public:
   void saveMessages(const char *filename);
   void copySelectedMessagesToClipboard();
   void setMessageFontSize(int size);
-  void changeMessageFontSize(int incr);
   void fillRecentHistoryMenu();
 };
 

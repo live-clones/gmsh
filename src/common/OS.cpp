@@ -16,6 +16,7 @@
 #include <time.h>
 #include <math.h>
 #include "GmshConfig.h"
+#include "GmshVersion.h"
 #include "StringUtils.h"
 #include "Context.h"
 
@@ -43,6 +44,7 @@
 
 #if defined(WIN32)
 #include <windows.h>
+#include <string.h>
 #include <process.h>
 #include <psapi.h>
 #include <io.h>
@@ -638,6 +640,131 @@ int SystemCall(const std::string &command, bool blocking)
 {
   return SystemCallExe("", command, blocking);
 }
+
+#if defined(WIN32) && !defined(__CYGWIN__) &&                                  \
+  (defined(_M_X64) || defined(__x86_64__))
+
+// A crash in the Gmsh library called from Python (through ctypes) only shows
+// as "OSError: exception: access violation" on Windows: a handler that runs
+// before the one of ctypes prints the stack first. The frames are given as
+// module + offset, which utils/misc/symbolize_crash.sh turns into functions
+// and lines with the unstripped library of the same build.
+static PVOID _crashHandler = nullptr;
+static char _crashFile[MAX_PATH] = "";
+
+static void crashWrite(FILE *fp, const char *str)
+{
+  fputs(str, stderr);
+  if(fp) fputs(str, fp);
+}
+
+static void crashFrame(FILE *fp, int i, DWORD64 pc)
+{
+  HMODULE mod = nullptr;
+  char path[MAX_PATH] = "?";
+  if(GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+                          GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                        (LPCSTR)pc, &mod) &&
+     mod)
+    GetModuleFileNameA(mod, path, MAX_PATH);
+  const char *name = strrchr(path, '\\');
+  char line[512];
+  snprintf(line, sizeof(line), "  #%-2d %s+0x%llx\n", i, name ? name + 1 : path,
+           (unsigned long long)(pc - (DWORD64)mod));
+  crashWrite(fp, line);
+}
+
+static LONG WINAPI crashHandler(EXCEPTION_POINTERS *e)
+{
+  DWORD code = e->ExceptionRecord->ExceptionCode;
+  const char *what = nullptr;
+  switch(code) {
+  case EXCEPTION_ACCESS_VIOLATION: what = "access violation"; break;
+  case EXCEPTION_ILLEGAL_INSTRUCTION: what = "illegal instruction"; break;
+  case EXCEPTION_PRIV_INSTRUCTION: what = "privileged instruction"; break;
+  case EXCEPTION_INT_DIVIDE_BY_ZERO: what = "integer division by zero"; break;
+  case EXCEPTION_IN_PAGE_ERROR: what = "in-page error"; break;
+  default: return EXCEPTION_CONTINUE_SEARCH; // C++ exceptions and the like
+  }
+  // a few reports at most: a fault while reporting is not reported
+  static LONG reports = 0;
+  if(InterlockedIncrement(&reports) > 3) return EXCEPTION_CONTINUE_SEARCH;
+
+  FILE *fp = _crashFile[0] ? fopen(_crashFile, "w") : nullptr;
+  char line[512];
+  snprintf(line, sizeof(line),
+           "\nGmsh %s crash report (thread %lu), also saved in %s\n%s",
+           GMSH_VERSION, GetCurrentThreadId(), _crashFile, what);
+  crashWrite(fp, line);
+  if(code == EXCEPTION_ACCESS_VIOLATION &&
+     e->ExceptionRecord->NumberParameters >= 2) {
+    ULONG_PTR rw = e->ExceptionRecord->ExceptionInformation[0];
+    snprintf(line, sizeof(line), " %s address 0x%llx",
+             rw == 0 ? "reading" :
+             rw == 1 ? "writing" :
+                       "executing",
+             (unsigned long long)e->ExceptionRecord->ExceptionInformation[1]);
+    crashWrite(fp, line);
+  }
+  crashWrite(fp, ", stack:\n");
+
+  // the frames, unwound with the tables every x64 module carries
+  CONTEXT ctx = *e->ContextRecord;
+  for(int i = 0; i < 64 && ctx.Rip; i++) {
+    crashFrame(fp, i, ctx.Rip);
+    DWORD64 base = 0;
+    PRUNTIME_FUNCTION f = RtlLookupFunctionEntry(ctx.Rip, &base, nullptr);
+    if(f) {
+      PVOID data = nullptr;
+      DWORD64 frame = 0;
+      RtlVirtualUnwind(UNW_FLAG_NHANDLER, base, ctx.Rip, f, &ctx, &data, &frame,
+                       nullptr);
+    }
+    else if(i == 0) {
+      // a leaf function: the return address is on top of the stack
+      ctx.Rip = *(DWORD64 *)ctx.Rsp;
+      ctx.Rsp += 8;
+    }
+    else
+      break;
+  }
+  crashWrite(fp, "\n");
+  if(fp) fclose(fp);
+  fflush(stderr);
+  // the crash goes on as before (an OSError in Python)
+  return EXCEPTION_CONTINUE_SEARCH;
+}
+
+// a fault on purpose, to check that the report works (GMSH_CRASH_TEST=1)
+static void crashTest()
+{
+  // the pointer volatile too, or the compiler, seeing it is null, emits a
+  // trap instead of the write
+  volatile int *volatile p = nullptr;
+  *p = 1;
+}
+
+void SetCrashReport(bool on)
+{
+  if(on && !_crashHandler) {
+    char dir[MAX_PATH];
+    DWORD n = GetTempPathA(MAX_PATH, dir);
+    if(n && n < MAX_PATH - 32)
+      snprintf(_crashFile, sizeof(_crashFile), "%sgmsh-crash-report.txt", dir);
+    _crashHandler = AddVectoredExceptionHandler(1, crashHandler);
+    if(getenv("GMSH_CRASH_TEST")) crashTest();
+  }
+  else if(!on && _crashHandler) {
+    RemoveVectoredExceptionHandler(_crashHandler);
+    _crashHandler = nullptr;
+  }
+}
+
+#else
+
+void SetCrashReport(bool on) {}
+
+#endif
 
 void RedirectIOToConsole()
 {

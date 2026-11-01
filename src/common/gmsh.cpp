@@ -109,8 +109,11 @@ extern "C" {
 }
 
 static int _initialized = 0;
+// copies of the arguments given to initialize(): the caller's go when it
+// returns (Python's are temporaries), and the GUI reads them when created
 static int _argc = 0;
 static char **_argv = nullptr;
+static std::vector<std::string> _argvStrings;
 
 static bool _checkInit()
 {
@@ -143,8 +146,10 @@ GMSH_API void gmsh::initialize(int argc, char **argv,
   if(GmshInitialize(argc, argv, readConfigFiles, false)) {
     _initialized = 1;
     _argc = argc;
+    _argvStrings.assign(argv, argv + argc);
     _argv = new char *[_argc + 1];
-    for(int i = 0; i < argc; i++) _argv[i] = argv[i];
+    for(int i = 0; i < argc; i++) _argv[i] = &_argvStrings[i][0];
+    _argv[_argc] = nullptr;
 
 #if defined(HAVE_FLTK)
     // if the GUI is already running (rare case, but could happen), we're done
@@ -182,6 +187,7 @@ GMSH_API void gmsh::finalize()
     _argc = 0;
     if(_argv) delete[] _argv;
     _argv = nullptr;
+    _argvStrings.clear();
     _initialized = 0;
     return;
   }
@@ -7776,7 +7782,7 @@ GMSH_API int gmsh::view::add(const std::string &name, const int tag)
   PView *view = new PView(tag);
   view->getData()->setName(name);
 #if defined(HAVE_FLTK)
-  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+  if(FlGui::available()) FlGui::instance()->updateViews(true);
 #endif
   return view->getTag();
 #else
@@ -7796,7 +7802,7 @@ GMSH_API void gmsh::view::remove(const int tag)
   }
   delete view;
 #if defined(HAVE_FLTK)
-  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+  if(FlGui::available()) FlGui::instance()->updateViews(true);
 #endif
 #else
   Msg::Error("Views require the post-processing module");
@@ -8413,7 +8419,7 @@ GMSH_API int gmsh::view::addAlias(const int refTag, const bool copyOptions,
   }
   PView *view = new PView(ref, copyOptions, tag);
 #if defined(HAVE_FLTK)
-  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+  if(FlGui::available()) FlGui::instance()->updateViews(true);
 #endif
   return view->getTag();
 #else
@@ -8432,7 +8438,7 @@ GMSH_API void gmsh::view::combine(const std::string &what,
   int ihow = (how == "all") ? 1 : (how == "name") ? 2 : 0; // "visible"
   PView::combine(time, ihow, remove, copyOptions);
 #if defined(HAVE_FLTK)
-  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+  if(FlGui::available()) FlGui::instance()->updateViews(true);
 #endif
 #else
   Msg::Error("Views require the post-processing module");
@@ -8701,7 +8707,7 @@ GMSH_API void gmsh::view::option::copy(const int refTag, const int tag)
   view->setOptions(ref->getOptions());
   view->setChanged(true);
 #if defined(HAVE_FLTK)
-  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+  if(FlGui::available()) FlGui::instance()->updateViews(true);
 #endif
 #else
   Msg::Error("Views require the post-processing module");
@@ -9007,7 +9013,7 @@ GMSH_API void gmsh::fltk::update()
   if(!_checkInit()) return;
 #if defined(HAVE_FLTK)
   _createFltk();
-  FlGui::instance()->updateViews(true, true);
+  FlGui::instance()->updateViews(true);
 #else
   Msg::Error("Fltk not available");
 #endif

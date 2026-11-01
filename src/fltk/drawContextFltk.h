@@ -8,11 +8,7 @@
 
 #include "GmshConfig.h"
 #include <algorithm>
-#if !defined(HAVE_NO_STDINT_H)
-#include <stdint.h>
-#elif defined(HAVE_NO_INTPTR_T)
-typedef unsigned long intptr_t;
-#endif
+#include <cstdint>
 #include <FL/x.H>
 #include <FL/gl.h>
 #include "GmshMessage.h"

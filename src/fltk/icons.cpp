@@ -48,6 +48,9 @@ static const char *strokes(const std::string &name)
            "<path d='m16.95 7.05 2.12-2.12M7.05 16.95l-2.12 2.12'/>";
   if(name == "search")
     return "<circle cx='11' cy='11' r='7'/><path d='m21 21-4.3-4.3'/>";
+  if(name == "eye")
+    return "<path d='M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z'/>"
+           "<circle cx='12' cy='12' r='3'/>";
   return "";
 }
 
@@ -87,6 +90,17 @@ static Fl_SVG_Image *image(const std::string &name, int size, bool active)
 
 void gmshIcon(Fl_Widget *w, const char *name, int size)
 {
+  // the holders of deleted widgets go (FLTK cleared their pointers, which it
+  // watches until released)
+  for(auto it = holders.begin(); it != holders.end();) {
+    if((*it)->widget) {
+      ++it;
+      continue;
+    }
+    Fl::release_widget_pointer((*it)->widget);
+    delete *it;
+    it = holders.erase(it);
+  }
   icon *h = nullptr;
   for(icon *i : holders)
     if(i->widget == w) h = i;

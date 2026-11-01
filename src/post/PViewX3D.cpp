@@ -349,11 +349,14 @@ bool PView::writeX3D(const std::string &fileName)
     PViewData *data = PView::list[ipv]->getData(true);
     PViewOptions *opt = PView::list[ipv]->getOptions();
     if(!data->getDirty() && opt->visible) {
-      va = PView::list[ipv]->va_lines;
-      if(!va) continue;
-      for(int ipt = 0; ipt < va->getNumVertices(); ipt += 2) {
-        // (the lines drawn as cylinders or tapers are not written)
-        if(opt->lineType != 2 && opt->lineType != 1) {
+      // the lines of the field, but those drawn as cylinders or tapers, and
+      // the outlines of the elements
+      VertexArray *lines[2] = {PView::list[ipv]->va_lines,
+                               PView::list[ipv]->va_outlines};
+      for(int k = 0; k < 2; k++) {
+        va = lines[k];
+        if(!va || (!k && (opt->lineType == 2 || opt->lineType == 1))) continue;
+        for(int ipt = 0; ipt < va->getNumVertices(); ipt += 2) {
           fprintf(fp, "%i %i %i ", _ind, _ind + 1, -1);
           _ind += 2;
         }
@@ -366,16 +369,18 @@ bool PView::writeX3D(const std::string &fileName)
     PViewData *data = PView::list[ipv]->getData(true);
     PViewOptions *opt = PView::list[ipv]->getOptions();
     if(!data->getDirty() && opt->visible) {
-      va = PView::list[ipv]->va_lines;
-      if(!va) continue;
-      for(int ipt = 0; ipt < va->getNumVertices(); ipt += 2) {
-        if(opt->lineType != 2 && opt->lineType != 1) {
+      VertexArray *lines[2] = {PView::list[ipv]->va_lines,
+                               PView::list[ipv]->va_outlines};
+      for(int k = 0; k < 2; k++) {
+        va = lines[k];
+        if(!va || (!k && (opt->lineType == 2 || opt->lineType == 1))) continue;
+        for(int ipt = 0; ipt < va->getNumVertices(); ipt += 2) {
           float *p0 = va->getVertexArray(3 * ipt);
           float *p1 = va->getVertexArray(3 * (ipt + 1));
           fprintf(fp, "%g %g %g %g %g %g ", p0[0], p0[1], p0[2], p1[0], p1[1],
                   p1[2]);
         }
-      } // end for
+      }
     } // end if dirty
   } // end for loop on PView::list
   fprintf(fp, "'/> \n");

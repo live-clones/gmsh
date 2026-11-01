@@ -78,10 +78,7 @@ void resetOpenglMode()
 {
   if(!FlGui::available()) return;
   int mode = openglWindowMode();
-  for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-    for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
-      FlGui::instance()->graph[i]->gl[j]->mode(mode);
-  if(FlGui::instance()->fullscreen) FlGui::instance()->fullscreen->mode(mode);
+  for(openglWindow *gl : FlGui::instance()->openglWindows()) gl->mode(mode);
 }
 
 openglWindow::openglWindow(int x, int y, int w, int h)
@@ -97,27 +94,21 @@ openglWindow::openglWindow(int x, int y, int w, int h)
     Fl::add_timeout(.5, navigator_handler, (void *)this);
 }
 
+void openglWindow::_setLock(bool on)
+{
+  if(on != _lock) FlGui::drawing += on ? 1 : -1;
+  _lock = on;
+}
+
 openglWindow::~openglWindow()
 {
+  if(_lastHandled == this) _lastHandled = nullptr;
+  _setLock(false);
+  Fl::remove_timeout(navigator_handler, this);
   Fl::remove_timeout(_studioSampleCb, this);
   Fl::remove_timeout(_fireCb, this);
   delete _ctx;
   if(Nautilus) delete Nautilus;
-}
-
-void openglWindow::show()
-{
-  Fl_Gl_Window::show();
-  /* You can uncomment this if you cannot use the very latest FLTK 1.4 version
-     patched for macOS mojave
-
-#if defined(__APPLE__) && (MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_14)
-  Msg::Info("OpenGL hack for macOS 10.14: see http://www.fltk.org/str.php?L3496");
-  resize(x(), y(), w()+1, h());
-  resize(x(), y(), w()-1, h());
-#endif
-
-  */
 }
 
 // the messages of a selection (Msg::StatusGl) at the top of the window, and
@@ -221,11 +212,16 @@ void openglWindow::draw()
   if(!_studioTimer) _ctx->studioSample = 0;
   // some drawing routines can create data (STL triangulations, etc.): make sure
   // that we don't fire draw() while we are already drawing, e.g. due to an
-  // impromptu Fl::check(). The same lock is also used in _select to guarantee
-  // that we don't mix GL_RENDER and GL_SELECT rendering passes.
+  // Fl::check() (FlGui::check() refuses while drawing). The same lock is held
+  // by the picking passes (hostBeginGL()).
   _drawn = true;
   if(_lock) return;
-  _lock = true;
+  _setLock(true);
+  // given back however the drawing ends (an error may throw)
+  struct unlock {
+    openglWindow *w;
+    ~unlock() { w->_setLock(false); }
+  } unlocked{this};
 
   Msg::Debug("openglWindow::draw()");
   double start = TimeOfDay();
@@ -248,7 +244,6 @@ void openglWindow::draw()
     if(CTX::instance()->shaders && !glShader::available() &&
        (mode() & FL_OPENGL3) && !glShader::wanted()) {
       Fl::add_timeout(0., [](void *) { resetOpenglMode(); });
-      _lock = false;
       return;
     }
   }
@@ -473,7 +468,6 @@ void openglWindow::draw()
   }
   glImmediate::flush();
   drawContext::global()->flushString();
-  _lock = false;
   _studioTimer = false;
   // (read by the graphics tests, benchmarks/graphics)
   Msg::Debug("openglWindow::draw() done in %g s", TimeOfDay() - start);
@@ -654,10 +648,14 @@ void openglWindow::_fireCb(void *data) { ((openglWindow *)data)->redraw(); }
 
 openglWindow *openglWindow::_lastHandled = nullptr;
 
-void openglWindow::_setLastHandled(openglWindow *w)
+void openglWindow::setLastHandled(openglWindow *w)
 {
+  bool changed = (w != _lastHandled);
   _lastHandled = w;
-  FlGui::instance()->visibility->updatePerWindow();
+  // not without a GUI (FlGui::instance() would build one), nor for no window,
+  // which ~graphicWindow sets while the GUI is destroyed
+  if(changed && w && FlGui::available())
+    FlGui::instance()->visibility->updatePerWindow();
 }
 
 // One step through the entities under the cursor for one press or one notch,
@@ -740,7 +738,7 @@ void openglWindow::hostRedraw() { redraw(); }
 
 void openglWindow::hostClicked()
 {
-  _setLastHandled(this);
+  setLastHandled(this);
   take_focus(); // force keyboard focus when we click in the window
 }
 
@@ -752,18 +750,18 @@ void openglWindow::hostCursor(bool cross)
 }
 
 // the same lock as in draw(): no picking pass in the middle of a frame (an
-// impromptu Fl::check() can deliver the event there), and the pass reads the
-// buffers of this window
+// Fl::check() of FLTK itself can deliver the event there), and the pass reads
+// the buffers of this window
 bool openglWindow::hostBeginGL()
 {
   if(_lock) return false;
-  _lock = true;
+  _setLock(true);
   make_current();
   glShader::setContext(context());
   return true;
 }
 
-void openglWindow::hostEndGL() { _lock = false; }
+void openglWindow::hostEndGL() { _setLock(false); }
 
 bool openglWindow::hostQueryMode() { return queryMode(); }
 
@@ -815,6 +813,9 @@ char openglWindow::selectEntity(int type, std::vector<GVertex *> &vertices,
   take_focus();
   beginSelection(type);
 
+  // the events processed while waiting may delete this window (unsplit, the
+  // closing of a graphic window), or the whole GUI
+  Fl_Widget_Tracker alive(this);
   while(1) {
     if(!FlGui::available()) return 'q';
     vertices.clear();
@@ -822,8 +823,10 @@ char openglWindow::selectEntity(int type, std::vector<GVertex *> &vertices,
     faces.clear();
     regions.clear();
     elements.clear();
+    points.clear();
+    views.clear();
     FlGui::wait();
-    if(!FlGui::available()) return 'q';
+    if(!FlGui::available() || alive.deleted()) return 'q';
     char ret = selectionStep(vertices, edges, faces, regions, elements, points,
                              views);
     if(ret) return ret;

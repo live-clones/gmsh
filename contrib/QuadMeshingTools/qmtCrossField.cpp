@@ -30,6 +30,9 @@
 #include <Eigen/SparseCholesky>
 #include <Eigen/SparseLU>
 #endif
+#if defined(HAVE_PETSC)
+#include <petscksp.h>
+#endif
 #if defined(HAVE_SOLVER)
 #include "dofManager.h"
 #include "laplaceTerm.h"
@@ -47,10 +50,15 @@
 #include "qmtMeshUtils.h"
 #include "geolog.h"
 
+#if defined(HAVE_PETSC) && defined(PETSC_HAVE_MUMPS) && \
+    (PETSC_VERSION_MAJOR > 3 || \
+     (PETSC_VERSION_MAJOR == 3 && PETSC_VERSION_MINOR >= 9))
+#define QMT_CROSS_FIELD_MUMPS
+#endif
+
 /* TODO list:
  * - Cross field smoother with a single Laplacian solve
  * - Cross field smoother with a single factorization
- * - MUMPS support
  */
 
 using namespace ArrayGeometry;
@@ -91,7 +99,23 @@ namespace QMT {
   class CrossFieldLinearSystem {
   protected:
     size_t N = 0;
-#if defined(HAVE_EIGEN)
+#if defined(QMT_CROSS_FIELD_MUMPS)
+    Mat matrix = nullptr;
+    Vec solution = nullptr, rhs = nullptr;
+    KSP ksp = nullptr;
+    std::vector<PetscInt> rowOffsets, columnIndices;
+    std::vector<PetscScalar> coefficients;
+    bool ready = true;
+
+    bool check(PetscErrorCode code, const char *operation)
+    {
+      if(!code) return true;
+      ready = false;
+      Msg::Error("Cross field PETSc/MUMPS %s failed (error %d)", operation,
+                 static_cast<int>(code));
+      return false;
+    }
+#elif defined(HAVE_EIGEN)
     Eigen::VectorXd x, b;
     Eigen::SparseMatrix<double> A;
     Eigen::SparseLU<Eigen::SparseMatrix<double> > solver;
@@ -100,7 +124,30 @@ namespace QMT {
   public:
     CrossFieldLinearSystem(size_t N_) : N(N_)
     {
-#if defined(HAVE_EIGEN)
+#if defined(QMT_CROSS_FIELD_MUMPS)
+      PetscBool initialized = PETSC_FALSE, finalized = PETSC_FALSE;
+      ready = N > 0 && N <= static_cast<size_t>(std::numeric_limits<PetscInt>::max());
+      ready = ready && check(PetscInitialized(&initialized), "runtime query") &&
+        check(PetscFinalized(&finalized), "runtime query") && initialized && !finalized;
+      if(!ready) {
+        Msg::Error("Cross field MUMPS requires an initialized PETSc runtime "
+                   "and valid system size");
+        return;
+      }
+#if defined(PETSC_HAVE_MPIUNI)
+      const int mainThread = Msg::GetThreadNum() == 0;
+#else
+      int mainThread = 0;
+      if(!check(MPI_Is_thread_main(&mainThread), "MPI thread query")) return;
+#endif
+      if(!mainThread) {
+        ready = false;
+        Msg::Error("Cross field MUMPS must run on the host MPI thread");
+        return;
+      }
+      Msg::Debug("Cross field linear solver: PETSc/MUMPS, %zu unknowns", N);
+#elif defined(HAVE_EIGEN)
+      Msg::Info("Cross field linear solver: Eigen SparseLU, %zu unknowns (PETSc/MUMPS unavailable)", N);
       Msg::Debug("Eigen call: initialize sparse matrix, vectors and solver");
       x.resize(N);
       x.fill(0.);
@@ -112,12 +159,69 @@ namespace QMT {
 #endif
     }
 
+    ~CrossFieldLinearSystem()
+    {
+#if defined(QMT_CROSS_FIELD_MUMPS)
+      if(ksp) KSPDestroy(&ksp);
+      if(solution) VecDestroy(&solution);
+      if(rhs) VecDestroy(&rhs);
+      if(matrix) MatDestroy(&matrix);
+      // PETSc/MPI belong to the host Gmsh application, not this face solver.
+#endif
+    }
+
+    CrossFieldLinearSystem(const CrossFieldLinearSystem &) = delete;
+    CrossFieldLinearSystem &operator=(const CrossFieldLinearSystem &) = delete;
+
     bool
     add_sparse_coefficients(const std::vector<std::vector<size_t> > &columns,
                             const std::vector<std::vector<double> > &values,
                             bool firstTime = false)
     {
-#if defined(HAVE_EIGEN)
+      if(columns.size() != N || values.size() != N) return false;
+#if defined(QMT_CROSS_FIELD_MUMPS)
+      if(!ready) return false;
+      if(firstTime) {
+        if(matrix) return false;
+        rowOffsets.assign(N + 1, 0);
+        for(size_t i = 0; i < N; ++i) {
+          if(columns[i].size() != values[i].size() ||
+             columns[i].size() > static_cast<size_t>(std::numeric_limits<PetscInt>::max()) -
+               static_cast<size_t>(rowOffsets[i])) return false;
+          rowOffsets[i + 1] = rowOffsets[i] + columns[i].size();
+        }
+        columnIndices.reserve(rowOffsets.back());
+        coefficients.reserve(rowOffsets.back());
+        for(size_t i = 0; i < N; ++i) {
+          for(size_t j = 0; j < columns[i].size(); ++j) {
+            if(columns[i][j] >= N || !std::isfinite(values[i][j]) ||
+               (j && columns[i][j] <= columns[i][j - 1])) return false;
+            columnIndices.push_back(static_cast<PetscInt>(columns[i][j]));
+            coefficients.push_back(values[i][j]);
+          }
+        }
+        return check(MatCreateSeqAIJWithArrays(PETSC_COMM_SELF, N, N,
+          rowOffsets.data(), columnIndices.data(), coefficients.data(), &matrix),
+          "matrix creation") &&
+          check(MatSetOption(matrix, MAT_KEEP_NONZERO_PATTERN, PETSC_TRUE), "matrix pattern");
+      }
+      if(!matrix) return false;
+      PetscScalar *data = nullptr;
+      if(!check(MatSeqAIJGetArray(matrix, &data), "matrix access")) return false;
+      bool valid = true;
+      for(size_t i = 0; i < N && valid; ++i) {
+        if(columns[i].size() != values[i].size()) { valid = false; break; }
+        for(size_t j = 0; j < columns[i].size(); ++j) {
+          const auto first = columnIndices.begin() + rowOffsets[i];
+          const auto last = columnIndices.begin() + rowOffsets[i + 1];
+          const auto entry = std::lower_bound(first, last, columns[i][j]);
+          if(entry == last || static_cast<size_t>(*entry) != columns[i][j] ||
+             !std::isfinite(values[i][j])) { valid = false; break; }
+          data[entry - columnIndices.begin()] += values[i][j];
+        }
+      }
+      return check(MatSeqAIJRestoreArray(matrix, &data), "matrix update") && valid;
+#elif defined(HAVE_EIGEN)
       // Msg::Debug("Eigen call: add coefficients");
       std::vector<Eigen::Triplet<double, size_t> > triplets;
       triplets.reserve(values.size());
@@ -149,10 +253,16 @@ namespace QMT {
 
     bool set_rhs_values(const std::vector<double> &rhs)
     {
-#if defined(HAVE_EIGEN)
-      // Msg::Debug("Eigen call: add rhs values");
-      for(size_t i = 0; i < rhs.size(); ++i)
-        if(rhs[i] != 0.) { b[i] = rhs[i]; }
+      if(rhs.size() != N) return false;
+#if defined(QMT_CROSS_FIELD_MUMPS)
+      if(!ready || !this->rhs) return false;
+      PetscScalar *data = nullptr;
+      if(!check(VecGetArray(this->rhs, &data), "right hand side access")) return false;
+      for(size_t i = 0; i < N; ++i) data[i] = rhs[i];
+      return check(VecRestoreArray(this->rhs, &data), "right hand side update");
+#elif defined(HAVE_EIGEN)
+      // Every entry must be overwritten, including a component returning to zero.
+      for(size_t i = 0; i < N; ++i) b[i] = rhs[i];
       return true;
 #else
       Msg::Error("Linear solver Eigen required");
@@ -162,7 +272,26 @@ namespace QMT {
 
     bool preprocess_sparsity_pattern()
     {
-#if defined(HAVE_EIGEN)
+#if defined(QMT_CROSS_FIELD_MUMPS)
+      if(!ready || !matrix) return false;
+      PC pc = nullptr;
+      // the system is symmetric positive definite (the Crouzeix-Raviart
+      // operator is semi-definite, the mass positive): a Cholesky
+      // factorization without pivoting
+      return check(MatSetOption(matrix, MAT_SPD, PETSC_TRUE), "matrix definiteness") &&
+        check(MatSetOption(matrix, MAT_SYMMETRIC, PETSC_TRUE), "matrix symmetry") &&
+        check(MatSetOption(matrix, MAT_SYMMETRY_ETERNAL, PETSC_TRUE), "matrix symmetry") &&
+        check(VecCreateSeq(PETSC_COMM_SELF, N, &rhs), "rhs creation") &&
+        check(VecDuplicate(rhs, &solution), "solution creation") &&
+        check(KSPCreate(PETSC_COMM_SELF, &ksp), "solver creation") &&
+        check(KSPSetType(ksp, KSPPREONLY), "direct solver selection") &&
+        check(KSPGetPC(ksp, &pc), "factorization access") &&
+        check(PCSetType(pc, PCCHOLESKY), "symmetric factorization selection") &&
+        check(PCFactorSetMatSolverType(pc, MATSOLVERMUMPS), "MUMPS selection") &&
+        check(PCFactorSetReuseOrdering(pc, PETSC_TRUE), "ordering reuse") &&
+        check((KSPSetOperators)(ksp, matrix, matrix), "operator selection") &&
+        setOrdering(pc);
+#elif defined(HAVE_EIGEN)
       Msg::Debug("Eigen call: analyse sparse matrix sparsity pattern");
       solver.analyzePattern(A);
       return true;
@@ -172,12 +301,48 @@ namespace QMT {
 #endif
     }
 
+#if defined(QMT_CROSS_FIELD_MUMPS)
+    // The approximate minimum fill ordering (ICNTL(7) = 2) rather than the
+    // default METIS one: its analysis is much cheaper, and so is the
+    // factorization of these surface matrices (cross fields 30% faster on a
+    // pipe junction, from 32k to 1.1M unknowns); -mat_mumps_icntl_7 still
+    // overrides it
+    bool setOrdering(PC pc)
+    {
+      Mat factor = nullptr;
+      return check(PCFactorSetUpMatSolverType(pc), "MUMPS setup") &&
+        check(PCFactorGetMatrix(pc, &factor), "MUMPS factor access") &&
+        check(MatMumpsSetIcntl(factor, 7, 2), "MUMPS ordering");
+    }
+#endif
+
     bool factorize()
     {
-#if defined(HAVE_EIGEN)
+#if defined(QMT_CROSS_FIELD_MUMPS)
+      if(!ready || !ksp) return false;
+      const double start = TimeOfDay();
+      Msg::Debug("Cross field MUMPS factorization begin (%zu unknowns)", N);
+      // Changing only values keeps symbolic analysis reusable, but every dt
+      // requires a fresh numeric factor. RHS-only solves reuse that factor.
+      bool ok = check((KSPSetOperators)(ksp, matrix, matrix), "operator update") &&
+        check(KSPSetUp(ksp), "factorization");
+      // PETSc can return success while recording a numerical PC failure.
+      KSPConvergedReason reason = KSP_CONVERGED_ITERATING;
+      if(ok) {
+        ok = check(KSPGetConvergedReason(ksp, &reason), "factorization status");
+        if(ok && reason < 0) {
+          ready = ok = false;
+          Msg::Error("Cross field MUMPS factorization failed (KSP reason %d)",
+                     static_cast<int>(reason));
+        }
+      }
+      Msg::Debug("Cross field MUMPS factorization %s in %.3f s", ok ? "done" : "failed",
+                 TimeOfDay() - start);
+      return ok;
+#elif defined(HAVE_EIGEN)
       Msg::Debug("Eigen call: factorize sparse matrix");
       solver.factorize(A);
-      return true;
+      return solver.info() == Eigen::Success;
 #else
       Msg::Error("Linear solver Eigen required");
       return false;
@@ -186,7 +351,20 @@ namespace QMT {
 
     bool solve(std::vector<double> &slt)
     {
-#if defined(HAVE_EIGEN)
+#if defined(QMT_CROSS_FIELD_MUMPS)
+      if(!ready || !ksp || !check(KSPSolve(ksp, rhs, solution), "solve")) return false;
+      KSPConvergedReason reason;
+      if(!check(KSPGetConvergedReason(ksp, &reason), "solve status") || reason <= 0) return false;
+      const PetscScalar *data = nullptr;
+      if(!check(VecGetArrayRead(solution, &data), "solution access")) return false;
+      slt.resize(N);
+      bool finite = true;
+      for(size_t i = 0; i < N; ++i) {
+        slt[i] = PetscRealPart(data[i]);
+        finite = finite && std::isfinite(slt[i]);
+      }
+      return check(VecRestoreArrayRead(solution, &data), "solution release") && finite;
+#elif defined(HAVE_EIGEN)
       Msg::Debug("Eigen call: solve linear system");
       x = solver.solve(b);
       if(solver.info() != Eigen::ComputationInfo::Success) {
@@ -291,7 +469,8 @@ namespace QMT {
                              id e, const vector<id2> &uIEdges,
                              const vector<id> &old2IEdge,
                              const vector<vector<id> > &uIEdgeToOld,
-                             vector<IV> &iv, vector<IJV> &ijv)
+                             vector<IV> &iv, vector<IJV> &ijv,
+                             double *rowScale = nullptr)
   {
     if(uIEdgeToOld[e].size() != 2) {
       Msg::Error("assembly, edge %li: uIEdgeToOld[e].size() = %li", e,
@@ -373,6 +552,8 @@ namespace QMT {
     double isum =
       -1. * (CR_weight[0] + CR_weight[1] + CR_weight[2] + CR_weight[3]);
     for(size_t k = 0; k < 4; ++k) CR_weight[k] = CR_weight[k] / isum;
+    // the rows are normalized: multiplied by isum, they are symmetric
+    if(rowScale) *rowScale = isum;
 
     iv.clear();
     ijv.clear();
@@ -628,12 +809,16 @@ namespace QMT {
     vector<double> rhs(2 * uIEdges.size(), 0.);
     vector<double> Mass(2 * uIEdges.size(),
                         1.); /* diagonal for Crouzeix-Raviart */
+    /* the normalization of the rows of the stiffness matrix */
+    vector<double> rowScale(2 * uIEdges.size(), 1.);
     for(size_t e = 0; e < uIEdges.size(); ++e) {
       if(!dirichletEdge[e]) {
         vector<IV> iv;
         vector<IJV> ijv;
         bool oks = stiffness_coefficient(N, points, triangles, e, uIEdges,
-                                         old2IEdge, uIEdgeToOld, iv, ijv);
+                                         old2IEdge, uIEdgeToOld, iv, ijv,
+                                         &rowScale[2 * e]);
+        rowScale[2 * e + 1] = rowScale[2 * e];
         if(!oks) {
           Msg::Error(
             "failed to compute stiffness matrix coefficients for e = %li", e);
@@ -714,12 +899,25 @@ namespace QMT {
     }
 
     {
-      /* Initialize system (I/dt + M^-1 * L) x_(i+1) = 1/dt * x_i     (Ax = B)
-       */
-      vector<vector<size_t> > Acol = K_columns;
-      vector<vector<double> > Aval_add = K_values; /* to get sparsity pattern */
-      for(size_t i = 0; i < Aval_add.size(); ++i)
-        std::fill(Aval_add[i].begin(), Aval_add[i].end(), 0.);
+      /* Initialize system (S M/dt + S L) x_(i+1) = S M/dt * x_i - S L_D x_D
+       * (Ax = B): (I/dt + M^-1 * L) x_(i+1) = 1/dt * x_i with its rows
+       * multiplied by the (diagonal) mass M and the normalization S of the
+       * rows of L, and the fixed Dirichlet values moved to the right hand
+       * side, which makes it symmetric; the Dirichlet rows are the identity */
+      vector<vector<size_t> > Acol(K_columns.size());
+      vector<vector<double> > Aval_add(K_columns.size());
+      vector<double> dirichletRhs(2 * uIEdges.size(), 0.);
+      for(size_t i = 0; i < K_columns.size(); ++i) {
+        if(dirichletEdge[i / 2]) continue;
+        for(size_t j = 0; j < K_columns[i].size(); ++j) {
+          const size_t c = K_columns[i][j];
+          if(dirichletEdge[c / 2])
+            dirichletRhs[i] -= rowScale[i] * K_values[i][j] * x[c];
+          else
+            Acol[i].push_back(c);
+        }
+        Aval_add[i].assign(Acol[i].size(), 0.);
+      }
       vector<double> B = x;
       vector<double> norms(uIEdges.size(), 0.);
       vector<double> prevNorms = norms;
@@ -729,15 +927,20 @@ namespace QMT {
       vector<double> diag_sum(2 * uIEdges.size(), 0.);
       for(size_t i = 0; i < Acol.size(); ++i) {
         if(!dirichletEdge[i / 2]) {
-          for(size_t j = 0; j < Acol[i].size(); ++j) {
-            Aval_add[i][j] = 1. / Mass[i] * K_values[i][j];
+          for(size_t j = 0, k = 0; j < K_columns[i].size(); ++j) {
+            if(dirichletEdge[K_columns[i][j] / 2]) continue;
+            Aval_add[i][k++] = rowScale[i] * K_values[i][j];
           }
         }
         else {
+          Acol[i] = {i};
           Aval_add[i] = {1.};
         }
       }
-      solver.add_sparse_coefficients(Acol, Aval_add, true);
+      if(!solver.add_sparse_coefficients(Acol, Aval_add, true)) {
+        Msg::Error("failed to assemble cross field linear system");
+        return false;
+      }
       for(size_t i = 0; i < Aval_add.size(); ++i) Aval_add[i].clear();
       for(size_t i = 0; i < Acol.size(); ++i) Acol[i].clear();
       bool okp = solver.preprocess_sparsity_pattern();
@@ -761,7 +964,7 @@ namespace QMT {
         for(size_t i = 0; i < Acol.size(); ++i) {
           if(!dirichletEdge[i / 2]) {
             Acol[i] = {i};
-            Aval_add[i] = {-diag_sum[i] + 1. / dt};
+            Aval_add[i] = {Mass[i] * rowScale[i] * (-diag_sum[i] + 1. / dt)};
             diag_sum[i] = 1. / dt;
           }
         }
@@ -770,7 +973,10 @@ namespace QMT {
           Msg::Error("failed to update linear system");
           return false;
         }
-        solver.factorize();
+        if(!solver.factorize()) {
+          Msg::Error("failed to factorize cross field linear system");
+          return false;
+        }
 
         /* Loop at fixed time step */
         constexpr size_t subiter_max = 25;
@@ -780,8 +986,12 @@ namespace QMT {
           /* Update RHS */
           B = x;
           for(size_t i = 0; i < B.size(); ++i)
-            if(!dirichletEdge[i / 2]) B[i] /= dt;
-          solver.set_rhs_values(B);
+            if(!dirichletEdge[i / 2])
+              B[i] = Mass[i] * rowScale[i] * B[i] / dt + dirichletRhs[i];
+          if(!solver.set_rhs_values(B)) {
+            Msg::Error("failed to set cross field right hand side");
+            return false;
+          }
 
           bool oks = solver.solve(x);
           if(!oks) {
@@ -979,6 +1189,15 @@ namespace QMT {
     return 0;
   }
 } // namespace QMT
+
+bool crossFieldHeatSolverUsesMumps()
+{
+#if defined(QMT_CROSS_FIELD_MUMPS)
+  return true;
+#else
+  return false;
+#endif
+}
 
 int computeCrossFieldWithHeatEquation(
   int N, const std::vector<MTriangle *> &triangles,

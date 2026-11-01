@@ -4,15 +4,18 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <typeinfo>
 #include <FL/Fl.H>
 #include <FL/Fl_Button.H>
+#include <FL/Fl_Group.H>
 #include <FL/Fl_Input_.H>
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Menu_.H>
 #include <FL/Fl_Menu_Bar.H>
+#include <FL/Fl_Menu_Button.H>
 #include <FL/Fl_Menu_Window.H>
 #include <FL/Fl_Tooltip.H>
 #include <FL/Fl_Scrollbar.H>
@@ -86,6 +89,68 @@ void applyGmshColors(bool dark)
     Fl_Tooltip::textcolor(FL_FOREGROUND_COLOR);
   }
 }
+
+// A colour chosen for a light interface (a pastel background, a vivid text)
+// at another lightness, of the same hue, saturated as much as the colour was
+// coloured, so that a pastel stays a tint and a vivid colour stays vivid,
+// within a cap that keeps them from glaring
+static Fl_Color atLightness(Fl_Color c, double lightness, double maxSaturation)
+{
+  uchar r, g, b;
+  Fl::get_color(c, r, g, b);
+  double rgb[3] = {r / 255., g / 255., b / 255.};
+  double mx = std::max(rgb[0], std::max(rgb[1], rgb[2]));
+  double mn = std::min(rgb[0], std::min(rgb[1], rgb[2]));
+  double chroma = mx - mn, l = 0.5 * (mx + mn), hue = 0., s = 0.;
+  if(chroma > 0.) {
+    s = chroma / (1. - std::abs(2. * l - 1.));
+    if(mx == rgb[0])
+      hue = std::fmod((rgb[1] - rgb[2]) / chroma + 6., 6.);
+    else if(mx == rgb[1])
+      hue = (rgb[2] - rgb[0]) / chroma + 2.;
+    else
+      hue = (rgb[0] - rgb[1]) / chroma + 4.;
+  }
+  s = std::min(maxSaturation, s * std::min(1., 8. * chroma));
+  // back from hue, saturation and lightness
+  double c2 = (1. - std::abs(2. * lightness - 1.)) * s;
+  double x = c2 * (1. - std::abs(std::fmod(hue, 2.) - 1.));
+  double m = lightness - 0.5 * c2;
+  double out[3] = {0., 0., 0.};
+  int sector = (int)hue % 6;
+  const int order[6][3] = {{0, 1, 2}, {1, 0, 2}, {2, 0, 1},
+                           {2, 1, 0}, {1, 2, 0}, {0, 2, 1}};
+  double v[3] = {c2, x, 0.};
+  for(int i = 0; i < 3; i++) out[i] = v[order[sector][i]] + m;
+  return fl_rgb_color((uchar)(255. * out[0] + 0.5),
+                      (uchar)(255. * out[1] + 0.5),
+                      (uchar)(255. * out[2] + 0.5));
+}
+
+// A pastel, barely told apart from white, as a clearer tint: each channel
+// moved further from the brightest one, by up to 2.5 times, until the colour
+// is as coloured as a moderate tint; the brightest channel, the hue and the
+// differences between two pastels kept, a grey or a vivid colour unchanged
+static Fl_Color clearer(Fl_Color c)
+{
+  uchar rgb[3];
+  Fl::get_color(c, rgb[0], rgb[1], rgb[2]);
+  int mx = std::max(rgb[0], std::max(rgb[1], rgb[2]));
+  int mn = std::min(rgb[0], std::min(rgb[1], rgb[2]));
+  double chroma = (mx - mn) / 255.;
+  if(chroma <= 0.) return c;
+  double k = std::min(2.5, std::max(1., 0.35 / chroma));
+  for(int i = 0; i < 3; i++)
+    rgb[i] = (uchar)std::max(0., mx - k * (mx - rgb[i]) + 0.5);
+  return fl_rgb_color(rgb[0], rgb[1], rgb[2]);
+}
+
+// a field: a deep tint in dark mode, a clear one in light mode
+Fl_Color adaptedFill(Fl_Color c)
+{ return CTX::instance()->guiDark ? atLightness(c, 0.27, 0.6) : clearer(c); }
+
+Fl_Color adaptedText(Fl_Color c)
+{ return CTX::instance()->guiDark ? atLightness(c, 0.72, 0.8) : c; }
 
 // The widget under the pointer, when it takes input (a button, a check box,
 // a menu button, a field, a slider, a tab): its boxes are drawn a little
@@ -268,11 +333,13 @@ static void boxWhileHovered(Fl_Widget *w)
   }
 }
 
-// the widget the pointer leaves and the one it enters are drawn again
-static int hover_dispatch(int event, Fl_Window *win)
+int gmshSchemeHandle(int event, Fl_Window *win)
 {
   installBoxes();
-  // zeroed if the event deletes it: Cmd+Q from the API destroys the windows
+  // the event may delete the widget the pointer was over, through a callback
+  // (Cmd+Q from the API destroys every window, a tree widget rebuilds the
+  // tree): FLTK then clears its own pointers to it, but not this copy, so it
+  // is watched for the span of the event and zeroed by the deletion
   Fl_Widget *before = Fl::belowmouse();
   Fl::watch_widget_pointer(before);
   int ret = Fl::handle_(event, win);
@@ -302,6 +369,73 @@ static int hover_dispatch(int event, Fl_Window *win)
     }
   }
   return ret;
+}
+
+// The item under the pointer in a menu, a pull-down or a shortcut menu: a
+// neutral grey, as in Windows and GNOME, the light blue being for what is
+// selected (the rows of the lists, the text of the fields)
+Fl_Color gmshMenuHighlight()
+{ return fl_color_average(FL_BACKGROUND_COLOR, FL_FOREGROUND_COLOR, 0.82f); }
+
+// what a shortcut menu (Fl_Menu_Item::popup()) takes its look from: FLTK's
+// own (the box, the colour, the font of a menu without a widget), but the
+// highlight; nothing without the theme
+const Fl_Menu_ *gmshPopupStyle()
+{
+  if(!gmshScheme()) return nullptr;
+  static Fl_Menu_Button *b = nullptr;
+  if(!b) {
+    Fl_Group *current = Fl_Group::current();
+    Fl_Group::current(nullptr);
+    b = new Fl_Menu_Button(0, 0, 1, 1);
+    Fl_Group::current(current);
+  }
+  b->textsize(FL_NORMAL_SIZE);
+  b->selection_color(gmshMenuHighlight());
+  return b;
+}
+
+// The scrollbars: a track of the colour of what they scroll and a rounded
+// thumb, without the arrows FLTK no longer draws at this width (see
+// gmshScrollbarSize). They are the members of the widgets that scroll, which
+// FLTK creates, so they are styled before the windows holding them are drawn
+// (anything shown or rebuilt is), and drawn again if that changed them. So
+// are the menus: the pull-downs, the menu buttons, the menu bar.
+static void thumbBox(int x, int y, int w, int h, Fl_Color c)
+{
+  fl_color(c);
+  fl_rounded_rectf(x, y, w, h, std::min(w, h) / 2);
+}
+
+static void styleScrollbar(Fl_Scrollbar *s)
+{
+  Fl_Color track = s->parent() ? s->parent()->color() : FL_BACKGROUND_COLOR;
+  Fl_Color thumb = fl_color_average(FL_FOREGROUND_COLOR, track, 0.35f);
+  if(s->box() == FL_FLAT_BOX && s->color() == track &&
+     s->slider() == GMSH_THUMB_BOX && s->selection_color() == thumb)
+    return;
+  s->box(FL_FLAT_BOX);
+  s->color(track);
+  s->slider(GMSH_THUMB_BOX);
+  s->selection_color(thumb);
+  s->redraw();
+}
+
+static void styleWidgetsIn(Fl_Widget *w)
+{
+  if(Fl_Scrollbar *s = dynamic_cast<Fl_Scrollbar *>(w))
+    styleScrollbar(s);
+  else if(Fl_Menu_ *m = dynamic_cast<Fl_Menu_ *>(w))
+    m->selection_color(gmshMenuHighlight());
+  if(Fl_Group *g = w->as_group())
+    for(int i = 0; i < g->children(); i++) styleWidgetsIn(g->child(i));
+}
+
+static void styleWidgets(void *)
+{
+  if(!gmshScheme()) return;
+  for(Fl_Window *win = Fl::first_window(); win; win = Fl::next_window(win))
+    if(win->damage()) styleWidgetsIn(win);
 }
 
 void applyGmshScheme()
@@ -339,7 +473,9 @@ void applyGmshScheme()
 #endif
 
   installBoxes();
-  Fl::event_dispatch(hover_dispatch);
+
+  Fl::set_boxtype(GMSH_THUMB_BOX, thumbBox, 0, 0, 0, 0);
+  if(!Fl::has_check(styleWidgets)) Fl::add_check(styleWidgets);
 
   // no dashed rectangle on the widget with the focus
   Fl::visible_focus(0);

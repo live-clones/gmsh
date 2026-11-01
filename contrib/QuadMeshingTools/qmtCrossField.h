@@ -18,6 +18,10 @@ class MTriangle;
 class MLine;
 class GFace;
 
+// PETSc/MUMPS face solves must be dispatched on the host thread. The host
+// owns PETSc/MPI initialization; independent OpenMP face solves are unsafe.
+bool crossFieldHeatSolverUsesMumps();
+
 /**
  * @brief Compute a smooth boundary-aligned cross field by alternating
  *        heat diffusion and projection (also called the MBO method).

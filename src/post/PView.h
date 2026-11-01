@@ -228,12 +228,15 @@ public:
   // the first step it holds.
   bool savesSeveralMeshes();
 
-  // vertex arrays to draw the elements efficiently
-  VertexArray *va_points, *va_lines, *va_triangles, *va_vectors, *va_ellipses;
+  // vertex arrays to draw the elements efficiently; the outlines of the
+  // elements (View.ShowElement) apart from the lines of the field, drawn
+  // with a width of their own (View.OutlineWidth)
+  VertexArray *va_points, *va_lines, *va_outlines, *va_triangles, *va_vectors,
+    *va_ellipses;
   // what the clipping planes add, kept apart so that moving a plane rebuilds
   // only this: the section they cut (capping), or the cut elements drawn
   // whole (whole element mode)
-  VertexArray *va_clip_lines, *va_clip_triangles;
+  VertexArray *va_clip_lines, *va_clip_outlines, *va_clip_triangles;
 
   // fill the vertex arrays, given the current option and data
   bool fillVertexArrays();

@@ -36,9 +36,12 @@
 
 static void highordertools_runp_cb(Fl_Widget *w, void *data)
 {
+  if(modelBusy()) return;
+  modelLock lock;
   highOrderToolsWindow *o = FlGui::instance()->highordertools;
 
-  int order = (int)o->value[0]->value();
+  // at least 1, the order of no mesh being -1
+  int order = std::max(1, (int)o->value[0]->value());
   bool linear = !(bool)o->butt[2]->value();
   bool incomplete = (bool)o->butt[0]->value();
   bool onlyVisible = (bool)o->butt[1]->value();
@@ -60,6 +63,8 @@ static void highordertools_runp_cb(Fl_Widget *w, void *data)
   */
 
   CTX::instance()->meshChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
+  // the GUI may have been closed while the mesh was changed
+  if(!FlGui::available()) return;
   drawContext::global()->draw();
 }
 
@@ -150,6 +155,8 @@ static void chooseopti_strategy(Fl_Widget *w, void *data)
 
 static void highordertools_runopti_cb(Fl_Widget *w, void *data)
 {
+  if(modelBusy()) return;
+  modelLock lock;
   highOrderToolsWindow *o = FlGui::instance()->highordertools;
 
   if(o->butt[3]->value()) FlGui::instance()->graph[0]->showMessages();
@@ -233,6 +240,8 @@ static void highordertools_runopti_cb(Fl_Widget *w, void *data)
   FixPeriodicMesh(GModel::current());
 
   CTX::instance()->meshChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
+  // the GUI may have been closed while the mesh was changed
+  if(!FlGui::available()) return;
   drawContext::global()->draw();
 }
 
@@ -297,14 +306,12 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   butt[1] =
     new Fl_Check_Button(x, y, width - 4 * WB, BH,
                         "Only apply high-order tools to visible entities");
-  butt[1]->type(FL_TOGGLE_BUTTON);
   butt[1]->value(1);
 
   y += BH;
 
   butt[3] =
     new Fl_Check_Button(x, y, width - 4 * WB, BH, "Show detailed log messages");
-  butt[3]->type(FL_TOGGLE_BUTTON);
   butt[3]->value(0);
 
   {
@@ -328,13 +335,12 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   value[0]->maximum(10);
   if(CTX::instance()->inputScrolling) value[0]->step(1);
   value[0]->align(FL_ALIGN_RIGHT);
-  value[0]->value(meshOrder);
+  value[0]->value(std::max(1, meshOrder));
 
   y += BH;
 
   butt[0] = new Fl_Check_Button(x, y, width - 4 * WB, BH,
                                 "Generate incomplete elements");
-  butt[0]->type(FL_TOGGLE_BUTTON);
   butt[0]->value(!complete);
   // AJ: This is bad a design. Add a proper Fl_Button to toggle between
   // completeness if needed. Plus: only 2d version implemented for now
@@ -344,7 +350,6 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
 
   butt[2] = new Fl_Check_Button(x, y, width - 4 * WB, BH,
                                 "Use CAD model to curve mesh");
-  butt[2]->type(FL_TOGGLE_BUTTON);
   butt[2]->value(1);
 
   y += BH;
@@ -495,7 +500,7 @@ void highOrderToolsWindow::show(bool redrawOnly)
   if(win->shown() && redrawOnly)
     win->redraw();
   else {
-    value[0]->value(meshOrder);
+    value[0]->value(std::max(1, meshOrder));
     butt[0]->value(!complete);
     if(CAD) {
       box->label("CAD model is available");
@@ -510,15 +515,7 @@ void highOrderToolsWindow::show(bool redrawOnly)
 }
 
 void highordertools_cb(Fl_Widget *w, void *data)
-{
-  // get the visibility info from the model, and update the browser
-  // accordingly
-  const char *str = (const char *)data;
-  if(str && !strcmp(str, "redraw_only"))
-    FlGui::instance()->highordertools->show(true);
-  else
-    FlGui::instance()->highordertools->show(false);
-}
+{ FlGui::instance()->highordertools->show(false); }
 
 #else // HAVE_MESH
 

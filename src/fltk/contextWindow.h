@@ -35,6 +35,8 @@ public:
   void hide() { win->hide(); }
   void updatePoint(double pt[3], int which);
   bool frozenPointCoord(int coord);
+  // adds the entity of the pane to the script
+  void addShape(int pane);
 };
 
 class physicalContextWindow {

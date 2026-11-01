@@ -26,11 +26,7 @@
 // Modified for Gmsh (C++ and 64 bit compatibility)
 
 #include "GmshConfig.h"
-#if !defined(HAVE_NO_STDINT_H)
-#include <stdint.h>
-#elif defined(HAVE_NO_INTPTR_T)
-typedef unsigned long intptr_t;
-#endif
+#include <cstdint>
 #include <stdio.h>
 #include "avl.h"
 #include "MallocUtils.h"

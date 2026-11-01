@@ -624,7 +624,9 @@ public:
                  int align = 0);
   void drawSphere(double R, double x, double y, double z, int n1, int n2,
                   int light);
-  void drawSphere(double size, double x, double y, double z, int light);
+  // a sphere of a point size, or a marker (see GLYPH_MARKER)
+  void drawSphere(double size, double x, double y, double z, int light,
+                  bool marker = false);
   void drawCylinder(double width, double *x, double *y, double *z, int light);
   // update the glyph shapes to the options; they are only read afterwards,
   // possibly by several threads at once

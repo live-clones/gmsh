@@ -8,13 +8,15 @@
 
 #include <string>
 #include <vector>
-#include <atomic>
+#include <thread>
 #include "SPoint2.h"
 #include "gmshScheme.h"
 
 #define GMSH_WINDOW_BOX FL_FLAT_BOX
 #define GMSH_SIMPLE_RIGHT_BOX (Fl_Boxtype)(FL_FREE_BOXTYPE + 1)
 #define GMSH_SIMPLE_TOP_BOX (Fl_Boxtype)(FL_FREE_BOXTYPE + 2)
+// the thumb of the scrollbars of the gmsh theme (see gmshScheme.cpp)
+#define GMSH_THUMB_BOX (Fl_Boxtype)(FL_FREE_BOXTYPE + 3)
 
 #define IW (10 * FL_NORMAL_SIZE) // input field width
 #define BB (7 * FL_NORMAL_SIZE) // width of a button with internal label
@@ -72,9 +74,20 @@ private:
   static FlGui *_instance;
   static std::string _openedThroughMacFinder;
   static bool _finishedProcessingCommandLine;
-  static std::atomic<int> _locked;
+  // the thread that created the GUI, the only one that may touch it
+  static std::thread::id _mainThread;
+  // every event goes through _dispatch(), with the hover of the scheme, which
+  // keeps the widgets the events being handled were sent to (the one with the
+  // focus, the pushed one, the one under the pointer), watched (zeroed if
+  // deleted); the callbacks they run handle more. Once the first one is
+  // handled, no widget code is running, and the widgets the ONELAB tree
+  // retired are deleted
+  static std::vector<Fl_Widget **> _eventWidgets;
+  static int _dispatch(int event, Fl_Window *win);
   std::string _lastStatus;
   bool _quitShouldExit;
+  // the tool windows, named for General.FloatingTools
+  std::vector<paletteWindow *> _tools;
 
 public:
   std::vector<GVertex *> selectedVertices;
@@ -97,7 +110,7 @@ public:
   partitionWindow *partition;
   classificationEditor *classify;
   // the tool windows, docked while the main window has a dock
-  std::vector<Fl_Window *> toolWindows();
+  const std::vector<paletteWindow *> &toolWindows() const { return _tools; }
   // the ones kept on the desktop, from and to General.FloatingTools: the
   // open ones move when the option changes
   void applyFloatingTools();
@@ -131,6 +144,19 @@ public:
   static void destroy();
   // check if the GUI is available
   static bool available();
+  // whether the caller is the thread that runs the GUI: the others (OpenMP
+  // workers, the threads of an API program) must not touch it
+  static bool onMainThread();
+  // whether w is or holds a widget an event being handled was sent to, or one
+  // it has moved to since (a click gives the focus to an input, whose code
+  // goes on once the input that had it has run its callback): its code may be
+  // running (see onelabGroup::_rebuildTree())
+  static bool inEvent(Fl_Widget *w);
+  // whether an event is being handled: the code of its widgets is running
+  static bool handlingEvent() { return !_eventWidgets.empty(); }
+  // a graphic window draws or runs a picking pass: the messages it prints do
+  // not process events meanwhile, which could delete what it draws
+  static int drawing;
   // run the GUI until there's no window left
   static int run(const std::string &optionFileName="");
   // check if there are any pending events, and process them (if rateLimited is
@@ -141,13 +167,12 @@ public:
   static void wait(bool force = false);
   // wait (at most time seconds) for any events, then process them
   static void wait(double time, bool force = false);
-  // lock/unlock child threads
+  // lock/unlock child threads (FLTK's lock: the thread of the GUI holds it
+  // except while it waits for events)
   static void lock();
   static void unlock();
   // trigger event loop in main thread
   static void awake(const std::string &action);
-  // is locked
-  static int locked();
   // is a file opened through the Mac Finder?
   static void setOpenedThroughMacFinder(const std::string &name);
   static std::string getOpenedThroughMacFinder();
@@ -164,7 +189,7 @@ public:
   // set the title of the graphic windows
   void setGraphicTitle(const std::string &title);
   // update the GUI when views get modified, added or deleted
-  void updateViews(bool numberOfViewsHasChanged, bool deleteWidgets);
+  void updateViews(bool numberOfViewsHasChanged);
   // update the GUI when fields change
   void updateFields();
   // reset the visibility window
@@ -173,6 +198,8 @@ public:
   void updateStatistics(bool qualities = false);
   // store current window positions and sizes in CTX
   void storeCurrentWindowsInfo();
+  // every graphic window, the fullscreen one included
+  std::vector<openglWindow *> openglWindows();
   // get the last opengl window that received an event
   openglWindow *getCurrentOpenglWindow();
   // get the draw context from the last opengl window that received an event
@@ -192,12 +219,13 @@ public:
   void setLastStatus(int col = -1);
   // display status message and update progress bar
   void setProgress(const std::string &msg, double val, double min, double max);
-  // add line in message console
-  void addMessage(const char *msg);
+  // add line in message console; from another thread than the GUI's, the line
+  // is queued and added by the GUI's thread when it next processes events
+  static void addMessage(const char *msg);
   // save messages to file
   void saveMessages(const char *fileName);
   // rebuild the tree
-  void rebuildTree(bool deleteWidgets);
+  void rebuildTree();
   // toggles the module open or closed based on its current state
   void toggleModule(const std::string &name);
   // open module in tree
