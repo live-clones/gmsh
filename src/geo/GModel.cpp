@@ -1745,14 +1745,20 @@ int GModel::getMeshStatus(bool countDiscrete)
     if(countDiscrete && numEle3D) return 3;
   }
   if(numEle3D) {
-    bool toMesh3D = false;
-    for(auto it = firstRegion(); it != lastRegion() && !toMesh3D; ++it) {
+    // (volumes keep no mesh status: one to mesh without elements, e.g. added
+    // since, makes the mesh incomplete)
+    bool toMesh3D = false, meshDone3D = true;
+    for(auto it = firstRegion(); it != lastRegion(); ++it) {
       GRegion *gr = *it;
       if(gr->geomType() != GEntity::DiscreteVolume &&
-         gr->meshAttributes.method != MESH_NONE)
+         gr->meshAttributes.method != MESH_NONE) {
         toMesh3D = true;
+        if(!gr->getNumMeshElements() &&
+           (!onlyVisible || (onlyVisible && gr->getVisibility())))
+          meshDone3D = false;
+      }
     }
-    if(toMesh3D) return 3;
+    if(toMesh3D && meshDone3D) return 3;
   }
 
   std::size_t numEle2D = 0;
