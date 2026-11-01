@@ -90,11 +90,10 @@ void applyGmshColors(bool dark)
 }
 
 // A colour chosen for a light interface (a pastel background, a vivid text)
-// at another lightness (or at most that one), of the same hue, saturated as
-// much as the colour was coloured, so that a pastel becomes a clear tint and a
-// vivid colour stays vivid, within a cap that keeps them from glaring
-static Fl_Color atLightness(Fl_Color c, double lightness, double maxSaturation,
-                            bool atMost = false)
+// at another lightness, of the same hue, saturated as much as the colour was
+// coloured, so that a pastel stays a tint and a vivid colour stays vivid,
+// within a cap that keeps them from glaring
+static Fl_Color atLightness(Fl_Color c, double lightness, double maxSaturation)
 {
   uchar r, g, b;
   Fl::get_color(c, r, g, b);
@@ -112,7 +111,6 @@ static Fl_Color atLightness(Fl_Color c, double lightness, double maxSaturation,
       hue = (rgb[0] - rgb[1]) / chroma + 4.;
   }
   s = std::min(maxSaturation, s * std::min(1., 8. * chroma));
-  if(atMost) lightness = std::min(lightness, l);
   // back from hue, saturation and lightness
   double c2 = (1. - std::abs(2. * lightness - 1.)) * s;
   double x = c2 * (1. - std::abs(std::fmod(hue, 2.) - 1.));
@@ -128,13 +126,27 @@ static Fl_Color atLightness(Fl_Color c, double lightness, double maxSaturation,
                       (uchar)(255. * out[2] + 0.5));
 }
 
-// a field: a deep tint in dark mode; in light mode a clear one, a pastel being
-// barely told apart from white
-Fl_Color adaptedFill(Fl_Color c)
+// A pastel, barely told apart from white, as a clearer tint: each channel
+// moved further from the brightest one, by up to 2.5 times, until the colour
+// is as coloured as a moderate tint; the brightest channel, the hue and the
+// differences between two pastels kept, a grey or a vivid colour unchanged
+static Fl_Color clearer(Fl_Color c)
 {
-  return CTX::instance()->guiDark ? atLightness(c, 0.27, 0.6) :
-                                    atLightness(c, 0.88, 1., true);
+  uchar rgb[3];
+  Fl::get_color(c, rgb[0], rgb[1], rgb[2]);
+  int mx = std::max(rgb[0], std::max(rgb[1], rgb[2]));
+  int mn = std::min(rgb[0], std::min(rgb[1], rgb[2]));
+  double chroma = (mx - mn) / 255.;
+  if(chroma <= 0.) return c;
+  double k = std::min(2.5, std::max(1., 0.35 / chroma));
+  for(int i = 0; i < 3; i++)
+    rgb[i] = (uchar)std::max(0., mx - k * (mx - rgb[i]) + 0.5);
+  return fl_rgb_color(rgb[0], rgb[1], rgb[2]);
 }
+
+// a field: a deep tint in dark mode, a clear one in light mode
+Fl_Color adaptedFill(Fl_Color c)
+{ return CTX::instance()->guiDark ? atLightness(c, 0.27, 0.6) : clearer(c); }
 
 Fl_Color adaptedText(Fl_Color c)
 { return CTX::instance()->guiDark ? atLightness(c, 0.72, 0.8) : c; }
