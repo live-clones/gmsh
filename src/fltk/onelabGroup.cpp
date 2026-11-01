@@ -1495,11 +1495,32 @@ static void highlight_physical_group_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
+onelabGroup::~onelabGroup() { Fl::remove_timeout(_rebuildAfterPress, this); }
+
+void onelabGroup::_rebuildAfterPress(void *data)
+{
+  onelabGroup *g = (onelabGroup *)data;
+  if(Fl::pushed() && g->_tree->contains(Fl::pushed()))
+    Fl::repeat_timeout(0.05, _rebuildAfterPress, data);
+  else
+    g->rebuildTree();
+}
+
 void onelabGroup::rebuildTree()
 {
   // only in the thread of the GUI (e.g. not from a thread of an API program
   // that holds the lock)
   if(!FlGui::onMainThread()) return;
+
+  // not while a mouse button is held down over the tree: the press and the
+  // release of a click go to the same widget, and the click is lost if a
+  // rebuild replaces it in between (a computation rebuilds the tree several
+  // times a second); done once the button is released
+  if(Fl::pushed() && _tree->contains(Fl::pushed())) {
+    if(!Fl::has_timeout(_rebuildAfterPress, this))
+      Fl::add_timeout(0.05, _rebuildAfterPress, this);
+    return;
+  }
 
   // asked for while the tree is emptied and built (see _rebuildTree()): done
   // once this rebuild is over

@@ -35,6 +35,9 @@ private:
   // callback, which may rebuild the tree): done once the current one is over
   bool _rebuilding, _rebuildAgain;
   void _rebuildTree();
+  // a rebuild asked for while a mouse button is held down over the tree: done
+  // once it is released (see rebuildTree())
+  static void _rebuildAfterPress(void *data);
   bool _stop;
   double _baseWidth, _indent;
   int _minWindowWidth, _minWindowHeight;
@@ -59,6 +62,7 @@ private:
 
 public:
   onelabGroup(int x, int y, int w, int h, const char *l = nullptr);
+  ~onelabGroup() override;
   void updateGearMenu();
   void rebuildSolverList();
   // once the events are handled (see FlGui::_dispatch())
