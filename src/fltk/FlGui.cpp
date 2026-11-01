@@ -1715,10 +1715,12 @@ void window_cb(Fl_Widget *w, void *data)
       FlGui::instance()->fullscreen->valid(0);
       FlGui::instance()->fullscreen->show();
       FlGui::instance()->fullscreen->fullscreen();
-      // (not drawn at all if closed meanwhile)
+      // (not drawn at all if closed meanwhile, nor ever if the window manager
+      // does not show it: 2 s at most)
+      double start = TimeOfDay();
       while(FlGui::available() && FlGui::instance()->fullscreen->shown() &&
-            !FlGui::instance()->fullscreen->valid())
-        FlGui::wait();
+            !FlGui::instance()->fullscreen->valid() && TimeOfDay() - start < 2.)
+        FlGui::wait(0.05);
       if(!FlGui::available() || !FlGui::instance()->fullscreen->shown()) return;
       FlGui::instance()->fullscreen->getDrawContext()->copyViewAttributes(
         FlGui::instance()->getCurrentOpenglWindow()->getDrawContext());
@@ -1732,15 +1734,19 @@ void window_cb(Fl_Widget *w, void *data)
         FlGui::instance()->graph[i]->gl[0]->valid(0);
       for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
         FlGui::instance()->graph[i]->getWindow()->show();
-      // (a graphic window may be closed meanwhile)
+      // (a graphic window may be closed meanwhile; its first pane is never
+      // drawn if hidden, nor the window if the window manager keeps it
+      // minimized: 2 s at most)
       auto waiting = [](std::size_t i) {
         FlGui *g = FlGui::instance();
         return i < g->graph.size() && g->graph[i]->getWindow()->shown() &&
-               !g->graph[i]->gl[0]->valid();
+               g->graph[i]->gl[0]->visible_r() && !g->graph[i]->gl[0]->valid();
       };
+      double start = TimeOfDay();
       for(std::size_t i = 0;
           FlGui::available() && i < FlGui::instance()->graph.size(); i++)
-        while(FlGui::available() && waiting(i)) FlGui::wait();
+        while(FlGui::available() && waiting(i) && TimeOfDay() - start < 2.)
+          FlGui::wait(0.05);
       if(!FlGui::available()) return;
       FlGui::instance()->graph[0]->gl[0]->getDrawContext()->copyViewAttributes(
         FlGui::instance()->getCurrentOpenglWindow()->getDrawContext());
