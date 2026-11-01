@@ -67,16 +67,21 @@ static void view_reload(int index)
 
     p = PView::getViewByTag(tag);
     if(p && (int)PView::list.size() > n) { // we loaded a new view
-      // delete old data and replace with new
-      delete p->getData();
-      p->setData(PView::list.back()->getData());
+      // the new data in place of the old, in the view and in every view
+      // sharing it (its aliases, or the view it is an alias of), the new view
+      // deleted without it
+      PViewData *old = p->getData(), *data = PView::list.back()->getData();
       PView::list.back()->setData(nullptr);
-      // delete new view
       delete PView::list.back();
-      // in case the reloaded view has a different number of time steps
-      if(p->getOptions()->timeStep > p->getData()->getNumTimeSteps() - 1)
-        p->getOptions()->timeStep = 0;
-      p->setChanged(true);
+      for(PView *v : PView::list) {
+        if(v->getData() != old) continue;
+        v->setData(data);
+        // in case the reloaded view has a different number of time steps
+        if(v->getOptions()->timeStep > data->getNumTimeSteps() - 1)
+          v->getOptions()->timeStep = 0;
+        v->setChanged(true);
+      }
+      delete old;
       FlGui::instance()->updateViews(true);
     }
   }
