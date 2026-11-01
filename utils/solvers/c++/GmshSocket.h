@@ -268,10 +268,12 @@ public:
        !strstr(sockname, ":")) {
 #if !defined(WIN32) || defined(__CYGWIN__)
       // UNIX socket (testing ":" is not enough with Windows paths)
+      struct sockaddr_un addr_un;
+      // (a name longer than the address holds: no socket)
+      if(strlen(sockname) >= sizeof(addr_un.sun_path)) return -1;
       _sock = socket(PF_UNIX, SOCK_STREAM, 0);
       if(_sock < 0) return -1;
       // try to connect socket to given name
-      struct sockaddr_un addr_un;
       memset((char *)&addr_un, 0, sizeof(addr_un));
       addr_un.sun_family = AF_UNIX;
       strcpy(addr_un.sun_path, sockname);
@@ -358,13 +360,15 @@ public:
       // UNIX socket (testing ":" is not enough with Windows paths)
       _portno = -1;
 #if !defined(WIN32) || defined(__CYGWIN__)
+      struct sockaddr_un addr_un;
+      if(_sockname.size() >= sizeof(addr_un.sun_path))
+        throw std::runtime_error("Unix socket name too long");
       // delete the file if it already exists
       unlink(_sockname.c_str());
       // create a socket
       tmpsock = socket(PF_UNIX, SOCK_STREAM, 0);
       if(tmpsock < 0) throw std::runtime_error("Couldn't create socket");
       // bind the socket to its name
-      struct sockaddr_un addr_un;
       memset((char *)&addr_un, 0, sizeof(addr_un));
       strcpy(addr_un.sun_path, _sockname.c_str());
       addr_un.sun_family = AF_UNIX;
