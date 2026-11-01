@@ -84,6 +84,8 @@ GModel::GModel(const std::string &name)
   _maxElementNum = CTX::instance()->mesh.firstElementTag - 1;
   _checkPointedMaxVertexNum = _maxVertexNum;
   _checkPointedMaxElementNum = _maxElementNum;
+  for(int dim = 0; dim < 4; dim++)
+    _maxNonOCCTag[dim] = CTX::instance()->geom.firstEntityTag - 1;
 
   // hide all other models
   for(std::size_t i = 0; i < list.size(); i++) list[i]->setVisibility(0);
@@ -186,6 +188,8 @@ void GModel::destroy(bool keepName)
   _maxElementNum = CTX::instance()->mesh.firstElementTag - 1;
   _checkPointedMaxVertexNum = _maxVertexNum;
   _checkPointedMaxElementNum = _maxElementNum;
+  for(int dim = 0; dim < 4; dim++)
+    _maxNonOCCTag[dim] = CTX::instance()->geom.firstEntityTag - 1;
   _currentMeshEntity = nullptr;
   _numPartitions = 0;
   _lastMeshEntityError.clear();
@@ -523,27 +527,37 @@ std::vector<int> GModel::getTagsForPhysicalName(int dim,
   return tags;
 }
 
+void GModel::_keepNonOCCTag(GEntity *e)
+{
+  if(e->getNativeType() != GEntity::OpenCascadeModel)
+    _maxNonOCCTag[e->dim()] = std::max(_maxNonOCCTag[e->dim()], e->tag());
+}
+
 bool GModel::add(GRegion *r)
 {
   CTX::instance()->entitiesChanged();
+  _keepNonOCCTag(r);
   return regions.insert(r).second;
 }
 
 bool GModel::add(GFace *f)
 {
   CTX::instance()->entitiesChanged();
+  _keepNonOCCTag(f);
   return faces.insert(f).second;
 }
 
 bool GModel::add(GEdge *e)
 {
   CTX::instance()->entitiesChanged();
+  _keepNonOCCTag(e);
   return edges.insert(e).second;
 }
 
 bool GModel::add(GVertex *v)
 {
   CTX::instance()->entitiesChanged();
+  _keepNonOCCTag(v);
   return vertices.insert(v).second;
 }
 

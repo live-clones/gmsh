@@ -138,6 +138,10 @@ protected:
   GEO_Internals *_geo_internals;
   // OpenCASCADE model internal data
   OCC_Internals *_occ_internals;
+  // the largest tags of the entities not from OpenCASCADE (e.g. built-in), in
+  // each dimension: new OpenCASCADE entities do not take them
+  int _maxNonOCCTag[4];
+  void _keepNonOCCTag(GEntity *e);
   // ACIS model internal data
   ACIS_Internals *_acis_internals;
   // Parasolid model internal data
@@ -522,6 +526,10 @@ public:
   // return the highest number associated with an elementary entity of
   // a given dimension (or the highest overall if dim < 0)
   int getMaxElementaryNumber(int dim);
+  int getMaxNonOCCTag(int dim) const
+  {
+    return (dim >= 0 && dim <= 3) ? _maxNonOCCTag[dim] : 0;
+  }
 
   // check if there are no physical entities in the model
   bool noPhysicalGroups();

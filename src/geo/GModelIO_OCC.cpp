@@ -212,6 +212,11 @@ void OCC_Internals::_recomputeMaxTag(int dim)
 {
   if(dim < -2 || dim > 3) return;
   _maxTag[dim + 2] = CTX::instance()->geom.firstEntityTag - 1;
+  // the tags of the entities of the other kernels stay taken: an OpenCASCADE
+  // entity given one would be mistaken for them in GModel
+  if(dim >= 0)
+    _maxTag[dim + 2] =
+      std::max(_maxTag[dim + 2], GModel::current()->getMaxNonOCCTag(dim));
   NCollection_DataMap<int, TopoDS_Shape>::Iterator exp;
   switch(dim) {
   case 0: exp.Initialize(_tagVertex); break;
