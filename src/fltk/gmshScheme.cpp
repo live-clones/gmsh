@@ -15,6 +15,7 @@
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Menu_.H>
 #include <FL/Fl_Menu_Bar.H>
+#include <FL/Fl_Menu_Button.H>
 #include <FL/Fl_Menu_Window.H>
 #include <FL/Fl_Tooltip.H>
 #include <FL/Fl_Scrollbar.H>
@@ -370,11 +371,36 @@ int gmshSchemeHandle(int event, Fl_Window *win)
   return ret;
 }
 
+// The item under the pointer in a menu, a pull-down or a shortcut menu: a
+// neutral grey, as in Windows and GNOME, the light blue being for what is
+// selected (the rows of the lists, the text of the fields)
+Fl_Color gmshMenuHighlight()
+{ return fl_color_average(FL_BACKGROUND_COLOR, FL_FOREGROUND_COLOR, 0.82f); }
+
+// what a shortcut menu (Fl_Menu_Item::popup()) takes its look from: FLTK's
+// own (the box, the colour, the font of a menu without a widget), but the
+// highlight; nothing without the theme
+const Fl_Menu_ *gmshPopupStyle()
+{
+  if(!gmshScheme()) return nullptr;
+  static Fl_Menu_Button *b = nullptr;
+  if(!b) {
+    Fl_Group *current = Fl_Group::current();
+    Fl_Group::current(nullptr);
+    b = new Fl_Menu_Button(0, 0, 1, 1);
+    Fl_Group::current(current);
+  }
+  b->textsize(FL_NORMAL_SIZE);
+  b->selection_color(gmshMenuHighlight());
+  return b;
+}
+
 // The scrollbars: a track of the colour of what they scroll and a rounded
 // thumb, without the arrows FLTK no longer draws at this width (see
 // gmshScrollbarSize). They are the members of the widgets that scroll, which
 // FLTK creates, so they are styled before the windows holding them are drawn
-// (anything shown or rebuilt is), and drawn again if that changed them.
+// (anything shown or rebuilt is), and drawn again if that changed them. So
+// are the menus: the pull-downs, the menu buttons, the menu bar.
 static void thumbBox(int x, int y, int w, int h, Fl_Color c)
 {
   fl_color(c);
@@ -395,18 +421,21 @@ static void styleScrollbar(Fl_Scrollbar *s)
   s->redraw();
 }
 
-static void styleScrollbarsIn(Fl_Widget *w)
+static void styleWidgetsIn(Fl_Widget *w)
 {
-  if(Fl_Scrollbar *s = dynamic_cast<Fl_Scrollbar *>(w)) styleScrollbar(s);
+  if(Fl_Scrollbar *s = dynamic_cast<Fl_Scrollbar *>(w))
+    styleScrollbar(s);
+  else if(Fl_Menu_ *m = dynamic_cast<Fl_Menu_ *>(w))
+    m->selection_color(gmshMenuHighlight());
   if(Fl_Group *g = w->as_group())
-    for(int i = 0; i < g->children(); i++) styleScrollbarsIn(g->child(i));
+    for(int i = 0; i < g->children(); i++) styleWidgetsIn(g->child(i));
 }
 
-static void styleScrollbars(void *)
+static void styleWidgets(void *)
 {
   if(!gmshScheme()) return;
   for(Fl_Window *win = Fl::first_window(); win; win = Fl::next_window(win))
-    if(win->damage()) styleScrollbarsIn(win);
+    if(win->damage()) styleWidgetsIn(win);
 }
 
 void applyGmshScheme()
@@ -446,7 +475,7 @@ void applyGmshScheme()
   installBoxes();
 
   Fl::set_boxtype(GMSH_THUMB_BOX, thumbBox, 0, 0, 0, 0);
-  if(!Fl::has_check(styleScrollbars)) Fl::add_check(styleScrollbars);
+  if(!Fl::has_check(styleWidgets)) Fl::add_check(styleWidgets);
 
   // no dashed rectangle on the widget with the focus
   Fl::visible_focus(0);

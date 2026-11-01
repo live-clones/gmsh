@@ -3109,7 +3109,7 @@ void status_options_cb(Fl_Widget *w, void *data)
     Fl_Menu_Item it = {nullptr};
     menu.push_back(it);
     Fl_Menu_Item *m = (Fl_Menu_Item *)(&menu[0])->popup(
-      Fl::event_x(), Fl::event_y(), nullptr, &menu[selected], nullptr);
+      Fl::event_x(), Fl::event_y(), nullptr, &menu[selected], gmshPopupStyle());
     if(m) m->do_callback(nullptr);
     for(std::size_t i = 0; i < tofree.size(); i++) free(tofree[i]);
     drawContext::global()->draw();
@@ -3294,7 +3294,8 @@ void status_options_cb(Fl_Widget *w, void *data)
       &menu[msh + 8]; // toggle mesh display - the default
     picked = (Fl_Menu_Item *)menu->popup(
       Fl::event_x(), Fl::event_y(), nullptr,
-      (picked && picked->visible()) ? picked : &menu[msh + 8], nullptr);
+      (picked && picked->visible()) ? picked : &menu[msh + 8],
+      gmshPopupStyle());
     if(picked && picked->callback())
       picked->do_callback(nullptr, picked->user_data());
     drawContext::global()->draw();
@@ -3588,11 +3589,9 @@ public:
   }
   void draw()
   {
-    // the open title and the items of its menu in a neutral grey, as the
-    // bars of Windows and GTK, the selection colour staying for the lists
-    if(gmshScheme())
-      selection_color(
-        fl_color_average(FL_BACKGROUND_COLOR, FL_FOREGROUND_COLOR, 0.82f));
+    // the open title and the items of its menu in a neutral grey (see
+    // gmshMenuHighlight())
+    if(gmshScheme()) selection_color(gmshMenuHighlight());
     draw_box();
     if(!menu() || !menu()->text) return;
     int X = x() + 6, i = 0;
