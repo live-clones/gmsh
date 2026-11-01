@@ -674,8 +674,7 @@ bool getParameterColor(const std::string &str, Fl_Color &c)
   }
   int r, g, b;
   if(str.size() && GetRGBForString(str.c_str(), r, g, b)) {
-    c = fl_color_cube(r * (FL_NUM_RED - 1) / 255, g * (FL_NUM_GREEN - 1) / 255,
-                      b * (FL_NUM_BLUE - 1) / 255);
+    c = fl_rgb_color(r, g, b);
     return true;
   }
   c = FL_BLACK;
@@ -1078,7 +1077,7 @@ Fl_Widget *addParameterWidget(onelab::number &p, int xx, int yy, int ww, int hh,
     for(std::size_t i = 0; i < choices.size(); i++) {
       strings.push_back(labels[choices[i]]);
       Fl_Menu_Item menuItem = {strings.back().c_str(), 0, nullptr, nullptr, 0};
-      if(highlight) menuItem.labelcolor(c);
+      if(highlight) menuItem.labelcolor(adaptedText(c));
       menu.push_back(menuItem);
     }
     Fl_Menu_Item it = {nullptr};
@@ -1107,8 +1106,8 @@ Fl_Widget *addParameterWidget(onelab::number &p, int xx, int yy, int ww, int hh,
     but->callback(onelab_number_check_button_cb, (void *)path);
     but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
     if(highlight) {
-      but->color(c);
-      but->labelcolor(fl_contrast(FL_FOREGROUND_COLOR, c));
+      but->color(adaptedFill(c));
+      but->labelcolor(fl_contrast(FL_FOREGROUND_COLOR, adaptedFill(c)));
     }
     if(p.getReadOnly()) but->deactivate();
     return but;
@@ -1127,7 +1126,7 @@ Fl_Widget *addParameterWidget(onelab::number &p, int xx, int yy, int ww, int hh,
     but->choices(p.getChoices());
     but->align(FL_ALIGN_RIGHT | FL_ALIGN_CLIP);
     but->graph(p.getAttribute("Graph"));
-    if(highlight) but->color(c);
+    if(highlight) but->color(adaptedFill(c));
     return but;
   }
 
@@ -1146,7 +1145,7 @@ Fl_Widget *addParameterWidget(onelab::number &p, int xx, int yy, int ww, int hh,
   but->callback(onelab_number_input_range_cb, (void *)path);
   but->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
   but->align(FL_ALIGN_RIGHT | FL_ALIGN_CLIP);
-  if(highlight) but->color(c);
+  if(highlight) but->color(adaptedFill(c));
   return but;
 }
 
@@ -1350,8 +1349,8 @@ Fl_Widget *addParameterWidget(onelab::string &p, int xx, int yy, int ww, int hh,
     }
     but->callback(onelab_string_button_cb, (void *)path);
     if(highlight) {
-      but->color(c);
-      but->labelcolor(fl_contrast(FL_FOREGROUND_COLOR, c));
+      but->color(adaptedFill(c));
+      but->labelcolor(fl_contrast(FL_FOREGROUND_COLOR, adaptedFill(c)));
     }
     return but;
   }
@@ -1362,8 +1361,8 @@ Fl_Widget *addParameterWidget(onelab::string &p, int xx, int yy, int ww, int hh,
     but->value(p.getValue().c_str());
     but->align(FL_ALIGN_RIGHT | FL_ALIGN_CLIP);
     if(highlight) {
-      but->color(c);
-      but->textcolor(fl_contrast(FL_FOREGROUND_COLOR, c));
+      but->color(adaptedFill(c));
+      but->textcolor(fl_contrast(FL_FOREGROUND_COLOR, adaptedFill(c)));
     }
     return but;
   }
@@ -1376,8 +1375,8 @@ Fl_Widget *addParameterWidget(onelab::string &p, int xx, int yy, int ww, int hh,
     but->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
     but->align(FL_ALIGN_RIGHT | FL_ALIGN_CLIP);
     if(highlight) {
-      but->color(c);
-      but->textcolor(fl_contrast(FL_FOREGROUND_COLOR, c));
+      but->color(adaptedFill(c));
+      but->textcolor(fl_contrast(FL_FOREGROUND_COLOR, adaptedFill(c)));
     }
     return but;
   }
@@ -1429,8 +1428,8 @@ Fl_Widget *addParameterWidget(onelab::string &p, int xx, int yy, int ww, int hh,
   but->input()->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
   but->align(FL_ALIGN_RIGHT | FL_ALIGN_CLIP);
   if(highlight) {
-    but->input()->color(c);
-    but->input()->textcolor(fl_contrast(FL_FOREGROUND_COLOR, c));
+    but->input()->color(adaptedFill(c));
+    but->input()->textcolor(fl_contrast(FL_FOREGROUND_COLOR, adaptedFill(c)));
   }
   return but;
 }

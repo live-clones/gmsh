@@ -36,5 +36,11 @@ int gmshSchemeHandle(int event, Fl_Window *win);
 // own); and the highlight alone, for a part of a widget under the pointer
 Fl_Color hoverHighlight(Fl_Widget *w, Fl_Color c);
 Fl_Color hoverHighlight(Fl_Color c);
+// a colour chosen for a light interface, of the same hue at a lightness that
+// suits the theme: the background of a field (a clear tint in light mode, a
+// deep one in dark mode), or a text (as is in light mode, light in dark mode);
+// e.g. the highlight colours of ONELAB parameters
+Fl_Color adaptedFill(Fl_Color c);
+Fl_Color adaptedText(Fl_Color c);
 
 #endif

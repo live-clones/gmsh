@@ -4,6 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <typeinfo>
@@ -87,6 +88,56 @@ void applyGmshColors(bool dark)
     Fl_Tooltip::textcolor(FL_FOREGROUND_COLOR);
   }
 }
+
+// A colour chosen for a light interface (a pastel background, a vivid text)
+// at another lightness (or at most that one), of the same hue, saturated as
+// much as the colour was coloured, so that a pastel becomes a clear tint and a
+// vivid colour stays vivid, within a cap that keeps them from glaring
+static Fl_Color atLightness(Fl_Color c, double lightness, double maxSaturation,
+                            bool atMost = false)
+{
+  uchar r, g, b;
+  Fl::get_color(c, r, g, b);
+  double rgb[3] = {r / 255., g / 255., b / 255.};
+  double mx = std::max(rgb[0], std::max(rgb[1], rgb[2]));
+  double mn = std::min(rgb[0], std::min(rgb[1], rgb[2]));
+  double chroma = mx - mn, l = 0.5 * (mx + mn), hue = 0., s = 0.;
+  if(chroma > 0.) {
+    s = chroma / (1. - std::abs(2. * l - 1.));
+    if(mx == rgb[0])
+      hue = std::fmod((rgb[1] - rgb[2]) / chroma + 6., 6.);
+    else if(mx == rgb[1])
+      hue = (rgb[2] - rgb[0]) / chroma + 2.;
+    else
+      hue = (rgb[0] - rgb[1]) / chroma + 4.;
+  }
+  s = std::min(maxSaturation, s * std::min(1., 8. * chroma));
+  if(atMost) lightness = std::min(lightness, l);
+  // back from hue, saturation and lightness
+  double c2 = (1. - std::abs(2. * lightness - 1.)) * s;
+  double x = c2 * (1. - std::abs(std::fmod(hue, 2.) - 1.));
+  double m = lightness - 0.5 * c2;
+  double out[3] = {0., 0., 0.};
+  int sector = (int)hue % 6;
+  const int order[6][3] = {{0, 1, 2}, {1, 0, 2}, {2, 0, 1},
+                           {2, 1, 0}, {1, 2, 0}, {0, 2, 1}};
+  double v[3] = {c2, x, 0.};
+  for(int i = 0; i < 3; i++) out[i] = v[order[sector][i]] + m;
+  return fl_rgb_color((uchar)(255. * out[0] + 0.5),
+                      (uchar)(255. * out[1] + 0.5),
+                      (uchar)(255. * out[2] + 0.5));
+}
+
+// a field: a deep tint in dark mode; in light mode a clear one, a pastel being
+// barely told apart from white
+Fl_Color adaptedFill(Fl_Color c)
+{
+  return CTX::instance()->guiDark ? atLightness(c, 0.27, 0.6) :
+                                    atLightness(c, 0.88, 1., true);
+}
+
+Fl_Color adaptedText(Fl_Color c)
+{ return CTX::instance()->guiDark ? atLightness(c, 0.72, 0.8) : c; }
 
 // The widget under the pointer, when it takes input (a button, a check box,
 // a menu button, a field, a slider, a tab): its boxes are drawn a little

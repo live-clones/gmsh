@@ -20,6 +20,7 @@
 #include "graphMenu.h"
 #include "extraDialogs.h"
 #include "Context.h"
+#include "gmshScheme.h"
 
 class inputRange : public Fl_Group {
 private:
@@ -151,24 +152,26 @@ private:
   void _set_loop_value(const std::string &val)
   {
     _loop_val = val;
-    if(val == "1") {
-      _loop_butt->label("1");
-      _loop_butt->selection_color(FL_GREEN);
-      _loop_butt->value(1);
-    }
-    else if(val == "2") {
-      _loop_butt->label("2");
-      _loop_butt->selection_color(FL_BLUE);
-      _loop_butt->value(1);
-    }
-    else if(val == "3") {
-      _loop_butt->label("3");
-      _loop_butt->selection_color(FL_RED);
+    // the level of the loop, on its colour (adapted to the theme, see
+    // adaptedFill()) with a digit that reads on it
+    Fl_Color col = 0;
+    if(val == "1")
+      col = FL_GREEN;
+    else if(val == "2")
+      col = FL_BLUE;
+    else if(val == "3")
+      col = FL_RED;
+    if(col) {
+      _loop_butt->copy_label(val.c_str());
+      _loop_butt->selection_color(adaptedFill(col));
+      _loop_butt->labelcolor(
+        fl_contrast(FL_FOREGROUND_COLOR, adaptedFill(col)));
       _loop_butt->value(1);
     }
     else {
       _loop_butt->label("@-1gmsh_rotate");
       _loop_butt->selection_color(_loop_butt->color());
+      _loop_butt->labelcolor(FL_FOREGROUND_COLOR);
       _loop_butt->value(0);
     }
     _loop_butt->redraw();
