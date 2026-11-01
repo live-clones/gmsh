@@ -763,6 +763,10 @@ void openglWindow::hostCursor(bool cross)
 bool openglWindow::hostBeginGL()
 {
   if(_lock) return false;
+  // no picking in a context the next draw() is to make or set up, e.g. after a
+  // change of mode: the buffer objects and entry points of the previous one
+  // would be used
+  if(!context() || !context_valid()) return false;
   _setLock(true);
   make_current();
   glShader::setContext(context());
