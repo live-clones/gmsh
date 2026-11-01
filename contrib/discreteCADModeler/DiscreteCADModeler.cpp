@@ -2039,6 +2039,20 @@ bool DiscreteCAD_Internals::addTriangulation(
     }
   }
 
+  // (the other triangles of a surface, in several pieces around those on
+  // analytic surfaces, a surface for each piece)
+  {
+    for(std::size_t i = 0; i < nt; i++) parent[i] = i;
+    for(auto &e : edgeTriangles) {
+      if(e.second.size() != 2) continue;
+      const std::size_t i = e.second[0], j = e.second[1];
+      if(!hasUV[i] && !hasUV[j] && label[i] == label[j])
+        parent[find(i)] = find(j);
+    }
+    for(std::size_t i = 0; i < nt; i++)
+      if(!hasUV[i]) label[i] = (int)find(i);
+  }
+
   // the other surfaces split into pieces that a single map can parametrize,
   // as classifySurfaces does (in a temporary model, a discrete surface for
   // each surface)

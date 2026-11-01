@@ -983,32 +983,128 @@ void segmentSurface(const std::vector<std::array<double, 3> > &x,
   }
   if(surfaces.empty()) return;
 
-  // the triangles between pieces moved to the piece whose surface is the
-  // nearest to their centroid
-  for(int pass = 0; pass < 10; pass++) {
-    int moved = 0;
-    for(std::size_t t = 0; t < nt; t++) {
-      if(piece[t] < 0) continue;
-      int best = piece[t];
-      double nearest = std::abs(surfaces[best].distance(centroid[t].data()));
-      for(int u : neighbors[t]) {
-        const int p = piece[u];
-        if(p < 0 || p == best) continue;
-        int side = 0;
-        if(!agrees((int)t, surfaces[p], side)) continue;
-        const double d = std::abs(surfaces[p].distance(centroid[t].data()));
-        if(d < nearest) {
-          nearest = d;
-          best = p;
+  // the pieces optimized together (variational shape approximation, with
+  // analytic surfaces, Cohen-Steiner et al. 2004, Wu and Kobbelt 2005): the
+  // triangles given to the surface of the pieces nearest to their nodes by
+  // flooding from the triangle of each piece nearest to its surface (keeping
+  // the pieces connected; those within tau of no surface free), then the
+  // surfaces fitted to their pieces, until the pieces do not change; then
+  // two pieces next to each other on the same surface merged, and so on
+  // (the distances of the nodes and of the centroid, which tells the surface
+  // of a triangle whose nodes are on two of them, along the curve between
+  // them)
+  auto error = [&](int t, const Analytic &a) {
+    const double d = a.distance(centroid[t].data());
+    double e = d * d;
+    for(int k = 0; k < 3; k++) {
+      const double dk = a.distance(x[triangles[t][k]].data());
+      e += dk * dk;
+    }
+    return e;
+  };
+  std::vector<int> sideOf;
+  auto admissible = [&](int t, int p) {
+    for(int k = 0; k < 3; k++)
+      if(!(std::abs(surfaces[p].distance(x[triangles[t][k]].data())) <= tau))
+        return false;
+    int side = sideOf[p];
+    return agrees(t, surfaces[p], side);
+  };
+  auto lloyd = [&]() {
+    for(int iteration = 0; iteration < 20; iteration++) {
+      const std::size_t np = surfaces.size();
+      std::vector<int> seedOf(np, -1);
+      std::vector<double> best(np, 1e300);
+      for(std::size_t t = 0; t < nt; t++) {
+        const int p = piece[t];
+        if(p < 0) continue;
+        const double e = error((int)t, surfaces[p]);
+        if(e < best[p]) {
+          best[p] = e;
+          seedOf[p] = (int)t;
         }
       }
-      if(best != piece[t]) {
-        piece[t] = best;
-        moved++;
+      sideOf.assign(np, 0);
+      std::vector<int> label(nt, -1);
+      std::priority_queue<std::pair<double, std::pair<int, int> >,
+                          std::vector<std::pair<double, std::pair<int, int> > >,
+                          std::greater<std::pair<double, std::pair<int, int> > > >
+        queue;
+      for(std::size_t p = 0; p < np; p++) {
+        if(seedOf[p] < 0) continue;
+        agrees(seedOf[p], surfaces[p], sideOf[p]);
+        label[seedOf[p]] = (int)p;
+        for(int u : neighbors[seedOf[p]])
+          if(label[u] < 0 && admissible(u, (int)p))
+            queue.push({error(u, surfaces[p]), {u, (int)p}});
+      }
+      while(!queue.empty()) {
+        const int t = queue.top().second.first, p = queue.top().second.second;
+        queue.pop();
+        if(label[t] >= 0) continue;
+        label[t] = p;
+        for(int u : neighbors[t])
+          if(label[u] < 0 && admissible(u, p))
+            queue.push({error(u, surfaces[p]), {u, p}});
+      }
+      // the surfaces of the pieces that changed fitted to them
+      std::vector<char> changed(np, 0);
+      bool any = false;
+      for(std::size_t t = 0; t < nt; t++) {
+        if(label[t] == piece[t]) continue;
+        any = true;
+        if(label[t] >= 0) changed[label[t]] = 1;
+        if(piece[t] >= 0) changed[piece[t]] = 1;
+      }
+      piece = label;
+      if(!any) break;
+      std::vector<std::vector<int> > members(np);
+      for(std::size_t t = 0; t < nt; t++)
+        if(piece[t] >= 0) members[piece[t]].push_back((int)t);
+      for(std::size_t p = 0; p < np; p++) {
+        if(!changed[p] || members[p].empty()) continue;
+        const Analytic r = fit(members[p], tau);
+        if(r.type != Analytic::NONE) surfaces[p] = r;
       }
     }
-    if(!moved) break;
+  };
+  lloyd();
+  for(bool merged = true; merged;) {
+    merged = false;
+    std::set<std::pair<int, int> > pairs;
+    for(std::size_t t = 0; t < nt; t++)
+      for(int u : neighbors[t])
+        if(piece[t] >= 0 && piece[u] >= 0 && piece[t] != piece[u])
+          pairs.insert(std::minmax(piece[t], piece[u]));
+    for(auto &pq : pairs) {
+      std::vector<int> both;
+      for(std::size_t t = 0; t < nt; t++)
+        if(piece[t] == pq.first || piece[t] == pq.second) both.push_back((int)t);
+      const Analytic r = fit(both, tau);
+      if(r.type == Analytic::NONE) continue;
+      for(int t : both) piece[t] = pq.first;
+      surfaces[pq.first] = r;
+      merged = true;
+      break;
+    }
+    if(merged) lloyd();
   }
+  // (the pieces left empty removed)
+  {
+    std::vector<int> renumber(surfaces.size(), -1);
+    std::vector<Analytic> kept;
+    for(std::size_t t = 0; t < nt; t++) {
+      const int p = piece[t];
+      if(p < 0) continue;
+      if(renumber[p] < 0) {
+        renumber[p] = (int)kept.size();
+        kept.push_back(surfaces[p]);
+      }
+      piece[t] = renumber[p];
+    }
+    surfaces = kept;
+  }
+
   // the components of free triangles all along pieces added to them
   std::vector<char> seen(nt, 0);
   for(std::size_t t0 = 0; t0 < nt; t0++) {

@@ -61,10 +61,12 @@ double coordinatePrecision(const std::vector<std::array<double, 3> > &x);
 // them, fewer for a small face, if an analytic surface is within twice the
 // precision of the coordinates of their nodes, and within tolerance), the
 // regions grown on the surface, refitted as they grow (a freeform surface has
-// no seeds); then the triangles between the pieces moved to the piece whose
-// surface is the nearest to their centroid, the bands of free triangles one
-// triangle wide along them added to them. The piece of each triangle (-1 for
-// none) and the surface of each piece.
+// no seeds); then the pieces optimized together (variational shape
+// approximation: the triangles given to the nearest surface by flooding, the
+// surfaces fitted to their pieces, until they do not change, pieces on the
+// same surface merged), the bands of free triangles one triangle wide along
+// them added to them. The piece of each triangle (-1 for none) and the
+// surface of each piece.
 void segmentSurface(const std::vector<std::array<double, 3> > &x,
                     const std::vector<std::array<int, 3> > &triangles,
                     const std::vector<std::vector<int> > &neighbors,
