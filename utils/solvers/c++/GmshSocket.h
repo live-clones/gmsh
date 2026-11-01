@@ -123,13 +123,13 @@ protected:
     long int remaining = bytes;
     do {
       long int len = recv(_sock, buf + sofar, remaining, 0);
-      if(len == 0) break; // we're done!
+      if(len == 0) break; // connection closed: what was read so far
       if(len < 0) return -1; // error
       sofar += len;
       remaining -= len;
     } while(remaining > 0);
-    _received += bytes;
-    return bytes;
+    _received += sofar;
+    return (int)sofar;
   }
   // utility function to swap bytes in an array
   void _swapBytes(char *array, int size, int n)
@@ -212,14 +212,14 @@ public:
   int ReceiveHeader(int *type, int *len, int *swap)
   {
     *swap = 0;
-    if(_receiveData(type, sizeof(int)) > 0) {
+    if(_receiveData(type, sizeof(int)) == (int)sizeof(int)) {
       if(*type > 65535) {
         // the data comes from a machine with different endianness and
         // we must swap the bytes
         *swap = 1;
         _swapBytes((char *)type, sizeof(int), 1);
       }
-      if(_receiveData(len, sizeof(int)) > 0) {
+      if(_receiveData(len, sizeof(int)) == (int)sizeof(int)) {
         if(*swap) _swapBytes((char *)len, sizeof(int), 1);
         return 1;
       }
