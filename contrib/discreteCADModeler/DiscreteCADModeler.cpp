@@ -1790,40 +1790,132 @@ bool DiscreteCAD_Internals::addTriangulation(
     Msg::Warning("Discrete CAD triangulation not orientable");
 
   // the surfaces: the triangles of the same piece connected across edges of
-  // two triangles whose normals make an angle smaller than angle (or one of
-  // them without normal)
-  std::vector<std::array<double, 3> > normal(nt);
-  for(std::size_t i = 0; i < nt; i++) {
-    const std::array<double, 3> &a = _nodes[tri[i][0]], &b = _nodes[tri[i][1]],
-                                &c = _nodes[tri[i][2]];
-    double n[3] = {(b[1] - a[1]) * (c[2] - a[2]) - (b[2] - a[2]) * (c[1] - a[1]),
-                   (b[2] - a[2]) * (c[0] - a[0]) - (b[0] - a[0]) * (c[2] - a[2]),
-                   (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])};
-    normalize(n);
-    normal[i] = {{n[0], n[1], n[2]}};
-  }
+  // two triangles that are not sharp
   std::vector<std::size_t> parent(nt);
   for(std::size_t i = 0; i < nt; i++) parent[i] = i;
   std::function<std::size_t(std::size_t)> find = [&](std::size_t i) {
     while(parent[i] != i) i = parent[i] = parent[parent[i]];
     return i;
   };
-  // (the other edges are sharp: curves, on the boundary of the surfaces or
-  // embedded in them)
-  std::set<std::pair<int, int> > sharp;
+  // (the sharp edges: where the angle between the triangles is at least angle
+  // and that between the sheets of the surface, see sheetAngles, at least
+  // angle / 2 (on a coarse triangulation of a smooth surface, it is
+  // smaller), or where the latter is at least angle / 2 continuing sharp
+  // edges, at the end of their chains or between two of them; curves, on the
+  // boundary of the surfaces or embedded in them)
+  std::vector<std::array<int, 4> > inner;
   for(auto &e : edgeTriangles) {
     if(e.second.size() != 2) continue;
     const std::size_t i = e.second[0], j = e.second[1];
     if(piece[i] != piece[j]) continue;
-    const std::array<double, 3> &m = normal[i], &n = normal[j];
-    const double c = m[0] * n[0] + m[1] * n[1] + m[2] * n[2];
-    const bool none = (m[0] == 0. && m[1] == 0. && m[2] == 0.) ||
-                      (n[0] == 0. && n[1] == 0. && n[2] == 0.);
-    if(none || std::acos(std::max(-1., std::min(1., c))) < angle)
-      parent[find(i)] = find(j);
-    else
-      sharp.insert(e.first);
+    inner.push_back({{e.first.first, e.first.second, (int)i, (int)j}});
   }
+  std::vector<double> sheet, raw;
+  sheetAngles(_nodes, tri, inner, angle / 2., sheet, raw);
+  std::set<std::pair<int, int> > sharp;
+  std::map<int, std::vector<std::size_t> > weakAt;
+  for(std::size_t k = 0; k < inner.size(); k++) {
+    const std::pair<int, int> edge(inner[k][0], inner[k][1]);
+    if(raw[k] >= angle && sheet[k] >= angle / 2.)
+      sharp.insert(edge);
+    else if(sheet[k] >= angle / 2.) {
+      weakAt[edge.first].push_back(k);
+      weakAt[edge.second].push_back(k);
+    }
+  }
+  // (the weak ones continuing sharp ones, turning by less than 45 degrees;
+  // then one of the edges around a triangle all of whose edges are sharp
+  // removed, and the chains of those leaving the middle of a chain of sharp
+  // edges without reaching another one)
+  std::set<std::pair<int, int> > promoted;
+  std::vector<std::pair<int, int> > front; // (node, previous node)
+  for(auto &e : sharp)
+    front.insert(front.end(), {{e.first, e.second}, {e.second, e.first}});
+  while(!front.empty()) {
+    const int v = front.back().first, u = front.back().second;
+    front.pop_back();
+    auto it = weakAt.find(v);
+    if(it == weakAt.end()) continue;
+    for(std::size_t k : it->second) {
+      const std::pair<int, int> edge(inner[k][0], inner[k][1]);
+      const int w = edge.first == v ? edge.second : edge.first;
+      double p[3], q[3];
+      for(int j = 0; j < 3; j++) {
+        p[j] = _nodes[v][j] - _nodes[u][j];
+        q[j] = _nodes[w][j] - _nodes[v][j];
+      }
+      const double c = (p[0] * q[0] + p[1] * q[1] + p[2] * q[2]) /
+                       std::sqrt((p[0] * p[0] + p[1] * p[1] + p[2] * p[2]) *
+                                 (q[0] * q[0] + q[1] * q[1] + q[2] * q[2]));
+      if(!(c > std::cos(pi / 4.))) continue;
+      if(!sharp.insert(edge).second) continue;
+      promoted.insert(edge);
+      front.push_back({w, v});
+    }
+  }
+  if(!promoted.empty()) {
+    std::map<std::pair<int, int>, double> sheetOf;
+    for(std::size_t k = 0; k < inner.size(); k++)
+      sheetOf[std::make_pair(inner[k][0], inner[k][1])] = sheet[k];
+    for(std::size_t i = 0; i < nt; i++) {
+      std::pair<int, int> weakest(-1, -1);
+      bool closed = true;
+      for(int k = 0; k < 3 && closed; k++) {
+        const std::pair<int, int> edge =
+          std::minmax(tri[i][k], tri[i][(k + 1) % 3]);
+        auto it = edgeTriangles.find(edge);
+        const bool boundary = it->second.size() != 2 ||
+                              piece[it->second[0]] != piece[it->second[1]];
+        if(!boundary && !sharp.count(edge)) closed = false;
+        if(promoted.count(edge) &&
+           (weakest.first < 0 || sheetOf[edge] < sheetOf[weakest]))
+          weakest = edge;
+      }
+      if(closed && weakest.first >= 0) {
+        sharp.erase(weakest);
+        promoted.erase(weakest);
+      }
+    }
+  }
+  for(bool removed = true; removed && !promoted.empty();) {
+    removed = false;
+    std::map<int, std::vector<std::pair<int, int> > > sharpAt;
+    for(auto &e : sharp) {
+      sharpAt[e.first].push_back(e);
+      sharpAt[e.second].push_back(e);
+    }
+    std::set<std::pair<int, int> > visited;
+    for(auto &e0 : std::set<std::pair<int, int> >(promoted)) {
+      if(visited.count(e0)) continue;
+      // the chain of promoted edges through nodes of two sharp edges, and its
+      // ends
+      std::vector<std::pair<int, int> > chain = {e0};
+      visited.insert(e0);
+      int ends[2] = {e0.first, e0.second};
+      for(int side = 0; side < 2; side++) {
+        std::pair<int, int> last = e0;
+        while(sharpAt[ends[side]].size() == 2) {
+          const std::vector<std::pair<int, int> > &at = sharpAt[ends[side]];
+          const std::pair<int, int> next = at[0] == last ? at[1] : at[0];
+          if(!promoted.count(next) || visited.count(next)) break;
+          visited.insert(next);
+          chain.push_back(next);
+          ends[side] = next.first == ends[side] ? next.second : next.first;
+          last = next;
+        }
+      }
+      const std::size_t d0 = sharpAt[ends[0]].size(), d1 = sharpAt[ends[1]].size();
+      if((d0 == 1 && d1 >= 3) || (d1 == 1 && d0 >= 3) || (d0 == 1 && d1 == 1)) {
+        for(auto &e : chain) {
+          sharp.erase(e);
+          promoted.erase(e);
+        }
+        removed = true;
+      }
+    }
+  }
+  for(auto &e : inner)
+    if(!sharp.count(std::make_pair(e[0], e[1]))) parent[find(e[2])] = find(e[3]);
   std::vector<int> label(nt);
   for(std::size_t i = 0; i < nt; i++) label[i] = (int)find(i);
 

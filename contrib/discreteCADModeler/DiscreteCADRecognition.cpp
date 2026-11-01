@@ -7,6 +7,7 @@
 #include <cmath>
 #include <functional>
 #include <map>
+#include <set>
 #include "DiscreteCADRecognition.h"
 
 namespace {
@@ -635,12 +636,142 @@ recognizeSurface(const std::vector<std::array<double, 3> > &x,
   return choice();
 }
 
+void sheetAngles(const std::vector<std::array<double, 3> > &x,
+                 const std::vector<std::array<int, 3> > &triangles,
+                 const std::vector<std::array<int, 4> > &edges, double lower,
+                 std::vector<double> &angles, std::vector<double> &raw)
+{
+  angles.assign(edges.size(), 0.);
+  auto unit = [&](int t, double n[3]) {
+    const std::array<double, 3> &a = x[triangles[t][0]], &b = x[triangles[t][1]],
+                                &c = x[triangles[t][2]];
+    double u[3], v[3];
+    for(int k = 0; k < 3; k++) {
+      u[k] = b[k] - a[k];
+      v[k] = c[k] - a[k];
+    }
+    cross(u, v, n);
+    return normalize(n);
+  };
+  auto between = [](const double m[3], const double n[3]) {
+    return std::acos(std::max(-1., std::min(1., dot(m, n))));
+  };
+  // the angles between the triangles, and the edges of each triangle (the
+  // other ones cannot be crossed)
+  std::map<std::pair<int, int>, std::size_t> edgeOf;
+  for(std::size_t i = 0; i < edges.size(); i++) {
+    edgeOf[std::minmax(edges[i][0], edges[i][1])] = i;
+    double n[2][3];
+    if(unit(edges[i][2], n[0]) && unit(edges[i][3], n[1]))
+      angles[i] = between(n[0], n[1]);
+  }
+  raw = angles;
+  for(std::size_t i = 0; i < edges.size(); i++) {
+    const int a = edges[i][0], b = edges[i][1], t[2] = {edges[i][2], edges[i][3]};
+    double n[2][3];
+    if(raw[i] < lower || !unit(t[0], n[0]) || !unit(t[1], n[1])) continue;
+    // the axis of the edge, its middle, and the directions of the two
+    // triangles around it
+    double e[3], m[3], side[2][3];
+    for(int k = 0; k < 3; k++) {
+      e[k] = x[b][k] - x[a][k];
+      m[k] = (x[a][k] + x[b][k]) / 2.;
+    }
+    if(!normalize(e)) continue;
+    for(int s = 0; s < 2; s++) {
+      int c = triangles[t[s]][0];
+      for(int k = 1; k < 3 && (c == a || c == b); k++) c = triangles[t[s]][k];
+      double w[3];
+      for(int k = 0; k < 3; k++) w[k] = x[c][k] - m[k];
+      const double h = dot(w, e);
+      for(int k = 0; k < 3; k++) side[s][k] = w[k] - h * e[k];
+      normalize(side[s]);
+    }
+    // the nodes on each side (around the axis; those near the axis, on the
+    // extension of the edge, on none), in the frame of the triangle of the
+    // side: the normal at the middle of the edge of the quadric (or the
+    // plane) fitted to them, with the nodes of the edge
+    double normal[2][3];
+    bool fitted = true;
+    for(int s = 0; s < 2 && fitted; s++) {
+      double f0[3], f1[3];
+      for(int k = 0; k < 3; k++) f0[k] = e[k];
+      cross(n[s], f0, f1);
+      // (the nodes of the triangles within three steps of the triangle of the
+      // side across edges not sharper than this one)
+      std::set<int> ring = {a, b};
+      std::map<int, int> depth = {{t[s], 0}};
+      std::vector<int> queue = {t[s]};
+      for(std::size_t q = 0; q < queue.size(); q++) {
+        const int u = queue[q];
+        for(int k = 0; k < 3; k++) ring.insert(triangles[u][k]);
+        if(depth[u] == 3) continue;
+        for(int k = 0; k < 3; k++) {
+          auto it = edgeOf.find(
+            std::minmax(triangles[u][k], triangles[u][(k + 1) % 3]));
+          if(it == edgeOf.end() || it->second == i ||
+             raw[it->second] > 1.1 * raw[i])
+            continue;
+          const int w = edges[it->second][2] == u ? edges[it->second][3] :
+                                                     edges[it->second][2];
+          if(depth.insert({w, depth[u] + 1}).second) queue.push_back(w);
+        }
+      }
+      std::vector<std::array<double, 3> > local;
+      for(int v : ring) {
+        double w[3];
+        for(int k = 0; k < 3; k++) w[k] = x[v][k] - m[k];
+        if(v != a && v != b) {
+          const double h = dot(w, e);
+          double r[3];
+          for(int k = 0; k < 3; k++) r[k] = w[k] - h * e[k];
+          const double l = norm(r);
+          if(l < 0.2 * norm(w)) continue;
+          if((dot(r, side[s]) < dot(r, side[1 - s]))) continue;
+        }
+        local.push_back({{dot(w, f0), dot(w, f1), dot(w, n[s])}});
+      }
+      // (in units of the length of the edge; the quadratic terms regularized:
+      // those the nodes do not determine, as along the edge for nodes on two
+      // lines, vanish)
+      if(local.size() < 4) {
+        fitted = false;
+        break;
+      }
+      double length = 0.;
+      for(int k = 0; k < 3; k++)
+        length += (x[b][k] - x[a][k]) * (x[b][k] - x[a][k]);
+      length = std::sqrt(length);
+      std::vector<double> ata(36, 0.), sol(6, 0.);
+      for(auto &p : local) {
+        const double u = p[0] / length, v = p[1] / length, w = p[2] / length;
+        const double row[6] = {1., u, v, u * u, u * v, v * v};
+        for(int j = 0; j < 6; j++) {
+          sol[j] += row[j] * w;
+          for(int k = 0; k < 6; k++) ata[j * 6 + k] += row[j] * row[k];
+        }
+      }
+      double quadratic = 0.;
+      for(int j = 3; j < 6; j++) quadratic += ata[j * 6 + j] / 3.;
+      for(int j = 3; j < 6; j++) ata[j * 6 + j] += 1.e-3 * quadratic + 1.e-12;
+      if(!solve(6, ata, sol)) {
+        fitted = false;
+        break;
+      }
+      for(int k = 0; k < 3; k++)
+        normal[s][k] = -sol[1] * f0[k] - sol[2] * f1[k] + n[s][k];
+      normalize(normal[s]);
+    }
+    if(fitted) angles[i] = std::min(raw[i], between(normal[0], normal[1]));
+  }
+}
+
 double coordinatePrecision(const std::vector<std::array<double, 3> > &x)
 {
   // the decimals and significant digits of the coordinates, if they all have
   // a finite decimal expansion
   bool single = true, decimal = true;
-  int decimals = 0, digits = 0;
+  std::vector<std::pair<int, int> > counts; // decimals, significant digits
   for(auto &p : x)
     for(double v : p) {
       if(v == 0.) continue;
@@ -656,21 +787,36 @@ double coordinatePrecision(const std::vector<std::array<double, 3> > &x)
         decimal = false;
         continue;
       }
-      decimals = std::max(decimals, d);
-      digits = std::max(digits, d + (int)std::floor(std::log10(std::abs(v))) + 1);
+      counts.push_back({d, d + (int)std::floor(std::log10(std::abs(v))) + 1});
     }
-  // written with few decimals or significant digits (as text), or else
-  // single or double precision floats
-  if(decimal && std::min(decimals, digits) > 9) decimal = false;
+  // written with few decimals or significant digits (as text): most of them
+  // have that many (exact values, as products of short decimals, have various
+  // numbers of decimals, some large); or else single or double precision
+  // floats
+  int decimals = 0, digits = 0;
+  for(auto &c : counts) {
+    decimals = std::max(decimals, c.first);
+    digits = std::max(digits, c.second);
+  }
+  std::size_t withDecimals = 0, withDigits = 0;
+  for(auto &c : counts) {
+    if(c.first == decimals) withDecimals++;
+    if(c.second == digits) withDigits++;
+  }
+  const bool fixed = decimal && decimals <= 9 && 2 * withDecimals >= counts.size();
+  const bool significant =
+    decimal && digits <= 9 && 2 * withDigits >= counts.size();
   double q = 0.;
   for(auto &p : x)
     for(double v : p) {
       if(v == 0.) continue;
       double qv = std::abs(v) * (single ? std::ldexp(1., -24) : std::ldexp(1., -53));
-      if(decimal)
-        qv = std::max(qv, std::min(std::pow(10., -decimals),
-                                   std::pow(10., std::floor(std::log10(std::abs(v))) +
-                                                   1 - digits)) / 2.);
+      double r = 1e300;
+      if(fixed) r = std::pow(10., -decimals);
+      if(significant)
+        r = std::min(r, std::pow(10., std::floor(std::log10(std::abs(v))) + 1 -
+                                        digits));
+      if(fixed || significant) qv = std::max(qv, r / 2.);
       q = std::max(q, qv);
     }
   return std::sqrt(3.) * q;

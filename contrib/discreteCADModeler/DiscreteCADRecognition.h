@@ -36,6 +36,20 @@ recognizeSurface(const std::vector<std::array<double, 3> > &x,
                  const std::vector<std::array<int, 3> > &triangles,
                  double tolerance, double angle);
 
+// the angle between the sheets of a triangulation along its edges shared by
+// two triangles (edges: their nodes and their two triangles, consistently
+// oriented): the angle between the normals at the middle of the edge of the
+// quadrics fitted to the nodes within two edges of its nodes on each side of
+// it (around its axis), which does not depend on the size of the triangles on
+// a smooth surface (on a coarse triangulation the angle between the
+// triangles, in raw, can be large), the nodes reached from the triangle on
+// each side across edges not sharper than it; the angle between the triangles
+// if it is smaller (or than lower, or if the nodes are too few)
+void sheetAngles(const std::vector<std::array<double, 3> > &x,
+                 const std::vector<std::array<int, 3> > &triangles,
+                 const std::vector<std::array<int, 4> > &edges, double lower,
+                 std::vector<double> &angles, std::vector<double> &raw);
+
 // the largest distance by which the nodes x were moved when their coordinates
 // were rounded: written as text with few decimals or significant digits, or
 // as single or double precision floats
