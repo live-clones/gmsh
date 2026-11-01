@@ -89,8 +89,16 @@ public:
               lastRefresh = start;
             }
           }
-          // wait at most waitint seconds and respond to FLTK events if ready
-          if(Fl::ready()) FlGui::wait(waitint);
+          // wait at most waitint seconds and respond to FLTK events if ready,
+          // and run the timers of FLTK at least every 50 ms, which Fl::ready()
+          // does not count on every platform (nothing else would run them
+          // while no message comes, e.g. while listening)
+          static double lastWait = 0.;
+          double now = TimeOfDay();
+          if(Fl::ready() || now - lastWait > 0.05) {
+            lastWait = now;
+            FlGui::wait(waitint);
+          }
         }
 #endif
         // return to caller (we will be back here soon again)
