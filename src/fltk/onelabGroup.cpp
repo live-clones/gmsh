@@ -486,7 +486,7 @@ static Fl_Color treeColor()
 static Fl_Color connectorColor()
 {
   if(!gmshScheme()) return FL_INACTIVE_COLOR;
-  return fl_color_average(treeColor(), FL_FOREGROUND_COLOR, 0.68f);
+  return fl_color_average(treeColor(), FL_FOREGROUND_COLOR, 0.76f);
 }
 
 // every row of the tree is this tall, whether it holds a label, a button or
