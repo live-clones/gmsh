@@ -75,8 +75,10 @@ void segmentSurface(const std::vector<std::array<double, 3> > &x,
 // the parameters of the corners of the triangles on an analytic surface, as
 // those of the primitives of the discrete CAD modeler: the coordinates in the
 // plane; the developed cylinder (r theta, z) and cone s (cos(theta sin(a)),
-// sin(theta sin(a))), the angles of the corners of each triangle within pi of
-// each other (their jumps are the seams); for a cone holding its apex (a node
+// sin(theta sin(a))), the angles continuous across the edges except, for a
+// surface going around its axis, along the shortest path of edges between
+// two of its boundaries going around it (the jump is its seam); for a cone
+// holding its apex (a node
 // at most tolerance away from it, given in apex, else -1), the disk (s / smax)
 // (cos(theta), sin(theta)); the stereographic projection of a sphere from the
 // point opposite to it, or of its two halves (half of each triangle, 0 or 1)

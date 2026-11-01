@@ -7,6 +7,7 @@
 #include <cmath>
 #include <functional>
 #include <map>
+#include <queue>
 #include <set>
 #include "DiscreteCADRecognition.h"
 
@@ -1098,6 +1099,121 @@ void analyticParameters(const DiscreteCADAnalyticSurface &s,
       a[k] = sum / count;
     }
   };
+  // the angles of the corners of the triangles around the axis, continuous
+  // across their edges, except along a cut if the surface goes around the
+  // axis: the shortest path along the edges between two of its boundaries
+  // that go around it (its seam, along a generatrix if the nodes allow it)
+  auto aroundAxis = [&]() {
+    auto wrap = [](double d) { return d - 2. * pi * std::round(d / (2. * pi)); };
+    std::map<std::pair<int, int>, std::vector<int> > edges;
+    for(std::size_t t = 0; t < nt; t++)
+      for(int k = 0; k < 3; k++)
+        edges[std::minmax(triangles[t][k], triangles[t][(k + 1) % 3])]
+          .push_back((int)t);
+    std::map<int, std::vector<int> > boundary, adjacent;
+    for(auto &e : edges) {
+      adjacent[e.first.first].push_back(e.first.second);
+      adjacent[e.first.second].push_back(e.first.first);
+      if(e.second.size() != 1) continue;
+      boundary[e.first.first].push_back(e.first.second);
+      boundary[e.first.second].push_back(e.first.first);
+    }
+    std::vector<std::vector<int> > around;
+    std::set<int> seen;
+    for(auto &b : boundary) {
+      if(seen.count(b.first) || b.second.size() != 2) continue;
+      std::vector<int> loop = {b.first};
+      seen.insert(b.first);
+      int previous = b.first, current = b.second[0];
+      double turns = 0.;
+      bool simple = true;
+      while(current != b.first) {
+        turns += wrap(theta[current] - theta[previous]);
+        if(seen.count(current) || boundary[current].size() != 2) {
+          simple = false;
+          break;
+        }
+        seen.insert(current);
+        loop.push_back(current);
+        const std::vector<int> &nb = boundary[current];
+        const int following = nb[0] == previous ? nb[1] : nb[0];
+        previous = current;
+        current = following;
+      }
+      if(!simple) continue;
+      turns += wrap(theta[b.first] - theta[previous]);
+      if(std::abs(turns) > pi) around.push_back(loop);
+    }
+    std::set<std::pair<int, int> > cut;
+    if(around.size() >= 2) {
+      std::vector<double> distance(n, 1e300);
+      std::vector<int> from(n, -1);
+      std::priority_queue<std::pair<double, int>,
+                          std::vector<std::pair<double, int> >,
+                          std::greater<std::pair<double, int> > >
+        queue;
+      for(int v : around[0]) {
+        distance[v] = 0.;
+        queue.push({0., v});
+      }
+      const std::set<int> target(around[1].begin(), around[1].end());
+      int reached = -1;
+      while(!queue.empty()) {
+        const std::pair<double, int> top = queue.top();
+        queue.pop();
+        const int v = top.second;
+        if(top.first > distance[v]) continue;
+        if(target.count(v)) {
+          reached = v;
+          break;
+        }
+        for(int w : adjacent[v]) {
+          double l = 0.;
+          for(int k = 0; k < 3; k++) l += (x[w][k] - x[v][k]) * (x[w][k] - x[v][k]);
+          const double d = top.first + std::sqrt(l);
+          if(d < distance[w]) {
+            distance[w] = d;
+            from[w] = v;
+            queue.push({d, w});
+          }
+        }
+      }
+      for(int v = reached; v >= 0 && from[v] >= 0; v = from[v])
+        cut.insert(std::minmax(v, from[v]));
+    }
+    std::vector<std::array<double, 3> > angle(nt);
+    std::vector<char> done(nt, 0);
+    for(std::size_t t0 = 0; t0 < nt; t0++) {
+      if(done[t0]) continue;
+      unwrapped(t0, angle[t0].data());
+      done[t0] = 1;
+      std::vector<int> stack = {(int)t0};
+      while(!stack.empty()) {
+        const int t = stack.back();
+        stack.pop_back();
+        for(int k = 0; k < 3; k++) {
+          const int p = triangles[t][k], q = triangles[t][(k + 1) % 3];
+          const std::pair<int, int> key = std::minmax(p, q);
+          if(cut.count(key)) continue;
+          for(int u : edges[key]) {
+            if(done[u]) continue;
+            for(int l = 0; l < 3; l++) {
+              const int v = triangles[u][l];
+              if(v == p)
+                angle[u][l] = angle[t][k];
+              else if(v == q)
+                angle[u][l] = angle[t][(k + 1) % 3];
+              else
+                angle[u][l] = angle[t][k] + wrap(theta[v] - angle[t][k]);
+            }
+            done[u] = 1;
+            stack.push_back(u);
+          }
+        }
+      }
+    }
+    return angle;
+  };
 
   switch(s.type) {
   case Analytic::PLANE:
@@ -1107,14 +1223,12 @@ void analyticParameters(const DiscreteCADAnalyticSurface &s,
         uv[t][k] = {{p[0], p[1]}};
       }
     break;
-  case Analytic::CYLINDER:
-    for(std::size_t t = 0; t < nt; t++) {
-      double a[3];
-      unwrapped(t, a);
+  case Analytic::CYLINDER: {
+    const std::vector<std::array<double, 3> > angle = aroundAxis();
+    for(std::size_t t = 0; t < nt; t++)
       for(int k = 0; k < 3; k++)
-        uv[t][k] = {{s.r1 * a[k], c[triangles[t][k]][2]}};
-    }
-    break;
+        uv[t][k] = {{s.r1 * angle[t][k], c[triangles[t][k]][2]}};
+  } break;
   case Analytic::CONE: {
     double smax = 0., nearest = 1e300;
     std::vector<double> dist(n);
@@ -1129,9 +1243,14 @@ void analyticParameters(const DiscreteCADAnalyticSurface &s,
     }
     if(nearest > tolerance) apex = -1;
     const double sinHalf = std::sin(s.r1);
+    std::vector<std::array<double, 3> > angle;
+    if(apex < 0) angle = aroundAxis();
     for(std::size_t t = 0; t < nt; t++) {
       double a[3];
-      unwrapped(t, a);
+      if(apex >= 0)
+        unwrapped(t, a);
+      else
+        for(int k = 0; k < 3; k++) a[k] = angle[t][k];
       for(int k = 0; k < 3; k++) {
         const int i = triangles[t][k];
         if(apex >= 0) {
