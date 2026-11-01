@@ -78,7 +78,15 @@ void resetOpenglMode()
 {
   if(!FlGui::available()) return;
   int mode = openglWindowMode();
-  for(openglWindow *gl : FlGui::instance()->openglWindows()) gl->mode(mode);
+  for(openglWindow *gl : FlGui::instance()->openglWindows()) {
+    // FLTK on macOS detaches the context it deletes from its view only when it
+    // is the current one: another one, still alive until the pool of released
+    // objects is drained, then takes the view's drawable away from the new
+    // context of the window, whose next swap crashes (two panes and a change of
+    // General.Antialiasing or General.Shaders)
+    if(gl->shown() && gl->context() && gl->mode() != mode) gl->make_current();
+    gl->mode(mode);
+  }
 }
 
 openglWindow::openglWindow(int x, int y, int w, int h)
