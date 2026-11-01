@@ -251,6 +251,16 @@ static void gmsh_rotate(Fl_Color c)
   fl_end_polygon();
 }
 
+// a small disk (FLTK draws its circle 10 pixels wide at the least): the switch
+// of the views of a group in the ONELAB tree
+static void gmsh_dot(Fl_Color c)
+{
+  fl_color(c);
+  fl_begin_polygon();
+  fl_arc(0.0, 0.0, 0.5, 0.0, 360.0);
+  fl_end_polygon();
+}
+
 // a crosshair over a target: the point of the model a query asks about
 static void gmsh_query(Fl_Color c)
 {
@@ -654,6 +664,7 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   fl_add_symbol("gmsh_sidebar", gmsh_sidebar, 1);
   fl_add_symbol("gmsh_models", gmsh_models, 1);
   fl_add_symbol("gmsh_query", gmsh_query, 1);
+  fl_add_symbol("gmsh_dot", gmsh_dot, 1);
   fl_add_symbol("gmsh_measure", gmsh_measure, 1);
   fl_add_symbol("gmsh_gear", gmsh_gear, 1);
   fl_add_symbol("gmsh_graph", gmsh_graph, 1);

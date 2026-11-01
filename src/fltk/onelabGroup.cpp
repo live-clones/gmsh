@@ -1664,7 +1664,7 @@ void onelabGroup::_rebuildTree()
         if(gmshScheme())
           gmshIcon(sw, "eye", FL_NORMAL_SIZE);
         else
-          sw->label("@circle");
+          sw->label("@gmsh_dot");
         _treeStrings.push_back(getPath(n).substr(24));
         sw->callback(view_group_cb, (void *)_treeStrings.back().c_str());
         ((Fl_Group *)row)->end();
