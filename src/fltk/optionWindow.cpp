@@ -479,11 +479,8 @@ void general_options_ok_cb(Fl_Widget *w, void *data)
   opt_general_eye_sep_ratio(0, GMSH_SET, o->general.value[29]->value());
   opt_general_focallength_ratio(0, GMSH_SET, o->general.value[30]->value());
   opt_general_camera_aperture(0, GMSH_SET, o->general.value[31]->value());
-  if(opt_general_stereo_mode(0, GMSH_GET, 0) != o->general.butt[17]->value()) {
+  if(opt_general_stereo_mode(0, GMSH_GET, 0) != o->general.butt[17]->value())
     opt_general_stereo_mode(0, GMSH_SET, o->general.butt[17]->value());
-    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-      FlGui::instance()->graph[i]->setStereo((bool)CTX::instance()->stereo);
-  }
 
   if(CTX::instance()->fastRedraw)
     CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;

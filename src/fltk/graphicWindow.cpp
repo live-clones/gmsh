@@ -4269,19 +4269,6 @@ bool graphicWindow::split(openglWindow *g, char how, double ratio)
   return true;
 }
 
-void graphicWindow::setStereo(bool st)
-{
-  openglWindow::setLastHandled(nullptr);
-  for(std::size_t i = 0; i < gl.size(); i++) {
-    if(st) { gl[i]->mode(FL_RGB | FL_DEPTH | FL_DOUBLE | FL_STEREO); }
-    else {
-      gl[i]->mode(FL_RGB | FL_DEPTH | FL_DOUBLE);
-    }
-    gl[i]->show();
-  }
-  Msg::Info("new gl window for stereo vision!");
-}
-
 void graphicWindow::setAnimButtons(int mode)
 {
   if(mode) {

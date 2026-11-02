@@ -64,13 +64,21 @@ int openglWindowMode()
 {
   int mode = FL_RGB | FL_DEPTH | (CTX::instance()->db ? FL_DOUBLE : FL_SINGLE);
   if(CTX::instance()->antialiasing) mode |= FL_MULTISAMPLE;
-  if(CTX::instance()->stereo) {
-    mode |= FL_DOUBLE;
-    mode |= FL_STEREO;
-  }
   // the shader pipeline needs a core profile on macOS, which cannot do fixed
   // function: the two pipelines cannot share a context
   if(glShader::wanted()) mode |= FL_OPENGL3;
+  // quad-buffered stereo is not available everywhere (not on macOS), and FLTK
+  // crashes making a context it cannot do (warned once each time it is asked)
+  static bool warned = false;
+  if(!CTX::instance()->stereo)
+    warned = false;
+  else if(Fl_Gl_Window::can_do(mode | FL_DOUBLE | FL_STEREO))
+    mode |= FL_DOUBLE | FL_STEREO;
+  else if(!warned) {
+    Msg::Warning("Stereo rendering not available on this system: "
+                 "General.Stereo ignored");
+    warned = true;
+  }
   return mode;
 }
 
