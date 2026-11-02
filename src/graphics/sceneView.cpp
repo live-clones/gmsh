@@ -173,25 +173,24 @@ void sceneView::_hover()
              (_selection == ENT_SURFACE && faces.size()) ||
              (_selection == ENT_VOLUME && regions.size()));
   std::string text, cmd;
-  bool multiline = CTX::instance()->tooltips;
   if(vertices.size()) {
-    text = vertices[0]->getInfoString(true, multiline);
+    text = vertices[0]->getInfoString(true, true);
     cmd = CTX::instance()->geom.doubleClickedPointCommand;
   }
   else if(edges.size()) {
-    text = edges[0]->getInfoString(true, multiline);
+    text = edges[0]->getInfoString(true, true);
     cmd = CTX::instance()->geom.doubleClickedCurveCommand;
   }
   else if(faces.size()) {
-    text = faces[0]->getInfoString(true, multiline);
+    text = faces[0]->getInfoString(true, true);
     cmd = CTX::instance()->geom.doubleClickedSurfaceCommand;
   }
   else if(regions.size()) {
-    text = regions[0]->getInfoString(true, multiline);
+    text = regions[0]->getInfoString(true, true);
     cmd = CTX::instance()->geom.doubleClickedVolumeCommand;
   }
   else if(elements.size()) {
-    text = elements[0]->getInfoString(multiline);
+    text = elements[0]->getInfoString(true);
   }
   else if(points.size()) {
     char tmp[256];
@@ -278,11 +277,18 @@ void sceneView::_hover()
     if(tmp[0]) hints.push_back(tmp);
   }
   for(std::size_t i = 0; i < hints.size(); i++)
-    text += (multiline ? (i ? "\n" : "\n\n") : " ") + hints[i];
+    text += (i ? "\n" : "\n\n") + hints[i];
   if(CTX::instance()->tooltips)
     drawTooltip(text);
-  else
-    Msg::StatusBar(false, text.c_str());
+  else {
+    // in the status bar, its first line only (what is under the cursor), with
+    // the next one when it ends with a colon (an element, then its type)
+    std::string::size_type n = text.find('\n');
+    if(n != std::string::npos && n && text[n - 1] == ':')
+      n = text.find('\n', n + 1);
+    Msg::StatusBar(false,
+                   ReplaceSubString("\n", "", text.substr(0, n)).c_str());
+  }
   if(Msg::GetVerbosity() == 99)
     Msg::Debug(ReplaceSubString("\n", " ", text).c_str());
 }
