@@ -4,13 +4,14 @@
 # of the viewer, and the models given, each packed as a zip and listed on the
 # landing page (index.html)
 #
-# Usage: ./site.sh <site directory> [--group <heading>] [<title>|]<model> ...
+# Usage: ./site.sh <site directory> [--group <heading>] [--note <text>]
+#                  [<title>|]<model> ...
 #
 # A model is a directory (onelab.html opens its .pro with a .geo of the same
 # name), or a .pro or .geo file in one (opened instead, e.g. for a directory of
 # several models). Its title is the first heading of its README.md, else its
 # name, unless given as "<title>|<model>". --group starts a list of models
-# under a heading. E.g.
+# under a heading; --note adds a remark after the next model. E.g.
 #
 #   ./site.sh site --group "GetDP tutorials" ~/src/getdp/tutorials/*/
 #   rsync -az site/ server:path
@@ -22,7 +23,8 @@ HERE=$(cd "$(dirname "$0")" && pwd)
 SRC=$(cd "$HERE/../.." && pwd)
 B=${BUILD:-$HERE/build}
 if [ $# -lt 1 ]; then
-  echo "Usage: $0 <site directory> [--group <heading>] [<title>|]<model> ..."
+  echo "Usage: $0 <site directory> [--group <heading>] [--note <text>]" \
+       "[<title>|]<model> ..."
   exit 1
 fi
 if [ ! -f "$B/libgmsh.wasm" ]; then
@@ -53,7 +55,13 @@ rm -rf "$SITE/models"
 mkdir "$SITE/models"
 LIST="$SITE/models/list.html"
 inlist=0
+note=""
 while [ $# -gt 0 ]; do
+  if [ "$1" == "--note" ]; then
+    note=$2
+    shift 2
+    continue
+  fi
   if [ "$1" == "--group" ]; then
     if [ $inlist == 1 ]; then echo "</ul>" >> "$LIST"; fi
     echo "<h3>$(echo "$2" | html)</h3>" >> "$LIST"
@@ -86,7 +94,10 @@ while [ $# -gt 0 ]; do
     echo "<ul>" >> "$LIST"
     inlist=1
   fi
-  echo "  <li><a href=\"$link\">$(echo "$title" | html)</a></li>" >> "$LIST"
+  item="<a href=\"$link\">$(echo "$title" | html)</a>"
+  if [ -n "$note" ]; then item="$item ($(echo "$note" | html))"; fi
+  echo "  <li>$item</li>" >> "$LIST"
+  note=""
   echo "$name.zip: $title"
   shift
 done

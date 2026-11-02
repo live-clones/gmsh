@@ -23,11 +23,26 @@ parameters, and runs Gmsh and GetDP, in the page.
 
 site.sh makes a site to copy to a web server: the pages, the module, and the
 models given, each packed as a zip and listed on the landing page made from
-index.html, e.g. (the demo at https://onelab.info/webapp/)
+index.html (see the usage at the top of site.sh).
 
-  ./site.sh site "Induction machine|$HOME/src/onelab_doc/models/ElectricMachines/im_3kW.pro" \
-    --group "GetDP tutorials" ~/src/getdp/tutorials/*/
-  rsync -az site/ gmsh.info:.wwwonelab/webapp/
+The demo at https://onelab.info/webapp/ is made, after ./build.sh, with the
+GetDP tutorials and the models of onelab_doc (in ~/src/getdp and
+~/src/onelab_doc), by
+
+  T=$HOME/src/getdp/tutorials
+  M=$HOME/src/onelab_doc/models
+  P=$M/AcademicPhotonics/tutorial_photonics_dev
+  B="does not run in the browser yet: needs GetDP's Bessel functions (Fortran)"
+  L="too large for the browser's memory for now"
+  ./site.sh build/site \
+    "Induction machine, 3 kW (2D, frequency domain)|$M/ElectricMachines/im_3kW.pro" \
+    "Magnetic forces between magnets (3D, OpenCASCADE geometry)|$M/MagneticForces" \
+    --group "GetDP tutorials" $T/0*/ --note "3D, about 30 s" $T/10-Gauging \
+    --group "Photonics tutorials" $P/P0[1-7]*/ --note "about 25 s" $P/P08*/ \
+    $P/P09*/ $P/P1[0-2]*/ --note "about 30 s" $P/P13*/ --note "about 15 s" $P/P14*/ \
+    $P/P15*/ --note "about 10 s" $P/P16*/ --note "$B" $P/P17*/ --note "$L" $P/P18*/ \
+    --note "$B" $P/P19*/ --note "$L" $P/P20*/ --note "$L" $P/P21*/ $P/P22*/
+  rsync -az --delete build/site/ gmsh.info:.wwwonelab/webapp/
 
 run_models.mjs runs model directories through the module under node, as the
 page does, to check them:
