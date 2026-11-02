@@ -145,12 +145,58 @@ static Fl_Color clearer(Fl_Color c)
   return fl_rgb_color(rgb[0], rgb[1], rgb[2]);
 }
 
-// a field: a deep tint in dark mode, a clear one in light mode
+// a field: a deep tint in dark mode, a clear one in light mode (a pastel made
+// clearer, a darker or vivid colour, e.g. black, navy or red, made a tint)
 Fl_Color adaptedFill(Fl_Color c)
-{ return CTX::instance()->guiDark ? atLightness(c, 0.27, 0.6) : clearer(c); }
+{
+  if(CTX::instance()->guiDark) return atLightness(c, 0.27, 0.6);
+  Fl_Color t = clearer(c);
+  uchar r, g, b;
+  Fl::get_color(t, r, g, b);
+  double l = (std::max(r, std::max(g, b)) + std::min(r, std::min(g, b))) / 510.;
+  return (l < 0.75) ? atLightness(c, 0.85, 0.8) : t;
+}
 
+// the relative luminance of a colour, and the contrast of two colours, from 1
+// to 21 (WCAG 2)
+static double luminance(Fl_Color c)
+{
+  uchar rgb[3];
+  Fl::get_color(c, rgb[0], rgb[1], rgb[2]);
+  double l[3];
+  for(int i = 0; i < 3; i++) {
+    double v = rgb[i] / 255.;
+    l[i] = (v <= 0.04045) ? v / 12.92 : std::pow((v + 0.055) / 1.055, 2.4);
+  }
+  return 0.2126 * l[0] + 0.7152 * l[1] + 0.0722 * l[2];
+}
+
+static double contrast(Fl_Color a, Fl_Color b)
+{
+  double la = luminance(a), lb = luminance(b);
+  return (std::max(la, lb) + 0.05) / (std::min(la, lb) + 0.05);
+}
+
+// a text: light in dark mode, as is in light mode, but in both cases moved
+// further from the background, of the same hue, until it reads on the
+// backgrounds of the interface (a contrast of 4.5, WCAG AA): a pastel or a
+// near white chosen for a light interface is made darker
 Fl_Color adaptedText(Fl_Color c)
-{ return CTX::instance()->guiDark ? atLightness(c, 0.72, 0.8) : c; }
+{
+  auto reads = [](Fl_Color t) {
+    return contrast(t, FL_BACKGROUND_COLOR) >= 4.5 &&
+           contrast(t, FL_BACKGROUND2_COLOR) >= 4.5;
+  };
+  bool dark = CTX::instance()->guiDark;
+  Fl_Color t = dark ? atLightness(c, 0.72, 0.8) : c;
+  uchar r, g, b;
+  Fl::get_color(c, r, g, b);
+  double l = (std::max(r, std::max(g, b)) + std::min(r, std::min(g, b))) / 510.;
+  for(int i = 1; i <= 20 && !reads(t); i++)
+    t = dark ? atLightness(c, 0.72 + 0.28 * i / 20., 0.8) :
+               atLightness(c, l * (1. - i / 20.), 0.7);
+  return t;
+}
 
 // The widget under the pointer, when it takes input (a button, a check box,
 // a menu button, a field, a slider, a tab): its boxes are drawn a little
