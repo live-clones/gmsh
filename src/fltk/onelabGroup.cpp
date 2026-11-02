@@ -501,6 +501,8 @@ static int rowHeight() { return FL_NORMAL_SIZE + 8 + gmshAir(); }
 // action of their own
 class onelabTree : public Fl_Tree {
 private:
+  // the depth of the events passed on to all the rows, see broadcasting()
+  int _broadcasting = 0;
   // the branch on the row of the last event, if any
   Fl_Tree_Item *_branchAtEvent()
   {
@@ -548,10 +550,23 @@ public:
     box(FL_NO_BOX); // drawn in draw()
     item_draw_mode(FL_TREE_ITEM_HEIGHT_FROM_WIDGET);
   }
+  // whether an event is being passed on to all the rows (the window hidden,
+  // shown...): FLTK goes through the array of the rows meanwhile, which a
+  // rebuild would replace, e.g. asked by an edited value that the hiding
+  // commits (see onelabGroup::rebuildTree())
+  bool broadcasting() const { return _broadcasting > 0; }
   int handle(int event) override
   {
     // compared only: a rebuild of the tree deletes the items
     static Fl_Tree_Item *hovered = nullptr;
+    if(event == FL_HIDE || event == FL_SHOW || event == FL_ACTIVATE ||
+       event == FL_DEACTIVATE) {
+      Fl_Widget_Tracker alive(this);
+      _broadcasting++;
+      int ret = Fl_Tree::handle(event);
+      if(alive.exists()) _broadcasting--;
+      return ret;
+    }
     int ret = Fl_Tree::handle(event);
     switch(event) {
     case FL_PUSH:
@@ -1500,7 +1515,8 @@ onelabGroup::~onelabGroup() { Fl::remove_timeout(_rebuildAfterPress, this); }
 void onelabGroup::_rebuildAfterPress(void *data)
 {
   onelabGroup *g = (onelabGroup *)data;
-  if(Fl::pushed() && g->_tree->contains(Fl::pushed()))
+  if((Fl::pushed() && g->_tree->contains(Fl::pushed())) ||
+     ((onelabTree *)g->_tree)->broadcasting())
     Fl::repeat_timeout(0.05, _rebuildAfterPress, data);
   else
     g->rebuildTree();
@@ -1516,7 +1532,10 @@ void onelabGroup::rebuildTree()
   // release of a click go to the same widget, and the click is lost if a
   // rebuild replaces it in between (a computation rebuilds the tree several
   // times a second); done once the button is released
-  if(Fl::pushed() && _tree->contains(Fl::pushed())) {
+  // nor while an event goes through all the rows (see
+  // onelabTree::broadcasting())
+  if((Fl::pushed() && _tree->contains(Fl::pushed())) ||
+     ((onelabTree *)_tree)->broadcasting()) {
     if(!Fl::has_timeout(_rebuildAfterPress, this))
       Fl::add_timeout(0.05, _rebuildAfterPress, this);
     return;
