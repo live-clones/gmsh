@@ -321,7 +321,6 @@ static int exportFile(const char *name, int format)
     return keyRadFileDialog(name, "LSDYNA KEY Options", FORMAT_KEY);
   case FORMAT_RAD:
     return keyRadFileDialog(name, "RADIOSS Block Options", FORMAT_RAD);
-  case FORMAT_CGNS: return cgnsFileDialog(name);
   case FORMAT_MED: return medFileDialog(name);
   case FORMAT_BDF: return bdfFileDialog(name);
   case FORMAT_STL: return stlFileDialog(name);
@@ -384,7 +383,7 @@ static int exportFile(const char *name, int format)
   case FORMAT_TEX: return latexFileDialog(name);
   case FORMAT_MPEG:
   case FORMAT_MP4: return mpegFileDialog(name, format);
-  default: // VIS, BREP, XAO, STEP, IGES, XMT and the others with no options
+  default: // CGNS, VIS, BREP, XAO, STEP, IGES, XMT and the others with no options
     CreateOutputFile(name, format);
     return 1;
   }
