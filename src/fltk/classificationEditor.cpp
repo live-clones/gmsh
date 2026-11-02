@@ -445,7 +445,7 @@ classificationEditor::classificationEditor(int deltaFontSize)
     inputs[CLASS_VALUE_ANGLE]->minimum(0);
     if(CTX::instance()->inputScrolling) inputs[CLASS_VALUE_ANGLE]->step(1);
     inputs[CLASS_VALUE_ANGLE]->align(FL_ALIGN_RIGHT);
-    inputs[CLASS_VALUE_ANGLE]->when(FL_WHEN_RELEASE);
+    inputs[CLASS_VALUE_ANGLE]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
     inputs[CLASS_VALUE_ANGLE]->callback(update_edges_cb, this);
 
     toggles[CLASS_TOGGLE_SHOW_ONLY_EDGES] = new Fl_Check_Button(

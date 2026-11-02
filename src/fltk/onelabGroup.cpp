@@ -1441,6 +1441,9 @@ Fl_Widget *addParameterWidget(onelab::string &p, int xx, int yy, int ww, int hh,
   but->value(p.getValue().c_str());
   but->callback(onelab_string_input_choice_cb, (void *)path);
   but->input()->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
+  // and the widget calls back on both: FLTK 1.5 passes on an Enter only with
+  // FL_WHEN_CHANGED (on the menu, its choices call back as before)
+  but->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE);
   but->align(FL_ALIGN_RIGHT | FL_ALIGN_CLIP);
   if(highlight) {
     but->input()->color(adaptedFill(c));
