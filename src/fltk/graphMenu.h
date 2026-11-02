@@ -9,6 +9,7 @@
 #include <string>
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Menu_Button.H>
+#include "gmshScheme.h"
 
 // the X-Y graph menu of inputRange and outputRange: 9 graphs with 4 axes each
 // (X, Y, X', Y'), the 36 axes stored in a string, '0' for an axis not drawn
@@ -54,8 +55,13 @@ inline void showGraphValue(const std::string &val, Fl_Button *butt,
     else
       item.clear();
   }
+  // a graph drawn: a yellow adapted to the theme, as the loop button's colours
+  // (the icon then drawn in what reads on it, as on any pressed button)
   butt->value(drawn ? 1 : 0);
-  butt->selection_color(drawn ? FL_YELLOW : butt->color());
+  butt->selection_color(drawn ? adaptedFill(FL_YELLOW) : butt->color());
+  butt->labelcolor(drawn ? fl_contrast(FL_FOREGROUND_COLOR,
+                                       adaptedFill(FL_YELLOW)) :
+                           FL_FOREGROUND_COLOR);
   butt->redraw();
 }
 
