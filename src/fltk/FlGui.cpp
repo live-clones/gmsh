@@ -5,6 +5,7 @@
 
 #include "GmshConfig.h"
 #include <algorithm>
+#include <mutex>
 #include <sstream>
 #include <string.h>
 #include <FL/Fl.H>
@@ -69,12 +70,15 @@
 FlGui *FlGui::_instance = nullptr;
 std::string FlGui::_openedThroughMacFinder = "";
 bool FlGui::_finishedProcessingCommandLine = false;
-std::atomic<int> FlGui::_locked(0);
+std::thread::id FlGui::_mainThread;
+int FlGui::drawing = 0;
+
+bool FlGui::onMainThread() { return std::this_thread::get_id() == _mainThread; }
 
 // check (now!) if there are any pending events, and process them
 void FlGui::check(bool rateLimited)
 {
-  if(Msg::GetThreadNum() > 0 || _locked > 0) return;
+  if(!onMainThread() || drawing > 0) return;
 
   static double lastRefresh = 0.;
   double start = TimeOfDay();
@@ -93,34 +97,25 @@ void FlGui::check(bool rateLimited)
 // wait (possibly indefinitely) for any events, then process them
 void FlGui::wait(bool force)
 {
-  if((Msg::GetThreadNum() > 0 || _locked > 0) && !force) return;
+  if((!onMainThread() || drawing > 0) && !force) return;
   Fl::wait();
 }
 
 // wait (at most time seconds) for any events, then process them
 void FlGui::wait(double time, bool force)
 {
-  if((Msg::GetThreadNum() > 0 || _locked > 0) && !force) return;
+  if((!onMainThread() || drawing > 0) && !force) return;
   Fl::wait(time);
 }
 
-void FlGui::lock()
-{
-  _locked++;
-  Fl::lock();
-}
+void FlGui::lock() { Fl::lock(); }
 
-void FlGui::unlock()
-{
-  _locked--;
-  Fl::unlock();
-}
-
-int FlGui::locked() { return _locked; }
+void FlGui::unlock() { Fl::unlock(); }
 
 static void awake_cb(void *data)
 {
-  if(data) FlGui::instance()->updateViews(true, false);
+  // without a GUI, nothing to update (instance() would create one)
+  if(data && FlGui::available()) FlGui::instance()->updateViews(true);
 }
 
 void FlGui::awake(const std::string &action)
@@ -253,6 +248,16 @@ static void gmsh_rotate(Fl_Color c)
   vv(0.5, 0.6);
   vv(-0.1, 0.9);
   vv(-0.1, 0.3);
+  fl_end_polygon();
+}
+
+// a small disk (FLTK draws its circle 10 pixels wide at the least): the switch
+// of the views of a group in the ONELAB tree
+static void gmsh_dot(Fl_Color c)
+{
+  fl_color(c);
+  fl_begin_polygon();
+  fl_arc(0.0, 0.0, 0.5, 0.0, 360.0);
   fl_end_polygon();
 }
 
@@ -503,13 +508,15 @@ void FlGui::applyColorScheme(bool redraw)
   Fl::set_boxtype(FL_UP_FRAME, FL_THIN_UP_FRAME);
   Fl::set_boxtype(FL_DOWN_FRAME, FL_THIN_DOWN_FRAME);
 
-  // thinner scrollbars
-  Fl::scrollbar_size(std::max(10, FL_NORMAL_SIZE));
+  // thinner scrollbars; in the gmsh theme thinner than FLTK draws the arrow
+  // buttons at either end (see applyGmshScheme())
+  Fl::scrollbar_size(gmshScheme() ? gmshScrollbarSize :
+                                    std::max(10, FL_NORMAL_SIZE));
 
   if(redraw && available()) {
     gmshIconsRecolor();
     help->resetText();
-    updateViews(true, true);
+    updateViews(true);
     for(Fl_Window *win = Fl::first_window(); win; win = Fl::next_window(win)) {
       win->redraw();
       redrawWindowsIn(win);
@@ -531,11 +538,18 @@ void FlGui::desktopChanged()
   Fl::flush();
 }
 
-static void desktop_changed_cb() { FlGui::instance()->desktopChanged(); }
+// the GUI may be gone when the desktop switches: not brought back by this
+static void desktop_changed_cb()
+{
+  if(FlGui::available()) FlGui::instance()->desktopChanged();
+}
 
 static void watchDesktop()
 {
-  watchDesktopAppearance(desktop_changed_cb);
+  // the system is asked once, whatever the number of GUIs created
+  static bool watched = false;
+  if(!watched) watchDesktopAppearance(desktop_changed_cb);
+  watched = true;
   // and whenever a window of Gmsh gets the focus back, where the system does
   // not tell (Linux)
   mainWindow::focusHook = desktop_changed_cb;
@@ -572,7 +586,7 @@ static void default_fatal_error_handler(const char *fmt, ...)
 
 FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
              void (*error_handler)(const char *fmt, ...))
-  : _quitShouldExit(quitShouldExit), lastContextWindow(0)
+  : _quitShouldExit(quitShouldExit), lastContextWindow(0), fullscreen(nullptr)
 {
   if(error_handler) {
     Fl::error = error_handler;
@@ -591,8 +605,12 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   Fl_Mac_App_Menu::print = ""; // this sometimes crashes
 #endif
 
-  // tell fltk we're (potentially) in multi-threaded mode
-  Fl::lock();
+  // tell fltk we're (potentially) in multi-threaded mode, once: the lock is
+  // recursive, and Fl::wait() only releases one level of it
+  static bool locked = false;
+  if(!locked) Fl::lock();
+  locked = true;
+  _mainThread = std::this_thread::get_id();
 
   // set X display
   if(CTX::instance()->display.size())
@@ -612,6 +630,8 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
 
   // add global shortcuts
   Fl::add_handler(globalShortcut);
+
+  Fl::event_dispatch(_dispatch);
 
   // make sure a global drawing context is setup
   if(!drawContext::global()) drawContext::setGlobal(new drawContextFltk);
@@ -644,6 +664,7 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   fl_add_symbol("gmsh_sidebar", gmsh_sidebar, 1);
   fl_add_symbol("gmsh_models", gmsh_models, 1);
   fl_add_symbol("gmsh_query", gmsh_query, 1);
+  fl_add_symbol("gmsh_dot", gmsh_dot, 1);
   fl_add_symbol("gmsh_measure", gmsh_measure, 1);
   fl_add_symbol("gmsh_gear", gmsh_gear, 1);
   fl_add_symbol("gmsh_graph", gmsh_graph, 1);
@@ -756,6 +777,7 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
     paletteWindow *p = (paletteWindow *)t.first;
     p->dockable(true);
     p->name(t.second);
+    _tools.push_back(p);
   }
   applyFloatingTools();
   // what docked tools skip while hidden, refreshed when shown again
@@ -806,9 +828,59 @@ FlGui::~FlGui()
   delete meshContext;
   delete help;
   delete fullscreen;
+
+  // what was registered for this GUI, which a new one registers again
+  Fl::remove_handler(globalShortcut);
+  Fl::event_dispatch(nullptr);
+  Fl::remove_timeout(gamepad_handler);
+  drawContext::setDrawGeomTransientFunction(nullptr);
 }
 
 bool FlGui::available() { return _instance != nullptr; }
+
+bool FlGui::inEvent(Fl_Widget *w)
+{
+  if(_eventWidgets.empty()) return false;
+  for(Fl_Widget *t : {Fl::focus(), Fl::pushed(), Fl::belowmouse()})
+    if(t && w->contains(t)) return true;
+  for(Fl_Widget **targets : _eventWidgets)
+    for(int i = 0; i < 3; i++)
+      if(targets[i] && w->contains(targets[i])) return true;
+  return false;
+}
+
+std::vector<Fl_Widget **> FlGui::_eventWidgets;
+
+int FlGui::_dispatch(int event, Fl_Window *win)
+{
+  Fl_Widget *targets[3] = {Fl::focus(), Fl::pushed(), Fl::belowmouse()};
+  // however the event ends, e.g. by an exception the API catches
+  struct handled {
+    Fl_Widget **targets;
+    handled(Fl_Widget **t) : targets(t)
+    {
+      for(int i = 0; i < 3; i++) Fl::watch_widget_pointer(targets[i]);
+      _eventWidgets.push_back(targets);
+    }
+    ~handled()
+    {
+      _eventWidgets.pop_back();
+      for(int i = 0; i < 3; i++) Fl::release_widget_pointer(targets[i]);
+    }
+  };
+  int ret;
+  {
+    handled h(targets);
+    ret = gmshScheme() ? gmshSchemeHandle(event, win) : Fl::handle_(event, win);
+  }
+  // the GUI may have been closed by the event
+  if(_eventWidgets.empty() && _instance) {
+    if(_instance->onelab) _instance->onelab->deleteRetiredWidgets();
+    if(_instance->onelabContext)
+      _instance->onelabContext->deleteRetiredWidgets();
+  }
+  return ret;
+}
 
 FlGui *FlGui::instance(int argc, char **argv, bool quitShouldExit,
                        void (*error_handler)(const char *fmt, ...))
@@ -825,7 +897,7 @@ FlGui *FlGui::instance(int argc, char **argv, bool quitShouldExit,
     PrintBuildInfo();
     Msg::Direct("-------------------------------------------------------");
     // update views (in case the GUI is created after some data has been loaded)
-    _instance->updateViews(true, true);
+    _instance->updateViews(true);
     // set global bounding box in CTX (necessary if we run the gui without any
     // model/post-processing data)
     SetBoundingBox();
@@ -847,6 +919,9 @@ void FlGui::destroy()
 
   // process remaining events
   Fl::check();
+  // then delete the widgets they scheduled for deletion, as the windows,
+  // deleting their children, would not take them off the list
+  Fl::do_widget_deletion();
 
   delete _instance;
   _instance = nullptr;
@@ -1034,14 +1109,12 @@ int FlGui::runShortcut(const std::string &a)
   // --- a selection under way
   if(a == "selection_end" || a == "selection_undo" || a == "selection_invert" ||
      a == "selection_quit") {
-    for(std::size_t i = 0; i < graph.size(); i++)
-      for(std::size_t j = 0; j < graph[i]->gl.size(); j++) {
-        openglWindow *gl = graph[i]->gl[j];
-        if(a == "selection_end") gl->endSelection = 1;
-        if(a == "selection_undo") gl->undoSelection = 1;
-        if(a == "selection_invert") gl->invertSelection = 1;
-        if(a == "selection_quit") gl->quitSelection = 1;
-      }
+    for(openglWindow *gl : openglWindows()) {
+      if(a == "selection_end") gl->endSelection = 1;
+      if(a == "selection_undo") gl->undoSelection = 1;
+      if(a == "selection_invert") gl->invertSelection = 1;
+      if(a == "selection_quit") gl->quitSelection = 1;
+    }
     return 1;
   }
   // --- placing an elementary entity with the mouse: the axes it may move
@@ -1062,13 +1135,10 @@ int FlGui::runShortcut(const std::string &a)
       return 1;
     }
     bool lasso = false;
-    for(std::size_t i = 0; i < graph.size(); i++)
-      for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
-        if(graph[i]->gl[j]->lassoMode) lasso = true;
+    for(openglWindow *gl : openglWindows())
+      if(gl->lassoMode) lasso = true;
     if(lasso) {
-      for(std::size_t i = 0; i < graph.size(); i++)
-        for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
-          graph[i]->gl[j]->lassoMode = false;
+      for(openglWindow *gl : openglWindows()) gl->lassoMode = false;
       return 2;
     }
     status_options_cb(nullptr, (void *)"S");
@@ -1275,12 +1345,14 @@ void FlGui::setGraphicTitle(const std::string &title)
   }
 }
 
-void FlGui::updateViews(bool numberOfViewsHasChanged, bool deleteWidgets)
+void FlGui::updateViews(bool numberOfViewsHasChanged)
 {
   for(std::size_t i = 0; i < graph.size(); i++) graph[i]->checkAnimButtons();
   if(numberOfViewsHasChanged) {
-    if(onelab) onelab->rebuildTree(deleteWidgets);
-    if(onelabContext) onelabContext->rebuild(deleteWidgets);
+    rebuildTree();
+    // this GUI may have been destroyed by the events the rebuild processed
+    if(_instance != this) return;
+    visibility->updatePerWindow();
     options->resetBrowser();
     options->resetExternalViewList();
     fields->loadFieldViewList();
@@ -1307,6 +1379,14 @@ void FlGui::resetVisibility()
 void FlGui::updateStatistics(bool qualities)
 {
   if(stats->win->shown()) stats->compute(qualities);
+}
+
+std::vector<openglWindow *> FlGui::openglWindows()
+{
+  std::vector<openglWindow *> all;
+  for(auto g : graph) all.insert(all.end(), g->gl.begin(), g->gl.end());
+  if(fullscreen) all.push_back(fullscreen);
+  return all;
 }
 
 openglWindow *FlGui::getCurrentOpenglWindow()
@@ -1412,7 +1492,7 @@ char FlGui::selectEntity(int type)
 
 void FlGui::setStatus(const std::string &msg, bool opengl)
 {
-  if(Msg::GetThreadNum() > 0) return;
+  if(!onMainThread()) return;
   if(!opengl) {
     _lastStatus = msg;
     static char buff[1024];
@@ -1455,7 +1535,7 @@ void FlGui::setStatus(const std::string &msg, bool opengl)
 
 void FlGui::setLastStatus(int col)
 {
-  if(Msg::GetThreadNum() > 0) return;
+  if(!onMainThread()) return;
   for(std::size_t i = 0; i < graph.size(); i++) {
     if(col >= 0 && graph[0]->getMessageHeight() < FL_NORMAL_SIZE) {
       if(CTX::instance()->guiDark) // dark
@@ -1474,7 +1554,7 @@ void FlGui::setLastStatus(int col)
 void FlGui::setProgress(const std::string &msg, double val, double min,
                         double max)
 {
-  if(Msg::GetThreadNum() > 0) return;
+  if(!onMainThread()) return;
   for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++) {
     if(FlGui::instance()->graph[i]->getProgress()->value() != val)
       FlGui::instance()->graph[i]->getProgress()->value(val);
@@ -1486,24 +1566,11 @@ void FlGui::setProgress(const std::string &msg, double val, double min,
   setStatus(msg);
 }
 
-std::vector<Fl_Window *> FlGui::toolWindows()
-{
-  std::vector<Fl_Window *> tools = {
-    options->win,         plugins->win,          fields->win,
-    visibility->win,      clipping->win,         manip->win,
-    stats->win,           highordertools->win,   elementaryContext->win,
-    physicalContext->win, transformContext->win, meshContext->win,
-    onelabContext->win,   classify->window};
-  if(partition->win) tools.push_back(partition->win);
-  return tools;
-}
-
 void FlGui::applyFloatingTools()
 {
   std::string names = "," + CTX::instance()->floatingTools + ",";
   names.erase(std::remove(names.begin(), names.end(), ' '), names.end());
-  for(auto w : toolWindows()) {
-    paletteWindow *p = (paletteWindow *)w;
+  for(paletteWindow *p : toolWindows()) {
     bool floating = names.find("," + p->name() + ",") != std::string::npos;
     if(floating != p->floating()) setToolFloating(p, floating);
   }
@@ -1536,8 +1603,7 @@ void FlGui::toggleCurrentTool()
 void FlGui::storeFloatingTools()
 {
   std::string names;
-  for(auto w : toolWindows()) {
-    paletteWindow *p = (paletteWindow *)w;
+  for(paletteWindow *p : toolWindows()) {
     if(!p->floating()) continue;
     names += (names.empty() ? "" : ",") + p->name();
   }
@@ -1548,10 +1614,8 @@ void FlGui::dockTools(bool dock)
 {
   std::string names;
   if(!dock)
-    for(auto w : toolWindows()) {
-      paletteWindow *p = (paletteWindow *)w;
+    for(paletteWindow *p : toolWindows())
       names += (names.empty() ? "" : ",") + p->name();
-    }
   opt_general_floating_tools(0, GMSH_SET | GMSH_GUI, names);
 }
 
@@ -1606,8 +1670,6 @@ void redraw_cb(Fl_Widget *w, void *data) { drawContext::global()->draw(); }
 
 void window_cb(Fl_Widget *w, void *data)
 {
-  static int oldx = 0, oldy = 0, oldw = 0, oldh = 0, zoom = 0, fullscreen = 0;
-
   std::string str((const char *)data);
 
   if(str == "minimize") {
@@ -1618,26 +1680,29 @@ void window_cb(Fl_Widget *w, void *data)
     FlGui *g = FlGui::instance();
     for(std::size_t i = 0; i < g->graph.size(); i++)
       iconize(g->graph[i]->getWindow());
-    for(Fl_Window *w : g->toolWindows()) iconize(w);
+    for(paletteWindow *p : g->toolWindows()) iconize(p);
   }
   else if(str == "zoom") {
-    if(!zoom) {
-      oldx = FlGui::instance()->graph[0]->getWindow()->x();
-      oldy = FlGui::instance()->graph[0]->getWindow()->y();
-      oldw = FlGui::instance()->graph[0]->getWindow()->w();
-      oldh = FlGui::instance()->graph[0]->getWindow()->h();
-      int x, y, w, h;
-      windowWorkArea(FlGui::instance()->graph[0]->getWindow(), x, y, w, h);
-      FlGui::instance()->graph[0]->getWindow()->resize(x, y, w, h);
-      zoom = 1;
-    }
-    else {
-      FlGui::instance()->graph[0]->getWindow()->resize(oldx, oldy, oldw, oldh);
-      zoom = 0;
-    }
+    // the window manager's maximization: it fills the work area title bar
+    // included (a resize to the work area sizes the inside of the window, and
+    // the title bar then pushes its bottom off the screen), and it remembers
+    // the size to go back to
+    Fl_Window *win = FlGui::instance()->graph[0]->getWindow();
+    if(win->maximize_active())
+      win->un_maximize();
+    else
+      win->maximize();
   }
   else if(str == "fullscreen") {
-    if(!fullscreen) {
+    // a switch waits for the windows to be drawn, processing events: another
+    // one asked for meanwhile is ignored
+    static bool switching = false;
+    if(switching) return;
+    struct switched {
+      ~switched() { switching = false; }
+    } switched;
+    switching = true;
+    if(!FlGui::instance()->fullscreen->shown()) {
       // resize to the size of the screen of the current graphic window first,
       // in case fullscreen does not work
       int x, y, w, h;
@@ -1650,29 +1715,45 @@ void window_cb(Fl_Widget *w, void *data)
       FlGui::instance()->fullscreen->valid(0);
       FlGui::instance()->fullscreen->show();
       FlGui::instance()->fullscreen->fullscreen();
-      while(!FlGui::instance()->fullscreen->valid()) FlGui::wait();
+      // (not drawn at all if closed meanwhile, nor ever if the window manager
+      // does not show it: 2 s at most)
+      double start = TimeOfDay();
+      while(FlGui::available() && FlGui::instance()->fullscreen->shown() &&
+            !FlGui::instance()->fullscreen->valid() && TimeOfDay() - start < 2.)
+        FlGui::wait(0.05);
+      if(!FlGui::available() || !FlGui::instance()->fullscreen->shown()) return;
       FlGui::instance()->fullscreen->getDrawContext()->copyViewAttributes(
         FlGui::instance()->getCurrentOpenglWindow()->getDrawContext());
       openglWindow::setLastHandled(FlGui::instance()->fullscreen);
       for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
         FlGui::instance()->graph[i]->getWindow()->hide();
       drawContext::global()->draw();
-      fullscreen = 1;
     }
     else {
       for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
         FlGui::instance()->graph[i]->gl[0]->valid(0);
       for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
         FlGui::instance()->graph[i]->getWindow()->show();
-      for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-        while(!FlGui::instance()->graph[i]->gl[0]->valid()) FlGui::wait();
+      // (a graphic window may be closed meanwhile; its first pane is never
+      // drawn if hidden, nor the window if the window manager keeps it
+      // minimized: 2 s at most)
+      auto waiting = [](std::size_t i) {
+        FlGui *g = FlGui::instance();
+        return i < g->graph.size() && g->graph[i]->getWindow()->shown() &&
+               g->graph[i]->gl[0]->visible_r() && !g->graph[i]->gl[0]->valid();
+      };
+      double start = TimeOfDay();
+      for(std::size_t i = 0;
+          FlGui::available() && i < FlGui::instance()->graph.size(); i++)
+        while(FlGui::available() && waiting(i) && TimeOfDay() - start < 2.)
+          FlGui::wait(0.05);
+      if(!FlGui::available()) return;
       FlGui::instance()->graph[0]->gl[0]->getDrawContext()->copyViewAttributes(
         FlGui::instance()->getCurrentOpenglWindow()->getDrawContext());
       openglWindow::setLastHandled(FlGui::instance()->graph[0]->gl[0]);
       FlGui::instance()->fullscreen->fullscreen_off();
       FlGui::instance()->fullscreen->hide();
       drawContext::global()->draw();
-      fullscreen = 0;
     }
   }
   else if(str == "front") {
@@ -1680,16 +1761,45 @@ void window_cb(Fl_Widget *w, void *data)
     FlGui *g = FlGui::instance();
     for(std::size_t i = 0; i < g->graph.size(); i++)
       g->graph[i]->getWindow()->show();
-    for(Fl_Window *w : g->toolWindows())
-      if(w->shown() && !w->parent()) w->show();
+    for(paletteWindow *p : g->toolWindows())
+      if(p->shown() && !p->parent()) p->show();
   }
+}
+
+// The lines of the other threads, waiting for the GUI's thread to add them
+// to the consoles, and whether it has been asked to (Fl::awake())
+static std::mutex pendingMutex;
+static std::vector<std::string> pendingMessages;
+static bool pendingAsked = false;
+
+static void addPendingMessages(void *)
+{
+  std::vector<std::string> msgs;
+  {
+    std::lock_guard<std::mutex> lock(pendingMutex);
+    msgs.swap(pendingMessages);
+    pendingAsked = false;
+  }
+  for(auto &m : msgs) FlGui::addMessage(m.c_str());
 }
 
 void FlGui::addMessage(const char *msg)
 {
-  for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++) {
-    FlGui::instance()->graph[i]->addMessage(msg);
+  if(!onMainThread()) {
+    std::lock_guard<std::mutex> lock(pendingMutex);
+    // no more than the consoles keep (see graphicWindow::addMessage()), the
+    // oldest tenth going
+    const std::size_t maxPending = 50000;
+    if(pendingMessages.size() >= maxPending)
+      pendingMessages.erase(pendingMessages.begin(),
+                            pendingMessages.begin() + maxPending / 10);
+    pendingMessages.push_back(msg);
+    if(!pendingAsked) pendingAsked = (Fl::awake(addPendingMessages) == 0);
+    return;
   }
+  if(!_instance) return;
+  for(std::size_t i = 0; i < _instance->graph.size(); i++)
+    _instance->graph[i]->addMessage(msg);
 }
 
 void FlGui::saveMessages(const char *fileName)
@@ -1697,10 +1807,12 @@ void FlGui::saveMessages(const char *fileName)
   FlGui::instance()->graph[0]->saveMessages(fileName);
 }
 
-void FlGui::rebuildTree(bool deleteWidgets)
+void FlGui::rebuildTree()
 {
-  if(onelab) onelab->rebuildTree(deleteWidgets);
-  if(onelabContext) onelabContext->rebuild(deleteWidgets);
+  if(onelab) onelab->rebuildTree();
+  // this GUI may have been destroyed by the events the rebuild processed
+  if(_instance != this) return;
+  if(onelabContext) onelabContext->rebuild();
 }
 
 void FlGui::toggleModule(const std::string &name)

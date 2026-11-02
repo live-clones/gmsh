@@ -212,6 +212,11 @@ void OCC_Internals::_recomputeMaxTag(int dim)
 {
   if(dim < -2 || dim > 3) return;
   _maxTag[dim + 2] = CTX::instance()->geom.firstEntityTag - 1;
+  // the tags of the entities of the other kernels stay taken: an OpenCASCADE
+  // entity given one would be mistaken for them in GModel
+  if(dim >= 0)
+    _maxTag[dim + 2] =
+      std::max(_maxTag[dim + 2], GModel::current()->getMaxNonOCCTag(dim));
   NCollection_DataMap<int, TopoDS_Shape>::Iterator exp;
   switch(dim) {
   case 0: exp.Initialize(_tagVertex); break;
@@ -2649,6 +2654,10 @@ static bool makeSphere(TopoDS_Solid &result, double xc, double yc, double zc,
     Msg::Error("Cannot build sphere with angle <= 0 or angle > 2*Pi");
     return false;
   }
+  if(angle1 >= angle2) {
+    Msg::Error("Cannot build sphere with angle1 >= angle2");
+    return false;
+  }
   try {
     gp_Pnt p(xc, yc, zc);
     BRepPrimAPI_MakeSphere s(p, radius, angle1, angle2, angle3);
@@ -2773,6 +2782,10 @@ static bool makeTorus(TopoDS_Solid &result, double x, double y, double z,
     Msg::Error("Torus radii should be positive");
     return false;
   }
+  if(angle <= 0 || angle > 2 * M_PI) {
+    Msg::Error("Cannot build torus with angle <= 0 or angle > 2*Pi");
+    return false;
+  }
   try {
     gp_Pnt p(x, y, z);
     std::vector<double> NN(N);
@@ -2822,8 +2835,8 @@ static bool makeCone(TopoDS_Solid &result, double x, double y, double z,
     Msg::Error("Cannot build cone of zero height");
     return false;
   }
-  if(angle <= 0) {
-    Msg::Error("Cone angle should be positive");
+  if(angle <= 0 || angle > 2 * M_PI) {
+    Msg::Error("Cannot build cone with angle <= 0 or angle > 2*Pi");
     return false;
   }
   try {

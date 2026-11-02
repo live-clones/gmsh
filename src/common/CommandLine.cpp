@@ -237,7 +237,9 @@ std::vector<std::pair<std::string, std::string> > GetMouseUsage()
   s.push_back(mp("Left button", "Rotate / Select an entity / Accept a lasso "
                  "zoom or a lasso selection"));
   s.push_back(mp("Ctrl+Left button", "Start a lasso zoom or a lasso "
-                 "(un)selection"));
+                 "(un)selection, of all the entities inside it"));
+  s.push_back(mp("Ctrl+Alt+Left button", "Start a lasso (un)selection of the "
+                 "entities in front only"));
   s.push_back(mp("Middle button", "Zoom / Unselect an entity / Accept a lasso "
                  "zoom or a lasso unselection"));
   s.push_back(mp("Ctrl+Middle button", "Orthogonalize display"));

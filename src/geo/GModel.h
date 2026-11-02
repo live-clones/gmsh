@@ -102,6 +102,10 @@ protected:
   // the name of the model
   std::string _name;
 
+  // a number no other model of the run has: a new model may get the address
+  // of one deleted
+  std::size_t _serial;
+
   // the name of the file the model was read from
   std::string _fileName;
   std::set<std::string> _fileNames;
@@ -134,6 +138,13 @@ protected:
   GEO_Internals *_geo_internals;
   // OpenCASCADE model internal data
   OCC_Internals *_occ_internals;
+  // the largest tags of the entities not from OpenCASCADE (e.g. built-in), in
+  // each dimension: new OpenCASCADE entities do not take them
+  int _maxNonOCCTag[4];
+  void _keepNonOCCTag(GEntity *e);
+  // the partition entities whose parent e is lose it, e being removed (they
+  // would point to it once it is deleted)
+  void _forgetParent(GEntity *e);
   // ACIS model internal data
   ACIS_Internals *_acis_internals;
   // Parasolid model internal data
@@ -401,6 +412,9 @@ public:
   void setName(const std::string &name) { _name = name; }
   std::string getName() const { return _name; }
 
+  // the number of the model, unique in the run
+  std::size_t getSerial() const { return _serial; }
+
   // get/set the model file name
   void setFileName(const std::string &fileName);
   std::string getFileName() const { return _fileName; }
@@ -515,6 +529,10 @@ public:
   // return the highest number associated with an elementary entity of
   // a given dimension (or the highest overall if dim < 0)
   int getMaxElementaryNumber(int dim);
+  int getMaxNonOCCTag(int dim) const
+  {
+    return (dim >= 0 && dim <= 3) ? _maxNonOCCTag[dim] : 0;
+  }
 
   // check if there are no physical entities in the model
   bool noPhysicalGroups();
@@ -759,7 +777,9 @@ public:
   smooth_normals *normals;
 
   // mesh the model
-  int mesh(int dimension);
+  // not while another operation holds the lock on the model, unless nested in
+  // the operation holding it (see modelLock)
+  int mesh(int dimension, bool nested = false);
 
   // adapt 3d mesh
   int adaptMesh();

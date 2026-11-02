@@ -6,11 +6,7 @@
 #include <string>
 #include <time.h>
 #include "GmshConfig.h"
-#if !defined(HAVE_NO_STDINT_H)
-#include <stdint.h>
-#elif defined(HAVE_NO_INTPTR_T)
-typedef unsigned long intptr_t;
-#endif
+#include <cstdint>
 #include "GmshVersion.h"
 #include "GmshMessage.h"
 #include "GmshDefines.h"
@@ -77,6 +73,7 @@ int GmshInitialize(int argc, char **argv, bool readConfigFiles,
 #if defined(HAVE_FLTK)
   RedirectIOToConsole();
 #endif
+  SetCrashReport(true);
 
   // we need at least one model during option parsing
   GModel *dummy = nullptr;
@@ -248,6 +245,18 @@ int GmshWriteFile(const std::string &fileName)
 
 int GmshFinalize()
 {
+#if defined(HAVE_FLTK)
+  // the GUI shows the models, views, fields and plugins deleted below, and
+  // would point to them after a new initialization: it goes first, from its
+  // own thread only
+  if(FlGui::available()) {
+    if(FlGui::onMainThread())
+      FlGui::destroy();
+    else
+      Msg::Warning("Finalizing outside the thread of the GUI, which stays");
+  }
+#endif
+
   // delete all models and views
   DeleteAllModelsAndViews();
 
@@ -267,6 +276,7 @@ int GmshFinalize()
   }
 #endif
   Msg::Finalize();
+  SetCrashReport(false);
   isInitialized = false;
   return 1;
 }
@@ -451,7 +461,7 @@ int GmshFLTK(int argc, char **argv)
   if(CTX::instance()->post.combineTime) {
     PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig,
                    CTX::instance()->post.combineCopyOptions);
-    FlGui::instance()->updateViews(true, true);
+    FlGui::instance()->updateViews(true);
   }
 
   // init first context

@@ -8,6 +8,7 @@
 
 #include <map>
 #include <string>
+#include <initializer_list>
 #include <FL/Fl.H>
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Input.H>
@@ -18,6 +19,10 @@
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Box.H>
+
+// whether the inputs are all filled in; if not, an error names the first one
+// left empty, which would write an invalid command in the script
+bool inputsFilled(std::initializer_list<Fl_Input *> inputs);
 
 class elementaryContextWindow {
 public:
@@ -35,6 +40,9 @@ public:
   void hide() { win->hide(); }
   void updatePoint(double pt[3], int which);
   bool frozenPointCoord(int coord);
+  // adds the entity of the pane to the script, unless a value it needs is
+  // missing
+  bool addShape(int pane);
 };
 
 class physicalContextWindow {

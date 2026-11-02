@@ -989,7 +989,9 @@ void meshGEdge::operator()(GEdge *ge)
     IntPoint P1, P2;
     mesh_vertices.resize(N - 2);
 
-    while(NUMP < N - 1) {
+    // (not past the last point, which a degenerate integral, e.g. not a number,
+    // would not reach)
+    while(NUMP < N - 1 && count < (int)Points.size()) {
       P1 = Points[count - 1];
       P2 = Points[count];
       const double d = (double)NUMP * b;
@@ -1010,6 +1012,9 @@ void meshGEdge::operator()(GEdge *ge)
         count++;
       }
     }
+    if(NUMP < N - 1)
+      Msg::Warning("Could not place %d of the %d nodes of curve %d",
+                   N - 1 - NUMP, N - 2, ge->tag());
     mesh_vertices.resize(NUMP - 1);
   }
 

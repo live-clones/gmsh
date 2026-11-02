@@ -4,6 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <algorithm>
+#include <atomic>
 #include <limits>
 #include <stdlib.h>
 #include <sstream>
@@ -77,10 +78,14 @@ GModel::GModel(const std::string &name)
     _currentMeshEntity(nullptr), _numPartitions(0), normals(nullptr),
     lcCallback(nullptr)
 {
+  static std::atomic<std::size_t> numModels(0);
+  _serial = ++numModels;
   _maxVertexNum = CTX::instance()->mesh.firstNodeTag - 1;
   _maxElementNum = CTX::instance()->mesh.firstElementTag - 1;
   _checkPointedMaxVertexNum = _maxVertexNum;
   _checkPointedMaxElementNum = _maxElementNum;
+  for(int dim = 0; dim < 4; dim++)
+    _maxNonOCCTag[dim] = CTX::instance()->geom.firstEntityTag - 1;
 
   // hide all other models
   for(std::size_t i = 0; i < list.size(); i++) list[i]->setVisibility(0);
@@ -171,7 +176,7 @@ GModel *GModel::findByName(const std::string &name, const std::string &fileName)
 
 void GModel::destroy(bool keepName)
 {
-  CTX::instance()->geomChanged();
+  CTX::instance()->entitiesChanged();
   Msg::Debug("Destroying model %s", getName().c_str());
 
   if(!keepName) {
@@ -183,6 +188,8 @@ void GModel::destroy(bool keepName)
   _maxElementNum = CTX::instance()->mesh.firstElementTag - 1;
   _checkPointedMaxVertexNum = _maxVertexNum;
   _checkPointedMaxElementNum = _maxElementNum;
+  for(int dim = 0; dim < 4; dim++)
+    _maxNonOCCTag[dim] = CTX::instance()->geom.firstEntityTag - 1;
   _currentMeshEntity = nullptr;
   _numPartitions = 0;
   _lastMeshEntityError.clear();
@@ -228,6 +235,11 @@ void GModel::destroyMeshCaches(bool keepVertexCaches)
   // this is called in GEntity::deleteMesh()
 #pragma omp critical(destroyMeshCaches)
   {
+    // elements and nodes are deleted or replaced: what keeps pointers to them
+    // compares the elements stamp (see modelStamps), what draws them the
+    // content stamp
+    CTX::instance()->meshElementsStamp++;
+    CTX::instance()->meshContentStamp++;
     if(!keepVertexCaches) {
       _vertexVectorCache.clear();
       std::vector<MVertex *>().swap(_vertexVectorCache);
@@ -515,33 +527,71 @@ std::vector<int> GModel::getTagsForPhysicalName(int dim,
   return tags;
 }
 
+void GModel::_keepNonOCCTag(GEntity *e)
+{
+  if(e->getNativeType() != GEntity::OpenCascadeModel)
+    _maxNonOCCTag[e->dim()] = std::max(_maxNonOCCTag[e->dim()], e->tag());
+}
+
 bool GModel::add(GRegion *r)
 {
-  CTX::instance()->geomChanged();
+  CTX::instance()->entitiesChanged();
+  _keepNonOCCTag(r);
   return regions.insert(r).second;
 }
 
 bool GModel::add(GFace *f)
 {
-  CTX::instance()->geomChanged();
+  CTX::instance()->entitiesChanged();
+  _keepNonOCCTag(f);
   return faces.insert(f).second;
 }
 
 bool GModel::add(GEdge *e)
 {
-  CTX::instance()->geomChanged();
+  CTX::instance()->entitiesChanged();
+  _keepNonOCCTag(e);
   return edges.insert(e).second;
 }
 
 bool GModel::add(GVertex *v)
 {
-  CTX::instance()->geomChanged();
+  CTX::instance()->entitiesChanged();
+  _keepNonOCCTag(v);
   return vertices.insert(v).second;
+}
+
+void GModel::_forgetParent(GEntity *e)
+{
+  if(!getNumPartitions()) return;
+  // (a partition entity is the parent of none)
+  switch(e->geomType()) {
+  case GEntity::PartitionPoint:
+  case GEntity::PartitionCurve:
+  case GEntity::PartitionSurface:
+  case GEntity::PartitionVolume:
+  case GEntity::GhostCurve:
+  case GEntity::GhostSurface:
+  case GEntity::GhostVolume: return;
+  default: break;
+  }
+  for(GVertex *v : vertices)
+    if(v->geomType() == GEntity::PartitionPoint && v->getParentEntity() == e)
+      static_cast<partitionVertex *>(v)->setParentEntity(nullptr);
+  for(GEdge *ed : edges)
+    if(ed->geomType() == GEntity::PartitionCurve && ed->getParentEntity() == e)
+      static_cast<partitionEdge *>(ed)->setParentEntity(nullptr);
+  for(GFace *f : faces)
+    if(f->geomType() == GEntity::PartitionSurface && f->getParentEntity() == e)
+      static_cast<partitionFace *>(f)->setParentEntity(nullptr);
+  for(GRegion *r : regions)
+    if(r->geomType() == GEntity::PartitionVolume && r->getParentEntity() == e)
+      static_cast<partitionRegion *>(r)->setParentEntity(nullptr);
 }
 
 bool GModel::remove(GRegion *r)
 {
-  CTX::instance()->geomChanged();
+  CTX::instance()->entitiesChanged();
   // the container is sorted by tag, so look the entity up instead of scanning
   // (this is O(#entities) per removal otherwise, which dominates on models
   // with many partition entities); fall back to a scan in case a tag was
@@ -551,6 +601,7 @@ bool GModel::remove(GRegion *r)
     it = std::find(regions.begin(), regions.end(), r);
   if(it != regions.end()) {
     regions.erase(it);
+    _forgetParent(r);
     std::vector<GFace *> f = r->faces();
     for(auto it = f.begin(); it != f.end(); it++) (*it)->delRegion(r);
     return true;
@@ -562,7 +613,7 @@ bool GModel::remove(GRegion *r)
 
 bool GModel::remove(GFace *f)
 {
-  CTX::instance()->geomChanged();
+  CTX::instance()->entitiesChanged();
   // the container is sorted by tag, so look the entity up instead of scanning
   // (this is O(#entities) per removal otherwise, which dominates on models
   // with many partition entities); fall back to a scan in case a tag was
@@ -572,6 +623,7 @@ bool GModel::remove(GFace *f)
     it = std::find(faces.begin(), faces.end(), f);
   if(it != faces.end()) {
     faces.erase(it);
+    _forgetParent(f);
     std::vector<GEdge *> const &e = f->edges();
     for(auto it = e.begin(); it != e.end(); it++) (*it)->delFace(f);
     return true;
@@ -583,7 +635,7 @@ bool GModel::remove(GFace *f)
 
 bool GModel::remove(GEdge *e)
 {
-  CTX::instance()->geomChanged();
+  CTX::instance()->entitiesChanged();
   // the container is sorted by tag, so look the entity up instead of scanning
   // (this is O(#entities) per removal otherwise, which dominates on models
   // with many partition entities); fall back to a scan in case a tag was
@@ -593,6 +645,7 @@ bool GModel::remove(GEdge *e)
     it = std::find(edges.begin(), edges.end(), e);
   if(it != edges.end()) {
     edges.erase(it);
+    _forgetParent(e);
     if(e->getBeginVertex()) e->getBeginVertex()->delEdge(e);
     if(e->getEndVertex()) e->getEndVertex()->delEdge(e);
     return true;
@@ -604,7 +657,7 @@ bool GModel::remove(GEdge *e)
 
 bool GModel::remove(GVertex *v)
 {
-  CTX::instance()->geomChanged();
+  CTX::instance()->entitiesChanged();
   // the container is sorted by tag, so look the entity up instead of scanning
   // (this is O(#entities) per removal otherwise, which dominates on models
   // with many partition entities); fall back to a scan in case a tag was
@@ -614,6 +667,7 @@ bool GModel::remove(GVertex *v)
     it = std::find(vertices.begin(), vertices.end(), v);
   if(it != vertices.end()) {
     vertices.erase(it);
+    _forgetParent(v);
     return true;
   }
   else {
@@ -1305,10 +1359,15 @@ SBoundingBox3d GModel::bounds(bool aroundVisible)
   return bb;
 }
 
-int GModel::mesh(int dimension)
+int GModel::mesh(int dimension, bool nested)
 {
 #if defined(HAVE_MESH)
-  GenerateMesh(this, dimension);
+  // not during another operation, which processes events of the GUI; locked
+  // until the mesh is renumbered and its homology computed, whose messages
+  // process them too
+  if(!nested && modelBusy()) return false;
+  modelLock lock;
+  GenerateMesh(this, dimension, true);
   if(CTX::instance()->mesh.renumber) {
     renumberMeshVertices();
     renumberMeshElements();
@@ -1732,14 +1791,20 @@ int GModel::getMeshStatus(bool countDiscrete)
     if(countDiscrete && numEle3D) return 3;
   }
   if(numEle3D) {
-    bool toMesh3D = false;
-    for(auto it = firstRegion(); it != lastRegion() && !toMesh3D; ++it) {
+    // (volumes keep no mesh status: one to mesh without elements, e.g. added
+    // since, makes the mesh incomplete)
+    bool toMesh3D = false, meshDone3D = true;
+    for(auto it = firstRegion(); it != lastRegion(); ++it) {
       GRegion *gr = *it;
       if(gr->geomType() != GEntity::DiscreteVolume &&
-         gr->meshAttributes.method != MESH_NONE)
+         gr->meshAttributes.method != MESH_NONE) {
         toMesh3D = true;
+        if(!gr->getNumMeshElements() &&
+           (!onlyVisible || (onlyVisible && gr->getVisibility())))
+          meshDone3D = false;
+      }
     }
-    if(toMesh3D) return 3;
+    if(toMesh3D && meshDone3D) return 3;
   }
 
   std::size_t numEle2D = 0;

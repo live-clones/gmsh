@@ -118,6 +118,7 @@ public:
   // the desktop under the pointer (root coordinates)
   inline static void (*tornOutHook)(paletteWindow *w, int x, int y) = nullptr;
   toolDock(int x, int y, int w, int h, int rowHeight);
+  ~toolDock();
   // docks the window, or brings it forward, and shows it
   void dock(paletteWindow *pw);
   // a tab or title dragged: whether the drag from (fromX, fromY) to (x, y)

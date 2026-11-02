@@ -192,6 +192,10 @@ namespace {
 
       shape[GLYPH_SPHERE].clear();
       shape[GLYPH_SPHERE].sphere(1., n, n);
+      // a few more subdivisions for the markers, whose outline shows its
+      // facets at their size
+      shape[GLYPH_MARKER].clear();
+      shape[GLYPH_MARKER].sphere(1., n + 4, n + 4);
 
       shape[GLYPH_DISK].clear();
       shape[GLYPH_DISK].disk(0., 1., 0., n);
@@ -524,9 +528,8 @@ void drawContext::drawSphere(double R, double x, double y, double z, int n1,
   gmshLighting(false);
 }
 
-
 void drawContext::drawSphere(double size, double x, double y, double z,
-                             int light)
+                             int light, bool marker)
 {
   // size is a point size: a diameter
   double ss = 0.5 * size * pointPixelFactor() * pixel_equiv_x / s[0];
@@ -536,7 +539,7 @@ void drawContext::drawSphere(double size, double x, double y, double z,
   glMatrix::multiply(t, sc, m);
   _tmpl.update();
   if(light) gmshLighting(true);
-  emit(_tmpl.shape[GLYPH_SPHERE], m);
+  emit(_tmpl.shape[marker ? GLYPH_MARKER : GLYPH_SPHERE], m);
   gmshLighting(false);
 }
 

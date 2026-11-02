@@ -65,6 +65,7 @@ static void clip_update_cb(Fl_Widget *w, void *data)
 
 static void clip_update(bool adjusting)
 {
+  if(!FlGui::available()) return; // a timer firing after the GUI is gone
   if(FlGui::instance()->clipping->group[0]->visible()) { // plane tab
     int idx = FlGui::instance()->clipping->choice->value();
     CTX::instance()->geom.clip &= ~(1 << idx);
@@ -210,7 +211,7 @@ static void clip_reset_cb(Fl_Widget *w, void *data)
   // Warning: for consistency these reset values should match the
   // default values for the associated options
   for(int i = 0; i < 6; i++)
-    for(int j = 0; j < 4; j++) CTX::instance()->clipPlane[0][0] = 0.;
+    for(int j = 0; j < 4; j++) CTX::instance()->clipPlane[i][j] = 0.;
   CTX::instance()->clipPlane[0][0] = 1.;
   CTX::instance()->clipPlane[1][1] = 1.;
   CTX::instance()->clipPlane[2][2] = 1.;
@@ -337,10 +338,7 @@ clippingWindow::clippingWindow(int deltaFontSize)
                                 "Only clip volume elements");
   butt[3]->tooltip("General.ClipOnlyVolume");
 
-  for(int i = 0; i < 4; i++) {
-    butt[i]->type(FL_TOGGLE_BUTTON);
-    butt[i]->callback(clip_update_cb);
-  }
+  for(int i = 0; i < 4; i++) butt[i]->callback(clip_update_cb);
 
   {
     Fl_Button *o =

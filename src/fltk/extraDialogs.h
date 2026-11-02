@@ -15,8 +15,6 @@ int opacityChooser(const char *title, const std::string &category,
 std::string connectionChooser();
 std::string patternChooser();
 
-int cgnsImport();
-
 int simpleTextDisplay(const char *title, const std::string &text);
 int simpleTextEditor(const char *title, const std::string &help,
                      std::string &text);

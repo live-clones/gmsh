@@ -26,11 +26,13 @@ void resetOpenglMode();
 class openglWindow : public Fl_Gl_Window, public sceneView {
 private:
   static openglWindow *_lastHandled;
-  static void _setLastHandled(openglWindow *);
   // some drawing routines can create data (STL triangulations, etc.), which
-  // can fire draw() while we are already drawing, e.g. due to an impromptu
-  // Fl::check(); the same lock keeps the picking passes out of the frames
+  // can fire draw() while we are already drawing, through an Fl::check() or
+  // Fl::wait() of FLTK itself (FlGui::check() refuses while drawing); the
+  // same lock keeps the picking passes out of the frames
   bool _lock;
+  // which also says to FlGui that a window draws (see FlGui::drawing)
+  void _setLock(bool on);
   bool _drawn;
   void _drawScreenMessage();
   void _drawBorder();
@@ -67,7 +69,7 @@ protected:
   int handle(int);
   // what the interaction asks of its window
   void hostRedraw();
-  void hostClicked();
+  bool hostClicked();
   void hostViewChanged();
   void hostCursor(bool cross);
   bool hostBeginGL();
@@ -89,11 +91,8 @@ public:
     _studioAsked = false;
     Fl_Gl_Window::redraw();
   }
-  time_t rawtime, prev_rawtime;
-  double response_frequency;
   openglWindow(int x, int y, int w, int h);
   ~openglWindow();
-  void show();
   // draw into a picture of the given size (pixels) instead of the window,
   // at supersampling times the scale of the window; false if it cannot be
   // done
@@ -111,8 +110,8 @@ public:
   // PixelBuffer::fill): the studio frames that one accumulated are put back
   // rather than drawn again
   void setAgain(bool again) { _again = again; }
-  static void setLastHandled(openglWindow *w) { _lastHandled = w; }
-  double frequency;
+  // which also brings the per-window visibility list up to date
+  static void setLastHandled(openglWindow *w);
   void moveWithGamepad();
   Navigator *Nautilus;
 };

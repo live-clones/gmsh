@@ -22,17 +22,24 @@
 
 sceneView::sceneView(drawContext *ctx)
   : _w(1), _h(1), _selection(ENT_NONE), _trySelection(0), _addQuery(false),
-    _highlighted(nullptr), _highlightedWas(0), _pickStepTime(0.),
-    _stepping(false), _hoverBehind(false), _spin(0.), _spinFrom(0.),
-    _spinPath(0.), _spinHot(0.), _ctx(ctx), _fire(0.), _fireTime(0.),
-    addPointMode(0), lassoMode(false), selectionMode(false), endSelection(0),
-    undoSelection(0), invertSelection(0), quitSelection(0), changeSelection(0)
+    _highlightedDim(-1), _highlightedTag(0), _highlightedWas(0),
+    _pickStepTime(0.), _stepping(false), _hoverBehind(false), _spin(0.),
+    _spinFrom(0.), _spinPath(0.), _spinHot(0.), _ctx(ctx), _fire(0.),
+    _fireTime(0.), addPointMode(0), lassoMode(false), selectionMode(false),
+    endSelection(0), undoSelection(0), invertSelection(0), quitSelection(0),
+    changeSelection(0)
 {
   for(int i = 0; i < 3; i++) _point[i] = 0.;
   for(int i = 0; i < 4; i++) _trySelectionXYWH[i] = 0;
   _stepAnchor[0] = _stepAnchor[1] = 0.;
   _hoverAnchor[0] = _hoverAnchor[1] = 0.;
   for(int i = 0; i < 4; i++) _hoverBox[i] = 0.;
+}
+
+sceneView::~sceneView()
+{
+  GEntity *was = _highlightedEntity();
+  if(was) was->setSelection(_highlightedWas);
 }
 
 bool sceneView::_select(int type, bool multiple, bool mesh, bool post, int x,
@@ -42,7 +49,7 @@ bool sceneView::_select(int type, bool multiple, bool mesh, bool post, int x,
                         std::vector<GRegion *> &regions,
                         std::vector<MElement *> &elements,
                         std::vector<SPoint2> &points,
-                        std::vector<PView *> &views)
+                        std::vector<PView *> &views, bool through)
 {
   // test: completely deactivate GL_SELECT passes when mouse selection is off,
   // to see if unaccelerated (pure CPU) selection buffer is the reason for slow
@@ -55,7 +62,8 @@ bool sceneView::_select(int type, bool multiple, bool mesh, bool post, int x,
   // middle of one can deliver a click there): the passes would mix
   if(!hostBeginGL()) return false;
   bool ret = _ctx->select(type, multiple, mesh, post, x, y, w, h, vertices,
-                          edges, faces, regions, elements, points, views);
+                          edges, faces, regions, elements, points, views,
+                          through);
   hostEndGL();
   return ret;
 }
@@ -96,6 +104,20 @@ bool sceneView::_probeBehind()
   return behind;
 }
 
+// The highlighted entity, if it still is: looked up by its tag in the models,
+// as it may have been deleted since, and still drawn as highlighted, as
+// something else may have changed its selection since (or a new entity may
+// have its tag)
+GEntity *sceneView::_highlightedEntity() const
+{
+  if(_highlightedDim < 0) return nullptr;
+  for(GModel *m : GModel::list) {
+    GEntity *e = m->getEntityByTag(_highlightedDim, _highlightedTag);
+    if(e && e->getSelection() == GEntity::SelectHover) return e;
+  }
+  return nullptr;
+}
+
 // The entity the cursor is over, drawn as a selected one until the cursor is
 // over something else. The picture changes, so this redraws; what is drawn is
 // the same geometry in another colour, so the identifier image a pick is read
@@ -103,12 +125,17 @@ bool sceneView::_probeBehind()
 void sceneView::_highlight(GEntity *e)
 {
   if(!CTX::instance()->mouseHoverHighlight) e = nullptr;
-  if(e == _highlighted) return;
-  // put back what it was, unless something else has changed it since
-  if(_highlighted && _highlighted->getSelection() == GEntity::SelectHover)
-    _highlighted->setSelection(_highlightedWas);
+  if(!e && _highlightedDim < 0) return;
+  GEntity *was = _highlightedEntity();
+  if(e && e == was) return;
+  // not one already chosen, drawn as such: it would lose its marker and label
+  // and no longer read as chosen to what picks it (see getSelection())
+  if(e && e->getSelection()) e = nullptr;
+  // put back what it was
+  if(was) was->setSelection(_highlightedWas);
   _highlightedWas = e ? e->getSelection() : 0;
-  _highlighted = e;
+  _highlightedDim = e ? e->dim() : -1;
+  _highlightedTag = e ? e->tag() : 0;
   // selected as far as the drawing is concerned, so that it is drawn again
   // on top of the merged arrays, but in the highlight colour and without the
   // marker and label a chosen entity shows (see getSelectionColor())
@@ -147,25 +174,24 @@ void sceneView::_hover()
              (_selection == ENT_SURFACE && faces.size()) ||
              (_selection == ENT_VOLUME && regions.size()));
   std::string text, cmd;
-  bool multiline = CTX::instance()->tooltips;
   if(vertices.size()) {
-    text = vertices[0]->getInfoString(true, multiline);
+    text = vertices[0]->getInfoString(true, true);
     cmd = CTX::instance()->geom.doubleClickedPointCommand;
   }
   else if(edges.size()) {
-    text = edges[0]->getInfoString(true, multiline);
+    text = edges[0]->getInfoString(true, true);
     cmd = CTX::instance()->geom.doubleClickedCurveCommand;
   }
   else if(faces.size()) {
-    text = faces[0]->getInfoString(true, multiline);
+    text = faces[0]->getInfoString(true, true);
     cmd = CTX::instance()->geom.doubleClickedSurfaceCommand;
   }
   else if(regions.size()) {
-    text = regions[0]->getInfoString(true, multiline);
+    text = regions[0]->getInfoString(true, true);
     cmd = CTX::instance()->geom.doubleClickedVolumeCommand;
   }
   else if(elements.size()) {
-    text = elements[0]->getInfoString(multiline);
+    text = elements[0]->getInfoString(true);
   }
   else if(points.size()) {
     char tmp[256];
@@ -252,11 +278,18 @@ void sceneView::_hover()
     if(tmp[0]) hints.push_back(tmp);
   }
   for(std::size_t i = 0; i < hints.size(); i++)
-    text += (multiline ? (i ? "\n" : "\n\n") : " ") + hints[i];
+    text += (i ? "\n" : "\n\n") + hints[i];
   if(CTX::instance()->tooltips)
     drawTooltip(text);
-  else
-    Msg::StatusBar(false, text.c_str());
+  else {
+    // in the status bar, its first line only (what is under the cursor), with
+    // the next one when it ends with a colon (an element, then its type)
+    std::string::size_type n = text.find('\n');
+    if(n != std::string::npos && n && text[n - 1] == ':')
+      n = text.find('\n', n + 1);
+    Msg::StatusBar(false,
+                   ReplaceSubString("\n", "", text.substr(0, n)).c_str());
+  }
   if(Msg::GetVerbosity() == 99)
     Msg::Debug(ReplaceSubString("\n", " ", text).c_str());
 }
@@ -281,6 +314,13 @@ bool sceneView::_processDoubleClick(std::size_t num, const std::string &what)
   return true;
 }
 
+// the command of a double click, which may change the model: not during
+// another operation on it
+static void runCommand(const std::string &command)
+{
+  if(!modelBusy()) ParseString(command, true);
+}
+
 // what was double clicked runs its command (General.DoubleClicked*Command),
 // shows its ONELAB parameters, or, when there is nothing, the quick access
 // menu
@@ -302,7 +342,7 @@ void sceneView::_doubleClick(const paneInput &in)
     if(CTX::instance()->geom.doubleClickedPointCommand == "ONELAB")
       hostShowOnelabContext(0, vertices[0]->tag());
     else
-      ParseString(CTX::instance()->geom.doubleClickedPointCommand, true);
+      runCommand(CTX::instance()->geom.doubleClickedPointCommand);
   }
   else if(_processDoubleClick(edges.size(),
                               CTX::instance()->geom.doubleClickedCurveCommand)) {
@@ -310,7 +350,7 @@ void sceneView::_doubleClick(const paneInput &in)
     if(CTX::instance()->geom.doubleClickedCurveCommand == "ONELAB")
       hostShowOnelabContext(1, edges[0]->tag());
     else
-      ParseString(CTX::instance()->geom.doubleClickedCurveCommand, true);
+      runCommand(CTX::instance()->geom.doubleClickedCurveCommand);
   }
   else if(_processDoubleClick(faces.size(),
                               CTX::instance()->geom.doubleClickedSurfaceCommand)) {
@@ -318,7 +358,7 @@ void sceneView::_doubleClick(const paneInput &in)
     if(CTX::instance()->geom.doubleClickedSurfaceCommand == "ONELAB")
       hostShowOnelabContext(2, faces[0]->tag());
     else
-      ParseString(CTX::instance()->geom.doubleClickedSurfaceCommand, true);
+      runCommand(CTX::instance()->geom.doubleClickedSurfaceCommand);
   }
   else if(_processDoubleClick(regions.size(),
                               CTX::instance()->geom.doubleClickedVolumeCommand)) {
@@ -326,17 +366,17 @@ void sceneView::_doubleClick(const paneInput &in)
     if(CTX::instance()->geom.doubleClickedVolumeCommand == "ONELAB")
       hostShowOnelabContext(3, regions[0]->tag());
     else
-      ParseString(CTX::instance()->geom.doubleClickedVolumeCommand, true);
+      runCommand(CTX::instance()->geom.doubleClickedVolumeCommand);
   }
   else if(views.size() && views[0]->getOptions()->doubleClickedCommand.size()) {
     CTX::instance()->post.doubleClickedView = views[0]->getIndex();
-    ParseString(views[0]->getOptions()->doubleClickedCommand, true);
+    runCommand(views[0]->getOptions()->doubleClickedCommand);
   }
   else if(points.size() &&
           CTX::instance()->post.doubleClickedGraphPointCommand.size()) {
     CTX::instance()->post.doubleClickedGraphPointX = points[0].x();
     CTX::instance()->post.doubleClickedGraphPointY = points[0].y();
-    ParseString(CTX::instance()->post.doubleClickedGraphPointCommand, true);
+    runCommand(CTX::instance()->post.doubleClickedGraphPointCommand);
   }
   else { // popup quick access menu
     hostQuickAccess();
@@ -350,6 +390,7 @@ void sceneView::_lassoZoom()
     Camera *cam = &(_ctx->camera);
     double dy = fabs(-_click.win[1] + _curr.win[1]);
     double dx = fabs(-_click.win[0] + _curr.win[0]);
+    if(dx == 0. || dy == 0.) return;
     double factx = _w / fabs(dx);
     double facty = _h / fabs(dy);
     double fact = .8 * std::min(factx, facty);
@@ -378,7 +419,7 @@ void sceneView::_lassoZoom()
   tmp.recenter(_ctx);
 
   _ctx->initPosition(false);
-  drawContext::global()->draw();
+  hostRedraw();
   hostViewChanged();
 }
 
@@ -398,20 +439,25 @@ void sceneView::handleMouse(const paneInput &in)
       _doubleClick(in);
       return;
     }
-    hostClicked();
+    if(!hostClicked()) return;
     _curr.set(_ctx, x, y);
-    if(in.button == 0 && !shift && !alt) {
+    // (Ctrl+Alt+click starts a lasso of what is in front, and Alt does not
+    // matter for the click that ends a lasso)
+    if(in.button == 0 && !shift && (!alt || ctrl || lassoMode)) {
       // Ctrl+click adds a query in query mode (when the clicks select), and
       // starts a lasso otherwise
-      _addQuery = hostQueryMode() && CTX::instance()->mouseSelection && ctrl;
+      _addQuery =
+        hostQueryMode() && CTX::instance()->mouseSelection && ctrl && !alt;
       if(!lassoMode && ctrl && !_addQuery) {
         lassoMode = true;
+        _lassoFront = alt;
       }
       else if(lassoMode) {
         lassoMode = false;
         if(selectionMode && CTX::instance()->mouseSelection) {
           // will try to select multiple entities
           _trySelection = 2;
+          _trySelectionFront = _lassoFront;
           _trySelectionXYWH[0] = (int)(_click.win[0] + _curr.win[0]) / 2;
           _trySelectionXYWH[1] = (int)(_click.win[1] + _curr.win[1]) / 2;
           _trySelectionXYWH[2] = (int)fabs(_click.win[0] - _curr.win[0]);
@@ -442,6 +488,7 @@ void sceneView::handleMouse(const paneInput &in)
         if(selectionMode && CTX::instance()->mouseSelection) {
           // will try to unselect multiple entities
           _trySelection = -2;
+          _trySelectionFront = _lassoFront;
           _trySelectionXYWH[0] = (int)(_click.win[0] + _curr.win[0]) / 2;
           _trySelectionXYWH[1] = (int)(_click.win[1] + _curr.win[1]) / 2;
           _trySelectionXYWH[2] = (int)fabs(_click.win[0] - _curr.win[0]);
@@ -721,16 +768,23 @@ char sceneView::selectionStep(std::vector<GVertex *> &vertices,
     hostCursor(false);
     return 'q';
   }
+  // the selection is over, as in every other return below (beginSelection()
+  // starts the next)
   if(endSelection) {
     _selection = ENT_NONE;
+    selectionMode = false;
     endSelection = 0;
     return 'e';
   }
   if(undoSelection) {
+    _selection = ENT_NONE;
+    selectionMode = false;
     undoSelection = 0;
     return 'u';
   }
   if(invertSelection) {
+    _selection = ENT_NONE;
+    selectionMode = false;
     invertSelection = 0;
     return 'i';
   }
@@ -745,7 +799,7 @@ char sceneView::selectionStep(std::vector<GVertex *> &vertices,
     else if(_select(_selection, multi, true, true, _trySelectionXYWH[0],
                     _trySelectionXYWH[1], _trySelectionXYWH[2],
                     _trySelectionXYWH[3], vertices, edges, faces, regions,
-                    elements, points, views)) {
+                    elements, points, views, !_trySelectionFront)) {
       _selection = ENT_NONE;
       selectionMode = false;
       return add ? 'l' : 'r';

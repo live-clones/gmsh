@@ -252,7 +252,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Solver.AutoShowViews
-Automcatically show newly merged results (0: none; 1: all; 2: last one)@*
+Automatically show newly merged results (0: none; 1: all; 2: last one, a view replacing the older ones of its name, shown as they were)@*
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 

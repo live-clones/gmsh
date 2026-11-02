@@ -1453,7 +1453,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "HighOrderThresholdMax", opt_mesh_ho_threshold_max, 2.0,
     "Maximum threshold for high-order element optimization"},
   { F|O, "HighOrderFastCurvingNewAlgo", opt_mesh_ho_fast_new_algo, 0,
-    "Curve boundary layer with new \"fast curving\" algorithm (experimental)"},
+    "Curve boundary layer with \"fast curving\" algorithm"},
   { F|O, "HighOrderCurveOuterBL", opt_mesh_ho_curve_outer_BL, 0,
     "Curve also the outer surface of the boundary layer in the fast curving "
     "algorithm (0 = do not curve, 1 = curve according to boundary, 2 = curve "
@@ -1524,7 +1524,7 @@ StringXNumber MeshOptions_Number[] = {
     "recovering boundary edges fails (0: mark the surface as failed and "
     "preserve the existing curve mesh without subdivision or retries)" },
   { F|O, "MeshOnlyVisible" , opt_mesh_mesh_only_visible, 0. ,
-    "Mesh only visible entities (experimental)" },
+    "Mesh only visible entities" },
   { F|O, "MeshOnlyEmpty" , opt_mesh_mesh_only_empty, 0. ,
     "Mesh only entities that have no existing mesh" },
   { F|O, "MeshSizeExtendFromBoundary" , opt_mesh_lc_extend_from_boundary, 1. ,
@@ -1625,7 +1625,7 @@ StringXNumber MeshOptions_Number[] = {
     "Number of triangles in the current mesh (read-only)" },
   { F|O, "NewtonConvergenceTestXYZ" , opt_mesh_newton_convergence_test_xyz , 0. ,
     "Force inverse surface mapping algorithm (Newton-Raphson) to converge in real "
-    "coordinates (experimental)" },
+    "coordinates" },
   { F|O, "Nodes" , opt_mesh_nodes , 0. ,
     "Display mesh nodes?" },
   { F|O, "NodeLabels" , opt_mesh_node_labels , 0. ,
@@ -1818,7 +1818,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "ReparamMaxTriangles" , opt_mesh_reparam_max_triangles , 250000 ,
     "Maximum number of triangles in a single parametrization patch" },
   { F|O, "Reproducible" , opt_mesh_reproducible , 0 ,
-    "Try to produce reproducible meshes even when multi-threaded (experimental)" },
+    "Try to produce reproducible meshes even when multi-threaded" },
 
   { F,   "SaveAll" , opt_mesh_save_all , 0. ,
     "Save all elements, even if they don't belong to physical groups (for some "
@@ -1963,7 +1963,8 @@ StringXNumber SolverOptions_Number[] = {
   { F|O, "AutoMergeFile" , opt_solver_auto_merge_file , 1. ,
     "Automatically merge result files" },
   { F|O, "AutoShowViews" , opt_solver_auto_show_views , 2. ,
-    "Automcatically show newly merged results (0: none; 1: all; 2: last one)" },
+    "Automatically show newly merged results (0: none; 1: all; 2: last one, "
+    "a view replacing the older ones of its name, shown as they were)" },
   { F|O, "AutoShowLastStep" , opt_solver_auto_show_last_step , 1. ,
     "Automatically show the last step in newly merged results, if there are "
     "more than 2 steps" },
@@ -2273,6 +2274,8 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "Opacity" , opt_view_opacity , 1. ,
     "Opacity factor applied to the colormap (1: unchanged, 0: fully "
     "transparent)" },
+  { F|O, "OutlineWidth" , opt_view_outline_width , 1.0 ,
+    "Display width of the element outlines (in pixels, see View.ShowElement)" },
   { F|O, "PointSize" , opt_view_point_size , 6. ,
     "Display size of points (in pixels)" },
   { F|O, "PointType" , opt_view_point_type , 0. ,
@@ -2737,7 +2740,7 @@ StringXColor ViewOptions_Color[] = {
   { F|O, "Text3D" , opt_view_color_text3d , ELECOL, "3D text color" },
   { F|O, "Axes" , opt_view_color_axes , ELECOL, "Axes color" },
   { F|O, "Background2D" , opt_view_color_background2d ,
-    {255, 255, 255, 200}, {255, 255, 255, 200}, {255, 255, 255, 200}, {245, 245, 245, 200},
+    {255, 255, 255, 240}, {255, 255, 255, 240}, {255, 255, 255, 240}, {245, 245, 245, 240},
     "Bacground color for 2D plots" },
   { 0, nullptr , nullptr , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , nullptr }
 } ;

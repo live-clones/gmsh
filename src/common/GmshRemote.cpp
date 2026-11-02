@@ -43,9 +43,10 @@ static void ComputeAndSendVertexArrays(GmshClient *client, bool compute = true)
       min = data->getMin(opt->timeStep);
       max = data->getMax(opt->timeStep);
     }
-    VertexArray *va[4] = {p->va_points, p->va_lines, p->va_triangles,
-                          p->va_vectors};
-    for(int type = 0; type < 4; type++) {
+    // by type, from 1 (the ellipses, 5, are not sent)
+    VertexArray *va[6] = {p->va_points,  p->va_lines, p->va_triangles,
+                          p->va_vectors, nullptr,     p->va_outlines};
+    for(int type = 0; type < 6; type++) {
       if(va[type]) {
         int len;
         char *str = va[type]->toChar(p->getTag(), data->getName(), type + 1,
@@ -68,7 +69,7 @@ static void ComputeAndSendVertexArrays()
     PView::list[i]->fillVertexArrays();
 
   // ...and send
-  int nbArrays = PView::list.size() * 4;
+  int nbArrays = PView::list.size() * 5;
   MPI_Send(&nbArrays, 1, MPI_INT, 0, MPI_GMSH_DATA_READY, MPI_COMM_WORLD);
 
   for(std::size_t i = 0; i < PView::list.size(); i++) {
@@ -80,9 +81,10 @@ static void ComputeAndSendVertexArrays()
       min = data->getMin(opt->timeStep);
       max = data->getMax(opt->timeStep);
     }
-    VertexArray *va[4] = {p->va_points, p->va_lines, p->va_triangles,
-                          p->va_vectors};
-    for(int type = 0; type < 4; type++) {
+    // by type, from 1 (the ellipses, 5, are not sent)
+    VertexArray *va[6] = {p->va_points,  p->va_lines, p->va_triangles,
+                          p->va_vectors, nullptr,     p->va_outlines};
+    for(int type = 0; type < 6; type++) {
       if(va[type]) {
         int len;
         char *str = va[type]->toChar(p->getTag(), data->getName(), type + 1,
@@ -109,8 +111,9 @@ static void AddToVertexArrays(int length, const char *bytes, int swap)
   PView *p = PView::list[num - 1];
   PViewData *data = p->getData();
 
-  VertexArray *varrays[4] = {p->va_points, p->va_lines, p->va_triangles,
-                             p->va_vectors};
+  VertexArray *varrays[6] = {p->va_points,  p->va_lines, p->va_triangles,
+                             p->va_vectors, nullptr,     p->va_outlines};
+  if(type < 1 || type > 6 || !varrays[type - 1]) return;
 
   VertexArray *va = varrays[type - 1];
 
@@ -123,7 +126,8 @@ static void AddToVertexArrays(int length, const char *bytes, int swap)
 
   data->setBoundingBox(bb);
 
-  if(type == 4) type = 2;
+  // (the vectors and the outlines are pairs of nodes)
+  if(type == 4 || type == 6) type = 2;
   VertexArray *toAdd = new VertexArray(type, 100);
   toAdd->fromChar(length, bytes, swap);
   va->merge(toAdd);

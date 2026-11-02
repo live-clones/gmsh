@@ -675,7 +675,10 @@ bool OCCFace::buildSTLTriangulation(bool force)
   // face
   std::vector<GEdge *> const &e = edges();
   for(auto it = e.begin(); it != e.end(); it++) {
-    if((*it)->stl_vertices_xyz.size() == 0) {
+    // (only an OpenCASCADE curve has a TopoDS_Edge: not a built-in one of a
+    // model mixing the kernels)
+    if((*it)->stl_vertices_xyz.size() == 0 &&
+       (*it)->getNativeType() == GEntity::OpenCascadeModel) {
       const TopoDS_Edge *c = (TopoDS_Edge *)(*it)->getNativePtr();
       model()->getOCCInternals()->makeEdgeSTLFromFace(
         *c, _s, &((*it)->stl_vertices_xyz));

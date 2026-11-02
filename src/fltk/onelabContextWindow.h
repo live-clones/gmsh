@@ -6,6 +6,8 @@
 #ifndef ONELAB_CONTEXT_WINDOW_H
 #define ONELAB_CONTEXT_WINDOW_H
 
+#include <list>
+#include <memory>
 #include <vector>
 #include <string>
 #include <set>
@@ -34,18 +36,29 @@ public:
 class onelabContextWindow {
 private:
   int _width, _height;
-  std::vector<char *> _toFree;
-  std::vector<Fl_Widget *> _onelabWidgets;
+  // the widgets and the strings they show, and those retired, kept hidden
+  // until the events are handled (see onelabGroup::_rebuildTree())
+  std::list<std::string> _strings, _retiredStrings;
+  // the labels of the menu of the entity and its physical groups
+  std::list<std::string> _labels;
+  std::vector<Fl_Widget *> _onelabWidgets, _retiredWidgets;
+  // a rebuild asked for during a rebuild (hiding an edited input runs its
+  // callback): done once the current one is over
+  bool _rebuilding, _rebuildAgain;
+  // false once this window is deleted, which the code still running after
+  // events were processed (e.g. the GUI closed) reads
+  std::shared_ptr<bool> _alive;
+  void _rebuild();
   template <class T>
   void
   _addOnelabWidget(T &p, const std::string &pattern,
                    std::set<std::pair<std::string, Fl_Widget *> > &widgets);
   Fl_Choice *_choice;
+  // the entity, and its physical groups, by their tags: the model may change
+  // while the window is shown (a script reloaded, gmsh.model.occ.fragment)
   int _dim, _tag;
-  GEntity *_entity;
   std::string _name;
-  std::vector<std::pair<int, std::string> > _physicalGroups;
-  std::vector<std::vector<GEntity *> > _physicalGroupEntities;
+  std::vector<std::pair<int, std::string>> _physicalGroups;
   // the widgets of the parameters, with the codes of where they go
   struct placed {
     Fl_Widget *widget;
@@ -63,7 +76,9 @@ public:
   ~onelabContextWindow();
   void show(int dim, int tag);
   void hide();
-  void rebuild(bool deleteWidgets);
+  void rebuild();
+  // once the events are handled (see FlGui::_dispatch())
+  void deleteRetiredWidgets();
   void highlightSelection();
   void disableRedraw();
 };

@@ -60,15 +60,21 @@ private:
   // be looked at at the next step: 1 select, -1 unselect, 2 and -2 inside
   // the lasso, in the rectangle (centre, size)
   int _selection, _trySelection, _trySelectionXYWH[4];
+  // a lasso started with Ctrl+Alt+click takes only what is in front, not
+  // all that is inside it
+  bool _lassoFront = false, _trySelectionFront = false;
   // whether the last click asked to add a query to those on the picture
   // (Ctrl+click in query mode) rather than to replace them
   bool _addQuery;
   // what the cursor is over, in a box by it or in the status bar
   void _hover();
   // and drawn as selected while it is: the entity, what its selection was
-  // before, and the change of one for the other (which redraws)
-  GEntity *_highlighted;
+  // before, and the change of one for the other (which redraws). The entity
+  // is kept by its dimension and tag, not by a pointer: a clear, a reload or
+  // a synchronization deletes it while it is highlighted
+  int _highlightedDim, _highlightedTag;
   char _highlightedWas;
+  GEntity *_highlightedEntity() const;
   void _highlight(GEntity *e);
   // step through what is under the cursor, once per press or notch: see
   // _stepPick() for the several ways one of them arrives twice
@@ -94,7 +100,7 @@ private:
                std::vector<GEdge *> &edges, std::vector<GFace *> &faces,
                std::vector<GRegion *> &regions,
                std::vector<MElement *> &elements, std::vector<SPoint2> &points,
-               std::vector<PView *> &views);
+               std::vector<PView *> &views, bool through = true);
   // should a double click be processed?
   bool _processDoubleClick(std::size_t num, const std::string &what);
   void _doubleClick(const paneInput &in);
@@ -131,8 +137,10 @@ protected:
   // what the interaction asks of the host
   // the picture changed
   virtual void hostRedraw() {}
-  // a button was pushed in this view: it is the current one from now on
-  virtual void hostClicked() {}
+  // a button was pushed in this view: it is the current one from now on;
+  // false if the view is gone meanwhile (taking the focus commits an edited
+  // value, whose callback may run events that delete it)
+  virtual bool hostClicked() { return true; }
   // the view moved (rotation, translation, scale): whatever shows the
   // numbers follows
   virtual void hostViewChanged() {}
@@ -169,7 +177,8 @@ public:
   std::string screenMessage[2];
 
   sceneView(drawContext *ctx);
-  virtual ~sceneView() {}
+  // puts back the entity it highlights, e.g. when a window goes on unsplit
+  virtual ~sceneView();
   drawContext *getDrawContext() { return _ctx; }
   void setDrawContext(drawContext *ctx) { _ctx = ctx; }
 

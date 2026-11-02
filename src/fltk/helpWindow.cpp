@@ -98,7 +98,7 @@ double numberOrStringOptionChooser(const std::string &category, int index,
       number->maximum(maximum);
       if(CTX::instance()->inputScrolling) number->step(step, 1);
       number->callback(interactive_cb, (void *)&d);
-      number->when(FL_WHEN_RELEASE);
+      number->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
     }
   }
   else {
@@ -390,11 +390,22 @@ static std::string aboutText()
                                     std::to_string(MED_NUM_RELEASE)));
 #endif
   rows.push_back(std::make_pair("Packaged by", GetGmshPackager()));
-  rows.push_back(std::make_pair("Build options", GetGmshBuildOptions()));
+  // the one-line rows in a single row of the table, as Fl_Help_View spaces
+  // its rows widely, then the build options, which wrap
+  std::string labels, values;
+  for(std::size_t i = 0; i < rows.size(); i++) {
+    labels +=
+      (i ? "<br>" : "") + ReplaceSubString(" ", "&nbsp;", rows[i].first);
+    values +=
+      (i ? "<br>" : "") + ReplaceSubString(" ", "&nbsp;", rows[i].second);
+  }
+  rows.clear();
+  rows.push_back(std::make_pair(labels, values));
+  rows.push_back(std::make_pair("Build&nbsp;options", GetGmshBuildOptions()));
   for(std::size_t i = 0; i < rows.size(); i++)
     sstream << "<tr><td><font color=\"" << mutedColor() << "\">"
-            << ReplaceSubString(" ", "&nbsp;", rows[i].first)
-            << "</font></td><td>" << rows[i].second << "</td></tr>";
+            << rows[i].first << "</font></td><td>" << rows[i].second
+            << "</td></tr>";
   sstream << "</table>";
   return sstream.str();
 }
@@ -449,12 +460,23 @@ void helpWindow::resetText()
 {
   aboutView->value(aboutText().c_str());
   basicView->value(usageText(usageFilter).c_str());
+  // the About window as tall as its text (the fonts may have changed), which
+  // a wider window wraps less, within the screen; the text scrolls when the
+  // window is made smaller; not while shown
+  if(about->shown()) return;
+  int textHeight = aboutView->size() + 2 * WB;
+  textHeight = std::min(textHeight, Fl::h() * 4 / 5 - aboutView->y());
+  about->resizable(nullptr);
+  aboutView->size(aboutView->w(), textHeight);
+  about->size(about->w(), aboutView->y() + textHeight);
+  about->resizable(aboutView);
 }
 
 helpWindow::helpWindow()
 {
   {
-    int width = 30 * FL_NORMAL_SIZE;
+    // the height is fitted to the text below
+    int width = 36 * FL_NORMAL_SIZE;
     int logo = 7 * FL_NORMAL_SIZE;
     int height = 23 * BH + logo + 2 * WB;
 
@@ -469,7 +491,7 @@ helpWindow::helpWindow()
     Fl_Box *logoBox = new Fl_Box(0, 3 * WB, width, logo);
     Fl_SVG_Image *logoImage = new Fl_SVG_Image(nullptr, logoSvg);
     logoImage->resize(logo, logo);
-    logoBox->image(logoImage);
+    logoBox->bind_image(logoImage); // deleted with the box
 
     aboutView = new Fl_Help_View(2 * WB, logo + 3 * WB, width - 4 * WB,
                                  height - logo - 3 * WB);
@@ -520,12 +542,10 @@ helpWindow::helpWindow()
     int BW = (width - 4 * WB) / 3;
 
     modified = new Fl_Check_Button(WB, WB, BW, BH, "Only show modified");
-    modified->type(FL_TOGGLE_BUTTON);
     modified->callback(help_options_cb);
     modified->tooltip("Show only values different from defaults");
 
     showhelp = new Fl_Check_Button(2 * WB + BW, WB, BW, BH, "Show help");
-    showhelp->type(FL_TOGGLE_BUTTON);
     showhelp->callback(help_options_cb);
     showhelp->tooltip("Show help strings");
 
