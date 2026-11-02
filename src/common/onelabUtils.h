@@ -44,6 +44,24 @@ namespace onelabUtils {
   void archiveSolutionFiles(const std::string &fileName);
   void loadDb(const std::string &name);
   void resetDb(bool runGmshClient);
+  // what an interface does when the user changes a parameter, besides storing
+  // it: the global action the parameter asks for ("ServerAction" attribute, or
+  // "GmshOption" for backward compatibility: "ResetDatabase", "Reset" or
+  // "Reset<names>"), true if one was performed (the interface then rebuilds
+  // its list of parameters)...
+  bool serverAction(const std::string &action);
+  // ... the actions on other parameters ("ServerAction<Set, Show...>"
+  // attributes) ...
+  void performServerAction(const onelab::number &p);
+  void performServerAction(const onelab::string &p);
+  // ... the Gmsh option the parameter stands for ("GmshOption" attribute) ...
+  void setGmshOption(const onelab::number &p);
+  void setGmshOption(const onelab::string &p);
+  // ... and whether to "check" the model, the value going from pold to pnew
+  bool autoCheck(const onelab::number &pold, const onelab::number &pnew,
+                 bool force = false);
+  bool autoCheck(const onelab::string &pold, const onelab::string &pnew,
+                 bool force = false);
 } // namespace onelabUtils
 
 #endif
