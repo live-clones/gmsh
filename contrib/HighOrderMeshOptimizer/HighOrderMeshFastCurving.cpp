@@ -307,9 +307,11 @@ namespace {
                    std::vector<MVertex *> &topPrimVert,
                    std::vector<MElement *> &blob, MElement *&aboveElt)
   {
-    // Get first element and base vertices
-    std::vector<MElement *> firstElts = ed2el[baseEd];
-    MElement *el = firstElts[0];
+    // Get first element and base vertices (none, e.g. when the elements along
+    // the boundary were deleted: no column)
+    auto itFirst = ed2el.find(baseEd);
+    if(itFirst == ed2el.end() || itFirst->second.empty()) return false;
+    MElement *el = itFirst->second[0];
     int iFirstElEd, iDum;
     el->getEdgeInfo(baseEd, iFirstElEd, iDum);
     el->getEdgeVertices(iFirstElEd, baseVert);
@@ -593,8 +595,9 @@ namespace {
   {
     // Get first element and base vertices
     const int nbBaseFaceVert = baseFace.getNumVertices();
-    std::vector<MElement *> firstElts = face2el[baseFace];
-    MElement *el = firstElts[0];
+    auto itFirst = face2el.find(baseFace);
+    if(itFirst == face2el.end() || itFirst->second.empty()) return false;
+    MElement *el = itFirst->second[0];
     int iFirstElFace = -1, iDum;
     el->getFaceInfo(baseFace, iFirstElFace, iDum, iDum);
     el->getFaceVertices(iFirstElFace, baseVert);

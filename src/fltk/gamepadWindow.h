@@ -70,6 +70,9 @@ public:
 
 public:
   gamepadWindow();
+  ~gamepadWindow();
+  // shows the window, polling the gamepad again
+  void show();
   double frequency;
 };
 

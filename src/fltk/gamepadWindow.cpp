@@ -39,7 +39,7 @@ static void gamepad_update_cb(Fl_Widget *w)
     pad->axe_map[i] = gmpd_win->gamepad.mapping[10 + i]->value();
 }
 
-gamepadWindow::gamepadWindow()
+gamepadWindow::gamepadWindow() : win(nullptr)
 {
   if(!CTX::instance()->gamepad) return;
 
@@ -163,4 +163,19 @@ gamepadWindow::gamepadWindow()
   }
 
   win->end();
+}
+
+void gamepadWindow::show()
+{
+  // polling again, the gamepad having perhaps gone and come back since
+  Fl::remove_timeout(gamepadWindow_handler, (void *)this);
+  if(CTX::instance()->gamepad && CTX::instance()->gamepad->active)
+    Fl::add_timeout(frequency, gamepadWindow_handler, (void *)this);
+  if(win) win->show();
+}
+
+gamepadWindow::~gamepadWindow()
+{
+  Fl::remove_timeout(gamepadWindow_handler, (void *)this);
+  if(win) Fl::delete_widget(win);
 }

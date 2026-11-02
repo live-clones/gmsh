@@ -6,11 +6,7 @@
 #include <sstream>
 #include <string.h>
 #include "GmshConfig.h"
-#if !defined(HAVE_NO_STDINT_H)
-#include <stdint.h>
-#elif defined(HAVE_NO_INTPTR_T)
-typedef unsigned long intptr_t;
-#endif
+#include <cstdint>
 #include "GmshMessage.h"
 #include "GModelIO_GEO.h"
 #include "Options.h"
@@ -233,7 +229,7 @@ int ParseFile(const std::string &fileName, bool close, bool errorIfMissing)
 
 #if defined(HAVE_FLTK) && defined(HAVE_POST)
   if(FlGui::available()) {
-    FlGui::instance()->updateViews(true, false);
+    FlGui::instance()->updateViews(true);
   }
 #endif
 
@@ -333,6 +329,10 @@ int MergeFile(const std::string &fileName, bool errorIfMissing,
   }
 
   CTX::instance()->geom.draw = 0; // don't try to draw the model while reading
+  // and drawn again however the reading ends, e.g. by an error thrown
+  struct drawAgain {
+    ~drawAgain() { CTX::instance()->geom.draw = 1; }
+  } drawAgain;
 
 #if defined(HAVE_FLTK) && defined(HAVE_POST)
   int numViewsBefore = PView::list.size();
@@ -536,6 +536,8 @@ int MergeFile(const std::string &fileName, bool errorIfMissing,
 #if defined(HAVE_POST)
     else if(!strncmp(header, "$PostFormat", 11) ||
             !strncmp(header, "$View", 5)) {
+      // views only: the model can be drawn meanwhile
+      CTX::instance()->geom.draw = 1;
       status = PView::readPOS(fileName);
     }
 #endif
@@ -573,8 +575,7 @@ int MergeFile(const std::string &fileName, bool errorIfMissing,
       opt_view_timestep(i, GMSH_SET | GMSH_GUI,
                         PView::list[i]->getData()->getFirstNonEmptyTimeStep(
                           opt_view_timestep(i, GMSH_GET, 0)));
-    FlGui::instance()->updateViews(numViewsBefore != (int)PView::list.size(),
-                                   false);
+    FlGui::instance()->updateViews(numViewsBefore != (int)PView::list.size());
   }
 #endif
 
@@ -631,14 +632,39 @@ int MergePostProcessingFile(const std::string &fileName, int showViews,
   // if there is a mesh, create a new model to store it (don't merge elements in
   // the current mesh!)
   GModel *old = GModel::current();
+  GModel *m = nullptr;
   if(haveMesh) {
-    GModel *m = new GModel();
+    m = new GModel();
     GModel::setCurrent(m);
+    // shown again at once, not after the reading, which redraws: a new model
+    // hides the others (the geometry would blink at every merge of results)
+    old->setVisibility(1);
+    // the mesh of the results is not drawn (their views are), unless it is
+    // all the file holds (see below)
+    m->setVisibility(0);
   }
-  int ret =
-    MergeFile(fileName, errorIfMissing, old->bounds().empty() ? true : false);
+  // the new views hidden while they are read, which redraws: those shown are
+  // chosen below
+  int ret = 0;
+  int refVisible = PViewOptions::reference()->visible;
+  {
+    // given back however the reading ends
+    struct restore {
+      int visible;
+      ~restore() { PViewOptions::reference()->visible = visible; }
+    } restored{refVisible};
+    if(showViews != 1) PViewOptions::reference()->visible = 0;
+    ret = MergeFile(fileName, errorIfMissing,
+                    old->bounds().empty() ? true : false);
+  }
   GModel::setCurrent(old);
   old->setVisibility(1);
+  if(m) {
+    bool hasData = false;
+    for(PView *v : PView::list)
+      if(v->getData()->hasModel(m)) hasData = true;
+    if(!hasData) m->setVisibility(1);
+  }
 
   // hide everything except onelab X-Y graphs and views with attribute
   // "AlwaysVisible"
@@ -650,14 +676,32 @@ int MergePostProcessingFile(const std::string &fileName, int showViews,
         PView::list[i]->getOptions()->visible = 0;
     }
   }
-  else if(showViews == 2 && n < PView::list.size()) {
-    // if we created new views, assume we only want to see those (and the
+  else if(showViews == 2) {
+    // a new view replaces the older ones of its name (e.g. the same field at
+    // the previous time step): shown as the last of them was, which are
+    // hidden; one of a new name is shown, the older views hidden (but the
     // onelab X-Y graphs)
-    for(std::size_t i = 0; i < n; i++) {
-      if(PView::list[i]->getData()->getFileName().substr(0, 6) != "ONELAB" &&
-         PView::list[i]->getOptions()->attributes.find("AlwaysVisible") ==
-         std::string::npos)
-        PView::list[i]->getOptions()->visible = 0;
+    auto hideable = [](PView *o) {
+      return o->getData()->getFileName().substr(0, 6) != "ONELAB" &&
+             o->getOptions()->attributes.find("AlwaysVisible") ==
+               std::string::npos;
+    };
+    for(std::size_t j = n; j < PView::list.size(); j++) {
+      PView *v = PView::list[j];
+      bool replaces = false;
+      for(std::size_t i = 0; i < n; i++) {
+        PView *o = PView::list[i];
+        if(o->getData()->getName() != v->getData()->getName() || !hideable(o))
+          continue;
+        v->getOptions()->visible = o->getOptions()->visible;
+        o->getOptions()->visible = 0;
+        replaces = true;
+      }
+      if(!replaces) {
+        for(std::size_t i = 0; i < n; i++)
+          if(hideable(PView::list[i])) PView::list[i]->getOptions()->visible = 0;
+        v->getOptions()->visible = refVisible;
+      }
     }
   }
 
@@ -724,7 +768,7 @@ void ClearProject()
 #if defined(HAVE_FLTK)
   if(FlGui::available()) {
     FlGui::instance()->resetVisibility();
-    FlGui::instance()->updateViews(true, true);
+    FlGui::instance()->updateViews(true);
     FlGui::instance()->updateFields();
     GModel::current()->setSelection(0);
   }
@@ -732,14 +776,9 @@ void ClearProject()
   Msg::ResetErrorCounter();
 }
 
-void OpenProject(const std::string &fileName, bool errorIfMissing)
+// the reading proper, under the lock on the model
+static void openProjectLocked(const std::string &fileName, bool errorIfMissing)
 {
-  if(CTX::instance()->lock) {
-    Msg::Info("I'm busy! Ask me that later...");
-    return;
-  }
-  CTX::instance()->lock = 1;
-
   Msg::ResetErrorCounter();
 
   if(GModel::current()->empty()) {
@@ -795,8 +834,18 @@ void OpenProject(const std::string &fileName, bool errorIfMissing)
     for(std::size_t i = 0; i < openedFiles.size(); i++) fclose(openedFiles[i]);
     openedFiles.clear();
   }
+}
 
-  CTX::instance()->lock = 0;
+void OpenProject(const std::string &fileName, bool errorIfMissing)
+{
+  if(modelBusy()) return;
+  {
+    // released however the reading ends, e.g. by the exception a script error
+    // throws (Msg::Error), which would otherwise leave every later open and
+    // meshing refused
+    modelLock lock;
+    openProjectLocked(fileName, errorIfMissing);
+  }
 
   // FIXME: temporary for auto-extrude testing
   if(CTX::instance()->geom.autoExtrude)
@@ -806,7 +855,7 @@ void OpenProject(const std::string &fileName, bool errorIfMissing)
   if(FlGui::available()) {
     file_watch_cb(nullptr, nullptr);
     FlGui::instance()->resetVisibility();
-    FlGui::instance()->updateViews(true, false);
+    FlGui::instance()->updateViews(true);
     FlGui::instance()->updateFields();
     GModel::current()->setSelection(0);
   }

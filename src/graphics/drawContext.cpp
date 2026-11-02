@@ -1961,11 +1961,13 @@ void drawContext::unproject(double winx, double winy, double p[3], double d[3])
   // draw2d
   double onNear[3] = {0., 0., 0.}, onFar[3] = {0., 0., 0.};
   double win[3] = {winx, winy, 0.};
+  // (fails harmlessly in a pane not drawn yet, e.g. on a pointer event sent
+  // while widgets are deleted: no warning, which would process the events)
   if(!glMatrix::unProject(win, model, proj, vp, onNear))
-    Msg::Warning("unproject1 failed");
+    Msg::Debug("unproject1 failed");
   win[2] = 1.;
   if(!glMatrix::unProject(win, model, proj, vp, onFar))
-    Msg::Warning("unproject2 failed");
+    Msg::Debug("unproject2 failed");
 
   p[0] = onNear[0];
   p[1] = onNear[1];

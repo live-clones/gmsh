@@ -29,6 +29,10 @@ struct mp4Writer::data {
   // YUV 4:2:0 is sampled every other pixel)
   int width = 0, height = 0;
   long long count = 0;
+  // times each picture is encoded: a slow animation is played at 30 frames
+  // per second or more, as players do not all keep to a picture every second
+  // (VLC does not), and a repeated picture costs little
+  int repeat = 1;
   bool failed = false, opened = false;
 };
 
@@ -76,7 +80,8 @@ bool mp4Writer::open(const std::string &name, int width, int height,
   d->stream = avformat_new_stream(d->format, nullptr);
   d->codec = avcodec_alloc_context3(codec);
   if(!d->stream || !d->codec) return false;
-  AVRational rate = av_d2q(fps, 1000);
+  d->repeat = (fps > 0. && fps < 30.) ? (int)(30. / fps + 0.5) : 1;
+  AVRational rate = av_d2q(fps * d->repeat, 1000);
   d->codec->width = w;
   d->codec->height = h;
   d->codec->pix_fmt = AV_PIX_FMT_YUV420P;
@@ -123,8 +128,13 @@ bool mp4Writer::open(const std::string &name, int width, int height,
   av_frame_get_buffer(d->frame, 0);
   d->sws = sws_getContext(w, h, AV_PIX_FMT_RGB24, w, h, AV_PIX_FMT_YUV420P,
                           SWS_BICUBIC, nullptr, nullptr, nullptr);
-  Msg::Info("Writing a %dx%d movie at %g frames per second with the %s "
-            "encoder", w, h, av_q2d(rate), codec->name);
+  if(d->repeat > 1)
+    Msg::Info("Writing a %dx%d movie at %g frames per second, each picture "
+              "%d times, with the %s encoder", w, h, av_q2d(rate), d->repeat,
+              codec->name);
+  else
+    Msg::Info("Writing a %dx%d movie at %g frames per second with the %s "
+              "encoder", w, h, av_q2d(rate), codec->name);
   return d->frame && d->packet && d->sws;
 }
 
@@ -174,8 +184,10 @@ bool mp4Writer::write(PixelBuffer *buffer)
   int srcStride[1] = {-stride};
   sws_scale(d->sws, src, srcStride, 0, d->frame->height, d->frame->data,
             d->frame->linesize);
-  d->frame->pts = d->count++;
-  if(!encode(d, d->frame)) d->failed = true;
+  for(int i = 0; i < d->repeat && !d->failed; i++) {
+    d->frame->pts = d->count++;
+    if(!encode(d, d->frame)) d->failed = true;
+  }
   return !d->failed;
 }
 

@@ -1312,6 +1312,8 @@ namespace BoundaryLayerCurver {
     MEdgeN *baseEdge = &stackEdges[0];
     MEdgeN *firstEdge = &stackEdges[iFirst];
     if(edgesShareVertex(baseEdge, firstEdge)) {
+      // (no edge past the base one in a column of two elements: not curved)
+      if(iLast < 2) return false;
       iFirst = 2;
       firstEdge = &stackEdges[iFirst];
     }

@@ -1843,6 +1843,17 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
 
   // - if onlyVisible is true, then only the visible entities will be curved.
 
+  // the bases stop at order 10, 9 for hexahedra, prisms and pyramids
+  int maxOrder = 10;
+  for(auto it = m->firstRegion(); it != m->lastRegion(); ++it)
+    if((*it)->hexahedra.size() || (*it)->prisms.size() ||
+       (*it)->pyramids.size())
+      maxOrder = 9;
+  if(order > maxOrder) {
+    Msg::Error("Element order %d not available (maximum %d)", order, maxOrder);
+    return;
+  }
+
   int nPts = order - 1;
 
   char msg[256];

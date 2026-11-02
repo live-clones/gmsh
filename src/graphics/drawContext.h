@@ -331,9 +331,29 @@ private:
       return type == o.type && ient == o.ient && type2 == o.type2 &&
              ient2 == o.ient2;
     }
+    bool operator<(const pickKey &o) const
+    {
+      if(type != o.type) return type < o.type;
+      if(ient != o.ient) return ient < o.ient;
+      if(type2 != o.type2) return type2 < o.type2;
+      return ient2 < o.ient2;
+    }
   };
-  // the entities stepped past, and the last one a pick chose
+  // the entities stepped past (or found by the passes of a box before, see
+  // select()), and the last one a pick chose; the keys are also kept sorted,
+  // as every object of a pass is looked up among them
   std::vector<pickKey> _pickSkip;
+  std::multiset<pickKey> _pickSkipSet;
+  void _skipPush(const pickKey &k)
+  {
+    _pickSkip.push_back(k);
+    _pickSkipSet.insert(k);
+  }
+  void _skipPop()
+  {
+    _pickSkipSet.erase(_pickSkipSet.find(_pickSkip.back()));
+    _pickSkip.pop_back();
+  }
   pickKey _pickLast;
   bool _pickLastValid = false;
   int _pickCandidates = 0;
@@ -397,7 +417,8 @@ private:
                     std::vector<GRegion *> &regions,
                     std::vector<MElement *> &elements,
                     std::vector<SPoint2> &points,
-                    std::vector<PView *> &views);
+                    std::vector<PView *> &views,
+                    std::vector<pickKey> *seen = nullptr);
 public:
   // true during a colour buffer picking pass, where the drawing code must
   // use the colour set by setPickColor() instead of its own
@@ -587,7 +608,7 @@ public:
               std::vector<GEdge *> &edges, std::vector<GFace *> &faces,
               std::vector<GRegion *> &regions,
               std::vector<MElement *> &elements, std::vector<SPoint2> &points,
-              std::vector<PView *> &views);
+              std::vector<PView *> &views, bool through = true);
   void recenterForRotationCenterChange(SPoint3 newRotationCenter);
   int fix2dCoordinates(double *x, double *y);
   void draw3d();
@@ -624,7 +645,9 @@ public:
                  int align = 0);
   void drawSphere(double R, double x, double y, double z, int n1, int n2,
                   int light);
-  void drawSphere(double size, double x, double y, double z, int light);
+  // a sphere of a point size, or a marker (see GLYPH_MARKER)
+  void drawSphere(double size, double x, double y, double z, int light,
+                  bool marker = false);
   void drawCylinder(double width, double *x, double *y, double *z, int light);
   // update the glyph shapes to the options; they are only read afterwards,
   // possibly by several threads at once

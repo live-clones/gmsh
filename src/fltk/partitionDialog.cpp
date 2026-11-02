@@ -35,7 +35,6 @@
 #include "meshPartition.h"
 
 // Forward declarations of some callbacks
-void partition_opt_num_partitions_cb(Fl_Widget *widget, void *data);
 void partition_defaults_cb(Fl_Widget *widget, void *data);
 void partition_partition_cb(Fl_Widget *widget, void *data);
 void partition_cancel_cb(Fl_Widget *widget, void *data);
@@ -86,21 +85,6 @@ void partitionWindow::read_all_options()
   inputPriWeight->value(CTX::instance()->mesh.partitionPriWeight);
   inputPyrWeight->value(CTX::instance()->mesh.partitionPyrWeight);
   inputHexWeight->value(CTX::instance()->mesh.partitionHexWeight);
-
-  // Call all callbacks to ensure consistent options
-  partition_opt_num_partitions_cb(inputNumPartition, this);
-}
-
-// Match several locations that provide a partition number
-void partition_opt_num_partitions_cb(Fl_Widget *widget, void *data)
-{
-  partitionWindow *dlg = static_cast<partitionWindow *>(data);
-  unsigned val = 0;
-  if(widget == dlg->inputNumPartition) {
-    val = static_cast<unsigned>(dlg->inputNumPartition->value());
-  }
-
-  //dlg->choiceMetisAlg->value((val <= 8) ? 0 : 1);
 }
 
 void partition_defaults_cb(Fl_Widget *widget, void *data)
@@ -118,10 +102,15 @@ void partition_partition_cb(Fl_Widget *widget, void *data)
   dlg->write_all_options();
 
   // Partition the mesh
-  int ier =
-    GModel::current()->partitionMesh(CTX::instance()->mesh.numPartitions);
+  if(modelBusy()) return;
+  int ier;
+  {
+    modelLock lock;
+    ier = GModel::current()->partitionMesh(CTX::instance()->mesh.numPartitions);
+  }
 
-  // Update the screen
+  // Update the screen, if still there
+  if(!FlGui::available()) return;
   if(!ier) {
     opt_mesh_zone_definition(0, GMSH_SET, 2.); // Define zone by partition
     opt_mesh_color_carousel(0, GMSH_SET | GMSH_GUI, 3.);
@@ -247,7 +236,6 @@ partitionWindow::partitionWindow(int deltaFontSize)
       inputNumPartition = o;
       o->minimum(0);
       o->maximum(std::numeric_limits<unsigned short>::max());
-      o->callback((Fl_Callback *)partition_opt_num_partitions_cb, this);
       if(CTX::instance()->inputScrolling) o->step(1);
       o->align(FL_ALIGN_RIGHT);
     }

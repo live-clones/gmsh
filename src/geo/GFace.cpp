@@ -51,7 +51,10 @@ GFace::~GFace()
 {
   for(auto ge : l_edges) ge->delFace(this);
 
-  if(va_geom_triangles) delete va_geom_triangles;
+  // (zeroed: deleteMesh() deletes it again for a triangulation taken from the
+  // mesh)
+  delete va_geom_triangles;
+  va_geom_triangles = nullptr;
 
   GFace::deleteMesh();
 }

@@ -26,6 +26,7 @@ private:
   {
     draw_box(box(), color());
     int d = _d(), x0 = _x0(), y0 = _y0();
+    if(d <= 0) return; // no room for the ball
     // the ball shaded pixel by pixel: ambient, diffuse and a highlight
     unsigned char r, g, b;
     Fl::get_color(color(), r, g, b);
@@ -61,6 +62,7 @@ private:
     case FL_DRAG:
     case FL_RELEASE: {
       int d = _d();
+      if(d <= 0) return 1;
       double xx = (Fl::event_x() - _x0()) / (0.5 * d) - 1.;
       double yy = -((Fl::event_y() - _y0()) / (0.5 * d) - 1.);
       if(xx != _x || yy != _y) {
@@ -72,7 +74,7 @@ private:
         }
         _x = xx;
         _y = yy;
-        _z = sqrt(1. - norm);
+        _z = sqrt(1. - norm * norm);
         set_changed();
         redraw();
         do_callback();

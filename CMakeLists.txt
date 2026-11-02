@@ -1512,18 +1512,6 @@ if(NOT SOCKLEN_T_SIZE AND NOT ENABLE_BUILD_IOS AND NOT ENABLE_BUILD_ANDROID)
   set_config_option(HAVE_NO_SOCKLEN_T "NoSocklenT")
 endif()
 
-check_include_file(stdint.h HAVE_STDINT_H)
-if(HAVE_STDINT_H)
-  set(CMAKE_EXTRA_INCLUDE_FILES stdint.h)
-else()
-  set_config_option(HAVE_NO_STDINT_H "NoStdintH")
-endif()
-check_type_size(intptr_t INTPTR_T_SIZE)
-set(CMAKE_EXTRA_INCLUDE_FILES)
-if(NOT INTPTR_T_SIZE AND NOT ENABLE_BUILD_IOS AND NOT ENABLE_BUILD_ANDROID)
-  set_config_option(HAVE_NO_INTPTR_T "NoIntptrT")
-endif()
-
 check_include_file(dlfcn.h DLFCN_H)
 if(DLFCN_H)
   set_config_option(HAVE_DLOPEN "Dlopen")
@@ -2250,6 +2238,8 @@ else()
   set(CPACK_STRIP_FILES FALSE)
 endif()
 set(CPACK_SOURCE_GENERATOR TGZ)
+# write a .sha256 file next to each package
+set(CPACK_PACKAGE_CHECKSUM SHA256)
 set(CPACK_SOURCE_IGNORE_FILES "${CMAKE_CURRENT_BINARY_DIR}" "/CVS/" "/.svn" "/.git"
     "~$" "DS_Store$" "GmshConfig.h$" "GmshVersion.h$" "/benchmarks/" "/tmp/"
     "/bin/" "/lib/" "/nightly/" "GPATH" "GRTAGS" "GSYMS" "GTAGS" "/HTML/"

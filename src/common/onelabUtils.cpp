@@ -658,7 +658,7 @@ namespace onelabUtils {
 
 #if defined(HAVE_FLTK)
     if(FlGui::available() && onelab::server::instance()->getChanged())
-      FlGui::instance()->rebuildTree(false);
+      FlGui::instance()->rebuildTree();
 #endif
   }
 
@@ -679,7 +679,7 @@ namespace onelabUtils {
 
 #if defined(HAVE_FLTK)
     if(FlGui::available() && onelab::server::instance()->getChanged())
-      FlGui::instance()->rebuildTree(false);
+      FlGui::instance()->rebuildTree();
 #endif
     return ret;
   }
@@ -694,9 +694,8 @@ namespace onelabUtils {
       redraw = redraw || ret;
     }
     if(redraw) {
-    // don't delete the widgets, as this is called in widget callbacks
 #if defined(HAVE_FLTK)
-      FlGui::instance()->updateViews(true, false);
+      FlGui::instance()->updateViews(true);
       drawContext::global()->draw();
 #endif
     }
@@ -783,7 +782,7 @@ namespace onelabUtils {
     }
 
 #if defined(HAVE_FLTK)
-    FlGui::instance()->rebuildTree(true);
+    FlGui::instance()->rebuildTree();
 #endif
   }
 
@@ -814,7 +813,7 @@ namespace onelabUtils {
         strings[0].setChoices(names);
         onelab::server::instance()->set(strings[0]);
 #if defined(HAVE_FLTK)
-        FlGui::instance()->rebuildTree(true);
+        FlGui::instance()->rebuildTree();
 #endif
       }
     }

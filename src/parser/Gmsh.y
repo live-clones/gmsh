@@ -349,17 +349,17 @@ SendToFile :
 Printf :
     tPrintf '(' StringExprVar ')' tEND
     {
-      Msg::Direct($3);
+      Msg::Direct("%s", $3);
       Free($3);
     }
   | tWarning '(' StringExprVar ')' tEND
     {
-      Msg::Warning($3);
+      Msg::Warning("%s", $3);
       Free($3);
     }
   | tError '(' StringExprVar ')' tEND
     {
-      Msg::Error($3);
+      Msg::Error("%s", $3);
       Free($3);
     }
   | tPrintf '(' StringExprVar ')' SendToFile StringExprVar tEND
@@ -385,7 +385,7 @@ Printf :
       else if(i > 0)
 	yymsg(0, "%d extra argument%s in Printf", i, (i > 1) ? "s" : "");
       else
-	Msg::Direct(tmpstring.c_str());
+	Msg::Direct("%s", tmpstring.c_str());
       Free($3);
       List_Delete($5);
     }
@@ -398,7 +398,7 @@ Printf :
       else if(i > 0)
 	yymsg(1, "%d extra argument%s in Error", i, (i > 1) ? "s" : "");
       else
-	Msg::Warning(tmpstring.c_str());
+	Msg::Warning("%s", tmpstring.c_str());
       Free($3);
       List_Delete($5);
     }
@@ -411,7 +411,7 @@ Printf :
       else if(i > 0)
 	yymsg(0, "%d extra argument%s in Error", i, (i > 1) ? "s" : "");
       else
-	Msg::Error(tmpstring.c_str());
+	Msg::Error("%s", tmpstring.c_str());
       Free($3);
       List_Delete($5);
     }
@@ -3097,15 +3097,13 @@ Command :
 	yymsg(0, "Surface remeshing must be reinterfaced");
       }
       else if(!strcmp($1, "Mesh")) {
-	int lock = CTX::instance()->lock;
-	CTX::instance()->lock = 0;
+        // part of the operation reading the script, which may hold the lock
         if(GModel::current()->getOCCInternals() &&
            GModel::current()->getOCCInternals()->getChanged())
           GModel::current()->getOCCInternals()->synchronize(GModel::current());
         if(GModel::current()->getGEOInternals()->getChanged())
           GModel::current()->getGEOInternals()->synchronize(GModel::current());
-	GModel::current()->mesh((int)$2);
-	CTX::instance()->lock = lock;
+	GModel::current()->mesh((int)$2, true);
       }
       else if(!strcmp($1, "SetOrder")) {
 #if defined(HAVE_MESH)

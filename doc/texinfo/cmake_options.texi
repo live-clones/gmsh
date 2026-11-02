@@ -42,6 +42,8 @@ Enable GetDP solver (linked as a library, experimental) (default: ON)
 Enable GMM linear solvers (simple alternative to PETSc) (default: ON)
 @item ENABLE_GRAPHICS
 Enable building graphics lib even without GUI (advanced) (default: OFF)
+@item ENABLE_HIERARCHICAL_BASIS
+Enable hierarchical basis functions (default: ON)
 @item ENABLE_HXT
 Enable HXT library (for reparametrization and meshing) (default: ON)
 @item ENABLE_MATHEX
@@ -54,6 +56,8 @@ Enable mesh module (default: ON)
 Enable mesquite (default: ON)
 @item ENABLE_METIS
 Enable Metis mesh partitioner (default: ON)
+@item ENABLE_MTMETIS
+Enable multithreaded mt-metis mesh partitioner (requires Metis and OpenMP) (default: ON)
 @item ENABLE_MMG
 Enable Mmg mesh adaptation interface (default: ON)
 @item ENABLE_MPEG_ENCODE
@@ -81,7 +85,7 @@ Link OpenCASCADE static instead of dynamic libraries (requires ENABLE_OCC) (defa
 @item ENABLE_OCC_TBB
 Add TBB libraries in list of OCC libraries (default: OFF)
 @item ENABLE_OCTREE_SIZE_FIELD
-Enable the octree-based automatic mesh size field (contrib/OctreeSizeField) (default: ON)
+Enable the octree-based automatic mesh size field (default: ON)
 @item ENABLE_ONELAB
 Enable ONELAB solver interface (default: ON)
 @item ENABLE_ONELAB_METAMODEL

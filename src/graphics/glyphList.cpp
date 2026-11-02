@@ -97,7 +97,7 @@ void glyphList::add(glyphKind kind, const double m[16], unsigned int color)
 }
 
 void glyphList::addSphere(drawContext *ctx, double size, double x, double y,
-                          double z, unsigned int color)
+                          double z, unsigned int color, bool marker)
 {
   // the size is a point size: a diameter
   double r =
@@ -117,7 +117,7 @@ void glyphList::addSphere(drawContext *ctx, double size, double x, double y,
   i.m[11] = z;
   i.color = color;
   i.param[0] = i.param[1] = 0.f;
-  _inst[GLYPH_SPHERE].push_back(i);
+  _inst[marker ? GLYPH_MARKER : GLYPH_SPHERE].push_back(i);
 }
 
 void glyphList::addArrow(double x, double y, double z, double dx, double dy,

@@ -4,6 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <cctype>
+#include <chrono>
 #include <cstdio>
 #include "desktop.h"
 
@@ -156,13 +157,25 @@ static std::string run(const std::string &cmd)
 }
 
 // a setting read through the settings portal of xdg-desktop-portal, which
-// GNOME, KDE and the others serve on X11 and Wayland alike
+// GNOME, KDE and the others serve on X11 and Wayland alike; not waiting for a
+// portal that hangs (the default timeout of gdbus is 25 s), and not asking
+// one that did not answer in time again for a minute (one without the
+// setting answers at once, with an error; one started on demand may be slow
+// the first time)
 static std::string portal(const std::string &ns, const std::string &key)
 {
-  return run("gdbus call --session --dest org.freedesktop.portal.Desktop "
-             "--object-path /org/freedesktop/portal/desktop "
-             "--method org.freedesktop.portal.Settings.Read " +
-             ns + " " + key);
+  using clock = std::chrono::steady_clock;
+  static clock::time_point silentUntil;
+  auto start = clock::now();
+  if(start < silentUntil) return "";
+  std::string s = run("gdbus call --session --timeout 1 "
+                      "--dest org.freedesktop.portal.Desktop "
+                      "--object-path /org/freedesktop/portal/desktop "
+                      "--method org.freedesktop.portal.Settings.Read " +
+                      ns + " " + key);
+  if(s.empty() && clock::now() - start >= std::chrono::seconds(1))
+    silentUntil = clock::now() + std::chrono::minutes(1);
+  return s;
 }
 
 // the text between the first pair of single quotes
@@ -188,7 +201,7 @@ std::string desktopFont()
   return name;
 }
 
-int desktopDark()
+static int askDesktopDark()
 {
   // "(<<uint32 1>>,)": 1 dark, 2 light, 0 no preference
   std::string s = portal("org.freedesktop.appearance", "color-scheme");
@@ -198,6 +211,20 @@ int desktopDark()
   s = run("gsettings get org.gnome.desktop.interface color-scheme");
   if(s.find("prefer-dark") != std::string::npos) return 1;
   return s.empty() ? -1 : 0;
+}
+
+int desktopDark()
+{
+  // asked on every focus of a main window (see watchDesktopAppearance()): the
+  // commands are run at most once a second
+  static std::chrono::steady_clock::time_point last;
+  static int dark = -2;
+  auto now = std::chrono::steady_clock::now();
+  if(dark == -2 || now - last > std::chrono::seconds(1)) {
+    dark = askDesktopDark();
+    last = now;
+  }
+  return dark;
 }
 
 // no notification without a D-Bus listener: the switch is seen when a window

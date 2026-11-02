@@ -4,11 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "GmshConfig.h"
-#if !defined(HAVE_NO_STDINT_H)
-#include <stdint.h>
-#elif defined(HAVE_NO_INTPTR_T)
-typedef unsigned long intptr_t;
-#endif
+#include <cstdint>
 #include <string>
 #include <sstream>
 #include <algorithm>
@@ -449,6 +445,34 @@ public:
 
 VisibilityList *VisibilityList::_instance = nullptr;
 
+// The list and the tree hold pointers to the entities and the models they
+// were built from, deleted with them (by the API, a script merged, a
+// synchronization): what they are used for first checks that none was created
+// or deleted since, else rebuilds them, the selection made in them being then
+// out of date. The rebuild is deferred: the checks run inside the event
+// handling of the browser and the tree, which still use their lines and items
+// once the callback returns
+static int _listStamp = -1, _treeStamp = -1;
+
+static void _rebuild_cb(void *)
+{
+  if(FlGui::available()) visibility_cb(nullptr, nullptr);
+}
+
+static bool _changed(int stamp)
+{
+  if(stamp == CTX::instance()->entitiesStamp) return false;
+  if(!Fl::has_timeout(_rebuild_cb)) {
+    Msg::Info("The model changed: the visibility lists are rebuilt");
+    Fl::add_timeout(0., _rebuild_cb);
+  }
+  return true;
+}
+
+static bool _listChanged() { return _changed(_listStamp); }
+
+static bool _treeChanged() { return _changed(_treeStamp); }
+
 static void _rebuild_list_browser()
 {
   FlGui::instance()->visibility->browser->clear();
@@ -466,6 +490,7 @@ static void _rebuild_list_browser()
     FlGui::instance()->visibility->search);
   VisibilityList::instance()->update(type,
                                      FlGui::instance()->visibility->filter);
+  _listStamp = CTX::instance()->entitiesStamp;
 
   for(int i = 0; i < VisibilityList::instance()->getNumEntities(); i++) {
     FlGui::instance()->visibility->browser->add(
@@ -477,6 +502,7 @@ static void _rebuild_list_browser()
 
 static void visibility_browser_apply_cb(Fl_Widget *w, void *data)
 {
+  if(_listChanged()) return;
   // if the browser is not empty, get the selections made in the
   // browser and apply them into the model
   if(VisibilityList::instance()->getNumEntities()) {
@@ -722,6 +748,7 @@ static void _rebuild_tree_browser(bool force)
   FlGui::instance()->visibility->tree_create->hide();
   FlGui::instance()->visibility->tree->show();
   FlGui::instance()->visibility->tree->clear();
+  _treeStamp = CTX::instance()->entitiesStamp;
 
   for(std::size_t i = 0; i < GModel::list.size(); i++) {
     GModel *m = GModel::list[i];
@@ -813,6 +840,7 @@ static void _recur_update_selected(Fl_Tree_Item *n)
 
 static void visibility_tree_apply_cb(Fl_Widget *w, void *data)
 {
+  if(_treeChanged()) return;
   CTX::instance()->meshChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
   bool recursive =
     FlGui::instance()->visibility->butt[0]->value() ? true : false;
@@ -891,26 +919,19 @@ void visibility_cb(Fl_Widget *w, void *data)
 
   if(tmp.find("list_only") == std::string::npos) _rebuild_tree_browser(false);
 
-  FlGui::instance()->visibility->updatePerWindow(true);
+  FlGui::instance()->visibility->updatePerWindow();
 }
 
 void visibility_save(const std::string &fileName)
 {
   // get the whole visibility information in geo format
   std::vector<int> state[4][2];
-  GModel *m = GModel::current();
-  for(auto it = m->firstVertex(); it != m->lastVertex(); it++)
-    (*it)->getVisibility() ? state[0][1].push_back((*it)->tag()) :
-                             state[0][0].push_back((*it)->tag());
-  for(auto it = m->firstEdge(); it != m->lastEdge(); it++)
-    (*it)->getVisibility() ? state[1][1].push_back((*it)->tag()) :
-                             state[1][0].push_back((*it)->tag());
-  for(auto it = m->firstFace(); it != m->lastFace(); it++)
-    (*it)->getVisibility() ? state[2][1].push_back((*it)->tag()) :
-                             state[2][0].push_back((*it)->tag());
-  for(auto it = m->firstRegion(); it != m->lastRegion(); it++)
-    (*it)->getVisibility() ? state[3][1].push_back((*it)->tag()) :
-                             state[3][0].push_back((*it)->tag());
+  for(int dim = 0; dim < 4; dim++) {
+    std::vector<GEntity *> entities;
+    GModel::current()->getEntities(entities, dim);
+    for(GEntity *ge : entities)
+      state[dim][ge->getVisibility() ? 1 : 0].push_back(ge->tag());
+  }
   std::vector<std::pair<int, int> > entities;
   int mode = 0, on = 0, off = 0;
   for(int i = 0; i < 4; i++) {
@@ -973,46 +994,28 @@ static void _set_visibility_by_number(int what, int num, char val,
           }
         }
         break;
-      case 2: // point
-        for(auto it = m->firstVertex(); it != m->lastVertex(); it++)
-          if(all || (*it)->tag() == num) (*it)->setVisibility(val, recursive);
+      case 2: // points, curves, surfaces, volumes
+      case 3:
+      case 4:
+      case 5:
+      case 6: // physical points, curves, surfaces, volumes
+      case 7:
+      case 8:
+      case 9: {
+        bool physical = (what >= 6);
+        std::vector<GEntity *> dimEntities;
+        m->getEntities(dimEntities, physical ? what - 6 : what - 2);
+        for(GEntity *ge : dimEntities) {
+          if(!physical) {
+            if(all || ge->tag() == num) ge->setVisibility(val, recursive);
+            continue;
+          }
+          for(std::size_t i = 0; i < ge->physicals.size(); i++)
+            if(all || std::abs(ge->physicals[i]) == num)
+              ge->setVisibility(val, recursive);
+        }
         break;
-      case 3: // line
-        for(auto it = m->firstEdge(); it != m->lastEdge(); it++)
-          if(all || (*it)->tag() == num) (*it)->setVisibility(val, recursive);
-        break;
-      case 4: // surface
-        for(auto it = m->firstFace(); it != m->lastFace(); it++)
-          if(all || (*it)->tag() == num) (*it)->setVisibility(val, recursive);
-        break;
-      case 5: // volume
-        for(auto it = m->firstRegion(); it != m->lastRegion(); it++)
-          if(all || (*it)->tag() == num) (*it)->setVisibility(val, recursive);
-        break;
-      case 6: // physical point
-        for(auto it = m->firstVertex(); it != m->lastVertex(); it++)
-          for(std::size_t i = 0; i < (*it)->physicals.size(); i++)
-            if(all || std::abs((*it)->physicals[i]) == num)
-              (*it)->setVisibility(val, recursive);
-        break;
-      case 7: // physical line
-        for(auto it = m->firstEdge(); it != m->lastEdge(); it++)
-          for(std::size_t i = 0; i < (*it)->physicals.size(); i++)
-            if(all || std::abs((*it)->physicals[i]) == num)
-              (*it)->setVisibility(val, recursive);
-        break;
-      case 8: // physical surface
-        for(auto it = m->firstFace(); it != m->lastFace(); it++)
-          for(std::size_t i = 0; i < (*it)->physicals.size(); i++)
-            if(all || std::abs((*it)->physicals[i]) == num)
-              (*it)->setVisibility(val, recursive);
-        break;
-      case 9: // physical volume
-        for(auto it = m->firstRegion(); it != m->lastRegion(); it++)
-          for(std::size_t i = 0; i < (*it)->physicals.size(); i++)
-            if(all || std::abs((*it)->physicals[i]) == num)
-              (*it)->setVisibility(val, recursive);
-        break;
+      }
       }
     }
   }
@@ -1202,6 +1205,9 @@ static void visibility_interactive_cb(Fl_Widget *w, void *data)
   std::vector<GFace *> faces;
   std::vector<GRegion *> regions;
   std::vector<MElement *> elements;
+  // when they were picked: the draws below process events, which may change
+  // the model or its mesh
+  modelStamps before;
 
   while(1) {
     if(what == ENT_ALL) CTX::instance()->meshChanged();
@@ -1210,6 +1216,17 @@ static void visibility_interactive_cb(Fl_Widget *w, void *data)
                   mode ? "" : "'u' to undo or ");
 
     char ib = FlGui::instance()->selectEntity(what);
+    if(!FlGui::available()) break;
+    // the model or its mesh changed meanwhile: what an undo would show again
+    // may be gone
+    if(before.changed()) {
+      vertices.clear();
+      edges.clear();
+      faces.clear();
+      regions.clear();
+      elements.clear();
+    }
+    before.record();
     if(ib == 'l') {
       // store for possible undo later
       vertices = FlGui::instance()->selectedVertices;
@@ -1256,12 +1273,8 @@ static void visibility_per_window_cb(Fl_Widget *w, void *data)
     }
   }
   else if(what == "reset_all") {
-    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++) {
-      for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++) {
-        drawContext *ctx = FlGui::instance()->graph[i]->gl[j]->getDrawContext();
-        ctx->showAll();
-      }
-    }
+    for(openglWindow *gl : FlGui::instance()->openglWindows())
+      gl->getDrawContext()->showAll();
     for(int i = 0; i < FlGui::instance()->visibility->per_window->size(); i++)
       FlGui::instance()->visibility->per_window->select(i + 1);
   }
@@ -1271,6 +1284,7 @@ static void visibility_per_window_cb(Fl_Widget *w, void *data)
 static void browser_cb(Fl_Widget *w, void *data)
 {
   if(Fl::event_clicks()) {
+    if(_listChanged()) return;
     int n = FlGui::instance()->visibility->browser->value() - 1;
     if(n >= 0 && n < VisibilityList::instance()->getNumEntities()) {
       int dim = VisibilityList::instance()->getDim(n);
@@ -1295,6 +1309,7 @@ static void tree_cb(Fl_Widget *w, void *data)
   if(tree->callback_reason() == FL_TREE_REASON_RESELECTED &&
      Fl::event_clicks()) {
     // double click
+    if(_treeChanged()) return;
     Fl_Tree_Item *item = (Fl_Tree_Item *)tree->callback_item();
     GEntity *ge = nullptr;
     if(item) {
@@ -1645,12 +1660,10 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
 
     butt[0] = new Fl_Check_Button(WB + aw + WB, height - BH - WB, 2 * aw, BH,
                                   "recursively");
-    butt[0]->type(FL_TOGGLE_BUTTON);
     butt[0]->value(1);
 
     butt[1] = new Fl_Check_Button(WB + 3 * aw + 2 * WB, height - BH - WB,
                                   3 * aw, BH, "to all models");
-    butt[1]->type(FL_TOGGLE_BUTTON);
     butt[1]->value(1);
 
     g->end();
@@ -1679,12 +1692,9 @@ void visibilityWindow::show(bool redrawOnly)
   }
 }
 
-void visibilityWindow::updatePerWindow(bool force)
+void visibilityWindow::updatePerWindow()
 {
-  static openglWindow *gl = nullptr;
-  if(!force && gl == FlGui::instance()->getCurrentOpenglWindow()) return;
-
-  gl = FlGui::instance()->getCurrentOpenglWindow();
+  openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
   drawContext *ctx = gl->getDrawContext();
 
   per_window->clear();

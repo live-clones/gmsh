@@ -4,11 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "GmshConfig.h"
-#if !defined(HAVE_NO_STDINT_H)
-#include <stdint.h>
-#elif defined(HAVE_NO_INTPTR_T)
-typedef unsigned long intptr_t;
-#endif
+#include <cstdint>
 #include <FL/fl_ask.H>
 #include "FlGui.h"
 #include "drawContext.h"
@@ -53,30 +49,40 @@ static void view_reload(int index)
 {
   if(index >= 0 && index < (int)PView::list.size()) {
     PView *p = PView::list[index];
+    // copied: reading processes events, during which the view may go
+    std::string fileName = p->getData()->getFileName();
 
-    if(StatFile(p->getData()->getFileName())) {
-      Msg::Error("File '%s' does not exist",
-                 p->getData()->getFileName().c_str());
+    if(StatFile(fileName)) {
+      Msg::Error("File '%s' does not exist", fileName.c_str());
       return;
     }
 
+    // not during another operation on the model, which reading may change
+    if(modelBusy()) return;
+    int tag = p->getTag();
     int n = PView::list.size();
 
     // FIXME: use fileIndex
-    MergeFile(p->getData()->getFileName());
+    MergeFile(fileName);
 
-    if((int)PView::list.size() > n) { // we loaded a new view
-      // delete old data and replace with new
-      delete p->getData();
-      p->setData(PView::list.back()->getData());
+    p = PView::getViewByTag(tag);
+    if(p && (int)PView::list.size() > n) { // we loaded a new view
+      // the new data in place of the old, in the view and in every view
+      // sharing it (its aliases, or the view it is an alias of), the new view
+      // deleted without it
+      PViewData *old = p->getData(), *data = PView::list.back()->getData();
       PView::list.back()->setData(nullptr);
-      // delete new view
       delete PView::list.back();
-      // in case the reloaded view has a different number of time steps
-      if(p->getOptions()->timeStep > p->getData()->getNumTimeSteps() - 1)
-        p->getOptions()->timeStep = 0;
-      p->setChanged(true);
-      FlGui::instance()->updateViews(true, true);
+      for(PView *v : PView::list) {
+        if(v->getData() != old) continue;
+        v->setData(data);
+        // in case the reloaded view has a different number of time steps
+        if(v->getOptions()->timeStep > data->getNumTimeSteps() - 1)
+          v->getOptions()->timeStep = 0;
+        v->setChanged(true);
+      }
+      delete old;
+      FlGui::instance()->updateViews(true);
     }
   }
 }
@@ -103,7 +109,7 @@ static void view_reload_visible_cb(Fl_Widget *w, void *data)
 static void view_sort_cb(Fl_Widget *w, void *data)
 {
   PView::sortByName();
-  FlGui::instance()->updateViews(true, true);
+  FlGui::instance()->updateViews(true);
   drawContext::global()->draw();
 }
 
@@ -112,7 +118,7 @@ static void view_remove_other_cb(Fl_Widget *w, void *data)
   if(PView::list.empty()) return;
   for(int i = PView::list.size() - 1; i >= 0; i--)
     if(i != (intptr_t)data) delete PView::list[i];
-  FlGui::instance()->updateViews(true, true);
+  FlGui::instance()->updateViews(true);
   drawContext::global()->draw();
 }
 
@@ -142,14 +148,14 @@ static void view_remove_all_cb(Fl_Widget *w, void *data)
       if(PView::list[i]->getData()->getName() == name) delete PView::list[i];
   }
 
-  FlGui::instance()->updateViews(true, true);
+  FlGui::instance()->updateViews(true);
   drawContext::global()->draw();
 }
 
 static void view_remove_cb(Fl_Widget *w, void *data)
 {
   delete PView::list[(intptr_t)data];
-  FlGui::instance()->updateViews(true, true);
+  FlGui::instance()->updateViews(true);
   drawContext::global()->draw();
 }
 
@@ -190,7 +196,7 @@ static void view_alias_with_options_cb(Fl_Widget *w, void *data)
 {
   const bool copyOptions = true;
   new PView(PView::list[(intptr_t)data], copyOptions);
-  FlGui::instance()->updateViews(true, true);
+  FlGui::instance()->updateViews(true);
   drawContext::global()->draw();
 }
 
@@ -198,7 +204,7 @@ static void view_combine_space_all_cb(Fl_Widget *w, void *data)
 {
   PView::combine(false, 1, CTX::instance()->post.combineRemoveOrig,
                  CTX::instance()->post.combineCopyOptions);
-  FlGui::instance()->updateViews(true, true);
+  FlGui::instance()->updateViews(true);
   drawContext::global()->draw();
 }
 
@@ -206,7 +212,7 @@ static void view_combine_space_visible_cb(Fl_Widget *w, void *data)
 {
   PView::combine(false, 0, CTX::instance()->post.combineRemoveOrig,
                  CTX::instance()->post.combineCopyOptions);
-  FlGui::instance()->updateViews(true, true);
+  FlGui::instance()->updateViews(true);
   drawContext::global()->draw();
 }
 
@@ -214,7 +220,7 @@ static void view_combine_space_by_name_cb(Fl_Widget *w, void *data)
 {
   PView::combine(false, 2, CTX::instance()->post.combineRemoveOrig,
                  CTX::instance()->post.combineCopyOptions);
-  FlGui::instance()->updateViews(true, true);
+  FlGui::instance()->updateViews(true);
   drawContext::global()->draw();
 }
 
@@ -222,7 +228,7 @@ static void view_combine_time_all_cb(Fl_Widget *w, void *data)
 {
   PView::combine(true, 1, CTX::instance()->post.combineRemoveOrig,
                  CTX::instance()->post.combineCopyOptions);
-  FlGui::instance()->updateViews(true, true);
+  FlGui::instance()->updateViews(true);
   drawContext::global()->draw();
 }
 
@@ -230,7 +236,7 @@ static void view_combine_time_visible_cb(Fl_Widget *w, void *data)
 {
   PView::combine(true, 0, CTX::instance()->post.combineRemoveOrig,
                  CTX::instance()->post.combineCopyOptions);
-  FlGui::instance()->updateViews(true, true);
+  FlGui::instance()->updateViews(true);
   drawContext::global()->draw();
 }
 
@@ -238,7 +244,7 @@ static void view_combine_time_by_name_cb(Fl_Widget *w, void *data)
 {
   PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig,
                  CTX::instance()->post.combineCopyOptions);
-  FlGui::instance()->updateViews(true, true);
+  FlGui::instance()->updateViews(true);
   drawContext::global()->draw();
 }
 
@@ -283,11 +289,9 @@ viewButton::viewButton(int x, int y, int w, int h, int num, Fl_Color col)
   _toggle->callback(view_toggle_cb, (void *)(intptr_t)num);
   _toggle->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
   _toggle->value(opt->visible);
-  char tmp[256];
-  sprintf(tmp, "[%d] %s", num, data->getName().c_str());
-  _toggle->copy_label(tmp);
-  strcpy(_tooltip, data->getFileName().c_str());
-  _toggle->tooltip(_tooltip);
+  std::string label = "[" + std::to_string(num) + "] " + data->getName();
+  _toggle->copy_label(label.c_str());
+  _toggle->copy_tooltip(data->getFileName().c_str());
 
   _butt = new Fl_Button(x + w - popw, y, popw, h, "@>");
   _butt->align(FL_ALIGN_RIGHT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);

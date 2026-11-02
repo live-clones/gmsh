@@ -1540,6 +1540,14 @@ void recombineIntoQuads(GFace *gf, bool blossom, int topologicalOptiPasses,
 
   bool haveParam = (gf->geomType() != GEntity::DiscreteSurface);
   bool debug = (Msg::GetVerbosity() == 99);
+  // (the debug files hold the whole model, which the other threads are
+  // meshing when surfaces are meshed in parallel)
+  if(debug && Msg::GetNumThreads() > 1) {
+    Msg::Debug("Recombination debug files of surface %d not written while "
+               "surfaces are meshed in parallel (Mesh.MaxNumThreads2D 1 "
+               "writes them)", gf->tag());
+    debug = false;
+  }
 
   if(debug) gf->model()->writeMSH("recombine_0before.msh");
 

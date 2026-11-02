@@ -514,13 +514,9 @@ namespace onelab {
       setVisible(p.getVisible());
       setReadOnly(p.getReadOnly());
       setAttributes(p.getAttributes());
-      bool changed = false;
-      for(std::size_t i = 0; i < p.getValues().size(); i++) {
-        if(p.getValues()[i] != getValues()[i]) {
-          changed = true;
-          break;
-        }
-      }
+      // an empty list of values leaves the stored ones alone; any other list
+      // replaces them if it differs, whatever its length
+      bool changed = p.getValues().size() && p.getValues() != getValues();
       if(changed) {
         setValues(p.getValues());
         setChanged(getChangedValue());
@@ -723,13 +719,9 @@ namespace onelab {
       setVisible(p.getVisible());
       setReadOnly(p.getReadOnly());
       setAttributes(p.getAttributes());
-      bool changed = false;
-      for(std::size_t i = 0; i < p.getValues().size(); i++) {
-        if(p.getValues()[i] != getValues()[i]) {
-          changed = true;
-          break;
-        }
-      }
+      // an empty list of values leaves the stored ones alone; any other list
+      // replaces them if it differs, whatever its length
+      bool changed = p.getValues().size() && p.getValues() != getValues();
       if(changed) {
         setValues(p.getValues());
         setChanged(getChangedValue());
@@ -843,7 +835,10 @@ namespace onelab {
   private:
     std::set<number *, parameterLessThan> _numbers;
     std::set<string *, parameterLessThan> _strings;
-    std::mutex _mutex;
+    // every public function locks it, as the parameters are set and read from
+    // several threads (e.g. those of an API program while the GUI's thread
+    // rebuilds its tree); recursive, as some call others
+    mutable std::recursive_mutex _mutex;
 
     // delete a parameter from the parameter space
     template <class T>
@@ -878,14 +873,11 @@ namespace onelab {
       return false;
     }
     // set a parameter in the parameter space; if it already exists, update it
-    // (adding new clients if necessary). This would need to be locked to avoid
-    // race conditions when several clients try to set a parameter at the same
-    // time.
+    // (adding new clients if necessary)
     template <class T>
     bool _set(const T &p, const std::string &client,
               std::set<T *, parameterLessThan> &ps)
     {
-      _mutex.lock();
       auto it = ps.find((T *)&p);
       if(it != ps.end()) {
         (*it)->update(p);
@@ -898,13 +890,12 @@ namespace onelab {
           newp->addClient(client, parameter::defaultChangedValue());
         ps.insert(newp);
       }
-      _mutex.unlock();
       return true;
     }
     // get the parameter matching the given name, or all the parameters in the
     // category if no name is given. If we find a given parameter by name, we
     // add the client requesting the parameter to the list of clients for this
-    // parameter. This would also need to be locked.
+    // parameter
     template <class T>
     bool _get(std::vector<T> &p, const std::string &name,
               const std::string &client, std::set<T *, parameterLessThan> &ps)
@@ -917,11 +908,8 @@ namespace onelab {
         T tmp(name);
         auto it = ps.find(&tmp);
         if(it != ps.end()) {
-          if(client.size()) {
-            _mutex.lock();
+          if(client.size())
             (*it)->addClient(client, parameter::defaultChangedValue());
-            _mutex.unlock();
-          }
           p.push_back(**it);
         }
       }
@@ -929,16 +917,13 @@ namespace onelab {
     }
     template <class T>
     T *_getPtr(std::string name, const std::string client,
-               std::set<T *, parameterLessThan> ps)
+               std::set<T *, parameterLessThan> &ps)
     {
       T tmp(name);
       auto it = ps.find(&tmp);
       if(it != ps.end()) {
-        if(client.size()) {
-          _mutex.lock();
+        if(client.size())
           (*it)->addClient(client, parameter::defaultChangedValue());
-          _mutex.unlock();
-        }
         return *it;
       }
       return nullptr;
@@ -949,6 +934,7 @@ namespace onelab {
     ~parameterSpace() { clear(); }
     void clear(const std::string &name = "", const std::string &client = "")
     {
+      std::lock_guard<std::recursive_mutex> guard(_mutex);
       if(name.empty() && client.empty()) {
         std::set<parameter *, parameterLessThan> ps;
         getAllParameters(ps);
@@ -963,41 +949,53 @@ namespace onelab {
     }
     bool set(const number &p, const std::string &client = "")
     {
+      std::lock_guard<std::recursive_mutex> guard(_mutex);
       return _set(p, client, _numbers);
     }
     bool set(const string &p, const std::string &client = "")
     {
+      std::lock_guard<std::recursive_mutex> guard(_mutex);
       return _set(p, client, _strings);
     }
     bool get(std::vector<number> &ps, const std::string &name = "",
              const std::string &client = "")
     {
+      std::lock_guard<std::recursive_mutex> guard(_mutex);
       return _get(ps, name, client, _numbers);
     }
     bool get(std::vector<string> &ps, const std::string &name = "",
              const std::string &client = "")
     {
+      std::lock_guard<std::recursive_mutex> guard(_mutex);
       return _get(ps, name, client, _strings);
     }
     void getPtr(number **ptr, const std::string &name,
                 const std::string &client = "")
     {
+      std::lock_guard<std::recursive_mutex> guard(_mutex);
       *ptr = _getPtr(name, client, _numbers);
     }
     void getPtr(string **ptr, const std::string &name,
                 const std::string &client = "")
     {
+      std::lock_guard<std::recursive_mutex> guard(_mutex);
       *ptr = _getPtr(name, client, _strings);
     }
     void getAllParameters(std::set<parameter *, parameterLessThan> &ps) const
     {
+      std::lock_guard<std::recursive_mutex> guard(_mutex);
       ps.insert(_numbers.begin(), _numbers.end());
       ps.insert(_strings.begin(), _strings.end());
     }
-    int getNumParameters() { return (int)(_numbers.size() + _strings.size()); }
+    int getNumParameters()
+    {
+      std::lock_guard<std::recursive_mutex> guard(_mutex);
+      return (int)(_numbers.size() + _strings.size());
+    }
     void getParameterNames(std::vector<std::string> &names,
                            const std::string &search = "") const
     {
+      std::lock_guard<std::recursive_mutex> guard(_mutex);
       names.clear();
       if(search.empty()) {
         for(auto &p : _numbers) names.push_back(p->getName());
@@ -1020,6 +1018,7 @@ namespace onelab {
     // check if at least one parameter depends on the given client
     bool hasClient(const std::string &client) const
     {
+      std::lock_guard<std::recursive_mutex> guard(_mutex);
       std::set<parameter *, parameterLessThan> ps;
       getAllParameters(ps);
       for(auto it = ps.begin(); it != ps.end(); it++)
@@ -1030,6 +1029,7 @@ namespace onelab {
     // parameters that depend on a given client)
     int getChanged(const std::string &client = "") const
     {
+      std::lock_guard<std::recursive_mutex> guard(_mutex);
       std::set<parameter *, parameterLessThan> ps;
       getAllParameters(ps);
       int changed = 0;
@@ -1042,6 +1042,7 @@ namespace onelab {
     // client (or for all parameters if no client name is provided)
     void setChanged(int changed, const std::string &client = "")
     {
+      std::lock_guard<std::recursive_mutex> guard(_mutex);
       std::set<parameter *, parameterLessThan> ps;
       getAllParameters(ps);
       for(auto it = ps.begin(); it != ps.end(); it++)
@@ -1049,6 +1050,7 @@ namespace onelab {
     }
     void thresholdChanged(int threshold, const std::string &client = "")
     {
+      std::lock_guard<std::recursive_mutex> guard(_mutex);
       std::set<parameter *, parameterLessThan> ps;
       getAllParameters(ps);
       for(auto it = ps.begin(); it != ps.end(); it++) {
@@ -1060,6 +1062,7 @@ namespace onelab {
     // that depend on the given client)
     std::vector<std::string> toChar(const std::string &client = "") const
     {
+      std::lock_guard<std::recursive_mutex> guard(_mutex);
       std::vector<std::string> s;
       std::set<parameter *, parameterLessThan> ps;
       getAllParameters(ps);
@@ -1074,6 +1077,7 @@ namespace onelab {
     bool fromChar(const std::vector<std::string> &msg,
                   const std::string &client = "")
     {
+      std::lock_guard<std::recursive_mutex> guard(_mutex);
       for(std::size_t i = 0; i < msg.size(); i++) {
         std::string version, type, name;
         onelab::parameter::getInfoFromChar(msg[i], version, type, name);
@@ -1096,6 +1100,7 @@ namespace onelab {
     bool toJSON(std::string &json, const std::string &creator = "",
                 const std::string &client = "") const
     {
+      std::lock_guard<std::recursive_mutex> guard(_mutex);
       time_t now;
       time(&now);
       std::string t(ctime(&now));
@@ -1121,6 +1126,7 @@ namespace onelab {
     }
     bool fromJSON(const std::string &json, const std::string &client = "")
     {
+      std::lock_guard<std::recursive_mutex> guard(_mutex);
 #if defined(HAVE_PICOJSON)
       picojson::value v;
       std::string err = picojson::parse(v, json);
