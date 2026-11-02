@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ONELAB web app</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #fff;
+               font: 13px sans-serif; }
+  body { display: grid; grid-template-columns: minmax(240px, 320px) 1fr;
+         grid-template-rows: auto 1fr auto; }
+  #bar { grid-column: 1 / 3; display: flex; flex-wrap: wrap; gap: 4px 10px;
+         align-items: center; padding: 4px 8px; border-bottom: 1px solid #ddd; }
+  #status { color: #666; }
+  #side { overflow: auto; border-right: 1px solid #ddd; padding: 4px 8px; }
+  #side details { margin: 4px 0; }
+  #side summary { font-weight: bold; cursor: pointer; }
+  #side .row { display: grid; grid-template-columns: 1fr 110px; gap: 6px;
+               align-items: center; margin: 2px 0 2px 8px; padding: 1px 2px; }
+  #side .row input, #side .row select { width: 110px; box-sizing: border-box; }
+  #side .row input[type=checkbox] { width: auto; justify-self: start; }
+  #side .out { color: #444; font-variant-numeric: tabular-nums; }
+  #side .view { display: flex; gap: 6px; align-items: center; margin-left: 8px; }
+  #canvas { display: block; width: 100%; height: 100%; min-height: 0;
+            touch-action: none; }
+  #log { grid-column: 1 / 3; margin: 0; border-top: 1px solid #ddd; }
+  #log summary { padding: 2px 8px; cursor: pointer; color: #666; }
+  #log pre { margin: 0; padding: 0 8px 4px; height: 120px; overflow: auto;
+             font: 11px monospace; }
+  #log .error { color: #c00; }
+  #log .warning { color: #a60; }
+  #drop { position: fixed; inset: 0; display: none; place-items: center;
+          background: rgba(255,255,255,.85); font-size: 18px; z-index: 2; }
+</style>
+</head>
+<body>
+<div id="bar">
+  <strong>ONELAB</strong>
+  <label>Files <input id="files" type="file" multiple></label>
+  <label>Folder <input id="folder" type="file" webkitdirectory></label>
+  <span id="model"></span>
+  <button id="template" disabled title="Merge GetDP's Interactive.pro on the geometry: choose the physics, then the materials, sources and boundary conditions of each physical group">Physics template</button>
+  <button id="run" disabled>Run</button>
+  <button id="reset" disabled>Reset</button>
+  <span id="status">loading...</span>
+</div>
+<div id="side">
+  <div id="params"></div>
+  <details id="views" open><summary>Views</summary><div id="viewList"></div></details>
+</div>
+<canvas id="canvas"></canvas>
+<details id="log"><summary>Messages</summary><pre id="logText"></pre></details>
+<div id="drop">drop a model (.pro, .geo and the files they include, or a .zip)</div>
+<script type="module">
+// The ONELAB web app: Gmsh, with GetDP linked in and run in-process
+// (webOnelab.cpp), through the Gmsh JavaScript API (gmsh.mjs) and the drawing
+// functions of webView.cpp. A model is opened from files, a folder, a zip
+// archive, or a URL (?zip=<url>, or ?model=<url of the .pro>&files=<other
+// files, next to it, separated by commas>)
+import createGmsh from './build/gmsh.mjs';
+
+const $ = (id) => document.getElementById(id);
+const canvas = $('canvas'), status = $('status'), logText = $('logText');
+
+// the messages of Gmsh and GetDP, the errors also in the status bar
+const lines = [];
+let lastError = '';
+function log(t) {
+  const kind = /^Error|^\*\*\*/.test(t) ? 'error' : /^Warning/.test(t) ? 'warning' : '';
+  if(kind === 'error') lastError = t;
+  lines.push([t, kind]);
+  if(lines.length > 2000) lines.shift();
+  scheduleLog();
+}
+let logPending = false;
+function scheduleLog() {
+  if(logPending) return;
+  logPending = true;
+  requestAnimationFrame(() => {
+    logPending = false;
+    logText.textContent = '';
+    for(const [t, kind] of lines.slice(-500)) {
+      const d = document.createElement('div');
+      d.textContent = t;
+      if(kind) d.className = kind;
+      logText.appendChild(d);
+    }
+    logText.scrollTop = logText.scrollHeight;
+  });
+}
+
+const gmsh = await createGmsh({canvas, print: log, printErr: log});
+const Module = gmsh.lib;
+const FS = Module.FS;
+gmsh.initialize([], false);
+gmsh.option.setNumber('General.Terminal', 1);
+
+// ---------------------------------------------------------------- drawing
+
+let pending = false;
+function draw() {
+  if(pending) return;
+  pending = true;
+  requestAnimationFrame(() => {
+    pending = false;
+    const dpr = window.devicePixelRatio || 1;
+    const w = Math.round(canvas.clientWidth * dpr);
+    const h = Math.round(canvas.clientHeight * dpr);
+    if(canvas.width !== w || canvas.height !== h) {
+      canvas.width = w;
+      canvas.height = h;
+    }
+    Module.ccall('gmshWebDraw', 'number', ['number', 'number', 'number'], [w, h, dpr]);
+  });
+}
+function mouse(kind, e, wheel = 0) {
+  const mods = (e.shiftKey ? 1 : 0) | (e.ctrlKey ? 2 : 0) | (e.altKey ? 4 : 0) |
+               (e.metaKey ? 8 : 0);
+  // the page numbers the buttons 0 left, 1 middle, 2 right; the scene 0
+  // left, 1 right, 2 middle
+  const button = e.button === 2 ? 1 : e.button === 1 ? 2 : 0;
+  if(Module.ccall('gmshWebMouse', 'number',
+       ['number', 'number', 'number', 'number', 'number', 'number', 'number', 'number'],
+       [kind, e.offsetX, e.offsetY, canvas.clientWidth, canvas.clientHeight, button,
+        wheel, mods]))
+    draw();
+}
+let pressed = false;
+canvas.addEventListener('pointerdown', (e) => {
+  pressed = true;
+  canvas.setPointerCapture(e.pointerId);
+  mouse(1, e);
+});
+canvas.addEventListener('pointermove', (e) => mouse(pressed ? 3 : 0, e));
+canvas.addEventListener('pointerup', (e) => { pressed = false; mouse(2, e); });
+canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+canvas.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  mouse(4, e, e.deltaMode === 1 ? e.deltaY : e.deltaY / 100);
+}, {passive: false});
+canvas.addEventListener('dblclick', () => {
+  Module.ccall('gmshWebResetView', null, [], []);
+  draw();
+});
+window.addEventListener('resize', draw);
+
+// ---------------------------------------------------------------- ONELAB
+
+// the parameters, in the JSON of the ONELAB database
+function getParameters() {
+  const json = gmsh.onelab.get();
+  return json ? JSON.parse(json).onelab.parameters : [];
+}
+// a changed parameter, with what the graphical interface does besides (the
+// Gmsh option it stands for, the actions on other parameters it asks for):
+// returns 1 if the model is to be checked
+function setParameter(p) {
+  return Module.ccall('gmshWebOnelabSet', 'number', ['string'], [JSON.stringify(p)]);
+}
+
+// run "check", "compute" or "reset": the page waits (no worker yet), after
+// showing what it does
+let busy = false;
+function run(action) {
+  if(busy) return Promise.resolve();
+  busy = true;
+  $('run').disabled = $('reset').disabled = true;
+  status.textContent = action === 'compute' ? 'computing...' : 'checking...';
+  lastError = '';
+  return new Promise((resolve) => setTimeout(() => {
+    const t0 = performance.now();
+    let errors = 0;
+    try {
+      errors = Module.ccall('gmshWebOnelab', 'number', ['string'], [action]);
+    } catch(e) {
+      log('*** ' + e);
+      errors = 1;
+    }
+    const ms = (performance.now() - t0).toFixed(0);
+    busy = false;
+    $('run').disabled = $('reset').disabled = false;
+    showParameters();
+    showViews();
+    draw();
+    status.textContent = errors ? (lastError || `${errors} error(s)`) :
+      `${action === 'compute' ? 'computed' : 'checked'} in ${ms} ms`;
+    resolve();
+  }, 20));
+}
+$('run').addEventListener('click', () => run('compute'));
+$('reset').addEventListener('click', () => run('reset'));
+
+// the parameter tree, as the graphical interface shows it: grouped by the
+// path of their names (the digits that start each part only order them),
+// output (read-only) parameters as values
+const shortName = (s) => s.replace(/^\d+/, '');
+const groupOpen = {};
+function showParameters() {
+  const ps = getParameters().filter((p) => p.visible);
+  ps.sort((a, b) => a.name.localeCompare(b.name));
+  const params = $('params');
+  params.textContent = '';
+  const groups = {};
+  for(const p of ps) {
+    const parts = p.name.split('/');
+    const g = parts.slice(0, -1).map(shortName).join(' / ') || 'Parameters';
+    if(!groups[g]) {
+      const d = document.createElement('details');
+      const s = document.createElement('summary');
+      s.textContent = g;
+      d.appendChild(s);
+      d.open = groupOpen[g] !== undefined ? groupOpen[g] :
+        !(p.attributes && p.attributes.Closed === '1');
+      d.addEventListener('toggle', () => { groupOpen[g] = d.open; });
+      params.appendChild(d);
+      groups[g] = d;
+    }
+    groups[g].appendChild(parameterRow(p, shortName(parts[parts.length - 1])));
+  }
+}
+function parameterRow(p, name) {
+  const row = document.createElement('label');
+  row.className = 'row';
+  const label = document.createElement('span');
+  label.textContent = p.label || name;
+  if(p.help) row.title = p.help;
+  const color = p.attributes && p.attributes.Highlight;
+  if(color) row.style.background = color.replace(/^AliceBlue$/i, '#eef4fb');
+  row.appendChild(label);
+  const value = p.values ? p.values[0] : '';
+  const choices = p.choices || [];
+  const labels = {};
+  for(const [k, v] of Object.entries(p.valueLabels || {})) labels[v] = k;
+  let el;
+  if(p.readOnly) {
+    el = document.createElement('span');
+    el.className = 'out';
+    el.textContent = (p.type === 'number' && labels[value] !== undefined) ?
+      labels[value] : (typeof value === 'number' ? Number(value.toPrecision(6)) : value);
+  }
+  else if(p.type === 'number' && choices.length === 2 && choices[0] === 0 &&
+          choices[1] === 1 && !Object.keys(labels).length) {
+    el = document.createElement('input');
+    el.type = 'checkbox';
+    el.checked = !!value;
+  }
+  else if(choices.length) {
+    el = document.createElement('select');
+    for(const c of choices) {
+      const o = document.createElement('option');
+      o.value = c;
+      o.textContent = labels[c] !== undefined ? labels[c] : c;
+      if(c === value) o.selected = true;
+      el.appendChild(o);
+    }
+  }
+  else {
+    el = document.createElement('input');
+    if(p.type === 'number') {
+      el.type = 'number';
+      if(p.step && p.step < 1e200) el.step = p.step;
+      if(p.min > -1e200) el.min = p.min;
+      if(p.max < 1e200) el.max = p.max;
+    }
+    el.value = value;
+  }
+  if(!p.readOnly) {
+    el.addEventListener('change', () => {
+      let v = el.type === 'checkbox' ? (el.checked ? 1 : 0) : el.value;
+      if(p.type === 'number') v = Number(v);
+      p.values = [v];
+      if(setParameter(p) & 1)
+        run('check');
+      else {
+        showParameters();
+        draw();
+      }
+    });
+  }
+  row.appendChild(el);
+  return row;
+}
+
+// the post-processing views, shown or hidden
+function showViews() {
+  const list = $('viewList');
+  list.textContent = '';
+  const n = gmsh.option.getNumber('PostProcessing.NbViews');
+  for(let i = 0; i < n; i++) {
+    const row = document.createElement('label');
+    row.className = 'view';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = !!gmsh.option.getNumber(`View[${i}].Visible`);
+    cb.addEventListener('change', () => {
+      gmsh.option.setNumber(`View[${i}].Visible`, cb.checked ? 1 : 0);
+      draw();
+    });
+    row.appendChild(cb);
+    row.appendChild(document.createTextNode(gmsh.option.getString(`View[${i}].Name`)));
+    list.appendChild(row);
+  }
+}
+
+// ---------------------------------------------------------------- models
+
+// a physical problem set up on the geometry with GetDP's templates
+// (Interactive.pro asks for the physics, then for the materials, sources and
+// boundary conditions of each physical group, and writes a .pro of the
+// choices next to the geometry), copied in /templates by the build
+async function mergeTemplate() {
+  if(busy) return;
+  if(!FS.analyzePath('/templates').exists) {
+    FS.mkdir('/templates');
+    for(const f of await (await fetch('build/templates/index.json')).json())
+      FS.writeFile('/templates/' + f, await fetchFile('build/templates/' + f));
+  }
+  gmsh.merge('/templates/Interactive.pro');
+  await run('check');
+}
+$('template').addEventListener('click', mergeTemplate);
+
+// a model is opened from a directory of its own in the in-memory filesystem
+let modelCount = 0;
+function newModelDirectory() {
+  const dir = `/model${++modelCount}`;
+  FS.mkdir(dir);
+  return dir;
+}
+function writeFile(dir, path, data) {
+  const parts = path.split('/').filter((s) => s);
+  let d = dir;
+  for(const p of parts.slice(0, -1)) {
+    d += '/' + p;
+    if(!FS.analyzePath(d).exists) FS.mkdir(d);
+  }
+  FS.writeFile(d + '/' + parts[parts.length - 1], data);
+}
+// the file to open in a directory: a .pro with a .geo of the same name, or
+// else a .pro, or else a .geo
+function findModel(dir) {
+  const files = [];
+  const walk = (d) => {
+    for(const f of FS.readdir(d)) {
+      if(f === '.' || f === '..' || f.startsWith('__MACOSX')) continue;
+      const p = d + '/' + f;
+      if(FS.isDir(FS.stat(p).mode)) walk(p);
+      else files.push(p);
+    }
+  };
+  walk(dir);
+  const pro = files.filter((f) => f.endsWith('.pro'));
+  const geo = files.filter((f) => f.endsWith('.geo'));
+  return pro.find((f) => geo.includes(f.replace(/\.pro$/, '.geo'))) ||
+    pro[0] || geo[0] || files[0];
+}
+async function openFiles(entries) {
+  // entries: [path, Uint8Array]
+  if(busy) return;
+  const dir = newModelDirectory();
+  for(const [path, data] of entries) {
+    if(path.endsWith('.zip')) {
+      writeFile(dir, path, data);
+      Module.ccall('gmshWebUnzip', null, ['string', 'string'], [dir + '/' + path, dir]);
+      FS.unlink(dir + '/' + path);
+    }
+    else
+      writeFile(dir, path, data);
+  }
+  const file = findModel(dir);
+  if(!file) {
+    status.textContent = 'no model found';
+    return;
+  }
+  FS.chdir(file.slice(0, file.lastIndexOf('/')));
+  $('model').textContent = file.slice(file.lastIndexOf('/') + 1);
+  // a model starts from the default options, as the options a model sets
+  // (e.g. Mesh.ElementOrder) stay otherwise
+  gmsh.onelab.clear();
+  gmsh.clear();
+  gmsh.option.restoreDefaults();
+  gmsh.option.setNumber('General.Terminal', 1);
+  try {
+    gmsh.open(file);
+  } catch(e) {
+    log('*** ' + e.message);
+  }
+  Module.ccall('gmshWebResetView', null, [], []);
+  $('template').disabled = false;
+  await run('check');
+}
+const readFile = async (f) => new Uint8Array(await f.arrayBuffer());
+for(const id of ['files', 'folder']) {
+  $(id).addEventListener('change', async (e) => {
+    const entries = [];
+    for(const f of e.target.files) {
+      // a folder's files keep their path below it
+      const path = f.webkitRelativePath ?
+        f.webkitRelativePath.split('/').slice(1).join('/') : f.name;
+      entries.push([path, await readFile(f)]);
+    }
+    e.target.value = '';
+    openFiles(entries);
+  });
+}
+window.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  $('drop').style.display = 'grid';
+});
+window.addEventListener('dragleave', (e) => {
+  if(!e.relatedTarget) $('drop').style.display = 'none';
+});
+window.addEventListener('drop', async (e) => {
+  e.preventDefault();
+  $('drop').style.display = 'none';
+  const entries = [];
+  for(const f of e.dataTransfer.files) entries.push([f.name, await readFile(f)]);
+  openFiles(entries);
+});
+async function fetchFile(url) {
+  const r = await fetch(url);
+  if(!r.ok) throw new Error(`${url}: ${r.status}`);
+  return new Uint8Array(await r.arrayBuffer());
+}
+
+$('run').disabled = $('reset').disabled = false;
+status.textContent = 'open a model';
+const params = new URLSearchParams(location.search);
+try {
+  if(params.get('zip')) {
+    const url = params.get('zip');
+    await openFiles([[url.split('/').pop(), await fetchFile(url)]]);
+  }
+  else if(params.get('model')) {
+    const url = params.get('model');
+    const base = url.slice(0, url.lastIndexOf('/') + 1);
+    const names = [url.slice(base.length)].concat(
+      (params.get('files') || '').split(',').filter((s) => s));
+    const entries = [];
+    for(const n of names) entries.push([n, await fetchFile(base + n)]);
+    await openFiles(entries);
+  }
+} catch(e) {
+  status.textContent = e.message;
+}
+draw();
+</script>
+</body>
+</html>
