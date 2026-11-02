@@ -153,7 +153,8 @@ protected:
   }
 
 public:
-  GmshSocket() : _sock(0), _sent(0), _received(0)
+  // (no socket: -1, as 0 is the standard input)
+  GmshSocket() : _sock(-1), _sent(0), _received(0)
   {
 #if defined(WIN32) && !defined(__CYGWIN__)
     WSADATA wsaData;
@@ -242,6 +243,7 @@ public:
   }
   void CloseSocket(int s)
   {
+    if(s < 0) return;
 #if !defined(WIN32) || defined(__CYGWIN__)
     close(s);
 #else
@@ -250,6 +252,7 @@ public:
   }
   void ShutdownSocket(int s)
   {
+    if(s < 0) return;
 #if !defined(WIN32) || defined(__CYGWIN__)
     shutdown(s, SHUT_RDWR);
 #endif
@@ -303,6 +306,7 @@ public:
       struct hostent *server;
       if(!(server = gethostbyname(remote))) {
         CloseSocket(_sock);
+        _sock = -1;
         free(remote);
         return -3; // no such host
       }
@@ -321,6 +325,7 @@ public:
       }
     }
     CloseSocket(_sock);
+    _sock = -1;
     return -2; // couldn't connect
   }
   void Start()
@@ -334,7 +339,11 @@ public:
     SendString(GMSH_START, tmp);
   }
   void Stop() { SendString(GMSH_STOP, "Goodbye!"); }
-  void Disconnect() { CloseSocket(_sock); }
+  void Disconnect()
+  {
+    CloseSocket(_sock);
+    _sock = -1;
+  }
 };
 
 class GmshServer : public GmshSocket {
@@ -472,6 +481,7 @@ public:
 #endif
     ShutdownSocket(_sock);
     CloseSocket(_sock);
+    _sock = -1;
     return 0;
   }
 };
