@@ -1249,6 +1249,36 @@ static void action_point_line_surface_volume(int action,
     if(ib == 'i') { Msg::Error("Inverting selection!"); }
     if(ib == 'e') {
       if(dimTags.size()) {
+        // a value the command needs is missing: the selection is kept, to try
+        // again once it is filled in
+        Fl_Input **ti = FlGui::instance()->transformContext->input;
+        Fl_Input **mi = FlGui::instance()->meshContext->input;
+        bool filled = true;
+        switch(action) {
+        case 0: filled = inputsFilled({ti[0], ti[1], ti[2]}); break;
+        case 1:
+          filled =
+            inputsFilled({ti[6], ti[7], ti[8], ti[3], ti[4], ti[5], ti[9]});
+          break;
+        case 2:
+          filled =
+            inputsFilled({ti[10], ti[11], ti[12], ti[13], ti[14], ti[15]});
+          break;
+        case 3: filled = inputsFilled({ti[16], ti[17], ti[18], ti[19]}); break;
+        case 4:
+          filled = inputsFilled({ti[0], ti[1], ti[2]}) &&
+                   (!FlGui::instance()->transformContext->butt[7]->value() ||
+                    inputsFilled({ti[21]}));
+          break;
+        case 5:
+          filled =
+            inputsFilled({ti[6], ti[7], ti[8], ti[3], ti[4], ti[5], ti[9]}) &&
+            (!FlGui::instance()->transformContext->butt[9]->value() ||
+             inputsFilled({ti[22]}));
+          break;
+        case 8: filled = inputsFilled({mi[0]}); break;
+        }
+        if(!filled) continue;
         switch(action) {
         case 0:
           scriptTranslate(
@@ -1634,6 +1664,9 @@ static void geometry_elementary_fillet_cb(Fl_Widget *w, void *data)
       }
       else if(edges.empty()) {
         Msg::Error("At least one curve must be selected");
+      }
+      else if(!inputsFilled({FlGui::instance()->transformContext->input[20]})) {
+        // the selection kept, to try again once the radius is filled in
       }
       else {
         scriptFillet(GModel::current()->getFileName(), regions, edges,
@@ -2092,6 +2125,11 @@ static void mesh_define_transfinite(int dim)
       break;
     default: ib = 'l'; break;
     }
+
+    // no number of nodes: the selection kept, to try again once it is given
+    if(ib == 'e' && dim == 1 && p.size() &&
+       !inputsFilled({FlGui::instance()->meshContext->input[1]}))
+      continue;
 
     if(ib == 'e') {
       if(dim == 1) {
