@@ -4265,6 +4265,9 @@ bool graphicWindow::split(openglWindow *g, char how, double ratio)
     // brutal :-)
     int mode = g->mode();
     openglWindow::setLastHandled(nullptr);
+    // hidden first, all of them whole: hiding moves the focus, which may
+    // commit an edited value whose callback draws every pane
+    for(std::size_t i = 0; i < gl.size(); i++) gl[i]->hide();
     for(std::size_t i = 0; i < gl.size(); i++) {
       _tile->remove(gl[i]);
       delete gl[i];

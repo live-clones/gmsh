@@ -438,7 +438,7 @@ void sceneView::handleMouse(const paneInput &in)
       _doubleClick(in);
       return;
     }
-    hostClicked();
+    if(!hostClicked()) return;
     _curr.set(_ctx, x, y);
     if(in.button == 0 && !shift && !alt) {
       // Ctrl+click adds a query in query mode (when the clicks select), and

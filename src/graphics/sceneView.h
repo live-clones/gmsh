@@ -134,8 +134,10 @@ protected:
   // what the interaction asks of the host
   // the picture changed
   virtual void hostRedraw() {}
-  // a button was pushed in this view: it is the current one from now on
-  virtual void hostClicked() {}
+  // a button was pushed in this view: it is the current one from now on;
+  // false if the view is gone meanwhile (taking the focus commits an edited
+  // value, whose callback may run events that delete it)
+  virtual bool hostClicked() { return true; }
   // the view moved (rotation, translation, scale): whatever shows the
   // numbers follows
   virtual void hostViewChanged() {}

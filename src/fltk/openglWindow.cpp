@@ -118,6 +118,9 @@ void openglWindow::_setLock(bool on)
 
 openglWindow::~openglWindow()
 {
+  // hidden while whole: FLTK hides it when it is deleted, which moves the
+  // focus and may run callbacks that draw it (an edited value committed)
+  hide();
   if(_lastHandled == this) _lastHandled = nullptr;
   _setLock(false);
   Fl::remove_timeout(navigator_handler, this);
@@ -752,10 +755,12 @@ int openglWindow::handle(int event)
 
 void openglWindow::hostRedraw() { redraw(); }
 
-void openglWindow::hostClicked()
+bool openglWindow::hostClicked()
 {
+  Fl_Widget_Tracker alive(this);
   setLastHandled(this);
   take_focus(); // force keyboard focus when we click in the window
+  return alive.exists();
 }
 
 void openglWindow::hostViewChanged() { FlGui::instance()->manip->update(); }
