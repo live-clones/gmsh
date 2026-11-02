@@ -32,6 +32,19 @@
 
 namespace onelabUtils {
 
+  static std::map<std::string, inProcessSolver> _inProcessSolvers;
+
+  void setInProcessSolver(const std::string &name, inProcessSolver solver)
+  {
+    _inProcessSolvers[name] = solver;
+  }
+
+  inProcessSolver getInProcessSolver(const std::string &name)
+  {
+    auto it = _inProcessSolvers.find(name);
+    return it == _inProcessSolvers.end() ? nullptr : it->second;
+  }
+
   // get command line arguments for the client if "UseCommandLine" is set for
   // this client
   std::vector<std::string> getCommandLine(onelab::client *c)
@@ -469,7 +482,7 @@ namespace onelabUtils {
         name = opt_solver_name(num, GMSH_GET, "");
         exe = opt_solver_executable(num, GMSH_GET, "");
         host = opt_solver_remote_login(num, GMSH_GET, "");
-        if(exe.empty()) {
+        if(exe.empty() && !getInProcessSolver(name)) {
           Msg::Error("Solver executable name not provided");
           return;
         }
@@ -487,7 +500,10 @@ namespace onelabUtils {
       onelab::localNetworkClient *c = nullptr;
       onelab::string o;
       if(name.size()) {
-        c = new gmshLocalNetworkClient(name, exe, host);
+        if(getInProcessSolver(name))
+          c = new gmshInProcessClient(name, getInProcessSolver(name));
+        else
+          c = new gmshLocalNetworkClient(name, exe, host);
         c->setIndex(num);
         o = c->getName() + "/Action";
       }

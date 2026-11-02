@@ -12,6 +12,14 @@
 // onelab servers
 
 namespace onelabUtils {
+  // a solver linked in the program (GetDP in the web app), run in-process
+  // instead of through a socket: the function gets the command line of the
+  // solver (with "-onelab name" and no socket) and the ONELAB server, as
+  // getdp(args, server)
+  typedef int (*inProcessSolver)(const std::vector<std::string> &args,
+                                 void *server);
+  void setInProcessSolver(const std::string &name, inProcessSolver solver);
+  inProcessSolver getInProcessSolver(const std::string &name);
   std::vector<std::string> getCommandLine(onelab::client *c);
   std::string getMshFileName(onelab::client *c);
   void guessModelName(onelab::client *c);
