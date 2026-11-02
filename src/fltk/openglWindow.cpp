@@ -834,13 +834,16 @@ char openglWindow::selectEntity(int type, std::vector<GVertex *> &vertices,
 {
   if(!FlGui::available()) return 'q';
 
+  // the events processed while waiting may delete this window (unsplit, the
+  // closing of a graphic window), or the whole GUI; so may taking the focus,
+  // which commits an edited value
+  Fl_Widget_Tracker alive(this);
+
   // force keyboard focus in GL window
   take_focus();
+  if(!FlGui::available() || alive.deleted()) return 'q';
   beginSelection(type);
 
-  // the events processed while waiting may delete this window (unsplit, the
-  // closing of a graphic window), or the whole GUI
-  Fl_Widget_Tracker alive(this);
   while(1) {
     if(!FlGui::available()) return 'q';
     vertices.clear();
