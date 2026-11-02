@@ -2835,8 +2835,8 @@ static bool makeCone(TopoDS_Solid &result, double x, double y, double z,
     Msg::Error("Cannot build cone of zero height");
     return false;
   }
-  if(angle <= 0) {
-    Msg::Error("Cone angle should be positive");
+  if(angle <= 0 || angle > 2 * M_PI) {
+    Msg::Error("Cannot build cone with angle <= 0 or angle > 2*Pi");
     return false;
   }
   try {
