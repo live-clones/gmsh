@@ -13,6 +13,7 @@
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Input_.H>
 #include <FL/Fl_Tabs.H>
+#include <FL/Fl_Browser_.H>
 #include <FL/Fl_Menu_.H>
 #include <FL/Fl_Menu_Bar.H>
 #include <FL/Fl_Menu_Button.H>
@@ -390,6 +391,13 @@ int gmshSchemeHandle(int event, Fl_Window *win)
   Fl::watch_widget_pointer(before);
   int ret = Fl::handle_(event, win);
   Fl::release_widget_pointer(before);
+  // without the focus rectangle (Fl::visible_focus(0), see below) FLTK does
+  // not give the keyboard focus to a list it is clicked in: given here, so
+  // that the arrows go along its lines
+  if(event == FL_PUSH && !Fl::visible_focus()) {
+    Fl_Browser_ *b = dynamic_cast<Fl_Browser_ *>(Fl::pushed());
+    if(b && b->type() >= FL_HOLD_BROWSER && Fl::focus() != b) Fl::focus(b);
+  }
   Fl_Widget *after = Fl::belowmouse();
   static Fl_Widget *lastTab = nullptr;
   if(before != after) {
