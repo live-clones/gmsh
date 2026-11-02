@@ -959,6 +959,10 @@ namespace tetgenBR {
     std::vector<MVertex *> _vertices;
     // Get the set of vertices from GRegion.
     {
+      // with a negative Mesh.OptimizePyramids, the apex is pushed into this
+      // (tetrahedral) volume, whichever way the quadrangles are oriented
+      std::map<GFace *, int> inward;
+      bool oriented = false, orientFailed = false;
       std::set<MVertex *, MVertexPtrLessThan> all;
       std::vector<GFace *> const &f = gr->faces();
       for(auto it = f.begin(); it != f.end(); ++it) {
@@ -990,7 +994,18 @@ namespace tetgenBR {
               if(CTX::instance()->mesh.optimizePyramids < 0) {
                 // push the vertex along the face normal by fact * diam_face:
                 double fact = std::abs(CTX::instance()->mesh.optimizePyramids);
+                if(!oriented) {
+                  oriented = true;
+                  if(!orientRegionBoundary(gr, inward)) {
+                    orientFailed = true;
+                    Msg::Warning("Cannot orient the boundary mesh of volume %d: "
+                                 "pyramid apices are pushed along the "
+                                 "quadrangle normals",
+                                 gr->tag());
+                  }
+                }
                 SVector3 n = mf.normal();
+                if(!orientFailed && inward.count(gf)) n *= (double)inward[gf];
                 double diam = v0->distance(v2);
                 p = (p + fact * diam * n);
               }
