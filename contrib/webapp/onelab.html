@@ -55,8 +55,9 @@
 // The ONELAB web app: Gmsh, with GetDP linked in and run in-process
 // (webOnelab.cpp), through the Gmsh JavaScript API (gmsh.mjs) and the drawing
 // functions of webView.cpp. A model is opened from files, a folder, a zip
-// archive, or a URL (?zip=<url>, or ?model=<url of the .pro>&files=<other
-// files, next to it, separated by commas>)
+// archive, or a URL (?zip=<url>, with &open=<file> for a zip of several
+// models, or ?model=<url of the .pro>&files=<other files, next to it,
+// separated by commas>)
 import createGmsh from './build/gmsh.mjs';
 
 const $ = (id) => document.getElementById(id);
@@ -354,7 +355,7 @@ function findModel(dir) {
   return pro.find((f) => geo.includes(f.replace(/\.pro$/, '.geo'))) ||
     pro[0] || geo[0] || files[0];
 }
-async function openFiles(entries) {
+async function openFiles(entries, open = '') {
   // entries: [path, Uint8Array]
   if(busy) return;
   const dir = newModelDirectory();
@@ -367,7 +368,9 @@ async function openFiles(entries) {
     else
       writeFile(dir, path, data);
   }
-  const file = findModel(dir);
+  // the file asked for (a zip may hold several models), or the one found
+  const file = (open && FS.analyzePath(dir + '/' + open).exists) ?
+    dir + '/' + open : findModel(dir);
   if(!file) {
     status.textContent = 'no model found';
     return;
@@ -429,7 +432,8 @@ const params = new URLSearchParams(location.search);
 try {
   if(params.get('zip')) {
     const url = params.get('zip');
-    await openFiles([[url.split('/').pop(), await fetchFile(url)]]);
+    await openFiles([[url.split('/').pop(), await fetchFile(url)]],
+                    params.get('open') || '');
   }
   else if(params.get('model')) {
     const url = params.get('model');
