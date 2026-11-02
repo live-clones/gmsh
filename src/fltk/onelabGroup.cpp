@@ -550,17 +550,19 @@ public:
     box(FL_NO_BOX); // drawn in draw()
     item_draw_mode(FL_TREE_ITEM_HEIGHT_FROM_WIDGET);
   }
-  // whether an event is being passed on to all the rows (the window hidden,
-  // shown...): FLTK goes through the array of the rows meanwhile, which a
-  // rebuild would replace, e.g. asked by an edited value that the hiding
-  // commits (see onelabGroup::rebuildTree())
+  // whether an event is being passed along the rows (the window hidden or
+  // shown, a shortcut offered to each, a key moving the focus to the next):
+  // FLTK goes through the array of the rows meanwhile, which a rebuild would
+  // replace, e.g. asked by an edited value that the event commits (see
+  // onelabGroup::rebuildTree())
   bool broadcasting() const { return _broadcasting > 0; }
   int handle(int event) override
   {
     // compared only: a rebuild of the tree deletes the items
     static Fl_Tree_Item *hovered = nullptr;
     if(event == FL_HIDE || event == FL_SHOW || event == FL_ACTIVATE ||
-       event == FL_DEACTIVATE) {
+       event == FL_DEACTIVATE || event == FL_KEYBOARD || event == FL_SHORTCUT ||
+       event == FL_FOCUS) {
       Fl_Widget_Tracker alive(this);
       _broadcasting++;
       int ret = Fl_Tree::handle(event);
