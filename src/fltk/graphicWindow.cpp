@@ -4735,7 +4735,7 @@ void graphicWindow::addMessage(const char *msg)
   const std::size_t maxMessages = 50000;
   if(_messages.size() >= maxMessages) {
     _messages.erase(_messages.begin(), _messages.begin() + maxMessages / 10);
-    _browser->rebuild(_messages);
+    _browser->removeFirst(maxMessages / 10);
   }
   _messages.push_back(msg);
   _browser->add(msg);
