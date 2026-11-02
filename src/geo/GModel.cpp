@@ -561,6 +561,34 @@ bool GModel::add(GVertex *v)
   return vertices.insert(v).second;
 }
 
+void GModel::_forgetParent(GEntity *e)
+{
+  if(!getNumPartitions()) return;
+  // (a partition entity is the parent of none)
+  switch(e->geomType()) {
+  case GEntity::PartitionPoint:
+  case GEntity::PartitionCurve:
+  case GEntity::PartitionSurface:
+  case GEntity::PartitionVolume:
+  case GEntity::GhostCurve:
+  case GEntity::GhostSurface:
+  case GEntity::GhostVolume: return;
+  default: break;
+  }
+  for(GVertex *v : vertices)
+    if(v->geomType() == GEntity::PartitionPoint && v->getParentEntity() == e)
+      static_cast<partitionVertex *>(v)->setParentEntity(nullptr);
+  for(GEdge *ed : edges)
+    if(ed->geomType() == GEntity::PartitionCurve && ed->getParentEntity() == e)
+      static_cast<partitionEdge *>(ed)->setParentEntity(nullptr);
+  for(GFace *f : faces)
+    if(f->geomType() == GEntity::PartitionSurface && f->getParentEntity() == e)
+      static_cast<partitionFace *>(f)->setParentEntity(nullptr);
+  for(GRegion *r : regions)
+    if(r->geomType() == GEntity::PartitionVolume && r->getParentEntity() == e)
+      static_cast<partitionRegion *>(r)->setParentEntity(nullptr);
+}
+
 bool GModel::remove(GRegion *r)
 {
   CTX::instance()->entitiesChanged();
@@ -573,6 +601,7 @@ bool GModel::remove(GRegion *r)
     it = std::find(regions.begin(), regions.end(), r);
   if(it != regions.end()) {
     regions.erase(it);
+    _forgetParent(r);
     std::vector<GFace *> f = r->faces();
     for(auto it = f.begin(); it != f.end(); it++) (*it)->delRegion(r);
     return true;
@@ -594,6 +623,7 @@ bool GModel::remove(GFace *f)
     it = std::find(faces.begin(), faces.end(), f);
   if(it != faces.end()) {
     faces.erase(it);
+    _forgetParent(f);
     std::vector<GEdge *> const &e = f->edges();
     for(auto it = e.begin(); it != e.end(); it++) (*it)->delFace(f);
     return true;
@@ -615,6 +645,7 @@ bool GModel::remove(GEdge *e)
     it = std::find(edges.begin(), edges.end(), e);
   if(it != edges.end()) {
     edges.erase(it);
+    _forgetParent(e);
     if(e->getBeginVertex()) e->getBeginVertex()->delEdge(e);
     if(e->getEndVertex()) e->getEndVertex()->delEdge(e);
     return true;
@@ -636,6 +667,7 @@ bool GModel::remove(GVertex *v)
     it = std::find(vertices.begin(), vertices.end(), v);
   if(it != vertices.end()) {
     vertices.erase(it);
+    _forgetParent(v);
     return true;
   }
   else {

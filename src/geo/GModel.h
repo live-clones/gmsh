@@ -142,6 +142,9 @@ protected:
   // each dimension: new OpenCASCADE entities do not take them
   int _maxNonOCCTag[4];
   void _keepNonOCCTag(GEntity *e);
+  // the partition entities whose parent e is lose it, e being removed (they
+  // would point to it once it is deleted)
+  void _forgetParent(GEntity *e);
   // ACIS model internal data
   ACIS_Internals *_acis_internals;
   // Parasolid model internal data
