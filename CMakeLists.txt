@@ -2238,6 +2238,8 @@ else()
   set(CPACK_STRIP_FILES FALSE)
 endif()
 set(CPACK_SOURCE_GENERATOR TGZ)
+# write a .sha256 file next to each package
+set(CPACK_PACKAGE_CHECKSUM SHA256)
 set(CPACK_SOURCE_IGNORE_FILES "${CMAKE_CURRENT_BINARY_DIR}" "/CVS/" "/.svn" "/.git"
     "~$" "DS_Store$" "GmshConfig.h$" "GmshVersion.h$" "/benchmarks/" "/tmp/"
     "/bin/" "/lib/" "/nightly/" "GPATH" "GRTAGS" "GSYMS" "GTAGS" "/HTML/"
