@@ -82,7 +82,16 @@ public:
       return s;
     }
   }
-  void setFont(int fontid, int fontsize) { gl_font(fontid, fontsize); }
+  // a font size FLTK can load: a size typed out of all proportion (thousands
+  // of pixels) makes the X11 font code exit
+  static int fontSizeInRange(int fontsize)
+  {
+    return fontsize < 1 ? 1 : fontsize > 512 ? 512 : fontsize;
+  }
+  void setFont(int fontid, int fontsize)
+  {
+    gl_font(fontid, fontSizeInRange(fontsize));
+  }
   double getStringWidth(const char *str) { return gl_width(str); }
   int getStringHeight() { return gl_height(); }
   int getStringDescent() { return gl_descent(); }
