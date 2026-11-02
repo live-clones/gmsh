@@ -1869,6 +1869,11 @@ elseif(EMSCRIPTEN)
   # reads and writes its memory and adds the callbacks to its function table
   add_executable(libgmsh EXCLUDE_FROM_ALL ${GMSH_SRC})
   target_link_libraries(libgmsh ${LINK_LIBRARIES})
+  # with the functions the pages of the web app call to draw the scene on
+  # their canvas
+  if(HAVE_OPENGL)
+    target_sources(libgmsh PRIVATE contrib/webapp/webView.cpp)
+  endif()
   set(LIBFLAGS "${FLAGS} --no-entry -sMODULARIZE=1 -sEXPORT_ES6=1")
   set(LIBFLAGS "${LIBFLAGS} -sEXPORTED_FUNCTIONS=_malloc,_free")
   set(LIBFLAGS "${LIBFLAGS} -sEXPORT_NAME=createLibgmsh -sALLOW_TABLE_GROWTH=1")

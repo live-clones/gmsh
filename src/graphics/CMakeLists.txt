@@ -29,7 +29,6 @@ set(SRC
   offscreenContext.cpp
   drawContextOffscreen.cpp
   sceneView.cpp
-  webView.cpp
   gl2ps.cpp
   gl2gif.cpp
   gl2jpeg.cpp
