@@ -233,7 +233,7 @@ std::vector<std::pair<std::string, std::string> > GetMouseUsage()
                  "zoom or a lasso selection"));
   s.push_back(mp("Ctrl+Left button", "Start a lasso zoom or a lasso "
                  "(un)selection, of all the entities inside it"));
-  s.push_back(mp("Ctrl+Alt+Left button", "Start a lasso (un)selection of the "
+  s.push_back(mp("Alt+Left button", "Accept a lasso (un)selection of the "
                  "entities in front only"));
   s.push_back(mp("Middle button", "Zoom / Unselect an entity / Accept a lasso "
                  "zoom or a lasso unselection"));
@@ -241,6 +241,7 @@ std::vector<std::pair<std::string, std::string> > GetMouseUsage()
   s.push_back(mp("Right button", "Pan / Cancel a lasso zoom or a lasso "
                  "(un)selection / Pop-up menu on post-processing view button"));
   s.push_back(mp("Ctrl+Right button", "Reset to default viewpoint"));
+  s.push_back(mp("Ctrl+Alt+Left button", "Reset to default viewpoint"));
   return s;
 }
 
