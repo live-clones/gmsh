@@ -25,11 +25,11 @@ mathEvaluator::mathEvaluator(std::vector<std::string> &expressions,
     } catch(smlib::mathex::error &e) {
       if(e.what() + expressions[i] != lastError) {
         lastError = e.what() + expressions[i];
-        Msg::Error(e.what());
+        Msg::Error("%s", e.what());
         std::string pos(_expressions[i]->stopposition(), ' ');
         pos.push_back('^');
-        Msg::Error(expressions[i].c_str());
-        Msg::Error(pos.c_str());
+        Msg::Error("%s", expressions[i].c_str());
+        Msg::Error("%s", pos.c_str());
       }
       error = true;
     }
@@ -68,13 +68,13 @@ bool mathEvaluator::eval(const std::vector<double> &values,
     try {
       res[i] = _expressions[i]->eval(values.data(), stack);
     } catch(smlib::mathex::error &e) {
-      Msg::Error(e.what());
+      Msg::Error("%s", e.what());
       std::vector<double> shifted(values);
       for(auto &v : shifted) v += 1.e-20;
       try {
         res[i] = _expressions[i]->eval(shifted.data(), stack);
       } catch(smlib::mathex::error &e2) {
-        Msg::Error(e2.what());
+        Msg::Error("%s", e2.what());
         return false;
       }
     }

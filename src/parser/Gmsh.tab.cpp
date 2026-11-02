@@ -7181,7 +7181,7 @@ yyreduce:
   case 27:
 #line 351 "Gmsh.y"
     {
-      Msg::Direct((yyvsp[(3) - (5)].c));
+      Msg::Direct("%s", (yyvsp[(3) - (5)].c));
       Free((yyvsp[(3) - (5)].c));
     ;}
     break;
@@ -7189,7 +7189,7 @@ yyreduce:
   case 28:
 #line 356 "Gmsh.y"
     {
-      Msg::Warning((yyvsp[(3) - (5)].c));
+      Msg::Warning("%s", (yyvsp[(3) - (5)].c));
       Free((yyvsp[(3) - (5)].c));
     ;}
     break;
@@ -7197,7 +7197,7 @@ yyreduce:
   case 29:
 #line 361 "Gmsh.y"
     {
-      Msg::Error((yyvsp[(3) - (5)].c));
+      Msg::Error("%s", (yyvsp[(3) - (5)].c));
       Free((yyvsp[(3) - (5)].c));
     ;}
     break;
@@ -7229,7 +7229,7 @@ yyreduce:
       else if(i > 0)
 	yymsg(0, "%d extra argument%s in Printf", i, (i > 1) ? "s" : "");
       else
-	Msg::Direct(tmpstring.c_str());
+	Msg::Direct("%s", tmpstring.c_str());
       Free((yyvsp[(3) - (7)].c));
       List_Delete((yyvsp[(5) - (7)].l));
     ;}
@@ -7245,7 +7245,7 @@ yyreduce:
       else if(i > 0)
 	yymsg(1, "%d extra argument%s in Error", i, (i > 1) ? "s" : "");
       else
-	Msg::Warning(tmpstring.c_str());
+	Msg::Warning("%s", tmpstring.c_str());
       Free((yyvsp[(3) - (7)].c));
       List_Delete((yyvsp[(5) - (7)].l));
     ;}
@@ -7261,7 +7261,7 @@ yyreduce:
       else if(i > 0)
 	yymsg(0, "%d extra argument%s in Error", i, (i > 1) ? "s" : "");
       else
-	Msg::Error(tmpstring.c_str());
+	Msg::Error("%s", tmpstring.c_str());
       Free((yyvsp[(3) - (7)].c));
       List_Delete((yyvsp[(5) - (7)].l));
     ;}

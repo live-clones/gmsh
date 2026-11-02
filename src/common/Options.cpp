@@ -279,7 +279,7 @@ static void PrintNumberOptions(int num, int level, int diff, int help,
         else if(vec)
           vec->push_back(std::string(tmp) + '\0' + "number");
         else
-          Msg::Direct(tmp);
+          Msg::Direct("%s", tmp);
       }
     }
     i++;
@@ -462,7 +462,7 @@ static void PrintColorOptions(int num, int level, int diff, int help,
         else if(vec)
           vec->push_back(std::string(tmp) + '\0' + "color");
         else
-          Msg::Direct(tmp);
+          Msg::Direct("%s", tmp);
       }
     }
     i++;
@@ -666,7 +666,7 @@ static void PrintColorTable(int num, int diff, const char *prefix, FILE *file,
   else if(vec)
     vec->push_back(tmp);
   else
-    Msg::Direct(tmp);
+    Msg::Direct("%s", tmp);
   ColorTable_Print(&opt->colorTable, file, vec);
   sprintf(tmp, "};");
   if(file)
@@ -674,7 +674,7 @@ static void PrintColorTable(int num, int diff, const char *prefix, FILE *file,
   else if(vec)
     vec->push_back(tmp);
   else
-    Msg::Direct(tmp);
+    Msg::Direct("%s", tmp);
 #endif
 }
 
