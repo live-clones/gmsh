@@ -274,7 +274,8 @@ double PViewDataGModel::getTime(int step)
 double PViewDataGModel::getMin(int step, bool onlyVisible, int tensorRep,
                                int forceNumComponents, int componentMap[9])
 {
-  if(_steps.empty()) return _min;
+  // (a step past the last one, e.g. asked while the data are being replaced)
+  if(_steps.empty() || step >= (int)_steps.size()) return _min;
 
   if(onlyVisible || forceNumComponents || tensorRep) {
     double vmin = VAL_INF;
@@ -300,7 +301,8 @@ double PViewDataGModel::getMin(int step, bool onlyVisible, int tensorRep,
 double PViewDataGModel::getMax(int step, bool onlyVisible, int tensorRep,
                                int forceNumComponents, int componentMap[9])
 {
-  if(_steps.empty()) return _max;
+  // (a step past the last one, e.g. asked while the data are being replaced)
+  if(_steps.empty() || step >= (int)_steps.size()) return _max;
 
   if(onlyVisible || forceNumComponents || tensorRep) {
     double vmax = -VAL_INF;
