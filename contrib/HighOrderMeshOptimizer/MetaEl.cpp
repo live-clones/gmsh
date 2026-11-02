@@ -103,7 +103,9 @@ MetaEl::metaInfoType::metaInfoType(int type, int order)
   // Compute value of nodal bases of base face at base vertices
   const fullMatrix<double> basePoints = baseFaceBasis->getReferenceNodes();
   for(int iV = 0; iV < baseFaceBasis->getNumShapeFunctions(); iV++) {
-    const double &u = basePoints(iV, 0), &v = basePoints(iV, 1);
+    // (the base of a 2D element is a line, with a single coordinate)
+    const double u = basePoints(iV, 0);
+    const double v = (basePoints.size2() > 1) ? basePoints(iV, 1) : 0.;
     double linShapeFunc[1256];
     linBaseFaceBasis->f(u, v, 0., linShapeFunc);
     for(int iSF = 0; iSF < nbLinBaseShapeFunc; iSF++)
