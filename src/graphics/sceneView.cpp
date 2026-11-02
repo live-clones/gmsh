@@ -49,7 +49,7 @@ bool sceneView::_select(int type, bool multiple, bool mesh, bool post, int x,
                         std::vector<GRegion *> &regions,
                         std::vector<MElement *> &elements,
                         std::vector<SPoint2> &points,
-                        std::vector<PView *> &views)
+                        std::vector<PView *> &views, bool through)
 {
   // test: completely deactivate GL_SELECT passes when mouse selection is off,
   // to see if unaccelerated (pure CPU) selection buffer is the reason for slow
@@ -62,7 +62,8 @@ bool sceneView::_select(int type, bool multiple, bool mesh, bool post, int x,
   // middle of one can deliver a click there): the passes would mix
   if(!hostBeginGL()) return false;
   bool ret = _ctx->select(type, multiple, mesh, post, x, y, w, h, vertices,
-                          edges, faces, regions, elements, points, views);
+                          edges, faces, regions, elements, points, views,
+                          through);
   hostEndGL();
   return ret;
 }
@@ -440,18 +441,23 @@ void sceneView::handleMouse(const paneInput &in)
     }
     if(!hostClicked()) return;
     _curr.set(_ctx, x, y);
-    if(in.button == 0 && !shift && !alt) {
+    // (Ctrl+Alt+click starts a lasso of what is in front, and Alt does not
+    // matter for the click that ends a lasso)
+    if(in.button == 0 && !shift && (!alt || ctrl || lassoMode)) {
       // Ctrl+click adds a query in query mode (when the clicks select), and
       // starts a lasso otherwise
-      _addQuery = hostQueryMode() && CTX::instance()->mouseSelection && ctrl;
+      _addQuery =
+        hostQueryMode() && CTX::instance()->mouseSelection && ctrl && !alt;
       if(!lassoMode && ctrl && !_addQuery) {
         lassoMode = true;
+        _lassoFront = alt;
       }
       else if(lassoMode) {
         lassoMode = false;
         if(selectionMode && CTX::instance()->mouseSelection) {
           // will try to select multiple entities
           _trySelection = 2;
+          _trySelectionFront = _lassoFront;
           _trySelectionXYWH[0] = (int)(_click.win[0] + _curr.win[0]) / 2;
           _trySelectionXYWH[1] = (int)(_click.win[1] + _curr.win[1]) / 2;
           _trySelectionXYWH[2] = (int)fabs(_click.win[0] - _curr.win[0]);
@@ -482,6 +488,7 @@ void sceneView::handleMouse(const paneInput &in)
         if(selectionMode && CTX::instance()->mouseSelection) {
           // will try to unselect multiple entities
           _trySelection = -2;
+          _trySelectionFront = _lassoFront;
           _trySelectionXYWH[0] = (int)(_click.win[0] + _curr.win[0]) / 2;
           _trySelectionXYWH[1] = (int)(_click.win[1] + _curr.win[1]) / 2;
           _trySelectionXYWH[2] = (int)fabs(_click.win[0] - _curr.win[0]);
@@ -792,7 +799,7 @@ char sceneView::selectionStep(std::vector<GVertex *> &vertices,
     else if(_select(_selection, multi, true, true, _trySelectionXYWH[0],
                     _trySelectionXYWH[1], _trySelectionXYWH[2],
                     _trySelectionXYWH[3], vertices, edges, faces, regions,
-                    elements, points, views)) {
+                    elements, points, views, !_trySelectionFront)) {
       _selection = ENT_NONE;
       selectionMode = false;
       return add ? 'l' : 'r';

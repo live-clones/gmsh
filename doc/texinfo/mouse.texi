@@ -6,7 +6,9 @@ Highlight the entity under the mouse pointer and display its properties / Resize
 @item Left button
 Rotate / Select an entity / Accept a lasso zoom or a lasso selection
 @item Ctrl+Left button
-Start a lasso zoom or a lasso (un)selection
+Start a lasso zoom or a lasso (un)selection, of all the entities inside it
+@item Ctrl+Alt+Left button
+Start a lasso (un)selection of the entities in front only
 @item Middle button
 Zoom / Unselect an entity / Accept a lasso zoom or a lasso unselection
 @item Ctrl+Middle button

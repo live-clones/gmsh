@@ -60,6 +60,9 @@ private:
   // be looked at at the next step: 1 select, -1 unselect, 2 and -2 inside
   // the lasso, in the rectangle (centre, size)
   int _selection, _trySelection, _trySelectionXYWH[4];
+  // a lasso started with Ctrl+Alt+click takes only what is in front, not
+  // all that is inside it
+  bool _lassoFront = false, _trySelectionFront = false;
   // whether the last click asked to add a query to those on the picture
   // (Ctrl+click in query mode) rather than to replace them
   bool _addQuery;
@@ -97,7 +100,7 @@ private:
                std::vector<GEdge *> &edges, std::vector<GFace *> &faces,
                std::vector<GRegion *> &regions,
                std::vector<MElement *> &elements, std::vector<SPoint2> &points,
-               std::vector<PView *> &views);
+               std::vector<PView *> &views, bool through = true);
   // should a double click be processed?
   bool _processDoubleClick(std::size_t num, const std::string &what);
   void _doubleClick(const paneInput &in);
