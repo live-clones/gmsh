@@ -37,6 +37,34 @@ struct DiscreteCADAnalyticSurface {
   void normal(const double x[3], double n[3]) const;
 };
 
+// the map from the parameters of an analytic surface (see
+// analyticParameters) to its points, and back: the coordinates in a plane of
+// axes e0, e1; the developed cylinder or cone (around the axis of the
+// surface, e0 and e1 at the angle 0 and pi / 2), the angle of a point taken
+// around reference (in the developed plane for a cone); the disk of a cone
+// with its apex, of radius scale; the stereographic projection of a sphere
+// from -scale d (scale = 1 or -1), e0 and e1 orthogonal to d; the conformal
+// map of a torus onto an annulus, the angle around its section taken from
+// cut, the radius exp(scale (s - lowest)) for the conformal coordinate s
+struct DiscreteCADAnalyticMap {
+  enum Kind { NONE, PLANE, DEVELOPED, DISK, STEREOGRAPHIC, ANNULUS };
+  Kind kind;
+  DiscreteCADAnalyticSurface surface;
+  double e0[3], e1[3], d[3], scale, lowest, cut, reference;
+  DiscreteCADAnalyticMap()
+    : kind(NONE), scale(1.), lowest(0.), cut(0.), reference(0.)
+  {
+    for(int k = 0; k < 3; k++) e0[k] = e1[k] = d[k] = 0.;
+  }
+  // the point at the parameters (u, v), and the parameters of the point of
+  // the surface nearest to x (near guess, if not null)
+  void point(double u, double v, double x[3]) const;
+  void parameters(const double x[3], const double *guess, double uv[2]) const;
+  // the reference of the angles from the parameters of the corners of the
+  // triangles of a surface
+  void setReference(const std::vector<std::array<std::array<double, 2>, 3> > &uv);
+};
+
 // the simplest analytic surface (a plane, a sphere, a cylinder, a cone or a
 // torus) whose distance to the nodes x of a triangulation is at most
 // tolerance, the normals of its triangles making an angle smaller than angle
@@ -97,11 +125,13 @@ void segmentSurface(const std::vector<std::array<double, 3> > &x,
 // if it goes beyond 120 degrees from its center; the conformal map of a torus
 // onto an annulus, or of its two halves on each side of its equatorial plane
 // if it goes around its section
+// (the maps of the halves in maps)
 void analyticParameters(const DiscreteCADAnalyticSurface &s,
                         const std::vector<std::array<double, 3> > &x,
                         const std::vector<std::array<int, 3> > &triangles,
                         double tolerance,
                         std::vector<std::array<std::array<double, 2>, 3> > &uv,
-                        std::vector<int> &half, int &apex);
+                        std::vector<int> &half, int &apex,
+                        std::vector<DiscreteCADAnalyticMap> &maps);
 
 #endif

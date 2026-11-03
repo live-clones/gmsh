@@ -14,6 +14,7 @@
 #include "Context.h"
 #include "MElementOctree.h"
 #include "GModelParametrize.h"
+#include "intersectCurveSurface.h"
 
 
 namespace {
@@ -238,9 +239,20 @@ int discreteFace::trianglePosition(double par1, double par2, double &u,
   return position;
 }
 
+double discreteFace::_step() const
+{
+  const double size = std::abs(_param.umax - _param.umin) +
+                      std::abs(_param.vmax - _param.vmin);
+  return 1.e-6 * (size > 0. ? size : 1.);
+}
+
 GPoint discreteFace::point(double par1, double par2) const
 {
   double xy[3] = {par1, par2, 0};
+  if(_exactPoint) {
+    const SPoint3 p = _exactPoint(par1, par2);
+    return GPoint(p.x(), p.y(), p.z(), this, xy);
+  }
   double bary[2];
   int position = _locate(par1, par2, bary);
   if(position < 0) {
@@ -306,6 +318,12 @@ static void closestPointCallback(std::pair<MTriangle *, MTriangle *> *t,
 GPoint discreteFace::_closestPoint(const SPoint3 &p, const double guess[2],
                                    SVector3 *normal) const
 {
+  if(_exactParameters) {
+    SPoint2 uv = _exactParameters(p, guess);
+    const SPoint3 x = _exactPoint(uv.x(), uv.y());
+    if(normal) *normal = this->normal(uv);
+    return GPoint(x.x(), x.y(), x.z(), this, uv);
+  }
   if(_param.empty()) {
     GPoint gp;
     gp.setNoSuccess();
@@ -384,6 +402,12 @@ SBoundingBox3d discreteFace::bounds(bool fast)
 
 SVector3 discreteFace::normal(const SPoint2 &param) const
 {
+  if(_exactPoint) {
+    const std::pair<SVector3, SVector3> d = firstDer(param);
+    SVector3 n = crossprod(d.first, d.second);
+    n.normalize();
+    return n;
+  }
   if(_param.empty()) return SVector3();
   int position = _locate(param.x(), param.y());
   if(position < 0) {
@@ -399,7 +423,7 @@ bool discreteFace::normalIfContainsParam(const SPoint2 &param,
 {
   int position = _locate(param.x(), param.y());
   if(position < 0) return false;
-  normal = _normal(position);
+  normal = _exactPoint ? this->normal(param) : _normal(position);
   return true;
 }
 
@@ -433,6 +457,12 @@ bool discreteFace::normalBoundsForParametricTriangle(
 
 double discreteFace::curvatureMax(const SPoint2 &param) const
 {
+  if(_exactPoint) {
+    SVector3 dirMax, dirMin;
+    double c, C;
+    curvatures(param, dirMax, dirMin, C, c);
+    return std::max(std::abs(c), std::abs(C));
+  }
   if(_param.empty()) return 0.;
 
   SVector3 dirMax, dirMin;
@@ -446,6 +476,48 @@ double discreteFace::curvatures(const SPoint2 &param, SVector3 &dirMax,
                                 SVector3 &dirMin, double &curvMax,
                                 double &curvMin) const
 {
+  if(_exactPoint) {
+    // from the fundamental forms
+    const std::pair<SVector3, SVector3> d = firstDer(param);
+    SVector3 duu, dvv, duv;
+    secondDer(param, duu, dvv, duv);
+    SVector3 n = crossprod(d.first, d.second);
+    n.normalize();
+    const double E = dot(d.first, d.first), F = dot(d.first, d.second),
+                 G = dot(d.second, d.second);
+    const double L = dot(duu, n), M = dot(duv, n), N = dot(dvv, n);
+    const double det = E * G - F * F;
+    if(!(det > 0.)) {
+      curvMax = curvMin = 0.;
+      return 0.;
+    }
+    // the eigenvalues of the shape operator (L M; M N) (E F; F G)^-1
+    const double H = (E * N - 2. * F * M + G * L) / (2. * det);
+    const double K = (L * N - M * M) / det;
+    const double s = std::sqrt(std::max(0., H * H - K));
+    curvMax = H + s;
+    curvMin = H - s;
+    // the principal directions: (a, b) with (L - k E) a + (M - k F) b = 0
+    auto direction = [&](double k) {
+      double a = -(M - k * F), b = L - k * E;
+      if(std::abs(a) + std::abs(b) < 1.e-14 * (std::abs(L) + std::abs(M) + 1.)) {
+        a = N - k * G;
+        b = -(M - k * F);
+      }
+      SVector3 t = d.first * a + d.second * b;
+      t.normalize();
+      return t;
+    };
+    dirMax = direction(curvMax);
+    dirMin = direction(curvMin);
+    curvMax = std::abs(curvMax);
+    curvMin = std::abs(curvMin);
+    if(curvMin > curvMax) {
+      std::swap(curvMin, curvMax);
+      std::swap(dirMin, dirMax);
+    }
+    return 0.;
+  }
   if(_param.empty()) return 0.;
   if(_param.CURV.empty()) return 0.0;
 
@@ -475,6 +547,13 @@ double discreteFace::curvatures(const SPoint2 &param, SVector3 &dirMax,
 
 std::pair<SVector3, SVector3> discreteFace::firstDer(const SPoint2 &param) const
 {
+  if(_exactPoint) {
+    const double h = _step(), u = param.x(), v = param.y();
+    const SPoint3 pu = _exactPoint(u + h, v), mu = _exactPoint(u - h, v);
+    const SPoint3 pv = _exactPoint(u, v + h), mv = _exactPoint(u, v - h);
+    return std::make_pair(SVector3(mu, pu) * (0.5 / h),
+                          SVector3(mv, pv) * (0.5 / h));
+  }
   // the triangle in space times the inverse of the triangle in the chart
   int position = _locate(param.x(), param.y());
   if(position < 0) {
@@ -501,7 +580,33 @@ std::pair<SVector3, SVector3> discreteFace::firstDer(const SPoint2 &param) const
 void discreteFace::secondDer(const SPoint2 &param, SVector3 &dudu,
                              SVector3 &dvdv, SVector3 &dudv) const
 {
-  return;
+  if(!_exactPoint) return;
+  const double h = 10. * _step(), u = param.x(), v = param.y();
+  const SVector3 c(_exactPoint(u, v));
+  const SVector3 pu(_exactPoint(u + h, v)), mu(_exactPoint(u - h, v));
+  const SVector3 pv(_exactPoint(u, v + h)), mv(_exactPoint(u, v - h));
+  const SVector3 pp(_exactPoint(u + h, v + h)), pm(_exactPoint(u + h, v - h));
+  const SVector3 mp(_exactPoint(u - h, v + h)), mm(_exactPoint(u - h, v - h));
+  dudu = (pu - c * 2. + mu) * (1. / (h * h));
+  dvdv = (pv - c * 2. + mv) * (1. / (h * h));
+  dudv = (pp - pm - mp + mm) * (0.25 / (h * h));
+}
+
+GPoint discreteFace::_exactIntersectionWithCircle(GPoint gp, const SVector3 &n1,
+                                                  const SVector3 &n2,
+                                                  const SVector3 &p,
+                                                  const double &R, double uv[2])
+{
+  if(!_exactPoint || !gp.succeeded()) return gp;
+  // (the circle p + R (n1 cos(t) + n2 sin(t)), t from the point found)
+  const SVector3 d(gp.x() - p.x(), gp.y() - p.y(), gp.z() - p.z());
+  double uvt[3] = {uv[0], uv[1], std::atan2(dot(d, n2), dot(d, n1))};
+  curveFunctorCircle cc(n1, n2, p, R);
+  surfaceFunctorGFace ss(this);
+  if(!intersectCurveSurface(cc, ss, uvt, R * 1.e-8)) return gp;
+  uv[0] = uvt[0];
+  uv[1] = uvt[1];
+  return point(uv[0], uv[1]);
 }
 
 void discreteFace::_debugParametrization(bool uv)
@@ -701,6 +806,25 @@ GPoint discreteFace::intersectionWithCircle(const SVector3 &n1,
                                             const SVector3 &p, const double &R,
                                             double uv[2])
 {
+  return _exactIntersectionWithCircle(
+    _intersectionWithCircle(n1, n2, p, R, uv), n1, n2, p, R, uv);
+}
+
+GPoint discreteFace::intersectionWithCircleSpatial(const SVector3 &n1,
+                                                   const SVector3 &n2,
+                                                   const SVector3 &p,
+                                                   const double &R,
+                                                   double uv[2])
+{
+  return _exactIntersectionWithCircle(
+    _intersectionWithCircleSpatial(n1, n2, p, R, uv), n1, n2, p, R, uv);
+}
+
+GPoint discreteFace::_intersectionWithCircle(const SVector3 &n1,
+                                             const SVector3 &n2,
+                                             const SVector3 &p, const double &R,
+                                             double uv[2])
+{
   if(_param.empty()) return 0.;
 
   MTriangle *t2d = (MTriangle *)_param.oct->find(uv[0], uv[1], 0.0, -1, true);
@@ -809,11 +933,11 @@ GPoint discreteFace::intersectionWithCircle(const SVector3 &n1,
   return pp;
 }
 
-GPoint discreteFace::intersectionWithCircleSpatial(const SVector3 &n1,
-                                                   const SVector3 &n2,
-                                                   const SVector3 &p,
-                                                   const double &R,
-                                                   double uv[2])
+GPoint discreteFace::_intersectionWithCircleSpatial(const SVector3 &n1,
+                                                    const SVector3 &n2,
+                                                    const SVector3 &p,
+                                                    const double &R,
+                                                    double uv[2])
 {
   auto failure = []() {
     GPoint result(0.0);

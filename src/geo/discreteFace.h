@@ -7,6 +7,7 @@
 #define DISCRETE_FACE_H
 
 #include <algorithm>
+#include <functional>
 #include "GModel.h"
 #include "GFace.h"
 #include "MTriangle.h"
@@ -37,6 +38,24 @@ private:
   };
   param _param;
   ModelType _nativeType = UnknownModel;
+  // the exact geometry of an analytic surface, if given: its point at the
+  // parameters (u, v), and the parameters of its point nearest to a point
+  // (near the parameters guess, if not null)
+  std::function<SPoint3(double, double)> _exactPoint;
+  std::function<SPoint2(const SPoint3 &, const double *)> _exactParameters;
+  // the step of the finite differences of its derivatives
+  double _step() const;
+  GPoint _intersectionWithCircle(const SVector3 &n1, const SVector3 &n2,
+                                 const SVector3 &p, const double &R,
+                                 double uv[2]);
+  GPoint _intersectionWithCircleSpatial(const SVector3 &n1, const SVector3 &n2,
+                                        const SVector3 &p, const double &R,
+                                        double uv[2]);
+  // the intersection with a circle found on the chart moved onto the exact
+  // surface
+  GPoint _exactIntersectionWithCircle(GPoint gp, const SVector3 &n1,
+                                      const SVector3 &n2, const SVector3 &p,
+                                      const double &R, double uv[2]);
   void _createGeometryFromSTL();
   GPoint _closestPoint(const SPoint3 &p, const double guess[2],
                        SVector3 *normal = nullptr) const;
@@ -88,6 +107,17 @@ public:
                           const std::vector<SPoint3> &xyz,
                           const std::vector<int> &triangles);
   virtual bool haveParametrization() { return !_param.empty(); }
+  // the exact geometry of the surface, if it is analytic (see _exactPoint):
+  // its points, derivatives, normals and curvatures are then computed from
+  // it, the parametrization only giving the domain of the parameters
+  void setExactGeometry(
+    const std::function<SPoint3(double, double)> &point,
+    const std::function<SPoint2(const SPoint3 &, const double *)> &parameters)
+  {
+    _exactPoint = point;
+    _exactParameters = parameters;
+  }
+  bool haveExactGeometry() const { return (bool)_exactPoint; }
   virtual void mesh(bool verbose);
   int trianglePosition(double par1, double par2, double &u, double &v) const;
   GPoint intersectionWithCircle(const SVector3 &n1, const SVector3 &n2,

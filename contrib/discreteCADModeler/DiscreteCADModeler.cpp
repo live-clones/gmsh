@@ -1123,6 +1123,10 @@ bool DiscreteCAD_Internals::booleanOperation(
     }
   }
   _addTopology(triangles, label, uv, hasUV, creases, pi, surfaceOf);
+  // (the exact geometry of the surfaces they come from)
+  for(std::size_t i = 0; i < nt; i++)
+    _surfaces[surfaceOf[i]].analytic =
+      _surfaces[origins[birth[i]].surface].analytic;
 
   // the operands removed before the volumes are created (one of them can
   // take the tag of an operand)
@@ -1951,6 +1955,8 @@ bool DiscreteCAD_Internals::addTriangulation(
   std::vector<char> hasUV(nt, 0);
   std::vector<int> apexes;
   int recognized[6] = {0, 0, 0, 0, 0, 0};
+  std::vector<DiscreteCADAnalyticMap> maps;
+  std::vector<int> mapOf(nt, -1);
   double precision;
   {
     std::set<int> used;
@@ -2035,15 +2041,18 @@ bool DiscreteCAD_Internals::addTriangulation(
                    a.axis[0], a.axis[1], a.axis[2], a.r1, a.r2, deviation);
         std::vector<std::array<std::array<double, 2>, 3> > luv;
         std::vector<int> half;
+        std::vector<DiscreteCADAnalyticMap> halves;
         int apex;
-        analyticParameters(a, px, pt, tolerance, luv, half, apex);
+        analyticParameters(a, px, pt, tolerance, luv, half, apex, halves);
         const int first = next++, second = next++;
         for(std::size_t j = 0; j < which.size(); j++) {
           const std::size_t i = which[j];
           uv[i] = luv[j];
           hasUV[i] = 1;
           label[i] = half[j] ? second : first;
+          mapOf[i] = (int)maps.size() + (half[j] && halves.size() > 1 ? 1 : 0);
         }
+        maps.insert(maps.end(), halves.begin(), halves.end());
         if(apex >= 0) apexes.push_back(pglobal[apex]);
       }
     }
@@ -2153,6 +2162,8 @@ bool DiscreteCAD_Internals::addTriangulation(
   // the surfaces, curves and vertices, and the volumes
   std::vector<int> surfaceOf;
   _addTopology(tri, label, uv, hasUV, sharp, curveAngle, surfaceOf);
+  for(std::size_t i = 0; i < nt; i++)
+    if(mapOf[i] >= 0) _surfaces[surfaceOf[i]].analytic = maps[mapOf[i]];
   std::vector<std::vector<std::vector<int> > > cells = _cells(tri, surfaceOf);
   // (the apexes of the cones inside their surfaces)
   for(int a : apexes) {
@@ -2414,6 +2425,28 @@ void DiscreteCAD_Internals::synchronize(GModel *model)
     const double flip = area < 0. ? -1. : 1.;
     for(SPoint2 &p : uv) p = SPoint2(p.x(), flip * p.y());
     gf->setParametrization(uv, xyz, triangles);
+    // the exact geometry of an analytic surface
+    if(sf.analytic.kind != DiscreteCADAnalyticMap::NONE &&
+       !(getenv("DCAD_NOEXACT") && atoi(getenv("DCAD_NOEXACT")) == (int)sf.analytic.kind)) { // TEMPORARY
+      DiscreteCADAnalyticMap map = sf.analytic;
+      map.setReference(sf.uv);
+      gf->setExactGeometry(
+        [map, flip](double u, double v) {
+          double x[3];
+          map.point(u, flip * v, x);
+          return SPoint3(x[0], x[1], x[2]);
+        },
+        [map, flip](const SPoint3 &p, const double *guess) {
+          const double x[3] = {p.x(), p.y(), p.z()};
+          double g[2], uv[2];
+          if(guess) {
+            g[0] = guess[0];
+            g[1] = flip * guess[1];
+          }
+          map.parameters(x, guess ? g : nullptr, uv);
+          return SPoint2(uv[0], flip * uv[1]);
+        });
+    }
     // the parameters of its curves on it, from the triangles along them (the
     // two sides of the seam given)
     std::map<std::pair<int, int>, std::size_t> triangleOf;

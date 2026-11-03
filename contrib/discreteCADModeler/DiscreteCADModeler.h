@@ -23,6 +23,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include "DiscreteCADRecognition.h"
 
 class GModel;
 
@@ -49,8 +50,9 @@ public:
   // vertices inside it, the parameters of the corners of its triangles
   // (computed from the triangulation by synchronize if empty), its seams: the
   // curves used twice in its loops, with the parameters of their nodes on
-  // their two sides (the side of the curve used forwards first), and the
-  // curves inside it (its creases)
+  // their two sides (the side of the curve used forwards first), the curves
+  // inside it (its creases), and, for an analytic surface, the map from its
+  // parameters to its points (its exact geometry)
   struct Surface {
     std::vector<int> curves;
     std::vector<std::array<int, 3> > triangles;
@@ -58,6 +60,7 @@ public:
     std::vector<std::array<std::array<double, 2>, 3> > uv;
     std::map<int, std::array<std::vector<std::array<double, 2> >, 2> > seams;
     std::vector<int> embeddedCurves;
+    DiscreteCADAnalyticMap analytic;
   };
   // a closed shell of surfaces, a negative tag for a surface used reversed
   struct Volume {
