@@ -29,6 +29,10 @@ void applyGmshScheme();
 // the width of the scrollbars of the theme: under 7 pixels, FLTK neither draws
 // nor handles the arrow buttons at their ends, which nobody uses
 const int gmshScrollbarSize = 6;
+// the scrollbars and the menus of a window in the theme, called by the windows
+// of Gmsh before they draw: Windows paints a new window as soon as it is shown,
+// before the check callback that styles the others
+void gmshStyleWidgets(Fl_Widget *w);
 // an event handled with the hover of the scheme: the widget the pointer leaves
 // and the one it enters are drawn again (see FlGui::_dispatch())
 int gmshSchemeHandle(int event, Fl_Window *win);
