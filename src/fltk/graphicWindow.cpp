@@ -847,7 +847,8 @@ static void add_new_curve_from_points(const std::string &what,
                     steps[p.size()].c_str());
     char ib = FlGui::instance()->selectEntity(ENT_POINT);
     if(!FlGui::available()) return;
-    if(ib == 'l') {
+    // the mode buttons of another context may have changed what is picked
+    if(ib == 'l' && FlGui::instance()->selectedVertices.size()) {
       FlGui::instance()->selectedVertices[0]->setSelection(1);
       drawContext::global()->draw();
       p.push_back(FlGui::instance()->selectedVertices[0]->tag());
@@ -986,7 +987,9 @@ static void add_new_surface_volume(int mode)
         Msg::Warning("Entity de-selection not supported yet during "
                      "surface/volume creation");
       }
-      if(ib == 'l') {
+      if(ib == 'l' && (type == ENT_CURVE ?
+                         FlGui::instance()->selectedEdges.size() :
+                         FlGui::instance()->selectedFaces.size())) {
         int num = (type == ENT_CURVE) ?
                     FlGui::instance()->selectedEdges[0]->tag() :
                     FlGui::instance()->selectedFaces[0]->tag();
@@ -2175,6 +2178,9 @@ static void mesh_define_transfinite(int dim)
         break;
       case 2:
       case 3:
+        if(dim == 2 ? FlGui::instance()->selectedFaces.empty() :
+                      FlGui::instance()->selectedRegions.empty())
+          break;
         if(dim == 2) {
           FlGui::instance()->selectedFaces[0]->setSelection(1);
           drawContext::global()->draw();
