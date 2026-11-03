@@ -69,7 +69,7 @@ protected:
   int handle(int);
   // what the interaction asks of its window
   void hostRedraw();
-  void hostClicked();
+  bool hostClicked();
   void hostViewChanged();
   void hostCursor(bool cross);
   bool hostBeginGL();

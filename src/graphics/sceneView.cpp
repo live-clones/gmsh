@@ -49,7 +49,7 @@ bool sceneView::_select(int type, bool multiple, bool mesh, bool post, int x,
                         std::vector<GRegion *> &regions,
                         std::vector<MElement *> &elements,
                         std::vector<SPoint2> &points,
-                        std::vector<PView *> &views)
+                        std::vector<PView *> &views, bool through)
 {
   // test: completely deactivate GL_SELECT passes when mouse selection is off,
   // to see if unaccelerated (pure CPU) selection buffer is the reason for slow
@@ -62,7 +62,8 @@ bool sceneView::_select(int type, bool multiple, bool mesh, bool post, int x,
   // middle of one can deliver a click there): the passes would mix
   if(!hostBeginGL()) return false;
   bool ret = _ctx->select(type, multiple, mesh, post, x, y, w, h, vertices,
-                          edges, faces, regions, elements, points, views);
+                          edges, faces, regions, elements, points, views,
+                          through);
   hostEndGL();
   return ret;
 }
@@ -173,25 +174,24 @@ void sceneView::_hover()
              (_selection == ENT_SURFACE && faces.size()) ||
              (_selection == ENT_VOLUME && regions.size()));
   std::string text, cmd;
-  bool multiline = CTX::instance()->tooltips;
   if(vertices.size()) {
-    text = vertices[0]->getInfoString(true, multiline);
+    text = vertices[0]->getInfoString(true, true);
     cmd = CTX::instance()->geom.doubleClickedPointCommand;
   }
   else if(edges.size()) {
-    text = edges[0]->getInfoString(true, multiline);
+    text = edges[0]->getInfoString(true, true);
     cmd = CTX::instance()->geom.doubleClickedCurveCommand;
   }
   else if(faces.size()) {
-    text = faces[0]->getInfoString(true, multiline);
+    text = faces[0]->getInfoString(true, true);
     cmd = CTX::instance()->geom.doubleClickedSurfaceCommand;
   }
   else if(regions.size()) {
-    text = regions[0]->getInfoString(true, multiline);
+    text = regions[0]->getInfoString(true, true);
     cmd = CTX::instance()->geom.doubleClickedVolumeCommand;
   }
   else if(elements.size()) {
-    text = elements[0]->getInfoString(multiline);
+    text = elements[0]->getInfoString(true);
   }
   else if(points.size()) {
     char tmp[256];
@@ -278,11 +278,18 @@ void sceneView::_hover()
     if(tmp[0]) hints.push_back(tmp);
   }
   for(std::size_t i = 0; i < hints.size(); i++)
-    text += (multiline ? (i ? "\n" : "\n\n") : " ") + hints[i];
+    text += (i ? "\n" : "\n\n") + hints[i];
   if(CTX::instance()->tooltips)
     drawTooltip(text);
-  else
-    Msg::StatusBar(false, text.c_str());
+  else {
+    // in the status bar, its first line only (what is under the cursor), with
+    // the next one when it ends with a colon (an element, then its type)
+    std::string::size_type n = text.find('\n');
+    if(n != std::string::npos && n && text[n - 1] == ':')
+      n = text.find('\n', n + 1);
+    Msg::StatusBar(false,
+                   ReplaceSubString("\n", "", text.substr(0, n)).c_str());
+  }
   if(Msg::GetVerbosity() == 99)
     Msg::Debug(ReplaceSubString("\n", " ", text).c_str());
 }
@@ -432,9 +439,11 @@ void sceneView::handleMouse(const paneInput &in)
       _doubleClick(in);
       return;
     }
-    hostClicked();
+    if(!hostClicked()) return;
     _curr.set(_ctx, x, y);
-    if(in.button == 0 && !shift && !alt) {
+    // (Alt+click ends a lasso with what is in front only: the click that
+    // ends a lasso can have it)
+    if(in.button == 0 && !shift && (!alt || lassoMode)) {
       // Ctrl+click adds a query in query mode (when the clicks select), and
       // starts a lasso otherwise
       _addQuery = hostQueryMode() && CTX::instance()->mouseSelection && ctrl;
@@ -446,6 +455,7 @@ void sceneView::handleMouse(const paneInput &in)
         if(selectionMode && CTX::instance()->mouseSelection) {
           // will try to select multiple entities
           _trySelection = 2;
+          _trySelectionFront = alt;
           _trySelectionXYWH[0] = (int)(_click.win[0] + _curr.win[0]) / 2;
           _trySelectionXYWH[1] = (int)(_click.win[1] + _curr.win[1]) / 2;
           _trySelectionXYWH[2] = (int)fabs(_click.win[0] - _curr.win[0]);
@@ -476,6 +486,7 @@ void sceneView::handleMouse(const paneInput &in)
         if(selectionMode && CTX::instance()->mouseSelection) {
           // will try to unselect multiple entities
           _trySelection = -2;
+          _trySelectionFront = alt;
           _trySelectionXYWH[0] = (int)(_click.win[0] + _curr.win[0]) / 2;
           _trySelectionXYWH[1] = (int)(_click.win[1] + _curr.win[1]) / 2;
           _trySelectionXYWH[2] = (int)fabs(_click.win[0] - _curr.win[0]);
@@ -786,7 +797,7 @@ char sceneView::selectionStep(std::vector<GVertex *> &vertices,
     else if(_select(_selection, multi, true, true, _trySelectionXYWH[0],
                     _trySelectionXYWH[1], _trySelectionXYWH[2],
                     _trySelectionXYWH[3], vertices, edges, faces, regions,
-                    elements, points, views)) {
+                    elements, points, views, !_trySelectionFront)) {
       _selection = ENT_NONE;
       selectionMode = false;
       return add ? 'l' : 'r';

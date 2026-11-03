@@ -327,7 +327,6 @@ static int exportFile(const char *name, int format)
     return keyRadFileDialog(name, "LSDYNA KEY Options", FORMAT_KEY);
   case FORMAT_RAD:
     return keyRadFileDialog(name, "RADIOSS Block Options", FORMAT_RAD);
-  case FORMAT_CGNS: return cgnsFileDialog(name);
   case FORMAT_MED: return medFileDialog(name);
   case FORMAT_BDF: return bdfFileDialog(name);
   case FORMAT_STL: return stlFileDialog(name);
@@ -390,7 +389,7 @@ static int exportFile(const char *name, int format)
   case FORMAT_TEX: return latexFileDialog(name);
   case FORMAT_MPEG:
   case FORMAT_MP4: return mpegFileDialog(name, format);
-  default: // VIS, BREP, XAO, STEP, IGES, XMT and the others with no options
+  default: // CGNS, VIS, BREP, XAO, STEP, IGES, XMT and the others with no options
     CreateOutputFile(name, format);
     return 1;
   }
@@ -854,7 +853,8 @@ static void add_new_curve_from_points(const std::string &what,
                     steps[p.size()].c_str());
     char ib = FlGui::instance()->selectEntity(ENT_POINT);
     if(!FlGui::available()) return;
-    if(ib == 'l') {
+    // the mode buttons of another context may have changed what is picked
+    if(ib == 'l' && FlGui::instance()->selectedVertices.size()) {
       FlGui::instance()->selectedVertices[0]->setSelection(1);
       drawContext::global()->draw();
       p.push_back(FlGui::instance()->selectedVertices[0]->tag());
@@ -993,7 +993,9 @@ static void add_new_surface_volume(int mode)
         Msg::Warning("Entity de-selection not supported yet during "
                      "surface/volume creation");
       }
-      if(ib == 'l') {
+      if(ib == 'l' && (type == ENT_CURVE ?
+                         FlGui::instance()->selectedEdges.size() :
+                         FlGui::instance()->selectedFaces.size())) {
         int num = (type == ENT_CURVE) ?
                     FlGui::instance()->selectedEdges[0]->tag() :
                     FlGui::instance()->selectedFaces[0]->tag();
@@ -1256,6 +1258,36 @@ static void action_point_line_surface_volume(int action,
     if(ib == 'i') { Msg::Error("Inverting selection!"); }
     if(ib == 'e') {
       if(dimTags.size()) {
+        // a value the command needs is missing: the selection is kept, to try
+        // again once it is filled in
+        Fl_Input **ti = FlGui::instance()->transformContext->input;
+        Fl_Input **mi = FlGui::instance()->meshContext->input;
+        bool filled = true;
+        switch(action) {
+        case 0: filled = inputsFilled({ti[0], ti[1], ti[2]}); break;
+        case 1:
+          filled =
+            inputsFilled({ti[6], ti[7], ti[8], ti[3], ti[4], ti[5], ti[9]});
+          break;
+        case 2:
+          filled =
+            inputsFilled({ti[10], ti[11], ti[12], ti[13], ti[14], ti[15]});
+          break;
+        case 3: filled = inputsFilled({ti[16], ti[17], ti[18], ti[19]}); break;
+        case 4:
+          filled = inputsFilled({ti[0], ti[1], ti[2]}) &&
+                   (!FlGui::instance()->transformContext->butt[7]->value() ||
+                    inputsFilled({ti[21]}));
+          break;
+        case 5:
+          filled =
+            inputsFilled({ti[6], ti[7], ti[8], ti[3], ti[4], ti[5], ti[9]}) &&
+            (!FlGui::instance()->transformContext->butt[9]->value() ||
+             inputsFilled({ti[22]}));
+          break;
+        case 8: filled = inputsFilled({mi[0]}); break;
+        }
+        if(!filled) continue;
         switch(action) {
         case 0:
           scriptTranslate(
@@ -1641,6 +1673,9 @@ static void geometry_elementary_fillet_cb(Fl_Widget *w, void *data)
       }
       else if(edges.empty()) {
         Msg::Error("At least one curve must be selected");
+      }
+      else if(!inputsFilled({FlGui::instance()->transformContext->input[20]})) {
+        // the selection kept, to try again once the radius is filled in
       }
       else {
         scriptFillet(GModel::current()->getFileName(), regions, edges,
@@ -2100,6 +2135,11 @@ static void mesh_define_transfinite(int dim)
     default: ib = 'l'; break;
     }
 
+    // no number of nodes: the selection kept, to try again once it is given
+    if(ib == 'e' && dim == 1 && p.size() &&
+       !inputsFilled({FlGui::instance()->meshContext->input[1]}))
+      continue;
+
     if(ib == 'e') {
       if(dim == 1) {
         if(p.size())
@@ -2144,6 +2184,9 @@ static void mesh_define_transfinite(int dim)
         break;
       case 2:
       case 3:
+        if(dim == 2 ? FlGui::instance()->selectedFaces.empty() :
+                      FlGui::instance()->selectedRegions.empty())
+          break;
         if(dim == 2) {
           FlGui::instance()->selectedFaces[0]->setSelection(1);
           drawContext::global()->draw();
@@ -4234,6 +4277,9 @@ bool graphicWindow::split(openglWindow *g, char how, double ratio)
     // brutal :-)
     int mode = g->mode();
     openglWindow::setLastHandled(nullptr);
+    // hidden first, all of them whole: hiding moves the focus, which may
+    // commit an edited value whose callback draws every pane
+    for(std::size_t i = 0; i < gl.size(); i++) gl[i]->hide();
     for(std::size_t i = 0; i < gl.size(); i++) {
       _tile->remove(gl[i]);
       delete gl[i];
@@ -4274,19 +4320,6 @@ bool graphicWindow::split(openglWindow *g, char how, double ratio)
     openglWindow::setLastHandled(g2);
   }
   return true;
-}
-
-void graphicWindow::setStereo(bool st)
-{
-  openglWindow::setLastHandled(nullptr);
-  for(std::size_t i = 0; i < gl.size(); i++) {
-    if(st) { gl[i]->mode(FL_RGB | FL_DEPTH | FL_DOUBLE | FL_STEREO); }
-    else {
-      gl[i]->mode(FL_RGB | FL_DEPTH | FL_DOUBLE);
-    }
-    gl[i]->show();
-  }
-  Msg::Info("new gl window for stereo vision!");
 }
 
 void graphicWindow::setAnimButtons(int mode)
@@ -4714,7 +4747,7 @@ void graphicWindow::addMessage(const char *msg)
   const std::size_t maxMessages = 50000;
   if(_messages.size() >= maxMessages) {
     _messages.erase(_messages.begin(), _messages.begin() + maxMessages / 10);
-    _browser->rebuild(_messages);
+    _browser->removeFirst(maxMessages / 10);
   }
   _messages.push_back(msg);
   _browser->add(msg);

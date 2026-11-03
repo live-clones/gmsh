@@ -13,6 +13,7 @@
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Input_.H>
 #include <FL/Fl_Tabs.H>
+#include <FL/Fl_Browser_.H>
 #include <FL/Fl_Menu_.H>
 #include <FL/Fl_Menu_Bar.H>
 #include <FL/Fl_Menu_Button.H>
@@ -145,12 +146,58 @@ static Fl_Color clearer(Fl_Color c)
   return fl_rgb_color(rgb[0], rgb[1], rgb[2]);
 }
 
-// a field: a deep tint in dark mode, a clear one in light mode
+// a field: a deep tint in dark mode, a clear one in light mode (a pastel made
+// clearer, a darker or vivid colour, e.g. black, navy or red, made a tint)
 Fl_Color adaptedFill(Fl_Color c)
-{ return CTX::instance()->guiDark ? atLightness(c, 0.27, 0.6) : clearer(c); }
+{
+  if(CTX::instance()->guiDark) return atLightness(c, 0.27, 0.6);
+  Fl_Color t = clearer(c);
+  uchar r, g, b;
+  Fl::get_color(t, r, g, b);
+  double l = (std::max(r, std::max(g, b)) + std::min(r, std::min(g, b))) / 510.;
+  return (l < 0.75) ? atLightness(c, 0.85, 0.8) : t;
+}
 
+// the relative luminance of a colour, and the contrast of two colours, from 1
+// to 21 (WCAG 2)
+static double luminance(Fl_Color c)
+{
+  uchar rgb[3];
+  Fl::get_color(c, rgb[0], rgb[1], rgb[2]);
+  double l[3];
+  for(int i = 0; i < 3; i++) {
+    double v = rgb[i] / 255.;
+    l[i] = (v <= 0.04045) ? v / 12.92 : std::pow((v + 0.055) / 1.055, 2.4);
+  }
+  return 0.2126 * l[0] + 0.7152 * l[1] + 0.0722 * l[2];
+}
+
+static double contrast(Fl_Color a, Fl_Color b)
+{
+  double la = luminance(a), lb = luminance(b);
+  return (std::max(la, lb) + 0.05) / (std::min(la, lb) + 0.05);
+}
+
+// a text: light in dark mode, as is in light mode, but in both cases moved
+// further from the background, of the same hue, until it reads on the
+// backgrounds of the interface (a contrast of 4.5, WCAG AA): a pastel or a
+// near white chosen for a light interface is made darker
 Fl_Color adaptedText(Fl_Color c)
-{ return CTX::instance()->guiDark ? atLightness(c, 0.72, 0.8) : c; }
+{
+  auto reads = [](Fl_Color t) {
+    return contrast(t, FL_BACKGROUND_COLOR) >= 4.5 &&
+           contrast(t, FL_BACKGROUND2_COLOR) >= 4.5;
+  };
+  bool dark = CTX::instance()->guiDark;
+  Fl_Color t = dark ? atLightness(c, 0.72, 0.8) : c;
+  uchar r, g, b;
+  Fl::get_color(c, r, g, b);
+  double l = (std::max(r, std::max(g, b)) + std::min(r, std::min(g, b))) / 510.;
+  for(int i = 1; i <= 20 && !reads(t); i++)
+    t = dark ? atLightness(c, 0.72 + 0.28 * i / 20., 0.8) :
+               atLightness(c, l * (1. - i / 20.), 0.7);
+  return t;
+}
 
 // The widget under the pointer, when it takes input (a button, a check box,
 // a menu button, a field, a slider, a tab): its boxes are drawn a little
@@ -344,6 +391,13 @@ int gmshSchemeHandle(int event, Fl_Window *win)
   Fl::watch_widget_pointer(before);
   int ret = Fl::handle_(event, win);
   Fl::release_widget_pointer(before);
+  // without the focus rectangle (Fl::visible_focus(0), see below) FLTK does
+  // not give the keyboard focus to a list it is clicked in: given here, so
+  // that the arrows go along its lines
+  if(event == FL_PUSH && !Fl::visible_focus()) {
+    Fl_Browser_ *b = dynamic_cast<Fl_Browser_ *>(Fl::pushed());
+    if(b && b->type() >= FL_HOLD_BROWSER && Fl::focus() != b) Fl::focus(b);
+  }
   Fl_Widget *after = Fl::belowmouse();
   static Fl_Widget *lastTab = nullptr;
   if(before != after) {
@@ -401,8 +455,30 @@ const Fl_Menu_ *gmshPopupStyle()
 // FLTK creates, so they are styled before the windows holding them are drawn
 // (anything shown or rebuilt is), and drawn again if that changed them. So
 // are the menus: the pull-downs, the menu buttons, the menu bar.
+static int track[4]; // the last track drawn: the whole scrollbar
+
+static void trackBox(int x, int y, int w, int h, Fl_Color c)
+{
+  track[0] = x;
+  track[1] = y;
+  track[2] = w;
+  track[3] = h;
+  fl_color(c);
+  fl_rectf(x, y, w, h);
+}
+
 static void thumbBox(int x, int y, int w, int h, Fl_Color c)
 {
+#if FL_API_VERSION < 10500
+  // FLTK 1.4 draws the arrow buttons whatever the width, after the track and
+  // with the box of the thumb, at both ends, where the thumb never is: they
+  // stay track, and their arrows are drawn in its colour (the label colour)
+  int t = std::min(track[2], track[3]);
+  if(w == t && h == t &&
+     ((x == track[0] && y == track[1]) ||
+      (x + w == track[0] + track[2] && y + h == track[1] + track[3])))
+    return;
+#endif
   fl_color(c);
   fl_rounded_rectf(x, y, w, h, std::min(w, h) / 2);
 }
@@ -411,11 +487,13 @@ static void styleScrollbar(Fl_Scrollbar *s)
 {
   Fl_Color track = s->parent() ? s->parent()->color() : FL_BACKGROUND_COLOR;
   Fl_Color thumb = fl_color_average(FL_FOREGROUND_COLOR, track, 0.35f);
-  if(s->box() == FL_FLAT_BOX && s->color() == track &&
-     s->slider() == GMSH_THUMB_BOX && s->selection_color() == thumb)
+  if(s->box() == GMSH_TRACK_BOX && s->color() == track &&
+     s->labelcolor() == track && s->slider() == GMSH_THUMB_BOX &&
+     s->selection_color() == thumb)
     return;
-  s->box(FL_FLAT_BOX);
+  s->box(GMSH_TRACK_BOX);
   s->color(track);
+  s->labelcolor(track);
   s->slider(GMSH_THUMB_BOX);
   s->selection_color(thumb);
   s->redraw();
@@ -436,6 +514,11 @@ static void styleWidgets(void *)
   if(!gmshScheme()) return;
   for(Fl_Window *win = Fl::first_window(); win; win = Fl::next_window(win))
     if(win->damage()) styleWidgetsIn(win);
+}
+
+void gmshStyleWidgets(Fl_Widget *w)
+{
+  if(gmshScheme()) styleWidgetsIn(w);
 }
 
 void applyGmshScheme()
@@ -475,6 +558,7 @@ void applyGmshScheme()
   installBoxes();
 
   Fl::set_boxtype(GMSH_THUMB_BOX, thumbBox, 0, 0, 0, 0);
+  Fl::set_boxtype(GMSH_TRACK_BOX, trackBox, 0, 0, 0, 0);
   if(!Fl::has_check(styleWidgets)) Fl::add_check(styleWidgets);
 
   // no dashed rectangle on the widget with the focus

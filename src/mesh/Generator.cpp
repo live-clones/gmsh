@@ -1288,6 +1288,17 @@ void RecombineMesh(GModel *m)
   Msg::StatusBar(true, "Recombining 2D mesh...");
   double t1 = Cpu(), w1 = TimeOfDay();
 
+  // a 3D mesh would keep nodes the recombination deletes, and would not match
+  // the new 2D mesh: deleted, as when meshing in 2D again
+  for(auto it = m->firstRegion(); it != m->lastRegion(); ++it) {
+    if((*it)->getNumMeshElements()) {
+      Msg::Warning("Deleting the 3D mesh, which recombining the 2D mesh would "
+                   "invalidate");
+      std::for_each(m->firstRegion(), m->lastRegion(), deMeshGRegion());
+      break;
+    }
+  }
+
   for(auto it = m->firstFace(); it != m->lastFace(); ++it) {
     GFace *gf = *it;
     if(CTX::instance()->mesh.algoRecombine == 4) {

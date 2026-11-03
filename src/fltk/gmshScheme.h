@@ -29,6 +29,10 @@ void applyGmshScheme();
 // the width of the scrollbars of the theme: under 7 pixels, FLTK neither draws
 // nor handles the arrow buttons at their ends, which nobody uses
 const int gmshScrollbarSize = 6;
+// the scrollbars and the menus of a window in the theme, called by the windows
+// of Gmsh before they draw: Windows paints a new window as soon as it is shown,
+// before the check callback that styles the others
+void gmshStyleWidgets(Fl_Widget *w);
 // an event handled with the hover of the scheme: the widget the pointer leaves
 // and the one it enters are drawn again (see FlGui::_dispatch())
 int gmshSchemeHandle(int event, Fl_Window *win);
@@ -43,8 +47,9 @@ Fl_Color gmshMenuHighlight();
 const Fl_Menu_ *gmshPopupStyle();
 // a colour chosen for a light interface, of the same hue at a lightness that
 // suits the theme: the background of a field (a clear tint in light mode, a
-// deep one in dark mode), or a text (as is in light mode, light in dark mode);
-// e.g. the highlight colours of ONELAB parameters
+// deep one in dark mode), or a text (as is in light mode, light in dark mode,
+// in both cases changed as much as needed to read); e.g. the highlight colours
+// of ONELAB parameters
 Fl_Color adaptedFill(Fl_Color c);
 Fl_Color adaptedText(Fl_Color c);
 

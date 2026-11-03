@@ -479,11 +479,8 @@ void general_options_ok_cb(Fl_Widget *w, void *data)
   opt_general_eye_sep_ratio(0, GMSH_SET, o->general.value[29]->value());
   opt_general_focallength_ratio(0, GMSH_SET, o->general.value[30]->value());
   opt_general_camera_aperture(0, GMSH_SET, o->general.value[31]->value());
-  if(opt_general_stereo_mode(0, GMSH_GET, 0) != o->general.butt[17]->value()) {
+  if(opt_general_stereo_mode(0, GMSH_GET, 0) != o->general.butt[17]->value())
     opt_general_stereo_mode(0, GMSH_SET, o->general.butt[17]->value());
-    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-      FlGui::instance()->graph[i]->setStereo((bool)CTX::instance()->stereo);
-  }
 
   if(CTX::instance()->fastRedraw)
     CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;
@@ -2240,13 +2237,13 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
         valueInput(L + 2 * WB, 2 * WB + 6 * BH, IW / 2, BH, nullptr,
                    "Geometry.Normals", 0, 500, 1, geometry_options_ok_cb);
       geo.value[0]->align(FL_ALIGN_RIGHT);
-      geo.value[0]->when(FL_WHEN_RELEASE);
+      geo.value[0]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 
       geo.value[1] = valueInput(L + 2 * WB + IW / 2, 2 * WB + 6 * BH, IW / 2,
                                 BH, "Normals and tangents", "Geometry.Tangents",
                                 0, 500, 1, geometry_options_ok_cb);
       geo.value[1]->align(FL_ALIGN_RIGHT);
-      geo.value[1]->when(FL_WHEN_RELEASE);
+      geo.value[1]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 
       o->end();
     }
@@ -2298,7 +2295,7 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
         geo.value[i]->maximum(1.);
         if(CTX::instance()->inputScrolling) geo.value[i]->step(0.1);
         geo.value[i]->align(FL_ALIGN_RIGHT);
-        geo.value[i]->when(FL_WHEN_RELEASE);
+        geo.value[i]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
         geo.value[i]->callback(geometry_options_ok_cb);
       }
 
@@ -2653,7 +2650,7 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
         valueInput(L + width / 2, 2 * WB + 7 * BH, IW / 2, BH, "Sampling",
                    "Mesh.LabelSampling", 1, 100, 1, mesh_options_ok_cb);
       mesh.value[12]->align(FL_ALIGN_RIGHT);
-      mesh.value[12]->when(FL_WHEN_RELEASE);
+      mesh.value[12]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 
       static Fl_Menu_Item menu_mesh_element_types[] = {
         {"Triangles", 0, nullptr, nullptr, FL_MENU_TOGGLE},
@@ -2680,13 +2677,13 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
         valueInput(L + 2 * WB, 2 * WB + 9 * BH, IW / 4, BH, nullptr,
                    "Mesh.QualityInf", 0, 1, 0.01, mesh_options_ok_cb);
       mesh.value[4]->align(FL_ALIGN_RIGHT);
-      mesh.value[4]->when(FL_WHEN_RELEASE);
+      mesh.value[4]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 
       mesh.value[5] =
         valueInput(L + 2 * WB + IW / 4, 2 * WB + 9 * BH, IW / 2 - IW / 4, BH,
                    nullptr, "Mesh.QualitySup", 0, 1, 0.01, mesh_options_ok_cb);
       mesh.value[5]->align(FL_ALIGN_RIGHT);
-      mesh.value[5]->when(FL_WHEN_RELEASE);
+      mesh.value[5]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 
       static Fl_Menu_Item menu_quality_type[] = {{"SICN", 0, nullptr, nullptr},
                                                  {"SIGE", 0, nullptr, nullptr},
@@ -2703,25 +2700,25 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
       mesh.value[6] = valueInput(L + 2 * WB, 2 * WB + 10 * BH, IW / 2, BH,
                                  nullptr, "Mesh.RadiusInf", mesh_options_ok_cb);
       mesh.value[6]->align(FL_ALIGN_RIGHT);
-      mesh.value[6]->when(FL_WHEN_RELEASE);
+      mesh.value[6]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 
       mesh.value[7] =
         valueInput(L + 2 * WB + IW / 2, 2 * WB + 10 * BH, IW / 2, BH,
                    "Size range", "Mesh.RadiusSup", mesh_options_ok_cb);
       mesh.value[7]->align(FL_ALIGN_RIGHT);
-      mesh.value[7]->when(FL_WHEN_RELEASE);
+      mesh.value[7]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 
       mesh.value[8] =
         valueInput(L + 2 * WB, 2 * WB + 11 * BH, IW / 2, BH, nullptr,
                    "Mesh.Normals", 0, 500, 1, mesh_options_ok_cb);
       mesh.value[8]->align(FL_ALIGN_RIGHT);
-      mesh.value[8]->when(FL_WHEN_RELEASE);
+      mesh.value[8]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 
       mesh.value[13] = valueInput(L + 2 * WB + IW / 2, 2 * WB + 11 * BH, IW / 2,
                                   BH, "Normals and tangents", "Mesh.Tangents",
                                   0, 200, 1.0, mesh_options_ok_cb);
       mesh.value[13]->align(FL_ALIGN_RIGHT);
-      mesh.value[13]->when(FL_WHEN_RELEASE);
+      mesh.value[13]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 
       o->end();
     }
@@ -2734,7 +2731,7 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
                                  "Element shrinking factor", "Mesh.Explode", 0,
                                  1, 0.01, mesh_options_ok_cb);
       mesh.value[9]->align(FL_ALIGN_RIGHT);
-      mesh.value[9]->when(FL_WHEN_RELEASE);
+      mesh.value[9]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 
       mesh.choice[0] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Point display");
@@ -2757,7 +2754,7 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
         L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "High-order element subdivisions",
         "Mesh.NumSubEdges", 1, 10, 1, mesh_options_ok_cb);
       mesh.value[14]->align(FL_ALIGN_RIGHT);
-      mesh.value[14]->when(FL_WHEN_RELEASE);
+      mesh.value[14]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 
       o->end();
     }
@@ -2794,7 +2791,7 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
         L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Smoothing threshold angle",
         "Mesh.AngleSmoothNormals", 0., 180., 1., mesh_options_ok_cb);
       mesh.value[18]->align(FL_ALIGN_RIGHT);
-      mesh.value[18]->when(FL_WHEN_RELEASE);
+      mesh.value[18]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 
       int w1 = (int)(3. * IW / 4.), w2 = IW - w1;
       static Fl_Menu_Item menu_transparency_mode[] = {
@@ -2987,7 +2984,7 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
         valueInput(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Intervals",
                    "View.NbIso", 1, 256, 1, view_options_ok_cb);
       view.value[30]->align(FL_ALIGN_RIGHT);
-      view.value[30]->when(FL_WHEN_RELEASE);
+      view.value[30]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 
       view.input[1] = new Fl_Input(C2, 2 * WB + 4 * BH, RW / 2, BH, "Format");
       view.input[1]->tooltip("View.Format");
@@ -3039,12 +3036,12 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
         valueInput(L + 2 * WB + sw2, 2 * WB + 7 * BH, IW - sw2, BH,
                    "Custom min", "View.CustomMin", view_options_ok_cb);
       view.value[31]->align(FL_ALIGN_RIGHT);
-      view.value[31]->when(FL_WHEN_RELEASE);
+      view.value[31]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 
       view.value[35] = valueInput(C2, 2 * WB + 7 * BH, RW / 2, BH, "Threshold",
                                   "View.ScaleThreshold", view_options_ok_cb);
       view.value[35]->align(FL_ALIGN_RIGHT);
-      view.value[35]->when(FL_WHEN_RELEASE);
+      view.value[35]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 
       view.push[2] = new Fl_Button(L + 2 * WB, 2 * WB + 8 * BH, sw2, BH, "Max");
       view.push[2]->callback(view_options_ok_cb, (void *)"range_max");
@@ -3052,7 +3049,7 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
         valueInput(L + 2 * WB + sw2, 2 * WB + 8 * BH, IW - sw2, BH,
                    "Custom max", "View.CustomMax", view_options_ok_cb);
       view.value[32]->align(FL_ALIGN_RIGHT);
-      view.value[32]->when(FL_WHEN_RELEASE);
+      view.value[32]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 
       view.butt[0] =
         checkButton(L + 2 * WB, 2 * WB + 9 * BH, C2 - L - 3 * WB, BH,
@@ -3078,7 +3075,7 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
         valueInput(L + 2 * WB + sw, 2 * WB + 10 * BH, IW - 2 * sw, BH, nullptr,
                    "View.MaxRecursionLevel", 0, 6, 1, view_options_ok_cb);
       view.value[33]->align(FL_ALIGN_RIGHT);
-      view.value[33]->when(FL_WHEN_RELEASE);
+      view.value[33]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
       view.label[1] = new Fl_Box(L + 2 * WB + IW, 2 * WB + 10 * BH, width / 2,
                                  BH, "Maximum recursion level");
       view.label[1]->box(FL_NO_BOX);
@@ -3093,7 +3090,7 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
       view.value[34]->minimum(-1.e-4);
       view.value[34]->maximum(1e-1);
       if(CTX::instance()->inputScrolling) view.value[34]->step(1.e-4);
-      view.value[34]->when(FL_WHEN_RELEASE);
+      view.value[34]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
       view.value[34]->callback(view_options_ok_cb);
 
       view.range->end();
@@ -3274,7 +3271,7 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
         valueInput(L + 3 * WB + IW, 2 * WB + 6 * BH, IW / 3, BH, "Sampling",
                    "View.Sampling", 1, 100, 1, view_options_ok_cb);
       view.value[6]->align(FL_ALIGN_RIGHT);
-      view.value[6]->when(FL_WHEN_RELEASE);
+      view.value[6]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 
       static Fl_Menu_Item menu_boundary[] = {
         {"None", 0, nullptr, nullptr},
@@ -3293,13 +3290,13 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
         valueInput(L + 2 * WB, 2 * WB + 8 * BH, IW / 2, BH, nullptr,
                    "View.Normals", 0, 500, 1, view_options_ok_cb);
       view.value[0]->align(FL_ALIGN_RIGHT);
-      view.value[0]->when(FL_WHEN_RELEASE);
+      view.value[0]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 
       view.value[1] = valueInput(L + 2 * WB + IW / 2, 2 * WB + 8 * BH, IW / 2,
                                  BH, "Normals and tangents", "View.Tangents", 0,
                                  500, 1, view_options_ok_cb);
       view.value[1]->align(FL_ALIGN_RIGHT);
-      view.value[1]->when(FL_WHEN_RELEASE);
+      view.value[1]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 
       static Fl_Menu_Item menu_view_field_types[] = {
         {"Scalar", 0, nullptr, nullptr, FL_MENU_TOGGLE},
@@ -3403,7 +3400,7 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
 
       for(int i = 40; i <= 46; i++) {
         view.value[i]->align(FL_ALIGN_RIGHT);
-        view.value[i]->when(FL_WHEN_RELEASE);
+        view.value[i]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
         view.value[i]->callback(view_options_ok_cb);
       }
       for(int i = 51; i <= 59; i++) {
@@ -3411,7 +3408,7 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
         view.value[i]->maximum(1.);
         if(CTX::instance()->inputScrolling) view.value[i]->step(0.1);
         view.value[i]->align(FL_ALIGN_RIGHT);
-        view.value[i]->when(FL_WHEN_RELEASE);
+        view.value[i]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
         view.value[i]->callback(view_options_ok_cb);
       }
 
@@ -3431,7 +3428,7 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
         new inputValueFloat(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Factor");
       view.value[2]->tooltip("View.GeneralizedRaiseFactor");
       view.value[2]->align(FL_ALIGN_RIGHT);
-      view.value[2]->when(FL_WHEN_RELEASE);
+      view.value[2]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
       view.value[2]->callback(view_options_ok_cb);
 
       view.input[4] =
@@ -3463,7 +3460,7 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
                                   "Element shrinking factor", "View.Explode",
                                   0., 1., 0.01, view_options_ok_cb);
       view.value[12]->align(FL_ALIGN_RIGHT);
-      view.value[12]->when(FL_WHEN_RELEASE);
+      view.value[12]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 
       view.choice[5] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Point display");
@@ -3529,7 +3526,7 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
         view.value[63]->maximum(1.);
         if(CTX::instance()->inputScrolling) view.value[63]->step(0.01);
         view.value[63]->align(FL_ALIGN_RIGHT);
-        view.value[63]->when(FL_WHEN_RELEASE);
+        view.value[63]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
         view.value[63]->callback(view_options_ok_cb);
 
         view.choice[10] = new Fl_Choice(L + 2 * WB, 2 * WB + 9 * BH, IW, BH,
@@ -3605,7 +3602,7 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
         L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Smoothing threshold angle",
         "View.AngleSmoothNormals", 0., 180., 1., view_options_ok_cb);
       view.value[10]->align(FL_ALIGN_RIGHT);
-      view.value[10]->when(FL_WHEN_RELEASE);
+      view.value[10]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 
       view.value[79] =
         valueInput(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Opacity",

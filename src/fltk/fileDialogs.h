@@ -45,6 +45,5 @@ int unvinpFileDialog(const char *filename, const char *title, int format);
 int keyRadFileDialog(const char *filename, const char *title, int format);
 int bdfFileDialog(const char *filename);
 int latexFileDialog(const char *filename);
-int cgnsFileDialog(const char *filename);
 
 #endif

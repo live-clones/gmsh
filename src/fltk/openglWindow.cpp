@@ -64,13 +64,21 @@ int openglWindowMode()
 {
   int mode = FL_RGB | FL_DEPTH | (CTX::instance()->db ? FL_DOUBLE : FL_SINGLE);
   if(CTX::instance()->antialiasing) mode |= FL_MULTISAMPLE;
-  if(CTX::instance()->stereo) {
-    mode |= FL_DOUBLE;
-    mode |= FL_STEREO;
-  }
   // the shader pipeline needs a core profile on macOS, which cannot do fixed
   // function: the two pipelines cannot share a context
   if(glShader::wanted()) mode |= FL_OPENGL3;
+  // quad-buffered stereo is not available everywhere (not on macOS), and FLTK
+  // crashes making a context it cannot do (warned once each time it is asked)
+  static bool warned = false;
+  if(!CTX::instance()->stereo)
+    warned = false;
+  else if(Fl_Gl_Window::can_do(mode | FL_DOUBLE | FL_STEREO))
+    mode |= FL_DOUBLE | FL_STEREO;
+  else if(!warned) {
+    Msg::Warning("Stereo rendering not available on this system: "
+                 "General.Stereo ignored");
+    warned = true;
+  }
   return mode;
 }
 
@@ -78,7 +86,15 @@ void resetOpenglMode()
 {
   if(!FlGui::available()) return;
   int mode = openglWindowMode();
-  for(openglWindow *gl : FlGui::instance()->openglWindows()) gl->mode(mode);
+  for(openglWindow *gl : FlGui::instance()->openglWindows()) {
+    // FLTK on macOS detaches the context it deletes from its view only when it
+    // is the current one: another one, still alive until the pool of released
+    // objects is drained, then takes the view's drawable away from the new
+    // context of the window, whose next swap crashes (two panes and a change of
+    // General.Antialiasing or General.Shaders)
+    if(gl->shown() && gl->context() && gl->mode() != mode) gl->make_current();
+    gl->mode(mode);
+  }
 }
 
 openglWindow::openglWindow(int x, int y, int w, int h)
@@ -102,6 +118,9 @@ void openglWindow::_setLock(bool on)
 
 openglWindow::~openglWindow()
 {
+  // hidden while whole: FLTK hides it when it is deleted, which moves the
+  // focus and may run callbacks that draw it (an edited value committed)
+  hide();
   if(_lastHandled == this) _lastHandled = nullptr;
   _setLock(false);
   Fl::remove_timeout(navigator_handler, this);
@@ -736,10 +755,12 @@ int openglWindow::handle(int event)
 
 void openglWindow::hostRedraw() { redraw(); }
 
-void openglWindow::hostClicked()
+bool openglWindow::hostClicked()
 {
+  Fl_Widget_Tracker alive(this);
   setLastHandled(this);
   take_focus(); // force keyboard focus when we click in the window
+  return alive.exists();
 }
 
 void openglWindow::hostViewChanged() { FlGui::instance()->manip->update(); }
@@ -755,6 +776,10 @@ void openglWindow::hostCursor(bool cross)
 bool openglWindow::hostBeginGL()
 {
   if(_lock) return false;
+  // no picking in a context the next draw() is to make or set up, e.g. after a
+  // change of mode: the buffer objects and entry points of the previous one
+  // would be used
+  if(!context() || !context_valid()) return false;
   _setLock(true);
   make_current();
   glShader::setContext(context());
@@ -809,13 +834,16 @@ char openglWindow::selectEntity(int type, std::vector<GVertex *> &vertices,
 {
   if(!FlGui::available()) return 'q';
 
+  // the events processed while waiting may delete this window (unsplit, the
+  // closing of a graphic window), or the whole GUI; so may taking the focus,
+  // which commits an edited value
+  Fl_Widget_Tracker alive(this);
+
   // force keyboard focus in GL window
   take_focus();
+  if(!FlGui::available() || alive.deleted()) return 'q';
   beginSelection(type);
 
-  // the events processed while waiting may delete this window (unsplit, the
-  // closing of a graphic window), or the whole GUI
-  Fl_Widget_Tracker alive(this);
   while(1) {
     if(!FlGui::available()) return 'q';
     vertices.clear();

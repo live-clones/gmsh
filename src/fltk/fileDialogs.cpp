@@ -1740,9 +1740,3 @@ int genericViewFileDialog(const char *name, const char *title, int format)
     _saveViews(name, dialog->c[0]->value(), format, false);
   });
 }
-
-int cgnsFileDialog(const char *filename)
-{
-  CreateOutputFile(filename, FORMAT_CGNS);
-  return 1;
-}

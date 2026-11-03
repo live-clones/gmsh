@@ -4,6 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <stdlib.h>
+#include <string.h>
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Return_Button.H>
 #include "FlGui.h"
@@ -28,6 +29,7 @@
 #include "Geo.h"
 #include "VertexArray.h"
 #include "mathEvaluator.h"
+#include "GmshMessage.h"
 
 static bool getval(const char *str, double &val)
 {
@@ -84,10 +86,24 @@ static void draw_stl(std::vector<SPoint3> &vertices,
   gmshPolygonFill(fill);
 }
 
-// the inputs of each pane of the elementary context window: the first one and
-// how many
+bool inputsFilled(std::initializer_list<Fl_Input *> inputs)
+{
+  for(Fl_Input *in : inputs) {
+    const char *v = in->value();
+    if(!v || !v[strspn(v, " \t")]) {
+      Msg::Error("Field '%s' is empty", in->label() ? in->label() : "");
+      return false;
+    }
+  }
+  return true;
+}
+
+// the inputs of each pane of the elementary context window: the first one, how
+// many, and how many of the first ones the command needs (the others, angles,
+// mesh size, label..., can be left empty)
 static const int paneFirst[12] = {0, 4, 8, 14, 21, 26, 32, 39, 47, 53, 59, 68};
 static const int paneSize[12] = {4, 4, 6, 7, 5, 6, 7, 8, 6, 6, 9, 7};
+static const int paneRequired[12] = {2, 3, 4, 5, 5, 5, 4, 7, 6, 5, 8, 7};
 
 // the values of the first inputs of a pane (all by default), if they evaluate
 static bool paneValues(int pane, double *v, int count = -1)
@@ -179,11 +195,16 @@ static void elementary_draw_cb(Fl_Widget *w, void *data)
   if(!data) drawContext::global()->draw();
 }
 
-void elementaryContextWindow::addShape(int pane)
+bool elementaryContextWindow::addShape(int pane)
 {
+  for(int i = 0; i < paneRequired[pane]; i++)
+    if(!inputsFilled({input[paneFirst[pane] + i]})) return false;
   std::vector<std::string> v;
-  for(int i = 0; i < paneSize[pane]; i++)
+  for(int i = 0; i < paneSize[pane]; i++) {
+    // (blank, an optional value is left out)
     v.push_back(input[paneFirst[pane] + i]->value());
+    if(v.back().find_first_not_of(" \t") == std::string::npos) v.back().clear();
+  }
   const std::string &f = GModel::current()->getFileName();
   switch(pane) {
   case 0: scriptAddParameter(v[0], v[1], v[2], v[3], f); break;
@@ -203,12 +224,13 @@ void elementaryContextWindow::addShape(int pane)
     break;
   case 11: scriptAddWedge(f, v[0], v[1], v[2], v[3], v[4], v[5], v[6]); break;
   }
+  return true;
 }
 
 static void elementary_add_cb(Fl_Widget *w, void *data)
 {
   int pane = (int)(intptr_t)data;
-  FlGui::instance()->elementaryContext->addShape(pane);
+  if(!FlGui::instance()->elementaryContext->addShape(pane)) return;
   FlGui::instance()->resetVisibility();
   if(pane == 0) {
     FlGui::instance()->rebuildTree();

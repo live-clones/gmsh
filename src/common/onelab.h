@@ -331,8 +331,27 @@ namespace onelab {
     }
     std::string sanitizeJSON(const std::string &in) const
     {
-      // FIXME: replace \n with \\n, \t with \\t, etc.
-      return in;
+      // escape what a JSON string cannot hold as such (e.g. the newlines and
+      // backslashes of labels and help strings)
+      std::string out;
+      for(char c : in) {
+        switch(c) {
+        case '"': out += "\\\""; break;
+        case '\\': out += "\\\\"; break;
+        case '\n': out += "\\n"; break;
+        case '\r': out += "\\r"; break;
+        case '\t': out += "\\t"; break;
+        default:
+          if((unsigned char)c < 0x20) {
+            char tmp[8];
+            snprintf(tmp, sizeof(tmp), "\\u%04x", c);
+            out += tmp;
+          }
+          else
+            out += c;
+        }
+      }
+      return out;
     }
     virtual std::string toJSON() const
     {

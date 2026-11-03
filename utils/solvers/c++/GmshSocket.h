@@ -123,13 +123,13 @@ protected:
     long int remaining = bytes;
     do {
       long int len = recv(_sock, buf + sofar, remaining, 0);
-      if(len == 0) break; // we're done!
+      if(len == 0) break; // connection closed: what was read so far
       if(len < 0) return -1; // error
       sofar += len;
       remaining -= len;
     } while(remaining > 0);
-    _received += bytes;
-    return bytes;
+    _received += sofar;
+    return (int)sofar;
   }
   // utility function to swap bytes in an array
   void _swapBytes(char *array, int size, int n)
@@ -153,7 +153,8 @@ protected:
   }
 
 public:
-  GmshSocket() : _sock(0), _sent(0), _received(0)
+  // (no socket: -1, as 0 is the standard input)
+  GmshSocket() : _sock(-1), _sent(0), _received(0)
   {
 #if defined(WIN32) && !defined(__CYGWIN__)
     WSADATA wsaData;
@@ -212,14 +213,14 @@ public:
   int ReceiveHeader(int *type, int *len, int *swap)
   {
     *swap = 0;
-    if(_receiveData(type, sizeof(int)) > 0) {
+    if(_receiveData(type, sizeof(int)) == (int)sizeof(int)) {
       if(*type > 65535) {
         // the data comes from a machine with different endianness and
         // we must swap the bytes
         *swap = 1;
         _swapBytes((char *)type, sizeof(int), 1);
       }
-      if(_receiveData(len, sizeof(int)) > 0) {
+      if(_receiveData(len, sizeof(int)) == (int)sizeof(int)) {
         if(*swap) _swapBytes((char *)len, sizeof(int), 1);
         return 1;
       }
@@ -242,6 +243,7 @@ public:
   }
   void CloseSocket(int s)
   {
+    if(s < 0) return;
 #if !defined(WIN32) || defined(__CYGWIN__)
     close(s);
 #else
@@ -250,6 +252,7 @@ public:
   }
   void ShutdownSocket(int s)
   {
+    if(s < 0) return;
 #if !defined(WIN32) || defined(__CYGWIN__)
     shutdown(s, SHUT_RDWR);
 #endif
@@ -268,10 +271,12 @@ public:
        !strstr(sockname, ":")) {
 #if !defined(WIN32) || defined(__CYGWIN__)
       // UNIX socket (testing ":" is not enough with Windows paths)
+      struct sockaddr_un addr_un;
+      // (a name longer than the address holds: no socket)
+      if(strlen(sockname) >= sizeof(addr_un.sun_path)) return -1;
       _sock = socket(PF_UNIX, SOCK_STREAM, 0);
       if(_sock < 0) return -1;
       // try to connect socket to given name
-      struct sockaddr_un addr_un;
       memset((char *)&addr_un, 0, sizeof(addr_un));
       addr_un.sun_family = AF_UNIX;
       strcpy(addr_un.sun_path, sockname);
@@ -301,6 +306,7 @@ public:
       struct hostent *server;
       if(!(server = gethostbyname(remote))) {
         CloseSocket(_sock);
+        _sock = -1;
         free(remote);
         return -3; // no such host
       }
@@ -319,6 +325,7 @@ public:
       }
     }
     CloseSocket(_sock);
+    _sock = -1;
     return -2; // couldn't connect
   }
   void Start()
@@ -332,7 +339,11 @@ public:
     SendString(GMSH_START, tmp);
   }
   void Stop() { SendString(GMSH_STOP, "Goodbye!"); }
-  void Disconnect() { CloseSocket(_sock); }
+  void Disconnect()
+  {
+    CloseSocket(_sock);
+    _sock = -1;
+  }
 };
 
 class GmshServer : public GmshSocket {
@@ -358,13 +369,15 @@ public:
       // UNIX socket (testing ":" is not enough with Windows paths)
       _portno = -1;
 #if !defined(WIN32) || defined(__CYGWIN__)
+      struct sockaddr_un addr_un;
+      if(_sockname.size() >= sizeof(addr_un.sun_path))
+        throw std::runtime_error("Unix socket name too long");
       // delete the file if it already exists
       unlink(_sockname.c_str());
       // create a socket
       tmpsock = socket(PF_UNIX, SOCK_STREAM, 0);
       if(tmpsock < 0) throw std::runtime_error("Couldn't create socket");
       // bind the socket to its name
-      struct sockaddr_un addr_un;
       memset((char *)&addr_un, 0, sizeof(addr_un));
       strcpy(addr_un.sun_path, _sockname.c_str());
       addr_un.sun_family = AF_UNIX;
@@ -468,6 +481,7 @@ public:
 #endif
     ShutdownSocket(_sock);
     CloseSocket(_sock);
+    _sock = -1;
     return 0;
   }
 };

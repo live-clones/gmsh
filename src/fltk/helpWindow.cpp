@@ -98,7 +98,7 @@ double numberOrStringOptionChooser(const std::string &category, int index,
       number->maximum(maximum);
       if(CTX::instance()->inputScrolling) number->step(step, 1);
       number->callback(interactive_cb, (void *)&d);
-      number->when(FL_WHEN_RELEASE);
+      number->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
     }
   }
   else {

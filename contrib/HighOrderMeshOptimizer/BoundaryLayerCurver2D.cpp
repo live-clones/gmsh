@@ -1306,12 +1306,20 @@ namespace BoundaryLayerCurver {
     std::vector<MEdgeN> stackEdges;
     std::vector<MFaceN> stackFaces;
     computeStackHOEdgesFaces(column, stackEdges, stackFaces);
+    // (an element of the column without the edge or face expected: the
+    // column is not a stack, which a mesh edited by hand can give)
+    for(std::size_t i = 0; i < stackEdges.size(); ++i) {
+      if(stackEdges[i].getNumVertices() < 2 || !stackFaces[i].getNumVertices())
+        return false;
+    }
 
     // Curve topEdge of first element and last edge
     int iFirst = 1, iLast = (int)stackEdges.size() - 1;
     MEdgeN *baseEdge = &stackEdges[0];
     MEdgeN *firstEdge = &stackEdges[iFirst];
     if(edgesShareVertex(baseEdge, firstEdge)) {
+      // (no edge past the base one in a column of two elements: not curved)
+      if(iLast < 2) return false;
       iFirst = 2;
       firstEdge = &stackEdges[iFirst];
     }

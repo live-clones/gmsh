@@ -279,7 +279,7 @@ static void PrintNumberOptions(int num, int level, int diff, int help,
         else if(vec)
           vec->push_back(std::string(tmp) + '\0' + "number");
         else
-          Msg::Direct(tmp);
+          Msg::Direct("%s", tmp);
       }
     }
     i++;
@@ -462,7 +462,7 @@ static void PrintColorOptions(int num, int level, int diff, int help,
         else if(vec)
           vec->push_back(std::string(tmp) + '\0' + "color");
         else
-          Msg::Direct(tmp);
+          Msg::Direct("%s", tmp);
       }
     }
     i++;
@@ -666,7 +666,7 @@ static void PrintColorTable(int num, int diff, const char *prefix, FILE *file,
   else if(vec)
     vec->push_back(tmp);
   else
-    Msg::Direct(tmp);
+    Msg::Direct("%s", tmp);
   ColorTable_Print(&opt->colorTable, file, vec);
   sprintf(tmp, "};");
   if(file)
@@ -674,7 +674,7 @@ static void PrintColorTable(int num, int diff, const char *prefix, FILE *file,
   else if(vec)
     vec->push_back(tmp);
   else
-    Msg::Direct(tmp);
+    Msg::Direct("%s", tmp);
 #endif
 }
 
@@ -4006,7 +4006,12 @@ double opt_general_heavy_visualization(OPT_ARGS_NUM)
 
 double opt_general_stereo_mode(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->stereo = (int)val;
+  if(action & GMSH_SET) {
+    CTX::instance()->stereo = (int)val;
+#if defined(HAVE_FLTK)
+    resetOpenglMode();
+#endif
+  }
   if(CTX::instance()->stereo) opt_general_camera_mode(num, action, 1.);
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))

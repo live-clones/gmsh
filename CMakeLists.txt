@@ -1458,6 +1458,9 @@ if(ENABLE_ZIPPER)
   if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/zipper AND HAVE_LIBZ)
     add_subdirectory(contrib/zipper)
     include_directories(contrib/zipper)
+    # no password-protected archives: their code takes zlib's CRC table for
+    # longs, which does not compile where both are 32 bits (WebAssembly)
+    add_definitions(-DNOCRYPT)
     set_config_option(HAVE_ZIPPER "Zipper")
   endif()
 endif()
@@ -1877,6 +1880,19 @@ elseif(EMSCRIPTEN)
   # reads and writes its memory and adds the callbacks to its function table
   add_executable(libgmsh EXCLUDE_FROM_ALL ${GMSH_SRC})
   target_link_libraries(libgmsh ${LINK_LIBRARIES})
+  # with the functions the pages of the web app call to draw the scene on
+  # their canvas, and, when GetDP is given (built as a static library with its
+  # solvers, see contrib/webapp/build.sh), GetDP run in-process as the ONELAB
+  # solver
+  if(HAVE_OPENGL)
+    target_sources(libgmsh PRIVATE contrib/webapp/webView.cpp)
+  endif()
+  if(GETDP_INC AND GETDP_LIBS)
+    message(STATUS "Linking the web app with GetDP: ${GETDP_LIBS}")
+    target_sources(libgmsh PRIVATE contrib/webapp/webOnelab.cpp)
+    target_include_directories(libgmsh PRIVATE ${GETDP_INC})
+    target_link_libraries(libgmsh ${GETDP_LIBS})
+  endif()
   set(LIBFLAGS "${FLAGS} --no-entry -sMODULARIZE=1 -sEXPORT_ES6=1")
   set(LIBFLAGS "${LIBFLAGS} -sEXPORTED_FUNCTIONS=_malloc,_free")
   set(LIBFLAGS "${LIBFLAGS} -sEXPORT_NAME=createLibgmsh -sALLOW_TABLE_GROWTH=1")
@@ -2246,6 +2262,8 @@ else()
   set(CPACK_STRIP_FILES FALSE)
 endif()
 set(CPACK_SOURCE_GENERATOR TGZ)
+# write a .sha256 file next to each package
+set(CPACK_PACKAGE_CHECKSUM SHA256)
 set(CPACK_SOURCE_IGNORE_FILES "${CMAKE_CURRENT_BINARY_DIR}" "/CVS/" "/.svn" "/.git"
     "~$" "DS_Store$" "GmshConfig.h$" "GmshVersion.h$" "/benchmarks/" "/tmp/"
     "/bin/" "/lib/" "/nightly/" "GPATH" "GRTAGS" "GSYMS" "GTAGS" "/HTML/"

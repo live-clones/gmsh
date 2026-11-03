@@ -501,6 +501,8 @@ static int rowHeight() { return FL_NORMAL_SIZE + 8 + gmshAir(); }
 // action of their own
 class onelabTree : public Fl_Tree {
 private:
+  // the depth of the events passed on to all the rows, see broadcasting()
+  int _broadcasting = 0;
   // the branch on the row of the last event, if any
   Fl_Tree_Item *_branchAtEvent()
   {
@@ -548,10 +550,25 @@ public:
     box(FL_NO_BOX); // drawn in draw()
     item_draw_mode(FL_TREE_ITEM_HEIGHT_FROM_WIDGET);
   }
+  // whether an event is being passed along the rows (the window hidden or
+  // shown, a shortcut offered to each, a key moving the focus to the next):
+  // FLTK goes through the array of the rows meanwhile, which a rebuild would
+  // replace, e.g. asked by an edited value that the event commits (see
+  // onelabGroup::rebuildTree())
+  bool broadcasting() const { return _broadcasting > 0; }
   int handle(int event) override
   {
     // compared only: a rebuild of the tree deletes the items
     static Fl_Tree_Item *hovered = nullptr;
+    if(event == FL_HIDE || event == FL_SHOW || event == FL_ACTIVATE ||
+       event == FL_DEACTIVATE || event == FL_KEYBOARD || event == FL_SHORTCUT ||
+       event == FL_FOCUS) {
+      Fl_Widget_Tracker alive(this);
+      _broadcasting++;
+      int ret = Fl_Tree::handle(event);
+      if(alive.exists()) _broadcasting--;
+      return ret;
+    }
     int ret = Fl_Tree::handle(event);
     switch(event) {
     case FL_PUSH:
@@ -684,17 +701,8 @@ bool getParameterColor(const std::string &str, Fl_Color &c)
 template <class T>
 static void autoCheck(const T &pold, const T &pnew, bool force = false)
 {
-  if(onelabUtils::getFirstComputationFlag()) {
-    if(pold.getValue() != pnew.getValue())
-      onelabUtils::setFirstComputationFlag(false);
-  }
-
-  if((CTX::instance()->solver.autoCheck &&
-      pnew.getAttribute("AutoCheck") != "0") ||
-     pnew.getAttribute("AutoCheck") == "1") {
-    if(force || pold.getValue() != pnew.getValue())
-      onelab_cb(nullptr, (void *)"check");
-  }
+  if(onelabUtils::autoCheck(pold, pnew, force))
+    onelab_cb(nullptr, (void *)"check");
 }
 
 int onelabGroup::_rowWidth(Fl_Tree_Item *n)
@@ -818,157 +826,17 @@ void onelabGroup::openCloseViewButton(int num)
 
 static bool serverAction(const std::string &action)
 {
-  if(action == "ResetDatabase") {
-    // reset the onelab db
-    onelabUtils::resetDb(false);
-    FlGui::instance()->rebuildTree();
-    return true;
-  }
-  else if(action == "Reset") {
-    // reset the onelab db + views + models (except the current model)
-    onelabUtils::resetDb(false);
-    for(int i = PView::list.size() - 1; i >= 0; i--) delete PView::list[i];
-    for(int i = GModel::list.size() - 1; i >= 0; i--)
-      if(GModel::list[i] != GModel::current()) delete GModel::list[i];
-    FlGui::instance()->rebuildTree();
-    return true;
-  }
-  else if(!action.compare(0, 5, "Reset")) {
-    // reset some variables
-    std::vector<std::string> what =
-      onelab::parameter::split(action.substr(5), ',');
-    for(std::size_t i = 0; i < what.size(); i++) {
-      std::string var = onelab::parameter::trim(what[i]);
-      Msg::Debug("Clearing variable '%s'", var.c_str());
-      onelab::server::instance()->clear(var);
-    }
-    FlGui::instance()->rebuildTree();
-    return true;
-  }
-  return false;
-}
-
-// the value of a "Set" action, for a number or a string
-static void setValueFromString(onelab::number &p, const std::string &val)
-{ p.setValue(atof(val.c_str())); }
-
-static void setValueFromString(onelab::string &p, const std::string &val)
-{ p.setValue(val); }
-
-// Show, Hide, ReadOnly, ReadWrite or Set on the parameter of the given name, if
-// it is a T (a number or a string), stored back in the server
-template <class T>
-static void applyServerAction(const std::string &var, const std::string &action,
-                              const std::string &val)
-{
-  std::vector<T> ps;
-  onelab::server::instance()->get(ps, var);
-  if(ps.empty()) return;
-  if(action == "Set")
-    setValueFromString(ps[0], val);
-  else if(action == "Show")
-    ps[0].setVisible(true);
-  else if(action == "Hide")
-    ps[0].setVisible(false);
-  else if(action == "ReadOnly")
-    ps[0].setReadOnly(true);
-  else if(action == "ReadWrite")
-    ps[0].setReadOnly(false);
-  onelab::server::instance()->set(ps[0]);
-}
-
-// the actions named "...Match", on the parameters whose names match a regex
-static bool serverActionMatch(const std::string &action,
-                              const std::string &match)
-{
-  std::vector<std::string> names;
-  onelab::server::instance()->getParameterNames(names, match);
-  // the same as the action without "Match"
-  std::string a = action.substr(0, action.size() - 5);
-
-  for(auto &var : names) {
-    Msg::Debug("Performing action '%s' on variable '%s'", action.c_str(),
-               var.c_str());
-    if(a == "Reset") { onelab::server::instance()->clear(var); }
-    else {
-      applyServerAction<onelab::string>(var, a, "");
-      applyServerAction<onelab::number>(var, a, "");
-    }
-  }
-
-  // don't rebuild the tree here: we should leave it to the normal event loop to
-  // perform a "check" if necessary, after all modifications have been performed
-  return !names.empty();
-}
-
-static bool serverActionList(const std::string &path, const std::string &action,
-                             const std::string &data)
-{
-  std::vector<std::string> what = onelab::parameter::split(data, ',');
-
-  if(action == "Set" && (what.size() < 2 || what.size() % 2)) {
-    Msg::Warning("Bad data for ServerActionSet");
-    return false;
-  }
-
-  for(std::size_t i = 0; i < what.size(); i++) {
-    std::string var = onelab::parameter::trim(what[i]);
-    // replace starting '%' with path of variable with the attributes
-    if(var.size() && var[0] == '%') {
-      var.erase(0, 1);
-      var = path + "/" + var;
-    }
-    Msg::Debug("Performing action '%s' on variable '%s'", action.c_str(),
-               var.c_str());
-    if(action == "Reset") { onelab::server::instance()->clear(var); }
-    else {
-      std::string val;
-      if(action == "Set") {
-        val = onelab::parameter::trim(what[i + 1]);
-        i++;
-      }
-      applyServerAction<onelab::string>(var, action, val);
-      applyServerAction<onelab::number>(var, action, val);
-    }
-  }
-
+  if(!onelabUtils::serverAction(action)) return false;
+  FlGui::instance()->rebuildTree();
   return true;
 }
 
 template <class T> static void performServerAction(T &n)
 {
-  if(n.getAttributes().empty()) return;
-
   // global unconditional actions, triggering a tree rebuild
-  std::string action = n.getAttribute("ServerAction");
-  if(action.size()) serverAction(action);
-
-  // actions not triggering a tree rebuild (it should happen after all
-  // parameters have been changed on the server-side):
-
-  // * actions using one variable or a list of variables
-  std::vector<std::string> list = {"Reset", "Hide",     "Show",
-                                   "Set",   "ReadOnly", "ReadWrite"};
-  for(auto &a : list) {
-    // global
-    std::string data = n.getAttribute("ServerAction" + a);
-    if(data.size()) serverActionList(n.getPath(), a, data);
-    // only for a given value
-    data = n.getAttribute("ServerAction" + a + " " + n.getValueAsString());
-    if(data.size()) serverActionList(n.getPath(), a, data);
-  }
-
-  // * actions using a regex
-  std::vector<std::string> regex = {"ResetMatch", "HideMatch", "ShowMatch",
-                                    "ReadOnlyMatch", "ReadWriteMatch"};
-  for(auto &a : regex) {
-    // global
-    std::string data = n.getAttribute("ServerAction" + a);
-    if(data.size()) serverActionMatch(a, data);
-    // only for a given value
-    data = n.getAttribute("ServerAction" + a + " " + n.getValueAsString());
-    if(data.size()) serverActionMatch(a, data);
-  }
+  serverAction(n.getAttribute("ServerAction"));
+  // actions on other parameters
+  onelabUtils::performServerAction(n);
 }
 
 template <class T> static void setGmshOption(T &n)
@@ -976,9 +844,7 @@ template <class T> static void setGmshOption(T &n)
   std::string opt = n.getAttribute("GmshOption");
   if(opt.empty()) return;
   if(serverAction(opt)) return; // for backward compatibility:
-  std::string::size_type dot = opt.find('.');
-  if(dot == std::string::npos) return;
-  GmshSetOption(opt.substr(0, dot), opt.substr(dot + 1), n.getValue());
+  onelabUtils::setGmshOption(n);
   drawContext::global()->draw();
 }
 
@@ -1426,6 +1292,9 @@ Fl_Widget *addParameterWidget(onelab::string &p, int xx, int yy, int ww, int hh,
   but->value(p.getValue().c_str());
   but->callback(onelab_string_input_choice_cb, (void *)path);
   but->input()->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
+  // and the widget calls back on both: FLTK 1.5 passes on an Enter only with
+  // FL_WHEN_CHANGED (on the menu, its choices call back as before)
+  but->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE);
   but->align(FL_ALIGN_RIGHT | FL_ALIGN_CLIP);
   if(highlight) {
     but->input()->color(adaptedFill(c));
@@ -1500,7 +1369,8 @@ onelabGroup::~onelabGroup() { Fl::remove_timeout(_rebuildAfterPress, this); }
 void onelabGroup::_rebuildAfterPress(void *data)
 {
   onelabGroup *g = (onelabGroup *)data;
-  if(Fl::pushed() && g->_tree->contains(Fl::pushed()))
+  if((Fl::pushed() && g->_tree->contains(Fl::pushed())) ||
+     ((onelabTree *)g->_tree)->broadcasting())
     Fl::repeat_timeout(0.05, _rebuildAfterPress, data);
   else
     g->rebuildTree();
@@ -1516,7 +1386,10 @@ void onelabGroup::rebuildTree()
   // release of a click go to the same widget, and the click is lost if a
   // rebuild replaces it in between (a computation rebuilds the tree several
   // times a second); done once the button is released
-  if(Fl::pushed() && _tree->contains(Fl::pushed())) {
+  // nor while an event goes through all the rows (see
+  // onelabTree::broadcasting())
+  if((Fl::pushed() && _tree->contains(Fl::pushed())) ||
+     ((onelabTree *)_tree)->broadcasting()) {
     if(!Fl::has_timeout(_rebuildAfterPress, this))
       Fl::add_timeout(0.05, _rebuildAfterPress, this);
     return;

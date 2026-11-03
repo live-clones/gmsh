@@ -85,7 +85,6 @@ public:
   void setAutoScroll(bool val) { _autoScrollMessages = val; }
   bool getAutoScroll() { return _autoScrollMessages; }
   void setTitle(const std::string &str);
-  void setStereo(bool st);
   int getGlWidth();
   void setGlWidth(int w);
   int getGlHeight();
