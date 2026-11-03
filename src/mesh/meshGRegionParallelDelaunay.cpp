@@ -4405,33 +4405,69 @@ namespace {
       }
       return false;
     };
-    // the star of x and the tets crossed by the segment (x, y)
+    // the tet t meets the segment (x, y) (not through x or y)
+    auto meetsSegment = [&](tIdx t, vIdx x, vIdx y) {
+      const vIdx *n = &m.node[4 * t];
+      for(unsigned f = 0; f < 4; f++) {
+        const vIdx u = n[facetNode0(f)], v = n[facetNode1(f)],
+                   w = n[facetNode2(f)];
+        if(x == u || x == v || x == w || y == u || y == v || y == w) continue;
+        if(meets(&m.xyz[4 * x], &m.xyz[4 * y], &m.xyz[4 * u], &m.xyz[4 * v],
+                 &m.xyz[4 * w]))
+          return true;
+      }
+      return false;
+    };
+    // the tets of the item being grown, whether an earlier item put them in
+    // the cavity or not (the items sharing nodes share their stars): each
+    // item grows from all of its own tets
+    std::vector<std::uint32_t> grownBy(m.ntet, 0);
+    std::uint32_t item = 0;
+    std::vector<tIdx> grown;
+    auto grow = [&](tIdx t) {
+      if(t == NO_TET || m.isDeleted(t) || m.isGhost(t) || grownBy[t] == item)
+        return;
+      grownBy[t] = item;
+      grown.push_back(t);
+      add(t);
+    };
+    // the star of x and the tets crossed by the segment (x, y) (the walk
+    // stops where the segment goes through an edge or a node: the growth
+    // goes on from there)
     auto crossedTets = [&](vIdx x, vIdx y) {
       R.star(x, R.scratch);
-      for(auto t : R.scratch) add(t);
+      for(auto t : R.scratch) grow(t);
       R.walkSegment(x, y, R.scratch, 1000,
-                    [&](tIdx t, unsigned f) { add(m.neigh[4 * t + f] >> 2); });
+                    [&](tIdx t, unsigned f) { grow(m.neigh[4 * t + f] >> 2); });
+    };
+    // grow the item through the neighbors of its tets that meet it
+    auto growThrough = [&](auto meetsItem) {
+      for(std::size_t j = 0; j < grown.size(); j++) {
+        for(unsigned f = 0; f < 4; f++) {
+          const tIdx nb = m.neigh[4 * grown[j] + f] >> 2;
+          if(nb == NO_TET || m.isGhost(nb) || grownBy[nb] == item) continue;
+          if(meetsItem(nb)) grow(nb);
+        }
+      }
     };
     for(auto i : missingTri) {
       const vIdx *tri = &s.triNode[3 * i];
       const double *a = &m.xyz[4 * tri[0]], *b = &m.xyz[4 * tri[1]],
                    *c = &m.xyz[4 * tri[2]];
-      const std::size_t first = cavity.size();
+      item++;
+      grown.clear();
       for(int k = 0; k < 3; k++) crossedTets(tri[k], tri[(k + 1) % 3]);
       // grow through the tets intersecting the triangle
-      for(std::size_t j = first; j < cavity.size(); j++) {
-        for(unsigned f = 0; f < 4; f++) {
-          const tIdx nb = m.neigh[4 * cavity[j] + f] >> 2;
-          if(m.isGhost(nb) || inCavity[nb]) continue;
-          if(intersects(nb, a, b, c, tri)) add(nb);
-        }
-      }
+      growThrough([&](tIdx t) { return intersects(t, a, b, c, tri); });
     }
     for(auto i : missingLine) {
       const vIdx x = s.lineNode[2 * i], y = s.lineNode[2 * i + 1];
+      item++;
+      grown.clear();
       R.star(y, R.scratch);
-      for(auto t : R.scratch) add(t);
+      for(auto t : R.scratch) grow(t);
       crossedTets(x, y);
+      growThrough([&](tIdx t) { return meetsSegment(t, x, y); });
     }
     const std::size_t sizeIntersecting = cavity.size();
     // two layers around: room for the flips of the recovery, which must not
