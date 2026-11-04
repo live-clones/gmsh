@@ -169,6 +169,10 @@ SBoundingBox3d GRegion::bounds(bool fast)
     for(std::size_t i = 0; i < getNumMeshElements(); i++)
       for(std::size_t j = 0; j < getMeshElement(i)->getNumVertices(); j++)
         res += getMeshElement(i)->getVertex(j)->point();
+    // (not meshed yet, e.g. a volume of the discrete CAD modeler: the bounds
+    // of its surfaces)
+    if(res.empty())
+      for(auto gf : l_faces) res += gf->bounds(fast);
   }
   return res;
 }
