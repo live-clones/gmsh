@@ -3679,7 +3679,10 @@ public:
                     this == FlGui::instance()->graph[0]->getWindow());
     int mh = 0;
     if(special) mh = FlGui::instance()->graph[0]->getMessageHeight();
-    Fl_Window::resize(X, Y, W, H);
+    // not Fl_Window::resize(): Fl_Double_Window::resize() drops the offscreen
+    // buffer when the window grows (on Windows the parts out of the old buffer
+    // stay black otherwise)
+    mainWindow::resize(X, Y, W, H);
     const int minimum_non_message_height = 100;
     if(special && mh < h() - minimum_non_message_height)
       FlGui::instance()->graph[0]->setMessageHeight(mh);
