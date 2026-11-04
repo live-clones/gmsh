@@ -2426,8 +2426,7 @@ void DiscreteCAD_Internals::synchronize(GModel *model)
     for(SPoint2 &p : uv) p = SPoint2(p.x(), flip * p.y());
     gf->setParametrization(uv, xyz, triangles);
     // the exact geometry of an analytic surface
-    if(sf.analytic.kind != DiscreteCADAnalyticMap::NONE &&
-       !(getenv("DCAD_NOEXACT") && atoi(getenv("DCAD_NOEXACT")) == (int)sf.analytic.kind)) { // TEMPORARY
+    if(sf.analytic.kind != DiscreteCADAnalyticMap::NONE) {
       DiscreteCADAnalyticMap map = sf.analytic;
       map.setReference(sf.uv);
       gf->setExactGeometry(
