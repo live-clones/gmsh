@@ -693,7 +693,9 @@ void discreteFace::setParametrization(const std::vector<SPoint2> &uv,
   stl_curvatures.clear();
   stl_from_mesh = false;
   _computeSTLNormals();
-  _createGeometryFromSTL();
+  // (kept as given, even for a plane: the exact geometry of the surface, if
+  // any, is in these parameters)
+  _createGeometryFromSTL(false);
 }
 
 void discreteFace::_computeSTLNormals()
@@ -720,7 +722,7 @@ void discreteFace::_computeSTLNormals()
   for(std::size_t i = 0; i < N; i++) stl_normals[i].normalize();
 }
 
-void discreteFace::_createGeometryFromSTL()
+void discreteFace::_createGeometryFromSTL(bool planar)
 {
   if(stl_triangles.empty() || stl_vertices_uv.empty() ||
      stl_vertices_xyz.empty())
@@ -762,7 +764,7 @@ void discreteFace::_createGeometryFromSTL()
       _param.CURV.push_back(stl_curvatures[2 * c + 1]);
     }
   }
-  if(_param.checkPlanar())
+  if(planar && _param.checkPlanar())
     Msg::Info("Discrete surface %d is planar, simplifying parametrization",
               tag());
 

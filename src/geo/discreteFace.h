@@ -57,7 +57,9 @@ private:
   GPoint _exactIntersectionWithCircle(GPoint gp, const SVector3 &n1,
                                       const SVector3 &n2, const SVector3 &p,
                                       const double &R, double uv[2]);
-  void _createGeometryFromSTL();
+  // (planar: the parametrization of a planar surface replaced by the
+  // coordinates in its mean plane)
+  void _createGeometryFromSTL(bool planar = true);
   GPoint _closestPoint(const SPoint3 &p, const double guess[2],
                        SVector3 *normal = nullptr) const;
   // the chart triangle containing (u, v), and the barycentric coordinates of
