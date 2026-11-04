@@ -2315,10 +2315,98 @@ void DiscreteCAD_Internals::synchronize(GModel *model)
   // numbering of the mesh of the model
   const std::size_t maxVertex = model->getMaxVertexNumber();
   const std::size_t maxElement = model->getMaxElementNumber();
+
+  // the exact geometry of the curves along which two analytic surfaces meet
+  // at an angle: their intersection, the nodes of their polylines moved onto
+  // it; and the vertices moved onto the intersection of the analytic surfaces
+  // around them (of three of them, or else two, meeting at the largest angle)
+  std::map<int, std::set<int> > surfacesOfCurve, surfacesOfVertex;
+  for(auto &it : _surfaces)
+    for(int c : it.second.curves) {
+      const Curve &cv = _curves[std::abs(c)];
+      surfacesOfCurve[std::abs(c)].insert(it.first);
+      surfacesOfVertex[cv.v0].insert(it.first);
+      surfacesOfVertex[cv.v1].insert(it.first);
+    }
+  auto analytic = [&](int surface) -> const DiscreteCADAnalyticSurface * {
+    const DiscreteCADAnalyticMap &m = _surfaces[surface].analytic;
+    return m.kind == DiscreteCADAnalyticMap::NONE ? nullptr : &m.surface;
+  };
+  std::map<int, std::array<double, 3> > exact;
+  for(auto &it : _vertices) {
+    std::vector<const DiscreteCADAnalyticSurface *> s;
+    for(int f : surfacesOfVertex[it.first])
+      if(analytic(f)) s.push_back(analytic(f));
+    const double *p = _nodes[it.second.node].data();
+    // (the sets of three, then two, surfaces by decreasing angle at p)
+    std::vector<std::array<double, 3> > n(s.size());
+    for(std::size_t i = 0; i < s.size(); i++) s[i]->normal(p, n[i].data());
+    using Set = std::pair<std::pair<int, double>, std::vector<std::size_t> >;
+    std::vector<Set> sets;
+    for(std::size_t i = 0; i < s.size(); i++)
+      for(std::size_t j = i + 1; j < s.size(); j++) {
+        const std::array<double, 3> &a = n[i], &b = n[j];
+        const double c[3] = {a[1] * b[2] - a[2] * b[1],
+                             a[2] * b[0] - a[0] * b[2],
+                             a[0] * b[1] - a[1] * b[0]};
+        sets.push_back(
+          {{2, std::sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2])}, {i, j}});
+        for(std::size_t k = j + 1; k < s.size(); k++)
+          sets.push_back({{3, std::abs(c[0] * n[k][0] + c[1] * n[k][1] +
+                                       c[2] * n[k][2])},
+                          {i, j, k}});
+      }
+    std::sort(sets.begin(), sets.end(),
+              [](const Set &a, const Set &b) { return a.first > b.first; });
+    for(auto &set : sets) {
+      std::vector<const DiscreteCADAnalyticSurface *> ss;
+      for(std::size_t i : set.second) ss.push_back(s[i]);
+      std::array<double, 3> x;
+      if(intersectSurfaces(ss, p, nullptr, x.data()) &&
+         isIntersectionNear(ss, p, x.data())) {
+        exact[it.second.node] = x;
+        break;
+      }
+    }
+  }
+  auto position = [&](int n) -> const std::array<double, 3> & {
+    auto it = exact.find(n);
+    return it == exact.end() ? _nodes[n] : it->second;
+  };
+  std::map<int, std::array<const DiscreteCADAnalyticSurface *, 2> >
+    intersections;
+  for(auto &it : _curves) {
+    const std::set<int> &f = surfacesOfCurve[it.first];
+    if(f.size() != 2) continue;
+    const std::vector<const DiscreteCADAnalyticSurface *> s = {
+      analytic(*f.begin()), analytic(*f.rbegin())};
+    if(!s[0] || !s[1]) continue;
+    // (the nodes in the planes normal to the polyline through them)
+    const std::vector<int> &nodes = it.second.nodes;
+    std::vector<std::array<double, 3> > x(nodes.size());
+    bool found = nodes.size() >= 2;
+    for(std::size_t i = 0; i < nodes.size() && found; i++) {
+      const std::array<double, 3> &p = position(nodes[i]),
+                                  &a = position(nodes[i ? i - 1 : i]),
+                                  &b = position(
+                                    nodes[i + 1 < nodes.size() ? i + 1 : i]);
+      double t[3] = {b[0] - a[0], b[1] - a[1], b[2] - a[2]};
+      normalize(t);
+      found = intersectSurfaces(s, p.data(), t, x[i].data()) &&
+              isIntersectionNear(s, p.data(), x[i].data());
+    }
+    if(!found) continue;
+    for(std::size_t i = 1; i + 1 < nodes.size(); i++) exact[nodes[i]] = x[i];
+    intersections[it.first] = {{s[0], s[1]}};
+  }
+  Msg::Debug("Discrete CAD: %lu of %lu curves on the intersection of two "
+             "analytic surfaces, %lu nodes moved onto intersections",
+             intersections.size(), _curves.size(), exact.size());
+
   std::vector<MVertex *> mesh(_nodes.size(), nullptr);
   auto node = [&](int n, GEntity *e) {
     if(!mesh[n]) {
-      const std::array<double, 3> &x = _nodes[n];
+      const std::array<double, 3> &x = position(n);
       mesh[n] = new MVertex(x[0], x[1], x[2], e);
       e->mesh_vertices.push_back(mesh[n]);
     }
@@ -2333,7 +2421,7 @@ void DiscreteCAD_Internals::synchronize(GModel *model)
   std::vector<GEntity *> created;
   for(auto &it : _vertices) {
     if(taken(0, it.first)) continue;
-    const std::array<double, 3> &x = _nodes[it.second.node];
+    const std::array<double, 3> &x = position(it.second.node);
     discreteVertex *gv =
       new discreteVertex(model, it.first, x[0], x[1], x[2], false);
     gv->setNativeType(GEntity::DiscreteCADModel);
@@ -2351,6 +2439,23 @@ void DiscreteCAD_Internals::synchronize(GModel *model)
     const std::vector<int> &n = it.second.nodes;
     for(std::size_t i = 0; i + 1 < n.size(); i++)
       ge->lines.push_back(new MLine(node(n[i], ge), node(n[i + 1], ge)));
+    auto in = intersections.find(it.first);
+    if(in != intersections.end()) {
+      const DiscreteCADAnalyticSurface a = *in->second[0], b = *in->second[1];
+      ge->setExactGeometry([a, b](const SPoint3 &p, const SVector3 &t,
+                                  SPoint3 &x, SVector3 &tangent,
+                                  SVector3 &curvature) {
+        const double pp[3] = {p.x(), p.y(), p.z()};
+        const double tt[3] = {t.x(), t.y(), t.z()};
+        double xx[3], tx[3], kx[3];
+        if(!intersectSurfaces({&a, &b}, pp, tt, xx)) return false;
+        intersectionCurve(a, b, xx, tt, tx, kx);
+        x = SPoint3(xx[0], xx[1], xx[2]);
+        tangent = SVector3(tx[0], tx[1], tx[2]);
+        curvature = SVector3(kx[0], kx[1], kx[2]);
+        return true;
+      });
+    }
     created.push_back(ge);
   }
   for(auto &it : _surfaces) {

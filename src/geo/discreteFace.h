@@ -123,6 +123,16 @@ public:
     _exactParameters = parameters;
   }
   bool haveExactGeometry() const { return (bool)_exactPoint; }
+  // the parameters of the point of the exact surface nearest to p, near the
+  // parameters guess, even outside the domain (false without exact geometry)
+  bool exactParameters(const SPoint3 &p, const SPoint2 &guess,
+                       SPoint2 &uv) const
+  {
+    if(!_exactParameters) return false;
+    const double g[2] = {guess.x(), guess.y()};
+    uv = _exactParameters(p, g);
+    return true;
+  }
   virtual void mesh(bool verbose);
   int trianglePosition(double par1, double par2, double &u, double &v) const;
   GPoint intersectionWithCircle(const SVector3 &n1, const SVector3 &n2,

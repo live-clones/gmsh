@@ -35,7 +35,32 @@ struct DiscreteCADAnalyticSurface {
   // point of the surface nearest to x
   double distance(const double x[3]) const;
   void normal(const double x[3], double n[3]) const;
+  // the second derivatives m of the signed distance at x (the derivatives of
+  // the normal)
+  void hessian(const double x[3], double m[3][3]) const;
 };
+
+// the point x where the analytic surfaces s (two or three) meet near p, on the
+// plane through p normal to the unit vector t if t is not null (with two
+// surfaces): Newton steps of least norm from p; false if they do not converge
+bool intersectSurfaces(const std::vector<const DiscreteCADAnalyticSurface *> &s,
+                       const double p[3], const double *t, double x[3]);
+
+// whether x, where the analytic surfaces s (two or three) meet, is their
+// intersection near p: they meet at x at more than a degree (the intersection
+// of surfaces fitted to a triangulation of tangent surfaces is not defined),
+// and x is closer to p than a tenth of the distance at which their curvatures
+// can make them meet again
+bool isIntersectionNear(
+  const std::vector<const DiscreteCADAnalyticSurface *> &s, const double p[3],
+  const double x[3]);
+
+// the unit tangent (along t) and the curvature vector at x of the
+// intersection of the analytic surfaces a and b
+void intersectionCurve(const DiscreteCADAnalyticSurface &a,
+                       const DiscreteCADAnalyticSurface &b, const double x[3],
+                       const double t[3], double tangent[3],
+                       double curvature[3]);
 
 // the map from the parameters of an analytic surface (see
 // analyticParameters) to its points, and back: the coordinates in a plane of

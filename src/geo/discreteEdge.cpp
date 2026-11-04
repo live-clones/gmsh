@@ -8,6 +8,7 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "discreteEdge.h"
+#include "discreteFace.h"
 #include "SVector3.h"
 #include "MLine.h"
 #include "MEdge.h"
@@ -63,12 +64,39 @@ bool discreteEdge::_getLocalParameter(const double &t, int &iLine,
   return false;
 }
 
+bool discreteEdge::_onExactCurve(int i, double tLoc, SPoint3 &x,
+                                 SVector3 *der, SVector3 *der2,
+                                 double *curvature) const
+{
+  if(!_exact) return false;
+  const SPoint3 &a = _discretization[i], &b = _discretization[i + 1];
+  const SVector3 chord(a, b);
+  const double l = chord.norm();
+  if(!(l > 0.)) return false;
+  const SVector3 t = chord * (1. / l);
+  SVector3 tangent, k;
+  if(!_exact(a + (b - a) * tLoc, t, x, tangent, k)) return false;
+  // (x' = lambda tangent, the plane moving by l along t: x' . t = l; and
+  // tangent' = lambda k)
+  const double c = dot(tangent, t);
+  if(!(c > 0.)) return false;
+  const double lambda = l / c;
+  if(der) *der = tangent * lambda;
+  if(der2) *der2 = (k - tangent * (dot(k, t) / c)) * (lambda * lambda);
+  if(curvature) *curvature = k.norm();
+  return true;
+}
+
 GPoint discreteEdge::point(double par) const
 {
   double tLoc;
   int iEdge;
 
   if(!_getLocalParameter(par, iEdge, tLoc)) return GPoint();
+
+  SPoint3 x;
+  if(_onExactCurve(iEdge, tLoc, x))
+    return GPoint(x.x(), x.y(), x.z(), this, par);
 
   SPoint3 vB = _discretization[iEdge];
   SPoint3 vE = _discretization[iEdge + 1];
@@ -85,6 +113,10 @@ SVector3 discreteEdge::firstDer(double par) const
 
   if(!_getLocalParameter(par, iEdge, tLoc)) return SVector3();
 
+  SPoint3 x;
+  SVector3 exact;
+  if(_onExactCurve(iEdge, tLoc, x, &exact)) return exact;
+
   SPoint3 vB = _discretization[iEdge];
   SPoint3 vE = _discretization[iEdge + 1];
 
@@ -95,6 +127,18 @@ SVector3 discreteEdge::firstDer(double par) const
 
   SVector3 der(dx, dy, dz);
   return der;
+}
+
+SVector3 discreteEdge::secondDer(double par) const
+{
+  double tLoc;
+  int iEdge;
+  SPoint3 x;
+  SVector3 der2;
+  if(_getLocalParameter(par, iEdge, tLoc) &&
+     _onExactCurve(iEdge, tLoc, x, nullptr, &der2))
+    return der2;
+  return GEdge::secondDer(par);
 }
 
 void discreteEdge::setReparamOnFace(const GFace *face,
@@ -126,7 +170,14 @@ SPoint2 discreteEdge::reparamOnFace(const GFace *face, double epar,
     int i;
     if(!_getLocalParameter(epar, i, tLoc))
       return epar <= 0. ? uv.front() : uv.back();
-    return uv[i] + (uv[i + 1] - uv[i]) * tLoc;
+    const SPoint2 p = uv[i] + (uv[i + 1] - uv[i]) * tLoc;
+    // (those of the point of the exact curve on the exact surface)
+    const discreteFace *df = dynamic_cast<const discreteFace *>(face);
+    SPoint3 x;
+    SPoint2 exact;
+    if(df && _onExactCurve(i, tLoc, x) && df->exactParameters(x, p, exact))
+      return exact;
+    return p;
   }
   GPoint p = point(epar);
   double guess[2];
@@ -158,6 +209,12 @@ double discreteEdge::curvature(double par) const
 {
   double tLoc;
   int iEdge;
+  SPoint3 x;
+  double exact;
+  if(_getLocalParameter(par, iEdge, tLoc) &&
+     _onExactCurve(iEdge, tLoc, x, nullptr, nullptr, &exact))
+    return exact;
+
   if(_discretization.size() <= 3)
     return 0.0; // no clue on how to compute curvature with so few data...
 

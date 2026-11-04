@@ -297,6 +297,158 @@ void DiscreteCADAnalyticSurface::normal(const double x[3], double n[3]) const
   }
 }
 
+void DiscreteCADAnalyticSurface::hessian(const double x[3],
+                                         double m[3][3]) const
+{
+  double d[3];
+  for(int k = 0; k < 3; k++) d[k] = x[k] - o[k];
+  const double h = dot(d, axis);
+  double e[3];
+  for(int k = 0; k < 3; k++) e[k] = d[k] - h * axis[k];
+  const double rho = norm(e);
+  const bool radial = normalize(e);
+  for(int i = 0; i < 3; i++)
+    for(int j = 0; j < 3; j++) m[i][j] = 0.;
+  // (the second derivatives of rho: the projection around the axis over rho)
+  auto around = [&](int i, int j) {
+    return ((i == j) - axis[i] * axis[j] - e[i] * e[j]) / rho;
+  };
+  switch(type) {
+  case SPHERE: {
+    const double r = norm(d);
+    if(!(r > 0.)) break;
+    for(int i = 0; i < 3; i++)
+      for(int j = 0; j < 3; j++)
+        m[i][j] = ((i == j) - d[i] * d[j] / (r * r)) / r;
+  } break;
+  case CYLINDER:
+  case CONE: {
+    if(!radial) break;
+    const double f = type == CONE ? std::cos(r1) : 1.;
+    for(int i = 0; i < 3; i++)
+      for(int j = 0; j < 3; j++) m[i][j] = f * around(i, j);
+  } break;
+  case TORUS: {
+    // (of the distance to the center circle, minus r2)
+    const double l = std::hypot(rho - r1, h);
+    if(!radial || !(l > 0.)) break;
+    double n[3];
+    for(int k = 0; k < 3; k++) n[k] = ((rho - r1) * e[k] + h * axis[k]) / l;
+    for(int i = 0; i < 3; i++)
+      for(int j = 0; j < 3; j++)
+        m[i][j] = (e[i] * e[j] + (rho - r1) * around(i, j) +
+                   axis[i] * axis[j] - n[i] * n[j]) /
+                  l;
+  } break;
+  default: break;
+  }
+}
+
+bool intersectSurfaces(const std::vector<const DiscreteCADAnalyticSurface *> &s,
+                       const double p[3], const double *t, double x[3])
+{
+  const int ns = (int)s.size(), m = ns + (t ? 1 : 0);
+  if(ns < 2 || m > 3) return false;
+  // (the size of the coordinates, for their rounding errors)
+  double size = 0.;
+  for(int k = 0; k < 3; k++) {
+    x[k] = p[k];
+    size = std::max(size, std::abs(p[k]));
+  }
+  for(const DiscreteCADAnalyticSurface *a : s) {
+    double d[3];
+    for(int k = 0; k < 3; k++) d[k] = p[k] - a->o[k];
+    size = std::max(size, norm(d) + a->r1 + a->r2);
+  }
+  for(int iter = 0; iter < 50; iter++) {
+    // the residuals and their gradients (the unit normals), and the step of
+    // least norm that cancels them linearly
+    double g[3][3];
+    std::vector<double> r(m), jjt(m * m);
+    for(int i = 0; i < ns; i++) {
+      r[i] = s[i]->distance(x);
+      s[i]->normal(x, g[i]);
+    }
+    if(t) {
+      r[ns] = 0.;
+      for(int k = 0; k < 3; k++) {
+        r[ns] += t[k] * (x[k] - p[k]);
+        g[ns][k] = t[k];
+      }
+    }
+    for(int i = 0; i < m; i++)
+      for(int j = 0; j < m; j++) jjt[i * m + j] = dot(g[i], g[j]);
+    if(!solve(m, jjt, r)) return false;
+    double step = 0.;
+    for(int k = 0; k < 3; k++) {
+      double dx = 0.;
+      for(int i = 0; i < m; i++) dx -= g[i][k] * r[i];
+      x[k] += dx;
+      step = std::max(step, std::abs(dx));
+    }
+    if(!std::isfinite(step)) return false;
+    if(step <= 1.e-13 * size) return true;
+  }
+  return false;
+}
+
+bool isIntersectionNear(
+  const std::vector<const DiscreteCADAnalyticSurface *> &s, const double p[3],
+  const double x[3])
+{
+  const int ns = (int)s.size();
+  if(ns < 2 || ns > 3) return false;
+  double n[3][3], c[3];
+  for(int i = 0; i < ns; i++) s[i]->normal(x, n[i]);
+  cross(n[0], n[1], c);
+  const double sine = ns == 2 ? norm(c) : std::abs(dot(c, n[2]));
+  if(sine < std::sin(pi / 180.)) return false;
+  // (the largest curvature of the surfaces at x, bounded by the norm of the
+  // second derivatives of their distances)
+  double curvature = 0.;
+  for(int i = 0; i < ns; i++) {
+    double m[3][3], f = 0.;
+    s[i]->hessian(x, m);
+    for(int j = 0; j < 3; j++)
+      for(int k = 0; k < 3; k++) f += m[j][k] * m[j][k];
+    curvature = std::max(curvature, std::sqrt(f));
+  }
+  double d[3];
+  for(int k = 0; k < 3; k++) d[k] = x[k] - p[k];
+  return norm(d) * curvature <= 0.1 * sine;
+}
+
+void intersectionCurve(const DiscreteCADAnalyticSurface &a,
+                       const DiscreteCADAnalyticSurface &b, const double x[3],
+                       const double t[3], double tangent[3],
+                       double curvature[3])
+{
+  double na[3], nb[3];
+  a.normal(x, na);
+  b.normal(x, nb);
+  cross(na, nb, tangent);
+  for(int k = 0; k < 3; k++) curvature[k] = 0.;
+  if(!normalize(tangent)) return;
+  if(dot(tangent, t) < 0.)
+    for(int k = 0; k < 3; k++) tangent[k] = -tangent[k];
+  // the curvature vector c of a curve on a surface of signed distance f:
+  // c . grad(f) = -tangent . hessian(f) tangent; c . tangent = 0
+  auto normalCurvature = [&](const DiscreteCADAnalyticSurface &s) {
+    double m[3][3], f = 0.;
+    s.hessian(x, m);
+    for(int i = 0; i < 3; i++)
+      for(int j = 0; j < 3; j++) f += tangent[i] * m[i][j] * tangent[j];
+    return f;
+  };
+  const double ka = normalCurvature(a), kb = normalCurvature(b);
+  double u[3], v[3];
+  cross(nb, tangent, u);
+  cross(tangent, na, v);
+  const double det = dot(na, u);
+  if(det == 0.) return;
+  for(int k = 0; k < 3; k++) curvature[k] = -(ka * u[k] + kb * v[k]) / det;
+}
+
 namespace {
   // the conformal coordinate of the angle a around the section of a torus,
   // ds = r2 da / (r1 + r2 cos(a)), continuous for all a, and its inverse
