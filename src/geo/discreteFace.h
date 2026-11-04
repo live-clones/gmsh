@@ -39,12 +39,13 @@ private:
   param _param;
   ModelType _nativeType = UnknownModel;
   // the exact geometry of an analytic surface, if given: its point at the
-  // parameters (u, v), and the parameters of its point nearest to a point
-  // (near the parameters guess, if not null)
+  // parameters (u, v), the derivatives d of the point (d[0] = dx/du,
+  // d[1] = dx/dv, d[2] = d2x/du2, d[3] = d2x/dv2, d[4] = d2x/dudv), and the
+  // parameters of its point nearest to a point (near the parameters guess, if
+  // not null)
   std::function<SPoint3(double, double)> _exactPoint;
+  std::function<void(double, double, SVector3[5])> _exactDerivatives;
   std::function<SPoint2(const SPoint3 &, const double *)> _exactParameters;
-  // the step of the finite differences of its derivatives
-  double _step() const;
   GPoint _intersectionWithCircle(const SVector3 &n1, const SVector3 &n2,
                                  const SVector3 &p, const double &R,
                                  double uv[2]);
@@ -112,9 +113,11 @@ public:
   // it, the parametrization only giving the domain of the parameters
   void setExactGeometry(
     const std::function<SPoint3(double, double)> &point,
+    const std::function<void(double, double, SVector3[5])> &derivatives,
     const std::function<SPoint2(const SPoint3 &, const double *)> &parameters)
   {
     _exactPoint = point;
+    _exactDerivatives = derivatives;
     _exactParameters = parameters;
   }
   bool haveExactGeometry() const { return (bool)_exactPoint; }

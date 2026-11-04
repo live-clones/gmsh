@@ -321,6 +321,48 @@ namespace {
   {
     return a + 2. * pi * std::round((reference - a) / (2. * pi));
   }
+  // the derivatives (_u, _v, _uu, _vv, _uv) of the polar coordinates of
+  // (u, v): of rho, of log(rho) and of the angle (0 at the origin)
+  void polarDerivatives(double u, double v, double rho[5], double logRho[5],
+                        double angle[5])
+  {
+    const double r2 = u * u + v * v;
+    if(!(r2 > 0.)) {
+      for(int i = 0; i < 5; i++) rho[i] = logRho[i] = angle[i] = 0.;
+      return;
+    }
+    const double r = std::sqrt(r2), r3 = r2 * r, r4 = r2 * r2;
+    const double values[3][5] = {
+      {u / r, v / r, v * v / r3, u * u / r3, -u * v / r3},
+      {u / r2, v / r2, (v * v - u * u) / r4, (u * u - v * v) / r4,
+       -2. * u * v / r4},
+      {-v / r2, u / r2, 2. * u * v / r4, -2. * u * v / r4,
+       (v * v - u * u) / r4}};
+    for(int i = 0; i < 5; i++) {
+      rho[i] = values[0][i];
+      logRho[i] = values[1][i];
+      angle[i] = values[2][i];
+    }
+  }
+  // the derivatives d (as in DiscreteCADAnalyticMap::derivatives) of x(a, b)
+  // for a and b functions of (u, v), from those of x with respect to (a, b)
+  // (dx: x_a, x_b, x_aa, x_bb, x_ab) and those of a and b (da, db: _u, _v,
+  // _uu, _vv, _uv)
+  void chainRule(const double dx[5][3], const double da[5], const double db[5],
+                 double d[5][3])
+  {
+    for(int k = 0; k < 3; k++) {
+      d[0][k] = dx[0][k] * da[0] + dx[1][k] * db[0];
+      d[1][k] = dx[0][k] * da[1] + dx[1][k] * db[1];
+      d[2][k] = dx[2][k] * da[0] * da[0] + 2. * dx[4][k] * da[0] * db[0] +
+                dx[3][k] * db[0] * db[0] + dx[0][k] * da[2] + dx[1][k] * db[2];
+      d[3][k] = dx[2][k] * da[1] * da[1] + 2. * dx[4][k] * da[1] * db[1] +
+                dx[3][k] * db[1] * db[1] + dx[0][k] * da[3] + dx[1][k] * db[3];
+      d[4][k] = dx[2][k] * da[0] * da[1] +
+                dx[4][k] * (da[0] * db[1] + da[1] * db[0]) +
+                dx[3][k] * db[0] * db[1] + dx[0][k] * da[4] + dx[1][k] * db[4];
+    }
+  }
 } // namespace
 
 void DiscreteCADAnalyticMap::point(double u, double v, double x[3]) const
@@ -433,6 +475,114 @@ void DiscreteCADAnalyticMap::parameters(const double x[3], const double *guess,
     uv[1] = r * std::sin(t);
   } break;
   default: uv[0] = uv[1] = 0.;
+  }
+}
+
+void DiscreteCADAnalyticMap::derivatives(double u, double v,
+                                         double der[5][3]) const
+{
+  const double *a = surface.axis;
+  for(int i = 0; i < 5; i++)
+    for(int k = 0; k < 3; k++) der[i][k] = 0.;
+  double dRho[5], dLogRho[5], dAngle[5];
+  polarDerivatives(u, v, dRho, dLogRho, dAngle);
+  switch(kind) {
+  case PLANE:
+    for(int k = 0; k < 3; k++) {
+      der[0][k] = e0[k];
+      der[1][k] = e1[k];
+    }
+    break;
+  case DEVELOPED:
+  case DISK:
+    if(surface.type == DiscreteCADAnalyticSurface::CYLINDER) {
+      const double r = surface.r1, t = u / r;
+      const double co = std::cos(t), si = std::sin(t);
+      for(int k = 0; k < 3; k++) {
+        der[0][k] = -si * e0[k] + co * e1[k];
+        der[1][k] = a[k];
+        der[2][k] = -(co * e0[k] + si * e1[k]) / r;
+      }
+    }
+    else if(kind == DISK) {
+      // o + scale (sinHalf (u e0 + v e1) + cosHalf rho a) (at the apex, the
+      // limit of the centered differences)
+      const double sinHalf = std::sin(surface.r1);
+      const double cosHalf = std::cos(surface.r1);
+      for(int k = 0; k < 3; k++) {
+        der[0][k] = scale * (sinHalf * e0[k] + cosHalf * dRho[0] * a[k]);
+        der[1][k] = scale * (sinHalf * e1[k] + cosHalf * dRho[1] * a[k]);
+        for(int i = 2; i < 5; i++)
+          der[i][k] = scale * cosHalf * dRho[i] * a[k];
+      }
+    }
+    else {
+      // o + s (sinHalf c(t) + cosHalf a) for c(t) = cos(t) e0 + sin(t) e1,
+      // the distance s = rho to the apex and the angle t = angle / sinHalf
+      const double sinHalf = std::sin(surface.r1);
+      const double cosHalf = std::cos(surface.r1);
+      const double s = std::hypot(u, v),
+                   t = near(std::atan2(v, u), reference) / sinHalf;
+      const double co = std::cos(t), si = std::sin(t);
+      double dx[5][3], dt[5];
+      for(int k = 0; k < 3; k++) {
+        const double c = co * e0[k] + si * e1[k], dc = -si * e0[k] + co * e1[k];
+        dx[0][k] = sinHalf * c + cosHalf * a[k];
+        dx[1][k] = s * sinHalf * dc;
+        dx[2][k] = 0.;
+        dx[3][k] = -s * sinHalf * c;
+        dx[4][k] = sinHalf * dc;
+      }
+      for(int i = 0; i < 5; i++) dt[i] = dAngle[i] / sinHalf;
+      chainRule(dx, dRho, dt, der);
+    }
+    break;
+  case STEREOGRAPHIC: {
+    // r1 f for f = n / q, n = 2 u e0 + 2 v e1 + scale (1 - w) d, q = 1 + w
+    // and w = u^2 + v^2: from the derivatives of n = f q
+    const double w = u * u + v * v, q = 1. + w, r = surface.r1;
+    for(int k = 0; k < 3; k++) {
+      const double f =
+        (2. * u * e0[k] + 2. * v * e1[k] + scale * (1. - w) * d[k]) / q;
+      const double fu = (2. * e0[k] - 2. * scale * u * d[k] - 2. * u * f) / q;
+      const double fv = (2. * e1[k] - 2. * scale * v * d[k] - 2. * v * f) / q;
+      der[0][k] = r * fu;
+      der[1][k] = r * fv;
+      der[2][k] = r * (-2. * scale * d[k] - 4. * u * fu - 2. * f) / q;
+      der[3][k] = r * (-2. * scale * d[k] - 4. * v * fv - 2. * f) / q;
+      der[4][k] = r * (-2. * v * fu - 2. * u * fv) / q;
+    }
+  } break;
+  case ANNULUS: {
+    // o + (r1 + r2 cos(phi)) c(t) + r2 sin(phi) a for c(t) = cos(t) e0 +
+    // sin(t) e1, the angle t around the axis and the angle phi around the
+    // section, whose conformal coordinate s = lowest + log(rho) / scale
+    // (dphi / ds = (r1 + r2 cos(phi)) / r2)
+    const double r1 = surface.r1, r2 = surface.r2;
+    const double t = std::atan2(v, u), co = std::cos(t), si = std::sin(t);
+    const double phi =
+      conformalAngle(r1, r2, lowest + std::log(std::hypot(u, v)) / scale);
+    const double cp = std::cos(phi), sp = std::sin(phi);
+    const double radial = r1 + r2 * cp;
+    double dx[5][3], ds[5], dPhi[5];
+    for(int k = 0; k < 3; k++) {
+      const double c = co * e0[k] + si * e1[k], dc = -si * e0[k] + co * e1[k];
+      dx[0][k] = -r2 * sp * c + r2 * cp * a[k];
+      dx[1][k] = radial * dc;
+      dx[2][k] = -r2 * cp * c - r2 * sp * a[k];
+      dx[3][k] = -radial * c;
+      dx[4][k] = -r2 * sp * dc;
+    }
+    const double phiS = radial / r2, phiSS = -sp * phiS;
+    for(int i = 0; i < 5; i++) ds[i] = dLogRho[i] / scale;
+    dPhi[0] = phiS * ds[0];
+    dPhi[1] = phiS * ds[1];
+    dPhi[2] = phiSS * ds[0] * ds[0] + phiS * ds[2];
+    dPhi[3] = phiSS * ds[1] * ds[1] + phiS * ds[3];
+    dPhi[4] = phiSS * ds[0] * ds[1] + phiS * ds[4];
+    chainRule(dx, dPhi, dAngle, der);
+  } break;
+  default: break;
   }
 }
 

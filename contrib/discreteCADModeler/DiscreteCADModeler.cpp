@@ -2436,6 +2436,15 @@ void DiscreteCAD_Internals::synchronize(GModel *model)
           map.point(u, flip * v, x);
           return SPoint3(x[0], x[1], x[2]);
         },
+        [map, flip](double u, double v, SVector3 d[5]) {
+          double der[5][3];
+          map.derivatives(u, flip * v, der);
+          for(int i = 0; i < 5; i++) {
+            // (the derivatives once in v change sign with it)
+            const double f = (i == 1 || i == 4) ? flip : 1.;
+            d[i] = SVector3(f * der[i][0], f * der[i][1], f * der[i][2]);
+          }
+        },
         [map, flip](const SPoint3 &p, const double *guess) {
           const double x[3] = {p.x(), p.y(), p.z()};
           double g[2], uv[2];

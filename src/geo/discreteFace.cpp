@@ -239,13 +239,6 @@ int discreteFace::trianglePosition(double par1, double par2, double &u,
   return position;
 }
 
-double discreteFace::_step() const
-{
-  const double size = std::abs(_param.umax - _param.umin) +
-                      std::abs(_param.vmax - _param.vmin);
-  return 1.e-6 * (size > 0. ? size : 1.);
-}
-
 GPoint discreteFace::point(double par1, double par2) const
 {
   double xy[3] = {par1, par2, 0};
@@ -497,19 +490,28 @@ double discreteFace::curvatures(const SPoint2 &param, SVector3 &dirMax,
     const double s = std::sqrt(std::max(0., H * H - K));
     curvMax = H + s;
     curvMin = H - s;
-    // the principal directions: (a, b) with (L - k E) a + (M - k F) b = 0
-    auto direction = [&](double k) {
-      double a = -(M - k * F), b = L - k * E;
-      if(std::abs(a) + std::abs(b) < 1.e-14 * (std::abs(L) + std::abs(M) + 1.)) {
-        a = N - k * G;
-        b = -(M - k * F);
-      }
-      SVector3 t = d.first * a + d.second * b;
-      t.normalize();
-      return t;
-    };
-    dirMax = direction(curvMax);
-    dirMin = direction(curvMin);
+    // the principal directions: (a, b) with (L - k E) a + (M - k F) b = 0 and
+    // (M - k F) a + (N - k G) b = 0 (from the larger equation); any two
+    // orthogonal directions at an umbilic point (on a plane or a sphere,
+    // where the rounding errors of H^2 - K make s of the order of 1e-8 H)
+    if(s <= 1.e-6 * std::abs(H)) {
+      curvMax = curvMin = H;
+      dirMax = d.first;
+      dirMax.normalize();
+      dirMin = crossprod(n, dirMax);
+    }
+    else {
+      auto direction = [&](double k) {
+        const double l = L - k * E, m = M - k * F, o = N - k * G;
+        SVector3 t = std::abs(l) + std::abs(m) >= std::abs(m) + std::abs(o) ?
+                       d.first * (-m) + d.second * l :
+                       d.first * o + d.second * (-m);
+        t.normalize();
+        return t;
+      };
+      dirMax = direction(curvMax);
+      dirMin = direction(curvMin);
+    }
     curvMax = std::abs(curvMax);
     curvMin = std::abs(curvMin);
     if(curvMin > curvMax) {
@@ -548,11 +550,9 @@ double discreteFace::curvatures(const SPoint2 &param, SVector3 &dirMax,
 std::pair<SVector3, SVector3> discreteFace::firstDer(const SPoint2 &param) const
 {
   if(_exactPoint) {
-    const double h = _step(), u = param.x(), v = param.y();
-    const SPoint3 pu = _exactPoint(u + h, v), mu = _exactPoint(u - h, v);
-    const SPoint3 pv = _exactPoint(u, v + h), mv = _exactPoint(u, v - h);
-    return std::make_pair(SVector3(mu, pu) * (0.5 / h),
-                          SVector3(mv, pv) * (0.5 / h));
+    SVector3 d[5];
+    _exactDerivatives(param.x(), param.y(), d);
+    return std::make_pair(d[0], d[1]);
   }
   // the triangle in space times the inverse of the triangle in the chart
   int position = _locate(param.x(), param.y());
@@ -581,15 +581,11 @@ void discreteFace::secondDer(const SPoint2 &param, SVector3 &dudu,
                              SVector3 &dvdv, SVector3 &dudv) const
 {
   if(!_exactPoint) return;
-  const double h = 10. * _step(), u = param.x(), v = param.y();
-  const SVector3 c(_exactPoint(u, v));
-  const SVector3 pu(_exactPoint(u + h, v)), mu(_exactPoint(u - h, v));
-  const SVector3 pv(_exactPoint(u, v + h)), mv(_exactPoint(u, v - h));
-  const SVector3 pp(_exactPoint(u + h, v + h)), pm(_exactPoint(u + h, v - h));
-  const SVector3 mp(_exactPoint(u - h, v + h)), mm(_exactPoint(u - h, v - h));
-  dudu = (pu - c * 2. + mu) * (1. / (h * h));
-  dvdv = (pv - c * 2. + mv) * (1. / (h * h));
-  dudv = (pp - pm - mp + mm) * (0.25 / (h * h));
+  SVector3 d[5];
+  _exactDerivatives(param.x(), param.y(), d);
+  dudu = d[2];
+  dvdv = d[3];
+  dudv = d[4];
 }
 
 GPoint discreteFace::_exactIntersectionWithCircle(GPoint gp, const SVector3 &n1,

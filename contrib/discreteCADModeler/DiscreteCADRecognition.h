@@ -60,6 +60,9 @@ struct DiscreteCADAnalyticMap {
   // the surface nearest to x (near guess, if not null)
   void point(double u, double v, double x[3]) const;
   void parameters(const double x[3], const double *guess, double uv[2]) const;
+  // the derivatives of the point at the parameters (u, v): der[0] = dx/du,
+  // der[1] = dx/dv, der[2] = d2x/du2, der[3] = d2x/dv2, der[4] = d2x/dudv
+  void derivatives(double u, double v, double der[5][3]) const;
   // the reference of the angles from the parameters of the corners of the
   // triangles of a surface
   void setReference(const std::vector<std::array<std::array<double, 2>, 3> > &uv);
