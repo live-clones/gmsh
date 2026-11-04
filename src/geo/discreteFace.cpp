@@ -311,11 +311,17 @@ static void closestPointCallback(std::pair<MTriangle *, MTriangle *> *t,
 GPoint discreteFace::_closestPoint(const SPoint3 &p, const double guess[2],
                                    SVector3 *normal) const
 {
+  // with the exact geometry, the nearest point of the analytic surface if it
+  // is on the surface (its parameters in the domain), otherwise (beyond its
+  // boundary, in a hole) the nearest point of the chart below, moved onto the
+  // exact surface
   if(_exactParameters) {
     SPoint2 uv = _exactParameters(p, guess);
-    const SPoint3 x = _exactPoint(uv.x(), uv.y());
-    if(normal) *normal = this->normal(uv);
-    return GPoint(x.x(), x.y(), x.z(), this, uv);
+    if(_locate(uv.x(), uv.y()) >= 0) {
+      const SPoint3 x = _exactPoint(uv.x(), uv.y());
+      if(normal) *normal = this->normal(uv);
+      return GPoint(x.x(), x.y(), x.z(), this, uv);
+    }
   }
   if(_param.empty()) {
     GPoint gp;
@@ -343,13 +349,18 @@ GPoint discreteFace::_closestPoint(const SPoint3 &p, const double guess[2],
     return gp;
   }
 
-  if(normal) *normal = _normal(s.best);
   const MTriangle &t2d = _param.t2d[s.best];
   SPoint2 uv;
   for(int i = 0; i < 3; ++i) {
     uv[0] += s.proj.w[i] * t2d.getVertex(i)->x();
     uv[1] += s.proj.w[i] * t2d.getVertex(i)->y();
   }
+  if(_exactPoint) {
+    const SPoint3 x = _exactPoint(uv.x(), uv.y());
+    if(normal) *normal = this->normal(uv);
+    return GPoint(x.x(), x.y(), x.z(), this, uv);
+  }
+  if(normal) *normal = _normal(s.best);
   return GPoint(s.proj.point.x(), s.proj.point.y(), s.proj.point.z(), this,
                 uv);
 }
