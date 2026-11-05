@@ -3362,19 +3362,10 @@ double opt_general_mouse_selection(OPT_ARGS_NUM)
   if(action & GMSH_SET) CTX::instance()->mouseSelection = (int)val;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI)) {
-    if(CTX::instance()->mouseSelection) {
-      if(FlGui::available()) Msg::StatusBar(false, "Mouse selection ON");
-      for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-        FlGui::instance()->graph[i]->getSelectionButton()->color(
-          FL_BACKGROUND_COLOR);
-    }
-    else {
-      if(FlGui::available()) Msg::StatusBar(false, "Mouse selection OFF");
-      for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-        FlGui::instance()->graph[i]->getSelectionButton()->color(FL_RED);
-    }
-    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-      FlGui::instance()->graph[i]->getSelectionButton()->redraw();
+    Msg::StatusBar(false, CTX::instance()->mouseSelection ?
+                            "Mouse selection ON" :
+                            "Mouse selection OFF");
+    updateModeButtons();
   }
 #endif
   return CTX::instance()->mouseSelection;

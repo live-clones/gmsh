@@ -2892,21 +2892,21 @@ static bool _queryMode = false;
 
 bool queryMode() { return _queryMode; }
 
-static void setQueryButtons(bool on, bool measure = false)
+void updateModeButtons()
 {
   if(!FlGui::available()) return;
-  // in the colour of what a query leaves on the picture, so that the button
-  // and the note it sticks there are read as one thing
-  CTX *c = CTX::instance();
-  Fl_Color col = fl_rgb_color((uchar)c->unpackRed(c->color.query),
-                              (uchar)c->unpackGreen(c->color.query),
-                              (uchar)c->unpackBlue(c->color.query));
-  for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++) {
-    Fl_Button *b = measure ?
-                     FlGui::instance()->graph[i]->getMeasureButton() :
-                     FlGui::instance()->graph[i]->getQueryButton();
-    b->color(on ? col : FL_BACKGROUND_COLOR);
-    b->redraw();
+  // a query and a measurement in yellow, as what they leave on the picture by
+  // default (see General.Color.Query)
+  Fl_Color col = gmshIndicator(IndicatorYellow);
+  for(graphicWindow *g : FlGui::instance()->graph) {
+    g->getQueryButton()->color(queryMode() ? col : FL_BACKGROUND_COLOR);
+    g->getQueryButton()->redraw();
+    g->getMeasureButton()->color(measureMode() ? col : FL_BACKGROUND_COLOR);
+    g->getMeasureButton()->redraw();
+    g->getSelectionButton()->color(
+      CTX::instance()->mouseSelection ? FL_BACKGROUND_COLOR :
+                                        gmshIndicator(IndicatorRed));
+    g->getSelectionButton()->redraw();
   }
 }
 
@@ -2926,7 +2926,7 @@ void status_query_cb(Fl_Widget *w, void *data)
   }
 
   _queryMode = true;
-  setQueryButtons(true);
+  updateModeButtons();
   int old = CTX::instance()->pickElements;
   CTX::instance()->pickElements = 1;
   // a query is a pick: it needs the mouse selection the "S" button switches
@@ -3028,7 +3028,7 @@ void status_query_cb(Fl_Widget *w, void *data)
 
   CTX::instance()->pickElements = old;
   _queryMode = false;
-  setQueryButtons(false);
+  updateModeButtons();
   if(FlGui::available()) {
     GModel::current()->setSelection(0);
     for(openglWindow *gl : FlGui::instance()->openglWindows()) {
@@ -3065,7 +3065,7 @@ void status_measure_cb(Fl_Widget *w, void *data)
   }
 
   _measureMode = true;
-  setQueryButtons(true, true);
+  updateModeButtons();
   // a measurement is a pick: it needs the mouse selection the "S" button
   // switches, but not the mesh elements, only where the click hits
   if(!CTX::instance()->mouseSelection)
@@ -3111,7 +3111,7 @@ void status_measure_cb(Fl_Widget *w, void *data)
   }
 
   _measureMode = false;
-  setQueryButtons(false, true);
+  updateModeButtons();
   if(FlGui::available()) {
     GModel::current()->setSelection(0);
     for(openglWindow *gl : FlGui::instance()->openglWindows()) {

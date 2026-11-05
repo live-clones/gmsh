@@ -45,12 +45,20 @@ Fl_Color hoverHighlight(Fl_Color c);
 // menu is shown with to get it (pass it to Fl_Menu_Item::popup())
 Fl_Color gmshMenuHighlight();
 const Fl_Menu_ *gmshPopupStyle();
-// a colour chosen for a light interface, made to suit the theme: the background
-// of a field (a clear tint in light mode, the colour itself no brighter than the
-// text in dark mode), or a text (as is in light mode, light in dark mode, in
-// both cases changed as much as needed to read); e.g. the highlight colours of
-// ONELAB parameters
+// a colour chosen by the user, e.g. the highlight of a ONELAB parameter, often
+// that of entities in the model: the background of a field (the colour itself,
+// no brighter than the text in dark mode), or a text (as is in light mode, light
+// in dark mode, in both cases changed as much as needed to read)
 Fl_Color adaptedFill(Fl_Color c);
 Fl_Color adaptedText(Fl_Color c);
+// the colours of Gmsh itself, for a button that is on (the levels of a loop, a
+// graph drawn, the mouse selection off, a query, a measurement), for the theme
+enum GmshIndicator {
+  IndicatorGreen,
+  IndicatorBlue,
+  IndicatorRed,
+  IndicatorYellow
+};
+Fl_Color gmshIndicator(GmshIndicator i);
 
 #endif
