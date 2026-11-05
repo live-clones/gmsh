@@ -146,11 +146,27 @@ static Fl_Color clearer(Fl_Color c)
   return fl_rgb_color(rgb[0], rgb[1], rgb[2]);
 }
 
-// a field: a deep tint in dark mode, a clear one in light mode (a pastel made
-// clearer, a darker or vivid colour, e.g. black, navy or red, made a tint)
+// A colour no brighter than the text of the interface, or else scaled down to
+// it: the same hue and saturation, so that it is still the colour chosen (often
+// that of entities in the model, which it must match), without the glare
+static Fl_Color noBrighterThanText(Fl_Color c)
+{
+  uchar r, g, b, fr, fg, fb;
+  Fl::get_color(c, r, g, b);
+  Fl::get_color(FL_FOREGROUND_COLOR, fr, fg, fb);
+  int mx = std::max(r, std::max(g, b));
+  int cap = std::max(fr, std::max(fg, fb));
+  if(mx <= cap) return c;
+  return fl_rgb_color((uchar)(r * cap / mx), (uchar)(g * cap / mx),
+                      (uchar)(b * cap / mx));
+}
+
+// a field: the colour itself, not glaring, in dark mode; a clear tint in light
+// mode (a pastel made clearer, a darker or vivid colour, e.g. black, navy or
+// red, made a tint)
 Fl_Color adaptedFill(Fl_Color c)
 {
-  if(CTX::instance()->guiDark) return atLightness(c, 0.36, 0.7);
+  if(CTX::instance()->guiDark) return noBrighterThanText(c);
   Fl_Color t = clearer(c);
   uchar r, g, b;
   Fl::get_color(t, r, g, b);

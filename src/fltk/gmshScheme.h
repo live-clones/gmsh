@@ -45,11 +45,11 @@ Fl_Color hoverHighlight(Fl_Color c);
 // menu is shown with to get it (pass it to Fl_Menu_Item::popup())
 Fl_Color gmshMenuHighlight();
 const Fl_Menu_ *gmshPopupStyle();
-// a colour chosen for a light interface, of the same hue at a lightness that
-// suits the theme: the background of a field (a clear tint in light mode, a
-// deep one in dark mode), or a text (as is in light mode, light in dark mode,
-// in both cases changed as much as needed to read); e.g. the highlight colours
-// of ONELAB parameters
+// a colour chosen for a light interface, made to suit the theme: the background
+// of a field (a clear tint in light mode, the colour itself no brighter than the
+// text in dark mode), or a text (as is in light mode, light in dark mode, in
+// both cases changed as much as needed to read); e.g. the highlight colours of
+// ONELAB parameters
 Fl_Color adaptedFill(Fl_Color c);
 Fl_Color adaptedText(Fl_Color c);
 
