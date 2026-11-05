@@ -1242,6 +1242,10 @@ int FlGui::runShortcut(const std::string &a)
     status_xyz1p_cb(nullptr, (void *)"1:1");
     return 1;
   }
+  if(a == "view_3d") {
+    status_xyz1p_cb(nullptr, (void *)"3d");
+    return 1;
+  }
   if(a == "projection") {
     status_options_cb(nullptr, (void *)"p");
     return 1;

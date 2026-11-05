@@ -2518,6 +2518,23 @@ static graphicWindow *getGraphicWindow(Fl_Widget *w)
   return FlGui::instance()->graph[0];
 }
 
+// the scale at which the bounding box seen isometrically fills the viewport,
+// with the margin it has at scale 1 seen along z, which is all scale 1 is made
+// for: a box seen isometrically is larger on the screen
+static double isometricScale(drawContext *ctx)
+{
+  CTX *c = CTX::instance();
+  const double dx = c->max[0] - c->min[0], dy = c->max[1] - c->min[1];
+  const double dz = c->max[2] - c->min[2];
+  const double w = (dx + dy) / sqrt(2.);
+  const double h = (dx + dy) / sqrt(6.) + dz * sqrt(2. / 3.);
+  const double margin = 1. + 2. * c->displayBorderFactor;
+  double scale = 1.;
+  if(h > 0.) scale = (ctx->vymax - ctx->vymin) / (margin * h);
+  if(w > 0.) scale = std::min(scale, (ctx->vxmax - ctx->vxmin) / (margin * w));
+  return scale;
+}
+
 void status_xyz1p_cb(Fl_Widget *w, void *data)
 {
   const char *str = (const char *)data;
@@ -2599,6 +2616,20 @@ void status_xyz1p_cb(Fl_Widget *w, void *data)
           ctx->r[2] = 0.;
         }
         ctx->setQuaternionFromEulerAngles();
+      }
+    }
+    else if(!strcmp(str, "3d")) {
+      // isometric view, with Z up: X to the left and Y to the right, or the
+      // other way round from the opposite side (shift)
+      bool opposite = Fl::event_state(FL_SHIFT);
+      if(CTX::instance()->camera) { ctx->camera.isometric(opposite); }
+      else {
+        ctx->r[0] = -54.7356; // the axes equally foreshortened
+        ctx->r[1] = 0.;
+        ctx->r[2] = opposite ? 45. : -135.;
+        ctx->setQuaternionFromEulerAngles();
+        ctx->t[0] = ctx->t[1] = ctx->t[2] = 0.;
+        ctx->s[0] = ctx->s[1] = ctx->s[2] = isometricScale(ctx);
       }
     }
     else if(!strcmp(str, "1:1")) {
@@ -3952,6 +3983,12 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   _butt[2]->callback(status_xyz1p_cb, (void *)"z");
   _butt[2]->tooltip("Set +Z or -Z (Shift) view (Alt+z or Alt+Shift+z)");
   x += sw;
+  _butt[15] = new Fl_Button(x, mh + glheight + mheight + 2,
+                            (int)(1.75 * FL_NORMAL_SIZE), sht, "3D");
+  _butt[15]->callback(status_xyz1p_cb, (void *)"3d");
+  _butt[15]->tooltip("Set isometric 3D view, Z up, or from the opposite side "
+                     "(Shift) (Alt+3 or Alt+Shift+3)");
+  x += 1.75 * FL_NORMAL_SIZE;
   _butt[4] =
     new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_rotate");
   _butt[4]->callback(status_xyz1p_cb, (void *)"r");
@@ -4006,7 +4043,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   _butt[11]->deactivate();
   x += sw;
 
-  for(int i = 0; i < 15; i++) {
+  for(int i = 0; i < 16; i++) {
     _butt[i]->box(FL_FLAT_BOX);
     _butt[i]->selection_color(FL_WHITE);
     _butt[i]->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);

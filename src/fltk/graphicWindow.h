@@ -40,7 +40,7 @@ private:
   messageBrowser *_browser;
   onelabGroup *_onelab;
   Fl_Box *_bottom;
-  Fl_Button *_butt[15];
+  Fl_Button *_butt[16];
   Fl_Progress *_label;
   int _minWidth, _minHeight;
   // the size of the icons of the status bar
