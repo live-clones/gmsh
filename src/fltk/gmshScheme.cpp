@@ -150,7 +150,7 @@ static Fl_Color clearer(Fl_Color c)
 // clearer, a darker or vivid colour, e.g. black, navy or red, made a tint)
 Fl_Color adaptedFill(Fl_Color c)
 {
-  if(CTX::instance()->guiDark) return atLightness(c, 0.27, 0.6);
+  if(CTX::instance()->guiDark) return atLightness(c, 0.36, 0.7);
   Fl_Color t = clearer(c);
   uchar r, g, b;
   Fl::get_color(t, r, g, b);
