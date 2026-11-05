@@ -81,6 +81,11 @@ public:
     Fl_Double_Window::show();
     titleBarColor(this);
   }
+  virtual void draw()
+  {
+    gmshStyleWidgets(this);
+    Fl_Double_Window::draw();
+  }
 };
 
 #endif

@@ -7,8 +7,8 @@ Highlight the entity under the mouse pointer and display its properties / Resize
 Rotate / Select an entity / Accept a lasso zoom or a lasso selection
 @item Ctrl+Left button
 Start a lasso zoom or a lasso (un)selection, of all the entities inside it
-@item Ctrl+Alt+Left button
-Start a lasso (un)selection of the entities in front only
+@item Alt+Left button
+Accept a lasso (un)selection of the entities in front only
 @item Middle button
 Zoom / Unselect an entity / Accept a lasso zoom or a lasso unselection
 @item Ctrl+Middle button
@@ -16,5 +16,7 @@ Orthogonalize display
 @item Right button
 Pan / Cancel a lasso zoom or a lasso (un)selection / Pop-up menu on post-processing view button
 @item Ctrl+Right button
+Reset to default viewpoint
+@item Ctrl+Alt+Left button
 Reset to default viewpoint
 @end table

@@ -678,4 +678,53 @@ bool gmshLocalNetworkClient::kill()
   return false;
 }
 
+bool gmshInProcessClient::run()
+{
+  // the command line a network client gets (see onelabUtils::getCommandLine),
+  // as separate arguments, words in double quotes kept whole
+  std::vector<std::string> args(1, _name);
+  std::vector<onelab::string> ps;
+  get(ps, _name + "/Model name");
+  if(ps.size() && ps[0].getValue().size()) args.push_back(ps[0].getValue());
+  get(ps, _name + "/Action");
+  std::string action = ps.empty() ? "" : ps[0].getValue(), command;
+  if(action == "check" || action == "compute") {
+    get(ps, _name + (action == "check" ? "/9CheckCommand" : "/9ComputeCommand"));
+    if(ps.size()) command = ps[0].getValue();
+  }
+  std::string word;
+  bool quoted = false, inWord = false;
+  for(char c : command) {
+    if(c == '"') {
+      quoted = !quoted;
+      inWord = true;
+    }
+    else if(!quoted && (c == ' ' || c == '\t')) {
+      if(inWord) args.push_back(word);
+      word.clear();
+      inWord = false;
+    }
+    else {
+      word += c;
+      inWord = true;
+    }
+  }
+  if(inWord) args.push_back(word);
+  args.push_back(getSocketSwitch());
+  args.push_back(_name);
+
+  Msg::StatusBar(true, "Running '%s'...", _name.c_str());
+  setPid(0);
+  int errors = 0;
+  try {
+    errors = _solver(args, onelab::server::instance());
+  } catch(...) {
+    Msg::Error("'%s' stopped on an error", _name.c_str());
+    errors = 1;
+  }
+  setPid(-1);
+  Msg::StatusBar(true, "Done running '%s'", _name.c_str());
+  return !errors;
+}
+
 #endif

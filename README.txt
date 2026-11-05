@@ -55,7 +55,7 @@ Build Gmsh from the command line
   and C include files, and the Python, Julia and Fortran modules.
 
 * The JavaScript Gmsh API needs Gmsh compiled to WebAssembly with Emscripten:
-  see utils/wasm/README.txt.
+  see contrib/webapp/README.txt.
 
 * To change build options you can use "ccmake" instead of "cmake", e.g.:
 

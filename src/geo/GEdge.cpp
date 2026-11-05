@@ -860,6 +860,8 @@ static bool recreateConsecutiveElements(GEdge *ge)
 
   if(!SortEdgeConsecutive(ed, vs))
     Msg::Warning("Line elements on curve %d cannot be ordered", ge->tag());
+  // (no chain at all, e.g. of degenerate elements: nothing to recreate)
+  if(vs.empty() || vs[0].size() < 2) return false;
 
   if(vs.size() != 1)
     Msg::Warning("Mesh of curve %d is mutiply connected", ge->tag());
@@ -911,17 +913,26 @@ static void meshCompound(GEdge *ge)
     de->meshAttributes.typeTransfinite = ge->meshAttributes.typeTransfinite;
   }
 
-  std::vector<int> phys;
   for(std::size_t i = 0; i < ge->compound.size(); i++) {
     auto *c = (GEdge *)ge->compound[i];
     de->lines.insert(de->lines.end(), c->lines.begin(), c->lines.end());
+  }
+
+  // recreate a 1D mesh with consecutive elements (this creates new MLines);
+  // when the elements make no chain the curves stay meshed on their own
+  if(!recreateConsecutiveElements(de)) {
+    Msg::Warning("Cannot mesh the curves of compound %d as one", ge->tag());
+    de->lines.clear();
+    return;
+  }
+
+  std::vector<int> phys;
+  for(std::size_t i = 0; i < ge->compound.size(); i++) {
+    auto *c = (GEdge *)ge->compound[i];
     c->compoundCurve = de;
     phys.insert(phys.end(), c->physicals.begin(), c->physicals.end());
     c->physicals.clear();
   }
-
-  // recreate a 1D mesh with consecutive elements (this creates new MLines)
-  recreateConsecutiveElements(de);
   // create the geometry
   de->createGeometry();
   // delete the MLines just created above

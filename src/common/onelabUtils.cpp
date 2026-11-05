@@ -15,6 +15,7 @@
 #include "OpenFile.h"
 #include "CreateFile.h"
 #include "StringUtils.h"
+#include "GmshGlobal.h"
 #include "gmshLocalNetworkClient.h"
 #include "onelabUtils.h"
 
@@ -31,6 +32,19 @@
 #endif
 
 namespace onelabUtils {
+
+  static std::map<std::string, inProcessSolver> _inProcessSolvers;
+
+  void setInProcessSolver(const std::string &name, inProcessSolver solver)
+  {
+    _inProcessSolvers[name] = solver;
+  }
+
+  inProcessSolver getInProcessSolver(const std::string &name)
+  {
+    auto it = _inProcessSolvers.find(name);
+    return it == _inProcessSolvers.end() ? nullptr : it->second;
+  }
 
   // get command line arguments for the client if "UseCommandLine" is set for
   // this client
@@ -469,7 +483,7 @@ namespace onelabUtils {
         name = opt_solver_name(num, GMSH_GET, "");
         exe = opt_solver_executable(num, GMSH_GET, "");
         host = opt_solver_remote_login(num, GMSH_GET, "");
-        if(exe.empty()) {
+        if(exe.empty() && !getInProcessSolver(name)) {
           Msg::Error("Solver executable name not provided");
           return;
         }
@@ -487,7 +501,10 @@ namespace onelabUtils {
       onelab::localNetworkClient *c = nullptr;
       onelab::string o;
       if(name.size()) {
-        c = new gmshLocalNetworkClient(name, exe, host);
+        if(getInProcessSolver(name))
+          c = new gmshInProcessClient(name, getInProcessSolver(name));
+        else
+          c = new gmshLocalNetworkClient(name, exe, host);
         c->setIndex(num);
         o = c->getName() + "/Action";
       }
@@ -880,6 +897,196 @@ namespace onelabUtils {
 
     // mark all parameters as changed
     onelab::server::instance()->setChanged(3);
+  }
+
+  bool serverAction(const std::string &action)
+  {
+    if(action == "ResetDatabase") {
+      // reset the onelab db
+      resetDb(false);
+      return true;
+    }
+    else if(action == "Reset") {
+      // reset the onelab db + views + models (except the current model)
+      resetDb(false);
+#if defined(HAVE_POST)
+      for(int i = PView::list.size() - 1; i >= 0; i--) delete PView::list[i];
+#endif
+      for(int i = GModel::list.size() - 1; i >= 0; i--)
+        if(GModel::list[i] != GModel::current()) delete GModel::list[i];
+      return true;
+    }
+    else if(!action.compare(0, 5, "Reset")) {
+      // reset some variables
+      std::vector<std::string> what =
+        onelab::parameter::split(action.substr(5), ',');
+      for(std::size_t i = 0; i < what.size(); i++) {
+        std::string var = onelab::parameter::trim(what[i]);
+        Msg::Debug("Clearing variable '%s'", var.c_str());
+        onelab::server::instance()->clear(var);
+      }
+      return true;
+    }
+    return false;
+  }
+
+  // the value of a "Set" action, for a number or a string
+  static void setValueFromString(onelab::number &p, const std::string &val)
+  {
+    p.setValue(atof(val.c_str()));
+  }
+
+  static void setValueFromString(onelab::string &p, const std::string &val)
+  {
+    p.setValue(val);
+  }
+
+  // Show, Hide, ReadOnly, ReadWrite or Set on the parameter of the given name,
+  // if it is a T (a number or a string), stored back in the server
+  template <class T>
+  static void applyServerAction(const std::string &var,
+                                const std::string &action,
+                                const std::string &val)
+  {
+    std::vector<T> ps;
+    onelab::server::instance()->get(ps, var);
+    if(ps.empty()) return;
+    if(action == "Set")
+      setValueFromString(ps[0], val);
+    else if(action == "Show")
+      ps[0].setVisible(true);
+    else if(action == "Hide")
+      ps[0].setVisible(false);
+    else if(action == "ReadOnly")
+      ps[0].setReadOnly(true);
+    else if(action == "ReadWrite")
+      ps[0].setReadOnly(false);
+    onelab::server::instance()->set(ps[0]);
+  }
+
+  // the actions named "...Match", on the parameters whose names match a regex
+  static bool serverActionMatch(const std::string &action,
+                                const std::string &match)
+  {
+    std::vector<std::string> names;
+    onelab::server::instance()->getParameterNames(names, match);
+    // the same as the action without "Match"
+    std::string a = action.substr(0, action.size() - 5);
+
+    for(auto &var : names) {
+      Msg::Debug("Performing action '%s' on variable '%s'", action.c_str(),
+                 var.c_str());
+      if(a == "Reset") { onelab::server::instance()->clear(var); }
+      else {
+        applyServerAction<onelab::string>(var, a, "");
+        applyServerAction<onelab::number>(var, a, "");
+      }
+    }
+    return !names.empty();
+  }
+
+  static bool serverActionList(const std::string &path,
+                               const std::string &action,
+                               const std::string &data)
+  {
+    std::vector<std::string> what = onelab::parameter::split(data, ',');
+
+    if(action == "Set" && (what.size() < 2 || what.size() % 2)) {
+      Msg::Warning("Bad data for ServerActionSet");
+      return false;
+    }
+
+    for(std::size_t i = 0; i < what.size(); i++) {
+      std::string var = onelab::parameter::trim(what[i]);
+      // replace starting '%' with path of variable with the attributes
+      if(var.size() && var[0] == '%') {
+        var.erase(0, 1);
+        var = path + "/" + var;
+      }
+      Msg::Debug("Performing action '%s' on variable '%s'", action.c_str(),
+                 var.c_str());
+      if(action == "Reset") { onelab::server::instance()->clear(var); }
+      else {
+        std::string val;
+        if(action == "Set") {
+          val = onelab::parameter::trim(what[i + 1]);
+          i++;
+        }
+        applyServerAction<onelab::string>(var, action, val);
+        applyServerAction<onelab::number>(var, action, val);
+      }
+    }
+    return true;
+  }
+
+  // the actions that do not rebuild the list of parameters (it should happen
+  // after all parameters have been changed on the server-side)
+  template <class T> static void performServerActionT(const T &n)
+  {
+    if(n.getAttributes().empty()) return;
+
+    // * actions using one variable or a list of variables
+    std::vector<std::string> list = {"Reset", "Hide",     "Show",
+                                     "Set",   "ReadOnly", "ReadWrite"};
+    for(auto &a : list) {
+      // global
+      std::string data = n.getAttribute("ServerAction" + a);
+      if(data.size()) serverActionList(n.getPath(), a, data);
+      // only for a given value
+      data = n.getAttribute("ServerAction" + a + " " + n.getValueAsString());
+      if(data.size()) serverActionList(n.getPath(), a, data);
+    }
+
+    // * actions using a regex
+    std::vector<std::string> regex = {"ResetMatch", "HideMatch", "ShowMatch",
+                                      "ReadOnlyMatch", "ReadWriteMatch"};
+    for(auto &a : regex) {
+      // global
+      std::string data = n.getAttribute("ServerAction" + a);
+      if(data.size()) serverActionMatch(a, data);
+      // only for a given value
+      data = n.getAttribute("ServerAction" + a + " " + n.getValueAsString());
+      if(data.size()) serverActionMatch(a, data);
+    }
+  }
+
+  void performServerAction(const onelab::number &p) { performServerActionT(p); }
+  void performServerAction(const onelab::string &p) { performServerActionT(p); }
+
+  template <class T> static void setGmshOptionT(const T &n)
+  {
+    std::string opt = n.getAttribute("GmshOption");
+    std::string::size_type dot = opt.find('.');
+    if(dot == std::string::npos) return;
+    GmshSetOption(opt.substr(0, dot), opt.substr(dot + 1), n.getValue());
+  }
+
+  void setGmshOption(const onelab::number &p) { setGmshOptionT(p); }
+  void setGmshOption(const onelab::string &p) { setGmshOptionT(p); }
+
+  template <class T>
+  static bool autoCheckT(const T &pold, const T &pnew, bool force)
+  {
+    if(getFirstComputationFlag()) {
+      if(pold.getValue() != pnew.getValue()) setFirstComputationFlag(false);
+    }
+    if((CTX::instance()->solver.autoCheck &&
+        pnew.getAttribute("AutoCheck") != "0") ||
+       pnew.getAttribute("AutoCheck") == "1")
+      return force || pold.getValue() != pnew.getValue();
+    return false;
+  }
+
+  bool autoCheck(const onelab::number &pold, const onelab::number &pnew,
+                 bool force)
+  {
+    return autoCheckT(pold, pnew, force);
+  }
+
+  bool autoCheck(const onelab::string &pold, const onelab::string &pnew,
+                 bool force)
+  {
+    return autoCheckT(pold, pnew, force);
   }
 
 } // namespace onelabUtils

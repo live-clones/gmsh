@@ -150,7 +150,7 @@ static Fl_Color clearer(Fl_Color c)
 // clearer, a darker or vivid colour, e.g. black, navy or red, made a tint)
 Fl_Color adaptedFill(Fl_Color c)
 {
-  if(CTX::instance()->guiDark) return atLightness(c, 0.27, 0.6);
+  if(CTX::instance()->guiDark) return atLightness(c, 0.36, 0.7);
   Fl_Color t = clearer(c);
   uchar r, g, b;
   Fl::get_color(t, r, g, b);
@@ -455,8 +455,30 @@ const Fl_Menu_ *gmshPopupStyle()
 // FLTK creates, so they are styled before the windows holding them are drawn
 // (anything shown or rebuilt is), and drawn again if that changed them. So
 // are the menus: the pull-downs, the menu buttons, the menu bar.
+static int track[4]; // the last track drawn: the whole scrollbar
+
+static void trackBox(int x, int y, int w, int h, Fl_Color c)
+{
+  track[0] = x;
+  track[1] = y;
+  track[2] = w;
+  track[3] = h;
+  fl_color(c);
+  fl_rectf(x, y, w, h);
+}
+
 static void thumbBox(int x, int y, int w, int h, Fl_Color c)
 {
+#if FL_API_VERSION < 10500
+  // FLTK 1.4 draws the arrow buttons whatever the width, after the track and
+  // with the box of the thumb, at both ends, where the thumb never is: they
+  // stay track, and their arrows are drawn in its colour (the label colour)
+  int t = std::min(track[2], track[3]);
+  if(w == t && h == t &&
+     ((x == track[0] && y == track[1]) ||
+      (x + w == track[0] + track[2] && y + h == track[1] + track[3])))
+    return;
+#endif
   fl_color(c);
   fl_rounded_rectf(x, y, w, h, std::min(w, h) / 2);
 }
@@ -465,11 +487,13 @@ static void styleScrollbar(Fl_Scrollbar *s)
 {
   Fl_Color track = s->parent() ? s->parent()->color() : FL_BACKGROUND_COLOR;
   Fl_Color thumb = fl_color_average(FL_FOREGROUND_COLOR, track, 0.35f);
-  if(s->box() == FL_FLAT_BOX && s->color() == track &&
-     s->slider() == GMSH_THUMB_BOX && s->selection_color() == thumb)
+  if(s->box() == GMSH_TRACK_BOX && s->color() == track &&
+     s->labelcolor() == track && s->slider() == GMSH_THUMB_BOX &&
+     s->selection_color() == thumb)
     return;
-  s->box(FL_FLAT_BOX);
+  s->box(GMSH_TRACK_BOX);
   s->color(track);
+  s->labelcolor(track);
   s->slider(GMSH_THUMB_BOX);
   s->selection_color(thumb);
   s->redraw();
@@ -490,6 +514,11 @@ static void styleWidgets(void *)
   if(!gmshScheme()) return;
   for(Fl_Window *win = Fl::first_window(); win; win = Fl::next_window(win))
     if(win->damage()) styleWidgetsIn(win);
+}
+
+void gmshStyleWidgets(Fl_Widget *w)
+{
+  if(gmshScheme()) styleWidgetsIn(w);
 }
 
 void applyGmshScheme()
@@ -529,6 +558,7 @@ void applyGmshScheme()
   installBoxes();
 
   Fl::set_boxtype(GMSH_THUMB_BOX, thumbBox, 0, 0, 0, 0);
+  Fl::set_boxtype(GMSH_TRACK_BOX, trackBox, 0, 0, 0, 0);
   if(!Fl::has_check(styleWidgets)) Fl::add_check(styleWidgets);
 
   // no dashed rectangle on the widget with the focus

@@ -898,9 +898,11 @@ namespace jacobianBasedQuality {
     const int max_subdivision = 1000;
     while(!domains[0]->boundsOk(minL, maxL) && k + 1 < max_subdivision) {
       _coeffData *cd = domains[0];
+      cd->getSubCoeff(subs);
+      // (no subdivision for this element type: keep the bounds as they are)
+      if(subs.empty()) break;
       pop_heap(domains.begin(), domains.end(), Comp());
       domains.pop_back();
-      cd->getSubCoeff(subs);
       cd->deleteBezierCoeff();
       delete cd;
 

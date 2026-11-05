@@ -441,23 +441,21 @@ void sceneView::handleMouse(const paneInput &in)
     }
     if(!hostClicked()) return;
     _curr.set(_ctx, x, y);
-    // (Ctrl+Alt+click starts a lasso of what is in front, and Alt does not
-    // matter for the click that ends a lasso)
-    if(in.button == 0 && !shift && (!alt || ctrl || lassoMode)) {
+    // (Alt+click ends a lasso with what is in front only: the click that
+    // ends a lasso can have it)
+    if(in.button == 0 && !shift && (!alt || lassoMode)) {
       // Ctrl+click adds a query in query mode (when the clicks select), and
       // starts a lasso otherwise
-      _addQuery =
-        hostQueryMode() && CTX::instance()->mouseSelection && ctrl && !alt;
+      _addQuery = hostQueryMode() && CTX::instance()->mouseSelection && ctrl;
       if(!lassoMode && ctrl && !_addQuery) {
         lassoMode = true;
-        _lassoFront = alt;
       }
       else if(lassoMode) {
         lassoMode = false;
         if(selectionMode && CTX::instance()->mouseSelection) {
           // will try to select multiple entities
           _trySelection = 2;
-          _trySelectionFront = _lassoFront;
+          _trySelectionFront = alt;
           _trySelectionXYWH[0] = (int)(_click.win[0] + _curr.win[0]) / 2;
           _trySelectionXYWH[1] = (int)(_click.win[1] + _curr.win[1]) / 2;
           _trySelectionXYWH[2] = (int)fabs(_click.win[0] - _curr.win[0]);
@@ -488,7 +486,7 @@ void sceneView::handleMouse(const paneInput &in)
         if(selectionMode && CTX::instance()->mouseSelection) {
           // will try to unselect multiple entities
           _trySelection = -2;
-          _trySelectionFront = _lassoFront;
+          _trySelectionFront = alt;
           _trySelectionXYWH[0] = (int)(_click.win[0] + _curr.win[0]) / 2;
           _trySelectionXYWH[1] = (int)(_click.win[1] + _curr.win[1]) / 2;
           _trySelectionXYWH[2] = (int)fabs(_click.win[0] - _curr.win[0]);

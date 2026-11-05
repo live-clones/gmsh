@@ -12,6 +12,7 @@
 #include <FL/Fl_Double_Window.H>
 #include "windowPlacement.h"
 #include "widthRules.h"
+#include "gmshScheme.h"
 
 // Derive special windows from Fl_Double_Window to correctly process
 // the OS-specific shorcuts (Esc & Cmd-w on Mac, Alt+F4 on Windows)
@@ -262,6 +263,11 @@ public:
       hiddenHook(this);
     else
       Fl_Double_Window::hide();
+  }
+  virtual void draw()
+  {
+    gmshStyleWidgets(this);
+    Fl_Double_Window::draw();
   }
 };
 

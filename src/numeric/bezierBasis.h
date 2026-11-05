@@ -215,6 +215,8 @@ private:
   static void _subdivide(fullMatrix<double> &coeff, int npts, int start);
   static void _subdivide(fullMatrix<double> &coeff, int npts, int start,
                          int inc);
+  static void _subdivideLine(const bezierCoeff &coeff,
+                             std::vector<bezierCoeff *> &subCoeff);
   static void _subdivideTriangle(const bezierCoeff &coeff, int start,
                                  std::vector<bezierCoeff *> &subCoeff);
   static void _subdivideTetrahedron(const bezierCoeff &coeff,

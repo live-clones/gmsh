@@ -61,6 +61,23 @@ public:
   bool kill();
 };
 
+// a solver linked in the program (see onelabUtils::setInProcessSolver), run
+// as a function call that shares the ONELAB server: no executable, no socket
+class gmshInProcessClient : public onelab::localNetworkClient {
+private:
+  int (*_solver)(const std::vector<std::string> &args, void *server);
+
+public:
+  gmshInProcessClient(const std::string &name,
+                      int (*solver)(const std::vector<std::string> &args,
+                                    void *server))
+    : onelab::localNetworkClient(name, ""), _solver(solver)
+  {
+  }
+  bool run();
+  bool kill() { return false; }
+};
+
 #endif
 
 #endif
