@@ -8599,7 +8599,7 @@ double opt_view_axes(OPT_ARGS_NUM)
   GET_VIEWo(0.);
   if(action & GMSH_SET) {
     opt->axes = (int)val;
-    if(opt->axes < 0 || opt->axes > 5) opt->axes = 0;
+    if(opt->axes < 0 || opt->axes > PViewOptions::AutomaticAxes) opt->axes = 0;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {

@@ -1287,10 +1287,12 @@ int FlGui::runShortcut(const std::string &a)
   if(a == "axes_loop") {
     opt_general_axes(0, GMSH_SET | GMSH_GUI,
                      opt_general_axes(0, GMSH_GET, 0) + 1);
+    // through the six modes: a view left on automatic starts over at none
     for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_axes(i, GMSH_SET | GMSH_GUI,
-                      opt_view_axes(i, GMSH_GET, 0) + 1);
+      if(opt_view_visible(i, GMSH_GET, 0)) {
+        int a = (int)opt_view_axes(i, GMSH_GET, 0);
+        opt_view_axes(i, GMSH_SET | GMSH_GUI, (a >= 5) ? 0 : a + 1);
+      }
     return 2;
   }
   if(a == "small_axes") {

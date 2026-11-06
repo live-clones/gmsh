@@ -360,7 +360,8 @@ static void getGraphLayout(PView *p, double xmin, double xmax, double ymin,
   // of a colour scale, so that a graph and a scale in the same window match
   l.out = l.gap = 0.4 * CTX::instance()->glFontSize;
 
-  if(!opt->axes) { // nothing is written: the curves alone, off the edges
+  // nothing is written: the curves alone, off the edges
+  if(!opt->getAxes()) {
     l.left = l.right = l.top = l.bottom = 1.5 * l.fontH;
     return;
   }
@@ -392,7 +393,7 @@ static void getGraphLayout(PView *p, double xmin, double xmax, double ymin,
 
   // the tick marks stick out of the frame, on both sides of a box
   l.left = l.bottom = l.out;
-  l.right = l.top = (opt->axes > 1) ? l.out : 0.;
+  l.right = l.top = (opt->getAxes() > 1) ? l.out : 0.;
 
   l.numX = l.out + l.gap + l.fontH + pl.xrow * (l.fontH + tick);
   l.multX = l.numX + 1.2 * l.fontH;
@@ -490,7 +491,7 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
 {
   PViewOptions *opt = p->getOptions();
 
-  if(!opt->axes) return;
+  if(!opt->getAxes()) return;
 
   if(width <= 0 || height <= 0) return;
 
@@ -526,7 +527,7 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
     gmshVertex2d(xleft, ytop);
     gmshVertex2d(xleft, ytop - height);
     gmshVertex2d(xleft + width, ytop - height);
-    if(opt->axes > 1) {
+    if(opt->getAxes() > 1) {
       gmshVertex2d(xleft + width, ytop);
       gmshVertex2d(xleft, ytop);
     }
@@ -568,7 +569,7 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
     CTX::instance()->unpackRed(opt->color.axes),
     CTX::instance()->unpackGreen(opt->color.axes),
     CTX::instance()->unpackBlue(opt->color.axes), 25);
-  bool blend = (opt->axes > 2);
+  bool blend = (opt->getAxes() > 2);
   if(blend) {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
@@ -587,7 +588,8 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
     if(pl.first) {
       gmshVertex2d(xleft - o, y);
       gmshVertex2d(xleft, y);
-      if(opt->axes > 1 && !pl.ytwin) { // the twin axis has the right side
+      // the twin axis has the right side
+      if(opt->getAxes() > 1 && !pl.ytwin) {
         gmshVertex2d(xleft + width, y);
         gmshVertex2d(xleft + width + o, y);
       }
@@ -597,7 +599,8 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
       gmshVertex2d(yaxis + o, y);
     }
     gmshEnd();
-    if(pl.first && opt->axes > 2 && l.yt[i].t > 0. && l.yt[i].t < 1.) {
+    if(pl.first && opt->getAxes() > 2 && l.yt[i].t > 0. &&
+       l.yt[i].t < 1.) {
       gmshColor4ubv((const void *)(minor ? &gridMinor : &grid));
       gmshBegin(GL_LINES);
       gmshVertex2d(xleft, y);
@@ -630,12 +633,12 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
       gmshBegin(GL_LINES);
       gmshVertex2d(x, ybot - o);
       gmshVertex2d(x, ybot);
-      if(opt->axes > 1) {
+      if(opt->getAxes() > 1) {
         gmshVertex2d(x, ytop);
         gmshVertex2d(x, ytop + o);
       }
       gmshEnd();
-      if(opt->axes > 2 && l.xt[i].t > 0. && l.xt[i].t < 1.) {
+      if(opt->getAxes() > 2 && l.xt[i].t > 0. && l.xt[i].t < 1.) {
         gmshColor4ubv((const void *)(minor ? &gridMinor : &grid));
         gmshBegin(GL_LINES);
         gmshVertex2d(x, ybot);
@@ -899,7 +902,7 @@ void drawContext::drawGraph2d(bool inModelCoordinates)
   for(std::size_t i = 0; i < graphs.size(); i++) {
     PViewOptions *opt = graphs[i]->getOptions();
     int a = opt->autoPosition;
-    if(a >= 2 && a <= 11 && opt->axes) shared[a]++;
+    if(a >= 2 && a <= 11 && opt->getAxes()) shared[a]++;
   }
 
   // what each graph does in its frame, and what the text of all of them
@@ -918,7 +921,7 @@ void drawContext::drawGraph2d(bool inModelCoordinates)
       PViewOptions *opt = graphs[i]->getOptions();
       int a = opt->autoPosition;
       if(a == 0 || a == 12) continue; // a graph placed by hand
-      if(!opt->axes) continue; // nothing is written around it
+      if(!opt->getAxes()) continue; // nothing is written around it
       graphPlace &pl = place[i];
       double xmin, xmax, ymin, ymax;
       getGraphAbscissa(graphs[i], xmin, xmax);

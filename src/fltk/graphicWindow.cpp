@@ -3273,7 +3273,8 @@ void status_options_cb(Fl_Widget *w, void *data)
     else
       menu[gen + 1].clear();
     for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0) && opt_view_axes(i, GMSH_GET, 0))
+      if(opt_view_visible(i, GMSH_GET, 0) &&
+         PView::list[i]->getOptions()->getAxes())
         menu[gen + 0].set();
     if(opt_geometry_points(0, GMSH_GET, 0))
       menu[geo + 1].set();

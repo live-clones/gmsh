@@ -92,6 +92,17 @@ static Fl_Menu_Item menu_axes_mode[] = {{"None", 0, nullptr, nullptr},
                                         {"Ruler", 0, nullptr, nullptr},
                                         {nullptr}};
 
+// the same for a view, with the automatic mode of View.Axes
+static Fl_Menu_Item menu_view_axes_mode[] = {
+  {"None", 0, nullptr, nullptr},
+  {"Simple axes", 0, nullptr, nullptr},
+  {"Box", 0, nullptr, nullptr},
+  {"Full grid", 0, nullptr, nullptr},
+  {"Open grid", 0, nullptr, nullptr},
+  {"Ruler", 0, nullptr, nullptr},
+  {"Automatic", 0, nullptr, nullptr},
+  {nullptr}};
+
 static Fl_Menu_Item menu_position[] = {
   {"Manual", 0, nullptr, nullptr},
   {"Automatic", 0, nullptr, nullptr},
@@ -3105,7 +3116,7 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
       view.choice[8] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Axes mode");
       view.choice[8]->tooltip("View.Axes (Alt+a)");
-      view.choice[8]->menu(menu_axes_mode);
+      view.choice[8]->menu(menu_view_axes_mode);
       view.choice[8]->align(FL_ALIGN_RIGHT);
       view.choice[8]->callback(view_options_ok_cb, (void *)"view_axes");
 

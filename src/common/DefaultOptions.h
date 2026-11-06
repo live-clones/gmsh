@@ -2045,8 +2045,9 @@ StringXNumber ViewOptions_Number[] = {
     "Position the scale or 2D plot automatically (0: manual, 1: automatic, 2: top left, "
     "3: top right, 4: bottom left, 5: bottom right, 6: top, 7: bottom, 8: left, 9: right, "
     "10: full, 11: top third, 12: in model coordinates)" },
-  { F|O, "Axes" , opt_view_axes , 0 ,
-    "Axes (0: none, 1: simple axes, 2: box, 3: full grid, 4: open grid, 5: ruler)" },
+  { F|O, "Axes" , opt_view_axes , 6 ,
+    "Axes (0: none, 1: simple axes, 2: box, 3: full grid, 4: open grid, "
+    "5: ruler, 6: automatic: none for 3D plots, full grid for 2D graphs)" },
   { F|O, "AxesMikado" , opt_view_axes_mikado , 0. ,
     "Mikado axes style" },
   { F|O, "AxesAutoPosition" , opt_view_axes_auto_position , 1. ,
