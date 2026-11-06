@@ -190,11 +190,13 @@ static std::string quoted(const std::string &s)
 
 std::string desktopFont()
 {
-  // "Cantarell 11", through the portal or straight from the GNOME settings
+  // "Cantarell 11", or "Noto Sans,  10" under KDE, through the portal or straight
+  // from the GNOME settings
   std::string name = quoted(portal("org.gnome.desktop.interface", "font-name"));
   if(name.empty())
     name = quoted(run("gsettings get org.gnome.desktop.interface font-name"));
   // the family without the size
+  name = name.substr(0, name.find(','));
   while(!name.empty() && (isdigit(name.back()) || name.back() == '.'))
     name.pop_back();
   while(!name.empty() && name.back() == ' ') name.pop_back();
