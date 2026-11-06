@@ -166,6 +166,162 @@ namespace {
     for(auto &t : triangles) std::swap(t[1], t[2]);
   }
 
+  // the chart of an analytic surface (the parameters uv of its points xyz,
+  // those of map with v times flip; node: the node of each point) fitted to
+  // the curves on the intersection of analytic surfaces (segments: their
+  // surfaces, by the nodes of the segments of their polylines), so that it
+  // contains them (bounded by their chords, it leaves out their arcs that
+  // bulge out of it, whose closest points are then on the chords): its
+  // edges on the boundary along them replaced by points of the curves (in
+  // the planes normal to the edge, enough for the arcs between them to be
+  // within 1e-3 times its length of their chords) and the apices of the
+  // triangles on the chords enclosing the arcs that bulge out (tangent at
+  // their ends to the parabola through their ends and middle, a quarter
+  // higher for arcs of varying curvature), the triangle along the edge by
+  // the fan from its opposite corner, if all of it keeps its orientation;
+  // the parameters of the ends of the edges those of their points. The
+  // numbers of edges fitted and left as chords
+  std::pair<int, int> fitChartToCurves(
+    const DiscreteCADAnalyticMap &map, double flip,
+    const std::map<std::pair<int, int>,
+                   std::vector<const DiscreteCADAnalyticSurface *> > &segments,
+    const std::vector<int> &node, std::vector<SPoint2> &uv,
+    std::vector<SPoint3> &xyz, std::vector<int> &triangles)
+  {
+    auto parameters = [&](const SPoint3 &x, double u, double v) {
+      const double p[3] = {x.x(), x.y(), x.z()}, guess[2] = {u, flip * v};
+      double q[2];
+      map.parameters(p, guess, q);
+      return SPoint2(q[0], flip * q[1]);
+    };
+    // the point x of the curve of the surfaces s in the plane normal to ab
+    // through a + f (b - a)
+    auto onCurve = [](const std::vector<const DiscreteCADAnalyticSurface *> &s,
+                      const SPoint3 &a, const SPoint3 &b, double f,
+                      SPoint3 &x) {
+      double p[3], t[3], y[3];
+      for(int k = 0; k < 3; k++) {
+        p[k] = a[k] + f * (b[k] - a[k]);
+        t[k] = b[k] - a[k];
+      }
+      normalize(t);
+      if(!intersectSurfaces(s, p, t, y)) return false;
+      x = SPoint3(y[0], y[1], y[2]);
+      return true;
+    };
+    auto cross = [](const SPoint2 &a, const SPoint2 &b, const SPoint2 &c) {
+      return (b.x() - a.x()) * (c.y() - a.y()) -
+             (b.y() - a.y()) * (c.x() - a.x());
+    };
+    std::map<std::pair<int, int>, int> uses;
+    for(std::size_t i = 0; i < triangles.size(); i++)
+      uses[std::minmax(triangles[i], triangles[i - i % 3 + (i + 1) % 3])]++;
+    std::map<std::pair<int, int>,
+             const std::vector<const DiscreteCADAnalyticSurface *> *>
+      along;
+    for(auto &e : uses) {
+      if(e.second != 1) continue;
+      auto s =
+        segments.find(std::minmax(node[e.first.first], node[e.first.second]));
+      if(s != segments.end()) along[e.first] = &s->second;
+    }
+    std::pair<int, int> fitted(0, 0);
+    for(std::size_t t = 0; t < triangles.size() / 3; t++) {
+      for(int k = 0; k < 3; k++) {
+        const int a = triangles[3 * t + k], b = triangles[3 * t + (k + 1) % 3],
+                  c = triangles[3 * t + (k + 2) % 3];
+        auto e = along.find(std::minmax(a, b));
+        if(e == along.end()) continue;
+        const std::vector<const DiscreteCADAnalyticSurface *> &s = *e->second;
+        along.erase(e);
+        uv[a] = parameters(xyz[a], uv[a].x(), uv[a].y());
+        uv[b] = parameters(xyz[b], uv[b].x(), uv[b].y());
+        const double l = xyz[a].distance(xyz[b]);
+        SPoint3 m;
+        if(!onCurve(s, xyz[a], xyz[b], 0.5, m)) {
+          fitted.second++;
+          continue;
+        }
+        const SPoint3 middle(0.5 * (xyz[a].x() + xyz[b].x()),
+                             0.5 * (xyz[a].y() + xyz[b].y()),
+                             0.5 * (xyz[a].z() + xyz[b].z()));
+        const double sagitta = m.distance(middle);
+        if(!(sagitta > 1.e-9 * l)) continue;
+        const int n = std::min(
+          16, (int)std::ceil(std::sqrt(sagitta / (1.e-3 * l)) - 1.e-9));
+        std::vector<SPoint3> x(n + 1);
+        std::vector<SPoint2> p(n + 1);
+        x[0] = xyz[a];
+        p[0] = uv[a];
+        x[n] = xyz[b];
+        p[n] = uv[b];
+        bool found = true;
+        for(int i = 1; i < n && found; i++) {
+          const double f = (double)i / n;
+          found = onCurve(s, xyz[a], xyz[b], f, x[i]);
+          p[i] = parameters(x[i], (1. - f) * uv[a].x() + f * uv[b].x(),
+                            (1. - f) * uv[a].y() + f * uv[b].y());
+        }
+        // (the side out of the chart, to the right of ab if the triangle is
+        // positively oriented)
+        const double o = cross(uv[a], uv[b], uv[c]) > 0. ? 1. : -1.;
+        std::vector<SPoint2> fanUV(1, p[0]);
+        std::vector<SPoint3> fanXYZ(1, x[0]);
+        for(int i = 0; i < n && found; i++) {
+          if(i) {
+            fanUV.push_back(p[i]);
+            fanXYZ.push_back(x[i]);
+          }
+          SPoint3 y;
+          found = onCurve(s, x[i], x[i + 1], 0.5, y);
+          if(!found) break;
+          const double mu = 0.5 * (p[i].x() + p[i + 1].x());
+          const double mv = 0.5 * (p[i].y() + p[i + 1].y());
+          const SPoint2 q = parameters(y, mu, mv);
+          const double eu = p[i + 1].x() - p[i].x();
+          const double ev = p[i + 1].y() - p[i].y();
+          const double du = q.x() - mu, dv = q.y() - mv;
+          const double ee = eu * eu + ev * ev;
+          if(!(ee > 0.) || o * (eu * dv - ev * du) >= 0.) continue;
+          // (the bulge normal to the chord)
+          const double h = 2.5 * (du * eu + dv * ev) / ee;
+          const SPoint2 apex(mu + 2.5 * du - h * eu, mv + 2.5 * dv - h * ev);
+          double z[3];
+          map.point(apex.x(), flip * apex.y(), z);
+          fanUV.push_back(apex);
+          fanXYZ.push_back(SPoint3(z[0], z[1], z[2]));
+        }
+        fanUV.push_back(p[n]);
+        fanXYZ.push_back(x[n]);
+        for(std::size_t i = 0; i + 1 < fanUV.size() && found; i++)
+          found = o * cross(fanUV[i], fanUV[i + 1], uv[c]) >
+                  1.e-9 * fanUV[i].distance(fanUV[i + 1]) *
+                    fanUV[i].distance(uv[c]);
+        if(!found) {
+          fitted.second++;
+          continue;
+        }
+        std::vector<int> fan(1, a);
+        for(std::size_t i = 1; i + 1 < fanUV.size(); i++) {
+          fan.push_back((int)uv.size());
+          uv.push_back(fanUV[i]);
+          xyz.push_back(fanXYZ[i]);
+        }
+        fan.push_back(b);
+        triangles[3 * t + (k + 1) % 3] = fan[1];
+        for(std::size_t i = 1; i + 1 < fan.size(); i++) {
+          triangles.push_back(fan[i]);
+          triangles.push_back(fan[i + 1]);
+          triangles.push_back(c);
+        }
+        fitted.first++;
+        // (the edges of the triangle again, its edge ca maybe along a curve)
+        k = -1;
+      }
+    }
+    return fitted;
+  }
+
   // a temporary model, current while it exists (the numbering of the nodes
   // and elements of the current one is left alone); creating it hides the
   // others
@@ -2499,8 +2655,18 @@ void DiscreteCAD_Internals::synchronize(GModel *model)
   }
   for(GEntity *e : created) _synchronized.push_back({e->dim(), e->tag()});
   model->createGeometryOfDiscreteEntities(_synchronized);
+  std::map<std::pair<int, int>,
+           std::vector<const DiscreteCADAnalyticSurface *> >
+    segments;
+  for(auto &it : intersections) {
+    const std::vector<int> &n = _curves[it.first].nodes;
+    for(std::size_t i = 0; i + 1 < n.size(); i++)
+      segments[std::minmax(n[i], n[i + 1])] = {it.second[0], it.second[1]};
+  }
+  std::pair<int, int> fitted(0, 0);
   // the parametrizations given with the surfaces, positively oriented (the
-  // nodes of a seam twice, with their parameters on each side)
+  // nodes of a seam twice, with their parameters on each side), those of the
+  // analytic surfaces fitted to the curves on intersections
   for(GEntity *e : created) {
     if(e->dim() != 2) continue;
     discreteFace *gf = static_cast<discreteFace *>(e);
@@ -2509,7 +2675,7 @@ void DiscreteCAD_Internals::synchronize(GModel *model)
     std::map<std::pair<int, std::array<double, 2> >, int> local;
     std::vector<SPoint2> uv;
     std::vector<SPoint3> xyz;
-    std::vector<int> triangles;
+    std::vector<int> triangles, nodeOf;
     double area = 0.;
     for(std::size_t i = 0; i < sf.triangles.size(); i++) {
       for(int k = 0; k < 3; k++) {
@@ -2518,8 +2684,10 @@ void DiscreteCAD_Internals::synchronize(GModel *model)
         auto it = local.find({n, p});
         if(it == local.end()) {
           it = local.insert({{n, p}, (int)uv.size()}).first;
+          const std::array<double, 3> &x = position(n);
           uv.push_back(SPoint2(p[0], p[1]));
-          xyz.push_back(SPoint3(_nodes[n][0], _nodes[n][1], _nodes[n][2]));
+          xyz.push_back(SPoint3(x[0], x[1], x[2]));
+          nodeOf.push_back(n);
         }
         triangles.push_back(it->second);
       }
@@ -2529,11 +2697,17 @@ void DiscreteCAD_Internals::synchronize(GModel *model)
     }
     const double flip = area < 0. ? -1. : 1.;
     for(SPoint2 &p : uv) p = SPoint2(p.x(), flip * p.y());
+    DiscreteCADAnalyticMap map = sf.analytic;
+    if(map.kind != DiscreteCADAnalyticMap::NONE) {
+      map.setReference(sf.uv);
+      const std::pair<int, int> f =
+        fitChartToCurves(map, flip, segments, nodeOf, uv, xyz, triangles);
+      fitted.first += f.first;
+      fitted.second += f.second;
+    }
     gf->setParametrization(uv, xyz, triangles);
     // the exact geometry of an analytic surface
-    if(sf.analytic.kind != DiscreteCADAnalyticMap::NONE) {
-      DiscreteCADAnalyticMap map = sf.analytic;
-      map.setReference(sf.uv);
+    if(map.kind != DiscreteCADAnalyticMap::NONE) {
       gf->setExactGeometry(
         [map, flip](double u, double v) {
           double x[3];
@@ -2651,6 +2825,9 @@ void DiscreteCAD_Internals::synchronize(GModel *model)
       gf->edgeLoops.push_back(loop);
     }
   }
+  Msg::Debug("Discrete CAD: %d edges of the parametrizations fitted to the "
+             "curves on intersections, %d left as chords",
+             fitted.first, fitted.second);
   for(GEntity *e : created) e->deleteMesh();
   model->resetMaxVertexNumber(maxVertex);
   model->resetMaxElementNumber(maxElement);
