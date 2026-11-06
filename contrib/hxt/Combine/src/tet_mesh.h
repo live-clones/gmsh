@@ -310,7 +310,7 @@ namespace HXTCombine {
     double prismCornerQuality(VertexIndex v0, VertexIndex v1, VertexIndex v2, VertexIndex v3) const {
       return cellCornerQuality<Prism>(point(v0),point(v1), point(v2), point(v3));
     }
-    bool triangleCornerQuality(VertexIndex v0, VertexIndex v1, VertexIndex v2) const {
+    double triangleCornerQuality(VertexIndex v0, VertexIndex v1, VertexIndex v2) const {
       return evaluateTriangle(point(v0), point(v1), point(v2));
     }
 
