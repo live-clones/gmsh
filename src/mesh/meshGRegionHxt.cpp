@@ -37,15 +37,6 @@ extern "C" {
 #include "hxt_tetColor.h"
 }
 
-static int getNumThreads()
-{
-  int nthreads = CTX::instance()->numThreads;
-  if(CTX::instance()->mesh.maxNumThreads3D > 0)
-    nthreads = CTX::instance()->mesh.maxNumThreads3D;
-  if(!nthreads) nthreads = Msg::GetMaxThreads();
-  return nthreads;
-}
-
 static HXTStatus messageCallback(HXTMessage *msg)
 {
   if(msg) Msg::Info("%s", msg->string);
@@ -63,7 +54,7 @@ static HXTStatus nodalSizesCallBack(double *pts, uint32_t *volume,
   HXT_INFO("Computing %smesh sizes...",
            useInterpolatedSize ? "interpolated " : "");
 
-  int nthreads = getNumThreads();
+  int nthreads = CTX::instance()->numThreads3D();
   bool exceptions = false;
 #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
   for(size_t i = 0; i < numPts; i++) {
@@ -470,7 +461,7 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
   std::vector<MVertex *> c2v;
   Gmsh2Hxt(regions, mesh, v2c, c2v);
 
-  int nthreads = getNumThreads();
+  int nthreads = CTX::instance()->numThreads3D();
 
   HXTTetMeshOptions options = {
     nthreads, // int defaultThreads;
@@ -531,7 +522,7 @@ static HXTStatus _delaunayMeshIn3DHxt(std::vector<MVertex *> &verts,
   mesh->vertices.num = nvert;
   mesh->vertices.size = nvert;
 
-  int nthreads = getNumThreads();
+  int nthreads = CTX::instance()->numThreads3D();
 
   HXTDelaunayOptions delOptions = {
     nullptr, // bbox
@@ -758,7 +749,7 @@ void optimizeMeshHXT(GModel *pModel, double quality, bool flipOnly)
 
     HXTOptimizeOptions options;
     options.bbox = nullptr;
-    options.numThreads = getNumThreads();
+    options.numThreads = CTX::instance()->numThreads3D();
     if(flipOnly)
       options.numVerticesConstrained = pMesh->vertices.num;
     else
@@ -979,7 +970,7 @@ void refineTetrahedraHxt(const std::vector<double> &coord, const std::vector<dou
   hxtBboxAdd(&bbox, pMesh->vertices.coord, pMesh->vertices.num);
   HXTDelaunayOptions delOptions;
   delOptions.bbox = &bbox;
-  delOptions.delaunayThreads = getNumThreads();
+  delOptions.delaunayThreads = CTX::instance()->numThreads3D();
   delOptions.perfectDelaunay = 0;
   delOptions.allowOuterInsertion = 0;
   delOptions.insertionFirst = pMesh->vertices.num;

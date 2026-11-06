@@ -602,10 +602,8 @@ void RelocateVertices(GRegion *region, int niter, double tol, int nthreads,
   if(!niter) return;
 
   if(nthreads <= 0)
-    nthreads = CTX::instance()->mesh.maxNumThreads3D > 0 ?
-                 CTX::instance()->mesh.maxNumThreads3D :
-                 CTX::instance()->numThreadsFor(region->getNumMeshElements(),
-                                                1000);
+    nthreads =
+      region->getNumMeshElements() < 1000 ? 1 : CTX::instance()->numThreads3D();
 
   // the elements around each vertex, the vertices by increasing number and
   // the elements in the order of the lists below (as a v2t_cont)

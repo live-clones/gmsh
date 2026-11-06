@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <unordered_map>
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <limits>
 #include <set>
@@ -1024,6 +1025,29 @@ void laplaceSmoothing(GFace *gf, int niter, bool infinity_norm)
 }
 
 #if defined(HAVE_BLOSSOM)
+// The perfect matching of Blossom on a graph of ncount nodes and the ecount
+// edges (elist[2i], elist[2i+1]) of lengths elen[i], both from malloc (Blossom
+// frees them): the matched edges as (node, node, length), false if it failed
+static bool perfectMatching(int ncount, int ecount, int *elist, int *elen,
+                            std::vector<std::array<int, 3>> &matched,
+                            double *time = nullptr)
+{
+  double matzeit = 0.0;
+  char MATCHFILE[256];
+  sprintf(MATCHFILE, ".face.match");
+  if(perfect_match(ncount, nullptr, ecount, &elist, &elen, nullptr, MATCHFILE,
+                   0, 0, 0, 0, &matzeit)) {
+    free(elist);
+    return false;
+  }
+  matched.resize(elist[0]);
+  for(int k = 0; k < elist[0]; k++)
+    matched[k] = {elist[1 + 3 * k], elist[1 + 3 * k + 1], elist[1 + 3 * k + 2]};
+  free(elist);
+  if(time) *time = matzeit;
+  return true;
+}
+
 // Greedy pre-matching: the pairs that are the best of both their
 // triangles, good enough and clearly better than their second choices
 // are matched first. Blossom matches the triangles left, some possibly
@@ -1121,24 +1145,19 @@ static bool prematchedBlossom(GFace *gf,
       elen[CC++] = alone;
     }
     ++nbBlossom;
-    double matzeit = 0.0;
-    char MATCHFILE[256];
-    sprintf(MATCHFILE, ".face.match");
-    if(perfect_match(2 * n, nullptr, ecount, &elist, &elen, nullptr, MATCHFILE,
-                     0, 0, 0, 0, &matzeit)) {
+    std::vector<std::array<int, 3>> matched;
+    if(!perfectMatching(2 * n, ecount, elist, elen, matched)) {
       failed = true;
-      free(elist);
       return;
     }
-    for(int k = 0; k < elist[0]; k++) {
-      const int i1 = elist[1 + 3 * k], i2 = elist[1 + 3 * k + 1];
+    for(const auto &m : matched) {
+      const int i1 = m[0], i2 = m[1];
       if(i1 >= n || i2 >= n) continue;
       auto it = pairOfNodes.find((std::uint64_t)std::min(i1, i2) << 32 |
                                  std::max(i1, i2));
       if(it == pairOfNodes.end()) continue;
       partner[global[i1]] = partner[global[i2]] = it->second;
     }
-    free(elist);
   };
 
   blossomMatch();
@@ -1405,33 +1424,21 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = true)
         }
         std::vector<MElement *> n2t(gf->triangles.begin(), gf->triangles.end());
 
+        std::vector<std::array<int, 3>> matched;
         double matzeit = 0.0;
-        char MATCHFILE[256];
-        sprintf(MATCHFILE, ".face.match");
-        if(perfect_match(ncount, nullptr, ecount, &elist, &elen, nullptr,
-                         MATCHFILE, 0, 0, 0, 0, &matzeit)) {
+        if(!perfectMatching(ncount, ecount, elist, elen, matched, &matzeit)) {
           Msg::Warning(
             "Perfect Match failed in quadrangulation, try something else");
-          free(elist);
           pairs.clear();
           _recombineIntoQuads(gf, false, cubicGraph);
         }
         else {
-          for(int k = 0; k < elist[0]; k++) {
-            int i1 = elist[1 + 3 * k], i2 = elist[1 + 3 * k + 1],
-                an = elist[1 + 3 * k + 2];
-            // FIXME !
-            if(an == 100000 /*|| an == 1000*/) {
-              // toProcess.push_back(std::make_pair(n2t[i1],n2t[i2]));
-              // Msg::Warning("Extra edge found in blossom algorithm,
-              // optimization"
-              //              "will be required");
-            }
-            else
-              addMatchedPair(n2t[i1], n2t[i2]);
+          for(const auto &m : matched) {
+            // FIXME: the edges closing the periodic graph (length 100000)
+            // match two triangles that stay triangles
+            if(m[2] != 100000) addMatchedPair(n2t[m[0]], n2t[m[1]]);
           }
           reportMatching();
-          free(elist);
           pairs.clear();
           Msg::Debug("Perfect Match Succeeded in Quadrangulation (%g sec)",
                      matzeit);

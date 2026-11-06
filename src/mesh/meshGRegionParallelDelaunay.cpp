@@ -3654,15 +3654,6 @@ namespace pdel3d {
 
 } // namespace pdel3d
 
-static int numThreads3D()
-{
-  int n = CTX::instance()->numThreads;
-  if(CTX::instance()->mesh.maxNumThreads3D > 0)
-    n = CTX::instance()->mesh.maxNumThreads3D;
-  if(!n) n = Msg::GetMaxThreads();
-  return n;
-}
-
 void delaunayMeshIn3DParallel(std::vector<MVertex *> &v,
                               std::vector<MTetrahedron *> &tets)
 {
@@ -3681,7 +3672,7 @@ void delaunayMeshIn3DParallel(std::vector<MVertex *> &v,
   std::iota(toInsert.begin(), toInsert.end(), 0);
   std::vector<std::uint8_t> status;
   pdel3d::DelaunayOptions opt;
-  opt.numThreads = numThreads3D();
+  opt.numThreads = CTX::instance()->numThreads3D();
   opt.reorderVertices = true; // toInsert[i] = original index of vertex i
   opt.verbosity = Msg::GetVerbosity() > 5 ? 2 : 1;
   pdel3d::DelaunayStats stats;
@@ -4977,12 +4968,7 @@ static int meshRegions(std::vector<GRegion *> &regions, splitQuadRecovery &sqr,
                        bool optimizeTopology = false)
 {
   const double t0 = TimeOfDay();
-  // with given points (the hex-dominant meshes): all the cores, as the
-  // combination that follows, unless Mesh.MaxNumThreads3D
-  const int nthreads = !points ? numThreads3D() :
-                       CTX::instance()->mesh.maxNumThreads3D > 0 ?
-                                 CTX::instance()->mesh.maxNumThreads3D :
-                                 Msg::GetMaxThreads();
+  const int nthreads = CTX::instance()->numThreads3D();
   const int verbosity = Msg::GetVerbosity() > 5 ? 2 : 1;
   SurfaceMesh s;
   if(!collectSurfaceMesh(regions, s, sqr)) return 2;

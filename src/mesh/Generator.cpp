@@ -1113,13 +1113,9 @@ static void Mesh3D(GModel *m)
          gr->meshAttributes.recombine3D) {
         hexDominant = true;
         meshCombine3D(gr, &frames);
-        // all the cores, as the combination, unless Mesh.MaxNumThreads3D
         const double tSmoothing = TimeOfDay(), cSmoothing = Cpu();
         RelocateVertices(gr, CTX::instance()->mesh.recombine3DSmoothing, 1.e-2,
-                         CTX::instance()->mesh.maxNumThreads3D > 0 ?
-                           CTX::instance()->mesh.maxNumThreads3D :
-                           Msg::GetMaxThreads(),
-                         true);
+                         0, true);
         AddMeshStageTime("smoothing", TimeOfDay() - tSmoothing,
                          Cpu() - cSmoothing);
         if(CTX::instance()->mesh.recombine3DSmoothing > 0)
