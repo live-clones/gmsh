@@ -1158,6 +1158,15 @@ enum class EdgeRecovery {
 //
 // The caller owns the BDS mesh and must delete it unless the result is
 // Recovered.
+// why the curve meshes of a failed surface are not subdivided, if the user
+// asked for it
+static const char *noSubdivisionHint()
+{
+  return CTX::instance()->mesh.repairSelfIntersecting1dMesh ?
+           "" :
+           " (Mesh.RepairSelfIntersecting1DMesh=0)";
+}
+
 static EdgeRecovery
 recoverBoundaryEdges(GFace *gf, BDS_Mesh *m, std::vector<GEdge *> &edges,
                      std::vector<GEdge *> &emb_edges,
@@ -1202,26 +1211,26 @@ recoverBoundaryEdges(GFace *gf, BDS_Mesh *m, std::vector<GEdge *> &edges,
              edgesToRecover.size(), edgesNotRecovered.size());
 
   if(edgesNotRecovered.size() || gf->meshStatistics.refineAllEdges) {
-    if(!CTX::instance()->mesh.repairSelfIntersecting1dMesh) {
-      Msg::Warning("Surface %d: boundary recovery failed; keeping the 1D mesh "
-                   "without subdivision (Mesh.RepairSelfIntersecting1DMesh=0)",
-                   gf->tag());
-      gf->meshStatistics.status = GFace::FAILED;
-      return EdgeRecovery::Failed;
-    }
     std::ostringstream sstream;
     for(auto itr = edgesNotRecovered.begin(); itr != edgesNotRecovered.end();
         ++itr)
       sstream << " " << itr->ge->tag();
+    if(!repairSelfIntersecting1dMesh) {
+      Msg::Error("Surface %d: %d intersections in the 1D mesh (curves%s), "
+                 "not subdivided%s",
+                 gf->tag(), edgesNotRecovered.size(), sstream.str().c_str(),
+                 noSubdivisionHint());
+      gf->meshStatistics.status = GFace::FAILED;
+      return EdgeRecovery::Failed;
+    }
     if(gf->meshStatistics.refineAllEdges) {
       Msg::Info("8-| Splitting all edges and trying again");
     }
     else {
       Msg::Info(":-( There are %d intersections in the 1D mesh (curves%s)",
                 edgesNotRecovered.size(), sstream.str().c_str());
-      if(repairSelfIntersecting1dMesh)
-        Msg::Info("8-| Splitting those edges and trying again - level %d",
-                  RECUR_ITER);
+      Msg::Info("8-| Splitting those edges and trying again - level %d",
+                RECUR_ITER);
     }
     if(debug) {
       char name[245];
@@ -1229,21 +1238,8 @@ recoverBoundaryEdges(GFace *gf, BDS_Mesh *m, std::vector<GEdge *> &edges,
               RECUR_ITER);
       gf->model()->writeMSH(name);
     }
-
-    if(repairSelfIntersecting1dMesh) {
-      remeshUnrecoveredEdges(recoverMapInv, edgesNotRecovered);
-      gf->meshStatistics.refineAllEdges = false;
-    }
-    else {
-      auto itr = edgesNotRecovered.begin();
-      for(; itr != edgesNotRecovered.end(); ++itr) {
-        int p1 = itr->p1;
-        int p2 = itr->p2;
-        int tag = itr->ge->tag();
-        Msg::Error("Edge not recovered: %d %d %d", p1, p2, tag);
-      }
-    }
-
+    remeshUnrecoveredEdges(recoverMapInv, edgesNotRecovered);
+    gf->meshStatistics.refineAllEdges = false;
     return EdgeRecovery::Retry;
   }
 
@@ -2064,12 +2060,22 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
   }
 
   if(doItAgain) {
-    // Stop before serialization or any change to shared curve meshes. In
-    // particular, do not invalidate already meshed neighboring surfaces.
-    if(!CTX::instance()->mesh.repairSelfIntersecting1dMesh) {
-      Msg::Warning("Surface %d: boundary recovery failed; keeping the 1D mesh "
-                   "without subdivision (Mesh.RepairSelfIntersecting1DMesh=0)",
-                   gf->tag());
+    std::ostringstream sstream;
+    for(auto itr = edgesNotRecovered.begin(); itr != edgesNotRecovered.end();
+        ++itr)
+      sstream << " " << itr->ge->tag() << "("
+              << (itr->ge->getBeginVertex() ? itr->ge->getBeginVertex()->tag() :
+                                              -1)
+              << ","
+              << (itr->ge->getEndVertex() ? itr->ge->getEndVertex()->tag() : -1)
+              << ")";
+    // before the serialization and any change to the curve meshes shared
+    // with the surfaces meshed already
+    if(!repairSelfIntersecting1dMesh) {
+      Msg::Error("Surface %d: %d intersections in the 1D mesh (curves%s), "
+                 "not subdivided%s",
+                 gf->tag(), edgesNotRecovered.size(), sstream.str().c_str(),
+                 noSubdivisionHint());
       gf->meshStatistics.status = GFace::FAILED;
       delete m;
       return false;
@@ -2085,42 +2091,30 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
       return true;
     }
 
-    if(!gf->meshStatistics.refineAllEdges) {
-      std::ostringstream sstream;
-      for(auto itr = edgesNotRecovered.begin(); itr != edgesNotRecovered.end();
-          ++itr)
-        sstream
-          << " " << itr->ge->tag() << "("
-          << (itr->ge->getBeginVertex() ? itr->ge->getBeginVertex()->tag() : -1)
-          << ","
-          << (itr->ge->getEndVertex() ? itr->ge->getEndVertex()->tag() : -1)
-          << ")";
+    if(!gf->meshStatistics.refineAllEdges)
       Msg::Info(":-( There are %d intersections in the 1D mesh (curves%s)",
                 edgesNotRecovered.size(), sstream.str().c_str());
-    }
-    if(repairSelfIntersecting1dMesh) {
-      Msg::Info("8-| Splitting those edges and trying again");
-      if(gf->meshStatistics.refineAllEdges) {
-        std::vector<GEdge *> eds = gf->edges();
-        edgesNotRecovered.clear();
-        for(size_t i = 0; i < eds.size(); i++) {
-          const std::size_t NN = eds[i]->lines.size() ? 1 : 0;
-          for(size_t j = 0; j < NN; j++) {
-            MVertex *v1 = eds[i]->lines[j]->getVertex(0);
-            MVertex *v2 = eds[i]->lines[j]->getVertex(1);
-            auto itp1 = recoverMultiMapInv.lower_bound(v1);
-            auto itp2 = recoverMultiMapInv.lower_bound(v2);
-            if(itp1 != recoverMultiMapInv.end() &&
-               itp2 != recoverMultiMapInv.end())
-              edgesNotRecovered.insert(
-                EdgeToRecover(itp1->second->iD, itp2->second->iD, eds[i]));
-          }
+    Msg::Info("8-| Splitting those edges and trying again");
+    if(gf->meshStatistics.refineAllEdges) {
+      std::vector<GEdge *> eds = gf->edges();
+      edgesNotRecovered.clear();
+      for(size_t i = 0; i < eds.size(); i++) {
+        const std::size_t NN = eds[i]->lines.size() ? 1 : 0;
+        for(size_t j = 0; j < NN; j++) {
+          MVertex *v1 = eds[i]->lines[j]->getVertex(0);
+          MVertex *v2 = eds[i]->lines[j]->getVertex(1);
+          auto itp1 = recoverMultiMapInv.lower_bound(v1);
+          auto itp2 = recoverMultiMapInv.lower_bound(v2);
+          if(itp1 != recoverMultiMapInv.end() &&
+             itp2 != recoverMultiMapInv.end())
+            edgesNotRecovered.insert(
+              EdgeToRecover(itp1->second->iD, itp2->second->iD, eds[i]));
         }
       }
-      remeshUnrecoveredEdges(recoverMultiMapInv, edgesNotRecovered,
-                             gf->meshStatistics.refineAllEdges);
-      gf->meshStatistics.refineAllEdges = false;
     }
+    remeshUnrecoveredEdges(recoverMultiMapInv, edgesNotRecovered,
+                           gf->meshStatistics.refineAllEdges);
+    gf->meshStatistics.refineAllEdges = false;
     // delete the mesh
     if(debug) {
       char name[245];
@@ -2173,10 +2167,10 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     if(debug) debugViews(m, gf, "phase4");
 
     if(gf->meshStatistics.status == GFace::FAILED &&
-       !CTX::instance()->mesh.repairSelfIntersecting1dMesh) {
-      Msg::Warning("Surface %d: meshing failed; keeping the 1D mesh without "
-                   "subdivision (Mesh.RepairSelfIntersecting1DMesh=0)",
-                   gf->tag());
+       !repairSelfIntersecting1dMesh) {
+      Msg::Error("Surface %d: meshing failed, its bounding curves not "
+                 "subdivided%s",
+                 gf->tag(), noSubdivisionHint());
       delete m;
       return false;
     }
@@ -2457,16 +2451,21 @@ void meshGFace::operator()(GFace *gf, bool print)
 
   quadMeshRemoveHalfOfOneDMesh halfmesh(gf, periodic);
 
+  // (the curve meshes are subdivided when their recovery fails, unless the
+  // caller or the user said not to)
+  const bool repair = repairSelfIntersecting1dMesh &&
+                      CTX::instance()->mesh.repairSelfIntersecting1dMesh;
+
   if(periodic) {
     // the generators turn debug output on themselves, from
     // CTX::instance()->debugSurface
-    if(!meshGeneratorPeriodic(gf, 0, repairSelfIntersecting1dMesh, false)) {
+    if(!meshGeneratorPeriodic(gf, 0, repair, false)) {
       Msg::Error("Impossible to mesh periodic surface %d", gf->tag());
       gf->meshStatistics.status = GFace::FAILED;
     }
   }
   else {
-    meshGenerator(gf, 0, repairSelfIntersecting1dMesh,
+    meshGenerator(gf, 0, repair,
                   (gf->getMeshingAlgo() == ALGO_2D_INITIAL_ONLY) ?
                     MeshExtent::InitialOnly :
                     MeshExtent::Full,
