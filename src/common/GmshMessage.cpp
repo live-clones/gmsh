@@ -190,6 +190,9 @@ void Msg::Initialize(int argc, char **argv)
     // find the onelab.py module or subclients automatically)
     addGmshPathToEnvironmentVar("PYTHONPATH");
     addGmshPathToEnvironmentVar("PATH");
+    // the interface is in English: under e.g. a Thai LANG, fontconfig would give
+    // Xft a font without Latin letters, which draws them all as empty boxes
+    if(GetEnvironmentVar("FC_LANG").empty()) SetEnvironmentVar("FC_LANG", "en");
   }
 
   if(_locale) {
@@ -197,9 +200,6 @@ void Msg::Initialize(int argc, char **argv)
     // use a dot for for the decimal separator when writing ASCII mesh files
     std::setlocale(LC_ALL, "C.UTF-8");
     std::setlocale(LC_NUMERIC, "C");
-    // the interface is in English: under e.g. a Thai LANG, fontconfig would give
-    // Xft a font without Latin letters, which draws them all as empty boxes
-    if(GetEnvironmentVar("FC_LANG").empty()) SetEnvironmentVar("FC_LANG", "en");
   }
 
   InitializeOnelab("Gmsh");
