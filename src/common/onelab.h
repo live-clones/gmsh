@@ -1320,7 +1320,7 @@ namespace onelab {
   class server {
   private:
     // the unique server (singleton behaviour due to the "static" specifier)
-    static server *_server;
+    static inline server *_server = nullptr;
     // the address of the server
     std::string _address;
     // the connected clients
