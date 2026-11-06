@@ -446,12 +446,13 @@ static void drawGeomCurve(drawContext *ctx, GEdge *e, bool sel, double width)
 {
   CTX *c = CTX::instance();
   // already in the kept curves, unless selected: then drawn again on top,
-  // which needs the depth test to accept equal depths
+  // pulled just towards the viewer since at another width its depths are not
+  // quite those of the kept line, which would show through in patches
   bool merged = _kept && c->geom.curves;
   bool drawIt = (c->geom.curves || e->getSelection() == GEntity::SelectShow) &&
                 (!merged || sel);
   if(drawIt) {
-    if(merged) glDepthFunc(GL_LEQUAL);
+    if(merged) gmshDepthOffset(true, 1e-5);
     std::vector<SPoint3> pts;
     curvePoints(ctx, e, pts);
     if(c->geom.curveType > 0) {
@@ -472,10 +473,7 @@ static void drawGeomCurve(drawContext *ctx, GEdge *e, bool sel, double width)
       for(auto &p : pts) gmshVertex3d(p.x(), p.y(), p.z());
       gmshEnd();
     }
-    if(merged) {
-      glImmediate::flush();
-      glDepthFunc(GL_LESS);
-    }
+    if(merged) gmshDepthOffset(false);
   }
 
   Range<double> t_bounds = e->parBounds(0);
