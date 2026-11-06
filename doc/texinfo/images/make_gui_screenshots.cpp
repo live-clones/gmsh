@@ -102,6 +102,7 @@ int main(int argc, char **argv)
   outdir = argc > 1 ? argv[1] : "."; scene = getenv("SCENE") ? getenv("SCENE") : "gui";
   gmsh::initialize(0, nullptr, false);
   gmsh::option::setNumber("General.FltkColorScheme", 0);
+  gmsh::option::setNumber("General.ColorScheme", 1);
   gmsh::option::setNumber("General.SystemMenuBar", 0);
   gmsh::option::setNumber("General.GraphicsWidth", 940);
   gmsh::option::setNumber("General.GraphicsHeight", 512);

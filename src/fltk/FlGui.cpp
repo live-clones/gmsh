@@ -554,10 +554,15 @@ void FlGui::applyColorScheme(bool redraw)
 // follows when asked to (General.FltkColorScheme = 2)
 void FlGui::desktopChanged()
 {
-  if(CTX::instance()->guiColorScheme != 2 || !available()) return;
+  if(!available()) return;
+  CTX *c = CTX::instance();
+  if(c->guiColorScheme != 2 && c->colorScheme != 4) return;
   bool dark = (desktopDark() == 1);
-  if(dark == (bool)CTX::instance()->guiDark) return;
-  applyColorScheme(true);
+  bool gui = (c->guiColorScheme == 2 && dark != (bool)c->guiDark);
+  bool graphics = followDesktopColorScheme(dark);
+  if(!gui && !graphics) return;
+  if(gui) applyColorScheme(true);
+  if(graphics) drawContext::global()->draw();
   // drawn now: the notification came while the loop waited for events, and
   // the windows inside the main one are only painted by a flush
   Fl::flush();
@@ -644,6 +649,10 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   // add new box types (dx dy dw dh)
   Fl::set_boxtype(GMSH_SIMPLE_RIGHT_BOX, simple_right_box_draw, 0, 0, 1, 0);
   Fl::set_boxtype(GMSH_SIMPLE_TOP_BOX, simple_top_box_draw, 0, 1, 0, 1);
+
+  // the graphics leave the colours used without a GUI, if they follow the desktop
+  if(CTX::instance()->colorScheme == 4)
+    followDesktopColorScheme(desktopDark() == 1);
 
   // apply color scheme before widget creation (noop if default color scheme is
   // selected), so that there's no color "flashing"
