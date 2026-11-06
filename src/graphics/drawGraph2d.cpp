@@ -880,17 +880,16 @@ void drawContext::drawGraph2d(bool inModelCoordinates)
   drawContext::global()->setFont(CTX::instance()->glFontEnum,
                                  CTX::instance()->glFontSize);
   double tick = 5; // the space between two lines of text
-  // a margin to the border of the window, in the size of the text, so that a
-  // graph keeps its air on a screen whose pixels are half as large
-  double font_h = std::max(1., (double)drawContext::global()->getStringHeight());
-  double mx = font_h, my = 0.6 * font_h;
   double ss = 1.;
   if(inModelCoordinates) {
     ss = pixel_equiv_x / s[0];
     tick *= ss;
-    mx *= ss;
-    my *= ss;
   }
+  // the air around the graphs, from the text to the border of the window and
+  // between two graphs: a fraction of a frame, as the model gets a fraction
+  // of its bounding box
+  double fact = CTX::instance()->displayBorderFactor;
+  double mx = 0., my = 0.;
 
   double winw = viewport[2] - viewport[0];
   double winh = viewport[3] - viewport[1];
@@ -953,30 +952,31 @@ void drawContext::drawGraph2d(bool inModelCoordinates)
       mr = std::max(mr, l.right);
       mt = std::max(mt, l.top);
       mb = std::max(mb, l.bottom);
-      if(a == 1)
-        nw = nh = (graphs.size() > 2) ? 2 : 1;
+      if(a == 1) {
+        if(graphs.size() > 2) nw = 2;
+        if(graphs.size() > 1) nh = 2;
+      }
       else {
         if(a <= 5 || a == 8 || a == 9) nw = 2;
         if(a <= 5 || a == 6 || a == 7) nh = std::max(nh, 2);
-        if(a == 11) nh = 3;
+        if(a == 11) nh = std::max(nh, 3);
       }
     }
-    // text wider than the window would leave nothing to draw in: the graphs
-    // keep two thirds of it, whatever their labels measure
-    double needw = nw * (ml + mr) + (nw + 1) * mx;
-    if(needw > 0.67 * winw) {
-      double f = 0.67 * winw / needw;
+    // text wider than half the window would leave nothing to draw in: the
+    // frames and their air keep half of it, whatever the labels measure
+    if(nw * (ml + mr) > 0.5 * winw) {
+      double f = 0.5 * winw / (nw * (ml + mr));
       ml *= f;
       mr *= f;
-      mx *= f;
     }
-    double needh = nh * (mt + mb) + (nh + 1) * my;
-    if(needh > 0.67 * winh) {
-      double f = 0.67 * winh / needh;
+    if(nh * (mt + mb) > 0.5 * winh) {
+      double f = 0.5 * winh / (nh * (mt + mb));
       mt *= f;
       mb *= f;
-      my *= f;
     }
+    // what is left goes to the frames and the air between and around them
+    mx = fact * (winw - nw * (ml + mr)) / (nw + (nw + 1) * fact);
+    my = fact * (winh - nh * (mt + mb)) / (nh + (nh + 1) * fact);
   }
 
   //  +------------------winw-------------------+
