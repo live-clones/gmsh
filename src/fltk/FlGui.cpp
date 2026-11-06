@@ -251,6 +251,30 @@ static void gmsh_rotate(Fl_Color c)
   fl_end_polygon();
 }
 
+// a cube seen along its diagonal: the isometric view
+static void gmsh_cube(Fl_Color c)
+{
+  fl_color(c);
+  bl;
+  vv(0.0, 0.9);
+  vv(0.78, 0.45);
+  vv(0.78, -0.45);
+  vv(0.0, -0.9);
+  vv(-0.78, -0.45);
+  vv(-0.78, 0.45);
+  el;
+  // (y down)
+  fl_begin_line();
+  vv(-0.78, -0.45);
+  vv(0.0, 0.0);
+  vv(0.78, -0.45);
+  fl_end_line();
+  fl_begin_line();
+  vv(0.0, 0.0);
+  vv(0.0, 0.9);
+  fl_end_line();
+}
+
 // a small disk (FLTK draws its circle 10 pixels wide at the least): the switch
 // of the views of a group in the ONELAB tree
 static void gmsh_dot(Fl_Color c)
@@ -662,6 +686,7 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   fl_add_symbol("gmsh_pause", gmsh_pause, 1);
   fl_add_symbol("gmsh_forward", gmsh_forward, 1);
   fl_add_symbol("gmsh_rotate", gmsh_rotate, 1);
+  fl_add_symbol("gmsh_cube", gmsh_cube, 1);
   fl_add_symbol("gmsh_sidebar", gmsh_sidebar, 1);
   fl_add_symbol("gmsh_models", gmsh_models, 1);
   fl_add_symbol("gmsh_query", gmsh_query, 1);

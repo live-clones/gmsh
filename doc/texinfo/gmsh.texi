@@ -1810,7 +1810,8 @@ display axes, or access the full module options (from the
 status bar give access to the same things: the first three show or hide
 the tree menu, select the active model and open the quick shortcut menu;
 `X', `Y', `Z' set viewports with the corresponding axis perpendicular to
-graphic plane; the rotation button rotates the view by 90 degrees; `1:1'
+graphic plane; the cube button sets an isometric view; the rotation button
+rotates the view by 90 degrees; `1:1'
 fits the model in the window; and `S' switches the mouse selection on or off. The
 crosshair button switches `Query' on: every click then says what
 the model holds where it hit, i.e. the geometrical entity, the mesh element

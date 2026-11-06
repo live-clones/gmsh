@@ -3746,7 +3746,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   // the status bar and its buttons: as tall as the menu bar and wider under
   // the gmsh theme, for its icons
   int sh = gmshScheme() ? BH : 2 * FL_NORMAL_SIZE - 3;
-  int sw = gmshScheme() ? 1.8 * FL_NORMAL_SIZE : FL_NORMAL_SIZE + 2;
+  int sw = gmshScheme() ? 1.7 * FL_NORMAL_SIZE : FL_NORMAL_SIZE + 2;
   _iconSize = FL_NORMAL_SIZE + 1; // the icons on the scale of the letters
 
   // the usable area of the screen that will show the window
@@ -3966,12 +3966,12 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   _butt[2]->callback(status_xyz1p_cb, (void *)"z");
   _butt[2]->tooltip("Set +Z or -Z (Shift) view (Alt+z or Alt+Shift+z)");
   x += sw;
-  _butt[15] = new Fl_Button(x, mh + glheight + mheight + 2,
-                            (int)(1.75 * FL_NORMAL_SIZE), sht, "3D");
+  _butt[15] =
+    new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_cube");
   _butt[15]->callback(status_xyz1p_cb, (void *)"3d");
   _butt[15]->tooltip("Set isometric 3D view, Z up, or from the opposite side "
                      "(Shift) (Alt+3 or Alt+Shift+3)");
-  x += 1.75 * FL_NORMAL_SIZE;
+  x += sw;
   _butt[4] =
     new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_rotate");
   _butt[4]->callback(status_xyz1p_cb, (void *)"r");
@@ -4028,7 +4028,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
 
   for(int i = 0; i < 16; i++) {
     _butt[i]->box(FL_FLAT_BOX);
-    _butt[i]->selection_color(FL_WHITE);
+    _butt[i]->selection_color(FL_BACKGROUND2_COLOR);
     _butt[i]->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
   }
   if(gmshScheme()) {
@@ -4036,6 +4036,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
     gmshIcon(_butt[14], "sidebar", _iconSize);
     gmshIcon(_butt[5], "models", _iconSize);
     gmshIcon(_butt[8], "quick", _iconSize);
+    gmshIcon(_butt[15], "cube", _iconSize);
     gmshIcon(_butt[4], "rotate", _iconSize);
     gmshIcon(_butt[12], "query", _iconSize);
     gmshIcon(_butt[13], "measure", _iconSize);

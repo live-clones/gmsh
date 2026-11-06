@@ -25,6 +25,9 @@ static const char *strokes(const std::string &name)
   if(name == "quick")
     return "<path d='M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3'/>"
            "<path d='M14 2v4M8 10v4M16 18v4'/>";
+  if(name == "cube")
+    return "<path d='M12 3l8 4.5v9L12 21l-8-4.5v-9z'/>"
+           "<path d='m4 7.5 8 4.5 8-4.5M12 12v9'/>";
   if(name == "rotate")
     return "<path d='M21 12a9 9 0 1 1-3-6.7'/><path d='M21 3v6h-6'/>";
   if(name == "query")
