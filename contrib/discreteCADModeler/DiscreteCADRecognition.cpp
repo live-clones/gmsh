@@ -602,10 +602,14 @@ void DiscreteCADAnalyticMap::parameters(const double x[3], const double *guess,
       }
       else {
         // (the angle t + 2 k pi whose developed angle is nearest to the
-        // reference)
+        // reference, among those within half a turn of the reference of
+        // point: beyond, a developed sector wider than half a turn wraps onto
+        // itself, and the developed point is that of another angle)
         const double ref =
           guess ? near(std::atan2(guess[1], guess[0]), reference) : reference;
-        const double phi = near(t, ref / sinHalf) * sinHalf;
+        double phi = near(t, ref / sinHalf) * sinHalf;
+        while(phi > reference + pi) phi -= 2. * pi * sinHalf;
+        while(phi < reference - pi) phi += 2. * pi * sinHalf;
         uv[0] = s * std::cos(phi);
         uv[1] = s * std::sin(phi);
       }
@@ -752,13 +756,19 @@ void DiscreteCADAnalyticMap::setReference(
     reference = (lo + hi) / 2. / surface.r1;
   }
   else {
-    double su = 0., sv = 0.;
+    // (the plane cut half a turn from the reference, in the middle of the
+    // widest angle without corners, out of the developed sector)
+    std::vector<double> a;
     for(auto &t : uv)
-      for(auto &p : t) {
-        su += p[0];
-        sv += p[1];
+      for(auto &p : t) a.push_back(std::atan2(p[1], p[0]));
+    std::sort(a.begin(), a.end());
+    double gap = a.front() + 2. * pi - a.back(), cut = a.back() + gap / 2.;
+    for(std::size_t i = 1; i < a.size(); i++)
+      if(a[i] - a[i - 1] > gap) {
+        gap = a[i] - a[i - 1];
+        cut = a[i - 1] + gap / 2.;
       }
-    reference = std::atan2(sv, su);
+    reference = cut - pi;
   }
 }
 
