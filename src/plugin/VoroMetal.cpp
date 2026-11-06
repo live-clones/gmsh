@@ -21,11 +21,6 @@ std::string GMSH_VoroMetalPlugin::getHelp() const
          "diagrams.\n\n";
 }
 
-#if defined(HAVE_MESH) && defined(HAVE_VOROPP)
-
-#include "meshGRegion.h"
-#include "voro++.hh"
-
 GMSH_VoroMetalPlugin::GMSH_VoroMetalPlugin()
   : GMSH_PostPlugin({{GMSH_FULLRC, "ComputeBestSeeds", nullptr, 0., ""},
                      {GMSH_FULLRC, "ComputeMicrostructure", nullptr, 1., ""}},
@@ -34,6 +29,11 @@ GMSH_VoroMetalPlugin::GMSH_VoroMetalPlugin()
                     })
 {
 }
+
+#if defined(HAVE_MESH) && defined(HAVE_VOROPP)
+
+#include "meshGRegion.h"
+#include "voro++.hh"
 
 using namespace voro;
 
