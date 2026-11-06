@@ -83,6 +83,9 @@ public:
   void alongX() { alongAxis(0); }
   void alongY() { alongAxis(1); }
   void alongZ() { alongAxis(2); }
+  // looking at the model isometrically, with z up, from the side of +x and +y
+  // or of -x and -y
+  void isometric(bool opposite);
   void upX() { upAxis(0); }
   void upY() { upAxis(1); }
   void upZ() { upAxis(2); }

@@ -251,6 +251,30 @@ static void gmsh_rotate(Fl_Color c)
   fl_end_polygon();
 }
 
+// a cube seen along its diagonal: the isometric view
+static void gmsh_cube(Fl_Color c)
+{
+  fl_color(c);
+  bl;
+  vv(0.0, 0.9);
+  vv(0.78, 0.45);
+  vv(0.78, -0.45);
+  vv(0.0, -0.9);
+  vv(-0.78, -0.45);
+  vv(-0.78, 0.45);
+  el;
+  // (y down)
+  fl_begin_line();
+  vv(-0.78, -0.45);
+  vv(0.0, 0.0);
+  vv(0.78, -0.45);
+  fl_end_line();
+  fl_begin_line();
+  vv(0.0, 0.0);
+  vv(0.0, 0.9);
+  fl_end_line();
+}
+
 // a small disk (FLTK draws its circle 10 pixels wide at the least): the switch
 // of the views of a group in the ONELAB tree
 static void gmsh_dot(Fl_Color c)
@@ -515,6 +539,7 @@ void FlGui::applyColorScheme(bool redraw)
 
   if(redraw && available()) {
     gmshIconsRecolor();
+    updateModeButtons();
     help->resetText();
     updateViews(true);
     for(Fl_Window *win = Fl::first_window(); win; win = Fl::next_window(win)) {
@@ -529,10 +554,15 @@ void FlGui::applyColorScheme(bool redraw)
 // follows when asked to (General.FltkColorScheme = 2)
 void FlGui::desktopChanged()
 {
-  if(CTX::instance()->guiColorScheme != 2 || !available()) return;
+  if(!available()) return;
+  CTX *c = CTX::instance();
+  if(c->guiColorScheme != 2 && c->colorScheme != 4) return;
   bool dark = (desktopDark() == 1);
-  if(dark == (bool)CTX::instance()->guiDark) return;
-  applyColorScheme(true);
+  bool gui = (c->guiColorScheme == 2 && dark != (bool)c->guiDark);
+  bool graphics = followDesktopColorScheme(dark);
+  if(!gui && !graphics) return;
+  if(gui) applyColorScheme(true);
+  if(graphics) drawContext::global()->draw();
   // drawn now: the notification came while the loop waited for events, and
   // the windows inside the main one are only painted by a flush
   Fl::flush();
@@ -620,6 +650,10 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   Fl::set_boxtype(GMSH_SIMPLE_RIGHT_BOX, simple_right_box_draw, 0, 0, 1, 0);
   Fl::set_boxtype(GMSH_SIMPLE_TOP_BOX, simple_top_box_draw, 0, 1, 0, 1);
 
+  // the graphics leave the colours used without a GUI, if they follow the desktop
+  if(CTX::instance()->colorScheme == 4)
+    followDesktopColorScheme(desktopDark() == 1);
+
   // apply color scheme before widget creation (noop if default color scheme is
   // selected), so that there's no color "flashing"
   applyColorScheme();
@@ -661,6 +695,7 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   fl_add_symbol("gmsh_pause", gmsh_pause, 1);
   fl_add_symbol("gmsh_forward", gmsh_forward, 1);
   fl_add_symbol("gmsh_rotate", gmsh_rotate, 1);
+  fl_add_symbol("gmsh_cube", gmsh_cube, 1);
   fl_add_symbol("gmsh_sidebar", gmsh_sidebar, 1);
   fl_add_symbol("gmsh_models", gmsh_models, 1);
   fl_add_symbol("gmsh_query", gmsh_query, 1);
@@ -1239,6 +1274,10 @@ int FlGui::runShortcut(const std::string &a)
   }
   if(a == "view_1_1") {
     status_xyz1p_cb(nullptr, (void *)"1:1");
+    return 1;
+  }
+  if(a == "view_3d") {
+    status_xyz1p_cb(nullptr, (void *)"3d");
     return 1;
   }
   if(a == "projection") {

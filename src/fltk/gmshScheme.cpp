@@ -128,34 +128,41 @@ static Fl_Color atLightness(Fl_Color c, double lightness, double maxSaturation)
                       (uchar)(255. * out[2] + 0.5));
 }
 
-// A pastel, barely told apart from white, as a clearer tint: each channel
-// moved further from the brightest one, by up to 2.5 times, until the colour
-// is as coloured as a moderate tint; the brightest channel, the hue and the
-// differences between two pastels kept, a grey or a vivid colour unchanged
-static Fl_Color clearer(Fl_Color c)
+// A colour no brighter than the text of the interface, or else scaled down to
+// it: the same hue and saturation, so that it is still the colour chosen (often
+// that of entities in the model, which it must match), without the glare
+static Fl_Color noBrighterThanText(Fl_Color c)
 {
-  uchar rgb[3];
-  Fl::get_color(c, rgb[0], rgb[1], rgb[2]);
-  int mx = std::max(rgb[0], std::max(rgb[1], rgb[2]));
-  int mn = std::min(rgb[0], std::min(rgb[1], rgb[2]));
-  double chroma = (mx - mn) / 255.;
-  if(chroma <= 0.) return c;
-  double k = std::min(2.5, std::max(1., 0.35 / chroma));
-  for(int i = 0; i < 3; i++)
-    rgb[i] = (uchar)std::max(0., mx - k * (mx - rgb[i]) + 0.5);
-  return fl_rgb_color(rgb[0], rgb[1], rgb[2]);
+  uchar r, g, b, fr, fg, fb;
+  Fl::get_color(c, r, g, b);
+  Fl::get_color(FL_FOREGROUND_COLOR, fr, fg, fb);
+  int mx = std::max(r, std::max(g, b));
+  int cap = std::max(fr, std::max(fg, fb));
+  if(mx <= cap) return c;
+  return fl_rgb_color((uchar)(r * cap / mx), (uchar)(g * cap / mx),
+                      (uchar)(b * cap / mx));
 }
 
-// a field: a deep tint in dark mode, a clear one in light mode (a pastel made
-// clearer, a darker or vivid colour, e.g. black, navy or red, made a tint)
+// a field: the colour chosen, as is; only kept from glaring in dark mode
 Fl_Color adaptedFill(Fl_Color c)
 {
-  if(CTX::instance()->guiDark) return atLightness(c, 0.36, 0.7);
-  Fl_Color t = clearer(c);
-  uchar r, g, b;
-  Fl::get_color(t, r, g, b);
-  double l = (std::max(r, std::max(g, b)) + std::min(r, std::min(g, b))) / 510.;
-  return (l < 0.75) ? atLightness(c, 0.85, 0.8) : t;
+  return CTX::instance()->guiDark ? noBrighterThanText(c) : c;
+}
+
+// chosen by hand: a formula darkens yellow to olive, and greys the others
+Fl_Color gmshIndicator(GmshIndicator i)
+{
+  // a clear tint on a light interface, and a strong colour on a dark one, on
+  // which the text and the icons of the interface read; a yellow only stays
+  // clean there as a gold
+  static const unsigned char colors[4][2][3] = {
+    {{140, 230, 160}, {35, 134, 54}}, // green
+    {{150, 210, 255}, {31, 111, 235}}, // blue
+    {{255, 180, 175}, {190, 40, 40}}, // red
+    {{250, 220, 100}, {158, 106, 3}} // yellow
+  };
+  const unsigned char *c = colors[i][CTX::instance()->guiDark ? 1 : 0];
+  return fl_rgb_color(c[0], c[1], c[2]);
 }
 
 // the relative luminance of a colour, and the contrast of two colours, from 1

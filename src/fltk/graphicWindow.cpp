@@ -2601,12 +2601,26 @@ void status_xyz1p_cb(Fl_Widget *w, void *data)
         ctx->setQuaternionFromEulerAngles();
       }
     }
+    else if(!strcmp(str, "3d")) {
+      // isometric view, with Z up: X to the left and Y to the right, or the
+      // other way round from the opposite side (shift)
+      bool opposite = Fl::event_state(FL_SHIFT);
+      if(CTX::instance()->camera) { ctx->camera.isometric(opposite); }
+      else {
+        ctx->r[0] = -54.7356; // the axes equally foreshortened
+        ctx->r[1] = 0.;
+        ctx->r[2] = opposite ? 45. : -135.;
+        ctx->setQuaternionFromEulerAngles();
+        ctx->t[0] = ctx->t[1] = ctx->t[2] = 0.;
+        ctx->s[0] = ctx->s[1] = ctx->s[2] = ctx->fitScale();
+      }
+    }
     else if(!strcmp(str, "1:1")) {
       // if Shift is pressed, reset bounding box around visible
       // entities
       if(Fl::event_state(FL_SHIFT)) SetBoundingBox(true);
-      // reset translation and scaling, or sync translation and
-      // scaling with the first window (alt)
+      // reset translation and fit the model in the window, or sync translation
+      // and scaling with the first window (Ctrl)
       if(CTX::instance()->camera) { ctx->camera.lookAtCg(); }
       else {
         if(Fl::event_state(FL_CTRL) || Fl::event_state(FL_META)) {
@@ -2620,7 +2634,7 @@ void status_xyz1p_cb(Fl_Widget *w, void *data)
         }
         else {
           ctx->t[0] = ctx->t[1] = ctx->t[2] = 0.;
-          ctx->s[0] = ctx->s[1] = ctx->s[2] = 1.;
+          ctx->s[0] = ctx->s[1] = ctx->s[2] = ctx->fitScale();
         }
       }
     }
@@ -2667,8 +2681,8 @@ void quick_access_cb(Fl_Widget *w, void *data)
   else if(what == "view")
     view_options_cb(nullptr, (void *)-1);
   else if(what == "reset_viewport") {
-    status_xyz1p_cb(nullptr, (void *)"1:1");
     status_xyz1p_cb(nullptr, (void *)"z");
+    status_xyz1p_cb(nullptr, (void *)"1:1");
   }
   else if(what == "measure") {
     status_measure_cb(nullptr, nullptr);
@@ -2892,21 +2906,21 @@ static bool _queryMode = false;
 
 bool queryMode() { return _queryMode; }
 
-static void setQueryButtons(bool on, bool measure = false)
+void updateModeButtons()
 {
   if(!FlGui::available()) return;
-  // in the colour of what a query leaves on the picture, so that the button
-  // and the note it sticks there are read as one thing
-  CTX *c = CTX::instance();
-  Fl_Color col = fl_rgb_color((uchar)c->unpackRed(c->color.query),
-                              (uchar)c->unpackGreen(c->color.query),
-                              (uchar)c->unpackBlue(c->color.query));
-  for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++) {
-    Fl_Button *b = measure ?
-                     FlGui::instance()->graph[i]->getMeasureButton() :
-                     FlGui::instance()->graph[i]->getQueryButton();
-    b->color(on ? col : FL_BACKGROUND_COLOR);
-    b->redraw();
+  // a query and a measurement in yellow, as what they leave on the picture by
+  // default (see General.Color.Query)
+  Fl_Color col = gmshIndicator(IndicatorYellow);
+  for(graphicWindow *g : FlGui::instance()->graph) {
+    g->getQueryButton()->color(queryMode() ? col : FL_BACKGROUND_COLOR);
+    g->getQueryButton()->redraw();
+    g->getMeasureButton()->color(measureMode() ? col : FL_BACKGROUND_COLOR);
+    g->getMeasureButton()->redraw();
+    g->getSelectionButton()->color(
+      CTX::instance()->mouseSelection ? FL_BACKGROUND_COLOR :
+                                        gmshIndicator(IndicatorRed));
+    g->getSelectionButton()->redraw();
   }
 }
 
@@ -2926,7 +2940,7 @@ void status_query_cb(Fl_Widget *w, void *data)
   }
 
   _queryMode = true;
-  setQueryButtons(true);
+  updateModeButtons();
   int old = CTX::instance()->pickElements;
   CTX::instance()->pickElements = 1;
   // a query is a pick: it needs the mouse selection the "S" button switches
@@ -3028,7 +3042,7 @@ void status_query_cb(Fl_Widget *w, void *data)
 
   CTX::instance()->pickElements = old;
   _queryMode = false;
-  setQueryButtons(false);
+  updateModeButtons();
   if(FlGui::available()) {
     GModel::current()->setSelection(0);
     for(openglWindow *gl : FlGui::instance()->openglWindows()) {
@@ -3065,7 +3079,7 @@ void status_measure_cb(Fl_Widget *w, void *data)
   }
 
   _measureMode = true;
-  setQueryButtons(true, true);
+  updateModeButtons();
   // a measurement is a pick: it needs the mouse selection the "S" button
   // switches, but not the mesh elements, only where the click hits
   if(!CTX::instance()->mouseSelection)
@@ -3111,7 +3125,7 @@ void status_measure_cb(Fl_Widget *w, void *data)
   }
 
   _measureMode = false;
-  setQueryButtons(false, true);
+  updateModeButtons();
   if(FlGui::available()) {
     GModel::current()->setSelection(0);
     for(openglWindow *gl : FlGui::instance()->openglWindows()) {
@@ -3732,7 +3746,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   // the status bar and its buttons: as tall as the menu bar and wider under
   // the gmsh theme, for its icons
   int sh = gmshScheme() ? BH : 2 * FL_NORMAL_SIZE - 3;
-  int sw = gmshScheme() ? 1.8 * FL_NORMAL_SIZE : FL_NORMAL_SIZE + 2;
+  int sw = gmshScheme() ? 1.7 * FL_NORMAL_SIZE : FL_NORMAL_SIZE + 2;
   _iconSize = FL_NORMAL_SIZE + 1; // the icons on the scale of the letters
 
   // the usable area of the screen that will show the window
@@ -3952,6 +3966,12 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   _butt[2]->callback(status_xyz1p_cb, (void *)"z");
   _butt[2]->tooltip("Set +Z or -Z (Shift) view (Alt+z or Alt+Shift+z)");
   x += sw;
+  _butt[15] =
+    new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_cube");
+  _butt[15]->callback(status_xyz1p_cb, (void *)"3d");
+  _butt[15]->tooltip("Set isometric 3D view, Z up, or from the opposite side "
+                     "(Shift) (Alt+3 or Alt+Shift+3)");
+  x += sw;
   _butt[4] =
     new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_rotate");
   _butt[4]->callback(status_xyz1p_cb, (void *)"r");
@@ -3961,9 +3981,9 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   _butt[3] = new Fl_Button(x, mh + glheight + mheight + 2, 2 * FL_NORMAL_SIZE,
                            sht, "1:1");
   _butt[3]->callback(status_xyz1p_cb, (void *)"1:1");
-  _butt[3]->tooltip("Set unit scale, sync scale between viewports (Ctrl), "
-                    "or reset bounding box around visible entities (Shift) "
-                    "(Alt+1, Alt+Ctrl+1, Alt+Shift+1)");
+  _butt[3]->tooltip("Fit the model in the window, sync scale between viewports "
+                    "(Ctrl), or reset bounding box around visible entities "
+                    "(Shift) (Alt+1, Alt+Ctrl+1, Alt+Shift+1)");
   x += 1.75 * FL_NORMAL_SIZE;
   _butt[9] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "S");
   _butt[9]->callback(status_options_cb, (void *)"S");
@@ -4006,9 +4026,9 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   _butt[11]->deactivate();
   x += sw;
 
-  for(int i = 0; i < 15; i++) {
+  for(int i = 0; i < 16; i++) {
     _butt[i]->box(FL_FLAT_BOX);
-    _butt[i]->selection_color(FL_WHITE);
+    _butt[i]->selection_color(FL_BACKGROUND2_COLOR);
     _butt[i]->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
   }
   if(gmshScheme()) {
@@ -4016,6 +4036,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
     gmshIcon(_butt[14], "sidebar", _iconSize);
     gmshIcon(_butt[5], "models", _iconSize);
     gmshIcon(_butt[8], "quick", _iconSize);
+    gmshIcon(_butt[15], "cube", _iconSize);
     gmshIcon(_butt[4], "rotate", _iconSize);
     gmshIcon(_butt[12], "query", _iconSize);
     gmshIcon(_butt[13], "measure", _iconSize);

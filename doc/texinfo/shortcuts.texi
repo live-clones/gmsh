@@ -158,7 +158,9 @@ Set Y view
 @item Alt+z
 Set Z view
 @item Alt+1
-Set 1:1 view
+Fit the model in the window
+@item Alt+3
+Set isometric 3D view
 @item Alt+Shift+a
 Hide/show small axes
 @item Alt+Shift+b
@@ -185,6 +187,8 @@ Set -X view
 Set -Y view
 @item Alt+Shift+z
 Set -Z view
+@item Alt+Shift+3
+Set isometric 3D view from the opposite side
 @item Alt+Shift+1
 Reset bounding box around visible entities
 @item Alt+Ctrl+1

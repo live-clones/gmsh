@@ -152,20 +152,15 @@ private:
   void _set_loop_value(const std::string &val)
   {
     _loop_val = val;
-    // the level of the loop, on its colour (adapted to the theme, see
-    // adaptedFill()) with a digit that reads on it
-    Fl_Color col = 0;
-    if(val == "1")
-      col = FL_GREEN;
-    else if(val == "2")
-      col = FL_BLUE;
-    else if(val == "3")
-      col = FL_RED;
-    if(col) {
+    // the level of the loop, on its colour (see gmshIndicator()) with a digit
+    // that reads on it
+    if(val == "1" || val == "2" || val == "3") {
+      Fl_Color col = gmshIndicator(val == "1" ? IndicatorGreen :
+                                   val == "2" ? IndicatorBlue :
+                                                IndicatorRed);
       _loop_butt->copy_label(val.c_str());
-      _loop_butt->selection_color(adaptedFill(col));
-      _loop_butt->labelcolor(
-        fl_contrast(FL_FOREGROUND_COLOR, adaptedFill(col)));
+      _loop_butt->selection_color(col);
+      _loop_butt->labelcolor(fl_contrast(FL_FOREGROUND_COLOR, col));
       _loop_butt->value(1);
     }
     else {

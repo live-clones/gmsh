@@ -1882,6 +1882,36 @@ void drawContext::initRenderModel()
   gmshLighting(false);
 }
 
+double drawContext::fitScale()
+{
+  const double vw = viewport[2] - viewport[0], vh = viewport[3] - viewport[1];
+  if(vw <= 0. || vh <= 0.) return 1.;
+  CTX *c = CTX::instance();
+  // what initProjection() shows at scale 1, without its margins, which hold at
+  // any scale
+  const double w = std::max(c->max[0] - c->min[0],
+                            (c->max[1] - c->min[1]) * vw / vh);
+  const double h = w * vh / vw;
+  // how far from the center of the window the corners of the box go, placed
+  // as in initPosition()
+  buildRotationMatrix();
+  const double *cg = c->cg;
+  const double *rc = c->rotationCenterCg ? cg : c->rotationCenter;
+  double xm = 0., ym = 0.;
+  for(int i = 0; i < 8; i++) {
+    double p[3];
+    for(int j = 0; j < 3; j++)
+      p[j] = ((i >> j) & 1 ? c->max[j] : c->min[j]) - rc[j];
+    xm = std::max(xm, fabs(rot[0] * p[0] + rot[4] * p[1] + rot[8] * p[2] +
+                           rc[0] - cg[0]));
+    ym = std::max(ym, fabs(rot[1] * p[0] + rot[5] * p[1] + rot[9] * p[2] +
+                           rc[1] - cg[1]));
+  }
+  // infinite along a direction in which the box has no size
+  const double s = 0.5 * std::min(w / xm, h / ym);
+  return (s > 0. && std::isfinite(s)) ? s : 1.;
+}
+
 void drawContext::initPosition(bool saveMatrices)
 {
   // NB: Those operations are applied to the model in the view coordinates

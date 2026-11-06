@@ -40,7 +40,7 @@ private:
   messageBrowser *_browser;
   onelabGroup *_onelab;
   Fl_Box *_bottom;
-  Fl_Button *_butt[15];
+  Fl_Button *_butt[16];
   Fl_Progress *_label;
   int _minWidth, _minHeight;
   // the size of the icons of the status bar
@@ -160,6 +160,9 @@ bool queryMode();
 void status_measure_cb(Fl_Widget *w, void *data);
 // whether a measurement is waiting for a click (see status_measure_cb)
 bool measureMode();
+// the buttons of the mouse selection, the query and the measurement, in the
+// colours of their states
+void updateModeButtons();
 void status_play_manual(int time, int incr, bool redraw = true);
 void quick_access_cb(Fl_Widget *w, void *data);
 void show_hide_message_cb(Fl_Widget *w, void *data);

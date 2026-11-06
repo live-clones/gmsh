@@ -584,8 +584,9 @@ StringXNumber GeneralOptions_Number[] = {
     "[Deprecated]" },
   { F|O, "ClipWholeElements" , opt_general_clip_whole_elements , 0. ,
     "Clip whole elements" },
-  { F|S, "ColorScheme", opt_general_color_scheme , 1. ,
-    "Default color scheme for graphics (0: light, 1: default, 2: grayscale, 3: dark)" },
+  { F|S, "ColorScheme", opt_general_color_scheme , 4. ,
+    "Color scheme for graphics (0: light, 1: classic, 2: grayscale, 3: dark, 4: "
+    "system, i.e. light or dark as the desktop, and classic without a GUI)" },
   { F|O, "ConfirmOverwrite" , opt_general_confirm_overwrite, 1. ,
     "Ask confirmation before overwriting files?" },
   { F|S, "ContextOffsetX" , opt_general_context_offset0 , 600. ,
@@ -2514,22 +2515,22 @@ StringXNumber PrintOptions_Number[] = {
 
 StringXColor GeneralOptions_Color[] = {
   { F|O, "Background" , opt_general_color_background ,
-    {255, 255, 255, 255}, {255, 255, 255, 255}, {245, 245, 245, 255}, {0, 0, 0, 255},
+    {255, 255, 255, 255}, {255, 255, 255, 255}, {250, 250, 250, 255}, {26, 27, 30, 255},
     "Background color" },
   { F|O, "BackgroundGradient" , opt_general_color_background_gradient ,
-    {255, 255, 255, 255}, {208, 215, 255, 255}, {185, 185, 185, 255}, {0, 0, 0, 255},
+    {236, 238, 242, 255}, {208, 215, 255, 255}, {218, 218, 218, 255}, {58, 62, 72, 255},
     "Background gradient color" },
   { F|O, "Foreground" , opt_general_color_foreground ,
     {85, 85, 85, 255}, {85, 85, 85, 255}, {85, 85, 85, 255}, {170, 170, 170, 255},
     "Foreground color" },
   { F|O, "Text" , opt_general_color_text ,
-    {0, 0, 0, 255}, {0, 0, 0, 255}, {0, 0, 0, 255}, {245, 245, 245, 255},
+    {0, 0, 0, 255}, {0, 0, 0, 255}, {0, 0, 0, 255}, {230, 230, 230, 255},
     "Text color" },
   { F|O, "Axes" , opt_general_color_axes ,
-    {0, 0, 0, 255}, {0, 0, 0, 255}, {0, 0, 0, 255}, {245, 245, 245, 255},
+    {0, 0, 0, 255}, {0, 0, 0, 255}, {0, 0, 0, 255}, {230, 230, 230, 255},
     "Axes color" },
   { F|O, "SmallAxes" , opt_general_color_small_axes ,
-    {0, 0, 0, 255}, {0, 0, 0, 255}, {0, 0, 0, 255}, {245, 245, 245, 255},
+    {0, 0, 0, 255}, {0, 0, 0, 255}, {0, 0, 0, 255}, {230, 230, 230, 255},
     "Small axes color" },
   { F|O, "AmbientLight" , opt_general_color_ambient_light,
     {25, 25, 25, 255}, {25, 25, 25, 255}, {25, 25, 25, 255}, {25, 25, 25, 255},
@@ -2550,19 +2551,19 @@ StringXColor GeneralOptions_Color[] = {
 
 StringXColor GeometryOptions_Color[] = {
   { F|O, "Points" , opt_geometry_color_points ,
-    {90, 90, 90, 255}, {90, 90, 90, 255}, {0, 0, 0, 255}, {178, 178, 178, 255},
+    {90, 90, 90, 255}, {90, 90, 90, 255}, {0, 0, 0, 255}, {200, 200, 200, 255},
     "Normal geometry point color" },
   { F|O, "Curves" , opt_geometry_color_curves ,
-    {0, 0, 255, 255}, {0, 0, 255, 255}, {0, 0, 0, 255}, {0, 0, 255, 255},
+    {0, 0, 255, 255}, {0, 0, 255, 255}, {0, 0, 0, 255}, {110, 160, 255, 255},
     "Normal geometry curve color" },
   { F|O|D, "Lines" , opt_geometry_color_curves ,
-    {0, 0, 255, 255}, {0, 0, 255, 255}, {0, 0, 0, 255}, {0, 0, 255, 255},
+    {0, 0, 255, 255}, {0, 0, 255, 255}, {0, 0, 0, 255}, {110, 160, 255, 255},
     "[Deprecated]" },
   { F|O, "Surfaces" , opt_geometry_color_surfaces ,
-    {128, 128, 128, 255}, {128, 128, 128, 255}, {0, 0, 0, 255}, {128, 128, 128, 255},
+    {128, 128, 128, 255}, {128, 128, 128, 255}, {170, 170, 170, 255}, {150, 150, 150, 255},
     "Normal geometry surface color" },
   { F|O, "Volumes" , opt_geometry_color_volumes ,
-    {200, 200, 0, 255}, {200, 200, 0, 255}, {0, 0, 0, 255}, {200, 200, 0, 255},
+    {200, 200, 0, 255}, {200, 200, 0, 255}, {90, 90, 90, 255}, {200, 200, 0, 255},
     "Normal geometry volume color" },
   { F|O, "Selection" , opt_geometry_color_selection ,
     {255, 0, 0, 255}, {255, 0, 0, 255}, {255, 0, 0, 255}, {255, 0, 0, 255},
@@ -2615,19 +2616,26 @@ StringXColor GeometryOptions_Color[] = {
 #define COL15 {84, 0, 255, 255}
 #define COL17 {104, 0, 255, 255}
 #define COL19 {184, 0, 255, 255}
+// the same, on a dark background
+#define COLD9 {70, 150, 255, 255}
+#define COLD11 {80, 130, 255, 255}
+#define COLD13 {110, 100, 255, 255}
+#define COLD15 {140, 100, 255, 255}
+#define COLD17 {160, 100, 255, 255}
+#define COLD19 {200, 90, 255, 255}
 
 StringXColor MeshOptions_Color[] = {
   { F|O, "Nodes" , opt_mesh_color_nodes ,
-    {0, 0, 255, 255}, {0, 0, 255, 255}, {0, 0, 0, 255}, {0, 0, 255, 255},
+    {0, 0, 255, 255}, {0, 0, 255, 255}, {0, 0, 0, 255}, {110, 160, 255, 255},
     "Mesh node color" },
   { F|O|D, "Points" , opt_mesh_color_nodes ,
-    {0, 0, 255, 255}, {0, 0, 255, 255}, {0, 0, 0, 255}, {0, 0, 255, 255},
+    {0, 0, 255, 255}, {0, 0, 255, 255}, {0, 0, 0, 255}, {110, 160, 255, 255},
     "[Deprecated]" },
   { F|O, "NodesSup" , opt_mesh_color_nodes_sup ,
-    {255, 0, 255, 255}, {255, 0, 255, 255}, {0, 0, 0, 255}, {255, 0, 255, 255},
+    {255, 0, 255, 255}, {255, 0, 255, 255}, {0, 0, 0, 255}, {255, 120, 255, 255},
     "Second order mesh node color" },
   { F|O|D, "PointsSup" , opt_mesh_color_nodes_sup ,
-    {255, 0, 255, 255}, {255, 0, 255, 255}, {0, 0, 0, 255}, {255, 0, 255, 255},
+    {255, 0, 255, 255}, {255, 0, 255, 255}, {0, 0, 0, 255}, {255, 120, 255, 255},
     "[Deprecated]" },
   { F|O, "Lines" , opt_mesh_color_lines ,
     {0, 0, 0, 255}, {0, 0, 0, 255}, {0, 0, 0, 255}, {0, 0, 0, 255},
@@ -2683,27 +2691,27 @@ StringXColor MeshOptions_Color[] = {
     "Color 7 in color carousel" },
   { F|O, "Eight"    , opt_mesh_color_8 , COL8, COL8, COLW, COL8,
     "Color 8 in color carousel" },
-  { F|O, "Nine"     , opt_mesh_color_9 , COL9, COL9, COLW, COL9,
+  { F|O, "Nine"     , opt_mesh_color_9 , COL9, COL9, COLW, COLD9,
     "Color 9 in color carousel" },
   { F|O, "Ten"      , opt_mesh_color_10, COL10, COL10, COLW, COL10,
     "Color 10 in color carousel" },
-  { F|O, "Eleven"   , opt_mesh_color_11, COL11, COL11, COLW, COL11,
+  { F|O, "Eleven"   , opt_mesh_color_11, COL11, COL11, COLW, COLD11,
     "Color 11 in color carousel" },
   { F|O, "Twelve"   , opt_mesh_color_12, COL12, COL12, COLW, COL12,
     "Color 12 in color carousel" },
-  { F|O, "Thirteen" , opt_mesh_color_13, COL13, COL13, COLW, COL13,
+  { F|O, "Thirteen" , opt_mesh_color_13, COL13, COL13, COLW, COLD13,
     "Color 13 in color carousel" },
   { F|O, "Fourteen" , opt_mesh_color_14, COL14, COL14, COLW, COL14,
     "Color 14 in color carousel" },
-  { F|O, "Fifteen"  , opt_mesh_color_15, COL15, COL15, COLW, COL15,
+  { F|O, "Fifteen"  , opt_mesh_color_15, COL15, COL15, COLW, COLD15,
     "Color 15 in color carousel" },
   { F|O, "Sixteen"  , opt_mesh_color_16, COL16, COL16, COLW, COL16,
     "Color 16 in color carousel" },
-  { F|O, "Seventeen", opt_mesh_color_17, COL17, COL17, COLW, COL17,
+  { F|O, "Seventeen", opt_mesh_color_17, COL17, COL17, COLW, COLD17,
     "Color 17 in color carousel" },
   { F|O, "Eighteen" , opt_mesh_color_18, COL18, COL18, COLW, COL18,
     "Color 18 in color carousel" },
-  { F|O, "Nineteen" , opt_mesh_color_19, COL19, COL19, COLW, COL19,
+  { F|O, "Nineteen" , opt_mesh_color_19, COL19, COL19, COLW, COLD19,
     "Color 19 in color carousel" },
   { 0, nullptr , nullptr , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , {0, 0, 0, 0} , nullptr }
 } ;
@@ -2740,7 +2748,7 @@ StringXColor ViewOptions_Color[] = {
   { F|O, "Text3D" , opt_view_color_text3d , ELECOL, "3D text color" },
   { F|O, "Axes" , opt_view_color_axes , ELECOL, "Axes color" },
   { F|O, "Background2D" , opt_view_color_background2d ,
-    {255, 255, 255, 240}, {255, 255, 255, 240}, {255, 255, 255, 240}, {245, 245, 245, 240},
+    {255, 255, 255, 240}, {255, 255, 255, 240}, {255, 255, 255, 240}, {40, 42, 48, 240},
     "Bacground color for 2D plots" },
   { 0, nullptr , nullptr , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , nullptr }
 } ;

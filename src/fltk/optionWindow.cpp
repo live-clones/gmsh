@@ -1589,9 +1589,10 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
 
       static Fl_Menu_Item menu_color_scheme[] = {
         {"Light", 0, nullptr, nullptr},
-        {"Default", 0, nullptr, nullptr},
+        {"Classic", 0, nullptr, nullptr},
         {"Grayscale", 0, nullptr, nullptr},
         {"Dark", 0, nullptr, nullptr},
+        {"System", 0, nullptr, nullptr},
         {nullptr}};
 
       general.choice[3] =

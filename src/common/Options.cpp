@@ -49,6 +49,7 @@
 #endif
 
 #if defined(HAVE_FLTK)
+#include "desktop.h"
 #include <FL/Fl_Tooltip.H>
 #include "FlGui.h"
 #include "drawContextFltk.h"
@@ -375,44 +376,48 @@ bool GetRGBForString(const char *str, int &r, int &g, int &b)
   return true;
 }
 
+// the scheme in use: the one asked for, or what General.ColorScheme = 4 stands
+// for: light or dark as the desktop, which is asked once, under the GUI; classic
+// without it, as a batch run must not depend on the desktop it is run from
+static int _desktopScheme = -1;
+
+static int colorSchemeInUse()
+{
+  int scheme = CTX::instance()->colorScheme;
+  if(scheme != 4) return scheme;
+  if(_desktopScheme < 0) {
+    _desktopScheme = 1;
+#if defined(HAVE_FLTK)
+    if(FlGui::available()) _desktopScheme = (desktopDark() == 1) ? 3 : 0;
+#endif
+  }
+  return _desktopScheme;
+}
+
+// an option's colour in a scheme
+static unsigned int schemeColor(const StringXColor &s, int scheme)
+{
+  const auto &d = (scheme == 1) ? s.def2 :
+                  (scheme == 2) ? s.def3 :
+                  (scheme == 3) ? s.def4 :
+                                  s.def1;
+  return CTX::instance()->packColor(d[0], d[1], d[2], d[3]);
+}
+
 static void SetDefaultColorOptions(int num, StringXColor s[])
 {
-  int i = 0;
-  // Warning: this assumes that CTX::instance()->color_scheme is set...
-  switch(CTX::instance()->colorScheme) {
-  case 1:
-    while(s[i].str) {
-      s[i].function(num, GMSH_SET_DEFAULT | GMSH_SET,
-                    CTX::instance()->packColor(s[i].def2[0], s[i].def2[1],
-                                               s[i].def2[2], s[i].def2[3]));
-      i++;
-    }
-    break;
-  case 2:
-    while(s[i].str) {
-      s[i].function(num, GMSH_SET_DEFAULT | GMSH_SET,
-                    CTX::instance()->packColor(s[i].def3[0], s[i].def3[1],
-                                               s[i].def3[2], s[i].def3[3]));
-      i++;
-    }
-    break;
-  case 3:
-    while(s[i].str) {
-      s[i].function(num, GMSH_SET_DEFAULT | GMSH_SET,
-                    CTX::instance()->packColor(s[i].def4[0], s[i].def4[1],
-                                               s[i].def4[2], s[i].def4[3]));
-      i++;
-    }
-    break;
-  default:
-    while(s[i].str) {
-      s[i].function(num, GMSH_SET_DEFAULT | GMSH_SET,
-                    CTX::instance()->packColor(s[i].def1[0], s[i].def1[1],
-                                               s[i].def1[2], s[i].def1[3]));
-      i++;
-    }
-    break;
-  }
+  int scheme = colorSchemeInUse();
+  for(int i = 0; s[i].str; i++)
+    s[i].function(num, GMSH_SET_DEFAULT | GMSH_SET, schemeColor(s[i], scheme));
+}
+
+// the colours still those of a scheme move to those of another, the others being
+// the user's
+static void switchColorOptions(int num, StringXColor s[], int from, int to)
+{
+  for(int i = 0; s[i].str; i++)
+    if(s[i].function(num, GMSH_GET, 0) == schemeColor(s[i], from))
+      s[i].function(num, GMSH_SET_DEFAULT | GMSH_SET, schemeColor(s[i], to));
 }
 
 static void SetColorOptionsGUI(int num, StringXColor s[])
@@ -432,25 +437,7 @@ static void PrintColorOptions(int num, int level, int diff, int help,
   char tmp[1024];
   while(s[i].str) {
     if((s[i].level & level) && !(s[i].level & GMSH_DEPRECATED)) {
-      unsigned int def;
-      switch(CTX::instance()->colorScheme) {
-      case 1:
-        def = CTX::instance()->packColor(s[i].def2[0], s[i].def2[1],
-                                         s[i].def2[2], s[i].def2[3]);
-        break;
-      case 2:
-        def = CTX::instance()->packColor(s[i].def3[0], s[i].def3[1],
-                                         s[i].def3[2], s[i].def3[3]);
-        break;
-      case 3:
-        def = CTX::instance()->packColor(s[i].def4[0], s[i].def4[1],
-                                         s[i].def4[2], s[i].def4[3]);
-        break;
-      default:
-        def = CTX::instance()->packColor(s[i].def1[0], s[i].def1[1],
-                                         s[i].def1[2], s[i].def1[3]);
-        break;
-      }
+      unsigned int def = schemeColor(s[i], colorSchemeInUse());
       if(!diff || (s[i].function(num, GMSH_GET, 0) != def)) {
         sprintf(tmp, "%sColor.%s = {%d,%d,%d};%s%s", prefix, s[i].str,
                 CTX::instance()->unpackRed(s[i].function(num, GMSH_GET, 0)),
@@ -3362,19 +3349,10 @@ double opt_general_mouse_selection(OPT_ARGS_NUM)
   if(action & GMSH_SET) CTX::instance()->mouseSelection = (int)val;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI)) {
-    if(CTX::instance()->mouseSelection) {
-      if(FlGui::available()) Msg::StatusBar(false, "Mouse selection ON");
-      for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-        FlGui::instance()->graph[i]->getSelectionButton()->color(
-          FL_BACKGROUND_COLOR);
-    }
-    else {
-      if(FlGui::available()) Msg::StatusBar(false, "Mouse selection OFF");
-      for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-        FlGui::instance()->graph[i]->getSelectionButton()->color(FL_RED);
-    }
-    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-      FlGui::instance()->graph[i]->getSelectionButton()->redraw();
+    Msg::StatusBar(false, CTX::instance()->mouseSelection ?
+                            "Mouse selection ON" :
+                            "Mouse selection OFF");
+    updateModeButtons();
   }
 #endif
   return CTX::instance()->mouseSelection;
@@ -3826,11 +3804,39 @@ double opt_general_arrow_stem_radius(OPT_ARGS_NUM)
   return CTX::instance()->arrowRelStemRadius;
 }
 
+bool followDesktopColorScheme(bool dark)
+{
+  if(CTX::instance()->colorScheme != 4) return false;
+  int from = colorSchemeInUse(), to = dark ? 3 : 0;
+  if(from == to) return false;
+  _desktopScheme = to;
+  StringXColor *tables[] = {GeneralOptions_Color, GeometryOptions_Color,
+                            MeshOptions_Color, SolverOptions_Color,
+                            PostProcessingOptions_Color, PrintOptions_Color};
+  for(auto t : tables) {
+    switchColorOptions(0, t, from, to);
+    SetColorOptionsGUI(0, t);
+  }
+#if defined(HAVE_POST)
+  for(std::size_t i = 0; i < PView::list.size(); i++) {
+    switchColorOptions(i, ViewOptions_Color, from, to);
+    SetColorOptionsGUI(i, ViewOptions_Color);
+  }
+  // horrible trick so that opt_view_XXX will act on the reference view
+  std::vector<PView *> tmp = PView::list;
+  PView::list.clear();
+  switchColorOptions(0, ViewOptions_Color, from, to);
+  PView::list = tmp;
+#endif
+  return true;
+}
+
 double opt_general_color_scheme(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     CTX::instance()->colorScheme = (int)val;
-    if(CTX::instance()->colorScheme > 3) CTX::instance()->colorScheme = 0;
+    if(CTX::instance()->colorScheme > 4) CTX::instance()->colorScheme = 0;
+    _desktopScheme = -1;
     SetDefaultColorOptions(0, GeneralOptions_Color);
     SetDefaultColorOptions(0, GeometryOptions_Color);
     SetDefaultColorOptions(0, MeshOptions_Color);

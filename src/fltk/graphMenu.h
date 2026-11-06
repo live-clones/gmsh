@@ -55,12 +55,12 @@ inline void showGraphValue(const std::string &val, Fl_Button *butt,
     else
       item.clear();
   }
-  // a graph drawn: a yellow adapted to the theme, as the loop button's colours
-  // (the icon then drawn in what reads on it, as on any pressed button)
+  // a graph drawn: a yellow tint, as the loop button's colours (the icon then
+  // drawn in what reads on it, as on any pressed button)
   butt->value(drawn ? 1 : 0);
-  butt->selection_color(drawn ? adaptedFill(FL_YELLOW) : butt->color());
+  butt->selection_color(drawn ? gmshIndicator(IndicatorYellow) : butt->color());
   butt->labelcolor(drawn ? fl_contrast(FL_FOREGROUND_COLOR,
-                                       adaptedFill(FL_YELLOW)) :
+                                       gmshIndicator(IndicatorYellow)) :
                            FL_FOREGROUND_COLOR);
   butt->redraw();
 }

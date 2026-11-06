@@ -591,6 +591,9 @@ public:
   // its target), which `view' comes back with
   void initCameraMatrices(double view[16]);
   void initPosition(bool saveMatrices);
+  // the scale that fits the bounding box in the viewport, without translation,
+  // as it is currently rotated, with the margin it has at scale 1 along Z
+  double fitScale();
   void unproject(double winx, double winy, double p[3], double d[3]);
   // where a point of the model is in the window, in its units and with the
   // matrices of the frame, as unproject() reads them back: false when the

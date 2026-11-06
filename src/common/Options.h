@@ -1033,6 +1033,9 @@ typedef struct {
 void InitOptions(int num);
 void InitOptionsGUI(int num);
 void ReInitOptions(int num);
+// General.ColorScheme = 4 goes on to the colours for a light or dark desktop,
+// if not there yet: the ones the user changed are kept
+bool followDesktopColorScheme(bool dark);
 void PrintOptions(int num, int level, int diff, int help, const char *filename,
                   std::vector<std::string> *vec = nullptr);
 void PrintOptionsDoc();
