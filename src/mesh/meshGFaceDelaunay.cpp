@@ -725,15 +725,6 @@ insertAPoint(GFace *gf, std::set<MTri3 *, compareTri3Ptr>::iterator it,
              bool testStarShapeness = false, bool forceInsertion = false,
              const SPoint3 *physicalPoint = nullptr)
 {
-  // PACK already projected this candidate onto the physical surface. Keep
-  // that position through the UV triangulation instead of evaluating the
-  // inverse chart again, which can be singular in a compressed discrete map.
-  if(physicalPoint &&
-     (!std::isfinite(physicalPoint->x()) ||
-      !std::isfinite(physicalPoint->y()) ||
-      !std::isfinite(physicalPoint->z())))
-    return false;
-
   if(worst) {
     it = AllTris.find(worst);
     if(worst != *it) {
@@ -796,6 +787,9 @@ insertAPoint(GFace *gf, std::set<MTri3 *, compareTri3Ptr>::iterator it,
   }
 
   if(ptin) {
+    // (physicalPoint: PACK already projected the point on the surface; that
+    // position is kept rather than evaluated again from the parameters,
+    // which can be singular in a compressed discrete parametrization)
     GPoint p = physicalPoint ?
       GPoint(physicalPoint->x(), physicalPoint->y(), physicalPoint->z(), gf,
              center) :

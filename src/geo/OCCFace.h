@@ -39,18 +39,14 @@ private:
   // the global search performed by the projector above, especially on B-splines
   mutable std::vector<Handle(ShapeAnalysis_Surface)> _localProjectors;
   // IntTools_FClass2d keeps a preprocessed representation of the trimming
-  // wires and mutable query state. Keep one lazily-created classifier per
-  // thread, tied explicitly to the TopoDS_Face and tolerance it was built
-  // from.
+  // wires and mutable query state: one lazily-created classifier per thread
   mutable std::vector<IntTools_FClass2d *> _classifiers;
-  mutable std::vector<TopoDS_Face> _classifierFaces;
-  mutable std::vector<double> _classifierTolerances;
   double _projectorBounds[4];
   double _tolerance;
   GeomAPI_ProjectPointOnSurf &_projector(GeomAPI_ProjectPointOnSurf &fallback)
     const;
   const Handle(ShapeAnalysis_Surface) & _localProjector() const;
-  IntTools_FClass2d *_classifier(double tolerance) const;
+  IntTools_FClass2d *_classifier() const;
   void _clearClassifiers();
   bool _project(const double p[3], double uv[2], double xyz[3],
                 const double *initialGuess = nullptr,

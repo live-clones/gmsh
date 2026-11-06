@@ -570,6 +570,14 @@ static void addRemainingStageTime(const std::string &stage, std::size_t first,
   AddMeshStageTime(stage, std::max(w, 0.), std::max(c, 0.));
 }
 
+static std::size_t countTrihedra(GModel *m)
+{
+  std::size_t n = 0;
+  for(auto it = m->firstRegion(); it != m->lastRegion(); ++it)
+    n += (*it)->trihedra.size();
+  return n;
+}
+
 // the minimum SICN of the volume elements of a hex-dominant mesh, by type,
 // and the times of the stages of its generation
 static void PrintHexDominantMeshQuality(GModel *m, double wall, double cpu)
@@ -603,9 +611,7 @@ static void PrintHexDominantMeshQuality(GModel *m, double wall, double cpu)
     Msg::Info("  %-10s %9zu   min %.3f   mean %.3f   %ld below 0.1", names[k],
               e.size(), qmin, sum / e.size(), bad);
   }
-  std::size_t nbTrihedra = 0;
-  for(auto it = m->firstRegion(); it != m->lastRegion(); ++it)
-    nbTrihedra += (*it)->trihedra.size();
+  const std::size_t nbTrihedra = countTrihedra(m);
   if(nbTrihedra) Msg::Info("  %-10s %9zu", "trihedra", nbTrihedra);
   Msg::Info("Timings:                    Wall (s)    CPU (s)");
   for(auto &s : meshStageTimes)
@@ -1133,11 +1139,8 @@ static void Mesh3D(GModel *m)
     const double tTrihedra = TimeOfDay(), cTrihedra = Cpu();
     MakeHybridHexTetMeshConformalThroughTriHedron(m);
     AddMeshStageTime("trihedra", TimeOfDay() - tTrihedra, Cpu() - cTrihedra);
-    std::size_t nbTrihedra = 0;
-    for(auto it = m->firstRegion(); it != m->lastRegion(); ++it)
-      nbTrihedra += (*it)->trihedra.size();
     Msg::Info("%zu trihedra on the unmatched quadrangular faces (Wall %gs)",
-              nbTrihedra, TimeOfDay() - tTrihedra);
+              countTrihedra(m), TimeOfDay() - tTrihedra);
   }
 
   // ensure that all volume Jacobians are positive

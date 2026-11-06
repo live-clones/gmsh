@@ -661,11 +661,6 @@ Reconnect the tetrahedra that the parallel 3D optimizer could not improve otherw
 Default value: @code{0.5}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.Pack3D
-Deprecated compatibility option, fixed to 1: PACK always uses tangent-frame propagation and oriented exclusion cubes in 3D@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Mesh.PackSizemapMethod
 Size map for the PACK guiding field (same methods as QuadqsSizemapMethod, configured independently)@*
 Default value: @code{3}@*

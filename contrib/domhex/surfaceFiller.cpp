@@ -20,7 +20,7 @@
 #include "MElement.h"
 #include "MLine.h"
 #include "BackgroundMesh.h"
-#include "discreteFace.h"
+#include "meshGFaceDirections.h"
 
 static bool inParametricDomain(GFace *gf, const SPoint2 &p)
 {
@@ -127,41 +127,15 @@ static surfacePointWithExclusionCube3D *makeSurfaceCubePoint3D(
   surfacePointWithExclusionCube3D *father = nullptr)
 {
   SPoint2 uv;
-  reparamMeshVertexOnFace(vertex, gf, uv);
-
-  SVector3 t1;
-  (*crossField)(vertex->x(), vertex->y(), vertex->z(), t1, gf);
-  const double size = t1.norm();
-  if(!(size > 0.0) || !std::isfinite(size) || size > 1.e10)
+  SVector3 t1, normal;
+  double size;
+  if(!crossFieldDirection(gf, crossField, vertex, uv, t1, normal, size))
     return nullptr;
-
-  SVector3 normal;
-  if(gf->geomType() == GEntity::DiscreteSurface) {
-    // The point is on the physical MAT. Its normal is determined by that
-    // source triangle, even when the corresponding UV triangle is compressed
-    // or singular. Do not recover it by differentiating the inverse chart.
-    const double guess[2] = {uv.x(), uv.y()};
-    discreteFace *discrete = static_cast<discreteFace *>(gf);
-    const GPoint projected =
-      discrete->closestPoint(vertex->point(), guess, &normal);
-    if(!projected.succeeded()) return nullptr;
-  }
-  else {
-    const std::pair<SVector3, SVector3> derivatives = gf->firstDer(uv);
-    normal = crossprod(derivatives.first, derivatives.second);
-  }
-  const double normalLength = normal.norm();
-  if(!(normalLength > 0.0) || !std::isfinite(normalLength)) return nullptr;
-  normal.normalize();
-  t1 -= normal * dot(t1, normal);
-  if(!(t1.norm() > 0.0)) return nullptr;
-  t1.normalize();
   SVector3 t2 = crossprod(normal, t1);
   if(!(t2.norm() > 0.0)) return nullptr;
   t2.normalize();
-
-  return new surfacePointWithExclusionCube3D(
-    vertex, uv, t1, t2, normal, size, father);
+  return new surfacePointWithExclusionCube3D(vertex, uv, t1, t2, normal, size,
+                                             father);
 }
 
 static MFaceVertex *projectSurfaceCandidate3D(

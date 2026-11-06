@@ -55,16 +55,22 @@ inline double tet_volume(vec3 a, vec3 b, vec3 c, vec3 d)
   return dot((a - d), cross(b - d, c - d)) / 6.;
 }
 
+// the gamma quality of a tet, and its volume
+static double tetGamma(MElement *e, double &V)
+{
+  return qmTetrahedron::gamma(
+    e->getVertex(0)->x(), e->getVertex(0)->y(), e->getVertex(0)->z(),
+    e->getVertex(1)->x(), e->getVertex(1)->y(), e->getVertex(1)->z(),
+    e->getVertex(2)->x(), e->getVertex(2)->y(), e->getVertex(2)->z(),
+    e->getVertex(3)->x(), e->getVertex(3)->y(), e->getVertex(3)->z(), &V);
+}
+
 // the quality of an element in the objective functions below
 static double elementQuality(MElement *e, bool onlytet, bool signedQuality)
 {
   if(e->getNumVertices() == 4) {
     double V;
-    double Q = qmTetrahedron::gamma(
-      e->getVertex(0)->x(), e->getVertex(0)->y(), e->getVertex(0)->z(),
-      e->getVertex(1)->x(), e->getVertex(1)->y(), e->getVertex(1)->z(),
-      e->getVertex(2)->x(), e->getVertex(2)->y(), e->getVertex(2)->z(),
-      e->getVertex(3)->x(), e->getVertex(3)->y(), e->getVertex(3)->z(), &V);
+    const double Q = tetGamma(e, V);
     return V > 0 ? -Q : Q;
   }
   if(onlytet) return 1.0;
@@ -124,6 +130,15 @@ static double elementQuality(const ElementAroundVertex &a, bool signedQuality)
   return (signedQuality ? q : std::abs(q)) * .2;
 }
 
+// the same, as elementQuality(MElement *, ...)
+static double elementQuality(const ElementAroundVertex &a, bool onlytet,
+                             bool signedQuality)
+{
+  return onlytet ? elementQuality(a.e, true, signedQuality) :
+                   elementQuality(a, signedQuality);
+}
+
+// lt: MElement pointers, or ElementAroundVertex of ver, the moving vertex.
 // signedQuality: the SICN of the elements other than tets keeps its sign, so
 // that inverted ones stay penalized (the hex-dominant meshes); without it its
 // absolute value is taken, as del3d needs for its pyramid apexes. The
@@ -145,30 +160,6 @@ static double objective_function(double xi, MVertex *ver, double xTarget,
   double minQual = 1.0;
   for(std::size_t i = 0; i < lt.size() && minQual > stopAt; i++)
     minQual = std::min(elementQuality(lt[i], onlytet, signedQuality), minQual);
-  ver->x() = x;
-  ver->y() = y;
-  ver->z() = z;
-  return minQual;
-}
-
-// the same, ver being the moving vertex of the elements
-static double objective_function(double xi, MVertex *ver, double xTarget,
-                                 double yTarget, double zTarget,
-                                 const std::vector<ElementAroundVertex> &lt,
-                                 bool onlytet, bool signedQuality,
-                                 double stopAt = -1.e22)
-{
-  double x = ver->x();
-  double y = ver->y();
-  double z = ver->z();
-  ver->x() = (1. - xi) * ver->x() + xi * xTarget;
-  ver->y() = (1. - xi) * ver->y() + xi * yTarget;
-  ver->z() = (1. - xi) * ver->z() + xi * zTarget;
-  double minQual = 1.0;
-  for(std::size_t i = 0; i < lt.size() && minQual > stopAt; i++)
-    minQual = std::min(onlytet ? elementQuality(lt[i].e, true, signedQuality) :
-                                 elementQuality(lt[i], signedQuality),
-                       minQual);
   ver->x() = x;
   ver->y() = y;
   ver->z() = z;
@@ -233,12 +224,10 @@ static bool Stopping_Rule(double const x0, double const x1, double const tol)
   return std::abs(x1 - x0) < tol;
 }
 
-template <class Elements>
-static double Maximize_Quality_Golden_Section(MVertex *ver, double xTarget,
-                                              double yTarget, double zTarget,
-                                              const Elements &lt,
-                                              double const tol, double &q,
-                                              bool signedQuality = false)
+static double Maximize_Quality_Golden_Section(
+  MVertex *ver, double xTarget, double yTarget, double zTarget,
+  const std::vector<ElementAroundVertex> &lt, double const tol, double &q,
+  bool signedQuality = false)
 {
   const double lambda = 0.5 * (std::sqrt(5.0) - 1.0);
   const double mu = 0.5 * (3.0 - std::sqrt(5.0)); // = 1 - lambda
@@ -598,11 +587,7 @@ static bool goodElements(const Elements &lt, double qTet, double qOther)
     MElement *e = lt[i];
     if(e->getNumVertices() == 4) {
       double V;
-      const double q = qmTetrahedron::gamma(
-        e->getVertex(0)->x(), e->getVertex(0)->y(), e->getVertex(0)->z(),
-        e->getVertex(1)->x(), e->getVertex(1)->y(), e->getVertex(1)->z(),
-        e->getVertex(2)->x(), e->getVertex(2)->y(), e->getVertex(2)->z(),
-        e->getVertex(3)->x(), e->getVertex(3)->y(), e->getVertex(3)->z(), &V);
+      const double q = tetGamma(e, V);
       if(V > 0 || q < qTet) return false;
     }
     else if(e->minSICNShapeMeasure() < qOther)

@@ -1023,6 +1023,181 @@ void laplaceSmoothing(GFace *gf, int niter, bool infinity_norm)
   }
 }
 
+#if defined(HAVE_BLOSSOM)
+// Greedy pre-matching: the pairs that are the best of both their
+// triangles, good enough and clearly better than their second choices
+// are matched first. Blossom matches the triangles left, some possibly
+// without any partner left: each one has a copy, matching it at the
+// cost of leaving it a triangle, the copies being matched together
+// where their triangles are (a perfect matching always exists). Around
+// the triangles left alone, the pairs matched first are released and
+// matched again by Blossom, in wider and wider zones.
+// (the quads of hex-dominant meshes: more hexes; quad surface meshes are
+// left to Blossom, the cleanup making fewer triangles of its matching).
+// partner[t] receives the pair matching triangle t (-1 if none); false if
+// a Blossom call failed
+static bool prematchedBlossom(GFace *gf,
+                              const std::vector<RecombineTriangle> &pairs,
+                              const std::vector<int> &cost,
+                              std::map<MElement *, int> &t2n,
+                              std::vector<int> &partner)
+{
+  const std::size_t nt = gf->triangles.size();
+  const double minimumEta = 0.7;
+  const int margin = 30, alone = 100000;
+  const int none = std::numeric_limits<int>::max();
+  std::vector<std::vector<std::size_t>> pairsOf(nt);
+  for(std::size_t i = 0; i < pairs.size(); ++i) {
+    pairsOf[t2n[pairs[i].t1]].push_back(i);
+    pairsOf[t2n[pairs[i].t2]].push_back(i);
+  }
+  partner.assign(nt, -1); // the pair matching each triangle
+  {
+    std::vector<int> best(nt, -1), bestCost(nt, none), secondCost(nt, none);
+    for(std::size_t t = 0; t < nt; ++t)
+      for(std::size_t i : pairsOf[t]) {
+        if(cost[i] < bestCost[t]) {
+          secondCost[t] = bestCost[t];
+          bestCost[t] = cost[i];
+          best[t] = i;
+        }
+        else if(cost[i] < secondCost[t])
+          secondCost[t] = cost[i];
+      }
+    for(std::size_t i = 0; i < pairs.size(); ++i) {
+      const int n1 = t2n[pairs[i].t1], n2 = t2n[pairs[i].t2];
+      if(best[n1] != (int)i || best[n2] != (int)i) continue;
+      if(!(pairs[i].angle >= minimumEta)) continue;
+      if(secondCost[n1] != none && secondCost[n1] - cost[i] < margin) continue;
+      if(secondCost[n2] != none && secondCost[n2] - cost[i] < margin) continue;
+      partner[n1] = partner[n2] = i;
+    }
+  }
+  std::size_t nbPrematched = 0;
+  for(std::size_t t = 0; t < nt; ++t) nbPrematched += partner[t] >= 0;
+  nbPrematched /= 2;
+
+  // matches the triangles whose pairs are not fixed (fixed[t] false)
+  std::vector<char> fixed(nt);
+  for(std::size_t t = 0; t < nt; ++t) fixed[t] = partner[t] >= 0;
+  bool failed = false;
+  std::size_t nbBlossom = 0;
+  auto blossomMatch = [&]() {
+    std::vector<int> local(nt, -1), global;
+    for(std::size_t t = 0; t < nt; ++t)
+      if(!fixed[t]) {
+        local[t] = global.size();
+        global.push_back(t);
+        partner[t] = -1;
+      }
+    const int n = global.size();
+    if(!n) return;
+    std::vector<std::size_t> edges;
+    std::unordered_map<std::uint64_t, std::size_t> pairOfNodes;
+    for(std::size_t i = 0; i < pairs.size(); ++i) {
+      const int l1 = local[t2n[pairs[i].t1]], l2 = local[t2n[pairs[i].t2]];
+      if(l1 < 0 || l2 < 0) continue;
+      edges.push_back(i);
+      pairOfNodes[(std::uint64_t)std::min(l1, l2) << 32 | std::max(l1, l2)] = i;
+    }
+    const int ecount = n + 2 * edges.size();
+    // do not use new[] here, blossom will free them with free()
+    int *elist = (int *)malloc(sizeof(int) * 2 * ecount);
+    int *elen = (int *)malloc(sizeof(int) * ecount);
+    std::size_t CC = 0;
+    for(std::size_t i : edges) {
+      elist[2 * CC] = local[t2n[pairs[i].t1]];
+      elist[2 * CC + 1] = local[t2n[pairs[i].t2]];
+      elen[CC++] = cost[i];
+    }
+    for(std::size_t i : edges) {
+      elist[2 * CC] = n + local[t2n[pairs[i].t1]];
+      elist[2 * CC + 1] = n + local[t2n[pairs[i].t2]];
+      elen[CC++] = 0;
+    }
+    for(int i = 0; i < n; i++) {
+      elist[2 * CC] = i;
+      elist[2 * CC + 1] = n + i;
+      elen[CC++] = alone;
+    }
+    ++nbBlossom;
+    double matzeit = 0.0;
+    char MATCHFILE[256];
+    sprintf(MATCHFILE, ".face.match");
+    if(perfect_match(2 * n, nullptr, ecount, &elist, &elen, nullptr, MATCHFILE,
+                     0, 0, 0, 0, &matzeit)) {
+      failed = true;
+      free(elist);
+      return;
+    }
+    for(int k = 0; k < elist[0]; k++) {
+      const int i1 = elist[1 + 3 * k], i2 = elist[1 + 3 * k + 1];
+      if(i1 >= n || i2 >= n) continue;
+      auto it = pairOfNodes.find((std::uint64_t)std::min(i1, i2) << 32 |
+                                 std::max(i1, i2));
+      if(it == pairOfNodes.end()) continue;
+      partner[global[i1]] = partner[global[i2]] = it->second;
+    }
+    free(elist);
+  };
+
+  blossomMatch();
+  auto nbLeftAlone = [&]() {
+    std::size_t nb = 0;
+    for(std::size_t t = 0; t < nt; ++t)
+      nb += partner[t] < 0 && !pairsOf[t].empty();
+    return nb;
+  };
+  std::size_t nbAloneBefore = nbLeftAlone();
+  for(int round = 0; round < 3 && !failed && nbAloneBefore; ++round) {
+    // the triangles left alone, and the zone around them
+    for(std::size_t t = 0; t < nt; ++t) fixed[t] = partner[t] >= 0;
+    std::vector<int> depth(nt, -1);
+    std::vector<std::size_t> front;
+    for(std::size_t t = 0; t < nt; ++t)
+      if(partner[t] < 0 && !pairsOf[t].empty()) {
+        depth[t] = 0;
+        front.push_back(t);
+      }
+    if(front.empty()) break;
+    const int radius = 2 << round;
+    for(std::size_t k = 0; k < front.size(); ++k) {
+      const std::size_t t = front[k];
+      if(depth[t] >= radius) continue;
+      for(std::size_t i : pairsOf[t]) {
+        const std::size_t u =
+          t2n[pairs[i].t1] == (int)t ? t2n[pairs[i].t2] : t2n[pairs[i].t1];
+        if(depth[u] >= 0) continue;
+        depth[u] = depth[t] + 1;
+        front.push_back(u);
+      }
+    }
+    // and the partners of its triangles
+    for(std::size_t t : front) {
+      fixed[t] = 0;
+      if(partner[t] >= 0) {
+        fixed[t2n[pairs[partner[t]].t1]] = 0;
+        fixed[t2n[pairs[partner[t]].t2]] = 0;
+      }
+    }
+    blossomMatch();
+    // (no better in a wider zone either, mostly)
+    const std::size_t nbAlone = nbLeftAlone();
+    if(nbAlone >= nbAloneBefore) break;
+    nbAloneBefore = nbAlone;
+  }
+
+  if(failed) return false;
+  std::size_t nbAlone = 0;
+  for(std::size_t t = 0; t < nt; ++t) nbAlone += partner[t] < 0;
+  Msg::Debug("Blossom: %zu of %zu pairs matched first, %zu Blossom "
+             "run%s, %zu triangle%s left",
+             nbPrematched, nt / 2, nbBlossom, nbBlossom == 1 ? "" : "s",
+             nbAlone, nbAlone == 1 ? "" : "s");
+  return true;
+}
+#endif
+
 static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = true)
 {
   if(gf->triangles.empty()) return;
@@ -1178,181 +1353,17 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = true)
                    minimumRejectedEta, maximumRejectedEta);
     };
 
-    // (the quads of hex-dominant meshes: more hexes; quad surface meshes are
-    // left to Blossom, the cleanup making fewer triangles of its matching)
-    const bool prematch = gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS &&
-                          CTX::instance()->mesh.algo3d == ALGO_3D_RTREE;
-
-    if(prematch) {
-      // Greedy pre-matching: the pairs that are the best of both their
-      // triangles, good enough and clearly better than their second choices
-      // are matched first. Blossom matches the triangles left, some possibly
-      // without any partner left: each one has a copy, matching it at the
-      // cost of leaving it a triangle, the copies being matched together
-      // where their triangles are (a perfect matching always exists). Around
-      // the triangles left alone, the pairs matched first are released and
-      // matched again by Blossom, in wider and wider zones.
-      const std::size_t nt = gf->triangles.size();
-      const double minimumEta = 0.7;
-      const int margin = 30, alone = 100000;
-      const int none = std::numeric_limits<int>::max();
-      std::vector<std::vector<std::size_t>> pairsOf(nt);
-      for(std::size_t i = 0; i < pairs.size(); ++i) {
-        pairsOf[t2n[pairs[i].t1]].push_back(i);
-        pairsOf[t2n[pairs[i].t2]].push_back(i);
-      }
-      std::vector<int> partner(nt, -1); // the pair matching each triangle
-      {
-        std::vector<int> best(nt, -1), bestCost(nt, none), secondCost(nt, none);
-        for(std::size_t t = 0; t < nt; ++t)
-          for(std::size_t i : pairsOf[t]) {
-            if(cost[i] < bestCost[t]) {
-              secondCost[t] = bestCost[t];
-              bestCost[t] = cost[i];
-              best[t] = i;
-            }
-            else if(cost[i] < secondCost[t])
-              secondCost[t] = cost[i];
-          }
-        for(std::size_t i = 0; i < pairs.size(); ++i) {
-          const int n1 = t2n[pairs[i].t1], n2 = t2n[pairs[i].t2];
-          if(best[n1] != (int)i || best[n2] != (int)i) continue;
-          if(!(pairs[i].angle >= minimumEta)) continue;
-          if(secondCost[n1] != none && secondCost[n1] - cost[i] < margin)
-            continue;
-          if(secondCost[n2] != none && secondCost[n2] - cost[i] < margin)
-            continue;
-          partner[n1] = partner[n2] = i;
-        }
-      }
-      std::size_t nbPrematched = 0;
-      for(std::size_t t = 0; t < nt; ++t) nbPrematched += partner[t] >= 0;
-      nbPrematched /= 2;
-
-      // matches the triangles whose pairs are not fixed (fixed[t] false)
-      std::vector<char> fixed(nt);
-      for(std::size_t t = 0; t < nt; ++t) fixed[t] = partner[t] >= 0;
-      bool failed = false;
-      std::size_t nbBlossom = 0;
-      auto blossomMatch = [&]() {
-        std::vector<int> local(nt, -1), global;
-        for(std::size_t t = 0; t < nt; ++t)
-          if(!fixed[t]) {
-            local[t] = global.size();
-            global.push_back(t);
-            partner[t] = -1;
-          }
-        const int n = global.size();
-        if(!n) return;
-        std::vector<std::size_t> edges;
-        std::unordered_map<std::uint64_t, std::size_t> pairOfNodes;
-        for(std::size_t i = 0; i < pairs.size(); ++i) {
-          const int l1 = local[t2n[pairs[i].t1]], l2 = local[t2n[pairs[i].t2]];
-          if(l1 < 0 || l2 < 0) continue;
-          edges.push_back(i);
-          pairOfNodes[(std::uint64_t)std::min(l1, l2) << 32 | std::max(l1, l2)] = i;
-        }
-        const int ecount = n + 2 * edges.size();
-        // do not use new[] here, blossom will free them with free()
-        int *elist = (int *)malloc(sizeof(int) * 2 * ecount);
-        int *elen = (int *)malloc(sizeof(int) * ecount);
-        std::size_t CC = 0;
-        for(std::size_t i : edges) {
-          elist[2 * CC] = local[t2n[pairs[i].t1]];
-          elist[2 * CC + 1] = local[t2n[pairs[i].t2]];
-          elen[CC++] = cost[i];
-        }
-        for(std::size_t i : edges) {
-          elist[2 * CC] = n + local[t2n[pairs[i].t1]];
-          elist[2 * CC + 1] = n + local[t2n[pairs[i].t2]];
-          elen[CC++] = 0;
-        }
-        for(int i = 0; i < n; i++) {
-          elist[2 * CC] = i;
-          elist[2 * CC + 1] = n + i;
-          elen[CC++] = alone;
-        }
-        ++nbBlossom;
-        double matzeit = 0.0;
-        char MATCHFILE[256];
-        sprintf(MATCHFILE, ".face.match");
-        if(perfect_match(2 * n, nullptr, ecount, &elist, &elen, nullptr,
-                         MATCHFILE, 0, 0, 0, 0, &matzeit)) {
-          failed = true;
-          free(elist);
-          return;
-        }
-        for(int k = 0; k < elist[0]; k++) {
-          const int i1 = elist[1 + 3 * k], i2 = elist[1 + 3 * k + 1];
-          if(i1 >= n || i2 >= n) continue;
-          auto it = pairOfNodes.find((std::uint64_t)std::min(i1, i2) << 32 |
-                                     std::max(i1, i2));
-          if(it == pairOfNodes.end()) continue;
-          partner[global[i1]] = partner[global[i2]] = it->second;
-        }
-        free(elist);
-      };
-
-      blossomMatch();
-      auto nbLeftAlone = [&]() {
-        std::size_t nb = 0;
-        for(std::size_t t = 0; t < nt; ++t)
-          nb += partner[t] < 0 && !pairsOf[t].empty();
-        return nb;
-      };
-      std::size_t nbAloneBefore = nbLeftAlone();
-      for(int round = 0; round < 3 && !failed && nbAloneBefore; ++round) {
-        // the triangles left alone, and the zone around them
-        for(std::size_t t = 0; t < nt; ++t) fixed[t] = partner[t] >= 0;
-        std::vector<int> depth(nt, -1);
-        std::vector<std::size_t> front;
-        for(std::size_t t = 0; t < nt; ++t)
-          if(partner[t] < 0 && !pairsOf[t].empty()) {
-            depth[t] = 0;
-            front.push_back(t);
-          }
-        if(front.empty()) break;
-        const int radius = 2 << round;
-        for(std::size_t k = 0; k < front.size(); ++k) {
-          const std::size_t t = front[k];
-          if(depth[t] >= radius) continue;
-          for(std::size_t i : pairsOf[t]) {
-            const std::size_t u =
-              t2n[pairs[i].t1] == (int)t ? t2n[pairs[i].t2] : t2n[pairs[i].t1];
-            if(depth[u] >= 0) continue;
-            depth[u] = depth[t] + 1;
-            front.push_back(u);
-          }
-        }
-        // and the partners of its triangles
-        for(std::size_t t : front) {
-          fixed[t] = 0;
-          if(partner[t] >= 0) {
-            fixed[t2n[pairs[partner[t]].t1]] = 0;
-            fixed[t2n[pairs[partner[t]].t2]] = 0;
-          }
-        }
-        blossomMatch();
-        // (no better in a wider zone either, mostly)
-        const std::size_t nbAlone = nbLeftAlone();
-        if(nbAlone >= nbAloneBefore) break;
-        nbAloneBefore = nbAlone;
-      }
-
-      if(failed) {
+    if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS &&
+       CTX::instance()->mesh.algo3d == ALGO_3D_RTREE) {
+      std::vector<int> partner;
+      if(!prematchedBlossom(gf, pairs, cost, t2n, partner)) {
         Msg::Warning(
           "Perfect Match failed in quadrangulation, try something else");
         pairs.clear();
         _recombineIntoQuads(gf, false, cubicGraph);
       }
       else {
-        std::size_t nbAlone = 0;
-        for(std::size_t t = 0; t < nt; ++t) nbAlone += partner[t] < 0;
-        Msg::Debug("Blossom: %zu of %zu pairs matched first, %zu Blossom "
-                   "run%s, %zu triangle%s left",
-                   nbPrematched, nt / 2, nbBlossom, nbBlossom == 1 ? "" : "s",
-                   nbAlone, nbAlone == 1 ? "" : "s");
-        for(std::size_t t = 0; t < nt; ++t) {
+        for(std::size_t t = 0; t < partner.size(); ++t) {
           const int i = partner[t];
           if(i >= 0 && t2n[pairs[i].t1] == (int)t)
             addMatchedPair(pairs[i].t1, pairs[i].t2);

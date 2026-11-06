@@ -52,19 +52,17 @@ static bool improved_translate(GFace *gf, MVertex *vertex, SVector3 &v1,
   return 1;
 }
 
-// The directions and the size at a node from the scaled cross field that
-// guided the surface mesh (PACK, QuadQS), as its 3D packing reads them: the
-// field vector projected on the tangent plane, its normal rotation, its norm
-static bool guidedDirections(GFace *gf, Field *crossField, MVertex *vertex,
-                             SVector3 &v1, SVector3 &v2, double &size)
+bool crossFieldDirection(GFace *gf, Field *crossField, MVertex *vertex,
+                         SPoint2 &uv, SVector3 &t1, SVector3 &normal,
+                         double &size)
 {
-  SPoint2 uv;
   reparamMeshVertexOnFace(vertex, gf, uv);
-  (*crossField)(vertex->x(), vertex->y(), vertex->z(), v1, gf);
-  size = v1.norm();
+  (*crossField)(vertex->x(), vertex->y(), vertex->z(), t1, gf);
+  size = t1.norm();
   if(!(size > 0.) || !std::isfinite(size) || size > 1.e10) return false;
-  SVector3 normal;
   if(gf->geomType() == GEntity::DiscreteSurface) {
+    // the normal of the triangle the node lies on, not of the chart, which
+    // can be compressed or singular there
     const double guess[2] = {uv.x(), uv.y()};
     if(!static_cast<discreteFace *>(gf)
           ->closestPoint(vertex->point(), guess, &normal)
@@ -77,12 +75,9 @@ static bool guidedDirections(GFace *gf, Field *crossField, MVertex *vertex,
   }
   if(!(normal.norm() > 0.) || !std::isfinite(normal.norm())) return false;
   normal.normalize();
-  v1 -= normal * dot(v1, normal);
-  if(!(v1.norm() > 0.)) return false;
-  v1.normalize();
-  v2 = crossprod(v1, normal);
-  if(!(v2.norm() > 0.)) return false;
-  v2.normalize();
+  t1 -= normal * dot(t1, normal);
+  if(!(t1.norm() > 0.)) return false;
+  t1.normalize();
   return true;
 }
 
@@ -114,12 +109,19 @@ void directions_storage(GFace *gf)
       s4.reserve(vertices.size());
       bool ok = true;
       for(MVertex *v : vertices) {
-        SVector3 v1, v2;
+        SPoint2 uv;
+        SVector3 v1, normal;
         double size;
-        if(!guidedDirections(gf, crossField, v, v1, v2, size)) {
+        if(!crossFieldDirection(gf, crossField, v, uv, v1, normal, size)) {
           ok = false;
           break;
         }
+        SVector3 v2 = crossprod(v1, normal);
+        if(!(v2.norm() > 0.)) {
+          ok = false;
+          break;
+        }
+        v2.normalize();
         s1.push_back(v->point());
         s2.push_back(v1);
         s3.push_back(v2);

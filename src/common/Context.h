@@ -39,7 +39,7 @@ struct contextMeshOptions {
   int mmg3dCombineDomains;
   int algoRecombine, recombineAll, recombineOptimizeTopology;
   int repairSelfIntersecting1dMesh;
-  int packSizemapMethod, pack3D;
+  int packSizemapMethod;
   int recombineNodeRepositioning;
   double recombineMinimumQuality;
   int recombine3DAll, recombine3DPrisms, recombine3DPyramids;

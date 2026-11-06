@@ -7431,19 +7431,9 @@ double opt_mesh_repair_self_intersecting_1d_mesh(OPT_ARGS_NUM)
   return CTX::instance()->mesh.repairSelfIntersecting1dMesh;
 }
 
-double opt_mesh_pack_3d(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET) {
-    if(val != 1.)
-      Msg::Warning("Mesh.Pack3D is fixed to 1: PACK only supports 3D packing");
-    CTX::instance()->mesh.pack3D = 1;
-  }
-  return 1.;
-}
-
 double opt_mesh_pack_sizemap_method(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->mesh.packSizemapMethod = val;
+  if(action & GMSH_SET) CTX::instance()->mesh.packSizemapMethod = (int)val;
   return CTX::instance()->mesh.packSizemapMethod;
 }
 

@@ -301,23 +301,13 @@ int meshCombine3D(GRegion *gr, const CombineFrames *frames)
 
   for(size_t k = 0; k < ccs.hexes().size(); k++) {
     if(ccs.selectedHexes()[k]) {
-      MVertex *v0 = c2v[ccs.hexes()[k].vertexes[0]];
-      MVertex *v1 = c2v[ccs.hexes()[k].vertexes[1]];
-      MVertex *v2 = c2v[ccs.hexes()[k].vertexes[2]];
-      MVertex *v3 = c2v[ccs.hexes()[k].vertexes[3]];
-      MVertex *v4 = c2v[ccs.hexes()[k].vertexes[4]];
-      MVertex *v5 = c2v[ccs.hexes()[k].vertexes[5]];
-      MVertex *v6 = c2v[ccs.hexes()[k].vertexes[6]];
-      MVertex *v7 = c2v[ccs.hexes()[k].vertexes[7]];
-      used[v0->getIndex()] = 1;
-      used[v1->getIndex()] = 1;
-      used[v2->getIndex()] = 1;
-      used[v3->getIndex()] = 1;
-      used[v4->getIndex()] = 1;
-      used[v5->getIndex()] = 1;
-      used[v6->getIndex()] = 1;
-      used[v7->getIndex()] = 1;
-      MHexahedron *h = new MHexahedron(v0, v1, v2, v3, v4, v5, v6, v7);
+      MVertex *v[8];
+      for(int i = 0; i < 8; i++) {
+        v[i] = c2v[ccs.hexes()[k].vertexes[i]];
+        used[v[i]->getIndex()] = 1;
+      }
+      MHexahedron *h =
+        new MHexahedron(v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7]);
       volHex += hexVolume(h);
       numHex++;
       gr->hexahedra.push_back(h);
@@ -353,19 +343,12 @@ int meshCombine3D(GRegion *gr, const CombineFrames *frames)
   if(enablePrisms) {
     for(size_t k = 0; k < ccs.prisms().size(); k++) {
       if(!ccs.selectedPrisms()[k]) continue;
-      MVertex *v0 = c2v[ccs.prisms()[k].vertexes[0]];
-      MVertex *v1 = c2v[ccs.prisms()[k].vertexes[1]];
-      MVertex *v2 = c2v[ccs.prisms()[k].vertexes[2]];
-      MVertex *v3 = c2v[ccs.prisms()[k].vertexes[3]];
-      MVertex *v4 = c2v[ccs.prisms()[k].vertexes[4]];
-      MVertex *v5 = c2v[ccs.prisms()[k].vertexes[5]];
-      used[v0->getIndex()] = 1;
-      used[v1->getIndex()] = 1;
-      used[v2->getIndex()] = 1;
-      used[v3->getIndex()] = 1;
-      used[v4->getIndex()] = 1;
-      used[v5->getIndex()] = 1;
-      MPrism *p = new MPrism(v0, v1, v2, v3, v4, v5);
+      MVertex *v[6];
+      for(int i = 0; i < 6; i++) {
+        v[i] = c2v[ccs.prisms()[k].vertexes[i]];
+        used[v[i]->getIndex()] = 1;
+      }
+      MPrism *p = new MPrism(v[0], v[1], v[2], v[3], v[4], v[5]);
       gr->prisms.push_back(p);
       // Faces 0 and 1 are the 2 triangular caps: they coincide with
       // existing surface triangles already in place, nothing to
@@ -403,15 +386,12 @@ int meshCombine3D(GRegion *gr, const CombineFrames *frames)
 
   for(unsigned int k = 0; k < ms.tetCorners.size() / 4; k++) {
     if(ccs.selectedTets()[k]) {
-      MVertex *v0 = c2v[ms.tetCorners[4 * k]];
-      MVertex *v1 = c2v[ms.tetCorners[4 * k + 1]];
-      MVertex *v2 = c2v[ms.tetCorners[4 * k + 2]];
-      MVertex *v3 = c2v[ms.tetCorners[4 * k + 3]];
-      used[v0->getIndex()] = 1;
-      used[v1->getIndex()] = 1;
-      used[v2->getIndex()] = 1;
-      used[v3->getIndex()] = 1;
-      MTetrahedron *tet = new MTetrahedron(v0, v1, v2, v3);
+      MVertex *v[4];
+      for(int i = 0; i < 4; i++) {
+        v[i] = c2v[ms.tetCorners[4 * k + i]];
+        used[v[i]->getIndex()] = 1;
+      }
+      MTetrahedron *tet = new MTetrahedron(v[0], v[1], v[2], v[3]);
       gr->tetrahedra.push_back(tet);
       volTet += tet->getVolume();
       numTet++;

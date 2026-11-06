@@ -1728,9 +1728,6 @@ StringXNumber MeshOptions_Number[] = {
       "4: cross-field + CAD small features adaptation (clamped by background mesh)" },
   { F|O, "PackSizemapMethod", opt_mesh_pack_sizemap_method, 3,
     "Size map for the PACK guiding field (same methods as QuadqsSizemapMethod, configured independently)" },
-  { F|O, "Pack3D" , opt_mesh_pack_3d, 1 ,
-    "Deprecated compatibility option, fixed to 1: PACK always uses "
-      "tangent-frame propagation and oriented exclusion cubes in 3D" },
   { F|O, "QuadqsTopologyOptimizationMethods" , opt_mesh_quadqs_topo_optim_methods, 0. ,
     "Topology optimization methods in QuadQuasiStructured. 0: default (all),"
       "100: pattern-based CAD faces,"

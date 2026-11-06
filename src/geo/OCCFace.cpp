@@ -67,8 +67,6 @@ void OCCFace::_clearClassifiers()
   for(std::size_t i = 0; i < _classifiers.size(); i++)
     delete _classifiers[i];
   _classifiers.clear();
-  _classifierFaces.clear();
-  _classifierTolerances.clear();
 }
 
 void OCCFace::_setup()
@@ -204,8 +202,6 @@ void OCCFace::_setup()
   _projectors.resize(std::max(1, Msg::GetMaxThreads()), nullptr);
   _localProjectors.resize(_projectors.size());
   _classifiers.resize(_projectors.size(), nullptr);
-  _classifierFaces.resize(_projectors.size());
-  _classifierTolerances.resize(_projectors.size(), -1.);
   _tolerance = BRep_Tool::Tolerance(_s);
 
   if(OCCFace::geomType() == GEntity::Sphere) {
@@ -349,34 +345,14 @@ const Handle(ShapeAnalysis_Surface) & OCCFace::_localProjector() const
   return _localProjectors[t];
 }
 
-IntTools_FClass2d *OCCFace::_classifier(double tolerance) const
+IntTools_FClass2d *OCCFace::_classifier() const
 {
   const std::size_t t = (std::size_t)Msg::GetThreadNum();
   if(t >= _classifiers.size()) return nullptr;
-
-  // A member cache already prevents reuse across OCCFace instances. Keep the
-  // explicit shape/tolerance check as well so that a future replacement of
-  // _s, or an update of its tolerance, cannot leave a stale OCCT classifier
-  // behind.
-  if(_classifiers[t] &&
-     (!_classifierFaces[t].IsEqual(_s) ||
-      _classifierTolerances[t] != tolerance)) {
-    delete _classifiers[t];
-    _classifiers[t] = nullptr;
-    _classifierFaces[t].Nullify();
-    _classifierTolerances[t] = -1.;
-  }
-
   if(!_classifiers[t]) {
     try {
-      _classifiers[t] = new IntTools_FClass2d(_s, tolerance);
-      _classifierFaces[t] = _s;
-      _classifierTolerances[t] = tolerance;
+      _classifiers[t] = new IntTools_FClass2d(_s, _tolerance);
     } catch(Standard_Failure &err) {
-      delete _classifiers[t];
-      _classifiers[t] = nullptr;
-      _classifierFaces[t].Nullify();
-      _classifierTolerances[t] = -1.;
       Msg::Debug("Could not initialize OpenCASCADE 2D classifier for surface "
                  "%d: %s",
                  tag(), err.GetMessageString());
@@ -632,28 +608,22 @@ bool OCCFace::containsPoint(const SPoint3 &pt) const
 
 bool OCCFace::containsParam(const SPoint2 &pt)
 {
-  const double tolerance = BRep_Tool::Tolerance(_s);
-  if(IntTools_FClass2d *classifier = _classifier(tolerance)) {
+  if(IntTools_FClass2d *classifier = _classifier()) {
     try {
       const TopAbs_State state =
         classifier->Perform(gp_Pnt2d{pt.x(), pt.y()});
       if(state != TopAbs_UNKNOWN)
         return (state == TopAbs_IN || state == TopAbs_ON);
     } catch(Standard_Failure &err) {
-      const std::size_t t = (std::size_t)Msg::GetThreadNum();
-      if(t < _classifiers.size()) {
-        delete _classifiers[t];
-        _classifiers[t] = nullptr;
-        _classifierFaces[t].Nullify();
-        _classifierTolerances[t] = -1.;
-      }
+      delete classifier;
+      _classifiers[Msg::GetThreadNum()] = nullptr;
       Msg::Debug("OpenCASCADE 2D classifier failed on surface %d: %s; using "
                  "the face classifier",
                  tag(), err.GetMessageString());
     }
   }
   BRepClass_FaceClassifier faceClassifier;
-  faceClassifier.Perform(_s, gp_Pnt2d{pt.x(), pt.y()}, tolerance);
+  faceClassifier.Perform(_s, gp_Pnt2d{pt.x(), pt.y()}, _tolerance);
   const TopAbs_State state = faceClassifier.State();
   return (state == TopAbs_IN || state == TopAbs_ON);
 }

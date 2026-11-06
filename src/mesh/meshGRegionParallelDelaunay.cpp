@@ -5202,16 +5202,25 @@ static int meshRegions(std::vector<GRegion *> &regions, splitQuadRecovery &sqr,
   return 0;
 }
 
-int meshGRegionParallelDelaunay(std::vector<GRegion *> &regions)
+// the same with the quadrangles of the boundary split for the recovery, and
+// pyramids put on them on success (the pyramid apexes only go to the
+// volumes then)
+static int meshRegionsWithPyramids(std::vector<GRegion *> &regions,
+                                   const std::vector<double> *points,
+                                   std::vector<MVertex *> *pointVertices,
+                                   bool optimizeTopology)
 {
   if(regions.empty()) return 0;
   splitQuadRecovery sqr(CTX::instance()->mesh.optimizePyramids >= -2);
-  const int ret = meshRegions(regions, sqr);
-  // the pyramid apexes only go to the volumes on success
+  const int ret =
+    meshRegions(regions, sqr, points, pointVertices, optimizeTopology);
   if(ret)
     for(auto &q : sqr.getQuad()) delete q.second;
   return ret;
 }
+
+int meshGRegionParallelDelaunay(std::vector<GRegion *> &regions)
+{ return meshRegionsWithPyramids(regions, nullptr, nullptr, false); }
 
 int meshGRegionParallelDelaunayWithPoints(GRegion *gr,
                                           const std::vector<double> &xyz,
@@ -5219,10 +5228,5 @@ int meshGRegionParallelDelaunayWithPoints(GRegion *gr,
                                           bool optimizeTopology)
 {
   std::vector<GRegion *> regions(1, gr);
-  splitQuadRecovery sqr(CTX::instance()->mesh.optimizePyramids >= -2);
-  const int ret =
-    meshRegions(regions, sqr, &xyz, &vertices, optimizeTopology);
-  if(ret)
-    for(auto &q : sqr.getQuad()) delete q.second;
-  return ret;
+  return meshRegionsWithPyramids(regions, &xyz, &vertices, optimizeTopology);
 }
