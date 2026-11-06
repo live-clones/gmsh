@@ -732,17 +732,18 @@ public:
     gl2psLineWidth(
       (float)(opt->lineWidth * CTX::instance()->print.epsLineWidthFactor));
 
-    if(opt->axes) {
+    int axes = opt->getAxes();
+    if(axes) {
       gmshColor4ubv((const void *)&opt->color.axes);
       gmshLineWidth((float)CTX::instance()->lineWidth);
       gl2psLineWidth((float)(CTX::instance()->lineWidth *
                              CTX::instance()->print.epsLineWidthFactor));
       if(!opt->axesAutoPosition)
-        _ctx->drawAxes(opt->axes, opt->axesTicks, opt->axesFormat,
+        _ctx->drawAxes(axes, opt->axesTicks, opt->axesFormat,
                        opt->axesLabel, opt->axesPosition, opt->axesMikado,
                        opt->axesPosition);
       else if(!opt->tmpBBox.empty())
-        _ctx->drawAxes(opt->axes, opt->axesTicks, opt->axesFormat,
+        _ctx->drawAxes(axes, opt->axesTicks, opt->axesFormat,
                        opt->axesLabel, opt->tmpBBox, opt->axesMikado,
                        opt->tmpBBox);
     }

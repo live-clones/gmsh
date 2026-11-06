@@ -360,7 +360,8 @@ static void getGraphLayout(PView *p, double xmin, double xmax, double ymin,
   // of a colour scale, so that a graph and a scale in the same window match
   l.out = l.gap = 0.4 * CTX::instance()->glFontSize;
 
-  if(!opt->axes) { // nothing is written: the curves alone, off the edges
+  // nothing is written: the curves alone, off the edges
+  if(!opt->getAxes()) {
     l.left = l.right = l.top = l.bottom = 1.5 * l.fontH;
     return;
   }
@@ -392,7 +393,7 @@ static void getGraphLayout(PView *p, double xmin, double xmax, double ymin,
 
   // the tick marks stick out of the frame, on both sides of a box
   l.left = l.bottom = l.out;
-  l.right = l.top = (opt->axes > 1) ? l.out : 0.;
+  l.right = l.top = (opt->getAxes() > 1) ? l.out : 0.;
 
   l.numX = l.out + l.gap + l.fontH + pl.xrow * (l.fontH + tick);
   l.multX = l.numX + 1.2 * l.fontH;
@@ -490,7 +491,7 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
 {
   PViewOptions *opt = p->getOptions();
 
-  if(!opt->axes) return;
+  if(!opt->getAxes()) return;
 
   if(width <= 0 || height <= 0) return;
 
@@ -526,7 +527,7 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
     gmshVertex2d(xleft, ytop);
     gmshVertex2d(xleft, ytop - height);
     gmshVertex2d(xleft + width, ytop - height);
-    if(opt->axes > 1) {
+    if(opt->getAxes() > 1) {
       gmshVertex2d(xleft + width, ytop);
       gmshVertex2d(xleft, ytop);
     }
@@ -568,7 +569,7 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
     CTX::instance()->unpackRed(opt->color.axes),
     CTX::instance()->unpackGreen(opt->color.axes),
     CTX::instance()->unpackBlue(opt->color.axes), 25);
-  bool blend = (opt->axes > 2);
+  bool blend = (opt->getAxes() > 2);
   if(blend) {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
@@ -587,7 +588,8 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
     if(pl.first) {
       gmshVertex2d(xleft - o, y);
       gmshVertex2d(xleft, y);
-      if(opt->axes > 1 && !pl.ytwin) { // the twin axis has the right side
+      // the twin axis has the right side
+      if(opt->getAxes() > 1 && !pl.ytwin) {
         gmshVertex2d(xleft + width, y);
         gmshVertex2d(xleft + width + o, y);
       }
@@ -597,7 +599,8 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
       gmshVertex2d(yaxis + o, y);
     }
     gmshEnd();
-    if(pl.first && opt->axes > 2 && l.yt[i].t > 0. && l.yt[i].t < 1.) {
+    if(pl.first && opt->getAxes() > 2 && l.yt[i].t > 0. &&
+       l.yt[i].t < 1.) {
       gmshColor4ubv((const void *)(minor ? &gridMinor : &grid));
       gmshBegin(GL_LINES);
       gmshVertex2d(xleft, y);
@@ -630,12 +633,12 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
       gmshBegin(GL_LINES);
       gmshVertex2d(x, ybot - o);
       gmshVertex2d(x, ybot);
-      if(opt->axes > 1) {
+      if(opt->getAxes() > 1) {
         gmshVertex2d(x, ytop);
         gmshVertex2d(x, ytop + o);
       }
       gmshEnd();
-      if(opt->axes > 2 && l.xt[i].t > 0. && l.xt[i].t < 1.) {
+      if(opt->getAxes() > 2 && l.xt[i].t > 0. && l.xt[i].t < 1.) {
         gmshColor4ubv((const void *)(minor ? &gridMinor : &grid));
         gmshBegin(GL_LINES);
         gmshVertex2d(x, ybot);
@@ -877,17 +880,16 @@ void drawContext::drawGraph2d(bool inModelCoordinates)
   drawContext::global()->setFont(CTX::instance()->glFontEnum,
                                  CTX::instance()->glFontSize);
   double tick = 5; // the space between two lines of text
-  // a margin to the border of the window, in the size of the text, so that a
-  // graph keeps its air on a screen whose pixels are half as large
-  double font_h = std::max(1., (double)drawContext::global()->getStringHeight());
-  double mx = font_h, my = 0.6 * font_h;
   double ss = 1.;
   if(inModelCoordinates) {
     ss = pixel_equiv_x / s[0];
     tick *= ss;
-    mx *= ss;
-    my *= ss;
   }
+  // the air around the graphs, from the text to the border of the window and
+  // between two graphs: a fraction of a frame, as the model gets a fraction
+  // of its bounding box
+  double fact = CTX::instance()->displayBorderFactor;
+  double mx = 0., my = 0.;
 
   double winw = viewport[2] - viewport[0];
   double winh = viewport[3] - viewport[1];
@@ -899,7 +901,7 @@ void drawContext::drawGraph2d(bool inModelCoordinates)
   for(std::size_t i = 0; i < graphs.size(); i++) {
     PViewOptions *opt = graphs[i]->getOptions();
     int a = opt->autoPosition;
-    if(a >= 2 && a <= 11 && opt->axes) shared[a]++;
+    if(a >= 2 && a <= 11 && opt->getAxes()) shared[a]++;
   }
 
   // what each graph does in its frame, and what the text of all of them
@@ -918,7 +920,7 @@ void drawContext::drawGraph2d(bool inModelCoordinates)
       PViewOptions *opt = graphs[i]->getOptions();
       int a = opt->autoPosition;
       if(a == 0 || a == 12) continue; // a graph placed by hand
-      if(!opt->axes) continue; // nothing is written around it
+      if(!opt->getAxes()) continue; // nothing is written around it
       graphPlace &pl = place[i];
       double xmin, xmax, ymin, ymax;
       getGraphAbscissa(graphs[i], xmin, xmax);
@@ -950,30 +952,31 @@ void drawContext::drawGraph2d(bool inModelCoordinates)
       mr = std::max(mr, l.right);
       mt = std::max(mt, l.top);
       mb = std::max(mb, l.bottom);
-      if(a == 1)
-        nw = nh = (graphs.size() > 2) ? 2 : 1;
+      if(a == 1) {
+        if(graphs.size() > 2) nw = 2;
+        if(graphs.size() > 1) nh = 2;
+      }
       else {
         if(a <= 5 || a == 8 || a == 9) nw = 2;
         if(a <= 5 || a == 6 || a == 7) nh = std::max(nh, 2);
-        if(a == 11) nh = 3;
+        if(a == 11) nh = std::max(nh, 3);
       }
     }
-    // text wider than the window would leave nothing to draw in: the graphs
-    // keep two thirds of it, whatever their labels measure
-    double needw = nw * (ml + mr) + (nw + 1) * mx;
-    if(needw > 0.67 * winw) {
-      double f = 0.67 * winw / needw;
+    // text wider than half the window would leave nothing to draw in: the
+    // frames and their air keep half of it, whatever the labels measure
+    if(nw * (ml + mr) > 0.5 * winw) {
+      double f = 0.5 * winw / (nw * (ml + mr));
       ml *= f;
       mr *= f;
-      mx *= f;
     }
-    double needh = nh * (mt + mb) + (nh + 1) * my;
-    if(needh > 0.67 * winh) {
-      double f = 0.67 * winh / needh;
+    if(nh * (mt + mb) > 0.5 * winh) {
+      double f = 0.5 * winh / (nh * (mt + mb));
       mt *= f;
       mb *= f;
-      my *= f;
     }
+    // what is left goes to the frames and the air between and around them
+    mx = fact * (winw - nw * (ml + mr)) / (nw + (nw + 1) * fact);
+    my = fact * (winh - nh * (mt + mb)) / (nh + (nh + 1) * fact);
   }
 
   //  +------------------winw-------------------+

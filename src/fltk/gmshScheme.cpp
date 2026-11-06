@@ -29,6 +29,7 @@
 #include <string>
 #include "FlGui.h" // the box types of Gmsh
 #include "Context.h"
+#include "GmshMessage.h"
 
 // the default theme, which an empty name also selects: the session files of
 // older versions store an empty theme, and their users get the new look too
@@ -528,6 +529,28 @@ void gmshStyleWidgets(Fl_Widget *w)
   if(gmshScheme()) styleWidgetsIn(w);
 }
 
+#if !defined(__APPLE__) && !defined(WIN32)
+// a font without Latin letters draws them all as the same empty box
+static bool drawsLetters()
+{
+  int dx, dy, w1, h1, w2, h2;
+  fl_font(FL_HELVETICA, 16);
+  fl_text_extents("i", dx, dy, w1, h1);
+  fl_text_extents("W", dx, dy, w2, h2);
+  return w1 != w2 || h1 != h2;
+}
+
+// a warning for the message console, which does not exist yet
+static std::string fontWarning;
+static void warnFont(void *)
+{
+  if(FlGui::available())
+    Msg::Warning("%s", fontWarning.c_str());
+  else
+    Fl::repeat_timeout(0.1, warnFont);
+}
+#endif
+
 void applyGmshScheme()
 {
   // the font of the desktop, where FLTK can be told its name
@@ -555,6 +578,20 @@ void applyGmshScheme()
     names[1] = x11 ? "B" + family : family + " Bold";
     names[2] = x11 ? "I" + family : family + " Italic";
     names[3] = x11 ? "P" + family : family + " Bold Italic";
+    // Xft takes no missing letter from another font: back to the stock fonts if
+    // this one does not have them
+    if(x11) {
+      const std::string stocks[4] = {stock, Fl::get_font(FL_HELVETICA_BOLD),
+                                     Fl::get_font(FL_HELVETICA_ITALIC),
+                                     Fl::get_font(FL_HELVETICA_BOLD_ITALIC)};
+      Fl::set_font(FL_HELVETICA, names[0].c_str());
+      if(!drawsLetters()) {
+        fontWarning = "Font '" + family + "' cannot draw Latin letters: using "
+                      "the default font of FLTK";
+        Fl::add_timeout(0., warnFont);
+        for(int i = 0; i < 4; i++) names[i] = stocks[i];
+      }
+    }
   }
   Fl::set_font(FL_HELVETICA, names[0].c_str());
   Fl::set_font(FL_HELVETICA_BOLD, names[1].c_str());

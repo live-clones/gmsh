@@ -190,6 +190,9 @@ void Msg::Initialize(int argc, char **argv)
     // find the onelab.py module or subclients automatically)
     addGmshPathToEnvironmentVar("PYTHONPATH");
     addGmshPathToEnvironmentVar("PATH");
+    // the interface is in English: under e.g. a Thai LANG, fontconfig would give
+    // Xft a font without Latin letters, which draws them all as empty boxes
+    if(GetEnvironmentVar("FC_LANG").empty()) SetEnvironmentVar("FC_LANG", "en");
   }
 
   if(_locale) {
