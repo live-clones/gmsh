@@ -48,10 +48,11 @@
 #include "meshQuadQuasiStructured.h"
 #include "meshGFaceBipartiteLabelling.h"
 #include "sizeField.h"
-
 #include "meshCombine3D.h"
-
 #include "meshQuantize2.h"
+#include "meshUntangling.h"
+#include "meshMesquite.h"
+#include "meshDuplicateVertices.h"
 
 #if defined(HAVE_DOMHEX)
 #include "pointInsertionFlat.h"
@@ -62,10 +63,6 @@
 #include "HighOrderMeshElasticAnalogy.h"
 #include "HighOrderMeshFastCurving.h"
 #endif
-
-#include "meshUntangling.h"
-
-#include "meshMesquite.h"
 
 #if defined(HAVE_QUADMESHINGTOOLS)
 #include "cppUtils.h"
@@ -79,7 +76,6 @@
 #include "geolog.h"
 #endif
 
-#include "meshDuplicateVertices.h"
 
 class EmbeddedCompatibilityTest {
 public:
