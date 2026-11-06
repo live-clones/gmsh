@@ -162,7 +162,7 @@ const std::vector<ShortcutEntry> &GetShortcuts()
     E("view_x", {'x', ModAlt}, "Set X view"),
     E("view_y", {'y', ModAlt}, "Set Y view"),
     E("view_z", {'z', ModAlt}, "Set Z view"),
-    E("view_1_1", {'1', ModAlt}, "Set 1:1 view"),
+    E("view_1_1", {'1', ModAlt}, "Fit the model in the window"),
     E("view_3d", {'3', ModAlt}, "Set isometric 3D view"),
     E("small_axes", {'a', ModAlt | ModShift}, "Hide/show small axes"),
     E("mesh_volume_faces", {'b', ModAlt | ModShift},

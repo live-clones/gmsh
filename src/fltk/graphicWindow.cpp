@@ -2518,23 +2518,6 @@ static graphicWindow *getGraphicWindow(Fl_Widget *w)
   return FlGui::instance()->graph[0];
 }
 
-// the scale at which the bounding box seen isometrically fills the viewport,
-// with the margin it has at scale 1 seen along z, which is all scale 1 is made
-// for: a box seen isometrically is larger on the screen
-static double isometricScale(drawContext *ctx)
-{
-  CTX *c = CTX::instance();
-  const double dx = c->max[0] - c->min[0], dy = c->max[1] - c->min[1];
-  const double dz = c->max[2] - c->min[2];
-  const double w = (dx + dy) / sqrt(2.);
-  const double h = (dx + dy) / sqrt(6.) + dz * sqrt(2. / 3.);
-  const double margin = 1. + 2. * c->displayBorderFactor;
-  double scale = 1.;
-  if(h > 0.) scale = (ctx->vymax - ctx->vymin) / (margin * h);
-  if(w > 0.) scale = std::min(scale, (ctx->vxmax - ctx->vxmin) / (margin * w));
-  return scale;
-}
-
 void status_xyz1p_cb(Fl_Widget *w, void *data)
 {
   const char *str = (const char *)data;
@@ -2629,15 +2612,15 @@ void status_xyz1p_cb(Fl_Widget *w, void *data)
         ctx->r[2] = opposite ? 45. : -135.;
         ctx->setQuaternionFromEulerAngles();
         ctx->t[0] = ctx->t[1] = ctx->t[2] = 0.;
-        ctx->s[0] = ctx->s[1] = ctx->s[2] = isometricScale(ctx);
+        ctx->s[0] = ctx->s[1] = ctx->s[2] = ctx->fitScale();
       }
     }
     else if(!strcmp(str, "1:1")) {
       // if Shift is pressed, reset bounding box around visible
       // entities
       if(Fl::event_state(FL_SHIFT)) SetBoundingBox(true);
-      // reset translation and scaling, or sync translation and
-      // scaling with the first window (alt)
+      // reset translation and fit the model in the window, or sync translation
+      // and scaling with the first window (Ctrl)
       if(CTX::instance()->camera) { ctx->camera.lookAtCg(); }
       else {
         if(Fl::event_state(FL_CTRL) || Fl::event_state(FL_META)) {
@@ -2651,7 +2634,7 @@ void status_xyz1p_cb(Fl_Widget *w, void *data)
         }
         else {
           ctx->t[0] = ctx->t[1] = ctx->t[2] = 0.;
-          ctx->s[0] = ctx->s[1] = ctx->s[2] = 1.;
+          ctx->s[0] = ctx->s[1] = ctx->s[2] = ctx->fitScale();
         }
       }
     }
@@ -2698,8 +2681,8 @@ void quick_access_cb(Fl_Widget *w, void *data)
   else if(what == "view")
     view_options_cb(nullptr, (void *)-1);
   else if(what == "reset_viewport") {
-    status_xyz1p_cb(nullptr, (void *)"1:1");
     status_xyz1p_cb(nullptr, (void *)"z");
+    status_xyz1p_cb(nullptr, (void *)"1:1");
   }
   else if(what == "measure") {
     status_measure_cb(nullptr, nullptr);
@@ -3998,9 +3981,9 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   _butt[3] = new Fl_Button(x, mh + glheight + mheight + 2, 2 * FL_NORMAL_SIZE,
                            sht, "1:1");
   _butt[3]->callback(status_xyz1p_cb, (void *)"1:1");
-  _butt[3]->tooltip("Set unit scale, sync scale between viewports (Ctrl), "
-                    "or reset bounding box around visible entities (Shift) "
-                    "(Alt+1, Alt+Ctrl+1, Alt+Shift+1)");
+  _butt[3]->tooltip("Fit the model in the window, sync scale between viewports "
+                    "(Ctrl), or reset bounding box around visible entities "
+                    "(Shift) (Alt+1, Alt+Ctrl+1, Alt+Shift+1)");
   x += 1.75 * FL_NORMAL_SIZE;
   _butt[9] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "S");
   _butt[9]->callback(status_options_cb, (void *)"S");
