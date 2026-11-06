@@ -376,7 +376,7 @@ bool GetRGBForString(const char *str, int &r, int &g, int &b)
   return true;
 }
 
-// the scheme in use: the one asked for, or what General.ColorScheme = 4 stands
+// the scheme in use: the one asked for, or what General.ColorScheme = 3 stands
 // for: light or dark as the desktop, which is asked once, under the GUI; classic
 // without it, as a batch run must not depend on the desktop it is run from
 static int _desktopScheme = -1;
@@ -384,11 +384,11 @@ static int _desktopScheme = -1;
 static int colorSchemeInUse()
 {
   int scheme = CTX::instance()->colorScheme;
-  if(scheme != 4) return scheme;
+  if(scheme != 3) return scheme;
   if(_desktopScheme < 0) {
     _desktopScheme = 1;
 #if defined(HAVE_FLTK)
-    if(FlGui::available()) _desktopScheme = (desktopDark() == 1) ? 3 : 0;
+    if(FlGui::available()) _desktopScheme = (desktopDark() == 1) ? 2 : 0;
 #endif
   }
   return _desktopScheme;
@@ -397,10 +397,7 @@ static int colorSchemeInUse()
 // an option's colour in a scheme
 static unsigned int schemeColor(const StringXColor &s, int scheme)
 {
-  const auto &d = (scheme == 1) ? s.def2 :
-                  (scheme == 2) ? s.def3 :
-                  (scheme == 3) ? s.def4 :
-                                  s.def1;
+  const auto &d = (scheme == 1) ? s.def2 : (scheme == 2) ? s.def3 : s.def1;
   return CTX::instance()->packColor(d[0], d[1], d[2], d[3]);
 }
 
@@ -3806,8 +3803,8 @@ double opt_general_arrow_stem_radius(OPT_ARGS_NUM)
 
 bool followDesktopColorScheme(bool dark)
 {
-  if(CTX::instance()->colorScheme != 4) return false;
-  int from = colorSchemeInUse(), to = dark ? 3 : 0;
+  if(CTX::instance()->colorScheme != 3) return false;
+  int from = colorSchemeInUse(), to = dark ? 2 : 0;
   if(from == to) return false;
   _desktopScheme = to;
   StringXColor *tables[] = {GeneralOptions_Color, GeometryOptions_Color,
@@ -3835,7 +3832,7 @@ double opt_general_color_scheme(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     CTX::instance()->colorScheme = (int)val;
-    if(CTX::instance()->colorScheme > 4) CTX::instance()->colorScheme = 0;
+    if(CTX::instance()->colorScheme > 3) CTX::instance()->colorScheme = 0;
     _desktopScheme = -1;
     SetDefaultColorOptions(0, GeneralOptions_Color);
     SetDefaultColorOptions(0, GeometryOptions_Color);

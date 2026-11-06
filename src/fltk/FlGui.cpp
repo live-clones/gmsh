@@ -556,7 +556,7 @@ void FlGui::desktopChanged()
 {
   if(!available()) return;
   CTX *c = CTX::instance();
-  if(c->guiColorScheme != 2 && c->colorScheme != 4) return;
+  if(c->guiColorScheme != 2 && c->colorScheme != 3) return;
   bool dark = (desktopDark() == 1);
   bool gui = (c->guiColorScheme == 2 && dark != (bool)c->guiDark);
   bool graphics = followDesktopColorScheme(dark);
@@ -651,7 +651,7 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   Fl::set_boxtype(GMSH_SIMPLE_TOP_BOX, simple_top_box_draw, 0, 1, 0, 1);
 
   // the graphics leave the colours used without a GUI, if they follow the desktop
-  if(CTX::instance()->colorScheme == 4)
+  if(CTX::instance()->colorScheme == 3)
     followDesktopColorScheme(desktopDark() == 1);
 
   // apply color scheme before widget creation (noop if default color scheme is
