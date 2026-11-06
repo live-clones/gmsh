@@ -1025,14 +1025,14 @@ typedef struct {
   // the defaults are stored in individual bytes so that we can initialize
   // them statically independently of the machine endianness. They will be
   // packed into unsigned ints at runtime
-  unsigned char def1[4], def2[4], def3[4], def4[4];
+  unsigned char def1[4], def2[4], def3[4]; // light, classic, dark
   const char *help;
 } StringXColor;
 
 void InitOptions(int num);
 void InitOptionsGUI(int num);
 void ReInitOptions(int num);
-// General.ColorScheme = 4 goes on to the colours for a light or dark desktop,
+// General.ColorScheme = 3 goes on to the colours for a light or dark desktop,
 // if not there yet: the ones the user changed are kept
 bool followDesktopColorScheme(bool dark);
 void PrintOptions(int num, int level, int diff, int help, const char *filename,

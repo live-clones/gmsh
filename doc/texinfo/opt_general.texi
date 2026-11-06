@@ -542,8 +542,8 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.ColorScheme
-Color scheme for graphics (0: light, 1: classic, 2: grayscale, 3: dark, 4: system, i.e. light or dark as the desktop, and classic without a GUI)@*
-Default value: @code{4}@*
+Color scheme for graphics (0: light, 1: classic, 2: dark, 3: system, i.e. light or dark as the desktop, and classic without a GUI)@*
+Default value: @code{3}@*
 Saved in: @code{General.SessionFileName}
 
 @item General.ConfirmOverwrite
