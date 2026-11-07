@@ -56,6 +56,16 @@
   #openMenu small.drop { padding: 4px 6px 2px; border-top: 1px solid var(--line2);
                          margin-top: 2px; }
   #status { color: var(--muted); }
+  #keys { margin-left: auto; border-radius: 50%; width: 22px; height: 22px;
+          padding: 0; }
+  #keysDialog { max-width: min(560px, 90vw); max-height: 80vh; color: var(--fg);
+                background: var(--bg); border: 1px solid var(--border);
+                border-radius: 6px; padding: 10px 16px; }
+  #keysDialog form { float: right; }
+  #keysDialog h3 { margin: 4px 0 6px; }
+  #keysDialog p { color: var(--muted); margin: 0 0 8px; }
+  #keysDialog td { padding: 2px 12px 2px 0; vertical-align: top; }
+  #keysDialog td:first-child { white-space: nowrap; font-family: monospace; }
   #status.error { color: var(--error); }
   #side { overflow: auto; padding: 4px 8px; }
   /* the handle that resizes the panel: a drag, a double-click for the default */
@@ -126,7 +136,13 @@
   <button id="run" disabled>Run</button>
   <button id="reset" disabled>Reset</button>
   <span id="status">loading...</span>
+  <button id="keys" title="Keyboard shortcuts">?</button>
 </div>
+<dialog id="keysDialog"><form method="dialog"><button>Close</button></form>
+  <h3>Keyboard shortcuts</h3>
+  <p>The keys of Gmsh's graphical interface, in the 3D view or anywhere but
+    a field. A browser keeps some for itself (e.g. Cmd+W, Cmd+T).</p>
+  <table id="keysTable"></table></dialog>
 <div id="side">
   <div id="tabs"><button data-tab="modelTab" class="on">Model</button><button
     data-tab="optionsTab">Options</button></div>
@@ -150,6 +166,7 @@
 // models, or ?model=<url of the .pro>&files=<other files, next to it,
 // separated by commas>)
 import createGmsh from './build/gmsh.mjs';
+import {installShortcuts, shortcutsHelp} from './shortcuts.js';
 
 const $ = (id) => document.getElementById(id);
 const canvas = $('canvas'), status = $('status'), logText = $('logText');
@@ -785,13 +802,95 @@ function meshNow(dim) {
 applyColorScheme();
 buildOptions();
 readOptions();
+function showTab(id) {
+  for(const o of document.querySelectorAll('#tabs button')) {
+    o.classList.toggle('on', o.dataset.tab === id);
+    $(o.dataset.tab).hidden = o.dataset.tab !== id;
+  }
+}
 for(const b of document.querySelectorAll('#tabs button'))
-  b.addEventListener('click', () => {
-    for(const o of document.querySelectorAll('#tabs button')) {
-      o.classList.toggle('on', o === b);
-      $(o.dataset.tab).hidden = o !== b;
-    }
-  });
+  b.addEventListener('click', () => showTab(b.dataset.tab));
+
+// ---------------------------------------------------------------- keys
+
+// the shortcuts of the graphical interface: those that change the scene run
+// in the module (shortcuts.js), these by the page
+function showOptions(group) {
+  showTab('optionsTab');
+  if(group) {
+    $('options' + group).open = true;
+    $('options' + group).scrollIntoView({block: 'start'});
+  }
+}
+async function saveMesh() {
+  const name = ($('model').textContent || 'model').replace(/\.[^.]*$/, '') + '.msh';
+  try {
+    gmsh.write('/tmp/' + name);
+  } catch(e) {
+    status.textContent = e.message;
+    status.classList.add('error');
+    return;
+  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([FS.readFile('/tmp/' + name)]));
+  a.download = name;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  FS.unlink('/tmp/' + name);
+}
+const pageShortcuts = {
+  mesh_1d: () => meshNow(1),
+  mesh_2d: () => meshNow(2),
+  mesh_3d: () => meshNow(3),
+  solver_run: () => run('compute'),
+  geometry_reload: () => run('check'),
+  project_reload: () => run('check'),
+  file_open: () => openMenu(true),
+  mesh_save: saveMesh,
+  fullscreen: () => document.fullscreenElement ? document.exitFullscreen() :
+    document.documentElement.requestFullscreen(),
+  help_keys: () => $('keysDialog').showModal(),
+  options: () => showOptions(),
+  options_general: () => showOptions('General'),
+  options_geometry: () => showOptions('Geometry'),
+  options_mesh: () => showOptions('Mesh'),
+  options_post: () => showOptions('Views'),
+  options_view: () => showOptions('Views'),
+  options_solver: () => showTab('modelTab'),
+};
+const shortcuts = installShortcuts(Module, (action) => {
+  if(action === 'escape' && !$('openMenu').hidden) {
+    openMenu(false);
+    return true;
+  }
+  if(!pageShortcuts[action]) return false;
+  pageShortcuts[action]();
+  return true;
+}, (action) => {
+  // the options the key changed, shown, and the page following the scene's
+  // colour scheme
+  if(action === 'escape') lasso.style.display = 'none';
+  const c = gmsh.option.getNumber('General.ColorScheme');
+  if(c !== colorScheme) setColorScheme(c);
+  readOptions();
+  draw();
+});
+// the actions RunSceneShortcut() does, and those of the page, in the list
+const sceneActions = new Set(['geometry_points', 'geometry_curves',
+  'geometry_surfaces', 'geometry_volumes', 'mesh_nodes', 'mesh_lines',
+  'mesh_surface_edges', 'mesh_surface_faces', 'mesh_volume_edges',
+  'mesh_volume_faces', 'mesh_toggle', 'fast_redraw', 'bounding_boxes',
+  'color_scheme', 'lighting', 'axes_loop', 'small_axes', 'surface_type',
+  'projection', 'view_scales', 'colormaps', 'view_intervals',
+  'view_intervals_all', 'view_range', 'view_annotations', 'view_elements',
+  'views_hide_show', 'time_step_prev', 'time_step_next', 'view_prev',
+  'view_next', 'view_x', 'view_y', 'view_z', 'view_3d', 'view_1_1', 'escape']);
+for(const r of shortcutsHelp(shortcuts, (a) => sceneActions.has(a) || pageShortcuts[a])) {
+  const tr = $('keysTable').insertRow();
+  tr.insertCell().textContent = r.label;
+  tr.insertCell().textContent = r.help;
+}
+$('keys').addEventListener('click', () => $('keysDialog').showModal());
 
 // ---------------------------------------------------------------- models
 
@@ -886,7 +985,6 @@ $('openFiles').addEventListener('click', () => { openMenu(false); $('files').cli
 document.addEventListener('pointerdown', (e) => {
   if(!$('open').contains(e.target)) openMenu(false);
 });
-document.addEventListener('keydown', (e) => { if(e.key === 'Escape') openMenu(false); });
 for(const id of ['files', 'folder']) {
   $(id).addEventListener('change', async (e) => {
     const entries = [];

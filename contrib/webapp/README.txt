@@ -60,4 +60,5 @@ api_test.mjs shows its use and checks it:
   node api_test.mjs
 
 The pages draw the scene with the functions of webView.cpp; webOnelab.cpp
-links GetDP in and runs the ONELAB loop.
+links GetDP in and runs the ONELAB loop; shortcuts.js gives them the keyboard
+shortcuts of the graphical interface (from src/common/Shortcuts.cpp).

@@ -105,7 +105,7 @@
     </div>
   </details>
   <span id="status">loading...</span>
-  <span id="help">keys 1, 2, 3: mesh in 1D, 2D, 3D; Ctrl+click: lasso zoom; Ctrl+right click: reset</span>
+  <span id="help">Gmsh keys (1, 2, 3: mesh; Alt+X, Y, Z: views); Ctrl+click: lasso zoom</span>
 </div>
 <canvas id="canvas"></canvas>
 <div id="lasso"></div>
@@ -115,6 +115,7 @@
 // by the build), and a few functions of contrib/webapp/webView.cpp, called on
 // the module itself, to draw on the canvas and move the view
 import createGmsh from './build/gmsh.mjs';
+import {installShortcuts} from './shortcuts.js';
 // where the examples are: the tutorials of the source tree (site.sh copies
 // them next to the page and changes this line)
 const examples = '../../tutorials/';
@@ -195,12 +196,10 @@ example.addEventListener('change', () => {
   openUrl(examples + example.value);
 });
 
-// the 1, 2 and 3 shortcuts of the graphical interface: mesh in that dimension
+// meshing in a dimension (1, 2 and 3, F1, F2 and F3, as in the graphical
+// interface)
 const num = (n) => gmsh.option.getNumber(n);
-window.addEventListener('keydown', (e) => {
-  if(e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
-  const dim = {'1': 1, '2': 2, '3': 3}[e.key];
-  if(!dim) return;
+function meshDim(dim) {
   status.textContent = `meshing in ${dim}D...`;
   // let the status show before the (synchronous) meshing
   setTimeout(() => {
@@ -223,7 +222,7 @@ window.addEventListener('keydown', (e) => {
         `${surf} surface and ${vol} volume elements` : 'meshing failed';
     }));
   }, 0);
-});
+}
 
 // the options of the panel: data-opt names an option, data-view an option of
 // every view; they show the values of the model opened last
@@ -255,6 +254,23 @@ function start() {
   gmsh.option.setNumber('General.Terminal', 1);
   openUrl(first);
   window.addEventListener('resize', draw);
+  // the keyboard shortcuts of the graphical interface (shortcuts.js)
+  const page = {
+    mesh_1d: () => meshDim(1),
+    mesh_2d: () => meshDim(2),
+    mesh_3d: () => meshDim(3),
+    file_open: () => document.getElementById('file').click(),
+    fullscreen: () => document.fullscreenElement ? document.exitFullscreen() :
+      document.documentElement.requestFullscreen(),
+  };
+  installShortcuts(Module, (action) => {
+    if(!page[action]) return false;
+    page[action]();
+    return true;
+  }, (action) => {
+    if(action === 'escape') document.getElementById('lasso').style.display = 'none';
+    draw();
+  });
   // the scene follows the browser going light or dark
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
     if(Module.ccall('gmshWebColorScheme', 'number', ['number'], [e.matches ? 1 : 0]))

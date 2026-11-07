@@ -16,6 +16,7 @@
 #include <emscripten.h>
 #include "Context.h"
 #include "Options.h"
+#include "Shortcuts.h"
 #include "drawContextOffscreen.h"
 #include "sceneView.h"
 
@@ -169,6 +170,69 @@ EMSCRIPTEN_KEEPALIVE int gmshWebLasso(double *xy)
 EMSCRIPTEN_KEEPALIVE int gmshWebColorScheme(int dark)
 {
   return followDesktopColorScheme(dark) ? 1 : 0;
+}
+
+// the keyboard shortcuts of the graphical interface, in JSON: [{"action",
+// "key" (a lower case letter, a digit or a mark, or the name the page gives a
+// key: "F1", "Escape", "ArrowLeft", "PageUp"...), "mods" (ModCommand 1,
+// ModShift 2, ModAlt 4, AnyModifiers 8), "help", "label" (with command the
+// name of the Command key, "Cmd+" or "Ctrl+")}]
+EMSCRIPTEN_KEEPALIVE const char *gmshWebShortcuts(const char *command)
+{
+  auto quoted = [](const std::string &s) {
+    std::string q = "\"";
+    for(char c : s) {
+      if(c == '"' || c == '\\') q += '\\';
+      q += c;
+    }
+    return q + "\"";
+  };
+  static std::string json;
+  json = "[";
+  for(const ShortcutEntry &e : GetShortcuts()) {
+    int k = e.shortcut.key;
+    std::string key;
+    if(k >= KeyF1 && k < KeyF1 + 12)
+      key = "F" + std::to_string(k - KeyF1 + 1);
+    else if(k == KeyEscape)
+      key = "Escape";
+    else if(k == KeyLeft)
+      key = "ArrowLeft";
+    else if(k == KeyRight)
+      key = "ArrowRight";
+    else if(k == KeyUp)
+      key = "ArrowUp";
+    else if(k == KeyDown)
+      key = "ArrowDown";
+    else if(k == KeyPageUp)
+      key = "PageUp";
+    else if(k == KeyPageDown)
+      key = "PageDown";
+    else
+      key = std::string(1, (char)k);
+    if(json.size() > 1) json += ",";
+    json += "{\"action\":" + quoted(e.action) + ",\"key\":" + quoted(key) +
+            ",\"mods\":" + std::to_string(e.shortcut.mods) +
+            ",\"help\":" + quoted(e.help) +
+            ",\"label\":" + quoted(e.shortcut.label(command)) + "}";
+  }
+  json += "]";
+  return json.c_str();
+}
+
+// run an action of the shortcuts that changes the scene (see
+// RunSceneShortcut()), or Escape, which stops a lasso: returns 2 if the scene
+// is to be drawn again, 0 if the action is not one of them
+EMSCRIPTEN_KEEPALIVE int gmshWebShortcut(const char *action, int mods)
+{
+  if(!_view || !_view->getDrawContext()) return 0;
+  std::string a(action);
+  if(a == "escape") {
+    if(!_scene || !_scene->lassoMode) return 0;
+    _scene->lassoMode = false;
+    return 2;
+  }
+  return RunSceneShortcut(a, mods, _view->getDrawContext());
 }
 
 // back to the view of the options (General.RotationX, General.ScaleX,
