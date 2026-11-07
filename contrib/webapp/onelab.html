@@ -52,7 +52,7 @@
   body.noSide #side, body.noSide #split { display: none; }
   /* the status bar of the graphical interface, under the scene and the
      messages: the buttons of the view and of the animation, the status */
-  #statusbar { grid-column: 1 / 4; display: flex; align-items: center; gap: 1px;
+  #statusbar { grid-row: 4; grid-column: 1 / 4; display: flex; align-items: center; gap: 1px;
                padding: 1px 4px; border-top: 1px solid var(--line); min-width: 0; }
   #statusbar button { border: none; background: none; color: var(--fg);
                       min-width: 24px; height: 22px; padding: 0 4px;
@@ -104,9 +104,11 @@
   #keysDialog td { padding: 2px 12px 2px 0; vertical-align: top; }
   #keysDialog td:first-child { white-space: nowrap; font-family: monospace; }
   #status.error { color: var(--error); }
-  #side { overflow: auto; padding: 4px 8px; }
+  /* as the graphical interface: the panel down to the status bar, the
+     messages under the scene only */
+  #side { grid-row: 2 / 4; grid-column: 1; overflow: auto; padding: 4px 8px; }
   /* the handle that resizes the panel: a drag, a double-click for the default */
-  #split { cursor: col-resize; touch-action: none; border-left: 1px solid var(--line); }
+  #split { grid-row: 2 / 4; grid-column: 2; cursor: col-resize; touch-action: none; border-left: 1px solid var(--line); }
   #split:hover, #split.on { background: var(--line); }
   #side details { margin: 4px 0; }
   #side summary { font-weight: bold; cursor: pointer; }
@@ -176,9 +178,9 @@
   #side .row .slider input[type=range] { flex: 1; min-width: 0; width: auto; }
   #side .row .slider input[type=number] { flex: none; width: 76px; }
   #side .view { display: flex; gap: 6px; align-items: center; margin-left: 8px; }
-  #canvas { display: block; width: 100%; height: 100%; min-height: 0;
+  #canvas { grid-row: 2; grid-column: 3; display: block; width: 100%; height: 100%; min-height: 0;
             touch-action: none; }
-  #log { grid-column: 1 / 4; margin: 0; border-top: 1px solid var(--line);
+  #log { grid-row: 3; grid-column: 3; margin: 0; border-top: 1px solid var(--line);
          position: relative; }
   /* the handle that resizes the messages, on their top edge when they are
      shown: a drag, a double-click for the default height */
@@ -476,10 +478,9 @@ canvas.addEventListener('wheel', (e) => {
   e.preventDefault();
   mouse(4, e, wheelNotches(e));
 }, {passive: false});
-canvas.addEventListener('dblclick', () => {
-  Module.ccall('gmshWebResetView', null, [], []);
-  draw();
-});
+// a double-click opens the quick access menu where it is, as in the
+// graphical interface (see the status bar)
+canvas.addEventListener('dblclick', (e) => openQuickMenu(e.clientX, e.clientY));
 window.addEventListener('resize', draw);
 
 // the width of the panel, dragged on the handle beside it, kept for the next
@@ -1852,7 +1853,11 @@ $('statusbar').addEventListener('click', (e) => {
   const shift = e.shiftKey ? ModShift : 0;
   switch(b.dataset.act) {
   case 'sidebar': toggleSide(); break;
-  case 'quick': openQuickMenu(b); break;
+  case 'quick': {
+    const r = b.getBoundingClientRect();
+    openQuickMenu(r.left, r.top, true);
+    break;
+  }
   case 'x': case 'y': case 'z': case '3d': sceneAction('view_' + b.dataset.act, shift); break;
   case 'fit': sceneAction('view_1_1', shift); break;
   case 'rotate':
@@ -1925,7 +1930,8 @@ function quickItems() {
   }
   return items;
 }
-function openQuickMenu(button) {
+// at (x, y) in the window, or above it (from the status bar)
+function openQuickMenu(x, y, above = false) {
   const menu = $('quickMenu');
   menu.textContent = '';
   for(const item of quickItems()) {
@@ -1951,10 +1957,10 @@ function openQuickMenu(button) {
     menu.appendChild(b);
   }
   menu.hidden = false;
-  // above the button, in the window
-  const r = button.getBoundingClientRect();
-  menu.style.left = Math.min(r.left, innerWidth - menu.offsetWidth - 8) + 'px';
-  menu.style.top = Math.max(8, r.top - menu.offsetHeight - 2) + 'px';
+  // in the window
+  menu.style.left = Math.max(8, Math.min(x, innerWidth - menu.offsetWidth - 8)) + 'px';
+  menu.style.top = Math.max(8, Math.min(above ? y - menu.offsetHeight - 2 : y,
+                                        innerHeight - menu.offsetHeight - 8)) + 'px';
 }
 document.addEventListener('pointerdown', (e) => {
   if(!$('quickMenu').hidden && !e.target.closest('#quickMenu, [data-act=quick]'))
