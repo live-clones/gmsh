@@ -15,7 +15,8 @@
           --out-bg: #f7f7f7; --out-fg: #222; --menu-hover: #e8eefc;
           --error: #c00; --warning: #a60; --shadow: rgba(0,0,0,.15);
           --hover-bg: rgba(255,255,255,.92); --lasso: #333;
-          --lasso-fill: rgba(0,0,0,.04); --veil: rgba(255,255,255,.85); }
+          --lasso-fill: rgba(0,0,0,.04); --veil: rgba(255,255,255,.85);
+          --graph-on: #fadc64; }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) { color-scheme: dark;
       --bg-rgb: 30, 31, 34; --fg-rgb: 228, 228, 228;
@@ -24,7 +25,8 @@
       --out-border: #4a4b50; --out-bg: #2a2b2f; --out-fg: #e4e4e4;
       --menu-hover: #2f3b55; --error: #ff6b6b; --warning: #e5a33d;
       --shadow: rgba(0,0,0,.5); --hover-bg: rgba(40,41,45,.94); --lasso: #ddd;
-      --lasso-fill: rgba(255,255,255,.06); --veil: rgba(30,31,34,.85); }
+      --lasso-fill: rgba(255,255,255,.06); --veil: rgba(30,31,34,.85);
+      --graph-on: #c9961e; }
   }
   :root[data-theme="dark"] { color-scheme: dark;
     --bg-rgb: 30, 31, 34; --fg-rgb: 228, 228, 228;
@@ -33,7 +35,8 @@
     --out-border: #4a4b50; --out-bg: #2a2b2f; --out-fg: #e4e4e4;
     --menu-hover: #2f3b55; --error: #ff6b6b; --warning: #e5a33d;
     --shadow: rgba(0,0,0,.5); --hover-bg: rgba(40,41,45,.94); --lasso: #ddd;
-    --lasso-fill: rgba(255,255,255,.06); --veil: rgba(30,31,34,.85); }
+    --lasso-fill: rgba(255,255,255,.06); --veil: rgba(30,31,34,.85);
+      --graph-on: #c9961e; }
   html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg);
                color: var(--fg); font: 14px system-ui, -apple-system, "Segoe UI", sans-serif; }
   /* the controls in the font of the page, not the smaller one of the browser */
@@ -105,6 +108,25 @@
   #side .pair > * { flex: 1; min-width: 0; }
   /* a slider with its value, the width of the panel */
   #side .row.wide { grid-template-columns: 88px minmax(0, 1fr); }
+  /* a number with its graph button, and the menu of the graphs it is drawn on
+     (as the graph button of the graphical interface) */
+  #side .withGraph { display: flex; gap: 3px; align-items: center; min-width: 0; }
+  #side .withGraph > :first-child { flex: 1; min-width: 0; }
+  #side .graphButton { flex: none; width: 22px; height: 20px; padding: 0;
+                       display: grid; place-items: center; cursor: pointer;
+                       border: 1px solid var(--field-border); border-radius: 3px;
+                       background: var(--bg); color: var(--fg); }
+  #side .graphButton.on { background: var(--graph-on); color: #000; }
+  #graphMenu { position: fixed; z-index: 3; padding: 6px 8px; display: grid;
+               gap: 4px; background: var(--bg); color: var(--fg);
+               border: 1px solid var(--border); border-radius: 4px;
+               box-shadow: 0 2px 8px var(--shadow); }
+  #graphMenu[hidden] { display: none; }
+  #graphMenu td, #graphMenu th { padding: 1px 6px; text-align: center; }
+  #graphMenu td:first-child { text-align: left; white-space: nowrap; }
+  #graphMenu th { font-weight: normal; color: var(--muted); }
+  #graphMenu .name { font-weight: bold; max-width: 260px; overflow: hidden;
+                     text-overflow: ellipsis; white-space: nowrap; }
   /* a check box before its name, which takes the rest of the row */
   #side .row.item { grid-template-columns: auto minmax(0, 1fr); }
   #side .slider { display: flex; gap: 4px; align-items: center; }
@@ -202,6 +224,11 @@
       id="visNone">None</button><button id="visInvert">Invert</button></div>
     <div id="visList"></div>
   </div>
+</div>
+<div id="graphMenu" hidden>
+  <div class="name" id="graphName"></div>
+  <table id="graphTable"></table>
+  <div><button id="graphNone">None</button></div>
 </div>
 <div id="split" title="Drag to resize the panel, double-click for its default width"></div>
 <canvas id="canvas"></canvas>
@@ -441,6 +468,7 @@ function startWorker() {
       if(m.type === 'ready') ready();
       else if(m.type === 'log') log(m.text);
       else if(m.type === 'merge') solverMerge(m);
+      else if(m.type === 'db') solverRefresh(m);
       else if(m.type === 'done') solverEnd(m);
     };
   });
@@ -482,9 +510,18 @@ function changedFiles() {
   walk(modelDir);
   return {files, transfer};
 }
+// the database the worker sent, with the graphs asked for here since it was
+// given the page's (see setGraph())
+const graphEdits = new Map();
 function setDatabase(db) {
   gmsh.onelab.clear();
   gmsh.onelab.set(db);
+  if(!graphEdits.size) return;
+  for(const p of getParameters()) {
+    if(!graphEdits.has(p.name)) continue;
+    p.attributes = Object.assign({}, p.attributes, {Graph: graphEdits.get(p.name)});
+    setParameter(p);
+  }
 }
 // a solver, with the arguments gmshWebOnelabGmsh() gives: its errors
 async function solve(solver) {
@@ -494,6 +531,8 @@ async function solve(solver) {
     const {files, transfer} = changedFiles();
     worker.postMessage({type: 'run', dir: modelDir, cwd: FS.cwd(), files,
                         db: gmsh.onelab.get(), args: solver.args}, transfer);
+    // the worker has the graphs asked for now
+    graphEdits.clear();
   });
 }
 // what the solver asks to show, with the database as it is then
@@ -501,6 +540,18 @@ function solverMerge(m) {
   fromSolver(m.name, m.data);
   setDatabase(m.db);
   Module.ccall('gmshWebMergeFile', null, ['string'], [m.name]);
+  showSolverProgress();
+}
+// the database, when the solver asks for a refresh (e.g. a value added to an
+// output drawn on a graph)
+function solverRefresh(m) {
+  setDatabase(m.db);
+  showSolverProgress();
+}
+// what the solver changed: the graphs made again from the parameters, as the
+// graphical interface does on a refresh
+function showSolverProgress() {
+  Module.ccall('gmshWebUpdateGraphs', null, [], []);
   showParameters();
   showViews();
   readOptions();
@@ -713,9 +764,17 @@ function parameterRow(p, name) {
       target.style.color = css(contrastText(fill));
     }
   }
+  // a number drawn on the X-Y graphs, or not: the menu of its graph button
+  if(p.type === 'number' && kind === 'fill') {
+    const pair = document.createElement('span');
+    pair.className = 'withGraph';
+    pair.append(el, graphButton(p));
+    el = pair;
+  }
   if(!p.readOnly) {
-    el.addEventListener('change', () => {
-      let v = el.type === 'checkbox' ? (el.checked ? 1 : 0) : el.value;
+    el.addEventListener('change', (e) => {
+      if(e.target.closest('#graphMenu')) return;
+      let v = e.target.type === 'checkbox' ? (e.target.checked ? 1 : 0) : e.target.value;
       if(p.type === 'number') v = Number(v);
       p.values = [v];
       if(setParameter(p) & 1)
@@ -729,6 +788,83 @@ function parameterRow(p, name) {
   row.appendChild(el);
   return row;
 }
+
+// The X-Y graphs, as the graph button of the graphical interface sets them: a
+// number drawn as X, Y, X' or Y' of the graphs at 9 places, in its "Graph"
+// attribute (36 characters, 2 for each of 18 graphs, the primed ones the odd
+// graphs: '0' not drawn, else how, '3' by default); the graphs are views
+// made from the values of the numbers (onelabUtils::updateGraphs())
+const graphPlaces = ['Top left', 'Top right', 'Bottom left', 'Bottom right',
+                     'Top', 'Bottom', 'Left', 'Right', 'Full'];
+const graphBoxes = [];
+{
+  const head = $('graphTable').insertRow();
+  for(const t of ['', 'X', 'Y', "X′", "Y′"]) {
+    const th = document.createElement('th');
+    th.textContent = t;
+    head.appendChild(th);
+  }
+  for(const place of graphPlaces) {
+    const tr = $('graphTable').insertRow();
+    tr.insertCell().textContent = place;
+    for(let a = 0; a < 4; a++) {
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.addEventListener('change', setGraph);
+      tr.insertCell().appendChild(cb);
+      graphBoxes.push(cb);
+    }
+  }
+}
+let graphParameter = '';
+const graphValue = (p) => ((p.attributes && p.attributes.Graph) || '').padEnd(36, '0');
+function graphButton(p) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'graphButton' + (/[^0]/.test(graphValue(p)) ? ' on' : '');
+  b.title = 'Draw on the X-Y graphs';
+  b.innerHTML = '<svg width="14" height="12" viewBox="0 0 14 12" fill="none" ' +
+    'stroke="currentColor" stroke-width="1.4"><path d="M1 1v10h12"/>' +
+    '<path d="M3 8l3-3 2 2 4-5"/></svg>';
+  b.addEventListener('click', (e) => {
+    e.preventDefault();
+    openGraphMenu(p.name, b);
+  });
+  return b;
+}
+function openGraphMenu(name, button) {
+  const p = getParameters().find((q) => q.name === name);
+  if(!p) return;
+  graphParameter = name;
+  $('graphName').textContent = p.label || shortName(name.split('/').pop());
+  const val = graphValue(p);
+  graphBoxes.forEach((cb, i) => { cb.checked = val[i] !== '0'; });
+  const menu = $('graphMenu');
+  menu.hidden = false;
+  const r = button.getBoundingClientRect();
+  menu.style.left = Math.min(r.left, innerWidth - menu.offsetWidth - 8) + 'px';
+  menu.style.top = Math.min(r.bottom + 2, innerHeight - menu.offsetHeight - 8) + 'px';
+}
+// the graphs the menu checks, kept as they were drawn where still checked
+function setGraph() {
+  const p = getParameters().find((q) => q.name === graphParameter);
+  if(!p) return;
+  const old = graphValue(p);
+  const val = graphBoxes.map((cb, i) => cb.checked ? (old[i] !== '0' ? old[i] : '3') : '0');
+  p.attributes = Object.assign({}, p.attributes, {Graph: val.join('')});
+  setParameter(p);
+  // kept while a solver runs, whose database does not have it
+  if(busy) graphEdits.set(p.name, p.attributes.Graph);
+  showSolverProgress();
+}
+$('graphNone').addEventListener('click', () => {
+  graphBoxes.forEach((cb) => { cb.checked = false; });
+  setGraph();
+});
+document.addEventListener('pointerdown', (e) => {
+  if(!$('graphMenu').hidden && !e.target.closest('#graphMenu, .graphButton'))
+    $('graphMenu').hidden = true;
+});
 
 // the colours of the parameters, as src/fltk/gmshScheme.cpp makes them: the
 // colour of a name in Gmsh's table ("1" for yellow) as a fill, kept from
@@ -1399,6 +1535,10 @@ const pageShortcuts = {
 const shortcuts = installShortcuts(Module, (action) => {
   if(action === 'escape' && !$('openMenu').hidden) {
     openMenu(false);
+    return true;
+  }
+  if(action === 'escape' && !$('graphMenu').hidden) {
+    $('graphMenu').hidden = true;
     return true;
   }
   if(!pageShortcuts[action]) return false;

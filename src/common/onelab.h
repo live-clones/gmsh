@@ -1452,24 +1452,28 @@ namespace onelab {
     }
     virtual bool setAndAppendChoices(const number &p)
     {
+      // the values appended to the choices the parameter has on the server
+      // (e.g. the history of an output), as the server does for a network
+      // client (GMSH_PARAMETER_WITHOUT_CHOICES)
       std::vector<number> ps;
-      _get(ps, _name);
+      _get(ps, p.getName());
       std::vector<double> choices;
       if(ps.size()) choices = ps[0].getChoices();
-      choices.insert(choices.end(), p.getChoices().begin(),
-                     p.getChoices().end());
+      choices.insert(choices.end(), p.getValues().begin(), p.getValues().end());
       number p2(p);
       p2.setChoices(choices);
       return _set(p2);
     }
     virtual bool setAndAppendChoices(const string &p)
     {
+      // the values appended to the choices the parameter has on the server
+      // (e.g. the history of an output), as the server does for a network
+      // client (GMSH_PARAMETER_WITHOUT_CHOICES)
       std::vector<string> ps;
-      _get(ps, _name);
+      _get(ps, p.getName());
       std::vector<std::string> choices;
       if(ps.size()) choices = ps[0].getChoices();
-      choices.insert(choices.end(), p.getChoices().begin(),
-                     p.getChoices().end());
+      choices.insert(choices.end(), p.getValues().begin(), p.getValues().end());
       string p2(p);
       p2.setChoices(choices);
       return _set(p2);

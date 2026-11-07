@@ -13,6 +13,8 @@
 //                   {type: 'log', text}: a line of output
 //                   {type: 'merge', name, data, db}: a file to show, written
 //                   by the solver, with the database as it is then
+//                   {type: 'db', db}: the database, when the solver asks for
+//                   a refresh (e.g. a value added to an output on a graph)
 //                   {type: 'done', errors, db, files}: the database, and the
 //                   files of the model the solver wrote
 
@@ -65,6 +67,8 @@ self.onmessage = async (e) => {
       const data = FS.readFile(name);
       post({type: 'merge', name, data, db: gmsh.onelab.get()}, [data.buffer]);
     };
+    // the database, when the solver asks for a refresh (graphs)
+    globalThis.gmshSolverRefresh = () => post({type: 'db', db: gmsh.onelab.get()});
     post({type: 'ready'});
   }
   else if(m.type === 'forget') {

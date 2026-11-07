@@ -128,20 +128,37 @@ namespace {
 
   // in a web worker running a solver: what GetDP asks to show, given to the
   // page (solver.js). GetDP merges such a file in the program, as the files
-  // it reads, then asks for a render: the file is then the last one merged
+  // it reads, then asks for a render: the file is then the last one merged.
+  // And the database, when GetDP asks for a refresh (Gmsh/Action, e.g. after
+  // adding a value to an output drawn on a graph), no more than every quarter
+  // of a second, as the graphical interface (gmshLocalNetworkClient)
   class solverMessages : public GmshMessage {
   public:
     void operator()(std::string level, std::string message)
     {
-      if(level != "RequestRender") return;
-      const std::string &file = GmshLastMergedPostProcessingFile();
-      if(file.empty()) return;
-      EM_ASM(
-        {
-          if(globalThis.gmshSolverMerge)
-            globalThis.gmshSolverMerge(UTF8ToString($0));
-        },
-        file.c_str());
+      if(level == "RequestRender") {
+        const std::string &file = GmshLastMergedPostProcessingFile();
+        if(file.empty()) return;
+        EM_ASM(
+          {
+            if(globalThis.gmshSolverMerge)
+              globalThis.gmshSolverMerge(UTF8ToString($0));
+          },
+          file.c_str());
+        return;
+      }
+      static double lastRefresh = 0.;
+      double now = TimeOfDay();
+      if(now - lastRefresh < 0.25) return;
+      std::vector<onelab::string> ps;
+      onelab::server::instance()->get(ps, "Gmsh/Action");
+      if(ps.empty() || ps[0].getValue() != "refresh") return;
+      ps[0].setValue("");
+      onelab::server::instance()->set(ps[0]);
+      lastRefresh = now;
+      EM_ASM({
+        if(globalThis.gmshSolverRefresh) globalThis.gmshSolverRefresh();
+      });
     }
   };
 } // namespace
@@ -267,6 +284,11 @@ EMSCRIPTEN_KEEPALIVE void gmshWebMergeFile(const char *name)
                           CTX::instance()->solver.autoShowLastStep, true);
   onelab::server::instance()->setChanged(changedBeforeMerge, "Gmsh");
 }
+
+// On the page: the X-Y graphs of the parameters drawn on them (their "Graph"
+// attribute), made again from their values, as the graphical interface does
+// on a refresh
+EMSCRIPTEN_KEEPALIVE void gmshWebUpdateGraphs() { onelabUtils::updateGraphs(); }
 
 // change a parameter, given in JSON as gmsh.onelab.get() gives them: returns
 // 1 if the model is to be checked, 2 if other parameters were reset, or -1
