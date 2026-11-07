@@ -20,8 +20,8 @@
 </style>
 </head>
 <body>
-<!-- the landing page of the web app, which site.sh fills with the models it
-     packs -->
+<!-- the landing page of the web app, which deploy.sh fills with the models
+     it packs -->
 <main>
 <h1>ONELAB in the browser</h1>
 <p class="lead">Gmsh and GetDP compiled to WebAssembly and running entirely in
@@ -30,8 +30,9 @@ nothing is sent to a server. Experimental.</p>
 
 <p class="note">The first visit downloads about 16 MB (Gmsh with OpenCASCADE,
 GetDP with PETSc, SLEPc and UMFPACK); the browser keeps it afterwards. Needs
-a recent Chrome, Firefox, Edge or Safari with WebGL 2. The page is busy while
-a model is meshed or solved.</p>
+a recent Chrome, Firefox, Edge or Safari with WebGL 2. The solver runs in the
+background: the results show as they are computed, and <b>Run</b> turns into
+<b>Stop</b> meanwhile; the page only waits while a model is meshed.</p>
 
 <h2>Models</h2>
 <p>Open one, change its parameters on the left, press <b>Run</b>.</p>
