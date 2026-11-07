@@ -15,6 +15,7 @@
 #include <cmath>
 #include <emscripten.h>
 #include "Context.h"
+#include "Options.h"
 #include "drawContextOffscreen.h"
 #include "sceneView.h"
 
@@ -160,6 +161,14 @@ EMSCRIPTEN_KEEPALIVE int gmshWebCrossCursor()
 EMSCRIPTEN_KEEPALIVE int gmshWebLasso(double *xy)
 {
   return (_scene && _scene->lasso(xy)) ? 1 : 0;
+}
+
+// the browser went light (0) or dark (1): the colours follow it when
+// General.ColorScheme is 3 (System), as they follow the desktop in the
+// graphical interface; returns 1 if the scene is to be drawn again
+EMSCRIPTEN_KEEPALIVE int gmshWebColorScheme(int dark)
+{
+  return followDesktopColorScheme(dark) ? 1 : 0;
 }
 
 // back to the view of the options (General.RotationX, General.ScaleX,

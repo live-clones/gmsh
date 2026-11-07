@@ -48,6 +48,10 @@
 #include "drawContext.h"
 #endif
 
+#if defined(__EMSCRIPTEN__)
+#include <emscripten.h>
+#endif
+
 #if defined(HAVE_FLTK)
 #include "desktop.h"
 #include <FL/Fl_Tooltip.H>
@@ -377,8 +381,9 @@ bool GetRGBForString(const char *str, int &r, int &g, int &b)
 }
 
 // the scheme in use: the one asked for, or what General.ColorScheme = 3 stands
-// for: light or dark as the desktop, which is asked once, under the GUI; classic
-// without it, as a batch run must not depend on the desktop it is run from
+// for: light or dark as the desktop, which is asked once, under the GUI or in a
+// web page (as the browser); classic without them, as a batch run must not
+// depend on the desktop it is run from
 static int _desktopScheme = -1;
 
 static int colorSchemeInUse()
@@ -389,6 +394,11 @@ static int colorSchemeInUse()
     _desktopScheme = 1;
 #if defined(HAVE_FLTK)
     if(FlGui::available()) _desktopScheme = (desktopDark() == 1) ? 2 : 0;
+#elif defined(__EMSCRIPTEN__)
+    _desktopScheme = EM_ASM_INT({
+      if(typeof matchMedia !== 'function') return 1;
+      return matchMedia('(prefers-color-scheme: dark)').matches ? 2 : 0;
+    });
 #endif
   }
   return _desktopScheme;
