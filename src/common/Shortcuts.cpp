@@ -7,6 +7,17 @@
 #include "GmshConfig.h"
 #include "Shortcuts.h"
 #include "Context.h"
+#include "GmshMessage.h"
+#include "Options.h"
+#include "OpenFile.h"
+
+#if defined(HAVE_POST)
+#include "PView.h"
+#endif
+
+#if defined(HAVE_OPENGL)
+#include "drawContext.h"
+#endif
 
 std::string Shortcut::label(const std::string &command) const
 {
@@ -229,4 +240,135 @@ GetShortcutsUsage(const std::string &command)
     s.push_back(std::make_pair(e.shortcut.label(command), std::string(e.help)));
   }
   return s;
+}
+
+// whether to turn a display option of the geometry or the mesh on or off
+static void toggle(double (*option)(int, int, double))
+{ option(0, GMSH_SET | GMSH_GUI, !option(0, GMSH_GET, 0)); }
+
+#if defined(HAVE_POST)
+// an option of every visible view, from what it is
+static void forVisibleViews(double (*option)(int, int, double),
+                            double (*next)(double))
+{
+  for(std::size_t i = 0; i < PView::list.size(); i++)
+    if(opt_view_visible(i, GMSH_GET, 0))
+      option(i, GMSH_SET | GMSH_GUI, next(option(i, GMSH_GET, 0)));
+}
+#endif
+
+int RunSceneShortcut(const std::string &a, unsigned mods, drawContext *ctx)
+{
+  // --- the display
+  if(a == "geometry_points")
+    toggle(opt_geometry_points);
+  else if(a == "geometry_curves")
+    toggle(opt_geometry_curves);
+  else if(a == "geometry_surfaces")
+    toggle(opt_geometry_surfaces);
+  else if(a == "geometry_volumes")
+    toggle(opt_geometry_volumes);
+  else if(a == "mesh_nodes")
+    toggle(opt_mesh_nodes);
+  else if(a == "mesh_lines")
+    toggle(opt_mesh_lines);
+  else if(a == "mesh_surface_edges")
+    toggle(opt_mesh_surface_edges);
+  else if(a == "mesh_surface_faces")
+    toggle(opt_mesh_surface_faces);
+  else if(a == "mesh_volume_edges")
+    toggle(opt_mesh_volume_edges);
+  else if(a == "mesh_volume_faces")
+    toggle(opt_mesh_volume_faces);
+  else if(a == "mesh_toggle") {
+    // all of the mesh off, then back as it was
+    static double (*const options[])(int, int, double) = {
+      opt_mesh_nodes,         opt_mesh_lines,        opt_mesh_surface_edges,
+      opt_mesh_surface_faces, opt_mesh_volume_edges, opt_mesh_volume_faces};
+    static bool off = false;
+    static int old[6];
+    for(int i = 0; i < 6; i++) {
+      if(!off) old[i] = (int)options[i](0, GMSH_GET, 0);
+      options[i](0, GMSH_SET | GMSH_GUI, off ? old[i] : 0);
+    }
+    off = !off;
+    Msg::StatusBar(false, off ? "Mesh display OFF" : "Mesh display restored");
+  }
+  else if(a == "fast_redraw")
+    toggle(opt_general_fast_redraw);
+  else if(a == "bounding_boxes")
+    toggle(opt_general_draw_bounding_box);
+  else if(a == "color_scheme")
+    opt_general_color_scheme(0, GMSH_SET | GMSH_GUI,
+                             opt_general_color_scheme(0, GMSH_GET, 0) + 1);
+  else if(a == "lighting") {
+    toggle(opt_geometry_light);
+    toggle(opt_mesh_light);
+#if defined(HAVE_POST)
+    forVisibleViews(opt_view_light, [](double v) { return (double)!v; });
+#endif
+  }
+  else if(a == "axes_loop") {
+    opt_general_axes(0, GMSH_SET | GMSH_GUI,
+                     opt_general_axes(0, GMSH_GET, 0) + 1);
+#if defined(HAVE_POST)
+    // through the six modes: a view left on automatic starts over at none
+    forVisibleViews(opt_view_axes,
+                    [](double v) { return (v >= 5) ? 0. : v + 1.; });
+#endif
+  }
+  else if(a == "small_axes")
+    toggle(opt_general_small_axes);
+  else if(a == "surface_type")
+    opt_geometry_surface_type(0, GMSH_SET | GMSH_GUI,
+                              opt_geometry_surface_type(0, GMSH_GET, 0) + 1);
+  else if(a == "projection")
+    toggle(opt_general_orthographic);
+#if defined(HAVE_POST)
+  // --- the views
+  else if(a == "view_scales")
+    forVisibleViews(opt_view_show_scale, [](double v) { return (double)!v; });
+  else if(a == "colormaps")
+    forVisibleViews(opt_view_colormap_number, [](double v) { return v + 1.; });
+  else if(a == "view_intervals")
+    // skipping the numeric display
+    forVisibleViews(opt_view_intervals_type,
+                    [](double v) { return (v + 1 == 4) ? 1. : v + 1.; });
+  else if(a == "view_intervals_all")
+    forVisibleViews(opt_view_intervals_type, [](double v) { return v + 1.; });
+  else if(a == "view_range")
+    forVisibleViews(opt_view_range_type, [](double v) { return v + 1.; });
+  else if(a == "view_annotations")
+    forVisibleViews(opt_view_draw_strings, [](double v) { return (double)!v; });
+  else if(a == "view_elements")
+    forVisibleViews(opt_view_show_element, [](double v) { return (double)!v; });
+  else if(a == "views_hide_show") {
+    static int show = 0;
+    for(std::size_t i = 0; i < PView::list.size(); i++)
+      opt_view_visible(i, GMSH_SET | GMSH_GUI, show);
+    show = !show;
+  }
+  // --- the time steps and the views, on the arrows
+  else if(a == "time_step_prev")
+    PView::animate(true, -CTX::instance()->post.animStep);
+  else if(a == "time_step_next")
+    PView::animate(true, CTX::instance()->post.animStep);
+  else if(a == "view_prev")
+    PView::animate(false, -CTX::instance()->post.animStep);
+  else if(a == "view_next")
+    PView::animate(false, CTX::instance()->post.animStep);
+#endif
+#if defined(HAVE_OPENGL)
+  // --- the point of view (Shift for the other side, or with "1:1" for the
+  // bounding box of what is visible)
+  else if(ctx && (a == "view_x" || a == "view_y" || a == "view_z" ||
+                  a == "view_3d" || a == "view_1_1")) {
+    std::string which = (a == "view_1_1") ? "1:1" : a.substr(5);
+    if(which == "1:1" && (mods & ModShift)) SetBoundingBox(true);
+    ctx->standardView(which, mods & ModShift);
+  }
+#endif
+  else
+    return 0;
+  return 2;
 }

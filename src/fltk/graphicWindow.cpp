@@ -2550,103 +2550,28 @@ void status_xyz1p_cb(Fl_Widget *w, void *data)
         if(CTX::instance()->camera) ctx->camera.tiltHeadLeft();
       }
     }
-    else if(!strcmp(str, "x")) {
-      // set X-axis pointing out or into (shift) the screen
-      if(CTX::instance()->camera) { ctx->camera.alongX(); }
-      else {
-        if(!Fl::event_state(FL_SHIFT)) {
-          ctx->r[0] = -90.;
-          ctx->r[1] = 0.;
-          ctx->r[2] = -90.;
-        }
-        else {
-          ctx->r[0] = -90.;
-          ctx->r[1] = 0.;
-          ctx->r[2] = 90.;
-        }
-        ctx->setQuaternionFromEulerAngles();
-      }
-    }
-    else if(!strcmp(str, "y")) {
-      // set Y-axis pointing out or into (shift) the screen
-      if(CTX::instance()->camera) { ctx->camera.alongY(); }
-      else {
-        if(!Fl::event_state(FL_SHIFT)) {
-          ctx->r[0] = -90.;
-          ctx->r[1] = 0.;
-          ctx->r[2] = 180.;
-        }
-        else {
-          ctx->r[0] = -90.;
-          ctx->r[1] = 0.;
-          ctx->r[2] = 0.;
-        }
-        ctx->setQuaternionFromEulerAngles();
-      }
-    }
-    else if(!strcmp(str, "z")) {
-      // set Z-axis pointing out or into (shift) the screen
-      if(CTX::instance()->camera) { ctx->camera.alongZ(); }
-      else {
-        if(!Fl::event_state(FL_SHIFT)) {
-          ctx->r[0] = 0.;
-          ctx->r[1] = 0.;
-          ctx->r[2] = 0.;
-        }
-        else {
-          ctx->r[0] = 0.;
-          ctx->r[1] = 180.;
-          ctx->r[2] = 0.;
-        }
-        ctx->setQuaternionFromEulerAngles();
-      }
-    }
-    else if(!strcmp(str, "3d")) {
-      // isometric view, with Z up: X to the left and Y to the right, or the
-      // other way round from the opposite side (shift)
-      bool opposite = Fl::event_state(FL_SHIFT);
-      if(CTX::instance()->camera) { ctx->camera.isometric(opposite); }
-      else {
-        ctx->r[0] = -54.7356; // the axes equally foreshortened
-        ctx->r[1] = 0.;
-        ctx->r[2] = opposite ? 45. : -135.;
-        ctx->setQuaternionFromEulerAngles();
-        ctx->t[0] = ctx->t[1] = ctx->t[2] = 0.;
-        ctx->s[0] = ctx->s[1] = ctx->s[2] = ctx->fitScale();
-      }
-    }
     else if(!strcmp(str, "1:1")) {
-      // if Shift is pressed, reset bounding box around visible
-      // entities
+      // if Shift is pressed, reset bounding box around visible entities
       if(Fl::event_state(FL_SHIFT)) SetBoundingBox(true);
-      // reset translation and fit the model in the window, or sync translation
-      // and scaling with the first window (Ctrl)
-      if(CTX::instance()->camera) { ctx->camera.lookAtCg(); }
-      else {
-        if(Fl::event_state(FL_CTRL) || Fl::event_state(FL_META)) {
-          if(i != 0) {
-            drawContext *ctx0 = gls[0]->getDrawContext();
-            for(int j = 0; j < 3; j++) {
-              ctx->t[j] = ctx0->t[j];
-              ctx->s[j] = ctx0->s[j];
-            }
+      // fit the model in the window, or sync translation and scaling with the
+      // first window (Ctrl)
+      if(!CTX::instance()->camera &&
+         (Fl::event_state(FL_CTRL) || Fl::event_state(FL_META))) {
+        if(i != 0) {
+          drawContext *ctx0 = gls[0]->getDrawContext();
+          for(int j = 0; j < 3; j++) {
+            ctx->t[j] = ctx0->t[j];
+            ctx->s[j] = ctx0->s[j];
           }
         }
-        else {
-          ctx->t[0] = ctx->t[1] = ctx->t[2] = 0.;
-          ctx->s[0] = ctx->s[1] = ctx->s[2] = ctx->fitScale();
-        }
       }
+      else
+        ctx->standardView(str, false);
     }
-    else if(!strcmp(str, "reset")) {
-      if(CTX::instance()->camera) { ctx->camera.init(); }
-      else {
-        // reset everything
-        ctx->t[0] = ctx->t[1] = ctx->t[2] = 0.;
-        ctx->s[0] = ctx->s[1] = ctx->s[2] = 1.;
-        ctx->r[0] = ctx->r[1] = ctx->r[2] = 0.;
-        ctx->setQuaternionFromEulerAngles();
-      }
+    else {
+      // an axis pointing out of the screen, or into it (Shift), the
+      // isometric view, or no rotation, translation or scaling
+      ctx->standardView(str, Fl::event_state(FL_SHIFT));
     }
   }
   drawContext::global()->draw();
@@ -2672,6 +2597,8 @@ void quick_access_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
   std::string what((const char *)data);
+  // the display of the geometry and the mesh, as the shortcuts change it
+  if(RunSceneShortcut(what, 0, nullptr)) return;
   if(what == "general")
     general_options_cb(nullptr, nullptr);
   else if(what == "geometry")
@@ -2724,34 +2651,6 @@ void quick_access_cb(Fl_Widget *w, void *data)
     numberOrStringOptionChooser("General", 0, "ClipFactor", true, "Factor",
                                 true, 0.1, 20., 0.1);
   }
-  else if(what == "geometry_points")
-    opt_geometry_points(0, GMSH_SET | GMSH_GUI,
-                        !opt_geometry_points(0, GMSH_GET, 0));
-  else if(what == "geometry_curves")
-    opt_geometry_curves(0, GMSH_SET | GMSH_GUI,
-                        !opt_geometry_curves(0, GMSH_GET, 0));
-  else if(what == "geometry_surfaces")
-    opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI,
-                          !opt_geometry_surfaces(0, GMSH_GET, 0));
-  else if(what == "geometry_volumes")
-    opt_geometry_volumes(0, GMSH_SET | GMSH_GUI,
-                         !opt_geometry_volumes(0, GMSH_GET, 0));
-  else if(what == "mesh_nodes")
-    opt_mesh_nodes(0, GMSH_SET | GMSH_GUI, !opt_mesh_nodes(0, GMSH_GET, 0));
-  else if(what == "mesh_lines")
-    opt_mesh_lines(0, GMSH_SET | GMSH_GUI, !opt_mesh_lines(0, GMSH_GET, 0));
-  else if(what == "mesh_surface_edges")
-    opt_mesh_surface_edges(0, GMSH_SET | GMSH_GUI,
-                           !opt_mesh_surface_edges(0, GMSH_GET, 0));
-  else if(what == "mesh_surface_faces")
-    opt_mesh_surface_faces(0, GMSH_SET | GMSH_GUI,
-                           !opt_mesh_surface_faces(0, GMSH_GET, 0));
-  else if(what == "mesh_volume_edges")
-    opt_mesh_volume_edges(0, GMSH_SET | GMSH_GUI,
-                          !opt_mesh_volume_edges(0, GMSH_GET, 0));
-  else if(what == "mesh_volume_faces")
-    opt_mesh_volume_faces(0, GMSH_SET | GMSH_GUI,
-                          !opt_mesh_volume_faces(0, GMSH_GET, 0));
   else if(what == "mesh_size")
     numberOrStringOptionChooser("Mesh", 0, "MeshSizeFactor", true, "Factor",
                                 true, 0.01, 100, 0.01);
@@ -2832,41 +2731,6 @@ void quick_access_cb(Fl_Widget *w, void *data)
     setVisibleViews(opt_view_range_type, 1);
   else if(what == "view_range_per_step")
     setVisibleViews(opt_view_range_type, 3);
-  else if(what == "mesh_toggle") {
-    static int value = 1;
-    static int old_p = (int)opt_mesh_nodes(0, GMSH_GET, 0.);
-    static int old_l = (int)opt_mesh_lines(0, GMSH_GET, 0.);
-    static int old_se = (int)opt_mesh_surface_edges(0, GMSH_GET, 0.);
-    static int old_sf = (int)opt_mesh_surface_faces(0, GMSH_GET, 0.);
-    static int old_ve = (int)opt_mesh_volume_edges(0, GMSH_GET, 0.);
-    static int old_vf = (int)opt_mesh_volume_faces(0, GMSH_GET, 0.);
-    if(!value) { // retore visibility
-      Msg::StatusBar(false, "Mesh display restored");
-      value = 1;
-      opt_mesh_nodes(0, GMSH_SET | GMSH_GUI, old_p);
-      opt_mesh_lines(0, GMSH_SET | GMSH_GUI, old_l);
-      opt_mesh_surface_edges(0, GMSH_SET | GMSH_GUI, old_se);
-      opt_mesh_surface_faces(0, GMSH_SET | GMSH_GUI, old_sf);
-      opt_mesh_volume_edges(0, GMSH_SET | GMSH_GUI, old_ve);
-      opt_mesh_volume_faces(0, GMSH_SET | GMSH_GUI, old_vf);
-    }
-    else {
-      Msg::StatusBar(false, "Mesh display OFF");
-      value = 0;
-      old_p = (int)opt_mesh_nodes(0, GMSH_GET, 0.);
-      old_l = (int)opt_mesh_lines(0, GMSH_GET, 0.);
-      old_se = (int)opt_mesh_surface_edges(0, GMSH_GET, 0.);
-      old_sf = (int)opt_mesh_surface_faces(0, GMSH_GET, 0.);
-      old_ve = (int)opt_mesh_volume_edges(0, GMSH_GET, 0.);
-      old_vf = (int)opt_mesh_volume_faces(0, GMSH_GET, 0.);
-      opt_mesh_nodes(0, GMSH_SET | GMSH_GUI, 0);
-      opt_mesh_lines(0, GMSH_SET | GMSH_GUI, 0);
-      opt_mesh_surface_edges(0, GMSH_SET | GMSH_GUI, 0);
-      opt_mesh_surface_faces(0, GMSH_SET | GMSH_GUI, 0);
-      opt_mesh_volume_edges(0, GMSH_SET | GMSH_GUI, 0);
-      opt_mesh_volume_faces(0, GMSH_SET | GMSH_GUI, 0);
-    }
-  }
 }
 
 static void model_switch_cb(Fl_Widget *w, void *data)

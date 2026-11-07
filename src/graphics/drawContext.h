@@ -594,6 +594,11 @@ public:
   // the scale that fits the bounding box in the viewport, without translation,
   // as it is currently rotated, with the margin it has at scale 1 along Z
   double fitScale();
+  // a standard point of view: "x", "y" or "z" for that axis pointing out of
+  // the screen (into it when opposite), "3d" for the isometric view with Z up
+  // (seen from the other side when opposite), "1:1" to fit the model without
+  // translation, "reset" for no rotation, translation or scaling
+  void standardView(const std::string &which, bool opposite);
   void unproject(double winx, double winy, double p[3], double d[3]);
   // where a point of the model is in the window, in its units and with the
   // matrices of the frame, as unproject() reads them back: false when the

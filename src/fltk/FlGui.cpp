@@ -1218,53 +1218,6 @@ int FlGui::runShortcut(const std::string &a)
     }
     return 1;
   }
-  // --- the display: what the quick access menu of the status bar does too
-  if(a == "geometry_points" || a == "geometry_curves" ||
-     a == "geometry_surfaces" || a == "geometry_volumes" || a == "mesh_nodes" ||
-     a == "mesh_lines" || a == "mesh_surface_edges" ||
-     a == "mesh_surface_faces" || a == "mesh_volume_edges" ||
-     a == "mesh_volume_faces" || a == "mesh_toggle") {
-    quick_access_cb(nullptr, (void *)a.c_str());
-    return 2;
-  }
-  if(a == "fast_redraw") {
-    opt_general_fast_redraw(0, GMSH_SET | GMSH_GUI,
-                            !opt_general_fast_redraw(0, GMSH_GET, 0));
-    return 2;
-  }
-  if(a == "bounding_boxes") {
-    opt_general_draw_bounding_box(
-      0, GMSH_SET | GMSH_GUI, !opt_general_draw_bounding_box(0, GMSH_GET, 0));
-    return 2;
-  }
-  if(a == "view_scales") {
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_show_scale(i, GMSH_SET | GMSH_GUI,
-                            !opt_view_show_scale(i, GMSH_GET, 0));
-    return 2;
-  }
-  if(a == "color_scheme") {
-    opt_general_color_scheme(0, GMSH_SET | GMSH_GUI,
-                             opt_general_color_scheme(0, GMSH_GET, 0) + 1);
-    return 2;
-  }
-  if(a == "colormaps") {
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_colormap_number(i, GMSH_SET | GMSH_GUI,
-                                 opt_view_colormap_number(i, GMSH_GET, 0) + 1);
-    return 2;
-  }
-  if(a == "lighting") {
-    opt_geometry_light(0, GMSH_SET | GMSH_GUI,
-                       !opt_geometry_light(0, GMSH_GET, 0));
-    opt_mesh_light(0, GMSH_SET | GMSH_GUI, !opt_mesh_light(0, GMSH_GET, 0));
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_light(i, GMSH_SET | GMSH_GUI, !opt_view_light(i, GMSH_GET, 0));
-    return 2;
-  }
   // the view callback reads Shift and Ctrl itself (-X, reset, sync)
   if(a == "view_x" || a == "view_y" || a == "view_z") {
     status_xyz1p_cb(nullptr, (void *)(a == "view_x" ? "x" :
@@ -1279,68 +1232,6 @@ int FlGui::runShortcut(const std::string &a)
   if(a == "view_3d") {
     status_xyz1p_cb(nullptr, (void *)"3d");
     return 1;
-  }
-  if(a == "projection") {
-    status_options_cb(nullptr, (void *)"p");
-    return 1;
-  }
-  if(a == "axes_loop") {
-    opt_general_axes(0, GMSH_SET | GMSH_GUI,
-                     opt_general_axes(0, GMSH_GET, 0) + 1);
-    // through the six modes: a view left on automatic starts over at none
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0)) {
-        int a = (int)opt_view_axes(i, GMSH_GET, 0);
-        opt_view_axes(i, GMSH_SET | GMSH_GUI, (a >= 5) ? 0 : a + 1);
-      }
-    return 2;
-  }
-  if(a == "small_axes") {
-    opt_general_small_axes(0, GMSH_SET | GMSH_GUI,
-                           !opt_general_small_axes(0, GMSH_GET, 0));
-    return 2;
-  }
-  if(a == "surface_type") {
-    opt_geometry_surface_type(0, GMSH_SET | GMSH_GUI,
-                              opt_geometry_surface_type(0, GMSH_GET, 0) + 1);
-    return 2;
-  }
-  if(a == "view_intervals" || a == "view_intervals_all") {
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0)) {
-        int t = opt_view_intervals_type(i, GMSH_GET, 0) + 1;
-        if(t == 4 && a == "view_intervals") t = 1; // skip numeric display
-        opt_view_intervals_type(i, GMSH_SET | GMSH_GUI, t);
-      }
-    return 2;
-  }
-  if(a == "view_range") {
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_range_type(i, GMSH_SET | GMSH_GUI,
-                            opt_view_range_type(i, GMSH_GET, 0) + 1);
-    return 2;
-  }
-  if(a == "view_annotations") {
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_draw_strings(i, GMSH_SET | GMSH_GUI,
-                              !opt_view_draw_strings(i, GMSH_GET, 0));
-    return 2;
-  }
-  if(a == "view_elements") {
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_show_element(i, GMSH_SET | GMSH_GUI,
-                              !opt_view_show_element(i, GMSH_GET, 0));
-    return 2;
-  }
-  if(a == "views_hide_show") {
-    static int show = 0;
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      opt_view_visible(i, GMSH_SET | GMSH_GUI, show);
-    show = !show;
-    return 2;
   }
   // --- the time steps and the views, on the arrows
   if(a == "time_step_prev") {
@@ -1369,7 +1260,8 @@ int FlGui::runShortcut(const std::string &a)
     return 2;
   }
 #endif
-  return 0;
+  // the display, the views and the time steps, as in a web page
+  return RunSceneShortcut(a, 0, nullptr);
 }
 
 void FlGui::setGraphicTitle(const std::string &title)

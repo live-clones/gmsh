@@ -70,6 +70,14 @@ const std::vector<ShortcutEntry> &GetShortcuts();
 // the shortcuts of an action: several keys may do the same
 std::vector<Shortcut> GetShortcutsOf(const std::string &action);
 
+// what the actions of the table that only change the scene do, the same in the
+// GUI and in a web page: the display, the views, the time steps and the point
+// of view of ctx (with ModShift from mods for the other side); returns 0 for an
+// action not handled here, 2 when the scene must be drawn again
+class drawContext;
+int RunSceneShortcut(const std::string &action, unsigned mods,
+                     drawContext *ctx);
+
 // each shortcut (keys that do the same joined with "or") and what it does, for
 // the help window and the documentation; see Shortcut::label() for command
 std::vector<std::pair<std::string, std::string> >
