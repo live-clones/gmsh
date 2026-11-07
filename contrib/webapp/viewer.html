@@ -6,25 +6,40 @@
 <title>Gmsh WebGL viewer</title>
 <style>
   /* nothing scrolls: a box placed over the canvas must not grow the page */
-  html, body { margin: 0; height: 100%; overflow: hidden; background: #fff;
-               font: 13px sans-serif; }
+  /* light or dark as the browser, as the scene (General.ColorScheme 3) */
+  :root { color-scheme: light dark; --bg: #fff; --fg: #000; --line: #ddd;
+          --muted: #666; --faint: #999; --off: #aaa; --border: #ccc;
+          --box-border: #bbb; --shadow: rgba(0,0,0,.15);
+          --hover-bg: rgba(255,255,255,.92); --lasso: #333;
+          --lasso-fill: rgba(0,0,0,.04); }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #1e1f22; --fg: #e4e4e4; --line: #3a3b3f; --muted: #a2a2a6;
+            --faint: #8e8e93; --off: #66686e; --border: #4a4b50;
+            --box-border: #55575c; --shadow: rgba(0,0,0,.5);
+            --hover-bg: rgba(40,41,45,.94); --lasso: #ddd;
+            --lasso-fill: rgba(255,255,255,.06); }
+  }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg);
+               color: var(--fg); font: 14px system-ui, -apple-system, "Segoe UI", sans-serif; }
+  /* the controls in the font of the page, not the smaller one of the browser */
+  button, input, select, textarea { font: inherit; }
   body { display: flex; flex-direction: column; }
   /* the bar wraps on a narrow window; the canvas takes what is left */
   #bar { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px;
-         padding: 4px 8px; border-bottom: 1px solid #ddd; }
+         padding: 4px 8px; border-bottom: 1px solid var(--line); }
   #canvas { display: block; flex: 1; min-height: 0; width: 100%;
             touch-action: none; }
-  #status { color: #666; }
+  #status { color: var(--muted); }
   /* what the pointer is over, in a box by it over the canvas */
   #hover { position: absolute; display: none; max-width: 360px; padding: 4px 6px;
-           background: rgba(255,255,255,.92); border: 1px solid #bbb;
+           background: var(--hover-bg); border: 1px solid var(--box-border);
            border-radius: 3px; white-space: pre-line; pointer-events: none; }
   /* the options: a panel that drops down from the bar, over the canvas */
   #options { position: relative; }
   #options summary { cursor: pointer; }
-  #panel { position: fixed; top: 40px; right: 8px; z-index: 1; background: #fff;
-           border: 1px solid #ccc; border-radius: 4px; padding: 8px 10px;
-           box-shadow: 0 2px 8px rgba(0,0,0,.15); display: grid;
+  #panel { position: fixed; top: 40px; right: 8px; z-index: 1; background: var(--bg);
+           border: 1px solid var(--border); border-radius: 4px; padding: 8px 10px;
+           box-shadow: 0 2px 8px var(--shadow); display: grid;
            grid-template-columns: auto auto; gap: 6px 12px; align-items: center;
            white-space: nowrap; }
   #panel .head { grid-column: 1 / 3; font-weight: bold; margin-top: 4px; }
@@ -33,11 +48,11 @@
                    justify-content: space-between; gap: 12px; }
   #panel .slider input { width: 160px; margin: 0; }
   #panel .wide { grid-column: 1 / 3; }
-  #panel label:has(:disabled) { color: #aaa; }
-  #help { color: #999; margin-left: auto; }
+  #panel label:has(:disabled) { color: var(--off); }
+  #help { color: var(--faint); margin-left: auto; }
   /* the lasso rectangle (Ctrl+click), over the canvas */
-  #lasso { position: absolute; display: none; border: 1px dashed #333;
-           background: rgba(0,0,0,.04); pointer-events: none; }
+  #lasso { position: absolute; display: none; border: 1px dashed var(--lasso);
+           background: var(--lasso-fill); pointer-events: none; }
 </style>
 </head>
 <body>
@@ -52,7 +67,8 @@
     <option value="t10.geo">t10.geo (2D)</option>
     <option value="view3.pos">view3.pos</option>
   </select>
-  <label>File <input id="file" type="file"></label>
+  <button id="openFile" title="Choose a file to open: a mesh, a geometry, a view">Open file...</button>
+  <input id="file" type="file" hidden>
   <details id="options">
     <summary>Options</summary>
     <div id="panel">
@@ -239,8 +255,15 @@ function start() {
   gmsh.option.setNumber('General.Terminal', 1);
   openUrl(first);
   window.addEventListener('resize', draw);
+  // the scene follows the browser going light or dark
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+    if(Module.ccall('gmshWebColorScheme', 'number', ['number'], [e.matches ? 1 : 0]))
+      draw();
+  });
 }
 
+document.getElementById('openFile').addEventListener('click',
+  () => document.getElementById('file').click());
 document.getElementById('file').addEventListener('change', async (e) => {
   const f = e.target.files[0];
   if(!f) return;
@@ -319,11 +342,19 @@ canvas.addEventListener('pointerleave', () => {
   draw();
 });
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+// the notches the wheel turned, as the graphical interface counts them (one
+// an event): a mouse wheel reports about a hundred pixels or three lines a
+// notch, a trackpad a few pixels at a time, and a pinch on a trackpad comes
+// as a wheel with Ctrl, in still smaller steps
+function wheelNotches(e) {
+  if(e.deltaMode === 1) return e.deltaY / 3;
+  if(e.deltaMode === 2) return 3 * Math.sign(e.deltaY);
+  const n = e.deltaY / (e.ctrlKey ? 2 : 10);
+  return Math.max(-5, Math.min(5, n));
+}
 canvas.addEventListener('wheel', (e) => {
   e.preventDefault();
-  // in notches: a mouse wheel reports lines or about a hundred pixels a
-  // notch, a trackpad a few pixels at a time
-  mouse(4, e, e.deltaMode === 1 ? e.deltaY : e.deltaY / 100);
+  mouse(4, e, wheelNotches(e));
 }, {passive: false});
 canvas.addEventListener('dblclick', () => {
   Module.ccall('gmshWebResetView', null, [], []);

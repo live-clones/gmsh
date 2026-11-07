@@ -139,6 +139,15 @@ EMSCRIPTEN_KEEPALIVE void gmshWebUnzip(const char *fileName, const char *dir)
   UnzipFile(fileName, dir);
 }
 
+// the colour of a name as the graphical interface reads it (the "Highlight"
+// of a parameter, an X11 name such as LightSteelBlue1), as 0xrrggbb, or -1
+EMSCRIPTEN_KEEPALIVE int gmshWebColor(const char *name)
+{
+  int r, g, b;
+  if(!GetRGBForString(name, r, g, b)) return -1;
+  return (r << 16) | (g << 8) | b;
+}
+
 } // extern "C"
 
 #endif

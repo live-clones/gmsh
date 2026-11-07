@@ -5,51 +5,142 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ONELAB web app</title>
 <style>
-  html, body { margin: 0; height: 100%; overflow: hidden; background: #fff;
-               font: 13px sans-serif; }
-  body { display: grid; grid-template-columns: minmax(240px, 320px) 1fr;
+  /* light or dark as the browser, unless the colour scheme chosen in the
+     options says otherwise (data-theme) */
+  :root { color-scheme: light;
+          --bg-rgb: 255, 255, 255; --fg-rgb: 0, 0, 0;
+          --bg: rgb(var(--bg-rgb)); --fg: rgb(var(--fg-rgb));
+          --muted: #666; --faint: #777; --tab: #555; --line: #ddd; --line2: #eee;
+          --border: #bbb; --field-border: #aaa; --out-border: #ccc;
+          --out-bg: #f7f7f7; --out-fg: #222; --menu-hover: #e8eefc;
+          --error: #c00; --warning: #a60; --shadow: rgba(0,0,0,.15);
+          --hover-bg: rgba(255,255,255,.92); --lasso: #333;
+          --lasso-fill: rgba(0,0,0,.04); --veil: rgba(255,255,255,.85); }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { color-scheme: dark;
+      --bg-rgb: 30, 31, 34; --fg-rgb: 228, 228, 228;
+      --muted: #a2a2a6; --faint: #8e8e93; --tab: #b0b0b4; --line: #3a3b3f;
+      --line2: #313236; --border: #55575c; --field-border: #66686e;
+      --out-border: #4a4b50; --out-bg: #2a2b2f; --out-fg: #e4e4e4;
+      --menu-hover: #2f3b55; --error: #ff6b6b; --warning: #e5a33d;
+      --shadow: rgba(0,0,0,.5); --hover-bg: rgba(40,41,45,.94); --lasso: #ddd;
+      --lasso-fill: rgba(255,255,255,.06); --veil: rgba(30,31,34,.85); }
+  }
+  :root[data-theme="dark"] { color-scheme: dark;
+    --bg-rgb: 30, 31, 34; --fg-rgb: 228, 228, 228;
+    --muted: #a2a2a6; --faint: #8e8e93; --tab: #b0b0b4; --line: #3a3b3f;
+    --line2: #313236; --border: #55575c; --field-border: #66686e;
+    --out-border: #4a4b50; --out-bg: #2a2b2f; --out-fg: #e4e4e4;
+    --menu-hover: #2f3b55; --error: #ff6b6b; --warning: #e5a33d;
+    --shadow: rgba(0,0,0,.5); --hover-bg: rgba(40,41,45,.94); --lasso: #ddd;
+    --lasso-fill: rgba(255,255,255,.06); --veil: rgba(30,31,34,.85); }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg);
+               color: var(--fg); font: 14px system-ui, -apple-system, "Segoe UI", sans-serif; }
+  /* the controls in the font of the page, not the smaller one of the browser */
+  button, input, select, textarea { font: inherit; }
+  body { display: grid; grid-template-columns: var(--side-width, 330px) 5px 1fr;
          grid-template-rows: auto 1fr auto; }
-  #bar { grid-column: 1 / 3; display: flex; flex-wrap: wrap; gap: 4px 10px;
-         align-items: center; padding: 4px 8px; border-bottom: 1px solid #ddd; }
-  #status { color: #666; }
-  #side { overflow: auto; border-right: 1px solid #ddd; padding: 4px 8px; }
+  #bar { grid-column: 1 / 4; display: flex; flex-wrap: wrap; gap: 4px 10px;
+         align-items: center; padding: 4px 8px; border-bottom: 1px solid var(--line); }
+  #open { position: relative; }
+  #openMenu { position: absolute; top: calc(100% + 2px); left: 0; z-index: 3;
+              display: flex; flex-direction: column; width: 300px; padding: 4px;
+              background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
+              box-shadow: 0 2px 8px var(--shadow); }
+  #openMenu[hidden] { display: none; }
+  #openMenu button { display: block; text-align: left; border: none;
+                     background: none; padding: 5px 6px; border-radius: 3px;
+                     font: inherit; cursor: pointer; color: inherit; }
+  #openMenu button:hover, #openMenu button:focus-visible { background: var(--menu-hover); }
+  #openMenu small { display: block; color: var(--muted); margin-top: 1px; }
+  #openMenu small.drop { padding: 4px 6px 2px; border-top: 1px solid var(--line2);
+                         margin-top: 2px; }
+  #status { color: var(--muted); }
+  #status.error { color: var(--error); }
+  #side { overflow: auto; padding: 4px 8px; }
+  /* the handle that resizes the panel: a drag, a double-click for the default */
+  #split { cursor: col-resize; touch-action: none; border-left: 1px solid var(--line); }
+  #split:hover, #split.on { background: var(--line); }
   #side details { margin: 4px 0; }
   #side summary { font-weight: bold; cursor: pointer; }
-  #side .row { display: grid; grid-template-columns: 1fr 110px; gap: 6px;
+  #side .row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(118px, 40%); gap: 6px;
                align-items: center; margin: 2px 0 2px 8px; padding: 1px 2px; }
-  #side .row input, #side .row select { width: 110px; box-sizing: border-box; }
+  #side .row input, #side .row select { width: 100%; box-sizing: border-box;
+                                        min-width: 0; }
   #side .row input[type=checkbox] { width: auto; justify-self: start; }
-  #side .out { color: #444; font-variant-numeric: tabular-nums; }
+  #side details details { margin-left: 10px; }
+  #tabs { display: flex; gap: 2px; margin: 0 -8px 6px; padding: 0 8px;
+          border-bottom: 1px solid var(--line); }
+  #tabs button { border: 1px solid transparent; border-bottom: none;
+                 background: none; padding: 4px 10px; cursor: pointer;
+                 border-radius: 4px 4px 0 0; color: var(--tab); font: inherit; }
+  #tabs button.on { border-color: var(--line); background: var(--bg); color: var(--fg);
+                    margin-bottom: -1px; }
+  #side .buttons { display: flex; gap: 4px; margin: 4px 0 4px 8px; }
+  #side .note { color: var(--faint); font-size: 13px; margin: 2px 0 4px 8px; }
+  #side .out { display: block; min-height: 1.3em; padding: 1px 4px;
+               border: 1px solid var(--out-border); border-radius: 3px;
+               background: var(--out-bg); color: var(--out-fg); font-variant-numeric: tabular-nums; overflow: hidden;
+               text-overflow: ellipsis; white-space: nowrap; }
+  #side .row > span.highlight { border-radius: 3px; padding: 0 4px; }
+  #side input.highlight { border: 1px solid var(--field-border); border-radius: 3px; }
   #side .view { display: flex; gap: 6px; align-items: center; margin-left: 8px; }
   #canvas { display: block; width: 100%; height: 100%; min-height: 0;
             touch-action: none; }
-  #log { grid-column: 1 / 3; margin: 0; border-top: 1px solid #ddd; }
-  #log summary { padding: 2px 8px; cursor: pointer; color: #666; }
+  #log { grid-column: 1 / 4; margin: 0; border-top: 1px solid var(--line); }
+  #log summary { padding: 2px 8px; cursor: pointer; color: var(--muted); }
   #log pre { margin: 0; padding: 0 8px 4px; height: 120px; overflow: auto;
-             font: 11px monospace; }
-  #log .error { color: #c00; }
-  #log .warning { color: #a60; }
+             font: 12px ui-monospace, Menlo, Consolas, monospace; }
+  #log .error { color: var(--error); }
+  #log .warning { color: var(--warning); }
+  /* what the pointer is over, in a box by it, and the lasso rectangle
+     (Ctrl+click), over the canvas */
+  #hover { position: fixed; display: none; max-width: 360px; padding: 4px 6px;
+           background: var(--hover-bg); border: 1px solid var(--border);
+           border-radius: 3px; white-space: pre-line; pointer-events: none;
+           z-index: 1; }
+  #lasso { position: fixed; display: none; border: 1px dashed var(--lasso);
+           background: var(--lasso-fill); pointer-events: none; z-index: 1; }
   #drop { position: fixed; inset: 0; display: none; place-items: center;
-          background: rgba(255,255,255,.85); font-size: 18px; z-index: 2; }
+          background: var(--veil); font-size: 18px; z-index: 2; }
 </style>
 </head>
 <body>
 <div id="bar">
   <strong>ONELAB</strong>
-  <label>Files <input id="files" type="file" multiple></label>
-  <label>Folder <input id="folder" type="file" webkitdirectory></label>
+  <span id="open">
+    <button id="openButton" aria-haspopup="menu" aria-expanded="false">Open model &#9662;</button>
+    <span id="openMenu" role="menu" hidden>
+      <button id="openFolder" role="menuitem"><b>Its folder...</b>
+        <small>the folder with the .pro, the .geo and the files they include
+          (best for a GetDP model)</small></button>
+      <button id="openFiles" role="menuitem"><b>Files...</b>
+        <small>a .zip of the model, or files that are a model on their own
+          (.geo, .msh, .step, ...)</small></button>
+      <small class="drop">or drop the files or a .zip on the page</small>
+    </span>
+  </span>
+  <input id="files" type="file" multiple hidden>
+  <input id="folder" type="file" webkitdirectory hidden>
   <span id="model"></span>
-  <button id="template" disabled title="Merge GetDP's Interactive.pro on the geometry: choose the physics, then the materials, sources and boundary conditions of each physical group">Physics template</button>
   <button id="run" disabled>Run</button>
   <button id="reset" disabled>Reset</button>
   <span id="status">loading...</span>
 </div>
 <div id="side">
-  <div id="params"></div>
-  <details id="views" open><summary>Views</summary><div id="viewList"></div></details>
+  <div id="tabs"><button data-tab="modelTab" class="on">Model</button><button
+    data-tab="optionsTab">Options</button></div>
+  <div id="modelTab">
+    <div id="params"></div>
+    <details id="views" open hidden><summary>Views</summary><div id="viewList"></div></details>
+  </div>
+  <div id="optionsTab" hidden></div>
 </div>
+<div id="split" title="Drag to resize the panel, double-click for its default width"></div>
 <canvas id="canvas"></canvas>
 <details id="log"><summary>Messages</summary><pre id="logText"></pre></details>
+<div id="lasso"></div>
+<div id="hover"></div>
 <div id="drop">drop a model (.pro, .geo and the files they include, or a .zip)</div>
 <script type="module">
 // The ONELAB web app: Gmsh, with GetDP linked in and run in-process
@@ -67,6 +158,8 @@ const canvas = $('canvas'), status = $('status'), logText = $('logText');
 const lines = [];
 let lastError = '';
 function log(t) {
+  // without the colours of the terminal
+  t = t.replace(/\x1b\[[0-9;]*m/g, '');
   const kind = /^Error|^\*\*\*/.test(t) ? 'error' : /^Warning/.test(t) ? 'warning' : '';
   if(kind === 'error') lastError = t;
   lines.push([t, kind]);
@@ -114,17 +207,67 @@ function draw() {
     Module.ccall('gmshWebDraw', 'number', ['number', 'number', 'number'], [w, h, dpr]);
   });
 }
+// the mouse: the events of the canvas go to the same interaction as in the
+// graphical interface (src/graphics/sceneView.cpp, through webView.cpp):
+// left drag rotates, right drag pans, middle or shift drag zooms, the wheel
+// zooms at the cursor, Ctrl+click starts a lasso to zoom on, Ctrl+right click
+// resets the view; what is under the cursor is named in a box by it
+const lasso = $('lasso'), hover = $('hover');
 function mouse(kind, e, wheel = 0) {
   const mods = (e.shiftKey ? 1 : 0) | (e.ctrlKey ? 2 : 0) | (e.altKey ? 4 : 0) |
                (e.metaKey ? 8 : 0);
   // the page numbers the buttons 0 left, 1 middle, 2 right; the scene 0
   // left, 1 right, 2 middle
   const button = e.button === 2 ? 1 : e.button === 1 ? 2 : 0;
-  if(Module.ccall('gmshWebMouse', 'number',
-       ['number', 'number', 'number', 'number', 'number', 'number', 'number', 'number'],
-       [kind, e.offsetX, e.offsetY, canvas.clientWidth, canvas.clientHeight, button,
-        wheel, mods]))
-    draw();
+  const redraw = Module.ccall('gmshWebMouse', 'number',
+    ['number', 'number', 'number', 'number', 'number', 'number', 'number', 'number'],
+    [kind, e.offsetX, e.offsetY, canvas.clientWidth, canvas.clientHeight, button,
+     wheel, mods]);
+  // the boxes over the canvas, placed in the window
+  const at = canvas.getBoundingClientRect();
+  // the box hangs from the point the view keeps, so it follows the pointer
+  // only once it has strayed, as in the graphical interface
+  const xy = Module._malloc(4 * 8);
+  const text = Module.ccall('gmshWebHoverText', 'string', ['number'], [xy]);
+  if(text) {
+    const a = Module.HEAPF64.subarray(xy / 8, xy / 8 + 2);
+    hover.textContent = text;
+    hover.style.display = 'block';
+    // below and to the right of the point, or on the other side of it when
+    // the box would leave the canvas
+    let x = a[0] + 12, y = a[1] + 16;
+    if(x + hover.offsetWidth > canvas.clientWidth) x = a[0] - 12 - hover.offsetWidth;
+    if(y + hover.offsetHeight > canvas.clientHeight) y = a[1] - 16 - hover.offsetHeight;
+    hover.style.left = (at.left + Math.max(0, x)) + 'px';
+    hover.style.top = (at.top + Math.max(0, y)) + 'px';
+  }
+  else
+    hover.style.display = 'none';
+  canvas.style.cursor = Module.ccall('gmshWebCrossCursor', 'number', [], []) ?
+    'crosshair' : 'default';
+  // the lasso rectangle, drawn by the page over the canvas
+  if(Module.ccall('gmshWebLasso', 'number', ['number'], [xy])) {
+    const r = Module.HEAPF64.subarray(xy / 8, xy / 8 + 4);
+    lasso.style.left = (at.left + Math.min(r[0], r[2])) + 'px';
+    lasso.style.top = (at.top + Math.min(r[1], r[3])) + 'px';
+    lasso.style.width = Math.abs(r[2] - r[0]) + 'px';
+    lasso.style.height = Math.abs(r[3] - r[1]) + 'px';
+    lasso.style.display = 'block';
+  }
+  else
+    lasso.style.display = 'none';
+  Module._free(xy);
+  if(redraw) draw();
+}
+// the notches the wheel turned, as the graphical interface counts them (one
+// an event): a mouse wheel reports about a hundred pixels or three lines a
+// notch, a trackpad a few pixels at a time, and a pinch on a trackpad comes
+// as a wheel with Ctrl, in still smaller steps
+function wheelNotches(e) {
+  if(e.deltaMode === 1) return e.deltaY / 3;
+  if(e.deltaMode === 2) return 3 * Math.sign(e.deltaY);
+  const n = e.deltaY / (e.ctrlKey ? 2 : 10);
+  return Math.max(-5, Math.min(5, n));
 }
 let pressed = false;
 canvas.addEventListener('pointerdown', (e) => {
@@ -134,16 +277,49 @@ canvas.addEventListener('pointerdown', (e) => {
 });
 canvas.addEventListener('pointermove', (e) => mouse(pressed ? 3 : 0, e));
 canvas.addEventListener('pointerup', (e) => { pressed = false; mouse(2, e); });
+canvas.addEventListener('pointerleave', () => {
+  if(pressed) return;
+  Module.ccall('gmshWebMouseLeft', null, [], []);
+  hover.style.display = 'none';
+  canvas.style.cursor = 'default';
+  draw();
+});
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 canvas.addEventListener('wheel', (e) => {
   e.preventDefault();
-  mouse(4, e, e.deltaMode === 1 ? e.deltaY : e.deltaY / 100);
+  mouse(4, e, wheelNotches(e));
 }, {passive: false});
 canvas.addEventListener('dblclick', () => {
   Module.ccall('gmshWebResetView', null, [], []);
   draw();
 });
 window.addEventListener('resize', draw);
+
+// the width of the panel, dragged on the handle beside it, kept for the next
+// visits; the canvas keeps at least half the window
+const split = $('split');
+function sideWidth(w) {
+  if(w) {
+    w = Math.max(200, Math.min(w, window.innerWidth / 2));
+    document.body.style.setProperty('--side-width', w + 'px');
+  }
+  else
+    document.body.style.removeProperty('--side-width');
+  try {
+    if(w) localStorage.setItem('sideWidth', w); else localStorage.removeItem('sideWidth');
+  } catch(e) {}
+  draw();
+}
+try { const w = Number(localStorage.getItem('sideWidth')); if(w) sideWidth(w); } catch(e) {}
+split.addEventListener('pointerdown', (e) => {
+  split.setPointerCapture(e.pointerId);
+  split.classList.add('on');
+});
+split.addEventListener('pointermove', (e) => {
+  if(split.hasPointerCapture(e.pointerId)) sideWidth(e.clientX);
+});
+split.addEventListener('pointerup', () => split.classList.remove('on'));
+split.addEventListener('dblclick', () => sideWidth(0));
 
 // ---------------------------------------------------------------- ONELAB
 
@@ -162,6 +338,8 @@ function setParameter(p) {
 // run "check", "compute" or "reset": the page waits (no worker yet), after
 // showing what it does
 let busy = false;
+// what is likely missing when the model fails, said with its errors
+let hint = '';
 function run(action) {
   if(busy) return Promise.resolve();
   busy = true;
@@ -182,70 +360,95 @@ function run(action) {
     $('run').disabled = $('reset').disabled = false;
     showParameters();
     showViews();
+    readOptions();
     draw();
-    status.textContent = errors ? (lastError || `${errors} error(s)`) :
+    // an error in the status bar, in full in the messages
+    const error = lastError.replace(/^Error *: */, '') || `${errors} error(s)`;
+    status.textContent = errors ? (hint ? hint + ' (' + error + ')' : error) :
       `${action === 'compute' ? 'computed' : 'checked'} in ${ms} ms`;
+    status.classList.toggle('error', !!errors);
+    if(errors) $('log').open = true;
     resolve();
   }, 20));
 }
 $('run').addEventListener('click', () => run('compute'));
 $('reset').addEventListener('click', () => run('reset'));
 
-// the parameter tree, as the graphical interface shows it: grouped by the
-// path of their names (the digits that start each part only order them),
-// output (read-only) parameters as values
-const shortName = (s) => s.replace(/^\d+/, '');
+// the parameter tree, as the graphical interface shows it: a branch for
+// each part of the names' paths, the branches and the parameters of a branch
+// sorted by their names as they are (byte order: the leading spaces, digits
+// and braces that sort them come before the letters), and shown without
+// these (as onelab::parameter::getShortName() does); the branches a
+// parameter asks to be closed ("Closed" attribute) closed, until opened
+const shortName = (s) => s.replace(/^ +/, '').replace(/^[{}]+/, '').replace(/^\d+/, '');
+const byName = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
 const groupOpen = {};
+let choiceLists = 0;
 function showParameters() {
-  const ps = getParameters().filter((p) => p.visible);
-  ps.sort((a, b) => a.name.localeCompare(b.name));
+  const root = {children: new Map()};
+  const closed = new Set();
+  for(const p of getParameters()) {
+    if(!p.visible || p.name.includes('ONELAB Context/')) continue;
+    const parts = p.name.split('/');
+    let node = root;
+    for(const part of parts.slice(0, -1)) {
+      if(!node.children.has(part)) node.children.set(part, {children: new Map()});
+      node = node.children.get(part);
+    }
+    node.children.set(parts[parts.length - 1], {parameter: p});
+    if(p.attributes && p.attributes.Closed === '1')
+      closed.add(parts.slice(0, -1).join('/'));
+  }
   const params = $('params');
   params.textContent = '';
-  const groups = {};
-  for(const p of ps) {
-    const parts = p.name.split('/');
-    const g = parts.slice(0, -1).map(shortName).join(' / ') || 'Parameters';
-    if(!groups[g]) {
+  const add = (node, path, parent) => {
+    for(const key of [...node.children.keys()].sort(byName)) {
+      const child = node.children.get(key);
+      if(child.parameter) {
+        parent.appendChild(parameterRow(child.parameter, shortName(key)));
+        continue;
+      }
+      const branch = path ? path + '/' + key : key;
       const d = document.createElement('details');
-      const s = document.createElement('summary');
-      s.textContent = g;
-      d.appendChild(s);
-      d.open = groupOpen[g] !== undefined ? groupOpen[g] :
-        !(p.attributes && p.attributes.Closed === '1');
-      d.addEventListener('toggle', () => { groupOpen[g] = d.open; });
-      params.appendChild(d);
-      groups[g] = d;
+      const sum = document.createElement('summary');
+      sum.textContent = shortName(key);
+      d.appendChild(sum);
+      d.open = groupOpen[branch] !== undefined ? groupOpen[branch] : !closed.has(branch);
+      d.addEventListener('toggle', () => { groupOpen[branch] = d.open; });
+      add(child, branch, d);
+      parent.appendChild(d);
     }
-    groups[g].appendChild(parameterRow(p, shortName(parts[parts.length - 1])));
-  }
+  };
+  add(root, '', params);
 }
 function parameterRow(p, name) {
   const row = document.createElement('label');
   row.className = 'row';
   const label = document.createElement('span');
-  label.textContent = p.label || name;
+  const units = p.attributes && p.attributes.Units;
+  label.textContent = (p.label || name) + (units ? ` [${units}]` : '');
   if(p.help) row.title = p.help;
-  const color = p.attributes && p.attributes.Highlight;
-  if(color) row.style.background = color.replace(/^AliceBlue$/i, '#eef4fb');
   row.appendChild(label);
   const value = p.values ? p.values[0] : '';
   const choices = p.choices || [];
   const labels = {};
   for(const [k, v] of Object.entries(p.valueLabels || {})) labels[v] = k;
-  let el;
+  let el, kind;
   if(p.readOnly) {
     el = document.createElement('span');
     el.className = 'out';
     el.textContent = (p.type === 'number' && labels[value] !== undefined) ?
       labels[value] : (typeof value === 'number' ? Number(value.toPrecision(6)) : value);
+    kind = 'fill';
   }
   else if(p.type === 'number' && choices.length === 2 && choices[0] === 0 &&
           choices[1] === 1 && !Object.keys(labels).length) {
     el = document.createElement('input');
     el.type = 'checkbox';
     el.checked = !!value;
+    kind = 'check';
   }
-  else if(choices.length) {
+  else if(choices.length && p.type === 'number') {
     el = document.createElement('select');
     for(const c of choices) {
       const o = document.createElement('option');
@@ -254,6 +457,24 @@ function parameterRow(p, name) {
       if(c === value) o.selected = true;
       el.appendChild(o);
     }
+    // a menu of numbers shows the colour in its text
+    kind = 'text';
+  }
+  else if(choices.length) {
+    // a string with choices: a field that also takes other values, its
+    // choices offered (Fl_Input_Choice in the graphical interface)
+    el = document.createElement('input');
+    el.value = value;
+    const list = document.createElement('datalist');
+    list.id = 'choices-' + (++choiceLists);
+    for(const c of choices) {
+      const o = document.createElement('option');
+      o.value = c;
+      list.appendChild(o);
+    }
+    row.appendChild(list);
+    el.setAttribute('list', list.id);
+    kind = 'fill';
   }
   else {
     el = document.createElement('input');
@@ -264,6 +485,20 @@ function parameterRow(p, name) {
       if(p.max < 1e200) el.max = p.max;
     }
     el.value = value;
+    kind = 'fill';
+  }
+  // the colour the model asks for, where the graphical interface shows it
+  const rgb = highlightColor(p.attributes && p.attributes.Highlight);
+  if(rgb) {
+    if(kind === 'text')
+      el.style.color = css(readableText(rgb));
+    else {
+      const target = kind === 'check' ? label : el;
+      const fill = adaptedFill(rgb);
+      target.classList.add('highlight');
+      target.style.background = css(fill);
+      target.style.color = css(contrastText(fill));
+    }
   }
   if(!p.readOnly) {
     el.addEventListener('change', () => {
@@ -282,11 +517,79 @@ function parameterRow(p, name) {
   return row;
 }
 
+// the colours of the parameters, as src/fltk/gmshScheme.cpp makes them: the
+// colour of a name in Gmsh's table ("1" for yellow) as a fill, kept from
+// glaring in dark mode, with a text in black or white on it, and a coloured
+// text moved away from the background, of the same hue, until it reads on it
+// (a contrast of 4.5, WCAG AA): darker in light mode, lighter in dark mode
+const colorCache = new Map();
+function highlightColor(name) {
+  if(!name) return null;
+  if(name === '1') name = 'yellow';
+  if(!colorCache.has(name)) {
+    const c = Module.ccall('gmshWebColor', 'number', ['string'], [name]);
+    colorCache.set(name, c < 0 ? null : [(c >> 16) & 255, (c >> 8) & 255, c & 255]);
+  }
+  return colorCache.get(name);
+}
+const css = ([r, g, b]) => `rgb(${r}, ${g}, ${b})`;
+function luminance([r, g, b]) {
+  const f = (c) => (c /= 255) <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+}
+function contrast(a, b) {
+  const la = luminance(a), lb = luminance(b);
+  return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+}
+const contrastText = (rgb) =>
+  contrast(rgb, [0, 0, 0]) >= contrast(rgb, [255, 255, 255]) ? [0, 0, 0] : [255, 255, 255];
+// the colour at another lightness, of the same hue, saturated as much as it
+// was coloured, within a cap
+function atLightness([r, g, b], lightness, maxSaturation) {
+  const v = [r / 255, g / 255, b / 255];
+  const mx = Math.max(...v), mn = Math.min(...v), chroma = mx - mn, l = (mx + mn) / 2;
+  let hue = 0, s = 0;
+  if(chroma > 0) {
+    s = chroma / (1 - Math.abs(2 * l - 1));
+    if(mx === v[0]) hue = ((v[1] - v[2]) / chroma + 6) % 6;
+    else if(mx === v[1]) hue = (v[2] - v[0]) / chroma + 2;
+    else hue = (v[0] - v[1]) / chroma + 4;
+  }
+  s = Math.min(maxSaturation, s * Math.min(1, 8 * chroma));
+  const c2 = (1 - Math.abs(2 * lightness - 1)) * s;
+  const x = c2 * (1 - Math.abs((hue % 2) - 1)), m = lightness - c2 / 2;
+  const order = [[0, 1, 2], [1, 0, 2], [2, 0, 1], [2, 1, 0], [1, 2, 0], [0, 2, 1]];
+  const w = [c2, x, 0], sector = Math.floor(hue) % 6;
+  return order[sector].map((k) => Math.round(255 * (w[k] + m)));
+}
+// the page in dark mode, and its background and text colours
+const themeColor = (name) => getComputedStyle(document.documentElement)
+  .getPropertyValue(name).trim().match(/\d+/g).slice(0, 3).map(Number);
+const isDark = () => getComputedStyle(document.documentElement)
+  .colorScheme.trim() === 'dark';
+function readableText(rgb) {
+  const background = themeColor('--bg-rgb'), dark = isDark();
+  const l = (Math.max(...rgb) + Math.min(...rgb)) / 510;
+  let t = dark ? atLightness(rgb, 0.72, 0.8) : rgb;
+  for(let i = 1; i <= 20 && contrast(t, background) < 4.5; i++)
+    t = dark ? atLightness(rgb, 0.72 + 0.28 * i / 20, 0.8) :
+               atLightness(rgb, l * (1 - i / 20), 0.7);
+  return t;
+}
+// no brighter than the text in dark mode: the same hue and saturation
+function adaptedFill(rgb) {
+  if(!isDark()) return rgb;
+  const mx = Math.max(...rgb), cap = Math.max(...themeColor('--fg-rgb'));
+  return mx <= cap ? rgb : rgb.map((c) => Math.round(c * cap / mx));
+}
+
 // the post-processing views, shown or hidden
 function showViews() {
   const list = $('viewList');
   list.textContent = '';
   const n = gmsh.option.getNumber('PostProcessing.NbViews');
+  // nothing to show before a view is made
+  $('views').hidden = !n;
   for(let i = 0; i < n; i++) {
     const row = document.createElement('label');
     row.className = 'view';
@@ -303,23 +606,194 @@ function showViews() {
   }
 }
 
-// ---------------------------------------------------------------- models
+// ---------------------------------------------------------------- options
 
-// a physical problem set up on the geometry with GetDP's templates
-// (Interactive.pro asks for the physics, then for the materials, sources and
-// boundary conditions of each physical group, and writes a .pro of the
-// choices next to the geometry), copied in /templates by the build
-async function mergeTemplate() {
-  if(busy) return;
-  if(!FS.analyzePath('/templates').exists) {
-    FS.mkdir('/templates');
-    for(const f of await (await fetch('build/templates/index.json')).json())
-      FS.writeFile('/templates/' + f, await fetchFile('build/templates/' + f));
+// the main Gmsh options, as in the option window of the graphical interface:
+// [option, kind, label, choices]; those of the views apply to all of them,
+// and are given again to the views a new run makes
+const optionGroups = [
+  ['Geometry', [
+    ['Geometry.Points', 'check', 'Points'],
+    ['Geometry.Curves', 'check', 'Curves'],
+    ['Geometry.Surfaces', 'check', 'Surfaces'],
+    ['Geometry.Volumes', 'check', 'Volumes'],
+    ['Geometry.Opacity', 'range', 'Opacity']]],
+  ['Mesh', [
+    ['Mesh.Algorithm', 'choice', '2D algorithm', {1: 'MeshAdapt', 2: 'Automatic',
+      5: 'Delaunay', 6: 'Frontal-Delaunay', 8: 'Frontal-Delaunay for quads',
+      9: 'Packing of parallelograms', 11: 'Quasi-structured quads'}],
+    ['Mesh.Algorithm3D', 'choice', '3D algorithm', {1: 'Delaunay', 4: 'Frontal',
+      10: 'HXT'}],
+    ['Mesh.MeshSizeFactor', 'number', 'Element size factor'],
+    ['Mesh.ElementOrder', 'choice', 'Element order', {1: '1', 2: '2', 3: '3'}],
+    ['Mesh.RecombineAll', 'check', 'Recombine all triangles'],
+    ['Mesh.Nodes', 'check', 'Nodes'],
+    ['Mesh.Lines', 'check', '1D elements'],
+    ['Mesh.SurfaceEdges', 'check', '2D element edges'],
+    ['Mesh.SurfaceFaces', 'check', '2D element faces'],
+    ['Mesh.VolumeEdges', 'check', '3D element edges'],
+    ['Mesh.VolumeFaces', 'check', '3D element faces'],
+    ['Mesh.Opacity', 'range', 'Opacity']]],
+  ['Views', [
+    ['View.IntervalsType', 'choice', 'Intervals', {1: 'Iso-values',
+      2: 'Continuous', 3: 'Discrete', 4: 'Numeric'}],
+    ['View.NbIso', 'number', 'Number of intervals'],
+    ['View.ShowScale', 'check', 'Color scale'],
+    ['View.ShowElement', 'check', 'Element outlines'],
+    ['View.Opacity', 'range', 'Opacity']]],
+  ['General', [
+    ['General.Axes', 'choice', 'Axes', {0: 'None', 1: 'Simple axes', 2: 'Box',
+      3: 'Full grid', 4: 'Open grid', 5: 'Ruler'}],
+    ['General.SmallAxes', 'check', 'Small axes'],
+    ['General.Orthographic', 'choice', 'Projection', {1: 'Orthographic',
+      0: 'Perspective'}],
+    ['General.Shading', 'choice', 'Shading', {0: 'Classic', 1: 'Studio (X floor)',
+      2: 'Studio (Y floor)', 3: 'Studio (Z floor)'}],
+    ['General.ColorScheme', 'choice', 'Colors', {3: 'As the browser', 0: 'Light',
+      2: 'Dark', 1: 'Classic'}]]],
+];
+// the options that change the mesh: the next run meshes again
+const meshing = new Set(['Mesh.Algorithm', 'Mesh.Algorithm3D',
+  'Mesh.MeshSizeFactor', 'Mesh.ElementOrder', 'Mesh.RecombineAll']);
+const viewSettings = {};
+const optionFields = [];
+const views = () => gmsh.option.getNumber('PostProcessing.NbViews');
+function setOption(name, v) {
+  if(name.startsWith('View.')) {
+    viewSettings[name] = v;
+    for(let i = 0; i < views(); i++) gmsh.option.setNumber(name.replace('View.', `View[${i}].`), v);
   }
-  gmsh.merge('/templates/Interactive.pro');
-  await run('check');
+  else
+    gmsh.option.setNumber(name, v);
+  if(meshing.has(name)) gmsh.onelab.setChanged('Gmsh', 2);
+  if(name === 'General.ColorScheme') setColorScheme(v);
+  draw();
 }
-$('template').addEventListener('click', mergeTemplate);
+
+// the colour scheme: the page light or dark as the scene, which follows the
+// browser when it is 3 (As the browser); kept for the next models (which
+// start from the default options) and the next visits
+let colorScheme = 3;
+try { colorScheme = Number(localStorage.getItem('colorScheme') ?? 3); } catch(e) {}
+function setColorScheme(v) {
+  colorScheme = v;
+  try { localStorage.setItem('colorScheme', v); } catch(e) {}
+  applyColorScheme();
+}
+function applyColorScheme() {
+  if(gmsh.option.getNumber('General.ColorScheme') !== colorScheme)
+    gmsh.option.setNumber('General.ColorScheme', colorScheme);
+  if(colorScheme === 3) delete document.documentElement.dataset.theme;
+  else document.documentElement.dataset.theme = colorScheme === 2 ? 'dark' : 'light';
+  showParameters();
+}
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+  if(colorScheme !== 3) return;
+  Module.ccall('gmshWebColorScheme', 'number', ['number'], [e.matches ? 1 : 0]);
+  showParameters();
+  draw();
+});
+function buildOptions() {
+  const tab = $('optionsTab');
+  for(const [group, options] of optionGroups) {
+    const d = document.createElement('details');
+    d.open = true;
+    d.id = 'options' + group;
+    const sum = document.createElement('summary');
+    sum.textContent = group;
+    d.appendChild(sum);
+    for(const [name, kind, text, choices] of options) {
+      const row = document.createElement('label');
+      row.className = 'row';
+      const label = document.createElement('span');
+      label.textContent = text;
+      row.appendChild(label);
+      let el;
+      if(kind === 'choice') {
+        el = document.createElement('select');
+        for(const [v, t] of Object.entries(choices)) {
+          const o = document.createElement('option');
+          o.value = v;
+          o.textContent = t;
+          el.appendChild(o);
+        }
+      }
+      else {
+        el = document.createElement('input');
+        el.type = {check: 'checkbox', number: 'number', range: 'range'}[kind];
+        if(kind === 'range') Object.assign(el, {min: 0, max: 1, step: 0.05});
+        if(kind === 'number') el.step = 'any';
+      }
+      el.title = name;
+      el.addEventListener(kind === 'range' ? 'input' : 'change', () =>
+        setOption(name, kind === 'check' ? (el.checked ? 1 : 0) : Number(el.value)));
+      row.appendChild(el);
+      d.appendChild(row);
+      optionFields.push([name, kind, el]);
+    }
+    if(group === 'Mesh') {
+      const note = document.createElement('div');
+      note.className = 'note';
+      note.textContent = 'Run meshes again after a change of the first five';
+      d.appendChild(note);
+      const buttons = document.createElement('div');
+      buttons.className = 'buttons';
+      for(const [t, dim] of [['1D', 1], ['2D', 2], ['3D', 3], ['Clear', 0]]) {
+        const b = document.createElement('button');
+        b.textContent = t;
+        b.addEventListener('click', () => meshNow(dim));
+        buttons.appendChild(b);
+      }
+      d.appendChild(buttons);
+    }
+    tab.appendChild(d);
+  }
+}
+// the options as Gmsh has them (a model sets some, its views their own), the
+// settings asked for the views given to the new ones
+function readOptions() {
+  for(const [name, v] of Object.entries(viewSettings))
+    for(let i = 0; i < views(); i++) gmsh.option.setNumber(name.replace('View.', `View[${i}].`), v);
+  // the options of the views, once there are views
+  $('optionsViews').hidden = !views();
+  for(const [name, kind, el] of optionFields) {
+    const isView = name.startsWith('View.');
+    if(isView && !views()) continue;
+    const v = gmsh.option.getNumber(isView ? name.replace('View.', 'View[0].') : name);
+    if(kind === 'check') el.checked = !!v;
+    else el.value = String(v);
+  }
+}
+function meshNow(dim) {
+  if(busy) return;
+  status.classList.remove('error');
+  status.textContent = dim ? `meshing in ${dim}D...` : 'clearing the mesh...';
+  setTimeout(() => {
+    const t0 = performance.now();
+    try {
+      if(dim) gmsh.model.mesh.generate(dim);
+      else gmsh.model.mesh.clear();
+      status.textContent = dim ? `${dim}D mesh in ${(performance.now() - t0).toFixed(0)} ms, ` +
+        `${gmsh.option.getNumber('Mesh.NbNodes')} nodes` : 'mesh cleared';
+    } catch(e) {
+      status.textContent = e.message;
+      status.classList.add('error');
+    }
+    draw();
+  }, 20);
+}
+applyColorScheme();
+buildOptions();
+readOptions();
+for(const b of document.querySelectorAll('#tabs button'))
+  b.addEventListener('click', () => {
+    for(const o of document.querySelectorAll('#tabs button')) {
+      o.classList.toggle('on', o === b);
+      $(o.dataset.tab).hidden = o !== b;
+    }
+  });
+
+// ---------------------------------------------------------------- models
 
 // a model is opened from a directory of its own in the in-memory filesystem
 let modelCount = 0;
@@ -376,23 +850,43 @@ async function openFiles(entries, open = '') {
     return;
   }
   FS.chdir(file.slice(0, file.lastIndexOf('/')));
-  $('model').textContent = file.slice(file.lastIndexOf('/') + 1);
+  const base = file.slice(file.lastIndexOf('/') + 1);
+  $('model').textContent = base;
+  // a .pro alone: the page has only the files it is given, not the ones
+  // next to them on the disk
+  const geo = file.replace(/\.pro$/, '.geo');
+  hint = (geo !== file && !FS.analyzePath(geo).exists) ?
+    `no ${geo.slice(geo.lastIndexOf('/') + 1)} next to ${base}: open the ` +
+    `model's folder instead (Open model > Its folder)` : '';
   // a model starts from the default options, as the options a model sets
   // (e.g. Mesh.ElementOrder) stay otherwise
   gmsh.onelab.clear();
   gmsh.clear();
   gmsh.option.restoreDefaults();
   gmsh.option.setNumber('General.Terminal', 1);
+  applyColorScheme();
   try {
     gmsh.open(file);
   } catch(e) {
     log('*** ' + e.message);
   }
   Module.ccall('gmshWebResetView', null, [], []);
-  $('template').disabled = false;
   await run('check');
 }
 const readFile = async (f) => new Uint8Array(await f.arrayBuffer());
+// one button for a model, which asks for its folder or for files: a browser
+// has no dialog that offers both
+function openMenu(show) {
+  $('openMenu').hidden = !show;
+  $('openButton').setAttribute('aria-expanded', show);
+}
+$('openButton').addEventListener('click', () => openMenu($('openMenu').hidden));
+$('openFolder').addEventListener('click', () => { openMenu(false); $('folder').click(); });
+$('openFiles').addEventListener('click', () => { openMenu(false); $('files').click(); });
+document.addEventListener('pointerdown', (e) => {
+  if(!$('open').contains(e.target)) openMenu(false);
+});
+document.addEventListener('keydown', (e) => { if(e.key === 'Escape') openMenu(false); });
 for(const id of ['files', 'folder']) {
   $(id).addEventListener('change', async (e) => {
     const entries = [];
@@ -427,7 +921,7 @@ async function fetchFile(url) {
 }
 
 $('run').disabled = $('reset').disabled = false;
-status.textContent = 'open a model';
+status.textContent = 'open a model, or drop its files here';
 const params = new URLSearchParams(location.search);
 try {
   if(params.get('zip')) {

@@ -35,7 +35,8 @@ mkdir -p "$1"
 SITE=$(cd "$1" && pwd)
 shift
 
-# the module, and GetDP's templates (for the "Physics template" button)
+# the module, and GetDP's templates (for a page that sets up a problem on a
+# geometry, not offered yet)
 mkdir -p "$SITE/build/templates"
 cp "$B/gmsh.mjs" "$B/libgmsh.mjs" "$B/libgmsh.wasm" "$SITE/build"
 if [ -d "$B/templates" ]; then cp "$B"/templates/* "$SITE/build/templates"; fi
