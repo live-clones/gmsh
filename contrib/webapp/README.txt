@@ -34,14 +34,20 @@ GetDP tutorials and the models of onelab_doc (in ~/src/getdp and
   P=$M/AcademicPhotonics/tutorial_photonics_dev
   B="does not run in the browser yet: needs GetDP's Bessel functions (Fortran)"
   L="too large for the browser's memory for now"
+  C="Photonics tutorial P13: 3D photonic crystal of spheres"
+  C3=$P/P13-modes_photonic_crystal_3D/modes_photonic_crystal
   ./site.sh build/site \
     "Induction machine, 3 kW (2D, frequency domain)|$M/ElectricMachines/im_3kW.pro" \
     "Magnetic forces between magnets (3D, OpenCASCADE geometry)|$M/MagneticForces" \
     --group "GetDP tutorials" $T/0*/ --note "3D, about 30 s" $T/10-Gauging \
     --group "Photonics tutorials" $P/P0[1-7]*/ --note "about 25 s" $P/P08*/ \
-    $P/P09*/ $P/P1[0-2]*/ --note "about 30 s" $P/P13*/ --note "about 15 s" $P/P14*/ \
-    $P/P15*/ --note "about 10 s" $P/P16*/ --note "$B" $P/P17*/ --note "$L" $P/P18*/ \
-    --note "$B" $P/P19*/ --note "$L" $P/P20*/ --note "$L" $P/P21*/ $P/P22*/
+    $P/P09*/ $P/P1[0-2]*/ \
+    --note "about 20 s" "$C, simple cubic lattice|${C3}_cubic_3D.pro" \
+    --note "about 15 s; its high-order mesh optimization reports errors, as in the desktop app" \
+    "$C, diamond lattice|${C3}_diamond_3D.pro" \
+    --note "about 30 s" $P/P14*/ $P/P15*/ --note "about 10 s" $P/P16*/ \
+    --note "$B" $P/P17*/ --note "$L" $P/P18*/ --note "$B" $P/P19*/ \
+    --note "$L" $P/P20*/ --note "$L" $P/P21*/ $P/P22*/ $P/P23*/
   rsync -az --delete build/site/ gmsh.info:.wwwonelab/webapp/
 
 run_models.mjs runs model directories through the module under node, as the
