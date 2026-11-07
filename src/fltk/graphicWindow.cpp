@@ -2822,86 +2822,12 @@ void status_query_cb(Fl_Widget *w, void *data)
 
     openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
     if(!gl) break;
-    double xyz[3];
-    if(!gl->getDrawContext()->pickPoint(xyz)) continue;
-
-    GEntity *entity = nullptr;
-    if(FlGui::instance()->selectedVertices.size())
-      entity = FlGui::instance()->selectedVertices[0];
-    else if(FlGui::instance()->selectedEdges.size())
-      entity = FlGui::instance()->selectedEdges[0];
-    else if(FlGui::instance()->selectedFaces.size())
-      entity = FlGui::instance()->selectedFaces[0];
-    else if(FlGui::instance()->selectedRegions.size())
-      entity = FlGui::instance()->selectedRegions[0];
-    MElement *element = FlGui::instance()->selectedElements.size() ?
-                          FlGui::instance()->selectedElements[0] :
-                          nullptr;
-    // a pick that found a mesh element returns it instead of the entity it
-    // belongs to, which the query names as well
-    if(!entity) entity = gl->getDrawContext()->pickEntity();
-    PView *view = FlGui::instance()->selectedViews.size() ?
-                    FlGui::instance()->selectedViews[0] :
-                    nullptr;
-
-    // A view drawn as glyphs hides the model behind them: the arrow clicked
-    // on hangs off the data it stands for, so the query asks about the point
-    // of the model under it, where the views can be interpolated, and keeps
-    // the point on the glyph only when there is nothing behind it.
-    if(view) {
-      std::vector<GVertex *> v; std::vector<GEdge *> e;
-      std::vector<GFace *> f; std::vector<GRegion *> r;
-      std::vector<MElement *> el; std::vector<SPoint2> p;
-      std::vector<PView *> vw;
-      double behind[3];
-      int at[4];
-      gl->lastSelection(at); // where the click looked, not where the mouse is
-      double px = gl->getDrawContext()->pixel_equiv_x / gl->getDrawContext()->s[0];
-      if(gl->pick(ENT_ALL, true, false, at[0], at[1], at[2], at[3], v, e, f, r,
-                  el, p, vw) &&
-         gl->getDrawContext()->pickPoint(behind)) {
-        GEntity *under = v.size() ? (GEntity *)v[0] :
-                         e.size() ? (GEntity *)e[0] :
-                         f.size() ? (GEntity *)f[0] :
-                         r.size() ? (GEntity *)r[0] :
-                                    nullptr;
-        if(queryBehind(view, xyz, behind, px)) {
-          for(int k = 0; k < 3; k++) xyz[k] = behind[k];
-          entity = under;
-          element = el.size() ? el[0] : nullptr;
-        }
-        else if(!entity) {
-          // the glyph is over something else than what it stands for: name
-          // it, as the query is about a point of the view itself
-          entity = under;
-        }
-      }
-    }
-
-    drawContext *ctx = gl->getDrawContext();
-    double pixel = ctx->pixel_equiv_x / ctx->s[0];
-    // what was hit may hold no element there (a point or a curve of the
-    // geometry, drawn over the mesh and picked before it), or the point read
-    // back may be off its surface: the element is then the one of the mesh
-    // drawn under the point
-    if(!element) element = queryElement(xyz, pixel);
-
-    std::vector<std::string> info =
-      queryPoint(xyz, entity, element, view, pixel);
-    // the messages keep everything, the box over the picture the lines that
-    // do not begin with a space, i.e. all but the detail of an element
-    std::string text;
-    for(std::size_t i = 0; i < info.size(); i++) {
-      if(info[i].size()) Msg::Direct("%s", info[i].c_str());
-      if(info[i].size() && info[i][0] == ' ') continue;
-      text += (text.size() ? "\n" : "") + info[i];
-    }
-    GModel::current()->setSelection(0);
-    bool add = gl->addQuery();
-    if(!add) ctx->clearMarks();
-    ctx->addMark(xyz);
+    FlGui *g = FlGui::instance();
+    if(!gl->queryClick(g->selectedVertices, g->selectedEdges, g->selectedFaces,
+                       g->selectedRegions, g->selectedElements,
+                       g->selectedViews))
+      continue;
     drawContext::global()->draw();
-    if(CTX::instance()->tooltips) gl->pinTooltip(text, xyz, add);
   }
 
   CTX::instance()->pickElements = old;
@@ -2949,13 +2875,12 @@ void status_measure_cb(Fl_Widget *w, void *data)
   if(!CTX::instance()->mouseSelection)
     opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 1);
 
-  double first[3] = {0., 0., 0.};
-  bool half = false; // the first point is taken, the second one is awaited
-
   while(1) {
     if(!FlGui::available()) break;
-    Msg::StatusGl(half ? "Click the second point\n[Press 'q' to abort]" :
-                         "Click the first point\n[Press 'q' to abort]");
+    openglWindow *current = FlGui::instance()->getCurrentOpenglWindow();
+    Msg::StatusGl(current && current->measuring() ?
+                    "Click the second point\n[Press 'q' to abort]" :
+                    "Click the first point\n[Press 'q' to abort]");
     char ib = FlGui::instance()->selectEntity(ENT_ALL);
     if(!FlGui::available()) break;
     if(ib == 'q') break;
@@ -2963,28 +2888,7 @@ void status_measure_cb(Fl_Widget *w, void *data)
 
     openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
     if(!gl) break;
-    drawContext *ctx = gl->getDrawContext();
-    double xyz[3];
-    if(!ctx->pickPoint(xyz)) continue;
-    GModel::current()->setSelection(0);
-
-    if(!half) { // start a new measurement
-      ctx->clearMarks();
-      ctx->addMark(xyz);
-      for(int k = 0; k < 3; k++) first[k] = xyz[k];
-      half = true;
-      gl->pinTooltip("");
-    }
-    else {
-      ctx->addMark(xyz);
-      ctx->setSegment(first, xyz);
-      half = false;
-      // the messages keep everything; the length stays on the picture, in a
-      // box over the middle of the line (see drawContext::drawMarks)
-      std::vector<std::string> info = measurePoints(first, xyz);
-      for(std::size_t i = 0; i < info.size(); i++)
-        if(info[i].size()) Msg::Direct("%s", info[i].c_str());
-    }
+    if(!gl->measureClick()) continue;
     drawContext::global()->draw();
   }
 

@@ -227,6 +227,25 @@ public:
   void pinTooltip(const std::string &text, const double *xyz = nullptr,
                   bool add = false);
   bool addQuery() const { return _addQuery; }
+  // the notes pinned to the model, for a host that draws them itself
+  std::size_t numPinned() const { return _pinned.size(); }
+  const std::string &pinnedText(std::size_t i) const { return _pinned[i].text; }
+  const double *pinnedPoint(std::size_t i) const { return _pinned[i].xyz; }
+  // A click of the query, with what the selection found there: what the model
+  // holds at the point hit (its entity, element, node, the values of the
+  // views), in the messages and pinned to the point (added to the notes with
+  // Ctrl, see addQuery()). False if the click hit nothing. The host runs the
+  // selection, as the graphical interface does in status_query_cb()
+  bool queryClick(std::vector<GVertex *> &vertices, std::vector<GEdge *> &edges,
+                  std::vector<GFace *> &faces, std::vector<GRegion *> &regions,
+                  std::vector<MElement *> &elements,
+                  std::vector<PView *> &views);
+  // A click of the measurement: its first point, or its second one and the
+  // distance between them, in the messages and over the line. False if the
+  // click hit nothing
+  bool measureClick();
+  // a measurement waits for its second point
+  bool measuring() const { return _ctx->numMarks() == 1; }
   void setPoint(double x, double y, double z)
   {
     _point[0] = x;

@@ -806,6 +806,116 @@ char sceneView::selectionStep(std::vector<GVertex *> &vertices,
   return 0;
 }
 
+bool sceneView::queryClick(std::vector<GVertex *> &vertices,
+                           std::vector<GEdge *> &edges,
+                           std::vector<GFace *> &faces,
+                           std::vector<GRegion *> &regions,
+                           std::vector<MElement *> &elements,
+                           std::vector<PView *> &views)
+{
+  double xyz[3];
+  if(!_ctx->pickPoint(xyz)) return false;
+
+  GEntity *entity = nullptr;
+  if(vertices.size())
+    entity = vertices[0];
+  else if(edges.size())
+    entity = edges[0];
+  else if(faces.size())
+    entity = faces[0];
+  else if(regions.size())
+    entity = regions[0];
+  MElement *element = elements.size() ? elements[0] : nullptr;
+  // a pick that found a mesh element returns it instead of the entity it
+  // belongs to, which the query names as well
+  if(!entity) entity = _ctx->pickEntity();
+  PView *view = views.size() ? views[0] : nullptr;
+
+  // A view drawn as glyphs hides the model behind them: the arrow clicked
+  // on hangs off the data it stands for, so the query asks about the point
+  // of the model under it, where the views can be interpolated, and keeps
+  // the point on the glyph only when there is nothing behind it.
+  if(view) {
+    std::vector<GVertex *> v;
+    std::vector<GEdge *> e;
+    std::vector<GFace *> f;
+    std::vector<GRegion *> r;
+    std::vector<MElement *> el;
+    std::vector<SPoint2> p;
+    std::vector<PView *> vw;
+    double behind[3];
+    int at[4];
+    lastSelection(at); // where the click looked, not where the mouse is
+    double px = _ctx->pixel_equiv_x / _ctx->s[0];
+    if(pick(ENT_ALL, true, false, at[0], at[1], at[2], at[3], v, e, f, r, el, p,
+            vw) &&
+       _ctx->pickPoint(behind)) {
+      GEntity *under = v.size() ? (GEntity *)v[0] :
+                       e.size() ? (GEntity *)e[0] :
+                       f.size() ? (GEntity *)f[0] :
+                       r.size() ? (GEntity *)r[0] :
+                                  nullptr;
+      if(queryBehind(view, xyz, behind, px)) {
+        for(int k = 0; k < 3; k++) xyz[k] = behind[k];
+        entity = under;
+        element = el.size() ? el[0] : nullptr;
+      }
+      else if(!entity) {
+        // the glyph is over something else than what it stands for: name
+        // it, as the query is about a point of the view itself
+        entity = under;
+      }
+    }
+  }
+
+  double pixel = _ctx->pixel_equiv_x / _ctx->s[0];
+  // what was hit may hold no element there (a point or a curve of the
+  // geometry, drawn over the mesh and picked before it), or the point read
+  // back may be off its surface: the element is then the one of the mesh
+  // drawn under the point
+  if(!element) element = queryElement(xyz, pixel);
+
+  std::vector<std::string> info = queryPoint(xyz, entity, element, view, pixel);
+  // the messages keep everything, the box over the picture the lines that
+  // do not begin with a space, i.e. all but the detail of an element
+  std::string text;
+  for(std::size_t i = 0; i < info.size(); i++) {
+    if(info[i].size()) Msg::Direct("%s", info[i].c_str());
+    if(info[i].size() && info[i][0] == ' ') continue;
+    text += (text.size() ? "\n" : "") + info[i];
+  }
+  GModel::current()->setSelection(0);
+  if(!_addQuery) _ctx->clearMarks();
+  _ctx->addMark(xyz);
+  hostRedraw();
+  if(CTX::instance()->tooltips) pinTooltip(text, xyz, _addQuery);
+  return true;
+}
+
+bool sceneView::measureClick()
+{
+  double xyz[3];
+  if(!_ctx->pickPoint(xyz)) return false;
+  GModel::current()->setSelection(0);
+  double first[3];
+  if(!measuring() || !_ctx->mark(0, first)) { // start a new measurement
+    _ctx->clearMarks();
+    _ctx->addMark(xyz);
+    pinTooltip("");
+  }
+  else {
+    _ctx->addMark(xyz);
+    _ctx->setSegment(first, xyz);
+    // the messages keep everything; the length stays on the picture, in a
+    // box over the middle of the line (drawn by the host)
+    std::vector<std::string> info = measurePoints(first, xyz);
+    for(std::size_t i = 0; i < info.size(); i++)
+      if(info[i].size()) Msg::Direct("%s", info[i].c_str());
+  }
+  hostRedraw();
+  return true;
+}
+
 void sceneView::pinTooltip(const std::string &text, const double *xyz,
                            bool add)
 {
