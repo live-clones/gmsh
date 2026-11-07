@@ -16,7 +16,8 @@
           --error: #c00; --warning: #a60; --shadow: rgba(0,0,0,.15);
           --hover-bg: rgba(255,255,255,.92); --lasso: #333;
           --lasso-fill: rgba(0,0,0,.04); --veil: rgba(255,255,255,.85);
-          --graph-on: #fadc64; }
+          --graph-on: #fadc64; --loop1: #8ce6a0; --loop2: #96d2ff;
+          --loop3: #ffb4af; --loop-fg: #000; }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) { color-scheme: dark;
       --bg-rgb: 30, 31, 34; --fg-rgb: 228, 228, 228;
@@ -26,7 +27,8 @@
       --menu-hover: #2f3b55; --error: #ff6b6b; --warning: #e5a33d;
       --shadow: rgba(0,0,0,.5); --hover-bg: rgba(40,41,45,.94); --lasso: #ddd;
       --lasso-fill: rgba(255,255,255,.06); --veil: rgba(30,31,34,.85);
-      --graph-on: #c9961e; }
+      --graph-on: #c9961e; --loop1: #238636; --loop2: #1f6feb;
+      --loop3: #be2828; --loop-fg: #fff; }
   }
   :root[data-theme="dark"] { color-scheme: dark;
     --bg-rgb: 30, 31, 34; --fg-rgb: 228, 228, 228;
@@ -36,7 +38,8 @@
     --menu-hover: #2f3b55; --error: #ff6b6b; --warning: #e5a33d;
     --shadow: rgba(0,0,0,.5); --hover-bg: rgba(40,41,45,.94); --lasso: #ddd;
     --lasso-fill: rgba(255,255,255,.06); --veil: rgba(30,31,34,.85);
-      --graph-on: #c9961e; }
+      --graph-on: #c9961e; --loop1: #238636; --loop2: #1f6feb;
+      --loop3: #be2828; --loop-fg: #fff; }
   html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg);
                color: var(--fg); font: 14px -apple-system, BlinkMacSystemFont, "Segoe UI",
                  system-ui, Roboto, "Helvetica Neue", Arial, sans-serif; }
@@ -118,11 +121,20 @@
                        border: 1px solid var(--field-border); border-radius: 3px;
                        background: var(--bg); color: var(--fg); }
   #side .graphButton.on { background: var(--graph-on); color: #000; }
-  #graphMenu { position: fixed; z-index: 3; padding: 6px 8px; display: grid;
-               gap: 4px; background: var(--bg); color: var(--fg);
+  #graphMenu, #rangeMenu { position: fixed; z-index: 3; padding: 6px 8px;
+               display: grid; gap: 4px; background: var(--bg); color: var(--fg);
                border: 1px solid var(--border); border-radius: 4px;
                box-shadow: 0 2px 8px var(--shadow); }
-  #graphMenu[hidden] { display: none; }
+  #graphMenu[hidden], #rangeMenu[hidden] { display: none; }
+  #rangeMenu input { width: 240px; }
+  #rangeMenu .note { color: var(--muted); font-size: 12px; }
+  #rangeMenu .error { color: var(--error); font-size: 12px; }
+  #rangeMenu .name { font-weight: bold; }
+  /* the loop button: the level, on the colour of the graphical interface */
+  #side .loopButton.level1 { background: var(--loop1); color: var(--loop-fg); }
+  #side .loopButton.level2 { background: var(--loop2); color: var(--loop-fg); }
+  #side .loopButton.level3 { background: var(--loop3); color: var(--loop-fg); }
+  #side .graphButton:disabled { opacity: .35; cursor: default; }
   #graphMenu td, #graphMenu th { padding: 1px 6px; text-align: center; }
   #graphMenu td:first-child { text-align: left; white-space: nowrap; }
   #graphMenu th { font-weight: normal; color: var(--muted); }
@@ -232,6 +244,13 @@
       id="visNone">None</button><button id="visInvert">Invert</button></div>
     <div id="visList"></div>
   </div>
+</div>
+<div id="rangeMenu" hidden>
+  <div class="name" id="rangeName"></div>
+  <input id="rangeText" type="text" spellcheck="false" autocomplete="off">
+  <div class="note" id="rangeNote">min : max, min : max : step, or val1, val2, ...</div>
+  <div class="buttons"><button id="rangeApply">Apply</button><button
+    id="rangeCancel">Cancel</button></div>
 </div>
 <div id="graphMenu" hidden>
   <div class="name" id="graphName"></div>
@@ -717,7 +736,7 @@ const rowUpdates = new Map();
 function rowKey(p) {
   const a = p.attributes || {};
   return [p.name, p.type, p.readOnly, p.label, p.help, a.Units, a.Highlight,
-          a.Closed, p.valueLabels,
+          a.Closed, a.Loop, a.ReadOnlyRange, p.valueLabels,
           p.readOnly ? '' : [p.choices, p.min, p.max, p.step]];
 }
 // the tree made again, its colours being those of the page (light or dark)
@@ -850,25 +869,43 @@ function parameterRow(p, name) {
       target.style.color = css(contrastText(fill));
     }
   }
-  // the row given new values, but where it is being typed in
+  // the row given new values, but where it is being typed in; its range and
+  // loop not changed while a solver runs (whose database would replace them)
   const field = el;
-  let button = null;
-  rowUpdates.set(p.name, (q) => {
+  let button = null, rangeButton = null, loopButton = null;
+  const update = (q) => {
     const v = q.values ? q.values[0] : '';
     if(q.readOnly) field.textContent = shownValue(v);
     else if(field !== document.activeElement) {
       if(field.type === 'checkbox') field.checked = !!v;
       else field.value = v;
     }
-    if(button) button.classList.toggle('on', /[^0]/.test(graphValue(q)));
-  });
-  // a number drawn on the X-Y graphs, or not: the menu of its graph button
-  if(p.type === 'number' && kind === 'fill') {
+    if(button) {
+      button.classList.toggle('on', /[^0]/.test(graphValue(q)));
+      button.disabled = !q.readOnly && !hasRange(q);
+    }
+    if(rangeButton) rangeButton.disabled = busy;
+    if(loopButton) loopButton.disabled = busy || !hasRange(q);
+  };
+  rowUpdates.set(p.name, update);
+  // a number to set: its range or choices, the loop over them and the X-Y
+  // graphs it is drawn on, as the graphical interface's inputRange (but a
+  // menu of named values); an output: its graphs
+  const ranged = p.type === 'number' && !p.readOnly && kind !== 'check' &&
+    !Object.keys(labels).length;
+  if(p.type === 'number' && (p.readOnly ? kind === 'fill' : ranged)) {
     const pair = document.createElement('span');
     pair.className = 'withGraph';
+    pair.appendChild(el);
+    if(ranged) {
+      rangeButton = rangeButtonFor(p);
+      loopButton = loopButtonFor(p);
+      pair.append(rangeButton, loopButton);
+    }
     button = graphButton(p);
-    pair.append(el, button);
+    pair.appendChild(button);
     el = pair;
+    update(p);
   }
   if(!p.readOnly) {
     el.addEventListener('change', (e) => {
@@ -965,6 +1002,137 @@ $('graphNone').addEventListener('click', () => {
 document.addEventListener('pointerdown', (e) => {
   if(!$('graphMenu').hidden && !e.target.closest('#graphMenu, .graphButton'))
     $('graphMenu').hidden = true;
+  if(!$('rangeMenu').hidden && !e.target.closest('#rangeMenu, .rangeButton'))
+    $('rangeMenu').hidden = true;
+});
+
+// The range of a number, its loop over it, as the graphical interface's
+// inputRange: "min : max", "min : max : step" or "val1, val2, ..." (its
+// choices), edited in a box (only shown if the model says ReadOnlyRange); the
+// loop button going through the levels 1, 2 and 3 (nested loops, 1 the
+// outer, run by Run: onelabUtils::initializeLoops()) and none. A number loops
+// or is drawn on a graph once it has a range with a step, or choices
+const noRange = 1e200; // onelab::parameter::maxNumber()
+const hasRange = (p) => (p.choices && p.choices.length > 0) || p.step > 0;
+const fmtNumber = (v) => String(Number(Number(v).toPrecision(12)));
+function rangeString(p) {
+  if(p.choices && p.choices.length) return p.choices.map(fmtNumber).join(', ');
+  if(p.min > -noRange && p.max < noRange)
+    return fmtNumber(p.min) + ' : ' + fmtNumber(p.max) +
+      (p.step ? ' : ' + fmtNumber(p.step) : '');
+  return '';
+}
+// the parameter as the box asks, or the error in what it says
+function parseRange(p, text) {
+  const t = text.trim();
+  const num = (s) => {
+    const v = Number(s.trim());
+    if(!s.trim() || !Number.isFinite(v)) throw new Error(`"${s.trim()}" is not a number`);
+    return v;
+  };
+  if(t.includes(',')) {
+    p.choices = t.split(',').map(num);
+    p.step = 0;
+  }
+  else {
+    const [min = '', max = '', step = ''] = t.split(':');
+    if(t.split(':').length > 3) throw new Error('at most min : max : step');
+    p.min = min.trim() ? num(min) : -noRange;
+    p.max = max.trim() ? num(max) : noRange;
+    p.step = step.trim() ? num(step) : 0;
+    p.choices = [];
+  }
+  return p;
+}
+// a range or a loop changed, as the graphical interface does
+// (onelab_number_input_range_cb)
+function changeRange(p) {
+  if(setParameter(p) & 1)
+    run('check');
+  else
+    showSolverProgress();
+}
+const rowButton = (cls, title) => {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'graphButton ' + cls;
+  b.title = title;
+  return b;
+};
+function rangeButtonFor(p) {
+  const readOnly = p.attributes && p.attributes.ReadOnlyRange === '1';
+  const b = rowButton('rangeButton',
+                      readOnly ? 'Show the range or choices' : 'Edit the range or choices');
+  b.textContent = ':';
+  b.addEventListener('click', (e) => {
+    e.preventDefault();
+    openRangeMenu(p.name, b);
+  });
+  return b;
+}
+function loopButtonFor(p) {
+  const level = (p.attributes && p.attributes.Loop) || '';
+  const b = rowButton('loopButton',
+                      'Loop over the range or choices (loop level 1, 2 or 3)');
+  if(['1', '2', '3'].includes(level)) {
+    b.textContent = level;
+    b.classList.add('level' + level);
+  }
+  else
+    b.innerHTML = '<svg width="13" height="13" viewBox="0 0 13 13" fill="none" ' +
+      'stroke="currentColor" stroke-width="1.4"><path d="M10.5 4.5a4.5 4.5 0 1 0 .5 3"/>' +
+      '<path d="M11 1.5v3h-3"/></svg>';
+  b.addEventListener('click', (e) => {
+    e.preventDefault();
+    const q = getParameters().find((x) => x.name === p.name);
+    if(!q) return;
+    const cur = (q.attributes && q.attributes.Loop) || '';
+    const next = {'1': '2', '2': '3', '3': '0'}[cur] || '1';
+    q.attributes = Object.assign({}, q.attributes, {Loop: next});
+    changeRange(q);
+  });
+  return b;
+}
+let rangeParameter = '';
+function openRangeMenu(name, button) {
+  const p = getParameters().find((q) => q.name === name);
+  if(!p) return;
+  rangeParameter = name;
+  const readOnly = p.attributes && p.attributes.ReadOnlyRange === '1';
+  $('rangeName').textContent = (readOnly ? 'Range or choices of ' : 'Range or choices: ') +
+    (p.label || shortName(name.split('/').pop()));
+  $('rangeText').value = rangeString(p);
+  $('rangeText').readOnly = readOnly;
+  $('rangeApply').hidden = readOnly;
+  $('rangeNote').className = 'note';
+  $('rangeNote').textContent = 'min : max, min : max : step, or val1, val2, ...';
+  const menu = $('rangeMenu');
+  menu.hidden = false;
+  const r = button.getBoundingClientRect();
+  menu.style.left = Math.max(8, Math.min(r.right - menu.offsetWidth, innerWidth - menu.offsetWidth - 8)) + 'px';
+  menu.style.top = Math.min(r.bottom + 2, innerHeight - menu.offsetHeight - 8) + 'px';
+  $('rangeText').focus();
+  $('rangeText').select();
+}
+function applyRange() {
+  const p = getParameters().find((q) => q.name === rangeParameter);
+  if(!p || $('rangeText').readOnly) return;
+  try {
+    parseRange(p, $('rangeText').value);
+  } catch(err) {
+    $('rangeNote').className = 'error';
+    $('rangeNote').textContent = err.message;
+    return;
+  }
+  $('rangeMenu').hidden = true;
+  changeRange(p);
+}
+$('rangeApply').addEventListener('click', applyRange);
+$('rangeCancel').addEventListener('click', () => { $('rangeMenu').hidden = true; });
+// (the shortcuts leave the keys of a field alone)
+$('rangeText').addEventListener('keydown', (e) => {
+  if(e.key === 'Enter') applyRange();
+  else if(e.key === 'Escape') $('rangeMenu').hidden = true;
 });
 
 // the colours of the parameters, as src/fltk/gmshScheme.cpp makes them: the
@@ -1640,6 +1808,10 @@ const shortcuts = installShortcuts(Module, (action) => {
   }
   if(action === 'escape' && !$('graphMenu').hidden) {
     $('graphMenu').hidden = true;
+    return true;
+  }
+  if(action === 'escape' && !$('rangeMenu').hidden) {
+    $('rangeMenu').hidden = true;
     return true;
   }
   if(!pageShortcuts[action]) return false;
