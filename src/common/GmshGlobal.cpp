@@ -230,8 +230,18 @@ int GmshMergeFile(const std::string &fileName, bool errorIfMissing)
   return MergeFile(fileName, errorIfMissing);
 }
 
+// the last file merged by GmshMergePostProcessingFile(), which GetDP calls when
+// it runs in the program: both for the files it reads (GmshRead) and for those
+// it asks to show, which it follows with Msg::RequestRender() (a web worker
+// running GetDP sends that one to its page then, see contrib/webapp)
+static std::string _lastMergedPostProcessingFile;
+
+const std::string &GmshLastMergedPostProcessingFile()
+{ return _lastMergedPostProcessingFile; }
+
 int GmshMergePostProcessingFile(const std::string &fileName)
 {
+  _lastMergedPostProcessingFile = fileName;
   return MergePostProcessingFile(
     fileName, CTX::instance()->solver.autoShowViews,
     CTX::instance()->solver.autoShowLastStep, true);

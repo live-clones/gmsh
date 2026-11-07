@@ -210,9 +210,10 @@
 <div id="hover"></div>
 <div id="drop">drop a model (.pro, .geo and the files they include, or a .zip)</div>
 <script type="module">
-// The ONELAB web app: Gmsh, with GetDP linked in and run in-process
-// (webOnelab.cpp), through the Gmsh JavaScript API (gmsh.mjs) and the drawing
-// functions of webView.cpp. A model is opened from files, a folder, a zip
+// The ONELAB web app: Gmsh, through the Gmsh JavaScript API (gmsh.mjs) and
+// the drawing functions of webView.cpp, with GetDP, linked in the same module
+// (webOnelab.cpp) but run in a web worker (solver.js), as the graphical
+// interface runs it in a process of its own. A model is opened from files, a folder, a zip
 // archive, or a URL (?zip=<url>, with &open=<file> for a zip of several
 // models, or ?model=<url of the .pro>&files=<other files, next to it,
 // separated by commas>)
@@ -251,7 +252,22 @@ function scheduleLog() {
   });
 }
 
-const gmsh = await createGmsh({canvas, print: log, printErr: log});
+// the WebAssembly code, compiled once for the page and for the solver's worker
+async function compileWasm(url) {
+  try {
+    return await WebAssembly.compileStreaming(fetch(url));
+  } catch(e) { // not served as application/wasm
+    return WebAssembly.compile(await (await fetch(url)).arrayBuffer());
+  }
+}
+const wasm = await compileWasm(new URL('./build/libgmsh.wasm', import.meta.url));
+const gmsh = await createGmsh({
+  canvas, print: log, printErr: log,
+  instantiateWasm: (imports, done) => {
+    WebAssembly.instantiate(wasm, imports).then((i) => done(i, wasm));
+    return {};
+  },
+});
 const Module = gmsh.lib;
 const FS = Module.FS;
 gmsh.initialize([], false);
@@ -403,45 +419,172 @@ function setParameter(p) {
   return Module.ccall('gmshWebOnelabSet', 'number', ['string'], [JSON.stringify(p)]);
 }
 
-// run "check", "compute" or "reset": the page waits (no worker yet), after
-// showing what it does
+// ---------------------------------------------------------------- solver
+
+// The solver's worker (solver.js): GetDP runs there, while the page merges
+// what it is sent as it comes and stays free, as the graphical interface does
+// with a solver's process. Stopping the solver ends the worker, a new one
+// taking its place.
+let worker = null, workerReady = null;
+// the model's directory, and its files as last sent to the worker (path ->
+// time of change)
+let modelDir = '';
+let sent = new Map();
+// what ends the solver's run under way
+let solverDone = null;
+function startWorker() {
+  worker = new Worker(new URL('./solver.js', import.meta.url), {type: 'module'});
+  sent = new Map();
+  workerReady = new Promise((ready) => {
+    worker.onmessage = (e) => {
+      const m = e.data;
+      if(m.type === 'ready') ready();
+      else if(m.type === 'log') log(m.text);
+      else if(m.type === 'merge') solverMerge(m);
+      else if(m.type === 'done') solverEnd(m);
+    };
+  });
+  worker.onerror = (e) => {
+    log('Error   : the solver stopped: ' + e.message);
+    solverEnd({errors: 1});
+  };
+  worker.postMessage({type: 'init', module: wasm});
+}
+// a file the solver wrote, written here too, not to be sent back
+function fromSolver(path, data) {
+  if(!path.startsWith('/')) path = FS.cwd() + '/' + path;
+  const parts = path.split('/').filter((s) => s);
+  let d = '';
+  for(const p of parts.slice(0, -1)) {
+    d += '/' + p;
+    if(!FS.analyzePath(d).exists) FS.mkdir(d);
+  }
+  FS.writeFile(path, data);
+  sent.set(path, FS.stat(path).mtime.getTime());
+}
+// the files of the model the worker does not have as they are
+function changedFiles() {
+  const files = [], transfer = [];
+  const walk = (dir) => {
+    for(const f of FS.readdir(dir)) {
+      if(f === '.' || f === '..') continue;
+      const path = dir + '/' + f;
+      const st = FS.stat(path);
+      if(FS.isDir(st.mode)) walk(path);
+      else if(sent.get(path) !== st.mtime.getTime()) {
+        const data = FS.readFile(path);
+        files.push([path, data]);
+        transfer.push(data.buffer);
+        sent.set(path, st.mtime.getTime());
+      }
+    }
+  };
+  walk(modelDir);
+  return {files, transfer};
+}
+function setDatabase(db) {
+  gmsh.onelab.clear();
+  gmsh.onelab.set(db);
+}
+// a solver, with the arguments gmshWebOnelabGmsh() gives: its errors
+async function solve(solver) {
+  await workerReady;
+  return new Promise((done) => {
+    solverDone = done;
+    const {files, transfer} = changedFiles();
+    worker.postMessage({type: 'run', dir: modelDir, cwd: FS.cwd(), files,
+                        db: gmsh.onelab.get(), args: solver.args}, transfer);
+  });
+}
+// what the solver asks to show, with the database as it is then
+function solverMerge(m) {
+  fromSolver(m.name, m.data);
+  setDatabase(m.db);
+  Module.ccall('gmshWebMergeFile', null, ['string'], [m.name]);
+  showParameters();
+  showViews();
+  readOptions();
+  draw();
+}
+function solverEnd(m) {
+  for(const [path, data] of m.files || []) fromSolver(path, data);
+  if(m.db) setDatabase(m.db);
+  const done = solverDone;
+  solverDone = null;
+  if(done) done(m.errors);
+}
+let stopping = false;
+function stopSolver() {
+  stopping = true;
+  if(!solverDone) return;
+  worker.terminate();
+  log('Info    : Stopped the solver');
+  solverEnd({errors: 0});
+  startWorker();
+}
+startWorker();
+
+// run "check", "compute" or "reset", as the graphical interface does: Gmsh
+// here, then the solvers in the worker, for each pass of the loops over
+// parameters; the Run button stops it
 let busy = false;
 // what is likely missing when the model fails, said with its errors
 let hint = '';
-function run(action) {
-  if(busy) return Promise.resolve();
+// (a timer, not an animation frame, which a page in the background never gets)
+const nextFrame = () => new Promise((r) => setTimeout(r, 20));
+function showAll() {
+  showParameters();
+  showViews();
+  readOptions();
+  readClipping();
+  readVisibility();
+  draw();
+}
+async function run(action) {
+  if(busy) return;
   busy = true;
-  $('run').disabled = $('reset').disabled = true;
+  stopping = false;
+  $('reset').disabled = true;
+  $('run').textContent = 'Stop';
+  status.classList.remove('error');
   status.textContent = action === 'compute' ? 'computing...' : 'checking...';
   lastError = '';
-  return new Promise((resolve) => setTimeout(() => {
-    const t0 = performance.now();
-    let errors = 0;
-    try {
-      errors = Module.ccall('gmshWebOnelab', 'number', ['string'], [action]);
-    } catch(e) {
-      log('*** ' + e);
-      errors = 1;
-    }
-    const ms = (performance.now() - t0).toFixed(0);
-    busy = false;
-    $('run').disabled = $('reset').disabled = false;
-    showParameters();
-    showViews();
-    readOptions();
-    readClipping();
-    readVisibility();
-    draw();
-    // an error in the status bar, in full in the messages
-    const error = lastError.replace(/^Error *: */, '') || `${errors} error(s)`;
-    status.textContent = errors ? (hint ? hint + ' (' + error + ')' : error) :
-      `${action === 'compute' ? 'computed' : 'checked'} in ${ms} ms`;
-    status.classList.toggle('error', !!errors);
-    if(errors) $('log').open = true;
-    resolve();
-  }, 20));
+  // the status shown before Gmsh's part, which the page waits for
+  await nextFrame();
+  const t0 = performance.now();
+  const pass = action === 'reset' ? 'check' : action;
+  let errors = 0;
+  try {
+    Module.ccall('gmshWebOnelabStart', null, ['string'], [action]);
+    do {
+      const solvers = JSON.parse(
+        Module.ccall('gmshWebOnelabGmsh', 'string', ['string'], [pass]));
+      showAll();
+      for(const s of solvers) {
+        if(stopping) break;
+        errors += await solve(s);
+      }
+    } while(!stopping &&
+            Module.ccall('gmshWebOnelabNext', 'number', ['string'], [pass]));
+    errors += Module.ccall('gmshWebErrorCount', 'number', [], []);
+  } catch(e) {
+    log('*** ' + e);
+    errors++;
+  }
+  const ms = (performance.now() - t0).toFixed(0);
+  busy = false;
+  $('reset').disabled = false;
+  $('run').textContent = 'Run';
+  showAll();
+  // an error in the status bar, in full in the messages
+  const error = lastError.replace(/^Error *: */, '') || `${errors} error(s)`;
+  status.textContent = stopping ? 'stopped' :
+    errors ? (hint ? hint + ' (' + error + ')' : error) :
+    `${action === 'compute' ? 'computed' : 'checked'} in ${ms} ms`;
+  status.classList.toggle('error', !!errors && !stopping);
+  if(errors && !stopping) $('log').open = true;
 }
-$('run').addEventListener('click', () => run('compute'));
+$('run').addEventListener('click', () => busy ? stopSolver() : run('compute'));
 $('reset').addEventListener('click', () => run('reset'));
 
 // the parameter tree, as the graphical interface shows it: a branch for
@@ -1328,6 +1471,12 @@ async function openFiles(entries, open = '') {
   // entries: [path, Uint8Array]
   if(busy) return;
   const dir = newModelDirectory();
+  // the worker lets the files of the model before go
+  if(modelDir) {
+    const old = modelDir;
+    workerReady.then(() => worker.postMessage({type: 'forget', dir: old}));
+  }
+  modelDir = dir;
   for(const [path, data] of entries) {
     if(path.endsWith('.zip')) {
       writeFile(dir, path, data);

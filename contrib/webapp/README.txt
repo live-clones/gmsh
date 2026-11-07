@@ -66,5 +66,8 @@ api_test.mjs shows its use and checks it:
   node api_test.mjs
 
 The pages draw the scene with the functions of webView.cpp; webOnelab.cpp
-links GetDP in and runs the ONELAB loop; shortcuts.js gives them the keyboard
-shortcuts of the graphical interface (from src/common/Shortcuts.cpp).
+links GetDP in and runs the ONELAB loop; onelab.html runs GetDP in a web
+worker (solver.js), with a module of its own, as the graphical interface runs
+it in a process of its own: the page shows the results as they are written and
+can stop the solver; shortcuts.js gives the pages the keyboard shortcuts of the
+graphical interface (from src/common/Shortcuts.cpp).

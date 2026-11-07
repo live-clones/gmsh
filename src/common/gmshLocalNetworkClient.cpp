@@ -678,7 +678,7 @@ bool gmshLocalNetworkClient::kill()
   return false;
 }
 
-bool gmshInProcessClient::run()
+std::vector<std::string> gmshInProcessClient::commandLine()
 {
   // the command line a network client gets (see onelabUtils::getCommandLine),
   // as separate arguments, words in double quotes kept whole
@@ -712,7 +712,12 @@ bool gmshInProcessClient::run()
   if(inWord) args.push_back(word);
   args.push_back(getSocketSwitch());
   args.push_back(_name);
+  return args;
+}
 
+bool gmshInProcessClient::run()
+{
+  std::vector<std::string> args = commandLine();
   Msg::StatusBar(true, "Running '%s'...", _name.c_str());
   setPid(0);
   int errors = 0;

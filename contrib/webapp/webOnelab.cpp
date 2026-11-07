@@ -11,6 +11,7 @@
 
 #if defined(__EMSCRIPTEN__)
 
+#include <algorithm>
 #include <cstdlib>
 #include <emscripten.h>
 #include "GmshConfig.h"
@@ -21,6 +22,8 @@
 #include "onelab.h"
 #include "onelabUtils.h"
 #include "gmshLocalNetworkClient.h"
+#include "GmshGlobal.h"
+#include "OpenFile.h"
 #include "getdp.h"
 
 namespace {
@@ -81,6 +84,66 @@ namespace {
     if(onelabUtils::autoCheck(old, p)) ret |= 1;
     return ret;
   }
+
+  // the solvers of the server (not the clients a solver adds while it runs)
+  std::vector<gmshInProcessClient *> solvers()
+  {
+    onelab::server *s = onelab::server::instance();
+    std::vector<gmshInProcessClient *> v;
+    for(auto it = s->firstClient(); it != s->lastClient(); it++) {
+      auto *c = dynamic_cast<gmshInProcessClient *>(*it);
+      if(c && c->getName().find("NoAutoRun") == std::string::npos)
+        v.push_back(c);
+    }
+    return v;
+  }
+
+  // a solver about to run: the action it is asked for, in the database
+  void setAction(gmshInProcessClient *c, const std::string &action)
+  {
+    onelabUtils::guessModelName(c);
+    onelab::string o(c->getName() + "/Action", action);
+    o.setVisible(false);
+    o.setNeverChanged(true);
+    onelab::server::instance()->set(o);
+  }
+
+  std::string quoted(const std::string &s)
+  {
+    std::string q = "\"";
+    for(char c : s) {
+      if(c == '"' || c == '\\') q += '\\';
+      if(c == '\n') {
+        q += "\\n";
+        continue;
+      }
+      if(c == '\t') {
+        q += "\\t";
+        continue;
+      }
+      q += c;
+    }
+    return q + "\"";
+  }
+
+  // in a web worker running a solver: what GetDP asks to show, given to the
+  // page (solver.js). GetDP merges such a file in the program, as the files
+  // it reads, then asks for a render: the file is then the last one merged
+  class solverMessages : public GmshMessage {
+  public:
+    void operator()(std::string level, std::string message)
+    {
+      if(level != "RequestRender") return;
+      const std::string &file = GmshLastMergedPostProcessingFile();
+      if(file.empty()) return;
+      EM_ASM(
+        {
+          if(globalThis.gmshSolverMerge)
+            globalThis.gmshSolverMerge(UTF8ToString($0));
+        },
+        file.c_str());
+    }
+  };
 } // namespace
 
 extern "C" {
@@ -100,26 +163,109 @@ EMSCRIPTEN_KEEPALIVE int gmshWebOnelab(const char *what)
   if(action == "compute") onelabUtils::initializeLoops();
   do {
     onelabUtils::runGmshClient(action, CTX::instance()->solver.autoMesh);
-    // the solvers (not the clients a solver adds while it runs)
-    onelab::server *s = onelab::server::instance();
-    std::vector<onelab::localNetworkClient *> solvers;
-    for(auto it = s->firstClient(); it != s->lastClient(); it++) {
-      auto *c = dynamic_cast<onelab::localNetworkClient *>(*it);
-      if(c && c->getName().find("NoAutoRun") == std::string::npos)
-        solvers.push_back(c);
-    }
-    for(auto *c : solvers) {
-      onelabUtils::guessModelName(c);
-      onelab::string o(c->getName() + "/Action", action);
-      o.setVisible(false);
-      o.setNeverChanged(true);
-      s->set(o);
+    for(auto *c : solvers()) {
+      setAction(c, action);
       c->run();
-      if(action == "compute") s->setChanged(0, c->getName());
+      if(action == "compute")
+        onelab::server::instance()->setChanged(0, c->getName());
     }
     onelabUtils::updateGraphs();
   } while(action == "compute" && onelabUtils::incrementLoops());
   return Msg::GetErrorCount();
+}
+
+// The same loop in steps, for a page that runs the solvers in a web worker,
+// as the graphical interface runs them in processes of their own (onelab.html
+// and solver.js): the page starts, then for each pass runs Gmsh here and the
+// solvers it is given in the worker, the database going along, then asks for
+// the next pass. Starting, with "check", "compute" or "reset":
+EMSCRIPTEN_KEEPALIVE void gmshWebOnelabStart(const char *what)
+{
+  std::string action(what);
+  addSolver();
+  if(action == "reset") onelabUtils::resetDb(true);
+  Msg::ResetErrorCounter();
+  if(action == "compute") onelabUtils::initializeLoops();
+}
+
+// Gmsh's part of a pass ("check" or "compute"), and the solvers to run then,
+// in JSON: [{"name":..., "args":[...]}]
+EMSCRIPTEN_KEEPALIVE const char *gmshWebOnelabGmsh(const char *what)
+{
+  std::string action(what);
+  onelabUtils::runGmshClient(action, CTX::instance()->solver.autoMesh);
+  static std::string json;
+  json = "[";
+  for(auto *c : solvers()) {
+    setAction(c, action);
+    if(json.size() > 1) json += ",";
+    json += "{\"name\":" + quoted(c->getName()) + ",\"args\":[";
+    std::vector<std::string> args = c->commandLine();
+    for(std::size_t i = 0; i < args.size(); i++)
+      json += (i ? "," : "") + quoted(args[i]);
+    json += "]}";
+  }
+  json += "]";
+  return json.c_str();
+}
+
+// the end of a pass, once the solvers have run and their database is back:
+// returns 1 if there is another pass (a loop over parameters)
+EMSCRIPTEN_KEEPALIVE int gmshWebOnelabNext(const char *what)
+{
+  std::string action(what);
+  if(action == "compute")
+    for(auto *c : solvers())
+      onelab::server::instance()->setChanged(0, c->getName());
+  onelabUtils::updateGraphs();
+  return (action == "compute" && onelabUtils::incrementLoops()) ? 1 : 0;
+}
+
+// the errors since the start
+EMSCRIPTEN_KEEPALIVE int gmshWebErrorCount() { return Msg::GetErrorCount(); }
+
+// In the web worker: run a solver with the arguments of gmshWebOnelabGmsh()
+// (separated by new lines), with the database the page sent; the files it
+// asks to show go to the page as they are written. Returns the errors
+EMSCRIPTEN_KEEPALIVE int gmshWebSolve(const char *argv)
+{
+  std::vector<std::string> args;
+  std::string a(argv);
+  for(std::size_t start = 0, end; start < a.size(); start = end + 1) {
+    end = a.find('\n', start);
+    if(end == std::string::npos) end = a.size();
+    args.push_back(a.substr(start, end - start));
+  }
+  if(args.empty()) return 1;
+  onelabUtils::inProcessSolver solver =
+    onelabUtils::getInProcessSolver(args[0]);
+  if(!solver) {
+    Msg::Error("Solver '%s' is not available in the web app", args[0].c_str());
+    return 1;
+  }
+  static solverMessages messages;
+  Msg::SetCallback(&messages);
+  Msg::ResetErrorCounter();
+  int errors = 0;
+  try {
+    errors = solver(args, onelab::server::instance());
+  } catch(...) {
+    Msg::Error("'%s' stopped on an error", args[0].c_str());
+    errors = 1;
+  }
+  Msg::SetCallback(nullptr);
+  return std::max(errors, Msg::GetErrorCount());
+}
+
+// On the page: show a file a solver wrote, as the graphical interface does
+// when a solver asks for it (gmshLocalNetworkClient)
+EMSCRIPTEN_KEEPALIVE void gmshWebMergeFile(const char *name)
+{
+  if(!CTX::instance()->solver.autoMergeFile) return;
+  bool changedBeforeMerge = onelab::server::instance()->getChanged("Gmsh");
+  MergePostProcessingFile(name, CTX::instance()->solver.autoShowViews,
+                          CTX::instance()->solver.autoShowLastStep, true);
+  onelab::server::instance()->setChanged(changedBeforeMerge, "Gmsh");
 }
 
 // change a parameter, given in JSON as gmsh.onelab.get() gives them: returns

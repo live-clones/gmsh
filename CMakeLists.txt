@@ -1862,7 +1862,7 @@ elseif(EMSCRIPTEN)
   # (all the symbols are exported, as the JavaScript API calls them by name,
   # with the allocation functions of the C library it hands arguments with)
   set(FLAGS "${FLAGS} -sFILESYSTEM=1 -sEXPORT_ALL=1")
-  set(FLAGS "${FLAGS} -sENVIRONMENT=web,node")
+  set(FLAGS "${FLAGS} -sENVIRONMENT=web,worker,node")
   # the program (gmsh.js, gmsh.wasm), whose main() runs when it is loaded,
   # with the runtime methods needed to drive it from JavaScript
   set_target_properties(gmsh PROPERTIES LINK_FLAGS

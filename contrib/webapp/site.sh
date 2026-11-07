@@ -42,7 +42,7 @@ cp "$B/gmsh.mjs" "$B/libgmsh.mjs" "$B/libgmsh.wasm" "$SITE/build"
 if [ -d "$B/templates" ]; then cp "$B"/templates/* "$SITE/build/templates"; fi
 
 # the pages, and the examples of the viewer next to it
-cp "$HERE/onelab.html" "$HERE/shortcuts.js" "$SITE"
+cp "$HERE/onelab.html" "$HERE/shortcuts.js" "$HERE/solver.js" "$SITE"
 sed "s|^const examples = '../../tutorials/';|const examples = 'tutorials/';|" \
   "$HERE/viewer.html" > "$SITE/viewer.html"
 mkdir -p "$SITE/tutorials"

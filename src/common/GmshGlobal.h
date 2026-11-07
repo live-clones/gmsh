@@ -44,6 +44,7 @@ int GmshOpenProject(const std::string &fileName);
 int GmshClearProject();
 int GmshMergeFile(const std::string &fileName, bool errorIfMissing = true);
 int GmshMergePostProcessingFile(const std::string &fileName);
+const std::string &GmshLastMergedPostProcessingFile();
 int GmshWriteFile(const std::string &fileName);
 int GmshFinalize();
 int GmshBatch();
