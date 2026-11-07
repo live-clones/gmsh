@@ -15,6 +15,8 @@
 #include <cmath>
 #include <emscripten.h>
 #include "Context.h"
+#include "GmshDefines.h"
+#include "GModel.h"
 #include "Options.h"
 #include "Shortcuts.h"
 #include "drawContextOffscreen.h"
@@ -36,7 +38,12 @@ namespace {
     // a picking pass drew into the canvas: the frame is to be drawn again
     // before the page shows it
     bool picked = false;
+    // the tool that takes over the clicks, as the buttons of the status bar
+    // of the graphical interface: 0 none, 1 the query, 2 the measurement
+    int tool = 0;
     webView() : sceneView(nullptr) {}
+    bool hostQueryMode() { return tool == 1; }
+    bool hostMeasureMode() { return tool == 2; }
     void hostRedraw() { redrawAsked = true; }
     void hostCursor(bool c) { cross = c; }
     bool hostBeginGL()
@@ -67,6 +74,42 @@ namespace {
   {
     _view->drawCurrentOpenglWindow(true);
     _view->end();
+  }
+
+  std::string jsonString(const std::string &s)
+  {
+    std::string q = "\"";
+    for(char c : s) {
+      if(c == '\n') {
+        q += "\\n";
+        continue;
+      }
+      if(c == '"' || c == '\\') q += '\\';
+      q += c;
+    }
+    return q + "\"";
+  }
+
+  // what the selection of the tool found at a click, for the tool: the
+  // selection waits for the next click then (see status_query_cb() and
+  // status_measure_cb() in the graphical interface)
+  void toolStep()
+  {
+    std::vector<GVertex *> v;
+    std::vector<GEdge *> e;
+    std::vector<GFace *> f;
+    std::vector<GRegion *> r;
+    std::vector<MElement *> el;
+    std::vector<SPoint2> p;
+    std::vector<PView *> vw;
+    char ib = _scene->selectionStep(v, e, f, r, el, p, vw);
+    if(!ib) return;
+    if(ib == 'l' && _scene->tool == 1)
+      _scene->queryClick(v, e, f, r, el, vw);
+    else if(ib == 'l' && _scene->tool == 2)
+      _scene->measureClick();
+    // the next click, unless the tool was stopped
+    if(_scene->tool) _scene->beginSelection(ENT_ALL);
   }
 } // namespace
 
@@ -126,6 +169,7 @@ EMSCRIPTEN_KEEPALIVE int gmshWebMouse(int kind, double x, double y, int w,
   in.alt = modifiers & 4;
   in.meta = modifiers & 8;
   _scene->handleMouse(in);
+  if(_scene->tool) toolStep();
   // the picking pass left its image on the canvas: put the frame back now,
   // before the page shows it
   if(_scene->picked && _view->begin(_width, _height, _scale, true)) {
@@ -164,6 +208,94 @@ EMSCRIPTEN_KEEPALIVE int gmshWebLasso(double *xy)
   return (_scene && _scene->lasso(xy)) ? 1 : 0;
 }
 
+// the query (1) or the measurement (2) taking over the clicks, or neither
+// (0), as the buttons of the status bar of the graphical interface: what
+// they left on the picture is taken away
+EMSCRIPTEN_KEEPALIVE int gmshWebTool(int tool)
+{
+  if(!_view || !_view->getDrawContext()) return 0;
+  if(!_scene) _scene = new webView();
+  _scene->setDrawContext(_view->getDrawContext());
+  // a query picks mesh elements, as long as it is on
+  static int pickElements = 0;
+  if(_scene->tool == 1) CTX::instance()->pickElements = pickElements;
+  _scene->tool = tool;
+  GModel::current()->setSelection(0);
+  _scene->getDrawContext()->clearMarks();
+  _scene->pinTooltip("");
+  if(tool == 1) {
+    pickElements = CTX::instance()->pickElements;
+    CTX::instance()->pickElements = 1;
+  }
+  if(tool) {
+    // a pick needs the mouse selection (the "S" button)
+    if(!CTX::instance()->mouseSelection)
+      opt_general_mouse_selection(0, GMSH_SET, 1);
+    _scene->beginSelection(ENT_ALL);
+  }
+  else {
+    _scene->quitSelection = 1;
+    toolStep();
+  }
+  return 1;
+}
+
+// the tool under way (see gmshWebTool()), and for the measurement 1 more
+// while its second point is awaited
+EMSCRIPTEN_KEEPALIVE int gmshWebToolState()
+{
+  if(!_scene || !_scene->tool) return 0;
+  return _scene->tool + ((_scene->tool == 2 && _scene->measuring()) ? 1 : 0);
+}
+
+// What the query and the measurement show over the picture, in JSON, for the
+// page to draw where the model is now (CSS pixels from the top left of the
+// canvas): {"notes": [{"text", "x", "y"}], "length": {"text", "x", "y"} or
+// null, "tint": the colour of their paper}. The paper is the colour of the
+// marks (General.Color.Query), lightened over a light picture and darkened
+// over a dark one, as in the graphical interface (openglWindow)
+EMSCRIPTEN_KEEPALIVE const char *gmshWebNotes()
+{
+  static std::string json;
+  json = "{\"notes\":[";
+  std::string length = "null";
+  if(_scene && _scene->getDrawContext()) {
+    drawContext *ctx = _scene->getDrawContext();
+    double h = ctx->viewport[3];
+    for(std::size_t i = 0; i < _scene->numPinned(); i++) {
+      double win[2];
+      if(!ctx->world2Window(_scene->pinnedPoint(i), win)) continue;
+      if(json.back() == '}') json += ",";
+      json += "{\"text\":" + jsonString(_scene->pinnedText(i)) +
+              ",\"x\":" + std::to_string(win[0]) +
+              ",\"y\":" + std::to_string(h - win[1]) + "}";
+    }
+    double a[3], b[3], win[2];
+    if(ctx->segment(a, b)) {
+      double mid[3] = {0.5 * (a[0] + b[0]), 0.5 * (a[1] + b[1]),
+                       0.5 * (a[2] + b[2])};
+      if(ctx->world2Window(mid, win))
+        length = "{\"text\":" + jsonString(measurePoints(a, b)[0]) +
+                 ",\"x\":" + std::to_string(win[0]) +
+                 ",\"y\":" + std::to_string(h - win[1]) + "}";
+    }
+  }
+  CTX *c = CTX::instance();
+  unsigned int q = c->color.query, bg = c->color.bg;
+  double lum = 0.299 * c->unpackRed(bg) + 0.587 * c->unpackGreen(bg) +
+               0.114 * c->unpackBlue(bg);
+  bool dark = (lum < 110.);
+  double paper = dark ? 0. : 255., mix = dark ? 0.32 : 0.45;
+  auto channel = [&](int v) {
+    return std::to_string((int)(paper * (1. - mix) + mix * v));
+  };
+  json += "],\"length\":" + length + ",\"tint\":\"rgb(" +
+          channel(c->unpackRed(q)) + "," + channel(c->unpackGreen(q)) + "," +
+          channel(c->unpackBlue(q)) +
+          ")\",\"dark\":" + (dark ? "true" : "false") + "}";
+  return json.c_str();
+}
+
 // the browser went light (0) or dark (1): the colours follow it when
 // General.ColorScheme is 3 (System), as they follow the desktop in the
 // graphical interface; returns 1 if the scene is to be drawn again
@@ -179,14 +311,6 @@ EMSCRIPTEN_KEEPALIVE int gmshWebColorScheme(int dark)
 // name of the Command key, "Cmd+" or "Ctrl+")}]
 EMSCRIPTEN_KEEPALIVE const char *gmshWebShortcuts(const char *command)
 {
-  auto quoted = [](const std::string &s) {
-    std::string q = "\"";
-    for(char c : s) {
-      if(c == '"' || c == '\\') q += '\\';
-      q += c;
-    }
-    return q + "\"";
-  };
   static std::string json;
   json = "[";
   for(const ShortcutEntry &e : GetShortcuts()) {
@@ -211,10 +335,10 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebShortcuts(const char *command)
     else
       key = std::string(1, (char)k);
     if(json.size() > 1) json += ",";
-    json += "{\"action\":" + quoted(e.action) + ",\"key\":" + quoted(key) +
+    json += "{\"action\":" + jsonString(e.action) + ",\"key\":" + jsonString(key) +
             ",\"mods\":" + std::to_string(e.shortcut.mods) +
-            ",\"help\":" + quoted(e.help) +
-            ",\"label\":" + quoted(e.shortcut.label(command)) + "}";
+            ",\"help\":" + jsonString(e.help) +
+            ",\"label\":" + jsonString(e.shortcut.label(command)) + "}";
   }
   json += "]";
   return json.c_str();
