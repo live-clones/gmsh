@@ -46,7 +46,37 @@
   /* the controls in the font of the page, not the smaller one of the browser */
   button, input, select, textarea { font: inherit; }
   body { display: grid; grid-template-columns: var(--side-width, 330px) 5px 1fr;
-         grid-template-rows: auto 1fr auto; }
+         grid-template-rows: auto 1fr auto auto; }
+  /* the panel hidden (the sidebar button of the status bar) */
+  body.noSide { grid-template-columns: 0 0 1fr; }
+  body.noSide #side, body.noSide #split { display: none; }
+  /* the status bar of the graphical interface, under the scene and the
+     messages: the buttons of the view and of the animation, the status */
+  #statusbar { grid-column: 1 / 4; display: flex; align-items: center; gap: 1px;
+               padding: 1px 4px; border-top: 1px solid var(--line); min-width: 0; }
+  #statusbar button { border: none; background: none; color: var(--fg);
+                      min-width: 24px; height: 22px; padding: 0 4px;
+                      border-radius: 3px; cursor: pointer; font: inherit;
+                      display: grid; place-items: center; flex: none; }
+  #statusbar button:hover:not(:disabled) { background: var(--menu-hover); }
+  #statusbar button:disabled { opacity: .35; cursor: default; }
+  #statusbar button.off { background: var(--loop3); color: var(--loop-fg); }
+  #statusbar .gap { width: 10px; flex: none; }
+  #status { margin-left: 8px; min-width: 0; overflow: hidden;
+            text-overflow: ellipsis; white-space: nowrap; }
+  #quickMenu { position: fixed; z-index: 3; padding: 4px; display: flex;
+               flex-direction: column; max-height: 80vh; overflow: auto;
+               background: var(--bg); color: var(--fg);
+               border: 1px solid var(--border); border-radius: 4px;
+               box-shadow: 0 2px 8px var(--shadow); min-width: 220px; }
+  #quickMenu[hidden] { display: none; }
+  #quickMenu button { display: flex; gap: 6px; text-align: left; border: none;
+                      background: none; padding: 3px 8px; border-radius: 3px;
+                      font: inherit; color: inherit; cursor: pointer; }
+  #quickMenu button:hover { background: var(--menu-hover); }
+  #quickMenu .mark { width: 1em; flex: none; }
+  #quickMenu .head { color: var(--muted); font-size: 12px; padding: 6px 8px 1px; }
+  #quickMenu hr { border: none; border-top: 1px solid var(--line2); margin: 3px 0; width: 100%; }
   #bar { grid-column: 1 / 4; display: flex; flex-wrap: wrap; gap: 4px 10px;
          align-items: center; padding: 4px 8px; border-bottom: 1px solid var(--line); }
   #open { position: relative; }
@@ -193,7 +223,6 @@
   <span id="model"></span>
   <button id="run" disabled>Run</button>
   <button id="reset" disabled>Reset</button>
-  <span id="status">loading...</span>
   <button id="keys" title="Keyboard shortcuts">?</button>
 </div>
 <dialog id="keysDialog"><form method="dialog"><button>Close</button></form>
@@ -262,6 +291,24 @@
 <details id="log"><summary>Messages</summary><div id="logSplit"
   title="Drag to resize the messages, double-click for their default height"></div><pre
   id="logText"></pre></details>
+<div id="statusbar">
+  <button data-act="sidebar" title="Show or hide the panel"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><rect x="1.5" y="2.5" width="11" height="9" rx="1"/><path d="M5 2.5v9"/></svg></button>
+  <button data-act="quick" title="Quick access menu"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><circle cx="7" cy="7" r="4.5"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/></svg></button>
+  <button data-act="x" title="Set +X or -X (Shift) view (Alt+X or Alt+Shift+X)">X</button>
+  <button data-act="y" title="Set +Y or -Y (Shift) view (Alt+Y or Alt+Shift+Y)">Y</button>
+  <button data-act="z" title="Set +Z or -Z (Shift) view (Alt+Z or Alt+Shift+Z)">Z</button>
+  <button data-act="3d" title="Set isometric 3D view, Z up, or from the opposite side (Shift) (Alt+3 or Alt+Shift+3)"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><path d="M7 1.5l5 2.7v5.6L7 12.5 2 9.8V4.2z"/><path d="M2 4.2l5 2.7 5-2.7M7 6.9v5.6"/></svg></button>
+  <button data-act="rotate" title="Rotate +90 or -90 (Shift) degrees"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><path d="M11.5 7a4.5 4.5 0 1 1-1.3-3.2"/><path d="M10.6 1.3v2.8H7.8"/></svg></button>
+  <button data-act="fit" title="Fit the model in the window, or reset the bounding box around the visible entities (Shift) (Alt+1 or Alt+Shift+1)">1:1</button>
+  <button data-act="select" title="Toggle mouse selection on or off">S</button>
+  <span class="gap"></span>
+  <button data-act="rewind" title="Rewind animation" disabled><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><path d="M2.5 2.5v9"/><path d="M11.5 2.5L5 7l6.5 4.5z" fill="currentColor"/></svg></button>
+  <button data-act="back" title="Step backward (Left arrow)" disabled><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><path d="M10.5 2.5L4 7l6.5 4.5z" fill="currentColor"/></svg></button>
+  <button data-act="play" title="Play or pause animation" disabled><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><path d="M4 2.5L11 7l-7 4.5z" fill="currentColor"/></svg></button>
+  <button data-act="forward" title="Step forward (Right arrow)" disabled><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><path d="M3.5 2.5L10 7l-6.5 4.5z" fill="currentColor"/><path d="M11.5 2.5v9"/></svg></button>
+  <span id="status">loading...</span>
+</div>
+<div id="quickMenu" hidden></div>
 <div id="lasso"></div>
 <div id="hover"></div>
 <div id="drop">drop a model (.pro, .geo and the files they include, or a .zip)</div>
@@ -1222,6 +1269,7 @@ function showViews() {
     row.appendChild(document.createTextNode(gmsh.option.getString(`View[${i}].Name`)));
     list.appendChild(row);
   }
+  showAnimation();
 }
 
 // ---------------------------------------------------------------- options
@@ -1752,6 +1800,168 @@ for(const [id, how] of [['visAll', 1], ['visNone', 0], ['visInvert', -1]])
     draw();
   });
 
+// ---------------------------------------------------------------- status bar
+
+// The status bar of the graphical interface's window: the views along the
+// axes, isometric, turned, fitted (Shift: the other side, the box around
+// what is visible), the mouse selection, the panel, the quick access menu,
+// and the animation of the views with time steps
+const ModShift = 2;
+function sceneAction(action, mods = 0) {
+  if(Module.ccall('gmshWebShortcut', 'number', ['string', 'number'], [action, mods])) {
+    readOptions();
+    draw();
+  }
+}
+function toggleSide() {
+  document.body.classList.toggle('noSide');
+  draw();
+}
+// the selection button red while the mouse selects nothing (hover, picking)
+function showSelection() {
+  const on = !!gmsh.option.getNumber('General.MouseSelection');
+  $('statusbar').querySelector('[data-act=select]').classList.toggle('off', !on);
+}
+// the animation: a step every PostProcessing.AnimationDelay seconds
+let playTimer = 0;
+const playIcon = '<svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">' +
+  '<path d="M4 2.5L11 7l-7 4.5z"/></svg>';
+const pauseIcon = '<svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">' +
+  '<path d="M3.5 2.5h2.5v9H3.5zM8 2.5h2.5v9H8z"/></svg>';
+function setPlaying(on) {
+  clearInterval(playTimer);
+  playTimer = 0;
+  if(on) {
+    const delay = 1000 * gmsh.option.getNumber('PostProcessing.AnimationDelay');
+    playTimer = setInterval(() => sceneAction('time_step_next'), Math.max(20, delay));
+  }
+  $('statusbar').querySelector('[data-act=play]').innerHTML = on ? pauseIcon : playIcon;
+}
+// the buttons of the animation, for views with several time steps
+function showAnimation() {
+  let steps = !!gmsh.option.getNumber('PostProcessing.AnimationCycle');
+  for(let i = 0; i < views() && !steps; i++)
+    if(gmsh.option.getNumber(`View[${i}].NbTimeStep`) > 1) steps = true;
+  for(const a of ['rewind', 'back', 'play', 'forward'])
+    $('statusbar').querySelector(`[data-act=${a}]`).disabled = !steps;
+  if(!steps && playTimer) setPlaying(false);
+}
+$('statusbar').addEventListener('click', (e) => {
+  const b = e.target.closest('button');
+  if(!b) return;
+  const shift = e.shiftKey ? ModShift : 0;
+  switch(b.dataset.act) {
+  case 'sidebar': toggleSide(); break;
+  case 'quick': openQuickMenu(b); break;
+  case 'x': case 'y': case 'z': case '3d': sceneAction('view_' + b.dataset.act, shift); break;
+  case 'fit': sceneAction('view_1_1', shift); break;
+  case 'rotate':
+    if(Module.ccall('gmshWebRotate', 'number', ['number'], [shift ? 1 : 0])) draw();
+    break;
+  case 'select':
+    gmsh.option.setNumber('General.MouseSelection',
+                          gmsh.option.getNumber('General.MouseSelection') ? 0 : 1);
+    showSelection();
+    draw();
+    break;
+  case 'rewind':
+    for(let i = 0; i < views(); i++) gmsh.option.setNumber(`View[${i}].TimeStep`, 0);
+    readOptions();
+    draw();
+    break;
+  case 'back': sceneAction('time_step_prev'); break;
+  case 'forward': sceneAction('time_step_next'); break;
+  case 'play': setPlaying(!playTimer); break;
+  }
+});
+
+// The quick access menu of the status bar, as the graphical interface's: what
+// is shown of the geometry, the mesh and the views, the projection and the
+// axes, and the options of each
+function quickItems() {
+  const num = (n) => gmsh.option.getNumber(n);
+  const toggle = (label, name) => [label, () => setOption(name, num(name) ? 0 : 1), !!num(name)];
+  const radio = (label, name, v) => [label, () => setOption(name, v), num(name) === v];
+  const items = [
+    ['Reset viewport', () => { sceneAction('view_z'); sceneAction('view_1_1'); }],
+    ['Axes', () => setOption('General.Axes', num('General.Axes') ? 0 : 3), !!num('General.Axes')],
+    toggle('Hover mesh and views', 'General.MouseHoverMeshes'),
+    'Projection',
+    radio('Orthographic', 'General.Orthographic', 1),
+    radio('Perspective', 'General.Orthographic', 0),
+    ['All general options...', () => showOptions('General')],
+    'Geometry',
+    toggle('Points', 'Geometry.Points'), toggle('Curves', 'Geometry.Curves'),
+    toggle('Surfaces', 'Geometry.Surfaces'), toggle('Volumes', 'Geometry.Volumes'),
+    ['All geometry options...', () => showOptions('Geometry')],
+    'Mesh',
+    toggle('Nodes', 'Mesh.Nodes'), toggle('1D elements', 'Mesh.Lines'),
+    toggle('2D element edges', 'Mesh.SurfaceEdges'),
+    toggle('2D element faces', 'Mesh.SurfaceFaces'),
+    toggle('3D element edges', 'Mesh.VolumeEdges'),
+    toggle('3D element faces', 'Mesh.VolumeFaces'),
+    ['Toggle mesh display', () => sceneAction('mesh_toggle')],
+    ['All mesh options...', () => showOptions('Mesh')],
+  ];
+  if(views()) {
+    // the views as the first is (the options are set for all)
+    const view = (n) => num(n.replace('View.', 'View[0].'));
+    const vradio = (label, name, v) => [label, () => setOption(name, v), view(name) === v];
+    items.push('Views',
+      ['Element outlines', () => setOption('View.ShowElement', view('View.ShowElement') ? 0 : 1),
+       !!view('View.ShowElement')],
+      vradio('Iso-values', 'View.IntervalsType', 1),
+      vradio('Continuous map', 'View.IntervalsType', 2),
+      vradio('Filled iso-values', 'View.IntervalsType', 3),
+      vradio('Numeric values', 'View.IntervalsType', 4),
+      vradio('Default range', 'View.RangeType', 1),
+      vradio('Range per time step', 'View.RangeType', 3),
+      vradio('Vectors as lines', 'View.VectorType', 1),
+      vradio('Vectors as 3D arrows', 'View.VectorType', 4),
+      vradio('Displacement', 'View.VectorType', 5),
+      vradio('Glyphs at barycenters', 'View.GlyphLocation', 1),
+      vradio('Glyphs at nodes', 'View.GlyphLocation', 2),
+      ['All view options...', () => showOptions('Views')]);
+  }
+  return items;
+}
+function openQuickMenu(button) {
+  const menu = $('quickMenu');
+  menu.textContent = '';
+  for(const item of quickItems()) {
+    if(typeof item === 'string') {
+      const h = document.createElement('div');
+      h.className = 'head';
+      h.textContent = item;
+      menu.appendChild(h);
+      continue;
+    }
+    const [label, act, checked] = item;
+    const b = document.createElement('button');
+    const mark = document.createElement('span');
+    mark.className = 'mark';
+    mark.textContent = checked ? '✓' : '';
+    b.append(mark, document.createTextNode(label));
+    b.addEventListener('click', () => {
+      menu.hidden = true;
+      act();
+      readOptions();
+      draw();
+    });
+    menu.appendChild(b);
+  }
+  menu.hidden = false;
+  // above the button, in the window
+  const r = button.getBoundingClientRect();
+  menu.style.left = Math.min(r.left, innerWidth - menu.offsetWidth - 8) + 'px';
+  menu.style.top = Math.max(8, r.top - menu.offsetHeight - 2) + 'px';
+}
+document.addEventListener('pointerdown', (e) => {
+  if(!$('quickMenu').hidden && !e.target.closest('#quickMenu, [data-act=quick]'))
+    $('quickMenu').hidden = true;
+});
+showSelection();
+
 // ---------------------------------------------------------------- keys
 
 // the shortcuts of the graphical interface: those that change the scene run
@@ -1800,6 +2010,7 @@ const pageShortcuts = {
   options_solver: () => showTab('modelTab'),
   clipping: () => showTab('clipTab'),
   visibility: () => showTab('visTab'),
+  menu_show_hide: toggleSide,
 };
 const shortcuts = installShortcuts(Module, (action) => {
   if(action === 'escape' && !$('openMenu').hidden) {
@@ -1812,6 +2023,10 @@ const shortcuts = installShortcuts(Module, (action) => {
   }
   if(action === 'escape' && !$('rangeMenu').hidden) {
     $('rangeMenu').hidden = true;
+    return true;
+  }
+  if(action === 'escape' && !$('quickMenu').hidden) {
+    $('quickMenu').hidden = true;
     return true;
   }
   if(!pageShortcuts[action]) return false;

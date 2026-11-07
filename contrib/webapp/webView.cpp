@@ -235,6 +235,23 @@ EMSCRIPTEN_KEEPALIVE int gmshWebShortcut(const char *action, int mods)
   return RunSceneShortcut(a, mods, _view->getDrawContext());
 }
 
+// the view turned by 90 degrees about the axis out of the screen, clockwise
+// or the other way (ccw), as the rotate button of the graphical interface
+EMSCRIPTEN_KEEPALIVE int gmshWebRotate(int ccw)
+{
+  if(!_view || !_view->getDrawContext()) return 0;
+  drawContext *ctx = _view->getDrawContext();
+  double axis[3] = {0., 0., 1.};
+  ctx->addQuaternionFromAxisAndAngle(axis, ccw ? 90. : -90.);
+  if(CTX::instance()->camera) {
+    if(ccw)
+      ctx->camera.tiltHeadLeft();
+    else
+      ctx->camera.tiltHeadRight();
+  }
+  return 1;
+}
+
 // back to the view of the options (General.RotationX, General.ScaleX,
 // General.TrackballQuaternion0, ...), as set by the files opened, at the next
 // draw
