@@ -54,7 +54,6 @@
 #include "PViewOptions.h"
 #include "OpenFile.h"
 #include "CreateFile.h"
-#include "findLinks.h"
 #include "scriptStringInterface.h"
 #include "CommandLine.h"
 #include "Options.h"
@@ -62,6 +61,7 @@
 #include "StringUtils.h"
 #include "OS.h"
 #include "onelabUtils.h"
+#include "selectionDriver.h"
 
 #if defined(HAVE_MESH)
 #include "gmshCrossFields.h"
@@ -692,37 +692,67 @@ void geometry_remove_last_command_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
-// the entities of dimension dim picked by the last selectEntity()
-static std::vector<GEntity *> picked(int dim)
+// The value of a field of the operations on selected entities (see
+// selectionDriver), by its name, from the context windows
+static std::string dialogValue(const std::string &operation,
+                               const std::string &name)
 {
   FlGui *g = FlGui::instance();
-  switch(dim) {
-  case 0:
-    return std::vector<GEntity *>(g->selectedVertices.begin(),
-                                  g->selectedVertices.end());
-  case 1:
-    return std::vector<GEntity *>(g->selectedEdges.begin(),
-                                  g->selectedEdges.end());
-  case 2:
-    return std::vector<GEntity *>(g->selectedFaces.begin(),
-                                  g->selectedFaces.end());
-  case 3:
-    return std::vector<GEntity *>(g->selectedRegions.begin(),
-                                  g->selectedRegions.end());
-  }
-  return std::vector<GEntity *>();
+  if(name == "Name") return g->physicalContext->selectedName;
+  if(name == "Tag") return std::to_string(g->physicalContext->selectedTag);
+  Fl_Widget *w =
+    g->transformContext->field(name, operation == "Extrude rotate");
+  return fieldValue(w ? w : g->meshContext->field(name));
 }
 
-// those of them not selected yet, now marked as selected
-static std::vector<GEntity *> newlyPicked(int dim)
+// After a physical group is added or removed: the clients are told, and the
+// ONELAB parameters of the group are shown if it has any, which stops the
+// selection (so that outside codes can process events through the API); or
+// the dialog is shown again, with the new group. False if the selection stops
+static bool physicalGroupChanged(const selectionDriver &d)
 {
-  std::vector<GEntity *> added;
-  for(GEntity *ge : picked(dim)) {
-    if(ge->getSelection() == 1) continue;
-    ge->setSelection(1);
-    added.push_back(ge);
+  const std::string &op = d.operation();
+  std::string what = op.substr(op.rfind(' ') + 1);
+  bool remove = (op[0] == 'R');
+  onelab_cb(nullptr, (void *)"check");
+  if(!FlGui::available()) return false;
+  std::vector<std::string> param;
+  onelab::server::instance()->getParameterNames(
+    param, "ONELAB Context/" + what + " Template");
+  const std::vector<std::pair<int, int> > &picked = d.done()[0];
+  if(picked.size() && param.size() && !remove) {
+    FlGui::instance()->getCurrentOpenglWindow()->quitSelection = 1;
+    GModel::current()->setSelection(0);
+    FlGui::instance()->onelabContext->show(picked[0].first, picked[0].second);
+    return false;
   }
-  return added;
+  FlGui::instance()->physicalContext->show(what, remove);
+  return true;
+}
+
+// An operation on selected entities (see selectionDriver): the clicks and the
+// keys are waited for until it is over
+static void runSelection(const std::string &operation)
+{
+  selectionDriver d(operation, [operation](const std::string &name) {
+    return dialogValue(operation, name);
+  });
+  while(d.active()) {
+    if(!FlGui::available()) return;
+    Msg::StatusGl("%s", d.status().c_str());
+    char ib = FlGui::instance()->selectEntity(d.type());
+    if(!FlGui::available()) return;
+    FlGui *g = FlGui::instance();
+    if(d.step(ib, g->selectedVertices, g->selectedEdges, g->selectedFaces,
+              g->selectedRegions, g->selectedElements)) {
+      g->resetVisibility();
+      if(operation.find("Physical ") != std::string::npos &&
+         !physicalGroupChanged(d))
+        break;
+    }
+    drawContext::global()->draw();
+  }
+  if(FlGui::available()) Msg::StatusGl("");
 }
 
 static void add_new_point_based_entity(const std::string &what, int pane)
@@ -767,336 +797,6 @@ static void add_new_point_based_entity(const std::string &what, int pane)
   Msg::StatusGl("");
 }
 
-static void add_new_multiline(const std::string &type)
-{
-  opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
-  opt_geometry_curves(0, GMSH_SET | GMSH_GUI, 1);
-  drawContext::global()->draw();
-
-  std::vector<int> p;
-  while(1) {
-    if(!FlGui::available()) return;
-
-    if(p.empty())
-      Msg::StatusGl("Select control points\n"
-                    "[Press 'e' to end selection or 'q' to abort]");
-    else
-      Msg::StatusGl("Select control points\n"
-                    "[Press 'e' to end selection, 'u' to undo last selection "
-                    "or 'q' to abort]");
-    char ib = FlGui::instance()->selectEntity(ENT_POINT);
-    if(!FlGui::available()) return;
-    if(ib == 'l') {
-      for(std::size_t i = 0; i < FlGui::instance()->selectedVertices.size();
-          i++) {
-        FlGui::instance()->selectedVertices[i]->setSelection(1);
-        p.push_back(FlGui::instance()->selectedVertices[i]->tag());
-      }
-      drawContext::global()->draw();
-    }
-    if(ib == 'r') {
-      Msg::Warning(
-        "Entity de-selection not supported yet during multi-line creation");
-    }
-    if(ib == 'e') {
-      if(p.size() >= 2)
-        scriptAddCurve(type, p, GModel::current()->getFileName());
-      FlGui::instance()->resetVisibility();
-      GModel::current()->setSelection(0);
-      drawContext::global()->draw();
-      p.clear();
-    }
-    if(ib == 'u') {
-      if(p.size()) {
-        GVertex *gv = GModel::current()->getVertexByTag(p.back());
-        if(gv) gv->setSelection(0);
-        drawContext::global()->draw();
-        p.pop_back();
-      }
-    }
-    if(ib == 'q') {
-      GModel::current()->setSelection(0);
-      drawContext::global()->draw();
-      break;
-    }
-  }
-
-  Msg::StatusGl("");
-}
-
-// a line, circle arc or ellipse arc through points picked one after the
-// other, the steps naming each of them
-static void add_new_curve_from_points(const std::string &what,
-                                      const std::vector<std::string> &steps)
-{
-  opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
-  opt_geometry_curves(0, GMSH_SET | GMSH_GUI, 1);
-  drawContext::global()->draw();
-
-  std::vector<int> p;
-  while(1) {
-    if(!FlGui::available()) return;
-
-    if(p.empty())
-      Msg::StatusGl("Select %s point\n"
-                    "[Press 'q' to abort]",
-                    steps[0].c_str());
-    else
-      Msg::StatusGl("Select %s point\n"
-                    "[Press 'u' to undo last selection or 'q' to abort]",
-                    steps[p.size()].c_str());
-    char ib = FlGui::instance()->selectEntity(ENT_POINT);
-    if(!FlGui::available()) return;
-    // the mode buttons of another context may have changed what is picked
-    if(ib == 'l' && FlGui::instance()->selectedVertices.size()) {
-      FlGui::instance()->selectedVertices[0]->setSelection(1);
-      drawContext::global()->draw();
-      p.push_back(FlGui::instance()->selectedVertices[0]->tag());
-    }
-    if(ib == 'r') {
-      Msg::Warning("Entity de-selection not supported yet during %s creation",
-                   what.c_str());
-    }
-    if(ib == 'u') {
-      if(p.size()) {
-        GVertex *gv = GModel::current()->getVertexByTag(p.back());
-        if(gv) gv->setSelection(0);
-        drawContext::global()->draw();
-        p.pop_back();
-      }
-    }
-    if(ib == 'q') {
-      GModel::current()->setSelection(0);
-      drawContext::global()->draw();
-      break;
-    }
-    if(p.size() == steps.size()) {
-      const std::string &file = GModel::current()->getFileName();
-      if(what == "curve")
-        scriptAddCurve("Line", p, file);
-      else if(what == "circle") // begin, center, end
-        scriptAddCircleArc(p[0], p[1], p[2], file);
-      else
-        scriptAddEllipseArc(p[0], p[1], p[2], p[3], file);
-      FlGui::instance()->resetVisibility();
-      GModel::current()->setSelection(0);
-      drawContext::global()->draw();
-      p.clear();
-    }
-  }
-
-  Msg::StatusGl("");
-}
-
-static int selectContour(int type, int num, List_T *List)
-{
-  int k = 0;
-
-  switch(type) {
-  case ENT_CURVE:
-    k = allEdgesLinked(num, List);
-    for(int i = 0; i < List_Nbr(List); i++) {
-      int ip;
-      List_Read(List, i, &ip);
-      GEdge *ge = GModel::current()->getEdgeByTag(abs(ip));
-      if(ge) ge->setSelection(1);
-    }
-    break;
-  case ENT_SURFACE:
-    k = allFacesLinked(num, List);
-    for(int i = 0; i < List_Nbr(List); i++) {
-      int ip;
-      List_Read(List, i, &ip);
-      GFace *gf = GModel::current()->getFaceByTag(abs(ip));
-      if(gf) gf->setSelection(1);
-    }
-    break;
-  }
-
-  drawContext::global()->draw();
-  return k;
-}
-
-static void add_new_surface_volume(int mode)
-{
-  List_T *List1 = List_Create(10, 10, sizeof(int));
-  List_T *List2 = List_Create(10, 10, sizeof(int));
-  int type;
-  if(mode == 2) {
-    type = ENT_SURFACE;
-    opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
-    opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
-  }
-  else {
-    type = ENT_CURVE;
-    opt_geometry_curves(0, GMSH_SET | GMSH_GUI, 1);
-    opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
-  }
-  drawContext::global()->draw();
-
-  while(1) {
-    if(!FlGui::available()) return;
-
-    List_Reset(List1);
-    List_Reset(List2);
-
-    while(1) {
-      if(!FlGui::available()) return;
-
-      if(type == ENT_CURVE) {
-        if(!List_Nbr(List1))
-          Msg::StatusGl("Select surface boundary\n"
-                        "[Press 'q' to abort]");
-        else
-          Msg::StatusGl("Select surface boundary\n"
-                        "[Press 'u' to undo last selection or 'q' to abort]");
-      }
-      else {
-        if(!List_Nbr(List1))
-          Msg::StatusGl("Select volume boundary\n"
-                        "[Press 'q' to abort]");
-        else
-          Msg::StatusGl("Select volume boundary\n"
-                        "[Press 'u' to undo last selection or 'q' to abort]");
-      }
-
-      char ib = FlGui::instance()->selectEntity(type);
-      if(!FlGui::available()) return;
-      if(ib == 'q') {
-        GModel::current()->setSelection(0);
-        drawContext::global()->draw();
-        goto stopall;
-      }
-      if(ib == 'u') {
-        if(List_Nbr(List1) > 0) {
-          int num;
-          List_Read(List1, List_Nbr(List1) - 1, &num);
-          if(type == ENT_CURVE) {
-            GEdge *ge = GModel::current()->getEdgeByTag(abs(num));
-            if(ge) ge->setSelection(0);
-          }
-          else {
-            GFace *gf = GModel::current()->getFaceByTag(abs(num));
-            if(gf) gf->setSelection(0);
-          }
-          List_Pop(List1);
-          drawContext::global()->draw();
-        }
-      }
-      if(ib == 'r') {
-        Msg::Warning("Entity de-selection not supported yet during "
-                     "surface/volume creation");
-      }
-      if(ib == 'l' && (type == ENT_CURVE ?
-                         FlGui::instance()->selectedEdges.size() :
-                         FlGui::instance()->selectedFaces.size())) {
-        int num = (type == ENT_CURVE) ?
-                    FlGui::instance()->selectedEdges[0]->tag() :
-                    FlGui::instance()->selectedFaces[0]->tag();
-        if(selectContour(type, num, List1)) {
-          if(type == ENT_CURVE)
-            scriptAddCurveLoop(List1, GModel::current()->getFileName(), &num);
-          else
-            scriptAddSurfaceLoop(List1, GModel::current()->getFileName(), &num);
-          List_Reset(List1);
-          List_Add(List2, &num);
-          while(1) {
-            if(!FlGui::available()) return;
-
-            if(!List_Nbr(List1))
-              Msg::StatusGl("Select hole boundaries (if none, press 'e')\n"
-                            "[Press 'e' to end selection or 'q' to abort]");
-            else
-              Msg::StatusGl(
-                "Select hole boundaries\n"
-                "[Press 'e' to end selection, 'u' to undo last selection "
-                "or 'q' to abort]");
-            ib = FlGui::instance()->selectEntity(type);
-            if(!FlGui::available()) return;
-            if(ib == 'q') {
-              GModel::current()->setSelection(0);
-              drawContext::global()->draw();
-              goto stopall;
-            }
-            if(ib == 'e') {
-              GModel::current()->setSelection(0);
-              drawContext::global()->draw();
-              List_Reset(List1);
-              break;
-            }
-            if(ib == 'u') {
-              if(List_Nbr(List1) > 0) {
-                int num;
-                List_Read(List1, List_Nbr(List1) - 1, &num);
-                if(type == ENT_CURVE) {
-                  GEdge *ge = GModel::current()->getEdgeByTag(abs(num));
-                  if(ge) ge->setSelection(0);
-                }
-                else {
-                  GFace *gf = GModel::current()->getFaceByTag(abs(num));
-                  if(gf) gf->setSelection(0);
-                }
-                List_Pop(List1);
-                drawContext::global()->draw();
-              }
-            }
-            if(ib == 'l') {
-              int size = (type == ENT_CURVE) ?
-                           FlGui::instance()->selectedEdges.size() :
-                           FlGui::instance()->selectedFaces.size();
-              for(int i = 0; i < size; i++) {
-                int num = (type == ENT_CURVE) ?
-                            FlGui::instance()->selectedEdges[i]->tag() :
-                            FlGui::instance()->selectedFaces[i]->tag();
-                if(selectContour(type, num, List1)) {
-                  if(type == ENT_CURVE)
-                    scriptAddCurveLoop(List1, GModel::current()->getFileName(),
-                                       &num);
-                  else
-                    scriptAddSurfaceLoop(
-                      List1, GModel::current()->getFileName(), &num);
-                  List_Reset(List1);
-                  List_Add(List2, &num);
-                }
-              }
-            }
-            if(ib == 'r') {
-              Msg::Warning("Entity de-selection not supported yet during "
-                           "surface/volume creation");
-            }
-          }
-          List_Unique(List2, fcmp_absint);
-          if(List_Nbr(List2)) {
-            switch(mode) {
-            case 0:
-              scriptAddSurface("Plane Surface", List2,
-                               GModel::current()->getFileName());
-              break;
-            case 1:
-              scriptAddSurface("Surface", List2,
-                               GModel::current()->getFileName());
-              break;
-            case 2:
-              scriptAddVolume(List2, GModel::current()->getFileName());
-              break;
-            }
-            FlGui::instance()->resetVisibility();
-            GModel::current()->setSelection(0);
-            drawContext::global()->draw();
-            break;
-          }
-        } // if selectContour
-      }
-    }
-  }
-
-stopall:
-  List_Delete(List1);
-  List_Delete(List2);
-
-  Msg::StatusGl("");
-}
-
 static void geometry_elementary_set_factory_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
@@ -1112,638 +812,84 @@ static void geometry_elementary_add_new_cb(Fl_Widget *w, void *data)
 
   std::string str((const char *)data);
   // the entities placed by a point, by pane of the elementary context window
-  static const char *panes[12] = {
-    "Parameter", "Point",    "Circle", "Ellipse", "Disk", "Rectangle",
-    "Sphere",    "Cylinder", "Box",    "Torus",   "Cone", "Wedge"};
   for(int pane = 1; pane < 12; pane++) {
-    if(str == panes[pane]) {
+    if(str == scriptShapes()[pane].name) {
       add_new_point_based_entity(str, pane);
       return;
     }
   }
   if(str == "Parameter")
     FlGui::instance()->elementaryContext->show(0);
-  else if(str == "Line")
-    add_new_curve_from_points("curve", {"start", "end"});
-  else if(str == "Spline" || str == "BSpline" || str == "Bezier")
-    add_new_multiline(str);
-  else if(str == "Circle arc")
-    add_new_curve_from_points("circle", {"start", "center", "end"});
-  else if(str == "Ellipse arc")
-    add_new_curve_from_points("ellipse",
-                              {"start", "center", "major axis", "end"});
-  else if(str == "Plane Surface")
-    add_new_surface_volume(0);
-  else if(str == "Surface")
-    add_new_surface_volume(1);
-  else if(str == "Volume")
-    add_new_surface_volume(2);
   else
-    Msg::Error("Unknown entity to create: %s", str.c_str());
+    runSelection(str);
 }
 
-static void action_point_line_surface_volume(int action,
-                                             const std::string &onwhat = "")
-{
-  drawContext::global()->draw();
-
-  std::string what(onwhat);
-  if(what == "Point")
-    opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
-  else if(what == "Curve")
-    opt_geometry_curves(0, GMSH_SET | GMSH_GUI, 1);
-  else if(what == "Surface")
-    opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
-  else if(what == "Volume")
-    opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
-
-  std::vector<std::pair<int, int> > dimTags, dimTagsSaved;
-  while(1) {
-    if(!FlGui::available()) return;
-
-    std::string str;
-    int type;
-    if(what == "Point") {
-      str = "points";
-      type = ENT_POINT;
-    }
-    else if(what == "Curve") {
-      str = "curves";
-      type = ENT_CURVE;
-    }
-    else if(what == "Surface") {
-      str = "surfaces";
-      type = ENT_SURFACE;
-    }
-    else if(what == "Volume") {
-      str = "volumes";
-      type = ENT_VOLUME;
-    }
-    else {
-      switch(FlGui::instance()->transformContext->choice->value()) {
-      case 1:
-        str = "points";
-        type = ENT_POINT;
-        break;
-      case 2:
-        str = "curves";
-        type = ENT_CURVE;
-        break;
-      case 3:
-        str = "surfaces";
-        type = ENT_SURFACE;
-        break;
-      case 4:
-        str = "volumes";
-        type = ENT_VOLUME;
-        break;
-      default:
-        str = "entities";
-        type = ENT_ALL;
-        break;
-      }
-    }
-
-    if(dimTags.empty())
-      Msg::StatusGl("Select %s\n"
-                    "[Press 'e' to end selection or 'q' to abort]",
-                    str.c_str());
-    else
-      Msg::StatusGl("Select %s\n"
-                    "[Press 'e' to end selection, 'u' to undo last selection "
-                    "or 'q' to abort]",
-                    str.c_str());
-
-    char ib = FlGui::instance()->selectEntity(type);
-    if(!FlGui::available()) return;
-    if(ib == 'l') {
-      for(int dim = 0; dim < 4; dim++) {
-        for(GEntity *ge : picked(dim)) {
-          ge->setSelection(1);
-          std::pair<int, int> t(dim, ge->tag());
-          if(std::find(dimTags.begin(), dimTags.end(), t) == dimTags.end())
-            dimTags.push_back(t);
-        }
-      }
-      drawContext::global()->draw();
-    }
-    if(ib == 'r') {
-      for(int dim = 0; dim < 4; dim++) {
-        for(GEntity *p : picked(dim)) {
-          auto it = std::find(dimTags.begin(), dimTags.end(),
-                              std::make_pair(dim, p->tag()));
-          if(it == dimTags.end()) continue;
-          dimTags.erase(it);
-          GEntity *ge = GModel::current()->getEntityByTag(dim, p->tag());
-          if(ge) ge->setSelection(0);
-        }
-      }
-      drawContext::global()->draw();
-    }
-    if(ib == 'u') {
-      if(dimTags.size()) {
-        std::pair<int, int> t = dimTags.back();
-        GEntity *ge = GModel::current()->getEntityByTag(t.first, t.second);
-        if(ge) ge->setSelection(0);
-        dimTags.pop_back();
-        drawContext::global()->draw();
-      }
-    }
-    if(ib == 'i') { Msg::Error("Inverting selection!"); }
-    if(ib == 'e') {
-      if(dimTags.size()) {
-        // a value the command needs is missing: the selection is kept, to try
-        // again once it is filled in
-        Fl_Input **ti = FlGui::instance()->transformContext->input;
-        Fl_Input **mi = FlGui::instance()->meshContext->input;
-        bool filled = true;
-        switch(action) {
-        case 0: filled = inputsFilled({ti[0], ti[1], ti[2]}); break;
-        case 1:
-          filled =
-            inputsFilled({ti[6], ti[7], ti[8], ti[3], ti[4], ti[5], ti[9]});
-          break;
-        case 2:
-          filled =
-            inputsFilled({ti[10], ti[11], ti[12], ti[13], ti[14], ti[15]});
-          break;
-        case 3: filled = inputsFilled({ti[16], ti[17], ti[18], ti[19]}); break;
-        case 4:
-          filled = inputsFilled({ti[0], ti[1], ti[2]}) &&
-                   (!FlGui::instance()->transformContext->butt[7]->value() ||
-                    inputsFilled({ti[21]}));
-          break;
-        case 5:
-          filled =
-            inputsFilled({ti[6], ti[7], ti[8], ti[3], ti[4], ti[5], ti[9]}) &&
-            (!FlGui::instance()->transformContext->butt[9]->value() ||
-             inputsFilled({ti[22]}));
-          break;
-        case 8: filled = inputsFilled({mi[0]}); break;
-        }
-        if(!filled) continue;
-        switch(action) {
-        case 0:
-          scriptTranslate(
-            GModel::current()->getFileName(), dimTags,
-            FlGui::instance()->transformContext->input[0]->value(),
-            FlGui::instance()->transformContext->input[1]->value(),
-            FlGui::instance()->transformContext->input[2]->value(),
-            FlGui::instance()->transformContext->butt[0]->value());
-          break;
-        case 1:
-          scriptRotate(GModel::current()->getFileName(), dimTags,
-                       FlGui::instance()->transformContext->input[6]->value(),
-                       FlGui::instance()->transformContext->input[7]->value(),
-                       FlGui::instance()->transformContext->input[8]->value(),
-                       FlGui::instance()->transformContext->input[3]->value(),
-                       FlGui::instance()->transformContext->input[4]->value(),
-                       FlGui::instance()->transformContext->input[5]->value(),
-                       FlGui::instance()->transformContext->input[9]->value(),
-                       FlGui::instance()->transformContext->butt[1]->value());
-          break;
-        case 2:
-          scriptDilate(GModel::current()->getFileName(), dimTags,
-                       FlGui::instance()->transformContext->input[10]->value(),
-                       FlGui::instance()->transformContext->input[11]->value(),
-                       FlGui::instance()->transformContext->input[12]->value(),
-                       FlGui::instance()->transformContext->input[13]->value(),
-                       FlGui::instance()->transformContext->input[14]->value(),
-                       FlGui::instance()->transformContext->input[15]->value(),
-                       FlGui::instance()->transformContext->butt[2]->value());
-          break;
-        case 3:
-          scriptMirror(GModel::current()->getFileName(), dimTags,
-                       FlGui::instance()->transformContext->input[16]->value(),
-                       FlGui::instance()->transformContext->input[17]->value(),
-                       FlGui::instance()->transformContext->input[18]->value(),
-                       FlGui::instance()->transformContext->input[19]->value(),
-                       FlGui::instance()->transformContext->butt[3]->value());
-          break;
-        case 4:
-          scriptExtrude(GModel::current()->getFileName(), dimTags,
-                        FlGui::instance()->transformContext->input[0]->value(),
-                        FlGui::instance()->transformContext->input[1]->value(),
-                        FlGui::instance()->transformContext->input[2]->value(),
-                        FlGui::instance()->transformContext->butt[7]->value(),
-                        FlGui::instance()->transformContext->input[21]->value(),
-                        FlGui::instance()->transformContext->butt[8]->value());
-          break;
-        case 5:
-          scriptProtude(GModel::current()->getFileName(), dimTags,
-                        FlGui::instance()->transformContext->input[6]->value(),
-                        FlGui::instance()->transformContext->input[7]->value(),
-                        FlGui::instance()->transformContext->input[8]->value(),
-                        FlGui::instance()->transformContext->input[3]->value(),
-                        FlGui::instance()->transformContext->input[4]->value(),
-                        FlGui::instance()->transformContext->input[5]->value(),
-                        FlGui::instance()->transformContext->input[9]->value(),
-                        FlGui::instance()->transformContext->butt[9]->value(),
-                        FlGui::instance()->transformContext->input[22]->value(),
-                        FlGui::instance()->transformContext->butt[10]->value());
-          break;
-        case 6:
-          scriptDeleteEntities(
-            GModel::current()->getFileName(), dimTags,
-            FlGui::instance()->transformContext->butt[6]->value());
-          break;
-        case 7:
-        case 11: {
-          std::vector<int> tags;
-          int dim = 0;
-          for(std::size_t i = 0; i < dimTags.size(); i++) {
-            if((dimTags[i].first == 0 && what == "Point") ||
-               (dimTags[i].first == 1 && what == "Curve") ||
-               (dimTags[i].first == 2 && what == "Surface") ||
-               (dimTags[i].first == 3 && what == "Volume")) {
-              dim = dimTags[i].first;
-              tags.push_back(dimTags[i].second);
-            }
-          }
-          scriptAddRemovePhysicalGroup(
-            GModel::current()->getFileName(), what, tags,
-            FlGui::instance()->physicalContext->selectedName,
-            FlGui::instance()->physicalContext->selectedTag,
-            FlGui::instance()->physicalContext->append,
-            FlGui::instance()->physicalContext->mode);
-          if(!FlGui::available()) return;
-
-          // ask clients to update using the new physical definition
-          onelab_cb(nullptr, (void *)"check");
-
-          // if onelab context parameters are defined for the physical group,
-          // show the parameter definition window and abort the physical group
-          // creation loop (otherwise events cannot be processed by outside
-          // codes through the api, as we are stuck in the while(1) for the
-          // physical creation mode)
-          std::vector<std::string> param;
-          onelab::server::instance()->getParameterNames(
-            param, "ONELAB Context/" + what + " Template");
-          if(tags.size() && param.size() && action == 7) {
-            FlGui::instance()->getCurrentOpenglWindow()->quitSelection = 1;
-            GModel::current()->setSelection(0);
-            FlGui::instance()->onelabContext->show(dim, tags[0]);
-            ib = 'z';
-          }
-          else {
-            FlGui::instance()->physicalContext->show(what, action == 7 ? false :
-                                                                         true);
-          }
-        } break;
-        case 8: {
-          std::vector<int> tags;
-          for(std::size_t i = 0; i < dimTags.size(); i++) {
-            if(dimTags[i].first == 0 && what == "Point")
-              tags.push_back(dimTags[i].second);
-          }
-          if(tags.size())
-            scriptSetMeshSize(
-              GModel::current()->getFileName(), tags,
-              FlGui::instance()->meshContext->input[0]->value());
-        } break;
-        case 9: {
-          std::vector<int> tags;
-          for(std::size_t i = 0; i < dimTags.size(); i++) {
-            if(dimTags[i].first == 2 && what == "Surface")
-              tags.push_back(dimTags[i].second);
-          }
-          scriptRecombineSurface(GModel::current()->getFileName(), tags);
-        } break;
-        case 10: {
-          std::vector<int> tags;
-          for(std::size_t i = 0; i < dimTags.size(); i++) {
-            if((dimTags[i].first == 1 && what == "Curve") ||
-               (dimTags[i].first == 2 && what == "Surface") ||
-               (dimTags[i].first == 3 && what == "Volume"))
-              tags.push_back(dimTags[i].second);
-          }
-          scriptSetCompound(GModel::current()->getFileName(), what, tags);
-        } break;
-        case 12:
-          if(dimTagsSaved.empty()) {
-            dimTagsSaved = dimTags;
-            dimTags.clear();
-            what = "Curve";
-            continue;
-          }
-          else {
-            std::vector<int> l;
-            for(std::size_t i = 0; i < dimTags.size(); i++) {
-              if(dimTags[i].first == 1) l.push_back(dimTags[i].second);
-            }
-            scriptAddPipe(GModel::current()->getFileName(), dimTagsSaved, l);
-            dimTagsSaved.clear();
-          }
-          break;
-        default: Msg::Error("Unknown action on selected entities"); break;
-        }
-        dimTags.clear();
-        FlGui::instance()->resetVisibility();
-        if(ib == 'z') break; // done: onelab context now shown
-        GModel::current()->setSelection(0);
-        if(action <= 6 || action >= 12) SetBoundingBox();
-        drawContext::global()->draw();
-      }
-    }
-    if(ib == 'q') {
-      GModel::current()->setSelection(0);
-      drawContext::global()->draw();
-      break;
-    }
-  }
-
-  Msg::StatusGl("");
-}
-
-// the transform context at pane, then the action on the entities picked
-static void transformEntities(int pane, bool extrude, int action)
+// the transform context at pane, then the operation on the entities picked
+static void transformEntities(int pane, bool extrude,
+                              const std::string &operation)
 {
   FlGui::instance()->transformContext->show(pane, extrude);
-  action_point_line_surface_volume(action);
+  runSelection(operation);
   if(!FlGui::available()) return;
   FlGui::instance()->transformContext->hide();
 }
 
 static void geometry_elementary_translate_cb(Fl_Widget *w, void *data)
 {
-  transformEntities(0, false, 0);
+  transformEntities(0, false, "Translate");
 }
 
 static void geometry_elementary_rotate_cb(Fl_Widget *w, void *data)
 {
-  transformEntities(1, false, 1);
+  transformEntities(1, false, "Rotate");
 }
 
 static void geometry_elementary_scale_cb(Fl_Widget *w, void *data)
 {
-  transformEntities(2, false, 2);
+  transformEntities(2, false, "Scale");
 }
 
 static void geometry_elementary_symmetry_cb(Fl_Widget *w, void *data)
 {
-  transformEntities(3, false, 3);
+  transformEntities(3, false, "Symmetry");
 }
 
 static void geometry_elementary_extrude_translate_cb(Fl_Widget *w, void *data)
 {
-  transformEntities(0, true, 4);
+  transformEntities(0, true, "Extrude translate");
 }
 
 static void geometry_elementary_extrude_rotate_cb(Fl_Widget *w, void *data)
 {
-  transformEntities(1, true, 5);
+  transformEntities(1, true, "Extrude rotate");
 }
 
 static void geometry_elementary_pipe_cb(Fl_Widget *w, void *data)
 {
-  transformEntities(-1, true, 12);
+  transformEntities(-1, true, "Pipe");
 }
 
 static void geometry_elementary_delete_cb(Fl_Widget *w, void *data)
 {
-  transformEntities(6, false, 6);
+  transformEntities(6, false, "Delete");
 }
 
 static void geometry_elementary_boolean_cb(Fl_Widget *w, void *data)
 {
-  if(!data) return;
-  FlGui::instance()->transformContext->show(4);
-
-  std::string mode((const char *)data);
-  bool selectObject = true;
-  std::vector<std::pair<int, int> > object, tool;
-
-  while(1) {
-    if(!FlGui::available()) return;
-
-    if(object.empty())
-      Msg::StatusGl("Select object\n"
-                    "[Press 'e' to end selection or 'q' to abort]");
-    else if(selectObject)
-      Msg::StatusGl(
-        "Select object\n"
-        "[Press 'e' to end selection, 'u' to undo last selection or "
-        "'q' to abort]");
-    else if(tool.empty())
-      Msg::StatusGl("Select tool\n"
-                    "[Press 'e' to end selection or 'q' to abort]");
-    else
-      Msg::StatusGl(
-        "Select tool\n"
-        "[Press 'e' to end selection, 'u' to undo last selection or "
-        "'q' to abort]");
-
-    int type = ENT_ALL;
-    switch(FlGui::instance()->transformContext->choice->value()) {
-    case 1: type = ENT_POINT; break;
-    case 2: type = ENT_CURVE; break;
-    case 3: type = ENT_SURFACE; break;
-    case 4: type = ENT_VOLUME; break;
-    }
-
-    char ib = FlGui::instance()->selectEntity(type);
-    if(!FlGui::available()) return;
-    if(ib == 'l') {
-      for(int dim = 0; dim < 4; dim++) {
-        for(GEntity *ge : newlyPicked(dim)) {
-          if(selectObject)
-            object.push_back(std::make_pair(dim, ge->tag()));
-          else
-            tool.push_back(std::make_pair(dim, ge->tag()));
-        }
-      }
-    }
-    if(ib == 'r') {
-      Msg::Warning(
-        "Entity de-selection not supported yet during boolean operation");
-    }
-    if(ib == 'u') {
-      if(selectObject && object.size()) {
-        std::pair<int, int> t = object.back();
-        GEntity *ge = GModel::current()->getEntityByTag(t.first, t.second);
-        if(ge) ge->setSelection(0);
-        object.pop_back();
-      }
-      else if(tool.size()) {
-        std::pair<int, int> t = tool.back();
-        GEntity *ge = GModel::current()->getEntityByTag(t.first, t.second);
-        if(ge) ge->setSelection(0);
-        tool.pop_back();
-      }
-    }
-    if(ib == 'e') {
-      if(selectObject) {
-        if(object.empty())
-          Msg::Error("At least one object must be selected");
-        else
-          selectObject = false;
-      }
-      else if(tool.empty() && mode != "BooleanFragments") {
-        Msg::Error("At least one tool must be selected");
-      }
-      else {
-        scriptBoolean(GModel::current()->getFileName(), mode, object, tool,
-                      FlGui::instance()->transformContext->butt[4]->value(),
-                      tool.size() ?
-                        FlGui::instance()->transformContext->butt[5]->value() :
-                        0);
-        GModel::current()->setSelection(0);
-        selectObject = true;
-        object.clear();
-        tool.clear();
-      }
-    }
-    if(ib == 'q') {
-      GModel::current()->setSelection(0);
-      break;
-    }
-  }
-
-  if(!FlGui::available()) return;
-  FlGui::instance()->transformContext->hide();
-  drawContext::global()->draw();
-  Msg::StatusGl("");
+  if(data) transformEntities(4, false, (const char *)data);
 }
 
 static void geometry_elementary_fillet_cb(Fl_Widget *w, void *data)
 {
-  opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
-  opt_geometry_curves(0, GMSH_SET | GMSH_GUI, 1);
-
   FlGui::instance()->transformContext->show(5, false, false);
-
-  bool selectRegions = true;
-  std::vector<int> regions, edges;
-
-  while(1) {
-    if(!FlGui::available()) return;
-
-    if(regions.empty())
-      Msg::StatusGl("Select volume\n"
-                    "[Press 'e' to end selection or 'q' to abort]");
-    else if(selectRegions)
-      Msg::StatusGl(
-        "Select volume\n"
-        "[Press 'e' to end selection, 'u' to undo last selection or "
-        "'q' to abort]");
-    else if(edges.empty())
-      Msg::StatusGl("Select curve\n"
-                    "[Press 'e' to end selection or 'q' to abort]");
-    else
-      Msg::StatusGl(
-        "Select curve\n"
-        "[Press 'e' to end selection, 'u' to undo last selection or "
-        "'q' to abort]");
-
-    char ib =
-      FlGui::instance()->selectEntity(selectRegions ? ENT_VOLUME : ENT_CURVE);
-    if(!FlGui::available()) return;
-    if(ib == 'l') {
-      for(GEntity *ge : newlyPicked(1)) edges.push_back(ge->tag());
-      for(GEntity *ge : newlyPicked(3)) regions.push_back(ge->tag());
-    }
-    if(ib == 'r') {
-      Msg::Warning(
-        "Entity de-selection not supported yet during boolean operation");
-    }
-    if(ib == 'u') {
-      if(selectRegions && regions.size()) {
-        GRegion *ge = GModel::current()->getRegionByTag(regions.back());
-        if(ge) ge->setSelection(0);
-        regions.pop_back();
-      }
-      else if(edges.size()) {
-        GEdge *ge = GModel::current()->getEdgeByTag(edges.back());
-        if(ge) ge->setSelection(0);
-        edges.pop_back();
-      }
-    }
-    if(ib == 'e') {
-      if(selectRegions) {
-        if(regions.empty())
-          Msg::Error("At least one volume must be selected");
-        else
-          selectRegions = false;
-      }
-      else if(edges.empty()) {
-        Msg::Error("At least one curve must be selected");
-      }
-      else if(!inputsFilled({FlGui::instance()->transformContext->input[20]})) {
-        // the selection kept, to try again once the radius is filled in
-      }
-      else {
-        scriptFillet(GModel::current()->getFileName(), regions, edges,
-                     FlGui::instance()->transformContext->input[20]->value());
-        GModel::current()->setSelection(0);
-        selectRegions = true;
-        regions.clear();
-        edges.clear();
-      }
-    }
-    if(ib == 'q') {
-      GModel::current()->setSelection(0);
-      break;
-    }
-  }
-
+  runSelection("Fillet");
   if(!FlGui::available()) return;
   FlGui::instance()->transformContext->hide();
-  drawContext::global()->draw();
-  Msg::StatusGl("");
 }
 
 static void geometry_elementary_split_cb(Fl_Widget *w, void *data)
 {
-  if(!data) return;
-  opt_geometry_curves(0, GMSH_SET | GMSH_GUI, 1);
-  drawContext::global()->draw();
-  Msg::StatusGl("Select curve to split\n"
-                "[Press 'q' to abort]");
-  // by its tag, as the model may change while the points are chosen
-  int edgeTag = -1;
-  while(1) {
-    if(!FlGui::available()) return;
-
-    char ib = FlGui::instance()->selectEntity(ENT_CURVE);
-    if(!FlGui::available()) return;
-    if(ib == 'q') { break; }
-    if(!FlGui::instance()->selectedEdges.empty()) {
-      edgeTag = FlGui::instance()->selectedEdges[0]->tag();
-      FlGui::instance()->selectedEdges[0]->setSelection(1);
-      break;
-    }
-  }
-  Msg::StatusGl("");
-  if(edgeTag < 0) return; // no curve picked
-  List_T *List1 = List_Create(5, 5, sizeof(int));
-  Msg::StatusGl("Select break points\n"
-                "[Press 'e' to end selection or 'q' to abort]");
-  opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
-  drawContext::global()->draw();
-  while(1) {
-    // the drawing processes events, among which the GUI may be closed
-    if(!FlGui::available()) break;
-    char ib = FlGui::instance()->selectEntity(ENT_POINT);
-    if(!FlGui::available()) break;
-    if(ib == 'q') { break; }
-    if(ib == 'e') {
-      scriptSplitCurve(edgeTag, List1, GModel::current()->getFileName());
-      break;
-    }
-    for(std::size_t i = 0; i < FlGui::instance()->selectedVertices.size();
-        i++) {
-      int tag = FlGui::instance()->selectedVertices[i]->tag();
-      int index = List_ISearchSeq(List1, &tag, fcmp_int);
-      if(index < 0) List_Add(List1, &tag);
-      FlGui::instance()->selectedVertices[i]->setSelection(1);
-    }
-  }
-  List_Delete(List1);
-  if(!FlGui::available()) return;
-  Msg::StatusGl("");
-  FlGui::instance()->resetVisibility();
-  GModel::current()->setSelection(0);
-  drawContext::global()->draw();
+  runSelection("Split curve");
 }
 
 static void geometry_elementary_coherence_cb(Fl_Widget *w, void *data)
@@ -1756,9 +902,8 @@ static void geometry_physical_add_cb(Fl_Widget *w, void *data)
   if(!data) return;
   std::string what((const char *)data);
   FlGui::instance()->physicalContext->show(what, false);
-  action_point_line_surface_volume(7, what);
-  if(!FlGui::available()) return;
-  FlGui::instance()->physicalContext->hide();
+  runSelection("Physical " + what);
+  if(FlGui::available()) FlGui::instance()->physicalContext->hide();
 }
 
 static void geometry_physical_remove_cb(Fl_Widget *w, void *data)
@@ -1766,7 +911,7 @@ static void geometry_physical_remove_cb(Fl_Widget *w, void *data)
   if(!data) return;
   std::string what((const char *)data);
   FlGui::instance()->physicalContext->show(what, true);
-  action_point_line_surface_volume(11, what);
+  runSelection("Remove Physical " + what);
   if(FlGui::available()) FlGui::instance()->physicalContext->hide();
 }
 
@@ -1818,151 +963,24 @@ void mesh_3d_cb(Fl_Widget *w, void *data)
 
 #if defined(HAVE_MESH)
 
-static void mesh_modify_parts(Fl_Widget *w, void *data,
-                              const std::string &action)
+// the elements, curves, surfaces or volumes picked deleted or reversed
+static void mesh_modify_parts(void *data, const std::string &action)
 {
-  // the parts are deleted or reversed: not during another operation on the
-  // model (nor the picking mode changed then)
-  if(modelBusy()) return;
-  const char *str = (const char *)data;
-  int what;
-
-  if(!strcmp(str, "elements")) {
-    CTX::instance()->pickElements = 1;
-    what = ENT_ALL;
-  }
-  else if(!strcmp(str, "curves")) {
-    CTX::instance()->pickElements = 0;
-    what = ENT_CURVE;
-  }
-  else if(!strcmp(str, "surfaces")) {
-    CTX::instance()->pickElements = 0;
-    what = ENT_SURFACE;
-  }
-  else if(!strcmp(str, "volumes")) {
-    CTX::instance()->pickElements = 0;
-    what = ENT_VOLUME;
-  }
-  else
-    return;
-
-  std::vector<MElement *> ele;
-  std::vector<GEntity *> ent;
-  // when they were picked: the draws below process events, which may change
-  // the model or its mesh
-  modelStamps before;
-
-  while(1) {
-    if(!FlGui::available()) return;
-
-    CTX::instance()->meshChanged();
-    drawContext::global()->draw();
-
-    if(ele.size() || ent.size())
-      Msg::StatusGl(
-        "Select %s\n"
-        "[Press 'e' to end selection, 'u' to undo last selection or "
-        "'q' to abort]",
-        str);
-    else
-      Msg::StatusGl("Select %s\n"
-                    "[Press 'e' to end selection or 'q' to abort]",
-                    str);
-
-    char ib = FlGui::instance()->selectEntity(what);
-    if(!FlGui::available()) return;
-    // the model or its mesh changed meanwhile: what was selected before may
-    // be gone
-    if(before.changed()) {
-      ele.clear();
-      ent.clear();
-    }
-    before.record();
-    if(ib == 'l') {
-      if(CTX::instance()->pickElements) {
-        for(std::size_t i = 0; i < FlGui::instance()->selectedElements.size();
-            i++) {
-          if(FlGui::instance()->selectedElements[i]->getVisibility() != 2) {
-            FlGui::instance()->selectedElements[i]->setVisibility(2);
-            ele.push_back(FlGui::instance()->selectedElements[i]);
-          }
-        }
-      }
-      else {
-        for(int dim = 1; dim < 4; dim++)
-          for(GEntity *ge : newlyPicked(dim)) ent.push_back(ge);
-      }
-    }
-    if(ib == 'r') {
-      if(CTX::instance()->pickElements) {
-        for(std::size_t i = 0; i < FlGui::instance()->selectedElements.size();
-            i++)
-          FlGui::instance()->selectedElements[i]->setVisibility(1);
-      }
-      else {
-        for(int dim = 1; dim < 4; dim++)
-          for(GEntity *ge : picked(dim)) ge->setSelection(0);
-      }
-    }
-    if(ib == 'u') {
-      if(CTX::instance()->pickElements) {
-        if(ele.size()) {
-          ele[ele.size() - 1]->setVisibility(1);
-          ele.pop_back();
-        }
-      }
-      else {
-        if(ent.size()) {
-          ent[ent.size() - 1]->setSelection(0);
-          ent.pop_back();
-        }
-      }
-    }
-    if(ib == 'e') {
-      // the lock held meanwhile (by an API program on another thread): the
-      // parts stay picked, to try again
-      if(modelBusy()) continue;
-      if(CTX::instance()->pickElements) {
-        for(std::size_t i = 0; i < ele.size(); i++)
-          if(ele[i]->getVisibility() == 2) ele[i]->setVisibility(0);
-      }
-      else {
-        for(std::size_t i = 0; i < ent.size(); i++)
-          if(ent[i]->getSelection() == 1) {
-            ent[i]->setVisibility(0);
-            ent[i]->setSelection(0);
-          }
-      }
-      modelLock lock;
-      if(action == "delete")
-        GModel::current()->removeInvisibleElements();
-      else if(action == "reverse")
-        GModel::current()->reverseInvisibleElements();
-      else
-        Msg::Error("Unknown action on mesh part");
-      ele.clear();
-      ent.clear();
-    }
-    if(ib == 'q') {
-      GModel::current()->setSelection(0);
-      break;
-    }
-  }
-
-  CTX::instance()->meshChanged();
-  CTX::instance()->pickElements = 0;
+  // not during another operation on the model (nor the picking mode changed
+  // then)
+  if(modelBusy() || !data) return;
+  runSelection(action + " mesh " + (const char *)data);
   afterMeshOperation();
-  Msg::StatusGl("");
 }
 
 static void mesh_delete_parts_cb(Fl_Widget *w, void *data)
 {
-  mesh_modify_parts(w, data, "delete");
+  mesh_modify_parts(data, "Delete");
 }
 
 static void mesh_reverse_parts_cb(Fl_Widget *w, void *data)
 {
-  mesh_modify_parts(w, data, "reverse");
+  mesh_modify_parts(data, "Reverse");
 }
 
 static void mesh_degree_cb(Fl_Widget *w, void *data)
@@ -2080,321 +1098,42 @@ static void mesh_convert_old_partitioning_cb(Fl_Widget *w, void *data)
 static void mesh_define_length_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->meshContext->show(0);
-  action_point_line_surface_volume(8, "Point");
+  runSelection("Size at points");
   if(FlGui::available()) FlGui::instance()->meshContext->hide();
 }
 
 static void mesh_define_recombine_cb(Fl_Widget *w, void *data)
 {
-  action_point_line_surface_volume(9, "Surface");
-}
-
-static void mesh_define_transfinite(int dim)
-{
-  opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
-  switch(dim) {
-  case 1: opt_geometry_curves(0, GMSH_SET | GMSH_GUI, 1); break;
-  case 2: opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1); break;
-  case 3: opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1); break;
-  }
-  drawContext::global()->draw();
-
-  std::vector<int> p;
-  char ib;
-  while(1) {
-    if(!FlGui::available()) return;
-
-    switch(dim) {
-    case 1:
-      if(p.empty())
-        Msg::StatusGl("Select curves\n"
-                      "[Press 'e' to end selection or 'q' to abort]");
-      else
-        Msg::StatusGl("Select curves\n"
-                      "[Press 'e' to end selection, 'u' to undo last selection "
-                      "or 'q' to abort]");
-      ib = FlGui::instance()->selectEntity(ENT_CURVE);
-      if(!FlGui::available()) return;
-      break;
-    case 2:
-      Msg::StatusGl("Select surface\n[Press 'q' to abort]");
-      ib = FlGui::instance()->selectEntity(ENT_SURFACE);
-      if(!FlGui::available()) return;
-      break;
-    case 3:
-      Msg::StatusGl("Select volume\n[Press 'q' to abort]");
-      ib = FlGui::instance()->selectEntity(ENT_VOLUME);
-      if(!FlGui::available()) return;
-      break;
-    default: ib = 'l'; break;
-    }
-
-    // no number of nodes: the selection kept, to try again once it is given
-    if(ib == 'e' && dim == 1 && p.size() &&
-       !inputsFilled({FlGui::instance()->meshContext->input[1]}))
-      continue;
-
-    if(ib == 'e') {
-      if(dim == 1) {
-        if(p.size())
-          scriptSetTransfiniteLine(
-            p, GModel::current()->getFileName(),
-            FlGui::instance()->meshContext->choice[0]->text(),
-            FlGui::instance()->meshContext->input[2]->value(),
-            FlGui::instance()->meshContext->input[1]->value());
-      }
-      GModel::current()->setSelection(0);
-      drawContext::global()->draw();
-      p.clear();
-    }
-    if(ib == 'u') {
-      if(dim == 1) {
-        if(p.size()) {
-          GEdge *ge = GModel::current()->getEdgeByTag(p.back());
-          if(ge) ge->setSelection(0);
-          drawContext::global()->draw();
-          p.pop_back();
-        }
-      }
-    }
-    if(ib == 'q') {
-      GModel::current()->setSelection(0);
-      drawContext::global()->draw();
-      break;
-    }
-    if(ib == 'r') {
-      Msg::Warning("Entity de-selection not supported yet during "
-                   "transfinite definition");
-    }
-    if(ib == 'l') {
-      switch(dim) {
-      case 1:
-        for(std::size_t i = 0; i < FlGui::instance()->selectedEdges.size();
-            i++) {
-          FlGui::instance()->selectedEdges[i]->setSelection(1);
-          p.push_back(FlGui::instance()->selectedEdges[i]->tag());
-        }
-        drawContext::global()->draw();
-        break;
-      case 2:
-      case 3:
-        if(dim == 2 ? FlGui::instance()->selectedFaces.empty() :
-                      FlGui::instance()->selectedRegions.empty())
-          break;
-        if(dim == 2) {
-          FlGui::instance()->selectedFaces[0]->setSelection(1);
-          drawContext::global()->draw();
-          p.push_back(FlGui::instance()->selectedFaces[0]->tag());
-        }
-        else {
-          FlGui::instance()->selectedRegions[0]->setSelection(1);
-          drawContext::global()->draw();
-          p.push_back(FlGui::instance()->selectedRegions[0]->tag());
-        }
-        while(1) {
-          if(!FlGui::available()) return;
-
-          if(p.size() == 1)
-            Msg::StatusGl("Select (ordered) boundary points\n"
-                          "[Press 'e' to end selection or 'q' to abort]");
-          else
-            Msg::StatusGl(
-              "Select (ordered) boundary points\n"
-              "[Press 'e' to end selection, 'u' to undo last selection "
-              "or 'q' to abort]");
-          ib = FlGui::instance()->selectEntity(ENT_POINT);
-          if(!FlGui::available()) return;
-          if(ib == 'l') {
-            for(std::size_t i = 0;
-                i < FlGui::instance()->selectedVertices.size(); i++) {
-              FlGui::instance()->selectedVertices[i]->setSelection(1);
-              p.push_back(FlGui::instance()->selectedVertices[i]->tag());
-              break;
-            }
-            drawContext::global()->draw();
-          }
-          if(ib == 'u') {
-            if(p.size() > 1) {
-              GVertex *gv = GModel::current()->getVertexByTag(p.back());
-              if(gv) gv->setSelection(0);
-              drawContext::global()->draw();
-              p.pop_back();
-            }
-          }
-          if(ib == 'r') {
-            Msg::Warning("Entity de-selection not supported yet during "
-                         "transfinite definition");
-          }
-          if(ib == 'e') {
-            switch(dim) {
-            case 2:
-              if((p.size() == 0 + 1 || p.size() == 3 + 1 || p.size() == 4 + 1))
-                scriptSetTransfiniteSurface(
-                  p, GModel::current()->getFileName(),
-                  FlGui::instance()->meshContext->choice[1]->text());
-              else
-                Msg::Error("Wrong number of points for mesh constraint");
-              break;
-            case 3:
-              if((p.size() == 0 + 1 || p.size() == 6 + 1 || p.size() == 8 + 1))
-                scriptSetTransfiniteVolume(p, GModel::current()->getFileName());
-              else
-                Msg::Error("Wrong number of points for transfinite volume");
-              break;
-            }
-            GModel::current()->setSelection(0);
-            drawContext::global()->draw();
-            p.clear();
-            break;
-          }
-          if(ib == 'q') {
-            GModel::current()->setSelection(0);
-            drawContext::global()->draw();
-            goto stopall;
-          }
-        }
-        break;
-      }
-    }
-  }
-
-stopall:
-  Msg::StatusGl("");
+  runSelection("Recombine");
 }
 
 static void mesh_define_transfinite_line_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->meshContext->show(1);
-  mesh_define_transfinite(1);
+  runSelection("Transfinite Curve");
   if(FlGui::available()) FlGui::instance()->meshContext->hide();
 }
 
 static void mesh_define_transfinite_surface_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->meshContext->show(2);
-  mesh_define_transfinite(2);
+  runSelection("Transfinite Surface");
   if(FlGui::available()) FlGui::instance()->meshContext->hide();
 }
 
 static void mesh_define_transfinite_volume_cb(Fl_Widget *w, void *data)
 {
-  mesh_define_transfinite(3);
+  runSelection("Transfinite Volume");
 }
 
 static void mesh_define_embedded_cb(Fl_Widget *w, void *data)
 {
-  if(!data) return;
-  std::string what((const char *)data);
-  std::vector<int> entities;
-  bool selectEntities = true;
-
-  int type, entityDim;
-  const char *str = "";
-  if(what == "Surface") {
-    type = ENT_SURFACE;
-    entityDim = 2;
-    str = "surfaces";
-    opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
-  }
-  else if(what == "Curve") {
-    type = ENT_CURVE;
-    entityDim = 1;
-    str = "curves";
-    opt_geometry_curves(0, GMSH_SET | GMSH_GUI, 1);
-  }
-  else if(what == "Point") {
-    type = ENT_POINT;
-    entityDim = 0;
-    str = "points";
-    opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
-  }
-  else {
-    Msg::Error("Unknown type of entity to embed: %s", what.c_str());
-    return;
-  }
-  while(1) {
-    if(!FlGui::available()) return;
-
-    if(entities.empty())
-      Msg::StatusGl("Select %s\n"
-                    "[Press 'e' to end selection or 'q' to abort]",
-                    str);
-    else if(selectEntities)
-      Msg::StatusGl(
-        "Select %s\n"
-        "[Press 'e' to end selection, 'u' to undo last selection or "
-        "'q' to abort]",
-        str);
-    else
-      Msg::StatusGl("Select entity in which to embed the %s\n"
-                    "[Press 'q' to abort]",
-                    str);
-    int t = type;
-    if(!selectEntities) {
-      switch(FlGui::instance()->transformContext->choice->value()) {
-      case 2: t = ENT_CURVE; break;
-      case 3: t = ENT_SURFACE; break;
-      case 4: t = ENT_VOLUME; break;
-      default: t = ENT_ALL; break;
-      }
-    }
-    char ib = FlGui::instance()->selectEntity(t);
-    if(!FlGui::available()) return;
-    if(ib == 'l') {
-      if(selectEntities) {
-        for(GEntity *ge : newlyPicked(entityDim)) entities.push_back(ge->tag());
-      }
-      else if(FlGui::instance()->selectedFaces.size() ||
-              FlGui::instance()->selectedRegions.size()) {
-        int dim = FlGui::instance()->selectedFaces.size() ? 2 : 3;
-        GEntity *target = (dim == 2) ?
-                            (GEntity *)FlGui::instance()->selectedFaces[0] :
-                            (GEntity *)FlGui::instance()->selectedRegions[0];
-        target->setSelection(1);
-        int tag = target->tag(); // read before the drawing processes events
-        drawContext::global()->draw();
-        if(!FlGui::available()) return;
-        scriptEmbed(GModel::current()->getFileName(), what, entities, dim, tag);
-        GModel::current()->setSelection(0);
-        selectEntities = true;
-        entities.clear();
-      }
-    }
-    if(ib == 'r') {
-      Msg::Warning(
-        "Entity de-selection not supported yet during boolean operation");
-    }
-    if(ib == 'u') {
-      if(selectEntities && entities.size()) {
-        GEntity *ge =
-          GModel::current()->getEntityByTag(entityDim, entities.back());
-        if(ge) ge->setSelection(0);
-        entities.pop_back();
-      }
-    }
-    if(ib == 'e') {
-      if(selectEntities) {
-        if(entities.empty())
-          Msg::Error("At least one entity must be selected");
-        else
-          selectEntities = false;
-      }
-    }
-    if(ib == 'q') {
-      GModel::current()->setSelection(0);
-      break;
-    }
-  }
-
-  if(!FlGui::available()) return;
-  FlGui::instance()->transformContext->hide();
-  drawContext::global()->draw();
-  Msg::StatusGl("");
+  if(data) runSelection(std::string("Embed ") + (const char *)data);
 }
 
 static void mesh_define_compound_entity_cb(Fl_Widget *w, void *data)
 {
-  action_point_line_surface_volume(10, (const char *)data);
+  if(data) runSelection(std::string("Compound ") + (const char *)data);
 }
 
 #endif // HAVE_MESH

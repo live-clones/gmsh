@@ -4,6 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <string.h>
+#include <algorithm>
 #include <sstream>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
@@ -967,6 +968,152 @@ void scriptAddWedge(const std::string &fileName, const std::string &x,
     }
     scriptAddCommand(sstream.str(), fileName, lang);
   }
+}
+
+const std::vector<scriptShape> &scriptShapes()
+{
+  static const std::vector<scriptShape> shapes = {
+    {"Parameter",
+     2,
+     {{"Name", "lc"}, {"Value", "0.1"}, {"Label", ""}, {"Path", "Parameters"}}},
+    {"Point",
+     3,
+     {{"X", "0"},
+      {"Y", "0"},
+      {"Z", "0"},
+      {"Prescribed mesh size at point", "1.0"}}},
+    {"Circle",
+     4,
+     {{"Center X", "0"},
+      {"Center Y", "0"},
+      {"Center Z", "0"},
+      {"Radius", "0.5"},
+      {"Angle 1", "0"},
+      {"Angle 2", "2*Pi"}}},
+    {"Ellipse",
+     5,
+     {{"Center X", "0"},
+      {"Center Y", "0"},
+      {"Center Z", "0"},
+      {"Radius X", "0.5"},
+      {"Radius Y", "0.25"},
+      {"Angle 1", "0"},
+      {"Angle 2", "2*Pi"}}},
+    {"Disk",
+     5,
+     {{"Center X", "0"},
+      {"Center Y", "0"},
+      {"Center Z", "0"},
+      {"Radius X", "0.5"},
+      {"Radius Y", "0.25"}}},
+    {"Rectangle",
+     5,
+     {{"Corner X", "0"},
+      {"Corner Y", "0"},
+      {"Corner Z", "0"},
+      {"Size X", "1"},
+      {"Size Y", "0.5"},
+      {"Rounded radius", "0"}}},
+    {"Sphere",
+     4,
+     {{"Center X", "0"},
+      {"Center Y", "0"},
+      {"Center Z", "0"},
+      {"Radius", "0.5"},
+      {"Angle 1", "-Pi/2"},
+      {"Angle 2", "Pi/2"},
+      {"Angle 3", "2*Pi"}}},
+    {"Cylinder",
+     7,
+     {{"Center base X", "0"},
+      {"Center base Y", "0"},
+      {"Center base Z", "0"},
+      {"Axis DX", "1"},
+      {"Axis DY", "0"},
+      {"Axis DZ", "0"},
+      {"Radius", "0.5"},
+      {"Angle", "2*Pi"}}},
+    {"Box",
+     6,
+     {{"Corner X", "0"},
+      {"Corner Y", "0"},
+      {"Corner Z", "0"},
+      {"Size X", "1"},
+      {"Size Y", "1"},
+      {"Size Z", "1"}}},
+    {"Torus",
+     5,
+     {{"Center X", "0"},
+      {"Center Y", "0"},
+      {"Center Z", "0"},
+      {"Radius 1", "0.5"},
+      {"Radius 2", "0.2"},
+      {"Angle", "2*Pi"}}},
+    {"Cone",
+     8,
+     {{"Center base X", "0"},
+      {"Center base Y", "0"},
+      {"Center base Z", "0"},
+      {"Axis DX", "1"},
+      {"Axis DY", "0"},
+      {"Axis DZ", "0"},
+      {"Radius 1", "0.5"},
+      {"Radius 2", "0.1"},
+      {"Angle", "2*Pi"}}},
+    {"Wedge",
+     7,
+     {{"Corner X", "0"},
+      {"Corner Y", "0"},
+      {"Corner Z", "0"},
+      {"Size X", "0.5"},
+      {"Size Y", "0.5"},
+      {"Size Z", "0.5"},
+      {"Top size X", "0"}}}};
+  return shapes;
+}
+
+bool scriptAddShape(const std::string &shape, std::vector<std::string> v,
+                    const std::string &f)
+{
+  const scriptShape *s = nullptr;
+  for(auto &t : scriptShapes())
+    if(t.name == shape) s = &t;
+  if(!s) {
+    Msg::Error("Unknown shape '%s'", shape.c_str());
+    return false;
+  }
+  v.resize(std::max<std::size_t>(9, s->fields.size()));
+  for(std::size_t i = 0; i < v.size(); i++) {
+    // (blank, an optional value is left out, which would write an invalid
+    // command in the script if it is required)
+    if(v[i].find_first_not_of(" \t") != std::string::npos) continue;
+    v[i].clear();
+    if((int)i < s->required) {
+      Msg::Error("Field '%s' is empty", s->fields[i].first.c_str());
+      return false;
+    }
+  }
+  if(shape == "Parameter") scriptAddParameter(v[0], v[1], v[2], v[3], f);
+  else if(shape == "Point") scriptAddPoint(f, v[0], v[1], v[2], v[3]);
+  else if(shape == "Circle")
+    scriptAddCircle(f, v[0], v[1], v[2], v[3], v[4], v[5]);
+  else if(shape == "Ellipse")
+    scriptAddEllipse(f, v[0], v[1], v[2], v[3], v[4], v[5], v[6]);
+  else if(shape == "Disk") scriptAddDisk(f, v[0], v[1], v[2], v[3], v[4]);
+  else if(shape == "Rectangle")
+    scriptAddRectangle(f, v[0], v[1], v[2], v[3], v[4], v[5]);
+  else if(shape == "Sphere")
+    scriptAddSphere(f, v[0], v[1], v[2], v[3], v[4], v[5], v[6]);
+  else if(shape == "Cylinder")
+    scriptAddCylinder(f, v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7]);
+  else if(shape == "Box") scriptAddBox(f, v[0], v[1], v[2], v[3], v[4], v[5]);
+  else if(shape == "Torus")
+    scriptAddTorus(f, v[0], v[1], v[2], v[3], v[4], v[5]);
+  else if(shape == "Cone")
+    scriptAddCone(f, v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], v[8]);
+  else
+    scriptAddWedge(f, v[0], v[1], v[2], v[3], v[4], v[5], v[6]);
+  return true;
 }
 
 void scriptTranslate(const std::string &fileName,

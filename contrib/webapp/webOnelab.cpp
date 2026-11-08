@@ -191,6 +191,18 @@ EMSCRIPTEN_KEEPALIVE int gmshWebOnelab(const char *what)
   return Msg::GetErrorCount();
 }
 
+// the solvers forgotten, as a model starts, or none (Clear in the page): the
+// next file opened adds those it asks for (see addSolver())
+EMSCRIPTEN_KEEPALIVE void gmshWebOnelabForgetSolvers()
+{
+  onelab::server *s = onelab::server::instance();
+  std::vector<gmshInProcessClient *> v;
+  for(auto it = s->firstClient(); it != s->lastClient(); it++)
+    if(auto *c = dynamic_cast<gmshInProcessClient *>(*it)) v.push_back(c);
+  // (each unregisters itself)
+  for(auto *c : v) delete c;
+}
+
 // The same loop in steps, for a page that runs the solvers in a web worker,
 // as the graphical interface runs them in processes of their own (onelab.html
 // and solver.js): the page starts, then for each pass runs Gmsh here and the

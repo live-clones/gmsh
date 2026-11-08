@@ -13,14 +13,21 @@
 #if defined(__EMSCRIPTEN__)
 
 #include <cmath>
+#include <fstream>
+#include <map>
+#include <sstream>
 #include <emscripten.h>
 #include "Context.h"
 #include "GmshDefines.h"
+#include "GmshMessage.h"
 #include "GModel.h"
+#include "OpenFile.h"
 #include "Options.h"
 #include "Shortcuts.h"
 #include "drawContextOffscreen.h"
 #include "sceneView.h"
+#include "scriptStringInterface.h"
+#include "selectionDriver.h"
 
 namespace {
   drawContextOffscreen *_view = nullptr;
@@ -39,7 +46,8 @@ namespace {
     // before the page shows it
     bool picked = false;
     // the tool that takes over the clicks, as the buttons of the status bar
-    // of the graphical interface: 0 none, 1 the query, 2 the measurement
+    // of the graphical interface: 0 none, 1 the query, 2 the measurement, 3
+    // an operation on selected entities (see gmshWebOperation())
     int tool = 0;
     webView() : sceneView(nullptr) {}
     bool hostQueryMode() { return tool == 1; }
@@ -69,6 +77,13 @@ namespace {
     }
   };
   webView *_scene = nullptr;
+
+  // the operation on selected entities under way, the values of the fields
+  // of its form, and how many times operations were carried out (for the
+  // page to show what changed)
+  selectionDriver *_operation = nullptr;
+  std::map<std::string, std::string> _values;
+  int _changes = 0;
 
   void draw()
   {
@@ -104,6 +119,11 @@ namespace {
     std::vector<PView *> vw;
     char ib = _scene->selectionStep(v, e, f, r, el, p, vw);
     if(!ib) return;
+    if(_scene->tool == 3) {
+      if(_operation->step(ib, v, e, f, r, el)) _changes++;
+      if(_operation->active()) _scene->beginSelection(_operation->type());
+      return;
+    }
     if(ib == 'l' && _scene->tool == 1)
       _scene->queryClick(v, e, f, r, el, vw);
     else if(ib == 'l' && _scene->tool == 2)
@@ -276,6 +296,9 @@ EMSCRIPTEN_KEEPALIVE int gmshWebTool(int tool)
   if(!_view || !_view->getDrawContext()) return 0;
   if(!_scene) _scene = new webView();
   _scene->setDrawContext(_view->getDrawContext());
+  // the operation under way stops
+  delete _operation;
+  _operation = nullptr;
   // a query picks mesh elements, as long as it is on
   static int pickElements = 0;
   if(_scene->tool == 1) CTX::instance()->pickElements = pickElements;
@@ -298,6 +321,132 @@ EMSCRIPTEN_KEEPALIVE int gmshWebTool(int tool)
     toolStep();
   }
   return 1;
+}
+
+// Start an operation on selected entities (see selectionDriver), or stop the
+// one under way (an empty name): its clicks are those of the canvas, its keys
+// those of gmshWebOperationKey(), and the values of its form those of
+// gmshWebOperationValue(). Returns its fields, in JSON: [{"name", "kind"
+// ("text", "check", or the choices separated by '|'), "value" (by default)}],
+// or "" if the operation is unknown
+EMSCRIPTEN_KEEPALIVE const char *gmshWebOperation(const char *name)
+{
+  static std::string json;
+  json = "";
+  if(!gmshWebTool(0) || !name[0]) return json.c_str();
+  _values.clear();
+  _operation = new selectionDriver(name, [](const std::string &n) {
+    auto it = _values.find(n);
+    if(it != _values.end()) return it->second;
+    for(auto &f : _operation->fields())
+      if(f.name == n) return f.value;
+    return std::string();
+  });
+  if(!_operation->active()) {
+    delete _operation;
+    _operation = nullptr;
+    return json.c_str();
+  }
+  _scene->tool = 3;
+  if(!CTX::instance()->mouseSelection)
+    opt_general_mouse_selection(0, GMSH_SET, 1);
+  _scene->beginSelection(_operation->type());
+  json = "[";
+  for(auto &f : _operation->fields())
+    json += std::string(json.size() > 1 ? "," : "") + "{\"name\":" +
+            jsonString(f.name) + ",\"kind\":" + jsonString(f.kind) +
+            ",\"value\":" + jsonString(f.value) + "}";
+  json += "]";
+  return json.c_str();
+}
+
+// a value of the form of the operation (what it picks may depend on it)
+EMSCRIPTEN_KEEPALIVE void gmshWebOperationValue(const char *name,
+                                                const char *value)
+{
+  _values[name] = value;
+  // (the entities it picks drawn, as the dialog of the graphical interface
+  // draws them)
+  int mode = selectionDriver::selectionMode(value);
+  if(std::string(name) == "Selection mode" && mode != ENT_ALL)
+    selectionDriver::show(mode);
+  if(_operation && _operation->active())
+    _scene->beginSelection(_operation->type());
+}
+
+// a key of the operation: 'e' ends the selection, 'u' takes back what was
+// picked last, 'q' stops the operation
+EMSCRIPTEN_KEEPALIVE void gmshWebOperationKey(int key)
+{
+  if(!_scene || _scene->tool != 3) return;
+  if(key == 'e') _scene->endSelection = 1;
+  if(key == 'u') _scene->undoSelection = 1;
+  if(key == 'q') _scene->quitSelection = 1;
+  toolStep();
+}
+
+// the operation, in JSON: {"name" ("" once it is over), "status" (what to
+// pick, and the keys), "changes" (the operations carried out so far)}
+EMSCRIPTEN_KEEPALIVE const char *gmshWebOperationState()
+{
+  static std::string json;
+  bool on = _operation && _operation->active();
+  json = "{\"name\":" + jsonString(on ? _operation->operation() : "") +
+         ",\"status\":" + jsonString(on ? _operation->status() : "") +
+         ",\"changes\":" + std::to_string(_changes) + "}";
+  return json.c_str();
+}
+
+// The shapes of the elementary entity dialog of the graphical interface, in
+// JSON: [{"name", "fields": [[name, default value], ...]}] (see
+// scriptShapes())
+EMSCRIPTEN_KEEPALIVE const char *gmshWebShapes()
+{
+  static std::string json;
+  json = "[";
+  for(auto &shape : scriptShapes()) {
+    json += std::string(json.size() > 1 ? "," : "") +
+            "{\"name\":" + jsonString(shape.name) + ",\"fields\":[";
+    for(std::size_t i = 0; i < shape.fields.size(); i++)
+      json += std::string(i ? "," : "") + "[" +
+              jsonString(shape.fields[i].first) + "," +
+              jsonString(shape.fields[i].second) + "]";
+    json += "]}";
+  }
+  json += "]";
+  return json.c_str();
+}
+
+// Add a shape (see gmshWebShapes()) to the script of the current model, with
+// the values of its fields (expressions of the .geo language, separated by
+// new lines; an optional one left empty is left out): returns the number of
+// errors, the command being taken back from the script if there are any. A
+// model that is not a .geo file is given a .geo file that merges it, as the
+// dialog's default answer (the page sets General.NoPopup)
+EMSCRIPTEN_KEEPALIVE int gmshWebAddShape(const char *shape, const char *values)
+{
+  std::vector<std::string> v;
+  std::istringstream in(values);
+  for(std::string s; std::getline(in, s);) v.push_back(s);
+  const std::string f = GModel::current()->getFileName();
+  auto fileSize = [&f]() {
+    std::ifstream file(f, std::ios::binary | std::ios::ate);
+    return file ? (long)file.tellg() : -1L;
+  };
+  const int errors = Msg::GetErrorCount();
+  const long size = fileSize();
+  try {
+    scriptAddShape(shape, v, f);
+  } catch(...) {
+    Msg::Error("Could not add the %s", shape);
+  }
+  // (counted before the script is read again, which resets the count)
+  const int added = Msg::GetErrorCount() - errors;
+  if(added && f == GModel::current()->getFileName() && fileSize() != size)
+    scriptRemoveLastCommand(f);
+  GModel::current()->setSelection(0);
+  SetBoundingBox();
+  return added;
 }
 
 // the tool under way (see gmshWebTool()), and for the measurement 1 more

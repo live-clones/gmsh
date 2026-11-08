@@ -196,8 +196,9 @@
                 min-width: 0; }
   #side .view label { flex: 1; display: flex; gap: 6px; align-items: center; min-width: 0; }
   #side .view label span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  #side .viewOptions, #side .shapeForm { margin-left: 16px; border-left: 2px solid var(--line2); }
-  #side .shapeForm .name { font-weight: bold; margin: 2px 0 0 8px; }
+  #side .viewOptions, #panel { margin-left: 16px; border-left: 2px solid var(--line2); }
+  #panel .name { font-weight: bold; margin: 2px 0 0 8px; }
+  #panel[hidden], #statusbar button[hidden] { display: none; }
   /* the script of the model, edited */
   #scriptDialog { width: min(800px, 94vw); height: min(700px, 85vh); box-sizing: border-box;
                   color: var(--fg); background: var(--bg); border: 1px solid var(--border);
@@ -345,6 +346,8 @@
       <button id="openFiles" role="menuitem"><b>Files...</b>
         <small>a .zip of the model, or files that are a model on their own
           (.geo, .msh, .step, ...)</small></button>
+      <button id="clearModel" role="menuitem" hidden><b>Clear</b>
+        <small>delete the model, its meshes, results and parameters</small></button>
       <small class="drop">or drop the files or a .zip on the page</small>
     </span>
   </span>
@@ -370,6 +373,7 @@
     <details id="modules" open><summary>Modules</summary>
       <details id="moduleGeometry"><summary>Geometry</summary></details>
       <details id="moduleMesh"><summary>Mesh</summary></details>
+      <div id="panel" hidden></div>
       <details id="modulePost" open hidden><summary>Post-processing</summary><div
         id="viewList"></div></details>
     </details>
@@ -444,6 +448,9 @@
   <button data-act="select" title="Toggle mouse selection on or off">S</button>
   <button data-act="query" title="Query the model where you click: the entity, element, node and values there (Ctrl+click adds a query; q or Escape to stop)"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><circle cx="6" cy="6" r="4"/><path d="M9 9l3.5 3.5M6 4v2.5M6 8.2v.1"/></svg></button>
   <button data-act="measure" title="Measure the distance between two points you click (q or Escape to stop)"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><path d="M1.5 9.5l8-8 3 3-8 8z"/><path d="M4 7l1.3 1.3M6 5l1.3 1.3M8 3l1.3 1.3"/></svg></button>
+  <button data-act="op_e" title="End the selection (e)" hidden>&#10003;</button>
+  <button data-act="op_u" title="Undo the last selection (u)" hidden>&#8630;</button>
+  <button data-act="op_q" title="Stop the operation (q)" hidden>&#10005;</button>
   <span class="gap"></span>
   <button data-act="rewind" title="Rewind animation" disabled><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><path d="M2.5 2.5v9"/><path d="M11.5 2.5L5 7l6.5 4.5z" fill="currentColor"/></svg></button>
   <button data-act="back" title="Step backward (Left arrow)" disabled><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><path d="M10.5 2.5L4 7l6.5 4.5z" fill="currentColor"/></svg></button>
@@ -557,6 +564,9 @@ const Module = gmsh.lib;
 const FS = Module.FS;
 gmsh.initialize([], false);
 gmsh.option.setNumber('General.Terminal', 1);
+// (the questions Gmsh asks answered by default, not on the console, which a
+// browser would ask with a prompt)
+gmsh.option.setNumber('General.NoPopup', 1);
 
 // ---------------------------------------------------------------- drawing
 
@@ -1012,7 +1022,8 @@ async function run(action) {
             Module.ccall('gmshWebOnelabNext', 'number', ['string'], [pass]));
     errors += Module.ccall('gmshWebErrorCount', 'number', [], []);
   } catch(e) {
-    log('*** ' + e);
+    // (an error of the file system is not an Error, but has a name)
+    log('*** ' + (e.message || e.name || e));
     errors++;
   }
   const ms = (performance.now() - t0).toFixed(0);
@@ -1687,8 +1698,9 @@ function exportView(tag, ext) {
     status.classList.add('error');
   }
 }
-// Mesh: the actions of the graphical interface that need no selection
-// a row of buttons [label, title, action], after a label
+// The actions of the modules: buttons, and menus as the tree of the graphical
+// interface has them
+// a row of buttons [label, title, action, opens a menu], after a label
 function buttonRow(parent, items, label = '') {
   const row = document.createElement('div');
   row.className = 'buttons fill';
@@ -1697,15 +1709,64 @@ function buttonRow(parent, items, label = '') {
     s.textContent = label;
     row.appendChild(s);
   }
-  for(const [text, title, act] of items) {
+  for(const [text, title, act, menu] of items) {
     const b = document.createElement('button');
     b.textContent = text;
     b.title = title;
+    if(menu) b.className = 'menuButton';
     b.addEventListener('click', act);
     row.appendChild(b);
   }
   parent.appendChild(row);
 }
+// a button of a row that opens a menu of items(): [label, action] or the
+// heading of a section (see popupMenu())
+const menuButton = (text, title, items) => [text + ' ▾', title, (e) => {
+  const r = e.currentTarget.getBoundingClientRect();
+  popupMenu(items, r.left, r.bottom + 2, {owner: e.currentTarget});
+}, true];
+// The form under the buttons of a module: the fields of a shape to add, or
+// those of the operation under way, each given to change(name, value) ("1"
+// or "0" for a check box), Enter in one doing enter(); then its buttons
+function showPanel(module, title, fields = [], change, enter, buttons = []) {
+  const panel = $('panel');
+  panel.textContent = '';
+  panel.hidden = !module;
+  if(!module) return;
+  module.appendChild(panel);
+  module.open = true;
+  const name = document.createElement('div');
+  name.className = 'name';
+  name.textContent = title;
+  panel.appendChild(name);
+  const inputs = [];
+  for(const f of fields) {
+    let el;
+    if(f.kind === 'check' || f.kind === 'text') {
+      el = document.createElement('input');
+      el.type = f.kind === 'check' ? 'checkbox' : 'text';
+      el.spellcheck = false;
+      if(f.kind === 'check') el.checked = f.value === '1';
+      else el.value = f.value;
+    }
+    else {
+      el = document.createElement('select');
+      for(const c of f.kind.split('|')) el.add(new Option(c, c));
+      el.value = f.value;
+    }
+    const value = () => el.type === 'checkbox' ? (el.checked ? '1' : '0') : el.value;
+    el.addEventListener('change', () => change(f.name, value()));
+    if(enter) el.addEventListener('keydown', (e) => { if(e.key === 'Enter') enter(); });
+    panel.appendChild(optionRow(f.name, el));
+    inputs.push(el);
+  }
+  buttonRow(panel, buttons);
+  // (not on a phone, whose keyboard would cover the form)
+  if(inputs.length && !narrow.matches) inputs[0].focus({preventScroll: true});
+}
+
+// Mesh: what the graphical interface does without a selection, through the
+// API, and the operations on selected entities
 // an operation on the mesh: what is being done in the status, then how long
 // it took and the size of the mesh, or the error
 function meshAction(doing, done, act) {
@@ -1748,6 +1809,9 @@ function saveMesh() {
 }
 function buildMesh() {
   const d = $('moduleMesh');
+  const op = (label, name = label) => [label, () => startOperation(d, name)];
+  const parts = (action) => () => ['Elements', 'Curves', 'Surfaces', 'Volumes'].map(
+    (w) => op(w, `${action} mesh ${w.toLowerCase()}`));
   buttonRow(d, [1, 2, 3].map((n) => [`${n}D`, `Mesh the ${['curves', 'surfaces',
     'volumes'][n - 1]} (and what they are bounded by)`, () => meshNow(n)]));
   buttonRow(d, [1, 2, 3].map((n) => [`${n}`, `Make the mesh of order ${n}`,
@@ -1760,36 +1824,30 @@ function buildMesh() {
   buttonRow(d, [
     ['Refine by splitting', 'Refine the mesh by splitting its elements', () => meshAction(
       'Refining', 'Refined', () => gmsh.model.mesh.refine())],
-    ['Delete', 'Delete the mesh', () => meshAction(
-      'Deleting the mesh', 'Mesh deleted', () => gmsh.model.mesh.clear())],
     ['Save', 'Save the mesh (.msh)', saveMesh]]);
+  buttonRow(d, [
+    menuButton('Define', 'Mesh sizes and constraints on entities picked in the scene',
+      () => [op('Size at points'), op('Recombine'), 'Transfinite',
+             op('Curve', 'Transfinite Curve'), op('Surface', 'Transfinite Surface'),
+             op('Volume', 'Transfinite Volume'), 'Embedded',
+             op('Point', 'Embed Point'), op('Curve', 'Embed Curve'),
+             op('Surface', 'Embed Surface'), 'Compound',
+             op('Curve', 'Compound Curve'), op('Surface', 'Compound Surface')]),
+    menuButton('Reverse', 'Reverse the elements picked in the scene', parts('Reverse')),
+    menuButton('Delete', 'Delete the mesh, or the elements picked in the scene',
+      () => [['All', () => meshAction('Deleting the mesh', 'Mesh deleted',
+                                      () => gmsh.model.mesh.clear())],
+             ...parts('Delete')()])]);
 }
-buildMesh();
 
-// Geometry: a new model, the shapes of OpenCASCADE added to its script as the
-// dialog of the graphical interface adds them (webModules.cpp), and the
-// script edited, reloaded and saved. The fields of a shape, as the dialog's,
+// Geometry: a new model, the script edited, reloaded and saved, the shapes
+// added to it as the dialog of the graphical interface adds them, with its
+// fields and their defaults (see gmshWebShapes() in webView.cpp), and the
+// operations on selected entities. The fields of a shape, as the dialog's,
 // keep what was typed in them
-const shapes = {
-  Box: [['Corner X', '0'], ['Corner Y', '0'], ['Corner Z', '0'], ['Size X', '1'],
-        ['Size Y', '1'], ['Size Z', '1']],
-  Sphere: [['Center X', '0'], ['Center Y', '0'], ['Center Z', '0'], ['Radius', '0.5'],
-           ['Angle 1', '-Pi/2'], ['Angle 2', 'Pi/2'], ['Angle 3', '2*Pi']],
-  Cylinder: [['Center base X', '0'], ['Center base Y', '0'], ['Center base Z', '0'],
-             ['Axis DX', '1'], ['Axis DY', '0'], ['Axis DZ', '0'], ['Radius', '0.5'],
-             ['Angle', '2*Pi']],
-  Cone: [['Center base X', '0'], ['Center base Y', '0'], ['Center base Z', '0'],
-         ['Axis DX', '1'], ['Axis DY', '0'], ['Axis DZ', '0'], ['Radius 1', '0.5'],
-         ['Radius 2', '0.1'], ['Angle', '2*Pi']],
-  Torus: [['Center X', '0'], ['Center Y', '0'], ['Center Z', '0'], ['Radius 1', '0.5'],
-          ['Radius 2', '0.2'], ['Angle', '2*Pi']],
-  Wedge: [['Corner X', '0'], ['Corner Y', '0'], ['Corner Z', '0'], ['Size X', '0.5'],
-          ['Size Y', '0.5'], ['Size Z', '0.5'], ['Top size X', '0']],
-  Disk: [['Center X', '0'], ['Center Y', '0'], ['Center Z', '0'], ['Radius X', '0.5'],
-         ['Radius Y', '0.25']],
-  Rectangle: [['Corner X', '0'], ['Corner Y', '0'], ['Corner Z', '0'], ['Size X', '1'],
-              ['Size Y', '0.5'], ['Rounded radius', '0']],
-};
+const shapes = Object.fromEntries(
+  JSON.parse(Module.ccall('gmshWebShapes', 'string', [], [])).map(
+    (shape) => [shape.name, shape.fields]));
 // the script of the model: its .geo file, if it is one
 function scriptFile() {
   const f = gmsh.model.getFileName();
@@ -1837,43 +1895,33 @@ function saveScript() {
   if(f) download(f, true);
   else status.textContent = 'No script to save: open a .geo model, or make a new one';
 }
-// the form of a shape, under the buttons
+// the form of a shape
 function showShapeForm(shape) {
-  const form = $('shapeForm');
-  form.textContent = '';
-  form.hidden = !shape;
-  if(!shape) return;
-  const title = document.createElement('div');
-  title.className = 'name';
-  title.textContent = shape;
-  form.appendChild(title);
-  const inputs = shapes[shape].map((field) => {
-    const el = document.createElement('input');
-    el.type = 'text';
-    el.value = field[1];
-    el.spellcheck = false;
-    el.addEventListener('change', () => { field[1] = el.value; });
-    el.addEventListener('keydown', (e) => { if(e.key === 'Enter') addShape(shape); });
-    form.appendChild(optionRow(field[0], el));
-    return el;
-  });
-  buttonRow(form, [['Add', `Add the ${shape.toLowerCase()} to the script`, () => addShape(shape)],
-                   ['Close', 'Close the form', () => showShapeForm('')]]);
-  // (not on a phone, whose keyboard would cover the form)
-  if(!narrow.matches) inputs[0].focus({preventScroll: true});
+  if(tool === 3) stopOperation();
+  const fields = shapes[shape];
+  showPanel($('moduleGeometry'), shape,
+            fields.map(([name, value]) => ({name, kind: 'text', value})),
+            (name, value) => { fields.find((f) => f[0] === name)[1] = value; },
+            () => addShape(shape),
+            [['Add', `Add the ${shape.toLowerCase()} to the script`, () => addShape(shape)],
+             ['Close', 'Close the form', () => showPanel(null)]]);
+}
+// the model's name, which changes when a model that is not a .geo file is
+// given one by the first command added to it
+function showModelName() {
+  const f = gmsh.model.getFileName();
+  $('model').textContent = f.slice(f.lastIndexOf('/') + 1);
 }
 // a shape added to the script of the model, a new one if there is none
 async function addShape(shape) {
   if(busy) return;
-  for(const el of $('shapeForm').querySelectorAll('input')) el.dispatchEvent(new Event('change'));
+  for(const el of $('panel').querySelectorAll('input')) el.dispatchEvent(new Event('change'));
   if(!modelDir) await newModel();
   const wasEmpty = isEmpty();
   lastError = '';
   const errors = Module.ccall('gmshWebAddShape', 'number', ['string', 'string'],
                               [shape, shapes[shape].map((f) => f[1]).join('\n')]);
-  // (a model that is not a .geo file is given one)
-  const f = gmsh.model.getFileName();
-  $('model').textContent = f.slice(f.lastIndexOf('/') + 1);
+  showModelName();
   showAll();
   fitIfWasEmpty(wasEmpty);
   status.textContent = errors ?
@@ -1883,22 +1931,87 @@ async function addShape(shape) {
 }
 function buildGeometry() {
   const d = $('moduleGeometry');
+  const shape = (label, name = label) => [label, () => showShapeForm(name)];
+  const op = (label, name = label) => [label, () => startOperation(d, name)];
+  const groups = (remove) => () => ['Point', 'Curve', 'Surface', 'Volume'].map(
+    (w) => op(w, (remove ? 'Remove Physical ' : 'Physical ') + w));
   buttonRow(d, [
     ['New', 'Make a new model, an empty script with the OpenCASCADE kernel', newModel],
     ['Reload', 'Read the script again', reloadScript],
     ['Edit', 'Edit the script', editScript],
     ['Save', 'Save the script (.geo)', saveScript]]);
-  const names = Object.keys(shapes);
-  const add = (n) => [n, `Add a ${n.toLowerCase()}`, () => showShapeForm(n)];
-  buttonRow(d, names.slice(0, 4).map(add));
-  buttonRow(d, names.slice(4).map(add));
-  const form = document.createElement('div');
-  form.id = 'shapeForm';
-  form.className = 'shapeForm';
-  form.hidden = true;
-  d.appendChild(form);
+  buttonRow(d, [
+    menuButton('Add', 'Add an entity to the script, from its values or from the ' +
+      'entities picked in the scene', () => [
+      shape('Point'), op('Line'), op('Spline'), op('Bezier'), op('B-Spline', 'BSpline'),
+      shape('Circle'), op('Circle arc'), shape('Ellipse'), op('Ellipse arc'),
+      shape('Rectangle'), shape('Disk'), op('Plane surface', 'Plane Surface'),
+      op('Surface filling', 'Surface'), shape('Sphere'), shape('Cylinder'),
+      shape('Box'), shape('Torus'), shape('Cone'), shape('Wedge'), op('Volume')]),
+    menuButton('Transform', 'Transform the entities picked in the scene', () => [
+      op('Translate'), op('Rotate'), op('Scale'), op('Symmetry'), 'Extrude',
+      op('Translate', 'Extrude translate'), op('Rotate', 'Extrude rotate'), op('Pipe'),
+      'Other', op('Fillet'), op('Split curve'), op('Delete')]),
+    menuButton('Boolean', 'Boolean operations on the entities picked in the scene',
+      () => ['Intersection', 'Union', 'Difference', 'Fragments'].map(
+        (b) => op(b, 'Boolean' + b))),
+    menuButton('Physical', 'Physical groups of the entities picked in the scene',
+      () => ['Add', ...groups(false)(), 'Remove', ...groups(true)()])]);
 }
 buildGeometry();
+buildMesh();
+
+// The operations on entities picked in the scene, as the graphical interface
+// does them (src/graphics/selectionDriver.cpp, through webView.cpp): started
+// from the menus of the modules, with their fields in the form, what to pick
+// in the status bar, and its buttons to end the selection, take back the last
+// pick and stop (e, u and q, as in the graphical interface)
+let operationChanges = 0, operationName = '';
+function startOperation(module, name) {
+  if(busy) return;
+  if(!modelDir) {
+    status.textContent = 'Open a model, or make a new one (Geometry > New)';
+    return;
+  }
+  const json = Module.ccall('gmshWebOperation', 'string', ['string'], [name]);
+  if(!json) return;
+  tool = 3;
+  operationName = name;
+  for(const a of ['query', 'measure'])
+    $('statusbar').querySelector(`[data-act=${a}]`).classList.remove('on');
+  const fields = JSON.parse(json);
+  showPanel(module, name.replace(/^Boolean(?=\w)/, 'Boolean '), fields,
+            (n, v) => {
+              Module.ccall('gmshWebOperationValue', null, ['string', 'string'], [n, v]);
+              toolStatus();
+            }, null, [['Stop', 'Stop the operation (q)', stopOperation]]);
+  showOperationKeys(true);
+  toolStatus();
+  draw();
+  // nothing to fill in: the scene, on a small screen
+  if(narrow.matches && !fields.length) showSide(false);
+}
+function stopOperation() {
+  Module.ccall('gmshWebOperation', 'string', ['string'], ['']);
+  toolStatus();
+  draw();
+}
+function operationKey(key) {
+  Module.ccall('gmshWebOperationKey', null, ['number'], [key.charCodeAt(0)]);
+  toolStatus();
+  draw();
+}
+function showOperationKeys(on) {
+  for(const k of ['e', 'u', 'q'])
+    $('statusbar').querySelector(`[data-act=op_${k}]`).hidden = !on;
+}
+// what an operation changed: the model's script or its mesh
+function operationDone(name) {
+  showModelName();
+  showAll();
+  // the clients told of a new physical group, as the graphical interface does
+  if(name.includes('Physical')) run('check').then(toolStatus);
+}
 
 // a file of the in-memory filesystem, downloaded, then removed unless kept
 function download(path, keep = false) {
@@ -2530,6 +2643,9 @@ $('statusbar').addEventListener('click', (e) => {
   case 'rotate':
     if(Module.ccall('gmshWebRotate', 'number', ['number'], [shift ? 1 : 0])) draw();
     break;
+  case 'op_e': operationKey('e'); break;
+  case 'op_u': operationKey('u'); break;
+  case 'op_q': operationKey('q'); break;
   case 'query': setTool(tool === 1 ? 0 : 1); break;
   case 'measure': setTool(tool === 2 ? 0 : 2); break;
   case 'select':
@@ -2700,6 +2816,11 @@ showSelection();
 // the model in boxes the page draws (showNotes())
 let tool = 0;
 function setTool(t) {
+  // (the operation under way stops, see gmshWebTool())
+  if(tool === 3) {
+    showPanel(null);
+    showOperationKeys(false);
+  }
   tool = t;
   Module.ccall('gmshWebTool', 'number', ['number'], [t]);
   for(const [a, n] of [['query', 1], ['measure', 2]])
@@ -2712,6 +2833,22 @@ function setTool(t) {
 // once the tool is stopped (unless something else was said meanwhile)
 let statusBefore = null;
 function toolStatus() {
+  // an operation: what it waits for, and what it did
+  let text = '';
+  if(tool === 3) {
+    const s = JSON.parse(Module.ccall('gmshWebOperationState', 'string', [], []));
+    if(s.changes !== operationChanges) {
+      operationChanges = s.changes;
+      operationDone(operationName);
+    }
+    // (on a small screen, without the keys, which are buttons there)
+    if(s.name) text = narrow.matches ? s.status.split('\n')[0] : s.status.replace('\n', ' ');
+    else {
+      tool = 0;
+      showPanel(null);
+      showOperationKeys(false);
+    }
+  }
   if(!tool) {
     if(statusBefore && status.textContent === statusBefore.tool) {
       status.textContent = statusBefore.text;
@@ -2724,10 +2861,10 @@ function toolStatus() {
   if(!statusBefore)
     statusBefore = {text: status.textContent, error: status.classList.contains('error')};
   status.classList.remove('error');
-  status.textContent = statusBefore.tool = tool === 1 ?
+  status.textContent = statusBefore.tool = text || (tool === 1 ?
     'Click to query the model, Ctrl+click to add a query (q or Escape to stop)' :
     state === 3 ? 'Click the second point (q or Escape to stop)' :
-    'Click the first point (q or Escape to stop)';
+    'Click the first point (q or Escape to stop)');
 }
 function showNotes() {
   const box = $('notes');
@@ -2813,6 +2950,12 @@ const shortcuts = installShortcuts(Module, (action) => {
     $('quickMenu').hidden = true;
     return true;
   }
+  // the keys of an operation
+  const key = {selection_end: 'e', selection_undo: 'u', selection_quit: 'q', escape: 'q'};
+  if(tool === 3 && key[action]) {
+    operationKey(key[action]);
+    return true;
+  }
   if((action === 'escape' || action === 'selection_quit') && tool) {
     setTool(0);
     return true;
@@ -2883,15 +3026,27 @@ function findModel(dir) {
   return pro.find((f) => geo.includes(f.replace(/\.pro$/, '.geo'))) ||
     pro[0] || geo[0] || files[0];
 }
-async function openFiles(entries, open = '') {
-  // entries: [path, Uint8Array]
-  if(busy) return;
-  const dir = newModelDirectory();
-  // the worker lets the files of the model before go
+// What a model leaves when another starts, or none (Clear): the tool or the
+// operation under way, the files the worker has, the parameters, the
+// solvers, the models and the views
+function forgetModel() {
+  if(tool) setTool(0);
+  showPanel(null);
   if(modelDir) {
     const old = modelDir;
     workerReady.then(() => worker.postMessage({type: 'forget', dir: old}));
   }
+  modelDir = modelFile = hint = '';
+  FS.chdir('/');
+  gmsh.onelab.clear();
+  Module.ccall('gmshWebOnelabForgetSolvers', null, [], []);
+  gmsh.clear();
+}
+async function openFiles(entries, open = '') {
+  // entries: [path, Uint8Array]
+  if(busy) return;
+  forgetModel();
+  const dir = newModelDirectory();
   modelDir = dir;
   for(const [path, data] of entries) {
     if(path.endsWith('.zip')) {
@@ -2910,6 +3065,8 @@ async function openFiles(entries, open = '') {
     return;
   }
   FS.chdir(file.slice(0, file.lastIndexOf('/')));
+  modelFile = file;
+  $('clearModel').hidden = false;
   const base = file.slice(file.lastIndexOf('/') + 1);
   $('model').textContent = base;
   // a .pro alone: the page has only the files it is given, not the ones
@@ -2920,10 +3077,9 @@ async function openFiles(entries, open = '') {
     `model's folder instead (Open model > Its folder)` : '';
   // a model starts from the default options, as the options a model sets
   // (e.g. Mesh.ElementOrder) stay otherwise
-  gmsh.onelab.clear();
-  gmsh.clear();
   gmsh.option.restoreDefaults();
   gmsh.option.setNumber('General.Terminal', 1);
+  gmsh.option.setNumber('General.NoPopup', 1);
   applyColorScheme();
   try {
     gmsh.open(file);
@@ -2933,6 +3089,19 @@ async function openFiles(entries, open = '') {
   Module.ccall('gmshWebResetView', null, [], []);
   await run('check');
   if(narrow.matches && getParameters().some((p) => p.visible && !p.name.includes('ONELAB Context/'))) showSide(true);
+}
+// Clear, as File > Clear in the graphical interface: everything deleted (the
+// model, its meshes, results and parameters), the page as it starts, with
+// its options and view
+let modelFile = '';
+function clearModel() {
+  if(busy) return;
+  forgetModel();
+  $('model').textContent = '';
+  $('clearModel').hidden = true;
+  showAll();
+  status.classList.remove('error');
+  status.textContent = 'Open a model, or drop its files here';
 }
 const readFile = async (f) => new Uint8Array(await f.arrayBuffer());
 // one button for a model, which asks for its folder or for files: a browser
@@ -2944,6 +3113,7 @@ function openMenu(show) {
 $('openButton').addEventListener('click', () => openMenu($('openMenu').hidden));
 $('openFolder').addEventListener('click', () => { openMenu(false); $('folder').click(); });
 $('openFiles').addEventListener('click', () => { openMenu(false); $('files').click(); });
+$('clearModel').addEventListener('click', () => { openMenu(false); clearModel(); });
 document.addEventListener('pointerdown', (e) => {
   if(!$('open').contains(e.target)) openMenu(false);
 });

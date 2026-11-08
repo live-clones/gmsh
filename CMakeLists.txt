@@ -1873,12 +1873,11 @@ elseif(EMSCRIPTEN)
   add_executable(libgmsh EXCLUDE_FROM_ALL ${GMSH_SRC})
   target_link_libraries(libgmsh ${LINK_LIBRARIES})
   # with the functions the pages of the web app call to draw the scene on
-  # their canvas and for the modules of the tree, and, when GetDP is given
-  # (built as a static library with its solvers, see contrib/webapp/build.sh),
-  # GetDP run in-process as the ONELAB solver
+  # their canvas, and, when GetDP is given (built as a static library with its
+  # solvers, see contrib/webapp/build.sh), GetDP run in-process as the ONELAB
+  # solver
   if(HAVE_OPENGL)
-    target_sources(libgmsh PRIVATE contrib/webapp/webView.cpp
-                   contrib/webapp/webModules.cpp)
+    target_sources(libgmsh PRIVATE contrib/webapp/webView.cpp)
   endif()
   if(WEBAPP_GETDP_INC AND WEBAPP_GETDP_LIBS)
     message(STATUS "Linking the web app with GetDP: ${WEBAPP_GETDP_LIBS}")

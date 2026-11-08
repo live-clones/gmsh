@@ -20,9 +20,9 @@
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Box.H>
 
-// whether the inputs are all filled in; if not, an error names the first one
-// left empty, which would write an invalid command in the script
-bool inputsFilled(std::initializer_list<Fl_Input *> inputs);
+// the value of a field of the operations on selected entities: the text of
+// an input or of a choice, "1" or "0" for a check button
+std::string fieldValue(Fl_Widget *w);
 
 class elementaryContextWindow {
 public:
@@ -79,6 +79,9 @@ public:
 
 public:
   transformContextWindow(int deltaFontSize = 0);
+  // the widget of a field of the operations on selected entities, by its name
+  // (see selectionDriver); the extrusion by a rotation has its own mesh fields
+  Fl_Widget *field(const std::string &name, bool rotation = false);
   ~transformContextWindow() { Fl::delete_widget(win); }
   void show(int pane, bool extrude = false, bool selection = true);
   void hide() { win->hide(); }
@@ -93,6 +96,7 @@ public:
 
 public:
   meshContextWindow(int deltaFontSize = 0);
+  Fl_Widget *field(const std::string &name);
   ~meshContextWindow() { Fl::delete_widget(win); }
   void show(int pane);
   void hide() { win->hide(); }
