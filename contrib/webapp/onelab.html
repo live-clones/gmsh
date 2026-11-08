@@ -45,10 +45,10 @@
                  system-ui, Roboto, "Helvetica Neue", Arial, sans-serif; }
   /* the controls in the font of the page, not the smaller one of the browser */
   button, input, select, textarea { font: inherit; }
-  body { display: grid; grid-template-columns: var(--side-width, 330px) 5px 1fr;
+  body { display: grid; grid-template-columns: var(--side-width, min(330px, 40vw)) 5px minmax(0, 1fr);
          grid-template-rows: auto 1fr auto auto; }
   /* the panel hidden (the sidebar button of the status bar) */
-  body.noSide { grid-template-columns: 0 0 1fr; }
+  body.noSide { grid-template-columns: 0 0 minmax(0, 1fr); }
   body.noSide #side, body.noSide #split { display: none; }
   /* the status bar of the graphical interface, under the scene and the
      messages: the buttons of the view and of the animation, the status */
@@ -76,6 +76,7 @@
   #quickMenu button:hover { background: var(--menu-hover); }
   #quickMenu .mark { width: 1em; flex: none; }
   #quickMenu .head { color: var(--muted); font-size: 12px; padding: 6px 8px 1px; }
+  #quickMenu button.head { font-size: inherit; font-weight: bold; color: var(--fg); padding: 7px 8px; }
   #quickMenu hr { border: none; border-top: 1px solid var(--line2); margin: 3px 0; width: 100%; }
   #bar { grid-column: 1 / 4; display: flex; flex-wrap: wrap; gap: 4px 10px;
          align-items: center; padding: 4px 8px; border-bottom: 1px solid var(--line); }
@@ -180,7 +181,7 @@
   #side .view { display: flex; gap: 6px; align-items: center; margin-left: 8px; }
   #canvas { grid-row: 2; grid-column: 3; display: block; width: 100%; height: 100%; min-height: 0;
             touch-action: none; }
-  #log { grid-row: 3; grid-column: 3; margin: 0; border-top: 1px solid var(--line);
+  #log { grid-row: 3; grid-column: 3; margin: 0; min-width: 0; border-top: 1px solid var(--line);
          position: relative; }
   /* the handle that resizes the messages, on their top edge when they are
      shown: a drag, a double-click for the default height */
@@ -213,9 +214,71 @@
            background: var(--lasso-fill); pointer-events: none; z-index: 1; }
   #drop { position: fixed; inset: 0; display: none; place-items: center;
           background: var(--veil); font-size: 18px; z-index: 2; }
+  /* the height of a phone's window, which its toolbars change */
+  body { height: 100dvh; }
+  html { touch-action: manipulation; }
+  #model { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #openMenu { max-width: calc(100vw - 16px); }
+  /* touch screens: controls a finger can hit, and fields of 16 px, below
+     which a phone zooms the page on them */
+  @media (pointer: coarse) {
+    html, body { font-size: 15px; }
+    input, select, textarea { font-size: 16px; }
+    #bar button { min-height: 36px; padding: 0 10px; }
+    #statusbar button { min-width: 40px; height: 40px; }
+    #statusbar svg { width: 18px; height: 18px; }
+    #tabs button { padding: 8px 10px; }
+    #side summary { padding: 6px 0; }
+    #side .row { min-height: 36px; }
+    #side input[type=checkbox] { width: 20px; height: 20px; }
+    #side .graphButton { width: 32px; height: 32px; }
+    /* a number with its buttons under its name, for room */
+    #side .row:has(.withGraph) { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+    #side .buttons button, #side .seg button, #side .pair button { min-height: 36px; }
+    #quickMenu button { padding: 7px 10px; }
+    #openMenu button { padding: 10px 8px; }
+    #graphMenu td { padding: 6px 8px; }
+    #graphMenu input { width: 20px; height: 20px; }
+    #split { position: relative; }
+    #split::after { content: ''; position: absolute; inset: 0 -10px; }
+    #logSplit { top: -10px; height: 20px; }
+  }
+  /* no keyboard shortcuts without a keyboard */
+  @media (hover: none) { #keys { display: none; } }
+  /* small screens (a phone, upright or not): the panel over the scene, open
+     from the status bar; the status above the buttons, and only the buttons
+     there is room for */
+  @media (max-width: 700px), (max-height: 500px) {
+    body { grid-template-columns: 0 0 minmax(0, 1fr); }
+    #side { position: relative; z-index: 2; width: min(360px, 88vw); box-sizing: border-box;
+            background: var(--bg); border-right: 1px solid var(--line);
+            box-shadow: 2px 0 8px var(--shadow); }
+    #split { display: none; }
+    #bar { flex-wrap: nowrap; gap: 6px; padding: 4px 6px; }
+    #bar strong { display: none; }
+    #model { flex: 1; }
+    /* the buttons share the width, a finger's height (the views along the
+       axes are in the quick access menu) */
+    #statusbar { flex-wrap: wrap; gap: 2px; padding: 2px 4px; }
+    #status { order: -1; flex: 1 0 100%; margin: 0; padding: 2px 4px 0; }
+    #statusbar .gap { flex: 0 0 6px; width: auto; }
+    #statusbar button { flex: 1 1 0; min-width: 32px; max-width: 80px; height: 38px;
+                        font-size: 16px; }
+    #statusbar svg { width: 20px; height: 20px; }
+    #statusbar [data-act=x], #statusbar [data-act=y], #statusbar [data-act=z],
+    #statusbar [data-act=rotate], #statusbar [data-act=select],
+    #statusbar [data-act=rewind], #statusbar button:disabled { display: none; }
+    #notes .note, #hover { max-width: 70vw; }
+  }
 </style>
 </head>
 <body>
+<!-- the panel closed at first on a small screen (see narrow below), before
+     the module loads -->
+<script>
+  if(matchMedia('(max-width: 700px), (max-height: 500px)').matches)
+    document.body.classList.add('noSide');
+</script>
 <div id="bar">
   <strong>ONELAB</strong>
   <span id="open">
@@ -422,12 +485,12 @@ function mouse(kind, e, wheel = 0) {
   // the page numbers the buttons 0 left, 1 middle, 2 right; the scene 0
   // left, 1 right, 2 middle
   const button = e.button === 2 ? 1 : e.button === 1 ? 2 : 0;
+  const at = canvas.getBoundingClientRect();
   const redraw = Module.ccall('gmshWebMouse', 'number',
     ['number', 'number', 'number', 'number', 'number', 'number', 'number', 'number'],
-    [kind, e.offsetX, e.offsetY, canvas.clientWidth, canvas.clientHeight, button,
-     wheel, mods]);
+    [kind, e.clientX - at.left, e.clientY - at.top, canvas.clientWidth,
+     canvas.clientHeight, button, wheel, mods]);
   // the boxes over the canvas, placed in the window
-  const at = canvas.getBoundingClientRect();
   // the box hangs from the point the view keeps, so it follows the pointer
   // only once it has strayed, as in the graphical interface
   const xy = Module._malloc(4 * 8);
@@ -473,16 +536,88 @@ function wheelNotches(e) {
   const n = e.deltaY / (e.ctrlKey ? 2 : 10);
   return Math.max(-5, Math.min(5, n));
 }
-let pressed = false;
+// A touch screen: one finger is the left button (it rotates, picks, queries),
+// two pinch to zoom and move together to pan, about the point between them,
+// until both are lifted; a double tap opens the quick access menu, as a
+// double-click
+let pressed = false, pinching = false;
+const touches = new Map();
+let lastTap = {t: 0, x: 0, y: 0}, touchDown = null;
+const inCanvas = (e) => {
+  const at = canvas.getBoundingClientRect();
+  return {x: e.clientX - at.left, y: e.clientY - at.top};
+};
+function pinch(kind) {
+  // (the end of a pinch needs no position: one finger is gone)
+  const [a, b = a] = [...touches.values()];
+  if(Module.ccall('gmshWebPinch', 'number', ['number', 'number', 'number', 'number'],
+                  [kind, (a.x + b.x) / 2, (a.y + b.y) / 2,
+                   Math.hypot(a.x - b.x, a.y - b.y)])) draw();
+}
 canvas.addEventListener('pointerdown', (e) => {
+  // a touch of the scene closes the panel over it (small screens)
+  if(sideOver()) {
+    showSide(false);
+    return;
+  }
+  // (not for a pointer the browser has let go of already)
+  try { canvas.setPointerCapture(e.pointerId); } catch(err) {}
+  if(e.pointerType === 'touch') {
+    touches.set(e.pointerId, inCanvas(e));
+    if(touches.size === 2 && !pinching) {
+      // the first finger's drag ends where it is
+      if(pressed) {
+        pressed = false;
+        const [a] = touches.values();
+        const at = canvas.getBoundingClientRect();
+        mouse(2, {clientX: at.left + a.x, clientY: at.top + a.y, button: 0});
+      }
+      pinching = true;
+      pinch(0);
+    }
+    if(pinching) return;
+    touchDown = {t: e.timeStamp, x: e.clientX, y: e.clientY};
+  }
   pressed = true;
-  canvas.setPointerCapture(e.pointerId);
   mouse(1, e);
 });
-canvas.addEventListener('pointermove', (e) => mouse(pressed ? 3 : 0, e));
-canvas.addEventListener('pointerup', (e) => { pressed = false; mouse(2, e); });
-canvas.addEventListener('pointerleave', () => {
-  if(pressed) return;
+canvas.addEventListener('pointermove', (e) => {
+  if(touches.has(e.pointerId)) {
+    touches.set(e.pointerId, inCanvas(e));
+    if(pinching) {
+      if(touches.size >= 2) pinch(1);
+      return;
+    }
+    if(touchDown && Math.hypot(e.clientX - touchDown.x, e.clientY - touchDown.y) > 10)
+      touchDown = null;
+  }
+  mouse(pressed ? 3 : 0, e);
+});
+function pointerUp(e) {
+  if(touches.delete(e.pointerId) && pinching) {
+    if(touches.size === 1) pinch(2);
+    if(!touches.size) pinching = false;
+    return;
+  }
+  if(!pressed) return;
+  pressed = false;
+  mouse(2, e);
+  // a tap, a second one soon after and near it opening the quick menu
+  if(e.pointerType === 'touch' && touchDown) {
+    const t = e.timeStamp, x = e.clientX, y = e.clientY;
+    if(t - lastTap.t < 350 && Math.hypot(x - lastTap.x, y - lastTap.y) < 30) {
+      lastTap.t = 0;
+      openQuickMenu(x, y);
+    }
+    else
+      lastTap = {t, x, y};
+  }
+  touchDown = null;
+}
+canvas.addEventListener('pointerup', pointerUp);
+canvas.addEventListener('pointercancel', pointerUp);
+canvas.addEventListener('pointerleave', (e) => {
+  if(pressed || e.pointerType === 'touch') return;
   Module.ccall('gmshWebMouseLeft', null, [], []);
   hover.style.display = 'none';
   canvas.style.cursor = 'default';
@@ -495,7 +630,9 @@ canvas.addEventListener('wheel', (e) => {
 }, {passive: false});
 // a double-click opens the quick access menu where it is, as in the
 // graphical interface (see the status bar)
-canvas.addEventListener('dblclick', (e) => openQuickMenu(e.clientX, e.clientY));
+canvas.addEventListener('dblclick', (e) => {
+  if(e.pointerType !== 'touch' && !touches.size) openQuickMenu(e.clientX, e.clientY);
+});
 window.addEventListener('resize', draw);
 
 // the width of the panel, dragged on the handle beside it, kept for the next
@@ -780,7 +917,14 @@ async function run(action) {
   status.classList.toggle('error', !!errors && !stopping);
   if(errors && !stopping) $('log').open = true;
 }
-$('run').addEventListener('click', () => busy ? stopSolver() : run('compute'));
+$('run').addEventListener('click', () => {
+  if(busy) {
+    stopSolver();
+    return;
+  }
+  if(narrow.matches) showSide(false);
+  run('compute');
+});
 $('reset').addEventListener('click', () => run('reset'));
 
 // the parameter tree, as the graphical interface shows it: a branch for
@@ -1855,10 +1999,20 @@ function sceneAction(action, mods = 0) {
     draw();
   }
 }
-function toggleSide() {
-  document.body.classList.toggle('noSide');
+function showSide(show) {
+  document.body.classList.toggle('noSide', !show);
   draw();
 }
+function toggleSide() {
+  showSide(document.body.classList.contains('noSide'));
+}
+// On a small screen the panel is over the scene: closed at first, opened by
+// a model with parameters to set, and closed by a run (to show what it
+// computes) or a touch of the scene
+const narrow = matchMedia('(max-width: 700px), (max-height: 500px)');
+const sideOver = () => narrow.matches && !document.body.classList.contains('noSide');
+narrow.addEventListener('change', () => showSide(!narrow.matches));
+if(narrow.matches) document.body.classList.add('noSide');
 // the selection button red while the mouse selects nothing (hover, picking)
 function showSelection() {
   const on = !!gmsh.option.getNumber('General.MouseSelection');
@@ -1932,6 +2086,18 @@ function quickItems() {
   const radio = (label, name, v) => [label, () => setOption(name, v), num(name) === v];
   const items = [
     ['Reset viewport', () => { sceneAction('view_z'); sceneAction('view_1_1'); }],
+    // the buttons of the status bar there is no room for on a small screen
+    ...(narrow.matches ? [
+      ['View along X', () => sceneAction('view_x')],
+      ['View along Y', () => sceneAction('view_y')],
+      ['View along Z', () => sceneAction('view_z')],
+      ['Rotate by 90 degrees', () => {
+        if(Module.ccall('gmshWebRotate', 'number', ['number'], [0])) draw();
+      }],
+      ['Mouse selection', () => {
+        setOption('General.MouseSelection', num('General.MouseSelection') ? 0 : 1);
+        showSelection();
+      }, !!num('General.MouseSelection')]] : []),
     ['Axes', () => setOption('General.Axes', num('General.Axes') ? 0 : 3), !!num('General.Axes')],
     toggle('Hover mesh and views', 'General.MouseHoverMeshes'),
     'Projection',
@@ -1974,17 +2140,28 @@ function quickItems() {
   return items;
 }
 // at (x, y) in the window, or above it (from the status bar)
+// On a small screen its sections are folded under their headings, until
+// they are opened (and kept open for the next times)
+const quickOpen = new Set();
 function openQuickMenu(x, y, above = false) {
   const menu = $('quickMenu');
   menu.textContent = '';
+  const fold = narrow.matches;
+  let section = '';
   for(const item of quickItems()) {
     if(typeof item === 'string') {
-      const h = document.createElement('div');
+      section = item;
+      const h = document.createElement(fold ? 'button' : 'div');
       h.className = 'head';
-      h.textContent = item;
+      h.textContent = fold ? (quickOpen.has(item) ? '▾ ' : '▸ ') + item : item;
+      if(fold) h.addEventListener('click', () => {
+        if(!quickOpen.delete(item)) quickOpen.add(item);
+        openQuickMenu(x, y, above);
+      });
       menu.appendChild(h);
       continue;
     }
+    if(fold && section && !quickOpen.has(section)) continue;
     const [label, act, checked] = item;
     const b = document.createElement('button');
     const mark = document.createElement('span');
@@ -2260,6 +2437,7 @@ async function openFiles(entries, open = '') {
   }
   Module.ccall('gmshWebResetView', null, [], []);
   await run('check');
+  if(narrow.matches && getParameters().some((p) => p.visible && !p.name.includes('ONELAB Context/'))) showSide(true);
 }
 const readFile = async (f) => new Uint8Array(await f.arrayBuffer());
 // one button for a model, which asks for its folder or for files: a browser

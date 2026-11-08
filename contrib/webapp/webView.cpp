@@ -179,6 +179,66 @@ EMSCRIPTEN_KEEPALIVE int gmshWebMouse(int kind, double x, double y, int w,
   return _scene->redrawAsked ? 1 : 0;
 }
 
+// A pinch of two fingers on the canvas: kind 0 when the second finger comes
+// down, 1 as they move, 2 when one is lifted; (x, y) is the point between
+// them (CSS pixels) and d how far apart they are. The model is zoomed as they
+// spread or close and moved with the point between them, so that what was
+// under the fingers stays under them. Returns 1 when the picture is to be
+// drawn again.
+EMSCRIPTEN_KEEPALIVE int gmshWebPinch(int kind, double x, double y, double d)
+{
+  if(!_view || !_view->getDrawContext()) return 0;
+  drawContext *ctx = _view->getDrawContext();
+  // where the pinch started, and its last step
+  static mousePosition start;
+  static double d0 = 0., last[3] = {0., 0., 0.};
+  if(kind == 0) {
+    start.set(ctx, (int)x, (int)y);
+    d0 = d;
+    last[0] = x;
+    last[1] = y;
+    last[2] = d;
+    return 0;
+  }
+  if(kind == 2) {
+    CTX::instance()->drawRotationCenter = 0;
+    CTX::instance()->mesh.draw = 1;
+    CTX::instance()->post.draw = 1;
+    return 1;
+  }
+  if(d0 <= 0. || d <= 0. || last[2] <= 0.) return 0;
+  if(CTX::instance()->camera) {
+    // as the zoom and the translation of a drag (see sceneView)
+    Camera *cam = &ctx->camera;
+    double fact = d / last[2];
+    double h = ctx->viewport[3];
+    double tx = cam->radians * (x - last[0]) * 2. / h;
+    double ty = cam->radians * (y - last[1]) * 2. / h;
+    cam->zoom(fact);
+    cam->update();
+    cam->moveRight(tx);
+    cam->moveUp(ty);
+  }
+  else {
+    double s = start.s[0] * d / d0;
+    ctx->s[0] = ctx->s[1] = ctx->s[2] = s;
+    // the point under the fingers where the pinch started (start.wnr) under
+    // them now (see mousePosition::set())
+    ctx->t[0] = (ctx->vxmin + x / ctx->viewport[2] * (ctx->vxmax - ctx->vxmin)) / s +
+                ctx->t_init[0] / s - start.wnr[0];
+    ctx->t[1] = (ctx->vymax - y / ctx->viewport[3] * (ctx->vymax - ctx->vymin)) / s +
+                ctx->t_init[1] / s - start.wnr[1];
+  }
+  if(CTX::instance()->fastRedraw) {
+    CTX::instance()->mesh.draw = 0;
+    CTX::instance()->post.draw = 0;
+  }
+  last[0] = x;
+  last[1] = y;
+  last[2] = d;
+  return 1;
+}
+
 // the pointer left the canvas
 EMSCRIPTEN_KEEPALIVE void gmshWebMouseLeft()
 {
