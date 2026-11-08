@@ -1637,6 +1637,27 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/common/GmshConfig.h.in
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/common/GmshVersion.h.in
                ${CMAKE_CURRENT_BINARY_DIR}/src/common/GmshVersion.h)
 
+# the words the lexer of the .geo language knows, for the editors (see
+# src/common/ScriptWords.h.in); CMake runs again when the lexer changes
+file(STRINGS ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/Gmsh.l GEO_LEXER
+     REGEX "^[A-Za-z_][A-Za-z0-9_]*[ \t]+return")
+set(GEO_WORDS_LIST "")
+foreach(LINE ${GEO_LEXER})
+  if(LINE MATCHES "^([A-Za-z_][A-Za-z0-9_]*)[ \t]+return")
+    list(APPEND GEO_WORDS_LIST ${CMAKE_MATCH_1})
+  endif()
+endforeach()
+list(REMOVE_DUPLICATES GEO_WORDS_LIST)
+list(SORT GEO_WORDS_LIST)
+set(GEO_WORDS "")
+foreach(WORD ${GEO_WORDS_LIST})
+  set(GEO_WORDS "${GEO_WORDS}\"${WORD}\", ")
+endforeach()
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/common/ScriptWords.h.in
+               ${CMAKE_CURRENT_BINARY_DIR}/src/common/ScriptWords.h)
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+             ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/Gmsh.l)
+
 # the texi version file is modified in the source directory (not
 # ideal for version.texi, but since git tracks the contents of the file this is
 # acceptable as it will only change when the actual version is changed - not for

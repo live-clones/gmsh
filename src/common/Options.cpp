@@ -841,6 +841,36 @@ void PrintOptions(int num, int level, int diff, int help, const char *filename,
   if(filename) fclose(file);
 }
 
+std::vector<std::string> GetOptionNames(const std::string &category)
+{
+  struct tables {
+    const char *category;
+    StringXString *s;
+    StringXNumber *n;
+    StringXColor *c;
+  };
+  static const tables all[] = {
+    {"General", GeneralOptions_String, GeneralOptions_Number,
+     GeneralOptions_Color},
+    {"Geometry", GeometryOptions_String, GeometryOptions_Number,
+     GeometryOptions_Color},
+    {"Mesh", MeshOptions_String, MeshOptions_Number, MeshOptions_Color},
+    {"Solver", SolverOptions_String, SolverOptions_Number, SolverOptions_Color},
+    {"PostProcessing", PostProcessingOptions_String,
+     PostProcessingOptions_Number, PostProcessingOptions_Color},
+    {"View", ViewOptions_String, ViewOptions_Number, ViewOptions_Color},
+    {"Print", PrintOptions_String, PrintOptions_Number, PrintOptions_Color}};
+  std::vector<std::string> names;
+  for(const tables &t : all) {
+    if(category != t.category) continue;
+    for(int i = 0; t.s[i].str; i++) names.push_back(t.s[i].str);
+    for(int i = 0; t.n[i].str; i++) names.push_back(t.n[i].str);
+    for(int i = 0; t.c[i].str; i++)
+      names.push_back(std::string("Color.") + t.c[i].str);
+  }
+  return names;
+}
+
 void PrintOptionsDoc()
 {
   const char *warn =

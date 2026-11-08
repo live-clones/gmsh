@@ -1032,6 +1032,9 @@ bool followDesktopColorScheme(bool dark);
 void PrintOptions(int num, int level, int diff, int help, const char *filename,
                   std::vector<std::string> *vec = nullptr);
 void PrintOptionsDoc();
+// the names of the options of a category ("General", "Mesh", ...), as the
+// scripts write them after "Category." ("Color.Name" for a color)
+std::vector<std::string> GetOptionNames(const std::string &category);
 
 bool StringOption(int action, const char *category, int num, const char *name,
                   std::string &val, bool warnIfUnknown = true);

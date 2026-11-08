@@ -18,6 +18,7 @@
 #include <sstream>
 #include <emscripten.h>
 #include "Actions.h"
+#include "ScriptStyles.h"
 #include "Context.h"
 #include "GmshDefines.h"
 #include "GmshMessage.h"
@@ -495,6 +496,23 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebActionAsk(int id)
 EMSCRIPTEN_KEEPALIVE void gmshWebActionSet(int id, double value)
 {
   if(item(id)) SetActionOption(item(id)->ask.option, value);
+}
+
+// The style of each character of the text of a file in an editor (see
+// GetScriptStyles()), one for each UTF-16 unit of the text as the page has it
+EMSCRIPTEN_KEEPALIVE const char *gmshWebScriptStyles(const char *fileName,
+                                                     const char *text)
+{
+  static std::string units;
+  std::string bytes = GetScriptStyles(fileName, text);
+  units.clear();
+  for(std::size_t i = 0; text[i]; i++) {
+    unsigned char b = (unsigned char)text[i];
+    if((b & 0xC0) == 0x80) continue; // in a character
+    units += bytes[i];
+    if(b >= 0xF0) units += bytes[i]; // a pair of UTF-16 units
+  }
+  return units.c_str();
 }
 
 // Add a shape (see gmshWebShapes()) to the script of the current model, with

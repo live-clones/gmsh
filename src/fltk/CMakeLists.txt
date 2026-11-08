@@ -22,6 +22,7 @@ set(SRC
     clippingWindow.cpp
     manipWindow.cpp
     contextWindow.cpp
+    editorWindow.cpp
     onelabContextWindow.cpp
     onelabGroup.cpp
     helpWindow.cpp

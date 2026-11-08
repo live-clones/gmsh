@@ -27,6 +27,7 @@
 #include "paletteWindow.h"
 #include "graphicWindow.h"
 #include "fileDialogs.h"
+#include "editorWindow.h"
 #include "onelabGroup.h"
 #include "GmshGlobal.h"
 #include "FlGui.h"
@@ -1117,9 +1118,7 @@ static void onelab_input_choice_file_chooser_cb(Fl_Widget *w, void *data)
 static void onelab_input_choice_file_edit_cb(Fl_Widget *w, void *data)
 {
   Fl_Input_Choice *but = (Fl_Input_Choice *)w->parent();
-  std::string prog = FixWindowsPath(CTX::instance()->editor);
-  std::string file = FixWindowsPath(but->value());
-  SystemCall(ReplaceSubString("%s", file, prog));
+  editFile(but->value());
 }
 
 static void onelab_input_choice_file_merge_cb(Fl_Widget *w, void *data)

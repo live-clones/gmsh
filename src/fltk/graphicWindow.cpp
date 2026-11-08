@@ -44,6 +44,7 @@
 #include "windowPlacement.h"
 #include "openglWindow.h"
 #include "viewButton.h"
+#include "editorWindow.h"
 #include "onelabContextWindow.h"
 #include "onelabGroup.h"
 #include "messageBrowser.h"
@@ -657,12 +658,7 @@ void help_about_cb(Fl_Widget *w, void *data)
 }
 
 static void geometry_edit_cb(Fl_Widget *w, void *data)
-{
-  std::string prog = FixWindowsPath(CTX::instance()->editor);
-  // allow white space in file name
-  std::string file = "\"" + FixWindowsPath(GModel::current()->getFileName()) + "\"";
-  SystemCall(ReplaceSubString("%s", file, prog));
-}
+{ editFile(GModel::current()->getFileName()); }
 
 void onelab_reload_cb(Fl_Widget *w, void *data)
 {

@@ -177,8 +177,8 @@ Default value: @code{"geo"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.TextEditor
-System command to launch a text editor@*
-Default value: @code{"open -t %s"}@*
+System command to launch a text editor (with '%s' for the file name); the editor of the graphical interface if empty@*
+Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.TmpFileName
