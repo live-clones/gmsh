@@ -62,7 +62,7 @@
   #statusbar button:disabled { opacity: .35; cursor: default; }
   #statusbar button.off { background: var(--loop3); color: var(--loop-fg); }
   #statusbar .gap { width: 10px; flex: none; }
-  #status { margin-left: 8px; min-width: 0; overflow: hidden;
+  #status { margin-left: 8px; min-width: 0; flex: 1; overflow: hidden;
             text-overflow: ellipsis; white-space: nowrap; }
   #quickMenu { position: fixed; z-index: 3; padding: 4px; display: flex;
                flex-direction: column; max-height: 80vh; overflow: auto;
@@ -2203,17 +2203,23 @@ function setTool(t) {
   toolStatus();
   draw();
 }
-// what the tool waits for, in the status
+// what the tool waits for, in the status, and what the status said before
+// once the tool is stopped (unless something else was said meanwhile)
+let statusBefore = null;
 function toolStatus() {
   if(!tool) {
-    if(status.dataset.tool) status.textContent = '';
-    delete status.dataset.tool;
+    if(statusBefore && status.textContent === statusBefore.tool) {
+      status.textContent = statusBefore.text;
+      status.classList.toggle('error', statusBefore.error);
+    }
+    statusBefore = null;
     return;
   }
   const state = Module.ccall('gmshWebToolState', 'number', [], []);
-  status.dataset.tool = '1';
+  if(!statusBefore)
+    statusBefore = {text: status.textContent, error: status.classList.contains('error')};
   status.classList.remove('error');
-  status.textContent = tool === 1 ?
+  status.textContent = statusBefore.tool = tool === 1 ?
     'Click to query the model, Ctrl+click to add a query (q or Escape to stop)' :
     state === 3 ? 'Click the second point (q or Escape to stop)' :
     'Click the first point (q or Escape to stop)';
