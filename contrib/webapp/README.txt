@@ -45,7 +45,8 @@ api_test.mjs shows its use and checks it:
 
   node api_test.mjs
 
-The pages draw the scene with the functions of webView.cpp; webOnelab.cpp
+The pages draw the scene with the functions of webView.cpp, and add shapes
+to the script of a model with those of webModules.cpp; webOnelab.cpp
 links GetDP in and runs the ONELAB loop; onelab.html runs GetDP in a web
 worker (solver.js), with a module of its own, as the graphical interface runs
 it in a process of its own: the page shows the results as they are written and

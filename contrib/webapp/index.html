@@ -27,6 +27,13 @@
   .note { font-size: 13px; color: #666; border-left: 3px solid #ddd;
           padding-left: 10px; }
   code { background: #f3f3f3; padding: 0 3px; border-radius: 3px; }
+  .install { display: flex; gap: 10px; align-items: center; margin: 0 0 16px;
+             padding: 8px 12px; background: #eef4fc; border-radius: 6px; }
+  .install[hidden] { display: none; }
+  .install button { font: inherit; font-weight: bold; padding: 6px 14px;
+                    border: none; border-radius: 6px; background: #0a58a5;
+                    color: #fff; cursor: pointer; flex: none; }
+  .install svg { vertical-align: -3px; }
 </style>
 </head>
 <body>
@@ -42,10 +49,45 @@ nothing is sent to a server. Experimental.</p>
 GetDP with PETSc, SLEPc and UMFPACK); the browser keeps it afterwards. Needs
 a recent Chrome, Firefox, Edge or Safari with WebGL 2. The solver runs in the
 background: the results show as they are computed, and <b>Run</b> turns into
-<b>Stop</b> meanwhile; the page only waits while a model is meshed. On a
-phone or a tablet, add it to the home screen (<i>Share &gt; Add to Home
-Screen</i> in Safari, <i>Install app</i> in Chrome) to have it without the
-bars of the browser.</p>
+<b>Stop</b> meanwhile; the page only waits while a model is meshed.</p>
+
+<!-- installed as an app (manifest.webmanifest), it opens without the bars
+     of the browser: a button where the browser offers it (Chrome, Edge,
+     Android), how to do it otherwise on an iPhone or an iPad, nothing
+     once it is installed -->
+<p class="install" id="install" hidden><button id="installButton">Install</button>
+<span>the app, to open it from the home screen or the desktop, without the
+bars of the browser</span></p>
+<p class="install" id="installIOS" hidden><span>To have the app on the home
+screen, without the bars of the browser: tap <b>Share</b> <svg width="16"
+height="18" viewBox="0 0 16 18" fill="none" stroke="currentColor"
+stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path
+d="M8 1.5v10M4.5 5L8 1.5 11.5 5M5 8H2.5v8.5h11V8H11"/></svg>, then <b>Add to
+Home Screen</b>.</span></p>
+<script>
+  let installPrompt = null;
+  addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    installPrompt = e;
+    document.getElementById('install').hidden = false;
+  });
+  document.getElementById('installButton').addEventListener('click', async () => {
+    if(!installPrompt) return;
+    installPrompt.prompt();
+    await installPrompt.userChoice;
+    installPrompt = null;
+    document.getElementById('install').hidden = true;
+  });
+  addEventListener('appinstalled', () => {
+    document.getElementById('install').hidden = true;
+  });
+  // an iPhone, or an iPad (which says it is a Mac, with a touch screen), in
+  // its browser rather than from the home screen
+  const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if(ios && !navigator.standalone)
+    document.getElementById('installIOS').hidden = false;
+</script>
 
 <h2>Models</h2>
 <p>Open one, change its parameters on the left, press <b>Run</b>.</p>

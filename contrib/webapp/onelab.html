@@ -135,6 +135,11 @@
   #tabs button.on { border-color: var(--line); background: var(--bg); color: var(--fg);
                     margin-bottom: -1px; }
   #side .buttons { display: flex; gap: 4px; margin: 4px 0 4px 8px; }
+  /* the actions of a module: buttons sharing the row, after its label */
+  #side .buttons.fill { align-items: center; }
+  #side .buttons.fill button { flex: 1 1 auto; min-width: 0; padding: 2px 4px;
+                              white-space: nowrap; }
+  #side .buttons.fill span { flex: 0 0 72px; }
   #side .note { color: var(--faint); font-size: 13px; margin: 2px 0 4px 8px; }
   #side .out { display: block; min-height: 1.3em; padding: 1px 4px;
                border: 1px solid var(--out-border); border-radius: 3px;
@@ -186,7 +191,22 @@
   #side .slider { display: flex; gap: 4px; align-items: center; }
   #side .row .slider input[type=range] { flex: 1; min-width: 0; width: auto; }
   #side .row .slider input[type=number] { flex: none; width: 76px; }
-  #side .view { display: flex; gap: 6px; align-items: center; margin-left: 8px; }
+  /* a view: its box and name, and the button of its menu; its options under it */
+  #side .view { display: flex; gap: 4px; align-items: center; margin: 1px 0 1px 8px;
+                min-width: 0; }
+  #side .view label { flex: 1; display: flex; gap: 6px; align-items: center; min-width: 0; }
+  #side .view label span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #side .viewOptions, #side .shapeForm { margin-left: 16px; border-left: 2px solid var(--line2); }
+  #side .shapeForm .name { font-weight: bold; margin: 2px 0 0 8px; }
+  /* the script of the model, edited */
+  #scriptDialog { width: min(800px, 94vw); height: min(700px, 85vh); box-sizing: border-box;
+                  color: var(--fg); background: var(--bg); border: 1px solid var(--border);
+                  border-radius: 6px; padding: 8px 10px; }
+  #scriptDialog form { display: flex; flex-direction: column; gap: 6px; height: 100%; }
+  #scriptDialog .name { font-weight: bold; }
+  #scriptText { flex: 1; resize: none; box-sizing: border-box; width: 100%;
+                font: 13px ui-monospace, Menlo, Consolas, monospace; tab-size: 2;
+                color: var(--fg); background: var(--bg); border: 1px solid var(--field-border); }
   #canvas { grid-row: 2; grid-column: 3; display: block; width: 100%; height: 100%; min-height: 0;
             touch-action: none; }
   #log { grid-row: 3; grid-column: 3; margin: 0; min-width: 0; border-top: 1px solid var(--line);
@@ -237,7 +257,7 @@
     #statusbar svg { width: 18px; height: 18px; }
     #tabs button { padding: 8px 10px; }
     #side summary { padding: 6px 0; }
-    #side .row { min-height: 36px; }
+    #side .row, #side .view { min-height: 36px; }
     #side input[type=checkbox] { width: 20px; height: 20px; }
     #side .graphButton { width: 32px; height: 32px; }
     /* a number with its buttons under its name, for room */
@@ -278,6 +298,18 @@
     #statusbar [data-act=rewind], #statusbar button:disabled { display: none; }
     #notes .note, #hover { max-width: 70vw; }
   }
+  /* what is being loaded or computed, on the top edge of the scene: a
+     bar that fills when its end is known, that runs to and fro otherwise
+     (an animation the browser runs even while Gmsh keeps the page busy) */
+  #progress { grid-row: 2; grid-column: 1 / 4; align-self: start; height: 3px;
+              z-index: 3; overflow: hidden; pointer-events: none; }
+  #progress[hidden] { display: none; }
+  #progress > div { height: 100%; width: 0; background: #2f7fe0; }
+  #progress.busy > div { width: 30%; animation: progress 1.2s ease-in-out infinite; }
+  @keyframes progress { from { transform: translateX(-100%); }
+                        to { transform: translateX(340%); } }
+  /* the panel scrolls up and down only (Safari let it move sideways) */
+  #side { overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; }
   /* the edges of a phone's screen (the notch, the home indicator), which
      the page reaches (viewport-fit=cover) */
   #bar { padding-top: max(4px, env(safe-area-inset-top));
@@ -290,11 +322,17 @@
 </style>
 </head>
 <body>
-<!-- the panel closed at first on a small screen (see narrow below), before
-     the module loads -->
+<!-- before the module loads: the panel closed at first on a small screen
+     (see narrow below), and the offer of the browser to install the page as
+     an app kept (see installApp below), which may come first -->
 <script>
   if(matchMedia('(max-width: 700px), (max-height: 500px)').matches)
     document.body.classList.add('noSide');
+  addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    window.installPrompt = e;
+  });
+  addEventListener('appinstalled', () => { window.installPrompt = null; });
 </script>
 <div id="bar">
   <strong>ONELAB</strong>
@@ -328,8 +366,14 @@
     data-tab="clipTab">Clipping</button><button
     data-tab="visTab">Visibility</button></div>
   <div id="modelTab">
+    <!-- the modules of the graphical interface's tree, before the parameters -->
+    <details id="modules" open><summary>Modules</summary>
+      <details id="moduleGeometry"><summary>Geometry</summary></details>
+      <details id="moduleMesh"><summary>Mesh</summary></details>
+      <details id="modulePost" open hidden><summary>Post-processing</summary><div
+        id="viewList"></div></details>
+    </details>
     <div id="params"></div>
-    <details id="views" open hidden><summary>Views</summary><div id="viewList"></div></details>
   </div>
   <div id="optionsTab" hidden></div>
   <div id="clipTab" hidden>
@@ -366,6 +410,11 @@
     <div id="visList"></div>
   </div>
 </div>
+<dialog id="scriptDialog"><form method="dialog">
+  <div class="name" id="scriptName"></div>
+  <textarea id="scriptText" spellcheck="false" autocomplete="off"></textarea>
+  <div><button value="save">Save and reload</button> <button value="cancel">Cancel</button></div>
+</form></dialog>
 <div id="rangeMenu" hidden>
   <div class="name" id="rangeName"></div>
   <input id="rangeText" type="text" spellcheck="false" autocomplete="off">
@@ -400,10 +449,11 @@
   <button data-act="back" title="Step backward (Left arrow)" disabled><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><path d="M10.5 2.5L4 7l6.5 4.5z" fill="currentColor"/></svg></button>
   <button data-act="play" title="Play or pause animation" disabled><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><path d="M4 2.5L11 7l-7 4.5z" fill="currentColor"/></svg></button>
   <button data-act="forward" title="Step forward (Right arrow)" disabled><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><path d="M3.5 2.5L10 7l-6.5 4.5z" fill="currentColor"/><path d="M11.5 2.5v9"/></svg></button>
-  <span id="status" title="Show or hide the messages">loading...</span>
+  <span id="status" title="Show or hide the messages">Loading...</span>
 </div>
 <div id="quickMenu" hidden></div>
 <div id="notes"></div>
+<div id="progress" hidden><div></div></div>
 <div id="lasso"></div>
 <div id="hover"></div>
 <div id="drop">drop a model (.pro, .geo and the files they include, or a .zip)</div>
@@ -429,16 +479,22 @@ function log(t) {
   t = t.replace(/\x1b\[[0-9;]*m/g, '');
   const kind = /^Error|^\*\*\*/.test(t) ? 'error' : /^Warning/.test(t) ? 'warning' : '';
   if(kind === 'error') lastError = t;
+  else if(busyLabel) busyLine = t.replace(/^Info *: */, '');
   lines.push([t, kind]);
   if(lines.length > 2000) lines.shift();
   scheduleLog();
 }
+// while a model is checked or computed, its last message in the status, as
+// the graphical interface shows it
+let busyLabel = '', busyLine = '';
 let logPending = false;
 function scheduleLog() {
   if(logPending) return;
   logPending = true;
   requestAnimationFrame(() => {
     logPending = false;
+    if(busyLabel && busyLine && !statusBefore) status.textContent = `${busyLabel}: ${busyLine}`;
+    busyLine = '';
     logText.textContent = '';
     for(const [t, kind] of lines.slice(-500)) {
       const d = document.createElement('div');
@@ -450,15 +506,46 @@ function scheduleLog() {
   });
 }
 
-// the WebAssembly code, compiled once for the page and for the solver's worker
+// The progress bar: a fraction, true for a task of unknown length, or
+// false when there is none
+function progress(p) {
+  const bar = $('progress');
+  bar.hidden = p === false;
+  bar.classList.toggle('busy', p === true);
+  bar.firstElementChild.style.width = typeof p === 'number' ? (100 * p) + '%' : '';
+}
+// the WebAssembly code, compiled once for the page and for the solver's
+// worker as it is downloaded, with how much has come in the status: the size
+// is the response's, or that of the file deploy.sh puts next to it when the
+// server compresses the response (whose length is then the compressed one)
 async function compileWasm(url) {
+  const r = await fetch(url);
+  let total = r.headers.get('Content-Encoding') ? 0 :
+    Number(r.headers.get('Content-Length')) || 0;
+  if(!total) {
+    try { total = Number(await (await fetch(url + '.size')).text()) || 0; } catch(e) {}
+  }
+  let got = 0;
+  progress(total ? 0 : true);
+  const counted = r.body.pipeThrough(new TransformStream({
+    transform(chunk, out) {
+      got += chunk.length;
+      status.textContent = `Loading Gmsh and GetDP: ${(got / 1e6).toFixed(0)}` +
+        (total ? ` of ${(total / 1e6).toFixed(0)} MB` : ' MB');
+      if(total) progress(Math.min(1, got / total));
+      out.enqueue(chunk);
+    }
+  }));
+  const body = new Response(counted, {headers: {'Content-Type': 'application/wasm'}});
   try {
-    return await WebAssembly.compileStreaming(fetch(url));
-  } catch(e) { // not served as application/wasm
+    return await WebAssembly.compileStreaming(body);
+  } catch(e) { // no streaming compilation: again, as a whole
     return WebAssembly.compile(await (await fetch(url)).arrayBuffer());
   }
 }
 const wasm = await compileWasm(new URL('./build/libgmsh.wasm', import.meta.url));
+status.textContent = 'Starting...';
+progress(true);
 const gmsh = await createGmsh({
   canvas, print: log, printErr: log,
   instantiateWasm: (imports, done) => {
@@ -641,6 +728,11 @@ canvas.addEventListener('pointerleave', (e) => {
   draw();
 });
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+// no zoom of the page itself on a touch screen (Safari's double tap and
+// pinch), which left it scaled up: the touches of the scene are its own
+// (pointer events, which this does not stop), and the page is not zoomed
+document.addEventListener('gesturestart', (e) => e.preventDefault());
+canvas.addEventListener('touchstart', (e) => e.preventDefault(), {passive: false});
 canvas.addEventListener('wheel', (e) => {
   e.preventDefault();
   mouse(4, e, wheelNotches(e));
@@ -897,7 +989,9 @@ async function run(action) {
   $('reset').disabled = true;
   $('run').textContent = 'Stop';
   status.classList.remove('error');
-  status.textContent = action === 'compute' ? 'computing...' : 'checking...';
+  busyLabel = action === 'compute' ? 'Computing' : 'Checking';
+  status.textContent = busyLabel + '...';
+  progress(true);
   lastError = '';
   // the status shown before Gmsh's part, which the page waits for
   await nextFrame();
@@ -923,14 +1017,16 @@ async function run(action) {
   }
   const ms = (performance.now() - t0).toFixed(0);
   busy = false;
+  busyLabel = '';
+  progress(false);
   $('reset').disabled = false;
   $('run').textContent = 'Run';
   showAll();
   // an error in the status bar, in full in the messages
   const error = lastError.replace(/^Error *: */, '') || `${errors} error(s)`;
-  status.textContent = stopping ? 'stopped' :
+  status.textContent = stopping ? 'Stopped' :
     errors ? (hint ? hint + ' (' + error + ')' : error) :
-    `${action === 'compute' ? 'computed' : 'checked'} in ${ms} ms`;
+    `${action === 'compute' ? 'Computed' : 'Checked'} in ${ms} ms`;
   status.classList.toggle('error', !!errors && !stopping);
   if(errors && !stopping) $('log').open = true;
 }
@@ -1428,28 +1524,390 @@ function adaptedFill(rgb) {
   return mx <= cap ? rgb : rgb.map((c) => Math.round(c * cap / mx));
 }
 
-// the post-processing views, shown or hidden
+// ---------------------------------------------------------------- modules
+
+// The modules of the graphical interface's tree. Post-processing: the views
+// (in the branches their Group option names), each shown or hidden by its box,
+// with the menu of its button (its options, its export, the visibility and
+// the removal of views). The options set for a view alone are kept for it
+// when those of the Options tab are given again to all (see readOptions())
+const viewOverrides = new Map(); // view tag -> the options set for it alone
+const viewOptionsOpen = new Set(); // the views whose options are shown
+// [option, kind, label, choices], those of one view
+const perViewOptions = [
+  ['IntervalsType', 'choice', 'Intervals', {1: 'Iso-values', 2: 'Continuous',
+    3: 'Discrete', 4: 'Numeric'}],
+  ['NbIso', 'number', 'Number of intervals'],
+  ['RangeType', 'choice', 'Range', {1: 'Default', 2: 'Custom', 3: 'Per time step'}],
+  ['CustomMin', 'number', 'Minimum'],
+  ['CustomMax', 'number', 'Maximum'],
+  ['TimeStep', 'number', 'Time step'],
+  ['ShowScale', 'check', 'Color scale'],
+  ['ShowElement', 'check', 'Element outlines'],
+  ['Opacity', 'range', 'Opacity']];
+const viewTags = () => [...gmsh.view.getTags()];
+const viewNum = (i, n) => gmsh.option.getNumber(`View[${i}].${n}`);
+// The list is made again only when what it shows changes (the views, their
+// names, groups, time steps and range type, the options shown): otherwise the
+// values are written in its fields as they are, so that a field being typed
+// in while a solver runs (and shows new views several times a second) stays
+let viewsKey = '';
+const viewUpdates = [];
+function updateViews() {
+  const tags = viewTags();
+  for(const u of viewUpdates) u(tags);
+}
 function showViews() {
-  const list = $('viewList');
-  list.textContent = '';
-  const n = gmsh.option.getNumber('PostProcessing.NbViews');
-  // nothing to show before a view is made
-  $('views').hidden = !n;
-  for(let i = 0; i < n; i++) {
-    const row = document.createElement('label');
-    row.className = 'view';
-    const cb = document.createElement('input');
-    cb.type = 'checkbox';
-    cb.checked = !!gmsh.option.getNumber(`View[${i}].Visible`);
-    cb.addEventListener('change', () => {
-      gmsh.option.setNumber(`View[${i}].Visible`, cb.checked ? 1 : 0);
-      draw();
+  const tags = viewTags();
+  const name = (i) => gmsh.option.getString(`View[${i}].Name`);
+  const group = (i) => gmsh.option.getString(`View[${i}].Group`);
+  $('modulePost').hidden = !tags.length;
+  const key = JSON.stringify(tags.map((t, i) => [
+    t, name(i), group(i), viewNum(i, 'NbTimeStep'), viewNum(i, 'RangeType'),
+    viewOptionsOpen.has(t)]));
+  if(key !== viewsKey) {
+    viewsKey = key;
+    viewUpdates.length = 0;
+    const list = $('viewList');
+    list.textContent = '';
+    const groups = new Map();
+    const parentOf = (g) => {
+      if(!g) return list;
+      if(!groups.has(g)) {
+        const d = document.createElement('details');
+        const sum = document.createElement('summary');
+        sum.textContent = g.slice(g.lastIndexOf('/') + 1);
+        d.appendChild(sum);
+        const branch = 'Post-processing/' + g;
+        d.open = groupOpen[branch] ?? true;
+        d.addEventListener('toggle', () => { groupOpen[branch] = d.open; });
+        parentOf(g.slice(0, Math.max(0, g.lastIndexOf('/')))).appendChild(d);
+        groups.set(g, d);
+      }
+      return groups.get(g);
+    };
+    tags.forEach((tag, i) => {
+      const parent = parentOf(group(i));
+      const row = document.createElement('div');
+      row.className = 'view';
+      const label = document.createElement('label');
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.addEventListener('change', () => {
+        gmsh.option.setNumber(`View[${viewTags().indexOf(tag)}].Visible`, cb.checked ? 1 : 0);
+        draw();
+      });
+      const text = document.createElement('span');
+      text.textContent = text.title = name(i);
+      label.append(cb, text);
+      const menu = document.createElement('button');
+      menu.className = 'graphButton menuButton';
+      menu.textContent = '⋯';
+      menu.title = 'Options, export, visibility and removal of the views';
+      menu.addEventListener('click', () => {
+        const r = menu.getBoundingClientRect();
+        popupMenu(() => viewItems(tag), r.right - 220, r.bottom + 2, {owner: menu});
+      });
+      row.append(label, menu);
+      parent.appendChild(row);
+      viewUpdates.push((ts) => {
+        const k = ts.indexOf(tag);
+        if(k >= 0) cb.checked = !!viewNum(k, 'Visible');
+      });
+      if(viewOptionsOpen.has(tag)) parent.appendChild(viewOptionRows(tag, i));
     });
-    row.appendChild(cb);
-    row.appendChild(document.createTextNode(gmsh.option.getString(`View[${i}].Name`)));
-    list.appendChild(row);
   }
+  updateViews();
   showAnimation();
+}
+// the options of a view, under it
+function viewOptionRows(tag, i) {
+  const box = document.createElement('div');
+  box.className = 'viewOptions';
+  const steps = viewNum(i, 'NbTimeStep');
+  for(const [name, kind, text, choices] of perViewOptions) {
+    if(name === 'TimeStep' && steps < 2) continue;
+    if(name.startsWith('Custom') && viewNum(i, 'RangeType') !== 2) continue;
+    const el = optionField(kind, choices, (v) => setViewOptionOf(tag, name, v));
+    el.title = `View[${i}].${name}`;
+    if(name === 'TimeStep') Object.assign(el, {min: 0, max: steps - 1, step: 1});
+    box.appendChild(optionRow(text, el));
+    viewUpdates.push((ts) => {
+      const k = ts.indexOf(tag);
+      if(k >= 0 && el !== document.activeElement) setField(el, kind, viewNum(k, name));
+    });
+  }
+  return box;
+}
+function setViewOptionOf(tag, name, v) {
+  const i = viewTags().indexOf(tag);
+  gmsh.option.setNumber(`View[${i}].${name}`, v);
+  // a custom range not given yet: that of the values
+  if(name === 'RangeType' && v === 2 && viewNum(i, 'CustomMin') === viewNum(i, 'CustomMax')) {
+    gmsh.option.setNumber(`View[${i}].CustomMin`, viewNum(i, 'Min'));
+    gmsh.option.setNumber(`View[${i}].CustomMax`, viewNum(i, 'Max'));
+  }
+  if(!viewOverrides.has(tag)) viewOverrides.set(tag, new Set());
+  viewOverrides.get(tag).add('View.' + name);
+  showViews();
+  readOptions();
+  draw();
+}
+// the menu of a view's button, as the graphical interface's
+function viewItems(tag) {
+  const all = (f) => viewTags().forEach((t, k) =>
+    gmsh.option.setNumber(`View[${k}].Visible`, f(k)));
+  const remove = (keep) => viewTags().filter((t, k) => !keep(t, k)).forEach(
+    (t) => gmsh.view.remove(t));
+  return [
+    ['Options', () => {
+      if(!viewOptionsOpen.delete(tag)) viewOptionsOpen.add(tag);
+    }, viewOptionsOpen.has(tag)],
+    ['Export as .pos', () => exportView(tag, 'pos')],
+    ['Export as .msh', () => exportView(tag, 'msh')],
+    ['Remove', () => gmsh.view.remove(tag)],
+    'Set visibility',
+    ['All on', () => all(() => 1)],
+    ['All off', () => all(() => 0)],
+    ['Invert', () => all((k) => viewNum(k, 'Visible') ? 0 : 1)],
+    'Remove views',
+    ['All', () => remove(() => false)],
+    ['Invisible', () => remove((t, k) => viewNum(k, 'Visible'))],
+    ['Other', () => remove((t) => t === tag)]];
+}
+function exportView(tag, ext) {
+  const i = viewTags().indexOf(tag);
+  const name = gmsh.option.getString(`View[${i}].Name`).replace(/[^\w.-]+/g, '_') ||
+    `view${tag}`;
+  try {
+    gmsh.view.write(tag, `/tmp/${name}.${ext}`);
+    download(`/tmp/${name}.${ext}`);
+  } catch(e) {
+    status.textContent = e.message;
+    status.classList.add('error');
+  }
+}
+// Mesh: the actions of the graphical interface that need no selection
+// a row of buttons [label, title, action], after a label
+function buttonRow(parent, items, label = '') {
+  const row = document.createElement('div');
+  row.className = 'buttons fill';
+  if(label) {
+    const s = document.createElement('span');
+    s.textContent = label;
+    row.appendChild(s);
+  }
+  for(const [text, title, act] of items) {
+    const b = document.createElement('button');
+    b.textContent = text;
+    b.title = title;
+    b.addEventListener('click', act);
+    row.appendChild(b);
+  }
+  parent.appendChild(row);
+}
+// an operation on the mesh: what is being done in the status, then how long
+// it took and the size of the mesh, or the error
+function meshAction(doing, done, act) {
+  if(busy) return;
+  status.classList.remove('error');
+  status.textContent = doing + '...';
+  progress(true);
+  setTimeout(() => {
+    const t0 = performance.now();
+    lastError = '';
+    try {
+      act();
+    } catch(e) {
+      lastError = lastError || e.message;
+    }
+    // (with errors: in the messages, opened, which end with a summary)
+    status.textContent = `${done} in ${(performance.now() - t0).toFixed(0)} ms, ` +
+      `${gmsh.option.getNumber('Mesh.NbNodes')} nodes` +
+      (lastError ? ', with errors (see the messages)' : '');
+    status.classList.toggle('error', !!lastError);
+    if(lastError) $('log').open = true;
+    progress(false);
+    draw();
+  }, 20);
+}
+const meshNow = (dim) => meshAction(`Meshing in ${dim}D`, `${dim}D mesh`,
+                                    () => gmsh.model.mesh.generate(dim));
+const setOrder = (n) => meshAction(`Setting order ${n}`, `Order ${n}`,
+                                   () => gmsh.model.mesh.setOrder(n));
+// the mesh, as a .msh file named after the model
+function saveMesh() {
+  const path = '/tmp/' + ($('model').textContent || 'untitled').replace(/\.[^.]*$/, '') + '.msh';
+  try {
+    gmsh.write(path);
+    download(path);
+  } catch(e) {
+    status.textContent = e.message;
+    status.classList.add('error');
+  }
+}
+function buildMesh() {
+  const d = $('moduleMesh');
+  buttonRow(d, [1, 2, 3].map((n) => [`${n}D`, `Mesh the ${['curves', 'surfaces',
+    'volumes'][n - 1]} (and what they are bounded by)`, () => meshNow(n)]));
+  buttonRow(d, [1, 2, 3].map((n) => [`${n}`, `Make the mesh of order ${n}`,
+    () => setOrder(n)]), 'Set order');
+  buttonRow(d, [
+    ['Optimize 3D', 'Optimize the quality of the tetrahedra', () => meshAction(
+      'Optimizing', 'Optimized', () => gmsh.model.mesh.optimize(''))],
+    ['Recombine 2D', 'Recombine the triangles into quadrangles', () => meshAction(
+      'Recombining', 'Recombined', () => gmsh.model.mesh.recombine())]]);
+  buttonRow(d, [
+    ['Refine by splitting', 'Refine the mesh by splitting its elements', () => meshAction(
+      'Refining', 'Refined', () => gmsh.model.mesh.refine())],
+    ['Delete', 'Delete the mesh', () => meshAction(
+      'Deleting the mesh', 'Mesh deleted', () => gmsh.model.mesh.clear())],
+    ['Save', 'Save the mesh (.msh)', saveMesh]]);
+}
+buildMesh();
+
+// Geometry: a new model, the shapes of OpenCASCADE added to its script as the
+// dialog of the graphical interface adds them (webModules.cpp), and the
+// script edited, reloaded and saved. The fields of a shape, as the dialog's,
+// keep what was typed in them
+const shapes = {
+  Box: [['Corner X', '0'], ['Corner Y', '0'], ['Corner Z', '0'], ['Size X', '1'],
+        ['Size Y', '1'], ['Size Z', '1']],
+  Sphere: [['Center X', '0'], ['Center Y', '0'], ['Center Z', '0'], ['Radius', '0.5'],
+           ['Angle 1', '-Pi/2'], ['Angle 2', 'Pi/2'], ['Angle 3', '2*Pi']],
+  Cylinder: [['Center base X', '0'], ['Center base Y', '0'], ['Center base Z', '0'],
+             ['Axis DX', '1'], ['Axis DY', '0'], ['Axis DZ', '0'], ['Radius', '0.5'],
+             ['Angle', '2*Pi']],
+  Cone: [['Center base X', '0'], ['Center base Y', '0'], ['Center base Z', '0'],
+         ['Axis DX', '1'], ['Axis DY', '0'], ['Axis DZ', '0'], ['Radius 1', '0.5'],
+         ['Radius 2', '0.1'], ['Angle', '2*Pi']],
+  Torus: [['Center X', '0'], ['Center Y', '0'], ['Center Z', '0'], ['Radius 1', '0.5'],
+          ['Radius 2', '0.2'], ['Angle', '2*Pi']],
+  Wedge: [['Corner X', '0'], ['Corner Y', '0'], ['Corner Z', '0'], ['Size X', '0.5'],
+          ['Size Y', '0.5'], ['Size Z', '0.5'], ['Top size X', '0']],
+  Disk: [['Center X', '0'], ['Center Y', '0'], ['Center Z', '0'], ['Radius X', '0.5'],
+         ['Radius Y', '0.25']],
+  Rectangle: [['Corner X', '0'], ['Corner Y', '0'], ['Corner Z', '0'], ['Size X', '1'],
+              ['Size Y', '0.5'], ['Rounded radius', '0']],
+};
+// the script of the model: its .geo file, if it is one
+function scriptFile() {
+  const f = gmsh.model.getFileName();
+  return /\.geo$/i.test(f) && FS.analyzePath(f).exists ? f : '';
+}
+// an empty .geo file, with the OpenCASCADE kernel, as a new model
+async function newModel() {
+  const geo = `// Gmsh project created on ${new Date().toString()}\n` +
+    'SetFactory("OpenCASCADE");\n';
+  await openFiles([['untitled.geo', new TextEncoder().encode(geo)]]);
+  $('moduleGeometry').open = true;
+}
+// the view fitted to a model that was empty (a new one), or kept
+const isEmpty = () => !gmsh.model.getEntities().length;
+function fitIfWasEmpty(wasEmpty) {
+  if(!wasEmpty || isEmpty()) return;
+  Module.ccall('gmshWebResetView', null, [], []);
+  draw();
+}
+// the script read again, with what the solvers check
+async function reloadScript() {
+  const wasEmpty = isEmpty();
+  gmsh.onelab.setChanged('Gmsh', 3);
+  await run('check');
+  fitIfWasEmpty(wasEmpty);
+}
+let editedScript = '';
+function editScript() {
+  editedScript = scriptFile();
+  if(!editedScript) {
+    status.textContent = 'No script to edit: open a .geo model, or make a new one';
+    return;
+  }
+  $('scriptName').textContent = editedScript.slice(editedScript.lastIndexOf('/') + 1);
+  $('scriptText').value = FS.readFile(editedScript, {encoding: 'utf8'});
+  $('scriptDialog').showModal();
+}
+$('scriptDialog').addEventListener('close', () => {
+  if($('scriptDialog').returnValue !== 'save' || !editedScript) return;
+  FS.writeFile(editedScript, $('scriptText').value);
+  reloadScript();
+});
+function saveScript() {
+  const f = scriptFile();
+  if(f) download(f, true);
+  else status.textContent = 'No script to save: open a .geo model, or make a new one';
+}
+// the form of a shape, under the buttons
+function showShapeForm(shape) {
+  const form = $('shapeForm');
+  form.textContent = '';
+  form.hidden = !shape;
+  if(!shape) return;
+  const title = document.createElement('div');
+  title.className = 'name';
+  title.textContent = shape;
+  form.appendChild(title);
+  const inputs = shapes[shape].map((field) => {
+    const el = document.createElement('input');
+    el.type = 'text';
+    el.value = field[1];
+    el.spellcheck = false;
+    el.addEventListener('change', () => { field[1] = el.value; });
+    el.addEventListener('keydown', (e) => { if(e.key === 'Enter') addShape(shape); });
+    form.appendChild(optionRow(field[0], el));
+    return el;
+  });
+  buttonRow(form, [['Add', `Add the ${shape.toLowerCase()} to the script`, () => addShape(shape)],
+                   ['Close', 'Close the form', () => showShapeForm('')]]);
+  // (not on a phone, whose keyboard would cover the form)
+  if(!narrow.matches) inputs[0].focus({preventScroll: true});
+}
+// a shape added to the script of the model, a new one if there is none
+async function addShape(shape) {
+  if(busy) return;
+  for(const el of $('shapeForm').querySelectorAll('input')) el.dispatchEvent(new Event('change'));
+  if(!modelDir) await newModel();
+  const wasEmpty = isEmpty();
+  lastError = '';
+  const errors = Module.ccall('gmshWebAddShape', 'number', ['string', 'string'],
+                              [shape, shapes[shape].map((f) => f[1]).join('\n')]);
+  // (a model that is not a .geo file is given one)
+  const f = gmsh.model.getFileName();
+  $('model').textContent = f.slice(f.lastIndexOf('/') + 1);
+  showAll();
+  fitIfWasEmpty(wasEmpty);
+  status.textContent = errors ?
+    `Not added: ${lastError.replace(/^Error *: */, '')}` :
+    `Added a ${shape.toLowerCase()} to ${$('model').textContent}`;
+  status.classList.toggle('error', !!errors);
+}
+function buildGeometry() {
+  const d = $('moduleGeometry');
+  buttonRow(d, [
+    ['New', 'Make a new model, an empty script with the OpenCASCADE kernel', newModel],
+    ['Reload', 'Read the script again', reloadScript],
+    ['Edit', 'Edit the script', editScript],
+    ['Save', 'Save the script (.geo)', saveScript]]);
+  const names = Object.keys(shapes);
+  const add = (n) => [n, `Add a ${n.toLowerCase()}`, () => showShapeForm(n)];
+  buttonRow(d, names.slice(0, 4).map(add));
+  buttonRow(d, names.slice(4).map(add));
+  const form = document.createElement('div');
+  form.id = 'shapeForm';
+  form.className = 'shapeForm';
+  form.hidden = true;
+  d.appendChild(form);
+}
+buildGeometry();
+
+// a file of the in-memory filesystem, downloaded, then removed unless kept
+function download(path, keep = false) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([FS.readFile(path)]));
+  a.download = path.slice(path.lastIndexOf('/') + 1);
+  a.click();
+  URL.revokeObjectURL(a.href);
+  if(!keep) FS.unlink(path);
 }
 
 // ---------------------------------------------------------------- options
@@ -1531,6 +1989,7 @@ function setOption(name, v) {
   if(name.startsWith('View.')) {
     viewSettings[name] = v;
     for(let i = 0; i < views(); i++) setViewOption(name, i, v);
+    for(const s of viewOverrides.values()) s.delete(name);
   }
   else
     gmsh.option.setNumber(name, v);
@@ -1570,6 +2029,42 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
   recolorParameters();
   draw();
 });
+// the field of an option of a kind (check, number, range or choice), which
+// gives change() its new value
+function optionField(kind, choices, change) {
+  let el;
+  if(kind === 'choice') {
+    el = document.createElement('select');
+    for(const [v, t] of Object.entries(choices)) {
+      const o = document.createElement('option');
+      o.value = v;
+      o.textContent = t;
+      el.appendChild(o);
+    }
+  }
+  else {
+    el = document.createElement('input');
+    el.type = {check: 'checkbox', number: 'number', range: 'range'}[kind];
+    if(kind === 'range') Object.assign(el, choices || {min: 0, max: 1, step: 0.05});
+    if(kind === 'number') el.step = 'any';
+  }
+  el.addEventListener(kind === 'range' ? 'input' : 'change', () =>
+    change(kind === 'check' ? (el.checked ? 1 : 0) : Number(el.value)));
+  return el;
+}
+function setField(el, kind, v) {
+  if(kind === 'check') el.checked = !!v;
+  else el.value = String(v);
+}
+// a field with its label before it
+function optionRow(text, el) {
+  const row = document.createElement('label');
+  row.className = 'row';
+  const label = document.createElement('span');
+  label.textContent = text;
+  row.append(label, el);
+  return row;
+}
 function buildOptions() {
   const tab = $('optionsTab');
   for(const [group, options] of optionGroups) {
@@ -1580,32 +2075,9 @@ function buildOptions() {
     sum.textContent = group;
     d.appendChild(sum);
     for(const [name, kind, text, choices] of options) {
-      const row = document.createElement('label');
-      row.className = 'row';
-      const label = document.createElement('span');
-      label.textContent = text;
-      row.appendChild(label);
-      let el;
-      if(kind === 'choice') {
-        el = document.createElement('select');
-        for(const [v, t] of Object.entries(choices)) {
-          const o = document.createElement('option');
-          o.value = v;
-          o.textContent = t;
-          el.appendChild(o);
-        }
-      }
-      else {
-        el = document.createElement('input');
-        el.type = {check: 'checkbox', number: 'number', range: 'range'}[kind];
-        if(kind === 'range') Object.assign(el, choices || {min: 0, max: 1, step: 0.05});
-        if(kind === 'number') el.step = 'any';
-      }
+      const el = optionField(kind, choices, (v) => setOption(name, v));
       el.title = name;
-      el.addEventListener(kind === 'range' ? 'input' : 'change', () =>
-        setOption(name, kind === 'check' ? (el.checked ? 1 : 0) : Number(el.value)));
-      row.appendChild(el);
-      d.appendChild(row);
+      d.appendChild(optionRow(text, el));
       optionFields.push([name, kind, el]);
     }
     if(group === 'Mesh') {
@@ -1613,15 +2085,6 @@ function buildOptions() {
       note.className = 'note';
       note.textContent = 'Run meshes again after a change of the first five';
       d.appendChild(note);
-      const buttons = document.createElement('div');
-      buttons.className = 'buttons';
-      for(const [t, dim] of [['1D', 1], ['2D', 2], ['3D', 3], ['Clear', 0]]) {
-        const b = document.createElement('button');
-        b.textContent = t;
-        b.addEventListener('click', () => meshNow(dim));
-        buttons.appendChild(b);
-      }
-      d.appendChild(buttons);
     }
     tab.appendChild(d);
   }
@@ -1629,35 +2092,19 @@ function buildOptions() {
 // the options as Gmsh has them (a model sets some, its views their own), the
 // settings asked for the views given to the new ones
 function readOptions() {
+  const tags = viewTags();
   for(const [name, v] of Object.entries(viewSettings))
-    for(let i = 0; i < views(); i++) setViewOption(name, i, v);
+    tags.forEach((t, i) => {
+      if(!viewOverrides.get(t)?.has(name)) setViewOption(name, i, v);
+    });
   // the options of the views, once there are views
-  $('optionsViews').hidden = !views();
+  $('optionsViews').hidden = !tags.length;
   for(const [name, kind, el] of optionFields) {
     const isView = name.startsWith('View.');
-    if(isView && !views()) continue;
-    const v = isView ? getViewOption(name, 0) : gmsh.option.getNumber(name);
-    if(kind === 'check') el.checked = !!v;
-    else el.value = String(v);
+    if(isView && !tags.length) continue;
+    setField(el, kind, isView ? getViewOption(name, 0) : gmsh.option.getNumber(name));
   }
-}
-function meshNow(dim) {
-  if(busy) return;
-  status.classList.remove('error');
-  status.textContent = dim ? `meshing in ${dim}D...` : 'clearing the mesh...';
-  setTimeout(() => {
-    const t0 = performance.now();
-    try {
-      if(dim) gmsh.model.mesh.generate(dim);
-      else gmsh.model.mesh.clear();
-      status.textContent = dim ? `${dim}D mesh in ${(performance.now() - t0).toFixed(0)} ms, ` +
-        `${gmsh.option.getNumber('Mesh.NbNodes')} nodes` : 'mesh cleared';
-    } catch(e) {
-      status.textContent = e.message;
-      status.classList.add('error');
-    }
-    draw();
-  }, 20);
+  updateViews();
 }
 applyColorScheme();
 buildOptions();
@@ -2112,6 +2559,7 @@ function quickItems() {
   const items = [
     ['Reset viewport', () => { sceneAction('view_z'); sceneAction('view_1_1'); }],
     ...(fullscreenEnabled ? [['Full screen', toggleFullscreen, !!fullscreenElement()]] : []),
+    ...(window.installPrompt ? [['Install app', installApp]] : []),
     // the buttons of the status bar there is no room for on a small screen
     ...(narrow.matches ? [
       ['View along X', () => sceneAction('view_x')],
@@ -2176,16 +2624,35 @@ function toggleFullscreen() {
     (d.requestFullscreen || d.webkitRequestFullscreen).call(d);
   if(r && r.catch) r.catch((e) => log('*** ' + e.message));
 }
-// at (x, y) in the window, or above it (from the status bar)
+// the page installed as an app (manifest.webmanifest), where the browser
+// offers it (Chrome, Edge, Android; see also the landing page)
+async function installApp() {
+  const p = window.installPrompt;
+  if(!p) return;
+  window.installPrompt = null;
+  p.prompt();
+  await p.userChoice;
+}
 // On a small screen its sections are folded under their headings, until
 // they are opened (and kept open for the next times)
 const quickOpen = new Set();
 function openQuickMenu(x, y, above = false) {
+  popupMenu(quickItems, x, y, {above, fold: narrow.matches});
+}
+// A menu of items(): [label, action, checked] or the heading of a section, at
+// (x, y) in the window or above it; the button that opened it (owner) closes
+// it again
+let menuOwner = null;
+function popupMenu(items, x, y, {above = false, fold = false, owner = null} = {}) {
   const menu = $('quickMenu');
+  if(owner && owner === menuOwner && !menu.hidden) {
+    menu.hidden = true;
+    return;
+  }
+  menuOwner = owner;
   menu.textContent = '';
-  const fold = narrow.matches;
   let section = '';
-  for(const item of quickItems()) {
+  for(const item of items()) {
     if(typeof item === 'string') {
       section = item;
       const h = document.createElement(fold ? 'button' : 'div');
@@ -2193,7 +2660,7 @@ function openQuickMenu(x, y, above = false) {
       h.textContent = fold ? (quickOpen.has(item) ? '▾ ' : '▸ ') + item : item;
       if(fold) h.addEventListener('click', () => {
         if(!quickOpen.delete(item)) quickOpen.add(item);
-        openQuickMenu(x, y, above);
+        popupMenu(items, x, y, {above, fold});
       });
       menu.appendChild(h);
       continue;
@@ -2208,6 +2675,7 @@ function openQuickMenu(x, y, above = false) {
     b.addEventListener('click', () => {
       menu.hidden = true;
       act();
+      showViews();
       readOptions();
       draw();
     });
@@ -2220,7 +2688,7 @@ function openQuickMenu(x, y, above = false) {
                                         innerHeight - menu.offsetHeight - 8)) + 'px';
 }
 document.addEventListener('pointerdown', (e) => {
-  if(!$('quickMenu').hidden && !e.target.closest('#quickMenu, [data-act=quick]'))
+  if(!$('quickMenu').hidden && !e.target.closest('#quickMenu, [data-act=quick], .menuButton'))
     $('quickMenu').hidden = true;
 });
 showSelection();
@@ -2305,28 +2773,13 @@ function showOptions(group) {
     $('options' + group).scrollIntoView({block: 'start'});
   }
 }
-async function saveMesh() {
-  const name = ($('model').textContent || 'model').replace(/\.[^.]*$/, '') + '.msh';
-  try {
-    gmsh.write('/tmp/' + name);
-  } catch(e) {
-    status.textContent = e.message;
-    status.classList.add('error');
-    return;
-  }
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([FS.readFile('/tmp/' + name)]));
-  a.download = name;
-  a.click();
-  URL.revokeObjectURL(a.href);
-  FS.unlink('/tmp/' + name);
-}
 const pageShortcuts = {
   mesh_1d: () => meshNow(1),
   mesh_2d: () => meshNow(2),
   mesh_3d: () => meshNow(3),
   solver_run: () => run('compute'),
-  geometry_reload: () => run('check'),
+  geometry_reload: reloadScript,
+  file_new: newModel,
   project_reload: () => run('check'),
   file_open: () => openMenu(true),
   mesh_save: saveMesh,
@@ -2453,7 +2906,7 @@ async function openFiles(entries, open = '') {
   const file = (open && FS.analyzePath(dir + '/' + open).exists) ?
     dir + '/' + open : findModel(dir);
   if(!file) {
-    status.textContent = 'no model found';
+    status.textContent = 'No model found';
     return;
   }
   FS.chdir(file.slice(0, file.lastIndexOf('/')));
@@ -2463,7 +2916,7 @@ async function openFiles(entries, open = '') {
   // next to them on the disk
   const geo = file.replace(/\.pro$/, '.geo');
   hint = (geo !== file && !FS.analyzePath(geo).exists) ?
-    `no ${geo.slice(geo.lastIndexOf('/') + 1)} next to ${base}: open the ` +
+    `No ${geo.slice(geo.lastIndexOf('/') + 1)} next to ${base}: open the ` +
     `model's folder instead (Open model > Its folder)` : '';
   // a model starts from the default options, as the options a model sets
   // (e.g. Mesh.ElementOrder) stay otherwise
@@ -2522,13 +2975,16 @@ window.addEventListener('drop', async (e) => {
   openFiles(entries);
 });
 async function fetchFile(url) {
+  status.textContent = `Loading ${url.split('/').pop()}...`;
+  progress(true);
   const r = await fetch(url);
   if(!r.ok) throw new Error(`${url}: ${r.status}`);
   return new Uint8Array(await r.arrayBuffer());
 }
 
 $('run').disabled = $('reset').disabled = false;
-status.textContent = 'open a model, or drop its files here';
+status.textContent = 'Open a model, or drop its files here';
+progress(false);
 const params = new URLSearchParams(location.search);
 try {
   if(params.get('zip')) {
@@ -2547,6 +3003,7 @@ try {
   }
 } catch(e) {
   status.textContent = e.message;
+  progress(false);
 }
 draw();
 </script>

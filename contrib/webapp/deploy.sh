@@ -44,6 +44,9 @@ mkdir -p "$SITE"
 # geometry, not offered yet)
 mkdir -p "$SITE/build/templates"
 cp "$B/gmsh.mjs" "$B/libgmsh.mjs" "$B/libgmsh.wasm" "$SITE/build"
+# its size, which the page cannot read from a compressed response, for the
+# progress of its loading
+wc -c < "$B/libgmsh.wasm" | tr -d ' ' > "$SITE/build/libgmsh.wasm.size"
 if [ -d "$B/templates" ]; then cp "$B"/templates/* "$SITE/build/templates"; fi
 
 # the pages, with the manifest and the icons that make them an app on a
