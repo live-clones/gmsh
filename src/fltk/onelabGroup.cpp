@@ -569,9 +569,18 @@ public:
       if(alive.exists()) _broadcasting--;
       return ret;
     }
+    Fl_Widget_Tracker alive(this);
+    int rootX = Fl::event_x_root(), rootY = Fl::event_y_root();
     int ret = Fl_Tree::handle(event);
+    if(!alive.exists()) return ret;
     switch(event) {
     case FL_PUSH:
+      // not after a popup menu of a row (the choices of a field) took the
+      // click: its events were handled meanwhile, the last one (the choice)
+      // in place of the click, at the place of the choice in the menu
+      if(Fl::event() != FL_PUSH || Fl::event_x_root() != rootX ||
+         Fl::event_y_root() != rootY)
+        break;
       if(Fl::event_button() == FL_LEFT_MOUSE) {
         // not when a widget of the row took the click (the switch of a group
         // of views): FLTK has noted it as pushed
@@ -748,7 +757,7 @@ template <class T> void onelabGroup::_addParameter(T &p)
 }
 
 void onelabGroup::_addMenu(const std::string &path, Fl_Callback *callback,
-                           void *data)
+                           void *data, const std::string &help)
 {
   Fl_Tree_Item *n = _tree->add(path.c_str());
   if(!n) {
@@ -766,6 +775,7 @@ void onelabGroup::_addMenu(const std::string &path, Fl_Callback *callback,
     std::string::size_type last = path.find_last_of('/');
     if(last != std::string::npos) label = path.substr(last + 1);
     but->copy_label(label.c_str());
+    if(help.size()) but->copy_tooltip(help.c_str());
   });
 }
 

@@ -54,9 +54,11 @@ private:
   void _addRow(Fl_Tree_Item *n,
                const std::function<void(int ww, int hh)> &make);
   template <class T> void _addParameter(T &p);
-  void _addMenu(const std::string &path, Fl_Callback *callback, void *data);
+  void _addMenu(const std::string &path, Fl_Callback *callback, void *data,
+                const std::string &help = "");
   void _addSolverMenu(int num);
   void _addViewMenu(int num);
+  void _addModuleButtons(const std::string &module);
   std::set<std::string> _getClosedGmshMenus();
   void _addGmshMenus();
 

@@ -11,6 +11,7 @@ set(SRC
   Options.cpp
   CommandLine.cpp
   Shortcuts.cpp
+  Actions.cpp
   OS.cpp
   OpenFile.cpp
   CreateFile.cpp

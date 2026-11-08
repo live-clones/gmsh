@@ -17,6 +17,7 @@
 #include <map>
 #include <sstream>
 #include <emscripten.h>
+#include "Actions.h"
 #include "Context.h"
 #include "GmshDefines.h"
 #include "GmshMessage.h"
@@ -415,6 +416,85 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebShapes()
   }
   json += "]";
   return json.c_str();
+}
+
+// The action registry (see Actions.h), in JSON: {menu: item}, an item
+// {"id", "label", "kind" ("menu", "run", "operation", "shape" or "option"),
+// "what", "help", "key", "ask" (the option asked for, or ""), "interface"
+// (1 if the page does it), "items"}; the page gives back its id to do it
+static std::vector<const actionItem *> _items;
+
+static std::string jsonItem(const actionItem &item)
+{
+  static const char *kinds[] = {"menu", "run", "operation", "shape", "option"};
+  std::string json =
+    "{\"id\":" + std::to_string(_items.size()) +
+    ",\"label\":" + jsonString(item.label) + ",\"kind\":\"" + kinds[item.kind] +
+    "\",\"what\":" + jsonString(item.what) +
+    ",\"help\":" + jsonString(item.help) + ",\"key\":" + jsonString(item.key) +
+    ",\"ask\":" + jsonString(item.ask.option) +
+    ",\"interface\":" + (IsDoneByInterface(item) ? "1" : "0") + ",\"items\":[";
+  _items.push_back(&item);
+  for(std::size_t i = 0; i < item.items.size(); i++)
+    json += std::string(i ? "," : "") + jsonItem(item.items[i]);
+  return json + "]}";
+}
+
+EMSCRIPTEN_KEEPALIVE const char *gmshWebActions()
+{
+  static std::string json;
+  _items.clear();
+  json = "{";
+  for(const char *menu : {"Geometry", "Mesh", "Quick access", "View"})
+    json += std::string(json.size() > 1 ? "," : "") + jsonString(menu) + ":" +
+            jsonItem(GetActionMenu(menu));
+  json += "}";
+  return json.c_str();
+}
+
+static const actionItem *item(int id)
+{ return (id >= 0 && id < (int)_items.size()) ? _items[id] : nullptr; }
+
+// What the item of id does, done here (see RunAction()), for the view of
+// index view, in the scene: what RunAction() returns
+EMSCRIPTEN_KEEPALIVE int gmshWebAction(int id, int view)
+{
+  if(!item(id)) return 0;
+  int ret =
+    RunAction(*item(id), view, _view ? _view->getDrawContext() : nullptr);
+  if(ret & ActionModelChanged) {
+    GModel::current()->setSelection(0);
+    SetBoundingBox();
+  }
+  return ret;
+}
+
+// The check mark of the item of id (see GetActionCheck()), -2 if it does not
+// apply now (see IsActionAvailable())
+EMSCRIPTEN_KEEPALIVE int gmshWebActionCheck(int id)
+{
+  if(!item(id) || !IsActionAvailable(*item(id))) return -2;
+  return GetActionCheck(*item(id));
+}
+
+// What the item of id asks for, in JSON: {"min", "max", "step", "value"}
+EMSCRIPTEN_KEEPALIVE const char *gmshWebActionAsk(int id)
+{
+  static std::string json;
+  double min = 0., max = 0., step = 0., value = 0.;
+  if(item(id)) GetActionAsk(item(id)->ask, min, max, step, value);
+  char buf[256];
+  snprintf(buf, sizeof(buf),
+           "{\"min\":%.16g,\"max\":%.16g,\"step\":%.16g,\"value\":%.16g}", min,
+           max, step, value);
+  json = buf;
+  return json.c_str();
+}
+
+// The option asked for by the item of id set (see SetActionOption())
+EMSCRIPTEN_KEEPALIVE void gmshWebActionSet(int id, double value)
+{
+  if(item(id)) SetActionOption(item(id)->ask.option, value);
 }
 
 // Add a shape (see gmshWebShapes()) to the script of the current model, with

@@ -29,4 +29,7 @@ public:
   std::string label() { return _toggle->label(); }
 };
 
+// the view of index (intptr_t)data exported, to a file chosen
+void view_save_cb(Fl_Widget *w, void *data);
+
 #endif

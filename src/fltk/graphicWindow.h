@@ -148,9 +148,6 @@ void mod_back_cb(Fl_Widget *w, void *data);
 void mod_forward_cb(Fl_Widget *w, void *data);
 void geometry_reload_cb(Fl_Widget *w, void *data);
 void onelab_reload_cb(Fl_Widget *w, void *data);
-void mesh_1d_cb(Fl_Widget *w, void *data);
-void mesh_2d_cb(Fl_Widget *w, void *data);
-void mesh_3d_cb(Fl_Widget *w, void *data);
 void help_about_cb(Fl_Widget *w, void *data);
 void status_xyz1p_cb(Fl_Widget *w, void *data);
 void status_options_cb(Fl_Widget *w, void *data);
@@ -164,11 +161,21 @@ bool measureMode();
 // colours of their states
 void updateModeButtons();
 void status_play_manual(int time, int incr, bool redraw = true);
-void quick_access_cb(Fl_Widget *w, void *data);
 void show_hide_message_cb(Fl_Widget *w, void *data);
 void show_hide_menu_cb(Fl_Widget *w, void *data);
 void attach_detach_menu_cb(Fl_Widget *w, void *data);
 void dock_tool_cb(Fl_Widget *w, void *data);
 void dock_tools_cb(Fl_Widget *w, void *data);
+
+// The items of the action registry (see Actions.h), as this interface does
+// them: whether it has an item now, what an item does done (view: the index
+// of the view of a menu of a view), an action of the table done by its name,
+// and the items of a menu added to an FLTK menu, which do them for the view
+struct actionItem;
+class Fl_Menu_;
+bool canRunItem(const actionItem &item);
+void runItem(const actionItem &item, int view = -1);
+void runAction(const std::string &name);
+void addActionItems(Fl_Menu_ *m, const actionItem &menu, int view);
 
 #endif

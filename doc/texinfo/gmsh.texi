@@ -1741,9 +1741,8 @@ desktop and follows its light or dark mode; see the
 
 To create a new geometrical model, use the `File->New' menu to create a
 new model file, and choose for example @file{mymodel.geo} as file
-name. Then in the tree menu, successively open the `Geometry',
-`Elementary entities' and `Add' submenus, and click for example on
-`Rectangle'. A context window with parameters will open, docked on the
+name. Then in the tree menu, open the `Geometry' module and choose for
+example `Rectangle' in its `Add' menu. A context window with parameters will open, docked on the
 right of the graphic area: you can enter some parameters in this window
 (e.g. the width and height of the rectangle) and move the mouse to place
 it on the canvas. If you don't

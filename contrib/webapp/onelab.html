@@ -137,6 +137,7 @@
   #side .buttons { display: flex; gap: 4px; margin: 4px 0 4px 8px; }
   /* the actions of a module: buttons sharing the row, after its label */
   #side .buttons.fill { align-items: center; }
+  #side .buttons.wrap { flex-wrap: wrap; }
   #side .buttons.fill button { flex: 1 1 auto; min-width: 0; padding: 2px 4px;
                               white-space: nowrap; }
   #side .buttons.fill span { flex: 0 0 72px; }
@@ -1666,25 +1667,7 @@ function setViewOptionOf(tag, name, v) {
 }
 // the menu of a view's button, as the graphical interface's
 function viewItems(tag) {
-  const all = (f) => viewTags().forEach((t, k) =>
-    gmsh.option.setNumber(`View[${k}].Visible`, f(k)));
-  const remove = (keep) => viewTags().filter((t, k) => !keep(t, k)).forEach(
-    (t) => gmsh.view.remove(t));
-  return [
-    ['Options', () => {
-      if(!viewOptionsOpen.delete(tag)) viewOptionsOpen.add(tag);
-    }, viewOptionsOpen.has(tag)],
-    ['Export as .pos', () => exportView(tag, 'pos')],
-    ['Export as .msh', () => exportView(tag, 'msh')],
-    ['Remove', () => gmsh.view.remove(tag)],
-    'Set visibility',
-    ['All on', () => all(() => 1)],
-    ['All off', () => all(() => 0)],
-    ['Invert', () => all((k) => viewNum(k, 'Visible') ? 0 : 1)],
-    'Remove views',
-    ['All', () => remove(() => false)],
-    ['Invisible', () => remove((t, k) => viewNum(k, 'Visible'))],
-    ['Other', () => remove((t) => t === tag)]];
+  return menuItems(registry.View, {view: viewTags().indexOf(tag), tag});
 }
 function exportView(tag, ext) {
   const i = viewTags().indexOf(tag);
@@ -1718,6 +1701,7 @@ function buttonRow(parent, items, label = '') {
     row.appendChild(b);
   }
   parent.appendChild(row);
+  return row;
 }
 // a button of a row that opens a menu of items(): [label, action] or the
 // heading of a section (see popupMenu())
@@ -1742,10 +1726,11 @@ function showPanel(module, title, fields = [], change, enter, buttons = []) {
   const inputs = [];
   for(const f of fields) {
     let el;
-    if(f.kind === 'check' || f.kind === 'text') {
+    if(f.kind === 'check' || f.kind === 'text' || f.kind === 'range') {
       el = document.createElement('input');
-      el.type = f.kind === 'check' ? 'checkbox' : 'text';
+      el.type = f.kind === 'check' ? 'checkbox' : f.kind;
       el.spellcheck = false;
+      if(f.kind === 'range') Object.assign(el, {min: f.min, max: f.max, step: f.step});
       if(f.kind === 'check') el.checked = f.value === '1';
       else el.value = f.value;
     }
@@ -1755,7 +1740,7 @@ function showPanel(module, title, fields = [], change, enter, buttons = []) {
       el.value = f.value;
     }
     const value = () => el.type === 'checkbox' ? (el.checked ? '1' : '0') : el.value;
-    el.addEventListener('change', () => change(f.name, value()));
+    el.addEventListener(f.kind === 'range' ? 'input' : 'change', () => change(f.name, value()));
     if(enter) el.addEventListener('keydown', (e) => { if(e.key === 'Enter') enter(); });
     panel.appendChild(optionRow(f.name, el));
     inputs.push(el);
@@ -1792,10 +1777,6 @@ function meshAction(doing, done, act) {
     draw();
   }, 20);
 }
-const meshNow = (dim) => meshAction(`Meshing in ${dim}D`, `${dim}D mesh`,
-                                    () => gmsh.model.mesh.generate(dim));
-const setOrder = (n) => meshAction(`Setting order ${n}`, `Order ${n}`,
-                                   () => gmsh.model.mesh.setOrder(n));
 // the mesh, as a .msh file named after the model
 function saveMesh() {
   const path = '/tmp/' + ($('model').textContent || 'untitled').replace(/\.[^.]*$/, '') + '.msh';
@@ -1807,39 +1788,6 @@ function saveMesh() {
     status.classList.add('error');
   }
 }
-function buildMesh() {
-  const d = $('moduleMesh');
-  const op = (label, name = label) => [label, () => startOperation(d, name)];
-  const parts = (action) => () => ['Elements', 'Curves', 'Surfaces', 'Volumes'].map(
-    (w) => op(w, `${action} mesh ${w.toLowerCase()}`));
-  buttonRow(d, [1, 2, 3].map((n) => [`${n}D`, `Mesh the ${['curves', 'surfaces',
-    'volumes'][n - 1]} (and what they are bounded by)`, () => meshNow(n)]));
-  buttonRow(d, [1, 2, 3].map((n) => [`${n}`, `Make the mesh of order ${n}`,
-    () => setOrder(n)]), 'Set order');
-  buttonRow(d, [
-    ['Optimize 3D', 'Optimize the quality of the tetrahedra', () => meshAction(
-      'Optimizing', 'Optimized', () => gmsh.model.mesh.optimize(''))],
-    ['Recombine 2D', 'Recombine the triangles into quadrangles', () => meshAction(
-      'Recombining', 'Recombined', () => gmsh.model.mesh.recombine())]]);
-  buttonRow(d, [
-    ['Refine by splitting', 'Refine the mesh by splitting its elements', () => meshAction(
-      'Refining', 'Refined', () => gmsh.model.mesh.refine())],
-    ['Save', 'Save the mesh (.msh)', saveMesh]]);
-  buttonRow(d, [
-    menuButton('Define', 'Mesh sizes and constraints on entities picked in the scene',
-      () => [op('Size at points'), op('Recombine'), 'Transfinite',
-             op('Curve', 'Transfinite Curve'), op('Surface', 'Transfinite Surface'),
-             op('Volume', 'Transfinite Volume'), 'Embedded',
-             op('Point', 'Embed Point'), op('Curve', 'Embed Curve'),
-             op('Surface', 'Embed Surface'), 'Compound',
-             op('Curve', 'Compound Curve'), op('Surface', 'Compound Surface')]),
-    menuButton('Reverse', 'Reverse the elements picked in the scene', parts('Reverse')),
-    menuButton('Delete', 'Delete the mesh, or the elements picked in the scene',
-      () => [['All', () => meshAction('Deleting the mesh', 'Mesh deleted',
-                                      () => gmsh.model.mesh.clear())],
-             ...parts('Delete')()])]);
-}
-
 // Geometry: a new model, the script edited, reloaded and saved, the shapes
 // added to it as the dialog of the graphical interface adds them, with its
 // fields and their defaults (see gmshWebShapes() in webView.cpp), and the
@@ -1929,37 +1877,163 @@ async function addShape(shape) {
     `Added a ${shape.toLowerCase()} to ${$('model').textContent}`;
   status.classList.toggle('error', !!errors);
 }
-function buildGeometry() {
-  const d = $('moduleGeometry');
-  const shape = (label, name = label) => [label, () => showShapeForm(name)];
-  const op = (label, name = label) => [label, () => startOperation(d, name)];
-  const groups = (remove) => () => ['Point', 'Curve', 'Surface', 'Volume'].map(
-    (w) => op(w, (remove ? 'Remove Physical ' : 'Physical ') + w));
-  buttonRow(d, [
-    ['New', 'Make a new model, an empty script with the OpenCASCADE kernel', newModel],
-    ['Reload', 'Read the script again', reloadScript],
-    ['Edit', 'Edit the script', editScript],
-    ['Save', 'Save the script (.geo)', saveScript]]);
-  buttonRow(d, [
-    menuButton('Add', 'Add an entity to the script, from its values or from the ' +
-      'entities picked in the scene', () => [
-      shape('Point'), op('Line'), op('Spline'), op('Bezier'), op('B-Spline', 'BSpline'),
-      shape('Circle'), op('Circle arc'), shape('Ellipse'), op('Ellipse arc'),
-      shape('Rectangle'), shape('Disk'), op('Plane surface', 'Plane Surface'),
-      op('Surface filling', 'Surface'), shape('Sphere'), shape('Cylinder'),
-      shape('Box'), shape('Torus'), shape('Cone'), shape('Wedge'), op('Volume')]),
-    menuButton('Transform', 'Transform the entities picked in the scene', () => [
-      op('Translate'), op('Rotate'), op('Scale'), op('Symmetry'), 'Extrude',
-      op('Translate', 'Extrude translate'), op('Rotate', 'Extrude rotate'), op('Pipe'),
-      'Other', op('Fillet'), op('Split curve'), op('Delete')]),
-    menuButton('Boolean', 'Boolean operations on the entities picked in the scene',
-      () => ['Intersection', 'Union', 'Difference', 'Fragments'].map(
-        (b) => op(b, 'Boolean' + b))),
-    menuButton('Physical', 'Physical groups of the entities picked in the scene',
-      () => ['Add', ...groups(false)(), 'Remove', ...groups(true)()])]);
+// the mesh partitioned, into the number of parts the form of the module asks
+let partitions = '4';
+function partitionForm() {
+  const go = () => {
+    for(const el of $('panel').querySelectorAll('input')) el.dispatchEvent(new Event('change'));
+    showPanel(null);
+    meshAction('Partition mesh', 'Partition mesh',
+               () => gmsh.model.mesh.partition(Number(partitions)));
+  };
+  showPanel($('moduleMesh'), 'Partition',
+            [{name: 'Number of partitions', kind: 'text', value: partitions}],
+            (name, value) => { partitions = value; }, go,
+            [['Partition', 'Partition the mesh', go],
+             ['Close', 'Close the form', () => showPanel(null)]]);
 }
-buildGeometry();
-buildMesh();
+// The action registry (src/common/Actions.cpp): the menus of the page and
+// of the graphical interface, the buttons of the modules included, and what
+// their items do (see gmshWebActions() in webView.cpp)
+const registry = JSON.parse(Module.ccall('gmshWebActions', 'string', [], []));
+// the actions of the registry this page does: what it does (view: the index
+// of the view of a menu of a view, tag its tag), its check mark, and whether
+// it has it now (always if not said)
+const pageActions = {
+  'New model': {run: newModel},
+  'Reload script': {run: reloadScript},
+  'Edit script': {run: editScript},
+  'Save script': {run: saveScript},
+  'Save mesh': {run: saveMesh},
+  'Partition mesh': {run: partitionForm},
+  'Query': {run: () => setTool(tool === 1 ? 0 : 1), check: () => tool === 1},
+  'Measure': {run: () => setTool(tool === 2 ? 0 : 2), check: () => tool === 2},
+  'Full screen': {run: toggleFullscreen, check: () => !!fullscreenElement(),
+                  available: () => !!fullscreenEnabled},
+  'Install app': {run: installApp, available: () => !!window.installPrompt},
+  'General options': {run: () => showOptions('General')},
+  'Geometry options': {run: () => showOptions('Geometry')},
+  'Mesh options': {run: () => showOptions('Mesh')},
+  'All view options': {run: () => showOptions('Views')},
+  'View options': {run: (view, tag) => { if(!viewOptionsOpen.delete(tag)) viewOptionsOpen.add(tag); },
+                   check: (view, tag) => viewOptionsOpen.has(tag)},
+  'Export view as .pos': {run: (view, tag) => exportView(tag, 'pos')},
+  'Export view as .msh': {run: (view, tag) => exportView(tag, 'msh')}
+};
+// the check mark of an item in Gmsh: -1 for none, 0 or 1, -2 if it does not
+// apply now
+const itemCheck = (item) => Module.ccall('gmshWebActionCheck', 'number', ['number'], [item.id]);
+// whether the page has an item now
+function canRun(item) {
+  if(itemCheck(item) === -2) return false;
+  if(item.kind !== 'run' || !item.interface) return true;
+  const a = pageActions[item.what];
+  return !!a && (!a.available || a.available());
+}
+// whether a menu has an item the page has now
+const anyItem = (menu) => menu.items.some((it) => it.kind === 'menu' ? anyItem(it) : canRun(it));
+function checkOf(item, view, tag) {
+  if(item.kind === 'run' && item.interface) {
+    const a = pageActions[item.what];
+    return a.check ? a.check(view, tag) : undefined;
+  }
+  const c = itemCheck(item);
+  return c >= 0 ? !!c : undefined;
+}
+// what an item does: by the page, or in Gmsh, then what it asks for
+async function runItem(item, {view = -1, tag, module = ''} = {}) {
+  if(item.kind === 'operation') startOperation($('module' + module), item.what);
+  else if(item.kind === 'shape') showShapeForm(item.what);
+  else if(item.interface) pageActions[item.what].run(view, tag);
+  else await gmshAction(item, view, module);
+  if(item.ask) askFor(item);
+}
+// what an item does in Gmsh (see RunAction()): on the mesh, timed with the
+// size of the mesh in the status; on the script, of a new model if there is
+// none; an option, kept (see keepOption())
+async function gmshAction(item, view, module) {
+  if(busy) return;
+  const run = () => Module.ccall('gmshWebAction', 'number', ['number', 'number'],
+                                 [item.id, view]);
+  if(item.kind === 'option') {
+    run();
+    if(item.what) keepOptionOf(item.what.split('=')[0]);
+    return;
+  }
+  if(module === 'Mesh') {
+    meshAction(item.what, item.what, run);
+    return;
+  }
+  if(module === 'Geometry' && !modelDir) await newModel();
+  lastError = '';
+  run();
+  if(!module) return;
+  showModelName();
+  showAll();
+  status.textContent = lastError ? lastError.replace(/^Error *: */, '') :
+    `${item.what} in ${$('model').textContent}`;
+  status.classList.toggle('error', !!lastError);
+}
+// the value an item asks for, with a slider in the form of its module
+function askFor(item) {
+  const b = JSON.parse(Module.ccall('gmshWebActionAsk', 'string', ['number'], [item.id]));
+  const category = item.ask.slice(0, item.ask.indexOf('.'));
+  showSide(true);
+  showPanel($({View: 'modulePost', Mesh: 'moduleMesh'}[category] || 'moduleGeometry'),
+            item.label, [{name: item.ask, kind: 'range', ...b}],
+            (name, v) => {
+              Module.ccall('gmshWebActionSet', null, ['number', 'number'], [item.id, Number(v)]);
+              keepOptionOf(item.ask);
+              readOptions();
+              draw();
+            }, () => showPanel(null), [['Close', 'Close the form', () => showPanel(null)]]);
+}
+// the items of a menu as popupMenu() shows them: a submenu as a heading, a
+// group set apart by a separator ('')
+function menuItems(menu, opts = {}) {
+  const items = [];
+  const add = (m) => {
+    for(const it of m.items) {
+      if(it.kind === 'menu') {
+        if(!anyItem(it)) continue;
+        items.push(it.label || '');
+        add(it);
+        items.push('');
+      }
+      else if(canRun(it))
+        items.push([it.label, () => runItem(it, opts), checkOf(it, opts.view, opts.tag)]);
+    }
+  };
+  add(menu);
+  // (no separator at the ends, nor two in a row)
+  return items.filter((x, i, a) => x !== '' || (i > 0 && i < a.length - 1 && a[i - 1] !== ''));
+}
+// the buttons of a module, by rows: a menu as a button that opens it
+function moduleButtons(module) {
+  const d = $('module' + module);
+  for(const row of registry[module].items) {
+    const buttons = [];
+    for(const b of row.items) {
+      if(b.kind !== 'menu') {
+        if(canRun(b)) buttons.push([b.label, b.help, () => runItem(b, {module})]);
+      }
+      else if(anyItem(b))
+        buttons.push(menuButton(b.label, b.help, () => menuItems(b, {module})));
+    }
+    // (on more lines if it must)
+    if(buttons.length) buttonRow(d, buttons).classList.add('wrap');
+  }
+}
+// an item of the table by its action (for the keys)
+function findItem(what, menu = registry.Mesh) {
+  for(const it of menu.items) {
+    const found = it.kind === 'menu' ? findItem(what, it) : it.what === what && it;
+    if(found) return found;
+  }
+  return null;
+}
+moduleButtons('Geometry');
+moduleButtons('Mesh');
 
 // The operations on entities picked in the scene, as the graphical interface
 // does them (src/graphics/selectionDriver.cpp, through webView.cpp): started
@@ -2099,16 +2173,32 @@ function getViewOption(name, i) {
   return u ? v / u : 0;
 }
 function setOption(name, v) {
-  if(name.startsWith('View.')) {
-    viewSettings[name] = v;
+  if(name.startsWith('View.'))
     for(let i = 0; i < views(); i++) setViewOption(name, i, v);
-    for(const s of viewOverrides.values()) s.delete(name);
-  }
   else
     gmsh.option.setNumber(name, v);
+  keepOption(name, v);
+  draw();
+}
+// What the page keeps of an option set (here, or by an item of a menu in
+// Gmsh): those of the views, given to the views to come (the results of the
+// solvers); the mesh made again by the next run if it changes it
+function keepOption(name, v) {
+  if(name.startsWith('View.')) {
+    viewSettings[name] = v;
+    for(const s of viewOverrides.values()) s.delete(name);
+  }
   if(meshing.has(name)) gmsh.onelab.setChanged('Gmsh', 2);
   if(name === 'General.ColorScheme') setColorScheme(v);
-  draw();
+}
+// an option as Gmsh has it now (of the first visible view for View.*)
+function keepOptionOf(name) {
+  if(!name.startsWith('View.')) {
+    keepOption(name, gmsh.option.getNumber(name));
+    return;
+  }
+  const i = viewTags().findIndex((t, k) => viewNum(k, 'Visible'));
+  if(i >= 0) keepOption(name, getViewOption(name, i));
 }
 
 // the colour scheme: the page light or dark as the scene, which follows the
@@ -2670,63 +2760,20 @@ $('statusbar').addEventListener('click', (e) => {
 // axes, and the options of each
 function quickItems() {
   const num = (n) => gmsh.option.getNumber(n);
-  const toggle = (label, name) => [label, () => setOption(name, num(name) ? 0 : 1), !!num(name)];
-  const radio = (label, name, v) => [label, () => setOption(name, v), num(name) === v];
-  const items = [
-    ['Reset viewport', () => { sceneAction('view_z'); sceneAction('view_1_1'); }],
-    ...(fullscreenEnabled ? [['Full screen', toggleFullscreen, !!fullscreenElement()]] : []),
-    ...(window.installPrompt ? [['Install app', installApp]] : []),
-    // the buttons of the status bar there is no room for on a small screen
-    ...(narrow.matches ? [
-      ['View along X', () => sceneAction('view_x')],
-      ['View along Y', () => sceneAction('view_y')],
-      ['View along Z', () => sceneAction('view_z')],
-      ['Rotate by 90 degrees', () => {
-        if(Module.ccall('gmshWebRotate', 'number', ['number'], [0])) draw();
-      }],
-      ['Mouse selection', () => {
-        setOption('General.MouseSelection', num('General.MouseSelection') ? 0 : 1);
-        showSelection();
-      }, !!num('General.MouseSelection')]] : []),
-    ['Axes', () => setOption('General.Axes', num('General.Axes') ? 0 : 3), !!num('General.Axes')],
-    toggle('Hover mesh and views', 'General.MouseHoverMeshes'),
-    'Projection',
-    radio('Orthographic', 'General.Orthographic', 1),
-    radio('Perspective', 'General.Orthographic', 0),
-    ['All general options...', () => showOptions('General')],
-    'Geometry',
-    toggle('Points', 'Geometry.Points'), toggle('Curves', 'Geometry.Curves'),
-    toggle('Surfaces', 'Geometry.Surfaces'), toggle('Volumes', 'Geometry.Volumes'),
-    ['All geometry options...', () => showOptions('Geometry')],
-    'Mesh',
-    toggle('Nodes', 'Mesh.Nodes'), toggle('1D elements', 'Mesh.Lines'),
-    toggle('2D element edges', 'Mesh.SurfaceEdges'),
-    toggle('2D element faces', 'Mesh.SurfaceFaces'),
-    toggle('3D element edges', 'Mesh.VolumeEdges'),
-    toggle('3D element faces', 'Mesh.VolumeFaces'),
-    ['Toggle mesh display', () => sceneAction('mesh_toggle')],
-    ['All mesh options...', () => showOptions('Mesh')],
-  ];
-  if(views()) {
-    // the views as the first is (the options are set for all)
-    const view = (n) => num(n.replace('View.', 'View[0].'));
-    const vradio = (label, name, v) => [label, () => setOption(name, v), view(name) === v];
-    items.push('Views',
-      ['Element outlines', () => setOption('View.ShowElement', view('View.ShowElement') ? 0 : 1),
-       !!view('View.ShowElement')],
-      vradio('Iso-values', 'View.IntervalsType', 1),
-      vradio('Continuous map', 'View.IntervalsType', 2),
-      vradio('Filled iso-values', 'View.IntervalsType', 3),
-      vradio('Numeric values', 'View.IntervalsType', 4),
-      vradio('Default range', 'View.RangeType', 1),
-      vradio('Range per time step', 'View.RangeType', 3),
-      vradio('Vectors as lines', 'View.VectorType', 1),
-      vradio('Vectors as 3D arrows', 'View.VectorType', 4),
-      vradio('Displacement', 'View.VectorType', 5),
-      vradio('Glyphs at barycenters', 'View.GlyphLocation', 1),
-      vradio('Glyphs at nodes', 'View.GlyphLocation', 2),
-      ['All view options...', () => showOptions('Views')]);
-  }
+  const items = menuItems(registry['Quick access']);
+  // the buttons of the status bar there is no room for on a small screen,
+  // after the first entry
+  if(narrow.matches) items.splice(1, 0,
+    ['View along X', () => sceneAction('view_x')],
+    ['View along Y', () => sceneAction('view_y')],
+    ['View along Z', () => sceneAction('view_z')],
+    ['Rotate by 90 degrees', () => {
+      if(Module.ccall('gmshWebRotate', 'number', ['number'], [0])) draw();
+    }],
+    ['Mouse selection', () => {
+      setOption('General.MouseSelection', num('General.MouseSelection') ? 0 : 1);
+      showSelection();
+    }, !!num('General.MouseSelection')]);
   return items;
 }
 // the page in full screen, where the browser lets it (not on an iPhone,
@@ -2769,6 +2816,11 @@ function popupMenu(items, x, y, {above = false, fold = false, owner = null} = {}
   menu.textContent = '';
   let section = '';
   for(const item of items()) {
+    if(item === '') {
+      section = '';
+      menu.appendChild(document.createElement('hr'));
+      continue;
+    }
     if(typeof item === 'string') {
       section = item;
       const h = document.createElement(fold ? 'button' : 'div');
@@ -2911,9 +2963,9 @@ function showOptions(group) {
   }
 }
 const pageShortcuts = {
-  mesh_1d: () => meshNow(1),
-  mesh_2d: () => meshNow(2),
-  mesh_3d: () => meshNow(3),
+  mesh_1d: () => runItem(findItem('Mesh 1D'), {module: 'Mesh'}),
+  mesh_2d: () => runItem(findItem('Mesh 2D'), {module: 'Mesh'}),
+  mesh_3d: () => runItem(findItem('Mesh 3D'), {module: 'Mesh'}),
   solver_run: () => run('compute'),
   geometry_reload: reloadScript,
   file_new: newModel,

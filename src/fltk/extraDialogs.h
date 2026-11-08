@@ -9,8 +9,6 @@
 #include <string>
 
 int arrowEditor(const char *title, double &a, double &b, double &c);
-int opacityChooser(const char *title, const std::string &category,
-                        int index, const std::string &name);
 
 std::string connectionChooser();
 std::string patternChooser();

@@ -15,10 +15,13 @@
 #include <fstream>
 #include <string>
 #include <algorithm>
+#include <functional>
+#include <map>
 #include <FL/Fl_Box.H>
 #include <FL/fl_ask.H>
 #include <FL/filename.H>
 #include <FL/Fl_Tree.H>
+#include <FL/Fl_Menu_Button.H>
 #include "FlGui.h"
 #include "Shortcuts.h"
 #include "mainWindow.h"
@@ -40,6 +43,7 @@
 #include "helpWindow.h"
 #include "windowPlacement.h"
 #include "openglWindow.h"
+#include "viewButton.h"
 #include "onelabContextWindow.h"
 #include "onelabGroup.h"
 #include "messageBrowser.h"
@@ -62,6 +66,7 @@
 #include "OS.h"
 #include "onelabUtils.h"
 #include "selectionDriver.h"
+#include "Actions.h"
 
 #if defined(HAVE_MESH)
 #include "gmshCrossFields.h"
@@ -686,12 +691,6 @@ void geometry_reload_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
-void geometry_remove_last_command_cb(Fl_Widget *w, void *data)
-{
-  scriptRemoveLastCommand(GModel::current()->getFileName());
-  drawContext::global()->draw();
-}
-
 // The value of a field of the operations on selected entities (see
 // selectionDriver), by its name, from the context windows
 static std::string dialogValue(const std::string &operation,
@@ -797,124 +796,6 @@ static void add_new_point_based_entity(const std::string &what, int pane)
   Msg::StatusGl("");
 }
 
-static void geometry_elementary_set_factory_cb(Fl_Widget *w, void *data)
-{
-  if(!data) return;
-  std::string str((const char *)data);
-  scriptSetFactory(str, GModel::current()->getFileName());
-  if(FlGui::available())
-    Msg::StatusBar(false, "Setting %s factory", str.c_str());
-}
-
-static void geometry_elementary_add_new_cb(Fl_Widget *w, void *data)
-{
-  if(!data) return;
-
-  std::string str((const char *)data);
-  // the entities placed by a point, by pane of the elementary context window
-  for(int pane = 1; pane < 12; pane++) {
-    if(str == scriptShapes()[pane].name) {
-      add_new_point_based_entity(str, pane);
-      return;
-    }
-  }
-  if(str == "Parameter")
-    FlGui::instance()->elementaryContext->show(0);
-  else
-    runSelection(str);
-}
-
-// the transform context at pane, then the operation on the entities picked
-static void transformEntities(int pane, bool extrude,
-                              const std::string &operation)
-{
-  FlGui::instance()->transformContext->show(pane, extrude);
-  runSelection(operation);
-  if(!FlGui::available()) return;
-  FlGui::instance()->transformContext->hide();
-}
-
-static void geometry_elementary_translate_cb(Fl_Widget *w, void *data)
-{
-  transformEntities(0, false, "Translate");
-}
-
-static void geometry_elementary_rotate_cb(Fl_Widget *w, void *data)
-{
-  transformEntities(1, false, "Rotate");
-}
-
-static void geometry_elementary_scale_cb(Fl_Widget *w, void *data)
-{
-  transformEntities(2, false, "Scale");
-}
-
-static void geometry_elementary_symmetry_cb(Fl_Widget *w, void *data)
-{
-  transformEntities(3, false, "Symmetry");
-}
-
-static void geometry_elementary_extrude_translate_cb(Fl_Widget *w, void *data)
-{
-  transformEntities(0, true, "Extrude translate");
-}
-
-static void geometry_elementary_extrude_rotate_cb(Fl_Widget *w, void *data)
-{
-  transformEntities(1, true, "Extrude rotate");
-}
-
-static void geometry_elementary_pipe_cb(Fl_Widget *w, void *data)
-{
-  transformEntities(-1, true, "Pipe");
-}
-
-static void geometry_elementary_delete_cb(Fl_Widget *w, void *data)
-{
-  transformEntities(6, false, "Delete");
-}
-
-static void geometry_elementary_boolean_cb(Fl_Widget *w, void *data)
-{
-  if(data) transformEntities(4, false, (const char *)data);
-}
-
-static void geometry_elementary_fillet_cb(Fl_Widget *w, void *data)
-{
-  FlGui::instance()->transformContext->show(5, false, false);
-  runSelection("Fillet");
-  if(!FlGui::available()) return;
-  FlGui::instance()->transformContext->hide();
-}
-
-static void geometry_elementary_split_cb(Fl_Widget *w, void *data)
-{
-  runSelection("Split curve");
-}
-
-static void geometry_elementary_coherence_cb(Fl_Widget *w, void *data)
-{
-  scriptCoherence(GModel::current()->getFileName());
-}
-
-static void geometry_physical_add_cb(Fl_Widget *w, void *data)
-{
-  if(!data) return;
-  std::string what((const char *)data);
-  FlGui::instance()->physicalContext->show(what, false);
-  runSelection("Physical " + what);
-  if(FlGui::available()) FlGui::instance()->physicalContext->hide();
-}
-
-static void geometry_physical_remove_cb(Fl_Widget *w, void *data)
-{
-  if(!data) return;
-  std::string what((const char *)data);
-  FlGui::instance()->physicalContext->show(what, true);
-  runSelection("Remove Physical " + what);
-  if(FlGui::available()) FlGui::instance()->physicalContext->hide();
-}
-
 void mesh_save_cb(Fl_Widget *w, void *data)
 {
   std::string name = CTX::instance()->outputFileName;
@@ -942,201 +823,6 @@ static void afterMeshOperation()
   FlGui::instance()->updateStatistics();
   drawContext::global()->draw();
 }
-
-void mesh_1d_cb(Fl_Widget *w, void *data)
-{
-  GModel::current()->mesh(1);
-  afterMeshOperation();
-}
-
-void mesh_2d_cb(Fl_Widget *w, void *data)
-{
-  GModel::current()->mesh(2);
-  afterMeshOperation();
-}
-
-void mesh_3d_cb(Fl_Widget *w, void *data)
-{
-  GModel::current()->mesh(3);
-  afterMeshOperation();
-}
-
-#if defined(HAVE_MESH)
-
-// the elements, curves, surfaces or volumes picked deleted or reversed
-static void mesh_modify_parts(void *data, const std::string &action)
-{
-  // not during another operation on the model (nor the picking mode changed
-  // then)
-  if(modelBusy() || !data) return;
-  runSelection(action + " mesh " + (const char *)data);
-  afterMeshOperation();
-}
-
-static void mesh_delete_parts_cb(Fl_Widget *w, void *data)
-{
-  mesh_modify_parts(data, "Delete");
-}
-
-static void mesh_reverse_parts_cb(Fl_Widget *w, void *data)
-{
-  mesh_modify_parts(data, "Reverse");
-}
-
-static void mesh_degree_cb(Fl_Widget *w, void *data)
-{
-  if(modelBusy()) return;
-  modelLock lock;
-  int degree = (intptr_t)data;
-  GModel::current()->setOrderN(degree, CTX::instance()->mesh.secondOrderLinear,
-                               CTX::instance()->mesh.secondOrderIncomplete,
-                               CTX::instance()->mesh.meshOnlyVisible);
-  drawContext::global()->draw();
-}
-
-static void optimizeMesh(const std::string &how)
-{
-  if(modelBusy()) return;
-  {
-    modelLock lock;
-    GModel::current()->optimizeMesh(how);
-  }
-  afterMeshOperation();
-}
-
-static void mesh_optimize_cb(Fl_Widget *w, void *data) { optimizeMesh(""); }
-
-static void mesh_optimize_quad_topo_cb(Fl_Widget *w, void *data)
-{ optimizeMesh("QuadQuasiStructured"); }
-
-static void mesh_untangle_cb(Fl_Widget *w, void *data)
-{ optimizeMesh("UntangleMeshGeometry"); }
-
-static void mesh_cross_compute_cb(Fl_Widget *w, void *data)
-{
-  if(modelBusy()) return;
-#if defined(HAVE_MESH)
-  {
-    modelLock lock;
-    std::vector<int> tags;
-    computeCrossField(GModel::current(), tags);
-  }
-#endif
-  drawContext::global()->draw();
-}
-
-static void mesh_refine_cb(Fl_Widget *w, void *data)
-{
-  if(modelBusy()) return;
-  modelLock lock;
-  GModel::current()->refineMesh(CTX::instance()->mesh.secondOrderLinear,
-                                CTX::instance()->mesh.algoSubdivide == 1,
-                                CTX::instance()->mesh.algoSubdivide == 2,
-                                CTX::instance()->mesh.algoSubdivide == 3);
-  afterMeshOperation();
-}
-
-static void mesh_smooth_cb(Fl_Widget *w, void *data)
-{ optimizeMesh("Laplace2D"); }
-
-static void mesh_recombine_cb(Fl_Widget *w, void *data)
-{
-  if(modelBusy()) return;
-  {
-    modelLock lock;
-    GModel::current()->recombineMesh();
-  }
-  afterMeshOperation();
-}
-
-#if defined(HAVE_NETGEN)
-static void mesh_optimize_netgen_cb(Fl_Widget *w, void *data)
-{ optimizeMesh("Netgen"); }
-#endif
-
-static void mesh_partition_cb(Fl_Widget *w, void *data) { partition_dialog(); }
-
-static void mesh_unpartition_cb(Fl_Widget *w, void *data)
-{
-  if(modelBusy()) return;
-  int ier;
-  {
-    modelLock lock;
-    ier = GModel::current()->unpartitionMesh();
-  }
-
-  // Update the screen, if still there
-  if(!FlGui::available()) return;
-  if(!ier) {
-    opt_mesh_zone_definition(0, GMSH_SET, 0.);
-    opt_mesh_color_carousel(0, GMSH_SET | GMSH_GUI, 1.);
-    CTX::instance()->meshChanged();
-    FlGui::instance()->resetVisibility();
-    drawContext::global()->draw();
-  }
-}
-
-static void mesh_convert_old_partitioning_cb(Fl_Widget *w, void *data)
-{
-  if(modelBusy()) return;
-  int ier;
-  {
-    modelLock lock;
-    ier = GModel::current()->convertOldPartitioningToNewOne();
-  }
-
-  // Update the screen, if still there
-  if(!FlGui::available()) return;
-  if(!ier) {
-    opt_mesh_zone_definition(0, GMSH_SET, 0.);
-    opt_mesh_color_carousel(0, GMSH_SET | GMSH_GUI, 1.);
-    CTX::instance()->meshChanged();
-    drawContext::global()->draw();
-  }
-}
-
-static void mesh_define_length_cb(Fl_Widget *w, void *data)
-{
-  FlGui::instance()->meshContext->show(0);
-  runSelection("Size at points");
-  if(FlGui::available()) FlGui::instance()->meshContext->hide();
-}
-
-static void mesh_define_recombine_cb(Fl_Widget *w, void *data)
-{
-  runSelection("Recombine");
-}
-
-static void mesh_define_transfinite_line_cb(Fl_Widget *w, void *data)
-{
-  FlGui::instance()->meshContext->show(1);
-  runSelection("Transfinite Curve");
-  if(FlGui::available()) FlGui::instance()->meshContext->hide();
-}
-
-static void mesh_define_transfinite_surface_cb(Fl_Widget *w, void *data)
-{
-  FlGui::instance()->meshContext->show(2);
-  runSelection("Transfinite Surface");
-  if(FlGui::available()) FlGui::instance()->meshContext->hide();
-}
-
-static void mesh_define_transfinite_volume_cb(Fl_Widget *w, void *data)
-{
-  runSelection("Transfinite Volume");
-}
-
-static void mesh_define_embedded_cb(Fl_Widget *w, void *data)
-{
-  if(data) runSelection(std::string("Embed ") + (const char *)data);
-}
-
-static void mesh_define_compound_entity_cb(Fl_Widget *w, void *data)
-{
-  if(data) runSelection(std::string("Compound ") + (const char *)data);
-}
-
-#endif // HAVE_MESH
 
 // clang-format off
 
@@ -1317,159 +1003,12 @@ void status_xyz1p_cb(Fl_Widget *w, void *data)
   FlGui::instance()->manip->update();
 }
 
-// sets an option of every visible view
-static void setVisibleViews(double (*option)(int, int, double), double val)
-{
-  for(std::size_t i = 0; i < PView::list.size(); i++)
-    if(opt_view_visible(i, GMSH_GET, 0)) option(i, GMSH_SET | GMSH_GUI, val);
-}
-
 // the index of the first visible view, or -1
 static int firstVisibleView()
 {
   for(std::size_t i = 0; i < PView::list.size(); i++)
     if(opt_view_visible(i, GMSH_GET, 0)) return i;
   return -1;
-}
-
-void quick_access_cb(Fl_Widget *w, void *data)
-{
-  if(!data) return;
-  std::string what((const char *)data);
-  // the display of the geometry and the mesh, as the shortcuts change it
-  if(RunSceneShortcut(what, 0, nullptr)) return;
-  if(what == "general")
-    general_options_cb(nullptr, nullptr);
-  else if(what == "geometry")
-    geometry_options_cb(nullptr, nullptr);
-  else if(what == "mesh")
-    mesh_options_cb(nullptr, nullptr);
-  else if(what == "view")
-    view_options_cb(nullptr, (void *)-1);
-  else if(what == "reset_viewport") {
-    status_xyz1p_cb(nullptr, (void *)"z");
-    status_xyz1p_cb(nullptr, (void *)"1:1");
-  }
-  else if(what == "measure") {
-    status_measure_cb(nullptr, nullptr);
-  }
-  else if(what == "query") {
-    status_query_cb(nullptr, nullptr);
-  }
-  else if(what == "select_center") {
-    opt_general_rotation_center_cg(0, GMSH_SET | GMSH_GUI, 0);
-    general_options_ok_cb(nullptr, (void *)"rotation_center");
-    general_options_rotation_center_select_cb(nullptr, nullptr);
-  }
-  else if(what == "hover_meshes") {
-    opt_general_mouse_hover_meshes(
-      0, GMSH_SET | GMSH_GUI, !opt_general_mouse_hover_meshes(0, GMSH_GET, 0));
-  }
-  else if(what == "split_hor") {
-    file_window_cb(nullptr, (void *)"split_h");
-  }
-  else if(what == "split_ver") {
-    file_window_cb(nullptr, (void *)"split_v");
-  }
-  else if(what == "unsplit") {
-    file_window_cb(nullptr, (void *)"split_u");
-  }
-  else if(what == "axes") {
-    int old = opt_general_axes(0, GMSH_GET, 0);
-    opt_general_axes(0, GMSH_SET | GMSH_GUI, old ? 0 : 3);
-    if(!old) {
-      opt_general_axes_auto_position(0, GMSH_SET | GMSH_GUI, 0);
-      general_options_axes_fit_cb(nullptr, nullptr);
-    }
-  }
-  else if(what == "orthographic")
-    opt_general_orthographic(0, GMSH_SET | GMSH_GUI, 1);
-  else if(what == "perspective") {
-    opt_general_orthographic(0, GMSH_SET | GMSH_GUI, 0);
-    drawContext::global()->draw();
-    numberOrStringOptionChooser("General", 0, "ClipFactor", true, "Factor",
-                                true, 0.1, 20., 0.1);
-  }
-  else if(what == "mesh_size")
-    numberOrStringOptionChooser("Mesh", 0, "MeshSizeFactor", true, "Factor",
-                                true, 0.01, 100, 0.01);
-  else if(what == "geometry_opacity") {
-    opacityChooser("Geometry Opacity", "Geometry", 0, "Opacity");
-  }
-  else if(what == "mesh_opacity") {
-    opacityChooser("Mesh Opacity", "Mesh", 0, "Opacity");
-  }
-  else if(what == "view_opacity") {
-    double val = 1.;
-    for(std::size_t i = 0; i < PView::list.size(); i++) {
-      if(opt_view_visible(i, GMSH_GET, 0)) {
-        if(opacityChooser("View Opacity", "View", i, "Opacity")) {
-          val = opt_view_opacity(i, GMSH_GET, 0);
-          break;
-        }
-      }
-    }
-    setVisibleViews(opt_view_opacity, val);
-  }
-  else if(what == "view_element_outlines") {
-    int set = 0;
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0) &&
-         (set = opt_view_show_element(i, GMSH_GET, 0)))
-        break;
-    setVisibleViews(opt_view_show_element, !set);
-  }
-  else if(what == "view_normal_raise" || what == "view_displacement") {
-    bool raise = (what == "view_normal_raise");
-    if(!raise) {
-      setVisibleViews(opt_view_vector_type, 5);
-      drawContext::global()->draw();
-    }
-    double val = 0.;
-    int i = firstVisibleView();
-    if(i >= 0) {
-      double maxval = std::max(fabs(opt_view_min(i, GMSH_GET, 0)),
-                               fabs(opt_view_max(i, GMSH_GET, 0)));
-      if(!maxval) maxval = 1.;
-      double range = 2. * CTX::instance()->lc / maxval;
-      if(raise)
-        val =
-          numberOrStringOptionChooser("View", i, "NormalRaise", true, "Raise",
-                                      true, -range, range, range / 200.);
-      else
-        val =
-          numberOrStringOptionChooser("View", i, "DisplacementFactor", true,
-                                      "Factor", true, 0, range, range / 100.);
-    }
-    setVisibleViews(
-      raise ? opt_view_normal_raise : opt_view_displacement_factor, val);
-  }
-  else if(what == "view_iso" || what == "view_filled") {
-    setVisibleViews(opt_view_intervals_type, (what == "view_iso") ? 1 : 3);
-    drawContext::global()->draw();
-    double val = 0.;
-    int i = firstVisibleView();
-    if(i >= 0)
-      val = numberOrStringOptionChooser("View", i, "NbIso", true, "Intervals",
-                                        true, 1, 100, 1);
-    setVisibleViews(opt_view_nb_iso, val);
-  }
-  else if(what == "view_continous")
-    setVisibleViews(opt_view_intervals_type, 2);
-  else if(what == "view_numeric")
-    setVisibleViews(opt_view_intervals_type, 4);
-  else if(what == "view_line")
-    setVisibleViews(opt_view_vector_type, 1);
-  else if(what == "view_3d_arrow")
-    setVisibleViews(opt_view_vector_type, 4);
-  else if(what == "view_glyph_barycenter")
-    setVisibleViews(opt_view_glyph_location, 1);
-  else if(what == "view_glyph_node")
-    setVisibleViews(opt_view_glyph_location, 2);
-  else if(what == "view_range_default")
-    setVisibleViews(opt_view_range_type, 1);
-  else if(what == "view_range_per_step")
-    setVisibleViews(opt_view_range_type, 3);
 }
 
 static void model_switch_cb(Fl_Widget *w, void *data)
@@ -1692,177 +1231,28 @@ void status_options_cb(Fl_Widget *w, void *data)
     drawContext::global()->draw();
   }
   else if(what == "quick_access") { // quick access menu
-    // clang-format off
-    static Fl_Menu_Item menu[] = {
-      { "Reset viewport", 0, quick_access_cb, (void*)"reset_viewport" },
-      { "Select rotation center", 0, quick_access_cb, (void*)"select_center" },
-      { "Query", 0, quick_access_cb, (void*)"query" },
-      { "Measure", 0, quick_access_cb, (void*)"measure" },
-      { "Split window", 0, nullptr, nullptr, FL_SUBMENU | FL_MENU_DIVIDER },
-         { "Horizontally", 0, quick_access_cb, (void*)"split_hor"},
-         { "Vertically", 0, quick_access_cb, (void*)"split_ver"},
-         { "Unsplit", 0, quick_access_cb, (void*)"unsplit"},
-         { nullptr },
-      { "Axes", fltkShortcut("axes_loop"), quick_access_cb, (void*)"axes",
-        FL_MENU_TOGGLE },
-      { "Hover mesh and views", 0, quick_access_cb, (void*)"hover_meshes",
-        FL_MENU_TOGGLE },
-      { "Projection mode", 0, nullptr, nullptr, FL_SUBMENU },
-         { "Orthographic", fltkShortcut("projection"), quick_access_cb, (void*)"orthographic"},
-         { "Perspective", 0, quick_access_cb, (void*)"perspective"},
-         { nullptr },
-      { "All general options...", 0, quick_access_cb, (void*)"general",
-        FL_MENU_DIVIDER, 0, FL_ITALIC },
-      { "Geometry visibility", 0, nullptr, nullptr, FL_SUBMENU },
-         { "Points", fltkShortcut("geometry_points"), quick_access_cb, (void*)"geometry_points",
-           FL_MENU_TOGGLE },
-         { "Curves", fltkShortcut("geometry_curves"), quick_access_cb, (void*)"geometry_curves",
-           FL_MENU_TOGGLE },
-         { "Surfaces ", fltkShortcut("geometry_surfaces"), quick_access_cb, (void*)"geometry_surfaces",
-           FL_MENU_TOGGLE },
-         { "Volumes", fltkShortcut("geometry_volumes"), quick_access_cb, (void*)"geometry_volumes",
-           FL_MENU_TOGGLE },
-         { nullptr },
-      { "Geometry opacity", 0, quick_access_cb,
-        (void*)"geometry_opacity" },
-      { "All geometry options...", 0, quick_access_cb, (void*)"geometry",
-        FL_MENU_DIVIDER, 0, FL_ITALIC },
-      { "Mesh visibility", 0, nullptr, nullptr, FL_SUBMENU },
-         { "Nodes", fltkShortcut("mesh_nodes"), quick_access_cb, (void*)"mesh_nodes",
-           FL_MENU_TOGGLE },
-         { "1D elements", fltkShortcut("mesh_lines"), quick_access_cb, (void*)"mesh_lines",
-           FL_MENU_TOGGLE },
-         { "2D element edges ", fltkShortcut("mesh_surface_edges"), quick_access_cb,
-           (void*)"mesh_surface_edges", FL_MENU_TOGGLE },
-         { "2D element faces", fltkShortcut("mesh_surface_faces"), quick_access_cb,
-           (void*)"mesh_surface_faces", FL_MENU_TOGGLE },
-         { "3D element edges", fltkShortcut("mesh_volume_edges"), quick_access_cb,
-           (void*)"mesh_volume_edges", FL_MENU_TOGGLE },
-         { "3D element faces", fltkShortcut("mesh_volume_faces"), quick_access_cb,
-           (void*)"mesh_volume_faces", FL_MENU_TOGGLE },
-         { nullptr },
-      { "Toggle mesh display", fltkShortcut("mesh_toggle"), quick_access_cb, (void*)"mesh_toggle" },
-      { "Mesh opacity", 0, quick_access_cb, (void*)"mesh_opacity" },
-      { "Global mesh size factor", 0, quick_access_cb, (void*)"mesh_size" },
-      { "All mesh options...", 0, quick_access_cb, (void*)"mesh",
-        FL_MENU_DIVIDER, 0, FL_ITALIC },
-      { "View element outlines ", fltkShortcut("view_elements"), quick_access_cb,
-        (void*)"view_element_outlines", FL_MENU_TOGGLE },
-      { "View normal raise", 0, quick_access_cb, (void*)"view_normal_raise" },
-      { "View intervals", 0, nullptr, nullptr, FL_SUBMENU },
-         { "Iso-values", fltkShortcut("view_intervals"), quick_access_cb, (void*)"view_iso"},
-         { "Continuous map", 0, quick_access_cb, (void*)"view_continous"},
-         { "Filled iso-values", 0, quick_access_cb, (void*)"view_filled"},
-         { "Numeric values", 0, quick_access_cb, (void*)"view_numeric", FL_MENU_DIVIDER},
-         { "Default range", 0, quick_access_cb, (void*)"view_range_default"},
-         { "Range per time step", 0, quick_access_cb, (void*)"view_range_per_step"},
-         { nullptr },
-      { "View vectors", 0, nullptr, nullptr, FL_SUBMENU },
-         { "Line", 0, quick_access_cb, (void*)"view_line"},
-         { "3D arrow", 0, quick_access_cb, (void*)"view_3d_arrow"},
-         { "Displacement", 0, quick_access_cb, (void*)"view_displacement", FL_MENU_DIVIDER},
-         { "At barycenter", 0, quick_access_cb, (void*)"view_glyph_barycenter"},
-         { "At node", 0, quick_access_cb, (void*)"view_glyph_node"},
-         { nullptr },
-      { "View opacity", 0, quick_access_cb, (void*)"view_opacity" },
-      { "All view options...", 0, quick_access_cb, (void*)"view", 0, 0, FL_ITALIC },
-      { nullptr }
-    };
-    // clang-format on
-    // the first item of each section, and the last one of the menu
-    const int gen = 9, geo = 16, msh = 24, pos = 36, end = 54;
-    if(opt_general_axes(0, GMSH_GET, 0))
-      menu[gen + 0].set();
-    else
-      menu[gen + 0].clear();
-    if(opt_general_mouse_hover_meshes(0, GMSH_GET, 0))
-      menu[gen + 1].set();
-    else
-      menu[gen + 1].clear();
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0) &&
-         PView::list[i]->getOptions()->getAxes())
-        menu[gen + 0].set();
-    if(opt_geometry_points(0, GMSH_GET, 0))
-      menu[geo + 1].set();
-    else
-      menu[geo + 1].clear();
-    if(opt_geometry_curves(0, GMSH_GET, 0))
-      menu[geo + 2].set();
-    else
-      menu[geo + 2].clear();
-    if(opt_geometry_surfaces(0, GMSH_GET, 0))
-      menu[geo + 3].set();
-    else
-      menu[geo + 3].clear();
-    if(opt_geometry_volumes(0, GMSH_GET, 0))
-      menu[geo + 4].set();
-    else
-      menu[geo + 4].clear();
-    if(opt_mesh_nodes(0, GMSH_GET, 0))
-      menu[msh + 1].set();
-    else
-      menu[msh + 1].clear();
-    if(opt_mesh_lines(0, GMSH_GET, 0))
-      menu[msh + 2].set();
-    else
-      menu[msh + 2].clear();
-    if(opt_mesh_surface_edges(0, GMSH_GET, 0))
-      menu[msh + 3].set();
-    else
-      menu[msh + 3].clear();
-    if(opt_mesh_surface_faces(0, GMSH_GET, 0))
-      menu[msh + 4].set();
-    else
-      menu[msh + 4].clear();
-    if(opt_mesh_volume_edges(0, GMSH_GET, 0))
-      menu[msh + 5].set();
-    else
-      menu[msh + 5].clear();
-    if(opt_mesh_volume_faces(0, GMSH_GET, 0))
-      menu[msh + 6].set();
-    else
-      menu[msh + 6].clear();
-    if(PView::list.empty()) {
-      // if there are no post-processing view, hide all entries below the mesh
-      // options...
-      menu[pos - 1].flags = 0;
-      for(int i = pos; i <= end; i++) menu[i].hide();
+    // (see Actions.cpp), opened on the item picked last
+    static Fl_Menu_Button *menu = nullptr;
+    static const void *last = nullptr;
+    if(!menu) {
+      Fl_Group::current(nullptr);
+      menu = new Fl_Menu_Button(0, 0, 0, 0);
     }
-    else {
-      // otherwise add a divider and show the post-pro view entries
-      menu[pos - 1].flags = FL_MENU_DIVIDER;
-      for(int i = pos; i <= end; i++) menu[i].show();
-      menu[pos].clear();
-      for(std::size_t i = 0; i < PView::list.size(); i++) {
-        if(opt_view_visible(i, GMSH_GET, 0) &&
-           opt_view_show_element(i, GMSH_GET, 0)) {
-          menu[pos].set();
-          break;
-        }
-      }
+    menu->clear();
+    addActionItems(menu, GetActionMenu("Quick access"), -1);
+    // (the display of the mesh toggled, at first)
+    const Fl_Menu_Item *initial = nullptr;
+    for(int i = 0; i < menu->size(); i++) {
+      const actionItem *item = (const actionItem *)menu->menu()[i].user_data();
+      if(item && (last ? item == last : item->what == "Toggle mesh display"))
+        initial = &menu->menu()[i];
     }
-    // the transparency factors are only applied by the shader pipeline
-    if(opt_general_shaders(0, GMSH_GET, 0)) {
-      menu[geo + 6].show();
-      menu[msh + 9].show();
-      if(!PView::list.empty()) menu[pos + 17].show();
+    const Fl_Menu_Item *picked = menu->menu()->popup(
+      Fl::event_x(), Fl::event_y(), nullptr, initial, gmshPopupStyle());
+    if(picked && picked->callback()) {
+      last = picked->user_data();
+      picked->do_callback(menu, picked->user_data());
     }
-    else {
-      menu[geo + 6].hide();
-      menu[msh + 9].hide();
-      menu[pos + 17].hide();
-    }
-
-    // popup the menu
-    static Fl_Menu_Item *picked =
-      &menu[msh + 8]; // toggle mesh display - the default
-    picked = (Fl_Menu_Item *)menu->popup(
-      Fl::event_x(), Fl::event_y(), nullptr,
-      (picked && picked->visible()) ? picked : &menu[msh + 8],
-      gmshPopupStyle());
-    if(picked && picked->callback())
-      picked->do_callback(nullptr, picked->user_data());
     drawContext::global()->draw();
   }
   else if(what == "S") { // mouse selection
@@ -3400,189 +2790,290 @@ void graphicWindow::fillRecentHistoryMenu()
 #endif
 }
 
-typedef struct {
-  std::string label;
-  Fl_Callback *callback;
-  void *arg;
-} menuItem;
+// The actions of the registry (see Actions.h) as this interface does them
 
-static menuItem static_modules[] = {
-  {"0Modules/Geometry/Elementary entities/Set geometry kernel/Built-in",
-   (Fl_Callback *)geometry_elementary_set_factory_cb, (void *)"Built-in"},
-  {"0Modules/Geometry/Elementary entities/Set geometry kernel/OpenCASCADE",
-   (Fl_Callback *)geometry_elementary_set_factory_cb, (void *)"OpenCASCADE"},
-  {"0Modules/Geometry/Elementary entities/Add/Parameter",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void *)"Parameter"},
-  {"0Modules/Geometry/Elementary entities/Add/Point",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void *)"Point"},
-  {"0Modules/Geometry/Elementary entities/Add/Line",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void *)"Line"},
-  {"0Modules/Geometry/Elementary entities/Add/Spline",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void *)"Spline"},
-  {"0Modules/Geometry/Elementary entities/Add/Bezier",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void *)"Bezier"},
-  {"0Modules/Geometry/Elementary entities/Add/B-Spline",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void *)"BSpline"},
-  {"0Modules/Geometry/Elementary entities/Add/Circle",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void *)"Circle"},
-  {"0Modules/Geometry/Elementary entities/Add/Circle arc",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void *)"Circle arc"},
-  {"0Modules/Geometry/Elementary entities/Add/Ellipse",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void *)"Ellipse"},
-  {"0Modules/Geometry/Elementary entities/Add/Ellipse arc",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void *)"Ellipse arc"},
-  {"0Modules/Geometry/Elementary entities/Add/Rectangle",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void *)"Rectangle"},
-  {"0Modules/Geometry/Elementary entities/Add/Disk",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void *)"Disk"},
-  {"0Modules/Geometry/Elementary entities/Add/Plane surface",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void *)"Plane Surface"},
-  {"0Modules/Geometry/Elementary entities/Add/Surface filling",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void *)"Surface"},
-  {"0Modules/Geometry/Elementary entities/Add/Sphere",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void *)"Sphere"},
-  {"0Modules/Geometry/Elementary entities/Add/Cylinder",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void *)"Cylinder"},
-  {"0Modules/Geometry/Elementary entities/Add/Box",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void *)"Box"},
-  {"0Modules/Geometry/Elementary entities/Add/Torus",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void *)"Torus"},
-  {"0Modules/Geometry/Elementary entities/Add/Cone",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void *)"Cone"},
-  {"0Modules/Geometry/Elementary entities/Add/Wedge",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void *)"Wedge"},
-  {"0Modules/Geometry/Elementary entities/Add/Volume",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void *)"Volume"},
-  {"0Modules/Geometry/Elementary entities/Transform/Translate",
-   (Fl_Callback *)geometry_elementary_translate_cb},
-  {"0Modules/Geometry/Elementary entities/Transform/Rotate",
-   (Fl_Callback *)geometry_elementary_rotate_cb},
-  {"0Modules/Geometry/Elementary entities/Transform/Scale",
-   (Fl_Callback *)geometry_elementary_scale_cb},
-  {"0Modules/Geometry/Elementary entities/Transform/Symmetry",
-   (Fl_Callback *)geometry_elementary_symmetry_cb},
-  {"0Modules/Geometry/Elementary entities/Extrude/Translate",
-   (Fl_Callback *)geometry_elementary_extrude_translate_cb},
-  {"0Modules/Geometry/Elementary entities/Extrude/Rotate",
-   (Fl_Callback *)geometry_elementary_extrude_rotate_cb},
-  {"0Modules/Geometry/Elementary entities/Extrude/Pipe",
-   (Fl_Callback *)geometry_elementary_pipe_cb},
-  {"0Modules/Geometry/Elementary entities/Boolean/Intersection",
-   (Fl_Callback *)geometry_elementary_boolean_cb,
-   (void *)"BooleanIntersection"},
-  {"0Modules/Geometry/Elementary entities/Boolean/Union",
-   (Fl_Callback *)geometry_elementary_boolean_cb, (void *)"BooleanUnion"},
-  {"0Modules/Geometry/Elementary entities/Boolean/Difference",
-   (Fl_Callback *)geometry_elementary_boolean_cb, (void *)"BooleanDifference"},
-  {"0Modules/Geometry/Elementary entities/Boolean/Fragments",
-   (Fl_Callback *)geometry_elementary_boolean_cb, (void *)"BooleanFragments"},
-  {"0Modules/Geometry/Elementary entities/Fillet",
-   (Fl_Callback *)geometry_elementary_fillet_cb},
-  {"0Modules/Geometry/Elementary entities/Split curve",
-   (Fl_Callback *)geometry_elementary_split_cb, (void *)"Curve"},
-  {"0Modules/Geometry/Elementary entities/Delete",
-   (Fl_Callback *)geometry_elementary_delete_cb},
-  {"0Modules/Geometry/Elementary entities/Coherence",
-   (Fl_Callback *)geometry_elementary_coherence_cb},
-  {"0Modules/Geometry/Physical groups/Add/Point",
-   (Fl_Callback *)geometry_physical_add_cb, (void *)"Point"},
-  {"0Modules/Geometry/Physical groups/Add/Curve",
-   (Fl_Callback *)geometry_physical_add_cb, (void *)"Curve"},
-  {"0Modules/Geometry/Physical groups/Add/Surface",
-   (Fl_Callback *)geometry_physical_add_cb, (void *)"Surface"},
-  {"0Modules/Geometry/Physical groups/Add/Volume",
-   (Fl_Callback *)geometry_physical_add_cb, (void *)"Volume"},
-  {"0Modules/Geometry/Physical groups/Remove/Point",
-   (Fl_Callback *)geometry_physical_remove_cb, (void *)"Point"},
-  {"0Modules/Geometry/Physical groups/Remove/Curve",
-   (Fl_Callback *)geometry_physical_remove_cb, (void *)"Curve"},
-  {"0Modules/Geometry/Physical groups/Remove/Surface",
-   (Fl_Callback *)geometry_physical_remove_cb, (void *)"Surface"},
-  {"0Modules/Geometry/Physical groups/Remove/Volume",
-   (Fl_Callback *)geometry_physical_remove_cb, (void *)"Volume"},
-  {"0Modules/Geometry/Reload script", (Fl_Callback *)geometry_reload_cb},
-  {"0Modules/Geometry/Remove last script command",
-   (Fl_Callback *)geometry_remove_last_command_cb},
-  {"0Modules/Geometry/Edit script", (Fl_Callback *)geometry_edit_cb},
-#if defined(HAVE_MESH)
-  {"0Modules/Mesh/Define/Size at points", (Fl_Callback *)mesh_define_length_cb},
-  {"0Modules/Mesh/Define/Size fields", (Fl_Callback *)field_cb},
-  {"0Modules/Mesh/Define/Embedded/Point",
-   (Fl_Callback *)mesh_define_embedded_cb, (void *)"Point"},
-  {"0Modules/Mesh/Define/Embedded/Curve",
-   (Fl_Callback *)mesh_define_embedded_cb, (void *)"Curve"},
-  {"0Modules/Mesh/Define/Embedded/Surface",
-   (Fl_Callback *)mesh_define_embedded_cb, (void *)"Surface"},
-  {"0Modules/Mesh/Define/Transfinite/Curve",
-   (Fl_Callback *)mesh_define_transfinite_line_cb},
-  {"0Modules/Mesh/Define/Transfinite/Surface",
-   (Fl_Callback *)mesh_define_transfinite_surface_cb},
-  {"0Modules/Mesh/Define/Transfinite/Volume",
-   (Fl_Callback *)mesh_define_transfinite_volume_cb},
-  {"0Modules/Mesh/Define/Compound/Curve",
-   (Fl_Callback *)mesh_define_compound_entity_cb, (void *)"Curve"},
-  {"0Modules/Mesh/Define/Compound/Surface",
-   (Fl_Callback *)mesh_define_compound_entity_cb, (void *)"Surface"},
-  {"0Modules/Mesh/Define/Recombine", (Fl_Callback *)mesh_define_recombine_cb},
-  {"0Modules/Mesh/1D", (Fl_Callback *)mesh_1d_cb},
-  {"0Modules/Mesh/2D", (Fl_Callback *)mesh_2d_cb},
-  {"0Modules/Mesh/3D", (Fl_Callback *)mesh_3d_cb},
-  {"0Modules/Mesh/Optimize 3D", (Fl_Callback *)mesh_optimize_cb},
-#if defined(HAVE_NETGEN)
-  {"0Modules/Mesh/Optimize 3D (Netgen)",
-   (Fl_Callback *)mesh_optimize_netgen_cb},
-#endif
-  {"0Modules/Mesh/Set order 1", (Fl_Callback *)mesh_degree_cb, (void *)1},
-  {"0Modules/Mesh/Set order 2", (Fl_Callback *)mesh_degree_cb, (void *)2},
-  {"0Modules/Mesh/Set order 3", (Fl_Callback *)mesh_degree_cb, (void *)3},
-  {"0Modules/Mesh/High-order tools", (Fl_Callback *)highordertools_cb},
-  {"0Modules/Mesh/Refine by splitting", (Fl_Callback *)mesh_refine_cb},
-#if defined(HAVE_METIS)
-  {"0Modules/Mesh/Partition", (Fl_Callback *)mesh_partition_cb},
-  {"0Modules/Mesh/Unpartition", (Fl_Callback *)mesh_unpartition_cb},
-#endif
-  {"0Modules/Mesh/Smooth 2D", (Fl_Callback *)mesh_smooth_cb},
-  {"0Modules/Mesh/Recombine 2D", (Fl_Callback *)mesh_recombine_cb},
-  {"0Modules/Mesh/Reclassify 2D", (Fl_Callback *)mesh_classify_cb},
-  {"0Modules/Mesh/Experimental/Compute quad layout",
-   (Fl_Callback *)mesh_cross_compute_cb},
-#if defined(HAVE_METIS)
-  {"0Modules/Mesh/Experimental/Convert old partitioning",
-   (Fl_Callback *)mesh_convert_old_partitioning_cb},
-#endif
-  {"0Modules/Mesh/Experimental/Optimize quad topology",
-   (Fl_Callback *)mesh_optimize_quad_topo_cb},
-  {"0Modules/Mesh/Experimental/Untangle geometry",
-   (Fl_Callback *)mesh_untangle_cb},
-  {"0Modules/Mesh/Reverse/Elements", (Fl_Callback *)mesh_reverse_parts_cb,
-   (void *)"elements"},
-  {"0Modules/Mesh/Reverse/Curves", (Fl_Callback *)mesh_reverse_parts_cb,
-   (void *)"curves"},
-  {"0Modules/Mesh/Reverse/Surfaces", (Fl_Callback *)mesh_reverse_parts_cb,
-   (void *)"surfaces"},
-  {"0Modules/Mesh/Reverse/Volumes", (Fl_Callback *)mesh_reverse_parts_cb,
-   (void *)"volumes"},
-  {"0Modules/Mesh/Delete/Elements", (Fl_Callback *)mesh_delete_parts_cb,
-   (void *)"elements"},
-  {"0Modules/Mesh/Delete/Curves", (Fl_Callback *)mesh_delete_parts_cb,
-   (void *)"curves"},
-  {"0Modules/Mesh/Delete/Surfaces", (Fl_Callback *)mesh_delete_parts_cb,
-   (void *)"surfaces"},
-  {"0Modules/Mesh/Delete/Volumes", (Fl_Callback *)mesh_delete_parts_cb,
-   (void *)"volumes"},
-  {"0Modules/Mesh/Save", (Fl_Callback *)mesh_save_cb},
-#endif
+// an operation, with the context window that holds its fields, if it has one
+static void runOperation(const std::string &op)
+{
+  FlGui *g = FlGui::instance();
+  // the mesh parts picked deleted or reversed: not during another operation
+  // on the model (nor the picking mode changed then)
+  if(op.find(" mesh ") != std::string::npos) {
+    if(modelBusy()) return;
+    runSelection(op);
+    afterMeshOperation();
+    return;
+  }
+  // the pane of the transform context window, and whether it extrudes
+  static const std::map<std::string, std::pair<int, bool>> transforms = {
+    {"Translate", {0, false}},
+    {"Rotate", {1, false}},
+    {"Scale", {2, false}},
+    {"Symmetry", {3, false}},
+    {"Fillet", {5, false}},
+    {"Delete", {6, false}},
+    {"Extrude translate", {0, true}},
+    {"Extrude rotate", {1, true}},
+    {"Pipe", {-1, true}}};
+  // the pane of the mesh context window
+  static const std::map<std::string, int> meshPanes = {
+    {"Size at points", 0},
+    {"Transfinite Curve", 1},
+    {"Transfinite Surface", 2}};
+  auto t = transforms.find(op);
+  auto m = meshPanes.find(op);
+  std::function<void()> hide = [] {};
+  if(op.find("Physical ") != std::string::npos) {
+    g->physicalContext->show(op.substr(op.rfind(' ') + 1), op[0] == 'R');
+    hide = [] { FlGui::instance()->physicalContext->hide(); };
+  }
+  else if(t != transforms.end() || op.compare(0, 7, "Boolean") == 0) {
+    if(t != transforms.end())
+      g->transformContext->show(t->second.first, t->second.second,
+                                op != "Fillet");
+    else
+      g->transformContext->show(4);
+    hide = [] { FlGui::instance()->transformContext->hide(); };
+  }
+  else if(m != meshPanes.end()) {
+    g->meshContext->show(m->second);
+    hide = [] { FlGui::instance()->meshContext->hide(); };
+  }
+  runSelection(op);
+  if(FlGui::available()) hide();
+}
+
+// a shape: placed with the mouse, or from the values of its fields
+static void addShape(const std::string &shape)
+{
+  if(shape == "Parameter") {
+    FlGui::instance()->elementaryContext->show(0);
+    return;
+  }
+  // (by pane of the elementary context window)
+  for(int pane = 1; pane < 12; pane++)
+    if(shape == scriptShapes()[pane].name)
+      add_new_point_based_entity(shape, pane);
+}
+
+// the actions of the table this interface does: what it does (view: the
+// index of the view of a menu of a view), its check mark, and whether it has
+// it now (always if not said)
+struct fltkAction {
+  std::function<void(int view)> run;
+  std::function<int()> check;
+  std::function<bool()> available;
 };
+
+static const std::map<std::string, fltkAction> &fltkActions()
+{
+  static const std::map<std::string, fltkAction> actions = {
+    // the modules
+    {"Reload script", {[](int) { geometry_reload_cb(nullptr, nullptr); }}},
+    {"Edit script", {[](int) { geometry_edit_cb(nullptr, nullptr); }}},
+#if defined(HAVE_MESH)
+    {"Reclassify surfaces", {[](int) { mesh_classify_cb(nullptr, nullptr); }}},
+    {"Save mesh", {[](int) { mesh_save_cb(nullptr, nullptr); }}},
+    {"Size fields", {[](int) { field_cb(nullptr, nullptr); }}},
+    {"High-order tools", {[](int) { highordertools_cb(nullptr, nullptr); }}},
+#if defined(HAVE_METIS)
+    {"Partition mesh", {[](int) { partition_dialog(); }}},
+#endif
+#endif
+    // the quick access menu
+    {"Select rotation center", {[](int) {
+       opt_general_rotation_center_cg(0, GMSH_SET | GMSH_GUI, 0);
+       general_options_ok_cb(nullptr, (void *)"rotation_center");
+       general_options_rotation_center_select_cb(nullptr, nullptr);
+     }}},
+    {"Query",
+     {[](int) { status_query_cb(nullptr, nullptr); },
+      [] { return (int)queryMode(); }}},
+    {"Measure",
+     {[](int) { status_measure_cb(nullptr, nullptr); },
+      [] { return (int)measureMode(); }}},
+    {"Full screen",
+     {[](int) { window_cb(nullptr, (void *)"fullscreen"); },
+      [] { return (int)FlGui::instance()->fullscreen->shown(); }}},
+    {"Split window horizontally",
+     {[](int) { file_window_cb(nullptr, (void *)"split_h"); }}},
+    {"Split window vertically",
+     {[](int) { file_window_cb(nullptr, (void *)"split_v"); }}},
+    {"Unsplit window",
+     {[](int) { file_window_cb(nullptr, (void *)"split_u"); }}},
+    {"General options", {[](int) { general_options_cb(nullptr, nullptr); }}},
+    {"Geometry options", {[](int) { geometry_options_cb(nullptr, nullptr); }}},
+    {"Mesh options", {[](int) { mesh_options_cb(nullptr, nullptr); }}},
+    {"All view options", {[](int) { view_options_cb(nullptr, (void *)-1); }}},
+    // the menu of a view
+    {"View options",
+     {[](int view) { view_options_cb(nullptr, (void *)(intptr_t)view); }}},
+    {"View plugins",
+     {[](int view) { plugin_cb(nullptr, (void *)(intptr_t)view); }}},
+    {"Export view",
+     {[](int view) { view_save_cb(nullptr, (void *)(intptr_t)view); }}},
+  };
+  return actions;
+}
+
+bool canRunItem(const actionItem &item)
+{
+  if(!IsActionAvailable(item)) return false;
+  if(item.kind != ActionRun || !IsDoneByInterface(item)) return true;
+  auto it = fltkActions().find(item.what);
+  return it != fltkActions().end() &&
+         (!it->second.available || it->second.available());
+}
+
+// the value an item asks for, with a slider
+static void askFor(const actionItem &item)
+{
+  double min, max, step, value;
+  GetActionAsk(item.ask, min, max, step, value);
+  std::string::size_type dot = item.ask.option.find('.');
+  std::string category = item.ask.option.substr(0, dot);
+  int index = (category == "View") ? firstVisibleView() : 0;
+  if(index < 0) return;
+  drawContext::global()->draw();
+  double v = numberOrStringOptionChooser(category, index,
+                                         item.ask.option.substr(dot + 1), true,
+                                         item.label, true, min, max, step);
+  SetActionOption(item.ask.option, v);
+}
+
+void runItem(const actionItem &item, int view)
+{
+  if(IsDoneByInterface(item)) {
+    if(item.kind == ActionOperation)
+      runOperation(item.what);
+    else if(item.kind == ActionShape)
+      addShape(item.what);
+    else {
+      auto it = fltkActions().find(item.what);
+      if(it != fltkActions().end()) it->second.run(view);
+    }
+  }
+  else {
+    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
+    int ret = RunAction(item, view, gl ? gl->getDrawContext() : nullptr);
+    // the interface may have been closed meanwhile
+    if(!FlGui::available()) return;
+    if(ret & ActionViewsChanged) FlGui::instance()->updateViews(true);
+    if(ret & ActionModelChanged) FlGui::instance()->resetVisibility();
+    // (before the drawing, which processes events)
+    FlGui::instance()->updateStatistics();
+  }
+  if(!FlGui::available()) return;
+  if(!item.ask.option.empty()) askFor(item);
+  drawContext::global()->draw();
+}
+
+void runAction(const std::string &name)
+{ runItem(actionItem{"", ActionRun, name, {}, "", "", {}}); }
+
+static void item_cb(Fl_Widget *w, void *data)
+{
+  // (the menu of a view keeps its index)
+  int view = w ? (int)(intptr_t)w->user_data() : -1;
+  runItem(*(const actionItem *)data, view);
+}
+
+// whether a menu has an item this interface has now
+static bool anyItem(const actionItem &menu)
+{
+  for(const actionItem &item : menu.items)
+    if(item.kind == ActionMenu ? anyItem(item) : canRunItem(item)) return true;
+  return false;
+}
+
+// the items of menu added to an FLTK menu under prefix (the path of a
+// submenu), a group set apart by a divider; the index of the last one added
+// at the level of prefix, or -1
+static int addItems(Fl_Menu_ *m, const actionItem &menu,
+                    const std::string &prefix)
+{
+  int last = -1;
+  for(const actionItem &item : menu.items) {
+    if(item.kind == ActionMenu) {
+      if(!anyItem(item)) continue;
+      if(item.label.empty()) { // a group
+        if(last >= 0) m->mode(last, m->mode(last) | FL_MENU_DIVIDER);
+        int l = addItems(m, item, prefix);
+        if(l >= 0) last = l;
+      }
+      else { // a submenu
+        addItems(m, item, prefix + item.label + "/");
+        last = m->find_index((prefix + item.label).c_str());
+      }
+      continue;
+    }
+    if(!canRunItem(item)) continue;
+    int check = GetActionCheck(item);
+    if(IsDoneByInterface(item) && item.kind == ActionRun) {
+      auto it = fltkActions().find(item.what);
+      check = it->second.check ? it->second.check() : -1;
+    }
+    int flags = 0;
+    if(check >= 0)
+      flags = (item.what.find('=') == std::string::npos ? FL_MENU_TOGGLE :
+                                                          FL_MENU_RADIO) |
+              (check ? FL_MENU_VALUE : 0);
+    last = m->add((prefix + item.label).c_str(),
+                  item.key.empty() ? 0 : fltkShortcut(item.key.c_str()),
+                  item_cb, (void *)&item, flags);
+  }
+  return last;
+}
+
+void addActionItems(Fl_Menu_ *m, const actionItem &menu, int view)
+{
+  m->user_data((void *)(intptr_t)view);
+  addItems(m, menu, "");
+}
+
+static void item_button_cb(Fl_Widget *w, void *data)
+{ runItem(*(const actionItem *)data, -1); }
+
+// the buttons of a module (see Actions.cpp) as rows of the tree, a menu as a
+// row that pops it up, its submenus as submenus
+void onelabGroup::_addModuleButtons(const std::string &module)
+{
+  for(const actionItem &row : GetActionMenu(module).items) {
+    for(const actionItem &b : row.items) {
+      std::string path = "0Modules/" + module + "/" + b.label;
+      if(b.kind != ActionMenu) {
+        if(canRunItem(b)) _addMenu(path, item_button_cb, (void *)&b, b.help);
+        continue;
+      }
+      if(!anyItem(b)) continue;
+      Fl_Tree_Item *n = _tree->add(path.c_str());
+      if(!n) {
+        Msg::Debug("Could not add item '%s' in tree", path.c_str());
+        continue;
+      }
+      _addRow(n, [&](int ww, int hh) {
+        // (its label where a button has it, 3 pixels in)
+        Fl_Menu_Button *but = new Fl_Menu_Button(4, 1, ww - 3, hh);
+        but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
+        but->box(FL_FLAT_BOX);
+        but->color(_tree->color());
+        but->selection_color(_tree->color());
+        but->copy_label(b.label.c_str());
+        but->copy_tooltip(b.help.c_str());
+        addActionItems(but, b, -1);
+      });
+    }
+  }
+}
 
 void onelabGroup::_addGmshMenus()
 {
   _tree->sortorder(FL_TREE_SORT_NONE);
 
-  // add static geometry and mesh module items
-  for(std::size_t i = 0; i < sizeof(static_modules) / sizeof(static_modules[0]);
-      i++)
-    _addMenu(static_modules[i].label, static_modules[i].callback,
-             static_modules[i].arg);
+  _addModuleButtons("Geometry");
+#if defined(HAVE_MESH)
+  _addModuleButtons("Mesh");
+#endif
 
   // add dynamic solver module items
   for(int i = 0; i < NUM_SOLVERS; i++) {

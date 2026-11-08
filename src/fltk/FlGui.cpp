@@ -1100,15 +1100,15 @@ int FlGui::runShortcut(const std::string &a)
     return 1;
   }
   if(a == "mesh_1d") {
-    mesh_1d_cb(nullptr, nullptr);
+    runAction("Mesh 1D");
     return 1;
   }
   if(a == "mesh_2d") {
-    mesh_2d_cb(nullptr, nullptr);
+    runAction("Mesh 2D");
     return 1;
   }
   if(a == "mesh_3d") {
-    mesh_3d_cb(nullptr, nullptr);
+    runAction("Mesh 3D");
     return 1;
   }
   if(a == "solver_run") {

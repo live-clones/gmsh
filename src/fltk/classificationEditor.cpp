@@ -396,7 +396,7 @@ classificationEditor::classificationEditor(int deltaFontSize)
 
   window = new paletteWindow(
     width, height, CTX::instance()->nonModalWindows ? true : false,
-    "Reclassify 2D", CTX::instance()->reclassifyOffset);
+    "Reclassify surfaces", CTX::instance()->reclassifyOffset);
   window->box(GMSH_WINDOW_BOX);
 
   int x = WB, y = WB;
