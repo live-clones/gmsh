@@ -1323,6 +1323,9 @@ const optionGroups = [
     ['View.IntervalsType', 'choice', 'Intervals', {1: 'Iso-values',
       2: 'Continuous', 3: 'Discrete', 4: 'Numeric'}],
     ['View.NbIso', 'number', 'Number of intervals'],
+    ['View.ScaleType', 'choice', 'Scale', {1: 'Linear', 2: 'Logarithmic',
+      3: 'Symmetric log'}],
+    ['View.NormalRaise', 'range', 'Normal raise', {min: -0.5, max: 0.5, step: 0.01}],
     ['View.ShowScale', 'check', 'Color scale'],
     ['View.ShowElement', 'check', 'Element outlines'],
     ['View.Opacity', 'range', 'Opacity']]],
@@ -1343,10 +1346,30 @@ const meshing = new Set(['Mesh.Algorithm', 'Mesh.Algorithm3D',
 const viewSettings = {};
 const optionFields = [];
 const views = () => gmsh.option.getNumber('PostProcessing.NbViews');
+// The normal raise of a view is in model units per unit of its values: the
+// slider gives it as a fraction of the size of the view for its largest
+// value, which raises all the views alike, whatever their size and values
+function raiseUnit(i) {
+  const num = (n) => gmsh.option.getNumber(`View[${i}].${n}`);
+  const size = Math.hypot(num('MaxX') - num('MinX'), num('MaxY') - num('MinY'),
+                          num('MaxZ') - num('MinZ'));
+  const vmax = Math.max(Math.abs(num('Min')), Math.abs(num('Max')));
+  return vmax > 0 ? size / vmax : 0;
+}
+function setViewOption(name, i, v) {
+  if(name === 'View.NormalRaise') v *= raiseUnit(i);
+  gmsh.option.setNumber(name.replace('View.', `View[${i}].`), v);
+}
+function getViewOption(name, i) {
+  const v = gmsh.option.getNumber(name.replace('View.', `View[${i}].`));
+  if(name !== 'View.NormalRaise') return v;
+  const u = raiseUnit(i);
+  return u ? v / u : 0;
+}
 function setOption(name, v) {
   if(name.startsWith('View.')) {
     viewSettings[name] = v;
-    for(let i = 0; i < views(); i++) gmsh.option.setNumber(name.replace('View.', `View[${i}].`), v);
+    for(let i = 0; i < views(); i++) setViewOption(name, i, v);
   }
   else
     gmsh.option.setNumber(name, v);
@@ -1406,7 +1429,7 @@ function buildOptions() {
       else {
         el = document.createElement('input');
         el.type = {check: 'checkbox', number: 'number', range: 'range'}[kind];
-        if(kind === 'range') Object.assign(el, {min: 0, max: 1, step: 0.05});
+        if(kind === 'range') Object.assign(el, choices || {min: 0, max: 1, step: 0.05});
         if(kind === 'number') el.step = 'any';
       }
       el.title = name;
@@ -1438,13 +1461,13 @@ function buildOptions() {
 // settings asked for the views given to the new ones
 function readOptions() {
   for(const [name, v] of Object.entries(viewSettings))
-    for(let i = 0; i < views(); i++) gmsh.option.setNumber(name.replace('View.', `View[${i}].`), v);
+    for(let i = 0; i < views(); i++) setViewOption(name, i, v);
   // the options of the views, once there are views
   $('optionsViews').hidden = !views();
   for(const [name, kind, el] of optionFields) {
     const isView = name.startsWith('View.');
     if(isView && !views()) continue;
-    const v = gmsh.option.getNumber(isView ? name.replace('View.', 'View[0].') : name);
+    const v = isView ? getViewOption(name, 0) : gmsh.option.getNumber(name);
     if(kind === 'check') el.checked = !!v;
     else el.value = String(v);
   }
