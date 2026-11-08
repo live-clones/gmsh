@@ -2,7 +2,15 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- installable on a phone's or tablet's home screen, where it opens
+     without the bars of the browser (manifest.webmanifest) -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/onelab-180.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ONELAB">
+<meta name="theme-color" content="#ffffff">
 <title>ONELAB web app</title>
 <style>
   /* light or dark as the browser, unless the colour scheme chosen in the
@@ -270,6 +278,15 @@
     #statusbar [data-act=rewind], #statusbar button:disabled { display: none; }
     #notes .note, #hover { max-width: 70vw; }
   }
+  /* the edges of a phone's screen (the notch, the home indicator), which
+     the page reaches (viewport-fit=cover) */
+  #bar { padding-top: max(4px, env(safe-area-inset-top));
+         padding-left: max(6px, env(safe-area-inset-left));
+         padding-right: max(6px, env(safe-area-inset-right)); }
+  #statusbar { padding-bottom: max(2px, env(safe-area-inset-bottom));
+               padding-left: max(4px, env(safe-area-inset-left));
+               padding-right: max(4px, env(safe-area-inset-right)); }
+  #side { padding-left: max(8px, env(safe-area-inset-left)); }
 </style>
 </head>
 <body>
@@ -1537,10 +1554,18 @@ function applyColorScheme() {
     gmsh.option.setNumber('General.ColorScheme', colorScheme);
   if(colorScheme === 3) delete document.documentElement.dataset.theme;
   else document.documentElement.dataset.theme = colorScheme === 2 ? 'dark' : 'light';
+  barColor();
   recolorParameters();
+}
+// the bars of a phone's browser (or of the app on its home screen) in the
+// colour of the page
+function barColor() {
+  document.querySelector('meta[name=theme-color]').content =
+    getComputedStyle(document.body).backgroundColor;
 }
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
   if(colorScheme !== 3) return;
+  barColor();
   Module.ccall('gmshWebColorScheme', 'number', ['number'], [e.matches ? 1 : 0]);
   recolorParameters();
   draw();
@@ -2086,6 +2111,7 @@ function quickItems() {
   const radio = (label, name, v) => [label, () => setOption(name, v), num(name) === v];
   const items = [
     ['Reset viewport', () => { sceneAction('view_z'); sceneAction('view_1_1'); }],
+    ...(fullscreenEnabled ? [['Full screen', toggleFullscreen, !!fullscreenElement()]] : []),
     // the buttons of the status bar there is no room for on a small screen
     ...(narrow.matches ? [
       ['View along X', () => sceneAction('view_x')],
@@ -2138,6 +2164,17 @@ function quickItems() {
       ['All view options...', () => showOptions('Views')]);
   }
   return items;
+}
+// the page in full screen, where the browser lets it (not on an iPhone,
+// where the app on the home screen has no bars instead)
+const fullscreenEnabled = document.fullscreenEnabled || document.webkitFullscreenEnabled;
+const fullscreenElement = () => document.fullscreenElement || document.webkitFullscreenElement;
+function toggleFullscreen() {
+  const d = document.documentElement;
+  const r = fullscreenElement() ?
+    (document.exitFullscreen || document.webkitExitFullscreen).call(document) :
+    (d.requestFullscreen || d.webkitRequestFullscreen).call(d);
+  if(r && r.catch) r.catch((e) => log('*** ' + e.message));
 }
 // at (x, y) in the window, or above it (from the status bar)
 // On a small screen its sections are folded under their headings, until
@@ -2293,8 +2330,7 @@ const pageShortcuts = {
   project_reload: () => run('check'),
   file_open: () => openMenu(true),
   mesh_save: saveMesh,
-  fullscreen: () => document.fullscreenElement ? document.exitFullscreen() :
-    document.documentElement.requestFullscreen(),
+  fullscreen: () => { if(fullscreenEnabled) toggleFullscreen(); },
   help_keys: () => $('keysDialog').showModal(),
   options: () => showOptions(),
   options_general: () => showOptions('General'),

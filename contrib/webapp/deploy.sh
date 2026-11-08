@@ -46,8 +46,12 @@ mkdir -p "$SITE/build/templates"
 cp "$B/gmsh.mjs" "$B/libgmsh.mjs" "$B/libgmsh.wasm" "$SITE/build"
 if [ -d "$B/templates" ]; then cp "$B"/templates/* "$SITE/build/templates"; fi
 
-# the pages, and the examples of the viewer next to it
-cp "$HERE/onelab.html" "$HERE/shortcuts.js" "$HERE/solver.js" "$SITE"
+# the pages, with the manifest and the icons that make them an app on a
+# phone's home screen, and the examples of the viewer next to it
+cp "$HERE/onelab.html" "$HERE/shortcuts.js" "$HERE/solver.js" \
+  "$HERE/manifest.webmanifest" "$SITE"
+mkdir -p "$SITE/icons"
+cp "$HERE"/icons/*.png "$SITE/icons"
 sed "s|^const examples = '../../tutorials/';|const examples = 'tutorials/';|" \
   "$HERE/viewer.html" > "$SITE/viewer.html"
 mkdir -p "$SITE/tutorials"

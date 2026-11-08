@@ -50,4 +50,7 @@ links GetDP in and runs the ONELAB loop; onelab.html runs GetDP in a web
 worker (solver.js), with a module of its own, as the graphical interface runs
 it in a process of its own: the page shows the results as they are written and
 can stop the solver; shortcuts.js gives the pages the keyboard shortcuts of the
-graphical interface (from src/common/Shortcuts.cpp).
+graphical interface (from src/common/Shortcuts.cpp). manifest.webmanifest and
+the icons (made from contrib/mobile/utils/gmsh_mobile_1024x1024.png, the icon
+of the mobile app) let a phone or a tablet install the pages on its home
+screen, where they open without the bars of the browser.
