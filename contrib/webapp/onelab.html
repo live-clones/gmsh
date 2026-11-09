@@ -606,8 +606,6 @@ gmsh.option.setNumber('General.Terminal', 1);
 // browser would ask with a prompt)
 gmsh.option.setNumber('General.NoPopup', 1);
 
-// ---------------------------------------------------------------- drawing
-
 // the studio shading (General.Shading) converges while the view is still: a
 // few of its frames at each animation frame after a frame is drawn, until
 // the next one (each run its own number, the older ones then stop)
@@ -854,8 +852,6 @@ status.addEventListener('click', () => { $('log').open = !$('log').open; });
 // the canvas resized as the messages are shown or hidden
 $('log').addEventListener('toggle', draw);
 
-// ---------------------------------------------------------------- ONELAB
-
 // The popups over the page: the menu of a model (Open model), of the graphs
 // and of the range of a parameter, and the quick access menu (popupMenu());
 // each closed by a click elsewhere but on the buttons that open it (its
@@ -891,8 +887,6 @@ function getParameters() {
 function setParameter(p) {
   return Module.ccall('gmshWebOnelabSet', 'number', ['string'], [JSON.stringify(p)]);
 }
-
-// ---------------------------------------------------------------- solver
 
 // The solver's worker (solver.js): GetDP runs there, while the page merges
 // what it is sent as it comes and stays free, as the graphical interface does
@@ -1588,8 +1582,6 @@ function readableColor(rgb, what) {
                       ['number', 'number', 'number', 'number', 'number'],
                       [rgb, theme('--bg-rgb'), theme('--fg-rgb'), dark ? 1 : 0, what]);
 }
-
-// ---------------------------------------------------------------- modules
 
 // The modules of the graphical interface's tree. Post-processing: the views
 // (in the branches their Group option names), each shown or hidden by its box,
@@ -2335,8 +2327,6 @@ function download(path, keep = false) {
   if(!keep) FS.unlink(path);
 }
 
-// ---------------------------------------------------------------- options
-
 // the main Gmsh options, as in the option window of the graphical interface:
 // [option, kind, label, range if not Gmsh's]; those of the views apply to all,
 // and are given again to the views a new run makes
@@ -2542,8 +2532,6 @@ function showTab(id) {
 }
 for(const b of document.querySelectorAll('#tabs button'))
   b.addEventListener('click', () => showTab(b.dataset.tab));
-
-// ---------------------------------------------------------------- clipping
 
 // the clipping, as the clipping window of the graphical interface: one of six
 // planes (A X + B Y + C Z + D = 0, what is on the positive side kept) or a
@@ -2763,8 +2751,6 @@ $('clipReset').addEventListener('click', () => {
 });
 readClipping();
 
-// ---------------------------------------------------------------- visibility
-
 // the visibility of the model, as the visibility window of the graphical
 // interface: its elementary entities or its physical groups, by dimension,
 // shown or hidden (with their boundaries, as asked); the mesh and the
@@ -2879,8 +2865,6 @@ for(const [id, how] of [['visAll', 1], ['visNone', 0], ['visInvert', -1]])
     readVisibility();
     draw();
   });
-
-// ---------------------------------------------------------------- status bar
 
 // The status bar of the graphical interface's window: the views along the
 // axes, isometric, turned, fitted (Shift: the other side, the box around
@@ -3190,8 +3174,6 @@ function showNotes() {
   }
 }
 
-// ---------------------------------------------------------------- keys
-
 // the shortcuts of the graphical interface: those that change the scene run
 // in the module (shortcuts.js), these by the page
 function showOptions(group) {
@@ -3266,8 +3248,6 @@ for(const r of shortcutsHelp(shortcuts, (a) => pageShortcuts[a] ||
   tr.insertCell().textContent = r.help;
 }
 $('keys').addEventListener('click', () => $('keysDialog').showModal());
-
-// ---------------------------------------------------------------- models
 
 // a model is opened from a directory of its own in the in-memory filesystem
 let modelCount = 0;

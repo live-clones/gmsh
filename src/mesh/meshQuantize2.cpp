@@ -245,7 +245,7 @@ Solution compute_weighted_even_faces(const vector<int>& N,
     return {n, true, flips, bestCost};
 }
 
-// ------------- Example main -------------
+// Example main
 
 
 // Remplit `faces` (faces -> indices de courbes [0..m-1]) et `N` (#elts 1D par courbe)

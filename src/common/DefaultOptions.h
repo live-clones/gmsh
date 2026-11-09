@@ -26,6 +26,9 @@
 #define F GMSH_FULLRC
 #define D GMSH_DEPRECATED
 
+// (laid out by hand, one option per line)
+// clang-format off
+
 // STRINGS
 
 StringXString GeneralOptions_String[] = {
@@ -2948,6 +2951,8 @@ std::map<std::string, OptionRange> OptionRanges = {
   {"Print.TexWidthInMm", {0, 5000, 1}},
   {"Print.Width", {-1, 5000, 1}},
 };
+
+// clang-format on
 
 #undef S
 #undef O

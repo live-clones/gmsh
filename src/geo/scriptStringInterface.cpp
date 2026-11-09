@@ -223,7 +223,6 @@ static bool scriptRemoveLastGeoCommand(const std::string &fileName)
   return true;
 }
 
-// ---------------------------------------------------------------------------
 // The commands in the .geo language, and in the languages of the API
 // (General.ScriptingLanguages: py, jl, cpp, c, f90, js): the .geo script is
 // always written, as the graphical interface works through it; each command
