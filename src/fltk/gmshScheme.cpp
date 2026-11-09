@@ -20,7 +20,6 @@
 #include <FL/Fl_Menu_Window.H>
 #include <FL/Fl_Tooltip.H>
 #include <FL/Fl_Scrollbar.H>
-#include <FL/Fl_Value_Input.H>
 #include <FL/Fl_Valuator.H>
 #include <FL/Fl_Window.H>
 #include <FL/fl_draw.H>

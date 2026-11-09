@@ -17,38 +17,43 @@
 #include "findLinks.h"
 #include "scriptStringInterface.h"
 
+const selectionDriver::entityKind selectionDriver::entityKinds[4] = {
+  {ENT_POINT, "Point", "points"},
+  {ENT_CURVE, "Curve", "curves"},
+  {ENT_SURFACE, "Surface", "surfaces"},
+  {ENT_VOLUME, "Volume", "volumes"}};
+
 namespace {
+  // the dimension of the entities of a type, or -1 for several types
+  int dimOf(int type)
+  {
+    for(int dim = 0; dim < 4; dim++)
+      if(selectionDriver::entityKinds[dim].type == type) return dim;
+    return -1;
+  }
+
   // the entities of a type, as the status names them
   std::string entityNames(int type)
   {
-    switch(type) {
-    case ENT_POINT: return "points";
-    case ENT_CURVE: return "curves";
-    case ENT_SURFACE: return "surfaces";
-    case ENT_VOLUME: return "volumes";
-    default: return "entities";
-    }
+    int dim = dimOf(type);
+    return dim < 0 ? "entities" : selectionDriver::entityKinds[dim].names;
   }
 
   // the type of the entities named "Point", "Curve", "Surface" or "Volume"
   int typeOf(const std::string &what)
   {
-    if(what == "Point") return ENT_POINT;
-    if(what == "Curve") return ENT_CURVE;
-    if(what == "Surface") return ENT_SURFACE;
-    if(what == "Volume") return ENT_VOLUME;
+    for(auto &k : selectionDriver::entityKinds)
+      if(what == k.name) return k.type;
     return ENT_ALL;
   }
 
-  int dimOf(int type)
+  // the type of the entities named "points", "curves"... (all for
+  // "elements")
+  int typeOfNames(const std::string &names)
   {
-    switch(type) {
-    case ENT_POINT: return 0;
-    case ENT_CURVE: return 1;
-    case ENT_SURFACE: return 2;
-    case ENT_VOLUME: return 3;
-    default: return -1;
-    }
+    for(auto &k : selectionDriver::entityKinds)
+      if(names == k.names) return k.type;
+    return ENT_ALL;
   }
 
   const char *copyField[4] = {"Apply translation on copy",
@@ -58,10 +63,11 @@ namespace {
 
 void selectionDriver::show(int types)
 {
-  if(types & ENT_POINT) opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
-  if(types & ENT_CURVE) opt_geometry_curves(0, GMSH_SET | GMSH_GUI, 1);
-  if(types & ENT_SURFACE) opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
-  if(types & ENT_VOLUME) opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
+  double (*draw[4])(int, int, double) = {
+    opt_geometry_points, opt_geometry_curves, opt_geometry_surfaces,
+    opt_geometry_volumes};
+  for(int dim = 0; dim < 4; dim++)
+    if(types & entityKinds[dim].type) draw[dim](0, GMSH_SET | GMSH_GUI, 1);
 }
 
 selectionDriver::kind selectionDriver::kindOf(const std::string &op)
@@ -80,10 +86,9 @@ selectionDriver::kind selectionDriver::kindOf(const std::string &op)
 
 int selectionDriver::selectionMode(const std::string &mode)
 {
-  if(mode == "Points") return ENT_POINT;
-  if(mode == "Curves") return ENT_CURVE;
-  if(mode == "Surfaces") return ENT_SURFACE;
-  if(mode == "Volumes") return ENT_VOLUME;
+  // "Points"... (see the "Selection mode" field below)
+  for(auto &k : entityKinds)
+    if(mode == std::string(k.name) + "s") return k.type;
   return ENT_ALL;
 }
 
@@ -473,11 +478,7 @@ selectionDriver::selectionDriver(const std::string &operation,
     _meshParts = true;
     _pickElements = (what == "elements");
     CTX::instance()->pickElements = _pickElements;
-    _add(what == "curves"   ? ENT_CURVE :
-         what == "surfaces" ? ENT_SURFACE :
-         what == "volumes"  ? ENT_VOLUME :
-                              ENT_ALL,
-         what);
+    _add(typeOfNames(what), what);
     _apply = [this, reverse]() {
       // the lock held by another operation: the parts stay picked, to try
       // again

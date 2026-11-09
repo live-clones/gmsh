@@ -114,9 +114,6 @@ private:
   static void _close_cb(Fl_Widget *w, void *data);
 
 public:
-  // set by the main window: a window torn out of the dock, to be shown on
-  // the desktop under the pointer (root coordinates)
-  inline static void (*tornOutHook)(paletteWindow *w, int x, int y) = nullptr;
   toolDock(int x, int y, int w, int h, int rowHeight);
   ~toolDock();
   // docks the window, or brings it forward, and shows it

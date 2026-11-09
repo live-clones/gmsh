@@ -38,28 +38,6 @@ static void cameraView(Camera *cam, double dx, double dy, double dz,
   glMatrix::lookAt(eye, target, up, view);
 }
 
-// read the gamepad events, if there is a gamepad
-static void navigator_handler(void *data)
-{
-  openglWindow *gl_win = (openglWindow *)data;
-  if(CTX::instance()->gamepad && CTX::instance()->gamepad->active) {
-    if(gl_win->Nautilus == nullptr) {
-      gl_win->Nautilus = new Navigator(CTX::instance()->gamepad->frequency,
-                                       gl_win->getDrawContext());
-    }
-    gl_win->moveWithGamepad();
-    Fl::add_timeout(CTX::instance()->gamepad->frequency, navigator_handler,
-                    data);
-  }
-  else {
-    if(gl_win->Nautilus) {
-      delete gl_win->Nautilus;
-      gl_win->Nautilus = nullptr;
-    }
-    Fl::add_timeout(3., navigator_handler, data);
-  }
-}
-
 int openglWindowMode()
 {
   int mode = FL_RGB | FL_DEPTH | (CTX::instance()->db ? FL_DOUBLE : FL_SINGLE);
@@ -105,9 +83,6 @@ openglWindow::openglWindow(int x, int y, int w, int h)
   _studioW = _studioH = 0;
   _printW = _printH = 0;
   _printScale = 1.;
-
-  if(CTX::instance()->gamepad)
-    Fl::add_timeout(.5, navigator_handler, (void *)this);
 }
 
 void openglWindow::_setLock(bool on)
@@ -123,7 +98,6 @@ openglWindow::~openglWindow()
   hide();
   if(_lastHandled == this) _lastHandled = nullptr;
   _setLock(false);
-  Fl::remove_timeout(navigator_handler, this);
   Fl::remove_timeout(_studioSampleCb, this);
   Fl::remove_timeout(_fireCb, this);
   delete _ctx;
@@ -288,202 +262,137 @@ void openglWindow::draw()
   }
   drawContext::global()->setPixelFactor(_ctx->highResolutionPixelFactor());
 
-  if(lassoMode) {
-    // draw the scene again with the lasso rectangle on top (drawing into the
-    // front buffer, as was done before, left the frame black on current
-    // implementations)
+  drawContext::setClearColor();
+  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+  if(lassoMode || addPointMode) {
+    // the scene with the lasso rectangle or the point to add on top (drawing
+    // into the front buffer, as was done before, left the frame black on
+    // current implementations)
     if(CTX::instance()->fastRedraw) {
       CTX::instance()->mesh.draw = 0;
       CTX::instance()->post.draw = 0;
     }
-
-    glClearColor(
-      (GLclampf)(CTX::instance()->unpackRed(CTX::instance()->color.bg) / 255.),
-      (GLclampf)(CTX::instance()->unpackGreen(CTX::instance()->color.bg) /
-                 255.),
-      (GLclampf)(CTX::instance()->unpackBlue(CTX::instance()->color.bg) / 255.),
-      0.0F);
-    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-
     _ctx->draw3d();
+    if(addPointMode) {
+      gmshColor4ubv((GLubyte *)&CTX::instance()->color.geom.highlight[0]);
+      gmshPointSize(CTX::instance()->geom.pointSize);
+      gmshBegin(GL_POINTS);
+      gmshVertex3d(_point[0], _point[1], _point[2]);
+      gmshEnd();
+    }
     _ctx->draw2d();
-
-    // the rectangle, in pixel coordinates: a border inverting whatever it
-    // crosses, and a faint wash of the foreground colour inside
-    gmshMatrixMode(GMSH_PROJECTION);
-    double px[16];
-    glMatrix::ortho(_ctx->viewport[0], _ctx->viewport[2], _ctx->viewport[1],
-                    _ctx->viewport[3], -1., 1., px);
-    gmshLoadMatrix(px);
-    gmshMatrixMode(GMSH_MODELVIEW);
-    gmshLoadIdentity();
-    double x0 = _click.win[0], y0 = _ctx->viewport[3] - _click.win[1];
-    double x1 = _curr.win[0], y1 = _ctx->viewport[3] - _curr.win[1];
-    // flush before changing the blending, which the collector does not track
-    glImmediate::flush();
-    glDisable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    unsigned int fg = CTX::instance()->color.fg;
-    gmshColor4ub((unsigned char)CTX::instance()->unpackRed(fg),
-                 (unsigned char)CTX::instance()->unpackGreen(fg),
-                 (unsigned char)CTX::instance()->unpackBlue(fg), 40);
-    gmshBegin(GL_QUADS);
-    gmshVertex2d(x0, y0);
-    gmshVertex2d(x1, y0);
-    gmshVertex2d(x1, y1);
-    gmshVertex2d(x0, y1);
-    gmshEnd();
-    glImmediate::flush();
-    // white blended to one minus the destination: an inversion
-    glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
-    gmshColor3d(1., 1., 1.);
-    if(selectionMode && CTX::instance()->mouseSelection)
-      gmshLineStipple(1, 0x0F0F);
-    // two window pixels wide (the width is in display pixels, the
-    // coordinates in window pixels)
-    double hw = 1.;
-    gmshLineWidth(2. * hw * _ctx->highResolutionPixelFactor());
-    // four segments, the horizontal ones stretched by half the width and the
-    // vertical ones shortened by it, so that each corner is inverted once
-    double sx = (x1 > x0) ? hw : (x1 < x0) ? -hw : 0.;
-    double sy = (y1 > y0) ? hw : (y1 < y0) ? -hw : 0.;
-    gmshBegin(GL_LINES);
-    gmshVertex2d(x0 - sx, y0);
-    gmshVertex2d(x1 + sx, y0);
-    gmshVertex2d(x0 - sx, y1);
-    gmshVertex2d(x1 + sx, y1);
-    gmshVertex2d(x0, y0 + sy);
-    gmshVertex2d(x0, y1 - sy);
-    gmshVertex2d(x1, y0 + sy);
-    gmshVertex2d(x1, y1 - sy);
-    gmshEnd();
-    glImmediate::flush();
-    gmshLineStippleOff();
-    gmshLineWidth(1.);
-    glDisable(GL_BLEND);
-    glEnable(GL_DEPTH_TEST);
-
+    if(lassoMode) {
+      // the rectangle, in pixel coordinates: a border inverting whatever it
+      // crosses, and a faint wash of the foreground colour inside
+      gmshMatrixMode(GMSH_PROJECTION);
+      double px[16];
+      glMatrix::ortho(_ctx->viewport[0], _ctx->viewport[2], _ctx->viewport[1],
+                      _ctx->viewport[3], -1., 1., px);
+      gmshLoadMatrix(px);
+      gmshMatrixMode(GMSH_MODELVIEW);
+      gmshLoadIdentity();
+      double x0 = _click.win[0], y0 = _ctx->viewport[3] - _click.win[1];
+      double x1 = _curr.win[0], y1 = _ctx->viewport[3] - _curr.win[1];
+      // flush before changing the blending, which the collector does not track
+      glImmediate::flush();
+      glDisable(GL_DEPTH_TEST);
+      glEnable(GL_BLEND);
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      unsigned int fg = CTX::instance()->color.fg;
+      gmshColor4ub((unsigned char)CTX::instance()->unpackRed(fg),
+                   (unsigned char)CTX::instance()->unpackGreen(fg),
+                   (unsigned char)CTX::instance()->unpackBlue(fg), 40);
+      gmshBegin(GL_QUADS);
+      gmshVertex2d(x0, y0);
+      gmshVertex2d(x1, y0);
+      gmshVertex2d(x1, y1);
+      gmshVertex2d(x0, y1);
+      gmshEnd();
+      glImmediate::flush();
+      // white blended to one minus the destination: an inversion
+      glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
+      gmshColor3d(1., 1., 1.);
+      if(selectionMode && CTX::instance()->mouseSelection)
+        gmshLineStipple(1, 0x0F0F);
+      // two window pixels wide (the width is in display pixels, the
+      // coordinates in window pixels)
+      double hw = 1.;
+      gmshLineWidth(2. * hw * _ctx->highResolutionPixelFactor());
+      // four segments, the horizontal ones stretched by half the width and the
+      // vertical ones shortened by it, so that each corner is inverted once
+      double sx = (x1 > x0) ? hw : (x1 < x0) ? -hw : 0.;
+      double sy = (y1 > y0) ? hw : (y1 < y0) ? -hw : 0.;
+      gmshBegin(GL_LINES);
+      gmshVertex2d(x0 - sx, y0);
+      gmshVertex2d(x1 + sx, y0);
+      gmshVertex2d(x0 - sx, y1);
+      gmshVertex2d(x1 + sx, y1);
+      gmshVertex2d(x0, y0 + sy);
+      gmshVertex2d(x0, y1 - sy);
+      gmshVertex2d(x1, y0 + sy);
+      gmshVertex2d(x1, y1 - sy);
+      gmshEnd();
+      glImmediate::flush();
+      gmshLineStippleOff();
+      gmshLineWidth(1.);
+      glDisable(GL_BLEND);
+      glEnable(GL_DEPTH_TEST);
+    }
     _drawScreenMessage();
     _drawBorder();
     CTX::instance()->mesh.draw = 1;
     CTX::instance()->post.draw = 1;
   }
-  else if(addPointMode) {
-    // draw the whole scene and the point to add
-    if(CTX::instance()->fastRedraw) {
-      CTX::instance()->mesh.draw = 0;
-      CTX::instance()->post.draw = 0;
+  else if(CTX::instance()->stereo) {
+    Camera *cam = &(_ctx->camera);
+    if(!cam->on) cam->init();
+    cam->giveViewportDimension(_ctx->viewport[2], _ctx->viewport[3]);
+    XYZ eye = cam->eyesep / 2.0 * cam->right;
+    // the right eye (side 1), then the left one (side -1), each with its
+    // frustum shifted by half the eye separation and its own buffer
+    for(int side : {1, -1}) {
+      gmshMatrixMode(GMSH_PROJECTION);
+      double frustum[16], view[16];
+      double shift = -side * 0.5 * cam->eyesep * cam->ndfl;
+      glMatrix::frustum(-cam->screenratio * cam->wd2 + shift,
+                        cam->screenratio * cam->wd2 + shift, -cam->wd2,
+                        cam->wd2, cam->glFnear, cam->glFfar * cam->Lc,
+                        frustum);
+      gmshLoadMatrix(frustum);
+      gmshMatrixMode(GMSH_MODELVIEW);
+      glDrawBuffer(side > 0 ? GL_BACK_RIGHT : GL_BACK_LEFT);
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      cameraView(cam, side * eye.x, side * eye.y, side * eye.z, view);
+      gmshLoadMatrix(view);
+      _ctx->draw3d();
+      _burn(side < 0); // the same frame for both eyes
+      _ctx->draw2d();
+      _drawScreenMessage();
+      _drawBorder();
     }
-
-    glClearColor(
-      (GLclampf)(CTX::instance()->unpackRed(CTX::instance()->color.bg) / 255.),
-      (GLclampf)(CTX::instance()->unpackGreen(CTX::instance()->color.bg) /
-                 255.),
-      (GLclampf)(CTX::instance()->unpackBlue(CTX::instance()->color.bg) / 255.),
-      0.0F);
-
-    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-
-    _ctx->draw3d();
-    gmshColor4ubv((GLubyte *)&CTX::instance()->color.geom.highlight[0]);
-    gmshPointSize(CTX::instance()->geom.pointSize);
-    gmshBegin(GL_POINTS);
-    gmshVertex3d(_point[0], _point[1], _point[2]);
-    gmshEnd();
-    _ctx->draw2d();
-    _drawScreenMessage();
-    _drawBorder();
-    CTX::instance()->mesh.draw = 1;
-    CTX::instance()->post.draw = 1;
   }
   else {
-    // draw the whole scene
-    if(CTX::instance()->printing && !CTX::instance()->print.background)
-      glClearColor(1.0F, 1.0F, 1.0F, 0.0F);
-    else
-      glClearColor(
-        (GLclampf)(CTX::instance()->unpackRed(CTX::instance()->color.bg) /
-                   255.),
-        (GLclampf)(CTX::instance()->unpackGreen(CTX::instance()->color.bg) /
-                   255.),
-        (GLclampf)(CTX::instance()->unpackBlue(CTX::instance()->color.bg) /
-                   255.),
-        0.0F);
-    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-
-    if(CTX::instance()->camera && !CTX::instance()->stereo) {
+    // the whole scene, as drawContextOffscreen::drawCurrentOpenglWindow()
+    // draws it
+    if(CTX::instance()->camera) {
       // both eyes' buffers may be left selected by stereo (a print target
       // has no such buffer)
       if(!_printW) glDrawBuffer(GL_BACK);
       _cameraMatrices();
       _ctx->draw3d();
-      _burn();
-      _ctx->draw2d();
-      _studioFrame();
-      if(CTX::instance()->gamepad && CTX::instance()->gamepad->active &&
-         Nautilus)
-        Nautilus->drawIcons();
-      _drawScreenMessage();
-      _drawBorder();
-    }
-    else if(CTX::instance()->stereo) {
-      Camera *cam = &(_ctx->camera);
-      if(!cam->on) cam->init();
-      cam->giveViewportDimension(_ctx->viewport[2], _ctx->viewport[3]);
-      XYZ eye = cam->eyesep / 2.0 * cam->right;
-      // right eye
-      gmshMatrixMode(GMSH_PROJECTION);
-      double frustum[16], view[16];
-      double left =
-        -cam->screenratio * cam->wd2 - 0.5 * cam->eyesep * cam->ndfl;
-      double right =
-        cam->screenratio * cam->wd2 - 0.5 * cam->eyesep * cam->ndfl;
-      double top = cam->wd2;
-      double bottom = -cam->wd2;
-      glMatrix::frustum(left, right, bottom, top, cam->glFnear,
-                        cam->glFfar * cam->Lc, frustum);
-      gmshLoadMatrix(frustum);
-      gmshMatrixMode(GMSH_MODELVIEW);
-      glDrawBuffer(GL_BACK_RIGHT);
-      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-      cameraView(cam, eye.x, eye.y, eye.z, view);
-      gmshLoadMatrix(view);
-      _ctx->draw3d();
-      _burn();
-      _ctx->draw2d();
-      _drawScreenMessage();
-      _drawBorder();
-      // left eye
-      gmshMatrixMode(GMSH_PROJECTION);
-      left = -cam->screenratio * cam->wd2 + 0.5 * cam->eyesep * cam->ndfl;
-      right = cam->screenratio * cam->wd2 + 0.5 * cam->eyesep * cam->ndfl;
-      top = cam->wd2;
-      bottom = -cam->wd2;
-      glMatrix::frustum(left, right, bottom, top, cam->glFnear,
-                        cam->glFfar * cam->Lc, frustum);
-      gmshLoadMatrix(frustum);
-
-      gmshMatrixMode(GMSH_MODELVIEW);
-      glDrawBuffer(GL_BACK_LEFT);
-      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-      cameraView(cam, -eye.x, -eye.y, -eye.z, view);
-      gmshLoadMatrix(view);
-      _ctx->draw3d();
-      _burn(true); // the same frame as the other eye
-      _ctx->draw2d();
-      _drawScreenMessage();
-      _drawBorder();
     }
     else {
       _ctx->draw3d();
       memcpy(_frameView, _ctx->model, sizeof(_frameView));
-      _burn();
-      _ctx->draw2d();
-      _studioFrame();
-      _drawScreenMessage();
-      _drawBorder();
     }
+    _burn();
+    _ctx->draw2d();
+    _studioFrame();
+    if(CTX::instance()->camera && CTX::instance()->gamepad &&
+       CTX::instance()->gamepad->active && Nautilus)
+      Nautilus->drawIcons();
+    _drawScreenMessage();
+    _drawBorder();
   }
   glImmediate::flush();
   drawContext::global()->flushString();
@@ -854,6 +763,19 @@ char openglWindow::selectEntity(int type, std::vector<GVertex *> &vertices,
     char ret = selectionStep(vertices, edges, faces, regions, elements, points,
                              views);
     if(ret) return ret;
+  }
+}
+
+void openglWindow::gamepadStep()
+{
+  GamePad *pad = CTX::instance()->gamepad;
+  if(pad && pad->active) {
+    if(!Nautilus) Nautilus = new Navigator(pad->frequency, _ctx);
+    moveWithGamepad();
+  }
+  else if(Nautilus) {
+    delete Nautilus;
+    Nautilus = nullptr;
   }
 }
 

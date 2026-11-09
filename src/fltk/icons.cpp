@@ -10,6 +10,7 @@
 #include <FL/Fl.H>
 #include <FL/Fl_Widget.H>
 #include <FL/Fl_SVG_Image.H>
+#include <FL/fl_draw.H>
 #include "icons.h"
 
 // the strokes, in a 24 by 24 box, two units wide with round ends, the colour
@@ -131,4 +132,298 @@ void gmshIconsRecolor()
     h->widget->deimage(image(h->name, h->size, false));
     h->widget->redraw();
   }
+}
+
+// The icons of the status bar and the tools as FLTK symbols ("@gmsh_play"),
+// drawn in a 2 by 2 box: those of the themes other than gmsh
+#define vv(x, y) fl_vertex(x, y)
+#define bl fl_begin_loop()
+#define el fl_end_loop()
+
+static void gmsh_play(Fl_Color c)
+{
+  fl_color(c);
+  bl;
+  vv(-0.3, 0.8);
+  vv(0.5, 0.0);
+  vv(-0.3, -0.8);
+  el;
+}
+
+static void gmsh_pause(Fl_Color c)
+{
+  fl_color(c);
+  bl;
+  vv(-0.8, -0.8);
+  vv(-0.3, -0.8);
+  vv(-0.3, 0.8);
+  vv(-0.8, 0.8);
+  el;
+  bl;
+  vv(0.0, -0.8);
+  vv(0.5, -0.8);
+  vv(0.5, 0.8);
+  vv(0.0, 0.8);
+  el;
+}
+
+static void gmsh_rewind(Fl_Color c)
+{
+  fl_color(c);
+  bl;
+  vv(-0.8, -0.8);
+  vv(-0.3, -0.8);
+  vv(-0.3, 0.8);
+  vv(-0.8, 0.8);
+  el;
+  bl;
+  vv(-0.3, 0.0);
+  vv(0.5, -0.8);
+  vv(0.5, 0.8);
+  el;
+}
+
+static void gmsh_forward(Fl_Color c)
+{
+  fl_color(c);
+  bl;
+  vv(0.0, 0.8);
+  vv(0.8, 0.0);
+  vv(0.0, -0.8);
+  el;
+  bl;
+  vv(-0.8, 0.8);
+  vv(-0.3, 0.8);
+  vv(-0.3, -0.8);
+  vv(-0.8, -0.8);
+  el;
+}
+
+static void gmsh_back(Fl_Color c)
+{
+  fl_rotate(180);
+  gmsh_forward(c);
+}
+
+static void gmsh_rotate(Fl_Color c)
+{
+  fl_color(c);
+  fl_begin_line();
+  fl_arc(0.0, -0.1, 0.7, 0.0, 270.0);
+  fl_end_line();
+  fl_begin_polygon();
+  vv(0.5, 0.6);
+  vv(-0.1, 0.9);
+  vv(-0.1, 0.3);
+  fl_end_polygon();
+}
+
+// a cube seen along its diagonal: the isometric view
+static void gmsh_cube(Fl_Color c)
+{
+  fl_color(c);
+  bl;
+  vv(0.0, 0.9);
+  vv(0.78, 0.45);
+  vv(0.78, -0.45);
+  vv(0.0, -0.9);
+  vv(-0.78, -0.45);
+  vv(-0.78, 0.45);
+  el;
+  // (y down)
+  fl_begin_line();
+  vv(-0.78, -0.45);
+  vv(0.0, 0.0);
+  vv(0.78, -0.45);
+  fl_end_line();
+  fl_begin_line();
+  vv(0.0, 0.0);
+  vv(0.0, 0.9);
+  fl_end_line();
+}
+
+// a small disk (FLTK draws its circle 10 pixels wide at the least): the switch
+// of the views of a group in the ONELAB tree
+static void gmsh_dot(Fl_Color c)
+{
+  fl_color(c);
+  fl_begin_polygon();
+  fl_arc(0.0, 0.0, 0.5, 0.0, 360.0);
+  fl_end_polygon();
+}
+
+// a crosshair over a target: the point of the model a query asks about
+static void gmsh_query(Fl_Color c)
+{
+  fl_color(c);
+  fl_begin_line();
+  fl_arc(0.0, 0.0, 0.45, 0.0, 360.0);
+  fl_end_line();
+  bl;
+  vv(-0.9, 0.0);
+  vv(-0.2, 0.0);
+  el;
+  bl;
+  vv(0.2, 0.0);
+  vv(0.9, 0.0);
+  el;
+  bl;
+  vv(0.0, -0.9);
+  vv(0.0, -0.2);
+  el;
+  bl;
+  vv(0.0, 0.2);
+  vv(0.0, 0.9);
+  el;
+}
+
+// a ruler: the line a measurement draws between the two points it is given
+static void gmsh_measure(Fl_Color c)
+{
+  fl_color(c);
+  bl;
+  vv(-0.75, 0.55);
+  vv(0.75, -0.55);
+  el; // the line
+  bl;
+  vv(-0.90, 0.35);
+  vv(-0.60, 0.75);
+  el; // its ends
+  bl;
+  vv(0.60, -0.75);
+  vv(0.90, -0.35);
+  el;
+  bl;
+  vv(-0.38, 0.28);
+  vv(-0.29, 0.40);
+  el; // graduations
+  bl;
+  vv(0.00, 0.00);
+  vv(0.09, 0.12);
+  el;
+  bl;
+  vv(0.38, -0.28);
+  vv(0.46, -0.15);
+  el;
+}
+
+// a window with its side pane filled: the tree, shown or hidden
+static void gmsh_sidebar(Fl_Color c)
+{
+  fl_color(c);
+  bl;
+  vv(-0.8, -0.8);
+  vv(0.8, -0.8);
+  vv(0.8, 0.8);
+  vv(-0.8, 0.8);
+  el;
+  fl_begin_polygon();
+  vv(-0.8, -0.8);
+  vv(-0.3, -0.8);
+  vv(-0.3, 0.8);
+  vv(-0.8, 0.8);
+  fl_end_polygon();
+}
+
+static void gmsh_models(Fl_Color c)
+{
+  fl_color(c);
+  bl;
+  vv(-0.8, -0.7);
+  vv(0.8, -0.7);
+  el;
+  bl;
+  vv(-0.8, -0.2);
+  vv(0.8, -0.2);
+  el;
+  bl;
+  vv(-0.8, 0.3);
+  vv(0.8, 0.3);
+  el;
+  bl;
+  vv(-0.8, 0.8);
+  vv(0.8, 0.8);
+  el;
+}
+
+static void gmsh_gear(Fl_Color c)
+{
+  fl_color(c);
+  double w = 0.12;
+  double h1 = 0.5;
+#if defined(WIN32)
+  double h2 = 1.0;
+#else
+  double h2 = 1.05;
+#endif
+  fl_line_style(FL_SOLID, 3);
+  fl_begin_line();
+  fl_circle(0, 0, 0.5);
+  fl_end_line();
+  fl_line_style(FL_SOLID);
+  for(int i = 0; i < 8; i++) {
+    fl_rotate(45);
+    fl_begin_polygon();
+    fl_vertex(h1, -w);
+    fl_vertex(h2, -w);
+    fl_vertex(h2, w);
+    fl_vertex(h1, w);
+    fl_end_polygon();
+  }
+}
+
+static void gmsh_graph(Fl_Color c)
+{
+  fl_color(c);
+  fl_begin_line();
+  vv(-0.8, -0.8);
+  vv(-0.8, 0.8);
+  vv(0.8, 0.8);
+  fl_end_line();
+  fl_begin_line();
+  vv(-0.8, 0.3);
+  vv(-0.2, -0.2);
+  vv(0.3, 0.1);
+  vv(0.8, -0.4);
+  fl_end_line();
+}
+
+static void gmsh_search(Fl_Color col)
+{
+  double e = 0.5;
+  fl_color(col);
+  fl_begin_polygon();
+  vv(.6 - e, .33);
+  vv(1.2 - e, .93);
+  vv(.93 - e, 1.2);
+  vv(.33 - e, .6);
+  fl_end_polygon();
+  fl_line_style(FL_SOLID, 2);
+  fl_begin_loop();
+  fl_circle(0 - e, 0, .6);
+  fl_end_loop();
+  fl_line_style(FL_SOLID);
+}
+
+#undef vv
+#undef bl
+#undef el
+
+void gmshAddSymbols()
+{
+  fl_add_symbol("gmsh_rewind", gmsh_rewind, 1);
+  fl_add_symbol("gmsh_back", gmsh_back, 1);
+  fl_add_symbol("gmsh_play", gmsh_play, 1);
+  fl_add_symbol("gmsh_pause", gmsh_pause, 1);
+  fl_add_symbol("gmsh_forward", gmsh_forward, 1);
+  fl_add_symbol("gmsh_rotate", gmsh_rotate, 1);
+  fl_add_symbol("gmsh_cube", gmsh_cube, 1);
+  fl_add_symbol("gmsh_sidebar", gmsh_sidebar, 1);
+  fl_add_symbol("gmsh_models", gmsh_models, 1);
+  fl_add_symbol("gmsh_query", gmsh_query, 1);
+  fl_add_symbol("gmsh_dot", gmsh_dot, 1);
+  fl_add_symbol("gmsh_measure", gmsh_measure, 1);
+  fl_add_symbol("gmsh_gear", gmsh_gear, 1);
+  fl_add_symbol("gmsh_graph", gmsh_graph, 1);
+  fl_add_symbol("gmsh_search", gmsh_search, 1);
 }

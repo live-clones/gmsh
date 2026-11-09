@@ -14,6 +14,37 @@
 #include "widthRules.h"
 #include "gmshScheme.h"
 
+class paletteWindow;
+
+// The main window that docks the tool windows (see graphicWindow::
+// setDocking()), as the tool windows, the main window and the dock reach it:
+// through paletteWindow::docking, null while no window docks
+class dockHost {
+public:
+  virtual ~dockHost() {}
+  // whether a tool window shown is docked (not while the dock lets its tools
+  // go)
+  virtual bool takesTools() const = 0;
+  // docks a window and shows it
+  virtual void dockTool(paletteWindow *w) = 0;
+  // a docked window hidden, or resized
+  virtual void toolHidden(paletteWindow *w) = 0;
+  virtual void toolResized(paletteWindow *w) = 0;
+  // a floating tool window moved on the desktop, or dragged to the dock by a
+  // tab or its background: an FLTK drag and drop, the one drag the
+  // application can follow under Wayland, which hides where the windows are
+  virtual void toolMoved(paletteWindow *w) = 0;
+  virtual void dragToDock(paletteWindow *w) = 0;
+  // the events of that drag over the main window, and its drop
+  virtual int toolDrop(int event) = 0;
+  // a window torn out of the dock, to be shown on the desktop under the
+  // pointer (root coordinates)
+  virtual void toolTornOut(paletteWindow *w, int x, int y) = 0;
+  // closes the tool shown in the dock if w is the main window, or returns
+  // false (Cmd-W)
+  virtual bool closeTool(Fl_Window *w) = 0;
+};
+
 // Derive special windows from Fl_Double_Window to correctly process
 // the OS-specific shorcuts (Esc & Cmd-w on Mac, Alt+F4 on Windows)
 class paletteWindow : public Fl_Double_Window {
@@ -47,17 +78,8 @@ private:
   void *_revealedData;
 
 public:
-  // set by the main window while it has a dock: docks a window and shows it
-  inline static void (*dockHook)(paletteWindow *w) = nullptr;
-  // called when a docked window is hidden, or resized
-  inline static void (*hiddenHook)(paletteWindow *w) = nullptr;
-  inline static void (*resizedHook)(paletteWindow *w) = nullptr;
-  // called when a floating tool window is moved on the desktop
-  inline static void (*movedHook)(paletteWindow *w) = nullptr;
-  // called when a floating tool window is dragged to the dock by a tab or
-  // its background: an FLTK drag and drop, the one drag the application can
-  // follow under Wayland, which hides where the windows are
-  inline static void (*dragHook)(paletteWindow *w) = nullptr;
+  // the main window while it has a dock
+  inline static dockHost *docking = nullptr;
   // the tool window being so dragged, until it is dropped: the main window
   // takes the drop over the dock (see graphicWindow::toolDrop())
   inline static paletteWindow *dragged = nullptr;
@@ -97,7 +119,7 @@ public:
   bool floating() const { return _floating; }
   void dragToDock()
   {
-    if(!parent() && _dockable && dragHook) dragHook(this);
+    if(!parent() && _dockable && docking) docking->dragToDock(this);
   }
   // on the desktop, or in the dock (where a folded or covered window is not
   // shown)
@@ -187,7 +209,8 @@ public:
     bool sized = (w != this->w() || h != this->h());
     Fl_Double_Window::resize(x, y, w, h);
     if(!sized) { // only moved
-      if(!parent() && _dockable && _floating && movedHook) movedHook(this);
+      if(!parent() && _dockable && _floating && docking)
+        docking->toolMoved(this);
       return;
     }
     if(!_rules.empty()) {
@@ -195,7 +218,7 @@ public:
       init_sizes();
     }
     if(_resized) _resized(_resizedData);
-    if(parent() && resizedHook) resizedHook(this);
+    if(parent() && docking) docking->toolResized(this);
   }
   virtual int handle(int event)
   {
@@ -242,8 +265,8 @@ public:
   }
   virtual void show()
   {
-    if(_dockable && !_floating && dockHook) {
-      dockHook(this);
+    if(_dockable && !_floating && docking && docking->takesTools()) {
+      docking->dockTool(this);
       return;
     }
     if(parent()) { // docked
@@ -259,8 +282,8 @@ public:
   virtual void hide()
   {
     // FLTK also hides the subwindows of a window it hides: not a close
-    if(parent() && hiddenHook && top_window()->shown())
-      hiddenHook(this);
+    if(parent() && docking && top_window()->shown())
+      docking->toolHidden(this);
     else
       Fl_Double_Window::hide();
   }

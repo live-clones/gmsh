@@ -16,7 +16,6 @@
 #include <algorithm>
 #include <FL/fl_draw.H>
 #include "GmshConfig.h"
-#include "GmshDefines.h"
 #include "FlGui.h"
 #include "drawContext.h"
 #include "fieldWindow.h"
@@ -27,7 +26,6 @@
 #include "GmshMessage.h"
 #include "scriptStringInterface.h"
 #include "StringUtils.h"
-#include "Options.h"
 #include "Context.h"
 
 #if defined(HAVE_MESH)

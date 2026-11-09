@@ -6,8 +6,6 @@
 #include <FL/Fl.H>
 #include "GmshConfig.h"
 #include <cstdint>
-#include <fstream>
-#include <streambuf>
 #include <ctype.h>
 #include "GmshMessage.h"
 #include "onelab.h"
@@ -15,7 +13,6 @@
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Choice.H>
-#include <FL/Fl_Light_Button.H>
 #include <FL/Fl_Input_Choice.H>
 #include <FL/Fl_Output.H>
 #include <FL/Fl_Return_Button.H>
@@ -24,22 +21,20 @@
 #include "outputRange.h"
 #include "solverButton.h"
 #include "viewButton.h"
-#include "paletteWindow.h"
 #include "graphicWindow.h"
 #include "fileDialogs.h"
 #include "editorWindow.h"
 #include "onelabGroup.h"
-#include "GmshGlobal.h"
 #include "FlGui.h"
 #include "gmshScheme.h"
 #include "icons.h"
 #include "Context.h"
 #include "GModel.h"
-#include "GmshDefines.h"
 #include "Options.h"
 #include "OS.h"
 #include "StringUtils.h"
 #include "onelabUtils.h"
+#include "Actions.h"
 #include "OpenFile.h"
 #include "CreateFile.h"
 #include "drawContext.h"
@@ -50,6 +45,32 @@
 // This file contains the Gmsh/FLTK specific parts of the ONELAB
 // interface. You'll need to reimplement this if you plan to build a different
 // ONELAB server.
+
+// the graphs of the parameters made again, and the views they changed shown
+static void updateGraphs()
+{
+  if(onelabUtils::updateGraphs() && FlGui::available()) {
+    FlGui::instance()->updateViews(true);
+    drawContext::global()->draw();
+  }
+}
+
+// the loops over parameters started, or their next step taken (false when
+// they are over), with the values they set shown in the tree
+static void initializeLoops()
+{
+  onelabUtils::initializeLoops();
+  if(FlGui::available() && onelab::server::instance()->getChanged())
+    FlGui::instance()->rebuildTree();
+}
+
+static bool incrementLoops()
+{
+  bool more = onelabUtils::incrementLoops();
+  if(FlGui::available() && onelab::server::instance()->getChanged())
+    FlGui::instance()->rebuildTree();
+  return more;
+}
 
 void solver_cb(Fl_Widget *w, void *data)
 {
@@ -117,7 +138,7 @@ void onelab_cb(Fl_Widget *w, void *data)
   }
 
   if(action == "refresh") {
-    onelabUtils::updateGraphs();
+    updateGraphs();
     FlGui::instance()->rebuildTree();
     return;
   }
@@ -213,7 +234,7 @@ void onelab_cb(Fl_Widget *w, void *data)
 
   FlGui::instance()->onelab->setButtonMode("", "stop");
 
-  if(action == "compute") onelabUtils::initializeLoops();
+  if(action == "compute") initializeLoops();
 
   do { // enter loop
 
@@ -227,22 +248,12 @@ void onelab_cb(Fl_Widget *w, void *data)
     if(action == "compute") FlGui::instance()->onelab->checkForErrors("Gmsh");
     if(FlGui::instance()->onelab->stop()) break;
 
-    // iterate over all other clients (there should normally only be one)
+    // iterate over the solvers (there should normally only be one)
     for(auto it = onelab::server::instance()->firstClient();
         it != onelab::server::instance()->lastClient(); it++) {
       onelab::client *c = *it;
-      if(c->getName() == "Gmsh" || // local Gmsh client
-         c->getName() ==
-           "Listen" || // unknown client connecting through "-listen"
-         c->getName() == "GmshRemote" || // distant post-processing Gmsh client
-         c->getName().find("NoAutoRun") !=
-           std::string::npos) // client name contains "NoAutoRun"
-        continue;
-      if(action != "initialize") onelabUtils::guessModelName(c);
-      onelab::string o(c->getName() + "/Action", action);
-      o.setVisible(false);
-      o.setNeverChanged(true);
-      onelab::server::instance()->set(o);
+      if(!onelabUtils::isAutoRunSolver(c)) continue;
+      onelabUtils::setSolverAction(c, action);
       // we should skip the computation here if no parameter has changed for the
       // solver:
       //
@@ -260,30 +271,18 @@ void onelab_cb(Fl_Widget *w, void *data)
     }
 
     if(action != "initialize") {
-      onelabUtils::updateGraphs();
+      updateGraphs();
       FlGui::instance()->rebuildTree();
       if(!FlGui::available()) return;
     }
 
   } while(action == "compute" && !FlGui::instance()->onelab->stop() &&
-          onelabUtils::incrementLoops());
+          incrementLoops());
 
-  if(action == "compute" && (CTX::instance()->solver.autoSaveDatabase ||
-                             CTX::instance()->solver.autoArchiveOutputFiles)) {
-    std::string db;
-    std::vector<onelab::string> ps;
-    onelab::server::instance()->get(ps, "Gmsh/DatabaseFileName");
-    if(ps.size() && ps[0].getValue().size()) {
-      db = ps[0].getValue();
-    }
-    else {
-      std::vector<std::string> split =
-        SplitFileName(GModel::current()->getFileName());
-      db = split[0] + split[1] + ".db";
-    }
-    if(CTX::instance()->solver.autoArchiveOutputFiles)
-      onelabUtils::archiveOutputFiles(db);
-    if(CTX::instance()->solver.autoSaveDatabase) onelabUtils::saveDb(db);
+  if(action == "compute" && onelabUtils::afterCompute()) {
+    // (the archived files renamed in the tree)
+    if(!FlGui::available()) return;
+    FlGui::instance()->rebuildTree();
     if(!FlGui::available()) return;
   }
 
@@ -890,7 +889,7 @@ static void onelab_number_input_range_cb(Fl_Widget *w, void *data)
     numbers[0].setAttribute("Loop", o->loop());
     numbers[0].setAttribute("Graph", o->graph());
     int what = onelabUtils::setParameter(numbers[0]);
-    onelabUtils::updateGraphs();
+    updateGraphs();
     parameterChanged(what);
   }
 }
@@ -905,7 +904,7 @@ static void onelab_number_output_range_cb(Fl_Widget *w, void *data)
     outputRange *o = (outputRange *)w;
     numbers[0].setAttribute("Graph", o->graph());
     onelab::server::instance()->set(numbers[0]);
-    onelabUtils::updateGraphs();
+    updateGraphs();
   }
 }
 
@@ -1403,37 +1402,15 @@ void onelabGroup::_rebuildTree()
 {
   _rebuilding = true;
 
-  // The widgets are deleted after FlGui::check() below, but a row an event
-  // being handled was sent to (e.g. an edited value, whose autoCheck may
-  // rebuild the tree more than once): its code may still be running, so it is
-  // retired, with the strings of its build, kept hidden until the events are
-  // handled (see deleteRetiredWidgets()); found before the rows are hidden,
-  // which takes the focus away
-  std::vector<Fl_Widget *> delWidgets;
-  std::list<std::string> delStrings; // freed when the rebuild is over
-  // the rows retired before that no event targets any more are deleted too,
-  // or a long run, whose event lasts, would keep one per refresh
-  std::vector<Fl_Widget *> retiredBefore;
-  retiredBefore.swap(_retiredWidgets);
-  for(Fl_Widget *w : retiredBefore)
-    (FlGui::inEvent(w) ? _retiredWidgets : delWidgets).push_back(w);
-  if(_retiredWidgets.empty()) delStrings.swap(_retiredStrings);
-  bool retired = false;
+  // The rows are deleted after FlGui::check() below, but a row an event being
+  // handled was sent to (e.g. an edited value, whose autoCheck may rebuild the
+  // tree more than once) is retired (see FlGui::retireInEvent()); the strings
+  // of the others are freed when the rebuild is over
   std::vector<Fl_Widget *> old = _treeWidgets;
-  for(Fl_Widget *w : old) {
-    if(FlGui::inEvent(w)) {
-      _retiredWidgets.push_back(w);
-      retired = true;
-    }
-    else
-      delWidgets.push_back(w);
-  }
-  if(retired)
-    _retiredStrings.splice(_retiredStrings.end(), _treeStrings);
-  else
-    delStrings.splice(delStrings.end(), _treeStrings);
+  std::list<std::string> delStrings;
+  delStrings.swap(_treeStrings);
+  std::vector<Fl_Widget *> delWidgets = FlGui::retireInEvent(old, delStrings);
   _treeWidgets.clear();
-  _treeStrings.clear();
 
   // hide all the widgets we have added in the tree to make sure they don't get
   // spurious events (until they are deleted); hiding an edited input runs its
@@ -1570,13 +1547,6 @@ void onelabGroup::_rebuildTree()
   // this needs to be performed after FlGui::check()
   Msg::Debug("Deleting onelabGroup widgets (%d)", (int)delWidgets.size());
   for(Fl_Widget *w : delWidgets) Fl::delete_widget(w);
-}
-
-void onelabGroup::deleteRetiredWidgets()
-{
-  for(Fl_Widget *w : _retiredWidgets) Fl::delete_widget(w);
-  _retiredWidgets.clear();
-  _retiredStrings.clear();
 }
 
 void onelabGroup::openTreeItem(const std::string &name)
@@ -1833,4 +1803,85 @@ void onelabGroup::addSolver(const std::string &name,
 
   // initialize the client
   onelab_cb(nullptr, (void *)"initialize");
+}
+
+// The rows of the modules of the tree (Geometry, Mesh) from the action
+// registry (see Actions.h and actionMenus.cpp)
+
+static void item_button_cb(Fl_Widget *w, void *data)
+{ runItem(*(const actionItem *)data, -1); }
+
+// the buttons of a module (see Actions.cpp) as rows of the tree, a menu as a
+// row that pops it up, its submenus as submenus
+void onelabGroup::_addModuleButtons(const std::string &module)
+{
+  for(const actionItem &row : GetActionMenu(module).items) {
+    for(const actionItem &b : row.items) {
+      std::string path = "0Modules/" + module + "/" + b.label;
+      if(b.kind != ActionMenu) {
+        if(canRunItem(b)) _addMenu(path, item_button_cb, (void *)&b, b.help);
+        continue;
+      }
+      if(!canRunAnyItem(b)) continue;
+      Fl_Tree_Item *n = _tree->add(path.c_str());
+      if(!n) {
+        Msg::Debug("Could not add item '%s' in tree", path.c_str());
+        continue;
+      }
+      _addRow(n, [&](int ww, int hh) {
+        // (its label where a button has it, 3 pixels in)
+        Fl_Menu_Button *but = new Fl_Menu_Button(4, 1, ww - 3, hh);
+        but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
+        but->box(FL_FLAT_BOX);
+        but->color(_tree->color());
+        but->selection_color(_tree->color());
+        but->copy_label(b.label.c_str());
+        but->copy_tooltip(b.help.c_str());
+        addActionItems(but, b, -1);
+      });
+    }
+  }
+}
+
+void onelabGroup::_addGmshMenus()
+{
+  _tree->sortorder(FL_TREE_SORT_NONE);
+
+  _addModuleButtons("Geometry");
+#if defined(HAVE_MESH)
+  _addModuleButtons("Mesh");
+#endif
+
+  // add dynamic solver module items
+  for(int i = 0; i < NUM_SOLVERS; i++) {
+    std::string name = opt_solver_name(i, GMSH_GET, "");
+    if(name.size()) _addSolverMenu(i);
+  }
+
+  // add dynamic post-processing module items
+  for(std::size_t i = 0; i < PView::list.size(); i++) _addViewMenu(i);
+
+  _tree->sortorder(FL_TREE_SORT_ASCENDING);
+
+  if(_firstBuild) {
+    _firstBuild = false;
+    Fl_Tree_Item *n0 = _tree->find_item("0Modules");
+    for(Fl_Tree_Item *n = n0; n; n = n->next()) {
+      if(!n->is_root() && n->has_children() && n->depth() > 1) n->close();
+    }
+  }
+}
+
+std::set<std::string> onelabGroup::_getClosedGmshMenus()
+{
+  std::set<std::string> closed;
+  Fl_Tree_Item *n0 = _tree->find_item("0Modules");
+  for(Fl_Tree_Item *n = n0; n; n = n->next()) {
+    if(!n->is_root() && n->has_children() && n->is_close()) {
+      char path[1024];
+      _tree->item_pathname(path, sizeof(path), n);
+      closed.insert(path);
+    }
+  }
+  return closed;
 }

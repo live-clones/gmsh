@@ -6,6 +6,8 @@
 #ifndef FL_GUI_H
 #define FL_GUI_H
 
+#include <memory>
+#include <list>
 #include <string>
 #include <vector>
 #include <thread>
@@ -78,14 +80,18 @@ private:
   static bool _finishedProcessingCommandLine;
   // the thread that created the GUI, the only one that may touch it
   static std::thread::id _mainThread;
-  // every event goes through _dispatch(), with the hover of the scheme, which
-  // keeps the widgets the events being handled were sent to (the one with the
-  // focus, the pushed one, the one under the pointer), watched (zeroed if
-  // deleted); the callbacks they run handle more. Once the first one is
-  // handled, no widget code is running, and the widgets the ONELAB tree
-  // retired are deleted
+  // the widgets the events being handled were sent to (see _dispatch() and
+  // the comment at the top of FlGui.cpp)
   static std::vector<Fl_Widget **> _eventWidgets;
   static int _dispatch(int event, Fl_Window *win);
+  // the widgets retired by retireInEvent(), with the strings they show
+  struct _retired {
+    Fl_Widget *widget;
+    std::shared_ptr<std::list<std::string>> strings;
+  };
+  static std::vector<_retired> _retiredWidgets;
+  // those no event targets any more deleted (all of them if all)
+  static void _deleteRetired(bool all);
   std::string _lastStatus;
   bool _quitShouldExit;
   // the tool windows, named for General.FloatingTools
@@ -154,6 +160,14 @@ public:
   // goes on once the input that had it has run its callback): its code may be
   // running (see onelabGroup::_rebuildTree())
   static bool inEvent(Fl_Widget *w);
+  // Of widgets about to be deleted (the rows of a list made again), those an
+  // event being handled was sent to are retired: their code may still be
+  // running, so they are kept, hidden by the caller, with the strings they
+  // show (moved out of strings), until no event targets them. Returns the
+  // others, to delete. To call before hiding them, which takes the focus away.
+  static std::vector<Fl_Widget *>
+  retireInEvent(const std::vector<Fl_Widget *> &widgets,
+                std::list<std::string> &strings);
   // whether an event is being handled: the code of its widgets is running
   static bool handlingEvent() { return !_eventWidgets.empty(); }
   // a graphic window draws or runs a picking pass: the messages it prints do

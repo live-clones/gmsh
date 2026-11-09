@@ -257,13 +257,6 @@ void onelabContextWindow::rebuild()
   } while(_rebuildAgain);
 }
 
-void onelabContextWindow::deleteRetiredWidgets()
-{
-  for(auto w : _retiredWidgets) Fl::delete_widget(w);
-  _retiredWidgets.clear();
-  _retiredStrings.clear();
-}
-
 void onelabContextWindow::_rebuild()
 {
   // no entity selected, or not any more: its parameters go with it
@@ -272,12 +265,13 @@ void onelabContextWindow::_rebuild()
     return;
   }
 
-  // the widgets an event being handled was sent to, found before they are
-  // hidden, which takes the focus away (see below)
+  // the widgets to delete, but those an event being handled was sent to,
+  // retired (see FlGui::retireInEvent()); the strings of the others freed
+  // when the rebuild is over
   std::vector<Fl_Widget *> old = _onelabWidgets;
-  std::set<Fl_Widget *> inEvent;
-  for(auto w : old)
-    if(FlGui::inEvent(w)) inEvent.insert(w);
+  std::list<std::string> oldStrings;
+  oldStrings.swap(_strings);
+  std::vector<Fl_Widget *> del = FlGui::retireInEvent(old, oldStrings);
 
   // hide old widgets and record if one had the focus; hiding an edited input
   // runs its callback, which may rebuild (see rebuild()) or close the GUI
@@ -289,21 +283,9 @@ void onelabContextWindow::_rebuild()
     if(!*alive) return;
   }
 
-  // delete the widgets (this is called every time the main ONELAB tree is
-  // rebuilt), but retire one an event being handled was sent to until the
-  // events are handled, as the tree does
-  bool retired = false;
-  for(auto w : _onelabWidgets) {
-    if(inEvent.count(w)) {
-      _retiredWidgets.push_back(w);
-      retired = true;
-    }
-    else
-      Fl::delete_widget(w);
-  }
-  if(retired) _retiredStrings.splice(_retiredStrings.end(), _strings);
+  // (this is called every time the main ONELAB tree is rebuilt)
+  for(auto w : del) Fl::delete_widget(w);
   _onelabWidgets.clear();
-  _strings.clear();
 
   // get all ONELAB parameters
   std::vector<onelab::number> pn, fpn;

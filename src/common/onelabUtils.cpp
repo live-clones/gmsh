@@ -25,12 +25,6 @@
 #include "PViewOptions.h"
 #endif
 
-#if defined(HAVE_FLTK)
-#include "FlGui.h"
-#include "onelabGroup.h"
-#include "drawContext.h"
-#endif
-
 namespace onelabUtils {
 
   static std::map<std::string, inProcessSolver> _inProcessSolvers;
@@ -499,22 +493,19 @@ namespace onelabUtils {
 
       // create client
       onelab::localNetworkClient *c = nullptr;
-      onelab::string o;
       if(name.size()) {
         if(getInProcessSolver(name))
           c = new gmshInProcessClient(name, getInProcessSolver(name));
         else
           c = new gmshLocalNetworkClient(name, exe, host);
         c->setIndex(num);
-        o = c->getName() + "/Action";
       }
 
       // initialize
       onelabUtils::runGmshClient("initialize",
                                  CTX::instance()->solver.autoMesh);
       if(c) {
-        o.setValue("initialize");
-        onelab::server::instance()->set(o);
+        setSolverAction(c, "initialize");
         c->run();
       }
 
@@ -529,9 +520,7 @@ namespace onelabUtils {
       // check
       onelabUtils::runGmshClient("check", CTX::instance()->solver.autoMesh);
       if(c) {
-        onelabUtils::guessModelName(c);
-        o.setValue("check");
-        onelab::server::instance()->set(o);
+        setSolverAction(c, "check");
         c->run();
       }
 
@@ -540,23 +529,12 @@ namespace onelabUtils {
       do {
         onelabUtils::runGmshClient("compute", CTX::instance()->solver.autoMesh);
         if(c) {
-          onelabUtils::guessModelName(c);
-          o.setValue("compute");
-          onelab::server::instance()->set(o);
+          setSolverAction(c, "compute");
           c->run();
           onelab::server::instance()->setChanged(0, c->getName());
         }
       } while(incrementLoops());
-
-      if(CTX::instance()->solver.autoSaveDatabase ||
-         CTX::instance()->solver.autoArchiveOutputFiles) {
-        std::vector<std::string> split =
-          SplitFileName(GModel::current()->getFileName());
-        std::string db = split[0] + split[1] + ".db";
-        if(CTX::instance()->solver.autoArchiveOutputFiles)
-          archiveOutputFiles(db);
-        if(CTX::instance()->solver.autoSaveDatabase) saveDb(db);
-      }
+      afterCompute();
     }
   }
 
@@ -672,11 +650,6 @@ namespace onelabUtils {
     onelabUtils::initializeLoop("1");
     onelabUtils::initializeLoop("2");
     onelabUtils::initializeLoop("3");
-
-#if defined(HAVE_FLTK)
-    if(FlGui::available() && onelab::server::instance()->getChanged())
-      FlGui::instance()->rebuildTree();
-#endif
   }
 
   bool incrementLoops()
@@ -693,29 +666,54 @@ namespace onelabUtils {
     onelab::number n("0Metamodel/Loop", ret ? 1 : 0);
     n.setVisible(false);
     onelab::server::instance()->set(n);
-
-#if defined(HAVE_FLTK)
-    if(FlGui::available() && onelab::server::instance()->getChanged())
-      FlGui::instance()->rebuildTree();
-#endif
     return ret;
   }
 
-  void updateGraphs()
+  bool updateGraphs()
   {
-    bool redraw = false;
-    for(int i = 0; i < 18; i++) {
-      std::ostringstream tmp;
-      tmp << i;
-      bool ret = onelabUtils::updateGraph(tmp.str());
-      redraw = redraw || ret;
-    }
-#if defined(HAVE_FLTK)
-    if(redraw && FlGui::available()) {
-      FlGui::instance()->updateViews(true);
-      drawContext::global()->draw();
-    }
-#endif
+    bool changed = false;
+    for(int i = 0; i < 18; i++)
+      if(onelabUtils::updateGraph(std::to_string(i))) changed = true;
+    return changed;
+  }
+
+  bool isAutoRunSolver(onelab::client *c)
+  {
+    const std::string &n = c->getName();
+    return n != "Gmsh" && // the local Gmsh client
+           n != "Listen" && // a client connecting through "-listen"
+           n != "GmshRemote" && // a distant post-processing Gmsh client
+           n.find("NoAutoRun") == std::string::npos;
+  }
+
+  void setSolverAction(onelab::client *c, const std::string &action)
+  {
+    if(action != "initialize") guessModelName(c);
+    onelab::string o(c->getName() + "/Action", action);
+    o.setVisible(false);
+    o.setNeverChanged(true);
+    onelab::server::instance()->set(o);
+  }
+
+  std::string dbFileName()
+  {
+    std::vector<onelab::string> ps;
+    onelab::server::instance()->get(ps, "Gmsh/DatabaseFileName");
+    if(ps.size() && ps[0].getValue().size()) return ps[0].getValue();
+    std::vector<std::string> split =
+      SplitFileName(GModel::current()->getFileName());
+    return split[0] + split[1] + ".db";
+  }
+
+  bool afterCompute()
+  {
+    bool archive = CTX::instance()->solver.autoArchiveOutputFiles;
+    bool save = CTX::instance()->solver.autoSaveDatabase;
+    if(!archive && !save) return false;
+    std::string db = dbFileName();
+    if(archive) archiveOutputFiles(db);
+    if(save) saveDb(db);
+    return true;
   }
 
   std::string timeStamp()
@@ -797,10 +795,6 @@ namespace onelabUtils {
       CreateSingleDir(split[0] + "archive/");
       saveDb(split[0] + "archive/" + split[1] + stamp + split[2]);
     }
-
-#if defined(HAVE_FLTK)
-    if(FlGui::available()) FlGui::instance()->rebuildTree();
-#endif
   }
 
   void archiveSolutionFiles(const std::string &fileName)
@@ -829,9 +823,6 @@ namespace onelabUtils {
         strings[0].setValue(names[0]);
         strings[0].setChoices(names);
         onelab::server::instance()->set(strings[0]);
-#if defined(HAVE_FLTK)
-        if(FlGui::available()) FlGui::instance()->rebuildTree();
-#endif
       }
     }
   }

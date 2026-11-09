@@ -112,6 +112,9 @@ public:
   void setAgain(bool again) { _again = again; }
   // which also brings the per-window visibility list up to date
   static void setLastHandled(openglWindow *w);
+  // a step of the gamepad (see FlGui.cpp): the navigator made while the pad
+  // is active, which moves the camera, and deleted when it is not
+  void gamepadStep();
   void moveWithGamepad();
   Navigator *Nautilus;
 };

@@ -5,14 +5,12 @@
 
 #include <FL/Fl.H>
 #include <FL/Fl_Tabs.H>
-#include <FL/Fl_Return_Button.H>
 #include <algorithm>
 #include "FlGui.h"
 #include "accentTabs.h"
 #include "drawContext.h"
 #include "clippingWindow.h"
 #include "paletteWindow.h"
-#include "GmshDefines.h"
 #include "PView.h"
 #include "PViewOptions.h"
 #include "GModel.h"

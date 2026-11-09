@@ -35,9 +35,24 @@ namespace onelabUtils {
   double updateNumber(onelab::number &x, onelab::number &y,
                       const bool readOnlyRange = false);
   std::string updateString(onelab::string &x, onelab::string &y);
+  // the loops over parameters (see Loop in onelab.h) started, and the next
+  // step of the innermost one taken: false when they are over
   void initializeLoops();
   bool incrementLoops();
-  void updateGraphs();
+  // the graphs of the parameters (their "Graph" attribute) made again: true
+  // if views were added or changed, for the interface to show them
+  bool updateGraphs();
+  // The run loops of the interfaces (the graphical interface, the batch mode,
+  // the web page) share these: whether a client is a solver they run (not
+  // Gmsh itself, nor a client connecting on its own, nor one whose name says
+  // NoAutoRun); a solver about to run an action (its model name guessed, the
+  // action set); the database file (Gmsh/DatabaseFileName, or the model's
+  // name with .db); and, after a compute, the output files archived and the
+  // database saved as the Solver options ask (true if one was)
+  bool isAutoRunSolver(onelab::client *c);
+  void setSolverAction(onelab::client *c, const std::string &action);
+  std::string dbFileName();
+  bool afterCompute();
   std::string timeStamp();
   void saveDb(const std::string &fileName);
   void archiveOutputFiles(const std::string &fileName);

@@ -16,5 +16,7 @@ class Fl_Widget;
 void gmshIcon(Fl_Widget *w, const char *name, int size);
 // the icons drawn again in the colours in place
 void gmshIconsRecolor();
+// the same icons as FLTK symbols ("@gmsh_play", ...), for the other themes
+void gmshAddSymbols();
 
 #endif

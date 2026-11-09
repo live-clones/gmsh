@@ -3,12 +3,10 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#include "GmshConfig.h"
 #include <cstdint>
 #include <algorithm>
 #include <functional>
 #include <vector>
-#include <string.h>
 #include <FL/Fl_Return_Button.H>
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Value_Input.H>
@@ -27,9 +25,7 @@
 #include "PluginManager.h"
 #include "Plugin.h"
 #include "GModel.h"
-#include "MVertex.h"
 #include "Context.h"
-#include "scriptStringInterface.h"
 #include "StringUtils.h"
 #include "OS.h"
 

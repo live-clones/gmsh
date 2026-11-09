@@ -3,6 +3,21 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+// The main window of the graphical interface (graphicWindow): its menu bar,
+// the tiles of the scene, the tree of the modules (onelabGroup), the messages
+// and the status bar. In this file, in order:
+// - the callbacks of the menu bar (File, Window, Help), then the menu bar
+//   itself (the actions of its items, whose menus are in Actions.cpp);
+// - the callbacks of the status bar: the points of view, the query and the
+//   measure (the modes that wait for clicks), the quick access menu, the
+//   mouse selection, the models and the animation of the views;
+// - the small widget classes of the window (its tile, menu bar, resizing,
+//   progress bar), the table of the status bar buttons, the constructor, and
+//   the methods that size and split the window, the menu and the messages.
+// Elsewhere: the docking of the tool windows (toolDock.cpp), the items of the
+// action registry and the operations on picked entities (actionMenus.cpp),
+// the rows of the modules (onelabGroup.cpp).
+
 #include "GmshConfig.h"
 #include "GmshDefines.h"
 #include "GmshVersion.h"
@@ -12,15 +27,12 @@
 #include <stdio.h>
 #include <time.h>
 #include <sstream>
-#include <fstream>
 #include <string>
 #include <algorithm>
-#include <functional>
 #include <map>
 #include <FL/Fl_Box.H>
 #include <FL/fl_ask.H>
 #include <FL/filename.H>
-#include <FL/Fl_Tree.H>
 #include <FL/Fl_Menu_Button.H>
 #include "FlGui.h"
 #include "Shortcuts.h"
@@ -31,36 +43,26 @@
 #include "gmshScheme.h"
 #include "icons.h"
 #include "optionWindow.h"
-#include "gamepadWindow.h"
 #include "statisticsWindow.h"
-#include "contextWindow.h"
 #include "visibilityWindow.h"
-#include "highOrderToolsWindow.h"
 #include "clippingWindow.h"
 #include "manipWindow.h"
-#include "fieldWindow.h"
 #include "pluginWindow.h"
 #include "helpWindow.h"
 #include "windowPlacement.h"
 #include "openglWindow.h"
-#include "viewButton.h"
 #include "editorWindow.h"
-#include "onelabContextWindow.h"
 #include "onelabGroup.h"
 #include "messageBrowser.h"
 #include "gmshLocalNetworkClient.h"
 #include "fileDialogs.h"
 #include "extraDialogs.h"
-#include "partitionDialog.h"
-#include "classificationEditor.h"
 #include "GModel.h"
 #include "PView.h"
 #include "PViewData.h"
 #include "PViewOptions.h"
 #include "OpenFile.h"
 #include "CreateFile.h"
-#include "scriptStringInterface.h"
-#include "CommandLine.h"
 #include "Options.h"
 #include "Context.h"
 #include "StringUtils.h"
@@ -194,11 +196,13 @@ static void file_open_merge_cb(Fl_Widget *w, void *data)
   }
 }
 
+// the recent file of index data
 static void file_open_recent_cb(Fl_Widget *w, void *data)
 {
-  if(!data) return;
+  std::size_t i = (intptr_t)data;
+  if(i >= CTX::instance()->recentFiles.size()) return;
   if(modelBusy()) return;
-  std::string str((const char *)data);
+  std::string str = CTX::instance()->recentFiles[i];
   int n = PView::list.size();
   OpenProject(str);
   // the GUI may have been closed while the file was read
@@ -275,7 +279,7 @@ static void file_remote_cb(Fl_Widget *w, void *data)
   }
 }
 
-static void file_window_cb(Fl_Widget *w, void *data)
+void file_window_cb(Fl_Widget *w, void *data)
 {
   std::string str((const char *)data);
   if(str == "new") {
@@ -657,7 +661,7 @@ void help_about_cb(Fl_Widget *w, void *data)
   FlGui::instance()->help->about->show();
 }
 
-static void geometry_edit_cb(Fl_Widget *w, void *data)
+void geometry_edit_cb(Fl_Widget *w, void *data)
 { editFile(GModel::current()->getFileName()); }
 
 void onelab_reload_cb(Fl_Widget *w, void *data)
@@ -687,111 +691,6 @@ void geometry_reload_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
-// The value of a field of the operations on selected entities (see
-// selectionDriver), by its name, from the context windows
-static std::string dialogValue(const std::string &operation,
-                               const std::string &name)
-{
-  FlGui *g = FlGui::instance();
-  if(name == "Name") return g->physicalContext->selectedName;
-  if(name == "Tag") return std::to_string(g->physicalContext->selectedTag);
-  Fl_Widget *w =
-    g->transformContext->field(name, operation == "Extrude rotate");
-  return fieldValue(w ? w : g->meshContext->field(name));
-}
-
-// After a physical group is added or removed: the clients are told, and the
-// ONELAB parameters of the group are shown if it has any, which stops the
-// selection (so that outside codes can process events through the API); or
-// the dialog is shown again, with the new group. False if the selection stops
-static bool physicalGroupChanged(const selectionDriver &d)
-{
-  selectionDriver::kind k = selectionDriver::kindOf(d.operation());
-  const std::string &what = k.what;
-  bool remove = k.remove;
-  onelab_cb(nullptr, (void *)"check");
-  if(!FlGui::available()) return false;
-  std::vector<std::string> param;
-  onelab::server::instance()->getParameterNames(
-    param, "ONELAB Context/" + what + " Template");
-  const std::vector<std::pair<int, int> > &picked = d.done()[0];
-  if(picked.size() && param.size() && !remove) {
-    FlGui::instance()->getCurrentOpenglWindow()->quitSelection = 1;
-    GModel::current()->setSelection(0);
-    FlGui::instance()->onelabContext->show(picked[0].first, picked[0].second);
-    return false;
-  }
-  FlGui::instance()->physicalContext->show(what, remove);
-  return true;
-}
-
-// An operation on selected entities (see selectionDriver): the clicks and the
-// keys are waited for until it is over
-static void runSelection(const std::string &operation)
-{
-  selectionDriver d(operation, [operation](const std::string &name) {
-    return dialogValue(operation, name);
-  });
-  while(d.active()) {
-    if(!FlGui::available()) return;
-    Msg::StatusGl("%s", d.status().c_str());
-    char ib = FlGui::instance()->selectEntity(d.type());
-    if(!FlGui::available()) return;
-    FlGui *g = FlGui::instance();
-    if(d.step(ib, g->selectedVertices, g->selectedEdges, g->selectedFaces,
-              g->selectedRegions, g->selectedElements)) {
-      g->resetVisibility();
-      if(selectionDriver::kindOf(operation).on == selectionDriver::OnPhysical &&
-         !physicalGroupChanged(d))
-        break;
-    }
-    drawContext::global()->draw();
-  }
-  if(FlGui::available()) Msg::StatusGl("");
-}
-
-static void add_new_point_based_entity(const std::string &what, int pane)
-{
-  opt_general_axes(0, GMSH_SET | GMSH_GUI, 3);
-  opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
-  drawContext::global()->draw();
-
-  FlGui::instance()->elementaryContext->show(pane);
-
-  while(1) {
-    if(!FlGui::available()) return;
-
-    for(openglWindow *gl : FlGui::instance()->openglWindows())
-      gl->addPointMode = 1;
-    std::string name = what;
-    std::transform(name.begin(), name.end(), name.begin(), ::tolower);
-    Msg::StatusGl(
-      "Move mouse and/or enter coordinates\n"
-      "[Press 'Shift' to hold position, 'e' to add %s or 'q' to abort]",
-      name.c_str());
-    char ib = FlGui::instance()->selectEntity(ENT_NONE);
-    if(!FlGui::available()) return;
-    if(ib == 'e') {
-      FlGui::instance()->elementaryContext->addShape(pane);
-      FlGui::instance()->resetVisibility();
-      drawContext::global()->draw();
-    }
-    if(ib == 'q') {
-      for(openglWindow *gl : FlGui::instance()->openglWindows())
-        gl->addPointMode = 0;
-      break;
-    }
-  }
-
-  drawContext::setDrawGeomTransientFunction(nullptr);
-  if(!FlGui::available()) return;
-  FlGui::instance()->elementaryContext->hide();
-
-  // at the end, not during creation to avoid having things jumping around
-  SetBoundingBox();
-  Msg::StatusGl("");
-}
-
 void mesh_save_cb(Fl_Widget *w, void *data)
 {
   std::string name = CTX::instance()->outputFileName;
@@ -810,127 +709,73 @@ void mesh_save_cb(Fl_Widget *w, void *data)
   CreateOutputFile(name, CTX::instance()->mesh.fileFormat);
 }
 
-// after an operation on the mesh, which processes events: the GUI may have
-// been closed meanwhile
-static void afterMeshOperation()
-{
-  if(!FlGui::available()) return;
-  // (before the drawing, which processes events)
-  FlGui::instance()->updateStatistics();
-  drawContext::global()->draw();
-}
-
-// clang-format off
-
-// The static menus (we cannot use the 'g', 'm' 's' and 'p' mnemonics since they
-// are already defined as global shortcuts)
-// no label carries a mnemonic (an "&" letter): the titles of the menus would
-// take Alt+f, t, w and h from the shortcuts of the table (see Shortcuts.h)
-// before they are seen, and the macOS system menu bar wants none
+// The actions of the menu bar, by the names the "Menu bar" menu of the
+// registry gives them (see Actions.cpp), which are those of their shortcuts
 static void help_current_options_cb(Fl_Widget *w, void *data);
 
-static Fl_Menu_Item bar_table[] = {
-  {"File", 0, nullptr, nullptr, FL_SUBMENU},
-    {"New...",     fltkShortcut("file_new"), (Fl_Callback *)file_new_cb, nullptr},
-    {"Open...",    fltkShortcut("file_open"), (Fl_Callback *)file_open_merge_cb, (void*)"open"},
-    {"Open Recent", 0, nullptr, nullptr, FL_SUBMENU},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
-      {"", fltkShortcut("file_recent"), (Fl_Callback *)file_open_recent_cb, nullptr},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
-      {nullptr},
-    {"Merge...",   fltkShortcut("file_merge"), (Fl_Callback *)file_open_merge_cb, (void*)"merge"},
-    {"Watch Pattern...",    0, (Fl_Callback *)file_watch_cb, nullptr, FL_MENU_DIVIDER},
-    {"Clear",      0, (Fl_Callback *)file_clear_cb, nullptr},
-    {"Rename...",  fltkShortcut("file_rename"), (Fl_Callback *)file_rename_cb, nullptr},
-    {"Delete",      0, (Fl_Callback *)file_delete_cb, nullptr, FL_MENU_DIVIDER},
-    {"Remote", 0, nullptr, nullptr, FL_MENU_DIVIDER | FL_SUBMENU},
-      {"Start...",  0, (Fl_Callback *)file_remote_cb, (void*)"start"},
-      {"Merge...",  0, (Fl_Callback *)file_remote_cb, (void*)"merge"},
-      {"Clear",     0, (Fl_Callback *)file_remote_cb, (void*)"clear"},
-      {"Stop",      0, (Fl_Callback *)file_remote_cb, (void*)"stop"},
-      {nullptr},
-    {"Save Mesh",  fltkShortcut("Save mesh"), (Fl_Callback *)mesh_save_cb, nullptr},
-    {"Save Model Options", fltkShortcut("options_save"), (Fl_Callback *)file_options_save_cb, (void*)"file"},
-    {"Save Options As Default", fltkShortcut("options_save_default"), (Fl_Callback *)file_options_save_cb, (void*)"default", FL_MENU_DIVIDER},
-    {"Export...",  fltkShortcut("file_export"), (Fl_Callback *)file_export_cb, nullptr, FL_MENU_DIVIDER},
-    {"Quit",       fltkShortcut("quit"), (Fl_Callback *)file_quit_cb, nullptr},
-    {nullptr},
-  {"Tools", 0, nullptr, nullptr, FL_SUBMENU},
-    {"Options",         fltkShortcut("options"), (Fl_Callback *)options_cb, nullptr},
-    {"Plugins",         fltkShortcut("plugins"), (Fl_Callback *)plugin_cb, (void*)(-1)},
-    {"Visibility",      fltkShortcut("visibility"), (Fl_Callback *)visibility_cb, nullptr},
-    {"Clipping",        fltkShortcut("clipping"), (Fl_Callback *)clip_cb, nullptr},
-    {"Manipulator",     fltkShortcut("manipulator"), (Fl_Callback *)manip_cb, nullptr, FL_MENU_DIVIDER},
-#if defined(HAVE_3M)
-    {"3M",              0, (Fl_Callback *)window3M_cb, 0, FL_MENU_DIVIDER},
-#endif
-    {"Statistics",      fltkShortcut("statistics"), (Fl_Callback *)statistics_cb, nullptr},
-    {"Message Console", fltkShortcut("console"), (Fl_Callback *)show_hide_message_cb, nullptr},
-    {nullptr},
-  {"Window", 0, nullptr, nullptr, FL_SUBMENU},
-    {"New Window", 0, (Fl_Callback *)file_window_cb, (void*)"new", FL_MENU_DIVIDER},
-#if defined(WIN32)
-    {"Copy to Clipboard",  fltkShortcut("window_copy"), (Fl_Callback *)file_window_cb, (void*)"copy", FL_MENU_DIVIDER},
-#endif
-    {"Split Horizontally", 0, (Fl_Callback *)file_window_cb, (void*)"split_h"},
-    {"Split Vertically",   0, (Fl_Callback *)file_window_cb, (void*)"split_v"},
-    {"Unsplit",            0, (Fl_Callback *)file_window_cb, (void*)"split_u", FL_MENU_DIVIDER},
-    {"Minimize",           fltkShortcut("minimize"), (Fl_Callback *)window_cb, (void*)"minimize"},
-    {"Zoom",               0, (Fl_Callback *)window_cb, (void*)"zoom"},
-    {"Enter Full Screen",  fltkShortcut("Full screen"), (Fl_Callback *)window_cb, (void*)"fullscreen", FL_MENU_DIVIDER},
-    {"Show/Hide Menu",     fltkShortcut("menu_show_hide"), (Fl_Callback *)show_hide_menu_cb, nullptr},
-    {"Attach/Detach Menu", 0, (Fl_Callback *)attach_detach_menu_cb, nullptr},
-    {"Dock/Undock Tool Window", fltkShortcut("dock"), (Fl_Callback *)dock_tool_cb, nullptr},
-    {"Dock/Undock All Tool Windows", fltkShortcut("dock_all"), (Fl_Callback *)dock_tools_cb, nullptr, FL_MENU_DIVIDER},
-    {"Bring All to Front", 0, (Fl_Callback *)window_cb, (void*)"front"},
-    {nullptr},
-  {"Help", 0, nullptr, nullptr, FL_SUBMENU},
-    {"Online Documentation", 0, (Fl_Callback *)help_online_cb, nullptr, FL_MENU_DIVIDER},
-    {"Keyboard and Mouse Usage",  fltkShortcut("help_keys"), (Fl_Callback *)help_basic_cb, nullptr, FL_MENU_DIVIDER},
-    {"Current Options and Workspace", fltkShortcut("help_options"), (Fl_Callback *)help_current_options_cb, nullptr, 0},
-    {"Restore all Options to Default Settings", 0, (Fl_Callback *)options_restore_defaults_cb, nullptr, FL_MENU_DIVIDER},
-    {"About Gmsh",           0, (Fl_Callback *)help_about_cb, nullptr},
-    {nullptr},
-  {nullptr}
-};
-
-#if defined(__APPLE__)
-
-// the items of the macOS system menu bar: those of the window bar without
-// Quit and About, which the application menu has, nor the shortcut of the
-// keyboard help, as Cmd+H hides the application
-static Fl_Menu_Item *systemBarTable()
+static fltkAction call(Fl_Callback *f, void *data = nullptr)
 {
-  static std::vector<Fl_Menu_Item> table;
-  if(table.empty()) {
-    int n = sizeof(bar_table) / sizeof(bar_table[0]);
-    for(int i = 0; i < n; i++) {
-      Fl_Menu_Item it = bar_table[i];
-      if(it.callback_ == (Fl_Callback *)file_quit_cb ||
-         it.callback_ == (Fl_Callback *)help_about_cb) {
-        // the last of its menu: the divider above it goes too
-        if(it.text && !bar_table[i + 1].text && table.size())
-          table.back().flags &= ~FL_MENU_DIVIDER;
-        continue;
-      }
-      if(it.callback_ == (Fl_Callback *)help_basic_cb)
-        it.shortcut_ = fltkShortcut("help_keys", true);
-      table.push_back(it);
-    }
-  }
-  return &table[0];
+  return {[f, data](int) { f(nullptr, data); }};
 }
 
-#endif
+// the rows of the recent files under path, named by fillRecentHistoryMenu();
+// the second one, the file opened before the current one, has a shortcut
+static void addRecentFiles(Fl_Menu_ *m, const std::string &path)
+{
+  for(int i = 0; i < 10; i++)
+    m->add((path + "/" + std::to_string(i)).c_str(),
+           i == 1 ? fltkShortcut("file_recent") : 0, file_open_recent_cb,
+           (void *)(intptr_t)i, FL_MENU_INVISIBLE);
+}
 
-// clang-format on
+const std::map<std::string, fltkAction> &menuBarActions()
+{
+  static const std::map<std::string, fltkAction> actions = {
+    {"file_new", call(file_new_cb)},
+    {"file_open", call(file_open_merge_cb, (void *)"open")},
+    {"recent_files", {nullptr, nullptr, addRecentFiles}},
+    {"file_recent", call(file_open_recent_cb, (void *)1)},
+    {"file_merge", call(file_open_merge_cb, (void *)"merge")},
+    {"watch", call(file_watch_cb)},
+    {"file_clear", call(file_clear_cb)},
+    {"file_rename", call(file_rename_cb)},
+    {"file_delete", call(file_delete_cb)},
+    {"remote_start", call(file_remote_cb, (void *)"start")},
+    {"remote_merge", call(file_remote_cb, (void *)"merge")},
+    {"remote_clear", call(file_remote_cb, (void *)"clear")},
+    {"remote_stop", call(file_remote_cb, (void *)"stop")},
+    {"options_save", call(file_options_save_cb, (void *)"file")},
+    {"options_save_default", call(file_options_save_cb, (void *)"default")},
+    {"file_export", call(file_export_cb)},
+    {"quit", call(file_quit_cb)},
+    {"options", call(options_cb)},
+    {"plugins", call(plugin_cb, (void *)(-1))},
+    {"visibility", call(visibility_cb)},
+    {"clipping", call(clip_cb)},
+    {"manipulator", call(manip_cb)},
+#if defined(HAVE_3M)
+    {"window_3m", call(window3M_cb)},
+#endif
+    {"statistics", call(statistics_cb)},
+    {"console", call(show_hide_message_cb)},
+    {"window_new", call(file_window_cb, (void *)"new")},
+    {"window_copy", call(file_window_cb, (void *)"copy")},
+    {"minimize", call(window_cb, (void *)"minimize")},
+    {"window_zoom", call(window_cb, (void *)"zoom")},
+    {"menu_show_hide", call(show_hide_menu_cb)},
+    {"menu_attach_detach", call(attach_detach_menu_cb)},
+    {"dock", call(dock_tool_cb)},
+    {"dock_all", call(dock_tools_cb)},
+    {"window_front", call(window_cb, (void *)"front")},
+    {"help_online", call(help_online_cb)},
+    {"help_keys", call(help_basic_cb)},
+    {"help_options", call(help_current_options_cb)},
+    {"options_restore_defaults", call(options_restore_defaults_cb)},
+    {"help_about", call(help_about_cb)},
+  };
+  return actions;
+}
+
 
 static graphicWindow *getGraphicWindow(Fl_Widget *w)
 {
@@ -1010,7 +855,7 @@ void status_xyz1p_cb(Fl_Widget *w, void *data)
 }
 
 // the index of the first visible view, or -1
-static int firstVisibleView()
+int firstVisibleView()
 {
   for(std::size_t i = 0; i < PView::list.size(); i++)
     if(opt_view_visible(i, GMSH_GET, 0)) return i;
@@ -1358,23 +1203,6 @@ static void dock_divider_cb(Fl_Widget *w, void *data)
   graphicWindow *g = (graphicWindow *)data;
   g->setDockWidth(g->getWindow()->w() - Fl::event_x() - WB / 2);
 }
-
-// the main window docking the tool windows, which reach it through the hooks of
-// paletteWindow
-static graphicWindow *theDocking = nullptr;
-static void dock_hook(paletteWindow *w) { theDocking->dockTool(w); }
-static bool close_tool_hook(Fl_Window *w)
-{
-  // Cmd-W in the main window closes the tool shown in the dock, if any
-  return theDocking->getWindow() == w && theDocking->closeDockedTool();
-}
-static void resized_hook(paletteWindow *w) { theDocking->toolResized(w); }
-static void hidden_hook(paletteWindow *w) { theDocking->toolHidden(w); }
-static void moved_hook(paletteWindow *w) { theDocking->toolMoved(w); }
-static void drag_hook(paletteWindow *w) { theDocking->dragToDock(w); }
-static int drop_hook(int event) { return theDocking->toolDrop(event); }
-static void torn_out_hook(paletteWindow *w, int x, int y)
-{ theDocking->toolTornOut(w, x, y); }
 
 void attach_detach_menu_cb(Fl_Widget *w, void *data)
 {
@@ -1728,14 +1556,25 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
 #if defined(__APPLE__)
     if(CTX::instance()->systemMenuBar) {
       _sysbar = new Fl_Sys_Menu_Bar(1, 1, 1, 1);
-      _sysbar->menu(systemBarTable());
+      addActionItems(_sysbar, GetActionMenu("Menu bar"), -1, false);
+      // Quit and About are in the application menu, and Cmd+H hides the
+      // application: the keyboard help has another shortcut
+      for(const char *path : {"File/Quit", "Help/About Gmsh"}) {
+        int i = _sysbar->find_index(path);
+        if(i < 1) continue;
+        _sysbar->remove(i);
+        // (the last of its menu: no divider above it then)
+        _sysbar->mode(i - 1, _sysbar->mode(i - 1) & ~FL_MENU_DIVIDER);
+      }
+      int i = _sysbar->find_index("Help/Keyboard and Mouse Usage");
+      if(i >= 0) _sysbar->shortcut(i, fltkShortcut("help_keys", true));
       _sysbar->global();
       fillRecentHistoryMenu();
     }
     else {
 #endif
       _bar = new hoverMenuBar(0, 0, width, BH);
-      _bar->menu(bar_table);
+      addActionItems(_bar, GetActionMenu("Menu bar"), -1, false);
       _bar->global();
       fillRecentHistoryMenu();
 #if defined(__APPLE__)
@@ -1931,7 +1770,8 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   }
 }
 
-static void dropped_cb(void *data);
+// a tool dropped on the dock, docked at the next event (see toolDock.cpp)
+void dropped_cb(void *data);
 
 graphicWindow::~graphicWindow()
 {
@@ -2211,15 +2051,12 @@ bool graphicWindow::runMenuShortcut()
 {
   // the entry of the menu bar whose shortcut is the event, run as a click on
   // it would; the system menu bar of macOS does not always take its own
-  Fl_Menu_Item *table = bar_table;
-  Fl_Widget *w = _bar;
+  Fl_Menu_ *w = _bar;
 #if defined(__APPLE__)
-  if(_sysbar) {
-    table = systemBarTable();
-    w = _sysbar;
-  }
+  if(_sysbar) w = _sysbar;
 #endif
-  const Fl_Menu_Item *m = table->test_shortcut();
+  if(!w || !w->menu()) return false;
+  const Fl_Menu_Item *m = w->menu()->test_shortcut();
   if(!m || !m->callback()) return false;
   const_cast<Fl_Menu_Item *>(m)->do_callback(w);
   return true;
@@ -2262,260 +2099,6 @@ void graphicWindow::setGlWidth(int w)
 {
   if(w == _win->w()) return;
   _win->size(std::max(w, _minWidth), _win->h());
-  _win->redraw();
-}
-
-bool graphicWindow::isDockShown() { return _dock && _dock->visible(); }
-
-// the least width of the tool windows, in the frame of the dock tabs
-static int leastDockWidth() { return TW + Fl::box_dw(FL_THIN_UP_BOX); }
-
-int graphicWindow::getDockWidth()
-{ return std::max(CTX::instance()->dockWidth, leastDockWidth()); }
-
-int graphicWindow::_leastTileWidth()
-{
-  // the tree, and some room for the graphics
-  int tw = (_onelab && !_menuwin) ? _onelab->w() : 0;
-  return std::max(_minWidth, tw + BB);
-}
-
-int graphicWindow::_fitDockWidth(int w)
-{
-  w = std::min(w, _win->w() - WB - _leastTileWidth());
-  return std::max(w, leastDockWidth());
-}
-
-void graphicWindow::setDockWidth(int w)
-{
-  if(!isDockShown()) return;
-  w = _fitDockWidth(w);
-  CTX::instance()->dockWidth = w;
-  _layoutDock(w);
-}
-
-void graphicWindow::setDocking(bool docking)
-{
-  if(!_dock) return;
-  if(docking) {
-    theDocking = this;
-    paletteWindow::dockHook = dock_hook;
-    mainWindow::closeToolHook = close_tool_hook;
-    paletteWindow::resizedHook = resized_hook;
-    paletteWindow::hiddenHook = hidden_hook;
-    paletteWindow::movedHook = moved_hook;
-    paletteWindow::dragHook = drag_hook;
-    mainWindow::dropHook = drop_hook;
-    toolDock::tornOutHook = torn_out_hook;
-    // the tool windows open on the desktop join the dock, in the order they
-    // were shown (the list of FLTK starts with the newest)
-    std::vector<paletteWindow *> open;
-    for(Fl_Window *w = Fl::first_window(); w; w = Fl::next_window(w)) {
-      paletteWindow *p = dynamic_cast<paletteWindow *>(w);
-      if(p && p->dockable() && !p->parent()) open.push_back(p);
-    }
-    std::reverse(open.begin(), open.end());
-    for(auto p : open) p->show();
-  }
-  else {
-    paletteWindow::dockHook = nullptr;
-    _dock->undockAll();
-    paletteWindow::hiddenHook = nullptr;
-    paletteWindow::movedHook = nullptr;
-    paletteWindow::dragHook = nullptr;
-    mainWindow::dropHook = nullptr;
-    toolDock::tornOutHook = nullptr;
-    paletteWindow::dragged = nullptr;
-    theDocking = nullptr;
-    mainWindow::closeToolHook = nullptr;
-    paletteWindow::resizedHook = nullptr;
-    _layoutDock(0);
-  }
-}
-
-void graphicWindow::toolTornOut(paletteWindow *w, int x, int y)
-{
-  if(_dock->empty()) _layoutDock(0);
-  // the title bar under the pointer, which held the tab or the title
-  placeWindowAt(w, x - w->w() / 2, y + BH / 2);
-  w->show();
-  FlGui::instance()->storeFloatingTools();
-}
-
-bool graphicWindow::_overDock(paletteWindow *w)
-{
-  // Wayland hides where the windows are on the screen: there a tool is docked
-  // by dragging a tab or its background, not its title bar (see toolDrop())
-  if(!screenPositionsKnown()) return false;
-  // the middle of the title bar of the tool over the dock, or over where the
-  // dock would be while none is docked: the right of the tiles
-  int th = w->decorated_h() - w->h();
-  int cx = w->x() + w->w() / 2, cy = w->y() - th / 2;
-  int X = _win->x() + _win->w() - getDockWidth(), W = getDockWidth();
-  if(isDockShown()) {
-    X = _win->x() + _dock->x();
-    W = _dock->w();
-  }
-  int Y = _win->y() + _tile->y(), H = _tile->h();
-  return cx >= X && cx < X + W && cy >= Y && cy < Y + H;
-}
-
-void graphicWindow::toolMoved(paletteWindow *w)
-{
-  if(!w->shown() || !_win->shown()) return;
-  if(_overDock(w)) {
-    if(_dropping != w) {
-      _dropping = w;
-      _dropTarget(true);
-      // docked when the button is released: the system is asked for it
-      Fl::add_timeout(0.05, _drop_cb, this);
-    }
-  }
-  else if(_dropping == w) {
-    Fl::remove_timeout(_drop_cb, this);
-    _dropping = nullptr;
-    _dropTarget(false);
-  }
-}
-
-void graphicWindow::_dropTarget(bool on)
-{
-  // the dock as the target of a drop, shown empty while none is docked
-  if(on && !isDockShown()) _layoutDock(_fitDockWidth(getDockWidth()));
-  _dropHint(on);
-  if(!on && _dock->empty()) _layoutDock(0);
-}
-
-void graphicWindow::_dropHint(bool on)
-{
-  _dock->dropHint(on);
-  if(on == _divider->highlight) return;
-  _divider->highlight = on;
-  _divider->redraw();
-}
-
-void graphicWindow::_drop_cb(void *data)
-{
-  graphicWindow *g = (graphicWindow *)data;
-  paletteWindow *w = g->_dropping;
-  if(!w) return;
-  // Shift held keeps the tool out of the dock, to leave it over the dock
-  // (Alt would tile the window on macOS): no hint while it is
-  bool shift = shiftKeyDown();
-  g->_dropHint(!shift);
-  int down = mouseButtonDown();
-  if(down == 1) {
-    Fl::repeat_timeout(0.05, _drop_cb, data);
-    return;
-  }
-  g->_dropping = nullptr;
-  g->_dropTarget(false);
-  // kept out when Shift is held, or where the system cannot say
-  if(shift || down == -1) return;
-  w->floating(false);
-  w->show(); // docks it
-  FlGui::instance()->storeFloatingTools();
-}
-
-void graphicWindow::dragToDock(paletteWindow *w)
-{
-  // an FLTK drag and drop of the label of the tool, which the system shows
-  // along the pointer; the drop lands in toolDrop()
-  const char *label = w->label() ? w->label() : "";
-  paletteWindow::dragged = w;
-  Fl::copy(label, strlen(label), 0);
-  Fl::dnd();
-}
-
-static void dropped_cb(void *data)
-{
-  paletteWindow *w = (paletteWindow *)data;
-  w->floating(false);
-  w->show(); // docks it
-  FlGui::instance()->storeFloatingTools();
-}
-
-int graphicWindow::toolDrop(int event)
-{
-  paletteWindow *w = paletteWindow::dragged;
-  switch(event) {
-  case FL_DND_ENTER:
-  case FL_DND_DRAG: {
-    // over the dock, or where it would be while none is docked: the right of
-    // the tiles
-    int X = isDockShown() ? _dock->x() : _win->w() - getDockWidth();
-    bool over = Fl::event_x() >= X && Fl::event_y() >= _tile->y() &&
-                Fl::event_y() < _tile->y() + _tile->h();
-    _dropTarget(over);
-    // the release and the text dropped go to the widget below the mouse
-    if(over) Fl::belowmouse(_win);
-    return over;
-  }
-  case FL_DND_LEAVE: _dropTarget(false); return 1;
-  case FL_DND_RELEASE: return _dock->dropHint();
-  case FL_PASTE:
-    paletteWindow::dragged = nullptr;
-    _dropTarget(false);
-    // ours, by its text; docked once the drag is over
-    if(w->label() && Fl::event_text() && !strcmp(Fl::event_text(), w->label()))
-      Fl::add_timeout(0., dropped_cb, w);
-    return 1;
-  }
-  return 0;
-}
-
-void graphicWindow::toolResized(paletteWindow *w) { _dock->resized(w); }
-
-paletteWindow *graphicWindow::currentDockedTool()
-{ return isDockShown() ? _dock->current() : nullptr; }
-
-bool graphicWindow::closeDockedTool()
-{ return isDockShown() && _dock->closeCurrent(); }
-
-void graphicWindow::dockTool(paletteWindow *w)
-{
-  if(!isDockShown()) {
-    // the window widened if the graphics would get narrower than their least,
-    // within the screen
-    int need = _leastTileWidth() + getDockWidth() + WB;
-    if(_win->w() < need) {
-      int sx, sy, sw, sh;
-      windowWorkArea(_win, sx, sy, sw, sh);
-      _win->size(std::min(need, sw), _win->h());
-    }
-    _layoutDock(_fitDockWidth(getDockWidth()));
-  }
-  _dock->dock(w);
-}
-
-void graphicWindow::toolHidden(paletteWindow *w)
-{
-  _dock->hidden(w);
-  if(_dock->empty()) _layoutDock(0);
-}
-
-void graphicWindow::_layoutDock(int width)
-{
-  // the tiles take what the dock leaves
-  int ww = _win->w(), y = _tile->y(), h = _tile->h();
-  int dw = width ? width + WB : 0;
-  _tile->resize(0, y, ww - dw, h);
-  if(width) {
-    _divider->resize(ww - dw, y, WB, h);
-    _divider->show();
-    _dock->resize(ww - width, y, width, h);
-    _dock->show();
-  }
-  else {
-    _divider->hide();
-    _dock->hide();
-  }
-  // the dock keeps its width when the window is resized, and the window keeps
-  // room for it
-  _win->size_range((width ? _leastTileWidth() : _minWidth) + dw, _minHeight);
-  _resbox->resize(_minWidth, _resbox->y(), std::max(1, ww - dw - _minWidth),
-                  _resbox->h());
-  _win->init_sizes();
   _win->redraw();
 }
 
@@ -2688,353 +2271,28 @@ static bool check_utf8(const std::string &string)
 
 void graphicWindow::fillRecentHistoryMenu()
 {
+  Fl_Menu_ *m = _bar;
 #if defined(__APPLE__)
-  if(CTX::instance()->systemMenuBar && !_sysbar) return;
+  if(_sysbar) m = _sysbar;
 #endif
-
-  Fl_Menu_Item *table = bar_table;
-#if defined(__APPLE__)
-  if(CTX::instance()->systemMenuBar) table = systemBarTable();
-#endif
-
-  static std::string recent[10];
+  if(!m) return;
+  // the ten rows after the submenu (see addRecentFiles())
+  int first = m->find_index("File/Open Recent") + 1;
+  if(first < 1) return;
   for(int i = 0; i < 10; i++) {
-    recent[i].clear();
+    std::string name;
     if(i < (int)CTX::instance()->recentFiles.size()) {
       if(check_utf8(CTX::instance()->recentFiles[i]))
-        recent[i] = CTX::instance()->recentFiles[i];
+        name = CTX::instance()->recentFiles[i];
       else
         Msg::Info("Ignoring invalid General.RecentFile%d", i);
     }
-    table[4 + i].text = recent[i].c_str();
-    table[4 + i].user_data_ = (void *)recent[i].c_str();
+    // (replace() takes the label as it is: a '/' is not a submenu there)
+    m->replace(first + i, name.c_str());
+    int mode = m->mode(first + i) & ~FL_MENU_INVISIBLE;
+    m->mode(first + i, name.empty() ? (mode | FL_MENU_INVISIBLE) : mode);
   }
-
 #if defined(__APPLE__)
-  if(CTX::instance()->systemMenuBar) _sysbar->menu(table);
+  if(_sysbar) _sysbar->update();
 #endif
-}
-
-// The actions of the registry (see Actions.h) as this interface does them
-
-// an operation, with the context window that holds its fields, if it has one
-static void runOperation(const std::string &op)
-{
-  FlGui *g = FlGui::instance();
-  selectionDriver::kind k = selectionDriver::kindOf(op);
-  // the mesh parts picked deleted or reversed: not during another operation
-  // on the model (nor the picking mode changed then)
-  if(k.on == selectionDriver::OnMeshParts) {
-    if(modelBusy()) return;
-    runSelection(op);
-    afterMeshOperation();
-    return;
-  }
-  // the pane of the transform context window, and whether it extrudes
-  static const std::map<std::string, std::pair<int, bool>> transforms = {
-    {"Translate", {0, false}},
-    {"Rotate", {1, false}},
-    {"Scale", {2, false}},
-    {"Symmetry", {3, false}},
-    {"Fillet", {5, false}},
-    {"Delete", {6, false}},
-    {"Extrude translate", {0, true}},
-    {"Extrude rotate", {1, true}},
-    {"Pipe", {-1, true}}};
-  // the pane of the mesh context window
-  static const std::map<std::string, int> meshPanes = {
-    {"Size at points", 0},
-    {"Transfinite Curve", 1},
-    {"Transfinite Surface", 2}};
-  auto t = transforms.find(op);
-  auto m = meshPanes.find(op);
-  std::function<void()> hide = [] {};
-  if(k.on == selectionDriver::OnPhysical) {
-    g->physicalContext->show(k.what, k.remove);
-    hide = [] { FlGui::instance()->physicalContext->hide(); };
-  }
-  else if(t != transforms.end() || k.on == selectionDriver::OnBoolean) {
-    if(t != transforms.end())
-      g->transformContext->show(t->second.first, t->second.second,
-                                op != "Fillet");
-    else
-      g->transformContext->show(4);
-    hide = [] { FlGui::instance()->transformContext->hide(); };
-  }
-  else if(m != meshPanes.end()) {
-    g->meshContext->show(m->second);
-    hide = [] { FlGui::instance()->meshContext->hide(); };
-  }
-  runSelection(op);
-  if(FlGui::available()) hide();
-}
-
-// a shape: placed with the mouse, or from the values of its fields
-static void addShape(const std::string &shape)
-{
-  if(shape == "Parameter") {
-    FlGui::instance()->elementaryContext->show(0);
-    return;
-  }
-  // (by pane of the elementary context window)
-  for(int pane = 1; pane < 12; pane++)
-    if(shape == scriptShapes()[pane].name)
-      add_new_point_based_entity(shape, pane);
-}
-
-// the actions of the table this interface does: what it does (view: the
-// index of the view of a menu of a view), its check mark, and whether it has
-// it now (always if not said)
-struct fltkAction {
-  std::function<void(int view)> run;
-  std::function<int()> check;
-};
-
-static const std::map<std::string, fltkAction> &fltkActions()
-{
-  static const std::map<std::string, fltkAction> actions = {
-    // the modules
-    {"Reload script", {[](int) { geometry_reload_cb(nullptr, nullptr); }}},
-    {"Edit script", {[](int) { geometry_edit_cb(nullptr, nullptr); }}},
-#if defined(HAVE_MESH)
-    {"Reclassify surfaces", {[](int) { mesh_classify_cb(nullptr, nullptr); }}},
-    {"Save mesh", {[](int) { mesh_save_cb(nullptr, nullptr); }}},
-    {"Size fields", {[](int) { field_cb(nullptr, nullptr); }}},
-    {"High-order tools", {[](int) { highordertools_cb(nullptr, nullptr); }}},
-#if defined(HAVE_METIS)
-    {"Partition mesh", {[](int) { partition_dialog(); }}},
-#endif
-#endif
-    // the quick access menu
-    {"Select rotation center", {[](int) {
-       opt_general_rotation_center_cg(0, GMSH_SET | GMSH_GUI, 0);
-       general_rotation_center_cg_cb(nullptr, nullptr);
-       general_options_rotation_center_select_cb(nullptr, nullptr);
-     }}},
-    {"Query",
-     {[](int) { status_query_cb(nullptr, nullptr); },
-      [] { return (int)queryMode(); }}},
-    {"Measure",
-     {[](int) { status_measure_cb(nullptr, nullptr); },
-      [] { return (int)measureMode(); }}},
-    {"Full screen",
-     {[](int) { window_cb(nullptr, (void *)"fullscreen"); },
-      [] { return (int)FlGui::instance()->fullscreen->shown(); }}},
-    {"Split window horizontally",
-     {[](int) { file_window_cb(nullptr, (void *)"split_h"); }}},
-    {"Split window vertically",
-     {[](int) { file_window_cb(nullptr, (void *)"split_v"); }}},
-    {"Unsplit window",
-     {[](int) { file_window_cb(nullptr, (void *)"split_u"); }}},
-    {"General options", {[](int) { general_options_cb(nullptr, nullptr); }}},
-    {"Geometry options", {[](int) { geometry_options_cb(nullptr, nullptr); }}},
-    {"Mesh options", {[](int) { mesh_options_cb(nullptr, nullptr); }}},
-    {"All view options", {[](int) { view_options_cb(nullptr, (void *)-1); }}},
-    // the menu of a view
-    {"View options",
-     {[](int view) { view_options_cb(nullptr, (void *)(intptr_t)view); }}},
-    {"View plugins",
-     {[](int view) { plugin_cb(nullptr, (void *)(intptr_t)view); }}},
-    {"Export view",
-     {[](int view) { view_save_cb(nullptr, (void *)(intptr_t)view); }}},
-  };
-  return actions;
-}
-
-bool canRunItem(const actionItem &item)
-{
-  if(!IsActionAvailable(item)) return false;
-  if(item.kind != ActionRun || !IsDoneByInterface(item)) return true;
-  auto it = fltkActions().find(item.what);
-  return it != fltkActions().end();
-}
-
-// the value an item asks for, with a slider
-static void askFor(const actionItem &item)
-{
-  double min, max, step, value;
-  GetActionAsk(item.ask, min, max, step, value);
-  std::string::size_type dot = item.ask.option.find('.');
-  std::string category = item.ask.option.substr(0, dot);
-  int index = (category == "View") ? firstVisibleView() : 0;
-  if(index < 0) return;
-  drawContext::global()->draw();
-  double v = numberOrStringOptionChooser(category, index,
-                                         item.ask.option.substr(dot + 1), true,
-                                         item.label, true, min, max, step);
-  SetActionOption(item.ask.option, v);
-}
-
-void runItem(const actionItem &item, int view)
-{
-  if(IsDoneByInterface(item)) {
-    if(item.kind == ActionOperation)
-      runOperation(item.what);
-    else if(item.kind == ActionShape)
-      addShape(item.what);
-    else {
-      auto it = fltkActions().find(item.what);
-      if(it != fltkActions().end()) it->second.run(view);
-    }
-  }
-  else {
-    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
-    int ret = RunAction(item, view, gl ? gl->getDrawContext() : nullptr);
-    // the interface may have been closed meanwhile
-    if(!FlGui::available()) return;
-    if(ret & ActionViewsChanged) FlGui::instance()->updateViews(true);
-    if(ret & ActionModelChanged) FlGui::instance()->resetVisibility();
-    // (before the drawing, which processes events)
-    FlGui::instance()->updateStatistics();
-  }
-  if(!FlGui::available()) return;
-  if(!item.ask.option.empty()) askFor(item);
-  drawContext::global()->draw();
-}
-
-void runAction(const std::string &name)
-{ runItem(actionItem{"", ActionRun, name, {}, "", "", {}}); }
-
-static void item_cb(Fl_Widget *w, void *data)
-{
-  // (the menu of a view keeps its index)
-  int view = w ? (int)(intptr_t)w->user_data() : -1;
-  runItem(*(const actionItem *)data, view);
-}
-
-// whether a menu has an item this interface has now
-static bool anyItem(const actionItem &menu)
-{
-  for(const actionItem &item : menu.items)
-    if(item.kind == ActionMenu ? anyItem(item) : canRunItem(item)) return true;
-  return false;
-}
-
-// the items of menu added to an FLTK menu under prefix (the path of a
-// submenu), a group set apart by a divider; the index of the last one added
-// at the level of prefix, or -1
-static int addItems(Fl_Menu_ *m, const actionItem &menu,
-                    const std::string &prefix)
-{
-  int last = -1;
-  for(const actionItem &item : menu.items) {
-    if(item.kind == ActionMenu) {
-      if(!anyItem(item)) continue;
-      if(item.label.empty()) { // a group
-        if(last >= 0) m->mode(last, m->mode(last) | FL_MENU_DIVIDER);
-        int l = addItems(m, item, prefix);
-        if(l >= 0) last = l;
-      }
-      else { // a submenu
-        addItems(m, item, prefix + item.label + "/");
-        last = m->find_index((prefix + item.label).c_str());
-      }
-      continue;
-    }
-    if(!canRunItem(item)) continue;
-    int check = GetActionCheck(item);
-    if(IsDoneByInterface(item) && item.kind == ActionRun) {
-      auto it = fltkActions().find(item.what);
-      check = it->second.check ? it->second.check() : -1;
-    }
-    int flags = 0;
-    if(check >= 0)
-      flags = (item.what.find('=') == std::string::npos ? FL_MENU_TOGGLE :
-                                                          FL_MENU_RADIO) |
-              (check ? FL_MENU_VALUE : 0);
-    // the shortcut shown: the item's, or the one of the same name as its
-    // action
-    std::string key = item.key;
-    if(key.empty() && item.kind == ActionRun &&
-       !GetShortcutsOf(item.what).empty())
-      key = item.what;
-    last = m->add((prefix + item.label).c_str(),
-                  key.empty() ? 0 : fltkShortcut(key.c_str()), item_cb,
-                  (void *)&item, flags);
-  }
-  return last;
-}
-
-void addActionItems(Fl_Menu_ *m, const actionItem &menu, int view)
-{
-  m->user_data((void *)(intptr_t)view);
-  addItems(m, menu, "");
-}
-
-static void item_button_cb(Fl_Widget *w, void *data)
-{ runItem(*(const actionItem *)data, -1); }
-
-// the buttons of a module (see Actions.cpp) as rows of the tree, a menu as a
-// row that pops it up, its submenus as submenus
-void onelabGroup::_addModuleButtons(const std::string &module)
-{
-  for(const actionItem &row : GetActionMenu(module).items) {
-    for(const actionItem &b : row.items) {
-      std::string path = "0Modules/" + module + "/" + b.label;
-      if(b.kind != ActionMenu) {
-        if(canRunItem(b)) _addMenu(path, item_button_cb, (void *)&b, b.help);
-        continue;
-      }
-      if(!anyItem(b)) continue;
-      Fl_Tree_Item *n = _tree->add(path.c_str());
-      if(!n) {
-        Msg::Debug("Could not add item '%s' in tree", path.c_str());
-        continue;
-      }
-      _addRow(n, [&](int ww, int hh) {
-        // (its label where a button has it, 3 pixels in)
-        Fl_Menu_Button *but = new Fl_Menu_Button(4, 1, ww - 3, hh);
-        but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
-        but->box(FL_FLAT_BOX);
-        but->color(_tree->color());
-        but->selection_color(_tree->color());
-        but->copy_label(b.label.c_str());
-        but->copy_tooltip(b.help.c_str());
-        addActionItems(but, b, -1);
-      });
-    }
-  }
-}
-
-void onelabGroup::_addGmshMenus()
-{
-  _tree->sortorder(FL_TREE_SORT_NONE);
-
-  _addModuleButtons("Geometry");
-#if defined(HAVE_MESH)
-  _addModuleButtons("Mesh");
-#endif
-
-  // add dynamic solver module items
-  for(int i = 0; i < NUM_SOLVERS; i++) {
-    std::string name = opt_solver_name(i, GMSH_GET, "");
-    if(name.size()) _addSolverMenu(i);
-  }
-
-  // add dynamic post-processing module items
-  for(std::size_t i = 0; i < PView::list.size(); i++) _addViewMenu(i);
-
-  _tree->sortorder(FL_TREE_SORT_ASCENDING);
-
-  if(_firstBuild) {
-    _firstBuild = false;
-    Fl_Tree_Item *n0 = _tree->find_item("0Modules");
-    for(Fl_Tree_Item *n = n0; n; n = n->next()) {
-      if(!n->is_root() && n->has_children() && n->depth() > 1) n->close();
-    }
-  }
-}
-
-std::set<std::string> onelabGroup::_getClosedGmshMenus()
-{
-  std::set<std::string> closed;
-  Fl_Tree_Item *n0 = _tree->find_item("0Modules");
-  for(Fl_Tree_Item *n = n0; n; n = n->next()) {
-    if(!n->is_root() && n->has_children() && n->is_close()) {
-      char path[1024];
-      _tree->item_pathname(path, sizeof(path), n);
-      closed.insert(path);
-    }
-  }
-  return closed;
 }

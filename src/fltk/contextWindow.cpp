@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <FL/Fl_Tabs.H>
-#include <FL/Fl_Return_Button.H>
 #include "FlGui.h"
 #include "accentTabs.h"
 #include "drawContext.h"
@@ -24,8 +23,6 @@
 #include "selectionDriver.h"
 #include "OpenFile.h"
 #include "Context.h"
-#include "Options.h"
-#include "MallocUtils.h"
 #include "StringUtils.h"
 #include "Geo.h"
 #include "VertexArray.h"

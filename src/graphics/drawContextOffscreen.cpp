@@ -29,18 +29,6 @@ drawContextOffscreen::~drawContextOffscreen()
   delete _strings;
 }
 
-// the colour a frame starts from: white for a print without its background
-static void setClearColor()
-{
-  CTX *ctx = CTX::instance();
-  if(ctx->printing && !ctx->print.background)
-    glClearColor(1.0F, 1.0F, 1.0F, 0.0F);
-  else
-    glClearColor((GLclampf)(ctx->unpackRed(ctx->color.bg) / 255.),
-                 (GLclampf)(ctx->unpackGreen(ctx->color.bg) / 255.),
-                 (GLclampf)(ctx->unpackBlue(ctx->color.bg) / 255.), 0.0F);
-}
-
 bool drawContextOffscreen::begin(int width, int height, double scale,
                                  bool screen)
 {
@@ -76,7 +64,7 @@ bool drawContextOffscreen::begin(int width, int height, double scale,
   setPixelFactor(scale);
   // gl2ps takes the background of its page from the clear colour, before any
   // frame is drawn
-  setClearColor();
+  drawContext::setClearColor();
   return true;
 }
 
@@ -109,7 +97,7 @@ void drawContextOffscreen::drawCurrentOpenglWindow(bool make_current,
   glViewport(0, 0, _width, _height);
   setPixelFactor(_scale);
 
-  setClearColor();
+  drawContext::setClearColor();
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
   if(ctx->camera) {

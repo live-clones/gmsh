@@ -3,14 +3,12 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#include <FL/Fl_Tabs.H>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Return_Button.H>
 #include "GmshConfig.h"
 #include "FlGui.h"
 #include "classificationEditor.h"
 #include "paletteWindow.h"
-#include "Numeric.h"
 #include "drawContext.h"
 #include "Options.h"
 #include "Context.h"
@@ -18,7 +16,6 @@
 #include "MLine.h"
 #include "MQuadrangle.h"
 #include "discreteEdge.h"
-#include "discreteFace.h"
 #include "GModelParametrize.h"
 
 #if defined(HAVE_MESH)

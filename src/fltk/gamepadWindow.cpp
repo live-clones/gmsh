@@ -3,8 +3,6 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#include "GmshConfig.h"
-#include <string.h>
 #include <FL/Fl.H>
 #include <algorithm>
 #include "FlGui.h"
@@ -14,18 +12,14 @@
 #include "gamepadWindow.h"
 #include "Context.h"
 
-// handler (listen to gamepad or other names pipes
-static void gamepadWindow_handler(void *data)
+void gamepadWindow::update()
 {
-  if(CTX::instance()->gamepad && CTX::instance()->gamepad->active) {
-    gamepadWindow *gmpd_win = (gamepadWindow *)data;
-    GamePad *pad = CTX::instance()->gamepad;
-    for(int i = 0; i < std::min(13, GP_BUTTONS); i++)
-      gmpd_win->gamepad.butt[i]->value(pad->button[i]);
-    for(int i = 0; i < std::min(9, GP_AXES); i++)
-      gmpd_win->gamepad.axe[i]->value(pad->axe[i]);
-    Fl::add_timeout(gmpd_win->frequency, gamepadWindow_handler, data);
-  }
+  GamePad *pad = CTX::instance()->gamepad;
+  if(!win || !win->shown() || !pad || !pad->active) return;
+  for(int i = 0; i < std::min(13, GP_BUTTONS); i++)
+    gamepad.butt[i]->value(pad->button[i]);
+  for(int i = 0; i < std::min(9, GP_AXES); i++)
+    gamepad.axe[i]->value(pad->axe[i]);
 }
 
 static void gamepad_update_cb(Fl_Widget *w)
@@ -43,8 +37,6 @@ static void gamepad_update_cb(Fl_Widget *w)
 gamepadWindow::gamepadWindow() : win(nullptr)
 {
   if(!CTX::instance()->gamepad) return;
-
-  frequency = CTX::instance()->gamepad->frequency;
 
   //  FL_NORMAL_SIZE -= deltaFontSize;
 
@@ -158,25 +150,15 @@ gamepadWindow::gamepadWindow() : win(nullptr)
     gamepad.mapping[10 + i]->value(pad->axe_map[i]);
   }
 
-  // add external reader for gamepad events
-  if(CTX::instance()->gamepad && CTX::instance()->gamepad->active) {
-    Fl::add_timeout(frequency, gamepadWindow_handler, (void *)this);
-  }
-
   win->end();
 }
 
 void gamepadWindow::show()
 {
-  // polling again, the gamepad having perhaps gone and come back since
-  Fl::remove_timeout(gamepadWindow_handler, (void *)this);
-  if(CTX::instance()->gamepad && CTX::instance()->gamepad->active)
-    Fl::add_timeout(frequency, gamepadWindow_handler, (void *)this);
   if(win) win->show();
 }
 
 gamepadWindow::~gamepadWindow()
 {
-  Fl::remove_timeout(gamepadWindow_handler, (void *)this);
   if(win) Fl::delete_widget(win);
 }

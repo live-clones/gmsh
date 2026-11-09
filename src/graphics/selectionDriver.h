@@ -126,6 +126,13 @@ public:
   static int selectionMode(const std::string &mode);
   // the entities of the types drawn, to be picked
   static void show(int types);
+  // the entities of each dimension: their type (ENT_POINT...), their name
+  // ("Point"...) and how a sentence names several ("points"...)
+  struct entityKind {
+    int type;
+    const char *name, *names;
+  };
+  static const entityKind entityKinds[4];
   bool active() const { return _phase >= 0; }
   // what to pick now, and the two lines that say so
   int type() const;

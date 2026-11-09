@@ -4,7 +4,6 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <FL/Fl_Box.H>
-#include <FL/Fl_Return_Button.H>
 #include "FlGui.h"
 #include "manipWindow.h"
 #include "paletteWindow.h"

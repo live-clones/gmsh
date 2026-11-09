@@ -1752,6 +1752,17 @@ bool drawContext::drawStudioFrames(int from, int width, int height,
   return true;
 }
 
+void drawContext::setClearColor()
+{
+  CTX *ctx = CTX::instance();
+  if(ctx->printing && !ctx->print.background)
+    glClearColor(1.0F, 1.0F, 1.0F, 0.0F);
+  else
+    glClearColor((GLclampf)(ctx->unpackRed(ctx->color.bg) / 255.),
+                 (GLclampf)(ctx->unpackGreen(ctx->color.bg) / 255.),
+                 (GLclampf)(ctx->unpackBlue(ctx->color.bg) / 255.), 0.0F);
+}
+
 void drawContext::initCameraMatrices(double view[16])
 {
   if(!camera.on) camera.init();

@@ -6,6 +6,8 @@
 #ifndef GRAPHIC_WINDOW_H
 #define GRAPHIC_WINDOW_H
 
+#include <functional>
+#include <map>
 #include <string>
 #include <vector>
 #include <FL/Fl.H>
@@ -19,6 +21,7 @@
 #include <FL/Fl_Sys_Menu_Bar.H>
 #endif
 #include <FL/Fl_Menu_Bar.H>
+#include "paletteWindow.h"
 
 class openglWindow;
 class onelabGroup;
@@ -49,9 +52,11 @@ enum statusButtonId {
   StatusButtons
 };
 
-class graphicWindow {
+class graphicWindow : public dockHost {
 private:
   bool _autoScrollMessages;
+  // while the dock lets its tools go (see setDocking())
+  bool _undocking = false;
 #if defined(__APPLE__)
   Fl_Sys_Menu_Bar *_sysbar;
 #endif
@@ -132,21 +137,27 @@ public:
   // windows always float)
   void setDocking(bool docking);
   bool isDockShown();
-  void dockTool(paletteWindow *w);
-  void toolHidden(paletteWindow *w);
-  void toolResized(paletteWindow *w);
-  // toolTornOut() shows a tool torn out of the dock on the desktop, under the
-  // pointer; toolMoved() and dragToDock() follow a floating tool moved on the
-  // desktop, which is docked when dragged over the dock
-  void toolTornOut(paletteWindow *w, int x, int y);
-  void toolMoved(paletteWindow *w);
-  void dragToDock(paletteWindow *w);
-  int toolDrop(int event);
+  // the dockHost of the tool windows (see paletteWindow.h): toolTornOut()
+  // shows a tool torn out of the dock on the desktop, under the pointer;
+  // toolMoved() and dragToDock() follow a floating tool moved on the desktop,
+  // which is docked when dragged over the dock
+  bool takesTools() const override { return !_undocking; }
+  void dockTool(paletteWindow *w) override;
+  void toolHidden(paletteWindow *w) override;
+  void toolResized(paletteWindow *w) override;
+  void toolTornOut(paletteWindow *w, int x, int y) override;
+  void toolMoved(paletteWindow *w) override;
+  void dragToDock(paletteWindow *w) override;
+  int toolDrop(int event) override;
+  bool closeTool(Fl_Window *w) override;
   // the docked tool used last, if any, and closing it
   paletteWindow *currentDockedTool();
   bool closeDockedTool();
   // run the entry of the menu bar whose shortcut is the current event
   bool runMenuShortcut();
+#if defined(__APPLE__)
+  bool hasSystemMenuBar() const { return _sysbar != nullptr; }
+#endif
   int getDockWidth();
   void setDockWidth(int w);
   bool split(openglWindow *g, char how, double ratio);
@@ -168,6 +179,11 @@ public:
 void file_quit_cb(Fl_Widget *w, void *data);
 void file_watch_cb(Fl_Widget *w, void *data);
 void geometry_reload_cb(Fl_Widget *w, void *data);
+void geometry_edit_cb(Fl_Widget *w, void *data);
+void file_window_cb(Fl_Widget *w, void *data);
+void mesh_save_cb(Fl_Widget *w, void *data);
+// the index of the first visible view, or -1
+int firstVisibleView();
 void onelab_reload_cb(Fl_Widget *w, void *data);
 void help_about_cb(Fl_Widget *w, void *data);
 void status_xyz1p_cb(Fl_Widget *w, void *data);
@@ -198,12 +214,28 @@ void dock_tools_cb(Fl_Widget *w, void *data);
 //   menu of a view);
 // - runAction() runs an action of the table by its name;
 // - addActionItems() adds the items of a menu to an FLTK menu, where they act
-//   on the given view.
+//   on the given view; with marks, the items that toggle or set an option
+//   show its value (not in a menu that stays, which would not follow it).
 struct actionItem;
 class Fl_Menu_;
 bool canRunItem(const actionItem &item);
 void runItem(const actionItem &item, int view = -1);
 void runAction(const std::string &name);
-void addActionItems(Fl_Menu_ *m, const actionItem &menu, int view);
+// whether a menu of the registry has an item this interface can run now
+bool canRunAnyItem(const actionItem &menu);
+void addActionItems(Fl_Menu_ *m, const actionItem &menu, int view,
+                    bool marks = true);
+
+// An action of the registry this interface does: what it does (view: the
+// index of the view of a menu of a view), its check mark, and, for an item
+// that is a submenu filled by the interface (the recent files), how to fill
+// it under path
+struct fltkAction {
+  std::function<void(int view)> run;
+  std::function<int()> check;
+  std::function<void(Fl_Menu_ *m, const std::string &path)> fill;
+};
+// the actions of the menu bar (see the "Menu bar" menu of Actions.cpp)
+const std::map<std::string, fltkAction> &menuBarActions();
 
 #endif

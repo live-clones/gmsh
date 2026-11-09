@@ -102,9 +102,9 @@ private:
                std::vector<MElement *> &elements, std::vector<SPoint2> &points,
                std::vector<PView *> &views, bool through = true);
   // should a double click be processed?
-  bool _processDoubleClick(std::size_t num, const std::string &what);
   void _doubleClick(const paneInput &in);
   void _lassoZoom();
+  void _clickSelection(int sign, bool alt);
 
 protected:
   // the context whose scene this is: the host's, which draws it

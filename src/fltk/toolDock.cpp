@@ -13,6 +13,9 @@
 #include "toolDock.h"
 #include "FlGui.h" // for WB
 #include "gmshScheme.h"
+#include "graphicWindow.h"
+#include "onelabGroup.h"
+#include "Context.h"
 
 void dragGhost::follow(const char *label, int rowHeight, int xroot, int yroot)
 {
@@ -533,7 +536,7 @@ void toolDock::dragEnded(paletteWindow *pw, int x, int y, bool tearOut)
   if(!tearOut) return;
   pw->floating(true);
   hidden(pw);
-  if(tornOutHook) tornOutHook(pw, x, y);
+  if(paletteWindow::docking) paletteWindow::docking->toolTornOut(pw, x, y);
 }
 
 void toolDock::dropHint(bool on)
@@ -592,4 +595,254 @@ void dockDivider::draw()
     fl_color(gmshAccent());
     fl_rectf(x() + w() - 3, y(), 3, h());
   }
+}
+
+// The docking of the tool windows in the main window (graphicWindow), which
+// the tool windows reach as their dockHost (paletteWindow::docking)
+
+bool graphicWindow::closeTool(Fl_Window *w)
+{
+  // Cmd-W in the main window closes the tool shown in the dock, if any
+  return getWindow() == w && closeDockedTool();
+}
+
+bool graphicWindow::isDockShown() { return _dock && _dock->visible(); }
+
+// the least width of the tool windows, in the frame of the dock tabs
+static int leastDockWidth() { return TW + Fl::box_dw(FL_THIN_UP_BOX); }
+
+int graphicWindow::getDockWidth()
+{ return std::max(CTX::instance()->dockWidth, leastDockWidth()); }
+
+int graphicWindow::_leastTileWidth()
+{
+  // the tree, and some room for the graphics
+  int tw = (_onelab && !_menuwin) ? _onelab->w() : 0;
+  return std::max(_minWidth, tw + BB);
+}
+
+int graphicWindow::_fitDockWidth(int w)
+{
+  w = std::min(w, _win->w() - WB - _leastTileWidth());
+  return std::max(w, leastDockWidth());
+}
+
+void graphicWindow::setDockWidth(int w)
+{
+  if(!isDockShown()) return;
+  w = _fitDockWidth(w);
+  CTX::instance()->dockWidth = w;
+  _layoutDock(w);
+}
+
+void graphicWindow::setDocking(bool docking)
+{
+  if(!_dock) return;
+  if(docking) {
+    paletteWindow::docking = this;
+    // the tool windows open on the desktop join the dock, in the order they
+    // were shown (the list of FLTK starts with the newest)
+    std::vector<paletteWindow *> open;
+    for(Fl_Window *w = Fl::first_window(); w; w = Fl::next_window(w)) {
+      paletteWindow *p = dynamic_cast<paletteWindow *>(w);
+      if(p && p->dockable() && !p->parent()) open.push_back(p);
+    }
+    std::reverse(open.begin(), open.end());
+    for(auto p : open) p->show();
+  }
+  else {
+    // the windows let go are shown on the desktop, not docked again
+    _undocking = true;
+    _dock->undockAll();
+    _undocking = false;
+    paletteWindow::dragged = nullptr;
+    if(paletteWindow::docking == this) paletteWindow::docking = nullptr;
+    _layoutDock(0);
+  }
+}
+
+void graphicWindow::toolTornOut(paletteWindow *w, int x, int y)
+{
+  if(_dock->empty()) _layoutDock(0);
+  // the title bar under the pointer, which held the tab or the title
+  placeWindowAt(w, x - w->w() / 2, y + BH / 2);
+  w->show();
+  FlGui::instance()->storeFloatingTools();
+}
+
+bool graphicWindow::_overDock(paletteWindow *w)
+{
+  // Wayland hides where the windows are on the screen: there a tool is docked
+  // by dragging a tab or its background, not its title bar (see toolDrop())
+  if(!screenPositionsKnown()) return false;
+  // the middle of the title bar of the tool over the dock, or over where the
+  // dock would be while none is docked: the right of the tiles
+  int th = w->decorated_h() - w->h();
+  int cx = w->x() + w->w() / 2, cy = w->y() - th / 2;
+  int X = _win->x() + _win->w() - getDockWidth(), W = getDockWidth();
+  if(isDockShown()) {
+    X = _win->x() + _dock->x();
+    W = _dock->w();
+  }
+  int Y = _win->y() + _tile->y(), H = _tile->h();
+  return cx >= X && cx < X + W && cy >= Y && cy < Y + H;
+}
+
+void graphicWindow::toolMoved(paletteWindow *w)
+{
+  if(!w->shown() || !_win->shown()) return;
+  if(_overDock(w)) {
+    if(_dropping != w) {
+      _dropping = w;
+      _dropTarget(true);
+      // docked when the button is released: the system is asked for it
+      Fl::add_timeout(0.05, _drop_cb, this);
+    }
+  }
+  else if(_dropping == w) {
+    Fl::remove_timeout(_drop_cb, this);
+    _dropping = nullptr;
+    _dropTarget(false);
+  }
+}
+
+void graphicWindow::_dropTarget(bool on)
+{
+  // the dock as the target of a drop, shown empty while none is docked
+  if(on && !isDockShown()) _layoutDock(_fitDockWidth(getDockWidth()));
+  _dropHint(on);
+  if(!on && _dock->empty()) _layoutDock(0);
+}
+
+void graphicWindow::_dropHint(bool on)
+{
+  _dock->dropHint(on);
+  if(on == _divider->highlight) return;
+  _divider->highlight = on;
+  _divider->redraw();
+}
+
+void graphicWindow::_drop_cb(void *data)
+{
+  graphicWindow *g = (graphicWindow *)data;
+  paletteWindow *w = g->_dropping;
+  if(!w) return;
+  // Shift held keeps the tool out of the dock, to leave it over the dock
+  // (Alt would tile the window on macOS): no hint while it is
+  bool shift = shiftKeyDown();
+  g->_dropHint(!shift);
+  int down = mouseButtonDown();
+  if(down == 1) {
+    Fl::repeat_timeout(0.05, _drop_cb, data);
+    return;
+  }
+  g->_dropping = nullptr;
+  g->_dropTarget(false);
+  // kept out when Shift is held, or where the system cannot say
+  if(shift || down == -1) return;
+  w->floating(false);
+  w->show(); // docks it
+  FlGui::instance()->storeFloatingTools();
+}
+
+void graphicWindow::dragToDock(paletteWindow *w)
+{
+  // an FLTK drag and drop of the label of the tool, which the system shows
+  // along the pointer; the drop lands in toolDrop()
+  const char *label = w->label() ? w->label() : "";
+  paletteWindow::dragged = w;
+  Fl::copy(label, strlen(label), 0);
+  Fl::dnd();
+}
+
+void dropped_cb(void *data)
+{
+  paletteWindow *w = (paletteWindow *)data;
+  w->floating(false);
+  w->show(); // docks it
+  FlGui::instance()->storeFloatingTools();
+}
+
+int graphicWindow::toolDrop(int event)
+{
+  paletteWindow *w = paletteWindow::dragged;
+  switch(event) {
+  case FL_DND_ENTER:
+  case FL_DND_DRAG: {
+    // over the dock, or where it would be while none is docked: the right of
+    // the tiles
+    int X = isDockShown() ? _dock->x() : _win->w() - getDockWidth();
+    bool over = Fl::event_x() >= X && Fl::event_y() >= _tile->y() &&
+                Fl::event_y() < _tile->y() + _tile->h();
+    _dropTarget(over);
+    // the release and the text dropped go to the widget below the mouse
+    if(over) Fl::belowmouse(_win);
+    return over;
+  }
+  case FL_DND_LEAVE: _dropTarget(false); return 1;
+  case FL_DND_RELEASE: return _dock->dropHint();
+  case FL_PASTE:
+    paletteWindow::dragged = nullptr;
+    _dropTarget(false);
+    // ours, by its text; docked once the drag is over
+    if(w->label() && Fl::event_text() && !strcmp(Fl::event_text(), w->label()))
+      Fl::add_timeout(0., dropped_cb, w);
+    return 1;
+  }
+  return 0;
+}
+
+void graphicWindow::toolResized(paletteWindow *w) { _dock->resized(w); }
+
+paletteWindow *graphicWindow::currentDockedTool()
+{ return isDockShown() ? _dock->current() : nullptr; }
+
+bool graphicWindow::closeDockedTool()
+{ return isDockShown() && _dock->closeCurrent(); }
+
+void graphicWindow::dockTool(paletteWindow *w)
+{
+  if(!isDockShown()) {
+    // the window widened if the graphics would get narrower than their least,
+    // within the screen
+    int need = _leastTileWidth() + getDockWidth() + WB;
+    if(_win->w() < need) {
+      int sx, sy, sw, sh;
+      windowWorkArea(_win, sx, sy, sw, sh);
+      _win->size(std::min(need, sw), _win->h());
+    }
+    _layoutDock(_fitDockWidth(getDockWidth()));
+  }
+  _dock->dock(w);
+}
+
+void graphicWindow::toolHidden(paletteWindow *w)
+{
+  _dock->hidden(w);
+  if(_dock->empty()) _layoutDock(0);
+}
+
+void graphicWindow::_layoutDock(int width)
+{
+  // the tiles take what the dock leaves
+  int ww = _win->w(), y = _tile->y(), h = _tile->h();
+  int dw = width ? width + WB : 0;
+  _tile->resize(0, y, ww - dw, h);
+  if(width) {
+    _divider->resize(ww - dw, y, WB, h);
+    _divider->show();
+    _dock->resize(ww - width, y, width, h);
+    _dock->show();
+  }
+  else {
+    _divider->hide();
+    _dock->hide();
+  }
+  // the dock keeps its width when the window is resized, and the window keeps
+  // room for it
+  _win->size_range((width ? _leastTileWidth() : _minWidth) + dw, _minHeight);
+  _resbox->resize(_minWidth, _resbox->y(), std::max(1, ww - dw - _minWidth),
+                  _resbox->h());
+  _win->init_sizes();
+  _win->redraw();
 }

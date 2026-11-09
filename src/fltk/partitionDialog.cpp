@@ -20,15 +20,12 @@
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Box.H>
 #include "GmshConfig.h"
-#include "GmshDefines.h"
-#include "GmshMessage.h"
 #include "FlGui.h"
 #include "paletteWindow.h"
 #include "GModel.h"
 #include "drawContext.h"
 #include "Options.h"
 #include "Context.h"
-#include "fileDialogs.h"
 #include "partitionDialog.h"
 
 #if defined(HAVE_MESH) && defined(HAVE_METIS)

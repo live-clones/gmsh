@@ -10,12 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <FL/Fl_Value_Slider.H>
-#include <FL/Fl_Menu_Window.H>
-#include <FL/Fl_Select_Browser.H>
-#include <FL/Fl_Toggle_Button.H>
-#include <FL/Fl_Round_Button.H>
 #include <FL/Fl_Return_Button.H>
-#include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Hold_Browser.H>
 #include <FL/Fl_Input_Choice.H>
 #include <FL/Fl_Box.H>
@@ -27,9 +22,6 @@
 #include <FL/Fl_Preferences.H>
 #include "FlGui.h"
 #include "paletteWindow.h"
-#include "GmshDefines.h"
-#include "OpenFile.h"
-#include "CreateFile.h"
 #include "Options.h"
 #include "drawContext.h"
 #include "GModel.h"
@@ -38,6 +30,34 @@
 #include "PView.h"
 
 // Arrow editor
+
+// shows the dialog until OK, which calls apply() and returns 1, or Cancel or
+// the close button, which return 0; other(o) is told first of every widget
+// whose callback ran
+int runDialog(Fl_Window *window, Fl_Widget *ok, Fl_Widget *cancel,
+              const std::function<void()> &apply,
+              const std::function<void(Fl_Widget *)> &other = nullptr)
+{
+  window->show();
+  while(window->shown()) {
+    Fl::wait();
+    for(;;) {
+      Fl_Widget *o = Fl::readqueue();
+      if(!o) break;
+      if(other) other(o);
+      if(o == ok) {
+        apply();
+        window->hide();
+        return 1;
+      }
+      if(o == window || o == cancel) {
+        window->hide();
+        return 0;
+      }
+    }
+  }
+  return 0;
+}
 
 int arrowEditor(const char *title, double &a, double &b, double &c)
 {
@@ -211,35 +231,20 @@ public:
     }
     else
       input->value(_defaultCommand.c_str());
-    window->show();
-    while(window->shown()) {
-      Fl::wait();
-      for(;;) {
-        Fl_Widget *o = Fl::readqueue();
-        if(!o) break;
-        if(o == ok) {
-          if(strlen(input->value())) {
-            // insert choosen value at the top of the history
-            for(int i = 0; i < browser->size(); i++) {
-              if(!strcmp(input->value(), browser->text(i + 1))) {
-                browser->remove(i + 1);
-                break;
-              }
-            }
-            browser->insert(1, input->value());
+    int chosen = runDialog(window, ok, cancel, [&]() {
+      if(strlen(input->value())) {
+        // the value chosen at the top of the history
+        for(int i = 0; i < browser->size(); i++) {
+          if(!strcmp(input->value(), browser->text(i + 1))) {
+            browser->remove(i + 1);
+            break;
           }
-          save(prefs);
-          window->hide();
-          return input->value();
         }
-        if(o == window || o == cancel) {
-          save(prefs);
-          window->hide();
-          return "";
-        }
+        browser->insert(1, input->value());
       }
-    }
-    return "";
+    });
+    save(prefs);
+    return chosen ? input->value() : "";
   }
 };
 
@@ -304,20 +309,7 @@ int simpleTextDisplay(const char *title, const std::string &text)
   display->window->label(title);
   display->buff->text(text.c_str());
   display->window->hotspot(display->window);
-  display->window->show();
-
-  while(display->window->shown()) {
-    Fl::wait();
-    for(;;) {
-      Fl_Widget *o = Fl::readqueue();
-      if(!o) break;
-      if(o == display->window) {
-        display->window->hide();
-        return 0;
-      }
-    }
-  }
-  return 0;
+  return runDialog(display->window, nullptr, nullptr, [] {});
 }
 
 int simpleTextEditor(const char *title, const std::string &help,
@@ -355,25 +347,9 @@ int simpleTextEditor(const char *title, const std::string &help,
   editor->help->copy_label(help.c_str());
   editor->buff->text(text.c_str());
   editor->window->hotspot(editor->window);
-  editor->window->show();
-
-  while(editor->window->shown()) {
-    Fl::wait();
-    for(;;) {
-      Fl_Widget *o = Fl::readqueue();
-      if(!o) break;
-      if(o == editor->apply) {
-        char *t = editor->buff->text();
-        text = t;
-        free(t);
-        editor->window->hide();
-        return 1;
-      }
-      if(o == editor->window || o == editor->cancel) {
-        editor->window->hide();
-        return 0;
-      }
-    }
-  }
-  return 0;
+  return runDialog(editor->window, editor->apply, editor->cancel, [&]() {
+    char *t = editor->buff->text();
+    text = t;
+    free(t);
+  });
 }

@@ -9,17 +9,11 @@
 
 #include <list>
 #include <functional>
-#include <limits>
-#include <sstream>
-#include <errno.h>
 #include <FL/Fl_Double_Window.H>
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Return_Button.H>
 #include <FL/Fl_Value_Slider.H>
 #include <FL/Fl_Value_Input.H>
-#include <FL/Fl_Menu_Window.H>
-#include <FL/Fl_Select_Browser.H>
-#include <FL/Fl_Toggle_Button.H>
 #include <FL/Fl_Round_Button.H>
 #include <FL/Fl_Choice.H>
 #include <FL/Fl_Native_File_Chooser.H>
@@ -33,6 +27,7 @@
 #include "FlGui.h"
 #include "optionWindow.h"
 #include "fileDialogs.h"
+#include "extraDialogs.h"
 #include "windowPlacement.h"
 #include "CreateFile.h"
 #include "Options.h"
@@ -40,7 +35,6 @@
 #include "GModel.h"
 #include "PView.h"
 #include "PViewOptions.h"
-#include <iostream>
 
 // basic file chooser
 class flFileChooser : public Fl_File_Chooser {
@@ -236,34 +230,6 @@ static void okCancelButtons(Fl_Window *window, int y, int bw, Fl_Button *&ok,
   cancel = new Fl_Button(2 * WB + bw, y + WB, bw, BH, "Cancel");
   window->end();
   window->hotspot(window);
-}
-
-// shows the dialog until OK, which calls apply() and returns 1, or Cancel or
-// the close button, which return 0; other(o) is told first of every widget
-// whose callback ran
-static int runDialog(Fl_Window *window, Fl_Widget *ok, Fl_Widget *cancel,
-                     const std::function<void()> &apply,
-                     const std::function<void(Fl_Widget *)> &other = nullptr)
-{
-  window->show();
-  while(window->shown()) {
-    Fl::wait();
-    for(;;) {
-      Fl_Widget *o = Fl::readqueue();
-      if(!o) break;
-      if(other) other(o);
-      if(o == ok) {
-        apply();
-        window->hide();
-        return 1;
-      }
-      if(o == window || o == cancel) {
-        window->hide();
-        return 0;
-      }
-    }
-  }
-  return 0;
 }
 
 // The dialogs whose rows each show an option and set it on OK. A row is a

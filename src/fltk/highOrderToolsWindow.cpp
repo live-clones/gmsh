@@ -3,14 +3,9 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#include <string>
-#include <sstream>
-#include <map>
 #include <vector>
-#include <string.h>
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Box.H>
-#include <FL/Fl_Return_Button.H>
 #include <FL/Fl_Value_Input.H>
 #include "GmshConfig.h"
 #include "FlGui.h"
@@ -18,7 +13,6 @@
 #include "drawContext.h"
 #include "highOrderToolsWindow.h"
 #include "paletteWindow.h"
-#include "GmshMessage.h"
 #include "GModel.h"
 #include "MElement.h"
 #include "Context.h"

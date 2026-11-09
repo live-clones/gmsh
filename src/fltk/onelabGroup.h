@@ -30,12 +30,10 @@ private:
   bool _busy;
   // all the items of the gear menu active, or only the automatic behaviours
   void _activateGearMenu(bool all);
-  // the widgets of the tree and the strings they show, and those retired by
-  // a rebuild while an event sent to them was handled, kept hidden until the
-  // events are handled (see _rebuildTree()); a list, so that the strings stay
-  // where they are
-  std::vector<Fl_Widget *> _treeWidgets, _retiredWidgets;
-  std::list<std::string> _treeStrings, _retiredStrings;
+  // the widgets of the tree and the strings they show (a list, so that the
+  // strings stay where they are)
+  std::vector<Fl_Widget *> _treeWidgets;
+  std::list<std::string> _treeStrings;
   // a rebuild asked for during a rebuild (hiding an edited input runs its
   // callback, which may rebuild the tree): done once the current one is over
   bool _rebuilding, _rebuildAgain;
@@ -73,7 +71,6 @@ public:
   void updateGearMenu();
   void rebuildSolverList();
   // once the events are handled (see FlGui::_dispatch())
-  void deleteRetiredWidgets();
   void rebuildTree();
   void openTreeItem(const std::string &name);
   void closeTreeItem(const std::string &name);

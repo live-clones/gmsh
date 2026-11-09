@@ -181,8 +181,8 @@ static void window_moved(void *hwnd)
 {
   paletteWindow *w = dynamic_cast<paletteWindow *>(fl_find((HWND)hwnd));
   if(w && !w->parent() && w->dockable() && w->floating() &&
-     paletteWindow::movedHook)
-    paletteWindow::movedHook(w);
+     paletteWindow::docking)
+    paletteWindow::docking->toolMoved(w);
 }
 #endif
 

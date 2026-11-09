@@ -21,7 +21,6 @@
 #include "paletteWindow.h"
 #include "CommandLine.h"
 #include "StringUtils.h"
-#include "OS.h"
 #include "Options.h"
 #include "Context.h"
 #include "drawContext.h"

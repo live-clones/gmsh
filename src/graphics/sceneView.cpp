@@ -139,6 +139,30 @@ void sceneView::_highlight(GEntity *e)
   hostRedraw();
 }
 
+// the entity in front among those picked: a point before a curve, before a
+// surface, before a volume
+static GEntity *firstEntity(std::vector<GVertex *> &vertices,
+                            std::vector<GEdge *> &edges,
+                            std::vector<GFace *> &faces,
+                            std::vector<GRegion *> &regions)
+{
+  if(vertices.size()) return vertices[0];
+  if(edges.size()) return edges[0];
+  if(faces.size()) return faces[0];
+  if(regions.size()) return regions[0];
+  return nullptr;
+}
+
+// the command a double click on an entity of dimension dim runs
+static const std::string &doubleClickCommand(int dim)
+{
+  CTX *c = CTX::instance();
+  const std::string *cmd[4] = {
+    &c->geom.doubleClickedPointCommand, &c->geom.doubleClickedCurveCommand,
+    &c->geom.doubleClickedSurfaceCommand, &c->geom.doubleClickedVolumeCommand};
+  return *cmd[dim];
+}
+
 // What the cursor is over: a box by the cursor or the status bar says what a
 // click would pick, and the cursor says whether there is anything. When several
 // entities are under it, the wheel steps through them (see handleMouse())
@@ -170,21 +194,10 @@ void sceneView::_hover()
              (_selection == ENT_SURFACE && faces.size()) ||
              (_selection == ENT_VOLUME && regions.size()));
   std::string text, cmd;
-  if(vertices.size()) {
-    text = vertices[0]->getInfoString(true, true);
-    cmd = CTX::instance()->geom.doubleClickedPointCommand;
-  }
-  else if(edges.size()) {
-    text = edges[0]->getInfoString(true, true);
-    cmd = CTX::instance()->geom.doubleClickedCurveCommand;
-  }
-  else if(faces.size()) {
-    text = faces[0]->getInfoString(true, true);
-    cmd = CTX::instance()->geom.doubleClickedSurfaceCommand;
-  }
-  else if(regions.size()) {
-    text = regions[0]->getInfoString(true, true);
-    cmd = CTX::instance()->geom.doubleClickedVolumeCommand;
+  GEntity *over = firstEntity(vertices, edges, faces, regions);
+  if(over) {
+    text = over->getInfoString(true, true);
+    cmd = doubleClickCommand(over->dim());
   }
   else if(elements.size()) {
     text = elements[0]->getInfoString(true);
@@ -220,15 +233,6 @@ void sceneView::_hover()
     }
   }
   // and drawn as selected, so that it is not only named but shown
-  GEntity *over = nullptr;
-  if(vertices.size())
-    over = vertices[0];
-  else if(edges.size())
-    over = edges[0];
-  else if(faces.size())
-    over = faces[0];
-  else if(regions.size())
-    over = regions[0];
   _highlight(over);
 
   // while a measurement waits for its second point, the line follows the
@@ -303,12 +307,6 @@ bool sceneView::acceptsDoubleClick() const
   return !selectionMode && CTX::instance()->mouseSelection;
 }
 
-bool sceneView::_processDoubleClick(std::size_t num, const std::string &what)
-{
-  if(!num || what.empty()) return false;
-  if(what == "ONELAB" && !hostHasOnelabContext()) return false;
-  return true;
-}
 
 // the command of a double click, which may change the model: not during
 // another operation on it
@@ -319,7 +317,8 @@ static void runCommand(const std::string &command)
 
 // what was double clicked runs its command (General.DoubleClicked*Command),
 // shows its ONELAB parameters, or, when there is nothing, the quick access
-// menu
+// menu; an entity without a command lets a double click reach the entity
+// behind it of higher dimension
 void sceneView::_doubleClick(const paneInput &in)
 {
   std::vector<GVertex *> vertices;
@@ -332,39 +331,23 @@ void sceneView::_doubleClick(const paneInput &in)
   _select(ENT_ALL, false, CTX::instance()->mouseHoverMeshes, true, (int)in.x,
           (int)in.y, 5, 5, vertices, edges, faces, regions, elements, points,
           views);
-  if(_processDoubleClick(vertices.size(),
-                         CTX::instance()->geom.doubleClickedPointCommand)) {
-    CTX::instance()->geom.doubleClickedEntityTag = vertices[0]->tag();
-    if(CTX::instance()->geom.doubleClickedPointCommand == "ONELAB")
-      hostShowOnelabContext(0, vertices[0]->tag());
+  GEntity *picked[4] = {vertices.size() ? vertices[0] : nullptr,
+                        edges.size() ? edges[0] : nullptr,
+                        faces.size() ? faces[0] : nullptr,
+                        regions.size() ? regions[0] : nullptr};
+  for(int dim = 0; dim < 4; dim++) {
+    const std::string &cmd = doubleClickCommand(dim);
+    if(!picked[dim] || cmd.empty() ||
+       (cmd == "ONELAB" && !hostHasOnelabContext()))
+      continue;
+    CTX::instance()->geom.doubleClickedEntityTag = picked[dim]->tag();
+    if(cmd == "ONELAB")
+      hostShowOnelabContext(dim, picked[dim]->tag());
     else
-      runCommand(CTX::instance()->geom.doubleClickedPointCommand);
+      runCommand(cmd);
+    return;
   }
-  else if(_processDoubleClick(edges.size(),
-                              CTX::instance()->geom.doubleClickedCurveCommand)) {
-    CTX::instance()->geom.doubleClickedEntityTag = edges[0]->tag();
-    if(CTX::instance()->geom.doubleClickedCurveCommand == "ONELAB")
-      hostShowOnelabContext(1, edges[0]->tag());
-    else
-      runCommand(CTX::instance()->geom.doubleClickedCurveCommand);
-  }
-  else if(_processDoubleClick(faces.size(),
-                              CTX::instance()->geom.doubleClickedSurfaceCommand)) {
-    CTX::instance()->geom.doubleClickedEntityTag = faces[0]->tag();
-    if(CTX::instance()->geom.doubleClickedSurfaceCommand == "ONELAB")
-      hostShowOnelabContext(2, faces[0]->tag());
-    else
-      runCommand(CTX::instance()->geom.doubleClickedSurfaceCommand);
-  }
-  else if(_processDoubleClick(regions.size(),
-                              CTX::instance()->geom.doubleClickedVolumeCommand)) {
-    CTX::instance()->geom.doubleClickedEntityTag = regions[0]->tag();
-    if(CTX::instance()->geom.doubleClickedVolumeCommand == "ONELAB")
-      hostShowOnelabContext(3, regions[0]->tag());
-    else
-      runCommand(CTX::instance()->geom.doubleClickedVolumeCommand);
-  }
-  else if(views.size() && views[0]->getOptions()->doubleClickedCommand.size()) {
+  if(views.size() && views[0]->getOptions()->doubleClickedCommand.size()) {
     CTX::instance()->post.doubleClickedView = views[0]->getIndex();
     runCommand(views[0]->getOptions()->doubleClickedCommand);
   }
@@ -419,6 +402,34 @@ void sceneView::_lassoZoom()
   hostViewChanged();
 }
 
+// a click that selects (sign 1) or unselects (sign -1): it ends a lasso, and
+// then tries the entities in the lasso (or zooms on it when not selecting),
+// or tries the entity under the cursor; alt keeps what is in front only
+void sceneView::_clickSelection(int sign, bool alt)
+{
+  if(lassoMode) {
+    lassoMode = false;
+    if(selectionMode && CTX::instance()->mouseSelection) {
+      _trySelection = 2 * sign;
+      _trySelectionFront = alt;
+      _trySelectionXYWH[0] = (int)(_click.win[0] + _curr.win[0]) / 2;
+      _trySelectionXYWH[1] = (int)(_click.win[1] + _curr.win[1]) / 2;
+      _trySelectionXYWH[2] = (int)fabs(_click.win[0] - _curr.win[0]);
+      _trySelectionXYWH[3] = (int)fabs(_click.win[1] - _curr.win[1]);
+    }
+    else {
+      _lassoZoom();
+    }
+  }
+  else if(CTX::instance()->mouseSelection) {
+    _trySelection = sign;
+    _trySelectionXYWH[0] = (int)_curr.win[0];
+    _trySelectionXYWH[1] = (int)_curr.win[1];
+    _trySelectionXYWH[2] = 5;
+    _trySelectionXYWH[3] = 5;
+  }
+}
+
 void sceneView::handleMouse(const paneInput &in)
 {
   _w = in.w;
@@ -443,32 +454,10 @@ void sceneView::handleMouse(const paneInput &in)
       // Ctrl+click adds a query in query mode (when the clicks select), and
       // starts a lasso otherwise
       _addQuery = hostQueryMode() && CTX::instance()->mouseSelection && ctrl;
-      if(!lassoMode && ctrl && !_addQuery) {
+      if(!lassoMode && ctrl && !_addQuery)
         lassoMode = true;
-      }
-      else if(lassoMode) {
-        lassoMode = false;
-        if(selectionMode && CTX::instance()->mouseSelection) {
-          // will try to select multiple entities
-          _trySelection = 2;
-          _trySelectionFront = alt;
-          _trySelectionXYWH[0] = (int)(_click.win[0] + _curr.win[0]) / 2;
-          _trySelectionXYWH[1] = (int)(_click.win[1] + _curr.win[1]) / 2;
-          _trySelectionXYWH[2] = (int)fabs(_click.win[0] - _curr.win[0]);
-          _trySelectionXYWH[3] = (int)fabs(_click.win[1] - _curr.win[1]);
-        }
-        else {
-          _lassoZoom();
-        }
-      }
-      else if(CTX::instance()->mouseSelection) {
-        // will try to select clicked entity
-        _trySelection = 1;
-        _trySelectionXYWH[0] = (int)_curr.win[0];
-        _trySelectionXYWH[1] = (int)_curr.win[1];
-        _trySelectionXYWH[2] = 5;
-        _trySelectionXYWH[3] = 5;
-      }
+      else
+        _clickSelection(1, alt);
     }
     else if(in.button == 2 || (in.button == 0 && shift)) {
       if(!lassoMode && ctrl) {
@@ -477,29 +466,8 @@ void sceneView::handleMouse(const paneInput &in)
         _ctx->s[2] = _ctx->s[0];
         hostRedraw();
       }
-      else if(lassoMode) {
-        lassoMode = false;
-        if(selectionMode && CTX::instance()->mouseSelection) {
-          // will try to unselect multiple entities
-          _trySelection = -2;
-          _trySelectionFront = alt;
-          _trySelectionXYWH[0] = (int)(_click.win[0] + _curr.win[0]) / 2;
-          _trySelectionXYWH[1] = (int)(_click.win[1] + _curr.win[1]) / 2;
-          _trySelectionXYWH[2] = (int)fabs(_click.win[0] - _curr.win[0]);
-          _trySelectionXYWH[3] = (int)fabs(_click.win[1] - _curr.win[1]);
-        }
-        else {
-          _lassoZoom();
-        }
-      }
-      else if(CTX::instance()->mouseSelection) {
-        // will try to unselect clicked entity
-        _trySelection = -1;
-        _trySelectionXYWH[0] = (int)_curr.win[0];
-        _trySelectionXYWH[1] = (int)_curr.win[1];
-        _trySelectionXYWH[2] = 5;
-        _trySelectionXYWH[3] = 5;
-      }
+      else
+        _clickSelection(-1, alt);
     }
     else {
       if(ctrl && !lassoMode) {

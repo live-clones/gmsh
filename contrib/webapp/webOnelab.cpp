@@ -62,27 +62,17 @@ namespace {
     }
   }
 
-  // the solvers of the server (not the clients a solver adds while it runs)
+  // the solvers of the server the loops run (not the clients a solver adds
+  // while it runs; see onelabUtils::isAutoRunSolver())
   std::vector<gmshInProcessClient *> solvers()
   {
     onelab::server *s = onelab::server::instance();
     std::vector<gmshInProcessClient *> v;
     for(auto it = s->firstClient(); it != s->lastClient(); it++) {
       auto *c = dynamic_cast<gmshInProcessClient *>(*it);
-      if(c && c->getName().find("NoAutoRun") == std::string::npos)
-        v.push_back(c);
+      if(c && onelabUtils::isAutoRunSolver(c)) v.push_back(c);
     }
     return v;
-  }
-
-  // a solver about to run: the action it is asked for, in the database
-  void setAction(gmshInProcessClient *c, const std::string &action)
-  {
-    onelabUtils::guessModelName(c);
-    onelab::string o(c->getName() + "/Action", action);
-    o.setVisible(false);
-    o.setNeverChanged(true);
-    onelab::server::instance()->set(o);
   }
 
   std::string quoted(const std::string &s)
@@ -158,7 +148,7 @@ EMSCRIPTEN_KEEPALIVE int gmshWebOnelab(const char *what)
   do {
     onelabUtils::runGmshClient(action, CTX::instance()->solver.autoMesh);
     for(auto *c : solvers()) {
-      setAction(c, action);
+      onelabUtils::setSolverAction(c, action);
       c->run();
       if(action == "compute")
         onelab::server::instance()->setChanged(0, c->getName());
@@ -203,7 +193,7 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebOnelabGmsh(const char *what)
   static std::string json;
   json = "[";
   for(auto *c : solvers()) {
-    setAction(c, action);
+    onelabUtils::setSolverAction(c, action);
     if(json.size() > 1) json += ",";
     json += "{\"name\":" + quoted(c->getName()) + ",\"args\":[";
     std::vector<std::string> args = c->commandLine();

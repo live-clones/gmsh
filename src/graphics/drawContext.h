@@ -590,6 +590,9 @@ public:
   // shifted for a studio frame) and the modelview (the camera looking at
   // its target), which `view' comes back with
   void initCameraMatrices(double view[16]);
+  // the colour a frame starts from: the background, or white for a print
+  // without its background
+  static void setClearColor();
   void initPosition(bool saveMatrices);
   // the scale that fits the bounding box in the viewport, without translation,
   // as it is currently rotated, with the margin it has at scale 1 along Z

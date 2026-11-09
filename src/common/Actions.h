@@ -72,7 +72,8 @@ struct actionItem {
 };
 
 // The menu with the given name: "Geometry" and "Mesh" (the modules), "Quick
-// access" (the menu of the scene) or "View" (the menu of a view)
+// access" (the menu of the scene), "View" (the menu of a view) or "Menu bar"
+// (the menu bar of the graphical interface)
 const actionItem &GetActionMenu(const std::string &name);
 
 // What RunAction() returns, as bits: ActionNotHere if the interface does the
