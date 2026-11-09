@@ -7,7 +7,18 @@
 // from the page.
 
 const mac = /Mac|iPhone|iPad/.test(navigator.platform);
-const ModCommand = 1, ModShift = 2, ModAlt = 4, AnyModifiers = 8;
+// the modifiers of the shortcut table (src/common/Shortcuts.h), and for the
+// mouse Control and Meta apart, which the scene tells apart (see
+// gmshWebMouse())
+export const ModCommand = 1, ModShift = 2, ModAlt = 4, AnyModifiers = 8,
+             ModControl = 16, ModMeta = 32;
+// the modifiers of an event: of a key, Command (Control, or Command on
+// macOS), Shift and Alt; of the mouse, Control and Meta instead of Command
+export function modifiers(e, mouse = false) {
+  const command = mouse ? (e.ctrlKey ? ModControl : 0) | (e.metaKey ? ModMeta : 0) :
+                          ((mac ? e.metaKey : e.ctrlKey) ? ModCommand : 0);
+  return command | (e.shiftKey ? ModShift : 0) | (e.altKey ? ModAlt : 0);
+}
 
 // the key a shortcut names: the character of the key on the keyboard layout
 // in use, which Alt changes on macOS (Alt+p is "π"), so that the character of
@@ -45,8 +56,7 @@ export function installShortcuts(Module, run, draw) {
          .includes(t.type)))
       return;
     const key = keyOf(e);
-    const mods = ((mac ? e.metaKey : e.ctrlKey) ? ModCommand : 0) |
-                 (e.shiftKey ? ModShift : 0) | (e.altKey ? ModAlt : 0);
+    const mods = modifiers(e);
     // the keys as the layout gives them: a digit may need Shift
     const digit = /^[0-9]$/.test(key);
     const matches = (s, m) => s.key === key &&
@@ -68,11 +78,12 @@ export function installShortcuts(Module, run, draw) {
 }
 
 // a list of the shortcuts, for a help box: each key and what it does, keys
-// that do the same joined with "or", the actions the page has not left out
+// that do the same joined with "or", the actions of the module (those that
+// change the scene) and those available(action) says the page has
 export function shortcutsHelp(table, available) {
   const rows = [];
   for(const s of table) {
-    if(!available(s.action)) continue;
+    if(!s.scene && !available(s.action)) continue;
     const last = rows[rows.length - 1];
     if(last && last.action === s.action && last.help === s.help)
       last.label += ' or ' + s.label;

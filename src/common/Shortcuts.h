@@ -86,6 +86,9 @@ class drawContext;
 int RunSceneShortcut(const std::string &action, unsigned mods,
                      drawContext *ctx);
 
+// whether an action is one of RunSceneShortcut()
+bool IsSceneShortcut(const std::string &action);
+
 // each shortcut and what it does, for the help window and the documentation
 // (the keys that do the same are joined with "or"; see Shortcut::label() for
 // command)

@@ -3,7 +3,7 @@ new parallel 3D Delaunay algorithm; improved graphics performance and entity
 selection; new shader rendering pipeline with order-independent transparency and
 studio shading; redesigned GUI, with tools docked to the right of the graphics
 window by default and automatic dark mode; new experimental JavaScript API and
-WebGL viewer; new capping visualization mode in clipping tool; new interactive
+ONELAB web app; new capping visualization mode in clipping tool; new interactive
 model query and measurement; improved colorbars and 2D plots; new predefined
 colormaps and symmetric log scale; new built-in fonts used by default (removed
 ZapfDingbats); new headless image and movie export (replaces deprecated OSMesa;

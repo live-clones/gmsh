@@ -1,7 +1,7 @@
 #!/bin/bash
 # Deploy the web app demo on https://onelab.info/webapp/: the site is made in
 # build/site, with the pages, the module of build.sh (run it first) and GetDP's
-# templates, the examples of the viewer, and the models (the GetDP tutorials
+# templates, and the models (the GetDP tutorials
 # and those of onelab_doc), each packed as a zip and listed on the landing
 # page (index.html); then it is copied to the web server.
 #
@@ -50,17 +50,13 @@ wc -c < "$B/libgmsh.wasm" | tr -d ' ' > "$SITE/build/libgmsh.wasm.size"
 if [ -d "$B/templates" ]; then cp "$B"/templates/* "$SITE/build/templates"; fi
 
 # the pages, with the manifest and the icons that make them an app on a
-# phone's home screen, and the examples of the viewer next to it
-cp "$HERE/onelab.html" "$HERE/shortcuts.js" "$HERE/solver.js" \
+# phone's home screen
+cp "$HERE/onelab.html" "$HERE/shortcuts.js" "$HERE/solver.js" "$HERE/files.mjs" \
   "$HERE/manifest.webmanifest" "$SITE"
 mkdir -p "$SITE/icons"
 cp "$HERE"/icons/*.png "$SITE/icons"
-sed "s|^const examples = '../../tutorials/';|const examples = 'tutorials/';|" \
-  "$HERE/viewer.html" > "$SITE/viewer.html"
-mkdir -p "$SITE/tutorials"
-for f in $(sed -n 's|.*<option value="\([^"]*\.[a-z]*\)".*|\1|p' "$HERE/viewer.html"); do
-  cp "$SRC/tutorials/$f" "$SITE/tutorials"
-done
+# (what the viewer page left on the server, removed by rsync --delete)
+rm -rf "$SITE/viewer.html" "$SITE/tutorials"
 
 # The models, without what earlier runs left (meshes, results, databases),
 # and their list on the landing page: group starts a list under a heading;

@@ -1,7 +1,6 @@
 #!/bin/bash
 # Build the Gmsh web app with Emscripten (experimental), in ./build: the Gmsh
-# library and its JavaScript API with the WebGL drawing (viewer.html), with
-# OpenCASCADE, and with GetDP run in-process as the ONELAB solver
+# library and its JavaScript API with the WebGL drawing, with OpenCASCADE, and with GetDP run in-process as the ONELAB solver
 # (onelab.html). The dependencies (OpenCASCADE, and PETSc and SLEPc with
 # SuiteSparse and f2c BLAS/LAPACK for GetDP, all without Fortran or MPI) are
 # downloaded and built once, in ./build/deps.
@@ -13,7 +12,6 @@
 #
 # Testing:
 #   python3 -m http.server 8000 --bind 127.0.0.1 --directory ~/src/gmsh
-#   browse http://localhost:8000/contrib/webapp/viewer.html
 #   browse http://localhost:8000/contrib/webapp/onelab.html
 
 set -e

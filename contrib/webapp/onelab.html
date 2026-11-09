@@ -13,8 +13,8 @@
 <meta name="theme-color" content="#ffffff">
 <title>ONELAB web app</title>
 <style>
-  /* light or dark as the browser, unless the colour scheme chosen in the
-     options says otherwise (data-theme) */
+  /* light, or dark (data-theme, set as the colour scheme chosen in the
+     options or the browser's, see pageTheme() below) */
   :root { color-scheme: light;
           --bg-rgb: 255, 255, 255; --fg-rgb: 0, 0, 0;
           --bg: rgb(var(--bg-rgb)); --fg: rgb(var(--fg-rgb));
@@ -28,20 +28,6 @@
           --loop3: #ffb4af; --loop-fg: #000;
           --code-comment: #008000; --code-string: #a31515; --code-number: #098658;
           --code-word: #0050c0; --code-option: #8a3fb0; }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) { color-scheme: dark;
-      --bg-rgb: 30, 31, 34; --fg-rgb: 228, 228, 228;
-      --muted: #a2a2a6; --faint: #8e8e93; --tab: #b0b0b4; --line: #3a3b3f;
-      --line2: #313236; --border: #55575c; --field-border: #66686e;
-      --out-border: #4a4b50; --out-bg: #2a2b2f; --out-fg: #e4e4e4;
-      --menu-hover: #2f3b55; --error: #ff6b6b; --warning: #e5a33d;
-      --shadow: rgba(0,0,0,.5); --hover-bg: rgba(40,41,45,.94); --lasso: #ddd;
-      --lasso-fill: rgba(255,255,255,.06); --veil: rgba(30,31,34,.85);
-      --graph-on: #c9961e; --loop1: #238636; --loop2: #1f6feb;
-      --loop3: #be2828; --loop-fg: #fff;
-      --code-comment: #6a9955; --code-string: #ce9178; --code-number: #b5cea8;
-      --code-word: #569cd6; --code-option: #c586c0; }
-  }
   :root[data-theme="dark"] { color-scheme: dark;
     --bg-rgb: 30, 31, 34; --fg-rgb: 228, 228, 228;
     --muted: #a2a2a6; --faint: #8e8e93; --tab: #b0b0b4; --line: #3a3b3f;
@@ -50,34 +36,44 @@
     --menu-hover: #2f3b55; --error: #ff6b6b; --warning: #e5a33d;
     --shadow: rgba(0,0,0,.5); --hover-bg: rgba(40,41,45,.94); --lasso: #ddd;
     --lasso-fill: rgba(255,255,255,.06); --veil: rgba(30,31,34,.85);
-      --graph-on: #c9961e; --loop1: #238636; --loop2: #1f6feb;
-      --loop3: #be2828; --loop-fg: #fff;
-      --code-comment: #6a9955; --code-string: #ce9178; --code-number: #b5cea8;
-      --code-word: #569cd6; --code-option: #c586c0; }
+    --graph-on: #c9961e; --loop1: #238636; --loop2: #1f6feb;
+    --loop3: #be2828; --loop-fg: #fff;
+    --code-comment: #6a9955; --code-string: #ce9178; --code-number: #b5cea8;
+    --code-word: #569cd6; --code-option: #c586c0; }
   html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg);
                color: var(--fg); font: 14px -apple-system, BlinkMacSystemFont, "Segoe UI",
                  system-ui, Roboto, "Helvetica Neue", Arial, sans-serif; }
   /* the controls in the font of the page, not the smaller one of the browser */
   button, input, select, textarea { font: inherit; }
+  /* (the height of a phone's window, which its toolbars change) */
   body { display: grid; grid-template-columns: var(--side-width, min(330px, 40vw)) 5px minmax(0, 1fr);
-         grid-template-rows: auto 1fr auto auto; }
+         grid-template-rows: auto 1fr auto auto; height: 100dvh; }
+  html { touch-action: manipulation; }
   /* the panel hidden (the sidebar button of the status bar) */
   body.noSide { grid-template-columns: 0 0 minmax(0, 1fr); }
   body.noSide #side, body.noSide #split { display: none; }
   /* the status bar of the graphical interface, under the scene and the
      messages: the buttons of the view and of the animation, the status */
   #statusbar { grid-row: 4; grid-column: 1 / 4; display: flex; align-items: center; gap: 1px;
-               padding: 1px 4px; border-top: 1px solid var(--line); min-width: 0; }
+               border-top: 1px solid var(--line); min-width: 0;
+               padding: 1px max(4px, env(safe-area-inset-right))
+                        max(2px, env(safe-area-inset-bottom)) max(4px, env(safe-area-inset-left)); }
   #statusbar button { border: none; background: none; color: var(--fg);
                       min-width: 24px; height: 22px; padding: 0 4px;
                       border-radius: 3px; cursor: pointer; font: inherit;
                       display: grid; place-items: center; flex: none; }
   #statusbar button:hover:not(:disabled) { background: var(--menu-hover); }
   #statusbar button:disabled { opacity: .35; cursor: default; }
+  #statusbar button.on { background: var(--graph-on); color: #000; }
   #statusbar button.off { background: var(--loop3); color: var(--loop-fg); }
   #statusbar .gap { width: 10px; flex: none; }
+  /* the status: a click shows or hides the messages, as in the graphical
+     interface */
   #status { margin-left: 8px; min-width: 0; flex: 1; overflow: hidden;
-            text-overflow: ellipsis; white-space: nowrap; }
+            text-overflow: ellipsis; white-space: nowrap; color: var(--muted);
+            cursor: pointer; }
+  #status:hover { text-decoration: underline; }
+  #status.error { color: var(--error); }
   #quickMenu { position: fixed; z-index: 3; padding: 4px; display: flex;
                flex-direction: column; max-height: 80vh; overflow: auto;
                background: var(--bg); color: var(--fg);
@@ -92,11 +88,16 @@
   #quickMenu .head { color: var(--muted); font-size: 12px; padding: 6px 8px 1px; }
   #quickMenu button.head { font-size: inherit; font-weight: bold; color: var(--fg); padding: 7px 8px; }
   #quickMenu hr { border: none; border-top: 1px solid var(--line2); margin: 3px 0; width: 100%; }
+  /* (the edges of a phone's screen, the notch and the home indicator, which
+     the page reaches: viewport-fit=cover) */
   #bar { grid-column: 1 / 4; display: flex; flex-wrap: wrap; gap: 4px 10px;
-         align-items: center; padding: 4px 8px; border-bottom: 1px solid var(--line); }
+         align-items: center; border-bottom: 1px solid var(--line);
+         padding: max(4px, env(safe-area-inset-top)) max(6px, env(safe-area-inset-right))
+                  4px max(6px, env(safe-area-inset-left)); }
   #open { position: relative; }
   #openMenu { position: absolute; top: calc(100% + 2px); left: 0; z-index: 3;
-              display: flex; flex-direction: column; width: 300px; padding: 4px;
+              display: flex; flex-direction: column; width: 300px;
+              max-width: calc(100vw - 16px); padding: 4px;
               background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
               box-shadow: 0 2px 8px var(--shadow); }
   #openMenu[hidden] { display: none; }
@@ -107,7 +108,6 @@
   #openMenu small { display: block; color: var(--muted); margin-top: 1px; }
   #openMenu small.drop { padding: 4px 6px 2px; border-top: 1px solid var(--line2);
                          margin-top: 2px; }
-  #status { color: var(--muted); }
   #keys { margin-left: auto; border-radius: 50%; width: 22px; height: 22px;
           padding: 0; }
   #keysDialog { max-width: min(560px, 90vw); max-height: 80vh; color: var(--fg);
@@ -118,10 +118,12 @@
   #keysDialog p { color: var(--muted); margin: 0 0 8px; }
   #keysDialog td { padding: 2px 12px 2px 0; vertical-align: top; }
   #keysDialog td:first-child { white-space: nowrap; font-family: monospace; }
-  #status.error { color: var(--error); }
   /* as the graphical interface: the panel down to the status bar, the
      messages under the scene only */
-  #side { grid-row: 2 / 4; grid-column: 1; overflow: auto; padding: 4px 8px; }
+  /* (scrolled up and down only: Safari let it move sideways) */
+  #side { grid-row: 2 / 4; grid-column: 1; padding: 4px 8px;
+          padding-left: max(8px, env(safe-area-inset-left));
+          overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; }
   /* the handle that resizes the panel: a drag, a double-click for the default */
   #split { grid-row: 2 / 4; grid-column: 2; cursor: col-resize; touch-action: none; border-left: 1px solid var(--line); }
   #split:hover, #split.on { background: var(--line); }
@@ -241,12 +243,9 @@
   #logSplit { position: absolute; left: 0; right: 0; top: -3px; height: 6px;
               cursor: row-resize; touch-action: none; z-index: 1; }
   #logSplit:hover, #logSplit.on { background: var(--line); }
-  /* shown or hidden by a click on the status, as in the graphical interface */
+  /* shown or hidden by a click on the status */
   #log summary { display: none; }
   #log:not([open]) { display: none; }
-  #status { cursor: pointer; }
-  #status:hover { text-decoration: underline; }
-  #statusbar button.on { background: var(--graph-on); color: #000; }
   /* what the query and the measurement pin on the picture */
   #notes { position: fixed; inset: 0; pointer-events: none; z-index: 1; }
   #notes .note { position: absolute; padding: 3px 6px; border: 1px solid var(--border);
@@ -267,11 +266,7 @@
            background: var(--lasso-fill); pointer-events: none; z-index: 1; }
   #drop { position: fixed; inset: 0; display: none; place-items: center;
           background: var(--veil); font-size: 18px; z-index: 2; }
-  /* the height of a phone's window, which its toolbars change */
-  body { height: 100dvh; }
-  html { touch-action: manipulation; }
   #model { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  #openMenu { max-width: calc(100vw - 16px); }
   /* touch screens: controls a finger can hit, and fields of 16 px, below
      which a phone zooms the page on them */
   @media (pointer: coarse) {
@@ -307,12 +302,12 @@
             background: var(--bg); border-right: 1px solid var(--line);
             box-shadow: 2px 0 8px var(--shadow); }
     #split { display: none; }
-    #bar { flex-wrap: nowrap; gap: 6px; padding: 4px 6px; }
+    #bar { flex-wrap: nowrap; gap: 6px; }
     #bar strong { display: none; }
     #model { flex: 1; }
     /* the buttons share the width, a finger's height (the views along the
        axes are in the quick access menu) */
-    #statusbar { flex-wrap: wrap; gap: 2px; padding: 2px 4px; }
+    #statusbar { flex-wrap: wrap; gap: 2px; padding-top: 2px; }
     #status { order: -1; flex: 1 0 100%; margin: 0; padding: 2px 4px 0; }
     #statusbar .gap { flex: 0 0 6px; width: auto; }
     #statusbar button { flex: 1 1 0; min-width: 32px; max-width: 80px; height: 38px;
@@ -333,17 +328,6 @@
   #progress.busy > div { width: 30%; animation: progress 1.2s ease-in-out infinite; }
   @keyframes progress { from { transform: translateX(-100%); }
                         to { transform: translateX(340%); } }
-  /* the panel scrolls up and down only (Safari let it move sideways) */
-  #side { overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; }
-  /* the edges of a phone's screen (the notch, the home indicator), which
-     the page reaches (viewport-fit=cover) */
-  #bar { padding-top: max(4px, env(safe-area-inset-top));
-         padding-left: max(6px, env(safe-area-inset-left));
-         padding-right: max(6px, env(safe-area-inset-right)); }
-  #statusbar { padding-bottom: max(2px, env(safe-area-inset-bottom));
-               padding-left: max(4px, env(safe-area-inset-left));
-               padding-right: max(4px, env(safe-area-inset-right)); }
-  #side { padding-left: max(8px, env(safe-area-inset-left)); }
 </style>
 </head>
 <body>
@@ -353,6 +337,16 @@
 <script>
   if(matchMedia('(max-width: 700px), (max-height: 500px)').matches)
     document.body.classList.add('noSide');
+  // light or dark: as the colour scheme chosen in the options (General.
+  // ColorScheme, kept by the page: 2 dark, 3 as the browser, otherwise
+  // light), before the page is drawn
+  window.pageTheme = (scheme) => {
+    const dark = scheme === 2 ||
+      (scheme === 3 && matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  };
+  try { pageTheme(Number(localStorage.getItem('colorScheme') ?? 3)); }
+  catch(e) { pageTheme(3); }
   addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     window.installPrompt = e;
@@ -504,10 +498,16 @@
 // models, or ?model=<url of the .pro>&files=<other files, next to it,
 // separated by commas>)
 import createGmsh from './build/gmsh.mjs';
-import {installShortcuts, shortcutsHelp} from './shortcuts.js';
+import {installShortcuts, shortcutsHelp, modifiers, ModShift} from './shortcuts.js';
+import {listFiles, writeFile, findModel} from './files.mjs';
 
 const $ = (id) => document.getElementById(id);
 const canvas = $('canvas'), status = $('status'), logText = $('logText');
+// the message of the status bar, in red for an error
+function setStatus(text, error = false) {
+  status.textContent = text;
+  status.classList.toggle('error', error);
+}
 
 // the messages of Gmsh and GetDP, the errors also in the status bar
 const lines = [];
@@ -531,7 +531,7 @@ function scheduleLog() {
   logPending = true;
   requestAnimationFrame(() => {
     logPending = false;
-    if(busyLabel && busyLine && !statusBefore) status.textContent = `${busyLabel}: ${busyLine}`;
+    if(busyLabel && busyLine && !statusBefore) setStatus(`${busyLabel}: ${busyLine}`);
     busyLine = '';
     logText.textContent = '';
     for(const [t, kind] of lines.slice(-500)) {
@@ -568,8 +568,8 @@ async function compileWasm(url) {
   const counted = r.body.pipeThrough(new TransformStream({
     transform(chunk, out) {
       got += chunk.length;
-      status.textContent = `Loading Gmsh and GetDP: ${(got / 1e6).toFixed(0)}` +
-        (total ? ` of ${(total / 1e6).toFixed(0)} MB` : ' MB');
+      setStatus(`Loading Gmsh and GetDP: ${(got / 1e6).toFixed(0)}` +
+        (total ? ` of ${(total / 1e6).toFixed(0)} MB` : ' MB'));
       if(total) progress(Math.min(1, got / total));
       out.enqueue(chunk);
     }
@@ -582,7 +582,7 @@ async function compileWasm(url) {
   }
 }
 const wasm = await compileWasm(new URL('./build/libgmsh.wasm', import.meta.url));
-status.textContent = 'Starting...';
+setStatus('Starting...');
 progress(true);
 const gmsh = await createGmsh({
   canvas, print: log, printErr: log,
@@ -601,10 +601,24 @@ gmsh.option.setNumber('General.NoPopup', 1);
 
 // ---------------------------------------------------------------- drawing
 
-let pending = false;
+// the studio shading (General.Shading) converges while the view is still: a
+// few of its frames at each animation frame after a frame is drawn, until
+// the next one (each run its own number, the older ones then stop)
+let pending = false, studio = 0, drawn = null;
+function studioFrames() {
+  const run = ++studio;
+  const more = () => {
+    if(run !== studio || pending || !drawn) return;
+    if(Module.ccall('gmshWebDrawStudio', 'number',
+                    ['number', 'number', 'number', 'number'], [...drawn, 0.03]))
+      requestAnimationFrame(more);
+  };
+  requestAnimationFrame(more);
+}
 function draw() {
   if(pending) return;
   pending = true;
+  studio++;
   requestAnimationFrame(() => {
     pending = false;
     const dpr = window.devicePixelRatio || 1;
@@ -615,6 +629,8 @@ function draw() {
       canvas.height = h;
     }
     Module.ccall('gmshWebDraw', 'number', ['number', 'number', 'number'], [w, h, dpr]);
+    drawn = [w, h, dpr];
+    studioFrames();
     showNotes();
   });
 }
@@ -625,8 +641,7 @@ function draw() {
 // resets the view; what is under the cursor is named in a box by it
 const lasso = $('lasso'), hover = $('hover');
 function mouse(kind, e, wheel = 0) {
-  const mods = (e.shiftKey ? 1 : 0) | (e.ctrlKey ? 2 : 0) | (e.altKey ? 4 : 0) |
-               (e.metaKey ? 8 : 0);
+  const mods = modifiers(e, true);
   // the page numbers the buttons 0 left, 1 middle, 2 right; the scene 0
   // left, 1 right, 2 middle
   const button = e.button === 2 ? 1 : e.button === 1 ? 2 : 0;
@@ -669,7 +684,10 @@ function mouse(kind, e, wheel = 0) {
     lasso.style.display = 'none';
   Module._free(xy);
   if(tool) toolStatus();
+  // (a frame drawn by the event itself, after picking, starts the studio
+  // frames again; they stop at once if there are none to add)
   if(redraw) draw();
+  else studioFrames();
 }
 // the notches the wheel turned, as the graphical interface counts them (one
 // an event): a mouse wheel reports about a hundred pixels or three lines a
@@ -785,60 +803,44 @@ canvas.addEventListener('dblclick', (e) => {
 });
 window.addEventListener('resize', draw);
 
-// the width of the panel, dragged on the handle beside it, kept for the next
-// visits; the canvas keeps at least half the window
-const split = $('split');
-function sideWidth(w) {
-  if(w) {
-    w = Math.max(200, Math.min(w, window.innerWidth / 2));
-    document.body.style.setProperty('--side-width', w + 'px');
-  }
-  else
-    document.body.style.removeProperty('--side-width');
-  try {
-    if(w) localStorage.setItem('sideWidth', w); else localStorage.removeItem('sideWidth');
-  } catch(e) {}
-  draw();
+// A size dragged on a handle (the variable of the page's CSS), kept for the
+// next visits (under key): given by the pointer through size(), within its
+// bounds; a double-click gives back the default
+function sizeHandle(handle, variable, key, size, bounds) {
+  const set = (v) => {
+    if(v) {
+      v = Math.max(bounds[0], Math.min(v, bounds[1]()));
+      document.body.style.setProperty(variable, v + 'px');
+    }
+    else
+      document.body.style.removeProperty(variable);
+    try {
+      if(v) localStorage.setItem(key, v); else localStorage.removeItem(key);
+    } catch(e) {}
+    draw();
+  };
+  try { const v = Number(localStorage.getItem(key)); if(v) set(v); } catch(e) {}
+  handle.addEventListener('pointerdown', (e) => {
+    handle.setPointerCapture(e.pointerId);
+    handle.classList.add('on');
+  });
+  handle.addEventListener('pointermove', (e) => {
+    if(handle.hasPointerCapture(e.pointerId)) set(size(e));
+  });
+  handle.addEventListener('pointerup', () => handle.classList.remove('on'));
+  handle.addEventListener('dblclick', () => set(0));
 }
-try { const w = Number(localStorage.getItem('sideWidth')); if(w) sideWidth(w); } catch(e) {}
-split.addEventListener('pointerdown', (e) => {
-  split.setPointerCapture(e.pointerId);
-  split.classList.add('on');
-});
-split.addEventListener('pointermove', (e) => {
-  if(split.hasPointerCapture(e.pointerId)) sideWidth(e.clientX);
-});
-split.addEventListener('pointerup', () => split.classList.remove('on'));
-split.addEventListener('dblclick', () => sideWidth(0));
-
-// the height of the messages, dragged on the handle above them, kept for the
-// next visits; the canvas keeps at least a third of the window
-const logSplit = $('logSplit');
-function logHeight(h) {
-  if(h) {
-    h = Math.max(40, Math.min(h, window.innerHeight * 2 / 3));
-    document.body.style.setProperty('--log-height', h + 'px');
-  }
-  else
-    document.body.style.removeProperty('--log-height');
-  try {
-    if(h) localStorage.setItem('logHeight', h); else localStorage.removeItem('logHeight');
-  } catch(e) {}
-  draw();
-}
-try { const h = Number(localStorage.getItem('logHeight')); if(h) logHeight(h); } catch(e) {}
-logSplit.addEventListener('pointerdown', (e) => {
-  logSplit.setPointerCapture(e.pointerId);
-  logSplit.classList.add('on');
-});
-logSplit.addEventListener('pointermove', (e) => {
-  // from the pointer to the bottom of the messages, but their title
-  if(logSplit.hasPointerCapture(e.pointerId))
-    logHeight($('logText').getBoundingClientRect().bottom - e.clientY -
-              $('log').querySelector('summary').offsetHeight);
-});
-logSplit.addEventListener('pointerup', () => logSplit.classList.remove('on'));
-logSplit.addEventListener('dblclick', () => logHeight(0));
+// the width of the panel, on the handle beside it: the canvas keeps at least
+// half the window
+sizeHandle($('split'), '--side-width', 'sideWidth', (e) => e.clientX,
+           [200, () => window.innerWidth / 2]);
+// the height of the messages, on the handle above them, from the pointer to
+// their bottom but their title: the canvas keeps at least a third of the
+// window
+sizeHandle($('logSplit'), '--log-height', 'logHeight',
+           (e) => $('logText').getBoundingClientRect().bottom - e.clientY -
+                  $('log').querySelector('summary').offsetHeight,
+           [40, () => window.innerHeight * 2 / 3]);
 // the messages shown or hidden by a click on the status, as in the graphical
 // interface
 status.addEventListener('click', () => { $('log').open = !$('log').open; });
@@ -846,6 +848,30 @@ status.addEventListener('click', () => { $('log').open = !$('log').open; });
 $('log').addEventListener('toggle', draw);
 
 // ---------------------------------------------------------------- ONELAB
+
+// The popups over the page: the menu of a model (Open model), of the graphs
+// and of the range of a parameter, and the quick access menu (popupMenu());
+// each closed by a click elsewhere but on the buttons that open it (its
+// selector), or by Escape (closePopup()). A popup is placed in the window.
+const popups = [
+  ['openMenu', '#open', () => openMenu(false)],
+  ['graphMenu', '#graphMenu, .graphButton'],
+  ['rangeMenu', '#rangeMenu, .rangeButton'],
+  ['quickMenu', '#quickMenu, [data-act=quick], .menuButton']];
+// the first popup open closed: false if none is open
+function closePopup(target = null) {
+  for(const [id, keep, close] of popups) {
+    if($(id).hidden || (target && target.closest(keep))) continue;
+    if(close) close(); else $(id).hidden = true;
+    if(!target) return true;
+  }
+  return false;
+}
+document.addEventListener('pointerdown', (e) => closePopup(e.target));
+function placePopup(menu, x, y) {
+  menu.style.left = Math.max(8, Math.min(x, innerWidth - menu.offsetWidth - 8)) + 'px';
+  menu.style.top = Math.max(8, Math.min(y, innerHeight - menu.offsetHeight - 8)) + 'px';
+}
 
 // the parameters, in the JSON of the ONELAB database
 function getParameters() {
@@ -894,33 +920,19 @@ function startWorker() {
 // a file the solver wrote, written here too, not to be sent back
 function fromSolver(path, data) {
   if(!path.startsWith('/')) path = FS.cwd() + '/' + path;
-  const parts = path.split('/').filter((s) => s);
-  let d = '';
-  for(const p of parts.slice(0, -1)) {
-    d += '/' + p;
-    if(!FS.analyzePath(d).exists) FS.mkdir(d);
-  }
-  FS.writeFile(path, data);
+  writeFile(FS, path, data);
   sent.set(path, FS.stat(path).mtime.getTime());
 }
 // the files of the model the worker does not have as they are
 function changedFiles() {
   const files = [], transfer = [];
-  const walk = (dir) => {
-    for(const f of FS.readdir(dir)) {
-      if(f === '.' || f === '..') continue;
-      const path = dir + '/' + f;
-      const st = FS.stat(path);
-      if(FS.isDir(st.mode)) walk(path);
-      else if(sent.get(path) !== st.mtime.getTime()) {
-        const data = FS.readFile(path);
-        files.push([path, data]);
-        transfer.push(data.buffer);
-        sent.set(path, st.mtime.getTime());
-      }
-    }
-  };
-  walk(modelDir);
+  for(const [path, time] of listFiles(FS, modelDir)) {
+    if(sent.get(path) === time) continue;
+    const data = FS.readFile(path);
+    files.push([path, data]);
+    transfer.push(data.buffer);
+    sent.set(path, time);
+  }
   return {files, transfer};
 }
 // the database the worker sent, with the graphs asked for here since it was
@@ -1029,9 +1041,8 @@ async function run(action) {
   stopping = false;
   $('reset').disabled = true;
   $('run').textContent = 'Stop';
-  status.classList.remove('error');
   busyLabel = action === 'compute' ? 'Computing' : 'Checking';
-  status.textContent = busyLabel + '...';
+  setStatus(busyLabel + '...');
   progress(true);
   lastError = '';
   // the status shown before Gmsh's part, which the page waits for
@@ -1066,10 +1077,10 @@ async function run(action) {
   showAll();
   // an error in the status bar, in full in the messages
   const error = lastError.replace(/^Error *: */, '') || `${errors} error(s)`;
-  status.textContent = stopping ? 'Stopped' :
+  const text = stopping ? 'Stopped' :
     errors ? (hint ? hint + ' (' + error + ')' : error) :
     `${action === 'compute' ? 'Computed' : 'Checked'} in ${ms} ms`;
-  status.classList.toggle('error', !!errors && !stopping);
+  setStatus(text, !!errors && !stopping);
   if(errors && !stopping) $('log').open = true;
 }
 $('run').addEventListener('click', () => {
@@ -1168,19 +1179,21 @@ function parameterRow(p, name) {
   for(const [k, v] of Object.entries(p.valueLabels || {})) labels[v] = k;
   const shownValue = (v) => (p.type === 'number' && labels[v] !== undefined) ?
     labels[v] : (typeof v === 'number' ? Number(v.toPrecision(6)) : v);
-  let el, kind;
+  // where the colour the model asks for shows: as the fill of the field, of
+  // the label of a check box, or as the text of a menu
+  let el, tint;
   if(p.readOnly) {
     el = document.createElement('span');
     el.className = 'out';
     el.textContent = shownValue(value);
-    kind = 'fill';
+    tint = 'field';
   }
   else if(p.type === 'number' && choices.length === 2 && choices[0] === 0 &&
           choices[1] === 1 && !Object.keys(labels).length) {
     el = document.createElement('input');
     el.type = 'checkbox';
     el.checked = !!value;
-    kind = 'check';
+    tint = 'label';
   }
   else if(choices.length && p.type === 'number') {
     el = document.createElement('select');
@@ -1191,8 +1204,7 @@ function parameterRow(p, name) {
       if(c === value) o.selected = true;
       el.appendChild(o);
     }
-    // a menu of numbers shows the colour in its text
-    kind = 'text';
+    tint = 'text';
   }
   else if(choices.length) {
     // a string with choices: a field that also takes other values, its
@@ -1208,7 +1220,7 @@ function parameterRow(p, name) {
     }
     row.appendChild(list);
     el.setAttribute('list', list.id);
-    kind = 'fill';
+    tint = 'field';
   }
   else {
     el = document.createElement('input');
@@ -1219,19 +1231,18 @@ function parameterRow(p, name) {
       if(p.max < 1e200) el.max = p.max;
     }
     el.value = value;
-    kind = 'fill';
+    tint = 'field';
   }
   // the colour the model asks for, where the graphical interface shows it
   const rgb = highlightColor(p.attributes && p.attributes.Highlight);
-  if(rgb) {
-    if(kind === 'text')
-      el.style.color = css(readableText(rgb));
+  if(rgb !== null) {
+    if(tint === 'text')
+      el.style.color = css(readableColor(rgb, Readable.Text));
     else {
-      const target = kind === 'check' ? label : el;
-      const fill = adaptedFill(rgb);
+      const target = tint === 'label' ? label : el;
       target.classList.add('highlight');
-      target.style.background = css(fill);
-      target.style.color = css(contrastText(fill));
+      target.style.background = css(readableColor(rgb, Readable.Fill));
+      target.style.color = css(readableColor(rgb, Readable.OnFill));
     }
   }
   // the row given new values, but where it is being typed in; its range and
@@ -1256,9 +1267,9 @@ function parameterRow(p, name) {
   // a number to set: its range or choices, the loop over them and the X-Y
   // graphs it is drawn on, as the graphical interface's inputRange (but a
   // menu of named values); an output: its graphs
-  const ranged = p.type === 'number' && !p.readOnly && kind !== 'check' &&
+  const ranged = p.type === 'number' && !p.readOnly && tint !== 'label' &&
     !Object.keys(labels).length;
-  if(p.type === 'number' && (p.readOnly ? kind === 'fill' : ranged)) {
+  if(p.type === 'number' && (p.readOnly || ranged)) {
     const pair = document.createElement('span');
     pair.className = 'withGraph';
     pair.appendChild(el);
@@ -1368,8 +1379,7 @@ function openGraphMenu(name, button) {
   const menu = $('graphMenu');
   menu.hidden = false;
   const r = button.getBoundingClientRect();
-  menu.style.left = Math.min(r.left, innerWidth - menu.offsetWidth - 8) + 'px';
-  menu.style.top = Math.min(r.bottom + 2, innerHeight - menu.offsetHeight - 8) + 'px';
+  placePopup(menu, r.left, r.bottom + 2);
 }
 // the graphs the menu checks, kept as they were drawn where still checked
 function setGraph() {
@@ -1386,12 +1396,6 @@ function setGraph() {
 $('graphNone').addEventListener('click', () => {
   graphBoxes.forEach((cb) => { cb.checked = false; });
   setGraph();
-});
-document.addEventListener('pointerdown', (e) => {
-  if(!$('graphMenu').hidden && !e.target.closest('#graphMenu, .graphButton'))
-    $('graphMenu').hidden = true;
-  if(!$('rangeMenu').hidden && !e.target.closest('#rangeMenu, .rangeButton'))
-    $('rangeMenu').hidden = true;
 });
 
 // The range of a number, its loop over it, as the graphical interface's
@@ -1500,8 +1504,7 @@ function openRangeMenu(name, button) {
   const menu = $('rangeMenu');
   menu.hidden = false;
   const r = button.getBoundingClientRect();
-  menu.style.left = Math.max(8, Math.min(r.right - menu.offsetWidth, innerWidth - menu.offsetWidth - 8)) + 'px';
-  menu.style.top = Math.min(r.bottom + 2, innerHeight - menu.offsetHeight - 8) + 'px';
+  placePopup(menu, r.right - menu.offsetWidth, r.bottom + 2);
   $('rangeText').focus();
   $('rangeText').select();
 }
@@ -1526,70 +1529,32 @@ $('rangeText').addEventListener('keydown', (e) => {
   else if(e.key === 'Escape') $('rangeMenu').hidden = true;
 });
 
-// the colours of the parameters, as src/fltk/gmshScheme.cpp makes them: the
-// colour of a name in Gmsh's table ("1" for yellow) as a fill, kept from
-// glaring in dark mode, with a text in black or white on it, and a coloured
-// text moved away from the background, of the same hue, until it reads on it
-// (a contrast of 4.5, WCAG AA): darker in light mode, lighter in dark mode
+// the colours of the parameters, as the graphical interface makes them (see
+// src/common/ColorContrast.h): the colour of a name in Gmsh's table ("1" for
+// yellow), as 0xrrggbb, or null
 const colorCache = new Map();
 function highlightColor(name) {
   if(!name) return null;
   if(name === '1') name = 'yellow';
   if(!colorCache.has(name)) {
     const c = Module.ccall('gmshWebColor', 'number', ['string'], [name]);
-    colorCache.set(name, c < 0 ? null : [(c >> 16) & 255, (c >> 8) & 255, c & 255]);
+    colorCache.set(name, c < 0 ? null : c);
   }
   return colorCache.get(name);
 }
-const css = ([r, g, b]) => `rgb(${r}, ${g}, ${b})`;
-function luminance([r, g, b]) {
-  const f = (c) => (c /= 255) <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
-  return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
-}
-function contrast(a, b) {
-  const la = luminance(a), lb = luminance(b);
-  return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
-}
-const contrastText = (rgb) =>
-  contrast(rgb, [0, 0, 0]) >= contrast(rgb, [255, 255, 255]) ? [0, 0, 0] : [255, 255, 255];
-// the colour at another lightness, of the same hue, saturated as much as it
-// was coloured, within a cap
-function atLightness([r, g, b], lightness, maxSaturation) {
-  const v = [r / 255, g / 255, b / 255];
-  const mx = Math.max(...v), mn = Math.min(...v), chroma = mx - mn, l = (mx + mn) / 2;
-  let hue = 0, s = 0;
-  if(chroma > 0) {
-    s = chroma / (1 - Math.abs(2 * l - 1));
-    if(mx === v[0]) hue = ((v[1] - v[2]) / chroma + 6) % 6;
-    else if(mx === v[1]) hue = (v[2] - v[0]) / chroma + 2;
-    else hue = (v[0] - v[1]) / chroma + 4;
-  }
-  s = Math.min(maxSaturation, s * Math.min(1, 8 * chroma));
-  const c2 = (1 - Math.abs(2 * lightness - 1)) * s;
-  const x = c2 * (1 - Math.abs((hue % 2) - 1)), m = lightness - c2 / 2;
-  const order = [[0, 1, 2], [1, 0, 2], [2, 0, 1], [2, 1, 0], [1, 2, 0], [0, 2, 1]];
-  const w = [c2, x, 0], sector = Math.floor(hue) % 6;
-  return order[sector].map((k) => Math.round(255 * (w[k] + m)));
-}
-// the page in dark mode, and its background and text colours
-const themeColor = (name) => getComputedStyle(document.documentElement)
-  .getPropertyValue(name).trim().match(/\d+/g).slice(0, 3).map(Number);
-const isDark = () => getComputedStyle(document.documentElement)
-  .colorScheme.trim() === 'dark';
-function readableText(rgb) {
-  const background = themeColor('--bg-rgb'), dark = isDark();
-  const l = (Math.max(...rgb) + Math.min(...rgb)) / 510;
-  let t = dark ? atLightness(rgb, 0.72, 0.8) : rgb;
-  for(let i = 1; i <= 20 && contrast(t, background) < 4.5; i++)
-    t = dark ? atLightness(rgb, 0.72 + 0.28 * i / 20, 0.8) :
-               atLightness(rgb, l * (1 - i / 20), 0.7);
-  return t;
-}
-// no brighter than the text in dark mode: the same hue and saturation
-function adaptedFill(rgb) {
-  if(!isDark()) return rgb;
-  const mx = Math.max(...rgb), cap = Math.max(...themeColor('--fg-rgb'));
-  return mx <= cap ? rgb : rgb.map((c) => Math.round(c * cap / mx));
+const css = (c) => `rgb(${(c >> 16) & 255}, ${(c >> 8) & 255}, ${c & 255})`;
+// the colour as a text (Readable.Text), as the background of a field
+// (Readable.Fill) or as the text on that field (Readable.OnFill), on the
+// background and with the text of the page, in its colour scheme
+const Readable = {Text: 0, Fill: 1, OnFill: 2};
+function readableColor(rgb, what) {
+  const theme = (name) => getComputedStyle(document.documentElement)
+    .getPropertyValue(name).trim().match(/\d+/g).slice(0, 3)
+    .reduce((c, v) => (c << 8) | Number(v), 0);
+  const dark = getComputedStyle(document.documentElement).colorScheme.trim() === 'dark';
+  return Module.ccall('gmshWebReadableColor', 'number',
+                      ['number', 'number', 'number', 'number', 'number'],
+                      [rgb, theme('--bg-rgb'), theme('--fg-rgb'), dark ? 1 : 0, what]);
 }
 
 // ---------------------------------------------------------------- modules
@@ -1601,17 +1566,25 @@ function adaptedFill(rgb) {
 // when those of the Options tab are given again to all (see readOptions())
 const viewOverrides = new Map(); // view tag -> the options set for it alone
 const viewOptionsOpen = new Set(); // the views whose options are shown
-// [option, kind, label], those of one view (the choices and ranges from Gmsh)
-const perViewOptions = [
-  ['IntervalsType', 'choice', 'Intervals'],
-  ['NbIso', 'number', 'Number of intervals'],
-  ['RangeType', 'choice', 'Range'],
-  ['CustomMin', 'number', 'Minimum'],
-  ['CustomMax', 'number', 'Maximum'],
-  ['TimeStep', 'number', 'Time step'],
-  ['ShowScale', 'check', 'Color scale'],
-  ['ShowElement', 'check', 'Element outlines'],
-  ['Opacity', 'range', 'Opacity']];
+// The options of the views shown, by name: [kind, label, range if not
+// Gmsh's] (the choices and ranges from Gmsh); those of one view, under it,
+// and those of the Options tab, set for all the views
+const viewOptions = {
+  IntervalsType: ['choice', 'Intervals'],
+  NbIso: ['number', 'Number of intervals'],
+  RangeType: ['choice', 'Range'],
+  CustomMin: ['number', 'Minimum'],
+  CustomMax: ['number', 'Maximum'],
+  TimeStep: ['number', 'Time step'],
+  ScaleType: ['choice', 'Scale'],
+  NormalRaise: ['range', 'Normal raise', {min: -0.5, max: 0.5, step: 0.01}],
+  ShowScale: ['check', 'Color scale'],
+  ShowElement: ['check', 'Element outlines'],
+  Opacity: ['range', 'Opacity']};
+const perViewOptions = ['IntervalsType', 'NbIso', 'RangeType', 'CustomMin',
+  'CustomMax', 'TimeStep', 'ShowScale', 'ShowElement', 'Opacity'];
+const allViewsOptions = ['IntervalsType', 'NbIso', 'ScaleType', 'NormalRaise',
+  'ShowScale', 'ShowElement', 'Opacity'];
 const viewTags = () => [...gmsh.view.getTags()];
 const viewNum = (i, n) => gmsh.option.getNumber(`View[${i}].${n}`);
 // The list is made again only when what it shows changes (the views, their
@@ -1692,7 +1665,8 @@ function viewOptionRows(tag, i) {
   const box = document.createElement('div');
   box.className = 'viewOptions';
   const steps = viewNum(i, 'NbTimeStep');
-  for(const [name, kind, text] of perViewOptions) {
+  for(const name of perViewOptions) {
+    const [kind, text] = viewOptions[name];
     if(name === 'TimeStep' && steps < 2) continue;
     if(name.startsWith('Custom') && viewNum(i, 'RangeType') !== 2) continue;
     const el = optionField(kind, 'View.' + name, (v) => setViewOptionOf(tag, name, v));
@@ -1732,8 +1706,7 @@ function exportView(tag, ext) {
     gmsh.view.write(tag, `/tmp/${name}.${ext}`);
     download(`/tmp/${name}.${ext}`);
   } catch(e) {
-    status.textContent = e.message;
-    status.classList.add('error');
+    setStatus(e.message, true);
   }
 }
 // The actions of the modules: buttons, and menus as the tree of the graphical
@@ -1811,8 +1784,7 @@ function showPanel(module, title, fields = [], change, enter, buttons = []) {
 // it took and the size of the mesh, or the error
 function meshAction(doing, done, act) {
   if(busy) return;
-  status.classList.remove('error');
-  status.textContent = doing + '...';
+  setStatus(doing + '...');
   progress(true);
   setTimeout(() => {
     const t0 = performance.now();
@@ -1823,10 +1795,10 @@ function meshAction(doing, done, act) {
       lastError = lastError || e.message;
     }
     // (with errors: in the messages, opened, which end with a summary)
-    status.textContent = `${done} in ${(performance.now() - t0).toFixed(0)} ms, ` +
+    const text = `${done} in ${(performance.now() - t0).toFixed(0)} ms, ` +
       `${gmsh.option.getNumber('Mesh.NbNodes')} nodes` +
       (lastError ? ', with errors (see the messages)' : '');
-    status.classList.toggle('error', !!lastError);
+    setStatus(text, !!lastError);
     if(lastError) $('log').open = true;
     progress(false);
     draw();
@@ -1839,8 +1811,7 @@ function saveMesh() {
     gmsh.write(path);
     download(path);
   } catch(e) {
-    status.textContent = e.message;
-    status.classList.add('error');
+    setStatus(e.message, true);
   }
 }
 // Geometry: a new model, the script edited, reloaded and saved, the shapes
@@ -1883,7 +1854,7 @@ async function reloadScript() {
 let editedFile = '';
 function editFile(path) {
   if(!path || !FS.analyzePath(path).exists) {
-    status.textContent = `No file '${path}' to edit`;
+    setStatus(`No file '${path}' to edit`);
     return;
   }
   editedFile = path;
@@ -1899,7 +1870,7 @@ function editFile(path) {
 function editScript() {
   const f = scriptFile();
   if(f) editFile(f);
-  else status.textContent = 'No script to edit: open a .geo model, or make a new one';
+  else setStatus('No script to edit: open a .geo model, or make a new one');
 }
 // the text in its colors, under the text area
 function colorScript() {
@@ -1974,11 +1945,11 @@ $('scriptDialog').querySelector('form').addEventListener('submit', (e) => {
 function saveScript() {
   const f = scriptFile();
   if(f) download(f, true);
-  else status.textContent = 'No script to save: open a .geo model, or make a new one';
+  else setStatus('No script to save: open a .geo model, or make a new one');
 }
 // the form of a shape
 function showShapeForm(shape) {
-  if(tool === 3) stopOperation();
+  if(tool === Tool.Operation) stopOperation();
   const fields = shapes[shape];
   showPanel($('moduleGeometry'), shape,
             fields.map(([name, value]) => ({name, kind: 'text', value})),
@@ -2005,10 +1976,9 @@ async function addShape(shape) {
   showModelName();
   showAll();
   fitIfWasEmpty(wasEmpty);
-  status.textContent = errors ?
-    `Not added: ${lastError.replace(/^Error *: */, '')}` :
+  const text = errors ? `Not added: ${lastError.replace(/^Error *: */, '')}` :
     `Added a ${shape.toLowerCase()} to ${$('model').textContent}`;
-  status.classList.toggle('error', !!errors);
+  setStatus(text, !!errors);
 }
 // the mesh partitioned, into the number of parts the form of the module asks
 let partitions = '4';
@@ -2039,8 +2009,8 @@ const pageActions = {
   'Save script': {run: saveScript},
   'Save mesh': {run: saveMesh},
   'Partition mesh': {run: partitionForm},
-  'Query': {run: () => setTool(tool === 1 ? 0 : 1), check: () => tool === 1},
-  'Measure': {run: () => setTool(tool === 2 ? 0 : 2), check: () => tool === 2},
+  'Query': {run: () => toggleTool(Tool.Query), check: () => tool === Tool.Query},
+  'Measure': {run: () => toggleTool(Tool.Measure), check: () => tool === Tool.Measure},
   'Full screen': {run: toggleFullscreen, check: () => !!fullscreenElement(),
                   available: () => !!fullscreenEnabled},
   'Install app': {run: installApp, available: () => !!window.installPrompt},
@@ -2103,9 +2073,9 @@ async function gmshAction(item, view, module) {
   if(!module) return;
   showModelName();
   showAll();
-  status.textContent = lastError ? lastError.replace(/^Error *: */, '') :
+  const text = lastError ? lastError.replace(/^Error *: */, '') :
     `${item.what} in ${$('model').textContent}`;
-  status.classList.toggle('error', !!lastError);
+  setStatus(text, !!lastError);
 }
 // the value an item asks for, with a slider in the form of its module
 function askFor(item) {
@@ -2177,12 +2147,12 @@ let operationChanges = 0, operationName = '';
 function startOperation(module, name) {
   if(busy) return;
   if(!modelDir) {
-    status.textContent = 'Open a model, or make a new one (Geometry > New)';
+    setStatus('Open a model, or make a new one (Geometry > New)');
     return;
   }
   const json = Module.ccall('gmshWebOperation', 'string', ['string'], [name]);
   if(!json) return;
-  tool = 3;
+  tool = Tool.Operation;
   operationName = name;
   for(const a of ['query', 'measure'])
     $('statusbar').querySelector(`[data-act=${a}]`).classList.remove('on');
@@ -2255,14 +2225,7 @@ const optionGroups = [
     ['Mesh.VolumeEdges', 'check', '3D element edges'],
     ['Mesh.VolumeFaces', 'check', '3D element faces'],
     ['Mesh.Opacity', 'range', 'Opacity']]],
-  ['Views', [
-    ['View.IntervalsType', 'choice', 'Intervals'],
-    ['View.NbIso', 'number', 'Number of intervals'],
-    ['View.ScaleType', 'choice', 'Scale'],
-    ['View.NormalRaise', 'range', 'Normal raise', {min: -0.5, max: 0.5, step: 0.01}],
-    ['View.ShowScale', 'check', 'Color scale'],
-    ['View.ShowElement', 'check', 'Element outlines'],
-    ['View.Opacity', 'range', 'Opacity']]],
+  ['Views', allViewsOptions.map((n) => ['View.' + n, ...viewOptions[n]])],
   ['General', [
     ['General.Axes', 'choice', 'Axes'],
     ['General.SmallAxes', 'check', 'Small axes'],
@@ -2338,8 +2301,7 @@ function setColorScheme(v) {
 function applyColorScheme() {
   if(gmsh.option.getNumber('General.ColorScheme') !== colorScheme)
     gmsh.option.setNumber('General.ColorScheme', colorScheme);
-  if(colorScheme === 3) delete document.documentElement.dataset.theme;
-  else document.documentElement.dataset.theme = colorScheme === 2 ? 'dark' : 'light';
+  pageTheme(colorScheme);
   barColor();
   recolorParameters();
 }
@@ -2351,6 +2313,7 @@ function barColor() {
 }
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
   if(colorScheme !== 3) return;
+  pageTheme(colorScheme);
   barColor();
   Module.ccall('gmshWebColorScheme', 'number', ['number'], [e.matches ? 1 : 0]);
   recolorParameters();
@@ -2803,7 +2766,6 @@ for(const [id, how] of [['visAll', 1], ['visNone', 0], ['visInvert', -1]])
 // axes, isometric, turned, fitted (Shift: the other side, the box around
 // what is visible), the mouse selection, the panel, the quick access menu,
 // and the animation of the views with time steps
-const ModShift = 2;
 function sceneAction(action, mods = 0) {
   if(Module.ccall('gmshWebShortcut', 'number', ['string', 'number'], [action, mods])) {
     readOptions();
@@ -2856,7 +2818,7 @@ function showAnimation() {
 $('statusbar').addEventListener('click', (e) => {
   const b = e.target.closest('button');
   if(!b) return;
-  const shift = e.shiftKey ? ModShift : 0;
+  const shift = modifiers(e) & ModShift;
   switch(b.dataset.act) {
   case 'sidebar': toggleSide(); break;
   case 'quick': {
@@ -2872,8 +2834,8 @@ $('statusbar').addEventListener('click', (e) => {
   case 'op_e': operationKey('e'); break;
   case 'op_u': operationKey('u'); break;
   case 'op_q': operationKey('q'); break;
-  case 'query': setTool(tool === 1 ? 0 : 1); break;
-  case 'measure': setTool(tool === 2 ? 0 : 2); break;
+  case 'query': toggleTool(Tool.Query); break;
+  case 'measure': toggleTool(Tool.Measure); break;
   case 'select':
     gmsh.option.setNumber('General.MouseSelection',
                           gmsh.option.getNumber('General.MouseSelection') ? 0 : 1);
@@ -2986,15 +2948,8 @@ function popupMenu(items, x, y, {above = false, fold = false, owner = null} = {}
     menu.appendChild(b);
   }
   menu.hidden = false;
-  // in the window
-  menu.style.left = Math.max(8, Math.min(x, innerWidth - menu.offsetWidth - 8)) + 'px';
-  menu.style.top = Math.max(8, Math.min(above ? y - menu.offsetHeight - 2 : y,
-                                        innerHeight - menu.offsetHeight - 8)) + 'px';
+  placePopup(menu, x, above ? y - menu.offsetHeight - 2 : y);
 }
-document.addEventListener('pointerdown', (e) => {
-  if(!$('quickMenu').hidden && !e.target.closest('#quickMenu, [data-act=quick], .menuButton'))
-    $('quickMenu').hidden = true;
-});
 showSelection();
 
 // The query and the measurement, as the buttons of the status bar of the
@@ -3002,16 +2957,20 @@ showSelection();
 // with the code of the interface in sceneView), until they are clicked again,
 // or q or Escape; what they find is printed in the messages, and pinned to
 // the model in boxes the page draws (showNotes())
-let tool = 0;
+// (the numbers of webView::tool)
+const Tool = {None: 0, Query: 1, Measure: 2, Operation: 3};
+let tool = Tool.None;
+// a tool started, or stopped if it is under way
+const toggleTool = (t) => setTool(tool === t ? Tool.None : t);
 function setTool(t) {
   // (the operation under way stops, see gmshWebTool())
-  if(tool === 3) {
+  if(tool === Tool.Operation) {
     showPanel(null);
     showOperationKeys(false);
   }
   tool = t;
   Module.ccall('gmshWebTool', 'number', ['number'], [t]);
-  for(const [a, n] of [['query', 1], ['measure', 2]])
+  for(const [a, n] of [['query', Tool.Query], ['measure', Tool.Measure]])
     $('statusbar').querySelector(`[data-act=${a}]`).classList.toggle('on', tool === n);
   showSelection();
   toolStatus();
@@ -3023,7 +2982,7 @@ let statusBefore = null;
 function toolStatus() {
   // an operation: what it waits for, and what it did
   let text = '';
-  if(tool === 3) {
+  if(tool === Tool.Operation) {
     const s = JSON.parse(Module.ccall('gmshWebOperationState', 'string', [], []));
     if(s.changes !== operationChanges) {
       operationChanges = s.changes;
@@ -3032,27 +2991,25 @@ function toolStatus() {
     // (on a small screen, without the keys, which are buttons there)
     if(s.name) text = narrow.matches ? s.status.split('\n')[0] : s.status.replace('\n', ' ');
     else {
-      tool = 0;
+      tool = Tool.None;
       showPanel(null);
       showOperationKeys(false);
     }
   }
   if(!tool) {
-    if(statusBefore && status.textContent === statusBefore.tool) {
-      status.textContent = statusBefore.text;
-      status.classList.toggle('error', statusBefore.error);
-    }
+    if(statusBefore && status.textContent === statusBefore.tool)
+      setStatus(statusBefore.text, statusBefore.error);
     statusBefore = null;
     return;
   }
-  const state = Module.ccall('gmshWebToolState', 'number', [], []);
   if(!statusBefore)
     statusBefore = {text: status.textContent, error: status.classList.contains('error')};
-  status.classList.remove('error');
-  status.textContent = statusBefore.tool = text || (tool === 1 ?
+  statusBefore.tool = text || (tool === Tool.Query ?
     'Click to query the model, Ctrl+click to add a query (q or Escape to stop)' :
-    state === 3 ? 'Click the second point (q or Escape to stop)' :
+    Module.ccall('gmshWebMeasuring', 'number', [], []) ?
+    'Click the second point (q or Escape to stop)' :
     'Click the first point (q or Escape to stop)');
+  setStatus(statusBefore.tool);
 }
 function showNotes() {
   const box = $('notes');
@@ -3121,30 +3078,15 @@ const pageShortcuts = {
   menu_show_hide: toggleSide,
 };
 const shortcuts = installShortcuts(Module, (action) => {
-  if(action === 'escape' && !$('openMenu').hidden) {
-    openMenu(false);
-    return true;
-  }
-  if(action === 'escape' && !$('graphMenu').hidden) {
-    $('graphMenu').hidden = true;
-    return true;
-  }
-  if(action === 'escape' && !$('rangeMenu').hidden) {
-    $('rangeMenu').hidden = true;
-    return true;
-  }
-  if(action === 'escape' && !$('quickMenu').hidden) {
-    $('quickMenu').hidden = true;
-    return true;
-  }
+  if(action === 'escape' && closePopup()) return true;
   // the keys of an operation
   const key = {selection_end: 'e', selection_undo: 'u', selection_quit: 'q', escape: 'q'};
-  if(tool === 3 && key[action]) {
+  if(tool === Tool.Operation && key[action]) {
     operationKey(key[action]);
     return true;
   }
   if((action === 'escape' || action === 'selection_quit') && tool) {
-    setTool(0);
+    setTool(Tool.None);
     return true;
   }
   const f = pageShortcuts[action] || registryShortcut(action);
@@ -3161,17 +3103,8 @@ const shortcuts = installShortcuts(Module, (action) => {
   readClipping();
   draw();
 });
-// the actions RunSceneShortcut() does, and those of the page, in the list
-const sceneActions = new Set(['geometry_points', 'geometry_curves',
-  'geometry_surfaces', 'geometry_volumes', 'mesh_nodes', 'mesh_lines',
-  'mesh_surface_edges', 'mesh_surface_faces', 'mesh_volume_edges',
-  'mesh_volume_faces', 'fast_redraw', 'bounding_boxes',
-  'color_scheme', 'lighting', 'axes_loop', 'small_axes', 'surface_type',
-  'projection', 'view_scales', 'colormaps', 'view_intervals',
-  'view_intervals_all', 'view_range', 'view_annotations', 'view_elements',
-  'views_hide_show', 'time_step_prev', 'time_step_next', 'view_prev',
-  'view_next', 'view_x', 'view_y', 'view_z', 'view_3d', 'view_1_1', 'escape']);
-for(const r of shortcutsHelp(shortcuts, (a) => sceneActions.has(a) || pageShortcuts[a] ||
+// the actions of the page in the list, with those of the module
+for(const r of shortcutsHelp(shortcuts, (a) => pageShortcuts[a] ||
                                               registryShortcut(a) !== null)) {
   const tr = $('keysTable').insertRow();
   tr.insertCell().textContent = r.label;
@@ -3188,38 +3121,11 @@ function newModelDirectory() {
   FS.mkdir(dir);
   return dir;
 }
-function writeFile(dir, path, data) {
-  const parts = path.split('/').filter((s) => s);
-  let d = dir;
-  for(const p of parts.slice(0, -1)) {
-    d += '/' + p;
-    if(!FS.analyzePath(d).exists) FS.mkdir(d);
-  }
-  FS.writeFile(d + '/' + parts[parts.length - 1], data);
-}
-// the file to open in a directory: a .pro with a .geo of the same name, or
-// else a .pro, or else a .geo
-function findModel(dir) {
-  const files = [];
-  const walk = (d) => {
-    for(const f of FS.readdir(d)) {
-      if(f === '.' || f === '..' || f.startsWith('__MACOSX')) continue;
-      const p = d + '/' + f;
-      if(FS.isDir(FS.stat(p).mode)) walk(p);
-      else files.push(p);
-    }
-  };
-  walk(dir);
-  const pro = files.filter((f) => f.endsWith('.pro'));
-  const geo = files.filter((f) => f.endsWith('.geo'));
-  return pro.find((f) => geo.includes(f.replace(/\.pro$/, '.geo'))) ||
-    pro[0] || geo[0] || files[0];
-}
 // What a model leaves when another starts, or none (Clear): the tool or the
 // operation under way, the files the worker has, the parameters, the
 // solvers, the models and the views
 function forgetModel() {
-  if(tool) setTool(0);
+  if(tool) setTool(Tool.None);
   showPanel(null);
   if(modelDir) {
     const old = modelDir;
@@ -3239,18 +3145,18 @@ async function openFiles(entries, open = '') {
   modelDir = dir;
   for(const [path, data] of entries) {
     if(path.endsWith('.zip')) {
-      writeFile(dir, path, data);
+      writeFile(FS, dir + '/' + path, data);
       Module.ccall('gmshWebUnzip', null, ['string', 'string'], [dir + '/' + path, dir]);
       FS.unlink(dir + '/' + path);
     }
     else
-      writeFile(dir, path, data);
+      writeFile(FS, dir + '/' + path, data);
   }
   // the file asked for (a zip may hold several models), or the one found
   const file = (open && FS.analyzePath(dir + '/' + open).exists) ?
-    dir + '/' + open : findModel(dir);
+    dir + '/' + open : findModel(FS, dir);
   if(!file) {
-    status.textContent = 'No model found';
+    setStatus('No model found');
     return;
   }
   FS.chdir(file.slice(0, file.lastIndexOf('/')));
@@ -3289,8 +3195,7 @@ function clearModel() {
   $('model').textContent = '';
   $('clearModel').hidden = true;
   showAll();
-  status.classList.remove('error');
-  status.textContent = 'Open a model, or drop its files here';
+  setStatus('Open a model, or drop its files here');
 }
 const readFile = async (f) => new Uint8Array(await f.arrayBuffer());
 // one button for a model, which asks for its folder or for files: a browser
@@ -3303,9 +3208,6 @@ $('openButton').addEventListener('click', () => openMenu($('openMenu').hidden));
 $('openFolder').addEventListener('click', () => { openMenu(false); $('folder').click(); });
 $('openFiles').addEventListener('click', () => { openMenu(false); $('files').click(); });
 $('clearModel').addEventListener('click', () => { openMenu(false); clearModel(); });
-document.addEventListener('pointerdown', (e) => {
-  if(!$('open').contains(e.target)) openMenu(false);
-});
 for(const id of ['files', 'folder']) {
   $(id).addEventListener('change', async (e) => {
     const entries = [];
@@ -3334,7 +3236,7 @@ window.addEventListener('drop', async (e) => {
   openFiles(entries);
 });
 async function fetchFile(url) {
-  status.textContent = `Loading ${url.split('/').pop()}...`;
+  setStatus(`Loading ${url.split('/').pop()}...`);
   progress(true);
   const r = await fetch(url);
   if(!r.ok) throw new Error(`${url}: ${r.status}`);
@@ -3342,7 +3244,7 @@ async function fetchFile(url) {
 }
 
 $('run').disabled = $('reset').disabled = false;
-status.textContent = 'Open a model, or drop its files here';
+setStatus('Open a model, or drop its files here');
 progress(false);
 const params = new URLSearchParams(location.search);
 try {
@@ -3361,7 +3263,7 @@ try {
     await openFiles(entries);
   }
 } catch(e) {
-  status.textContent = e.message;
+  setStatus(e.message);
   progress(false);
 }
 draw();

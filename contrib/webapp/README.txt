@@ -13,11 +13,9 @@ Serve the Gmsh source tree over HTTP and open the pages, e.g.
 
   python3 -m http.server 8000 --bind 127.0.0.1 --directory ~/src/gmsh
 
-  http://localhost:8000/contrib/webapp/viewer.html
   http://localhost:8000/contrib/webapp/onelab.html
 
-viewer.html shows a model and meshes it; onelab.html is the ONELAB app: it
-opens a model (a .pro file with the .geo of the same name and the files they
+onelab.html is the ONELAB app: it opens a model (a .pro file with the .geo of the same name and the files they
 include, given as files, a folder, a zip archive, or ?zip=<url>), shows its
 parameters, and runs Gmsh and GetDP, in the page.
 
@@ -45,17 +43,19 @@ api_test.mjs shows its use and checks it:
 
   node api_test.mjs
 
-The pages draw the scene with the functions of webView.cpp, which also add
+The page draws the scene with the functions of webView.cpp, which also add
 shapes to the script of a model and run the operations on entities picked in
 the scene, as the graphical interface does (src/graphics/selectionDriver), and
-give the page the buttons of the modules and the entries of the menus of the
+give it the buttons of the modules and the entries of the menus of the
 graphical interface, and do their actions (the action registry,
 src/common/Actions.cpp); webOnelab.cpp
 links GetDP in and runs the ONELAB loop; onelab.html runs GetDP in a web
 worker (solver.js), with a module of its own, as the graphical interface runs
 it in a process of its own: the page shows the results as they are written and
 can stop the solver; shortcuts.js gives the pages the keyboard shortcuts of the
-graphical interface (from src/common/Shortcuts.cpp). manifest.webmanifest and
+graphical interface (from src/common/Shortcuts.cpp); files.mjs handles the
+files of a model, for the page, the worker and run_models.mjs.
+manifest.webmanifest and
 the icons (made from contrib/mobile/utils/gmsh_mobile_1024x1024.png, the icon
 of the mobile app) let a phone or a tablet install the pages on its home
 screen, where they open without the bars of the browser.

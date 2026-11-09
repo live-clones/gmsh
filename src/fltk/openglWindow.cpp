@@ -22,6 +22,7 @@
 #include "glMatrix.h"
 #include "glShader.h"
 #include "Context.h"
+#include "ColorContrast.h"
 #include <cstring>
 #include "GamePad.h"
 
@@ -125,19 +126,10 @@ void openglWindow::_drawScreenMessage()
     _ctx->drawTextBox(_hoverText, _hoverAnchor[0],
                       _ctx->viewport[3] - _hoverAnchor[1], 2, _hoverBox);
   // on paper of its own: the colour of the mark it hangs from
-  // (General.Color.Query, which the mark wears at full strength), lightened
-  // to the paper of a note over a light picture and darkened to the same
-  // note over a dark one, where the full colour would glare
-  CTX *c = CTX::instance();
-  unsigned int q = c->color.query, bg = c->color.bg;
-  double lum = 0.299 * c->unpackRed(bg) + 0.587 * c->unpackGreen(bg) +
-               0.114 * c->unpackBlue(bg);
-  bool dark = (lum < 110.);
-  double paper = dark ? 0. : 255., mix = dark ? 0.32 : 0.45;
-  unsigned int tint =
-    c->packColor((int)(paper * (1. - mix) + mix * c->unpackRed(q)),
-                 (int)(paper * (1. - mix) + mix * c->unpackGreen(q)),
-                 (int)(paper * (1. - mix) + mix * c->unpackBlue(q)), 255);
+  // (General.Color.Query, which the mark wears at full strength), toned to the
+  // paper of a note
+  unsigned int tint = NotePaperColor(CTX::instance()->color.query,
+                                     CTX::instance()->color.bg, nullptr);
   // the boxes the queries pin are drawn by the points they asked about, so
   // that they travel with the model: each is kept whole in the window while
   // its point is in it, and leaves the window with that point

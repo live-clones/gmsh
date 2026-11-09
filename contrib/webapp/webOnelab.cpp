@@ -17,8 +17,10 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "Context.h"
+#include "ColorContrast.h"
 #include "Options.h"
 #include "OS.h"
+#include "StringUtils.h"
 #include "onelab.h"
 #include "onelabUtils.h"
 #include "gmshLocalNetworkClient.h"
@@ -75,24 +77,6 @@ namespace {
     return v;
   }
 
-  std::string quoted(const std::string &s)
-  {
-    std::string q = "\"";
-    for(char c : s) {
-      if(c == '"' || c == '\\') q += '\\';
-      if(c == '\n') {
-        q += "\\n";
-        continue;
-      }
-      if(c == '\t') {
-        q += "\\t";
-        continue;
-      }
-      q += c;
-    }
-    return q + "\"";
-  }
-
   // in a web worker running a solver: what GetDP asks to show, given to the
   // page (solver.js). GetDP merges such a file in the program, as the files
   // it reads, then asks for a render: the file is then the last one merged.
@@ -132,27 +116,6 @@ namespace {
 
 extern "C" {
 
-// run "check", "compute" (with the loops over parameters) or "reset" with
-// Gmsh and the solvers, as onelab_cb() of the graphical interface; returns
-// the number of errors
-EMSCRIPTEN_KEEPALIVE int gmshWebOnelab(const char *what)
-{
-  std::string action(what);
-  addSolver();
-  if(action == "reset") {
-    onelabUtils::resetDb(true);
-    action = "check";
-  }
-  Msg::ResetErrorCounter();
-  if(action == "compute") onelabUtils::initializeLoops();
-  do {
-    onelabUtils::runGmshClient(action, CTX::instance()->solver.autoMesh);
-    for(auto *c : solvers()) onelabUtils::runSolver(c, action);
-    onelabUtils::updateGraphs();
-  } while(action == "compute" && onelabUtils::incrementLoops());
-  return Msg::GetErrorCount();
-}
-
 // the solvers forgotten, as a model starts, or none (Clear in the page): the
 // next file opened adds those it asks for (see addSolver())
 EMSCRIPTEN_KEEPALIVE void gmshWebOnelabForgetSolvers()
@@ -165,11 +128,12 @@ EMSCRIPTEN_KEEPALIVE void gmshWebOnelabForgetSolvers()
   for(auto *c : v) delete c;
 }
 
-// The same loop in steps, for a page that runs the solvers in a web worker,
-// as the graphical interface runs them in processes of their own (onelab.html
-// and solver.js): the page starts, then for each pass runs Gmsh here and the
-// solvers it is given in the worker, the database going along, then asks for
-// the next pass. Starting, with "check", "compute" or "reset":
+// The ONELAB loop of the graphical interface (onelab_cb()) in steps, for a
+// page that runs the solvers in a web worker, as the graphical interface runs
+// them in processes of their own (onelab.html and solver.js): the page starts,
+// then for each pass runs Gmsh here and the solvers it is given in the worker,
+// the database going along, then asks for the next pass. Starting, with
+// "check", "compute" or "reset" (whose passes are "check"):
 EMSCRIPTEN_KEEPALIVE void gmshWebOnelabStart(const char *what)
 {
   std::string action(what);
@@ -190,10 +154,10 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebOnelabGmsh(const char *what)
   for(auto *c : solvers()) {
     onelabUtils::setSolverAction(c, action);
     if(json.size() > 1) json += ",";
-    json += "{\"name\":" + quoted(c->getName()) + ",\"args\":[";
+    json += "{\"name\":" + JsonString(c->getName()) + ",\"args\":[";
     std::vector<std::string> args = c->commandLine();
     for(std::size_t i = 0; i < args.size(); i++)
-      json += (i ? "," : "") + quoted(args[i]);
+      json += (i ? "," : "") + JsonString(args[i]);
     json += "]}";
   }
   json += "]";
@@ -210,6 +174,19 @@ EMSCRIPTEN_KEEPALIVE int gmshWebOnelabNext(const char *what)
       onelab::server::instance()->setChanged(0, c->getName());
   onelabUtils::updateGraphs();
   return (action == "compute" && onelabUtils::incrementLoops()) ? 1 : 0;
+}
+
+// the whole loop, with the solvers run here (run_models.mjs): returns the
+// number of errors
+EMSCRIPTEN_KEEPALIVE int gmshWebOnelab(const char *what)
+{
+  std::string pass = (std::string(what) == "reset") ? "check" : what;
+  gmshWebOnelabStart(what);
+  do {
+    gmshWebOnelabGmsh(pass.c_str());
+    for(auto *c : solvers()) c->run();
+  } while(gmshWebOnelabNext(pass.c_str()));
+  return Msg::GetErrorCount();
 }
 
 // the errors since the start
@@ -288,6 +265,18 @@ EMSCRIPTEN_KEEPALIVE int gmshWebColor(const char *name)
   int r, g, b;
   if(!GetRGBForString(name, r, g, b)) return -1;
   return (r << 16) | (g << 8) | b;
+}
+
+// that colour as the graphical interface shows it (see ColorContrast.h), on
+// the background bg with the text fg of the page (as 0xrrggbb), in dark mode
+// or not: as a text (what = 0), as the background of a field (1) or as the
+// text on that field (2)
+EMSCRIPTEN_KEEPALIVE int gmshWebReadableColor(int rgb, int bg, int fg, int dark,
+                                              int what)
+{
+  if(what == 0) return ReadableTextColor(rgb, bg, bg, dark);
+  unsigned int fill = ReadableFillColor(rgb, fg, dark);
+  return what == 1 ? fill : ContrastingColor(fill);
 }
 
 } // extern "C"

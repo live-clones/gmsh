@@ -13,6 +13,7 @@
 #if defined(__EMSCRIPTEN__)
 
 #include <cmath>
+#include <cstring>
 #include <fstream>
 #include <map>
 #include <sstream>
@@ -20,12 +21,14 @@
 #include "Actions.h"
 #include "ScriptStyles.h"
 #include "Context.h"
+#include "ColorContrast.h"
 #include "GmshDefines.h"
 #include "GmshMessage.h"
 #include "GModel.h"
 #include "OpenFile.h"
 #include "Options.h"
 #include "Shortcuts.h"
+#include "StringUtils.h"
 #include "drawContextOffscreen.h"
 #include "sceneView.h"
 #include "scriptStringInterface.h"
@@ -48,12 +51,13 @@ namespace {
     // before the page shows it
     bool picked = false;
     // the tool that takes over the clicks, as the buttons of the status bar
-    // of the graphical interface: 0 none, 1 the query, 2 the measurement, 3
-    // an operation on selected entities (see gmshWebOperation())
-    int tool = 0;
+    // of the graphical interface, or an operation on selected entities (see
+    // gmshWebOperation()); the numbers of Tool in onelab.html
+    enum { NoTool, QueryTool, MeasureTool, OperationTool };
+    int tool = NoTool;
     webView() : sceneView(nullptr) {}
-    bool hostQueryMode() { return tool == 1; }
-    bool hostMeasureMode() { return tool == 2; }
+    bool hostQueryMode() { return tool == QueryTool; }
+    bool hostMeasureMode() { return tool == MeasureTool; }
     void hostRedraw() { redrawAsked = true; }
     void hostCursor(bool c) { cross = c; }
     bool hostBeginGL()
@@ -93,20 +97,6 @@ namespace {
     _view->end();
   }
 
-  std::string jsonString(const std::string &s)
-  {
-    std::string q = "\"";
-    for(char c : s) {
-      if(c == '\n') {
-        q += "\\n";
-        continue;
-      }
-      if(c == '"' || c == '\\') q += '\\';
-      q += c;
-    }
-    return q + "\"";
-  }
-
   // what the selection of the tool found at a click, for the tool: the
   // selection waits for the next click then (see status_query_cb() and
   // status_measure_cb() in the graphical interface)
@@ -121,14 +111,14 @@ namespace {
     std::vector<PView *> vw;
     char ib = _scene->selectionStep(v, e, f, r, el, p, vw);
     if(!ib) return;
-    if(_scene->tool == 3) {
+    if(_scene->tool == webView::OperationTool) {
       if(_operation->step(ib, v, e, f, r, el)) _changes++;
       if(_operation->active()) _scene->beginSelection(_operation->type());
       return;
     }
-    if(ib == 'l' && _scene->tool == 1)
+    if(ib == 'l' && _scene->tool == webView::QueryTool)
       _scene->queryClick(v, e, f, r, el, vw);
-    else if(ib == 'l' && _scene->tool == 2)
+    else if(ib == 'l' && _scene->tool == webView::MeasureTool)
       _scene->measureClick();
     // the next click, unless the tool was stopped
     if(_scene->tool) _scene->beginSelection(ENT_ALL);
@@ -165,8 +155,9 @@ EMSCRIPTEN_KEEPALIVE int gmshWebDrawStudio(int width, int height, double scale,
 // A mouse event on the canvas: kind as paneInput::Kind (0 move, 1 push, 2
 // release, 3 drag, 4 wheel), the pointer at (x, y) in a canvas of w x h CSS
 // pixels, the button (0 left, 1 right, 2 middle), the notches the wheel
-// turned (positive towards the user) and the modifier keys (1 shift, 2 ctrl,
-// 4 alt, 8 meta). Returns 1 when the picture changed and the page is to draw
+// turned (positive towards the user) and the modifier keys: ModShift and
+// ModAlt (Shortcuts.h), and Control and Meta apart (see modifiers() in
+// shortcuts.js). Returns 1 when the picture changed and the page is to draw
 // it again.
 EMSCRIPTEN_KEEPALIVE int gmshWebMouse(int kind, double x, double y, int w,
                                       int h, int button, double wheel,
@@ -186,10 +177,11 @@ EMSCRIPTEN_KEEPALIVE int gmshWebMouse(int kind, double x, double y, int w,
   in.h = h;
   in.button = button;
   in.wheel = wheel;
-  in.shift = modifiers & 1;
-  in.ctrl = modifiers & 2;
-  in.alt = modifiers & 4;
-  in.meta = modifiers & 8;
+  const int ModControl = 16, ModMeta = 32;
+  in.shift = modifiers & ModShift;
+  in.ctrl = modifiers & ModControl;
+  in.alt = modifiers & ModAlt;
+  in.meta = modifiers & ModMeta;
   _scene->handleMouse(in);
   if(_scene->tool) toolStep();
   // the picking pass left its image on the canvas: put the frame back now,
@@ -290,9 +282,9 @@ EMSCRIPTEN_KEEPALIVE int gmshWebLasso(double *xy)
   return (_scene && _scene->lasso(xy)) ? 1 : 0;
 }
 
-// the query (1) or the measurement (2) taking over the clicks, or neither
-// (0), as the buttons of the status bar of the graphical interface: what
-// they left on the picture is taken away
+// the query or the measurement taking over the clicks, or neither (see
+// webView::tool), as the buttons of the status bar of the graphical
+// interface: what they left on the picture is taken away
 EMSCRIPTEN_KEEPALIVE int gmshWebTool(int tool)
 {
   if(!_view || !_view->getDrawContext()) return 0;
@@ -303,12 +295,13 @@ EMSCRIPTEN_KEEPALIVE int gmshWebTool(int tool)
   _operation = nullptr;
   // a query picks mesh elements, as long as it is on
   static int pickElements = 0;
-  if(_scene->tool == 1) CTX::instance()->pickElements = pickElements;
+  if(_scene->tool == webView::QueryTool)
+    CTX::instance()->pickElements = pickElements;
   _scene->tool = tool;
   GModel::current()->setSelection(0);
   _scene->getDrawContext()->clearMarks();
   _scene->pinTooltip("");
-  if(tool == 1) {
+  if(tool == webView::QueryTool) {
     pickElements = CTX::instance()->pickElements;
     CTX::instance()->pickElements = 1;
   }
@@ -335,7 +328,7 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebOperation(const char *name)
 {
   static std::string json;
   json = "";
-  if(!gmshWebTool(0) || !name[0]) return json.c_str();
+  if(!gmshWebTool(webView::NoTool) || !name[0]) return json.c_str();
   _values.clear();
   _operation = new selectionDriver(name, [](const std::string &n) {
     auto it = _values.find(n);
@@ -349,15 +342,16 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebOperation(const char *name)
     _operation = nullptr;
     return json.c_str();
   }
-  _scene->tool = 3;
+  _scene->tool = webView::OperationTool;
   if(!CTX::instance()->mouseSelection)
     opt_general_mouse_selection(0, GMSH_SET, 1);
   _scene->beginSelection(_operation->type());
   json = "[";
   for(auto &f : _operation->fields())
-    json += std::string(json.size() > 1 ? "," : "") + "{\"name\":" +
-            jsonString(f.name) + ",\"kind\":" + jsonString(f.kind) +
-            ",\"value\":" + jsonString(f.value) + "}";
+    json += std::string(json.size() > 1 ? "," : "") +
+            "{\"name\":" + JsonString(f.name) +
+            ",\"kind\":" + JsonString(f.kind) +
+            ",\"value\":" + JsonString(f.value) + "}";
   json += "]";
   return json.c_str();
 }
@@ -380,7 +374,7 @@ EMSCRIPTEN_KEEPALIVE void gmshWebOperationValue(const char *name,
 // picked last, 'q' stops the operation
 EMSCRIPTEN_KEEPALIVE void gmshWebOperationKey(int key)
 {
-  if(!_scene || _scene->tool != 3) return;
+  if(!_scene || _scene->tool != webView::OperationTool) return;
   if(key == 'e') _scene->endSelection = 1;
   if(key == 'u') _scene->undoSelection = 1;
   if(key == 'q') _scene->quitSelection = 1;
@@ -393,8 +387,8 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebOperationState()
 {
   static std::string json;
   bool on = _operation && _operation->active();
-  json = "{\"name\":" + jsonString(on ? _operation->operation() : "") +
-         ",\"status\":" + jsonString(on ? _operation->status() : "") +
+  json = "{\"name\":" + JsonString(on ? _operation->operation() : "") +
+         ",\"status\":" + JsonString(on ? _operation->status() : "") +
          ",\"changes\":" + std::to_string(_changes) + "}";
   return json.c_str();
 }
@@ -408,11 +402,11 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebShapes()
   json = "[";
   for(auto &shape : scriptShapes()) {
     json += std::string(json.size() > 1 ? "," : "") +
-            "{\"name\":" + jsonString(shape.name) + ",\"fields\":[";
+            "{\"name\":" + JsonString(shape.name) + ",\"fields\":[";
     for(std::size_t i = 0; i < shape.fields.size(); i++)
       json += std::string(i ? "," : "") + "[" +
-              jsonString(shape.fields[i].first) + "," +
-              jsonString(shape.fields[i].second) + "]";
+              JsonString(shape.fields[i].first) + "," +
+              JsonString(shape.fields[i].second) + "]";
     json += "]}";
   }
   json += "]";
@@ -430,10 +424,10 @@ static std::string jsonItem(const actionItem &item)
   static const char *kinds[] = {"menu", "run", "operation", "shape", "option"};
   std::string json =
     "{\"id\":" + std::to_string(_items.size()) +
-    ",\"label\":" + jsonString(item.label) + ",\"kind\":\"" + kinds[item.kind] +
-    "\",\"what\":" + jsonString(item.what) +
-    ",\"help\":" + jsonString(item.help) + ",\"key\":" + jsonString(item.key) +
-    ",\"ask\":" + jsonString(item.ask.option) +
+    ",\"label\":" + JsonString(item.label) + ",\"kind\":\"" + kinds[item.kind] +
+    "\",\"what\":" + JsonString(item.what) +
+    ",\"help\":" + JsonString(item.help) + ",\"key\":" + JsonString(item.key) +
+    ",\"ask\":" + JsonString(item.ask.option) +
     ",\"interface\":" + (IsDoneByInterface(item) ? "1" : "0") + ",\"items\":[";
   _items.push_back(&item);
   for(std::size_t i = 0; i < item.items.size(); i++)
@@ -447,7 +441,7 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebActions()
   _items.clear();
   json = "{";
   for(const char *menu : {"Geometry", "Mesh", "Quick access", "View"})
-    json += std::string(json.size() > 1 ? "," : "") + jsonString(menu) + ":" +
+    json += std::string(json.size() > 1 ? "," : "") + JsonString(menu) + ":" +
             jsonItem(GetActionMenu(menu));
   json += "}";
   return json.c_str();
@@ -547,12 +541,13 @@ EMSCRIPTEN_KEEPALIVE int gmshWebAddShape(const char *shape, const char *values)
   return added;
 }
 
-// the tool under way (see gmshWebTool()), and for the measurement 1 more
-// while its second point is awaited
-EMSCRIPTEN_KEEPALIVE int gmshWebToolState()
+// whether the measurement awaits its second point
+EMSCRIPTEN_KEEPALIVE int gmshWebMeasuring()
 {
-  if(!_scene || !_scene->tool) return 0;
-  return _scene->tool + ((_scene->tool == 2 && _scene->measuring()) ? 1 : 0);
+  return (_scene && _scene->tool == webView::MeasureTool &&
+          _scene->measuring()) ?
+           1 :
+           0;
 }
 
 // What the query and the measurement show over the picture, in JSON, for the
@@ -573,7 +568,7 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebNotes()
       double win[2];
       if(!ctx->world2Window(_scene->pinnedPoint(i), win)) continue;
       if(json.back() == '}') json += ",";
-      json += "{\"text\":" + jsonString(_scene->pinnedText(i)) +
+      json += "{\"text\":" + JsonString(_scene->pinnedText(i)) +
               ",\"x\":" + std::to_string(win[0]) +
               ",\"y\":" + std::to_string(h - win[1]) + "}";
     }
@@ -582,23 +577,19 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebNotes()
       double mid[3] = {0.5 * (a[0] + b[0]), 0.5 * (a[1] + b[1]),
                        0.5 * (a[2] + b[2])};
       if(ctx->world2Window(mid, win))
-        length = "{\"text\":" + jsonString(measurePoints(a, b)[0]) +
+        length = "{\"text\":" + JsonString(measurePoints(a, b)[0]) +
                  ",\"x\":" + std::to_string(win[0]) +
                  ",\"y\":" + std::to_string(h - win[1]) + "}";
     }
   }
+  // on the paper of the desktop's notes (see openglWindow::draw())
   CTX *c = CTX::instance();
-  unsigned int q = c->color.query, bg = c->color.bg;
-  double lum = 0.299 * c->unpackRed(bg) + 0.587 * c->unpackGreen(bg) +
-               0.114 * c->unpackBlue(bg);
-  bool dark = (lum < 110.);
-  double paper = dark ? 0. : 255., mix = dark ? 0.32 : 0.45;
-  auto channel = [&](int v) {
-    return std::to_string((int)(paper * (1. - mix) + mix * v));
-  };
+  bool dark;
+  unsigned int tint = NotePaperColor(c->color.query, c->color.bg, &dark);
   json += "],\"length\":" + length + ",\"tint\":\"rgb(" +
-          channel(c->unpackRed(q)) + "," + channel(c->unpackGreen(q)) + "," +
-          channel(c->unpackBlue(q)) +
+          std::to_string(c->unpackRed(tint)) + "," +
+          std::to_string(c->unpackGreen(tint)) + "," +
+          std::to_string(c->unpackBlue(tint)) +
           ")\",\"dark\":" + (dark ? "true" : "false") + "}";
   return json.c_str();
 }
@@ -622,7 +613,7 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebOptionChoices(const char *option)
     if(json.size() > 1) json += ",";
     char v[32];
     snprintf(v, sizeof(v), "%.16g", c.first);
-    json += "[" + std::string(v) + "," + jsonString(c.second) + "]";
+    json += "[" + std::string(v) + "," + JsonString(c.second) + "]";
   }
   json += "]";
   return json.c_str();
@@ -646,7 +637,8 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebOptionRange(const char *option)
 // "key" (a lower case letter, a digit or a mark, or the name the page gives a
 // key: "F1", "Escape", "ArrowLeft", "PageUp"...), "mods" (ModCommand 1,
 // ModShift 2, ModAlt 4, AnyModifiers 8), "help", "label" (with command the
-// name of the Command key, "Cmd+" or "Ctrl+")}]
+// name of the Command key, "Cmd+" or "Ctrl+"), "scene" (run by
+// gmshWebShortcut())}]
 EMSCRIPTEN_KEEPALIVE const char *gmshWebShortcuts(const char *command)
 {
   static std::string json;
@@ -672,11 +664,14 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebShortcuts(const char *command)
       key = "PageDown";
     else
       key = std::string(1, (char)k);
+    bool scene = !strcmp(e.action, "escape") || IsSceneShortcut(e.action);
     if(json.size() > 1) json += ",";
-    json += "{\"action\":" + jsonString(e.action) + ",\"key\":" + jsonString(key) +
+    json += "{\"action\":" + JsonString(e.action) +
+            ",\"key\":" + JsonString(key) +
             ",\"mods\":" + std::to_string(e.shortcut.mods) +
-            ",\"help\":" + jsonString(e.help) +
-            ",\"label\":" + jsonString(e.shortcut.label(command)) + "}";
+            ",\"help\":" + JsonString(e.help) +
+            ",\"label\":" + JsonString(e.shortcut.label(command)) +
+            ",\"scene\":" + (scene ? "true" : "false") + "}";
   }
   json += "]";
   return json.c_str();

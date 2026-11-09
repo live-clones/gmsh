@@ -19,31 +19,12 @@
 //                   files of the model the solver wrote
 
 import createGmsh from './build/gmsh.mjs';
+import {listFiles, writeFile, removeDirectory} from './files.mjs';
 
 let gmsh, FS;
 const post = (message, transfer = []) => postMessage(message, transfer);
 // the files of the run already sent to be shown, with their time of change
 const shown = new Map();
-
-// the files under a directory, with their time of change
-function listFiles(dir, out = new Map()) {
-  for(const f of FS.readdir(dir)) {
-    if(f === '.' || f === '..') continue;
-    const path = dir + '/' + f;
-    const st = FS.stat(path);
-    if(FS.isDir(st.mode)) listFiles(path, out);
-    else out.set(path, st.mtime.getTime());
-  }
-  return out;
-}
-function writeFile(path, data) {
-  let dir = '';
-  for(const part of path.split('/').slice(1, -1)) {
-    dir += '/' + part;
-    if(!FS.analyzePath(dir).exists) FS.mkdir(dir);
-  }
-  FS.writeFile(path, data);
-}
 
 self.onmessage = async (e) => {
   const m = e.data;
@@ -73,23 +54,14 @@ self.onmessage = async (e) => {
   }
   else if(m.type === 'forget') {
     // the files of a model no longer open
-    const remove = (dir) => {
-      for(const f of FS.readdir(dir)) {
-        if(f === '.' || f === '..') continue;
-        const path = dir + '/' + f;
-        if(FS.isDir(FS.stat(path).mode)) remove(path);
-        else FS.unlink(path);
-      }
-      FS.rmdir(dir);
-    };
-    if(FS.analyzePath(m.dir).exists) remove(m.dir);
+    if(FS.analyzePath(m.dir).exists) removeDirectory(FS, m.dir);
   }
   else if(m.type === 'run') {
-    for(const [path, data] of m.files) writeFile(path, data);
+    for(const [path, data] of m.files) writeFile(FS, path, data);
     FS.chdir(m.cwd);
     gmsh.onelab.clear();
     gmsh.onelab.set(m.db);
-    const before = listFiles(m.dir);
+    const before = listFiles(FS, m.dir);
     shown.clear();
     let errors = 0;
     try {
@@ -102,7 +74,7 @@ self.onmessage = async (e) => {
     // what the solver wrote, back to the page, but what it has already been
     // sent and the solver's own data (results, preprocessing), of no use there
     const files = [], transfer = [];
-    for(const [path, time] of listFiles(m.dir)) {
+    for(const [path, time] of listFiles(FS, m.dir)) {
       if(before.get(path) === time || shown.get(path) === time ||
          /\.(res|pre)$/.test(path))
         continue;

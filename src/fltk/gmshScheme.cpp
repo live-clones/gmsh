@@ -28,6 +28,7 @@
 #include <string>
 #include "FlGui.h" // the box types of Gmsh
 #include "Context.h"
+#include "ColorContrast.h"
 #include "GmshMessage.h"
 
 // the default theme, which an empty name also selects: the session files of
@@ -94,62 +95,33 @@ void applyGmshColors(bool dark)
   }
 }
 
-// A colour chosen for a light interface (a pastel background, a vivid text)
-// at another lightness, of the same hue, saturated as much as the colour was
-// coloured, so that a pastel stays a tint and a vivid colour stays vivid,
-// within a cap that keeps them from glaring
-static Fl_Color atLightness(Fl_Color c, double lightness, double maxSaturation)
+// a colour of FLTK as 0xrrggbb (see ColorContrast.h), and back
+static unsigned int toRGB(Fl_Color c)
 {
   uchar r, g, b;
   Fl::get_color(c, r, g, b);
-  double rgb[3] = {r / 255., g / 255., b / 255.};
-  double mx = std::max(rgb[0], std::max(rgb[1], rgb[2]));
-  double mn = std::min(rgb[0], std::min(rgb[1], rgb[2]));
-  double chroma = mx - mn, l = 0.5 * (mx + mn), hue = 0., s = 0.;
-  if(chroma > 0.) {
-    s = chroma / (1. - std::abs(2. * l - 1.));
-    if(mx == rgb[0])
-      hue = std::fmod((rgb[1] - rgb[2]) / chroma + 6., 6.);
-    else if(mx == rgb[1])
-      hue = (rgb[2] - rgb[0]) / chroma + 2.;
-    else
-      hue = (rgb[0] - rgb[1]) / chroma + 4.;
-  }
-  s = std::min(maxSaturation, s * std::min(1., 8. * chroma));
-  // back from hue, saturation and lightness
-  double c2 = (1. - std::abs(2. * lightness - 1.)) * s;
-  double x = c2 * (1. - std::abs(std::fmod(hue, 2.) - 1.));
-  double m = lightness - 0.5 * c2;
-  double out[3] = {0., 0., 0.};
-  int sector = (int)hue % 6;
-  const int order[6][3] = {{0, 1, 2}, {1, 0, 2}, {2, 0, 1},
-                           {2, 1, 0}, {1, 2, 0}, {0, 2, 1}};
-  double v[3] = {c2, x, 0.};
-  for(int i = 0; i < 3; i++) out[i] = v[order[sector][i]] + m;
-  return fl_rgb_color((uchar)(255. * out[0] + 0.5),
-                      (uchar)(255. * out[1] + 0.5),
-                      (uchar)(255. * out[2] + 0.5));
+  return (r << 16) | (g << 8) | b;
 }
 
-// A colour no brighter than the text of the interface, or else scaled down to
-// it: the same hue and saturation, so that it is still the colour chosen (often
-// that of entities in the model, which it must match), without the glare
-static Fl_Color noBrighterThanText(Fl_Color c)
+static Fl_Color fromRGB(unsigned int rgb, Fl_Color c)
 {
-  uchar r, g, b, fr, fg, fb;
-  Fl::get_color(c, r, g, b);
-  Fl::get_color(FL_FOREGROUND_COLOR, fr, fg, fb);
-  int mx = std::max(r, std::max(g, b));
-  int cap = std::max(fr, std::max(fg, fb));
-  if(mx <= cap) return c;
-  return fl_rgb_color((uchar)(r * cap / mx), (uchar)(g * cap / mx),
-                      (uchar)(b * cap / mx));
+  if(rgb == toRGB(c)) return c;
+  return fl_rgb_color((rgb >> 16) & 255, (rgb >> 8) & 255, rgb & 255);
 }
 
-// a field: the colour chosen, as is; only kept from glaring in dark mode
 Fl_Color adaptedFill(Fl_Color c)
 {
-  return CTX::instance()->guiDark ? noBrighterThanText(c) : c;
+  return fromRGB(ReadableFillColor(toRGB(c), toRGB(FL_FOREGROUND_COLOR),
+                                   CTX::instance()->guiDark),
+                 c);
+}
+
+Fl_Color adaptedText(Fl_Color c)
+{
+  return fromRGB(ReadableTextColor(toRGB(c), toRGB(FL_BACKGROUND_COLOR),
+                                   toRGB(FL_BACKGROUND2_COLOR),
+                                   CTX::instance()->guiDark),
+                 c);
 }
 
 // chosen by hand: a formula darkens yellow to olive, and greys the others
@@ -166,47 +138,6 @@ Fl_Color gmshIndicator(GmshIndicator i)
   };
   const unsigned char *c = colors[i][CTX::instance()->guiDark ? 1 : 0];
   return fl_rgb_color(c[0], c[1], c[2]);
-}
-
-// the relative luminance of a colour, and the contrast of two colours, from 1
-// to 21 (WCAG 2)
-static double luminance(Fl_Color c)
-{
-  uchar rgb[3];
-  Fl::get_color(c, rgb[0], rgb[1], rgb[2]);
-  double l[3];
-  for(int i = 0; i < 3; i++) {
-    double v = rgb[i] / 255.;
-    l[i] = (v <= 0.04045) ? v / 12.92 : std::pow((v + 0.055) / 1.055, 2.4);
-  }
-  return 0.2126 * l[0] + 0.7152 * l[1] + 0.0722 * l[2];
-}
-
-static double contrast(Fl_Color a, Fl_Color b)
-{
-  double la = luminance(a), lb = luminance(b);
-  return (std::max(la, lb) + 0.05) / (std::min(la, lb) + 0.05);
-}
-
-// a text: light in dark mode, as is in light mode, but in both cases moved
-// further from the background, of the same hue, until it reads on the
-// backgrounds of the interface (a contrast of 4.5, WCAG AA): a pastel or a
-// near white chosen for a light interface is made darker
-Fl_Color adaptedText(Fl_Color c)
-{
-  auto reads = [](Fl_Color t) {
-    return contrast(t, FL_BACKGROUND_COLOR) >= 4.5 &&
-           contrast(t, FL_BACKGROUND2_COLOR) >= 4.5;
-  };
-  bool dark = CTX::instance()->guiDark;
-  Fl_Color t = dark ? atLightness(c, 0.72, 0.8) : c;
-  uchar r, g, b;
-  Fl::get_color(c, r, g, b);
-  double l = (std::max(r, std::max(g, b)) + std::min(r, std::min(g, b))) / 510.;
-  for(int i = 1; i <= 20 && !reads(t); i++)
-    t = dark ? atLightness(c, 0.72 + 0.28 * i / 20., 0.8) :
-               atLightness(c, l * (1. - i / 20.), 0.7);
-  return t;
 }
 
 // The widget under the pointer, when it takes input (a button, a check box,
