@@ -39,6 +39,7 @@
 #include "mainWindow.h"
 #include "paletteWindow.h"
 #include "graphicWindow.h"
+#include "sceneTool.h"
 #include "toolDock.h"
 #include "gmshScheme.h"
 #include "icons.h"
@@ -912,8 +913,8 @@ static void model_switch_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
-// The two modes that wait for clicks on the model, until asked to stop (their
-// button again, Escape, or 'q'):
+// The two tools that take the clicks on the model, until asked to stop (their
+// button again, or Escape), shared with the web page (see sceneTool):
 // - in query mode, every click says what the model holds where it hit: the
 //   entity, the mesh element and the node there, and the value of every
 //   visible view. A click replaces what the queries before it left on the
@@ -921,23 +922,20 @@ static void model_switch_cb(Fl_Widget *w, void *data)
 //   builds a search structure that the ones after it reuse.)
 // - in measure mode, two clicks give the distance between the points they hit,
 //   drawn on the picture and printed.
-// Starting one mode stops the other, which is only over once its loop has
-// returned, so the one taking over is started from the event loop rather than
-// from the callback.
-enum clickMode { NoClickMode, QueryMode, MeasureMode };
-static int _clickMode = NoClickMode, _pendingMode = NoClickMode;
+// Starting one stops the other.
+bool queryMode() { return sceneTool::running("Query"); }
 
-bool queryMode() { return _clickMode == QueryMode; }
+bool measureMode() { return sceneTool::running("Measure"); }
 
-bool measureMode() { return _clickMode == MeasureMode; }
-
-static void runClickMode(int mode);
-
-static void _startPendingMode(void *)
+static void toggleTool(const std::string &name)
 {
-  int mode = _pendingMode;
-  _pendingMode = NoClickMode;
-  if(mode != NoClickMode) runClickMode(mode);
+  if(!FlGui::available()) return;
+  if(sceneTool::running(name)) {
+    sceneTool::stop();
+    return;
+  }
+  sceneTool::start(name == "Query" ? newQueryTool() : newMeasureTool(),
+                   FlGui::instance()->getCurrentOpenglWindow());
 }
 
 void updateModeButtons()
@@ -958,72 +956,9 @@ void updateModeButtons()
   }
 }
 
-static void runClickMode(int mode)
-{
-  if(!FlGui::available()) return;
+void status_query_cb(Fl_Widget *w, void *data) { toggleTool("Query"); }
 
-  if(_clickMode != NoClickMode) {
-    // asked to stop the mode, or to take over from the other when it is over
-    if(_clickMode != mode) _pendingMode = mode;
-    for(openglWindow *gl : FlGui::instance()->openglWindows())
-      gl->quitSelection = 1;
-    return;
-  }
-
-  _clickMode = mode;
-  updateModeButtons();
-  // a click is a pick: it needs the mouse selection the "S" button switches,
-  // and the mesh elements for a query (a measurement only needs where the
-  // click hits)
-  int old = CTX::instance()->pickElements;
-  if(mode == QueryMode) CTX::instance()->pickElements = 1;
-  if(!CTX::instance()->mouseSelection)
-    opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 1);
-
-  while(1) {
-    if(!FlGui::available()) break;
-    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
-    if(mode == QueryMode)
-      Msg::StatusGl("Click to query the model, Ctrl+click to add a query\n"
-                    "[Press 'q' to abort]");
-    else
-      Msg::StatusGl(gl && gl->measuring() ?
-                      "Click the second point\n[Press 'q' to abort]" :
-                      "Click the first point\n[Press 'q' to abort]");
-    char ib = FlGui::instance()->selectEntity(ENT_ALL);
-    if(!FlGui::available()) break;
-    if(ib == 'q') break;
-    if(ib != 'l') continue;
-
-    gl = FlGui::instance()->getCurrentOpenglWindow();
-    if(!gl) break;
-    FlGui *g = FlGui::instance();
-    bool done = (mode == QueryMode) ?
-                  gl->queryClick(g->selectedVertices, g->selectedEdges,
-                                 g->selectedFaces, g->selectedRegions,
-                                 g->selectedElements, g->selectedViews) :
-                  gl->measureClick();
-    if(done) drawContext::global()->draw();
-  }
-
-  if(mode == QueryMode) CTX::instance()->pickElements = old;
-  _clickMode = NoClickMode;
-  updateModeButtons();
-  if(FlGui::available()) {
-    GModel::current()->setSelection(0);
-    for(openglWindow *gl : FlGui::instance()->openglWindows()) {
-      gl->getDrawContext()->clearMarks();
-      gl->pinTooltip("");
-    }
-    drawContext::global()->draw();
-    Msg::StatusGl("");
-  }
-  if(_pendingMode != NoClickMode) Fl::add_timeout(0., _startPendingMode);
-}
-
-void status_query_cb(Fl_Widget *w, void *data) { runClickMode(QueryMode); }
-
-void status_measure_cb(Fl_Widget *w, void *data) { runClickMode(MeasureMode); }
+void status_measure_cb(Fl_Widget *w, void *data) { toggleTool("Measure"); }
 
 // the menu of the models, to pick the current one
 static void status_model_cb(Fl_Widget *w, void *data)
@@ -1532,20 +1467,20 @@ static const statusButton *statusButtons()
      "reset bounding box around visible entities (Shift)",
      "view_1_1", 0, true},
     {"S", nullptr, mouse_selection_cb, nullptr, "Toggle mouse selection ON/OFF",
-     "escape", 0, false},
+     "mouse_selection", 0, false},
     {nullptr, "query", status_query_cb, nullptr,
-     "Query the model where you click ('q' to stop)", nullptr, 0, false},
+     "Query the model where you click (Escape to stop)", nullptr, 0, false},
     {nullptr, "measure", status_measure_cb, nullptr,
-     "Measure the distance between two points you click ('q' to stop)", nullptr,
-     0, false},
-    {nullptr, "rewind", status_rewind_cb, nullptr, "Rewind animation",
-     nullptr, 4, false},
+     "Measure the distance between two points you click (Escape to stop)",
+     nullptr, 0, false},
+    {nullptr, "rewind", status_rewind_cb, nullptr, "Rewind animation", nullptr,
+     4, false},
     {nullptr, "back", status_stepbackward_cb, nullptr, "Step backward",
      "time_step_prev", 0, false},
-    {nullptr, "play", status_play_cb, nullptr, "Play/pause animation",
-     nullptr, 0, false},
-    {nullptr, "forward", status_stepforward_cb, nullptr,
-     "Step forward", "time_step_next", 0, false},
+    {nullptr, "play", status_play_cb, nullptr, "Play/pause animation", nullptr,
+     0, false},
+    {nullptr, "forward", status_stepforward_cb, nullptr, "Step forward",
+     "time_step_next", 0, false},
   };
   return buttons;
 }
@@ -1862,6 +1797,9 @@ graphicWindow::~graphicWindow()
     _dock->undockAll(false);
     setDocking(false);
   }
+  // (as on unsplit, see split())
+  for(openglWindow *w : gl)
+    if(sceneTool::scene() == w) sceneTool::stop();
   openglWindow::setLastHandled(nullptr);
   if(globalMenu && globalMenu == _menuBar()) {
     Fl::remove_handler(globalMenuHandler);
@@ -2042,6 +1980,10 @@ bool graphicWindow::split(openglWindow *g, char how, double ratio)
     // after many tries I cannot figure out how to do this cleanly, so let's be
     // brutal :-)
     int mode = g->mode();
+    // the tool on one of the panes ends while they are all there (its end
+    // may draw them, or say so in the current one)
+    for(openglWindow *w : gl)
+      if(sceneTool::scene() == w) sceneTool::stop();
     openglWindow::setLastHandled(nullptr);
     // hidden first, all of them whole: hiding moves the focus, which may
     // commit an edited value whose callback draws every pane

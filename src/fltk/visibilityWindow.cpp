@@ -4,6 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "GmshConfig.h"
+#include <memory>
 #include <cstdint>
 #include <string>
 #include <sstream>
@@ -18,6 +19,7 @@
 #include "FlGui.h"
 #include "drawContext.h"
 #include "visibilityWindow.h"
+#include "sceneTool.h"
 #include "hintInput.h"
 #include "paletteWindow.h"
 #include "contextWindow.h"
@@ -969,19 +971,18 @@ static void _set_visibility_by_number(int row, int num, char val,
 // Interactive tab: hidden, shown alone, or shown again (the undo of a hide)
 enum pickAction { PickHide, PickShow, PickUndo };
 
-static void _apply_visibility(pickAction action, bool physical,
-                              std::vector<GVertex *> &vertices,
-                              std::vector<GEdge *> &edges,
-                              std::vector<GFace *> &faces,
-                              std::vector<GRegion *> &regions,
-                              std::vector<MElement *> &elements)
+static void
+_apply_visibility(pickAction action, bool physical, bool pickElements,
+                  std::vector<GVertex *> &vertices, std::vector<GEdge *> &edges,
+                  std::vector<GFace *> &faces, std::vector<GRegion *> &regions,
+                  std::vector<MElement *> &elements)
 {
   bool recursive = recursiveVisibility();
   bool allmodels = allModelsVisibility();
 
   if(action ==
      PickShow) { // when showing a single entity, first hide everything
-    if(CTX::instance()->pickElements)
+    if(pickElements)
       _set_visibility_by_number(ROW_ELEMENTS, -1, 0, false, allmodels);
     else
       for(int dim = 0; dim < 4; dim++)
@@ -990,7 +991,7 @@ static void _apply_visibility(pickAction action, bool physical,
 
   char mode = (action == PickHide) ? 0 : 1;
 
-  if(CTX::instance()->pickElements) {
+  if(pickElements) {
     for(std::size_t i = 0; i < elements.size(); i++)
       elements[i]->setVisibility(mode);
   }
@@ -1044,19 +1045,19 @@ static void visibility_number_hide_cb(Fl_Widget *w, void *data)
 }
 
 // the elements, entities or physical groups of a row of the Interactive tab
-// picked in the scene, until 'q', to be shown or hidden
+// picked in the scene, until 'q', to be shown or hidden: a tool of the
+// current window (see sceneTool)
 static void _visibility_interactive(int row, bool show)
 {
   bool physical = (row >= ROW_PHYSICALS);
+  bool elements = (row == ROW_ELEMENTS);
   int dim = (row - ROW_ENTITIES) % 4, what;
   std::string str = physical ? "physical " : "";
-  if(row == ROW_ELEMENTS) {
-    CTX::instance()->pickElements = 1;
+  if(elements) {
     what = ENT_ALL;
     str += "elements";
   }
   else {
-    CTX::instance()->pickElements = 0;
     what = selectionDriver::entityKinds[dim].type;
     str += selectionDriver::entityKinds[dim].names;
     // the surfaces and volumes are drawn by their mesh once they have one
@@ -1064,55 +1065,53 @@ static void _visibility_interactive(int row, bool show)
       selectionDriver::show(what);
   }
   str += show ? " to show" : " to hide";
+  std::string status = "Select " + str + "\n[Press " +
+                       (show ? "" : "'u' to undo or ") + "Escape to abort]";
 
-  std::vector<GVertex *> vertices;
-  std::vector<GEdge *> edges;
-  std::vector<GFace *> faces;
-  std::vector<GRegion *> regions;
-  std::vector<MElement *> elements;
-  // when they were picked: the draws below process events, which may change
-  // the model or its mesh
-  modelStamps before;
+  // what was picked last, for an undo, and when (the model or its mesh may
+  // change meanwhile, and what an undo would show again be gone)
+  struct picked {
+    std::vector<GVertex *> vertices;
+    std::vector<GEdge *> edges;
+    std::vector<GFace *> faces;
+    std::vector<GRegion *> regions;
+    std::vector<MElement *> elements;
+    modelStamps stamps;
+  };
+  auto last = std::make_shared<picked>();
 
-  while(1) {
-    if(what == ENT_ALL) CTX::instance()->meshChanged();
-    drawContext::global()->draw();
-    Msg::StatusGl("Select %s\n[Press %s'q' to abort]", str.c_str(),
-                  show ? "" : "'u' to undo or ");
-
-    char ib = FlGui::instance()->selectEntity(what);
-    if(!FlGui::available()) break;
-    // the model or its mesh changed meanwhile: what an undo would show again
-    // may be gone
-    if(before.changed()) {
-      vertices.clear();
-      edges.clear();
-      faces.clear();
-      regions.clear();
-      elements.clear();
-    }
-    before.record();
-    if(ib == 'l') {
-      // store for possible undo later
-      vertices = FlGui::instance()->selectedVertices;
-      edges = FlGui::instance()->selectedEdges;
-      faces = FlGui::instance()->selectedFaces;
-      regions = FlGui::instance()->selectedRegions;
-      elements = FlGui::instance()->selectedElements;
-      _apply_visibility(show ? PickShow : PickHide, physical, vertices, edges,
-                        faces, regions, elements);
-    }
-    if(ib == 'u' && !show) { // undo only in hide mode
-      _apply_visibility(PickUndo, physical, vertices, edges, faces, regions,
-                        elements);
-    }
-    if(ib == 'q') { break; }
-  }
-
-  CTX::instance()->meshChanged();
-  CTX::instance()->pickElements = 0;
-  drawContext::global()->draw();
-  Msg::StatusGl("");
+  // (the elements drawn one by one for their picking)
+  if(elements) CTX::instance()->meshChanged();
+  sceneTool::start(
+    new functionTool(
+      "Visibility", what, elements, [status](sceneView *) { return status; },
+      [=](char ib, sceneView *, const scenePicks &p) {
+        if(ib == 'q') return false;
+        if(last->stamps.changed()) *last = picked();
+        last->stamps.record();
+        if(ib == 'l') {
+          last->vertices = p.vertices;
+          last->edges = p.edges;
+          last->faces = p.faces;
+          last->regions = p.regions;
+          last->elements = p.elements;
+          _apply_visibility(show ? PickShow : PickHide, physical, elements,
+                            last->vertices, last->edges, last->faces,
+                            last->regions, last->elements);
+        }
+        if(ib == 'u' && !show) // undo only in hide mode
+          _apply_visibility(PickUndo, physical, elements, last->vertices,
+                            last->edges, last->faces, last->regions,
+                            last->elements);
+        if(elements) CTX::instance()->meshChanged();
+        return true;
+      },
+      []() {
+        CTX::instance()->meshChanged();
+        drawContext::global()->draw();
+      }),
+    FlGui::instance()->getCurrentOpenglWindow(),
+    (Fl_Window *)FlGui::instance()->visibility->win);
 }
 
 static void visibility_pick_show_cb(Fl_Widget *w, void *data)

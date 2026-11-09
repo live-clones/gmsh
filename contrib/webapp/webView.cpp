@@ -34,6 +34,7 @@
 #include "sceneView.h"
 #include "scriptStringInterface.h"
 #include "selectionDriver.h"
+#include "sceneTool.h"
 
 namespace {
   drawContextOffscreen *_view = nullptr;
@@ -51,14 +52,7 @@ namespace {
     // a picking pass drew into the canvas: the frame is to be drawn again
     // before the page shows it
     bool picked = false;
-    // the tool that takes over the clicks, as the buttons of the status bar
-    // of the graphical interface, or an operation on selected entities (see
-    // gmshWebOperation()); the numbers of Tool in onelab.html
-    enum { NoTool, QueryTool, MeasureTool, OperationTool };
-    int tool = NoTool;
     webView() : sceneView(nullptr) {}
-    bool hostQueryMode() { return tool == QueryTool; }
-    bool hostMeasureMode() { return tool == MeasureTool; }
     void hostRedraw() { redrawAsked = true; }
     void hostCursor(bool c) { cross = c; }
     bool hostBeginGL()
@@ -85,10 +79,14 @@ namespace {
   };
   webView *_scene = nullptr;
 
-  // the operation on selected entities under way, the values of the fields
-  // of its form, and how many times operations were carried out (for the
-  // page to show what changed)
-  selectionDriver *_operation = nullptr;
+  // the operation on selected entities under way (a tool, see sceneTool),
+  // the values of the fields of its form, and how many times operations were
+  // carried out (for the page to show what changed)
+  operationTool *operation()
+  {
+    auto *t = dynamic_cast<operationTool *>(sceneTool::current());
+    return (t && t->active()) ? t : nullptr;
+  }
   std::map<std::string, std::string> _values;
   int _changes = 0;
 
@@ -98,35 +96,6 @@ namespace {
     _view->end();
   }
 
-  // what the selection of the tool found at a click, for the tool: the
-  // selection waits for the next click then (see status_query_cb() and
-  // status_measure_cb() in the graphical interface)
-  void toolStep()
-  {
-    std::vector<GVertex *> v;
-    std::vector<GEdge *> e;
-    std::vector<GFace *> f;
-    std::vector<GRegion *> r;
-    std::vector<MElement *> el;
-    std::vector<SPoint2> p;
-    std::vector<PView *> vw;
-    char ib = _scene->selectionStep(v, e, f, r, el, p, vw);
-    if(!ib) return;
-    if(_scene->tool == webView::OperationTool) {
-      if(_operation->step(ib, v, e, f, r, el)) _changes++;
-      if(_operation->active())
-        _scene->beginSelection(_operation->type());
-      else // (over: the clicks are the scene's again, as with no tool)
-        _scene->tool = webView::NoTool;
-      return;
-    }
-    if(ib == 'l' && _scene->tool == webView::QueryTool)
-      _scene->queryClick(v, e, f, r, el, vw);
-    else if(ib == 'l' && _scene->tool == webView::MeasureTool)
-      _scene->measureClick();
-    // the next click, unless the tool was stopped
-    if(_scene->tool) _scene->beginSelection(ENT_ALL);
-  }
 } // namespace
 
 extern "C" {
@@ -190,7 +159,7 @@ EMSCRIPTEN_KEEPALIVE int gmshWebMouse(int kind, double x, double y, int w,
   in.alt = modifiers & ModAlt;
   in.meta = modifiers & ModMeta;
   _scene->handleMouse(in);
-  if(_scene->tool) toolStep();
+  sceneTool::step();
   // the picking pass left its image on the canvas: put the frame back now,
   // before the page shows it
   if(_scene->picked && _view->begin(_width, _height, _scale, true)) {
@@ -294,40 +263,19 @@ EMSCRIPTEN_KEEPALIVE int gmshWebLasso(double *xy)
   return (_scene && _scene->lasso(xy)) ? 1 : 0;
 }
 
-// the query or the measurement taking over the clicks, or neither (see
-// webView::tool), as the buttons of the status bar of the graphical
-// interface: what they left on the picture is taken away
+// the query (1) or the measurement (2) taking over the clicks, or neither
+// (0), as the buttons of the status bar of the graphical interface (see
+// sceneTool): what they left on the picture is taken away
 EMSCRIPTEN_KEEPALIVE int gmshWebTool(int tool)
 {
   Msg::NoThrow noThrow;
   if(!_view || !_view->getDrawContext()) return 0;
   if(!_scene) _scene = new webView();
   _scene->setDrawContext(_view->getDrawContext());
-  // the operation under way stops
-  delete _operation;
-  _operation = nullptr;
-  // a query picks mesh elements, as long as it is on
-  static int pickElements = 0;
-  if(_scene->tool == webView::QueryTool)
-    CTX::instance()->pickElements = pickElements;
-  _scene->tool = tool;
-  GModel::current()->setSelection(0);
-  _scene->getDrawContext()->clearMarks();
-  _scene->pinTooltip("");
-  if(tool == webView::QueryTool) {
-    pickElements = CTX::instance()->pickElements;
-    CTX::instance()->pickElements = 1;
-  }
-  if(tool) {
-    // a pick needs the mouse selection (the "S" button)
-    if(!CTX::instance()->mouseSelection)
-      opt_general_mouse_selection(0, GMSH_SET, 1);
-    _scene->beginSelection(ENT_ALL);
-  }
-  else {
-    _scene->quitSelection = 1;
-    toolStep();
-  }
+  // (the tool under way, an operation say, stops)
+  sceneTool::stop();
+  if(tool == 1) sceneTool::start(newQueryTool(), _scene);
+  if(tool == 2) sceneTool::start(newMeasureTool(), _scene);
   return 1;
 }
 
@@ -342,26 +290,30 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebOperation(const char *name)
   Msg::NoThrow noThrow;
   static std::string json;
   json = "";
-  if(!gmshWebTool(webView::NoTool) || !name[0]) return json.c_str();
+  if(!gmshWebTool(0) || !name[0]) return json.c_str();
   _values.clear();
-  _operation = new selectionDriver(name, [](const std::string &n) {
-    auto it = _values.find(n);
-    if(it != _values.end()) return it->second;
-    for(auto &f : _operation->fields())
-      if(f.name == n) return f.value;
-    return std::string();
-  });
-  if(!_operation->active()) {
-    delete _operation;
-    _operation = nullptr;
+  auto *t = new operationTool(
+    name,
+    [](const std::string &n) {
+      auto it = _values.find(n);
+      if(it != _values.end()) return it->second;
+      // the default of the field (of the operation, once it has started)
+      operationTool *o = operation();
+      for(auto &f : o ? o->driver().fields() : selectionDriver::allFields())
+        if(f.name == n) return f.value;
+      return std::string();
+    },
+    [](const selectionDriver &) {
+      _changes++;
+      return true;
+    });
+  if(!t->active()) {
+    delete t;
     return json.c_str();
   }
-  _scene->tool = webView::OperationTool;
-  if(!CTX::instance()->mouseSelection)
-    opt_general_mouse_selection(0, GMSH_SET, 1);
-  _scene->beginSelection(_operation->type());
+  sceneTool::start(t, _scene);
   json = "[";
-  for(auto &f : _operation->fields())
+  for(auto &f : t->driver().fields())
     json += std::string(json.size() > 1 ? "," : "") +
             "{\"name\":" + JsonString(f.name) +
             ",\"kind\":" + JsonString(f.kind) +
@@ -381,8 +333,7 @@ EMSCRIPTEN_KEEPALIVE void gmshWebOperationValue(const char *name,
   int mode = selectionDriver::selectionMode(value);
   if(std::string(name) == "Selection mode" && mode != ENT_ALL)
     selectionDriver::show(mode);
-  if(_operation && _operation->active())
-    _scene->beginSelection(_operation->type());
+  if(operation()) sceneTool::restart();
 }
 
 // a key of the operation: 'e' ends the selection, 'u' takes back what was
@@ -390,11 +341,11 @@ EMSCRIPTEN_KEEPALIVE void gmshWebOperationValue(const char *name,
 EMSCRIPTEN_KEEPALIVE void gmshWebOperationKey(int key)
 {
   Msg::NoThrow noThrow;
-  if(!_scene || _scene->tool != webView::OperationTool) return;
+  if(!_scene || !operation()) return;
   if(key == 'e') _scene->endSelection = 1;
   if(key == 'u') _scene->undoSelection = 1;
   if(key == 'q') _scene->quitSelection = 1;
-  toolStep();
+  sceneTool::step();
 }
 
 // the operation, in JSON: {"name" ("" once it is over), "status" (what to
@@ -403,9 +354,9 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebOperationState()
 {
   Msg::NoThrow noThrow;
   static std::string json;
-  bool on = _operation && _operation->active();
-  json = "{\"name\":" + JsonString(on ? _operation->operation() : "") +
-         ",\"status\":" + JsonString(on ? _operation->status() : "") +
+  operationTool *t = operation();
+  json = "{\"name\":" + JsonString(t ? t->name() : "") +
+         ",\"status\":" + JsonString(t ? t->status(_scene) : "") +
          ",\"changes\":" + std::to_string(_changes) + "}";
   return json.c_str();
 }
@@ -555,10 +506,8 @@ EMSCRIPTEN_KEEPALIVE int gmshWebAddShape(const char *shape, const char *values)
 EMSCRIPTEN_KEEPALIVE int gmshWebMeasuring()
 {
   Msg::NoThrow noThrow;
-  return (_scene && _scene->tool == webView::MeasureTool &&
-          _scene->measuring()) ?
-           1 :
-           0;
+  bool on = _scene && sceneTool::running("Measure") && _scene->measuring();
+  return on ? 1 : 0;
 }
 
 // What the query and the measurement show over the picture, in JSON, for the

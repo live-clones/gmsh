@@ -492,7 +492,6 @@ selectionDriver::selectionDriver(const std::string &operation,
     std::string what = kindOf(op).what;
     _meshParts = true;
     _pickElements = (what == "elements");
-    CTX::instance()->pickElements = _pickElements;
     _add(typeOfNames(what), what);
     _apply = [this, reverse]() {
       std::set<GEntity *> entities;
@@ -583,7 +582,7 @@ std::string selectionDriver::status() const
   if(_anyPicked())
     keys +=
       (keys.empty() ? "" : ", ") + std::string("'u' to undo last selection");
-  keys += (keys.empty() ? "" : " or ") + std::string("'q' to abort");
+  keys += (keys.empty() ? "" : " or ") + std::string("Escape to abort");
   return "Select " + what + "\n[Press " + keys + "]";
 }
 
@@ -773,8 +772,5 @@ void selectionDriver::quit()
   if(!active()) return;
   _clear();
   _phase = -1;
-  if(_meshParts) {
-    CTX::instance()->pickElements = 0;
-    CTX::instance()->meshChanged();
-  }
+  if(_meshParts) CTX::instance()->meshChanged();
 }

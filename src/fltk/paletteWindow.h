@@ -13,6 +13,7 @@
 #include "windowPlacement.h"
 #include "widthRules.h"
 #include "gmshScheme.h"
+#include "sceneTool.h"
 
 class paletteWindow;
 
@@ -91,6 +92,8 @@ public:
 // them (Escape, and the key that closes a window)
 class paletteWindow : public gmshWindow {
 private:
+  // the selection this window is for being ended by its closing (see hide())
+  bool _endingTool = false;
   // the widgets that follow the width of the window, laid out at _width
   widthRules _rules;
   int _width;
@@ -286,6 +289,13 @@ public:
     case FL_KEYBOARD:
       // docked, only when the focus is inside: the main window has its own
       if(parent() && !contains(Fl::focus())) break;
+      // Escape stops the selection this window is for first, as in the
+      // graphic window (a second one closes it, unless the end of the
+      // selection did); the close key closes it, which ends the selection
+      if(Fl::test_shortcut(FL_Escape) && sceneTool::owner() == ownerId()) {
+        sceneTool::stop();
+        return 1;
+      }
       if(_closeKey() || Fl::test_shortcut(FL_Escape)) {
         do_callback();
         return 1;
@@ -307,10 +317,21 @@ public:
     _showOnDesktop();
     watchMoves(this);
   }
+  // what a tool started for this window gives as its owner (see sceneTool)
+  const void *ownerId() const { return (const Fl_Window *)this; }
   virtual void hide()
   {
+    // (hidden below, once: the end of the selection may hide it too)
+    if(_endingTool) return;
     // FLTK also hides the subwindows of a window it hides: not a close
-    if(parent() && host && top_window()->shown())
+    bool docked = parent() && host && top_window()->shown();
+    // closed (by any means): the selection it is for ends
+    if((docked || !parent()) && sceneTool::owner() == ownerId()) {
+      _endingTool = true;
+      sceneTool::stop();
+      _endingTool = false;
+    }
+    if(docked)
       host->toolHidden(this);
     else
       Fl_Double_Window::hide();

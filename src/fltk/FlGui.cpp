@@ -20,6 +20,7 @@
 #include <FL/Fl_Copy_Surface.H>
 #include <FL/Fl_Image.H>
 #include "FlGui.h"
+#include "sceneTool.h"
 #include "gmshScheme.h"
 #include "desktop.h"
 #include "mainWindow.h"
@@ -76,14 +77,15 @@
 // 1. Every event goes through FlGui::_dispatch(), which records the widgets
 //    it is sent to (the one with the focus, the pushed one, the one under the
 //    pointer) while it is handled.
-// 2. Callbacks run nested event loops: a selection waits for clicks
-//    (FlGui::selectEntity()), meshing and solvers handle events while they run
-//    (FlGui::check()), dialogs and popup menus have loops of their own. The
-//    events handled there may delete widgets, close windows, or close the
-//    whole interface. So code that runs a nested loop checks after it that
-//    what it uses still exists: FlGui::available() for the interface (never
-//    FlGui::instance(), which would build a new one), an Fl_Widget_Tracker
-//    for a widget.
+// 2. Callbacks run nested event loops: meshing and solvers handle events
+//    while they run (FlGui::check()), dialogs and popup menus have loops of
+//    their own, and so does the API waiting for a selection
+//    (FlGui::selectEntity()); the picks of the interface do not wait, they
+//    are tools stepped by the events (see sceneTool). The events handled in
+//    a nested loop may delete widgets, close windows, or close the whole
+//    interface. So code that runs one checks after it that what it uses
+//    still exists: FlGui::available() for the interface (FlGui::instance()
+//    is null once it is gone), an Fl_Widget_Tracker for a widget.
 // 3. A widget whose code may still be running (an event being handled was
 //    sent to it) is never deleted directly: the lists made again (the ONELAB
 //    tree, the context window) retire such rows with FlGui::retireInEvent(),
@@ -412,6 +414,8 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
 
   // add global shortcuts
   Fl::add_handler(globalShortcut);
+  // the buttons of the query and the measurement follow the tools
+  sceneTool::changed = updateModeButtons;
 
   Fl::event_dispatch(_dispatch);
 
@@ -586,6 +590,7 @@ FlGui::~FlGui()
   // what was registered for this GUI, which a new one registers again
   Fl::remove_handler(globalShortcut);
   Fl::event_dispatch(nullptr);
+  sceneTool::changed = nullptr;
   Fl::remove_timeout(gamepad_handler);
   drawContext::setDrawGeomTransientFunction(nullptr);
 
@@ -725,6 +730,8 @@ void FlGui::destroy()
 {
   if(!_instance) return;
 
+  // the tool under way ends while its windows are there
+  sceneTool::stop();
   _instance->onelabContext->disableRedraw();
 
   // hide all windows (in case they are not tracked by FlGui)...
@@ -866,6 +873,9 @@ int FlGui::testArrowShortcuts()
 static void setSelectionFlag(int sceneView::*flag)
 {
   for(openglWindow *gl : FlGui::instance()->openglWindows()) gl->*flag = 1;
+  // the tool under way takes it now; without one, the API waiting for a
+  // selection reads it (see openglWindow::selectEntity())
+  sceneTool::step();
 }
 
 // placing an elementary entity with the mouse: the axis i frozen or not, or
@@ -881,22 +891,28 @@ static void freezeAxis(int i, bool allBut)
 
 // Escape leaves the full screen, or cancels a lasso, or toggles the mouse
 // selection
+// Escape cancels what is under way, one thing at a time: a lasso, then the
+// selection (a tool, or the API waiting for one: as 'q'), then full screen
+// (picking is switched off and on by Shift+Escape, see "mouse_selection")
 static void escape()
 {
-  if(FlGui::instance()->fullscreen->shown()) {
-    window_cb(nullptr, (void *)"fullscreen");
-    return;
-  }
-  bool lasso = false;
-  for(openglWindow *gl : FlGui::instance()->openglWindows())
+  bool lasso = false, selection = sceneTool::current() != nullptr;
+  for(openglWindow *gl : FlGui::instance()->openglWindows()) {
     if(gl->lassoMode) lasso = true;
+    if(gl->selectionMode) selection = true;
+  }
   if(lasso) {
     for(openglWindow *gl : FlGui::instance()->openglWindows())
       gl->lassoMode = false;
     drawContext::global()->draw();
     return;
   }
-  mouse_selection_cb(nullptr, nullptr);
+  if(selection) {
+    setSelectionFlag(&sceneView::quitSelection);
+    return;
+  }
+  if(FlGui::instance()->fullscreen->shown())
+    window_cb(nullptr, (void *)"fullscreen");
 }
 
 // the plugins of the view shown in the options window
@@ -936,6 +952,7 @@ const std::map<std::string, fltkAction> &keyboardActions()
     {"freeze_but_y", {[](int) { freezeAxis(1, true); }}},
     {"freeze_but_z", {[](int) { freezeAxis(2, true); }}},
     {"escape", {[](int) { escape(); }}},
+    {"mouse_selection", {[](int) { mouse_selection_cb(nullptr, nullptr); }}},
     // the windows
     {"options_solver", {[](int) { solver_options_cb(nullptr, nullptr); }}},
     {"options_post", {[](int) { post_options_cb(nullptr, nullptr); }}},
@@ -1107,11 +1124,11 @@ drawContext *FlGui::getCurrentDrawContext()
   return getCurrentOpenglWindow()->getDrawContext();
 }
 
-char FlGui::selectEntity(int type)
+char FlGui::selectEntity(int type, bool pickElements)
 {
   return getCurrentOpenglWindow()->selectEntity(
-    type, selectedVertices, selectedEdges, selectedFaces, selectedRegions,
-    selectedElements, selectedPoints, selectedViews);
+    type, pickElements, selectedVertices, selectedEdges, selectedFaces,
+    selectedRegions, selectedElements, selectedPoints, selectedViews);
 }
 
 void FlGui::setStatus(const std::string &msg, bool opengl)

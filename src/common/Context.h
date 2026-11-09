@@ -470,9 +470,10 @@ public:
   double arrowRelHeadRadius, arrowRelStemRadius, arrowRelStemLength;
   // dynamic variable tracking if the bbox is currently imposed
   int forcedBBox;
-  // enable selection/hover using the mouse; pickElements asks a pick to
-  // return the mesh element under the point it hit, instead of the entity
-  int mouseSelection, mouseHoverMeshes, mouseHoverHighlight, pickElements;
+  // enable selection/hover using the mouse (whether a pick returns the mesh
+  // element under the point it hit is a parameter of the selection, see
+  // sceneView::beginSelection())
+  int mouseSelection, mouseHoverMeshes, mouseHoverHighlight;
   // invert sense of mouse wheel zoom
   int mouseInvertZoom;
   // disable some warnings for expert users?

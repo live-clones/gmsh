@@ -7,6 +7,7 @@
 #include <cmath>
 #include <cstdio>
 #include "sceneView.h"
+#include "sceneTool.h"
 #include "GmshDefines.h"
 #include "GmshMessage.h"
 #include "GModel.h"
@@ -20,6 +21,13 @@
 #include "StringUtils.h"
 #include "Context.h"
 
+// the scenes there are
+static std::vector<sceneView *> &_scenes()
+{
+  static std::vector<sceneView *> s;
+  return s;
+}
+
 sceneView::sceneView(drawContext *ctx)
   : _w(1), _h(1), _selection(ENT_NONE), _trySelection(0), _addQuery(false),
     _highlightedDim(-1), _highlightedTag(0), _highlightedWas(0),
@@ -28,6 +36,8 @@ sceneView::sceneView(drawContext *ctx)
     _fireTime(0.), addPointMode(0), lassoMode(false), selectionMode(false),
     endSelection(0), undoSelection(0), quitSelection(0), changeSelection(0)
 {
+  _selectionElements = false;
+  _scenes().push_back(this);
   for(int i = 0; i < 3; i++) _point[i] = 0.;
   for(int i = 0; i < 4; i++) _trySelectionXYWH[i] = 0;
   _stepAnchor[0] = _stepAnchor[1] = 0.;
@@ -39,16 +49,21 @@ sceneView::~sceneView()
 {
   GEntity *was = _highlightedEntity();
   if(was) was->setSelection(_highlightedWas);
+  // (out of the scenes first: the tool on it ends, whose end may go through
+  // them, and what a derived class held is gone already)
+  auto &s = _scenes();
+  s.erase(std::remove(s.begin(), s.end(), this), s.end());
+  sceneTool::forget(this);
 }
 
-bool sceneView::_select(int type, bool multiple, bool mesh, bool post, int x,
-                        int y, int w, int h, std::vector<GVertex *> &vertices,
-                        std::vector<GEdge *> &edges,
-                        std::vector<GFace *> &faces,
-                        std::vector<GRegion *> &regions,
-                        std::vector<MElement *> &elements,
-                        std::vector<SPoint2> &points,
-                        std::vector<PView *> &views, bool through)
+const std::vector<sceneView *> &sceneView::all() { return _scenes(); }
+
+bool sceneView::_select(
+  int type, bool multiple, bool mesh, bool post, int x, int y, int w, int h,
+  std::vector<GVertex *> &vertices, std::vector<GEdge *> &edges,
+  std::vector<GFace *> &faces, std::vector<GRegion *> &regions,
+  std::vector<MElement *> &elements, std::vector<SPoint2> &points,
+  std::vector<PView *> &views, bool pickElements, bool through)
 {
   // no picking passes when mouse selection is off (General.MouseSelection),
   // which is how users avoid their cost
@@ -56,9 +71,11 @@ bool sceneView::_select(int type, bool multiple, bool mesh, bool post, int x,
   // not while a frame is being drawn (a host checking its events in the
   // middle of one can deliver a click there): the passes would mix
   if(!hostBeginGL()) return false;
+  _ctx->pickElements = pickElements;
   bool ret = _ctx->select(type, multiple, mesh, post, x, y, w, h, vertices,
                           edges, faces, regions, elements, points, views,
                           through);
+  _ctx->pickElements = false;
   hostEndGL();
   return ret;
 }
@@ -179,14 +196,11 @@ void sceneView::_hover()
   // the hover looks at them otherwise: what is highlighted is what a click
   // would take
   bool all = selectionMode || CTX::instance()->mouseHoverMeshes;
-  // the mesh element under the cursor is looked for in the octree of the
-  // model: a query asks for it on a click, a hover would ask on every move
-  int elems = CTX::instance()->pickElements;
-  CTX::instance()->pickElements = 0;
-  bool res = _select(_selection, false, all, all, (int)_curr.win[0],
-                     (int)_curr.win[1], 5, 5, vertices, edges, faces,
-                     regions, elements, points, views);
-  CTX::instance()->pickElements = elems;
+  // (not the mesh element under the cursor, looked for in the octree of the
+  // model: a query asks for it on a click, a hover would ask on every move)
+  bool res =
+    _select(_selection, false, all, all, (int)_curr.win[0], (int)_curr.win[1],
+            5, 5, vertices, edges, faces, regions, elements, points, views);
   hostCursor((_selection == ENT_ALL && res) ||
              (_selection == ENT_POINT && vertices.size()) ||
              (_selection == ENT_CURVE && edges.size()) ||
@@ -236,7 +250,7 @@ void sceneView::_hover()
 
   // while a measurement waits for its second point, the line follows the
   // cursor over the model, so that its length is seen as it is chosen
-  if(hostMeasureMode() && _ctx->numMarks() == 1) {
+  if(sceneTool::running("Measure") && _ctx->numMarks() == 1) {
     double a[3], p[3];
     if(_ctx->mark(0, a) && _ctx->pickPoint(p))
       _ctx->setSegment(a, p);
@@ -453,7 +467,8 @@ void sceneView::handleMouse(const paneInput &in)
     if(in.button == 0 && !shift && (!alt || lassoMode)) {
       // Ctrl+click adds a query in query mode (when the clicks select), and
       // starts a lasso otherwise
-      _addQuery = hostQueryMode() && CTX::instance()->mouseSelection && ctrl;
+      _addQuery =
+        sceneTool::running("Query") && CTX::instance()->mouseSelection && ctrl;
       if(!lassoMode && ctrl && !_addQuery)
         lassoMode = true;
       else
@@ -697,15 +712,27 @@ void sceneView::handleMouse(const paneInput &in)
   }
 }
 
-void sceneView::beginSelection(int type)
+void sceneView::beginSelection(int type, bool elements)
 {
   _selection = type;
+  _selectionElements = elements;
   _trySelection = 0;
   selectionMode = true;
   quitSelection = 0;
   changeSelection = 0;
   endSelection = 0;
   undoSelection = 0;
+}
+
+void sceneView::cancelSelection()
+{
+  _selection = ENT_NONE;
+  _trySelection = 0;
+  quitSelection = 0;
+  selectionMode = false;
+  lassoMode = false;
+  addPointMode = 0;
+  hostCursor(false);
 }
 
 char sceneView::selectionStep(std::vector<GVertex *> &vertices,
@@ -722,11 +749,7 @@ char sceneView::selectionStep(std::vector<GVertex *> &vertices,
     changeSelection = 0;
   }
   if(quitSelection) {
-    _selection = ENT_NONE;
-    selectionMode = false;
-    lassoMode = false;
-    addPointMode = 0;
-    hostCursor(false);
+    cancelSelection();
     return 'q';
   }
   // the selection is over, as in every other return below (beginSelection()
@@ -751,7 +774,8 @@ char sceneView::selectionStep(std::vector<GVertex *> &vertices,
     else if(_select(_selection, multi, true, true, _trySelectionXYWH[0],
                     _trySelectionXYWH[1], _trySelectionXYWH[2],
                     _trySelectionXYWH[3], vertices, edges, faces, regions,
-                    elements, points, views, !_trySelectionFront)) {
+                    elements, points, views, _selectionElements,
+                    !_trySelectionFront)) {
       _selection = ENT_NONE;
       selectionMode = false;
       return add ? 'l' : 'r';

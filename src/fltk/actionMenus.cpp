@@ -45,6 +45,7 @@
 #include "Options.h"
 #include "Context.h"
 #include "selectionDriver.h"
+#include "sceneTool.h"
 #include "Actions.h"
 
 #if defined(HAVE_MESH)
@@ -84,7 +85,6 @@ static bool physicalGroupChanged(const selectionDriver &d)
     param, "ONELAB Context/" + what + " Template");
   const std::vector<std::pair<int, int> > &picked = d.done()[0];
   if(picked.size() && param.size() && !remove) {
-    FlGui::instance()->getCurrentOpenglWindow()->quitSelection = 1;
     GModel::current()->setSelection(0);
     FlGui::instance()->onelabContext->show(picked[0].first, picked[0].second);
     return false;
@@ -93,31 +93,38 @@ static bool physicalGroupChanged(const selectionDriver &d)
   return true;
 }
 
-// An operation on selected entities (see selectionDriver): the clicks and the
-// keys are waited for until it is over
-static void runSelection(const std::string &operation)
+// An operation on selected entities (see selectionDriver), as a tool of the
+// current window (see sceneTool), for the dialog window if there is one (its
+// owner); finished() once it is over
+static void runSelection(const std::string &operation,
+                         std::function<void()> finished,
+                         Fl_Window *window = nullptr)
 {
-  selectionDriver d(operation, [operation](const std::string &name) {
-    return dialogValue(operation, name);
-  });
-  while(d.active()) {
-    if(!FlGui::available()) return;
-    Msg::StatusGl("%s", d.status().c_str());
-    char ib = FlGui::instance()->selectEntity(d.type());
-    if(!FlGui::available()) return;
-    FlGui *g = FlGui::instance();
-    if(d.step(ib, g->selectedVertices, g->selectedEdges, g->selectedFaces,
-              g->selectedRegions, g->selectedElements)) {
-      g->resetVisibility();
-      if(selectionDriver::kindOf(operation).on == selectionDriver::OnPhysical &&
-         !physicalGroupChanged(d))
-        break;
-    }
-    drawContext::global()->draw();
+  auto *t = new operationTool(
+    operation,
+    [operation](const std::string &name) {
+      return dialogValue(operation, name);
+    },
+    [operation](const selectionDriver &d) {
+      if(!FlGui::available()) return false;
+      FlGui::instance()->resetVisibility();
+      if(selectionDriver::kindOf(operation).on == selectionDriver::OnPhysical)
+        return physicalGroupChanged(d);
+      return true;
+    },
+    [finished]() {
+      if(FlGui::available() && finished) finished();
+    });
+  if(!t->active()) {
+    delete t;
+    if(finished) finished();
+    return;
   }
-  if(FlGui::available()) Msg::StatusGl("");
+  sceneTool::start(t, FlGui::instance()->getCurrentOpenglWindow(), window);
 }
 
+// a point, or a shape placed at points, following the mouse (and the values
+// of the dialog) until 'e' adds it, as a tool of the current window
 static void add_new_point_based_entity(const std::string &what, int pane)
 {
   opt_general_axes(0, GMSH_SET | GMSH_GUI, 3);
@@ -126,38 +133,43 @@ static void add_new_point_based_entity(const std::string &what, int pane)
 
   FlGui::instance()->elementaryContext->show(pane);
 
-  while(1) {
-    if(!FlGui::available()) return;
-
+  std::string name = what;
+  std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+  auto pointMode = [](int mode) {
     for(openglWindow *gl : FlGui::instance()->openglWindows())
-      gl->addPointMode = 1;
-    std::string name = what;
-    std::transform(name.begin(), name.end(), name.begin(), ::tolower);
-    Msg::StatusGl(
-      "Move mouse and/or enter coordinates\n"
-      "[Press 'Shift' to hold position, 'e' to add %s or 'q' to abort]",
-      name.c_str());
-    char ib = FlGui::instance()->selectEntity(ENT_NONE);
-    if(!FlGui::available()) return;
-    if(ib == 'e') {
-      FlGui::instance()->elementaryContext->addShape(pane);
-      FlGui::instance()->resetVisibility();
-      drawContext::global()->draw();
-    }
-    if(ib == 'q') {
-      for(openglWindow *gl : FlGui::instance()->openglWindows())
-        gl->addPointMode = 0;
-      break;
-    }
-  }
-
-  drawContext::setDrawGeomTransientFunction(nullptr);
-  if(!FlGui::available()) return;
-  FlGui::instance()->elementaryContext->hide();
-
-  // at the end, not during creation to avoid having things jumping around
-  SetBoundingBox();
-  Msg::StatusGl("");
+      gl->addPointMode = mode;
+  };
+  sceneTool::start(
+    new functionTool(
+      "Add " + what, ENT_NONE, false,
+      [name](sceneView *) {
+        return "Move mouse and/or enter coordinates\n[Press 'Shift' to hold "
+               "position, 'e' to add " +
+               name + " or Escape to abort]";
+      },
+      [pane, pointMode](char ib, sceneView *, const scenePicks &) {
+        if(ib == 'q') return false;
+        if(ib == 'e') {
+          FlGui::instance()->elementaryContext->addShape(pane);
+          FlGui::instance()->resetVisibility();
+        }
+        // (the point follows the mouse again)
+        pointMode(1);
+        return true;
+      },
+      [pointMode]() {
+        drawContext::setDrawGeomTransientFunction(nullptr);
+        if(!FlGui::available()) return;
+        pointMode(0);
+        FlGui::instance()->elementaryContext->hide();
+        // at the end, not during creation to avoid having things jumping
+        // around
+        SetBoundingBox();
+        drawContext::global()->draw();
+      }),
+    FlGui::instance()->getCurrentOpenglWindow(),
+    (Fl_Window *)FlGui::instance()->elementaryContext->win);
+  pointMode(1);
 }
 
 // after an operation on the mesh, which processes events: the GUI may have
@@ -181,8 +193,7 @@ static void runOperation(const std::string &op)
   // on the model (nor the picking mode changed then)
   if(k.on == selectionDriver::OnMeshParts) {
     if(modelBusy()) return;
-    runSelection(op);
-    afterMeshOperation();
+    runSelection(op, afterMeshOperation);
     return;
   }
   // the pane of the transform context window, and whether it extrudes
@@ -204,9 +215,11 @@ static void runOperation(const std::string &op)
   auto t = transforms.find(op);
   auto m = meshPanes.find(op);
   std::function<void()> hide = [] {};
+  Fl_Window *window = nullptr;
   if(k.on == selectionDriver::OnPhysical) {
     g->physicalContext->show(k.what, k.remove);
     hide = [] { FlGui::instance()->physicalContext->hide(); };
+    window = g->physicalContext->win;
   }
   else if(t != transforms.end() || k.on == selectionDriver::OnBoolean) {
     if(t != transforms.end())
@@ -215,13 +228,14 @@ static void runOperation(const std::string &op)
     else
       g->transformContext->show(4);
     hide = [] { FlGui::instance()->transformContext->hide(); };
+    window = g->transformContext->win;
   }
   else if(m != meshPanes.end()) {
     g->meshContext->show(m->second);
     hide = [] { FlGui::instance()->meshContext->hide(); };
+    window = g->meshContext->win;
   }
-  runSelection(op);
-  if(FlGui::available()) hide();
+  runSelection(op, hide, window);
 }
 
 // a shape: placed with the mouse, or from the values of its fields

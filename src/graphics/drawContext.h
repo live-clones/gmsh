@@ -614,6 +614,9 @@ public:
   // that set them (see world2Window() above)
   void viewport2World(double vp[3], double xyz[3]);
   void world2Viewport(double xyz[3], double vp[3]);
+  // a pick on a mesh gives its element (the query): set by the scene for its
+  // picking pass (see sceneView::beginSelection())
+  bool pickElements = false;
   bool select(int type, bool multiple, bool mesh, bool post, int x, int y,
               int w, int h, std::vector<GVertex *> &vertices,
               std::vector<GEdge *> &edges, std::vector<GFace *> &faces,

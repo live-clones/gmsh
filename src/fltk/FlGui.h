@@ -232,8 +232,9 @@ public:
   void splitCurrentOpenglWindow(char how, double ratio = 0.5);
   // copy the current opengl window to the clipboard
   void copyCurrentOpenglWindowToClipboard();
-  // select an entity in the most recent graphic window
-  char selectEntity(int type);
+  // wait for a selection in the most recent graphic window (the API's: the
+  // interface's own picks are tools, see sceneTool)
+  char selectEntity(int type, bool pickElements = false);
   // display status message
   void setStatus(const std::string &msg, bool opengl = false);
   // redisplay last status message

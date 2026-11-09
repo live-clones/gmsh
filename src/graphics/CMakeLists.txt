@@ -29,6 +29,7 @@ set(SRC
   offscreenContext.cpp
   drawContextOffscreen.cpp
   sceneView.cpp
+  sceneTool.cpp
   selectionDriver.cpp
   gl2ps.cpp
   gl2gif.cpp

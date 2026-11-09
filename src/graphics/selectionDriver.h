@@ -138,6 +138,8 @@ public:
   };
   static const entityKind entityKinds[4];
   bool active() const { return _phase >= 0; }
+  // the clicks pick mesh elements (see sceneView::beginSelection())
+  bool pickElements() const { return _pickElements; }
   // what to pick now, and the two lines that say so
   int type() const;
   std::string status() const;

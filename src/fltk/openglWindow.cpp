@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "openglWindow.h"
+#include "sceneTool.h"
 #include "drawContextFltkEmbedded.h"
 #include "graphicWindow.h"
 #include "paletteWindow.h"
@@ -94,6 +95,9 @@ void openglWindow::_setLock(bool on)
 
 openglWindow::~openglWindow()
 {
+  // the tool on this window ends while it is whole (its end may clear what
+  // the scenes show, this one too)
+  sceneTool::forget(this);
   // hidden while whole: FLTK hides it when it is deleted, which moves the
   // focus and may run callbacks that draw it (an edited value committed)
   hide();
@@ -653,6 +657,9 @@ int openglWindow::handle(int event)
     handleMouse(in);
     // the clicks start over after a double click
     if(in.doubleClick) Fl::event_clicks(-1);
+    // the tool under way takes the answer of the selection (last: its step
+    // may process events that delete this window)
+    sceneTool::step();
     return 1;
   }
 
@@ -695,10 +702,6 @@ bool openglWindow::hostBeginGL()
 
 void openglWindow::hostEndGL() { _setLock(false); }
 
-bool openglWindow::hostQueryMode() { return queryMode(); }
-
-bool openglWindow::hostMeasureMode() { return measureMode(); }
-
 bool openglWindow::hostFrozenCoordinate(int coord)
 {
   return FlGui::instance()->elementaryContext->frozenPointCoord(coord);
@@ -727,14 +730,14 @@ int openglWindow::pixel_w() { return Fl_Gl_Window::pixel_w(); }
 int openglWindow::pixel_h() { return Fl_Gl_Window::pixel_h(); }
 
 // the clicks and keys of a selection are taken by the event loop: wait for
-// them until the selection has something to say
-char openglWindow::selectEntity(int type, std::vector<GVertex *> &vertices,
-                                std::vector<GEdge *> &edges,
-                                std::vector<GFace *> &faces,
-                                std::vector<GRegion *> &regions,
-                                std::vector<MElement *> &elements,
-                                std::vector<SPoint2> &points,
-                                std::vector<PView *> &views)
+// them until the selection has something to say. Only the API waits so
+// (gmsh::fltk::selectEntities()...): the interface runs its tools step by
+// step (see sceneTool)
+char openglWindow::selectEntity(
+  int type, bool pickElements, std::vector<GVertex *> &vertices,
+  std::vector<GEdge *> &edges, std::vector<GFace *> &faces,
+  std::vector<GRegion *> &regions, std::vector<MElement *> &elements,
+  std::vector<SPoint2> &points, std::vector<PView *> &views)
 {
   if(!FlGui::available()) return 'q';
 
@@ -746,7 +749,9 @@ char openglWindow::selectEntity(int type, std::vector<GVertex *> &vertices,
   // force keyboard focus in GL window
   take_focus();
   if(!FlGui::available() || alive.deleted()) return 'q';
-  beginSelection(type);
+  // (the tool under way stops: the clicks are this selection's)
+  sceneTool::stop();
+  beginSelection(type, pickElements);
   // the selections started, to know if one is started while this one waits
   static int started = 0;
   int mine = ++started;
@@ -762,9 +767,10 @@ char openglWindow::selectEntity(int type, std::vector<GVertex *> &vertices,
     views.clear();
     FlGui::wait();
     if(!FlGui::available() || alive.deleted()) return 'q';
-    // another selection was started meanwhile (from a menu during this one):
-    // it took the state of the selection, and this one stops as with 'q'
-    if(started != mine) return 'q';
+    // another selection or a tool was started meanwhile (from a menu during
+    // this one): it took the state of the selection, and this one stops as
+    // with 'q'
+    if(started != mine || sceneTool::current()) return 'q';
     char ret = selectionStep(vertices, edges, faces, regions, elements, points,
                              views);
     if(ret) return ret;
