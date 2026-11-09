@@ -247,7 +247,9 @@ const std::string &GmshLastMergedPostProcessingFile(std::size_t *firstView)
 int GmshMergePostProcessingFile(const std::string &fileName)
 {
   _lastMergedPostProcessingFile = fileName;
+#if defined(HAVE_POST)
   _lastMergedFirstView = PView::list.size();
+#endif
   return MergePostProcessingFile(
     fileName, CTX::instance()->solver.autoShowViews,
     CTX::instance()->solver.autoShowLastStep, true);
