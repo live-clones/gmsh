@@ -267,7 +267,12 @@
            background: var(--lasso-fill); pointer-events: none; z-index: 1; }
   #drop { position: fixed; inset: 0; display: none; place-items: center;
           background: var(--veil); font-size: 18px; z-index: 2; }
-  #model { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #model { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+           border: none; background: none; font: inherit; color: inherit;
+           padding: 2px 4px; cursor: pointer; text-align: left; }
+  #model:empty { display: none; }
+  #model::after { content: ' ▾'; color: var(--muted); }
+  #model:hover { text-decoration: underline; }
   /* touch screens: controls a finger can hit, and fields of 16 px, below
      which a phone zooms the page on them */
   @media (pointer: coarse) {
@@ -372,7 +377,7 @@
   </span>
   <input id="files" type="file" multiple hidden>
   <input id="folder" type="file" webkitdirectory hidden>
-  <span id="model"></span>
+  <button id="model" title="The models in the folder of this one"></button>
   <button id="run" disabled>Run</button>
   <button id="reset" disabled>Reset</button>
   <button id="keys" title="Keyboard shortcuts">?</button>
@@ -859,7 +864,7 @@ const popups = [
   ['openMenu', '#open', () => openMenu(false)],
   ['graphMenu', '#graphMenu, .graphButton'],
   ['rangeMenu', '#rangeMenu, .rangeButton'],
-  ['quickMenu', '#quickMenu, [data-act=quick], .menuButton']];
+  ['quickMenu', '#quickMenu, [data-act=quick], .menuButton, #model']];
 // the first popup open closed: false if none is open
 function closePopup(target = null) {
   for(const [id, keep, close] of popups) {
@@ -1743,15 +1748,19 @@ function setViewOptionOf(tag, option, v) {
   const i = viewTags().indexOf(tag);
   if(i < 0) return;
   setViewOption(option, i, v);
-  // a custom range not given yet: that of the values
-  if(option === 'View.RangeType' && v === 2 &&
-     viewNum(i, 'CustomMin') === viewNum(i, 'CustomMax')) {
-    gmsh.option.setNumber(`View[${i}].CustomMin`, viewNum(i, 'Min'));
-    gmsh.option.setNumber(`View[${i}].CustomMax`, viewNum(i, 'Max'));
-  }
+  customRangeOfValues(i);
   keepViewOption(i, option);
   showViews();
   draw();
+}
+// a custom range a view was not given yet (as when the range of another view
+// becomes custom for all): that of its values, not an empty one that shows
+// nothing
+function customRangeOfValues(i) {
+  if(viewNum(i, 'RangeType') !== 2 || viewNum(i, 'CustomMin') !== viewNum(i, 'CustomMax'))
+    return;
+  gmsh.option.setNumber(`View[${i}].CustomMin`, viewNum(i, 'Min'));
+  gmsh.option.setNumber(`View[${i}].CustomMax`, viewNum(i, 'Max'));
 }
 // the options of a view given to all the views, and to the views to come
 function applyToAllViews(tag, options) {
@@ -1766,6 +1775,7 @@ function applyToAllViews(tag, options) {
       keepViewOption(k, option);
     }
   }
+  for(let k = 0; k < views(); k++) customRangeOfValues(k);
   showViews();
   draw();
 }
@@ -1785,6 +1795,7 @@ function settleViews() {
     const name = gmsh.option.getString(`View[${i}].Name`);
     const kept = {...allViewSettings, ...(viewSettings.get(name) || {})};
     for(const [option, v] of Object.entries(kept)) setViewOption(option, i, v);
+    customRangeOfValues(i);
   });
 }
 // the first visible view (or the first one), for the items of all views
@@ -2330,6 +2341,12 @@ function download(path, keep = false) {
 // [option, kind, label, range if not Gmsh's]; those of the views apply to all,
 // and are given again to the views a new run makes
 const optionGroups = [
+  ['General', [
+    ['General.Axes', 'choice', 'Axes'],
+    ['General.SmallAxes', 'check', 'Small axes'],
+    ['General.Orthographic', 'choice', 'Projection'],
+    ['General.Shading', 'choice', 'Shading'],
+    ['General.ColorScheme', 'choice', 'Colors']]],
   ['Geometry', [
     ['Geometry.Points', 'check', 'Points'],
     ['Geometry.Curves', 'check', 'Curves'],
@@ -2349,12 +2366,6 @@ const optionGroups = [
     ['Mesh.VolumeEdges', 'check', '3D element edges'],
     ['Mesh.VolumeFaces', 'check', '3D element faces'],
     ['Mesh.Opacity', 'range', 'Opacity']]],
-  ['General', [
-    ['General.Axes', 'choice', 'Axes'],
-    ['General.SmallAxes', 'check', 'Small axes'],
-    ['General.Orthographic', 'choice', 'Projection'],
-    ['General.Shading', 'choice', 'Shading'],
-    ['General.ColorScheme', 'choice', 'Colors']]],
 ];
 // the options that change the mesh: the next run meshes again
 const meshing = new Set(['Mesh.Algorithm', 'Mesh.Algorithm3D',
@@ -2369,7 +2380,8 @@ function raiseUnit(i) {
   const size = Math.hypot(num('MaxX') - num('MinX'), num('MaxY') - num('MinY'),
                           num('MaxZ') - num('MinZ'));
   const vmax = Math.max(Math.abs(num('Min')), Math.abs(num('Max')));
-  return vmax > 0 ? size / vmax : 0;
+  // (none for a view without values or without bounds)
+  return vmax > 0 && isFinite(size) ? size / vmax : 0;
 }
 function setViewOption(name, i, v) {
   if(name === 'View.NormalRaise') v *= raiseUnit(i);
@@ -3265,25 +3277,27 @@ function newModelDirectory() {
   return dir;
 }
 // What a model leaves when another starts, or none (Clear): the tool or the
-// operation under way, its files here and in the worker, the parameters, the
-// solvers, the models and the views, and what the page keeps per view
-// (gmsh.clear() starts the view tags again)
-function forgetModel() {
+// operation under way, its files here and in the worker (unless another
+// model of its folder starts, keepFiles), the parameters, the solvers, the
+// models and the views, and what the page keeps per view (gmsh.clear()
+// starts the view tags again)
+function forgetModel(keepFiles = false) {
   if(tool) setTool(Tool.None);
   showPanel(null);
   FS.chdir('/');
-  if(modelDir) {
+  if(modelDir && !keepFiles) {
     const old = modelDir;
     if(FS.analyzePath(old).exists) removeDirectory(FS, old);
     workerReady.then((ok) => { if(ok) worker.postMessage({type: 'forget', dir: old}); });
+    sent.clear();
   }
-  sent.clear();
   viewSettings.clear();
   for(const k of Object.keys(allViewSettings)) delete allViewSettings[k];
   settledViews.clear();
   viewOptionsOpen.clear();
   graphEdits.clear();
-  modelDir = modelFile = hint = '';
+  if(!keepFiles) modelDir = '';
+  modelFile = hint = '';
   gmsh.onelab.clear();
   Module.ccall('gmshWebOnelabForgetSolvers', null, [], []);
   gmsh.clear();
@@ -3310,6 +3324,10 @@ async function openFiles(entries, open = '') {
     setStatus('No model found');
     return;
   }
+  await openModel(file);
+}
+// a file of the model's directory opened as the model
+async function openModel(file) {
   FS.chdir(file.slice(0, file.lastIndexOf('/')));
   modelFile = file;
   $('clearModel').hidden = false;
@@ -3332,10 +3350,42 @@ async function openFiles(entries, open = '') {
   } catch(e) {
     log('*** ' + e.message);
   }
+  // (just read, unless it is a solver's file whose geometry the check reads:
+  // the check does not read it again, which would merge the views of a .pos
+  // a second time)
+  if(gmsh.model.getFileName() === file) gmsh.onelab.setChanged('Gmsh', 0);
   Module.ccall('gmshWebResetView', null, [], []);
   await run('check');
   if(narrow.matches && getParameters().some((p) => p.visible && !p.name.includes('ONELAB Context/'))) showSide(true);
 }
+// The files of the folder of the model that Gmsh opens as a model, in the
+// menu of its name: the one picked opened instead, with the files of the
+// folder kept
+const modelExtensions = ['pro', 'geo', 'msh', 'step', 'stp', 'brep', 'iges', 'igs',
+                         'stl', 'vtk', 'vtu', 'med', 'cgns', 'unv', 'mesh', 'inp',
+                         'bdf', 'nas', 'obj', 'ply'];
+function folderModels() {
+  const dir = FS.cwd();
+  return FS.readdir(dir).filter((f) => {
+    const ext = f.slice(f.lastIndexOf('.') + 1).toLowerCase();
+    return f.includes('.') && modelExtensions.includes(ext) &&
+      !FS.isDir(FS.stat(dir + '/' + f).mode);
+  }).sort().map((f) => dir + '/' + f);
+}
+async function switchModel(file) {
+  if(busy || file === modelFile) return;
+  forgetModel(true);
+  await openModel(file);
+}
+$('model').addEventListener('click', (e) => {
+  if(!modelDir) return;
+  const r = e.currentTarget.getBoundingClientRect();
+  // (checked: the one named, as a .pro is named for its .geo)
+  const name = (f) => f.slice(f.lastIndexOf('/') + 1);
+  popupMenu(() => folderModels().map((f) => [name(f), () => switchModel(f),
+                                              name(f) === $('model').textContent]),
+            r.left, r.bottom + 2, {owner: e.currentTarget});
+});
 // Clear, as File > Clear in the graphical interface: everything deleted (the
 // model, its meshes, results and parameters), the page as it starts, with
 // its options and view
