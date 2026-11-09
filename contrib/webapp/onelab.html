@@ -499,7 +499,7 @@
 // separated by commas>)
 import createGmsh from './build/gmsh.mjs';
 import {installShortcuts, shortcutsHelp, modifiers, ModShift} from './shortcuts.js';
-import {listFiles, writeFile, findModel} from './files.mjs';
+import {listFiles, writeFile, findModel, removeDirectory} from './files.mjs';
 
 const $ = (id) => document.getElementById(id);
 const canvas = $('canvas'), status = $('status'), logText = $('logText');
@@ -898,23 +898,32 @@ let modelDir = '';
 let sent = new Map();
 // what ends the solver's run under way
 let solverDone = null;
+// whether the worker failed (to start, or in a run, which may leave its
+// module broken): the next run starts a new one
+let workerFailed = false;
 function startWorker() {
   worker = new Worker(new URL('./solver.js', import.meta.url), {type: 'module'});
   sent = new Map();
-  workerReady = new Promise((ready) => {
-    worker.onmessage = (e) => {
-      const m = e.data;
-      if(m.type === 'ready') ready();
-      else if(m.type === 'log') log(m.text);
-      else if(m.type === 'merge') solverMerge(m);
-      else if(m.type === 'db') solverRefresh(m);
-      else if(m.type === 'done') solverEnd(m);
-    };
-  });
-  worker.onerror = (e) => {
-    log('Error   : the solver stopped: ' + e.message);
+  workerFailed = false;
+  // true once it is ready, false if it failed to start
+  let started;
+  workerReady = new Promise((r) => { started = r; });
+  worker.onmessage = (e) => {
+    const m = e.data;
+    if(m.type === 'ready') started(true);
+    else if(m.type === 'log') log(m.text);
+    else if(m.type === 'merge') solverMerge(m);
+    else if(m.type === 'db') solverRefresh(m);
+    else if(m.type === 'done') solverEnd(m);
+    else if(m.type === 'failed') failed(m.text);
+  };
+  const failed = (text) => {
+    log('Error   : the solver stopped: ' + text);
+    workerFailed = true;
+    started(false);
     solverEnd({errors: 1});
   };
+  worker.onerror = (e) => failed(e.message);
   worker.postMessage({type: 'init', module: wasm});
 }
 // a file the solver wrote, written here too, not to be sent back
@@ -939,6 +948,13 @@ function changedFiles() {
 // given the page's (see setGraph())
 const graphEdits = new Map();
 function setDatabase(db) {
+  // (one that cannot be read leaves the parameters as they are)
+  try {
+    JSON.parse(db);
+  } catch(e) {
+    log('Error   : could not read the database of the solver: ' + e.message);
+    return;
+  }
   gmsh.onelab.clear();
   gmsh.onelab.set(db);
   if(!graphEdits.size) return;
@@ -949,15 +965,23 @@ function setDatabase(db) {
   }
 }
 // a solver, with the arguments gmshWebOnelabGmsh() gives: its errors
-async function solve(solver) {
-  await workerReady;
+function solve(solver) {
+  if(workerFailed) {
+    worker.terminate();
+    startWorker();
+  }
   return new Promise((done) => {
+    // (set before the worker is ready, for the Stop button to end the wait)
     solverDone = done;
-    const {files, transfer} = changedFiles();
-    worker.postMessage({type: 'run', dir: modelDir, cwd: FS.cwd(), files,
-                        db: gmsh.onelab.get(), args: solver.args}, transfer);
-    // the worker has the graphs asked for now
-    graphEdits.clear();
+    workerReady.then((ok) => {
+      if(solverDone !== done) return; // stopped meanwhile
+      if(!ok) return; // (solverEnd() has been called)
+      const {files, transfer} = changedFiles();
+      worker.postMessage({type: 'run', dir: modelDir, cwd: FS.cwd(), files,
+                          db: gmsh.onelab.get(), args: solver.args}, transfer);
+      // the worker has the graphs asked for now
+      graphEdits.clear();
+    });
   });
 }
 // What the solver asks to show, with the database as it is then, and the
@@ -1004,6 +1028,7 @@ function solverEnd(m) {
   }
   for(const [path, data] of m.files || []) fromSolver(path, data);
   if(m.db) setDatabase(m.db);
+  if(m.failed) workerFailed = true;
   const done = solverDone;
   solverDone = null;
   if(done) done(m.errors);
@@ -3122,17 +3147,23 @@ function newModelDirectory() {
   return dir;
 }
 // What a model leaves when another starts, or none (Clear): the tool or the
-// operation under way, the files the worker has, the parameters, the
-// solvers, the models and the views
+// operation under way, its files here and in the worker, the parameters, the
+// solvers, the models and the views, and what the page keeps per view
+// (gmsh.clear() starts the view tags again)
 function forgetModel() {
   if(tool) setTool(Tool.None);
   showPanel(null);
+  FS.chdir('/');
   if(modelDir) {
     const old = modelDir;
-    workerReady.then(() => worker.postMessage({type: 'forget', dir: old}));
+    if(FS.analyzePath(old).exists) removeDirectory(FS, old);
+    workerReady.then((ok) => { if(ok) worker.postMessage({type: 'forget', dir: old}); });
   }
+  sent.clear();
+  viewOverrides.clear();
+  viewOptionsOpen.clear();
+  graphEdits.clear();
   modelDir = modelFile = hint = '';
-  FS.chdir('/');
   gmsh.onelab.clear();
   Module.ccall('gmshWebOnelabForgetSolvers', null, [], []);
   gmsh.clear();

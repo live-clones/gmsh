@@ -26,6 +26,7 @@
 #include "gmshLocalNetworkClient.h"
 #include "GmshGlobal.h"
 #include "OpenFile.h"
+#include "PView.h"
 #include "getdp.h"
 
 namespace {
@@ -79,7 +80,10 @@ namespace {
 
   // in a web worker running a solver: what GetDP asks to show, given to the
   // page (solver.js). GetDP merges such a file in the program, as the files
-  // it reads, then asks for a render: the file is then the last one merged.
+  // it reads, then asks for a render: the file is then the last one merged,
+  // and its views, of no use in the worker, are removed (a solver writing its
+  // results at each time step would keep them all, and GetDP would find them
+  // as the last views, which a GetDP process of its own never sees).
   // And the database, when GetDP asks for a refresh (Gmsh/Action, e.g. after
   // adding a value to an output drawn on a graph), no more than every quarter
   // of a second, as the graphical interface (gmshLocalNetworkClient)
@@ -88,7 +92,8 @@ namespace {
     void operator()(std::string level, std::string message)
     {
       if(level == "RequestRender") {
-        const std::string &file = GmshLastMergedPostProcessingFile();
+        std::size_t first;
+        const std::string &file = GmshLastMergedPostProcessingFile(&first);
         if(file.empty()) return;
         EM_ASM(
           {
@@ -96,6 +101,7 @@ namespace {
               globalThis.gmshSolverMerge(UTF8ToString($0));
           },
           file.c_str());
+        while(PView::list.size() > first) delete PView::list.back();
         return;
       }
       static double lastRefresh = 0.;
@@ -120,6 +126,7 @@ extern "C" {
 // next file opened adds those it asks for (see addSolver())
 EMSCRIPTEN_KEEPALIVE void gmshWebOnelabForgetSolvers()
 {
+  Msg::NoThrow noThrow;
   onelab::server *s = onelab::server::instance();
   std::vector<gmshInProcessClient *> v;
   for(auto it = s->firstClient(); it != s->lastClient(); it++)
@@ -136,6 +143,7 @@ EMSCRIPTEN_KEEPALIVE void gmshWebOnelabForgetSolvers()
 // "check", "compute" or "reset" (whose passes are "check"):
 EMSCRIPTEN_KEEPALIVE void gmshWebOnelabStart(const char *what)
 {
+  Msg::NoThrow noThrow;
   std::string action(what);
   addSolver();
   if(action == "reset") onelabUtils::resetDb(true);
@@ -147,6 +155,7 @@ EMSCRIPTEN_KEEPALIVE void gmshWebOnelabStart(const char *what)
 // in JSON: [{"name":..., "args":[...]}]
 EMSCRIPTEN_KEEPALIVE const char *gmshWebOnelabGmsh(const char *what)
 {
+  Msg::NoThrow noThrow;
   std::string action(what);
   onelabUtils::runGmshClient(action, CTX::instance()->solver.autoMesh);
   static std::string json;
@@ -168,6 +177,7 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebOnelabGmsh(const char *what)
 // returns 1 if there is another pass (a loop over parameters)
 EMSCRIPTEN_KEEPALIVE int gmshWebOnelabNext(const char *what)
 {
+  Msg::NoThrow noThrow;
   std::string action(what);
   if(action == "compute")
     for(auto *c : solvers())
@@ -180,6 +190,7 @@ EMSCRIPTEN_KEEPALIVE int gmshWebOnelabNext(const char *what)
 // number of errors
 EMSCRIPTEN_KEEPALIVE int gmshWebOnelab(const char *what)
 {
+  Msg::NoThrow noThrow;
   std::string pass = (std::string(what) == "reset") ? "check" : what;
   gmshWebOnelabStart(what);
   do {
@@ -197,6 +208,7 @@ EMSCRIPTEN_KEEPALIVE int gmshWebErrorCount() { return Msg::GetErrorCount(); }
 // asks to show go to the page as they are written. Returns the errors
 EMSCRIPTEN_KEEPALIVE int gmshWebSolve(const char *argv)
 {
+  Msg::NoThrow noThrow;
   std::vector<std::string> args;
   std::string a(argv);
   for(std::size_t start = 0, end; start < a.size(); start = end + 1) {
@@ -211,6 +223,8 @@ EMSCRIPTEN_KEEPALIVE int gmshWebSolve(const char *argv)
     Msg::Error("Solver '%s' is not available in the web app", args[0].c_str());
     return 1;
   }
+  // a solver starts with no views, as in a process of its own
+  while(PView::list.size()) delete PView::list.back();
   static solverMessages messages;
   Msg::SetCallback(&messages);
   Msg::ResetErrorCounter();
@@ -229,22 +243,24 @@ EMSCRIPTEN_KEEPALIVE int gmshWebSolve(const char *argv)
 // when a solver asks for it (gmshLocalNetworkClient)
 EMSCRIPTEN_KEEPALIVE void gmshWebMergeFile(const char *name)
 {
-  if(!CTX::instance()->solver.autoMergeFile) return;
-  bool changedBeforeMerge = onelab::server::instance()->getChanged("Gmsh");
-  MergePostProcessingFile(name, CTX::instance()->solver.autoShowViews,
-                          CTX::instance()->solver.autoShowLastStep, true);
-  onelab::server::instance()->setChanged(changedBeforeMerge, "Gmsh");
+  Msg::NoThrow noThrow;
+  onelabUtils::mergeSolverFile(name);
 }
 
 // On the page: the X-Y graphs of the parameters drawn on them (their "Graph"
 // attribute), made again from their values, as the graphical interface does
 // on a refresh
-EMSCRIPTEN_KEEPALIVE void gmshWebUpdateGraphs() { onelabUtils::updateGraphs(); }
+EMSCRIPTEN_KEEPALIVE void gmshWebUpdateGraphs()
+{
+  Msg::NoThrow noThrow;
+  onelabUtils::updateGraphs();
+}
 
 // change a parameter, given in JSON as gmsh.onelab.get() gives them: returns
 // 1 if the model is to be checked, 2 if other parameters were reset, or -1
 EMSCRIPTEN_KEEPALIVE int gmshWebOnelabSet(const char *json)
 {
+  Msg::NoThrow noThrow;
   onelab::number n;
   if(n.fromJSON(json)) return onelabUtils::setParameter(n) & 3;
   onelab::string s;
@@ -255,6 +271,7 @@ EMSCRIPTEN_KEEPALIVE int gmshWebOnelabSet(const char *json)
 // extract a zip archive (e.g. a model with its included files) in a directory
 EMSCRIPTEN_KEEPALIVE void gmshWebUnzip(const char *fileName, const char *dir)
 {
+  Msg::NoThrow noThrow;
   UnzipFile(fileName, dir);
 }
 
@@ -262,6 +279,7 @@ EMSCRIPTEN_KEEPALIVE void gmshWebUnzip(const char *fileName, const char *dir)
 // of a parameter, an X11 name such as LightSteelBlue1), as 0xrrggbb, or -1
 EMSCRIPTEN_KEEPALIVE int gmshWebColor(const char *name)
 {
+  Msg::NoThrow noThrow;
   int r, g, b;
   if(!GetRGBForString(name, r, g, b)) return -1;
   return (r << 16) | (g << 8) | b;
@@ -274,6 +292,7 @@ EMSCRIPTEN_KEEPALIVE int gmshWebColor(const char *name)
 EMSCRIPTEN_KEEPALIVE int gmshWebReadableColor(int rgb, int bg, int fg, int dark,
                                               int what)
 {
+  Msg::NoThrow noThrow;
   if(what == 0) return ReadableTextColor(rgb, bg, bg, dark);
   unsigned int fill = ReadableFillColor(rgb, fg, dark);
   return what == 1 ? fill : ContrastingColor(fill);

@@ -16,7 +16,9 @@
 //                   {type: 'db', db}: the database, when the solver asks for
 //                   a refresh (e.g. a value added to an output on a graph)
 //                   {type: 'done', errors, db, files}: the database, and the
-//                   files of the model the solver wrote
+//                   files of the model the solver wrote ({type: 'done',
+//                   errors: 1, failed: true} if the run broke the worker)
+//                   {type: 'failed', text}: the worker could not start
 
 import createGmsh from './build/gmsh.mjs';
 import {listFiles, writeFile, removeDirectory} from './files.mjs';
@@ -26,8 +28,21 @@ const post = (message, transfer = []) => postMessage(message, transfer);
 // the files of the run already sent to be shown, with their time of change
 const shown = new Map();
 
+// (a handler that throws would leave the page waiting: it is told instead)
 self.onmessage = async (e) => {
-  const m = e.data;
+  try {
+    await handle(e.data);
+  } catch(err) {
+    if(e.data.type === 'init')
+      post({type: 'failed', text: String(err)});
+    else {
+      post({type: 'log', text: 'Error   : ' + (err.message || err.name || err)});
+      if(e.data.type === 'run') post({type: 'done', errors: 1, failed: true});
+    }
+  }
+};
+
+async function handle(m) {
   if(m.type === 'init') {
     gmsh = await createGmsh({
       instantiateWasm: (imports, done) => {
@@ -53,7 +68,9 @@ self.onmessage = async (e) => {
     post({type: 'ready'});
   }
   else if(m.type === 'forget') {
-    // the files of a model no longer open
+    // the files of a model no longer open (out of its directory first, which
+    // a run made the current one)
+    FS.chdir('/');
     if(FS.analyzePath(m.dir).exists) removeDirectory(FS, m.dir);
   }
   else if(m.type === 'run') {
@@ -63,13 +80,15 @@ self.onmessage = async (e) => {
     gmsh.onelab.set(m.db);
     const before = listFiles(FS, m.dir);
     shown.clear();
-    let errors = 0;
+    let errors = 0, failed = false;
     try {
       errors = gmsh.lib.ccall('gmshWebSolve', 'number', ['string'],
                               [m.args.join('\n')]);
     } catch(err) {
       post({type: 'log', text: 'Error   : ' + err});
       errors = 1;
+      // (an abort of the module, e.g. out of memory, leaves it unusable)
+      failed = err instanceof WebAssembly.RuntimeError;
     }
     // what the solver wrote, back to the page, but what it has already been
     // sent and the solver's own data (results, preprocessing), of no use there
@@ -82,6 +101,6 @@ self.onmessage = async (e) => {
       files.push([path, data]);
       transfer.push(data.buffer);
     }
-    post({type: 'done', errors, db: gmsh.onelab.get(), files}, transfer);
+    post({type: 'done', errors, failed, db: gmsh.onelab.get(), files}, transfer);
   }
-};
+}

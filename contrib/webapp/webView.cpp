@@ -8,7 +8,8 @@
 // window would draw it (see drawContextOffscreen), and the mouse events of
 // the page given to the same interaction as the graphical interface's
 // (sceneView). Positions are in the CSS pixels of the canvas, from its top
-// left corner.
+// left corner. Errors in these entries are reported and return, as in the
+// desktop interface, instead of throwing into the page (Msg::NoThrow).
 
 #if defined(__EMSCRIPTEN__)
 
@@ -113,7 +114,10 @@ namespace {
     if(!ib) return;
     if(_scene->tool == webView::OperationTool) {
       if(_operation->step(ib, v, e, f, r, el)) _changes++;
-      if(_operation->active()) _scene->beginSelection(_operation->type());
+      if(_operation->active())
+        _scene->beginSelection(_operation->type());
+      else // (over: the clicks are the scene's again, as with no tool)
+        _scene->tool = webView::NoTool;
       return;
     }
     if(ib == 'l' && _scene->tool == webView::QueryTool)
@@ -131,6 +135,7 @@ extern "C" {
 // of them per CSS pixel (the devicePixelRatio of the page)
 EMSCRIPTEN_KEEPALIVE int gmshWebDraw(int width, int height, double scale)
 {
+  Msg::NoThrow noThrow;
   if(!_view) _view = new drawContextOffscreen();
   if(!_view->begin(width, height, scale, true)) return 0;
   _width = width;
@@ -146,6 +151,7 @@ EMSCRIPTEN_KEEPALIVE int gmshWebDraw(int width, int height, double scale)
 EMSCRIPTEN_KEEPALIVE int gmshWebDrawStudio(int width, int height, double scale,
                                            double budget)
 {
+  Msg::NoThrow noThrow;
   if(!_view || !_view->begin(width, height, scale, true)) return 0;
   bool more = _view->drawStudioFrames(budget);
   _view->end();
@@ -163,6 +169,7 @@ EMSCRIPTEN_KEEPALIVE int gmshWebMouse(int kind, double x, double y, int w,
                                       int h, int button, double wheel,
                                       int modifiers)
 {
+  Msg::NoThrow noThrow;
   // nothing to move until the scene has been drawn
   if(!_view || !_view->getDrawContext()) return 0;
   if(!_scene) _scene = new webView();
@@ -201,6 +208,7 @@ EMSCRIPTEN_KEEPALIVE int gmshWebMouse(int kind, double x, double y, int w,
 // drawn again.
 EMSCRIPTEN_KEEPALIVE int gmshWebPinch(int kind, double x, double y, double d)
 {
+  Msg::NoThrow noThrow;
   if(!_view || !_view->getDrawContext()) return 0;
   drawContext *ctx = _view->getDrawContext();
   // where the pinch started, and its last step
@@ -256,6 +264,7 @@ EMSCRIPTEN_KEEPALIVE int gmshWebPinch(int kind, double x, double y, double d)
 // the pointer left the canvas
 EMSCRIPTEN_KEEPALIVE void gmshWebMouseLeft()
 {
+  Msg::NoThrow noThrow;
   if(_scene && _scene->getDrawContext()) _scene->pointerLeft();
 }
 
@@ -263,6 +272,7 @@ EMSCRIPTEN_KEEPALIVE void gmshWebMouseLeft()
 // a box hanging from the point xy[2] of the canvas
 EMSCRIPTEN_KEEPALIVE const char *gmshWebHoverText(double *xy)
 {
+  Msg::NoThrow noThrow;
   if(!_scene) return "";
   xy[0] = _scene->hoverAnchor()[0];
   xy[1] = _scene->hoverAnchor()[1];
@@ -272,6 +282,7 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebHoverText(double *xy)
 // whether a click would pick something: a cross cursor says so
 EMSCRIPTEN_KEEPALIVE int gmshWebCrossCursor()
 {
+  Msg::NoThrow noThrow;
   return (_scene && _scene->cross) ? 1 : 0;
 }
 
@@ -279,6 +290,7 @@ EMSCRIPTEN_KEEPALIVE int gmshWebCrossCursor()
 // (CSS pixels) in xy[4]: 0 when there is none
 EMSCRIPTEN_KEEPALIVE int gmshWebLasso(double *xy)
 {
+  Msg::NoThrow noThrow;
   return (_scene && _scene->lasso(xy)) ? 1 : 0;
 }
 
@@ -287,6 +299,7 @@ EMSCRIPTEN_KEEPALIVE int gmshWebLasso(double *xy)
 // interface: what they left on the picture is taken away
 EMSCRIPTEN_KEEPALIVE int gmshWebTool(int tool)
 {
+  Msg::NoThrow noThrow;
   if(!_view || !_view->getDrawContext()) return 0;
   if(!_scene) _scene = new webView();
   _scene->setDrawContext(_view->getDrawContext());
@@ -326,6 +339,7 @@ EMSCRIPTEN_KEEPALIVE int gmshWebTool(int tool)
 // or "" if the operation is unknown
 EMSCRIPTEN_KEEPALIVE const char *gmshWebOperation(const char *name)
 {
+  Msg::NoThrow noThrow;
   static std::string json;
   json = "";
   if(!gmshWebTool(webView::NoTool) || !name[0]) return json.c_str();
@@ -360,6 +374,7 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebOperation(const char *name)
 EMSCRIPTEN_KEEPALIVE void gmshWebOperationValue(const char *name,
                                                 const char *value)
 {
+  Msg::NoThrow noThrow;
   _values[name] = value;
   // (the entities it picks drawn, as the dialog of the graphical interface
   // draws them)
@@ -374,6 +389,7 @@ EMSCRIPTEN_KEEPALIVE void gmshWebOperationValue(const char *name,
 // picked last, 'q' stops the operation
 EMSCRIPTEN_KEEPALIVE void gmshWebOperationKey(int key)
 {
+  Msg::NoThrow noThrow;
   if(!_scene || _scene->tool != webView::OperationTool) return;
   if(key == 'e') _scene->endSelection = 1;
   if(key == 'u') _scene->undoSelection = 1;
@@ -385,6 +401,7 @@ EMSCRIPTEN_KEEPALIVE void gmshWebOperationKey(int key)
 // pick, and the keys), "changes" (the operations carried out so far)}
 EMSCRIPTEN_KEEPALIVE const char *gmshWebOperationState()
 {
+  Msg::NoThrow noThrow;
   static std::string json;
   bool on = _operation && _operation->active();
   json = "{\"name\":" + JsonString(on ? _operation->operation() : "") +
@@ -398,6 +415,7 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebOperationState()
 // scriptShapes())
 EMSCRIPTEN_KEEPALIVE const char *gmshWebShapes()
 {
+  Msg::NoThrow noThrow;
   static std::string json;
   json = "[";
   for(auto &shape : scriptShapes()) {
@@ -437,6 +455,7 @@ static std::string jsonItem(const actionItem &item)
 
 EMSCRIPTEN_KEEPALIVE const char *gmshWebActions()
 {
+  Msg::NoThrow noThrow;
   static std::string json;
   _items.clear();
   json = "{";
@@ -454,6 +473,7 @@ static const actionItem *item(int id)
 // index view, in the scene: what RunAction() returns
 EMSCRIPTEN_KEEPALIVE int gmshWebAction(int id, int view)
 {
+  Msg::NoThrow noThrow;
   if(!item(id)) return 0;
   int ret =
     RunAction(*item(id), view, _view ? _view->getDrawContext() : nullptr);
@@ -468,6 +488,7 @@ EMSCRIPTEN_KEEPALIVE int gmshWebAction(int id, int view)
 // apply now (see IsActionAvailable())
 EMSCRIPTEN_KEEPALIVE int gmshWebActionCheck(int id)
 {
+  Msg::NoThrow noThrow;
   if(!item(id) || !IsActionAvailable(*item(id))) return -2;
   return GetActionCheck(*item(id));
 }
@@ -475,6 +496,7 @@ EMSCRIPTEN_KEEPALIVE int gmshWebActionCheck(int id)
 // What the item of id asks for, in JSON: {"min", "max", "step", "value"}
 EMSCRIPTEN_KEEPALIVE const char *gmshWebActionAsk(int id)
 {
+  Msg::NoThrow noThrow;
   static std::string json;
   double min = 0., max = 0., step = 0., value = 0.;
   if(item(id)) GetActionAsk(item(id)->ask, min, max, step, value);
@@ -489,6 +511,7 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebActionAsk(int id)
 // The option asked for by the item of id set (see SetActionOption())
 EMSCRIPTEN_KEEPALIVE void gmshWebActionSet(int id, double value)
 {
+  Msg::NoThrow noThrow;
   if(item(id)) SetActionOption(item(id)->ask.option, value);
 }
 
@@ -497,6 +520,7 @@ EMSCRIPTEN_KEEPALIVE void gmshWebActionSet(int id, double value)
 EMSCRIPTEN_KEEPALIVE const char *gmshWebScriptStyles(const char *fileName,
                                                      const char *text)
 {
+  Msg::NoThrow noThrow;
   static std::string units;
   std::string bytes = GetScriptStyles(fileName, text);
   units.clear();
@@ -511,39 +535,26 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebScriptStyles(const char *fileName,
 
 // Add a shape (see gmshWebShapes()) to the script of the current model, with
 // the values of its fields (expressions of the .geo language, separated by
-// new lines; an optional one left empty is left out): returns the number of
-// errors, the command being taken back from the script if there are any. A
-// model that is not a .geo file is given a .geo file that merges it, as the
-// dialog's default answer (the page sets General.NoPopup)
+// new lines; an optional one left empty is left out): returns 1 if it was not
+// added (with errors). A model that is not a .geo file is given a .geo file
+// that merges it, as the dialog's default answer (the page sets
+// General.NoPopup)
 EMSCRIPTEN_KEEPALIVE int gmshWebAddShape(const char *shape, const char *values)
 {
+  Msg::NoThrow noThrow;
   std::vector<std::string> v;
   std::istringstream in(values);
   for(std::string s; std::getline(in, s);) v.push_back(s);
-  const std::string f = GModel::current()->getFileName();
-  auto fileSize = [&f]() {
-    std::ifstream file(f, std::ios::binary | std::ios::ate);
-    return file ? (long)file.tellg() : -1L;
-  };
-  const int errors = Msg::GetErrorCount();
-  const long size = fileSize();
-  try {
-    scriptAddShape(shape, v, f);
-  } catch(...) {
-    Msg::Error("Could not add the %s", shape);
-  }
-  // (counted before the script is read again, which resets the count)
-  const int added = Msg::GetErrorCount() - errors;
-  if(added && f == GModel::current()->getFileName() && fileSize() != size)
-    scriptRemoveLastCommand(f);
+  bool added = scriptAddShape(shape, v, GModel::current()->getFileName());
   GModel::current()->setSelection(0);
   SetBoundingBox();
-  return added;
+  return added ? 0 : 1;
 }
 
 // whether the measurement awaits its second point
 EMSCRIPTEN_KEEPALIVE int gmshWebMeasuring()
 {
+  Msg::NoThrow noThrow;
   return (_scene && _scene->tool == webView::MeasureTool &&
           _scene->measuring()) ?
            1 :
@@ -558,6 +569,7 @@ EMSCRIPTEN_KEEPALIVE int gmshWebMeasuring()
 // over a dark one, as in the graphical interface (openglWindow)
 EMSCRIPTEN_KEEPALIVE const char *gmshWebNotes()
 {
+  Msg::NoThrow noThrow;
   static std::string json;
   json = "{\"notes\":[";
   std::string length = "null";
@@ -599,6 +611,7 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebNotes()
 // graphical interface; returns 1 if the scene is to be drawn again
 EMSCRIPTEN_KEEPALIVE int gmshWebColorScheme(int dark)
 {
+  Msg::NoThrow noThrow;
   return followDesktopColorScheme(dark) ? 1 : 0;
 }
 
@@ -607,6 +620,7 @@ EMSCRIPTEN_KEEPALIVE int gmshWebColorScheme(int dark)
 // value (see GetOptionChoices())
 EMSCRIPTEN_KEEPALIVE const char *gmshWebOptionChoices(const char *option)
 {
+  Msg::NoThrow noThrow;
   static std::string json;
   json = "[";
   for(auto &c : GetOptionChoices(option)) {
@@ -623,6 +637,7 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebOptionChoices(const char *option)
 // {"min", "max", "step"}, or null if it has none (see GetOptionRange())
 EMSCRIPTEN_KEEPALIVE const char *gmshWebOptionRange(const char *option)
 {
+  Msg::NoThrow noThrow;
   static std::string json;
   const OptionRange *r = GetOptionRange(option);
   if(!r) return "null";
@@ -641,6 +656,7 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebOptionRange(const char *option)
 // gmshWebShortcut())}]
 EMSCRIPTEN_KEEPALIVE const char *gmshWebShortcuts(const char *command)
 {
+  Msg::NoThrow noThrow;
   static std::string json;
   json = "[";
   for(const ShortcutEntry &e : GetShortcuts()) {
@@ -682,6 +698,7 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebShortcuts(const char *command)
 // is to be drawn again, 0 if the action is not one of them
 EMSCRIPTEN_KEEPALIVE int gmshWebShortcut(const char *action, int mods)
 {
+  Msg::NoThrow noThrow;
   if(!_view || !_view->getDrawContext()) return 0;
   std::string a(action);
   if(a == "escape") {
@@ -696,6 +713,7 @@ EMSCRIPTEN_KEEPALIVE int gmshWebShortcut(const char *action, int mods)
 // or the other way (ccw), as the rotate button of the graphical interface
 EMSCRIPTEN_KEEPALIVE int gmshWebRotate(int ccw)
 {
+  Msg::NoThrow noThrow;
   if(!_view || !_view->getDrawContext()) return 0;
   drawContext *ctx = _view->getDrawContext();
   double axis[3] = {0., 0., 1.};
@@ -714,6 +732,7 @@ EMSCRIPTEN_KEEPALIVE int gmshWebRotate(int ccw)
 // draw
 EMSCRIPTEN_KEEPALIVE void gmshWebResetView()
 {
+  Msg::NoThrow noThrow;
   if(_view) _view->resetView();
 }
 

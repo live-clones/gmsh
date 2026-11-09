@@ -233,15 +233,21 @@ int GmshMergeFile(const std::string &fileName, bool errorIfMissing)
 // the last file merged by GmshMergePostProcessingFile(), which GetDP calls when
 // it runs in the program: both for the files it reads (GmshRead) and for those
 // it asks to show, which it follows with Msg::RequestRender() (a web worker
-// running GetDP sends that one to its page then, see contrib/webapp)
+// running GetDP sends that one to its page then, see contrib/webapp), with
+// the position in PView::list of the first view it added
 static std::string _lastMergedPostProcessingFile;
+static std::size_t _lastMergedFirstView = 0;
 
-const std::string &GmshLastMergedPostProcessingFile()
-{ return _lastMergedPostProcessingFile; }
+const std::string &GmshLastMergedPostProcessingFile(std::size_t *firstView)
+{
+  if(firstView) *firstView = _lastMergedFirstView;
+  return _lastMergedPostProcessingFile;
+}
 
 int GmshMergePostProcessingFile(const std::string &fileName)
 {
   _lastMergedPostProcessingFile = fileName;
+  _lastMergedFirstView = PView::list.size();
   return MergePostProcessingFile(
     fileName, CTX::instance()->solver.autoShowViews,
     CTX::instance()->solver.autoShowLastStep, true);
