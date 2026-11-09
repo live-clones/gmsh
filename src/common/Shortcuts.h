@@ -14,12 +14,13 @@
 // the shortcuts shown in its menus, and the lists in the help window and in
 // the documentation are all read from this table, so that they cannot drift
 // apart. The table does not depend on a toolkit: the GUI translates the keys
-// and runs the actions by their names. An action that is also an action of
-// the action registry (see Actions.h) has the name it has there, as "Mesh 1D";
-// the others are named in snake case, as "mesh_nodes". The titles of the
-// menus must not have
-// a mnemonic (an "&" letter) used by an Alt shortcut below, because the menu
-// bar would open the menu before the shortcut is seen.
+// and runs the actions by their names. An action of the action registry (see
+// Actions.h) that both interfaces have keeps its label there, as "Mesh 1D";
+// the others are named in snake case, as "mesh_nodes", also those the
+// graphical interface alone does (as the entries of its menu bar, "file_open").
+// The titles of the menus must not have a mnemonic (an "&" letter) used by an
+// Alt shortcut below, because the menu bar would open the menu before the
+// shortcut is seen.
 
 // the keys that are not a character
 enum ShortcutKey {
@@ -74,9 +75,11 @@ const std::vector<ShortcutEntry> &GetShortcuts();
 // the shortcuts of an action (several keys may do the same)
 std::vector<Shortcut> GetShortcutsOf(const std::string &action);
 
-// Run an action of the table that only changes the scene, in the same way in
-// the GUI and in the web page: what is displayed, the views, the time steps
-// and the point of view of ctx (ModShift in mods gives the opposite side).
+// Run an action of the table that only changes the scene: what is displayed,
+// the views, the time steps and the point of view of ctx (ModShift in mods
+// gives the opposite side). The graphical interface does the point of view,
+// the time steps and the views with the buttons of its status bar instead
+// (which also sync its viewports); the web page does all of them here.
 // Returns 0 for an action not handled here, and 2 when the scene must be drawn
 // again.
 class drawContext;

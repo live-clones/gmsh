@@ -29,8 +29,18 @@
 #include "StringUtils.h"
 #include "ScriptStyles.h"
 
+// a help text with the key of a shortcut, as this platform names it
+static std::string withKey(const char *text, char key)
+{
+#if defined(__APPLE__)
+  return std::string(text) + " (Cmd+" + key + ")";
+#else
+  return std::string(text) + " (Ctrl+" + key + ")";
+#endif
+}
+
 // the window of an editor, which tells it when it is activated, and closes
-// with Ctrl+W
+// with Cmd+W (Ctrl+W)
 class editorFrame : public Fl_Double_Window {
 public:
   std::function<void()> activated;
@@ -154,13 +164,14 @@ public:
     bar->box(GMSH_SIMPLE_TOP_BOX);
     Fl_Button *save = new Fl_Button(wb, wb, bb, bh, "Save");
     save->shortcut(FL_COMMAND | 's');
-    save->tooltip("Save the file (Ctrl+S)");
+    save->copy_tooltip(withKey("Save the file", 'S').c_str());
     save->callback(_save_cb, this);
     int rw = 2 * bb;
     Fl_Button *reload =
       new Fl_Button(wb + bb + WB, wb, rw, bh, "Save and reload");
     reload->shortcut(FL_COMMAND | 'r');
-    reload->tooltip("Save the file, then read the model again (Ctrl+R)");
+    reload->copy_tooltip(
+      withKey("Save the file, then read the model again", 'R').c_str());
     reload->callback(_reload_cb, this);
     for(Fl_Button *b : {save, reload}) {
       b->labelsize(FL_NORMAL_SIZE - 1);
@@ -169,16 +180,18 @@ public:
     int lw = (int)(1.3 * BB), sw = 2 * BB;
     int lx = width - wb - lw, sx = lx - WB - sw, left = wb + bb + 2 * WB + rw;
     Fl_Box *space = new Fl_Box(left, wb, std::max(1, sx - WB - left), bh);
-    _find = searchBox(sx, wb, sw, bh, "Find",
-                      "Find the text: the first one as it is typed, the next "
-                      "one on Enter (Ctrl+F)",
-                      _find_cb);
+    static std::string findHelp =
+      withKey("Find the text: the first one as it is typed, the next one on "
+              "Enter",
+              'F');
+    _find = searchBox(sx, wb, sw, bh, "Find", findHelp.c_str(), _find_cb);
     _find->user_data(this);
     _find->textsize(FL_NORMAL_SIZE - 1);
     _line = new hintInput(lx, wb, lw, bh, nullptr, "Go to line");
     _line->box(FL_DOWN_BOX);
     _line->textsize(FL_NORMAL_SIZE - 1);
-    _line->tooltip("Go to the line, as an error gives it (Ctrl+L)");
+    _line->copy_tooltip(
+      withKey("Go to the line, as an error gives it", 'L').c_str());
     _line->when(FL_WHEN_ENTER_KEY_ALWAYS);
     _line->callback(_line_cb, this);
     // (the shortcuts of the fields)
@@ -248,7 +261,6 @@ public:
     _editor->linenumber_width((int)fl_width("00000") + 4);
     _editor->redraw();
   }
-  bool modified() const { return _modified; }
   // the file read again if it changed on disk (the graphical interface adds
   // to the scripts) and not here
   void refresh()

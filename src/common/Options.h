@@ -1043,12 +1043,11 @@ std::vector<std::pair<double, std::string>>
 GetOptionChoices(const std::string &option);
 
 // The range of a number option, and the step of the fields that set it (see
-// OptionRanges in DefaultOptions.h); false if it has none
+// OptionRanges in DefaultOptions.h); null if it has none
 struct OptionRange {
   double min, max, step;
 };
-bool GetOptionRange(const std::string &option, double &min, double &max,
-                    double &step);
+const OptionRange *GetOptionRange(const std::string &option);
 
 // The help of an option, with the values it takes (see GetOptionChoices())
 std::string GetOptionHelp(const std::string &option, const char *help);

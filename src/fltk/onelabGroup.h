@@ -6,6 +6,7 @@
 #ifndef ONELAB_GROUP_H
 #define ONELAB_GROUP_H
 
+#include "rebuildLoop.h"
 #include <list>
 #include <string>
 #include <vector>
@@ -20,23 +21,25 @@
 class viewButton;
 
 class onelabGroup : public Fl_Group {
+public:
+  // a solver running or not, and asked to stop (see setRunState())
+  enum runState { Idle, Running, Stopping };
+
 private:
   Fl_Tree *_tree;
   Fl_Button *_butt[2];
   Fl_Menu_Button *_gear;
   // the index of the first item of the automatic behaviours in the gear menu
-  int _gearOptions;
-  // whether a solver runs (the Run button then stops it)
-  bool _busy;
+  int _firstGearOption;
+  runState _state;
   // all the items of the gear menu active, or only the automatic behaviours
   void _activateGearMenu(bool all);
   // the widgets of the tree and the strings they show (a list, so that the
   // strings stay where they are)
   std::vector<Fl_Widget *> _treeWidgets;
   std::list<std::string> _treeStrings;
-  // a rebuild asked for during a rebuild (hiding an edited input runs its
-  // callback, which may rebuild the tree): done once the current one is over
-  bool _rebuilding, _rebuildAgain;
+  // the rebuilds of the tree (see rebuildTree())
+  rebuildLoop _rebuilds;
   void _rebuildTree();
   // a rebuild asked for while a mouse button is held down over the tree: done
   // once it is released (see rebuildTree())
@@ -70,14 +73,17 @@ public:
   ~onelabGroup() override;
   void updateGearMenu();
   void rebuildSolverList();
-  // once the events are handled (see FlGui::_dispatch())
+  // the tree made again from the ONELAB parameters, once a click on it is over
+  // (see onelabGroup.cpp)
   void rebuildTree();
   void openTreeItem(const std::string &name);
   void closeTreeItem(const std::string &name);
   bool isTreeItemOpen(const std::string &name);
   void setButtonVisibility();
-  void setButtonMode(const std::string &butt0, const std::string &butt1);
-  bool isBusy() { return _busy; }
+  // whether a solver runs: the Run button becomes Stop, and Kill once asked to
+  // stop
+  void setRunState(runState state);
+  bool isBusy() { return _state != Idle; }
   int getMinWindowWidth() { return _minWindowWidth; }
   int getMinWindowHeight() { return _minWindowHeight; }
   std::string getPath(Fl_Tree_Item *item);
@@ -115,5 +121,9 @@ Fl_Widget *addParameterWidget(onelab::string &p, int xx, int yy, int ww, int hh,
                               std::list<std::string> &strings);
 void solver_cb(Fl_Widget *w, void *data);
 void onelab_cb(Fl_Widget *w, void *data);
+
+// whether a solver runs (then said in the messages): what changes the
+// solvers or the model must wait
+bool solverBusy();
 
 #endif

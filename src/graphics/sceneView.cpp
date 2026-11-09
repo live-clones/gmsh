@@ -731,24 +731,15 @@ char sceneView::selectionStep(std::vector<GVertex *> &vertices,
     return 'q';
   }
   // the selection is over, as in every other return below (beginSelection()
-  // starts the next)
-  if(endSelection) {
+  // starts the next): ended, undone or inverted
+  std::pair<int *, char> asked[3] = {
+    {&endSelection, 'e'}, {&undoSelection, 'u'}, {&invertSelection, 'i'}};
+  for(auto &a : asked) {
+    if(!*a.first) continue;
     _selection = ENT_NONE;
     selectionMode = false;
-    endSelection = 0;
-    return 'e';
-  }
-  if(undoSelection) {
-    _selection = ENT_NONE;
-    selectionMode = false;
-    undoSelection = 0;
-    return 'u';
-  }
-  if(invertSelection) {
-    _selection = ENT_NONE;
-    selectionMode = false;
-    invertSelection = 0;
-    return 'i';
+    *a.first = 0;
+    return a.second;
   }
   if(_trySelection) {
     bool add = (_trySelection > 0) ? true : false;
@@ -780,15 +771,7 @@ bool sceneView::queryClick(std::vector<GVertex *> &vertices,
   double xyz[3];
   if(!_ctx->pickPoint(xyz)) return false;
 
-  GEntity *entity = nullptr;
-  if(vertices.size())
-    entity = vertices[0];
-  else if(edges.size())
-    entity = edges[0];
-  else if(faces.size())
-    entity = faces[0];
-  else if(regions.size())
-    entity = regions[0];
+  GEntity *entity = firstEntity(vertices, edges, faces, regions);
   MElement *element = elements.size() ? elements[0] : nullptr;
   // a pick that found a mesh element returns it instead of the entity it
   // belongs to, which the query names as well
@@ -814,11 +797,7 @@ bool sceneView::queryClick(std::vector<GVertex *> &vertices,
     if(pick(ENT_ALL, true, false, at[0], at[1], at[2], at[3], v, e, f, r, el, p,
             vw) &&
        _ctx->pickPoint(behind)) {
-      GEntity *under = v.size() ? (GEntity *)v[0] :
-                       e.size() ? (GEntity *)e[0] :
-                       f.size() ? (GEntity *)f[0] :
-                       r.size() ? (GEntity *)r[0] :
-                                  nullptr;
+      GEntity *under = firstEntity(v, e, f, r);
       if(queryBehind(view, xyz, behind, px)) {
         for(int k = 0; k < 3; k++) xyz[k] = behind[k];
         entity = under;

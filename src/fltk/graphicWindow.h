@@ -61,6 +61,14 @@ private:
   Fl_Sys_Menu_Bar *_sysbar;
 #endif
   Fl_Menu_Bar *_bar;
+  // the menu bar, in the window or the system's
+  Fl_Menu_ *_menuBar() const
+  {
+#if defined(__APPLE__)
+    if(_sysbar) return _sysbar;
+#endif
+    return _bar;
+  }
   Fl_Tile *_tile;
   Fl_Window *_win, *_menuwin;
   messageBrowser *_browser;
@@ -153,8 +161,6 @@ public:
   // the docked tool used last, if any, and closing it
   paletteWindow *currentDockedTool();
   bool closeDockedTool();
-  // run the entry of the menu bar whose shortcut is the current event
-  bool runMenuShortcut();
 #if defined(__APPLE__)
   bool hasSystemMenuBar() const { return _sysbar != nullptr; }
 #endif
@@ -182,8 +188,6 @@ void geometry_reload_cb(Fl_Widget *w, void *data);
 void geometry_edit_cb(Fl_Widget *w, void *data);
 void file_window_cb(Fl_Widget *w, void *data);
 void mesh_save_cb(Fl_Widget *w, void *data);
-// the index of the first visible view, or -1
-int firstVisibleView();
 void onelab_reload_cb(Fl_Widget *w, void *data);
 void help_about_cb(Fl_Widget *w, void *data);
 void status_xyz1p_cb(Fl_Widget *w, void *data);
@@ -212,7 +216,6 @@ void dock_tools_cb(Fl_Widget *w, void *data);
 // - canRunItem() says whether an item can be used now;
 // - runItem() does what an item does (view is the index of the view, for the
 //   menu of a view);
-// - runAction() runs an action of the table by its name;
 // - addActionItems() adds the items of a menu to an FLTK menu, where they act
 //   on the given view; with marks, the items that toggle or set an option
 //   show its value (not in a menu that stays, which would not follow it).
@@ -220,7 +223,6 @@ struct actionItem;
 class Fl_Menu_;
 bool canRunItem(const actionItem &item);
 void runItem(const actionItem &item, int view = -1);
-void runAction(const std::string &name);
 // whether a menu of the registry has an item this interface can run now
 bool canRunAnyItem(const actionItem &menu);
 void addActionItems(Fl_Menu_ *m, const actionItem &menu, int view,
@@ -237,5 +239,7 @@ struct fltkAction {
 };
 // the actions of the menu bar (see the "Menu bar" menu of Actions.cpp)
 const std::map<std::string, fltkAction> &menuBarActions();
+// the actions of the keys that are not in a menu (see FlGui::runShortcut())
+const std::map<std::string, fltkAction> &keyboardActions();
 
 #endif

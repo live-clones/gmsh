@@ -18,7 +18,7 @@ class paletteWindow;
 
 // The main window that docks the tool windows (see graphicWindow::
 // setDocking()), as the tool windows, the main window and the dock reach it:
-// through paletteWindow::docking, null while no window docks
+// through paletteWindow::host, null while no window docks
 class dockHost {
 public:
   virtual ~dockHost() {}
@@ -45,12 +45,52 @@ public:
   virtual bool closeTool(Fl_Window *w) = 0;
 };
 
-// Derive special windows from Fl_Double_Window to correctly process
-// the OS-specific shorcuts (Esc & Cmd-w on Mac, Alt+F4 on Windows)
-class paletteWindow : public Fl_Double_Window {
-private:
+// The windows of the interface, main and tool windows: placed on the desktop
+// at their offset from the main graphic window (see windowPlacement.h), with
+// the title bar and the widgets in the style of the theme
+class gmshWindow : public Fl_Double_Window {
+protected:
   // position relative to the main graphic window, applied when shown
   int *_offset;
+  void _showOnDesktop()
+  {
+    if(_offset) placeWindow(this, _offset);
+    if(non_modal() && !shown()) Fl_Double_Window::show(); // fix ordering
+    Fl_Double_Window::show();
+    titleBarColor(this);
+  }
+  // the key that closes a window: Cmd-W on macOS, Alt+F4 on Windows, Ctrl-W
+  // otherwise
+  static bool _closeKey()
+  {
+#if defined(__APPLE__)
+    return Fl::test_shortcut(FL_META + 'w');
+#elif defined(WIN32)
+    return Fl::test_shortcut(FL_ALT + FL_F + 4);
+#else
+    return Fl::test_shortcut(FL_CTRL + 'w');
+#endif
+  }
+
+public:
+  gmshWindow(int w, int h, bool nonModal, const char *l, int *offset)
+    : Fl_Double_Window(w, h, l), _offset(offset)
+  {
+    if(nonModal) set_non_modal();
+  }
+  ~gmshWindow() { forgetWindow(this); }
+  virtual void draw()
+  {
+    gmshStyleWidgets(this);
+    Fl_Double_Window::draw();
+  }
+};
+
+// The tool windows: on the desktop or in the dock of the main window (see
+// dockHost), with the sizes their rules allow, and the shortcuts that close
+// them (Escape, and the key that closes a window)
+class paletteWindow : public gmshWindow {
+private:
   // the widgets that follow the width of the window, laid out at _width
   widthRules _rules;
   int _width;
@@ -79,7 +119,7 @@ private:
 
 public:
   // the main window while it has a dock
-  inline static dockHost *docking = nullptr;
+  inline static dockHost *host = nullptr;
   // the tool window being so dragged, until it is dropped: the main window
   // takes the drop over the dock (see graphicWindow::toolDrop())
   inline static paletteWindow *dragged = nullptr;
@@ -105,13 +145,12 @@ public:
   }
   paletteWindow(int w, int h, bool nonModal, const char *l = nullptr,
                 int *offset = nullptr)
-    : Fl_Double_Window(w, h, l), _offset(offset), _width(w), _resized(nullptr),
+    : gmshWindow(w, h, nonModal, l, offset), _width(w), _resized(nullptr),
       _resizedData(nullptr), _minW(0), _minH(0), _maxW(0), _maxH(0),
       _dockable(false), _floating(false), _pushed(false), _desktopBorder(true),
       _desktopNonModal(false), _desktopW(w), _desktopH(h), _revealed(nullptr),
       _revealedData(nullptr)
   {
-    if(nonModal) set_non_modal();
   }
   void dockable(bool d) { _dockable = d; }
   bool dockable() const { return _dockable; }
@@ -119,7 +158,7 @@ public:
   bool floating() const { return _floating; }
   void dragToDock()
   {
-    if(!parent() && _dockable && docking) docking->dragToDock(this);
+    if(!parent() && _dockable && host) host->dragToDock(this);
   }
   // on the desktop, or in the dock (where a folded or covered window is not
   // shown)
@@ -162,7 +201,6 @@ public:
     size(std::max(_desktopW, _minW),
          fixedHeight() ? _minH : std::max(_desktopH, _minH));
   }
-  ~paletteWindow() { forgetWindow(this); }
   // the widgets as placed now follow a wider window (see widthRules.h)
   void followWidth(int mid, int right)
   {
@@ -209,8 +247,7 @@ public:
     bool sized = (w != this->w() || h != this->h());
     Fl_Double_Window::resize(x, y, w, h);
     if(!sized) { // only moved
-      if(!parent() && _dockable && _floating && docking)
-        docking->toolMoved(this);
+      if(!parent() && _dockable && _floating && host) host->toolMoved(this);
       return;
     }
     if(!_rules.empty()) {
@@ -218,7 +255,7 @@ public:
       init_sizes();
     }
     if(_resized) _resized(_resizedData);
-    if(parent() && docking) docking->toolResized(this);
+    if(parent() && host) host->toolResized(this);
   }
   virtual int handle(int event)
   {
@@ -249,13 +286,7 @@ public:
     case FL_KEYBOARD:
       // docked, only when the focus is inside: the main window has its own
       if(parent() && !contains(Fl::focus())) break;
-#if defined(__APPLE__)
-      if(Fl::test_shortcut(FL_META + 'w') || Fl::test_shortcut(FL_Escape)) {
-#elif defined(WIN32)
-      if(Fl::test_shortcut(FL_ALT + FL_F + 4) || Fl::test_shortcut(FL_Escape)) {
-#else
-      if(Fl::test_shortcut(FL_CTRL + 'w') || Fl::test_shortcut(FL_Escape)) {
-#endif
+      if(_closeKey() || Fl::test_shortcut(FL_Escape)) {
         do_callback();
         return 1;
       }
@@ -265,32 +296,24 @@ public:
   }
   virtual void show()
   {
-    if(_dockable && !_floating && docking && docking->takesTools()) {
-      docking->dockTool(this);
+    if(_dockable && !_floating && host && host->takesTools()) {
+      host->dockTool(this);
       return;
     }
     if(parent()) { // docked
       Fl_Double_Window::show();
       return;
     }
-    if(_offset) placeWindow(this, _offset);
-    if(non_modal() && !shown()) Fl_Double_Window::show(); // fix ordering
-    Fl_Double_Window::show();
-    titleBarColor(this);
+    _showOnDesktop();
     watchMoves(this);
   }
   virtual void hide()
   {
     // FLTK also hides the subwindows of a window it hides: not a close
-    if(parent() && docking && top_window()->shown())
-      docking->toolHidden(this);
+    if(parent() && host && top_window()->shown())
+      host->toolHidden(this);
     else
       Fl_Double_Window::hide();
-  }
-  virtual void draw()
-  {
-    gmshStyleWidgets(this);
-    Fl_Double_Window::draw();
   }
 };
 

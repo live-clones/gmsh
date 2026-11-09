@@ -7,7 +7,6 @@
 //   Stephen Guzik
 //   Sebastian Eiser
 
-#include <list>
 #include <functional>
 #include <FL/Fl_Double_Window.H>
 #include <FL/Fl_Check_Button.H>
@@ -233,12 +232,13 @@ static void okCancelButtons(Fl_Window *window, int y, int bw, Fl_Button *&ok,
 }
 
 // The dialogs whose rows each show an option and set it on OK. A row is a
-// check box ('c'), a value ('v'), two values on one line ('2', the label
-// after the second), a slider ('s') or a choice ('h'); the ranges of the
-// values and the items of the choices are those of the options (see
-// GetOptionRange() and GetOptionChoices() in Options.h)
+// check box, a value, two values on one line (the label after the second), a
+// slider or a choice; the ranges of the values and the items of the choices
+// are those of the options (see GetOptionRange() and GetOptionChoices() in
+// Options.h)
+enum dialogRowKind { Check, Value, TwoValues, Slider, Choice };
 struct dialogRow {
-  char kind;
+  dialogRowKind kind;
   const char *label, *option, *option2;
 };
 
@@ -246,35 +246,32 @@ class optionDialog {
 private:
   Fl_Window *_window;
   Fl_Button *_ok, *_cancel;
-  // the widget of each option
-  std::vector<std::pair<Fl_Widget *, std::string>> _fields;
+  // the widget of each option, and the values of its items if a choice
+  struct field {
+    Fl_Widget *widget;
+    std::string option;
+    std::vector<double> values;
+  };
+  std::vector<field> _fields;
   // "Print.Text" as "Print" and "Text"
   static std::string _category(const std::string &o)
   { return o.substr(0, o.find('.')); }
   static std::string _name(const std::string &o)
   { return o.substr(o.find('.') + 1); }
+  static double _get(const std::string &o)
+  {
+    double v = 0.;
+    NumberOption(GMSH_GET, _category(o).c_str(), 0, _name(o).c_str(), v);
+    return v;
+  }
   Fl_Widget *_add(Fl_Widget *w, const char *option)
   {
     w->tooltip(option);
-    double min, max, step;
-    Fl_Valuator *v = dynamic_cast<Fl_Valuator *>(w);
-    if(v && GetOptionRange(option, min, max, step)) {
-      v->minimum(min);
-      v->maximum(max);
-      if(CTX::instance()->inputScrolling) v->step(step);
-    }
-    if(Fl_Choice *c = dynamic_cast<Fl_Choice *>(w)) {
-      // (the labels kept here, for the items, which point to them)
-      static std::list<std::string> labels;
-      std::vector<Fl_Menu_Item> items;
-      for(auto &ch : GetOptionChoices(option)) {
-        labels.push_back(ch.second);
-        items.push_back({labels.back().c_str(), 0, nullptr, nullptr, 0});
-      }
-      items.push_back({nullptr});
-      c->copy(&items[0]);
-    }
-    _fields.push_back({w, option});
+    if(Fl_Valuator *v = dynamic_cast<Fl_Valuator *>(w)) optionRange(v, option);
+    std::vector<double> values;
+    if(Fl_Choice *c = dynamic_cast<Fl_Choice *>(w))
+      values = choiceItems(c, option);
+    _fields.push_back({w, option, values});
     return w;
   }
 
@@ -287,21 +284,21 @@ public:
     for(const dialogRow &r : rows) {
       Fl_Widget *o = nullptr;
       switch(r.kind) {
-      case 'c': o = new Fl_Check_Button(WB, y, 2 * bw + WB, BH, r.label); break;
-      case 'v': o = new Fl_Value_Input(WB, y, bw, BH, r.label); break;
-      case '2':
+      case Check: o = new Fl_Check_Button(WB, y, 2 * bw + WB, BH, r.label); break;
+      case Value: o = new Fl_Value_Input(WB, y, bw, BH, r.label); break;
+      case TwoValues:
         _add(new Fl_Value_Input(WB, y, bw / 2, BH), r.option);
         o = new Fl_Value_Input(WB + bw / 2, y, bw - bw / 2, BH, r.label);
         _add(o, r.option2);
         break;
-      case 's':
+      case Slider:
         o = new Fl_Value_Slider(WB, y, bw, BH, r.label);
         o->type(FL_HOR_SLIDER);
         break;
-      case 'h': o = new Fl_Choice(WB, y, bw + bw / 2, BH, r.label); break;
+      case Choice: o = new Fl_Choice(WB, y, bw + bw / 2, BH, r.label); break;
       }
-      if(r.kind != 'c') o->align(FL_ALIGN_RIGHT);
-      if(r.kind != '2') _add(o, r.option);
+      if(r.kind != Check) o->align(FL_ALIGN_RIGHT);
+      if(r.kind != TwoValues) _add(o, r.option);
       y += BH;
     }
     okCancelButtons(_window, y, bw, _ok, _cancel);
@@ -310,28 +307,26 @@ public:
   Fl_Widget *field(const std::string &option)
   {
     for(auto &f : _fields)
-      if(f.second == option) return f.first;
+      if(f.option == option) return f.widget;
     return nullptr;
   }
   // shows the values of the options, then calls adjust(); on OK, sets the
-  // options of the rows that are enabled and calls apply() (see runDialog())
+  // options of the rows that are enabled and calls apply(); other() is called
+  // with the other widgets clicked (see runDialog())
   int run(const char *title, const std::function<void()> &apply,
-          const std::function<void(Fl_Widget *)> &other = nullptr,
-          const std::function<void()> &adjust = nullptr)
+          const std::function<void()> &adjust = nullptr,
+          const std::function<void(Fl_Widget *)> &other = nullptr)
   {
     if(title) _window->label(title);
     for(auto &f : _fields) {
-      double v = 0.;
-      NumberOption(GMSH_GET, _category(f.second).c_str(), 0,
-                   _name(f.second).c_str(), v);
-      if(Fl_Button *b = dynamic_cast<Fl_Button *>(f.first))
+      double v = _get(f.option);
+      if(Fl_Button *b = dynamic_cast<Fl_Button *>(f.widget))
         b->value(v != 0);
-      else if(Fl_Valuator *val = dynamic_cast<Fl_Valuator *>(f.first))
+      else if(Fl_Valuator *val = dynamic_cast<Fl_Valuator *>(f.widget))
         val->value(v);
-      else if(Fl_Choice *c = dynamic_cast<Fl_Choice *>(f.first)) {
-        auto choices = GetOptionChoices(f.second);
-        for(std::size_t i = 0; i < choices.size(); i++)
-          if(choices[i].first == v) c->value((int)i);
+      else if(Fl_Choice *c = dynamic_cast<Fl_Choice *>(f.widget)) {
+        for(std::size_t i = 0; i < f.values.size(); i++)
+          if(f.values[i] == v) c->value((int)i);
       }
     }
     if(adjust) adjust();
@@ -339,19 +334,18 @@ public:
       _window, _ok, _cancel,
       [&]() {
         for(auto &f : _fields) {
-          if(!f.first->active()) continue;
-          double v = 0.;
-          if(Fl_Button *b = dynamic_cast<Fl_Button *>(f.first))
-            v = b->value() ? 1 : 0;
-          else if(Fl_Valuator *val = dynamic_cast<Fl_Valuator *>(f.first))
+          if(!f.widget->active()) continue;
+          double v = _get(f.option);
+          if(Fl_Button *b = dynamic_cast<Fl_Button *>(f.widget))
+            v = checkValue(b, v);
+          else if(Fl_Valuator *val = dynamic_cast<Fl_Valuator *>(f.widget))
             v = val->value();
-          else if(Fl_Choice *c = dynamic_cast<Fl_Choice *>(f.first)) {
-            auto choices = GetOptionChoices(f.second);
-            if(c->value() >= 0 && c->value() < (int)choices.size())
-              v = choices[c->value()].first;
+          else if(Fl_Choice *c = dynamic_cast<Fl_Choice *>(f.widget)) {
+            if(c->value() >= 0 && c->value() < (int)f.values.size())
+              v = f.values[c->value()];
           }
-          NumberOption(GMSH_SET | GMSH_GUI, _category(f.second).c_str(), 0,
-                       _name(f.second).c_str(), v);
+          NumberOption(GMSH_SET | GMSH_GUI, _category(f.option).c_str(), 0,
+                       _name(f.option).c_str(), v);
         }
         apply();
       },
@@ -367,16 +361,16 @@ int genericBitmapFileDialog(const char *name, const char *title, int format)
   if(!dialog)
     dialog = new optionDialog(
       nullptr, BB,
-      {{'c', "Print text strings", "Print.Text"},
-       {'c', "Print background", "Print.Background"},
-       {'c', "Composite all window tiles", "Print.CompositeWindows"},
-       {'c', "Scale sizes with the picture", "Print.ScalePixelSizes"},
-       {'2', "Dimensions", "Print.Width", "Print.Height"},
-       {'v', "Supersampling", "Print.Supersampling"},
-       {'s', "Quality", "Print.JpegQuality"},
-       {'s', "Smoothing", "Print.JpegSmoothing"}});
+      {{Check, "Print text strings", "Print.Text"},
+       {Check, "Print background", "Print.Background"},
+       {Check, "Composite all window tiles", "Print.CompositeWindows"},
+       {Check, "Scale sizes with the picture", "Print.ScalePixelSizes"},
+       {TwoValues, "Dimensions", "Print.Width", "Print.Height"},
+       {Value, "Supersampling", "Print.Supersampling"},
+       {Slider, "Quality", "Print.JpegQuality"},
+       {Slider, "Smoothing", "Print.JpegSmoothing"}});
   return dialog->run(
-    title, [&]() { CreateOutputFile(name, format); }, nullptr,
+    title, [&]() { CreateOutputFile(name, format); },
     [&]() {
       // (the quality and smoothing of JPEG pictures)
       for(const char *o : {"Print.JpegQuality", "Print.JpegSmoothing"}) {
@@ -396,10 +390,10 @@ int pgfBitmapFileDialog(const char *name, const char *title, int format)
   if(!dialog)
     dialog = new optionDialog(
       nullptr, BB,
-      {{'c', "Flat graphics", "Print.PgfTwoDim"},
-       {'c', "Export axis (for entire fig)", "Print.PgfExportAxis"},
-       {'c', "Horizontal colorbar", "Print.PgfHorizontalBar"},
-       {'2', "Dimensions", "Print.Width", "Print.Height"}});
+      {{Check, "Flat graphics", "Print.PgfTwoDim"},
+       {Check, "Export axis (for entire fig)", "Print.PgfExportAxis"},
+       {Check, "Horizontal colorbar", "Print.PgfHorizontalBar"},
+       {TwoValues, "Dimensions", "Print.Width", "Print.Height"}});
   return dialog->run(title, [&]() {
     // never any text, background or compositing in the bitmap of a PGF
     // figure: for this file only, the options are set back after
@@ -424,9 +418,9 @@ int latexFileDialog(const char *name)
   if(!dialog)
     dialog = new optionDialog(
       "LaTeX Options", BB,
-      {{'c', "Print strings as equations", "Print.TexAsEquation"},
-       {'c', "Force font size", "Print.TexForceFontSize"},
-       {'v', "Graphics width in mm", "Print.TexWidthInMm"}});
+      {{Check, "Print strings as equations", "Print.TexAsEquation"},
+       {Check, "Force font size", "Print.TexForceFontSize"},
+       {Value, "Graphics width in mm", "Print.TexWidthInMm"}});
   return dialog->run(nullptr, [&]() { CreateOutputFile(name, FORMAT_TEX); });
 }
 
@@ -488,9 +482,7 @@ int mpegFileDialog(const char *name, int format)
                                       BH, "First / Last / Steps");
     dialog->v[4]->tooltip("Print.ParameterSteps");
     dialog->v[4]->align(FL_ALIGN_RIGHT);
-    dialog->v[4]->minimum(1);
-    dialog->v[4]->maximum(500);
-    if(CTX::instance()->inputScrolling) dialog->v[4]->step(1);
+    optionRange(dialog->v[4], "Print.ParameterSteps");
     y += BH;
     dialog->param->end();
 
@@ -500,18 +492,14 @@ int mpegFileDialog(const char *name, int format)
       new Fl_Value_Input(WB, y, ww2, BH, "Frame duration (in seconds)");
     dialog->v[0]->tooltip("PostProcessing.AnimationDelay");
     y += BH;
-    dialog->v[0]->minimum(1. / 30.);
-    dialog->v[0]->maximum(2.);
-    if(CTX::instance()->inputScrolling) dialog->v[0]->step(1. / 30.);
+    optionRange(dialog->v[0], "PostProcessing.AnimationDelay");
     dialog->v[0]->precision(3);
     dialog->v[0]->align(FL_ALIGN_RIGHT);
 
     dialog->v[1] = new Fl_Value_Input(WB, y, ww2, BH, "Steps between frames");
     dialog->v[1]->tooltip("PostProcessing.AnimationStep");
     y += BH;
-    dialog->v[1]->minimum(1);
-    dialog->v[1]->maximum(100);
-    if(CTX::instance()->inputScrolling) dialog->v[1]->step(1);
+    optionRange(dialog->v[1], "PostProcessing.AnimationStep");
     dialog->v[1]->align(FL_ALIGN_RIGHT);
 
     dialog->c[0] = new Fl_Check_Button(WB, y, ww, BH, "Print background");
@@ -600,13 +588,13 @@ int gifFileDialog(const char *name)
   if(!dialog)
     dialog = new optionDialog(
       "GIF Options", BB,
-      {{'c', "Dither", "Print.GifDither"},
-       {'c', "Interlace", "Print.GifInterlace"},
-       {'c', "Sort colormap", "Print.GifSort"},
-       {'c', "Transparent background", "Print.GifTransparent"},
-       {'c', "Print text strings", "Print.Text"},
-       {'c', "Print background", "Print.Background"},
-       {'c', "Composite all window tiles", "Print.CompositeWindows"}});
+      {{Check, "Dither", "Print.GifDither"},
+       {Check, "Interlace", "Print.GifInterlace"},
+       {Check, "Sort colormap", "Print.GifSort"},
+       {Check, "Transparent background", "Print.GifTransparent"},
+       {Check, "Print text strings", "Print.Text"},
+       {Check, "Print background", "Print.Background"},
+       {Check, "Composite all window tiles", "Print.CompositeWindows"}});
   return dialog->run(nullptr, [&]() { CreateOutputFile(name, FORMAT_GIF); });
 }
 
@@ -618,13 +606,13 @@ int gl2psFileDialog(const char *name, const char *title, int format)
   if(!dialog)
     dialog = new optionDialog(
       nullptr, BB,
-      {{'h', "Type", "Print.EpsQuality"},
-       {'c', "Compress", "Print.EpsCompress"},
-       {'c', "Remove hidden primitives", "Print.EpsOcclusionCulling"},
-       {'c', "Optimize BSP tree", "Print.EpsBestRoot"},
-       {'c', "Use level 3 shading", "Print.EpsPS3Shading"},
-       {'c', "Print text strings", "Print.Text"},
-       {'c', "Print background", "Print.Background"}});
+      {{Choice, "Type", "Print.EpsQuality"},
+       {Check, "Compress", "Print.EpsCompress"},
+       {Check, "Remove hidden primitives", "Print.EpsOcclusionCulling"},
+       {Check, "Optimize BSP tree", "Print.EpsBestRoot"},
+       {Check, "Use level 3 shading", "Print.EpsPS3Shading"},
+       {Check, "Print text strings", "Print.Text"},
+       {Check, "Print background", "Print.Background"}});
   // what applies to the type of the file: compressed with zlib; with vector
   // graphics, the hidden primitives, the BSP tree of the accurate sort and
   // the level 3 shading of PostScript
@@ -650,10 +638,10 @@ int gl2psFileDialog(const char *name, const char *title, int format)
   };
   return dialog->run(
     title, [&]() { CreateOutputFile(name, format); },
+    activate,
     [&](Fl_Widget *o) {
       if(o == dialog->field("Print.EpsQuality")) activate();
-    },
-    activate);
+    });
 }
 
 // Save options dialog
@@ -698,8 +686,8 @@ int geoFileDialog(const char *name)
   if(!dialog)
     dialog = new optionDialog(
       "GEO Options", BB,
-      {{'c', "Save physical group labels", "Print.GeoLabels"},
-       {'c', "Only save physical entities", "Print.GeoOnlyPhysicals"}});
+      {{Check, "Save physical group labels", "Print.GeoLabels"},
+       {Check, "Only save physical entities", "Print.GeoOnlyPhysicals"}});
   return dialog->run(nullptr, [&]() { CreateOutputFile(name, FORMAT_GEO); });
 }
 
@@ -709,14 +697,14 @@ int meshStatFileDialog(const char *name)
   if(!dialog)
     dialog = new optionDialog(
       "POS Options", BB + 9,
-      {{'c', "Save all elements", "Mesh.SaveAll"},
-       {'c', "Print elementary tags", "Print.PostElementary"},
-       {'c', "Print element numbers", "Print.PostElement"},
-       {'c', "Print SICN quality measure", "Print.PostSICN"},
-       {'c', "Print SIGE quality measure", "Print.PostSIGE"},
-       {'c', "Print Gamma quality measure", "Print.PostGamma"},
-       {'c', "Print Eta quality measure", "Print.PostEta"},
-       {'c', "Print Disto quality measure", "Print.PostDisto"}});
+      {{Check, "Save all elements", "Mesh.SaveAll"},
+       {Check, "Print elementary tags", "Print.PostElementary"},
+       {Check, "Print element numbers", "Print.PostElement"},
+       {Check, "Print SICN quality measure", "Print.PostSICN"},
+       {Check, "Print SIGE quality measure", "Print.PostSIGE"},
+       {Check, "Print Gamma quality measure", "Print.PostGamma"},
+       {Check, "Print Eta quality measure", "Print.PostEta"},
+       {Check, "Print Disto quality measure", "Print.PostDisto"}});
   return dialog->run(nullptr, [&]() { CreateOutputFile(name, FORMAT_POS); });
 }
 
@@ -751,10 +739,6 @@ int mshFileDialog(const char *name)
     {"Version 4.2 ASCII", 0, nullptr, nullptr},
     {"Version 4.2 Binary", 0, nullptr, nullptr},
     {nullptr}};
-  static Fl_Menu_Item viewsmenu[] = {{"None", 0, nullptr, nullptr},
-                                     {"Visible", 0, nullptr, nullptr},
-                                     {"All", 0, nullptr, nullptr},
-                                     {nullptr}};
 
   int BBB = BB + 9; // labels too long
 
@@ -771,7 +755,7 @@ int mshFileDialog(const char *name)
     dialog->views = new Fl_Choice(WB, y, BBB + BBB / 2, BH, "Views");
     dialog->views->tooltip("Mesh.SaveViews");
     y += BH;
-    dialog->views->menu(viewsmenu);
+    choiceItems(dialog->views, "Mesh.SaveViews");
     dialog->views->align(FL_ALIGN_RIGHT);
     dialog->b[0] =
       new Fl_Check_Button(WB, y, 2 * BBB + WB, BH, "Save all elements");
@@ -872,8 +856,8 @@ int unvinpFileDialog(const char *name, const char *title, int format)
   if(!dialog)
     dialog = new optionDialog(
       nullptr, BB + 9,
-      {{'c', "Save all elements", "Mesh.SaveAll"},
-       {'c', "Save groups of nodes", "Mesh.SaveGroupsOfNodes"}});
+      {{Check, "Save all elements", "Mesh.SaveAll"},
+       {Check, "Save groups of nodes", "Mesh.SaveGroupsOfNodes"}});
   return dialog->run(title, [&]() { CreateOutputFile(name, format); });
 }
 
@@ -889,20 +873,11 @@ int keyRadFileDialog(const char *name, const char *title, int format)
   };
   static _keyRadFileDialog *dialog = nullptr;
 
-  static Fl_Menu_Item beammenu[] = {{"Physical groups", 0, nullptr, nullptr},
-                                    {"Save all", 0, nullptr, nullptr},
-                                    {"Ignore", 0, nullptr, nullptr},
-                                    {nullptr}};
-
-  static Fl_Menu_Item shellmenu[] = {{"Physical groups", 0, nullptr, nullptr},
-                                     {"Save all", 0, nullptr, nullptr},
-                                     {"Ignore", 0, nullptr, nullptr},
-                                     {nullptr}};
-
-  static Fl_Menu_Item solidmenu[] = {{"Physical groups", 0, nullptr, nullptr},
-                                     {"Save all", 0, nullptr, nullptr},
-                                     {"Ignore", 0, nullptr, nullptr},
-                                     {nullptr}};
+  // the elements of each dimension saved (two bits of Mesh.SaveAll each)
+  static Fl_Menu_Item menu[] = {{"Physical groups", 0, nullptr, nullptr},
+                                {"Save all", 0, nullptr, nullptr},
+                                {"Ignore", 0, nullptr, nullptr},
+                                {nullptr}};
 
   int BBB = BB + 16; // labels too long
 
@@ -910,18 +885,14 @@ int keyRadFileDialog(const char *name, const char *title, int format)
     dialog = new _keyRadFileDialog;
     int h = 3 * WB + 6 * BH, w = 2 * BBB + 3 * WB, y = WB;
     dialog->window = dialogWindow(w, h, title);
-    dialog->c[0] = new Fl_Choice(WB, y, BBB + BBB / 4, BH, "Line");
-    y += BH;
-    dialog->c[0]->menu(beammenu);
-    dialog->c[0]->align(FL_ALIGN_RIGHT);
-    dialog->c[1] = new Fl_Choice(WB, y, BBB + BBB / 4, BH, "Surface");
-    y += BH;
-    dialog->c[1]->menu(shellmenu);
-    dialog->c[1]->align(FL_ALIGN_RIGHT);
-    dialog->c[2] = new Fl_Choice(WB, y, BBB + BBB / 4, BH, "Volume");
-    y += BH;
-    dialog->c[2]->menu(solidmenu);
-    dialog->c[2]->align(FL_ALIGN_RIGHT);
+    const char *labels[3] = {"Line", "Surface", "Volume"};
+    for(int i = 0; i < 3; i++) {
+      dialog->c[i] = new Fl_Choice(WB, y, BBB + BBB / 4, BH, labels[i]);
+      y += BH;
+      dialog->c[i]->menu(menu);
+      dialog->c[i]->tooltip("Mesh.SaveAll");
+      dialog->c[i]->align(FL_ALIGN_RIGHT);
+    }
     dialog->b[0] =
       new Fl_Check_Button(WB, y, 2 * BBB + WB, BH, "Save groups of elements");
     dialog->b[0]->tooltip("Mesh.SaveGroupsOfNodes");
@@ -934,15 +905,11 @@ int keyRadFileDialog(const char *name, const char *title, int format)
   }
 
   dialog->window->label(title);
-  dialog->c[0]->value(((int)opt_mesh_save_all(0, GMSH_GET, 0) & 4) ? 1 :
-                      ((int)opt_mesh_save_all(0, GMSH_GET, 0) & 8) ? 2 :
-                                                                     0);
-  dialog->c[1]->value(((int)opt_mesh_save_all(0, GMSH_GET, 0) & 16) ? 1 :
-                      ((int)opt_mesh_save_all(0, GMSH_GET, 0) & 32) ? 2 :
-                                                                      0);
-  dialog->c[2]->value(((int)opt_mesh_save_all(0, GMSH_GET, 0) & 64)  ? 1 :
-                      ((int)opt_mesh_save_all(0, GMSH_GET, 0) & 128) ? 2 :
-                                                                       0);
+  int all = (int)opt_mesh_save_all(0, GMSH_GET, 0);
+  for(int i = 0; i < 3; i++) {
+    int bits = 4 << (2 * i);
+    dialog->c[i]->value((all & bits) ? 1 : (all & (2 * bits)) ? 2 : 0);
+  }
   dialog->b[0]->value(
     (int)opt_mesh_save_groups_of_nodes(0, GMSH_GET, 0) & 2 ? 1 : 0);
   dialog->b[1]->value(
@@ -965,9 +932,9 @@ int bdfFileDialog(const char *name)
   static optionDialog *dialog = nullptr;
   if(!dialog)
     dialog = new optionDialog("BDF Options", BB + 16,
-                              {{'h', "Format", "Mesh.BdfFieldFormat"},
-                               {'h', "Element tag", "Mesh.SaveElementTagType"},
-                               {'c', "Save all elements", "Mesh.SaveAll"}});
+                              {{Choice, "Format", "Mesh.BdfFieldFormat"},
+                               {Choice, "Element tag", "Mesh.SaveElementTagType"},
+                               {Check, "Save all elements", "Mesh.SaveAll"}});
   return dialog->run(nullptr, [&]() { CreateOutputFile(name, FORMAT_BDF); });
 }
 
@@ -978,9 +945,9 @@ int stlFileDialog(const char *name)
   static optionDialog *dialog = nullptr;
   if(!dialog)
     dialog = new optionDialog("STL Options", BB + 9,
-                              {{'h', "Format", "Mesh.Binary"},
-                               {'c', "Save all elements", "Mesh.SaveAll"},
-                               {'h', "Solid", "Mesh.StlOneSolidPerSurface"}});
+                              {{Choice, "Format", "Mesh.Binary"},
+                               {Check, "Save all elements", "Mesh.SaveAll"},
+                               {Choice, "Solid", "Mesh.StlOneSolidPerSurface"}});
   // a solid per physical surface saves the elements of the physical groups
   auto activate = [&]() {
     if(((Fl_Choice *)dialog->field("Mesh.StlOneSolidPerSurface"))->value() == 2)
@@ -990,10 +957,10 @@ int stlFileDialog(const char *name)
   };
   return dialog->run(
     nullptr, [&]() { CreateOutputFile(name, FORMAT_STL); },
+    activate,
     [&](Fl_Widget *o) {
       if(o == dialog->field("Mesh.StlOneSolidPerSurface")) activate();
-    },
-    activate);
+    });
 }
 
 // Generic mesh dialog
@@ -1004,11 +971,11 @@ int genericMeshFileDialog(const char *name, const char *title, int format,
   static optionDialog *dialog = nullptr;
   if(!dialog)
     dialog = new optionDialog(nullptr, BB + 16,
-                              {{'h', "Format", "Mesh.Binary"},
-                               {'h', "Element tag", "Mesh.SaveElementTagType"},
-                               {'c', "Save all elements", "Mesh.SaveAll"}});
+                              {{Choice, "Format", "Mesh.Binary"},
+                               {Choice, "Element tag", "Mesh.SaveElementTagType"},
+                               {Check, "Save all elements", "Mesh.SaveAll"}});
   return dialog->run(
-    title, [&]() { CreateOutputFile(name, format); }, nullptr,
+    title, [&]() { CreateOutputFile(name, format); },
     [&]() {
       // what the format supports
       for(auto &f : std::vector<std::pair<const char *, bool>>{
@@ -1027,10 +994,10 @@ int medFileDialog(const char *name)
   static optionDialog *dialog = nullptr;
   if(!dialog)
     dialog = new optionDialog("MED Options", BB + 16,
-                              {{'h', "Views", "Mesh.SaveViews"},
-                               {'c', "Save all elements", "Mesh.SaveAll"}});
+                              {{Choice, "Views", "Mesh.SaveViews"},
+                               {Check, "Save all elements", "Mesh.SaveAll"}});
   return dialog->run(
-    nullptr, [&]() { CreateOutputFile(name, FORMAT_MED); }, nullptr,
+    nullptr, [&]() { CreateOutputFile(name, FORMAT_MED); },
     [&]() {
       // the views to save, if there are views
       Fl_Choice *views = (Fl_Choice *)dialog->field("Mesh.SaveViews");
@@ -1048,12 +1015,12 @@ int vtuFileDialog(const char *name)
   if(!dialog)
     dialog = new optionDialog(
       "VTU Options", BB + 16,
-      {{'h', "Format", "Mesh.Binary"},
-       {'h', "Views", "Mesh.SaveViews"},
-       {'c', "Save all elements", "Mesh.SaveAll"},
-       {'c', "Save high order views refined", "PostProcessing.SaveAdapted"}});
+      {{Choice, "Format", "Mesh.Binary"},
+       {Choice, "Views", "Mesh.SaveViews"},
+       {Check, "Save all elements", "Mesh.SaveAll"},
+       {Check, "Save high order views refined", "PostProcessing.SaveAdapted"}});
   return dialog->run(
-    nullptr, [&]() { CreateOutputFile(name, FORMAT_VTU); }, nullptr,
+    nullptr, [&]() { CreateOutputFile(name, FORMAT_VTU); },
     [&]() {
       // the views to save, and how, if there are views
       Fl_Choice *views = (Fl_Choice *)dialog->field("Mesh.SaveViews");

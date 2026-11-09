@@ -2939,6 +2939,7 @@ std::map<std::string, OptionRange> OptionRanges = {
   {"Print.Height", {-1, 5000, 1}},
   {"Print.JpegQuality", {1, 100, 1}},
   {"Print.JpegSmoothing", {0, 100, 1}},
+  {"Print.ParameterSteps", {1, 500, 1}},
   {"Print.Supersampling", {1, 8, 1}},
   {"Print.TexWidthInMm", {0, 5000, 1}},
   {"Print.Width", {-1, 5000, 1}},

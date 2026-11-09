@@ -20,8 +20,9 @@ class drawContext;
 //   Actions.cpp. An action that shows something of an interface (a window, a
 //   file chooser) is done by each interface instead, and an interface that
 //   cannot do it leaves its items out.
-// To add an item, add it to its menu. To add an action, also add it to the
-// table, and, if the interfaces do it, to each of them.
+// To add an item, add it to its menu. An action done here is added to the
+// table; one an interface does is added to the interface (fltkActions() on
+// the desktop), and an interface that does not have it leaves its items out.
 
 // The kind of an item, which says what it does:
 // - ActionMenu shows its items: as a submenu (a heading on the web page), or,
@@ -113,5 +114,9 @@ void GetActionAsk(const actionAsk &ask, double &min, double &max, double &step,
 
 // Set an option, as an item does
 void SetActionOption(const std::string &option, double value);
+
+// The index of the option an item sets whose value is shown: 0, or the first
+// visible view for an option of the views; -1 if there is none
+int GetActionOptionIndex(const std::string &option);
 
 #endif

@@ -196,6 +196,65 @@ void openglWindow::_drawBorder()
   gmshEnd();
 }
 
+// the lasso rectangle, in pixel coordinates: a border inverting whatever it
+// crosses, and a faint wash of the foreground colour inside
+void openglWindow::_drawLasso()
+{
+  gmshMatrixMode(GMSH_PROJECTION);
+  double px[16];
+  glMatrix::ortho(_ctx->viewport[0], _ctx->viewport[2], _ctx->viewport[1],
+                  _ctx->viewport[3], -1., 1., px);
+  gmshLoadMatrix(px);
+  gmshMatrixMode(GMSH_MODELVIEW);
+  gmshLoadIdentity();
+  double x0 = _click.win[0], y0 = _ctx->viewport[3] - _click.win[1];
+  double x1 = _curr.win[0], y1 = _ctx->viewport[3] - _curr.win[1];
+  // flush before changing the blending, which the collector does not track
+  glImmediate::flush();
+  glDisable(GL_DEPTH_TEST);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  unsigned int fg = CTX::instance()->color.fg;
+  gmshColor4ub((unsigned char)CTX::instance()->unpackRed(fg),
+               (unsigned char)CTX::instance()->unpackGreen(fg),
+               (unsigned char)CTX::instance()->unpackBlue(fg), 40);
+  gmshBegin(GL_QUADS);
+  gmshVertex2d(x0, y0);
+  gmshVertex2d(x1, y0);
+  gmshVertex2d(x1, y1);
+  gmshVertex2d(x0, y1);
+  gmshEnd();
+  glImmediate::flush();
+  // white blended to one minus the destination: an inversion
+  glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
+  gmshColor3d(1., 1., 1.);
+  if(selectionMode && CTX::instance()->mouseSelection)
+    gmshLineStipple(1, 0x0F0F);
+  // two window pixels wide (the width is in display pixels, the
+  // coordinates in window pixels)
+  double hw = 1.;
+  gmshLineWidth(2. * hw * _ctx->highResolutionPixelFactor());
+  // four segments, the horizontal ones stretched by half the width and the
+  // vertical ones shortened by it, so that each corner is inverted once
+  double sx = (x1 > x0) ? hw : (x1 < x0) ? -hw : 0.;
+  double sy = (y1 > y0) ? hw : (y1 < y0) ? -hw : 0.;
+  gmshBegin(GL_LINES);
+  gmshVertex2d(x0 - sx, y0);
+  gmshVertex2d(x1 + sx, y0);
+  gmshVertex2d(x0 - sx, y1);
+  gmshVertex2d(x1 + sx, y1);
+  gmshVertex2d(x0, y0 + sy);
+  gmshVertex2d(x0, y1 - sy);
+  gmshVertex2d(x1, y0 + sy);
+  gmshVertex2d(x1, y1 - sy);
+  gmshEnd();
+  glImmediate::flush();
+  gmshLineStippleOff();
+  gmshLineWidth(1.);
+  glDisable(GL_BLEND);
+  glEnable(GL_DEPTH_TEST);
+}
+
 void openglWindow::draw()
 {
   // a draw the studio timer did not ask for, or that anyone else asked for
@@ -281,63 +340,7 @@ void openglWindow::draw()
       gmshEnd();
     }
     _ctx->draw2d();
-    if(lassoMode) {
-      // the rectangle, in pixel coordinates: a border inverting whatever it
-      // crosses, and a faint wash of the foreground colour inside
-      gmshMatrixMode(GMSH_PROJECTION);
-      double px[16];
-      glMatrix::ortho(_ctx->viewport[0], _ctx->viewport[2], _ctx->viewport[1],
-                      _ctx->viewport[3], -1., 1., px);
-      gmshLoadMatrix(px);
-      gmshMatrixMode(GMSH_MODELVIEW);
-      gmshLoadIdentity();
-      double x0 = _click.win[0], y0 = _ctx->viewport[3] - _click.win[1];
-      double x1 = _curr.win[0], y1 = _ctx->viewport[3] - _curr.win[1];
-      // flush before changing the blending, which the collector does not track
-      glImmediate::flush();
-      glDisable(GL_DEPTH_TEST);
-      glEnable(GL_BLEND);
-      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-      unsigned int fg = CTX::instance()->color.fg;
-      gmshColor4ub((unsigned char)CTX::instance()->unpackRed(fg),
-                   (unsigned char)CTX::instance()->unpackGreen(fg),
-                   (unsigned char)CTX::instance()->unpackBlue(fg), 40);
-      gmshBegin(GL_QUADS);
-      gmshVertex2d(x0, y0);
-      gmshVertex2d(x1, y0);
-      gmshVertex2d(x1, y1);
-      gmshVertex2d(x0, y1);
-      gmshEnd();
-      glImmediate::flush();
-      // white blended to one minus the destination: an inversion
-      glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
-      gmshColor3d(1., 1., 1.);
-      if(selectionMode && CTX::instance()->mouseSelection)
-        gmshLineStipple(1, 0x0F0F);
-      // two window pixels wide (the width is in display pixels, the
-      // coordinates in window pixels)
-      double hw = 1.;
-      gmshLineWidth(2. * hw * _ctx->highResolutionPixelFactor());
-      // four segments, the horizontal ones stretched by half the width and the
-      // vertical ones shortened by it, so that each corner is inverted once
-      double sx = (x1 > x0) ? hw : (x1 < x0) ? -hw : 0.;
-      double sy = (y1 > y0) ? hw : (y1 < y0) ? -hw : 0.;
-      gmshBegin(GL_LINES);
-      gmshVertex2d(x0 - sx, y0);
-      gmshVertex2d(x1 + sx, y0);
-      gmshVertex2d(x0 - sx, y1);
-      gmshVertex2d(x1 + sx, y1);
-      gmshVertex2d(x0, y0 + sy);
-      gmshVertex2d(x0, y1 - sy);
-      gmshVertex2d(x1, y0 + sy);
-      gmshVertex2d(x1, y1 - sy);
-      gmshEnd();
-      glImmediate::flush();
-      gmshLineStippleOff();
-      gmshLineWidth(1.);
-      glDisable(GL_BLEND);
-      glEnable(GL_DEPTH_TEST);
-    }
+    if(lassoMode) _drawLasso();
     _drawScreenMessage();
     _drawBorder();
     CTX::instance()->mesh.draw = 1;

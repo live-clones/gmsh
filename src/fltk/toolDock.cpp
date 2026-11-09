@@ -536,7 +536,7 @@ void toolDock::dragEnded(paletteWindow *pw, int x, int y, bool tearOut)
   if(!tearOut) return;
   pw->floating(true);
   hidden(pw);
-  if(paletteWindow::docking) paletteWindow::docking->toolTornOut(pw, x, y);
+  if(paletteWindow::host) paletteWindow::host->toolTornOut(pw, x, y);
 }
 
 void toolDock::dropHint(bool on)
@@ -598,7 +598,7 @@ void dockDivider::draw()
 }
 
 // The docking of the tool windows in the main window (graphicWindow), which
-// the tool windows reach as their dockHost (paletteWindow::docking)
+// the tool windows reach as their dockHost (paletteWindow::host)
 
 bool graphicWindow::closeTool(Fl_Window *w)
 {
@@ -639,7 +639,7 @@ void graphicWindow::setDocking(bool docking)
 {
   if(!_dock) return;
   if(docking) {
-    paletteWindow::docking = this;
+    paletteWindow::host = this;
     // the tool windows open on the desktop join the dock, in the order they
     // were shown (the list of FLTK starts with the newest)
     std::vector<paletteWindow *> open;
@@ -656,7 +656,7 @@ void graphicWindow::setDocking(bool docking)
     _dock->undockAll();
     _undocking = false;
     paletteWindow::dragged = nullptr;
-    if(paletteWindow::docking == this) paletteWindow::docking = nullptr;
+    if(paletteWindow::host == this) paletteWindow::host = nullptr;
     _layoutDock(0);
   }
 }
@@ -722,6 +722,15 @@ void graphicWindow::_dropHint(bool on)
   _divider->redraw();
 }
 
+// a tool dropped on the dock: docked, and no longer floating
+void dropped_cb(void *data)
+{
+  paletteWindow *w = (paletteWindow *)data;
+  w->floating(false);
+  w->show(); // docks it
+  FlGui::instance()->storeFloatingTools();
+}
+
 void graphicWindow::_drop_cb(void *data)
 {
   graphicWindow *g = (graphicWindow *)data;
@@ -740,9 +749,7 @@ void graphicWindow::_drop_cb(void *data)
   g->_dropTarget(false);
   // kept out when Shift is held, or where the system cannot say
   if(shift || down == -1) return;
-  w->floating(false);
-  w->show(); // docks it
-  FlGui::instance()->storeFloatingTools();
+  dropped_cb(w);
 }
 
 void graphicWindow::dragToDock(paletteWindow *w)
@@ -753,14 +760,6 @@ void graphicWindow::dragToDock(paletteWindow *w)
   paletteWindow::dragged = w;
   Fl::copy(label, strlen(label), 0);
   Fl::dnd();
-}
-
-void dropped_cb(void *data)
-{
-  paletteWindow *w = (paletteWindow *)data;
-  w->floating(false);
-  w->show(); // docks it
-  FlGui::instance()->storeFloatingTools();
 }
 
 int graphicWindow::toolDrop(int event)

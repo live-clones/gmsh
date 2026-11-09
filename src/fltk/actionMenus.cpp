@@ -232,7 +232,7 @@ static void addShape(const std::string &shape)
     return;
   }
   // (by pane of the elementary context window)
-  for(int pane = 1; pane < 12; pane++)
+  for(int pane = 1; pane < (int)scriptShapes().size(); pane++)
     if(shape == scriptShapes()[pane].name)
       add_new_point_based_entity(shape, pane);
 }
@@ -290,10 +290,12 @@ static const std::map<std::string, fltkAction> &fltkActions()
   return actions;
 }
 
-// the action this interface does with this name, or null
+// the action this interface does with this name, or null: those of the
+// modules and the scene menus here, those of the menu bar (graphicWindow.cpp)
+// and those of the keys not in a menu (FlGui.cpp)
 static const fltkAction *findAction(const std::string &name)
 {
-  for(auto *table : {&fltkActions(), &menuBarActions()}) {
+  for(auto *table : {&fltkActions(), &menuBarActions(), &keyboardActions()}) {
     auto it = table->find(name);
     if(it != table->end()) return &it->second;
   }
@@ -312,10 +314,10 @@ static void askFor(const actionItem &item)
 {
   double min, max, step, value;
   GetActionAsk(item.ask, min, max, step, value);
+  int index = GetActionOptionIndex(item.ask.option);
+  if(index < 0) return;
   std::string::size_type dot = item.ask.option.find('.');
   std::string category = item.ask.option.substr(0, dot);
-  int index = (category == "View") ? firstVisibleView() : 0;
-  if(index < 0) return;
   drawContext::global()->draw();
   double v = numberOrStringOptionChooser(category, index,
                                          item.ask.option.substr(dot + 1), true,
@@ -348,9 +350,6 @@ void runItem(const actionItem &item, int view)
   if(!item.ask.option.empty()) askFor(item);
   drawContext::global()->draw();
 }
-
-void runAction(const std::string &name)
-{ runItem(actionItem{"", ActionRun, name, {}, "", "", {}}); }
 
 static void item_cb(Fl_Widget *w, void *data)
 {
@@ -400,14 +399,15 @@ static int addItems(Fl_Menu_ *m, const actionItem &menu,
       continue;
     }
     if(!canRunItem(item)) continue;
-    // (not asked for when not shown: a menu that stays is built with the
-    // interface, which the marks of the interface's actions read)
-    int check = marks ? GetActionCheck(item) : -1;
-    const fltkAction *a = nullptr;
-    if(IsDoneByInterface(item) && item.kind == ActionRun) {
-      a = findAction(item.what);
-      check = (marks && a->check) ? a->check() : -1;
-    }
+    const fltkAction *a = (IsDoneByInterface(item) && item.kind == ActionRun) ?
+                            findAction(item.what) :
+                            nullptr;
+    // the check mark, the interface's for its actions (not asked for when not
+    // shown: a menu that stays is built with the interface, which the marks
+    // of the interface's actions read)
+    int check = !marks ? -1 :
+                a      ? (a->check ? a->check() : -1) :
+                         GetActionCheck(item);
     if(a && a->fill) { // a submenu the interface fills
       a->fill(m, prefix + item.label);
       last = m->find_index((prefix + item.label).c_str());

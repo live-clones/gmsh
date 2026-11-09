@@ -26,17 +26,15 @@
 #include "drawContext.h"
 #include "GModel.h"
 #include "Context.h"
-#include "Options.h"
 #include "PView.h"
+#include "extraDialogs.h"
 
-// Arrow editor
-
-// shows the dialog until OK, which calls apply() and returns 1, or Cancel or
+// Shows the dialog until OK, which calls apply() and returns 1, or Cancel or
 // the close button, which return 0; other(o) is told first of every widget
 // whose callback ran
 int runDialog(Fl_Window *window, Fl_Widget *ok, Fl_Widget *cancel,
               const std::function<void()> &apply,
-              const std::function<void(Fl_Widget *)> &other = nullptr)
+              const std::function<void(Fl_Widget *)> &other)
 {
   window->show();
   while(window->shown()) {
@@ -58,6 +56,9 @@ int runDialog(Fl_Window *window, Fl_Widget *ok, Fl_Widget *cancel,
   }
   return 0;
 }
+
+// Arrow editor: its own loop, as Apply leaves the window open for the caller
+// (see optionWindow.cpp)
 
 int arrowEditor(const char *title, double &a, double &b, double &c)
 {

@@ -43,11 +43,34 @@ extern StringXColor GeometryOptions_Color[];
 extern StringXColor MeshOptions_Color[];
 extern StringXColor ViewOptions_Color[];
 
-// the value a check button gives an option that may hold more than 0 and 1
-// (as General.SaveOptions = 2): the value it has while the button shows it as
-// it is, on or off
-static double checkValue(Fl_Button *b, double value)
+double checkValue(Fl_Button *b, double value)
 { return ((b->value() != 0) == (value != 0)) ? value : b->value(); }
+
+void optionRange(Fl_Valuator *v, const std::string &option)
+{
+  const OptionRange *r = GetOptionRange(option);
+  if(!r) return;
+  v->minimum(r->min);
+  v->maximum(r->max);
+  if(CTX::instance()->inputScrolling) v->step(r->step);
+}
+
+std::vector<double> choiceItems(Fl_Choice *c, const std::string &option)
+{
+  // (the labels kept here, for the items, which point to them)
+  static std::list<std::string> labels;
+  std::vector<Fl_Menu_Item> items;
+  std::vector<double> values;
+  for(auto &ch : GetOptionChoices(option)) {
+    labels.push_back(ch.second);
+    items.push_back({labels.back().c_str(), 0, nullptr, nullptr, 0});
+    values.push_back(ch.first);
+  }
+  if(values.empty()) return values;
+  items.push_back({nullptr});
+  c->copy(&items[0]);
+  return values;
+}
 
 // The option each widget of the window sets, by its name (see bind()): the
 // category ("Geometry") and the name ("Points") of the option, what is added
@@ -93,20 +116,8 @@ static void choicesFromTable()
   for(auto &b : bindings()) {
     Fl_Choice *c = dynamic_cast<Fl_Choice *>(b.first);
     if(!c) continue;
-    auto choices = GetOptionChoices(b.second.category + "." + b.second.name);
-    if(choices.empty()) continue;
-    // (the labels kept here, for the items, which point to them)
-    static std::list<std::string> labels;
-    std::vector<Fl_Menu_Item> items;
-    std::vector<double> values;
-    for(auto &ch : choices) {
-      labels.push_back(ch.second);
-      items.push_back({labels.back().c_str(), 0, nullptr, nullptr, 0});
-      values.push_back(ch.first);
-    }
-    items.push_back({nullptr});
-    c->copy(&items[0]);
-    bindValues(c, values);
+    auto values = choiceItems(c, b.second.category + "." + b.second.name);
+    if(!values.empty()) bindValues(c, values);
   }
 }
 
@@ -268,8 +279,6 @@ static int colorOptions(StringXColor *table)
   return n;
 }
 
-// the same for a view, with the automatic mode of View.Axes
-
 Fl_Menu_Item menu_font_names[] = {
   {"Times-Roman", 0, nullptr, (void *)FL_TIMES},
   {"Times-Bold", 0, nullptr, (void *)FL_TIMES_BOLD},
@@ -304,20 +313,16 @@ static void view_color_cb(Fl_Widget *w, void *data)
 {
   unsigned int (*fct)(int, int, unsigned int);
   fct = (unsigned int (*)(int, int, unsigned int))data;
-  optionWindow *o = FlGui::instance()->options;
-  int current = o->view.index;
-  unsigned int color = fct(current, GMSH_GET, 0);
+  std::vector<int> nums = viewTargets();
+  if(nums.empty()) return;
+  unsigned int color = fct(nums[0], GMSH_GET, 0);
   uchar r = CTX::instance()->unpackRed(color);
   uchar g = CTX::instance()->unpackGreen(color);
   uchar b = CTX::instance()->unpackBlue(color);
   if(!fl_color_chooser("Color Chooser", r, g, b)) return;
   color = CTX::instance()->packColor(r, g, b, 255);
-  for(int i = 0; i < (int)PView::list.size(); i++) {
-    if(i == current)
-      fct(i, GMSH_SET | GMSH_GUI, color);
-    else if(o->viewList->browser->selected(i + 1))
-      fct(i, GMSH_SET, color);
-  }
+  for(int i : nums)
+    fct(i, GMSH_SET | (i == nums[0] ? GMSH_GUI : 0), color);
   drawContext::global()->draw();
 }
 
@@ -751,18 +756,13 @@ void view_options_cb(Fl_Widget *w, void *data)
 static void view_options_timestep_cb(Fl_Widget *w, void *data)
 {
   std::string str((const char *)data);
-  for(int i = 0; i < (int)PView::list.size(); i++) {
-    if(i == FlGui::instance()->options->view.index ||
-       FlGui::instance()->options->viewList->browser->selected(i + 1)) {
-      if(str == "=")
-        opt_view_timestep(i, GMSH_SET, ((Fl_Value_Input *)w)->value());
-      else if(str == "-")
-        opt_view_timestep(i, GMSH_SET | GMSH_GUI,
-                          opt_view_timestep(i, GMSH_GET, 0) - 1);
-      else if(str == "+")
-        opt_view_timestep(i, GMSH_SET | GMSH_GUI,
-                          opt_view_timestep(i, GMSH_GET, 0) + 1);
-    }
+  for(int i : viewTargets()) {
+    if(str == "=")
+      opt_view_timestep(i, GMSH_SET, ((Fl_Value_Input *)w)->value());
+    else
+      opt_view_timestep(i, GMSH_SET | GMSH_GUI,
+                        opt_view_timestep(i, GMSH_GET, 0) +
+                          (str == "-" ? -1 : 1));
   }
   drawContext::global()->draw();
 }
@@ -891,16 +891,8 @@ static T *valueInput(int x, int y, int w, int h, const char *label,
   v->tooltip(option);
   v->align(FL_ALIGN_RIGHT);
   bind(v, option);
-  // the range of the option, if it has one (see GetOptionRange()), and the
-  // step of its scrolling (when General.InputScrolling is set)
-  double min, max, step;
-  if(option && GetOptionRange(
-                 std::string(option).substr(0, std::string(option).find(' ')),
-                 min, max, step)) {
-    v->minimum(min);
-    v->maximum(max);
-    if(CTX::instance()->inputScrolling) v->step(step);
-  }
+  if(option)
+    optionRange(v, std::string(option).substr(0, std::string(option).find(' ')));
   if(cb) v->callback(cb, data);
   return v;
 }
@@ -3012,8 +3004,7 @@ void optionWindow::updateViewGroup(int index)
   if(CTX::instance()->inputScrolling) view.value[63]->step(val3 / 100., 1);
   view.value[63]->maximum(val3);
 
-  // the widgets bound to the options of the view
-  showOptions();
+  // (the widgets bound to the options of the view shown by showGroup())
   view.colorbar->update(v->getTag(), data->getMin(), data->getMax());
 }
 

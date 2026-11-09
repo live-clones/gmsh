@@ -220,10 +220,7 @@ static void file_open_recent_cb(Fl_Widget *w, void *data)
 static void file_clear_cb(Fl_Widget *w, void *data)
 {
   if(modelBusy()) return;
-  if(FlGui::instance()->onelab->isBusy()) {
-    Msg::Info("I'm busy! Ask me that later...");
-    return;
-  }
+  if(solverBusy()) return;
   ClearProject();
   if(onelabUtils::haveSolverToRun())
     onelab_cb(nullptr, (void *)"reset"); // this will call OpenProject
@@ -667,10 +664,7 @@ void geometry_edit_cb(Fl_Widget *w, void *data)
 void onelab_reload_cb(Fl_Widget *w, void *data)
 {
   if(modelBusy()) return;
-  if(FlGui::instance()->onelab->isBusy()) {
-    Msg::Info("I'm busy! Ask me that later...");
-    return;
-  }
+  if(solverBusy()) return;
 
   std::string fileName = GModel::current()->getFileName();
   ClearProject();
@@ -718,14 +712,64 @@ static fltkAction call(Fl_Callback *f, void *data = nullptr)
   return {[f, data](int) { f(nullptr, data); }};
 }
 
-// the rows of the recent files under path, named by fillRecentHistoryMenu();
-// the second one, the file opened before the current one, has a shortcut
+// whether a string is valid UTF-8, as a menu label must be
+static bool check_utf8(const std::string &string)
+{
+  for(int i = 0, ix = string.length(); i < ix; i++) {
+    int n;
+    int c = (unsigned char)string[i];
+    if(0x00 <= c && c <= 0x7f)
+      n = 0; // 0bbbbbbb
+    else if((c & 0xE0) == 0xC0)
+      n = 1; // 110bbbbb
+    else if(c == 0xed && i < (ix - 1) &&
+            ((unsigned char)string[i + 1] & 0xa0) == 0xa0)
+      return false; // U+d800 to U+dfff
+    else if((c & 0xF0) == 0xE0)
+      n = 2; // 1110bbbb
+    else if((c & 0xF8) == 0xF0)
+      n = 3; // 11110bbb
+    // else if (($c & 0xFC) == 0xF8) n=4; // 111110bb //byte 5, unnecessary in 4
+    // byte UTF-8 else if (($c & 0xFE) == 0xFC) n=5; // 1111110b //byte 6,
+    // unnecessary in 4 byte UTF-8
+    else
+      return false;
+    for(int j = 0; j < n && i < ix; j++) { // n bytes matching 10bbbbbb follow ?
+      if((++i == ix) || (((unsigned char)string[i] & 0xC0) != 0x80))
+        return false;
+    }
+  }
+  return true;
+}
+
+// the submenu path of the recent files (see fillRecentHistoryMenu()); the
+// second one, the file opened before the current one, has a shortcut
 static void addRecentFiles(Fl_Menu_ *m, const std::string &path)
 {
-  for(int i = 0; i < 10; i++)
-    m->add((path + "/" + std::to_string(i)).c_str(),
+  // (add() makes a new submenu of a path that is one already)
+  if(m->find_index(path.c_str()) < 0)
+    m->add(path.c_str(), 0, nullptr, nullptr, FL_SUBMENU);
+  const std::vector<std::string> &files = CTX::instance()->recentFiles;
+  for(std::size_t i = 0; i < files.size(); i++) {
+    if(!check_utf8(files[i])) {
+      Msg::Info("Ignoring invalid General.RecentFile%d", (int)i);
+      continue;
+    }
+    // (add() takes a label starting with '/' as it is; otherwise '/' would
+    // make a submenu, and '\\' or a leading '_' would be read as well)
+    std::string label;
+    if(files[i][0] != '/') {
+      for(char c : files[i]) {
+        if(c == '/' || c == '\\' || (c == '_' && label.empty())) label += '\\';
+        label += c;
+      }
+    }
+    else
+      label = files[i];
+    m->add((path + "/" + label).c_str(),
            i == 1 ? fltkShortcut("file_recent") : 0, file_open_recent_cb,
-           (void *)(intptr_t)i, FL_MENU_INVISIBLE);
+           (void *)(intptr_t)i);
+  }
 }
 
 const std::map<std::string, fltkAction> &menuBarActions()
@@ -852,14 +896,6 @@ void status_xyz1p_cb(Fl_Widget *w, void *data)
   }
   drawContext::global()->draw();
   FlGui::instance()->manip->update();
-}
-
-// the index of the first visible view, or -1
-int firstVisibleView()
-{
-  for(std::size_t i = 0; i < PView::list.size(); i++)
-    if(opt_view_visible(i, GMSH_GET, 0)) return i;
-  return -1;
 }
 
 static void model_switch_cb(Fl_Widget *w, void *data)
@@ -1554,32 +1590,30 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   _bar = nullptr;
   if(main) {
 #if defined(__APPLE__)
-    if(CTX::instance()->systemMenuBar) {
+    if(CTX::instance()->systemMenuBar)
       _sysbar = new Fl_Sys_Menu_Bar(1, 1, 1, 1);
-      addActionItems(_sysbar, GetActionMenu("Menu bar"), -1, false);
+    else
+#endif
+      _bar = new hoverMenuBar(0, 0, width, BH);
+    Fl_Menu_ *m = _menuBar();
+    addActionItems(m, GetActionMenu("Menu bar"), -1, false);
+#if defined(__APPLE__)
+    if(_sysbar) {
       // Quit and About are in the application menu, and Cmd+H hides the
       // application: the keyboard help has another shortcut
       for(const char *path : {"File/Quit", "Help/About Gmsh"}) {
-        int i = _sysbar->find_index(path);
+        int i = m->find_index(path);
         if(i < 1) continue;
-        _sysbar->remove(i);
+        m->remove(i);
         // (the last of its menu: no divider above it then)
-        _sysbar->mode(i - 1, _sysbar->mode(i - 1) & ~FL_MENU_DIVIDER);
+        m->mode(i - 1, m->mode(i - 1) & ~FL_MENU_DIVIDER);
       }
-      int i = _sysbar->find_index("Help/Keyboard and Mouse Usage");
-      if(i >= 0) _sysbar->shortcut(i, fltkShortcut("help_keys", true));
-      _sysbar->global();
-      fillRecentHistoryMenu();
-    }
-    else {
-#endif
-      _bar = new hoverMenuBar(0, 0, width, BH);
-      addActionItems(_bar, GetActionMenu("Menu bar"), -1, false);
-      _bar->global();
-      fillRecentHistoryMenu();
-#if defined(__APPLE__)
+      int i = m->find_index("Help/Keyboard and Mouse Usage");
+      if(i >= 0) m->shortcut(i, fltkShortcut("help_keys", true));
     }
 #endif
+    m->global();
+    fillRecentHistoryMenu();
   }
 
   // a dummy resizable box that won't eat events, created before the tile so
@@ -2041,21 +2075,6 @@ void graphicWindow::checkAnimButtons()
   }
 }
 
-bool graphicWindow::runMenuShortcut()
-{
-  // the entry of the menu bar whose shortcut is the event, run as a click on
-  // it would; the system menu bar of macOS does not always take its own
-  Fl_Menu_ *w = _bar;
-#if defined(__APPLE__)
-  if(_sysbar) w = _sysbar;
-#endif
-  if(!w || !w->menu()) return false;
-  const Fl_Menu_Item *m = w->menu()->test_shortcut();
-  if(!m || !m->callback()) return false;
-  const_cast<Fl_Menu_Item *>(m)->do_callback(w);
-  return true;
-}
-
 void graphicWindow::setMenuWidth(int w)
 {
   if(!_onelab) return;
@@ -2234,59 +2253,19 @@ void graphicWindow::setMessageFontSize(int size)
   _browser->redraw();
 }
 
-static bool check_utf8(const std::string &string)
-{
-  for(int i = 0, ix = string.length(); i < ix; i++) {
-    int n;
-    int c = (unsigned char)string[i];
-    if(0x00 <= c && c <= 0x7f)
-      n = 0; // 0bbbbbbb
-    else if((c & 0xE0) == 0xC0)
-      n = 1; // 110bbbbb
-    else if(c == 0xed && i < (ix - 1) &&
-            ((unsigned char)string[i + 1] & 0xa0) == 0xa0)
-      return false; // U+d800 to U+dfff
-    else if((c & 0xF0) == 0xE0)
-      n = 2; // 1110bbbb
-    else if((c & 0xF8) == 0xF0)
-      n = 3; // 11110bbb
-    // else if (($c & 0xFC) == 0xF8) n=4; // 111110bb //byte 5, unnecessary in 4
-    // byte UTF-8 else if (($c & 0xFE) == 0xFC) n=5; // 1111110b //byte 6,
-    // unnecessary in 4 byte UTF-8
-    else
-      return false;
-    for(int j = 0; j < n && i < ix; j++) { // n bytes matching 10bbbbbb follow ?
-      if((++i == ix) || (((unsigned char)string[i] & 0xC0) != 0x80))
-        return false;
-    }
-  }
-  return true;
-}
-
 void graphicWindow::fillRecentHistoryMenu()
 {
-  Fl_Menu_ *m = _bar;
-#if defined(__APPLE__)
-  if(_sysbar) m = _sysbar;
-#endif
+  Fl_Menu_ *m = _menuBar();
   if(!m) return;
-  // the ten rows after the submenu (see addRecentFiles())
-  int first = m->find_index("File/Open Recent") + 1;
-  if(first < 1) return;
-  for(int i = 0; i < 10; i++) {
-    std::string name;
-    if(i < (int)CTX::instance()->recentFiles.size()) {
-      if(check_utf8(CTX::instance()->recentFiles[i]))
-        name = CTX::instance()->recentFiles[i];
-      else
-        Msg::Info("Ignoring invalid General.RecentFile%d", i);
-    }
-    // (replace() takes the label as it is: a '/' is not a submenu there)
-    m->replace(first + i, name.c_str());
-    int mode = m->mode(first + i) & ~FL_MENU_INVISIBLE;
-    m->mode(first + i, name.empty() ? (mode | FL_MENU_INVISIBLE) : mode);
+  int i = m->find_index("File/Open Recent");
+  if(i >= 0) {
+    m->clear_submenu(i);
+    addRecentFiles(m, "File/Open Recent");
   }
 #if defined(__APPLE__)
+  // the system menu bar is made from the items only when asked: its add(),
+  // mode()... are not virtual, and those of Fl_Menu_ are the ones called here
+  // and when the menu is built
   if(_sysbar) _sysbar->update();
 #endif
 }

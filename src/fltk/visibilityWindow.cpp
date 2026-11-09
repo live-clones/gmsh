@@ -500,6 +500,13 @@ static void _rebuild_list_browser()
   }
 }
 
+// what the boxes under the lists ask for: the visibility set recursively (the
+// boundaries of an entity too), and in all the models
+static bool recursiveVisibility()
+{ return FlGui::instance()->visibility->butt[0]->value() != 0; }
+static bool allModelsVisibility()
+{ return FlGui::instance()->visibility->butt[1]->value() != 0; }
+
 static void visibility_browser_apply_cb(Fl_Widget *w, void *data)
 {
   if(_listChanged()) return;
@@ -507,10 +514,8 @@ static void visibility_browser_apply_cb(Fl_Widget *w, void *data)
   // browser and apply them into the model
   if(VisibilityList::instance()->getNumEntities()) {
     CTX::instance()->meshChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
-    bool recursive =
-      FlGui::instance()->visibility->butt[0]->value() ? true : false;
-    bool allmodels =
-      FlGui::instance()->visibility->butt[1]->value() ? true : false;
+    bool recursive = recursiveVisibility();
+    bool allmodels = allModelsVisibility();
     VisibilityList::VisibilityType type;
     switch(FlGui::instance()->visibility->browser_type->value()) {
     case 0: type = VisibilityList::Models; break;
@@ -730,8 +735,7 @@ static void _recur_select(Fl_Tree_Item *n)
 
 static void _recur_set_visible(Fl_Tree_Item *n)
 {
-  bool recursive =
-    FlGui::instance()->visibility->butt[0]->value() ? true : false;
+  bool recursive = recursiveVisibility();
   if(n->user_data() && n->is_selected()) {
     GEntity *ge = (GEntity *)n->user_data();
     ge->setVisibility(1, recursive);
@@ -758,8 +762,7 @@ static void visibility_tree_apply_cb(Fl_Widget *w, void *data)
 {
   if(_treeChanged()) return;
   CTX::instance()->meshChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
-  bool recursive =
-    FlGui::instance()->visibility->butt[0]->value() ? true : false;
+  bool recursive = recursiveVisibility();
 
   Fl_Tree_Item *root = FlGui::instance()->visibility->tree->root();
   for(int i = 0; i < root->children(); i++) {
@@ -949,19 +952,22 @@ static void _set_visibility_by_number(int row, int num, char val,
   }
 }
 
-static void _apply_visibility(char mode, bool physical,
+// what is done to the elements, entities or physical groups picked in the
+// Interactive tab: hidden, shown alone, or shown again (the undo of a hide)
+enum pickAction { PickHide, PickShow, PickUndo };
+
+static void _apply_visibility(pickAction action, bool physical,
                               std::vector<GVertex *> &vertices,
                               std::vector<GEdge *> &edges,
                               std::vector<GFace *> &faces,
                               std::vector<GRegion *> &regions,
                               std::vector<MElement *> &elements)
 {
-  bool recursive =
-    FlGui::instance()->visibility->butt[0]->value() ? true : false;
-  bool allmodels =
-    FlGui::instance()->visibility->butt[1]->value() ? true : false;
+  bool recursive = recursiveVisibility();
+  bool allmodels = allModelsVisibility();
 
-  if(mode == 1) { // when showing a single entity, first hide everything
+  if(action ==
+     PickShow) { // when showing a single entity, first hide everything
     if(CTX::instance()->pickElements)
       _set_visibility_by_number(ROW_ELEMENTS, -1, 0, false, allmodels);
     else
@@ -969,7 +975,7 @@ static void _apply_visibility(char mode, bool physical,
         _set_visibility_by_number(ROW_ENTITIES + dim, -1, 0, false, allmodels);
   }
 
-  if(mode == 2) mode = 1;
+  char mode = (action == PickHide) ? 0 : 1;
 
   if(CTX::instance()->pickElements) {
     for(std::size_t i = 0; i < elements.size(); i++)
@@ -1003,10 +1009,8 @@ static void _visibility_number(int row, char val)
   CTX::instance()->meshChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
   const char *str = FlGui::instance()->visibility->input[row]->value();
   int num = (!strcmp(str, "all") || !strcmp(str, "*")) ? -1 : atoi(str);
-  bool recursive =
-    FlGui::instance()->visibility->butt[0]->value() ? true : false;
-  bool allmodels =
-    FlGui::instance()->visibility->butt[1]->value() ? true : false;
+  bool recursive = recursiveVisibility();
+  bool allmodels = allModelsVisibility();
 
   _set_visibility_by_number(row, num, val, recursive, allmodels);
 
@@ -1027,8 +1031,8 @@ static void visibility_number_hide_cb(Fl_Widget *w, void *data)
 }
 
 // the elements, entities or physical groups of a row of the Interactive tab
-// picked in the scene, until 'q', to be shown (mode 1) or hidden (mode 0)
-static void _visibility_interactive(int row, char mode)
+// picked in the scene, until 'q', to be shown or hidden
+static void _visibility_interactive(int row, bool show)
 {
   bool physical = (row >= ROW_PHYSICALS);
   int dim = (row - ROW_ENTITIES) % 4, what;
@@ -1046,7 +1050,7 @@ static void _visibility_interactive(int row, char mode)
     if(dim < 2 || GModel::current()->getMeshStatus() < dim)
       selectionDriver::show(what);
   }
-  str += mode ? " to show" : " to hide";
+  str += show ? " to show" : " to hide";
 
   std::vector<GVertex *> vertices;
   std::vector<GEdge *> edges;
@@ -1061,7 +1065,7 @@ static void _visibility_interactive(int row, char mode)
     if(what == ENT_ALL) CTX::instance()->meshChanged();
     drawContext::global()->draw();
     Msg::StatusGl("Select %s\n[Press %s'q' to abort]", str.c_str(),
-                  mode ? "" : "'u' to undo or ");
+                  show ? "" : "'u' to undo or ");
 
     char ib = FlGui::instance()->selectEntity(what);
     if(!FlGui::available()) break;
@@ -1082,11 +1086,12 @@ static void _visibility_interactive(int row, char mode)
       faces = FlGui::instance()->selectedFaces;
       regions = FlGui::instance()->selectedRegions;
       elements = FlGui::instance()->selectedElements;
-      _apply_visibility(mode, physical, vertices, edges, faces, regions,
-                        elements);
+      _apply_visibility(show ? PickShow : PickHide, physical, vertices, edges,
+                        faces, regions, elements);
     }
-    if(ib == 'u' && !mode) { // undo only in hide mode
-      _apply_visibility(2, physical, vertices, edges, faces, regions, elements);
+    if(ib == 'u' && !show) { // undo only in hide mode
+      _apply_visibility(PickUndo, physical, vertices, edges, faces, regions,
+                        elements);
     }
     if(ib == 'q') { break; }
   }
@@ -1098,19 +1103,14 @@ static void _visibility_interactive(int row, char mode)
 }
 
 static void visibility_pick_show_cb(Fl_Widget *w, void *data)
-{
-  _visibility_interactive((intptr_t)data, 1);
-}
+{ _visibility_interactive((intptr_t)data, true); }
 
 static void visibility_pick_hide_cb(Fl_Widget *w, void *data)
-{
-  _visibility_interactive((intptr_t)data, 0);
-}
+{ _visibility_interactive((intptr_t)data, false); }
 
 static void visibility_show_all_cb(Fl_Widget *w, void *data)
 {
-  bool allmodels =
-    FlGui::instance()->visibility->butt[1]->value() ? true : false;
+  bool allmodels = allModelsVisibility();
   _set_visibility_by_number(ROW_ELEMENTS, -1, 1, false, allmodels);
   for(int dim = 0; dim < 4; dim++)
     _set_visibility_by_number(ROW_ENTITIES + dim, -1, 1, false, allmodels);

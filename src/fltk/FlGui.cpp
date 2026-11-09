@@ -363,7 +363,8 @@ static void default_fatal_error_handler(const char *fmt, ...)
 
 FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
              void (*error_handler)(const char *fmt, ...))
-  : _quitShouldExit(quitShouldExit), lastContextWindow(0), fullscreen(nullptr)
+  : _quitShouldExit(quitShouldExit), lastContextWindow(nullptr),
+    fullscreen(nullptr)
 {
   if(error_handler) {
     Fl::error = error_handler;
@@ -623,8 +624,9 @@ std::vector<Fl_Widget *>
 FlGui::retireInEvent(const std::vector<Fl_Widget *> &widgets,
                      std::list<std::string> &strings)
 {
-  // (and those retired before that no event targets any more deleted, or a
-  // long computation, whose event lasts, would keep one per refresh)
+  // the widgets retired before, which no event targets any more, deleted
+  // first (a long computation, whose event lasts, would otherwise keep one
+  // set per refresh)
   _deleteRetired(false);
   std::vector<Fl_Widget *> free;
   std::shared_ptr<std::list<std::string>> kept;
@@ -806,26 +808,21 @@ int FlGui::testGlobalShortcuts(int event)
   // we only handle shortcuts here
   if(event != FL_SHORTCUT) return 0;
 
+  // (a key of the menu bar runs its action here too, also when the system
+  // menu bar of macOS did not take it)
   int status = 0;
-  if(graph[0]->runMenuShortcut()) {
-    // a shortcut of the menus is its entry, also when the system menu bar
-    // did not take it
-    status = 1;
-  }
-  else {
-    for(const ShortcutEntry &e : GetShortcuts()) {
-      if(!fltkTest(e.shortcut)) continue;
+  for(const ShortcutEntry &e : GetShortcuts()) {
+    if(!fltkTest(e.shortcut)) continue;
 #if defined(__APPLE__)
-      // (Cmd+H hides the application)
-      if(e.inWindowBarOnly && graph[0]->hasSystemMenuBar()) continue;
+    // (Cmd+H hides the application)
+    if(e.inWindowBarOnly && graph[0]->hasSystemMenuBar()) continue;
 #endif
-      int st = runShortcut(e.action);
-      if(!st) continue; // a menu entry, or not for this build
-      // a key passed on is handled, but as if it had not been: what is
-      // under the mouse reads it too
-      status = e.passOn ? 0 : st;
-      break;
-    }
+    int st = runShortcut(e.action);
+    if(!st) continue; // not for this build
+    // a key passed on is handled, but as if it had not been: what is under
+    // the mouse reads it too
+    status = e.passOn ? 0 : st;
+    break;
   }
 
   if(status == 2) {
@@ -840,14 +837,12 @@ int FlGui::testGlobalShortcuts(int event)
 
 int FlGui::testArrowShortcuts()
 {
-  // the keys the 3D view handles itself when it has the focus
-  static const char *keys[] = {"time_step_prev", "time_step_next", "view_prev",
-                               "view_next",      "page_prev",      "page_next"};
+  // the keys the 3D view handles itself when it has the focus, before FLTK
+  // moves the focus with them: the arrows and Page Up/Down
   for(const ShortcutEntry &e : GetShortcuts()) {
-    bool arrow = false;
-    for(const char *k : keys)
-      if(!strcmp(e.action, k)) arrow = true;
-    if(arrow && fltkTest(e.shortcut)) return runShortcut(e.action) ? 1 : 0;
+    int key = e.shortcut.key;
+    if(key >= KeyLeft && key <= KeyPageDown && fltkTest(e.shortcut))
+      return runShortcut(e.action) ? 1 : 0;
   }
   return 0;
 }
@@ -870,12 +865,12 @@ static void freezeAxis(int i, bool allBut)
 }
 
 // Escape leaves the full screen, or cancels a lasso, or toggles the mouse
-// selection; returns 2 when the scene must be drawn again
-static int escape()
+// selection
+static void escape()
 {
   if(FlGui::instance()->fullscreen->shown()) {
     window_cb(nullptr, (void *)"fullscreen");
-    return 1;
+    return;
   }
   bool lasso = false;
   for(openglWindow *gl : FlGui::instance()->openglWindows())
@@ -883,194 +878,99 @@ static int escape()
   if(lasso) {
     for(openglWindow *gl : FlGui::instance()->openglWindows())
       gl->lassoMode = false;
-    return 2;
+    drawContext::global()->draw();
+    return;
   }
   mouse_selection_cb(nullptr, nullptr);
-  return 1;
 }
 
-// What each action of the shortcut table does. The entries of the menu bar
-// are run by the menus (see graphicWindow::runMenuShortcut()), or else, as
-// any action of the action registry (see Actions.h), which has the same name
-// in both tables, as its items run. The actions that only change the scene
-// are those of RunSceneShortcut(), shared with the web page. Returns 0 for an
-// action not handled here, 1 when done, 2 when the scene must be drawn again.
+// the plugins of the view shown in the options window
+static void plugins_view()
+{
+  int view = FlGui::instance()->options->view.index;
+  if(PView::list.size())
+    FlGui::instance()->plugins->show(
+      (view >= 0 && view < (int)PView::list.size()) ? view : 0);
+}
+
+const std::map<std::string, fltkAction> &keyboardActions()
+{
+  static const std::map<std::string, fltkAction> actions = {
+    // reloading and running
+    {"project_reload", {[](int) { onelab_reload_cb(nullptr, nullptr); }}},
+    {"solver_run", {[](int) { onelab_cb(nullptr, (void *)"compute"); }}},
+    // the modules of the tree
+    {"module_geometry",
+     {[](int) { FlGui::instance()->toggleModule("Geometry"); }}},
+    {"module_mesh", {[](int) { FlGui::instance()->toggleModule("Mesh"); }}},
+    {"module_solver", {[](int) { FlGui::instance()->toggleModule("Solver"); }}},
+    {"module_post",
+     {[](int) { FlGui::instance()->toggleModule("Post-processing"); }}},
+    // a selection under way
+    {"selection_end",
+     {[](int) { setSelectionFlag(&sceneView::endSelection); }}},
+    {"selection_undo",
+     {[](int) { setSelectionFlag(&sceneView::undoSelection); }}},
+    {"selection_invert",
+     {[](int) { setSelectionFlag(&sceneView::invertSelection); }}},
+    {"selection_quit",
+     {[](int) { setSelectionFlag(&sceneView::quitSelection); }}},
+    // placing an elementary entity with the mouse
+    {"freeze_x", {[](int) { freezeAxis(0, false); }}},
+    {"freeze_y", {[](int) { freezeAxis(1, false); }}},
+    {"freeze_z", {[](int) { freezeAxis(2, false); }}},
+    {"freeze_but_x", {[](int) { freezeAxis(0, true); }}},
+    {"freeze_but_y", {[](int) { freezeAxis(1, true); }}},
+    {"freeze_but_z", {[](int) { freezeAxis(2, true); }}},
+    {"escape", {[](int) { escape(); }}},
+    // the windows
+    {"options_solver", {[](int) { solver_options_cb(nullptr, nullptr); }}},
+    {"options_post", {[](int) { post_options_cb(nullptr, nullptr); }}},
+    {"plugins_view", {[](int) { plugins_view(); }}},
+    // the point of view, as the buttons of the status bar (which read Shift
+    // and Ctrl: the other side, reset, sync the viewports); the web page does
+    // it in RunSceneShortcut()
+    {"view_x", {[](int) { status_xyz1p_cb(nullptr, (void *)"x"); }}},
+    {"view_y", {[](int) { status_xyz1p_cb(nullptr, (void *)"y"); }}},
+    {"view_z", {[](int) { status_xyz1p_cb(nullptr, (void *)"z"); }}},
+    {"view_1_1", {[](int) { status_xyz1p_cb(nullptr, (void *)"1:1"); }}},
+    {"view_3d", {[](int) { status_xyz1p_cb(nullptr, (void *)"3d"); }}},
+    // the time steps and the views, on the arrows
+    {"time_step_prev",
+     {[](int) { status_play_manual(1, -CTX::instance()->post.animStep); }}},
+    {"time_step_next",
+     {[](int) { status_play_manual(1, CTX::instance()->post.animStep); }}},
+    {"view_prev",
+     {[](int) { status_play_manual(0, -CTX::instance()->post.animStep); }}},
+    {"view_next",
+     {[](int) { status_play_manual(0, CTX::instance()->post.animStep); }}},
+#if defined(HAVE_POPPLER)
+    {"page_prev", {[](int) {
+       gmshPopplerWrapper::setCurrentPageDown();
+       drawContext::global()->draw();
+     }}},
+    {"page_next", {[](int) {
+       gmshPopplerWrapper::setCurrentPageUp();
+       drawContext::global()->draw();
+     }}},
+#endif
+  };
+  return actions;
+}
+
+// What each action of the shortcut table does: an action of the registry (see
+// Actions.h) or one the interface does (see findAction() in actionMenus.cpp:
+// the modules, the menu bar and the keys above) runs as its items do; those
+// that only change the scene are those of RunSceneShortcut(), shared with the
+// web page. Returns 0 for an action not handled here, 1 when done, 2 when the
+// scene must be drawn again.
 int FlGui::runShortcut(const std::string &a)
 {
   actionItem item{"", ActionRun, a, {}, "", "", {}};
-  if(IsAction(a)) {
+  if(IsAction(a) || canRunItem(item)) {
     if(canRunItem(item)) runItem(item);
     return 1;
   }
-
-  static const std::map<std::string, std::function<int()>> actions = {
-    // reloading and running
-    {"project_reload",
-     [] {
-       onelab_reload_cb(nullptr, nullptr);
-       return 1;
-     }},
-    {"solver_run",
-     [] {
-       onelab_cb(nullptr, (void *)"compute");
-       return 1;
-     }},
-    // the modules of the tree
-    {"module_geometry",
-     [] {
-       FlGui::instance()->toggleModule("Geometry");
-       return 1;
-     }},
-    {"module_mesh",
-     [] {
-       FlGui::instance()->toggleModule("Mesh");
-       return 1;
-     }},
-    {"module_solver",
-     [] {
-       FlGui::instance()->toggleModule("Solver");
-       return 1;
-     }},
-    {"module_post",
-     [] {
-       FlGui::instance()->toggleModule("Post-processing");
-       return 1;
-     }},
-    // a selection under way
-    {"selection_end",
-     [] {
-       setSelectionFlag(&sceneView::endSelection);
-       return 1;
-     }},
-    {"selection_undo",
-     [] {
-       setSelectionFlag(&sceneView::undoSelection);
-       return 1;
-     }},
-    {"selection_invert",
-     [] {
-       setSelectionFlag(&sceneView::invertSelection);
-       return 1;
-     }},
-    {"selection_quit",
-     [] {
-       setSelectionFlag(&sceneView::quitSelection);
-       return 1;
-     }},
-    // placing an elementary entity with the mouse
-    {"freeze_x",
-     [] {
-       freezeAxis(0, false);
-       return 1;
-     }},
-    {"freeze_y",
-     [] {
-       freezeAxis(1, false);
-       return 1;
-     }},
-    {"freeze_z",
-     [] {
-       freezeAxis(2, false);
-       return 1;
-     }},
-    {"freeze_but_x",
-     [] {
-       freezeAxis(0, true);
-       return 1;
-     }},
-    {"freeze_but_y",
-     [] {
-       freezeAxis(1, true);
-       return 1;
-     }},
-    {"freeze_but_z",
-     [] {
-       freezeAxis(2, true);
-       return 1;
-     }},
-    {"escape", escape},
-    // the windows
-    {"options_solver",
-     [] {
-       solver_options_cb(nullptr, nullptr);
-       return 1;
-     }},
-    {"options_post",
-     [] {
-       post_options_cb(nullptr, nullptr);
-       return 1;
-     }},
-    {"plugins_view",
-     [] {
-       int view = FlGui::instance()->options->view.index;
-       if(PView::list.size())
-         FlGui::instance()->plugins->show(
-           (view >= 0 && view < (int)PView::list.size()) ? view : 0);
-       return 1;
-     }},
-    // the point of view (the callback reads Shift and Ctrl itself: the other
-    // side, reset, sync)
-    {"view_x",
-     [] {
-       status_xyz1p_cb(nullptr, (void *)"x");
-       return 1;
-     }},
-    {"view_y",
-     [] {
-       status_xyz1p_cb(nullptr, (void *)"y");
-       return 1;
-     }},
-    {"view_z",
-     [] {
-       status_xyz1p_cb(nullptr, (void *)"z");
-       return 1;
-     }},
-    {"view_1_1",
-     [] {
-       status_xyz1p_cb(nullptr, (void *)"1:1");
-       return 1;
-     }},
-    {"view_3d",
-     [] {
-       status_xyz1p_cb(nullptr, (void *)"3d");
-       return 1;
-     }},
-    // the time steps and the views, on the arrows
-    {"time_step_prev",
-     [] {
-       status_play_manual(1, -CTX::instance()->post.animStep);
-       return 1;
-     }},
-    {"time_step_next",
-     [] {
-       status_play_manual(1, CTX::instance()->post.animStep);
-       return 1;
-     }},
-    {"view_prev",
-     [] {
-       status_play_manual(0, -CTX::instance()->post.animStep);
-       return 1;
-     }},
-    {"view_next",
-     [] {
-       status_play_manual(0, CTX::instance()->post.animStep);
-       return 1;
-     }},
-#if defined(HAVE_POPPLER)
-    {"page_prev",
-     [] {
-       gmshPopplerWrapper::setCurrentPageDown();
-       return 2;
-     }},
-    {"page_next",
-     [] {
-       gmshPopplerWrapper::setCurrentPageUp();
-       return 2;
-     }},
-#endif
-  };
-  auto it = actions.find(a);
-  if(it != actions.end()) return it->second();
   // the display, the views and the time steps, as in the web page
   return RunSceneShortcut(a, 0, nullptr);
 }
@@ -1360,12 +1260,9 @@ void FlGui::storeCurrentWindowsInfo()
     storeWindowOffset(partition->win, CTX::instance()->partOffset);
   storeWindowOffset(classify->window, CTX::instance()->reclassifyOffset);
   storeWindowOffset(manip->win, CTX::instance()->manipOffset);
-  Fl_Window *ctx = (lastContextWindow == 4) ? onelabContext->win :
-                   (lastContextWindow == 3) ? physicalContext->win :
-                   (lastContextWindow == 2) ? meshContext->win :
-                   (lastContextWindow == 1) ? transformContext->win :
-                                              elementaryContext->win;
-  storeWindowOffset(ctx, CTX::instance()->ctxOffset);
+  storeWindowOffset(lastContextWindow ? lastContextWindow :
+                                        elementaryContext->win,
+                    CTX::instance()->ctxOffset);
 #if defined(HAVE_3M)
   storeWindowPosition3M();
 #endif

@@ -633,11 +633,11 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebOptionChoices(const char *option)
 EMSCRIPTEN_KEEPALIVE const char *gmshWebOptionRange(const char *option)
 {
   static std::string json;
-  double min, max, step;
-  if(!GetOptionRange(option, min, max, step)) return "null";
+  const OptionRange *r = GetOptionRange(option);
+  if(!r) return "null";
   char buf[128];
   snprintf(buf, sizeof(buf), "{\"min\":%.16g,\"max\":%.16g,\"step\":%.16g}",
-           min, max, step);
+           r->min, r->max, r->step);
   json = buf;
   return json.c_str();
 }

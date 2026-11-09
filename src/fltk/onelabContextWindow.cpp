@@ -152,7 +152,6 @@ onelabContextWindow::onelabContextWindow(int deltaFontSize)
   FL_NORMAL_SIZE -= deltaFontSize;
 
   _dim = _tag = -1;
-  _rebuilding = _rebuildAgain = false;
 
   // as narrow as the option window, wider as the window is widened
   _width = TW;
@@ -183,7 +182,7 @@ onelabContextWindow::~onelabContextWindow()
 
 void onelabContextWindow::show(int dim, int tag)
 {
-  FlGui::instance()->lastContextWindow = 4;
+  FlGui::instance()->lastContextWindow = win;
 
   _dim = dim;
   _tag = tag;
@@ -234,27 +233,12 @@ void onelabContextWindow::rebuild()
 {
   // only in the thread of the GUI, as the tree (see onelabGroup::rebuildTree())
   if(!FlGui::onMainThread()) return;
-  if(_rebuilding) {
-    _rebuildAgain = true;
-    return;
-  }
-  _rebuilding = true;
   // this window may be gone after the callbacks run (the GUI closed)
   std::shared_ptr<bool> alive = _alive;
-  // not rebuilding any more however a rebuild ends, e.g. by an exception
-  struct rebuilt {
-    std::shared_ptr<bool> &alive;
-    bool &rebuilding;
-    ~rebuilt()
-    {
-      if(*alive) rebuilding = false;
-    }
-  } done{alive, _rebuilding};
-  do {
-    _rebuildAgain = false;
+  _rebuilds.run([&] {
     _rebuild();
-    if(!*alive) return;
-  } while(_rebuildAgain);
+    return *alive;
+  });
 }
 
 void onelabContextWindow::_rebuild()

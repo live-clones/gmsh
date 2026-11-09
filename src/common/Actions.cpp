@@ -521,51 +521,7 @@ struct action {
 static const std::map<std::string, action> &actions()
 {
   static const std::map<std::string, action> actions = {
-    // the menu bar of the graphical interface
-    {"file_new", {}},
-    {"file_open", {}},
-    {"recent_files", {}},
-    {"file_recent", {}}, // (a shortcut: the file opened before)
-    {"options_restore_defaults", {}},
-    {"file_merge", {}},
-    {"watch", {}},
-    {"file_clear", {}},
-    {"file_rename", {}},
-    {"file_delete", {}},
-    {"remote_start", {}},
-    {"remote_merge", {}},
-    {"remote_clear", {}},
-    {"remote_stop", {}},
-    {"options_save", {}},
-    {"options_save_default", {}},
-    {"file_export", {}},
-    {"quit", {}},
-    {"options", {}},
-    {"plugins", {}},
-    {"visibility", {}},
-    {"clipping", {}},
-    {"manipulator", {}},
-    {"window_3m", {}},
-    {"statistics", {}},
-    {"console", {}},
-    {"window_new", {}},
-    {"window_copy", {}},
-    {"minimize", {}},
-    {"window_zoom", {}},
-    {"menu_show_hide", {}},
-    {"menu_attach_detach", {}},
-    {"dock", {}},
-    {"dock_all", {}},
-    {"window_front", {}},
-    {"help_online", {}},
-    {"help_keys", {}},
-    {"help_options", {}},
-    {"help_about", {}},
     // the script
-    {"New model", {}},
-    {"Reload script", {}},
-    {"Edit script", {}},
-    {"Save script", {}},
     {"Remove last script command", {[](int, drawContext *) {
        scriptRemoveLastCommand(scriptFile());
        return ActionDone | ActionModelChanged;
@@ -583,11 +539,6 @@ static const std::map<std::string, action> &actions()
        return ActionDone | ActionModelChanged;
      }}},
     // the mesh
-    {"Save mesh", {}},
-    {"Size fields", {}},
-    {"High-order tools", {}},
-    {"Reclassify surfaces", {}},
-    {"Partition mesh", {}},
 #if defined(HAVE_MESH)
     {"Mesh 1D", {[](int, drawContext *) {
        GModel::current()->mesh(1);
@@ -657,14 +608,6 @@ static const std::map<std::string, action> &actions()
        RunSceneShortcut("view_1_1", 0, ctx);
        return ActionDone;
      }}},
-    {"Select rotation center", {}},
-    {"Query", {}},
-    {"Measure", {}},
-    {"Full screen", {}},
-    {"Install app", {}},
-    {"Split window horizontally", {}},
-    {"Split window vertically", {}},
-    {"Unsplit window", {}},
     {"Axes",
      {[](int, drawContext *) { return toggleAxes(); }, nullptr,
       [] {
@@ -679,16 +622,8 @@ static const std::map<std::string, action> &actions()
        RunSceneShortcut("Toggle mesh display", 0, ctx);
        return ActionDone;
      }}},
-    {"General options", {}},
-    {"Geometry options", {}},
-    {"Mesh options", {}},
     {"All view options", {nullptr, haveViews}},
     // the views
-    {"View options", {}},
-    {"View plugins", {}},
-    {"Export view", {}},
-    {"Export view as .pos", {}},
-    {"Export view as .msh", {}},
 #if defined(HAVE_POST)
     {"Reload view", {[](int view, drawContext *) { return reloadView(view); }}},
     {"Reload all views", {[](int, drawContext *) {
@@ -765,64 +700,68 @@ static const std::map<std::string, action> &actions()
 // ---------------------------------------------------------------------------
 // The options
 
-// "Category.Name" or "Category.Name=value": the category, the name, and the
-// value, or toggle if there is none
-static void optionOf(const std::string &option, std::string &category,
-                     std::string &name, double &value, bool &toggle)
-{
-  std::string::size_type dot = option.find('.'), eq = option.find('=');
-  category = option.substr(0, dot);
-  name = option.substr(dot + 1, eq == std::string::npos ? eq : eq - dot - 1);
-  toggle = (eq == std::string::npos);
-  value = toggle ? 0. : atof(option.substr(eq + 1).c_str());
-}
+// "Category.Name" or "Category.Name=value": the category, the name, the value
+// (none for a toggle), and the indices the option is set for: 0, or the
+// visible views for View
+namespace {
+  struct actionOption {
+    std::string category, name;
+    double value;
+    bool toggle;
+    std::vector<int> indices;
+    // the value at the first index, shown for all
+    double current() const
+    {
+      double v = 0.;
+      if(!indices.empty())
+        NumberOption(GMSH_GET, category.c_str(), indices[0], name.c_str(), v,
+                     false);
+      return v;
+    }
+  };
+} // namespace
 
-// the indices an option is of: 0, or the visible views for View
-static std::vector<int> optionIndices(const std::string &category)
+static actionOption optionOf(const std::string &option)
 {
-  std::vector<int> indices;
-  if(category != "View") indices.push_back(0);
+  actionOption o;
+  std::string::size_type dot = option.find('.'), eq = option.find('=');
+  o.category = option.substr(0, dot);
+  o.name = option.substr(dot + 1, eq == std::string::npos ? eq : eq - dot - 1);
+  o.toggle = (eq == std::string::npos);
+  o.value = o.toggle ? 0. : atof(option.substr(eq + 1).c_str());
+  if(o.category != "View") o.indices.push_back(0);
 #if defined(HAVE_POST)
   else
     for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(visibleView(i)) indices.push_back(i);
+      if(visibleView(i)) o.indices.push_back(i);
 #endif
-  return indices;
-}
-
-static double optionValue(const std::string &category, const std::string &name,
-                          int index)
-{
-  double v = 0.;
-  NumberOption(GMSH_GET, category.c_str(), index, name.c_str(), v, false);
-  return v;
+  return o;
 }
 
 void SetActionOption(const std::string &option, double value)
 {
-  std::string category, name;
-  double v;
-  bool toggle;
-  optionOf(option, category, name, v, toggle);
-  for(int i : optionIndices(category))
-    NumberOption(GMSH_SET | GMSH_GUI, category.c_str(), i, name.c_str(), value,
-                 false);
+  actionOption o = optionOf(option);
+  for(int i : o.indices)
+    NumberOption(GMSH_SET | GMSH_GUI, o.category.c_str(), i, o.name.c_str(),
+                 value, false);
+}
+
+int GetActionOptionIndex(const std::string &option)
+{
+  actionOption o = optionOf(option);
+  return o.indices.empty() ? -1 : o.indices[0];
 }
 
 void GetActionAsk(const actionAsk &ask, double &min, double &max, double &step,
                   double &value)
 {
-  std::string category, name;
-  double v;
-  bool toggle;
-  optionOf(ask.option, category, name, v, toggle);
-  std::vector<int> indices = optionIndices(category);
-  value = indices.empty() ? 0. : optionValue(category, name, indices[0]);
+  actionOption o = optionOf(ask.option);
+  value = o.current();
   double unit = 1.;
 #if defined(HAVE_POST)
-  if(ask.perValue && !indices.empty()) {
-    double largest = std::max(fabs(opt_view_min(indices[0], GMSH_GET, 0)),
-                              fabs(opt_view_max(indices[0], GMSH_GET, 0)));
+  if(ask.perValue && !o.indices.empty()) {
+    double largest = std::max(fabs(opt_view_min(o.indices[0], GMSH_GET, 0)),
+                              fabs(opt_view_max(o.indices[0], GMSH_GET, 0)));
     unit = 2. * CTX::instance()->lc / (largest ? largest : 1.);
   }
 #endif
@@ -847,14 +786,9 @@ int RunAction(const actionItem &item, int view, drawContext *ctx)
 {
   if(item.kind == ActionOption) {
     if(item.what.empty()) return ActionDone; // only asked for
-    std::string category, name;
-    double value;
-    bool toggle;
-    optionOf(item.what, category, name, value, toggle);
-    std::vector<int> indices = optionIndices(category);
-    if(indices.empty()) return ActionDone;
-    if(toggle) value = !optionValue(category, name, indices[0]);
-    SetActionOption(item.what, value);
+    actionOption o = optionOf(item.what);
+    if(o.indices.empty()) return ActionDone;
+    SetActionOption(item.what, o.toggle ? !o.current() : o.value);
     return ActionDone;
   }
   if(item.kind != ActionRun) return ActionNotHere;
@@ -870,22 +804,20 @@ bool IsActionAvailable(const actionItem &item)
     return option.compare(0, 5, "View.") || haveViews();
   }
   if(item.kind != ActionRun) return true;
+  // (an action not in the table is done by the interfaces, which say whether
+  // they do it)
   auto it = actions().find(item.what);
-  return it != actions().end() &&
-         (!it->second.available || it->second.available());
+  return it == actions().end() || !it->second.available ||
+         it->second.available();
 }
 
 int GetActionCheck(const actionItem &item)
 {
   if(item.kind == ActionOption && !item.what.empty()) {
-    std::string category, name;
-    double value;
-    bool toggle;
-    optionOf(item.what, category, name, value, toggle);
-    std::vector<int> indices = optionIndices(category);
-    if(indices.empty()) return 0;
-    double v = optionValue(category, name, indices[0]);
-    return toggle ? (v != 0.) : (v == value);
+    actionOption o = optionOf(item.what);
+    if(o.indices.empty()) return 0;
+    double v = o.current();
+    return o.toggle ? (v != 0.) : (v == o.value);
   }
   if(item.kind != ActionRun) return -1;
   auto it = actions().find(item.what);

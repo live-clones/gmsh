@@ -36,6 +36,7 @@ private:
   bool _drawn;
   void _drawScreenMessage();
   void _drawBorder();
+  void _drawLasso();
   // The accumulation of the studio frames: whether the timer asked for the
   // next draw, whether this draw is one of them, the modelview of this
   // frame, and the modelview and window size the last one was drawn with.

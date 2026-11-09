@@ -180,9 +180,8 @@ void titleBarColor(Fl_Window *w)
 static void window_moved(void *hwnd)
 {
   paletteWindow *w = dynamic_cast<paletteWindow *>(fl_find((HWND)hwnd));
-  if(w && !w->parent() && w->dockable() && w->floating() &&
-     paletteWindow::docking)
-    paletteWindow::docking->toolMoved(w);
+  if(w && !w->parent() && w->dockable() && w->floating() && paletteWindow::host)
+    paletteWindow::host->toolMoved(w);
 }
 #endif
 

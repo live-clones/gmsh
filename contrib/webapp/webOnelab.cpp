@@ -147,12 +147,7 @@ EMSCRIPTEN_KEEPALIVE int gmshWebOnelab(const char *what)
   if(action == "compute") onelabUtils::initializeLoops();
   do {
     onelabUtils::runGmshClient(action, CTX::instance()->solver.autoMesh);
-    for(auto *c : solvers()) {
-      onelabUtils::setSolverAction(c, action);
-      c->run();
-      if(action == "compute")
-        onelab::server::instance()->setChanged(0, c->getName());
-    }
+    for(auto *c : solvers()) onelabUtils::runSolver(c, action);
     onelabUtils::updateGraphs();
   } while(action == "compute" && onelabUtils::incrementLoops());
   return Msg::GetErrorCount();

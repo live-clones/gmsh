@@ -135,7 +135,9 @@ public:
   meshContextWindow *meshContext;
   physicalContextWindow *physicalContext;
   onelabContextWindow *onelabContext;
-  int lastContextWindow;
+  // the context window shown last, whose place is stored (see
+  // storeWindowState())
+  Fl_Window *lastContextWindow;
   helpWindow *help;
   onelabGroup *onelab;
   openglWindow *fullscreen;
@@ -198,8 +200,8 @@ public:
   int testGlobalShortcuts(int event);
   // runs an action of the shortcut table (src/common/Shortcuts.h) by name
   int runShortcut(const std::string &action);
-  // test the arrow shortcuts, which are not in the shortcut table: they are
-  // also tested where they override the navigation between widgets
+  // test the shortcuts of the arrows and Page Up/Down, where they override
+  // the navigation between widgets (the 3D view)
   int testArrowShortcuts();
   // set the title of the graphic windows
   void setGraphicTitle(const std::string &title);

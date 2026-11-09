@@ -101,7 +101,7 @@ private:
                std::vector<GRegion *> &regions,
                std::vector<MElement *> &elements, std::vector<SPoint2> &points,
                std::vector<PView *> &views, bool through = true);
-  // should a double click be processed?
+  // what a double click on what is under the cursor does
   void _doubleClick(const paneInput &in);
   void _lassoZoom();
   void _clickSelection(int sign, bool alt);
@@ -235,7 +235,7 @@ public:
   // holds at the point hit (its entity, element, node, the values of the
   // views), in the messages and pinned to the point (added to the notes with
   // Ctrl, see addQuery()). False if the click hit nothing. The host runs the
-  // selection, as the graphical interface does in status_query_cb()
+  // selection, as the graphical interface does in runClickMode()
   bool queryClick(std::vector<GVertex *> &vertices, std::vector<GEdge *> &edges,
                   std::vector<GFace *> &faces, std::vector<GRegion *> &regions,
                   std::vector<MElement *> &elements,

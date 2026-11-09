@@ -96,29 +96,54 @@ static void showInGui(int action, const char *category, int num,
 #endif
 }
 
+// The options of each category (see DefaultOptions.h): its name, its title in
+// the option files, the file of the reference manual that lists them, and its
+// string, number and colour options; in the order of the option files
+struct optionCategory {
+  const char *name, *title, *docFile;
+  StringXString *strings;
+  StringXNumber *numbers;
+  StringXColor *colors;
+};
+
+static const std::vector<optionCategory> &optionCategories()
+{
+  static const std::vector<optionCategory> c = {
+    {"General", "General options", "opt_general.texi", GeneralOptions_String,
+     GeneralOptions_Number, GeneralOptions_Color},
+    {"Geometry", "Geometry options", "opt_geometry.texi",
+     GeometryOptions_String, GeometryOptions_Number, GeometryOptions_Color},
+    {"Mesh", "Mesh options", "opt_mesh.texi", MeshOptions_String,
+     MeshOptions_Number, MeshOptions_Color},
+    {"Solver", "Solver options", "opt_solver.texi", SolverOptions_String,
+     SolverOptions_Number, SolverOptions_Color},
+    {"PostProcessing", "Post-processing options", "opt_post.texi",
+     PostProcessingOptions_String, PostProcessingOptions_Number,
+     PostProcessingOptions_Color},
+    {"View", "View options", "opt_view.texi", ViewOptions_String,
+     ViewOptions_Number, ViewOptions_Color},
+    {"Print", "Print options", "opt_print.texi", PrintOptions_String,
+     PrintOptions_Number, PrintOptions_Color}};
+  return c;
+}
+
+static const optionCategory *findCategory(const char *name)
+{
+  for(const optionCategory &c : optionCategories())
+    if(!strcmp(c.name, name)) return &c;
+  return nullptr;
+}
+
 bool StringOption(int action, const char *category, int num, const char *name,
                   std::string &val, bool warnIfUnknown)
 {
-  StringXString *s = nullptr;
-  if(!strcmp(category, "General"))
-    s = GeneralOptions_String;
-  else if(!strcmp(category, "Geometry"))
-    s = GeometryOptions_String;
-  else if(!strcmp(category, "Mesh"))
-    s = MeshOptions_String;
-  else if(!strcmp(category, "Solver"))
-    s = SolverOptions_String;
-  else if(!strcmp(category, "PostProcessing"))
-    s = PostProcessingOptions_String;
-  else if(!strcmp(category, "View"))
-    s = ViewOptions_String;
-  else if(!strcmp(category, "Print"))
-    s = PrintOptions_String;
-  else {
+  const optionCategory *c = findCategory(category);
+  if(!c) {
     if(warnIfUnknown)
       Msg::Error("Unknown string option category '%s'", category);
     return false;
   }
+  StringXString *s = c->strings;
 
   int i = 0;
   while(s[i].str && strcmp(s[i].str, name)) i++;
@@ -223,26 +248,13 @@ static void PrintStringOptionsDoc(StringXString s[], const char *prefix,
 bool NumberOption(int action, const char *category, int num, const char *name,
                   double &val, bool warnIfUnknown)
 {
-  StringXNumber *s = nullptr;
-  if(!strcmp(category, "General"))
-    s = GeneralOptions_Number;
-  else if(!strcmp(category, "Geometry"))
-    s = GeometryOptions_Number;
-  else if(!strcmp(category, "Mesh"))
-    s = MeshOptions_Number;
-  else if(!strcmp(category, "Solver"))
-    s = SolverOptions_Number;
-  else if(!strcmp(category, "PostProcessing"))
-    s = PostProcessingOptions_Number;
-  else if(!strcmp(category, "View"))
-    s = ViewOptions_Number;
-  else if(!strcmp(category, "Print"))
-    s = PrintOptions_Number;
-  else {
+  const optionCategory *c = findCategory(category);
+  if(!c) {
     if(warnIfUnknown)
       Msg::Error("Unknown number option category '%s'", category);
     return false;
   }
+  StringXNumber *s = c->numbers;
 
   int i = 0;
   while(s[i].str && strcmp(s[i].str, name)) i++;
@@ -330,26 +342,13 @@ static void PrintNumberOptionsDoc(StringXNumber s[], const char *prefix,
 bool ColorOption(int action, const char *category, int num, const char *name,
                  unsigned int &val, bool warnIfUnknown)
 {
-  StringXColor *s = nullptr;
-  if(!strcmp(category, "General"))
-    s = GeneralOptions_Color;
-  else if(!strcmp(category, "Geometry"))
-    s = GeometryOptions_Color;
-  else if(!strcmp(category, "Mesh"))
-    s = MeshOptions_Color;
-  else if(!strcmp(category, "Solver"))
-    s = SolverOptions_Color;
-  else if(!strcmp(category, "PostProcessing"))
-    s = PostProcessingOptions_Color;
-  else if(!strcmp(category, "View"))
-    s = ViewOptions_Color;
-  else if(!strcmp(category, "Print"))
-    s = PrintOptions_Color;
-  else {
+  const optionCategory *c = findCategory(category);
+  if(!c) {
     if(warnIfUnknown)
       Msg::Error("Unknown color option category '%s'", category);
     return false;
   }
+  StringXColor *s = c->colors;
 
   int i = 0;
   while(s[i].str && strcmp(s[i].str, name)) i++;
@@ -541,32 +540,11 @@ void InitOptions(int num)
 {
   CTX::instance()->init();
 
-  // Default string options
-  SetDefaultStringOptions(num, GeneralOptions_String);
-  SetDefaultStringOptions(num, GeometryOptions_String);
-  SetDefaultStringOptions(num, MeshOptions_String);
-  SetDefaultStringOptions(num, SolverOptions_String);
-  SetDefaultStringOptions(num, PostProcessingOptions_String);
-  SetDefaultStringOptions(num, ViewOptions_String);
-  SetDefaultStringOptions(num, PrintOptions_String);
-
-  // Default number options
-  SetDefaultNumberOptions(num, GeneralOptions_Number);
-  SetDefaultNumberOptions(num, GeometryOptions_Number);
-  SetDefaultNumberOptions(num, MeshOptions_Number);
-  SetDefaultNumberOptions(num, SolverOptions_Number);
-  SetDefaultNumberOptions(num, PostProcessingOptions_Number);
-  SetDefaultNumberOptions(num, ViewOptions_Number);
-  SetDefaultNumberOptions(num, PrintOptions_Number);
-
-  // Default color options
-  SetDefaultColorOptions(num, GeneralOptions_Color);
-  SetDefaultColorOptions(num, GeometryOptions_Color);
-  SetDefaultColorOptions(num, MeshOptions_Color);
-  SetDefaultColorOptions(num, SolverOptions_Color);
-  SetDefaultColorOptions(num, PostProcessingOptions_Color);
-  SetDefaultColorOptions(num, ViewOptions_Color);
-  SetDefaultColorOptions(num, PrintOptions_Color);
+  for(const optionCategory &c : optionCategories()) {
+    SetDefaultStringOptions(num, c.strings);
+    SetDefaultNumberOptions(num, c.numbers);
+    SetDefaultColorOptions(num, c.colors);
+  }
 }
 
 void ReInitOptions(int num)
@@ -589,26 +567,13 @@ void ReInitOptions(int num)
 void InitOptionsGUI(int num)
 {
   keepMeshStatistics keep;
-  SetStringOptionsGUI(num, GeneralOptions_String);
-  SetStringOptionsGUI(num, GeometryOptions_String);
-  SetStringOptionsGUI(num, MeshOptions_String);
-  SetStringOptionsGUI(num, SolverOptions_String);
-  SetStringOptionsGUI(num, PostProcessingOptions_String);
-  SetStringOptionsGUI(num, PrintOptions_String);
-
-  SetNumberOptionsGUI(num, GeneralOptions_Number);
-  SetNumberOptionsGUI(num, GeometryOptions_Number);
-  SetNumberOptionsGUI(num, MeshOptions_Number);
-  SetNumberOptionsGUI(num, SolverOptions_Number);
-  SetNumberOptionsGUI(num, PostProcessingOptions_Number);
-  SetNumberOptionsGUI(num, PrintOptions_Number);
-
-  SetColorOptionsGUI(num, GeneralOptions_Color);
-  SetColorOptionsGUI(num, GeometryOptions_Color);
-  SetColorOptionsGUI(num, MeshOptions_Color);
-  SetColorOptionsGUI(num, SolverOptions_Color);
-  SetColorOptionsGUI(num, PostProcessingOptions_Color);
-  SetColorOptionsGUI(num, PrintOptions_Color);
+  // (the views show their own options)
+  for(const optionCategory &c : optionCategories()) {
+    if(!strcmp(c.name, "View")) continue;
+    SetStringOptionsGUI(num, c.strings);
+    SetNumberOptionsGUI(num, c.numbers);
+    SetColorOptionsGUI(num, c.colors);
+  }
 
 #if defined(HAVE_FLTK)
   // the widgets of the options window
@@ -708,6 +673,23 @@ void Sanitize_String_Texi(std::string &s)
   while((i = s.find_first_of("{}", i + 1)) >= 0) s.insert(i++, "@");
 }
 
+// the string, number and colour options of a category, each under its title
+static void PrintCategoryOptions(int num, int level, int diff, int help,
+                                 const optionCategory &c, const char *prefix,
+                                 FILE *file, std::vector<std::string> *vec)
+{
+  std::string title(c.title);
+  PrintOptionCategory(level, diff, help, (title + " (strings)").c_str(), file,
+                      vec);
+  PrintStringOptions(num, level, diff, help, c.strings, prefix, file, vec);
+  PrintOptionCategory(level, diff, help, (title + " (numbers)").c_str(), file,
+                      vec);
+  PrintNumberOptions(num, level, diff, help, c.numbers, prefix, file, vec);
+  PrintOptionCategory(level, diff, help, (title + " (colors)").c_str(), file,
+                      vec);
+  PrintColorOptions(num, level, diff, help, c.colors, prefix, file, vec);
+}
+
 void PrintOptions(int num, int level, int diff, int help, const char *filename,
                   std::vector<std::string> *vec)
 {
@@ -760,108 +742,29 @@ void PrintOptions(int num, int level, int diff, int help, const char *filename,
     fprintf(file, "//\n");
   }
 
-  PrintOptionCategory(level, diff, help, "General options (strings)", file,
-                      vec);
-  PrintStringOptions(num, level, diff, help, GeneralOptions_String, "General.",
-                     file, vec);
-  PrintOptionCategory(level, diff, help, "General options (numbers)", file,
-                      vec);
-  PrintNumberOptions(num, level, diff, help, GeneralOptions_Number, "General.",
-                     file, vec);
-  PrintOptionCategory(level, diff, help, "General options (colors)", file, vec);
-  PrintColorOptions(num, level, diff, help, GeneralOptions_Color, "General.",
-                    file, vec);
-
-  PrintOptionCategory(level, diff, help, "Geometry options (strings)", file,
-                      vec);
-  PrintStringOptions(num, level, diff, help, GeometryOptions_String,
-                     "Geometry.", file, vec);
-  PrintOptionCategory(level, diff, help, "Geometry options (numbers)", file,
-                      vec);
-  PrintNumberOptions(num, level, diff, help, GeometryOptions_Number,
-                     "Geometry.", file, vec);
-  PrintOptionCategory(level, diff, help, "Geometry options (colors)", file,
-                      vec);
-  PrintColorOptions(num, level, diff, help, GeometryOptions_Color, "Geometry.",
-                    file, vec);
-
-  PrintOptionCategory(level, diff, help, "Mesh options (strings)", file, vec);
-  PrintStringOptions(num, level, diff, help, MeshOptions_String, "Mesh.", file,
-                     vec);
-  PrintOptionCategory(level, diff, help, "Mesh options (numbers)", file, vec);
-  PrintNumberOptions(num, level, diff, help, MeshOptions_Number, "Mesh.", file,
-                     vec);
-  PrintOptionCategory(level, diff, help, "Mesh options (colors)", file, vec);
-  PrintColorOptions(num, level, diff, help, MeshOptions_Color, "Mesh.", file,
-                    vec);
-
-  PrintOptionCategory(level, diff, help, "Solver options (strings)", file, vec);
-  PrintStringOptions(num, level, diff, help, SolverOptions_String, "Solver.",
-                     file, vec);
-  PrintOptionCategory(level, diff, help, "Solver options (numbers)", file, vec);
-  PrintNumberOptions(num, level, diff, help, SolverOptions_Number, "Solver.",
-                     file, vec);
-  PrintOptionCategory(level, diff, help, "Solver options (colors)", file, vec);
-  PrintColorOptions(num, level, diff, help, SolverOptions_Color, "Solver.",
-                    file, vec);
-
-  PrintOptionCategory(level, diff, help, "Post-processing options (strings)",
-                      file, vec);
-  PrintStringOptions(num, level, diff, help, PostProcessingOptions_String,
-                     "PostProcessing.", file, vec);
-  PrintOptionCategory(level, diff, help, "Post-processing options (numbers)",
-                      file, vec);
-  PrintNumberOptions(num, level, diff, help, PostProcessingOptions_Number,
-                     "PostProcessing.", file, vec);
-  PrintOptionCategory(level, diff, help, "Post-processing options (colors)",
-                      file, vec);
-  PrintColorOptions(num, level, diff, help, PostProcessingOptions_Color,
-                    "PostProcessing.", file, vec);
-
-  if(level & GMSH_FULLRC) {
-#if defined(HAVE_POST)
-    for(std::size_t i = 0; i < PView::list.size(); i++) {
-      char tmp[256];
-      sprintf(tmp, "View[%zu].", i);
-      PrintOptionCategory(level, diff, help, "View options (strings)", file,
-                          vec);
-      PrintStringOptions(i, level, diff, help, ViewOptions_String, tmp, file,
-                         vec);
-      PrintOptionCategory(level, diff, help, "View options (numbers)", file,
-                          vec);
-      PrintNumberOptions(i, level, diff, help, ViewOptions_Number, tmp, file,
-                         vec);
-      PrintOptionCategory(level, diff, help, "View options (colors)", file,
-                          vec);
-      PrintColorOptions(i, level, diff, help, ViewOptions_Color, tmp, file,
-                        vec);
-      strcat(tmp, "ColorTable");
-      PrintColorTable(i, diff, tmp, file, vec);
+  for(const optionCategory &c : optionCategories()) {
+    if(strcmp(c.name, "View")) {
+      PrintCategoryOptions(num, level, diff, help, c,
+                           (std::string(c.name) + ".").c_str(), file, vec);
+      continue;
     }
+    // the options of each view in the full listing, and the default ones in
+    // the option file
+    if(level & GMSH_FULLRC) {
+#if defined(HAVE_POST)
+      for(std::size_t i = 0; i < PView::list.size(); i++) {
+        std::string prefix = "View[" + std::to_string(i) + "].";
+        PrintCategoryOptions(i, level, diff, help, c, prefix.c_str(), file,
+                             vec);
+        PrintColorTable(i, diff, (prefix + "ColorTable").c_str(), file, vec);
+      }
 #endif
+    }
+    else if(level & GMSH_OPTIONSRC) {
+      PrintCategoryOptions(num, level, diff, help, c, "View.", file, vec);
+      PrintColorTable(num, diff, "View.ColorTable", file, vec);
+    }
   }
-  else if(level & GMSH_OPTIONSRC) {
-    PrintOptionCategory(level, diff, help, "View options (strings)", file, vec);
-    PrintStringOptions(num, level, diff, help, ViewOptions_String, "View.",
-                       file, vec);
-    PrintOptionCategory(level, diff, help, "View options (numbers)", file, vec);
-    PrintNumberOptions(num, level, diff, help, ViewOptions_Number, "View.",
-                       file, vec);
-    PrintOptionCategory(level, diff, help, "View options (colors)", file, vec);
-    PrintColorOptions(num, level, diff, help, ViewOptions_Color, "View.", file,
-                      vec);
-    PrintColorTable(num, diff, "View.ColorTable", file, vec);
-  }
-
-  PrintOptionCategory(level, diff, help, "Print options (strings)", file, vec);
-  PrintStringOptions(num, level, diff, help, PrintOptions_String, "Print.",
-                     file, vec);
-  PrintOptionCategory(level, diff, help, "Print options (numbers)", file, vec);
-  PrintNumberOptions(num, level, diff, help, PrintOptions_Number, "Print.",
-                     file, vec);
-  PrintOptionCategory(level, diff, help, "Print options (colors)", file, vec);
-  PrintColorOptions(num, level, diff, help, PrintOptions_Color, "Print.", file,
-                    vec);
 
   if(filename) fclose(file);
 }
@@ -881,15 +784,10 @@ GetOptionChoices(const std::string &option)
   return choices;
 }
 
-bool GetOptionRange(const std::string &option, double &min, double &max,
-                    double &step)
+const OptionRange *GetOptionRange(const std::string &option)
 {
   auto it = OptionRanges.find(option);
-  if(it == OptionRanges.end()) return false;
-  min = it->second.min;
-  max = it->second.max;
-  step = it->second.step;
-  return true;
+  return (it == OptionRanges.end()) ? nullptr : &it->second;
 }
 
 std::string GetOptionHelp(const std::string &option, const char *help)
@@ -917,31 +815,13 @@ std::string GetOptionHelp(const std::string &option, const char *help)
 
 std::vector<std::string> GetOptionNames(const std::string &category)
 {
-  struct tables {
-    const char *category;
-    StringXString *s;
-    StringXNumber *n;
-    StringXColor *c;
-  };
-  static const tables all[] = {
-    {"General", GeneralOptions_String, GeneralOptions_Number,
-     GeneralOptions_Color},
-    {"Geometry", GeometryOptions_String, GeometryOptions_Number,
-     GeometryOptions_Color},
-    {"Mesh", MeshOptions_String, MeshOptions_Number, MeshOptions_Color},
-    {"Solver", SolverOptions_String, SolverOptions_Number, SolverOptions_Color},
-    {"PostProcessing", PostProcessingOptions_String,
-     PostProcessingOptions_Number, PostProcessingOptions_Color},
-    {"View", ViewOptions_String, ViewOptions_Number, ViewOptions_Color},
-    {"Print", PrintOptions_String, PrintOptions_Number, PrintOptions_Color}};
   std::vector<std::string> names;
-  for(const tables &t : all) {
-    if(category != t.category) continue;
-    for(int i = 0; t.s[i].str; i++) names.push_back(t.s[i].str);
-    for(int i = 0; t.n[i].str; i++) names.push_back(t.n[i].str);
-    for(int i = 0; t.c[i].str; i++)
-      names.push_back(std::string("Color.") + t.c[i].str);
-  }
+  const optionCategory *c = findCategory(category.c_str());
+  if(!c) return names;
+  for(int i = 0; c->strings[i].str; i++) names.push_back(c->strings[i].str);
+  for(int i = 0; c->numbers[i].str; i++) names.push_back(c->numbers[i].str);
+  for(int i = 0; c->colors[i].str; i++)
+    names.push_back(std::string("Color.") + c->colors[i].str);
   return names;
 }
 
@@ -950,104 +830,28 @@ void PrintOptionsDoc()
   const char *warn =
     "@c This file was generated by \"gmsh -doc\": do not edit manually!\n\n";
 
-  {
-    FILE *file = Fopen("opt_general.texi", "w");
-    if(!file) {
-      Msg::Error("Unable to open file 'opt_general.texi'");
-      return;
-    }
-    fprintf(file, "%s@ftable @code\n", warn);
-    PrintStringOptionsDoc(GeneralOptions_String, "General.", file);
-    PrintNumberOptionsDoc(GeneralOptions_Number, "General.", file);
-    PrintColorOptionsDoc(GeneralOptions_Color, "General.", file);
-    fprintf(file, "@end ftable\n");
-    fclose(file);
-  }
-  {
-    FILE *file = Fopen("opt_print.texi", "w");
-    if(!file) {
-      Msg::Error("Unable to open file 'opt_print.texi'");
-      return;
-    }
-    fprintf(file, "%s@ftable @code\n", warn);
-    PrintStringOptionsDoc(PrintOptions_String, "Print.", file);
-    PrintNumberOptionsDoc(PrintOptions_Number, "Print.", file);
-    PrintColorOptionsDoc(PrintOptions_Color, "Print.", file);
-    fprintf(file, "@end ftable\n");
-    fclose(file);
-  }
-  {
-    FILE *file = Fopen("opt_geometry.texi", "w");
-    if(!file) {
-      Msg::Error("Unable to open file 'opt_geometry.texi'");
-      return;
-    }
-    fprintf(file, "%s@ftable @code\n", warn);
-    PrintStringOptionsDoc(GeometryOptions_String, "Geometry.", file);
-    PrintNumberOptionsDoc(GeometryOptions_Number, "Geometry.", file);
-    PrintColorOptionsDoc(GeometryOptions_Color, "Geometry.", file);
-    fprintf(file, "@end ftable\n");
-    fclose(file);
-  }
-  {
-    FILE *file = Fopen("opt_mesh.texi", "w");
-    if(!file) {
-      Msg::Error("Unable to open file 'opt_mesh.texi'");
-      return;
-    }
-    fprintf(file, "%s@ftable @code\n", warn);
-    PrintStringOptionsDoc(MeshOptions_String, "Mesh.", file);
-    PrintNumberOptionsDoc(MeshOptions_Number, "Mesh.", file);
-    PrintColorOptionsDoc(MeshOptions_Color, "Mesh.", file);
-    fprintf(file, "@end ftable\n");
-    fclose(file);
-  }
-  {
-    FILE *file = Fopen("opt_solver.texi", "w");
-    if(!file) {
-      Msg::Error("Unable to open file 'opt_solver.texi'");
-      return;
-    }
-    fprintf(file, "%s@ftable @code\n", warn);
-    PrintStringOptionsDoc(SolverOptions_String, "Solver.", file);
-    PrintNumberOptionsDoc(SolverOptions_Number, "Solver.", file);
-    PrintColorOptionsDoc(SolverOptions_Color, "Solver.", file);
-    fprintf(file, "@end ftable\n");
-    fclose(file);
-  }
-  {
-    FILE *file = Fopen("opt_post.texi", "w");
-    if(!file) {
-      Msg::Error("Unable to open file 'opt_post.texi'");
-      return;
-    }
-    fprintf(file, "%s@ftable @code\n", warn);
-    PrintStringOptionsDoc(PostProcessingOptions_String, "PostProcessing.",
-                          file);
-    PrintNumberOptionsDoc(PostProcessingOptions_Number, "PostProcessing.",
-                          file);
-    PrintColorOptionsDoc(PostProcessingOptions_Color, "PostProcessing.", file);
-    fprintf(file, "@end ftable\n");
-    fclose(file);
-  }
-  {
-#if defined(HAVE_POST)
-    FILE *file = Fopen("opt_view.texi", "w");
-    if(!file) {
-      Msg::Error("Unable to open file 'opt_view.texi'");
-      return;
-    }
-    fprintf(file, "%s@ftable @code\n", warn);
-    PrintStringOptionsDoc(ViewOptions_String, "View.", file);
-    PrintNumberOptionsDoc(ViewOptions_Number, "View.", file);
-    PrintColorOptionsDoc(ViewOptions_Color, "View.", file);
-    fprintf(file, "@item View.ColorTable\n");
-    fprintf(file, "Color table used to draw the view@*\n");
-    fprintf(file, "Saved in: @code{%s}\n\n",
-            GetOptionSaveLevel(GMSH_FULLRC | GMSH_OPTIONSRC));
-    fprintf(file, "@end ftable\n");
-    fclose(file);
+  for(const optionCategory &c : optionCategories()) {
+#if !defined(HAVE_POST)
+    if(!strcmp(c.name, "View")) continue;
 #endif
+    FILE *file = Fopen(c.docFile, "w");
+    if(!file) {
+      Msg::Error("Unable to open file '%s'", c.docFile);
+      return;
+    }
+    std::string prefix = std::string(c.name) + ".";
+    fprintf(file, "%s@ftable @code\n", warn);
+    PrintStringOptionsDoc(c.strings, prefix.c_str(), file);
+    PrintNumberOptionsDoc(c.numbers, prefix.c_str(), file);
+    PrintColorOptionsDoc(c.colors, prefix.c_str(), file);
+    if(!strcmp(c.name, "View")) {
+      fprintf(file, "@item View.ColorTable\n");
+      fprintf(file, "Color table used to draw the view@*\n");
+      fprintf(file, "Saved in: @code{%s}\n\n",
+              GetOptionSaveLevel(GMSH_FULLRC | GMSH_OPTIONSRC));
+    }
+    fprintf(file, "@end ftable\n");
+    fclose(file);
   }
   {
 #if defined(HAVE_PLUGINS)

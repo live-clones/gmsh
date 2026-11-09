@@ -86,12 +86,12 @@ private:
   std::function<bool()> _apply;
 
   // the fields of these names used by the operation
-  void _use(std::initializer_list<std::string> names);
+  void _use(const std::vector<std::string> &names);
   void _add(int type, const std::string &what = "", int count = 0,
             bool optional = false, bool ordered = false, int dims = 15);
   std::string _get(const std::string &name) const;
   bool _checked(const std::string &name) const { return _get(name) == "1"; }
-  bool _filled(std::initializer_list<const char *> names) const;
+  bool _filled(const std::vector<std::string> &names) const;
   std::vector<int> _tags(int phase, int dim = -1) const;
   bool _anyPicked() const;
   void _pick(const std::vector<GEntity *> &entities,

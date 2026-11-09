@@ -154,6 +154,18 @@ public:
   void layout(bool keepPosition);
 };
 
+// the value a check button gives an option that may hold more than 0 and 1
+// (as General.SaveOptions = 2): the value it has while the button shows it as
+// it is, on or off
+double checkValue(Fl_Button *b, double value);
+// the range of a value from the table of the ranges of its option (see
+// GetOptionRange()), and the step of its scrolling (when
+// General.InputScrolling is set)
+void optionRange(Fl_Valuator *v, const std::string &option);
+// the items of a choice from the table of the choices of its option (see
+// GetOptionChoices()), and their values; none if the option has no table
+std::vector<double> choiceItems(Fl_Choice *c, const std::string &option);
+
 void options_cb(Fl_Widget *w, void *data);
 void options_restore_defaults_cb(Fl_Widget *w, void *data);
 void general_options_cb(Fl_Widget *w, void *data);

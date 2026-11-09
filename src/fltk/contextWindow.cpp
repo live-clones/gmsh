@@ -337,7 +337,7 @@ void elementaryContextWindow::updatePoint(double pt[3], int which)
 
 void elementaryContextWindow::show(int pane)
 {
-  FlGui::instance()->lastContextWindow = 0;
+  FlGui::instance()->lastContextWindow = win;
 
   if(pane < 0 || pane > 11) return;
 
@@ -501,7 +501,7 @@ physicalContextWindow::physicalContextWindow(int deltaFontSize)
 
 void physicalContextWindow::show(const std::string &what, bool remove)
 {
-  FlGui::instance()->lastContextWindow = 3;
+  FlGui::instance()->lastContextWindow = win;
 
   // update window title and labels
   type = what;
@@ -613,25 +613,19 @@ static void setFieldDefault(Fl_Widget *w, const selectionDriver::field &f)
 Fl_Widget *transformContextWindow::field(const std::string &name,
                                          bool rotation)
 {
-  static const char *inputs[21] = {
-    "Translation X", "Translation Y", "Translation Z", "Axis point X",
-    "Axis point Y", "Axis point Z", "Axis direction DX", "Axis direction DY",
-    "Axis direction DZ", "Angle", "Center X", "Center Y", "Center Z",
-    "Scaling X", "Scaling Y", "Scaling Z", "Symmetry plane coefficient A",
-    "Symmetry plane coefficient B", "Symmetry plane coefficient C",
-    "Symmetry plane coefficient D", "Radius"};
-  static const char *checks[7] = {
-    "Apply translation on copy", "Apply rotation on copy",
-    "Apply scaling on copy", "Apply symmetry on copy", "Delete object",
-    "Delete tool", "Recursive"};
-  for(int i = 0; i < 21; i++)
-    if(name == inputs[i]) return input[i];
-  for(int i = 0; i < 7; i++)
-    if(name == checks[i]) return butt[i];
-  if(name == "Mesh layers") return input[rotation ? 22 : 21];
-  if(name == "Extrude mesh") return butt[rotation ? 9 : 7];
-  if(name == "Recombine") return butt[rotation ? 10 : 8];
+  // the widget labelled with the name (the fields of the axis by their
+  // tooltip), first in the tab of the rotation or of the translation, which
+  // have the same fields of the extrusion
   if(name == "Selection mode") return choice;
+  int first = rotation ? 1 : 0;
+  for(int g : {first, 1 - first, 2, 3, 4, 5, 6}) {
+    for(int i = 0; i < group[g]->children(); i++) {
+      Fl_Widget *w = group[g]->child(i);
+      if((w->label() && name == w->label()) ||
+         (w->tooltip() && name == w->tooltip()))
+        return w;
+    }
+  }
   return nullptr;
 }
 
@@ -796,7 +790,7 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
 
 void transformContextWindow::show(int pane, bool extrude, bool selection)
 {
-  FlGui::instance()->lastContextWindow = 1;
+  FlGui::instance()->lastContextWindow = win;
 
   for(int i = 0; i < 7; i++) {
     group[i]->hide();
@@ -892,7 +886,7 @@ meshContextWindow::meshContextWindow(int deltaFontSize)
 
 void meshContextWindow::show(int pane)
 {
-  FlGui::instance()->lastContextWindow = 2;
+  FlGui::instance()->lastContextWindow = win;
 
   for(int i = 0; i < 3; i++) {
     group[i]->hide();

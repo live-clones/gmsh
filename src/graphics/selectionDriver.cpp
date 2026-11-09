@@ -59,6 +59,22 @@ namespace {
   const char *copyField[4] = {"Apply translation on copy",
                               "Apply rotation on copy", "Apply scaling on copy",
                               "Apply symmetry on copy"};
+
+  // the fields of the transformations, as the operations use them
+  const std::vector<std::string> translationFields = {
+    "Translation X", "Translation Y", "Translation Z"};
+  const std::vector<std::string> rotationFields = {"Axis point X",
+                                                   "Axis point Y",
+                                                   "Axis point Z",
+                                                   "Axis direction DX",
+                                                   "Axis direction DY",
+                                                   "Axis direction DZ",
+                                                   "Angle"};
+  const std::vector<std::string> scalingFields = {
+    "Center X", "Center Y", "Center Z", "Scaling X", "Scaling Y", "Scaling Z"};
+  const std::vector<std::string> symmetryFields = {
+    "Symmetry plane coefficient A", "Symmetry plane coefficient B",
+    "Symmetry plane coefficient C", "Symmetry plane coefficient D"};
 } // namespace
 
 void selectionDriver::show(int types)
@@ -141,7 +157,7 @@ const std::vector<selectionDriver::field> &selectionDriver::allFields()
   return fields;
 }
 
-void selectionDriver::_use(std::initializer_list<std::string> names)
+void selectionDriver::_use(const std::vector<std::string> &names)
 {
   for(const std::string &name : names)
     for(const field &f : allFields())
@@ -177,13 +193,8 @@ selectionDriver::selectionDriver(const std::string &operation,
     _add(-1);
     _boundingBox = true;
   };
-  auto translation = [&]() {
-    _use({"Translation X", "Translation Y", "Translation Z"});
-  };
-  auto rotation = [&]() {
-    _use({"Axis point X", "Axis point Y", "Axis point Z", "Axis direction DX",
-          "Axis direction DY", "Axis direction DZ", "Angle"});
-  };
+  auto translation = [&]() { _use(translationFields); };
+  auto rotation = [&]() { _use(rotationFields); };
   auto extrusion = [&]() {
     _use({"Extrude mesh", "Mesh layers", "Recombine"});
   };
@@ -243,8 +254,7 @@ selectionDriver::selectionDriver(const std::string &operation,
     _use({copyField[0]});
     transform();
     _apply = [this, file]() {
-      if(!_filled({"Translation X", "Translation Y", "Translation Z"}))
-        return false;
+      if(!_filled(translationFields)) return false;
       scriptTranslate(file(), _picked[0], _get("Translation X"),
                       _get("Translation Y"), _get("Translation Z"),
                       _checked(copyField[0]));
@@ -256,10 +266,7 @@ selectionDriver::selectionDriver(const std::string &operation,
     _use({copyField[1]});
     transform();
     _apply = [this, file]() {
-      if(!_filled({"Axis point X", "Axis point Y", "Axis point Z",
-                   "Axis direction DX", "Axis direction DY",
-                   "Axis direction DZ", "Angle"}))
-        return false;
+      if(!_filled(rotationFields)) return false;
       scriptRotate(file(), _picked[0], _get("Axis direction DX"),
                    _get("Axis direction DY"), _get("Axis direction DZ"),
                    _get("Axis point X"), _get("Axis point Y"),
@@ -268,13 +275,11 @@ selectionDriver::selectionDriver(const std::string &operation,
     };
   }
   else if(op == "Scale") {
-    _use({"Center X", "Center Y", "Center Z", "Scaling X", "Scaling Y",
-          "Scaling Z", copyField[2]});
+    _use(scalingFields);
+    _use({copyField[2]});
     transform();
     _apply = [this, file]() {
-      if(!_filled({"Center X", "Center Y", "Center Z", "Scaling X", "Scaling Y",
-                   "Scaling Z"}))
-        return false;
+      if(!_filled(scalingFields)) return false;
       scriptDilate(file(), _picked[0], _get("Center X"), _get("Center Y"),
                    _get("Center Z"), _get("Scaling X"), _get("Scaling Y"),
                    _get("Scaling Z"), _checked(copyField[2]));
@@ -282,15 +287,14 @@ selectionDriver::selectionDriver(const std::string &operation,
     };
   }
   else if(op == "Symmetry") {
-    const char *c[4] = {
-      "Symmetry plane coefficient A", "Symmetry plane coefficient B",
-      "Symmetry plane coefficient C", "Symmetry plane coefficient D"};
-    _use({c[0], c[1], c[2], c[3], copyField[3]});
+    _use(symmetryFields);
+    _use({copyField[3]});
     transform();
-    _apply = [this, file, c]() {
-      if(!_filled({c[0], c[1], c[2], c[3]})) return false;
-      scriptMirror(file(), _picked[0], _get(c[0]), _get(c[1]), _get(c[2]),
-                   _get(c[3]), _checked(copyField[3]));
+    _apply = [this, file]() {
+      if(!_filled(symmetryFields)) return false;
+      scriptMirror(file(), _picked[0], _get(symmetryFields[0]),
+                   _get(symmetryFields[1]), _get(symmetryFields[2]),
+                   _get(symmetryFields[3]), _checked(copyField[3]));
       return true;
     };
   }
@@ -299,7 +303,7 @@ selectionDriver::selectionDriver(const std::string &operation,
     extrusion();
     transform();
     _apply = [this, file]() {
-      if(!_filled({"Translation X", "Translation Y", "Translation Z"}) ||
+      if(!_filled(translationFields) ||
          (_checked("Extrude mesh") && !_filled({"Mesh layers"})))
         return false;
       scriptExtrude(file(), _picked[0], _get("Translation X"),
@@ -314,9 +318,7 @@ selectionDriver::selectionDriver(const std::string &operation,
     extrusion();
     transform();
     _apply = [this, file]() {
-      if(!_filled({"Axis point X", "Axis point Y", "Axis point Z",
-                   "Axis direction DX", "Axis direction DY",
-                   "Axis direction DZ", "Angle"}) ||
+      if(!_filled(rotationFields) ||
          (_checked("Extrude mesh") && !_filled({"Mesh layers"})))
         return false;
       scriptProtude(file(), _picked[0], _get("Axis direction DX"),
@@ -522,12 +524,12 @@ std::string selectionDriver::_get(const std::string &name) const
 
 // whether the fields are filled in; if not, an error names the first one
 // left empty, which would write an invalid command in the script
-bool selectionDriver::_filled(std::initializer_list<const char *> names) const
+bool selectionDriver::_filled(const std::vector<std::string> &names) const
 {
-  for(const char *name : names) {
+  for(const std::string &name : names) {
     std::string v = _get(name);
     if(v.find_first_not_of(" \t") == std::string::npos) {
-      Msg::Error("Field '%s' is empty", name);
+      Msg::Error("Field '%s' is empty", name.c_str());
       return false;
     }
   }

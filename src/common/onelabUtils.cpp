@@ -504,10 +504,7 @@ namespace onelabUtils {
       // initialize
       onelabUtils::runGmshClient("initialize",
                                  CTX::instance()->solver.autoMesh);
-      if(c) {
-        setSolverAction(c, "initialize");
-        c->run();
-      }
+      if(c) runSolver(c, "initialize");
 
       // load db
       if(CTX::instance()->solver.autoLoadDatabase) {
@@ -519,20 +516,13 @@ namespace onelabUtils {
 
       // check
       onelabUtils::runGmshClient("check", CTX::instance()->solver.autoMesh);
-      if(c) {
-        setSolverAction(c, "check");
-        c->run();
-      }
+      if(c) runSolver(c, "check");
 
       // compute
       initializeLoops();
       do {
         onelabUtils::runGmshClient("compute", CTX::instance()->solver.autoMesh);
-        if(c) {
-          setSolverAction(c, "compute");
-          c->run();
-          onelab::server::instance()->setChanged(0, c->getName());
-        }
+        if(c) runSolver(c, "compute");
       } while(incrementLoops());
       afterCompute();
     }
@@ -693,6 +683,14 @@ namespace onelabUtils {
     o.setVisible(false);
     o.setNeverChanged(true);
     onelab::server::instance()->set(o);
+  }
+
+  void runSolver(onelab::client *c, const std::string &action)
+  {
+    setSolverAction(c, action);
+    c->run();
+    if(action == "compute")
+      onelab::server::instance()->setChanged(0, c->getName());
   }
 
   std::string dbFileName()
