@@ -103,9 +103,7 @@ void solver_cb(Fl_Widget *w, void *data)
   }
 
   if(CTX::instance()->solver.autoLoadDatabase) {
-    std::vector<std::string> split =
-      SplitFileName(GModel::current()->getFileName());
-    std::string db = split[0] + split[1] + ".db";
+    std::string db = onelabUtils::dbFileName();
     if(!StatFile(db)) {
       onelabUtils::loadDb(db);
       CTX::instance()->launchSolverAtStartup = -1;
@@ -718,8 +716,10 @@ template <class T> void onelabGroup::_addParameter(T &p)
   }
   _addRow(n, [&](int ww, int hh) {
     const double labelRatio = 0.5; // the field, then its label
+    // (the callbacks find the parameter by its name, not by the item's path,
+    // which FLTK escapes and splits differently)
     Fl_Widget *widget =
-      addParameterWidget(p, 1, 1, ww * labelRatio, hh, labelRatio, getPath(n),
+      addParameterWidget(p, 1, 1, ww * labelRatio, hh, labelRatio, p.getName(),
                          highlight, c, _tree->color(), _treeStrings);
     widget->copy_label(p.getShortName().c_str());
     std::string help = p.getHelp();
@@ -964,7 +964,8 @@ Fl_Widget *addParameterWidget(onelab::number &p, int xx, int yy, int ww, int hh,
   but->value(p.getValue());
   but->minimum(p.getMin());
   but->maximum(p.getMax());
-  if(CTX::instance()->inputScrolling) but->step(p.getStep());
+  // (the step is kept even when the input does not scroll: see inputRange)
+  but->step(p.getStep());
   but->choices(p.getChoices());
   but->loop(p.getAttribute("Loop"));
   but->graph(p.getAttribute("Graph"));
@@ -1554,7 +1555,8 @@ void onelabGroup::setButtonVisibility()
   if(ps.size() && ps[0].getValues().size() == 2) {
     _butt[0]->hide();
     _butt[1]->show();
-    setRunState(Idle);
+    // (the tree is rebuilt while a solver runs too, which keeps its Stop)
+    setRunState(_state);
     return;
   }
 
@@ -1589,10 +1591,10 @@ void onelabGroup::setButtonVisibility()
 void onelabGroup::setRunState(runState state)
 {
   _state = state;
-  // custom button behavior
+  // custom button behavior, while idle
   std::vector<onelab::string> ps;
   onelab::server::instance()->get(ps, "ONELAB/Button");
-  if(ps.size() && ps[0].getValues().size() == 2) {
+  if(state == Idle && ps.size() && ps[0].getValues().size() == 2) {
     static char label[256];
     strncpy(label, ps[0].getValues()[0].c_str(), sizeof(label) - 1);
     label[sizeof(label) - 1] = '\0';

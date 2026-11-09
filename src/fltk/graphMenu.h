@@ -32,13 +32,15 @@ inline void addGraphMenu(Fl_Menu_Button *menu, Fl_Callback *cb,
   menu->add("None", 0, resetCb, data);
 }
 
-// the axes checked in the menu, drawn as discrete values ('3'; 1=iso,
-// 2=continuous, 4=numeric)
-inline std::string graphMenuValue(Fl_Menu_Button *menu)
+// the axes checked in the menu: those already drawn keep their type (old),
+// the others are drawn as discrete values ('3'; 1=iso, 2=continuous,
+// 4=numeric)
+inline std::string graphMenuValue(Fl_Menu_Button *menu, const std::string &old)
 {
   std::string val(36, '0');
   for(int i = 0; i < 36; i++)
-    if(menu->menu()[graphMenuIndex(i)].value()) val[i] = '3';
+    if(menu->menu()[graphMenuIndex(i)].value())
+      val[i] = (i < (int)old.size() && old[i] != '0') ? old[i] : '3';
   return val;
 }
 

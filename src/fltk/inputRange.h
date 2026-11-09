@@ -209,7 +209,7 @@ private:
   static void _graph_menu_cb(Fl_Widget *w, void *data)
   {
     inputRange *b = (inputRange *)data;
-    b->_set_graph_value(graphMenuValue(b->_graph_menu), false);
+    b->_set_graph_value(graphMenuValue(b->_graph_menu, b->_graph_val), false);
     b->doCallbackOnValues(false);
     b->do_callback();
   }

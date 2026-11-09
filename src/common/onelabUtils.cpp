@@ -4,6 +4,9 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "GmshConfig.h"
+#include <algorithm>
+#include <regex>
+#include <cmath>
 
 #if defined(HAVE_ONELAB)
 
@@ -200,9 +203,32 @@ namespace onelabUtils {
     if(changed) setFirstComputationFlag(false);
   }
 
+  // the value of index j of a loop over a range, from its min with a step > 0
+  // or from its max with a step < 0, if in the range: computed from the end
+  // and not by repeated additions, which accumulate roundoff, and compared to
+  // the other end with a tolerance relative to the step
+  static bool loopValue(const onelab::number &p, int j, double &val)
+  {
+    double step = p.getStep(), tol = 1e-9 * std::abs(step);
+    if(step > 0) {
+      if(p.getMin() == -onelab::parameter::maxNumber() ||
+         p.getMax() == onelab::parameter::maxNumber())
+        return false;
+      val = p.getMin() + j * step;
+      return val <= p.getMax() + tol;
+    }
+    else if(step < 0) {
+      if(p.getMin() == -onelab::parameter::maxNumber() ||
+         p.getMax() == onelab::parameter::maxNumber())
+        return false;
+      val = p.getMax() + j * step;
+      return val >= p.getMin() - tol;
+    }
+    return false;
+  }
+
   bool incrementLoop(const std::string &level)
   {
-    const double eps = 1.e-15; // for roundoff
     // called at the end of the do{...} while(incrementLoops);
     bool recompute = false, loop = false;
     std::vector<onelab::number> numbers;
@@ -223,25 +249,10 @@ namespace onelabUtils {
             recompute = true;
           }
         }
-        else if(numbers[i].getStep() > 0) {
+        else if(numbers[i].getStep() != 0) {
           int j = numbers[i].getIndex() + 1;
-          double val = numbers[i].getValue() + numbers[i].getStep();
-          if(numbers[i].getMax() != onelab::parameter::maxNumber() &&
-             val <= numbers[i].getMax() * (1 + eps)) {
-            numbers[i].setValue(val);
-            numbers[i].setIndex(j);
-            onelab::server::instance()->set(numbers[i]);
-            Msg::Info("Loop level %s - setting '%s' to value %d: %g",
-                      level.c_str(), numbers[i].getName().c_str(), j,
-                      numbers[i].getValue());
-            recompute = true;
-          }
-        }
-        else if(numbers[i].getStep() < 0) {
-          int j = numbers[i].getIndex() + 1;
-          double val = numbers[i].getValue() + numbers[i].getStep();
-          if(numbers[i].getMin() != -onelab::parameter::maxNumber() &&
-             val >= numbers[i].getMin() * (1 - eps)) {
+          double val;
+          if(loopValue(numbers[i], j, val)) {
             numbers[i].setValue(val);
             numbers[i].setIndex(j);
             onelab::server::instance()->set(numbers[i]);
@@ -262,23 +273,12 @@ namespace onelabUtils {
 
   std::vector<double> getRange(onelab::number &p)
   {
-    const double eps = 1.e-15; // for roundoff
     std::vector<double> v;
-    if(p.getChoices().size()) {
-      v = p.getChoices();
-    }
-    else if(p.getMin() != -onelab::parameter::maxNumber() &&
-            p.getMax() != onelab::parameter::maxNumber()) {
-      if(p.getStep() > 0) {
-        for(double d = p.getMin(); d <= p.getMax() * (1 + eps);
-            d += p.getStep())
-          v.push_back(d);
-      }
-      else if(p.getStep() < 0) {
-        for(double d = p.getMin(); d <= p.getMax() * (1 + eps);
-            d -= p.getStep())
-          v.push_back(d);
-      }
+    if(p.getChoices().size()) { v = p.getChoices(); }
+    else {
+      double val;
+      for(int j = 0; loopValue(p, j, val); j++) v.push_back(val);
+      if(p.getStep() < 0) std::reverse(v.begin(), v.end());
     }
     return v;
   }
@@ -508,9 +508,7 @@ namespace onelabUtils {
 
       // load db
       if(CTX::instance()->solver.autoLoadDatabase) {
-        std::vector<std::string> split =
-          SplitFileName(GModel::current()->getFileName());
-        std::string db = split[0] + split[1] + ".db";
+        std::string db = dbFileName();
         if(!StatFile(db)) loadDb(db);
       }
 
@@ -563,6 +561,7 @@ namespace onelabUtils {
       if(!noRangeEither) {
         x.setMin(y.getMin());
         x.setMax(y.getMax());
+        x.setStep(y.getStep());
       }
       else {
         // if no range/min/max/step info is provided, try to compute a
@@ -703,6 +702,17 @@ namespace onelabUtils {
     return split[0] + split[1] + ".db";
   }
 
+  bool mergeSolverFile(const std::string &fileName)
+  {
+    if(!CTX::instance()->solver.autoMergeFile) return false;
+    onelab::server *s = onelab::server::instance();
+    std::map<std::string, int> levels = s->getChangedLevels("Gmsh");
+    MergePostProcessingFile(fileName, CTX::instance()->solver.autoShowViews,
+                            CTX::instance()->solver.autoShowLastStep, true);
+    s->setChangedLevels(levels, "Gmsh");
+    return true;
+  }
+
   bool afterCompute()
   {
     bool archive = CTX::instance()->solver.autoArchiveOutputFiles;
@@ -769,10 +779,10 @@ namespace onelabUtils {
         names.push_back(strings[i].getValue());
         for(std::size_t j = 0; j < names.size(); j++) {
           std::vector<std::string> split = SplitFileName(names[j]);
-          int n = split[1].size();
-          // if name is not already stamped
-          if(n < 18 || split[1][n - 3] != '-' || split[1][n - 6] != '-' ||
-             split[1][n - 9] != '_') {
+          // if name is not already stamped (the tag, if any, follows the time)
+          static const std::regex stamped(
+            "_[0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}-[0-9]{2}-[0-9]{2}");
+          if(!std::regex_search(split[1], stamped)) {
             std::string old = names[j];
             CreateSingleDir(split[0] + "archive/");
             names[j] = split[0] + "archive/" + split[1] + stamp + split[2];
@@ -918,6 +928,10 @@ namespace onelabUtils {
     }
     return false;
   }
+
+  // what serverAction() acts on (all its actions start with "Reset")
+  static bool isServerAction(const std::string &action)
+  { return !action.compare(0, 5, "Reset"); }
 
   // the value of a "Set" action, for a number or a string
   static void setValueFromString(onelab::number &p, const std::string &val)
@@ -1084,18 +1098,25 @@ namespace onelabUtils {
     std::vector<T> ps;
     s->get(ps, p.getName());
     T old = ps.empty() ? p : ps[0];
+    // the server actions follow a change of value, not of the other attributes
+    // (a loop or a graph toggled): a ResetDatabase must not run again then
+    bool changed =
+      ps.empty() || force || old.getValueAsString() != p.getValueAsString();
     int ret = 0;
     std::string opt = p.getAttribute("GmshOption");
     if(opt.size()) {
-      if(serverAction(opt)) // for backward compatibility
-        ret |= ParameterRebuild;
+      if(isServerAction(opt)) { // for backward compatibility
+        if(changed && serverAction(opt)) ret |= ParameterRebuild;
+      }
       else {
         setGmshOption(p);
         ret |= ParameterOption;
       }
     }
-    if(serverAction(p.getAttribute("ServerAction"))) ret |= ParameterRebuild;
-    performServerAction(p);
+    if(changed) {
+      if(serverAction(p.getAttribute("ServerAction"))) ret |= ParameterRebuild;
+      performServerAction(p);
+    }
     s->set(p);
     if(autoCheck(old, p, force)) ret |= ParameterCheck;
     return ret;

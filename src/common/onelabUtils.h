@@ -42,6 +42,11 @@ namespace onelabUtils {
   // the graphs of the parameters (their "Graph" attribute) made again: true
   // if views were added or changed, for the interface to show them
   bool updateGraphs();
+  // a file a solver asks to show, merged if Solver.AutoMergeFile is set: what
+  // the merge changes in Gmsh's parameters (e.g. a view option given by a
+  // parameter) is no reason to redo Gmsh's part, and each keeps its level of
+  // change. Returns true if the file was merged
+  bool mergeSolverFile(const std::string &fileName);
   // The run loops of the interfaces (the graphical interface, the batch mode,
   // the web page) share these.
   // - Whether a client is a solver they run: not Gmsh itself, nor a client

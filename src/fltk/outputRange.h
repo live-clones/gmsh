@@ -75,7 +75,7 @@ private:
   static void _graph_menu_cb(Fl_Widget *w, void *data)
   {
     outputRange *b = (outputRange *)data;
-    b->_set_graph_value(graphMenuValue(b->_graph_menu), false);
+    b->_set_graph_value(graphMenuValue(b->_graph_menu, b->_graph_val), false);
     b->do_callback();
   }
   static void _graph_menu_reset_cb(Fl_Widget *w, void *data)
