@@ -64,6 +64,25 @@ static actionItem ask(actionItem item, const std::string &option, double min,
   return item;
 }
 
+// the programs the commands added to the script are also written in (see
+// General.ScriptingLanguages), and their edition
+static actionItem programsMenu()
+{
+  std::vector<actionItem> write, edit;
+  for(auto &l : scriptLanguages()) {
+    write.push_back(run(l.label, "Write " + l.label + " program",
+                        "Also write the commands added to the script in a " +
+                          l.label + " program next to it"));
+    edit.push_back(
+      run(l.label, "Edit " + l.label + " program",
+          "Edit the " + l.label + " program written next to the script"));
+  }
+  return menu("Also write",
+              "Also write the commands added to the script as programs of "
+              "the API",
+              {group(write), menu("Edit program", "", edit)});
+}
+
 static const std::map<std::string, actionItem> &menus()
 {
   static const std::map<std::string, actionItem> menus = {
@@ -76,7 +95,8 @@ static const std::map<std::string, actionItem> &menus()
                run("Edit script", "", "Edit the script"),
                run("Save script", "", "Save the script (.geo)"),
                run("Remove last script command", "",
-                   "Take back the last command added to the script")}),
+                   "Take back the last command added to the script"),
+               programsMenu()}),
         group(
           {menu("Set kernel",
                 "The geometry kernel of the entities added to the script after",
@@ -521,7 +541,7 @@ struct action {
   std::function<int()> check;
 };
 
-static const std::map<std::string, action> &actions()
+static const std::map<std::string, action> &tableActions()
 {
   static const std::map<std::string, action> actions = {
     // the script
@@ -692,6 +712,31 @@ static const std::map<std::string, action> &actions()
 #endif
   };
   return actions;
+}
+
+// the actions of the table, and those of the programs of the script: written
+// or not (checked), and edited by the interfaces, once there is one
+static const std::map<std::string, action> &actions()
+{
+  static const std::map<std::string, action> all = [] {
+    std::map<std::string, action> m = tableActions();
+    for(auto &l : scriptLanguages()) {
+      std::string lang = l.name;
+      m["Write " + l.label + " program"] = {
+        [lang](int, drawContext *) {
+          scriptWriteIn(lang, !scriptWritesIn(lang));
+          return (int)ActionDone;
+        },
+        nullptr, [lang] { return scriptWritesIn(lang) ? 1 : 0; }};
+      m["Edit " + l.label + " program"] = {
+        nullptr, [lang] {
+          return scriptWritesIn(lang) &&
+                 !StatFile(scriptProgram(scriptFile(), lang));
+        }};
+    }
+    return m;
+  }();
+  return all;
 }
 
 // ---------------------------------------------------------------------------

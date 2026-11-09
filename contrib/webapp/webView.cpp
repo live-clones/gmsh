@@ -406,6 +406,19 @@ static std::string jsonItem(const actionItem &item)
   return json + "]}";
 }
 
+// the program written next to the script of the model for an item of the
+// registry ("Edit Python program"), or "" (see scriptProgram())
+EMSCRIPTEN_KEEPALIVE const char *gmshWebScriptProgram(const char *what)
+{
+  Msg::NoThrow noThrow;
+  static std::string file;
+  file = "";
+  for(auto &l : scriptLanguages())
+    if(std::string(what) == "Edit " + l.label + " program")
+      file = scriptProgram(GModel::current()->getFileName(), l.name);
+  return file.c_str();
+}
+
 EMSCRIPTEN_KEEPALIVE const char *gmshWebActions()
 {
   Msg::NoThrow noThrow;

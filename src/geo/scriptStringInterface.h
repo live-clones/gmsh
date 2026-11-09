@@ -11,6 +11,18 @@
 #include "ListUtils.h"
 
 void scriptRemoveLastCommand(const std::string &fileName);
+
+// The languages of the API the commands can also be written in, besides the
+// .geo script (General.ScriptingLanguages): their name in the option, their
+// label; the program written for a script ("model.geo": "model.py"), whether
+// the commands are written in a language, and that switched on or off
+struct scriptLanguage {
+  std::string name, label;
+};
+const std::vector<scriptLanguage> &scriptLanguages();
+std::string scriptProgram(const std::string &geoFile, const std::string &lang);
+bool scriptWritesIn(const std::string &lang);
+void scriptWriteIn(const std::string &lang, bool on);
 // whether the last command was added to the script: not if the model was
 // busy, or if the command had errors (the model is then read again from the
 // script)

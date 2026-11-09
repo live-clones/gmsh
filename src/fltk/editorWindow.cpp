@@ -9,6 +9,7 @@
 #include <fstream>
 #include <map>
 #include <sstream>
+#include <vector>
 #include <FL/Fl.H>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Button.H>
@@ -166,19 +167,28 @@ public:
     save->shortcut(FL_COMMAND | 's');
     save->copy_tooltip(withKey("Save the file", 'S').c_str());
     save->callback(_save_cb, this);
-    int rw = 2 * bb;
-    Fl_Button *reload =
-      new Fl_Button(wb + bb + WB, wb, rw, bh, "Save and reload");
-    reload->shortcut(FL_COMMAND | 'r');
-    reload->copy_tooltip(
-      withKey("Save the file, then read the model again", 'R').c_str());
-    reload->callback(_reload_cb, this);
-    for(Fl_Button *b : {save, reload}) {
+    // (the model read again: only from a .geo script, which is what the
+    // geometry module reads; a .pro, or a program of the API, is only saved)
+    std::string ext = SplitFileName(_fileName)[2];
+    bool geo = (ext == ".geo" || ext == ".GEO");
+    int rw = geo ? 2 * bb : 0;
+    std::vector<Fl_Button *> buttons = {save};
+    if(geo) {
+      Fl_Button *reload =
+        new Fl_Button(wb + bb + WB, wb, rw, bh, "Save and reload");
+      reload->shortcut(FL_COMMAND | 'r');
+      reload->copy_tooltip(
+        withKey("Save the file, then read the model again", 'R').c_str());
+      reload->callback(_reload_cb, this);
+      buttons.push_back(reload);
+    }
+    for(Fl_Button *b : buttons) {
       b->labelsize(FL_NORMAL_SIZE - 1);
       b->box(FL_THIN_UP_BOX);
     }
     int lw = (int)(1.3 * BB), sw = 2 * BB;
-    int lx = width - wb - lw, sx = lx - WB - sw, left = wb + bb + 2 * WB + rw;
+    int lx = width - wb - lw, sx = lx - WB - sw;
+    int left = wb + bb + WB + (geo ? rw + WB : 0);
     Fl_Box *space = new Fl_Box(left, wb, std::max(1, sx - WB - left), bh);
     static std::string findHelp =
       withKey("Find the text: the first one as it is typed, the next one on "

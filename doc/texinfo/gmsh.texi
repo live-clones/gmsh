@@ -351,10 +351,10 @@ that many features of the geometry module can be used interactively in
 the GUI (@pxref{Gmsh graphical user interface}), which is also a good
 way to learn about both Gmsh's scripting language and the API, as
 actions in the geometry module automatically append the related command
-in the input script file, and can optionally also generate input for the
-languages supported by the API (see the
-@code{General.ScriptingLanguages} option; this is still work-in-progress
-as of Gmsh 4.14.)
+in the input script file, and can optionally also write it, as the calls
+of the API it amounts to, in a runnable program for each of the languages
+supported by the API, next to the script file (see the
+@code{General.ScriptingLanguages} option, e.g. @code{"geo,py,cpp"}).
 
 In addition to CAD-type geometrical entities, whose geometry is provided
 by a CAD kernel, Gmsh also supports @emph{discrete} model entities,

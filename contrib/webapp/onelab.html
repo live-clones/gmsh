@@ -440,8 +440,9 @@
       title="Go to the line, as an error gives it"></div>
   <div id="scriptBox"><pre id="scriptColors" aria-hidden="true"></pre>
     <textarea id="scriptText" spellcheck="false" autocomplete="off" wrap="off"></textarea></div>
-  <div><button value="write">Save</button>
-    <button value="save" id="scriptSave">Save and reload</button>
+  <div><button value="write" id="scriptWrite" title="Save the file">Save</button>
+    <button value="save" id="scriptSave"
+      title="Save the file, then read the model again">Save and reload</button>
     <button value="cancel">Cancel</button></div>
 </form></dialog>
 <div id="rangeMenu" hidden>
@@ -1966,7 +1967,10 @@ function editFile(path) {
   }
   editedFile = path;
   $('scriptName').textContent = path.slice(path.lastIndexOf('/') + 1);
-  $('scriptSave').textContent = /\.geo$/i.test(path) ? 'Save and reload' : 'Save and check';
+  // the model read again only from a .geo script, which is what the geometry
+  // module reads (a .pro, or a program of the API, is only saved), as in the
+  // graphical interface
+  $('scriptSave').hidden = !/\.geo$/i.test(path);
   $('scriptText').value = FS.readFile(path, {encoding: 'utf8'});
   $('scriptLine').value = '';
   $('scriptFind').value = '';
@@ -2039,6 +2043,20 @@ $('scriptFind').addEventListener('keydown', (e) => {
   e.preventDefault();
   findInScript(false);
 });
+// the keys of the buttons, as in the graphical interface: Ctrl+S (Cmd+S on
+// macOS) saves, Ctrl+R saves and reads the model again
+{
+  const mod = /Mac/.test(navigator.platform) ? 'Cmd' : 'Ctrl';
+  $('scriptWrite').title += ` (${mod}+S)`;
+  $('scriptSave').title += ` (${mod}+R)`;
+  $('scriptDialog').addEventListener('keydown', (e) => {
+    if(!(mod === 'Cmd' ? e.metaKey : e.ctrlKey) || e.altKey) return;
+    const b = {s: $('scriptWrite'), r: $('scriptSave')}[e.key.toLowerCase()];
+    if(!b || b.hidden) return;
+    e.preventDefault();
+    b.click();
+  });
+}
 // (on the submission of the form, which says the button at once: the close
 // event of the dialog comes later)
 $('scriptDialog').querySelector('form').addEventListener('submit', (e) => {
@@ -2047,7 +2065,6 @@ $('scriptDialog').querySelector('form').addEventListener('submit', (e) => {
   FS.writeFile(editedFile, $('scriptText').value);
   if(how === 'write') return;
   if(/\.geo$/i.test(editedFile)) reloadScript();
-  else run('check');
 });
 function saveScript() {
   const f = scriptFile();
@@ -2235,6 +2252,16 @@ function moduleButtons(module) {
   }
 }
 // an item of the table by its action (for the keys)
+// the programs written next to the script (the items "Edit ... program" of
+// the Geometry module), in the editor
+(function editPrograms(menu) {
+  for(const it of menu.items) {
+    if(it.kind === 'menu') editPrograms(it);
+    else if(/^Edit .+ program$/.test(it.what || ''))
+      pageActions[it.what] = {run: () => editFile(Module.ccall(
+        'gmshWebScriptProgram', 'string', ['string'], [it.what]))};
+  }
+})(registry.Geometry);
 function findItem(what, menu = registry.Mesh) {
   for(const it of menu.items) {
     const found = it.kind === 'menu' ? findItem(what, it) : it.what === what && it;

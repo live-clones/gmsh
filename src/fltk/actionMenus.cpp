@@ -35,6 +35,7 @@
 #include "onelabContextWindow.h"
 #include "onelabGroup.h"
 #include "extraDialogs.h"
+#include "editorWindow.h"
 #include "partitionDialog.h"
 #include "classificationEditor.h"
 #include "GModel.h"
@@ -253,7 +254,7 @@ static void addShape(const std::string &shape)
 
 // the actions of the registry this interface does, but those of the menu bar
 // (see menuBarActions())
-static const std::map<std::string, fltkAction> &fltkActions()
+static const std::map<std::string, fltkAction> &tableFltkActions()
 {
   static const std::map<std::string, fltkAction> actions = {
     // the modules
@@ -302,6 +303,23 @@ static const std::map<std::string, fltkAction> &fltkActions()
      {[](int view) { view_save_cb(nullptr, (void *)(intptr_t)view); }}},
   };
   return actions;
+}
+
+// those of the table, and the programs written next to the script, in the
+// script editor
+static const std::map<std::string, fltkAction> &fltkActions()
+{
+  static const std::map<std::string, fltkAction> all = [] {
+    std::map<std::string, fltkAction> m = tableFltkActions();
+    for(auto &l : scriptLanguages()) {
+      std::string lang = l.name;
+      m["Edit " + l.label + " program"] = {[lang](int) {
+        editFile(scriptProgram(GModel::current()->getFileName(), lang));
+      }};
+    }
+    return m;
+  }();
+  return all;
 }
 
 // the action this interface does with this name, or null: those of the
