@@ -86,27 +86,6 @@ static void bindValues(Fl_Widget *w, const std::vector<double> &values)
   bindings()[w].values = values;
 }
 
-static void bindOffset(Fl_Widget *w, int offset)
-{
-  if(!bindings().count(w)) bind(w, w->tooltip());
-  bindings()[w].offset = offset;
-}
-
-// bind every widget of a group that sets an option to the option of its
-// tooltip (the widgets built by hand; not the menus of toggles, which list
-// several)
-static void bindTooltips(Fl_Group *g)
-{
-  for(int i = 0; i < g->children(); i++) {
-    Fl_Widget *w = g->child(i);
-    if(!bindings().count(w) && w->tooltip() &&
-       (dynamic_cast<Fl_Button *>(w) || dynamic_cast<Fl_Valuator *>(w) ||
-        dynamic_cast<Fl_Choice *>(w) || dynamic_cast<Fl_Input *>(w)))
-      bind(w, w->tooltip());
-    if(Fl_Group *gg = w->as_group()) bindTooltips(gg);
-  }
-}
-
 // the items of the bound choices whose options take one of a few values, and
 // their values, from the table of these options (see GetOptionChoices())
 static void choicesFromTable()
@@ -167,17 +146,43 @@ static std::vector<std::string> menuOptions(Fl_Widget *menu)
   return names;
 }
 
+// the category of the options of a menu of toggles ("View")
+static std::string menuCategory(Fl_Widget *menu)
+{
+  std::string s = menu->tooltip() ? menu->tooltip() : "";
+  return s.substr(0, s.find('.'));
+}
+
+// The menus of toggles, and the colour buttons with the option each shows
+// (its function in the colour tables of DefaultOptions.h): refreshed with the
+// bound widgets (see showOptions())
+static std::vector<Fl_Menu_Button *> &toggleMenus()
+{
+  static std::vector<Fl_Menu_Button *> m;
+  return m;
+}
+
+struct colorBinding {
+  std::string category, name;
+  unsigned int (*fct)(int, int, unsigned int);
+};
+
+static std::map<Fl_Widget *, colorBinding> &colorBindings()
+{
+  static std::map<Fl_Widget *, colorBinding> b;
+  return b;
+}
+
 // With PostProcessing.Link, the selected views get all the options the view
 // page shows of the view shown, its colors and its color map
 static void linkViews(const std::vector<int> &nums)
 {
   if(!opt_post_link(0, GMSH_GET, 0) || nums.size() < 2) return;
-  optionWindow *o = FlGui::instance()->options;
   std::vector<std::string> names;
   for(auto &b : bindings())
     if(b.second.category == "View") names.push_back(b.second.name);
-  for(Fl_Menu_Button *m : o->view.menu)
-    if(m)
+  for(Fl_Menu_Button *m : toggleMenus())
+    if(menuCategory(m) == "View")
       for(const std::string &n : menuOptions(m)) names.push_back(n);
   int from = nums[0];
   for(std::size_t k = 1; k < nums.size(); k++) {
@@ -246,7 +251,7 @@ static void option_cb(Fl_Widget *w, void *data)
     }
     if(b.category == "View") linkViews(nums);
   }
-  o->activate((const char *)data);
+  o->updateActive();
   if(CTX::instance()->fastRedraw)
     CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;
   drawContext::global()->draw();
@@ -513,6 +518,48 @@ static void showValue(Fl_Widget *w, const optionBinding &b)
   }
 }
 
+// the items of a menu of toggles as their options are
+static void showToggles(Fl_Menu_Button *m)
+{
+  std::string category = menuCategory(m);
+  int num = 0;
+  if(category == "View") {
+    num = FlGui::instance()->options->view.index;
+    if(num < 0 || num >= (int)PView::list.size()) return;
+  }
+  std::vector<std::string> names = menuOptions(m);
+  Fl_Menu_Item *items = (Fl_Menu_Item *)m->menu();
+  for(std::size_t i = 0; i < names.size() && items[i].text; i++) {
+    double v;
+    if(!NumberOption(GMSH_GET, category.c_str(), num, names[i].c_str(), v,
+                     false))
+      continue;
+    if(v)
+      items[i].set();
+    else
+      items[i].clear();
+  }
+}
+
+// a colour button in the colour of its option
+static void showColor(Fl_Widget *w, const colorBinding &b)
+{
+  int num = 0;
+  if(b.category == "View") {
+    num = FlGui::instance()->options->view.index;
+    if(num < 0 || num >= (int)PView::list.size()) return;
+  }
+  unsigned int col = b.fct(num, GMSH_GET, 0);
+  Fl_Color c =
+    fl_color_cube(CTX::instance()->unpackRed(col) * FL_NUM_RED / 256,
+                  CTX::instance()->unpackGreen(col) * FL_NUM_GREEN / 256,
+                  CTX::instance()->unpackBlue(col) * FL_NUM_BLUE / 256);
+  if(w->color() == c) return;
+  w->color(c);
+  w->labelcolor(fl_contrast(FL_BLACK, c));
+  w->redraw();
+}
+
 void optionWindow::showOption(const std::string &category, int num,
                               const std::string &name)
 {
@@ -520,6 +567,16 @@ void optionWindow::showOption(const std::string &category, int num,
   for(auto &b : bindings())
     if(b.second.name == name && b.second.category == category)
       showValue(b.first, b.second);
+  for(Fl_Menu_Button *m : toggleMenus()) {
+    std::vector<std::string> names = menuOptions(m);
+    if(menuCategory(m) == category &&
+       std::find(names.begin(), names.end(), name) != names.end())
+      showToggles(m);
+  }
+  for(auto &b : colorBindings())
+    if(b.second.name == name && b.second.category == category)
+      showColor(b.first, b.second);
+  updateActive();
 }
 
 void optionWindow::showOptions(bool shownOnly)
@@ -533,6 +590,12 @@ void optionWindow::showOptions(bool shownOnly)
       continue;
     showValue(b.first, b.second);
   }
+  for(Fl_Menu_Button *m : toggleMenus())
+    if(!shownOnly || !shown || shown->contains(m)) showToggles(m);
+  for(auto &b : colorBindings())
+    if(!shownOnly || !shown || shown->contains(b.first))
+      showColor(b.first, b.second);
+  updateActive();
 }
 
 // The widgets of the General page set their options with option_cb(); these
@@ -568,7 +631,7 @@ void general_rotation_center_cg_cb(Fl_Widget *w, void *data)
     ->getDrawContext()
     ->recenterForRotationCenterChange(p);
   FlGui::instance()->manip->update();
-  option_cb(w, (void *)"rotation_center");
+  option_cb(w, nullptr);
 }
 
 // a coordinate of the light typed in: the ball follows
@@ -642,14 +705,6 @@ void mesh_options_cb(Fl_Widget *w, void *data)
 
 // the element types shown, in a menu whose items are named as their options
 // ("Triangles" for Mesh.Triangles)
-static void mesh_element_types_cb(Fl_Widget *w, void *data)
-{
-  const Fl_Menu_Item *item = ((Fl_Menu_ *)w)->mvalue();
-  if(!item || !item->label()) return;
-  double value = item->value() ? 1. : 0.;
-  NumberOption(GMSH_SET | GMSH_GUI, "Mesh", 0, item->label(), value);
-  option_cb(nullptr, nullptr);
-}
 
 void solver_options_cb(Fl_Widget *w, void *data)
 {
@@ -727,7 +782,7 @@ static void view_range_cb(Fl_Widget *w, void *data)
               std::max(v, opt_view_max_visible(i, GMSH_GET, 0));
   Fl_Value_Input *field = min ? o->view.value[31] : o->view.value[32];
   field->value(v);
-  option_cb(field, data);
+  option_cb(field, nullptr);
 }
 
 // a map picked by its name: the map drawn again
@@ -750,20 +805,51 @@ static void view_colorbar_cb(Fl_Widget *w, void *data)
   option_cb(nullptr, nullptr);
 }
 
-// an item of a menu of toggles, whose tooltip lists their options in order
-static void view_toggles_cb(Fl_Widget *w, void *data)
+// an item of a menu of toggles, whose tooltip lists their options in order:
+// its option set (on the view page, for the view shown and the selected ones)
+static void toggles_cb(Fl_Widget *w, void *data)
 {
   Fl_Menu_ *m = (Fl_Menu_ *)w;
   int i = m->value();
   std::vector<std::string> names = menuOptions(w);
   if(!m->mvalue() || i < 0 || i >= (int)names.size()) return;
   double value = m->mvalue()->value() ? 1. : 0.;
-  std::vector<int> nums = viewTargets();
+  std::string category = menuCategory(w);
+  std::vector<int> nums =
+    (category == "View") ? viewTargets() : std::vector<int>{0};
   for(int n : nums)
-    NumberOption(GMSH_SET | (n == nums[0] ? GMSH_GUI : 0), "View", n,
+    NumberOption(GMSH_SET | (n == nums[0] ? GMSH_GUI : 0), category.c_str(), n,
                  names[i].c_str(), value);
-  linkViews(nums);
+  if(category == "View") linkViews(nums);
   option_cb(nullptr, nullptr);
+}
+
+// a menu of toggles: its items set the options its tooltip lists, in order
+static Fl_Menu_Button *toggleMenu(int x, int y, int w, int h, const char *label,
+                                  const char *options, Fl_Menu_Item *items)
+{
+  Fl_Menu_Button *m = new Fl_Menu_Button(x, y, w, h, label);
+  m->tooltip(options);
+  m->menu(items);
+  m->callback(toggles_cb);
+  toggleMenus().push_back(m);
+  return m;
+}
+
+// the colour buttons of a table of colour options (but the deprecated ones),
+// one per row from y; cb chooses the colour
+static void colorButtons(const char *category, StringXColor *table, int x,
+                         int y, int w, Fl_Callback *cb,
+                         std::vector<Fl_Button *> &buttons)
+{
+  for(int i = 0, j = 0; table[j].str; j++) {
+    if(table[j].level & GMSH_DEPRECATED) continue;
+    Fl_Button *b = new Fl_Button(x, y + i * BH, w, BH, table[j].str);
+    b->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
+    b->callback(cb, (void *)table[j].function);
+    colorBindings()[b] = {category, table[j].str, table[j].function};
+    buttons[i++] = b;
+  }
 }
 
 // one level of refinement more or less
@@ -795,13 +881,15 @@ static Fl_Check_Button *checkButton(int x, int y, int w, int h,
   return b;
 }
 
-// a value input
-static Fl_Value_Input *valueInput(int x, int y, int w, int h, const char *label,
-                                  const char *option, Fl_Callback *cb = nullptr,
-                                  void *data = nullptr)
+// a value input (an Fl_Value_Input, or a class derived from it)
+template <class T = Fl_Value_Input>
+static T *valueInput(int x, int y, int w, int h, const char *label,
+                     const char *option, Fl_Callback *cb = nullptr,
+                     void *data = nullptr)
 {
-  Fl_Value_Input *v = new Fl_Value_Input(x, y, w, h, label);
+  T *v = new T(x, y, w, h, label);
   v->tooltip(option);
+  v->align(FL_ALIGN_RIGHT);
   bind(v, option);
   // the range of the option, if it has one (see GetOptionRange()), and the
   // step of its scrolling (when General.InputScrolling is set)
@@ -863,6 +951,8 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
 {
   // (the widgets of a window built before are gone)
   bindings().clear();
+  toggleMenus().clear();
+  colorBindings().clear();
   general.butt.resize(50, nullptr);
   general.push.resize(50, nullptr);
   general.value.resize(50, nullptr);
@@ -969,10 +1059,8 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
       Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB,
                                  height - 2 * WB - BH, "General");
       general.choice[9] =
-        new Fl_Choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Interface");
-      general.choice[9]->align(FL_ALIGN_RIGHT);
-      general.choice[9]->tooltip("General.FltkColorScheme");
-      general.choice[9]->callback(option_cb);
+        choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Interface",
+               "General.FltkColorScheme", nullptr, option_cb);
 
       general.choice[3] =
         choice(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Graphics",
@@ -994,14 +1082,14 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
         checkButton(L + 2 * WB, 2 * WB + 5 * BH, BW, BH, "Show bounding boxes",
                     "General.DrawBoundingBoxes (Alt+b)", option_cb);
 
-      general.butt[2] = checkButton(
-        L + 2 * WB, 2 * WB + 6 * BH, BW, BH,
-        "Draw simplified model during user interaction",
-        "General.FastRedraw (Alt+f)", option_cb, (void *)"fast_redraw");
+      general.butt[2] =
+        checkButton(L + 2 * WB, 2 * WB + 6 * BH, BW, BH,
+                    "Draw simplified model during user interaction",
+                    "General.FastRedraw (Alt+f)", option_cb);
 
-      general.butt[3] = checkButton(
-        L + 2 * WB, 2 * WB + 7 * BH, BW, BH, "Draw with the shader pipeline",
-        "General.Shaders", option_cb, (void *)"shaders");
+      general.butt[3] = checkButton(L + 2 * WB, 2 * WB + 7 * BH, BW, BH,
+                                    "Draw with the shader pipeline",
+                                    "General.Shaders", option_cb);
 
       general.butt[12] =
         checkButton(L + 2 * WB, 2 * WB + 8 * BH, BW, BH, "Enable antialiasing",
@@ -1031,7 +1119,6 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
         valueInput(L + 2 * WB + 2 * IW / 3, 2 * WB + 11 * BH, IW / 3, BH,
                    "Rotation center", "General.RotationCenterZ",
                    general_rotation_center_cb);
-      general.value[10]->align(FL_ALIGN_RIGHT);
 
       general.butt[22] = checkButton(L + 2 * WB, 2 * WB + 12 * BH, BW, BH,
                                      "Invert mouse wheel zoom direction",
@@ -1050,13 +1137,10 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
       general.value[5] =
         valueInput(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Message verbosity",
                    "General.Verbosity", option_cb);
-      general.value[5]->align(FL_ALIGN_RIGHT);
 
-      general.input[1] = new Fl_Input(L + 2 * WB, 2 * WB + 3 * BH, IW, BH,
-                                      "Text editor command");
-      general.input[1]->tooltip("General.TextEditor");
-      general.input[1]->align(FL_ALIGN_RIGHT);
-      general.input[1]->callback(option_cb);
+      general.input[1] =
+        input(L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "Text editor command",
+              "General.TextEditor", option_cb);
 
       general.input[0] =
         input(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Default file name",
@@ -1093,7 +1177,6 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
       general.value[32] = valueInput(L + 2 * WB, 2 * WB + 9 * BH, IW, BH,
                                      "Maximum number of threads",
                                      "General.NumThreads", option_cb);
-      general.value[32]->align(FL_ALIGN_RIGHT);
 #if !defined(_OPENMP)
       general.value[32]->deactivate();
 #endif
@@ -1121,10 +1204,8 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
                                  height - 2 * WB - BH, "Axes");
 
       general.choice[4] =
-        new Fl_Choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Axes mode");
-      general.choice[4]->tooltip("General.Axes (Alt+a)");
-      general.choice[4]->align(FL_ALIGN_RIGHT);
-      general.choice[4]->callback(option_cb, (void *)"general_axes");
+        choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Axes mode",
+               "General.Axes (Alt+a)", nullptr, option_cb);
 
       general.butt[16] =
         checkButton(C2, 2 * WB + 1 * BH, RW, BH, "Mikado style",
@@ -1138,34 +1219,27 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
       general.value[19] =
         valueInput(L + 2 * WB + 2 * IW / 3, 2 * WB + 2 * BH, IW / 3, BH,
                    "Axes ticks", "General.AxesTicksZ", option_cb);
-      general.value[19]->align(FL_ALIGN_RIGHT);
 
-      general.input[3] = new Fl_Input(L + 2 * WB, 2 * WB + 3 * BH, IW / 3, BH);
-      general.input[3]->tooltip("General.AxesFormatX");
-      general.input[3]->callback(option_cb);
-      general.input[4] =
-        new Fl_Input(L + 2 * WB + 1 * IW / 3, 2 * WB + 3 * BH, IW / 3, BH);
-      general.input[4]->callback(option_cb);
-      general.input[4]->tooltip("General.AxesFormatY");
+      general.input[3] = input(L + 2 * WB, 2 * WB + 3 * BH, IW / 3, BH, nullptr,
+                               "General.AxesFormatX", option_cb);
+      general.input[4] = input(L + 2 * WB + 1 * IW / 3, 2 * WB + 3 * BH, IW / 3,
+                               BH, nullptr, "General.AxesFormatY", option_cb);
       general.input[5] =
         input(L + 2 * WB + 2 * IW / 3, 2 * WB + 3 * BH, IW / 3, BH,
               "Axes format", "General.AxesFormatZ", option_cb);
 
-      general.input[6] = new Fl_Input(L + 2 * WB, 2 * WB + 4 * BH, IW / 3, BH);
-      general.input[6]->tooltip("General.AxesLabelX");
-      general.input[6]->callback(option_cb);
-      general.input[7] =
-        new Fl_Input(L + 2 * WB + 1 * IW / 3, 2 * WB + 4 * BH, IW / 3, BH);
-      general.input[7]->tooltip("General.AxesLabelY");
-      general.input[7]->callback(option_cb);
+      general.input[6] = input(L + 2 * WB, 2 * WB + 4 * BH, IW / 3, BH, nullptr,
+                               "General.AxesLabelX", option_cb);
+      general.input[7] = input(L + 2 * WB + 1 * IW / 3, 2 * WB + 4 * BH, IW / 3,
+                               BH, nullptr, "General.AxesLabelY", option_cb);
       general.input[8] =
         input(L + 2 * WB + 2 * IW / 3, 2 * WB + 4 * BH, IW / 3, BH,
               "Axes labels", "General.AxesLabelZ", option_cb);
 
-      general.butt[0] = checkButton(
-        L + 2 * WB, 2 * WB + 5 * BH, BW, BH,
-        "Set position and size of axes automatically",
-        "General.AxesAutoPosition", option_cb, (void *)"general_axes_auto");
+      general.butt[0] =
+        checkButton(L + 2 * WB, 2 * WB + 5 * BH, BW, BH,
+                    "Set position and size of axes automatically",
+                    "General.AxesAutoPosition", option_cb);
 
       general.value[20] = valueInput(L + 2 * WB, 2 * WB + 6 * BH, IW / 3, BH,
                                      nullptr, "General.AxesMinX", option_cb);
@@ -1175,7 +1249,6 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
       general.value[22] =
         valueInput(L + 2 * WB + 2 * IW / 3, 2 * WB + 6 * BH, IW / 3, BH,
                    "Axes minimum", "General.AxesMinZ", option_cb);
-      general.value[22]->align(FL_ALIGN_RIGHT);
 
       general.value[23] = valueInput(L + 2 * WB, 2 * WB + 7 * BH, IW / 3, BH,
                                      nullptr, "General.AxesMaxX", option_cb);
@@ -1185,7 +1258,6 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
       general.value[25] =
         valueInput(L + 2 * WB + 2 * IW / 3, 2 * WB + 7 * BH, IW / 3, BH,
                    "Axes maximum", "General.AxesMaxZ", option_cb);
-      general.value[25]->align(FL_ALIGN_RIGHT);
 
       general.push[1] =
         new Fl_Button(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Fit to visible");
@@ -1193,8 +1265,7 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
 
       general.butt[1] =
         checkButton(L + 2 * WB, 2 * WB + 9 * BH, BW, BH, "Show small axes",
-                    "General.SmallAxes (Alt+Shift+a)", option_cb,
-                    (void *)"general_small_axes");
+                    "General.SmallAxes (Alt+Shift+a)", option_cb);
 
       general.value[26] =
         valueInput(L + 2 * WB, 2 * WB + 10 * BH, IW / 2, BH, nullptr,
@@ -1202,7 +1273,6 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
       general.value[27] = valueInput(L + 2 * WB + IW / 2, 2 * WB + 10 * BH,
                                      IW / 2, BH, "Small axes position",
                                      "General.SmallAxesPositionY", option_cb);
-      general.value[27]->align(FL_ALIGN_RIGHT);
 
       o->end();
     }
@@ -1217,17 +1287,14 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
       general.value[14] = valueInput(L + 2 * WB, 2 * WB + 2 * BH, IW, BH,
                                      "Z-clipping distance factor",
                                      "General.ClipFactor", option_cb);
-      general.value[14]->align(FL_ALIGN_RIGHT);
 
       general.value[15] =
         valueInput(L + 2 * WB, 2 * WB + 3 * BH, IW / 2, BH, nullptr,
                    "General.PolygonOffsetFactor", option_cb);
-      general.value[15]->align(FL_ALIGN_RIGHT);
 
       general.value[16] = valueInput(L + 2 * WB + IW / 2, 2 * WB + 3 * BH,
                                      IW / 2, BH, "Polygon offset factor/units",
                                      "General.PolygonOffsetUnits", option_cb);
-      general.value[16]->align(FL_ALIGN_RIGHT);
 
       general.butt[4] = checkButton(L + 2 * WB, 2 * WB + 4 * BH, BW, BH,
                                     "Always apply polygon offset",
@@ -1236,17 +1303,14 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
       general.value[11] =
         valueInput(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Quadric subdivisions",
                    "General.QuadricSubdivisions", option_cb);
-      general.value[11]->align(FL_ALIGN_RIGHT);
 
       general.value[6] =
         valueInput(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Point size",
                    "General.PointSize", option_cb);
-      general.value[6]->align(FL_ALIGN_RIGHT);
 
       general.value[7] =
         valueInput(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Line width",
                    "General.LineWidth", option_cb);
-      general.value[7]->align(FL_ALIGN_RIGHT);
       general.choice[0] =
         choice(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Vector display",
                "General.VectorType", nullptr, option_cb);
@@ -1260,33 +1324,24 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
         {"StringTexture", 0, nullptr, nullptr},
         {"Embedded", 0, nullptr, nullptr},
         {nullptr}};
-      general.choice[7] = new Fl_Choice(L + 2 * WB, 2 * WB + 9 * BH, IW, BH,
-                                        "Font rendering engine");
-      general.choice[7]->tooltip("General.GraphicsFontEngine");
-      general.choice[7]->menu(menu_font_engine);
-      general.choice[7]->align(FL_ALIGN_RIGHT);
-      general.choice[7]->callback(option_cb);
+      general.choice[7] =
+        choice(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Font rendering engine",
+               "General.GraphicsFontEngine", menu_font_engine, option_cb);
 
       int w1 = (int)(4. * IW / 5.), w2 = IW - w1;
-      general.choice[1] = new Fl_Choice(L + 2 * WB, 2 * WB + 10 * BH, w1, BH);
-      general.choice[1]->tooltip("General.GraphicsFont");
-      general.choice[1]->menu(menu_font_names);
-      general.choice[1]->align(FL_ALIGN_RIGHT);
-      general.choice[1]->callback(option_cb);
+      general.choice[1] =
+        choice(L + 2 * WB, 2 * WB + 10 * BH, w1, BH, nullptr,
+               "General.GraphicsFont", menu_font_names, option_cb);
       general.value[12] =
         valueInput(L + 2 * WB + w1, 2 * WB + 10 * BH, w2, BH, "Default font",
                    "General.GraphicsFontSize", option_cb);
-      general.value[12]->align(FL_ALIGN_RIGHT);
 
-      general.choice[6] = new Fl_Choice(L + 2 * WB, 2 * WB + 11 * BH, w1, BH);
-      general.choice[6]->tooltip("General.GraphicsFontTitle");
-      general.choice[6]->menu(menu_font_names);
-      general.choice[6]->align(FL_ALIGN_RIGHT);
-      general.choice[6]->callback(option_cb);
+      general.choice[6] =
+        choice(L + 2 * WB, 2 * WB + 11 * BH, w1, BH, nullptr,
+               "General.GraphicsFontTitle", menu_font_names, option_cb);
       general.value[28] =
         valueInput(L + 2 * WB + w1, 2 * WB + 11 * BH, w2, BH, "Title font",
                    "General.GraphicsFontSizeTitle", option_cb);
-      general.value[28]->align(FL_ALIGN_RIGHT);
 
       o->end();
     }
@@ -1306,14 +1361,12 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
       general.value[4] =
         valueInput(L + 2 * WB + 2 * IW / 3, 2 * WB + 1 * BH, IW / 3, BH,
                    "Light position", "General.Light0Z", general_light_cb);
-      general.value[4]->align(FL_ALIGN_RIGHT);
 
       general.value[13] = valueInput(L + 2 * WB, 2 * WB + 2 * BH, IW / 2, BH,
                                      nullptr, "General.Light0W", option_cb);
       general.value[36] =
         valueInput(L + 2 * WB + IW / 2, 2 * WB + 2 * BH, IW / 2, BH,
                    "Proximity and brightness", "General.Brightness", option_cb);
-      general.value[36]->align(FL_ALIGN_RIGHT);
 
       // the ball beside the two rows, after the longer of their labels
       fl_font(FL_HELVETICA, FL_NORMAL_SIZE);
@@ -1331,18 +1384,14 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
         valueInput(L + 2 * WB + IW / 2, 2 * WB + 3 * BH, IW / 2, BH,
                    "Material shininess and exponent",
                    "General.ShininessExponent", option_cb);
-      general.value[0]->align(FL_ALIGN_RIGHT);
 
-      general.choice[8] = new Fl_Choice(L + 2 * WB, 2 * WB + 4 * BH, IW, BH,
-                                        "Shading mode");
-      general.choice[8]->tooltip("General.Shading");
-      general.choice[8]->align(FL_ALIGN_RIGHT);
-      general.choice[8]->callback(option_cb, (void *)"shaders");
+      general.choice[8] =
+        choice(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Shading mode",
+               "General.Shading", nullptr, option_cb);
 
       general.value[33] =
         valueInput(L + 2 * WB, 2 * WB + 5 * BH, IW / 3, BH, nullptr,
                    "General.StudioSamples", option_cb);
-      general.value[33]->align(FL_ALIGN_RIGHT);
 
       general.value[35] =
         valueInput(L + 2 * WB + IW / 3, 2 * WB + 5 * BH, IW / 3, BH, nullptr,
@@ -1352,29 +1401,13 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
         valueInput(L + 2 * WB + 2 * IW / 3, 2 * WB + 5 * BH, IW / 3, BH,
                    "Studio samples, spread, floor offset",
                    "General.StudioFloorOffset", -10, 10, 0.01, option_cb);
-      general.value[34]->align(FL_ALIGN_RIGHT);
 
-      general.choice[5] = new Fl_Choice(L + 2 * WB, 2 * WB + 6 * BH, IW, BH,
-                                        "Background gradient");
-      general.choice[5]->tooltip("General.BackgroundGradient");
-      general.choice[5]->align(FL_ALIGN_RIGHT);
-      general.choice[5]->callback(option_cb);
+      general.choice[5] =
+        choice(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Background gradient",
+               "General.BackgroundGradient", nullptr, option_cb);
 
-      std::size_t i = 0, j = 0;
-      while(GeneralOptions_Color[j].str) {
-        if(GeneralOptions_Color[j].level & GMSH_DEPRECATED) {
-          j++;
-          continue;
-        }
-        general.color[i] = new Fl_Button(L + 2 * WB, 3 * WB + (7 + i) * BH, IW,
-                                         BH, GeneralOptions_Color[j].str);
-        general.color[i]->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE |
-                                FL_ALIGN_CLIP);
-        general.color[i]->callback(color_cb,
-                                   (void *)GeneralOptions_Color[j].function);
-        i++;
-        j++;
-      }
+      colorButtons("General", GeneralOptions_Color, L + 2 * WB, 3 * WB + 7 * BH,
+                   IW, color_cb, general.color);
 
       o->end();
     }
@@ -1383,9 +1416,9 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
                                  height - 2 * WB - BH, "Camera");
       o->hide();
 
-      general.butt[18] = checkButton(
-        L + 2 * WB, 2 * WB + 1 * BH, BW, BH, "Enable camera", "General.Camera",
-        general_camera_cb, (void *)"general_camera");
+      general.butt[18] =
+        checkButton(L + 2 * WB, 2 * WB + 1 * BH, BW, BH, "Enable camera",
+                    "General.Camera", general_camera_cb);
       general.butt[18]->value(opt_general_camera_mode(0, GMSH_GET, 0));
 
       general.butt[17] =
@@ -1397,23 +1430,20 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
         L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "Eye separation ratio (%)",
         "General.CameraEyeSeparationRatio", option_cb);
       general.value[29]->value(CTX::instance()->eye_sep_ratio);
-      general.value[29]->align(FL_ALIGN_RIGHT);
 
       general.value[30] = valueInput(
         L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Focal length ratio (%)",
         "General.CameraFocalLengthRatio", option_cb);
       general.value[30]->value(CTX::instance()->focallength_ratio);
-      general.value[30]->align(FL_ALIGN_RIGHT);
 
       general.value[31] = valueInput(L + 2 * WB, 2 * WB + 5 * BH, IW, BH,
                                      "Camera Aperture (degrees)",
                                      "General.CameraAperture", option_cb);
       general.value[31]->value(CTX::instance()->camera_aperture);
-      general.value[31]->align(FL_ALIGN_RIGHT);
 
-      general.butt[19] = checkButton(
-        L + 2 * WB, 2 * WB + 7 * BH, BW, BH, "Enable gamepad (experimental)",
-        "General.Gamepad", general_camera_cb, (void *)"general_camera");
+      general.butt[19] = checkButton(L + 2 * WB, 2 * WB + 7 * BH, BW, BH,
+                                     "Enable gamepad (experimental)",
+                                     "General.Gamepad", general_camera_cb);
       general.butt[19]->value(opt_general_gamepad(0, GMSH_GET, 0));
 
       general.gamepadconfig =
@@ -1451,7 +1481,6 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
       geo.value[2] =
         valueInput(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Geometry tolerance",
                    "Geometry.Tolerance", option_cb);
-      geo.value[2]->align(FL_ALIGN_RIGHT);
 
       geo.butt[8] =
         checkButton(L + 2 * WB, 2 * WB + 2 * BH, BW, BH,
@@ -1489,7 +1518,6 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
       geo.value[20] =
         valueInput(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Global model scaling",
                    "Geometry.OCCScaling", option_cb);
-      geo.value[20]->align(FL_ALIGN_RIGHT);
 
 #if !defined(HAVE_OCC)
       b2->deactivate();
@@ -1540,13 +1568,11 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
 
       geo.value[0] = valueInput(L + 2 * WB, 2 * WB + 6 * BH, IW / 2, BH,
                                 nullptr, "Geometry.Normals", option_cb);
-      geo.value[0]->align(FL_ALIGN_RIGHT);
       geo.value[0]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 
       geo.value[1] =
         valueInput(L + 2 * WB + IW / 2, 2 * WB + 6 * BH, IW / 2, BH,
                    "Normals and tangents", "Geometry.Tangents", option_cb);
-      geo.value[1]->align(FL_ALIGN_RIGHT);
       geo.value[1]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 
       o->end();
@@ -1555,9 +1581,9 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
       Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB,
                                  height - 2 * WB - BH, "Transfo");
       o->hide();
-      geo.choice[3] = choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH,
-                             "Main window transform", "Geometry.Transform",
-                             nullptr, option_cb, (void *)"geo_transform");
+      geo.choice[3] =
+        choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Main window transform",
+               "Geometry.Transform", nullptr, option_cb);
 
       int ss = 2 * IW / 3 / 3 + 4;
       geo.value[7] = valueInput(L + 2 * WB, 2 * WB + 2 * BH, ss, BH, nullptr,
@@ -1591,7 +1617,6 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
         geo.value[i]->minimum(-1.);
         geo.value[i]->maximum(1.);
         if(CTX::instance()->inputScrolling) geo.value[i]->step(0.1);
-        geo.value[i]->align(FL_ALIGN_RIGHT);
         geo.value[i]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
         geo.value[i]->callback(option_cb);
       }
@@ -1609,12 +1634,10 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
 
       geo.value[3] = valueInput(L + 2 * WB, 2 * WB + 2 * BH, IW, BH,
                                 "Point size", "Geometry.PointSize", option_cb);
-      geo.value[3]->align(FL_ALIGN_RIGHT);
 
       geo.value[5] =
         valueInput(L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "Selected point size",
                    "Geometry.PointSelectSize", option_cb);
-      geo.value[5]->align(FL_ALIGN_RIGHT);
 
       geo.choice[1] =
         choice(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Curve display",
@@ -1623,17 +1646,14 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
       geo.value[4] =
         valueInput(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Curve width",
                    "Geometry.CurveWidth", option_cb);
-      geo.value[4]->align(FL_ALIGN_RIGHT);
 
       geo.value[6] =
         valueInput(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Selected curve width",
                    "Geometry.CurveSelectWidth", option_cb);
-      geo.value[6]->align(FL_ALIGN_RIGHT);
 
       geo.value[19] =
         valueInput(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Curve subdivisions",
                    "Geometry.NumSubEdges", option_cb);
-      geo.value[19]->align(FL_ALIGN_RIGHT);
 
       geo.choice[2] =
         choice(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Surface display",
@@ -1665,26 +1685,14 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
       int w1 = (int)(3. * IW / 4.), w2 = IW - w1;
       geo.value[21] = valueInput(L + 2 * WB, 2 * WB + 4 * BH, w2, BH, nullptr,
                                  "Geometry.Opacity", option_cb);
-      geo.value[21]->align(FL_ALIGN_RIGHT);
       geo.value[21]->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE);
 
       geo.choice[6] =
         choice(L + 2 * WB + w2, 2 * WB + 4 * BH, w1, BH, "Opacity",
                "Geometry.OpacityMode", nullptr, option_cb);
 
-      std::size_t i = 0, j = 0;
-      while(GeometryOptions_Color[j].str) {
-        if(GeometryOptions_Color[j].level & GMSH_DEPRECATED) {
-          j++;
-          continue;
-        }
-        geo.color[i] = new Fl_Button(L + 2 * WB, 3 * WB + (5 + i) * BH, IW, BH,
-                                     GeometryOptions_Color[j].str);
-        geo.color[i]->callback(color_cb,
-                               (void *)GeometryOptions_Color[j].function);
-        i++;
-        j++;
-      }
+      colorButtons("Geometry", GeometryOptions_Color, L + 2 * WB,
+                   3 * WB + 5 * BH, IW, color_cb, geo.color);
 
       o->end();
     }
@@ -1708,30 +1716,25 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
         choice(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "3D algorithm",
                "Mesh.Algorithm3D", nullptr, option_cb);
 
-      mesh.choice[1] = new Fl_Choice(L + 2 * WB, 2 * WB + 3 * BH, IW, BH,
-                                     "2D recombination algorithm");
-      mesh.choice[1]->tooltip("Mesh.RecombinationAlgorithm");
-      mesh.choice[1]->align(FL_ALIGN_RIGHT);
-      mesh.choice[1]->callback(option_cb);
+      mesh.choice[1] = choice(
+        L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "2D recombination algorithm",
+        "Mesh.RecombinationAlgorithm", nullptr, option_cb);
 
       mesh.butt[21] = checkButton(L + 2 * WB, 2 * WB + 4 * BH, BW, BH,
                                   "Recombine all triangular meshes",
                                   "Mesh.RecombineAll", option_cb);
 
-      mesh.choice[5] = new Fl_Choice(L + 2 * WB, 2 * WB + 5 * BH, IW, BH,
-                                     "Subdivision algorithm");
-      mesh.choice[5]->tooltip("Mesh.SubdivisionAlgorithm");
-      mesh.choice[5]->align(FL_ALIGN_RIGHT);
-      mesh.choice[5]->callback(option_cb);
+      mesh.choice[5] =
+        choice(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Subdivision algorithm",
+               "Mesh.SubdivisionAlgorithm", nullptr, option_cb);
 
       mesh.value[0] =
         valueInput(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Smoothing steps",
                    "Mesh.Smoothing", option_cb);
-      mesh.value[0]->align(FL_ALIGN_RIGHT);
 
-      mesh.value[2] = new inputValueFloat(L + 2 * WB, 2 * WB + 7 * BH, IW, BH,
-                                          "Element size factor");
-      mesh.value[2]->tooltip("Mesh.MeshSizeFactor");
+      mesh.value[2] = valueInput<inputValueFloat>(L + 2 * WB, 2 * WB + 7 * BH,
+                                                  IW, BH, "Element size factor",
+                                                  "Mesh.MeshSizeFactor");
       mesh.value[2]->minimum(0.001);
       mesh.value[2]->maximum(1000);
       if(CTX::instance()->inputScrolling) mesh.value[2]->step(0.01);
@@ -1740,17 +1743,14 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
 
       mesh.value[25] = valueInput(L + 2 * WB, 2 * WB + 8 * BH, IW / 2, BH,
                                   nullptr, "Mesh.MeshSizeMin", option_cb);
-      mesh.value[25]->align(FL_ALIGN_RIGHT);
 
       mesh.value[26] =
         valueInput(L + 2 * WB + IW / 2, 2 * WB + 8 * BH, IW / 2, BH,
                    "Min/Max element size", "Mesh.MeshSizeMax", option_cb);
-      mesh.value[26]->align(FL_ALIGN_RIGHT);
 
       mesh.value[3] =
         valueInput(L + 2 * WB, 2 * WB + 9 * BH, IW / 3, BH, "Element order",
                    "Mesh.ElementOrder", option_cb);
-      mesh.value[3]->align(FL_ALIGN_RIGHT);
 
       mesh.butt[4] = checkButton(
         L + width / 2, 2 * WB + 9 * BH, width - width / 2 - 2 * WB, BH,
@@ -1779,7 +1779,6 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
                    "Mesh.MeshSizeFromCurvature (number of elements "
                    "per 2 * Pi radians)",
                    option_cb);
-      mesh.value[1]->align(FL_ALIGN_RIGHT);
 
       mesh.butt[16] = checkButton(L + 2 * WB, 2 * WB + 4 * BH, BW, BH,
                                   "Extend element sizes from boundary",
@@ -1837,10 +1836,9 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
       mesh.butt[1] = checkButton(
         L + width / 2, 2 * WB + 5 * BH, width - width / 2 - 2 * WB, BH,
         "Hide interior edges", "Mesh.DrawSkinEdgesOnly", option_cb);
-      mesh.choice[12] = new Fl_Choice(L + width / 2, 2 * WB + 6 * BH,
-                                      width - width / 2 - 2 * WB, BH);
-      mesh.choice[12]->tooltip("Mesh.DrawSkinOnly");
-      mesh.choice[12]->callback(option_cb);
+      mesh.choice[12] =
+        choice(L + width / 2, 2 * WB + 6 * BH, width - width / 2 - 2 * WB, BH,
+               nullptr, "Mesh.DrawSkinOnly", nullptr, option_cb);
 
       mesh.butt[12] =
         checkButton(L + width / 2, 2 * WB + 1 * BH, width - width / 2 - 2 * WB,
@@ -1862,7 +1860,6 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
 
       mesh.value[12] = valueInput(L + width / 2, 2 * WB + 7 * BH, IW / 2, BH,
                                   "Sampling", "Mesh.LabelSampling", option_cb);
-      mesh.value[12]->align(FL_ALIGN_RIGHT);
       mesh.value[12]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 
       static Fl_Menu_Item menu_mesh_element_types[] = {
@@ -1878,23 +1875,19 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
         {nullptr}};
 
       mesh.menu =
-        new Fl_Menu_Button(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Elements");
-      mesh.menu->tooltip(
-        "Mesh.Triangles, Mesh.Quadrangles, Mesh.Tetrahedra, "
-        "Mesh.Hexahedra, Mesh.Prisms, Mesh.Pyramids, Mesh.Trihedra, "
-        "Mesh.Polygons, Mesh.Polyhedra");
-      mesh.menu->menu(menu_mesh_element_types);
-      mesh.menu->callback(mesh_element_types_cb);
+        toggleMenu(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Elements",
+                   "Mesh.Triangles, Mesh.Quadrangles, Mesh.Tetrahedra, "
+                   "Mesh.Hexahedra, Mesh.Prisms, Mesh.Pyramids, Mesh.Trihedra, "
+                   "Mesh.Polygons, Mesh.Polyhedra",
+                   menu_mesh_element_types);
 
       mesh.value[4] = valueInput(L + 2 * WB, 2 * WB + 9 * BH, IW / 4, BH,
                                  nullptr, "Mesh.QualityInf", option_cb);
-      mesh.value[4]->align(FL_ALIGN_RIGHT);
       mesh.value[4]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 
       mesh.value[5] =
         valueInput(L + 2 * WB + IW / 4, 2 * WB + 9 * BH, IW / 2 - IW / 4, BH,
                    nullptr, "Mesh.QualitySup", option_cb);
-      mesh.value[5]->align(FL_ALIGN_RIGHT);
       mesh.value[5]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
       mesh.choice[6] =
         choice(L + 2 * WB + IW / 2, 2 * WB + 9 * BH, IW / 2, BH,
@@ -1902,23 +1895,19 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
 
       mesh.value[6] = valueInput(L + 2 * WB, 2 * WB + 10 * BH, IW / 2, BH,
                                  nullptr, "Mesh.RadiusInf", option_cb);
-      mesh.value[6]->align(FL_ALIGN_RIGHT);
       mesh.value[6]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 
       mesh.value[7] = valueInput(L + 2 * WB + IW / 2, 2 * WB + 10 * BH, IW / 2,
                                  BH, "Size range", "Mesh.RadiusSup", option_cb);
-      mesh.value[7]->align(FL_ALIGN_RIGHT);
       mesh.value[7]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 
       mesh.value[8] = valueInput(L + 2 * WB, 2 * WB + 11 * BH, IW / 2, BH,
                                  nullptr, "Mesh.Normals", option_cb);
-      mesh.value[8]->align(FL_ALIGN_RIGHT);
       mesh.value[8]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 
       mesh.value[13] =
         valueInput(L + 2 * WB + IW / 2, 2 * WB + 11 * BH, IW / 2, BH,
                    "Normals and tangents", "Mesh.Tangents", option_cb);
-      mesh.value[13]->align(FL_ALIGN_RIGHT);
       mesh.value[13]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 
       o->end();
@@ -1931,7 +1920,6 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
       mesh.value[9] =
         valueInput(L + 2 * WB, 2 * WB + 1 * BH, IW, BH,
                    "Element shrinking factor", "Mesh.Explode", option_cb);
-      mesh.value[9]->align(FL_ALIGN_RIGHT);
       mesh.value[9]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 
       mesh.choice[0] =
@@ -1940,16 +1928,13 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
 
       mesh.value[10] = valueInput(L + 2 * WB, 2 * WB + 3 * BH, IW, BH,
                                   "Point size", "Mesh.PointSize", option_cb);
-      mesh.value[10]->align(FL_ALIGN_RIGHT);
 
       mesh.value[11] = valueInput(L + 2 * WB, 2 * WB + 4 * BH, IW, BH,
                                   "Line width", "Mesh.LineWidth", option_cb);
-      mesh.value[11]->align(FL_ALIGN_RIGHT);
 
       mesh.value[14] = valueInput(L + 2 * WB, 2 * WB + 5 * BH, IW, BH,
                                   "High-order element subdivisions",
                                   "Mesh.NumSubEdges", option_cb);
-      mesh.value[14]->align(FL_ALIGN_RIGHT);
       mesh.value[14]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 
       o->end();
@@ -1961,7 +1946,7 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
 
       mesh.butt[17] =
         checkButton(L + 2 * WB, 2 * WB + 1 * BH, BW, BH, "Enable lighting",
-                    "Mesh.Light (Alt+w)", option_cb, (void *)"mesh_light");
+                    "Mesh.Light (Alt+w)", option_cb);
       mesh.choice[10] =
         choice(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Edge lighting",
                "Mesh.LightLines", nullptr, option_cb);
@@ -1977,13 +1962,11 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
       mesh.value[18] = valueInput(L + 2 * WB, 2 * WB + 5 * BH, IW, BH,
                                   "Smoothing threshold angle",
                                   "Mesh.AngleSmoothNormals", option_cb);
-      mesh.value[18]->align(FL_ALIGN_RIGHT);
       mesh.value[18]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 
       int w1 = (int)(3. * IW / 4.), w2 = IW - w1;
       mesh.value[27] = valueInput(L + 2 * WB, 2 * WB + 6 * BH, w2, BH, nullptr,
                                   "Mesh.Opacity", option_cb);
-      mesh.value[27]->align(FL_ALIGN_RIGHT);
       mesh.value[27]->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE);
 
       mesh.choice[11] =
@@ -1993,19 +1976,8 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
         choice(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Coloring mode",
                "Mesh.ColorCarousel", nullptr, option_cb);
 
-      std::size_t i = 0, j = 0;
-      while(MeshOptions_Color[j].str) {
-        if(MeshOptions_Color[j].level & GMSH_DEPRECATED) {
-          j++;
-          continue;
-        }
-        mesh.color[i] = new Fl_Button(L + 2 * WB, 3 * WB + (8 + i) * BH, IW, BH,
-                                      MeshOptions_Color[j].str);
-        mesh.color[i]->callback(color_cb,
-                                (void *)MeshOptions_Color[j].function);
-        i++;
-        j++;
-      }
+      colorButtons("Mesh", MeshOptions_Color, L + 2 * WB, 3 * WB + 8 * BH, IW,
+                   color_cb, mesh.color);
 
       o->end();
     }
@@ -2028,24 +2000,19 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
         solver.value[0] =
           valueInput(L + 2 * WB, 2 * WB + 2 * BH, IW, BH,
                      "Timeout (in seconds)", "Solver.Timeout", option_cb);
-        solver.value[0]->align(FL_ALIGN_RIGHT);
 
         solver.butt[0] =
           checkButton(L + 2 * WB, 2 * WB + 3 * BH, BW, BH,
                       "Always listen to incoming connection requests",
                       "Solver.AlwaysListen", solver_listen_cb);
 
-        solver.input[1] = new Fl_Input(L + 2 * WB, 2 * WB + 4 * BH, IW, BH,
-                                       "Python interpreter");
-        solver.input[1]->tooltip("Solver.PythonInterpreter");
-        solver.input[1]->align(FL_ALIGN_RIGHT);
-        solver.input[1]->callback(option_cb);
+        solver.input[1] =
+          input(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Python interpreter",
+                "Solver.PythonInterpreter", option_cb);
 
-        solver.input[2] = new Fl_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH,
-                                       "Octave interpreter");
-        solver.input[2]->tooltip("Solver.OctaveInterpreter");
-        solver.input[2]->align(FL_ALIGN_RIGHT);
-        solver.input[2]->callback(option_cb);
+        solver.input[2] =
+          input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Octave interpreter",
+                "Solver.OctaveInterpreter", option_cb);
 
         o->end();
       }
@@ -2067,12 +2034,10 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
       post.value[0] = valueInput(L + 2 * WB, 2 * WB + 2 * BH, IW, BH,
                                  "Frame duration (in seconds)",
                                  "PostProcessing.AnimationDelay", option_cb);
-      post.value[0]->align(FL_ALIGN_RIGHT);
 
       post.value[1] = valueInput(L + 2 * WB, 2 * WB + 3 * BH, IW, BH,
                                  "Animation increment step",
                                  "PostProcessing.AnimationStep", option_cb);
-      post.value[1]->align(FL_ALIGN_RIGHT);
 
       post.butt[0] = checkButton(L + 2 * WB, 2 * WB + 4 * BH, BW, BH,
                                  "Cycle through views instead of steps",
@@ -2115,7 +2080,6 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
       view.value[50] = valueInput(L + 2 * WB + sw, 2 * WB + 3 * BH, IW - 2 * sw,
                                   BH, nullptr, "View.TimeStep", 0, 0, 1,
                                   view_options_timestep_cb, (void *)"=");
-      view.value[50]->align(FL_ALIGN_RIGHT);
       view.label[0] =
         new Fl_Box(L + 2 * WB + IW, 2 * WB + 3 * BH, width / 2, BH, "Step");
       view.label[0]->box(FL_NO_BOX);
@@ -2126,7 +2090,6 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
 
       view.value[30] = valueInput(L + 2 * WB, 2 * WB + 4 * BH, IW, BH,
                                   "Intervals", "View.NbIso", option_cb);
-      view.value[30]->align(FL_ALIGN_RIGHT);
       view.value[30]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 
       view.input[1] = input(C2, 2 * WB + 4 * BH, RW / 2, BH, "Format",
@@ -2134,13 +2097,10 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
       view.choice[0] =
         choice(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Intervals type",
                "View.IntervalsType (Alt+t)", nullptr, option_cb);
-      view.choice[1] = new Fl_Choice(C2, 2 * WB + 5 * BH, RW, BH);
-      view.choice[1]->tooltip("View.ScaleType");
-      view.choice[1]->align(FL_ALIGN_RIGHT);
-      view.choice[1]->callback(option_cb);
+      view.choice[1] = choice(C2, 2 * WB + 5 * BH, RW, BH, nullptr,
+                              "View.ScaleType", nullptr, option_cb);
       view.choice[7] = choice(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Range mode",
-                              "View.RangeType (Alt+r)", nullptr, option_cb,
-                              (void *)"custom_range");
+                              "View.RangeType (Alt+r)", nullptr, option_cb);
 
       view.butt[38] = checkButton(C2, 2 * WB + 6 * BH, RW, BH, "Saturate",
                                   "View.SaturateValues", option_cb);
@@ -2151,12 +2111,10 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
       view.value[31] =
         valueInput(L + 2 * WB + sw2, 2 * WB + 7 * BH, IW - sw2, BH,
                    "Custom min", "View.CustomMin", option_cb);
-      view.value[31]->align(FL_ALIGN_RIGHT);
       view.value[31]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 
       view.value[35] = valueInput(C2, 2 * WB + 7 * BH, RW / 2, BH, "Threshold",
                                   "View.ScaleThreshold", option_cb);
-      view.value[35]->align(FL_ALIGN_RIGHT);
       view.value[35]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 
       view.push[2] = new Fl_Button(L + 2 * WB, 2 * WB + 8 * BH, sw2, BH, "Max");
@@ -2164,16 +2122,13 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
       view.value[32] =
         valueInput(L + 2 * WB + sw2, 2 * WB + 8 * BH, IW - sw2, BH,
                    "Custom max", "View.CustomMax", option_cb);
-      view.value[32]->align(FL_ALIGN_RIGHT);
       view.value[32]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 
-      view.butt[0] =
-        checkButton(L + 2 * WB, 2 * WB + 9 * BH, C2 - L - 3 * WB, BH,
-                    "Adapt visualization grid", "View.AdaptVisualizationGrid",
-                    option_cb, (void *)"view_adaptive");
-      view.choice[18] = new Fl_Choice(C2, 2 * WB + 9 * BH, RW, BH);
-      view.choice[18]->tooltip("View.AdaptSkinOnly");
-      view.choice[18]->callback(option_cb);
+      view.butt[0] = checkButton(L + 2 * WB, 2 * WB + 9 * BH, C2 - L - 3 * WB,
+                                 BH, "Adapt visualization grid",
+                                 "View.AdaptVisualizationGrid", option_cb);
+      view.choice[18] = choice(C2, 2 * WB + 9 * BH, RW, BH, nullptr,
+                               "View.AdaptSkinOnly", nullptr, option_cb);
 
       view.push[5] = new Fl_Button(L + 2 * WB, 2 * WB + 10 * BH, sw, BH, "-");
       view.push[5]->callback(view_options_max_recursion_cb, (void *)"-");
@@ -2183,7 +2138,6 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
       view.value[33] =
         valueInput(L + 2 * WB + sw, 2 * WB + 10 * BH, IW - 2 * sw, BH, nullptr,
                    "View.MaxRecursionLevel", option_cb);
-      view.value[33]->align(FL_ALIGN_RIGHT);
       view.value[33]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
       view.label[1] = new Fl_Box(L + 2 * WB + IW, 2 * WB + 10 * BH, width / 2,
                                  BH, "Maximum recursion level");
@@ -2191,9 +2145,9 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
       view.label[1]->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
 
       // (shown as it is set, e.g. 1e-6, whatever the step of the scrolling)
-      view.value[34] = new inputValueFloat(L + 2 * WB, 2 * WB + 11 * BH, IW, BH,
-                                           "Target visualization error");
-      view.value[34]->tooltip("View.TargetError");
+      view.value[34] = valueInput<inputValueFloat>(
+        L + 2 * WB, 2 * WB + 11 * BH, IW, BH, "Target visualization error",
+        "View.TargetError");
       view.value[34]->align(FL_ALIGN_RIGHT);
       // (a fraction of the range of the view; negative: refine everything)
       view.value[34]->minimum(-1.e-4);
@@ -2211,9 +2165,8 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
                                  height - 2 * WB - BH, "Axes");
       o->hide();
 
-      view.choice[8] =
-        choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Axes mode",
-               "View.Axes (Alt+a)", nullptr, option_cb, (void *)"view_axes");
+      view.choice[8] = choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Axes mode",
+                              "View.Axes (Alt+a)", nullptr, option_cb);
 
       view.butt[3] = checkButton(C2, 2 * WB + 1 * BH, RW, BH, "Mikado style",
                                  "View.AxesMikado", option_cb);
@@ -2226,31 +2179,24 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
       view.value[5] =
         valueInput(L + 2 * WB + 2 * IW / 3, 2 * WB + 2 * BH, IW / 3, BH,
                    "Axes ticks", "View.AxesTicksZ", option_cb);
-      view.value[5]->align(FL_ALIGN_RIGHT);
 
-      view.input[7] = new Fl_Input(L + 2 * WB, 2 * WB + 3 * BH, IW / 3, BH);
-      view.input[7]->tooltip("View.AxesFormatX");
-      view.input[7]->callback(option_cb);
-      view.input[8] =
-        new Fl_Input(L + 2 * WB + 1 * IW / 3, 2 * WB + 3 * BH, IW / 3, BH);
-      view.input[8]->tooltip("View.AxesFormatY");
-      view.input[8]->callback(option_cb);
+      view.input[7] = input(L + 2 * WB, 2 * WB + 3 * BH, IW / 3, BH, nullptr,
+                            "View.AxesFormatX", option_cb);
+      view.input[8] = input(L + 2 * WB + 1 * IW / 3, 2 * WB + 3 * BH, IW / 3,
+                            BH, nullptr, "View.AxesFormatY", option_cb);
       view.input[9] = input(L + 2 * WB + 2 * IW / 3, 2 * WB + 3 * BH, IW / 3,
                             BH, "Axes format", "View.AxesFormatZ", option_cb);
 
-      view.input[10] = new Fl_Input(L + 2 * WB, 2 * WB + 4 * BH, IW / 3, BH);
-      view.input[10]->tooltip("View.AxesLabelX");
-      view.input[10]->callback(option_cb);
-      view.input[11] =
-        new Fl_Input(L + 2 * WB + 1 * IW / 3, 2 * WB + 4 * BH, IW / 3, BH);
-      view.input[11]->tooltip("View.AxesLabelY");
-      view.input[11]->callback(option_cb);
+      view.input[10] = input(L + 2 * WB, 2 * WB + 4 * BH, IW / 3, BH, nullptr,
+                             "View.AxesLabelX", option_cb);
+      view.input[11] = input(L + 2 * WB + 1 * IW / 3, 2 * WB + 4 * BH, IW / 3,
+                             BH, nullptr, "View.AxesLabelY", option_cb);
       view.input[12] = input(L + 2 * WB + 2 * IW / 3, 2 * WB + 4 * BH, IW / 3,
                              BH, "Axes labels", "View.AxesLabelZ", option_cb);
 
-      view.butt[25] = checkButton(
-        L + 2 * WB, 2 * WB + 5 * BH, BW, BH, "Position 3D axes automatically",
-        "View.AxesAutoPosition", option_cb, (void *)"view_axes_auto_3d");
+      view.butt[25] = checkButton(L + 2 * WB, 2 * WB + 5 * BH, BW, BH,
+                                  "Position 3D axes automatically",
+                                  "View.AxesAutoPosition", option_cb);
 
       view.value[13] = valueInput(L + 2 * WB, 2 * WB + 6 * BH, IW / 3, BH,
                                   nullptr, "View.AxesMinX", option_cb);
@@ -2259,7 +2205,6 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
       view.value[15] =
         valueInput(L + 2 * WB + 2 * IW / 3, 2 * WB + 6 * BH, IW / 3, BH,
                    "3D axes minimum", "View.AxesMinZ", option_cb);
-      view.value[15]->align(FL_ALIGN_RIGHT);
 
       view.value[16] = valueInput(L + 2 * WB, 2 * WB + 7 * BH, IW / 3, BH,
                                   nullptr, "View.AxesMaxX", option_cb);
@@ -2268,27 +2213,22 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
       view.value[18] =
         valueInput(L + 2 * WB + 2 * IW / 3, 2 * WB + 7 * BH, IW / 3, BH,
                    "3D axes maximum", "View.AxesMaxZ", option_cb);
-      view.value[18]->align(FL_ALIGN_RIGHT);
 
-      view.choice[16] = new Fl_Choice(L + 2 * WB, 2 * WB + 8 * BH, IW, BH,
-                                      "2D axes/value scale position");
-      view.choice[16]->tooltip("View.AutoPosition");
-      view.choice[16]->align(FL_ALIGN_RIGHT);
-      view.choice[16]->callback(option_cb, (void *)"view_axes_auto_2d");
+      view.choice[16] = choice(L + 2 * WB, 2 * WB + 8 * BH, IW, BH,
+                               "2D axes/value scale position",
+                               "View.AutoPosition", nullptr, option_cb);
 
       view.value[20] = valueInput(L + 2 * WB, 2 * WB + 9 * BH, IW / 2, BH,
                                   nullptr, "View.PositionX", option_cb);
       view.value[21] =
         valueInput(L + 2 * WB + IW / 2, 2 * WB + 9 * BH, IW / 2, BH,
                    "2D axes/value scale position", "View.PositionY", option_cb);
-      view.value[21]->align(FL_ALIGN_RIGHT);
 
       view.value[22] = valueInput(L + 2 * WB, 2 * WB + 10 * BH, IW / 2, BH,
                                   nullptr, "View.Width", option_cb);
       view.value[23] =
         valueInput(L + 2 * WB + IW / 2, 2 * WB + 10 * BH, IW / 2, BH,
                    "2D axes/value scale size", "View.Height", option_cb);
-      view.value[23]->align(FL_ALIGN_RIGHT);
 
       o->end();
     }
@@ -2334,35 +2274,28 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
         {"Polyhedra", 0, nullptr, nullptr, FL_MENU_TOGGLE},
         {nullptr}};
 
-      view.menu[1] =
-        new Fl_Menu_Button(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Elements");
-      view.menu[1]->tooltip(
+      view.menu[1] = toggleMenu(
+        L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Elements",
         "View.DrawPoints, View.DrawLines, View.DrawTriangles, "
         "View.DrawQuadrangles, View.DrawTetrahedra, View.DrawHexahedra, "
         "View.DrawPrisms, View.DrawPyramids, View.DrawTrihedra, "
-        "View.DrawPolygons, View.DrawPolyhedra");
-      view.menu[1]->menu(menu_view_element_types);
-      view.menu[1]->callback(view_toggles_cb);
+        "View.DrawPolygons, View.DrawPolyhedra",
+        menu_view_element_types);
 
       view.value[6] = valueInput(L + 3 * WB + IW, 2 * WB + 6 * BH, IW / 3, BH,
                                  "Sampling", "View.Sampling", option_cb);
-      view.value[6]->align(FL_ALIGN_RIGHT);
       view.value[6]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
-      view.choice[9] = new Fl_Choice(L + 2 * WB, 2 * WB + 7 * BH, IW, BH,
-                                     "Element boundary mode");
-      view.choice[9]->tooltip("View.Boundary");
-      view.choice[9]->align(FL_ALIGN_RIGHT);
-      view.choice[9]->callback(option_cb);
+      view.choice[9] =
+        choice(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Element boundary mode",
+               "View.Boundary", nullptr, option_cb);
 
       view.value[0] = valueInput(L + 2 * WB, 2 * WB + 8 * BH, IW / 2, BH,
                                  nullptr, "View.Normals", option_cb);
-      view.value[0]->align(FL_ALIGN_RIGHT);
       view.value[0]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 
       view.value[1] =
         valueInput(L + 2 * WB + IW / 2, 2 * WB + 8 * BH, IW / 2, BH,
                    "Normals and tangents", "View.Tangents", option_cb);
-      view.value[1]->align(FL_ALIGN_RIGHT);
       view.value[1]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 
       static Fl_Menu_Item menu_view_field_types[] = {
@@ -2371,26 +2304,24 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
         {"Tensor", 0, nullptr, nullptr, FL_MENU_TOGGLE},
         {nullptr}};
       view.menu[0] =
-        new Fl_Menu_Button(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Fields");
-      view.menu[0]->tooltip(
-        "View.DrawScalars, View.DrawVectors, View.DrawTensors");
-      view.menu[0]->menu(menu_view_field_types);
-      view.menu[0]->callback(view_toggles_cb);
-      view.choice[14] = new Fl_Choice(L + 2 * WB, 2 * WB + 10 * BH, IW, BH);
-      view.choice[14]->tooltip("View.ForceNumComponents");
-      view.choice[14]->align(FL_ALIGN_RIGHT);
-      view.choice[14]->callback(option_cb);
+        toggleMenu(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Fields",
+                   "View.DrawScalars, View.DrawVectors, View.DrawTensors",
+                   menu_view_field_types);
+      view.choice[14] = choice(L + 2 * WB, 2 * WB + 10 * BH, IW, BH, nullptr,
+                               "View.ForceNumComponents", nullptr, option_cb);
 
       // the 9 fields of the map widen together
       int W = width - 5 * WB - IW;
+      static const char *maps[9] = {
+        "View.ComponentMap0", "View.ComponentMap1", "View.ComponentMap2",
+        "View.ComponentMap3", "View.ComponentMap4", "View.ComponentMap5",
+        "View.ComponentMap6", "View.ComponentMap7", "View.ComponentMap8"};
       Fl_Group *row = new Fl_Group(L + 3 * WB + IW, 2 * WB + 10 * BH, W, BH);
       for(int i = 0; i < 9; i++) {
         int w = W / 9;
         view.value[70 + i] = valueInput(
           L + 3 * WB + IW + i * w, 2 * WB + 10 * BH, (i < 8) ? w : W - 8 * w,
-          BH, nullptr, nullptr, -1, 9, 1, option_cb);
-        view.value[70 + i]->copy_tooltip(
-          ("View.ComponentMap" + std::to_string(i)).c_str());
+          BH, nullptr, maps[i], -1, 9, 1, option_cb);
       }
       row->end();
 
@@ -2416,8 +2347,8 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
       view.value[53] = valueInput(L + 2 * WB + 2 * ss, 2 * WB + 2 * BH, ss, BH,
                                   " X", "View.TransformXZ");
       view.value[40] =
-        new inputValueFloat(L + 2 * WB + IW, 2 * WB + 2 * BH, 7 * IW / 10, BH);
-      view.value[40]->tooltip("View.OffsetX");
+        valueInput<inputValueFloat>(L + 2 * WB + IW, 2 * WB + 2 * BH,
+                                    7 * IW / 10, BH, nullptr, "View.OffsetX");
 
       view.value[54] = valueInput(L + 2 * WB, 2 * WB + 3 * BH, ss, BH, nullptr,
                                   "View.TransformYX");
@@ -2426,8 +2357,8 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
       view.value[56] = valueInput(L + 2 * WB + 2 * ss, 2 * WB + 3 * BH, ss, BH,
                                   " Y +", "View.TransformYZ");
       view.value[41] =
-        new inputValueFloat(L + 2 * WB + IW, 2 * WB + 3 * BH, 7 * IW / 10, BH);
-      view.value[41]->tooltip("View.OffsetY");
+        valueInput<inputValueFloat>(L + 2 * WB + IW, 2 * WB + 3 * BH,
+                                    7 * IW / 10, BH, nullptr, "View.OffsetY");
 
       view.value[57] = valueInput(L + 2 * WB, 2 * WB + 4 * BH, ss, BH, nullptr,
                                   "View.TransformZX");
@@ -2436,26 +2367,26 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
       view.value[59] = valueInput(L + 2 * WB + 2 * ss, 2 * WB + 4 * BH, ss, BH,
                                   " Z", "View.TransformZZ");
       view.value[42] =
-        new inputValueFloat(L + 2 * WB + IW, 2 * WB + 4 * BH, 7 * IW / 10, BH);
-      view.value[42]->tooltip("View.OffsetZ");
+        valueInput<inputValueFloat>(L + 2 * WB + IW, 2 * WB + 4 * BH,
+                                    7 * IW / 10, BH, nullptr, "View.OffsetZ");
 
       Fl_Box *b2 = new Fl_Box(FL_NO_BOX, L + 2 * WB + 2 * IW - 3 * WB,
                               2 * WB + 1 * BH, 7 * IW / 10, BH, "Raise:");
       b2->align(FL_ALIGN_INSIDE | FL_ALIGN_LEFT);
 
-      view.value[43] = new inputValueFloat(L + 2 * WB + 2 * IW - 3 * WB,
-                                           2 * WB + 2 * BH, 7 * IW / 10, BH);
-      view.value[43]->tooltip("View.RaiseX");
-      view.value[44] = new inputValueFloat(L + 2 * WB + 2 * IW - 3 * WB,
-                                           2 * WB + 3 * BH, 7 * IW / 10, BH);
-      view.value[44]->tooltip("View.RaiseY");
-      view.value[45] = new inputValueFloat(L + 2 * WB + 2 * IW - 3 * WB,
-                                           2 * WB + 4 * BH, 7 * IW / 10, BH);
-      view.value[45]->tooltip("View.RaiseZ");
+      view.value[43] = valueInput<inputValueFloat>(L + 2 * WB + 2 * IW - 3 * WB,
+                                                   2 * WB + 2 * BH, 7 * IW / 10,
+                                                   BH, nullptr, "View.RaiseX");
+      view.value[44] = valueInput<inputValueFloat>(L + 2 * WB + 2 * IW - 3 * WB,
+                                                   2 * WB + 3 * BH, 7 * IW / 10,
+                                                   BH, nullptr, "View.RaiseY");
+      view.value[45] = valueInput<inputValueFloat>(L + 2 * WB + 2 * IW - 3 * WB,
+                                                   2 * WB + 4 * BH, 7 * IW / 10,
+                                                   BH, nullptr, "View.RaiseZ");
       table->end();
-      view.value[46] = new inputValueFloat(L + 2 * WB, 2 * WB + 5 * BH, 3 * ss,
-                                           BH, "Normal raise");
-      view.value[46]->tooltip("View.NormalRaise");
+      view.value[46] =
+        valueInput<inputValueFloat>(L + 2 * WB, 2 * WB + 5 * BH, 3 * ss, BH,
+                                    "Normal raise", "View.NormalRaise");
 
       for(int i = 40; i <= 46; i++) {
         view.value[i]->align(FL_ALIGN_RIGHT);
@@ -2473,19 +2404,16 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
 
       view.butt[6] = checkButton(L + 2 * WB, 2 * WB + 6 * BH, BW, BH,
                                  "Use general transformation expressions",
-                                 "View.UseGeneralizedRaise", option_cb,
-                                 (void *)"view_general_transform");
+                                 "View.UseGeneralizedRaise", option_cb);
 
       view.choice[11] =
-        new Fl_Choice(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Data source");
-      view.choice[11]->tooltip("View.GeneralizedRaiseView");
-      view.choice[11]->align(FL_ALIGN_RIGHT);
+        choice(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Data source",
+               "View.GeneralizedRaiseView", nullptr, option_cb, nullptr, -1);
       view.choice[11]->add("Self");
-      view.choice[11]->callback(option_cb);
 
       view.value[2] =
-        new inputValueFloat(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Factor");
-      view.value[2]->tooltip("View.GeneralizedRaiseFactor");
+        valueInput<inputValueFloat>(L + 2 * WB, 2 * WB + 8 * BH, IW, BH,
+                                    "Factor", "View.GeneralizedRaiseFactor");
       view.value[2]->align(FL_ALIGN_RIGHT);
       view.value[2]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
       view.value[2]->callback(option_cb);
@@ -2511,7 +2439,6 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
       view.value[12] =
         valueInput(L + 2 * WB, 2 * WB + 1 * BH, IW, BH,
                    "Element shrinking factor", "View.Explode", option_cb);
-      view.value[12]->align(FL_ALIGN_RIGHT);
       view.value[12]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 
       view.choice[5] =
@@ -2520,7 +2447,6 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
 
       view.value[61] = valueInput(L + 2 * WB, 2 * WB + 3 * BH, IW, BH,
                                   "Point size", "View.PointSize", option_cb);
-      view.value[61]->align(FL_ALIGN_RIGHT);
 
       view.choice[6] =
         choice(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Line display",
@@ -2531,11 +2457,9 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
 
       view.value[62] = valueInput(L + 2 * WB, 2 * WB + 5 * BH, IW / 2, BH,
                                   nullptr, "View.LineWidth", option_cb);
-      view.value[62]->align(FL_ALIGN_RIGHT);
       view.value[80] =
         valueInput(L + 2 * WB + IW / 2, 2 * WB + 5 * BH, IW - IW / 2, BH,
                    "Line / outline width", "View.OutlineWidth", option_cb);
-      view.value[80]->align(FL_ALIGN_RIGHT);
 
       {
         view.choice[2] =
@@ -2544,15 +2468,13 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
 
         view.value[64] = valueInput(L + 2 * WB, 2 * WB + 7 * BH, IW / 2, BH,
                                     nullptr, "View.ArrowSizeMin", option_cb);
-        view.value[64]->align(FL_ALIGN_RIGHT);
         view.value[60] =
           valueInput(L + 2 * WB + IW / 2, 2 * WB + 7 * BH, IW / 2, BH,
                      "Arrow size", "View.ArrowSizeMax", option_cb);
-        view.value[60]->align(FL_ALIGN_RIGHT);
 
-        view.value[63] = new inputValueFloat(L + 2 * WB, 2 * WB + 8 * BH, IW,
-                                             BH, "Displacement factor");
-        view.value[63]->tooltip("View.DisplacementFactor");
+        view.value[63] = valueInput<inputValueFloat>(
+          L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Displacement factor",
+          "View.DisplacementFactor");
         view.value[63]->minimum(0.);
         view.value[63]->maximum(1.);
         if(CTX::instance()->inputScrolling) view.value[63]->step(0.01);
@@ -2560,19 +2482,16 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
         view.value[63]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
         view.value[63]->callback(option_cb);
 
-        view.choice[10] = new Fl_Choice(L + 2 * WB, 2 * WB + 9 * BH, IW, BH,
-                                        "Data source for vector fields");
-        view.choice[10]->tooltip("View.ExternalView");
-        view.choice[10]->align(FL_ALIGN_RIGHT);
+        view.choice[10] = choice(
+          L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Data source for vector fields",
+          "View.ExternalView", nullptr, option_cb, nullptr, -1);
         view.choice[10]->add("Self");
-        view.choice[10]->callback(option_cb);
       }
       view.choice[3] =
         choice(L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Glyph location",
                "View.GlyphLocation", nullptr, option_cb);
-      view.choice[15] = new Fl_Choice(C2, 2 * WB + 10 * BH, RW, BH);
-      view.choice[15]->tooltip("View.CenterGlyphs");
-      view.choice[15]->callback(option_cb);
+      view.choice[15] = choice(C2, 2 * WB + 10 * BH, RW, BH, nullptr,
+                               "View.CenterGlyphs", nullptr, option_cb);
       view.choice[4] =
         choice(L + 2 * WB, 2 * WB + 11 * BH, IW, BH, "Tensor display",
                "View.TensorType", nullptr, option_cb);
@@ -2586,7 +2505,7 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
 
       view.butt[11] =
         checkButton(L + 2 * WB, 2 * WB + 1 * BH, BW, BH, "Enable lighting",
-                    "View.Light (Alt+w)", option_cb, (void *)"view_light");
+                    "View.Light (Alt+w)", option_cb);
 
       view.butt[8] =
         checkButton(L + 2 * WB, 2 * WB + 2 * BH, BW, BH,
@@ -2603,27 +2522,14 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
       view.value[10] = valueInput(L + 2 * WB, 2 * WB + 5 * BH, IW, BH,
                                   "Smoothing threshold angle",
                                   "View.AngleSmoothNormals", option_cb);
-      view.value[10]->align(FL_ALIGN_RIGHT);
       view.value[10]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 
       view.value[79] = valueInput(L + 2 * WB, 2 * WB + 6 * BH, IW, BH,
                                   "Opacity", "View.Opacity", option_cb);
-      view.value[79]->align(FL_ALIGN_RIGHT);
       view.value[79]->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE);
 
-      std::size_t i = 0, j = 0;
-      while(ViewOptions_Color[j].str) {
-        if(ViewOptions_Color[j].level & GMSH_DEPRECATED) {
-          j++;
-          continue;
-        }
-        view.color[i] = new Fl_Button(L + 2 * WB, 3 * WB + (7 + i) * BH, IW, BH,
-                                      ViewOptions_Color[j].str);
-        view.color[i]->callback(view_color_cb,
-                                (void *)ViewOptions_Color[j].function);
-        i++;
-        j++;
-      }
+      colorButtons("View", ViewOptions_Color, L + 2 * WB, 3 * WB + 7 * BH, IW,
+                   view_color_cb, view.color);
 
       o->end();
     }
@@ -2642,12 +2548,9 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
         Fl_Menu_Item last = {nullptr};
         menu_colormap.push_back(last);
       }
-      view.choice[17] = new Fl_Choice(L + 2 * WB, 2 * WB + BH, IW, BH,
-                                      "Predefined colormap");
-      view.choice[17]->tooltip("View.ColormapNumber");
-      view.choice[17]->menu(&menu_colormap[0]);
-      view.choice[17]->align(FL_ALIGN_RIGHT);
-      view.choice[17]->callback(view_colormap_cb);
+      view.choice[17] =
+        choice(L + 2 * WB, 2 * WB + BH, IW, BH, "Predefined colormap",
+               "View.ColormapNumber", &menu_colormap[0], view_colormap_cb);
       // the keys go to the map widget below
       view.choice[17]->clear_visible_focus();
 
@@ -2675,10 +2578,7 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
 
   // every widget that sets an option bound to it, and the values of the
   // choices of the view page that are not their indices
-  bindTooltips(win);
   choicesFromTable();
-  bindOffset(view.choice[10], -1);
-  bindOffset(view.choice[11], -1);
 
   _category[0] = general.group;
   _category[1] = geo.group;
@@ -3054,8 +2954,6 @@ void optionWindow::updateViewGroup(int index)
   double val1 = 10. * CTX::instance()->lc;
   double val2 = 2. * CTX::instance()->lc / maxval;
 
-  opt_view_adapt_visualization_grid(index, GMSH_GUI, 0);
-
   if(data->getNumPoints() || data->getNumLines()) {
     ((Fl_Menu_Item *)view.choice[13]->menu())[1].activate();
     ((Fl_Menu_Item *)view.choice[13]->menu())[2].activate();
@@ -3065,11 +2963,7 @@ void optionWindow::updateViewGroup(int index)
     ((Fl_Menu_Item *)view.choice[13]->menu())[2].deactivate();
   }
 
-  opt_view_auto_position(index, GMSH_GUI, 0);
-
-  opt_view_axes(index, GMSH_GUI, 0);
   opt_view_colormap_number(index, GMSH_GUI, 0);
-  opt_view_axes_auto_position(index, GMSH_GUI, 0);
   for(int i = 13; i <= 18; i++) {
     if(CTX::instance()->inputScrolling)
       view.value[i]->step(CTX::instance()->lc / 200., 1);
@@ -3085,23 +2979,6 @@ void optionWindow::updateViewGroup(int index)
     view.range->deactivate();
     ((Fl_Menu_Item *)view.choice[13]->menu())[0].deactivate();
   }
-  opt_view_light(index, GMSH_GUI, 0);
-  opt_view_draw_points(index, GMSH_GUI, 0);
-  opt_view_draw_lines(index, GMSH_GUI, 0);
-  opt_view_draw_triangles(index, GMSH_GUI, 0);
-  opt_view_draw_quadrangles(index, GMSH_GUI, 0);
-  opt_view_draw_tetrahedra(index, GMSH_GUI, 0);
-  opt_view_draw_hexahedra(index, GMSH_GUI, 0);
-  opt_view_draw_prisms(index, GMSH_GUI, 0);
-  opt_view_draw_pyramids(index, GMSH_GUI, 0);
-  opt_view_draw_trihedra(index, GMSH_GUI, 0);
-  opt_view_draw_polygons(index, GMSH_GUI, 0);
-  opt_view_draw_polyhedra(index, GMSH_GUI, 0);
-  opt_view_draw_scalars(index, GMSH_GUI, 0);
-  opt_view_draw_vectors(index, GMSH_GUI, 0);
-  opt_view_draw_tensors(index, GMSH_GUI, 0);
-
-  opt_view_range_type(index, GMSH_GUI, 0);
 
   for(int i = 40; i <= 42; i++) {
     if(CTX::instance()->inputScrolling) view.value[i]->step(val1 / 200., 1);
@@ -3113,8 +2990,6 @@ void optionWindow::updateViewGroup(int index)
     view.value[i]->minimum(-val2);
     view.value[i]->maximum(val2);
   }
-  opt_view_use_gen_raise(index, GMSH_GUI, 0);
-  opt_view_gen_raise_view(index, GMSH_GUI, 0);
   if(CTX::instance()->inputScrolling) view.value[2]->step(val2 / 200., 1);
   view.value[2]->minimum(-val2);
   view.value[2]->maximum(val2);
@@ -3132,40 +3007,10 @@ void optionWindow::updateViewGroup(int index)
     view.label[0]->activate();
   }
   view.value[50]->maximum(data->getNumTimeSteps() - 1);
-  opt_view_force_num_components(index, GMSH_GUI, 0);
-  opt_view_component_map0(index, GMSH_GUI, 0);
-  opt_view_component_map1(index, GMSH_GUI, 0);
-  opt_view_component_map2(index, GMSH_GUI, 0);
-  opt_view_component_map3(index, GMSH_GUI, 0);
-  opt_view_component_map4(index, GMSH_GUI, 0);
-  opt_view_component_map5(index, GMSH_GUI, 0);
-  opt_view_component_map6(index, GMSH_GUI, 0);
-  opt_view_component_map7(index, GMSH_GUI, 0);
-  opt_view_component_map8(index, GMSH_GUI, 0);
 
   double val3 = 2. * CTX::instance()->lc / maxval;
   if(CTX::instance()->inputScrolling) view.value[63]->step(val3 / 100., 1);
   view.value[63]->maximum(val3);
-
-  opt_view_external_view(index, GMSH_GUI, 0);
-
-  opt_view_color_points(index, GMSH_GUI, 0);
-  opt_view_color_lines(index, GMSH_GUI, 0);
-  opt_view_color_triangles(index, GMSH_GUI, 0);
-  opt_view_color_quadrangles(index, GMSH_GUI, 0);
-  opt_view_color_tetrahedra(index, GMSH_GUI, 0);
-  opt_view_color_hexahedra(index, GMSH_GUI, 0);
-  opt_view_color_prisms(index, GMSH_GUI, 0);
-  opt_view_color_pyramids(index, GMSH_GUI, 0);
-  opt_view_color_trihedra(index, GMSH_GUI, 0);
-  opt_view_color_polygons(index, GMSH_GUI, 0);
-  opt_view_color_polyhedra(index, GMSH_GUI, 0);
-  opt_view_color_tangents(index, GMSH_GUI, 0);
-  opt_view_color_normals(index, GMSH_GUI, 0);
-  opt_view_color_text2d(index, GMSH_GUI, 0);
-  opt_view_color_text3d(index, GMSH_GUI, 0);
-  opt_view_color_axes(index, GMSH_GUI, 0);
-  opt_view_color_background2d(index, GMSH_GUI, 0);
 
   // the widgets bound to the options of the view
   showOptions();
@@ -3178,21 +3023,21 @@ static void setActive(bool on, std::initializer_list<Fl_Widget *> widgets)
   for(Fl_Widget *w : widgets) on ? w->activate() : w->deactivate();
 }
 
-void optionWindow::activate(const char *what)
+void optionWindow::updateActive()
 {
-  if(!what) return;
-
-  // activate/deactivate parts of the option window depending on the
-  // user's choices (or the option settings)
-  if(!strcmp(what, "fast_redraw")) {
-    // (no drawing here: this is also called by the option setter)
+  // the parts of the window that only apply with other options, made active
+  // or not as those are shown (activate() and deactivate() do nothing when the
+  // state does not change)
+  // (no drawing here: this is also called by the option setters; laid out
+  // again only when the button shows or hides)
+  if(general.butt[2]->value() != (redraw->visible() != 0)) {
     if(general.butt[2]->value())
       redraw->show();
     else
       redraw->hide();
     layout(true);
   }
-  else if(!strcmp(what, "shaders")) {
+  {
     // studio shading takes the direction of light 0 alone
     if(general.butt[3]->value() && general.choice[8]->value())
       general.value[13]->deactivate();
@@ -3203,27 +3048,27 @@ void optionWindow::activate(const char *what)
                general.value[35], geo.value[21], geo.choice[6], mesh.value[27],
                mesh.choice[11], view.value[79]});
   }
-  else if(!strcmp(what, "rotation_center")) {
+  {
     setActive(
       !(general.butt[15]->value()),
       {general.push[0], general.value[8], general.value[9], general.value[10]});
   }
-  else if(!strcmp(what, "general_axes")) {
+  {
     setActive(general.choice[4]->value(),
               {general.value[17], general.value[18], general.value[19],
                general.input[3], general.input[4], general.input[5],
                general.input[6], general.input[7], general.input[8]});
   }
-  else if(!strcmp(what, "general_axes_auto")) {
+  {
     setActive(!(general.butt[0]->value()),
               {general.value[20], general.value[21], general.value[22],
                general.value[23], general.value[24], general.value[25],
                general.push[1]});
   }
-  else if(!strcmp(what, "general_small_axes")) {
+  {
     setActive(general.butt[1]->value(), {general.value[26], general.value[27]});
   }
-  else if(!strcmp(what, "general_camera")) {
+  {
     if(general.butt[19]->value()) {
       if(CTX::instance()->gamepad && CTX::instance()->gamepad->active)
         general.gamepadconfig->activate();
@@ -3235,7 +3080,7 @@ void optionWindow::activate(const char *what)
     setActive(general.butt[18]->value(),
               {general.value[30], general.value[31]});
   }
-  else if(!strcmp(what, "geo_transform")) {
+  {
     if(geo.choice[3]->value() == 1) {
       for(int i = 7; i <= 18; i++) geo.value[i]->activate();
     }
@@ -3243,41 +3088,41 @@ void optionWindow::activate(const char *what)
       for(int i = 7; i <= 18; i++) geo.value[i]->deactivate();
     }
   }
-  else if(!strcmp(what, "custom_range")) {
+  {
     setActive(view.choice[7]->value() == 1,
               {view.value[31], view.value[32], view.push[1], view.push[2],
                view.butt[38]});
   }
-  else if(!strcmp(what, "view_adaptive")) {
+  {
     setActive(view.butt[0]->value(),
               {view.push[5], view.push[6], view.value[33], view.value[34],
                view.label[1]});
   }
-  else if(!strcmp(what, "view_general_transform")) {
+  {
     setActive(view.butt[6]->value(),
               {view.choice[11], view.value[2], view.input[4], view.input[5],
                view.input[6]});
   }
-  else if(!strcmp(what, "mesh_light")) {
+  {
     setActive(mesh.butt[17]->value(),
               {mesh.butt[18], mesh.butt[19], mesh.choice[10], mesh.value[18]});
   }
-  else if(!strcmp(what, "view_light")) {
+  {
     setActive(view.butt[11]->value(),
               {view.butt[8], view.butt[9], view.butt[12], view.value[10]});
   }
-  else if(!strcmp(what, "view_axes")) {
+  {
     setActive(view.choice[8]->value(),
               {view.value[3], view.value[4], view.value[5], view.input[7],
                view.input[8], view.input[9], view.input[10], view.input[11],
                view.input[12]});
   }
-  else if(!strcmp(what, "view_axes_auto_3d")) {
+  {
     setActive(!(view.butt[25]->value()),
               {view.value[13], view.value[14], view.value[15], view.value[16],
                view.value[17], view.value[18]});
   }
-  else if(!strcmp(what, "view_axes_auto_2d")) {
+  {
     setActive(view.choice[16]->value() == 0 || view.choice[16]->value() == 12,
               {view.value[20], view.value[21], view.value[22], view.value[23]});
   }

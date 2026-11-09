@@ -368,6 +368,8 @@ bool ColorOption(int action, const char *category, int num, const char *name,
                                                    s[i].def1[2], s[i].def1[3]));
   else
     val = s[i].function(num, action, val);
+
+  showInGui(action, category, num, name);
   return true;
 }
 
@@ -1531,11 +1533,6 @@ std::string opt_general_graphics_font_engine(OPT_ARGS_STR)
       if(old) delete old;
     }
   }
-  if(FlGui::available() && (action & GMSH_GUI)) {
-    Fl_Choice *c = FlGui::instance()->options->general.choice[7];
-    int index = c->find_index(CTX::instance()->glFontEngine.c_str());
-    c->value(index < 0 ? 0 : index);
-  }
 #endif
 
   return CTX::instance()->glFontEngine;
@@ -2323,10 +2320,6 @@ double opt_general_gui_color_scheme(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->guiColorScheme = (int)val;
 #if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)) {
-    FlGui::instance()->options->general.choice[9]->value(
-      CTX::instance()->guiColorScheme);
-  }
   if(action & GMSH_SET && FlGui::available()) {
     FlGui::instance()->applyColorScheme(true);
   }
@@ -3005,13 +2998,6 @@ double opt_general_shading(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX::instance()->shading = std::max(0, std::min(3, (int)val));
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)) {
-    FlGui::instance()->options->general.choice[8]->value(
-      CTX::instance()->shading);
-    FlGui::instance()->options->activate("shaders");
-  }
-#endif
   return CTX::instance()->shading;
 }
 
@@ -3131,13 +3117,6 @@ double opt_general_shaders(OPT_ARGS_NUM)
     }
 #endif
   }
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)) {
-    FlGui::instance()->options->general.butt[3]->value(
-      CTX::instance()->shaders);
-    FlGui::instance()->options->activate("shaders");
-  }
-#endif
   return CTX::instance()->shaders;
 }
 
@@ -3191,11 +3170,9 @@ double opt_general_orthographic(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI)) {
     if(CTX::instance()->ortho) {
-      FlGui::instance()->options->general.choice[2]->value(0);
       if(FlGui::available()) Msg::StatusBar(false, "Orthographic projection");
     }
     else {
-      FlGui::instance()->options->general.choice[2]->value(1);
       if(FlGui::available()) Msg::StatusBar(false, "Perspective projection");
     }
   }
@@ -3242,13 +3219,6 @@ double opt_general_mouse_invert_zoom(OPT_ARGS_NUM)
 double opt_general_fast_redraw(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->fastRedraw = (int)val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)) {
-    FlGui::instance()->options->general.butt[2]->value(
-      CTX::instance()->fastRedraw);
-    FlGui::instance()->options->activate("fast_redraw");
-  }
-#endif
   return CTX::instance()->fastRedraw;
 }
 
@@ -3330,12 +3300,6 @@ double opt_general_axes(OPT_ARGS_NUM)
     if(CTX::instance()->axes < 0 || CTX::instance()->axes > 5)
       CTX::instance()->axes = 0;
   }
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)) {
-    FlGui::instance()->options->general.choice[4]->value(CTX::instance()->axes);
-    FlGui::instance()->options->activate("general_axes");
-  }
-#endif
   return CTX::instance()->axes;
 }
 
@@ -3348,13 +3312,6 @@ double opt_general_axes_mikado(OPT_ARGS_NUM)
 double opt_general_axes_auto_position(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->axesAutoPosition = (int)val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)) {
-    FlGui::instance()->options->general.butt[0]->value(
-      CTX::instance()->axesAutoPosition);
-    FlGui::instance()->options->activate("general_axes_auto");
-  }
-#endif
   return CTX::instance()->axesAutoPosition;
 }
 
@@ -3457,13 +3414,6 @@ double opt_general_axes_value_zmax(OPT_ARGS_NUM)
 double opt_general_small_axes(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->smallAxes = (int)val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)) {
-    FlGui::instance()->options->general.butt[1]->value(
-      CTX::instance()->smallAxes);
-    FlGui::instance()->options->activate("general_small_axes");
-  }
-#endif
   return CTX::instance()->smallAxes;
 }
 
@@ -3488,13 +3438,6 @@ double opt_general_small_axes_size(OPT_ARGS_NUM)
 double opt_general_quadric_subdivisions(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->quadricSubdivisions = (int)val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) {
-    if(action & GMSH_GUI)
-      FlGui::instance()->options->general.value[11]->value(
-        CTX::instance()->quadricSubdivisions);
-  }
-#endif
   return CTX::instance()->quadricSubdivisions;
 }
 
@@ -3635,11 +3578,6 @@ double opt_general_color_scheme(OPT_ARGS_NUM)
     PView::list = tmp;
 #endif
   }
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->options->general.choice[3]->value(
-      CTX::instance()->colorScheme);
-#endif
   return CTX::instance()->colorScheme;
 }
 
@@ -3724,13 +3662,6 @@ double opt_general_gamepad(OPT_ARGS_NUM)
 double opt_general_rotation_center_cg(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->rotationCenterCg = (int)val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)) {
-    FlGui::instance()->options->general.butt[15]->value(
-      CTX::instance()->rotationCenterCg);
-    FlGui::instance()->options->activate("rotation_center");
-  }
-#endif
   return CTX::instance()->rotationCenterCg;
 }
 
@@ -3755,11 +3686,6 @@ double opt_general_heavy_visualization(OPT_ARGS_NUM)
 #endif
     CTX::instance()->heavyVisu = (int)val;
   }
-#if defined(HAVE_VISUDEV) && defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->options->general.butt[20]->value(
-      CTX::instance()->heavyVisu);
-#endif
   return CTX::instance()->heavyVisu;
 }
 
@@ -3796,13 +3722,6 @@ double opt_general_camera_aperture(OPT_ARGS_NUM)
 double opt_general_camera_mode(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->camera = (int)val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)) {
-    FlGui::instance()->options->general.butt[18]->value(
-      CTX::instance()->camera);
-    FlGui::instance()->options->activate("general_camera");
-  }
-#endif
   return CTX::instance()->camera;
 }
 
@@ -4120,8 +4039,6 @@ double opt_general_light00(OPT_ARGS_NUM)
   if(action & GMSH_SET) CTX::instance()->lightPosition[0][0] = val;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI)) {
-    FlGui::instance()->options->general.value[2]->value(
-      CTX::instance()->lightPosition[0][0]);
     FlGui::instance()->options->general.sphere->setValue(
       CTX::instance()->lightPosition[0][0],
       CTX::instance()->lightPosition[0][1],
@@ -4136,8 +4053,6 @@ double opt_general_light01(OPT_ARGS_NUM)
   if(action & GMSH_SET) CTX::instance()->lightPosition[0][1] = val;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI)) {
-    FlGui::instance()->options->general.value[3]->value(
-      CTX::instance()->lightPosition[0][1]);
     FlGui::instance()->options->general.sphere->setValue(
       CTX::instance()->lightPosition[0][0],
       CTX::instance()->lightPosition[0][1],
@@ -4152,8 +4067,6 @@ double opt_general_light02(OPT_ARGS_NUM)
   if(action & GMSH_SET) CTX::instance()->lightPosition[0][2] = val;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI)) {
-    FlGui::instance()->options->general.value[4]->value(
-      CTX::instance()->lightPosition[0][2]);
     FlGui::instance()->options->general.sphere->setValue(
       CTX::instance()->lightPosition[0][0],
       CTX::instance()->lightPosition[0][1],
@@ -4335,9 +4248,6 @@ double opt_geometry_transform(OPT_ARGS_NUM)
   }
 #if defined(HAVE_FLTK)
   if(FlGui::available()) {
-    if(action & GMSH_GUI)
-      FlGui::instance()->options->geo.choice[3]->value(
-        CTX::instance()->geom.useTransform);
     if(action & GMSH_SET) {
       openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
       if(CTX::instance()->geom.useTransform == 1) {
@@ -4351,20 +4261,16 @@ double opt_geometry_transform(OPT_ARGS_NUM)
         if(tr) delete tr;
       }
     }
-    FlGui::instance()->options->activate("geo_transform");
   }
 #endif
   return CTX::instance()->geom.useTransform;
 }
 
-static double _opt_geometry_transform(OPT_ARGS_NUM, int ii, int jj, int nn)
+static double _opt_geometry_transform(OPT_ARGS_NUM, int ii, int jj)
 {
   if(action & GMSH_SET) CTX::instance()->geom.transform[ii][jj] = val;
 #if defined(HAVE_FLTK)
   if(FlGui::available()) {
-    if(action & GMSH_GUI)
-      FlGui::instance()->options->geo.value[nn]->value(
-        CTX::instance()->geom.transform[ii][jj]);
     if(action & GMSH_SET) {
       openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
       drawTransform *tr = gl->getDrawContext()->getTransform();
@@ -4379,57 +4285,54 @@ static double _opt_geometry_transform(OPT_ARGS_NUM, int ii, int jj, int nn)
 
 double opt_geometry_transform00(OPT_ARGS_NUM)
 {
-  return _opt_geometry_transform(num, action, val, 0, 0, 7);
+  return _opt_geometry_transform(num, action, val, 0, 0);
 }
 
 double opt_geometry_transform01(OPT_ARGS_NUM)
 {
-  return _opt_geometry_transform(num, action, val, 0, 1, 8);
+  return _opt_geometry_transform(num, action, val, 0, 1);
 }
 
 double opt_geometry_transform02(OPT_ARGS_NUM)
 {
-  return _opt_geometry_transform(num, action, val, 0, 2, 9);
+  return _opt_geometry_transform(num, action, val, 0, 2);
 }
 
 double opt_geometry_transform10(OPT_ARGS_NUM)
 {
-  return _opt_geometry_transform(num, action, val, 1, 0, 11);
+  return _opt_geometry_transform(num, action, val, 1, 0);
 }
 
 double opt_geometry_transform11(OPT_ARGS_NUM)
 {
-  return _opt_geometry_transform(num, action, val, 1, 1, 12);
+  return _opt_geometry_transform(num, action, val, 1, 1);
 }
 
 double opt_geometry_transform12(OPT_ARGS_NUM)
 {
-  return _opt_geometry_transform(num, action, val, 1, 2, 13);
+  return _opt_geometry_transform(num, action, val, 1, 2);
 }
 
 double opt_geometry_transform20(OPT_ARGS_NUM)
 {
-  return _opt_geometry_transform(num, action, val, 2, 0, 15);
+  return _opt_geometry_transform(num, action, val, 2, 0);
 }
 
 double opt_geometry_transform21(OPT_ARGS_NUM)
 {
-  return _opt_geometry_transform(num, action, val, 2, 1, 16);
+  return _opt_geometry_transform(num, action, val, 2, 1);
 }
 
 double opt_geometry_transform22(OPT_ARGS_NUM)
 {
-  return _opt_geometry_transform(num, action, val, 2, 2, 17);
+  return _opt_geometry_transform(num, action, val, 2, 2);
 }
 
-static double _opt_geometry_offset(OPT_ARGS_NUM, int ii, int nn)
+static double _opt_geometry_offset(OPT_ARGS_NUM, int ii)
 {
   if(action & GMSH_SET) CTX::instance()->geom.offset[ii] = val;
 #if defined(HAVE_FLTK)
   if(FlGui::available()) {
-    if(action & GMSH_GUI)
-      FlGui::instance()->options->geo.value[nn]->value(
-        CTX::instance()->geom.offset[ii]);
     if(action & GMSH_SET) {
       openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
       drawTransform *tr = gl->getDrawContext()->getTransform();
@@ -4444,17 +4347,17 @@ static double _opt_geometry_offset(OPT_ARGS_NUM, int ii, int nn)
 
 double opt_geometry_offset0(OPT_ARGS_NUM)
 {
-  return _opt_geometry_offset(num, action, val, 0, 10);
+  return _opt_geometry_offset(num, action, val, 0);
 }
 
 double opt_geometry_offset1(OPT_ARGS_NUM)
 {
-  return _opt_geometry_offset(num, action, val, 1, 14);
+  return _opt_geometry_offset(num, action, val, 1);
 }
 
 double opt_geometry_offset2(OPT_ARGS_NUM)
 {
-  return _opt_geometry_offset(num, action, val, 2, 18);
+  return _opt_geometry_offset(num, action, val, 2);
 }
 
 double opt_geometry_auto_coherence(OPT_ARGS_NUM)
@@ -5322,15 +5225,6 @@ double opt_mesh_triangles(OPT_ARGS_NUM)
       CTX::instance()->meshOptionsChanged(ENT_SURFACE);
     CTX::instance()->mesh.triangles = (int)val;
   }
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)) {
-    if(CTX::instance()->mesh.triangles)
-      ((Fl_Menu_Item *)FlGui::instance()->options->mesh.menu->menu())[0].set();
-    else
-      ((Fl_Menu_Item *)FlGui::instance()->options->mesh.menu->menu())[0]
-        .clear();
-  }
-#endif
   return CTX::instance()->mesh.triangles;
 }
 
@@ -5341,15 +5235,6 @@ double opt_mesh_quadrangles(OPT_ARGS_NUM)
       CTX::instance()->meshOptionsChanged(ENT_SURFACE);
     CTX::instance()->mesh.quadrangles = (int)val;
   }
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)) {
-    if(CTX::instance()->mesh.quadrangles)
-      ((Fl_Menu_Item *)FlGui::instance()->options->mesh.menu->menu())[1].set();
-    else
-      ((Fl_Menu_Item *)FlGui::instance()->options->mesh.menu->menu())[1]
-        .clear();
-  }
-#endif
   return CTX::instance()->mesh.quadrangles;
 }
 
@@ -5360,15 +5245,6 @@ double opt_mesh_tetrahedra(OPT_ARGS_NUM)
       CTX::instance()->meshOptionsChanged(ENT_VOLUME);
     CTX::instance()->mesh.tetrahedra = (int)val;
   }
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)) {
-    if(CTX::instance()->mesh.tetrahedra)
-      ((Fl_Menu_Item *)FlGui::instance()->options->mesh.menu->menu())[2].set();
-    else
-      ((Fl_Menu_Item *)FlGui::instance()->options->mesh.menu->menu())[2]
-        .clear();
-  }
-#endif
   return CTX::instance()->mesh.tetrahedra;
 }
 
@@ -5379,15 +5255,6 @@ double opt_mesh_hexahedra(OPT_ARGS_NUM)
       CTX::instance()->meshOptionsChanged(ENT_VOLUME);
     CTX::instance()->mesh.hexahedra = (int)val;
   }
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)) {
-    if(CTX::instance()->mesh.hexahedra)
-      ((Fl_Menu_Item *)FlGui::instance()->options->mesh.menu->menu())[3].set();
-    else
-      ((Fl_Menu_Item *)FlGui::instance()->options->mesh.menu->menu())[3]
-        .clear();
-  }
-#endif
   return CTX::instance()->mesh.hexahedra;
 }
 
@@ -5398,15 +5265,6 @@ double opt_mesh_prisms(OPT_ARGS_NUM)
       CTX::instance()->meshOptionsChanged(ENT_VOLUME);
     CTX::instance()->mesh.prisms = (int)val;
   }
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)) {
-    if(CTX::instance()->mesh.prisms)
-      ((Fl_Menu_Item *)FlGui::instance()->options->mesh.menu->menu())[4].set();
-    else
-      ((Fl_Menu_Item *)FlGui::instance()->options->mesh.menu->menu())[4]
-        .clear();
-  }
-#endif
   return CTX::instance()->mesh.prisms;
 }
 
@@ -5417,15 +5275,6 @@ double opt_mesh_pyramids(OPT_ARGS_NUM)
       CTX::instance()->meshOptionsChanged(ENT_VOLUME);
     CTX::instance()->mesh.pyramids = (int)val;
   }
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)) {
-    if(CTX::instance()->mesh.pyramids)
-      ((Fl_Menu_Item *)FlGui::instance()->options->mesh.menu->menu())[5].set();
-    else
-      ((Fl_Menu_Item *)FlGui::instance()->options->mesh.menu->menu())[5]
-        .clear();
-  }
-#endif
   return CTX::instance()->mesh.pyramids;
 }
 
@@ -5436,15 +5285,6 @@ double opt_mesh_trihedra(OPT_ARGS_NUM)
       CTX::instance()->meshOptionsChanged(ENT_VOLUME);
     CTX::instance()->mesh.trihedra = (int)val;
   }
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)) {
-    if(CTX::instance()->mesh.trihedra)
-      ((Fl_Menu_Item *)FlGui::instance()->options->mesh.menu->menu())[6].set();
-    else
-      ((Fl_Menu_Item *)FlGui::instance()->options->mesh.menu->menu())[6]
-        .clear();
-  }
-#endif
   return CTX::instance()->mesh.trihedra;
 }
 double opt_mesh_polygons(OPT_ARGS_NUM)
@@ -5454,15 +5294,6 @@ double opt_mesh_polygons(OPT_ARGS_NUM)
       CTX::instance()->meshOptionsChanged(ENT_SURFACE);
     CTX::instance()->mesh.polygons = (int)val;
   }
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)) {
-    if(CTX::instance()->mesh.polygons)
-      ((Fl_Menu_Item *)FlGui::instance()->options->mesh.menu->menu())[7].set();
-    else
-      ((Fl_Menu_Item *)FlGui::instance()->options->mesh.menu->menu())[7]
-        .clear();
-  }
-#endif
   return CTX::instance()->mesh.polygons;
 }
 
@@ -5473,15 +5304,6 @@ double opt_mesh_polyhedra(OPT_ARGS_NUM)
       CTX::instance()->meshOptionsChanged(ENT_VOLUME);
     CTX::instance()->mesh.polyhedra = (int)val;
   }
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)) {
-    if(CTX::instance()->mesh.polyhedra)
-      ((Fl_Menu_Item *)FlGui::instance()->options->mesh.menu->menu())[8].set();
-    else
-      ((Fl_Menu_Item *)FlGui::instance()->options->mesh.menu->menu())[8]
-        .clear();
-  }
-#endif
   return CTX::instance()->mesh.polyhedra;
 }
 
@@ -5615,13 +5437,6 @@ double opt_mesh_angle_smooth_normals(OPT_ARGS_NUM)
 double opt_mesh_light(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.light = (int)val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)) {
-    FlGui::instance()->options->mesh.butt[17]->value(
-      CTX::instance()->mesh.light);
-    FlGui::instance()->options->activate("mesh_light");
-  }
-#endif
   return CTX::instance()->mesh.light;
 }
 
@@ -5892,38 +5707,6 @@ double opt_mesh_algo2d(OPT_ARGS_NUM)
       Msg::SetOnelabChanged(2);
     CTX::instance()->mesh.algo2d = (int)val;
   }
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)) {
-    switch(CTX::instance()->mesh.algo2d) {
-    case ALGO_2D_MESHADAPT:
-      FlGui::instance()->options->mesh.choice[2]->value(1);
-      break;
-    case ALGO_2D_DELAUNAY:
-      FlGui::instance()->options->mesh.choice[2]->value(2);
-      break;
-    case ALGO_2D_FRONTAL:
-      FlGui::instance()->options->mesh.choice[2]->value(3);
-      break;
-    case ALGO_2D_BAMG:
-      FlGui::instance()->options->mesh.choice[2]->value(4);
-      break;
-    case ALGO_2D_FRONTAL_QUAD:
-      FlGui::instance()->options->mesh.choice[2]->value(5);
-      break;
-    case ALGO_2D_PACK_PRLGRMS:
-      FlGui::instance()->options->mesh.choice[2]->value(6);
-      break;
-    case ALGO_2D_QUAD_QUASI_STRUCT:
-      FlGui::instance()->options->mesh.choice[2]->value(7);
-      break;
-    case ALGO_2D_INITIAL_ONLY:
-      FlGui::instance()->options->mesh.choice[2]->value(8);
-      break;
-    case ALGO_2D_AUTO:
-    default: FlGui::instance()->options->mesh.choice[2]->value(0); break;
-    }
-  }
-#endif
   return CTX::instance()->mesh.algo2d;
 }
 
@@ -6077,29 +5860,6 @@ double opt_mesh_algo3d(OPT_ARGS_NUM)
     // "New Delaunay" is now simply "Delaunay"
     if(CTX::instance()->mesh.algo3d == 2) CTX::instance()->mesh.algo3d = 1;
   }
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)) {
-    switch(CTX::instance()->mesh.algo3d) {
-    case ALGO_3D_PDEL3D:
-      FlGui::instance()->options->mesh.choice[3]->value(1);
-      break;
-    case ALGO_3D_FRONTAL:
-      FlGui::instance()->options->mesh.choice[3]->value(2);
-      break;
-    case ALGO_3D_HXT:
-      FlGui::instance()->options->mesh.choice[3]->value(3);
-      break;
-    case ALGO_3D_MMG3D:
-      FlGui::instance()->options->mesh.choice[3]->value(4);
-      break;
-    case ALGO_3D_INITIAL_ONLY:
-      FlGui::instance()->options->mesh.choice[3]->value(5);
-      break;
-    case ALGO_3D_DELAUNAY:
-    default: FlGui::instance()->options->mesh.choice[3]->value(0); break;
-    }
-  }
-#endif
   return CTX::instance()->mesh.algo3d;
 }
 
@@ -6860,9 +6620,6 @@ double opt_post_anim_cycle(OPT_ARGS_NUM)
       CTX::instance()->post.animCycle = 0;
   }
 #if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->options->post.butt[0]->value(
-      CTX::instance()->post.animCycle);
   if(FlGui::available())
     for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
       FlGui::instance()->graph[i]->checkAnimButtons();
@@ -7576,13 +7333,6 @@ double opt_view_adapt_visualization_grid(OPT_ARGS_NUM)
       view->setChanged(true);
     }
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    FlGui::instance()->options->view.butt[0]->value(
-      opt->adaptVisualizationGrid);
-    FlGui::instance()->options->activate("view_adaptive");
-  }
-#endif
   return opt->adaptVisualizationGrid;
 #else
   return 0.;
@@ -7654,12 +7404,6 @@ double opt_view_auto_position(OPT_ARGS_NUM)
     opt->autoPosition = (int)val;
     if(opt->autoPosition < 0 || opt->autoPosition > 12) opt->autoPosition = 0;
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    FlGui::instance()->options->view.choice[16]->value(opt->autoPosition);
-    FlGui::instance()->options->activate("view_axes_auto_2d");
-  }
-#endif
   return opt->autoPosition;
 #else
   return 0.;
@@ -7732,12 +7476,6 @@ double opt_view_axes(OPT_ARGS_NUM)
     opt->axes = (int)val;
     if(opt->axes < 0 || opt->axes > PViewOptions::AutomaticAxes) opt->axes = 0;
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    FlGui::instance()->options->view.choice[8]->value(opt->axes);
-    FlGui::instance()->options->activate("view_axes");
-  }
-#endif
   return opt->axes;
 #else
   return 0.;
@@ -7760,12 +7498,6 @@ double opt_view_axes_auto_position(OPT_ARGS_NUM)
 #if defined(HAVE_POST)
   GET_VIEWo(0.);
   if(action & GMSH_SET) { opt->axesAutoPosition = (int)val; }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    FlGui::instance()->options->view.butt[25]->value(opt->axesAutoPosition);
-    FlGui::instance()->options->activate("view_axes_auto_3d");
-  }
-#endif
   return opt->axesAutoPosition;
 #else
   return 0.;
@@ -7908,12 +7640,6 @@ double opt_view_light(OPT_ARGS_NUM)
     opt->light = (int)val;
     if(view) view->setChanged(true);
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    FlGui::instance()->options->view.butt[11]->value(opt->light);
-    FlGui::instance()->options->activate("view_light");
-  }
-#endif
   return opt->light;
 #else
   return 0.;
@@ -8028,16 +7754,6 @@ double opt_view_draw_points(OPT_ARGS_NUM)
     opt->drawPoints = (int)val;
     if(view) view->setChanged(true);
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    if(opt->drawPoints)
-      ((Fl_Menu_Item *)FlGui::instance()->options->view.menu[1]->menu())[0]
-        .set();
-    else
-      ((Fl_Menu_Item *)FlGui::instance()->options->view.menu[1]->menu())[0]
-        .clear();
-  }
-#endif
   return opt->drawPoints;
 #else
   return 0.;
@@ -8052,16 +7768,6 @@ double opt_view_draw_lines(OPT_ARGS_NUM)
     opt->drawLines = (int)val;
     if(view) view->setChanged(true);
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    if(opt->drawLines)
-      ((Fl_Menu_Item *)FlGui::instance()->options->view.menu[1]->menu())[1]
-        .set();
-    else
-      ((Fl_Menu_Item *)FlGui::instance()->options->view.menu[1]->menu())[1]
-        .clear();
-  }
-#endif
   return opt->drawLines;
 #else
   return 0.;
@@ -8076,16 +7782,6 @@ double opt_view_draw_triangles(OPT_ARGS_NUM)
     opt->drawTriangles = (int)val;
     if(view) view->setChanged(true);
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    if(opt->drawTriangles)
-      ((Fl_Menu_Item *)FlGui::instance()->options->view.menu[1]->menu())[2]
-        .set();
-    else
-      ((Fl_Menu_Item *)FlGui::instance()->options->view.menu[1]->menu())[2]
-        .clear();
-  }
-#endif
   return opt->drawTriangles;
 #else
   return 0.;
@@ -8100,16 +7796,6 @@ double opt_view_draw_quadrangles(OPT_ARGS_NUM)
     opt->drawQuadrangles = (int)val;
     if(view) view->setChanged(true);
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    if(opt->drawQuadrangles)
-      ((Fl_Menu_Item *)FlGui::instance()->options->view.menu[1]->menu())[3]
-        .set();
-    else
-      ((Fl_Menu_Item *)FlGui::instance()->options->view.menu[1]->menu())[3]
-        .clear();
-  }
-#endif
   return opt->drawQuadrangles;
 #else
   return 0.;
@@ -8124,16 +7810,6 @@ double opt_view_draw_tetrahedra(OPT_ARGS_NUM)
     opt->drawTetrahedra = (int)val;
     if(view) view->setChanged(true);
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    if(opt->drawTetrahedra)
-      ((Fl_Menu_Item *)FlGui::instance()->options->view.menu[1]->menu())[4]
-        .set();
-    else
-      ((Fl_Menu_Item *)FlGui::instance()->options->view.menu[1]->menu())[4]
-        .clear();
-  }
-#endif
   return opt->drawTetrahedra;
 #else
   return 0.;
@@ -8148,16 +7824,6 @@ double opt_view_draw_hexahedra(OPT_ARGS_NUM)
     opt->drawHexahedra = (int)val;
     if(view) view->setChanged(true);
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    if(opt->drawHexahedra)
-      ((Fl_Menu_Item *)FlGui::instance()->options->view.menu[1]->menu())[5]
-        .set();
-    else
-      ((Fl_Menu_Item *)FlGui::instance()->options->view.menu[1]->menu())[5]
-        .clear();
-  }
-#endif
   return opt->drawHexahedra;
 #else
   return 0.;
@@ -8172,16 +7838,6 @@ double opt_view_draw_prisms(OPT_ARGS_NUM)
     opt->drawPrisms = (int)val;
     if(view) view->setChanged(true);
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    if(opt->drawPrisms)
-      ((Fl_Menu_Item *)FlGui::instance()->options->view.menu[1]->menu())[6]
-        .set();
-    else
-      ((Fl_Menu_Item *)FlGui::instance()->options->view.menu[1]->menu())[6]
-        .clear();
-  }
-#endif
   return opt->drawPrisms;
 #else
   return 0.;
@@ -8196,16 +7852,6 @@ double opt_view_draw_pyramids(OPT_ARGS_NUM)
     opt->drawPyramids = (int)val;
     if(view) view->setChanged(true);
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    if(opt->drawPyramids)
-      ((Fl_Menu_Item *)FlGui::instance()->options->view.menu[1]->menu())[7]
-        .set();
-    else
-      ((Fl_Menu_Item *)FlGui::instance()->options->view.menu[1]->menu())[7]
-        .clear();
-  }
-#endif
   return opt->drawPyramids;
 #else
   return 0.;
@@ -8220,16 +7866,6 @@ double opt_view_draw_trihedra(OPT_ARGS_NUM)
     opt->drawTrihedra = (int)val;
     if(view) view->setChanged(true);
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    if(opt->drawTrihedra)
-      ((Fl_Menu_Item *)FlGui::instance()->options->view.menu[1]->menu())[8]
-        .set();
-    else
-      ((Fl_Menu_Item *)FlGui::instance()->options->view.menu[1]->menu())[8]
-        .clear();
-  }
-#endif
   return opt->drawTrihedra;
 #else
   return 0.;
@@ -8243,16 +7879,6 @@ double opt_view_draw_polygons(OPT_ARGS_NUM)
     opt->drawPolygons = (int)val;
     if(view) view->setChanged(true);
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    if(opt->drawPolygons)
-      ((Fl_Menu_Item *)FlGui::instance()->options->view.menu[1]->menu())[9]
-        .set();
-    else
-      ((Fl_Menu_Item *)FlGui::instance()->options->view.menu[1]->menu())[9]
-        .clear();
-  }
-#endif
   return opt->drawPolygons;
 #else
   return 0.;
@@ -8267,16 +7893,6 @@ double opt_view_draw_polyhedra(OPT_ARGS_NUM)
     opt->drawPolyhedra = (int)val;
     if(view) view->setChanged(true);
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    if(opt->drawPolyhedra)
-      ((Fl_Menu_Item *)FlGui::instance()->options->view.menu[1]->menu())[10]
-        .set();
-    else
-      ((Fl_Menu_Item *)FlGui::instance()->options->view.menu[1]->menu())[10]
-        .clear();
-  }
-#endif
   return opt->drawPolyhedra;
 #else
   return 0.;
@@ -8292,16 +7908,6 @@ double opt_view_draw_scalars(OPT_ARGS_NUM)
     opt->drawScalars = (int)val;
     if(view) view->setChanged(true);
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    if(opt->drawScalars)
-      ((Fl_Menu_Item *)FlGui::instance()->options->view.menu[0]->menu())[0]
-        .set();
-    else
-      ((Fl_Menu_Item *)FlGui::instance()->options->view.menu[0]->menu())[0]
-        .clear();
-  }
-#endif
   return opt->drawScalars;
 #else
   return 0.;
@@ -8316,16 +7922,6 @@ double opt_view_draw_vectors(OPT_ARGS_NUM)
     opt->drawVectors = (int)val;
     if(view) view->setChanged(true);
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    if(opt->drawVectors)
-      ((Fl_Menu_Item *)FlGui::instance()->options->view.menu[0]->menu())[1]
-        .set();
-    else
-      ((Fl_Menu_Item *)FlGui::instance()->options->view.menu[0]->menu())[1]
-        .clear();
-  }
-#endif
   return opt->drawVectors;
 #else
   return 0.;
@@ -8340,16 +7936,6 @@ double opt_view_draw_tensors(OPT_ARGS_NUM)
     opt->drawTensors = (int)val;
     if(view) view->setChanged(true);
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    if(opt->drawTensors)
-      ((Fl_Menu_Item *)FlGui::instance()->options->view.menu[0]->menu())[2]
-        .set();
-    else
-      ((Fl_Menu_Item *)FlGui::instance()->options->view.menu[0]->menu())[2]
-        .clear();
-  }
-#endif
   return opt->drawTensors;
 #else
   return 0.;
@@ -8422,12 +8008,6 @@ double opt_view_range_type(OPT_ARGS_NUM)
     if(opt->rangeType < 1 || opt->rangeType > 3) opt->rangeType = 1;
     if(view) view->setChanged(true);
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    FlGui::instance()->options->view.choice[7]->value(opt->rangeType - 1);
-    FlGui::instance()->options->activate("custom_range");
-  }
-#endif
   return opt->rangeType;
 #else
   return 0.;
@@ -8692,8 +8272,6 @@ double opt_view_colormap_number(OPT_ARGS_NUM)
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    FlGui::instance()->options->view.choice[17]->value(
-      opt->colorTable.ipar[COLORTABLE_NUMBER]);
     FlGui::instance()->options->view.colorbar->redraw();
   }
 #endif
@@ -8751,17 +8329,6 @@ double opt_view_external_view(OPT_ARGS_NUM)
     opt->externalViewIndex = (int)val;
     if(view) view->setChanged(true);
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    // warning: Fl_Choice::size() returns number of items+1
-    int item = opt->externalViewIndex + 1;
-    if(item > -1 &&
-       item < FlGui::instance()->options->view.choice[10]->size() - 1)
-      FlGui::instance()->options->view.choice[10]->value(item);
-    else
-      FlGui::instance()->options->view.choice[10]->value(0);
-  }
-#endif
   return opt->externalViewIndex;
 #else
   return 0.;
@@ -8776,17 +8343,6 @@ double opt_view_gen_raise_view(OPT_ARGS_NUM)
     opt->viewIndexForGenRaise = (int)val;
     if(view) view->setChanged(true);
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    // warning: Fl_Choice::size() returns number of items+1
-    int item = opt->viewIndexForGenRaise + 1;
-    if(item > -1 &&
-       item < FlGui::instance()->options->view.choice[11]->size() - 1)
-      FlGui::instance()->options->view.choice[11]->value(item);
-    else
-      FlGui::instance()->options->view.choice[11]->value(0);
-  }
-#endif
   return opt->viewIndexForGenRaise;
 #else
   return 0.;
@@ -8815,12 +8371,6 @@ double opt_view_use_gen_raise(OPT_ARGS_NUM)
     opt->useGenRaise = (int)val;
     if(view) view->setChanged(true);
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    FlGui::instance()->options->view.butt[6]->value(opt->useGenRaise);
-    FlGui::instance()->options->activate("view_general_transform");
-  }
-#endif
   return opt->useGenRaise;
 #else
   return 0.;
@@ -8862,18 +8412,6 @@ double opt_view_force_num_components(OPT_ARGS_NUM)
     opt->forceNumComponents = (int)val;
     if(view) view->setChanged(true);
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    if(opt->forceNumComponents == 1)
-      FlGui::instance()->options->view.choice[14]->value(1);
-    else if(opt->forceNumComponents == 3)
-      FlGui::instance()->options->view.choice[14]->value(2);
-    else if(opt->forceNumComponents == 9)
-      FlGui::instance()->options->view.choice[14]->value(3);
-    else
-      FlGui::instance()->options->view.choice[14]->value(0);
-  }
-#endif
   return opt->forceNumComponents;
 #else
   return 0.;
@@ -8888,12 +8426,6 @@ static double ovcm(OPT_ARGS_NUM, int nn)
     opt->componentMap[nn] = (int)val;
     if(view) view->setChanged(true);
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    FlGui::instance()->options->view.value[70 + nn]->value(
-      opt->componentMap[nn]);
-  }
-#endif
   return opt->componentMap[nn];
 #else
   return 0.;
@@ -9255,16 +8787,6 @@ double opt_print_x3d_colorize(OPT_ARGS_NUM)
 
 #if defined(HAVE_FLTK)
 
-#define CCC(col, but)                                                          \
-  if(FlGui::available() && (action & GMSH_GUI)) {                              \
-    Fl_Color c =                                                               \
-      fl_color_cube(CTX::instance()->unpackRed(col) * FL_NUM_RED / 256,        \
-                    CTX::instance()->unpackGreen(col) * FL_NUM_GREEN / 256,    \
-                    CTX::instance()->unpackBlue(col) * FL_NUM_BLUE / 256);     \
-    (but)->color(c);                                                           \
-    (but)->labelcolor(fl_contrast(FL_BLACK, c));                               \
-    (but)->redraw();                                                           \
-  }
 
 #endif
 
@@ -9276,28 +8798,18 @@ unsigned int opt_general_color_background(OPT_ARGS_COL)
     if(FlGui::available()) FlGui::instance()->options->view.colorbar->redraw();
 #endif
   }
-#if defined(HAVE_FLTK)
-  CCC(CTX::instance()->color.bg, FlGui::instance()->options->general.color[0]);
-#endif
   return CTX::instance()->color.bg;
 }
 
 unsigned int opt_general_color_background_gradient(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) CTX::instance()->color.bgGrad = val;
-#if defined(HAVE_FLTK)
-  CCC(CTX::instance()->color.bgGrad,
-      FlGui::instance()->options->general.color[1]);
-#endif
   return CTX::instance()->color.bgGrad;
 }
 
 unsigned int opt_general_color_foreground(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) CTX::instance()->color.fg = val;
-#if defined(HAVE_FLTK)
-  CCC(CTX::instance()->color.fg, FlGui::instance()->options->general.color[2]);
-#endif
   return CTX::instance()->color.fg;
 }
 
@@ -9307,10 +8819,6 @@ unsigned int opt_general_color_text(OPT_ARGS_COL)
     CTX::instance()->color.text = val;
     stringColorsChanged();
   }
-#if defined(HAVE_FLTK)
-  CCC(CTX::instance()->color.text,
-      FlGui::instance()->options->general.color[3]);
-#endif
   return CTX::instance()->color.text;
 }
 
@@ -9320,10 +8828,6 @@ unsigned int opt_general_color_axes(OPT_ARGS_COL)
     CTX::instance()->color.axes = val;
     stringColorsChanged();
   }
-#if defined(HAVE_FLTK)
-  CCC(CTX::instance()->color.axes,
-      FlGui::instance()->options->general.color[4]);
-#endif
   return CTX::instance()->color.axes;
 }
 
@@ -9333,20 +8837,12 @@ unsigned int opt_general_color_small_axes(OPT_ARGS_COL)
     CTX::instance()->color.smallAxes = val;
     stringColorsChanged();
   }
-#if defined(HAVE_FLTK)
-  CCC(CTX::instance()->color.smallAxes,
-      FlGui::instance()->options->general.color[5]);
-#endif
   return CTX::instance()->color.smallAxes;
 }
 
 unsigned int opt_general_color_query(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) { CTX::instance()->color.query = val; }
-#if defined(HAVE_FLTK)
-  CCC(CTX::instance()->color.query,
-      FlGui::instance()->options->general.color[9]);
-#endif
   return CTX::instance()->color.query;
 }
 
@@ -9354,10 +8850,6 @@ unsigned int opt_general_color_ambient_light(OPT_ARGS_COL)
 {
   if(action & GMSH_SET)
     for(int i = 0; i < 6; i++) CTX::instance()->color.ambientLight[i] = val;
-#if defined(HAVE_FLTK)
-  CCC(CTX::instance()->color.ambientLight[0],
-      FlGui::instance()->options->general.color[6]);
-#endif
   return CTX::instance()->color.ambientLight[0];
 }
 
@@ -9365,10 +8857,6 @@ unsigned int opt_general_color_diffuse_light(OPT_ARGS_COL)
 {
   if(action & GMSH_SET)
     for(int i = 0; i < 6; i++) CTX::instance()->color.diffuseLight[i] = val;
-#if defined(HAVE_FLTK)
-  CCC(CTX::instance()->color.diffuseLight[0],
-      FlGui::instance()->options->general.color[7]);
-#endif
   return CTX::instance()->color.diffuseLight[0];
 }
 
@@ -9376,30 +8864,18 @@ unsigned int opt_general_color_specular_light(OPT_ARGS_COL)
 {
   if(action & GMSH_SET)
     for(int i = 0; i < 6; i++) CTX::instance()->color.specularLight[i] = val;
-#if defined(HAVE_FLTK)
-  CCC(CTX::instance()->color.specularLight[0],
-      FlGui::instance()->options->general.color[8]);
-#endif
   return CTX::instance()->color.specularLight[0];
 }
 
 unsigned int opt_geometry_color_points(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) CTX::instance()->color.geom.point = val;
-#if defined(HAVE_FLTK)
-  CCC(CTX::instance()->color.geom.point,
-      FlGui::instance()->options->geo.color[0]);
-#endif
   return CTX::instance()->color.geom.point;
 }
 
 unsigned int opt_geometry_color_curves(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) CTX::instance()->color.geom.curve = val;
-#if defined(HAVE_FLTK)
-  CCC(CTX::instance()->color.geom.curve,
-      FlGui::instance()->options->geo.color[1]);
-#endif
   return CTX::instance()->color.geom.curve;
 }
 
@@ -9409,110 +8885,66 @@ unsigned int opt_geometry_color_surfaces(OPT_ARGS_COL)
     CTX::instance()->color.geom.surface = val;
     GModel::current()->deleteGeometryVertexArrays();
   }
-#if defined(HAVE_FLTK)
-  CCC(CTX::instance()->color.geom.surface,
-      FlGui::instance()->options->geo.color[2]);
-#endif
   return CTX::instance()->color.geom.surface;
 }
 
 unsigned int opt_geometry_color_volumes(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) CTX::instance()->color.geom.volume = val;
-#if defined(HAVE_FLTK)
-  CCC(CTX::instance()->color.geom.volume,
-      FlGui::instance()->options->geo.color[3]);
-#endif
   return CTX::instance()->color.geom.volume;
 }
 
 unsigned int opt_geometry_color_selection(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) CTX::instance()->color.geom.selection = val;
-#if defined(HAVE_FLTK)
-  CCC(CTX::instance()->color.geom.selection,
-      FlGui::instance()->options->geo.color[4]);
-#endif
   return CTX::instance()->color.geom.selection;
 }
 
 unsigned int opt_geometry_color_highlight0(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) { CTX::instance()->color.geom.highlight[0] = val; }
-#if defined(HAVE_FLTK)
-  CCC(CTX::instance()->color.geom.highlight[0],
-      FlGui::instance()->options->geo.color[5]);
-#endif
   return CTX::instance()->color.geom.highlight[0];
 }
 
 unsigned int opt_geometry_color_highlight1(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) { CTX::instance()->color.geom.highlight[1] = val; }
-#if defined(HAVE_FLTK)
-  CCC(CTX::instance()->color.geom.highlight[1],
-      FlGui::instance()->options->geo.color[6]);
-#endif
   return CTX::instance()->color.geom.highlight[1];
 }
 
 unsigned int opt_geometry_color_highlight2(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) CTX::instance()->color.geom.highlight[2] = val;
-#if defined(HAVE_FLTK)
-  CCC(CTX::instance()->color.geom.highlight[2],
-      FlGui::instance()->options->geo.color[7]);
-#endif
   return CTX::instance()->color.geom.highlight[2];
 }
 
 unsigned int opt_geometry_color_tangents(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) CTX::instance()->color.geom.tangents = val;
-#if defined(HAVE_FLTK)
-  CCC(CTX::instance()->color.geom.tangents,
-      FlGui::instance()->options->geo.color[8]);
-#endif
   return CTX::instance()->color.geom.tangents;
 }
 
 unsigned int opt_geometry_color_normals(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) CTX::instance()->color.geom.normals = val;
-#if defined(HAVE_FLTK)
-  CCC(CTX::instance()->color.geom.normals,
-      FlGui::instance()->options->geo.color[9]);
-#endif
   return CTX::instance()->color.geom.normals;
 }
 
 unsigned int opt_geometry_color_projection(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) { CTX::instance()->color.geom.projection = val; }
-#if defined(HAVE_FLTK)
-  CCC(CTX::instance()->color.geom.projection,
-      FlGui::instance()->options->geo.color[10]);
-#endif
   return CTX::instance()->color.geom.projection;
 }
 
 unsigned int opt_mesh_color_nodes(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) { CTX::instance()->color.mesh.node = val; }
-#if defined(HAVE_FLTK)
-  CCC(CTX::instance()->color.mesh.node,
-      FlGui::instance()->options->mesh.color[0]);
-#endif
   return CTX::instance()->color.mesh.node;
 }
 
 unsigned int opt_mesh_color_nodes_sup(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) { CTX::instance()->color.mesh.nodeSup = val; }
-#if defined(HAVE_FLTK)
-  CCC(CTX::instance()->color.mesh.nodeSup,
-      FlGui::instance()->options->mesh.color[1]);
-#endif
   return CTX::instance()->color.mesh.nodeSup;
 }
 
@@ -9529,10 +8961,6 @@ unsigned int opt_mesh_color_lines(OPT_ARGS_COL)
       CTX::instance()->entityColorsChanged();
     CTX::instance()->color.mesh.line = val;
   }
-#if defined(HAVE_FLTK)
-  CCC(CTX::instance()->color.mesh.line,
-      FlGui::instance()->options->mesh.color[2]);
-#endif
   return CTX::instance()->color.mesh.line;
 }
 
@@ -9546,10 +8974,6 @@ unsigned int opt_mesh_color_triangles(OPT_ARGS_COL)
       CTX::instance()->meshOptionsChanged(ENT_SURFACE);
     CTX::instance()->color.mesh.triangle = val;
   }
-#if defined(HAVE_FLTK)
-  CCC(CTX::instance()->color.mesh.triangle,
-      FlGui::instance()->options->mesh.color[3]);
-#endif
   return CTX::instance()->color.mesh.triangle;
 }
 
@@ -9563,10 +8987,6 @@ unsigned int opt_mesh_color_quadrangles(OPT_ARGS_COL)
       CTX::instance()->meshOptionsChanged(ENT_SURFACE);
     CTX::instance()->color.mesh.quadrangle = val;
   }
-#if defined(HAVE_FLTK)
-  CCC(CTX::instance()->color.mesh.quadrangle,
-      FlGui::instance()->options->mesh.color[4]);
-#endif
   return CTX::instance()->color.mesh.quadrangle;
 }
 
@@ -9580,10 +9000,6 @@ unsigned int opt_mesh_color_tetrahedra(OPT_ARGS_COL)
       CTX::instance()->meshOptionsChanged(ENT_VOLUME);
     CTX::instance()->color.mesh.tetrahedron = val;
   }
-#if defined(HAVE_FLTK)
-  CCC(CTX::instance()->color.mesh.tetrahedron,
-      FlGui::instance()->options->mesh.color[5]);
-#endif
   return CTX::instance()->color.mesh.tetrahedron;
 }
 
@@ -9597,10 +9013,6 @@ unsigned int opt_mesh_color_hexahedra(OPT_ARGS_COL)
       CTX::instance()->meshOptionsChanged(ENT_VOLUME);
     CTX::instance()->color.mesh.hexahedron = val;
   }
-#if defined(HAVE_FLTK)
-  CCC(CTX::instance()->color.mesh.hexahedron,
-      FlGui::instance()->options->mesh.color[6]);
-#endif
   return CTX::instance()->color.mesh.hexahedron;
 }
 
@@ -9614,10 +9026,6 @@ unsigned int opt_mesh_color_prisms(OPT_ARGS_COL)
       CTX::instance()->meshOptionsChanged(ENT_VOLUME);
     CTX::instance()->color.mesh.prism = val;
   }
-#if defined(HAVE_FLTK)
-  CCC(CTX::instance()->color.mesh.prism,
-      FlGui::instance()->options->mesh.color[7]);
-#endif
   return CTX::instance()->color.mesh.prism;
 }
 
@@ -9631,10 +9039,6 @@ unsigned int opt_mesh_color_pyramid(OPT_ARGS_COL)
       CTX::instance()->meshOptionsChanged(ENT_VOLUME);
     CTX::instance()->color.mesh.pyramid = val;
   }
-#if defined(HAVE_FLTK)
-  CCC(CTX::instance()->color.mesh.pyramid,
-      FlGui::instance()->options->mesh.color[8]);
-#endif
   return CTX::instance()->color.mesh.pyramid;
 }
 
@@ -9648,10 +9052,6 @@ unsigned int opt_mesh_color_trihedron(OPT_ARGS_COL)
       CTX::instance()->meshOptionsChanged(ENT_VOLUME);
     CTX::instance()->color.mesh.trihedron = val;
   }
-#if defined(HAVE_FLTK)
-  CCC(CTX::instance()->color.mesh.trihedron,
-      FlGui::instance()->options->mesh.color[9]);
-#endif
   return CTX::instance()->color.mesh.trihedron;
 }
 unsigned int opt_mesh_color_polygon(OPT_ARGS_COL)
@@ -9662,10 +9062,6 @@ unsigned int opt_mesh_color_polygon(OPT_ARGS_COL)
       CTX::instance()->meshOptionsChanged(ENT_SURFACE);
     CTX::instance()->color.mesh.polygon = val;
   }
-#if defined(HAVE_FLTK)
-  CCC(CTX::instance()->color.mesh.polygon,
-      FlGui::instance()->options->mesh.color[10]);
-#endif
   return CTX::instance()->color.mesh.polygon;
 }
 
@@ -9677,10 +9073,6 @@ unsigned int opt_mesh_color_polyhedron(OPT_ARGS_COL)
       CTX::instance()->meshOptionsChanged(ENT_VOLUME);
     CTX::instance()->color.mesh.polyhedron = val;
   }
-#if defined(HAVE_FLTK)
-  CCC(CTX::instance()->color.mesh.polyhedron,
-      FlGui::instance()->options->mesh.color[11]);
-#endif
   return CTX::instance()->color.mesh.polyhedron;
 }
 
@@ -9688,20 +9080,12 @@ unsigned int opt_mesh_color_polyhedron(OPT_ARGS_COL)
 unsigned int opt_mesh_color_tangents(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) { CTX::instance()->color.mesh.tangents = val; }
-#if defined(HAVE_FLTK)
-  CCC(CTX::instance()->color.mesh.tangents,
-      FlGui::instance()->options->mesh.color[12]);
-#endif
   return CTX::instance()->color.mesh.tangents;
 }
 
 unsigned int opt_mesh_color_normals(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) { CTX::instance()->color.mesh.normals = val; }
-#if defined(HAVE_FLTK)
-  CCC(CTX::instance()->color.mesh.normals,
-      FlGui::instance()->options->mesh.color[13]);
-#endif
   return CTX::instance()->color.mesh.normals;
 }
 
@@ -9719,10 +9103,6 @@ unsigned int opt_mesh_color_(int i, OPT_ARGS_COL)
       CTX::instance()->entityColorsChanged();
     CTX::instance()->color.mesh.carousel[n] = val;
   }
-#if defined(HAVE_FLTK)
-  CCC(CTX::instance()->color.mesh.carousel[n],
-      FlGui::instance()->options->mesh.color[14 + n]);
-#endif
   return CTX::instance()->color.mesh.carousel[n];
 }
 
@@ -9815,11 +9195,6 @@ unsigned int opt_view_color_points(OPT_ARGS_COL)
     opt->color.point = val;
     if(view) view->setChanged(true);
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    CCC(opt->color.point, FlGui::instance()->options->view.color[0]);
-  }
-#endif
   return opt->color.point;
 #else
   return 0;
@@ -9834,11 +9209,6 @@ unsigned int opt_view_color_lines(OPT_ARGS_COL)
     opt->color.line = val;
     if(view) view->setChanged(true);
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    CCC(opt->color.line, FlGui::instance()->options->view.color[1]);
-  }
-#endif
   return opt->color.line;
 #else
   return 0;
@@ -9853,11 +9223,6 @@ unsigned int opt_view_color_triangles(OPT_ARGS_COL)
     opt->color.triangle = val;
     if(view) view->setChanged(true);
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    CCC(opt->color.triangle, FlGui::instance()->options->view.color[2]);
-  }
-#endif
   return opt->color.triangle;
 #else
   return 0;
@@ -9872,11 +9237,6 @@ unsigned int opt_view_color_quadrangles(OPT_ARGS_COL)
     opt->color.quadrangle = val;
     if(view) view->setChanged(true);
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    CCC(opt->color.quadrangle, FlGui::instance()->options->view.color[3]);
-  }
-#endif
   return opt->color.quadrangle;
 #else
   return 0;
@@ -9891,11 +9251,6 @@ unsigned int opt_view_color_tetrahedra(OPT_ARGS_COL)
     opt->color.tetrahedron = val;
     if(view) view->setChanged(true);
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    CCC(opt->color.tetrahedron, FlGui::instance()->options->view.color[4]);
-  }
-#endif
   return opt->color.tetrahedron;
 #else
   return 0;
@@ -9910,11 +9265,6 @@ unsigned int opt_view_color_hexahedra(OPT_ARGS_COL)
     opt->color.hexahedron = val;
     if(view) view->setChanged(true);
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    CCC(opt->color.hexahedron, FlGui::instance()->options->view.color[5]);
-  }
-#endif
   return opt->color.hexahedron;
 #else
   return 0;
@@ -9929,11 +9279,6 @@ unsigned int opt_view_color_prisms(OPT_ARGS_COL)
     opt->color.prism = val;
     if(view) view->setChanged(true);
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    CCC(opt->color.prism, FlGui::instance()->options->view.color[6]);
-  }
-#endif
   return opt->color.prism;
 #else
   return 0;
@@ -9948,11 +9293,6 @@ unsigned int opt_view_color_pyramids(OPT_ARGS_COL)
     opt->color.pyramid = val;
     if(view) view->setChanged(true);
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    CCC(opt->color.pyramid, FlGui::instance()->options->view.color[7]);
-  }
-#endif
   return opt->color.pyramid;
 #else
   return 0;
@@ -9967,11 +9307,6 @@ unsigned int opt_view_color_trihedra(OPT_ARGS_COL)
     opt->color.trihedron = val;
     if(view) view->setChanged(true);
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    CCC(opt->color.trihedron, FlGui::instance()->options->view.color[8]);
-  }
-#endif
   return opt->color.trihedron;
 #else
   return 0;
@@ -9986,11 +9321,6 @@ unsigned int opt_view_color_polygons(OPT_ARGS_COL)
     opt->color.polygon = val;
     if(view) view->setChanged(true);
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    CCC(opt->color.polygon, FlGui::instance()->options->view.color[9]);
-  }
-#endif
   return opt->color.polygon;
 #else
   return 0;
@@ -10005,11 +9335,6 @@ unsigned int opt_view_color_polyhedra(OPT_ARGS_COL)
     opt->color.polyhedron = val;
     if(view) view->setChanged(true);
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    CCC(opt->color.polyhedron, FlGui::instance()->options->view.color[10]);
-  }
-#endif
   return opt->color.polyhedron;
 #else
   return 0;
@@ -10024,11 +9349,6 @@ unsigned int opt_view_color_tangents(OPT_ARGS_COL)
     opt->color.tangents = val;
     if(view) view->setChanged(true);
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    CCC(opt->color.tangents, FlGui::instance()->options->view.color[11]);
-  }
-#endif
   return opt->color.tangents;
 #else
   return 0;
@@ -10043,11 +9363,6 @@ unsigned int opt_view_color_normals(OPT_ARGS_COL)
     opt->color.normals = val;
     if(view) view->setChanged(true);
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    CCC(opt->color.normals, FlGui::instance()->options->view.color[12]);
-  }
-#endif
   return opt->color.normals;
 #else
   return 0;
@@ -10062,10 +9377,6 @@ unsigned int opt_view_color_text2d(OPT_ARGS_COL)
     opt->color.text2d = val;
     stringColorsChanged();
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num))
-    CCC(opt->color.text2d, FlGui::instance()->options->view.color[13]);
-#endif
   return opt->color.text2d;
 #else
   return 0;
@@ -10080,10 +9391,6 @@ unsigned int opt_view_color_text3d(OPT_ARGS_COL)
     opt->color.text3d = val;
     stringColorsChanged();
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num))
-    CCC(opt->color.text3d, FlGui::instance()->options->view.color[14]);
-#endif
   return opt->color.text3d;
 #else
   return 0;
@@ -10098,10 +9405,6 @@ unsigned int opt_view_color_axes(OPT_ARGS_COL)
     opt->color.axes = val;
     stringColorsChanged();
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num))
-    CCC(opt->color.axes, FlGui::instance()->options->view.color[15]);
-#endif
   return opt->color.axes;
 #else
   return 0;
@@ -10116,10 +9419,6 @@ unsigned int opt_view_color_background2d(OPT_ARGS_COL)
     opt->color.background2d = val;
     stringColorsChanged();
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num))
-    CCC(opt->color.background2d, FlGui::instance()->options->view.color[16]);
-#endif
   return opt->color.background2d;
 #else
   return 0;

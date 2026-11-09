@@ -143,7 +143,8 @@ public:
   // all the widgets show the values of their options (only those of the
   // category shown, and not the one being edited, if shownOnly)
   void showOptions(bool shownOnly = false);
-  void activate(const char *what);
+  // the widgets active or not as the options they depend on are set
+  void updateActive();
   void toggleSection(int category, int section);
   // the tab clicked
   void categoryChosen();
