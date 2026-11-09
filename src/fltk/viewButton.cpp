@@ -9,18 +9,16 @@
 #include "FlGui.h"
 #include "drawContext.h"
 #include "fileDialogs.h"
-#include "optionWindow.h"
-#include "pluginWindow.h"
 #include "Context.h"
-#include "GModel.h"
 #include "PView.h"
 #include "PViewData.h"
 #include "PViewOptions.h"
 #include "Options.h"
-#include "OpenFile.h"
 #include "OS.h"
 #include "onelabGroup.h"
 #include "viewButton.h"
+#include "graphicWindow.h"
+#include "Actions.h"
 
 #if defined(HAVE_MESH)
 #include "Field.h"
@@ -45,121 +43,7 @@ static void view_toggle_cb(Fl_Widget *w, void *data)
   }
 }
 
-static void view_reload(int index)
-{
-  if(index >= 0 && index < (int)PView::list.size()) {
-    PView *p = PView::list[index];
-    // copied: reading processes events, during which the view may go
-    std::string fileName = p->getData()->getFileName();
-
-    if(StatFile(fileName)) {
-      Msg::Error("File '%s' does not exist", fileName.c_str());
-      return;
-    }
-
-    // not during another operation on the model, which reading may change
-    if(modelBusy()) return;
-    int tag = p->getTag();
-    int n = PView::list.size();
-
-    // FIXME: use fileIndex
-    MergeFile(fileName);
-
-    p = PView::getViewByTag(tag);
-    if(p && (int)PView::list.size() > n) { // we loaded a new view
-      // the new data in place of the old, in the view and in every view
-      // sharing it (its aliases, or the view it is an alias of), the new view
-      // deleted without it
-      PViewData *old = p->getData(), *data = PView::list.back()->getData();
-      PView::list.back()->setData(nullptr);
-      delete PView::list.back();
-      for(PView *v : PView::list) {
-        if(v->getData() != old) continue;
-        v->setData(data);
-        // in case the reloaded view has a different number of time steps
-        if(v->getOptions()->timeStep > data->getNumTimeSteps() - 1)
-          v->getOptions()->timeStep = 0;
-        v->setChanged(true);
-      }
-      delete old;
-      FlGui::instance()->updateViews(true);
-    }
-  }
-}
-
-static void view_reload_cb(Fl_Widget *w, void *data)
-{
-  view_reload((intptr_t)data);
-  drawContext::global()->draw();
-}
-
-static void view_reload_all_cb(Fl_Widget *w, void *data)
-{
-  for(std::size_t i = 0; i < PView::list.size(); i++) view_reload(i);
-  drawContext::global()->draw();
-}
-
-static void view_reload_visible_cb(Fl_Widget *w, void *data)
-{
-  for(std::size_t i = 0; i < PView::list.size(); i++)
-    if(opt_view_visible(i, GMSH_GET, 0)) view_reload(i);
-  drawContext::global()->draw();
-}
-
-static void view_sort_cb(Fl_Widget *w, void *data)
-{
-  PView::sortByName();
-  FlGui::instance()->updateViews(true);
-  drawContext::global()->draw();
-}
-
-static void view_remove_other_cb(Fl_Widget *w, void *data)
-{
-  if(PView::list.empty()) return;
-  for(int i = PView::list.size() - 1; i >= 0; i--)
-    if(i != (intptr_t)data) delete PView::list[i];
-  FlGui::instance()->updateViews(true);
-  drawContext::global()->draw();
-}
-
-static void view_remove_all_cb(Fl_Widget *w, void *data)
-{
-  if(PView::list.empty()) return;
-  int mode = (intptr_t)data;
-  if(mode == -1) { // remove all
-    if(PView::list.empty()) return;
-    while(PView::list.size()) delete PView::list[0];
-  }
-  else if(mode == -2) { // remove all visible
-    for(int i = PView::list.size() - 1; i >= 0; i--)
-      if(opt_view_visible(i, GMSH_GET, 0)) delete PView::list[i];
-  }
-  else if(mode == -3) { // remove all invisible
-    for(int i = PView::list.size() - 1; i >= 0; i--)
-      if(!opt_view_visible(i, GMSH_GET, 0)) delete PView::list[i];
-  }
-  else if(mode == -4) { // remove all empty
-    for(int i = PView::list.size() - 1; i >= 0; i--)
-      if(PView::list[i]->getData()->empty()) delete PView::list[i];
-  }
-  else if(mode >= 0 && mode < (int)PView::list.size()) { // remove by name
-    std::string name = PView::list[mode]->getData()->getName();
-    for(int i = PView::list.size() - 1; i >= 0; i--)
-      if(PView::list[i]->getData()->getName() == name) delete PView::list[i];
-  }
-
-  FlGui::instance()->updateViews(true);
-  drawContext::global()->draw();
-}
-
-static void view_remove_cb(Fl_Widget *w, void *data)
-{
-  delete PView::list[(intptr_t)data];
-  FlGui::instance()->updateViews(true);
-  drawContext::global()->draw();
-}
-
-static void view_save_cb(Fl_Widget *w, void *data)
+void view_save_cb(Fl_Widget *w, void *data)
 {
   static const char *formats =
     "Gmsh Parsed\t*.pos\nGmsh MSH\t*.msh\n"
@@ -192,88 +76,6 @@ test:
   }
 }
 
-static void view_alias_with_options_cb(Fl_Widget *w, void *data)
-{
-  const bool copyOptions = true;
-  new PView(PView::list[(intptr_t)data], copyOptions);
-  FlGui::instance()->updateViews(true);
-  drawContext::global()->draw();
-}
-
-static void view_combine_space_all_cb(Fl_Widget *w, void *data)
-{
-  PView::combine(false, 1, CTX::instance()->post.combineRemoveOrig,
-                 CTX::instance()->post.combineCopyOptions);
-  FlGui::instance()->updateViews(true);
-  drawContext::global()->draw();
-}
-
-static void view_combine_space_visible_cb(Fl_Widget *w, void *data)
-{
-  PView::combine(false, 0, CTX::instance()->post.combineRemoveOrig,
-                 CTX::instance()->post.combineCopyOptions);
-  FlGui::instance()->updateViews(true);
-  drawContext::global()->draw();
-}
-
-static void view_combine_space_by_name_cb(Fl_Widget *w, void *data)
-{
-  PView::combine(false, 2, CTX::instance()->post.combineRemoveOrig,
-                 CTX::instance()->post.combineCopyOptions);
-  FlGui::instance()->updateViews(true);
-  drawContext::global()->draw();
-}
-
-static void view_combine_time_all_cb(Fl_Widget *w, void *data)
-{
-  PView::combine(true, 1, CTX::instance()->post.combineRemoveOrig,
-                 CTX::instance()->post.combineCopyOptions);
-  FlGui::instance()->updateViews(true);
-  drawContext::global()->draw();
-}
-
-static void view_combine_time_visible_cb(Fl_Widget *w, void *data)
-{
-  PView::combine(true, 0, CTX::instance()->post.combineRemoveOrig,
-                 CTX::instance()->post.combineCopyOptions);
-  FlGui::instance()->updateViews(true);
-  drawContext::global()->draw();
-}
-
-static void view_combine_time_by_name_cb(Fl_Widget *w, void *data)
-{
-  PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig,
-                 CTX::instance()->post.combineCopyOptions);
-  FlGui::instance()->updateViews(true);
-  drawContext::global()->draw();
-}
-
-static void view_all_visible_cb(Fl_Widget *w, void *data)
-{
-  int mode = (intptr_t)data;
-  std::string name;
-  if(mode >= 0) name = PView::list[mode]->getData()->getName();
-  for(std::size_t i = 0; i < PView::list.size(); i++)
-    opt_view_visible(i, GMSH_SET | GMSH_GUI,
-                     (mode == -1) ? 1 :
-                     (mode == -2) ? 0 :
-                     (mode == -3) ? !opt_view_visible(i, GMSH_GET, 0) :
-                     (name == PView::list[i]->getData()->getName()) ? 1 :
-                                                                      0);
-  drawContext::global()->draw();
-}
-
-static void view_applybgmesh_cb(Fl_Widget *w, void *data)
-{
-#if defined(HAVE_MESH)
-  int index = (intptr_t)data;
-  if(index >= 0 && index < (int)PView::list.size())
-    GModel::current()->getFields()->setBackgroundMesh(index);
-#else
-  Msg::Error("Background mesh requires mesh module");
-#endif
-}
-
 viewButton::viewButton(int x, int y, int w, int h, int num, Fl_Color col)
   : Fl_Group(x, y, w, h)
 {
@@ -302,70 +104,8 @@ viewButton::viewButton(int x, int y, int w, int h, int num, Fl_Color col)
   _popup = new Fl_Menu_Button(x + w - popw, y, popw, h);
   _popup->type(Fl_Menu_Button::POPUP123);
 
-  _popup->add("Options", 'o', (Fl_Callback *)view_options_cb,
-              (void *)(intptr_t)num, 0);
-  _popup->add("_Plugins", 'p', (Fl_Callback *)plugin_cb, (void *)(intptr_t)num,
-              0);
-
-  _popup->add("Reload", 'r', (Fl_Callback *)view_reload_cb,
-              (void *)(intptr_t)num, 0);
-  _popup->add("Reload Views/All", 0, (Fl_Callback *)view_reload_all_cb,
-              (void *)(intptr_t)num, 0);
-  _popup->add("Reload Views/Visible", 0, (Fl_Callback *)view_reload_visible_cb,
-              (void *)(intptr_t)num, 0);
-  _popup->add("_Create Alias", 0, (Fl_Callback *)view_alias_with_options_cb,
-              (void *)(intptr_t)num, 0);
-
-  _popup->add("Remove", FL_Delete, (Fl_Callback *)view_remove_cb,
-              (void *)(intptr_t)num, 0);
-  _popup->add("_Remove Views/All", 0, (Fl_Callback *)view_remove_all_cb,
-              (void *)-1, 0);
-  _popup->add("Remove Views/Visible", 0, (Fl_Callback *)view_remove_all_cb,
-              (void *)-2, 0);
-  _popup->add("Remove Views/Invisible", 0, (Fl_Callback *)view_remove_all_cb,
-              (void *)-3, 0);
-  _popup->add("Remove Views/Other", 0, (Fl_Callback *)view_remove_other_cb,
-              (void *)(intptr_t)num, 0);
-  _popup->add("Remove Views/Empty", 0, (Fl_Callback *)view_remove_all_cb,
-              (void *)-4, 0);
-  _popup->add("Remove Views/With Same Name", 0,
-              (Fl_Callback *)view_remove_all_cb, (void *)(intptr_t)num, 0);
-
-  _popup->add("Sort By Name", 0, (Fl_Callback *)view_sort_cb, (void *)nullptr,
-              0);
-  _popup->add("Set Visibility/All On", 0, (Fl_Callback *)view_all_visible_cb,
-              (void *)-1, 0);
-  _popup->add("Set Visibility/All Off", 0, (Fl_Callback *)view_all_visible_cb,
-              (void *)-2, 0);
-  _popup->add("Set Visibility/Invert", 0, (Fl_Callback *)view_all_visible_cb,
-              (void *)-3, 0);
-  _popup->add("Set Visibility/Same Name On", 0,
-              (Fl_Callback *)view_all_visible_cb, (void *)(intptr_t)num, 0);
-
-  _popup->add("Combine Elements/From All Views", 0,
-              (Fl_Callback *)view_combine_space_all_cb, (void *)(intptr_t)num,
-              0);
-  _popup->add("Combine Elements/From Visible Views", 0,
-              (Fl_Callback *)view_combine_space_visible_cb,
-              (void *)(intptr_t)num, 0);
-  _popup->add("Combine Elements/From All Views With Same Name", 0,
-              (Fl_Callback *)view_combine_space_by_name_cb,
-              (void *)(intptr_t)num, 0);
-
-  _popup->add("_Combine Time Steps/From All Views", 0,
-              (Fl_Callback *)view_combine_time_all_cb, (void *)(intptr_t)num,
-              0);
-  _popup->add("Combine Time Steps/From Visible Views", 0,
-              (Fl_Callback *)view_combine_time_visible_cb,
-              (void *)(intptr_t)num, 0);
-  _popup->add("Combine Time Steps/From All Views With Same Name", 0,
-              (Fl_Callback *)view_combine_time_by_name_cb,
-              (void *)(intptr_t)num, 0);
-
-  _popup->add("Apply As Background Mesh", 0, (Fl_Callback *)view_applybgmesh_cb,
-              (void *)(intptr_t)num, 0);
-  _popup->add("Export...", 0, (Fl_Callback *)view_save_cb,
-              (void *)(intptr_t)num, 0);
+  // (see Actions.cpp)
+  addActionItems(_popup, GetActionMenu("View"), num);
 
   end(); // close the group
   resizable(_toggle);

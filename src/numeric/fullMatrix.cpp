@@ -440,6 +440,122 @@ bool fullMatrix<double>::svd(fullMatrix<double> &V, fullVector<double> &S)
 
 #endif
 
+#if defined(HAVE_EIGEN)
+
+// The dense decompositions with Eigen, here rather than in the header: Eigen's
+// solvers are then compiled once, not in every file that calls them
+
+#include <Eigen/Dense>
+
+template <class scalar>
+bool fullMatrix<scalar>::luSolve(const fullVector<scalar> &rhs,
+                                 fullVector<scalar> &result)
+{
+  if(_r != _c || _r != rhs._r || _r != result._r) {
+    Msg::Error("Wrong sizes for dense linear system solve (size = %d %d, "
+               "%d, %d)",
+               _r, _c, result._r, rhs._r);
+    return false;
+  }
+  EigenMat ma(_data, _r, _c);
+  EigenVec vb(rhs._data, rhs._r);
+  EigenVec vx(result._data, result._r);
+  vx = ma.colPivHouseholderQr().solve(vb);
+  return true;
+}
+
+template <class scalar>
+bool fullMatrix<scalar>::invert(fullMatrix<scalar> &result) const
+{
+  if(_r != _c) {
+    Msg::Error("Dense matrix inverse requires square matrix (size = %d %d)", _r,
+               _c);
+    return false;
+  }
+  result.resize(_r, _c);
+  EigenMat ma(_data, _r, _c);
+  EigenMat mi(result._data, _r, _c);
+  mi = ma.inverse();
+  return true;
+}
+
+template <class scalar> bool fullMatrix<scalar>::invertInPlace()
+{
+  if(_r != _c) {
+    Msg::Error("Dense matrix inversion requires square matrix (size = %d %d)",
+               _r, _c);
+    return false;
+  }
+  EigenMat ma(_data, _r, _c);
+  ma = ma.inverse();
+  return true;
+}
+
+template <class scalar> scalar fullMatrix<scalar>::determinant() const
+{
+  EigenMat ma(_data, _r, _c);
+  return ma.determinant();
+}
+
+template <class scalar>
+bool fullMatrix<scalar>::eig(fullVector<double> &eigenValReal,
+                             fullVector<double> &eigenValImag,
+                             fullMatrix<scalar> &leftEigenVect,
+                             fullMatrix<scalar> &rightEigenVect,
+                             bool sortRealPart)
+{
+  EigenMat ma(_data, _r, _c);
+  Eigen::EigenSolver<Eigen::Matrix<scalar, Eigen::Dynamic, Eigen::Dynamic>> es(
+    ma);
+  if(es.info() != Eigen::Success) {
+    Msg::Warning("Eigen could not compute eigenvalues/eigenvectors");
+    return false;
+  }
+  EigenVec vr(eigenValReal._data, eigenValReal._r);
+  vr = es.eigenvalues().real();
+  EigenVec vi(eigenValImag._data, eigenValImag._r);
+  vi = es.eigenvalues().imag();
+  EigenMat mr(rightEigenVect._data, rightEigenVect._r, rightEigenVect._c);
+  mr = es.eigenvectors().real();
+  EigenMat ml(leftEigenVect._data, leftEigenVect._r, leftEigenVect._c);
+  // FIXME: only true for symmetric matrices - compute the true left
+  // eigenvectors!
+  ml = mr;
+
+  if(sortRealPart)
+    eigSort(_r, eigenValReal._data, eigenValImag._data, leftEigenVect._data,
+            rightEigenVect._data);
+  return true;
+}
+
+template <class scalar>
+bool fullMatrix<scalar>::svd(fullMatrix<scalar> &V, fullVector<scalar> &S)
+{
+  EigenMat ma(_data, _r, _c);
+  EigenMat mv(V._data, V._r, V._c);
+  EigenVec vs(S._data, S._r);
+  Eigen::BDCSVD<Eigen::Matrix<scalar, Eigen::Dynamic, Eigen::Dynamic>> svd(
+    ma, Eigen::ComputeThinU | Eigen::ComputeThinV);
+  ma = svd.matrixU();
+  mv = svd.matrixV();
+  vs = svd.singularValues();
+  return true;
+}
+
+template bool fullMatrix<double>::luSolve(const fullVector<double> &,
+                                          fullVector<double> &);
+template bool fullMatrix<double>::invert(fullMatrix<double> &) const;
+template bool fullMatrix<double>::invertInPlace();
+template double fullMatrix<double>::determinant() const;
+template bool fullMatrix<double>::eig(fullVector<double> &,
+                                      fullVector<double> &,
+                                      fullMatrix<double> &,
+                                      fullMatrix<double> &, bool);
+template bool fullMatrix<double>::svd(fullMatrix<double> &,
+                                      fullVector<double> &);
+
+#endif
+
 // Specialisation of norm() and print()
 
 template <> double fullVector<double>::norm() const

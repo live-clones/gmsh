@@ -406,8 +406,24 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
     openglWindow::setLastHandled(newg);
     // waiting for the OS to really make the window visible and to call the
     // draw() function on (some ?) linux; if we do not wait here, the window is
-    // not ready and the picture cannot be generated
-    while(!newg->valid()) Fl::wait();
+    // not ready and the picture cannot be generated (not forever: a window
+    // never shown, or the interface closed meanwhile, gives the picture of
+    // the window at its own size, or an offscreen one)
+    double start = TimeOfDay();
+    while(!newg->valid() && FlGui::available() && TimeOfDay() - start < 10.)
+      Fl::wait(0.1);
+    if(!newg->valid() || !FlGui::available()) {
+      Msg::Warning("Could not open a window of the size of the picture");
+      std::vector<openglWindow *> gls;
+      if(FlGui::available()) gls = FlGui::instance()->openglWindows();
+      if(std::find(gls.begin(), gls.end(), previous) == gls.end())
+        previous = nullptr;
+      openglWindow::setLastHandled(previous);
+      newg->hide();
+      delete newg;
+      newg = nullptr;
+      if(!FlGui::available()) return getOffscreenPixelBuffer(format, type);
+    }
   }
 
   PixelBuffer *buffer;

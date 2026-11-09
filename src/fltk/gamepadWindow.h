@@ -71,9 +71,10 @@ public:
 public:
   gamepadWindow();
   ~gamepadWindow();
-  // shows the window, polling the gamepad again
   void show();
-  double frequency;
+  // the buttons and axes of the gamepad as they are now, while the window is
+  // shown (see FlGui.cpp)
+  void update();
 };
 
 #endif

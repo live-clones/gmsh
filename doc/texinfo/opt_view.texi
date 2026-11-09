@@ -132,7 +132,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.AdaptSkinOnly
-Refine only the skin of the volumes of an adaptive view when only the skin is drawn (DrawSkinOnly), and apart the volumes the clipping planes cut when they are capped or drawn whole: what reads the refined view as a whole (plugins, probes, the API) refines it all (2: the same, with the partitions of an entity together, without the faces between them)@*
+Refine only the skin of the volumes of an adaptive view when only the skin is drawn (DrawSkinOnly), and apart the volumes the clipping planes cut when they are capped or drawn whole; what reads the refined view as a whole (plugins, probes, the API) refines it all; Skin w/o partitions takes the partitions of an entity together, without the faces between them (0: Adapt everything, 1: Adapt skin only, 2: Skin w/o partitions)@*
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -157,13 +157,13 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.AutoPosition
-Position the scale or 2D plot automatically (0: manual, 1: automatic, 2: top left, 3: top right, 4: bottom left, 5: bottom right, 6: top, 7: bottom, 8: left, 9: right, 10: full, 11: top third, 12: in model coordinates)@*
+Position the scale or 2D plot automatically (0: Manual, 1: Automatic, 2: Top left, 3: Top right, 4: Bottom left, 5: Bottom right, 6: Top, 7: Bottom, 8: Left, 9: Right, 10: Full, 11: Top third, 12: In model coordinates)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.Axes
-Axes (0: none, 1: simple axes, 2: box, 3: full grid, 4: open grid, 5: ruler)@*
-Default value: @code{0}@*
+Axes; Automatic is none for 3D plots and a full grid for 2D graphs (0: None, 1: Simple axes, 2: Box, 3: Full grid, 4: Open grid, 5: Ruler, 6: Automatic)@*
+Default value: @code{6}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.AxesMikado
@@ -222,12 +222,12 @@ Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.Boundary
-Draw the `N minus b'-dimensional boundary of the element (N: element dimension, b: option value)@*
+Draw the (N-b)-dimensional boundary of the elements, N being their dimension and b the option value (0: None, 1: Dimension - 1, 2: Dimension - 2, 3: Dimension - 3)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.CenterGlyphs
-Center glyphs (arrows, numbers, etc.)? (0: left, 1: centered, 2: right)@*
+Alignment of the glyphs: arrows, numbers, etc. (0: Left-aligned, 1: Centered, 2: Right-aligned)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -447,7 +447,7 @@ Default value: @code{-1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.ForceNumComponents
-Force number of components to display (see View.ComponentMapN for mapping)@*
+Force the number of components to display, mapped by View.ComponentMapN (0: Original Field, 1: Force Scalar, 3: Force Vector, 9: Force Tensor)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -462,7 +462,7 @@ Default value: @code{-1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.GlyphLocation
-Glyph (arrow, number, etc.) location (1: center of gravity, 2: node)@*
+Location of the glyphs: arrows, numbers, etc. (1: Barycenter, 2: Node)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -472,7 +472,7 @@ Default value: @code{200}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.IntervalsType
-Type of interval display (1: iso, 2: continuous, 3: discrete, 4: numeric)@*
+Type of interval display (1: Iso-values, 2: Continuous map, 3: Filled iso-values, 4: Numeric values)@*
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -492,7 +492,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.LineType
-Display lines as solid color segments (0), 3D cylinders (1) or tapered cylinders (2)@*
+Line display type (0: Color segment, 1: 3D cylinder, 2: Tapered cylinder)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -607,7 +607,7 @@ Default value: @code{6}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.PointType
-Display points as solid color dots (0), 3D spheres (1), scaled dots (2) or scaled spheres (3)@*
+Point display type (0: Color dot, 1: 3D sphere, 2: Scaled dot, 3: Scaled sphere)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -637,7 +637,7 @@ Default value: @code{0}@*
 Saved in: @code{-}
 
 @item View.RangeType
-Value scale range type (1: default, 2: custom, 3: per time step)@*
+Value scale range type (1: Default, 2: Custom, 3: Per step)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -657,7 +657,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.ScaleType
-Value scale type (1: linear, 2: logarithmic, 3: symmetric logarithmic, logarithmic on both sides of zero and linear in between)@*
+Value scale type; Symmetric log is logarithmic on both sides of zero and linear in between (1: Linear, 2: Logarithmic, 3: Symmetric log)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -672,7 +672,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.ShowTime
-Time display mode (0: none, 1: time series, 2: harmonic data, 3: automatic, 4: step data, 5: multi-step data, 6: real eigenvalues, 7: complex eigenvalues)@*
+Time display mode (0: None, 1: Time series, 2: Harmonic data, 3: Automatic, 4: Step data, 5: Multi-step data, 6: Real eigenvalues, 7: Complex eigenvalues)@*
 Default value: @code{3}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -697,7 +697,7 @@ Default value: @code{0.001}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.TensorType
-Tensor display type (1: Von-Mises, 2: maximum eigenvalue, 3: minimum eigenvalue, 4: eigenvectors, 5: ellipse, 6: ellipsoid, 7: frame (box), 8: frame (vectors))@*
+Tensor display type (1: Von-Mises, 2: Maximum eigenvalue, 3: Minimum eigenvalue, 4: Eigenvectors, 5: Ellipse, 6: Ellipsoid, 7: Frame (box), 8: Frame (vectors))@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -767,7 +767,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.VectorType
-Vector display type (1: segment, 2: arrow, 3: pyramid, 4: 3D arrow, 5: displacement, 6: comet)@*
+Vector display type (1: Line, 2: Arrow, 3: Pyramid, 4: 3D arrow, 5: Displacement, 6: Comet)@*
 Default value: @code{4}@*
 Saved in: @code{General.OptionsFileName}
 

@@ -9,6 +9,7 @@ set(SRC
     desktop.cpp
     icons.cpp
     graphicWindow.cpp
+    actionMenus.cpp
       openglWindow.cpp
     optionWindow.cpp
       colorbarWindow.cpp
@@ -22,6 +23,7 @@ set(SRC
     clippingWindow.cpp
     manipWindow.cpp
     contextWindow.cpp
+    editorWindow.cpp
     onelabContextWindow.cpp
     onelabGroup.cpp
     helpWindow.cpp

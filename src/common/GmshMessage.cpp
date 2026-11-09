@@ -92,7 +92,6 @@ GmshClient *Msg::_client = nullptr;
 std::string Msg::_execName;
 #if defined(HAVE_ONELAB)
 onelab::client *Msg::_onelabClient = nullptr;
-onelab::server *onelab::server::_server = nullptr;
 #endif
 std::string Msg::_logFileName;
 FILE *Msg::_logFile = nullptr;
@@ -373,6 +372,14 @@ int Msg::GetErrorCount()
 {
   return _errorCount;
 }
+
+Msg::NoThrow::NoThrow() : _abortOnError(CTX::instance()->abortOnError)
+{
+  if(_abortOnError == 2 || _abortOnError == 3)
+    CTX::instance()->abortOnError = 0;
+}
+
+Msg::NoThrow::~NoThrow() { CTX::instance()->abortOnError = _abortOnError; }
 
 std::string Msg::GetFirstWarning()
 {

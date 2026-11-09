@@ -5,6 +5,8 @@
 
 #include "GmshConfig.h"
 #include <algorithm>
+#include <functional>
+#include <map>
 #include <mutex>
 #include <sstream>
 #include <string.h>
@@ -15,13 +17,19 @@
 #include <FL/fl_draw.H>
 #include <FL/Fl_Box.H>
 #include <FL/fl_ask.H>
+#include <FL/Fl_Copy_Surface.H>
+#include <FL/Fl_Image.H>
 #include "FlGui.h"
+#include "sceneTool.h"
 #include "gmshScheme.h"
 #include "desktop.h"
 #include "mainWindow.h"
 #include "icons.h"
 #include "drawContextFltk.h"
 #include "graphicWindow.h"
+#include "openglWindow.h"
+#include "gamepadWindow.h"
+#include "GamePad.h"
 #include "optionWindow.h"
 #include "fieldWindow.h"
 #include "pluginWindow.h"
@@ -37,25 +45,22 @@
 #include "onelabContextWindow.h"
 #include "onelabGroup.h"
 #include "helpWindow.h"
-#include "colorbarWindow.h"
 #include "fileDialogs.h"
 #include "windowPlacement.h"
-#include "GmshDefines.h"
 #include "GmshMessage.h"
 #include "GModel.h"
 #include "OS.h"
 #include "MElement.h"
 #include "PView.h"
 #include "Plugin.h"
-#include "PluginManager.h"
 #include "OpenFile.h"
 #include "XpmIcon.h"
 #include "Options.h"
 #include "CommandLine.h"
 #include "Shortcuts.h"
+#include "Actions.h"
 #include "Context.h"
 #include "StringUtils.h"
-#include "gl2ps.h"
 #include "gmshPopplerWrapper.h"
 #include "PixelBuffer.h"
 
@@ -66,6 +71,25 @@
 #if defined(HAVE_3M)
 #include "3M.h"
 #endif
+
+// Widget lifetime and nested event loops: the rules of this interface.
+//
+// 1. Every event goes through FlGui::_dispatch(), which records the widgets
+//    it is sent to (the one with the focus, the pushed one, the one under the
+//    pointer) while it is handled.
+// 2. Callbacks run nested event loops: meshing and solvers handle events
+//    while they run (FlGui::check()), dialogs and popup menus have loops of
+//    their own, and so does the API waiting for a selection
+//    (FlGui::selectEntity()); the picks of the interface do not wait, they
+//    are tools stepped by the events (see sceneTool). The events handled in
+//    a nested loop may delete widgets, close windows, or close the whole
+//    interface. So code that runs one checks after it that what it uses
+//    still exists: FlGui::available() for the interface (FlGui::instance()
+//    is null once it is gone), an Fl_Widget_Tracker for a widget.
+// 3. A widget whose code may still be running (an event being handled was
+//    sent to it) is never deleted directly: the lists made again (the ONELAB
+//    tree, the context window) retire such rows with FlGui::retireInEvent(),
+//    and they are deleted once no event targets them.
 
 FlGui *FlGui::_instance = nullptr;
 std::string FlGui::_openedThroughMacFinder = "";
@@ -168,297 +192,22 @@ static void simple_top_box_draw(int x, int y, int w, int h, Fl_Color c)
   fl_line(x, y, x + w, y);
 }
 
-// Icons for the satus bar
-#define vv(x, y) fl_vertex(x, y)
-#define bl fl_begin_loop()
-#define el fl_end_loop()
-
-static void gmsh_play(Fl_Color c)
-{
-  fl_color(c);
-  bl;
-  vv(-0.3, 0.8);
-  vv(0.5, 0.0);
-  vv(-0.3, -0.8);
-  el;
-}
-
-static void gmsh_pause(Fl_Color c)
-{
-  fl_color(c);
-  bl;
-  vv(-0.8, -0.8);
-  vv(-0.3, -0.8);
-  vv(-0.3, 0.8);
-  vv(-0.8, 0.8);
-  el;
-  bl;
-  vv(0.0, -0.8);
-  vv(0.5, -0.8);
-  vv(0.5, 0.8);
-  vv(0.0, 0.8);
-  el;
-}
-
-static void gmsh_rewind(Fl_Color c)
-{
-  fl_color(c);
-  bl;
-  vv(-0.8, -0.8);
-  vv(-0.3, -0.8);
-  vv(-0.3, 0.8);
-  vv(-0.8, 0.8);
-  el;
-  bl;
-  vv(-0.3, 0.0);
-  vv(0.5, -0.8);
-  vv(0.5, 0.8);
-  el;
-}
-
-static void gmsh_forward(Fl_Color c)
-{
-  fl_color(c);
-  bl;
-  vv(0.0, 0.8);
-  vv(0.8, 0.0);
-  vv(0.0, -0.8);
-  el;
-  bl;
-  vv(-0.8, 0.8);
-  vv(-0.3, 0.8);
-  vv(-0.3, -0.8);
-  vv(-0.8, -0.8);
-  el;
-}
-
-static void gmsh_back(Fl_Color c)
-{
-  fl_rotate(180);
-  gmsh_forward(c);
-}
-
-static void gmsh_rotate(Fl_Color c)
-{
-  fl_color(c);
-  fl_begin_line();
-  fl_arc(0.0, -0.1, 0.7, 0.0, 270.0);
-  fl_end_line();
-  fl_begin_polygon();
-  vv(0.5, 0.6);
-  vv(-0.1, 0.9);
-  vv(-0.1, 0.3);
-  fl_end_polygon();
-}
-
-// a cube seen along its diagonal: the isometric view
-static void gmsh_cube(Fl_Color c)
-{
-  fl_color(c);
-  bl;
-  vv(0.0, 0.9);
-  vv(0.78, 0.45);
-  vv(0.78, -0.45);
-  vv(0.0, -0.9);
-  vv(-0.78, -0.45);
-  vv(-0.78, 0.45);
-  el;
-  // (y down)
-  fl_begin_line();
-  vv(-0.78, -0.45);
-  vv(0.0, 0.0);
-  vv(0.78, -0.45);
-  fl_end_line();
-  fl_begin_line();
-  vv(0.0, 0.0);
-  vv(0.0, 0.9);
-  fl_end_line();
-}
-
-// a small disk (FLTK draws its circle 10 pixels wide at the least): the switch
-// of the views of a group in the ONELAB tree
-static void gmsh_dot(Fl_Color c)
-{
-  fl_color(c);
-  fl_begin_polygon();
-  fl_arc(0.0, 0.0, 0.5, 0.0, 360.0);
-  fl_end_polygon();
-}
-
-// a crosshair over a target: the point of the model a query asks about
-static void gmsh_query(Fl_Color c)
-{
-  fl_color(c);
-  fl_begin_line();
-  fl_arc(0.0, 0.0, 0.45, 0.0, 360.0);
-  fl_end_line();
-  bl;
-  vv(-0.9, 0.0);
-  vv(-0.2, 0.0);
-  el;
-  bl;
-  vv(0.2, 0.0);
-  vv(0.9, 0.0);
-  el;
-  bl;
-  vv(0.0, -0.9);
-  vv(0.0, -0.2);
-  el;
-  bl;
-  vv(0.0, 0.2);
-  vv(0.0, 0.9);
-  el;
-}
-
-// a ruler: the line a measurement draws between the two points it is given
-static void gmsh_measure(Fl_Color c)
-{
-  fl_color(c);
-  bl; vv(-0.75, 0.55); vv(0.75, -0.55); el;   // the line
-  bl; vv(-0.90, 0.35); vv(-0.60, 0.75); el;   // its ends
-  bl; vv(0.60, -0.75); vv(0.90, -0.35); el;
-  bl; vv(-0.38, 0.28); vv(-0.29, 0.40); el;   // graduations
-  bl; vv(0.00, 0.00); vv(0.09, 0.12); el;
-  bl; vv(0.38, -0.28); vv(0.46, -0.15); el;
-}
-
-// a window with its side pane filled: the tree, shown or hidden
-static void gmsh_sidebar(Fl_Color c)
-{
-  fl_color(c);
-  bl;
-  vv(-0.8, -0.8);
-  vv(0.8, -0.8);
-  vv(0.8, 0.8);
-  vv(-0.8, 0.8);
-  el;
-  fl_begin_polygon();
-  vv(-0.8, -0.8);
-  vv(-0.3, -0.8);
-  vv(-0.3, 0.8);
-  vv(-0.8, 0.8);
-  fl_end_polygon();
-}
-
-static void gmsh_models(Fl_Color c)
-{
-  fl_color(c);
-  bl;
-  vv(-0.8, -0.7);
-  vv(0.8, -0.7);
-  el;
-  bl;
-  vv(-0.8, -0.2);
-  vv(0.8, -0.2);
-  el;
-  bl;
-  vv(-0.8, 0.3);
-  vv(0.8, 0.3);
-  el;
-  bl;
-  vv(-0.8, 0.8);
-  vv(0.8, 0.8);
-  el;
-}
-
-static void gmsh_gear(Fl_Color c)
-{
-  fl_color(c);
-  double w = 0.12;
-  double h1 = 0.5;
-#if defined(WIN32)
-  double h2 = 1.0;
-#else
-  double h2 = 1.05;
-#endif
-  fl_line_style(FL_SOLID, 3);
-  fl_begin_line();
-  fl_circle(0, 0, 0.5);
-  fl_end_line();
-  fl_line_style(FL_SOLID);
-  for(int i = 0; i < 8; i++) {
-    fl_rotate(45);
-    fl_begin_polygon();
-    fl_vertex(h1, -w);
-    fl_vertex(h2, -w);
-    fl_vertex(h2, w);
-    fl_vertex(h1, w);
-    fl_end_polygon();
-  }
-}
-
-static void gmsh_graph(Fl_Color c)
-{
-  fl_color(c);
-  fl_begin_line();
-  vv(-0.8, -0.8);
-  vv(-0.8, 0.8);
-  vv(0.8, 0.8);
-  fl_end_line();
-  fl_begin_line();
-  vv(-0.8, 0.3);
-  vv(-0.2, -0.2);
-  vv(0.3, 0.1);
-  vv(0.8, -0.4);
-  fl_end_line();
-}
-
-static void gmsh_search(Fl_Color col)
-{
-  double e = 0.5;
-  fl_color(col);
-  fl_begin_polygon();
-  vv(.6 - e, .33);
-  vv(1.2 - e, .93);
-  vv(.93 - e, 1.2);
-  vv(.33 - e, .6);
-  fl_end_polygon();
-  fl_line_style(FL_SOLID, 2);
-  fl_begin_loop();
-  fl_circle(0 - e, 0, .6);
-  fl_end_loop();
-  fl_line_style(FL_SOLID);
-}
-
-static void gmsh_colormap(Fl_Color col)
-{
-  fl_color(FL_RED);
-  fl_begin_polygon();
-  vv(-0.8, -0.8);
-  vv(-0.3, -0.8);
-  vv(-0.3, 0.8);
-  vv(-0.8, 0.8);
-  fl_end_polygon();
-  fl_color(FL_GREEN);
-  fl_begin_polygon();
-  vv(-0.3, -0.8);
-  vv(0.2, -0.8);
-  vv(0.2, 0.8);
-  vv(-0.3, 0.8);
-  fl_end_polygon();
-  fl_color(FL_BLUE);
-  fl_begin_polygon();
-  vv(0.2, -0.8);
-  vv(0.7, -0.8);
-  vv(0.7, 0.8);
-  vv(0.2, 0.8);
-  fl_end_polygon();
-}
-
-#undef vv
-#undef bl
-#undef el
-
-// question presence of gamepad every 3. seconds
+// The one timer of the gamepad: its events read while it is active, then the
+// graphic windows moved by it and its window of options updated; every half
+// second while it is not active, to notice when it is
 static void gamepad_handler(void *data)
 {
-  if(CTX::instance()->gamepad && CTX::instance()->gamepad->active) {
-    CTX::instance()->gamepad->read_event();
-    Fl::add_timeout(CTX::instance()->gamepad->frequency, gamepad_handler, data);
+  GamePad *pad = CTX::instance()->gamepad;
+  if(!pad) return;
+  if(pad->active) pad->read_event();
+  if(FlGui::available()) {
+    FlGui *gui = FlGui::instance();
+    // (the fullscreen window included)
+    for(openglWindow *gl : gui->openglWindows()) gl->gamepadStep();
+    if(gui->options && gui->options->gmpdoption)
+      gui->options->gmpdoption->update();
   }
-  else {
-    Fl::add_timeout(.5, gamepad_handler, data);
-  }
+  Fl::add_timeout(pad->active ? pad->frequency : .5, gamepad_handler, data);
 }
 
 // the windows inside a window (the docked tools, the graphics), which a
@@ -616,7 +365,8 @@ static void default_fatal_error_handler(const char *fmt, ...)
 
 FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
              void (*error_handler)(const char *fmt, ...))
-  : _quitShouldExit(quitShouldExit), lastContextWindow(0), fullscreen(nullptr)
+  : _quitShouldExit(quitShouldExit), lastContextWindow(nullptr),
+    fullscreen(nullptr)
 {
   if(error_handler) {
     Fl::error = error_handler;
@@ -664,6 +414,8 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
 
   // add global shortcuts
   Fl::add_handler(globalShortcut);
+  // the buttons of the query and the measurement follow the tools
+  sceneTool::changed = updateModeButtons;
 
   Fl::event_dispatch(_dispatch);
 
@@ -688,28 +440,10 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   // register image formats not in core fltk library (jpeg/png)
   fl_register_images();
 
-  // add our own icons
-  fl_add_symbol("gmsh_rewind", gmsh_rewind, 1);
-  fl_add_symbol("gmsh_back", gmsh_back, 1);
-  fl_add_symbol("gmsh_play", gmsh_play, 1);
-  fl_add_symbol("gmsh_pause", gmsh_pause, 1);
-  fl_add_symbol("gmsh_forward", gmsh_forward, 1);
-  fl_add_symbol("gmsh_rotate", gmsh_rotate, 1);
-  fl_add_symbol("gmsh_cube", gmsh_cube, 1);
-  fl_add_symbol("gmsh_sidebar", gmsh_sidebar, 1);
-  fl_add_symbol("gmsh_models", gmsh_models, 1);
-  fl_add_symbol("gmsh_query", gmsh_query, 1);
-  fl_add_symbol("gmsh_dot", gmsh_dot, 1);
-  fl_add_symbol("gmsh_measure", gmsh_measure, 1);
-  fl_add_symbol("gmsh_gear", gmsh_gear, 1);
-  fl_add_symbol("gmsh_graph", gmsh_graph, 1);
-  fl_add_symbol("gmsh_search", gmsh_search, 1);
-  fl_add_symbol("gmsh_colormap", gmsh_colormap, 1);
-
   // load default system icons (for file browser)
   Fl_File_Icon::load_system_icons();
 
-  // FLTK >= 1.3.3 allows one to set a default global window icon
+  // the icon of all the windows
   Fl_RGB_Image icon(&gmsh_icon_pixmap);
   Fl_Window::default_icon(&icon);
 
@@ -765,6 +499,11 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   fullscreen = new openglWindow(100, 100, 100, 100);
   fullscreen->mode(openglWindowMode());
   fullscreen->end();
+  // closed by the window manager (Alt+F4, the close button of X11): back to
+  // the graphic windows, which the default callback would leave hidden, the
+  // program then ending without asking
+  fullscreen->callback(
+    [](Fl_Widget *, void *) { window_cb(nullptr, (void *)"fullscreen"); });
 
   // create all other windows
   options = new optionWindow(CTX::instance()->deltaFontSize);
@@ -831,6 +570,9 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
 
 FlGui::~FlGui()
 {
+  // the retired widgets go with their windows
+  _retiredWidgets.clear();
+
   // copy back to temp values, in case we'd like to retrieve them after the GUI
   // has been closed
   drawContext *c = getCurrentDrawContext();
@@ -845,30 +587,41 @@ FlGui::~FlGui()
     }
   }
 
-  for(std::size_t i = 0; i < graph.size(); i++) delete graph[i];
-  delete options;
-  delete fields;
-  delete plugins;
-  delete stats;
-  delete visibility;
-  delete highordertools;
-  delete clipping;
-  delete partition;
-  delete classify;
-  delete manip;
-  delete elementaryContext;
-  delete transformContext;
-  delete physicalContext;
-  delete onelabContext;
-  delete meshContext;
-  delete help;
-  delete fullscreen;
-
   // what was registered for this GUI, which a new one registers again
   Fl::remove_handler(globalShortcut);
   Fl::event_dispatch(nullptr);
+  sceneTool::changed = nullptr;
   Fl::remove_timeout(gamepad_handler);
   drawContext::setDrawGeomTransientFunction(nullptr);
+
+  // each window off the GUI as it goes, so that none is reached once freed
+  // (the graphic windows first, which give the docked tools back)
+  while(graph.size()) {
+    graphicWindow *g = graph.back();
+    graph.pop_back();
+    delete g;
+  }
+  auto gone = [](auto *&w) {
+    delete w;
+    w = nullptr;
+  };
+  gone(options);
+  gone(fields);
+  gone(plugins);
+  gone(stats);
+  gone(visibility);
+  gone(highordertools);
+  gone(clipping);
+  gone(partition);
+  gone(classify);
+  gone(manip);
+  gone(elementaryContext);
+  gone(transformContext);
+  gone(physicalContext);
+  gone(onelabContext);
+  gone(meshContext);
+  gone(help);
+  gone(fullscreen);
 }
 
 bool FlGui::available() { return _instance != nullptr; }
@@ -885,6 +638,43 @@ bool FlGui::inEvent(Fl_Widget *w)
 }
 
 std::vector<Fl_Widget **> FlGui::_eventWidgets;
+std::vector<FlGui::_retired> FlGui::_retiredWidgets;
+
+std::vector<Fl_Widget *>
+FlGui::retireInEvent(const std::vector<Fl_Widget *> &widgets,
+                     std::list<std::string> &strings)
+{
+  // the widgets retired before, which no event targets any more, deleted
+  // first (a long computation, whose event lasts, would otherwise keep one
+  // set per refresh)
+  _deleteRetired(false);
+  std::vector<Fl_Widget *> free;
+  std::shared_ptr<std::list<std::string>> kept;
+  for(Fl_Widget *w : widgets) {
+    if(!inEvent(w)) {
+      free.push_back(w);
+      continue;
+    }
+    if(!kept) {
+      kept = std::make_shared<std::list<std::string>>();
+      kept->splice(kept->end(), strings);
+    }
+    _retiredWidgets.push_back({w, kept});
+  }
+  return free;
+}
+
+void FlGui::_deleteRetired(bool all)
+{
+  std::vector<_retired> keep;
+  for(_retired &r : _retiredWidgets) {
+    if(!all && inEvent(r.widget))
+      keep.push_back(r);
+    else
+      Fl::delete_widget(r.widget);
+  }
+  _retiredWidgets.swap(keep);
+}
 
 int FlGui::_dispatch(int event, Fl_Window *win)
 {
@@ -908,17 +698,13 @@ int FlGui::_dispatch(int event, Fl_Window *win)
     handled h(targets);
     ret = gmshScheme() ? gmshSchemeHandle(event, win) : Fl::handle_(event, win);
   }
-  // the GUI may have been closed by the event
-  if(_eventWidgets.empty() && _instance) {
-    if(_instance->onelab) _instance->onelab->deleteRetiredWidgets();
-    if(_instance->onelabContext)
-      _instance->onelabContext->deleteRetiredWidgets();
-  }
+  // no widget code is running once the first event is handled
+  if(_eventWidgets.empty()) _deleteRetired(true);
   return ret;
 }
 
-FlGui *FlGui::instance(int argc, char **argv, bool quitShouldExit,
-                       void (*error_handler)(const char *fmt, ...))
+FlGui *FlGui::create(int argc, char **argv, bool quitShouldExit,
+                     void (*error_handler)(const char *fmt, ...))
 {
   if(!_instance) {
     _instance = new FlGui(argc, argv, quitShouldExit, error_handler);
@@ -944,6 +730,8 @@ void FlGui::destroy()
 {
   if(!_instance) return;
 
+  // the tool under way ends while its windows are there
+  sceneTool::stop();
   _instance->onelabContext->disableRedraw();
 
   // hide all windows (in case they are not tracked by FlGui)...
@@ -1042,22 +830,21 @@ int FlGui::testGlobalShortcuts(int event)
   // we only handle shortcuts here
   if(event != FL_SHORTCUT) return 0;
 
+  // (a key of the menu bar runs its action here too, also when the system
+  // menu bar of macOS did not take it)
   int status = 0;
-  if(graph[0]->runMenuShortcut()) {
-    // a shortcut of the menus is its entry, also when the system menu bar
-    // did not take it
-    status = 1;
-  }
-  else {
-    for(const ShortcutEntry &e : GetShortcuts()) {
-      if(!fltkTest(e.shortcut)) continue;
-      int st = runShortcut(e.action);
-      if(!st) continue; // a menu entry, or not for this build
-      // a key passed on is handled, but as if it had not been: what is
-      // under the mouse reads it too
-      status = e.passOn ? 0 : st;
-      break;
-    }
+  for(const ShortcutEntry &e : GetShortcuts()) {
+    if(!fltkTest(e.shortcut)) continue;
+#if defined(__APPLE__)
+    // (Cmd+H hides the application)
+    if(e.inWindowBarOnly && graph[0]->hasSystemMenuBar()) continue;
+#endif
+    int st = runShortcut(e.action);
+    if(!st) continue; // not for this build
+    // a key passed on is handled, but as if it had not been: what is under
+    // the mouse reads it too
+    status = e.passOn ? 0 : st;
+    break;
   }
 
   if(status == 2) {
@@ -1072,304 +859,152 @@ int FlGui::testGlobalShortcuts(int event)
 
 int FlGui::testArrowShortcuts()
 {
-  // the keys the 3D view handles itself when it has the focus
-  static const char *keys[] = {"time_step_prev", "time_step_next", "view_prev",
-                               "view_next",      "page_prev",      "page_next"};
+  // the keys the 3D view handles itself when it has the focus, before FLTK
+  // moves the focus with them: the arrows and Page Up/Down
   for(const ShortcutEntry &e : GetShortcuts()) {
-    bool arrow = false;
-    for(const char *k : keys)
-      if(!strcmp(e.action, k)) arrow = true;
-    if(arrow && fltkTest(e.shortcut)) return runShortcut(e.action) ? 1 : 0;
+    int key = e.shortcut.key;
+    if(key >= KeyLeft && key <= KeyPageDown && fltkTest(e.shortcut))
+      return runShortcut(e.action) ? 1 : 0;
   }
   return 0;
 }
 
-// what each action of the shortcut table does; the entries of the menus are
-// run by the menus (see graphicWindow::runMenuShortcut()), those of the quick
-// access menu of the status bar by its callback. Returns 0 for an action not
-// handled here, 1 when done, 2 when the scene must be drawn again
+// the selection flags of all the scenes (see sceneView::selectionStep())
+static void setSelectionFlag(int sceneView::*flag)
+{
+  for(openglWindow *gl : FlGui::instance()->openglWindows()) gl->*flag = 1;
+  // the tool under way takes it now; without one, the API waiting for a
+  // selection reads it (see openglWindow::selectEntity())
+  sceneTool::step();
+}
+
+// placing an elementary entity with the mouse: the axis i frozen or not, or
+// all the axes but i frozen
+static void freezeAxis(int i, bool allBut)
+{
+  elementaryContextWindow *e = FlGui::instance()->elementaryContext;
+  if(allBut)
+    for(int j = 0; j < 3; j++) e->butt[j]->value(j != i);
+  else
+    e->butt[i]->value(!e->butt[i]->value());
+}
+
+// Escape leaves the full screen, or cancels a lasso, or toggles the mouse
+// selection
+// Escape cancels what is under way, one thing at a time: a lasso, then the
+// selection (a tool, or the API waiting for one: as 'q'), then full screen
+// (picking is switched off and on by Shift+Escape, see "mouse_selection")
+static void escape()
+{
+  bool lasso = false, selection = sceneTool::current() != nullptr;
+  for(openglWindow *gl : FlGui::instance()->openglWindows()) {
+    if(gl->lassoMode) lasso = true;
+    if(gl->selectionMode) selection = true;
+  }
+  if(lasso) {
+    for(openglWindow *gl : FlGui::instance()->openglWindows())
+      gl->lassoMode = false;
+    drawContext::global()->draw();
+    return;
+  }
+  if(selection) {
+    setSelectionFlag(&sceneView::quitSelection);
+    return;
+  }
+  if(FlGui::instance()->fullscreen->shown())
+    window_cb(nullptr, (void *)"fullscreen");
+}
+
+// the plugins of the view shown in the options window
+static void plugins_view()
+{
+  int view = FlGui::instance()->options->view.index;
+  if(PView::list.size())
+    FlGui::instance()->plugins->show(
+      (view >= 0 && view < (int)PView::list.size()) ? view : 0);
+}
+
+const std::map<std::string, fltkAction> &keyboardActions()
+{
+  static const std::map<std::string, fltkAction> actions = {
+    // reloading and running
+    {"project_reload", {[](int) { onelab_reload_cb(nullptr, nullptr); }}},
+    {"solver_run", {[](int) { onelab_cb(nullptr, (void *)"compute"); }}},
+    // the modules of the tree
+    {"module_geometry",
+     {[](int) { FlGui::instance()->toggleModule("Geometry"); }}},
+    {"module_mesh", {[](int) { FlGui::instance()->toggleModule("Mesh"); }}},
+    {"module_solver", {[](int) { FlGui::instance()->toggleModule("Solver"); }}},
+    {"module_post",
+     {[](int) { FlGui::instance()->toggleModule("Post-processing"); }}},
+    // a selection under way
+    {"selection_end",
+     {[](int) { setSelectionFlag(&sceneView::endSelection); }}},
+    {"selection_undo",
+     {[](int) { setSelectionFlag(&sceneView::undoSelection); }}},
+    {"selection_quit",
+     {[](int) { setSelectionFlag(&sceneView::quitSelection); }}},
+    // placing an elementary entity with the mouse
+    {"freeze_x", {[](int) { freezeAxis(0, false); }}},
+    {"freeze_y", {[](int) { freezeAxis(1, false); }}},
+    {"freeze_z", {[](int) { freezeAxis(2, false); }}},
+    {"freeze_but_x", {[](int) { freezeAxis(0, true); }}},
+    {"freeze_but_y", {[](int) { freezeAxis(1, true); }}},
+    {"freeze_but_z", {[](int) { freezeAxis(2, true); }}},
+    {"escape", {[](int) { escape(); }}},
+    {"mouse_selection", {[](int) { mouse_selection_cb(nullptr, nullptr); }}},
+    // the windows
+    {"options_solver", {[](int) { solver_options_cb(nullptr, nullptr); }}},
+    {"options_post", {[](int) { post_options_cb(nullptr, nullptr); }}},
+    {"plugins_view", {[](int) { plugins_view(); }}},
+    // the point of view, as the buttons of the status bar (which read Shift
+    // and Ctrl: the other side, reset, sync the viewports); the web page does
+    // it in RunSceneShortcut()
+    {"view_x", {[](int) { status_xyz1p_cb(nullptr, (void *)"x"); }}},
+    {"view_y", {[](int) { status_xyz1p_cb(nullptr, (void *)"y"); }}},
+    {"view_z", {[](int) { status_xyz1p_cb(nullptr, (void *)"z"); }}},
+    {"view_1_1", {[](int) { status_xyz1p_cb(nullptr, (void *)"1:1"); }}},
+    {"view_3d", {[](int) { status_xyz1p_cb(nullptr, (void *)"3d"); }}},
+    // the time steps and the views, on the arrows
+    {"time_step_prev",
+     {[](int) { status_play_manual(1, -CTX::instance()->post.animStep); }}},
+    {"time_step_next",
+     {[](int) { status_play_manual(1, CTX::instance()->post.animStep); }}},
+    {"view_prev",
+     {[](int) { status_play_manual(0, -CTX::instance()->post.animStep); }}},
+    {"view_next",
+     {[](int) { status_play_manual(0, CTX::instance()->post.animStep); }}},
+#if defined(HAVE_POPPLER)
+    {"page_prev", {[](int) {
+       gmshPopplerWrapper::setCurrentPageDown();
+       drawContext::global()->draw();
+     }}},
+    {"page_next", {[](int) {
+       gmshPopplerWrapper::setCurrentPageUp();
+       drawContext::global()->draw();
+     }}},
+#endif
+  };
+  return actions;
+}
+
+// What each action of the shortcut table does: an action of the registry (see
+// Actions.h) or one the interface does (see findAction() in actionMenus.cpp:
+// the modules, the menu bar and the keys above) runs as its items do; those
+// that only change the scene are those of RunSceneShortcut(), shared with the
+// web page. Returns 0 for an action not handled here (or not available now:
+// the key then goes on, as if it had no shortcut), 1 when done, 2 when the
+// scene must be drawn again.
 int FlGui::runShortcut(const std::string &a)
 {
-  // --- reloading and meshing
-  if(a == "geometry_reload") {
-    geometry_reload_cb(nullptr, nullptr);
+  actionItem item{"", ActionRun, a, {}, "", "", {}};
+  if(canRunItem(item)) {
+    runItem(item);
     return 1;
   }
-  if(a == "project_reload") {
-    onelab_reload_cb(nullptr, nullptr);
-    return 1;
-  }
-  if(a == "mesh_1d") {
-    mesh_1d_cb(nullptr, nullptr);
-    return 1;
-  }
-  if(a == "mesh_2d") {
-    mesh_2d_cb(nullptr, nullptr);
-    return 1;
-  }
-  if(a == "mesh_3d") {
-    mesh_3d_cb(nullptr, nullptr);
-    return 1;
-  }
-  if(a == "solver_run") {
-    onelab_cb(nullptr, (void *)"compute");
-    return 1;
-  }
-  if(a == "quit") {
-    // only necessary when using the system menu bar, but hey, it cannot hurt
-    file_quit_cb(nullptr, nullptr);
-    return 1;
-  }
-  if(a == "watch") {
-    file_watch_cb(nullptr, nullptr);
-    return 1;
-  }
-  // --- the modules of the tree
-  if(a == "module_geometry") {
-    FlGui::toggleModule("Geometry");
-    return 1;
-  }
-  if(a == "module_mesh") {
-    FlGui::toggleModule("Mesh");
-    return 1;
-  }
-  if(a == "module_solver") {
-    FlGui::toggleModule("Solver");
-    return 1;
-  }
-  if(a == "module_post") {
-    FlGui::toggleModule("Post-processing");
-    return 1;
-  }
-  // --- a selection under way
-  if(a == "selection_end" || a == "selection_undo" || a == "selection_invert" ||
-     a == "selection_quit") {
-    for(openglWindow *gl : openglWindows()) {
-      if(a == "selection_end") gl->endSelection = 1;
-      if(a == "selection_undo") gl->undoSelection = 1;
-      if(a == "selection_invert") gl->invertSelection = 1;
-      if(a == "selection_quit") gl->quitSelection = 1;
-    }
-    return 1;
-  }
-  // --- placing an elementary entity with the mouse: the axes it may move
-  // along, one at a time or all but one
-  if(a == "freeze_x" || a == "freeze_y" || a == "freeze_z") {
-    int i = a[7] - 'x';
-    elementaryContext->butt[i]->value(!elementaryContext->butt[i]->value());
-    return 1;
-  }
-  if(a == "freeze_but_x" || a == "freeze_but_y" || a == "freeze_but_z") {
-    int i = a[11] - 'x';
-    for(int j = 0; j < 3; j++) elementaryContext->butt[j]->value(j != i);
-    return 1;
-  }
-  if(a == "escape") {
-    if(fullscreen->shown()) {
-      window_cb(nullptr, (void *)"fullscreen");
-      return 1;
-    }
-    bool lasso = false;
-    for(openglWindow *gl : openglWindows())
-      if(gl->lassoMode) lasso = true;
-    if(lasso) {
-      for(openglWindow *gl : openglWindows()) gl->lassoMode = false;
-      return 2;
-    }
-    status_options_cb(nullptr, (void *)"S");
-    return 1;
-  }
-  // --- the windows
-  if(a == "window_front") {
-    window_cb(nullptr, (void *)"front");
-    return 1;
-  }
-  if(a == "options_general") {
-    general_options_cb(nullptr, nullptr);
-    return 1;
-  }
-  if(a == "options_geometry") {
-    geometry_options_cb(nullptr, nullptr);
-    return 1;
-  }
-  if(a == "options_mesh") {
-    mesh_options_cb(nullptr, nullptr);
-    return 1;
-  }
-  if(a == "options_solver") {
-    solver_options_cb(nullptr, nullptr);
-    return 1;
-  }
-  if(a == "options_post") {
-    post_options_cb(nullptr, nullptr);
-    return 1;
-  }
-  if(a == "options_view") {
-    view_options_cb(nullptr, (void *)-1);
-    return 1;
-  }
-  if(a == "plugins_view") {
-    if(PView::list.size()) {
-      if(options->view.index >= 0 &&
-         options->view.index < (int)PView::list.size())
-        plugins->show(options->view.index);
-      else
-        plugins->show(0);
-    }
-    return 1;
-  }
-  // --- the display: what the quick access menu of the status bar does too
-  if(a == "geometry_points" || a == "geometry_curves" ||
-     a == "geometry_surfaces" || a == "geometry_volumes" || a == "mesh_nodes" ||
-     a == "mesh_lines" || a == "mesh_surface_edges" ||
-     a == "mesh_surface_faces" || a == "mesh_volume_edges" ||
-     a == "mesh_volume_faces" || a == "mesh_toggle") {
-    quick_access_cb(nullptr, (void *)a.c_str());
-    return 2;
-  }
-  if(a == "fast_redraw") {
-    opt_general_fast_redraw(0, GMSH_SET | GMSH_GUI,
-                            !opt_general_fast_redraw(0, GMSH_GET, 0));
-    return 2;
-  }
-  if(a == "bounding_boxes") {
-    opt_general_draw_bounding_box(
-      0, GMSH_SET | GMSH_GUI, !opt_general_draw_bounding_box(0, GMSH_GET, 0));
-    return 2;
-  }
-  if(a == "view_scales") {
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_show_scale(i, GMSH_SET | GMSH_GUI,
-                            !opt_view_show_scale(i, GMSH_GET, 0));
-    return 2;
-  }
-  if(a == "color_scheme") {
-    opt_general_color_scheme(0, GMSH_SET | GMSH_GUI,
-                             opt_general_color_scheme(0, GMSH_GET, 0) + 1);
-    return 2;
-  }
-  if(a == "colormaps") {
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_colormap_number(i, GMSH_SET | GMSH_GUI,
-                                 opt_view_colormap_number(i, GMSH_GET, 0) + 1);
-    return 2;
-  }
-  if(a == "lighting") {
-    opt_geometry_light(0, GMSH_SET | GMSH_GUI,
-                       !opt_geometry_light(0, GMSH_GET, 0));
-    opt_mesh_light(0, GMSH_SET | GMSH_GUI, !opt_mesh_light(0, GMSH_GET, 0));
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_light(i, GMSH_SET | GMSH_GUI, !opt_view_light(i, GMSH_GET, 0));
-    return 2;
-  }
-  // the view callback reads Shift and Ctrl itself (-X, reset, sync)
-  if(a == "view_x" || a == "view_y" || a == "view_z") {
-    status_xyz1p_cb(nullptr, (void *)(a == "view_x" ? "x" :
-                                      a == "view_y" ? "y" :
-                                                      "z"));
-    return 1;
-  }
-  if(a == "view_1_1") {
-    status_xyz1p_cb(nullptr, (void *)"1:1");
-    return 1;
-  }
-  if(a == "view_3d") {
-    status_xyz1p_cb(nullptr, (void *)"3d");
-    return 1;
-  }
-  if(a == "projection") {
-    status_options_cb(nullptr, (void *)"p");
-    return 1;
-  }
-  if(a == "axes_loop") {
-    opt_general_axes(0, GMSH_SET | GMSH_GUI,
-                     opt_general_axes(0, GMSH_GET, 0) + 1);
-    // through the six modes: a view left on automatic starts over at none
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0)) {
-        int a = (int)opt_view_axes(i, GMSH_GET, 0);
-        opt_view_axes(i, GMSH_SET | GMSH_GUI, (a >= 5) ? 0 : a + 1);
-      }
-    return 2;
-  }
-  if(a == "small_axes") {
-    opt_general_small_axes(0, GMSH_SET | GMSH_GUI,
-                           !opt_general_small_axes(0, GMSH_GET, 0));
-    return 2;
-  }
-  if(a == "surface_type") {
-    opt_geometry_surface_type(0, GMSH_SET | GMSH_GUI,
-                              opt_geometry_surface_type(0, GMSH_GET, 0) + 1);
-    return 2;
-  }
-  if(a == "view_intervals" || a == "view_intervals_all") {
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0)) {
-        int t = opt_view_intervals_type(i, GMSH_GET, 0) + 1;
-        if(t == 4 && a == "view_intervals") t = 1; // skip numeric display
-        opt_view_intervals_type(i, GMSH_SET | GMSH_GUI, t);
-      }
-    return 2;
-  }
-  if(a == "view_range") {
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_range_type(i, GMSH_SET | GMSH_GUI,
-                            opt_view_range_type(i, GMSH_GET, 0) + 1);
-    return 2;
-  }
-  if(a == "view_annotations") {
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_draw_strings(i, GMSH_SET | GMSH_GUI,
-                              !opt_view_draw_strings(i, GMSH_GET, 0));
-    return 2;
-  }
-  if(a == "view_elements") {
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_show_element(i, GMSH_SET | GMSH_GUI,
-                              !opt_view_show_element(i, GMSH_GET, 0));
-    return 2;
-  }
-  if(a == "views_hide_show") {
-    static int show = 0;
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      opt_view_visible(i, GMSH_SET | GMSH_GUI, show);
-    show = !show;
-    return 2;
-  }
-  // --- the time steps and the views, on the arrows
-  if(a == "time_step_prev") {
-    status_play_manual(1, -CTX::instance()->post.animStep);
-    return 1;
-  }
-  if(a == "time_step_next") {
-    status_play_manual(1, CTX::instance()->post.animStep);
-    return 1;
-  }
-  if(a == "view_prev") {
-    status_play_manual(0, -CTX::instance()->post.animStep);
-    return 1;
-  }
-  if(a == "view_next") {
-    status_play_manual(0, CTX::instance()->post.animStep);
-    return 1;
-  }
-#if defined(HAVE_POPPLER)
-  if(a == "page_prev") {
-    gmshPopplerWrapper::setCurrentPageDown();
-    return 2;
-  }
-  if(a == "page_next") {
-    gmshPopplerWrapper::setCurrentPageUp();
-    return 2;
-  }
-#endif
-  return 0;
+  if(IsAction(a)) return 0;
+  // the display, the views and the time steps, as in the web page
+  return RunSceneShortcut(a, 0, nullptr);
 }
 
 void FlGui::setGraphicTitle(const std::string &title)
@@ -1462,61 +1097,26 @@ void FlGui::splitCurrentOpenglWindow(char how, double ratio)
 
 void FlGui::copyCurrentOpenglWindowToClipboard()
 {
-#if defined(WIN32)
-  GLint width = getCurrentOpenglWindow()->w();
-  GLint height = getCurrentOpenglWindow()->h();
-
-  // lines have to be 32 bytes aligned, suppose 24 bits per pixel; just crop it
-  width -= width % 4;
-
-  // get pixels
-  PixelBuffer *buffer =
-    new PixelBuffer(width, height, GL_RGB, GL_UNSIGNED_BYTE);
-  buffer->fill();
-  unsigned char *pixels = (unsigned char *)buffer->getPixels();
-
-  // swap R and B since Windows bitmap format is BGR
-  int nBytes = 3 * width * height;
-  for(int i = 0; i < nBytes; i += 3) {
-    unsigned char tmp = pixels[i];
-    pixels[i] = pixels[i + 2];
-    pixels[i + 2] = tmp;
-  }
-
-  // fill header
-  BITMAPINFOHEADER header;
-  header.biWidth = width;
-  header.biHeight = height;
-  header.biSizeImage = nBytes;
-  header.biSize = 40;
-  header.biPlanes = 1;
-  header.biBitCount = 3 * 8;
-  header.biCompression = BI_RGB;
-  header.biXPelsPerMeter = 0;
-  header.biYPelsPerMeter = 0;
-  header.biClrUsed = 0;
-  header.biClrImportant = 0;
-
-  // generate handle
-  HANDLE handle =
-    (HANDLE)::GlobalAlloc(GHND, sizeof(BITMAPINFOHEADER) + nBytes);
-  if(handle != nullptr) {
-    // lock handle
-    char *pData = (char *)::GlobalLock((HGLOBAL)handle);
-    // copy header and data
-    memcpy(pData, &header, sizeof(BITMAPINFOHEADER));
-    memcpy(pData + sizeof(BITMAPINFOHEADER), pixels, nBytes);
-    // unlock
-    ::GlobalUnlock((HGLOBAL)handle);
-    // push DIB in clipboard
-    OpenClipboard(nullptr);
-    EmptyClipboard();
-    SetClipboardData(CF_DIB, handle);
-    CloseClipboard();
-  }
-
-  delete buffer;
-#endif
+  // the scene as it is drawn, at the resolution of the screen, given to the
+  // clipboard as a picture of the size of the window (FLTK makes the formats
+  // of each platform)
+  // (the sizes read first: drawing may process events, and the pane go)
+  openglWindow *gl = getCurrentOpenglWindow();
+  int w = gl->pixel_w(), h = gl->pixel_h(), sw = gl->w(), sh = gl->h();
+  PixelBuffer buffer(w, h, GL_RGB, GL_UNSIGNED_BYTE);
+  buffer.fill();
+  // (the rows of the picture from the top, those of OpenGL from the bottom)
+  std::vector<unsigned char> rows(3 * w * h);
+  unsigned char *pixels = (unsigned char *)buffer.getPixels();
+  for(int j = 0; j < h; j++)
+    memcpy(&rows[3 * w * j], pixels + 3 * w * (h - 1 - j), 3 * w);
+  Fl_RGB_Image image(rows.data(), w, h, 3);
+  image.scale(sw, sh, 0, 1);
+  Fl_Copy_Surface *surface = new Fl_Copy_Surface(sw, sh);
+  Fl_Surface_Device::push_current(surface);
+  image.draw(0, 0);
+  Fl_Surface_Device::pop_current();
+  delete surface; // which loads the clipboard
 }
 
 drawContext *FlGui::getCurrentDrawContext()
@@ -1524,11 +1124,11 @@ drawContext *FlGui::getCurrentDrawContext()
   return getCurrentOpenglWindow()->getDrawContext();
 }
 
-char FlGui::selectEntity(int type)
+char FlGui::selectEntity(int type, bool pickElements)
 {
   return getCurrentOpenglWindow()->selectEntity(
-    type, selectedVertices, selectedEdges, selectedFaces, selectedRegions,
-    selectedElements, selectedPoints, selectedViews);
+    type, pickElements, selectedVertices, selectedEdges, selectedFaces,
+    selectedRegions, selectedElements, selectedPoints, selectedViews);
 }
 
 void FlGui::setStatus(const std::string &msg, bool opengl)
@@ -1693,12 +1293,9 @@ void FlGui::storeCurrentWindowsInfo()
     storeWindowOffset(partition->win, CTX::instance()->partOffset);
   storeWindowOffset(classify->window, CTX::instance()->reclassifyOffset);
   storeWindowOffset(manip->win, CTX::instance()->manipOffset);
-  Fl_Window *ctx = (lastContextWindow == 4) ? onelabContext->win :
-                   (lastContextWindow == 3) ? physicalContext->win :
-                   (lastContextWindow == 2) ? meshContext->win :
-                   (lastContextWindow == 1) ? transformContext->win :
-                                              elementaryContext->win;
-  storeWindowOffset(ctx, CTX::instance()->ctxOffset);
+  storeWindowOffset(lastContextWindow ? lastContextWindow :
+                                        elementaryContext->win,
+                    CTX::instance()->ctxOffset);
 #if defined(HAVE_3M)
   storeWindowPosition3M();
 #endif

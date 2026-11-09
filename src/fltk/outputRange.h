@@ -75,7 +75,7 @@ private:
   static void _graph_menu_cb(Fl_Widget *w, void *data)
   {
     outputRange *b = (outputRange *)data;
-    b->_set_graph_value(graphMenuValue(b->_graph_menu), false);
+    b->_set_graph_value(graphMenuValue(b->_graph_menu, b->_graph_val), false);
     b->do_callback();
   }
   static void _graph_menu_reset_cb(Fl_Widget *w, void *data)
@@ -93,7 +93,8 @@ private:
 public:
   outputRange(int x, int y, int w, int h, double max_number,
               const char *l = nullptr)
-    : Fl_Group(x, y, w, h, l), _max_number(max_number)
+    : Fl_Group(x, y, w, h, l), _min(-max_number), _max(max_number), _step(0.),
+      _max_number(max_number)
   {
     _graph_val.resize(36, '0');
 
@@ -108,7 +109,7 @@ public:
     _range_butt->tooltip("Show range or choices");
 
     _graph_butt = new Fl_Button(x + output_w + dot_w, y, graph_w, h);
-    _graph_butt->label("@-1gmsh_graph");
+    gmshIcon(_graph_butt, "graph", FL_NORMAL_SIZE);
     _graph_butt->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE);
     _graph_butt->tooltip("Draw range or choices on X-Y graph(s)");
 

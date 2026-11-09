@@ -10,6 +10,7 @@
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Menu_Button.H>
 #include "gmshScheme.h"
+#include "icons.h"
 
 // the X-Y graph menu of inputRange and outputRange: 9 graphs with 4 axes each
 // (X, Y, X', Y'), the 36 axes stored in a string, '0' for an axis not drawn
@@ -31,13 +32,15 @@ inline void addGraphMenu(Fl_Menu_Button *menu, Fl_Callback *cb,
   menu->add("None", 0, resetCb, data);
 }
 
-// the axes checked in the menu, drawn as discrete values ('3'; 1=iso,
-// 2=continuous, 4=numeric)
-inline std::string graphMenuValue(Fl_Menu_Button *menu)
+// the axes checked in the menu: those already drawn keep their type (old),
+// the others are drawn as discrete values ('3'; 1=iso, 2=continuous,
+// 4=numeric)
+inline std::string graphMenuValue(Fl_Menu_Button *menu, const std::string &old)
 {
   std::string val(36, '0');
   for(int i = 0; i < 36; i++)
-    if(menu->menu()[graphMenuIndex(i)].value()) val[i] = '3';
+    if(menu->menu()[graphMenuIndex(i)].value())
+      val[i] = (i < (int)old.size() && old[i] != '0') ? old[i] : '3';
   return val;
 }
 
@@ -62,7 +65,7 @@ inline void showGraphValue(const std::string &val, Fl_Button *butt,
   butt->labelcolor(drawn ? fl_contrast(FL_FOREGROUND_COLOR,
                                        gmshIndicator(IndicatorYellow)) :
                            FL_FOREGROUND_COLOR);
-  butt->redraw();
+  gmshIconRecolor(butt);
 }
 
 #endif

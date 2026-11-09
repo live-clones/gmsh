@@ -12,6 +12,7 @@
 import fs from 'fs';
 import path from 'path';
 import createGmsh from './build/gmsh.mjs';
+import {findModel} from './files.mjs';
 
 const dirs = process.argv.slice(2);
 if(!dirs.length) {
@@ -38,13 +39,6 @@ function copy(src, dst) {
     else if(!skip.test(f)) FS.writeFile(dst + '/' + f, fs.readFileSync(s));
   }
 }
-// as onelab.html: a .pro with a .geo of the same name, or else a .pro
-function findModel(dir) {
-  const files = FS.readdir(dir);
-  const pro = files.filter((f) => f.endsWith('.pro'));
-  return pro.find((f) => files.includes(f.replace(/\.pro$/, '.geo'))) ||
-    pro[0] || files.find((f) => f.endsWith('.geo'));
-}
 const run = (action) =>
   Module.ccall('gmshWebOnelab', 'number', ['string'], [action]);
 
@@ -53,8 +47,9 @@ for(const dir of dirs) {
   const name = path.basename(path.resolve(dir));
   const work = `/run${++n}`;
   copy(dir, work);
-  const file = findModel(work);
-  if(!file) {
+  // as onelab.html
+  const file = findModel(FS, work);
+  if(!/\.(pro|geo)$/.test(file || '')) {
     console.log(`${name}: no model`);
     continue;
   }
@@ -67,20 +62,20 @@ for(const dir of dirs) {
   const t0 = performance.now();
   let errors = 0;
   try {
-    gmsh.open(work + '/' + file);
+    gmsh.open(file);
     errors += run('check');
     const t1 = performance.now();
     errors += run('compute');
     const t2 = performance.now();
     const views = gmsh.option.getNumber('PostProcessing.NbViews');
     const nodes = gmsh.option.getNumber('Mesh.NbNodes');
-    console.log(`${name} (${file}): ${errors ? errors + ' error(s)' : 'ok'}, ` +
+    console.log(`${name} (${file.slice(work.length + 1)}): ${errors ? errors + ' error(s)' : 'ok'}, ` +
                 `${nodes} nodes, ${views} views, open+check ` +
                 `${((t1 - t0) / 1000).toFixed(2)} s, compute ` +
                 `${((t2 - t1) / 1000).toFixed(2)} s`);
   } catch(e) {
     errors++;
-    console.log(`${name} (${file}): exception ${e.message || e}`);
+    console.log(`${name} (${file.slice(work.length + 1)}): exception ${e.message || e}`);
   }
   if(errors) {
     failed++;

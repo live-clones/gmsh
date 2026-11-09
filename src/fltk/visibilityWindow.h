@@ -27,7 +27,6 @@ public:
   Fl_Tree *tree;
   Fl_Button *tree_create;
   Fl_Check_Button *butt[2];
-  Fl_Button *push[2];
   Fl_Input *input[10];
   Fl_Input *search;
   searchFilter filter;

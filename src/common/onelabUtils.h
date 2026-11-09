@@ -35,9 +35,34 @@ namespace onelabUtils {
   double updateNumber(onelab::number &x, onelab::number &y,
                       const bool readOnlyRange = false);
   std::string updateString(onelab::string &x, onelab::string &y);
+  // the loops over parameters (see Loop in onelab.h) started, and the next
+  // step of the innermost one taken: false when they are over
   void initializeLoops();
   bool incrementLoops();
-  void updateGraphs();
+  // the graphs of the parameters (their "Graph" attribute) made again: true
+  // if views were added or changed, for the interface to show them
+  bool updateGraphs();
+  // a file a solver asks to show, merged if Solver.AutoMergeFile is set: what
+  // the merge changes in Gmsh's parameters (e.g. a view option given by a
+  // parameter) is no reason to redo Gmsh's part, and each keeps its level of
+  // change. Returns true if the file was merged
+  bool mergeSolverFile(const std::string &fileName);
+  // The run loops of the interfaces (the graphical interface, the batch mode,
+  // the web page) share these.
+  // - Whether a client is a solver they run: not Gmsh itself, nor a client
+  //   connecting on its own, nor one whose name says NoAutoRun.
+  bool isAutoRunSolver(onelab::client *c);
+  // - A solver about to run an action: its model name guessed, the action set.
+  void setSolverAction(onelab::client *c, const std::string &action);
+  // - A solver running an action; after a compute, the parameters are marked
+  //   as unchanged for it.
+  void runSolver(onelab::client *c, const std::string &action);
+  // - The database file (Gmsh/DatabaseFileName, or the model's name with
+  //   .db); after a compute, the output files archived and the database saved
+  //   as the Solver options ask (true if one was).
+  std::string dbFileName();
+  bool afterCompute();
+
   std::string timeStamp();
   void saveDb(const std::string &fileName);
   void archiveOutputFiles(const std::string &fileName);
@@ -62,6 +87,16 @@ namespace onelabUtils {
                  bool force = false);
   bool autoCheck(const onelab::string &pold, const onelab::string &pnew,
                  bool force = false);
+  // all of this for a parameter changed in an interface (the tree of the
+  // graphical interface, the web page), and its new value stored, in that
+  // order; what the interface is to do next:
+  enum {
+    ParameterCheck = 1, // check the model (always if forced)
+    ParameterRebuild = 2, // rebuild the list of parameters
+    ParameterOption = 4 // redraw, a Gmsh option being set
+  };
+  int setParameter(onelab::number &p, bool force = false);
+  int setParameter(onelab::string &p, bool force = false);
 } // namespace onelabUtils
 
 #endif

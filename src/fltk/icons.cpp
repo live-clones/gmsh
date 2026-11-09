@@ -30,6 +30,10 @@ static const char *strokes(const std::string &name)
            "<path d='m4 7.5 8 4.5 8-4.5M12 12v9'/>";
   if(name == "rotate")
     return "<path d='M21 12a9 9 0 1 1-3-6.7'/><path d='M21 3v6h-6'/>";
+  // (a loop, as the repeat of a player: two arrows around a cycle)
+  if(name == "loop")
+    return "<path d='M17 2l4 4-4 4'/><path d='M3 11V9a3 3 0 0 1 3-3h15'/>"
+           "<path d='M7 22l-4-4 4-4'/><path d='M21 13v2a3 3 0 0 1-3 3H3'/>";
   if(name == "query")
     return "<circle cx='12' cy='12' r='8'/>"
            "<path d='M22 12h-4M6 12H2M12 6V2M12 22v-4'/>";
@@ -51,6 +55,8 @@ static const char *strokes(const std::string &name)
            "<path d='m16.95 7.05 2.12-2.12M7.05 16.95l-2.12 2.12'/>";
   if(name == "search")
     return "<circle cx='11' cy='11' r='7'/><path d='m21 21-4.3-4.3'/>";
+  if(name == "graph")
+    return "<path d='M3 3v18h18'/><path d='m7 15 4-5 3 3 6-7'/>";
   if(name == "eye")
     return "<path d='M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z'/>"
            "<circle cx='12' cy='12' r='3'/>";
@@ -68,12 +74,12 @@ namespace {
   std::vector<icon *> holders;
 } // namespace
 
-static Fl_SVG_Image *image(const std::string &name, int size, bool active)
+static Fl_SVG_Image *image(const std::string &name, int size, Fl_Color c,
+                           bool active)
 {
   unsigned char r, g, b;
   // the inactive icons in the colour FLTK greys an inactive label with
-  Fl::get_color(active ? FL_FOREGROUND_COLOR : fl_inactive(FL_FOREGROUND_COLOR),
-                r, g, b);
+  Fl::get_color(active ? c : fl_inactive(c), r, g, b);
   char col[16];
   snprintf(col, sizeof(col), "#%02x%02x%02x", r, g, b);
   std::string key = name + "/" + std::to_string(size) + "/" + col;
@@ -91,10 +97,24 @@ static Fl_SVG_Image *image(const std::string &name, int size, bool active)
   return img;
 }
 
+static void draw(icon *h)
+{
+  h->widget->image(image(h->name, h->size, h->widget->labelcolor(), true));
+  h->widget->deimage(image(h->name, h->size, h->widget->labelcolor(), false));
+  h->widget->redraw();
+}
+
 void gmshIcon(Fl_Widget *w, const char *name, int size)
 {
-  // the holders of deleted widgets go (FLTK cleared their pointers, which it
-  // watches until released)
+  // a null name takes the icon off: its holder goes with those of the deleted
+  // widgets (FLTK cleared their pointers, which it watches until released)
+  if(!name) {
+    for(icon *i : holders)
+      if(i->widget == w) i->widget = nullptr;
+    w->image(nullptr);
+    w->deimage(nullptr);
+    w->redraw();
+  }
   for(auto it = holders.begin(); it != holders.end();) {
     if((*it)->widget) {
       ++it;
@@ -104,6 +124,7 @@ void gmshIcon(Fl_Widget *w, const char *name, int size)
     delete *it;
     it = holders.erase(it);
   }
+  if(!name) return;
   icon *h = nullptr;
   for(icon *i : holders)
     if(i->widget == w) h = i;
@@ -118,17 +139,17 @@ void gmshIcon(Fl_Widget *w, const char *name, int size)
   h->size = size;
   // no label at all: an empty one would still take its line under the image
   w->label(nullptr);
-  w->image(image(name, size, true));
-  w->deimage(image(name, size, false));
-  w->redraw();
+  draw(h);
+}
+
+void gmshIconRecolor(Fl_Widget *w)
+{
+  for(icon *h : holders)
+    if(h->widget == w) draw(h);
 }
 
 void gmshIconsRecolor()
 {
-  for(icon *h : holders) {
-    if(!h->widget) continue;
-    h->widget->image(image(h->name, h->size, true));
-    h->widget->deimage(image(h->name, h->size, false));
-    h->widget->redraw();
-  }
+  for(icon *h : holders)
+    if(h->widget) draw(h);
 }

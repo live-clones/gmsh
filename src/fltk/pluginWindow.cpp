@@ -3,11 +3,11 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#include "GmshConfig.h"
 #include <cstdint>
 #include <algorithm>
+#include <functional>
 #include <vector>
-#include <string.h>
+#include <set>
 #include <FL/Fl_Return_Button.H>
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Value_Input.H>
@@ -26,9 +26,7 @@
 #include "PluginManager.h"
 #include "Plugin.h"
 #include "GModel.h"
-#include "MVertex.h"
 #include "Context.h"
-#include "scriptStringInterface.h"
 #include "StringUtils.h"
 #include "OS.h"
 
@@ -174,49 +172,56 @@ static void plugin_run_cb(Fl_Widget *w, void *data)
     sxn->def = p->dialogBox->value[i]->value();
   }
 
+  // a failure (the plugins throw) reported, the next views still run
+  auto attempt = [p](const std::function<void()> &f) {
+    try {
+      f();
+    } catch(const std::exception &e) {
+      Msg::Error("Plugin(%s) failed: %s", p->getName().c_str(), e.what());
+    }
+  };
+
   if(p->getType() == GMSH_Plugin::GMSH_POST_PLUGIN) {
     GMSH_PostPlugin *pp = (GMSH_PostPlugin *)p;
+    // the View option, set to each view the plugin runs on
+    StringXNumber *opt = nullptr;
+    for(int j = 0; j < pp->getNbOptions(); j++)
+      if(std::string(pp->getOption(j)->str) == "View") opt = pp->getOption(j);
     // run on all selected views
     bool no_view_selected = true;
     Fl_Multi_Browser *views = FlGui::instance()->plugins->views->browser;
     for(int i = 1; i <= views->size(); i++) {
-      if(views->selected(i)) {
-        no_view_selected = false;
-        try {
-          if(i - 1 >= 0 && i - 1 < (int)PView::list.size()) {
-            PView *view = PView::list[i - 1];
-            if(view->getData()->isRemote())
-              pp->executeRemote(view);
-            else {
-              // run on the selected view, whatever the View option says
-              StringXNumber *opt = nullptr;
-              for(int j = 0; j < pp->getNbOptions(); j++)
-                if(std::string(pp->getOption(j)->str) == "View")
-                  opt = pp->getOption(j);
-              double old = opt ? opt->def : 0.;
-              if(opt) opt->def = view->getIndex();
-              pp->execute(view);
-              add_scripting(pp, view);
-              if(opt) opt->def = old;
-            }
-          }
-          else {
-            pp->execute(nullptr);
-            add_scripting(pp, nullptr);
-          }
-        } catch(const std::exception &e) {
-          Msg::Error("Plugin(%s) failed: %s", pp->getName().c_str(), e.what());
-        }
+      if(!views->selected(i)) continue;
+      no_view_selected = false;
+      if(i - 1 >= (int)PView::list.size()) {
+        attempt([pp] {
+          pp->execute(nullptr);
+          add_scripting(pp, nullptr);
+        });
+        continue;
       }
+      PView *view = PView::list[i - 1];
+      if(view->getData()->isRemote()) {
+        attempt([pp, view] { pp->executeRemote(view); });
+        continue;
+      }
+      // run on the selected view, whatever the View option says
+      double old = opt ? opt->def : 0.;
+      if(opt) opt->def = view->getIndex();
+      attempt([pp, view] {
+        pp->execute(view);
+        add_scripting(pp, view);
+      });
+      if(opt) opt->def = old;
     }
-    if(no_view_selected) {
-      pp->execute(nullptr);
-      add_scripting(pp, nullptr);
-    }
+    if(no_view_selected)
+      attempt([pp] {
+        pp->execute(nullptr);
+        add_scripting(pp, nullptr);
+      });
   }
-  else {
-    p->run();
-  }
+  else
+    attempt([p] { p->run(); });
 
   FlGui::instance()->updateViews(true);
   GMSH_Plugin::preview = nullptr;
@@ -520,7 +525,7 @@ void pluginWindow::layout()
     help->show();
   }
   else {
-    // out of the way too: FLTK 1.3 scrolls over hidden children
+    // and of zero height, out of the way
     help->hide();
     help->resize(WB, y, w, 0);
   }
@@ -545,14 +550,17 @@ void pluginWindow::show(int viewIndex)
 
 void pluginWindow::resetViewBrowser()
 {
-  // keep what was selected
+  // keep what was selected, by view tag (each line keeps the tag of its
+  // view): the views before may have gone
   Fl_Multi_Browser *b = views->browser;
-  std::vector<int> state;
-  for(int i = 0; i < b->size(); i++) state.push_back(b->selected(i + 1));
+  std::set<int> tags;
+  for(int i = 1; i <= b->size(); i++)
+    if(b->selected(i)) tags.insert((int)(intptr_t)b->data(i));
   b->clear();
   for(std::size_t i = 0; i < PView::list.size(); i++) {
-    b->add(targetList::viewName(i).c_str());
-    if(i < state.size() && state[i]) b->select(i + 1);
+    int tag = PView::list[i]->getTag();
+    b->add(targetList::viewName(i).c_str(), (void *)(intptr_t)tag);
+    if(tags.count(tag)) b->select(i + 1);
   }
   plugin_browser_cb(nullptr, nullptr);
 }

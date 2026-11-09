@@ -351,10 +351,10 @@ that many features of the geometry module can be used interactively in
 the GUI (@pxref{Gmsh graphical user interface}), which is also a good
 way to learn about both Gmsh's scripting language and the API, as
 actions in the geometry module automatically append the related command
-in the input script file, and can optionally also generate input for the
-languages supported by the API (see the
-@code{General.ScriptingLanguages} option; this is still work-in-progress
-as of Gmsh 4.14.)
+in the input script file, and can optionally also write it, as the calls
+of the API it amounts to, in a runnable program for each of the languages
+supported by the API, next to the script file (see the
+@code{General.ScriptingLanguages} option, e.g. @code{"geo,py,cpp"}).
 
 In addition to CAD-type geometrical entities, whose geometry is provided
 by a CAD kernel, Gmsh also supports @emph{discrete} model entities,
@@ -1741,9 +1741,8 @@ desktop and follows its light or dark mode; see the
 
 To create a new geometrical model, use the `File->New' menu to create a
 new model file, and choose for example @file{mymodel.geo} as file
-name. Then in the tree menu, successively open the `Geometry',
-`Elementary entities' and `Add' submenus, and click for example on
-`Rectangle'. A context window with parameters will open, docked on the
+name. Then in the tree menu, open the `Geometry' module and choose for
+example `Rectangle' in its `Add' menu. A context window with parameters will open, docked on the
 right of the graphic area: you can enter some parameters in this window
 (e.g. the width and height of the rectangle) and move the mouse to place
 it on the canvas. If you don't
@@ -1751,7 +1750,7 @@ want to place the rectangle with the mouse, select `X', `Y' and `Z
 freeze' in the window and enter the coordinates manually in the context
 window. Once you are done, either press @kbd{e} (see the status message
 on the top of the graphic window) or click on the `Add' button in the
-context window.
+context window; press @kbd{Escape} to stop placing rectangles.
 
 @iftex
 @sp 1
@@ -1767,12 +1766,24 @@ SetFactory("OpenCASCADE");
 Rectangle(1) = @{0, 0, 0, 1, 0.5, 0@};
 @end example
 You can edit this script with any text editor; clicking on `Edit script'
-in the tree menu will launch the default text editor specified by the
-@code{General.Editor} option (@pxref{General options}). If you edit the
-script, you should click on `Reload script' in the tree menu to reload
-the modifications in the GUI. The @code{//+} line in the script is a
+in the tree menu opens it in the script editor of the GUI, or in the text
+editor given by the @code{General.TextEditor} option (@pxref{General
+options}). If you edit the script in another editor, click on `Reload
+script' in the tree menu to reload the modifications in the GUI. The @code{//+} line in the script is a
 comment that is used as a placemark between commands added by the GUI;
 see @ref{Gmsh scripting language} for the scripting language reference.
+
+Many commands act on entities you pick in the graphic window: for
+example `Plane surface' in the `Add' menu, the `Transform' and `Boolean'
+operations, `Delete', the physical groups, or the deletion of parts of the
+mesh. A click picks the entity under the mouse (a click with the middle
+button unpicks it; see @ref{Mouse actions}), @kbd{u} undoes the last pick and
+@kbd{e} ends the selection, which carries out the command; the status
+message on the top of the graphic window says what to pick and which keys
+apply. @kbd{Escape} stops the selection without doing anything (@kbd{q}
+does the same, for backward compatibility). @kbd{Shift+Escape} switches the
+mouse selection off and on, without stopping the selection, e.g. to move
+the view without picking what is under the mouse.
 
 Combining GUI actions and script file editing is a classical way of
 working with the Gmsh app. For example, it is often faster to define
@@ -1799,8 +1810,8 @@ name of the current active model, with an appended extension depending
 on the mesh format.  Note that most interactive commands have keyboard
 shortcuts: see @ref{Keyboard shortcuts}, or select `Help->Keyboard and
 Mouse Usage' in the menu (which has a search box to find them). For
-example, to quickly generate the 2D mesh
-and save a mesh, you can first press @kbd{2}, then @kbd{Ctrl+Shift+s}.
+example, to quickly generate the 2D mesh and save it, you can first
+press @kbd{2}, then @kbd{Ctrl+s}.
 
 A double-click in the graphic window will pop up a quick shortcut menu,
 which can be used e.g. to quickly toggle the visibility of mesh entities
@@ -1812,14 +1823,16 @@ the tree menu, select the active model and open the quick shortcut menu;
 `X', `Y', `Z' set viewports with the corresponding axis perpendicular to
 graphic plane; the cube button sets an isometric view; the rotation button
 rotates the view by 90 degrees; `1:1'
-fits the model in the window; and `S' switches the mouse selection on or off. The
+fits the model in the window; and `S' switches the mouse selection on or
+off (as @kbd{Shift+Escape} does). The
 crosshair button switches `Query' on: every click then says what
 the model holds where it hit, i.e. the geometrical entity, the mesh element
 and the node there, and the value of every visible post-processing view.
 The ruler button next to it switches `Measure' on: two clicks then draw the
 line between the points they hit and give its length. Both stay on until you
-press @kbd{q} (@kbd{Escape} suspends the mouse selection instead, as
-everywhere else, to move the view without clicking on the model). (Both are
+press @kbd{Escape} (or @kbd{q}, for backward compatibility), or click their
+button again; @kbd{Shift+Escape} suspends the mouse selection instead, as
+everywhere else, to move the view without clicking on the model. (Both are
 also available in the quick shortcut menu.) The last four buttons step
 through the time steps of the post-processing views, when there are any.
 
@@ -1924,7 +1937,10 @@ For a 1 button mouse, Middle button = Shift+Left button, Right button = Alt+Left
 @cindex Shortcuts, keyboard
 @cindex Bindings, keyboard
 
-(On macOS, @kbd{Ctrl} is replaced by @kbd{Cmd} in the shortcuts below.)
+(On macOS, @kbd{Ctrl} is replaced by @kbd{Cmd} in the shortcuts below.
+@kbd{Escape} stops the selection under way, e.g. a query, a measurement or
+an operation on the entities picked; @kbd{q} does the same, for backward
+compatibility.)
 
 @include shortcuts.texi
 
@@ -6724,25 +6740,53 @@ To add a new option in Gmsh:
 
 @enumerate
 @item
-create the option in the @code{CTX} class
-(@url{@value{GITLAB-PREFIX}/src/common/Context.h,src/common/Context.h})
-if it's a classical option, or in the @code{PViewOptions} class
+store its value: a member of the @code{CTX} class
+(@url{@value{GITLAB-PREFIX}/src/common/Context.h,src/common/Context.h}),
+or of the @code{PViewOptions} class
 (@url{@value{GITLAB-PREFIX}/src/post/PViewOptions.h,src/post/PViewOptions.h})
-if it's a post-processing view-dependent option;
+for an option of each post-processing view;
 @item
 in
 @url{@value{GITLAB-PREFIX}/src/common/DefaultOptions.h,src/common/DefaultOptions.h},
-give a name (for the parser to be able to access it), a reference to a
-handling routine (i.e. @code{opt_XXX}) and a default value for this
-option;
+add an entry to the table of its category and type (e.g.
+@code{MeshOptions_Number}), in alphabetical order: where it is saved
+(@code{O} in the option file, @code{S} in the session file, @code{F} in
+the full listing), its name (as the parser, the API and the interfaces
+call it, e.g. @code{Mesh.LightLines}), its handling routine
+@code{opt_XXX}, its default value and its help string;
 @item
-create the handling routine @code{opt_XXX} in
-@url{@value{GITLAB-PREFIX}/src/common/Options.cpp,src/common/Options.cpp}
-(and add the prototype in
-@url{@value{GITLAB-PREFIX}/src/common/Options.h,src/common/Options.h});
+write the handling routine @code{opt_XXX} in
+@url{@value{GITLAB-PREFIX}/src/common/Options.cpp,src/common/Options.cpp},
+and declare it in
+@url{@value{GITLAB-PREFIX}/src/common/Options.h,src/common/Options.h}:
+it sets the value when asked to (@code{action & GMSH_SET}) and returns
+it. If what is drawn depends on the option, it also says what changed
+(e.g. @code{CTX::instance()->meshOptionsChanged(...)}). It does not
+update the graphical interface: the widgets bound to an option are
+updated by their name whenever an option is set (see below);
 @item
-optional: create the associated widget in
-@url{@value{GITLAB-PREFIX}/src/fltk/optionWindow.cpp,src/fltk/optionWindow.cpp};
+if the option takes one of a few values, list them with their labels,
+in the order the menus should show them, in the @code{OptionChoices}
+table of
+@url{@value{GITLAB-PREFIX}/src/common/DefaultOptions.h,src/common/DefaultOptions.h}
+(rather than in the help string): the menus of the options window, the
+choices of the web page and the help are made from it. A number option
+with bounds gets its minimum, maximum and step in the
+@code{OptionRanges} table of the same file;
+@item
+optional: add a widget for it in the options window
+(@url{@value{GITLAB-PREFIX}/src/fltk/optionWindow.cpp,src/fltk/optionWindow.cpp}),
+with the helpers @code{checkButton()}, @code{valueInput()},
+@code{choice()} (with no menu, to take its items from
+@code{OptionChoices}) or @code{input()}, the name of the option as the
+tooltip and @code{option_cb} as the callback. The widget is then bound
+to the option by its name in both directions: changing it sets the
+option, and setting the option (in a script, through the API, or with
+another widget) updates it;
+@item
+regenerate the reference of the options (the files
+@file{opt_*.texi}) by running @code{gmsh -doc} in the
+@file{doc/texinfo} directory.
 @end enumerate
 
 @c =========================================================================

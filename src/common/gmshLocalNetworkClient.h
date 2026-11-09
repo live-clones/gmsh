@@ -74,6 +74,9 @@ public:
     : onelab::localNetworkClient(name, ""), _solver(solver)
   {
   }
+  // the arguments the solver is run with, as the command line of a network
+  // client (see onelabUtils::getCommandLine)
+  std::vector<std::string> commandLine();
   bool run();
   bool kill() { return false; }
 };

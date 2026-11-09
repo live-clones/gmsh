@@ -4,7 +4,6 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "inputValue.h"
-#include <FL/Fl_Group.H>
 #include <stdlib.h>
 #include <FL/math.h>
 

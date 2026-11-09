@@ -16,28 +16,16 @@
 // straight to the screen it flickered on Windows and on X11 without a
 // compositor (the dock, the tree, the status bar); the OpenGL subwindow has
 // buffers of its own
-class mainWindow : public Fl_Double_Window {
-private:
-  // position relative to the main graphic window, applied when shown
-  int *_offset;
-
+class mainWindow : public gmshWindow {
 public:
-  // set while tool windows are docked: closes the one shown in window w, or
-  // returns false
-  inline static bool (*closeToolHook)(Fl_Window *w) = nullptr;
   // called when a window gets the focus (the desktop may have switched
   // between light and dark meanwhile, see FlGui)
   inline static void (*focusHook)() = nullptr;
-  // set by the main window while it has a dock: the drag of a tool to the
-  // dock over the main window, and its drop
-  inline static int (*dropHook)(int event) = nullptr;
   mainWindow(int w, int h, bool nonModal, const char *l = nullptr,
              int *offset = nullptr)
-    : Fl_Double_Window(w, h, l), _offset(offset)
+    : gmshWindow(w, h, nonModal, l, offset)
   {
-    if(nonModal) set_non_modal();
   }
-  ~mainWindow() { forgetWindow(this); }
   virtual int handle(int event)
   {
     switch(event) {
@@ -52,19 +40,16 @@ public:
     case FL_DND_LEAVE:
     case FL_DND_RELEASE:
     case FL_PASTE:
-      if(dropHook && paletteWindow::dragged) return dropHook(event);
+      // the drag of a tool to the dock over the main window, and its drop
+      if(paletteWindow::host && paletteWindow::dragged)
+        return paletteWindow::host->toolDrop(event);
       break;
     case FL_SHORTCUT:
     case FL_KEYBOARD:
-#if defined(__APPLE__)
-      if(Fl::test_shortcut(FL_META + 'w')) {
-#elif defined(WIN32)
-      if(Fl::test_shortcut(FL_ALT + FL_F + 4)) {
-#else
-      if(Fl::test_shortcut(FL_CTRL + 'w')) {
-#endif
+      if(_closeKey()) {
 #if !defined(WIN32) // Cmd-W or Ctrl-W, not Alt-F4
-        if(closeToolHook && closeToolHook(this)) return 1;
+        if(paletteWindow::host && paletteWindow::host->closeTool(this))
+          return 1;
 #endif
         if(fl_choice("Do you really want to quit?", "Cancel", "Quit", nullptr))
           do_callback();
@@ -74,18 +59,7 @@ public:
     }
     return Fl_Double_Window::handle(event);
   }
-  virtual void show()
-  {
-    if(_offset) placeWindow(this, _offset);
-    if(non_modal() && !shown()) Fl_Double_Window::show(); // fix ordering
-    Fl_Double_Window::show();
-    titleBarColor(this);
-  }
-  virtual void draw()
-  {
-    gmshStyleWidgets(this);
-    Fl_Double_Window::draw();
-  }
+  virtual void show() { _showOnDesktop(); }
 };
 
 #endif

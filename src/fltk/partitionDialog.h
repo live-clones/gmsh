@@ -33,12 +33,8 @@ public:
   Fl_Choice *choiceEdgeMatch;
   Fl_Choice *choiceRefineAlg;
   // weight
-  Fl_Value_Input *inputTriWeight;
-  Fl_Value_Input *inputQuaWeight;
-  Fl_Value_Input *inputTetWeight;
-  Fl_Value_Input *inputPriWeight;
-  Fl_Value_Input *inputPyrWeight;
-  Fl_Value_Input *inputHexWeight;
+  // the weights of the elements (see weights in partitionDialog.cpp)
+  Fl_Value_Input *inputWeight[6];
 
 public:
   partitionWindow(int deltaFontSize = 0);
@@ -47,7 +43,8 @@ public:
     if(win) Fl::delete_widget(win);
   }
   void write_all_options();
-  void read_all_options();
+  // the widgets set from the options, or from their defaults
+  void read_all_options(bool defaults = false);
   void show();
 };
 

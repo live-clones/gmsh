@@ -6,6 +6,7 @@
 #ifndef ONELAB_CONTEXT_WINDOW_H
 #define ONELAB_CONTEXT_WINDOW_H
 
+#include "rebuildLoop.h"
 #include <list>
 #include <memory>
 #include <vector>
@@ -36,15 +37,13 @@ public:
 class onelabContextWindow {
 private:
   int _width, _height;
-  // the widgets and the strings they show, and those retired, kept hidden
-  // until the events are handled (see onelabGroup::_rebuildTree())
-  std::list<std::string> _strings, _retiredStrings;
+  // the widgets and the strings they show
+  std::list<std::string> _strings;
   // the labels of the menu of the entity and its physical groups
   std::list<std::string> _labels;
-  std::vector<Fl_Widget *> _onelabWidgets, _retiredWidgets;
-  // a rebuild asked for during a rebuild (hiding an edited input runs its
-  // callback): done once the current one is over
-  bool _rebuilding, _rebuildAgain;
+  std::vector<Fl_Widget *> _onelabWidgets;
+  // the rebuilds of the window (see rebuild())
+  rebuildLoop _rebuilds;
   // false once this window is deleted, which the code still running after
   // events were processed (e.g. the GUI closed) reads
   std::shared_ptr<bool> _alive;
@@ -77,8 +76,6 @@ public:
   void show(int dim, int tag);
   void hide();
   void rebuild();
-  // once the events are handled (see FlGui::_dispatch())
-  void deleteRetiredWidgets();
   void highlightSelection();
   void disableRedraw();
 };

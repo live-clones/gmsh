@@ -12,6 +12,22 @@
 
 void scriptRemoveLastCommand(const std::string &fileName);
 
+// The languages of the API the commands can also be written in, besides the
+// .geo script (General.ScriptingLanguages): their name in the option, their
+// label; the program written for a script ("model.geo": "model.py"), whether
+// the commands are written in a language, and that switched on or off
+struct scriptLanguage {
+  std::string name, label;
+};
+const std::vector<scriptLanguage> &scriptLanguages();
+std::string scriptProgram(const std::string &geoFile, const std::string &lang);
+bool scriptWritesIn(const std::string &lang);
+void scriptWriteIn(const std::string &lang, bool on);
+// whether the last command was added to the script: not if the model was
+// busy, or if the command had errors (the model is then read again from the
+// script)
+bool scriptLastCommandAdded();
+
 void scriptSetFactory(const std::string &factory, const std::string &fileName);
 void scriptSetMeshSize(const std::string &fileName, const std::vector<int> &l,
                        const std::string &lc);
@@ -46,12 +62,13 @@ void scriptAddField(int field_id, const std::string &type_name,
                     const std::string &fileName);
 void scriptDeleteField(int field_id, const std::string &fileName);
 void scriptSetBackgroundField(int field_id, const std::string &fileName);
-void scriptAddCurveLoop(List_T *list, const std::string &fileName,
-                        int *numloop);
+// a curve (dim 1) or surface (dim 2) loop: true and its tag if the model has
+// it, else false and the tag a new one would get (at least minTag)
+bool scriptFindLoop(int dim, List_T *list, int *numloop, int minTag = 0);
+void scriptAddLoop(int dim, List_T *list, int numloop,
+                   const std::string &fileName);
 void scriptAddSurface(const std::string &type, List_T *list,
                       const std::string &fileName);
-void scriptAddSurfaceLoop(List_T *list, const std::string &fileName,
-                          int *numvol);
 void scriptAddVolume(List_T *list, const std::string &fileName);
 void scriptAddRemovePhysicalGroup(const std::string &fileName,
                                   const std::string &what,
@@ -97,6 +114,21 @@ void scriptAddCone(const std::string &fileName, const std::string &x,
                    const std::string &dx, const std::string &dy,
                    const std::string &dz, const std::string &r1,
                    const std::string &r2, const std::string &alpha);
+// The shapes of the elementary entity dialog, in the order of its panes
+// (Parameter, Point, Circle, Ellipse, Disk, Rectangle, Sphere, Cylinder, Box,
+// Torus, Cone, Wedge): their fields with their defaults, the first `required`
+// of which cannot be left empty
+struct scriptShape {
+  std::string name;
+  int required;
+  std::vector<std::pair<std::string, std::string> > fields;
+};
+const std::vector<scriptShape> &scriptShapes();
+// a shape added with the values of its fields, in their order (an empty
+// optional one is left out): false if the shape is unknown, a required value
+// is missing or the command was not added (see scriptLastCommandAdded())
+bool scriptAddShape(const std::string &shape, std::vector<std::string> values,
+                    const std::string &fileName);
 void scriptAddWedge(const std::string &fileName, const std::string &x,
                     const std::string &y, const std::string &z,
                     const std::string &dx, const std::string &dy,

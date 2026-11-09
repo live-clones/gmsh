@@ -138,10 +138,8 @@ public:
         // this is ugly but it leads to the expected result if a single client
         // is instanciated (in general it is recommended to *not* specify the
         // port number, and let the OS assign a port number automatically)
-        if(!first) {
-          tmp << _client->getId();
-          first = false;
-        }
+        if(!first) tmp << _client->getId();
+        first = false;
       }
       sockname = tmp.str();
     }
@@ -429,15 +427,11 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
   case GmshSocket::GMSH_ERROR:
     Msg::Error("%s - %s", _name.c_str(), message.c_str());
     break;
-  case GmshSocket::GMSH_MERGE_FILE:
-    if(CTX::instance()->solver.autoMergeFile) {
+  case GmshSocket::GMSH_MERGE_FILE: {
 #if defined(HAVE_FLTK)
-      std::size_t n = PView::list.size();
+    std::size_t n = PView::list.size();
 #endif
-      bool changedBeforeMerge = onelab::server::instance()->getChanged("Gmsh");
-      MergePostProcessingFile(message, CTX::instance()->solver.autoShowViews,
-                              CTX::instance()->solver.autoShowLastStep, true);
-      onelab::server::instance()->setChanged(changedBeforeMerge, "Gmsh");
+    if(onelabUtils::mergeSolverFile(message)) {
 #if defined(HAVE_FLTK)
       drawContext::global()->draw();
       if(FlGui::available() && n != PView::list.size()) {
@@ -446,7 +440,7 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
       }
 #endif
     }
-    break;
+  } break;
   case GmshSocket::GMSH_OPEN_PROJECT: OpenProject(message);
 #if defined(HAVE_FLTK)
     drawContext::global()->draw();
@@ -491,6 +485,7 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
       server->Shutdown();
       delete server;
       Msg::Error("Could not connect client '%s'", subClient->getName().c_str());
+      delete subClient;
     }
     else {
       Msg::StatusBar(true, "Running '%s'...", subClient->getName().c_str());
@@ -678,7 +673,7 @@ bool gmshLocalNetworkClient::kill()
   return false;
 }
 
-bool gmshInProcessClient::run()
+std::vector<std::string> gmshInProcessClient::commandLine()
 {
   // the command line a network client gets (see onelabUtils::getCommandLine),
   // as separate arguments, words in double quotes kept whole
@@ -712,7 +707,12 @@ bool gmshInProcessClient::run()
   if(inWord) args.push_back(word);
   args.push_back(getSocketSwitch());
   args.push_back(_name);
+  return args;
+}
 
+bool gmshInProcessClient::run()
+{
+  std::vector<std::string> args = commandLine();
   Msg::StatusBar(true, "Running '%s'...", _name.c_str());
   setPid(0);
   int errors = 0;

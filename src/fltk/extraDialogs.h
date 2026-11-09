@@ -6,11 +6,20 @@
 #ifndef EXTRA_DIALOGS_H
 #define EXTRA_DIALOGS_H
 
+#include <functional>
 #include <string>
 
+class Fl_Widget;
+class Fl_Window;
+
+// A modal dialog shown until OK, which calls apply() and returns 1, or Cancel
+// or the close button, which return 0 (ok and cancel may be null); other(o)
+// is told first of every widget whose callback ran
+int runDialog(Fl_Window *window, Fl_Widget *ok, Fl_Widget *cancel,
+              const std::function<void()> &apply,
+              const std::function<void(Fl_Widget *)> &other = nullptr);
+
 int arrowEditor(const char *title, double &a, double &b, double &c);
-int opacityChooser(const char *title, const std::string &category,
-                        int index, const std::string &name);
 
 std::string connectionChooser();
 std::string patternChooser();

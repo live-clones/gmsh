@@ -3399,6 +3399,12 @@ void FieldManager::setBackgroundMesh(int iView)
   int id = newId();
   Field *f = newField(id, "PostView");
   f->options["ViewIndex"]->numericalValue(iView);
+#if defined(HAVE_POST)
+  // the view itself, by its tag, not its position, which changes when views
+  // are sorted or removed
+  if(iView >= 0 && iView < (int)PView::list.size())
+    f->options["ViewTag"]->numericalValue(PView::list[iView]->getTag());
+#endif
   (*this)[id] = f;
   _backgroundField = id;
 }
