@@ -435,9 +435,6 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   // register image formats not in core fltk library (jpeg/png)
   fl_register_images();
 
-  // add our own icons
-  gmshAddSymbols();
-
   // load default system icons (for file browser)
   Fl_File_Icon::load_system_icons();
 

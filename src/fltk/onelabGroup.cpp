@@ -482,15 +482,6 @@ void onelabGroup::_computeWidths()
   _indent = _tree->connectorwidth() / 2. + _tree->openicon()->w() / 2. - 2.;
 }
 
-#if !defined(__APPLE__)
-#define gear_width 16
-#define gear_height 16
-static unsigned char gear_bits[] = {
-  0x80, 0x01, 0x80, 0x01, 0x8c, 0x31, 0xfc, 0x3f, 0xf8, 0x1f, 0xf8,
-  0x1f, 0x38, 0x1c, 0x3f, 0xfc, 0x3f, 0xfc, 0x38, 0x1c, 0xf8, 0x1f,
-  0xf8, 0x1f, 0xfc, 0x3f, 0x8c, 0x31, 0x80, 0x01, 0x80, 0x01};
-#endif
-
 // the background of the tree: under the gmsh theme between the one of the
 // window, as the tools, and the one of the lists, which it is otherwise,
 // closer to the latter
@@ -661,15 +652,7 @@ onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
   _butt[1]->callback(onelab_cb, (void *)"compute");
 
   _gear = new Fl_Menu_Button(x + w - WB - BB2, y + h - WB - BH, BB2, BH);
-  if(gmshScheme())
-    gmshIcon(_gear, "gear", FL_NORMAL_SIZE + 2);
-  else {
-#if defined(__APPLE__)
-    _gear->label("@-1gmsh_gear");
-#else
-    _gear->image(new Fl_Bitmap(gear_bits, gear_width, gear_height));
-#endif
-  }
+  gmshIcon(_gear, "gear", FL_NORMAL_SIZE + 2);
   _gear->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
   _gear->add("Reset database", 0, onelab_cb, (void *)"reset");
   _gear->add("Save database...", 0, onelab_cb, (void *)"save");
@@ -1497,10 +1480,7 @@ void onelabGroup::_rebuildTree()
         sw->color(_tree->color());
         sw->selection_color(_tree->color());
         sw->tooltip("Toggle visibility of child views");
-        if(gmshScheme())
-          gmshIcon(sw, "eye", FL_NORMAL_SIZE);
-        else
-          sw->label("@gmsh_dot");
+        gmshIcon(sw, "eye", FL_NORMAL_SIZE);
         _treeStrings.push_back(getPath(n).substr(24));
         sw->callback(view_group_cb, (void *)_treeStrings.back().c_str());
         ((Fl_Group *)row)->end();

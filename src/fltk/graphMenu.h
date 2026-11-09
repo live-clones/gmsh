@@ -10,6 +10,7 @@
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Menu_Button.H>
 #include "gmshScheme.h"
+#include "icons.h"
 
 // the X-Y graph menu of inputRange and outputRange: 9 graphs with 4 axes each
 // (X, Y, X', Y'), the 36 axes stored in a string, '0' for an axis not drawn
@@ -62,7 +63,7 @@ inline void showGraphValue(const std::string &val, Fl_Button *butt,
   butt->labelcolor(drawn ? fl_contrast(FL_FOREGROUND_COLOR,
                                        gmshIndicator(IndicatorYellow)) :
                            FL_FOREGROUND_COLOR);
-  butt->redraw();
+  gmshIconRecolor(butt);
 }
 
 #endif

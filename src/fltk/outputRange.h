@@ -109,7 +109,7 @@ public:
     _range_butt->tooltip("Show range or choices");
 
     _graph_butt = new Fl_Button(x + output_w + dot_w, y, graph_w, h);
-    _graph_butt->label("@-1gmsh_graph");
+    gmshIcon(_graph_butt, "graph", FL_NORMAL_SIZE);
     _graph_butt->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE);
     _graph_butt->tooltip("Draw range or choices on X-Y graph(s)");
 

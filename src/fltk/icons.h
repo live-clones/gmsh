@@ -9,14 +9,14 @@
 class Fl_Widget;
 
 // Icons drawn as SVG strokes, in the style of the desktops, rendered at the
-// size asked in the foreground colour: the status bar and the tools under the
-// gmsh theme (the symbols of FLTK otherwise). A widget given one keeps it
-// through the changes of colours. Names: sidebar, models, quick, rotate,
-// query, measure, rewind, back, play, pause, forward, gear, search.
+// size asked in the label colour of the widget, in every theme. A widget given
+// one keeps it through the changes of colours; a null name takes it off.
+// Names: sidebar, models, quick, cube, rotate, loop, query, measure, rewind,
+// back, play, pause, forward, gear, search, graph, eye.
 void gmshIcon(Fl_Widget *w, const char *name, int size);
+// the icon of a widget drawn again, after a change of its label colour
+void gmshIconRecolor(Fl_Widget *w);
 // the icons drawn again in the colours in place
 void gmshIconsRecolor();
-// the same icons as FLTK symbols ("@gmsh_play", ...), for the other themes
-void gmshAddSymbols();
 
 #endif

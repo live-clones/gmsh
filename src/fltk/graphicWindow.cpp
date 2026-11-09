@@ -1417,8 +1417,8 @@ public:
 };
 
 // The buttons of the status bar, in their order (see statusButtonId): the
-// label (a symbol, or text), the icon of the gmsh theme, the callback and its
-// data, the tooltip and the shortcut action whose keys it shows, the space
+// label (text, for a button without icon), its icon (see icons.h), the
+// callback and its data, the tooltip and the shortcut action whose keys it shows, the space
 // before, and whether the button is wide
 struct statusButton {
   const char *label, *icon;
@@ -1431,11 +1431,11 @@ struct statusButton {
 static const statusButton *statusButtons()
 {
   static const statusButton buttons[StatusButtons] = {
-    {"@-1gmsh_sidebar", "sidebar", show_hide_menu_cb, nullptr,
+    {nullptr, "sidebar", show_hide_menu_cb, nullptr,
      "Show or hide the menu", "menu_show_hide", 0, false},
-    {"@-1gmsh_models", "models", status_model_cb, nullptr,
+    {nullptr, "models", status_model_cb, nullptr,
      "Set current (active) model", nullptr, 0, false},
-    {"O", "quick", quick_access_cb, nullptr,
+    {nullptr, "quick", quick_access_cb, nullptr,
      "Open quick access menu (also available by double-clicking in the "
      "graphic window)",
      nullptr, 0, false},
@@ -1445,10 +1445,10 @@ static const statusButton *statusButtons()
      0, false},
     {"Z", nullptr, status_xyz1p_cb, "z", "Set +Z or -Z (Shift) view", "view_z",
      0, false},
-    {"@-1gmsh_cube", "cube", status_xyz1p_cb, "3d",
+    {nullptr, "cube", status_xyz1p_cb, "3d",
      "Set isometric 3D view, Z up, or from the opposite side (Shift)",
      "view_3d", 0, false},
-    {"@-1gmsh_rotate", "rotate", status_xyz1p_cb, "r",
+    {nullptr, "rotate", status_xyz1p_cb, "r",
      "Rotate +90 or -90 (Shift) degrees, or sync rotations (Ctrl)", nullptr, 0,
      false},
     {"1:1", nullptr, status_xyz1p_cb, "1:1",
@@ -1457,18 +1457,18 @@ static const statusButton *statusButtons()
      "view_1_1", 0, true},
     {"S", nullptr, mouse_selection_cb, nullptr, "Toggle mouse selection ON/OFF",
      "escape", 0, false},
-    {"@-1gmsh_query", "query", status_query_cb, nullptr,
+    {nullptr, "query", status_query_cb, nullptr,
      "Query the model where you click ('q' to stop)", nullptr, 0, false},
-    {"@-1gmsh_measure", "measure", status_measure_cb, nullptr,
+    {nullptr, "measure", status_measure_cb, nullptr,
      "Measure the distance between two points you click ('q' to stop)", nullptr,
      0, false},
-    {"@-1gmsh_rewind", "rewind", status_rewind_cb, nullptr, "Rewind animation",
+    {nullptr, "rewind", status_rewind_cb, nullptr, "Rewind animation",
      nullptr, 4, false},
-    {"@-1gmsh_back", "back", status_stepbackward_cb, nullptr, "Step backward",
+    {nullptr, "back", status_stepbackward_cb, nullptr, "Step backward",
      "time_step_prev", 0, false},
-    {"@-1gmsh_play", "play", status_play_cb, nullptr, "Play/pause animation",
+    {nullptr, "play", status_play_cb, nullptr, "Play/pause animation",
      nullptr, 0, false},
-    {"@-1gmsh_forward", "forward", status_stepforward_cb, nullptr,
+    {nullptr, "forward", status_stepforward_cb, nullptr,
      "Step forward", "time_step_next", 0, false},
   };
   return buttons;
@@ -1495,10 +1495,10 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
 #if defined(__APPLE__)
   if(CTX::instance()->systemMenuBar) mh = 0;
 #endif
-  // the status bar and its buttons: as tall as the menu bar and wider under
-  // the gmsh theme, for its icons
-  int sh = gmshScheme() ? BH : 2 * FL_NORMAL_SIZE - 3;
-  int sw = gmshScheme() ? 1.7 * FL_NORMAL_SIZE : FL_NORMAL_SIZE + 2;
+  // the status bar and its buttons: as tall as the menu bar, and wide enough
+  // for their icons
+  int sh = BH;
+  int sw = 1.7 * FL_NORMAL_SIZE;
   _iconSize = FL_NORMAL_SIZE + 1; // the icons on the scale of the letters
 
   // the usable area of the screen that will show the window
@@ -1708,7 +1708,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
     _butt[i]->box(FL_FLAT_BOX);
     _butt[i]->selection_color(FL_BACKGROUND2_COLOR);
     _butt[i]->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
-    if(gmshScheme() && b.icon) gmshIcon(_butt[i], b.icon, _iconSize);
+    if(b.icon) gmshIcon(_butt[i], b.icon, _iconSize);
     // (the animation buttons wait for views with time steps)
     if(i >= StatusRewind) _butt[i]->deactivate();
     x += b.wide ? (int)(1.75 * FL_NORMAL_SIZE) : sw;
@@ -2013,17 +2013,11 @@ void graphicWindow::setAnimButtons(int mode)
   Fl_Button *b = _butt[StatusPlay];
   if(mode) {
     b->callback(status_play_cb);
-    if(gmshScheme())
-      gmshIcon(b, "play", _iconSize);
-    else
-      b->label("@-1gmsh_play");
+    gmshIcon(b, "play", _iconSize);
   }
   else {
     b->callback(status_pause_cb);
-    if(gmshScheme())
-      gmshIcon(b, "pause", _iconSize);
-    else
-      b->label("@-1gmsh_pause");
+    gmshIcon(b, "pause", _iconSize);
   }
 }
 
