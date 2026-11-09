@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <algorithm>
 #include <set>
 #include <unordered_map>
 #include <unordered_set>
@@ -72,16 +73,20 @@ void MPolyhedron::setTetrahedra(const std::vector<MVertex *> &simplicesVertices)
 void MPolyhedron::_ensureEdges() const
 {
   if(!_edges.empty() || !_numFaces) return;
-  // each edge once, whatever the orientation of the faces
-  std::set<std::pair<int, int>> edges;
+  // each edge once, whatever the orientation of the faces, in the order of
+  // their nodes
+  std::vector<std::pair<int, int>> edges;
   const int *f = _faceIndices();
+  edges.reserve(_data[_numFaces]);
   for(int i = 0; i < _numFaces; i++) {
     int N = _data[i + 1] - _data[i];
     for(int j = 0; j < N; j++) {
       int i0 = f[_data[i] + j], i1 = f[_data[i] + (j + 1) % N];
-      edges.insert({std::min(i0, i1), std::max(i0, i1)});
+      edges.push_back({std::min(i0, i1), std::max(i0, i1)});
     }
   }
+  std::sort(edges.begin(), edges.end());
+  edges.erase(std::unique(edges.begin(), edges.end()), edges.end());
   _edges.reserve(2 * edges.size());
   for(auto &e : edges) {
     _edges.push_back(e.first);
@@ -93,9 +98,10 @@ void MPolyhedron::_ensureTetrahedra() const
 {
   if((int)_data.size() > _tetOffset || !_numFaces) return;
 
-  // fan from the first vertex: each face is fanned into triangles from its
-  // first vertex, and each triangle not holding the apex gives a tetrahedron,
-  // oriented positively
+  // fan from the first vertex: each face not holding the apex is fanned into
+  // triangles from its first vertex, and each triangle gives a tetrahedron,
+  // oriented positively (a face holding the apex would only give flat
+  // tetrahedra, from its triangles that do not hold it)
   int apex = 0;
   MVertex *va = _vertices[apex];
   std::vector<int> tets; // appended to _data at the end: the face pointers
@@ -104,9 +110,9 @@ void MPolyhedron::_ensureTetrahedra() const
   for(int i = 0; i < _numFaces; i++) {
     int N = _data[i + 1] - _data[i];
     const int *fi = &f[_data[i]];
+    if(std::find(fi, fi + N, apex) != fi + N) continue;
     for(int j = 1; j < N - 1; j++) {
       int t[3] = {fi[0], fi[j], fi[j + 1]};
-      if(t[0] == apex || t[1] == apex || t[2] == apex) continue;
       MTetrahedron tet(va, _vertices[t[0]], _vertices[t[1]], _vertices[t[2]]);
       if(tet.getVolume() < 0.) std::swap(t[1], t[2]);
       tets.push_back(apex);
@@ -240,6 +246,31 @@ bool MPolyhedron::isInside(double u, double v, double w, double tol) const
   for(int k = 0; k < 4; k++)
     if(bary[k] < -tol) return false;
   return true;
+}
+
+double MPolyhedron::integrate(double val[], int pOrder, int stride, int order)
+{
+  double sum = 0.;
+  for(int i = 0; i < getNumTetrahedra(); i++) {
+    std::array<int, 4> t = getTetrahedronIndices(i);
+    MVertex *v[4] = {_vertices[t[0]], _vertices[t[1]], _vertices[t[2]],
+                     _vertices[t[3]]};
+    double a[3] = {v[1]->x() - v[0]->x(), v[1]->y() - v[0]->y(),
+                   v[1]->z() - v[0]->z()};
+    double b[3] = {v[2]->x() - v[0]->x(), v[2]->y() - v[0]->y(),
+                   v[2]->z() - v[0]->z()};
+    double c[3] = {v[3]->x() - v[0]->x(), v[3]->y() - v[0]->y(),
+                   v[3]->z() - v[0]->z()};
+    double vol = std::abs(a[0] * (b[1] * c[2] - b[2] * c[1]) -
+                          a[1] * (b[0] * c[2] - b[2] * c[0]) +
+                          a[2] * (b[0] * c[1] - b[1] * c[0])) /
+                 6.;
+    sum += vol *
+           (val[stride * t[0]] + val[stride * t[1]] + val[stride * t[2]] +
+            val[stride * t[3]]) /
+           4.;
+  }
+  return sum;
 }
 
 void MPolyhedron::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)

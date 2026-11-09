@@ -104,9 +104,18 @@ public:
   virtual int getNumFaces() { return _numFaces; }
   virtual MFace getFace(int num) const
   {
-    std::vector<MVertex *> v;
-    getFaceVertices(num, v);
-    return MFace(v);
+    // (the nodes in a buffer on the stack, for the usual faces)
+    const int *f = _faceIndices() + _data[num];
+    int n = _data[num + 1] - _data[num];
+    MVertex *few[16];
+    std::vector<MVertex *> many;
+    MVertex **v = few;
+    if(n > 16) {
+      many.resize(n);
+      v = many.data();
+    }
+    for(int i = 0; i < n; i++) v[i] = _vertices[f[i]];
+    return MFace(v, n);
   }
   virtual void getFaceVertices(const int num, std::vector<MVertex *> &v) const
   {
@@ -199,6 +208,10 @@ public:
   using MElement::isInside;
   virtual bool isInside(double u, double v, double w, double tol) const;
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
+  // exact for the fields P1 on the tetrahedra (the volume of each times the
+  // mean of its nodal values): no point to locate
+  virtual double integrate(double val[], int pOrder, int stride = 1,
+                           int order = -1);
 
   // no nodal basis: the shape functions are P1 on the tetrahedron holding the
   // point (or the closest one), and zero on the other nodes
