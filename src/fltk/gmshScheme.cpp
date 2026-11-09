@@ -32,11 +32,14 @@
 #include "GmshMessage.h"
 
 // the default theme, which an empty name also selects: the session files of
-// older versions store an empty theme, and their users get the new look too
+// older versions store an empty theme, and their users get the new look too;
+// read once, as gmshAir(): a theme set during the session is for the next one
+// (see opt_general_gui_theme())
 bool gmshScheme()
 {
-  return CTX::instance()->guiTheme == "gmsh" ||
-         CTX::instance()->guiTheme.empty();
+  static bool scheme =
+    CTX::instance()->guiTheme == "gmsh" || CTX::instance()->guiTheme.empty();
+  return scheme;
 }
 
 int gmshAir()

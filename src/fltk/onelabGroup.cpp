@@ -53,7 +53,7 @@
 
 void solver_cb(Fl_Widget *w, void *data)
 {
-  if(!FlGui::instance()->onelab) return;
+  if(!FlGui::available() || !FlGui::instance()->onelab) return;
   // choosing a solver deletes the clients, among which the one running; one
   // asked for by a file opened meanwhile is not launched by a later one
   if(FlGui::instance()->onelab->isBusy()) {
@@ -99,7 +99,9 @@ void solver_cb(Fl_Widget *w, void *data)
 
 void onelab_cb(Fl_Widget *w, void *data)
 {
-  if(!data) return;
+  // not once the GUI is closed (by the events processed during a run that
+  // called this one), which FlGui::instance() would build again
+  if(!data || !FlGui::available()) return;
 
   std::string action((const char *)data);
 
@@ -708,13 +710,6 @@ bool getParameterColor(const std::string &str, Fl_Color &c)
   return false;
 }
 
-template <class T>
-static void autoCheck(const T &pold, const T &pnew, bool force = false)
-{
-  if(onelabUtils::autoCheck(pold, pnew, force))
-    onelab_cb(nullptr, (void *)"check");
-}
-
 int onelabGroup::_rowWidth(Fl_Tree_Item *n)
 { return (int)(_baseWidth - (n->depth() + 1) * _indent); }
 
@@ -835,28 +830,14 @@ void onelabGroup::openCloseViewButton(int num)
   }
 }
 
-static bool serverAction(const std::string &action)
+// after a parameter changed in the tree (onelabUtils::setParameter(), which
+// says what to do next)
+static void parameterChanged(int what)
 {
-  if(!onelabUtils::serverAction(action)) return false;
-  FlGui::instance()->rebuildTree();
-  return true;
-}
-
-template <class T> static void performServerAction(T &n)
-{
-  // global unconditional actions, triggering a tree rebuild
-  serverAction(n.getAttribute("ServerAction"));
-  // actions on other parameters
-  onelabUtils::performServerAction(n);
-}
-
-template <class T> static void setGmshOption(T &n)
-{
-  std::string opt = n.getAttribute("GmshOption");
-  if(opt.empty()) return;
-  if(serverAction(opt)) return; // for backward compatibility:
-  onelabUtils::setGmshOption(n);
-  drawContext::global()->draw();
+  if(!FlGui::available()) return;
+  if(what & onelabUtils::ParameterRebuild) FlGui::instance()->rebuildTree();
+  if(what & onelabUtils::ParameterOption) drawContext::global()->draw();
+  if(what & onelabUtils::ParameterCheck) onelab_cb(nullptr, (void *)"check");
 }
 
 static void onelab_number_check_button_cb(Fl_Widget *w, void *data)
@@ -867,12 +848,8 @@ static void onelab_number_check_button_cb(Fl_Widget *w, void *data)
   onelab::server::instance()->get(numbers, name);
   if(numbers.size()) {
     Fl_Check_Button *o = (Fl_Check_Button *)w;
-    onelab::number old = numbers[0];
     numbers[0].setValue(o->value());
-    setGmshOption(numbers[0]);
-    performServerAction(numbers[0]);
-    onelab::server::instance()->set(numbers[0]);
-    autoCheck(old, numbers[0]);
+    parameterChanged(onelabUtils::setParameter(numbers[0]));
   }
 }
 
@@ -885,13 +862,9 @@ static void onelab_number_choice_cb(Fl_Widget *w, void *data)
   if(numbers.size()) {
     Fl_Choice *o = (Fl_Choice *)w;
     std::vector<double> choices = numbers[0].getChoices();
-    onelab::number old = numbers[0];
     if(o->value() < (int)choices.size())
       numbers[0].setValue(choices[o->value()]);
-    setGmshOption(numbers[0]);
-    performServerAction(numbers[0]);
-    onelab::server::instance()->set(numbers[0]);
-    autoCheck(old, numbers[0]);
+    parameterChanged(onelabUtils::setParameter(numbers[0]));
   }
 }
 
@@ -903,7 +876,6 @@ static void onelab_number_input_range_cb(Fl_Widget *w, void *data)
   onelab::server::instance()->get(numbers, name);
   if(numbers.size()) {
     inputRange *o = (inputRange *)w;
-    onelab::number old = numbers[0];
     if(o->doCallbackOnValues()) {
       numbers[0].setValue(o->value());
       numbers[0].setMin(o->minimum());
@@ -914,11 +886,9 @@ static void onelab_number_input_range_cb(Fl_Widget *w, void *data)
     o->doCallbackOnValues(true);
     numbers[0].setAttribute("Loop", o->loop());
     numbers[0].setAttribute("Graph", o->graph());
-    setGmshOption(numbers[0]);
-    performServerAction(numbers[0]);
-    onelab::server::instance()->set(numbers[0]);
+    int what = onelabUtils::setParameter(numbers[0]);
     onelabUtils::updateGraphs();
-    autoCheck(old, numbers[0]);
+    parameterChanged(what);
   }
 }
 
@@ -1055,9 +1025,10 @@ static void onelab_string_button_cb(Fl_Widget *w, void *data)
                                         strings[0].getValue());
       MergeFile(tmp);
     }
-    setGmshOption(strings[0]);
-    performServerAction(strings[0]);
-    autoCheck(strings[0], strings[0], true);
+    // as the script or the file left it
+    onelab::server::instance()->get(strings, name);
+    if(strings.size())
+      parameterChanged(onelabUtils::setParameter(strings[0], true));
     drawContext::global()->draw();
   }
 }
@@ -1070,12 +1041,8 @@ static void onelab_string_input_cb(Fl_Widget *w, void *data)
   onelab::server::instance()->get(strings, name);
   if(strings.size()) {
     Fl_Input *o = (Fl_Input *)w;
-    onelab::string old = strings[0];
     strings[0].setValue(o->value());
-    setGmshOption(strings[0]);
-    performServerAction(strings[0]);
-    onelab::server::instance()->set(strings[0]);
-    autoCheck(old, strings[0]);
+    parameterChanged(onelabUtils::setParameter(strings[0]));
   }
 }
 
@@ -1087,7 +1054,6 @@ static void onelab_string_input_choice_cb(Fl_Widget *w, void *data)
   onelab::server::instance()->get(strings, name);
   if(strings.size()) {
     Fl_Input_Choice *o = (Fl_Input_Choice *)w;
-    onelab::string old = strings[0];
     strings[0].setValue(o->value());
     std::string choices;
     for(int i = 0; i < o->menubutton()->menu()->size(); i++) {
@@ -1099,10 +1065,7 @@ static void onelab_string_input_choice_cb(Fl_Widget *w, void *data)
       }
     }
     if(choices.size()) strings[0].setAttribute("MultipleSelection", choices);
-    setGmshOption(strings[0]);
-    performServerAction(strings[0]);
-    onelab::server::instance()->set(strings[0]);
-    autoCheck(old, strings[0]);
+    parameterChanged(onelabUtils::setParameter(strings[0]));
   }
 }
 
@@ -1319,9 +1282,13 @@ static void view_group_cb(Fl_Widget *w, void *data)
   while(group.size() && group[0] == '/') group = group.substr(1);
   while(group.size() && group[group.size() - 1] == '/')
     group = group.substr(0, group.size() - 1);
+  // the views of the group and of its subgroups ("Res" and "Res/a", not
+  // "Results")
   for(std::size_t i = 0; i < PView::list.size(); i++) {
     PViewOptions *opt = PView::list[i]->getOptions();
-    if(opt->group.find(group) == 0)
+    std::string g = opt->group;
+    while(g.size() && g[0] == '/') g = g.substr(1);
+    if(g == group || g.compare(0, group.size() + 1, group + "/") == 0)
       opt_view_visible(i, GMSH_SET | GMSH_GUI, !opt->visible);
   }
   drawContext::global()->draw();
@@ -1441,6 +1408,13 @@ void onelabGroup::_rebuildTree()
   // which takes the focus away
   std::vector<Fl_Widget *> delWidgets;
   std::list<std::string> delStrings; // freed when the rebuild is over
+  // the rows retired before that no event targets any more are deleted too,
+  // or a long run, whose event lasts, would keep one per refresh
+  std::vector<Fl_Widget *> retiredBefore;
+  retiredBefore.swap(_retiredWidgets);
+  for(Fl_Widget *w : retiredBefore)
+    (FlGui::inEvent(w) ? _retiredWidgets : delWidgets).push_back(w);
+  if(_retiredWidgets.empty()) delStrings.swap(_retiredStrings);
   bool retired = false;
   std::vector<Fl_Widget *> old = _treeWidgets;
   for(Fl_Widget *w : old) {
@@ -1454,7 +1428,7 @@ void onelabGroup::_rebuildTree()
   if(retired)
     _retiredStrings.splice(_retiredStrings.end(), _treeStrings);
   else
-    delStrings.swap(_treeStrings);
+    delStrings.splice(delStrings.end(), _treeStrings);
   _treeWidgets.clear();
   _treeStrings.clear();
 

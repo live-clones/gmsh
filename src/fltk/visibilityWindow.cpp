@@ -1053,31 +1053,31 @@ static void _apply_visibility(char mode, bool physical,
         vertices[i]->setVisibility(mode, recursive);
       else
         for(std::size_t j = 0; j < vertices[i]->physicals.size(); j++)
-          _set_visibility_by_number(6, vertices[i]->physicals[j], mode,
-                                    recursive, allmodels);
+          _set_visibility_by_number(6, std::abs(vertices[i]->physicals[j]),
+                                    mode, recursive, allmodels);
     }
     for(std::size_t i = 0; i < edges.size(); i++) {
       if(!physical)
         edges[i]->setVisibility(mode, recursive);
       else
         for(std::size_t j = 0; j < edges[i]->physicals.size(); j++)
-          _set_visibility_by_number(7, edges[i]->physicals[j], mode, recursive,
-                                    allmodels);
+          _set_visibility_by_number(7, std::abs(edges[i]->physicals[j]), mode,
+                                    recursive, allmodels);
     }
     for(std::size_t i = 0; i < faces.size(); i++) {
       if(!physical)
         faces[i]->setVisibility(mode, recursive);
       else
         for(std::size_t j = 0; j < faces[i]->physicals.size(); j++)
-          _set_visibility_by_number(8, faces[i]->physicals[j], mode, recursive,
-                                    allmodels);
+          _set_visibility_by_number(8, std::abs(faces[i]->physicals[j]), mode,
+                                    recursive, allmodels);
     }
     for(std::size_t i = 0; i < regions.size(); i++) {
       if(!physical)
         regions[i]->setVisibility(mode, recursive);
       else
         for(std::size_t j = 0; j < regions[i]->physicals.size(); j++)
-          _set_visibility_by_number(9, regions[i]->physicals[j], mode,
+          _set_visibility_by_number(9, std::abs(regions[i]->physicals[j]), mode,
                                     recursive, allmodels);
     }
   }

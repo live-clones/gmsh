@@ -25,7 +25,6 @@ static void gamepadWindow_handler(void *data)
     for(int i = 0; i < std::min(9, GP_AXES); i++)
       gmpd_win->gamepad.axe[i]->value(pad->axe[i]);
     Fl::add_timeout(gmpd_win->frequency, gamepadWindow_handler, data);
-    gmpd_win->gamepad.mapping[16]->value(pad->axe_map[1]);
   }
 }
 
@@ -33,9 +32,11 @@ static void gamepad_update_cb(Fl_Widget *w)
 {
   gamepadWindow *gmpd_win = FlGui::instance()->options->gmpdoption;
   GamePad *pad = CTX::instance()->gamepad;
-  for(int i = 0; i < std::min(8, GP_BUTTONS); i++)
+  // the 9 fields of the buttons (mapping[0..8]) and the 7 of the axes
+  // (mapping[10..16])
+  for(int i = 0; i < 9; i++)
     pad->button_map[i] = gmpd_win->gamepad.mapping[i]->value();
-  for(int i = 0; i < std::min(7, GP_AXES); i++)
+  for(int i = 0; i < 7; i++)
     pad->axe_map[i] = gmpd_win->gamepad.mapping[10 + i]->value();
 }
 

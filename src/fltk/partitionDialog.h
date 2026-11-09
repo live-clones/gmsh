@@ -47,7 +47,8 @@ public:
     if(win) Fl::delete_widget(win);
   }
   void write_all_options();
-  void read_all_options();
+  // the widgets set from the options, or from their defaults
+  void read_all_options(bool defaults = false);
   void show();
 };
 

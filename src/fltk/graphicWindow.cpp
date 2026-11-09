@@ -943,11 +943,19 @@ void status_xyz1p_cb(Fl_Widget *w, void *data)
 {
   const char *str = (const char *)data;
 
+  // the viewports of the window of the button; from a shortcut the current
+  // one, or all those of its window to sync them (Ctrl)
   std::vector<openglWindow *> gls;
+  openglWindow *current = FlGui::instance()->getCurrentOpenglWindow();
+  bool sync = Fl::event_state(FL_CTRL) || Fl::event_state(FL_META);
   if(w)
     gls = getGraphicWindow(w)->gl;
-  else
-    gls.push_back(FlGui::instance()->getCurrentOpenglWindow());
+  else if(sync) {
+    for(graphicWindow *g : FlGui::instance()->graph)
+      if(std::find(g->gl.begin(), g->gl.end(), current) != g->gl.end())
+        gls = g->gl;
+  }
+  if(gls.empty()) gls.push_back(current);
 
   for(std::size_t i = 0; i < gls.size(); i++) {
     drawContext *ctx = gls[i]->getDrawContext();

@@ -41,6 +41,12 @@ extern StringXColor GeometryOptions_Color[];
 extern StringXColor MeshOptions_Color[];
 extern StringXColor ViewOptions_Color[];
 
+// the value a check button gives an option that may hold more than 0 and 1
+// (as General.SaveOptions = 2): the value it has while the button shows it as
+// it is, on or off
+static double checkValue(Fl_Button *b, double value)
+{ return ((b->value() != 0) == (value != 0)) ? value : b->value(); }
+
 // the colour options of a table that get a button: a new one in the table
 // needs no code here
 static int colorOptions(StringXColor *table)
@@ -155,19 +161,25 @@ static void color_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
+// the colour of the shown view, given to the selected views as well
 static void view_color_cb(Fl_Widget *w, void *data)
 {
   unsigned int (*fct)(int, int, unsigned int);
   fct = (unsigned int (*)(int, int, unsigned int))data;
-  uchar r = CTX::instance()->unpackRed(
-    fct(FlGui::instance()->options->view.index, GMSH_GET, 0));
-  uchar g = CTX::instance()->unpackGreen(
-    fct(FlGui::instance()->options->view.index, GMSH_GET, 0));
-  uchar b = CTX::instance()->unpackBlue(
-    fct(FlGui::instance()->options->view.index, GMSH_GET, 0));
-  if(fl_color_chooser("Color Chooser", r, g, b))
-    fct(FlGui::instance()->options->view.index, GMSH_SET | GMSH_GUI,
-        CTX::instance()->packColor(r, g, b, 255));
+  optionWindow *o = FlGui::instance()->options;
+  int current = o->view.index;
+  unsigned int color = fct(current, GMSH_GET, 0);
+  uchar r = CTX::instance()->unpackRed(color);
+  uchar g = CTX::instance()->unpackGreen(color);
+  uchar b = CTX::instance()->unpackBlue(color);
+  if(!fl_color_chooser("Color Chooser", r, g, b)) return;
+  color = CTX::instance()->packColor(r, g, b, 255);
+  for(int i = 0; i < (int)PView::list.size(); i++) {
+    if(i == current)
+      fct(i, GMSH_SET | GMSH_GUI, color);
+    else if(o->viewList->browser->selected(i + 1))
+      fct(i, GMSH_SET, color);
+  }
   drawContext::global()->draw();
 }
 
@@ -333,14 +345,6 @@ void general_options_ok_cb(Fl_Widget *w, void *data)
   optionWindow *o = FlGui::instance()->options;
   o->activate((const char *)data);
 
-  static double lc = 0.;
-  if(lc != CTX::instance()->lc) {
-    lc = CTX::instance()->lc;
-    for(int i = 2; i < 5; i++) {
-      o->general.value[i]->minimum(-5 * CTX::instance()->lc);
-      o->general.value[i]->maximum(5 * CTX::instance()->lc);
-    }
-  }
   if(data) {
     const char *name = (const char *)data;
     if(!strcmp(name, "rotation_center_coord")) {
@@ -397,7 +401,9 @@ void general_options_ok_cb(Fl_Widget *w, void *data)
     PrintOptions(
       0, GMSH_SESSIONRC, 1, 1,
       (CTX::instance()->homeDir + CTX::instance()->sessionFileName).c_str());
-  opt_general_options_save(0, GMSH_SET, o->general.butt[9]->value());
+  opt_general_options_save(
+    0, GMSH_SET,
+    checkValue(o->general.butt[9], opt_general_options_save(0, GMSH_GET, 0)));
   opt_general_expert_mode(0, GMSH_SET, o->general.butt[10]->value());
 #if defined(HAVE_VISUDEV)
   opt_general_heavy_visualization(0, GMSH_SET, o->general.butt[20]->value());
@@ -593,7 +599,10 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_lc_from_curvature(0, GMSH_SET, o->mesh.value[1]->value());
   opt_mesh_lc_from_points(0, GMSH_SET, o->mesh.butt[5]->value());
   opt_mesh_lc_from_parametric_points(0, GMSH_SET, o->mesh.butt[26]->value());
-  opt_mesh_lc_extend_from_boundary(0, GMSH_SET, o->mesh.butt[16]->value());
+  opt_mesh_lc_extend_from_boundary(
+    0, GMSH_SET,
+    checkValue(o->mesh.butt[16],
+               opt_mesh_lc_extend_from_boundary(0, GMSH_GET, 0)));
   opt_mesh_optimize(0, GMSH_SET, o->mesh.butt[2]->value());
   opt_mesh_optimize_netgen(0, GMSH_SET, o->mesh.butt[24]->value());
   opt_mesh_order(0, GMSH_SET, o->mesh.value[3]->value());
@@ -1040,7 +1049,7 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
       if(force || (val != draw_skin_edges_only))
         opt_view_draw_skin_edges_only(i, GMSH_SET, val);
 
-      val = o->view.butt[2]->value();
+      val = checkValue(o->view.butt[2], draw_skin_only);
       if(force || (val != draw_skin_only))
         opt_view_draw_skin_only(i, GMSH_SET, val);
 
@@ -1367,9 +1376,9 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
       str = o->view.input[6]->value();
       if(force || (str != gen_raise2)) opt_view_gen_raise2(i, GMSH_SET, str);
 
-      // colors (since the color buttons modify the values directly
-      // through callbacks, we can use the opt_XXX routines directly)
-      if(force || (i != current)) {
+      // colors: the color buttons set them themselves (view_color_cb), so
+      // they are copied only to force the same options
+      if(force && i != current) {
         opt_view_color_points(i, GMSH_SET,
                               opt_view_color_points(current, GMSH_GET, 0));
         opt_view_color_lines(i, GMSH_SET,
@@ -1408,12 +1417,12 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
     }
   }
 
-  // colorbar window: copied once the loop above has set the current view,
-  // or the views before it get its old map back
+  // the map of the colorbar window, when it was edited or to force the same
+  // options: copied once the loop above has set the current view, or the
+  // views before it get its old map back
   for(int i = 0; i < (int)PView::list.size(); i++) {
-    if((force && i == current) ||
-       (i != current &&
-        FlGui::instance()->options->viewList->browser->selected(i + 1))) {
+    if(i != current && (force || w == o->view.colorbar) &&
+       FlGui::instance()->options->viewList->browser->selected(i + 1)) {
       ColorTable_Copy(&PView::list[current]->getOptions()->colorTable);
       ColorTable_Paste(&PView::list[i]->getOptions()->colorTable);
       PView::list[i]->setChanged(true);
@@ -1741,9 +1750,10 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
       general.value[32]->deactivate();
 #endif
 
-      general.butt[20] = checkButton(L + 2 * WB, 2 * WB + 10 * BH, BW, BH,
-                                     "Enable heavy visualization capabilities",
-                                     nullptr, general_options_ok_cb);
+      general.butt[20] =
+        checkButton(L + 2 * WB, 2 * WB + 10 * BH, BW, BH,
+                    "Enable heavy visualization capabilities",
+                    "General.HeavyVisualization", general_options_ok_cb);
 
 #if !defined(HAVE_VISUDEV)
       general.butt[20]->deactivate();
@@ -2100,7 +2110,7 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
 
       general.butt[19] = checkButton(
         L + 2 * WB, 2 * WB + 7 * BH, BW, BH, "Enable gamepad (experimental)",
-        nullptr, general_options_ok_cb, (void *)"general_camera");
+        "General.Gamepad", general_options_ok_cb, (void *)"general_camera");
       general.butt[19]->value(opt_general_gamepad(0, GMSH_GET, 0));
 
       general.gamepadconfig =
@@ -2115,14 +2125,11 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
       if(opt_general_stereo_mode(0, GMSH_GET, 0) == 0)
         general.value[29]->deactivate();
 
-      if(CTX::instance()->gamepad && CTX::instance()->gamepad->active) {
+      // (the camera is on with an active gamepad: opt_general_gamepad())
+      if(CTX::instance()->gamepad && CTX::instance()->gamepad->active)
         general.gamepadconfig->activate();
-        opt_general_camera_mode(0, GMSH_SET, 1);
-        general.butt[18]->value(opt_general_camera_mode(0, GMSH_GET, 0));
-      }
-      else {
+      else
         general.gamepadconfig->deactivate();
-      }
       o->end();
     }
   }
@@ -2746,7 +2753,7 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
 
       mesh.choice[0] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Point display");
-      mesh.choice[0]->tooltip("Mesh.PointType");
+      mesh.choice[0]->tooltip("Mesh.NodeType");
       mesh.choice[0]->menu(menu_point_display);
       mesh.choice[0]->align(FL_ALIGN_RIGHT);
       mesh.choice[0]->callback(mesh_options_ok_cb);
@@ -2998,7 +3005,7 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
       view.value[30]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
 
       view.input[1] = new Fl_Input(C2, 2 * WB + 4 * BH, RW / 2, BH, "Format");
-      view.input[1]->tooltip("View.Format");
+      view.input[1]->tooltip("View.NumberFormat");
       view.input[1]->align(FL_ALIGN_RIGHT);
       view.input[1]->callback(view_options_ok_cb);
 

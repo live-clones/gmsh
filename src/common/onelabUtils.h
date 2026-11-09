@@ -62,6 +62,16 @@ namespace onelabUtils {
                  bool force = false);
   bool autoCheck(const onelab::string &pold, const onelab::string &pnew,
                  bool force = false);
+  // all of this for a parameter changed in an interface (the tree of the
+  // graphical interface, the web page), and its new value stored, in that
+  // order; what the interface is to do next:
+  enum {
+    ParameterCheck = 1, // check the model (always if forced)
+    ParameterRebuild = 2, // rebuild the list of parameters
+    ParameterOption = 4 // redraw, a Gmsh option being set
+  };
+  int setParameter(onelab::number &p, bool force = false);
+  int setParameter(onelab::string &p, bool force = false);
 } // namespace onelabUtils
 
 #endif

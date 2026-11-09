@@ -8,6 +8,7 @@
 //   Anthony Royer
 //
 
+#include <algorithm>
 #include <limits>
 #include <FL/Fl.H>
 #include <FL/Fl_Window.H>
@@ -40,6 +41,11 @@ void partition_partition_cb(Fl_Widget *widget, void *data);
 void partition_cancel_cb(Fl_Widget *widget, void *data);
 void partition_select_groups_cb(Fl_Widget *widget, void *data);
 
+// the item of the Metis algorithm shown for an option value: Multithreaded
+// k-way (3) is shown as K-way without mt-metis
+static int metisItem(Fl_Choice *c, int algorithm)
+{ return std::max(0, std::min(algorithm, c->size() - 1) - 1); }
+
 void partitionWindow::write_all_options()
 {
   // Group 0
@@ -49,8 +55,10 @@ void partitionWindow::write_all_options()
   CTX::instance()->mesh.partitionCreateTopology = setTopology->value();
   CTX::instance()->mesh.partitionCreatePhysicals = setPhysical->value();
 
-  // Group 1
-  CTX::instance()->mesh.metisAlgorithm = choiceMetisAlg->value() + 1;
+  // Group 1: the algorithm kept if its item was not changed
+  if(choiceMetisAlg->value() !=
+     metisItem(choiceMetisAlg, CTX::instance()->mesh.metisAlgorithm))
+    CTX::instance()->mesh.metisAlgorithm = choiceMetisAlg->value() + 1;
 
   // Group 2
   CTX::instance()->mesh.metisEdgeMatching = choiceEdgeMatch->value() + 1;
@@ -64,33 +72,42 @@ void partitionWindow::write_all_options()
   CTX::instance()->mesh.partitionHexWeight = (int)inputHexWeight->value();
 }
 
-void partitionWindow::read_all_options()
+void partitionWindow::read_all_options(bool defaults)
 {
+  // the value of the option, or its default
+  auto value = [defaults](const char *name) {
+    double v = 0.;
+    NumberOption(defaults ? GMSH_GET_DEFAULT : GMSH_GET, "Mesh", 0, name, v);
+    return v;
+  };
+
   // Group 0
-  inputNumPartition->value(CTX::instance()->mesh.numPartitions);
-  setGhostCells->value(CTX::instance()->mesh.partitionCreateGhostCells);
-  setTopology->value(CTX::instance()->mesh.partitionCreateTopology);
-  setPhysical->value(CTX::instance()->mesh.partitionCreatePhysicals);
+  inputNumPartition->value(value("NbPartitions"));
+  setGhostCells->value((int)value("PartitionCreateGhostCells"));
+  setTopology->value((int)value("PartitionCreateTopology"));
+  setPhysical->value((int)value("PartitionCreatePhysicals"));
 
   // Group 2
-  choiceMetisAlg->value(CTX::instance()->mesh.metisAlgorithm - 1);
+  choiceMetisAlg->value(
+    metisItem(choiceMetisAlg, (int)value("MetisAlgorithm")));
 
   // Group 3
-  choiceEdgeMatch->value(CTX::instance()->mesh.metisEdgeMatching - 1);
-  choiceRefineAlg->value(CTX::instance()->mesh.metisRefinementAlgorithm - 1);
+  choiceEdgeMatch->value((int)value("MetisEdgeMatching") - 1);
+  choiceRefineAlg->value((int)value("MetisRefinementAlgorithm") - 1);
 
-  inputTriWeight->value(CTX::instance()->mesh.partitionTriWeight);
-  inputQuaWeight->value(CTX::instance()->mesh.partitionQuaWeight);
-  inputTetWeight->value(CTX::instance()->mesh.partitionTetWeight);
-  inputPriWeight->value(CTX::instance()->mesh.partitionPriWeight);
-  inputPyrWeight->value(CTX::instance()->mesh.partitionPyrWeight);
-  inputHexWeight->value(CTX::instance()->mesh.partitionHexWeight);
+  inputTriWeight->value(value("PartitionTriWeight"));
+  inputQuaWeight->value(value("PartitionQuadWeight"));
+  inputTetWeight->value(value("PartitionTetWeight"));
+  inputPriWeight->value(value("PartitionPrismWeight"));
+  inputPyrWeight->value(value("PartitionPyramidWeight"));
+  inputHexWeight->value(value("PartitionHexWeight"));
 }
 
 void partition_defaults_cb(Fl_Widget *widget, void *data)
 {
+  // the defaults shown, applied by Partition
   partitionWindow *dlg = static_cast<partitionWindow *>(data);
-  dlg->read_all_options();
+  dlg->read_all_options(true);
   partition_select_groups_cb(dlg->choicePartitioner, data);
 }
 

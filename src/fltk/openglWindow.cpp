@@ -843,6 +843,9 @@ char openglWindow::selectEntity(int type, std::vector<GVertex *> &vertices,
   take_focus();
   if(!FlGui::available() || alive.deleted()) return 'q';
   beginSelection(type);
+  // the selections started, to know if one is started while this one waits
+  static int started = 0;
+  int mine = ++started;
 
   while(1) {
     if(!FlGui::available()) return 'q';
@@ -855,6 +858,9 @@ char openglWindow::selectEntity(int type, std::vector<GVertex *> &vertices,
     views.clear();
     FlGui::wait();
     if(!FlGui::available() || alive.deleted()) return 'q';
+    // another selection was started meanwhile (from a menu during this one):
+    // it took the state of the selection, and this one stops as with 'q'
+    if(started != mine) return 'q';
     char ret = selectionStep(vertices, edges, faces, regions, elements, points,
                              views);
     if(ret) return ret;

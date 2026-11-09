@@ -662,6 +662,8 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "FontSize" , opt_general_fontsize , -1. ,
     "Size of the font in the user interface, in pixels (-1: automatic)" },
 
+  { F|O, "Gamepad" , opt_general_gamepad , 0. ,
+    "Move the camera with a gamepad (experimental)" },
   { F|O, "GraphicsFontSize" , opt_general_graphics_fontsize , 16. ,
     "Size of the font in the graphic window, in pixels" },
   { F|O, "GraphicsFontSizeTitle" , opt_general_graphics_fontsize_title , 19. ,
@@ -678,6 +680,10 @@ StringXNumber GeneralOptions_Number[] = {
   { F|S, "GraphicsWidth" , opt_general_graphics_size0 , 800. ,
     "Width (in pixels) of the graphic window, and of the pictures made "
     "without one (in batch mode, or without the graphical interface)" },
+
+  { F|O, "HeavyVisualization" , opt_general_heavy_visualization , 0. ,
+    "Draw the faces of high-order elements subdivided (Mesh.NumSubEdges), in "
+    "builds with VisuDev" },
 
   { F|S, "HighOrderToolsOffsetX" , opt_general_hot_offset0 , 600. ,
     "Horizontal offset (in pixels) of the upper left corner of the high-order "
@@ -923,7 +929,7 @@ StringXNumber GeneralOptions_Number[] = {
     "Z coordinate of the center of rotation" },
 
   { F|S, "SaveOptions" , opt_general_options_save, 0. ,
-    "Automatically save current options in General.OptionsFileName (1) or per model (2)"
+    "Automatically save current options in General.OptionsFileName (1) or per model (2) "
     "when the graphical user interface is closed?" },
   { F|S, "SaveSession" , opt_general_session_save, 1. ,
     "Automatically save session specific information in General.SessionFileName "

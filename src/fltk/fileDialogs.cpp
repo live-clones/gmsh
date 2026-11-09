@@ -424,18 +424,24 @@ int pgfBitmapFileDialog(const char *name, const char *title, int format)
   dialog->v[0]->value(opt_print_width(0, GMSH_GET, 0));
   dialog->v[1]->value(opt_print_height(0, GMSH_GET, 0));
   return runDialog(dialog->window, dialog->ok, dialog->cancel, [&]() {
-    opt_print_text(0, GMSH_SET | GMSH_GUI, 0); // never print any text
-    opt_print_background(0, GMSH_SET | GMSH_GUI,
-                         0); // never print background
     opt_print_pgf_two_dim(0, GMSH_SET | GMSH_GUI, (int)dialog->b[0]->value());
     opt_print_pgf_export_axis(0, GMSH_SET | GMSH_GUI,
                               (int)dialog->b[1]->value());
     opt_print_pgf_horiz_bar(0, GMSH_SET | GMSH_GUI, (int)dialog->b[2]->value());
-    opt_print_composite_windows(0, GMSH_SET | GMSH_GUI,
-                                0); // never do compositing print
     opt_print_width(0, GMSH_SET | GMSH_GUI, (int)dialog->v[0]->value());
     opt_print_height(0, GMSH_SET | GMSH_GUI, (int)dialog->v[1]->value());
+    // never any text, background or compositing in the bitmap of a PGF
+    // figure: for this file only, the options are set back after
+    double text = opt_print_text(0, GMSH_GET, 0);
+    double background = opt_print_background(0, GMSH_GET, 0);
+    double composite = opt_print_composite_windows(0, GMSH_GET, 0);
+    opt_print_text(0, GMSH_SET, 0);
+    opt_print_background(0, GMSH_SET, 0);
+    opt_print_composite_windows(0, GMSH_SET, 0);
     CreateOutputFile(name, format);
+    opt_print_text(0, GMSH_SET, text);
+    opt_print_background(0, GMSH_SET, background);
+    opt_print_composite_windows(0, GMSH_SET, composite);
   });
 }
 

@@ -93,7 +93,8 @@ private:
 public:
   outputRange(int x, int y, int w, int h, double max_number,
               const char *l = nullptr)
-    : Fl_Group(x, y, w, h, l), _max_number(max_number)
+    : Fl_Group(x, y, w, h, l), _min(-max_number), _max(max_number), _step(0.),
+      _max_number(max_number)
   {
     _graph_val.resize(36, '0');
 

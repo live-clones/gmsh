@@ -62,29 +62,6 @@ namespace {
     }
   }
 
-  // a parameter changed in the page, as in the tree of the graphical
-  // interface: the Gmsh option it stands for, the actions it asks for
-  template <class T> int setParameter(T &p)
-  {
-    onelab::server *s = onelab::server::instance();
-    std::vector<T> ps;
-    s->get(ps, p.getName());
-    T old = ps.empty() ? p : ps[0];
-    int ret = 0;
-    std::string opt = p.getAttribute("GmshOption");
-    if(opt.size()) {
-      if(onelabUtils::serverAction(opt)) // for backward compatibility
-        ret = 2;
-      else
-        onelabUtils::setGmshOption(p);
-    }
-    if(onelabUtils::serverAction(p.getAttribute("ServerAction"))) ret = 2;
-    onelabUtils::performServerAction(p);
-    s->set(p);
-    if(onelabUtils::autoCheck(old, p)) ret |= 1;
-    return ret;
-  }
-
   // the solvers of the server (not the clients a solver adds while it runs)
   std::vector<gmshInProcessClient *> solvers()
   {
@@ -307,9 +284,9 @@ EMSCRIPTEN_KEEPALIVE void gmshWebUpdateGraphs() { onelabUtils::updateGraphs(); }
 EMSCRIPTEN_KEEPALIVE int gmshWebOnelabSet(const char *json)
 {
   onelab::number n;
-  if(n.fromJSON(json)) return setParameter(n);
+  if(n.fromJSON(json)) return onelabUtils::setParameter(n) & 3;
   onelab::string s;
-  if(s.fromJSON(json)) return setParameter(s);
+  if(s.fromJSON(json)) return onelabUtils::setParameter(s) & 3;
   return -1;
 }
 

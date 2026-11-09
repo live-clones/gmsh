@@ -132,6 +132,8 @@ static void update_edges_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
+static void reset_selection_cb(Fl_Widget *w, void *data);
+
 static void select_elements_cb(Fl_Widget *w, void *data)
 {
   classificationEditor *e = (classificationEditor *)data;
@@ -191,10 +193,12 @@ static void select_elements_cb(Fl_Widget *w, void *data)
         GModel::current()->setSelection(0);
         break;
       }
-      if(ib == 'q') { // do nothing
+      if(ib == 'q') { // the selection undone, back to no elements selected
         GModel::current()->setSelection(0);
-        e->elements.clear();
-        break;
+        for(MElement *me : e->elements) me->setVisibility(1);
+        CTX::instance()->pickElements = 0;
+        reset_selection_cb(nullptr, data);
+        return;
       }
     }
     CTX::instance()->pickElements = 0;

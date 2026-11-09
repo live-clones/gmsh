@@ -178,7 +178,7 @@ namespace onelabUtils {
             numbers[i].setValue(numbers[i].getMin());
             numbers[i].setIndex(0); // indicates we are in a loop
             std::vector<double> choices;
-            numbers[0].setChoices(choices);
+            numbers[i].setChoices(choices);
             onelab::server::instance()->set(numbers[i]);
             Msg::Info("Loop level %s - setting '%s' to value %d: %g",
                       level.c_str(), numbers[i].getName().c_str(), 0,
@@ -190,7 +190,7 @@ namespace onelabUtils {
           if(numbers[i].getMax() != onelab::parameter::maxNumber()) {
             numbers[i].setIndex(0); // indicates we are in a loop
             std::vector<double> choices;
-            numbers[0].setChoices(choices);
+            numbers[i].setChoices(choices);
             numbers[i].setValue(numbers[i].getMax());
             onelab::server::instance()->set(numbers[i]);
             Msg::Info("Loop level %s - setting '%s' to value %d: %g",
@@ -710,12 +710,12 @@ namespace onelabUtils {
       bool ret = onelabUtils::updateGraph(tmp.str());
       redraw = redraw || ret;
     }
-    if(redraw) {
 #if defined(HAVE_FLTK)
+    if(redraw && FlGui::available()) {
       FlGui::instance()->updateViews(true);
       drawContext::global()->draw();
-#endif
     }
+#endif
   }
 
   std::string timeStamp()
@@ -799,7 +799,7 @@ namespace onelabUtils {
     }
 
 #if defined(HAVE_FLTK)
-    FlGui::instance()->rebuildTree();
+    if(FlGui::available()) FlGui::instance()->rebuildTree();
 #endif
   }
 
@@ -830,7 +830,7 @@ namespace onelabUtils {
         strings[0].setChoices(names);
         onelab::server::instance()->set(strings[0]);
 #if defined(HAVE_FLTK)
-        FlGui::instance()->rebuildTree();
+        if(FlGui::available()) FlGui::instance()->rebuildTree();
 #endif
       }
     }
@@ -1088,6 +1088,35 @@ namespace onelabUtils {
   {
     return autoCheckT(pold, pnew, force);
   }
+
+  template <class T> static int setParameterT(T &p, bool force)
+  {
+    onelab::server *s = onelab::server::instance();
+    std::vector<T> ps;
+    s->get(ps, p.getName());
+    T old = ps.empty() ? p : ps[0];
+    int ret = 0;
+    std::string opt = p.getAttribute("GmshOption");
+    if(opt.size()) {
+      if(serverAction(opt)) // for backward compatibility
+        ret |= ParameterRebuild;
+      else {
+        setGmshOption(p);
+        ret |= ParameterOption;
+      }
+    }
+    if(serverAction(p.getAttribute("ServerAction"))) ret |= ParameterRebuild;
+    performServerAction(p);
+    s->set(p);
+    if(autoCheck(old, p, force)) ret |= ParameterCheck;
+    return ret;
+  }
+
+  int setParameter(onelab::number &p, bool force)
+  { return setParameterT(p, force); }
+
+  int setParameter(onelab::string &p, bool force)
+  { return setParameterT(p, force); }
 
 } // namespace onelabUtils
 

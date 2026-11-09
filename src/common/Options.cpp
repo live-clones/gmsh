@@ -1427,7 +1427,15 @@ std::string opt_general_watch_file_pattern(OPT_ARGS_STR)
 
 std::string opt_general_gui_theme(OPT_ARGS_STR)
 {
-  if(action & GMSH_SET) CTX::instance()->guiTheme = val;
+  if(action & GMSH_SET) {
+#if defined(HAVE_FLTK)
+    // the theme of the interface is set for the session
+    if(FlGui::available() && val != CTX::instance()->guiTheme)
+      Msg::Warning("General.FltkTheme will be '%s' from the next start",
+                   val.c_str());
+#endif
+    CTX::instance()->guiTheme = val;
+  }
   return CTX::instance()->guiTheme;
 }
 
@@ -1898,7 +1906,7 @@ std::string opt_view_name(OPT_ARGS_STR)
             PView::list[i]->getTag() == view->getAliasOf()) &&
            FlGui::instance()->onelab->getViewButton(i)) {
           FlGui::instance()->onelab->getViewButton(i)->copy_label(
-            data->getName());
+            "[" + std::to_string(i) + "] " + data->getName());
           FlGui::instance()->onelab->getViewButton(i)->redraw();
         }
       }

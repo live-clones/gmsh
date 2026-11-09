@@ -56,6 +56,8 @@ private:
   Fl_Text_Buffer *_text, *_style;
   hintInput *_find, *_line;
   bool _modified;
+  // the file as it was last read or written here
+  std::string _read;
   // the colors of the styles, those of the light or the dark scheme
   Fl_Text_Display::Style_Table_Entry _styles[6];
   void _title()
@@ -251,11 +253,7 @@ public:
   // to the scripts) and not here
   void refresh()
   {
-    if(_modified) return;
-    char *text = _text->text();
-    bool same = (onDisk() == text);
-    free(text);
-    if(!same) load();
+    if(!_modified && onDisk() != _read) load();
   }
   // the file as it is on disk
   std::string onDisk() const
@@ -269,7 +267,8 @@ public:
   void load()
   {
     int pos = _editor->insert_position();
-    _text->text(onDisk().c_str());
+    _read = onDisk();
+    _text->text(_read.c_str());
     _editor->insert_position(std::min(pos, _text->length()));
     // (an undo would not go before what was read)
     _text->canUndo(0);
@@ -277,18 +276,27 @@ public:
     _modified = false;
     _title();
   }
-  // the file written: false if it could not be
+  // the file written: false if it could not be, or if it changed on disk
+  // since it was read (as when the graphical interface added to a script) and
+  // is not to be overwritten
   bool save()
   {
     if(!_modified) return true;
+    if(onDisk() != _read &&
+       fl_choice("'%s' changed on disk since it was read here: overwrite it "
+                 "with the text of the editor?",
+                 "Cancel", "Overwrite", nullptr, _fileName.c_str()) != 1)
+      return false;
     std::ofstream out(_fileName, std::ios::binary);
     char *text = _text->text();
     if(out) out << text;
+    std::string written(text);
     free(text);
     if(!out) {
       Msg::Error("Could not write file '%s'", _fileName.c_str());
       return false;
     }
+    _read = written;
     _modified = false;
     _title();
     return true;

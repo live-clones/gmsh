@@ -502,6 +502,9 @@ void highOrderToolsWindow::show(bool redrawOnly)
   else {
     value[0]->value(std::max(1, meshOrder));
     butt[0]->value(!complete);
+    // the fields of the algorithm, and the boundary nodes only with a CAD
+    // model (which a model loaded since may have brought)
+    chooseopti_cb(nullptr, nullptr);
     if(CAD) {
       box->label("CAD model is available");
       choice[0]->value(CTX::instance()->mesh.hoFixBndNodes ? 0 : 1);

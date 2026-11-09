@@ -52,7 +52,9 @@ struct actionItem {
   std::string what;
   std::vector<actionItem> items; // of a menu
   std::string help; // a tooltip
-  std::string key; // the keyboard shortcut shown (an action of Shortcuts.h)
+  // the keyboard shortcut shown (an action of Shortcuts.h), which must do
+  // what the item does
+  std::string key;
   actionAsk ask; // asked for if ask.option is not empty
 };
 
