@@ -338,6 +338,18 @@ SBoundingBox3d PViewDataGModel::getBoundingBox(int step)
   return _steps[step]->getBoundingBox();
 }
 
+void PViewDataGModel::updateBoundingBoxes(GModel *model)
+{
+  SBoundingBox3d bbox;
+  bool computed = false;
+  for(auto s : _steps) {
+    if(s->getModel() != model) continue;
+    if(!computed) bbox = model->bounds();
+    computed = true;
+    s->setBoundingBox(bbox);
+  }
+}
+
 int PViewDataGModel::getNumScalars(int step)
 {
   if(_steps.empty()) return 0;

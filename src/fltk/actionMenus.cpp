@@ -341,22 +341,6 @@ bool canRunItem(const actionItem &item)
   return findAction(item.what) != nullptr;
 }
 
-// the value an item asks for, with a slider
-static void askFor(const actionItem &item)
-{
-  double min, max, step, value;
-  GetActionAsk(item.ask, min, max, step, value);
-  int index = GetActionOptionIndex(item.ask.option);
-  if(index < 0) return;
-  std::string::size_type dot = item.ask.option.find('.');
-  std::string category = item.ask.option.substr(0, dot);
-  drawContext::global()->draw();
-  double v = numberOrStringOptionChooser(category, index,
-                                         item.ask.option.substr(dot + 1), true,
-                                         item.label, true, min, max, step);
-  SetActionOption(item.ask.option, v);
-}
-
 void runItem(const actionItem &item, int view)
 {
   if(IsDoneByInterface(item)) {
@@ -379,7 +363,6 @@ void runItem(const actionItem &item, int view)
     FlGui::instance()->updateStatistics();
   }
   if(!FlGui::available()) return;
-  if(!item.ask.option.empty()) askFor(item);
   drawContext::global()->draw();
 }
 

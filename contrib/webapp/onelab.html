@@ -74,19 +74,20 @@
             cursor: pointer; }
   #status:hover { text-decoration: underline; }
   #status.error { color: var(--error); }
-  #quickMenu { position: fixed; z-index: 3; padding: 4px; display: flex;
+  #quickMenu, #quickMenu .submenu { position: fixed; z-index: 3; padding: 4px; display: flex;
                flex-direction: column; max-height: 80vh; overflow: auto;
                background: var(--bg); color: var(--fg);
                border: 1px solid var(--border); border-radius: 4px;
                box-shadow: 0 2px 8px var(--shadow); min-width: 220px; }
-  #quickMenu[hidden] { display: none; }
+  #quickMenu[hidden], #quickMenu .submenu[hidden] { display: none; }
+  #quickMenu .submenu { z-index: 4; min-width: 120px; }
   #quickMenu button { display: flex; gap: 6px; text-align: left; border: none;
                       background: none; padding: 3px 8px; border-radius: 3px;
                       font: inherit; color: inherit; cursor: pointer; }
-  #quickMenu button:hover { background: var(--menu-hover); }
+  #quickMenu button:hover, #quickMenu button.open { background: var(--menu-hover); }
+  #quickMenu .arrow { margin-left: auto; padding-left: 12px; color: var(--muted); }
   #quickMenu .mark { width: 1em; flex: none; }
   #quickMenu .head { color: var(--muted); font-size: 12px; padding: 6px 8px 1px; }
-  #quickMenu button.head { font-size: inherit; font-weight: bold; color: var(--fg); padding: 7px 8px; }
   #quickMenu hr { border: none; border-top: 1px solid var(--line2); margin: 3px 0; width: 100%; }
   /* (the edges of a phone's screen, the notch and the home indicator, which
      the page reaches: viewport-fit=cover) */
@@ -266,7 +267,12 @@
            background: var(--lasso-fill); pointer-events: none; z-index: 1; }
   #drop { position: fixed; inset: 0; display: none; place-items: center;
           background: var(--veil); font-size: 18px; z-index: 2; }
-  #model { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #model { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+           border: none; background: none; font: inherit; color: inherit;
+           padding: 2px 4px; cursor: pointer; text-align: left; }
+  #model:empty { display: none; }
+  #model::after { content: ' ▾'; color: var(--muted); }
+  #model:hover { text-decoration: underline; }
   /* touch screens: controls a finger can hit, and fields of 16 px, below
      which a phone zooms the page on them */
   @media (pointer: coarse) {
@@ -371,7 +377,7 @@
   </span>
   <input id="files" type="file" multiple hidden>
   <input id="folder" type="file" webkitdirectory hidden>
-  <span id="model"></span>
+  <button id="model" title="The models in the folder of this one"></button>
   <button id="run" disabled>Run</button>
   <button id="reset" disabled>Reset</button>
   <button id="keys" title="Keyboard shortcuts">?</button>
@@ -599,8 +605,6 @@ gmsh.option.setNumber('General.Terminal', 1);
 // (the questions Gmsh asks answered by default, not on the console, which a
 // browser would ask with a prompt)
 gmsh.option.setNumber('General.NoPopup', 1);
-
-// ---------------------------------------------------------------- drawing
 
 // the studio shading (General.Shading) converges while the view is still: a
 // few of its frames at each animation frame after a frame is drawn, until
@@ -848,8 +852,6 @@ status.addEventListener('click', () => { $('log').open = !$('log').open; });
 // the canvas resized as the messages are shown or hidden
 $('log').addEventListener('toggle', draw);
 
-// ---------------------------------------------------------------- ONELAB
-
 // The popups over the page: the menu of a model (Open model), of the graphs
 // and of the range of a parameter, and the quick access menu (popupMenu());
 // each closed by a click elsewhere but on the buttons that open it (its
@@ -858,7 +860,7 @@ const popups = [
   ['openMenu', '#open', () => openMenu(false)],
   ['graphMenu', '#graphMenu, .graphButton'],
   ['rangeMenu', '#rangeMenu, .rangeButton'],
-  ['quickMenu', '#quickMenu, [data-act=quick], .menuButton']];
+  ['quickMenu', '#quickMenu, [data-act=quick], .menuButton, #model']];
 // the first popup open closed: false if none is open
 function closePopup(target = null) {
   for(const [id, keep, close] of popups) {
@@ -885,8 +887,6 @@ function getParameters() {
 function setParameter(p) {
   return Module.ccall('gmshWebOnelabSet', 'number', ['string'], [JSON.stringify(p)]);
 }
-
-// ---------------------------------------------------------------- solver
 
 // The solver's worker (solver.js): GetDP runs there, while the page merges
 // what it is sent as it comes and stays free, as the graphical interface does
@@ -1583,8 +1583,6 @@ function readableColor(rgb, what) {
                       [rgb, theme('--bg-rgb'), theme('--fg-rgb'), dark ? 1 : 0, what]);
 }
 
-// ---------------------------------------------------------------- modules
-
 // The modules of the graphical interface's tree. Post-processing: the views
 // (in the branches their Group option names), each shown or hidden by its box,
 // with the menu of its button (its options, its export, the visibility and
@@ -1742,15 +1740,19 @@ function setViewOptionOf(tag, option, v) {
   const i = viewTags().indexOf(tag);
   if(i < 0) return;
   setViewOption(option, i, v);
-  // a custom range not given yet: that of the values
-  if(option === 'View.RangeType' && v === 2 &&
-     viewNum(i, 'CustomMin') === viewNum(i, 'CustomMax')) {
-    gmsh.option.setNumber(`View[${i}].CustomMin`, viewNum(i, 'Min'));
-    gmsh.option.setNumber(`View[${i}].CustomMax`, viewNum(i, 'Max'));
-  }
+  customRangeOfValues(i);
   keepViewOption(i, option);
   showViews();
   draw();
+}
+// a custom range a view was not given yet (as when the range of another view
+// becomes custom for all): that of its values, not an empty one that shows
+// nothing
+function customRangeOfValues(i) {
+  if(viewNum(i, 'RangeType') !== 2 || viewNum(i, 'CustomMin') !== viewNum(i, 'CustomMax'))
+    return;
+  gmsh.option.setNumber(`View[${i}].CustomMin`, viewNum(i, 'Min'));
+  gmsh.option.setNumber(`View[${i}].CustomMax`, viewNum(i, 'Max'));
 }
 // the options of a view given to all the views, and to the views to come
 function applyToAllViews(tag, options) {
@@ -1765,6 +1767,7 @@ function applyToAllViews(tag, options) {
       keepViewOption(k, option);
     }
   }
+  for(let k = 0; k < views(); k++) customRangeOfValues(k);
   showViews();
   draw();
 }
@@ -1784,6 +1787,7 @@ function settleViews() {
     const name = gmsh.option.getString(`View[${i}].Name`);
     const kept = {...allViewSettings, ...(viewSettings.get(name) || {})};
     for(const [option, v] of Object.entries(kept)) setViewOption(option, i, v);
+    customRangeOfValues(i);
   });
 }
 // the first visible view (or the first one), for the items of all views
@@ -2167,13 +2171,12 @@ function checkOf(item, view, tag) {
   const c = itemCheck(item);
   return c >= 0 ? !!c : undefined;
 }
-// what an item does: by the page, or in Gmsh, then what it asks for
+// what an item does: by the page, or in Gmsh
 async function runItem(item, {view = -1, tag, module = ''} = {}) {
   if(item.kind === 'operation') startOperation($('module' + module), item.what);
   else if(item.kind === 'shape') showShapeForm(item.what);
   else if(item.interface) pageActions[item.what].run(view, tag);
   else await gmshAction(item, view, module);
-  if(item.ask) askFor(item);
 }
 // what an item does in Gmsh (see RunAction()): on the mesh, timed with the
 // size of the mesh in the status; on the script, of a new model if there is
@@ -2201,31 +2204,21 @@ async function gmshAction(item, view, module) {
     `${item.what} in ${$('model').textContent}`;
   setStatus(text, !!lastError);
 }
-// the value an item asks for, with a slider in the form of its module
-function askFor(item) {
-  const b = JSON.parse(Module.ccall('gmshWebActionAsk', 'string', ['number'], [item.id]));
-  const category = item.ask.slice(0, item.ask.indexOf('.'));
-  showSide(true);
-  showPanel($({View: 'modulePost', Mesh: 'moduleMesh'}[category] || 'moduleGeometry'),
-            item.label, [{name: item.ask, kind: 'range', ...b}],
-            (name, v) => {
-              Module.ccall('gmshWebActionSet', null, ['number', 'number'], [item.id, Number(v)]);
-              keepOptionOf(item.ask);
-              readOptions();
-              draw();
-            }, () => showPanel(null), [['Close', 'Close the form', () => showPanel(null)]]);
-}
-// the items of a menu as popupMenu() shows them: a submenu as a heading, a
-// group set apart by a separator ('')
-function menuItems(menu, opts = {}) {
+// the items of a menu as popupMenu() shows them: a submenu as {label, items}
+// (one level, as in the graphical interface: a submenu in a submenu as a
+// heading), a group set apart by a separator ('')
+function menuItems(menu, opts = {}, level = 0) {
   const items = [];
   const add = (m) => {
     for(const it of m.items) {
       if(it.kind === 'menu') {
         if(!anyItem(it)) continue;
-        items.push(it.label || '');
-        add(it);
-        items.push('');
+        if(it.label && !level) items.push({label: it.label, items: menuItems(it, opts, 1)});
+        else {
+          items.push(it.label || '');
+          add(it);
+          items.push('');
+        }
       }
       else if(canRun(it))
         items.push([it.label, () => runItem(it, opts), checkOf(it, opts.view, opts.tag)]);
@@ -2334,12 +2327,16 @@ function download(path, keep = false) {
   if(!keep) FS.unlink(path);
 }
 
-// ---------------------------------------------------------------- options
-
 // the main Gmsh options, as in the option window of the graphical interface:
 // [option, kind, label, range if not Gmsh's]; those of the views apply to all,
 // and are given again to the views a new run makes
 const optionGroups = [
+  ['General', [
+    ['General.Axes', 'choice', 'Axes'],
+    ['General.SmallAxes', 'check', 'Small axes'],
+    ['General.Orthographic', 'choice', 'Projection'],
+    ['General.Shading', 'choice', 'Shading'],
+    ['General.ColorScheme', 'choice', 'Colors']]],
   ['Geometry', [
     ['Geometry.Points', 'check', 'Points'],
     ['Geometry.Curves', 'check', 'Curves'],
@@ -2359,12 +2356,6 @@ const optionGroups = [
     ['Mesh.VolumeEdges', 'check', '3D element edges'],
     ['Mesh.VolumeFaces', 'check', '3D element faces'],
     ['Mesh.Opacity', 'range', 'Opacity']]],
-  ['General', [
-    ['General.Axes', 'choice', 'Axes'],
-    ['General.SmallAxes', 'check', 'Small axes'],
-    ['General.Orthographic', 'choice', 'Projection'],
-    ['General.Shading', 'choice', 'Shading'],
-    ['General.ColorScheme', 'choice', 'Colors']]],
 ];
 // the options that change the mesh: the next run meshes again
 const meshing = new Set(['Mesh.Algorithm', 'Mesh.Algorithm3D',
@@ -2379,7 +2370,8 @@ function raiseUnit(i) {
   const size = Math.hypot(num('MaxX') - num('MinX'), num('MaxY') - num('MinY'),
                           num('MaxZ') - num('MinZ'));
   const vmax = Math.max(Math.abs(num('Min')), Math.abs(num('Max')));
-  return vmax > 0 ? size / vmax : 0;
+  // (none for a view without values or without bounds)
+  return vmax > 0 && isFinite(size) ? size / vmax : 0;
 }
 function setViewOption(name, i, v) {
   if(name === 'View.NormalRaise') v *= raiseUnit(i);
@@ -2540,8 +2532,6 @@ function showTab(id) {
 }
 for(const b of document.querySelectorAll('#tabs button'))
   b.addEventListener('click', () => showTab(b.dataset.tab));
-
-// ---------------------------------------------------------------- clipping
 
 // the clipping, as the clipping window of the graphical interface: one of six
 // planes (A X + B Y + C Z + D = 0, what is on the positive side kept) or a
@@ -2761,8 +2751,6 @@ $('clipReset').addEventListener('click', () => {
 });
 readClipping();
 
-// ---------------------------------------------------------------- visibility
-
 // the visibility of the model, as the visibility window of the graphical
 // interface: its elementary entities or its physical groups, by dimension,
 // shown or hidden (with their boundaries, as asked); the mesh and the
@@ -2877,8 +2865,6 @@ for(const [id, how] of [['visAll', 1], ['visNone', 0], ['visInvert', -1]])
     readVisibility();
     draw();
   });
-
-// ---------------------------------------------------------------- status bar
 
 // The status bar of the graphical interface's window: the views along the
 // axes, isometric, turned, fitted (Shift: the other side, the box around
@@ -3007,17 +2993,15 @@ async function installApp() {
   p.prompt();
   await p.userChoice;
 }
-// On a small screen its sections are folded under their headings, until
-// they are opened (and kept open for the next times)
-const quickOpen = new Set();
 function openQuickMenu(x, y, above = false) {
-  popupMenu(quickItems, x, y, {above, fold: narrow.matches});
+  popupMenu(quickItems, x, y, {above});
 }
-// A menu of items(): [label, action, checked] or the heading of a section, at
+// A menu of items(): [label, action, checked], the heading of a section, a
+// separator ('') or a submenu ({label, items}, opened next to its entry) at
 // (x, y) in the window or above it; the button that opened it (owner) closes
 // it again
 let menuOwner = null;
-function popupMenu(items, x, y, {above = false, fold = false, owner = null} = {}) {
+function popupMenu(items, x, y, {above = false, owner = null} = {}) {
   const menu = $('quickMenu');
   if(owner && owner === menuOwner && !menu.hidden) {
     menu.hidden = true;
@@ -3025,41 +3009,74 @@ function popupMenu(items, x, y, {above = false, fold = false, owner = null} = {}
   }
   menuOwner = owner;
   menu.textContent = '';
-  let section = '';
-  for(const item of items()) {
-    if(item === '') {
-      section = '';
-      menu.appendChild(document.createElement('hr'));
-      continue;
-    }
-    if(typeof item === 'string') {
-      section = item;
-      const h = document.createElement(fold ? 'button' : 'div');
-      h.className = 'head';
-      h.textContent = fold ? (quickOpen.has(item) ? '▾ ' : '▸ ') + item : item;
-      if(fold) h.addEventListener('click', () => {
-        if(!quickOpen.delete(item)) quickOpen.add(item);
-        popupMenu(items, x, y, {above, fold});
+  // (the submenu, in the menu so that a click in it is in the menu)
+  const sub = document.createElement('div');
+  sub.className = 'submenu';
+  sub.hidden = true;
+  let opened = null;
+  const open = (b, item) => {
+    if(opened === b) return;
+    if(opened) opened.classList.remove('open');
+    opened = b;
+    b.classList.add('open');
+    sub.textContent = '';
+    fillMenu(sub, item.items);
+    sub.hidden = false;
+    const r = b.getBoundingClientRect();
+    // (to the right of its entry, or to the left if there is no room)
+    const x = r.right + sub.offsetWidth + 8 <= innerWidth ? r.right : r.left - sub.offsetWidth;
+    placePopup(sub, x, r.top - 5);
+  };
+  const fillMenu = (m, list) => {
+    for(const item of list) {
+      if(item === '') {
+        m.appendChild(document.createElement('hr'));
+        continue;
+      }
+      if(typeof item === 'string') {
+        const h = document.createElement('div');
+        h.className = 'head';
+        h.textContent = item;
+        m.appendChild(h);
+        continue;
+      }
+      const b = document.createElement('button');
+      const mark = document.createElement('span');
+      mark.className = 'mark';
+      if(!Array.isArray(item)) {
+        const arrow = document.createElement('span');
+        arrow.className = 'arrow';
+        arrow.textContent = '▸';
+        b.append(mark, document.createTextNode(item.label), arrow);
+        b.addEventListener('click', () => open(b, item));
+        b.addEventListener('pointerenter', (e) => {
+          if(e.pointerType === 'mouse') open(b, item);
+        });
+        m.appendChild(b);
+        continue;
+      }
+      const [label, act, checked] = item;
+      mark.textContent = checked ? '✓' : '';
+      b.append(mark, document.createTextNode(label));
+      b.addEventListener('click', () => {
+        menu.hidden = true;
+        act();
+        showViews();
+        readOptions();
+        draw();
       });
-      menu.appendChild(h);
-      continue;
+      // (an entry of the menu closes the submenu)
+      if(m === menu) b.addEventListener('pointerenter', (e) => {
+        if(e.pointerType !== 'mouse' || !opened) return;
+        opened.classList.remove('open');
+        opened = null;
+        sub.hidden = true;
+      });
+      m.appendChild(b);
     }
-    if(fold && section && !quickOpen.has(section)) continue;
-    const [label, act, checked] = item;
-    const b = document.createElement('button');
-    const mark = document.createElement('span');
-    mark.className = 'mark';
-    mark.textContent = checked ? '✓' : '';
-    b.append(mark, document.createTextNode(label));
-    b.addEventListener('click', () => {
-      menu.hidden = true;
-      act();
-      showViews();
-      readOptions();
-      draw();
-    });
-    menu.appendChild(b);
-  }
+  };
+  fillMenu(menu, items());
+  menu.appendChild(sub);
   menu.hidden = false;
   placePopup(menu, x, above ? y - menu.offsetHeight - 2 : y);
 }
@@ -3157,8 +3174,6 @@ function showNotes() {
   }
 }
 
-// ---------------------------------------------------------------- keys
-
 // the shortcuts of the graphical interface: those that change the scene run
 // in the module (shortcuts.js), these by the page
 function showOptions(group) {
@@ -3234,8 +3249,6 @@ for(const r of shortcutsHelp(shortcuts, (a) => pageShortcuts[a] ||
 }
 $('keys').addEventListener('click', () => $('keysDialog').showModal());
 
-// ---------------------------------------------------------------- models
-
 // a model is opened from a directory of its own in the in-memory filesystem
 let modelCount = 0;
 function newModelDirectory() {
@@ -3244,25 +3257,27 @@ function newModelDirectory() {
   return dir;
 }
 // What a model leaves when another starts, or none (Clear): the tool or the
-// operation under way, its files here and in the worker, the parameters, the
-// solvers, the models and the views, and what the page keeps per view
-// (gmsh.clear() starts the view tags again)
-function forgetModel() {
+// operation under way, its files here and in the worker (unless another
+// model of its folder starts, keepFiles), the parameters, the solvers, the
+// models and the views, and what the page keeps per view (gmsh.clear()
+// starts the view tags again)
+function forgetModel(keepFiles = false) {
   if(tool) setTool(Tool.None);
   showPanel(null);
   FS.chdir('/');
-  if(modelDir) {
+  if(modelDir && !keepFiles) {
     const old = modelDir;
     if(FS.analyzePath(old).exists) removeDirectory(FS, old);
     workerReady.then((ok) => { if(ok) worker.postMessage({type: 'forget', dir: old}); });
+    sent.clear();
   }
-  sent.clear();
   viewSettings.clear();
   for(const k of Object.keys(allViewSettings)) delete allViewSettings[k];
   settledViews.clear();
   viewOptionsOpen.clear();
   graphEdits.clear();
-  modelDir = modelFile = hint = '';
+  if(!keepFiles) modelDir = '';
+  modelFile = hint = '';
   gmsh.onelab.clear();
   Module.ccall('gmshWebOnelabForgetSolvers', null, [], []);
   gmsh.clear();
@@ -3289,6 +3304,10 @@ async function openFiles(entries, open = '') {
     setStatus('No model found');
     return;
   }
+  await openModel(file);
+}
+// a file of the model's directory opened as the model
+async function openModel(file) {
   FS.chdir(file.slice(0, file.lastIndexOf('/')));
   modelFile = file;
   $('clearModel').hidden = false;
@@ -3311,10 +3330,42 @@ async function openFiles(entries, open = '') {
   } catch(e) {
     log('*** ' + e.message);
   }
+  // (just read, unless it is a solver's file whose geometry the check reads:
+  // the check does not read it again, which would merge the views of a .pos
+  // a second time)
+  if(gmsh.model.getFileName() === file) gmsh.onelab.setChanged('Gmsh', 0);
   Module.ccall('gmshWebResetView', null, [], []);
   await run('check');
   if(narrow.matches && getParameters().some((p) => p.visible && !p.name.includes('ONELAB Context/'))) showSide(true);
 }
+// The files of the folder of the model that Gmsh opens as a model, in the
+// menu of its name: the one picked opened instead, with the files of the
+// folder kept
+const modelExtensions = ['pro', 'geo', 'msh', 'step', 'stp', 'brep', 'iges', 'igs',
+                         'stl', 'vtk', 'vtu', 'med', 'cgns', 'unv', 'mesh', 'inp',
+                         'bdf', 'nas', 'obj', 'ply'];
+function folderModels() {
+  const dir = FS.cwd();
+  return FS.readdir(dir).filter((f) => {
+    const ext = f.slice(f.lastIndexOf('.') + 1).toLowerCase();
+    return f.includes('.') && modelExtensions.includes(ext) &&
+      !FS.isDir(FS.stat(dir + '/' + f).mode);
+  }).sort().map((f) => dir + '/' + f);
+}
+async function switchModel(file) {
+  if(busy || file === modelFile) return;
+  forgetModel(true);
+  await openModel(file);
+}
+$('model').addEventListener('click', (e) => {
+  if(!modelDir) return;
+  const r = e.currentTarget.getBoundingClientRect();
+  // (checked: the one named, as a .pro is named for its .geo)
+  const name = (f) => f.slice(f.lastIndexOf('/') + 1);
+  popupMenu(() => folderModels().map((f) => [name(f), () => switchModel(f),
+                                              name(f) === $('model').textContent]),
+            r.left, r.bottom + 2, {owner: e.currentTarget});
+});
 // Clear, as File > Clear in the graphical interface: everything deleted (the
 // model, its meshes, results and parameters), the page as it starts, with
 // its options and view

@@ -444,7 +444,7 @@ static PolyMesh::Face *Walk(PolyMesh::Face *f, double x, double y)
 }
 
 // recover an edge that goes from v_start --> v_end
-// ----------------------------------- assume it's internal !!!
+// assume it's internal !!!
 
 static int intersect(PolyMesh::Vertex *v0, PolyMesh::Vertex *v1,
                      PolyMesh::Vertex *b0, PolyMesh::Vertex *b1)
@@ -899,7 +899,6 @@ PolyMesh *GFaceInitialMesh(int faceTag, int recover,
   return pm;
 }
 
-// -----------------------------------
 // only on planar faces ...
 int PolyMeshDelaunayize (int faceTag){
 
@@ -928,4 +927,3 @@ int PolyMeshDelaunayize (int faceTag){
   delete pm;
   return 0;
 }
-// -----------------------------------

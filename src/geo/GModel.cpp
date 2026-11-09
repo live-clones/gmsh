@@ -1902,17 +1902,20 @@ static void createEdgesOrFaces(const std::vector<GEntity *> &entities, Set &set,
   typedef typename Set::key_type K;
   // the elements, and where the keys of each start
   std::vector<MElement *> elements;
-  std::vector<std::size_t> start(1, 0);
-  for(GEntity *ge : entities) {
-    for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
-      MElement *e = ge->getMeshElement(j);
-      elements.push_back(e);
-      start.push_back(start.back() + countOf(e));
-    }
-  }
-  std::size_t total = start.back(), numElements = elements.size();
+  for(GEntity *ge : entities)
+    for(std::size_t j = 0; j < ge->getNumMeshElements(); j++)
+      elements.push_back(ge->getMeshElement(j));
+  std::size_t numElements = elements.size();
+  // (counted by several threads: a polyhedron builds its edges to count them)
+  std::vector<std::size_t> start(numElements + 1, 0);
+  int nthreads = CTX::instance()->numThreadsFor(numElements, 20000);
+#pragma omp parallel for schedule(static) num_threads(nthreads)
+  for(std::size_t i = 0; i < numElements; i++)
+    start[i + 1] = countOf(elements[i]);
+  for(std::size_t i = 0; i < numElements; i++) start[i + 1] += start[i];
+  std::size_t total = start.back();
   if(!total) return;
-  int nthreads = CTX::instance()->numThreadsFor(total, 100000);
+  nthreads = CTX::instance()->numThreadsFor(total, 100000);
   if(nthreads == 1) { // (the same numbering, in one pass)
     std::vector<K> keys;
     for(auto e : elements) {

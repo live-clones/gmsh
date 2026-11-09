@@ -381,10 +381,8 @@ struct cross2dPtrLessThan {
   }
 };
 
-// ---------------------------------------------
 // TODO : MAKE IT PARALLEL AND SUPERFAST
 //        DO IT ON SURFACES
-// ---------------------------------------------
 
 static void closest(const cross2d &c1, const cross2d &c2, double &a2,
                     double &diff)

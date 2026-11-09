@@ -115,6 +115,10 @@ namespace onelabUtils {
       if(!CTX::instance()->showModuleMenu)
         o.setVisible(false);
       c->set(o);
+      // (a name given, not a change of the model: not a reason to read it
+      // again, which would merge the views of a .pos a second time)
+      onelab::server::instance()->setChangedLevels({{o.getName(), 0}},
+                                                   c->getName());
     }
     // we could keep track of mesh file name in "Output files" so we could
     // archive the mesh automatically:

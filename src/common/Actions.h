@@ -43,22 +43,11 @@ enum actionKind {
   ActionOption
 };
 
-// A value asked for with a slider once an item is picked: the value of the
-// option (e.g. "View.NbIso"), from min to max by step. If perValue is true,
-// min, max and step are in units of the size of the model divided by the
-// largest value of the visible views (for a displacement, say).
-struct actionAsk {
-  std::string option;
-  double min, max, step;
-  bool perValue;
-};
-
 // An item of a menu
 struct actionItem {
   std::string label;
   actionKind kind;
-  // the name of the action, operation, shape or option; empty for an item
-  // that only asks for a value
+  // the name of the action, operation, shape or option
   std::string what;
   // the items of a menu
   std::vector<actionItem> items;
@@ -68,8 +57,6 @@ struct actionItem {
   // Shortcuts.h), which must do what the item does; not needed for an action
   // that has a shortcut of the same name, which is shown
   std::string key;
-  // the value asked for, if ask.option is not empty
-  actionAsk ask;
 };
 
 // The menu with the given name: "Geometry" and "Mesh" (the modules), "Quick
@@ -108,15 +95,7 @@ bool IsActionAvailable(const actionItem &item);
 // item (for an action the interface does, the interface gives it)
 int GetActionCheck(const actionItem &item);
 
-// What to ask for: the bounds of the slider and the current value
-void GetActionAsk(const actionAsk &ask, double &min, double &max, double &step,
-                  double &value);
-
 // Set an option, as an item does
 void SetActionOption(const std::string &option, double value);
-
-// The index of the option an item sets whose value is shown: 0, or the first
-// visible view for an option of the views; -1 if there is none
-int GetActionOptionIndex(const std::string &option);
 
 #endif

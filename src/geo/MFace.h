@@ -19,18 +19,21 @@ template <class t> class fullMatrix;
 // A mesh face.
 class MFace {
 private:
-  // faces have 3 or 4 nodes, except the polygonal ones of cut elements: store
-  // the usual cases inline, and only allocate for the polygons. (MFace is
+  // faces have 3 or 4 nodes, except the polygonal ones of cut elements and
+  // polyhedra: store the usual cases inline, and allocate for the polygons, in
+  // one block holding their nodes and then their sorted indices. (MFace is
   // created by the million during meshing - one per face of every element -
   // so allocating for it shows up in profiles.)
   MVertex *_v[4];
   char _si[4]; // sorted indices
   int _n;
-  struct polygon {
-    std::vector<MVertex *> v;
-    std::vector<char> si;
-  };
-  polygon *_p; // non-null iff _n > 4
+  MVertex **_p; // non-null iff _n > 4
+  char *_psi() const { return reinterpret_cast<char *>(_p + _n); }
+  static MVertex **_alloc(int n)
+  {
+    // (n nodes, then n chars rounded up to whole pointers)
+    return new MVertex *[n + (n + sizeof(MVertex *) - 1) / sizeof(MVertex *)];
+  }
 
   void _initialize(MVertex *const *v, int n);
   void _copy(const MFace &f);
@@ -47,7 +50,8 @@ public:
   MFace() : _n(0), _p(nullptr) {}
   MFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3 = nullptr);
   MFace(const std::vector<MVertex *> &v);
-  ~MFace() { delete _p; }
+  MFace(MVertex *const *v, int n) { _initialize(v, n); }
+  ~MFace() { delete[] _p; }
   MFace(const MFace &f) : _p(nullptr) { _copy(f); }
   MFace(MFace &&f) noexcept : _p(f._p)
   {
@@ -58,7 +62,7 @@ public:
   MFace &operator=(const MFace &f)
   {
     if(this != &f) {
-      delete _p;
+      delete[] _p;
       _p = nullptr;
       _copy(f);
     }
@@ -67,7 +71,7 @@ public:
   MFace &operator=(MFace &&f) noexcept
   {
     if(this != &f) {
-      delete _p;
+      delete[] _p;
       _p = f._p;
       f._p = nullptr;
       _copyInline(f);
@@ -76,14 +80,9 @@ public:
     return *this;
   }
   std::size_t getNumVertices() const { return (std::size_t)_n; }
-  MVertex *getVertex(std::size_t i) const
-  {
-    return _p ? _p->v[i] : _v[i];
-  }
+  MVertex *getVertex(std::size_t i) const { return _p ? _p[i] : _v[i]; }
   MVertex *getSortedVertex(std::size_t i) const
-  {
-    return _p ? _p->v[std::size_t(_p->si[i])] : _v[std::size_t(_si[i])];
-  }
+  { return _p ? _p[std::size_t(_psi()[i])] : _v[std::size_t(_si[i])]; }
   MEdge getEdge(std::size_t i) const
   {
     return MEdge(getVertex(i), getVertex((i + 1) % getNumVertices()));
