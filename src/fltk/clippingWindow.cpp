@@ -184,6 +184,14 @@ static void clip_update(bool adjusting)
   drawContext::global()->draw();
 }
 
+// another tab: shown, not applied (the box would rewrite the six planes, the
+// planes tab one of them), until a value or a target is changed there
+static void clip_tab_cb(Fl_Widget *w, void *data)
+{
+  FlGui::instance()->clipping->fillBoxValuesFromPlaneValues();
+  FlGui::instance()->clipping->updateCount();
+}
+
 static void clip_targets_cb(Fl_Widget *w, void *data)
 {
   // the views follow the geometry and the mesh, always visible
@@ -319,7 +327,7 @@ clippingWindow::clippingWindow(int deltaFontSize)
 
     group[1]->end();
   }
-  o->callback(clip_update_cb); // force update when we switch tabs
+  o->callback(clip_tab_cb);
   o->end();
 
   // two columns: the volume-only options, active together, on the right

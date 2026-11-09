@@ -714,6 +714,12 @@ void MeshOptimizer(std::vector<GEntity *> &entities, MeshOptParameters &par)
 {
   if(par.nCurses) mvinit();
   redirectMessage _logWriter(par.logFileName, !par.nCurses);
+  // the callback in place (the API's logger, a web worker's) given back
+  // however this ends
+  struct restoreCallback {
+    GmshMessage *previous = Msg::GetCallback();
+    ~restoreCallback() { Msg::SetCallback(previous); }
+  } restore;
   if(par.logFileName.compare("") != 0 || par.nCurses)
     Msg::SetCallback(&_logWriter);
 
@@ -831,5 +837,4 @@ void MeshOptimizer(std::vector<GEntity *> &entities, MeshOptParameters &par)
     mvpause();
     mvterminate();
   }
-  if(par.logFileName.compare("") != 0 || par.nCurses) Msg::SetCallback(nullptr);
 }

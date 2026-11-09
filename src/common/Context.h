@@ -564,23 +564,42 @@ public:
   int unpackAlpha(unsigned int X);
 };
 
+// Whether an operation holds the lock on the model (the GUI processes events
+// during it), saying so if it does: what would change the model does nothing.
+bool modelBusy();
+
 // The lock on the model (CTX::lock) for the span of an operation, given back as
 // it was however the operation ends (an exception: Msg::Error throws without
 // the GUI when General.AbortOnError is 2, the default of the API, and the
 // meshers throw): a part of an operation locking it again, as the meshing a
-// script asks for while it is read, leaves it held. Taken by whoever found the
-// lock free (modelBusy()), or by a part of the operation holding it.
+// script asks for while it is read, leaves it held. An operation starting
+// takes it only if it is free, in one step:
+//
+//   modelLock lock(modelLock::ifFree);
+//   if(!lock) return; // busy, and said so
+//
+// and a part of the operation holding it takes it unconditionally.
 class modelLock {
   int _previous;
+  bool _held;
 
 public:
-  modelLock() : _previous(CTX::instance()->lock) { CTX::instance()->lock = 1; }
-  ~modelLock() { CTX::instance()->lock = _previous; }
+  enum ifFreeTag { ifFree };
+  modelLock() : _previous(CTX::instance()->lock), _held(true)
+  { CTX::instance()->lock = 1; }
+  explicit modelLock(ifFreeTag)
+    : _previous(CTX::instance()->lock), _held(!modelBusy())
+  {
+    if(_held) CTX::instance()->lock = 1;
+  }
+  ~modelLock()
+  {
+    if(_held) CTX::instance()->lock = _previous;
+  }
+  explicit operator bool() const { return _held; }
+  modelLock(const modelLock &) = delete;
+  modelLock &operator=(const modelLock &) = delete;
 };
-
-// Whether an operation holds the lock on the model (the GUI processes events
-// during it), saying so if it does: what would change the model does nothing.
-bool modelBusy();
 
 // The stamps of the entities and of the mesh elements when pointers to them
 // were kept (by a selection, an editor of the GUI): whether either changed

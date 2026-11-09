@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <functional>
 #include <vector>
+#include <set>
 #include <FL/Fl_Return_Button.H>
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Value_Input.H>
@@ -549,14 +550,17 @@ void pluginWindow::show(int viewIndex)
 
 void pluginWindow::resetViewBrowser()
 {
-  // keep what was selected
+  // keep what was selected, by view tag (each line keeps the tag of its
+  // view): the views before may have gone
   Fl_Multi_Browser *b = views->browser;
-  std::vector<int> state;
-  for(int i = 0; i < b->size(); i++) state.push_back(b->selected(i + 1));
+  std::set<int> tags;
+  for(int i = 1; i <= b->size(); i++)
+    if(b->selected(i)) tags.insert((int)(intptr_t)b->data(i));
   b->clear();
   for(std::size_t i = 0; i < PView::list.size(); i++) {
-    b->add(targetList::viewName(i).c_str());
-    if(i < state.size() && state[i]) b->select(i + 1);
+    int tag = PView::list[i]->getTag();
+    b->add(targetList::viewName(i).c_str(), (void *)(intptr_t)tag);
+    if(tags.count(tag)) b->select(i + 1);
   }
   plugin_browser_cb(nullptr, nullptr);
 }

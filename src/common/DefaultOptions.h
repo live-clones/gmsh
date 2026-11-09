@@ -1957,7 +1957,8 @@ StringXNumber PostProcessingOptions_Number[] = {
   { F|O, "AnimationDelay" , opt_post_anim_delay , 0.1 ,
     "Delay (in seconds) between frames in automatic animation mode" },
   { F|O, "AnimationCycle" , opt_post_anim_cycle , 0. ,
-    "Cycle through time steps (0) or views (1) for animations" },
+    "Cycle through time steps (0), views (1) or values of Print.Parameter (2) "
+    "for animations" },
   { F|O, "AnimationStep" , opt_post_anim_step , 1. ,
     "Step increment for animations" },
 
@@ -2789,6 +2790,8 @@ OptionChoices = {
    {{0, "Single"}, {1, "Per surface"}, {2, "Per physical surface"}}},
   {"Mesh.SubdivisionAlgorithm",
    {{0, "None"}, {1, "All Quads"}, {2, "All Hexas"}, {3, "Barycentric"}}},
+  {"PostProcessing.AnimationCycle",
+   {{0, "Time steps"}, {1, "Views"}, {2, "Print parameter values"}}},
   {"PostProcessing.Link",
    {{0, "Apply next changes to selected views"},
     {1, "Force same options for selected views"}}},

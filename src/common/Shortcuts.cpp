@@ -82,10 +82,6 @@ const std::vector<ShortcutEntry> &GetShortcuts()
     E("selection_end", {'e'}, "End/accept selection in geometry creation mode",
       true),
     E("module_geometry", {'g'}, "Go to geometry module"),
-    E("selection_invert", {'i'}, "Invert selection in geometry creation mode",
-      true),
-    E("selection_invert", {'-'}, "Invert selection in geometry creation mode",
-      true),
     E("module_mesh", {'m'}, "Go to mesh module"),
     E("module_post", {'p'}, "Go to post-processing module"),
     E("selection_quit", {'q'}, "Abort selection in geometry creation mode",
@@ -299,18 +295,22 @@ static const std::map<std::string, sceneAction> &sceneActions()
       };
     }
     add("Toggle mesh display", [] {
-      // all of the mesh off, then back as it was
+      // all of the mesh off if any of it is drawn (as the options say now,
+      // whatever changed them), else back as it was when turned off (the
+      // default edges if it never was)
       static double (*const options[])(int, int, double) = {
         opt_mesh_nodes,         opt_mesh_lines,        opt_mesh_surface_edges,
         opt_mesh_surface_faces, opt_mesh_volume_edges, opt_mesh_volume_faces};
-      static bool off = false;
-      static int old[6];
+      static int old[6] = {0, 0, 1, 0, 1, 0};
+      bool drawn = false;
+      for(int i = 0; i < 6; i++)
+        if(options[i](0, GMSH_GET, 0)) drawn = true;
       for(int i = 0; i < 6; i++) {
-        if(!off) old[i] = (int)options[i](0, GMSH_GET, 0);
-        options[i](0, GMSH_SET | GMSH_GUI, off ? old[i] : 0);
+        if(drawn) old[i] = (int)options[i](0, GMSH_GET, 0);
+        options[i](0, GMSH_SET | GMSH_GUI, drawn ? 0 : old[i]);
       }
-      off = !off;
-      Msg::StatusBar(false, off ? "Mesh display OFF" : "Mesh display restored");
+      Msg::StatusBar(false,
+                     drawn ? "Mesh display OFF" : "Mesh display restored");
     });
     add("color_scheme", [] {
       opt_general_color_scheme(0, GMSH_SET | GMSH_GUI,
@@ -366,10 +366,12 @@ static const std::map<std::string, sceneAction> &sceneActions()
                       [](double v) { return (double)!v; });
     });
     add("views_hide_show", [] {
-      static int show = 0;
+      // all hidden if any is shown, else all shown
+      bool shown = false;
       for(std::size_t i = 0; i < PView::list.size(); i++)
-        opt_view_visible(i, GMSH_SET | GMSH_GUI, show);
-      show = !show;
+        if(opt_view_visible(i, GMSH_GET, 0)) shown = true;
+      for(std::size_t i = 0; i < PView::list.size(); i++)
+        opt_view_visible(i, GMSH_SET | GMSH_GUI, !shown);
     });
     // --- the time steps and the views, on the arrows
     add("time_step_prev",

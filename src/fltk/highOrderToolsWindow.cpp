@@ -30,8 +30,8 @@
 
 static void highordertools_runp_cb(Fl_Widget *w, void *data)
 {
-  if(modelBusy()) return;
-  modelLock lock;
+  modelLock lock(modelLock::ifFree);
+  if(!lock) return;
   highOrderToolsWindow *o = FlGui::instance()->highordertools;
 
   // at least 1, the order of no mesh being -1
@@ -98,8 +98,8 @@ static void chooseopti_strategy(Fl_Widget *w, void *data)
 
 static void highordertools_runopti_cb(Fl_Widget *w, void *data)
 {
-  if(modelBusy()) return;
-  modelLock lock;
+  modelLock lock(modelLock::ifFree);
+  if(!lock) return;
   highOrderToolsWindow *o = FlGui::instance()->highordertools;
 
   if(o->butt[3]->value()) FlGui::instance()->graph[0]->showMessages();

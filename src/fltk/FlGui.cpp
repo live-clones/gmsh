@@ -200,8 +200,8 @@ static void gamepad_handler(void *data)
   if(pad->active) pad->read_event();
   if(FlGui::available()) {
     FlGui *gui = FlGui::instance();
-    for(graphicWindow *g : gui->graph)
-      for(openglWindow *gl : g->gl) gl->gamepadStep();
+    // (the fullscreen window included)
+    for(openglWindow *gl : gui->openglWindows()) gl->gamepadStep();
     if(gui->options && gui->options->gmpdoption)
       gui->options->gmpdoption->update();
   }
@@ -495,6 +495,11 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   fullscreen = new openglWindow(100, 100, 100, 100);
   fullscreen->mode(openglWindowMode());
   fullscreen->end();
+  // closed by the window manager (Alt+F4, the close button of X11): back to
+  // the graphic windows, which the default callback would leave hidden, the
+  // program then ending without asking
+  fullscreen->callback(
+    [](Fl_Widget *, void *) { window_cb(nullptr, (void *)"fullscreen"); });
 
   // create all other windows
   options = new optionWindow(CTX::instance()->deltaFontSize);
@@ -578,30 +583,40 @@ FlGui::~FlGui()
     }
   }
 
-  for(std::size_t i = 0; i < graph.size(); i++) delete graph[i];
-  delete options;
-  delete fields;
-  delete plugins;
-  delete stats;
-  delete visibility;
-  delete highordertools;
-  delete clipping;
-  delete partition;
-  delete classify;
-  delete manip;
-  delete elementaryContext;
-  delete transformContext;
-  delete physicalContext;
-  delete onelabContext;
-  delete meshContext;
-  delete help;
-  delete fullscreen;
-
   // what was registered for this GUI, which a new one registers again
   Fl::remove_handler(globalShortcut);
   Fl::event_dispatch(nullptr);
   Fl::remove_timeout(gamepad_handler);
   drawContext::setDrawGeomTransientFunction(nullptr);
+
+  // each window off the GUI as it goes, so that none is reached once freed
+  // (the graphic windows first, which give the docked tools back)
+  while(graph.size()) {
+    graphicWindow *g = graph.back();
+    graph.pop_back();
+    delete g;
+  }
+  auto gone = [](auto *&w) {
+    delete w;
+    w = nullptr;
+  };
+  gone(options);
+  gone(fields);
+  gone(plugins);
+  gone(stats);
+  gone(visibility);
+  gone(highordertools);
+  gone(clipping);
+  gone(partition);
+  gone(classify);
+  gone(manip);
+  gone(elementaryContext);
+  gone(transformContext);
+  gone(physicalContext);
+  gone(onelabContext);
+  gone(meshContext);
+  gone(help);
+  gone(fullscreen);
 }
 
 bool FlGui::available() { return _instance != nullptr; }
@@ -683,8 +698,8 @@ int FlGui::_dispatch(int event, Fl_Window *win)
   return ret;
 }
 
-FlGui *FlGui::instance(int argc, char **argv, bool quitShouldExit,
-                       void (*error_handler)(const char *fmt, ...))
+FlGui *FlGui::create(int argc, char **argv, bool quitShouldExit,
+                     void (*error_handler)(const char *fmt, ...))
 {
   if(!_instance) {
     _instance = new FlGui(argc, argv, quitShouldExit, error_handler);
@@ -911,8 +926,6 @@ const std::map<std::string, fltkAction> &keyboardActions()
      {[](int) { setSelectionFlag(&sceneView::endSelection); }}},
     {"selection_undo",
      {[](int) { setSelectionFlag(&sceneView::undoSelection); }}},
-    {"selection_invert",
-     {[](int) { setSelectionFlag(&sceneView::invertSelection); }}},
     {"selection_quit",
      {[](int) { setSelectionFlag(&sceneView::quitSelection); }}},
     // placing an elementary entity with the mouse
@@ -962,15 +975,17 @@ const std::map<std::string, fltkAction> &keyboardActions()
 // Actions.h) or one the interface does (see findAction() in actionMenus.cpp:
 // the modules, the menu bar and the keys above) runs as its items do; those
 // that only change the scene are those of RunSceneShortcut(), shared with the
-// web page. Returns 0 for an action not handled here, 1 when done, 2 when the
+// web page. Returns 0 for an action not handled here (or not available now:
+// the key then goes on, as if it had no shortcut), 1 when done, 2 when the
 // scene must be drawn again.
 int FlGui::runShortcut(const std::string &a)
 {
   actionItem item{"", ActionRun, a, {}, "", "", {}};
-  if(IsAction(a) || canRunItem(item)) {
-    if(canRunItem(item)) runItem(item);
+  if(canRunItem(item)) {
+    runItem(item);
     return 1;
   }
+  if(IsAction(a)) return 0;
   // the display, the views and the time steps, as in the web page
   return RunSceneShortcut(a, 0, nullptr);
 }
@@ -1068,8 +1083,9 @@ void FlGui::copyCurrentOpenglWindowToClipboard()
   // the scene as it is drawn, at the resolution of the screen, given to the
   // clipboard as a picture of the size of the window (FLTK makes the formats
   // of each platform)
+  // (the sizes read first: drawing may process events, and the pane go)
   openglWindow *gl = getCurrentOpenglWindow();
-  int w = gl->pixel_w(), h = gl->pixel_h();
+  int w = gl->pixel_w(), h = gl->pixel_h(), sw = gl->w(), sh = gl->h();
   PixelBuffer buffer(w, h, GL_RGB, GL_UNSIGNED_BYTE);
   buffer.fill();
   // (the rows of the picture from the top, those of OpenGL from the bottom)
@@ -1078,8 +1094,8 @@ void FlGui::copyCurrentOpenglWindowToClipboard()
   for(int j = 0; j < h; j++)
     memcpy(&rows[3 * w * j], pixels + 3 * w * (h - 1 - j), 3 * w);
   Fl_RGB_Image image(rows.data(), w, h, 3);
-  image.scale(gl->w(), gl->h(), 0, 1);
-  Fl_Copy_Surface *surface = new Fl_Copy_Surface(gl->w(), gl->h());
+  image.scale(sw, sh, 0, 1);
+  Fl_Copy_Surface *surface = new Fl_Copy_Surface(sw, sh);
   Fl_Surface_Device::push_current(surface);
   image.draw(0, 0);
   Fl_Surface_Device::pop_current();

@@ -718,6 +718,16 @@ static int _viewsToSave()
   return views;
 }
 
+// a file written with the views chosen: the views proposed by _viewsToSave()
+// where the option says none are for this file only, the option is put back
+static void _writeWithViews(int proposed, int option,
+                            const std::function<void()> &write)
+{
+  write();
+  if(proposed != option && (int)opt_mesh_save_views(0, GMSH_GET, 0) == proposed)
+    opt_mesh_save_views(0, GMSH_SET | GMSH_GUI, option);
+}
+
 // Save msh dialog
 struct _mshFileDialog {
   Fl_Window *window;
@@ -799,6 +809,8 @@ int mshFileDialog(const char *name)
     opt_mesh_partition_save_topology_file(0, GMSH_GET, 0) ? 1 : 0);
   // what the format and the model allow, each time the dialog is shown
   format_cb(nullptr, dialog);
+  int option = (int)opt_mesh_save_views(0, GMSH_GET, 0);
+  int proposed = _viewsToSave();
   return runDialog(dialog->window, dialog->ok, dialog->cancel, [&]() {
     opt_mesh_msh_file_version(0, GMSH_SET | GMSH_GUI,
                               (dialog->c->value() == 0) ? 1.0 :
@@ -812,14 +824,17 @@ int mshFileDialog(const char *name)
       opt_post_save_adapted(0, GMSH_SET | GMSH_GUI,
                             dialog->b[4]->value() ? 1 : 0);
     }
-    opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b[0]->value() ? 1 : 0);
+    // (the value kept unless the box changed: the KEY format reads its bits)
+    if(dialog->b[0]->value() != (opt_mesh_save_all(0, GMSH_GET, 0) ? 1 : 0))
+      opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b[0]->value() ? 1 : 0);
     opt_mesh_save_parametric(0, GMSH_SET | GMSH_GUI,
                              dialog->b[1]->value() ? 1 : 0);
     opt_mesh_partition_split_mesh_files(0, GMSH_SET | GMSH_GUI,
                                         dialog->b[2]->value() ? 1 : 0);
     opt_mesh_partition_save_topology_file(0, GMSH_SET | GMSH_GUI,
                                           dialog->b[3]->value() ? 1 : 0);
-    CreateOutputFile(name, FORMAT_MSH);
+    _writeWithViews(proposed, option,
+                    [&]() { CreateOutputFile(name, FORMAT_MSH); });
   });
 }
 
@@ -905,22 +920,32 @@ int keyRadFileDialog(const char *name, const char *title, int format)
   }
 
   dialog->window->label(title);
+  // the bits of the options the dialog shows, the others kept, and the
+  // options written only if changed (a negative Mesh.SaveGroupsOfNodes has
+  // a meaning of its own)
+  const int allMask = 4 | 8 | 16 | 32 | 64 | 128, groupsMask = 2 | 1;
   int all = (int)opt_mesh_save_all(0, GMSH_GET, 0);
+  int groups = (int)opt_mesh_save_groups_of_nodes(0, GMSH_GET, 0);
+  int choices[3];
   for(int i = 0; i < 3; i++) {
     int bits = 4 << (2 * i);
-    dialog->c[i]->value((all & bits) ? 1 : (all & (2 * bits)) ? 2 : 0);
+    choices[i] = (all & bits) ? 1 : (all & (2 * bits)) ? 2 : 0;
+    dialog->c[i]->value(choices[i]);
   }
-  dialog->b[0]->value(
-    (int)opt_mesh_save_groups_of_nodes(0, GMSH_GET, 0) & 2 ? 1 : 0);
-  dialog->b[1]->value(
-    (int)opt_mesh_save_groups_of_nodes(0, GMSH_GET, 0) & 1 ? 1 : 0);
+  dialog->b[0]->value(groups & 2 ? 1 : 0);
+  dialog->b[1]->value(groups & 1 ? 1 : 0);
   return runDialog(dialog->window, dialog->ok, dialog->cancel, [&]() {
-    opt_mesh_save_all(0, GMSH_SET | GMSH_GUI,
-                      dialog->c[0]->value() * 4 + dialog->c[1]->value() * 16 +
-                        dialog->c[2]->value() * 64);
-    opt_mesh_save_groups_of_nodes(0, GMSH_SET | GMSH_GUI,
-                                  (dialog->b[0]->value() ? 2 : 0) +
-                                    (dialog->b[1]->value() ? 1 : 0));
+    if(dialog->c[0]->value() != choices[0] ||
+       dialog->c[1]->value() != choices[1] ||
+       dialog->c[2]->value() != choices[2])
+      opt_mesh_save_all(0, GMSH_SET | GMSH_GUI,
+                        (all & ~allMask) + dialog->c[0]->value() * 4 +
+                          dialog->c[1]->value() * 16 +
+                          dialog->c[2]->value() * 64);
+    int g = (dialog->b[0]->value() ? 2 : 0) + (dialog->b[1]->value() ? 1 : 0);
+    if(g != (groups & groupsMask))
+      opt_mesh_save_groups_of_nodes(0, GMSH_SET | GMSH_GUI,
+                                    (groups & ~groupsMask) + g);
     CreateOutputFile(name, format);
   });
 }
@@ -996,12 +1021,19 @@ int medFileDialog(const char *name)
     dialog = new optionDialog("MED Options", BB + 16,
                               {{Choice, "Views", "Mesh.SaveViews"},
                                {Check, "Save all elements", "Mesh.SaveAll"}});
+  int option = 0, proposed = 0;
   return dialog->run(
-    nullptr, [&]() { CreateOutputFile(name, FORMAT_MED); },
+    nullptr,
+    [&]() {
+      _writeWithViews(proposed, option,
+                      [&]() { CreateOutputFile(name, FORMAT_MED); });
+    },
     [&]() {
       // the views to save, if there are views
       Fl_Choice *views = (Fl_Choice *)dialog->field("Mesh.SaveViews");
-      views->value(_viewsToSave());
+      option = (int)opt_mesh_save_views(0, GMSH_GET, 0);
+      proposed = _viewsToSave();
+      views->value(proposed);
       if(PView::list.empty())
         views->deactivate();
       else
@@ -1019,12 +1051,19 @@ int vtuFileDialog(const char *name)
        {Choice, "Views", "Mesh.SaveViews"},
        {Check, "Save all elements", "Mesh.SaveAll"},
        {Check, "Save high order views refined", "PostProcessing.SaveAdapted"}});
+  int option = 0, proposed = 0;
   return dialog->run(
-    nullptr, [&]() { CreateOutputFile(name, FORMAT_VTU); },
+    nullptr,
+    [&]() {
+      _writeWithViews(proposed, option,
+                      [&]() { CreateOutputFile(name, FORMAT_VTU); });
+    },
     [&]() {
       // the views to save, and how, if there are views
       Fl_Choice *views = (Fl_Choice *)dialog->field("Mesh.SaveViews");
-      views->value(_viewsToSave());
+      option = (int)opt_mesh_save_views(0, GMSH_GET, 0);
+      proposed = _viewsToSave();
+      views->value(proposed);
       for(const char *o : {"Mesh.SaveViews", "PostProcessing.SaveAdapted"}) {
         if(PView::list.empty())
           dialog->field(o)->deactivate();

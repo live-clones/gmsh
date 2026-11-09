@@ -28,23 +28,30 @@
 #include "onelab.h"
 #endif
 
+static bool _lastCommandAdded = false;
+
+bool scriptLastCommandAdded() { return _lastCommandAdded; }
+
 static void scriptAddCommand(const std::string &text,
                              const std::string &fileNameOrEmpty,
                              const std::string &lang)
 {
+  _lastCommandAdded = false;
   if(lang != "geo") {
     if(!text.empty()) printf("%s: %s\n", lang.c_str(), text.c_str());
+    _lastCommandAdded = true;
     return;
   }
   // the command changes the model: not during another operation on it, which
   // the GUI processes events of
   if(modelBusy()) return;
 
-  const std::string &fileName = fileNameOrEmpty;
+  std::string fileName = fileNameOrEmpty;
   if(fileName.empty()) {
     std::string base = (getenv("PWD") ? "" : CTX::instance()->homeDir);
     GModel::current()->setFileName(base + CTX::instance()->defaultFileName);
     GModel::current()->setName("");
+    fileName = GModel::current()->getFileName();
   }
 
   Msg::Debug("Adding `%s' to file `%s'", text.c_str(), fileName.c_str());
@@ -91,6 +98,7 @@ static void scriptAddCommand(const std::string &text,
                 text.c_str());
         fclose(fp);
         OpenProject(newFileName);
+        _lastCommandAdded = true;
         return;
       }
       else if(ret == 1)
@@ -101,11 +109,13 @@ static void scriptAddCommand(const std::string &text,
   }
 
 #if defined(HAVE_PARSER)
+  bool failed = false;
   {
     // the parsing and the synchronizations under the lock on the model, which
     // an operation started from the dialogs above may hold
-    if(modelBusy()) return;
-    modelLock lock;
+    modelLock lock(modelLock::ifFree);
+    if(!lock) return;
+    int errors = Msg::GetErrorCount();
     std::string tmpFileName =
       CTX::instance()->homeDir + CTX::instance()->tmpFileName;
     FILE *tmp_file;
@@ -137,6 +147,18 @@ static void scriptAddCommand(const std::string &text,
       GModel::current()->getOCCInternals()->synchronize(GModel::current());
     GModel::current()->setName(split[1]);
     CTX::instance()->meshChanged();
+    failed = Msg::GetErrorCount() > errors;
+  }
+
+  // a command with errors is not added, which would make the script fail the
+  // next time it is read, and the model is read again from the script, as it
+  // was before the command
+  if(failed) {
+    // (reading the script resets the errors: the last is given again)
+    std::string error = Msg::GetLastError();
+    if(!StatFile(fileName)) OpenProject(fileName);
+    Msg::Error("%s (not added to the script)", error.c_str());
+    return;
   }
 
   FILE *fp = Fopen(fileName.c_str(), "a");
@@ -146,6 +168,7 @@ static void scriptAddCommand(const std::string &text,
   }
   fprintf(fp, "//+\n%s\n", text.c_str());
   fclose(fp);
+  _lastCommandAdded = true;
 #else
   Msg::Error("GEO file creation not available without Gmsh parser");
 #endif
@@ -629,27 +652,6 @@ void scriptAddEllipseArc(int p1, int p2, int p3, int p4,
   }
 }
 
-void scriptAddCurveLoop(List_T *list, const std::string &fileName, int *numloop)
-{
-  if(RecognizeLineLoop(list, numloop)) return;
-  *numloop = GModel::current()->getGEOInternals()->getMaxTag(-1) + 1;
-  if(GModel::current()->getOCCInternals())
-    *numloop = std::max(
-      *numloop, GModel::current()->getOCCInternals()->getMaxTag(-1) + 1);
-
-  for(auto &lang : CTX::instance()->scriptLang) {
-    std::ostringstream sstream;
-    if(lang == "geo") {
-      sstream << "Curve Loop(" << *numloop << ") = " << list2String(list, lang)
-              << ";";
-    }
-    else {
-      // TODO
-    }
-    scriptAddCommand(sstream.str(), fileName, lang);
-  }
-}
-
 void scriptAddSurface(const std::string &type, List_T *list,
                       const std::string &fileName)
 {
@@ -666,19 +668,26 @@ void scriptAddSurface(const std::string &type, List_T *list,
   }
 }
 
-void scriptAddSurfaceLoop(List_T *list, const std::string &fileName,
-                          int *numloop)
+bool scriptFindLoop(int dim, List_T *list, int *numloop, int minTag)
 {
-  if(RecognizeSurfaceLoop(list, numloop)) return;
-  *numloop = GModel::current()->getGEOInternals()->getMaxTag(-2) + 1;
+  if(dim == 1 ? RecognizeLineLoop(list, numloop) :
+                RecognizeSurfaceLoop(list, numloop))
+    return true;
+  *numloop = GModel::current()->getGEOInternals()->getMaxTag(-dim) + 1;
   if(GModel::current()->getOCCInternals())
     *numloop = std::max(
-      *numloop, GModel::current()->getOCCInternals()->getMaxTag(-2) + 1);
+      *numloop, GModel::current()->getOCCInternals()->getMaxTag(-dim) + 1);
+  *numloop = std::max(*numloop, minTag);
+  return false;
+}
 
+void scriptAddLoop(int dim, List_T *list, int numloop,
+                   const std::string &fileName)
+{
   for(auto &lang : CTX::instance()->scriptLang) {
     std::ostringstream sstream;
     if(lang == "geo") {
-      sstream << "Surface Loop(" << *numloop
+      sstream << (dim == 1 ? "Curve Loop(" : "Surface Loop(") << numloop
               << ") = " << list2String(list, lang) << ";";
     }
     else {
@@ -1113,7 +1122,7 @@ bool scriptAddShape(const std::string &shape, std::vector<std::string> v,
     scriptAddCone(f, v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], v[8]);
   else
     scriptAddWedge(f, v[0], v[1], v[2], v[3], v[4], v[5], v[6]);
-  return true;
+  return scriptLastCommandAdded();
 }
 
 void scriptTranslate(const std::string &fileName,

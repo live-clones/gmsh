@@ -136,6 +136,15 @@ public:
   }
 };
 
+// whether some of the entities are shown (or there are none): how a group or
+// a partition is shown in the list when it is filled
+static char anyVisible(const std::vector<GEntity *> &entities)
+{
+  for(GEntity *ge : entities)
+    if(ge->getVisibility()) return 1;
+  return entities.empty() ? 1 : 0;
+}
+
 class VisPhysical : public Vis {
 private:
   int _tag, _dim;
@@ -145,7 +154,7 @@ private:
 public:
   VisPhysical(int tag, int dim, const std::vector<GEntity *> &list,
               std::string &name)
-    : Vis(name), _tag(tag), _dim(dim), _visible(1), _list(list)
+    : Vis(name), _tag(tag), _dim(dim), _visible(anyVisible(list)), _list(list)
   {
   }
   ~VisPhysical() {}
@@ -224,7 +233,12 @@ private:
   char _visible;
 
 public:
-  VisPartition(int tag) : _tag(tag), _visible(1) {}
+  // (after buildPartitionIndex())
+  VisPartition(int tag) : _tag(tag), _visible(1)
+  {
+    auto it = _partitionIndex.find(tag);
+    if(it != _partitionIndex.end()) _visible = anyVisible(it->second);
+  }
   ~VisPartition() {}
   int getTag() const { return _tag; }
   std::string getType() const { return "Partition"; }
@@ -733,20 +747,19 @@ static void _recur_select(Fl_Tree_Item *n)
   for(int i = 0; i < n->children(); i++) _recur_select(n->child(i));
 }
 
+// the selected entities of the tree under n shown (with what they are bounded
+// by if "recursively" is checked): every row is visited, whatever the option,
+// as the rows of the model and of the groups hold no entity
 static void _recur_set_visible(Fl_Tree_Item *n)
 {
-  bool recursive = recursiveVisibility();
   if(n->user_data() && n->is_selected()) {
     GEntity *ge = (GEntity *)n->user_data();
-    ge->setVisibility(1, recursive);
+    ge->setVisibility(1, recursiveVisibility());
     // force this: if we ask to see an entity, let's assume that we
     // don't want the whole model to be invisible
     ge->model()->setVisibility(1);
   }
-  if(recursive) {
-    for(int i = 0; i < n->children(); i++)
-      _recur_set_visible(n->child(i));
-  }
+  for(int i = 0; i < n->children(); i++) _recur_set_visible(n->child(i));
 }
 
 static void _recur_update_selected(Fl_Tree_Item *n)

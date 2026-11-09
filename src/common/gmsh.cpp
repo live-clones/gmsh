@@ -1270,6 +1270,8 @@ GMSH_API void gmsh::model::setVisibilityPerWindow(const int value,
 {
   if(!_checkInit()) return;
 #if defined(HAVE_FLTK)
+  // (the windows are those of the GUI: none without it)
+  if(!FlGui::available()) return;
   FlGui::instance()->setCurrentOpenglWindow(windowIndex);
   drawContext *ctx = FlGui::instance()->getCurrentDrawContext();
   GModel *m = GModel::current();
@@ -8324,6 +8326,8 @@ GMSH_API void gmsh::view::setVisibilityPerWindow(const int tag, const int value,
     return;
   }
 #if defined(HAVE_FLTK)
+  // (the windows are those of the GUI: none without it)
+  if(!FlGui::available()) return;
   FlGui::instance()->setCurrentOpenglWindow(windowIndex);
   drawContext *ctx = FlGui::instance()->getCurrentDrawContext();
   if(value)
@@ -8712,8 +8716,7 @@ static void _errorHandlerFltk(const char *fmt, ...)
 
 static void _createFltk()
 {
-  if(!FlGui::available())
-    FlGui::instance(_argc, _argv, false, _errorHandlerFltk);
+  if(!FlGui::available()) FlGui::create(_argc, _argv, false, _errorHandlerFltk);
 }
 #endif
 

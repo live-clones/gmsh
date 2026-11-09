@@ -113,14 +113,13 @@ void partition_partition_cb(Fl_Widget *widget, void *data)
 {
   partitionWindow *dlg = static_cast<partitionWindow *>(data);
 
-  // Write all options
-  dlg->write_all_options();
-
-  // Partition the mesh
-  if(modelBusy()) return;
+  // not during another operation on the model (nothing written then)
   int ier;
   {
-    modelLock lock;
+    modelLock lock(modelLock::ifFree);
+    if(!lock) return;
+    // Write all options, then partition the mesh
+    dlg->write_all_options();
     ier = GModel::current()->partitionMesh(CTX::instance()->mesh.numPartitions);
   }
 

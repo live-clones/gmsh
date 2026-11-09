@@ -7,7 +7,8 @@
 #define COLOR_CONTRAST_H
 
 // Colours made readable, the same in the graphical interface and in the web
-// page, which draw them with their own toolkits. Colours are 0xrrggbb.
+// page, which draw them with their own toolkits. Colours are 0xrrggbb, but
+// for NotePaperColor(), which takes and gives them packed as CTX colours.
 
 // the relative luminance of a colour, and the contrast of two colours, from 1
 // to 21 (WCAG 2)

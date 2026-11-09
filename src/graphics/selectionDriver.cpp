@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <map>
+#include <set>
 #include "selectionDriver.h"
 #include "GmshDefines.h"
 #include "GmshMessage.h"
@@ -241,6 +242,18 @@ selectionDriver::selectionDriver(const std::string &operation,
       for(int i = 0; i < 2; i++)
         for(int n : _tags(i)) List_Add(loops, &n);
       List_Unique(loops, fcmp_absint);
+      // the new loops first
+      int dim = (op == "Volume") ? 2 : 1;
+      for(int i = 0; i < List_Nbr(loops); i++) {
+        int n;
+        List_Read(loops, i, &n);
+        auto it = _newLoops.find(std::abs(n));
+        if(it == _newLoops.end()) continue;
+        List_T *l = List_Create(10, 10, sizeof(int));
+        for(int c : it->second) List_Add(l, &c);
+        scriptAddLoop(dim, l, it->first, file());
+        List_Delete(l);
+      }
       if(op == "Volume")
         scriptAddVolume(loops, file());
       else
@@ -482,20 +495,21 @@ selectionDriver::selectionDriver(const std::string &operation,
     CTX::instance()->pickElements = _pickElements;
     _add(typeOfNames(what), what);
     _apply = [this, reverse]() {
-      // the lock held by another operation: the parts stay picked, to try
-      // again
-      if(modelBusy()) return false;
-      for(MElement *e : _elements)
-        if(e->getVisibility() == 2) e->setVisibility(0);
+      std::set<GEntity *> entities;
       for(auto &p : _picked[0]) {
         GEntity *ge = GModel::current()->getEntityByTag(p.first, p.second);
-        if(ge) ge->setVisibility(0);
+        if(ge) entities.insert(ge);
+      }
+      std::set<MElement *> elements;
+      for(MElement *e : _elements) {
+        if(e->getVisibility() == 2) e->setVisibility(1);
+        elements.insert(e);
       }
       modelLock lock;
       if(reverse)
-        GModel::current()->reverseInvisibleElements();
+        GModel::current()->reverseElements(entities, elements);
       else
-        GModel::current()->removeInvisibleElements();
+        GModel::current()->removeElements(entities, elements);
       _elements.clear();
       CTX::instance()->meshChanged();
       return true;
@@ -641,11 +655,26 @@ void selectionDriver::_pick(const std::vector<GEntity *> &entities,
         if(e) e->setSelection(1);
       }
       if(!closed) continue;
-      const std::string file = GModel::current()->getFileName();
-      if(dim == 1)
-        scriptAddCurveLoop(_loop, file, &num);
-      else
-        scriptAddSurfaceLoop(_loop, file, &num);
+      // the loop of the model, or a new one picked before (the same curves
+      // or surfaces, as RecognizeLineLoop() compares them), or a new one
+      std::vector<int> l, key;
+      for(int i = 0; i < List_Nbr(_loop); i++) {
+        int c;
+        List_Read(_loop, i, &c);
+        l.push_back(c);
+        key.push_back(std::abs(c));
+      }
+      std::sort(key.begin(), key.end());
+      int after = _newLoops.empty() ? 0 : _newLoops.rbegin()->first + 1;
+      if(!scriptFindLoop(dim, _loop, &num, after)) {
+        for(auto &n : _newLoops) {
+          std::vector<int> k;
+          for(int c : n.second) k.push_back(std::abs(c));
+          std::sort(k.begin(), k.end());
+          if(k == key) num = n.first;
+        }
+        if(!_newLoops.count(num)) _newLoops[num] = l;
+      }
       List_Reset(_loop);
       _picked[_phase].push_back(std::make_pair(-1, num));
       continue;
@@ -697,6 +726,7 @@ void selectionDriver::_undo()
   if(_picked[_phase].empty()) return;
   std::pair<int, int> p = _picked[_phase].back();
   _picked[_phase].pop_back();
+  if(p.first < 0) _newLoops.erase(p.second);
   GEntity *e = (p.first < 0) ?
                  nullptr :
                  GModel::current()->getEntityByTag(p.first, p.second);
@@ -713,6 +743,9 @@ bool selectionDriver::_next()
     _phase++;
     return false;
   }
+  // the lock held by another operation (whose events the interface
+  // processes): nothing done, the picks stay, to try again
+  if(modelBusy()) return false;
   if(!_apply()) return false;
   _done = _picked;
   _clear();
@@ -725,6 +758,7 @@ void selectionDriver::_clear()
 {
   for(auto &p : _picked) p.clear();
   if(_loop) List_Reset(_loop);
+  _newLoops.clear();
   // (the elements still marked are put back, unless they may be gone)
   if(!_stamps.changed())
     for(MElement *e : _elements)

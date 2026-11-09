@@ -7,6 +7,7 @@
 //   Jonathan Lambrechts
 //
 
+#include <cstdlib>
 #include <sstream>
 #include <FL/Fl_Input.H>
 #include <FL/Fl_Return_Button.H>
@@ -283,6 +284,48 @@ void fieldWindow::loadFieldList()
 #endif
 }
 
+#if defined(HAVE_MESH)
+// a string as the .geo language reads it, which has no escapes: in double
+// quotes, or single ones if it has double quotes; false if it has both
+static bool geoString(const std::string &s, std::string &out)
+{
+  if(s.find('"') == std::string::npos)
+    out = "\"" + s + "\"";
+  else if(s.find('\'') == std::string::npos)
+    out = "'" + s + "'";
+  else
+    return false;
+  return true;
+}
+
+// the numbers of a list typed in, separated by commas or spaces, braces
+// allowed: false if one is not a number (or not an integer)
+static bool geoList(const std::string &text, bool integers, std::string &out)
+{
+  std::string s(text);
+  for(char &c : s)
+    if(c == ',' || c == '{' || c == '}') c = ' ';
+  std::istringstream in(s);
+  std::ostringstream o;
+  o.precision(17);
+  std::string token;
+  o << "{";
+  for(int n = 0; in >> token; n++) {
+    char *end;
+    double d = strtod(token.c_str(), &end);
+    if(*end || (integers && d != (int)d)) return false;
+    if(n) o << ", ";
+    if(integers)
+      o << (int)d;
+    else
+      o << d;
+  }
+  o << "}";
+  out = o.str();
+  return true;
+}
+#endif
+
 void fieldWindow::saveFieldOptions()
 {
 #if defined(HAVE_MESH)
@@ -302,19 +345,19 @@ void fieldWindow::saveFieldOptions()
   std::vector<change> changes;
   auto input = options_widget.begin();
   std::ostringstream sstream;
-  int i;
-  char a;
-  double d;
-  sstream.precision(16);
+  sstream.precision(17);
   for(auto it = f->options.begin(); it != f->options.end(); it++) {
     FieldOption *option = it->second;
     if(!option) continue;
     if(option->isDeprecated()) continue;
     sstream.str("");
+    bool valid = true;
+    std::string text;
     switch(option->getType()) {
     case FIELD_OPTION_STRING:
     case FIELD_OPTION_PATH:
-      sstream << "\"" << ((Fl_Input *)*input)->value() << "\"";
+      valid = geoString(((Fl_Input *)*input)->value(), text);
+      sstream << text;
       break;
     case FIELD_OPTION_INT:
       sstream << (int)((Fl_Value_Input *)*input)->value();
@@ -325,38 +368,20 @@ void fieldWindow::saveFieldOptions()
     case FIELD_OPTION_BOOL:
       sstream << (bool)((Fl_Check_Button *)*input)->value();
       break;
-    case FIELD_OPTION_LIST: {
-      sstream << "{";
-      std::istringstream istream(((Fl_Input *)*input)->value());
-      while(istream >> i) {
-        sstream << i;
-        if(istream >> a) {
-          if(a != ',')
-            Msg::Error("Unexpected character \'%c\' while parsing option "
-                       "'%s' of field \'%d\'",
-                       a, it->first.c_str(), f->id);
-          sstream << ", ";
-        }
-      }
-      sstream << "}";
-    } break;
-    case FIELD_OPTION_LIST_DOUBLE: {
-      sstream << "{";
-      std::istringstream istream(((Fl_Input *)*input)->value());
-      while(istream >> d) {
-        sstream << d;
-        if(istream >> a) {
-          if(a != ',')
-            Msg::Error("Unexpected character \'%c\' while parsing option "
-                       "'%s' of field \'%d\'",
-                       a, it->first.c_str(), f->id);
-          sstream << ", ";
-        }
-      }
-      sstream << "}";
-    } break;
+    case FIELD_OPTION_LIST:
+    case FIELD_OPTION_LIST_DOUBLE:
+      valid = geoList(((Fl_Input *)*input)->value(),
+                      option->getType() == FIELD_OPTION_LIST, text);
+      sstream << text;
+      break;
     }
-    if((*input)->changed()) {
+    if(!valid && (*input)->changed()) {
+      // (not written: the field keeps the value it had)
+      Msg::Error("Invalid value '%s' for option '%s' of field %d",
+                 ((Fl_Input *)*input)->value(), it->first.c_str(), f->id);
+      (*input)->clear_changed();
+    }
+    else if((*input)->changed()) {
       changes.push_back({it->first, sstream.str(), option->getType()});
       (*input)->clear_changed();
     }
@@ -411,7 +436,7 @@ void fieldWindow::loadFieldOptions()
       break;
     case FIELD_OPTION_LIST_DOUBLE:
       vstr.str("");
-      vstr.precision(16);
+      vstr.precision(17);
       for(auto it = option->listdouble().begin(); it != option->listdouble().end();
           it++) {
         if(it != option->listdouble().begin()) vstr << ", ";

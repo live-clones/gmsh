@@ -144,6 +144,10 @@ static void select_elements_cb(Fl_Widget *w, void *data)
   e->stamps.record();
 
   if(all) {
+    // (all of them, instead of those picked before)
+    for(MElement *me : e->elements)
+      if(me->getVisibility() == 2) me->setVisibility(1);
+    e->elements.clear();
     for(auto it = GModel::current()->firstFace();
         it != GModel::current()->lastFace(); ++it) {
       e->elements.insert(e->elements.end(), (*it)->triangles.begin(),
@@ -202,6 +206,9 @@ static void select_elements_cb(Fl_Widget *w, void *data)
   }
 
 #if defined(HAVE_MESH)
+  // (the edges of all the elements selected so far, made again)
+  e->edges_detected.clear();
+  e->edges_lonly.clear();
   e2t_cont adj;
   buildEdgeToElements(e->elements, adj);
   buildListOfEdgeAngle(adj, e->edges_detected, e->edges_lonly);
@@ -218,10 +225,15 @@ static void select_elements_cb(Fl_Widget *w, void *data)
 static void hide_cb(Fl_Widget *w, void *data)
 {
   classificationEditor *e = (classificationEditor *)data;
-  // the selection is in the model: not during another operation on it
-  if(modelBusy()) return;
+  Fl_Button *b = e->toggles[CLASS_TOGGLE_HIDE];
+  // the selection is in the model: not during another operation on it (the
+  // box then back as it was)
+  if(modelBusy()) {
+    b->value(CTX::instance()->hideUnselected ? 1 : 0);
+    return;
+  }
   e->forgetIfChanged();
-  CTX::instance()->hideUnselected = !CTX::instance()->hideUnselected;
+  CTX::instance()->hideUnselected = b->value() ? 1 : 0;
   CTX::instance()->meshChanged();
   e->stamps.record();
   drawContext::global()->draw();
@@ -325,6 +337,7 @@ static void delete_edge_cb(Fl_Widget *w, void *data)
 
   e->elements.clear();
   e->edges_detected.clear();
+  e->edges_lonly.clear();
 }
 
 static void reset_selection_cb(Fl_Widget *w, void *data)
@@ -339,6 +352,7 @@ static void reset_selection_cb(Fl_Widget *w, void *data)
   e->selected->deleteVertexArrays();
   e->elements.clear();
   e->edges_detected.clear();
+  e->edges_lonly.clear();
   NoElementsSelectedMode(e);
   e->stamps.record();
 }
@@ -346,8 +360,8 @@ static void reset_selection_cb(Fl_Widget *w, void *data)
 static void classify_cb(Fl_Widget *w, void *data)
 {
   classificationEditor *e = (classificationEditor *)data;
-  if(modelBusy()) return;
-  modelLock lock;
+  modelLock lock(modelLock::ifFree);
+  if(!lock) return;
   // the selection made on a model that changed since is gone
   if(e->forgetIfChanged()) return;
 
@@ -381,6 +395,7 @@ static void classify_cb(Fl_Widget *w, void *data)
   if(!FlGui::available()) return;
   e->elements.clear();
   e->edges_detected.clear();
+  e->edges_lonly.clear();
   NoElementsSelectedMode(e);
   e->stamps.record();
   // the entities changed: the visibility list held the old ones
@@ -516,6 +531,8 @@ void classificationEditor::show()
   if(!CTX::instance()->lock) forgetIfChanged();
   // the edges are what is selected
   opt_mesh_lines(0, GMSH_SET | GMSH_GUI, 1.);
+  // (the box as the flag is, whatever changed it meanwhile)
+  toggles[CLASS_TOGGLE_HIDE]->value(CTX::instance()->hideUnselected ? 1 : 0);
   drawContext::global()->draw();
   window->show();
 }

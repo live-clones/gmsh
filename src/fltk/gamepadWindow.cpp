@@ -27,11 +27,17 @@ static void gamepad_update_cb(Fl_Widget *w)
   gamepadWindow *gmpd_win = FlGui::instance()->options->gmpdoption;
   GamePad *pad = CTX::instance()->gamepad;
   // the 9 fields of the buttons (mapping[0..8]) and the 7 of the axes
-  // (mapping[10..16])
+  // (mapping[10..16]): indices of the buttons and axes read, kept in range
+  // (the fields showing what is used)
+  auto index = [](Fl_Value_Input *in, int n) {
+    int i = std::max(0, std::min(n - 1, (int)in->value()));
+    in->value(i);
+    return i;
+  };
   for(int i = 0; i < 9; i++)
-    pad->button_map[i] = gmpd_win->gamepad.mapping[i]->value();
+    pad->button_map[i] = index(gmpd_win->gamepad.mapping[i], GP_BUTTONS);
   for(int i = 0; i < 7; i++)
-    pad->axe_map[i] = gmpd_win->gamepad.mapping[10 + i]->value();
+    pad->axe_map[i] = index(gmpd_win->gamepad.mapping[10 + i], GP_AXES);
 }
 
 gamepadWindow::gamepadWindow() : win(nullptr)

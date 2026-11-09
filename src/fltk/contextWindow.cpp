@@ -4,6 +4,8 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <stdlib.h>
+#include <algorithm>
+#include <cmath>
 #include <string.h>
 #include <FL/Fl_Tabs.H>
 #include "FlGui.h"
@@ -156,6 +158,11 @@ static int previewPane = 2; // the pane draw_preview() draws
 
 static void draw_preview(void *context)
 {
+  // only while its pane is shown (the window closed or another pane chosen,
+  // whatever way, takes it away)
+  if(!FlGui::available()) return;
+  elementaryContextWindow *e = FlGui::instance()->elementaryContext;
+  if(!e || !e->win->visible() || !e->group[previewPane]->visible()) return;
   if(!GModel::current()->getOCCInternals())
     GModel::current()->createOCCInternals();
   double v[9];
@@ -203,7 +210,8 @@ static void elementary_add_cb(Fl_Widget *w, void *data)
     return;
   }
   GModel::current()->setSelection(0);
-  if(pane == 6) drawContext::setDrawGeomTransientFunction(nullptr);
+  // (the shape added is drawn now, not its preview)
+  drawContext::setDrawGeomTransientFunction(nullptr);
   SetBoundingBox();
   drawContext::global()->draw();
 }
@@ -406,11 +414,17 @@ static void physical_add_cb(Fl_Widget *w, void *data)
       pc->value[0]->activate();
   }
 
+  // a tag is a positive integer (0 while none is given): what is typed
+  // otherwise is shown in red, and the nearest one used
+  double typed = pc->value[0]->value();
+  int used = typed ? std::max(1, (int)std::lround(typed)) : 0;
+  if(what == "Tag" && used != typed) pc->value[0]->textcolor(FL_RED);
+
   pc->input[0]->redraw();
   pc->value[0]->redraw();
 
   pc->selectedName = pc->input[0]->value();
-  pc->selectedTag = pc->value[0]->value();
+  pc->selectedTag = used;
 }
 
 static void physical_remove_cb(Fl_Widget *w, void *data)

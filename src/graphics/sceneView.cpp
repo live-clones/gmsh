@@ -26,8 +26,7 @@ sceneView::sceneView(drawContext *ctx)
     _pickStepTime(0.), _stepping(false), _hoverBehind(false), _spin(0.),
     _spinFrom(0.), _spinPath(0.), _spinHot(0.), _ctx(ctx), _fire(0.),
     _fireTime(0.), addPointMode(0), lassoMode(false), selectionMode(false),
-    endSelection(0), undoSelection(0), invertSelection(0), quitSelection(0),
-    changeSelection(0)
+    endSelection(0), undoSelection(0), quitSelection(0), changeSelection(0)
 {
   for(int i = 0; i < 3; i++) _point[i] = 0.;
   for(int i = 0; i < 4; i++) _trySelectionXYWH[i] = 0;
@@ -312,7 +311,8 @@ bool sceneView::acceptsDoubleClick() const
 // another operation on it
 static void runCommand(const std::string &command)
 {
-  if(!modelBusy()) ParseString(command, true);
+  modelLock lock(modelLock::ifFree);
+  if(lock) ParseString(command, true);
 }
 
 // what was double clicked runs its command (General.DoubleClicked*Command),
@@ -706,7 +706,6 @@ void sceneView::beginSelection(int type)
   changeSelection = 0;
   endSelection = 0;
   undoSelection = 0;
-  invertSelection = 0;
 }
 
 char sceneView::selectionStep(std::vector<GVertex *> &vertices,
@@ -731,9 +730,9 @@ char sceneView::selectionStep(std::vector<GVertex *> &vertices,
     return 'q';
   }
   // the selection is over, as in every other return below (beginSelection()
-  // starts the next): ended, undone or inverted
-  std::pair<int *, char> asked[3] = {
-    {&endSelection, 'e'}, {&undoSelection, 'u'}, {&invertSelection, 'i'}};
+  // starts the next): ended or undone
+  std::pair<int *, char> asked[2] = {{&endSelection, 'e'},
+                                     {&undoSelection, 'u'}};
   for(auto &a : asked) {
     if(!*a.first) continue;
     _selection = ENT_NONE;
@@ -759,6 +758,15 @@ char sceneView::selectionStep(std::vector<GVertex *> &vertices,
     }
   }
   return 0;
+}
+
+// the lines of a query or a measurement in the messages, which keep them all:
+// printed last, as the desktop interface processes events then (Msg::Direct),
+// which may delete the window of the scene
+static void printLines(const std::vector<std::string> &lines)
+{
+  for(auto &l : lines)
+    if(l.size()) Msg::Direct("%s", l.c_str());
 }
 
 bool sceneView::queryClick(std::vector<GVertex *> &vertices,
@@ -819,11 +827,10 @@ bool sceneView::queryClick(std::vector<GVertex *> &vertices,
   if(!element) element = queryElement(xyz, pixel);
 
   std::vector<std::string> info = queryPoint(xyz, entity, element, view, pixel);
-  // the messages keep everything, the box over the picture the lines that
-  // do not begin with a space, i.e. all but the detail of an element
+  // the box over the picture shows the lines that do not begin with a space,
+  // i.e. all but the detail of an element
   std::string text;
   for(std::size_t i = 0; i < info.size(); i++) {
-    if(info[i].size()) Msg::Direct("%s", info[i].c_str());
     if(info[i].size() && info[i][0] == ' ') continue;
     text += (text.size() ? "\n" : "") + info[i];
   }
@@ -832,6 +839,7 @@ bool sceneView::queryClick(std::vector<GVertex *> &vertices,
   _ctx->addMark(xyz);
   hostRedraw();
   if(CTX::instance()->tooltips) pinTooltip(text, xyz, _addQuery);
+  printLines(info);
   return true;
 }
 
@@ -840,6 +848,7 @@ bool sceneView::measureClick()
   double xyz[3];
   if(!_ctx->pickPoint(xyz)) return false;
   GModel::current()->setSelection(0);
+  std::vector<std::string> info;
   double first[3];
   if(!measuring() || !_ctx->mark(0, first)) { // start a new measurement
     _ctx->clearMarks();
@@ -849,13 +858,12 @@ bool sceneView::measureClick()
   else {
     _ctx->addMark(xyz);
     _ctx->setSegment(first, xyz);
-    // the messages keep everything; the length stays on the picture, in a
-    // box over the middle of the line (drawn by the host)
-    std::vector<std::string> info = measurePoints(first, xyz);
-    for(std::size_t i = 0; i < info.size(); i++)
-      if(info[i].size()) Msg::Direct("%s", info[i].c_str());
+    // the length stays on the picture, in a box over the middle of the line
+    // (drawn by the host)
+    info = measurePoints(first, xyz);
   }
   hostRedraw();
+  printLines(info);
   return true;
 }
 

@@ -185,6 +185,7 @@ public:
     Fl_Box *b3 = new Fl_Box(WB, h - WB - BB, WB, WB);
     b3->hide();
     window->resizable(b3);
+    window->end();
   }
   void save(Fl_Preferences &prefs)
   {

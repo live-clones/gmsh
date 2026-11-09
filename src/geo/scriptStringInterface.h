@@ -11,6 +11,10 @@
 #include "ListUtils.h"
 
 void scriptRemoveLastCommand(const std::string &fileName);
+// whether the last command was added to the script: not if the model was
+// busy, or if the command had errors (the model is then read again from the
+// script)
+bool scriptLastCommandAdded();
 
 void scriptSetFactory(const std::string &factory, const std::string &fileName);
 void scriptSetMeshSize(const std::string &fileName, const std::vector<int> &l,
@@ -46,12 +50,13 @@ void scriptAddField(int field_id, const std::string &type_name,
                     const std::string &fileName);
 void scriptDeleteField(int field_id, const std::string &fileName);
 void scriptSetBackgroundField(int field_id, const std::string &fileName);
-void scriptAddCurveLoop(List_T *list, const std::string &fileName,
-                        int *numloop);
+// a curve (dim 1) or surface (dim 2) loop: true and its tag if the model has
+// it, else false and the tag a new one would get (at least minTag)
+bool scriptFindLoop(int dim, List_T *list, int *numloop, int minTag = 0);
+void scriptAddLoop(int dim, List_T *list, int numloop,
+                   const std::string &fileName);
 void scriptAddSurface(const std::string &type, List_T *list,
                       const std::string &fileName);
-void scriptAddSurfaceLoop(List_T *list, const std::string &fileName,
-                          int *numvol);
 void scriptAddVolume(List_T *list, const std::string &fileName);
 void scriptAddRemovePhysicalGroup(const std::string &fileName,
                                   const std::string &what,
@@ -108,8 +113,8 @@ struct scriptShape {
 };
 const std::vector<scriptShape> &scriptShapes();
 // a shape added with the values of its fields, in their order (an empty
-// optional one is left out): false, with an error, if the shape is unknown or
-// a required value is missing
+// optional one is left out): false if the shape is unknown, a required value
+// is missing or the command was not added (see scriptLastCommandAdded())
 bool scriptAddShape(const std::string &shape, std::vector<std::string> values,
                     const std::string &fileName);
 void scriptAddWedge(const std::string &fileName, const std::string &x,

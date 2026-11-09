@@ -8,6 +8,7 @@
 #include <string.h>
 #include <algorithm>
 #include <list>
+#include <set>
 #include <map>
 #include <FL/Fl.H>
 #include <FL/Fl_Scroll.H>
@@ -57,13 +58,14 @@ void optionRange(Fl_Valuator *v, const std::string &option)
 
 std::vector<double> choiceItems(Fl_Choice *c, const std::string &option)
 {
-  // (the labels kept here, for the items, which point to them)
-  static std::list<std::string> labels;
+  // (the labels kept here, for the items, which point to them: each once,
+  // however often the choices are made again)
+  static std::set<std::string> labels;
   std::vector<Fl_Menu_Item> items;
   std::vector<double> values;
   for(auto &ch : GetOptionChoices(option)) {
-    labels.push_back(ch.second);
-    items.push_back({labels.back().c_str(), 0, nullptr, nullptr, 0});
+    const std::string &label = *labels.insert(ch.second).first;
+    items.push_back({label.c_str(), 0, nullptr, nullptr, 0});
     values.push_back(ch.first);
   }
   if(values.empty()) return values;
@@ -185,16 +187,26 @@ static std::map<Fl_Widget *, colorBinding> &colorBindings()
 }
 
 // With PostProcessing.Link, the selected views get all the options the view
-// page shows of the view shown, its colors and its color map
+// page shows of the view shown, its colors and its color map, but those that
+// say what each view is (its name, its data, its time step, the view it
+// refers to)
 static void linkViews(const std::vector<int> &nums)
 {
   if(!opt_post_link(0, GMSH_GET, 0) || nums.size() < 2) return;
+  const std::string own = ",Name,FileName,Group,Attributes,AxesLabelX,"
+                          "AxesLabelY,AxesLabelZ,TimeStep,Time,ExternalView,"
+                          "GeneralizedRaiseView,";
+  auto linked = [&own](const std::string &n) {
+    return own.find("," + n + ",") == std::string::npos;
+  };
   std::vector<std::string> names;
   for(auto &b : bindings())
-    if(b.second.category == "View") names.push_back(b.second.name);
+    if(b.second.category == "View" && linked(b.second.name))
+      names.push_back(b.second.name);
   for(Fl_Menu_Button *m : toggleMenus())
     if(menuCategory(m) == "View")
-      for(const std::string &n : menuOptions(m)) names.push_back(n);
+      for(const std::string &n : menuOptions(m))
+        if(linked(n)) names.push_back(n);
   int from = nums[0];
   for(std::size_t k = 1; k < nums.size(); k++) {
     for(const std::string &n : names) {
@@ -624,19 +636,17 @@ static void general_rotation_center_cb(Fl_Widget *w, void *data)
 
 void general_rotation_center_cg_cb(Fl_Widget *w, void *data)
 {
-  // the rotation center at the pseudo center of mass, its fields filled with
-  // it
-  SPoint3 p(CTX::instance()->cg[0], CTX::instance()->cg[1],
-            CTX::instance()->cg[2]);
-  opt_general_rotation_center0(0, GMSH_SET | GMSH_GUI, p.x());
-  opt_general_rotation_center1(0, GMSH_SET | GMSH_GUI, p.y());
-  opt_general_rotation_center2(0, GMSH_SET | GMSH_GUI, p.z());
+  // the rotation about the pseudo center of mass, or back about the center
+  // given (General.RotationCenter, kept as the user set it)
+  option_cb(w, nullptr);
+  CTX *c = CTX::instance();
+  const double *rc = c->rotationCenterCg ? c->cg : c->rotationCenter;
+  SPoint3 p(rc[0], rc[1], rc[2]);
   FlGui::instance()
     ->getCurrentOpenglWindow()
     ->getDrawContext()
     ->recenterForRotationCenterChange(p);
   FlGui::instance()->manip->update();
-  option_cb(w, nullptr);
 }
 
 // a coordinate of the light typed in: the ball follows
@@ -2031,9 +2041,9 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
                                  "Animation increment step",
                                  "PostProcessing.AnimationStep", option_cb);
 
-      post.butt[0] = checkButton(L + 2 * WB, 2 * WB + 4 * BH, BW, BH,
-                                 "Cycle through views instead of steps",
-                                 "PostProcessing.AnimationCycle", option_cb);
+      post.choice[1] =
+        choice(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Animation cycle",
+               "PostProcessing.AnimationCycle", nullptr, option_cb);
 
       post.butt[1] =
         checkButton(L + 2 * WB, 2 * WB + 5 * BH, BW, BH,

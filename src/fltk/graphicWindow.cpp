@@ -1064,6 +1064,17 @@ static void help_current_options_cb(Fl_Widget *w, void *data)
   FlGui::instance()->help->options->show();
 }
 
+// the shortcuts of the main menu, whatever window has the focus: as
+// Fl_Menu_::global(), but undone when the menu goes (FLTK's cannot be)
+static Fl_Menu_ *globalMenu = nullptr;
+
+static int globalMenuHandler(int e)
+{
+  if(e != FL_SHORTCUT || Fl::modal() || !globalMenu) return 0;
+  Fl::first_window(globalMenu->window());
+  return globalMenu->handle(e);
+}
+
 void quick_access_cb(Fl_Widget *w, void *data)
 {
   // the menu (see Actions.cpp), opened on the item picked last
@@ -1086,7 +1097,16 @@ void quick_access_cb(Fl_Widget *w, void *data)
     Fl::event_x(), Fl::event_y(), nullptr, initial, gmshPopupStyle());
   if(picked && picked->callback()) {
     last = picked->user_data();
-    picked->do_callback(menu, picked->user_data());
+    // run once the event is over: an item may delete the pane double-clicked
+    // (Unsplit), whose handle() is still running
+    static Fl_Callback *cb;
+    static void *data;
+    cb = picked->callback();
+    data = picked->user_data();
+    Fl::add_timeout(0., [](void *) {
+      cb(menu, data);
+      drawContext::global()->draw();
+    });
   }
   drawContext::global()->draw();
 }
@@ -1396,6 +1416,26 @@ public:
   }
 };
 
+// A graphic window other than the main one: closed by the key that closes a
+// window, and Escape left to the scene and the global shortcuts, as in the
+// main window (a tool window would close on it)
+class secondaryGraphicWindow : public gmshWindow {
+public:
+  secondaryGraphicWindow(int w, int h)
+    : gmshWindow(w, h, false, nullptr, nullptr)
+  {
+  }
+  virtual int handle(int event)
+  {
+    if((event == FL_SHORTCUT || event == FL_KEYBOARD) && _closeKey()) {
+      do_callback();
+      return 1;
+    }
+    return Fl_Double_Window::handle(event);
+  }
+  virtual void show() { _showOnDesktop(); }
+};
+
 // The main graphic window has a special resize behaviour forcing the message
 // tile to always keep its height
 class mainWindowSpecialResize : public mainWindow {
@@ -1580,7 +1620,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
     _win->callback(file_quit_cb);
   }
   else {
-    _win = new paletteWindow(width, height, false);
+    _win = new secondaryGraphicWindow(width, height);
     _win->callback(remove_graphic_window_cb);
   }
 
@@ -1612,7 +1652,9 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
       if(i >= 0) m->shortcut(i, fltkShortcut("help_keys", true));
     }
 #endif
-    m->global();
+    Fl::remove_handler(globalMenuHandler);
+    Fl::add_handler(globalMenuHandler);
+    globalMenu = m;
     fillRecentHistoryMenu();
   }
 
@@ -1821,6 +1863,10 @@ graphicWindow::~graphicWindow()
     setDocking(false);
   }
   openglWindow::setLastHandled(nullptr);
+  if(globalMenu && globalMenu == _menuBar()) {
+    Fl::remove_handler(globalMenuHandler);
+    globalMenu = nullptr;
+  }
   _tile->clear();
   _win->clear();
   Fl::delete_widget(_win);

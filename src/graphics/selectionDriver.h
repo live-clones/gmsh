@@ -9,6 +9,7 @@
 #include <functional>
 #include <string>
 #include <utility>
+#include <map>
 #include <vector>
 #include "Context.h"
 #include "ListUtils.h"
@@ -70,8 +71,11 @@ private:
   std::vector<std::vector<std::pair<int, int>>> _picked, _done;
   // the phases pick boundaries (Plane Surface, Surface, Volume): the curves or
   // surfaces of the one being closed; each closed one is a curve or surface
-  // loop added to the script, picked with dimension -1
+  // loop, picked with dimension -1: the new ones (by tag) are added to the
+  // script with the surface or volume, not before (an undo or a quit leaves
+  // nothing behind)
   List_T *_loop;
+  std::map<int, std::vector<int>> _newLoops;
   // mesh parts are picked (Delete or Reverse mesh ...), drawn again at each
   // step; mesh elements (Delete or Reverse mesh elements), marked with the
   // visibility 2, while the entities and the mesh stay as they were

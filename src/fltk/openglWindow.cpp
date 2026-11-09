@@ -495,20 +495,30 @@ bool openglWindow::printTo(int width, int height, int supersampling,
   glImmediate::pixelScale(ss * ratio);
   // the native font engine places its strings from the window's size and
   // scale, which the picture has neither of: the embedded fonts meanwhile
-  drawContextGlobal *native = nullptr;
-  if(drawContext::global()->getName() == "Fltk") {
-    static bool warned = false;
-    if(!warned)
-      Msg::Warning("Font engine 'Native' cannot draw pictures of another size "
-                   "than the window: using 'Embedded' for them");
-    warned = true;
-    native = drawContext::global();
-    drawContext::setGlobal(new drawContextFltkEmbedded);
-  }
-  draw();
-  if(native) {
-    delete drawContext::global();
-    drawContext::setGlobal(native);
+  // (put back however the drawing ends)
+  struct embeddedFonts {
+    drawContextGlobal *native = nullptr;
+    embeddedFonts()
+    {
+      if(drawContext::global()->getName() != "Fltk") return;
+      static bool warned = false;
+      if(!warned)
+        Msg::Warning("Font engine 'Native' cannot draw pictures of another "
+                     "size than the window: using 'Embedded' for them");
+      warned = true;
+      native = drawContext::global();
+      drawContext::setGlobal(new drawContextFltkEmbedded);
+    }
+    ~embeddedFonts()
+    {
+      if(!native) return;
+      delete drawContext::global();
+      drawContext::setGlobal(native);
+    }
+  };
+  {
+    embeddedFonts fonts;
+    draw();
   }
   glShader::readPrintTarget(width, height, format, type, pixels);
   glShader::endPrintTarget();

@@ -146,10 +146,14 @@ public:
   FlGui(int argc, char **argv, bool quitShouldExit,
         void (*error_handler)(const char *fmt, ...) = nullptr);
   ~FlGui();
-  // return the single static instance of the GUI
-  static FlGui *instance(int argc = 0, char **argv = nullptr,
-                         bool quitShouldExit = true,
-                         void (*error_handler)(const char *fmt, ...) = nullptr);
+  // the GUI created, with these arguments, if there is none yet (at startup,
+  // and by gmsh::fltk::initialize())
+  static FlGui *create(int argc = 0, char **argv = nullptr,
+                       bool quitShouldExit = true,
+                       void (*error_handler)(const char *fmt, ...) = nullptr);
+  // the GUI, which must exist (see available()): this never creates it, as
+  // code outside the GUI (a script read in batch mode) must not
+  static FlGui *instance() { return _instance; }
   // close all windows and destroy instance
   static void destroy();
   // check if the GUI is available

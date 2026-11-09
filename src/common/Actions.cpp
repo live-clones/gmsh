@@ -364,8 +364,8 @@ static std::string scriptFile() { return GModel::current()->getFileName(); }
 // an operation on the mesh, not during another operation on the model
 static int meshOperation(const std::function<void(GModel *)> &f)
 {
-  if(modelBusy()) return ActionDone;
-  modelLock lock;
+  modelLock lock(modelLock::ifFree);
+  if(!lock) return ActionDone;
   f(GModel::current());
   CTX::instance()->meshChanged();
   return ActionDone;
@@ -438,11 +438,14 @@ static int reloadView(int index)
     Msg::Error("File '%s' does not exist", fileName.c_str());
     return ActionDone;
   }
-  // not during another operation on the model, which reading may change
-  if(modelBusy()) return ActionDone;
   int tag = p->getTag();
   std::size_t n = PView::list.size();
-  MergeFile(fileName);
+  {
+    // not during another operation on the model, which reading may change
+    modelLock lock(modelLock::ifFree);
+    if(!lock) return ActionDone;
+    MergeFile(fileName);
+  }
   p = PView::getViewByTag(tag);
   if(!p || PView::list.size() <= n) return ActionDone;
   PViewData *old = p->getData(), *data = PView::list.back()->getData();
@@ -591,13 +594,13 @@ static const std::map<std::string, action> &actions()
          [](GModel *m) { m->optimizeMesh("QuadQuasiStructured"); });
      }}},
     {"Unpartition mesh", {[](int, drawContext *) {
-       if(modelBusy()) return (int)ActionDone;
-       modelLock lock;
+       modelLock lock(modelLock::ifFree);
+       if(!lock) return (int)ActionDone;
        return partitionsChanged(GModel::current()->unpartitionMesh());
      }}},
     {"Convert old partitioning", {[](int, drawContext *) {
-       if(modelBusy()) return (int)ActionDone;
-       modelLock lock;
+       modelLock lock(modelLock::ifFree);
+       if(!lock) return (int)ActionDone;
        return partitionsChanged(
          GModel::current()->convertOldPartitioningToNewOne());
      }}},
@@ -610,14 +613,8 @@ static const std::map<std::string, action> &actions()
      }}},
     {"Axes",
      {[](int, drawContext *) { return toggleAxes(); }, nullptr,
-      [] {
-        if(opt_general_axes(0, GMSH_GET, 0)) return 1;
-#if defined(HAVE_POST)
-        for(PView *v : PView::list)
-          if(v->getOptions()->visible && v->getOptions()->getAxes()) return 1;
-#endif
-        return 0;
-      }}},
+      // (what the toggle changes: the model's axes, not those of the views)
+      [] { return opt_general_axes(0, GMSH_GET, 0) ? 1 : 0; }}},
     {"Toggle mesh display", {[](int, drawContext *ctx) {
        RunSceneShortcut("Toggle mesh display", 0, ctx);
        return ActionDone;

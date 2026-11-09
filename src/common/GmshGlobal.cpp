@@ -258,12 +258,14 @@ int GmshFinalize()
 #if defined(HAVE_FLTK)
   // the GUI shows the models, views, fields and plugins deleted below, and
   // would point to them after a new initialization: it goes first, from its
-  // own thread only
+  // own thread only (from another, nothing is deleted under it)
   if(FlGui::available()) {
-    if(FlGui::onMainThread())
-      FlGui::destroy();
-    else
-      Msg::Warning("Finalizing outside the thread of the GUI, which stays");
+    if(!FlGui::onMainThread()) {
+      Msg::Error("Cannot finalize outside the thread of the graphical "
+                 "interface");
+      return 0;
+    }
+    FlGui::destroy();
   }
 #endif
 
@@ -435,7 +437,7 @@ int GmshFLTK(int argc, char **argv)
 {
 #if defined(HAVE_FLTK) && defined(HAVE_POST)
   // create the GUI
-  FlGui::instance(argc, argv);
+  FlGui::create(argc, argv);
 
   StartupMessage();
 

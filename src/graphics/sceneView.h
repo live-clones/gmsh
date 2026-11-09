@@ -171,8 +171,7 @@ public:
   // a lasso is being drawn; a selection waits for clicks
   bool lassoMode, selectionMode;
   // what the keys ask of the selection, read at its next step
-  int endSelection, undoSelection, invertSelection, quitSelection,
-    changeSelection;
+  int endSelection, undoSelection, quitSelection, changeSelection;
   // the two lines of Msg::StatusGl(), drawn at the top of the picture
   std::string screenMessage[2];
 

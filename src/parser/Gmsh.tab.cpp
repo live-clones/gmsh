@@ -10404,17 +10404,17 @@ yyreduce:
       }
       else if(!strcmp((yyvsp[(1) - (3)].c), "SetCurrentWindow")) {
 #if defined(HAVE_FLTK)
-        FlGui::instance()->setCurrentOpenglWindow((int)(yyvsp[(2) - (3)].d));
+        if(FlGui::available()) FlGui::instance()->setCurrentOpenglWindow((int)(yyvsp[(2) - (3)].d));
 #endif
       }
       else if(!strcmp((yyvsp[(1) - (3)].c), "SplitCurrentWindowHorizontal")) {
 #if defined(HAVE_FLTK)
-        FlGui::instance()->splitCurrentOpenglWindow('h', (yyvsp[(2) - (3)].d));
+        if(FlGui::available()) FlGui::instance()->splitCurrentOpenglWindow('h', (yyvsp[(2) - (3)].d));
 #endif
       }
       else if(!strcmp((yyvsp[(1) - (3)].c), "SplitCurrentWindowVertical")) {
 #if defined(HAVE_FLTK)
-        FlGui::instance()->splitCurrentOpenglWindow('v', (yyvsp[(2) - (3)].d));
+        if(FlGui::available()) FlGui::instance()->splitCurrentOpenglWindow('v', (yyvsp[(2) - (3)].d));
 #endif
       }
       else {
@@ -10428,7 +10428,7 @@ yyreduce:
 #line 3144 "Gmsh.y"
     {
 #if defined(HAVE_FLTK)
-      FlGui::instance()->splitCurrentOpenglWindow('u');
+      if(FlGui::available()) FlGui::instance()->splitCurrentOpenglWindow('u');
 #endif
     ;}
     break;
