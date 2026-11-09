@@ -1750,7 +1750,7 @@ want to place the rectangle with the mouse, select `X', `Y' and `Z
 freeze' in the window and enter the coordinates manually in the context
 window. Once you are done, either press @kbd{e} (see the status message
 on the top of the graphic window) or click on the `Add' button in the
-context window.
+context window; press @kbd{Escape} to stop placing rectangles.
 
 @iftex
 @sp 1
@@ -1772,6 +1772,18 @@ options}). If you edit the script in another editor, click on `Reload
 script' in the tree menu to reload the modifications in the GUI. The @code{//+} line in the script is a
 comment that is used as a placemark between commands added by the GUI;
 see @ref{Gmsh scripting language} for the scripting language reference.
+
+Many commands act on entities you pick in the graphic window: for
+example `Plane surface' in the `Add' menu, the `Transform' and `Boolean'
+operations, `Delete', the physical groups, or the deletion of parts of the
+mesh. A click picks the entity under the mouse (a click with the middle
+button unpicks it; see @ref{Mouse actions}), @kbd{u} undoes the last pick and
+@kbd{e} ends the selection, which carries out the command; the status
+message on the top of the graphic window says what to pick and which keys
+apply. @kbd{Escape} stops the selection without doing anything (@kbd{q}
+does the same, for backward compatibility). @kbd{Shift+Escape} switches the
+mouse selection off and on, without stopping the selection, e.g. to move
+the view without picking what is under the mouse.
 
 Combining GUI actions and script file editing is a classical way of
 working with the Gmsh app. For example, it is often faster to define
@@ -1811,14 +1823,16 @@ the tree menu, select the active model and open the quick shortcut menu;
 `X', `Y', `Z' set viewports with the corresponding axis perpendicular to
 graphic plane; the cube button sets an isometric view; the rotation button
 rotates the view by 90 degrees; `1:1'
-fits the model in the window; and `S' switches the mouse selection on or off. The
+fits the model in the window; and `S' switches the mouse selection on or
+off (as @kbd{Shift+Escape} does). The
 crosshair button switches `Query' on: every click then says what
 the model holds where it hit, i.e. the geometrical entity, the mesh element
 and the node there, and the value of every visible post-processing view.
 The ruler button next to it switches `Measure' on: two clicks then draw the
 line between the points they hit and give its length. Both stay on until you
-press @kbd{q} (@kbd{Escape} suspends the mouse selection instead, as
-everywhere else, to move the view without clicking on the model). (Both are
+press @kbd{Escape} (or @kbd{q}, for backward compatibility), or click their
+button again; @kbd{Shift+Escape} suspends the mouse selection instead, as
+everywhere else, to move the view without clicking on the model. (Both are
 also available in the quick shortcut menu.) The last four buttons step
 through the time steps of the post-processing views, when there are any.
 
@@ -1923,7 +1937,10 @@ For a 1 button mouse, Middle button = Shift+Left button, Right button = Alt+Left
 @cindex Shortcuts, keyboard
 @cindex Bindings, keyboard
 
-(On macOS, @kbd{Ctrl} is replaced by @kbd{Cmd} in the shortcuts below.)
+(On macOS, @kbd{Ctrl} is replaced by @kbd{Cmd} in the shortcuts below.
+@kbd{Escape} stops the selection under way, e.g. a query, a measurement or
+an operation on the entities picked; @kbd{q} does the same, for backward
+compatibility.)
 
 @include shortcuts.texi
 

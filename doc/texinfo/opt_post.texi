@@ -17,7 +17,7 @@ Default value: @code{0.1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item PostProcessing.AnimationCycle
-Cycle through time steps (0) or views (1) for animations@*
+Cycle through time steps (0), views (1) or values of Print.Parameter (2) for animations (0: Time steps, 1: Views, 2: Print parameter values)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
