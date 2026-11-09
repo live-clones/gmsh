@@ -611,6 +611,37 @@ EMSCRIPTEN_KEEPALIVE int gmshWebColorScheme(int dark)
   return followDesktopColorScheme(dark) ? 1 : 0;
 }
 
+// the values an option ("Mesh.Algorithm") takes, with their labels, in the
+// order to list them, in JSON: [[value, "label"], ...], empty if it takes any
+// value (see GetOptionChoices())
+EMSCRIPTEN_KEEPALIVE const char *gmshWebOptionChoices(const char *option)
+{
+  static std::string json;
+  json = "[";
+  for(auto &c : GetOptionChoices(option)) {
+    if(json.size() > 1) json += ",";
+    char v[32];
+    snprintf(v, sizeof(v), "%.16g", c.first);
+    json += "[" + std::string(v) + "," + jsonString(c.second) + "]";
+  }
+  json += "]";
+  return json.c_str();
+}
+
+// the range of a number option and the step of its fields, in JSON:
+// {"min", "max", "step"}, or null if it has none (see GetOptionRange())
+EMSCRIPTEN_KEEPALIVE const char *gmshWebOptionRange(const char *option)
+{
+  static std::string json;
+  double min, max, step;
+  if(!GetOptionRange(option, min, max, step)) return "null";
+  char buf[128];
+  snprintf(buf, sizeof(buf), "{\"min\":%.16g,\"max\":%.16g,\"step\":%.16g}",
+           min, max, step);
+  json = buf;
+  return json.c_str();
+}
+
 // the keyboard shortcuts of the graphical interface, in JSON: [{"action",
 // "key" (a lower case letter, a digit or a mark, or the name the page gives a
 // key: "F1", "Escape", "ArrowLeft", "PageUp"...), "mods" (ModCommand 1,

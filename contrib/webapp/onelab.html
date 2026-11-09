@@ -1598,12 +1598,11 @@ function adaptedFill(rgb) {
 // when those of the Options tab are given again to all (see readOptions())
 const viewOverrides = new Map(); // view tag -> the options set for it alone
 const viewOptionsOpen = new Set(); // the views whose options are shown
-// [option, kind, label, choices], those of one view
+// [option, kind, label], those of one view (the choices and ranges from Gmsh)
 const perViewOptions = [
-  ['IntervalsType', 'choice', 'Intervals', {1: 'Iso-values', 2: 'Continuous',
-    3: 'Discrete', 4: 'Numeric'}],
+  ['IntervalsType', 'choice', 'Intervals'],
   ['NbIso', 'number', 'Number of intervals'],
-  ['RangeType', 'choice', 'Range', {1: 'Default', 2: 'Custom', 3: 'Per time step'}],
+  ['RangeType', 'choice', 'Range'],
   ['CustomMin', 'number', 'Minimum'],
   ['CustomMax', 'number', 'Maximum'],
   ['TimeStep', 'number', 'Time step'],
@@ -1690,10 +1689,10 @@ function viewOptionRows(tag, i) {
   const box = document.createElement('div');
   box.className = 'viewOptions';
   const steps = viewNum(i, 'NbTimeStep');
-  for(const [name, kind, text, choices] of perViewOptions) {
+  for(const [name, kind, text] of perViewOptions) {
     if(name === 'TimeStep' && steps < 2) continue;
     if(name.startsWith('Custom') && viewNum(i, 'RangeType') !== 2) continue;
-    const el = optionField(kind, choices, (v) => setViewOptionOf(tag, name, v));
+    const el = optionField(kind, 'View.' + name, (v) => setViewOptionOf(tag, name, v));
     el.title = `View[${i}].${name}`;
     if(name === 'TimeStep') Object.assign(el, {min: 0, max: steps - 1, step: 1});
     box.appendChild(optionRow(text, el));
@@ -2231,7 +2230,7 @@ function download(path, keep = false) {
 // ---------------------------------------------------------------- options
 
 // the main Gmsh options, as in the option window of the graphical interface:
-// [option, kind, label, choices]; those of the views apply to all of them,
+// [option, kind, label, range if not Gmsh's]; those of the views apply to all,
 // and are given again to the views a new run makes
 const optionGroups = [
   ['Geometry', [
@@ -2241,13 +2240,10 @@ const optionGroups = [
     ['Geometry.Volumes', 'check', 'Volumes'],
     ['Geometry.Opacity', 'range', 'Opacity']]],
   ['Mesh', [
-    ['Mesh.Algorithm', 'choice', '2D algorithm', {1: 'MeshAdapt', 2: 'Automatic',
-      5: 'Delaunay', 6: 'Frontal-Delaunay', 8: 'Frontal-Delaunay for quads',
-      9: 'Packing of parallelograms', 11: 'Quasi-structured quads'}],
-    ['Mesh.Algorithm3D', 'choice', '3D algorithm', {1: 'Delaunay', 4: 'Frontal',
-      10: 'HXT'}],
+    ['Mesh.Algorithm', 'choice', '2D algorithm'],
+    ['Mesh.Algorithm3D', 'choice', '3D algorithm'],
     ['Mesh.MeshSizeFactor', 'number', 'Element size factor'],
-    ['Mesh.ElementOrder', 'choice', 'Element order', {1: '1', 2: '2', 3: '3'}],
+    ['Mesh.ElementOrder', 'number', 'Element order'],
     ['Mesh.RecombineAll', 'check', 'Recombine all triangles'],
     ['Mesh.Nodes', 'check', 'Nodes'],
     ['Mesh.Lines', 'check', '1D elements'],
@@ -2257,25 +2253,19 @@ const optionGroups = [
     ['Mesh.VolumeFaces', 'check', '3D element faces'],
     ['Mesh.Opacity', 'range', 'Opacity']]],
   ['Views', [
-    ['View.IntervalsType', 'choice', 'Intervals', {1: 'Iso-values',
-      2: 'Continuous', 3: 'Discrete', 4: 'Numeric'}],
+    ['View.IntervalsType', 'choice', 'Intervals'],
     ['View.NbIso', 'number', 'Number of intervals'],
-    ['View.ScaleType', 'choice', 'Scale', {1: 'Linear', 2: 'Logarithmic',
-      3: 'Symmetric log'}],
+    ['View.ScaleType', 'choice', 'Scale'],
     ['View.NormalRaise', 'range', 'Normal raise', {min: -0.5, max: 0.5, step: 0.01}],
     ['View.ShowScale', 'check', 'Color scale'],
     ['View.ShowElement', 'check', 'Element outlines'],
     ['View.Opacity', 'range', 'Opacity']]],
   ['General', [
-    ['General.Axes', 'choice', 'Axes', {0: 'None', 1: 'Simple axes', 2: 'Box',
-      3: 'Full grid', 4: 'Open grid', 5: 'Ruler'}],
+    ['General.Axes', 'choice', 'Axes'],
     ['General.SmallAxes', 'check', 'Small axes'],
-    ['General.Orthographic', 'choice', 'Projection', {1: 'Orthographic',
-      0: 'Perspective'}],
-    ['General.Shading', 'choice', 'Shading', {0: 'Classic', 1: 'Studio (X floor)',
-      2: 'Studio (Y floor)', 3: 'Studio (Z floor)'}],
-    ['General.ColorScheme', 'choice', 'Colors', {3: 'As the browser', 0: 'Light',
-      2: 'Dark', 1: 'Classic'}]]],
+    ['General.Orthographic', 'choice', 'Projection'],
+    ['General.Shading', 'choice', 'Shading'],
+    ['General.ColorScheme', 'choice', 'Colors']]],
 ];
 // the options that change the mesh: the next run meshes again
 const meshing = new Set(['Mesh.Algorithm', 'Mesh.Algorithm3D',
@@ -2365,11 +2355,19 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
 });
 // the field of an option of a kind (check, number, range or choice), which
 // gives change() its new value
-function optionField(kind, choices, change) {
+// the values an option takes, with their labels, and its range, as Gmsh
+// lists them for its interfaces (src/common/DefaultOptions.h)
+const optionChoices = (option) =>
+  JSON.parse(Module.ccall('gmshWebOptionChoices', 'string', ['string'], [option]));
+const optionRange = (option) =>
+  JSON.parse(Module.ccall('gmshWebOptionRange', 'string', ['string'], [option]));
+// the field of an option: its choices, or the range of a slider, from Gmsh
+// unless given
+function optionField(kind, option, change, range) {
   let el;
   if(kind === 'choice') {
     el = document.createElement('select');
-    for(const [v, t] of Object.entries(choices)) {
+    for(const [v, t] of optionChoices(option)) {
       const o = document.createElement('option');
       o.value = v;
       o.textContent = t;
@@ -2379,8 +2377,12 @@ function optionField(kind, choices, change) {
   else {
     el = document.createElement('input');
     el.type = {check: 'checkbox', number: 'number', range: 'range'}[kind];
-    if(kind === 'range') Object.assign(el, choices || {min: 0, max: 1, step: 0.05});
-    if(kind === 'number') el.step = 'any';
+    const r = range || optionRange(option);
+    if(kind === 'range') Object.assign(el, r || {min: 0, max: 1, step: 0.05});
+    if(kind === 'number') {
+      el.step = 'any';
+      if(r) Object.assign(el, {min: r.min, max: r.max});
+    }
   }
   el.addEventListener(kind === 'range' ? 'input' : 'change', () =>
     change(kind === 'check' ? (el.checked ? 1 : 0) : Number(el.value)));
@@ -2408,8 +2410,8 @@ function buildOptions() {
     const sum = document.createElement('summary');
     sum.textContent = group;
     d.appendChild(sum);
-    for(const [name, kind, text, choices] of options) {
-      const el = optionField(kind, choices, (v) => setOption(name, v));
+    for(const [name, kind, text, range] of options) {
+      const el = optionField(kind, name, (v) => setOption(name, v), range);
       el.title = name;
       d.appendChild(optionRow(text, el));
       optionFields.push([name, kind, el]);
@@ -3093,24 +3095,23 @@ function showOptions(group) {
     $('options' + group).scrollIntoView({block: 'start'});
   }
 }
+// a shortcut named as an action of the registry (see src/common/Shortcuts.h)
+// runs as the items of that action, if the page has one now
+function registryShortcut(action) {
+  for(const module of ['Geometry', 'Mesh', 'Quick access']) {
+    const item = findItem(action, registry[module]);
+    if(item && item.kind === 'run') return canRun(item) && (() => runItem(item, {module}));
+  }
+  return null;
+}
 const pageShortcuts = {
-  mesh_1d: () => runItem(findItem('Mesh 1D'), {module: 'Mesh'}),
-  mesh_2d: () => runItem(findItem('Mesh 2D'), {module: 'Mesh'}),
-  mesh_3d: () => runItem(findItem('Mesh 3D'), {module: 'Mesh'}),
   solver_run: () => run('compute'),
-  geometry_reload: reloadScript,
   file_new: newModel,
   project_reload: () => run('check'),
   file_open: () => openMenu(true),
-  mesh_save: saveMesh,
-  fullscreen: () => { if(fullscreenEnabled) toggleFullscreen(); },
   help_keys: () => $('keysDialog').showModal(),
   options: () => showOptions(),
-  options_general: () => showOptions('General'),
-  options_geometry: () => showOptions('Geometry'),
-  options_mesh: () => showOptions('Mesh'),
   options_post: () => showOptions('Views'),
-  options_view: () => showOptions('Views'),
   options_solver: () => showTab('modelTab'),
   clipping: () => showTab('clipTab'),
   visibility: () => showTab('visTab'),
@@ -3143,8 +3144,9 @@ const shortcuts = installShortcuts(Module, (action) => {
     setTool(0);
     return true;
   }
-  if(!pageShortcuts[action]) return false;
-  pageShortcuts[action]();
+  const f = pageShortcuts[action] || registryShortcut(action);
+  if(!f) return false;
+  f();
   return true;
 }, (action) => {
   // the options the key changed, shown, and the page following the scene's
@@ -3160,13 +3162,14 @@ const shortcuts = installShortcuts(Module, (action) => {
 const sceneActions = new Set(['geometry_points', 'geometry_curves',
   'geometry_surfaces', 'geometry_volumes', 'mesh_nodes', 'mesh_lines',
   'mesh_surface_edges', 'mesh_surface_faces', 'mesh_volume_edges',
-  'mesh_volume_faces', 'mesh_toggle', 'fast_redraw', 'bounding_boxes',
+  'mesh_volume_faces', 'fast_redraw', 'bounding_boxes',
   'color_scheme', 'lighting', 'axes_loop', 'small_axes', 'surface_type',
   'projection', 'view_scales', 'colormaps', 'view_intervals',
   'view_intervals_all', 'view_range', 'view_annotations', 'view_elements',
   'views_hide_show', 'time_step_prev', 'time_step_next', 'view_prev',
   'view_next', 'view_x', 'view_y', 'view_z', 'view_3d', 'view_1_1', 'escape']);
-for(const r of shortcutsHelp(shortcuts, (a) => sceneActions.has(a) || pageShortcuts[a])) {
+for(const r of shortcutsHelp(shortcuts, (a) => sceneActions.has(a) || pageShortcuts[a] ||
+                                              registryShortcut(a) !== null)) {
   const tr = $('keysTable').insertRow();
   tr.insertCell().textContent = r.label;
   tr.insertCell().textContent = r.help;

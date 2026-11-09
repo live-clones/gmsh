@@ -554,8 +554,7 @@ helpWindow::helpWindow()
                 "Show only the options and variables matching the regular\n"
                 "expression, whatever the case",
                 help_options_cb);
-    // search->take_focus(); cannot call this here - it triggers show() on Linux
-    // in fltk 1.3.3
+    // (no search->take_focus() here: it shows the window on Linux)
 
     browser = new Fl_Browser(0, BH + 2 * WB, width, height - 2 * BH - 4 * WB);
     browser->box(GMSH_SIMPLE_TOP_BOX);

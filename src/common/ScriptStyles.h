@@ -21,9 +21,6 @@ enum scriptStyle {
   StyleOption // an option of Gmsh, as "Mesh.Algorithm" or "View[0].Visible"
 };
 
-// whether the editor colors a file, by its extension
-bool HasScriptStyles(const std::string &fileName);
-
 // the style of each character of the text of a file (a string of the same
 // length)
 std::string GetScriptStyles(const std::string &fileName,

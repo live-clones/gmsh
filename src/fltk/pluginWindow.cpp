@@ -528,7 +528,7 @@ void pluginWindow::layout()
     help->show();
   }
   else {
-    // out of the way too: FLTK 1.3 scrolls over hidden children
+    // and of zero height, out of the way
     help->hide();
     help->resize(WB, y, w, 0);
   }

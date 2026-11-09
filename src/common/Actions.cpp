@@ -229,7 +229,7 @@ static const std::map<std::string, actionItem> &menus()
                             "mesh_volume_edges"),
                      option("3D element faces", "Mesh.VolumeFaces",
                             "mesh_volume_faces")}),
-               run("Toggle mesh display", "", "", "mesh_toggle"),
+               run("Toggle mesh display"),
                ask(option("Mesh opacity", ""), "Mesh.Opacity", 0, 1, 0.01),
                ask(option("Global mesh size factor", ""), "Mesh.MeshSizeFactor",
                    0.01, 100, 0.01),
@@ -585,7 +585,7 @@ static const std::map<std::string, action> &actions()
         return 0;
       }}},
     {"Toggle mesh display", {[](int, drawContext *ctx) {
-       RunSceneShortcut("mesh_toggle", 0, ctx);
+       RunSceneShortcut("Toggle mesh display", 0, ctx);
        return ActionDone;
      }}},
     {"General options", {}},
@@ -741,6 +741,8 @@ void GetActionAsk(const actionAsk &ask, double &min, double &max, double &step,
 }
 
 // ---------------------------------------------------------------------------
+
+bool IsAction(const std::string &name) { return actions().count(name) > 0; }
 
 bool IsDoneByInterface(const actionItem &item)
 {

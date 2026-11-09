@@ -1036,6 +1036,23 @@ void PrintOptionsDoc();
 // scripts write them after "Category." ("Color.Name" for a color)
 std::vector<std::string> GetOptionNames(const std::string &category);
 
+// The values an option ("Mesh.Algorithm") takes, with their labels, in the
+// order the interfaces list them: none if it takes any value; without those
+// this build lacks the module for (see OptionChoices in DefaultOptions.h)
+std::vector<std::pair<double, std::string>>
+GetOptionChoices(const std::string &option);
+
+// The range of a number option, and the step of the fields that set it (see
+// OptionRanges in DefaultOptions.h); false if it has none
+struct OptionRange {
+  double min, max, step;
+};
+bool GetOptionRange(const std::string &option, double &min, double &max,
+                    double &step);
+
+// The help of an option, with the values it takes (see GetOptionChoices())
+std::string GetOptionHelp(const std::string &option, const char *help);
+
 bool StringOption(int action, const char *category, int num, const char *name,
                   std::string &val, bool warnIfUnknown = true);
 bool NumberOption(int action, const char *category, int num, const char *name,

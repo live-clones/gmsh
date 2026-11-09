@@ -184,9 +184,8 @@ public:
   int testGlobalShortcuts(int event);
   // runs an action of the shortcut table (src/common/Shortcuts.h) by name
   int runShortcut(const std::string &action);
-  // test the arrow shortcuts (not in the application-level shortcuts)
-  // since it is used elsewhere (where we want to override widget
-  // navigation). This is necessary since FLTK 1.1.
+  // test the arrow shortcuts, which are not in the shortcut table: they are
+  // also tested where they override the navigation between widgets
   int testArrowShortcuts();
   // set the title of the graphic windows
   void setGraphicTitle(const std::string &title);

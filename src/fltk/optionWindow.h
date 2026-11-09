@@ -93,8 +93,6 @@ public:
   struct {
     Fl_Group *group;
     std::vector<Fl_Check_Button *> butt;
-    std::vector<Fl_Return_Button *> retbutt;
-    std::vector<Fl_Input *> input;
     std::vector<Fl_Value_Input *> value;
     std::vector<Fl_Button *> color;
     std::vector<Fl_Choice *> choice;
@@ -124,7 +122,6 @@ public:
     std::vector<Fl_Box *> label;
     std::vector<Fl_Menu_Button *> menu;
     colorbarWindow *colorbar;
-    Fl_Return_Button *ok;
   } view;
 
 public:
@@ -139,6 +136,13 @@ public:
   void resetBrowser();
   void resetExternalViewList();
   void updateViewGroup(int index);
+  // the widgets bound to an option show its value (an option of the views:
+  // only for the view shown, num)
+  void showOption(const std::string &category, int num,
+                  const std::string &name);
+  // all the widgets show the values of their options (only those of the
+  // category shown, and not the one being edited, if shownOnly)
+  void showOptions(bool shownOnly = false);
   void activate(const char *what);
   void toggleSection(int category, int section);
   // the tab clicked
@@ -158,7 +162,7 @@ void solver_options_cb(Fl_Widget *w, void *data);
 void post_options_cb(Fl_Widget *w, void *data);
 void view_options_cb(Fl_Widget *w, void *data);
 void general_gmpdcf_cb(Fl_Widget *w, void *data);
-void general_options_ok_cb(Fl_Widget *w, void *data);
+void general_rotation_center_cg_cb(Fl_Widget *w, void *data);
 void general_options_rotation_center_select_cb(Fl_Widget *w, void *data);
 void general_options_axes_fit_cb(Fl_Widget *w, void *data);
 

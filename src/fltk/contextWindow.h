@@ -56,8 +56,7 @@ public:
   Fl_Value_Input *value[1];
   Fl_Choice *choice[1];
   int selectedTag;
-  std::string type, mode, selectedName;
-  bool append;
+  std::string type, selectedName;
   std::map<int, std::string> physicalTags;
   std::map<std::string, int> physicalNames;
 

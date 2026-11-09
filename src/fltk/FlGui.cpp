@@ -5,6 +5,8 @@
 
 #include "GmshConfig.h"
 #include <algorithm>
+#include <functional>
+#include <map>
 #include <mutex>
 #include <sstream>
 #include <string.h>
@@ -53,6 +55,7 @@
 #include "Options.h"
 #include "CommandLine.h"
 #include "Shortcuts.h"
+#include "Actions.h"
 #include "Context.h"
 #include "StringUtils.h"
 #include "gl2ps.h"
@@ -420,31 +423,6 @@ static void gmsh_search(Fl_Color col)
   fl_line_style(FL_SOLID);
 }
 
-static void gmsh_colormap(Fl_Color col)
-{
-  fl_color(FL_RED);
-  fl_begin_polygon();
-  vv(-0.8, -0.8);
-  vv(-0.3, -0.8);
-  vv(-0.3, 0.8);
-  vv(-0.8, 0.8);
-  fl_end_polygon();
-  fl_color(FL_GREEN);
-  fl_begin_polygon();
-  vv(-0.3, -0.8);
-  vv(0.2, -0.8);
-  vv(0.2, 0.8);
-  vv(-0.3, 0.8);
-  fl_end_polygon();
-  fl_color(FL_BLUE);
-  fl_begin_polygon();
-  vv(0.2, -0.8);
-  vv(0.7, -0.8);
-  vv(0.7, 0.8);
-  vv(0.2, 0.8);
-  fl_end_polygon();
-}
-
 #undef vv
 #undef bl
 #undef el
@@ -704,12 +682,11 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   fl_add_symbol("gmsh_gear", gmsh_gear, 1);
   fl_add_symbol("gmsh_graph", gmsh_graph, 1);
   fl_add_symbol("gmsh_search", gmsh_search, 1);
-  fl_add_symbol("gmsh_colormap", gmsh_colormap, 1);
 
   // load default system icons (for file browser)
   Fl_File_Icon::load_system_icons();
 
-  // FLTK >= 1.3.3 allows one to set a default global window icon
+  // the icon of all the windows
   Fl_RGB_Image icon(&gmsh_icon_pixmap);
   Fl_Window::default_icon(&icon);
 
@@ -1084,183 +1061,242 @@ int FlGui::testArrowShortcuts()
   return 0;
 }
 
-// what each action of the shortcut table does; the entries of the menus are
-// run by the menus (see graphicWindow::runMenuShortcut()), those of the quick
-// access menu of the status bar by its callback. Returns 0 for an action not
-// handled here, 1 when done, 2 when the scene must be drawn again
+// the selection flags of all the scenes (see sceneView::selectionStep())
+static void setSelectionFlag(int sceneView::*flag)
+{
+  for(openglWindow *gl : FlGui::instance()->openglWindows()) gl->*flag = 1;
+}
+
+// placing an elementary entity with the mouse: the axis i frozen or not, or
+// all the axes but i frozen
+static void freezeAxis(int i, bool allBut)
+{
+  elementaryContextWindow *e = FlGui::instance()->elementaryContext;
+  if(allBut)
+    for(int j = 0; j < 3; j++) e->butt[j]->value(j != i);
+  else
+    e->butt[i]->value(!e->butt[i]->value());
+}
+
+// Escape leaves the full screen, or cancels a lasso, or toggles the mouse
+// selection; returns 2 when the scene must be drawn again
+static int escape()
+{
+  if(FlGui::instance()->fullscreen->shown()) {
+    window_cb(nullptr, (void *)"fullscreen");
+    return 1;
+  }
+  bool lasso = false;
+  for(openglWindow *gl : FlGui::instance()->openglWindows())
+    if(gl->lassoMode) lasso = true;
+  if(lasso) {
+    for(openglWindow *gl : FlGui::instance()->openglWindows())
+      gl->lassoMode = false;
+    return 2;
+  }
+  mouse_selection_cb(nullptr, nullptr);
+  return 1;
+}
+
+// What each action of the shortcut table does. The entries of the menu bar
+// are run by the menus (see graphicWindow::runMenuShortcut()). An action of
+// the action registry (see Actions.h) has the same name in both tables, and
+// runs as its items do. The actions that only change the scene are those of
+// RunSceneShortcut(), shared with the web page. Returns 0 for an action not
+// handled here, 1 when done, 2 when the scene must be drawn again.
 int FlGui::runShortcut(const std::string &a)
 {
-  // --- reloading and meshing
-  if(a == "geometry_reload") {
-    geometry_reload_cb(nullptr, nullptr);
+  actionItem item{"", ActionRun, a, {}, "", "", {}};
+  if(IsAction(a)) {
+    if(canRunItem(item)) runItem(item);
     return 1;
   }
-  if(a == "project_reload") {
-    onelab_reload_cb(nullptr, nullptr);
-    return 1;
-  }
-  if(a == "mesh_1d") {
-    runAction("Mesh 1D");
-    return 1;
-  }
-  if(a == "mesh_2d") {
-    runAction("Mesh 2D");
-    return 1;
-  }
-  if(a == "mesh_3d") {
-    runAction("Mesh 3D");
-    return 1;
-  }
-  if(a == "solver_run") {
-    onelab_cb(nullptr, (void *)"compute");
-    return 1;
-  }
-  if(a == "quit") {
-    // only necessary when using the system menu bar, but hey, it cannot hurt
-    file_quit_cb(nullptr, nullptr);
-    return 1;
-  }
-  if(a == "watch") {
-    file_watch_cb(nullptr, nullptr);
-    return 1;
-  }
-  // --- the modules of the tree
-  if(a == "module_geometry") {
-    FlGui::toggleModule("Geometry");
-    return 1;
-  }
-  if(a == "module_mesh") {
-    FlGui::toggleModule("Mesh");
-    return 1;
-  }
-  if(a == "module_solver") {
-    FlGui::toggleModule("Solver");
-    return 1;
-  }
-  if(a == "module_post") {
-    FlGui::toggleModule("Post-processing");
-    return 1;
-  }
-  // --- a selection under way
-  if(a == "selection_end" || a == "selection_undo" || a == "selection_invert" ||
-     a == "selection_quit") {
-    for(openglWindow *gl : openglWindows()) {
-      if(a == "selection_end") gl->endSelection = 1;
-      if(a == "selection_undo") gl->undoSelection = 1;
-      if(a == "selection_invert") gl->invertSelection = 1;
-      if(a == "selection_quit") gl->quitSelection = 1;
-    }
-    return 1;
-  }
-  // --- placing an elementary entity with the mouse: the axes it may move
-  // along, one at a time or all but one
-  if(a == "freeze_x" || a == "freeze_y" || a == "freeze_z") {
-    int i = a[7] - 'x';
-    elementaryContext->butt[i]->value(!elementaryContext->butt[i]->value());
-    return 1;
-  }
-  if(a == "freeze_but_x" || a == "freeze_but_y" || a == "freeze_but_z") {
-    int i = a[11] - 'x';
-    for(int j = 0; j < 3; j++) elementaryContext->butt[j]->value(j != i);
-    return 1;
-  }
-  if(a == "escape") {
-    if(fullscreen->shown()) {
-      window_cb(nullptr, (void *)"fullscreen");
-      return 1;
-    }
-    bool lasso = false;
-    for(openglWindow *gl : openglWindows())
-      if(gl->lassoMode) lasso = true;
-    if(lasso) {
-      for(openglWindow *gl : openglWindows()) gl->lassoMode = false;
-      return 2;
-    }
-    status_options_cb(nullptr, (void *)"S");
-    return 1;
-  }
-  // --- the windows
-  if(a == "window_front") {
-    window_cb(nullptr, (void *)"front");
-    return 1;
-  }
-  if(a == "options_general") {
-    general_options_cb(nullptr, nullptr);
-    return 1;
-  }
-  if(a == "options_geometry") {
-    geometry_options_cb(nullptr, nullptr);
-    return 1;
-  }
-  if(a == "options_mesh") {
-    mesh_options_cb(nullptr, nullptr);
-    return 1;
-  }
-  if(a == "options_solver") {
-    solver_options_cb(nullptr, nullptr);
-    return 1;
-  }
-  if(a == "options_post") {
-    post_options_cb(nullptr, nullptr);
-    return 1;
-  }
-  if(a == "options_view") {
-    view_options_cb(nullptr, (void *)-1);
-    return 1;
-  }
-  if(a == "plugins_view") {
-    if(PView::list.size()) {
-      if(options->view.index >= 0 &&
-         options->view.index < (int)PView::list.size())
-        plugins->show(options->view.index);
-      else
-        plugins->show(0);
-    }
-    return 1;
-  }
-  // the view callback reads Shift and Ctrl itself (-X, reset, sync)
-  if(a == "view_x" || a == "view_y" || a == "view_z") {
-    status_xyz1p_cb(nullptr, (void *)(a == "view_x" ? "x" :
-                                      a == "view_y" ? "y" :
-                                                      "z"));
-    return 1;
-  }
-  if(a == "view_1_1") {
-    status_xyz1p_cb(nullptr, (void *)"1:1");
-    return 1;
-  }
-  if(a == "view_3d") {
-    status_xyz1p_cb(nullptr, (void *)"3d");
-    return 1;
-  }
-  // --- the time steps and the views, on the arrows
-  if(a == "time_step_prev") {
-    status_play_manual(1, -CTX::instance()->post.animStep);
-    return 1;
-  }
-  if(a == "time_step_next") {
-    status_play_manual(1, CTX::instance()->post.animStep);
-    return 1;
-  }
-  if(a == "view_prev") {
-    status_play_manual(0, -CTX::instance()->post.animStep);
-    return 1;
-  }
-  if(a == "view_next") {
-    status_play_manual(0, CTX::instance()->post.animStep);
-    return 1;
-  }
+
+  static const std::map<std::string, std::function<int()>> actions = {
+    // reloading and running
+    {"project_reload",
+     [] {
+       onelab_reload_cb(nullptr, nullptr);
+       return 1;
+     }},
+    {"solver_run",
+     [] {
+       onelab_cb(nullptr, (void *)"compute");
+       return 1;
+     }},
+    // (only necessary with the system menu bar)
+    {"quit",
+     [] {
+       file_quit_cb(nullptr, nullptr);
+       return 1;
+     }},
+    {"watch",
+     [] {
+       file_watch_cb(nullptr, nullptr);
+       return 1;
+     }},
+    // the modules of the tree
+    {"module_geometry",
+     [] {
+       FlGui::instance()->toggleModule("Geometry");
+       return 1;
+     }},
+    {"module_mesh",
+     [] {
+       FlGui::instance()->toggleModule("Mesh");
+       return 1;
+     }},
+    {"module_solver",
+     [] {
+       FlGui::instance()->toggleModule("Solver");
+       return 1;
+     }},
+    {"module_post",
+     [] {
+       FlGui::instance()->toggleModule("Post-processing");
+       return 1;
+     }},
+    // a selection under way
+    {"selection_end",
+     [] {
+       setSelectionFlag(&sceneView::endSelection);
+       return 1;
+     }},
+    {"selection_undo",
+     [] {
+       setSelectionFlag(&sceneView::undoSelection);
+       return 1;
+     }},
+    {"selection_invert",
+     [] {
+       setSelectionFlag(&sceneView::invertSelection);
+       return 1;
+     }},
+    {"selection_quit",
+     [] {
+       setSelectionFlag(&sceneView::quitSelection);
+       return 1;
+     }},
+    // placing an elementary entity with the mouse
+    {"freeze_x",
+     [] {
+       freezeAxis(0, false);
+       return 1;
+     }},
+    {"freeze_y",
+     [] {
+       freezeAxis(1, false);
+       return 1;
+     }},
+    {"freeze_z",
+     [] {
+       freezeAxis(2, false);
+       return 1;
+     }},
+    {"freeze_but_x",
+     [] {
+       freezeAxis(0, true);
+       return 1;
+     }},
+    {"freeze_but_y",
+     [] {
+       freezeAxis(1, true);
+       return 1;
+     }},
+    {"freeze_but_z",
+     [] {
+       freezeAxis(2, true);
+       return 1;
+     }},
+    {"escape", escape},
+    // the windows
+    {"window_front",
+     [] {
+       window_cb(nullptr, (void *)"front");
+       return 1;
+     }},
+    {"options_solver",
+     [] {
+       solver_options_cb(nullptr, nullptr);
+       return 1;
+     }},
+    {"options_post",
+     [] {
+       post_options_cb(nullptr, nullptr);
+       return 1;
+     }},
+    {"plugins_view",
+     [] {
+       int view = FlGui::instance()->options->view.index;
+       if(PView::list.size())
+         FlGui::instance()->plugins->show(
+           (view >= 0 && view < (int)PView::list.size()) ? view : 0);
+       return 1;
+     }},
+    // the point of view (the callback reads Shift and Ctrl itself: the other
+    // side, reset, sync)
+    {"view_x",
+     [] {
+       status_xyz1p_cb(nullptr, (void *)"x");
+       return 1;
+     }},
+    {"view_y",
+     [] {
+       status_xyz1p_cb(nullptr, (void *)"y");
+       return 1;
+     }},
+    {"view_z",
+     [] {
+       status_xyz1p_cb(nullptr, (void *)"z");
+       return 1;
+     }},
+    {"view_1_1",
+     [] {
+       status_xyz1p_cb(nullptr, (void *)"1:1");
+       return 1;
+     }},
+    {"view_3d",
+     [] {
+       status_xyz1p_cb(nullptr, (void *)"3d");
+       return 1;
+     }},
+    // the time steps and the views, on the arrows
+    {"time_step_prev",
+     [] {
+       status_play_manual(1, -CTX::instance()->post.animStep);
+       return 1;
+     }},
+    {"time_step_next",
+     [] {
+       status_play_manual(1, CTX::instance()->post.animStep);
+       return 1;
+     }},
+    {"view_prev",
+     [] {
+       status_play_manual(0, -CTX::instance()->post.animStep);
+       return 1;
+     }},
+    {"view_next",
+     [] {
+       status_play_manual(0, CTX::instance()->post.animStep);
+       return 1;
+     }},
 #if defined(HAVE_POPPLER)
-  if(a == "page_prev") {
-    gmshPopplerWrapper::setCurrentPageDown();
-    return 2;
-  }
-  if(a == "page_next") {
-    gmshPopplerWrapper::setCurrentPageUp();
-    return 2;
-  }
+    {"page_prev",
+     [] {
+       gmshPopplerWrapper::setCurrentPageDown();
+       return 2;
+     }},
+    {"page_next",
+     [] {
+       gmshPopplerWrapper::setCurrentPageUp();
+       return 2;
+     }},
 #endif
-  // the display, the views and the time steps, as in a web page
+  };
+  auto it = actions.find(a);
+  if(it != actions.end()) return it->second();
+  // the display, the views and the time steps, as in the web page
   return RunSceneShortcut(a, 0, nullptr);
 }
 

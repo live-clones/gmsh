@@ -110,6 +110,18 @@ public:
   const std::vector<field> &fields() const { return _fields; }
   // the fields of all the operations
   static const std::vector<field> &allFields();
+  // What an operation is, read from its name: on the parts of the mesh
+  // ("Delete mesh curves", "Reverse mesh elements": remove is true for a
+  // deletion, what is "curves"), on a physical group ("Physical Curve",
+  // "Remove Physical Curve": what is "Curve"), a boolean ("BooleanUnion"), or
+  // none of these (on the entities of the script, the mesh constraints...)
+  enum operationKind { OnScript, OnMeshParts, OnPhysical, OnBoolean };
+  struct kind {
+    operationKind on;
+    bool remove;
+    std::string what;
+  };
+  static kind kindOf(const std::string &operation);
   // the type of the entities a value of the "Selection mode" field picks
   static int selectionMode(const std::string &mode);
   // the entities of the types drawn, to be picked

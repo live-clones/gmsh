@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <map>
 #include <cstring>
 #include "GmshConfig.h"
 #include "Shortcuts.h"
@@ -66,15 +67,15 @@ const std::vector<ShortcutEntry> &GetShortcuts()
     E("time_step_next", {KeyRight}, "Go to next time step"),
     E("view_prev", {KeyUp}, "Make previous view visible"),
     E("view_next", {KeyDown}, "Make next view visible"),
-    E("geometry_reload", {'0'}, "Reload geometry"),
+    E("Reload script", {'0'}, "Reload geometry"),
     E("project_reload", {'0', ModCommand}, "Reload full project"),
     E("project_reload", {'9'}, "Reload full project"), // for Bruno
-    E("mesh_1d", {'1'}, "Mesh lines"),
-    E("mesh_1d", {KeyF1}, "Mesh lines"),
-    E("mesh_2d", {'2'}, "Mesh surfaces"),
-    E("mesh_2d", {KeyF1 + 1}, "Mesh surfaces"),
-    E("mesh_3d", {'3'}, "Mesh volumes"),
-    E("mesh_3d", {KeyF1 + 2}, "Mesh volumes"),
+    E("Mesh 1D", {'1'}, "Mesh lines"),
+    E("Mesh 1D", {KeyF1}, "Mesh lines"),
+    E("Mesh 2D", {'2'}, "Mesh surfaces"),
+    E("Mesh 2D", {KeyF1 + 1}, "Mesh surfaces"),
+    E("Mesh 3D", {'3'}, "Mesh volumes"),
+    E("Mesh 3D", {KeyF1 + 2}, "Mesh volumes"),
     E("escape", {KeyEscape, AnyModifiers},
       "Leave full screen, cancel a lasso, or toggle mouse selection on/off"),
     E("selection_end", {'e'}, "End/accept selection in geometry creation mode",
@@ -99,13 +100,13 @@ const std::vector<ShortcutEntry> &GetShortcuts()
     E("freeze_z", {'z'},
       "Toggle z coordinate freeze in geometry creation mode"),
     E("window_front", {'a', ModShift}, "Bring all windows to front"),
-    E("options_geometry", {'g', ModShift}, "Show geometry options"),
-    E("options_mesh", {'m', ModShift}, "Show mesh options"),
-    E("options_general", {'o', ModShift}, "Show general options"),
+    E("Geometry options", {'g', ModShift}, "Show geometry options"),
+    E("Mesh options", {'m', ModShift}, "Show mesh options"),
+    E("General options", {'o', ModShift}, "Show general options"),
     E("options_post", {'p', ModShift}, "Show post-processing options"),
     E("options_solver", {'s', ModShift}, "Show solver options"),
     E("plugins_view", {'u', ModShift}, "Show post-processing view plugins"),
-    E("options_view", {'w', ModShift}, "Show post-processing view options"),
+    E("All view options", {'w', ModShift}, "Show post-processing view options"),
     E("freeze_but_x", {'x', ModShift},
       "Move only along x coordinate in geometry creation mode"),
     E("freeze_but_y", {'y', ModShift},
@@ -119,7 +120,7 @@ const std::vector<ShortcutEntry> &GetShortcuts()
     E("dock", {'d', ModCommand}, "Dock/undock current tool window"),
     E("dock_all", {'d', ModCommand | ModShift}, "Dock/undock all tool windows"),
     E("file_export", {'e', ModCommand}, "Export project"),
-    E("fullscreen", {'f', ModCommand}, "Enter full screen"),
+    E("Full screen", {'f', ModCommand}, "Enter full screen"),
     E("help_keys", {'h', ModCommand}, "Show keyboard and mouse usage", false,
       true),
     E("statistics", {'i', ModCommand}, "Show statistics window"),
@@ -130,7 +131,7 @@ const std::vector<ShortcutEntry> &GetShortcuts()
     E("file_open", {'o', ModCommand}, "Open project file"),
     E("quit", {'q', ModCommand}, "Quit"),
     E("file_rename", {'r', ModCommand}, "Rename project file"),
-    E("mesh_save", {'s', ModCommand}, "Save mesh in default format"),
+    E("Save mesh", {'s', ModCommand}, "Save mesh in default format"),
     E("solver_run", {'t', ModCommand}, "Run solver"),
     E("clipping", {'c', ModShift | ModCommand}, "Show clipping plane window"),
     E("help_options", {'h', ModShift | ModCommand},
@@ -157,7 +158,8 @@ const std::vector<ShortcutEntry> &GetShortcuts()
     E("view_scales", {'i', ModAlt},
       "Hide/show all post-processing view scales"),
     E("geometry_curves", {'l', ModAlt}, "Hide/show geometry lines"),
-    E("mesh_toggle", {'m', ModAlt}, "Toggle visibility of all mesh entities"),
+    E("Toggle mesh display", {'m', ModAlt},
+      "Toggle visibility of all mesh entities"),
     E("view_annotations", {'n', ModAlt},
       "Hide/show all post-processing view annotations"),
     E("projection", {'o', ModAlt},
@@ -259,28 +261,28 @@ static void forVisibleViews(double (*option)(int, int, double),
 
 int RunSceneShortcut(const std::string &a, unsigned mods, drawContext *ctx)
 {
+  // the actions that toggle one option
+  static const std::map<std::string, double (*)(int, int, double)> toggles = {
+    {"geometry_points", opt_geometry_points},
+    {"geometry_curves", opt_geometry_curves},
+    {"geometry_surfaces", opt_geometry_surfaces},
+    {"geometry_volumes", opt_geometry_volumes},
+    {"mesh_nodes", opt_mesh_nodes},
+    {"mesh_lines", opt_mesh_lines},
+    {"mesh_surface_edges", opt_mesh_surface_edges},
+    {"mesh_surface_faces", opt_mesh_surface_faces},
+    {"mesh_volume_edges", opt_mesh_volume_edges},
+    {"mesh_volume_faces", opt_mesh_volume_faces},
+    {"fast_redraw", opt_general_fast_redraw},
+    {"bounding_boxes", opt_general_draw_bounding_box},
+    {"small_axes", opt_general_small_axes},
+    {"projection", opt_general_orthographic}};
+  auto t = toggles.find(a);
+
   // --- the display
-  if(a == "geometry_points")
-    toggle(opt_geometry_points);
-  else if(a == "geometry_curves")
-    toggle(opt_geometry_curves);
-  else if(a == "geometry_surfaces")
-    toggle(opt_geometry_surfaces);
-  else if(a == "geometry_volumes")
-    toggle(opt_geometry_volumes);
-  else if(a == "mesh_nodes")
-    toggle(opt_mesh_nodes);
-  else if(a == "mesh_lines")
-    toggle(opt_mesh_lines);
-  else if(a == "mesh_surface_edges")
-    toggle(opt_mesh_surface_edges);
-  else if(a == "mesh_surface_faces")
-    toggle(opt_mesh_surface_faces);
-  else if(a == "mesh_volume_edges")
-    toggle(opt_mesh_volume_edges);
-  else if(a == "mesh_volume_faces")
-    toggle(opt_mesh_volume_faces);
-  else if(a == "mesh_toggle") {
+  if(t != toggles.end())
+    toggle(t->second);
+  else if(a == "Toggle mesh display") {
     // all of the mesh off, then back as it was
     static double (*const options[])(int, int, double) = {
       opt_mesh_nodes,         opt_mesh_lines,        opt_mesh_surface_edges,
@@ -294,10 +296,6 @@ int RunSceneShortcut(const std::string &a, unsigned mods, drawContext *ctx)
     off = !off;
     Msg::StatusBar(false, off ? "Mesh display OFF" : "Mesh display restored");
   }
-  else if(a == "fast_redraw")
-    toggle(opt_general_fast_redraw);
-  else if(a == "bounding_boxes")
-    toggle(opt_general_draw_bounding_box);
   else if(a == "color_scheme")
     opt_general_color_scheme(0, GMSH_SET | GMSH_GUI,
                              opt_general_color_scheme(0, GMSH_GET, 0) + 1);
@@ -317,13 +315,9 @@ int RunSceneShortcut(const std::string &a, unsigned mods, drawContext *ctx)
                     [](double v) { return (v >= 5) ? 0. : v + 1.; });
 #endif
   }
-  else if(a == "small_axes")
-    toggle(opt_general_small_axes);
   else if(a == "surface_type")
     opt_geometry_surface_type(0, GMSH_SET | GMSH_GUI,
                               opt_geometry_surface_type(0, GMSH_GET, 0) + 1);
-  else if(a == "projection")
-    toggle(opt_general_orthographic);
 #if defined(HAVE_POST)
   // --- the views
   else if(a == "view_scales")

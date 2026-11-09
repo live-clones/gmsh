@@ -41,6 +41,14 @@ void partition_partition_cb(Fl_Widget *widget, void *data);
 void partition_cancel_cb(Fl_Widget *widget, void *data);
 void partition_select_groups_cb(Fl_Widget *widget, void *data);
 
+// the weights of the elements for the load balancing, as laid out
+static const struct {
+  const char *label, *option;
+} weights[6] = {
+  {"Triangle", "PartitionTriWeight"},   {"Tetrahedron", "PartitionTetWeight"},
+  {"Prism", "PartitionPrismWeight"},    {"Quadrangle", "PartitionQuadWeight"},
+  {"Hexahedron", "PartitionHexWeight"}, {"Pyramid", "PartitionPyramidWeight"}};
+
 // the item of the Metis algorithm shown for an option value: Multithreaded
 // k-way (3) is shown as K-way without mt-metis
 static int metisItem(Fl_Choice *c, int algorithm)
@@ -64,12 +72,10 @@ void partitionWindow::write_all_options()
   CTX::instance()->mesh.metisEdgeMatching = choiceEdgeMatch->value() + 1;
   CTX::instance()->mesh.metisRefinementAlgorithm = choiceRefineAlg->value() + 1;
 
-  CTX::instance()->mesh.partitionTriWeight = (int)inputTriWeight->value();
-  CTX::instance()->mesh.partitionQuaWeight = (int)inputQuaWeight->value();
-  CTX::instance()->mesh.partitionTetWeight = (int)inputTetWeight->value();
-  CTX::instance()->mesh.partitionPriWeight = (int)inputPriWeight->value();
-  CTX::instance()->mesh.partitionPyrWeight = (int)inputPyrWeight->value();
-  CTX::instance()->mesh.partitionHexWeight = (int)inputHexWeight->value();
+  for(int i = 0; i < 6; i++) {
+    double v = (int)inputWeight[i]->value();
+    NumberOption(GMSH_SET, "Mesh", 0, weights[i].option, v);
+  }
 }
 
 void partitionWindow::read_all_options(bool defaults)
@@ -95,12 +101,7 @@ void partitionWindow::read_all_options(bool defaults)
   choiceEdgeMatch->value((int)value("MetisEdgeMatching") - 1);
   choiceRefineAlg->value((int)value("MetisRefinementAlgorithm") - 1);
 
-  inputTriWeight->value(value("PartitionTriWeight"));
-  inputQuaWeight->value(value("PartitionQuadWeight"));
-  inputTetWeight->value(value("PartitionTetWeight"));
-  inputPriWeight->value(value("PartitionPrismWeight"));
-  inputPyrWeight->value(value("PartitionPyramidWeight"));
-  inputHexWeight->value(value("PartitionHexWeight"));
+  for(int i = 0; i < 6; i++) inputWeight[i]->value(value(weights[i].option));
 }
 
 void partition_defaults_cb(Fl_Widget *widget, void *data)
@@ -240,9 +241,6 @@ partitionWindow::partitionWindow(int deltaFontSize)
       choicePartitioner = o;
       o->menu(partitionTypeMenu);
       o->callback((Fl_Callback *)partition_select_groups_cb, this);
-#if !defined(HAVE_METIS)
-      o->mode(1, FL_MENU_INACTIVE);
-#endif
       o->align(FL_ALIGN_RIGHT);
     }
     y += BH + WB;
@@ -340,68 +338,22 @@ partitionWindow::partitionWindow(int deltaFontSize)
       o->align(FL_ALIGN_RIGHT);
     }
     y += BH + WB;
-    // element weights - line 1, a row that widens as one
-    Fl_Group *row1 = new Fl_Group(WB, y, w - 2 * WB, BH);
-    {
-      Fl_Value_Input *const o =
-        new Fl_Value_Input(WB, y, BB / 2, BH, "Triangle");
-      inputTriWeight = o;
-      o->minimum(-1);
-      o->maximum(std::numeric_limits<int>::max());
-      if(CTX::instance()->inputScrolling) o->step(1);
-      o->align(FL_ALIGN_RIGHT);
+    // the element weights, in two rows of three that widen as one
+    for(int row = 0; row < 2; row++) {
+      Fl_Group *r = new Fl_Group(WB, y, w - 2 * WB, BH);
+      for(int col = 0; col < 3; col++) {
+        int i = 3 * row + col;
+        Fl_Value_Input *o = new Fl_Value_Input(
+          (col + 1) * WB + col * (w / 3 - WB), y, BB / 2, BH, weights[i].label);
+        inputWeight[i] = o;
+        o->minimum(-1);
+        o->maximum(std::numeric_limits<int>::max());
+        if(CTX::instance()->inputScrolling) o->step(1);
+        o->align(FL_ALIGN_RIGHT);
+      }
+      r->end();
+      y += BH + WB;
     }
-    {
-      Fl_Value_Input *const o =
-        new Fl_Value_Input(2 * WB + (w / 3 - WB), y, BB / 2, BH, "Tetrahedron");
-      inputTetWeight = o;
-      o->minimum(-1);
-      o->maximum(std::numeric_limits<int>::max());
-      if(CTX::instance()->inputScrolling) o->step(1);
-      o->align(FL_ALIGN_RIGHT);
-    }
-    {
-      Fl_Value_Input *const o =
-        new Fl_Value_Input(3 * WB + 2 * (w / 3 - WB), y, BB / 2, BH, "Prism");
-      inputPriWeight = o;
-      o->minimum(-1);
-      o->maximum(std::numeric_limits<int>::max());
-      if(CTX::instance()->inputScrolling) o->step(1);
-      o->align(FL_ALIGN_RIGHT);
-    }
-    row1->end();
-    y += BH + WB;
-    // element weights - line 2
-    Fl_Group *row2 = new Fl_Group(WB, y, w - 2 * WB, BH);
-    {
-      Fl_Value_Input *const o =
-        new Fl_Value_Input(WB, y, BB / 2, BH, "Quadrangle");
-      inputQuaWeight = o;
-      o->minimum(-1);
-      o->maximum(std::numeric_limits<int>::max());
-      if(CTX::instance()->inputScrolling) o->step(1);
-      o->align(FL_ALIGN_RIGHT);
-    }
-    {
-      Fl_Value_Input *const o =
-        new Fl_Value_Input(2 * WB + (w / 3 - WB), y, BB / 2, BH, "Hexahedron");
-      inputHexWeight = o;
-      o->minimum(-1);
-      o->maximum(std::numeric_limits<int>::max());
-      if(CTX::instance()->inputScrolling) o->step(1);
-      o->align(FL_ALIGN_RIGHT);
-    }
-    {
-      Fl_Value_Input *const o =
-        new Fl_Value_Input(3 * WB + 2 * (w / 3 - WB), y, BB / 2, BH, "Pyramid");
-      inputPyrWeight = o;
-      o->minimum(-1);
-      o->maximum(std::numeric_limits<int>::max());
-      if(CTX::instance()->inputScrolling) o->step(1);
-      o->align(FL_ALIGN_RIGHT);
-    }
-    row2->end();
-    y += BH + WB;
     g->end();
     g->hide();
   }

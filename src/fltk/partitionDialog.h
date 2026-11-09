@@ -33,12 +33,8 @@ public:
   Fl_Choice *choiceEdgeMatch;
   Fl_Choice *choiceRefineAlg;
   // weight
-  Fl_Value_Input *inputTriWeight;
-  Fl_Value_Input *inputQuaWeight;
-  Fl_Value_Input *inputTetWeight;
-  Fl_Value_Input *inputPriWeight;
-  Fl_Value_Input *inputPyrWeight;
-  Fl_Value_Input *inputHexWeight;
+  // the weights of the elements (see weights in partitionDialog.cpp)
+  Fl_Value_Input *inputWeight[6];
 
 public:
   partitionWindow(int deltaFontSize = 0);

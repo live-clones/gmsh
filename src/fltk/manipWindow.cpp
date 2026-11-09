@@ -74,17 +74,8 @@ manipWindow::manipWindow(int deltaFontSize)
     row->end();
   }
 
+  // (the ranges are set by update(), when the window is shown)
   for(int i = 0; i < 9; i++) {
-    if(i < 3) {
-      value[i]->minimum(0.);
-      value[i]->maximum(360.);
-      if(CTX::instance()->inputScrolling) value[i]->step(1.);
-    }
-    else if(i > 5) {
-      value[i]->minimum(0.1);
-      value[i]->maximum(100.);
-      if(CTX::instance()->inputScrolling) value[i]->step(0.1);
-    }
     value[i]->align(FL_ALIGN_RIGHT);
     value[i]->callback(manip_update_cb);
   }

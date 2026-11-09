@@ -531,47 +531,28 @@ static void visibility_browser_apply_cb(Fl_Widget *w, void *data)
   }
 }
 
+// "*" selects or deselects all the rows, "-" inverts the selection, and
+// "type", "number" or "name" sorts the rows (in reverse order the second time)
 static void visibility_sort_cb(Fl_Widget *w, void *data)
 {
-  const char *str = (const char *)data;
-  int val;
-  if(!strcmp(str, "type"))
-    val = 1;
-  else if(!strcmp(str, "number"))
-    val = 2;
-  else if(!strcmp(str, "name"))
-    val = 3;
-  else if(!strcmp(str, "-"))
-    val = -1;
-  else if(!strcmp(str, "+"))
-    val = -2;
-  else
-    val = 0;
-
-  if(val == 0) { // select or deselect everything
-    int selectall = 0;
-    for(int i = 0; i < FlGui::instance()->visibility->browser->size(); i++)
-      if(!FlGui::instance()->visibility->browser->selected(i + 1)) {
-        selectall = 1;
-        break;
-      }
-    if(selectall)
-      for(int i = 0; i < FlGui::instance()->visibility->browser->size(); i++)
-        FlGui::instance()->visibility->browser->select(i + 1);
+  std::string str((const char *)data);
+  Fl_Browser *b = FlGui::instance()->visibility->browser;
+  if(str == "*") {
+    bool all = true;
+    for(int i = 1; i <= b->size(); i++)
+      if(!b->selected(i)) all = false;
+    if(all)
+      b->deselect();
     else
-      FlGui::instance()->visibility->browser->deselect();
+      for(int i = 1; i <= b->size(); i++) b->select(i);
   }
-  else if(val == -1) { // invert the selection
-    int *state = new int[FlGui::instance()->visibility->browser->size()];
-    for(int i = 0; i < FlGui::instance()->visibility->browser->size(); i++)
-      state[i] = FlGui::instance()->visibility->browser->selected(i + 1);
-    FlGui::instance()->visibility->browser->deselect();
-    for(int i = 0; i < FlGui::instance()->visibility->browser->size(); i++)
-      if(!state[i]) FlGui::instance()->visibility->browser->select(i + 1);
-    delete[] state;
+  else if(str == "-") {
+    for(int i = 1; i <= b->size(); i++) b->select(i, !b->selected(i));
   }
-  else { // set new sorting mode
-    VisibilityList::instance()->setSortMode(val);
+  else {
+    VisibilityList::instance()->setSortMode(str == "type"   ? 1 :
+                                            str == "number" ? 2 :
+                                                              3);
     visibility_cb(nullptr, (void *)"list_only");
   }
 }

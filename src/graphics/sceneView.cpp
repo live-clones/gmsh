@@ -51,12 +51,8 @@ bool sceneView::_select(int type, bool multiple, bool mesh, bool post, int x,
                         std::vector<SPoint2> &points,
                         std::vector<PView *> &views, bool through)
 {
-  // test: completely deactivate GL_SELECT passes when mouse selection is off,
-  // to see if unaccelerated (pure CPU) selection buffer is the reason for slow
-  // graphics performance on some Windows machines (cf. #2567, #2320, #2211,
-  // #1358, #1313). The hypothesis is that some recent opengl drivers don't
-  // support GL_SELECT mode on GPU anymore, and revert to the CPU for rendering
-  // the selection buffer, which would kill interactive performance.
+  // no picking passes when mouse selection is off (General.MouseSelection),
+  // which is how users avoid their cost
   if(!CTX::instance()->mouseSelection) return false;
   // not while a frame is being drawn (a host checking its events in the
   // middle of one can deliver a click there): the passes would mix

@@ -706,9 +706,9 @@ static std::string dialogValue(const std::string &operation,
 // the dialog is shown again, with the new group. False if the selection stops
 static bool physicalGroupChanged(const selectionDriver &d)
 {
-  const std::string &op = d.operation();
-  std::string what = op.substr(op.rfind(' ') + 1);
-  bool remove = (op[0] == 'R');
+  selectionDriver::kind k = selectionDriver::kindOf(d.operation());
+  const std::string &what = k.what;
+  bool remove = k.remove;
   onelab_cb(nullptr, (void *)"check");
   if(!FlGui::available()) return false;
   std::vector<std::string> param;
@@ -741,7 +741,7 @@ static void runSelection(const std::string &operation)
     if(d.step(ib, g->selectedVertices, g->selectedEdges, g->selectedFaces,
               g->selectedRegions, g->selectedElements)) {
       g->resetVisibility();
-      if(operation.find("Physical ") != std::string::npos &&
+      if(selectionDriver::kindOf(operation).on == selectionDriver::OnPhysical &&
          !physicalGroupChanged(d))
         break;
     }
@@ -827,6 +827,8 @@ static void afterMeshOperation()
 // no label carries a mnemonic (an "&" letter): the titles of the menus would
 // take Alt+f, t, w and h from the shortcuts of the table (see Shortcuts.h)
 // before they are seen, and the macOS system menu bar wants none
+static void help_current_options_cb(Fl_Widget *w, void *data);
+
 static Fl_Menu_Item bar_table[] = {
   {"File", 0, nullptr, nullptr, FL_SUBMENU},
     {"New...",     fltkShortcut("file_new"), (Fl_Callback *)file_new_cb, nullptr},
@@ -854,7 +856,7 @@ static Fl_Menu_Item bar_table[] = {
       {"Clear",     0, (Fl_Callback *)file_remote_cb, (void*)"clear"},
       {"Stop",      0, (Fl_Callback *)file_remote_cb, (void*)"stop"},
       {nullptr},
-    {"Save Mesh",  fltkShortcut("mesh_save"), (Fl_Callback *)mesh_save_cb, nullptr},
+    {"Save Mesh",  fltkShortcut("Save mesh"), (Fl_Callback *)mesh_save_cb, nullptr},
     {"Save Model Options", fltkShortcut("options_save"), (Fl_Callback *)file_options_save_cb, (void*)"file"},
     {"Save Options As Default", fltkShortcut("options_save_default"), (Fl_Callback *)file_options_save_cb, (void*)"default", FL_MENU_DIVIDER},
     {"Export...",  fltkShortcut("file_export"), (Fl_Callback *)file_export_cb, nullptr, FL_MENU_DIVIDER},
@@ -882,7 +884,7 @@ static Fl_Menu_Item bar_table[] = {
     {"Unsplit",            0, (Fl_Callback *)file_window_cb, (void*)"split_u", FL_MENU_DIVIDER},
     {"Minimize",           fltkShortcut("minimize"), (Fl_Callback *)window_cb, (void*)"minimize"},
     {"Zoom",               0, (Fl_Callback *)window_cb, (void*)"zoom"},
-    {"Enter Full Screen",  fltkShortcut("fullscreen"), (Fl_Callback *)window_cb, (void*)"fullscreen", FL_MENU_DIVIDER},
+    {"Enter Full Screen",  fltkShortcut("Full screen"), (Fl_Callback *)window_cb, (void*)"fullscreen", FL_MENU_DIVIDER},
     {"Show/Hide Menu",     fltkShortcut("menu_show_hide"), (Fl_Callback *)show_hide_menu_cb, nullptr},
     {"Attach/Detach Menu", 0, (Fl_Callback *)attach_detach_menu_cb, nullptr},
     {"Dock/Undock Tool Window", fltkShortcut("dock"), (Fl_Callback *)dock_tool_cb, nullptr},
@@ -892,7 +894,7 @@ static Fl_Menu_Item bar_table[] = {
   {"Help", 0, nullptr, nullptr, FL_SUBMENU},
     {"Online Documentation", 0, (Fl_Callback *)help_online_cb, nullptr, FL_MENU_DIVIDER},
     {"Keyboard and Mouse Usage",  fltkShortcut("help_keys"), (Fl_Callback *)help_basic_cb, nullptr, FL_MENU_DIVIDER},
-    {"Current Options and Workspace", fltkShortcut("help_options"), (Fl_Callback *)status_options_cb, (void*)"?", 0},
+    {"Current Options and Workspace", fltkShortcut("help_options"), (Fl_Callback *)help_current_options_cb, nullptr, 0},
     {"Restore all Options to Default Settings", 0, (Fl_Callback *)options_restore_defaults_cb, nullptr, FL_MENU_DIVIDER},
     {"About Gmsh",           0, (Fl_Callback *)help_about_cb, nullptr},
     {nullptr},
@@ -1029,28 +1031,33 @@ static void model_switch_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
-// Query and measure both wait for a click: starting one stops the other,
-// which is only over once its loop has returned, so the one taking over is
-// started from the event loop rather than from here.
-static int _pendingMode = 0; // 1: query, 2: measure
+// The two modes that wait for clicks on the model, until asked to stop (their
+// button again, Escape, or 'q'):
+// - in query mode, every click says what the model holds where it hit: the
+//   entity, the mesh element and the node there, and the value of every
+//   visible view. A click replaces what the queries before it left on the
+//   picture, a Ctrl+click adds to it. (The first query of a large mesh or view
+//   builds a search structure that the ones after it reuse.)
+// - in measure mode, two clicks give the distance between the points they hit,
+//   drawn on the picture and printed.
+// Starting one mode stops the other, which is only over once its loop has
+// returned, so the one taking over is started from the event loop rather than
+// from the callback.
+enum clickMode { NoClickMode, QueryMode, MeasureMode };
+static int _clickMode = NoClickMode, _pendingMode = NoClickMode;
+
+bool queryMode() { return _clickMode == QueryMode; }
+
+bool measureMode() { return _clickMode == MeasureMode; }
+
+static void runClickMode(int mode);
 
 static void _startPendingMode(void *)
 {
-  int what = _pendingMode;
-  _pendingMode = 0;
-  if(what == 1) status_query_cb(nullptr, nullptr);
-  else if(what == 2) status_measure_cb(nullptr, nullptr);
+  int mode = _pendingMode;
+  _pendingMode = NoClickMode;
+  if(mode != NoClickMode) runClickMode(mode);
 }
-
-// Query mode: every click says what the model holds where it hit - the
-// entity, the mesh element and the node there, and the value of every visible
-// view. A click replaces what the queries before it left on the picture, a
-// Ctrl+click adds to it. It stays on until it is asked to stop (the button
-// again or 'q'), as the first query of a large mesh or view builds a search
-// structure that the ones after it reuse.
-static bool _queryMode = false;
-
-bool queryMode() { return _queryMode; }
 
 void updateModeButtons()
 {
@@ -1070,50 +1077,56 @@ void updateModeButtons()
   }
 }
 
-void status_query_cb(Fl_Widget *w, void *data)
+static void runClickMode(int mode)
 {
   if(!FlGui::available()) return;
 
-  if(_queryMode) { // asked to stop while a query is waiting for a click
+  if(_clickMode != NoClickMode) {
+    // asked to stop the mode, or to take over from the other when it is over
+    if(_clickMode != mode) _pendingMode = mode;
     for(openglWindow *gl : FlGui::instance()->openglWindows())
       gl->quitSelection = 1;
     return;
   }
-  if(measureMode()) { // stop the measurement, and take over when it is over
-    _pendingMode = 1;
-    status_measure_cb(nullptr, nullptr);
-    return;
-  }
 
-  _queryMode = true;
+  _clickMode = mode;
   updateModeButtons();
+  // a click is a pick: it needs the mouse selection the "S" button switches,
+  // and the mesh elements for a query (a measurement only needs where the
+  // click hits)
   int old = CTX::instance()->pickElements;
-  CTX::instance()->pickElements = 1;
-  // a query is a pick: it needs the mouse selection the "S" button switches
+  if(mode == QueryMode) CTX::instance()->pickElements = 1;
   if(!CTX::instance()->mouseSelection)
     opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 1);
 
   while(1) {
     if(!FlGui::available()) break;
-    Msg::StatusGl("Click to query the model, Ctrl+click to add a query\n"
-                  "[Press 'q' to abort]");
+    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
+    if(mode == QueryMode)
+      Msg::StatusGl("Click to query the model, Ctrl+click to add a query\n"
+                    "[Press 'q' to abort]");
+    else
+      Msg::StatusGl(gl && gl->measuring() ?
+                      "Click the second point\n[Press 'q' to abort]" :
+                      "Click the first point\n[Press 'q' to abort]");
     char ib = FlGui::instance()->selectEntity(ENT_ALL);
     if(!FlGui::available()) break;
     if(ib == 'q') break;
     if(ib != 'l') continue;
 
-    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
+    gl = FlGui::instance()->getCurrentOpenglWindow();
     if(!gl) break;
     FlGui *g = FlGui::instance();
-    if(!gl->queryClick(g->selectedVertices, g->selectedEdges, g->selectedFaces,
-                       g->selectedRegions, g->selectedElements,
-                       g->selectedViews))
-      continue;
-    drawContext::global()->draw();
+    bool done = (mode == QueryMode) ?
+                  gl->queryClick(g->selectedVertices, g->selectedEdges,
+                                 g->selectedFaces, g->selectedRegions,
+                                 g->selectedElements, g->selectedViews) :
+                  gl->measureClick();
+    if(done) drawContext::global()->draw();
   }
 
-  CTX::instance()->pickElements = old;
-  _queryMode = false;
+  if(mode == QueryMode) CTX::instance()->pickElements = old;
+  _clickMode = NoClickMode;
   updateModeButtons();
   if(FlGui::available()) {
     GModel::current()->setSelection(0);
@@ -1124,150 +1137,88 @@ void status_query_cb(Fl_Widget *w, void *data)
     drawContext::global()->draw();
     Msg::StatusGl("");
   }
-  if(_pendingMode) Fl::add_timeout(0., _startPendingMode);
+  if(_pendingMode != NoClickMode) Fl::add_timeout(0., _startPendingMode);
 }
 
-// Measure mode: two clicks on the model, and the distance between the points
-// they hit is drawn on the picture and printed. It stays on until it is asked
-// to stop (the button again, Escape, or 'q'), so that distances can be taken
-// one after the other.
-static bool _measureMode = false;
+void status_query_cb(Fl_Widget *w, void *data) { runClickMode(QueryMode); }
 
-bool measureMode() { return _measureMode; }
+void status_measure_cb(Fl_Widget *w, void *data) { runClickMode(MeasureMode); }
 
-void status_measure_cb(Fl_Widget *w, void *data)
+// the menu of the models, to pick the current one
+static void status_model_cb(Fl_Widget *w, void *data)
 {
-  if(!FlGui::available()) return;
+  std::vector<char *> tofree;
+  std::vector<Fl_Menu_Item> menu;
+  int selected = 0;
+  for(std::size_t i = 0; i < GModel::list.size(); i++) {
+    std::ostringstream sstream;
+    sstream << "Model " << i;
+    if(GModel::list[i]->getName().size())
+      sstream << " - " << GModel::list[i]->getName();
+    sstream << " ";
+    char *str = strdup(sstream.str().c_str());
+    Fl_Menu_Item menuItem = {str, 0, model_switch_cb, (void *)(intptr_t)i,
+                             FL_MENU_RADIO};
+    if(GModel::list[i] == GModel::current()) {
+      selected = i;
+      menuItem.flags |= FL_MENU_VALUE;
+    }
+    menu.push_back(menuItem);
+    tofree.push_back(str);
+  }
+  Fl_Menu_Item it = {nullptr};
+  menu.push_back(it);
+  Fl_Menu_Item *m = (Fl_Menu_Item *)(&menu[0])->popup(
+    Fl::event_x(), Fl::event_y(), nullptr, &menu[selected], gmshPopupStyle());
+  if(m) m->do_callback(nullptr);
+  for(std::size_t i = 0; i < tofree.size(); i++) free(tofree[i]);
+  drawContext::global()->draw();
+}
 
-  if(_measureMode) { // asked to stop while a measurement waits for a click
+// the window of the current options and the workspace
+static void help_current_options_cb(Fl_Widget *w, void *data)
+{
+  help_options_cb(nullptr, nullptr);
+  centerWindow(FlGui::instance()->help->options);
+  FlGui::instance()->help->options->show();
+}
+
+void quick_access_cb(Fl_Widget *w, void *data)
+{
+  // the menu (see Actions.cpp), opened on the item picked last
+  static Fl_Menu_Button *menu = nullptr;
+  static const void *last = nullptr;
+  if(!menu) {
+    Fl_Group::current(nullptr);
+    menu = new Fl_Menu_Button(0, 0, 0, 0);
+  }
+  menu->clear();
+  addActionItems(menu, GetActionMenu("Quick access"), -1);
+  // (the display of the mesh toggled, at first)
+  const Fl_Menu_Item *initial = nullptr;
+  for(int i = 0; i < menu->size(); i++) {
+    const actionItem *item = (const actionItem *)menu->menu()[i].user_data();
+    if(item && (last ? item == last : item->what == "Toggle mesh display"))
+      initial = &menu->menu()[i];
+  }
+  const Fl_Menu_Item *picked = menu->menu()->popup(
+    Fl::event_x(), Fl::event_y(), nullptr, initial, gmshPopupStyle());
+  if(picked && picked->callback()) {
+    last = picked->user_data();
+    picked->do_callback(menu, picked->user_data());
+  }
+  drawContext::global()->draw();
+}
+
+void mouse_selection_cb(Fl_Widget *w, void *data)
+{
+  if(CTX::instance()->mouseSelection) {
+    opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 0);
     for(openglWindow *gl : FlGui::instance()->openglWindows())
-      gl->quitSelection = 1;
-    return;
+      gl->cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
   }
-  if(queryMode()) { // stop the query, and take over when it is over
-    _pendingMode = 2;
-    status_query_cb(nullptr, nullptr);
-    return;
-  }
-
-  _measureMode = true;
-  updateModeButtons();
-  // a measurement is a pick: it needs the mouse selection the "S" button
-  // switches, but not the mesh elements, only where the click hits
-  if(!CTX::instance()->mouseSelection)
+  else
     opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 1);
-
-  while(1) {
-    if(!FlGui::available()) break;
-    openglWindow *current = FlGui::instance()->getCurrentOpenglWindow();
-    Msg::StatusGl(current && current->measuring() ?
-                    "Click the second point\n[Press 'q' to abort]" :
-                    "Click the first point\n[Press 'q' to abort]");
-    char ib = FlGui::instance()->selectEntity(ENT_ALL);
-    if(!FlGui::available()) break;
-    if(ib == 'q') break;
-    if(ib != 'l') continue;
-
-    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
-    if(!gl) break;
-    if(!gl->measureClick()) continue;
-    drawContext::global()->draw();
-  }
-
-  _measureMode = false;
-  updateModeButtons();
-  if(FlGui::available()) {
-    GModel::current()->setSelection(0);
-    for(openglWindow *gl : FlGui::instance()->openglWindows()) {
-      gl->getDrawContext()->clearMarks();
-      gl->pinTooltip("");
-    }
-    drawContext::global()->draw();
-    Msg::StatusGl("");
-  }
-  if(_pendingMode) Fl::add_timeout(0., _startPendingMode);
-}
-
-void status_options_cb(Fl_Widget *w, void *data)
-{
-  if(!data) return;
-  std::string what((const char *)data);
-
-  if(what == "model") { // model selection
-    std::vector<char *> tofree;
-    std::vector<Fl_Menu_Item> menu;
-    int selected = 0;
-    for(std::size_t i = 0; i < GModel::list.size(); i++) {
-      std::ostringstream sstream;
-      sstream << "Model " << i;
-      if(GModel::list[i]->getName().size())
-        sstream << " - " << GModel::list[i]->getName();
-      sstream << " ";
-      char *str = strdup(sstream.str().c_str());
-      Fl_Menu_Item menuItem = {str, 0, model_switch_cb, (void *)(intptr_t)i,
-                               FL_MENU_RADIO};
-      if(GModel::list[i] == GModel::current()) {
-        selected = i;
-        menuItem.flags |= FL_MENU_VALUE;
-      }
-      menu.push_back(menuItem);
-      tofree.push_back(str);
-    }
-    Fl_Menu_Item it = {nullptr};
-    menu.push_back(it);
-    Fl_Menu_Item *m = (Fl_Menu_Item *)(&menu[0])->popup(
-      Fl::event_x(), Fl::event_y(), nullptr, &menu[selected], gmshPopupStyle());
-    if(m) m->do_callback(nullptr);
-    for(std::size_t i = 0; i < tofree.size(); i++) free(tofree[i]);
-    drawContext::global()->draw();
-  }
-  else if(what == "menu") { // show or hide the menu
-    show_hide_menu_cb(nullptr, nullptr);
-  }
-  else if(what == "?") { // display options
-    help_options_cb(nullptr, nullptr);
-    centerWindow(FlGui::instance()->help->options);
-    FlGui::instance()->help->options->show();
-  }
-  else if(what == "p") { // toggle projection mode
-    opt_general_orthographic(0, GMSH_SET | GMSH_GUI,
-                             !opt_general_orthographic(0, GMSH_GET, 0));
-    drawContext::global()->draw();
-  }
-  else if(what == "quick_access") { // quick access menu
-    // (see Actions.cpp), opened on the item picked last
-    static Fl_Menu_Button *menu = nullptr;
-    static const void *last = nullptr;
-    if(!menu) {
-      Fl_Group::current(nullptr);
-      menu = new Fl_Menu_Button(0, 0, 0, 0);
-    }
-    menu->clear();
-    addActionItems(menu, GetActionMenu("Quick access"), -1);
-    // (the display of the mesh toggled, at first)
-    const Fl_Menu_Item *initial = nullptr;
-    for(int i = 0; i < menu->size(); i++) {
-      const actionItem *item = (const actionItem *)menu->menu()[i].user_data();
-      if(item && (last ? item == last : item->what == "Toggle mesh display"))
-        initial = &menu->menu()[i];
-    }
-    const Fl_Menu_Item *picked = menu->menu()->popup(
-      Fl::event_x(), Fl::event_y(), nullptr, initial, gmshPopupStyle());
-    if(picked && picked->callback()) {
-      last = picked->user_data();
-      picked->do_callback(menu, picked->user_data());
-    }
-    drawContext::global()->draw();
-  }
-  else if(what == "S") { // mouse selection
-    if(CTX::instance()->mouseSelection) {
-      opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 0);
-      for(openglWindow *gl : FlGui::instance()->openglWindows())
-        gl->cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
-    }
-    else
-      opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 1);
-  }
 }
 
 void status_play_manual(int time, int incr, bool redraw)
@@ -1637,6 +1588,77 @@ public:
   }
 };
 
+// The buttons of the status bar, in their order (see statusButtonId): the
+// label (a symbol, or text), the icon of the gmsh theme, the callback and its
+// data, the tooltip and the shortcut action whose keys it shows, the space
+// before, and whether the button is wide
+struct statusButton {
+  const char *label, *icon;
+  Fl_Callback *callback;
+  const char *data, *tooltip, *shortcut;
+  int gap;
+  bool wide;
+};
+
+static const statusButton *statusButtons()
+{
+  static const statusButton buttons[StatusButtons] = {
+    {"@-1gmsh_sidebar", "sidebar", show_hide_menu_cb, nullptr,
+     "Show or hide the menu", "menu_show_hide", 0, false},
+    {"@-1gmsh_models", "models", status_model_cb, nullptr,
+     "Set current (active) model", nullptr, 0, false},
+    {"O", "quick", quick_access_cb, nullptr,
+     "Open quick access menu (also available by double-clicking in the "
+     "graphic window)",
+     nullptr, 0, false},
+    {"X", nullptr, status_xyz1p_cb, "x", "Set +X or -X (Shift) view", "view_x",
+     0, false},
+    {"Y", nullptr, status_xyz1p_cb, "y", "Set +Y or -Y (Shift) view", "view_y",
+     0, false},
+    {"Z", nullptr, status_xyz1p_cb, "z", "Set +Z or -Z (Shift) view", "view_z",
+     0, false},
+    {"@-1gmsh_cube", "cube", status_xyz1p_cb, "3d",
+     "Set isometric 3D view, Z up, or from the opposite side (Shift)",
+     "view_3d", 0, false},
+    {"@-1gmsh_rotate", "rotate", status_xyz1p_cb, "r",
+     "Rotate +90 or -90 (Shift) degrees, or sync rotations (Ctrl)", nullptr, 0,
+     false},
+    {"1:1", nullptr, status_xyz1p_cb, "1:1",
+     "Fit the model in the window, sync scale between viewports (Ctrl), or "
+     "reset bounding box around visible entities (Shift)",
+     "view_1_1", 0, true},
+    {"S", nullptr, mouse_selection_cb, nullptr, "Toggle mouse selection ON/OFF",
+     "escape", 0, false},
+    {"@-1gmsh_query", "query", status_query_cb, nullptr,
+     "Query the model where you click ('q' to stop)", nullptr, 0, false},
+    {"@-1gmsh_measure", "measure", status_measure_cb, nullptr,
+     "Measure the distance between two points you click ('q' to stop)", nullptr,
+     0, false},
+    {"@-1gmsh_rewind", "rewind", status_rewind_cb, nullptr, "Rewind animation",
+     nullptr, 4, false},
+    {"@-1gmsh_back", "back", status_stepbackward_cb, nullptr, "Step backward",
+     "time_step_prev", 0, false},
+    {"@-1gmsh_play", "play", status_play_cb, nullptr, "Play/pause animation",
+     nullptr, 0, false},
+    {"@-1gmsh_forward", "forward", status_stepforward_cb, nullptr,
+     "Step forward", "time_step_next", 0, false},
+  };
+  return buttons;
+}
+
+// the tooltip of a button, with the keys of its shortcut
+static std::string statusTooltip(const statusButton &b)
+{
+  std::string tip = b.tooltip;
+  if(!b.shortcut) return tip;
+  std::string keys;
+  // (without "with any modifier", a detail of how the key is matched)
+  for(const Shortcut &s : GetShortcutsOf(b.shortcut))
+    keys += (keys.empty() ? "" : ", ") +
+            Shortcut(s.key, s.mods & ~AnyModifiers).label();
+  return keys.empty() ? tip : tip + " (" + keys + ")";
+}
+
 graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   : _autoScrollMessages(true), _pushX(0), _pushY(0), _pushMenuWidth(0),
     _pushMessageHeight(0)
@@ -1837,117 +1859,21 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
 
   int x = 2;
   int sht = sh - 4; // leave a 2 pixel border at the bottom
-
-  _butt[14] =
-    new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_sidebar");
-  _butt[14]->callback(status_options_cb, (void *)"menu");
-  static std::string menuTip = "Show or hide the menu (" +
-                               GetShortcutsOf("menu_show_hide")[0].label() +
-                               ")";
-  _butt[14]->tooltip(menuTip.c_str());
-  x += sw;
-  _butt[5] =
-    new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_models");
-  _butt[5]->callback(status_options_cb, (void *)"model");
-  _butt[5]->tooltip("Set current (active) model");
-  x += sw;
-  _butt[8] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "O");
-  _butt[8]->callback(status_options_cb, (void *)"quick_access");
-  _butt[8]->tooltip("Open quick access menu (also available by double-clicking "
-                    "in the graphic window)");
-  x += sw;
-  _butt[0] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "X");
-  _butt[0]->callback(status_xyz1p_cb, (void *)"x");
-  _butt[0]->tooltip("Set +X or -X (Shift) view (Alt+x or Alt+Shift+x)");
-  x += sw;
-  _butt[1] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "Y");
-  _butt[1]->callback(status_xyz1p_cb, (void *)"y");
-  _butt[1]->tooltip("Set +Y or -Y (Shift) view (Alt+y or Alt+Shift+y)");
-  x += sw;
-  _butt[2] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "Z");
-  _butt[2]->callback(status_xyz1p_cb, (void *)"z");
-  _butt[2]->tooltip("Set +Z or -Z (Shift) view (Alt+z or Alt+Shift+z)");
-  x += sw;
-  _butt[15] =
-    new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_cube");
-  _butt[15]->callback(status_xyz1p_cb, (void *)"3d");
-  _butt[15]->tooltip("Set isometric 3D view, Z up, or from the opposite side "
-                     "(Shift) (Alt+3 or Alt+Shift+3)");
-  x += sw;
-  _butt[4] =
-    new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_rotate");
-  _butt[4]->callback(status_xyz1p_cb, (void *)"r");
-  _butt[4]->tooltip(
-    "Rotate +90 or -90 (Shift) degrees, or sync rotations (Ctrl)");
-  x += sw;
-  _butt[3] = new Fl_Button(x, mh + glheight + mheight + 2, 2 * FL_NORMAL_SIZE,
-                           sht, "1:1");
-  _butt[3]->callback(status_xyz1p_cb, (void *)"1:1");
-  _butt[3]->tooltip("Fit the model in the window, sync scale between viewports "
-                    "(Ctrl), or reset bounding box around visible entities "
-                    "(Shift) (Alt+1, Alt+Ctrl+1, Alt+Shift+1)");
-  x += 1.75 * FL_NORMAL_SIZE;
-  _butt[9] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "S");
-  _butt[9]->callback(status_options_cb, (void *)"S");
-  _butt[9]->tooltip("Toggle mouse selection ON/OFF (Escape)");
-  x += sw;
-  _butt[12] =
-    new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_query");
-  _butt[12]->callback(status_query_cb);
-  _butt[12]->tooltip("Query the model where you click ('q' to stop)");
-  x += sw;
-  _butt[13] =
-    new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_measure");
-  _butt[13]->callback(status_measure_cb);
-  _butt[13]->tooltip("Measure the distance between two points you click "
-                     "('q' to stop)");
-  x += sw;
-  x += 4;
-  _butt[6] =
-    new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_rewind");
-  _butt[6]->callback(status_rewind_cb);
-  _butt[6]->tooltip("Rewind animation");
-  _butt[6]->deactivate();
-  x += sw;
-  _butt[10] =
-    new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_back");
-  _butt[10]->callback(status_stepbackward_cb);
-  _butt[10]->tooltip("Step backward (Left arrow)");
-  _butt[10]->deactivate();
-  x += sw;
-  _butt[7] =
-    new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_play");
-  _butt[7]->callback(status_play_cb);
-  _butt[7]->tooltip("Play/pause animation");
-  _butt[7]->deactivate();
-  x += sw;
-  _butt[11] =
-    new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_forward");
-  _butt[11]->callback(status_stepforward_cb);
-  _butt[11]->tooltip("Step forward (Right arrow)");
-  _butt[11]->deactivate();
-  x += sw;
-
-  for(int i = 0; i < 16; i++) {
+  for(int i = 0; i < StatusButtons; i++) {
+    const statusButton &b = statusButtons()[i];
+    x += b.gap;
+    int bw = b.wide ? 2 * FL_NORMAL_SIZE : sw;
+    _butt[i] = new Fl_Button(x, mh + glheight + mheight + 2, bw, sht, b.label);
+    _butt[i]->callback(b.callback, (void *)b.data);
+    _butt[i]->copy_tooltip(statusTooltip(b).c_str());
     _butt[i]->box(FL_FLAT_BOX);
     _butt[i]->selection_color(FL_BACKGROUND2_COLOR);
     _butt[i]->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
+    if(gmshScheme() && b.icon) gmshIcon(_butt[i], b.icon, _iconSize);
+    // (the animation buttons wait for views with time steps)
+    if(i >= StatusRewind) _butt[i]->deactivate();
+    x += b.wide ? (int)(1.75 * FL_NORMAL_SIZE) : sw;
   }
-  if(gmshScheme()) {
-    // the icons in place of the symbols
-    gmshIcon(_butt[14], "sidebar", _iconSize);
-    gmshIcon(_butt[5], "models", _iconSize);
-    gmshIcon(_butt[8], "quick", _iconSize);
-    gmshIcon(_butt[15], "cube", _iconSize);
-    gmshIcon(_butt[4], "rotate", _iconSize);
-    gmshIcon(_butt[12], "query", _iconSize);
-    gmshIcon(_butt[13], "measure", _iconSize);
-    gmshIcon(_butt[6], "rewind", _iconSize);
-    gmshIcon(_butt[10], "back", _iconSize);
-    gmshIcon(_butt[7], "play", _iconSize);
-    gmshIcon(_butt[11], "forward", _iconSize);
-  }
-
   x += 4;
 
   // the least width of the window is what the status bar buttons take, and
@@ -2244,19 +2170,20 @@ bool graphicWindow::split(openglWindow *g, char how, double ratio)
 
 void graphicWindow::setAnimButtons(int mode)
 {
+  Fl_Button *b = _butt[StatusPlay];
   if(mode) {
-    _butt[7]->callback(status_play_cb);
+    b->callback(status_play_cb);
     if(gmshScheme())
-      gmshIcon(_butt[7], "play", _iconSize);
+      gmshIcon(b, "play", _iconSize);
     else
-      _butt[7]->label("@-1gmsh_play");
+      b->label("@-1gmsh_play");
   }
   else {
-    _butt[7]->callback(status_pause_cb);
+    b->callback(status_pause_cb);
     if(gmshScheme())
-      gmshIcon(_butt[7], "pause", _iconSize);
+      gmshIcon(b, "pause", _iconSize);
     else
-      _butt[7]->label("@-1gmsh_pause");
+      b->label("@-1gmsh_pause");
   }
 }
 
@@ -2272,17 +2199,11 @@ void graphicWindow::checkAnimButtons()
       }
     }
   }
-  if(play) {
-    _butt[6]->activate();
-    _butt[7]->activate();
-    _butt[10]->activate();
-    _butt[11]->activate();
-  }
-  else {
-    _butt[6]->deactivate();
-    _butt[7]->deactivate();
-    _butt[10]->deactivate();
-    _butt[11]->deactivate();
+  for(int i = StatusRewind; i <= StatusForward; i++) {
+    if(play)
+      _butt[i]->activate();
+    else
+      _butt[i]->deactivate();
   }
 }
 
@@ -2800,9 +2721,10 @@ void graphicWindow::fillRecentHistoryMenu()
 static void runOperation(const std::string &op)
 {
   FlGui *g = FlGui::instance();
+  selectionDriver::kind k = selectionDriver::kindOf(op);
   // the mesh parts picked deleted or reversed: not during another operation
   // on the model (nor the picking mode changed then)
-  if(op.find(" mesh ") != std::string::npos) {
+  if(k.on == selectionDriver::OnMeshParts) {
     if(modelBusy()) return;
     runSelection(op);
     afterMeshOperation();
@@ -2827,11 +2749,11 @@ static void runOperation(const std::string &op)
   auto t = transforms.find(op);
   auto m = meshPanes.find(op);
   std::function<void()> hide = [] {};
-  if(op.find("Physical ") != std::string::npos) {
-    g->physicalContext->show(op.substr(op.rfind(' ') + 1), op[0] == 'R');
+  if(k.on == selectionDriver::OnPhysical) {
+    g->physicalContext->show(k.what, k.remove);
     hide = [] { FlGui::instance()->physicalContext->hide(); };
   }
-  else if(t != transforms.end() || op.compare(0, 7, "Boolean") == 0) {
+  else if(t != transforms.end() || k.on == selectionDriver::OnBoolean) {
     if(t != transforms.end())
       g->transformContext->show(t->second.first, t->second.second,
                                 op != "Fillet");
@@ -2866,7 +2788,6 @@ static void addShape(const std::string &shape)
 struct fltkAction {
   std::function<void(int view)> run;
   std::function<int()> check;
-  std::function<bool()> available;
 };
 
 static const std::map<std::string, fltkAction> &fltkActions()
@@ -2887,7 +2808,7 @@ static const std::map<std::string, fltkAction> &fltkActions()
     // the quick access menu
     {"Select rotation center", {[](int) {
        opt_general_rotation_center_cg(0, GMSH_SET | GMSH_GUI, 0);
-       general_options_ok_cb(nullptr, (void *)"rotation_center");
+       general_rotation_center_cg_cb(nullptr, nullptr);
        general_options_rotation_center_select_cb(nullptr, nullptr);
      }}},
     {"Query",
@@ -2925,8 +2846,7 @@ bool canRunItem(const actionItem &item)
   if(!IsActionAvailable(item)) return false;
   if(item.kind != ActionRun || !IsDoneByInterface(item)) return true;
   auto it = fltkActions().find(item.what);
-  return it != fltkActions().end() &&
-         (!it->second.available || it->second.available());
+  return it != fltkActions().end();
 }
 
 // the value an item asks for, with a slider
@@ -3022,9 +2942,15 @@ static int addItems(Fl_Menu_ *m, const actionItem &menu,
       flags = (item.what.find('=') == std::string::npos ? FL_MENU_TOGGLE :
                                                           FL_MENU_RADIO) |
               (check ? FL_MENU_VALUE : 0);
+    // the shortcut shown: the item's, or the one of the same name as its
+    // action
+    std::string key = item.key;
+    if(key.empty() && item.kind == ActionRun &&
+       !GetShortcutsOf(item.what).empty())
+      key = item.what;
     last = m->add((prefix + item.label).c_str(),
-                  item.key.empty() ? 0 : fltkShortcut(item.key.c_str()),
-                  item_cb, (void *)&item, flags);
+                  key.empty() ? 0 : fltkShortcut(key.c_str()), item_cb,
+                  (void *)&item, flags);
   }
   return last;
 }

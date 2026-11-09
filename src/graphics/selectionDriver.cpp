@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <cstring>
 #include <algorithm>
 #include <cstdlib>
 #include <map>
@@ -61,6 +62,20 @@ void selectionDriver::show(int types)
   if(types & ENT_CURVE) opt_geometry_curves(0, GMSH_SET | GMSH_GUI, 1);
   if(types & ENT_SURFACE) opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
   if(types & ENT_VOLUME) opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
+}
+
+selectionDriver::kind selectionDriver::kindOf(const std::string &op)
+{
+  auto starts = [&op](const char *s) {
+    return op.compare(0, strlen(s), s) == 0;
+  };
+  std::string last = op.substr(op.rfind(' ') + 1);
+  if(starts("Delete mesh ")) return {OnMeshParts, true, last};
+  if(starts("Reverse mesh ")) return {OnMeshParts, false, last};
+  if(starts("Physical ")) return {OnPhysical, false, last};
+  if(starts("Remove Physical ")) return {OnPhysical, true, last};
+  if(starts("Boolean")) return {OnBoolean, false, ""};
+  return {OnScript, false, ""};
 }
 
 int selectionDriver::selectionMode(const std::string &mode)
@@ -324,7 +339,7 @@ selectionDriver::selectionDriver(const std::string &operation,
       return true;
     };
   }
-  else if(op.compare(0, 7, "Boolean") == 0) {
+  else if(kindOf(op).on == OnBoolean) {
     _use({"Selection mode", "Delete object", "Delete tool"});
     _add(-1, "object");
     _add(-1, "tool", 0, op == "BooleanFragments");
@@ -359,10 +374,9 @@ selectionDriver::selectionDriver(const std::string &operation,
       return true;
     };
   }
-  else if(op.compare(0, 9, "Physical ") == 0 ||
-          op.compare(0, 16, "Remove Physical ") == 0) {
-    bool remove = (op[0] == 'R');
-    std::string what = op.substr(op.rfind(' ') + 1);
+  else if(kindOf(op).on == OnPhysical) {
+    bool remove = kindOf(op).remove;
+    std::string what = kindOf(op).what;
     int type = typeOf(what);
     show(type);
     _use({"Name", "Tag"});
@@ -453,10 +467,9 @@ selectionDriver::selectionDriver(const std::string &operation,
       return true;
     };
   }
-  else if(op.compare(0, 12, "Delete mesh ") == 0 ||
-          op.compare(0, 13, "Reverse mesh ") == 0) {
-    bool reverse = (op[0] == 'R');
-    std::string what = op.substr(op.rfind(' ') + 1);
+  else if(kindOf(op).on == OnMeshParts) {
+    bool reverse = !kindOf(op).remove;
+    std::string what = kindOf(op).what;
     _meshParts = true;
     _pickElements = (what == "elements");
     CTX::instance()->pickElements = _pickElements;

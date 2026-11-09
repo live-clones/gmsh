@@ -257,11 +257,11 @@ function start() {
   window.addEventListener('resize', draw);
   // the keyboard shortcuts of the graphical interface (shortcuts.js)
   const page = {
-    mesh_1d: () => meshDim(1),
-    mesh_2d: () => meshDim(2),
-    mesh_3d: () => meshDim(3),
+    'Mesh 1D': () => meshDim(1),
+    'Mesh 2D': () => meshDim(2),
+    'Mesh 3D': () => meshDim(3),
     file_open: () => document.getElementById('file').click(),
-    fullscreen: () => document.fullscreenElement ? document.exitFullscreen() :
+    'Full screen': () => document.fullscreenElement ? document.exitFullscreen() :
       document.documentElement.requestFullscreen(),
   };
   installShortcuts(Module, (action) => {

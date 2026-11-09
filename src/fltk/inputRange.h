@@ -28,7 +28,7 @@ private:
   Fl_Toggle_Button *_loop_butt;
   Fl_Button *_range_butt, *_graph_butt;
   Fl_Menu_Button *_graph_menu;
-  std::string _loop_val, _graph_val, _number_format;
+  std::string _loop_val, _graph_val;
   double _min, _max, _step, _max_number;
   std::vector<double> _choices;
   std::string _range;

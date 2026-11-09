@@ -677,13 +677,6 @@ void openglWindow::setLastHandled(openglWindow *w)
     FlGui::instance()->visibility->updatePerWindow();
 }
 
-// One step through the entities under the cursor for one press or one notch,
-// which takes some holding down. A wheel event is rate limited because a
-// mouse gives one for each notch but a trackpad gives a burst of them for a
-// single swipe of two fingers, with more coming while it glides. A key is
-// rate limited too, and against being stepped again from inside this call,
-// because one press of it can reach this window more than once: macOS sends
-// an FL_KEYBOARD for the command an arrow key stands for and another for the
 // the events of FLTK, turned into what sceneView::handleMouse() reads
 int openglWindow::handle(int event)
 {
@@ -813,10 +806,7 @@ void openglWindow::hostShowOnelabContext(int dim, int tag)
   FlGui::instance()->onelabContext->show(dim, tag);
 }
 
-void openglWindow::hostQuickAccess()
-{
-  status_options_cb(nullptr, (void *)"quick_access");
-}
+void openglWindow::hostQuickAccess() { quick_access_cb(nullptr, nullptr); }
 
 int openglWindow::pixel_w() { return Fl_Gl_Window::pixel_w(); }
 

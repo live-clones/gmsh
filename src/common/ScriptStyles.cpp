@@ -57,9 +57,6 @@ static const language *languageOf(const std::string &fileName)
   return nullptr;
 }
 
-bool HasScriptStyles(const std::string &fileName)
-{ return languageOf(fileName) != nullptr; }
-
 static bool isWordStart(char c)
 { return isalpha((unsigned char)c) || c == '_'; }
 static bool isWordPart(char c) { return isalnum((unsigned char)c) || c == '_'; }

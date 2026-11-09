@@ -2,12 +2,12 @@
 
 @ftable @code
 @item Mesh.Algorithm
-2D mesh algorithm (1: MeshAdapt, 2: Automatic, 3: Initial mesh only, 5: Delaunay, 6: Frontal-Delaunay, 7: BAMG, 8: Frontal-Delaunay for Quads, 9: Packing of Parallelograms, 11: Quasi-structured Quad)@*
+2D mesh algorithm (1: MeshAdapt, 2: Automatic, 3: Initial Mesh Only, 5: Delaunay, 6: Frontal-Delaunay, 7: BAMG, 8: Frontal-Delaunay for Quads (experimental), 9: Packing of parallelograms (experimental), 11: Quasi-Structured Quad (experimental))@*
 Default value: @code{6}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Algorithm3D
-3D mesh algorithm (1: Delaunay, 3: Initial mesh only, 4: Frontal, 7: MMG3D, 9: R-tree, 10: HXT, 11: Parallel Delaunay)@*
+3D mesh algorithm (1: Delaunay, 3: Initial Mesh Only (no node insertion), 4: Frontal, 7: MMG3D (experimental), 9: R-tree, 10: HXT (experimental), 11: Parallel Delaunay)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -47,12 +47,12 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.BdfFieldFormat
-Field format for Nastran BDF files (0: free, 1: small, 2: large)@*
+Field format for Nastran BDF files (0: Free field, 1: Small field, 2: Long field)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Binary
-Write mesh files in binary format (if possible)@*
+Write mesh files in binary format (if possible) (0: ASCII, 1: Binary)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -102,7 +102,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.ColorCarousel
-Mesh coloring (0: by element type, 1: by elementary entity, 2: by physical group, 3: by mesh partition)@*
+Mesh coloring (0: By element type, 1: By elementary entity, 2: By physical group, 3: By mesh partition)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -142,7 +142,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.DrawSkinOnly
-Draw only the boundary faces of 3D meshes, entity by entity (1), or with the partitions of an entity together, without the faces between them (2)@*
+Draw only the boundary faces of 3D meshes, entity by entity, or with the partitions of an entity together, without the faces between them (0: Show interior faces, 1: Hide interior faces, 2: Hide partition faces)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -327,7 +327,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.LabelType
-Type of element label (0: node/element tag, 1: elementary entity tag, 2: physical entity tag, 3: partition, 4: coordinates)@*
+Type of element label (0: Node/element tag, 1: Elementary entity tag, 2: Physical group tag(s), 3: Mesh partition, 4: Coordinates)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -342,7 +342,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.LightLines
-Enable lighting for mesh edges (0: no, 1: surfaces, 2: surfaces+volumes@*
+Enable lighting for mesh edges (0: No, 1: Surface, 2: Volume and surface)@*
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -597,7 +597,7 @@ Default value: @code{4}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.NodeType
-Display mesh nodes as solid color dots (0) or 3D spheres (1)@*
+Node display type (0: Color dot, 1: 3D sphere)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -622,7 +622,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.OpacityMode
-Apply Mesh.Opacity to (0: filled surfaces only; 1: everything)@*
+What Mesh.Opacity applies to (0: Surfaces, 1: Everything)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -792,7 +792,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.QualityType
-Type of quality measure (0: SICN~signed inverse condition number, 1: SIGE~signed inverse gradient error, 2: gamma~vol/sum_face/max_edge, 3: Disto~minJ/maxJ@*
+Type of quality measure: SICN, signed inverse condition number; SIGE, signed inverse gradient error; Gamma, vol/sum_face/max_edge; Disto, minJ/maxJ (0: SICN, 1: SIGE, 2: Gamma, 3: Disto)@*
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -832,7 +832,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.RecombinationAlgorithm
-Mesh recombination algorithm (0: simple, 1: blossom, 2: simple full-quad, 3: blossom full-quad)@*
+Mesh recombination algorithm (0: Simple, 1: Blossom, 2: Simple Full-Quad, 3: Blossom Full-Quad, 4: Christos's bipartite labelling)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -897,7 +897,7 @@ Default value: @code{0}@*
 Saved in: @code{-}
 
 @item Mesh.SaveElementTagType
-Type of the element tag saved in mesh formats that don't support saving physical or partition ids (1: elementary, 2: physical, 3: partition)@*
+Type of the element tag saved in mesh formats that don't support saving physical or partition ids (1: Elementary entity, 2: Physical entity, 3: Partition)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -927,7 +927,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SaveViews
-Save post-processing views with the mesh in MSH, MED and VTU files (0: none, 1: visible views, 2: all views): the views based on the model with its mesh, and in MSH and VTU the list-based views (in `name_views.msh' or `name_views.vtu' if the model has a mesh)@*
+Save post-processing views with the mesh in MSH, MED and VTU files: the views based on the model with its mesh, and in MSH and VTU the list-based views (in `name_views.msh' or `name_views.vtu' if the model has a mesh) (0: None, 1: Visible, 2: All)@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
@@ -987,7 +987,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.StlOneSolidPerSurface
-Create one solid per surface when exporting STL files? (0: single solid, 1: one solid per face, 2: one solid per physical surface)@*
+Solids of the STL files: a single one, one per surface or one per physical surface (0: Single, 1: Per surface, 2: Per physical surface)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -997,7 +997,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SubdivisionAlgorithm
-Mesh subdivision algorithm (0: none, 1: all quadrangles, 2: all hexahedra, 3: barycentric)@*
+Mesh subdivision algorithm (0: None, 1: All Quads, 2: All Hexas, 3: Barycentric)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

@@ -227,7 +227,7 @@ Default value: @code{0.02}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Axes
-Axes (0: none, 1: simple axes, 2: box, 3: full grid, 4: open grid, 5: ruler)@*
+Axes (0: None, 1: Simple axes, 2: Box, 3: Full grid, 4: Open grid, 5: Ruler)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -322,7 +322,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.BackgroundGradient
-Draw background gradient (0: none, 1: vertical, 2: horizontal, 3: radial)@*
+Draw background gradient (0: None, 1: Vertical, 2: Horizontal, 3: Radial)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -542,7 +542,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.ColorScheme
-Color scheme for graphics (0: light, 1: classic, 2: dark, 3: system, i.e. light or dark as the desktop, and classic without a GUI)@*
+Color scheme for graphics; System is light or dark as the desktop, and Classic without a GUI (0: Light, 1: Classic, 2: Dark, 3: System)@*
 Default value: @code{3}@*
 Saved in: @code{General.SessionFileName}
 
@@ -652,7 +652,7 @@ Default value: @code{150}@*
 Saved in: @code{General.SessionFileName}
 
 @item General.FltkColorScheme
-FLTK user interface color theme (0: light, 1: dark, 2: light or dark as the desktop)@*
+FLTK user interface color theme; System is light or dark as the desktop (0: Light, 1: Dark, 2: System)@*
 Default value: @code{2}@*
 Saved in: @code{General.SessionFileName}
 
@@ -1017,7 +1017,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Orthographic
-Orthographic projection mode (0: perspective projection)@*
+Projection mode (0: Perspective, 1: Orthographic)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -1167,7 +1167,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Shading
-Shading model (0: classic; 1, 2 or 3: studio, with soft lighting and a shadow cast by light 0 on a floor normal to the X, Y or Z axis; shader pipeline only)@*
+Shading model; the studio shading has soft lighting and a shadow cast by light 0 on a floor normal to the X, Y or Z axis (shader pipeline only) (0: Classic, 1: Studio (X floor), 2: Studio (Y floor), 3: Studio (Z floor))@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -1317,7 +1317,7 @@ Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.VectorType
-Default vector display type (for normals, etc.)@*
+Default vector display type, for normals, etc. (1: Line, 2: Arrow, 3: Pyramid, 4: 3D arrow)@*
 Default value: @code{4}@*
 Saved in: @code{General.OptionsFileName}
 

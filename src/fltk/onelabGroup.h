@@ -24,7 +24,12 @@ private:
   Fl_Tree *_tree;
   Fl_Button *_butt[2];
   Fl_Menu_Button *_gear;
-  int _gearOptionsStart, _gearOptionsEnd;
+  // the index of the first item of the automatic behaviours in the gear menu
+  int _gearOptions;
+  // whether a solver runs (the Run button then stops it)
+  bool _busy;
+  // all the items of the gear menu active, or only the automatic behaviours
+  void _activateGearMenu(bool all);
   // the widgets of the tree and the strings they show, and those retired by
   // a rebuild while an event sent to them was handled, kept hidden until the
   // events are handled (see _rebuildTree()); a list, so that the strings stay
@@ -75,7 +80,7 @@ public:
   bool isTreeItemOpen(const std::string &name);
   void setButtonVisibility();
   void setButtonMode(const std::string &butt0, const std::string &butt1);
-  bool isBusy();
+  bool isBusy() { return _busy; }
   int getMinWindowWidth() { return _minWindowWidth; }
   int getMinWindowHeight() { return _minWindowHeight; }
   std::string getPath(Fl_Tree_Item *item);

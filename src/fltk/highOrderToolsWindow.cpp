@@ -68,80 +68,29 @@ static void highordertools_runp_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
+// the fields of the algorithm chosen: all of them for the optimization (the
+// last three only with its second strategy), the distance (value[2]) for fast
+// curving, none for the elastic analogy
 static void chooseopti_cb(Fl_Widget *w, void *data)
 {
   highOrderToolsWindow *o = FlGui::instance()->highordertools;
-  const int algo = o->choice[2]->value();
-
-  switch(algo) {
-  case 0: { // Optimization
-    o->choice[0]->activate();
-    o->choice[3]->activate();
-    o->value[1]->activate();
-    o->value[2]->activate();
-    o->value[3]->activate();
-    o->value[4]->activate();
-    o->value[5]->activate();
-    o->value[7]->activate();
-    o->value[8]->activate();
-    if(o->choice[3]->value() == 0) {
-      o->value[9]->deactivate();
-      o->value[10]->deactivate();
-      o->value[11]->deactivate();
-    }
-    else {
-      o->value[9]->activate();
-      o->value[10]->activate();
-      o->value[11]->activate();
-    }
-    break;
-  }
-  case 1: { // Elastic analogy
-    o->choice[0]->deactivate();
-    o->choice[3]->deactivate();
-    o->value[1]->deactivate();
-    o->value[2]->deactivate();
-    o->value[3]->deactivate();
-    o->value[4]->deactivate();
-    o->value[5]->deactivate();
-    o->value[7]->deactivate();
-    o->value[8]->deactivate();
-    o->value[9]->deactivate();
-    o->value[10]->deactivate();
-    o->value[11]->deactivate();
-    break;
-  }
-  case 2: { // Fast curving
-    o->choice[0]->deactivate();
-    o->choice[3]->deactivate();
-    o->value[1]->deactivate();
-    o->value[2]->activate();
-    o->value[3]->deactivate();
-    o->value[4]->deactivate();
-    o->value[5]->deactivate();
-    o->value[7]->deactivate();
-    o->value[8]->deactivate();
-    o->value[9]->deactivate();
-    o->value[10]->deactivate();
-    o->value[11]->deactivate();
-    break;
-  }
-  case 3: { // Fast curving 2
-    o->choice[0]->deactivate();
-    o->choice[3]->deactivate();
-    o->value[1]->deactivate();
-    o->value[2]->activate();
-    o->value[3]->deactivate();
-    o->value[4]->deactivate();
-    o->value[5]->deactivate();
-    o->value[7]->deactivate();
-    o->value[8]->deactivate();
-    o->value[9]->deactivate();
-    o->value[10]->deactivate();
-    o->value[11]->deactivate();
-    break;
-  }
-  }
+  int algo = o->choice[2]->value();
+  bool optimization = (algo == 0);
+  bool fastCurving = (algo == 2 || algo == 3);
+  bool strategy = optimization && o->choice[3]->value() != 0;
+  auto set = [](Fl_Widget *w, bool on) {
+    if(on)
+      w->activate();
+    else
+      w->deactivate();
+  };
+  for(Fl_Widget *w : {(Fl_Widget *)o->choice[0], (Fl_Widget *)o->choice[3],
+                      (Fl_Widget *)o->value[1], (Fl_Widget *)o->value[3],
+                      (Fl_Widget *)o->value[4], (Fl_Widget *)o->value[5],
+                      (Fl_Widget *)o->value[7], (Fl_Widget *)o->value[8]})
+    set(w, optimization);
+  set(o->value[2], optimization || fastCurving);
+  for(int i = 9; i <= 11; i++) set(o->value[i], strategy);
 }
 
 static void chooseopti_strategy(Fl_Widget *w, void *data)
@@ -280,9 +229,7 @@ static void getMeshInfoForHighOrder(GModel *gm, int &meshOrder, bool &complete,
 
 highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
 {
-#if defined(HAVE_MESH)
   getMeshInfoForHighOrder(GModel::current(), meshOrder, complete, CAD);
-#endif
 
   FL_NORMAL_SIZE -= deltaFontSize;
 

@@ -295,33 +295,50 @@ void onelab_cb(Fl_Widget *w, void *data)
   if(action != "initialize") FlGui::instance()->onelab->show();
 }
 
-void onelab_option_cb(Fl_Widget *w, void *data)
+// the automatic behaviours of the gear menu: the label, the field of
+// CTX::instance()->solver toggled, its value when checked, and what to update
+// after a change
+struct gearOption {
+  const char *label;
+  int &(*field)();
+  int on;
+  void (*changed)();
+};
+
+static const std::vector<gearOption> &gearOptions()
 {
-  if(!data) return;
-  std::string what((const char *)data);
-  double val = ((Fl_Menu_ *)w)->mvalue()->value() ? 1. : 0.;
-  if(what == "save")
-    CTX::instance()->solver.autoSaveDatabase = val;
-  else if(what == "load")
-    CTX::instance()->solver.autoLoadDatabase = val;
-  else if(what == "archive")
-    CTX::instance()->solver.autoArchiveOutputFiles = val;
-  else if(what == "check") {
-    CTX::instance()->solver.autoCheck = val;
-    FlGui::instance()->onelab->setButtonVisibility();
-  }
-  else if(what == "mesh")
-    CTX::instance()->solver.autoMesh = val ? 2 : 0;
-  else if(what == "merge")
-    CTX::instance()->solver.autoMergeFile = val;
-  else if(what == "show")
-    CTX::instance()->solver.autoShowViews = val ? 2 : 0;
-  else if(what == "step")
-    CTX::instance()->solver.autoShowLastStep = val;
-  else if(what == "invisible") {
-    CTX::instance()->solver.showInvisibleParameters = val;
-    FlGui::instance()->onelab->rebuildTree();
-  }
+  static const std::vector<gearOption> options = {
+    {"Save database automatically",
+     []() -> int & { return CTX::instance()->solver.autoSaveDatabase; }, 1},
+    {"Load database automatically",
+     []() -> int & { return CTX::instance()->solver.autoLoadDatabase; }, 1},
+    {"Archive output files automatically",
+     []() -> int & { return CTX::instance()->solver.autoArchiveOutputFiles; },
+     1},
+    {"Check model after each change",
+     []() -> int & { return CTX::instance()->solver.autoCheck; }, 1,
+     [] { FlGui::instance()->onelab->setButtonVisibility(); }},
+    {"Remesh automatically",
+     []() -> int & { return CTX::instance()->solver.autoMesh; }, 2},
+    {"Merge results automatically",
+     []() -> int & { return CTX::instance()->solver.autoMergeFile; }, 1},
+    {"Show new views",
+     []() -> int & { return CTX::instance()->solver.autoShowViews; }, 2},
+    {"Always show last step",
+     []() -> int & { return CTX::instance()->solver.autoShowLastStep; }, 1},
+    {"Show hidden parameters",
+     []() -> int & { return CTX::instance()->solver.showInvisibleParameters; },
+     1, [] { FlGui::instance()->onelab->rebuildTree(); }},
+  };
+  return options;
+}
+
+// data: the index of the option in gearOptions()
+static void onelab_option_cb(Fl_Widget *w, void *data)
+{
+  const gearOption &o = gearOptions()[(intptr_t)data];
+  o.field() = ((Fl_Menu_ *)w)->mvalue()->value() ? o.on : 0;
+  if(o.changed) o.changed();
 }
 
 static void onelab_choose_executable_cb(Fl_Widget *w, void *data)
@@ -608,8 +625,8 @@ public:
 };
 
 onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
-  : Fl_Group(x, y, w, h, l), _rebuilding(false), _rebuildAgain(false),
-    _stop(false), _firstBuild(true), _hasContext(false)
+  : Fl_Group(x, y, w, h, l), _gearOptions(0), _busy(false), _rebuilding(false),
+    _rebuildAgain(false), _stop(false), _firstBuild(true), _hasContext(false)
 {
   Fl_Color col = treeColor();
   color(col);
@@ -662,28 +679,14 @@ onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
   _minWindowWidth = 3 * BB2 + 4 * WB;
   _minWindowHeight = 2 * BH + 3 * WB;
 
-  _gearOptionsStart = _gear->menu()->size();
-
-  _gear->add("Save database automatically", 0, onelab_option_cb, (void *)"save",
-             FL_MENU_TOGGLE);
-  _gear->add("Load database automatically", 0, onelab_option_cb, (void *)"load",
-             FL_MENU_TOGGLE);
-  _gear->add("Archive output files automatically", 0, onelab_option_cb,
-             (void *)"archive", FL_MENU_TOGGLE);
-  _gear->add("Check model after each change", 0, onelab_option_cb,
-             (void *)"check", FL_MENU_TOGGLE);
-  _gear->add("Remesh automatically", 0, onelab_option_cb, (void *)"mesh",
-             FL_MENU_TOGGLE);
-  _gear->add("Merge results automatically", 0, onelab_option_cb,
-             (void *)"merge", FL_MENU_TOGGLE);
-  _gear->add("Show new views", 0, onelab_option_cb, (void *)"show",
-             FL_MENU_TOGGLE);
-  _gear->add("Always show last step", 0, onelab_option_cb, (void *)"step",
-             FL_MENU_TOGGLE);
-  _gear->add("_Show hidden parameters", 0, onelab_option_cb,
-             (void *)"invisible", FL_MENU_TOGGLE);
-
-  _gearOptionsEnd = _gear->menu()->size();
+  // the automatic behaviours, the items _gearOptions on
+  for(std::size_t i = 0; i < gearOptions().size(); i++) {
+    bool last = (i == gearOptions().size() - 1);
+    int item = _gear->add(gearOptions()[i].label, 0, onelab_option_cb,
+                          (void *)(intptr_t)i,
+                          FL_MENU_TOGGLE | (last ? FL_MENU_DIVIDER : 0));
+    if(!i) _gearOptions = item;
+  }
 
   _gear->add("Add new solver...", 0, onelab_add_solver_cb);
 
@@ -1659,6 +1662,7 @@ void onelabGroup::setButtonVisibility()
 void onelabGroup::setButtonMode(const std::string &butt0,
                                 const std::string &butt1)
 {
+  _busy = (butt1 == "stop" || butt1 == "kill");
   // custom button behavior
   std::vector<onelab::string> ps;
   onelab::server::instance()->get(ps, "ONELAB/Button");
@@ -1694,42 +1698,24 @@ void onelabGroup::setButtonMode(const std::string &butt0,
     _butt[0]->deactivate();
   }
 
+  // while a solver runs, only the automatic behaviours can be changed
   if(butt1 == "compute") {
     _butt[1]->activate();
     _butt[1]->label("Run");
     _butt[1]->callback(onelab_cb, (void *)"compute");
-    for(int i = 0; i < _gear->menu()->size(); i++)
-      ((Fl_Menu_Item *)_gear->menu())[i].activate();
+    _activateGearMenu(true);
   }
-  else if(butt1 == "stop") {
+  else if(butt1 == "stop" || butt1 == "kill") {
     _butt[1]->activate();
-    _butt[1]->label("Stop");
-    _butt[1]->callback(onelab_cb, (void *)"stop");
-    for(int i = 0; i < _gear->menu()->size(); i++)
-      if(i < _gearOptionsStart - 1 || i > _gearOptionsEnd - 2)
-        ((Fl_Menu_Item *)_gear->menu())[i].deactivate();
-  }
-  else if(butt1 == "kill") {
-    _butt[1]->activate();
-    _butt[1]->label("Kill");
-    _butt[1]->callback(onelab_cb, (void *)"kill");
-    for(int i = 0; i < _gear->menu()->size(); i++)
-      if(i < _gearOptionsStart - 1 || i > _gearOptionsEnd - 2)
-        ((Fl_Menu_Item *)_gear->menu())[i].deactivate();
+    _butt[1]->label(butt1 == "stop" ? "Stop" : "Kill");
+    _butt[1]->callback(onelab_cb,
+                       butt1 == "stop" ? (void *)"stop" : (void *)"kill");
+    _activateGearMenu(false);
   }
   else {
     _butt[1]->deactivate();
-    for(int i = 0; i < _gear->menu()->size(); i++)
-      if(i < _gearOptionsStart - 1 || i > _gearOptionsEnd - 2)
-        ((Fl_Menu_Item *)_gear->menu())[i].deactivate();
+    _activateGearMenu(false);
   }
-}
-
-bool onelabGroup::isBusy()
-{
-  std::string s(_butt[1]->label());
-  if(s == "Stop" || s == "Kill") return true;
-  return false;
 }
 
 std::string onelabGroup::getPath(Fl_Tree_Item *item)
@@ -1749,21 +1735,23 @@ std::string onelabGroup::getPath(Fl_Tree_Item *item)
 void onelabGroup::updateGearMenu()
 {
   Fl_Menu_Item *menu = (Fl_Menu_Item *)_gear->menu();
-  int values[9] = {CTX::instance()->solver.autoSaveDatabase,
-                   CTX::instance()->solver.autoLoadDatabase,
-                   CTX::instance()->solver.autoArchiveOutputFiles,
-                   CTX::instance()->solver.autoCheck,
-                   CTX::instance()->solver.autoMesh,
-                   CTX::instance()->solver.autoMergeFile,
-                   CTX::instance()->solver.autoShowViews,
-                   CTX::instance()->solver.autoShowLastStep,
-                   CTX::instance()->solver.showInvisibleParameters};
-  for(int i = 0; i < 9; i++) {
-    int idx = _gearOptionsStart - 1 + i;
-    if(values[i])
-      menu[idx].set();
+  for(std::size_t i = 0; i < gearOptions().size(); i++) {
+    if(gearOptions()[i].field())
+      menu[_gearOptions + i].set();
     else
-      menu[idx].clear();
+      menu[_gearOptions + i].clear();
+  }
+}
+
+void onelabGroup::_activateGearMenu(bool all)
+{
+  Fl_Menu_Item *menu = (Fl_Menu_Item *)_gear->menu();
+  int n = (int)gearOptions().size();
+  for(int i = 0; i < _gear->size() - 1; i++) {
+    if(all || (i >= _gearOptions && i < _gearOptions + n))
+      menu[i].activate();
+    else
+      menu[i].deactivate();
   }
 }
 

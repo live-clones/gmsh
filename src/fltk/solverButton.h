@@ -19,11 +19,6 @@ private:
 
 public:
   solverButton(int x, int y, int w, int h, int num, Fl_Color col);
-  void copy_label(const std::string &label)
-  {
-    _butt[0]->copy_label(label.c_str());
-  }
-  std::string label() { return _butt[0]->label(); }
 };
 
 #endif

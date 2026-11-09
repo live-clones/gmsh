@@ -395,13 +395,11 @@ static void physical_add_cb(Fl_Widget *w, void *data)
     if(what != "Name" && !strlen(pc->input[0]->value()))
       pc->input[0]->value(existingName.c_str());
     if(what != "Tag") pc->value[0]->value(existingTag);
-    pc->append = true;
   }
   else {
     pc->input[0]->textcolor(FL_FOREGROUND_COLOR);
     pc->value[0]->textcolor(FL_FOREGROUND_COLOR);
     if(what != "Tag") pc->value[0]->value(NEWPHYSICAL());
-    pc->append = false;
   }
 
   if(pc->butt[0]->active()) {
@@ -434,7 +432,7 @@ static void physical_remove_cb(Fl_Widget *w, void *data)
 }
 
 physicalContextWindow::physicalContextWindow(int deltaFontSize)
-  : selectedTag(0), type(""), mode("Add"), selectedName(""), append(false)
+  : selectedTag(0), type(""), selectedName("")
 {
   FL_NORMAL_SIZE -= deltaFontSize;
 
@@ -578,13 +576,11 @@ void physicalContextWindow::show(const std::string &what, bool remove)
     group[i]->deactivate();
   }
   if(remove) {
-    mode = "Remove";
     group[1]->show();
     group[1]->activate();
     physical_remove_cb(nullptr, nullptr);
   }
   else {
-    mode = "Add";
     group[0]->show();
     group[0]->activate();
     if(butt[0]->value())
