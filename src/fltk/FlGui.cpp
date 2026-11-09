@@ -997,7 +997,7 @@ const std::map<std::string, fltkAction> &keyboardActions()
 // scene must be drawn again.
 int FlGui::runShortcut(const std::string &a)
 {
-  actionItem item{"", ActionRun, a, {}, "", "", {}};
+  actionItem item{"", ActionRun, a, {}, "", ""};
   if(canRunItem(item)) {
     runItem(item);
     return 1;

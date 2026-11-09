@@ -386,8 +386,8 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebShapes()
 
 // The action registry (see Actions.h), in JSON: {menu: item}, an item
 // {"id", "label", "kind" ("menu", "run", "operation", "shape" or "option"),
-// "what", "help", "key", "ask" (the option asked for, or ""), "interface"
-// (1 if the page does it), "items"}; the page gives back its id to do it
+// "what", "help", "key", "interface" (1 if the page does it), "items"}; the
+// page gives back its id to do it
 static std::vector<const actionItem *> _items;
 
 static std::string jsonItem(const actionItem &item)
@@ -398,7 +398,6 @@ static std::string jsonItem(const actionItem &item)
     ",\"label\":" + JsonString(item.label) + ",\"kind\":\"" + kinds[item.kind] +
     "\",\"what\":" + JsonString(item.what) +
     ",\"help\":" + JsonString(item.help) + ",\"key\":" + JsonString(item.key) +
-    ",\"ask\":" + JsonString(item.ask.option) +
     ",\"interface\":" + (IsDoneByInterface(item) ? "1" : "0") + ",\"items\":[";
   _items.push_back(&item);
   for(std::size_t i = 0; i < item.items.size(); i++)
@@ -457,28 +456,6 @@ EMSCRIPTEN_KEEPALIVE int gmshWebActionCheck(int id)
   Msg::NoThrow noThrow;
   if(!item(id) || !IsActionAvailable(*item(id))) return -2;
   return GetActionCheck(*item(id));
-}
-
-// What the item of id asks for, in JSON: {"min", "max", "step", "value"}
-EMSCRIPTEN_KEEPALIVE const char *gmshWebActionAsk(int id)
-{
-  Msg::NoThrow noThrow;
-  static std::string json;
-  double min = 0., max = 0., step = 0., value = 0.;
-  if(item(id)) GetActionAsk(item(id)->ask, min, max, step, value);
-  char buf[256];
-  snprintf(buf, sizeof(buf),
-           "{\"min\":%.16g,\"max\":%.16g,\"step\":%.16g,\"value\":%.16g}", min,
-           max, step, value);
-  json = buf;
-  return json.c_str();
-}
-
-// The option asked for by the item of id set (see SetActionOption())
-EMSCRIPTEN_KEEPALIVE void gmshWebActionSet(int id, double value)
-{
-  Msg::NoThrow noThrow;
-  if(item(id)) SetActionOption(item(id)->ask.option, value);
 }
 
 // The style of each character of the text of a file in an editor (see

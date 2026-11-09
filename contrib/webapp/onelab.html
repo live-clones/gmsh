@@ -74,19 +74,20 @@
             cursor: pointer; }
   #status:hover { text-decoration: underline; }
   #status.error { color: var(--error); }
-  #quickMenu { position: fixed; z-index: 3; padding: 4px; display: flex;
+  #quickMenu, #quickMenu .submenu { position: fixed; z-index: 3; padding: 4px; display: flex;
                flex-direction: column; max-height: 80vh; overflow: auto;
                background: var(--bg); color: var(--fg);
                border: 1px solid var(--border); border-radius: 4px;
                box-shadow: 0 2px 8px var(--shadow); min-width: 220px; }
-  #quickMenu[hidden] { display: none; }
+  #quickMenu[hidden], #quickMenu .submenu[hidden] { display: none; }
+  #quickMenu .submenu { z-index: 4; min-width: 120px; }
   #quickMenu button { display: flex; gap: 6px; text-align: left; border: none;
                       background: none; padding: 3px 8px; border-radius: 3px;
                       font: inherit; color: inherit; cursor: pointer; }
-  #quickMenu button:hover { background: var(--menu-hover); }
+  #quickMenu button:hover, #quickMenu button.open { background: var(--menu-hover); }
+  #quickMenu .arrow { margin-left: auto; padding-left: 12px; color: var(--muted); }
   #quickMenu .mark { width: 1em; flex: none; }
   #quickMenu .head { color: var(--muted); font-size: 12px; padding: 6px 8px 1px; }
-  #quickMenu button.head { font-size: inherit; font-weight: bold; color: var(--fg); padding: 7px 8px; }
   #quickMenu hr { border: none; border-top: 1px solid var(--line2); margin: 3px 0; width: 100%; }
   /* (the edges of a phone's screen, the notch and the home indicator, which
      the page reaches: viewport-fit=cover) */
@@ -2167,13 +2168,12 @@ function checkOf(item, view, tag) {
   const c = itemCheck(item);
   return c >= 0 ? !!c : undefined;
 }
-// what an item does: by the page, or in Gmsh, then what it asks for
+// what an item does: by the page, or in Gmsh
 async function runItem(item, {view = -1, tag, module = ''} = {}) {
   if(item.kind === 'operation') startOperation($('module' + module), item.what);
   else if(item.kind === 'shape') showShapeForm(item.what);
   else if(item.interface) pageActions[item.what].run(view, tag);
   else await gmshAction(item, view, module);
-  if(item.ask) askFor(item);
 }
 // what an item does in Gmsh (see RunAction()): on the mesh, timed with the
 // size of the mesh in the status; on the script, of a new model if there is
@@ -2201,31 +2201,21 @@ async function gmshAction(item, view, module) {
     `${item.what} in ${$('model').textContent}`;
   setStatus(text, !!lastError);
 }
-// the value an item asks for, with a slider in the form of its module
-function askFor(item) {
-  const b = JSON.parse(Module.ccall('gmshWebActionAsk', 'string', ['number'], [item.id]));
-  const category = item.ask.slice(0, item.ask.indexOf('.'));
-  showSide(true);
-  showPanel($({View: 'modulePost', Mesh: 'moduleMesh'}[category] || 'moduleGeometry'),
-            item.label, [{name: item.ask, kind: 'range', ...b}],
-            (name, v) => {
-              Module.ccall('gmshWebActionSet', null, ['number', 'number'], [item.id, Number(v)]);
-              keepOptionOf(item.ask);
-              readOptions();
-              draw();
-            }, () => showPanel(null), [['Close', 'Close the form', () => showPanel(null)]]);
-}
-// the items of a menu as popupMenu() shows them: a submenu as a heading, a
-// group set apart by a separator ('')
-function menuItems(menu, opts = {}) {
+// the items of a menu as popupMenu() shows them: a submenu as {label, items}
+// (one level, as in the graphical interface: a submenu in a submenu as a
+// heading), a group set apart by a separator ('')
+function menuItems(menu, opts = {}, level = 0) {
   const items = [];
   const add = (m) => {
     for(const it of m.items) {
       if(it.kind === 'menu') {
         if(!anyItem(it)) continue;
-        items.push(it.label || '');
-        add(it);
-        items.push('');
+        if(it.label && !level) items.push({label: it.label, items: menuItems(it, opts, 1)});
+        else {
+          items.push(it.label || '');
+          add(it);
+          items.push('');
+        }
       }
       else if(canRun(it))
         items.push([it.label, () => runItem(it, opts), checkOf(it, opts.view, opts.tag)]);
@@ -3007,17 +2997,15 @@ async function installApp() {
   p.prompt();
   await p.userChoice;
 }
-// On a small screen its sections are folded under their headings, until
-// they are opened (and kept open for the next times)
-const quickOpen = new Set();
 function openQuickMenu(x, y, above = false) {
-  popupMenu(quickItems, x, y, {above, fold: narrow.matches});
+  popupMenu(quickItems, x, y, {above});
 }
-// A menu of items(): [label, action, checked] or the heading of a section, at
+// A menu of items(): [label, action, checked], the heading of a section, a
+// separator ('') or a submenu ({label, items}, opened next to its entry) at
 // (x, y) in the window or above it; the button that opened it (owner) closes
 // it again
 let menuOwner = null;
-function popupMenu(items, x, y, {above = false, fold = false, owner = null} = {}) {
+function popupMenu(items, x, y, {above = false, owner = null} = {}) {
   const menu = $('quickMenu');
   if(owner && owner === menuOwner && !menu.hidden) {
     menu.hidden = true;
@@ -3025,41 +3013,74 @@ function popupMenu(items, x, y, {above = false, fold = false, owner = null} = {}
   }
   menuOwner = owner;
   menu.textContent = '';
-  let section = '';
-  for(const item of items()) {
-    if(item === '') {
-      section = '';
-      menu.appendChild(document.createElement('hr'));
-      continue;
-    }
-    if(typeof item === 'string') {
-      section = item;
-      const h = document.createElement(fold ? 'button' : 'div');
-      h.className = 'head';
-      h.textContent = fold ? (quickOpen.has(item) ? '▾ ' : '▸ ') + item : item;
-      if(fold) h.addEventListener('click', () => {
-        if(!quickOpen.delete(item)) quickOpen.add(item);
-        popupMenu(items, x, y, {above, fold});
+  // (the submenu, in the menu so that a click in it is in the menu)
+  const sub = document.createElement('div');
+  sub.className = 'submenu';
+  sub.hidden = true;
+  let opened = null;
+  const open = (b, item) => {
+    if(opened === b) return;
+    if(opened) opened.classList.remove('open');
+    opened = b;
+    b.classList.add('open');
+    sub.textContent = '';
+    fillMenu(sub, item.items);
+    sub.hidden = false;
+    const r = b.getBoundingClientRect();
+    // (to the right of its entry, or to the left if there is no room)
+    const x = r.right + sub.offsetWidth + 8 <= innerWidth ? r.right : r.left - sub.offsetWidth;
+    placePopup(sub, x, r.top - 5);
+  };
+  const fillMenu = (m, list) => {
+    for(const item of list) {
+      if(item === '') {
+        m.appendChild(document.createElement('hr'));
+        continue;
+      }
+      if(typeof item === 'string') {
+        const h = document.createElement('div');
+        h.className = 'head';
+        h.textContent = item;
+        m.appendChild(h);
+        continue;
+      }
+      const b = document.createElement('button');
+      const mark = document.createElement('span');
+      mark.className = 'mark';
+      if(!Array.isArray(item)) {
+        const arrow = document.createElement('span');
+        arrow.className = 'arrow';
+        arrow.textContent = '▸';
+        b.append(mark, document.createTextNode(item.label), arrow);
+        b.addEventListener('click', () => open(b, item));
+        b.addEventListener('pointerenter', (e) => {
+          if(e.pointerType === 'mouse') open(b, item);
+        });
+        m.appendChild(b);
+        continue;
+      }
+      const [label, act, checked] = item;
+      mark.textContent = checked ? '✓' : '';
+      b.append(mark, document.createTextNode(label));
+      b.addEventListener('click', () => {
+        menu.hidden = true;
+        act();
+        showViews();
+        readOptions();
+        draw();
       });
-      menu.appendChild(h);
-      continue;
+      // (an entry of the menu closes the submenu)
+      if(m === menu) b.addEventListener('pointerenter', (e) => {
+        if(e.pointerType !== 'mouse' || !opened) return;
+        opened.classList.remove('open');
+        opened = null;
+        sub.hidden = true;
+      });
+      m.appendChild(b);
     }
-    if(fold && section && !quickOpen.has(section)) continue;
-    const [label, act, checked] = item;
-    const b = document.createElement('button');
-    const mark = document.createElement('span');
-    mark.className = 'mark';
-    mark.textContent = checked ? '✓' : '';
-    b.append(mark, document.createTextNode(label));
-    b.addEventListener('click', () => {
-      menu.hidden = true;
-      act();
-      showViews();
-      readOptions();
-      draw();
-    });
-    menu.appendChild(b);
-  }
+  };
+  fillMenu(menu, items());
+  menu.appendChild(sub);
   menu.hidden = false;
   placePopup(menu, x, above ? y - menu.offsetHeight - 2 : y);
 }

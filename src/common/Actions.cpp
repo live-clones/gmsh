@@ -35,34 +35,24 @@
 // a menu, and a group of items set apart (a menu without label)
 static actionItem menu(const std::string &label, const std::string &help,
                        const std::vector<actionItem> &items)
-{ return {label, ActionMenu, "", items, help, "", {}}; }
+{ return {label, ActionMenu, "", items, help, ""}; }
 static actionItem group(const std::vector<actionItem> &items)
 { return menu("", "", items); }
 // an action of the table (named as its label if no name is given)
 static actionItem run(const std::string &label, const std::string &name = "",
                       const std::string &help = "", const std::string &key = "")
-{ return {label, ActionRun, name.empty() ? label : name, {}, help, key, {}}; }
+{ return {label, ActionRun, name.empty() ? label : name, {}, help, key}; }
 // an operation on the entities picked
 static actionItem op(const std::string &label, const std::string &name = "",
                      const std::string &help = "")
-{
-  return {label, ActionOperation, name.empty() ? label : name, {}, help, "",
-          {}};
-}
+{ return {label, ActionOperation, name.empty() ? label : name, {}, help, ""}; }
 // a shape, named as its label
 static actionItem shape(const std::string &label)
-{ return {label, ActionShape, label, {}, "", "", {}}; }
+{ return {label, ActionShape, label, {}, "", ""}; }
 // an option toggled or set
 static actionItem option(const std::string &label, const std::string &name,
                          const std::string &key = "")
-{ return {label, ActionOption, name, {}, "", key, {}}; }
-// an item that then asks for the value of an option
-static actionItem ask(actionItem item, const std::string &option, double min,
-                      double max, double step, bool perValue = false)
-{
-  item.ask = {option, min, max, step, perValue};
-  return item;
-}
+{ return {label, ActionOption, name, {}, "", key}; }
 
 // the programs the commands added to the script are also written in (see
 // General.ScriptingLanguages), and their edition
@@ -82,6 +72,20 @@ static actionItem programsMenu()
               "the API",
               {group(write), menu("Edit program", "", edit)});
 }
+
+// a submenu of values of an option, each applied as it is chosen (the one
+// the option has checked): {label, value}
+static actionItem
+presets(const std::string &label, const std::string &option,
+        const std::vector<std::pair<std::string, std::string>> &values)
+{
+  std::vector<actionItem> items;
+  for(auto &v : values)
+    items.push_back(::option(v.first, option + "=" + v.second));
+  return menu(label, "", items);
+}
+static std::vector<std::pair<std::string, std::string>> opacities()
+{ return {{"100%", "1"}, {"75%", "0.75"}, {"50%", "0.5"}, {"25%", "0.25"}}; }
 
 static const std::map<std::string, actionItem> &menus()
 {
@@ -227,8 +231,7 @@ static const std::map<std::string, actionItem> &menus()
                option("Hover mesh and views", "General.MouseHoverMeshes"),
                menu("Projection", "",
                     {option("Orthographic", "General.Orthographic=1"),
-                     ask(option("Perspective", "General.Orthographic=0"),
-                         "General.ClipFactor", 0.1, 20, 0.1)}),
+                     option("Perspective", "General.Orthographic=0")}),
                run("All general options...", "General options")}),
         group(
           {menu("Geometry visibility", "",
@@ -236,7 +239,7 @@ static const std::map<std::string, actionItem> &menus()
                  option("Curves", "Geometry.Curves", "geometry_curves"),
                  option("Surfaces", "Geometry.Surfaces", "geometry_surfaces"),
                  option("Volumes", "Geometry.Volumes", "geometry_volumes")}),
-           ask(option("Geometry opacity", ""), "Geometry.Opacity", 0, 1, 0.01),
+           presets("Geometry opacity", "Geometry.Opacity", opacities()),
            run("All geometry options...", "Geometry options")}),
         group({menu("Mesh visibility", "",
                     {option("Nodes", "Mesh.Nodes", "mesh_nodes"),
@@ -250,31 +253,27 @@ static const std::map<std::string, actionItem> &menus()
                      option("3D element faces", "Mesh.VolumeFaces",
                             "mesh_volume_faces")}),
                run("Toggle mesh display"),
-               ask(option("Mesh opacity", ""), "Mesh.Opacity", 0, 1, 0.01),
-               ask(option("Global mesh size factor", ""), "Mesh.MeshSizeFactor",
-                   0.01, 100, 0.01),
+               presets("Mesh opacity", "Mesh.Opacity", opacities()),
+               presets("Global mesh size factor", "Mesh.MeshSizeFactor",
+                       {{"0.25", "0.25"}, {"0.5", "0.5"}, {"1", "1"},
+                        {"2", "2"}, {"4", "4"}}),
                run("All mesh options...", "Mesh options")}),
         group(
           {option("View element outlines", "View.ShowElement", "view_elements"),
-           ask(option("View normal raise", ""), "View.NormalRaise", -1, 1,
-               0.005, true),
            menu("View intervals", "",
-                {ask(option("Iso-values", "View.IntervalsType=1"), "View.NbIso",
-                     1, 100, 1),
+                {option("Iso-values", "View.IntervalsType=1"),
                  option("Continuous map", "View.IntervalsType=2"),
-                 ask(option("Filled iso-values", "View.IntervalsType=3"),
-                     "View.NbIso", 1, 100, 1),
+                 option("Filled iso-values", "View.IntervalsType=3"),
                  option("Numeric values", "View.IntervalsType=4"),
                  option("Default range", "View.RangeType=1"),
                  option("Range per time step", "View.RangeType=3")}),
            menu("View vectors", "",
                 {option("Line", "View.VectorType=1"),
                  option("3D arrow", "View.VectorType=4"),
-                 ask(option("Displacement", "View.VectorType=5"),
-                     "View.DisplacementFactor", 0, 1, 0.01, true),
+                 option("Displacement", "View.VectorType=5"),
                  option("At barycenter", "View.GlyphLocation=1"),
                  option("At node", "View.GlyphLocation=2")}),
-           ask(option("View opacity", ""), "View.Opacity", 0, 1, 0.01),
+           presets("View opacity", "View.Opacity", opacities()),
            run("All view options...", "All view options")})})},
     {"View",
      group(
@@ -788,30 +787,6 @@ void SetActionOption(const std::string &option, double value)
                  value, false);
 }
 
-int GetActionOptionIndex(const std::string &option)
-{
-  actionOption o = optionOf(option);
-  return o.indices.empty() ? -1 : o.indices[0];
-}
-
-void GetActionAsk(const actionAsk &ask, double &min, double &max, double &step,
-                  double &value)
-{
-  actionOption o = optionOf(ask.option);
-  value = o.current();
-  double unit = 1.;
-#if defined(HAVE_POST)
-  if(ask.perValue && !o.indices.empty()) {
-    double largest = std::max(fabs(opt_view_min(o.indices[0], GMSH_GET, 0)),
-                              fabs(opt_view_max(o.indices[0], GMSH_GET, 0)));
-    unit = 2. * CTX::instance()->lc / (largest ? largest : 1.);
-  }
-#endif
-  min = ask.min * unit;
-  max = ask.max * unit;
-  step = ask.step * unit;
-}
-
 // ---------------------------------------------------------------------------
 
 bool IsAction(const std::string &name) { return actions().count(name) > 0; }
@@ -827,7 +802,6 @@ bool IsDoneByInterface(const actionItem &item)
 int RunAction(const actionItem &item, int view, drawContext *ctx)
 {
   if(item.kind == ActionOption) {
-    if(item.what.empty()) return ActionDone; // only asked for
     actionOption o = optionOf(item.what);
     if(o.indices.empty()) return ActionDone;
     SetActionOption(item.what, o.toggle ? !o.current() : o.value);
@@ -842,8 +816,7 @@ int RunAction(const actionItem &item, int view, drawContext *ctx)
 bool IsActionAvailable(const actionItem &item)
 {
   if(item.kind == ActionOption) {
-    const std::string &option = item.what.empty() ? item.ask.option : item.what;
-    return option.compare(0, 5, "View.") || haveViews();
+    return item.what.compare(0, 5, "View.") || haveViews();
   }
   if(item.kind != ActionRun) return true;
   // (an action not in the table is done by the interfaces, which say whether

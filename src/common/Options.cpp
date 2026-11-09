@@ -8593,11 +8593,6 @@ double opt_print_x3d_colorize(OPT_ARGS_NUM)
 
 // Color option routines
 
-#if defined(HAVE_FLTK)
-
-
-#endif
-
 unsigned int opt_general_color_background(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
