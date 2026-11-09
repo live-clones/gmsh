@@ -1766,10 +1766,10 @@ SetFactory("OpenCASCADE");
 Rectangle(1) = @{0, 0, 0, 1, 0.5, 0@};
 @end example
 You can edit this script with any text editor; clicking on `Edit script'
-in the tree menu will launch the default text editor specified by the
-@code{General.Editor} option (@pxref{General options}). If you edit the
-script, you should click on `Reload script' in the tree menu to reload
-the modifications in the GUI. The @code{//+} line in the script is a
+in the tree menu opens it in the script editor of the GUI, or in the text
+editor given by the @code{General.TextEditor} option (@pxref{General
+options}). If you edit the script in another editor, click on `Reload
+script' in the tree menu to reload the modifications in the GUI. The @code{//+} line in the script is a
 comment that is used as a placemark between commands added by the GUI;
 see @ref{Gmsh scripting language} for the scripting language reference.
 
@@ -1798,8 +1798,8 @@ name of the current active model, with an appended extension depending
 on the mesh format.  Note that most interactive commands have keyboard
 shortcuts: see @ref{Keyboard shortcuts}, or select `Help->Keyboard and
 Mouse Usage' in the menu (which has a search box to find them). For
-example, to quickly generate the 2D mesh
-and save a mesh, you can first press @kbd{2}, then @kbd{Ctrl+Shift+s}.
+example, to quickly generate the 2D mesh and save it, you can first
+press @kbd{2}, then @kbd{Ctrl+s}.
 
 A double-click in the graphic window will pop up a quick shortcut menu,
 which can be used e.g. to quickly toggle the visibility of mesh entities
@@ -6723,25 +6723,53 @@ To add a new option in Gmsh:
 
 @enumerate
 @item
-create the option in the @code{CTX} class
-(@url{@value{GITLAB-PREFIX}/src/common/Context.h,src/common/Context.h})
-if it's a classical option, or in the @code{PViewOptions} class
+store its value: a member of the @code{CTX} class
+(@url{@value{GITLAB-PREFIX}/src/common/Context.h,src/common/Context.h}),
+or of the @code{PViewOptions} class
 (@url{@value{GITLAB-PREFIX}/src/post/PViewOptions.h,src/post/PViewOptions.h})
-if it's a post-processing view-dependent option;
+for an option of each post-processing view;
 @item
 in
 @url{@value{GITLAB-PREFIX}/src/common/DefaultOptions.h,src/common/DefaultOptions.h},
-give a name (for the parser to be able to access it), a reference to a
-handling routine (i.e. @code{opt_XXX}) and a default value for this
-option;
+add an entry to the table of its category and type (e.g.
+@code{MeshOptions_Number}), in alphabetical order: where it is saved
+(@code{O} in the option file, @code{S} in the session file, @code{F} in
+the full listing), its name (as the parser, the API and the interfaces
+call it, e.g. @code{Mesh.LightLines}), its handling routine
+@code{opt_XXX}, its default value and its help string;
 @item
-create the handling routine @code{opt_XXX} in
-@url{@value{GITLAB-PREFIX}/src/common/Options.cpp,src/common/Options.cpp}
-(and add the prototype in
-@url{@value{GITLAB-PREFIX}/src/common/Options.h,src/common/Options.h});
+write the handling routine @code{opt_XXX} in
+@url{@value{GITLAB-PREFIX}/src/common/Options.cpp,src/common/Options.cpp},
+and declare it in
+@url{@value{GITLAB-PREFIX}/src/common/Options.h,src/common/Options.h}:
+it sets the value when asked to (@code{action & GMSH_SET}) and returns
+it. If what is drawn depends on the option, it also says what changed
+(e.g. @code{CTX::instance()->meshOptionsChanged(...)}). It does not
+update the graphical interface: the widgets bound to an option are
+updated by their name whenever an option is set (see below);
 @item
-optional: create the associated widget in
-@url{@value{GITLAB-PREFIX}/src/fltk/optionWindow.cpp,src/fltk/optionWindow.cpp};
+if the option takes one of a few values, list them with their labels,
+in the order the menus should show them, in the @code{OptionChoices}
+table of
+@url{@value{GITLAB-PREFIX}/src/common/DefaultOptions.h,src/common/DefaultOptions.h}
+(rather than in the help string): the menus of the options window, the
+choices of the web page and the help are made from it. A number option
+with bounds gets its minimum, maximum and step in the
+@code{OptionRanges} table of the same file;
+@item
+optional: add a widget for it in the options window
+(@url{@value{GITLAB-PREFIX}/src/fltk/optionWindow.cpp,src/fltk/optionWindow.cpp}),
+with the helpers @code{checkButton()}, @code{valueInput()},
+@code{choice()} (with no menu, to take its items from
+@code{OptionChoices}) or @code{input()}, the name of the option as the
+tooltip and @code{option_cb} as the callback. The widget is then bound
+to the option by its name in both directions: changing it sets the
+option, and setting the option (in a script, through the API, or with
+another widget) updates it;
+@item
+regenerate the reference of the options (the files
+@file{opt_*.texi}) by running @code{gmsh -doc} in the
+@file{doc/texinfo} directory.
 @end enumerate
 
 @c =========================================================================
