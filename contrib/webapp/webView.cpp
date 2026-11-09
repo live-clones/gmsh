@@ -27,6 +27,8 @@
 #include "GmshMessage.h"
 #include "GModel.h"
 #include "OpenFile.h"
+#include "PView.h"
+#include "PViewData.h"
 #include "Options.h"
 #include "Shortcuts.h"
 #include "StringUtils.h"
@@ -500,6 +502,17 @@ EMSCRIPTEN_KEEPALIVE int gmshWebAddShape(const char *shape, const char *values)
   GModel::current()->setSelection(0);
   SetBoundingBox();
   return added ? 0 : 1;
+}
+
+// what the view of index i holds, over all its steps: 1 if scalars, 2 if
+// vectors, 4 if tensors (or-ed), for the page to show the options that apply
+EMSCRIPTEN_KEEPALIVE int gmshWebViewContent(int i)
+{
+  Msg::NoThrow noThrow;
+  if(i < 0 || i >= (int)PView::list.size()) return 0;
+  PViewData *d = PView::list[i]->getData();
+  return (d->getNumScalars() ? 1 : 0) | (d->getNumVectors() ? 2 : 0) |
+         (d->getNumTensors() ? 4 : 0);
 }
 
 // whether the measurement awaits its second point

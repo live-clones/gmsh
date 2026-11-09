@@ -1587,9 +1587,13 @@ function readableColor(rgb, what) {
 // The modules of the graphical interface's tree. Post-processing: the views
 // (in the branches their Group option names), each shown or hidden by its box,
 // with the menu of its button (its options, its export, the visibility and
-// the removal of views). The options set for a view alone are kept for it
-// when those of the Options tab are given again to all (see readOptions())
-const viewOverrides = new Map(); // view tag -> the options set for it alone
+// the removal of views). The options of a view are set under it, and only
+// there; the page keeps them by the name of the view, so that the views a
+// solver makes again at each run get them back, and those applied to all the
+// views also go to the views to come (see settleViews())
+const viewSettings = new Map(); // view name -> {View.X: value}
+const allViewSettings = {}; // View.X -> value, for every view
+const settledViews = new Set(); // the views (tags) given their settings
 const viewOptionsOpen = new Set(); // the views whose options are shown
 // The options of the views shown, by name: [kind, label, range if not
 // Gmsh's] (the choices and ranges from Gmsh); those of one view, under it,
@@ -1605,11 +1609,20 @@ const viewOptions = {
   NormalRaise: ['range', 'Normal raise', {min: -0.5, max: 0.5, step: 0.01}],
   ShowScale: ['check', 'Color scale'],
   ShowElement: ['check', 'Element outlines'],
-  Opacity: ['range', 'Opacity']};
+  Opacity: ['range', 'Opacity'],
+  // (for the views with vectors, or tensors)
+  VectorType: ['choice', 'Vector display'],
+  ArrowSizeMax: ['number', 'Arrow size (pixels)'],
+  DisplacementFactor: ['number', 'Displacement factor'],
+  GlyphLocation: ['choice', 'Glyph location'],
+  TensorType: ['choice', 'Tensor display']};
+// those shown under a view, in this order, when they apply to it
 const perViewOptions = ['IntervalsType', 'NbIso', 'RangeType', 'CustomMin',
-  'CustomMax', 'TimeStep', 'ShowScale', 'ShowElement', 'Opacity'];
-const allViewsOptions = ['IntervalsType', 'NbIso', 'ScaleType', 'NormalRaise',
+  'CustomMax', 'ScaleType', 'TimeStep', 'VectorType', 'ArrowSizeMax',
+  'DisplacementFactor', 'GlyphLocation', 'TensorType', 'NormalRaise',
   'ShowScale', 'ShowElement', 'Opacity'];
+// what the view of index i holds: 1 scalars, 2 vectors, 4 tensors (or-ed)
+const viewContent = (i) => Module.ccall('gmshWebViewContent', 'number', ['number'], [i]);
 const viewTags = () => [...gmsh.view.getTags()];
 const viewNum = (i, n) => gmsh.option.getNumber(`View[${i}].${n}`);
 // The list is made again only when what it shows changes (the views, their
@@ -1629,7 +1642,7 @@ function showViews() {
   $('modulePost').hidden = !tags.length;
   const key = JSON.stringify(tags.map((t, i) => [
     t, name(i), group(i), viewNum(i, 'NbTimeStep'), viewNum(i, 'RangeType'),
-    viewOptionsOpen.has(t)]));
+    viewNum(i, 'VectorType'), viewOptionsOpen.has(t)]));
   if(key !== viewsKey) {
     viewsKey = key;
     viewUpdates.length = 0;
@@ -1685,39 +1698,108 @@ function showViews() {
   updateViews();
   showAnimation();
 }
-// the options of a view, under it
+// the options of a view, under it: those that apply to what it holds, and a
+// button that gives them to all the views
 function viewOptionRows(tag, i) {
   const box = document.createElement('div');
   box.className = 'viewOptions';
   const steps = viewNum(i, 'NbTimeStep');
+  const content = viewContent(i);
+  const shown = [];
   for(const name of perViewOptions) {
-    const [kind, text] = viewOptions[name];
+    const [kind, text, range] = viewOptions[name];
     if(name === 'TimeStep' && steps < 2) continue;
     if(name.startsWith('Custom') && viewNum(i, 'RangeType') !== 2) continue;
-    const el = optionField(kind, 'View.' + name, (v) => setViewOptionOf(tag, name, v));
+    if(['VectorType', 'ArrowSizeMax', 'GlyphLocation'].includes(name) && !(content & 2))
+      continue;
+    if(name === 'DisplacementFactor' &&
+       (!(content & 2) || viewNum(i, 'VectorType') !== 5))
+      continue;
+    if(name === 'TensorType' && !(content & 4)) continue;
+    const option = 'View.' + name;
+    const el = optionField(kind, option, (v) => setViewOptionOf(tag, option, v), range);
     el.title = `View[${i}].${name}`;
     if(name === 'TimeStep') Object.assign(el, {min: 0, max: steps - 1, step: 1});
     box.appendChild(optionRow(text, el));
+    shown.push(option);
     viewUpdates.push((ts) => {
       const k = ts.indexOf(tag);
-      if(k >= 0 && el !== document.activeElement) setField(el, kind, viewNum(k, name));
+      if(k >= 0 && el !== document.activeElement)
+        setField(el, kind, getViewOption(option, k));
     });
   }
+  const all = document.createElement('button');
+  all.textContent = 'Apply to all views';
+  all.title = 'Give these options to all the views, and to the views to come ' +
+    '(the time step and a custom range stay those of each view)';
+  all.addEventListener('click', () => applyToAllViews(tag, shown));
+  box.appendChild(all);
   return box;
 }
-function setViewOptionOf(tag, name, v) {
+// an option of a view set under it: kept for the views of its name
+function setViewOptionOf(tag, option, v) {
   const i = viewTags().indexOf(tag);
-  gmsh.option.setNumber(`View[${i}].${name}`, v);
+  if(i < 0) return;
+  setViewOption(option, i, v);
   // a custom range not given yet: that of the values
-  if(name === 'RangeType' && v === 2 && viewNum(i, 'CustomMin') === viewNum(i, 'CustomMax')) {
+  if(option === 'View.RangeType' && v === 2 &&
+     viewNum(i, 'CustomMin') === viewNum(i, 'CustomMax')) {
     gmsh.option.setNumber(`View[${i}].CustomMin`, viewNum(i, 'Min'));
     gmsh.option.setNumber(`View[${i}].CustomMax`, viewNum(i, 'Max'));
   }
-  if(!viewOverrides.has(tag)) viewOverrides.set(tag, new Set());
-  viewOverrides.get(tag).add('View.' + name);
+  keepViewOption(i, option);
   showViews();
-  readOptions();
   draw();
+}
+// the options of a view given to all the views, and to the views to come
+function applyToAllViews(tag, options) {
+  const i = viewTags().indexOf(tag);
+  if(i < 0) return;
+  for(const option of options) {
+    if(['View.TimeStep', 'View.CustomMin', 'View.CustomMax'].includes(option)) continue;
+    const v = getViewOption(option, i);
+    allViewSettings[option] = v;
+    for(let k = 0; k < views(); k++) {
+      setViewOption(option, k, v);
+      keepViewOption(k, option);
+    }
+  }
+  showViews();
+  draw();
+}
+// the value an option of the view of index i has now, kept for its name
+function keepViewOption(i, option) {
+  const name = gmsh.option.getString(`View[${i}].Name`);
+  if(!viewSettings.has(name)) viewSettings.set(name, {});
+  viewSettings.get(name)[option] = getViewOption(option, i);
+}
+// the views not seen yet (made by a run, or opened) given what was kept: that
+// for all views, then that of their name; once, so that what a model sets for
+// a view, or a key changes, is not written over afterwards
+function settleViews() {
+  viewTags().forEach((t, i) => {
+    if(settledViews.has(t)) return;
+    settledViews.add(t);
+    const name = gmsh.option.getString(`View[${i}].Name`);
+    const kept = {...allViewSettings, ...(viewSettings.get(name) || {})};
+    for(const [option, v] of Object.entries(kept)) setViewOption(option, i, v);
+  });
+}
+// the first visible view (or the first one), for the items of all views
+function firstView() {
+  const tags = viewTags();
+  const i = tags.findIndex((t, k) => viewNum(k, 'Visible'));
+  return tags[i >= 0 ? i : 0];
+}
+// the options of a view shown, under it in the Model tab
+function showViewOptions(tag) {
+  if(tag === undefined) return;
+  viewOptionsOpen.add(tag);
+  showTab('modelTab');
+  showViews();
+  const list = $('viewList');
+  const rows = list.querySelectorAll('.viewOptions');
+  if(rows.length) rows[0].scrollIntoView({block: 'nearest'});
 }
 // the menu of a view's button, as the graphical interface's
 function viewItems(tag) {
@@ -2042,7 +2124,7 @@ const pageActions = {
   'General options': {run: () => showOptions('General')},
   'Geometry options': {run: () => showOptions('Geometry')},
   'Mesh options': {run: () => showOptions('Mesh')},
-  'All view options': {run: () => showOptions('Views')},
+  'All view options': {run: () => showViewOptions(firstView())},
   'View options': {run: (view, tag) => { if(!viewOptionsOpen.delete(tag)) viewOptionsOpen.add(tag); },
                    check: (view, tag) => viewOptionsOpen.has(tag)},
   'Export view as .pos': {run: (view, tag) => exportView(tag, 'pos')},
@@ -2085,7 +2167,7 @@ async function gmshAction(item, view, module) {
                                  [item.id, view]);
   if(item.kind === 'option') {
     run();
-    if(item.what) keepOptionOf(item.what.split('=')[0]);
+    if(item.what) keepOptionOf(item.what.split('=')[0], view);
     return;
   }
   if(module === 'Mesh') {
@@ -2250,7 +2332,6 @@ const optionGroups = [
     ['Mesh.VolumeEdges', 'check', '3D element edges'],
     ['Mesh.VolumeFaces', 'check', '3D element faces'],
     ['Mesh.Opacity', 'range', 'Opacity']]],
-  ['Views', allViewsOptions.map((n) => ['View.' + n, ...viewOptions[n]])],
   ['General', [
     ['General.Axes', 'choice', 'Axes'],
     ['General.SmallAxes', 'check', 'Small axes'],
@@ -2261,7 +2342,6 @@ const optionGroups = [
 // the options that change the mesh: the next run meshes again
 const meshing = new Set(['Mesh.Algorithm', 'Mesh.Algorithm3D',
   'Mesh.MeshSizeFactor', 'Mesh.ElementOrder', 'Mesh.RecombineAll']);
-const viewSettings = {};
 const optionFields = [];
 const views = () => gmsh.option.getNumber('PostProcessing.NbViews');
 // The normal raise of a view is in model units per unit of its values: the
@@ -2285,32 +2365,27 @@ function getViewOption(name, i) {
   return u ? v / u : 0;
 }
 function setOption(name, v) {
-  if(name.startsWith('View.'))
-    for(let i = 0; i < views(); i++) setViewOption(name, i, v);
-  else
-    gmsh.option.setNumber(name, v);
+  gmsh.option.setNumber(name, v);
   keepOption(name, v);
   draw();
 }
-// What the page keeps of an option set (here, or by an item of a menu in
-// Gmsh): those of the views, given to the views to come (the results of the
-// solvers); the mesh made again by the next run if it changes it
+// What follows an option set (here, or by an item of a menu in Gmsh): the
+// mesh made again by the next run if it changes it, the page's colours
 function keepOption(name, v) {
-  if(name.startsWith('View.')) {
-    viewSettings[name] = v;
-    for(const s of viewOverrides.values()) s.delete(name);
-  }
   if(meshing.has(name)) gmsh.onelab.setChanged('Gmsh', 2);
   if(name === 'General.ColorScheme') setColorScheme(v);
 }
-// an option as Gmsh has it now (of the first visible view for View.*)
-function keepOptionOf(name) {
+// an option as Gmsh has it now, after an item or a key changed it: one of
+// the views is kept for the views of its name (see keepViewOption()), for
+// the view of index view, or all the visible ones
+function keepOptionOf(name, view = -1) {
   if(!name.startsWith('View.')) {
     keepOption(name, gmsh.option.getNumber(name));
     return;
   }
-  const i = viewTags().findIndex((t, k) => viewNum(k, 'Visible'));
-  if(i >= 0) keepOption(name, getViewOption(name, i));
+  viewTags().forEach((t, i) => {
+    if(view >= 0 ? i === view : viewNum(i, 'Visible')) keepViewOption(i, name);
+  });
 }
 
 // the colour scheme: the page light or dark as the scene, which follows the
@@ -2417,20 +2492,11 @@ function buildOptions() {
   }
 }
 // the options as Gmsh has them (a model sets some, its views their own), the
-// settings asked for the views given to the new ones
+// views not seen yet given what the page kept for them (see settleViews())
 function readOptions() {
-  const tags = viewTags();
-  for(const [name, v] of Object.entries(viewSettings))
-    tags.forEach((t, i) => {
-      if(!viewOverrides.get(t)?.has(name)) setViewOption(name, i, v);
-    });
-  // the options of the views, once there are views
-  $('optionsViews').hidden = !tags.length;
-  for(const [name, kind, el] of optionFields) {
-    const isView = name.startsWith('View.');
-    if(isView && !tags.length) continue;
-    setField(el, kind, isView ? getViewOption(name, 0) : gmsh.option.getNumber(name));
-  }
+  settleViews();
+  for(const [name, kind, el] of optionFields)
+    setField(el, kind, gmsh.option.getNumber(name));
   updateViews();
 }
 applyColorScheme();
@@ -3100,7 +3166,7 @@ const pageShortcuts = {
   file_open: () => openMenu(true),
   help_keys: () => $('keysDialog').showModal(),
   options: () => showOptions(),
-  options_post: () => showOptions('Views'),
+  options_post: () => showViewOptions(firstView()),
   options_solver: () => showTab('modelTab'),
   clipping: () => showTab('clipTab'),
   visibility: () => showTab('visTab'),
@@ -3164,7 +3230,9 @@ function forgetModel() {
     workerReady.then((ok) => { if(ok) worker.postMessage({type: 'forget', dir: old}); });
   }
   sent.clear();
-  viewOverrides.clear();
+  viewSettings.clear();
+  for(const k of Object.keys(allViewSettings)) delete allViewSettings[k];
+  settledViews.clear();
   viewOptionsOpen.clear();
   graphEdits.clear();
   modelDir = modelFile = hint = '';
