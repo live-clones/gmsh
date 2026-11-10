@@ -498,9 +498,9 @@
 <div id="drop">drop a model (.pro, .geo and the files they include, or a .zip)</div>
 <script type="module">
 // The ONELAB web app: Gmsh, through the Gmsh JavaScript API (gmsh.mjs) and
-// the drawing functions of webView.cpp, with GetDP, linked in the same module
-// (webOnelab.cpp) but run in a web worker (solver.js), as the graphical
-// interface runs it in a process of its own. A model is opened from files, a folder, a zip
+// the functions of webApp.cpp, with GetDP, linked in the same module but run
+// in a web worker (solver.js), as the graphical interface runs it in a
+// process of its own. A model is opened from files, a folder, a zip
 // archive, or a URL (?zip=<url>, with &open=<file> for a zip of several
 // models, or ?model=<url of the .pro>&files=<other files, next to it,
 // separated by commas>)
@@ -640,7 +640,7 @@ function draw() {
   });
 }
 // the mouse: the events of the canvas go to the same interaction as in the
-// graphical interface (src/graphics/sceneView.cpp, through webView.cpp):
+// graphical interface (src/graphics/sceneView.cpp, through webApp.cpp):
 // left drag rotates, right drag pans, middle or shift drag zooms, the wheel
 // zooms at the cursor, Ctrl+click starts a lasso to zoom on, Ctrl+right click
 // resets the view; what is under the cursor is named in a box by it
@@ -1009,13 +1009,13 @@ function showPending() {
   if(pendingDb) setDatabase(pendingDb);
   pendingDb = null;
   for(const [name] of files)
-    Module.ccall('gmshWebMergeFile', null, ['string'], [name]);
+    Module.ccall('gmshWebOnelabMerge', null, ['string'], [name]);
   showSolverProgress();
 }
 // what the solver changed: the graphs made again from the parameters, as the
 // graphical interface does on a refresh
 function showSolverProgress() {
-  Module.ccall('gmshWebUpdateGraphs', null, [], []);
+  Module.ccall('gmshWebOnelabUpdateGraphs', null, [], []);
   showParameters();
   showViews();
   readOptions();
@@ -1928,7 +1928,7 @@ function saveMesh() {
 }
 // Geometry: a new model, the script edited, reloaded and saved, the shapes
 // added to it as the dialog of the graphical interface adds them, with its
-// fields and their defaults (see gmshWebShapes() in webView.cpp), and the
+// fields and their defaults (see gmshWebShapes() in webApp.cpp), and the
 // operations on selected entities. The fields of a shape, as the dialog's,
 // keep what was typed in them
 const shapes = Object.fromEntries(
@@ -2125,7 +2125,7 @@ function partitionForm() {
 }
 // The action registry (src/common/Actions.cpp): the menus of the page and
 // of the graphical interface, the buttons of the modules included, and what
-// their items do (see gmshWebActions() in webView.cpp)
+// their items do (see gmshWebActions() in webApp.cpp)
 const registry = JSON.parse(Module.ccall('gmshWebActions', 'string', [], []));
 // the actions of the registry this page does: what it does (view: the index
 // of the view of a menu of a view, tag its tag), its check mark, and whether
@@ -2266,7 +2266,7 @@ moduleButtons('Geometry');
 moduleButtons('Mesh');
 
 // The operations on entities picked in the scene, as the graphical interface
-// does them (src/graphics/selectionDriver.cpp, through webView.cpp): started
+// does them (src/graphics/selectionDriver.cpp, through webApp.cpp): started
 // from the menus of the modules, with their fields in the form, what to pick
 // in the status bar, and its buttons to end the selection, take back the last
 // pick and stop (e, u and q, as in the graphical interface)
@@ -3083,7 +3083,7 @@ function popupMenu(items, x, y, {above = false, owner = null} = {}) {
 showSelection();
 
 // The query and the measurement, as the buttons of the status bar of the
-// graphical interface: they take over the clicks of the scene (webView.cpp,
+// graphical interface: they take over the clicks of the scene (webApp.cpp,
 // with the code of the interface in sceneView), until they are clicked again,
 // or Escape (or q); what they find is printed in the messages, and pinned to
 // the model in boxes the page draws (showNotes())

@@ -43,13 +43,13 @@ api_test.mjs shows its use and checks it:
 
   node api_test.mjs
 
-The page draws the scene with the functions of webView.cpp, which also add
+The page draws the scene with the functions of webApp.cpp, which also add
 shapes to the script of a model and run the operations on entities picked in
-the scene, as the graphical interface does (src/graphics/selectionDriver), and
+the scene, as the graphical interface does (src/graphics/selectionDriver),
 give it the buttons of the modules and the entries of the menus of the
 graphical interface, and do their actions (the action registry,
-src/common/Actions.cpp); webOnelab.cpp
-links GetDP in and runs the ONELAB loop; onelab.html runs GetDP in a web
+src/common/Actions.cpp), and run the ONELAB loop, with GetDP linked in when
+build.sh is given it; onelab.html runs GetDP in a web
 worker (solver.js), with a module of its own, as the graphical interface runs
 it in a process of its own: the page shows the results as they are written and
 can stop the solver; shortcuts.js gives the pages the keyboard shortcuts of the
