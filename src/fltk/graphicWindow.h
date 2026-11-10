@@ -6,8 +6,6 @@
 #ifndef GRAPHIC_WINDOW_H
 #define GRAPHIC_WINDOW_H
 
-#include <functional>
-#include <map>
 #include <string>
 #include <vector>
 #include <FL/Fl.H>
@@ -182,67 +180,36 @@ public:
   void fillRecentHistoryMenu();
 };
 
-void file_quit_cb(Fl_Widget *w, void *data);
-void file_watch_cb(Fl_Widget *w, void *data);
-void geometry_reload_cb(Fl_Widget *w, void *data);
-void geometry_edit_cb(Fl_Widget *w, void *data);
-void file_window_cb(Fl_Widget *w, void *data);
-void mesh_save_cb(Fl_Widget *w, void *data);
-void onelab_reload_cb(Fl_Widget *w, void *data);
-void help_about_cb(Fl_Widget *w, void *data);
-void status_xyz1p_cb(Fl_Widget *w, void *data);
-// the quick access menu of the status bar (also on a double click in the
-// scene)
-void quick_access_cb(Fl_Widget *w, void *data);
-// the mouse selection on or off (the "S" button of the status bar, Escape)
-void mouse_selection_cb(Fl_Widget *w, void *data);
-void status_query_cb(Fl_Widget *w, void *data);
-// whether a query is waiting for a click (see status_query_cb)
+// What the status bar does, also from the keys and the menus (see
+// fltkActions.cpp):
+// the point of view of the viewports of g (those of the current window, or all
+// of them to sync them with Ctrl, if null): "x", "y", "z" (the axis out of
+// the screen, or into it with Shift), "3d" (isometric), "1:1" (the model
+// fitted in the window), "r" (rotated by 90 degrees), "reset"
+void setPointOfView(const char *which, graphicWindow *g = nullptr);
+// the query or the measure, the two tools that take the clicks on the model
+// until asked to stop (see sceneTool), started or stopped; whether each
+// waits for a click
+void toggleTool(const std::string &name);
 bool queryMode();
-void status_measure_cb(Fl_Widget *w, void *data);
-// whether a measurement is waiting for a click (see status_measure_cb)
 bool measureMode();
 // colour the buttons of the mouse selection, the query and the measurement
 // according to their states
 void updateModeButtons();
+// the mouse selection on or off (the "S" button of the status bar)
+void toggleMouseSelection();
+// the quick access menu of the status bar (also on a double click in the
+// scene)
+void quick_access_cb(Fl_Widget *w, void *data);
+// a step of the animation: of the time steps (time), or of the views
 void status_play_manual(int time, int incr, bool redraw = true);
-void show_hide_message_cb(Fl_Widget *w, void *data);
-void show_hide_menu_cb(Fl_Widget *w, void *data);
-void attach_detach_menu_cb(Fl_Widget *w, void *data);
-void dock_tool_cb(Fl_Widget *w, void *data);
-void dock_tools_cb(Fl_Widget *w, void *data);
-
-// The items of the action registry (see Actions.h) in this interface:
-// - fltkActions() gives the actions this interface does their run, once,
-//   before its menus are made;
-// - canRunItem() says whether an item can be used now;
-// - runItem() does what an item does (view is the index of the view, for the
-//   menu of a view);
-// - addMenuItems() adds the items of a menu to an FLTK menu, where they act
-//   on the given view; with marks, the items that toggle or set an option
-//   show its value (not in a menu that stays, which would not follow it).
-struct actionItem;
-class Fl_Menu_;
-void fltkActions();
-bool canRunItem(const actionItem &item);
-void runItem(const actionItem &item, int view = -1);
-// whether a menu of the registry has an item this interface can run now
-bool canRunAnyItem(const actionItem &menu);
-void addMenuItems(Fl_Menu_ *m, const actionItem &menu, int view,
-                  bool marks = true);
-
-// An action of the registry this interface does: what it does (view: the
-// index of the view of a menu of a view) and its check mark
-struct fltkAction {
-  std::function<void(int view)> run;
-  std::function<int()> check;
-};
-// the actions of the menu bar (see the "Menu bar" menu of Actions.cpp) and
-// of the keys that are not in a menu (see FlGui::runShortcut()), parts of
-// fltkActions() in actionMenus.cpp
-const std::map<std::string, fltkAction> &menuBarActions();
-const std::map<std::string, fltkAction> &keyboardActions();
-// the recent files, as the submenu under path (File/Open Recent)
-void addRecentFiles(Fl_Menu_ *m, const std::string &path);
+// the console, the menu and the docked tool windows shown or hidden, the
+// menu attached to the window or detached, and a graphic window added
+void showHideMessages();
+void showHideMenu();
+void attachDetachMenu();
+void dockCurrentTool();
+void dockAllTools();
+void newGraphicWindow();
 
 #endif

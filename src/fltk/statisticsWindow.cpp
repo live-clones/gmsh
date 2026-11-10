@@ -36,11 +36,6 @@ enum QM_HISTO {
   QMH_SIGE_3D
 };
 
-void statistics_cb(Fl_Widget *w, void *data)
-{
-  FlGui::instance()->stats->show();
-}
-
 static void statistics_update_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->stats->compute(true);

@@ -6,8 +6,10 @@
 // What a web page calls (through ccall) besides the Gmsh API (api/gmsh.mjs):
 // - the scene on its canvas, drawn as a window would draw it (see
 //   drawContextOffscreen), with the mouse events of the page given to the
-//   same interaction as the graphical interface's (sceneView); positions are
-//   in the CSS pixels of the canvas, from its top left corner;
+//   same interaction as the graphical interface's (sceneView; "the graphical
+//   interface", here and in the page, is the FLTK graphical user interface
+//   of Gmsh, src/fltk); positions are in the CSS pixels of the canvas, from
+//   its top left corner;
 // - the tools and the operations on the entities picked, the menus (the
 //   action registry), the shapes added to the script, the options and the
 //   shortcuts of the graphical interface;
@@ -16,7 +18,7 @@
 //   changed as the graphical interface changes them (they are read through
 //   the Gmsh API, gmsh.onelab.get, in JSON). GetDP is one of these solvers
 //   when the module is linked with it (HAVE_WEBAPP_GETDP, see build.sh).
-// Errors in these entries are reported and return, as in the desktop
+// Errors in these entries are reported and return, as in the FLTK
 // interface, instead of throwing into the page (Msg::NoThrow).
 
 #if defined(__EMSCRIPTEN__)

@@ -39,11 +39,6 @@ public:
   Fl_Input *input[MAX_PLUGIN_OPTIONS];
 };
 
-void plugin_cb(Fl_Widget *w, void *data)
-{
-  FlGui::instance()->plugins->show((intptr_t)data);
-}
-
 // the field of an option changed: tell the plugin, which may preview it
 static void plugin_input_value_cb(Fl_Widget *w, void *data)
 {

@@ -39,7 +39,7 @@
 class classificationEditor {
 public:
   std::vector<MElement *> elements;
-  Fl_Window *window;
+  Fl_Window *win;
   Fl_Button *buttons[7];
   Fl_Check_Button *toggles[4];
   Fl_Value_Input *inputs[1];
@@ -63,10 +63,8 @@ public:
   // forgets a selection whose model or mesh changed since; returns true then
   bool forgetIfChanged();
   classificationEditor(int deltaFontSize);
-  ~classificationEditor() { Fl::delete_widget(window); }
+  ~classificationEditor() { Fl::delete_widget(win); }
   void show();
 };
-
-void mesh_classify_cb(Fl_Widget *w, void *data);
 
 #endif

@@ -27,6 +27,7 @@ public:
 };
 
 // the view of index (intptr_t)data exported, to a file chosen
-void view_save_cb(Fl_Widget *w, void *data);
+// the view of the given index saved in a file chosen in a dialog
+void saveView(int index);
 
 #endif

@@ -46,6 +46,8 @@ public:
 public:
   fieldWindow(int deltaFontSize = 0);
   ~fieldWindow() { Fl::delete_widget(win); }
+  // the window shown, with no field being edited
+  void show();
   void loadFieldViewList();
   void loadFieldList();
   void saveFieldOptions();
@@ -56,7 +58,5 @@ public:
   void toggleHelp();
   void layout();
 };
-
-void field_cb(Fl_Widget *w, void *data);
 
 #endif

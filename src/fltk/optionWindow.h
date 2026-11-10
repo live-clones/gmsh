@@ -166,14 +166,10 @@ void optionRange(Fl_Valuator *v, const std::string &option);
 // GetOptionChoices()), and their values; none if the option has no table
 std::vector<double> choiceItems(Fl_Choice *c, const std::string &option);
 
-void options_cb(Fl_Widget *w, void *data);
 void options_restore_defaults_cb(Fl_Widget *w, void *data);
-void general_options_cb(Fl_Widget *w, void *data);
-void geometry_options_cb(Fl_Widget *w, void *data);
-void mesh_options_cb(Fl_Widget *w, void *data);
-void solver_options_cb(Fl_Widget *w, void *data);
-void post_options_cb(Fl_Widget *w, void *data);
-void view_options_cb(Fl_Widget *w, void *data);
+// the options of the view of index num shown (of the view shown last, or
+// the first, if num is negative)
+void showViewOptions(int num);
 void general_gmpdcf_cb(Fl_Widget *w, void *data);
 void general_rotation_center_cg_cb(Fl_Widget *w, void *data);
 void general_options_rotation_center_select_cb(Fl_Widget *w, void *data);

@@ -267,6 +267,14 @@ public:
 };
 
 void redraw_cb(Fl_Widget *w, void *data);
-void window_cb(Fl_Widget *w, void *data);
+// The windows, as the Window menu has them (see fltkActions.cpp): all of
+// them minimized (the docked tools with the main window), the main window
+// maximized or back, the scene full screen or back (and whether it is), and
+// all of them brought to the front
+void minimizeWindows();
+void zoomMainWindow();
+void toggleFullScreen();
+bool isFullScreen();
+void bringAllToFront();
 
 #endif

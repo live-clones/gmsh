@@ -9,7 +9,8 @@ set(SRC
     desktop.cpp
     icons.cpp
     graphicWindow.cpp
-    actionMenus.cpp
+    fltkActions.cpp
+    fileActions.cpp
       openglWindow.cpp
     optionWindow.cpp
       colorbarWindow.cpp

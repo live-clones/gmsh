@@ -34,6 +34,4 @@ public:
   void show(bool redrawOnly);
 };
 
-void highordertools_cb(Fl_Widget *w, void *data);
-
 #endif

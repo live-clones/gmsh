@@ -228,7 +228,7 @@ static void select_elements_cb(Fl_Widget *w, void *data)
         for(MElement *me : e->elements) me->setVisibility(1);
         reset_selection_cb(nullptr, e);
       }),
-    FlGui::instance()->getCurrentOpenglWindow(), (Fl_Window *)e->window);
+    FlGui::instance()->getCurrentOpenglWindow(), (Fl_Window *)e->win);
 }
 
 static void hide_cb(Fl_Widget *w, void *data)
@@ -345,7 +345,7 @@ static void delete_edge_cb(Fl_Widget *w, void *data)
         if(!*ended) ele->clear();
         deleteEdges(e, *ele);
       }),
-    FlGui::instance()->getCurrentOpenglWindow(), (Fl_Window *)e->window);
+    FlGui::instance()->getCurrentOpenglWindow(), (Fl_Window *)e->win);
 }
 
 static void reset_selection_cb(Fl_Widget *w, void *data)
@@ -418,10 +418,10 @@ classificationEditor::classificationEditor(int deltaFontSize)
   int BBB = (int)(1.4 * BB);
   const int width = TW, height = (int)(10.5 * BH);
 
-  window = new paletteWindow(
+  win = new paletteWindow(
     width, height, CTX::instance()->nonModalWindows ? true : false,
     "Reclassify surfaces", CTX::instance()->reclassifyOffset);
-  window->box(GMSH_WINDOW_BOX);
+  win->box(GMSH_WINDOW_BOX);
 
   int x = WB, y = WB;
   {
@@ -525,9 +525,9 @@ classificationEditor::classificationEditor(int deltaFontSize)
     x -= WB;
   }
 
-  window->end();
+  win->end();
   // of fixed height, as narrow as the option window, wider as one likes
-  ((paletteWindow *)window)->fixedLayout(width, height, 2 * WB);
+  ((paletteWindow *)win)->fixedLayout(width, height, 2 * WB);
 
   NoElementsSelectedMode(this, false);
   FL_NORMAL_SIZE += deltaFontSize;
@@ -542,8 +542,5 @@ void classificationEditor::show()
   // (the box as the flag is, whatever changed it meanwhile)
   toggles[CLASS_TOGGLE_HIDE]->value(CTX::instance()->hideUnselected ? 1 : 0);
   drawContext::global()->draw();
-  window->show();
+  win->show();
 }
-
-void mesh_classify_cb(Fl_Widget *w, void *data)
-{ FlGui::instance()->classify->show(); }

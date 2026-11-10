@@ -46,7 +46,7 @@ class PView;
 //                        [](char ib, sceneView *, const scenePicks &p) {
 //                          ...; return ib != 'q'; }),
 //                      scene);
-//   (see add_new_point_based_entity() in actionMenus.cpp).
+//   (see add_new_point_based_entity() in fltkActions.cpp).
 // - What the mouse does to the scene itself: in sceneView, for both
 //   front-ends at once.
 

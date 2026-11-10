@@ -24,6 +24,7 @@
 #include "graphicWindow.h"
 #include "windowPlacement.h"
 #include "editorWindow.h"
+#include "fileActions.h"
 #include "Context.h"
 #include "GmshMessage.h"
 #include "OS.h"
@@ -100,7 +101,7 @@ private:
   {
     editorWindow *e = (editorWindow *)data;
     if(!e->save()) return;
-    geometry_reload_cb(nullptr, nullptr);
+    reloadScript();
   }
   // a field focused by its shortcut, its text selected
   static void _focus(Fl_Input *field)

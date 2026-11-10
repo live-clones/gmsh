@@ -33,10 +33,10 @@
 #include "Field.h"
 #endif
 
-void field_cb(Fl_Widget *w, void *data)
+void fieldWindow::show()
 {
-  FlGui::instance()->fields->win->show();
-  FlGui::instance()->fields->editField(nullptr);
+  win->show();
+  editField(nullptr);
 }
 
 #if defined(HAVE_MESH)

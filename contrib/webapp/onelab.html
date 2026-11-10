@@ -500,7 +500,8 @@
 // The ONELAB web app: Gmsh, through the Gmsh JavaScript API (gmsh.mjs) and
 // the functions of webApp.cpp, with GetDP, linked in the same module but run
 // in a web worker (solver.js), as the graphical interface runs it in a
-// process of its own. A model is opened from files, a folder, a zip
+// process of its own. ("The graphical interface", here and below, is the
+// FLTK graphical user interface of Gmsh, src/fltk, which this page follows.) A model is opened from files, a folder, a zip
 // archive, or a URL (?zip=<url>, with &open=<file> for a zip of several
 // models, or ?model=<url of the .pro>&files=<other files, next to it,
 // separated by commas>)
@@ -2127,16 +2128,22 @@ function partitionForm() {
 // of the graphical interface, the buttons of the modules included, and what
 // their items do (see gmshWebActions() in webApp.cpp)
 const registry = JSON.parse(Module.ccall('gmshWebActions', 'string', [], []));
-// the actions of the registry this page does: what it does (view: the index
-// of the view of a menu of a view, tag its tag), its check mark, and whether
-// it has it now (always if not said)
+// The actions the page does, by name, in the order of the menus of
+// Actions.cpp (an item whose name is not here is not shown; the table of the
+// FLTK graphical user interface is at the top of src/fltk/fltkActions.cpp): what each
+// does (view: the index of the view of a menu of a view, tag its tag, mods
+// the modifiers of the key), its check mark, and whether the page has it now
+// (always if not said)
 const pageActions = {
+  // Geometry: the script
   'model_new': {run: newModel},
   'script_reload': {run: reloadScript},
   'script_edit': {run: editScript},
   'script_save': {run: saveScript},
+  // Mesh
   'mesh_save': {run: saveMesh},
   'mesh_partition': {run: partitionForm},
+  // Quick access: the scene
   'query': {run: () => toggleTool(Tool.Query), check: () => tool === Tool.Query},
   'measure': {run: () => toggleTool(Tool.Measure), check: () => tool === Tool.Measure},
   'window_full_screen': {run: toggleFullscreen, check: () => !!fullscreenElement(),
@@ -2146,37 +2153,42 @@ const pageActions = {
   'options_geometry': {run: () => showOptions('Geometry')},
   'options_mesh': {run: () => showOptions('Mesh')},
   'options_views': {run: () => showViewOptions(firstView())},
+  // View: the menu of a view
   'view_options': {run: (view, tag) => { if(!viewOptionsOpen.delete(tag)) viewOptionsOpen.add(tag); },
                    check: (view, tag) => viewOptionsOpen.has(tag)},
   'view_export_pos': {run: (view, tag) => exportView(tag, 'pos')},
   'view_export_msh': {run: (view, tag) => exportView(tag, 'msh')},
-  // those of the keys in no menu (see keysOnly() in src/common/Actions.cpp)
-  'escape': {run: () => escape()},
+  // Menu bar: File
+  'file_new': {run: () => newModel()},
+  'file_open': {run: () => openMenu(true)},
+  // Tools
+  'options': {run: () => showOptions()},
+  'visibility': {run: () => showTab('visTab')},
+  'clipping': {run: () => showTab('clipTab')},
+  // Window
+  'menu_show_hide': {run: () => toggleSide()},
+  // Help
+  'help_keys': {run: () => $('keysDialog').showModal()},
+  // Keys: the keys in no menu
+  'project_reload': {run: () => run('check')},
+  'solver_run': {run: () => run('compute')},
   'selection_end': {run: () => operationKey('e'), available: () => tool === Tool.Operation},
   'selection_undo': {run: () => operationKey('u'), available: () => tool === Tool.Operation},
   'selection_quit': {run: () => tool === Tool.Operation ? operationKey('q') : setTool(Tool.None),
                      available: () => !!tool},
+  'escape': {run: () => escape()},
+  'mouse_selection': {run: () => toggleMouseSelection()},
+  'options_solver': {run: () => showTab('modelTab')},
+  'options_post': {run: () => showViewOptions(firstView())},
   'view_x': {run: (view, tag, mods) => sceneAction('view_x', mods)},
   'view_y': {run: (view, tag, mods) => sceneAction('view_y', mods)},
   'view_z': {run: (view, tag, mods) => sceneAction('view_z', mods)},
-  'view_3d': {run: (view, tag, mods) => sceneAction('view_3d', mods)},
   'view_1_1': {run: (view, tag, mods) => sceneAction('view_1_1', mods)},
+  'view_3d': {run: (view, tag, mods) => sceneAction('view_3d', mods)},
   'time_step_prev': {run: () => sceneAction('time_step_prev')},
   'time_step_next': {run: () => sceneAction('time_step_next')},
   'view_prev': {run: () => sceneAction('view_prev')},
-  'view_next': {run: () => sceneAction('view_next')},
-  'mouse_selection': {run: () => toggleMouseSelection()},
-  'solver_run': {run: () => run('compute')},
-  'file_new': {run: () => newModel()},
-  'project_reload': {run: () => run('check')},
-  'file_open': {run: () => openMenu(true)},
-  'help_keys': {run: () => $('keysDialog').showModal()},
-  'options': {run: () => showOptions()},
-  'options_post': {run: () => showViewOptions(firstView())},
-  'options_solver': {run: () => showTab('modelTab')},
-  'clipping': {run: () => showTab('clipTab')},
-  'visibility': {run: () => showTab('visTab')},
-  'menu_show_hide': {run: () => toggleSide()}
+  'view_next': {run: () => sceneAction('view_next')}
 };
 // the programs written next to the script (the items script_edit_py... of
 // the Geometry module), in the editor

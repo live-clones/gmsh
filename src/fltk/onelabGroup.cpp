@@ -35,6 +35,7 @@
 #include "StringUtils.h"
 #include "onelabUtils.h"
 #include "Actions.h"
+#include "fltkActions.h"
 #include "OpenFile.h"
 #include "CreateFile.h"
 #include "drawContext.h"
@@ -1756,7 +1757,7 @@ void onelabGroup::addSolver(const std::string &name,
 }
 
 // The rows of the modules of the tree (Geometry, Mesh) from the action
-// registry (see Actions.h and actionMenus.cpp)
+// registry (see Actions.h and fltkActions.cpp)
 
 static void item_button_cb(Fl_Widget *w, void *data)
 { runItem(*(const actionItem *)data, -1); }

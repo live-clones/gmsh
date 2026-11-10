@@ -350,11 +350,6 @@ void general_gmpdcf_cb(Fl_Widget *w, void *data)
   o->gmpdoption->show();
 }
 
-void options_cb(Fl_Widget *w, void *data)
-{
-  FlGui::instance()->options->win->show();
-}
-
 static void options_browser_cb(Fl_Widget *w, void *data)
 {
   // the view clicked is shown; the others selected change with it
@@ -403,11 +398,6 @@ void options_restore_defaults_cb(Fl_Widget *w, void *data)
     FlGui::instance()->rebuildTree();
     drawContext::global()->draw();
   }
-}
-
-void general_options_cb(Fl_Widget *w, void *data)
-{
-  FlGui::instance()->options->showGroup(1);
 }
 
 void general_options_rotation_center_select_cb(Fl_Widget *w, void *data)
@@ -712,23 +702,8 @@ static void general_arrow_param_cb(Fl_Widget *w, void *data)
   }
 }
 
-void geometry_options_cb(Fl_Widget *w, void *data)
-{
-  FlGui::instance()->options->showGroup(2);
-}
-
-void mesh_options_cb(Fl_Widget *w, void *data)
-{
-  FlGui::instance()->options->showGroup(3);
-}
-
 // the element types shown, in a menu whose items are named as their options
 // ("Triangles" for Mesh.Triangles)
-
-void solver_options_cb(Fl_Widget *w, void *data)
-{
-  FlGui::instance()->options->showGroup(4);
-}
 
 // listening to the solvers turned on: the listening client started
 static void solver_listen_cb(Fl_Widget *w, void *data)
@@ -748,15 +723,9 @@ static void solver_listen_cb(Fl_Widget *w, void *data)
 #endif
 }
 
-void post_options_cb(Fl_Widget *w, void *data)
+void showViewOptions(int num)
 {
-  FlGui::instance()->options->showGroup(5);
-}
-
-void view_options_cb(Fl_Widget *w, void *data)
-{
-  int num = (intptr_t)data;
-  if(num < 0) { // automatic
+  if(num < 0) { // the view shown last, or the first
     int current = FlGui::instance()->options->view.index;
     if(current >= 0 && current < (int)PView::list.size())
       num = current;

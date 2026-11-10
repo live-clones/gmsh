@@ -12,8 +12,6 @@
 #include "Options.h"
 #include "Context.h"
 
-void manip_cb(Fl_Widget *w, void *data) { FlGui::instance()->manip->show(); }
-
 static void manip_update_cb(Fl_Widget *w, void *data)
 {
   drawContext *ctx =
@@ -82,7 +80,7 @@ manipWindow::manipWindow(int deltaFontSize)
   {
     Fl_Button *o =
       new Fl_Button(width - BB - WB, height - BH - WB, BB, BH, "Reset");
-    o->callback(status_xyz1p_cb, (void *)"reset");
+    o->callback([](Fl_Widget *, void *) { setPointOfView("reset"); });
   }
 
   win->end();

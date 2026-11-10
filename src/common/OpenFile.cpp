@@ -47,6 +47,7 @@
 #include "FlGui.h"
 #include "onelabGroup.h"
 #include "graphicWindow.h"
+#include "fileActions.h"
 #include "drawContext.h"
 #include "ReadImg.h"
 #endif
@@ -853,7 +854,7 @@ void OpenProject(const std::string &fileName, bool errorIfMissing)
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()) {
-    file_watch_cb(nullptr, nullptr);
+    mergeWatchedFiles();
     FlGui::instance()->resetVisibility();
     FlGui::instance()->updateViews(true);
     FlGui::instance()->updateFields();

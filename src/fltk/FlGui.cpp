@@ -27,6 +27,8 @@
 #include "icons.h"
 #include "drawContextFltk.h"
 #include "graphicWindow.h"
+#include "fltkActions.h"
+#include "fileActions.h"
 #include "openglWindow.h"
 #include "gamepadWindow.h"
 #include "GamePad.h"
@@ -61,7 +63,6 @@
 #include "Actions.h"
 #include "Context.h"
 #include "StringUtils.h"
-#include "gmshPopplerWrapper.h"
 #include "PixelBuffer.h"
 
 #if defined(HAVE_MESH)
@@ -71,6 +72,47 @@
 #if defined(HAVE_3M)
 #include "3M.h"
 #endif
+
+// The graphical interface of Gmsh, on FLTK. Where things are:
+//
+// - FlGui (this file): the interface as a whole, made at startup (the
+//   constructor creates every window), its event loop, the rules on the
+//   lifetime of its widgets (below) and the keys it handles.
+// - graphicWindow.cpp: the main window, with its menu bar, the tiles of the
+//   scene, the tree of the modules and of the ONELAB parameters
+//   (onelabGroup.cpp), the messages and the status bar; toolDock.cpp docks the
+//   tool windows in it.
+// - openglWindow.cpp: a scene, drawn by src/graphics (drawContext); what the
+//   mouse does in it is sceneView (src/graphics), shared with the web page.
+// - the tool windows, one file each (optionWindow.cpp, fieldWindow.cpp,
+//   pluginWindow.cpp, statisticsWindow.cpp, visibilityWindow.cpp,
+//   clippingWindow.cpp, manipWindow.cpp, highOrderToolsWindow.cpp, the
+//   context windows of the operations and shapes in contextWindow.cpp,
+//   onelabContextWindow.cpp, helpWindow.cpp), all on paletteWindow.
+// - fltkActions.cpp: what the items of the menus and the buttons of the
+//   modules do in this interface, in one table; fileActions.cpp: what the
+//   File and Help menus do.
+// - fileDialogs.cpp and extraDialogs.cpp: the dialogs; gmshScheme.cpp,
+//   desktop.cpp, icons.cpp and windowPlacement.cpp: the look, the colours of
+//   the desktop, the icons, where the windows go.
+//
+// The menus, the buttons of the modules and the keyboard shortcuts are shared
+// with the web page (contrib/webapp) and live in src/common: Actions.cpp (the
+// items, with what Gmsh does) and Shortcuts.cpp (the keys). The operations on
+// the entities picked in the scene are selectionDriver, stepped by sceneTool
+// (src/graphics).
+//
+// How to add...
+// - A menu item or a button of a module: see "How to add" in Actions.h. When
+//   this interface does it: one line in the table of fltkActions.cpp.
+// - A tool window: a class on paletteWindow in a file of its own, created in
+//   the constructor below, which names it for General.FloatingTools; then a
+//   guiAction() in the Tools menu of Actions.cpp and its line in
+//   fltkActions.cpp.
+// - A key: one line in Shortcuts.cpp, named as the item it runs.
+// - A button of the status bar: statusButtons() in graphicWindow.cpp.
+// - A field of the option window: optionWindow.cpp, bound to its option by
+//   name.
 
 // Widget lifetime and nested event loops: the rules of this interface.
 //
@@ -453,7 +495,7 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   // add callback to respond to Mac Finder
 #if defined(__APPLE__)
   fl_open_callback(OpenProjectMacFinder);
-  fl_mac_set_about(help_about_cb, nullptr);
+  fl_mac_set_about([](Fl_Widget *, void *) { helpAbout(); }, nullptr);
 #endif
 
   // don't move input dialogs to follow mouse
@@ -506,25 +548,33 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   // the graphic windows, which the default callback would leave hidden, the
   // program then ending without asking
   fullscreen->callback(
-    [](Fl_Widget *, void *) { window_cb(nullptr, (void *)"fullscreen"); });
+    [](Fl_Widget *, void *) { toggleFullScreen(); });
 
-  // create all other windows
-  options = new optionWindow(CTX::instance()->deltaFontSize);
-  fields = new fieldWindow(CTX::instance()->deltaFontSize);
-  plugins = new pluginWindow(CTX::instance()->deltaFontSize);
-  stats = new statisticsWindow(CTX::instance()->deltaFontSize);
-  visibility = new visibilityWindow(CTX::instance()->deltaFontSize);
-  highordertools = new highOrderToolsWindow(CTX::instance()->deltaFontSize);
-  clipping = new clippingWindow(CTX::instance()->deltaFontSize);
-  partition = new partitionWindow(CTX::instance()->deltaFontSize);
-  classify = new classificationEditor(CTX::instance()->deltaFontSize);
-  manip = new manipWindow(CTX::instance()->deltaFontSize);
-  elementaryContext =
-    new elementaryContextWindow(CTX::instance()->deltaFontSize);
-  transformContext = new transformContextWindow(CTX::instance()->deltaFontSize);
-  meshContext = new meshContextWindow(CTX::instance()->deltaFontSize);
-  physicalContext = new physicalContextWindow(CTX::instance()->deltaFontSize);
-  onelabContext = new onelabContextWindow(CTX::instance()->deltaFontSize);
+  // the tool windows, which dock, each named for General.FloatingTools, and
+  // the help windows
+  int delta = CTX::instance()->deltaFontSize;
+  auto tool = [this](auto *w, const char *name) {
+    paletteWindow *p = (paletteWindow *)w->win;
+    p->dockable(true);
+    p->name(name);
+    _tools.push_back(p);
+    return w;
+  };
+  options = tool(new optionWindow(delta), "options");
+  plugins = tool(new pluginWindow(delta), "plugins");
+  fields = tool(new fieldWindow(delta), "fields");
+  visibility = tool(new visibilityWindow(delta), "visibility");
+  clipping = tool(new clippingWindow(delta), "clipping");
+  manip = tool(new manipWindow(delta), "manipulator");
+  stats = tool(new statisticsWindow(delta), "statistics");
+  highordertools = tool(new highOrderToolsWindow(delta), "highorder");
+  elementaryContext = tool(new elementaryContextWindow(delta), "elementary");
+  physicalContext = tool(new physicalContextWindow(delta), "physical");
+  transformContext = tool(new transformContextWindow(delta), "transform");
+  meshContext = tool(new meshContextWindow(delta), "mesh");
+  onelabContext = tool(new onelabContextWindow(delta), "onelab");
+  classify = tool(new classificationEditor(delta), "reclassify");
+  partition = tool(new partitionWindow(delta), "partition");
   help = new helpWindow();
 
   // draw
@@ -532,30 +582,6 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
     for(std::size_t j = 0; j < graph[i]->gl.size(); j++)
       graph[i]->gl[j]->redraw();
 
-  // the tool windows dock, and are named for General.FloatingTools
-  const std::pair<Fl_Window *, const char *> tools[] = {
-    {options->win, "options"},
-    {plugins->win, "plugins"},
-    {fields->win, "fields"},
-    {visibility->win, "visibility"},
-    {clipping->win, "clipping"},
-    {manip->win, "manipulator"},
-    {stats->win, "statistics"},
-    {highordertools->win, "highorder"},
-    {elementaryContext->win, "elementary"},
-    {physicalContext->win, "physical"},
-    {transformContext->win, "transform"},
-    {meshContext->win, "mesh"},
-    {onelabContext->win, "onelab"},
-    {classify->window, "reclassify"},
-    {partition->win, "partition"}};
-  for(auto &t : tools) {
-    if(!t.first) continue;
-    paletteWindow *p = (paletteWindow *)t.first;
-    p->dockable(true);
-    p->name(t.second);
-    _tools.push_back(p);
-  }
   applyFloatingTools();
   // what docked tools skip while hidden, refreshed when shown again
   ((paletteWindow *)visibility->win)
@@ -872,124 +898,6 @@ int FlGui::testArrowShortcuts()
   return 0;
 }
 
-// the selection flags of all the scenes (see sceneView::selectionStep())
-static void setSelectionFlag(int sceneView::*flag)
-{
-  for(openglWindow *gl : FlGui::instance()->openglWindows()) gl->*flag = 1;
-  // the tool under way takes it now; without one, the API waiting for a
-  // selection reads it (see openglWindow::selectEntity())
-  sceneTool::step();
-}
-
-// placing an elementary entity with the mouse: the axis i frozen or not, or
-// all the axes but i frozen
-static void freezeAxis(int i, bool allBut)
-{
-  elementaryContextWindow *e = FlGui::instance()->elementaryContext;
-  if(allBut)
-    for(int j = 0; j < 3; j++) e->butt[j]->value(j != i);
-  else
-    e->butt[i]->value(!e->butt[i]->value());
-}
-
-// Escape leaves the full screen, or cancels a lasso, or toggles the mouse
-// selection
-// Escape cancels what is under way, one thing at a time: a lasso, then the
-// selection (a tool, or the API waiting for one: as 'q'), then full screen
-// (picking is switched off and on by Shift+Escape, see "mouse_selection")
-static void escape()
-{
-  bool lasso = false, selection = sceneTool::current() != nullptr;
-  for(openglWindow *gl : FlGui::instance()->openglWindows()) {
-    if(gl->lassoMode) lasso = true;
-    if(gl->selectionMode) selection = true;
-  }
-  if(lasso) {
-    for(openglWindow *gl : FlGui::instance()->openglWindows())
-      gl->lassoMode = false;
-    drawContext::global()->draw();
-    return;
-  }
-  if(selection) {
-    setSelectionFlag(&sceneView::quitSelection);
-    return;
-  }
-  if(FlGui::instance()->fullscreen->shown())
-    window_cb(nullptr, (void *)"fullscreen");
-}
-
-// the plugins of the view shown in the options window
-static void plugins_view()
-{
-  int view = FlGui::instance()->options->view.index;
-  if(PView::list.size())
-    FlGui::instance()->plugins->show(
-      (view >= 0 && view < (int)PView::list.size()) ? view : 0);
-}
-
-const std::map<std::string, fltkAction> &keyboardActions()
-{
-  static const std::map<std::string, fltkAction> actions = {
-    // reloading and running
-    {"project_reload", {[](int) { onelab_reload_cb(nullptr, nullptr); }}},
-    {"solver_run", {[](int) { onelab_cb(nullptr, (void *)"compute"); }}},
-    // the modules of the tree
-    {"module_geometry",
-     {[](int) { FlGui::instance()->toggleModule("Geometry"); }}},
-    {"module_mesh", {[](int) { FlGui::instance()->toggleModule("Mesh"); }}},
-    {"module_solver", {[](int) { FlGui::instance()->toggleModule("Solver"); }}},
-    {"module_post",
-     {[](int) { FlGui::instance()->toggleModule("Post-processing"); }}},
-    // a selection under way
-    {"selection_end",
-     {[](int) { setSelectionFlag(&sceneView::endSelection); }}},
-    {"selection_undo",
-     {[](int) { setSelectionFlag(&sceneView::undoSelection); }}},
-    {"selection_quit",
-     {[](int) { setSelectionFlag(&sceneView::quitSelection); }}},
-    // placing an elementary entity with the mouse
-    {"freeze_x", {[](int) { freezeAxis(0, false); }}},
-    {"freeze_y", {[](int) { freezeAxis(1, false); }}},
-    {"freeze_z", {[](int) { freezeAxis(2, false); }}},
-    {"freeze_but_x", {[](int) { freezeAxis(0, true); }}},
-    {"freeze_but_y", {[](int) { freezeAxis(1, true); }}},
-    {"freeze_but_z", {[](int) { freezeAxis(2, true); }}},
-    {"escape", {[](int) { escape(); }}},
-    {"mouse_selection", {[](int) { mouse_selection_cb(nullptr, nullptr); }}},
-    // the windows
-    {"options_solver", {[](int) { solver_options_cb(nullptr, nullptr); }}},
-    {"options_post", {[](int) { post_options_cb(nullptr, nullptr); }}},
-    {"plugins_view", {[](int) { plugins_view(); }}},
-    // the point of view, as the buttons of the status bar (which read Shift
-    // and Ctrl: the other side, reset, sync the viewports)
-    {"view_x", {[](int) { status_xyz1p_cb(nullptr, (void *)"x"); }}},
-    {"view_y", {[](int) { status_xyz1p_cb(nullptr, (void *)"y"); }}},
-    {"view_z", {[](int) { status_xyz1p_cb(nullptr, (void *)"z"); }}},
-    {"view_1_1", {[](int) { status_xyz1p_cb(nullptr, (void *)"1:1"); }}},
-    {"view_3d", {[](int) { status_xyz1p_cb(nullptr, (void *)"3d"); }}},
-    // the time steps and the views, on the arrows
-    {"time_step_prev",
-     {[](int) { status_play_manual(1, -CTX::instance()->post.animStep); }}},
-    {"time_step_next",
-     {[](int) { status_play_manual(1, CTX::instance()->post.animStep); }}},
-    {"view_prev",
-     {[](int) { status_play_manual(0, -CTX::instance()->post.animStep); }}},
-    {"view_next",
-     {[](int) { status_play_manual(0, CTX::instance()->post.animStep); }}},
-#if defined(HAVE_POPPLER)
-    {"page_prev", {[](int) {
-       gmshPopplerWrapper::setCurrentPageDown();
-       drawContext::global()->draw();
-     }}},
-    {"page_next", {[](int) {
-       gmshPopplerWrapper::setCurrentPageUp();
-       drawContext::global()->draw();
-     }}},
-#endif
-  };
-  return actions;
-}
-
 // What each action of the shortcut table does: the item of its name in the
 // registry (see Actions.h) runs, as a click on it does. Returns 0 for an
 // action not handled here (or not available now: the key then goes on, as if
@@ -1286,7 +1194,7 @@ void FlGui::storeCurrentWindowsInfo()
   storeWindowOffset(clipping->win, CTX::instance()->clipOffset);
   if(partition->win)
     storeWindowOffset(partition->win, CTX::instance()->partOffset);
-  storeWindowOffset(classify->window, CTX::instance()->reclassifyOffset);
+  storeWindowOffset(classify->win, CTX::instance()->reclassifyOffset);
   storeWindowOffset(manip->win, CTX::instance()->manipOffset);
   storeWindowOffset(lastContextWindow ? lastContextWindow :
                                         elementaryContext->win,
@@ -1301,102 +1209,109 @@ void FlGui::storeCurrentWindowsInfo()
 
 void redraw_cb(Fl_Widget *w, void *data) { drawContext::global()->draw(); }
 
-void window_cb(Fl_Widget *w, void *data)
+void minimizeWindows()
 {
-  std::string str((const char *)data);
+  // the docked tool windows go with the main window
+  auto iconize = [](Fl_Window *w) {
+    if(w->shown() && !w->parent()) w->iconize();
+  };
+  FlGui *g = FlGui::instance();
+  for(std::size_t i = 0; i < g->graph.size(); i++)
+    iconize(g->graph[i]->getWindow());
+  for(paletteWindow *p : g->toolWindows()) iconize(p);
+}
 
-  if(str == "minimize") {
-    // the docked tool windows go with the main window
-    auto iconize = [](Fl_Window *w) {
-      if(w->shown() && !w->parent()) w->iconize();
+void zoomMainWindow()
+{
+  // the window manager's maximization: it fills the work area title bar
+  // included (a resize to the work area sizes the inside of the window, and
+  // the title bar then pushes its bottom off the screen), and it remembers
+  // the size to go back to
+  Fl_Window *win = FlGui::instance()->graph[0]->getWindow();
+  if(win->maximize_active())
+    win->un_maximize();
+  else
+    win->maximize();
+}
+
+bool isFullScreen()
+{
+  return FlGui::instance()->fullscreen->shown();
+}
+
+void toggleFullScreen()
+{
+  // a switch waits for the windows to be drawn, processing events: another
+  // one asked for meanwhile is ignored
+  static bool switching = false;
+  if(switching) return;
+  struct switched {
+    ~switched() { switching = false; }
+  } switched;
+  switching = true;
+  if(!FlGui::instance()->fullscreen->shown()) {
+    // resize to the size of the screen of the current graphic window first,
+    // in case fullscreen does not work
+    int x, y, w, h;
+    Fl::screen_xywh(
+      x, y, w, h,
+      windowScreen(FlGui::instance()->getCurrentOpenglWindow()->top_window()));
+    FlGui::instance()->fullscreen->resize(x, y, w, h);
+    // setting resizable() is necessary with recent FLTK versions (1.4)
+    FlGui::instance()->fullscreen->resizable(FlGui::instance()->fullscreen);
+    FlGui::instance()->fullscreen->valid(0);
+    FlGui::instance()->fullscreen->show();
+    FlGui::instance()->fullscreen->fullscreen();
+    // (not drawn at all if closed meanwhile, nor ever if the window manager
+    // does not show it: 2 s at most)
+    double start = TimeOfDay();
+    while(FlGui::available() && FlGui::instance()->fullscreen->shown() &&
+          !FlGui::instance()->fullscreen->valid() && TimeOfDay() - start < 2.)
+      FlGui::wait(0.05);
+    if(!FlGui::available() || !FlGui::instance()->fullscreen->shown()) return;
+    FlGui::instance()->fullscreen->getDrawContext()->copyViewAttributes(
+      FlGui::instance()->getCurrentOpenglWindow()->getDrawContext());
+    openglWindow::setLastHandled(FlGui::instance()->fullscreen);
+    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
+      FlGui::instance()->graph[i]->getWindow()->hide();
+    drawContext::global()->draw();
+  }
+  else {
+    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
+      FlGui::instance()->graph[i]->gl[0]->valid(0);
+    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
+      FlGui::instance()->graph[i]->getWindow()->show();
+    // (a graphic window may be closed meanwhile; its first pane is never
+    // drawn if hidden, nor the window if the window manager keeps it
+    // minimized: 2 s at most)
+    auto waiting = [](std::size_t i) {
+      FlGui *g = FlGui::instance();
+      return i < g->graph.size() && g->graph[i]->getWindow()->shown() &&
+             g->graph[i]->gl[0]->visible_r() && !g->graph[i]->gl[0]->valid();
     };
-    FlGui *g = FlGui::instance();
-    for(std::size_t i = 0; i < g->graph.size(); i++)
-      iconize(g->graph[i]->getWindow());
-    for(paletteWindow *p : g->toolWindows()) iconize(p);
-  }
-  else if(str == "zoom") {
-    // the window manager's maximization: it fills the work area title bar
-    // included (a resize to the work area sizes the inside of the window, and
-    // the title bar then pushes its bottom off the screen), and it remembers
-    // the size to go back to
-    Fl_Window *win = FlGui::instance()->graph[0]->getWindow();
-    if(win->maximize_active())
-      win->un_maximize();
-    else
-      win->maximize();
-  }
-  else if(str == "fullscreen") {
-    // a switch waits for the windows to be drawn, processing events: another
-    // one asked for meanwhile is ignored
-    static bool switching = false;
-    if(switching) return;
-    struct switched {
-      ~switched() { switching = false; }
-    } switched;
-    switching = true;
-    if(!FlGui::instance()->fullscreen->shown()) {
-      // resize to the size of the screen of the current graphic window first,
-      // in case fullscreen does not work
-      int x, y, w, h;
-      Fl::screen_xywh(
-        x, y, w, h,
-        windowScreen(FlGui::instance()->getCurrentOpenglWindow()->top_window()));
-      FlGui::instance()->fullscreen->resize(x, y, w, h);
-      // setting resizable() is necessary with recent FLTK versions (1.4)
-      FlGui::instance()->fullscreen->resizable(FlGui::instance()->fullscreen);
-      FlGui::instance()->fullscreen->valid(0);
-      FlGui::instance()->fullscreen->show();
-      FlGui::instance()->fullscreen->fullscreen();
-      // (not drawn at all if closed meanwhile, nor ever if the window manager
-      // does not show it: 2 s at most)
-      double start = TimeOfDay();
-      while(FlGui::available() && FlGui::instance()->fullscreen->shown() &&
-            !FlGui::instance()->fullscreen->valid() && TimeOfDay() - start < 2.)
+    double start = TimeOfDay();
+    for(std::size_t i = 0;
+        FlGui::available() && i < FlGui::instance()->graph.size(); i++)
+      while(FlGui::available() && waiting(i) && TimeOfDay() - start < 2.)
         FlGui::wait(0.05);
-      if(!FlGui::available() || !FlGui::instance()->fullscreen->shown()) return;
-      FlGui::instance()->fullscreen->getDrawContext()->copyViewAttributes(
-        FlGui::instance()->getCurrentOpenglWindow()->getDrawContext());
-      openglWindow::setLastHandled(FlGui::instance()->fullscreen);
-      for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-        FlGui::instance()->graph[i]->getWindow()->hide();
-      drawContext::global()->draw();
-    }
-    else {
-      for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-        FlGui::instance()->graph[i]->gl[0]->valid(0);
-      for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-        FlGui::instance()->graph[i]->getWindow()->show();
-      // (a graphic window may be closed meanwhile; its first pane is never
-      // drawn if hidden, nor the window if the window manager keeps it
-      // minimized: 2 s at most)
-      auto waiting = [](std::size_t i) {
-        FlGui *g = FlGui::instance();
-        return i < g->graph.size() && g->graph[i]->getWindow()->shown() &&
-               g->graph[i]->gl[0]->visible_r() && !g->graph[i]->gl[0]->valid();
-      };
-      double start = TimeOfDay();
-      for(std::size_t i = 0;
-          FlGui::available() && i < FlGui::instance()->graph.size(); i++)
-        while(FlGui::available() && waiting(i) && TimeOfDay() - start < 2.)
-          FlGui::wait(0.05);
-      if(!FlGui::available()) return;
-      FlGui::instance()->graph[0]->gl[0]->getDrawContext()->copyViewAttributes(
-        FlGui::instance()->getCurrentOpenglWindow()->getDrawContext());
-      openglWindow::setLastHandled(FlGui::instance()->graph[0]->gl[0]);
-      FlGui::instance()->fullscreen->fullscreen_off();
-      FlGui::instance()->fullscreen->hide();
-      drawContext::global()->draw();
-    }
+    if(!FlGui::available()) return;
+    FlGui::instance()->graph[0]->gl[0]->getDrawContext()->copyViewAttributes(
+      FlGui::instance()->getCurrentOpenglWindow()->getDrawContext());
+    openglWindow::setLastHandled(FlGui::instance()->graph[0]->gl[0]);
+    FlGui::instance()->fullscreen->fullscreen_off();
+    FlGui::instance()->fullscreen->hide();
+    drawContext::global()->draw();
   }
-  else if(str == "front") {
-    // the order is important; the docked tool windows come with the main one
-    FlGui *g = FlGui::instance();
-    for(std::size_t i = 0; i < g->graph.size(); i++)
-      g->graph[i]->getWindow()->show();
-    for(paletteWindow *p : g->toolWindows())
-      if(p->shown() && !p->parent()) p->show();
-  }
+}
+
+void bringAllToFront()
+{
+  // the order is important; the docked tool windows come with the main one
+  FlGui *g = FlGui::instance();
+  for(std::size_t i = 0; i < g->graph.size(); i++)
+    g->graph[i]->getWindow()->show();
+  for(paletteWindow *p : g->toolWindows())
+    if(p->shown() && !p->parent()) p->show();
 }
 
 // The lines of the other threads, waiting for the GUI's thread to add them

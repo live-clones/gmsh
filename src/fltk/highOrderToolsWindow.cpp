@@ -458,9 +458,6 @@ void highOrderToolsWindow::show(bool redrawOnly)
   }
 }
 
-void highordertools_cb(Fl_Widget *w, void *data)
-{ FlGui::instance()->highordertools->show(false); }
-
 #else // HAVE_MESH
 
 highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
@@ -487,10 +484,6 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
 }
 
 void highOrderToolsWindow::show(bool redrawOnly)
-{
-}
-
-void highordertools_cb(Fl_Widget *w, void *data)
 {
 }
 

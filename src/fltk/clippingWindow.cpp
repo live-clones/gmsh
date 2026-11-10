@@ -16,8 +16,6 @@
 #include "GModel.h"
 #include "Context.h"
 
-void clip_cb(Fl_Widget *w, void *data) { FlGui::instance()->clipping->show(); }
-
 static void clip_num_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->clipping->resetBrowser();

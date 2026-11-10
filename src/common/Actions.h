@@ -18,7 +18,7 @@ class drawContext;
 // buttons.
 //
 // A click on an item, or a key (which runs the item of its name), goes to one
-// function of each interface (actionMenus.cpp on the desktop, onelab.html on
+// function of each interface (fltkActions.cpp on the desktop, onelab.html on
 // the web), runItem(), which does what the item is:
 //
 //   click ─┐
@@ -29,9 +29,10 @@ class drawContext;
 //                                    it changed (RunItem() on the desktop)
 //
 // The run of an action is Gmsh's, written in its item in Actions.cpp, or the
-// interface's: each gives its own actions their run when it starts, the
-// desktop from fltkActions() (with SetItemRun()), the web page from
-// pageActions. An item without run is not shown.
+// interface's: each gives its own actions their run when it starts (with
+// SetItemRun()), from one table of names, the desktop's at the top of
+// fltkActions.cpp, the web page's pageActions in onelab.html. An item without
+// run is not shown.
 //
 // The items, as Actions.cpp makes them:
 //   action("2D", "mesh_2d", "Mesh the surfaces",     Gmsh does it
@@ -53,18 +54,17 @@ class drawContext;
 // - Something Gmsh does: an action() in its menu in Actions.cpp, or in
 //   keysOnly() for a key in no menu. Nothing else to do.
 // - Something an interface shows (a window, a file chooser): a guiAction() in
-//   its menu (in keysOnly() for a key in no menu), and its run in each
-//   interface: in fltkActions() on the desktop (listedFltkActions() in
-//   actionMenus.cpp, menuBarActions() in graphicWindow.cpp, keyboardActions()
-//   in FlGui.cpp), and in pageActions in onelab.html. An interface without it
-//   does not show the item.
+//   its menu (in keysOnly() for a key in no menu), and a line in the table of
+//   each interface that has it: the desktop's in fltkActions.cpp, the web
+//   page's pageActions in onelab.html. An interface without it does not show
+//   the item.
 // - An option: option(), or presets() for a submenu of its values.
 // - A key: E("mesh_2d", {'2'}, "Mesh surfaces") in GetShortcuts()
 //   (Shortcuts.cpp), named as its item.
 // - An operation: what it picks and writes in the script, in the constructor
 //   of selectionDriver, then its operation() item. The web page makes its
 //   form from its fields; the desktop reads them from its context windows
-//   (dialogValue() in actionMenus.cpp), where a new field needs a widget.
+//   (dialogValue() in fltkActions.cpp), where a new field needs a widget.
 // - A shape: in scriptShapes() and scriptAddShape()
 //   (scriptStringInterface.cpp), then its shape() item. The desktop places it
 //   with the mouse or from a pane of its elementary context window

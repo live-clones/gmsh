@@ -16,6 +16,7 @@
 #include "Options.h"
 #include "OS.h"
 #include "onelabGroup.h"
+#include "fltkActions.h"
 #include "viewButton.h"
 #include "graphicWindow.h"
 #include "Actions.h"
@@ -43,7 +44,7 @@ static void view_toggle_cb(Fl_Widget *w, void *data)
   }
 }
 
-void view_save_cb(Fl_Widget *w, void *data)
+void saveView(int index)
 {
   static const char *formats =
     "Gmsh Parsed\t*.pos\nGmsh MSH\t*.msh\n"
@@ -51,7 +52,7 @@ void view_save_cb(Fl_Widget *w, void *data)
     "MED\t*.rmed\nSTL Surface\t*.stl\nGeneric TXT\t*.txt\n"
     "VTK XML Unstructured Grid\t*.vtu\n";
 
-  PView *view = PView::list[(intptr_t)data];
+  PView *view = PView::list[index];
 test:
   if(fileChooser(FILE_CHOOSER_CREATE, "Export", formats,
                  view->getData()->getFileName().c_str())) {
