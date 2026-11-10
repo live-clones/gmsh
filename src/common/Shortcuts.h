@@ -75,20 +75,6 @@ const std::vector<ShortcutEntry> &GetShortcuts();
 // the shortcuts of an action (several keys may do the same)
 std::vector<Shortcut> GetShortcutsOf(const std::string &action);
 
-// Run an action of the table that only changes the scene: what is displayed,
-// the views, the time steps and the point of view of ctx (ModShift in mods
-// gives the opposite side). The graphical interface does the point of view,
-// the time steps and the views with the buttons of its status bar instead
-// (which also sync its viewports); the web page does all of them here.
-// Returns 0 for an action not handled here, and 2 when the scene must be drawn
-// again.
-class drawContext;
-int RunSceneShortcut(const std::string &action, unsigned mods,
-                     drawContext *ctx);
-
-// whether an action is one of RunSceneShortcut()
-bool IsSceneShortcut(const std::string &action);
-
 // each shortcut and what it does, for the help window and the documentation
 // (the keys that do the same are joined with "or"; see Shortcut::label() for
 // command)

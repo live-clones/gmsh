@@ -16,13 +16,14 @@ class drawContext;
 // contrib/webapp) and what their items do:
 // - Each menu is a tree of items. The buttons of the Geometry and Mesh modules
 //   are such menus too: a module is a menu shown as rows of buttons.
-// - The actions of the items are in one table. Most actions are done in
-//   Actions.cpp. An action that shows something of an interface (a window, a
-//   file chooser) is done by each interface instead, and an interface that
-//   cannot do it leaves its items out.
+// - The actions, of the items and of the keys, are in one table. Most actions
+//   are done in Actions.cpp. An action that shows something of an interface
+//   (a window, a file chooser, its own buttons) is done by each interface
+//   instead, in a table of its own (fltkActions() on the desktop, pageActions
+//   in the web page), and an interface that cannot do it leaves its items
+//   out.
 // To add an item, add it to its menu. An action done here is added to the
-// table; one an interface does is added to the interface (fltkActions() on
-// the desktop), and an interface that does not have it leaves its items out.
+// table; one an interface does is added to the interface.
 //
 // The names of the actions, the operations and the shapes are keys, in snake
 // case, starting with what they act on: "mesh_2d", "views_remove_all",
@@ -56,10 +57,6 @@ struct actionItem {
   std::vector<actionItem> items;
   // the tooltip
   std::string help;
-  // the keyboard shortcut shown next to the label (the name of an action of
-  // Shortcuts.h), which must do what the item does; not needed for an action
-  // that has a shortcut of the same name, which is shown
-  std::string shortcut;
 };
 
 // The menu with the given name: "Geometry" and "Mesh" (the modules), "Quick
@@ -89,6 +86,11 @@ bool IsItemDoneByInterface(const actionItem &item);
 // Do what an item does. For the menu of a view, view is the index of that
 // view; ctx is the scene whose point of view an action changes.
 int RunItem(const actionItem &item, int view = -1, drawContext *ctx = nullptr);
+
+// Do the action of the table with this name, as an item of it does (from a
+// shortcut, for instance)
+int RunAction(const std::string &name, int view = -1,
+              drawContext *ctx = nullptr);
 
 // Whether an item applies now (an item on views needs views, for instance)
 bool IsItemAvailable(const actionItem &item);

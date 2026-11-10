@@ -237,9 +237,10 @@ struct fltkAction {
   std::function<int()> check;
   std::function<void(Fl_Menu_ *m, const std::string &path)> fill;
 };
-// the actions of the menu bar (see the "Menu bar" menu of Actions.cpp)
+// the actions of the menu bar (see the "Menu bar" menu of Actions.cpp) and
+// of the keys that are not in a menu (see FlGui::runShortcut()), parts of the
+// table of the actions this interface does (fltkActions() in actionMenus.cpp)
 const std::map<std::string, fltkAction> &menuBarActions();
-// the actions of the keys that are not in a menu (see FlGui::runShortcut())
 const std::map<std::string, fltkAction> &keyboardActions();
 
 #endif

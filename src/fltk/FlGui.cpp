@@ -958,8 +958,7 @@ const std::map<std::string, fltkAction> &keyboardActions()
     {"options_post", {[](int) { post_options_cb(nullptr, nullptr); }}},
     {"plugins_view", {[](int) { plugins_view(); }}},
     // the point of view, as the buttons of the status bar (which read Shift
-    // and Ctrl: the other side, reset, sync the viewports); the web page does
-    // it in RunSceneShortcut()
+    // and Ctrl: the other side, reset, sync the viewports)
     {"view_x", {[](int) { status_xyz1p_cb(nullptr, (void *)"x"); }}},
     {"view_y", {[](int) { status_xyz1p_cb(nullptr, (void *)"y"); }}},
     {"view_z", {[](int) { status_xyz1p_cb(nullptr, (void *)"z"); }}},
@@ -989,22 +988,17 @@ const std::map<std::string, fltkAction> &keyboardActions()
 }
 
 // What each action of the shortcut table does: an action of the registry (see
-// Actions.h) or one the interface does (see findAction() in actionMenus.cpp:
-// the modules, the menu bar and the keys above) runs as its items do; those
-// that only change the scene are those of RunSceneShortcut(), shared with the
-// web page. Returns 0 for an action not handled here (or not available now:
-// the key then goes on, as if it had no shortcut), 1 when done, 2 when the
-// scene must be drawn again.
+// Actions.h), or one the interface does (see fltkActions() in
+// actionMenus.cpp: those of the modules, the menu bar and the keys above),
+// runs as its items do. Returns 0 for an action not handled here (or not
+// available now: the key then goes on, as if it had no shortcut), 1 when
+// done.
 int FlGui::runShortcut(const std::string &a)
 {
-  actionItem item{"", ItemAction, a, {}, "", ""};
-  if(canRunItem(item)) {
-    runItem(item);
-    return 1;
-  }
-  if(HasAction(a)) return 0;
-  // the display, the views and the time steps, as in the web page
-  return RunSceneShortcut(a, 0, nullptr);
+  actionItem item{"", ItemAction, a, {}, ""};
+  if(!canRunItem(item)) return 0;
+  runItem(item);
+  return 1;
 }
 
 void FlGui::setGraphicTitle(const std::string &title)

@@ -20,6 +20,7 @@
 #include <map>
 #include <FL/fl_ask.H>
 #include "FlGui.h"
+#include "GmshMessage.h"
 #include "Shortcuts.h"
 #include "graphicWindow.h"
 #include "gmshScheme.h"
@@ -252,8 +253,7 @@ static void addShape(const std::string &shape)
       add_new_point_based_entity(scriptShapes()[pane].label, pane);
 }
 
-// the actions of the registry this interface does, but those of the menu bar
-// (see menuBarActions())
+// the actions of the modules and of the scene menus this interface does
 static const std::map<std::string, fltkAction> &listedFltkActions()
 {
   static const std::map<std::string, fltkAction> actions = {
@@ -264,7 +264,8 @@ static const std::map<std::string, fltkAction> &listedFltkActions()
     {"mesh_reclassify", {[](int) { mesh_classify_cb(nullptr, nullptr); }}},
     {"mesh_save", {[](int) { mesh_save_cb(nullptr, nullptr); }}},
     {"mesh_size_fields", {[](int) { field_cb(nullptr, nullptr); }}},
-    {"mesh_high_order_tools", {[](int) { highordertools_cb(nullptr, nullptr); }}},
+    {"mesh_high_order_tools",
+     {[](int) { highordertools_cb(nullptr, nullptr); }}},
 #if defined(HAVE_METIS)
     {"mesh_partition", {[](int) { partition_dialog(); }}},
 #endif
@@ -305,12 +306,20 @@ static const std::map<std::string, fltkAction> &listedFltkActions()
   return actions;
 }
 
-// those of the table, and the programs written next to the script, in the
-// script editor
+// The actions this interface does, in one table: those of the modules and of
+// the scene menus above, of the menu bar (graphicWindow.cpp) and of the keys
+// not in a menu (FlGui.cpp), each next to the code it calls, and the
+// programs written next to the script, in the script editor
 static const std::map<std::string, fltkAction> &fltkActions()
 {
   static const std::map<std::string, fltkAction> all = [] {
-    std::map<std::string, fltkAction> m = listedFltkActions();
+    std::map<std::string, fltkAction> m;
+    for(auto *part :
+        {&listedFltkActions(), &menuBarActions(), &keyboardActions()})
+      for(auto &a : *part)
+        if(!m.insert(a).second)
+          Msg::Error("Action '%s' done twice by the interface",
+                     a.first.c_str());
     for(auto &l : scriptLanguages()) {
       std::string lang = l.name;
       m["script_edit_" + lang] = {[lang](int) {
@@ -322,16 +331,11 @@ static const std::map<std::string, fltkAction> &fltkActions()
   return all;
 }
 
-// the action this interface does with this name, or null: those of the
-// modules and the scene menus here, those of the menu bar (graphicWindow.cpp)
-// and those of the keys not in a menu (FlGui.cpp)
+// the action this interface does with this name, or null
 static const fltkAction *findAction(const std::string &name)
 {
-  for(auto *table : {&fltkActions(), &menuBarActions(), &keyboardActions()}) {
-    auto it = table->find(name);
-    if(it != table->end()) return &it->second;
-  }
-  return nullptr;
+  auto it = fltkActions().find(name);
+  return it == fltkActions().end() ? nullptr : &it->second;
 }
 
 bool canRunItem(const actionItem &item)
@@ -435,14 +439,10 @@ static int addItems(Fl_Menu_ *m, const actionItem &menu,
       flags = (item.name.find('=') == std::string::npos ? FL_MENU_TOGGLE :
                                                           FL_MENU_RADIO) |
               (check ? FL_MENU_VALUE : 0);
-    // the shortcut shown: the item's, or the one of the same name as its
-    // action
-    std::string key = item.shortcut;
-    if(key.empty() && item.kind == ItemAction &&
-       !GetShortcutsOf(item.name).empty())
-      key = item.name;
+    // the shortcut shown: the one of the same name as its action
+    bool key = item.kind == ItemAction && !GetShortcutsOf(item.name).empty();
     last = m->add((prefix + menuLabel(item.label)).c_str(),
-                  key.empty() ? 0 : fltkShortcut(key.c_str()), item_cb,
+                  key ? fltkShortcut(item.name.c_str()) : 0, item_cb,
                   (void *)&item, flags);
   }
   return last;

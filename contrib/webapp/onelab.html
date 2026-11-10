@@ -2160,7 +2160,20 @@ const pageActions = {
   'view_options': {run: (view, tag) => { if(!viewOptionsOpen.delete(tag)) viewOptionsOpen.add(tag); },
                    check: (view, tag) => viewOptionsOpen.has(tag)},
   'view_export_pos': {run: (view, tag) => exportView(tag, 'pos')},
-  'view_export_msh': {run: (view, tag) => exportView(tag, 'msh')}
+  'view_export_msh': {run: (view, tag) => exportView(tag, 'msh')},
+  // those of the keys that are not in a menu (see src/common/Shortcuts.cpp)
+  'mouse_selection': {run: () => toggleMouseSelection()},
+  'solver_run': {run: () => run('compute')},
+  'file_new': {run: () => newModel()},
+  'project_reload': {run: () => run('check')},
+  'file_open': {run: () => openMenu(true)},
+  'help_keys': {run: () => $('keysDialog').showModal()},
+  'options': {run: () => showOptions()},
+  'options_post': {run: () => showViewOptions(firstView())},
+  'options_solver': {run: () => showTab('modelTab')},
+  'clipping': {run: () => showTab('clipTab')},
+  'visibility': {run: () => showTab('visTab')},
+  'menu_show_hide': {run: () => toggleSide()}
 };
 // the check mark of an item in Gmsh: -1 for none, 0 or 1, -2 if it does not
 // apply now
@@ -3196,10 +3209,11 @@ function showOptions(group) {
     $('options' + group).scrollIntoView({block: 'start'});
   }
 }
-// a shortcut named as an action of the registry (see src/common/Shortcuts.h)
-// runs as the items of that action, if the page has one now
+// a shortcut named as an action of a module (see src/common/Shortcuts.h) runs
+// as its item, with what the page shows of it (the time it took, a new model
+// if there is none), if the page has it now
 function registryShortcut(action) {
-  for(const module of ['Geometry', 'Mesh', 'Quick access']) {
+  for(const module of ['Geometry', 'Mesh']) {
     const item = findItem(action, registry[module]);
     if(item && item.kind === 'action') return canRun(item) && (() => runItem(item, {module}));
   }
@@ -3213,21 +3227,19 @@ function toggleMouseSelection() {
   showSelection();
   draw();
 }
-const pageShortcuts = {
-  mouse_selection: toggleMouseSelection,
-  solver_run: () => run('compute'),
-  file_new: newModel,
-  project_reload: () => run('check'),
-  file_open: () => openMenu(true),
-  help_keys: () => $('keysDialog').showModal(),
-  options: () => showOptions(),
-  options_post: () => showViewOptions(firstView()),
-  options_solver: () => showTab('modelTab'),
-  clipping: () => showTab('clipTab'),
-  visibility: () => showTab('visTab'),
-  menu_show_hide: toggleSide,
+// a key: what the page does, or false for the module (see shortcuts.js)
+const pageShortcut = (action) => {
+  const a = pageActions[action];
+  if(a && (!a.available || a.available())) return () => a.run();
+  return registryShortcut(action);
 };
 const shortcuts = installShortcuts(Module, (action) => {
+  // Escape: the lasso first, then a popup, then the tool under way
+  if(action === 'escape' &&
+     Module.ccall('gmshWebShortcut', 'number', ['string', 'number'], ['escape', 0])) {
+    draw();
+    return true;
+  }
   if(action === 'escape' && closePopup()) return true;
   // the keys of an operation
   const key = {selection_end: 'e', selection_undo: 'u', selection_quit: 'q', escape: 'q'};
@@ -3239,7 +3251,7 @@ const shortcuts = installShortcuts(Module, (action) => {
     setTool(Tool.None);
     return true;
   }
-  const f = pageShortcuts[action] || registryShortcut(action);
+  const f = pageShortcut(action);
   if(!f) return false;
   f();
   return true;
@@ -3254,7 +3266,7 @@ const shortcuts = installShortcuts(Module, (action) => {
   draw();
 });
 // the actions of the page in the list, with those of the module
-for(const r of shortcutsHelp(shortcuts, (a) => pageShortcuts[a] ||
+for(const r of shortcutsHelp(shortcuts, (a) => !!pageActions[a] ||
                                               registryShortcut(a) !== null)) {
   const tr = $('keysTable').insertRow();
   tr.insertCell().textContent = r.label;

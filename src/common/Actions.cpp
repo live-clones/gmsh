@@ -15,12 +15,15 @@
 #include "Options.h"
 #include "OS.h"
 #include "SBoundingBox3d.h"
-#include "Shortcuts.h"
 #include "scriptStringInterface.h"
 
 #if defined(HAVE_MESH)
 #include "Field.h"
 // #include "gmshCrossFields.h" (for Compute quad layout)
+#endif
+
+#if defined(HAVE_OPENGL)
+#include "drawContext.h"
 #endif
 
 #if defined(HAVE_POST)
@@ -34,26 +37,23 @@
 // a menu, and a group of items set apart (a menu without label)
 static actionItem menu(const std::string &label, const std::string &help,
                        const std::vector<actionItem> &items)
-{ return {label, ItemMenu, "", items, help, ""}; }
+{ return {label, ItemMenu, "", items, help}; }
 static actionItem group(const std::vector<actionItem> &items)
 { return menu("", "", items); }
-// an action of the table (named as its label if no name is given)
-static actionItem action(const std::string &label, const std::string &name = "",
-                         const std::string &help = "",
-                         const std::string &shortcut = "")
-{ return {label, ItemAction, name.empty() ? label : name, {}, help, shortcut}; }
+// an action of the table
+static actionItem action(const std::string &label, const std::string &name,
+                         const std::string &help = "")
+{ return {label, ItemAction, name, {}, help}; }
 // an operation on the entities picked
-static actionItem operation(const std::string &label,
-                            const std::string &name = "",
+static actionItem operation(const std::string &label, const std::string &name,
                             const std::string &help = "")
-{ return {label, ItemOperation, name.empty() ? label : name, {}, help, ""}; }
+{ return {label, ItemOperation, name, {}, help}; }
 // a shape (see scriptShapes())
 static actionItem shape(const std::string &label, const std::string &name)
-{ return {label, ItemShape, name, {}, "", ""}; }
+{ return {label, ItemShape, name, {}, ""}; }
 // an option toggled or set
-static actionItem option(const std::string &label, const std::string &name,
-                         const std::string &shortcut = "")
-{ return {label, ItemOption, name, {}, "", shortcut}; }
+static actionItem option(const std::string &label, const std::string &name)
+{ return {label, ItemOption, name, {}, ""}; }
 
 // the programs the commands added to the script are also written in (see
 // General.ScriptingLanguages), and their edition
@@ -310,10 +310,10 @@ static actionItem quickAccessMenu()
     action("All general options...", "options_general"),
   };
   std::vector<actionItem> geometryVisibility = {
-    option("Points", "Geometry.Points", "geometry_points"),
-    option("Curves", "Geometry.Curves", "geometry_curves"),
-    option("Surfaces", "Geometry.Surfaces", "geometry_surfaces"),
-    option("Volumes", "Geometry.Volumes", "geometry_volumes"),
+    action("Points", "geometry_points"),
+    action("Curves", "geometry_curves"),
+    action("Surfaces", "geometry_surfaces"),
+    action("Volumes", "geometry_volumes"),
   };
   std::vector<actionItem> geometry = {
     menu("Geometry visibility", "", geometryVisibility),
@@ -321,12 +321,12 @@ static actionItem quickAccessMenu()
     action("All geometry options...", "options_geometry"),
   };
   std::vector<actionItem> meshVisibility = {
-    option("Nodes", "Mesh.Nodes", "mesh_nodes"),
-    option("1D elements", "Mesh.Lines", "mesh_lines"),
-    option("2D element edges", "Mesh.SurfaceEdges", "mesh_surface_edges"),
-    option("2D element faces", "Mesh.SurfaceFaces", "mesh_surface_faces"),
-    option("3D element edges", "Mesh.VolumeEdges", "mesh_volume_edges"),
-    option("3D element faces", "Mesh.VolumeFaces", "mesh_volume_faces"),
+    action("Nodes", "mesh_nodes"),
+    action("1D elements", "mesh_lines"),
+    action("2D element edges", "mesh_surface_edges"),
+    action("2D element faces", "mesh_surface_faces"),
+    action("3D element edges", "mesh_volume_edges"),
+    action("3D element faces", "mesh_volume_faces"),
   };
   std::vector<std::pair<std::string, std::string>> sizeFactors = {
     {"0.25", "0.25"}, {"0.5", "0.5"}, {"1", "1"}, {"2", "2"}, {"4", "4"},
@@ -354,7 +354,7 @@ static actionItem quickAccessMenu()
     option("At node", "View.GlyphLocation=2"),
   };
   std::vector<actionItem> views = {
-    option("View element outlines", "View.ShowElement", "view_elements"),
+    action("View element outlines", "view_elements"),
     menu("View intervals", "", intervals),
     menu("View vectors", "", vectors),
     presets("View opacity", "View.Opacity", opacities()),
@@ -438,7 +438,7 @@ static actionItem menuBar()
     group({
       action("New...", "file_new"),
       action("Open...", "file_open"),
-      action("Open Recent", "recent_files"),
+      action("Open Recent", "file_open_recent"),
       action("Merge...", "file_merge"),
       action("Watch Pattern...", "watch"),
     }),
@@ -681,6 +681,55 @@ static int toggleAxes()
   return ActionDone;
 }
 
+// an option of the display turned on or off
+static void toggle(double (*option)(int, int, double))
+{ option(0, GMSH_SET | GMSH_GUI, !option(0, GMSH_GET, 0)); }
+
+#if defined(HAVE_POST)
+// an option of every visible view, from what it is
+static void forVisibleViews(double (*option)(int, int, double),
+                            double (*next)(double))
+{
+  for(std::size_t i = 0; i < PView::list.size(); i++)
+    if(opt_view_visible(i, GMSH_GET, 0))
+      option(i, GMSH_SET | GMSH_GUI, next(option(i, GMSH_GET, 0)));
+}
+
+// an option of the visible views as the first of them has it, and turned on
+// or off for all of them, as an item toggling it shows and does
+static double firstVisibleView(double (*option)(int, int, double))
+{
+  for(std::size_t i = 0; i < PView::list.size(); i++)
+    if(opt_view_visible(i, GMSH_GET, 0)) return option(i, GMSH_GET, 0);
+  return 0.;
+}
+static void toggleVisibleViews(double (*option)(int, int, double))
+{
+  double v = !firstVisibleView(option);
+  for(std::size_t i = 0; i < PView::list.size(); i++)
+    if(opt_view_visible(i, GMSH_GET, 0)) option(i, GMSH_SET | GMSH_GUI, v);
+}
+#endif
+
+// the mesh all off if any of it is drawn (as the options say now, whatever
+// changed them), else back as it was when turned off (the default edges if it
+// never was)
+static void toggleMesh()
+{
+  static double (*const options[])(int, int, double) = {
+    opt_mesh_nodes,         opt_mesh_lines,        opt_mesh_surface_edges,
+    opt_mesh_surface_faces, opt_mesh_volume_edges, opt_mesh_volume_faces};
+  static int old[6] = {0, 0, 1, 0, 1, 0};
+  bool drawn = false;
+  for(int i = 0; i < 6; i++)
+    if(options[i](0, GMSH_GET, 0)) drawn = true;
+  for(int i = 0; i < 6; i++) {
+    if(drawn) old[i] = (int)options[i](0, GMSH_GET, 0);
+    options[i](0, GMSH_SET | GMSH_GUI, drawn ? 0 : old[i]);
+  }
+  Msg::StatusBar(false, drawn ? "Mesh display OFF" : "Mesh display restored");
+}
+
 // what an action does: view is the index of the view of a menu of a view,
 // ctx the scene
 typedef std::function<int(int view, drawContext *ctx)> actionFunction;
@@ -713,7 +762,7 @@ static const std::map<std::string, actionEntry> &listedActions()
        scriptCoherence(scriptFile());
        return ActionDone | ActionModelChanged;
      }}},
-    // the mesh
+  // the mesh
 #if defined(HAVE_MESH)
     {"mesh_1d", {[](int, drawContext *) {
        GModel::current()->mesh(1);
@@ -779,21 +828,113 @@ static const std::map<std::string, actionEntry> &listedActions()
 #endif
     // the scene
     {"scene_reset", {[](int, drawContext *ctx) {
-       RunSceneShortcut("view_z", 0, ctx);
-       RunSceneShortcut("view_1_1", 0, ctx);
+#if defined(HAVE_OPENGL)
+       if(ctx) {
+         ctx->standardView("z", false);
+         ctx->standardView("1:1", false);
+       }
+#endif
        return ActionDone;
      }}},
     {"axes",
      {[](int, drawContext *) { return toggleAxes(); }, nullptr,
       // (what the toggle changes: the model's axes, not those of the views)
       [] { return opt_general_axes(0, GMSH_GET, 0) ? 1 : 0; }}},
-    {"mesh_toggle", {[](int, drawContext *ctx) {
-       RunSceneShortcut("mesh_toggle", 0, ctx);
+    // the display (on keys, see Shortcuts.cpp; the options turned on or off
+    // are added below)
+    {"mesh_toggle", {[](int, drawContext *) {
+       toggleMesh();
+       return ActionDone;
+     }}},
+    {"color_scheme", {[](int, drawContext *) {
+       opt_general_color_scheme(0, GMSH_SET | GMSH_GUI,
+                                opt_general_color_scheme(0, GMSH_GET, 0) + 1);
+       return ActionDone;
+     }}},
+    {"lighting", {[](int, drawContext *) {
+       toggle(opt_geometry_light);
+       toggle(opt_mesh_light);
+#if defined(HAVE_POST)
+       forVisibleViews(opt_view_light, [](double v) { return (double)!v; });
+#endif
+       return ActionDone;
+     }}},
+    {"axes_loop", {[](int, drawContext *) {
+       opt_general_axes(0, GMSH_SET | GMSH_GUI,
+                        opt_general_axes(0, GMSH_GET, 0) + 1);
+#if defined(HAVE_POST)
+       // through the six modes: a view left on automatic starts over at none
+       forVisibleViews(opt_view_axes,
+                       [](double v) { return (v >= 5) ? 0. : v + 1.; });
+#endif
+       return ActionDone;
+     }}},
+    {"surface_type", {[](int, drawContext *) {
+       opt_geometry_surface_type(0, GMSH_SET | GMSH_GUI,
+                                 opt_geometry_surface_type(0, GMSH_GET, 0) + 1);
        return ActionDone;
      }}},
     {"options_views", {nullptr, haveViews}},
-    // the views
+  // the views
 #if defined(HAVE_POST)
+    // (their display, on keys)
+    {"view_scales",
+     {[](int, drawContext *) {
+        forVisibleViews(opt_view_show_scale,
+                        [](double v) { return (double)!v; });
+        return ActionDone;
+      },
+      haveViews}},
+    {"colormaps",
+     {[](int, drawContext *) {
+        forVisibleViews(opt_view_colormap_number,
+                        [](double v) { return v + 1.; });
+        return ActionDone;
+      },
+      haveViews}},
+    {"view_intervals",
+     {[](int, drawContext *) {
+        // skipping the numeric display
+        forVisibleViews(opt_view_intervals_type,
+                        [](double v) { return (v + 1 == 4) ? 1. : v + 1.; });
+        return ActionDone;
+      },
+      haveViews}},
+    {"view_intervals_all",
+     {[](int, drawContext *) {
+        forVisibleViews(opt_view_intervals_type,
+                        [](double v) { return v + 1.; });
+        return ActionDone;
+      },
+      haveViews}},
+    {"view_range",
+     {[](int, drawContext *) {
+        forVisibleViews(opt_view_range_type, [](double v) { return v + 1.; });
+        return ActionDone;
+      },
+      haveViews}},
+    {"view_annotations",
+     {[](int, drawContext *) {
+        forVisibleViews(opt_view_draw_strings,
+                        [](double v) { return (double)!v; });
+        return ActionDone;
+      },
+      haveViews}},
+    {"view_elements",
+     {[](int, drawContext *) {
+        toggleVisibleViews(opt_view_show_element);
+        return ActionDone;
+      },
+      haveViews, [] { return (int)firstVisibleView(opt_view_show_element); }}},
+    {"views_hide_show",
+     {[](int, drawContext *) {
+        // all hidden if any is shown, else all shown
+        bool shown = false;
+        for(std::size_t i = 0; i < PView::list.size(); i++)
+          if(isViewVisible(i)) shown = true;
+        return showViews([shown](int) { return !shown; });
+      },
+      haveViews}},
     {"view_reload", {[](int view, drawContext *) { return reloadView(view); }}},
     {"views_reload_all", {[](int, drawContext *) {
        return reloadViews([](int) { return true; });
@@ -866,12 +1007,38 @@ static const std::map<std::string, actionEntry> &listedActions()
   return actions;
 }
 
-// the actions of the table, and those of the programs of the script: written
-// or not (checked), and edited by the interfaces, once there is one
+// the actions of the table, the options of the display turned on or off,
+// and those of the programs of the script: written or not (checked), and
+// edited by the interfaces, once there is one
 static const std::map<std::string, actionEntry> &actions()
 {
   static const std::map<std::string, actionEntry> all = [] {
     std::map<std::string, actionEntry> m = listedActions();
+    // the display: an option turned on or off, checked when it is on
+    static const std::pair<const char *, double (*)(int, int, double)>
+      toggles[] = {{"geometry_points", opt_geometry_points},
+                   {"geometry_curves", opt_geometry_curves},
+                   {"geometry_surfaces", opt_geometry_surfaces},
+                   {"geometry_volumes", opt_geometry_volumes},
+                   {"mesh_nodes", opt_mesh_nodes},
+                   {"mesh_lines", opt_mesh_lines},
+                   {"mesh_surface_edges", opt_mesh_surface_edges},
+                   {"mesh_surface_faces", opt_mesh_surface_faces},
+                   {"mesh_volume_edges", opt_mesh_volume_edges},
+                   {"mesh_volume_faces", opt_mesh_volume_faces},
+                   {"fast_redraw", opt_general_fast_redraw},
+                   {"bounding_boxes", opt_general_draw_bounding_box},
+                   {"small_axes", opt_general_small_axes},
+                   {"projection", opt_general_orthographic}};
+    for(const auto &t : toggles) {
+      auto option = t.second;
+      m[t.first] = {[option](int, drawContext *) {
+                      toggle(option);
+                      return (int)ActionDone;
+                    },
+                    nullptr,
+                    [option] { return option(0, GMSH_GET, 0) ? 1 : 0; }};
+    }
     for(auto &l : scriptLanguages()) {
       std::string lang = l.name;
       m["script_write_" + l.name] = {
@@ -958,7 +1125,12 @@ int RunItem(const actionItem &item, int view, drawContext *ctx)
     return ActionDone;
   }
   if(item.kind != ItemAction) return ActionByInterface;
-  auto it = actions().find(item.name);
+  return RunAction(item.name, view, ctx);
+}
+
+int RunAction(const std::string &name, int view, drawContext *ctx)
+{
+  auto it = actions().find(name);
   if(it == actions().end() || !it->second.run) return ActionByInterface;
   return it->second.run(view, ctx);
 }

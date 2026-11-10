@@ -768,7 +768,7 @@ static void addRecentFiles(Fl_Menu_ *m, const std::string &path)
     else
       label = files[i];
     m->add((path + "/" + label).c_str(),
-           i == 1 ? fltkShortcut("file_recent") : 0, file_open_recent_cb,
+           i == 1 ? fltkShortcut("file_open_previous") : 0, file_open_recent_cb,
            (void *)(intptr_t)i);
   }
 }
@@ -778,8 +778,8 @@ const std::map<std::string, fltkAction> &menuBarActions()
   static const std::map<std::string, fltkAction> actions = {
     {"file_new", call(file_new_cb)},
     {"file_open", call(file_open_merge_cb, (void *)"open")},
-    {"recent_files", {nullptr, nullptr, addRecentFiles}},
-    {"file_recent", call(file_open_recent_cb, (void *)1)},
+    {"file_open_recent", {nullptr, nullptr, addRecentFiles}},
+    {"file_open_previous", call(file_open_recent_cb, (void *)1)},
     {"file_merge", call(file_open_merge_cb, (void *)"merge")},
     {"watch", call(file_watch_cb)},
     {"file_clear", call(file_clear_cb)},

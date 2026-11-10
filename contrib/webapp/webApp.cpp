@@ -26,6 +26,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
+#include <functional>
 #include <map>
 #include <sstream>
 #include <emscripten.h>
@@ -130,7 +131,6 @@ namespace {
       ",\"label\":" + JsonString(item.label) + ",\"kind\":\"" +
       kinds[item.kind] + "\",\"name\":" + JsonString(item.name) +
       ",\"help\":" + JsonString(item.help) +
-      ",\"shortcut\":" + JsonString(item.shortcut) +
       ",\"interface\":" + (IsItemDoneByInterface(item) ? "1" : "0") +
       ",\"items\":[";
     _items.push_back(&item);
@@ -141,6 +141,48 @@ namespace {
 
   const actionItem *item(int id)
   { return (id >= 0 && id < (int)_items.size()) ? _items[id] : nullptr; }
+
+  // the actions of the keys the page does here, as the buttons of the status
+  // bar of the graphical interface do them (see Shortcuts.h): the point of
+  // view (Shift for the other side, or with "1:1" for the bounding box of
+  // what is visible), and the time steps and the views
+  typedef std::function<void(unsigned mods, drawContext *ctx)> sceneAction;
+  const std::map<std::string, sceneAction> &sceneActions()
+  {
+    static const std::map<std::string, sceneAction> actions = [] {
+      std::map<std::string, sceneAction> m;
+      for(const char *a :
+          {"view_x", "view_y", "view_z", "view_3d", "view_1_1"}) {
+        std::string which = strcmp(a, "view_1_1") ? std::string(a + 5) : "1:1";
+        m[a] = [which](unsigned mods, drawContext *ctx) {
+          if(which == "1:1" && (mods & ModShift)) SetBoundingBox(true);
+          ctx->standardView(which, mods & ModShift);
+        };
+      }
+      m["time_step_prev"] = [](unsigned, drawContext *) {
+        PView::animate(true, -CTX::instance()->post.animStep);
+      };
+      m["time_step_next"] = [](unsigned, drawContext *) {
+        PView::animate(true, CTX::instance()->post.animStep);
+      };
+      m["view_prev"] = [](unsigned, drawContext *) {
+        PView::animate(false, -CTX::instance()->post.animStep);
+      };
+      m["view_next"] = [](unsigned, drawContext *) {
+        PView::animate(false, CTX::instance()->post.animStep);
+      };
+      return m;
+    }();
+    return actions;
+  }
+
+  // whether Gmsh does the action of a key here (not the page)
+  bool doneHere(const std::string &a)
+  {
+    actionItem item{"", ItemAction, a, {}, ""};
+    return a == "escape" || sceneActions().count(a) ||
+           (HasAction(a) && !IsItemDoneByInterface(item));
+  }
 
 #if defined(HAVE_WEBAPP_GETDP)
   // GetDP is known as soon as the module starts, so that opening a .pro file
@@ -536,8 +578,8 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebScriptProgram(const char *name)
 
 // The action registry (see Actions.h), in JSON: {menu: item}, an item
 // {"id", "label", "kind" ("menu", "action", "operation", "shape" or
-// "option"), "name", "help", "shortcut", "interface" (1 if the page does it),
-// "items"}; the page gives back its id to do it
+// "option"), "name", "help", "interface" (1 if the page does it), "items"};
+// the page gives back its id to do it
 EMSCRIPTEN_KEEPALIVE const char *gmshWebActions()
 {
   Msg::NoThrow noThrow;
@@ -748,33 +790,46 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebShortcuts(const char *command)
       key = "PageDown";
     else
       key = std::string(1, (char)k);
-    bool scene = !strcmp(e.action, "escape") || IsSceneShortcut(e.action);
+    bool here = doneHere(e.action);
     if(json.size() > 1) json += ",";
     json += "{\"action\":" + JsonString(e.action) +
             ",\"key\":" + JsonString(key) +
             ",\"mods\":" + std::to_string(e.shortcut.mods) +
             ",\"help\":" + JsonString(e.help) +
             ",\"label\":" + JsonString(e.shortcut.label(command)) +
-            ",\"scene\":" + (scene ? "true" : "false") + "}";
+            ",\"module\":" + (here ? "true" : "false") + "}";
   }
   json += "]";
   return json.c_str();
 }
 
-// run an action of the shortcuts that changes the scene (see
-// RunSceneShortcut()), or Escape, which stops a lasso: returns 2 if the scene
-// is to be drawn again, 0 if the action is not one of them
+// run the action of a key Gmsh does here: Escape, which stops a lasso, the
+// point of view and the time steps (see sceneActions()), or an action of the
+// registry (see Actions.h): returns 2 if the scene is to be drawn again, 0 if
+// the action is not one of them (the page does it)
 EMSCRIPTEN_KEEPALIVE int gmshWebShortcut(const char *action, int mods)
 {
   Msg::NoThrow noThrow;
   if(!_view || !_view->getDrawContext()) return 0;
+  drawContext *ctx = _view->getDrawContext();
   std::string a(action);
   if(a == "escape") {
     if(!_scene || !_scene->lassoMode) return 0;
     _scene->lassoMode = false;
     return 2;
   }
-  return RunSceneShortcut(a, mods, _view->getDrawContext());
+  auto it = sceneActions().find(a);
+  if(it != sceneActions().end()) {
+    it->second(mods, ctx);
+    return 2;
+  }
+  int ret = RunAction(a, -1, ctx);
+  if(ret == ActionByInterface) return 0;
+  if(ret & ActionModelChanged) {
+    GModel::current()->setSelection(0);
+    SetBoundingBox();
+  }
+  return 2;
 }
 
 // the view turned by 90 degrees about the axis out of the screen, clockwise
