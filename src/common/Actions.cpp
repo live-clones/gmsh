@@ -297,8 +297,8 @@ static actionItem action(const std::string &label, const std::string &name,
                          std::function<bool()> available = nullptr,
                          std::function<int()> check = nullptr)
 { return {label, ItemAction, name, {}, help, run, available, check}; }
-// an action the interfaces do (fltkActions() on the desktop, pageActions in
-// the web page): when it applies
+// an action the interfaces do, which give it its run (see SetItemRun()): when
+// it applies
 static actionItem guiAction(const std::string &label, const std::string &name,
                             const std::string &help = "",
                             std::function<bool()> available = nullptr)
@@ -932,9 +932,44 @@ static actionItem menuBar()
   });
 }
 
-// The actions only on keys (see Shortcuts.h), in no menu: the display
+// The actions only on keys (see Shortcuts.h), in no menu: those the
+// interfaces do, then the display
 static actionItem keysOnly()
 {
+  std::vector<actionItem> interfaceKeys = {
+    guiAction("", "project_reload"),
+    guiAction("", "solver_run"),
+    guiAction("", "module_geometry"),
+    guiAction("", "module_mesh"),
+    guiAction("", "module_solver"),
+    guiAction("", "module_post"),
+    guiAction("", "selection_end"),
+    guiAction("", "selection_undo"),
+    guiAction("", "selection_quit"),
+    guiAction("", "freeze_x"),
+    guiAction("", "freeze_y"),
+    guiAction("", "freeze_z"),
+    guiAction("", "freeze_but_x"),
+    guiAction("", "freeze_but_y"),
+    guiAction("", "freeze_but_z"),
+    guiAction("", "escape"),
+    guiAction("", "mouse_selection"),
+    guiAction("", "options_solver"),
+    guiAction("", "options_post"),
+    guiAction("", "plugins_view"),
+    guiAction("", "view_x"),
+    guiAction("", "view_y"),
+    guiAction("", "view_z"),
+    guiAction("", "view_1_1"),
+    guiAction("", "view_3d"),
+    guiAction("", "time_step_prev"),
+    guiAction("", "time_step_next"),
+    guiAction("", "view_prev"),
+    guiAction("", "view_next"),
+    guiAction("", "page_prev"),
+    guiAction("", "page_next"),
+    guiAction("", "file_open_previous"),
+  };
   std::vector<actionItem> keys = {
     toggleAction("", "fast_redraw", opt_general_fast_redraw),
     toggleAction("", "bounding_boxes", opt_general_draw_bounding_box),
@@ -1028,12 +1063,12 @@ static actionItem keysOnly()
       haveViews),
 #endif
   };
-  return group(keys);
+  return group({group(interfaceKeys), group(keys)});
 }
 
-static const std::map<std::string, actionItem> &menus()
+static std::map<std::string, actionItem> &menus()
 {
-  static const std::map<std::string, actionItem> menus = {
+  static std::map<std::string, actionItem> menus = {
     {"Geometry", geometryModule()},
     {"Mesh", meshModule()},
     {"Quick access", quickAccessMenu()},
@@ -1053,36 +1088,45 @@ const actionItem &GetActionMenu(const std::string &name)
 
 // How the interfaces run them
 
-// the actions by name, from the items of all the menus (an action in several
-// menus is the same in each)
-static const std::map<std::string, const actionItem *> &actions()
+// the items of all the menus, each given to f
+static void forEachItem(const std::function<void(actionItem &)> &f)
 {
-  static const std::map<std::string, const actionItem *> all = [] {
+  std::function<void(actionItem &)> walk = [&](actionItem &i) {
+    if(i.kind == ItemMenu)
+      for(actionItem &j : i.items) walk(j);
+    else
+      f(i);
+  };
+  for(auto &menu : menus()) walk(menu.second);
+}
+
+const actionItem *FindItem(const std::string &name)
+{
+  static const std::map<std::string, const actionItem *> items = [] {
     std::map<std::string, const actionItem *> m;
-    std::function<void(const actionItem &)> add = [&](const actionItem &i) {
-      if(i.kind == ItemMenu)
-        for(const actionItem &j : i.items) add(j);
-      else if(i.kind == ItemAction && !m.count(i.name))
-        m[i.name] = &i;
-    };
-    for(auto &menu : menus()) add(menu.second);
+    forEachItem([&](actionItem &i) { m.insert({i.name, &i}); });
     return m;
   }();
-  return all;
+  auto it = items.find(name);
+  return it == items.end() ? nullptr : it->second;
 }
 
-static const actionItem *findAction(const std::string &name)
+void SetItemRun(const std::string &name, std::function<void(int view)> run,
+                std::function<int()> check)
 {
-  auto it = actions().find(name);
-  return it == actions().end() ? nullptr : it->second;
-}
-
-bool IsItemDoneByInterface(const actionItem &item)
-{
-  if(item.kind == ItemOperation || item.kind == ItemShape) return true;
-  if(item.kind != ItemAction) return false;
-  const actionItem *a = findAction(item.name);
-  return !a || !a->run;
+  bool found = false;
+  forEachItem([&](actionItem &i) {
+    if(i.kind != ItemAction || i.name != name) return;
+    found = true;
+    if(i.run) {
+      Msg::Error("Action '%s' is done by Gmsh and by the interface",
+                 name.c_str());
+      return;
+    }
+    i.run = [run](int view, drawContext *) { run(view); };
+    i.check = check;
+  });
+  if(!found) Msg::Error("No item '%s' in the menus", name.c_str());
 }
 
 // the views, for what an action changed in them: added, removed or read again
@@ -1097,30 +1141,12 @@ static std::vector<std::pair<int, void *>> viewsNow()
 
 int RunItem(const actionItem &item, int view, drawContext *ctx)
 {
-  // (by its name: the item of a key is the name alone)
-  const actionItem *a = item.kind == ItemAction ? findAction(item.name) : nullptr;
-  if(!a || !a->run) return 0;
+  if(item.kind != ItemAction || !item.run) return 0;
   int entities = CTX::instance()->entitiesStamp;
   std::vector<std::pair<int, void *>> views = viewsNow();
-  a->run(view, ctx);
+  item.run(view, ctx);
   int ret = 0;
   if(CTX::instance()->entitiesStamp != entities) ret |= ActionModelChanged;
   if(viewsNow() != views) ret |= ActionViewsChanged;
   return ret;
-}
-
-bool IsItemAvailable(const actionItem &item)
-{
-  if(item.kind != ItemAction) return true;
-  // (an action Gmsh does not know is done by the interfaces, which say
-  // whether they do it)
-  const actionItem *a = findAction(item.name);
-  return !a || !a->available || a->available();
-}
-
-int GetItemCheck(const actionItem &item)
-{
-  if(item.kind != ItemAction) return -1;
-  const actionItem *a = findAction(item.name);
-  return (a && a->check) ? a->check() : -1;
 }

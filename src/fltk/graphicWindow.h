@@ -213,6 +213,8 @@ void dock_tool_cb(Fl_Widget *w, void *data);
 void dock_tools_cb(Fl_Widget *w, void *data);
 
 // The items of the action registry (see Actions.h) in this interface:
+// - fltkActions() gives the actions this interface does their run, once,
+//   before its menus are made;
 // - canRunItem() says whether an item can be used now;
 // - runItem() does what an item does (view is the index of the view, for the
 //   menu of a view);
@@ -221,6 +223,7 @@ void dock_tools_cb(Fl_Widget *w, void *data);
 //   show its value (not in a menu that stays, which would not follow it).
 struct actionItem;
 class Fl_Menu_;
+void fltkActions();
 bool canRunItem(const actionItem &item);
 void runItem(const actionItem &item, int view = -1);
 // whether a menu of the registry has an item this interface can run now
@@ -229,18 +232,17 @@ void addMenuItems(Fl_Menu_ *m, const actionItem &menu, int view,
                   bool marks = true);
 
 // An action of the registry this interface does: what it does (view: the
-// index of the view of a menu of a view), its check mark, and, for an item
-// that is a submenu filled by the interface (the recent files), how to fill
-// it under path
+// index of the view of a menu of a view) and its check mark
 struct fltkAction {
   std::function<void(int view)> run;
   std::function<int()> check;
-  std::function<void(Fl_Menu_ *m, const std::string &path)> fill;
 };
 // the actions of the menu bar (see the "Menu bar" menu of Actions.cpp) and
-// of the keys that are not in a menu (see FlGui::runShortcut()), parts of the
-// table of the actions this interface does (fltkActions() in actionMenus.cpp)
+// of the keys that are not in a menu (see FlGui::runShortcut()), parts of
+// fltkActions() in actionMenus.cpp
 const std::map<std::string, fltkAction> &menuBarActions();
 const std::map<std::string, fltkAction> &keyboardActions();
+// the recent files, as the submenu under path (File/Open Recent)
+void addRecentFiles(Fl_Menu_ *m, const std::string &path);
 
 #endif

@@ -2076,7 +2076,7 @@ function saveScript() {
   else setStatus('No script to save: open a .geo model, or make a new one');
 }
 // the form of a shape
-function showShapeForm(shape) {
+function startShape(shape) {
   if(tool === Tool.Operation) stopOperation();
   const {label, fields} = shapes[shape];
   showPanel($('moduleGeometry'), label,
@@ -2127,17 +2127,6 @@ function partitionForm() {
 // of the graphical interface, the buttons of the modules included, and what
 // their items do (see gmshWebActions() in webApp.cpp)
 const registry = JSON.parse(Module.ccall('gmshWebActions', 'string', [], []));
-// the path of each item in its menu ("Mesh › 2D"), which says what it does in
-// the status and the forms (the names of the items are keys)
-for(const [menu, root] of Object.entries(registry)) {
-  (function setPaths(m, path) {
-    for(const it of m.items) {
-      const p = it.label ? [...path, it.label] : path;
-      if(it.kind === 'menu') setPaths(it, p);
-      else it.path = p.join(' › ');
-    }
-  })(root, [menu]);
-}
 // the actions of the registry this page does: what it does (view: the index
 // of the view of a menu of a view, tag its tag), its check mark, and whether
 // it has it now (always if not said)
@@ -2161,7 +2150,7 @@ const pageActions = {
                    check: (view, tag) => viewOptionsOpen.has(tag)},
   'view_export_pos': {run: (view, tag) => exportView(tag, 'pos')},
   'view_export_msh': {run: (view, tag) => exportView(tag, 'msh')},
-  // those of the keys that are not in a menu (see src/common/Shortcuts.cpp)
+  // those of the keys in no menu (see keysOnly() in src/common/Actions.cpp)
   'escape': {run: () => escape()},
   'selection_end': {run: () => operationKey('e'), available: () => tool === Tool.Operation},
   'selection_undo': {run: () => operationKey('u'), available: () => tool === Tool.Operation},
@@ -2189,50 +2178,75 @@ const pageActions = {
   'visibility': {run: () => showTab('visTab')},
   'menu_show_hide': {run: () => toggleSide()}
 };
+// the programs written next to the script (the items script_edit_py... of
+// the Geometry module), in the editor
+function editProgram(name) {
+  editFile(Module.ccall('gmshWebScriptProgram', 'string', ['string'], [name]));
+}
 // the check mark of an item in Gmsh: -1 for none, 0 or 1, -2 if it does not
 // apply now
 const itemCheck = (item) => Module.ccall('gmshWebActionCheck', 'number', ['number'], [item.id]);
+// Each item given its path in its menu ("Mesh › 2D"), which says what it does
+// in the status and the forms (the names of the items are keys), and, for an
+// action, what it does (none if the page does not have it), when it applies
+// and its check mark: Gmsh's (see gmshAction()), or the page's
+for(const [menu, root] of Object.entries(registry)) {
+  (function setItems(m, path) {
+    for(const it of m.items) {
+      const p = it.label ? [...path, it.label] : path;
+      if(it.kind === 'menu') {
+        setItems(it, p);
+        continue;
+      }
+      it.path = p.join(' › ');
+      if(it.kind === 'action' && !it.gmsh) {
+        const a = pageActions[it.name] ||
+          (/^script_edit_/.test(it.name) ? {run: () => editProgram(it.name)} : {});
+        it.run = a.run;
+        it.available = a.available || (() => true);
+        it.check = a.check || (() => undefined);
+      }
+      else {
+        if(it.kind === 'action') it.run = (view) => gmshAction(it, view);
+        it.available = () => itemCheck(it) !== -2;
+        it.check = () => {
+          const c = itemCheck(it);
+          return c >= 0 ? !!c : undefined;
+        };
+      }
+    }
+  })(root, [menu]);
+}
 // whether the page has an item now
-function canRun(item) {
-  if(item.id !== undefined && itemCheck(item) === -2) return false;
-  if(item.kind !== 'action' || !item.interface) return true;
-  const a = pageActions[item.name];
-  return !!a && (!a.available || a.available());
-}
+const canRunItem = (item) => (item.kind !== 'action' || !!item.run) && item.available();
 // whether a menu has an item the page has now
-const anyItem = (menu) => menu.items.some((it) => it.kind === 'menu' ? anyItem(it) : canRun(it));
-function checkOf(item, view, tag) {
-  if(item.kind === 'action' && item.interface) {
-    const a = pageActions[item.name];
-    return a.check ? a.check(view, tag) : undefined;
+const canRunAnyItem = (menu) =>
+  menu.items.some((it) => it.kind === 'menu' ? canRunAnyItem(it) : canRunItem(it));
+// the item of a name (that of a key), in any menu
+function findItem(name, menu = {items: Object.values(registry)}) {
+  for(const it of menu.items) {
+    const found = it.kind === 'menu' ? findItem(name, it) : it.name === name && it;
+    if(found) return found;
   }
-  const c = itemCheck(item);
-  return c >= 0 ? !!c : undefined;
+  return null;
 }
-// What an item does, clicked or by a key of its name: Gmsh's action, an
-// operation, a shape, or what the page does (view: the index of the view of
-// a menu of a view, tag its tag; mods: the modifiers of the key)
+// the module of an item ('Geometry', 'Mesh' or '')
+const moduleOf = (item) =>
+  ['Geometry', 'Mesh'].find((m) => item.path.startsWith(m + ' ›')) || '';
+// What an item does, clicked or by a key of its name: an operation, a shape,
+// or an action (view: the index of the view of a menu of a view, tag its tag;
+// mods: the modifiers of the key)
 async function runItem(item, {view = -1, tag, mods = 0} = {}) {
-  const module = ['Geometry', 'Mesh'].find((m) => (item.path || '').startsWith(m + ' ›')) || '';
-  if(item.kind === 'operation') startOperation($('module' + module), item);
-  else if(item.kind === 'shape') showShapeForm(item.name);
-  else if(item.interface) pageActions[item.name].run(view, tag, mods);
-  else await gmshAction(item, view, module);
+  if(item.kind === 'operation') startOperation(item);
+  else if(item.kind === 'shape') startShape(item.name);
+  else await item.run(view, tag, mods);
 }
-// the item of a name (that of a key): of a menu, of the actions of the keys
-// in no menu, or else one the page does
-function itemNamed(name) {
-  for(const menu of Object.values(registry)) {
-    const it = findItem(name, menu);
-    if(it) return it;
-  }
-  return pageActions[name] ? {kind: 'action', name, interface: 1} : null;
-}
-// what an item does in Gmsh (see RunItem()): on the mesh, timed with the
+// what an action does in Gmsh (see RunItem()): on the mesh, timed with the
 // size of the mesh in the status; on the script, of a new model if there is
 // none; an option, kept (see keepOption())
-async function gmshAction(item, view, module) {
+async function gmshAction(item, view) {
   if(busy) return;
+  const module = moduleOf(item);
   const run = () => Module.ccall('gmshWebAction', 'number', ['number', 'number'],
                                  [item.id, view]);
   // (an option, named as it is: kept)
@@ -2263,7 +2277,7 @@ function menuItems(menu, opts = {}, level = 0) {
   const add = (m) => {
     for(const it of m.items) {
       if(it.kind === 'menu') {
-        if(!anyItem(it)) continue;
+        if(!canRunAnyItem(it)) continue;
         if(it.label && !level) items.push({label: it.label, items: menuItems(it, opts, 1)});
         else {
           items.push(it.label || '');
@@ -2271,8 +2285,8 @@ function menuItems(menu, opts = {}, level = 0) {
           items.push('');
         }
       }
-      else if(canRun(it))
-        items.push([it.label, () => runItem(it, opts), checkOf(it, opts.view, opts.tag)]);
+      else if(canRunItem(it))
+        items.push([it.label, () => runItem(it, opts), it.check(opts.view, opts.tag)]);
     }
   };
   add(menu);
@@ -2286,31 +2300,14 @@ function moduleButtons(module) {
     const buttons = [];
     for(const b of row.items) {
       if(b.kind !== 'menu') {
-        if(canRun(b)) buttons.push([b.label, b.help, () => runItem(b)]);
+        if(canRunItem(b)) buttons.push([b.label, b.help, () => runItem(b)]);
       }
-      else if(anyItem(b))
+      else if(canRunAnyItem(b))
         buttons.push(menuButton(b.label, b.help, () => menuItems(b)));
     }
     // (on more lines if it must)
     if(buttons.length) buttonRow(d, buttons).classList.add('wrap');
   }
-}
-// the programs written next to the script (the items script_edit_py... of
-// the Geometry module), in the editor
-(function editPrograms(menu) {
-  for(const it of menu.items) {
-    if(it.kind === 'menu') editPrograms(it);
-    else if(/^script_edit_/.test(it.name || ''))
-      pageActions[it.name] = {run: () => editFile(Module.ccall(
-        'gmshWebScriptProgram', 'string', ['string'], [it.name]))};
-  }
-})(registry.Geometry);
-function findItem(name, menu = registry.Mesh) {
-  for(const it of menu.items) {
-    const found = it.kind === 'menu' ? findItem(name, it) : it.name === name && it;
-    if(found) return found;
-  }
-  return null;
 }
 moduleButtons('Geometry');
 moduleButtons('Mesh');
@@ -2321,7 +2318,7 @@ moduleButtons('Mesh');
 // in the status bar, and its buttons to end the selection, take back the last
 // pick and stop (e, u and q, as in the graphical interface)
 let operationChanges = 0, operationName = '';
-function startOperation(module, item) {
+function startOperation(item) {
   const name = item.name;
   if(busy) return;
   if(!modelDir) {
@@ -2336,7 +2333,7 @@ function startOperation(module, item) {
     $('statusbar').querySelector(`[data-act=${a}]`).classList.remove('on');
   const fields = JSON.parse(json);
   // (titled by its path in the module: "Boolean › Union")
-  showPanel(module, item.path.split(' › ').slice(1).join(' › '), fields,
+  showPanel($('module' + moduleOf(item)), item.path.split(' › ').slice(1).join(' › '), fields,
             (n, v) => {
               Module.ccall('gmshWebOperationValue', null, ['string', 'string'], [n, v]);
               toolStatus();
@@ -3256,8 +3253,8 @@ function escape() {
 // then what it changed is shown, the page following the scene's colour
 // scheme
 const shortcuts = installShortcuts(Module, (action, mods) => {
-  const item = itemNamed(action);
-  if(!item || !canRun(item)) return false;
+  const item = findItem(action);
+  if(!item || !canRunItem(item)) return false;
   runItem(item, {mods}).then(() => {
     const c = gmsh.option.getNumber('General.ColorScheme');
     if(c !== colorScheme) setColorScheme(c);
@@ -3270,8 +3267,8 @@ const shortcuts = installShortcuts(Module, (action, mods) => {
 // the keys of the items the page has, in the list (whether they apply now or
 // not)
 for(const r of shortcutsHelp(shortcuts, (a) => {
-  const item = itemNamed(a);
-  return !!item && (!item.interface || !!pageActions[a]);
+  const item = findItem(a);
+  return !!item && (item.kind !== 'action' || !!item.run);
 })) {
   const tr = $('keysTable').insertRow();
   tr.insertCell().textContent = r.label;

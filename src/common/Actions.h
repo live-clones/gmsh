@@ -18,17 +18,20 @@ class drawContext;
 // buttons.
 //
 // A click on an item, or a key (which runs the item of its name), goes to one
-// function of each interface, runItem(), which does what the item is:
+// function of each interface (actionMenus.cpp on the desktop, onelab.html on
+// the web), runItem(), which does what the item is:
 //
-//                            desktop (actionMenus.cpp)  web (onelab.html)
 //   click ─┐
 //   key   ─┴─> runItem(item)
-//               ├─ an action of Gmsh   RunItem(), here, then the interface
-//               │                      shows what it changed
-//               ├─ an operation        runOperation()       startOperation()
-//               ├─ a shape             addShape()           showShapeForm()
-//               └─ an action of the    fltkActions()        pageActions
-//                  interface
+//               ├─ an operation      startOperation()
+//               ├─ a shape           startShape()
+//               └─ an action         item.run, then the interface shows what
+//                                    it changed (RunItem() on the desktop)
+//
+// The run of an action is Gmsh's, written in its item in Actions.cpp, or the
+// interface's: each gives its own actions their run when it starts, the
+// desktop from fltkActions() (with SetItemRun()), the web page from
+// pageActions. An item without run is not shown.
 //
 // The items, as Actions.cpp makes them:
 //   action("2D", "mesh_2d", "Mesh the surfaces",     Gmsh does it
@@ -50,10 +53,11 @@ class drawContext;
 // - Something Gmsh does: an action() in its menu in Actions.cpp, or in
 //   keysOnly() for a key in no menu. Nothing else to do.
 // - Something an interface shows (a window, a file chooser): a guiAction() in
-//   its menu, and what it does in each interface: in fltkActions() on the
-//   desktop (its parts listedFltkActions() in actionMenus.cpp, menuBarActions()
-//   in graphicWindow.cpp, keyboardActions() in FlGui.cpp), and in pageActions
-//   in onelab.html. An interface without it does not show the item.
+//   its menu (in keysOnly() for a key in no menu), and its run in each
+//   interface: in fltkActions() on the desktop (listedFltkActions() in
+//   actionMenus.cpp, menuBarActions() in graphicWindow.cpp, keyboardActions()
+//   in FlGui.cpp), and in pageActions in onelab.html. An interface without it
+//   does not show the item.
 // - An option: option(), or presets() for a submenu of its values.
 // - A key: E("mesh_2d", {'2'}, "Mesh surfaces") in GetShortcuts()
 //   (Shortcuts.cpp), named as its item.
@@ -67,10 +71,9 @@ class drawContext;
 //   (contextWindow.cpp), the web page from a form.
 
 // The kind of an item: a menu (or, without label, a group set apart), an
-// action (its run, or the interface's if it has none), an operation on the
-// entities picked in the scene (see selectionDriver), or a shape added from
-// the values of its fields (see scriptShapes()); the interface runs the last
-// two
+// action (its run), an operation on the entities picked in the scene (see
+// selectionDriver), or a shape added from the values of its fields (see
+// scriptShapes()); the interface starts the last two
 enum itemKind { ItemMenu, ItemAction, ItemOperation, ItemShape };
 
 // An item of a menu
@@ -83,10 +86,10 @@ struct actionItem {
   std::vector<actionItem> items;
   // the tooltip
   std::string help;
-  // for an action: what it does in Gmsh (empty if the interfaces do it; view
+  // for an action: what it does (empty if no interface gave it one yet; view
   // is the index of the view whose menu it is in, ctx the scene whose point
   // of view it changes), when it applies (always if empty), and its check
-  // mark (none if empty)
+  // mark (none if empty; else 0 or 1, for a check box or a radio item)
   std::function<void(int view, drawContext *ctx)> run;
   std::function<bool()> available;
   std::function<int()> check;
@@ -98,25 +101,22 @@ struct actionItem {
 // keys in no menu, which no interface shows)
 const actionItem &GetActionMenu(const std::string &name);
 
+// The item of the given name in the menus (that of a key), or null
+const actionItem *FindItem(const std::string &name);
+
+// Give the action items of the given name, in all the menus, the run and the
+// check mark of the interface (once, when it starts)
+void SetItemRun(const std::string &name, std::function<void(int view)> run,
+                std::function<int()> check = nullptr);
+
 // What RunItem() returns: what the action changed, as bits (found by
 // RunItem(), not told by the action), for the interface to show it: views
 // added, removed or read again, entities added or removed
 enum actionResult { ActionViewsChanged = 1, ActionModelChanged = 2 };
 
-// Whether the interface does what an item does: an operation, a shape, or an
-// action without code (a guiAction())
-bool IsItemDoneByInterface(const actionItem &item);
-
-// Do what an action of Gmsh does (nothing for another item). For the menu of
-// a view, view is the index of that view; ctx is the scene whose point of
-// view the action changes.
+// Run an action (nothing for another item). For the menu of a view, view is
+// the index of that view; ctx is the scene whose point of view the action
+// changes.
 int RunItem(const actionItem &item, int view = -1, drawContext *ctx = nullptr);
-
-// Whether an item applies now (an item on views needs views, for instance)
-bool IsItemAvailable(const actionItem &item);
-
-// The check mark of an item: -1 for none, or 0 or 1 for a check box or a radio
-// item (for an action the interface does, the interface gives it)
-int GetItemCheck(const actionItem &item);
 
 #endif

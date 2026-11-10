@@ -743,9 +743,9 @@ static bool check_utf8(const std::string &string)
   return true;
 }
 
-// the submenu path of the recent files (see fillRecentHistoryMenu()); the
-// second one, the file opened before the current one, has a shortcut
-static void addRecentFiles(Fl_Menu_ *m, const std::string &path)
+// (see fillRecentHistoryMenu(); the second one, the file opened before the
+// current one, has a shortcut)
+void addRecentFiles(Fl_Menu_ *m, const std::string &path)
 {
   // (add() makes a new submenu of a path that is one already)
   if(m->find_index(path.c_str()) < 0)
@@ -778,7 +778,6 @@ const std::map<std::string, fltkAction> &menuBarActions()
   static const std::map<std::string, fltkAction> actions = {
     {"file_new", call(file_new_cb)},
     {"file_open", call(file_open_merge_cb, (void *)"open")},
-    {"file_open_recent", {nullptr, nullptr, addRecentFiles}},
     {"file_open_previous", call(file_open_recent_cb, (void *)1)},
     {"file_merge", call(file_open_merge_cb, (void *)"merge")},
     {"watch", call(file_watch_cb)},

@@ -125,13 +125,12 @@ namespace {
   std::string jsonItem(const actionItem &item)
   {
     static const char *kinds[] = {"menu", "action", "operation", "shape"};
-    std::string json =
-      "{\"id\":" + std::to_string(_items.size()) +
-      ",\"label\":" + JsonString(item.label) + ",\"kind\":\"" +
-      kinds[item.kind] + "\",\"name\":" + JsonString(item.name) +
-      ",\"help\":" + JsonString(item.help) +
-      ",\"interface\":" + (IsItemDoneByInterface(item) ? "1" : "0") +
-      ",\"items\":[";
+    std::string json = "{\"id\":" + std::to_string(_items.size()) +
+                       ",\"label\":" + JsonString(item.label) + ",\"kind\":\"" +
+                       kinds[item.kind] +
+                       "\",\"name\":" + JsonString(item.name) +
+                       ",\"help\":" + JsonString(item.help) +
+                       ",\"gmsh\":" + (item.run ? "1" : "0") + ",\"items\":[";
     _items.push_back(&item);
     for(std::size_t i = 0; i < item.items.size(); i++)
       json += std::string(i ? "," : "") + jsonItem(item.items[i]);
@@ -569,15 +568,17 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebScriptProgram(const char *name)
 
 // The action registry (see Actions.h), in JSON: {menu: item}, the menus and
 // the actions of the keys in no menu ("Keys"), an item {"id", "label", "kind"
-// ("menu", "action", "operation" or "shape"), "name", "help", "interface" (1
-// if the page does it), "items"}; the page gives back its id to do it
+// ("menu", "action", "operation" or "shape"), "name", "help", "gmsh" (1 for
+// an action Gmsh does, done here; the page does the others), "items"}; the
+// page gives back its id to do it
 EMSCRIPTEN_KEEPALIVE const char *gmshWebActions()
 {
   Msg::NoThrow noThrow;
   static std::string json;
   _items.clear();
   json = "{";
-  for(const char *menu : {"Geometry", "Mesh", "Quick access", "View", "Keys"})
+  for(const char *menu :
+      {"Geometry", "Mesh", "Quick access", "View", "Menu bar", "Keys"})
     json += std::string(json.size() > 1 ? "," : "") + JsonString(menu) + ":" +
             jsonItem(GetActionMenu(menu));
   json += "}";
@@ -598,13 +599,14 @@ EMSCRIPTEN_KEEPALIVE int gmshWebAction(int id, int view)
   return ret;
 }
 
-// The check mark of the item of id (see GetItemCheck()), -2 if it does not
-// apply now (see IsItemAvailable())
+// The check mark of the item of id (-1 for none, 0 or 1), -2 if it does not
+// apply now
 EMSCRIPTEN_KEEPALIVE int gmshWebActionCheck(int id)
 {
   Msg::NoThrow noThrow;
-  if(!item(id) || !IsItemAvailable(*item(id))) return -2;
-  return GetItemCheck(*item(id));
+  const actionItem *i = item(id);
+  if(!i || (i->available && !i->available())) return -2;
+  return i->check ? i->check() : -1;
 }
 
 // The style of each character of the text of a file in an editor (see

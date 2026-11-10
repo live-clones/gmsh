@@ -392,6 +392,9 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   locked = true;
   _mainThread = std::this_thread::get_id();
 
+  // the actions this interface does, given to the items of the menus
+  fltkActions();
+
   // set X display
   if(CTX::instance()->display.size())
     Fl::display(CTX::instance()->display.c_str());
@@ -987,17 +990,15 @@ const std::map<std::string, fltkAction> &keyboardActions()
   return actions;
 }
 
-// What each action of the shortcut table does: an action of the registry (see
-// Actions.h), or one the interface does (see fltkActions() in
-// actionMenus.cpp: those of the modules, the menu bar and the keys above),
-// runs as its items do. Returns 0 for an action not handled here (or not
-// available now: the key then goes on, as if it had no shortcut), 1 when
-// done.
+// What each action of the shortcut table does: the item of its name in the
+// registry (see Actions.h) runs, as a click on it does. Returns 0 for an
+// action not handled here (or not available now: the key then goes on, as if
+// it had no shortcut), 1 when done.
 int FlGui::runShortcut(const std::string &a)
 {
-  actionItem item{"", ItemAction, a, {}, ""};
-  if(!canRunItem(item)) return 0;
-  runItem(item);
+  const actionItem *item = FindItem(a);
+  if(!item || !canRunItem(*item)) return 0;
+  runItem(*item);
   return 1;
 }
 

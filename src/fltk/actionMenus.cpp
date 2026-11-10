@@ -187,7 +187,7 @@ static void afterMeshOperation()
 // The actions of the registry (see Actions.h) as this interface does them
 
 // an operation, with the context window that holds its fields, if it has one
-static void runOperation(const std::string &op)
+static void startOperation(const std::string &op)
 {
   FlGui *g = FlGui::instance();
   selectionDriver::kind k = selectionDriver::kindOf(op);
@@ -241,7 +241,7 @@ static void runOperation(const std::string &op)
 }
 
 // a shape: placed with the mouse, or from the values of its fields
-static void addShape(const std::string &shape)
+static void startShape(const std::string &shape)
 {
   if(shape == "add_parameter") {
     FlGui::instance()->elementaryContext->show(0);
@@ -306,56 +306,39 @@ static const std::map<std::string, fltkAction> &listedFltkActions()
   return actions;
 }
 
-// The actions this interface does, in one table: those of the modules and of
-// the scene menus above, of the menu bar (graphicWindow.cpp) and of the keys
-// not in a menu (FlGui.cpp), each next to the code it calls, and the
-// programs written next to the script, in the script editor
-static const std::map<std::string, fltkAction> &fltkActions()
+// The actions this interface does, given to their items once (see
+// SetItemRun()): those of the modules and of the scene menus above, of the
+// menu bar (graphicWindow.cpp) and of the keys not in a menu (FlGui.cpp),
+// each next to the code it calls, and the programs written next to the
+// script, in the script editor
+void fltkActions()
 {
-  static const std::map<std::string, fltkAction> all = [] {
-    std::map<std::string, fltkAction> m;
-    for(auto *part :
-        {&listedFltkActions(), &menuBarActions(), &keyboardActions()})
-      for(auto &a : *part)
-        if(!m.insert(a).second)
-          Msg::Error("Action '%s' done twice by the interface",
-                     a.first.c_str());
-    for(auto &l : scriptLanguages()) {
-      std::string lang = l.name;
-      m["script_edit_" + lang] = {[lang](int) {
-        editFile(scriptProgram(GModel::current()->getFileName(), lang));
-      }};
-    }
-    return m;
-  }();
-  return all;
-}
-
-// the action this interface does with this name, or null
-static const fltkAction *findAction(const std::string &name)
-{
-  auto it = fltkActions().find(name);
-  return it == fltkActions().end() ? nullptr : &it->second;
+  static bool done = false;
+  if(done) return;
+  done = true;
+  for(auto *part :
+      {&listedFltkActions(), &menuBarActions(), &keyboardActions()})
+    for(auto &a : *part) SetItemRun(a.first, a.second.run, a.second.check);
+  for(auto &l : scriptLanguages()) {
+    std::string lang = l.name;
+    SetItemRun("script_edit_" + lang, [lang](int) {
+      editFile(scriptProgram(GModel::current()->getFileName(), lang));
+    });
+  }
 }
 
 bool canRunItem(const actionItem &item)
 {
-  if(!IsItemAvailable(item)) return false;
-  if(item.kind != ItemAction || !IsItemDoneByInterface(item)) return true;
-  return findAction(item.name) != nullptr;
+  if(item.available && !item.available()) return false;
+  return item.kind != ItemAction || item.run;
 }
 
 void runItem(const actionItem &item, int view)
 {
-  if(IsItemDoneByInterface(item)) {
-    if(item.kind == ItemOperation)
-      runOperation(item.name);
-    else if(item.kind == ItemShape)
-      addShape(item.name);
-    else if(const fltkAction *a = findAction(item.name)) {
-      if(a->run) a->run(view);
-    }
-  }
+  if(item.kind == ItemOperation)
+    startOperation(item.name);
+  else if(item.kind == ItemShape)
+    startShape(item.name);
   else {
     openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
     int ret = RunItem(item, view, gl ? gl->getDrawContext() : nullptr);
@@ -418,22 +401,16 @@ static int addItems(Fl_Menu_ *m, const actionItem &menu,
       }
       continue;
     }
-    if(!canRunItem(item)) continue;
-    const fltkAction *a =
-      (IsItemDoneByInterface(item) && item.kind == ItemAction) ?
-        findAction(item.name) :
-        nullptr;
-    // the check mark, the interface's for its actions (not asked for when not
-    // shown: a menu that stays is built with the interface, which the marks
-    // of the interface's actions read)
-    int check = !marks ? -1 :
-                a      ? (a->check ? a->check() : -1) :
-                         GetItemCheck(item);
-    if(a && a->fill) { // a submenu the interface fills
-      a->fill(m, prefix + item.label);
+    if(item.name == "file_open_recent") { // a submenu the interface fills
+      addRecentFiles(m, prefix + item.label);
       last = m->find_index((prefix + item.label).c_str());
       continue;
     }
+    if(!canRunItem(item)) continue;
+    // the check mark (not asked for when not shown: a menu that stays is
+    // built with the interface, which the marks of the interface's actions
+    // read)
+    int check = (marks && item.check) ? item.check() : -1;
     int flags = 0;
     if(check >= 0)
       flags = (item.name.find('=') == std::string::npos ? FL_MENU_TOGGLE :
