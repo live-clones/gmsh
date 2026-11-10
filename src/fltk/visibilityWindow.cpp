@@ -4,6 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "GmshConfig.h"
+#include <memory>
 #include <cstdint>
 #include <string>
 #include <sstream>
@@ -18,9 +19,11 @@
 #include "FlGui.h"
 #include "drawContext.h"
 #include "visibilityWindow.h"
+#include "sceneTool.h"
 #include "hintInput.h"
 #include "paletteWindow.h"
 #include "contextWindow.h"
+#include "selectionDriver.h"
 #include "graphicWindow.h"
 #include "openglWindow.h"
 #include "onelabContextWindow.h"
@@ -31,7 +34,6 @@
 #include "PView.h"
 #include "PViewData.h"
 #include "scriptStringInterface.h"
-#include "Options.h"
 #include "Context.h"
 #include "StringUtils.h"
 #include "partitionVertex.h"
@@ -136,6 +138,15 @@ public:
   }
 };
 
+// whether some of the entities are shown (or there are none): how a group or
+// a partition is shown in the list when it is filled
+static char anyVisible(const std::vector<GEntity *> &entities)
+{
+  for(GEntity *ge : entities)
+    if(ge->getVisibility()) return 1;
+  return entities.empty() ? 1 : 0;
+}
+
 class VisPhysical : public Vis {
 private:
   int _tag, _dim;
@@ -145,7 +156,7 @@ private:
 public:
   VisPhysical(int tag, int dim, const std::vector<GEntity *> &list,
               std::string &name)
-    : Vis(name), _tag(tag), _dim(dim), _visible(1), _list(list)
+    : Vis(name), _tag(tag), _dim(dim), _visible(anyVisible(list)), _list(list)
   {
   }
   ~VisPhysical() {}
@@ -224,7 +235,12 @@ private:
   char _visible;
 
 public:
-  VisPartition(int tag) : _tag(tag), _visible(1) {}
+  // (after buildPartitionIndex())
+  VisPartition(int tag) : _tag(tag), _visible(1)
+  {
+    auto it = _partitionIndex.find(tag);
+    if(it != _partitionIndex.end()) _visible = anyVisible(it->second);
+  }
   ~VisPartition() {}
   int getTag() const { return _tag; }
   std::string getType() const { return "Partition"; }
@@ -500,6 +516,13 @@ static void _rebuild_list_browser()
   }
 }
 
+// what the boxes under the lists ask for: the visibility set recursively (the
+// boundaries of an entity too), and in all the models
+static bool recursiveVisibility()
+{ return FlGui::instance()->visibility->butt[0]->value() != 0; }
+static bool allModelsVisibility()
+{ return FlGui::instance()->visibility->butt[1]->value() != 0; }
+
 static void visibility_browser_apply_cb(Fl_Widget *w, void *data)
 {
   if(_listChanged()) return;
@@ -507,10 +530,8 @@ static void visibility_browser_apply_cb(Fl_Widget *w, void *data)
   // browser and apply them into the model
   if(VisibilityList::instance()->getNumEntities()) {
     CTX::instance()->meshChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
-    bool recursive =
-      FlGui::instance()->visibility->butt[0]->value() ? true : false;
-    bool allmodels =
-      FlGui::instance()->visibility->butt[1]->value() ? true : false;
+    bool recursive = recursiveVisibility();
+    bool allmodels = allModelsVisibility();
     VisibilityList::VisibilityType type;
     switch(FlGui::instance()->visibility->browser_type->value()) {
     case 0: type = VisibilityList::Models; break;
@@ -531,47 +552,28 @@ static void visibility_browser_apply_cb(Fl_Widget *w, void *data)
   }
 }
 
+// "*" selects or deselects all the rows, "-" inverts the selection, and
+// "type", "number" or "name" sorts the rows (in reverse order the second time)
 static void visibility_sort_cb(Fl_Widget *w, void *data)
 {
-  const char *str = (const char *)data;
-  int val;
-  if(!strcmp(str, "type"))
-    val = 1;
-  else if(!strcmp(str, "number"))
-    val = 2;
-  else if(!strcmp(str, "name"))
-    val = 3;
-  else if(!strcmp(str, "-"))
-    val = -1;
-  else if(!strcmp(str, "+"))
-    val = -2;
-  else
-    val = 0;
-
-  if(val == 0) { // select or deselect everything
-    int selectall = 0;
-    for(int i = 0; i < FlGui::instance()->visibility->browser->size(); i++)
-      if(!FlGui::instance()->visibility->browser->selected(i + 1)) {
-        selectall = 1;
-        break;
-      }
-    if(selectall)
-      for(int i = 0; i < FlGui::instance()->visibility->browser->size(); i++)
-        FlGui::instance()->visibility->browser->select(i + 1);
+  std::string str((const char *)data);
+  Fl_Browser *b = FlGui::instance()->visibility->browser;
+  if(str == "*") {
+    bool all = true;
+    for(int i = 1; i <= b->size(); i++)
+      if(!b->selected(i)) all = false;
+    if(all)
+      b->deselect();
     else
-      FlGui::instance()->visibility->browser->deselect();
+      for(int i = 1; i <= b->size(); i++) b->select(i);
   }
-  else if(val == -1) { // invert the selection
-    int *state = new int[FlGui::instance()->visibility->browser->size()];
-    for(int i = 0; i < FlGui::instance()->visibility->browser->size(); i++)
-      state[i] = FlGui::instance()->visibility->browser->selected(i + 1);
-    FlGui::instance()->visibility->browser->deselect();
-    for(int i = 0; i < FlGui::instance()->visibility->browser->size(); i++)
-      if(!state[i]) FlGui::instance()->visibility->browser->select(i + 1);
-    delete[] state;
+  else if(str == "-") {
+    for(int i = 1; i <= b->size(); i++) b->select(i, !b->selected(i));
   }
-  else { // set new sorting mode
-    VisibilityList::instance()->setSortMode(val);
+  else {
+    VisibilityList::instance()->setSortMode(str == "type"   ? 1 :
+                                            str == "number" ? 2 :
+                                                              3);
     visibility_cb(nullptr, (void *)"list_only");
   }
 }
@@ -620,113 +622,49 @@ public:
   }
 };
 
-static void _add_vertex(GVertex *gv, Fl_Tree *tree, const std::string &path)
+// an entity in the tree, under path, with its boundary below it: the ends of
+// a curve, the curves of a surface, the surfaces of a volume
+static void _add_entity(GEntity *ge, Fl_Tree *tree, const std::string &path)
 {
-  std::ostringstream vertex;
-  vertex << path << "Point " << gv->tag();
-  std::string name = gv->model()->getElementaryName(0, gv->tag());
-  if(!name.empty()) vertex << " - " << ReplaceSubString("/", "|", name);
-  vertex << "/";
-  Fl_Tree_Item *n = tree->add(vertex.str().c_str());
-  if(!n) return;
-  if(gv->getVisibility()) n->select(1);
-  n->user_data((void *)gv);
-  n->close();
-}
-
-static void _add_edge(GEdge *ge, Fl_Tree *tree, const std::string &path)
-{
-  std::ostringstream edge;
-  edge << path << "Curve " << ge->tag();
-  std::string name = ge->model()->getElementaryName(1, ge->tag());
-  if(!name.empty()) edge << " - " << ReplaceSubString("/", "|", name);
-  edge << "/";
-  Fl_Tree_Item *n = tree->add(edge.str().c_str());
+  int dim = ge->dim();
+  std::ostringstream entity;
+  entity << path << selectionDriver::entityKinds[dim].name << " " << ge->tag();
+  std::string name = ge->model()->getElementaryName(dim, ge->tag());
+  if(!name.empty()) entity << " - " << ReplaceSubString("/", "|", name);
+  entity << "/";
+  Fl_Tree_Item *n = tree->add(entity.str().c_str());
   if(!n) return;
   if(ge->getVisibility()) n->select(1);
   n->user_data((void *)ge);
   n->close();
-  if(ge->getBeginVertex()) _add_vertex(ge->getBeginVertex(), tree, edge.str());
-  if(ge->getEndVertex()) _add_vertex(ge->getEndVertex(), tree, edge.str());
-}
-
-static void _add_face(GFace *gf, Fl_Tree *tree, const std::string &path)
-{
-  std::ostringstream face;
-  face << path << "Surface " << gf->tag();
-  std::string name = gf->model()->getElementaryName(2, gf->tag());
-  if(!name.empty()) face << " - " << ReplaceSubString("/", "|", name);
-  face << "/";
-  Fl_Tree_Item *n = tree->add(face.str().c_str());
-  if(!n) return;
-  if(gf->getVisibility()) n->select(1);
-  n->user_data((void *)gf);
-  n->close();
-  std::vector<GEdge *> const &edges = gf->edges();
-  for(auto it = edges.begin(); it != edges.end(); it++)
-    _add_edge(*it, tree, face.str());
-}
-
-static void _add_region(GRegion *gr, Fl_Tree *tree, const std::string &path)
-{
-  std::ostringstream region;
-  region << path << "Volume " << gr->tag();
-  std::string name = gr->model()->getElementaryName(3, gr->tag());
-  if(!name.empty()) region << " - " << ReplaceSubString("/", "|", name);
-  region << "/";
-  Fl_Tree_Item *n = tree->add(region.str().c_str());
-  if(!n) return;
-  if(gr->getVisibility()) n->select(1);
-  n->user_data((void *)gr);
-  n->close();
-  std::vector<GFace *> faces = gr->faces();
-  for(auto it = faces.begin(); it != faces.end(); it++)
-    _add_face(*it, tree, region.str());
+  std::vector<GEntity *> boundary;
+  if(dim == 1) {
+    GEdge *e = (GEdge *)ge;
+    if(e->getBeginVertex()) boundary.push_back(e->getBeginVertex());
+    if(e->getEndVertex()) boundary.push_back(e->getEndVertex());
+  }
+  else if(dim == 2)
+    for(GEdge *e : ((GFace *)ge)->edges()) boundary.push_back(e);
+  else if(dim == 3)
+    for(GFace *f : ((GRegion *)ge)->faces()) boundary.push_back(f);
+  for(GEntity *b : boundary) _add_entity(b, tree, entity.str());
 }
 
 static void _add_physical_group(int dim, int num, std::vector<GEntity *> &ge,
                                 std::map<int, std::string> &oldLabels,
                                 Fl_Tree *tree, const std::string &path)
 {
-  if(ge.empty()) return;
+  if(ge.empty() || dim < 0 || dim > 3) return;
   std::string name = ge[0]->model()->getPhysicalName(dim, num);
   if(name.empty()) name = oldLabels[num];
   if(name.size()) name = std::string(" - ") + name;
-
-  Fl_Tree_Item *n;
   std::ostringstream group;
-  group << path;
-  switch(dim) {
-  case 3:
-    group << "Physical Volume " << num << name << "/";
-    n = tree->add(group.str().c_str());
-    if(n) n->close();
-    for(std::size_t i = 0; i < ge.size(); i++)
-      _add_region((GRegion *)ge[i], tree, group.str());
-    break;
-  case 2:
-    group << "Physical Surface " << num << name << "/";
-    n = tree->add(group.str().c_str());
-    if(n) n->close();
-    for(std::size_t i = 0; i < ge.size(); i++)
-      _add_face((GFace *)ge[i], tree, group.str());
-    break;
-  case 1:
-    group << "Physical Curve " << num << name << "/";
-    n = tree->add(group.str().c_str());
-    if(n) n->close();
-    for(std::size_t i = 0; i < ge.size(); i++)
-      _add_edge((GEdge *)ge[i], tree, group.str());
-    break;
-  case 0:
-    group << "Physical Point " << num << name << "/";
-    n = tree->add(group.str().c_str());
-    if(n) n->close();
-    for(std::size_t i = 0; i < ge.size(); i++)
-      _add_vertex((GVertex *)ge[i], tree, group.str());
-    break;
-  default: break;
-  }
+  group << path << "Physical " << selectionDriver::entityKinds[dim].name << " "
+        << num << name << "/";
+  Fl_Tree_Item *n = tree->add(group.str().c_str());
+  if(n) n->close();
+  for(std::size_t i = 0; i < ge.size(); i++)
+    _add_entity(ge[i], tree, group.str());
 }
 
 static void _rebuild_tree_browser(bool force)
@@ -768,14 +706,13 @@ static void _rebuild_tree_browser(bool force)
     std::string elementary = model.str() + "Elementary entities/";
     n = FlGui::instance()->visibility->tree->add(elementary.c_str());
     if(n) n->close();
-    for(auto it = m->firstRegion(); it != m->lastRegion(); it++)
-      _add_region(*it, FlGui::instance()->visibility->tree, elementary);
-    for(auto it = m->firstFace(); it != m->lastFace(); it++)
-      _add_face(*it, FlGui::instance()->visibility->tree, elementary);
-    for(auto it = m->firstEdge(); it != m->lastEdge(); it++)
-      _add_edge(*it, FlGui::instance()->visibility->tree, elementary);
-    for(auto it = m->firstVertex(); it != m->lastVertex(); it++)
-      _add_vertex(*it, FlGui::instance()->visibility->tree, elementary);
+    // the volumes first, then the surfaces, the curves and the points
+    for(int dim = 3; dim >= 0; dim--) {
+      std::vector<GEntity *> entities;
+      m->getEntities(entities, dim);
+      for(GEntity *ge : entities)
+        _add_entity(ge, FlGui::instance()->visibility->tree, elementary);
+    }
 
     std::string physical = model.str() + "Physical groups/";
     n = FlGui::instance()->visibility->tree->add(physical.c_str());
@@ -812,21 +749,19 @@ static void _recur_select(Fl_Tree_Item *n)
   for(int i = 0; i < n->children(); i++) _recur_select(n->child(i));
 }
 
+// the selected entities of the tree under n shown (with what they are bounded
+// by if "recursively" is checked): every row is visited, whatever the option,
+// as the rows of the model and of the groups hold no entity
 static void _recur_set_visible(Fl_Tree_Item *n)
 {
-  bool recursive =
-    FlGui::instance()->visibility->butt[0]->value() ? true : false;
   if(n->user_data() && n->is_selected()) {
     GEntity *ge = (GEntity *)n->user_data();
-    ge->setVisibility(1, recursive);
+    ge->setVisibility(1, recursiveVisibility());
     // force this: if we ask to see an entity, let's assume that we
     // don't want the whole model to be invisible
     ge->model()->setVisibility(1);
   }
-  if(recursive) {
-    for(int i = 0; i < n->children(); i++)
-      _recur_set_visible(n->child(i));
-  }
+  for(int i = 0; i < n->children(); i++) _recur_set_visible(n->child(i));
 }
 
 static void _recur_update_selected(Fl_Tree_Item *n)
@@ -842,8 +777,7 @@ static void visibility_tree_apply_cb(Fl_Widget *w, void *data)
 {
   if(_treeChanged()) return;
   CTX::instance()->meshChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
-  bool recursive =
-    FlGui::instance()->visibility->butt[0]->value() ? true : false;
+  bool recursive = recursiveVisibility();
 
   Fl_Tree_Item *root = FlGui::instance()->visibility->tree->root();
   for(int i = 0; i < root->children(); i++) {
@@ -966,152 +900,133 @@ static void visibility_save_cb(Fl_Widget *w, void *data)
   Msg::StatusBar(true, "Done appending visibility info");
 }
 
-static void _set_visibility_by_number(int what, int num, char val,
+// The rows of the Numeric and Interactive tabs: the nodes and the elements,
+// then the elementary entities and the physical groups of each dimension
+// (ROW_ENTITIES + dim, ROW_PHYSICALS + dim)
+enum { ROW_NODES = 0, ROW_ELEMENTS = 1, ROW_ENTITIES = 2, ROW_PHYSICALS = 6,
+       NUM_ROWS = 10 };
+
+// the section of the tabs a row is in
+static const char *_rowSection(int row)
+{
+  return row < ROW_ENTITIES ? "Mesh" :
+         row < ROW_PHYSICALS ? "Elementary entities" :
+                               "Physical groups";
+}
+
+// the name of what a row shows or hides: "Node", "Element", "Point"...
+static const char *_rowName(int row)
+{
+  if(row == ROW_NODES) return "Node";
+  if(row == ROW_ELEMENTS) return "Element";
+  return selectionDriver::entityKinds[(row - ROW_ENTITIES) % 4].name;
+}
+
+// the nodes, elements, entities or physical groups of a row with number num
+// (all for num < 0) shown or hidden
+static void _set_visibility_by_number(int row, int num, char val,
                                       bool recursive, bool allmodels)
 {
   bool all = (num < 0) ? true : false;
 
   for(std::size_t mod = 0; mod < GModel::list.size(); mod++) {
     GModel *m = GModel::list[mod];
-    if(allmodels || m == GModel::current()) {
-      std::vector<GEntity *> entities;
-      m->getEntities(entities);
-
-      switch(what) {
-      case 0: // nodes
-        for(std::size_t i = 0; i < entities.size(); i++) {
-          for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++) {
-            MVertex *v = entities[i]->mesh_vertices[j];
-            if(all || (int)v->getNum() == num) v->setVisibility(val);
-          }
+    if(!allmodels && m != GModel::current()) continue;
+    std::vector<GEntity *> entities;
+    m->getEntities(entities);
+    if(row == ROW_NODES) {
+      for(std::size_t i = 0; i < entities.size(); i++) {
+        for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++) {
+          MVertex *v = entities[i]->mesh_vertices[j];
+          if(all || (int)v->getNum() == num) v->setVisibility(val);
         }
-        break;
-      case 1: // elements
-        for(std::size_t i = 0; i < entities.size(); i++) {
-          for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
-            MElement *e = entities[i]->getMeshElement(j);
-            if(all || (int)e->getNum() == num) e->setVisibility(val);
-          }
-        }
-        break;
-      case 2: // points, curves, surfaces, volumes
-      case 3:
-      case 4:
-      case 5:
-      case 6: // physical points, curves, surfaces, volumes
-      case 7:
-      case 8:
-      case 9: {
-        bool physical = (what >= 6);
-        std::vector<GEntity *> dimEntities;
-        m->getEntities(dimEntities, physical ? what - 6 : what - 2);
-        for(GEntity *ge : dimEntities) {
-          if(!physical) {
-            if(all || ge->tag() == num) ge->setVisibility(val, recursive);
-            continue;
-          }
-          for(std::size_t i = 0; i < ge->physicals.size(); i++)
-            if(all || std::abs(ge->physicals[i]) == num)
-              ge->setVisibility(val, recursive);
-        }
-        break;
       }
+    }
+    else if(row == ROW_ELEMENTS) {
+      for(std::size_t i = 0; i < entities.size(); i++) {
+        for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
+          MElement *e = entities[i]->getMeshElement(j);
+          if(all || (int)e->getNum() == num) e->setVisibility(val);
+        }
+      }
+    }
+    else if(row < NUM_ROWS) {
+      bool physical = (row >= ROW_PHYSICALS);
+      std::vector<GEntity *> dimEntities;
+      m->getEntities(dimEntities, (row - ROW_ENTITIES) % 4);
+      for(GEntity *ge : dimEntities) {
+        if(!physical) {
+          if(all || ge->tag() == num) ge->setVisibility(val, recursive);
+          continue;
+        }
+        for(std::size_t i = 0; i < ge->physicals.size(); i++)
+          if(all || std::abs(ge->physicals[i]) == num)
+            ge->setVisibility(val, recursive);
       }
     }
   }
 }
 
-static void _apply_visibility(char mode, bool physical,
-                              std::vector<GVertex *> &vertices,
-                              std::vector<GEdge *> &edges,
-                              std::vector<GFace *> &faces,
-                              std::vector<GRegion *> &regions,
-                              std::vector<MElement *> &elements)
-{
-  bool recursive =
-    FlGui::instance()->visibility->butt[0]->value() ? true : false;
-  bool allmodels =
-    FlGui::instance()->visibility->butt[1]->value() ? true : false;
+// what is done to the elements, entities or physical groups picked in the
+// Interactive tab: hidden, shown alone, or shown again (the undo of a hide)
+enum pickAction { PickHide, PickShow, PickUndo };
 
-  if(mode == 1) { // when showing a single entity, first hide everything
-    if(CTX::instance()->pickElements)
-      _set_visibility_by_number(1, -1, 0, false, allmodels);
+static void
+_apply_visibility(pickAction action, bool physical, bool pickElements,
+                  std::vector<GVertex *> &vertices, std::vector<GEdge *> &edges,
+                  std::vector<GFace *> &faces, std::vector<GRegion *> &regions,
+                  std::vector<MElement *> &elements)
+{
+  bool recursive = recursiveVisibility();
+  bool allmodels = allModelsVisibility();
+
+  if(action ==
+     PickShow) { // when showing a single entity, first hide everything
+    if(pickElements)
+      _set_visibility_by_number(ROW_ELEMENTS, -1, 0, false, allmodels);
     else
-      for(int i = 2; i <= 5; i++)
-        _set_visibility_by_number(i, -1, 0, false, allmodels);
+      for(int dim = 0; dim < 4; dim++)
+        _set_visibility_by_number(ROW_ENTITIES + dim, -1, 0, false, allmodels);
   }
 
-  if(mode == 2) mode = 1;
+  char mode = (action == PickHide) ? 0 : 1;
 
-  if(CTX::instance()->pickElements) {
+  if(pickElements) {
     for(std::size_t i = 0; i < elements.size(); i++)
       elements[i]->setVisibility(mode);
   }
   else {
-    for(std::size_t i = 0; i < vertices.size(); i++) {
-      if(!physical)
-        vertices[i]->setVisibility(mode, recursive);
-      else
-        for(std::size_t j = 0; j < vertices[i]->physicals.size(); j++)
-          _set_visibility_by_number(6, vertices[i]->physicals[j], mode,
-                                    recursive, allmodels);
-    }
-    for(std::size_t i = 0; i < edges.size(); i++) {
-      if(!physical)
-        edges[i]->setVisibility(mode, recursive);
-      else
-        for(std::size_t j = 0; j < edges[i]->physicals.size(); j++)
-          _set_visibility_by_number(7, edges[i]->physicals[j], mode, recursive,
-                                    allmodels);
-    }
-    for(std::size_t i = 0; i < faces.size(); i++) {
-      if(!physical)
-        faces[i]->setVisibility(mode, recursive);
-      else
-        for(std::size_t j = 0; j < faces[i]->physicals.size(); j++)
-          _set_visibility_by_number(8, faces[i]->physicals[j], mode, recursive,
-                                    allmodels);
-    }
-    for(std::size_t i = 0; i < regions.size(); i++) {
-      if(!physical)
-        regions[i]->setVisibility(mode, recursive);
-      else
-        for(std::size_t j = 0; j < regions[i]->physicals.size(); j++)
-          _set_visibility_by_number(9, regions[i]->physicals[j], mode,
-                                    recursive, allmodels);
-    }
+    // a picked entity, or the physical groups it belongs to
+    auto apply = [&](GEntity *ge) {
+      if(!physical) {
+        ge->setVisibility(mode, recursive);
+        return;
+      }
+      for(std::size_t j = 0; j < ge->physicals.size(); j++)
+        _set_visibility_by_number(ROW_PHYSICALS + ge->dim(),
+                                  std::abs(ge->physicals[j]), mode, recursive,
+                                  allmodels);
+    };
+    for(GVertex *v : vertices) apply(v);
+    for(GEdge *e : edges) apply(e);
+    for(GFace *f : faces) apply(f);
+    for(GRegion *r : regions) apply(r);
   }
   int pos = FlGui::instance()->visibility->browser->position();
   visibility_cb(nullptr, (void *)"redraw_only");
   FlGui::instance()->visibility->browser->position(pos);
 }
 
-static void visibility_number_cb(Fl_Widget *w, void *data)
+// the Show (val 1) or Hide (val 0) button of a row of the Numeric tab
+static void _visibility_number(int row, char val)
 {
   CTX::instance()->meshChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
-
-  // what = 0 for nodes, 1 for elements, 2 for points, 3 for lines, 4
-  // for surfaces, 5 for volumes, 6 for physical points, 7 for
-  // physical lines, 8 for physical surfaces and 9 for physical
-  // volumes
-  int what = (intptr_t)data;
-  char val;
-  if(what >= 100) { // show
-    val = 1;
-    what -= 100;
-  }
-  else { // hide
-    val = 0;
-  }
-  const char *str = FlGui::instance()->visibility->input[what]->value();
-
+  const char *str = FlGui::instance()->visibility->input[row]->value();
   int num = (!strcmp(str, "all") || !strcmp(str, "*")) ? -1 : atoi(str);
-  bool recursive =
-    FlGui::instance()->visibility->butt[0]->value() ? true : false;
-  bool allmodels =
-    FlGui::instance()->visibility->butt[1]->value() ? true : false;
+  bool recursive = recursiveVisibility();
+  bool allmodels = allModelsVisibility();
 
-  _set_visibility_by_number(what, num, val, recursive, allmodels);
+  _set_visibility_by_number(row, num, val, recursive, allmodels);
 
   int pos = FlGui::instance()->visibility->browser->position();
   visibility_cb(nullptr, (void *)"redraw_only");
@@ -1119,134 +1034,100 @@ static void visibility_number_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
-static void visibility_interactive_cb(Fl_Widget *w, void *data)
+static void visibility_number_show_cb(Fl_Widget *w, void *data)
 {
-  std::string str((const char *)data);
-  int what;
-  char mode; // 0 for hide, 1 for show, 2 for undo
-  bool physical = (str.find("physical") != std::string::npos);
+  _visibility_number((intptr_t)data, 1);
+}
 
-  if(str == "elements to hide") {
-    CTX::instance()->pickElements = 1;
+static void visibility_number_hide_cb(Fl_Widget *w, void *data)
+{
+  _visibility_number((intptr_t)data, 0);
+}
+
+// the elements, entities or physical groups of a row of the Interactive tab
+// picked in the scene, until 'q', to be shown or hidden: a tool of the
+// current window (see sceneTool)
+static void _visibility_interactive(int row, bool show)
+{
+  bool physical = (row >= ROW_PHYSICALS);
+  bool elements = (row == ROW_ELEMENTS);
+  int dim = (row - ROW_ENTITIES) % 4, what;
+  std::string str = physical ? "physical " : "";
+  if(elements) {
     what = ENT_ALL;
-    mode = 0;
+    str += "elements";
   }
-  else if(str == "points to hide" || str == "physical points to hide") {
-    CTX::instance()->pickElements = 0;
-    what = ENT_POINT;
-    mode = 0;
-    opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
+  else {
+    what = selectionDriver::entityKinds[dim].type;
+    str += selectionDriver::entityKinds[dim].names;
+    // the surfaces and volumes are drawn by their mesh once they have one
+    if(dim < 2 || GModel::current()->getMeshStatus() < dim)
+      selectionDriver::show(what);
   }
-  else if(str == "curves to hide" || str == "physical curves to hide") {
-    CTX::instance()->pickElements = 0;
-    what = ENT_CURVE;
-    mode = 0;
-    opt_geometry_curves(0, GMSH_SET | GMSH_GUI, 1);
-  }
-  else if(str == "surfaces to hide" || str == "physical surfaces to hide") {
-    CTX::instance()->pickElements = 0;
-    what = ENT_SURFACE;
-    mode = 0;
-    if(GModel::current()->getMeshStatus() < 2)
-      opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
-  }
-  else if(str == "volumes to hide" || str == "physical volumes to hide") {
-    CTX::instance()->pickElements = 0;
-    what = ENT_VOLUME;
-    mode = 0;
-    if(GModel::current()->getMeshStatus() < 3)
-      opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
-  }
-  else if(str == "elements to show") {
-    CTX::instance()->pickElements = 1;
-    what = ENT_ALL;
-    mode = 1;
-  }
-  else if(str == "points to show" || str == "physical points to show") {
-    CTX::instance()->pickElements = 0;
-    what = ENT_POINT;
-    mode = 1;
-    opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
-  }
-  else if(str == "curves to show" || str == "physical curves to show") {
-    CTX::instance()->pickElements = 0;
-    what = ENT_CURVE;
-    mode = 1;
-    opt_geometry_curves(0, GMSH_SET | GMSH_GUI, 1);
-  }
-  else if(str == "surfaces to show" || str == "physical surfaces to show") {
-    CTX::instance()->pickElements = 0;
-    what = ENT_SURFACE;
-    mode = 1;
-    if(GModel::current()->getMeshStatus() < 2)
-      opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
-  }
-  else if(str == "volumes to show" || str == "physical volumes to show") {
-    CTX::instance()->pickElements = 0;
-    what = ENT_VOLUME;
-    mode = 1;
-    if(GModel::current()->getMeshStatus() < 3)
-      opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
-  }
-  else if(str == "show all") {
-    bool allmodels =
-      FlGui::instance()->visibility->butt[1]->value() ? true : false;
-    for(int i = 1; i <= 5; i++) // elements, points, curves, surfaces, volumes
-      _set_visibility_by_number(i, -1, 1, false, allmodels);
-    CTX::instance()->meshChanged();
-    drawContext::global()->draw();
-    return;
-  }
-  else
-    return;
+  str += show ? " to show" : " to hide";
+  std::string status = "Select " + str + "\n[Press " +
+                       (show ? "" : "'u' to undo or ") + "Escape to abort]";
 
-  std::vector<GVertex *> vertices;
-  std::vector<GEdge *> edges;
-  std::vector<GFace *> faces;
-  std::vector<GRegion *> regions;
-  std::vector<MElement *> elements;
-  // when they were picked: the draws below process events, which may change
-  // the model or its mesh
-  modelStamps before;
+  // what was picked last, for an undo, and when (the model or its mesh may
+  // change meanwhile, and what an undo would show again be gone)
+  struct picked {
+    std::vector<GVertex *> vertices;
+    std::vector<GEdge *> edges;
+    std::vector<GFace *> faces;
+    std::vector<GRegion *> regions;
+    std::vector<MElement *> elements;
+    modelStamps stamps;
+  };
+  auto last = std::make_shared<picked>();
 
-  while(1) {
-    if(what == ENT_ALL) CTX::instance()->meshChanged();
-    drawContext::global()->draw();
-    Msg::StatusGl("Select %s\n[Press %s'q' to abort]", str.c_str(),
-                  mode ? "" : "'u' to undo or ");
+  // (the elements drawn one by one for their picking)
+  if(elements) CTX::instance()->meshChanged();
+  sceneTool::start(
+    new functionTool(
+      "Visibility", what, elements, [status](sceneView *) { return status; },
+      [=](char ib, sceneView *, const scenePicks &p) {
+        if(ib == 'q') return false;
+        if(last->stamps.changed()) *last = picked();
+        last->stamps.record();
+        if(ib == 'l') {
+          last->vertices = p.vertices;
+          last->edges = p.edges;
+          last->faces = p.faces;
+          last->regions = p.regions;
+          last->elements = p.elements;
+          _apply_visibility(show ? PickShow : PickHide, physical, elements,
+                            last->vertices, last->edges, last->faces,
+                            last->regions, last->elements);
+        }
+        if(ib == 'u' && !show) // undo only in hide mode
+          _apply_visibility(PickUndo, physical, elements, last->vertices,
+                            last->edges, last->faces, last->regions,
+                            last->elements);
+        if(elements) CTX::instance()->meshChanged();
+        return true;
+      },
+      []() {
+        CTX::instance()->meshChanged();
+        drawContext::global()->draw();
+      }),
+    FlGui::instance()->getCurrentOpenglWindow(),
+    (Fl_Window *)FlGui::instance()->visibility->win);
+}
 
-    char ib = FlGui::instance()->selectEntity(what);
-    if(!FlGui::available()) break;
-    // the model or its mesh changed meanwhile: what an undo would show again
-    // may be gone
-    if(before.changed()) {
-      vertices.clear();
-      edges.clear();
-      faces.clear();
-      regions.clear();
-      elements.clear();
-    }
-    before.record();
-    if(ib == 'l') {
-      // store for possible undo later
-      vertices = FlGui::instance()->selectedVertices;
-      edges = FlGui::instance()->selectedEdges;
-      faces = FlGui::instance()->selectedFaces;
-      regions = FlGui::instance()->selectedRegions;
-      elements = FlGui::instance()->selectedElements;
-      _apply_visibility(mode, physical, vertices, edges, faces, regions,
-                        elements);
-    }
-    if(ib == 'u' && !mode) { // undo only in hide mode
-      _apply_visibility(2, physical, vertices, edges, faces, regions, elements);
-    }
-    if(ib == 'q') { break; }
-  }
+static void visibility_pick_show_cb(Fl_Widget *w, void *data)
+{ _visibility_interactive((intptr_t)data, true); }
 
+static void visibility_pick_hide_cb(Fl_Widget *w, void *data)
+{ _visibility_interactive((intptr_t)data, false); }
+
+static void visibility_show_all_cb(Fl_Widget *w, void *data)
+{
+  bool allmodels = allModelsVisibility();
+  _set_visibility_by_number(ROW_ELEMENTS, -1, 1, false, allmodels);
+  for(int dim = 0; dim < 4; dim++)
+    _set_visibility_by_number(ROW_ENTITIES + dim, -1, 1, false, allmodels);
   CTX::instance()->meshChanged();
-  CTX::instance()->pickElements = 0;
   drawContext::global()->draw();
-  Msg::StatusGl("");
 }
 
 static void visibility_per_window_cb(Fl_Widget *w, void *data)
@@ -1482,67 +1363,29 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     g->resizable(nullptr);
 
     int yy = 2 * WB + BH;
-    for(int i = 0; i < 10; i++) {
-      if(i == 0) {
-        Fl_Box *b = new Fl_Box(2 * WB, yy, IW, BH, "Mesh");
+    for(int row = 0; row < NUM_ROWS; row++) {
+      if(!row || strcmp(_rowSection(row), _rowSection(row - 1))) {
+        Fl_Box *b = new Fl_Box(2 * WB, yy, IW, BH, _rowSection(row));
         b->labelfont(FL_BOLD);
         b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
         yy += BH;
       }
-      else if(i == 2) {
-        Fl_Box *b = new Fl_Box(2 * WB, yy, IW, BH, "Elementary entities");
-        b->labelfont(FL_BOLD);
-        b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
-        yy += BH;
-      }
-      else if(i == 6) {
-        Fl_Box *b = new Fl_Box(2 * WB, yy, IW, BH, "Physical groups");
-        b->labelfont(FL_BOLD);
-        b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
-        yy += BH;
-      }
-      input[i] = new Fl_Input(width / 2 - WB / 2 - IW, yy, IW, BH);
-      input[i]->align(FL_ALIGN_LEFT);
-      input[i]->value("*");
+      input[row] = new Fl_Input(width / 2 - WB / 2 - IW, yy, IW, BH);
+      input[row]->align(FL_ALIGN_LEFT);
+      input[row]->value("*");
+      input[row]->label(_rowName(row));
+      std::string name = _rowName(row);
+      name[0] = tolower(name[0]);
+      input[row]->copy_tooltip(("Enter " + name + " number, or *").c_str());
 
       Fl_Button *o1 = new Fl_Button(width / 2 + WB / 2, yy, CC, BH, "Show");
-      o1->callback(visibility_number_cb, (void *)(100 + (intptr_t)i));
+      o1->callback(visibility_number_show_cb, (void *)(intptr_t)row);
 
       Fl_Button *o2 =
         new Fl_Button(width / 2 + WB / 2 + CC + WB, yy, CC, BH, "Hide");
-      o2->callback(visibility_number_cb, (void *)(intptr_t)i);
+      o2->callback(visibility_number_hide_cb, (void *)(intptr_t)row);
       yy += BH;
     }
-
-    input[0]->label("Node");
-    input[0]->tooltip("Enter node number, or *");
-
-    input[1]->label("Element");
-    input[1]->tooltip("Enter element number, or *");
-
-    input[2]->label("Point");
-    input[2]->tooltip("Enter point number, or *");
-
-    input[3]->label("Curve");
-    input[3]->tooltip("Enter curve number, or *");
-
-    input[4]->label("Surface");
-    input[4]->tooltip("Enter surface number, or *");
-
-    input[5]->label("Volume");
-    input[5]->tooltip("Enter volume number, or *");
-
-    input[6]->label("Point");
-    input[6]->tooltip("Enter point number, or *");
-
-    input[7]->label("Curve");
-    input[7]->tooltip("Enter curve number, or *");
-
-    input[8]->label("Surface");
-    input[8]->tooltip("Enter surface number, or *");
-
-    input[9]->label("Volume");
-    input[9]->tooltip("Enter volume number, or *");
 
     g->end();
   }
@@ -1551,81 +1394,34 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
                                height - 3 * WB - 2 * BH, "Interactive");
     g->resizable(nullptr);
 
-    Fl_Button *bb[20];
     int ll = width / 2 - BH - WB - IW;
     int ll2 = ll + IW + WB + 2 * BH + WB;
     int yy = 2 * WB + BH;
-    for(int i = 0; i < 9; i++) {
-      if(i == 0) {
-        Fl_Box *b = new Fl_Box(2 * WB, yy, IW, BH, "Mesh");
+    // the rows of the Numeric tab but the nodes, picked in the scene
+    for(int row = ROW_ELEMENTS; row < NUM_ROWS; row++) {
+      if(row == ROW_ELEMENTS ||
+         strcmp(_rowSection(row), _rowSection(row - 1))) {
+        Fl_Box *b = new Fl_Box(2 * WB, yy, IW, BH, _rowSection(row));
         b->labelfont(FL_BOLD);
         b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
         yy += BH;
       }
-      else if(i == 1) {
-        Fl_Box *b = new Fl_Box(2 * WB, yy, IW, BH, "Elementary entities");
-        b->labelfont(FL_BOLD);
-        b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
-        yy += BH;
-      }
-      else if(i == 5) {
-        Fl_Box *b = new Fl_Box(2 * WB, yy, IW, BH, "Physical groups");
-        b->labelfont(FL_BOLD);
-        b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
-        yy += BH;
-      }
-      bb[2 * i] = new Fl_Button(ll, yy, IW, BH);
-      bb[2 * i + 1] = new Fl_Button(ll2, yy, IW, BH);
+      std::string names =
+        row == ROW_ELEMENTS ?
+          "elements" :
+          selectionDriver::entityKinds[(row - ROW_ENTITIES) % 4].names;
+      Fl_Button *hide = new Fl_Button(ll, yy, IW, BH);
+      hide->copy_label(("Hide " + names).c_str());
+      hide->callback(visibility_pick_hide_cb, (void *)(intptr_t)row);
+      Fl_Button *show = new Fl_Button(ll2, yy, IW, BH);
+      show->copy_label(("Show " + names).c_str());
+      show->callback(visibility_pick_show_cb, (void *)(intptr_t)row);
       yy += BH;
     }
-    bb[0]->label("Hide elements");
-    bb[0]->callback(visibility_interactive_cb, (void *)"elements to hide");
-    bb[1]->label("Show elements");
-    bb[1]->callback(visibility_interactive_cb, (void *)"elements to show");
-    bb[2]->label("Hide points");
-    bb[2]->callback(visibility_interactive_cb, (void *)"points to hide");
-    bb[3]->label("Show points");
-    bb[3]->callback(visibility_interactive_cb, (void *)"points to show");
-    bb[4]->label("Hide curves");
-    bb[4]->callback(visibility_interactive_cb, (void *)"curves to hide");
-    bb[5]->label("Show curves");
-    bb[5]->callback(visibility_interactive_cb, (void *)"curves to show");
-    bb[6]->label("Hide surfaces");
-    bb[6]->callback(visibility_interactive_cb, (void *)"surfaces to hide");
-    bb[7]->label("Show surfaces");
-    bb[7]->callback(visibility_interactive_cb, (void *)"surfaces to show");
-    bb[8]->label("Hide volumes");
-    bb[8]->callback(visibility_interactive_cb, (void *)"volumes to hide");
-    bb[9]->label("Show volumes");
-    bb[9]->callback(visibility_interactive_cb, (void *)"volumes to show");
-    bb[10]->label("Hide points");
-    bb[10]->callback(visibility_interactive_cb,
-                     (void *)"physical points to hide");
-    bb[11]->label("Show points");
-    bb[11]->callback(visibility_interactive_cb,
-                     (void *)"physical points to show");
-    bb[12]->label("Hide curves");
-    bb[12]->callback(visibility_interactive_cb,
-                     (void *)"physical curves to hide");
-    bb[13]->label("Show curves");
-    bb[13]->callback(visibility_interactive_cb,
-                     (void *)"physical curves to show");
-    bb[14]->label("Hide surfaces");
-    bb[14]->callback(visibility_interactive_cb,
-                     (void *)"physical surfaces to hide");
-    bb[15]->label("Show surfaces");
-    bb[15]->callback(visibility_interactive_cb,
-                     (void *)"physical surfaces to show");
-    bb[16]->label("Hide volumes");
-    bb[16]->callback(visibility_interactive_cb,
-                     (void *)"physical volumes to hide");
-    bb[17]->label("Show volumes");
-    bb[17]->callback(visibility_interactive_cb,
-                     (void *)"physical volumes to show");
 
-    bb[18] = new Fl_Button(ll + IW + WB, 2 * WB + 2 * BH, 2 * BH, 11 * BH,
-                           "Show\nAll");
-    bb[18]->callback(visibility_interactive_cb, (void *)"show all");
+    Fl_Button *all = new Fl_Button(ll + IW + WB, 2 * WB + 2 * BH, 2 * BH,
+                                   11 * BH, "Show\nAll");
+    all->callback(visibility_show_all_cb);
 
     g->end();
   }

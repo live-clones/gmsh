@@ -8,6 +8,7 @@
 // Copyright (C) 1990 - 1995 Bill Hibbard, Brian Paul, Dave Santek,
 // and Andre Battaiola.
 
+#include <vector>
 #include <FL/fl_draw.H>
 #include <FL/Fl_Input_.H>
 #include "colorbarWindow.h"
@@ -73,6 +74,29 @@ int colorbarWindow::intensity_to_y(int intensity)
   else if(y >= wedge_y)
     y = wedge_y - 1;
   return y;
+}
+
+// the keys and buttons of the widget and what they do, shown by 'h'
+static const std::vector<std::pair<const char *, const char *>> &helpLines()
+{
+  static const std::vector<std::pair<const char *, const char *>> lines = {
+    {"0-9, Ctrl+0-9, F1-F7", "Select predefined colormap"},
+    {"Left button", "Draw red or hue channel"},
+    {"Middle button", "Draw green or saturation channel"},
+    {"Right button", "Draw blue or value channel"},
+    {"Ctrl+Left button", "Draw alpha channel"},
+    {"Ctrl+c, Ctrl+v", "Copy or paste colormap"},
+    {"m", "Toggle RGB/HSV mode"},
+    {"Left/Right arrow", "Translate abscissa"},
+    {"Ctrl+left, Ctrl+right", "Rotate abscissa"},
+    {"i, Ctrl+i", "Invert abscissa or ordinate"},
+    {"Up/Down arrow", "Modify color channel curvature"},
+    {"a, Ctrl+a", "Modify alpha coefficient"},
+    {"p, Ctrl+p", "Modify alpha channel power law"},
+    {"b, Ctrl+b", "Modify gamma correction"},
+    {"r", "Reset colormap modifications"},
+    {"h", "Toggle help message"}};
+  return lines;
 }
 
 void colorbarWindow::redraw_range(int a, int b)
@@ -194,55 +218,10 @@ void colorbarWindow::redraw_range(int a, int b)
   int fh = font_height + 1;
   int xx0 = ox + 6, xx1 = ox + 11 * fh, yy0 = oy + 6;
   if(help_flag) {
-    i = 0;
-    fl_draw("0-9, Ctrl+0-9, F1-F7", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Select predefined colormap", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("Left button", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Draw red or hue channel", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("Middle button", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Draw green or saturation channel", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("Right button", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Draw blue or value channel", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("Ctrl+Left button", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Draw alpha channel", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("Ctrl+c, Ctrl+v, r", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Copy, paste or reset colormap", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("m", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Toggle RGB/HSV mode", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("Left/Right arrow", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Translate abscissa", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("Ctrl+left, Ctrl+right", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Rotate abscissa", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("i, Ctrl+i", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Invert abscissa or ordinate", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("Up/Down arrow", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Modify color channel curvature", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("a, Ctrl+a", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Modify alpha coefficient", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("p, Ctrl+p", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Modify alpha channel power law", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("b, Ctrl+b", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Modify gamma correction", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("r", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Reset colormap modifications", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("h", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Toggle help message", xx1, yy0 + (i + 1) * fh);
-    i++;
+    for(std::size_t k = 0; k < helpLines().size(); k++) {
+      fl_draw(helpLines()[k].first, xx0, yy0 + (k + 1) * fh);
+      fl_draw(helpLines()[k].second, xx1, yy0 + (k + 1) * fh);
+    }
   }
   else {
     // the map and the mode
@@ -285,10 +264,11 @@ void colorbarWindow::redraw_marker()
 
 int colorbarWindow::helpHeight() const
 {
-  // the 16 lines of the help, from 6 pixels below the top, then the wedge, the
+  // the lines of the help, from 6 pixels below the top, then the wedge, the
   // marker and its value
   int fh = font_height + 1;
-  return 6 + 16 * fh + fh / 2 + wedge_height + marker_height + font_height + 5;
+  return 6 + (int)helpLines().size() * fh + fh / 2 + wedge_height +
+         marker_height + font_height + 5;
 }
 
 bool colorbarWindow::lookup()

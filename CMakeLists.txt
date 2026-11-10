@@ -1645,6 +1645,27 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/common/GmshConfig.h.in
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/common/GmshVersion.h.in
                ${CMAKE_CURRENT_BINARY_DIR}/src/common/GmshVersion.h)
 
+# the words the lexer of the .geo language knows, for the editors (see
+# src/common/ScriptWords.h.in); CMake runs again when the lexer changes
+file(STRINGS ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/Gmsh.l GEO_LEXER
+     REGEX "^[A-Za-z_][A-Za-z0-9_]*[ \t]+return")
+set(GEO_WORDS_LIST "")
+foreach(LINE ${GEO_LEXER})
+  if(LINE MATCHES "^([A-Za-z_][A-Za-z0-9_]*)[ \t]+return")
+    list(APPEND GEO_WORDS_LIST ${CMAKE_MATCH_1})
+  endif()
+endforeach()
+list(REMOVE_DUPLICATES GEO_WORDS_LIST)
+list(SORT GEO_WORDS_LIST)
+set(GEO_WORDS "")
+foreach(WORD ${GEO_WORDS_LIST})
+  set(GEO_WORDS "${GEO_WORDS}\"${WORD}\", ")
+endforeach()
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/common/ScriptWords.h.in
+               ${CMAKE_CURRENT_BINARY_DIR}/src/common/ScriptWords.h)
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+             ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/Gmsh.l)
+
 # the texi version file is modified in the source directory (not
 # ideal for version.texi, but since git tracks the contents of the file this is
 # acceptable as it will only change when the actual version is changed - not for
@@ -1870,7 +1891,7 @@ elseif(EMSCRIPTEN)
   # (all the symbols are exported, as the JavaScript API calls them by name,
   # with the allocation functions of the C library it hands arguments with)
   set(FLAGS "${FLAGS} -sFILESYSTEM=1 -sEXPORT_ALL=1")
-  set(FLAGS "${FLAGS} -sENVIRONMENT=web,node")
+  set(FLAGS "${FLAGS} -sENVIRONMENT=web,worker,node")
   # the program (gmsh.js, gmsh.wasm), whose main() runs when it is loaded,
   # with the runtime methods needed to drive it from JavaScript
   set_target_properties(gmsh PROPERTIES LINK_FLAGS
@@ -1880,18 +1901,19 @@ elseif(EMSCRIPTEN)
   # reads and writes its memory and adds the callbacks to its function table
   add_executable(libgmsh EXCLUDE_FROM_ALL ${GMSH_SRC})
   target_link_libraries(libgmsh ${LINK_LIBRARIES})
-  # with the functions the pages of the web app call to draw the scene on
-  # their canvas, and, when GetDP is given (built as a static library with its
-  # solvers, see contrib/webapp/build.sh), GetDP run in-process as the ONELAB
-  # solver
+  # with the functions the pages of the web app call (to draw the scene on
+  # their canvas, run the ONELAB loop...), and, when GetDP is given (built as a
+  # static library with its solvers, see contrib/webapp/build.sh), GetDP run
+  # in-process as the ONELAB solver
   if(HAVE_OPENGL)
-    target_sources(libgmsh PRIVATE contrib/webapp/webView.cpp)
+    target_sources(libgmsh PRIVATE contrib/webapp/webApp.cpp)
   endif()
-  if(GETDP_INC AND GETDP_LIBS)
-    message(STATUS "Linking the web app with GetDP: ${GETDP_LIBS}")
-    target_sources(libgmsh PRIVATE contrib/webapp/webOnelab.cpp)
-    target_include_directories(libgmsh PRIVATE ${GETDP_INC})
-    target_link_libraries(libgmsh ${GETDP_LIBS})
+  if(WEBAPP_GETDP_INC AND WEBAPP_GETDP_LIBS)
+    message(STATUS "Linking the web app with GetDP: ${WEBAPP_GETDP_LIBS}")
+    set_source_files_properties(contrib/webapp/webApp.cpp PROPERTIES
+                                COMPILE_DEFINITIONS HAVE_WEBAPP_GETDP)
+    target_include_directories(libgmsh PRIVATE ${WEBAPP_GETDP_INC})
+    target_link_libraries(libgmsh ${WEBAPP_GETDP_LIBS})
   endif()
   set(LIBFLAGS "${FLAGS} --no-entry -sMODULARIZE=1 -sEXPORT_ES6=1")
   set(LIBFLAGS "${LIBFLAGS} -sEXPORTED_FUNCTIONS=_malloc,_free")

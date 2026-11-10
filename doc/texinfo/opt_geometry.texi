@@ -112,7 +112,7 @@ Default value: @code{3}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.CurveType
-Display curves as solid color segments (0) or 3D cylinders (1)@*
+Curve display type (0: Color segment, 1: 3D cylinder)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -162,7 +162,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.LabelType
-Type of entity label (0: description, 1: elementary entity tag, 2: physical group tag, 3: elementary name, 4: physical name, 5: coordinates)@*
+Type of entity label (0: Description, 1: Elementary tag, 2: Physical tag(s), 3: Elementary name, 4: Physical name(s), 5: Coordinates)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -362,7 +362,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OpacityMode
-Apply Geometry.Opacity to (0: filled surfaces only; 1: everything)@*
+What Geometry.Opacity applies to (0: Surfaces, 1: Everything)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -392,7 +392,7 @@ Default value: @code{8}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.PointType
-Display points as solid color dots (0) or 3D spheres (1)@*
+Point display type (0: Color dot, 1: 3D sphere)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -437,7 +437,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.SurfaceType
-Surface display type (0: cross, 1: wireframe, 2: solid). A surface of the built-in geometry kernel is drawn as a cross until it is meshed.@*
+Surface display type; a surface of the built-in geometry kernel is drawn as a cross until it is meshed (0: Cross, 1: Wireframe, 2: Solid)@*
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -457,7 +457,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.Transform
-Transform model display coordinates (0: no, 1: scale)@*
+Transform model display coordinates (0: None, 1: Scaling)@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
@@ -517,7 +517,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.VolumeType
-Volume display type (0: sphere, 1: diamond)@*
+Volume display type (0: Sphere, 1: Diamond)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

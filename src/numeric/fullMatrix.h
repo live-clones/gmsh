@@ -18,7 +18,7 @@
 #undef Success
 #endif
 #include <sstream>
-#include <Eigen/Dense>
+#include <Eigen/Core>
 #endif
 
 // GCC 14 sees the AVX stores of Eigen's vectorized assignment into the small
@@ -622,20 +622,7 @@ public:
 #endif
   ;
   bool luSolve(const fullVector<scalar> &rhs, fullVector<scalar> &result)
-#if defined(HAVE_EIGEN)
-  {
-    if(_r != _c || _r != rhs._r || _r != result._r) {
-      Msg::Error("Wrong sizes for dense linear system solve (size = %d %d, "
-                 "%d, %d)", _r, _c, result._r, rhs._r);
-      return false;
-    }
-    EigenMat ma(_data, _r, _c);
-    EigenVec vb(rhs._data, rhs._r);
-    EigenVec vx(result._data, result._r);
-    vx = ma.colPivHouseholderQr().solve(vb);
-    return true;
-  }
-#elif !defined(HAVE_LAPACK)
+#if !defined(HAVE_EIGEN) && !defined(HAVE_LAPACK)
   {
     Msg::Error("LU factorization and substitution requires Eigen or LAPACK");
     return false;
@@ -660,20 +647,7 @@ public:
 #endif
   ;
   bool invert(fullMatrix<scalar> &result) const
-#if defined(HAVE_EIGEN)
-  {
-    if(_r != _c) {
-      Msg::Error("Dense matrix inverse requires square matrix (size = %d %d)",
-                 _r, _c);
-      return false;
-    }
-    result.resize(_r, _c);
-    EigenMat ma(_data, _r, _c);
-    EigenMat mi(result._data, _r, _c);
-    mi = ma.inverse();
-    return true;
-  }
-#elif !defined(HAVE_LAPACK)
+#if !defined(HAVE_EIGEN) && !defined(HAVE_LAPACK)
   {
     Msg::Error("Matrix inversion requires Eigen or LAPACK");
     return false;
@@ -681,18 +655,7 @@ public:
 #endif
   ;
   bool invertInPlace()
-#if defined(HAVE_EIGEN)
-  {
-    if(_r != _c) {
-      Msg::Error("Dense matrix inversion requires square matrix (size = %d %d)",
-                 _r, _c);
-      return false;
-    }
-    EigenMat ma(_data, _r, _c);
-    ma = ma.inverse();
-    return true;
-  }
-#elif !defined(HAVE_LAPACK)
+#if !defined(HAVE_EIGEN) && !defined(HAVE_LAPACK)
   {
     Msg::Error("Dense matrix inversion requires LAPACK");
     return false;
@@ -700,12 +663,7 @@ public:
 #endif
   ;
   scalar determinant() const
-#if defined(HAVE_EIGEN)
-  {
-    EigenMat ma(_data, _r, _c);
-    return ma.determinant();
-  }
-#elif !defined(HAVE_LAPACK)
+#if !defined(HAVE_EIGEN) && !defined(HAVE_LAPACK)
   {
     Msg::Error("Dense matrix inversion requires Eigen or LAPACK");
     return false;
@@ -748,30 +706,7 @@ public:
   bool eig(fullVector<double> &eigenValReal, fullVector<double> &eigenValImag,
            fullMatrix<scalar> &leftEigenVect, fullMatrix<scalar> &rightEigenVect,
            bool sortRealPart = false)
-#if defined(HAVE_EIGEN)
-  {
-    EigenMat ma(_data, _r, _c);
-    Eigen::EigenSolver<Eigen::Matrix<scalar, Eigen::Dynamic, Eigen::Dynamic> > es(ma);
-    if(es.info() != Eigen::Success) {
-      Msg::Warning("Eigen could not compute eigenvalues/eigenvectors");
-      return false;
-    }
-    EigenVec vr(eigenValReal._data, eigenValReal._r);
-    vr = es.eigenvalues().real();
-    EigenVec vi(eigenValImag._data, eigenValImag._r);
-    vi = es.eigenvalues().imag();
-    EigenMat mr(rightEigenVect._data, rightEigenVect._r, rightEigenVect._c);
-    mr = es.eigenvectors().real();
-    EigenMat ml(leftEigenVect._data, leftEigenVect._r, leftEigenVect._c);
-    // FIXME: only true for symmetric matrices - compute the true left eigenvectors!
-    ml = mr;
-
-    if(sortRealPart)
-      eigSort(_r, eigenValReal._data, eigenValImag._data,
-              leftEigenVect._data, rightEigenVect._data);
-    return true;
-  }
-#elif !defined(HAVE_LAPACK)
+#if !defined(HAVE_EIGEN) && !defined(HAVE_LAPACK)
   {
     Msg::Error("Eigenvalue computation of dense matrices requires Eigen or "
                "LAPACK");
@@ -780,20 +715,7 @@ public:
 #endif
   ;
   bool svd(fullMatrix<scalar> &V, fullVector<scalar> &S)
-#if defined(HAVE_EIGEN)
-  {
-    EigenMat ma(_data, _r, _c);
-    EigenMat mv(V._data, V._r, V._c);
-    EigenVec vs(S._data, S._r);
-    Eigen::BDCSVD
-      <Eigen::Matrix<scalar, Eigen::Dynamic, Eigen::Dynamic> >
-      svd(ma, Eigen::ComputeThinU | Eigen::ComputeThinV);
-    ma = svd.matrixU();
-    mv = svd.matrixV();
-    vs = svd.singularValues();
-    return true;
-  }
-#elif !defined(HAVE_LAPACK)
+#if !defined(HAVE_EIGEN) && !defined(HAVE_LAPACK)
   {
     Msg::Error("Singular value decomposition of dense matrices requires "
                "Eigen or LAPACK");

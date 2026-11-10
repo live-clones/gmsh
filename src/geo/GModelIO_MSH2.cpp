@@ -33,6 +33,7 @@
 
 #if defined(HAVE_POST)
 #include "PView.h"
+#include "PViewDataGModel.h"
 #endif
 
 // periodic nodes and entities backported from MSH3 format
@@ -116,6 +117,8 @@ int GModel::_readMSH2(const std::string &name)
   std::map<int, std::map<int, std::string> > physicals[4];
   std::map<std::size_t, MVertex *> vertexMap;
   std::vector<MVertex *> vertexVector;
+  // whether the file has data sections (read in views)
+  bool hasData = false;
   int minVertex = 0;
   std::size_t oldNumPartitions = getNumPartitions();
 
@@ -607,6 +610,7 @@ int GModel::_readMSH2(const std::string &name)
         else
           _vertexMapCache = vertexMap;
       }
+      hasData = true;
       if(!PView::readMSHViewData(name, fp, binary, swap, &str[1], version)) {
         fclose(fp);
         return 0;
@@ -651,6 +655,17 @@ int GModel::_readMSH2(const std::string &name)
     _storeVerticesInEntities(vertexVector);
   else
     _storeVerticesInEntities(vertexMap);
+
+#if defined(HAVE_POST)
+  // the views of the data sections were read before the vertices were stored:
+  // their bounding boxes are those of the model now
+  if(hasData) {
+    for(PView *p : PView::list) {
+      PViewDataGModel *d = dynamic_cast<PViewDataGModel *>(p->getData());
+      if(d) d->updateBoundingBoxes(this);
+    }
+  }
+#endif
 
   // store the physical tags
   for(int i = 0; i < 4; i++) _storePhysicalTagsInEntities(i, physicals[i]);

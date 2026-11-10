@@ -1909,17 +1909,20 @@ static void createEdgesOrFaces(const std::vector<GEntity *> &entities, Set &set,
   typedef typename Set::key_type K;
   // the elements, and where the keys of each start
   std::vector<MElement *> elements;
-  std::vector<std::size_t> start(1, 0);
-  for(GEntity *ge : entities) {
-    for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
-      MElement *e = ge->getMeshElement(j);
-      elements.push_back(e);
-      start.push_back(start.back() + countOf(e));
-    }
-  }
-  std::size_t total = start.back(), numElements = elements.size();
+  for(GEntity *ge : entities)
+    for(std::size_t j = 0; j < ge->getNumMeshElements(); j++)
+      elements.push_back(ge->getMeshElement(j));
+  std::size_t numElements = elements.size();
+  // (counted by several threads: a polyhedron builds its edges to count them)
+  std::vector<std::size_t> start(numElements + 1, 0);
+  int nthreads = CTX::instance()->numThreadsFor(numElements, 20000);
+#pragma omp parallel for schedule(static) num_threads(nthreads)
+  for(std::size_t i = 0; i < numElements; i++)
+    start[i + 1] = countOf(elements[i]);
+  for(std::size_t i = 0; i < numElements; i++) start[i + 1] += start[i];
+  std::size_t total = start.back();
   if(!total) return;
-  int nthreads = CTX::instance()->numThreadsFor(total, 100000);
+  nthreads = CTX::instance()->numThreadsFor(total, 100000);
   if(nthreads == 1) { // (the same numbering, in one pass)
     std::vector<K> keys;
     for(auto e : elements) {
@@ -2632,98 +2635,89 @@ void GModel::setMeshElementIndex(MElement *e, int index)
   _elementIndexCache[e->getNum()] = index;
 }
 
-template <class T>
-static std::size_t removeInvisible(std::vector<T *> &elements, bool all)
+// each list of mesh elements of the model, with its entity, given to f
+template <class F> static void forEachElementList(GModel *m, F f)
 {
-  std::vector<T *> tmp;
-  std::size_t n = elements.size();
-  for(std::size_t i = 0; i < n; i++) {
-    if(all || !elements[i]->getVisibility())
-      delete elements[i];
-    else
-      tmp.push_back(elements[i]);
+  for(auto it = m->firstRegion(); it != m->lastRegion(); ++it) {
+    f(*it, (*it)->tetrahedra);
+    f(*it, (*it)->hexahedra);
+    f(*it, (*it)->prisms);
+    f(*it, (*it)->pyramids);
+    f(*it, (*it)->trihedra);
+    f(*it, (*it)->polyhedra);
   }
-  elements.clear();
-  elements = tmp;
-  return n - elements.size();
+  for(auto it = m->firstFace(); it != m->lastFace(); ++it) {
+    f(*it, (*it)->triangles);
+    f(*it, (*it)->quadrangles);
+    f(*it, (*it)->polygons);
+  }
+  for(auto it = m->firstEdge(); it != m->lastEdge(); ++it) f(*it, (*it)->lines);
+}
+
+// the elements of the model for which pick(entity, element) is true deleted
+// (reverse = false) or reversed
+template <class P>
+static std::size_t removeOrReverse(GModel *m, bool reverse, P pick)
+{
+  std::size_t n = 0;
+  forEachElementList(m, [&](GEntity *ge, auto &elements) {
+    std::size_t kept = 0;
+    for(std::size_t i = 0; i < elements.size(); i++) {
+      if(!pick(ge, elements[i])) {
+        elements[kept++] = elements[i];
+        continue;
+      }
+      n++;
+      if(reverse) {
+        elements[i]->reverse();
+        elements[kept++] = elements[i];
+      }
+      else
+        delete elements[i];
+    }
+    elements.resize(kept);
+    ge->deleteVertexArrays();
+  });
+  m->destroyMeshCaches();
+  Msg::Info("%s %zu elements", reverse ? "Reversed" : "Removed", n);
+  return n;
 }
 
 std::size_t GModel::removeInvisibleElements()
 {
-  std::size_t n = 0;
-  for(auto it = firstRegion(); it != lastRegion(); ++it) {
-    bool all = !(*it)->getVisibility();
-    n += removeInvisible((*it)->tetrahedra, all);
-    n += removeInvisible((*it)->hexahedra, all);
-    n += removeInvisible((*it)->prisms, all);
-    n += removeInvisible((*it)->pyramids, all);
-    n += removeInvisible((*it)->trihedra, all);
-    n += removeInvisible((*it)->polyhedra, all);
-    (*it)->deleteVertexArrays();
-  }
-  for(auto it = firstFace(); it != lastFace(); ++it) {
-    bool all = !(*it)->getVisibility();
-    n += removeInvisible((*it)->triangles, all);
-    n += removeInvisible((*it)->quadrangles, all);
-    n += removeInvisible((*it)->polygons, all);
-    (*it)->deleteVertexArrays();
-  }
-  for(auto it = firstEdge(); it != lastEdge(); ++it) {
-    bool all = !(*it)->getVisibility();
-    n += removeInvisible((*it)->lines, all);
-    (*it)->deleteVertexArrays();
-  }
-  destroyMeshCaches();
-  Msg::Info("Removed %zu elements", n);
-  return n;
-}
-
-template <class T>
-static std::size_t reverseInvisible(std::vector<T *> &elements, bool all)
-{
-  std::size_t n = 0;
-  std::vector<T *> tmp;
-  for(std::size_t i = 0; i < elements.size(); i++) {
-    if(all || !elements[i]->getVisibility()) {
-      elements[i]->reverse();
-      elements[i]->setVisibility(1);
-      n++;
-    }
-  }
-  return n;
+  return removeOrReverse(this, false, [](GEntity *ge, MElement *e) {
+    return !ge->getVisibility() || !e->getVisibility();
+  });
 }
 
 std::size_t GModel::reverseInvisibleElements()
 {
-  std::size_t n = 0;
-  for(auto it = firstRegion(); it != lastRegion(); ++it) {
-    bool all = !(*it)->getVisibility();
-    n += reverseInvisible((*it)->tetrahedra, all);
-    n += reverseInvisible((*it)->hexahedra, all);
-    n += reverseInvisible((*it)->prisms, all);
-    n += reverseInvisible((*it)->pyramids, all);
-    n += reverseInvisible((*it)->trihedra, all);
-    n += reverseInvisible((*it)->polyhedra, all);
-    (*it)->deleteVertexArrays();
-    if(all) (*it)->setVisibility(1);
-  }
-  for(auto it = firstFace(); it != lastFace(); ++it) {
-    bool all = !(*it)->getVisibility();
-    n += reverseInvisible((*it)->triangles, all);
-    n += reverseInvisible((*it)->quadrangles, all);
-    n += reverseInvisible((*it)->polygons, all);
-    (*it)->deleteVertexArrays();
-    if(all) (*it)->setVisibility(1);
-  }
-  for(auto it = firstEdge(); it != lastEdge(); ++it) {
-    bool all = !(*it)->getVisibility();
-    n += reverseInvisible((*it)->lines, all);
-    (*it)->deleteVertexArrays();
-    if(all) (*it)->setVisibility(1);
-  }
-  destroyMeshCaches();
-  Msg::Info("Reversed %zu elements", n);
+  // (what is reversed is shown again)
+  std::size_t n = removeOrReverse(this, true, [](GEntity *ge, MElement *e) {
+    if(ge->getVisibility() && e->getVisibility()) return false;
+    e->setVisibility(1);
+    return true;
+  });
+  forEachElementList(this, [](GEntity *ge, auto &) {
+    if(!ge->getVisibility()) ge->setVisibility(1);
+  });
   return n;
+}
+
+std::size_t GModel::removeElements(const std::set<GEntity *> &entities,
+                                   const std::set<MElement *> &elements)
+{
+  return removeOrReverse(this, false, [&](GEntity *ge, MElement *e) {
+    return entities.count(ge) || elements.count(e);
+  });
+}
+
+std::size_t GModel::reverseElements(const std::set<GEntity *> &entities,
+                                    const std::set<MElement *> &elements)
+{
+  return removeOrReverse(this, true, [&](GEntity *ge, MElement *e) {
+    return entities.count(ge) || elements.count(e);
+  });
 }
 
 std::size_t GModel::indexMeshVertices(bool all, int singlePartition,

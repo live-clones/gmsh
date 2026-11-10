@@ -28,7 +28,7 @@ private:
   Fl_Toggle_Button *_loop_butt;
   Fl_Button *_range_butt, *_graph_butt;
   Fl_Menu_Button *_graph_menu;
-  std::string _loop_val, _graph_val, _number_format;
+  std::string _loop_val, _graph_val;
   double _min, _max, _step, _max_number;
   std::vector<double> _choices;
   std::string _range;
@@ -152,26 +152,22 @@ private:
   void _set_loop_value(const std::string &val)
   {
     _loop_val = val;
-    // the level of the loop, on its colour (adapted to the theme, see
-    // adaptedFill()) with a digit that reads on it
-    Fl_Color col = 0;
-    if(val == "1")
-      col = FL_GREEN;
-    else if(val == "2")
-      col = FL_BLUE;
-    else if(val == "3")
-      col = FL_RED;
-    if(col) {
+    // the level of the loop, on its colour (see gmshIndicator()) with a digit
+    // that reads on it
+    if(val == "1" || val == "2" || val == "3") {
+      Fl_Color col = gmshIndicator(val == "1" ? IndicatorGreen :
+                                   val == "2" ? IndicatorBlue :
+                                                IndicatorRed);
+      gmshIcon(_loop_butt, nullptr, 0);
       _loop_butt->copy_label(val.c_str());
-      _loop_butt->selection_color(adaptedFill(col));
-      _loop_butt->labelcolor(
-        fl_contrast(FL_FOREGROUND_COLOR, adaptedFill(col)));
+      _loop_butt->selection_color(col);
+      _loop_butt->labelcolor(fl_contrast(FL_FOREGROUND_COLOR, col));
       _loop_butt->value(1);
     }
     else {
-      _loop_butt->label("@-1gmsh_rotate");
       _loop_butt->selection_color(_loop_butt->color());
       _loop_butt->labelcolor(FL_FOREGROUND_COLOR);
+      gmshIcon(_loop_butt, "loop", FL_NORMAL_SIZE);
       _loop_butt->value(0);
     }
     _loop_butt->redraw();
@@ -213,7 +209,7 @@ private:
   static void _graph_menu_cb(Fl_Widget *w, void *data)
   {
     inputRange *b = (inputRange *)data;
-    b->_set_graph_value(graphMenuValue(b->_graph_menu), false);
+    b->_set_graph_value(graphMenuValue(b->_graph_menu, b->_graph_val), false);
     b->doCallbackOnValues(false);
     b->do_callback();
   }
@@ -251,13 +247,13 @@ public:
       _range_butt->tooltip("Edit range or choices");
 
     _loop_butt = new Fl_Toggle_Button(x + input_w + dot_w, y, loop_w, h);
-    _loop_butt->label("@-1gmsh_rotate");
+    gmshIcon(_loop_butt, "loop", FL_NORMAL_SIZE);
     _loop_butt->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE);
     _loop_butt->callback(_loop_butt_cb, this);
     _loop_butt->tooltip("Loop over range or choices (loop level 1, 2 or 3)");
 
     _graph_butt = new Fl_Button(x + input_w + dot_w + loop_w, y, graph_w, h);
-    _graph_butt->label("@-1gmsh_graph");
+    gmshIcon(_graph_butt, "graph", FL_NORMAL_SIZE);
     _graph_butt->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE);
     _graph_butt->tooltip("Draw range or choices on X-Y graph(s)");
 

@@ -165,6 +165,10 @@ public:
   using MElement::isInside;
   virtual bool isInside(double u, double v, double w, double tol) const;
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
+  // exact for the fields P1 on the triangles (the area of each times the mean
+  // of its nodal values): no point to locate
+  virtual double integrate(double val[], int pOrder, int stride = 1,
+                           int order = -1);
 
   // no nodal basis: the shape functions are P1 on the triangle holding the
   // point (or the closest one), and zero on the other nodes

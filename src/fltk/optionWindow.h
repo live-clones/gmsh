@@ -93,8 +93,6 @@ public:
   struct {
     Fl_Group *group;
     std::vector<Fl_Check_Button *> butt;
-    std::vector<Fl_Return_Button *> retbutt;
-    std::vector<Fl_Input *> input;
     std::vector<Fl_Value_Input *> value;
     std::vector<Fl_Button *> color;
     std::vector<Fl_Choice *> choice;
@@ -124,7 +122,6 @@ public:
     std::vector<Fl_Box *> label;
     std::vector<Fl_Menu_Button *> menu;
     colorbarWindow *colorbar;
-    Fl_Return_Button *ok;
   } view;
 
 public:
@@ -139,7 +136,15 @@ public:
   void resetBrowser();
   void resetExternalViewList();
   void updateViewGroup(int index);
-  void activate(const char *what);
+  // the widgets bound to an option show its value (an option of the views:
+  // only for the view shown, num)
+  void showOption(const std::string &category, int num,
+                  const std::string &name);
+  // all the widgets show the values of their options (only those of the
+  // category shown, and not the one being edited, if shownOnly)
+  void showOptions(bool shownOnly = false);
+  // the widgets active or not as the options they depend on are set
+  void updateActive();
   void toggleSection(int category, int section);
   // the tab clicked
   void categoryChosen();
@@ -148,6 +153,18 @@ public:
   // keepPosition keeps the scroll where it is, e.g. when a section is folded
   void layout(bool keepPosition);
 };
+
+// the value a check button gives an option that may hold more than 0 and 1
+// (as General.SaveOptions = 2): the value it has while the button shows it as
+// it is, on or off
+double checkValue(Fl_Button *b, double value);
+// the range of a value from the table of the ranges of its option (see
+// GetOptionRange()), and the step of its scrolling (when
+// General.InputScrolling is set)
+void optionRange(Fl_Valuator *v, const std::string &option);
+// the items of a choice from the table of the choices of its option (see
+// GetOptionChoices()), and their values; none if the option has no table
+std::vector<double> choiceItems(Fl_Choice *c, const std::string &option);
 
 void options_cb(Fl_Widget *w, void *data);
 void options_restore_defaults_cb(Fl_Widget *w, void *data);
@@ -158,7 +175,7 @@ void solver_options_cb(Fl_Widget *w, void *data);
 void post_options_cb(Fl_Widget *w, void *data);
 void view_options_cb(Fl_Widget *w, void *data);
 void general_gmpdcf_cb(Fl_Widget *w, void *data);
-void general_options_ok_cb(Fl_Widget *w, void *data);
+void general_rotation_center_cg_cb(Fl_Widget *w, void *data);
 void general_options_rotation_center_select_cb(Fl_Widget *w, void *data);
 void general_options_axes_fit_cb(Fl_Widget *w, void *data);
 

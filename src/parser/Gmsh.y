@@ -3211,17 +3211,17 @@ Command :
       }
       else if(!strcmp($1, "SetCurrentWindow")) {
 #if defined(HAVE_FLTK)
-        FlGui::instance()->setCurrentOpenglWindow((int)$2);
+        if(FlGui::available()) FlGui::instance()->setCurrentOpenglWindow((int)$2);
 #endif
       }
       else if(!strcmp($1, "SplitCurrentWindowHorizontal")) {
 #if defined(HAVE_FLTK)
-        FlGui::instance()->splitCurrentOpenglWindow('h', $2);
+        if(FlGui::available()) FlGui::instance()->splitCurrentOpenglWindow('h', $2);
 #endif
       }
       else if(!strcmp($1, "SplitCurrentWindowVertical")) {
 #if defined(HAVE_FLTK)
-        FlGui::instance()->splitCurrentOpenglWindow('v', $2);
+        if(FlGui::available()) FlGui::instance()->splitCurrentOpenglWindow('v', $2);
 #endif
       }
       else {
@@ -3232,7 +3232,7 @@ Command :
   | tUnsplitWindow tEND
     {
 #if defined(HAVE_FLTK)
-      FlGui::instance()->splitCurrentOpenglWindow('u');
+      if(FlGui::available()) FlGui::instance()->splitCurrentOpenglWindow('u');
 #endif
     }
   | tPlugin '(' tSTRING ')' '.' tSTRING tEND

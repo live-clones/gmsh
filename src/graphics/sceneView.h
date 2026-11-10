@@ -100,11 +100,19 @@ private:
                std::vector<GEdge *> &edges, std::vector<GFace *> &faces,
                std::vector<GRegion *> &regions,
                std::vector<MElement *> &elements, std::vector<SPoint2> &points,
-               std::vector<PView *> &views, bool through = true);
-  // should a double click be processed?
-  bool _processDoubleClick(std::size_t num, const std::string &what);
+               std::vector<PView *> &views, bool pickElements = false,
+               bool through = true);
+  // a selection picks the elements of the meshes (see beginSelection())
+  bool _selectionElements;
+  // what a double click on what is under the cursor does
   void _doubleClick(const paneInput &in);
   void _lassoZoom();
+  void _clickSelection(int sign, bool alt);
+  // where the last selection looked, in the units of the window
+  void _lastSelection(int xywh[4])
+  {
+    for(int i = 0; i < 4; i++) xywh[i] = _trySelectionXYWH[i];
+  }
 
 protected:
   // the context whose scene this is: the host's, which draws it
@@ -150,9 +158,6 @@ protected:
   // drawn (the pass would mix with it), in which case nothing is picked
   virtual bool hostBeginGL() { return true; }
   virtual void hostEndGL() {}
-  // the tools that take over the clicks: see queryMode() and measureMode()
-  virtual bool hostQueryMode() { return false; }
-  virtual bool hostMeasureMode() { return false; }
   // the point being placed: which of its coordinates the dialog holds fixed,
   // and where the pointer moved it (mode: see addPointMode)
   virtual bool hostFrozenCoordinate(int coord) { return false; }
@@ -171,14 +176,17 @@ public:
   // a lasso is being drawn; a selection waits for clicks
   bool lassoMode, selectionMode;
   // what the keys ask of the selection, read at its next step
-  int endSelection, undoSelection, invertSelection, quitSelection,
-    changeSelection;
+  int endSelection, undoSelection, quitSelection, changeSelection;
   // the two lines of Msg::StatusGl(), drawn at the top of the picture
   std::string screenMessage[2];
 
   sceneView(drawContext *ctx);
   // puts back the entity it highlights, e.g. when a window goes on unsplit
   virtual ~sceneView();
+  // all the scenes there are (the windows of the desktop, the page)
+  static const std::vector<sceneView *> &all();
+  // the scene to be drawn again
+  void askRedraw() { hostRedraw(); }
   drawContext *getDrawContext() { return _ctx; }
   void setDrawContext(drawContext *ctx) { _ctx = ctx; }
 
@@ -191,34 +199,33 @@ public:
   // step through what is stacked under the cursor (Alt+Up/Down)
   void stepPick(int direction) { _stepPick(direction, false); }
 
-  // A selection: begin it, then call selectionStep() each time the host has
-  // waited for events. It returns 0 while there is nothing to report, and
-  // otherwise 'l' (selected), 'r' (unselected), 'c' (a click, when the type
-  // is ENT_NONE), 'e' (ended), 'u' (undo), 'i' (invert) or 'q' (quit), the
-  // entities in the vectors; the selection goes on after 'e', 'u' and 'i'.
-  void beginSelection(int type);
+  // A selection (see sceneTool, which runs them): begin it, picking the mesh
+  // elements or not, then call selectionStep() after the events. It returns
+  // 0 while there is nothing to report, and otherwise 'l' (selected), 'r'
+  // (unselected), 'c' (a click, when the type is ENT_NONE), 'e' (ended), 'u'
+  // (undo) or 'q' (quit), the entities in the vectors; each answer ends the
+  // selection, which is begun again for the next one. cancelSelection() ends
+  // it without an answer
+  void beginSelection(int type, bool elements = false);
+  void cancelSelection();
   char selectionStep(std::vector<GVertex *> &vertices,
                      std::vector<GEdge *> &edges, std::vector<GFace *> &faces,
                      std::vector<GRegion *> &regions,
                      std::vector<MElement *> &elements,
                      std::vector<SPoint2> &points, std::vector<PView *> &views);
   // run one picking pass at the given position (window coordinates) and
-  // return what a click there would select, without waiting for a click
+  // return what a click there would select (mesh elements if asked),
+  // without waiting for a click
   bool pick(int type, bool mesh, bool post, int x, int y, int w, int h,
             std::vector<GVertex *> &vertices, std::vector<GEdge *> &edges,
             std::vector<GFace *> &faces, std::vector<GRegion *> &regions,
             std::vector<MElement *> &elements, std::vector<SPoint2> &points,
-            std::vector<PView *> &views)
+            std::vector<PView *> &views, bool pickElements = false)
   {
     // the kept image was drawn around the pointer, not around this position
     _ctx->invalidatePickCache();
     return _select(type, false, mesh, post, x, y, w, h, vertices, edges, faces,
-                   regions, elements, points, views);
-  }
-  // where the last selection looked, in the units of the window
-  void lastSelection(int xywh[4])
-  {
-    for(int i = 0; i < 4; i++) xywh[i] = _trySelectionXYWH[i];
+                   regions, elements, points, views, pickElements);
   }
   // show the text in a box by the cursor, or take the box away
   void drawTooltip(const std::string &text);
@@ -226,7 +233,25 @@ public:
   // boxes pinned before, or is added to them; an empty text removes them all
   void pinTooltip(const std::string &text, const double *xyz = nullptr,
                   bool add = false);
-  bool addQuery() const { return _addQuery; }
+  // the notes pinned to the model, for a host that draws them itself
+  std::size_t numPinned() const { return _pinned.size(); }
+  const std::string &pinnedText(std::size_t i) const { return _pinned[i].text; }
+  const double *pinnedPoint(std::size_t i) const { return _pinned[i].xyz; }
+  // A click of the query, with what the selection found there: what the model
+  // holds at the point hit (its entity, element, node, the values of the
+  // views), in the messages and pinned to the point (added to the notes with
+  // Ctrl). False if the click hit nothing. The query tool
+  // runs the selection (see newQueryTool())
+  bool queryClick(std::vector<GVertex *> &vertices, std::vector<GEdge *> &edges,
+                  std::vector<GFace *> &faces, std::vector<GRegion *> &regions,
+                  std::vector<MElement *> &elements,
+                  std::vector<PView *> &views);
+  // A click of the measurement: its first point, or its second one and the
+  // distance between them, in the messages and over the line. False if the
+  // click hit nothing
+  bool measureClick();
+  // a measurement waits for its second point
+  bool measuring() const { return _ctx->numMarks() == 1; }
   void setPoint(double x, double y, double z)
   {
     _point[0] = x;

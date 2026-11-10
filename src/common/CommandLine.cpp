@@ -1142,6 +1142,9 @@ static bool GetOtherOption(const std::vector<std::string> &argv,
     opt_general_nopopup(0, GMSH_SET, 1);
     i++;
   }
+  else if(argv[i] == "-noenv" || argv[i] == "-nolocale") {
+    i++; // already handled in Msg::Initialize()
+  }
   else if(argv[i] == "-shaders" || argv[i] == "-shader") {
     opt_general_shaders(0, GMSH_SET, 1);
     i++;

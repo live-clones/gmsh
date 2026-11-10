@@ -8,6 +8,8 @@
 
 #include "Options.h"
 
+// (laid out by hand, one colour per line)
+// clang-format off
 StringX4Int ColorString[] = {
   { "Snow"                     ,  255, 250, 250, 255 } ,
   { "GhostWhite"               ,  248, 248, 255, 255 } ,
@@ -668,5 +670,6 @@ StringX4Int ColorString[] = {
   { "LightGreen"               ,  144, 238, 144, 255 } ,
   { nullptr                    ,  0  ,   0,   0, 255 }
 } ;
+// clang-format on
 
 #endif

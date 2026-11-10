@@ -42,6 +42,10 @@ public:
         }
       }
     }
+    // the options changed by code that sets them without their names (see
+    // optionWindow::showOptions())
+    if(FlGui::instance()->options->win->shown())
+      FlGui::instance()->options->showOptions(true);
     FlGui::check(rateLimited);
   }
   void drawCurrentOpenglWindow(bool make_current, bool again = false)

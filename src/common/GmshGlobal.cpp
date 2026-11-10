@@ -230,8 +230,26 @@ int GmshMergeFile(const std::string &fileName, bool errorIfMissing)
   return MergeFile(fileName, errorIfMissing);
 }
 
+// the last file merged by GmshMergePostProcessingFile(), which GetDP calls when
+// it runs in the program: both for the files it reads (GmshRead) and for those
+// it asks to show, which it follows with Msg::RequestRender() (a web worker
+// running GetDP sends that one to its page then, see contrib/webapp), with
+// the position in PView::list of the first view it added
+static std::string _lastMergedPostProcessingFile;
+static std::size_t _lastMergedFirstView = 0;
+
+const std::string &GmshLastMergedPostProcessingFile(std::size_t *firstView)
+{
+  if(firstView) *firstView = _lastMergedFirstView;
+  return _lastMergedPostProcessingFile;
+}
+
 int GmshMergePostProcessingFile(const std::string &fileName)
 {
+  _lastMergedPostProcessingFile = fileName;
+#if defined(HAVE_POST)
+  _lastMergedFirstView = PView::list.size();
+#endif
   return MergePostProcessingFile(
     fileName, CTX::instance()->solver.autoShowViews,
     CTX::instance()->solver.autoShowLastStep, true);
@@ -248,12 +266,14 @@ int GmshFinalize()
 #if defined(HAVE_FLTK)
   // the GUI shows the models, views, fields and plugins deleted below, and
   // would point to them after a new initialization: it goes first, from its
-  // own thread only
+  // own thread only (from another, nothing is deleted under it)
   if(FlGui::available()) {
-    if(FlGui::onMainThread())
-      FlGui::destroy();
-    else
-      Msg::Warning("Finalizing outside the thread of the GUI, which stays");
+    if(!FlGui::onMainThread()) {
+      Msg::Error("Cannot finalize outside the thread of the graphical "
+                 "interface");
+      return 0;
+    }
+    FlGui::destroy();
   }
 #endif
 
@@ -425,7 +445,7 @@ int GmshFLTK(int argc, char **argv)
 {
 #if defined(HAVE_FLTK) && defined(HAVE_POST)
   // create the GUI
-  FlGui::instance(argc, argv);
+  FlGui::create(argc, argv);
 
   StartupMessage();
 

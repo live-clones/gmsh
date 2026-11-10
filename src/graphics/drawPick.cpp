@@ -548,9 +548,8 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
       GEdge *e = m->getEdgeByTag(o.ient);
       if(e) {
         _pickEntity = e;
-        MElement *ele = getElement(e, _pickPoint, _pickPointValid &&
-                                     CTX::instance()->pickElements,
-                                   pixel_equiv_x / s[0]);
+        MElement *ele = getElement(
+          e, _pickPoint, _pickPointValid && pickElements, pixel_equiv_x / s[0]);
         if(ele)
           elements.push_back(ele);
         else
@@ -562,9 +561,8 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
       GFace *f = m->getFaceByTag(o.ient);
       if(f) {
         _pickEntity = f;
-        MElement *ele = getElement(f, _pickPoint, _pickPointValid &&
-                                     CTX::instance()->pickElements,
-                                   pixel_equiv_x / s[0]);
+        MElement *ele = getElement(
+          f, _pickPoint, _pickPointValid && pickElements, pixel_equiv_x / s[0]);
         if(ele)
           elements.push_back(ele);
         else
@@ -576,9 +574,8 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
       GRegion *r = m->getRegionByTag(o.ient);
       if(r) {
         _pickEntity = r;
-        MElement *ele = getElement(r, _pickPoint, _pickPointValid &&
-                                     CTX::instance()->pickElements,
-                                   pixel_equiv_x / s[0]);
+        MElement *ele = getElement(
+          r, _pickPoint, _pickPointValid && pickElements, pixel_equiv_x / s[0]);
         if(ele)
           elements.push_back(ele);
         else

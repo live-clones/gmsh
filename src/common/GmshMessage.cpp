@@ -92,7 +92,6 @@ GmshClient *Msg::_client = nullptr;
 std::string Msg::_execName;
 #if defined(HAVE_ONELAB)
 onelab::client *Msg::_onelabClient = nullptr;
-onelab::server *onelab::server::_server = nullptr;
 #endif
 std::string Msg::_logFileName;
 FILE *Msg::_logFile = nullptr;
@@ -190,6 +189,9 @@ void Msg::Initialize(int argc, char **argv)
     // find the onelab.py module or subclients automatically)
     addGmshPathToEnvironmentVar("PYTHONPATH");
     addGmshPathToEnvironmentVar("PATH");
+    // the interface is in English: under e.g. a Thai LANG, fontconfig would give
+    // Xft a font without Latin letters, which draws them all as empty boxes
+    if(GetEnvironmentVar("FC_LANG").empty()) SetEnvironmentVar("FC_LANG", "en");
   }
 
   if(_locale) {
@@ -370,6 +372,14 @@ int Msg::GetErrorCount()
 {
   return _errorCount;
 }
+
+Msg::NoThrow::NoThrow() : _abortOnError(CTX::instance()->abortOnError)
+{
+  if(_abortOnError == 2 || _abortOnError == 3)
+    CTX::instance()->abortOnError = 0;
+}
+
+Msg::NoThrow::~NoThrow() { CTX::instance()->abortOnError = _abortOnError; }
 
 std::string Msg::GetFirstWarning()
 {

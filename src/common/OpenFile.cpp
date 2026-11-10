@@ -838,12 +838,12 @@ static void openProjectLocked(const std::string &fileName, bool errorIfMissing)
 
 void OpenProject(const std::string &fileName, bool errorIfMissing)
 {
-  if(modelBusy()) return;
   {
     // released however the reading ends, e.g. by the exception a script error
     // throws (Msg::Error), which would otherwise leave every later open and
     // meshing refused
-    modelLock lock;
+    modelLock lock(modelLock::ifFree);
+    if(!lock) return;
     openProjectLocked(fileName, errorIfMissing);
   }
 

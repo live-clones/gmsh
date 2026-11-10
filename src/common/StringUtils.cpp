@@ -37,6 +37,29 @@ std::string ExtractDoubleQuotedString(const char *str, int len)
   return ret;
 }
 
+std::string JsonString(const std::string &in)
+{
+  std::string out = "\"";
+  for(char c : in) {
+    if(c == '"' || c == '\\') {
+      out += '\\';
+      out += c;
+    }
+    else if(c == '\n')
+      out += "\\n";
+    else if(c == '\t')
+      out += "\\t";
+    else if((unsigned char)c < 0x20) {
+      char u[8];
+      snprintf(u, sizeof(u), "\\u%04x", c);
+      out += u;
+    }
+    else
+      out += c;
+  }
+  return out + "\"";
+}
+
 std::string SanitizeTeXString(const char *in, int equation)
 {
   // if there is a '$' or a '\' in the string, assume the author knows

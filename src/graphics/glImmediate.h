@@ -250,13 +250,14 @@ inline void gmshDepthTest(bool on)
     glDisable(GL_DEPTH_TEST);
 }
 // The depths the next primitives are written and tested at, pulled towards
-// the viewer by a thousandth of the range: what is drawn on a surface (the
-// mark of a query, the line of a measurement) is then not left to z-fighting
-// with it. Like the depth test, it applies to what is waiting.
-inline void gmshDepthOffset(bool on)
+// the viewer by a part of the range: what is drawn on a surface (the mark of a
+// query, the line of a measurement) is then not left to z-fighting with it.
+// With perspective a thousandth is a good part of the model. Like the depth
+// test, it applies to what is waiting.
+inline void gmshDepthOffset(bool on, double amount = 1e-3)
 {
   if(glShader::enabled()) glImmediate::flush();
-  glDepthRange(0., on ? 0.999 : 1.);
+  glDepthRange(0., on ? 1. - amount : 1.);
 }
 inline void gmshDepthMask(bool on)
 {

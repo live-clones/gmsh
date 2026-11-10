@@ -13,36 +13,20 @@ Serve the Gmsh source tree over HTTP and open the pages, e.g.
 
   python3 -m http.server 8000 --bind 127.0.0.1 --directory ~/src/gmsh
 
-  http://localhost:8000/contrib/webapp/viewer.html
   http://localhost:8000/contrib/webapp/onelab.html
 
-viewer.html shows a model and meshes it; onelab.html is the ONELAB app: it
-opens a model (a .pro file with the .geo of the same name and the files they
+onelab.html is the ONELAB app: it opens a model (a .pro file with the .geo of the same name and the files they
 include, given as files, a folder, a zip archive, or ?zip=<url>), shows its
 parameters, and runs Gmsh and GetDP, in the page.
 
-site.sh makes a site to copy to a web server: the pages, the module, and the
-models given, each packed as a zip and listed on the landing page made from
-index.html (see the usage at the top of site.sh).
+The demo at https://onelab.info/webapp/ is made, after ./build.sh, by
+deploy.sh: the pages, the module, and the GetDP tutorials and the models of
+onelab_doc (next to the Gmsh sources), each packed as a zip and listed with
+its notes on the landing page made from index.html, in build/site, which it
+copies to the web server:
 
-The demo at https://onelab.info/webapp/ is made, after ./build.sh, with the
-GetDP tutorials and the models of onelab_doc (in ~/src/getdp and
-~/src/onelab_doc), by
-
-  T=$HOME/src/getdp/tutorials
-  M=$HOME/src/onelab_doc/models
-  P=$M/AcademicPhotonics/tutorial_photonics_dev
-  B="does not run in the browser yet: needs GetDP's Bessel functions (Fortran)"
-  L="too large for the browser's memory for now"
-  ./site.sh build/site \
-    "Induction machine, 3 kW (2D, frequency domain)|$M/ElectricMachines/im_3kW.pro" \
-    "Magnetic forces between magnets (3D, OpenCASCADE geometry)|$M/MagneticForces" \
-    --group "GetDP tutorials" $T/0*/ --note "3D, about 30 s" $T/10-Gauging \
-    --group "Photonics tutorials" $P/P0[1-7]*/ --note "about 25 s" $P/P08*/ \
-    $P/P09*/ $P/P1[0-2]*/ --note "about 30 s" $P/P13*/ --note "about 15 s" $P/P14*/ \
-    $P/P15*/ --note "about 10 s" $P/P16*/ --note "$B" $P/P17*/ --note "$L" $P/P18*/ \
-    --note "$B" $P/P19*/ --note "$L" $P/P20*/ --note "$L" $P/P21*/ $P/P22*/
-  rsync -az --delete build/site/ gmsh.info:.wwwonelab/webapp/
+  ./deploy.sh --dry-run    # what would change on the server
+  ./deploy.sh
 
 run_models.mjs runs model directories through the module under node, as the
 page does, to check them:
@@ -59,5 +43,19 @@ api_test.mjs shows its use and checks it:
 
   node api_test.mjs
 
-The pages draw the scene with the functions of webView.cpp; webOnelab.cpp
-links GetDP in and runs the ONELAB loop.
+The page draws the scene with the functions of webApp.cpp, which also add
+shapes to the script of a model and run the operations on entities picked in
+the scene, as the graphical interface does (src/graphics/selectionDriver),
+give it the buttons of the modules and the entries of the menus of the
+graphical interface, and do their actions (the action registry,
+src/common/Actions.cpp), and run the ONELAB loop, with GetDP linked in when
+build.sh is given it; onelab.html runs GetDP in a web
+worker (solver.js), with a module of its own, as the graphical interface runs
+it in a process of its own: the page shows the results as they are written and
+can stop the solver; shortcuts.js gives the pages the keyboard shortcuts of the
+graphical interface (from src/common/Shortcuts.cpp); files.mjs handles the
+files of a model, for the page, the worker and run_models.mjs.
+manifest.webmanifest and
+the icons (made from contrib/mobile/utils/gmsh_mobile_1024x1024.png, the icon
+of the mobile app) let a phone or a tablet install the pages on its home
+screen, where they open without the bars of the browser.

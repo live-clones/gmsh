@@ -226,6 +226,25 @@ bool MPolygon::isInside(double u, double v, double w, double tol) const
   return dist <= tol * t.maxEdge();
 }
 
+double MPolygon::integrate(double val[], int pOrder, int stride, int order)
+{
+  double sum = 0.;
+  for(int i = 0; i < getNumTriangles(); i++) {
+    std::array<int, 3> t = getTriangleIndices(i);
+    MVertex *v[3] = {_vertices[t[0]], _vertices[t[1]], _vertices[t[2]]};
+    double a[3] = {v[1]->x() - v[0]->x(), v[1]->y() - v[0]->y(),
+                   v[1]->z() - v[0]->z()};
+    double b[3] = {v[2]->x() - v[0]->x(), v[2]->y() - v[0]->y(),
+                   v[2]->z() - v[0]->z()};
+    double n[3] = {a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2],
+                   a[0] * b[1] - a[1] * b[0]};
+    double area = 0.5 * std::sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
+    sum += area *
+           (val[stride * t[0]] + val[stride * t[1]] + val[stride * t[2]]) / 3.;
+  }
+  return sum;
+}
+
 void MPolygon::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 {
   // the points are consumed right away by the caller (as those of the simplex

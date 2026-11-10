@@ -10,13 +10,17 @@
 #include <utility>
 #include <vector>
 
-// The keyboard shortcuts of the GUI, said once: the keys the GUI handles, the
-// shortcuts its menus show and the list of the help window and of the
-// documentation are all read from this table, so that they cannot drift
-// apart. The table knows no toolkit: the GUI maps its keys and runs its
-// actions by name. The titles of the menus must not carry a mnemonic (an
-// "&" letter) that an Alt shortcut below uses: the menu bar opens the menu
-// before the shortcut is seen.
+// The keyboard shortcuts of the GUI, in one table. The keys the GUI handles,
+// the shortcuts shown in its menus, and the lists in the help window and in
+// the documentation are all read from this table, so that they cannot drift
+// apart. The table does not depend on a toolkit: the GUI translates the keys
+// and runs the actions by their names, in snake case ("mesh_nodes"), as those
+// of the action registry (see Actions.h), whose items show the shortcut of
+// the same name ("mesh_1d", or "file_open" in the menu bar of the graphical
+// interface).
+// The titles of the menus must not have a mnemonic (an "&" letter) used by an
+// Alt shortcut below, because the menu bar would open the menu before the
+// shortcut is seen.
 
 // the keys that are not a character
 enum ShortcutKey {
@@ -44,18 +48,19 @@ struct Shortcut {
   int key; // a lower case letter, a digit, a mark, or a ShortcutKey
   unsigned mods;
   Shortcut(int k = KeyNone, unsigned m = 0) : key(k), mods(m) {}
-  // "Alt+Shift+Ctrl+x", with command the name of the Command key ("Ctrl+"),
-  // or the one of this platform when empty
+  // the shortcut as text, e.g. "Alt+Shift+Ctrl+x"; command is the name of the
+  // Command key ("Ctrl+"), the one of this platform if empty
   std::string label(const std::string &command = "") const;
 };
 
 struct ShortcutEntry {
-  const char *action; // what the GUI does with it, by name
+  const char *action; // the name of what the GUI does
   Shortcut shortcut;
   const char *help;
-  // the key is also left to what is under the mouse (the keys of a selection)
+  // the key is also passed on to the widget under the mouse (as are the keys
+  // of a selection)
   bool passOn;
-  // not bound on the macOS system menu bar, where Cmd+H hides the application
+  // not in the macOS system menu bar, where Cmd+H hides the application
   bool inWindowBarOnly;
   ShortcutEntry(const char *a, Shortcut s, const char *h, bool pass = false,
                 bool inWindow = false)
@@ -67,11 +72,12 @@ struct ShortcutEntry {
 // the table, in the order of the documentation
 const std::vector<ShortcutEntry> &GetShortcuts();
 
-// the shortcuts of an action: several keys may do the same
+// the shortcuts of an action (several keys may do the same)
 std::vector<Shortcut> GetShortcutsOf(const std::string &action);
 
-// each shortcut (keys that do the same joined with "or") and what it does, for
-// the help window and the documentation; see Shortcut::label() for command
+// each shortcut and what it does, for the help window and the documentation
+// (the keys that do the same are joined with "or"; see Shortcut::label() for
+// command)
 std::vector<std::pair<std::string, std::string> >
 GetShortcutsUsage(const std::string &command = "");
 

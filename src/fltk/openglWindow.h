@@ -36,6 +36,7 @@ private:
   bool _drawn;
   void _drawScreenMessage();
   void _drawBorder();
+  void _drawLasso();
   // The accumulation of the studio frames: whether the timer asked for the
   // next draw, whether this draw is one of them, the modelview of this
   // frame, and the modelview and window size the last one was drawn with.
@@ -74,8 +75,6 @@ protected:
   void hostCursor(bool cross);
   bool hostBeginGL();
   void hostEndGL();
-  bool hostQueryMode();
-  bool hostMeasureMode();
   bool hostFrozenCoordinate(int coord);
   void hostPointMoved(const double p[3], int mode);
   bool hostHasOnelabContext();
@@ -98,9 +97,10 @@ public:
   // done
   bool printTo(int width, int height, int supersampling, unsigned int format,
                unsigned int type, void *pixels);
-  // wait for a selection (see sceneView::selectionStep() for what is
-  // returned)
-  char selectEntity(int type, std::vector<GVertex *> &vertices,
+  // wait for a selection, of mesh elements if asked (see
+  // sceneView::selectionStep() for what is returned): for the API only
+  char selectEntity(int type, bool pickElements,
+                    std::vector<GVertex *> &vertices,
                     std::vector<GEdge *> &edges, std::vector<GFace *> &faces,
                     std::vector<GRegion *> &regions,
                     std::vector<MElement *> &elements,
@@ -112,6 +112,9 @@ public:
   void setAgain(bool again) { _again = again; }
   // which also brings the per-window visibility list up to date
   static void setLastHandled(openglWindow *w);
+  // a step of the gamepad (see FlGui.cpp): the navigator made while the pad
+  // is active, which moves the camera, and deleted when it is not
+  void gamepadStep();
   void moveWithGamepad();
   Navigator *Nautilus;
 };

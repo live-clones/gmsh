@@ -39,10 +39,6 @@ public:
 void help_options_cb(Fl_Widget *w, void *data);
 double numberOrStringOptionChooser(const std::string &category, int index,
                                    const std::string &name,
-                                   bool isNumber = true,
-                                   const std::string &title = "",
-                                   bool isInteractive = false,
-                                   double minimum = 0., double maximum = 0.,
-                                   double step = 0.);
+                                   bool isNumber = true);
 
 #endif

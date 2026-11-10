@@ -23,10 +23,10 @@ public:
   double value() { return _toggle->value(); }
   void value(double val) { _toggle->value(val); }
   void copy_label(const std::string &label)
-  {
-    _toggle->copy_label(label.c_str());
-  }
-  std::string label() { return _toggle->label(); }
+  { _toggle->copy_label(label.c_str()); }
 };
+
+// the view of index (intptr_t)data exported, to a file chosen
+void view_save_cb(Fl_Widget *w, void *data);
 
 #endif

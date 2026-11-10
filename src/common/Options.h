@@ -1020,16 +1020,38 @@ typedef struct {
   // the defaults are stored in individual bytes so that we can initialize
   // them statically independently of the machine endianness. They will be
   // packed into unsigned ints at runtime
-  unsigned char def1[4], def2[4], def3[4], def4[4];
+  unsigned char def1[4], def2[4], def3[4]; // light, classic, dark
   const char *help;
 } StringXColor;
 
 void InitOptions(int num);
 void InitOptionsGUI(int num);
 void ReInitOptions(int num);
+// General.ColorScheme = 3 goes on to the colours for a light or dark desktop,
+// if not there yet: the ones the user changed are kept
+bool followDesktopColorScheme(bool dark);
 void PrintOptions(int num, int level, int diff, int help, const char *filename,
                   std::vector<std::string> *vec = nullptr);
 void PrintOptionsDoc();
+// the names of the options of a category ("General", "Mesh", ...), as the
+// scripts write them after "Category." ("Color.Name" for a color)
+std::vector<std::string> GetOptionNames(const std::string &category);
+
+// The values an option ("Mesh.Algorithm") takes, with their labels, in the
+// order the interfaces list them: none if it takes any value; without those
+// this build lacks the module for (see OptionChoices in DefaultOptions.h)
+std::vector<std::pair<double, std::string>>
+GetOptionChoices(const std::string &option);
+
+// The range of a number option, and the step of the fields that set it (see
+// OptionRanges in DefaultOptions.h); null if it has none
+struct OptionRange {
+  double min, max, step;
+};
+const OptionRange *GetOptionRange(const std::string &option);
+
+// The help of an option, with the values it takes (see GetOptionChoices())
+std::string GetOptionHelp(const std::string &option, const char *help);
 
 bool StringOption(int action, const char *category, int num, const char *name,
                   std::string &val, bool warnIfUnknown = true);

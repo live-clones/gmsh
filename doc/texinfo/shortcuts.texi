@@ -19,24 +19,24 @@ Mesh lines
 Mesh surfaces
 @item 3 or F3
 Mesh volumes
+@item Shift+Escape
+Toggle mouse selection on/off (a selection under way goes on)
 @item Escape (with any modifier)
-Leave full screen, cancel a lasso, or toggle mouse selection on/off
+Stop the selection under way (query, measurement, operation on the entities picked...), cancel a lasso, or leave full screen
 @item e
-End/accept selection in geometry creation mode
+End the selection under way (accept what is picked)
 @item g
 Go to geometry module
-@item i or -
-Invert selection in geometry creation mode
 @item m
 Go to mesh module
 @item p
 Go to post-processing module
 @item q
-Abort selection in geometry creation mode
+Stop the selection under way, as Escape
 @item s
 Go to solver module
 @item u
-Undo last selection in geometry creation mode
+Undo the last pick of the selection under way
 @item w
 Merge the files matching the watch pattern
 @item x
@@ -158,7 +158,9 @@ Set Y view
 @item Alt+z
 Set Z view
 @item Alt+1
-Set 1:1 view
+Fit the model in the window
+@item Alt+3
+Set isometric 3D view
 @item Alt+Shift+a
 Hide/show small axes
 @item Alt+Shift+b
@@ -185,6 +187,8 @@ Set -X view
 Set -Y view
 @item Alt+Shift+z
 Set -Z view
+@item Alt+Shift+3
+Set isometric 3D view from the opposite side
 @item Alt+Shift+1
 Reset bounding box around visible entities
 @item Alt+Ctrl+1

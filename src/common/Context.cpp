@@ -63,7 +63,6 @@ void CTX::init()
   mesh.timer[0] = mesh.timer[1] = mesh.timer[2] = 0.;
   mesh.minQuality = mesh.avgQuality = 0.;
   drawRotationCenter = 0;
-  pickElements = 0;
   geom.draw = 1;
   mesh.draw = 1;
   post.draw = 1;

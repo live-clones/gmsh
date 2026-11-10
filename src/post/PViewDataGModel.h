@@ -106,6 +106,7 @@ public:
   }
   GModel *getModel() { return _model; }
   SBoundingBox3d getBoundingBox() { return _bbox; }
+  void setBoundingBox(const SBoundingBox3d &bbox) { _bbox = bbox; }
   int getNumEntities() { return _entities.size(); }
   GEntity *getEntity(int ent) { return _entities[ent]; }
   int getNumComponents() { return _numComp; }
@@ -266,6 +267,9 @@ public:
   void setMax(double max) { _max = max; }
   SBoundingBox3d getBoundingBox(int step = -1);
   void setBoundingBox(SBoundingBox3d &box) {}
+  // the bounding box of the steps on a model made again, from the model as it
+  // is now (see the MSH2 reader)
+  void updateBoundingBoxes(GModel *model);
   int getNumScalars(int step = -1);
   int getNumVectors(int step = -1);
   int getNumTensors(int step = -1);

@@ -8,7 +8,6 @@
 #include "metamodel.h"
 #include <algorithm>
 
-onelab::server *onelab::server::_server = 0;
 std::string clientName;
 
 void initializeLoop(const std::string &level)

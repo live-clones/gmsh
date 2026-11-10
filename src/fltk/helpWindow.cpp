@@ -21,7 +21,6 @@
 #include "paletteWindow.h"
 #include "CommandLine.h"
 #include "StringUtils.h"
-#include "OS.h"
 #include "Options.h"
 #include "Context.h"
 #include "drawContext.h"
@@ -48,27 +47,8 @@ static const char *help_link(Fl_Widget *w, const char *uri)
   return nullptr;
 }
 
-struct opt_data {
-  std::string category;
-  int index;
-  std::string name;
-};
-
-static void interactive_cb(Fl_Widget *w, void *data)
-{
-  if(!data) return;
-  inputValueFloat *v = (inputValueFloat *)w;
-  opt_data *d = (opt_data *)data;
-  double val = v->value();
-  NumberOption(GMSH_SET | GMSH_GUI, d->category.c_str(), d->index,
-               d->name.c_str(), val);
-  drawContext::global()->draw();
-}
-
 double numberOrStringOptionChooser(const std::string &category, int index,
-                                   const std::string &name, bool isNumber,
-                                   const std::string &title, bool isInteractive,
-                                   double minimum, double maximum, double step)
+                                   const std::string &name, bool isNumber)
 {
   double valn = 0.;
   std::string vals = "";
@@ -77,11 +57,10 @@ double numberOrStringOptionChooser(const std::string &category, int index,
   else
     StringOption(GMSH_GET, category.c_str(), index, name.c_str(), vals);
 
-  int nn = (isInteractive ? 2 : 3);
+  int nn = 3;
   int width = nn * BB + (nn + 1) * WB, height = 2 * BH + 3 * WB;
-  std::string t = title;
-  if(t.empty()) t = (isNumber ? "Number Chooser" : "String Chooser");
-  Fl_Window *win = new paletteWindow(width, height, false, t.c_str());
+  Fl_Window *win = new paletteWindow(
+    width, height, false, isNumber ? "Number Chooser" : "String Chooser");
   win->set_modal();
   win->hotspot(win);
   inputValueFloat *number = nullptr;
@@ -89,17 +68,6 @@ double numberOrStringOptionChooser(const std::string &category, int index,
   if(isNumber) {
     number = new inputValueFloat(WB, WB, width - 2 * WB, BH);
     number->value(valn);
-    if(isInteractive) {
-      static opt_data d;
-      d.category = category;
-      d.index = index;
-      d.name = name;
-      number->minimum(minimum);
-      number->maximum(maximum);
-      if(CTX::instance()->inputScrolling) number->step(step, 1);
-      number->callback(interactive_cb, (void *)&d);
-      number->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
-    }
   }
   else {
     string = new Fl_Input(WB, WB, width - 2 * WB, BH);
@@ -109,9 +77,8 @@ double numberOrStringOptionChooser(const std::string &category, int index,
     new Fl_Return_Button(width - nn * BB - nn * WB, 2 * WB + BH, BB, BH, "OK");
   Fl_Button *def = new Fl_Button(width - (nn - 1) * BB - (nn - 1) * WB,
                                  2 * WB + BH, BB, BH, "Default");
-  Fl_Button *cancel = nullptr;
-  if(!isInteractive)
-    cancel = new Fl_Button(width - BB - WB, 2 * WB + BH, BB, BH, "Cancel");
+  Fl_Button *cancel =
+    new Fl_Button(width - BB - WB, 2 * WB + BH, BB, BH, "Cancel");
   win->end();
   win->show();
   if(number) number->take_focus();
@@ -146,7 +113,6 @@ double numberOrStringOptionChooser(const std::string &category, int index,
           NumberOption(GMSH_GET_DEFAULT, category.c_str(), index, name.c_str(),
                        valn);
           number->value(valn);
-          if(isInteractive) number->do_callback();
         }
         else {
           StringOption(GMSH_GET_DEFAULT, category.c_str(), index, name.c_str(),
@@ -554,8 +520,7 @@ helpWindow::helpWindow()
                 "Show only the options and variables matching the regular\n"
                 "expression, whatever the case",
                 help_options_cb);
-    // search->take_focus(); cannot call this here - it triggers show() on Linux
-    // in fltk 1.3.3
+    // (no search->take_focus() here: it shows the window on Linux)
 
     browser = new Fl_Browser(0, BH + 2 * WB, width, height - 2 * BH - 4 * WB);
     browser->box(GMSH_SIMPLE_TOP_BOX);

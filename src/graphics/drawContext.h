@@ -590,7 +590,18 @@ public:
   // shifted for a studio frame) and the modelview (the camera looking at
   // its target), which `view' comes back with
   void initCameraMatrices(double view[16]);
+  // the colour a frame starts from: the background, or white for a print
+  // without its background
+  static void setClearColor();
   void initPosition(bool saveMatrices);
+  // the scale that fits the bounding box in the viewport, without translation,
+  // as it is currently rotated, with the margin it has at scale 1 along Z
+  double fitScale();
+  // a standard point of view: "x", "y" or "z" for that axis pointing out of
+  // the screen (into it when opposite), "3d" for the isometric view with Z up
+  // (seen from the other side when opposite), "1:1" to fit the model without
+  // translation, "reset" for no rotation, translation or scaling
+  void standardView(const std::string &which, bool opposite);
   void unproject(double winx, double winy, double p[3], double d[3]);
   // where a point of the model is in the window, in its units and with the
   // matrices of the frame, as unproject() reads them back: false when the
@@ -603,6 +614,9 @@ public:
   // that set them (see world2Window() above)
   void viewport2World(double vp[3], double xyz[3]);
   void world2Viewport(double xyz[3], double vp[3]);
+  // a pick on a mesh gives its element (the query): set by the scene for its
+  // picking pass (see sceneView::beginSelection())
+  bool pickElements = false;
   bool select(int type, bool multiple, bool mesh, bool post, int x, int y,
               int w, int h, std::vector<GVertex *> &vertices,
               std::vector<GEdge *> &edges, std::vector<GFace *> &faces,

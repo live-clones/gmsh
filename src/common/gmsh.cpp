@@ -1273,6 +1273,8 @@ GMSH_API void gmsh::model::setVisibilityPerWindow(const int value,
 {
   if(!_checkInit()) return;
 #if defined(HAVE_FLTK)
+  // (the windows are those of the GUI: none without it)
+  if(!FlGui::available()) return;
   FlGui::instance()->setCurrentOpenglWindow(windowIndex);
   drawContext *ctx = FlGui::instance()->getCurrentDrawContext();
   GModel *m = GModel::current();
@@ -8549,6 +8551,8 @@ GMSH_API void gmsh::view::setVisibilityPerWindow(const int tag, const int value,
     return;
   }
 #if defined(HAVE_FLTK)
+  // (the windows are those of the GUI: none without it)
+  if(!FlGui::available()) return;
   FlGui::instance()->setCurrentOpenglWindow(windowIndex);
   drawContext *ctx = FlGui::instance()->getCurrentDrawContext();
   if(value)
@@ -8937,8 +8941,7 @@ static void _errorHandlerFltk(const char *fmt, ...)
 
 static void _createFltk()
 {
-  if(!FlGui::available())
-    FlGui::instance(_argc, _argv, false, _errorHandlerFltk);
+  if(!FlGui::available()) FlGui::create(_argc, _argv, false, _errorHandlerFltk);
 }
 #endif
 
@@ -9093,10 +9096,7 @@ GMSH_API int gmsh::fltk::selectElements(std::vector<std::size_t> &elementTags)
   elementTags.clear();
 #if defined(HAVE_FLTK)
   _createFltk();
-  int old = CTX::instance()->pickElements;
-  CTX::instance()->pickElements = 1;
-  char ret = FlGui::instance()->selectEntity(ENT_ALL);
-  CTX::instance()->pickElements = old;
+  char ret = FlGui::instance()->selectEntity(ENT_ALL, true);
   if(!FlGui::available()) return 0; // GUI closed during selection
   for(std::size_t i = 0; i < FlGui::instance()->selectedElements.size(); i++)
     elementTags.push_back(FlGui::instance()->selectedElements[i]->getNum());
@@ -9145,8 +9145,6 @@ GMSH_API int gmsh::fltk::pick(vectorpair &dimTags,
   case 3: type = ENT_VOLUME; break;
   default: break;
   }
-  int old = CTX::instance()->pickElements;
-  if(elements) CTX::instance()->pickElements = 1;
   std::vector<GVertex *> vertices;
   std::vector<GEdge *> edges;
   std::vector<GFace *> faces;
@@ -9154,10 +9152,9 @@ GMSH_API int gmsh::fltk::pick(vectorpair &dimTags,
   std::vector<MElement *> ele;
   std::vector<SPoint2> points;
   std::vector<PView *> views;
-  bool ret =
-    gl->pick(type, CTX::instance()->mesh.draw ? true : false, true, (int)x,
-             (int)y, w, h, vertices, edges, faces, regions, ele, points, views);
-  if(elements) CTX::instance()->pickElements = old;
+  bool ret = gl->pick(type, CTX::instance()->mesh.draw ? true : false, true,
+                      (int)x, (int)y, w, h, vertices, edges, faces, regions,
+                      ele, points, views, elements);
   for(std::size_t i = 0; i < vertices.size(); i++)
     dimTags.push_back(std::make_pair(0, vertices[i]->tag()));
   for(std::size_t i = 0; i < edges.size(); i++)

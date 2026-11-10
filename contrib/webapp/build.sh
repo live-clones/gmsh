@@ -1,7 +1,6 @@
 #!/bin/bash
 # Build the Gmsh web app with Emscripten (experimental), in ./build: the Gmsh
-# library and its JavaScript API with the WebGL drawing (viewer.html), with
-# OpenCASCADE, and with GetDP run in-process as the ONELAB solver
+# library and its JavaScript API with the WebGL drawing, with OpenCASCADE, and with GetDP run in-process as the ONELAB solver
 # (onelab.html). The dependencies (OpenCASCADE, and PETSc and SLEPc with
 # SuiteSparse and f2c BLAS/LAPACK for GetDP, all without Fortran or MPI) are
 # downloaded and built once, in ./build/deps.
@@ -13,7 +12,6 @@
 #
 # Testing:
 #   python3 -m http.server 8000 --bind 127.0.0.1 --directory ~/src/gmsh
-#   browse http://localhost:8000/contrib/webapp/viewer.html
 #   browse http://localhost:8000/contrib/webapp/onelab.html
 
 set -e
@@ -151,7 +149,19 @@ gmsh_cmake()
     $GMSH_OPTIONS \
     -DCMAKE_EXE_LINKER_FLAGS="$EXC -sUSE_ZLIB=1 $LINK -Wl,--error-limit=0" "$@"
 }
-gmsh_cmake -UGETDP_INC -UGETDP_LIBS "$@"
+# configured once, with GetDP's paths (its library is built below, before
+# Gmsh's), as configuring again with other settings rewrites the compile
+# flags all of Gmsh depends on, and recompiles it
+if [ $WITH_GETDP == 1 ]; then
+  LIBS="$B/getdp/libgetdp.a"
+  for l in slepc petsc spqr umfpack klu cholmod amd colamd ccolamd camd btf \
+           suitesparseconfig f2clapack f2cblas; do
+    LIBS="$LIBS;$DEPS/petsc/lib/lib$l.a"
+  done
+  gmsh_cmake -DWEBAPP_GETDP_INC="$GETDP/src/kernel" -DWEBAPP_GETDP_LIBS="$LIBS" "$@"
+else
+  gmsh_cmake -UWEBAPP_GETDP_INC -UWEBAPP_GETDP_LIBS "$@"
+fi
 
 # GetDP, as a static library using Gmsh's headers (its private API)
 if [ $WITH_GETDP == 1 ]; then
@@ -164,13 +174,7 @@ if [ $WITH_GETDP == 1 ]; then
     -DENABLE_GMSH=1 -DGMSH_INC="$B/Headers" -DGMSH_LIB="$B/libgmsh.mjs" \
     -DENABLE_BUILD_LIB=1 -DCMAKE_C_FLAGS="$EXC" -DCMAKE_CXX_FLAGS="$EXC"
   emmake make -j$JOBS lib
-  LIBS="$B/getdp/libgetdp.a"
-  for l in slepc petsc spqr umfpack klu cholmod amd colamd ccolamd camd btf \
-           suitesparseconfig f2clapack f2cblas; do
-    LIBS="$LIBS;$DEPS/petsc/lib/lib$l.a"
-  done
   cd "$B"
-  gmsh_cmake -DGETDP_INC="$GETDP/src/kernel" -DGETDP_LIBS="$LIBS" "$@"
   # GetDP's templates (Interactive.pro and the libraries it includes), which
   # onelab.html merges onto a geometry, and their list
   mkdir -p "$B/templates"

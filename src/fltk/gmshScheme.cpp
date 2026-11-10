@@ -20,7 +20,6 @@
 #include <FL/Fl_Menu_Window.H>
 #include <FL/Fl_Tooltip.H>
 #include <FL/Fl_Scrollbar.H>
-#include <FL/Fl_Value_Input.H>
 #include <FL/Fl_Valuator.H>
 #include <FL/Fl_Window.H>
 #include <FL/fl_draw.H>
@@ -29,13 +28,18 @@
 #include <string>
 #include "FlGui.h" // the box types of Gmsh
 #include "Context.h"
+#include "ColorContrast.h"
+#include "GmshMessage.h"
 
 // the default theme, which an empty name also selects: the session files of
-// older versions store an empty theme, and their users get the new look too
+// older versions store an empty theme, and their users get the new look too;
+// read once, as gmshAir(): a theme set during the session is for the next one
+// (see opt_general_gui_theme())
 bool gmshScheme()
 {
-  return CTX::instance()->guiTheme == "gmsh" ||
-         CTX::instance()->guiTheme.empty();
+  static bool scheme =
+    CTX::instance()->guiTheme == "gmsh" || CTX::instance()->guiTheme.empty();
+  return scheme;
 }
 
 int gmshAir()
@@ -91,112 +95,49 @@ void applyGmshColors(bool dark)
   }
 }
 
-// A colour chosen for a light interface (a pastel background, a vivid text)
-// at another lightness, of the same hue, saturated as much as the colour was
-// coloured, so that a pastel stays a tint and a vivid colour stays vivid,
-// within a cap that keeps them from glaring
-static Fl_Color atLightness(Fl_Color c, double lightness, double maxSaturation)
+// a colour of FLTK as 0xrrggbb (see ColorContrast.h), and back
+static unsigned int toRGB(Fl_Color c)
 {
   uchar r, g, b;
   Fl::get_color(c, r, g, b);
-  double rgb[3] = {r / 255., g / 255., b / 255.};
-  double mx = std::max(rgb[0], std::max(rgb[1], rgb[2]));
-  double mn = std::min(rgb[0], std::min(rgb[1], rgb[2]));
-  double chroma = mx - mn, l = 0.5 * (mx + mn), hue = 0., s = 0.;
-  if(chroma > 0.) {
-    s = chroma / (1. - std::abs(2. * l - 1.));
-    if(mx == rgb[0])
-      hue = std::fmod((rgb[1] - rgb[2]) / chroma + 6., 6.);
-    else if(mx == rgb[1])
-      hue = (rgb[2] - rgb[0]) / chroma + 2.;
-    else
-      hue = (rgb[0] - rgb[1]) / chroma + 4.;
-  }
-  s = std::min(maxSaturation, s * std::min(1., 8. * chroma));
-  // back from hue, saturation and lightness
-  double c2 = (1. - std::abs(2. * lightness - 1.)) * s;
-  double x = c2 * (1. - std::abs(std::fmod(hue, 2.) - 1.));
-  double m = lightness - 0.5 * c2;
-  double out[3] = {0., 0., 0.};
-  int sector = (int)hue % 6;
-  const int order[6][3] = {{0, 1, 2}, {1, 0, 2}, {2, 0, 1},
-                           {2, 1, 0}, {1, 2, 0}, {0, 2, 1}};
-  double v[3] = {c2, x, 0.};
-  for(int i = 0; i < 3; i++) out[i] = v[order[sector][i]] + m;
-  return fl_rgb_color((uchar)(255. * out[0] + 0.5),
-                      (uchar)(255. * out[1] + 0.5),
-                      (uchar)(255. * out[2] + 0.5));
+  return (r << 16) | (g << 8) | b;
 }
 
-// A pastel, barely told apart from white, as a clearer tint: each channel
-// moved further from the brightest one, by up to 2.5 times, until the colour
-// is as coloured as a moderate tint; the brightest channel, the hue and the
-// differences between two pastels kept, a grey or a vivid colour unchanged
-static Fl_Color clearer(Fl_Color c)
+static Fl_Color fromRGB(unsigned int rgb, Fl_Color c)
 {
-  uchar rgb[3];
-  Fl::get_color(c, rgb[0], rgb[1], rgb[2]);
-  int mx = std::max(rgb[0], std::max(rgb[1], rgb[2]));
-  int mn = std::min(rgb[0], std::min(rgb[1], rgb[2]));
-  double chroma = (mx - mn) / 255.;
-  if(chroma <= 0.) return c;
-  double k = std::min(2.5, std::max(1., 0.35 / chroma));
-  for(int i = 0; i < 3; i++)
-    rgb[i] = (uchar)std::max(0., mx - k * (mx - rgb[i]) + 0.5);
-  return fl_rgb_color(rgb[0], rgb[1], rgb[2]);
+  if(rgb == toRGB(c)) return c;
+  return fl_rgb_color((rgb >> 16) & 255, (rgb >> 8) & 255, rgb & 255);
 }
 
-// a field: a deep tint in dark mode, a clear one in light mode (a pastel made
-// clearer, a darker or vivid colour, e.g. black, navy or red, made a tint)
 Fl_Color adaptedFill(Fl_Color c)
 {
-  if(CTX::instance()->guiDark) return atLightness(c, 0.27, 0.6);
-  Fl_Color t = clearer(c);
-  uchar r, g, b;
-  Fl::get_color(t, r, g, b);
-  double l = (std::max(r, std::max(g, b)) + std::min(r, std::min(g, b))) / 510.;
-  return (l < 0.75) ? atLightness(c, 0.85, 0.8) : t;
+  return fromRGB(ReadableFillColor(toRGB(c), toRGB(FL_FOREGROUND_COLOR),
+                                   CTX::instance()->guiDark),
+                 c);
 }
 
-// the relative luminance of a colour, and the contrast of two colours, from 1
-// to 21 (WCAG 2)
-static double luminance(Fl_Color c)
-{
-  uchar rgb[3];
-  Fl::get_color(c, rgb[0], rgb[1], rgb[2]);
-  double l[3];
-  for(int i = 0; i < 3; i++) {
-    double v = rgb[i] / 255.;
-    l[i] = (v <= 0.04045) ? v / 12.92 : std::pow((v + 0.055) / 1.055, 2.4);
-  }
-  return 0.2126 * l[0] + 0.7152 * l[1] + 0.0722 * l[2];
-}
-
-static double contrast(Fl_Color a, Fl_Color b)
-{
-  double la = luminance(a), lb = luminance(b);
-  return (std::max(la, lb) + 0.05) / (std::min(la, lb) + 0.05);
-}
-
-// a text: light in dark mode, as is in light mode, but in both cases moved
-// further from the background, of the same hue, until it reads on the
-// backgrounds of the interface (a contrast of 4.5, WCAG AA): a pastel or a
-// near white chosen for a light interface is made darker
 Fl_Color adaptedText(Fl_Color c)
 {
-  auto reads = [](Fl_Color t) {
-    return contrast(t, FL_BACKGROUND_COLOR) >= 4.5 &&
-           contrast(t, FL_BACKGROUND2_COLOR) >= 4.5;
+  return fromRGB(ReadableTextColor(toRGB(c), toRGB(FL_BACKGROUND_COLOR),
+                                   toRGB(FL_BACKGROUND2_COLOR),
+                                   CTX::instance()->guiDark),
+                 c);
+}
+
+// chosen by hand: a formula darkens yellow to olive, and greys the others
+Fl_Color gmshIndicator(GmshIndicator i)
+{
+  // a clear tint on a light interface, and a strong colour on a dark one, on
+  // which the text and the icons of the interface read; a yellow only stays
+  // clean there as a gold
+  static const unsigned char colors[4][2][3] = {
+    {{140, 230, 160}, {35, 134, 54}}, // green
+    {{150, 210, 255}, {31, 111, 235}}, // blue
+    {{255, 180, 175}, {190, 40, 40}}, // red
+    {{250, 220, 100}, {158, 106, 3}} // yellow
   };
-  bool dark = CTX::instance()->guiDark;
-  Fl_Color t = dark ? atLightness(c, 0.72, 0.8) : c;
-  uchar r, g, b;
-  Fl::get_color(c, r, g, b);
-  double l = (std::max(r, std::max(g, b)) + std::min(r, std::min(g, b))) / 510.;
-  for(int i = 1; i <= 20 && !reads(t); i++)
-    t = dark ? atLightness(c, 0.72 + 0.28 * i / 20., 0.8) :
-               atLightness(c, l * (1. - i / 20.), 0.7);
-  return t;
+  const unsigned char *c = colors[i][CTX::instance()->guiDark ? 1 : 0];
+  return fl_rgb_color(c[0], c[1], c[2]);
 }
 
 // The widget under the pointer, when it takes input (a button, a check box,
@@ -521,6 +462,28 @@ void gmshStyleWidgets(Fl_Widget *w)
   if(gmshScheme()) styleWidgetsIn(w);
 }
 
+#if !defined(__APPLE__) && !defined(WIN32)
+// a font without Latin letters draws them all as the same empty box
+static bool drawsLetters()
+{
+  int dx, dy, w1, h1, w2, h2;
+  fl_font(FL_HELVETICA, 16);
+  fl_text_extents("i", dx, dy, w1, h1);
+  fl_text_extents("W", dx, dy, w2, h2);
+  return w1 != w2 || h1 != h2;
+}
+
+// a warning for the message console, which does not exist yet
+static std::string fontWarning;
+static void warnFont(void *)
+{
+  if(FlGui::available())
+    Msg::Warning("%s", fontWarning.c_str());
+  else
+    Fl::repeat_timeout(0.1, warnFont);
+}
+#endif
+
 void applyGmshScheme()
 {
   // the font of the desktop, where FLTK can be told its name
@@ -548,6 +511,20 @@ void applyGmshScheme()
     names[1] = x11 ? "B" + family : family + " Bold";
     names[2] = x11 ? "I" + family : family + " Italic";
     names[3] = x11 ? "P" + family : family + " Bold Italic";
+    // Xft takes no missing letter from another font: back to the stock fonts if
+    // this one does not have them
+    if(x11) {
+      const std::string stocks[4] = {stock, Fl::get_font(FL_HELVETICA_BOLD),
+                                     Fl::get_font(FL_HELVETICA_ITALIC),
+                                     Fl::get_font(FL_HELVETICA_BOLD_ITALIC)};
+      Fl::set_font(FL_HELVETICA, names[0].c_str());
+      if(!drawsLetters()) {
+        fontWarning = "Font '" + family + "' cannot draw Latin letters: using "
+                      "the default font of FLTK";
+        Fl::add_timeout(0., warnFont);
+        for(int i = 0; i < 4; i++) names[i] = stocks[i];
+      }
+    }
   }
   Fl::set_font(FL_HELVETICA, names[0].c_str());
   Fl::set_font(FL_HELVETICA_BOLD, names[1].c_str());

@@ -59,9 +59,7 @@ extern "C" {
 #include <set>
 #include <vector>
 
-/* ==========================================================================
-   Small helpers (ported unchanged from automaticMeshSizeField.cpp)
-   ========================================================================== */
+// Small helpers (ported unchanged from automaticMeshSizeField.cpp)
 
 static inline void norme2(double v[3], double *n)
 {
@@ -81,9 +79,7 @@ static bool rtreeCallback(uint64_t id, void *ctx)
   return true;
 }
 
-/* ==========================================================================
-   Gmsh -> HXT glue (ported unchanged)
-   ========================================================================== */
+// Gmsh -> HXT glue (ported unchanged)
 
 static HXTStatus getAllFacesOfAllRegions(std::vector<GRegion *> &regions,
                                          HXTMesh *m,
@@ -379,11 +375,9 @@ static HXTStatus Gmsh2HxtGlobal(std::vector<GFace *> &faces, HXTMesh *m,
   return HXT_STATUS_OK;
 }
 
-/* ==========================================================================
-   Context closed over by the refinement/assignment predicates and by
-   computeFeatureSize(): the successor of ForestOptions, without anything
-   p4est- or anisotropy-specific.
-   ========================================================================== */
+// Context closed over by the refinement/assignment predicates and by
+// computeFeatureSize(): the successor of ForestOptions, without anything
+// p4est- or anisotropy-specific.
 
 namespace {
 
@@ -405,12 +399,10 @@ struct SizeFieldContext {
 
 } // namespace
 
-/* ==========================================================================
-   Medial axis / feature size (Dey-Zhao via Voronoi poles) -- ported nearly
-   unchanged from automaticMeshSizeField.cpp's featureSize(); only the
-   debug .pos file writes and the (pure drawing) sortClockwise/facet-ordering
-   code have been dropped.
-   ========================================================================== */
+// Medial axis / feature size (Dey-Zhao via Voronoi poles) -- ported nearly
+// unchanged from automaticMeshSizeField.cpp's featureSize(); only the
+// debug .pos file writes and the (pure drawing) sortClockwise/facet-ordering
+// code have been dropped.
 
 // To quickly sort 4 integers
 static void sort4(int *d)
@@ -765,9 +757,7 @@ static void computeFeatureSize(SizeFieldContext &ctx)
   for(MVertex *v : allVertices) delete v;
 }
 
-/* ==========================================================================
-   Orchestration: OctreeSizeField::updateHXT()
-   ========================================================================== */
+// Orchestration: OctreeSizeField::updateHXT()
 
 HXTStatus OctreeSizeField::updateHXT()
 {

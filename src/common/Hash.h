@@ -8,6 +8,7 @@
 
 #include "GmshConfig.h"
 #include <cstdint>
+#include <cstddef>
 
 // FNV (Fowler–Noll–Vo) hashing parameters
 

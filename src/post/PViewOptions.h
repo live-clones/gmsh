@@ -83,7 +83,16 @@ public:
   // where a value falls on that scale, and what falls there
   double scaleForward(double v, double min, double max) const;
   double scaleInverse(double u, double min, double max) const;
+  // the last value of View.Axes: none for a 3D plot, a full grid for a 2D
+  // graph, which says nothing without a frame and numbers
+  enum { AutomaticAxes = 6 };
   int axes, axesAutoPosition, axesMikado;
+  // the axes actually drawn (View.Axes, resolved)
+  int getAxes() const
+  {
+    if(axes != AutomaticAxes) return axes;
+    return (type == Plot3D) ? 0 : 3;
+  }
   double axesTicks[3];
   std::string axesFormat[3], axesLabel[3];
   double axesPosition[6];

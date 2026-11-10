@@ -464,7 +464,8 @@ public:
     *npts = 0;
     *pts = nullptr;
   }
-  double integrate(double val[], int pOrder, int stride = 1, int order = -1);
+  virtual double integrate(double val[], int pOrder, int stride = 1,
+                           int order = -1);
   // val[] must contain interpolation data for face/edge vertices of given
   // edge/face
   double integrateCirc(double val[], int edge, int pOrder, int order = -1);
