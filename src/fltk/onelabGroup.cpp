@@ -1783,8 +1783,10 @@ void onelabGroup::_addModuleButtons(const std::string &module)
         Fl_Menu_Button *but = new Fl_Menu_Button(4, 1, ww - 3, hh);
         but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
         but->box(FL_FLAT_BOX);
+        // (the menu framed: in the flat box of the row it has no border,
+        // which only the shadow macOS gives menus hides)
+        but->menu_box(FL_BORDER_BOX);
         but->color(_tree->color());
-        but->selection_color(_tree->color());
         but->copy_label(b.label.c_str());
         but->copy_tooltip(b.help.c_str());
         addMenuItems(but, b, -1);
