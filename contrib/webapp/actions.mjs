@@ -16,10 +16,11 @@ import {editFile, editScript} from './editor.mjs';
 import {openFiles, openMenu} from './models.mjs';
 import {colorScheme, keepOptionOf, optionRow, readOptions, setColorScheme, showOptions, showTab} from './options.mjs';
 import {draw} from './scene.mjs';
-import {installShortcuts, shortcutsHelp} from './shortcuts.js';
+import {ModShift, installShortcuts, shortcutsHelp} from './shortcuts.js';
 import {run, showAll} from './solverClient.mjs';
-import {fullscreenElement, fullscreenEnabled, installApp, popupMenu, sceneAction,
-        toggleFullscreen, toggleMouseSelection, toggleSide} from './statusbar.mjs';
+import {fullscreenElement, fullscreenEnabled, installApp, openQuickMenu, playing, popupMenu,
+        rewindAnimation, sceneAction, setPlaying, toggleFullscreen, toggleMouseSelection,
+        toggleSide} from './statusbar.mjs';
 import {Tool, escape, operationKey, setTool, startOperation, stopOperation, toggleTool, tool} from './tools.mjs';
 import {exportView, firstView, showViewOptions, viewOptionsOpen} from './views.mjs';
 
@@ -245,6 +246,22 @@ const pageActions = {
                    check: (view, tag) => viewOptionsOpen.has(tag)},
   'view_export_pos': {run: (view, tag) => exportView(tag, 'pos')},
   'view_export_msh': {run: (view, tag) => exportView(tag, 'msh')},
+  // Status bar (the buttons are made from the registry, see statusbar.mjs)
+  'quick_access': {run: (view, tag, mods, el) => {
+    const r = el ? el.getBoundingClientRect() : {left: 20, top: innerHeight - 20};
+    openQuickMenu(r.left, r.top, true);
+  }},
+  'view_x': {run: (view, tag, mods) => sceneAction('view_x', mods)},
+  'view_y': {run: (view, tag, mods) => sceneAction('view_y', mods)},
+  'view_z': {run: (view, tag, mods) => sceneAction('view_z', mods)},
+  'view_3d': {run: (view, tag, mods) => sceneAction('view_3d', mods)},
+  'view_rotate': {run: (view, tag, mods) => { if(web.rotate(mods & ModShift ? 1 : 0)) draw(); }},
+  'view_1_1': {run: (view, tag, mods) => sceneAction('view_1_1', mods)},
+  'mouse_selection': {run: () => toggleMouseSelection()},
+  'anim_rewind': {run: rewindAnimation},
+  'time_step_prev': {run: () => sceneAction('time_step_prev')},
+  'anim_play': {run: () => setPlaying(!playing()), check: () => playing()},
+  'time_step_next': {run: () => sceneAction('time_step_next')},
   // Menu bar: File
   'file_new': {run: () => newModel()},
   'file_open': {run: () => openMenu(true)},
@@ -264,16 +281,8 @@ const pageActions = {
   'selection_quit': {run: () => tool === Tool.Operation ? operationKey('q') : setTool(Tool.None),
                      available: () => !!tool},
   'escape': {run: () => escape()},
-  'mouse_selection': {run: () => toggleMouseSelection()},
   'options_solver': {run: () => showTab('modelTab')},
   'options_post': {run: () => showViewOptions(firstView())},
-  'view_x': {run: (view, tag, mods) => sceneAction('view_x', mods)},
-  'view_y': {run: (view, tag, mods) => sceneAction('view_y', mods)},
-  'view_z': {run: (view, tag, mods) => sceneAction('view_z', mods)},
-  'view_1_1': {run: (view, tag, mods) => sceneAction('view_1_1', mods)},
-  'view_3d': {run: (view, tag, mods) => sceneAction('view_3d', mods)},
-  'time_step_prev': {run: () => sceneAction('time_step_prev')},
-  'time_step_next': {run: () => sceneAction('time_step_next')},
   'view_prev': {run: () => sceneAction('view_prev')},
   'view_next': {run: () => sceneAction('view_next')}
 };
@@ -286,7 +295,7 @@ function editProgram(name) {
 // apply now
 const itemCheck = (item) => web.actionCheck(item.id);
 // whether the page has an item now
-const canRunItem = (item) => (item.kind !== 'action' || !!item.run) && item.available();
+export const canRunItem = (item) => (item.kind !== 'action' || !!item.run) && item.available();
 // whether a menu has an item the page has now
 const canRunAnyItem = (menu) =>
   menu.items.some((it) => it.kind === 'menu' ? canRunAnyItem(it) : canRunItem(it));
@@ -303,11 +312,16 @@ export const moduleOf = (item) =>
   ['Geometry', 'Mesh'].find((m) => item.path.startsWith(m + ' ›')) || '';
 // What an item does, clicked or by a key of its name: an operation, a shape,
 // or an action (view: the index of the view of a menu of a view, tag its tag;
-// mods: the modifiers of the key)
-async function runItem(item, {view = -1, tag, mods = 0} = {}) {
+// mods: the modifiers of the key; el: the button clicked, for a menu to open
+// at it)
+export async function runItem(item, {view = -1, tag, mods = 0, el = null} = {}) {
   if(item.kind === 'operation') startOperation(item);
   else if(item.kind === 'shape') startShape(item.name);
-  else await item.run(view, tag, mods);
+  else await item.run(view, tag, mods, el);
+}
+// the keys of an item, as the platform names them ("Alt+x, Alt+Shift+x"), or ''
+export function keyLabels(name) {
+  return shortcuts.filter((s) => s.action === name).map((s) => s.label).join(', ');
 }
 // what an action does in Gmsh (see RunItem()): on the mesh, timed with the
 // size of the mesh in the status; on the script, of a new model if there is

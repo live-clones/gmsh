@@ -76,6 +76,8 @@ export const web = {
   onelabUpdateGraphs: () => call('OnelabUpdateGraphs', null, [], []),
   onelabForgetSolvers: () => call('OnelabForgetSolvers', null, [], []),
   errorCount: () => call('ErrorCount', N, [], []),
+  // the strokes of an icon (see IconStrokes.h), for the status bar
+  icon: (name) => call('Icon', S, [S], [name]),
   // the files (see models.mjs)
   unzip: (zip, dir) => call('Unzip', null, [S, S], [zip, dir]),
 };

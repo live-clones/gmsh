@@ -34,6 +34,7 @@
 #include <emscripten.h>
 #include "GmshConfig.h"
 #include "Actions.h"
+#include "IconStrokes.h"
 #include "ScriptStyles.h"
 #include "Context.h"
 #include "ColorContrast.h"
@@ -132,6 +133,7 @@ namespace {
                        kinds[item.kind] +
                        "\",\"name\":" + JsonString(item.name) +
                        ",\"help\":" + JsonString(item.help) +
+                       ",\"icon\":" + JsonString(item.icon) +
                        ",\"gmsh\":" + (item.run ? "1" : "0") + ",\"items\":[";
     _items.push_back(&item);
     for(std::size_t i = 0; i < item.items.size(); i++)
@@ -569,7 +571,8 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebScriptProgram(const char *name)
 }
 
 // The action registry (see Actions.h), in JSON: {menu: item}, the menus and
-// the actions of the keys in no menu ("Keys"), an item {"id", "label", "kind"
+// the status bar and the actions of the keys in no menu ("Keys"), an item
+// {"id", "label", "kind"
 // ("menu", "action", "operation" or "shape"), "name", "help", "gmsh" (1 for
 // an action Gmsh does, done here; the page does the others), "items"}; the
 // page gives back its id to do it
@@ -580,12 +583,18 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebActions()
   _items.clear();
   json = "{";
   for(const char *menu :
-      {"Geometry", "Mesh", "Quick access", "View", "Menu bar", "Keys"})
+      {"Geometry", "Mesh", "Quick access", "View", "Menu bar", "Status bar",
+       "Keys"})
     json += std::string(json.size() > 1 ? "," : "") + JsonString(menu) + ":" +
             jsonItem(GetActionMenu(menu));
   json += "}";
   return json.c_str();
 }
+
+// The strokes of the icon of the given name (see IconStrokes.h), the inside of
+// an SVG in a 24 by 24 box, or "" (the page colours and sizes them)
+EMSCRIPTEN_KEEPALIVE const char *gmshWebIcon(const char *name)
+{ return IconStrokes(name); }
 
 // What the item of id does, done here (see RunItem()), for the view of
 // index view, in the scene: what RunItem() returns

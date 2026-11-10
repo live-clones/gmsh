@@ -52,6 +52,7 @@ body.noSide #side, body.noSide #split { display: none; }
 #statusbar button.on { background: var(--graph-on); color: #000; }
 #statusbar button.off { background: var(--loop3); color: var(--loop-fg); }
 #statusbar .gap { width: 10px; flex: none; }
+#statusbar svg { width: 14px; height: 14px; display: block; }
 /* the status: a click shows or hides the messages, as in the graphical
    interface */
 #status { margin-left: 8px; min-width: 0; flex: 1; overflow: hidden;
@@ -304,9 +305,9 @@ body.noSide #side, body.noSide #split { display: none; }
   #statusbar button { flex: 1 1 0; min-width: 32px; max-width: 80px; height: 38px;
                       font-size: 16px; }
   #statusbar svg { width: 20px; height: 20px; }
-  #statusbar [data-act=x], #statusbar [data-act=y], #statusbar [data-act=z],
-  #statusbar [data-act=rotate], #statusbar [data-act=select],
-  #statusbar [data-act=rewind], #statusbar button:disabled { display: none; }
+  #statusbar [data-act=view_x], #statusbar [data-act=view_y], #statusbar [data-act=view_z],
+  #statusbar [data-act=view_rotate], #statusbar [data-act=mouse_selection],
+  #statusbar [data-act=anim_rewind], #statusbar button:disabled { display: none; }
   #notes .note, #hover { max-width: 70vw; }
 }
 /* what is being loaded or computed, on the top edge of the scene: a

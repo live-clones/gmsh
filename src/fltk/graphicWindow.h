@@ -6,6 +6,7 @@
 #ifndef GRAPHIC_WINDOW_H
 #define GRAPHIC_WINDOW_H
 
+#include <map>
 #include <string>
 #include <vector>
 #include <FL/Fl.H>
@@ -28,27 +29,6 @@ class messageBrowser;
 class toolDock;
 class dockDivider;
 class paletteWindow;
-
-// the buttons of the status bar (see statusButtons() in graphicWindow.cpp)
-enum statusButtonId {
-  StatusMenu,
-  StatusModels,
-  StatusQuick,
-  StatusX,
-  StatusY,
-  StatusZ,
-  Status3D,
-  StatusRotate,
-  StatusFit,
-  StatusSelect,
-  StatusQuery,
-  StatusMeasure,
-  StatusRewind,
-  StatusBack,
-  StatusPlay,
-  StatusForward,
-  StatusButtons
-};
 
 class graphicWindow : public dockHost {
 private:
@@ -73,7 +53,9 @@ private:
   onelabGroup *_onelab;
   Fl_Box *_bottom;
 
-  Fl_Button *_butt[StatusButtons];
+  // the buttons of the status bar, by the name of their item (see the "Status
+  // bar" menu of Actions.cpp)
+  std::map<std::string, Fl_Button *> _statusButtons;
   Fl_Progress *_label;
   int _minWidth, _minHeight;
   // the size of the icons of the status bar
@@ -112,9 +94,12 @@ public:
   Fl_Window *getMenuWindow() { return _menuwin; }
   onelabGroup *getMenu() { return _onelab; }
   Fl_Progress *getProgress() { return _label; }
-  Fl_Button *getSelectionButton() { return _butt[StatusSelect]; }
-  Fl_Button *getQueryButton() { return _butt[StatusQuery]; }
-  Fl_Button *getMeasureButton() { return _butt[StatusMeasure]; }
+  // the button of the status bar of the given item, or null
+  Fl_Button *statusButton(const std::string &name)
+  {
+    auto it = _statusButtons.find(name);
+    return it == _statusButtons.end() ? nullptr : it->second;
+  }
   messageBrowser *getMessageBrowser() { return _browser; }
   std::vector<std::string> &getMessages() { return _messages; }
   void setAutoScroll(bool val) { _autoScrollMessages = val; }
@@ -165,7 +150,9 @@ public:
   int getDockWidth();
   void setDockWidth(int w);
   bool split(openglWindow *g, char how, double ratio);
-  void setAnimButtons(int mode);
+  // the play button as a pause button while the animation plays
+  void setAnimButtons(bool playing);
+  // the animation buttons active when there are views with time steps
   void checkAnimButtons();
   int getMessageHeight();
   void setMessageHeight(int h);
@@ -198,11 +185,20 @@ bool measureMode();
 void updateModeButtons();
 // the mouse selection on or off (the "S" button of the status bar)
 void toggleMouseSelection();
-// the quick access menu of the status bar (also on a double click in the
-// scene)
-void quick_access_cb(Fl_Widget *w, void *data);
-// a step of the animation: of the time steps (time), or of the views
-void status_play_manual(int time, int incr, bool redraw = true);
+// the quick access menu, at the pointer (the button of the status bar, a
+// double click in the scene)
+void quickAccessMenu();
+// the menu of the models, at the pointer, to pick the current one
+void modelsMenu();
+// the window whose status bar button is being clicked (for an action to act
+// on its viewports), or null
+graphicWindow *statusBarWindow();
+// the animation: a step of the time steps (time) or of the views, back to the
+// first step, played or paused (and whether it plays)
+void stepAnimation(int time, int incr, bool redraw = true);
+void rewindAnimation();
+void playOrPauseAnimation();
+bool animationPlaying();
 // the console, the menu and the docked tool windows shown or hidden, the
 // menu attached to the window or detached, and a graphic window added
 void showHideMessages();

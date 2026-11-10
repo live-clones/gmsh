@@ -9,12 +9,11 @@
 
 import {$, app, gmsh, log} from './app.mjs';
 import {web} from './gmshweb.mjs';
-import {menuItems, registry} from './actions.mjs';
+import {canRunItem, keyLabels, menuItems, registry, runItem} from './actions.mjs';
 import {openMenu} from './models.mjs';
-import {readOptions, setOption, views} from './options.mjs';
+import {readOptions, views} from './options.mjs';
 import {draw} from './scene.mjs';
-import {ModShift, modifiers} from './shortcuts.js';
-import {Tool, operationKey, toggleTool} from './tools.mjs';
+import {modifiers} from './shortcuts.js';
 import {showViews} from './views.mjs';
 
 // The popups over the page: the menu of a model (Open model), of the graphs
@@ -25,7 +24,7 @@ const popups = [
   ['openMenu', '#open', () => openMenu(false)],
   ['graphMenu', '#graphMenu, .graphButton'],
   ['rangeMenu', '#rangeMenu, .rangeButton'],
-  ['quickMenu', '#quickMenu, [data-act=quick], .menuButton, #model']];
+  ['quickMenu', '#quickMenu, [data-act=quick_access], .menuButton, #model']];
 // the first popup open closed: false if none is open
 export function closePopup(target = null) {
   for(const [id, keep, close] of popups) {
@@ -60,31 +59,65 @@ export const sideOver = () => app.narrow.matches && !document.body.classList.con
 // the selection button red while the mouse selects nothing (hover, picking)
 export function showSelection() {
   const on = !!gmsh.option.getNumber('General.MouseSelection');
-  $('statusbar').querySelector('[data-act=select]').classList.toggle('off', !on);
+  const b = $('statusbar').querySelector('[data-act=mouse_selection]');
+  if(b) b.classList.toggle('off', !on);
 }
 // the animation: a step every PostProcessing.AnimationDelay seconds
 let playTimer = 0;
-const playIcon = '<svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">' +
-  '<path d="M4 2.5L11 7l-7 4.5z"/></svg>';
-const pauseIcon = '<svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">' +
-  '<path d="M3.5 2.5h2.5v9H3.5zM8 2.5h2.5v9H8z"/></svg>';
-function setPlaying(on) {
+export const playing = () => !!playTimer;
+export function setPlaying(on) {
   clearInterval(playTimer);
   playTimer = 0;
   if(on) {
     const delay = 1000 * gmsh.option.getNumber('PostProcessing.AnimationDelay');
     playTimer = setInterval(() => sceneAction('time_step_next'), Math.max(20, delay));
   }
-  $('statusbar').querySelector('[data-act=play]').innerHTML = on ? pauseIcon : playIcon;
+  const b = $('statusbar').querySelector('[data-act=anim_play]');
+  if(b) b.innerHTML = icon(on ? 'pause' : 'play');
+}
+// the time steps of the views back to the first
+export function rewindAnimation() {
+  for(let i = 0; i < views(); i++) gmsh.option.setNumber(`View[${i}].TimeStep`, 0);
+  readOptions();
+  draw();
 }
 // the buttons of the animation, for views with several time steps
 export function showAnimation() {
   let steps = !!gmsh.option.getNumber('PostProcessing.AnimationCycle');
   for(let i = 0; i < views() && !steps; i++)
     if(gmsh.option.getNumber(`View[${i}].NbTimeStep`) > 1) steps = true;
-  for(const a of ['rewind', 'back', 'play', 'forward'])
-    $('statusbar').querySelector(`[data-act=${a}]`).disabled = !steps;
+  for(const a of ['anim_rewind', 'time_step_prev', 'anim_play', 'time_step_next']) {
+    const b = $('statusbar').querySelector(`[data-act=${a}]`);
+    if(b) b.disabled = !steps;
+  }
   if(!steps && playTimer) setPlaying(false);
+}
+// an icon, as the FLTK interface draws it (see IconStrokes.h), in the colour
+// of the text
+const icon = (name) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" ` +
+  `stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${web.icon(name)}</svg>`;
+// The buttons of the status bar, from the "Status bar" menu of the registry
+// (see Actions.cpp), as in the FLTK interface: each with its icon or its
+// label, and its item's help and keys as its title; the groups set apart (the
+// first before the buttons of an operation, the others before the status)
+function buildStatusBar() {
+  const bar = $('statusbar');
+  const registryBar = registry['Status bar'];
+  registryBar.items.forEach((group, g) => {
+    const before = g ? $('status') : bar.querySelector('[data-act=op_e]');
+    if(g) bar.insertBefore(Object.assign(document.createElement('span'), {className: 'gap'}), before);
+    for(const item of group.items) {
+      if(!canRunItem(item)) continue;
+      const b = document.createElement('button');
+      b.dataset.act = item.name;
+      const keys = keyLabels(item.name);
+      b.title = item.help + (keys ? ` (${keys})` : '');
+      if(item.icon) b.innerHTML = icon(item.icon);
+      else b.textContent = item.label;
+      b.addEventListener('click', (e) => runItem(item, {mods: modifiers(e), el: b}));
+      bar.insertBefore(b, before);
+    }
+  });
 }
 // The quick access menu of the status bar, as the graphical interface's: what
 // is shown of the geometry, the mesh and the views, the projection and the
@@ -101,10 +134,7 @@ function quickItems() {
     ['Rotate by 90 degrees', () => {
       if(web.rotate(0)) draw();
     }],
-    ['Mouse selection', () => {
-      setOption('General.MouseSelection', num('General.MouseSelection') ? 0 : 1);
-      showSelection();
-    }, !!num('General.MouseSelection')]);
+    ['Mouse selection', () => toggleMouseSelection(), !!num('General.MouseSelection')]);
   return items;
 }
 // the page in full screen, where the browser lets it (not on an iPhone,
@@ -228,37 +258,6 @@ export function build() {
   document.addEventListener('pointerdown', (e) => closePopup(e.target));
   app.narrow.addEventListener('change', () => showSide(!app.narrow.matches));
   if(app.narrow.matches) document.body.classList.add('noSide');
-  $('statusbar').addEventListener('click', (e) => {
-    const b = e.target.closest('button');
-    if(!b) return;
-    const shift = modifiers(e) & ModShift;
-    switch(b.dataset.act) {
-    case 'sidebar': toggleSide(); break;
-    case 'quick': {
-      const r = b.getBoundingClientRect();
-      openQuickMenu(r.left, r.top, true);
-      break;
-    }
-    case 'x': case 'y': case 'z': case '3d': sceneAction('view_' + b.dataset.act, shift); break;
-    case 'fit': sceneAction('view_1_1', shift); break;
-    case 'rotate':
-      if(web.rotate(shift ? 1 : 0)) draw();
-      break;
-    case 'op_e': operationKey('e'); break;
-    case 'op_u': operationKey('u'); break;
-    case 'op_q': operationKey('q'); break;
-    case 'query': toggleTool(Tool.Query); break;
-    case 'measure': toggleTool(Tool.Measure); break;
-    case 'select': toggleMouseSelection(); break;
-    case 'rewind':
-      for(let i = 0; i < views(); i++) gmsh.option.setNumber(`View[${i}].TimeStep`, 0);
-      readOptions();
-      draw();
-      break;
-    case 'back': sceneAction('time_step_prev'); break;
-    case 'forward': sceneAction('time_step_next'); break;
-    case 'play': setPlaying(!playTimer); break;
-    }
-  });
+  buildStatusBar();
   showSelection();
 }

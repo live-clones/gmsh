@@ -1015,6 +1015,68 @@ static actionItem menuBar()
   });
 }
 
+// The status bar of the interfaces: a button for each item, with its icon or
+// its label, the groups set apart (the animation buttons wait for views with
+// time steps)
+static actionItem statusBar()
+{
+  std::vector<actionItem> view = {
+    guiAction("", "menu_show_hide", "Show or hide the menu")
+      .withIcon("sidebar"),
+    guiAction("", "models", "Set the current (active) model")
+      .withIcon("models"),
+    guiAction("", "quick_access",
+              "Open the quick access menu (also by a double click in the "
+              "scene)")
+      .withIcon("quick"),
+    guiAction("X", "view_x", "Set X view, or -X view (Shift)")
+      .key('x', ModAlt)
+      .key('x', ModAlt | ModShift),
+    guiAction("Y", "view_y", "Set Y view, or -Y view (Shift)")
+      .key('y', ModAlt)
+      .key('y', ModAlt | ModShift),
+    guiAction("Z", "view_z", "Set Z view, or -Z view (Shift)")
+      .key('z', ModAlt)
+      .key('z', ModAlt | ModShift),
+    guiAction("", "view_3d",
+              "Set isometric 3D view, or from the opposite side (Shift)")
+      .withIcon("cube")
+      .key('3', ModAlt)
+      .key('3', ModAlt | ModShift),
+    guiAction("", "view_rotate",
+              "Rotate by 90 degrees, or -90 (Shift), or sync the rotations of "
+              "the viewports (Ctrl)")
+      .withIcon("rotate"),
+    guiAction("1:1", "view_1_1",
+              "Fit the model in the window, reset the bounding box around the "
+              "visible entities (Shift), or sync the scale between viewports "
+              "(Ctrl)")
+      .key('1', ModAlt)
+      .key('1', ModAlt | ModShift)
+      .key('1', ModAlt | ModCommand),
+    guiAction("S", "mouse_selection",
+              "Toggle mouse selection on/off (a selection under way goes on)")
+      .key(KeyEscape, ModShift),
+    guiAction("", "query", "Query the model where you click (Escape to stop)")
+      .withIcon("query"),
+    guiAction("", "measure",
+              "Measure the distance between two points you click (Escape to "
+              "stop)")
+      .withIcon("measure"),
+  };
+  std::vector<actionItem> animation = {
+    guiAction("", "anim_rewind", "Rewind animation").withIcon("rewind"),
+    guiAction("", "time_step_prev", "Go to previous time step")
+      .withIcon("back")
+      .key(KeyLeft),
+    guiAction("", "anim_play", "Play or pause animation").withIcon("play"),
+    guiAction("", "time_step_next", "Go to next time step")
+      .withIcon("forward")
+      .key(KeyRight),
+  };
+  return group({group(view), group(animation)});
+}
+
 // The actions only on keys, in no menu, their help saying what the key does:
 // those the interfaces do, then the display
 static actionItem keysOnly()
@@ -1058,36 +1120,11 @@ static actionItem keysOnly()
               "Stop the selection under way (query, measurement, operation on "
               "the entities picked...), cancel a lasso, or leave full screen")
       .key(KeyEscape, AnyModifiers),
-    guiAction("", "mouse_selection",
-              "Toggle mouse selection on/off (a selection under way goes on)")
-      .key(KeyEscape, ModShift),
     guiAction("", "options_solver", "Show solver options").key('s', ModShift),
     guiAction("", "options_post", "Show post-processing options")
       .key('p', ModShift),
     guiAction("", "plugins_view", "Show post-processing view plugins")
       .key('u', ModShift),
-    guiAction("", "view_x", "Set X view, or -X view (Shift)")
-      .key('x', ModAlt)
-      .key('x', ModAlt | ModShift),
-    guiAction("", "view_y", "Set Y view, or -Y view (Shift)")
-      .key('y', ModAlt)
-      .key('y', ModAlt | ModShift),
-    guiAction("", "view_z", "Set Z view, or -Z view (Shift)")
-      .key('z', ModAlt)
-      .key('z', ModAlt | ModShift),
-    guiAction("", "view_1_1",
-              "Fit the model in the window, reset the bounding box around the "
-              "visible entities (Shift), or sync the scale between viewports "
-              "(Ctrl)")
-      .key('1', ModAlt)
-      .key('1', ModAlt | ModShift)
-      .key('1', ModAlt | ModCommand),
-    guiAction("", "view_3d",
-              "Set isometric 3D view, or from the opposite side (Shift)")
-      .key('3', ModAlt)
-      .key('3', ModAlt | ModShift),
-    guiAction("", "time_step_prev", "Go to previous time step").key(KeyLeft),
-    guiAction("", "time_step_next", "Go to next time step").key(KeyRight),
     guiAction("", "view_prev", "Make previous view visible").key(KeyUp),
     guiAction("", "view_next", "Make next view visible").key(KeyDown),
 #if defined(HAVE_POPPLER)
@@ -1223,6 +1260,7 @@ static std::map<std::string, actionItem> &menus()
     {"Quick access", quickAccessMenu()},
     {"View", viewMenu()},
     {"Menu bar", menuBar()},
+    {"Status bar", statusBar()},
     {"Keys", keysOnly()},
   };
   return menus;

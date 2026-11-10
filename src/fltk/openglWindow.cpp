@@ -723,7 +723,7 @@ void openglWindow::hostShowOnelabContext(int dim, int tag)
   FlGui::instance()->onelabContext->show(dim, tag);
 }
 
-void openglWindow::hostQuickAccess() { quick_access_cb(nullptr, nullptr); }
+void openglWindow::hostQuickAccess() { quickAccessMenu(); }
 
 int openglWindow::pixel_w() { return Fl_Gl_Window::pixel_w(); }
 

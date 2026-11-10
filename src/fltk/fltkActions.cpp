@@ -177,6 +177,33 @@ static const std::map<std::string, fltkAction> &actions()
     {"options_restore_defaults",
      [] { options_restore_defaults_cb(nullptr, nullptr); }},
     {"help_about", helpAbout},
+    // Status bar
+    {"models", modelsMenu},
+    {"quick_access", quickAccessMenu},
+    // the point of view of the window of the button clicked, or the current
+    // one (Shift and Ctrl read: the other side, reset, sync the viewports)
+    {"view_x", [] { setPointOfView("x", statusBarWindow()); }},
+    {"view_y", [] { setPointOfView("y", statusBarWindow()); }},
+    {"view_z", [] { setPointOfView("z", statusBarWindow()); }},
+    {"view_3d", [] { setPointOfView("3d", statusBarWindow()); }},
+    {"view_rotate", [] { setPointOfView("r", statusBarWindow()); }},
+    {"view_1_1", [] { setPointOfView("1:1", statusBarWindow()); }},
+    {"mouse_selection", toggleMouseSelection},
+    // the animation: the time steps, or the views
+    // (PostProcessing.AnimationCycle)
+    {"anim_rewind", rewindAnimation},
+    {"anim_play",
+     {playOrPauseAnimation, [] { return (int)animationPlaying(); }}},
+    {"time_step_prev",
+     [] {
+       stepAnimation(!CTX::instance()->post.animCycle,
+                     -CTX::instance()->post.animStep);
+     }},
+    {"time_step_next",
+     [] {
+       stepAnimation(!CTX::instance()->post.animCycle,
+                     CTX::instance()->post.animStep);
+     }},
     // Keys: the keys in no menu
     {"project_reload", reloadProject},
     {"solver_run", onelabCompute},
@@ -194,26 +221,12 @@ static const std::map<std::string, fltkAction> &actions()
     {"freeze_but_y", [] { freezeAxis(1, true); }},
     {"freeze_but_z", [] { freezeAxis(2, true); }},
     {"escape", escape},
-    {"mouse_selection", toggleMouseSelection},
     {"options_solver", [] { FlGui::instance()->options->showGroup(4); }},
     {"options_post", [] { FlGui::instance()->options->showGroup(5); }},
     {"plugins_view", pluginsOfView},
-    // the point of view, as the buttons of the status bar (which read Shift
-    // and Ctrl: the other side, reset, sync the viewports)
-    {"view_x", [] { setPointOfView("x"); }},
-    {"view_y", [] { setPointOfView("y"); }},
-    {"view_z", [] { setPointOfView("z"); }},
-    {"view_1_1", [] { setPointOfView("1:1"); }},
-    {"view_3d", [] { setPointOfView("3d"); }},
-    // the time steps and the views, on the arrows
-    {"time_step_prev",
-     [] { status_play_manual(1, -CTX::instance()->post.animStep); }},
-    {"time_step_next",
-     [] { status_play_manual(1, CTX::instance()->post.animStep); }},
-    {"view_prev",
-     [] { status_play_manual(0, -CTX::instance()->post.animStep); }},
-    {"view_next",
-     [] { status_play_manual(0, CTX::instance()->post.animStep); }},
+    // the views, on the arrows
+    {"view_prev", [] { stepAnimation(0, -CTX::instance()->post.animStep); }},
+    {"view_next", [] { stepAnimation(0, CTX::instance()->post.animStep); }},
 #if defined(HAVE_POPPLER)
     {"page_prev", [] { gmshPopplerWrapper::setCurrentPageDown(); }},
     {"page_next", [] { gmshPopplerWrapper::setCurrentPageUp(); }},

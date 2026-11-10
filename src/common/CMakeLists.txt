@@ -14,6 +14,7 @@ set(SRC
   ColorContrast.cpp
   ScriptStyles.cpp
   Actions.cpp
+  IconStrokes.cpp
   OS.cpp
   OpenFile.cpp
   CreateFile.cpp

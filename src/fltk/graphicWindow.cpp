@@ -138,11 +138,6 @@ void setPointOfView(const char *str, graphicWindow *g)
   FlGui::instance()->manip->update();
 }
 
-static void status_xyz1p_cb(Fl_Widget *w, void *data)
-{
-  setPointOfView((const char *)data, getGraphicWindow(w));
-}
-
 static void model_switch_cb(Fl_Widget *w, void *data)
 {
   int index = (intptr_t)data;
@@ -188,26 +183,20 @@ void updateModeButtons()
   // a query and a measurement in yellow, as what they leave on the picture by
   // default (see General.Color.Query)
   Fl_Color col = gmshIndicator(IndicatorYellow);
+  auto colour = [](Fl_Button *b, bool on, Fl_Color c) {
+    if(!b) return;
+    b->color(on ? c : FL_BACKGROUND_COLOR);
+    b->redraw();
+  };
   for(graphicWindow *g : FlGui::instance()->graph) {
-    g->getQueryButton()->color(queryMode() ? col : FL_BACKGROUND_COLOR);
-    g->getQueryButton()->redraw();
-    g->getMeasureButton()->color(measureMode() ? col : FL_BACKGROUND_COLOR);
-    g->getMeasureButton()->redraw();
-    g->getSelectionButton()->color(
-      CTX::instance()->mouseSelection ? FL_BACKGROUND_COLOR :
-                                        gmshIndicator(IndicatorRed));
-    g->getSelectionButton()->redraw();
+    colour(g->statusButton("query"), queryMode(), col);
+    colour(g->statusButton("measure"), measureMode(), col);
+    colour(g->statusButton("mouse_selection"), !CTX::instance()->mouseSelection,
+           gmshIndicator(IndicatorRed));
   }
 }
 
-static void status_query_cb(Fl_Widget *w, void *data)
-{ toggleTool("Query"); }
-
-static void status_measure_cb(Fl_Widget *w, void *data)
-{ toggleTool("Measure"); }
-
-// the menu of the models, to pick the current one
-static void status_model_cb(Fl_Widget *w, void *data)
+void modelsMenu()
 {
   std::vector<char *> tofree;
   std::vector<Fl_Menu_Item> menu;
@@ -248,7 +237,7 @@ static int globalMenuHandler(int e)
   return globalMenu->handle(e);
 }
 
-void quick_access_cb(Fl_Widget *w, void *data)
+void quickAccessMenu()
 {
   // the menu (see Actions.cpp), opened on the item picked last
   static Fl_Menu_Button *menu = nullptr;
@@ -295,10 +284,7 @@ void toggleMouseSelection()
     opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 1);
 }
 
-static void mouse_selection_cb(Fl_Widget *w, void *data)
-{ toggleMouseSelection(); }
-
-void status_play_manual(int time, int incr, bool redraw)
+void stepAnimation(int time, int incr, bool redraw)
 {
   // avoid firing this routine recursively (can happen e.g when
   // keeping the finger down on the arrow key: if the system generates
@@ -329,29 +315,14 @@ static void animate_cb(void *)
   // e.g. an export of the animation, which steps the views itself, as the
   // animation paused when it ran its own loop
   if(!CTX::instance()->lock && !FlGui::handlingEvent())
-    status_play_manual(!CTX::instance()->post.animCycle,
-                       CTX::instance()->post.animStep);
+    stepAnimation(!CTX::instance()->post.animCycle,
+                  CTX::instance()->post.animStep);
   // not again if a pause then a play during the step started another timer
   if(animPlaying && !Fl::has_timeout(animate_cb))
     Fl::repeat_timeout(CTX::instance()->post.animDelay, animate_cb);
 }
 
-static void status_play_cb(Fl_Widget *w, void *data)
-{
-  getGraphicWindow(w)->setAnimButtons(0);
-  if(animPlaying) return;
-  animPlaying = true;
-  Fl::add_timeout(CTX::instance()->post.animDelay, animate_cb);
-}
-
-static void status_pause_cb(Fl_Widget *w, void *data)
-{
-  animPlaying = false;
-  Fl::remove_timeout(animate_cb);
-  getGraphicWindow(w)->setAnimButtons(1);
-}
-
-static void status_rewind_cb(Fl_Widget *w, void *data)
+void rewindAnimation()
 {
   if(!CTX::instance()->post.animCycle) {
     for(std::size_t i = 0; i < PView::list.size(); i++) {
@@ -364,16 +335,17 @@ static void status_rewind_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
-static void status_stepbackward_cb(Fl_Widget *w, void *data)
-{
-  status_play_manual(!CTX::instance()->post.animCycle,
-                     -CTX::instance()->post.animStep);
-}
+bool animationPlaying() { return animPlaying; }
 
-static void status_stepforward_cb(Fl_Widget *w, void *data)
+void playOrPauseAnimation()
 {
-  status_play_manual(!CTX::instance()->post.animCycle,
-                     CTX::instance()->post.animStep);
+  animPlaying = !animPlaying;
+  if(animPlaying)
+    Fl::add_timeout(CTX::instance()->post.animDelay, animate_cb);
+  else
+    Fl::remove_timeout(animate_cb);
+  for(graphicWindow *g : FlGui::instance()->graph)
+    g->setAnimButtons(animPlaying);
 }
 
 void newGraphicWindow()
@@ -422,9 +394,6 @@ void showHideMenu()
   g->showHideMenu();
   FlGui::check();
 }
-
-static void show_hide_menu_cb(Fl_Widget *w, void *data)
-{ showHideMenu(); }
 
 void dockCurrentTool()
 {
@@ -685,75 +654,29 @@ public:
   }
 };
 
-// The buttons of the status bar, in their order (see statusButtonId): the
-// label (text, for a button without icon), its icon (see icons.h), the
-// callback and its data, the tooltip and the shortcut action whose keys it shows, the space
-// before, and whether the button is wide
-struct statusButton {
-  const char *label, *icon;
-  Fl_Callback *callback;
-  const char *data, *tooltip, *shortcut;
-  int gap;
-  bool wide;
-};
+// The buttons of the status bar come from the "Status bar" menu of the
+// registry (see Actions.cpp): a click runs its item, for the window of the
+// button (see statusBarWindow())
+static graphicWindow *statusWindow = nullptr;
 
-static const statusButton *statusButtons()
+graphicWindow *statusBarWindow() { return statusWindow; }
+
+static void status_item_cb(Fl_Widget *w, void *data)
 {
-  static const statusButton buttons[StatusButtons] = {
-    {nullptr, "sidebar", show_hide_menu_cb, nullptr,
-     "Show or hide the menu", "menu_show_hide", 0, false},
-    {nullptr, "models", status_model_cb, nullptr,
-     "Set current (active) model", nullptr, 0, false},
-    {nullptr, "quick", quick_access_cb, nullptr,
-     "Open quick access menu (also available by double-clicking in the "
-     "graphic window)",
-     nullptr, 0, false},
-    {"X", nullptr, status_xyz1p_cb, "x", "Set +X or -X (Shift) view", "view_x",
-     0, false},
-    {"Y", nullptr, status_xyz1p_cb, "y", "Set +Y or -Y (Shift) view", "view_y",
-     0, false},
-    {"Z", nullptr, status_xyz1p_cb, "z", "Set +Z or -Z (Shift) view", "view_z",
-     0, false},
-    {nullptr, "cube", status_xyz1p_cb, "3d",
-     "Set isometric 3D view, Z up, or from the opposite side (Shift)",
-     "view_3d", 0, false},
-    {nullptr, "rotate", status_xyz1p_cb, "r",
-     "Rotate +90 or -90 (Shift) degrees, or sync rotations (Ctrl)", nullptr, 0,
-     false},
-    {"1:1", nullptr, status_xyz1p_cb, "1:1",
-     "Fit the model in the window, sync scale between viewports (Ctrl), or "
-     "reset bounding box around visible entities (Shift)",
-     "view_1_1", 0, true},
-    {"S", nullptr, mouse_selection_cb, nullptr, "Toggle mouse selection ON/OFF",
-     "mouse_selection", 0, false},
-    {nullptr, "query", status_query_cb, nullptr,
-     "Query the model where you click (Escape to stop)", nullptr, 0, false},
-    {nullptr, "measure", status_measure_cb, nullptr,
-     "Measure the distance between two points you click (Escape to stop)",
-     nullptr, 0, false},
-    {nullptr, "rewind", status_rewind_cb, nullptr, "Rewind animation", nullptr,
-     4, false},
-    {nullptr, "back", status_stepbackward_cb, nullptr, "Step backward",
-     "time_step_prev", 0, false},
-    {nullptr, "play", status_play_cb, nullptr, "Play/pause animation", nullptr,
-     0, false},
-    {nullptr, "forward", status_stepforward_cb, nullptr, "Step forward",
-     "time_step_next", 0, false},
-  };
-  return buttons;
+  statusWindow = getGraphicWindow(w);
+  runItem(*(const actionItem *)data);
+  statusWindow = nullptr;
 }
 
-// the tooltip of a button, with the keys of its shortcut
-static std::string statusTooltip(const statusButton &b)
+// the tooltip of a button: the help of its item, with its keys
+static std::string statusTooltip(const actionItem &item)
 {
-  std::string tip = b.tooltip;
-  if(!b.shortcut) return tip;
   std::string keys;
   // (without "with any modifier", a detail of how the key is matched)
-  for(const Shortcut &s : GetShortcutsOf(b.shortcut))
+  for(const Shortcut &s : GetShortcutsOf(item.name))
     keys += (keys.empty() ? "" : ", ") +
             Shortcut(s.key, s.mods & ~AnyModifiers).label();
-  return keys.empty() ? tip : tip + " (" + keys + ")";
+  return keys.empty() ? item.help : item.help + " (" + keys + ")";
 }
 
 graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
@@ -967,22 +890,29 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
 
   int x = 2;
   int sht = sh - 4; // leave a 2 pixel border at the bottom
-  for(int i = 0; i < StatusButtons; i++) {
-    const statusButton &b = statusButtons()[i];
-    x += b.gap;
-    int bw = b.wide ? 2 * FL_NORMAL_SIZE : sw;
-    _butt[i] = new Fl_Button(x, mh + glheight + mheight + 2, bw, sht, b.label);
-    _butt[i]->callback(b.callback, (void *)b.data);
-    _butt[i]->copy_tooltip(statusTooltip(b).c_str());
-    _butt[i]->box(FL_FLAT_BOX);
-    _butt[i]->selection_color(FL_BACKGROUND2_COLOR);
-    _butt[i]->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
-    if(b.icon) gmshIcon(_butt[i], b.icon, _iconSize);
-    // (the animation buttons wait for views with time steps)
-    if(i >= StatusRewind) _butt[i]->deactivate();
-    x += b.wide ? (int)(1.75 * FL_NORMAL_SIZE) : sw;
+  const actionItem &bar = GetActionMenu("Status bar");
+  for(std::size_t g = 0; g < bar.items.size(); g++) {
+    if(g) x += 4; // the groups set apart
+    for(const actionItem &item : bar.items[g].items) {
+      if(!canRunItem(item)) continue;
+      // (a label of several letters, "1:1", takes a wider button)
+      bool wide = item.label.size() > 1;
+      int bw = wide ? 2 * FL_NORMAL_SIZE : sw;
+      Fl_Button *b = new Fl_Button(x, mh + glheight + mheight + 2, bw, sht);
+      b->copy_label(item.label.c_str());
+      b->callback(status_item_cb, (void *)&item);
+      b->copy_tooltip(statusTooltip(item).c_str());
+      b->box(FL_FLAT_BOX);
+      b->selection_color(FL_BACKGROUND2_COLOR);
+      b->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
+      if(item.icon.size()) gmshIcon(b, item.icon.c_str(), _iconSize);
+      _statusButtons[item.name] = b;
+      x += wide ? (int)(1.75 * FL_NORMAL_SIZE) : sw;
+    }
   }
   x += 4;
+  // (the animation buttons wait for views with time steps)
+  checkAnimButtons();
 
   // the least width of the window is what the status bar buttons take, and
   // the part of the window that resizes starts after them, so that they stay
@@ -1288,17 +1218,10 @@ bool graphicWindow::split(openglWindow *g, char how, double ratio)
   return true;
 }
 
-void graphicWindow::setAnimButtons(int mode)
+void graphicWindow::setAnimButtons(bool playing)
 {
-  Fl_Button *b = _butt[StatusPlay];
-  if(mode) {
-    b->callback(status_play_cb);
-    gmshIcon(b, "play", _iconSize);
-  }
-  else {
-    b->callback(status_pause_cb);
-    gmshIcon(b, "pause", _iconSize);
-  }
+  Fl_Button *b = statusButton("anim_play");
+  if(b) gmshIcon(b, playing ? "pause" : "play", _iconSize);
 }
 
 void graphicWindow::checkAnimButtons()
@@ -1313,11 +1236,14 @@ void graphicWindow::checkAnimButtons()
       }
     }
   }
-  for(int i = StatusRewind; i <= StatusForward; i++) {
+  for(const char *name :
+      {"anim_rewind", "time_step_prev", "anim_play", "time_step_next"}) {
+    Fl_Button *b = statusButton(name);
+    if(!b) continue;
     if(play)
-      _butt[i]->activate();
+      b->activate();
     else
-      _butt[i]->deactivate();
+      b->deactivate();
   }
 }
 

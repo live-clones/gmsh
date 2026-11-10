@@ -46,6 +46,7 @@ class drawContext;
 //   shape("Box", "add_box")                          from the values of a form
 //   menu("Delete", "help", {...}), group({...})      a submenu, a group
 //   action(...).key('2').key(KeyF1 + 1)              its keyboard shortcuts
+//   guiAction("", "query", "help").withIcon("query") a button with an icon
 //
 // Names are keys, in snake case, starting with what they act on ("mesh_2d",
 // "views_remove_all", "boolean_union", "add_box"; an option is named as the
@@ -62,6 +63,9 @@ class drawContext;
 //   web page's pageActions in onelab.html. An interface without it does not
 //   show the item.
 // - An option: option(), or presets() for a submenu of its values.
+// - A button of the status bar: a guiAction() in statusBar(), with its icon
+//   (.withIcon(), see Icons.h) or a short label, and its line in each
+//   interface's table.
 // - A key: .key('2') on the item it runs (modifiers and flags as in
 //   Shortcuts.h); the help of the item says what the key does in the help
 //   window and the documentation. A key that is in no menu: an item of
@@ -108,11 +112,20 @@ struct actionItem {
     i.keys.push_back(Shortcut(k, mods, flags));
     return i;
   }
+  // the icon of a button (see IconStrokes.h), instead of its label
+  std::string icon;
+  actionItem withIcon(const std::string &name) const
+  {
+    actionItem i = *this;
+    i.icon = name;
+    return i;
+  }
 };
 
 // The menu with the given name: "Geometry" and "Mesh" (the modules), "Quick
 // access" (the menu of the scene), "View" (the menu of a view), "Menu bar"
-// (the menu bar of the FLTK interface), or "Keys" (the actions of the
+// (the menu bar of the FLTK interface), "Status bar" (its buttons, each with
+// its icon or its label, the groups set apart), or "Keys" (the actions of the
 // keys in no menu, which no interface shows; GetShortcuts() in Shortcuts.h
 // lists the keys of every menu)
 const actionItem &GetActionMenu(const std::string &name);

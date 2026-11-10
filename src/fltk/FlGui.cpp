@@ -113,9 +113,12 @@
 //   fltkActions.cpp.
 // - A key: .key() on the item it runs in Actions.cpp (an item of keysOnly()
 //   for a key in no menu).
-// - A button of the status bar: statusButtons() in graphicWindow.cpp.
+// - A button of the status bar: an item of the "Status bar" menu of
+//   Actions.cpp, with its icon (IconStrokes.cpp), and its line in fltkActions.cpp.
 // - A field of the option window: optionWindow.cpp, bound to its option by
 //   name.
+// Then run the tests of benchmarks/gui (see its README.txt), which check the
+// registry, the menus and the selection workflows of this interface.
 
 // Widget lifetime and nested event loops: the rules of the FLTK interface.
 //

@@ -89,8 +89,8 @@ gmsh.option.setNumber('General.Terminal', 1);
 gmsh.option.setNumber('General.NoPopup', 1);
 
 // the parts of the page, in an order where each finds what it needs built
-for(const part of [scene, statusbar, parameters, options, clipping, visibility,
-                   actions, editor, views, models])
+for(const part of [scene, actions, statusbar, parameters, options, clipping,
+                   visibility, editor, views, models])
   if(part.build) part.build();
 solverClient.build(wasm);
 
