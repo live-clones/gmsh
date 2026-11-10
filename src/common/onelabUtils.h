@@ -47,21 +47,52 @@ namespace onelabUtils {
   // parameter) is no reason to redo Gmsh's part, and each keeps its level of
   // change. Returns true if the file was merged
   bool mergeSolverFile(const std::string &fileName);
-  // The run loops of the interfaces (the graphical interface, the batch mode,
-  // the web page) share these.
-  // - Whether a client is a solver they run: not Gmsh itself, nor a client
-  //   connecting on its own, nor one whose name says NoAutoRun.
-  bool isAutoRunSolver(onelab::client *c);
-  // - A solver about to run an action: its model name guessed, the action set.
-  void setSolverAction(onelab::client *c, const std::string &action);
-  // - A solver running an action; after a compute, the parameters are marked
-  //   as unchanged for it.
-  void runSolver(onelab::client *c, const std::string &action);
-  // - The database file (Gmsh/DatabaseFileName, or the model's name with
-  //   .db); after a compute, the output files archived and the database saved
-  //   as the Solver options ask (true if one was).
+  // The loop of an action on the model ("initialize", "check", "check_always"
+  // or "compute"), the same for every interface (the FLTK graphical user
+  // interface, the batch mode, the web page): Gmsh's part of a pass, then the
+  // solvers, pass after pass of the loops over the parameters when computing.
+  // An interface steps it, to show what each step changes, to stop between
+  // the steps, or to run the solvers elsewhere (the web page runs them in a
+  // worker):
+  //   onelabLoop loop(action);
+  //   do {
+  //     loop.runGmsh();
+  //     for(onelab::client *c : loop.solvers()) loop.runSolver(c);
+  //   } while(loop.nextPass());
+  //   loop.finish();
+  class onelabLoop {
+    std::string _action;
+    bool _graphsChanged = false;
+
+  public:
+    // the errors counted from here; when computing, the loops over the
+    // parameters started
+    onelabLoop(const std::string &action);
+    const std::string &action() const { return _action; }
+    // Gmsh's part of a pass: the model read again, and meshed, as the
+    // parameters say; true if views changed (for the interface to draw them)
+    bool runGmsh();
+    // the solvers of this pass, each given the action (its model name
+    // guessed): not Gmsh itself, nor a client connecting on its own, nor one
+    // whose name says NoAutoRun
+    std::vector<onelab::client *> solvers();
+    // a solver run; or run by the interface, which then says so: after a
+    // compute, the parameters are marked as unchanged for it
+    void runSolver(onelab::client *c);
+    void solverDone(onelab::client *c);
+    // the end of a pass: the graphs made again, then, unless the interface
+    // stops here, the loops over the parameters stepped: true if there is
+    // another pass
+    bool nextPass(bool goOn = true);
+    // whether the graphs of the last pass added or changed views (for the
+    // interface to show them)
+    bool graphsChanged() const { return _graphsChanged; }
+    // the end: after a compute, the output files archived and the database
+    // saved as the Solver options ask (true if one was)
+    bool finish();
+  };
+  // the database file (Gmsh/DatabaseFileName, or the model's name with .db)
   std::string dbFileName();
-  bool afterCompute();
 
   std::string timeStamp();
   void saveDb(const std::string &fileName);

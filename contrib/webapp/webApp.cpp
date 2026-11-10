@@ -30,6 +30,7 @@
 #include <fstream>
 #include <functional>
 #include <map>
+#include <memory>
 #include <sstream>
 #include <emscripten.h>
 #include "GmshConfig.h"
@@ -215,16 +216,17 @@ namespace {
     }
   }
 
-  // the solvers of the server the loops run (not the clients a solver adds
-  // while it runs; see onelabUtils::isAutoRunSolver())
+  // the loop under way (see onelabUtils::onelabLoop), stepped by the page
+  std::unique_ptr<onelabUtils::onelabLoop> _loop;
+
+  // the in-process solvers the loop runs (not the clients a solver adds while
+  // it runs)
   std::vector<gmshInProcessClient *> solvers()
   {
-    onelab::server *s = onelab::server::instance();
     std::vector<gmshInProcessClient *> v;
-    for(auto it = s->firstClient(); it != s->lastClient(); it++) {
-      auto *c = dynamic_cast<gmshInProcessClient *>(*it);
-      if(c && onelabUtils::isAutoRunSolver(c)) v.push_back(c);
-    }
+    if(!_loop) return v;
+    for(onelab::client *c : _loop->solvers())
+      if(auto *s = dynamic_cast<gmshInProcessClient *>(c)) v.push_back(s);
     return v;
   }
 
@@ -877,9 +879,11 @@ EMSCRIPTEN_KEEPALIVE void gmshWebOnelabStart(const char *what)
   Msg::NoThrow noThrow;
   std::string action(what);
   addSolver();
-  if(action == "reset") onelabUtils::resetDb(true);
-  Msg::ResetErrorCounter();
-  if(action == "compute") onelabUtils::initializeLoops();
+  if(action == "reset") {
+    onelabUtils::resetDb(true);
+    action = "check";
+  }
+  _loop.reset(new onelabUtils::onelabLoop(action));
 }
 
 // Gmsh's part of a pass ("check" or "compute"), and the solvers to run then,
@@ -887,15 +891,16 @@ EMSCRIPTEN_KEEPALIVE void gmshWebOnelabStart(const char *what)
 EMSCRIPTEN_KEEPALIVE const char *gmshWebOnelabGmsh(const char *what)
 {
   Msg::NoThrow noThrow;
-  std::string action(what);
-  onelabUtils::runGmshClient(action, CTX::instance()->solver.autoMesh);
   static std::string json;
   json = "[";
-  for(auto *c : solvers()) {
-    onelabUtils::setSolverAction(c, action);
+  if(!_loop) return "[]";
+  _loop->runGmsh();
+  for(onelab::client *c : _loop->solvers()) {
+    auto *s = dynamic_cast<gmshInProcessClient *>(c);
+    if(!s) continue;
     if(json.size() > 1) json += ",";
     json += "{\"name\":" + JsonString(c->getName()) + ",\"args\":[";
-    std::vector<std::string> args = c->commandLine();
+    std::vector<std::string> args = s->commandLine();
     for(std::size_t i = 0; i < args.size(); i++)
       json += (i ? "," : "") + JsonString(args[i]);
     json += "]}";
@@ -905,16 +910,17 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebOnelabGmsh(const char *what)
 }
 
 // the end of a pass, once the solvers have run and their database is back:
-// returns 1 if there is another pass (a loop over parameters)
+// returns 1 if there is another pass (a loop over parameters), else the loop
+// is finished
 EMSCRIPTEN_KEEPALIVE int gmshWebOnelabNext(const char *what)
 {
   Msg::NoThrow noThrow;
-  std::string action(what);
-  if(action == "compute")
-    for(auto *c : solvers())
-      onelab::server::instance()->setChanged(0, c->getName());
-  onelabUtils::updateGraphs();
-  return (action == "compute" && onelabUtils::incrementLoops()) ? 1 : 0;
+  if(!_loop) return 0;
+  for(onelab::client *c : _loop->solvers()) _loop->solverDone(c);
+  if(_loop->nextPass()) return 1;
+  _loop->finish();
+  _loop.reset();
+  return 0;
 }
 
 // the whole loop, with the solvers run here (run_models.mjs): returns the

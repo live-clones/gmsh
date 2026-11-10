@@ -56,23 +56,6 @@ static void updateGraphs()
   }
 }
 
-// the loops over parameters started, or their next step taken (false when
-// they are over), with the values they set shown in the tree
-static void initializeLoops()
-{
-  onelabUtils::initializeLoops();
-  if(FlGui::available() && onelab::server::instance()->getChanged())
-    FlGui::instance()->rebuildTree();
-}
-
-static bool incrementLoops()
-{
-  bool more = onelabUtils::incrementLoops();
-  if(FlGui::available() && onelab::server::instance()->getChanged())
-    FlGui::instance()->rebuildTree();
-  return more;
-}
-
 bool solverBusy()
 {
   if(!FlGui::available() || !FlGui::instance()->onelab ||
@@ -138,10 +121,9 @@ static bool onelabStart(const std::string &action)
   return true;
 }
 
-// The loop of an action on the model: Gmsh, then the solvers, for each pass of
-// the loops over the parameters when computing; action is "check",
-// "check_always", "compute" or "initialize", as runGmshClient() and
-// runSolver() read it
+// The loop of an action on the model (see onelabUtils::onelabLoop), with what
+// this interface shows between its steps, and the Stop button, which ends it
+// after the step under way
 static void onelabRun(const std::string &action)
 {
   if(solverBusy()) return;
@@ -157,58 +139,48 @@ static void onelabRun(const std::string &action)
     return;
   }
 
-  Msg::ResetErrorCounter();
-
-  FlGui::instance()->onelab->setRunState(onelabGroup::Running);
-
-  if(action == "compute") initializeLoops();
-
-  do { // enter loop
-
-    // run Gmsh client for non-metamodels
-    if(onelabUtils::runGmshClient(action, CTX::instance()->solver.autoMesh))
-      drawContext::global()->draw();
+  onelabGroup *g = FlGui::instance()->onelab;
+  g->setRunState(onelabGroup::Running);
+  bool compute = (action == "compute");
+  onelabUtils::onelabLoop loop(action);
+  while(true) {
+    if(loop.runGmsh()) drawContext::global()->draw();
     // the GUI may have been closed while the events were processed (not
     // FlGui::instance(), which would build it again)
     if(!FlGui::available()) return;
-
-    if(action == "compute") FlGui::instance()->onelab->checkForErrors("Gmsh");
-    if(FlGui::instance()->onelab->stop()) break;
-
-    // iterate over the solvers (there should normally only be one)
-    for(auto it = onelab::server::instance()->firstClient();
-        it != onelab::server::instance()->lastClient(); it++) {
-      onelab::client *c = *it;
-      if(!onelabUtils::isAutoRunSolver(c)) continue;
-      onelabUtils::runSolver(c, action);
+    if(compute) g->checkForErrors("Gmsh");
+    if(g->stop()) break;
+    for(onelab::client *c : loop.solvers()) {
+      loop.runSolver(c);
       if(!FlGui::available()) return;
-      if(action == "compute")
-        FlGui::instance()->onelab->checkForErrors(c->getName());
-      if(FlGui::instance()->onelab->stop()) break;
+      if(compute) g->checkForErrors(c->getName());
+      if(g->stop()) break;
     }
-
+    bool more = loop.nextPass(!g->stop());
+    if(loop.graphsChanged()) {
+      FlGui::instance()->updateViews(true);
+      if(!FlGui::available()) return;
+      drawContext::global()->draw();
+    }
     if(action != "initialize") {
-      updateGraphs();
       FlGui::instance()->rebuildTree();
       if(!FlGui::available()) return;
     }
-
-  } while(action == "compute" && !FlGui::instance()->onelab->stop() &&
-          incrementLoops());
-
-  if(action == "compute" && onelabUtils::afterCompute()) {
+    if(!more) break;
+  }
+  if(loop.finish()) {
     // (the archived files renamed in the tree)
     if(!FlGui::available()) return;
     FlGui::instance()->rebuildTree();
     if(!FlGui::available()) return;
   }
 
-  FlGui::instance()->onelab->stop(false);
-  FlGui::instance()->onelab->setRunState(onelabGroup::Idle);
+  g->stop(false);
+  g->setRunState(onelabGroup::Idle);
 
   Msg::StatusBar(true, "Done");
 
-  if(action != "initialize") FlGui::instance()->onelab->show();
+  if(action != "initialize") g->show();
 }
 
 void onelabCheck(bool always)

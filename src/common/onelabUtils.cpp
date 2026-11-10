@@ -20,6 +20,7 @@
 #include "StringUtils.h"
 #include "GmshGlobal.h"
 #include "gmshLocalNetworkClient.h"
+#include <string.h>
 #include "onelabUtils.h"
 
 #if defined(HAVE_POST)
@@ -505,28 +506,20 @@ namespace onelabUtils {
         c->setIndex(num);
       }
 
-      // initialize
-      onelabUtils::runGmshClient("initialize",
-                                 CTX::instance()->solver.autoMesh);
-      if(c) runSolver(c, "initialize");
-
-      // load db
-      if(CTX::instance()->solver.autoLoadDatabase) {
-        std::string db = dbFileName();
-        if(!StatFile(db)) loadDb(db);
+      // initialize, check, then compute (see onelabLoop)
+      for(const char *action : {"initialize", "check", "compute"}) {
+        if(!strcmp(action, "check") &&
+           CTX::instance()->solver.autoLoadDatabase) {
+          std::string db = dbFileName();
+          if(!StatFile(db)) loadDb(db);
+        }
+        onelabLoop loop(action);
+        do {
+          loop.runGmsh();
+          for(onelab::client *c : loop.solvers()) loop.runSolver(c);
+        } while(loop.nextPass());
+        loop.finish();
       }
-
-      // check
-      onelabUtils::runGmshClient("check", CTX::instance()->solver.autoMesh);
-      if(c) runSolver(c, "check");
-
-      // compute
-      initializeLoops();
-      do {
-        onelabUtils::runGmshClient("compute", CTX::instance()->solver.autoMesh);
-        if(c) runSolver(c, "compute");
-      } while(incrementLoops());
-      afterCompute();
     }
   }
 
@@ -670,30 +663,64 @@ namespace onelabUtils {
     return changed;
   }
 
-  bool isAutoRunSolver(onelab::client *c)
+  onelabLoop::onelabLoop(const std::string &action) : _action(action)
   {
-    const std::string &n = c->getName();
-    return n != "Gmsh" && // the local Gmsh client
-           n != "Listen" && // a client connecting through "-listen"
-           n != "GmshRemote" && // a distant post-processing Gmsh client
-           n.find("NoAutoRun") == std::string::npos;
+    Msg::ResetErrorCounter();
+    if(_action == "compute") initializeLoops();
   }
 
-  void setSolverAction(onelab::client *c, const std::string &action)
+  bool onelabLoop::runGmsh()
+  { return runGmshClient(_action, CTX::instance()->solver.autoMesh); }
+
+  std::vector<onelab::client *> onelabLoop::solvers()
   {
-    if(action != "initialize") guessModelName(c);
-    onelab::string o(c->getName() + "/Action", action);
-    o.setVisible(false);
-    o.setNeverChanged(true);
-    onelab::server::instance()->set(o);
+    std::vector<onelab::client *> v;
+    onelab::server *s = onelab::server::instance();
+    for(auto it = s->firstClient(); it != s->lastClient(); it++) {
+      const std::string &n = (*it)->getName();
+      if(n == "Gmsh" || // the local Gmsh client
+         n == "Listen" || // a client connecting through "-listen"
+         n == "GmshRemote" || // a distant post-processing Gmsh client
+         n.find("NoAutoRun") != std::string::npos)
+        continue;
+      if(_action != "initialize") guessModelName(*it);
+      onelab::string o(n + "/Action", _action);
+      o.setVisible(false);
+      o.setNeverChanged(true);
+      s->set(o);
+      v.push_back(*it);
+    }
+    return v;
   }
 
-  void runSolver(onelab::client *c, const std::string &action)
+  void onelabLoop::runSolver(onelab::client *c)
   {
-    setSolverAction(c, action);
     c->run();
-    if(action == "compute")
+    solverDone(c);
+  }
+
+  void onelabLoop::solverDone(onelab::client *c)
+  {
+    if(_action == "compute")
       onelab::server::instance()->setChanged(0, c->getName());
+  }
+
+  bool onelabLoop::nextPass(bool goOn)
+  {
+    _graphsChanged = updateGraphs();
+    return goOn && _action == "compute" && incrementLoops();
+  }
+
+  bool onelabLoop::finish()
+  {
+    if(_action != "compute") return false;
+    bool archive = CTX::instance()->solver.autoArchiveOutputFiles;
+    bool save = CTX::instance()->solver.autoSaveDatabase;
+    if(!archive && !save) return false;
+    std::string db = dbFileName();
+    if(archive) archiveOutputFiles(db);
+    if(save) saveDb(db);
+    return true;
   }
 
   std::string dbFileName()
@@ -714,17 +741,6 @@ namespace onelabUtils {
     MergePostProcessingFile(fileName, CTX::instance()->solver.autoShowViews,
                             CTX::instance()->solver.autoShowLastStep, true);
     s->setChangedLevels(levels, "Gmsh");
-    return true;
-  }
-
-  bool afterCompute()
-  {
-    bool archive = CTX::instance()->solver.autoArchiveOutputFiles;
-    bool save = CTX::instance()->solver.autoSaveDatabase;
-    if(!archive && !save) return false;
-    std::string db = dbFileName();
-    if(archive) archiveOutputFiles(db);
-    if(save) saveDb(db);
     return true;
   }
 
