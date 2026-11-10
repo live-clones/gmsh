@@ -39,7 +39,12 @@ public:
   void updatePerWindow();
 };
 
-void visibility_cb(Fl_Widget *w, void *data);
+// the visibility window shown, with the entities of the model as they are;
+// updated where it is (not raised), or its list only (after a change of what
+// it lists or of its sorting)
+void showVisibility();
+void updateVisibility();
+void updateVisibilityList();
 void visibility_save(const std::string &fileName);
 
 #endif

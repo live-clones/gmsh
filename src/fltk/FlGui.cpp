@@ -589,7 +589,7 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   // what docked tools skip while hidden, refreshed when shown again
   ((paletteWindow *)visibility->win)
     ->whenRevealed(
-      [](void *) { visibility_cb(nullptr, (void *)"redraw_only"); }, nullptr);
+      [](void *) { updateVisibility(); }, nullptr);
   ((paletteWindow *)stats->win)
     ->whenRevealed([](void *) { FlGui::instance()->stats->compute(false); },
                    nullptr);
@@ -962,7 +962,7 @@ void FlGui::updateFields()
 
 void FlGui::resetVisibility()
 {
-  if(visibility->win->shown()) visibility_cb(nullptr, nullptr);
+  if(visibility->win->shown()) showVisibility();
   if(help->options->shown()) help_options_cb(nullptr, nullptr);
   updateStatistics(false);
 }

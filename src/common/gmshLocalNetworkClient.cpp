@@ -84,7 +84,7 @@ public:
                 ps[0].setVisible(false);
                 ps[0].setValue("");
                 onelab::server::instance()->set(ps[0]);
-                if(FlGui::available()) onelab_cb(nullptr, (void *)"refresh");
+                if(FlGui::available()) onelabRefresh();
               }
               lastRefresh = start;
             }

@@ -119,8 +119,30 @@ Fl_Widget *addParameterWidget(onelab::string &p, int xx, int yy, int ww, int hh,
                               double labelRatio, const std::string &ppath,
                               bool highlight, Fl_Color c, Fl_Color bgc,
                               std::list<std::string> &strings);
-void solver_cb(Fl_Widget *w, void *data);
-void onelab_cb(Fl_Widget *w, void *data);
+// The ONELAB actions, as the Check and Run buttons and the gear menu do them
+// (the clients read the one under way in ONELAB/Action): the model checked
+// (the script read again with the parameters; always, even if nothing
+// changed, when asked), computed (the loops over the parameters run, then the
+// solvers), the database reset then checked, the solvers initialized (at
+// startup), the tree and the graphs refreshed, the run stopped or the solvers
+// killed, the database saved or loaded, and a reload asked by an outside code
+void onelabCheck(bool always = false);
+void onelabCompute();
+void onelabReset();
+void onelabInitialize();
+void onelabRefresh();
+void onelabStop();
+void onelabKill();
+void onelabSaveDatabase();
+void onelabLoadDatabase();
+void onelabReload();
+// an action by its name ("check", "compute", ...), as the custom Run button
+// of a model asks for it
+void onelabAction(const std::string &action);
+// the solver of index num added to the tree (or the list made again if num is
+// negative), then the model checked, or reset when a solver is to be launched
+// at startup
+void selectSolver(int num);
 
 // whether a solver runs (then said in the messages): what changes the
 // solvers or the model must wait

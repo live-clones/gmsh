@@ -523,7 +523,7 @@ int GmshFLTK(int argc, char **argv)
   }
 
   // launch solver (if requested) and fill onelab tree
-  solver_cb(nullptr, (void *)(intptr_t)CTX::instance()->launchSolverAtStartup);
+  selectSolver(CTX::instance()->launchSolverAtStartup);
 
   // loop
   return FlGui::instance()->run();

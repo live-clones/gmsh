@@ -472,7 +472,7 @@ static int _listStamp = -1, _treeStamp = -1;
 
 static void _rebuild_cb(void *)
 {
-  if(FlGui::available()) visibility_cb(nullptr, nullptr);
+  if(FlGui::available()) showVisibility();
 }
 
 static bool _changed(int stamp)
@@ -574,7 +574,7 @@ static void visibility_sort_cb(Fl_Widget *w, void *data)
     VisibilityList::instance()->setSortMode(str == "type"   ? 1 :
                                             str == "number" ? 2 :
                                                               3);
-    visibility_cb(nullptr, (void *)"list_only");
+    updateVisibilityList();
   }
 }
 
@@ -839,22 +839,23 @@ public:
   }
 };
 
-void visibility_cb(Fl_Widget *w, void *data)
+// the visibility info from the model, in the browsers (the list, and the tree
+// unless asked not to), the window raised unless asked not to
+static void readVisibility(bool raise, bool tree)
 {
-  // get the visibility info from the model, and update the browser accordingly
-  std::string tmp;
-  if(data) tmp = (const char *)data;
-  if(tmp.find("redraw_only") != std::string::npos)
-    FlGui::instance()->visibility->show(true);
-  else
-    FlGui::instance()->visibility->show(false);
-
+  FlGui::instance()->visibility->show(!raise);
   _rebuild_list_browser();
-
-  if(tmp.find("list_only") == std::string::npos) _rebuild_tree_browser(false);
-
+  if(tree) _rebuild_tree_browser(false);
   FlGui::instance()->visibility->updatePerWindow();
 }
+
+void showVisibility() { readVisibility(true, true); }
+
+void updateVisibility() { readVisibility(false, true); }
+
+void updateVisibilityList() { readVisibility(true, false); }
+
+static void list_only_cb(Fl_Widget *w, void *data) { updateVisibilityList(); }
 
 void visibility_save(const std::string &fileName)
 {
@@ -1013,7 +1014,7 @@ _apply_visibility(pickAction action, bool physical, bool pickElements,
     for(GRegion *r : regions) apply(r);
   }
   int pos = FlGui::instance()->visibility->browser->position();
-  visibility_cb(nullptr, (void *)"redraw_only");
+  updateVisibility();
   FlGui::instance()->visibility->browser->position(pos);
 }
 
@@ -1029,7 +1030,7 @@ static void _visibility_number(int row, char val)
   _set_visibility_by_number(row, num, val, recursive, allmodels);
 
   int pos = FlGui::instance()->visibility->browser->position();
-  visibility_cb(nullptr, (void *)"redraw_only");
+  updateVisibility();
   FlGui::instance()->visibility->browser->position(pos);
   drawContext::global()->draw();
 }
@@ -1304,11 +1305,10 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     }
 
     static Fl_Menu_Item browser_type_table[] = {
-      {"Models", 0, (Fl_Callback *)visibility_cb, (void *)"list_only"},
-      {"Elementary entities", 0, (Fl_Callback *)visibility_cb,
-       (void *)"list_only"},
-      {"Physical groups", 0, (Fl_Callback *)visibility_cb, (void *)"list_only"},
-      {"Mesh partitions", 0, (Fl_Callback *)visibility_cb, (void *)"list_only"},
+      {"Models", 0, list_only_cb},
+      {"Elementary entities", 0, list_only_cb},
+      {"Physical groups", 0, list_only_cb},
+      {"Mesh partitions", 0, list_only_cb},
       {nullptr}};
 
     double w1 = 1.7 * CC;
@@ -1321,8 +1321,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
       2 * WB + w1 + WB, height - 2 * BH - 3 * WB, w2, BH, "Filter list",
       "Show only the entries matching the regular expression,\n"
       "whatever the case",
-      visibility_cb);
-    search->user_data((void *)"list_only");
+      list_only_cb);
 
     Fl_Return_Button *b1 = new Fl_Return_Button(
       width - 2 * WB - w3, height - 2 * BH - 3 * WB, w3, BH, "Apply");

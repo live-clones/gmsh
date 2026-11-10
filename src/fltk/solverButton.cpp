@@ -27,7 +27,7 @@ static void solver_rename_cb(Fl_Widget *w, void *data)
     std::string host = opt_solver_remote_login(num, GMSH_GET, "");
     // this will remove the old client if the new name is different
     FlGui::instance()->onelab->addSolver(n, exe, host, num);
-    onelab_cb(nullptr, (void *)"reset");
+    onelabReset();
   }
 }
 
@@ -55,7 +55,7 @@ static void solver_change_exe_cb(Fl_Widget *w, void *data)
       if(it != onelab::server::instance()->lastClient()) delete *it;
       std::string host = opt_solver_remote_login(num, GMSH_GET, "");
       FlGui::instance()->onelab->addSolver(name, exe, host, num);
-      onelab_cb(nullptr, (void *)"reset");
+      onelabReset();
     }
   }
 }
@@ -88,7 +88,9 @@ solverButton::solverButton(int x, int y, int w, int h, int num, Fl_Color col)
   _butt[0]->box(FL_FLAT_BOX);
   _butt[0]->color(col);
   _butt[0]->selection_color(col);
-  _butt[0]->callback(solver_cb, (void *)(intptr_t)num);
+  _butt[0]->callback(
+    [](Fl_Widget *, void *data) { selectSolver((intptr_t)data); },
+    (void *)(intptr_t)num);
   _butt[0]->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
 
   std::string name = opt_solver_name(num, GMSH_GET, "");

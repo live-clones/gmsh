@@ -156,10 +156,9 @@ static void openOrMerge(bool merge)
     if(n != (int)PView::list.size())
       FlGui::instance()->openModule("Post-processing");
     if(CTX::instance()->launchSolverAtStartup >= 0)
-      solver_cb(nullptr,
-                (void *)(intptr_t)CTX::instance()->launchSolverAtStartup);
+      selectSolver(CTX::instance()->launchSolverAtStartup);
     else if(onelabUtils::haveSolverToRun())
-      onelab_cb(nullptr, (void *)"check");
+      onelabCheck();
     drawContext::global()->draw();
   }
 }
@@ -181,10 +180,9 @@ void fileOpenRecent(int i)
   if(n != (int)PView::list.size())
     FlGui::instance()->openModule("Post-processing");
   if(CTX::instance()->launchSolverAtStartup >= 0)
-    solver_cb(nullptr,
-              (void *)(intptr_t)CTX::instance()->launchSolverAtStartup);
+    selectSolver(CTX::instance()->launchSolverAtStartup);
   else if(onelabUtils::haveSolverToRun())
-    onelab_cb(nullptr, (void *)"check");
+    onelabCheck();
 }
 
 // whether a string is valid UTF-8, as a menu label must be
@@ -256,7 +254,7 @@ void fileClear()
   if(solverBusy()) return;
   ClearProject();
   if(onelabUtils::haveSolverToRun())
-    onelab_cb(nullptr, (void *)"reset"); // this will call OpenProject
+    onelabReset(); // this will call OpenProject
   else
     OpenProject(GModel::current()->getFileName());
   drawContext::global()->draw();
@@ -560,7 +558,7 @@ test:
     GModel::current()->setFileName(name);
     GModel::current()->setName(SplitFileName(name)[1]);
     Msg::SetOnelabChanged(3);
-    if(onelabUtils::haveSolverToRun()) onelab_cb(nullptr, (void *)"check");
+    if(onelabUtils::haveSolverToRun()) onelabCheck();
     drawContext::global()->draw();
   }
 }
@@ -698,17 +696,17 @@ void reloadProject()
   std::string fileName = GModel::current()->getFileName();
   ClearProject();
   GModel::current()->setFileName(fileName);
-  onelab_cb(nullptr, (void *)"reset"); // will call OpenProject
+  onelabReset(); // will call OpenProject
   drawContext::global()->draw();
 }
 
 void reloadScript()
 {
   if(onelabUtils::haveSolverToRun()) {
-    onelab_cb(nullptr, (void *)"check_always");
+    onelabCheck(true);
   }
   else {
-    onelab_cb(nullptr, (void *)"reload");
+    onelabReload();
     OpenProject(GModel::current()->getFileName());
   }
   drawContext::global()->draw();

@@ -82,7 +82,7 @@ bool solverBusy()
   return true;
 }
 
-void solver_cb(Fl_Widget *w, void *data)
+void selectSolver(int num)
 {
   if(!FlGui::available() || !FlGui::instance()->onelab) return;
   // choosing a solver deletes the clients, among which the one running; one
@@ -92,7 +92,6 @@ void solver_cb(Fl_Widget *w, void *data)
     return;
   }
 
-  int num = (intptr_t)data;
   if(num >= 0) {
     std::string name = opt_solver_name(num, GMSH_GET, "");
     std::string exe = opt_solver_executable(num, GMSH_GET, "");
@@ -112,118 +111,43 @@ void solver_cb(Fl_Widget *w, void *data)
   }
 
   if(CTX::instance()->launchSolverAtStartup >= 0) {
-    onelab_cb(nullptr, (void *)"reset");
+    onelabReset();
     onelabUtils::setFirstComputationFlag(true);
   }
   else if(num >= 0)
-    onelab_cb(nullptr, (void *)"check");
+    onelabCheck();
   else
-    onelab_cb(nullptr, (void *)"refresh");
+    onelabRefresh();
   // (the GUI may have been closed meanwhile)
   if(FlGui::available()) FlGui::instance()->onelab->updateGearMenu();
 
   CTX::instance()->launchSolverAtStartup = -1;
 }
 
-void onelab_cb(Fl_Widget *w, void *data)
+// the action under way, told to the clients (ONELAB/Action); false once the
+// GUI is closed (by the events processed during a run that called this one),
+// which FlGui::instance() would build again
+static bool onelabStart(const std::string &action)
 {
-  // not once the GUI is closed (by the events processed during a run that
-  // called this one), which FlGui::instance() would build again
-  if(!data || !FlGui::available()) return;
-
-  std::string action((const char *)data);
-
+  if(!FlGui::available()) return false;
   onelab::string o("ONELAB/Action", action);
   o.setVisible(false);
   o.setNeverChanged(true);
   o.setAttribute("Persistent", "1");
   onelab::server::instance()->set(o);
+  return true;
+}
 
-  if(action == "reload") {
-    // for outside code that will want to rebuild the geometry
-    return;
-  }
-
-  if(action == "refresh") {
-    updateGraphs();
-    FlGui::instance()->rebuildTree();
-    return;
-  }
-
-  if(action == "stop") {
-    FlGui::instance()->onelab->stop(true);
-    FlGui::instance()->onelab->setRunState(onelabGroup::Stopping);
-    for(auto it = onelab::server::instance()->firstClient();
-        it != onelab::server::instance()->lastClient(); it++) {
-      onelab::string o((*it)->getName() + "/Action", "stop");
-      o.setVisible(false);
-      o.setNeverChanged(true);
-      onelab::server::instance()->set(o);
-    }
-    return;
-  }
-
-  if(action == "kill") {
-    FlGui::instance()->onelab->stop(true);
-    for(auto it = onelab::server::instance()->firstClient();
-        it != onelab::server::instance()->lastClient(); it++)
-      (*it)->kill();
-    return;
-  }
-
-  if(action == "save") {
-    std::string fileName = "onelab.db";
-
-    // special handling for metamodels: add user defined tag, if any
-    std::vector<onelab::string> ps;
-    onelab::server::instance()->get(ps, "0Metamodel/9Tag");
-    if(ps.size() && ps[0].getValue().size()) {
-      fileName.assign("onelab_" + ps[0].getValue() + ".db");
-    }
-
-    // special handling for metamodels: save db in "restore" mode"
-    double restoreMode = 0.;
-    std::vector<onelab::number> pn;
-    onelab::server::instance()->get(pn, "0Metamodel/9Use restored solution");
-    if(pn.size()) {
-      restoreMode = pn[0].getValue();
-      pn[0].setValue(2); // special value
-      onelab::server::instance()->set(pn[0]);
-    }
-
-    std::string db;
-    db.assign(SplitFileName(GModel::current()->getFileName())[0] + fileName);
-    if(fileChooser(FILE_CHOOSER_CREATE, "Save", "*.db", db.c_str())) {
-      if(!restoreMode) onelabUtils::archiveSolutionFiles(fileChooserGetName(1));
-      onelabUtils::saveDb(fileChooserGetName(1));
-    }
-
-    // special handling for metamodels: switch back to normal "run" mode"
-    onelab::server::instance()->get(pn, "0Metamodel/9Use restored solution");
-    if(pn.size()) {
-      pn[0].setValue(0);
-      onelab::server::instance()->set(pn[0]);
-    }
-    action = "check";
-  }
-
+// The loop of an action on the model: Gmsh, then the solvers, for each pass of
+// the loops over the parameters when computing; action is "check",
+// "check_always", "compute" or "initialize", as runGmshClient() and
+// runSolver() read it
+static void onelabRun(const std::string &action)
+{
   if(solverBusy()) return;
   // the rest reads the project again or meshes it: not during another
   // operation on the model
   if(modelBusy()) return;
-
-  if(action == "load") {
-    std::string db =
-      SplitFileName(GModel::current()->getFileName())[0] + "onelab.db";
-    if(fileChooser(FILE_CHOOSER_SINGLE, "Load", "*.db", db.c_str()))
-      onelabUtils::loadDb(fileChooserGetName(1));
-    action = "check";
-  }
-
-  if(action == "reset") {
-    onelabUtils::resetDb(true);
-    action = "check";
-  }
 
   // custom button behavior
   std::vector<onelab::string> ps;
@@ -286,6 +210,144 @@ void onelab_cb(Fl_Widget *w, void *data)
 
   if(action != "initialize") FlGui::instance()->onelab->show();
 }
+
+void onelabCheck(bool always)
+{
+  std::string action = always ? "check_always" : "check";
+  if(onelabStart(action)) onelabRun(action);
+}
+
+void onelabCompute()
+{
+  if(onelabStart("compute")) onelabRun("compute");
+}
+
+void onelabInitialize()
+{
+  if(onelabStart("initialize")) onelabRun("initialize");
+}
+
+void onelabReset()
+{
+  if(!onelabStart("reset")) return;
+  if(solverBusy() || modelBusy()) return;
+  onelabUtils::resetDb(true);
+  onelabRun("check");
+}
+
+// for outside code that will want to rebuild the geometry
+void onelabReload() { onelabStart("reload"); }
+
+void onelabRefresh()
+{
+  if(!onelabStart("refresh")) return;
+  updateGraphs();
+  FlGui::instance()->rebuildTree();
+}
+
+void onelabStop()
+{
+  if(!onelabStart("stop")) return;
+  FlGui::instance()->onelab->stop(true);
+  FlGui::instance()->onelab->setRunState(onelabGroup::Stopping);
+  for(auto it = onelab::server::instance()->firstClient();
+      it != onelab::server::instance()->lastClient(); it++) {
+    onelab::string o((*it)->getName() + "/Action", "stop");
+    o.setVisible(false);
+    o.setNeverChanged(true);
+    onelab::server::instance()->set(o);
+  }
+}
+
+void onelabKill()
+{
+  if(!onelabStart("kill")) return;
+  FlGui::instance()->onelab->stop(true);
+  for(auto it = onelab::server::instance()->firstClient();
+      it != onelab::server::instance()->lastClient(); it++)
+    (*it)->kill();
+}
+
+void onelabSaveDatabase()
+{
+  if(!onelabStart("save")) return;
+  std::string fileName = "onelab.db";
+
+  // special handling for metamodels: add user defined tag, if any
+  std::vector<onelab::string> ps;
+  onelab::server::instance()->get(ps, "0Metamodel/9Tag");
+  if(ps.size() && ps[0].getValue().size()) {
+    fileName.assign("onelab_" + ps[0].getValue() + ".db");
+  }
+
+  // special handling for metamodels: save db in "restore" mode"
+  double restoreMode = 0.;
+  std::vector<onelab::number> pn;
+  onelab::server::instance()->get(pn, "0Metamodel/9Use restored solution");
+  if(pn.size()) {
+    restoreMode = pn[0].getValue();
+    pn[0].setValue(2); // special value
+    onelab::server::instance()->set(pn[0]);
+  }
+
+  std::string db;
+  db.assign(SplitFileName(GModel::current()->getFileName())[0] + fileName);
+  if(fileChooser(FILE_CHOOSER_CREATE, "Save", "*.db", db.c_str())) {
+    if(!restoreMode) onelabUtils::archiveSolutionFiles(fileChooserGetName(1));
+    onelabUtils::saveDb(fileChooserGetName(1));
+  }
+
+  // special handling for metamodels: switch back to normal "run" mode"
+  onelab::server::instance()->get(pn, "0Metamodel/9Use restored solution");
+  if(pn.size()) {
+    pn[0].setValue(0);
+    onelab::server::instance()->set(pn[0]);
+  }
+  onelabRun("check");
+}
+
+void onelabLoadDatabase()
+{
+  if(!onelabStart("load")) return;
+  if(solverBusy() || modelBusy()) return;
+  std::string db =
+    SplitFileName(GModel::current()->getFileName())[0] + "onelab.db";
+  if(fileChooser(FILE_CHOOSER_SINGLE, "Load", "*.db", db.c_str()))
+    onelabUtils::loadDb(fileChooserGetName(1));
+  onelabRun("check");
+}
+
+void onelabAction(const std::string &action)
+{
+  if(action == "check")
+    onelabCheck();
+  else if(action == "check_always")
+    onelabCheck(true);
+  else if(action == "compute")
+    onelabCompute();
+  else if(action == "reset")
+    onelabReset();
+  else if(action == "initialize")
+    onelabInitialize();
+  else if(action == "reload")
+    onelabReload();
+  else if(action == "refresh")
+    onelabRefresh();
+  else if(action == "stop")
+    onelabStop();
+  else if(action == "kill")
+    onelabKill();
+  else if(action == "save")
+    onelabSaveDatabase();
+  else if(action == "load")
+    onelabLoadDatabase();
+  else if(onelabStart(action))
+    onelabRun(action);
+}
+
+// the action named by the data of a widget (the custom Run button of a model)
+static void onelab_action_cb(Fl_Widget *w, void *data)
+{ onelabAction((const char *)data); }
 
 // the automatic behaviours of the gear menu: the label, the field of
 // CTX::instance()->solver toggled, its value when checked, and what to update
@@ -638,18 +700,20 @@ onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
 
   _butt[0] =
     new Fl_Button(x + w - 3 * WB - 3 * BB2, y + h - WB - BH, BB2, BH, "Check");
-  _butt[0]->callback(onelab_cb, (void *)"check");
+  _butt[0]->callback([](Fl_Widget *, void *) { onelabCheck(); });
 
   _butt[1] =
     new Fl_Button(x + w - 2 * WB - 2 * BB2, y + h - WB - BH, BB2, BH, "Run");
-  _butt[1]->callback(onelab_cb, (void *)"compute");
+  _butt[1]->callback([](Fl_Widget *, void *) { onelabCompute(); });
 
   _gear = new Fl_Menu_Button(x + w - WB - BB2, y + h - WB - BH, BB2, BH);
   gmshIcon(_gear, "gear", FL_NORMAL_SIZE + 2);
   _gear->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
-  _gear->add("Reset database", 0, onelab_cb, (void *)"reset");
-  _gear->add("Save database...", 0, onelab_cb, (void *)"save");
-  _gear->add("_Load database...", 0, onelab_cb, (void *)"load");
+  _gear->add("Reset database", 0, [](Fl_Widget *, void *) { onelabReset(); });
+  _gear->add("Save database...", 0,
+             [](Fl_Widget *, void *) { onelabSaveDatabase(); });
+  _gear->add("_Load database...", 0,
+             [](Fl_Widget *, void *) { onelabLoadDatabase(); });
 
   _minWindowWidth = 3 * BB2 + 4 * WB;
   _minWindowHeight = 2 * BH + 3 * WB;
@@ -817,7 +881,7 @@ static void parameterChanged(int what)
   if(!FlGui::available()) return;
   if(what & onelabUtils::ParameterRebuild) FlGui::instance()->rebuildTree();
   if(what & onelabUtils::ParameterOption) drawContext::global()->draw();
-  if(what & onelabUtils::ParameterCheck) onelab_cb(nullptr, (void *)"check");
+  if(what & onelabUtils::ParameterCheck) onelabCheck();
 }
 
 static void onelab_number_check_button_cb(Fl_Widget *w, void *data)
@@ -1614,7 +1678,7 @@ void onelabGroup::setRunState(runState state)
                        _butt[1]->w() + diff, _butt[1]->h());
       _butt[1]->redraw();
     }
-    _butt[1]->callback(onelab_cb, (void *)action);
+    _butt[1]->callback(onelab_action_cb, (void *)action);
     return;
   }
 
@@ -1623,18 +1687,20 @@ void onelabGroup::setRunState(runState state)
   if(state == Idle) {
     _butt[0]->activate();
     _butt[0]->label("Check");
-    _butt[0]->callback(onelab_cb, (void *)"check");
+    _butt[0]->callback([](Fl_Widget *, void *) { onelabCheck(); });
     _butt[1]->activate();
     _butt[1]->label("Run");
-    _butt[1]->callback(onelab_cb, (void *)"compute");
+    _butt[1]->callback([](Fl_Widget *, void *) { onelabCompute(); });
     _activateGearMenu(true);
   }
   else {
     _butt[0]->deactivate();
     _butt[1]->activate();
     _butt[1]->label(state == Running ? "Stop" : "Kill");
-    _butt[1]->callback(onelab_cb,
-                       state == Running ? (void *)"stop" : (void *)"kill");
+    if(state == Running)
+      _butt[1]->callback([](Fl_Widget *, void *) { onelabStop(); });
+    else
+      _butt[1]->callback([](Fl_Widget *, void *) { onelabKill(); });
     _activateGearMenu(false);
   }
 }
@@ -1753,7 +1819,7 @@ void onelabGroup::addSolver(const std::string &name,
   FlGui::instance()->onelab->rebuildSolverList();
 
   // initialize the client
-  onelab_cb(nullptr, (void *)"initialize");
+  onelabInitialize();
 }
 
 // The rows of the modules of the tree (Geometry, Mesh) from the action

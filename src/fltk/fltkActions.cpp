@@ -151,7 +151,7 @@ static const std::map<std::string, fltkAction> &actions()
     // Tools
     {"options", [] { FlGui::instance()->options->win->show(); }},
     {"plugins", [] { FlGui::instance()->plugins->show(-1); }},
-    {"visibility", [] { visibility_cb(nullptr, nullptr); }},
+    {"visibility", showVisibility},
     {"clipping", [] { FlGui::instance()->clipping->show(); }},
     {"manipulator", [] { FlGui::instance()->manip->show(); }},
 #if defined(HAVE_3M)
@@ -179,7 +179,7 @@ static const std::map<std::string, fltkAction> &actions()
     {"help_about", helpAbout},
     // Keys: the keys in no menu
     {"project_reload", reloadProject},
-    {"solver_run", [] { onelab_cb(nullptr, (void *)"compute"); }},
+    {"solver_run", onelabCompute},
     {"module_geometry", [] { FlGui::instance()->toggleModule("Geometry"); }},
     {"module_mesh", [] { FlGui::instance()->toggleModule("Mesh"); }},
     {"module_solver", [] { FlGui::instance()->toggleModule("Solver"); }},
@@ -461,7 +461,7 @@ static bool physicalGroupChanged(const selectionDriver &d)
   selectionDriver::kind k = selectionDriver::kindOf(d.operation());
   const std::string &what = k.what;
   bool remove = k.remove;
-  onelab_cb(nullptr, (void *)"check");
+  onelabCheck();
   if(!FlGui::available()) return false;
   std::vector<std::string> param;
   onelab::server::instance()->getParameterNames(param, "ONELAB Context/" +
