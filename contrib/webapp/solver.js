@@ -55,7 +55,7 @@ async function handle(m) {
     FS = gmsh.lib.FS;
     gmsh.initialize([], false);
     gmsh.option.setNumber('General.Terminal', 1);
-    // what the solver asks to show (see gmshWebSolve()), sent as it is written
+    // what the solver asks to show (see gmshWebOnelabSolve()), sent as it is written
     globalThis.gmshSolverMerge = (name) => {
       const file = FS.analyzePath(name);
       if(!file.exists) return;
@@ -82,7 +82,7 @@ async function handle(m) {
     shown.clear();
     let errors = 0, failed = false;
     try {
-      errors = gmsh.lib.ccall('gmshWebSolve', 'number', ['string'],
+      errors = gmsh.lib.ccall('gmshWebOnelabSolve', 'number', ['string'],
                               [m.args.join('\n')]);
     } catch(err) {
       post({type: 'log', text: 'Error   : ' + err});

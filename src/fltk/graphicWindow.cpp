@@ -743,9 +743,9 @@ static bool check_utf8(const std::string &string)
   return true;
 }
 
-// the submenu path of the recent files (see fillRecentHistoryMenu()); the
-// second one, the file opened before the current one, has a shortcut
-static void addRecentFiles(Fl_Menu_ *m, const std::string &path)
+// (see fillRecentHistoryMenu(); the second one, the file opened before the
+// current one, has a shortcut)
+void addRecentFiles(Fl_Menu_ *m, const std::string &path)
 {
   // (add() makes a new submenu of a path that is one already)
   if(m->find_index(path.c_str()) < 0)
@@ -768,7 +768,7 @@ static void addRecentFiles(Fl_Menu_ *m, const std::string &path)
     else
       label = files[i];
     m->add((path + "/" + label).c_str(),
-           i == 1 ? fltkShortcut("file_recent") : 0, file_open_recent_cb,
+           i == 1 ? fltkShortcut("file_open_previous") : 0, file_open_recent_cb,
            (void *)(intptr_t)i);
   }
 }
@@ -778,8 +778,7 @@ const std::map<std::string, fltkAction> &menuBarActions()
   static const std::map<std::string, fltkAction> actions = {
     {"file_new", call(file_new_cb)},
     {"file_open", call(file_open_merge_cb, (void *)"open")},
-    {"recent_files", {nullptr, nullptr, addRecentFiles}},
-    {"file_recent", call(file_open_recent_cb, (void *)1)},
+    {"file_open_previous", call(file_open_recent_cb, (void *)1)},
     {"file_merge", call(file_open_merge_cb, (void *)"merge")},
     {"watch", call(file_watch_cb)},
     {"file_clear", call(file_clear_cb)},
@@ -1020,12 +1019,12 @@ void quick_access_cb(Fl_Widget *w, void *data)
     menu = new Fl_Menu_Button(0, 0, 0, 0);
   }
   menu->clear();
-  addActionItems(menu, GetActionMenu("Quick access"), -1);
+  addMenuItems(menu, GetActionMenu("Quick access"), -1);
   // (the display of the mesh toggled, at first)
   const Fl_Menu_Item *initial = nullptr;
   for(int i = 0; i < menu->size(); i++) {
     const actionItem *item = (const actionItem *)menu->menu()[i].user_data();
-    if(item && (last ? item == last : item->what == "Toggle mesh display"))
+    if(item && (last ? item == last : item->name == "mesh_toggle"))
       initial = &menu->menu()[i];
   }
   const Fl_Menu_Item *picked = menu->menu()->popup(
@@ -1571,7 +1570,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
 #endif
       _bar = new hoverMenuBar(0, 0, width, BH);
     Fl_Menu_ *m = _menuBar();
-    addActionItems(m, GetActionMenu("Menu bar"), -1, false);
+    addMenuItems(m, GetActionMenu("Menu bar"), -1, false);
 #if defined(__APPLE__)
     if(_sysbar) {
       // Quit and About are in the application menu, and Cmd+H hides the

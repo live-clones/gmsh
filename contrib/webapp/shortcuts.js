@@ -1,10 +1,9 @@
 // The keyboard shortcuts of Gmsh's graphical interface in a web page: the same
-// table (src/common/Shortcuts.cpp, through gmshWebShortcuts()), the actions
-// that change the scene run by the module as in the interface (see
-// RunSceneShortcut()), the others by the page, or ignored when the page has
-// nothing for them. A browser keeps some keys for itself (Cmd+W, Cmd+N,
-// Cmd+T, Cmd+Q, and Cmd+H and Cmd+M on macOS): their actions are only reached
-// from the page.
+// table (src/common/Shortcuts.cpp, through gmshWebShortcuts()), a key running
+// the item of its action, as a click on it does (see runItem() in the page),
+// or ignored when the page has none. A browser keeps some keys for itself
+// (Cmd+W, Cmd+N, Cmd+T, Cmd+Q, and Cmd+H and Cmd+M on macOS): their actions
+// are only reached from the page.
 
 const mac = /Mac|iPhone|iPad/.test(navigator.platform);
 // the modifiers of the shortcut table (src/common/Shortcuts.h), and for the
@@ -41,11 +40,10 @@ function keyOf(e) {
   return e.key.toLowerCase();
 }
 
-// installs the shortcuts: run(action, mods) is the page's, returning true when
-// it handled the action; draw(action) draws the scene again after an action
-// of the module (the page may show what it changed). Returns the table,
-// with the label of each key as the platform names it
-export function installShortcuts(Module, run, draw) {
+// installs the shortcuts: run(action, mods) runs the item of the action,
+// returning true when the page has it. Returns the table, with the label of
+// each key as the platform names it
+export function installShortcuts(Module, run) {
   const table = JSON.parse(Module.ccall('gmshWebShortcuts', 'string', ['string'],
                                         [mac ? 'Cmd+' : 'Ctrl+']));
   window.addEventListener('keydown', (e) => {
@@ -65,12 +63,8 @@ export function installShortcuts(Module, run, draw) {
     if(!found.length && digit && (mods & ModShift))
       found = table.filter((s) => matches(s, mods & ~ModShift));
     for(const s of found) {
-      let st = Module.ccall('gmshWebShortcut', 'number', ['string', 'number'],
-                            [s.action, mods]);
-      if(!st && run(s.action, mods)) st = 1;
-      if(!st) continue;
+      if(!run(s.action, mods)) continue;
       e.preventDefault();
-      if(st === 2) draw(s.action);
       return;
     }
   });
@@ -78,12 +72,12 @@ export function installShortcuts(Module, run, draw) {
 }
 
 // a list of the shortcuts, for a help box: each key and what it does, keys
-// that do the same joined with "or", the actions of the module (those that
-// change the scene) and those available(action) says the page has
+// that do the same joined with "or", those available(action) says the page
+// has
 export function shortcutsHelp(table, available) {
   const rows = [];
   for(const s of table) {
-    if(!s.scene && !available(s.action)) continue;
+    if(!available(s.action)) continue;
     const last = rows[rows.length - 1];
     if(last && last.action === s.action && last.help === s.help)
       last.label += ' or ' + s.label;

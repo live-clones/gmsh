@@ -261,10 +261,10 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
     }
     const scriptShape &shape = scriptShapes()[pane];
     group[pane] = new Fl_Group(WB, WB + BH, width - 2 * WB,
-                               height - 3 * WB - 2 * BH, shape.name.c_str());
+                               height - 3 * WB - 2 * BH, shape.label.c_str());
     for(std::size_t i = 0; i < shape.fields.size(); i++, k++) {
       int x = 2 * WB, row = i + 1;
-      if(shape.name == "Cone" && i >= 6) {
+      if(shape.name == "add_cone" && i >= 6) {
         x += (width - 2 * WB) / 2;
         row -= 3;
       }

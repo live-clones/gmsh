@@ -3,40 +3,60 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-// What a web page calls (through ccall) to show Gmsh's scene on its canvas,
-// with Emscripten, besides the Gmsh API (api/gmsh.mjs): the scene drawn as a
-// window would draw it (see drawContextOffscreen), and the mouse events of
-// the page given to the same interaction as the graphical interface's
-// (sceneView). Positions are in the CSS pixels of the canvas, from its top
-// left corner. Errors in these entries are reported and return, as in the
-// desktop interface, instead of throwing into the page (Msg::NoThrow).
+// What a web page calls (through ccall) besides the Gmsh API (api/gmsh.mjs):
+// - the scene on its canvas, drawn as a window would draw it (see
+//   drawContextOffscreen), with the mouse events of the page given to the
+//   same interaction as the graphical interface's (sceneView); positions are
+//   in the CSS pixels of the canvas, from its top left corner;
+// - the tools and the operations on the entities picked, the menus (the
+//   action registry), the shapes added to the script, the options and the
+//   shortcuts of the graphical interface;
+// - the ONELAB loop of the graphical interface, in steps, with the solvers run
+//   in-process (gmshInProcessClient) in a web worker, and the parameters
+//   changed as the graphical interface changes them (they are read through
+//   the Gmsh API, gmsh.onelab.get, in JSON). GetDP is one of these solvers
+//   when the module is linked with it (HAVE_WEBAPP_GETDP, see build.sh).
+// Errors in these entries are reported and return, as in the desktop
+// interface, instead of throwing into the page (Msg::NoThrow).
 
 #if defined(__EMSCRIPTEN__)
 
+#include <algorithm>
 #include <cmath>
+#include <cstdlib>
 #include <cstring>
 #include <fstream>
+#include <functional>
 #include <map>
 #include <sstream>
 #include <emscripten.h>
+#include "GmshConfig.h"
 #include "Actions.h"
 #include "ScriptStyles.h"
 #include "Context.h"
 #include "ColorContrast.h"
 #include "GmshDefines.h"
+#include "GmshGlobal.h"
 #include "GmshMessage.h"
 #include "GModel.h"
 #include "OpenFile.h"
+#include "OS.h"
 #include "PView.h"
 #include "PViewData.h"
 #include "Options.h"
 #include "Shortcuts.h"
 #include "StringUtils.h"
 #include "drawContextOffscreen.h"
+#include "gmshLocalNetworkClient.h"
+#include "onelab.h"
+#include "onelabUtils.h"
 #include "sceneView.h"
 #include "scriptStringInterface.h"
 #include "selectionDriver.h"
 #include "sceneTool.h"
+#if defined(HAVE_WEBAPP_GETDP)
+#include "getdp.h"
+#endif
 
 namespace {
   drawContextOffscreen *_view = nullptr;
@@ -98,6 +118,152 @@ namespace {
     _view->end();
   }
 
+  // the items of the action registry given to the page (gmshWebActions()),
+  // by id
+  std::vector<const actionItem *> _items;
+
+  std::string jsonItem(const actionItem &item)
+  {
+    static const char *kinds[] = {"menu", "action", "operation", "shape"};
+    std::string json = "{\"id\":" + std::to_string(_items.size()) +
+                       ",\"label\":" + JsonString(item.label) + ",\"kind\":\"" +
+                       kinds[item.kind] +
+                       "\",\"name\":" + JsonString(item.name) +
+                       ",\"help\":" + JsonString(item.help) +
+                       ",\"gmsh\":" + (item.run ? "1" : "0") + ",\"items\":[";
+    _items.push_back(&item);
+    for(std::size_t i = 0; i < item.items.size(); i++)
+      json += std::string(i ? "," : "") + jsonItem(item.items[i]);
+    return json + "]}";
+  }
+
+  const actionItem *item(int id)
+  { return (id >= 0 && id < (int)_items.size()) ? _items[id] : nullptr; }
+
+  // the actions of the page done here, as the buttons of the status bar of
+  // the graphical interface do them: the point of view (Shift for the other
+  // side, or with "1:1" for the bounding box of what is visible), and the
+  // time steps and the views (see gmshWebView())
+  typedef std::function<void(unsigned mods, drawContext *ctx)> sceneAction;
+  const std::map<std::string, sceneAction> &sceneActions()
+  {
+    static const std::map<std::string, sceneAction> actions = [] {
+      std::map<std::string, sceneAction> m;
+      for(const char *a :
+          {"view_x", "view_y", "view_z", "view_3d", "view_1_1"}) {
+        std::string which = strcmp(a, "view_1_1") ? std::string(a + 5) : "1:1";
+        m[a] = [which](unsigned mods, drawContext *ctx) {
+          if(which == "1:1" && (mods & ModShift)) SetBoundingBox(true);
+          ctx->standardView(which, mods & ModShift);
+        };
+      }
+      m["time_step_prev"] = [](unsigned, drawContext *) {
+        PView::animate(true, -CTX::instance()->post.animStep);
+      };
+      m["time_step_next"] = [](unsigned, drawContext *) {
+        PView::animate(true, CTX::instance()->post.animStep);
+      };
+      m["view_prev"] = [](unsigned, drawContext *) {
+        PView::animate(false, -CTX::instance()->post.animStep);
+      };
+      m["view_next"] = [](unsigned, drawContext *) {
+        PView::animate(false, CTX::instance()->post.animStep);
+      };
+      return m;
+    }();
+    return actions;
+  }
+
+#if defined(HAVE_WEBAPP_GETDP)
+  // GetDP is known as soon as the module starts, so that opening a .pro file
+  // and running the solver (in the page or with gmsh.onelab.run()) uses it.
+  // Its direct solver is UMFPACK (MUMPS needs Fortran), whose default
+  // unsymmetric strategy needs ten times the memory of MUMPS on 3D models
+  // (28 GB instead of 0.8 for GetDP's tutorial 10): the symmetric strategy
+  // with METIS brings it to 2 GB (the options of a model still apply after)
+  struct registerGetDP {
+    registerGetDP()
+    {
+      onelabUtils::setInProcessSolver("GetDP", getdp);
+      setenv("PETSC_OPTIONS",
+             "-mat_umfpack_strategy SYMMETRIC -mat_umfpack_ordering METIS", 0);
+    }
+  } _registerGetDP;
+#endif
+
+  // the client of the solver the last file opened asked for (a .pro file
+  // asks for GetDP), as the graphical interface adds it
+  void addSolver()
+  {
+    int num = CTX::instance()->launchSolverAtStartup;
+    if(num < 0) return;
+    CTX::instance()->launchSolverAtStartup = -1;
+    std::string name = opt_solver_name(num, GMSH_GET, "");
+    onelabUtils::inProcessSolver solver = onelabUtils::getInProcessSolver(name);
+    if(!solver) {
+      Msg::Error("Solver '%s' is not available in the web app", name.c_str());
+      return;
+    }
+    onelab::server *s = onelab::server::instance();
+    if(s->findClient(name) == s->lastClient()) {
+      gmshInProcessClient *c = new gmshInProcessClient(name, solver);
+      c->setIndex(num);
+    }
+  }
+
+  // the solvers of the server the loops run (not the clients a solver adds
+  // while it runs; see onelabUtils::isAutoRunSolver())
+  std::vector<gmshInProcessClient *> solvers()
+  {
+    onelab::server *s = onelab::server::instance();
+    std::vector<gmshInProcessClient *> v;
+    for(auto it = s->firstClient(); it != s->lastClient(); it++) {
+      auto *c = dynamic_cast<gmshInProcessClient *>(*it);
+      if(c && onelabUtils::isAutoRunSolver(c)) v.push_back(c);
+    }
+    return v;
+  }
+
+  // in a web worker running a solver: what GetDP asks to show, given to the
+  // page (solver.js). GetDP merges such a file in the program, as the files
+  // it reads, then asks for a render: the file is then the last one merged,
+  // and its views, of no use in the worker, are removed (a solver writing its
+  // results at each time step would keep them all, and GetDP would find them
+  // as the last views, which a GetDP process of its own never sees).
+  // And the database, when GetDP asks for a refresh (Gmsh/Action, e.g. after
+  // adding a value to an output drawn on a graph), no more than every quarter
+  // of a second, as the graphical interface (gmshLocalNetworkClient)
+  class solverMessages : public GmshMessage {
+  public:
+    void operator()(std::string level, std::string message)
+    {
+      if(level == "RequestRender") {
+        std::size_t first;
+        const std::string &file = GmshLastMergedPostProcessingFile(&first);
+        if(file.empty()) return;
+        EM_ASM(
+          {
+            if(globalThis.gmshSolverMerge)
+              globalThis.gmshSolverMerge(UTF8ToString($0));
+          },
+          file.c_str());
+        while(PView::list.size() > first) delete PView::list.back();
+        return;
+      }
+      static double lastRefresh = 0.;
+      double now = TimeOfDay();
+      if(now - lastRefresh < 0.25) return;
+      std::vector<onelab::string> ps;
+      onelab::server::instance()->get(ps, "Gmsh/Action");
+      if(ps.empty() || ps[0].getValue() != "refresh") return;
+      ps[0].setValue("");
+      onelab::server::instance()->set(ps[0]);
+      lastRefresh = now;
+      EM_ASM({
+        if(globalThis.gmshSolverRefresh) globalThis.gmshSolverRefresh();
+      });
+    }
+  };
 } // namespace
 
 extern "C" {
@@ -217,10 +383,12 @@ EMSCRIPTEN_KEEPALIVE int gmshWebPinch(int kind, double x, double y, double d)
     ctx->s[0] = ctx->s[1] = ctx->s[2] = s;
     // the point under the fingers where the pinch started (start.wnr) under
     // them now (see mousePosition::set())
-    ctx->t[0] = (ctx->vxmin + x / ctx->viewport[2] * (ctx->vxmax - ctx->vxmin)) / s +
-                ctx->t_init[0] / s - start.wnr[0];
-    ctx->t[1] = (ctx->vymax - y / ctx->viewport[3] * (ctx->vymax - ctx->vymin)) / s +
-                ctx->t_init[1] / s - start.wnr[1];
+    ctx->t[0] =
+      (ctx->vxmin + x / ctx->viewport[2] * (ctx->vxmax - ctx->vxmin)) / s +
+      ctx->t_init[0] / s - start.wnr[0];
+    ctx->t[1] =
+      (ctx->vymax - y / ctx->viewport[3] * (ctx->vymax - ctx->vymin)) / s +
+      ctx->t_init[1] / s - start.wnr[1];
   }
   if(CTX::instance()->fastRedraw) {
     CTX::instance()->mesh.draw = 0;
@@ -364,7 +532,7 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebOperationState()
 }
 
 // The shapes of the elementary entity dialog of the graphical interface, in
-// JSON: [{"name", "fields": [[name, default value], ...]}] (see
+// JSON: [{"name", "label", "fields": [[name, default value], ...]}] (see
 // scriptShapes())
 EMSCRIPTEN_KEEPALIVE const char *gmshWebShapes()
 {
@@ -373,7 +541,8 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebShapes()
   json = "[";
   for(auto &shape : scriptShapes()) {
     json += std::string(json.size() > 1 ? "," : "") +
-            "{\"name\":" + JsonString(shape.name) + ",\"fields\":[";
+            "{\"name\":" + JsonString(shape.name) +
+            ",\"label\":" + JsonString(shape.label) + ",\"fields\":[";
     for(std::size_t i = 0; i < shape.fields.size(); i++)
       json += std::string(i ? "," : "") + "[" +
               JsonString(shape.fields[i].first) + "," +
@@ -384,64 +553,45 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebShapes()
   return json.c_str();
 }
 
-// The action registry (see Actions.h), in JSON: {menu: item}, an item
-// {"id", "label", "kind" ("menu", "run", "operation", "shape" or "option"),
-// "what", "help", "key", "interface" (1 if the page does it), "items"}; the
-// page gives back its id to do it
-static std::vector<const actionItem *> _items;
-
-static std::string jsonItem(const actionItem &item)
-{
-  static const char *kinds[] = {"menu", "run", "operation", "shape", "option"};
-  std::string json =
-    "{\"id\":" + std::to_string(_items.size()) +
-    ",\"label\":" + JsonString(item.label) + ",\"kind\":\"" + kinds[item.kind] +
-    "\",\"what\":" + JsonString(item.what) +
-    ",\"help\":" + JsonString(item.help) + ",\"key\":" + JsonString(item.key) +
-    ",\"interface\":" + (IsDoneByInterface(item) ? "1" : "0") + ",\"items\":[";
-  _items.push_back(&item);
-  for(std::size_t i = 0; i < item.items.size(); i++)
-    json += std::string(i ? "," : "") + jsonItem(item.items[i]);
-  return json + "]}";
-}
-
 // the program written next to the script of the model for an item of the
-// registry ("Edit Python program"), or "" (see scriptProgram())
-EMSCRIPTEN_KEEPALIVE const char *gmshWebScriptProgram(const char *what)
+// registry ("script_edit_py"), or "" (see scriptProgram())
+EMSCRIPTEN_KEEPALIVE const char *gmshWebScriptProgram(const char *name)
 {
   Msg::NoThrow noThrow;
   static std::string file;
   file = "";
   for(auto &l : scriptLanguages())
-    if(std::string(what) == "Edit " + l.label + " program")
+    if(std::string(name) == "script_edit_" + l.name)
       file = scriptProgram(GModel::current()->getFileName(), l.name);
   return file.c_str();
 }
 
+// The action registry (see Actions.h), in JSON: {menu: item}, the menus and
+// the actions of the keys in no menu ("Keys"), an item {"id", "label", "kind"
+// ("menu", "action", "operation" or "shape"), "name", "help", "gmsh" (1 for
+// an action Gmsh does, done here; the page does the others), "items"}; the
+// page gives back its id to do it
 EMSCRIPTEN_KEEPALIVE const char *gmshWebActions()
 {
   Msg::NoThrow noThrow;
   static std::string json;
   _items.clear();
   json = "{";
-  for(const char *menu : {"Geometry", "Mesh", "Quick access", "View"})
+  for(const char *menu :
+      {"Geometry", "Mesh", "Quick access", "View", "Menu bar", "Keys"})
     json += std::string(json.size() > 1 ? "," : "") + JsonString(menu) + ":" +
             jsonItem(GetActionMenu(menu));
   json += "}";
   return json.c_str();
 }
 
-static const actionItem *item(int id)
-{ return (id >= 0 && id < (int)_items.size()) ? _items[id] : nullptr; }
-
-// What the item of id does, done here (see RunAction()), for the view of
-// index view, in the scene: what RunAction() returns
+// What the item of id does, done here (see RunItem()), for the view of
+// index view, in the scene: what RunItem() returns
 EMSCRIPTEN_KEEPALIVE int gmshWebAction(int id, int view)
 {
   Msg::NoThrow noThrow;
   if(!item(id)) return 0;
-  int ret =
-    RunAction(*item(id), view, _view ? _view->getDrawContext() : nullptr);
+  int ret = RunItem(*item(id), view, _view ? _view->getDrawContext() : nullptr);
   if(ret & ActionModelChanged) {
     GModel::current()->setSelection(0);
     SetBoundingBox();
@@ -449,13 +599,14 @@ EMSCRIPTEN_KEEPALIVE int gmshWebAction(int id, int view)
   return ret;
 }
 
-// The check mark of the item of id (see GetActionCheck()), -2 if it does not
-// apply now (see IsActionAvailable())
+// The check mark of the item of id (-1 for none, 0 or 1), -2 if it does not
+// apply now
 EMSCRIPTEN_KEEPALIVE int gmshWebActionCheck(int id)
 {
   Msg::NoThrow noThrow;
-  if(!item(id) || !IsActionAvailable(*item(id))) return -2;
-  return GetActionCheck(*item(id));
+  const actionItem *i = item(id);
+  if(!i || (i->available && !i->available())) return -2;
+  return i->check ? i->check() : -1;
 }
 
 // The style of each character of the text of a file in an editor (see
@@ -604,8 +755,8 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebOptionRange(const char *option)
 // "key" (a lower case letter, a digit or a mark, or the name the page gives a
 // key: "F1", "Escape", "ArrowLeft", "PageUp"...), "mods" (ModCommand 1,
 // ModShift 2, ModAlt 4, AnyModifiers 8), "help", "label" (with command the
-// name of the Command key, "Cmd+" or "Ctrl+"), "scene" (run by
-// gmshWebShortcut())}]
+// name of the Command key, "Cmd+" or "Ctrl+")}]: a key runs the item of its
+// action (see Actions.h)
 EMSCRIPTEN_KEEPALIVE const char *gmshWebShortcuts(const char *command)
 {
   Msg::NoThrow noThrow;
@@ -632,33 +783,36 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebShortcuts(const char *command)
       key = "PageDown";
     else
       key = std::string(1, (char)k);
-    bool scene = !strcmp(e.action, "escape") || IsSceneShortcut(e.action);
     if(json.size() > 1) json += ",";
     json += "{\"action\":" + JsonString(e.action) +
             ",\"key\":" + JsonString(key) +
             ",\"mods\":" + std::to_string(e.shortcut.mods) +
             ",\"help\":" + JsonString(e.help) +
-            ",\"label\":" + JsonString(e.shortcut.label(command)) +
-            ",\"scene\":" + (scene ? "true" : "false") + "}";
+            ",\"label\":" + JsonString(e.shortcut.label(command)) + "}";
   }
   json += "]";
   return json.c_str();
 }
 
-// run an action of the shortcuts that changes the scene (see
-// RunSceneShortcut()), or Escape, which stops a lasso: returns 2 if the scene
-// is to be drawn again, 0 if the action is not one of them
-EMSCRIPTEN_KEEPALIVE int gmshWebShortcut(const char *action, int mods)
+// the point of view or the time steps, as the page's actions of these names
+// do them (see sceneActions()): 1 when done, for the page to draw again
+EMSCRIPTEN_KEEPALIVE int gmshWebView(const char *action, int mods)
 {
   Msg::NoThrow noThrow;
   if(!_view || !_view->getDrawContext()) return 0;
-  std::string a(action);
-  if(a == "escape") {
-    if(!_scene || !_scene->lassoMode) return 0;
-    _scene->lassoMode = false;
-    return 2;
-  }
-  return RunSceneShortcut(a, mods, _view->getDrawContext());
+  auto it = sceneActions().find(action);
+  if(it == sceneActions().end()) return 0;
+  it->second(mods, _view->getDrawContext());
+  return 1;
+}
+
+// the lasso being drawn stopped (Escape): 1 if there was one
+EMSCRIPTEN_KEEPALIVE int gmshWebStopLasso()
+{
+  Msg::NoThrow noThrow;
+  if(!_scene || !_scene->lassoMode) return 0;
+  _scene->lassoMode = false;
+  return 1;
 }
 
 // the view turned by 90 degrees about the axis out of the screen, clockwise
@@ -686,6 +840,182 @@ EMSCRIPTEN_KEEPALIVE void gmshWebResetView()
 {
   Msg::NoThrow noThrow;
   if(_view) _view->resetView();
+}
+
+// the solvers forgotten, as a model starts, or none (Clear in the page): the
+// next file opened adds those it asks for (see addSolver())
+EMSCRIPTEN_KEEPALIVE void gmshWebOnelabForgetSolvers()
+{
+  Msg::NoThrow noThrow;
+  onelab::server *s = onelab::server::instance();
+  std::vector<gmshInProcessClient *> v;
+  for(auto it = s->firstClient(); it != s->lastClient(); it++)
+    if(auto *c = dynamic_cast<gmshInProcessClient *>(*it)) v.push_back(c);
+  // (each unregisters itself)
+  for(auto *c : v) delete c;
+}
+
+// The ONELAB loop of the graphical interface (onelab_cb()) in steps, for a
+// page that runs the solvers in a web worker, as the graphical interface runs
+// them in processes of their own (onelab.html and solver.js): the page starts,
+// then for each pass runs Gmsh here and the solvers it is given in the worker,
+// the database going along, then asks for the next pass. Starting, with
+// "check", "compute" or "reset" (whose passes are "check"):
+EMSCRIPTEN_KEEPALIVE void gmshWebOnelabStart(const char *what)
+{
+  Msg::NoThrow noThrow;
+  std::string action(what);
+  addSolver();
+  if(action == "reset") onelabUtils::resetDb(true);
+  Msg::ResetErrorCounter();
+  if(action == "compute") onelabUtils::initializeLoops();
+}
+
+// Gmsh's part of a pass ("check" or "compute"), and the solvers to run then,
+// in JSON: [{"name":..., "args":[...]}]
+EMSCRIPTEN_KEEPALIVE const char *gmshWebOnelabGmsh(const char *what)
+{
+  Msg::NoThrow noThrow;
+  std::string action(what);
+  onelabUtils::runGmshClient(action, CTX::instance()->solver.autoMesh);
+  static std::string json;
+  json = "[";
+  for(auto *c : solvers()) {
+    onelabUtils::setSolverAction(c, action);
+    if(json.size() > 1) json += ",";
+    json += "{\"name\":" + JsonString(c->getName()) + ",\"args\":[";
+    std::vector<std::string> args = c->commandLine();
+    for(std::size_t i = 0; i < args.size(); i++)
+      json += (i ? "," : "") + JsonString(args[i]);
+    json += "]}";
+  }
+  json += "]";
+  return json.c_str();
+}
+
+// the end of a pass, once the solvers have run and their database is back:
+// returns 1 if there is another pass (a loop over parameters)
+EMSCRIPTEN_KEEPALIVE int gmshWebOnelabNext(const char *what)
+{
+  Msg::NoThrow noThrow;
+  std::string action(what);
+  if(action == "compute")
+    for(auto *c : solvers())
+      onelab::server::instance()->setChanged(0, c->getName());
+  onelabUtils::updateGraphs();
+  return (action == "compute" && onelabUtils::incrementLoops()) ? 1 : 0;
+}
+
+// the whole loop, with the solvers run here (run_models.mjs): returns the
+// number of errors
+EMSCRIPTEN_KEEPALIVE int gmshWebOnelab(const char *what)
+{
+  Msg::NoThrow noThrow;
+  std::string pass = (std::string(what) == "reset") ? "check" : what;
+  gmshWebOnelabStart(what);
+  do {
+    gmshWebOnelabGmsh(pass.c_str());
+    for(auto *c : solvers()) c->run();
+  } while(gmshWebOnelabNext(pass.c_str()));
+  return Msg::GetErrorCount();
+}
+
+// the errors since the start
+EMSCRIPTEN_KEEPALIVE int gmshWebErrorCount() { return Msg::GetErrorCount(); }
+
+// In the web worker: run a solver with the arguments of gmshWebOnelabGmsh()
+// (separated by new lines), with the database the page sent; the files it
+// asks to show go to the page as they are written. Returns the errors
+EMSCRIPTEN_KEEPALIVE int gmshWebOnelabSolve(const char *argv)
+{
+  Msg::NoThrow noThrow;
+  std::vector<std::string> args;
+  std::string a(argv);
+  for(std::size_t start = 0, end; start < a.size(); start = end + 1) {
+    end = a.find('\n', start);
+    if(end == std::string::npos) end = a.size();
+    args.push_back(a.substr(start, end - start));
+  }
+  if(args.empty()) return 1;
+  onelabUtils::inProcessSolver solver =
+    onelabUtils::getInProcessSolver(args[0]);
+  if(!solver) {
+    Msg::Error("Solver '%s' is not available in the web app", args[0].c_str());
+    return 1;
+  }
+  // a solver starts with no views, as in a process of its own
+  while(PView::list.size()) delete PView::list.back();
+  static solverMessages messages;
+  Msg::SetCallback(&messages);
+  Msg::ResetErrorCounter();
+  int errors = 0;
+  try {
+    errors = solver(args, onelab::server::instance());
+  } catch(...) {
+    Msg::Error("'%s' stopped on an error", args[0].c_str());
+    errors = 1;
+  }
+  Msg::SetCallback(nullptr);
+  return std::max(errors, Msg::GetErrorCount());
+}
+
+// On the page: show a file a solver wrote, as the graphical interface does
+// when a solver asks for it (gmshLocalNetworkClient)
+EMSCRIPTEN_KEEPALIVE void gmshWebOnelabMerge(const char *name)
+{
+  Msg::NoThrow noThrow;
+  onelabUtils::mergeSolverFile(name);
+}
+
+// On the page: the X-Y graphs of the parameters drawn on them (their "Graph"
+// attribute), made again from their values, as the graphical interface does
+// on a refresh
+EMSCRIPTEN_KEEPALIVE void gmshWebOnelabUpdateGraphs()
+{
+  Msg::NoThrow noThrow;
+  onelabUtils::updateGraphs();
+}
+
+// change a parameter, given in JSON as gmsh.onelab.get() gives them: returns
+// 1 if the model is to be checked, 2 if other parameters were reset, or -1
+EMSCRIPTEN_KEEPALIVE int gmshWebOnelabSet(const char *json)
+{
+  Msg::NoThrow noThrow;
+  onelab::number n;
+  if(n.fromJSON(json)) return onelabUtils::setParameter(n) & 3;
+  onelab::string s;
+  if(s.fromJSON(json)) return onelabUtils::setParameter(s) & 3;
+  return -1;
+}
+
+// extract a zip archive (e.g. a model with its included files) in a directory
+EMSCRIPTEN_KEEPALIVE void gmshWebUnzip(const char *fileName, const char *dir)
+{
+  Msg::NoThrow noThrow;
+  UnzipFile(fileName, dir);
+}
+
+// the colour of a name as the graphical interface reads it (the "Highlight"
+// of a parameter, an X11 name such as LightSteelBlue1), as 0xrrggbb, or -1
+EMSCRIPTEN_KEEPALIVE int gmshWebColor(const char *name)
+{
+  Msg::NoThrow noThrow;
+  int r, g, b;
+  if(!GetRGBForString(name, r, g, b)) return -1;
+  return (r << 16) | (g << 8) | b;
+}
+
+// that colour as the graphical interface shows it (see ColorContrast.h), on
+// the background bg with the text fg of the page (as 0xrrggbb), in dark mode
+// or not: as a text (what = 0), as the background of a field (1) or as the
+// text on that field (2)
+EMSCRIPTEN_KEEPALIVE int gmshWebReadableColor(int rgb, int bg, int fg, int dark,
+                                              int what)
+{
+  Msg::NoThrow noThrow;
+  if(what == 0) return ReadableTextColor(rgb, bg, bg, dark);
+  unsigned int fill = ReadableFillColor(rgb, fg, dark);
+  return what == 1 ? fill : ContrastingColor(fill);
 }
 
 } // extern "C"

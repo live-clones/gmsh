@@ -392,6 +392,9 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   locked = true;
   _mainThread = std::this_thread::get_id();
 
+  // the actions this interface does, given to the items of the menus
+  fltkActions();
+
   // set X display
   if(CTX::instance()->display.size())
     Fl::display(CTX::instance()->display.c_str());
@@ -958,8 +961,7 @@ const std::map<std::string, fltkAction> &keyboardActions()
     {"options_post", {[](int) { post_options_cb(nullptr, nullptr); }}},
     {"plugins_view", {[](int) { plugins_view(); }}},
     // the point of view, as the buttons of the status bar (which read Shift
-    // and Ctrl: the other side, reset, sync the viewports); the web page does
-    // it in RunSceneShortcut()
+    // and Ctrl: the other side, reset, sync the viewports)
     {"view_x", {[](int) { status_xyz1p_cb(nullptr, (void *)"x"); }}},
     {"view_y", {[](int) { status_xyz1p_cb(nullptr, (void *)"y"); }}},
     {"view_z", {[](int) { status_xyz1p_cb(nullptr, (void *)"z"); }}},
@@ -988,23 +990,16 @@ const std::map<std::string, fltkAction> &keyboardActions()
   return actions;
 }
 
-// What each action of the shortcut table does: an action of the registry (see
-// Actions.h) or one the interface does (see findAction() in actionMenus.cpp:
-// the modules, the menu bar and the keys above) runs as its items do; those
-// that only change the scene are those of RunSceneShortcut(), shared with the
-// web page. Returns 0 for an action not handled here (or not available now:
-// the key then goes on, as if it had no shortcut), 1 when done, 2 when the
-// scene must be drawn again.
+// What each action of the shortcut table does: the item of its name in the
+// registry (see Actions.h) runs, as a click on it does. Returns 0 for an
+// action not handled here (or not available now: the key then goes on, as if
+// it had no shortcut), 1 when done.
 int FlGui::runShortcut(const std::string &a)
 {
-  actionItem item{"", ActionRun, a, {}, "", ""};
-  if(canRunItem(item)) {
-    runItem(item);
-    return 1;
-  }
-  if(IsAction(a)) return 0;
-  // the display, the views and the time steps, as in the web page
-  return RunSceneShortcut(a, 0, nullptr);
+  const actionItem *item = FindItem(a);
+  if(!item || !canRunItem(*item)) return 0;
+  runItem(*item);
+  return 1;
 }
 
 void FlGui::setGraphicTitle(const std::string &title)

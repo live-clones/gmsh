@@ -1893,16 +1893,17 @@ elseif(EMSCRIPTEN)
   # reads and writes its memory and adds the callbacks to its function table
   add_executable(libgmsh EXCLUDE_FROM_ALL ${GMSH_SRC})
   target_link_libraries(libgmsh ${LINK_LIBRARIES})
-  # with the functions the pages of the web app call to draw the scene on
-  # their canvas, and, when GetDP is given (built as a static library with its
-  # solvers, see contrib/webapp/build.sh), GetDP run in-process as the ONELAB
-  # solver
+  # with the functions the pages of the web app call (to draw the scene on
+  # their canvas, run the ONELAB loop...), and, when GetDP is given (built as a
+  # static library with its solvers, see contrib/webapp/build.sh), GetDP run
+  # in-process as the ONELAB solver
   if(HAVE_OPENGL)
-    target_sources(libgmsh PRIVATE contrib/webapp/webView.cpp)
+    target_sources(libgmsh PRIVATE contrib/webapp/webApp.cpp)
   endif()
   if(WEBAPP_GETDP_INC AND WEBAPP_GETDP_LIBS)
     message(STATUS "Linking the web app with GetDP: ${WEBAPP_GETDP_LIBS}")
-    target_sources(libgmsh PRIVATE contrib/webapp/webOnelab.cpp)
+    set_source_files_properties(contrib/webapp/webApp.cpp PROPERTIES
+                                COMPILE_DEFINITIONS HAVE_WEBAPP_GETDP)
     target_include_directories(libgmsh PRIVATE ${WEBAPP_GETDP_INC})
     target_link_libraries(libgmsh ${WEBAPP_GETDP_LIBS})
   endif()

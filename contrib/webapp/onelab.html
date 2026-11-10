@@ -498,9 +498,9 @@
 <div id="drop">drop a model (.pro, .geo and the files they include, or a .zip)</div>
 <script type="module">
 // The ONELAB web app: Gmsh, through the Gmsh JavaScript API (gmsh.mjs) and
-// the drawing functions of webView.cpp, with GetDP, linked in the same module
-// (webOnelab.cpp) but run in a web worker (solver.js), as the graphical
-// interface runs it in a process of its own. A model is opened from files, a folder, a zip
+// the functions of webApp.cpp, with GetDP, linked in the same module but run
+// in a web worker (solver.js), as the graphical interface runs it in a
+// process of its own. A model is opened from files, a folder, a zip
 // archive, or a URL (?zip=<url>, with &open=<file> for a zip of several
 // models, or ?model=<url of the .pro>&files=<other files, next to it,
 // separated by commas>)
@@ -640,7 +640,7 @@ function draw() {
   });
 }
 // the mouse: the events of the canvas go to the same interaction as in the
-// graphical interface (src/graphics/sceneView.cpp, through webView.cpp):
+// graphical interface (src/graphics/sceneView.cpp, through webApp.cpp):
 // left drag rotates, right drag pans, middle or shift drag zooms, the wheel
 // zooms at the cursor, Ctrl+click starts a lasso to zoom on, Ctrl+right click
 // resets the view; what is under the cursor is named in a box by it
@@ -1009,13 +1009,13 @@ function showPending() {
   if(pendingDb) setDatabase(pendingDb);
   pendingDb = null;
   for(const [name] of files)
-    Module.ccall('gmshWebMergeFile', null, ['string'], [name]);
+    Module.ccall('gmshWebOnelabMerge', null, ['string'], [name]);
   showSolverProgress();
 }
 // what the solver changed: the graphs made again from the parameters, as the
 // graphical interface does on a refresh
 function showSolverProgress() {
-  Module.ccall('gmshWebUpdateGraphs', null, [], []);
+  Module.ccall('gmshWebOnelabUpdateGraphs', null, [], []);
   showParameters();
   showViews();
   readOptions();
@@ -1928,12 +1928,12 @@ function saveMesh() {
 }
 // Geometry: a new model, the script edited, reloaded and saved, the shapes
 // added to it as the dialog of the graphical interface adds them, with its
-// fields and their defaults (see gmshWebShapes() in webView.cpp), and the
+// fields and their defaults (see gmshWebShapes() in webApp.cpp), and the
 // operations on selected entities. The fields of a shape, as the dialog's,
 // keep what was typed in them
 const shapes = Object.fromEntries(
   JSON.parse(Module.ccall('gmshWebShapes', 'string', [], [])).map(
-    (shape) => [shape.name, shape.fields]));
+    (shape) => [shape.name, shape]));
 // the script of the model: its .geo file, if it is one
 function scriptFile() {
   const f = gmsh.model.getFileName();
@@ -2076,14 +2076,14 @@ function saveScript() {
   else setStatus('No script to save: open a .geo model, or make a new one');
 }
 // the form of a shape
-function showShapeForm(shape) {
+function startShape(shape) {
   if(tool === Tool.Operation) stopOperation();
-  const fields = shapes[shape];
-  showPanel($('moduleGeometry'), shape,
+  const {label, fields} = shapes[shape];
+  showPanel($('moduleGeometry'), label,
             fields.map(([name, value]) => ({name, kind: 'text', value})),
             (name, value) => { fields.find((f) => f[0] === name)[1] = value; },
             () => addShape(shape),
-            [['Add', `Add the ${shape.toLowerCase()} to the script`, () => addShape(shape)],
+            [['Add', `Add the ${label.toLowerCase()} to the script`, () => addShape(shape)],
              ['Close', 'Close the form', () => showPanel(null)]]);
 }
 // the model's name, which changes when a model that is not a .geo file is
@@ -2100,12 +2100,12 @@ async function addShape(shape) {
   const wasEmpty = isEmpty();
   lastError = '';
   const errors = Module.ccall('gmshWebAddShape', 'number', ['string', 'string'],
-                              [shape, shapes[shape].map((f) => f[1]).join('\n')]);
+                              [shape, shapes[shape].fields.map((f) => f[1]).join('\n')]);
   showModelName();
   showAll();
   fitIfWasEmpty(wasEmpty);
   const text = errors ? `Not added: ${lastError.replace(/^Error *: */, '')}` :
-    `Added a ${shape.toLowerCase()} to ${$('model').textContent}`;
+    `Added a ${shapes[shape].label.toLowerCase()} to ${$('model').textContent}`;
   setStatus(text, !!errors);
 }
 // the mesh partitioned, into the number of parts the form of the module asks
@@ -2125,73 +2125,138 @@ function partitionForm() {
 }
 // The action registry (src/common/Actions.cpp): the menus of the page and
 // of the graphical interface, the buttons of the modules included, and what
-// their items do (see gmshWebActions() in webView.cpp)
+// their items do (see gmshWebActions() in webApp.cpp)
 const registry = JSON.parse(Module.ccall('gmshWebActions', 'string', [], []));
 // the actions of the registry this page does: what it does (view: the index
 // of the view of a menu of a view, tag its tag), its check mark, and whether
 // it has it now (always if not said)
 const pageActions = {
-  'New model': {run: newModel},
-  'Reload script': {run: reloadScript},
-  'Edit script': {run: editScript},
-  'Save script': {run: saveScript},
-  'Save mesh': {run: saveMesh},
-  'Partition mesh': {run: partitionForm},
-  'Query': {run: () => toggleTool(Tool.Query), check: () => tool === Tool.Query},
-  'Measure': {run: () => toggleTool(Tool.Measure), check: () => tool === Tool.Measure},
-  'Full screen': {run: toggleFullscreen, check: () => !!fullscreenElement(),
-                  available: () => !!fullscreenEnabled},
-  'Install app': {run: installApp, available: () => !!window.installPrompt},
-  'General options': {run: () => showOptions('General')},
-  'Geometry options': {run: () => showOptions('Geometry')},
-  'Mesh options': {run: () => showOptions('Mesh')},
-  'All view options': {run: () => showViewOptions(firstView())},
-  'View options': {run: (view, tag) => { if(!viewOptionsOpen.delete(tag)) viewOptionsOpen.add(tag); },
+  'model_new': {run: newModel},
+  'script_reload': {run: reloadScript},
+  'script_edit': {run: editScript},
+  'script_save': {run: saveScript},
+  'mesh_save': {run: saveMesh},
+  'mesh_partition': {run: partitionForm},
+  'query': {run: () => toggleTool(Tool.Query), check: () => tool === Tool.Query},
+  'measure': {run: () => toggleTool(Tool.Measure), check: () => tool === Tool.Measure},
+  'window_full_screen': {run: toggleFullscreen, check: () => !!fullscreenElement(),
+                         available: () => !!fullscreenEnabled},
+  'app_install': {run: installApp, available: () => !!window.installPrompt},
+  'options_general': {run: () => showOptions('General')},
+  'options_geometry': {run: () => showOptions('Geometry')},
+  'options_mesh': {run: () => showOptions('Mesh')},
+  'options_views': {run: () => showViewOptions(firstView())},
+  'view_options': {run: (view, tag) => { if(!viewOptionsOpen.delete(tag)) viewOptionsOpen.add(tag); },
                    check: (view, tag) => viewOptionsOpen.has(tag)},
-  'Export view as .pos': {run: (view, tag) => exportView(tag, 'pos')},
-  'Export view as .msh': {run: (view, tag) => exportView(tag, 'msh')}
+  'view_export_pos': {run: (view, tag) => exportView(tag, 'pos')},
+  'view_export_msh': {run: (view, tag) => exportView(tag, 'msh')},
+  // those of the keys in no menu (see keysOnly() in src/common/Actions.cpp)
+  'escape': {run: () => escape()},
+  'selection_end': {run: () => operationKey('e'), available: () => tool === Tool.Operation},
+  'selection_undo': {run: () => operationKey('u'), available: () => tool === Tool.Operation},
+  'selection_quit': {run: () => tool === Tool.Operation ? operationKey('q') : setTool(Tool.None),
+                     available: () => !!tool},
+  'view_x': {run: (view, tag, mods) => sceneAction('view_x', mods)},
+  'view_y': {run: (view, tag, mods) => sceneAction('view_y', mods)},
+  'view_z': {run: (view, tag, mods) => sceneAction('view_z', mods)},
+  'view_3d': {run: (view, tag, mods) => sceneAction('view_3d', mods)},
+  'view_1_1': {run: (view, tag, mods) => sceneAction('view_1_1', mods)},
+  'time_step_prev': {run: () => sceneAction('time_step_prev')},
+  'time_step_next': {run: () => sceneAction('time_step_next')},
+  'view_prev': {run: () => sceneAction('view_prev')},
+  'view_next': {run: () => sceneAction('view_next')},
+  'mouse_selection': {run: () => toggleMouseSelection()},
+  'solver_run': {run: () => run('compute')},
+  'file_new': {run: () => newModel()},
+  'project_reload': {run: () => run('check')},
+  'file_open': {run: () => openMenu(true)},
+  'help_keys': {run: () => $('keysDialog').showModal()},
+  'options': {run: () => showOptions()},
+  'options_post': {run: () => showViewOptions(firstView())},
+  'options_solver': {run: () => showTab('modelTab')},
+  'clipping': {run: () => showTab('clipTab')},
+  'visibility': {run: () => showTab('visTab')},
+  'menu_show_hide': {run: () => toggleSide()}
 };
+// the programs written next to the script (the items script_edit_py... of
+// the Geometry module), in the editor
+function editProgram(name) {
+  editFile(Module.ccall('gmshWebScriptProgram', 'string', ['string'], [name]));
+}
 // the check mark of an item in Gmsh: -1 for none, 0 or 1, -2 if it does not
 // apply now
 const itemCheck = (item) => Module.ccall('gmshWebActionCheck', 'number', ['number'], [item.id]);
+// Each item given its path in its menu ("Mesh › 2D"), which says what it does
+// in the status and the forms (the names of the items are keys), and, for an
+// action, what it does (none if the page does not have it), when it applies
+// and its check mark: Gmsh's (see gmshAction()), or the page's
+for(const [menu, root] of Object.entries(registry)) {
+  (function setItems(m, path) {
+    for(const it of m.items) {
+      const p = it.label ? [...path, it.label] : path;
+      if(it.kind === 'menu') {
+        setItems(it, p);
+        continue;
+      }
+      it.path = p.join(' › ');
+      if(it.kind === 'action' && !it.gmsh) {
+        const a = pageActions[it.name] ||
+          (/^script_edit_/.test(it.name) ? {run: () => editProgram(it.name)} : {});
+        it.run = a.run;
+        it.available = a.available || (() => true);
+        it.check = a.check || (() => undefined);
+      }
+      else {
+        if(it.kind === 'action') it.run = (view) => gmshAction(it, view);
+        it.available = () => itemCheck(it) !== -2;
+        it.check = () => {
+          const c = itemCheck(it);
+          return c >= 0 ? !!c : undefined;
+        };
+      }
+    }
+  })(root, [menu]);
+}
 // whether the page has an item now
-function canRun(item) {
-  if(itemCheck(item) === -2) return false;
-  if(item.kind !== 'run' || !item.interface) return true;
-  const a = pageActions[item.what];
-  return !!a && (!a.available || a.available());
-}
+const canRunItem = (item) => (item.kind !== 'action' || !!item.run) && item.available();
 // whether a menu has an item the page has now
-const anyItem = (menu) => menu.items.some((it) => it.kind === 'menu' ? anyItem(it) : canRun(it));
-function checkOf(item, view, tag) {
-  if(item.kind === 'run' && item.interface) {
-    const a = pageActions[item.what];
-    return a.check ? a.check(view, tag) : undefined;
+const canRunAnyItem = (menu) =>
+  menu.items.some((it) => it.kind === 'menu' ? canRunAnyItem(it) : canRunItem(it));
+// the item of a name (that of a key), in any menu
+function findItem(name, menu = {items: Object.values(registry)}) {
+  for(const it of menu.items) {
+    const found = it.kind === 'menu' ? findItem(name, it) : it.name === name && it;
+    if(found) return found;
   }
-  const c = itemCheck(item);
-  return c >= 0 ? !!c : undefined;
+  return null;
 }
-// what an item does: by the page, or in Gmsh
-async function runItem(item, {view = -1, tag, module = ''} = {}) {
-  if(item.kind === 'operation') startOperation($('module' + module), item.what);
-  else if(item.kind === 'shape') showShapeForm(item.what);
-  else if(item.interface) pageActions[item.what].run(view, tag);
-  else await gmshAction(item, view, module);
+// the module of an item ('Geometry', 'Mesh' or '')
+const moduleOf = (item) =>
+  ['Geometry', 'Mesh'].find((m) => item.path.startsWith(m + ' ›')) || '';
+// What an item does, clicked or by a key of its name: an operation, a shape,
+// or an action (view: the index of the view of a menu of a view, tag its tag;
+// mods: the modifiers of the key)
+async function runItem(item, {view = -1, tag, mods = 0} = {}) {
+  if(item.kind === 'operation') startOperation(item);
+  else if(item.kind === 'shape') startShape(item.name);
+  else await item.run(view, tag, mods);
 }
-// what an item does in Gmsh (see RunAction()): on the mesh, timed with the
+// what an action does in Gmsh (see RunItem()): on the mesh, timed with the
 // size of the mesh in the status; on the script, of a new model if there is
 // none; an option, kept (see keepOption())
-async function gmshAction(item, view, module) {
+async function gmshAction(item, view) {
   if(busy) return;
+  const module = moduleOf(item);
   const run = () => Module.ccall('gmshWebAction', 'number', ['number', 'number'],
                                  [item.id, view]);
-  if(item.kind === 'option') {
+  // (an option, named as it is: kept)
+  if(item.name.includes('.')) {
     run();
-    if(item.what) keepOptionOf(item.what.split('=')[0], view);
+    keepOptionOf(item.name.split('=')[0], view);
     return;
   }
   if(module === 'Mesh') {
-    meshAction(item.what, item.what, run);
+    meshAction(item.path, item.path, run);
     return;
   }
   if(module === 'Geometry' && !modelDir) await newModel();
@@ -2201,7 +2266,7 @@ async function gmshAction(item, view, module) {
   showModelName();
   showAll();
   const text = lastError ? lastError.replace(/^Error *: */, '') :
-    `${item.what} in ${$('model').textContent}`;
+    `${item.path} in ${$('model').textContent}`;
   setStatus(text, !!lastError);
 }
 // the items of a menu as popupMenu() shows them: a submenu as {label, items}
@@ -2212,7 +2277,7 @@ function menuItems(menu, opts = {}, level = 0) {
   const add = (m) => {
     for(const it of m.items) {
       if(it.kind === 'menu') {
-        if(!anyItem(it)) continue;
+        if(!canRunAnyItem(it)) continue;
         if(it.label && !level) items.push({label: it.label, items: menuItems(it, opts, 1)});
         else {
           items.push(it.label || '');
@@ -2220,8 +2285,8 @@ function menuItems(menu, opts = {}, level = 0) {
           items.push('');
         }
       }
-      else if(canRun(it))
-        items.push([it.label, () => runItem(it, opts), checkOf(it, opts.view, opts.tag)]);
+      else if(canRunItem(it))
+        items.push([it.label, () => runItem(it, opts), it.check(opts.view, opts.tag)]);
     }
   };
   add(menu);
@@ -2235,43 +2300,26 @@ function moduleButtons(module) {
     const buttons = [];
     for(const b of row.items) {
       if(b.kind !== 'menu') {
-        if(canRun(b)) buttons.push([b.label, b.help, () => runItem(b, {module})]);
+        if(canRunItem(b)) buttons.push([b.label, b.help, () => runItem(b)]);
       }
-      else if(anyItem(b))
-        buttons.push(menuButton(b.label, b.help, () => menuItems(b, {module})));
+      else if(canRunAnyItem(b))
+        buttons.push(menuButton(b.label, b.help, () => menuItems(b)));
     }
     // (on more lines if it must)
     if(buttons.length) buttonRow(d, buttons).classList.add('wrap');
   }
 }
-// an item of the table by its action (for the keys)
-// the programs written next to the script (the items "Edit ... program" of
-// the Geometry module), in the editor
-(function editPrograms(menu) {
-  for(const it of menu.items) {
-    if(it.kind === 'menu') editPrograms(it);
-    else if(/^Edit .+ program$/.test(it.what || ''))
-      pageActions[it.what] = {run: () => editFile(Module.ccall(
-        'gmshWebScriptProgram', 'string', ['string'], [it.what]))};
-  }
-})(registry.Geometry);
-function findItem(what, menu = registry.Mesh) {
-  for(const it of menu.items) {
-    const found = it.kind === 'menu' ? findItem(what, it) : it.what === what && it;
-    if(found) return found;
-  }
-  return null;
-}
 moduleButtons('Geometry');
 moduleButtons('Mesh');
 
 // The operations on entities picked in the scene, as the graphical interface
-// does them (src/graphics/selectionDriver.cpp, through webView.cpp): started
+// does them (src/graphics/selectionDriver.cpp, through webApp.cpp): started
 // from the menus of the modules, with their fields in the form, what to pick
 // in the status bar, and its buttons to end the selection, take back the last
 // pick and stop (e, u and q, as in the graphical interface)
 let operationChanges = 0, operationName = '';
-function startOperation(module, name) {
+function startOperation(item) {
+  const name = item.name;
   if(busy) return;
   if(!modelDir) {
     setStatus('Open a model, or make a new one (Geometry > New)');
@@ -2284,7 +2332,8 @@ function startOperation(module, name) {
   for(const a of ['query', 'measure'])
     $('statusbar').querySelector(`[data-act=${a}]`).classList.remove('on');
   const fields = JSON.parse(json);
-  showPanel(module, name.replace(/^Boolean(?=\w)/, 'Boolean '), fields,
+  // (titled by its path in the module: "Boolean › Union")
+  showPanel($('module' + moduleOf(item)), item.path.split(' › ').slice(1).join(' › '), fields,
             (n, v) => {
               Module.ccall('gmshWebOperationValue', null, ['string', 'string'], [n, v]);
               toolStatus();
@@ -2314,7 +2363,7 @@ function operationDone(name) {
   showModelName();
   showAll();
   // the clients told of a new physical group, as the graphical interface does
-  if(name.includes('Physical')) run('check').then(toolStatus);
+  if(name.startsWith('physical_')) run('check').then(toolStatus);
 }
 
 // a file of the in-memory filesystem, downloaded, then removed unless kept
@@ -2871,7 +2920,7 @@ for(const [id, how] of [['visAll', 1], ['visNone', 0], ['visInvert', -1]])
 // what is visible), the mouse selection, the panel, the quick access menu,
 // and the animation of the views with time steps
 function sceneAction(action, mods = 0) {
-  if(Module.ccall('gmshWebShortcut', 'number', ['string', 'number'], [action, mods])) {
+  if(Module.ccall('gmshWebView', 'number', ['string', 'number'], [action, mods])) {
     readOptions();
     draw();
   }
@@ -3083,7 +3132,7 @@ function popupMenu(items, x, y, {above = false, owner = null} = {}) {
 showSelection();
 
 // The query and the measurement, as the buttons of the status bar of the
-// graphical interface: they take over the clicks of the scene (webView.cpp,
+// graphical interface: they take over the clicks of the scene (webApp.cpp,
 // with the code of the interface in sceneView), until they are clicked again,
 // or Escape (or q); what they find is printed in the messages, and pinned to
 // the model in boxes the page draws (showNotes())
@@ -3174,23 +3223,13 @@ function showNotes() {
   }
 }
 
-// the shortcuts of the graphical interface: those that change the scene run
-// in the module (shortcuts.js), these by the page
+// the Options tab, at the options of a group
 function showOptions(group) {
   showTab('optionsTab');
   if(group) {
     $('options' + group).open = true;
     $('options' + group).scrollIntoView({block: 'start'});
   }
-}
-// a shortcut named as an action of the registry (see src/common/Shortcuts.h)
-// runs as the items of that action, if the page has one now
-function registryShortcut(action) {
-  for(const module of ['Geometry', 'Mesh', 'Quick access']) {
-    const item = findItem(action, registry[module]);
-    if(item && item.kind === 'run') return canRun(item) && (() => runItem(item, {module}));
-  }
-  return null;
 }
 // picking on or off (the S button, Shift+Escape): a selection under way goes
 // on
@@ -3200,49 +3239,37 @@ function toggleMouseSelection() {
   showSelection();
   draw();
 }
-const pageShortcuts = {
-  mouse_selection: toggleMouseSelection,
-  solver_run: () => run('compute'),
-  file_new: newModel,
-  project_reload: () => run('check'),
-  file_open: () => openMenu(true),
-  help_keys: () => $('keysDialog').showModal(),
-  options: () => showOptions(),
-  options_post: () => showViewOptions(firstView()),
-  options_solver: () => showTab('modelTab'),
-  clipping: () => showTab('clipTab'),
-  visibility: () => showTab('visTab'),
-  menu_show_hide: toggleSide,
-};
-const shortcuts = installShortcuts(Module, (action) => {
-  if(action === 'escape' && closePopup()) return true;
-  // the keys of an operation
-  const key = {selection_end: 'e', selection_undo: 'u', selection_quit: 'q', escape: 'q'};
-  if(tool === Tool.Operation && key[action]) {
-    operationKey(key[action]);
-    return true;
+// Escape: the lasso, then a popup, then the selection or the tool under way
+function escape() {
+  if(Module.ccall('gmshWebStopLasso', 'number', [], [])) {
+    lasso.style.display = 'none';
+    draw();
   }
-  if((action === 'escape' || action === 'selection_quit') && tool) {
-    setTool(Tool.None);
-    return true;
-  }
-  const f = pageShortcuts[action] || registryShortcut(action);
-  if(!f) return false;
-  f();
+  else if(closePopup()) {}
+  else if(tool === Tool.Operation) operationKey('q');
+  else if(tool) setTool(Tool.None);
+}
+// a key runs the item of its action, as a click on it does (shortcuts.js),
+// then what it changed is shown, the page following the scene's colour
+// scheme
+const shortcuts = installShortcuts(Module, (action, mods) => {
+  const item = findItem(action);
+  if(!item || !canRunItem(item)) return false;
+  runItem(item, {mods}).then(() => {
+    const c = gmsh.option.getNumber('General.ColorScheme');
+    if(c !== colorScheme) setColorScheme(c);
+    readOptions();
+    readClipping();
+    draw();
+  });
   return true;
-}, (action) => {
-  // the options the key changed, shown, and the page following the scene's
-  // colour scheme
-  if(action === 'escape') lasso.style.display = 'none';
-  const c = gmsh.option.getNumber('General.ColorScheme');
-  if(c !== colorScheme) setColorScheme(c);
-  readOptions();
-  readClipping();
-  draw();
 });
-// the actions of the page in the list, with those of the module
-for(const r of shortcutsHelp(shortcuts, (a) => pageShortcuts[a] ||
-                                              registryShortcut(a) !== null)) {
+// the keys of the items the page has, in the list (whether they apply now or
+// not)
+for(const r of shortcutsHelp(shortcuts, (a) => {
+  const item = findItem(a);
+  return !!item && (item.kind !== 'action' || !!item.run);
+})) {
   const tr = $('keysTable').insertRow();
   tr.insertCell().textContent = r.label;
   tr.insertCell().textContent = r.help;

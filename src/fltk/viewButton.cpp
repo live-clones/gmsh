@@ -105,7 +105,7 @@ viewButton::viewButton(int x, int y, int w, int h, int num, Fl_Color col)
   _popup->type(Fl_Menu_Button::POPUP123);
 
   // (see Actions.cpp)
-  addActionItems(_popup, GetActionMenu("View"), num);
+  addMenuItems(_popup, GetActionMenu("View"), num);
 
   end(); // close the group
   resizable(_toggle);

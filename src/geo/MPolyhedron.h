@@ -107,7 +107,7 @@ public:
     // (the nodes in a buffer on the stack, for the usual faces)
     const int *f = _faceIndices() + _data[num];
     int n = _data[num + 1] - _data[num];
-    MVertex *few[16];
+    MVertex *few[16] = {}; // (initialized for GCC's maybe-uninitialized)
     std::vector<MVertex *> many;
     MVertex **v = few;
     if(n > 16) {

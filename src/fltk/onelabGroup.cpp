@@ -1768,7 +1768,7 @@ void onelabGroup::_addModuleButtons(const std::string &module)
   for(const actionItem &row : GetActionMenu(module).items) {
     for(const actionItem &b : row.items) {
       std::string path = "0Modules/" + module + "/" + b.label;
-      if(b.kind != ActionMenu) {
+      if(b.kind != ItemMenu) {
         if(canRunItem(b)) _addMenu(path, item_button_cb, (void *)&b, b.help);
         continue;
       }
@@ -1783,11 +1783,13 @@ void onelabGroup::_addModuleButtons(const std::string &module)
         Fl_Menu_Button *but = new Fl_Menu_Button(4, 1, ww - 3, hh);
         but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
         but->box(FL_FLAT_BOX);
+        // (the menu framed: in the flat box of the row it has no border,
+        // which only the shadow macOS gives menus hides)
+        but->menu_box(FL_BORDER_BOX);
         but->color(_tree->color());
-        but->selection_color(_tree->color());
         but->copy_label(b.label.c_str());
         but->copy_tooltip(b.help.c_str());
-        addActionItems(but, b, -1);
+        addMenuItems(but, b, -1);
       });
     }
   }

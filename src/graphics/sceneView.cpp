@@ -824,7 +824,7 @@ bool sceneView::queryClick(std::vector<GVertex *> &vertices,
     std::vector<PView *> vw;
     double behind[3];
     int at[4];
-    lastSelection(at); // where the click looked, not where the mouse is
+    _lastSelection(at); // where the click looked, not where the mouse is
     double px = _ctx->pixel_equiv_x / _ctx->s[0];
     if(pick(ENT_ALL, true, false, at[0], at[1], at[2], at[3], v, e, f, r, el, p,
             vw) &&
