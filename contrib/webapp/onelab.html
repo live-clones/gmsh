@@ -119,6 +119,16 @@
   #keysDialog p { color: var(--muted); margin: 0 0 8px; }
   #keysDialog td { padding: 2px 12px 2px 0; vertical-align: top; }
   #keysDialog td:first-child { white-space: nowrap; font-family: monospace; }
+  #keyDialog { width: min(460px, 90vw); color: var(--fg); background: var(--bg);
+               border: 1px solid var(--border); border-radius: 6px; padding: 10px 16px; }
+  #keyDialog h3 { margin: 4px 0 6px; }
+  #keyDialog p { color: var(--muted); margin: 0 0 8px; }
+  #keyDialog label { display: grid; grid-template-columns: 11em minmax(0, 1fr); gap: 6px;
+                     align-items: center; margin: 6px 0; }
+  #keyDialog input[type=checkbox] { justify-self: start; }
+  #keyDialog .note { color: var(--muted); font-size: 13px; min-height: 1.3em; margin: 6px 0; }
+  #keyDialog .note.error { color: var(--error); }
+  #keyDialog .buttons { display: flex; gap: 6px; justify-content: flex-end; }
   /* as the graphical interface: the panel down to the status bar, the
      messages under the scene only */
   /* (scrolled up and down only: Safari let it move sideways) */
@@ -387,6 +397,23 @@
   <p>The keys of Gmsh's graphical interface, in the 3D view or anywhere but
     a field. A browser keeps some for itself (e.g. Cmd+W, Cmd+T).</p>
   <table id="keysTable"></table></dialog>
+<dialog id="keyDialog"><form method="dialog">
+  <h3>Assistant key</h3>
+  <p>The key of your account at the provider of the assistant's models. It is
+    sent only to the provider, from this browser, and the requests are billed
+    to that account: a key of its own, with a spending limit, is safer.</p>
+  <label><span>Provider</span><select id="keyProvider"></select></label>
+  <label><span>Key</span><input id="keyText" type="password" autocomplete="off"
+    spellcheck="false"></label>
+  <label title="Kept in the storage of this browser, in clear, for anyone using its profile"><span>Remember on this device</span><input
+    id="keyRemember" type="checkbox"></label>
+  <label><span>Model</span><select id="keyModel"></select></label>
+  <div class="note" id="keyStatus"></div>
+  <div class="buttons"><button type="button" id="keyTest"
+    title="Ask the provider the models the key gives">Test</button><button type="button"
+    id="keyForget" title="Forget the key, here and in this browser">Forget</button><button
+    value="cancel">Cancel</button><button value="save">Save</button></div>
+</form></dialog>
 <div id="side">
   <div id="tabs"><button data-tab="modelTab" class="on">Model</button><button
     data-tab="optionsTab">Options</button><button
@@ -507,6 +534,7 @@
 import createGmsh from './build/gmsh.mjs';
 import {installShortcuts, shortcutsHelp, modifiers, ModShift} from './shortcuts.js';
 import {listFiles, writeFile, findModel, removeDirectory} from './files.mjs';
+import {installKeyDialog} from './assistant.mjs';
 
 const $ = (id) => document.getElementById(id);
 const canvas = $('canvas'), status = $('status'), logText = $('logText');
@@ -2130,8 +2158,10 @@ const registry = JSON.parse(Module.ccall('gmshWebActions', 'string', [], []));
 // the actions of the registry this page does: what it does (view: the index
 // of the view of a menu of a view, tag its tag), its check mark, and whether
 // it has it now (always if not said)
+const showKeyDialog = installKeyDialog(setStatus);
 const pageActions = {
   'model_new': {run: newModel},
+  'assistant_key': {run: () => showKeyDialog()},
   'script_reload': {run: reloadScript},
   'script_edit': {run: editScript},
   'script_save': {run: saveScript},

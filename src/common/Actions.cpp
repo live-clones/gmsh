@@ -654,6 +654,8 @@ static actionItem quickAccessMenu()
     guiAction("Measure", "measure"),
     guiAction("Full screen", "window_full_screen"),
     guiAction("Install app", "app_install"),
+    guiAction("Assistant key...", "assistant_key",
+              "The key of the provider of the assistant's models"),
     menu("Split window", "", split),
   };
   std::vector<actionItem> projection = {
