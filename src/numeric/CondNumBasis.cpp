@@ -394,6 +394,23 @@ CondNumBasis::CondNumBasis(int tag, int cnOrder)
   }
 
   delete[] barDPsi;
+
+  if(_dim == 3 && _nMapNodes <= 8) {
+    const fullMatrix<double> &gX = _gradBasis->dShapeIdealMat_dX;
+    const fullMatrix<double> &gY = _gradBasis->dShapeIdealMat_dY;
+    const fullMatrix<double> &gZ = _gradBasis->dShapeIdealMat_dZ;
+    for(int i = 0; i < _nCondNumNodes; i++) {
+      _stencilStart.push_back((int)_stencil.size());
+      for(int j = 0; j < _nMapNodes; j++) {
+        const double dX = gX(i, j), dY = gY(i, j), dZ = gZ(i, j);
+        // (at a corner of a first-order hex, only the corner and its 3
+        // neighbours contribute)
+        if(dX == 0. && dY == 0. && dZ == 0.) continue;
+        _stencil.push_back({j, dX, dY, dZ});
+      }
+    }
+    _stencilStart.push_back((int)_stencil.size());
+  }
 }
 
 int CondNumBasis::condNumOrder(int tag)
@@ -495,6 +512,62 @@ void CondNumBasis::getInvCondNumGeneral(int nCondNumNodes,
   fullMatrix<double> dumNormals;
   getInvCondNumGeneral<false>(nCondNumNodes, dSMat_dX, dSMat_dY, dSMat_dZ,
                               nodesXYZ, dumNormals, invCond);
+}
+
+namespace {
+  template <class Term>
+  double signedInvCondNumAt(const Term *t, const Term *end,
+                            const double (*nodesXYZ)[3])
+  {
+    // dxyz[k][l]: derivative of coordinate k along reference direction l
+    double dxyz[3][3] = {{0., 0., 0.}, {0., 0., 0.}, {0., 0., 0.}};
+    for(; t != end; ++t) {
+      const double *p = nodesXYZ[t->node];
+      for(int k = 0; k < 3; k++) {
+        dxyz[k][0] += t->dX * p[k];
+        dxyz[k][1] += t->dY * p[k];
+        dxyz[k][2] += t->dZ * p[k];
+      }
+    }
+    return calcInvCondNum3D<true>(dxyz[0][0], dxyz[0][1], dxyz[0][2],
+                                  dxyz[1][0], dxyz[1][1], dxyz[1][2],
+                                  dxyz[2][0], dxyz[2][1], dxyz[2][2]);
+  }
+} // namespace
+
+bool CondNumBasis::getSignedInvCondNumRange3D(const double (*nodesXYZ)[3],
+                                              double &iCNMin,
+                                              double &iCNMax) const
+{
+  if(_stencilStart.empty() || ElementType::getParentType(_tag) == TYPE_TRIH)
+    return false;
+  for(int i = 0; i < _nCondNumNodes; i++) {
+    const double iCN =
+      signedInvCondNumAt(_stencil.data() + _stencilStart[i],
+                         _stencil.data() + _stencilStart[i + 1], nodesXYZ);
+    if(!i || iCN < iCNMin) iCNMin = iCN;
+    if(!i || iCN > iCNMax) iCNMax = iCN;
+  }
+  return true;
+}
+
+bool CondNumBasis::getSignedInvCondNumMin3D(const double (*nodesXYZ)[3],
+                                            int node, bool with,
+                                            double &iCNMin) const
+{
+  if(_stencilStart.empty() || ElementType::getParentType(_tag) == TYPE_TRIH)
+    return false;
+  iCNMin = 1.e22;
+  for(int i = 0; i < _nCondNumNodes; i++) {
+    const StencilTerm *b = _stencil.data() + _stencilStart[i],
+                      *e = _stencil.data() + _stencilStart[i + 1];
+    bool depends = false;
+    for(const StencilTerm *t = b; t != e && !depends; ++t)
+      depends = t->node == node;
+    if(depends != with) continue;
+    iCNMin = std::min(iCNMin, signedInvCondNumAt(b, e, nodesXYZ));
+  }
+  return true;
 }
 
 void CondNumBasis::getSignedInvCondNumGeneral(

@@ -156,9 +156,9 @@ public:
 
   bool isOnCellBoundary(const bindex& edge) const;
 
-  HXTCombineCell createCombineCell() const
+  void appendTo(HXTCombineCellArray& cells) const
   {
-    return HXTCombineCell(
+    cells.push_back(
       vertices_, numVertices_,
       interiorTets_, numInteriorTets_,
       boundaryTets_, numBoundaryTets_);
@@ -310,14 +310,6 @@ private:
 };
 
 
-/**
-  * Create the API structure HXTCombineCell that corresponod to this CandidateCell
-  */
-struct CreateCombineCell {
-  HXTCombineCell operator()(const CandidateCell& cell) {
-    return cell.createCombineCell();
-  }
-};
 
 
 /**
@@ -396,15 +388,13 @@ template<class T>
 TetIndex CandidateCell::computeOneInteriorTet() const
 {
   // 1. Find one tet connecting 4 vertices of the cell
+  TetIndex found = NO_ID;
   for (CellVertexIndex i = 0; i < numVertices_; ++i) {
-    VertexIndex v = vertex(i);
-    const vector<TetIndex>& tetsAroundV = tetMesh().tetsAroundVertex(v);
-    for (unsigned int j = 0; j < tetsAroundV.size(); ++j) {
-      TetIndex t = tetsAroundV[j];
-      if (has4CellVertices(t) && !isTetInBoundary<T>(t)) {
-        return t;
-      }
-    }
+    if (tetMesh().anyTetAroundVertex(vertex(i), [&](TetIndex t) {
+          if (has4CellVertices(t) && !isTetInBoundary<T>(t)) found = t;
+          return found != NO_ID;
+        }))
+      return found;
   }
   // 2. Find a tet adjacent to one of the triangles of the theoretical
   // boundary that has a positive volume
@@ -416,19 +406,20 @@ TetIndex CandidateCell::computeOneInteriorTet() const
     VertexIndex v2 = vertex(ids[2]);
     
     trindex facet(v0, v1, v2);
-    const vector<TetIndex>& tetsAroundV0 = tetMesh().tetsAroundVertex(v0);
-    for (unsigned int j = 0; j < tetsAroundV0.size(); ++j) {
-      TetIndex t = tetsAroundV0[j];
-      for (TetFacetIndex f = 0; f < 4; ++f) {
-        if (tetMesh_.tetFacet(t, f) == facet) {
-          // Are we inside or outside the hex?
-          VertexIndex v3 = tetMesh_.vertex(t, f);
-          if (tetMesh_.isVolumePositive(v0, v1, v2, v3) && !isTetInBoundary<T>(t)) {
-            return t;
+    if (tetMesh().anyTetAroundVertex(v0, [&](TetIndex t) {
+          for (TetFacetIndex f = 0; f < 4; ++f) {
+            if (tetMesh_.tetFacet(t, f) == facet) {
+              // Are we inside or outside the hex?
+              VertexIndex v3 = tetMesh_.vertex(t, f);
+              if (tetMesh_.isVolumePositive(v0, v1, v2, v3) && !isTetInBoundary<T>(t)) {
+                found = t;
+                return true;
+              }
+            }
           }
-        }
-      }
-    }
+          return false;
+        }))
+      return found;
   }
   // The algorithm to build pyramid does not swallow points yet
   assert(false);
@@ -459,14 +450,15 @@ void CandidateCell::computeInteriorAndBoundaryTets(TetIndex tet)
   numInteriorTets_ = 0;
   numBoundaryTets_ = 0;
 
-  std::stack<TetIndex> S;
-  S.push(tet);
+  // at most 16 interior tets are pushed
+  TetIndex S[32];
+  unsigned int nbS = 0;
+  S[nbS++] = tet;
   interiorTets_[ numInteriorTets_] = tet;
   numInteriorTets_++;
 
-  while (!S.empty()) {
-    TetIndex t = S.top();
-    S.pop();
+  while (nbS > 0) {
+    TetIndex t = S[--nbS];
     for (TetFacetIndex lf = 0; lf <4; ++lf) {
       if (numInteriorTets_ > 15 || numBoundaryTets_ > 5) {
         numBoundaryTets_ = 0;
@@ -481,7 +473,7 @@ void CandidateCell::computeInteriorAndBoundaryTets(TetIndex tet)
             interiorTets_[numInteriorTets_] = adjacentTet;
             numInteriorTets_++;
             
-            S.push(adjacentTet);
+            S[nbS++] = adjacentTet;
           }
           else if (isTetInBoundary(adjacentTet)) {
             boundaryTets_[numBoundaryTets_] = adjacentTet;

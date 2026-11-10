@@ -13,7 +13,6 @@
 #include "GFace.h"
 #include "MEdge.h"
 #include "MElementOctree.h"
-#include "yamakawa.h"
 #include "STensor3.h"
 #include "SPoint3KDTree.h"
 
@@ -43,7 +42,11 @@ public:
   static void init_region(GRegion *);
   static void init_face(GFace *);
   static STensor3 search(double, double, double);
-  static STensor3 combine(double, double, double);
+  // the same, near[2] receiving the 2 nearest points of the field; given the
+  // 2 nearest points of a nearby location (hint), the search is bounded by
+  // the distance to them, with the same result
+  static STensor3 search(double x, double y, double z, std::size_t near[2],
+                         const std::size_t *hint = nullptr);
   static void print_field1();
   static void print_field2(GRegion *);
   static void print_segment(const SPoint3 &, const SPoint3 &, double, double,
@@ -77,42 +80,6 @@ public:
   static void save_energy(GRegion *gr, const std::string &filename);
   static void save_dist(const std::string &filename);
   static void checkSearchData(GEntity *ge, const std::string &filename);
-  static GRegion *test();
-  static void clear();
-};
-
-class Size_field {
-private:
-  static std::vector<std::pair<SPoint3, double> > field;
-  static std::map<MVertex *, double> boundary;
-  static MElementOctree *octree;
-  static SPoint3Search fieldSearch;
-  Size_field();
-
-public:
-  static void init_region(GRegion *);
-  static void solve(GRegion *);
-  static double search(double, double, double);
-  static void print_field(GRegion *);
-  static GRegion *test();
-  static void clear();
-};
-
-class Nearest_point {
-private:
-  static std::vector<SPoint3> field;
-  static std::vector<MElement *> vicinity;
-  static SPoint3Search fieldSearch;
-  Nearest_point();
-
-public:
-  static void init_region(GRegion *);
-  static bool search(double, double, double, SVector3 &);
-  static double T(double, double, double, double, double);
-  static SPoint3 closest(MElement *, const SPoint3 &);
-  static double clamp(double, double, double);
-  static void print_field(GRegion *);
-  static void print_segment(const SPoint3 &, const SPoint3 &, std::ofstream &);
   static GRegion *test();
   static void clear();
 };

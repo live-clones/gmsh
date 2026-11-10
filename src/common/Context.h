@@ -38,9 +38,13 @@ struct contextMeshOptions {
   int nbSmoothing, algo2d, algo3d, algoSubdivide, algoSwitchOnFailure;
   int mmg3dCombineDomains;
   int algoRecombine, recombineAll, recombineOptimizeTopology;
+  int repairSelfIntersecting1dMesh;
+  int packSizemapMethod;
   int recombineNodeRepositioning;
   double recombineMinimumQuality;
-  int recombine3DAll, recombine3DLevel, recombine3DConformity;
+  int recombine3DAll, recombine3DPrisms, recombine3DPyramids;
+  int recombine3DSmoothing;
+  double recombine3DMinimumQuality;
   int flexibleTransfinite, quasiTransfinite, transfiniteTri, maxRetries;
   int order, secondOrderLinear, secondOrderIncomplete;
   int meshOnlyVisible, meshOnlyEmpty;
@@ -272,6 +276,9 @@ public:
   // how many threads a loop over num items runs on: General.NumThreads (all
   // there are if 0), or 1 if there are fewer items than are worth it
   int numThreadsFor(std::size_t num, std::size_t worthIt) const;
+  // how many threads the 3D meshing stages run on: Mesh.MaxNumThreads3D if
+  // set, else General.NumThreads (all there are if 0)
+  int numThreads3D() const;
   // detached processes (WIN32)?
   int detachedProcess;
   // number of graphical windows/tiles

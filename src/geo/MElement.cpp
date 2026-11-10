@@ -423,6 +423,17 @@ void MElement::signedInvCondNumRange(double &iCNMin, double &iCNMax,
   iCNMin = iCNMax = 1.0;
 #if defined(HAVE_MESH)
   const CondNumBasis *cnb = BasisFactory::getCondNumBasis(getTypeForMSH());
+  if(getDim() == 3 && cnb->getNumMapNodes() <= 8 &&
+     (int)getNumVertices() == cnb->getNumMapNodes()) {
+    double xyz[8][3];
+    for(std::size_t i = 0; i < getNumVertices(); i++) {
+      const MVertex *v = getShapeFunctionNode(i);
+      xyz[i][0] = v->x();
+      xyz[i][1] = v->y();
+      xyz[i][2] = v->z();
+    }
+    if(cnb->getSignedInvCondNumRange3D(xyz, iCNMin, iCNMax)) return;
+  }
   const int numCNNodes = cnb->getNumCondNumNodes();
   fullMatrix<double> nodesXYZ(cnb->getNumMapNodes(), 3), normals;
   getNodesCoord(nodesXYZ);

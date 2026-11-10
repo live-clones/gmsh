@@ -627,5 +627,14 @@ void delaunayMeshIn3DParallel(std::vector<MVertex *> &v,
 // returns 0 on success, 2 if the input is not supported (the caller may fall
 // back to another algorithm), 1 on error
 int meshGRegionParallelDelaunay(std::vector<GRegion *> &regions);
+// mesh the region with the points xyz (3 coordinates each) inserted inside,
+// without refinement: the points stay where they are, the mesh being only
+// optimized by changing its connectivity if optimizeTopology; vertices
+// receives the vertex of each point (null if it was not inserted). Same
+// return values
+int meshGRegionParallelDelaunayWithPoints(GRegion *gr,
+                                          const std::vector<double> &xyz,
+                                          std::vector<MVertex *> &vertices,
+                                          bool optimizeTopology = false);
 
 #endif

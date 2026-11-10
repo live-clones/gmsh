@@ -182,6 +182,12 @@ int CTX::numThreadsFor(std::size_t num, std::size_t worthIt) const
   return numThreads ? numThreads : Msg::GetMaxThreads();
 }
 
+int CTX::numThreads3D() const
+{
+  if(mesh.maxNumThreads3D > 0) return mesh.maxNumThreads3D;
+  return numThreads ? numThreads : Msg::GetMaxThreads();
+}
+
 bool modelBusy()
 {
   if(!CTX::instance()->lock) return false;

@@ -18,6 +18,8 @@
 #include <ShapeAnalysis_Surface.hxx>
 #include <TopoDS_Face.hxx>
 
+class IntTools_FClass2d;
+
 class OCCFace : public GFace {
 private:
   TopoDS_Face _s;
@@ -36,25 +38,30 @@ private:
   // local projector, used when an initial guess is available: much faster than
   // the global search performed by the projector above, especially on B-splines
   mutable std::vector<Handle(ShapeAnalysis_Surface)> _localProjectors;
+  // IntTools_FClass2d keeps a preprocessed representation of the trimming
+  // wires and mutable query state: one lazily-created classifier per thread
+  mutable std::vector<IntTools_FClass2d *> _classifiers;
   double _projectorBounds[4];
   double _tolerance;
   GeomAPI_ProjectPointOnSurf &_projector(GeomAPI_ProjectPointOnSurf &fallback)
     const;
   const Handle(ShapeAnalysis_Surface) & _localProjector() const;
+  IntTools_FClass2d *_classifier() const;
+  void _clearClassifiers();
   bool _project(const double p[3], double uv[2], double xyz[3],
-                const double *initialGuess = nullptr) const;
+                const double *initialGuess = nullptr,
+                bool trustedGuess = false) const;
 
 public:
   OCCFace(GModel *m, TopoDS_Face s, int num);
-  virtual ~OCCFace()
-  {
-    for(std::size_t i = 0; i < _projectors.size(); i++) delete _projectors[i];
-  }
+  virtual ~OCCFace();
   virtual SBoundingBox3d bounds(bool fast = false);
   virtual Range<double> parBounds(int i) const;
   virtual GPoint point(double par1, double par2) const;
   virtual GPoint closestPoint(const SPoint3 &queryPoint,
                               const double initialGuess[2]) const;
+  virtual GPoint closestPointFromTrustedGuess(
+    const SPoint3 &queryPoint, const double initialGuess[2]) const;
   virtual bool containsPoint(const SPoint3 &pt) const;
   virtual bool containsParam(const SPoint2 &pt);
   virtual SVector3 normal(const SPoint2 &param) const;

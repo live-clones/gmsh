@@ -5590,18 +5590,42 @@ double opt_mesh_recombine3d_all(OPT_ARGS_NUM)
   return CTX::instance()->mesh.recombine3DAll;
 }
 
+// deprecated: 0 hexahedra, 1 also prisms (Mesh.Recombine3DPrisms)
 double opt_mesh_recombine3d_level(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) { CTX::instance()->mesh.recombine3DLevel = (int)val; }
-  return CTX::instance()->mesh.recombine3DLevel;
+  if(action & GMSH_SET) CTX::instance()->mesh.recombine3DPrisms = (int)val >= 1;
+  return CTX::instance()->mesh.recombine3DPrisms;
 }
 
+// deprecated: 2 also pyramids (Mesh.Recombine3DPyramids), trihedra always
 double opt_mesh_recombine3d_conformity(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) {
-    CTX::instance()->mesh.recombine3DConformity = (int)val;
-  }
-  return CTX::instance()->mesh.recombine3DConformity;
+  if(action & GMSH_SET) CTX::instance()->mesh.recombine3DPyramids = (int)val == 2;
+  return CTX::instance()->mesh.recombine3DPyramids ? 2 : 1;
+}
+
+double opt_mesh_recombine3d_prisms(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.recombine3DPrisms = (int)val;
+  return CTX::instance()->mesh.recombine3DPrisms;
+}
+
+double opt_mesh_recombine3d_pyramids(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.recombine3DPyramids = (int)val;
+  return CTX::instance()->mesh.recombine3DPyramids;
+}
+
+double opt_mesh_recombine3d_smoothing(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.recombine3DSmoothing = (int)val;
+  return CTX::instance()->mesh.recombine3DSmoothing;
+}
+
+double opt_mesh_recombine3d_minimum_quality(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.recombine3DMinimumQuality = val;
+  return CTX::instance()->mesh.recombine3DMinimumQuality;
 }
 
 double opt_mesh_flat_refine_2d(OPT_ARGS_NUM)
@@ -6280,6 +6304,19 @@ double opt_mesh_ignore_faces(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.ignoreFaces = (int)val;
   return CTX::instance()->mesh.ignoreFaces;
+}
+
+double opt_mesh_repair_self_intersecting_1d_mesh(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.repairSelfIntersecting1dMesh = (int)val;
+  return CTX::instance()->mesh.repairSelfIntersecting1dMesh;
+}
+
+double opt_mesh_pack_sizemap_method(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.packSizemapMethod = (int)val;
+  return CTX::instance()->mesh.packSizemapMethod;
 }
 
 double opt_mesh_quadqs_sizemap_method(OPT_ARGS_NUM)

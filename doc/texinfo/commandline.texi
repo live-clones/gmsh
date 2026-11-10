@@ -31,7 +31,7 @@ Reclassify surface mesh, then exit
 @item -reparam angle
 Reparametrize surface mesh, then exit
 @item -hybrid
-generate a hybrid hex-tet mesh with trihedron for transitions
+Generate a hex-dominant mesh with prisms, pyramids and trihedra (sets Mesh.Algorithm=9, Mesh.Algorithm3D=9, Mesh.RecombineAll=1, Mesh.Recombine3DAll=1, Mesh.Recombine3DPrisms=1, Mesh.Recombine3DPyramids=1, Mesh.Smoothing=3, Mesh.MeshSizeExtendFromBoundary=0; the options given after it override these)
 @item -part int
 Partition after batch mesh generation (Mesh.NbPartitions)
 @item -part_weight [tri,quad,tet,hex,pri,pyr,trih] int

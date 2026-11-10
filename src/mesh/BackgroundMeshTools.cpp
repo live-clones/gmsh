@@ -229,6 +229,13 @@ double BGM_MeshSizeWithoutScaling(GEntity *ge, double U, double V, double X,
       Field *f = fields->get(fields->getBackgroundField());
       if(f) l3 = (*f)(X, Y, Z, ge);
     }
+    // the PACK/QuadQS guiding field carries the size map of the curve and
+    // surface meshes it guides; it is only known on the surfaces, so it must
+    // not size volumes
+    if(ge->dim() < 3 && fields->getGuidingField() > 0) {
+      Field *g = fields->get(fields->getGuidingField());
+      if(g) l3 = std::min(l3, (*g)(X, Y, Z, ge));
+    }
   }
 
   // global lc from entity

@@ -178,7 +178,7 @@ int buildBackgroundField(
 
   d->finalize();
 
-  gm->getFields()->setBackgroundMesh(view->getIndex());
+  gm->getFields()->setGuidingField(view->getIndex());
 
   const bool exportBGM = false;
   if(exportBGM || Msg::GetVerbosity() >= 99) {
@@ -374,7 +374,9 @@ bool generateMeshWithSpecialParameters(GModel *gm,
     double lcFactor = CTX::instance()->mesh.lcFactor;
     int recombineAll = CTX::instance()->mesh.recombineAll;
     int algoRecombine = CTX::instance()->mesh.algoRecombine;
+    int algoSubdivide = CTX::instance()->mesh.algoSubdivide;
     int algo = CTX::instance()->mesh.algo2d;
+    int algo3d = CTX::instance()->mesh.algo3d;
     ~savedParameters()
     {
       CTX::instance()->mesh.minCurveNodes = minCurveNodes;
@@ -382,7 +384,9 @@ bool generateMeshWithSpecialParameters(GModel *gm,
       CTX::instance()->mesh.lcFactor = lcFactor;
       CTX::instance()->mesh.recombineAll = recombineAll;
       CTX::instance()->mesh.algoRecombine = algoRecombine;
+      CTX::instance()->mesh.algoSubdivide = algoSubdivide;
       CTX::instance()->mesh.algo2d = algo;
+      CTX::instance()->mesh.algo3d = algo3d;
     }
   } saved;
   CTX::instance()->mesh.minCurveNodes = std::min(saved.minCurveNodes, 5);
@@ -390,8 +394,15 @@ bool generateMeshWithSpecialParameters(GModel *gm,
   CTX::instance()->mesh.lcFactor = saved.lcFactor * scalingOnTriangulation;
   CTX::instance()->mesh.recombineAll = 0;
   CTX::instance()->mesh.algoRecombine = 0;
+  // the size map is read from this triangulation's edges: it must not be
+  // subdivided
+  CTX::instance()->mesh.algoSubdivide = 0;
   CTX::instance()->mesh.algo2d = ALGO_2D_FRONTAL;
   //    ALGO_2D_MESHADAPT; /* slow but frontal does not always work */
+  // the surface directions of the hex-dominant 3D algorithm are those of
+  // the final surface mesh: not computed on this one
+  if(saved.algo3d == ALGO_3D_RTREE)
+    CTX::instance()->mesh.algo3d = ALGO_3D_DELAUNAY;
 
   /* Generate the triangulation with standard gmsh pipeline, as part of the
    * meshing that called this, which holds the lock on the model */
@@ -457,9 +468,12 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
     return -1;
   }
 
-  const int qqsSizemapMethod = CTX::instance()->mesh.quadqsSizemapMethod;
+  const bool packing = CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS;
+  const char *method = packing ? "PACK" : "QuadQuasiStructured";
+  const int qqsSizemapMethod = packing ? CTX::instance()->mesh.packSizemapMethod :
+                                       CTX::instance()->mesh.quadqsSizemapMethod;
   if(qqsSizemapMethod == 5) {
-    Msg::Warning("Quadqs method: no background mesh");
+    Msg::Warning("%s: no background mesh", method);
     return 0;
   }
 
@@ -476,38 +490,38 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
   bool externalSizemap = false;
   {
     FieldManager *fields = gm->getFields();
-    if(fields->getBackgroundField() > 0) {
-      Field *field = fields->get(fields->getBackgroundField());
-      if(field && field->numComponents() == 3) {
-        if(!overwriteField) {
-          Msg::Info(
-            "vector background field exists, using it as a guiding field");
-          return 0;
-        }
-        else {
-          Msg::Info(
-            "disabled current vector background field, building a new one");
-          fields->setBackgroundFieldId(0);
-        }
+    if(fields->getDirectionField()) {
+      if(!overwriteField) {
+        Msg::Info("guiding field exists, using it");
+        return 0;
       }
-      else if(field && field->numComponents() == 1) {
-        if(qqsSizemapMethod == SizeMapDefault) {
-          Msg::Info("scalar background field exists, using it as size map");
-          externalSizemap = true;
-          // Some scalar fields (e.g. AutomaticMeshSizeField) lazily build
-          // themselves from the GModel's current surface mesh on first
-          // query. That mesh gets imported into a separate background
-          // mesh structure and then deleted from gm a few lines below
-          // (deleteGModelMeshAfter), so force the field to update now,
-          // while gm's mesh is still there, instead of leaving it to the
-          // first later query -- which would see an empty surface mesh.
-          field->update();
-        }
-        else {
-          Msg::Warning("scalar background field exists, but ignored because "
-                       "QuadqsSizemapMethod is %i",
-                       CTX::instance()->mesh.quadqsSizemapMethod);
-        }
+      Msg::Info("building a new guiding field");
+      // the previous one must not size the new triangulation (it clamps
+      // curve and surface sizes); a vector field set by the user as
+      // background field is replaced
+      if(fields->getGuidingField() > 0)
+        fields->clearGuidingField();
+      else
+        fields->setBackgroundFieldId(0);
+    }
+    Field *field = fields->getBackgroundField() > 0 ?
+                     fields->get(fields->getBackgroundField()) :
+                     nullptr;
+    if(field && field->numComponents() == 1) {
+      // Some scalar fields (e.g. AutomaticMeshSizeField) lazily build
+      // themselves from the GModel's current surface mesh on first query.
+      // That mesh gets deleted below (overwriteGModelMesh or
+      // deleteGModelMeshAfter) while the field stays the background field
+      // queried by all later meshing steps, so build it now.
+      field->update();
+      if(qqsSizemapMethod == SizeMapDefault) {
+        Msg::Info("scalar background field exists, using it as size map");
+        externalSizemap = true;
+      }
+      else {
+        Msg::Info("scalar background field exists, used through the "
+                  "background triangulation (%sSizemapMethod is %i)",
+                  packing ? "Pack" : "Quadqs", qqsSizemapMethod);
       }
     }
   }
@@ -528,12 +542,15 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
       }
   }
 
-  /* Generate triangulation */
-  /* - scalingOnTriangulation: this factor is used to get a triangulation a bit
-   * more finer than the target quadrangulation, to get a more accurate cross
-   * field */
-  double edgeScaling = CTX::instance()->mesh.quadqsScalingOnTriangulation;
-  if(!surfaceMeshed) { generateMeshWithSpecialParameters(gm, edgeScaling); }
+  // PACK uses the same sizing for the background triangulation and packing.
+  // QuadQS keeps its own background triangulation scaling.
+  const double edgeScaling =
+    packing ? 1. : CTX::instance()->mesh.quadqsScalingOnTriangulation;
+  if(!surfaceMeshed) {
+    const double w = TimeOfDay(), c = Cpu();
+    generateMeshWithSpecialParameters(gm, edgeScaling);
+    AddMeshStageTime("background mesh", TimeOfDay() - w, Cpu() - c);
+  }
 
   GlobalBackgroundMesh &bmesh = getBackgroundMesh(BMESH_NAME);
   bool overwrite = true;
@@ -567,11 +584,11 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
   int failedCrossFields = 0;
   /* Per GFace computations, in parallel */
   {
-    Msg::Info(
-      "- quadqs sizemap method: %s (%i), expect midpoint subdivision: %i, "
+    Msg::Debug(
+      "- %s sizemap method: %s (%i), expect midpoint subdivision: %i, "
       "scaling on edge length: %f",
-      nameOfSizeMapMethod(CTX::instance()->mesh.quadqsSizemapMethod).c_str(),
-      CTX::instance()->mesh.quadqsSizemapMethod, midpointSubdivisionAfter,
+      method, nameOfSizeMapMethod(qqsSizemapMethod).c_str(),
+      qqsSizemapMethod, midpointSubdivisionAfter,
       edgeScaling);
 
     std::vector<GFace *> faces = model_faces(gm);
@@ -589,7 +606,7 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
     global_size_map.reserve(3 * ntris);
 
     int nthreads = crossFieldHeatSolverUsesMumps() ? 1 : getNumThreads();
-    const double tCrossFields = TimeOfDay();
+    const double tCrossFields = TimeOfDay(), cCrossFields = Cpu();
     int nbCrossFields = 0;
     std::size_t nbCrossFieldTriangles = 0;
 #pragma omp parallel for schedule(dynamic) num_threads(nthreads) reduction(+ : failedCrossFields, nbCrossFields, nbCrossFieldTriangles)
@@ -764,6 +781,8 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
               nbCrossFields, nbCrossFields == 1 ? "" : "s",
               nbCrossFieldTriangles, global_singularity_list.size(),
               TimeOfDay() - tCrossFields);
+    AddMeshStageTime("cross field", TimeOfDay() - tCrossFields,
+                     Cpu() - cCrossFields);
   }
 
   if(failedCrossFields) {
@@ -895,10 +914,7 @@ bool backgroundMeshAndGuidingFieldExists(GModel *gm)
   bool bgmOk = backgroudMeshExists(BMESH_NAME);
   bool bfOk = false;
   FieldManager *fields = gm->getFields();
-  if(fields->getBackgroundField() > 0) {
-    Field *guiding_field = fields->get(fields->getBackgroundField());
-    if(guiding_field && guiding_field->numComponents() == 3) { bfOk = true; }
-  }
+  if(fields->getDirectionField()) bfOk = true;
   return bgmOk && bfOk;
 }
 
@@ -907,14 +923,7 @@ bool getSingularitiesFromBackgroundField(
 {
   singularities.clear();
 
-  Field *field = nullptr;
-  FieldManager *fields = gf->model()->getFields();
-  if(fields->getBackgroundField() > 0) {
-    Field *guiding_field = fields->get(fields->getBackgroundField());
-    if(guiding_field && guiding_field->numComponents() == 3) {
-      field = guiding_field;
-    }
-  }
+  Field *field = gf->model()->getFields()->getDirectionField();
   if(field == nullptr) {
     Msg::Debug("get singularities: face %i, failed to get background field",
                gf->tag());
@@ -2367,15 +2376,7 @@ int quadqsCleanup(GModel *gm)
 {
   Msg::Info("Cleaning quadqs background mesh and field");
   global_bmeshes.clear(); /* background meshes used in quadqs */
-  if(gm->getFields()->getBackgroundField() > 0) { /* background field */
-    gm->getFields()->reset();
-    // Field *field =
-    // gm->getFields()->get(gm->getFields()->getBackgroundField()); if(field &&
-    // field->numComponents() == 3) {
-    //   gm->getFields()->deleteField(field->id);
-    //   gm->getFields()->setBackgroundMesh(0);
-    // }
-  }
+  gm->getFields()->clearGuidingField();
 #if defined(HAVE_POST)
   PView *view = PView::getViewByName("guiding_field");
   delete view;
