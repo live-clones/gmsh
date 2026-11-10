@@ -68,15 +68,15 @@ const std::vector<ShortcutEntry> &GetShortcuts()
     E("time_step_next", {KeyRight}, "Go to next time step"),
     E("view_prev", {KeyUp}, "Make previous view visible"),
     E("view_next", {KeyDown}, "Make next view visible"),
-    E("Reload script", {'0'}, "Reload geometry"),
+    E("script_reload", {'0'}, "Reload geometry"),
     E("project_reload", {'0', ModCommand}, "Reload full project"),
     E("project_reload", {'9'}, "Reload full project"), // for Bruno
-    E("Mesh 1D", {'1'}, "Mesh lines"),
-    E("Mesh 1D", {KeyF1}, "Mesh lines"),
-    E("Mesh 2D", {'2'}, "Mesh surfaces"),
-    E("Mesh 2D", {KeyF1 + 1}, "Mesh surfaces"),
-    E("Mesh 3D", {'3'}, "Mesh volumes"),
-    E("Mesh 3D", {KeyF1 + 2}, "Mesh volumes"),
+    E("mesh_1d", {'1'}, "Mesh lines"),
+    E("mesh_1d", {KeyF1}, "Mesh lines"),
+    E("mesh_2d", {'2'}, "Mesh surfaces"),
+    E("mesh_2d", {KeyF1 + 1}, "Mesh surfaces"),
+    E("mesh_3d", {'3'}, "Mesh volumes"),
+    E("mesh_3d", {KeyF1 + 2}, "Mesh volumes"),
     // (before Escape, which takes any modifier)
     E("mouse_selection", {KeyEscape, ModShift},
       "Toggle mouse selection on/off (a selection under way goes on)"),
@@ -102,13 +102,13 @@ const std::vector<ShortcutEntry> &GetShortcuts()
     E("freeze_z", {'z'},
       "Toggle z coordinate freeze in geometry creation mode"),
     E("window_front", {'a', ModShift}, "Bring all windows to front"),
-    E("Geometry options", {'g', ModShift}, "Show geometry options"),
-    E("Mesh options", {'m', ModShift}, "Show mesh options"),
-    E("General options", {'o', ModShift}, "Show general options"),
+    E("options_geometry", {'g', ModShift}, "Show geometry options"),
+    E("options_mesh", {'m', ModShift}, "Show mesh options"),
+    E("options_general", {'o', ModShift}, "Show general options"),
     E("options_post", {'p', ModShift}, "Show post-processing options"),
     E("options_solver", {'s', ModShift}, "Show solver options"),
     E("plugins_view", {'u', ModShift}, "Show post-processing view plugins"),
-    E("All view options", {'w', ModShift}, "Show post-processing view options"),
+    E("options_views", {'w', ModShift}, "Show post-processing view options"),
     E("freeze_but_x", {'x', ModShift},
       "Move only along x coordinate in geometry creation mode"),
     E("freeze_but_y", {'y', ModShift},
@@ -122,7 +122,7 @@ const std::vector<ShortcutEntry> &GetShortcuts()
     E("dock", {'d', ModCommand}, "Dock/undock current tool window"),
     E("dock_all", {'d', ModCommand | ModShift}, "Dock/undock all tool windows"),
     E("file_export", {'e', ModCommand}, "Export project"),
-    E("Full screen", {'f', ModCommand}, "Enter full screen"),
+    E("window_full_screen", {'f', ModCommand}, "Enter full screen"),
     E("help_keys", {'h', ModCommand}, "Show keyboard and mouse usage", false,
       true),
     E("statistics", {'i', ModCommand}, "Show statistics window"),
@@ -133,7 +133,7 @@ const std::vector<ShortcutEntry> &GetShortcuts()
     E("file_open", {'o', ModCommand}, "Open project file"),
     E("quit", {'q', ModCommand}, "Quit"),
     E("file_rename", {'r', ModCommand}, "Rename project file"),
-    E("Save mesh", {'s', ModCommand}, "Save mesh in default format"),
+    E("mesh_save", {'s', ModCommand}, "Save mesh in default format"),
     E("solver_run", {'t', ModCommand}, "Run solver"),
     E("clipping", {'c', ModShift | ModCommand}, "Show clipping plane window"),
     E("help_options", {'h', ModShift | ModCommand},
@@ -160,7 +160,7 @@ const std::vector<ShortcutEntry> &GetShortcuts()
     E("view_scales", {'i', ModAlt},
       "Hide/show all post-processing view scales"),
     E("geometry_curves", {'l', ModAlt}, "Hide/show geometry lines"),
-    E("Toggle mesh display", {'m', ModAlt},
+    E("mesh_toggle", {'m', ModAlt},
       "Toggle visibility of all mesh entities"),
     E("view_annotations", {'n', ModAlt},
       "Hide/show all post-processing view annotations"),
@@ -299,7 +299,7 @@ static const std::map<std::string, sceneAction> &sceneActions()
         return true;
       };
     }
-    add("Toggle mesh display", [] {
+    add("mesh_toggle", [] {
       // all of the mesh off if any of it is drawn (as the options say now,
       // whatever changed them), else back as it was when turned off (the
       // default edges if it never was)

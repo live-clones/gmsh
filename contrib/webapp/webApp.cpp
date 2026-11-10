@@ -123,15 +123,15 @@ namespace {
 
   std::string jsonItem(const actionItem &item)
   {
-    static const char *kinds[] = {"menu", "run", "operation", "shape",
+    static const char *kinds[] = {"menu", "action", "operation", "shape",
                                   "option"};
     std::string json =
       "{\"id\":" + std::to_string(_items.size()) +
       ",\"label\":" + JsonString(item.label) + ",\"kind\":\"" +
-      kinds[item.kind] + "\",\"what\":" + JsonString(item.what) +
+      kinds[item.kind] + "\",\"name\":" + JsonString(item.name) +
       ",\"help\":" + JsonString(item.help) +
-      ",\"key\":" + JsonString(item.key) +
-      ",\"interface\":" + (IsDoneByInterface(item) ? "1" : "0") +
+      ",\"shortcut\":" + JsonString(item.shortcut) +
+      ",\"interface\":" + (IsItemDoneByInterface(item) ? "1" : "0") +
       ",\"items\":[";
     _items.push_back(&item);
     for(std::size_t i = 0; i < item.items.size(); i++)
@@ -500,7 +500,7 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebOperationState()
 }
 
 // The shapes of the elementary entity dialog of the graphical interface, in
-// JSON: [{"name", "fields": [[name, default value], ...]}] (see
+// JSON: [{"name", "label", "fields": [[name, default value], ...]}] (see
 // scriptShapes())
 EMSCRIPTEN_KEEPALIVE const char *gmshWebShapes()
 {
@@ -509,7 +509,8 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebShapes()
   json = "[";
   for(auto &shape : scriptShapes()) {
     json += std::string(json.size() > 1 ? "," : "") +
-            "{\"name\":" + JsonString(shape.name) + ",\"fields\":[";
+            "{\"name\":" + JsonString(shape.name) +
+            ",\"label\":" + JsonString(shape.label) + ",\"fields\":[";
     for(std::size_t i = 0; i < shape.fields.size(); i++)
       json += std::string(i ? "," : "") + "[" +
               JsonString(shape.fields[i].first) + "," +
@@ -521,22 +522,22 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebShapes()
 }
 
 // the program written next to the script of the model for an item of the
-// registry ("Edit Python program"), or "" (see scriptProgram())
-EMSCRIPTEN_KEEPALIVE const char *gmshWebScriptProgram(const char *what)
+// registry ("script_edit_py"), or "" (see scriptProgram())
+EMSCRIPTEN_KEEPALIVE const char *gmshWebScriptProgram(const char *name)
 {
   Msg::NoThrow noThrow;
   static std::string file;
   file = "";
   for(auto &l : scriptLanguages())
-    if(std::string(what) == "Edit " + l.label + " program")
+    if(std::string(name) == "script_edit_" + l.name)
       file = scriptProgram(GModel::current()->getFileName(), l.name);
   return file.c_str();
 }
 
 // The action registry (see Actions.h), in JSON: {menu: item}, an item
-// {"id", "label", "kind" ("menu", "run", "operation", "shape" or "option"),
-// "what", "help", "key", "interface" (1 if the page does it), "items"}; the
-// page gives back its id to do it
+// {"id", "label", "kind" ("menu", "action", "operation", "shape" or
+// "option"), "name", "help", "shortcut", "interface" (1 if the page does it),
+// "items"}; the page gives back its id to do it
 EMSCRIPTEN_KEEPALIVE const char *gmshWebActions()
 {
   Msg::NoThrow noThrow;
@@ -550,14 +551,13 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebActions()
   return json.c_str();
 }
 
-// What the item of id does, done here (see RunAction()), for the view of
-// index view, in the scene: what RunAction() returns
+// What the item of id does, done here (see RunItem()), for the view of
+// index view, in the scene: what RunItem() returns
 EMSCRIPTEN_KEEPALIVE int gmshWebAction(int id, int view)
 {
   Msg::NoThrow noThrow;
   if(!item(id)) return 0;
-  int ret =
-    RunAction(*item(id), view, _view ? _view->getDrawContext() : nullptr);
+  int ret = RunItem(*item(id), view, _view ? _view->getDrawContext() : nullptr);
   if(ret & ActionModelChanged) {
     GModel::current()->setSelection(0);
     SetBoundingBox();
@@ -565,13 +565,13 @@ EMSCRIPTEN_KEEPALIVE int gmshWebAction(int id, int view)
   return ret;
 }
 
-// The check mark of the item of id (see GetActionCheck()), -2 if it does not
-// apply now (see IsActionAvailable())
+// The check mark of the item of id (see GetItemCheck()), -2 if it does not
+// apply now (see IsItemAvailable())
 EMSCRIPTEN_KEEPALIVE int gmshWebActionCheck(int id)
 {
   Msg::NoThrow noThrow;
-  if(!item(id) || !IsActionAvailable(*item(id))) return -2;
-  return GetActionCheck(*item(id));
+  if(!item(id) || !IsItemAvailable(*item(id))) return -2;
+  return GetItemCheck(*item(id));
 }
 
 // The style of each character of the text of a file in an editor (see

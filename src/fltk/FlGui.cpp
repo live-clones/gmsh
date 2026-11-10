@@ -997,12 +997,12 @@ const std::map<std::string, fltkAction> &keyboardActions()
 // scene must be drawn again.
 int FlGui::runShortcut(const std::string &a)
 {
-  actionItem item{"", ActionRun, a, {}, "", ""};
+  actionItem item{"", ItemAction, a, {}, "", ""};
   if(canRunItem(item)) {
     runItem(item);
     return 1;
   }
-  if(IsAction(a)) return 0;
+  if(HasAction(a)) return 0;
   // the display, the views and the time steps, as in the web page
   return RunSceneShortcut(a, 0, nullptr);
 }

@@ -1020,12 +1020,12 @@ void quick_access_cb(Fl_Widget *w, void *data)
     menu = new Fl_Menu_Button(0, 0, 0, 0);
   }
   menu->clear();
-  addActionItems(menu, GetActionMenu("Quick access"), -1);
+  addMenuItems(menu, GetActionMenu("Quick access"), -1);
   // (the display of the mesh toggled, at first)
   const Fl_Menu_Item *initial = nullptr;
   for(int i = 0; i < menu->size(); i++) {
     const actionItem *item = (const actionItem *)menu->menu()[i].user_data();
-    if(item && (last ? item == last : item->what == "Toggle mesh display"))
+    if(item && (last ? item == last : item->name == "mesh_toggle"))
       initial = &menu->menu()[i];
   }
   const Fl_Menu_Item *picked = menu->menu()->popup(
@@ -1571,7 +1571,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
 #endif
       _bar = new hoverMenuBar(0, 0, width, BH);
     Fl_Menu_ *m = _menuBar();
-    addActionItems(m, GetActionMenu("Menu bar"), -1, false);
+    addMenuItems(m, GetActionMenu("Menu bar"), -1, false);
 #if defined(__APPLE__)
     if(_sysbar) {
       // Quit and About are in the application menu, and Cmd+H hides the

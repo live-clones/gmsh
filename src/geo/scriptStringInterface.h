@@ -116,10 +116,11 @@ void scriptAddCone(const std::string &fileName, const std::string &x,
                    const std::string &r2, const std::string &alpha);
 // The shapes of the elementary entity dialog, in the order of its panes
 // (Parameter, Point, Circle, Ellipse, Disk, Rectangle, Sphere, Cylinder, Box,
-// Torus, Cone, Wedge): their fields with their defaults, the first `required`
-// of which cannot be left empty
+// Torus, Cone, Wedge): their names (keys, as the actions of Actions.h:
+// "add_point"), their labels, and their fields with their defaults, the first
+// `required` of which cannot be left empty
 struct scriptShape {
-  std::string name;
+  std::string name, label;
   int required;
   std::vector<std::pair<std::string, std::string> > fields;
 };

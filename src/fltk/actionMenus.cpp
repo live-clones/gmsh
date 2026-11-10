@@ -66,7 +66,7 @@ static std::string dialogValue(const std::string &operation,
   if(name == "Name") return g->physicalContext->selectedName;
   if(name == "Tag") return std::to_string(g->physicalContext->selectedTag);
   Fl_Widget *w =
-    g->transformContext->field(name, operation == "Extrude rotate");
+    g->transformContext->field(name, operation == "extrude_rotate");
   return fieldValue(w ? w : g->meshContext->field(name));
 }
 
@@ -199,20 +199,20 @@ static void runOperation(const std::string &op)
   }
   // the pane of the transform context window, and whether it extrudes
   static const std::map<std::string, std::pair<int, bool>> transforms = {
-    {"Translate", {0, false}},
-    {"Rotate", {1, false}},
-    {"Scale", {2, false}},
-    {"Symmetry", {3, false}},
-    {"Fillet", {5, false}},
-    {"Delete", {6, false}},
-    {"Extrude translate", {0, true}},
-    {"Extrude rotate", {1, true}},
-    {"Pipe", {-1, true}}};
+    {"translate", {0, false}},
+    {"rotate", {1, false}},
+    {"scale", {2, false}},
+    {"symmetry", {3, false}},
+    {"fillet", {5, false}},
+    {"delete", {6, false}},
+    {"extrude_translate", {0, true}},
+    {"extrude_rotate", {1, true}},
+    {"extrude_pipe", {-1, true}}};
   // the pane of the mesh context window
   static const std::map<std::string, int> meshPanes = {
-    {"Size at points", 0},
-    {"Transfinite Curve", 1},
-    {"Transfinite Surface", 2}};
+    {"define_size_at_points", 0},
+    {"define_transfinite_curve", 1},
+    {"define_transfinite_surface", 2}};
   auto t = transforms.find(op);
   auto m = meshPanes.find(op);
   std::function<void()> hide = [] {};
@@ -225,7 +225,7 @@ static void runOperation(const std::string &op)
   else if(t != transforms.end() || k.on == selectionDriver::OnBoolean) {
     if(t != transforms.end())
       g->transformContext->show(t->second.first, t->second.second,
-                                op != "Fillet");
+                                op != "fillet");
     else
       g->transformContext->show(4);
     hide = [] { FlGui::instance()->transformContext->hide(); };
@@ -242,64 +242,64 @@ static void runOperation(const std::string &op)
 // a shape: placed with the mouse, or from the values of its fields
 static void addShape(const std::string &shape)
 {
-  if(shape == "Parameter") {
+  if(shape == "add_parameter") {
     FlGui::instance()->elementaryContext->show(0);
     return;
   }
   // (by pane of the elementary context window)
   for(int pane = 1; pane < (int)scriptShapes().size(); pane++)
     if(shape == scriptShapes()[pane].name)
-      add_new_point_based_entity(shape, pane);
+      add_new_point_based_entity(scriptShapes()[pane].label, pane);
 }
 
 // the actions of the registry this interface does, but those of the menu bar
 // (see menuBarActions())
-static const std::map<std::string, fltkAction> &tableFltkActions()
+static const std::map<std::string, fltkAction> &listedFltkActions()
 {
   static const std::map<std::string, fltkAction> actions = {
     // the modules
-    {"Reload script", {[](int) { geometry_reload_cb(nullptr, nullptr); }}},
-    {"Edit script", {[](int) { geometry_edit_cb(nullptr, nullptr); }}},
+    {"script_reload", {[](int) { geometry_reload_cb(nullptr, nullptr); }}},
+    {"script_edit", {[](int) { geometry_edit_cb(nullptr, nullptr); }}},
 #if defined(HAVE_MESH)
-    {"Reclassify surfaces", {[](int) { mesh_classify_cb(nullptr, nullptr); }}},
-    {"Save mesh", {[](int) { mesh_save_cb(nullptr, nullptr); }}},
-    {"Size fields", {[](int) { field_cb(nullptr, nullptr); }}},
-    {"High-order tools", {[](int) { highordertools_cb(nullptr, nullptr); }}},
+    {"mesh_reclassify", {[](int) { mesh_classify_cb(nullptr, nullptr); }}},
+    {"mesh_save", {[](int) { mesh_save_cb(nullptr, nullptr); }}},
+    {"mesh_size_fields", {[](int) { field_cb(nullptr, nullptr); }}},
+    {"mesh_high_order_tools", {[](int) { highordertools_cb(nullptr, nullptr); }}},
 #if defined(HAVE_METIS)
-    {"Partition mesh", {[](int) { partition_dialog(); }}},
+    {"mesh_partition", {[](int) { partition_dialog(); }}},
 #endif
 #endif
     // the quick access menu
-    {"Select rotation center", {[](int) {
+    {"scene_rotation_center", {[](int) {
        opt_general_rotation_center_cg(0, GMSH_SET | GMSH_GUI, 0);
        general_rotation_center_cg_cb(nullptr, nullptr);
        general_options_rotation_center_select_cb(nullptr, nullptr);
      }}},
-    {"Query",
+    {"query",
      {[](int) { status_query_cb(nullptr, nullptr); },
       [] { return (int)queryMode(); }}},
-    {"Measure",
+    {"measure",
      {[](int) { status_measure_cb(nullptr, nullptr); },
       [] { return (int)measureMode(); }}},
-    {"Full screen",
+    {"window_full_screen",
      {[](int) { window_cb(nullptr, (void *)"fullscreen"); },
       [] { return (int)FlGui::instance()->fullscreen->shown(); }}},
-    {"Split window horizontally",
+    {"window_split_horizontal",
      {[](int) { file_window_cb(nullptr, (void *)"split_h"); }}},
-    {"Split window vertically",
+    {"window_split_vertical",
      {[](int) { file_window_cb(nullptr, (void *)"split_v"); }}},
-    {"Unsplit window",
+    {"window_unsplit",
      {[](int) { file_window_cb(nullptr, (void *)"split_u"); }}},
-    {"General options", {[](int) { general_options_cb(nullptr, nullptr); }}},
-    {"Geometry options", {[](int) { geometry_options_cb(nullptr, nullptr); }}},
-    {"Mesh options", {[](int) { mesh_options_cb(nullptr, nullptr); }}},
-    {"All view options", {[](int) { view_options_cb(nullptr, (void *)-1); }}},
+    {"options_general", {[](int) { general_options_cb(nullptr, nullptr); }}},
+    {"options_geometry", {[](int) { geometry_options_cb(nullptr, nullptr); }}},
+    {"options_mesh", {[](int) { mesh_options_cb(nullptr, nullptr); }}},
+    {"options_views", {[](int) { view_options_cb(nullptr, (void *)-1); }}},
     // the menu of a view
-    {"View options",
+    {"view_options",
      {[](int view) { view_options_cb(nullptr, (void *)(intptr_t)view); }}},
-    {"View plugins",
+    {"view_plugins",
      {[](int view) { plugin_cb(nullptr, (void *)(intptr_t)view); }}},
-    {"Export view",
+    {"view_export",
      {[](int view) { view_save_cb(nullptr, (void *)(intptr_t)view); }}},
   };
   return actions;
@@ -310,10 +310,10 @@ static const std::map<std::string, fltkAction> &tableFltkActions()
 static const std::map<std::string, fltkAction> &fltkActions()
 {
   static const std::map<std::string, fltkAction> all = [] {
-    std::map<std::string, fltkAction> m = tableFltkActions();
+    std::map<std::string, fltkAction> m = listedFltkActions();
     for(auto &l : scriptLanguages()) {
       std::string lang = l.name;
-      m["Edit " + l.label + " program"] = {[lang](int) {
+      m["script_edit_" + lang] = {[lang](int) {
         editFile(scriptProgram(GModel::current()->getFileName(), lang));
       }};
     }
@@ -336,25 +336,25 @@ static const fltkAction *findAction(const std::string &name)
 
 bool canRunItem(const actionItem &item)
 {
-  if(!IsActionAvailable(item)) return false;
-  if(item.kind != ActionRun || !IsDoneByInterface(item)) return true;
-  return findAction(item.what) != nullptr;
+  if(!IsItemAvailable(item)) return false;
+  if(item.kind != ItemAction || !IsItemDoneByInterface(item)) return true;
+  return findAction(item.name) != nullptr;
 }
 
 void runItem(const actionItem &item, int view)
 {
-  if(IsDoneByInterface(item)) {
-    if(item.kind == ActionOperation)
-      runOperation(item.what);
-    else if(item.kind == ActionShape)
-      addShape(item.what);
-    else if(const fltkAction *a = findAction(item.what)) {
+  if(IsItemDoneByInterface(item)) {
+    if(item.kind == ItemOperation)
+      runOperation(item.name);
+    else if(item.kind == ItemShape)
+      addShape(item.name);
+    else if(const fltkAction *a = findAction(item.name)) {
       if(a->run) a->run(view);
     }
   }
   else {
     openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
-    int ret = RunAction(item, view, gl ? gl->getDrawContext() : nullptr);
+    int ret = RunItem(item, view, gl ? gl->getDrawContext() : nullptr);
     // the interface may have been closed meanwhile
     if(!FlGui::available()) return;
     if(ret & ActionViewsChanged) FlGui::instance()->updateViews(true);
@@ -377,7 +377,8 @@ static void item_cb(Fl_Widget *w, void *data)
 bool canRunAnyItem(const actionItem &menu)
 {
   for(const actionItem &item : menu.items)
-    if(item.kind == ActionMenu ? canRunAnyItem(item) : canRunItem(item)) return true;
+    if(item.kind == ItemMenu ? canRunAnyItem(item) : canRunItem(item))
+      return true;
   return false;
 }
 
@@ -400,7 +401,7 @@ static int addItems(Fl_Menu_ *m, const actionItem &menu,
 {
   int last = -1;
   for(const actionItem &item : menu.items) {
-    if(item.kind == ActionMenu) {
+    if(item.kind == ItemMenu) {
       if(!canRunAnyItem(item)) continue;
       if(item.label.empty()) { // a group
         if(last >= 0) m->mode(last, m->mode(last) | FL_MENU_DIVIDER);
@@ -414,15 +415,16 @@ static int addItems(Fl_Menu_ *m, const actionItem &menu,
       continue;
     }
     if(!canRunItem(item)) continue;
-    const fltkAction *a = (IsDoneByInterface(item) && item.kind == ActionRun) ?
-                            findAction(item.what) :
-                            nullptr;
+    const fltkAction *a =
+      (IsItemDoneByInterface(item) && item.kind == ItemAction) ?
+        findAction(item.name) :
+        nullptr;
     // the check mark, the interface's for its actions (not asked for when not
     // shown: a menu that stays is built with the interface, which the marks
     // of the interface's actions read)
     int check = !marks ? -1 :
                 a      ? (a->check ? a->check() : -1) :
-                         GetActionCheck(item);
+                         GetItemCheck(item);
     if(a && a->fill) { // a submenu the interface fills
       a->fill(m, prefix + item.label);
       last = m->find_index((prefix + item.label).c_str());
@@ -430,15 +432,15 @@ static int addItems(Fl_Menu_ *m, const actionItem &menu,
     }
     int flags = 0;
     if(check >= 0)
-      flags = (item.what.find('=') == std::string::npos ? FL_MENU_TOGGLE :
+      flags = (item.name.find('=') == std::string::npos ? FL_MENU_TOGGLE :
                                                           FL_MENU_RADIO) |
               (check ? FL_MENU_VALUE : 0);
     // the shortcut shown: the item's, or the one of the same name as its
     // action
-    std::string key = item.key;
-    if(key.empty() && item.kind == ActionRun &&
-       !GetShortcutsOf(item.what).empty())
-      key = item.what;
+    std::string key = item.shortcut;
+    if(key.empty() && item.kind == ItemAction &&
+       !GetShortcutsOf(item.name).empty())
+      key = item.name;
     last = m->add((prefix + menuLabel(item.label)).c_str(),
                   key.empty() ? 0 : fltkShortcut(key.c_str()), item_cb,
                   (void *)&item, flags);
@@ -446,7 +448,7 @@ static int addItems(Fl_Menu_ *m, const actionItem &menu,
   return last;
 }
 
-void addActionItems(Fl_Menu_ *m, const actionItem &menu, int view, bool marks)
+void addMenuItems(Fl_Menu_ *m, const actionItem &menu, int view, bool marks)
 {
   m->user_data((void *)(intptr_t)view);
   addItems(m, menu, "", marks);

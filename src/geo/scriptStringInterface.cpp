@@ -1613,16 +1613,19 @@ void scriptAddWedge(const std::string &fileName, const std::string &x,
 const std::vector<scriptShape> &scriptShapes()
 {
   static const std::vector<scriptShape> shapes = {
-    {"Parameter",
+    {"add_parameter",
+     "Parameter",
      2,
      {{"Name", "lc"}, {"Value", "0.1"}, {"Label", ""}, {"Path", "Parameters"}}},
-    {"Point",
+    {"add_point",
+     "Point",
      3,
      {{"X", "0"},
       {"Y", "0"},
       {"Z", "0"},
       {"Prescribed mesh size at point", "1.0"}}},
-    {"Circle",
+    {"add_circle",
+     "Circle",
      4,
      {{"Center X", "0"},
       {"Center Y", "0"},
@@ -1630,7 +1633,8 @@ const std::vector<scriptShape> &scriptShapes()
       {"Radius", "0.5"},
       {"Angle 1", "0"},
       {"Angle 2", "2*Pi"}}},
-    {"Ellipse",
+    {"add_ellipse",
+     "Ellipse",
      5,
      {{"Center X", "0"},
       {"Center Y", "0"},
@@ -1639,14 +1643,16 @@ const std::vector<scriptShape> &scriptShapes()
       {"Radius Y", "0.25"},
       {"Angle 1", "0"},
       {"Angle 2", "2*Pi"}}},
-    {"Disk",
+    {"add_disk",
+     "Disk",
      5,
      {{"Center X", "0"},
       {"Center Y", "0"},
       {"Center Z", "0"},
       {"Radius X", "0.5"},
       {"Radius Y", "0.25"}}},
-    {"Rectangle",
+    {"add_rectangle",
+     "Rectangle",
      5,
      {{"Corner X", "0"},
       {"Corner Y", "0"},
@@ -1654,7 +1660,8 @@ const std::vector<scriptShape> &scriptShapes()
       {"Size X", "1"},
       {"Size Y", "0.5"},
       {"Rounded radius", "0"}}},
-    {"Sphere",
+    {"add_sphere",
+     "Sphere",
      4,
      {{"Center X", "0"},
       {"Center Y", "0"},
@@ -1663,7 +1670,8 @@ const std::vector<scriptShape> &scriptShapes()
       {"Angle 1", "-Pi/2"},
       {"Angle 2", "Pi/2"},
       {"Angle 3", "2*Pi"}}},
-    {"Cylinder",
+    {"add_cylinder",
+     "Cylinder",
      7,
      {{"Center base X", "0"},
       {"Center base Y", "0"},
@@ -1673,7 +1681,8 @@ const std::vector<scriptShape> &scriptShapes()
       {"Axis DZ", "0"},
       {"Radius", "0.5"},
       {"Angle", "2*Pi"}}},
-    {"Box",
+    {"add_box",
+     "Box",
      6,
      {{"Corner X", "0"},
       {"Corner Y", "0"},
@@ -1681,7 +1690,8 @@ const std::vector<scriptShape> &scriptShapes()
       {"Size X", "1"},
       {"Size Y", "1"},
       {"Size Z", "1"}}},
-    {"Torus",
+    {"add_torus",
+     "Torus",
      5,
      {{"Center X", "0"},
       {"Center Y", "0"},
@@ -1689,7 +1699,8 @@ const std::vector<scriptShape> &scriptShapes()
       {"Radius 1", "0.5"},
       {"Radius 2", "0.2"},
       {"Angle", "2*Pi"}}},
-    {"Cone",
+    {"add_cone",
+     "Cone",
      8,
      {{"Center base X", "0"},
       {"Center base Y", "0"},
@@ -1700,7 +1711,8 @@ const std::vector<scriptShape> &scriptShapes()
       {"Radius 1", "0.5"},
       {"Radius 2", "0.1"},
       {"Angle", "2*Pi"}}},
-    {"Wedge",
+    {"add_wedge",
+     "Wedge",
      7,
      {{"Corner X", "0"},
       {"Corner Y", "0"},
@@ -1733,23 +1745,23 @@ bool scriptAddShape(const std::string &shape, std::vector<std::string> v,
       return false;
     }
   }
-  if(shape == "Parameter") scriptAddParameter(v[0], v[1], v[2], v[3], f);
-  else if(shape == "Point") scriptAddPoint(f, v[0], v[1], v[2], v[3]);
-  else if(shape == "Circle")
+  if(shape == "add_parameter") scriptAddParameter(v[0], v[1], v[2], v[3], f);
+  else if(shape == "add_point") scriptAddPoint(f, v[0], v[1], v[2], v[3]);
+  else if(shape == "add_circle")
     scriptAddCircle(f, v[0], v[1], v[2], v[3], v[4], v[5]);
-  else if(shape == "Ellipse")
+  else if(shape == "add_ellipse")
     scriptAddEllipse(f, v[0], v[1], v[2], v[3], v[4], v[5], v[6]);
-  else if(shape == "Disk") scriptAddDisk(f, v[0], v[1], v[2], v[3], v[4]);
-  else if(shape == "Rectangle")
+  else if(shape == "add_disk") scriptAddDisk(f, v[0], v[1], v[2], v[3], v[4]);
+  else if(shape == "add_rectangle")
     scriptAddRectangle(f, v[0], v[1], v[2], v[3], v[4], v[5]);
-  else if(shape == "Sphere")
+  else if(shape == "add_sphere")
     scriptAddSphere(f, v[0], v[1], v[2], v[3], v[4], v[5], v[6]);
-  else if(shape == "Cylinder")
+  else if(shape == "add_cylinder")
     scriptAddCylinder(f, v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7]);
-  else if(shape == "Box") scriptAddBox(f, v[0], v[1], v[2], v[3], v[4], v[5]);
-  else if(shape == "Torus")
+  else if(shape == "add_box") scriptAddBox(f, v[0], v[1], v[2], v[3], v[4], v[5]);
+  else if(shape == "add_torus")
     scriptAddTorus(f, v[0], v[1], v[2], v[3], v[4], v[5]);
-  else if(shape == "Cone")
+  else if(shape == "add_cone")
     scriptAddCone(f, v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], v[8]);
   else
     scriptAddWedge(f, v[0], v[1], v[2], v[3], v[4], v[5], v[6]);

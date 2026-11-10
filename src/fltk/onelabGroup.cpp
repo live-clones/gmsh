@@ -1768,7 +1768,7 @@ void onelabGroup::_addModuleButtons(const std::string &module)
   for(const actionItem &row : GetActionMenu(module).items) {
     for(const actionItem &b : row.items) {
       std::string path = "0Modules/" + module + "/" + b.label;
-      if(b.kind != ActionMenu) {
+      if(b.kind != ItemMenu) {
         if(canRunItem(b)) _addMenu(path, item_button_cb, (void *)&b, b.help);
         continue;
       }
@@ -1787,7 +1787,7 @@ void onelabGroup::_addModuleButtons(const std::string &module)
         but->selection_color(_tree->color());
         but->copy_label(b.label.c_str());
         but->copy_tooltip(b.help.c_str());
-        addActionItems(but, b, -1);
+        addMenuItems(but, b, -1);
       });
     }
   }

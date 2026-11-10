@@ -216,7 +216,7 @@ void dock_tools_cb(Fl_Widget *w, void *data);
 // - canRunItem() says whether an item can be used now;
 // - runItem() does what an item does (view is the index of the view, for the
 //   menu of a view);
-// - addActionItems() adds the items of a menu to an FLTK menu, where they act
+// - addMenuItems() adds the items of a menu to an FLTK menu, where they act
 //   on the given view; with marks, the items that toggle or set an option
 //   show its value (not in a menu that stays, which would not follow it).
 struct actionItem;
@@ -225,8 +225,8 @@ bool canRunItem(const actionItem &item);
 void runItem(const actionItem &item, int view = -1);
 // whether a menu of the registry has an item this interface can run now
 bool canRunAnyItem(const actionItem &menu);
-void addActionItems(Fl_Menu_ *m, const actionItem &menu, int view,
-                    bool marks = true);
+void addMenuItems(Fl_Menu_ *m, const actionItem &menu, int view,
+                  bool marks = true);
 
 // An action of the registry this interface does: what it does (view: the
 // index of the view of a menu of a view), its check mark, and, for an item

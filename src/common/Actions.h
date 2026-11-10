@@ -23,32 +23,35 @@ class drawContext;
 // To add an item, add it to its menu. An action done here is added to the
 // table; one an interface does is added to the interface (fltkActions() on
 // the desktop), and an interface that does not have it leaves its items out.
+//
+// The names of the actions, the operations and the shapes are keys, in snake
+// case, starting with what they act on: "mesh_2d", "views_remove_all",
+// "script_edit_py", "options_general"; "add_line", "boolean_union",
+// "physical_add_point", "define_embed_curve", "mesh_delete_surfaces";
+// "add_point", "add_box". They are shared with the keyboard shortcuts (see
+// Shortcuts.h): an item shows the shortcut of its name, and a shortcut runs
+// the action of its name. What the user reads is the label of an item (and
+// the menus it is in), never its name.
 
 // The kind of an item, which says what it does:
-// - ActionMenu shows its items: as a submenu (a heading on the web page), or,
-//   if it has no label, as a group of items set apart from the others;
-// - ActionRun runs the action of the table with the given name;
-// - ActionOperation starts an operation on the entities picked in the scene
+// - ItemMenu shows its items: as a submenu, or, if it has no label, as a
+//   group of items set apart from the others;
+// - ItemAction runs the action of the table of the given name;
+// - ItemOperation starts an operation on the entities picked in the scene
 //   (see selectionDriver), which the interface runs;
-// - ActionShape adds a shape from the values of its fields (see
+// - ItemShape adds a shape from the values of its fields (see
 //   scriptShapes()), which the interface asks for;
-// - ActionOption toggles an option ("Mesh.Nodes", shown as a check box) or
+// - ItemOption toggles an option ("Mesh.Nodes", shown as a check box) or
 //   sets it to a value ("View.IntervalsType=3", shown as a radio item); a
 //   View.* option applies to the visible views.
-enum actionKind {
-  ActionMenu,
-  ActionRun,
-  ActionOperation,
-  ActionShape,
-  ActionOption
-};
+enum itemKind { ItemMenu, ItemAction, ItemOperation, ItemShape, ItemOption };
 
 // An item of a menu
 struct actionItem {
   std::string label;
-  actionKind kind;
+  itemKind kind;
   // the name of the action, operation, shape or option
-  std::string what;
+  std::string name;
   // the items of a menu
   std::vector<actionItem> items;
   // the tooltip
@@ -56,7 +59,7 @@ struct actionItem {
   // the keyboard shortcut shown next to the label (the name of an action of
   // Shortcuts.h), which must do what the item does; not needed for an action
   // that has a shortcut of the same name, which is shown
-  std::string key;
+  std::string shortcut;
 };
 
 // The menu with the given name: "Geometry" and "Mesh" (the modules), "Quick
@@ -64,12 +67,12 @@ struct actionItem {
 // (the menu bar of the graphical interface)
 const actionItem &GetActionMenu(const std::string &name);
 
-// What RunAction() returns, as bits: ActionNotHere if the interface does the
+// What RunItem() returns, as bits: ActionByInterface if the interface does the
 // action, ActionDone otherwise, with ActionViewsChanged if views were added or
 // removed (the interface then rebuilds its list of views) and
 // ActionModelChanged if entities were added or removed.
 enum actionResult {
-  ActionNotHere = 0,
+  ActionByInterface = 0,
   ActionDone = 1,
   ActionViewsChanged = 2,
   ActionModelChanged = 4
@@ -77,25 +80,21 @@ enum actionResult {
 
 // Whether the table has an action with this name (as a shortcut that runs
 // one, see Shortcuts.h)
-bool IsAction(const std::string &name);
+bool HasAction(const std::string &name);
 
 // Whether the interface does what an item does: an operation, a shape, or an
 // action of the table that the interfaces do
-bool IsDoneByInterface(const actionItem &item);
+bool IsItemDoneByInterface(const actionItem &item);
 
 // Do what an item does. For the menu of a view, view is the index of that
 // view; ctx is the scene whose point of view an action changes.
-int RunAction(const actionItem &item, int view = -1,
-              drawContext *ctx = nullptr);
+int RunItem(const actionItem &item, int view = -1, drawContext *ctx = nullptr);
 
 // Whether an item applies now (an item on views needs views, for instance)
-bool IsActionAvailable(const actionItem &item);
+bool IsItemAvailable(const actionItem &item);
 
 // The check mark of an item: -1 for none, or 0 or 1 for a check box or a radio
 // item (for an action the interface does, the interface gives it)
-int GetActionCheck(const actionItem &item);
-
-// Set an option, as an item does
-void SetActionOption(const std::string &option, double value);
+int GetItemCheck(const actionItem &item);
 
 #endif

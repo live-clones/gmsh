@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <cctype>
 #include <cstring>
 #include <algorithm>
 #include <cstdlib>
@@ -57,6 +58,31 @@ namespace {
     return ENT_ALL;
   }
 
+  // the last word of the name of an operation ("define_embed_curve"), and the
+  // entity it names, as the .geo language does ("Curve")
+  std::string lastWord(const std::string &op)
+  {
+    return op.substr(op.rfind('_') + 1);
+  }
+  std::string entityOf(const std::string &op)
+  {
+    std::string what = lastWord(op);
+    if(what.size()) what[0] = toupper(what[0]);
+    return what;
+  }
+
+  // the commands of the .geo language the operations of these names add
+  const std::map<std::string, std::string> geoCommands = {
+    {"add_spline", "Spline"},
+    {"add_bspline", "BSpline"},
+    {"add_bezier", "Bezier"},
+    {"add_plane_surface", "Plane Surface"},
+    {"add_surface_filling", "Surface"},
+    {"boolean_intersection", "BooleanIntersection"},
+    {"boolean_union", "BooleanUnion"},
+    {"boolean_difference", "BooleanDifference"},
+    {"boolean_fragments", "BooleanFragments"}};
+
   const char *copyField[4] = {"Apply translation on copy",
                               "Apply rotation on copy", "Apply scaling on copy",
                               "Apply symmetry on copy"};
@@ -92,12 +118,11 @@ selectionDriver::kind selectionDriver::kindOf(const std::string &op)
   auto starts = [&op](const char *s) {
     return op.compare(0, strlen(s), s) == 0;
   };
-  std::string last = op.substr(op.rfind(' ') + 1);
-  if(starts("Delete mesh ")) return {OnMeshParts, true, last};
-  if(starts("Reverse mesh ")) return {OnMeshParts, false, last};
-  if(starts("Physical ")) return {OnPhysical, false, last};
-  if(starts("Remove Physical ")) return {OnPhysical, true, last};
-  if(starts("Boolean")) return {OnBoolean, false, ""};
+  if(starts("mesh_delete_")) return {OnMeshParts, true, lastWord(op)};
+  if(starts("mesh_reverse_")) return {OnMeshParts, false, lastWord(op)};
+  if(starts("physical_add_")) return {OnPhysical, false, entityOf(op)};
+  if(starts("physical_remove_")) return {OnPhysical, true, entityOf(op)};
+  if(starts("boolean_")) return {OnBoolean, false, ""};
   return {OnScript, false, ""};
 }
 
@@ -166,20 +191,22 @@ void selectionDriver::_use(const std::vector<std::string> &names)
 }
 
 // The operations, by name:
-// - curves through points: Line, Circle arc, Ellipse arc, Spline, BSpline,
-//   Bezier;
-// - surfaces and volumes from their boundaries: Plane Surface, Surface,
-//   Volume;
-// - transformations of the entities: Translate, Rotate, Scale, Symmetry,
-//   Extrude translate, Extrude rotate, Pipe, Delete, Fillet, Split curve, and
-//   BooleanIntersection, BooleanUnion, BooleanDifference, BooleanFragments;
-// - physical groups: Physical Point, ..., Physical Volume, and Remove
-//   Physical Point, ..., Remove Physical Volume;
-// - mesh constraints: Size at points, Recombine, Transfinite Curve,
-//   Transfinite Surface, Transfinite Volume, Embed Point, Embed Curve, Embed
-//   Surface, Compound Curve, Compound Surface;
-// - mesh parts: Delete mesh elements, Delete mesh curves, ..., Reverse mesh
-//   elements, Reverse mesh curves, ...
+// - curves through points: add_line, add_circle_arc, add_ellipse_arc,
+//   add_spline, add_bspline, add_bezier;
+// - surfaces and volumes from their boundaries: add_plane_surface,
+//   add_surface_filling, add_volume;
+// - transformations of the entities: translate, rotate, scale, symmetry,
+//   extrude_translate, extrude_rotate, extrude_pipe, delete, fillet,
+//   split_curve, and boolean_intersection, boolean_union, boolean_difference,
+//   boolean_fragments;
+// - physical groups: physical_add_point, ..., physical_add_volume, and
+//   physical_remove_point, ..., physical_remove_volume;
+// - mesh constraints: define_size_at_points, define_recombine,
+//   define_transfinite_curve, define_transfinite_surface,
+//   define_transfinite_volume, define_embed_point, define_embed_curve,
+//   define_embed_surface, define_compound_curve, define_compound_surface;
+// - mesh parts: mesh_delete_elements, mesh_delete_curves, ...,
+//   mesh_reverse_elements, mesh_reverse_curves, ...
 selectionDriver::selectionDriver(const std::string &operation,
                                  valueFunction value)
   : _operation(operation), _value(value), _phase(0), _loop(nullptr),
@@ -216,34 +243,37 @@ selectionDriver::selectionDriver(const std::string &operation,
     };
   };
 
-  if(op == "Line")
+  if(op == "add_line")
     curveFromPoints({"start", "end"});
-  else if(op == "Circle arc")
+  else if(op == "add_circle_arc")
     curveFromPoints({"start", "center", "end"});
-  else if(op == "Ellipse arc")
+  else if(op == "add_ellipse_arc")
     curveFromPoints({"start", "center", "major axis", "end"});
-  else if(op == "Spline" || op == "BSpline" || op == "Bezier") {
+  else if(op == "add_spline" || op == "add_bspline" || op == "add_bezier") {
     show(ENT_POINT | ENT_CURVE);
     _add(ENT_POINT, "control points", 0, false, true);
-    _apply = [this, op, file]() {
+    std::string command = geoCommands.at(op);
+    _apply = [this, command, file]() {
       std::vector<int> p = _tags(0);
-      if(p.size() >= 2) scriptAddCurve(op, p, file());
+      if(p.size() >= 2) scriptAddCurve(command, p, file());
       return true;
     };
   }
-  else if(op == "Plane Surface" || op == "Surface" || op == "Volume") {
-    int type = (op == "Volume") ? ENT_SURFACE : ENT_CURVE;
-    show(type | (op == "Volume" ? ENT_VOLUME : ENT_SURFACE));
+  else if(op == "add_plane_surface" || op == "add_surface_filling" ||
+          op == "add_volume") {
+    bool volume = (op == "add_volume");
+    int type = volume ? ENT_SURFACE : ENT_CURVE;
+    show(type | (volume ? ENT_VOLUME : ENT_SURFACE));
     _loop = List_Create(10, 10, sizeof(int));
-    _add(type, op == "Volume" ? "volume boundary" : "surface boundary", 1);
+    _add(type, volume ? "volume boundary" : "surface boundary", 1);
     _add(type, "hole boundaries", 0, true);
-    _apply = [this, op, file]() {
+    _apply = [this, volume, op, file]() {
       List_T *loops = List_Create(10, 10, sizeof(int));
       for(int i = 0; i < 2; i++)
         for(int n : _tags(i)) List_Add(loops, &n);
       List_Unique(loops, fcmp_absint);
       // the new loops first
-      int dim = (op == "Volume") ? 2 : 1;
+      int dim = volume ? 2 : 1;
       for(int i = 0; i < List_Nbr(loops); i++) {
         int n;
         List_Read(loops, i, &n);
@@ -254,15 +284,15 @@ selectionDriver::selectionDriver(const std::string &operation,
         scriptAddLoop(dim, l, it->first, file());
         List_Delete(l);
       }
-      if(op == "Volume")
+      if(volume)
         scriptAddVolume(loops, file());
       else
-        scriptAddSurface(op, loops, file());
+        scriptAddSurface(geoCommands.at(op), loops, file());
       List_Delete(loops);
       return true;
     };
   }
-  else if(op == "Translate") {
+  else if(op == "translate") {
     translation();
     _use({copyField[0]});
     transform();
@@ -274,7 +304,7 @@ selectionDriver::selectionDriver(const std::string &operation,
       return true;
     };
   }
-  else if(op == "Rotate") {
+  else if(op == "rotate") {
     rotation();
     _use({copyField[1]});
     transform();
@@ -287,7 +317,7 @@ selectionDriver::selectionDriver(const std::string &operation,
       return true;
     };
   }
-  else if(op == "Scale") {
+  else if(op == "scale") {
     _use(scalingFields);
     _use({copyField[2]});
     transform();
@@ -299,7 +329,7 @@ selectionDriver::selectionDriver(const std::string &operation,
       return true;
     };
   }
-  else if(op == "Symmetry") {
+  else if(op == "symmetry") {
     _use(symmetryFields);
     _use({copyField[3]});
     transform();
@@ -311,7 +341,7 @@ selectionDriver::selectionDriver(const std::string &operation,
       return true;
     };
   }
-  else if(op == "Extrude translate") {
+  else if(op == "extrude_translate") {
     translation();
     extrusion();
     transform();
@@ -326,7 +356,7 @@ selectionDriver::selectionDriver(const std::string &operation,
       return true;
     };
   }
-  else if(op == "Extrude rotate") {
+  else if(op == "extrude_rotate") {
     rotation();
     extrusion();
     transform();
@@ -343,7 +373,7 @@ selectionDriver::selectionDriver(const std::string &operation,
       return true;
     };
   }
-  else if(op == "Pipe") {
+  else if(op == "extrude_pipe") {
     transform();
     _add(ENT_CURVE);
     _apply = [this, file]() {
@@ -351,7 +381,7 @@ selectionDriver::selectionDriver(const std::string &operation,
       return true;
     };
   }
-  else if(op == "Delete") {
+  else if(op == "delete") {
     _use({"Recursive"});
     transform();
     _apply = [this, file]() {
@@ -362,15 +392,15 @@ selectionDriver::selectionDriver(const std::string &operation,
   else if(kindOf(op).on == OnBoolean) {
     _use({"Selection mode", "Delete object", "Delete tool"});
     _add(-1, "object");
-    _add(-1, "tool", 0, op == "BooleanFragments");
+    _add(-1, "tool", 0, op == "boolean_fragments");
     _apply = [this, op, file]() {
-      scriptBoolean(file(), op, _picked[0], _picked[1],
+      scriptBoolean(file(), geoCommands.at(op), _picked[0], _picked[1],
                     _checked("Delete object"),
                     _picked[1].size() ? _checked("Delete tool") : 0);
       return true;
     };
   }
-  else if(op == "Fillet") {
+  else if(op == "fillet") {
     show(ENT_VOLUME | ENT_CURVE);
     _use({"Radius"});
     _add(ENT_VOLUME, "volume");
@@ -381,7 +411,7 @@ selectionDriver::selectionDriver(const std::string &operation,
       return true;
     };
   }
-  else if(op == "Split curve") {
+  else if(op == "split_curve") {
     show(ENT_CURVE | ENT_POINT);
     _add(ENT_CURVE, "curve to split", 1);
     _add(ENT_POINT, "break points", 0, true);
@@ -415,7 +445,7 @@ selectionDriver::selectionDriver(const std::string &operation,
       return true;
     };
   }
-  else if(op == "Size at points") {
+  else if(op == "define_size_at_points") {
     show(ENT_POINT);
     _use({"Element size"});
     _add(ENT_POINT);
@@ -425,7 +455,7 @@ selectionDriver::selectionDriver(const std::string &operation,
       return true;
     };
   }
-  else if(op == "Recombine") {
+  else if(op == "define_recombine") {
     show(ENT_SURFACE);
     _add(ENT_SURFACE);
     _apply = [this, file]() {
@@ -433,8 +463,8 @@ selectionDriver::selectionDriver(const std::string &operation,
       return true;
     };
   }
-  else if(op == "Compound Curve" || op == "Compound Surface") {
-    std::string what = op.substr(9);
+  else if(op == "define_compound_curve" || op == "define_compound_surface") {
+    std::string what = entityOf(op);
     show(typeOf(what));
     _add(typeOf(what));
     _apply = [this, what, file]() {
@@ -442,7 +472,7 @@ selectionDriver::selectionDriver(const std::string &operation,
       return true;
     };
   }
-  else if(op == "Transfinite Curve") {
+  else if(op == "define_transfinite_curve") {
     show(ENT_POINT | ENT_CURVE);
     _use({"Number of points", "Type", "Parameter"});
     _add(ENT_CURVE);
@@ -454,8 +484,9 @@ selectionDriver::selectionDriver(const std::string &operation,
       return true;
     };
   }
-  else if(op == "Transfinite Surface" || op == "Transfinite Volume") {
-    bool surface = (op == "Transfinite Surface");
+  else if(op == "define_transfinite_surface" ||
+          op == "define_transfinite_volume") {
+    bool surface = (op == "define_transfinite_surface");
     show(ENT_POINT | (surface ? ENT_SURFACE : ENT_VOLUME));
     if(surface) _use({"Arrangement"});
     _add(surface ? ENT_SURFACE : ENT_VOLUME, surface ? "surface" : "volume", 1);
@@ -473,8 +504,8 @@ selectionDriver::selectionDriver(const std::string &operation,
       return true;
     };
   }
-  else if(op.compare(0, 6, "Embed ") == 0) {
-    std::string what = op.substr(6);
+  else if(op.compare(0, 13, "define_embed_") == 0) {
+    std::string what = entityOf(op);
     int type = typeOf(what);
     show(type);
     _add(type);

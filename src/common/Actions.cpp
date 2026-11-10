@@ -34,24 +34,26 @@
 // a menu, and a group of items set apart (a menu without label)
 static actionItem menu(const std::string &label, const std::string &help,
                        const std::vector<actionItem> &items)
-{ return {label, ActionMenu, "", items, help, ""}; }
+{ return {label, ItemMenu, "", items, help, ""}; }
 static actionItem group(const std::vector<actionItem> &items)
 { return menu("", "", items); }
 // an action of the table (named as its label if no name is given)
-static actionItem run(const std::string &label, const std::string &name = "",
-                      const std::string &help = "", const std::string &key = "")
-{ return {label, ActionRun, name.empty() ? label : name, {}, help, key}; }
+static actionItem action(const std::string &label, const std::string &name = "",
+                         const std::string &help = "",
+                         const std::string &shortcut = "")
+{ return {label, ItemAction, name.empty() ? label : name, {}, help, shortcut}; }
 // an operation on the entities picked
-static actionItem op(const std::string &label, const std::string &name = "",
-                     const std::string &help = "")
-{ return {label, ActionOperation, name.empty() ? label : name, {}, help, ""}; }
-// a shape, named as its label
-static actionItem shape(const std::string &label)
-{ return {label, ActionShape, label, {}, "", ""}; }
+static actionItem operation(const std::string &label,
+                            const std::string &name = "",
+                            const std::string &help = "")
+{ return {label, ItemOperation, name.empty() ? label : name, {}, help, ""}; }
+// a shape (see scriptShapes())
+static actionItem shape(const std::string &label, const std::string &name)
+{ return {label, ItemShape, name, {}, "", ""}; }
 // an option toggled or set
 static actionItem option(const std::string &label, const std::string &name,
-                         const std::string &key = "")
-{ return {label, ActionOption, name, {}, "", key}; }
+                         const std::string &shortcut = "")
+{ return {label, ItemOption, name, {}, "", shortcut}; }
 
 // the programs the commands added to the script are also written in (see
 // General.ScriptingLanguages), and their edition
@@ -59,12 +61,12 @@ static actionItem programsMenu()
 {
   std::vector<actionItem> write, edit;
   for(auto &l : scriptLanguages()) {
-    write.push_back(run(l.label, "Write " + l.label + " program",
-                        "Also write the commands added to the script in a " +
-                          l.label + " program next to it"));
+    write.push_back(action(l.label, "script_write_" + l.name,
+                           "Also write the commands added to the script in a " +
+                             l.label + " program next to it"));
     edit.push_back(
-      run(l.label, "Edit " + l.label + " program",
-          "Edit the " + l.label + " program written next to the script"));
+      action(l.label, "script_edit_" + l.name,
+             "Edit the " + l.label + " program written next to the script"));
   }
   return menu("Also write",
               "Also write the commands added to the script as programs of "
@@ -90,76 +92,76 @@ static std::vector<std::pair<std::string, std::string>> opacities()
 static actionItem geometryModule()
 {
   std::vector<actionItem> script = {
-    run("New", "New model",
-        "Make a new model, an empty script with the OpenCASCADE kernel"),
-    run("Reload script", "", "Read the script again"),
-    run("Edit script", "", "Edit the script"),
-    run("Save script", "", "Save the script (.geo)"),
-    run("Remove last script command", "",
-        "Take back the last command added to the script"),
+    action("New", "model_new",
+           "Make a new model, an empty script with the OpenCASCADE kernel"),
+    action("Reload script", "script_reload", "Read the script again"),
+    action("Edit script", "script_edit", "Edit the script"),
+    action("Save script", "script_save", "Save the script (.geo)"),
+    action("Remove last script command", "script_remove_last",
+           "Take back the last command added to the script"),
     programsMenu(),
   };
   std::vector<actionItem> kernel = {
-    run("Built-in", "Set kernel Built-in"),
-    run("OpenCASCADE", "Set kernel OpenCASCADE"),
+    action("Built-in", "kernel_builtin"),
+    action("OpenCASCADE", "kernel_occ"),
   };
   std::vector<actionItem> add = {
-    shape("Parameter"),
-    shape("Point"),
-    op("Line"),
-    op("Spline"),
-    op("Bezier"),
-    op("B-Spline", "BSpline"),
-    shape("Circle"),
-    op("Circle arc"),
-    shape("Ellipse"),
-    op("Ellipse arc"),
-    shape("Rectangle"),
-    shape("Disk"),
-    op("Plane surface", "Plane Surface"),
-    op("Surface filling", "Surface"),
-    shape("Sphere"),
-    shape("Cylinder"),
-    shape("Box"),
-    shape("Torus"),
-    shape("Cone"),
-    shape("Wedge"),
-    op("Volume"),
+    shape("Parameter", "add_parameter"),
+    shape("Point", "add_point"),
+    operation("Line", "add_line"),
+    operation("Spline", "add_spline"),
+    operation("Bezier", "add_bezier"),
+    operation("B-Spline", "add_bspline"),
+    shape("Circle", "add_circle"),
+    operation("Circle arc", "add_circle_arc"),
+    shape("Ellipse", "add_ellipse"),
+    operation("Ellipse arc", "add_ellipse_arc"),
+    shape("Rectangle", "add_rectangle"),
+    shape("Disk", "add_disk"),
+    operation("Plane surface", "add_plane_surface"),
+    operation("Surface filling", "add_surface_filling"),
+    shape("Sphere", "add_sphere"),
+    shape("Cylinder", "add_cylinder"),
+    shape("Box", "add_box"),
+    shape("Torus", "add_torus"),
+    shape("Cone", "add_cone"),
+    shape("Wedge", "add_wedge"),
+    operation("Volume", "add_volume"),
   };
   std::vector<actionItem> extrude = {
-    op("Translate", "Extrude translate"),
-    op("Rotate", "Extrude rotate"),
-    op("Pipe"),
+    operation("Translate", "extrude_translate"),
+    operation("Rotate", "extrude_rotate"),
+    operation("Pipe", "extrude_pipe"),
   };
   std::vector<actionItem> other = {
-    op("Fillet"),
-    op("Split curve"),
+    operation("Fillet", "fillet"),
+    operation("Split curve", "split_curve"),
   };
   std::vector<actionItem> transform = {
-    op("Translate"),
-    op("Rotate"),
-    op("Scale"),
-    op("Symmetry"),
+    operation("Translate", "translate"),
+    operation("Rotate", "rotate"),
+    operation("Scale", "scale"),
+    operation("Symmetry", "symmetry"),
     menu("Extrude", "", extrude),
     menu("Other", "", other),
   };
   std::vector<actionItem> boolean = {
-    op("Intersection", "BooleanIntersection"),
-    op("Union", "BooleanUnion"),
-    op("Difference", "BooleanDifference"),
-    op("Fragments", "BooleanFragments"),
+    operation("Intersection", "boolean_intersection"),
+    operation("Union", "boolean_union"),
+    operation("Difference", "boolean_difference"),
+    operation("Fragments", "boolean_fragments"),
   };
   std::vector<actionItem> addPhysical = {
-    op("Point", "Physical Point"),
-    op("Curve", "Physical Curve"),
-    op("Surface", "Physical Surface"),
-    op("Volume", "Physical Volume"),
+    operation("Point", "physical_add_point"),
+    operation("Curve", "physical_add_curve"),
+    operation("Surface", "physical_add_surface"),
+    operation("Volume", "physical_add_volume"),
   };
   std::vector<actionItem> removePhysical = {
-    op("Point", "Remove Physical Point"),
-    op("Curve", "Remove Physical Curve"),
-    op("Surface", "Remove Physical Surface"),
-    op("Volume", "Remove Physical Volume"),
+    operation("Point", "physical_remove_point"),
+    operation("Curve", "physical_remove_curve"),
+    operation("Surface", "physical_remove_surface"),
+    operation("Volume", "physical_remove_volume"),
   };
   std::vector<actionItem> physical = {
     menu("Add", "", addPhysical),
@@ -176,10 +178,10 @@ static actionItem geometryModule()
     menu("Transform", "Transform the entities picked in the scene", transform),
     menu("Boolean", "Boolean operations on the entities picked in the scene",
          boolean),
-    op("Delete", "", "Delete the entities picked in the scene"),
-    run("Coherence", "",
-        "Make the entities of the script coherent: merge the duplicates, or "
-        "fragment all of them with OpenCASCADE"),
+    operation("Delete", "delete", "Delete the entities picked in the scene"),
+    action("Coherence", "geometry_coherence",
+           "Make the entities of the script coherent: merge the duplicates, or "
+           "fragment all of them with OpenCASCADE"),
     menu("Physical groups",
          "Physical groups of the entities picked in the scene", physical),
   };
@@ -190,75 +192,75 @@ static actionItem geometryModule()
 static actionItem meshModule()
 {
   std::vector<actionItem> generate = {
-    run("1D", "Mesh 1D", "Mesh the curves"),
-    run("2D", "Mesh 2D",
-        "Mesh the surfaces (and the curves they are bounded by)"),
-    run("3D", "Mesh 3D", "Mesh the volumes (and what they are bounded by)"),
+    action("1D", "mesh_1d", "Mesh the curves"),
+    action("2D", "mesh_2d",
+           "Mesh the surfaces (and the curves they are bounded by)"),
+    action("3D", "mesh_3d", "Mesh the volumes (and what they are bounded by)"),
   };
   std::vector<actionItem> modify = {
-    run("Refine by splitting", "Refine mesh",
-        "Refine the mesh by splitting its elements"),
-    run("Smooth", "Smooth mesh",
-        "Smooth the mesh of the surfaces, then of the volumes"),
-    run("Reclassify surfaces", "",
-        "Reclassify the surface mesh into new surfaces, by the angle of its "
-        "triangles"),
-    run("Untangle mesh", "", "Untangle the elements of the mesh"),
+    action("Refine by splitting", "mesh_refine",
+           "Refine the mesh by splitting its elements"),
+    action("Smooth", "mesh_smooth",
+           "Smooth the mesh of the surfaces, then of the volumes"),
+    action("Reclassify surfaces", "mesh_reclassify",
+           "Reclassify the surface mesh into new surfaces, by the angle of its "
+           "triangles"),
+    action("Untangle mesh", "mesh_untangle", "Untangle the elements of the mesh"),
   };
   std::vector<actionItem> save = {
-    run("Save", "Save mesh", "Save the mesh"),
+    action("Save", "mesh_save", "Save the mesh"),
   };
   std::vector<actionItem> transfinite = {
-    op("Curve", "Transfinite Curve"),
-    op("Surface", "Transfinite Surface"),
-    op("Volume", "Transfinite Volume"),
+    operation("Curve", "define_transfinite_curve"),
+    operation("Surface", "define_transfinite_surface"),
+    operation("Volume", "define_transfinite_volume"),
   };
   std::vector<actionItem> embedded = {
-    op("Point", "Embed Point"),
-    op("Curve", "Embed Curve"),
-    op("Surface", "Embed Surface"),
+    operation("Point", "define_embed_point"),
+    operation("Curve", "define_embed_curve"),
+    operation("Surface", "define_embed_surface"),
   };
   std::vector<actionItem> compound = {
-    op("Curve", "Compound Curve"),
-    op("Surface", "Compound Surface"),
+    operation("Curve", "define_compound_curve"),
+    operation("Surface", "define_compound_surface"),
   };
   std::vector<actionItem> define = {
-    op("Size at points"),
-    run("Size fields"),
-    op("Recombine"),
+    operation("Size at points", "define_size_at_points"),
+    action("Size fields", "mesh_size_fields"),
+    operation("Recombine", "define_recombine"),
     menu("Transfinite", "", transfinite),
     menu("Embedded", "", embedded),
     menu("Compound", "", compound),
   };
   std::vector<actionItem> highOrder = {
-    run("Set order 1"),
-    run("Set order 2"),
-    run("Set order 3"),
-    run("High-order tools"),
+    action("Set order 1", "mesh_order_1"),
+    action("Set order 2", "mesh_order_2"),
+    action("Set order 3", "mesh_order_3"),
+    action("High-order tools", "mesh_high_order_tools"),
   };
   std::vector<actionItem> reverse = {
-    op("Elements", "Reverse mesh elements"),
-    op("Curves", "Reverse mesh curves"),
-    op("Surfaces", "Reverse mesh surfaces"),
-    op("Volumes", "Reverse mesh volumes"),
+    operation("Elements", "mesh_reverse_elements"),
+    operation("Curves", "mesh_reverse_curves"),
+    operation("Surfaces", "mesh_reverse_surfaces"),
+    operation("Volumes", "mesh_reverse_volumes"),
   };
   std::vector<actionItem> remove = {
-    run("All", "Delete mesh"),
-    op("Elements", "Delete mesh elements"),
-    op("Curves", "Delete mesh curves"),
-    op("Surfaces", "Delete mesh surfaces"),
-    op("Volumes", "Delete mesh volumes"),
+    action("All", "mesh_delete"),
+    operation("Elements", "mesh_delete_elements"),
+    operation("Curves", "mesh_delete_curves"),
+    operation("Surfaces", "mesh_delete_surfaces"),
+    operation("Volumes", "mesh_delete_volumes"),
   };
   std::vector<actionItem> quad = {
-    run("Recombine triangles into quads", "Recombine mesh"),
+    action("Recombine triangles into quads", "mesh_recombine"),
     // (back once the cross field computation works, with its action)
-    // run("Compute quad layout"),
-    run("Optimize quad topology"),
+    // action("Compute quad layout", "mesh_quad_layout"),
+    action("Optimize quad topology", "mesh_optimize_quads"),
   };
   std::vector<actionItem> partitioning = {
-    run("Partition", "Partition mesh"),
-    run("Unpartition", "Unpartition mesh"),
-    run("Convert old partitioning"),
+    action("Partition", "mesh_partition"),
+    action("Unpartition", "mesh_unpartition"),
+    action("Convert old partitioning", "mesh_convert_partitioning"),
   };
   std::vector<actionItem> tools = {
     menu("Define",
@@ -284,17 +286,17 @@ static actionItem meshModule()
 static actionItem quickAccessMenu()
 {
   std::vector<actionItem> split = {
-    run("Horizontally", "Split window horizontally"),
-    run("Vertically", "Split window vertically"),
-    run("Unsplit", "Unsplit window"),
+    action("Horizontally", "window_split_horizontal"),
+    action("Vertically", "window_split_vertical"),
+    action("Unsplit", "window_unsplit"),
   };
   std::vector<actionItem> window = {
-    run("Reset viewport"),
-    run("Select rotation center"),
-    run("Query"),
-    run("Measure"),
-    run("Full screen"),
-    run("Install app"),
+    action("Reset viewport", "scene_reset"),
+    action("Select rotation center", "scene_rotation_center"),
+    action("Query", "query"),
+    action("Measure", "measure"),
+    action("Full screen", "window_full_screen"),
+    action("Install app", "app_install"),
     menu("Split window", "", split),
   };
   std::vector<actionItem> projection = {
@@ -302,10 +304,10 @@ static actionItem quickAccessMenu()
     option("Perspective", "General.Orthographic=0"),
   };
   std::vector<actionItem> general = {
-    run("Axes"),
+    action("Axes", "axes"),
     option("Hover mesh and views", "General.MouseHoverMeshes"),
     menu("Projection", "", projection),
-    run("All general options...", "General options"),
+    action("All general options...", "options_general"),
   };
   std::vector<actionItem> geometryVisibility = {
     option("Points", "Geometry.Points", "geometry_points"),
@@ -316,7 +318,7 @@ static actionItem quickAccessMenu()
   std::vector<actionItem> geometry = {
     menu("Geometry visibility", "", geometryVisibility),
     presets("Geometry opacity", "Geometry.Opacity", opacities()),
-    run("All geometry options...", "Geometry options"),
+    action("All geometry options...", "options_geometry"),
   };
   std::vector<actionItem> meshVisibility = {
     option("Nodes", "Mesh.Nodes", "mesh_nodes"),
@@ -331,10 +333,10 @@ static actionItem quickAccessMenu()
   };
   std::vector<actionItem> mesh = {
     menu("Mesh visibility", "", meshVisibility),
-    run("Toggle mesh display"),
+    action("Toggle mesh display", "mesh_toggle"),
     presets("Mesh opacity", "Mesh.Opacity", opacities()),
     presets("Global mesh size factor", "Mesh.MeshSizeFactor", sizeFactors),
-    run("All mesh options...", "Mesh options"),
+    action("All mesh options...", "options_mesh"),
   };
   std::vector<actionItem> intervals = {
     option("Iso-values", "View.IntervalsType=1"),
@@ -356,7 +358,7 @@ static actionItem quickAccessMenu()
     menu("View intervals", "", intervals),
     menu("View vectors", "", vectors),
     presets("View opacity", "View.Opacity", opacities()),
-    run("All view options...", "All view options"),
+    action("All view options...", "options_views"),
   };
   return group({group(window), group(general), group(geometry), group(mesh),
                 group(views)});
@@ -366,59 +368,57 @@ static actionItem quickAccessMenu()
 static actionItem viewMenu()
 {
   std::vector<actionItem> settings = {
-    run("Options", "View options"),
-    run("Plugins", "View plugins"),
+    action("Options", "view_options"),
+    action("Plugins", "view_plugins"),
   };
   std::vector<actionItem> reloadViews = {
-    run("All", "Reload all views"),
-    run("Visible", "Reload visible views"),
+    action("All", "views_reload_all"),
+    action("Visible", "views_reload_visible"),
   };
   std::vector<actionItem> reload = {
-    run("Reload", "Reload view"),
+    action("Reload", "view_reload"),
     menu("Reload views", "", reloadViews),
-    run("Create alias", "Create view alias"),
+    action("Create alias", "view_alias"),
   };
   std::vector<actionItem> removeViews = {
-    run("All", "Remove all views"),
-    run("Visible", "Remove visible views"),
-    run("Invisible", "Remove invisible views"),
-    run("Other", "Remove other views"),
-    run("Empty", "Remove empty views"),
-    run("With same name", "Remove views with same name"),
+    action("All", "views_remove_all"),
+    action("Visible", "views_remove_visible"),
+    action("Invisible", "views_remove_invisible"),
+    action("Other", "views_remove_others"),
+    action("Empty", "views_remove_empty"),
+    action("With same name", "views_remove_same_name"),
   };
   std::vector<actionItem> remove = {
-    run("Remove", "Remove view"),
+    action("Remove", "view_remove"),
     menu("Remove views", "", removeViews),
   };
   std::vector<actionItem> visibility = {
-    run("All on", "Show all views"),
-    run("All off", "Hide all views"),
-    run("Invert", "Invert view visibility"),
-    run("Same name on", "Show views with same name"),
+    action("All on", "views_show_all"),
+    action("All off", "views_hide_all"),
+    action("Invert", "views_show_inverted"),
+    action("Same name on", "views_show_same_name"),
   };
   std::vector<actionItem> combineElements = {
-    run("From all views", "Combine elements of all views"),
-    run("From visible views", "Combine elements of visible views"),
-    run("From all views with same name",
-        "Combine elements of views with same name"),
+    action("From all views", "views_combine_elements_all"),
+    action("From visible views", "views_combine_elements_visible"),
+    action("From all views with same name", "views_combine_elements_same_name"),
   };
   std::vector<actionItem> combineSteps = {
-    run("From all views", "Combine time steps of all views"),
-    run("From visible views", "Combine time steps of visible views"),
-    run("From all views with same name",
-        "Combine time steps of views with same name"),
+    action("From all views", "views_combine_steps_all"),
+    action("From visible views", "views_combine_steps_visible"),
+    action("From all views with same name", "views_combine_steps_same_name"),
   };
   std::vector<actionItem> arrange = {
-    run("Sort by name", "Sort views by name"),
+    action("Sort by name", "views_sort"),
     menu("Set visibility", "", visibility),
     menu("Combine elements", "", combineElements),
     menu("Combine time steps", "", combineSteps),
   };
   std::vector<actionItem> use = {
-    run("Apply as background mesh", "Apply view as background mesh"),
-    run("Export...", "Export view"),
-    run("Export as .pos", "Export view as .pos"),
-    run("Export as .msh", "Export view as .msh"),
+    action("Apply as background mesh", "view_background_mesh"),
+    action("Export...", "view_export"),
+    action("Export as .pos", "view_export_pos"),
+    action("Export as .msh", "view_export_msh"),
   };
   return group({group(settings), group(reload), group(remove), group(arrange),
                 group(use)});
@@ -429,77 +429,77 @@ static actionItem viewMenu()
 static actionItem menuBar()
 {
   std::vector<actionItem> remote = {
-    run("Start...", "remote_start"),
-    run("Merge...", "remote_merge"),
-    run("Clear", "remote_clear"),
-    run("Stop", "remote_stop"),
+    action("Start...", "remote_start"),
+    action("Merge...", "remote_merge"),
+    action("Clear", "remote_clear"),
+    action("Stop", "remote_stop"),
   };
   std::vector<actionItem> file = {
     group({
-      run("New...", "file_new"),
-      run("Open...", "file_open"),
-      run("Open Recent", "recent_files"),
-      run("Merge...", "file_merge"),
-      run("Watch Pattern...", "watch"),
+      action("New...", "file_new"),
+      action("Open...", "file_open"),
+      action("Open Recent", "recent_files"),
+      action("Merge...", "file_merge"),
+      action("Watch Pattern...", "watch"),
     }),
     group({
-      run("Clear", "file_clear"),
-      run("Rename...", "file_rename"),
-      run("Delete", "file_delete"),
+      action("Clear", "file_clear"),
+      action("Rename...", "file_rename"),
+      action("Delete", "file_delete"),
     }),
     group({menu("Remote", "", remote)}),
     group({
-      run("Save Mesh", "Save mesh"),
-      run("Save Model Options", "options_save"),
-      run("Save Options As Default", "options_save_default"),
+      action("Save Mesh", "mesh_save"),
+      action("Save Model Options", "options_save"),
+      action("Save Options As Default", "options_save_default"),
     }),
-    group({run("Export...", "file_export")}),
-    group({run("Quit", "quit")}),
+    group({action("Export...", "file_export")}),
+    group({action("Quit", "quit")}),
   };
   std::vector<actionItem> tools = {
     group({
-      run("Options", "options"),
-      run("Plugins", "plugins"),
-      run("Visibility", "visibility"),
-      run("Clipping", "clipping"),
-      run("Manipulator", "manipulator"),
+      action("Options", "options"),
+      action("Plugins", "plugins"),
+      action("Visibility", "visibility"),
+      action("Clipping", "clipping"),
+      action("Manipulator", "manipulator"),
     }),
-    group({run("3M", "window_3m")}),
+    group({action("3M", "window_3m")}),
     group({
-      run("Statistics", "statistics"),
-      run("Message Console", "console"),
+      action("Statistics", "statistics"),
+      action("Message Console", "console"),
     }),
   };
   std::vector<actionItem> window = {
-    group({run("New Window", "window_new")}),
-    group({run("Copy to Clipboard", "window_copy")}),
+    group({action("New Window", "window_new")}),
+    group({action("Copy to Clipboard", "window_copy")}),
     group({
-      run("Split Horizontally", "Split window horizontally"),
-      run("Split Vertically", "Split window vertically"),
-      run("Unsplit", "Unsplit window"),
+      action("Split Horizontally", "window_split_horizontal"),
+      action("Split Vertically", "window_split_vertical"),
+      action("Unsplit", "window_unsplit"),
     }),
     group({
-      run("Minimize", "minimize"),
-      run("Zoom", "window_zoom"),
-      run("Enter Full Screen", "Full screen"),
+      action("Minimize", "minimize"),
+      action("Zoom", "window_zoom"),
+      action("Enter Full Screen", "window_full_screen"),
     }),
     group({
-      run("Show/Hide Menu", "menu_show_hide"),
-      run("Attach/Detach Menu", "menu_attach_detach"),
-      run("Dock/Undock Tool Window", "dock"),
-      run("Dock/Undock All Tool Windows", "dock_all"),
+      action("Show/Hide Menu", "menu_show_hide"),
+      action("Attach/Detach Menu", "menu_attach_detach"),
+      action("Dock/Undock Tool Window", "dock"),
+      action("Dock/Undock All Tool Windows", "dock_all"),
     }),
-    group({run("Bring All to Front", "window_front")}),
+    group({action("Bring All to Front", "window_front")}),
   };
   std::vector<actionItem> help = {
-    group({run("Online Documentation", "help_online")}),
-    group({run("Keyboard and Mouse Usage", "help_keys")}),
+    group({action("Online Documentation", "help_online")}),
+    group({action("Keyboard and Mouse Usage", "help_keys")}),
     group({
-      run("Current Options and Workspace", "help_options"),
-      run("Restore all Options to Default Settings",
-          "options_restore_defaults"),
+      action("Current Options and Workspace", "help_options"),
+      action("Restore all Options to Default Settings",
+             "options_restore_defaults"),
     }),
-    group({run("About Gmsh", "help_about")}),
+    group({action("About Gmsh", "help_about")}),
   };
   return group({
     menu("File", "", file),
@@ -572,7 +572,7 @@ static int removeViews(const std::function<bool(int i)> &remove)
   return ActionDone | ActionViewsChanged;
 }
 
-static bool visibleView(int i) { return opt_view_visible(i, GMSH_GET, 0); }
+static bool isViewVisible(int i) { return opt_view_visible(i, GMSH_GET, 0); }
 
 static std::string viewName(int i)
 {
@@ -687,90 +687,90 @@ typedef std::function<int(int view, drawContext *ctx)> actionFunction;
 
 // an action: what it does here (nothing if each interface does it), when it
 // applies (always if not said), and its check mark (none if not said)
-struct action {
+struct actionEntry {
   actionFunction run;
   std::function<bool()> available;
   std::function<int()> check;
 };
 
-static const std::map<std::string, action> &tableActions()
+static const std::map<std::string, actionEntry> &listedActions()
 {
-  static const std::map<std::string, action> actions = {
+  static const std::map<std::string, actionEntry> actions = {
     // the script
-    {"Remove last script command", {[](int, drawContext *) {
+    {"script_remove_last", {[](int, drawContext *) {
        scriptRemoveLastCommand(scriptFile());
        return ActionDone | ActionModelChanged;
      }}},
-    {"Set kernel Built-in", {[](int, drawContext *) {
+    {"kernel_builtin", {[](int, drawContext *) {
        scriptSetFactory("Built-in", scriptFile());
        return ActionDone;
      }}},
-    {"Set kernel OpenCASCADE", {[](int, drawContext *) {
+    {"kernel_occ", {[](int, drawContext *) {
        scriptSetFactory("OpenCASCADE", scriptFile());
        return ActionDone;
      }}},
-    {"Coherence", {[](int, drawContext *) {
+    {"geometry_coherence", {[](int, drawContext *) {
        scriptCoherence(scriptFile());
        return ActionDone | ActionModelChanged;
      }}},
     // the mesh
 #if defined(HAVE_MESH)
-    {"Mesh 1D", {[](int, drawContext *) {
+    {"mesh_1d", {[](int, drawContext *) {
        GModel::current()->mesh(1);
        return ActionDone;
      }}},
-    {"Mesh 2D", {[](int, drawContext *) {
+    {"mesh_2d", {[](int, drawContext *) {
        GModel::current()->mesh(2);
        return ActionDone;
      }}},
-    {"Mesh 3D", {[](int, drawContext *) {
+    {"mesh_3d", {[](int, drawContext *) {
        GModel::current()->mesh(3);
        return ActionDone;
      }}},
-    {"Refine mesh", {[](int, drawContext *) {
+    {"mesh_refine", {[](int, drawContext *) {
        return meshOperation([](GModel *m) {
          int split = CTX::instance()->mesh.algoSubdivide;
          m->refineMesh(CTX::instance()->mesh.secondOrderLinear, split == 1,
                        split == 2, split == 3);
        });
      }}},
-    {"Smooth mesh", {[](int, drawContext *) {
+    {"mesh_smooth", {[](int, drawContext *) {
        return meshOperation([](GModel *m) {
          m->optimizeMesh("Laplace2D");
          m->optimizeMesh("Relocate3D");
        });
      }}},
-    {"Untangle mesh", {[](int, drawContext *) {
+    {"mesh_untangle", {[](int, drawContext *) {
        return meshOperation(
          [](GModel *m) { m->optimizeMesh("UntangleMeshGeometry"); });
      }}},
-    {"Delete mesh", {[](int, drawContext *) {
+    {"mesh_delete", {[](int, drawContext *) {
        return meshOperation([](GModel *m) { m->deleteMesh(); });
      }}},
-    {"Set order 1", {[](int, drawContext *) { return setOrder(1); }}},
-    {"Set order 2", {[](int, drawContext *) { return setOrder(2); }}},
-    {"Set order 3", {[](int, drawContext *) { return setOrder(3); }}},
-    {"Recombine mesh", {[](int, drawContext *) {
+    {"mesh_order_1", {[](int, drawContext *) { return setOrder(1); }}},
+    {"mesh_order_2", {[](int, drawContext *) { return setOrder(2); }}},
+    {"mesh_order_3", {[](int, drawContext *) { return setOrder(3); }}},
+    {"mesh_recombine", {[](int, drawContext *) {
        return meshOperation([](GModel *m) { m->recombineMesh(); });
      }}},
     // (back with its item, once the cross field computation works)
-    // {"Compute quad layout",
+    // {"mesh_quad_layout",
     //  {[](int, drawContext *) {
     //    return meshOperation([](GModel *m) {
     //      std::vector<int> tags;
     //      computeCrossField(m, tags);
     //    });
     //  }}},
-    {"Optimize quad topology", {[](int, drawContext *) {
+    {"mesh_optimize_quads", {[](int, drawContext *) {
        return meshOperation(
          [](GModel *m) { m->optimizeMesh("QuadQuasiStructured"); });
      }}},
-    {"Unpartition mesh", {[](int, drawContext *) {
+    {"mesh_unpartition", {[](int, drawContext *) {
        modelLock lock(modelLock::ifFree);
        if(!lock) return (int)ActionDone;
        return partitionsChanged(GModel::current()->unpartitionMesh());
      }}},
-    {"Convert old partitioning", {[](int, drawContext *) {
+    {"mesh_convert_partitioning", {[](int, drawContext *) {
        modelLock lock(modelLock::ifFree);
        if(!lock) return (int)ActionDone;
        return partitionsChanged(
@@ -778,84 +778,84 @@ static const std::map<std::string, action> &tableActions()
      }}},
 #endif
     // the scene
-    {"Reset viewport", {[](int, drawContext *ctx) {
+    {"scene_reset", {[](int, drawContext *ctx) {
        RunSceneShortcut("view_z", 0, ctx);
        RunSceneShortcut("view_1_1", 0, ctx);
        return ActionDone;
      }}},
-    {"Axes",
+    {"axes",
      {[](int, drawContext *) { return toggleAxes(); }, nullptr,
       // (what the toggle changes: the model's axes, not those of the views)
       [] { return opt_general_axes(0, GMSH_GET, 0) ? 1 : 0; }}},
-    {"Toggle mesh display", {[](int, drawContext *ctx) {
-       RunSceneShortcut("Toggle mesh display", 0, ctx);
+    {"mesh_toggle", {[](int, drawContext *ctx) {
+       RunSceneShortcut("mesh_toggle", 0, ctx);
        return ActionDone;
      }}},
-    {"All view options", {nullptr, haveViews}},
+    {"options_views", {nullptr, haveViews}},
     // the views
 #if defined(HAVE_POST)
-    {"Reload view", {[](int view, drawContext *) { return reloadView(view); }}},
-    {"Reload all views", {[](int, drawContext *) {
+    {"view_reload", {[](int view, drawContext *) { return reloadView(view); }}},
+    {"views_reload_all", {[](int, drawContext *) {
        return reloadViews([](int) { return true; });
      }}},
-    {"Reload visible views",
-     {[](int, drawContext *) { return reloadViews(visibleView); }}},
-    {"Create view alias", {[](int view, drawContext *) {
+    {"views_reload_visible",
+     {[](int, drawContext *) { return reloadViews(isViewVisible); }}},
+    {"view_alias", {[](int view, drawContext *) {
        if(view < 0 || view >= (int)PView::list.size()) return (int)ActionDone;
        new PView(PView::list[view], true); // with its options
        return ActionDone | ActionViewsChanged;
      }}},
-    {"Remove view", {[](int view, drawContext *) {
+    {"view_remove", {[](int view, drawContext *) {
        return removeViews([view](int i) { return i == view; });
      }}},
-    {"Remove all views", {[](int, drawContext *) {
+    {"views_remove_all", {[](int, drawContext *) {
        return removeViews([](int) { return true; });
      }}},
-    {"Remove visible views",
-     {[](int, drawContext *) { return removeViews(visibleView); }}},
-    {"Remove invisible views", {[](int, drawContext *) {
-       return removeViews([](int i) { return !visibleView(i); });
+    {"views_remove_visible",
+     {[](int, drawContext *) { return removeViews(isViewVisible); }}},
+    {"views_remove_invisible", {[](int, drawContext *) {
+       return removeViews([](int i) { return !isViewVisible(i); });
      }}},
-    {"Remove other views", {[](int view, drawContext *) {
+    {"views_remove_others", {[](int view, drawContext *) {
        return removeViews([view](int i) { return i != view; });
      }}},
-    {"Remove empty views", {[](int, drawContext *) {
+    {"views_remove_empty", {[](int, drawContext *) {
        return removeViews(
          [](int i) { return PView::list[i]->getData()->empty(); });
      }}},
-    {"Remove views with same name", {[](int view, drawContext *) {
+    {"views_remove_same_name", {[](int view, drawContext *) {
        std::string name = viewName(view);
        return removeViews([name](int i) { return viewName(i) == name; });
      }}},
-    {"Sort views by name", {[](int, drawContext *) {
+    {"views_sort", {[](int, drawContext *) {
        PView::sortByName();
        return ActionDone | ActionViewsChanged;
      }}},
-    {"Show all views",
+    {"views_show_all",
      {[](int, drawContext *) { return showViews([](int) { return true; }); }}},
-    {"Hide all views",
+    {"views_hide_all",
      {[](int, drawContext *) { return showViews([](int) { return false; }); }}},
-    {"Invert view visibility", {[](int, drawContext *) {
-       return showViews([](int i) { return !visibleView(i); });
+    {"views_show_inverted", {[](int, drawContext *) {
+       return showViews([](int i) { return !isViewVisible(i); });
      }}},
-    {"Show views with same name", {[](int view, drawContext *) {
+    {"views_show_same_name", {[](int view, drawContext *) {
        std::string name = viewName(view);
        return showViews([name](int i) { return viewName(i) == name; });
      }}},
-    {"Combine elements of all views",
+    {"views_combine_elements_all",
      {[](int, drawContext *) { return combineViews(false, 1); }}},
-    {"Combine elements of visible views",
+    {"views_combine_elements_visible",
      {[](int, drawContext *) { return combineViews(false, 0); }}},
-    {"Combine elements of views with same name",
+    {"views_combine_elements_same_name",
      {[](int, drawContext *) { return combineViews(false, 2); }}},
-    {"Combine time steps of all views",
+    {"views_combine_steps_all",
      {[](int, drawContext *) { return combineViews(true, 1); }}},
-    {"Combine time steps of visible views",
+    {"views_combine_steps_visible",
      {[](int, drawContext *) { return combineViews(true, 0); }}},
-    {"Combine time steps of views with same name",
+    {"views_combine_steps_same_name",
      {[](int, drawContext *) { return combineViews(true, 2); }}},
 #if defined(HAVE_MESH)
-    {"Apply view as background mesh", {[](int view, drawContext *) {
+    {"view_background_mesh", {[](int view, drawContext *) {
        if(view >= 0 && view < (int)PView::list.size())
          GModel::current()->getFields()->setBackgroundMesh(view);
        return ActionDone;
@@ -868,19 +868,19 @@ static const std::map<std::string, action> &tableActions()
 
 // the actions of the table, and those of the programs of the script: written
 // or not (checked), and edited by the interfaces, once there is one
-static const std::map<std::string, action> &actions()
+static const std::map<std::string, actionEntry> &actions()
 {
-  static const std::map<std::string, action> all = [] {
-    std::map<std::string, action> m = tableActions();
+  static const std::map<std::string, actionEntry> all = [] {
+    std::map<std::string, actionEntry> m = listedActions();
     for(auto &l : scriptLanguages()) {
       std::string lang = l.name;
-      m["Write " + l.label + " program"] = {
+      m["script_write_" + l.name] = {
         [lang](int, drawContext *) {
           scriptWriteIn(lang, !scriptWritesIn(lang));
           return (int)ActionDone;
         },
         nullptr, [lang] { return scriptWritesIn(lang) ? 1 : 0; }};
-      m["Edit " + l.label + " program"] = {
+      m["script_edit_" + l.name] = {
         nullptr, [lang] {
           return scriptWritesIn(lang) &&
                  !StatFile(scriptProgram(scriptFile(), lang));
@@ -897,7 +897,7 @@ static const std::map<std::string, action> &actions()
 // (none for a toggle), and the indices the option is set for: 0, or the
 // visible views for View
 namespace {
-  struct actionOption {
+  struct itemOption {
     std::string category, name;
     double value;
     bool toggle;
@@ -914,9 +914,9 @@ namespace {
   };
 } // namespace
 
-static actionOption optionOf(const std::string &option)
+static itemOption parseOption(const std::string &option)
 {
-  actionOption o;
+  itemOption o;
   std::string::size_type dot = option.find('.'), eq = option.find('=');
   o.category = option.substr(0, dot);
   o.name = option.substr(dot + 1, eq == std::string::npos ? eq : eq - dot - 1);
@@ -926,66 +926,66 @@ static actionOption optionOf(const std::string &option)
 #if defined(HAVE_POST)
   else
     for(std::size_t i = 0; i < PView::list.size(); i++)
-      if(visibleView(i)) o.indices.push_back(i);
+      if(isViewVisible(i)) o.indices.push_back(i);
 #endif
   return o;
 }
 
-void SetActionOption(const std::string &option, double value)
+static void setOption(const std::string &option, double value)
 {
-  actionOption o = optionOf(option);
+  itemOption o = parseOption(option);
   for(int i : o.indices)
     NumberOption(GMSH_SET | GMSH_GUI, o.category.c_str(), i, o.name.c_str(),
                  value, false);
 }
 
-bool IsAction(const std::string &name) { return actions().count(name) > 0; }
+bool HasAction(const std::string &name) { return actions().count(name) > 0; }
 
-bool IsDoneByInterface(const actionItem &item)
+bool IsItemDoneByInterface(const actionItem &item)
 {
-  if(item.kind == ActionOperation || item.kind == ActionShape) return true;
-  if(item.kind != ActionRun) return false;
-  auto it = actions().find(item.what);
+  if(item.kind == ItemOperation || item.kind == ItemShape) return true;
+  if(item.kind != ItemAction) return false;
+  auto it = actions().find(item.name);
   return it == actions().end() || !it->second.run;
 }
 
-int RunAction(const actionItem &item, int view, drawContext *ctx)
+int RunItem(const actionItem &item, int view, drawContext *ctx)
 {
-  if(item.kind == ActionOption) {
-    actionOption o = optionOf(item.what);
+  if(item.kind == ItemOption) {
+    itemOption o = parseOption(item.name);
     if(o.indices.empty()) return ActionDone;
-    SetActionOption(item.what, o.toggle ? !o.current() : o.value);
+    setOption(item.name, o.toggle ? !o.current() : o.value);
     return ActionDone;
   }
-  if(item.kind != ActionRun) return ActionNotHere;
-  auto it = actions().find(item.what);
-  if(it == actions().end() || !it->second.run) return ActionNotHere;
+  if(item.kind != ItemAction) return ActionByInterface;
+  auto it = actions().find(item.name);
+  if(it == actions().end() || !it->second.run) return ActionByInterface;
   return it->second.run(view, ctx);
 }
 
-bool IsActionAvailable(const actionItem &item)
+bool IsItemAvailable(const actionItem &item)
 {
-  if(item.kind == ActionOption) {
-    return item.what.compare(0, 5, "View.") || haveViews();
+  if(item.kind == ItemOption) {
+    return item.name.compare(0, 5, "View.") || haveViews();
   }
-  if(item.kind != ActionRun) return true;
+  if(item.kind != ItemAction) return true;
   // (an action not in the table is done by the interfaces, which say whether
   // they do it)
-  auto it = actions().find(item.what);
+  auto it = actions().find(item.name);
   return it == actions().end() || !it->second.available ||
          it->second.available();
 }
 
-int GetActionCheck(const actionItem &item)
+int GetItemCheck(const actionItem &item)
 {
-  if(item.kind == ActionOption && !item.what.empty()) {
-    actionOption o = optionOf(item.what);
+  if(item.kind == ItemOption && !item.name.empty()) {
+    itemOption o = parseOption(item.name);
     if(o.indices.empty()) return 0;
     double v = o.current();
     return o.toggle ? (v != 0.) : (v == o.value);
   }
-  if(item.kind != ActionRun) return -1;
-  auto it = actions().find(item.what);
+  if(item.kind != ItemAction) return -1;
+  auto it = actions().find(item.name);
   if(it == actions().end() || !it->second.check) return -1;
   return it->second.check();
 }

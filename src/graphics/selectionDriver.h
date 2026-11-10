@@ -76,8 +76,9 @@ private:
   // nothing behind)
   List_T *_loop;
   std::map<int, std::vector<int>> _newLoops;
-  // mesh parts are picked (Delete or Reverse mesh ...), drawn again at each
-  // step; mesh elements (Delete or Reverse mesh elements), marked with the
+  // mesh parts are picked (mesh_delete_... or mesh_reverse_...), drawn again
+  // at each step; mesh elements (mesh_delete_elements or
+  // mesh_reverse_elements), marked with the
   // visibility 2, while the entities and the mesh stay as they were
   bool _meshParts, _pickElements;
   std::vector<MElement *> _elements;
@@ -115,9 +116,9 @@ public:
   // the fields of all the operations
   static const std::vector<field> &allFields();
   // What an operation is, read from its name: on the parts of the mesh
-  // ("Delete mesh curves", "Reverse mesh elements": remove is true for a
-  // deletion, what is "curves"), on a physical group ("Physical Curve",
-  // "Remove Physical Curve": what is "Curve"), a boolean ("BooleanUnion"), or
+  // ("mesh_delete_curves", "mesh_reverse_elements": remove is true for a
+  // deletion, what is "curves"), on a physical group ("physical_add_curve",
+  // "physical_remove_curve": what is "Curve"), a boolean ("boolean_union"), or
   // none of these (on the entities of the script, the mesh constraints...)
   enum operationKind { OnScript, OnMeshParts, OnPhysical, OnBoolean };
   struct kind {
