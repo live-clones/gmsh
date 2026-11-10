@@ -21,6 +21,35 @@ class GRegion;
 class MElement;
 class PView;
 
+// The scene and the clicks, in three layers, shared by the desktop (src/fltk)
+// and the web page (contrib/webapp):
+// - sceneView (sceneView.h): what the mouse does to the scene, the same in
+//   both front-ends: rotation, zoom, pan, the lasso, the hover, and the
+//   picking of entities when a selection is under way. The front-end derives
+//   it (openglWindow on the desktop, webView in webApp.cpp) and gives it the
+//   mouse events.
+// - sceneTool (here): what the clicks are for now, when something takes them
+//   over: the query, the measurement, an operation, a point being placed. One
+//   tool at a time, started with sceneTool::start(), stepped by the front-end
+//   after the events (it never waits in a loop).
+// - selectionDriver (selectionDriver.h): the operations of the modules, which
+//   operationTool runs as a tool: what each picks, phase by phase, and what it
+//   writes in the script once all is picked.
+//
+// How to add...
+// - An operation of the Geometry or Mesh module: in selectionDriver (see
+//   Actions.h for its menu item).
+// - A tool of a front-end (the clicks of a dialog, say): a functionTool, made
+//   of a status and a step function, started on the scene of the window:
+//     sceneTool::start(new functionTool("Pick a curve", ENT_CURVE, false,
+//                        [](sceneView *) { return "Select a curve"; },
+//                        [](char ib, sceneView *, const scenePicks &p) {
+//                          ...; return ib != 'q'; }),
+//                      scene);
+//   (see add_new_point_based_entity() in actionMenus.cpp).
+// - What the mouse does to the scene itself: in sceneView, for both
+//   front-ends at once.
+
 // what a click picked
 struct scenePicks {
   std::vector<GVertex *> vertices;

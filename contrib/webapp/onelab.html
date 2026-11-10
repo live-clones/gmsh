@@ -2162,6 +2162,20 @@ const pageActions = {
   'view_export_pos': {run: (view, tag) => exportView(tag, 'pos')},
   'view_export_msh': {run: (view, tag) => exportView(tag, 'msh')},
   // those of the keys that are not in a menu (see src/common/Shortcuts.cpp)
+  'escape': {run: () => escape()},
+  'selection_end': {run: () => operationKey('e'), available: () => tool === Tool.Operation},
+  'selection_undo': {run: () => operationKey('u'), available: () => tool === Tool.Operation},
+  'selection_quit': {run: () => tool === Tool.Operation ? operationKey('q') : setTool(Tool.None),
+                     available: () => !!tool},
+  'view_x': {run: (view, tag, mods) => sceneAction('view_x', mods)},
+  'view_y': {run: (view, tag, mods) => sceneAction('view_y', mods)},
+  'view_z': {run: (view, tag, mods) => sceneAction('view_z', mods)},
+  'view_3d': {run: (view, tag, mods) => sceneAction('view_3d', mods)},
+  'view_1_1': {run: (view, tag, mods) => sceneAction('view_1_1', mods)},
+  'time_step_prev': {run: () => sceneAction('time_step_prev')},
+  'time_step_next': {run: () => sceneAction('time_step_next')},
+  'view_prev': {run: () => sceneAction('view_prev')},
+  'view_next': {run: () => sceneAction('view_next')},
   'mouse_selection': {run: () => toggleMouseSelection()},
   'solver_run': {run: () => run('compute')},
   'file_new': {run: () => newModel()},
@@ -2180,7 +2194,7 @@ const pageActions = {
 const itemCheck = (item) => Module.ccall('gmshWebActionCheck', 'number', ['number'], [item.id]);
 // whether the page has an item now
 function canRun(item) {
-  if(itemCheck(item) === -2) return false;
+  if(item.id !== undefined && itemCheck(item) === -2) return false;
   if(item.kind !== 'action' || !item.interface) return true;
   const a = pageActions[item.name];
   return !!a && (!a.available || a.available());
@@ -2195,12 +2209,24 @@ function checkOf(item, view, tag) {
   const c = itemCheck(item);
   return c >= 0 ? !!c : undefined;
 }
-// what an item does: by the page, or in Gmsh
-async function runItem(item, {view = -1, tag, module = ''} = {}) {
+// What an item does, clicked or by a key of its name: Gmsh's action, an
+// operation, a shape, or what the page does (view: the index of the view of
+// a menu of a view, tag its tag; mods: the modifiers of the key)
+async function runItem(item, {view = -1, tag, mods = 0} = {}) {
+  const module = ['Geometry', 'Mesh'].find((m) => (item.path || '').startsWith(m + ' ›')) || '';
   if(item.kind === 'operation') startOperation($('module' + module), item);
   else if(item.kind === 'shape') showShapeForm(item.name);
-  else if(item.interface) pageActions[item.name].run(view, tag);
+  else if(item.interface) pageActions[item.name].run(view, tag, mods);
   else await gmshAction(item, view, module);
+}
+// the item of a name (that of a key): of a menu, of the actions of the keys
+// in no menu, or else one the page does
+function itemNamed(name) {
+  for(const menu of Object.values(registry)) {
+    const it = findItem(name, menu);
+    if(it) return it;
+  }
+  return pageActions[name] ? {kind: 'action', name, interface: 1} : null;
 }
 // what an item does in Gmsh (see RunItem()): on the mesh, timed with the
 // size of the mesh in the status; on the script, of a new model if there is
@@ -2209,9 +2235,10 @@ async function gmshAction(item, view, module) {
   if(busy) return;
   const run = () => Module.ccall('gmshWebAction', 'number', ['number', 'number'],
                                  [item.id, view]);
-  if(item.kind === 'option') {
+  // (an option, named as it is: kept)
+  if(item.name.includes('.')) {
     run();
-    if(item.name) keepOptionOf(item.name.split('=')[0], view);
+    keepOptionOf(item.name.split('=')[0], view);
     return;
   }
   if(module === 'Mesh') {
@@ -2259,16 +2286,15 @@ function moduleButtons(module) {
     const buttons = [];
     for(const b of row.items) {
       if(b.kind !== 'menu') {
-        if(canRun(b)) buttons.push([b.label, b.help, () => runItem(b, {module})]);
+        if(canRun(b)) buttons.push([b.label, b.help, () => runItem(b)]);
       }
       else if(anyItem(b))
-        buttons.push(menuButton(b.label, b.help, () => menuItems(b, {module})));
+        buttons.push(menuButton(b.label, b.help, () => menuItems(b)));
     }
     // (on more lines if it must)
     if(buttons.length) buttonRow(d, buttons).classList.add('wrap');
   }
 }
-// an item of the table by its action (for the keys)
 // the programs written next to the script (the items script_edit_py... of
 // the Geometry module), in the editor
 (function editPrograms(menu) {
@@ -2897,7 +2923,7 @@ for(const [id, how] of [['visAll', 1], ['visNone', 0], ['visInvert', -1]])
 // what is visible), the mouse selection, the panel, the quick access menu,
 // and the animation of the views with time steps
 function sceneAction(action, mods = 0) {
-  if(Module.ccall('gmshWebShortcut', 'number', ['string', 'number'], [action, mods])) {
+  if(Module.ccall('gmshWebView', 'number', ['string', 'number'], [action, mods])) {
     readOptions();
     draw();
   }
@@ -3200,24 +3226,13 @@ function showNotes() {
   }
 }
 
-// the shortcuts of the graphical interface: those that change the scene run
-// in the module (shortcuts.js), these by the page
+// the Options tab, at the options of a group
 function showOptions(group) {
   showTab('optionsTab');
   if(group) {
     $('options' + group).open = true;
     $('options' + group).scrollIntoView({block: 'start'});
   }
-}
-// a shortcut named as an action of a module (see src/common/Shortcuts.h) runs
-// as its item, with what the page shows of it (the time it took, a new model
-// if there is none), if the page has it now
-function registryShortcut(action) {
-  for(const module of ['Geometry', 'Mesh']) {
-    const item = findItem(action, registry[module]);
-    if(item && item.kind === 'action') return canRun(item) && (() => runItem(item, {module}));
-  }
-  return null;
 }
 // picking on or off (the S button, Shift+Escape): a selection under way goes
 // on
@@ -3227,47 +3242,37 @@ function toggleMouseSelection() {
   showSelection();
   draw();
 }
-// a key: what the page does, or false for the module (see shortcuts.js)
-const pageShortcut = (action) => {
-  const a = pageActions[action];
-  if(a && (!a.available || a.available())) return () => a.run();
-  return registryShortcut(action);
-};
-const shortcuts = installShortcuts(Module, (action) => {
-  // Escape: the lasso first, then a popup, then the tool under way
-  if(action === 'escape' &&
-     Module.ccall('gmshWebShortcut', 'number', ['string', 'number'], ['escape', 0])) {
+// Escape: the lasso, then a popup, then the selection or the tool under way
+function escape() {
+  if(Module.ccall('gmshWebStopLasso', 'number', [], [])) {
+    lasso.style.display = 'none';
     draw();
-    return true;
   }
-  if(action === 'escape' && closePopup()) return true;
-  // the keys of an operation
-  const key = {selection_end: 'e', selection_undo: 'u', selection_quit: 'q', escape: 'q'};
-  if(tool === Tool.Operation && key[action]) {
-    operationKey(key[action]);
-    return true;
-  }
-  if((action === 'escape' || action === 'selection_quit') && tool) {
-    setTool(Tool.None);
-    return true;
-  }
-  const f = pageShortcut(action);
-  if(!f) return false;
-  f();
+  else if(closePopup()) {}
+  else if(tool === Tool.Operation) operationKey('q');
+  else if(tool) setTool(Tool.None);
+}
+// a key runs the item of its action, as a click on it does (shortcuts.js),
+// then what it changed is shown, the page following the scene's colour
+// scheme
+const shortcuts = installShortcuts(Module, (action, mods) => {
+  const item = itemNamed(action);
+  if(!item || !canRun(item)) return false;
+  runItem(item, {mods}).then(() => {
+    const c = gmsh.option.getNumber('General.ColorScheme');
+    if(c !== colorScheme) setColorScheme(c);
+    readOptions();
+    readClipping();
+    draw();
+  });
   return true;
-}, (action) => {
-  // the options the key changed, shown, and the page following the scene's
-  // colour scheme
-  if(action === 'escape') lasso.style.display = 'none';
-  const c = gmsh.option.getNumber('General.ColorScheme');
-  if(c !== colorScheme) setColorScheme(c);
-  readOptions();
-  readClipping();
-  draw();
 });
-// the actions of the page in the list, with those of the module
-for(const r of shortcutsHelp(shortcuts, (a) => !!pageActions[a] ||
-                                              registryShortcut(a) !== null)) {
+// the keys of the items the page has, in the list (whether they apply now or
+// not)
+for(const r of shortcutsHelp(shortcuts, (a) => {
+  const item = itemNamed(a);
+  return !!item && (!item.interface || !!pageActions[a]);
+})) {
   const tr = $('keysTable').insertRow();
   tr.insertCell().textContent = r.label;
   tr.insertCell().textContent = r.help;
