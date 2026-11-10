@@ -1,0 +1,321 @@
+/* light, or dark (data-theme, set as the colour scheme chosen in the
+   options or the browser's, see pageTheme() below) */
+:root { color-scheme: light;
+        --bg-rgb: 255, 255, 255; --fg-rgb: 0, 0, 0;
+        --bg: rgb(var(--bg-rgb)); --fg: rgb(var(--fg-rgb));
+        --muted: #666; --faint: #777; --tab: #555; --line: #ddd; --line2: #eee;
+        --border: #bbb; --field-border: #aaa; --out-border: #ccc;
+        --out-bg: #f7f7f7; --out-fg: #222; --menu-hover: #e8eefc;
+        --error: #c00; --warning: #a60; --shadow: rgba(0,0,0,.15);
+        --hover-bg: rgba(255,255,255,.92); --lasso: #333;
+        --lasso-fill: rgba(0,0,0,.04); --veil: rgba(255,255,255,.85);
+        --graph-on: #fadc64; --loop1: #8ce6a0; --loop2: #96d2ff;
+        --loop3: #ffb4af; --loop-fg: #000;
+        --code-comment: #008000; --code-string: #a31515; --code-number: #098658;
+        --code-word: #0050c0; --code-option: #8a3fb0; }
+:root[data-theme="dark"] { color-scheme: dark;
+  --bg-rgb: 30, 31, 34; --fg-rgb: 228, 228, 228;
+  --muted: #a2a2a6; --faint: #8e8e93; --tab: #b0b0b4; --line: #3a3b3f;
+  --line2: #313236; --border: #55575c; --field-border: #66686e;
+  --out-border: #4a4b50; --out-bg: #2a2b2f; --out-fg: #e4e4e4;
+  --menu-hover: #2f3b55; --error: #ff6b6b; --warning: #e5a33d;
+  --shadow: rgba(0,0,0,.5); --hover-bg: rgba(40,41,45,.94); --lasso: #ddd;
+  --lasso-fill: rgba(255,255,255,.06); --veil: rgba(30,31,34,.85);
+  --graph-on: #c9961e; --loop1: #238636; --loop2: #1f6feb;
+  --loop3: #be2828; --loop-fg: #fff;
+  --code-comment: #6a9955; --code-string: #ce9178; --code-number: #b5cea8;
+  --code-word: #569cd6; --code-option: #c586c0; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg);
+             color: var(--fg); font: 14px -apple-system, BlinkMacSystemFont, "Segoe UI",
+               system-ui, Roboto, "Helvetica Neue", Arial, sans-serif; }
+/* the controls in the font of the page, not the smaller one of the browser */
+button, input, select, textarea { font: inherit; }
+/* (the height of a phone's window, which its toolbars change) */
+body { display: grid; grid-template-columns: var(--side-width, min(330px, 40vw)) 5px minmax(0, 1fr);
+       grid-template-rows: auto 1fr auto auto; height: 100dvh; }
+html { touch-action: manipulation; }
+/* the panel hidden (the sidebar button of the status bar) */
+body.noSide { grid-template-columns: 0 0 minmax(0, 1fr); }
+body.noSide #side, body.noSide #split { display: none; }
+/* the status bar of the graphical interface, under the scene and the
+   messages: the buttons of the view and of the animation, the status */
+#statusbar { grid-row: 4; grid-column: 1 / 4; display: flex; align-items: center; gap: 1px;
+             border-top: 1px solid var(--line); min-width: 0;
+             padding: 1px max(4px, env(safe-area-inset-right))
+                      max(2px, env(safe-area-inset-bottom)) max(4px, env(safe-area-inset-left)); }
+#statusbar button { border: none; background: none; color: var(--fg);
+                    min-width: 24px; height: 22px; padding: 0 4px;
+                    border-radius: 3px; cursor: pointer; font: inherit;
+                    display: grid; place-items: center; flex: none; }
+#statusbar button:hover:not(:disabled) { background: var(--menu-hover); }
+#statusbar button:disabled { opacity: .35; cursor: default; }
+#statusbar button.on { background: var(--graph-on); color: #000; }
+#statusbar button.off { background: var(--loop3); color: var(--loop-fg); }
+#statusbar .gap { width: 10px; flex: none; }
+/* the status: a click shows or hides the messages, as in the graphical
+   interface */
+#status { margin-left: 8px; min-width: 0; flex: 1; overflow: hidden;
+          text-overflow: ellipsis; white-space: nowrap; color: var(--muted);
+          cursor: pointer; }
+#status:hover { text-decoration: underline; }
+#status.error { color: var(--error); }
+#quickMenu, #quickMenu .submenu { position: fixed; z-index: 3; padding: 4px; display: flex;
+             flex-direction: column; max-height: 80vh; overflow: auto;
+             background: var(--bg); color: var(--fg);
+             border: 1px solid var(--border); border-radius: 4px;
+             box-shadow: 0 2px 8px var(--shadow); min-width: 220px; }
+#quickMenu[hidden], #quickMenu .submenu[hidden] { display: none; }
+#quickMenu .submenu { z-index: 4; min-width: 120px; }
+#quickMenu button { display: flex; gap: 6px; text-align: left; border: none;
+                    background: none; padding: 3px 8px; border-radius: 3px;
+                    font: inherit; color: inherit; cursor: pointer; }
+#quickMenu button:hover, #quickMenu button.open { background: var(--menu-hover); }
+#quickMenu .arrow { margin-left: auto; padding-left: 12px; color: var(--muted); }
+#quickMenu .mark { width: 1em; flex: none; }
+#quickMenu .head { color: var(--muted); font-size: 12px; padding: 6px 8px 1px; }
+#quickMenu hr { border: none; border-top: 1px solid var(--line2); margin: 3px 0; width: 100%; }
+/* (the edges of a phone's screen, the notch and the home indicator, which
+   the page reaches: viewport-fit=cover) */
+#bar { grid-column: 1 / 4; display: flex; flex-wrap: wrap; gap: 4px 10px;
+       align-items: center; border-bottom: 1px solid var(--line);
+       padding: max(4px, env(safe-area-inset-top)) max(6px, env(safe-area-inset-right))
+                4px max(6px, env(safe-area-inset-left)); }
+#open { position: relative; }
+#openMenu { position: absolute; top: calc(100% + 2px); left: 0; z-index: 3;
+            display: flex; flex-direction: column; width: 300px;
+            max-width: calc(100vw - 16px); padding: 4px;
+            background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
+            box-shadow: 0 2px 8px var(--shadow); }
+#openMenu[hidden] { display: none; }
+#openMenu button { display: block; text-align: left; border: none;
+                   background: none; padding: 5px 6px; border-radius: 3px;
+                   font: inherit; cursor: pointer; color: inherit; }
+#openMenu button:hover, #openMenu button:focus-visible { background: var(--menu-hover); }
+#openMenu small { display: block; color: var(--muted); margin-top: 1px; }
+#openMenu small.drop { padding: 4px 6px 2px; border-top: 1px solid var(--line2);
+                       margin-top: 2px; }
+#keys { margin-left: auto; border-radius: 50%; width: 22px; height: 22px;
+        padding: 0; }
+#keysDialog { max-width: min(560px, 90vw); max-height: 80vh; color: var(--fg);
+              background: var(--bg); border: 1px solid var(--border);
+              border-radius: 6px; padding: 10px 16px; }
+#keysDialog form { float: right; }
+#keysDialog h3 { margin: 4px 0 6px; }
+#keysDialog p { color: var(--muted); margin: 0 0 8px; }
+#keysDialog td { padding: 2px 12px 2px 0; vertical-align: top; }
+#keysDialog td:first-child { white-space: nowrap; font-family: monospace; }
+/* as the graphical interface: the panel down to the status bar, the
+   messages under the scene only */
+/* (scrolled up and down only: Safari let it move sideways) */
+#side { grid-row: 2 / 4; grid-column: 1; padding: 4px 8px;
+        padding-left: max(8px, env(safe-area-inset-left));
+        overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; }
+/* the handle that resizes the panel: a drag, a double-click for the default */
+#split { grid-row: 2 / 4; grid-column: 2; cursor: col-resize; touch-action: none; border-left: 1px solid var(--line); }
+#split:hover, #split.on { background: var(--line); }
+#side details { margin: 4px 0; }
+#side summary { font-weight: bold; cursor: pointer; }
+#side .row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(118px, 40%); gap: 6px;
+             align-items: center; margin: 2px 0 2px 8px; padding: 1px 2px; }
+#side .row input, #side .row select { width: 100%; box-sizing: border-box;
+                                      min-width: 0; }
+#side .row input[type=checkbox] { width: auto; justify-self: start; }
+#side details details { margin-left: 10px; }
+#tabs { display: flex; gap: 2px; margin: 0 -8px 6px; padding: 0 8px;
+        border-bottom: 1px solid var(--line); }
+#tabs button { border: 1px solid transparent; border-bottom: none;
+               background: none; padding: 4px 7px; cursor: pointer;
+               border-radius: 4px 4px 0 0; color: var(--tab); font: inherit; }
+#tabs button.on { border-color: var(--line); background: var(--bg); color: var(--fg);
+                  margin-bottom: -1px; }
+#side .buttons { display: flex; gap: 4px; margin: 4px 0 4px 8px; }
+/* the actions of a module: buttons sharing the row, after its label */
+#side .buttons.fill { align-items: center; }
+#side .buttons.wrap { flex-wrap: wrap; }
+#side .buttons.fill button { flex: 1 1 auto; min-width: 0; padding: 2px 4px;
+                            white-space: nowrap; }
+#side .buttons.fill span { flex: 0 0 72px; }
+#side .note { color: var(--faint); font-size: 13px; margin: 2px 0 4px 8px; }
+#side .out { display: block; min-height: 1.3em; padding: 1px 4px;
+             border: 1px solid var(--out-border); border-radius: 3px;
+             background: var(--out-bg); color: var(--out-fg); font-variant-numeric: tabular-nums; overflow: hidden;
+             text-overflow: ellipsis; white-space: nowrap; }
+#side .row > span.highlight { border-radius: 3px; padding: 0 4px; }
+#side input.highlight { border: 1px solid var(--field-border); border-radius: 3px; }
+#side .seg { display: flex; margin: 4px 0 8px 8px; }
+#side .seg button { flex: 1; font: inherit; padding: 3px 0; cursor: pointer;
+                    border: 1px solid var(--field-border); background: var(--bg);
+                    color: var(--fg); }
+#side .seg button:first-child { border-radius: 4px 0 0 4px; }
+#side .seg button:last-child { border-radius: 0 4px 4px 0; border-left: none; }
+#side .seg button.on { background: var(--menu-hover); font-weight: bold; }
+#side .pair { display: flex; gap: 4px; }
+#side .pair > * { flex: 1; min-width: 0; }
+/* a slider with its value, the width of the panel */
+#side .row.wide { grid-template-columns: 88px minmax(0, 1fr); }
+/* a number with its graph button, and the menu of the graphs it is drawn on
+   (as the graph button of the graphical interface) */
+#side .withGraph { display: flex; gap: 3px; align-items: center; min-width: 0; }
+#side .withGraph > :first-child { flex: 1; min-width: 0; }
+#side .graphButton { flex: none; width: 22px; height: 20px; padding: 0;
+                     display: grid; place-items: center; cursor: pointer;
+                     border: 1px solid var(--field-border); border-radius: 3px;
+                     background: var(--bg); color: var(--fg); }
+#side .graphButton.on { background: var(--graph-on); color: #000; }
+#graphMenu, #rangeMenu { position: fixed; z-index: 3; padding: 6px 8px;
+             display: grid; gap: 4px; background: var(--bg); color: var(--fg);
+             border: 1px solid var(--border); border-radius: 4px;
+             box-shadow: 0 2px 8px var(--shadow); }
+#graphMenu[hidden], #rangeMenu[hidden] { display: none; }
+#rangeMenu input { width: 240px; }
+#rangeMenu .note { color: var(--muted); font-size: 12px; }
+#rangeMenu .error { color: var(--error); font-size: 12px; }
+#rangeMenu .name { font-weight: bold; }
+/* the loop button: the level, on the colour of the graphical interface */
+#side .loopButton.level1 { background: var(--loop1); color: var(--loop-fg); }
+#side .loopButton.level2 { background: var(--loop2); color: var(--loop-fg); }
+#side .loopButton.level3 { background: var(--loop3); color: var(--loop-fg); }
+#side .graphButton:disabled { opacity: .35; cursor: default; }
+#graphMenu td, #graphMenu th { padding: 1px 6px; text-align: center; }
+#graphMenu td:first-child { text-align: left; white-space: nowrap; }
+#graphMenu th { font-weight: normal; color: var(--muted); }
+#graphMenu .name { font-weight: bold; max-width: 260px; overflow: hidden;
+                   text-overflow: ellipsis; white-space: nowrap; }
+/* a check box before its name, which takes the rest of the row */
+#side .row.item { grid-template-columns: auto minmax(0, 1fr); }
+#side .slider { display: flex; gap: 4px; align-items: center; }
+#side .row .slider input[type=range] { flex: 1; min-width: 0; width: auto; }
+#side .row .slider input[type=number] { flex: none; width: 76px; }
+/* a view: its box and name, and the button of its menu; its options under it */
+#side .view { display: flex; gap: 4px; align-items: center; margin: 1px 0 1px 8px;
+              min-width: 0; }
+#side .view label { flex: 1; display: flex; gap: 6px; align-items: center; min-width: 0; }
+#side .view label span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#side .viewOptions, #panel { margin-left: 16px; border-left: 2px solid var(--line2); }
+#panel .name { font-weight: bold; margin: 2px 0 0 8px; }
+#panel[hidden], #statusbar button[hidden] { display: none; }
+/* the script of the model, edited */
+#scriptDialog { width: min(800px, 94vw); height: min(700px, 85vh); box-sizing: border-box;
+                color: var(--fg); background: var(--bg); border: 1px solid var(--border);
+                border-radius: 6px; padding: 8px 10px; }
+#scriptDialog form { display: flex; flex-direction: column; gap: 6px; height: 100%; }
+#scriptDialog .name { font-weight: bold; }
+/* the text in its colors (#scriptColors), under the text area, whose text
+   is transparent: the same font, padding and scroll */
+#scriptBox { flex: 1; min-height: 0; position: relative; background: var(--bg);
+             border: 1px solid var(--field-border); }
+#scriptText, #scriptColors { position: absolute; inset: 0; margin: 0; padding: 4px;
+              box-sizing: border-box; border: none; overflow: auto;
+              font: 13px/1.4 ui-monospace, Menlo, Consolas, monospace; tab-size: 4;
+              white-space: pre; overflow-wrap: normal; }
+#scriptText { resize: none; color: transparent; background: transparent;
+              caret-color: var(--fg); }
+#scriptColors { color: var(--fg); pointer-events: none; overflow: hidden; }
+#scriptColors .B { color: var(--code-comment); }
+#scriptColors .C { color: var(--code-string); }
+#scriptColors .D { color: var(--code-number); }
+#scriptColors .E { color: var(--code-word); font-weight: bold; }
+#scriptColors .F { color: var(--code-option); }
+#scriptDialog .bar { display: flex; gap: 6px; align-items: center; }
+#scriptDialog .bar .gap { flex: 1; }
+#scriptLine { width: 7em; }
+#scriptFind { width: 12em; }
+#canvas { grid-row: 2; grid-column: 3; display: block; width: 100%; height: 100%; min-height: 0;
+          touch-action: none; }
+#log { grid-row: 3; grid-column: 3; margin: 0; min-width: 0; border-top: 1px solid var(--line);
+       position: relative; }
+/* the handle that resizes the messages, on their top edge when they are
+   shown: a drag, a double-click for the default height */
+#logSplit { position: absolute; left: 0; right: 0; top: -3px; height: 6px;
+            cursor: row-resize; touch-action: none; z-index: 1; }
+#logSplit:hover, #logSplit.on { background: var(--line); }
+/* shown or hidden by a click on the status */
+#log summary { display: none; }
+#log:not([open]) { display: none; }
+/* what the query and the measurement pin on the picture */
+#notes { position: fixed; inset: 0; pointer-events: none; z-index: 1; }
+#notes .note { position: absolute; padding: 3px 6px; border: 1px solid var(--border);
+               border-radius: 3px; white-space: pre-line; font-size: 12px;
+               max-width: 360px; }
+#log pre { margin: 0; padding: 0 8px 4px; height: var(--log-height, 120px);
+           overflow: auto;
+           font: 12px ui-monospace, Menlo, Consolas, monospace; }
+#log .error { color: var(--error); }
+#log .warning { color: var(--warning); }
+/* what the pointer is over, in a box by it, and the lasso rectangle
+   (Ctrl+click), over the canvas */
+#hover { position: fixed; display: none; max-width: 360px; padding: 4px 6px;
+         background: var(--hover-bg); border: 1px solid var(--border);
+         border-radius: 3px; white-space: pre-line; pointer-events: none;
+         z-index: 1; }
+#lasso { position: fixed; display: none; border: 1px dashed var(--lasso);
+         background: var(--lasso-fill); pointer-events: none; z-index: 1; }
+#drop { position: fixed; inset: 0; display: none; place-items: center;
+        background: var(--veil); font-size: 18px; z-index: 2; }
+#model { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+         border: none; background: none; font: inherit; color: inherit;
+         padding: 2px 4px; cursor: pointer; text-align: left; }
+#model:empty { display: none; }
+#model::after { content: ' ▾'; color: var(--muted); }
+#model:hover { text-decoration: underline; }
+/* touch screens: controls a finger can hit, and fields of 16 px, below
+   which a phone zooms the page on them */
+@media (pointer: coarse) {
+  html, body { font-size: 15px; }
+  input, select, textarea { font-size: 16px; }
+  #bar button { min-height: 36px; padding: 0 10px; }
+  #statusbar button { min-width: 40px; height: 40px; }
+  #statusbar svg { width: 18px; height: 18px; }
+  #tabs button { padding: 8px 10px; }
+  #side summary { padding: 6px 0; }
+  #side .row, #side .view { min-height: 36px; }
+  #side input[type=checkbox] { width: 20px; height: 20px; }
+  #side .graphButton { width: 32px; height: 32px; }
+  /* a number with its buttons under its name, for room */
+  #side .row:has(.withGraph) { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  #side .buttons button, #side .seg button, #side .pair button { min-height: 36px; }
+  #quickMenu button { padding: 7px 10px; }
+  #openMenu button { padding: 10px 8px; }
+  #graphMenu td { padding: 6px 8px; }
+  #graphMenu input { width: 20px; height: 20px; }
+  #split { position: relative; }
+  #split::after { content: ''; position: absolute; inset: 0 -10px; }
+  #logSplit { top: -10px; height: 20px; }
+}
+/* no keyboard shortcuts without a keyboard */
+@media (hover: none) { #keys { display: none; } }
+/* small screens (a phone, upright or not): the panel over the scene, open
+   from the status bar; the status above the buttons, and only the buttons
+   there is room for */
+@media (max-width: 700px), (max-height: 500px) {
+  body { grid-template-columns: 0 0 minmax(0, 1fr); }
+  #side { position: relative; z-index: 2; width: min(360px, 88vw); box-sizing: border-box;
+          background: var(--bg); border-right: 1px solid var(--line);
+          box-shadow: 2px 0 8px var(--shadow); }
+  #split { display: none; }
+  #bar { flex-wrap: nowrap; gap: 6px; }
+  #bar strong { display: none; }
+  #model { flex: 1; }
+  /* the buttons share the width, a finger's height (the views along the
+     axes are in the quick access menu) */
+  #statusbar { flex-wrap: wrap; gap: 2px; padding-top: 2px; }
+  #status { order: -1; flex: 1 0 100%; margin: 0; padding: 2px 4px 0; }
+  #statusbar .gap { flex: 0 0 6px; width: auto; }
+  #statusbar button { flex: 1 1 0; min-width: 32px; max-width: 80px; height: 38px;
+                      font-size: 16px; }
+  #statusbar svg { width: 20px; height: 20px; }
+  #statusbar [data-act=x], #statusbar [data-act=y], #statusbar [data-act=z],
+  #statusbar [data-act=rotate], #statusbar [data-act=select],
+  #statusbar [data-act=rewind], #statusbar button:disabled { display: none; }
+  #notes .note, #hover { max-width: 70vw; }
+}
+/* what is being loaded or computed, on the top edge of the scene: a
+   bar that fills when its end is known, that runs to and fro otherwise
+   (an animation the browser runs even while Gmsh keeps the page busy) */
+#progress { grid-row: 2; grid-column: 1 / 4; align-self: start; height: 3px;
+            z-index: 3; overflow: hidden; pointer-events: none; }
+#progress[hidden] { display: none; }
+#progress > div { height: 100%; width: 0; background: #2f7fe0; }
+#progress.busy > div { width: 30%; animation: progress 1.2s ease-in-out infinite; }
+@keyframes progress { from { transform: translateX(-100%); }
+                      to { transform: translateX(340%); } }

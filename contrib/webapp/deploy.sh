@@ -49,9 +49,14 @@ cp "$B/gmsh.mjs" "$B/libgmsh.mjs" "$B/libgmsh.wasm" "$SITE/build"
 wc -c < "$B/libgmsh.wasm" | tr -d ' ' > "$SITE/build/libgmsh.wasm.size"
 if [ -d "$B/templates" ]; then cp "$B"/templates/* "$SITE/build/templates"; fi
 
-# the pages, with the manifest and the icons that make them an app on a
-# phone's home screen
-cp "$HERE/onelab.html" "$HERE/shortcuts.js" "$HERE/solver.js" "$HERE/files.mjs" \
+# the page, its stylesheet and modules (see README.txt), with the manifest
+# and the icons that make it an app on a phone's home screen
+cp "$HERE/onelab.html" "$HERE/onelab.css" "$HERE/main.mjs" "$HERE/app.mjs" \
+  "$HERE/gmshweb.mjs" "$HERE/scene.mjs" "$HERE/statusbar.mjs" "$HERE/tools.mjs" \
+  "$HERE/actions.mjs" "$HERE/parameters.mjs" "$HERE/views.mjs" \
+  "$HERE/solverClient.mjs" "$HERE/options.mjs" "$HERE/clipping.mjs" \
+  "$HERE/visibility.mjs" "$HERE/editor.mjs" "$HERE/models.mjs" \
+  "$HERE/shortcuts.js" "$HERE/solver.js" "$HERE/files.mjs" \
   "$HERE/manifest.webmanifest" "$SITE"
 mkdir -p "$SITE/icons"
 cp "$HERE"/icons/*.png "$SITE/icons"

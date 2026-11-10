@@ -43,18 +43,24 @@ api_test.mjs shows its use and checks it:
 
   node api_test.mjs
 
-The page draws the scene with the functions of webApp.cpp, which also add
-shapes to the script of a model and run the operations on entities picked in
-the scene, as the graphical interface does (src/graphics/selectionDriver),
-give it the buttons of the modules and the entries of the menus of the
-graphical interface, and do their actions (the action registry,
-src/common/Actions.cpp), and run the ONELAB loop, with GetDP linked in when
-build.sh is given it; onelab.html runs GetDP in a web
-worker (solver.js), with a module of its own, as the graphical interface runs
-it in a process of its own: the page shows the results as they are written and
-can stop the solver; shortcuts.js gives the pages the keyboard shortcuts of the
-graphical interface (from src/common/Shortcuts.cpp); files.mjs handles the
-files of a model, for the page, the worker and run_models.mjs.
+The page is onelab.html (its markup), onelab.css and ES modules, one per
+part of the page, each with its functions and a build() that makes its part
+once Gmsh is loaded; main.mjs loads Gmsh and calls them, and says where
+things are. app.mjs holds what they share (Gmsh, its file system, the state,
+the status bar and the messages); gmshweb.mjs the functions of webApp.cpp,
+which draw the scene on the canvas and run the operations on entities picked
+in the scene as the FLTK graphical user interface does
+(src/graphics/selectionDriver), give the page the buttons of the modules and
+the entries of the menus of that interface, and do their actions (the action
+registry, src/common/Actions.cpp; actions.mjs holds the page's own, the
+counterpart of src/fltk/fltkActions.cpp), and run the ONELAB loop
+(solverClient.mjs), with GetDP linked in when build.sh is given it; the page
+runs GetDP in a web worker (solver.js), with a module of its own, as the
+FLTK interface runs it in a process of its own: the page shows the results
+as they are written and can stop the solver; shortcuts.js gives the page the
+keyboard shortcuts of the FLTK interface (declared on the items of
+src/common/Actions.cpp); files.mjs handles the files of a model, for the
+page, the worker and run_models.mjs.
 manifest.webmanifest and
 the icons (made from contrib/mobile/utils/gmsh_mobile_1024x1024.png, the icon
 of the mobile app) let a phone or a tablet install the pages on its home
