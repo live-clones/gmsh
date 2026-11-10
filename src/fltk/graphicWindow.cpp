@@ -767,7 +767,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   // the status bar and its buttons: as tall as the menu bar, and wide enough
   // for their icons
   int sh = BH;
-  int sw = 1.7 * FL_NORMAL_SIZE;
+  int sw = 1.7 * FL_NORMAL_SIZE + 1;
   _iconSize = FL_NORMAL_SIZE + 1; // the icons on the scale of the letters
 
   // the usable area of the screen that will show the window

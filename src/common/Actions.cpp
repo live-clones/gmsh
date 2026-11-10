@@ -348,7 +348,10 @@ presets(const std::string &label, const std::string &option,
   return menu(label, "", items);
 }
 static std::vector<std::pair<std::string, std::string>> opacities()
-{ return {{"100%", "1"}, {"75%", "0.75"}, {"50%", "0.5"}, {"25%", "0.25"}}; }
+{
+  return {{"100%", "1"}, {"75%", "0.75"}, {"50%", "0.5"}, {"25%", "0.25"},
+          {"10%", "0.1"}};
+}
 
 // The menus
 
@@ -724,7 +727,8 @@ static actionItem quickAccessMenu()
       .key('b', ModAlt | ModShift),
   };
   std::vector<std::pair<std::string, std::string>> sizeFactors = {
-    {"0.25", "0.25"}, {"0.5", "0.5"}, {"1", "1"}, {"2", "2"}, {"4", "4"},
+    {"0.1", "0.1"}, {"0.2", "0.2"}, {"0.5", "0.5"}, {"1", "1"},
+    {"2", "2"},     {"5", "5"},     {"10", "10"},
   };
   std::vector<actionItem> mesh = {
     menu("Mesh visibility", "", meshVisibility),
