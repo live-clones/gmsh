@@ -282,6 +282,9 @@ static void toggleMesh()
 
 // The builders of the items
 
+// what an action does in Gmsh (see actionItem)
+typedef std::function<void(int view, drawContext *ctx)> actionFunction;
+
 // a menu, and a group of items set apart (a menu without label)
 static actionItem menu(const std::string &label, const std::string &help,
                        const std::vector<actionItem> &items)
@@ -1074,20 +1077,12 @@ static const actionItem *findAction(const std::string &name)
   return it == actions().end() ? nullptr : it->second;
 }
 
-bool HasAction(const std::string &name) { return findAction(name) != nullptr; }
-
 bool IsItemDoneByInterface(const actionItem &item)
 {
   if(item.kind == ItemOperation || item.kind == ItemShape) return true;
   if(item.kind != ItemAction) return false;
   const actionItem *a = findAction(item.name);
   return !a || !a->run;
-}
-
-int RunItem(const actionItem &item, int view, drawContext *ctx)
-{
-  if(item.kind != ItemAction) return ActionByInterface;
-  return RunAction(item.name, view, ctx);
 }
 
 // the views, for what an action changed in them: added, removed or read again
@@ -1100,14 +1095,15 @@ static std::vector<std::pair<int, void *>> viewsNow()
   return v;
 }
 
-int RunAction(const std::string &name, int view, drawContext *ctx)
+int RunItem(const actionItem &item, int view, drawContext *ctx)
 {
-  const actionItem *a = findAction(name);
-  if(!a || !a->run) return ActionByInterface;
+  // (by its name: the item of a key is the name alone)
+  const actionItem *a = item.kind == ItemAction ? findAction(item.name) : nullptr;
+  if(!a || !a->run) return 0;
   int entities = CTX::instance()->entitiesStamp;
   std::vector<std::pair<int, void *>> views = viewsNow();
   a->run(view, ctx);
-  int ret = ActionDone;
+  int ret = 0;
   if(CTX::instance()->entitiesStamp != entities) ret |= ActionModelChanged;
   if(viewsNow() != views) ret |= ActionViewsChanged;
   return ret;

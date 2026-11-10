@@ -73,10 +73,6 @@ class drawContext;
 // two
 enum itemKind { ItemMenu, ItemAction, ItemOperation, ItemShape };
 
-// What an action does in Gmsh: view is the index of the view whose menu it is
-// in (-1 otherwise), ctx the scene whose point of view it changes
-typedef std::function<void(int view, drawContext *ctx)> actionFunction;
-
 // An item of a menu
 struct actionItem {
   std::string label;
@@ -87,9 +83,11 @@ struct actionItem {
   std::vector<actionItem> items;
   // the tooltip
   std::string help;
-  // for an action: what it does (empty if the interfaces do it), when it
-  // applies (always if empty), and its check mark (none if empty)
-  actionFunction run;
+  // for an action: what it does in Gmsh (empty if the interfaces do it; view
+  // is the index of the view whose menu it is in, ctx the scene whose point
+  // of view it changes), when it applies (always if empty), and its check
+  // mark (none if empty)
+  std::function<void(int view, drawContext *ctx)> run;
   std::function<bool()> available;
   std::function<int()> check;
 };
@@ -100,33 +98,19 @@ struct actionItem {
 // keys in no menu, which no interface shows)
 const actionItem &GetActionMenu(const std::string &name);
 
-// What RunItem() returns, as bits: ActionByInterface if the interface does
-// the item, ActionDone otherwise, with what the action changed (found by
+// What RunItem() returns: what the action changed, as bits (found by
 // RunItem(), not told by the action), for the interface to show it: views
 // added, removed or read again, entities added or removed
-enum actionResult {
-  ActionByInterface = 0,
-  ActionDone = 1,
-  ActionViewsChanged = 2,
-  ActionModelChanged = 4
-};
-
-// Whether an item of the menus, or of keysOnly(), has an action with this
-// name (as a shortcut that runs one, see Shortcuts.h)
-bool HasAction(const std::string &name);
+enum actionResult { ActionViewsChanged = 1, ActionModelChanged = 2 };
 
 // Whether the interface does what an item does: an operation, a shape, or an
 // action without code (a guiAction())
 bool IsItemDoneByInterface(const actionItem &item);
 
-// Do what an item does. For the menu of a view, view is the index of that
-// view; ctx is the scene whose point of view an action changes.
+// Do what an action of Gmsh does (nothing for another item). For the menu of
+// a view, view is the index of that view; ctx is the scene whose point of
+// view the action changes.
 int RunItem(const actionItem &item, int view = -1, drawContext *ctx = nullptr);
-
-// Do the action with this name, as an item of it does (from a shortcut, for
-// instance)
-int RunAction(const std::string &name, int view = -1,
-              drawContext *ctx = nullptr);
 
 // Whether an item applies now (an item on views needs views, for instance)
 bool IsItemAvailable(const actionItem &item);

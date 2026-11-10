@@ -108,6 +108,11 @@ private:
   void _doubleClick(const paneInput &in);
   void _lassoZoom();
   void _clickSelection(int sign, bool alt);
+  // where the last selection looked, in the units of the window
+  void _lastSelection(int xywh[4])
+  {
+    for(int i = 0; i < 4; i++) xywh[i] = _trySelectionXYWH[i];
+  }
 
 protected:
   // the context whose scene this is: the host's, which draws it
@@ -222,18 +227,12 @@ public:
     return _select(type, false, mesh, post, x, y, w, h, vertices, edges, faces,
                    regions, elements, points, views, pickElements);
   }
-  // where the last selection looked, in the units of the window
-  void lastSelection(int xywh[4])
-  {
-    for(int i = 0; i < 4; i++) xywh[i] = _trySelectionXYWH[i];
-  }
   // show the text in a box by the cursor, or take the box away
   void drawTooltip(const std::string &text);
   // the same box, pinned to the point xyz of the model: it replaces the
   // boxes pinned before, or is added to them; an empty text removes them all
   void pinTooltip(const std::string &text, const double *xyz = nullptr,
                   bool add = false);
-  bool addQuery() const { return _addQuery; }
   // the notes pinned to the model, for a host that draws them itself
   std::size_t numPinned() const { return _pinned.size(); }
   const std::string &pinnedText(std::size_t i) const { return _pinned[i].text; }
@@ -241,7 +240,7 @@ public:
   // A click of the query, with what the selection found there: what the model
   // holds at the point hit (its entity, element, node, the values of the
   // views), in the messages and pinned to the point (added to the notes with
-  // Ctrl, see addQuery()). False if the click hit nothing. The query tool
+  // Ctrl). False if the click hit nothing. The query tool
   // runs the selection (see newQueryTool())
   bool queryClick(std::vector<GVertex *> &vertices, std::vector<GEdge *> &edges,
                   std::vector<GFace *> &faces, std::vector<GRegion *> &regions,
