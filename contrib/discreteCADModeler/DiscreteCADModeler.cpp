@@ -166,6 +166,49 @@ namespace {
     for(auto &t : triangles) std::swap(t[1], t[2]);
   }
 
+  // the triangles of the simple polygon p oriented as o (the sign of the
+  // cross products at its convex corners), cut off one at a time at the
+  // corner whose triangle is the best shaped of those without other corners
+  // in them; none if there is no such corner
+  std::vector<std::array<int, 3> > triangulatePolygon(const std::vector<SPoint2> &p,
+                                                       double o)
+  {
+    auto area = [&](int i, int j, int k) {
+      return o * ((p[j].x() - p[i].x()) * (p[k].y() - p[i].y()) -
+                  (p[j].y() - p[i].y()) * (p[k].x() - p[i].x()));
+    };
+    std::vector<int> left(p.size());
+    for(std::size_t i = 0; i < p.size(); i++) left[i] = (int)i;
+    std::vector<std::array<int, 3> > triangles;
+    while(left.size() > 2) {
+      const std::size_t m = left.size();
+      std::size_t best = m;
+      double quality = 1.e-9;
+      for(std::size_t i = 0; i < m; i++) {
+        const int a = left[(i + m - 1) % m], b = left[i], c = left[(i + 1) % m];
+        const double s =
+          p[a].distance(p[b]) + p[b].distance(p[c]) + p[c].distance(p[a]);
+        const double q = area(a, b, c) / (s * s);
+        if(!(q > quality)) continue;
+        bool empty = true;
+        for(std::size_t j = 0; j < m && empty; j++) {
+          const int d = left[j];
+          if(d != a && d != b && d != c)
+            empty = !(area(a, b, d) >= 0. && area(b, c, d) >= 0. &&
+                      area(c, a, d) >= 0.);
+        }
+        if(!empty) continue;
+        best = i;
+        quality = q;
+      }
+      if(best == m) return {};
+      triangles.push_back(
+        {left[(best + m - 1) % m], left[best], left[(best + 1) % m]});
+      left.erase(left.begin() + best);
+    }
+    return triangles;
+  }
+
   // the chart of an analytic surface (the parameters uv of its points xyz,
   // those of map with v times flip; node: the node of each point) fitted to
   // the curves on the intersection of analytic surfaces (segments: their
@@ -178,9 +221,13 @@ namespace {
   // triangles on the chords enclosing the arcs that bulge out (tangent at
   // their ends to the parabola through their ends and middle, a quarter
   // higher for arcs of varying curvature), the triangle along the edge by
-  // the fan from its opposite corner, if all of it keeps its orientation;
-  // the parameters of the ends of the edges those of their points. The
-  // numbers of edges fitted and left as chords
+  // the fan from its opposite corner, if all of it keeps its orientation,
+  // else, for an arc out of the triangle, the triangle kept and the polygon
+  // between the chord and the arc triangulated (the opposite corner nearly
+  // on the line of the edge, a sliver of the triangulation: the fan folds
+  // over; an arc into such a triangle, out of it through another edge, is
+  // in the chart and left); the parameters of the ends of the edges those
+  // of their points. The numbers of edges fitted and left as chords
   std::pair<int, int> fitChartToCurves(
     const DiscreteCADAnalyticMap &map, double flip,
     const std::map<std::pair<int, int>,
@@ -293,28 +340,41 @@ namespace {
         }
         fanUV.push_back(p[n]);
         fanXYZ.push_back(x[n]);
-        for(std::size_t i = 0; i + 1 < fanUV.size() && found; i++)
-          found = o * cross(fanUV[i], fanUV[i + 1], uv[c]) >
-                  1.e-9 * fanUV[i].distance(fanUV[i + 1]) *
-                    fanUV[i].distance(uv[c]);
-        if(!found) {
+        bool fan = found;
+        for(std::size_t i = 0; i + 1 < fanUV.size() && fan; i++)
+          fan = o * cross(fanUV[i], fanUV[i + 1], uv[c]) >
+                1.e-9 * fanUV[i].distance(fanUV[i + 1]) *
+                  fanUV[i].distance(uv[c]);
+        std::vector<std::array<int, 3> > out;
+        if(found && !fan) {
+          bool outside = true;
+          for(std::size_t i = 1; i + 1 < fanUV.size() && outside; i++)
+            outside = o * cross(uv[a], uv[b], fanUV[i]) < 0.;
+          if(outside) out = triangulatePolygon(fanUV, o);
+        }
+        if(!fan && out.empty()) {
           fitted.second++;
           continue;
         }
-        std::vector<int> fan(1, a);
+        std::vector<int> points(1, a);
         for(std::size_t i = 1; i + 1 < fanUV.size(); i++) {
-          fan.push_back((int)uv.size());
+          points.push_back((int)uv.size());
           uv.push_back(fanUV[i]);
           xyz.push_back(fanXYZ[i]);
         }
-        fan.push_back(b);
-        triangles[3 * t + (k + 1) % 3] = fan[1];
-        for(std::size_t i = 1; i + 1 < fan.size(); i++) {
-          triangles.push_back(fan[i]);
-          triangles.push_back(fan[i + 1]);
+        points.push_back(b);
+        fitted.first++;
+        if(!fan) {
+          for(auto &tr : out)
+            for(int i : tr) triangles.push_back(points[i]);
+          continue;
+        }
+        triangles[3 * t + (k + 1) % 3] = points[1];
+        for(std::size_t i = 1; i + 1 < points.size(); i++) {
+          triangles.push_back(points[i]);
+          triangles.push_back(points[i + 1]);
           triangles.push_back(c);
         }
-        fitted.first++;
         // (the edges of the triangle again, its edge ca maybe along a curve)
         k = -1;
       }
