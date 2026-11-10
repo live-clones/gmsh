@@ -1466,6 +1466,28 @@ void segmentSurface(const std::vector<std::array<double, 3> > &x,
     for(int t : region) piece[t] = (int)surfaces.size();
     surfaces.push_back(s);
   }
+  // the components of the free triangles left, fitted as a whole: a small
+  // face meeting others tangentially whose seed rings spill over them before
+  // holding enough nodes (a quarter cone at a corner of a chamfer, seeded at
+  // its end)
+  {
+    std::vector<char> seen(nt, 0);
+    for(std::size_t t0 = 0; t0 < nt; t0++) {
+      if(piece[t0] >= 0 || seen[t0]) continue;
+      std::vector<int> component = {(int)t0};
+      seen[t0] = 1;
+      for(std::size_t j = 0; j < component.size(); j++)
+        for(int u : neighbors[component[j]])
+          if(piece[u] < 0 && !seen[u]) {
+            seen[u] = 1;
+            component.push_back(u);
+          }
+      const Analytic s = fit(component, tau);
+      if(s.type == Analytic::NONE) continue;
+      for(int t : component) piece[t] = (int)surfaces.size();
+      surfaces.push_back(s);
+    }
+  }
   if(surfaces.empty()) return;
 
   // the pieces optimized together (variational shape approximation, with
