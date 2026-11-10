@@ -380,47 +380,71 @@ static std::string menuLabel(const std::string &label)
   return s;
 }
 
-// the items of menu added to an FLTK menu under prefix (the path of a
-// submenu), a group set apart by a divider; the index of the last one added
-// at the level of prefix, or -1
+// the check mark of an item: a check box, or a radio item for an option
+// given a value, when marks are shown (not asked for otherwise: a menu that
+// stays is built with the interface, which the marks of the interface's
+// actions read)
+static int itemFlags(const actionItem &item, bool marks)
+{
+  int check = (marks && item.check) ? item.check() : -1;
+  if(check < 0) return 0;
+  int flags =
+    item.name.find('=') == std::string::npos ? FL_MENU_TOGGLE : FL_MENU_RADIO;
+  return check ? flags | FL_MENU_VALUE : flags;
+}
+
+// the shortcut an action shows: the one of its name
+static int itemShortcut(const actionItem &item)
+{
+  if(item.kind != ItemAction || GetShortcutsOf(item.name).empty()) return 0;
+  return fltkShortcut(item.name.c_str());
+}
+
+static int addItems(Fl_Menu_ *m, const actionItem &menu,
+                    const std::string &prefix, bool marks);
+
+// a submenu added under prefix; the index of its title
+static int addSubmenu(Fl_Menu_ *m, const actionItem &menu,
+                      const std::string &prefix, bool marks)
+{
+  addItems(m, menu, prefix + menu.label + "/", marks);
+  return m->find_index((prefix + menu.label).c_str());
+}
+
+// an item (not a menu) added under prefix; its index, or -1 if this interface
+// does not have it
+static int addItem(Fl_Menu_ *m, const actionItem &item,
+                   const std::string &prefix, bool marks)
+{
+  if(item.name == "file_open_recent") { // a submenu the interface fills
+    addRecentFiles(m, prefix + item.label);
+    return m->find_index((prefix + item.label).c_str());
+  }
+  if(!canRunItem(item)) return -1;
+  return m->add((prefix + menuLabel(item.label)).c_str(), itemShortcut(item),
+                item_cb, (void *)&item, itemFlags(item, marks));
+}
+
+// the items of menu added under prefix (the path of a submenu), each group
+// set apart by a divider; the index of the last one added at the level of
+// prefix, or -1
 static int addItems(Fl_Menu_ *m, const actionItem &menu,
                     const std::string &prefix, bool marks)
 {
   int last = -1;
   for(const actionItem &item : menu.items) {
-    if(item.kind == ItemMenu) {
-      if(!canRunAnyItem(item)) continue;
-      if(item.label.empty()) { // a group
-        if(last >= 0) m->mode(last, m->mode(last) | FL_MENU_DIVIDER);
-        int l = addItems(m, item, prefix, marks);
-        if(l >= 0) last = l;
-      }
-      else { // a submenu
-        addItems(m, item, prefix + item.label + "/", marks);
-        last = m->find_index((prefix + item.label).c_str());
-      }
-      continue;
+    int l;
+    if(item.kind != ItemMenu)
+      l = addItem(m, item, prefix, marks);
+    else if(!canRunAnyItem(item))
+      l = -1;
+    else if(!item.label.empty())
+      l = addSubmenu(m, item, prefix, marks);
+    else { // a group
+      if(last >= 0) m->mode(last, m->mode(last) | FL_MENU_DIVIDER);
+      l = addItems(m, item, prefix, marks);
     }
-    if(item.name == "file_open_recent") { // a submenu the interface fills
-      addRecentFiles(m, prefix + item.label);
-      last = m->find_index((prefix + item.label).c_str());
-      continue;
-    }
-    if(!canRunItem(item)) continue;
-    // the check mark (not asked for when not shown: a menu that stays is
-    // built with the interface, which the marks of the interface's actions
-    // read)
-    int check = (marks && item.check) ? item.check() : -1;
-    int flags = 0;
-    if(check >= 0)
-      flags = (item.name.find('=') == std::string::npos ? FL_MENU_TOGGLE :
-                                                          FL_MENU_RADIO) |
-              (check ? FL_MENU_VALUE : 0);
-    // the shortcut shown: the one of the same name as its action
-    bool key = item.kind == ItemAction && !GetShortcutsOf(item.name).empty();
-    last = m->add((prefix + menuLabel(item.label)).c_str(),
-                  key ? fltkShortcut(item.name.c_str()) : 0, item_cb,
-                  (void *)&item, flags);
+    if(l >= 0) last = l;
   }
   return last;
 }
