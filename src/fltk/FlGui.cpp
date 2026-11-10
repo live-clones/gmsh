@@ -73,7 +73,8 @@
 #include "3M.h"
 #endif
 
-// The graphical interface of Gmsh, on FLTK. Where things are:
+// The FLTK graphical user interface of Gmsh (the web page, contrib/webapp, is
+// the other interface). Where things are:
 //
 // - FlGui (this file): the interface as a whole, made at startup (the
 //   constructor creates every window), its event loop, the rules on the
@@ -90,7 +91,7 @@
 //   context windows of the operations and shapes in contextWindow.cpp,
 //   onelabContextWindow.cpp, helpWindow.cpp), all on paletteWindow.
 // - fltkActions.cpp: what the items of the menus and the buttons of the
-//   modules do in this interface, in one table; fileActions.cpp: what the
+//   modules do in the FLTK interface, in one table; fileActions.cpp: what the
 //   File and Help menus do.
 // - fileDialogs.cpp and extraDialogs.cpp: the dialogs; gmshScheme.cpp,
 //   desktop.cpp, icons.cpp and windowPlacement.cpp: the look, the colours of
@@ -104,17 +105,19 @@
 //
 // How to add...
 // - A menu item or a button of a module: see "How to add" in Actions.h. When
-//   this interface does it: one line in the table of fltkActions.cpp.
+//   the FLTK graphical user interface does it: one line in the table of
+//   fltkActions.cpp.
 // - A tool window: a class on paletteWindow in a file of its own, created in
 //   the constructor below, which names it for General.FloatingTools; then a
 //   guiAction() in the Tools menu of Actions.cpp and its line in
 //   fltkActions.cpp.
-// - A key: one line in Shortcuts.cpp, named as the item it runs.
+// - A key: .key() on the item it runs in Actions.cpp (an item of keysOnly()
+//   for a key in no menu).
 // - A button of the status bar: statusButtons() in graphicWindow.cpp.
 // - A field of the option window: optionWindow.cpp, bound to its option by
 //   name.
 
-// Widget lifetime and nested event loops: the rules of this interface.
+// Widget lifetime and nested event loops: the rules of the FLTK interface.
 //
 // 1. Every event goes through FlGui::_dispatch(), which records the widgets
 //    it is sent to (the one with the focus, the pushed one, the one under the
@@ -434,7 +437,7 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   locked = true;
   _mainThread = std::this_thread::get_id();
 
-  // the actions this interface does, given to the items of the menus
+  // the actions the FLTK interface does, given to the items of the menus
   fltkActions();
 
   // set X display
@@ -840,8 +843,10 @@ int wrappedHeight(Fl_Box *b, int w)
 int fltkShortcut(const char *action, bool systemBar)
 {
   for(const ShortcutEntry &e : GetShortcuts())
-    if(!strcmp(e.action, action))
-      return (systemBar && e.inWindowBarOnly) ? 0 : fltkCode(e.shortcut);
+    if(e.action == action)
+      return (systemBar && (e.shortcut.flags & KeyInWindowBarOnly)) ?
+               0 :
+               fltkCode(e.shortcut);
   Msg::Error("Unknown shortcut action '%s'", action);
   return 0;
 }
@@ -861,19 +866,26 @@ int FlGui::testGlobalShortcuts(int event)
 
   // (a key of the menu bar runs its action here too, also when the system
   // menu bar of macOS did not take it)
+  // the shortcuts with the modifiers held, before those taking any modifier
+  // (Shift+Escape before Escape)
   int status = 0;
-  for(const ShortcutEntry &e : GetShortcuts()) {
-    if(!fltkTest(e.shortcut)) continue;
+  for(bool any : {false, true}) {
+    for(const ShortcutEntry &e : GetShortcuts()) {
+      if((bool)(e.shortcut.mods & AnyModifiers) != any) continue;
+      if(!fltkTest(e.shortcut)) continue;
 #if defined(__APPLE__)
-    // (Cmd+H hides the application)
-    if(e.inWindowBarOnly && graph[0]->hasSystemMenuBar()) continue;
+      // (Cmd+H hides the application)
+      if((e.shortcut.flags & KeyInWindowBarOnly) && graph[0]->hasSystemMenuBar())
+        continue;
 #endif
-    int st = runShortcut(e.action);
-    if(!st) continue; // not for this build
-    // a key passed on is handled, but as if it had not been: what is under
-    // the mouse reads it too
-    status = e.passOn ? 0 : st;
-    break;
+      int st = runShortcut(e.action);
+      if(!st) continue; // not for this build
+      // a key passed on is handled, but as if it had not been: what is under
+      // the mouse reads it too
+      status = (e.shortcut.flags & KeyPassedOn) ? 0 : st;
+      break;
+    }
+    if(status) break;
   }
 
   if(status == 2) {

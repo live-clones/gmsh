@@ -3,9 +3,11 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <algorithm>
 #include <cmath>
 #include <functional>
 #include <map>
+#include <set>
 #include "GmshConfig.h"
 #include "GmshDefines.h"
 #include "Actions.h"
@@ -306,10 +308,11 @@ static actionItem guiAction(const std::string &label, const std::string &name,
 // an option of the display turned on or off, checked when it is on
 static actionItem toggleAction(const std::string &label,
                                const std::string &name,
-                               double (*option)(int, int, double))
+                               double (*option)(int, int, double),
+                               const std::string &help = "")
 {
   return action(
-    label, name, "",
+    label, name, help,
     [option](int, drawContext *) {
       option(0, GMSH_SET | GMSH_GUI, !option(0, GMSH_GET, 0));
     },
@@ -383,7 +386,8 @@ static actionItem geometryModule()
   std::vector<actionItem> script = {
     guiAction("New", "model_new",
               "Make a new model, an empty script with the OpenCASCADE kernel"),
-    guiAction("Reload script", "script_reload", "Read the script again"),
+    guiAction("Reload script", "script_reload", "Read the script again")
+      .key('0'),
     guiAction("Edit script", "script_edit", "Edit the script"),
     guiAction("Save script", "script_save", "Save the script (.geo)"),
     action("Remove last script command", "script_remove_last",
@@ -490,12 +494,18 @@ static actionItem meshModule()
 #if defined(HAVE_MESH)
   std::vector<actionItem> generate = {
     action("1D", "mesh_1d", "Mesh the curves",
-           [](int, drawContext *) { GModel::current()->mesh(1); }),
+           [](int, drawContext *) { GModel::current()->mesh(1); })
+      .key('1')
+      .key(KeyF1),
     action("2D", "mesh_2d",
            "Mesh the surfaces (and the curves they are bounded by)",
-           [](int, drawContext *) { GModel::current()->mesh(2); }),
+           [](int, drawContext *) { GModel::current()->mesh(2); })
+      .key('2')
+      .key(KeyF1 + 1),
     action("3D", "mesh_3d", "Mesh the volumes (and what they are bounded by)",
-           [](int, drawContext *) { GModel::current()->mesh(3); }),
+           [](int, drawContext *) { GModel::current()->mesh(3); })
+      .key('3')
+      .key(KeyF1 + 2),
   };
   std::vector<actionItem> modify = {
     action("Refine by splitting", "mesh_refine",
@@ -652,7 +662,8 @@ static actionItem quickAccessMenu()
     guiAction("Select rotation center", "scene_rotation_center"),
     guiAction("Query", "query"),
     guiAction("Measure", "measure"),
-    guiAction("Full screen", "window_full_screen"),
+    guiAction("Full screen", "window_full_screen", "Enter full screen")
+      .key('f', ModCommand),
     guiAction("Install app", "app_install"),
     menu("Split window", "", split),
   };
@@ -668,41 +679,63 @@ static actionItem quickAccessMenu()
       [] { return opt_general_axes(0, GMSH_GET, 0) ? 1 : 0; }),
     option("Hover mesh and views", "General.MouseHoverMeshes"),
     menu("Projection", "", projection),
-    guiAction("All general options...", "options_general"),
+    guiAction("All general options...", "options_general",
+              "Show the general options")
+      .key('o', ModShift),
   };
   std::vector<actionItem> geometryVisibility = {
-    toggleAction("Points", "geometry_points", opt_geometry_points),
-    toggleAction("Curves", "geometry_curves", opt_geometry_curves),
-    toggleAction("Surfaces", "geometry_surfaces", opt_geometry_surfaces),
-    toggleAction("Volumes", "geometry_volumes", opt_geometry_volumes),
+    toggleAction("Points", "geometry_points", opt_geometry_points,
+                 "Hide/show geometry points")
+      .key('p', ModAlt),
+    toggleAction("Curves", "geometry_curves", opt_geometry_curves,
+                 "Hide/show geometry curves")
+      .key('l', ModAlt),
+    toggleAction("Surfaces", "geometry_surfaces", opt_geometry_surfaces,
+                 "Hide/show geometry surfaces")
+      .key('s', ModAlt),
+    toggleAction("Volumes", "geometry_volumes", opt_geometry_volumes,
+                 "Hide/show geometry volumes")
+      .key('v', ModAlt),
   };
   std::vector<actionItem> geometry = {
     menu("Geometry visibility", "", geometryVisibility),
     presets("Geometry opacity", "Geometry.Opacity", opacities()),
-    guiAction("All geometry options...", "options_geometry"),
+    guiAction("All geometry options...", "options_geometry",
+              "Show the geometry options")
+      .key('g', ModShift),
   };
   std::vector<actionItem> meshVisibility = {
-    toggleAction("Nodes", "mesh_nodes", opt_mesh_nodes),
-    toggleAction("1D elements", "mesh_lines", opt_mesh_lines),
+    toggleAction("Nodes", "mesh_nodes", opt_mesh_nodes, "Hide/show mesh nodes")
+      .key('p', ModAlt | ModShift),
+    toggleAction("1D elements", "mesh_lines", opt_mesh_lines,
+                 "Hide/show mesh lines")
+      .key('l', ModAlt | ModShift),
     toggleAction("2D element edges", "mesh_surface_edges",
-                 opt_mesh_surface_edges),
+                 opt_mesh_surface_edges, "Hide/show mesh surface edges")
+      .key('s', ModAlt | ModShift),
     toggleAction("2D element faces", "mesh_surface_faces",
-                 opt_mesh_surface_faces),
-    toggleAction("3D element edges", "mesh_volume_edges",
-                 opt_mesh_volume_edges),
-    toggleAction("3D element faces", "mesh_volume_faces",
-                 opt_mesh_volume_faces),
+                 opt_mesh_surface_faces, "Hide/show mesh surface faces")
+      .key('d', ModAlt | ModShift),
+    toggleAction("3D element edges", "mesh_volume_edges", opt_mesh_volume_edges,
+                 "Hide/show mesh volume edges")
+      .key('v', ModAlt | ModShift),
+    toggleAction("3D element faces", "mesh_volume_faces", opt_mesh_volume_faces,
+                 "Hide/show mesh volume faces")
+      .key('b', ModAlt | ModShift),
   };
   std::vector<std::pair<std::string, std::string>> sizeFactors = {
     {"0.25", "0.25"}, {"0.5", "0.5"}, {"1", "1"}, {"2", "2"}, {"4", "4"},
   };
   std::vector<actionItem> mesh = {
     menu("Mesh visibility", "", meshVisibility),
-    action("Toggle mesh display", "mesh_toggle", "",
-           [](int, drawContext *) { toggleMesh(); }),
+    action("Toggle mesh display", "mesh_toggle",
+           "Toggle visibility of all mesh entities",
+           [](int, drawContext *) { toggleMesh(); })
+      .key('m', ModAlt),
     presets("Mesh opacity", "Mesh.Opacity", opacities()),
     presets("Global mesh size factor", "Mesh.MeshSizeFactor", sizeFactors),
-    guiAction("All mesh options...", "options_mesh"),
+    guiAction("All mesh options...", "options_mesh", "Show the mesh options")
+      .key('m', ModShift),
   };
   std::vector<actionItem> intervals = {
     option("Iso-values", "View.IntervalsType=1"),
@@ -722,14 +755,19 @@ static actionItem quickAccessMenu()
   std::vector<actionItem> views = {
 #if defined(HAVE_POST)
     action(
-      "View element outlines", "view_elements", "",
+      "View element outlines", "view_elements",
+      "Hide/show element outlines for visible post-pro views",
       [](int, drawContext *) { toggleVisibleViews(opt_view_show_element); },
-      haveViews, [] { return (int)firstVisibleView(opt_view_show_element); }),
+      haveViews, [] { return (int)firstVisibleView(opt_view_show_element); })
+      .key('e', ModAlt)
+      .key('e', ModAlt | ModShift),
 #endif
     menu("View intervals", "", intervals),
     menu("View vectors", "", vectors),
     presets("View opacity", "View.Opacity", opacities()),
-    guiAction("All view options...", "options_views", "", haveViews),
+    guiAction("All view options...", "options_views",
+              "Show post-processing view options", haveViews)
+      .key('w', ModShift),
   };
   return group({group(window), group(general), group(geometry), group(mesh),
                 group(views)});
@@ -847,8 +885,7 @@ static actionItem viewMenu()
 #endif
 }
 
-// The menu bar of the graphical interface, which does its actions, named as
-// their shortcuts (see Shortcuts.h)
+// The menu bar of the graphical interface, which does its actions
 static actionItem menuBar()
 {
   std::vector<actionItem> remote = {
@@ -859,66 +896,108 @@ static actionItem menuBar()
   };
   std::vector<actionItem> file = {
     group({
-      guiAction("New...", "file_new"),
-      guiAction("Open...", "file_open"),
+      guiAction("New...", "file_new", "Create new project file")
+        .key('n', ModCommand),
+      guiAction("Open...", "file_open", "Open project file")
+        .key('o', ModCommand),
       guiAction("Open Recent", "file_open_recent"),
-      guiAction("Merge...", "file_merge"),
-      guiAction("Watch Pattern...", "watch"),
+      guiAction("Merge...", "file_merge", "Merge file(s)")
+        .key('o', ModCommand | ModShift),
+      guiAction("Watch Pattern...", "watch",
+                "Merge the files matching the watch pattern")
+        .key('w'),
     }),
     group({
       guiAction("Clear", "file_clear"),
-      guiAction("Rename...", "file_rename"),
+      guiAction("Rename...", "file_rename", "Rename project file")
+        .key('r', ModCommand),
       guiAction("Delete", "file_delete"),
     }),
     group({menu("Remote", "", remote)}),
     group({
-      guiAction("Save Mesh", "mesh_save"),
-      guiAction("Save Model Options", "options_save"),
-      guiAction("Save Options As Default", "options_save_default"),
+      guiAction("Save Mesh", "mesh_save", "Save mesh in default format")
+        .key('s', ModCommand),
+      guiAction("Save Model Options", "options_save", "Save model options")
+        .key('j', ModCommand),
+      guiAction("Save Options As Default", "options_save_default",
+                "Save options as default")
+        .key('j', ModCommand | ModShift),
     }),
-    group({guiAction("Export...", "file_export")}),
-    group({guiAction("Quit", "quit")}),
+    group({
+      guiAction("Export...", "file_export", "Export project")
+        .key('e', ModCommand),
+    }),
+    group({guiAction("Quit", "quit", "Quit").key('q', ModCommand)}),
   };
   std::vector<actionItem> tools = {
     group({
-      guiAction("Options", "options"),
-      guiAction("Plugins", "plugins"),
-      guiAction("Visibility", "visibility"),
-      guiAction("Clipping", "clipping"),
-      guiAction("Manipulator", "manipulator"),
+      guiAction("Options", "options", "Show option window")
+        .key('n', ModCommand | ModShift),
+      guiAction("Plugins", "plugins", "Show plugin window")
+        .key('u', ModCommand | ModShift),
+      guiAction("Visibility", "visibility", "Show visibility window")
+        .key('v', ModCommand | ModShift),
+      guiAction("Clipping", "clipping", "Show clipping plane window")
+        .key('c', ModCommand | ModShift),
+      guiAction("Manipulator", "manipulator", "Show manipulator window")
+        .key('m', ModCommand | ModShift),
     }),
     group({guiAction("3M", "window_3m")}),
     group({
-      guiAction("Statistics", "statistics"),
-      guiAction("Message Console", "console"),
+      guiAction("Statistics", "statistics", "Show statistics window")
+        .key('i', ModCommand),
+      guiAction("Message Console", "console", "Show message console")
+        .key('l', ModCommand),
     }),
   };
   std::vector<actionItem> window = {
     group({guiAction("New Window", "window_new")}),
-    group({guiAction("Copy to Clipboard", "window_copy")}),
+    group({
+      guiAction("Copy to Clipboard", "window_copy",
+                "Copy graphic window to clipboard")
+#if defined(WIN32)
+        .key('c', ModCommand)
+#endif
+        ,
+    }),
     group({
       guiAction("Split Horizontally", "window_split_horizontal"),
       guiAction("Split Vertically", "window_split_vertical"),
       guiAction("Unsplit", "window_unsplit"),
     }),
     group({
-      guiAction("Minimize", "minimize"),
+      guiAction("Minimize", "minimize", "Minimize window").key('m', ModCommand),
       guiAction("Zoom", "window_zoom"),
       guiAction("Enter Full Screen", "window_full_screen"),
     }),
     group({
-      guiAction("Show/Hide Menu", "menu_show_hide"),
+      guiAction("Show/Hide Menu", "menu_show_hide", "Show/hide menu")
+        .key('t', ModAlt | ModCommand),
       guiAction("Attach/Detach Menu", "menu_attach_detach"),
-      guiAction("Dock/Undock Tool Window", "dock"),
-      guiAction("Dock/Undock All Tool Windows", "dock_all"),
+      guiAction("Dock/Undock Tool Window", "dock",
+                "Dock/undock current tool window")
+        .key('d', ModCommand),
+      guiAction("Dock/Undock All Tool Windows", "dock_all",
+                "Dock/undock all tool windows")
+        .key('d', ModCommand | ModShift),
     }),
-    group({guiAction("Bring All to Front", "window_front")}),
+    group({
+      guiAction("Bring All to Front", "window_front",
+                "Bring all windows to front")
+        .key('a', ModShift),
+    }),
   };
   std::vector<actionItem> help = {
     group({guiAction("Online Documentation", "help_online")}),
-    group({guiAction("Keyboard and Mouse Usage", "help_keys")}),
     group({
-      guiAction("Current Options and Workspace", "help_options"),
+      guiAction("Keyboard and Mouse Usage", "help_keys",
+                "Show keyboard and mouse usage")
+        .key('h', ModCommand, KeyInWindowBarOnly),
+    }),
+    group({
+      guiAction("Current Options and Workspace", "help_options",
+                "Show current options and workspace window")
+        .key('h', ModCommand | ModShift),
       guiAction("Restore all Options to Default Settings",
                 "options_restore_defaults"),
     }),
@@ -932,57 +1011,112 @@ static actionItem menuBar()
   });
 }
 
-// The actions only on keys (see Shortcuts.h), in no menu: those the
-// interfaces do, then the display
+// The actions only on keys, in no menu, their help saying what the key does:
+// those the interfaces do, then the display
 static actionItem keysOnly()
 {
   std::vector<actionItem> interfaceKeys = {
-    guiAction("", "project_reload"),
-    guiAction("", "solver_run"),
-    guiAction("", "module_geometry"),
-    guiAction("", "module_mesh"),
-    guiAction("", "module_solver"),
-    guiAction("", "module_post"),
-    guiAction("", "selection_end"),
-    guiAction("", "selection_undo"),
-    guiAction("", "selection_quit"),
-    guiAction("", "freeze_x"),
-    guiAction("", "freeze_y"),
-    guiAction("", "freeze_z"),
-    guiAction("", "freeze_but_x"),
-    guiAction("", "freeze_but_y"),
-    guiAction("", "freeze_but_z"),
-    guiAction("", "escape"),
-    guiAction("", "mouse_selection"),
-    guiAction("", "options_solver"),
-    guiAction("", "options_post"),
-    guiAction("", "plugins_view"),
-    guiAction("", "view_x"),
-    guiAction("", "view_y"),
-    guiAction("", "view_z"),
-    guiAction("", "view_1_1"),
-    guiAction("", "view_3d"),
-    guiAction("", "time_step_prev"),
-    guiAction("", "time_step_next"),
-    guiAction("", "view_prev"),
-    guiAction("", "view_next"),
-    guiAction("", "page_prev"),
-    guiAction("", "page_next"),
-    guiAction("", "file_open_previous"),
+    guiAction("", "project_reload", "Reload full project")
+      .key('0', ModCommand)
+      .key('9'), // for Bruno
+    guiAction("", "solver_run", "Run solver").key('t', ModCommand),
+    guiAction("", "module_geometry", "Go to geometry module").key('g'),
+    guiAction("", "module_mesh", "Go to mesh module").key('m'),
+    guiAction("", "module_solver", "Go to solver module").key('s'),
+    guiAction("", "module_post", "Go to post-processing module").key('p'),
+    guiAction("", "selection_end",
+              "End the selection under way (accept what is picked)")
+      .key('e', 0, KeyPassedOn),
+    guiAction("", "selection_undo",
+              "Undo the last pick of the selection under way")
+      .key('u', 0, KeyPassedOn),
+    guiAction("", "selection_quit", "Stop the selection under way, as Escape")
+      .key('q', 0, KeyPassedOn),
+    guiAction("", "freeze_x",
+              "Toggle x coordinate freeze in geometry creation mode")
+      .key('x'),
+    guiAction("", "freeze_y",
+              "Toggle y coordinate freeze in geometry creation mode")
+      .key('y'),
+    guiAction("", "freeze_z",
+              "Toggle z coordinate freeze in geometry creation mode")
+      .key('z'),
+    guiAction("", "freeze_but_x",
+              "Move only along x coordinate in geometry creation mode")
+      .key('x', ModShift),
+    guiAction("", "freeze_but_y",
+              "Move only along y coordinate in geometry creation mode")
+      .key('y', ModShift),
+    guiAction("", "freeze_but_z",
+              "Move only along z coordinate in geometry creation mode")
+      .key('z', ModShift),
+    guiAction("", "escape",
+              "Stop the selection under way (query, measurement, operation on "
+              "the entities picked...), cancel a lasso, or leave full screen")
+      .key(KeyEscape, AnyModifiers),
+    guiAction("", "mouse_selection",
+              "Toggle mouse selection on/off (a selection under way goes on)")
+      .key(KeyEscape, ModShift),
+    guiAction("", "options_solver", "Show solver options").key('s', ModShift),
+    guiAction("", "options_post", "Show post-processing options")
+      .key('p', ModShift),
+    guiAction("", "plugins_view", "Show post-processing view plugins")
+      .key('u', ModShift),
+    guiAction("", "view_x", "Set X view, or -X view (Shift)")
+      .key('x', ModAlt)
+      .key('x', ModAlt | ModShift),
+    guiAction("", "view_y", "Set Y view, or -Y view (Shift)")
+      .key('y', ModAlt)
+      .key('y', ModAlt | ModShift),
+    guiAction("", "view_z", "Set Z view, or -Z view (Shift)")
+      .key('z', ModAlt)
+      .key('z', ModAlt | ModShift),
+    guiAction("", "view_1_1",
+              "Fit the model in the window, reset the bounding box around the "
+              "visible entities (Shift), or sync the scale between viewports "
+              "(Ctrl)")
+      .key('1', ModAlt)
+      .key('1', ModAlt | ModShift)
+      .key('1', ModAlt | ModCommand),
+    guiAction("", "view_3d",
+              "Set isometric 3D view, or from the opposite side (Shift)")
+      .key('3', ModAlt)
+      .key('3', ModAlt | ModShift),
+    guiAction("", "time_step_prev", "Go to previous time step").key(KeyLeft),
+    guiAction("", "time_step_next", "Go to next time step").key(KeyRight),
+    guiAction("", "view_prev", "Make previous view visible").key(KeyUp),
+    guiAction("", "view_next", "Make next view visible").key(KeyDown),
+#if defined(HAVE_POPPLER)
+    guiAction("", "page_prev", "Go to previous PDF page")
+      .key('u')
+      .key(KeyPageUp),
+    guiAction("", "page_next", "Go to next PDF page").key('d').key(KeyPageDown),
+#endif
+    guiAction("", "file_open_previous", "Open next-to-last opened file")
+      .key('r', ModCommand | ModShift),
   };
   std::vector<actionItem> keys = {
-    toggleAction("", "fast_redraw", opt_general_fast_redraw),
-    toggleAction("", "bounding_boxes", opt_general_draw_bounding_box),
-    toggleAction("", "small_axes", opt_general_small_axes),
-    toggleAction("", "projection", opt_general_orthographic),
-    action("", "color_scheme", "",
+    toggleAction("", "fast_redraw", opt_general_fast_redraw,
+                 "Change redraw mode (fast/full)")
+      .key('f', ModAlt),
+    toggleAction("", "bounding_boxes", opt_general_draw_bounding_box,
+                 "Hide/show bounding boxes")
+      .key('b', ModAlt),
+    toggleAction("", "small_axes", opt_general_small_axes,
+                 "Hide/show small axes")
+      .key('a', ModAlt | ModShift),
+    toggleAction("", "projection", opt_general_orthographic,
+                 "Change projection mode (orthographic/perspective)")
+      .key('o', ModAlt),
+    action("", "color_scheme", "Loop through predefined color schemes",
            [](int, drawContext *) {
              opt_general_color_scheme(0, GMSH_SET | GMSH_GUI,
                                       opt_general_color_scheme(0, GMSH_GET, 0) +
                                         1);
-           }),
+           })
+      .key('c', ModAlt),
     action(
-      "", "lighting", "",
+      "", "lighting", "Enable/disable all lighting",
       [](int, drawContext *) {
         opt_geometry_light(0, GMSH_SET | GMSH_GUI,
                            !opt_geometry_light(0, GMSH_GET, 0));
@@ -990,8 +1124,9 @@ static actionItem keysOnly()
 #if defined(HAVE_POST)
         forVisibleViews(opt_view_light, [](double v) { return (double)!v; });
 #endif
-      }),
-    action("", "axes_loop", "",
+      })
+      .key('w', ModAlt),
+    action("", "axes_loop", "Loop through axes modes",
            [](int, drawContext *) {
              opt_general_axes(0, GMSH_SET | GMSH_GUI,
                               opt_general_axes(0, GMSH_GET, 0) + 1);
@@ -1001,58 +1136,67 @@ static actionItem keysOnly()
              forVisibleViews(opt_view_axes,
                              [](double v) { return (v >= 5) ? 0. : v + 1.; });
 #endif
-           }),
-    action("", "surface_type", "",
+           })
+      .key('a', ModAlt),
+    action("", "surface_type", "Loop through geometry surface display modes",
            [](int, drawContext *) {
              opt_geometry_surface_type(
                0, GMSH_SET | GMSH_GUI,
                opt_geometry_surface_type(0, GMSH_GET, 0) + 1);
-           }),
+           })
+      .key('d', ModAlt),
 #if defined(HAVE_POST)
     action(
-      "", "view_scales", "",
+      "", "view_scales", "Hide/show all post-processing view scales",
       [](int, drawContext *) {
         forVisibleViews(opt_view_show_scale,
                         [](double v) { return (double)!v; });
       },
-      haveViews),
+      haveViews)
+      .key('i', ModAlt),
     action(
-      "", "colormaps", "",
+      "", "colormaps", "Loop through predefined colormaps",
       [](int, drawContext *) {
         forVisibleViews(opt_view_colormap_number,
                         [](double v) { return v + 1.; });
       },
-      haveViews),
+      haveViews)
+      .key('c', ModAlt | ModShift),
     action(
-      "", "view_intervals", "",
+      "", "view_intervals",
+      "Loop through interval modes for visible post-pro views",
       [](int, drawContext *) {
         // skipping the numeric display
         forVisibleViews(opt_view_intervals_type,
                         [](double v) { return (v + 1 == 4) ? 1. : v + 1.; });
       },
-      haveViews),
+      haveViews)
+      .key('t', ModAlt),
     action(
-      "", "view_intervals_all", "",
+      "", "view_intervals_all", "Same as Alt+t, but with numeric mode included",
       [](int, drawContext *) {
         forVisibleViews(opt_view_intervals_type,
                         [](double v) { return v + 1.; });
       },
-      haveViews),
+      haveViews)
+      .key('t', ModAlt | ModShift),
     action(
-      "", "view_range", "",
+      "", "view_range", "Loop through range modes for visible post-pro views",
       [](int, drawContext *) {
         forVisibleViews(opt_view_range_type, [](double v) { return v + 1.; });
       },
-      haveViews),
+      haveViews)
+      .key('r', ModAlt),
     action(
-      "", "view_annotations", "",
+      "", "view_annotations", "Hide/show all post-processing view annotations",
       [](int, drawContext *) {
         forVisibleViews(opt_view_draw_strings,
                         [](double v) { return (double)!v; });
       },
-      haveViews),
+      haveViews)
+      .key('n', ModAlt),
     action(
-      "", "views_hide_show", "",
+      "", "views_hide_show", "Hide/show all post-processing views",
       [](int, drawContext *) {
         // all hidden if any is shown, else all shown
         bool shown = false;
@@ -1060,7 +1204,8 @@ static actionItem keysOnly()
           if(isViewVisible(i)) shown = true;
         showViews([shown](int) { return !shown; });
       },
-      haveViews),
+      haveViews)
+      .key('h', ModAlt),
 #endif
   };
   return group({group(interfaceKeys), group(keys)});
@@ -1098,6 +1243,58 @@ static void forEachItem(const std::function<void(actionItem &)> &f)
       f(i);
   };
   for(auto &menu : menus()) walk(menu.second);
+}
+
+// the place of a key in the documentation: by its modifiers (none, Shift,
+// Command, Command+Shift, Alt, Alt+Shift, Alt+Command), then by the key
+// (digits, letters, marks, function keys, Escape, arrows, pages)
+static int shortcutRank(const Shortcut &s)
+{
+  static const unsigned groups[] = {
+    0,      ModShift,          ModCommand,         ModCommand | ModShift,
+    ModAlt, ModAlt | ModShift, ModAlt | ModCommand};
+  int group = 7;
+  for(int i = 0; i < 7; i++)
+    if((s.mods & ~AnyModifiers) == groups[i]) group = i;
+  int key = s.key;
+  if(key >= '0' && key <= '9')
+    key = key - '0';
+  else if(key >= 'a' && key <= 'z')
+    key = 10 + key - 'a';
+  else if(key < KeyF1)
+    key = 36;
+  else if(key < KeyEscape)
+    key = 40 + key - KeyF1;
+  else
+    key = 60 + key - KeyEscape;
+  return 100 * group + key;
+}
+
+const std::vector<ShortcutEntry> &GetShortcuts()
+{
+  static const std::vector<ShortcutEntry> table = [] {
+    // the keys of each item, by the rank of its first one
+    std::vector<std::pair<int, std::vector<ShortcutEntry>>> items;
+    std::set<std::string> seen;
+    forEachItem([&](actionItem &i) {
+      if(i.keys.empty()) return;
+      if(!seen.insert(i.name).second) {
+        Msg::Error("Keys of '%s' declared on several items", i.name.c_str());
+        return;
+      }
+      std::vector<ShortcutEntry> keys;
+      for(const Shortcut &k : i.keys)
+        keys.push_back({i.name, k, i.help.empty() ? i.label : i.help});
+      items.push_back({shortcutRank(i.keys[0]), keys});
+    });
+    std::stable_sort(items.begin(), items.end(),
+                     [](auto &a, auto &b) { return a.first < b.first; });
+    std::vector<ShortcutEntry> all;
+    for(auto &i : items)
+      all.insert(all.end(), i.second.begin(), i.second.end());
+    return all;
+  }();
+  return table;
 }
 
 const actionItem *FindItem(const std::string &name)

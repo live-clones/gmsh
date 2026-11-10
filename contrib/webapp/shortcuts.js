@@ -1,7 +1,8 @@
-// The keyboard shortcuts of Gmsh's graphical interface in a web page: the same
-// table (src/common/Shortcuts.cpp, through gmshWebShortcuts()), a key running
-// the item of its action, as a click on it does (see runItem() in the page),
-// or ignored when the page has none. A browser keeps some keys for itself
+// The keyboard shortcuts of Gmsh's FLTK graphical user interface in a web
+// page: the same keys (declared on the items of src/common/Actions.cpp, read
+// through gmshWebShortcuts()), a key running the item of its action, as a
+// click on it does (see runItem() in the page), or ignored when the page has
+// none. A browser keeps some keys for itself
 // (Cmd+W, Cmd+N, Cmd+T, Cmd+Q, and Cmd+H and Cmd+M on macOS): their actions
 // are only reached from the page.
 

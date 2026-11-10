@@ -6,8 +6,7 @@
 // The actions of the registry (see Actions.h) as the FLTK graphical user
 // interface does them. In this file, in order:
 // - the table of the actions the FLTK interface does, by name, in the order of
-// the
-//   menus of Actions.cpp: what each does, and its check mark if it has one;
+//   the menus of Actions.cpp: what each does, and its check mark if it has one;
 // - how an item runs, clicked or by its key (runItem()), and how a menu of the
 //   registry becomes an FLTK menu (addMenuItems());
 // - the operations on the entities picked in the scene and the shapes placed
