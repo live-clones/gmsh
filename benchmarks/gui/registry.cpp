@@ -6,7 +6,8 @@
 // Every item of the action registry (see Actions.h) resolves: the items of a
 // name agree on what they do, every key names an item, every operation is
 // known to selectionDriver, every icon has strokes; the items the FLTK
-// graphical user interface does not have are listed
+// graphical user interface does not have are listed. Every field of the pages
+// of the option window (see OptionPages.h) is an option of its kind.
 #include <cstdio>
 #include <cstdlib>
 #include <map>
@@ -14,6 +15,7 @@
 #include "Actions.h"
 #include "Shortcuts.h"
 #include "IconStrokes.h"
+#include "OptionPages.h"
 #include "fltkActions.h"
 #include "selectionDriver.h"
 
@@ -83,7 +85,28 @@ int main(int argc, char **argv)
     else if(i->kind == ItemAction && !i->run)
       printf("     key %s: no run in the FLTK interface\n", e.action.c_str());
   }
-  printf("%d items, %d failures\n", items, fails);
+  int fields = 0;
+  for(const optionPage &p : OptionPages())
+    for(const optionSection &s : p.sections)
+      for(const optionRow &row : s.rows)
+        for(const optionField &f : row) {
+          if(f.kind == FieldCustom || f.kind == FieldHeading) continue;
+          fields++;
+          try {
+            if(f.kind == FieldText) {
+              std::string v;
+              gmsh::option::getString(f.option, v);
+            }
+            else {
+              double v;
+              gmsh::option::getNumber(f.option, v);
+            }
+          } catch(...) {
+            fail(p.name + " page: " + f.option +
+                 " is not an option of its kind");
+          }
+        }
+  printf("%d items, %d option fields, %d failures\n", items, fields, fails);
   gmsh::fltk::finalize();
   gmsh::finalize();
   return fails ? 1 : 0;

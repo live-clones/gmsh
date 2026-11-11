@@ -15,6 +15,7 @@ set(SRC
   ScriptStyles.cpp
   Actions.cpp
   IconStrokes.cpp
+  OptionPages.cpp
   OS.cpp
   OpenFile.cpp
   CreateFile.cpp

@@ -10,6 +10,9 @@
 #include <list>
 #include <set>
 #include <map>
+#include <deque>
+#include <functional>
+#include <map>
 #include <FL/Fl.H>
 #include <FL/Fl_Scroll.H>
 #include <FL/Fl_Color_Chooser.H>
@@ -30,7 +33,9 @@
 #include "manipWindow.h"
 #include "extraDialogs.h"
 #include "drawContext.h"
+#include "Actions.h"
 #include "Options.h"
+#include "OptionPages.h"
 #include "GModel.h"
 #include "MElement.h"
 #include "PView.h"
@@ -111,6 +116,40 @@ static void bindValues(Fl_Widget *w, const std::vector<double> &values)
 {
   if(!bindings().count(w)) bind(w, w->tooltip());
   bindings()[w].values = values;
+}
+
+// the widget bound to an option (the first, if several), or null; as the
+// valuator, choice or button it is
+static Fl_Widget *boundWidget(const std::string &option)
+{
+  for(auto &b : bindings())
+    if(b.second.category + "." + b.second.name == option) return b.first;
+  return nullptr;
+}
+static Fl_Valuator *boundValue(const std::string &option)
+{
+  return dynamic_cast<Fl_Valuator *>(boundWidget(option));
+}
+static Fl_Choice *boundChoice(const std::string &option)
+{
+  return dynamic_cast<Fl_Choice *>(boundWidget(option));
+}
+static Fl_Button *boundButton(const std::string &option)
+{
+  return dynamic_cast<Fl_Button *>(boundWidget(option));
+}
+
+// the titles of the headings of the sections (see FieldHeading), and the
+// groups of the numbers with - and + buttons (see FieldStepper), by option
+static std::map<std::string, Fl_Widget *> &headings()
+{
+  static std::map<std::string, Fl_Widget *> h;
+  return h;
+}
+static std::map<std::string, Fl_Group *> &steppers()
+{
+  static std::map<std::string, Fl_Group *> g;
+  return g;
 }
 
 // the items of the bound choices whose options take one of a few values, and
@@ -280,16 +319,6 @@ static void option_cb(Fl_Widget *w, void *data)
     CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;
   drawContext::global()->draw();
   CTX::instance()->post.draw = CTX::instance()->mesh.draw = 1;
-}
-
-// the colour options of a table that get a button: a new one in the table
-// needs no code here
-static int colorOptions(StringXColor *table)
-{
-  int n = 0;
-  for(int i = 0; table[i].str; i++)
-    if(!(table[i].level & GMSH_DEPRECATED)) n++;
-  return n;
 }
 
 Fl_Menu_Item menu_font_names[] = {
@@ -571,6 +600,11 @@ static void showColor(Fl_Widget *w, const colorBinding &b)
   w->redraw();
 }
 
+Fl_Widget *optionWindow::widget(const std::string &option) const
+{
+  return boundWidget(option);
+}
+
 void optionWindow::showOption(const std::string &category, int num,
                               const std::string &name)
 {
@@ -615,10 +649,10 @@ void optionWindow::showOptions(bool shownOnly)
 // the rotation center typed in: drawn while it moves
 static void general_rotation_center_cb(Fl_Widget *w, void *data)
 {
-  optionWindow *o = FlGui::instance()->options;
   CTX::instance()->drawRotationCenter = 1;
-  SPoint3 p(o->general.value[8]->value(), o->general.value[9]->value(),
-            o->general.value[10]->value());
+  SPoint3 p(boundValue("General.RotationCenterX")->value(),
+            boundValue("General.RotationCenterY")->value(),
+            boundValue("General.RotationCenterZ")->value());
   FlGui::instance()
     ->getCurrentOpenglWindow()
     ->getDrawContext()
@@ -648,9 +682,9 @@ static void general_light_cb(Fl_Widget *w, void *data)
 {
   optionWindow *o = FlGui::instance()->options;
   option_cb(w, nullptr);
-  o->general.sphere->setValue(o->general.value[2]->value(),
-                              o->general.value[3]->value(),
-                              o->general.value[4]->value());
+  o->general.sphere->setValue(boundValue("General.Light0X")->value(),
+                              boundValue("General.Light0Y")->value(),
+                              boundValue("General.Light0Z")->value());
 }
 
 // the light placed on the ball: its coordinates follow
@@ -680,8 +714,8 @@ static void general_session_save_cb(Fl_Widget *w, void *data)
 // with the camera, the camera on with the gamepad
 static void general_camera_cb(Fl_Widget *w, void *data)
 {
-  optionWindow *o = FlGui::instance()->options;
-  Fl_Button *camera = o->general.butt[18], *gamepad = o->general.butt[19];
+  Fl_Button *camera = boundButton("General.Camera"),
+            *gamepad = boundButton("General.Gamepad");
   if(w == camera && !camera->value() && gamepad->value())
     opt_general_gamepad(0, GMSH_SET | GMSH_GUI, 0);
   if(w == gamepad && gamepad->value() && !camera->value())
@@ -733,17 +767,12 @@ void showViewOptions(int num)
     FlGui::instance()->options->showGroup(num + 6);
 }
 
+// the time step typed in (or stepped), for the view shown and the selected
+// ones, and the scene drawn again
 static void view_options_timestep_cb(Fl_Widget *w, void *data)
 {
-  std::string str((const char *)data);
-  for(int i : viewTargets()) {
-    if(str == "=")
-      opt_view_timestep(i, GMSH_SET, ((Fl_Value_Input *)w)->value());
-    else
-      opt_view_timestep(i, GMSH_SET | GMSH_GUI,
-                        opt_view_timestep(i, GMSH_GET, 0) +
-                          (str == "-" ? -1 : 1));
-  }
+  for(int i : viewTargets())
+    opt_view_timestep(i, GMSH_SET, ((Fl_Value_Input *)w)->value());
   drawContext::global()->draw();
 }
 
@@ -754,13 +783,12 @@ static void view_options_timestep_cb(Fl_Widget *w, void *data)
 // (visible, and as their tensors are drawn)
 static void view_range_cb(Fl_Widget *w, void *data)
 {
-  optionWindow *o = FlGui::instance()->options;
   bool min = !strcmp((const char *)data, "range_min");
   double v = min ? 1e200 : -1e200;
   for(int i : viewTargets())
     v = min ? std::min(v, opt_view_min_visible(i, GMSH_GET, 0)) :
               std::max(v, opt_view_max_visible(i, GMSH_GET, 0));
-  Fl_Value_Input *field = min ? o->view.value[31] : o->view.value[32];
+  Fl_Valuator *field = boundValue(min ? "View.CustomMin" : "View.CustomMax");
   field->value(v);
   option_cb(field, nullptr);
 }
@@ -779,8 +807,7 @@ static void view_colorbar_cb(Fl_Widget *w, void *data)
   optionWindow *o = FlGui::instance()->options;
   std::vector<int> nums = viewTargets();
   if(nums.empty()) return;
-  o->view.choice[17]->value(
-    (int)opt_view_colormap_number(nums[0], GMSH_GET, 0));
+  o->view.colormap->value((int)opt_view_colormap_number(nums[0], GMSH_GET, 0));
   for(std::size_t k = 1; k < nums.size(); k++) copyColorTable(nums[0], nums[k]);
   option_cb(nullptr, nullptr);
 }
@@ -819,29 +846,15 @@ static Fl_Menu_Button *toggleMenu(int x, int y, int w, int h, const char *label,
 // the colour buttons of a table of colour options (but the deprecated ones),
 // one per row from y; cb chooses the colour
 static void colorButtons(const char *category, StringXColor *table, int x,
-                         int y, int w, Fl_Callback *cb,
-                         std::vector<Fl_Button *> &buttons)
+                         int y, int w, Fl_Callback *cb)
 {
   for(int i = 0, j = 0; table[j].str; j++) {
     if(table[j].level & GMSH_DEPRECATED) continue;
-    Fl_Button *b = new Fl_Button(x, y + i * BH, w, BH, table[j].str);
+    Fl_Button *b = new Fl_Button(x, y + i++ * BH, w, BH, table[j].str);
     b->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
     b->callback(cb, (void *)table[j].function);
     colorBindings()[b] = {category, table[j].str, table[j].function};
-    buttons[i++] = b;
   }
-}
-
-// one level of refinement more or less
-static void view_options_max_recursion_cb(Fl_Widget *w, void *data)
-{
-  Fl_Value_Input *v = FlGui::instance()->options->view.value[33];
-  int val = (int)v->value();
-  if(!strcmp((const char *)data, "-") && val > 0)
-    v->value(val - 1);
-  else if(!strcmp((const char *)data, "+"))
-    v->value(val + 1);
-  option_cb(v, nullptr);
 }
 
 // The widgets of the window. Each one is bound to the option it sets, whose
@@ -919,40 +932,174 @@ static Fl_Input *input(int x, int y, int w, int h, const char *label,
   return in;
 }
 
+// The pages of the window come from the table of OptionPages.h (see there);
+// the rows are laid out here. What the interface adds: the custom rows by
+// name, built by a function given the left edge, the top and the width of
+// their place (a custom row alone in its row returns the rows it takes), and
+// the callbacks of the fields that do more than set their option
+struct pageBuilders {
+  std::map<std::string, std::function<int(int x, int y, int w)>> custom;
+  std::map<std::string, Fl_Callback *> hooks;
+};
+
+// the option of a field, with the key of the action that sets it (see
+// GetOptionShortcuts()), as the tooltip of its widget (kept: FLTK keeps the
+// pointer)
+static const char *fieldTooltip(const std::string &option)
+{
+  static std::deque<std::string> kept;
+  std::string tip = option;
+  std::vector<Shortcut> keys = GetOptionShortcuts(option);
+  if(!keys.empty()) tip += " (" + keys[0].label() + ")";
+  kept.push_back(tip);
+  return kept.back().c_str();
+}
+
+// the - or + button of a stepper: the value stepped, and set
+static void step_cb(Fl_Widget *w, void *data)
+{
+  Fl_Valuator *v = (Fl_Valuator *)data;
+  v->value(v->clamp(v->value() + (strcmp(w->label(), "-") ? 1 : -1)));
+  v->do_callback();
+}
+
+// a number with its - and + buttons, and its label after them, in a group
+// (de)activated together (see steppers()); width is that of the section
+static Fl_Widget *stepperField(const optionField &f, int x, int y, int w,
+                               int width, const char *option, Fl_Callback *cb)
+{
+  int sw = (int)(1.5 * FL_NORMAL_SIZE);
+  Fl_Group *g = new Fl_Group(x, y, w + width / 2, BH);
+  Fl_Value_Input *v =
+    valueInput(x + sw, y, w - 2 * sw, BH, nullptr, option, cb);
+  if(f.flags & FieldOnRelease) v->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
+  if(CTX::instance()->inputScrolling && !GetOptionRange(f.option)) v->step(1);
+  Fl_Button *minus = new Fl_Button(x, y, sw, BH, "-");
+  minus->callback(step_cb, v);
+  Fl_Button *plus = new Fl_Button(x + w - sw, y, sw, BH, "+");
+  plus->callback(step_cb, v);
+  Fl_Box *l = new Fl_Box(x + w, y, width / 2, BH, f.label.c_str());
+  l->box(FL_NO_BOX);
+  l->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+  g->end();
+  steppers()[f.option] = g;
+  return v;
+}
+
+// the widget of a field, bound to its option; width is that of the section
+static Fl_Widget *fieldWidget(const optionField &f, int x, int y, int w,
+                              int width, const pageBuilders &b)
+{
+  const char *label = f.label.empty() ? nullptr : f.label.c_str();
+  const char *option = fieldTooltip(f.option);
+  auto h = b.hooks.find(f.option);
+  Fl_Callback *cb = (h != b.hooks.end()) ? h->second : option_cb;
+  switch(f.kind) {
+  case FieldCheck: return checkButton(x, y, w, BH, label, option, cb);
+  case FieldNumber: {
+    if(f.flags & FieldStepper)
+      return stepperField(f, x, y, w, width, option, cb);
+    Fl_Value_Input *v =
+      (f.flags & FieldFloat) ?
+        valueInput<inputValueFloat>(x, y, w, BH, label, option, cb) :
+        valueInput(x, y, w, BH, label, option, cb);
+    if(f.flags & FieldOnRelease) v->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
+    return v;
+  }
+  case FieldChoice: return choice(x, y, w, BH, label, option, nullptr, cb);
+  case FieldText: return input(x, y, w, BH, label, option, cb);
+  default: return nullptr;
+  }
+}
+
+// a custom field: built by its name (none for a space)
+static int customField(const optionField &f, int x, int y, int w,
+                       const pageBuilders &b)
+{
+  if(f.option.empty()) return 0;
+  auto it = b.custom.find(f.option);
+  if(it == b.custom.end()) {
+    Msg::Error("Unknown row '%s' in the option window", f.option.c_str());
+    return 1;
+  }
+  return it->second(x, y, w);
+}
+
+// a section of a page: its group, with its rows (the first one row below the
+// top of the section)
+static Fl_Group *buildSection(const optionSection &s, int L, int width,
+                              int height, const pageBuilders &b)
+{
+  Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB,
+                             height - 2 * WB - BH, s.name.c_str());
+  if(!s.open) o->hide();
+  int BW = width - 4 * WB, x = L + 2 * WB, r = 1;
+  // the second column: after the field of the first and a label of 7 em
+  int C2 = x + IW + 7 * FL_NORMAL_SIZE, RW = BW - IW - 7 * FL_NORMAL_SIZE;
+  for(const optionRow &row : s.rows) {
+    int y = 2 * WB + r * BH;
+    r++;
+    if(row.empty()) continue;
+    const optionField &f = row[0];
+    if(f.kind == FieldHeading) {
+      Fl_Box *line = new Fl_Box(x, y, BW, 2);
+      line->box(FL_ENGRAVED_FRAME);
+      line->labeltype(FL_NO_LABEL);
+      Fl_Box *title = new Fl_Box(FL_NO_BOX, x, y + 1, IW, BH, f.option.c_str());
+      title->align(FL_ALIGN_INSIDE | FL_ALIGN_LEFT);
+      headings()[f.option] = title;
+      continue;
+    }
+    if(row.size() == 1 && f.kind == FieldCustom) {
+      r += customField(f, x, y, width, b) - 1;
+      continue;
+    }
+    // the fields in columns: check buttons share the row, the other fields
+    // the width of one, by weight; a field of the second column, or a custom
+    // field without weight, is placed apart (a check button alone before the
+    // second column runs up to it)
+    bool columns = false, apart = false;
+    int total = 0;
+    for(const optionField &g : row) {
+      if(g.kind == FieldCheck) columns = true;
+      if(g.flags & (FieldColumn2 | FieldColumn2Half)) apart = true;
+      else if(g.weight > 0) total += g.weight;
+    }
+    if(apart) columns = false;
+    int span = columns ? BW : IW, cum = 0;
+    for(const optionField &g : row) {
+      if(g.flags & (FieldColumn2 | FieldColumn2Half)) {
+        fieldWidget(g, C2, y, (g.flags & FieldColumn2Half) ? RW / 2 : RW,
+                    width, b);
+        continue;
+      }
+      if(g.weight <= 0) {
+        customField(g, x, y, width, b);
+        continue;
+      }
+      int x0 = x + span * cum / total;
+      cum += g.weight;
+      int w = x + span * cum / total - x0 - (columns && cum < total ? WB : 0);
+      if(apart && g.kind == FieldCheck && total == g.weight) w = C2 - x - WB;
+      if(g.kind == FieldCustom)
+        customField(g, x0, y, w, b);
+      else
+        fieldWidget(g, x0, y, w, width, b);
+    }
+  }
+  o->end();
+  return o;
+}
+
 optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
 {
   // (the widgets of a window built before are gone)
   bindings().clear();
+  headings().clear();
+  steppers().clear();
   toggleMenus().clear();
   colorBindings().clear();
-  general.butt.resize(50, nullptr);
-  general.push.resize(50, nullptr);
-  general.value.resize(50, nullptr);
-  general.color.resize(colorOptions(GeneralOptions_Color), nullptr);
-  general.input.resize(50, nullptr);
-  general.choice.resize(50, nullptr);
-  geo.butt.resize(50, nullptr);
-  geo.value.resize(50, nullptr);
-  geo.color.resize(colorOptions(GeometryOptions_Color), nullptr);
-  geo.choice.resize(50, nullptr);
-  mesh.butt.resize(50, nullptr);
-  mesh.value.resize(50, nullptr);
-  mesh.color.resize(colorOptions(MeshOptions_Color), nullptr);
-  mesh.choice.resize(50, nullptr);
-  solver.butt.resize(50, nullptr);
-  solver.value.resize(50, nullptr);
-  solver.input.resize(50, nullptr);
-  post.butt.resize(50, nullptr);
-  post.value.resize(50, nullptr);
-  post.choice.resize(50, nullptr);
-  view.butt.resize(50, nullptr);
-  view.value.resize(100, nullptr);
-  view.input.resize(50, nullptr);
-  view.push.resize(50, nullptr);
-  view.choice.resize(50, nullptr);
-  view.color.resize(colorOptions(ViewOptions_Color), nullptr);
-  view.label.resize(50, nullptr);
-  view.menu.resize(50, nullptr);
+  view.hasElements = true;
 
   FL_NORMAL_SIZE -= deltaFontSize;
 
@@ -1018,1526 +1165,326 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
                          winHeight - 4 * WB - 2 * BH);
   scroll->type(Fl_Scroll::VERTICAL);
 
-  int BW = width - 4 * WB;
-  // the second column of a row: after the field and a label of 7 em, to the
-  // right margin
-  int C2 = L + 2 * WB + IW + 7 * FL_NORMAL_SIZE;
-  int RW = width - 4 * WB - IW - 7 * FL_NORMAL_SIZE;
-
-  // General options
-  general.group = new Fl_Group(L, 0, width, height, "General Options");
-  {
-    {
-      Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB,
-                                 height - 2 * WB - BH, "General");
-      general.choice[9] =
-        choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Interface",
-               "General.FltkColorScheme", nullptr, option_cb);
-
-      general.choice[3] =
-        choice(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Graphics",
-               "General.ColorScheme (Alt+c)", nullptr, option_cb);
-
-      general.butt[13] = checkButton(L + 2 * WB, 2 * WB + 3 * BH, BW, BH,
-                                     "Show tooltips and hover information box",
-                                     "General.Tooltips", option_cb);
-
-      general.butt[23] = checkButton(L + 2 * WB, 2 * WB + 4 * BH, BW / 2 - WB,
-                                     BH, "Highlight hovered entity",
-                                     "General.MouseHoverHighlight", option_cb);
-
-      general.butt[11] = checkButton(L + 2 * WB + BW / 2, 2 * WB + 4 * BH,
-                                     BW - BW / 2, BH, "Hover mesh and views",
-                                     "General.MouseHoverMeshes", option_cb);
-
-      general.butt[6] =
-        checkButton(L + 2 * WB, 2 * WB + 5 * BH, BW, BH, "Show bounding boxes",
-                    "General.DrawBoundingBoxes (Alt+b)", option_cb);
-
-      general.butt[2] =
-        checkButton(L + 2 * WB, 2 * WB + 6 * BH, BW, BH,
-                    "Draw simplified model during user interaction",
-                    "General.FastRedraw (Alt+f)", option_cb);
-
-      general.butt[3] = checkButton(L + 2 * WB, 2 * WB + 7 * BH, BW, BH,
-                                    "Draw with the shader pipeline",
-                                    "General.Shaders", option_cb);
-
-      general.butt[12] =
-        checkButton(L + 2 * WB, 2 * WB + 8 * BH, BW, BH, "Enable antialiasing",
-                    "General.Antialiasing", option_cb);
-
-      general.butt[5] =
-        checkButton(L + 2 * WB, 2 * WB + 9 * BH, BW, BH,
-                    "Use trackball rotation instead of Euler angles",
-                    "General.Trackball", option_cb);
-
-      general.butt[15] = checkButton(L + 2 * WB, 2 * WB + 10 * BH, BW, BH,
-                                     "Rotate around pseudo center of mass",
-                                     "General.RotationCenterGravity",
-                                     general_rotation_center_cg_cb);
-
-      general.push[0] =
-        new Fl_Button(L + 2 * IW - 2 * WB, 2 * WB + 11 * BH, BB, BH, "Select");
-      general.push[0]->callback(general_options_rotation_center_select_cb);
-
-      general.value[8] =
-        valueInput(L + 2 * WB, 2 * WB + 11 * BH, IW / 3, BH, nullptr,
-                   "General.RotationCenterX", general_rotation_center_cb);
-      general.value[9] =
-        valueInput(L + 2 * WB + IW / 3, 2 * WB + 11 * BH, IW / 3, BH, nullptr,
-                   "General.RotationCenterY", general_rotation_center_cb);
-      general.value[10] =
-        valueInput(L + 2 * WB + 2 * IW / 3, 2 * WB + 11 * BH, IW / 3, BH,
-                   "Rotation center", "General.RotationCenterZ",
-                   general_rotation_center_cb);
-
-      general.butt[22] = checkButton(L + 2 * WB, 2 * WB + 12 * BH, BW, BH,
-                                     "Invert mouse wheel zoom direction",
-                                     "General.MouseInvertZoom", option_cb);
-
-      o->end();
-    }
-    {
-      Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB,
-                                 height - 2 * WB - BH, "Advanced");
-
-      general.butt[7] = checkButton(L + 2 * WB, 2 * WB + 1 * BH, BW, BH,
-                                    "Print messages on terminal",
-                                    "General.Terminal", option_cb);
-
-      general.value[5] =
-        valueInput(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Message verbosity",
-                   "General.Verbosity", option_cb);
-
-      general.input[1] =
-        input(L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "Text editor command",
-              "General.TextEditor", option_cb);
-
-      general.input[0] =
-        input(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Default file name",
-              "General.DefaultFileName", option_cb);
-
-      general.butt[14] =
-        checkButton(L + 2 * WB, 2 * WB + 5 * BH, BW, BH,
-                    "Ask confirmation before overwriting files",
-                    "General.ConfirmOverwrite", option_cb);
-
-      general.butt[8] =
-        checkButton(L + 2 * WB, 2 * WB + 6 * BH, BW - BW / 3 - WB, BH,
-                    "Save session information on exit", "General.SaveSession",
-                    general_session_save_cb);
-
-      Fl_Button *b0 =
-        new Fl_Button(L + width - 2 * WB - BW / 3, 2 * WB + 6 * BH, BW / 3, BH,
-                      "Show file path");
-      b0->callback(options_show_file_cb, (void *)"session");
-
-      general.butt[9] =
-        checkButton(L + 2 * WB, 2 * WB + 7 * BH, BW / 2 - WB, BH,
-                    "Save options on exit", "General.SaveOptions", option_cb);
-
-      Fl_Button *b1 =
-        new Fl_Button(L + width - 2 * WB - BW / 3, 2 * WB + 7 * BH, BW / 3, BH,
-                      "Show file path");
-      b1->callback(options_show_file_cb, (void *)"option");
-
-      general.butt[10] =
-        checkButton(L + 2 * WB, 2 * WB + 8 * BH, BW, BH, "Enable expert mode",
-                    "General.ExpertMode", option_cb);
-
-      general.value[32] = valueInput(L + 2 * WB, 2 * WB + 9 * BH, IW, BH,
-                                     "Maximum number of threads",
-                                     "General.NumThreads", option_cb);
-#if !defined(_OPENMP)
-      general.value[32]->deactivate();
-#endif
-
-      general.butt[20] = checkButton(L + 2 * WB, 2 * WB + 10 * BH, BW, BH,
-                                     "Enable heavy visualization capabilities",
-                                     "General.HeavyVisualization", option_cb);
-
-#if !defined(HAVE_VISUDEV)
-      general.butt[20]->deactivate();
-#endif
-
-      Fl_Button *b2 = new Fl_Button(L + 2 * WB, 2 * WB + 11 * BH, BW, BH,
-                                    "Restore all options to default settings");
-      b2->callback(options_restore_defaults_cb);
-      if(CTX::instance()->guiDark)
-        b2->color(FL_DARK_RED);
-      else
-        b2->labelcolor(FL_DARK_RED);
-
-      o->end();
-    }
-    {
-      Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB,
-                                 height - 2 * WB - BH, "Axes");
-
-      general.choice[4] =
-        choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Axes mode",
-               "General.Axes (Alt+a)", nullptr, option_cb);
-
-      general.butt[16] =
-        checkButton(C2, 2 * WB + 1 * BH, RW, BH, "Mikado style",
-                    "General.AxesMikado", option_cb);
-
-      general.value[17] = valueInput(L + 2 * WB, 2 * WB + 2 * BH, IW / 3, BH,
-                                     nullptr, "General.AxesTicksX", option_cb);
-      general.value[18] =
-        valueInput(L + 2 * WB + 1 * IW / 3, 2 * WB + 2 * BH, IW / 3, BH,
-                   nullptr, "General.AxesTicksY", option_cb);
-      general.value[19] =
-        valueInput(L + 2 * WB + 2 * IW / 3, 2 * WB + 2 * BH, IW / 3, BH,
-                   "Axes ticks", "General.AxesTicksZ", option_cb);
-
-      general.input[3] = input(L + 2 * WB, 2 * WB + 3 * BH, IW / 3, BH, nullptr,
-                               "General.AxesFormatX", option_cb);
-      general.input[4] = input(L + 2 * WB + 1 * IW / 3, 2 * WB + 3 * BH, IW / 3,
-                               BH, nullptr, "General.AxesFormatY", option_cb);
-      general.input[5] =
-        input(L + 2 * WB + 2 * IW / 3, 2 * WB + 3 * BH, IW / 3, BH,
-              "Axes format", "General.AxesFormatZ", option_cb);
-
-      general.input[6] = input(L + 2 * WB, 2 * WB + 4 * BH, IW / 3, BH, nullptr,
-                               "General.AxesLabelX", option_cb);
-      general.input[7] = input(L + 2 * WB + 1 * IW / 3, 2 * WB + 4 * BH, IW / 3,
-                               BH, nullptr, "General.AxesLabelY", option_cb);
-      general.input[8] =
-        input(L + 2 * WB + 2 * IW / 3, 2 * WB + 4 * BH, IW / 3, BH,
-              "Axes labels", "General.AxesLabelZ", option_cb);
-
-      general.butt[0] =
-        checkButton(L + 2 * WB, 2 * WB + 5 * BH, BW, BH,
-                    "Set position and size of axes automatically",
-                    "General.AxesAutoPosition", option_cb);
-
-      general.value[20] = valueInput(L + 2 * WB, 2 * WB + 6 * BH, IW / 3, BH,
-                                     nullptr, "General.AxesMinX", option_cb);
-      general.value[21] =
-        valueInput(L + 2 * WB + IW / 3, 2 * WB + 6 * BH, IW / 3, BH, nullptr,
-                   "General.AxesMinY", option_cb);
-      general.value[22] =
-        valueInput(L + 2 * WB + 2 * IW / 3, 2 * WB + 6 * BH, IW / 3, BH,
-                   "Axes minimum", "General.AxesMinZ", option_cb);
-
-      general.value[23] = valueInput(L + 2 * WB, 2 * WB + 7 * BH, IW / 3, BH,
-                                     nullptr, "General.AxesMaxX", option_cb);
-      general.value[24] =
-        valueInput(L + 2 * WB + IW / 3, 2 * WB + 7 * BH, IW / 3, BH, nullptr,
-                   "General.AxesMaxY", option_cb);
-      general.value[25] =
-        valueInput(L + 2 * WB + 2 * IW / 3, 2 * WB + 7 * BH, IW / 3, BH,
-                   "Axes maximum", "General.AxesMaxZ", option_cb);
-
-      general.push[1] =
-        new Fl_Button(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Fit to visible");
-      general.push[1]->callback(general_options_axes_fit_cb);
-
-      general.butt[1] =
-        checkButton(L + 2 * WB, 2 * WB + 9 * BH, BW, BH, "Show small axes",
-                    "General.SmallAxes (Alt+Shift+a)", option_cb);
-
-      general.value[26] =
-        valueInput(L + 2 * WB, 2 * WB + 10 * BH, IW / 2, BH, nullptr,
-                   "General.SmallAxesPositionX", option_cb);
-      general.value[27] = valueInput(L + 2 * WB + IW / 2, 2 * WB + 10 * BH,
-                                     IW / 2, BH, "Small axes position",
-                                     "General.SmallAxesPositionY", option_cb);
-
-      o->end();
-    }
-    {
-      Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB,
-                                 height - 2 * WB - BH, "Aspect");
-      o->hide();
-      general.choice[2] =
-        choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Projection mode",
-               "General.Orthographic (Alt+o)", nullptr, option_cb);
-
-      general.value[14] = valueInput(L + 2 * WB, 2 * WB + 2 * BH, IW, BH,
-                                     "Z-clipping distance factor",
-                                     "General.ClipFactor", option_cb);
-
-      general.value[15] =
-        valueInput(L + 2 * WB, 2 * WB + 3 * BH, IW / 2, BH, nullptr,
-                   "General.PolygonOffsetFactor", option_cb);
-
-      general.value[16] = valueInput(L + 2 * WB + IW / 2, 2 * WB + 3 * BH,
-                                     IW / 2, BH, "Polygon offset factor/units",
-                                     "General.PolygonOffsetUnits", option_cb);
-
-      general.butt[4] = checkButton(L + 2 * WB, 2 * WB + 4 * BH, BW, BH,
-                                    "Always apply polygon offset",
-                                    "General.PolygonOffsetAlwaysOn", option_cb);
-
-      general.value[11] =
-        valueInput(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Quadric subdivisions",
-                   "General.QuadricSubdivisions", option_cb);
-
-      general.value[6] =
-        valueInput(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Point size",
-                   "General.PointSize", option_cb);
-
-      general.value[7] =
-        valueInput(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Line width",
-                   "General.LineWidth", option_cb);
-      general.choice[0] =
-        choice(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Vector display",
-               "General.VectorType", nullptr, option_cb);
-
-      Fl_Button *b = new Fl_Button(L + 2 * IW - 2 * WB, 2 * WB + 8 * BH, BB, BH,
-                                   "Edit arrow");
-      b->callback(general_arrow_param_cb);
-
-      static Fl_Menu_Item menu_font_engine[] = {
-        {"Native", 0, nullptr, nullptr},
-        {"StringTexture", 0, nullptr, nullptr},
-        {"Embedded", 0, nullptr, nullptr},
-        {nullptr}};
-      general.choice[7] =
-        choice(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Font rendering engine",
-               "General.GraphicsFontEngine", menu_font_engine, option_cb);
-
-      int w1 = (int)(4. * IW / 5.), w2 = IW - w1;
-      general.choice[1] =
-        choice(L + 2 * WB, 2 * WB + 10 * BH, w1, BH, nullptr,
-               "General.GraphicsFont", menu_font_names, option_cb);
-      general.value[12] =
-        valueInput(L + 2 * WB + w1, 2 * WB + 10 * BH, w2, BH, "Default font",
-                   "General.GraphicsFontSize", option_cb);
-
-      general.choice[6] =
-        choice(L + 2 * WB, 2 * WB + 11 * BH, w1, BH, nullptr,
-               "General.GraphicsFontTitle", menu_font_names, option_cb);
-      general.value[28] =
-        valueInput(L + 2 * WB + w1, 2 * WB + 11 * BH, w2, BH, "Title font",
-                   "General.GraphicsFontSizeTitle", option_cb);
-
-      o->end();
-    }
-    {
-      Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB,
-                                 height - 2 * WB - BH, "Color");
-      o->hide();
-
-      general.value[2] =
-        valueInput(L + 2 * WB, 2 * WB + 1 * BH, IW / 3, BH, nullptr,
-                   "General.Light0X", general_light_cb);
-
-      general.value[3] =
-        valueInput(L + 2 * WB + IW / 3, 2 * WB + 1 * BH, IW / 3, BH, nullptr,
-                   "General.Light0Y", general_light_cb);
-
-      general.value[4] =
-        valueInput(L + 2 * WB + 2 * IW / 3, 2 * WB + 1 * BH, IW / 3, BH,
-                   "Light position", "General.Light0Z", general_light_cb);
-
-      general.value[13] = valueInput(L + 2 * WB, 2 * WB + 2 * BH, IW / 2, BH,
-                                     nullptr, "General.Light0W", option_cb);
-      general.value[36] =
-        valueInput(L + 2 * WB + IW / 2, 2 * WB + 2 * BH, IW / 2, BH,
-                   "Proximity and brightness", "General.Brightness", option_cb);
-
-      // the ball beside the two rows, after the longer of their labels
-      fl_font(FL_HELVETICA, FL_NORMAL_SIZE);
-      int xs = L + 2 * WB + IW + WB +
-               (int)std::max(fl_width(general.value[4]->label()),
-                             fl_width(general.value[36]->label()));
-      int ws = std::min(2 * BH, L + width - 2 * WB - xs);
-      general.sphere =
-        new spherePositionWidget(L + width - 2 * WB - ws, 2 * WB + 1 * BH, ws);
-      general.sphere->callback(general_light_sphere_cb);
-
-      general.value[1] = valueInput(L + 2 * WB, 2 * WB + 3 * BH, IW / 2, BH,
-                                    nullptr, "General.Shininess", option_cb);
-      general.value[0] =
-        valueInput(L + 2 * WB + IW / 2, 2 * WB + 3 * BH, IW / 2, BH,
-                   "Material shininess and exponent",
-                   "General.ShininessExponent", option_cb);
-
-      general.choice[8] =
-        choice(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Shading mode",
-               "General.Shading", nullptr, option_cb);
-
-      general.value[33] =
-        valueInput(L + 2 * WB, 2 * WB + 5 * BH, IW / 3, BH, nullptr,
-                   "General.StudioSamples", option_cb);
-
-      general.value[35] =
-        valueInput(L + 2 * WB + IW / 3, 2 * WB + 5 * BH, IW / 3, BH, nullptr,
-                   "General.StudioLightSpread", option_cb);
-
-      general.value[34] =
-        valueInput(L + 2 * WB + 2 * IW / 3, 2 * WB + 5 * BH, IW / 3, BH,
-                   "Studio samples, spread, floor offset",
-                   "General.StudioFloorOffset", -10, 10, 0.01, option_cb);
-
-      general.choice[5] =
-        choice(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Background gradient",
-               "General.BackgroundGradient", nullptr, option_cb);
-
-      colorButtons("General", GeneralOptions_Color, L + 2 * WB, 3 * WB + 7 * BH,
-                   IW, color_cb, general.color);
-
-      o->end();
-    }
-    {
-      Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB,
-                                 height - 2 * WB - BH, "Camera");
-      o->hide();
-
-      general.butt[18] =
-        checkButton(L + 2 * WB, 2 * WB + 1 * BH, BW, BH, "Enable camera",
-                    "General.Camera", general_camera_cb);
-      general.butt[18]->value(opt_general_camera_mode(0, GMSH_GET, 0));
-
-      general.butt[17] =
-        checkButton(L + 2 * WB, 2 * WB + 2 * BH, BW, BH,
-                    "Enable stereo rendering", "General.Stereo", option_cb);
-      general.butt[17]->value(opt_general_stereo_mode(0, GMSH_GET, 0));
-
-      general.value[29] = valueInput(
-        L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "Eye separation ratio (%)",
-        "General.CameraEyeSeparationRatio", option_cb);
-      general.value[29]->value(CTX::instance()->eye_sep_ratio);
-
-      general.value[30] = valueInput(
-        L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Focal length ratio (%)",
-        "General.CameraFocalLengthRatio", option_cb);
-      general.value[30]->value(CTX::instance()->focallength_ratio);
-
-      general.value[31] = valueInput(L + 2 * WB, 2 * WB + 5 * BH, IW, BH,
-                                     "Camera Aperture (degrees)",
-                                     "General.CameraAperture", option_cb);
-      general.value[31]->value(CTX::instance()->camera_aperture);
-
-      general.butt[19] = checkButton(L + 2 * WB, 2 * WB + 7 * BH, BW, BH,
-                                     "Enable gamepad (experimental)",
-                                     "General.Gamepad", general_camera_cb);
-      general.butt[19]->value(opt_general_gamepad(0, GMSH_GET, 0));
-
-      general.gamepadconfig =
-        new Fl_Button(L + 2 * WB, 2 * WB + 8 * BH, BW, BH, "Configure Gamepad");
-      general.gamepadconfig->callback(general_gmpdcf_cb);
-
-      if(opt_general_camera_mode(0, GMSH_GET, 0) == 0) {
-        general.value[30]->deactivate();
-        general.value[31]->deactivate();
+  // The pages, from the table of OptionPages.h; what the table cannot say is
+  // built here by name (see pageBuilders), and the fields that do more than
+  // set their option get their callback
+  pageBuilders b;
+  for(const char *o : {"General.RotationCenterX", "General.RotationCenterY",
+                       "General.RotationCenterZ"})
+    b.hooks[o] = general_rotation_center_cb;
+  b.hooks["General.RotationCenterGravity"] = general_rotation_center_cg_cb;
+  b.hooks["General.SaveSession"] = general_session_save_cb;
+  for(const char *o : {"General.Light0X", "General.Light0Y", "General.Light0Z"})
+    b.hooks[o] = general_light_cb;
+  b.hooks["General.Camera"] = b.hooks["General.Gamepad"] = general_camera_cb;
+  b.hooks["Solver.AlwaysListen"] = solver_listen_cb;
+  b.hooks["View.TimeStep"] = view_options_timestep_cb;
+
+  // a button beside the fields of a row, at the right of their label
+  auto button = [](int x, int y, const char *label, Fl_Callback *cb) {
+    Fl_Button *p = new Fl_Button(x + 2 * IW - 4 * WB, y, BB, BH, label);
+    p->callback(cb);
+    return p;
+  };
+  // the button that shows the path of a file (the session or option file)
+  auto showFile = [](const char *which) {
+    return [which](int x, int y, int w) {
+      Fl_Button *p = new Fl_Button(x, y, w, BH, "Show file path");
+      p->callback(options_show_file_cb, (void *)which);
+      return 0;
+    };
+  };
+  // the colour buttons of a category, one row down
+  auto colors = [](const char *category, StringXColor *table, Fl_Callback *cb) {
+    return [=](int x, int y, int) {
+      colorButtons(category, table, x, y + WB, IW, cb);
+      return 1;
+    };
+  };
+  // a menu of toggles, one per option of the list
+  auto toggles = [](const char *label, const char *options,
+                    Fl_Menu_Item *items) {
+    return [=](int x, int y, int) {
+      toggleMenu(x, y, IW, BH, label, options, items);
+      return 1;
+    };
+  };
+  // a choice of the views, listed as they come (see resetExternalViewList())
+  auto viewChoice = [](Fl_Choice **choiceOf, const char *label,
+                       const char *option) {
+    return [=](int x, int y, int) {
+      *choiceOf = choice(x, y, IW, BH, label, fieldTooltip(option), nullptr,
+                         option_cb, nullptr, -1);
+      (*choiceOf)->add("Self");
+      return 1;
+    };
+  };
+  // the matrix of a transformation, with the offsets (and the raise of a view)
+  auto transformation = [](const char *category, bool raise) {
+    return [=](int x, int y, int) {
+      int ss = 2 * IW / 3 / 3 + 4, rows = raise ? 4 : 3;
+      std::string c(category);
+      if(raise) {
+        // the matrix, the offsets and the raise move together, as one table
+        new Fl_Group(x, y, 2 * IW - 3 * WB + 7 * IW / 10, 4 * BH);
+        Fl_Box *t = new Fl_Box(FL_NO_BOX, x, y, IW, BH,
+                               "Coordinate transformation:");
+        t->align(FL_ALIGN_INSIDE | FL_ALIGN_LEFT);
+        Fl_Box *t2 =
+          new Fl_Box(FL_NO_BOX, x + 2 * IW - 3 * WB, y, 7 * IW / 10, BH,
+                     "Raise:");
+        t2->align(FL_ALIGN_INSIDE | FL_ALIGN_LEFT);
+        y += BH;
       }
-
-      if(opt_general_stereo_mode(0, GMSH_GET, 0) == 0)
-        general.value[29]->deactivate();
-
-      // (the camera is on with an active gamepad: opt_general_gamepad())
-      if(CTX::instance()->gamepad && CTX::instance()->gamepad->active)
-        general.gamepadconfig->activate();
-      else
-        general.gamepadconfig->deactivate();
-      o->end();
-    }
-  }
-
-  general.group->end();
-
-  // Geometry options
-  geo.group = new Fl_Group(L, 0, width, height, "Geometry Options");
-  geo.group->hide();
-  {
-    {
-      Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB,
-                                 height - 2 * WB - BH, "General");
-      o->hide();
-
-      geo.value[2] =
-        valueInput(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Geometry tolerance",
-                   "Geometry.Tolerance", option_cb);
-
-      geo.butt[8] =
-        checkButton(L + 2 * WB, 2 * WB + 2 * BH, BW, BH,
-                    "Remove duplicate entities in GEO model transforms",
-                    "Geometry.AutoCoherence", option_cb);
-
-      Fl_Box *b = new Fl_Box(L + 2 * WB, 2 * WB + 3 * BH, BW, 2);
-      b->box(FL_ENGRAVED_FRAME);
-      b->labeltype(FL_NO_LABEL);
-
-      Fl_Box *b2 = new Fl_Box(FL_NO_BOX, L + 2 * WB, 2 * WB + 3 * BH + 1, IW,
-                              BH, "Open CASCADE model healing options:");
-      b2->align(FL_ALIGN_INSIDE | FL_ALIGN_LEFT);
-
-      geo.butt[16] = checkButton(L + 2 * WB, 2 * WB + 4 * BH, BW, BH,
-                                 "Remove degenerated edges and faces",
-                                 "Geometry.OCCFixDegenerated", option_cb);
-
-      geo.butt[11] =
-        checkButton(L + 2 * WB, 2 * WB + 5 * BH, BW, BH, "Remove small edges",
-                    "Geometry.OCCFixSmallEdges", option_cb);
-
-      geo.butt[12] =
-        checkButton(L + 2 * WB, 2 * WB + 6 * BH, BW, BH, "Remove small faces",
-                    "Geometry.OCCFixSmallFaces", option_cb);
-
-      geo.butt[13] =
-        checkButton(L + 2 * WB, 2 * WB + 7 * BH, BW, BH, "Sew faces",
-                    "Geometry.OCCSewFaces", option_cb);
-
-      geo.butt[14] = checkButton(L + 2 * WB, 2 * WB + 8 * BH, BW, BH,
-                                 "Fix shells and make solids",
-                                 "Geometry.OCCMakeSolids", option_cb);
-
-      geo.value[20] =
-        valueInput(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Global model scaling",
-                   "Geometry.OCCScaling", option_cb);
-
-#if !defined(HAVE_OCC)
-      b2->deactivate();
-      geo.butt[16]->deactivate();
-      geo.butt[11]->deactivate();
-      geo.butt[12]->deactivate();
-      geo.butt[13]->deactivate();
-      geo.butt[14]->deactivate();
-      geo.value[20]->deactivate();
-#endif
-      o->end();
-    }
-    {
-      Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB,
-                                 height - 2 * WB - BH, "Visibility");
-
-      geo.butt[0] = checkButton(L + 2 * WB, 2 * WB + 1 * BH, BW / 2 - WB, BH,
-                                "Points", "Geometry.Points (Alt+p)", option_cb);
-
-      geo.butt[1] = checkButton(L + 2 * WB, 2 * WB + 2 * BH, BW / 2 - WB, BH,
-                                "Curves", "Geometry.Curves (Alt+l)", option_cb);
-
-      geo.butt[2] =
-        checkButton(L + 2 * WB, 2 * WB + 3 * BH, BW / 2 - WB, BH, "Surfaces",
-                    "Geometry.Surfaces (Alt+s)", option_cb);
-
-      geo.butt[3] =
-        checkButton(L + 2 * WB, 2 * WB + 4 * BH, BW / 2 - WB, BH, "Volumes",
-                    "Geometry.Volumes (Alt+v)", option_cb);
-
-      geo.butt[4] =
-        checkButton(L + width / 2, 2 * WB + 1 * BH, width - width / 2 - 2 * WB,
-                    BH, "Point labels", "Geometry.PointLabels", option_cb);
-
-      geo.butt[5] =
-        checkButton(L + width / 2, 2 * WB + 2 * BH, width - width / 2 - 2 * WB,
-                    BH, "Curve labels", "Geometry.CurveLabels", option_cb);
-
-      geo.butt[6] =
-        checkButton(L + width / 2, 2 * WB + 3 * BH, width - width / 2 - 2 * WB,
-                    BH, "Surface labels", "Geometry.SurfaceLabels", option_cb);
-
-      geo.butt[7] =
-        checkButton(L + width / 2, 2 * WB + 4 * BH, width - width / 2 - 2 * WB,
-                    BH, "Volume labels", "Geometry.VolumeLabels", option_cb);
-      geo.choice[4] = choice(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Label type",
-                             "Geometry.LabelType", nullptr, option_cb);
-
-      geo.value[0] = valueInput(L + 2 * WB, 2 * WB + 6 * BH, IW / 2, BH,
-                                nullptr, "Geometry.Normals", option_cb);
-      geo.value[0]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
-
-      geo.value[1] =
-        valueInput(L + 2 * WB + IW / 2, 2 * WB + 6 * BH, IW / 2, BH,
-                   "Normals and tangents", "Geometry.Tangents", option_cb);
-      geo.value[1]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
-
-      o->end();
-    }
-    {
-      Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB,
-                                 height - 2 * WB - BH, "Transfo");
-      o->hide();
-      geo.choice[3] =
-        choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Main window transform",
-               "Geometry.Transform", nullptr, option_cb);
-
-      int ss = 2 * IW / 3 / 3 + 4;
-      geo.value[7] = valueInput(L + 2 * WB, 2 * WB + 2 * BH, ss, BH, nullptr,
-                                "Geometry.TransformXX");
-      geo.value[8] = valueInput(L + 2 * WB + ss, 2 * WB + 2 * BH, ss, BH,
-                                nullptr, "Geometry.TransformXY");
-      geo.value[9] = valueInput(L + 2 * WB + 2 * ss, 2 * WB + 2 * BH, ss, BH,
-                                " X", "Geometry.TransformXZ");
-      geo.value[10] = valueInput(L + 2 * WB + IW, 2 * WB + 2 * BH, 7 * IW / 10,
-                                 BH, nullptr, "Geometry.OffsetX");
-
-      geo.value[11] = valueInput(L + 2 * WB, 2 * WB + 3 * BH, ss, BH, nullptr,
-                                 "Geometry.TransformYX");
-      geo.value[12] = valueInput(L + 2 * WB + ss, 2 * WB + 3 * BH, ss, BH,
-                                 nullptr, "Geometry.TransformYY");
-      geo.value[13] = valueInput(L + 2 * WB + 2 * ss, 2 * WB + 3 * BH, ss, BH,
-                                 " Y +", "Geometry.TransformYZ");
-      geo.value[14] = valueInput(L + 2 * WB + IW, 2 * WB + 3 * BH, 7 * IW / 10,
-                                 BH, nullptr, "Geometry.OffsetY");
-
-      geo.value[15] = valueInput(L + 2 * WB, 2 * WB + 4 * BH, ss, BH, nullptr,
-                                 "Geometry.TransformZX");
-      geo.value[16] = valueInput(L + 2 * WB + ss, 2 * WB + 4 * BH, ss, BH,
-                                 nullptr, "Geometry.TransformZY");
-      geo.value[17] = valueInput(L + 2 * WB + 2 * ss, 2 * WB + 4 * BH, ss, BH,
-                                 " Z", "Geometry.TransformZZ");
-      geo.value[18] = valueInput(L + 2 * WB + IW, 2 * WB + 4 * BH, 7 * IW / 10,
-                                 BH, nullptr, "Geometry.OffsetZ");
-
-      for(int i = 7; i <= 18; i++) {
-        geo.value[i]->minimum(-1.);
-        geo.value[i]->maximum(1.);
-        if(CTX::instance()->inputScrolling) geo.value[i]->step(0.1);
-        geo.value[i]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
-        geo.value[i]->callback(option_cb);
-      }
-
-      o->end();
-    }
-    {
-      Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB,
-                                 height - 2 * WB - BH, "Aspect");
-      o->hide();
-
-      geo.choice[0] =
-        choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Point display",
-               "Geometry.PointType", nullptr, option_cb);
-
-      geo.value[3] = valueInput(L + 2 * WB, 2 * WB + 2 * BH, IW, BH,
-                                "Point size", "Geometry.PointSize", option_cb);
-
-      geo.value[5] =
-        valueInput(L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "Selected point size",
-                   "Geometry.PointSelectSize", option_cb);
-
-      geo.choice[1] =
-        choice(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Curve display",
-               "Geometry.CurveType", nullptr, option_cb);
-
-      geo.value[4] =
-        valueInput(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Curve width",
-                   "Geometry.CurveWidth", option_cb);
-
-      geo.value[6] =
-        valueInput(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Selected curve width",
-                   "Geometry.CurveSelectWidth", option_cb);
-
-      geo.value[19] =
-        valueInput(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Curve subdivisions",
-                   "Geometry.NumSubEdges", option_cb);
-
-      geo.choice[2] =
-        choice(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Surface display",
-               "Geometry.SurfaceType (Alt+d)", nullptr, option_cb);
-
-      geo.choice[5] =
-        choice(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Volume display",
-               "Geometry.VolumeType", nullptr, option_cb);
-
-      o->end();
-    }
-    {
-      Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB,
-                                 height - 2 * WB - BH, "Color");
-      o->hide();
-
-      geo.butt[9] =
-        checkButton(L + 2 * WB, 2 * WB + 1 * BH, BW, BH, "Enable lighting",
-                    "Geometry.Light (Alt+w)", option_cb);
-
-      geo.butt[15] = checkButton(L + 2 * WB, 2 * WB + 2 * BH, BW, BH,
-                                 "Use two-side lighting",
-                                 "Geometry.LightTwoSide", option_cb);
-
-      geo.butt[10] = checkButton(L + 2 * WB, 2 * WB + 3 * BH, BW, BH,
-                                 "Highlight orphan and boundary entities",
-                                 "Geometry.HighlightOrphans", option_cb);
-
-      int w1 = (int)(3. * IW / 4.), w2 = IW - w1;
-      geo.value[21] = valueInput(L + 2 * WB, 2 * WB + 4 * BH, w2, BH, nullptr,
-                                 "Geometry.Opacity", option_cb);
-      geo.value[21]->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE);
-
-      geo.choice[6] =
-        choice(L + 2 * WB + w2, 2 * WB + 4 * BH, w1, BH, "Opacity",
-               "Geometry.OpacityMode", nullptr, option_cb);
-
-      colorButtons("Geometry", GeometryOptions_Color, L + 2 * WB,
-                   3 * WB + 5 * BH, IW, color_cb, geo.color);
-
-      o->end();
-    }
-  }
-  geo.group->end();
-
-  // Mesh options
-  mesh.group = new Fl_Group(L, 0, width, height, "Mesh Options");
-  mesh.group->hide();
-  {
-    {
-      Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB,
-                                 height - 2 * WB - BH, "General");
-      o->hide();
-
-      mesh.choice[2] =
-        choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "2D algorithm",
-               "Mesh.Algorithm", nullptr, option_cb);
-
-      mesh.choice[3] =
-        choice(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "3D algorithm",
-               "Mesh.Algorithm3D", nullptr, option_cb);
-
-      mesh.choice[1] = choice(
-        L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "2D recombination algorithm",
-        "Mesh.RecombinationAlgorithm", nullptr, option_cb);
-
-      mesh.butt[21] = checkButton(L + 2 * WB, 2 * WB + 4 * BH, BW, BH,
-                                  "Recombine all triangular meshes",
-                                  "Mesh.RecombineAll", option_cb);
-
-      mesh.choice[5] =
-        choice(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Subdivision algorithm",
-               "Mesh.SubdivisionAlgorithm", nullptr, option_cb);
-
-      mesh.value[0] =
-        valueInput(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Smoothing steps",
-                   "Mesh.Smoothing", option_cb);
-
-      mesh.value[2] = valueInput<inputValueFloat>(L + 2 * WB, 2 * WB + 7 * BH,
-                                                  IW, BH, "Element size factor",
-                                                  "Mesh.MeshSizeFactor");
-      mesh.value[2]->minimum(0.001);
-      mesh.value[2]->maximum(1000);
-      if(CTX::instance()->inputScrolling) mesh.value[2]->step(0.01);
-      mesh.value[2]->align(FL_ALIGN_RIGHT);
-      mesh.value[2]->callback(option_cb);
-
-      mesh.value[25] = valueInput(L + 2 * WB, 2 * WB + 8 * BH, IW / 2, BH,
-                                  nullptr, "Mesh.MeshSizeMin", option_cb);
-
-      mesh.value[26] =
-        valueInput(L + 2 * WB + IW / 2, 2 * WB + 8 * BH, IW / 2, BH,
-                   "Min/Max element size", "Mesh.MeshSizeMax", option_cb);
-
-      mesh.value[3] =
-        valueInput(L + 2 * WB, 2 * WB + 9 * BH, IW / 3, BH, "Element order",
-                   "Mesh.ElementOrder", option_cb);
-
-      mesh.butt[4] = checkButton(
-        L + width / 2, 2 * WB + 9 * BH, width - width / 2 - 2 * WB, BH,
-        "Incomplete elements", "Mesh.SecondOrderIncomplete", option_cb);
-
-      o->end();
-    }
-
-    {
-      Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB,
-                                 height - 2 * WB - BH, "Advanced");
-      o->hide();
-
-      mesh.butt[5] = checkButton(L + 2 * WB, 2 * WB + 1 * BH, BW, BH,
-                                 "Compute element sizes using point values",
-                                 "Mesh.MeshSizeFromPoints", option_cb);
-
-      mesh.butt[26] =
-        checkButton(L + 2 * WB, 2 * WB + 2 * BH, BW, BH,
-                    "Compute element sizes using parametric point values",
-                    "Mesh.MeshSizeFromParametricPoints", option_cb);
-
-      mesh.value[1] =
-        valueInput(L + 2 * WB, 2 * WB + 3 * BH, IW / 2, BH,
-                   "Compute element sizes from curvature",
-                   "Mesh.MeshSizeFromCurvature (number of elements "
-                   "per 2 * Pi radians)",
-                   option_cb);
-
-      mesh.butt[16] = checkButton(L + 2 * WB, 2 * WB + 4 * BH, BW, BH,
-                                  "Extend element sizes from boundary",
-                                  "Mesh.MeshSizeExtendFromBoundary", option_cb);
-
-      mesh.butt[2] = checkButton(L + 2 * WB, 2 * WB + 5 * BH, BW, BH,
-                                 "Optimize quality of tetrahedra",
-                                 "Mesh.Optimize", option_cb);
-
-      mesh.butt[24] = checkButton(L + 2 * WB, 2 * WB + 6 * BH, BW, BH,
-                                  "Optimize quality of tetrahedra with Netgen",
-                                  "Mesh.OptimizeNetgen");
-#if !defined(HAVE_NETGEN)
-      mesh.butt[24]->deactivate();
-#endif
-      mesh.butt[24]->callback(option_cb);
-
-      mesh.butt[3] = checkButton(L + 2 * WB, 2 * WB + 7 * BH, BW, BH,
-                                 "Optimize high-order meshes",
-                                 "Mesh.HighOrderOptimize", option_cb);
-      // (a check box for one of its values)
-      bindValues(mesh.butt[3], {0, 2});
-
-      o->end();
-    }
-
-    {
-      Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB,
-                                 height - 2 * WB - BH, "Visibility");
-
-      mesh.butt[6] =
-        checkButton(L + 2 * WB, 2 * WB + 1 * BH, BW / 2 - WB, BH, "Nodes",
-                    "Mesh.Nodes (Alt+Shift+p)", option_cb);
-
-      mesh.butt[7] =
-        checkButton(L + 2 * WB, 2 * WB + 2 * BH, BW / 2 - WB, BH, "1D elements",
-                    "Mesh.Lines (Alt+Shift+l)", option_cb);
-
-      mesh.butt[8] = checkButton(L + 2 * WB, 2 * WB + 3 * BH, BW / 2 - WB, BH,
-                                 "2D element edges",
-                                 "Mesh.SurfaceEdges (Alt+Shift+s)", option_cb);
-
-      mesh.butt[9] = checkButton(L + 2 * WB, 2 * WB + 4 * BH, BW / 2 - WB, BH,
-                                 "2D element faces",
-                                 "Mesh.SurfaceFaces (Alt+Shift+d)", option_cb);
-
-      mesh.butt[10] = checkButton(L + 2 * WB, 2 * WB + 5 * BH, BW / 2 - WB, BH,
-                                  "3D element edges",
-                                  "Mesh.VolumeEdges (Alt+Shift+v)", option_cb);
-
-      mesh.butt[11] = checkButton(L + 2 * WB, 2 * WB + 6 * BH, BW / 2 - WB, BH,
-                                  "3D element faces",
-                                  "Mesh.VolumeFaces (Alt+Shift+b)", option_cb);
-
-      mesh.butt[1] = checkButton(
-        L + width / 2, 2 * WB + 5 * BH, width - width / 2 - 2 * WB, BH,
-        "Hide interior edges", "Mesh.DrawSkinEdgesOnly", option_cb);
-      mesh.choice[12] =
-        choice(L + width / 2, 2 * WB + 6 * BH, width - width / 2 - 2 * WB, BH,
-               nullptr, "Mesh.DrawSkinOnly", nullptr, option_cb);
-
-      mesh.butt[12] =
-        checkButton(L + width / 2, 2 * WB + 1 * BH, width - width / 2 - 2 * WB,
-                    BH, "Node labels", "Mesh.NodeLabels", option_cb);
-
-      mesh.butt[13] =
-        checkButton(L + width / 2, 2 * WB + 2 * BH, width - width / 2 - 2 * WB,
-                    BH, "1D element labels", "Mesh.LineLabels", option_cb);
-
-      mesh.butt[14] =
-        checkButton(L + width / 2, 2 * WB + 3 * BH, width - width / 2 - 2 * WB,
-                    BH, "2D element labels", "Mesh.SurfaceLabels", option_cb);
-
-      mesh.butt[15] =
-        checkButton(L + width / 2, 2 * WB + 4 * BH, width - width / 2 - 2 * WB,
-                    BH, "3D element labels", "Mesh.VolumeLabels", option_cb);
-      mesh.choice[7] = choice(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Label",
-                              "Mesh.LabelType", nullptr, option_cb);
-
-      mesh.value[12] = valueInput(L + width / 2, 2 * WB + 7 * BH, IW / 2, BH,
-                                  "Sampling", "Mesh.LabelSampling", option_cb);
-      mesh.value[12]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
-
-      static Fl_Menu_Item menu_mesh_element_types[] = {
-        {"Triangles", 0, nullptr, nullptr, FL_MENU_TOGGLE},
-        {"Quadrangles", 0, nullptr, nullptr, FL_MENU_TOGGLE},
-        {"Tetrahedra", 0, nullptr, nullptr, FL_MENU_TOGGLE},
-        {"Hexahedra", 0, nullptr, nullptr, FL_MENU_TOGGLE},
-        {"Prisms", 0, nullptr, nullptr, FL_MENU_TOGGLE},
-        {"Pyramids", 0, nullptr, nullptr, FL_MENU_TOGGLE},
-        {"Trihedra", 0, nullptr, nullptr, FL_MENU_TOGGLE},
-        {"Polygons", 0, nullptr, nullptr, FL_MENU_TOGGLE},
-        {"Polyhedra", 0, nullptr, nullptr, FL_MENU_TOGGLE},
-        {nullptr}};
-
-      mesh.menu =
-        toggleMenu(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Elements",
-                   "Mesh.Triangles, Mesh.Quadrangles, Mesh.Tetrahedra, "
-                   "Mesh.Hexahedra, Mesh.Prisms, Mesh.Pyramids, Mesh.Trihedra, "
-                   "Mesh.Polygons, Mesh.Polyhedra",
-                   menu_mesh_element_types);
-
-      mesh.value[4] = valueInput(L + 2 * WB, 2 * WB + 9 * BH, IW / 4, BH,
-                                 nullptr, "Mesh.QualityInf", option_cb);
-      mesh.value[4]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
-
-      mesh.value[5] =
-        valueInput(L + 2 * WB + IW / 4, 2 * WB + 9 * BH, IW / 2 - IW / 4, BH,
-                   nullptr, "Mesh.QualitySup", option_cb);
-      mesh.value[5]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
-      mesh.choice[6] =
-        choice(L + 2 * WB + IW / 2, 2 * WB + 9 * BH, IW / 2, BH,
-               "Quality range", "Mesh.QualityType", nullptr, option_cb);
-
-      mesh.value[6] = valueInput(L + 2 * WB, 2 * WB + 10 * BH, IW / 2, BH,
-                                 nullptr, "Mesh.RadiusInf", option_cb);
-      mesh.value[6]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
-
-      mesh.value[7] = valueInput(L + 2 * WB + IW / 2, 2 * WB + 10 * BH, IW / 2,
-                                 BH, "Size range", "Mesh.RadiusSup", option_cb);
-      mesh.value[7]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
-
-      mesh.value[8] = valueInput(L + 2 * WB, 2 * WB + 11 * BH, IW / 2, BH,
-                                 nullptr, "Mesh.Normals", option_cb);
-      mesh.value[8]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
-
-      mesh.value[13] =
-        valueInput(L + 2 * WB + IW / 2, 2 * WB + 11 * BH, IW / 2, BH,
-                   "Normals and tangents", "Mesh.Tangents", option_cb);
-      mesh.value[13]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
-
-      o->end();
-    }
-    {
-      Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB,
-                                 height - 2 * WB - BH, "Aspect");
-      o->hide();
-
-      mesh.value[9] =
-        valueInput(L + 2 * WB, 2 * WB + 1 * BH, IW, BH,
-                   "Element shrinking factor", "Mesh.Explode", option_cb);
-      mesh.value[9]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
-
-      mesh.choice[0] =
-        choice(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Point display",
-               "Mesh.NodeType", nullptr, option_cb);
-
-      mesh.value[10] = valueInput(L + 2 * WB, 2 * WB + 3 * BH, IW, BH,
-                                  "Point size", "Mesh.PointSize", option_cb);
-
-      mesh.value[11] = valueInput(L + 2 * WB, 2 * WB + 4 * BH, IW, BH,
-                                  "Line width", "Mesh.LineWidth", option_cb);
-
-      mesh.value[14] = valueInput(L + 2 * WB, 2 * WB + 5 * BH, IW, BH,
-                                  "High-order element subdivisions",
-                                  "Mesh.NumSubEdges", option_cb);
-      mesh.value[14]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
-
-      o->end();
-    }
-    {
-      Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB,
-                                 height - 2 * WB - BH, "Color");
-      o->hide();
-
-      mesh.butt[17] =
-        checkButton(L + 2 * WB, 2 * WB + 1 * BH, BW, BH, "Enable lighting",
-                    "Mesh.Light (Alt+w)", option_cb);
-      mesh.choice[10] =
-        choice(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Edge lighting",
-               "Mesh.LightLines", nullptr, option_cb);
-
-      mesh.butt[18] =
-        checkButton(L + 2 * WB, 2 * WB + 3 * BH, BW, BH,
-                    "Use two-side lighting", "Mesh.LightTwoSide", option_cb);
-
-      mesh.butt[19] =
-        checkButton(L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Smooth normals",
-                    "Mesh.SmoothNormals", option_cb);
-
-      mesh.value[18] = valueInput(L + 2 * WB, 2 * WB + 5 * BH, IW, BH,
-                                  "Smoothing threshold angle",
-                                  "Mesh.AngleSmoothNormals", option_cb);
-      mesh.value[18]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
-
-      int w1 = (int)(3. * IW / 4.), w2 = IW - w1;
-      mesh.value[27] = valueInput(L + 2 * WB, 2 * WB + 6 * BH, w2, BH, nullptr,
-                                  "Mesh.Opacity", option_cb);
-      mesh.value[27]->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE);
-
-      mesh.choice[11] =
-        choice(L + 2 * WB + w2, 2 * WB + 6 * BH, w1, BH, "Opacity",
-               "Mesh.OpacityMode", nullptr, option_cb);
-      mesh.choice[4] =
-        choice(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Coloring mode",
-               "Mesh.ColorCarousel", nullptr, option_cb);
-
-      colorButtons("Mesh", MeshOptions_Color, L + 2 * WB, 3 * WB + 8 * BH, IW,
-                   color_cb, mesh.color);
-
-      o->end();
-    }
-  }
-  mesh.group->end();
-
-  // Solver options
-  solver.group = new Fl_Group(L, 0, width, height, "Solver Options");
-  solver.group->hide();
-  {
-    {
-      {
-        Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB,
-                                   height - 2 * WB - BH, "General");
-
-        solver.input[0] =
-          input(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Base socket name",
-                "Solver.SocketName", option_cb);
-
-        solver.value[0] =
-          valueInput(L + 2 * WB, 2 * WB + 2 * BH, IW, BH,
-                     "Timeout (in seconds)", "Solver.Timeout", option_cb);
-
-        solver.butt[0] =
-          checkButton(L + 2 * WB, 2 * WB + 3 * BH, BW, BH,
-                      "Always listen to incoming connection requests",
-                      "Solver.AlwaysListen", solver_listen_cb);
-
-        solver.input[1] =
-          input(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Python interpreter",
-                "Solver.PythonInterpreter", option_cb);
-
-        solver.input[2] =
-          input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Octave interpreter",
-                "Solver.OctaveInterpreter", option_cb);
-
-        o->end();
-      }
-    }
-  }
-  solver.group->end();
-
-  // Post-processing options
-  post.group = new Fl_Group(L, 0, width, height, "Post-processing Options");
-  post.group->hide();
-  {
-    {
-      Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB,
-                                 height - 2 * WB - BH, "General");
-
-      post.choice[0] = choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "View links",
-                              "PostProcessing.Link", nullptr, option_cb);
-
-      post.value[0] = valueInput(L + 2 * WB, 2 * WB + 2 * BH, IW, BH,
-                                 "Frame duration (in seconds)",
-                                 "PostProcessing.AnimationDelay", option_cb);
-
-      post.value[1] = valueInput(L + 2 * WB, 2 * WB + 3 * BH, IW, BH,
-                                 "Animation increment step",
-                                 "PostProcessing.AnimationStep", option_cb);
-
-      post.choice[1] =
-        choice(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Animation cycle",
-               "PostProcessing.AnimationCycle", nullptr, option_cb);
-
-      post.butt[1] =
-        checkButton(L + 2 * WB, 2 * WB + 5 * BH, BW, BH,
-                    "Remove original views after combination",
-                    "PostProcessing.CombineRemoveOriginal", option_cb);
-
-      post.butt[2] = checkButton(L + 2 * WB, 2 * WB + 6 * BH, BW, BH,
-                                 "Draw value scales horizontally",
-                                 "PostProcessing.HorizontalScales", option_cb);
-
-      o->end();
-    }
-  }
-  post.group->end();
-
-  // View options
-  view.index = -1;
-  view.group = new Fl_Group(L, 0, width, height, "View Options");
-  view.group->hide();
-  {
-    {
-      Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB,
-                                 height - 2 * WB - BH, "General");
-      view.choice[13] = choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Plot type",
-                               "View.Type", nullptr, option_cb);
-
-      view.input[0] = input(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "View name",
-                            "View.Name", option_cb);
-
-      int sw = (int)(1.5 * FL_NORMAL_SIZE);
-      view.push[3] = new Fl_Button(L + 2 * WB, 2 * WB + 3 * BH, sw, BH, "-");
-      view.push[3]->callback(view_options_timestep_cb, (void *)"-");
-      view.push[4] =
-        new Fl_Button(L + 2 * WB + IW - sw, 2 * WB + 3 * BH, sw, BH, "+");
-      view.push[4]->callback(view_options_timestep_cb, (void *)"+");
-      view.value[50] = valueInput(L + 2 * WB + sw, 2 * WB + 3 * BH, IW - 2 * sw,
-                                  BH, nullptr, "View.TimeStep", 0, 0, 1,
-                                  view_options_timestep_cb, (void *)"=");
-      view.label[0] =
-        new Fl_Box(L + 2 * WB + IW, 2 * WB + 3 * BH, width / 2, BH, "Step");
-      view.label[0]->box(FL_NO_BOX);
-      view.label[0]->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
-
-      view.range =
-        new Fl_Group(L + 2 * WB, 2 * WB + 4 * BH, width - 4 * WB, 8 * BH);
-
-      view.value[30] = valueInput(L + 2 * WB, 2 * WB + 4 * BH, IW, BH,
-                                  "Intervals", "View.NbIso", option_cb);
-      view.value[30]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
-
-      view.input[1] = input(C2, 2 * WB + 4 * BH, RW / 2, BH, "Format",
-                            "View.NumberFormat", option_cb);
-      view.choice[0] =
-        choice(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Intervals type",
-               "View.IntervalsType (Alt+t)", nullptr, option_cb);
-      view.choice[1] = choice(C2, 2 * WB + 5 * BH, RW, BH, nullptr,
-                              "View.ScaleType", nullptr, option_cb);
-      view.choice[7] = choice(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Range mode",
-                              "View.RangeType (Alt+r)", nullptr, option_cb);
-
-      view.butt[38] = checkButton(C2, 2 * WB + 6 * BH, RW, BH, "Saturate",
-                                  "View.SaturateValues", option_cb);
-
-      int sw2 = (int)(2.5 * FL_NORMAL_SIZE);
-      view.push[1] = new Fl_Button(L + 2 * WB, 2 * WB + 7 * BH, sw2, BH, "Min");
-      view.push[1]->callback(view_range_cb, (void *)"range_min");
-      view.value[31] =
-        valueInput(L + 2 * WB + sw2, 2 * WB + 7 * BH, IW - sw2, BH,
-                   "Custom min", "View.CustomMin", option_cb);
-      view.value[31]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
-
-      view.value[35] = valueInput(C2, 2 * WB + 7 * BH, RW / 2, BH, "Threshold",
-                                  "View.ScaleThreshold", option_cb);
-      view.value[35]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
-
-      view.push[2] = new Fl_Button(L + 2 * WB, 2 * WB + 8 * BH, sw2, BH, "Max");
-      view.push[2]->callback(view_range_cb, (void *)"range_max");
-      view.value[32] =
-        valueInput(L + 2 * WB + sw2, 2 * WB + 8 * BH, IW - sw2, BH,
-                   "Custom max", "View.CustomMax", option_cb);
-      view.value[32]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
-
-      view.butt[0] = checkButton(L + 2 * WB, 2 * WB + 9 * BH, C2 - L - 3 * WB,
-                                 BH, "Adapt visualization grid",
-                                 "View.AdaptVisualizationGrid", option_cb);
-      view.choice[18] = choice(C2, 2 * WB + 9 * BH, RW, BH, nullptr,
-                               "View.AdaptSkinOnly", nullptr, option_cb);
-
-      view.push[5] = new Fl_Button(L + 2 * WB, 2 * WB + 10 * BH, sw, BH, "-");
-      view.push[5]->callback(view_options_max_recursion_cb, (void *)"-");
-      view.push[6] =
-        new Fl_Button(L + 2 * WB + IW - sw, 2 * WB + 10 * BH, sw, BH, "+");
-      view.push[6]->callback(view_options_max_recursion_cb, (void *)"+");
-      view.value[33] =
-        valueInput(L + 2 * WB + sw, 2 * WB + 10 * BH, IW - 2 * sw, BH, nullptr,
-                   "View.MaxRecursionLevel", option_cb);
-      view.value[33]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
-      view.label[1] = new Fl_Box(L + 2 * WB + IW, 2 * WB + 10 * BH, width / 2,
-                                 BH, "Maximum recursion level");
-      view.label[1]->box(FL_NO_BOX);
-      view.label[1]->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
-
-      // (shown as it is set, e.g. 1e-6, whatever the step of the scrolling)
-      view.value[34] = valueInput<inputValueFloat>(
-        L + 2 * WB, 2 * WB + 11 * BH, IW, BH, "Target visualization error",
-        "View.TargetError");
-      view.value[34]->align(FL_ALIGN_RIGHT);
-      // (a fraction of the range of the view; negative: refine everything)
-      view.value[34]->minimum(-1.e-4);
-      view.value[34]->maximum(1e-1);
-      if(CTX::instance()->inputScrolling) view.value[34]->step(1.e-4);
-      view.value[34]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
-      view.value[34]->callback(option_cb);
-
-      view.range->end();
-
-      o->end();
-    }
-    {
-      Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB,
-                                 height - 2 * WB - BH, "Axes");
-      o->hide();
-
-      view.choice[8] = choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Axes mode",
-                              "View.Axes (Alt+a)", nullptr, option_cb);
-
-      view.butt[3] = checkButton(C2, 2 * WB + 1 * BH, RW, BH, "Mikado style",
-                                 "View.AxesMikado", option_cb);
-
-      view.value[3] = valueInput(L + 2 * WB, 2 * WB + 2 * BH, IW / 3, BH,
-                                 nullptr, "View.AxesTicksX", option_cb);
-      view.value[4] =
-        valueInput(L + 2 * WB + 1 * IW / 3, 2 * WB + 2 * BH, IW / 3, BH,
-                   nullptr, "View.AxesTicksY", option_cb);
-      view.value[5] =
-        valueInput(L + 2 * WB + 2 * IW / 3, 2 * WB + 2 * BH, IW / 3, BH,
-                   "Axes ticks", "View.AxesTicksZ", option_cb);
-
-      view.input[7] = input(L + 2 * WB, 2 * WB + 3 * BH, IW / 3, BH, nullptr,
-                            "View.AxesFormatX", option_cb);
-      view.input[8] = input(L + 2 * WB + 1 * IW / 3, 2 * WB + 3 * BH, IW / 3,
-                            BH, nullptr, "View.AxesFormatY", option_cb);
-      view.input[9] = input(L + 2 * WB + 2 * IW / 3, 2 * WB + 3 * BH, IW / 3,
-                            BH, "Axes format", "View.AxesFormatZ", option_cb);
-
-      view.input[10] = input(L + 2 * WB, 2 * WB + 4 * BH, IW / 3, BH, nullptr,
-                             "View.AxesLabelX", option_cb);
-      view.input[11] = input(L + 2 * WB + 1 * IW / 3, 2 * WB + 4 * BH, IW / 3,
-                             BH, nullptr, "View.AxesLabelY", option_cb);
-      view.input[12] = input(L + 2 * WB + 2 * IW / 3, 2 * WB + 4 * BH, IW / 3,
-                             BH, "Axes labels", "View.AxesLabelZ", option_cb);
-
-      view.butt[25] = checkButton(L + 2 * WB, 2 * WB + 5 * BH, BW, BH,
-                                  "Position 3D axes automatically",
-                                  "View.AxesAutoPosition", option_cb);
-
-      view.value[13] = valueInput(L + 2 * WB, 2 * WB + 6 * BH, IW / 3, BH,
-                                  nullptr, "View.AxesMinX", option_cb);
-      view.value[14] = valueInput(L + 2 * WB + IW / 3, 2 * WB + 6 * BH, IW / 3,
-                                  BH, nullptr, "View.AxesMinY", option_cb);
-      view.value[15] =
-        valueInput(L + 2 * WB + 2 * IW / 3, 2 * WB + 6 * BH, IW / 3, BH,
-                   "3D axes minimum", "View.AxesMinZ", option_cb);
-
-      view.value[16] = valueInput(L + 2 * WB, 2 * WB + 7 * BH, IW / 3, BH,
-                                  nullptr, "View.AxesMaxX", option_cb);
-      view.value[17] = valueInput(L + 2 * WB + IW / 3, 2 * WB + 7 * BH, IW / 3,
-                                  BH, nullptr, "View.AxesMaxY", option_cb);
-      view.value[18] =
-        valueInput(L + 2 * WB + 2 * IW / 3, 2 * WB + 7 * BH, IW / 3, BH,
-                   "3D axes maximum", "View.AxesMaxZ", option_cb);
-
-      view.choice[16] = choice(L + 2 * WB, 2 * WB + 8 * BH, IW, BH,
-                               "2D axes/value scale position",
-                               "View.AutoPosition", nullptr, option_cb);
-
-      view.value[20] = valueInput(L + 2 * WB, 2 * WB + 9 * BH, IW / 2, BH,
-                                  nullptr, "View.PositionX", option_cb);
-      view.value[21] =
-        valueInput(L + 2 * WB + IW / 2, 2 * WB + 9 * BH, IW / 2, BH,
-                   "2D axes/value scale position", "View.PositionY", option_cb);
-
-      view.value[22] = valueInput(L + 2 * WB, 2 * WB + 10 * BH, IW / 2, BH,
-                                  nullptr, "View.Width", option_cb);
-      view.value[23] =
-        valueInput(L + 2 * WB + IW / 2, 2 * WB + 10 * BH, IW / 2, BH,
-                   "2D axes/value scale size", "View.Height", option_cb);
-
-      o->end();
-    }
-    {
-      Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB,
-                                 height - 2 * WB - BH, "Visibility");
-      o->hide();
-
-      view.butt[4] =
-        checkButton(L + 2 * WB, 2 * WB + 1 * BH, BW, BH, "Show value scale",
-                    "View.ShowScale (Alt+i)", option_cb);
-      view.choice[12] =
-        choice(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Time display",
-               "View.ShowTime", nullptr, option_cb);
-
-      view.butt[5] =
-        checkButton(L + 2 * WB, 2 * WB + 3 * BH, BW, BH, "Show annotations",
-                    "View.DrawStrings (Alt+n)", option_cb);
-
-      view.butt[10] = checkButton(L + 2 * WB, 2 * WB + 4 * BH, BW / 2 - WB, BH,
-                                  "Draw element outlines",
-                                  "View.ShowElement (Alt+e)", option_cb);
-
-      view.butt[1] = checkButton(
-        L + width / 2, 2 * WB + 4 * BH, width - width / 2 - 2 * WB, BH,
-        "Hide interior edges", "View.DrawSkinEdgesOnly", option_cb);
-
-      view.butt[2] =
-        checkButton(L + width / 2, 2 * WB + 5 * BH, width - width / 2 - 2 * WB,
-                    BH, "Hide interior faces", "View.DrawSkinOnly", option_cb);
-
-      static Fl_Menu_Item menu_view_element_types[] = {
-        {"Points", 0, nullptr, nullptr, FL_MENU_TOGGLE},
-        {"Lines", 0, nullptr, nullptr, FL_MENU_TOGGLE},
-        {"Triangles", 0, nullptr, nullptr, FL_MENU_TOGGLE},
-        {"Quadrangles", 0, nullptr, nullptr, FL_MENU_TOGGLE},
-        {"Tetrahedra", 0, nullptr, nullptr, FL_MENU_TOGGLE},
-        {"Hexahedra", 0, nullptr, nullptr, FL_MENU_TOGGLE},
-        {"Prisms", 0, nullptr, nullptr, FL_MENU_TOGGLE},
-        {"Pyramids", 0, nullptr, nullptr, FL_MENU_TOGGLE},
-        {"Trihedra", 0, nullptr, nullptr, FL_MENU_TOGGLE},
-        {"Polygons", 0, nullptr, nullptr, FL_MENU_TOGGLE},
-        {"Polyhedra", 0, nullptr, nullptr, FL_MENU_TOGGLE},
-        {nullptr}};
-
-      view.menu[1] = toggleMenu(
-        L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Elements",
-        "View.DrawPoints, View.DrawLines, View.DrawTriangles, "
-        "View.DrawQuadrangles, View.DrawTetrahedra, View.DrawHexahedra, "
-        "View.DrawPrisms, View.DrawPyramids, View.DrawTrihedra, "
-        "View.DrawPolygons, View.DrawPolyhedra",
-        menu_view_element_types);
-
-      view.value[6] = valueInput(L + 3 * WB + IW, 2 * WB + 6 * BH, IW / 3, BH,
-                                 "Sampling", "View.Sampling", option_cb);
-      view.value[6]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
-      view.choice[9] =
-        choice(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Element boundary mode",
-               "View.Boundary", nullptr, option_cb);
-
-      view.value[0] = valueInput(L + 2 * WB, 2 * WB + 8 * BH, IW / 2, BH,
-                                 nullptr, "View.Normals", option_cb);
-      view.value[0]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
-
-      view.value[1] =
-        valueInput(L + 2 * WB + IW / 2, 2 * WB + 8 * BH, IW / 2, BH,
-                   "Normals and tangents", "View.Tangents", option_cb);
-      view.value[1]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
-
-      static Fl_Menu_Item menu_view_field_types[] = {
-        {"Scalar", 0, nullptr, nullptr, FL_MENU_TOGGLE},
-        {"Vector", 0, nullptr, nullptr, FL_MENU_TOGGLE},
-        {"Tensor", 0, nullptr, nullptr, FL_MENU_TOGGLE},
-        {nullptr}};
-      view.menu[0] =
-        toggleMenu(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Fields",
-                   "View.DrawScalars, View.DrawVectors, View.DrawTensors",
-                   menu_view_field_types);
-      view.choice[14] = choice(L + 2 * WB, 2 * WB + 10 * BH, IW, BH, nullptr,
-                               "View.ForceNumComponents", nullptr, option_cb);
-
-      // the 9 fields of the map widen together
-      int W = width - 5 * WB - IW;
-      static const char *maps[9] = {
-        "View.ComponentMap0", "View.ComponentMap1", "View.ComponentMap2",
-        "View.ComponentMap3", "View.ComponentMap4", "View.ComponentMap5",
-        "View.ComponentMap6", "View.ComponentMap7", "View.ComponentMap8"};
-      Fl_Group *row = new Fl_Group(L + 3 * WB + IW, 2 * WB + 10 * BH, W, BH);
-      for(int i = 0; i < 9; i++) {
-        int w = W / 9;
-        view.value[70 + i] = valueInput(
-          L + 3 * WB + IW + i * w, 2 * WB + 10 * BH, (i < 8) ? w : W - 8 * w,
-          BH, nullptr, maps[i], -1, 9, 1, option_cb);
-      }
-      row->end();
-
-      o->end();
-    }
-    {
-      Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB,
-                                 height - 2 * WB - BH, "Transfo");
-      o->hide();
-
-      // the matrix, the offsets and the raise move together, as one table
-      Fl_Group *table = new Fl_Group(L + 2 * WB, 2 * WB + 1 * BH,
-                                     2 * IW - 3 * WB + 7 * IW / 10, 4 * BH);
-      Fl_Box *b = new Fl_Box(FL_NO_BOX, L + 2 * WB, 2 * WB + 1 * BH, IW, BH,
-                             "Coordinate transformation:");
-      b->align(FL_ALIGN_INSIDE | FL_ALIGN_LEFT);
-
-      int ss = 2 * IW / 3 / 3 + 4;
-      view.value[51] = valueInput(L + 2 * WB, 2 * WB + 2 * BH, ss, BH, nullptr,
-                                  "View.TransformXX");
-      view.value[52] = valueInput(L + 2 * WB + ss, 2 * WB + 2 * BH, ss, BH,
-                                  nullptr, "View.TransformXY");
-      view.value[53] = valueInput(L + 2 * WB + 2 * ss, 2 * WB + 2 * BH, ss, BH,
-                                  " X", "View.TransformXZ");
-      view.value[40] =
-        valueInput<inputValueFloat>(L + 2 * WB + IW, 2 * WB + 2 * BH,
-                                    7 * IW / 10, BH, nullptr, "View.OffsetX");
-
-      view.value[54] = valueInput(L + 2 * WB, 2 * WB + 3 * BH, ss, BH, nullptr,
-                                  "View.TransformYX");
-      view.value[55] = valueInput(L + 2 * WB + ss, 2 * WB + 3 * BH, ss, BH,
-                                  nullptr, "View.TransformYY");
-      view.value[56] = valueInput(L + 2 * WB + 2 * ss, 2 * WB + 3 * BH, ss, BH,
-                                  " Y +", "View.TransformYZ");
-      view.value[41] =
-        valueInput<inputValueFloat>(L + 2 * WB + IW, 2 * WB + 3 * BH,
-                                    7 * IW / 10, BH, nullptr, "View.OffsetY");
-
-      view.value[57] = valueInput(L + 2 * WB, 2 * WB + 4 * BH, ss, BH, nullptr,
-                                  "View.TransformZX");
-      view.value[58] = valueInput(L + 2 * WB + ss, 2 * WB + 4 * BH, ss, BH,
-                                  nullptr, "View.TransformZY");
-      view.value[59] = valueInput(L + 2 * WB + 2 * ss, 2 * WB + 4 * BH, ss, BH,
-                                  " Z", "View.TransformZZ");
-      view.value[42] =
-        valueInput<inputValueFloat>(L + 2 * WB + IW, 2 * WB + 4 * BH,
-                                    7 * IW / 10, BH, nullptr, "View.OffsetZ");
-
-      Fl_Box *b2 = new Fl_Box(FL_NO_BOX, L + 2 * WB + 2 * IW - 3 * WB,
-                              2 * WB + 1 * BH, 7 * IW / 10, BH, "Raise:");
-      b2->align(FL_ALIGN_INSIDE | FL_ALIGN_LEFT);
-
-      view.value[43] = valueInput<inputValueFloat>(L + 2 * WB + 2 * IW - 3 * WB,
-                                                   2 * WB + 2 * BH, 7 * IW / 10,
-                                                   BH, nullptr, "View.RaiseX");
-      view.value[44] = valueInput<inputValueFloat>(L + 2 * WB + 2 * IW - 3 * WB,
-                                                   2 * WB + 3 * BH, 7 * IW / 10,
-                                                   BH, nullptr, "View.RaiseY");
-      view.value[45] = valueInput<inputValueFloat>(L + 2 * WB + 2 * IW - 3 * WB,
-                                                   2 * WB + 4 * BH, 7 * IW / 10,
-                                                   BH, nullptr, "View.RaiseZ");
-      table->end();
-      view.value[46] =
-        valueInput<inputValueFloat>(L + 2 * WB, 2 * WB + 5 * BH, 3 * ss, BH,
-                                    "Normal raise", "View.NormalRaise");
-
-      for(int i = 40; i <= 46; i++) {
-        view.value[i]->align(FL_ALIGN_RIGHT);
-        view.value[i]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
-        view.value[i]->callback(option_cb);
-      }
-      for(int i = 51; i <= 59; i++) {
-        view.value[i]->minimum(-1.);
-        view.value[i]->maximum(1.);
-        if(CTX::instance()->inputScrolling) view.value[i]->step(0.1);
-        view.value[i]->align(FL_ALIGN_RIGHT);
-        view.value[i]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
-        view.value[i]->callback(option_cb);
-      }
-
-      view.butt[6] = checkButton(L + 2 * WB, 2 * WB + 6 * BH, BW, BH,
-                                 "Use general transformation expressions",
-                                 "View.UseGeneralizedRaise", option_cb);
-
-      view.choice[11] =
-        choice(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Data source",
-               "View.GeneralizedRaiseView", nullptr, option_cb, nullptr, -1);
-      view.choice[11]->add("Self");
-
-      view.value[2] =
-        valueInput<inputValueFloat>(L + 2 * WB, 2 * WB + 8 * BH, IW, BH,
-                                    "Factor", "View.GeneralizedRaiseFactor");
-      view.value[2]->align(FL_ALIGN_RIGHT);
-      view.value[2]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
-      view.value[2]->callback(option_cb);
-
-      view.input[4] = input(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "X expression",
-                            "View.GeneralizedRaiseX", option_cb);
-
-      view.input[5] =
-        input(L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Y expression",
-              "View.GeneralizedRaiseY", option_cb);
-
-      view.input[6] =
-        input(L + 2 * WB, 2 * WB + 11 * BH, IW, BH, "Z expression",
-              "View.GeneralizedRaiseZ", option_cb);
-
-      o->end();
-    }
-    {
-      Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB,
-                                 height - 2 * WB - BH, "Aspect");
-      o->hide();
-
-      view.value[12] =
-        valueInput(L + 2 * WB, 2 * WB + 1 * BH, IW, BH,
-                   "Element shrinking factor", "View.Explode", option_cb);
-      view.value[12]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
-
-      view.choice[5] =
-        choice(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Point display",
-               "View.PointType", nullptr, option_cb);
-
-      view.value[61] = valueInput(L + 2 * WB, 2 * WB + 3 * BH, IW, BH,
-                                  "Point size", "View.PointSize", option_cb);
-
-      view.choice[6] =
-        choice(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Line display",
-               "View.LineType", nullptr, option_cb);
-
-      view.butt[26] = checkButton(C2, 2 * WB + 4 * BH, RW, BH, "Stipple",
-                                  "View.Stipple", option_cb);
-
-      view.value[62] = valueInput(L + 2 * WB, 2 * WB + 5 * BH, IW / 2, BH,
-                                  nullptr, "View.LineWidth", option_cb);
-      view.value[80] =
-        valueInput(L + 2 * WB + IW / 2, 2 * WB + 5 * BH, IW - IW / 2, BH,
-                   "Line / outline width", "View.OutlineWidth", option_cb);
-
-      {
-        view.choice[2] =
-          choice(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Vector display",
-                 "View.VectorType", nullptr, option_cb);
-
-        view.value[64] = valueInput(L + 2 * WB, 2 * WB + 7 * BH, IW / 2, BH,
-                                    nullptr, "View.ArrowSizeMin", option_cb);
-        view.value[60] =
-          valueInput(L + 2 * WB + IW / 2, 2 * WB + 7 * BH, IW / 2, BH,
-                     "Arrow size", "View.ArrowSizeMax", option_cb);
-
-        view.value[63] = valueInput<inputValueFloat>(
-          L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Displacement factor",
-          "View.DisplacementFactor");
-        view.value[63]->minimum(0.);
-        view.value[63]->maximum(1.);
-        if(CTX::instance()->inputScrolling) view.value[63]->step(0.01);
-        view.value[63]->align(FL_ALIGN_RIGHT);
-        view.value[63]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
-        view.value[63]->callback(option_cb);
-
-        view.choice[10] = choice(
-          L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Data source for vector fields",
-          "View.ExternalView", nullptr, option_cb, nullptr, -1);
-        view.choice[10]->add("Self");
-      }
-      view.choice[3] =
-        choice(L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Glyph location",
-               "View.GlyphLocation", nullptr, option_cb);
-      view.choice[15] = choice(C2, 2 * WB + 10 * BH, RW, BH, nullptr,
-                               "View.CenterGlyphs", nullptr, option_cb);
-      view.choice[4] =
-        choice(L + 2 * WB, 2 * WB + 11 * BH, IW, BH, "Tensor display",
-               "View.TensorType", nullptr, option_cb);
-
-      o->end();
-    }
-    {
-      Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB,
-                                 height - 2 * WB - BH, "Color");
-      o->hide();
-
-      view.butt[11] =
-        checkButton(L + 2 * WB, 2 * WB + 1 * BH, BW, BH, "Enable lighting",
-                    "View.Light (Alt+w)", option_cb);
-
-      view.butt[8] =
-        checkButton(L + 2 * WB, 2 * WB + 2 * BH, BW, BH,
-                    "Enable lighting of lines", "View.LightLines", option_cb);
-
-      view.butt[9] =
-        checkButton(L + 2 * WB, 2 * WB + 3 * BH, BW, BH,
-                    "Use two-side lighting", "View.LightTwoSide", option_cb);
-
-      view.butt[12] =
-        checkButton(L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Smooth normals",
-                    "View.SmoothNormals", option_cb);
-
-      view.value[10] = valueInput(L + 2 * WB, 2 * WB + 5 * BH, IW, BH,
-                                  "Smoothing threshold angle",
-                                  "View.AngleSmoothNormals", option_cb);
-      view.value[10]->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
-
-      view.value[79] = valueInput(L + 2 * WB, 2 * WB + 6 * BH, IW, BH,
-                                  "Opacity", "View.Opacity", option_cb);
-      view.value[79]->when(FL_WHEN_CHANGED | FL_WHEN_RELEASE);
-
-      colorButtons("View", ViewOptions_Color, L + 2 * WB, 3 * WB + 7 * BH, IW,
-                   view_color_cb, view.color);
-
-      o->end();
-    }
-    {
-      Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB,
-                                 height - 2 * WB - BH, "Map");
-      o->hide();
-
-      // the predefined maps by name, above the map itself
-      static std::vector<Fl_Menu_Item> menu_colormap;
-      if(menu_colormap.empty()) {
-        for(int i = 0; i < ColorTable_NumPredefined(); i++) {
-          Fl_Menu_Item item = {ColorTable_Name(i), 0, nullptr, nullptr};
-          menu_colormap.push_back(item);
+      const char *axes[3] = {"X", "Y", "Z"}, *labels[3] = {" X", " Y +", " Z"};
+      for(int i = 0; i < 3; i++) {
+        for(int j = 0; j < 3; j++) {
+          Fl_Value_Input *v =
+            valueInput(x + j * ss, y + i * BH, ss, BH,
+                       j == 2 ? labels[i] : nullptr,
+                       fieldTooltip(c + ".Transform" + axes[i] + axes[j]));
+          v->minimum(-1.);
+          v->maximum(1.);
+          if(CTX::instance()->inputScrolling) v->step(0.1);
+          v->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
+          v->callback(option_cb);
         }
-        Fl_Menu_Item last = {nullptr};
-        menu_colormap.push_back(last);
+        // (the offsets and the raise of a view follow the view shown, see
+        // updateViewGroup())
+        const char *offset = fieldTooltip(c + ".Offset" + axes[i]);
+        Fl_Value_Input *off =
+          raise ? valueInput<inputValueFloat>(x + IW, y + i * BH, 7 * IW / 10,
+                                              BH, nullptr, offset) :
+                  valueInput(x + IW, y + i * BH, 7 * IW / 10, BH, nullptr,
+                             offset);
+        if(!raise) {
+          off->minimum(-1.);
+          off->maximum(1.);
+          if(CTX::instance()->inputScrolling) off->step(0.1);
+        }
+        off->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
+        off->callback(option_cb);
+        if(raise) {
+          Fl_Value_Input *r = valueInput<inputValueFloat>(
+            x + 2 * IW - 3 * WB, y + i * BH, 7 * IW / 10, BH, nullptr,
+            fieldTooltip(c + ".Raise" + axes[i]));
+          r->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
+          r->callback(option_cb);
+        }
       }
-      view.choice[17] =
-        choice(L + 2 * WB, 2 * WB + BH, IW, BH, "Predefined colormap",
-               "View.ColormapNumber", &menu_colormap[0], view_colormap_cb);
-      // the keys go to the map widget below
-      view.choice[17]->clear_visible_focus();
+      if(raise) Fl_Group::current()->end();
+      return rows;
+    };
+  };
 
-      // 16:9, but tall enough for its help
-      int cw = width - 4 * WB;
-      view.colorbar =
-        new colorbarWindow(L + 2 * WB, 3 * WB + 2 * BH, cw, 9 * cw / 16);
-      view.colorbar->size(cw,
-                          std::max(9 * cw / 16, view.colorbar->helpHeight()));
-      view.colorbar->callback(view_colorbar_cb);
-
-      o->end();
+  // General
+  b.custom["Select rotation center"] = [this, button](int x, int y, int) {
+    general.selectRotationCenter =
+      button(x, y, "Select", general_options_rotation_center_select_cb);
+    return 0;
+  };
+  b.custom["Show session file"] = showFile("session");
+  b.custom["Show option file"] = showFile("option");
+  b.custom["Restore default options"] = [](int x, int y, int width) {
+    Fl_Button *p = new Fl_Button(x, y, width - 4 * WB, BH,
+                                 "Restore all options to default settings");
+    p->callback(options_restore_defaults_cb);
+    if(CTX::instance()->guiDark)
+      p->color(FL_DARK_RED);
+    else
+      p->labelcolor(FL_DARK_RED);
+    return 1;
+  };
+  b.custom["Fit axes to visible"] = [this](int x, int y, int) {
+    general.fitAxes = new Fl_Button(x, y, IW, BH, "Fit to visible");
+    general.fitAxes->callback(general_options_axes_fit_cb);
+    return 1;
+  };
+  b.custom["Edit arrow"] = [button](int x, int y, int) {
+    button(x, y, "Edit arrow", general_arrow_param_cb);
+    return 0;
+  };
+  b.custom["Font engine"] = [](int x, int y, int) {
+    static Fl_Menu_Item engines[] = {{"Native", 0, nullptr, nullptr},
+                                     {"StringTexture", 0, nullptr, nullptr},
+                                     {"Embedded", 0, nullptr, nullptr},
+                                     {nullptr}};
+    choice(x, y, IW, BH, "Font rendering engine",
+           "General.GraphicsFontEngine", engines, option_cb);
+    return 1;
+  };
+  b.custom["Graphics font"] = [](int x, int y, int w) {
+    choice(x, y, w, BH, nullptr, "General.GraphicsFont", menu_font_names,
+           option_cb);
+    return 0;
+  };
+  b.custom["Graphics font of titles"] = [](int x, int y, int w) {
+    choice(x, y, w, BH, nullptr, "General.GraphicsFontTitle", menu_font_names,
+           option_cb);
+    return 0;
+  };
+  b.custom["Light sphere"] = [this, L, width](int x, int y, int) {
+    // the ball beside the two rows of the light, after the longer of their
+    // labels
+    fl_font(FL_HELVETICA, FL_NORMAL_SIZE);
+    double l1 = fl_width(boundWidget("General.Light0Z")->label());
+    double l2 = fl_width(boundWidget("General.Brightness")->label());
+    int xs = x + IW + WB + (int)std::max(l1, l2);
+    int ws = std::min(2 * BH, L + width - 2 * WB - xs);
+    general.sphere =
+      new spherePositionWidget(L + width - 2 * WB - ws, y - BH, ws);
+    general.sphere->callback(general_light_sphere_cb);
+    return 0;
+  };
+  b.custom["General colors"] =
+    colors("General", GeneralOptions_Color, color_cb);
+  b.custom["Configure gamepad"] = [this](int x, int y, int width) {
+    general.gamepadconfig =
+      new Fl_Button(x, y, width - 4 * WB, BH, "Configure Gamepad");
+    general.gamepadconfig->callback(general_gmpdcf_cb);
+    return 1;
+  };
+  // Geometry
+  b.custom["Geometry transformation"] = transformation("Geometry", false);
+  b.custom["Geometry colors"] =
+    colors("Geometry", GeometryOptions_Color, color_cb);
+  // Mesh
+  static Fl_Menu_Item meshElementTypes[] = {
+    {"Triangles", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+    {"Quadrangles", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+    {"Tetrahedra", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+    {"Hexahedra", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+    {"Prisms", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+    {"Pyramids", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+    {"Trihedra", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+    {"Polygons", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+    {"Polyhedra", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+    {nullptr}};
+  b.custom["Mesh element types"] =
+    toggles("Elements",
+            "Mesh.Triangles, Mesh.Quadrangles, Mesh.Tetrahedra, "
+            "Mesh.Hexahedra, Mesh.Prisms, Mesh.Pyramids, Mesh.Trihedra, "
+            "Mesh.Polygons, Mesh.Polyhedra",
+            meshElementTypes);
+  b.custom["Mesh colors"] = colors("Mesh", MeshOptions_Color, color_cb);
+  // View
+  b.custom["Range minimum"] = [this](int x, int y, int w) {
+    view.rangeMin = new Fl_Button(x, y, w, BH, "Min");
+    view.rangeMin->callback(view_range_cb, (void *)"range_min");
+    return 0;
+  };
+  b.custom["Range maximum"] = [this](int x, int y, int w) {
+    view.rangeMax = new Fl_Button(x, y, w, BH, "Max");
+    view.rangeMax->callback(view_range_cb, (void *)"range_max");
+    return 0;
+  };
+  static Fl_Menu_Item viewElementTypes[] = {
+    {"Points", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+    {"Lines", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+    {"Triangles", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+    {"Quadrangles", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+    {"Tetrahedra", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+    {"Hexahedra", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+    {"Prisms", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+    {"Pyramids", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+    {"Trihedra", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+    {"Polygons", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+    {"Polyhedra", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+    {nullptr}};
+  b.custom["View element types"] =
+    toggles("Elements",
+            "View.DrawPoints, View.DrawLines, View.DrawTriangles, "
+            "View.DrawQuadrangles, View.DrawTetrahedra, View.DrawHexahedra, "
+            "View.DrawPrisms, View.DrawPyramids, View.DrawTrihedra, "
+            "View.DrawPolygons, View.DrawPolyhedra",
+            viewElementTypes);
+  static Fl_Menu_Item viewFieldTypes[] = {
+    {"Scalar", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+    {"Vector", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+    {"Tensor", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+    {nullptr}};
+  b.custom["View field types"] =
+    toggles("Fields", "View.DrawScalars, View.DrawVectors, View.DrawTensors",
+            viewFieldTypes);
+  b.custom["Component map"] = [width](int x, int y, int) {
+    // the 9 fields of the map widen together
+    int W = width - 5 * WB - IW, w = W / 9;
+    Fl_Group *row = new Fl_Group(x + WB + IW, y, W, BH);
+    for(int i = 0; i < 9; i++)
+      valueInput(x + WB + IW + i * w, y, (i < 8) ? w : W - 8 * w, BH, nullptr,
+                 fieldTooltip("View.ComponentMap" + std::to_string(i)), -1, 9,
+                 1, option_cb);
+    row->end();
+    return 0;
+  };
+  b.custom["View transformation"] = transformation("View", true);
+  b.custom["Generalized raise view"] = viewChoice(
+    &view.generalizedRaiseView, "Data source", "View.GeneralizedRaiseView");
+  b.custom["External view"] = viewChoice(
+    &view.externalView, "Data source for vector fields", "View.ExternalView");
+  b.custom["View colors"] = colors("View", ViewOptions_Color, view_color_cb);
+  b.custom["Colormap"] = [this](int x, int y, int) {
+    // the predefined maps by name, above the map itself
+    static std::vector<Fl_Menu_Item> maps;
+    if(maps.empty()) {
+      for(int i = 0; i < ColorTable_NumPredefined(); i++) {
+        Fl_Menu_Item item = {ColorTable_Name(i), 0, nullptr, nullptr};
+        maps.push_back(item);
+      }
+      Fl_Menu_Item last = {nullptr};
+      maps.push_back(last);
     }
+    view.colormap = choice(x, y, IW, BH, "Predefined colormap",
+                           fieldTooltip("View.ColormapNumber"), &maps[0],
+                           view_colormap_cb);
+    // the keys go to the map widget below
+    view.colormap->clear_visible_focus();
+    return 1;
+  };
+  b.custom["Colorbar"] = [this](int x, int y, int width) {
+    // 16:9, but tall enough for its help
+    int cw = width - 4 * WB;
+    view.colorbar = new colorbarWindow(x, y + WB, cw, 9 * cw / 16);
+    view.colorbar->size(cw,
+                        std::max(9 * cw / 16, view.colorbar->helpHeight()));
+    view.colorbar->callback(view_colorbar_cb);
+    return 1;
+  };
+
+  // the pages, each a group of its sections, the first one shown
+  Fl_Group **groups[6] = {&general.group, &geo.group,  &mesh.group,
+                          &solver.group,  &post.group, &view.group};
+  int c = 0;
+  for(const optionPage &page : OptionPages()) {
+    Fl_Group *g = new Fl_Group(L, 0, width, height);
+    g->copy_label((page.name + " Options").c_str());
+    if(c) g->hide();
+    for(const optionSection &sec : page.sections)
+      buildSection(sec, L, width, height, b);
+    g->end();
+    *groups[c++] = g;
   }
-  view.group->end();
+
+  // what this build cannot do
+#if !defined(_OPENMP)
+  boundWidget("General.NumThreads")->deactivate();
+#endif
+#if !defined(HAVE_VISUDEV)
+  boundWidget("General.HeavyVisualization")->deactivate();
+#endif
+#if !defined(HAVE_OCC)
+  headings()["Open CASCADE model healing options:"]->deactivate();
+  for(const char *o :
+      {"Geometry.OCCFixDegenerated", "Geometry.OCCFixSmallEdges",
+       "Geometry.OCCFixSmallFaces", "Geometry.OCCSewFaces",
+       "Geometry.OCCMakeSolids", "Geometry.OCCScaling"})
+    boundWidget(o)->deactivate();
+#endif
+#if !defined(HAVE_NETGEN)
+  boundWidget("Mesh.OptimizeNetgen")->deactivate();
+#endif
+  // (a check box for one of its values)
+  bindValues(boundWidget("Mesh.HighOrderOptimize"), {0, 2});
 
   scroll->end();
 
@@ -2896,18 +1843,30 @@ void optionWindow::resetBrowser()
 void optionWindow::resetExternalViewList()
 {
   char str[32];
-  view.choice[10]->clear();
-  view.choice[11]->clear();
-  view.choice[10]->add("Self");
-  view.choice[11]->add("Self");
-  for(std::size_t i = 0; i < PView::list.size(); i++) {
-    sprintf(str, "View [%zu]", i);
-    view.choice[10]->add(str, 0, nullptr);
-    view.choice[11]->add(str, 0, nullptr);
+  for(Fl_Choice *c : {view.externalView, view.generalizedRaiseView}) {
+    c->clear();
+    c->add("Self");
+    for(std::size_t i = 0; i < PView::list.size(); i++) {
+      sprintf(str, "View [%zu]", i);
+      c->add(str, 0, nullptr);
+    }
   }
   if(view.index >= 0 && view.index < (int)PView::list.size()) {
     opt_view_external_view(view.index, GMSH_GUI, 0);
     opt_view_gen_raise_view(view.index, GMSH_GUI, 0);
+  }
+}
+
+// the widgets enabled or greyed out together, given or by their options
+static void setActive(bool on, std::initializer_list<Fl_Widget *> widgets)
+{
+  for(Fl_Widget *w : widgets) on ? w->activate() : w->deactivate();
+}
+static void setActive(bool on, std::initializer_list<const char *> options)
+{
+  for(const char *o : options) {
+    auto it = steppers().find(o);
+    setActive(on, {it != steppers().end() ? it->second : boundWidget(o)});
   }
 }
 
@@ -2922,76 +1881,58 @@ void optionWindow::updateViewGroup(int index)
 
   double maxval = std::max(fabs(data->getMin()), fabs(data->getMax()));
   if(!maxval) maxval = 1.;
-  double val1 = 10. * CTX::instance()->lc;
-  double val2 = 2. * CTX::instance()->lc / maxval;
+  double lc = CTX::instance()->lc, val1 = 10. * lc, val2 = 2. * lc / maxval;
 
-  if(data->getNumPoints() || data->getNumLines()) {
-    ((Fl_Menu_Item *)view.choice[13]->menu())[1].activate();
-    ((Fl_Menu_Item *)view.choice[13]->menu())[2].activate();
+  // a range that follows the view, and the step of its scrolling
+  auto range = [](const char *option, double min, double max, double step) {
+    Fl_Valuator *v = boundValue(option);
+    if(CTX::instance()->inputScrolling) v->step(step, 1);
+    v->minimum(min);
+    v->maximum(max);
+  };
+
+  // the plot types the data allows: the 2D plots need points or lines, the 3D
+  // plot elements
+  Fl_Menu_Item *types = (Fl_Menu_Item *)boundChoice("View.Type")->menu();
+  for(int i : {1, 2}) {
+    if(data->getNumPoints() || data->getNumLines())
+      types[i].activate();
+    else
+      types[i].deactivate();
   }
-  else {
-    ((Fl_Menu_Item *)view.choice[13]->menu())[1].deactivate();
-    ((Fl_Menu_Item *)view.choice[13]->menu())[2].deactivate();
-  }
+  view.hasElements = data->hasElements();
+  if(view.hasElements)
+    types[0].activate();
+  else
+    types[0].deactivate();
+  // the range, the intervals and the adaptation apply to elements (see also
+  // updateActive())
+  setActive(view.hasElements,
+            {"View.NbIso", "View.NumberFormat", "View.IntervalsType",
+             "View.ScaleType", "View.RangeType", "View.SaturateValues",
+             "View.CustomMin", "View.ScaleThreshold", "View.CustomMax",
+             "View.AdaptVisualizationGrid", "View.AdaptSkinOnly",
+             "View.MaxRecursionLevel", "View.TargetError"});
+  setActive(view.hasElements, {view.rangeMin, view.rangeMax});
 
   opt_view_colormap_number(index, GMSH_GUI, 0);
-  for(int i = 13; i <= 18; i++) {
-    if(CTX::instance()->inputScrolling)
-      view.value[i]->step(CTX::instance()->lc / 200., 1);
-    view.value[i]->minimum(-CTX::instance()->lc);
-    view.value[i]->maximum(CTX::instance()->lc);
-  }
+  for(const char *o : {"View.AxesMinX", "View.AxesMinY", "View.AxesMinZ",
+                       "View.AxesMaxX", "View.AxesMaxY", "View.AxesMaxZ"})
+    range(o, -lc, lc, lc / 200.);
+  for(const char *o : {"View.OffsetX", "View.OffsetY", "View.OffsetZ"})
+    range(o, -val1, val1, val1 / 200.);
+  for(const char *o : {"View.RaiseX", "View.RaiseY", "View.RaiseZ",
+                       "View.NormalRaise", "View.GeneralizedRaiseFactor"})
+    range(o, -val2, val2, val2 / 200.);
+  range("View.DisplacementFactor", 0., val2, val2 / 100.);
 
-  if(data->hasElements()) {
-    view.range->activate();
-    ((Fl_Menu_Item *)view.choice[13]->menu())[0].activate();
-  }
-  else {
-    view.range->deactivate();
-    ((Fl_Menu_Item *)view.choice[13]->menu())[0].deactivate();
-  }
-
-  for(int i = 40; i <= 42; i++) {
-    if(CTX::instance()->inputScrolling) view.value[i]->step(val1 / 200., 1);
-    view.value[i]->minimum(-val1);
-    view.value[i]->maximum(val1);
-  }
-  for(int i = 43; i <= 46; i++) {
-    if(CTX::instance()->inputScrolling) view.value[i]->step(val2 / 200., 1);
-    view.value[i]->minimum(-val2);
-    view.value[i]->maximum(val2);
-  }
-  if(CTX::instance()->inputScrolling) view.value[2]->step(val2 / 200., 1);
-  view.value[2]->minimum(-val2);
-  view.value[2]->maximum(val2);
-
-  if(data->getNumTimeSteps() == 1) {
-    view.value[50]->deactivate();
-    view.push[3]->deactivate();
-    view.push[4]->deactivate();
-    view.label[0]->deactivate();
-  }
-  else {
-    view.value[50]->activate();
-    view.push[3]->activate();
-    view.push[4]->activate();
-    view.label[0]->activate();
-  }
-  view.value[50]->maximum(data->getNumTimeSteps() - 1);
-
-  double val3 = 2. * CTX::instance()->lc / maxval;
-  if(CTX::instance()->inputScrolling) view.value[63]->step(val3 / 100., 1);
-  view.value[63]->maximum(val3);
+  setActive(data->getNumTimeSteps() != 1, {"View.TimeStep"});
+  boundValue("View.TimeStep")->maximum(data->getNumTimeSteps() - 1);
 
   // (the widgets bound to the options of the view shown by showGroup())
   view.colorbar->update(v->getTag(), data->getMin(), data->getMax());
 }
 
-// the widgets enabled or greyed out together
-static void setActive(bool on, std::initializer_list<Fl_Widget *> widgets)
-{
-  for(Fl_Widget *w : widgets) on ? w->activate() : w->deactivate();
-}
 
 void optionWindow::updateActive()
 {
@@ -3000,8 +1941,9 @@ void optionWindow::updateActive()
   // state does not change)
   // (no drawing here: this is also called by the option setters; laid out
   // again only when the button shows or hides)
-  if(general.butt[2]->value() != (redraw->visible() != 0)) {
-    if(general.butt[2]->value())
+  bool fastRedraw = boundButton("General.FastRedraw")->value();
+  if(fastRedraw != (redraw->visible() != 0)) {
+    if(fastRedraw)
       redraw->show();
     else
       redraw->hide();
@@ -3009,91 +1951,87 @@ void optionWindow::updateActive()
   }
   {
     // studio shading takes the direction of light 0 alone
-    if(general.butt[3]->value() && general.choice[8]->value())
-      general.value[13]->deactivate();
-    else
-      general.value[13]->activate();
-    setActive(general.butt[3]->value(),
-              {general.choice[8], general.value[33], general.value[34],
-               general.value[35], geo.value[21], geo.choice[6], mesh.value[27],
-               mesh.choice[11], view.value[79]});
+    bool shaders = boundButton("General.Shaders")->value();
+    setActive(!(shaders && boundChoice("General.Shading")->value()),
+              {"General.Light0W"});
+    setActive(shaders,
+              {"General.Shading", "General.StudioSamples",
+               "General.StudioFloorOffset", "General.StudioLightSpread",
+               "Geometry.Opacity", "Geometry.OpacityMode", "Mesh.Opacity",
+               "Mesh.OpacityMode", "View.Opacity"});
   }
   {
-    setActive(
-      !(general.butt[15]->value()),
-      {general.push[0], general.value[8], general.value[9], general.value[10]});
+    bool given = !boundButton("General.RotationCenterGravity")->value();
+    setActive(given, {"General.RotationCenterX", "General.RotationCenterY",
+                      "General.RotationCenterZ"});
+    setActive(given, {general.selectRotationCenter});
   }
+  setActive(boundChoice("General.Axes")->value(),
+            {"General.AxesTicksX", "General.AxesTicksY", "General.AxesTicksZ",
+             "General.AxesFormatX", "General.AxesFormatY",
+             "General.AxesFormatZ", "General.AxesLabelX", "General.AxesLabelY",
+             "General.AxesLabelZ"});
   {
-    setActive(general.choice[4]->value(),
-              {general.value[17], general.value[18], general.value[19],
-               general.input[3], general.input[4], general.input[5],
-               general.input[6], general.input[7], general.input[8]});
+    bool given = !boundButton("General.AxesAutoPosition")->value();
+    setActive(given, {"General.AxesMinX", "General.AxesMinY",
+                      "General.AxesMinZ", "General.AxesMaxX",
+                      "General.AxesMaxY", "General.AxesMaxZ"});
+    setActive(given, {general.fitAxes});
   }
+  setActive(boundButton("General.SmallAxes")->value(),
+            {"General.SmallAxesPositionX", "General.SmallAxesPositionY"});
   {
-    setActive(!(general.butt[0]->value()),
-              {general.value[20], general.value[21], general.value[22],
-               general.value[23], general.value[24], general.value[25],
-               general.push[1]});
-  }
-  {
-    setActive(general.butt[1]->value(), {general.value[26], general.value[27]});
-  }
-  {
-    if(general.butt[19]->value()) {
+    if(boundButton("General.Gamepad")->value()) {
       if(CTX::instance()->gamepad && CTX::instance()->gamepad->active)
         general.gamepadconfig->activate();
     }
     else {
       general.gamepadconfig->deactivate();
     }
-    setActive(general.butt[17]->value(), {general.value[29]});
-    setActive(general.butt[18]->value(),
-              {general.value[30], general.value[31]});
+    setActive(boundButton("General.Stereo")->value(),
+              {"General.CameraEyeSeparationRatio"});
+    setActive(boundButton("General.Camera")->value(),
+              {"General.CameraFocalLengthRatio", "General.CameraAperture"});
   }
   {
-    if(geo.choice[3]->value() == 1) {
-      for(int i = 7; i <= 18; i++) geo.value[i]->activate();
+    bool on = boundChoice("Geometry.Transform")->value() == 1;
+    for(const char *a : {"X", "Y", "Z"}) {
+      for(const char *b : {"X", "Y", "Z"})
+        setActive(on, {boundWidget(std::string("Geometry.Transform") + a + b)});
+      setActive(on, {boundWidget(std::string("Geometry.Offset") + a)});
     }
-    else {
-      for(int i = 7; i <= 18; i++) geo.value[i]->deactivate();
-    }
+  }
+  setActive(boundButton("Mesh.Light")->value(),
+            {"Mesh.LightTwoSide", "Mesh.SmoothNormals", "Mesh.LightLines",
+             "Mesh.AngleSmoothNormals"});
+  {
+    // (the range and the adaptation only apply to a view with elements)
+    bool custom =
+      view.hasElements && boundChoice("View.RangeType")->value() == 1;
+    setActive(custom,
+              {"View.CustomMin", "View.CustomMax", "View.SaturateValues"});
+    setActive(custom, {view.rangeMin, view.rangeMax});
+    bool adapt = view.hasElements &&
+                 boundButton("View.AdaptVisualizationGrid")->value();
+    setActive(adapt, {"View.TargetError", "View.MaxRecursionLevel"});
   }
   {
-    setActive(view.choice[7]->value() == 1,
-              {view.value[31], view.value[32], view.push[1], view.push[2],
-               view.butt[38]});
+    bool on = boundButton("View.UseGeneralizedRaise")->value();
+    setActive(on, {"View.GeneralizedRaiseFactor", "View.GeneralizedRaiseX",
+                   "View.GeneralizedRaiseY", "View.GeneralizedRaiseZ"});
+    setActive(on, {view.generalizedRaiseView});
   }
-  {
-    setActive(view.butt[0]->value(),
-              {view.push[5], view.push[6], view.value[33], view.value[34],
-               view.label[1]});
-  }
-  {
-    setActive(view.butt[6]->value(),
-              {view.choice[11], view.value[2], view.input[4], view.input[5],
-               view.input[6]});
-  }
-  {
-    setActive(mesh.butt[17]->value(),
-              {mesh.butt[18], mesh.butt[19], mesh.choice[10], mesh.value[18]});
-  }
-  {
-    setActive(view.butt[11]->value(),
-              {view.butt[8], view.butt[9], view.butt[12], view.value[10]});
-  }
-  {
-    setActive(view.choice[8]->value(),
-              {view.value[3], view.value[4], view.value[5], view.input[7],
-               view.input[8], view.input[9], view.input[10], view.input[11],
-               view.input[12]});
-  }
-  {
-    setActive(!(view.butt[25]->value()),
-              {view.value[13], view.value[14], view.value[15], view.value[16],
-               view.value[17], view.value[18]});
-  }
-  {
-    setActive(view.choice[16]->value() == 0 || view.choice[16]->value() == 12,
-              {view.value[20], view.value[21], view.value[22], view.value[23]});
-  }
+  setActive(boundButton("View.Light")->value(),
+            {"View.LightLines", "View.LightTwoSide", "View.SmoothNormals",
+             "View.AngleSmoothNormals"});
+  setActive(boundChoice("View.Axes")->value(),
+            {"View.AxesTicksX", "View.AxesTicksY", "View.AxesTicksZ",
+             "View.AxesFormatX", "View.AxesFormatY", "View.AxesFormatZ",
+             "View.AxesLabelX", "View.AxesLabelY", "View.AxesLabelZ"});
+  setActive(!boundButton("View.AxesAutoPosition")->value(),
+            {"View.AxesMinX", "View.AxesMinY", "View.AxesMinZ", "View.AxesMaxX",
+             "View.AxesMaxY", "View.AxesMaxZ"});
+  int position = boundChoice("View.AutoPosition")->value();
+  setActive(position == 0 || position == 12,
+            {"View.PositionX", "View.PositionY", "View.Width", "View.Height"});
 }

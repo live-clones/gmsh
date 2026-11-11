@@ -72,55 +72,26 @@ public:
   Fl_Return_Button *redraw;
   gamepadWindow *gmpdoption;
 
+  // The pages, from the table of OptionPages.h: the widgets bound to an
+  // option are reached by its name (see widget()); here the others
   struct {
     Fl_Group *group;
-    std::vector<Fl_Check_Button *> butt;
-    std::vector<Fl_Button *> push;
-    std::vector<Fl_Value_Input *> value;
-    std::vector<Fl_Button *> color;
-    std::vector<Fl_Input *> input;
-    std::vector<Fl_Choice *> choice;
-    Fl_Button *gamepadconfig;
+    // the buttons that act on other options, and the ball of the light
+    Fl_Button *selectRotationCenter, *fitAxes, *gamepadconfig;
     spherePositionWidget *sphere;
   } general;
   struct {
     Fl_Group *group;
-    std::vector<Fl_Check_Button *> butt;
-    std::vector<Fl_Value_Input *> value;
-    std::vector<Fl_Button *> color;
-    std::vector<Fl_Choice *> choice;
-  } geo;
+  } geo, mesh, solver, post;
   struct {
+    int index; // the view shown
+    bool hasElements; // the view shown has elements: its range applies
     Fl_Group *group;
-    std::vector<Fl_Check_Button *> butt;
-    std::vector<Fl_Value_Input *> value;
-    std::vector<Fl_Button *> color;
-    std::vector<Fl_Choice *> choice;
-    Fl_Menu_Button *menu;
-  } mesh;
-  struct {
-    Fl_Group *group;
-    std::vector<Fl_Check_Button *> butt;
-    std::vector<Fl_Value_Input *> value;
-    std::vector<Fl_Input *> input;
-  } solver;
-  struct {
-    Fl_Group *group;
-    std::vector<Fl_Check_Button *> butt;
-    std::vector<Fl_Value_Input *> value;
-    std::vector<Fl_Choice *> choice;
-  } post;
-  struct {
-    int index;
-    Fl_Group *group, *range;
-    std::vector<Fl_Check_Button *> butt;
-    std::vector<Fl_Value_Input *> value;
-    std::vector<Fl_Input *> input;
-    std::vector<Fl_Button *> push;
-    std::vector<Fl_Choice *> choice;
-    std::vector<Fl_Button *> color;
-    std::vector<Fl_Box *> label;
-    std::vector<Fl_Menu_Button *> menu;
+    // the range taken from the values
+    Fl_Button *rangeMin, *rangeMax;
+    // the views to choose from, listed as they come
+    Fl_Choice *externalView, *generalizedRaiseView;
+    Fl_Choice *colormap;
     colorbarWindow *colorbar;
   } view;
 
@@ -136,6 +107,8 @@ public:
   void resetBrowser();
   void resetExternalViewList();
   void updateViewGroup(int index);
+  // the widget bound to an option (the first, if several), or null
+  Fl_Widget *widget(const std::string &option) const;
   // the widgets bound to an option show its value (an option of the views:
   // only for the view shown, num)
   void showOption(const std::string &category, int num,
