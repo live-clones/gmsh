@@ -590,7 +590,7 @@ void openglWindow::setLastHandled(openglWindow *w)
 {
   bool changed = (w != _lastHandled);
   _lastHandled = w;
-  // not without a GUI (FlGui::instance() would build one), nor for no window,
+  // not without a GUI (FlGui::instance() is null then), nor for no window,
   // which ~graphicWindow sets while the GUI is destroyed
   if(changed && w && FlGui::available())
     FlGui::instance()->visibility->updatePerWindow();

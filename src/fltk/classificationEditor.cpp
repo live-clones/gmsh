@@ -270,6 +270,7 @@ static void show_only_edges_cb(Fl_Widget *w, void *data)
 // the segments picked deleted from the selected curve
 static void deleteEdges(classificationEditor *e, std::vector<MLine *> &ele)
 {
+  if(!e->selected) return;
   std::sort(ele.begin(), ele.end());
 
   // look in all selected edges if a deleted one is present and delete it
@@ -339,7 +340,8 @@ static void delete_edge_cb(Fl_Widget *w, void *data)
         return ib != 'e' && ib != 'q';
       },
       [e, ele, gone, ended]() {
-        if(*gone || !FlGui::available()) return;
+        // (the selected curve may have gone meanwhile: Reclassify, a remesh)
+        if(*gone || !FlGui::available() || !e->selected) return;
         GModel::current()->setSelection(0);
         // (none deleted unless ended with 'e')
         if(!*ended) ele->clear();

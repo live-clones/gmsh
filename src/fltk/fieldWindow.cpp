@@ -36,7 +36,11 @@
 void fieldWindow::show()
 {
   win->show();
-  editField(nullptr);
+  // (the field being edited, whose values may not be applied yet, kept)
+  if(editedField())
+    loadFieldList();
+  else
+    editField(nullptr);
 }
 
 #if defined(HAVE_MESH)
@@ -102,7 +106,11 @@ static void field_callback_cb(Fl_Widget *w, void *data)
 static void field_select_file_cb(Fl_Widget *w, void *data)
 {
   Fl_Input *input = (Fl_Input *)data;
+  // (the chooser processes events: a model read meanwhile rebuilds the
+  // options of the field, the input with them)
+  Fl_Widget_Tracker tracker(input);
   int ret = fileChooser(FILE_CHOOSER_SINGLE, "Choose", "", input->value());
+  if(tracker.deleted()) return;
   if(ret) {
     input->value(fileChooserGetName(1).c_str());
     input->set_changed();

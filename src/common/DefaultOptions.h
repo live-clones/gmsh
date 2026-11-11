@@ -1434,8 +1434,7 @@ StringXNumber MeshOptions_Number[] = {
     "optimization, or number of element layers to consider in the boundary "
     "layer mesh for high-order fast curving"},
   { F|O, "HighOrderOptimize" , opt_mesh_ho_optimize , 0.,
-    "Optimize high-order meshes? (0: none, 1: optimization, 2: elastic+optimization, "
-    "3: elastic, 4: fast curving)" },
+    "Optimize high-order meshes" },
   { F|O, "HighOrderPassMax", opt_mesh_ho_pass_max, 25,
     "Maximum number of high-order optimization passes (moving barrier)"},
   { F|O, "HighOrderPeriodic" , opt_mesh_ho_periodic , 0.,
@@ -2796,6 +2795,9 @@ OptionChoices = {
   {"Mesh.DrawSkinOnly",
    {{0, "Show interior faces"}, {1, "Hide interior faces"},
     {2, "Hide partition faces"}}},
+  {"Mesh.HighOrderOptimize",
+   {{0, "None"}, {1, "Optimization"}, {2, "Elastic and optimization"},
+    {3, "Elastic"}, {4, "Fast curving"}}},
   {"Mesh.LabelType",
    {{0, "Node/element tag"}, {1, "Elementary entity tag"},
     {2, "Physical group tag(s)"}, {3, "Mesh partition"}, {4, "Coordinates"}}},

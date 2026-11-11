@@ -178,7 +178,17 @@ static void clip_update(bool adjusting)
                     Fl::event() == FL_DRAG ? clip_drag_cb : clip_settle_cb);
 
   FlGui::instance()->clipping->updateCount();
-  CTX::instance()->drawBBox = adjusting ? 1 : 0;
+  // the bounding box shown while a value is adjusted, then as
+  // General.DrawBoundingBoxes has it
+  static int saved = -1;
+  if(adjusting) {
+    if(saved < 0) saved = CTX::instance()->drawBBox;
+    CTX::instance()->drawBBox = 1;
+  }
+  else if(saved >= 0) {
+    CTX::instance()->drawBBox = saved;
+    saved = -1;
+  }
   drawContext::global()->draw();
 }
 

@@ -569,6 +569,9 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   int delta = CTX::instance()->deltaFontSize;
   auto tool = [this](auto *w, const char *name) {
     paletteWindow *p = (paletteWindow *)w->win;
+    // (none for a tool this build does not have: the partition window
+    // without METIS)
+    if(!p) return w;
     p->dockable(true);
     p->name(name);
     _tools.push_back(p);
@@ -877,8 +880,9 @@ static bool fltkTest(const Shortcut &s)
 
 int FlGui::testGlobalShortcuts(int event)
 {
-  // we only handle shortcuts here
-  if(event != FL_SHORTCUT) return 0;
+  // we only handle shortcuts here, and none under a modal dialog: FLTK gives
+  // the handlers the keys it does not use, whose Escape closes it
+  if(event != FL_SHORTCUT || Fl::modal()) return 0;
 
   // (a key of the menu bar runs its action here too, also when the system
   // menu bar of macOS did not take it)
@@ -894,24 +898,16 @@ int FlGui::testGlobalShortcuts(int event)
       if((e.shortcut.flags & KeyInWindowBarOnly) && graph[0]->hasSystemMenuBar())
         continue;
 #endif
-      int st = runShortcut(e.action);
-      if(!st) continue; // not for this build
-      // a key passed on is handled, but as if it had not been: what is under
-      // the mouse reads it too
-      status = (e.shortcut.flags & KeyPassedOn) ? 0 : st;
+      // (a key reported unused, FLTK tries again with the case of its letter
+      // swapped: a key that ran its action is always used)
+      status = runShortcut(e.action);
+      if(!status) continue; // not for this build
       break;
     }
     if(status) break;
   }
 
-  if(status == 2) {
-    drawContext::global()->draw();
-    return 1;
-  }
-  else if(status == 1)
-    return 1;
-  else
-    return 0;
+  return status ? 1 : 0;
 }
 
 int FlGui::testArrowShortcuts()
@@ -1152,9 +1148,15 @@ void FlGui::setToolFloating(paletteWindow *p, bool floating)
 {
   p->floating(floating);
   if(!p->isOpen()) return;
-  // an open tool moves: a docked one leaves the dock when hidden, and a tool
-  // on the desktop joins it when shown
-  if(floating && p->parent()) p->hide();
+  // an open tool moves: a docked one leaves the dock (taken out by the dock,
+  // not closed, which would end the selection it is for), and a tool on the
+  // desktop joins it when shown
+  if(floating && p->parent()) {
+    if(paletteWindow::host)
+      paletteWindow::host->toolHidden(p);
+    else
+      p->Fl_Double_Window::hide();
+  }
   p->show();
 }
 
@@ -1238,7 +1240,9 @@ void redraw_cb(Fl_Widget *w, void *data) { drawContext::global()->draw(); }
 // What the core tells the interface (see GuiListener.h): each option that
 // changes something beyond its widgets says so, and the interface follows
 
-bool FlGui::running() { return available(); }
+// (from the thread of the interface only: the others, the workers of a
+// mesher or the threads of an API program, must not touch its widgets)
+bool FlGui::running() { return available() && onMainThread(); }
 
 drawContext *FlGui::scene() { return getCurrentDrawContext(); }
 
@@ -1376,17 +1380,9 @@ void FlGui::viewsChanged(bool numberChanged) { updateViews(numberChanged); }
 
 void FlGui::fieldsChanged() { updateFields(); }
 
-// (the tree and the visibility window are touched by the thread of the
-// interface only)
-void FlGui::entitiesChanged()
-{
-  if(onMainThread()) resetVisibility();
-}
+void FlGui::entitiesChanged() { resetVisibility(); }
 
-void FlGui::parametersChanged()
-{
-  if(onMainThread()) rebuildTree();
-}
+void FlGui::parametersChanged() { rebuildTree(); }
 
 void FlGui::setCurrentWindow(int index) { setCurrentOpenglWindow(index); }
 

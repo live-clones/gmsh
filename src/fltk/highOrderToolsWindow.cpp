@@ -71,14 +71,15 @@ static void chooseopti_cb(Fl_Widget *w, void *data)
   int algo = o->choice[2]->value();
   bool optimization = (algo == 0);
   bool fastCurving = (algo == 2 || algo == 3);
-  bool strategy = optimization && o->choice[3]->value() != 0;
+  bool strategy = optimization && o->choice[3]->value() == 1;
   auto set = [](Fl_Widget *w, bool on) {
     if(on)
       w->activate();
     else
       w->deactivate();
   };
-  for(Fl_Widget *w : {(Fl_Widget *)o->choice[0], (Fl_Widget *)o->choice[3],
+  set(o->choice[0], optimization && o->CAD);
+  for(Fl_Widget *w : {(Fl_Widget *)o->choice[3],
                       (Fl_Widget *)o->value[1], (Fl_Widget *)o->value[3],
                       (Fl_Widget *)o->value[4], (Fl_Widget *)o->value[5],
                       (Fl_Widget *)o->value[7], (Fl_Widget *)o->value[8]})

@@ -14,6 +14,7 @@
 #include <fstream>
 #include <functional>
 #include <sstream>
+#include <vector>
 #include <FL/Fl.H>
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Group.H>
@@ -60,6 +61,24 @@ static void click(double fx = 0.5, double fy = 0.5)
   Fl::awake();
 }
 static void key(const char *k) { FlGui::instance()->runShortcut(k); Fl::awake(); }
+// a letter pressed in the scene, as the keyboard sends it: through FLTK's own
+// dispatch, which tries a shortcut again with the case swapped when no one
+// used it
+static void press(char c)
+{
+  Fl::focus(gl());
+  char text[2] = {c, 0};
+  Fl::e_keysym = c; Fl::e_state = 0; Fl::e_text = text; Fl::e_length = 1;
+  Fl::handle(FL_KEYDOWN, gl()->top_window());
+  Fl::e_text = (char *)""; Fl::e_length = 0;
+  Fl::awake();
+}
+static int count(const std::string &s, const std::string &what)
+{
+  int n = 0;
+  for(std::size_t i = s.find(what); i != std::string::npos; i = s.find(what, i + 1)) n++;
+  return n;
+}
 static const char *E = "escape", *SE = "mouse_selection", *U = "selection_undo", *END = "selection_end", *Q = "selection_quit";
 static int fails = 0;
 static void check(bool ok, const std::string &what) { printf("%s %s\n", ok ? "ok  " : "FAIL", what.c_str()); if(!ok) fails++; }
@@ -192,6 +211,11 @@ int main(int argc, char **argv)
   key(SE);
   key(U); check(running() && gl()->addPointMode == 1 && script() == before, "add point: 'u' does nothing");
   key(END); check(running() && script().find("Point(") != std::string::npos, "add point: 'e' adds a point, goes on");
+  {
+    int points = count(script(), "Point(");
+    press('e');
+    check(running() && count(script(), "Point(") == points + 1, "add point: a key press 'e' adds one point, not two");
+  }
   key(E); check(!running() && gl()->addPointMode == 0, "add point: Escape ends it");
   gmsh::open("gui_keys.geo"); gmsh::model::mesh::generate(2); settle();
 
@@ -311,6 +335,41 @@ int main(int argc, char **argv)
   Fl::add_timeout(0.3, runLater);
   r = gmsh::fltk::selectEntities(dt, 2);
   check(r == 1 && dt.size() == 1, "API: with picking off a click is ignored, then picks once on");
+
+  // --- a modal window: its keys are its own (Escape closes it), and none
+  // runs an action behind it ('1' would mesh the curves); shown without the
+  // nested loop of a dialog, so that nothing can wait on screen
+  {
+    auto nodes = [] {
+      std::vector<std::size_t> tags;
+      std::vector<double> coord, param;
+      gmsh::model::mesh::getNodes(tags, coord, param);
+      return tags.size();
+    };
+    gmsh::model::mesh::clear();
+    Fl_Window *m = new Fl_Window(200, 100, "modal");
+    m->end();
+    m->set_modal();
+    m->show();
+    settle();
+    // (through FLTK's own dispatch, which closes a modal window on an
+    // Escape no one used)
+    auto send = [m](int key, const char *text) {
+      Fl::e_keysym = key; Fl::e_state = 0;
+      Fl::e_text = (char *)text; Fl::e_length = (int)strlen(text);
+      Fl::handle(FL_KEYDOWN, m);
+      Fl::e_text = (char *)""; Fl::e_length = 0;
+    };
+    char one[2] = {'1', 0}, esc[2] = {'\x1b', 0};
+    send('1', one);
+    send(FL_Escape, esc);
+    bool closed = !m->shown();
+    m->hide();
+    delete m;
+    settle();
+    check(nodes() == 0, "modal window: '1' does not mesh behind it");
+    check(closed, "modal window: Escape closes it");
+  }
 
   int ms = CTX::instance()->mouseSelection;
   key(E);

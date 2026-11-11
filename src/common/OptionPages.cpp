@@ -224,7 +224,7 @@ static optionPage meshPage()
               {check("Mesh.Optimize", "Optimize quality of tetrahedra")},
               {check("Mesh.OptimizeNetgen",
                      "Optimize quality of tetrahedra with Netgen")},
-              {check("Mesh.HighOrderOptimize", "Optimize high-order meshes")}}),
+              {choice("Mesh.HighOrderOptimize", "High-order optimization")}}),
      section(
        "Visibility", true,
        {{check("Mesh.Nodes", "Nodes"), check("Mesh.NodeLabels", "Node labels")},

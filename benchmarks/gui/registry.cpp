@@ -12,6 +12,8 @@
 #include <cstdlib>
 #include <map>
 #include "gmsh.h"
+#include "GmshMessage.h"
+#include "Options.h"
 #include "Actions.h"
 #include "Shortcuts.h"
 #include "IconStrokes.h"
@@ -85,6 +87,8 @@ int main(int argc, char **argv)
     else if(i->kind == ItemAction && !i->run)
       printf("     key %s: no run in the FLTK interface\n", e.action.c_str());
   }
+  // (asked of the options themselves: with the interface up, the API only
+  // reports an unknown option, it does not throw)
   int entries = 0;
   for(const optionPage &p : OptionPages())
     for(const optionSection &s : p.sections)
@@ -92,20 +96,27 @@ int main(int argc, char **argv)
         for(const optionEntry &f : row) {
           if(f.kind == EntryCustom || f.kind == EntryHeading) continue;
           entries++;
-          try {
-            if(f.kind == EntryText) {
-              std::string v;
-              gmsh::option::getString(f.option, v);
-            }
-            else {
-              double v;
-              gmsh::option::getNumber(f.option, v);
-            }
-          } catch(...) {
+          std::string cat = f.option.substr(0, f.option.find('.'));
+          std::string name = f.option.substr(f.option.find('.') + 1);
+          double v;
+          std::string s;
+          bool ok = (f.kind == EntryText) ?
+                      StringOption(GMSH_GET, cat.c_str(), 0, name.c_str(), s,
+                                   false) :
+                      NumberOption(GMSH_GET, cat.c_str(), 0, name.c_str(), v,
+                                   false);
+          if(!ok)
             fail(p.name + " page: " + f.option +
                  " is not an option of its kind");
-          }
+          if(f.kind == EntryChoice && GetOptionChoices(f.option).empty())
+            fail(p.name + " page: " + f.option + " has no table of choices");
         }
+  // what Gmsh reported while the registry and the windows were built (an
+  // unknown name in a table, a key on two items, a custom row with no
+  // builder): errors, which do not throw with the interface up
+  if(Msg::GetErrorCount())
+    fail(std::to_string(Msg::GetErrorCount()) +
+         " errors reported while building the interface");
   printf("%d items, %d option entries, %d failures\n", items, entries, fails);
   gmsh::fltk::finalize();
   gmsh::finalize();

@@ -10,7 +10,6 @@
 #include <list>
 #include <set>
 #include <map>
-#include <deque>
 #include <functional>
 #include <map>
 #include <FL/Fl.H>
@@ -100,6 +99,13 @@ static std::map<Fl_Widget *, optionBinding> &bindings()
 
 // Bind a widget to the option its tooltip starts with ("Geometry.Points", or
 // "Geometry.Points (Alt+p)" with the key that toggles it)
+// the first widget bound to each option, by its full name (see boundWidget())
+static std::map<std::string, Fl_Widget *> &boundByName()
+{
+  static std::map<std::string, Fl_Widget *> m;
+  return m;
+}
+
 static void bind(Fl_Widget *w, const char *option, int offset = 0)
 {
   if(!option) return;
@@ -108,6 +114,7 @@ static void bind(Fl_Widget *w, const char *option, int offset = 0)
   std::size_t dot = s.find('.');
   if(dot == std::string::npos) return;
   bindings()[w] = {s.substr(0, dot), s.substr(dot + 1), offset};
+  boundByName().insert({s, w});
 }
 
 // the values of the indices of a widget bound to an option (see
@@ -122,9 +129,8 @@ static void bindValues(Fl_Widget *w, const std::vector<double> &values)
 // valuator, choice or button it is
 static Fl_Widget *boundWidget(const std::string &option)
 {
-  for(auto &b : bindings())
-    if(b.second.category + "." + b.second.name == option) return b.first;
-  return nullptr;
+  auto it = boundByName().find(option);
+  return it == boundByName().end() ? nullptr : it->second;
 }
 static Fl_Valuator *boundValue(const std::string &option)
 {
@@ -947,12 +953,11 @@ struct pageBuilders {
 // pointer)
 static const char *entryTooltip(const std::string &option)
 {
-  static std::deque<std::string> kept;
+  static std::set<std::string> kept;
   std::string tip = option;
   std::vector<Shortcut> keys = GetOptionShortcuts(option);
   if(!keys.empty()) tip += " (" + keys[0].label() + ")";
-  kept.push_back(tip);
-  return kept.back().c_str();
+  return kept.insert(tip).first->c_str();
 }
 
 // the - or + button of a stepper: the value stepped, and set
@@ -1095,10 +1100,12 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
 {
   // (the widgets of a window built before are gone)
   bindings().clear();
+  boundByName().clear();
   headings().clear();
   steppers().clear();
   toggleMenus().clear();
   colorBindings().clear();
+  view.index = -1;
   view.hasElements = true;
 
   FL_NORMAL_SIZE -= deltaFontSize;
@@ -1483,8 +1490,6 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
 #if !defined(HAVE_NETGEN)
   boundWidget("Mesh.OptimizeNetgen")->deactivate();
 #endif
-  // (a check box for one of its values)
-  bindValues(boundWidget("Mesh.HighOrderOptimize"), {0, 2});
 
   scroll->end();
 
@@ -1851,10 +1856,23 @@ void optionWindow::resetExternalViewList()
       c->add(str, 0, nullptr);
     }
   }
+  // (cleared, the choices show the sources of the view shown again)
   if(view.index >= 0 && view.index < (int)PView::list.size()) {
-    opt_view_external_view(view.index, GMSH_GUI, 0);
-    opt_view_gen_raise_view(view.index, GMSH_GUI, 0);
+    showOption("View", view.index, "ExternalView");
+    showOption("View", view.index, "GeneralizedRaiseView");
   }
+}
+
+// the state the widget of an option shows (a check button, or the index of
+// a choice); 0, said, for an option the table of OptionPages.cpp does not
+// have
+static int shown(const char *option)
+{
+  Fl_Widget *w = boundWidget(option);
+  if(Fl_Choice *c = dynamic_cast<Fl_Choice *>(w)) return c->value();
+  if(Fl_Button *b = dynamic_cast<Fl_Button *>(w)) return b->value();
+  Msg::Error("No entry for option '%s' in the option window", option);
+  return 0;
 }
 
 // the widgets enabled or greyed out together, given or by their options
@@ -1866,7 +1884,13 @@ static void setActive(bool on, std::initializer_list<const char *> options)
 {
   for(const char *o : options) {
     auto it = steppers().find(o);
-    setActive(on, {it != steppers().end() ? it->second : boundWidget(o)});
+    Fl_Widget *w = (it != steppers().end()) ? it->second : boundWidget(o);
+    // (an option the table of OptionPages.cpp does not have)
+    if(!w) {
+      Msg::Error("No entry for option '%s' in the option window", o);
+      continue;
+    }
+    setActive(on, {w});
   }
 }
 
@@ -1941,7 +1965,7 @@ void optionWindow::updateActive()
   // state does not change)
   // (no drawing here: this is also called by the option setters; laid out
   // again only when the button shows or hides)
-  bool fastRedraw = boundButton("General.FastRedraw")->value();
+  bool fastRedraw = shown("General.FastRedraw");
   if(fastRedraw != (redraw->visible() != 0)) {
     if(fastRedraw)
       redraw->show();
@@ -1951,8 +1975,8 @@ void optionWindow::updateActive()
   }
   {
     // studio shading takes the direction of light 0 alone
-    bool shaders = boundButton("General.Shaders")->value();
-    setActive(!(shaders && boundChoice("General.Shading")->value()),
+    bool shaders = shown("General.Shaders");
+    setActive(!(shaders && shown("General.Shading")),
               {"General.Light0W"});
     setActive(shaders,
               {"General.Shading", "General.StudioSamples",
@@ -1961,77 +1985,77 @@ void optionWindow::updateActive()
                "Mesh.OpacityMode", "View.Opacity"});
   }
   {
-    bool given = !boundButton("General.RotationCenterGravity")->value();
+    bool given = !shown("General.RotationCenterGravity");
     setActive(given, {"General.RotationCenterX", "General.RotationCenterY",
                       "General.RotationCenterZ"});
     setActive(given, {general.selectRotationCenter});
   }
-  setActive(boundChoice("General.Axes")->value(),
+  setActive(shown("General.Axes"),
             {"General.AxesTicksX", "General.AxesTicksY", "General.AxesTicksZ",
              "General.AxesFormatX", "General.AxesFormatY",
              "General.AxesFormatZ", "General.AxesLabelX", "General.AxesLabelY",
              "General.AxesLabelZ"});
   {
-    bool given = !boundButton("General.AxesAutoPosition")->value();
+    bool given = !shown("General.AxesAutoPosition");
     setActive(given, {"General.AxesMinX", "General.AxesMinY",
                       "General.AxesMinZ", "General.AxesMaxX",
                       "General.AxesMaxY", "General.AxesMaxZ"});
     setActive(given, {general.fitAxes});
   }
-  setActive(boundButton("General.SmallAxes")->value(),
+  setActive(shown("General.SmallAxes"),
             {"General.SmallAxesPositionX", "General.SmallAxesPositionY"});
   {
-    if(boundButton("General.Gamepad")->value()) {
+    if(shown("General.Gamepad")) {
       if(CTX::instance()->gamepad && CTX::instance()->gamepad->active)
         general.gamepadconfig->activate();
     }
     else {
       general.gamepadconfig->deactivate();
     }
-    setActive(boundButton("General.Stereo")->value(),
+    setActive(shown("General.Stereo"),
               {"General.CameraEyeSeparationRatio"});
-    setActive(boundButton("General.Camera")->value(),
+    setActive(shown("General.Camera"),
               {"General.CameraFocalLengthRatio", "General.CameraAperture"});
   }
   {
-    bool on = boundChoice("Geometry.Transform")->value() == 1;
+    bool on = shown("Geometry.Transform") == 1;
     for(const char *a : {"X", "Y", "Z"}) {
       for(const char *b : {"X", "Y", "Z"})
         setActive(on, {boundWidget(std::string("Geometry.Transform") + a + b)});
       setActive(on, {boundWidget(std::string("Geometry.Offset") + a)});
     }
   }
-  setActive(boundButton("Mesh.Light")->value(),
+  setActive(shown("Mesh.Light"),
             {"Mesh.LightTwoSide", "Mesh.SmoothNormals", "Mesh.LightLines",
              "Mesh.AngleSmoothNormals"});
   {
     // (the range and the adaptation only apply to a view with elements)
     bool custom =
-      view.hasElements && boundChoice("View.RangeType")->value() == 1;
+      view.hasElements && shown("View.RangeType") == 1;
     setActive(custom,
               {"View.CustomMin", "View.CustomMax", "View.SaturateValues"});
     setActive(custom, {view.rangeMin, view.rangeMax});
     bool adapt = view.hasElements &&
-                 boundButton("View.AdaptVisualizationGrid")->value();
+                 shown("View.AdaptVisualizationGrid");
     setActive(adapt, {"View.TargetError", "View.MaxRecursionLevel"});
   }
   {
-    bool on = boundButton("View.UseGeneralizedRaise")->value();
+    bool on = shown("View.UseGeneralizedRaise");
     setActive(on, {"View.GeneralizedRaiseFactor", "View.GeneralizedRaiseX",
                    "View.GeneralizedRaiseY", "View.GeneralizedRaiseZ"});
     setActive(on, {view.generalizedRaiseView});
   }
-  setActive(boundButton("View.Light")->value(),
+  setActive(shown("View.Light"),
             {"View.LightLines", "View.LightTwoSide", "View.SmoothNormals",
              "View.AngleSmoothNormals"});
-  setActive(boundChoice("View.Axes")->value(),
+  setActive(shown("View.Axes"),
             {"View.AxesTicksX", "View.AxesTicksY", "View.AxesTicksZ",
              "View.AxesFormatX", "View.AxesFormatY", "View.AxesFormatZ",
              "View.AxesLabelX", "View.AxesLabelY", "View.AxesLabelZ"});
-  setActive(!boundButton("View.AxesAutoPosition")->value(),
+  setActive(!shown("View.AxesAutoPosition"),
             {"View.AxesMinX", "View.AxesMinY", "View.AxesMinZ", "View.AxesMaxX",
              "View.AxesMaxY", "View.AxesMaxZ"});
-  int position = boundChoice("View.AutoPosition")->value();
+  int position = shown("View.AutoPosition");
   setActive(position == 0 || position == 12,
             {"View.PositionX", "View.PositionY", "View.Width", "View.Height"});
 }

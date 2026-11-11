@@ -498,9 +498,12 @@ selectionDriver::selectionDriver(const std::string &operation,
         scriptSetTransfiniteSurface(p, file(), _get("Arrangement"));
       else if(!surface && (q.empty() || q.size() == 6 || q.size() == 8))
         scriptSetTransfiniteVolume(p, file());
-      else
+      else {
+        // (the picks kept, to try again)
         Msg::Error("Wrong number of points for transfinite %s",
                    surface ? "surface" : "volume");
+        return false;
+      }
       return true;
     };
   }

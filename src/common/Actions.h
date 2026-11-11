@@ -147,9 +147,6 @@ const actionItem *FindItem(const std::string &name);
 // The keys of the actions that set the given option (see actionItem::sets())
 std::vector<Shortcut> GetOptionShortcuts(const std::string &option);
 
-// The keys of the actions that set the given option (see actionItem::sets())
-std::vector<Shortcut> GetOptionShortcuts(const std::string &option);
-
 // Give the action items of the given name, in all the menus, the run and the
 // check mark of the interface (once, when it starts)
 void SetItemRun(const std::string &name, std::function<void(int view)> run,

@@ -35,7 +35,8 @@ enum ShortcutKey {
 };
 
 // the modifiers: Command is Control, or Command on macOS; AnyModifiers matches
-// whatever is held
+// whatever is held, after the keys with their exact modifiers (Shift+Escape
+// before Escape)
 enum ShortcutModifier {
   ModCommand = 1 << 0,
   ModShift = 1 << 1,
@@ -43,10 +44,9 @@ enum ShortcutModifier {
   AnyModifiers = 1 << 3
 };
 
-// how a key is handled: also passed on to the widget under the mouse (as the
-// keys of a selection are), or not in the macOS system menu bar (where Cmd+H
-// hides the application)
-enum ShortcutFlag { KeyPassedOn = 1 << 0, KeyInWindowBarOnly = 1 << 1 };
+// how a key is handled: not in the macOS system menu bar (where Cmd+H hides
+// the application)
+enum ShortcutFlag { KeyInWindowBarOnly = 1 << 1 };
 
 struct Shortcut {
   int key; // a lower case letter, a digit, a mark, or a ShortcutKey

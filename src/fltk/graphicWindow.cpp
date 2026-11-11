@@ -361,11 +361,18 @@ void newGraphicWindow()
   FlGui::instance()->setGraphicTitle(GModel::current()->getFileName());
 }
 
-// the main window closed: the program ends (see fileQuit())
-static void quit_cb(Fl_Widget *w, void *data) { fileQuit(); }
+// the main window closed: the program ends (see fileQuit()); not by an
+// Escape no one used, which FLTK turns into a close
+static void quit_cb(Fl_Widget *w, void *data)
+{
+  if(Fl::callback_reason() == FL_REASON_CANCELLED) return;
+  fileQuit();
+}
 
 static void remove_graphic_window_cb(Fl_Widget *w, void *data)
 {
+  // (not by an Escape no one used, see quit_cb())
+  if(Fl::callback_reason() == FL_REASON_CANCELLED) return;
   std::vector<graphicWindow *> graph2;
   graphicWindow *deleteMe = nullptr;
   for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++) {

@@ -289,8 +289,10 @@ public:
       return 1;
     case FL_SHORTCUT:
     case FL_KEYBOARD:
-      // docked, only when the focus is inside: the main window has its own
-      if(parent() && !contains(Fl::focus())) break;
+      // only when the focus is inside: FLTK also gives a key no one used to
+      // the window under the pointer, which Escape must not close while the
+      // scene has the focus (and the main window has keys of its own)
+      if(!contains(Fl::focus())) break;
       // Escape stops the selection this window is for first, as in the
       // graphic window (a second one closes it, unless the end of the
       // selection did); the close key closes it, which ends the selection

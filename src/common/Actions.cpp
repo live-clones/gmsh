@@ -113,7 +113,8 @@ static void combineViews(bool time, int how)
 
 // a view read again from its file, the new data replacing the old one in the
 // view and in every view sharing it (its aliases, or the view it is an alias
-// of)
+// of); of a file holding several views, the one at the same place in the file
+// (the others read with it are deleted)
 static void reloadView(int index)
 {
   if(index < 0 || index >= (int)PView::list.size()) return;
@@ -134,9 +135,16 @@ static void reloadView(int index)
   }
   p = PView::getViewByTag(tag);
   if(!p || PView::list.size() <= n) return;
-  PViewData *old = p->getData(), *data = PView::list.back()->getData();
-  PView::list.back()->setData(nullptr);
-  delete PView::list.back();
+  PViewData *old = p->getData();
+  // the view read at the same place in the file, or the last one
+  std::size_t k = PView::list.size() - 1;
+  for(std::size_t i = n; i < PView::list.size(); i++)
+    if(PView::list[i]->getData()->getFileIndex() == old->getFileIndex()) k = i;
+  PViewData *data = PView::list[k]->getData();
+  PView::list[k]->setData(nullptr);
+  // (the views read with it, the last first: deleting a view takes it out of
+  // the list)
+  for(std::size_t i = PView::list.size(); i-- > n;) delete PView::list[i];
   for(PView *v : PView::list) {
     if(v->getData() != old) continue;
     v->setData(data);
@@ -161,21 +169,6 @@ static void forVisibleViews(double (*option)(int, int, double),
   for(std::size_t i = 0; i < PView::list.size(); i++)
     if(isViewVisible(i))
       option(i, GMSH_SET | GMSH_GUI, next(option(i, GMSH_GET, 0)));
-}
-
-// an option of the visible views as the first of them has it, and turned on
-// or off for all of them, as an item toggling it shows and does
-static double firstVisibleView(double (*option)(int, int, double))
-{
-  for(std::size_t i = 0; i < PView::list.size(); i++)
-    if(isViewVisible(i)) return option(i, GMSH_GET, 0);
-  return 0.;
-}
-static void toggleVisibleViews(double (*option)(int, int, double))
-{
-  double v = !firstVisibleView(option);
-  for(std::size_t i = 0; i < PView::list.size(); i++)
-    if(isViewVisible(i)) option(i, GMSH_SET | GMSH_GUI, v);
 }
 #endif
 
@@ -1075,12 +1068,12 @@ static actionItem keysOnly()
     guiAction("", "module_post", "Go to post-processing module").key('p'),
     guiAction("", "selection_end",
               "End the selection under way (accept what is picked)")
-      .key('e', 0, KeyPassedOn),
+      .key('e'),
     guiAction("", "selection_undo",
               "Undo the last pick of the selection under way")
-      .key('u', 0, KeyPassedOn),
+      .key('u'),
     guiAction("", "selection_quit", "Stop the selection under way, as Escape")
-      .key('q', 0, KeyPassedOn),
+      .key('q'),
     guiAction("", "freeze_x",
               "Toggle x coordinate freeze in geometry creation mode")
       .key('x'),
@@ -1111,10 +1104,9 @@ static actionItem keysOnly()
     guiAction("", "view_prev", "Make previous view visible").key(KeyUp),
     guiAction("", "view_next", "Make next view visible").key(KeyDown),
 #if defined(HAVE_POPPLER)
-    guiAction("", "page_prev", "Go to previous PDF page")
-      .key('u')
-      .key(KeyPageUp),
-    guiAction("", "page_next", "Go to next PDF page").key('d').key(KeyPageDown),
+    // (Page Up and Down: 'u' is the undo of a selection)
+    guiAction("", "page_prev", "Go to previous PDF page").key(KeyPageUp),
+    guiAction("", "page_next", "Go to next PDF page").key(KeyPageDown),
 #endif
     guiAction("", "file_open_previous", "Open next-to-last opened file")
       .key('r', ModCommand | ModShift),
@@ -1311,6 +1303,19 @@ const std::vector<ShortcutEntry> &GetShortcuts()
     std::vector<ShortcutEntry> all;
     for(auto &i : items)
       all.insert(all.end(), i.second.begin(), i.second.end());
+    // a key (with the same modifiers) runs one item: the interfaces would run
+    // the first only
+    std::map<std::pair<int, unsigned>, std::string> owner;
+    for(const ShortcutEntry &e : all) {
+      auto k = std::make_pair(e.shortcut.key, e.shortcut.mods);
+      auto it = owner.find(k);
+      if(it == owner.end())
+        owner[k] = e.action;
+      else if(it->second != e.action)
+        Msg::Error("Key %s declared on '%s' and '%s'",
+                   e.shortcut.label().c_str(), it->second.c_str(),
+                   e.action.c_str());
+    }
     return all;
   }();
   return table;
