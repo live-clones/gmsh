@@ -139,7 +139,7 @@ struct actionItem {
 // interfaces, each with its icon or its label, the groups set apart), or
 // "Keys" (the actions of the keys in no menu, which no interface shows;
 // GetShortcuts() in Shortcuts.h lists the keys of every menu)
-const actionItem &GetActionMenu(const std::string &name);
+const actionItem &GetActionMenu(const char *name);
 
 // The item of the given name in the menus (that of a key), or null
 const actionItem *FindItem(const std::string &name);

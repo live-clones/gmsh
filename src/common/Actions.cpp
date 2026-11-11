@@ -1235,7 +1235,7 @@ static std::map<std::string, actionItem> &menus()
   return menus;
 }
 
-const actionItem &GetActionMenu(const std::string &name)
+const actionItem &GetActionMenu(const char *name)
 {
   static const actionItem none = group({});
   auto it = menus().find(name);

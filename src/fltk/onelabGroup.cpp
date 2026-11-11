@@ -1082,7 +1082,7 @@ static void item_button_cb(Fl_Widget *w, void *data)
 // row that pops it up, its submenus as submenus
 void onelabGroup::_addModuleButtons(const std::string &module)
 {
-  for(const actionItem &row : GetActionMenu(module).items) {
+  for(const actionItem &row : GetActionMenu(module.c_str()).items) {
     for(const actionItem &b : row.items) {
       std::string path = "0Modules/" + module + "/" + b.label;
       if(b.kind != ItemMenu) {
