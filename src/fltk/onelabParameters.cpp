@@ -82,7 +82,7 @@ static void onelab_number_choice_cb(Fl_Widget *w, void *data)
   if(numbers.size()) {
     Fl_Choice *o = (Fl_Choice *)w;
     std::vector<double> choices = numbers[0].getChoices();
-    if(o->value() < (int)choices.size())
+    if(o->value() >= 0 && o->value() < (int)choices.size())
       numbers[0].setValue(choices[o->value()]);
     parameterChanged(onelabUtils::setParameter(numbers[0]));
   }
@@ -223,35 +223,15 @@ static void onelab_string_button_cb(Fl_Widget *w, void *data)
   std::string name((char *)data);
   std::vector<onelab::string> strings;
   onelab::server::instance()->get(strings, name);
-  if(strings.size()) {
-    // a script parsed or a file merged change the model: not during another
-    // operation on it
-    if(strings[0].getAttribute("Macro") != "Action" && modelBusy()) return;
-    if(strings[0].getAttribute("Macro") == "GmshParseString") {
-      // parse string directly
-      ParseString(strings[0].getValue());
-    }
-    else if(strings[0].getAttribute("Macro") == "Action") {
-      // set onelab Action for custom GUIs
-      onelab::string o("ONELAB/Action", strings[0].getValue());
-      o.setVisible(false);
-      o.setNeverChanged(true);
-      o.setAttribute("Persistent", "1");
-      onelab::server::instance()->set(o);
-      return; // otherwise autoCheck will set Action to "check"
-    }
-    else {
-      // merge file
-      std::string tmp = FixRelativePath(GModel::current()->getFileName(),
-                                        strings[0].getValue());
-      MergeFile(tmp);
-    }
-    // as the script or the file left it
-    onelab::server::instance()->get(strings, name);
-    if(strings.size())
-      parameterChanged(onelabUtils::setParameter(strings[0], true));
-    drawContext::global()->draw();
-  }
+  if(strings.empty()) return;
+  // a script parsed or a file merged change the model: not during another
+  // operation on it
+  bool action = strings[0].getAttribute("Macro") == "Action";
+  if(!action && modelBusy()) return;
+  int what = onelabUtils::runMacro(name);
+  if(action) return;
+  parameterChanged(what);
+  drawContext::global()->draw();
 }
 
 static void onelab_string_input_cb(Fl_Widget *w, void *data)

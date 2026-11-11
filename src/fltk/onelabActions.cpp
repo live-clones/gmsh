@@ -180,8 +180,9 @@ void onelabInitialize()
 
 void onelabReset()
 {
-  if(!onelabStart("reset")) return;
+  // (ONELAB/Action says "reset" only when the reset is done)
   if(solverBusy() || modelBusy()) return;
+  if(!onelabStart("reset")) return;
   onelabUtils::resetDb(true);
   onelabRun("check");
 }
@@ -244,9 +245,11 @@ void onelabSaveDatabase()
 
   std::string db;
   db.assign(SplitFileName(GModel::current()->getFileName())[0] + fileName);
+  bool saved = false;
   if(fileChooser(FILE_CHOOSER_CREATE, "Save", "*.db", db.c_str())) {
     if(!restoreMode) onelabUtils::archiveSolutionFiles(fileChooserGetName(1));
     onelabUtils::saveDb(fileChooserGetName(1));
+    saved = true;
   }
 
   // special handling for metamodels: switch back to normal "run" mode"
@@ -255,18 +258,20 @@ void onelabSaveDatabase()
     pn[0].setValue(0);
     onelab::server::instance()->set(pn[0]);
   }
-  onelabRun("check");
+  // (nothing to check when the chooser was cancelled)
+  if(saved) onelabRun("check");
 }
 
 void onelabLoadDatabase()
 {
-  if(!onelabStart("load")) return;
   if(solverBusy() || modelBusy()) return;
+  if(!onelabStart("load")) return;
   std::string db =
     SplitFileName(GModel::current()->getFileName())[0] + "onelab.db";
-  if(fileChooser(FILE_CHOOSER_SINGLE, "Load", "*.db", db.c_str()))
+  if(fileChooser(FILE_CHOOSER_SINGLE, "Load", "*.db", db.c_str())) {
     onelabUtils::loadDb(fileChooserGetName(1));
-  onelabRun("check");
+    onelabRun("check");
+  }
 }
 
 void onelabAction(const std::string &action)

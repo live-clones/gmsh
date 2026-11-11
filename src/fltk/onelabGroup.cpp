@@ -89,11 +89,20 @@ static const std::vector<gearOption> &gearOptions()
   return options;
 }
 
-// data: the index of the option in gearOptions()
+// data: the index of the option in gearOptions(); checked again, an option
+// takes back the value it had (Solver.AutoMesh 1 stays 1), or `on'
 static void onelab_option_cb(Fl_Widget *w, void *data)
 {
-  const gearOption &o = gearOptions()[(intptr_t)data];
-  o.field() = ((Fl_Menu_ *)w)->mvalue()->value() ? o.on : 0;
+  std::size_t i = (intptr_t)data;
+  const gearOption &o = gearOptions()[i];
+  static std::vector<int> last(gearOptions().size(), 0);
+  int &field = o.field();
+  if(((Fl_Menu_ *)w)->mvalue()->value())
+    field = last[i] ? last[i] : o.on;
+  else {
+    if(field) last[i] = field;
+    field = 0;
+  }
   if(o.changed) o.changed();
 }
 

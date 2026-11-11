@@ -106,8 +106,15 @@ protected:
     const char *buf = (const char *)buffer;
     long int sofar = 0;
     long int remaining = bytes;
+    // (a peer gone: an error, not a SIGPIPE that ends the program; on macOS
+    // the socket says so, see Start())
+#if defined(MSG_NOSIGNAL)
+    int flags = MSG_NOSIGNAL;
+#else
+    int flags = 0;
+#endif
     do {
-      long int len = send(_sock, buf + sofar, remaining, 0);
+      long int len = send(_sock, buf + sofar, remaining, flags);
       if(len < 0) return -1; // error
       sofar += len;
       remaining -= len;
@@ -430,9 +437,12 @@ public:
     }
 
     if(exe.size() || args.size()) {
-      char s[1024];
-      sprintf(s, args.c_str(), _sockname.c_str());
-      NonBlockingSystemCall(exe, s); // starts the solver
+      // the socket name in place of the last %s (not a format: a path may
+      // hold a %, and a command line is any length)
+      std::string command = args;
+      std::string::size_type at = command.rfind("%s");
+      if(at != std::string::npos) command.replace(at, 2, _sockname);
+      NonBlockingSystemCall(exe, command); // starts the solver
     }
     else {
       timeout = 0.; // no command launched: don't set a timeout
@@ -472,6 +482,10 @@ public:
     }
     CloseSocket(tmpsock);
     if(_sock < 0) throw std::runtime_error("Socket accept failed");
+#if defined(SO_NOSIGPIPE)
+    int nosigpipe = 1;
+    setsockopt(_sock, SOL_SOCKET, SO_NOSIGPIPE, &nosigpipe, sizeof(nosigpipe));
+#endif
     return _sock;
   }
   int Shutdown()

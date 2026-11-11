@@ -128,6 +128,12 @@ namespace onelabUtils {
   };
   int setParameter(onelab::number &p, bool force = false);
   int setParameter(onelab::string &p, bool force = false);
+  // the button of a string parameter with a "Macro" attribute pressed: its
+  // value parsed (GmshParseString), merged as a file (Gmsh, GmshMergeFile) or
+  // set as ONELAB/Action for a custom interface (Action); what setParameter()
+  // says to do next. The caller checks that the model is free (but for an
+  // Action), as the script or the file changes it.
+  int runMacro(const std::string &name);
 } // namespace onelabUtils
 
 #endif

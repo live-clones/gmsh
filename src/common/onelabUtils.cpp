@@ -1148,6 +1148,32 @@ namespace onelabUtils {
   int setParameter(onelab::string &p, bool force)
   { return setParameterT(p, force); }
 
+  int runMacro(const std::string &name)
+  {
+    std::vector<onelab::string> strings;
+    onelab::server::instance()->get(strings, name);
+    if(strings.empty()) return 0;
+    std::string macro = strings[0].getAttribute("Macro");
+    if(macro == "Action") {
+      // for custom interfaces, which read it (setParameter() would make it
+      // "check")
+      onelab::string o("ONELAB/Action", strings[0].getValue());
+      o.setVisible(false);
+      o.setNeverChanged(true);
+      o.setAttribute("Persistent", "1");
+      onelab::server::instance()->set(o);
+      return 0;
+    }
+    if(macro == "GmshParseString")
+      ParseString(strings[0].getValue());
+    else
+      MergeFile(FixRelativePath(GModel::current()->getFileName(),
+                                strings[0].getValue()));
+    // as the script or the file left it
+    onelab::server::instance()->get(strings, name);
+    return strings.size() ? setParameter(strings[0], true) : 0;
+  }
+
 } // namespace onelabUtils
 
 #endif
