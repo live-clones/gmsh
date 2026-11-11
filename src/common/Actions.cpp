@@ -305,19 +305,6 @@ static actionItem guiAction(const std::string &label, const std::string &name,
                             const std::string &help = "",
                             std::function<bool()> available = nullptr)
 { return {label, ItemAction, name, {}, help, nullptr, available}; }
-// an option of the display turned on or off, checked when it is on
-static actionItem toggleAction(const std::string &label,
-                               const std::string &name,
-                               double (*option)(int, int, double),
-                               const std::string &help = "")
-{
-  return action(
-    label, name, help,
-    [option](int, drawContext *) {
-      option(0, GMSH_SET | GMSH_GUI, !option(0, GMSH_GET, 0));
-    },
-    nullptr, [option] { return option(0, GMSH_GET, 0) ? 1 : 0; });
-}
 // an operation on the entities picked (see selectionDriver)
 static actionItem operation(const std::string &label, const std::string &name,
                             const std::string &help = "")
@@ -328,12 +315,15 @@ static actionItem shape(const std::string &label, const std::string &name)
 // an option toggled ("Mesh.Nodes", a check box) or set ("View.IntervalsType=3",
 // a radio item), named as it is; a View.* option is that of the visible
 // views, which it needs
-static actionItem option(const std::string &label, const std::string &name)
+static actionItem option(const std::string &label, const std::string &name,
+                         const std::string &help = "")
 {
   return action(
-    label, name, "", [name](int, drawContext *) { setItemOption(name); },
-    name.compare(0, 5, "View.") ? std::function<bool()>() : haveViews,
-    [name] { return itemOptionCheck(name); });
+           label, name, help,
+           [name](int, drawContext *) { setItemOption(name); },
+           name.compare(0, 5, "View.") ? std::function<bool()>() : haveViews,
+           [name] { return itemOptionCheck(name); })
+    .sets({name.substr(0, name.find('='))});
 }
 
 // a submenu of values of an option, each applied as it is chosen (the one
@@ -687,17 +677,13 @@ static actionItem quickAccessMenu()
       .key('o', ModShift),
   };
   std::vector<actionItem> geometryVisibility = {
-    toggleAction("Points", "geometry_points", opt_geometry_points,
-                 "Hide/show geometry points")
+    option("Points", "Geometry.Points", "Hide/show geometry points")
       .key('p', ModAlt),
-    toggleAction("Curves", "geometry_curves", opt_geometry_curves,
-                 "Hide/show geometry curves")
+    option("Curves", "Geometry.Curves", "Hide/show geometry curves")
       .key('l', ModAlt),
-    toggleAction("Surfaces", "geometry_surfaces", opt_geometry_surfaces,
-                 "Hide/show geometry surfaces")
+    option("Surfaces", "Geometry.Surfaces", "Hide/show geometry surfaces")
       .key('s', ModAlt),
-    toggleAction("Volumes", "geometry_volumes", opt_geometry_volumes,
-                 "Hide/show geometry volumes")
+    option("Volumes", "Geometry.Volumes", "Hide/show geometry volumes")
       .key('v', ModAlt),
   };
   std::vector<actionItem> geometry = {
@@ -708,22 +694,21 @@ static actionItem quickAccessMenu()
       .key('g', ModShift),
   };
   std::vector<actionItem> meshVisibility = {
-    toggleAction("Nodes", "mesh_nodes", opt_mesh_nodes, "Hide/show mesh nodes")
+    option("Nodes", "Mesh.Nodes", "Hide/show mesh nodes")
       .key('p', ModAlt | ModShift),
-    toggleAction("1D elements", "mesh_lines", opt_mesh_lines,
-                 "Hide/show mesh lines")
+    option("1D elements", "Mesh.Lines", "Hide/show mesh lines")
       .key('l', ModAlt | ModShift),
-    toggleAction("2D element edges", "mesh_surface_edges",
-                 opt_mesh_surface_edges, "Hide/show mesh surface edges")
+    option("2D element edges", "Mesh.SurfaceEdges",
+           "Hide/show mesh surface edges")
       .key('s', ModAlt | ModShift),
-    toggleAction("2D element faces", "mesh_surface_faces",
-                 opt_mesh_surface_faces, "Hide/show mesh surface faces")
+    option("2D element faces", "Mesh.SurfaceFaces",
+           "Hide/show mesh surface faces")
       .key('d', ModAlt | ModShift),
-    toggleAction("3D element edges", "mesh_volume_edges", opt_mesh_volume_edges,
-                 "Hide/show mesh volume edges")
+    option("3D element edges", "Mesh.VolumeEdges",
+           "Hide/show mesh volume edges")
       .key('v', ModAlt | ModShift),
-    toggleAction("3D element faces", "mesh_volume_faces", opt_mesh_volume_faces,
-                 "Hide/show mesh volume faces")
+    option("3D element faces", "Mesh.VolumeFaces",
+           "Hide/show mesh volume faces")
       .key('b', ModAlt | ModShift),
   };
   std::vector<std::pair<std::string, std::string>> sizeFactors = {
@@ -758,11 +743,8 @@ static actionItem quickAccessMenu()
   };
   std::vector<actionItem> views = {
 #if defined(HAVE_POST)
-    action(
-      "View element outlines", "view_elements",
-      "Hide/show element outlines for visible post-pro views",
-      [](int, drawContext *) { toggleVisibleViews(opt_view_show_element); },
-      haveViews, [] { return (int)firstVisibleView(opt_view_show_element); })
+    option("View element outlines", "View.ShowElement",
+           "Hide/show element outlines for visible post-pro views")
       .key('e', ModAlt)
       .key('e', ModAlt | ModShift),
 #endif
@@ -1138,17 +1120,14 @@ static actionItem keysOnly()
       .key('r', ModCommand | ModShift),
   };
   std::vector<actionItem> keys = {
-    toggleAction("", "fast_redraw", opt_general_fast_redraw,
-                 "Change redraw mode (fast/full)")
+    option("", "General.FastRedraw", "Change redraw mode (fast/full)")
       .key('f', ModAlt),
-    toggleAction("", "bounding_boxes", opt_general_draw_bounding_box,
-                 "Hide/show bounding boxes")
+    option("", "General.DrawBoundingBoxes", "Hide/show bounding boxes")
       .key('b', ModAlt),
-    toggleAction("", "small_axes", opt_general_small_axes,
-                 "Hide/show small axes")
+    option("", "General.SmallAxes", "Hide/show small axes")
       .key('a', ModAlt | ModShift),
-    toggleAction("", "projection", opt_general_orthographic,
-                 "Change projection mode (orthographic/perspective)")
+    option("", "General.Orthographic",
+           "Change projection mode (orthographic/perspective)")
       .key('o', ModAlt),
     action("", "color_scheme", "Loop through predefined color schemes",
            [](int, drawContext *) {
@@ -1156,6 +1135,7 @@ static actionItem keysOnly()
                                       opt_general_color_scheme(0, GMSH_GET, 0) +
                                         1);
            })
+      .sets({"General.ColorScheme"})
       .key('c', ModAlt),
     action(
       "", "lighting", "Enable/disable all lighting",
@@ -1167,6 +1147,7 @@ static actionItem keysOnly()
         forVisibleViews(opt_view_light, [](double v) { return (double)!v; });
 #endif
       })
+      .sets({"Geometry.Light", "Mesh.Light", "View.Light"})
       .key('w', ModAlt),
     action("", "axes_loop", "Loop through axes modes",
            [](int, drawContext *) {
@@ -1179,6 +1160,7 @@ static actionItem keysOnly()
                              [](double v) { return (v >= 5) ? 0. : v + 1.; });
 #endif
            })
+      .sets({"General.Axes", "View.Axes"})
       .key('a', ModAlt),
     action("", "surface_type", "Loop through geometry surface display modes",
            [](int, drawContext *) {
@@ -1186,15 +1168,10 @@ static actionItem keysOnly()
                0, GMSH_SET | GMSH_GUI,
                opt_geometry_surface_type(0, GMSH_GET, 0) + 1);
            })
+      .sets({"Geometry.SurfaceType"})
       .key('d', ModAlt),
 #if defined(HAVE_POST)
-    action(
-      "", "view_scales", "Hide/show all post-processing view scales",
-      [](int, drawContext *) {
-        forVisibleViews(opt_view_show_scale,
-                        [](double v) { return (double)!v; });
-      },
-      haveViews)
+    option("", "View.ShowScale", "Hide/show all post-processing view scales")
       .key('i', ModAlt),
     action(
       "", "colormaps", "Loop through predefined colormaps",
@@ -1203,6 +1180,7 @@ static actionItem keysOnly()
                         [](double v) { return v + 1.; });
       },
       haveViews)
+      .sets({"View.ColormapNumber"})
       .key('c', ModAlt | ModShift),
     action(
       "", "view_intervals",
@@ -1213,6 +1191,7 @@ static actionItem keysOnly()
                         [](double v) { return (v + 1 == 4) ? 1. : v + 1.; });
       },
       haveViews)
+      .sets({"View.IntervalsType"})
       .key('t', ModAlt),
     action(
       "", "view_intervals_all", "Same as Alt+t, but with numeric mode included",
@@ -1221,6 +1200,7 @@ static actionItem keysOnly()
                         [](double v) { return v + 1.; });
       },
       haveViews)
+      .sets({"View.IntervalsType"})
       .key('t', ModAlt | ModShift),
     action(
       "", "view_range", "Loop through range modes for visible post-pro views",
@@ -1228,14 +1208,10 @@ static actionItem keysOnly()
         forVisibleViews(opt_view_range_type, [](double v) { return v + 1.; });
       },
       haveViews)
+      .sets({"View.RangeType"})
       .key('r', ModAlt),
-    action(
-      "", "view_annotations", "Hide/show all post-processing view annotations",
-      [](int, drawContext *) {
-        forVisibleViews(opt_view_draw_strings,
-                        [](double v) { return (double)!v; });
-      },
-      haveViews)
+    option("", "View.DrawStrings",
+           "Hide/show all post-processing view annotations")
       .key('n', ModAlt),
     action(
       "", "views_hide_show", "Hide/show all post-processing views",
@@ -1338,6 +1314,21 @@ const std::vector<ShortcutEntry> &GetShortcuts()
     return all;
   }();
   return table;
+}
+
+std::vector<Shortcut> GetOptionShortcuts(const std::string &option)
+{
+  std::vector<Shortcut> keys;
+  std::function<void(const actionItem &)> walk = [&](const actionItem &m) {
+    for(const actionItem &i : m.items) {
+      if(i.kind == ItemMenu) walk(i);
+      if(std::find(i.options.begin(), i.options.end(), option) !=
+         i.options.end())
+        keys.insert(keys.end(), i.keys.begin(), i.keys.end());
+    }
+  };
+  for(auto &m : menus()) walk(m.second);
+  return keys;
 }
 
 const actionItem *FindItem(const std::string &name)

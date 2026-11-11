@@ -69,7 +69,8 @@ class drawContext;
 // - A key: .key('2') on the item it runs (modifiers and flags as in
 //   Shortcuts.h); the help of the item says what the key does in the help
 //   window and the documentation. A key that is in no menu: an item of
-//   keysOnly(), whose help is that text.
+//   keysOnly(), whose help is that text. An action that sets options says
+//   which (.sets()), so that the option window shows its key beside them.
 // - An operation: what it picks and writes in the script, in the constructor
 //   of selectionDriver, then its operation() item. The web page makes its
 //   form from its fields; the FLTK interface reads them from its context
@@ -120,6 +121,16 @@ struct actionItem {
     i.icon = name;
     return i;
   }
+  // the options an action sets (those of its name for an option item), for
+  // the interfaces to show its keys beside them:
+  // action(...).key('a', ModAlt).sets({"General.Axes", "View.Axes"})
+  std::vector<std::string> options;
+  actionItem sets(const std::vector<std::string> &names) const
+  {
+    actionItem i = *this;
+    i.options = names;
+    return i;
+  }
 };
 
 // The menu with the given name: "Geometry" and "Mesh" (the modules), "Quick
@@ -132,6 +143,12 @@ const actionItem &GetActionMenu(const std::string &name);
 
 // The item of the given name in the menus (that of a key), or null
 const actionItem *FindItem(const std::string &name);
+
+// The keys of the actions that set the given option (see actionItem::sets())
+std::vector<Shortcut> GetOptionShortcuts(const std::string &option);
+
+// The keys of the actions that set the given option (see actionItem::sets())
+std::vector<Shortcut> GetOptionShortcuts(const std::string &option);
 
 // Give the action items of the given name, in all the menus, the run and the
 // check mark of the interface (once, when it starts)

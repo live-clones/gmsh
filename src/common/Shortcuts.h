@@ -16,7 +16,7 @@
 // in the help window and in the documentation are all read from the items, so
 // that they cannot drift apart. Nothing here depends on a toolkit: each
 // interface translates the keys and runs the items by their names, in snake
-// case ("mesh_nodes").
+// case ("mesh_2d").
 // The titles of the menus must not have a mnemonic (an "&" letter) used by an
 // Alt shortcut, because the menu bar would open the menu before the shortcut
 // is seen.
