@@ -1,4 +1,4 @@
-// Gmsh Boundary Layer Plugin - Copyright (C) 2026 C. Geuzaine and J.-F. Remacle
+// Gmsh Boundary Layer Plugin - Copyright (C) 2025-2026 C. Geuzaine and J.-F. Remacle
 //
 // This program is free software: you can redistribute it and/or modify it under
 // the terms of the GNU Affero General Public License as published by the Free
@@ -11,7 +11,7 @@
 // details.
 //
 // You should have received a copy of the GNU Affero General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #ifndef BOUNDARY_LAYER_H
 #define BOUNDARY_LAYER_H
