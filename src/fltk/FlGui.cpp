@@ -26,6 +26,9 @@
 #include "mainWindow.h"
 #include "icons.h"
 #include "drawContextFltk.h"
+#include "drawContextFltkStringTexture.h"
+#include "drawContextFltkEmbedded.h"
+#include "viewButton.h"
 #include "graphicWindow.h"
 #include "fltkActions.h"
 #include "fileActions.h"
@@ -54,6 +57,7 @@
 #include "OS.h"
 #include "MElement.h"
 #include "PView.h"
+#include "PViewOptions.h"
 #include "Plugin.h"
 #include "OpenFile.h"
 #include "XpmIcon.h"
@@ -81,8 +85,9 @@
 //   lifetime of its widgets (below) and the keys it handles.
 // - graphicWindow.cpp: the main window, with its menu bar, the tiles of the
 //   scene, the tree of the modules and of the ONELAB parameters
-//   (onelabGroup.cpp), the messages and the status bar; toolDock.cpp docks the
-//   tool windows in it.
+//   (onelabGroup.cpp; the widgets of the parameters in onelabParameters.cpp,
+//   what Check and Run do in onelabActions.cpp), the messages and the status
+//   bar; toolDock.cpp docks the tool windows in it.
 // - openglWindow.cpp: a scene, drawn by src/graphics (drawContext); what the
 //   mouse does in it is sceneView (src/graphics), shared with the web page.
 // - the tool windows, one file each (optionWindow.cpp, fieldWindow.cpp,
@@ -96,6 +101,10 @@
 // - fileDialogs.cpp and extraDialogs.cpp: the dialogs; gmshScheme.cpp,
 //   desktop.cpp, icons.cpp and windowPlacement.cpp: the look, the colours of
 //   the desktop, the icons, where the windows go.
+//
+// The core knows no toolkit: what an option changes in the interface, it
+// tells through guiListener (src/common/GuiListener.h), which FlGui
+// implements at the end of this file.
 //
 // The menus, the buttons of the modules and the keyboard shortcuts are shared
 // with the web page (contrib/webapp) and live in src/common: Actions.cpp (the
@@ -116,8 +125,8 @@
 //   for a key in no menu).
 // - A button of the status bar: an item of the "Status bar" menu of
 //   Actions.cpp, with its icon (IconStrokes.cpp), and its line in fltkActions.cpp.
-// - A field of the option window: optionWindow.cpp, bound to its option by
-//   name.
+// - A field of the option window: a row of the table of OptionPages.cpp
+//   (src/common), shown by both interfaces.
 // Then run the tests of benchmarks/gui (see its README.txt), which check the
 // registry, the menus and the selection workflows of the FLTK interface.
 
@@ -600,10 +609,15 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
 
   if(CTX::instance()->showOptionsOnStartup) options->win->show();
   if(CTX::instance()->showMessagesOnStartup) graph[0]->showMessages();
+
+  // the core tells this interface what changes from now on
+  SetGuiListener(this);
 }
 
 FlGui::~FlGui()
 {
+  SetGuiListener(nullptr);
+
   // the retired widgets go with their windows
   _retiredWidgets.clear();
 
@@ -1220,6 +1234,156 @@ void FlGui::storeCurrentWindowsInfo()
 }
 
 void redraw_cb(Fl_Widget *w, void *data) { drawContext::global()->draw(); }
+
+// What the core tells the interface (see GuiListener.h): each option that
+// changes something beyond its widgets says so, and the interface follows
+
+bool FlGui::running() { return available(); }
+
+drawContext *FlGui::scene() { return getCurrentDrawContext(); }
+
+int FlGui::desktopDark() { return ::desktopDark() == 1 ? 1 : 0; }
+
+void FlGui::showOption(const std::string &category, int num,
+                       const std::string &name)
+{
+  options->showOption(category, num, name);
+}
+
+void FlGui::showOptions() { options->showOptions(); }
+
+void FlGui::beforeOptionsSaved() { storeCurrentWindowsInfo(); }
+
+void FlGui::backgroundImageChanged()
+{
+  for(openglWindow *gl : openglWindows())
+    gl->getDrawContext()->invalidateBgImageTexture();
+}
+
+void FlGui::floatingToolsChanged() { applyFloatingTools(); }
+
+void FlGui::colorSchemeChanged() { applyColorScheme(true); }
+
+void FlGui::openglModeChanged() { resetOpenglMode(); }
+
+void FlGui::shadersChanged() { resetOpenglMode(); }
+
+void FlGui::tooltipsChanged()
+{
+  if(CTX::instance()->tooltips)
+    Fl_Tooltip::enable();
+  else
+    Fl_Tooltip::disable();
+}
+
+void FlGui::mouseSelectionChanged() { updateModeButtons(); }
+
+void FlGui::graphicSizeChanged()
+{
+  graph[0]->setGlWidth(CTX::instance()->glSize[0]);
+  graph[0]->setGlHeight(CTX::instance()->glSize[1]);
+}
+
+void FlGui::messageFontSizeChanged()
+{
+  graph[0]->setMessageFontSize(CTX::instance()->msgFontSize);
+}
+
+void FlGui::menuAttachedChanged()
+{
+  if(CTX::instance()->detachedMenu)
+    graph[0]->detachMenu();
+  else
+    graph[0]->attachMenu();
+}
+
+void FlGui::menuWidthChanged()
+{
+  if(CTX::instance()->menuSize[0] > 0)
+    graph[0]->setMenuWidth(CTX::instance()->menuSize[0]);
+  else
+    graph[0]->hideMenu();
+}
+
+void FlGui::sceneTransformChanged() { manip->update(); }
+
+void FlGui::clippingChanged()
+{
+  CTX *c = CTX::instance();
+  clipping->butt[0]->value(c->clipCapping);
+  clipping->butt[1]->value(c->clipWholeElements);
+  clipping->butt[2]->value(c->clipOnlyDrawIntersectingVolume);
+  clipping->butt[3]->value(c->clipOnlyVolume);
+  clipping->activateButtons();
+  clipping->resetBrowser();
+}
+
+void FlGui::lightChanged()
+{
+  options->general.sphere->setValue(CTX::instance()->lightPosition[0][0],
+                                    CTX::instance()->lightPosition[0][1],
+                                    CTX::instance()->lightPosition[0][2]);
+}
+
+void FlGui::snapChanged()
+{
+  for(int i = 0; i < 3; i++)
+    elementaryContext->value[i]->value(CTX::instance()->geom.snap[i]);
+}
+
+void FlGui::animationChanged()
+{
+  for(std::size_t i = 0; i < graph.size(); i++) graph[i]->checkAnimButtons();
+}
+
+void FlGui::viewTimeStepChanged(int num)
+{
+  // (the time step field shows the view of the option window)
+  if(num != options->view.index) return;
+  ((Fl_Valuator *)options->widget("View.TimeStep"))
+    ->maximum(PView::list[num]->getData()->getNumTimeSteps() - 1);
+}
+
+void FlGui::viewRenamed(int num)
+{
+  // the view and its aliases
+  PView *view = PView::list[num];
+  for(int i = 0; i < (int)PView::list.size(); i++) {
+    if((i == num || PView::list[i]->getAliasOf() == view->getTag() ||
+        PView::list[i]->getTag() == view->getAliasOf()) &&
+       onelab->getViewButton(i)) {
+      onelab->getViewButton(i)->copy_label("[" + std::to_string(i) + "] " +
+                                           view->getData()->getName());
+      onelab->getViewButton(i)->redraw();
+    }
+  }
+}
+
+void FlGui::viewVisibilityChanged(int num)
+{
+  if(onelab->getViewButton(num))
+    onelab->getViewButton(num)->value(PView::list[num]->getOptions()->visible);
+}
+
+void FlGui::viewOpenedOrClosed(int num) { onelab->openCloseViewButton(num); }
+
+void FlGui::viewColorMapChanged(int num)
+{
+  if(num < 0 || num == options->view.index) options->view.colorbar->redraw();
+}
+
+void fltkFontEngine(const std::string &engine)
+{
+  drawContextGlobal *old = drawContext::global();
+  if(old && old->getName() == engine) return;
+  if(engine == "StringTexture")
+    drawContext::setGlobal(new drawContextFltkStringTexture);
+  else if(engine == "Embedded")
+    drawContext::setGlobal(new drawContextFltkEmbedded);
+  else
+    drawContext::setGlobal(new drawContextFltk);
+  if(old) delete old;
+}
 
 // The windows, as the Window menu has them (see fltkActions.cpp)
 

@@ -6764,14 +6764,24 @@ by the events (@code{sceneTool}).
 The ONELAB loop (check, compute) is one stepper,
 @code{onelabUtils::onelabLoop}
 (@url{@value{GITLAB-PREFIX}/src/common/onelabUtils.cpp,src/common/onelabUtils.cpp}),
-driven by the FLTK interface (@file{onelabGroup.cpp}), the batch mode
+driven by the FLTK interface (@file{onelabActions.cpp}), the batch mode
 and the web app (@file{solverClient.mjs}), each adding its refreshes
 and its stop button.
 @item
-The widgets of the options window of the FLTK interface are bound to
-their options by name, in both directions (@pxref{Adding a new
-option}); the web app lists its options in a table in
-@file{options.mjs}.
+The core knows no toolkit. What an option changes in an interface, its
+function in @file{Options.cpp} tells through @code{guiListener}
+(@url{@value{GITLAB-PREFIX}/src/common/GuiListener.h,src/common/GuiListener.h}),
+a small set of notifications and questions (the scene of the current
+window, whether the desktop is dark) that the FLTK interface implements
+in @file{FlGui.cpp} and the web app in @file{webApp.cpp}.
+@item
+The option window is a table too
+(@url{@value{GITLAB-PREFIX}/src/common/OptionPages.cpp,src/common/OptionPages.cpp}):
+pages, sections and rows of fields, each bound to an option by name.
+The FLTK interface lays the rows out in @file{optionWindow.cpp}, where
+the widgets are bound to their options in both directions (@pxref{Adding
+a new option}); the web app shows the same rows in its Options tab
+(@file{options.mjs}).
 @end itemize
 
 In the FLTK interface, every event goes through @code{FlGui::_dispatch()},
@@ -6883,15 +6893,15 @@ choices of the web page and the help are made from it. A number option
 with bounds gets its minimum, maximum and step in the
 @code{OptionRanges} table of the same file;
 @item
-optional: add a widget for it in the options window
-(@url{@value{GITLAB-PREFIX}/src/fltk/optionWindow.cpp,src/fltk/optionWindow.cpp}),
-with the helpers @code{checkButton()}, @code{valueInput()},
-@code{choice()} (with no menu, to take its items from
-@code{OptionChoices}) or @code{input()}, the name of the option as the
-tooltip and @code{option_cb} as the callback. The widget is then bound
-to the option by its name in both directions: changing it sets the
-option, and setting the option (in a script, through the API, or with
-another widget) updates it;
+optional: add a field for it in the table of the option window
+(@url{@value{GITLAB-PREFIX}/src/common/OptionPages.cpp,src/common/OptionPages.cpp}),
+in a row of the section where it belongs: @code{check()},
+@code{number()}, @code{choice()} (its items come from
+@code{OptionChoices}) or @code{text()}, with its label. Both interfaces
+show it: in the FLTK interface the widget is bound to the option by its
+name in both directions (changing it sets the option, and setting the
+option in a script, through the API or with another widget updates
+it), and the web app shows it in its Options tab;
 @item
 regenerate the reference of the options (the files
 @file{opt_*.texi}) by running @code{gmsh -doc} in the

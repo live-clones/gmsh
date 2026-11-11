@@ -49,26 +49,7 @@
 #include "drawContext.h"
 #endif
 
-#if defined(__EMSCRIPTEN__)
-#include <emscripten.h>
-#endif
-
-#if defined(HAVE_FLTK)
-#include "desktop.h"
-#include <FL/Fl_Tooltip.H>
-#include "FlGui.h"
-#include "drawContextFltk.h"
-#include "graphicWindow.h"
-#include "openglWindow.h"
-#include "optionWindow.h"
-#include "manipWindow.h"
-#include "contextWindow.h"
-#include "clippingWindow.h"
-#include "onelabGroup.h"
-#include "viewButton.h"
-#include "drawContextFltkStringTexture.h"
-#include "drawContextFltkEmbedded.h"
-#endif
+#include "GuiListener.h"
 
 // A colour that strings are drawn in has changed. The native font engine
 // keeps a texture of every string, in the colour it was drawn in, so they
@@ -77,7 +58,7 @@
 // GUI or from a script.
 static void stringColorsChanged()
 {
-#if defined(HAVE_FLTK)
+#if defined(HAVE_OPENGL)
   drawContext::global()->resetFontTextures();
 #endif
 }
@@ -85,15 +66,12 @@ static void stringColorsChanged()
 // General routines for string options
 
 // an option set by its name for the graphical interface (GMSH_GUI): the
-// widgets bound to it show its new value (see optionWindow::showOption(); the
-// option functions that do more for the interface do it themselves)
+// widgets bound to it show its new value (see guiListener::showOption(); the
+// option functions that do more for the interface tell it themselves)
 static void showInGui(int action, const char *category, int num,
                       const char *name)
 {
-#if defined(HAVE_FLTK)
-  if((action & GMSH_GUI) && FlGui::available())
-    FlGui::instance()->options->showOption(category, num, name);
-#endif
+  if(action & GMSH_GUI) Gui()->showOption(category, num, name);
 }
 
 // The options of each category (see DefaultOptions.h): its name, its title in
@@ -410,15 +388,8 @@ static int colorSchemeInUse()
   int scheme = CTX::instance()->colorScheme;
   if(scheme != 3) return scheme;
   if(_desktopScheme < 0) {
-    _desktopScheme = 1;
-#if defined(HAVE_FLTK)
-    if(FlGui::available()) _desktopScheme = (desktopDark() == 1) ? 2 : 0;
-#elif defined(__EMSCRIPTEN__)
-    _desktopScheme = EM_ASM_INT({
-      if(typeof matchMedia !== 'function') return 1;
-      return matchMedia('(prefers-color-scheme: dark)').matches ? 2 : 0;
-    });
-#endif
+    int dark = Gui()->desktopDark();
+    _desktopScheme = (dark < 0) ? 1 : dark ? 2 : 0;
   }
   return _desktopScheme;
 }
@@ -575,10 +546,7 @@ void InitOptionsGUI(int num)
     SetColorOptionsGUI(num, c.colors);
   }
 
-#if defined(HAVE_FLTK)
-  // the widgets of the options window
-  if(FlGui::available()) FlGui::instance()->options->showOptions();
-#endif
+  Gui()->showOptions();
 }
 
 static void PrintOptionCategory(int level, int diff, int help, const char *cat,
@@ -694,9 +662,7 @@ void PrintOptions(int num, int level, int diff, int help, const char *filename,
                   std::vector<std::string> *vec)
 {
   keepMeshStatistics keep;
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) FlGui::instance()->storeCurrentWindowsInfo();
-#endif
+  Gui()->beforeOptionsSaved();
 
   FILE *file;
 
@@ -1079,17 +1045,7 @@ std::string opt_general_display(OPT_ARGS_STR)
 std::string opt_general_background_image_filename(OPT_ARGS_STR)
 {
   if(action & GMSH_SET) {
-#if defined(HAVE_FLTK)
-    if(CTX::instance()->bgImageFileName != val && FlGui::available()) {
-      for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-        for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
-          FlGui::instance()
-            ->graph[i]
-            ->gl[j]
-            ->getDrawContext()
-            ->invalidateBgImageTexture();
-    }
-#endif
+    if(CTX::instance()->bgImageFileName != val) Gui()->backgroundImageChanged();
     CTX::instance()->bgImageFileName = val;
   }
   return CTX::instance()->bgImageFileName;
@@ -1130,10 +1086,7 @@ std::string opt_general_executable_filename(OPT_ARGS_STR)
 std::string opt_general_floating_tools(OPT_ARGS_STR)
 {
   if(action & GMSH_SET) CTX::instance()->floatingTools = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->applyFloatingTools();
-#endif
+  if(action & GMSH_GUI) Gui()->floatingToolsChanged();
   return CTX::instance()->floatingTools;
 }
 
@@ -1266,12 +1219,10 @@ std::string opt_general_watch_file_pattern(OPT_ARGS_STR)
 std::string opt_general_gui_theme(OPT_ARGS_STR)
 {
   if(action & GMSH_SET) {
-#if defined(HAVE_FLTK)
     // the theme of the interface is set for the session
-    if(FlGui::available() && val != CTX::instance()->guiTheme)
+    if(Gui()->running() && val != CTX::instance()->guiTheme)
       Msg::Warning("General.FltkTheme will be '%s' from the next start",
                    val.c_str());
-#endif
     CTX::instance()->guiTheme = val;
   }
   return CTX::instance()->guiTheme;
@@ -1316,7 +1267,6 @@ std::string opt_general_graphics_font_engine(OPT_ARGS_STR)
     }
   }
 
-#if defined(HAVE_FLTK)
   if(action & GMSH_SET) {
     // the native engine draws at the raster position, which a core profile
     // has none of
@@ -1326,18 +1276,8 @@ std::string opt_general_graphics_font_engine(OPT_ARGS_STR)
                    "(General.Shaders = 0): using 'Embedded'");
       engine = "Embedded";
     }
-    drawContextGlobal *old = drawContext::global();
-    if(!old || old->getName() != engine) {
-      if(engine == "StringTexture")
-        drawContext::setGlobal(new drawContextFltkStringTexture);
-      else if(engine == "Embedded")
-        drawContext::setGlobal(new drawContextFltkEmbedded);
-      else
-        drawContext::setGlobal(new drawContextFltk);
-      if(old) delete old;
-    }
+    MakeFontEngine(engine);
   }
-#endif
 
   return CTX::instance()->glFontEngine;
 }
@@ -1691,13 +1631,6 @@ std::string opt_post_double_clicked_graph_point_command(OPT_ARGS_STR)
   return CTX::instance()->post.doubleClickedGraphPointCommand;
 }
 
-#if defined(HAVE_FLTK)
-int _gui_action_valid(int action, int num)
-{
-  if(!FlGui::available()) return 0;
-  return (action & GMSH_GUI) && (num == FlGui::instance()->options->view.index);
-}
-#endif
 
 std::string opt_view_name(OPT_ARGS_STR)
 {
@@ -1706,20 +1639,7 @@ std::string opt_view_name(OPT_ARGS_STR)
   if(!data) return "";
   if(action & GMSH_SET) {
     data->setName(val);
-#if defined(HAVE_FLTK)
-    // change name in GUI for the view and its aliases
-    if(FlGui::available()) {
-      for(int i = 0; i < (int)PView::list.size(); i++) {
-        if((i == num || PView::list[i]->getAliasOf() == view->getTag() ||
-            PView::list[i]->getTag() == view->getAliasOf()) &&
-           FlGui::instance()->onelab->getViewButton(i)) {
-          FlGui::instance()->onelab->getViewButton(i)->copy_label(
-            "[" + std::to_string(i) + "] " + data->getName());
-          FlGui::instance()->onelab->getViewButton(i)->redraw();
-        }
-      }
-    }
-#endif
+    Gui()->viewRenamed(num);
   }
   return data->getName();
 #else
@@ -2123,11 +2043,7 @@ double opt_general_fontsize(OPT_ARGS_NUM)
 double opt_general_gui_color_scheme(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->guiColorScheme = (int)val;
-#if defined(HAVE_FLTK)
-  if(action & GMSH_SET && FlGui::available()) {
-    FlGui::instance()->applyColorScheme(true);
-  }
-#endif
+  if(action & GMSH_SET) Gui()->colorSchemeChanged();
   return CTX::instance()->guiColorScheme;
 }
 
@@ -2185,11 +2101,7 @@ double opt_general_graphics_size0(OPT_ARGS_NUM)
     CTX::instance()->glSize[0] = (int)val;
     if(CTX::instance()->glSize[0] <= 0) CTX::instance()->glSize[0] = 600;
   }
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)) {
-    FlGui::instance()->graph[0]->setGlWidth(CTX::instance()->glSize[0]);
-  }
-#endif
+  if(action & GMSH_GUI) Gui()->graphicSizeChanged();
   return CTX::instance()->glSize[0];
 }
 
@@ -2199,11 +2111,7 @@ double opt_general_graphics_size1(OPT_ARGS_NUM)
     CTX::instance()->glSize[1] = (int)val;
     if(CTX::instance()->glSize[1] <= 0) CTX::instance()->glSize[1] = 600;
   }
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)) {
-    FlGui::instance()->graph[0]->setGlHeight(CTX::instance()->glSize[1]);
-  }
-#endif
+  if(action & GMSH_GUI) Gui()->graphicSizeChanged();
   return CTX::instance()->glSize[1];
 }
 
@@ -2269,12 +2177,7 @@ double opt_general_message_fontsize(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     CTX::instance()->msgFontSize = (int)val;
-#if defined(HAVE_FLTK)
-    if(FlGui::available() && (action & GMSH_GUI)) {
-      FlGui::instance()->graph[0]->setMessageFontSize(
-        CTX::instance()->msgFontSize);
-    }
-#endif
+    if(action & GMSH_GUI) Gui()->messageFontSizeChanged();
   }
   return CTX::instance()->msgFontSize;
 }
@@ -2282,14 +2185,7 @@ double opt_general_message_fontsize(OPT_ARGS_NUM)
 double opt_general_detached_menu(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) { CTX::instance()->detachedMenu = (int)val; }
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)) {
-    if(CTX::instance()->detachedMenu)
-      FlGui::instance()->graph[0]->detachMenu();
-    else
-      FlGui::instance()->graph[0]->attachMenu();
-  }
-#endif
+  if(action & GMSH_GUI) Gui()->menuAttachedChanged();
   return CTX::instance()->detachedMenu;
 }
 
@@ -2311,14 +2207,7 @@ double opt_general_menu_size0(OPT_ARGS_NUM)
     CTX::instance()->menuSize[0] = (int)val;
     if(CTX::instance()->menuSize[0] < 0) CTX::instance()->menuSize[0] = 0;
   }
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)) {
-    if(CTX::instance()->menuSize[0] > 0)
-      FlGui::instance()->graph[0]->setMenuWidth(CTX::instance()->menuSize[0]);
-    else
-      FlGui::instance()->graph[0]->hideMenu();
-  }
-#endif
+  if(action & GMSH_GUI) Gui()->menuWidthChanged();
   return CTX::instance()->menuSize[0];
 }
 
@@ -2544,11 +2433,10 @@ double opt_general_confirm_overwrite(OPT_ARGS_NUM)
 double opt_general_rotation0(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->tmpRotation[0] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) {
-    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
-    if(action & GMSH_SET) gl->getDrawContext()->r[0] = val;
-    return gl->getDrawContext()->r[0];
+#if defined(HAVE_OPENGL)
+  if(drawContext *ctx = Gui()->scene()) {
+    if(action & GMSH_SET) ctx->r[0] = val;
+    return ctx->r[0];
   }
 #endif
   return CTX::instance()->tmpRotation[0];
@@ -2557,11 +2445,10 @@ double opt_general_rotation0(OPT_ARGS_NUM)
 double opt_general_rotation1(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->tmpRotation[1] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) {
-    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
-    if(action & GMSH_SET) gl->getDrawContext()->r[1] = val;
-    return gl->getDrawContext()->r[1];
+#if defined(HAVE_OPENGL)
+  if(drawContext *ctx = Gui()->scene()) {
+    if(action & GMSH_SET) ctx->r[1] = val;
+    return ctx->r[1];
   }
 #endif
   return CTX::instance()->tmpRotation[1];
@@ -2570,11 +2457,10 @@ double opt_general_rotation1(OPT_ARGS_NUM)
 double opt_general_rotation2(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->tmpRotation[2] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) {
-    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
-    if(action & GMSH_SET) gl->getDrawContext()->r[2] = val;
-    return gl->getDrawContext()->r[2];
+#if defined(HAVE_OPENGL)
+  if(drawContext *ctx = Gui()->scene()) {
+    if(action & GMSH_SET) ctx->r[2] = val;
+    return ctx->r[2];
   }
 #endif
   return CTX::instance()->tmpRotation[2];
@@ -2601,12 +2487,11 @@ double opt_general_rotation_center2(OPT_ARGS_NUM)
 double opt_general_quaternion0(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->tmpQuaternion[0] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) {
-    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
-    if(action & GMSH_SET) gl->getDrawContext()->quaternion[0] = val;
-    if(action & GMSH_GUI) FlGui::instance()->manip->update();
-    return gl->getDrawContext()->quaternion[0];
+#if defined(HAVE_OPENGL)
+  if(drawContext *ctx = Gui()->scene()) {
+    if(action & GMSH_SET) ctx->quaternion[0] = val;
+    if(action & GMSH_GUI) Gui()->sceneTransformChanged();
+    return ctx->quaternion[0];
   }
 #endif
   return CTX::instance()->tmpQuaternion[0];
@@ -2615,12 +2500,11 @@ double opt_general_quaternion0(OPT_ARGS_NUM)
 double opt_general_quaternion1(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->tmpQuaternion[1] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) {
-    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
-    if(action & GMSH_SET) gl->getDrawContext()->quaternion[1] = val;
-    if(action & GMSH_GUI) FlGui::instance()->manip->update();
-    return gl->getDrawContext()->quaternion[1];
+#if defined(HAVE_OPENGL)
+  if(drawContext *ctx = Gui()->scene()) {
+    if(action & GMSH_SET) ctx->quaternion[1] = val;
+    if(action & GMSH_GUI) Gui()->sceneTransformChanged();
+    return ctx->quaternion[1];
   }
 #endif
   return CTX::instance()->tmpQuaternion[1];
@@ -2629,12 +2513,11 @@ double opt_general_quaternion1(OPT_ARGS_NUM)
 double opt_general_quaternion2(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->tmpQuaternion[2] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) {
-    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
-    if(action & GMSH_SET) gl->getDrawContext()->quaternion[2] = val;
-    if(action & GMSH_GUI) FlGui::instance()->manip->update();
-    return gl->getDrawContext()->quaternion[2];
+#if defined(HAVE_OPENGL)
+  if(drawContext *ctx = Gui()->scene()) {
+    if(action & GMSH_SET) ctx->quaternion[2] = val;
+    if(action & GMSH_GUI) Gui()->sceneTransformChanged();
+    return ctx->quaternion[2];
   }
 #endif
   return CTX::instance()->tmpQuaternion[2];
@@ -2643,12 +2526,11 @@ double opt_general_quaternion2(OPT_ARGS_NUM)
 double opt_general_quaternion3(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->tmpQuaternion[3] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) {
-    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
-    if(action & GMSH_SET) gl->getDrawContext()->quaternion[3] = val;
-    if(action & GMSH_GUI) FlGui::instance()->manip->update();
-    return gl->getDrawContext()->quaternion[3];
+#if defined(HAVE_OPENGL)
+  if(drawContext *ctx = Gui()->scene()) {
+    if(action & GMSH_SET) ctx->quaternion[3] = val;
+    if(action & GMSH_GUI) Gui()->sceneTransformChanged();
+    return ctx->quaternion[3];
   }
 #endif
   return CTX::instance()->tmpQuaternion[3];
@@ -2657,12 +2539,11 @@ double opt_general_quaternion3(OPT_ARGS_NUM)
 double opt_general_translation0(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->tmpTranslation[0] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) {
-    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
-    if(action & GMSH_SET) gl->getDrawContext()->t[0] = val;
-    if(action & GMSH_GUI) FlGui::instance()->manip->update();
-    return gl->getDrawContext()->t[0];
+#if defined(HAVE_OPENGL)
+  if(drawContext *ctx = Gui()->scene()) {
+    if(action & GMSH_SET) ctx->t[0] = val;
+    if(action & GMSH_GUI) Gui()->sceneTransformChanged();
+    return ctx->t[0];
   }
 #endif
   return CTX::instance()->tmpTranslation[0];
@@ -2671,12 +2552,11 @@ double opt_general_translation0(OPT_ARGS_NUM)
 double opt_general_translation1(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->tmpTranslation[1] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) {
-    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
-    if(action & GMSH_SET) gl->getDrawContext()->t[1] = val;
-    if(action & GMSH_GUI) FlGui::instance()->manip->update();
-    return gl->getDrawContext()->t[1];
+#if defined(HAVE_OPENGL)
+  if(drawContext *ctx = Gui()->scene()) {
+    if(action & GMSH_SET) ctx->t[1] = val;
+    if(action & GMSH_GUI) Gui()->sceneTransformChanged();
+    return ctx->t[1];
   }
 #endif
   return CTX::instance()->tmpTranslation[1];
@@ -2685,12 +2565,11 @@ double opt_general_translation1(OPT_ARGS_NUM)
 double opt_general_translation2(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->tmpTranslation[2] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) {
-    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
-    if(action & GMSH_SET) gl->getDrawContext()->t[2] = val;
-    if(action & GMSH_GUI) FlGui::instance()->manip->update();
-    return gl->getDrawContext()->t[2];
+#if defined(HAVE_OPENGL)
+  if(drawContext *ctx = Gui()->scene()) {
+    if(action & GMSH_SET) ctx->t[2] = val;
+    if(action & GMSH_GUI) Gui()->sceneTransformChanged();
+    return ctx->t[2];
   }
 #endif
   return CTX::instance()->tmpTranslation[2];
@@ -2699,12 +2578,11 @@ double opt_general_translation2(OPT_ARGS_NUM)
 double opt_general_scale0(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->tmpScale[0] = val ? val : 1.0;
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) {
-    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
-    if(action & GMSH_SET) gl->getDrawContext()->s[0] = val ? val : 1.0;
-    if(action & GMSH_GUI) FlGui::instance()->manip->update();
-    return gl->getDrawContext()->s[0];
+#if defined(HAVE_OPENGL)
+  if(drawContext *ctx = Gui()->scene()) {
+    if(action & GMSH_SET) ctx->s[0] = val ? val : 1.0;
+    if(action & GMSH_GUI) Gui()->sceneTransformChanged();
+    return ctx->s[0];
   }
 #endif
   return CTX::instance()->tmpScale[0];
@@ -2713,12 +2591,11 @@ double opt_general_scale0(OPT_ARGS_NUM)
 double opt_general_scale1(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->tmpScale[1] = val ? val : 1.0;
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) {
-    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
-    if(action & GMSH_SET) gl->getDrawContext()->s[1] = val ? val : 1.0;
-    if(action & GMSH_GUI) FlGui::instance()->manip->update();
-    return gl->getDrawContext()->s[1];
+#if defined(HAVE_OPENGL)
+  if(drawContext *ctx = Gui()->scene()) {
+    if(action & GMSH_SET) ctx->s[1] = val ? val : 1.0;
+    if(action & GMSH_GUI) Gui()->sceneTransformChanged();
+    return ctx->s[1];
   }
 #endif
   return CTX::instance()->tmpScale[1];
@@ -2727,12 +2604,11 @@ double opt_general_scale1(OPT_ARGS_NUM)
 double opt_general_scale2(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->tmpScale[2] = val ? val : 1.0;
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) {
-    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
-    if(action & GMSH_SET) gl->getDrawContext()->s[2] = val ? val : 1.0;
-    if(action & GMSH_GUI) FlGui::instance()->manip->update();
-    return gl->getDrawContext()->s[2];
+#if defined(HAVE_OPENGL)
+  if(drawContext *ctx = Gui()->scene()) {
+    if(action & GMSH_SET) ctx->s[2] = val ? val : 1.0;
+    if(action & GMSH_GUI) Gui()->sceneTransformChanged();
+    return ctx->s[2];
   }
 #endif
   return CTX::instance()->tmpScale[2];
@@ -2907,19 +2783,15 @@ double opt_view_opacity(OPT_ARGS_NUM)
 double opt_general_shaders(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
-#if defined(HAVE_FLTK)
     int old = CTX::instance()->shaders;
-#endif
     CTX::instance()->shaders = (int)val;
-#if defined(HAVE_FLTK)
     // the pipeline is chosen when the context is made; the font engine
     // depends on it
     if(CTX::instance()->shaders != old) {
-      resetOpenglMode();
+      Gui()->shadersChanged();
       opt_general_graphics_font_engine(0, GMSH_SET | GMSH_GUI,
                                        CTX::instance()->glFontEngine);
     }
-#endif
   }
   return CTX::instance()->shaders;
 }
@@ -2952,12 +2824,7 @@ double opt_general_tooltips(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     CTX::instance()->tooltips = (int)val;
-#if defined(HAVE_FLTK)
-    if(CTX::instance()->tooltips)
-      Fl_Tooltip::enable();
-    else
-      Fl_Tooltip::disable();
-#endif
+    Gui()->tooltipsChanged();
   }
   return CTX::instance()->tooltips;
 }
@@ -2971,30 +2838,21 @@ double opt_general_input_scrolling(OPT_ARGS_NUM)
 double opt_general_orthographic(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->ortho = (int)val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)) {
-    if(CTX::instance()->ortho) {
-      if(FlGui::available()) Msg::StatusBar(false, "Orthographic projection");
-    }
-    else {
-      if(FlGui::available()) Msg::StatusBar(false, "Perspective projection");
-    }
-  }
-#endif
+  if(action & GMSH_GUI)
+    Msg::StatusBar(false, CTX::instance()->ortho ? "Orthographic projection" :
+                                                   "Perspective projection");
   return CTX::instance()->ortho;
 }
 
 double opt_general_mouse_selection(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mouseSelection = (int)val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)) {
+  if(action & GMSH_GUI) {
     Msg::StatusBar(false, CTX::instance()->mouseSelection ?
                             "Mouse selection ON" :
                             "Mouse selection OFF");
-    updateModeButtons();
+    Gui()->mouseSelectionChanged();
   }
-#endif
   return CTX::instance()->mouseSelection;
 }
 
@@ -3255,9 +3113,7 @@ double opt_general_double_buffer(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     CTX::instance()->db = (int)val;
-#if defined(HAVE_FLTK)
-    resetOpenglMode();
-#endif
+    Gui()->openglModeChanged();
   }
   return CTX::instance()->db;
 }
@@ -3266,9 +3122,7 @@ double opt_general_antialiasing(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     CTX::instance()->antialiasing = (int)val;
-#if defined(HAVE_FLTK)
-    resetOpenglMode();
-#endif
+    Gui()->openglModeChanged();
   }
   return CTX::instance()->antialiasing;
 }
@@ -3501,9 +3355,7 @@ double opt_general_stereo_mode(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     CTX::instance()->stereo = (int)val;
-#if defined(HAVE_FLTK)
-    resetOpenglMode();
-#endif
+    Gui()->openglModeChanged();
   }
   if(CTX::instance()->stereo) opt_general_camera_mode(num, action, 1.);
   return CTX::instance()->stereo;
@@ -3536,240 +3388,168 @@ double opt_general_camera_mode(OPT_ARGS_NUM)
 double opt_general_clip0a(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[0][0] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
-#endif
+  if(action & GMSH_GUI) Gui()->clippingChanged();
   return CTX::instance()->clipPlane[0][0];
 }
 
 double opt_general_clip0b(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[0][1] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
-#endif
+  if(action & GMSH_GUI) Gui()->clippingChanged();
   return CTX::instance()->clipPlane[0][1];
 }
 
 double opt_general_clip0c(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[0][2] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
-#endif
+  if(action & GMSH_GUI) Gui()->clippingChanged();
   return CTX::instance()->clipPlane[0][2];
 }
 
 double opt_general_clip0d(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[0][3] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
-#endif
+  if(action & GMSH_GUI) Gui()->clippingChanged();
   return CTX::instance()->clipPlane[0][3];
 }
 
 double opt_general_clip1a(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[1][0] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
-#endif
+  if(action & GMSH_GUI) Gui()->clippingChanged();
   return CTX::instance()->clipPlane[1][0];
 }
 
 double opt_general_clip1b(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[1][1] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
-#endif
+  if(action & GMSH_GUI) Gui()->clippingChanged();
   return CTX::instance()->clipPlane[1][1];
 }
 
 double opt_general_clip1c(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[1][2] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
-#endif
+  if(action & GMSH_GUI) Gui()->clippingChanged();
   return CTX::instance()->clipPlane[1][2];
 }
 
 double opt_general_clip1d(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[1][3] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
-#endif
+  if(action & GMSH_GUI) Gui()->clippingChanged();
   return CTX::instance()->clipPlane[1][3];
 }
 
 double opt_general_clip2a(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[2][0] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
-#endif
+  if(action & GMSH_GUI) Gui()->clippingChanged();
   return CTX::instance()->clipPlane[2][0];
 }
 
 double opt_general_clip2b(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[2][1] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
-#endif
+  if(action & GMSH_GUI) Gui()->clippingChanged();
   return CTX::instance()->clipPlane[2][1];
 }
 
 double opt_general_clip2c(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[2][2] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
-#endif
+  if(action & GMSH_GUI) Gui()->clippingChanged();
   return CTX::instance()->clipPlane[2][2];
 }
 
 double opt_general_clip2d(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[2][3] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
-#endif
+  if(action & GMSH_GUI) Gui()->clippingChanged();
   return CTX::instance()->clipPlane[2][3];
 }
 
 double opt_general_clip3a(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[3][0] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
-#endif
+  if(action & GMSH_GUI) Gui()->clippingChanged();
   return CTX::instance()->clipPlane[3][0];
 }
 
 double opt_general_clip3b(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[3][1] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
-#endif
+  if(action & GMSH_GUI) Gui()->clippingChanged();
   return CTX::instance()->clipPlane[3][1];
 }
 
 double opt_general_clip3c(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[3][2] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
-#endif
+  if(action & GMSH_GUI) Gui()->clippingChanged();
   return CTX::instance()->clipPlane[3][2];
 }
 
 double opt_general_clip3d(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[3][3] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
-#endif
+  if(action & GMSH_GUI) Gui()->clippingChanged();
   return CTX::instance()->clipPlane[3][3];
 }
 
 double opt_general_clip4a(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[4][0] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
-#endif
+  if(action & GMSH_GUI) Gui()->clippingChanged();
   return CTX::instance()->clipPlane[4][0];
 }
 
 double opt_general_clip4b(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[4][1] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
-#endif
+  if(action & GMSH_GUI) Gui()->clippingChanged();
   return CTX::instance()->clipPlane[4][1];
 }
 
 double opt_general_clip4c(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[4][2] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
-#endif
+  if(action & GMSH_GUI) Gui()->clippingChanged();
   return CTX::instance()->clipPlane[4][2];
 }
 
 double opt_general_clip4d(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[4][3] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
-#endif
+  if(action & GMSH_GUI) Gui()->clippingChanged();
   return CTX::instance()->clipPlane[4][3];
 }
 
 double opt_general_clip5a(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[5][0] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
-#endif
+  if(action & GMSH_GUI) Gui()->clippingChanged();
   return CTX::instance()->clipPlane[5][0];
 }
 
 double opt_general_clip5b(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[5][1] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
-#endif
+  if(action & GMSH_GUI) Gui()->clippingChanged();
   return CTX::instance()->clipPlane[5][1];
 }
 
 double opt_general_clip5c(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[5][2] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
-#endif
+  if(action & GMSH_GUI) Gui()->clippingChanged();
   return CTX::instance()->clipPlane[5][2];
 }
 
 double opt_general_clip5d(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipPlane[5][3] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
-#endif
+  if(action & GMSH_GUI) Gui()->clippingChanged();
   return CTX::instance()->clipPlane[5][3];
 }
 
@@ -3786,26 +3566,14 @@ double opt_general_clip_capping(OPT_ARGS_NUM)
 #endif
     }
   }
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)) {
-    FlGui::instance()->clipping->butt[0]->value(
-      CTX::instance()->clipCapping);
-    FlGui::instance()->clipping->activateButtons();
-  }
-#endif
+  if(action & GMSH_GUI) Gui()->clippingChanged();
   return CTX::instance()->clipCapping;
 }
 
 double opt_general_clip_whole_elements(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipWholeElements = (int)val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)) {
-    FlGui::instance()->clipping->butt[1]->value(
-      CTX::instance()->clipWholeElements);
-    FlGui::instance()->clipping->activateButtons();
-  }
-#endif
+  if(action & GMSH_GUI) Gui()->clippingChanged();
   return CTX::instance()->clipWholeElements;
 }
 
@@ -3813,26 +3581,14 @@ double opt_general_clip_only_draw_intersecting_volume(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX::instance()->clipOnlyDrawIntersectingVolume = (int)val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)) {
-    FlGui::instance()->clipping->butt[2]->value(
-      CTX::instance()->clipOnlyDrawIntersectingVolume);
-    FlGui::instance()->clipping->activateButtons();
-  }
-#endif
+  if(action & GMSH_GUI) Gui()->clippingChanged();
   return CTX::instance()->clipOnlyDrawIntersectingVolume;
 }
 
 double opt_general_clip_only_volume(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->clipOnlyVolume = (int)val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)) {
-    FlGui::instance()->clipping->butt[3]->value(
-      CTX::instance()->clipOnlyVolume);
-    FlGui::instance()->clipping->activateButtons();
-  }
-#endif
+  if(action & GMSH_GUI) Gui()->clippingChanged();
   return CTX::instance()->clipOnlyVolume;
 }
 
@@ -3845,42 +3601,21 @@ double opt_general_light0(OPT_ARGS_NUM)
 double opt_general_light00(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->lightPosition[0][0] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)) {
-    FlGui::instance()->options->general.sphere->setValue(
-      CTX::instance()->lightPosition[0][0],
-      CTX::instance()->lightPosition[0][1],
-      CTX::instance()->lightPosition[0][2]);
-  }
-#endif
+  if(action & GMSH_GUI) Gui()->lightChanged();
   return CTX::instance()->lightPosition[0][0];
 }
 
 double opt_general_light01(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->lightPosition[0][1] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)) {
-    FlGui::instance()->options->general.sphere->setValue(
-      CTX::instance()->lightPosition[0][0],
-      CTX::instance()->lightPosition[0][1],
-      CTX::instance()->lightPosition[0][2]);
-  }
-#endif
+  if(action & GMSH_GUI) Gui()->lightChanged();
   return CTX::instance()->lightPosition[0][1];
 }
 
 double opt_general_light02(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->lightPosition[0][2] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)) {
-    FlGui::instance()->options->general.sphere->setValue(
-      CTX::instance()->lightPosition[0][0],
-      CTX::instance()->lightPosition[0][1],
-      CTX::instance()->lightPosition[0][2]);
-  }
-#endif
+  if(action & GMSH_GUI) Gui()->lightChanged();
   return CTX::instance()->lightPosition[0][2];
 }
 
@@ -4054,18 +3789,17 @@ double opt_geometry_transform(OPT_ARGS_NUM)
        CTX::instance()->geom.useTransform > 1)
       CTX::instance()->geom.useTransform = 0;
   }
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) {
+#if defined(HAVE_OPENGL)
+  if(drawContext *ctx = Gui()->scene()) {
     if(action & GMSH_SET) {
-      openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
       if(CTX::instance()->geom.useTransform == 1) {
         drawTransform *tr = new drawTransformScaled(
           CTX::instance()->geom.transform, CTX::instance()->geom.offset);
-        gl->getDrawContext()->setTransform(tr);
+        ctx->setTransform(tr);
       }
       else {
-        drawTransform *tr = gl->getDrawContext()->getTransform();
-        gl->getDrawContext()->setTransform(nullptr);
+        drawTransform *tr = ctx->getTransform();
+        ctx->setTransform(nullptr);
         if(tr) delete tr;
       }
     }
@@ -4077,11 +3811,10 @@ double opt_geometry_transform(OPT_ARGS_NUM)
 static double _opt_geometry_transform(OPT_ARGS_NUM, int ii, int jj)
 {
   if(action & GMSH_SET) CTX::instance()->geom.transform[ii][jj] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) {
+#if defined(HAVE_OPENGL)
+  if(drawContext *ctx = Gui()->scene()) {
     if(action & GMSH_SET) {
-      openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
-      drawTransform *tr = gl->getDrawContext()->getTransform();
+      drawTransform *tr = ctx->getTransform();
       if(tr)
         tr->setMatrix(CTX::instance()->geom.transform,
                       CTX::instance()->geom.offset);
@@ -4139,11 +3872,10 @@ double opt_geometry_transform22(OPT_ARGS_NUM)
 static double _opt_geometry_offset(OPT_ARGS_NUM, int ii)
 {
   if(action & GMSH_SET) CTX::instance()->geom.offset[ii] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) {
+#if defined(HAVE_OPENGL)
+  if(drawContext *ctx = Gui()->scene()) {
     if(action & GMSH_SET) {
-      openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
-      drawTransform *tr = gl->getDrawContext()->getTransform();
+      drawTransform *tr = ctx->getTransform();
       if(tr)
         tr->setMatrix(CTX::instance()->geom.transform,
                       CTX::instance()->geom.offset);
@@ -4566,43 +4298,28 @@ double opt_geometry_snap_points(OPT_ARGS_NUM)
 double opt_geometry_snap0(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->geom.snap[0] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->elementaryContext->value[0]->value(
-      CTX::instance()->geom.snap[0]);
-#endif
+  if(action & GMSH_GUI) Gui()->snapChanged();
   return CTX::instance()->geom.snap[0];
 }
 
 double opt_geometry_snap1(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->geom.snap[1] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->elementaryContext->value[1]->value(
-      CTX::instance()->geom.snap[1]);
-#endif
+  if(action & GMSH_GUI) Gui()->snapChanged();
   return CTX::instance()->geom.snap[1];
 }
 
 double opt_geometry_snap2(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->geom.snap[2] = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->elementaryContext->value[2]->value(
-      CTX::instance()->geom.snap[2]);
-#endif
+  if(action & GMSH_GUI) Gui()->snapChanged();
   return CTX::instance()->geom.snap[2];
 }
 
 double opt_geometry_clip(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->geom.clip = (int)val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
-#endif
+  if(action & GMSH_GUI) Gui()->clippingChanged();
   return CTX::instance()->geom.clip;
 }
 
@@ -6203,10 +5920,7 @@ double opt_mesh_partition_metis_min_conn(OPT_ARGS_NUM)
 double opt_mesh_clip(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.clip = (int)val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->clipping->resetBrowser();
-#endif
+  if(action & GMSH_GUI) Gui()->clippingChanged();
   return CTX::instance()->mesh.clip;
 }
 
@@ -6464,11 +6178,7 @@ double opt_post_anim_cycle(OPT_ARGS_NUM)
        CTX::instance()->post.animCycle > 2)
       CTX::instance()->post.animCycle = 0;
   }
-#if defined(HAVE_FLTK)
-  if(FlGui::available())
-    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-      FlGui::instance()->graph[i]->checkAnimButtons();
-#endif
+  Gui()->animationChanged();
   return CTX::instance()->post.animCycle;
 }
 
@@ -6568,14 +6278,8 @@ double opt_view_nb_timestep(OPT_ARGS_NUM)
 #if defined(HAVE_POST)
   GET_VIEWd(0.);
   if(!data) return 1;
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num))
-    FlGui::instance()->options->view.value[50]->maximum(
-      data->getNumTimeSteps() - 1);
-  if(FlGui::available())
-    for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
-      FlGui::instance()->graph[i]->checkAnimButtons();
-#endif
+  if(action & GMSH_GUI) Gui()->viewTimeStepChanged(num);
+  Gui()->animationChanged();
   return data->getNumTimeSteps();
 #else
   return 0.;
@@ -7126,11 +6830,7 @@ double opt_view_visible(OPT_ARGS_NUM)
 #if defined(HAVE_POST)
   GET_VIEWo(0.);
   if(action & GMSH_SET) { opt->visible = (int)val; }
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI) && num >= 0 &&
-     FlGui::instance()->onelab->getViewButton(num))
-    FlGui::instance()->onelab->getViewButton(num)->value(opt->visible);
-#endif
+  if((action & GMSH_GUI) && num >= 0) Gui()->viewVisibilityChanged(num);
   return opt->visible;
 #else
   return 0.;
@@ -8012,11 +7712,7 @@ double opt_view_colormap_alpha_power(OPT_ARGS_NUM)
     ColorTable_Recompute(&opt->colorTable);
     if(view) view->setChanged(true);
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    FlGui::instance()->options->view.colorbar->redraw();
-  }
-#endif
+  if(action & GMSH_GUI) Gui()->viewColorMapChanged(num);
   return opt->colorTable.dpar[COLORTABLE_ALPHAPOW];
 #else
   return 0.;
@@ -8032,11 +7728,7 @@ double opt_view_colormap_beta(OPT_ARGS_NUM)
     ColorTable_Recompute(&opt->colorTable);
     if(view) view->setChanged(true);
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    FlGui::instance()->options->view.colorbar->redraw();
-  }
-#endif
+  if(action & GMSH_GUI) Gui()->viewColorMapChanged(num);
   return opt->colorTable.dpar[COLORTABLE_BETA];
 #else
   return 0.;
@@ -8052,11 +7744,7 @@ double opt_view_colormap_bias(OPT_ARGS_NUM)
     ColorTable_Recompute(&opt->colorTable);
     if(view) view->setChanged(true);
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    FlGui::instance()->options->view.colorbar->redraw();
-  }
-#endif
+  if(action & GMSH_GUI) Gui()->viewColorMapChanged(num);
   return opt->colorTable.dpar[COLORTABLE_BIAS];
 #else
   return 0.;
@@ -8072,11 +7760,7 @@ double opt_view_colormap_curvature(OPT_ARGS_NUM)
     ColorTable_Recompute(&opt->colorTable);
     if(view) view->setChanged(true);
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    FlGui::instance()->options->view.colorbar->redraw();
-  }
-#endif
+  if(action & GMSH_GUI) Gui()->viewColorMapChanged(num);
   return opt->colorTable.dpar[COLORTABLE_CURVATURE];
 #else
   return 0.;
@@ -8092,11 +7776,7 @@ double opt_view_colormap_invert(OPT_ARGS_NUM)
     ColorTable_Recompute(&opt->colorTable);
     if(view) view->setChanged(true);
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    FlGui::instance()->options->view.colorbar->redraw();
-  }
-#endif
+  if(action & GMSH_GUI) Gui()->viewColorMapChanged(num);
   return opt->colorTable.ipar[COLORTABLE_INVERT];
 #else
   return 0.;
@@ -8115,11 +7795,7 @@ double opt_view_colormap_number(OPT_ARGS_NUM)
     ColorTable_Recompute(&opt->colorTable);
     if(view) view->setChanged(true);
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    FlGui::instance()->options->view.colorbar->redraw();
-  }
-#endif
+  if(action & GMSH_GUI) Gui()->viewColorMapChanged(num);
   return opt->colorTable.ipar[COLORTABLE_NUMBER];
 #else
   return 0.;
@@ -8135,11 +7811,7 @@ double opt_view_colormap_rotation(OPT_ARGS_NUM)
     ColorTable_Recompute(&opt->colorTable);
     if(view) view->setChanged(true);
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    FlGui::instance()->options->view.colorbar->redraw();
-  }
-#endif
+  if(action & GMSH_GUI) Gui()->viewColorMapChanged(num);
   return opt->colorTable.ipar[COLORTABLE_ROTATION];
 #else
   return 0.;
@@ -8155,11 +7827,7 @@ double opt_view_colormap_swap(OPT_ARGS_NUM)
     ColorTable_Recompute(&opt->colorTable);
     if(view) view->setChanged(true);
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    FlGui::instance()->options->view.colorbar->redraw();
-  }
-#endif
+  if(action & GMSH_GUI) Gui()->viewColorMapChanged(num);
   return opt->colorTable.ipar[COLORTABLE_SWAP];
 #else
   return 0.;
@@ -8238,11 +7906,7 @@ double opt_view_clip(OPT_ARGS_NUM)
 #if defined(HAVE_POST)
   GET_VIEWo(0.);
   if(action & GMSH_SET) { opt->clip = (int)val; }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    FlGui::instance()->clipping->resetBrowser();
-  }
-#endif
+  if(action & GMSH_GUI) Gui()->clippingChanged();
   return opt->clip;
 #else
   return 0.;
@@ -8319,11 +7983,7 @@ double opt_view_closed(OPT_ARGS_NUM)
 #if defined(HAVE_POST)
   GET_VIEWo(0.);
   if(action & GMSH_SET) { opt->closed = (int)val; }
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI) && num >= 0) {
-    FlGui::instance()->onelab->openCloseViewButton(num);
-  }
-#endif
+  if((action & GMSH_GUI) && num >= 0) Gui()->viewOpenedOrClosed(num);
   return opt->closed;
 #else
   return 0.;
@@ -8634,9 +8294,7 @@ unsigned int opt_general_color_background(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
     CTX::instance()->color.bg = val;
-#if defined(HAVE_FLTK)
-    if(FlGui::available()) FlGui::instance()->options->view.colorbar->redraw();
-#endif
+    Gui()->viewColorMapChanged(-1);
   }
   return CTX::instance()->color.bg;
 }

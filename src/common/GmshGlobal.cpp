@@ -54,6 +54,7 @@
 #endif
 #endif
 
+#include "GuiListener.h"
 #if defined(HAVE_FLTK)
 #include "FlGui.h"
 #include "graphicWindow.h"
@@ -72,6 +73,8 @@ int GmshInitialize(int argc, char **argv, bool readConfigFiles,
 
 #if defined(HAVE_FLTK)
   RedirectIOToConsole();
+  // the engines that draw text, whether or not the interface runs
+  SetFontEngineMaker(fltkFontEngine);
 #endif
   SetCrashReport(true);
 

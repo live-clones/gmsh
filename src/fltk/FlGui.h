@@ -13,6 +13,7 @@
 #include <thread>
 #include "SPoint2.h"
 #include "gmshScheme.h"
+#include "GuiListener.h"
 
 #define GMSH_WINDOW_BOX FL_FLAT_BOX
 #define GMSH_SIMPLE_RIGHT_BOX (Fl_Boxtype)(FL_FREE_BOXTYPE + 1)
@@ -74,7 +75,9 @@ class GRegion;
 class MElement;
 class PView;
 
-class FlGui {
+// The FLTK graphical user interface: a guiListener, the core tells it what
+// changed (see GuiListener.h)
+class FlGui : public guiListener {
 private:
   static FlGui *_instance;
   static std::string _openedThroughMacFinder;
@@ -266,7 +269,41 @@ public:
   bool quitShouldExit() { return _quitShouldExit; }
   // show onelab context window for the given entity
   void showOnelabContext(int dim, int tag);
+
+  // what the core tells the interface (see GuiListener.h)
+  bool running() override;
+  drawContext *scene() override;
+  int desktopDark() override;
+  void showOption(const std::string &category, int num,
+                  const std::string &name) override;
+  void showOptions() override;
+  void beforeOptionsSaved() override;
+  void backgroundImageChanged() override;
+  void floatingToolsChanged() override;
+  void colorSchemeChanged() override;
+  void openglModeChanged() override;
+  void shadersChanged() override;
+  void tooltipsChanged() override;
+  void mouseSelectionChanged() override;
+  void graphicSizeChanged() override;
+  void messageFontSizeChanged() override;
+  void menuAttachedChanged() override;
+  void menuWidthChanged() override;
+  void sceneTransformChanged() override;
+  void clippingChanged() override;
+  void lightChanged() override;
+  void snapChanged() override;
+  void animationChanged() override;
+  void viewTimeStepChanged(int num) override;
+  void viewRenamed(int num) override;
+  void viewVisibilityChanged(int num) override;
+  void viewOpenedOrClosed(int num) override;
+  void viewColorMapChanged(int num) override;
 };
+
+// the engine that draws text, chosen by name (General.GraphicsFontEngine):
+// given to the core at startup (see GmshGlobal.cpp), as a batch run draws too
+void fltkFontEngine(const std::string &engine);
 
 void redraw_cb(Fl_Widget *w, void *data);
 // The windows, as the Window menu has them (see fltkActions.cpp): all of

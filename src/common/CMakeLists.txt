@@ -16,6 +16,7 @@ set(SRC
   Actions.cpp
   IconStrokes.cpp
   OptionPages.cpp
+  GuiListener.cpp
   OS.cpp
   OpenFile.cpp
   CreateFile.cpp
