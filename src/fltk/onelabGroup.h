@@ -123,9 +123,10 @@ Fl_Widget *addParameterWidget(onelab::string &p, int xx, int yy, int ww, int hh,
 // (the clients read the one under way in ONELAB/Action): the model checked
 // (the script read again with the parameters; always, even if nothing
 // changed, when asked), computed (the loops over the parameters run, then the
-// solvers), the database reset then checked, the solvers initialized (at
-// startup), the tree and the graphs refreshed, the run stopped or the solvers
-// killed, the database saved or loaded, and a reload asked by an outside code
+// solvers), the database reset then checked, the solvers initialized (when
+// one is added), the tree and the graphs refreshed, the run stopped or the
+// solvers killed, the database saved or loaded, and a reload asked by an
+// outside code
 void onelabCheck(bool always = false);
 void onelabCompute();
 void onelabReset();
@@ -139,9 +140,9 @@ void onelabReload();
 // an action by its name ("check", "compute", ...), as the custom Run button
 // of a model asks for it
 void onelabAction(const std::string &action);
-// the solver of index num added to the tree (or the list made again if num is
-// negative), then the model checked, or reset when a solver is to be launched
-// at startup
+// the solver of index num added to the tree, then the model checked (or, if
+// num is negative, the list made again and the tree refreshed); the database
+// reset instead when a solver is to be launched at startup
 void selectSolver(int num);
 
 // whether a solver runs (then said in the messages): what changes the

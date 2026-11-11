@@ -4614,7 +4614,7 @@ respectively. The other top-level namespaces are @code{gmsh/option}
 (which handles all options), @code{gmsh/algorithm} (which handles raw
 algorithms), @code{gmsh/plugin} (which handles extensions to core Gmsh
 functionality), @code{gmsh/graphics} (which handles drawing),
-@code{gmsh/fltk} (which handles the graphical user interface),
+@code{gmsh/fltk} (which handles the FLTK graphical user interface),
 @code{gmsh/parser} (which handles the Gmsh parser), @code{gmsh/onelab}
 (which handles ONELAB parameters and communications with external codes)
 and @code{gmsh/logger} (which handles information logging).
@@ -6598,7 +6598,9 @@ Gmsh-specific CMake options:
 Gmsh is written in C++, the scripting language is parsed using Lex and
 Yacc (actually, Flex and Bison), and the GUI relies on OpenGL for the 3D
 graphics and FLTK (@uref{http://www.fltk.org}) for the widgets (menus,
-buttons, etc.). Gmsh's build system is based on CMake
+buttons, etc.); the web app is the same code compiled to WebAssembly
+with Emscripten (@uref{https://emscripten.org}), with a page in
+JavaScript (@pxref{Graphical user interfaces}). Gmsh's build system is based on CMake
 (@uref{http://www.cmake.org}). Practical notes on how to compile Gmsh's
 source code are provided in @ref{Compiling the source code} (see also
 @ref{Frequently asked questions}).
@@ -6612,6 +6614,7 @@ requests.
 
 @menu
 * Source code structure::
+* Graphical user interfaces::
 * Coding style::
 * Adding a new option::
 @end menu
@@ -6620,7 +6623,7 @@ requests.
 @c Source code structure
 @c -------------------------------------------------------------------------
 
-@node Source code structure, Coding style, Information for developers, Information for developers
+@node Source code structure, Graphical user interfaces, Information for developers, Information for developers
 @section Source code structure
 
 Gmsh's code is structured in several subdirectories, roughly separated
@@ -6636,6 +6639,7 @@ on one hand, and the graphics
 (@url{@value{GITLAB-PREFIX}/src/graphics,src/graphics})
 and interface
 (@url{@value{GITLAB-PREFIX}/src/fltk,src/fltk},
+@url{@value{GITLAB-PREFIX}/contrib/webapp,contrib/webapp},
 @url{@value{GITLAB-PREFIX}/src/parser,src/parser},
 @url{@value{GITLAB-PREFIX}/api,api}) code on
 the other.
@@ -6692,11 +6696,116 @@ in which case the view is linked to one or more models, or list-based
 in which case all the relevant geometrical information is self-contained
 in the view.
 
+
+@c -------------------------------------------------------------------------
+@c Graphical user interfaces
+@c -------------------------------------------------------------------------
+
+@node Graphical user interfaces, Coding style, Source code structure, Information for developers
+@section Graphical user interfaces
+
+Gmsh has two graphical user interfaces: the FLTK graphical user
+interface (@url{@value{GITLAB-PREFIX}/src/fltk,src/fltk}), which is the
+Gmsh app, and the web app
+(@url{@value{GITLAB-PREFIX}/contrib/webapp,contrib/webapp}), a page that
+runs Gmsh compiled to WebAssembly. What they show and do is written
+once, in @url{@value{GITLAB-PREFIX}/src/common,src/common} and
+@url{@value{GITLAB-PREFIX}/src/graphics,src/graphics}; each interface
+adds its widgets and the things only it has.
+
+@itemize
+@item
+The @emph{action registry}
+(@url{@value{GITLAB-PREFIX}/src/common/Actions.cpp,src/common/Actions.cpp})
+holds the menus: the Geometry and Mesh modules (shown as rows of
+buttons), the menu of the scene (`Quick access'), the menu of a view,
+the menu bar and the status bar of the FLTK interface, and the actions
+that only have a key. An item has a label, a name (its key, e.g.
+@code{mesh_2d}), a help string, its keyboard shortcuts, and, for the
+things Gmsh does, its run. An @emph{operation} on entities picked in
+the scene (e.g. a boolean union) is written in
+@url{@value{GITLAB-PREFIX}/src/graphics/selectionDriver.cpp,src/graphics/selectionDriver.cpp},
+which says what it picks and what it writes in the script; a
+@emph{shape} added from the values of a form is written in
+@url{@value{GITLAB-PREFIX}/src/common/scriptStringInterface.cpp,src/common/scriptStringInterface.cpp}.
+@item
+Each interface builds its widgets from the registry and runs its items:
+the FLTK interface in
+@url{@value{GITLAB-PREFIX}/src/fltk/graphicWindow.cpp,src/fltk/graphicWindow.cpp}
+and @url{@value{GITLAB-PREFIX}/src/fltk/fltkActions.cpp,src/fltk/fltkActions.cpp},
+the web app in
+@url{@value{GITLAB-PREFIX}/contrib/webapp/actions.mjs,contrib/webapp/actions.mjs}
+(the page gets the registry as JSON from
+@url{@value{GITLAB-PREFIX}/contrib/webapp/webApp.cpp,contrib/webapp/webApp.cpp}).
+An item that an interface does itself (a window, a file chooser) has no
+run in the registry: each interface gives it one in a table of names,
+at the top of @file{fltkActions.cpp} and @code{pageActions} in
+@file{actions.mjs}. An interface without an entry for it does not show
+the item.
+@item
+A click on the `2D' button of the Mesh module thus goes: the button,
+made from the item @code{mesh_2d} of the registry, calls the
+interface's @code{runItem()} (in @file{fltkActions.cpp} or
+@file{actions.mjs}), which calls @code{RunItem()} in
+@file{Actions.cpp}, which runs the item: Gmsh meshes, and
+@code{RunItem()} returns what changed (the model, the views) for the
+interface to redraw the scene and update its trees. A key does the
+same: the shortcuts are declared on the items, listed by
+@code{GetShortcuts()}, and run the item of their name.
+@item
+The scene is drawn by @code{drawContext}
+(@url{@value{GITLAB-PREFIX}/src/graphics/drawContext.cpp,src/graphics/drawContext.cpp}),
+and what the mouse does in it is @code{sceneView}
+(@url{@value{GITLAB-PREFIX}/src/graphics/sceneView.cpp,src/graphics/sceneView.cpp}),
+which @file{openglWindow.cpp} and @file{scene.mjs} inherit or call. The
+picks of an operation do not wait for the user: they are tools stepped
+by the events (@code{sceneTool}).
+@item
+The ONELAB loop (check, compute) is one stepper,
+@code{onelabUtils::onelabLoop}
+(@url{@value{GITLAB-PREFIX}/src/common/onelabUtils.cpp,src/common/onelabUtils.cpp}),
+driven by the FLTK interface (@file{onelabGroup.cpp}), the batch mode
+and the web app (@file{solverClient.mjs}), each adding its refreshes
+and its stop button.
+@item
+The widgets of the options window of the FLTK interface are bound to
+their options by name, in both directions (@pxref{Adding a new
+option}); the web app lists its options in a table in
+@file{options.mjs}.
+@end itemize
+
+In the FLTK interface, every event goes through @code{FlGui::_dispatch()},
+and callbacks run nested event loops (meshing and solvers handle events
+while they run, dialogs and menus have loops of their own): code that
+runs one checks afterwards that what it uses still exists, with
+@code{FlGui::available()} or an @code{Fl_Widget_Tracker}, and a widget
+that may still be running is retired, not deleted (see the comment at
+the top of @url{@value{GITLAB-PREFIX}/src/fltk/FlGui.cpp,src/fltk/FlGui.cpp}).
+
+Tests of the interfaces live in
+@url{@value{GITLAB-PREFIX}/benchmarks/gui,benchmarks/gui} (the
+registry, the menus, the ONELAB loop and the selection workflows of the
+FLTK interface; they open windows, so they are built only with the CMake
+option @code{ENABLE_GUI_TESTS}) and in
+@url{@value{GITLAB-PREFIX}/contrib/webapp/test,contrib/webapp/test}
+(the JavaScript API, the page's table of actions against the registry,
+and ONELAB models run under node).
+
+To add a menu item or a button of a module: an item in its menu in
+@file{Actions.cpp}, with what Gmsh does, and nothing else; if an
+interface does it, a line in the table of each interface that has it.
+To add a key: @code{.key()} on the item it runs. To add an operation or
+a shape: its definition in @file{selectionDriver.cpp} or
+@file{scriptStringInterface.cpp}, then its item. The comment at the top
+of @url{@value{GITLAB-PREFIX}/src/common/Actions.h,src/common/Actions.h}
+details each case; the one at the top of @file{FlGui.cpp} says where
+things are in the FLTK interface, and @file{main.mjs} in the web app.
+
 @c -------------------------------------------------------------------------
 @c Coding style
 @c -------------------------------------------------------------------------
 
-@node Coding style, Adding a new option, Source code structure, Information for developers
+@node Coding style, Adding a new option, Graphical user interfaces, Information for developers
 @section Coding style
 
 If you plan to contribute code to the Gmsh project, here are some easy rules

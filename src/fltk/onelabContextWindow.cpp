@@ -241,6 +241,7 @@ void onelabContextWindow::rebuild()
   });
 }
 
+// (run at each rebuild of the tree, see FlGui::rebuildTree())
 void onelabContextWindow::_rebuild()
 {
   // no entity selected, or not any more: its parameters go with it
@@ -267,7 +268,6 @@ void onelabContextWindow::_rebuild()
     if(!*alive) return;
   }
 
-  // (this is called every time the main ONELAB tree is rebuilt)
   for(auto w : del) Fl::delete_widget(w);
   _onelabWidgets.clear();
 

@@ -10,12 +10,13 @@
 #include <utility>
 #include <vector>
 
-// The keyboard shortcuts of the GUI. A key is declared on the item it runs, in
-// the menus of Actions.cpp (action(...).key('2'), see Actions.h): the keys the
-// GUI handles, the shortcuts shown in its menus, and the lists in the help
-// window and in the documentation are all read from the items, so that they
-// cannot drift apart. Nothing here depends on a toolkit: the GUI translates
-// the keys and runs the items by their names, in snake case ("mesh_nodes").
+// The keyboard shortcuts of the interfaces. A key is declared on the item it
+// runs, in the menus of Actions.cpp (action(...).key('2'), see Actions.h): the
+// keys the interfaces handle, the shortcuts shown in their menus, and the lists
+// in the help window and in the documentation are all read from the items, so
+// that they cannot drift apart. Nothing here depends on a toolkit: each
+// interface translates the keys and runs the items by their names, in snake
+// case ("mesh_nodes").
 // The titles of the menus must not have a mnemonic (an "&" letter) used by an
 // Alt shortcut, because the menu bar would open the menu before the shortcut
 // is seen.

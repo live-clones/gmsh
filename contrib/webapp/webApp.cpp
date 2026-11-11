@@ -584,9 +584,9 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebScriptProgram(const char *name)
 
 // The action registry (see Actions.h), in JSON: {menu: item}, the menus and
 // the status bar and the actions of the keys in no menu ("Keys"), an item
-// {"id", "label", "kind"
-// ("menu", "action", "operation" or "shape"), "name", "help", "gmsh" (1 for
-// an action Gmsh does, done here; the page does the others), "items"}; the
+// {"id", "label", "kind" ("menu", "action", "operation" or "shape"), "name",
+// "help", "icon" (the name of its icon, see gmshWebIcon(), or ""), "gmsh" (1
+// for an action Gmsh does, done here; the page does the others), "items"}; the
 // page gives back its id to do it
 EMSCRIPTEN_KEEPALIVE const char *gmshWebActions()
 {
@@ -720,7 +720,7 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebNotes()
                  ",\"y\":" + std::to_string(h - win[1]) + "}";
     }
   }
-  // on the paper of the desktop's notes (see openglWindow::draw())
+  // on the paper of the notes of the FLTK interface (see openglWindow.cpp)
   CTX *c = CTX::instance();
   bool dark;
   unsigned int tint = NotePaperColor(c->color.query, c->color.bg, &dark);
@@ -878,9 +878,10 @@ EMSCRIPTEN_KEEPALIVE void gmshWebOnelabForgetSolvers()
   for(auto *c : v) delete c;
 }
 
-// The ONELAB loop of the graphical interface (onelab_cb()) in steps, for a
-// page that runs the solvers in a web worker, as the graphical interface runs
-// them in processes of their own (onelab.html and solver.js): the page starts,
+// The ONELAB loop of the graphical interface (onelabRun() in onelabGroup.cpp,
+// on onelabUtils::onelabLoop) in steps, for a page that runs the solvers in a
+// web worker, as the graphical interface runs them in processes of their own
+// (solverClient.mjs and solver.js): the page starts,
 // then for each pass runs Gmsh here and the solvers it is given in the worker,
 // the database going along, then asks for the next pass. Starting, with
 // "check", "compute" or "reset" (whose passes are "check"):

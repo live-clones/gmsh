@@ -4,10 +4,10 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 // What the File and Help menus of the FLTK graphical user interface do (see
-// fileActions.h), in the order of the menus: the project made, opened,
-// merged into, cleared, renamed, deleted, exported and quit, the files
-// watched, the remote Gmsh, the script and the mesh of the modules, and the
-// help windows. The table of fltkActions.cpp names them.
+// fileActions.h): the project made, opened, merged into, cleared, the remote
+// Gmsh, the project exported, its options saved, renamed, deleted and quit,
+// the files watched, the help windows, and the script and the mesh of the
+// modules. The table of fltkActions.cpp names them.
 
 #include "GmshConfig.h"
 #include "GmshDefines.h"
@@ -599,7 +599,7 @@ void fileQuit()
   else if(CTX::instance()->optionsSave == 2) {
     std::string fileName = GModel::current()->getFileName() + ".opt";
     PrintOptions(0, GMSH_FULLRC, 1, 0, fileName.c_str());
-    // also save visibility info - same as with fltk::run("options")
+    // also save the visibility, as FlGui::run() does with its option file
     visibility_save(fileName);
   }
 

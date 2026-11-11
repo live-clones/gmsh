@@ -62,7 +62,7 @@ export const web = {
   operationValue: (name, value) => call('OperationValue', null, [S, S], [name, value]),
   operationKey: (key) => call('OperationKey', null, [N], [key]),
   operationState: () => call('OperationState', S, [], []),
-  // the action registry, the shapes and the script (see actions.mjs)
+  // the action registry, the shapes and the script (see actions.mjs, editor.mjs)
   actions: () => call('Actions', S, [], []),
   action: (id, view) => call('Action', N, [N, N], [id, view]),
   actionCheck: (id) => call('ActionCheck', N, [N], [id]),
@@ -70,7 +70,8 @@ export const web = {
   addShape: (shape, values) => call('AddShape', N, [S, S], [shape, values]),
   scriptProgram: (name) => call('ScriptProgram', S, [S], [name]),
   scriptStyles: (file, text) => call('ScriptStyles', S, [S, S], [file, text]),
-  // the options and the colours (see options.mjs, parameters.mjs)
+  // the options, the views and the colours (see options.mjs, views.mjs,
+  // parameters.mjs)
   optionChoices: (option) => call('OptionChoices', S, [S], [option]),
   optionRange: (option) => call('OptionRange', S, [S], [option]),
   viewContent: (i) => call('ViewContent', N, [N], [i]),

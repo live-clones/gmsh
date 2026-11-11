@@ -36,8 +36,9 @@ class paletteWindow;
 class Fl_Window;
 class graphicWindow;
 
-// the FLTK code of the shortcut of an action of the table in Shortcuts.h, for
-// the menus; 0 for one not bound on the macOS system menu bar
+// the FLTK code of the shortcut of an action (see GetShortcuts() in
+// Shortcuts.h: the keys declared on the items of Actions.cpp), for the menus;
+// 0 for one not bound on the macOS system menu bar
 int fltkShortcut(const char *action, bool systemBar = false);
 class openglWindow;
 class optionWindow;
@@ -136,7 +137,7 @@ public:
   physicalContextWindow *physicalContext;
   onelabContextWindow *onelabContext;
   // the context window shown last, whose place is stored (see
-  // storeWindowState())
+  // storeCurrentWindowsInfo())
   Fl_Window *lastContextWindow;
   helpWindow *help;
   onelabGroup *onelab;
@@ -202,7 +203,8 @@ public:
   static bool getFinishedProcessingCommandLine();
   // test application-level keyboard shortcuts
   int testGlobalShortcuts(int event);
-  // runs an action of the shortcut table (src/common/Shortcuts.h) by name
+  // runs the item of the registry named by a shortcut (see Actions.h), as a
+  // click on it does; 0 if there is none or it is not available now
   int runShortcut(const std::string &action);
   // test the shortcuts of the arrows and Page Up/Down, where they override
   // the navigation between widgets (the 3D view)

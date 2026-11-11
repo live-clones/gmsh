@@ -55,7 +55,7 @@ inline int formatNumber(char *buffer, int size, const std::string &fmt,
   return (n < 0) ? 0 : (n < size ? n : size - 1);
 }
 
-// same as FL_Value_Input, but prints values with the NumberFormat of a ONELAB
+// same as Fl_Value_Input, but prints values with the NumberFormat of a ONELAB
 // parameter (see formatNumber())
 
 class inputValue : public Fl_Value_Input {
@@ -73,7 +73,7 @@ public:
   { return formatNumber(buffer, 128, _number_format, value()); }
 };
 
-// same as inputValue, but forces the underlying FL_Value_Input to always accept
+// same as inputValue, but forces the underlying Fl_Value_Input to always accept
 // floats (whatever the step value)
 
 class inputValueFloat : public inputValue {

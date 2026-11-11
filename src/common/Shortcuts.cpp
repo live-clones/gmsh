@@ -63,7 +63,8 @@ GetShortcutsUsage(const std::string &command)
   for(std::size_t i = 0; i < table.size(); i++) {
     const ShortcutEntry &e = table[i];
 #if defined(__APPLE__)
-    // the list of this interface, with the system menu bar
+    // the list of the FLTK interface (no command given), with the system menu
+    // bar, whose Cmd+H is the system's
     if(command.empty() && (e.shortcut.flags & KeyInWindowBarOnly) &&
        CTX::instance()->systemMenuBar)
       continue;

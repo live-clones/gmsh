@@ -596,8 +596,9 @@ void Navigator::move()
     ctx->camera.lookAtCg();
     reference_speed = 1.5 * frequency * (ctx->camera.Lc) / 100.;
   }
-  // change the plane
+  // look at the centre of gravity (1:1)
   if(pad->toggle(pad->button_map[0])) ctx->camera.lookAtCg();
+  // change the plane: the next axis
   if(pad->toggle(pad->button_map[1])) {
     switch(along) {
     case AXE_X:

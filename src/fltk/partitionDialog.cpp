@@ -90,11 +90,11 @@ void partitionWindow::read_all_options(bool defaults)
   setTopology->value((int)value("PartitionCreateTopology"));
   setPhysical->value((int)value("PartitionCreatePhysicals"));
 
-  // Group 2
+  // Group 1
   choiceMetisAlg->value(
     metisItem(choiceMetisAlg, (int)value("MetisAlgorithm")));
 
-  // Group 3
+  // Group 2
   choiceEdgeMatch->value((int)value("MetisEdgeMatching") - 1);
   choiceRefineAlg->value((int)value("MetisRefinementAlgorithm") - 1);
 
@@ -166,7 +166,7 @@ void partition_select_groups_cb(Fl_Widget *widget, void *data)
     g[2]->hide();
   }
 
-  // Reset the vertical position of all widgets in group 6
+  // Reset the vertical position of the termination group [3] and its widgets
   {
     int yG = y;
     g[3]->position(g[3]->x(), yG);

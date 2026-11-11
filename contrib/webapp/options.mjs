@@ -25,9 +25,9 @@ import {draw} from './scene.mjs';
 import {keepViewOption, settleViews, updateViews, viewNum, viewTags} from './views.mjs';
 import {readVisibility} from './visibility.mjs';
 
-// the main Gmsh options, as in the option window of the graphical interface:
-// [option, kind, label, range if not Gmsh's]; those of the views apply to all,
-// and are given again to the views a new run makes
+// the main Gmsh options, as in the option window of the FLTK interface:
+// [option, kind, label, range if not Gmsh's]; the options of the views are set
+// under each view in the Post-processing module (see views.mjs)
 const optionGroups = [
   ['General', [
     ['General.Axes', 'choice', 'Axes'],
@@ -92,9 +92,9 @@ function keepOption(name, v) {
   if(meshing.has(name)) gmsh.onelab.setChanged('Gmsh', 2);
   if(name === 'General.ColorScheme') setColorScheme(v);
 }
-// an option as Gmsh has it now, after an item or a key changed it: one of
-// the views is kept for the views of its name (see keepViewOption()), for
-// the view of index view, or all the visible ones
+// an option as Gmsh has it now, after an item or a key changed it: kept as
+// keepOption() does, or for an option of the views, kept by the name of the
+// view of index view (see keepViewOption()), or of all the visible views
 export function keepOptionOf(name, view = -1) {
   if(!name.startsWith('View.')) {
     keepOption(name, gmsh.option.getNumber(name));
@@ -126,16 +126,15 @@ function barColor() {
   document.querySelector('meta[name=theme-color]').content =
     getComputedStyle(document.body).backgroundColor;
 }
-// the field of an option of a kind (check, number, range or choice), which
-// gives change() its new value
 // the values an option takes, with their labels, and its range, as Gmsh
 // lists them for its interfaces (src/common/DefaultOptions.h)
 const optionChoices = (option) =>
   JSON.parse(web.optionChoices(option));
 const optionRange = (option) =>
   JSON.parse(web.optionRange(option));
-// the field of an option: its choices, or the range of a slider, from Gmsh
-// unless given
+// the field of an option of a kind (check, number, range or choice), which
+// gives change() its new value; its choices, or the range of a slider, from
+// Gmsh unless given
 export function optionField(kind, option, change, range) {
   let el;
   if(kind === 'choice') {

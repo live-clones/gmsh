@@ -40,8 +40,8 @@ public:
 };
 
 // the visibility window shown, with the entities of the model as they are;
-// updated where it is (not raised), or its list only (after a change of what
-// it lists or of its sorting)
+// updated where it is (not raised); or shown with its list only made again
+// (after a change of what it lists or of its sorting)
 void showVisibility();
 void updateVisibility();
 void updateVisibilityList();

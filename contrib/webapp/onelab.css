@@ -16,7 +16,7 @@
 */
 
 /* light, or dark (data-theme, set as the colour scheme chosen in the
-   options or the browser's, see pageTheme() below) */
+   options or the browser's: pageTheme() in onelab.html) */
 :root { color-scheme: light;
         --bg-rgb: 255, 255, 255; --fg-rgb: 0, 0, 0;
         --bg: rgb(var(--bg-rgb)); --fg: rgb(var(--fg-rgb));

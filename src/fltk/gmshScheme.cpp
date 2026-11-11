@@ -127,9 +127,8 @@ Fl_Color adaptedText(Fl_Color c)
 // chosen by hand: a formula darkens yellow to olive, and greys the others
 Fl_Color gmshIndicator(GmshIndicator i)
 {
-  // a clear tint on a light interface, and a strong colour on a dark one, on
-  // which the text and the icons of the interface read; a yellow only stays
-  // clean there as a gold
+  // a clear tint on a light FLTK interface, and a strong colour on a dark one,
+  // on which its text and icons read; a yellow only stays clean there as a gold
   static const unsigned char colors[4][2][3] = {
     {{140, 230, 160}, {35, 134, 54}}, // green
     {{150, 210, 255}, {31, 111, 235}}, // blue
@@ -290,7 +289,8 @@ static void installBoxes()
   wrap(FL_THIN_DOWN_BOX);
   wrap(FL_ROUND_UP_BOX);
   wrap(FL_ROUND_DOWN_BOX);
-  // the boxes of Gmsh (the folded section headers of the options)
+  // the boxes of Gmsh (the section headers of the options, the frame of the
+  // tree)
   wrap(GMSH_SIMPLE_TOP_BOX);
   wrap(GMSH_SIMPLE_RIGHT_BOX);
   Fl::set_boxtype(FL_UP_BOX, FL_THIN_UP_BOX);

@@ -37,8 +37,8 @@ export const allViewSettings = {}; // View.X -> value, for every view
 export const settledViews = new Set(); // the views (tags) given their settings
 export const viewOptionsOpen = new Set(); // the views whose options are shown
 // The options of the views shown, by name: [kind, label, range if not
-// Gmsh's] (the choices and ranges from Gmsh); those of one view, under it,
-// and those of the Options tab, set for all the views
+// Gmsh's] (the choices and ranges from Gmsh); set under a view, and given to
+// all the views by its button (see applyToAllViews())
 const viewOptions = {
   IntervalsType: ['choice', 'Intervals'],
   NbIso: ['number', 'Number of intervals'],

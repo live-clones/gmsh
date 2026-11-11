@@ -27,8 +27,9 @@ import {modifiers} from './shortcuts.js';
 import {showViews} from './views.mjs';
 
 // The popups over the page: the menu of a model (Open model), of the graphs
-// and of the range of a parameter, and the quick access menu (popupMenu());
-// each closed by a click elsewhere but on the buttons that open it (its
+// and of the range of a parameter, and the menus of popupMenu() (quick access,
+// the module buttons, a view, the models of a folder), all in #quickMenu; each
+// closed by a click elsewhere but on the buttons that open it (its
 // selector), or by Escape (closePopup()). A popup is placed in the window.
 const popups = [
   ['openMenu', '#open', () => openMenu(false)],

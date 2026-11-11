@@ -32,7 +32,6 @@ public:
   // Group 2
   Fl_Choice *choiceEdgeMatch;
   Fl_Choice *choiceRefineAlg;
-  // weight
   // the weights of the elements (see weights in partitionDialog.cpp)
   Fl_Value_Input *inputWeight[6];
 

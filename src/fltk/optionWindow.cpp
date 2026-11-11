@@ -40,6 +40,7 @@
 #include "Context.h"
 #include "StringUtils.h"
 #include "gmshLocalNetworkClient.h"
+
 extern StringXColor GeneralOptions_Color[];
 extern StringXColor GeometryOptions_Color[];
 extern StringXColor MeshOptions_Color[];
@@ -231,8 +232,7 @@ static void linkViews(const std::vector<int> &nums)
 // The callback of a widget bound to an option: the option takes the value of
 // the widget (and the widgets that show it are updated), and nothing else
 // changes. An option of the views is set for the view shown and the views
-// selected in the list (see viewTargets() and linkViews()). data is what
-// activate() is told, if anything.
+// selected in the list (see viewTargets() and linkViews()); data is unused
 static void option_cb(Fl_Widget *w, void *data)
 {
   optionWindow *o = FlGui::instance()->options;
@@ -702,9 +702,6 @@ static void general_arrow_param_cb(Fl_Widget *w, void *data)
   }
 }
 
-// the element types shown, in a menu whose items are named as their options
-// ("Triangles" for Mesh.Triangles)
-
 // listening to the solvers turned on: the listening client started
 static void solver_listen_cb(Fl_Widget *w, void *data)
 {
@@ -960,8 +957,8 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
   FL_NORMAL_SIZE -= deltaFontSize;
 
   // the widgets of each section are built at their place in a tab of at most
-  // 11 rows of this width; layout() then stacks the sections in the scroll
-  // the sections lie in a scroll inside the frame of the tabs
+  // 11 rows of this width; layout() then stacks the sections in the scroll,
+  // which lies inside the frame of the tabs
   int L = WB + Fl::box_dx(FL_THIN_UP_BOX);
   int width = TW - 2 * L - Fl::scrollbar_size();
   int height = 12 * BH + 4 * WB;
@@ -970,8 +967,8 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
   _width = width;
   _current = 0;
 
-  // the scrollbar, shown when needed, ends where the search and the category
-  // bar end, so that everything is aligned on the right
+  // the scroll ends L inside the frame of the tabs: its scrollbar, shown when
+  // needed, lines up with the right edge of the search field and the tabs
   int winWidth = TW;
   int winHeight = CTX::instance()->optHeight;
   {
@@ -2551,8 +2548,6 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
 
   win->end();
 
-  // every widget that sets an option bound to it, and the values of the
-  // choices of the view page that are not their indices
   choicesFromTable();
 
   _category[0] = general.group;
@@ -2712,7 +2707,8 @@ void optionWindow::layout(bool keepPosition)
   int ypos = keepPosition ? scroll->yposition() : 0;
   scroll->scroll_to(0, 0);
   scroll->resize(L, y, ww - 2 * L, std::max(0, bottom - y));
-  // sized too: hidden, it is scaled with the window like the scroll it lies in
+  // placed even when hidden: resizing the window scales all its children with
+  // the scroll, its resizable
   redraw->resize(ww - _buttonWidth - WB, wh - bh - WB, _buttonWidth, bh);
 
   // the sections follow the width; the colormap keeps its shape

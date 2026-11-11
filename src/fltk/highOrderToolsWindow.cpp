@@ -63,8 +63,8 @@ static void highordertools_runp_cb(Fl_Widget *w, void *data)
 }
 
 // the fields of the algorithm chosen: all of them for the optimization (the
-// last three only with its second strategy), the distance (value[2]) for fast
-// curving, none for the elastic analogy
+// last three only with its second strategy), the number of layers (value[2])
+// for fast curving, none for the elastic analogy
 static void chooseopti_cb(Fl_Widget *w, void *data)
 {
   highOrderToolsWindow *o = FlGui::instance()->highordertools;

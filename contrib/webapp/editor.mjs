@@ -23,7 +23,7 @@ import {escape} from './tools.mjs';
 
 // A file of the model edited (its script, or an input file of a solver), in
 // the colors of its language (see GetScriptStyles() in ScriptStyles.cpp):
-// saved, then the script read again, or the model checked again
+// saved, and a .geo script then read again
 let editedFile = '';
 export function editFile(path) {
   if(!path || !FS.analyzePath(path).exists) {

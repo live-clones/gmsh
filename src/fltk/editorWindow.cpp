@@ -272,8 +272,8 @@ public:
     _editor->linenumber_width((int)fl_width("00000") + 4);
     _editor->redraw();
   }
-  // the file read again if it changed on disk (the graphical interface adds
-  // to the scripts) and not here
+  // the file read again if it changed on disk (the FLTK interface adds to the
+  // scripts) and not here
   void refresh()
   {
     if(!_modified && onDisk() != _read) load();
@@ -300,8 +300,8 @@ public:
     _title();
   }
   // the file written: false if it could not be, or if it changed on disk
-  // since it was read (as when the graphical interface added to a script) and
-  // is not to be overwritten
+  // since it was read (as when the FLTK interface added to a script) and is
+  // not to be overwritten
   bool save()
   {
     if(!_modified) return true;

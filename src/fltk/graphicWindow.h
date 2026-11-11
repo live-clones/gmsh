@@ -169,8 +169,8 @@ public:
 
 // What the status bar does, also from the keys and the menus (see
 // fltkActions.cpp):
-// the point of view of the viewports of g (those of the current window, or all
-// of them to sync them with Ctrl, if null): "x", "y", "z" (the axis out of
+// the point of view of the viewports of g (if null, the current viewport, or
+// with Ctrl all those of its window, synced): "x", "y", "z" (the axis out of
 // the screen, or into it with Shift), "3d" (isometric), "1:1" (the model
 // fitted in the window), "r" (rotated by 90 degrees), "reset"
 void setPointOfView(const char *which, graphicWindow *g = nullptr);

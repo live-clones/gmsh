@@ -1,6 +1,6 @@
-Tests of the graphical user interface (src/fltk) and of the action registry it
-shares with the web page (src/common/Actions.cpp). They open windows, so they
-are built and run only when asked:
+Tests of the FLTK graphical user interface (src/fltk) and of the action
+registry it shares with the web page (src/common/Actions.cpp). They open
+windows, so they are built and run only when asked:
 
   cmake -DENABLE_GUI_TESTS=1 -DENABLE_BUILD_DYNAMIC=1 ..
   make gui_registry gui_menus gui_onelab gui_keys

@@ -99,13 +99,14 @@
 //
 // The menus, the buttons of the modules and the keyboard shortcuts are shared
 // with the web page (contrib/webapp) and live in src/common: Actions.cpp (the
-// items, with what Gmsh does) and Shortcuts.cpp (the keys). The operations on
+// items, with what Gmsh does and the keys that run them) and Shortcuts.cpp (the
+// key codes, their labels and the listing of the keys). The operations on
 // the entities picked in the scene are selectionDriver, stepped by sceneTool
 // (src/graphics).
 //
 // How to add...
 // - A menu item or a button of a module: see "How to add" in Actions.h. When
-//   the FLTK graphical user interface does it: one line in the table of
+//   the FLTK interface does it: one line in the table of
 //   fltkActions.cpp.
 // - A tool window: a class on paletteWindow in a file of its own, created in
 //   the constructor below, which names it for General.FloatingTools; then a
@@ -118,7 +119,7 @@
 // - A field of the option window: optionWindow.cpp, bound to its option by
 //   name.
 // Then run the tests of benchmarks/gui (see its README.txt), which check the
-// registry, the menus and the selection workflows of this interface.
+// registry, the menus and the selection workflows of the FLTK interface.
 
 // Widget lifetime and nested event loops: the rules of the FLTK interface.
 //
@@ -186,7 +187,7 @@ void FlGui::unlock() { Fl::unlock(); }
 
 static void awake_cb(void *data)
 {
-  // without a GUI, nothing to update (instance() would create one)
+  // without a GUI, nothing to update
   if(data && FlGui::available()) FlGui::instance()->updateViews(true);
 }
 
@@ -455,8 +456,7 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   if(CTX::instance()->colorScheme == 3)
     followDesktopColorScheme(desktopDark() == 1);
 
-  // apply color scheme before widget creation (noop if default color scheme is
-  // selected), so that there's no color "flashing"
+  // the colour scheme before the widgets are made, so that none flashes
   applyColorScheme();
 
   // add gamepad handler
@@ -476,7 +476,6 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   // set default font size
   FL_NORMAL_SIZE = drawContext::global()->getFontSize();
 
-  // handle themes and tooltip options
   // the gmsh scheme is ours, not one of FLTK (see gmshScheme.h)
   // one of the schemes of FLTK, or its stock look ("fltk")
   if(!gmshScheme())
@@ -1220,9 +1219,9 @@ void FlGui::storeCurrentWindowsInfo()
   fileChooserStoreOffset(CTX::instance()->fileChooserOffset);
 }
 
-// Callbacks
-
 void redraw_cb(Fl_Widget *w, void *data) { drawContext::global()->draw(); }
+
+// The windows, as the Window menu has them (see fltkActions.cpp)
 
 void minimizeWindows()
 {

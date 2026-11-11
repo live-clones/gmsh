@@ -44,8 +44,7 @@ namespace onelabUtils {
     return it == _inProcessSolvers.end() ? nullptr : it->second;
   }
 
-  // get command line arguments for the client if "UseCommandLine" is set for
-  // this client
+  // the command line of the client, if its "Use command line" parameter is set
   std::vector<std::string> getCommandLine(onelab::client *c)
   {
     std::vector<std::string> args;
@@ -234,7 +233,8 @@ namespace onelabUtils {
 
   bool incrementLoop(const std::string &level)
   {
-    // called at the end of the do{...} while(incrementLoops);
+    // called through incrementLoops() at the end of a pass of the loop (see
+    // onelabLoop::nextPass())
     bool recompute = false, loop = false;
     std::vector<onelab::number> numbers;
     onelab::server::instance()->get(numbers);

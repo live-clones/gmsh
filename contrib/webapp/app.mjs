@@ -57,7 +57,8 @@ export function setStatus(text, error = false) {
   status.textContent = text;
   status.classList.toggle('error', error);
 }
-// the messages of Gmsh and GetDP, the errors also in the status bar
+// the messages of Gmsh and GetDP; the last error kept (app.lastError) for the
+// status after an action
 export const lines = [];
 export function log(t) {
   // without the colours of the terminal

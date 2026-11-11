@@ -191,8 +191,9 @@ if [ $WITH_GETDP == 1 ]; then
     -DENABLE_BUILD_LIB=1 -DCMAKE_C_FLAGS="$EXC" -DCMAKE_CXX_FLAGS="$EXC"
   emmake make -j$JOBS lib
   cd "$B"
-  # GetDP's templates (Interactive.pro and the libraries it includes), which
-  # onelab.html merges onto a geometry, and their list
+  # GetDP's templates (Interactive.pro and the libraries it includes) and their
+  # list, for a page that sets up a problem on a geometry (not offered yet, see
+  # deploy.sh)
   mkdir -p "$B/templates"
   cp "$GETDP"/templates/Interactive*.pro "$GETDP"/templates/Lib_*.pro "$B/templates"
   (cd "$B/templates" && ls *.pro | sed 's/.*/"&"/' | paste -sd, - |

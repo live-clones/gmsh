@@ -98,7 +98,7 @@ viewButton::viewButton(int x, int y, int w, int h, int num, Fl_Color col)
 
   _butt = new Fl_Button(x + w - popw, y, popw, h, "@>");
   _butt->align(FL_ALIGN_RIGHT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
-  _butt->tooltip("Show view options (Shift+w)");
+  _butt->tooltip("Show view menu");
   _butt->box(FL_FLAT_BOX);
   _butt->color(col);
   _butt->selection_color(col);

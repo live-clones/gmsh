@@ -102,8 +102,9 @@ export function showPanel(module, title, fields = [], change, enter, buttons = [
   // (not on a phone, whose keyboard would cover the form)
   if(inputs.length && !app.narrow.matches) inputs[0].focus({preventScroll: true});
 }
-// Mesh: what the graphical interface does without a selection, through the
-// API, and the operations on selected entities
+// Mesh: the actions done through the API, timed, and the mesh saved (the
+// operations on picked entities are in tools.mjs, the partition form below the
+// Geometry section)
 // an operation on the mesh: what is being done in the status, then how long
 // it took and the size of the mesh, or the error
 function meshAction(doing, done, act) {
@@ -140,9 +141,8 @@ function saveMesh() {
 }
 // Geometry: a new model, the script edited, reloaded and saved, the shapes
 // added to it as the dialog of the graphical interface adds them, with its
-// fields and their defaults (see gmshWebShapes() in webApp.cpp), and the
-// operations on selected entities. The fields of a shape, as the dialog's,
-// keep what was typed in them
+// fields and their defaults (see gmshWebShapes() in webApp.cpp). The fields of
+// a shape, as the dialog's, keep what was typed in them
 let shapes;
 // the script of the model: its .geo file, if it is one
 export function scriptFile() {
@@ -335,7 +335,7 @@ export function keyLabels(name) {
 }
 // what an action does in Gmsh (see RunItem()): on the mesh, timed with the
 // size of the mesh in the status; on the script, of a new model if there is
-// none; an option, kept (see keepOption())
+// none; an option, kept (see keepOptionOf() in options.mjs)
 async function gmshAction(item, view) {
   if(app.busy) return;
   const module = moduleOf(item);
@@ -400,9 +400,7 @@ function moduleButtons(module) {
     if(buttons.length) buttonRow(d, buttons).classList.add('wrap');
   }
 }
-// a key runs the item of its action, as a click on it does (shortcuts.js),
-// then what it changed is shown, the page following the scene's colour
-// scheme
+// the shortcuts of the page (see installShortcuts() below)
 let shortcuts;
 
 // the page built, once Gmsh is loaded (see main.mjs)
@@ -444,6 +442,9 @@ export function build() {
   }
   moduleButtons('Geometry');
   moduleButtons('Mesh');
+  // a key runs the item of its action, as a click on it does (shortcuts.js),
+  // then what it changed is shown, the page following the scene's colour
+  // scheme
   shortcuts = installShortcuts(Module, (action, mods) => {
     const item = findItem(action);
     if(!item || !canRunItem(item)) return false;

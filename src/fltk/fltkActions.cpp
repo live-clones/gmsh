@@ -79,8 +79,8 @@ struct fltkAction {
   }
 };
 
-// the keys of a selection, of a point placed with the mouse, Escape and the
-// plugins of a view, below the table
+// the rotation centre, the keys of a selection, of a point placed with the
+// mouse, Escape and the plugins of a view, below the table
 static void pickRotationCenter();
 static void endSelection();
 static void undoSelection();

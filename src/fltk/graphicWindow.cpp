@@ -3,19 +3,21 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-// The main window of the graphical interface (graphicWindow): its menu bar,
-// the tiles of the scene, the tree of the modules (onelabGroup), the messages
-// and the status bar. In this file, in order:
-// - the status bar: the points of view, the query and the measure (the tools
-//   that take the clicks), the quick access menu, the mouse selection, the
-//   models and the animation of the views;
+// The main window of the FLTK graphical user interface (graphicWindow): its
+// menu bar, the tiles of the scene, the tree of the modules (onelabGroup), the
+// messages and the status bar. In this file, in order:
+// - the status bar: the points of view, the models, the query and the measure
+//   (the tools that take the clicks), the quick access menu, the mouse
+//   selection and the animation of the views;
 // - the console, the menu and the docked tools shown or hidden, a window
 //   added or closed;
 // - the small widget classes of the window (its tile, menu bar, resizing,
-//   progress bar), the table of the status bar buttons, the constructor, and
+//   progress bar), what a status bar button does and its tooltip (the buttons
+//   come from the "Status bar" menu of the registry), the constructor, and
 //   the methods that size and split the window, the menu and the messages.
-// Elsewhere: what the menu bar does (fileActions.cpp, its items coming from
-// Actions.cpp through fltkActions.cpp), the docking of the tool windows
+// Elsewhere: what the menu bar does (its items from Actions.cpp, run through
+// the table of fltkActions.cpp; the File and Help menus in fileActions.cpp),
+// the docking of the tool windows
 // (toolDock.cpp), the rows of the modules (onelabGroup.cpp).
 
 #include "GmshConfig.h"

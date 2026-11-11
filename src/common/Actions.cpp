@@ -889,7 +889,8 @@ static actionItem viewMenu()
 #endif
 }
 
-// The menu bar of the graphical interface, which does its actions
+// The menu bar of the FLTK interface, which does its actions (the web page runs
+// some of them by their keys)
 static actionItem menuBar()
 {
   std::vector<actionItem> remote = {

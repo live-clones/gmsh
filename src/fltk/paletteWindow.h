@@ -19,7 +19,8 @@ class paletteWindow;
 
 // The main window that docks the tool windows (see graphicWindow::
 // setDocking()), as the tool windows, the main window and the dock reach it:
-// through paletteWindow::host, null while no window docks
+// through paletteWindow::host, null while the main window does not dock its
+// tools
 class dockHost {
 public:
   virtual ~dockHost() {}
@@ -46,7 +47,8 @@ public:
   virtual bool closeTool(Fl_Window *w) = 0;
 };
 
-// The windows of the interface, main and tool windows: placed on the desktop
+// The windows of the FLTK graphical user interface, main and tool windows:
+// placed on the desktop
 // at their offset from the main graphic window (see windowPlacement.h), with
 // the title bar and the widgets in the style of the theme
 class gmshWindow : public Fl_Double_Window {

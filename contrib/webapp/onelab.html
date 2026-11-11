@@ -32,8 +32,9 @@
 </head>
 <body>
 <!-- before the module loads: the panel closed at first on a small screen
-     (see narrow below), and the offer of the browser to install the page as
-     an app kept (see installApp below), which may come first -->
+     (app.narrow in app.mjs), the colours of the page (pageTheme, called by
+     options.mjs), and the offer of the browser to install the page as an app
+     kept for installApp() in statusbar.mjs, which may come first -->
 <script>
   if(matchMedia('(max-width: 700px), (max-height: 500px)').matches)
     document.body.classList.add('noSide');

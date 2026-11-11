@@ -43,9 +43,10 @@
 #include "PViewOptions.h"
 #include "treeIcons.h"
 
-// This file contains the Gmsh/FLTK specific parts of the ONELAB
-// interface. You'll need to reimplement this if you plan to build a different
-// ONELAB server.
+// The ONELAB part of the FLTK graphical user interface: the tree of the
+// parameters, the Check and Run buttons and the gear menu, and the actions they
+// run on onelabUtils::onelabLoop, the stepper shared with the batch mode and
+// the web page (contrib/webapp).
 
 // the graphs of the parameters made again, and the views they changed shown
 static void updateGraphs()
@@ -122,8 +123,8 @@ static bool onelabStart(const std::string &action)
 }
 
 // The loop of an action on the model (see onelabUtils::onelabLoop), with what
-// this interface shows between its steps, and the Stop button, which ends it
-// after the step under way
+// the FLTK interface shows between its steps, and the Stop button, which ends
+// it after the step under way
 static void onelabRun(const std::string &action)
 {
   if(solverBusy()) return;
@@ -207,7 +208,8 @@ void onelabReset()
   onelabRun("check");
 }
 
-// for outside code that will want to rebuild the geometry
+// a reload recorded in ONELAB/Action, for the clients: the FLTK interface reads
+// the script again itself (reloadScript() in fileActions.cpp)
 void onelabReload() { onelabStart("reload"); }
 
 void onelabRefresh()

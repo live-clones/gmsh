@@ -424,7 +424,7 @@ int latexFileDialog(const char *name)
   return dialog->run(nullptr, [&]() { CreateOutputFile(name, FORMAT_TEX); });
 }
 
-// Save mpeg dialog
+// Save movie (mpeg or mp4) dialog
 
 int mpegFileDialog(const char *name, int format)
 {
@@ -963,7 +963,7 @@ int bdfFileDialog(const char *name)
   return dialog->run(nullptr, [&]() { CreateOutputFile(name, FORMAT_BDF); });
 }
 
-// Generic mesh dialog
+// Save stl dialog
 
 int stlFileDialog(const char *name)
 {
@@ -1073,7 +1073,7 @@ int vtuFileDialog(const char *name)
     });
 }
 
-// POS format post-processing export dialog
+// View export dialogs (POS, X3D and the generic one)
 
 // write the current, visible or all views (which = 0, 1 or 2): in the file, or
 // if the format cannot hold several, in a file for each, name_i.ext

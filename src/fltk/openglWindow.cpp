@@ -165,7 +165,8 @@ void openglWindow::_drawScreenMessage()
 void openglWindow::_drawBorder()
 {
   if(!parent()) return;
-  // draw thin border if the parent group has more than 2 opengl windows
+  // a thin border when the parent group holds two or more OpenGL windows (the
+  // panes of a split)
   int numgl = 0;
   for(int i = 0; i < parent()->children(); i++) {
     if(parent()->child(i)->label() &&
@@ -731,8 +732,8 @@ int openglWindow::pixel_h() { return Fl_Gl_Window::pixel_h(); }
 
 // the clicks and keys of a selection are taken by the event loop: wait for
 // them until the selection has something to say. Only the API waits so
-// (gmsh::fltk::selectEntities()...): the interface runs its tools step by
-// step (see sceneTool)
+// (gmsh::fltk::selectEntities()...): the FLTK interface, like the web page,
+// runs its tools step by step (see sceneTool)
 char openglWindow::selectEntity(
   int type, bool pickElements, std::vector<GVertex *> &vertices,
   std::vector<GEdge *> &edges, std::vector<GFace *> &faces,

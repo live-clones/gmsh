@@ -78,9 +78,9 @@ int mouseButtonDown();
 // whether the Shift key is held, asked of the system likewise
 bool shiftKeyDown();
 
-// the title bar of a top-level window drawn dark or light as the interface,
-// where the desktop needs telling (Windows); called when the window is shown
-// and when the interface switches
+// the title bar of a top-level window drawn dark or light as the FLTK
+// interface, where the desktop needs telling (Windows); called when the window
+// is shown and when the FLTK interface switches
 void titleBarColor(Fl_Window *w);
 
 // the moves of a floating tool window reported to paletteWindow::host

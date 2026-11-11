@@ -26,7 +26,6 @@ public:
   { _toggle->copy_label(label.c_str()); }
 };
 
-// the view of index (intptr_t)data exported, to a file chosen
 // the view of the given index saved in a file chosen in a dialog
 void saveView(int index);
 

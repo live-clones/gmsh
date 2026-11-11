@@ -8,8 +8,8 @@
 
 #include "onelab.h"
 
-// onelab utility routines used both in the FLTK onelab server and in other
-// onelab servers
+// ONELAB routines shared by the FLTK graphical user interface, the batch mode
+// (runClient()) and the web page (contrib/webapp/webApp.cpp)
 
 namespace onelabUtils {
   // a solver linked in the program (GetDP in the web app), run in-process
@@ -118,8 +118,8 @@ namespace onelabUtils {
                  bool force = false);
   bool autoCheck(const onelab::string &pold, const onelab::string &pnew,
                  bool force = false);
-  // all of this for a parameter changed in an interface (the tree of the
-  // graphical interface, the web page), and its new value stored, in that
+  // all of this for a parameter changed in an interface (the tree of the FLTK
+  // interface, the web page), and its new value stored, in that
   // order; what the interface is to do next:
   enum {
     ParameterCheck = 1, // check the model (always if forced)

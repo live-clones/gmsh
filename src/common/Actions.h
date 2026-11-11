@@ -20,20 +20,20 @@ class drawContext;
 //
 // A click on an item, or a key (which runs the item of its name), goes to one
 // function of each interface (fltkActions.cpp for the FLTK interface,
-// onelab.html for the web page), runItem(), which does what the item is:
+// actions.mjs for the web page), runItem(), which does what the item is:
 //
 //   click ─┐
 //   key   ─┴─> runItem(item)
 //               ├─ an operation      startOperation()
 //               ├─ a shape           startShape()
-//               └─ an action         item.run, then the interface shows what
-//                                    it changed (RunItem() in the FLTK
-//                                    interface)
+//               └─ an action         RunItem(): item.run, then what it changed,
+//                                    for the interface to show it
 //
 // The run of an action is Gmsh's, written in its item in Actions.cpp, or the
-// interface's: each gives its own actions their run when it starts (with
-// SetItemRun()), from one table of names, the FLTK interface's at the top of
-// fltkActions.cpp, the web page's pageActions in onelab.html. An item without
+// interface's: each gives its own actions their run when it starts
+// (SetItemRun() for the FLTK interface, build() in actions.mjs for the web
+// page), from one table of names, the FLTK interface's at the top of
+// fltkActions.cpp, the web page's pageActions in actions.mjs. An item without
 // run is not shown.
 //
 // The items, as Actions.cpp makes them:
@@ -60,11 +60,11 @@ class drawContext;
 // - Something an interface shows (a window, a file chooser): a guiAction() in
 //   its menu (in keysOnly() for a key in no menu), and a line in the table of
 //   each interface that has it: the FLTK interface's in fltkActions.cpp, the
-//   web page's pageActions in onelab.html. An interface without it does not
+//   web page's pageActions in actions.mjs. An interface without it does not
 //   show the item.
 // - An option: option(), or presets() for a submenu of its values.
 // - A button of the status bar: a guiAction() in statusBar(), with its icon
-//   (.withIcon(), see Icons.h) or a short label, and its line in each
+//   (.withIcon(), see IconStrokes.h) or a short label, and its line in each
 //   interface's table.
 // - A key: .key('2') on the item it runs (modifiers and flags as in
 //   Shortcuts.h); the help of the item says what the key does in the help
@@ -76,8 +76,8 @@ class drawContext;
 //   windows (dialogValue() in fltkActions.cpp), where a new field needs a
 //   widget.
 // - A shape: in scriptShapes() and scriptAddShape()
-//   (scriptStringInterface.cpp), then its shape() item. The desktop places it
-//   with the mouse or from a pane of its elementary context window
+//   (scriptStringInterface.cpp), then its shape() item. The FLTK interface
+//   places it with the mouse or from a pane of its elementary context window
 //   (contextWindow.cpp), the web page from a form.
 
 // The kind of an item: a menu (or, without label, a group set apart), an
@@ -124,10 +124,10 @@ struct actionItem {
 
 // The menu with the given name: "Geometry" and "Mesh" (the modules), "Quick
 // access" (the menu of the scene), "View" (the menu of a view), "Menu bar"
-// (the menu bar of the FLTK interface), "Status bar" (its buttons, each with
-// its icon or its label, the groups set apart), or "Keys" (the actions of the
-// keys in no menu, which no interface shows; GetShortcuts() in Shortcuts.h
-// lists the keys of every menu)
+// (the menu bar of the FLTK interface), "Status bar" (the buttons of both
+// interfaces, each with its icon or its label, the groups set apart), or
+// "Keys" (the actions of the keys in no menu, which no interface shows;
+// GetShortcuts() in Shortcuts.h lists the keys of every menu)
 const actionItem &GetActionMenu(const std::string &name);
 
 // The item of the given name in the menus (that of a key), or null

@@ -155,7 +155,8 @@ public:
 // dragged to change the width of the dock
 class dockDivider : public Fl_Box {
 public:
-  // drawn in the selection colour with the drop hint of the dock
+  // drawn in the accent colour (gmshAccent()), as the markers of the dock, with
+  // its drop hint
   bool highlight;
   dockDivider(int x, int y, int w, int h) : Fl_Box(x, y, w, h), highlight(false)
   {

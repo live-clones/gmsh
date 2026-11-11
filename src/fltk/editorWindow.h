@@ -8,7 +8,7 @@
 
 #include <string>
 
-// A file edited: in the editor of the graphical interface if
+// A file edited: in the editor of the FLTK graphical user interface if
 // General.TextEditor is empty (the words of the .geo and .pro languages in
 // color), with the command it gives otherwise
 void editFile(const std::string &fileName);

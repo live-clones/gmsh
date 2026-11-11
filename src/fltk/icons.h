@@ -8,7 +8,8 @@
 
 class Fl_Widget;
 
-// Icons drawn as SVG strokes, in the style of the desktops, rendered at the
+// Icons drawn as SVG strokes, in the style of the desktop
+// environments, rendered at the
 // size asked in the label colour of the widget, in every theme. A widget given
 // one keeps it through the changes of colours; a null name takes it off.
 // Names: sidebar, models, quick, cube, rotate, loop, query, measure, rewind,
