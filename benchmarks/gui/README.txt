@@ -20,3 +20,17 @@ Each is a program linked to the Gmsh library, run from the build directory
   workflow (query, measure, operations on picked entities, point placing,
   rotation centre, visibility, reclassification, the API's selection), with
   synthetic clicks and keys.
+
+The random user (fuzz.cpp, built as gui_fuzz; ctest skips it, as it needs a
+model) opens a model and acts on the interface at random every 50 ms, each
+action logged with the seed so that a run can be repeated:
+
+  gui_fuzz model.geo [seconds] [seed]
+
+fuzz.sh runs it on models and seeds, one run at a time in a scratch copy of
+each model's files, kills a run stuck for twice its time, and keeps the logs
+(and on macOS the crash report of a run that died) in an output directory:
+
+  benchmarks/gui/fuzz.sh bin 60 1,2,3 /tmp/fuzz tutorials/t1.geo tutorials/t5.geo
+
+The windows open on screen while it runs: do not use the computer meanwhile.

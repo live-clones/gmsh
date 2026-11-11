@@ -6727,7 +6727,7 @@ the scene (e.g. a boolean union) is written in
 @url{@value{GITLAB-PREFIX}/src/graphics/selectionDriver.cpp,src/graphics/selectionDriver.cpp},
 which says what it picks and what it writes in the script; a
 @emph{shape} added from the values of a form is written in
-@url{@value{GITLAB-PREFIX}/src/common/scriptStringInterface.cpp,src/common/scriptStringInterface.cpp}.
+@url{@value{GITLAB-PREFIX}/src/geo/scriptStringInterface.cpp,src/geo/scriptStringInterface.cpp}.
 @item
 Each interface builds its widgets from the registry and runs its items:
 the FLTK interface in
