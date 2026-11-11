@@ -17,13 +17,15 @@
 #
 # Deploy the web app demo on https://onelab.info/webapp/: the site is made in
 # build/site, with the pages, the module of build.sh (run it first) and GetDP's
-# templates, and the models (the GetDP tutorials
-# and those of onelab_doc), each packed as a zip and listed on the landing
-# page (index.html); then it is copied to the web server.
+# templates, and the models (the Gmsh and GetDP tutorials and those of
+# onelab_doc), packed as zips and shown on the landing page (index.html) with
+# their thumbnails; then it is copied to the web server.
 #
-# Usage: ./deploy.sh [--dry-run]
+# Usage: ./deploy.sh [--dry-run | --thumbnails]
 #   --dry-run: make the site (which can also be served from build/site) and
 #              show what would change on the server, without changing it
+#   --thumbnails: make the missing thumbnails of the models instead
+#                 (thumbnails/make.sh), without deploying
 # GETDP: the GetDP sources (default: getdp next to the Gmsh sources)
 # ONELAB_DOC: the onelab_doc sources (default: onelab_doc next to them)
 # BUILD: the build directory (default: ./build)
@@ -37,10 +39,12 @@ ONELAB_DOC=${ONELAB_DOC:-$SRC/../onelab_doc}
 B=${BUILD:-$HERE/build}
 DEST=${DEST:-gmsh.info:.wwwonelab/webapp/}
 DRY=0
+THUMBNAILS=0
 case "$1" in
   --dry-run) DRY=1 ;;
+  --thumbnails) THUMBNAILS=1 ;;
   "") ;;
-  *) echo "Usage: $0 [--dry-run]"; exit 1 ;;
+  *) echo "Usage: $0 [--dry-run | --thumbnails]"; exit 1 ;;
 esac
 
 T=$GETDP/tutorials
@@ -80,25 +84,41 @@ cp "$HERE"/icons/*.png "$SITE/icons"
 rm -rf "$SITE/viewer.html" "$SITE/tutorials"
 
 # The models, without what earlier runs left (meshes, results, databases),
-# and their list on the landing page: group starts a list under a heading;
-# model adds a directory (onelab.html opens its .pro with a .geo of the same
-# name) or a .pro or .geo file in one (opened instead, e.g. for a directory of
-# several models), with its title (by default the first heading of its
-# README.md, else its name) and a note
+# each directory packed once (models/<directory>.zip, shared by the models it
+# holds), and their cards on the landing page, with their thumbnails
+# (thumbnails/, made by thumbnails/make.sh): section starts a part of the page
+# under a heading, with a line of text; group starts a set of cards under a
+# smaller heading; model adds a card for a directory (onelab.html opens its
+# .pro with a .geo of the same name) or for a .pro or .geo file in one (opened
+# instead, for a directory of several models), with its title (by default the
+# first heading of its README.md, whose "... tutorial N:" goes above the
+# title, else its name), a note, a label above the title, and the Gmsh
+# options its thumbnail is drawn with and the ONELAB parameters it is run
+# with for it (see thumbnails/render.py and run.mjs)
 html() { sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g'; }
-rm -rf "$SITE/models"
-mkdir "$SITE/models"
+rm -rf "$SITE/models" "$SITE/thumbnails"
+mkdir "$SITE/models" "$SITE/thumbnails"
 LIST="$SITE/models/list.html"
+THUMBS="$SITE/models/thumbnails.txt"
 : > "$LIST"
-inlist=0
+: > "$THUMBS"
+incards=0
+endcards() {
+  if [ $incards == 1 ]; then echo "</div>" >> "$LIST"; fi
+  incards=0
+}
+section() {
+  endcards
+  echo "<h2 id=\"$2\">$(echo "$1" | html)</h2>" >> "$LIST"
+  if [ -n "$3" ]; then echo "<p class=\"sub\">$3</p>" >> "$LIST"; fi
+}
 group() {
-  if [ $inlist == 1 ]; then echo "</ul>" >> "$LIST"; fi
+  endcards
   echo "<h3>$(echo "$1" | html)</h3>" >> "$LIST"
-  echo "<ul>" >> "$LIST"
-  inlist=1
 }
 model() {
-  local path=$1 title=$2 note=$3 dir name open=""
+  local path=$1 title=$2 note=$3 label=$4 options=${5//$'\n'/ } parameters=$6
+  local dir name zip open=""
   if [ -f "$path" ]; then
     dir=$(dirname "$path")
     open=$(basename "$path")
@@ -108,52 +128,180 @@ model() {
     name=$(basename "$dir")
     if [ -z "$title" -a -f "$dir/README.md" ]; then
       title=$(sed -n 's/^# *//p' "$dir/README.md" | head -1)
+      if [[ "$title" =~ ^(.*[Tt]utorial\ [^:]*):\ *(.*)$ ]]; then
+        label=${BASH_REMATCH[1]}
+        title=${BASH_REMATCH[2]}
+        title=$(echo "${title:0:1}" | tr a-z A-Z)${title:1}
+      fi
     fi
   fi
   if [ -z "$title" ]; then title=$name; fi
-  (cd "$dir" && zip -q -r "$SITE/models/$name.zip" . -x '*.msh' '*.pre' \
-     '*.res' '*.pos' '*.db' '*.db.json' '*.png' '*.jpg' '*.out' '*.mp4')
-  local link="onelab.html?zip=models/$name.zip"
-  if [ -n "$open" ]; then link="$link&amp;open=$open"; fi
-  if [ $inlist == 0 ]; then
-    echo "<ul>" >> "$LIST"
-    inlist=1
+  zip=$(basename "$dir")
+  if [ "$dir" == "$SRC/tutorials" ]; then
+    # the Gmsh tutorials: the files of the directory alone, not those of the
+    # other languages under it
+    zip=gmsh_tutorials
+    if [ ! -f "$SITE/models/$zip.zip" ]; then
+      (cd "$dir" && git ls-files . | grep -v / |
+         zip -q "$SITE/models/$zip.zip" -@)
+    fi
+  elif [ ! -f "$SITE/models/$zip.zip" ]; then
+    (cd "$dir" && zip -q -r "$SITE/models/$zip.zip" . -x '*.msh' '*.pre' \
+       '*.res' '*.pos' '*.db' '*.db.json' '*.png' '*.jpg' '*.out' '*.mp4')
   fi
-  local item="<a href=\"$link\">$(echo "$title" | html)</a>"
-  if [ -n "$note" ]; then item="$item ($(echo "$note" | html))"; fi
-  echo "  <li>$item</li>" >> "$LIST"
-  echo "$name.zip: $title"
+  printf '%s|%s|%s|%s|%s\n' "$name" "$dir" "$open" "$options" \
+    "$parameters" >> "$THUMBS"
+  local link="onelab.html?zip=models/$zip.zip"
+  if [ -n "$open" ]; then link="$link&amp;open=$open"; fi
+  if [ $incards == 0 ]; then
+    echo "<div class=\"cards\">" >> "$LIST"
+    incards=1
+  fi
+  local img="<span class=\"thumb\"></span>"
+  if [ -f "$HERE/thumbnails/$name.jpg" ]; then
+    cp "$HERE/thumbnails/$name.jpg" "$SITE/thumbnails"
+    img="<img class=\"thumb\" src=\"thumbnails/$name.jpg\" alt=\"\" width=\"240\" height=\"180\" loading=\"lazy\">"
+  fi
+  {
+    echo "<a class=\"card\" href=\"$link\">$img"
+    if [ -n "$label" ]; then echo "<span class=\"label\">$(echo "$label" | html)</span>"; fi
+    echo "<span class=\"title\">$(echo "$title" | html)</span>"
+    if [ -n "$note" ]; then echo "<span class=\"note\">$(echo "$note" | html)</span>"; fi
+    echo "</a>"
+  } >> "$LIST"
+  echo "$zip.zip: $title"
 }
 
-# the notes of the models that are slow, or do not run in the browser yet
-BESSEL="does not run in the browser yet: needs GetDP's Bessel functions (Fortran)"
-MEMORY="too large for the browser's memory for now"
-CRYSTAL="Photonics tutorial P13: 3D photonic crystal of spheres"
-P13=$P/P13-modes_photonic_crystal_3D/modes_photonic_crystal
+section "Gmsh tutorials" gmsh \
+  "Geometries and meshes made step by step with Gmsh's own language: open
+   one, change its parameters, press <b>Run</b> to mesh it."
+# (the thumbnails of t4 and t21 show the colours of their entities and
+# partitions, those of t4, t7 and t17 their mesh rather than their view)
+MESH="View[0].Visible=0; Mesh.SurfaceFaces=1; Mesh.SurfaceEdges=1;
+  Mesh.ColorCarousel=0; Mesh.Color.Triangles={205,215,235};"
+for i in $(seq 1 21); do
+  options=""
+  if [ $i == 4 ]; then options="$MESH Mesh.ColorCarousel=2;"; fi
+  if [ $i == 7 -o $i == 17 ]; then options="$MESH"; fi
+  if [ $i == 21 ]; then options="Mesh.ColorCarousel=3;"; fi
+  model "$SRC/tutorials/t$i.geo" \
+    "$(sed -n '5s|^// *||p' "$SRC/tutorials/t$i.geo")" "" "Gmsh tutorial $i" \
+    "$options"
+done
 
-model "$M/ElectricMachines/im_3kW.pro" "Induction machine, 3 kW (2D, frequency domain)"
-model "$M/MagneticForces" "Magnetic forces between magnets (3D, OpenCASCADE geometry)"
-group "GetDP tutorials"
-for d in "$T"/0*/; do model "$d"; done
-model "$T/10-Gauging" "" "3D, about 30 s"
-group "Photonics tutorials"
-for d in "$P"/P0[1-7]*/; do model "$d"; done
-model "$(echo "$P"/P08*/)" "" "about 25 s"
-for d in "$P"/P09*/ "$P"/P1[0-2]*/; do model "$d"; done
-model "${P13}_cubic_3D.pro" "$CRYSTAL, simple cubic lattice" "about 20 s"
-model "${P13}_diamond_3D.pro" "$CRYSTAL, diamond lattice" \
-  "about 15 s; its high-order mesh optimization reports errors, as in the desktop app"
-model "$(echo "$P"/P14*/)" "" "about 30 s"
+section "GetDP tutorials" getdp \
+  "Finite element problems of growing complexity, each solved with GetDP:
+   open one, change its parameters, press <b>Run</b>."
+# (the thumbnails of some show another view than the one they end with)
+model "$T/01-Electrostatics" "" "" "" "View[0].Visible=1; View[2].Visible=0;"
+model "$T/02-Thermal" "" "" "" \
+  "View[0].Visible=1; View[1].Visible=0; General.Trackball=0;
+   General.RotationX=-70; General.RotationY=0; General.RotationZ=-40;" \
+  "Parameters/0Model dimension=3"
+model "$T/03-Magnetostatics" "" "" "" "View[2].Visible=1; View[4].Visible=0;"
+model "$T/04-Magneto-quasistatics" "" "" "" \
+  "View[5].ForceNumComponents=1; View[5].ComponentMap0=2; Geometry.Curves=0;"
+model "$T/05-Full_wave"
+model "$T/06-Global_quantities" "" "" "" \
+  "View[1].Visible=1; View[2].Visible=1; View[1].ShowElement=0;
+   General.ScaleX=2.2; General.ScaleY=2.2; General.TranslationX=0.0038;
+   General.TranslationY=0.0038;" \
+  "Parameters/3Display global basis functions=1"
+model "$T/07-Coupled_problems"
+model "$T/08-Circuit_coupling" "" "" "" \
+  "View[2].Sampling=12; View[2].ArrowSizeMax=60; View[2].ArrowSizeMin=8;
+   Mesh.SurfaceFaces=1; Mesh.SurfaceEdges=0; Mesh.ColorCarousel=0;
+   Mesh.Color.Triangles={200,205,215}; Mesh.Opacity=0.25;" \
+  "Parameters/0Model dimension=3"
+model "$T/09-Template_library" "" "" "" \
+  "View[2].Visible=1; View[4].Visible=0; View[2].ScaleType=2;
+   View[2].RangeType=2; View[2].CustomMin=1e-3; View[2].CustomMax=0.13;
+   General.ScaleX=2.4; General.ScaleY=2.4;"
+model "$T/10-Gauging" "" "" "" \
+  "View[0].Visible=1; View[0].TimeStep=1; View[3].TimeStep=1;
+   Geometry.Curves=0; General.ScaleX=1; General.ScaleY=1; General.ScaleZ=1;"
+
+section "ONELAB models" models \
+  "Models of the <a href=\"https://onelab.info\">ONELAB</a> collection,
+   ready to run with their parameters."
+# (the thumbnails of the rotating machines show the elements of their views,
+# as the rotor has turned)
+OUTLINES="View[0].ShowElement=1; View[1].ShowElement=1; View[2].ShowElement=1;
+  View[3].ShowElement=1; View[4].ShowElement=1;"
+group "Electrical machines and devices"
+model "$M/ElectricMachines/pmsm.pro" "Permanent magnet synchronous machine" \
+  "Eight-pole surface mounted PMSM"
+model "$M/ElectricMachines/wfsm_4p.pro" "Wound field synchronous machine" \
+  "Four-pole WFSM" "" "$OUTLINES"
+model "$M/ElectricMachines/im_3kW.pro" "Induction machine" \
+  "3 kW four-pole induction machine"
+model "$M/ElectricMachines/srm.pro" "Switched reluctance machine" "Simple SRM" \
+  "" "$OUTLINES"
+model "$M/Inductor/inductor.pro" "Inductor" \
+  "2D and 3D model of an inductor/core system"
+model "$M/ElectromechanicalRelay/relay.pro" "Electromechanical relay" \
+  "2D model of an electro-mechanical relay" "" "View[3].Visible=1;" \
+  "Input/31Time max.=0.05"
+group "Magnetics and induction"
+model "$M/Magnets/magnets.pro" "Magnets" \
+  "3D force computation of a collection of magnets"
+model "$M/MagneticForces" "Magnetic forces" \
+  "Forces between magnets, 3D OpenCASCADE geometry"
+model "$M/Magnetometer/magnetometer.pro" "Magnetometer" \
+  "3D model of a xylophone-bar magnetometer" "" "" \
+  "Input/0Type of analysis=0"
+model "$M/Cohomology/indheat.pro" "Induction heating" \
+  "3D inductor with cohomology solver"
+model "$M/Superconductors/helix.pro" "Superconducting wire" \
+  "2D and 3D H-formulation of HTS with nonlinear power law" "" \
+  "View[2].Visible=1; View[3].Visible=0; View[2].ForceNumComponents=1;
+   View[2].ComponentMap0=2; General.ScaleX=2.6; General.ScaleY=2.6;"
+group "Waves"
+model "$M/Waveguides/waveguide2D_straight.pro" "Straight waveguide" \
+  "2D model of a rectangular metallic waveguide"
+model "$M/Waveguides/waveguide2D_Hbend.pro" "H-bend waveguide" \
+  "2D model of a bent metallic waveguide"
+model "$M/Waveguides/waveguide2D_starNetwork.pro" "Star-shaped waveguide" \
+  "2D model of a star-shaped metallic waveguide"
+model "$M/Waveguides/waveguide2D_MMI.pro" "Multi-mode interference coupler" \
+  "2D model of an MMI"
+model "$M/AcousticScattering/scattering.pro" "Acoustic wave scattering" \
+  "2D models of multiple acoustic scattering"
+group "Heat and flow"
+model "$M/ThermalConduction/contact.pro" "Thermal conduction" \
+  "Heat conduction after a transient heat flux pulse" "" \
+  "View[0].TimeStep=10; View[0].RangeType=3;"
+model "$M/PotentialFlow/magnus.pro" "Potential flow" \
+  "Lift and Magnus effect in 2D irrotational fluid flow" "" "View[0].Visible=1;"
+# (P17 to P21 left out: they need GetDP's Bessel functions, in Fortran, or
+# more memory than the browser gives)
+group "Photonics"
+model "$(echo "$P"/P01*/)"
+model "$(echo "$P"/P02*/)" "" "" "" "View[0].TimeStep=9;"
+for d in "$P"/P0[3-5]*/; do model "$d"; done
+model "$(echo "$P"/P06*/)" "" "" "" "View[0].TimeStep=11;"
+model "$(echo "$P"/P07*/)"
+model "$(echo "$P"/P08*/)"
+for d in "$P"/P09*/ "$P"/P1[01]*/; do model "$d"; done
+model "$(echo "$P"/P12*/)" "" "" "" \
+  "View[1].ArrowSizeMax=120; View[1].ArrowSizeMin=20;"
+P13=$P/P13-modes_photonic_crystal_3D/modes_photonic_crystal
+model "${P13}_cubic_3D.pro" "3D photonic crystal of spheres, simple cubic lattice" \
+  "" "Photonics tutorial P13"
+model "${P13}_diamond_3D.pro" "3D photonic crystal of spheres, diamond lattice" \
+  "" "Photonics tutorial P13"
+model "$(echo "$P"/P14*/)"
 model "$(echo "$P"/P15*/)"
-model "$(echo "$P"/P16*/)" "" "about 10 s"
-model "$(echo "$P"/P17*/)" "" "$BESSEL"
-model "$(echo "$P"/P18*/)" "" "$MEMORY"
-model "$(echo "$P"/P19*/)" "" "$BESSEL"
-model "$(echo "$P"/P20*/)" "" "$MEMORY"
-model "$(echo "$P"/P21*/)" "" "$MEMORY"
+model "$(echo "$P"/P16*/)"
 model "$(echo "$P"/P22*/)"
 model "$(echo "$P"/P23*/)"
-if [ $inlist == 1 ]; then echo "</ul>" >> "$LIST"; fi
+endcards
+
+if [ $THUMBNAILS == 1 ]; then
+  "$HERE/thumbnails/make.sh" < "$THUMBS"
+  exit 0
+fi
+rm "$THUMBS"
 
 # the landing page, with the list of the models
 awk -v list="$LIST" '/<!-- MODELS -->/ { while((getline l < list) > 0) print l; next }

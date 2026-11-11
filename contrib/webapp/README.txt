@@ -1,4 +1,4 @@
-The Gmsh web app: Gmsh compiled to WebAssembly with Emscripten (experimental)
+The Gmsh web app: Gmsh compiled to WebAssembly with Emscripten
 
 The web app is provided under the GNU Affero General Public License, Version 3
 or later (see LICENSE.txt here): whoever runs a modified version for others to
@@ -26,13 +26,20 @@ archive, or ?zip=<url>), shows its parameters, and runs Gmsh and GetDP, in the
 page.
 
 The demo at https://onelab.info/webapp/ is made, after ./build.sh, by
-deploy.sh: the pages, the module, and the GetDP tutorials and the models of
-onelab_doc (next to the Gmsh sources), each packed as a zip and listed with
-its notes on the landing page made from index.html, in build/site, which it
-copies to the web server:
+deploy.sh: the pages, the module, and the Gmsh and GetDP tutorials and the
+models of onelab_doc (next to the Gmsh sources), packed as zips and shown as
+cards with their thumbnails on the landing page made from index.html, in
+build/site, which it copies to the web server:
 
   ./deploy.sh --dry-run    # what would change on the server
   ./deploy.sh
+
+The thumbnails (thumbnails/*.jpg) are made once and kept in the sources: each
+model is run with the module under node and drawn by a native Gmsh (see
+thumbnails/make.sh); the missing ones, e.g. after a model is added to
+deploy.sh or a thumbnail removed, are made by
+
+  ./deploy.sh --thumbnails
 
 test/run_models.mjs runs model directories through the module under node, as the
 page does, to check them:

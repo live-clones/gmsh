@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-# Build the Gmsh web app with Emscripten (experimental), in ./build: the Gmsh
+# Build the Gmsh web app with Emscripten, in ./build: the Gmsh
 # library and its JavaScript API with the WebGL drawing, with OpenCASCADE, and with GetDP run in-process as the ONELAB solver
 # (onelab.html). The dependencies (OpenCASCADE, and PETSc and SLEPc with
 # SuiteSparse and f2c BLAS/LAPACK for GetDP, all without Fortran or MPI) are
