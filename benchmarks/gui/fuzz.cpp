@@ -203,6 +203,9 @@ static void pickMenuItem(Fl_Menu_ *m)
      !item->active())
     return;
   std::string label = item->label() ? item->label() : "";
+  // an entry ending in "..." opens a file chooser or a dialog; the native
+  // choosers of macOS run their own loop, where no timer of ours can end them
+  if(label.size() >= 3 && !label.compare(label.size() - 3, 3, "...")) return;
   log("menu " + label);
   m->picked(item);
 }
@@ -348,12 +351,14 @@ static void tick(void *)
     opt_solver_listen(0, GMSH_SET | GMSH_GUI, 0);
     return;
   }
+  // the next tick is set first: an action may open a dialog that waits in a
+  // loop of its own, and the next tick is what closes it
+  Fl::repeat_timeout(0.05, tick);
   if(depth < 8) {
     depth++;
     oneAction();
     depth--;
   }
-  Fl::repeat_timeout(0.05, tick);
 }
 
 int main(int argc, char **argv)
