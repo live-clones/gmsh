@@ -6777,7 +6777,7 @@ in @file{FlGui.cpp} and the web app in @file{webApp.cpp}.
 @item
 The option window is a table too
 (@url{@value{GITLAB-PREFIX}/src/common/OptionPages.cpp,src/common/OptionPages.cpp}):
-pages, sections and rows of fields, each bound to an option by name.
+pages, sections and rows of entries, each bound to an option by name.
 The FLTK interface lays the rows out in @file{optionWindow.cpp}, where
 the widgets are bound to their options in both directions (@pxref{Adding
 a new option}); the web app shows the same rows in its Options tab
@@ -6880,9 +6880,14 @@ and declare it in
 @url{@value{GITLAB-PREFIX}/src/common/Options.h,src/common/Options.h}:
 it sets the value when asked to (@code{action & GMSH_SET}) and returns
 it. If what is drawn depends on the option, it also says what changed
-(e.g. @code{CTX::instance()->meshOptionsChanged(...)}). It does not
-update the graphical interface: the widgets bound to an option are
-updated by their name whenever an option is set (see below);
+(e.g. @code{CTX::instance()->meshOptionsChanged(...)}). It knows no
+toolkit and does not update the widgets: those bound to the option are
+refreshed by its name whenever it is set (see below). If an interface
+has more to do than refresh them (place a window, reset a list), the
+routine says what happened through the listener of the interface,
+@code{Gui()->...Changed()} (see
+@url{@value{GITLAB-PREFIX}/src/common/GuiListener.h,src/common/GuiListener.h}),
+and the FLTK interface acts on it in @file{FlGui.cpp};
 @item
 if the option takes one of a few values, list them with their labels,
 in the order the menus should show them, in the @code{OptionChoices}
@@ -6893,15 +6898,20 @@ choices of the web page and the help are made from it. A number option
 with bounds gets its minimum, maximum and step in the
 @code{OptionRanges} table of the same file;
 @item
-optional: add a field for it in the table of the option window
+optional: add an entry for it in the table of the option window
 (@url{@value{GITLAB-PREFIX}/src/common/OptionPages.cpp,src/common/OptionPages.cpp}),
 in a row of the section where it belongs: @code{check()},
 @code{number()}, @code{choice()} (its items come from
-@code{OptionChoices}) or @code{text()}, with its label. Both interfaces
-show it: in the FLTK interface the widget is bound to the option by its
-name in both directions (changing it sets the option, and setting the
-option in a script, through the API or with another widget updates
-it), and the web app shows it in its Options tab;
+@code{OptionChoices}, its range from @code{OptionRanges}) or
+@code{text()}, with its label; several entries can share a row (X, Y
+and Z with one label), and what no entry can say (a matrix, a button)
+is a custom row that the FLTK interface builds by name. Both interfaces
+show the entry: in the FLTK interface its widget is bound to the option
+by name in both directions (changing it sets the option, and setting
+the option in a script, through the API or with another widget updates
+it), with the key of the action that sets the option in its tooltip;
+the web app shows it in its Options tab, or under each view for an
+option of the views;
 @item
 regenerate the reference of the options (the files
 @file{opt_*.texi}) by running @code{gmsh -doc} in the

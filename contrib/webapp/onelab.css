@@ -140,8 +140,8 @@ body.noSide #side, body.noSide #split { display: none; }
                                       min-width: 0; }
 #side .row input[type=checkbox] { width: auto; justify-self: start; }
 #side details details { margin-left: 10px; }
-#side .row .fields { display: flex; gap: 4px; min-width: 0; }
-#side .row .fields input, #side .row .fields select { flex: 1; min-width: 0; }
+#side .row .entries { display: flex; gap: 4px; min-width: 0; }
+#side .row .entries input, #side .row .entries select { flex: 1; min-width: 0; }
 #side .heading { font-weight: bold; margin: 6px 0 2px; }
 #tabs { display: flex; gap: 2px; margin: 0 -8px 6px; padding: 0 8px;
         border-bottom: 1px solid var(--line); }

@@ -19,7 +19,7 @@
 // do itself, every icon of the status bar has strokes, every button of the
 // status bar has an icon or a label; the actions the page does not have are
 // listed. Then the pages of the option window (src/common/OptionPages.cpp):
-// every field is an option of its kind. The counterpart of
+// every entry is an option of its kind. The counterpart of
 // benchmarks/gui/registry.cpp for the FLTK graphical user interface.
 //
 // Usage: node test/registry_test.mjs (with the node of emsdk, for example)
@@ -70,14 +70,14 @@ for(const [menu, root] of Object.entries(registry)) walk(root, menu);
 for(const name of pageActions)
   if(!actions.has(name)) fail(name + ': in pageActions, not an action of the registry');
 
-// the fields of the option pages: options of their kind
-let fields = 0;
+// the entries of the option pages: options of their kind
+let entries = 0;
 for(const page of JSON.parse(web.optionPages()))
   for(const sec of page.sections)
     for(const row of sec.rows)
       for(const f of row) {
         if(f.kind === 'custom' || f.kind === 'heading') continue;
-        fields++;
+        entries++;
         try {
           if(f.kind === 'text') gmsh.option.getString(f.option);
           else gmsh.option.getNumber(f.option);
@@ -87,6 +87,6 @@ for(const page of JSON.parse(web.optionPages()))
         }
       }
 
-console.log(`${items} items, ${pageActions.size} page actions, ${fields} option fields, ${fails} failures`);
+console.log(`${items} items, ${pageActions.size} page actions, ${entries} option entries, ${fails} failures`);
 gmsh.finalize();
 process.exit(fails ? 1 : 0);

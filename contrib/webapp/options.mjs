@@ -14,7 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 // The Options tab: the pages of the option window of the FLTK graphical user
-// interface (src/common/OptionPages.cpp), their fields bound to their options
+// interface (src/common/OptionPages.cpp), their entries bound to their options
 // by name, the colour scheme of the page, and the tabs of the panel
 
 import {$, gmsh} from './app.mjs';
@@ -34,7 +34,7 @@ let pages = [];
 export const viewPage = () => pages.find((p) => p.name === 'View');
 const meshing = new Set();
 export const textOptions = new Set();
-const optionFields = []; // [option, kind, field]
+const optionEntries = []; // [option, kind, input]
 export const views = () => gmsh.option.getNumber('PostProcessing.NbViews');
 // The normal raise of a view is in model units per unit of its values: the
 // slider gives it as a fraction of the size of the view for its largest
@@ -113,10 +113,10 @@ const optionChoices = (option) =>
   JSON.parse(web.optionChoices(option));
 const optionRange = (option) =>
   JSON.parse(web.optionRange(option));
-// the field of an option of a kind (check, number, range, choice or text),
+// the input of an option of a kind (check, number, range, choice or text),
 // which gives change() its new value; its choices, or the range of a slider,
 // from Gmsh unless given
-export function optionField(kind, option, change, range) {
+export function optionInput(kind, option, change, range) {
   let el;
   if(kind === 'choice') {
     el = document.createElement('select');
@@ -142,14 +142,14 @@ export function optionField(kind, option, change, range) {
            kind === 'text' ? el.value : Number(el.value)));
   return el;
 }
-export function setField(el, kind, v) {
+export function setInput(el, kind, v) {
   if(kind === 'check') el.checked = !!v;
   else el.value = String(v);
 }
-// the value of an option as its field shows it
+// the value of an option as its input shows it
 const optionValue = (option, kind) =>
   kind === 'text' ? gmsh.option.getString(option) : gmsh.option.getNumber(option);
-// a field with its label before it
+// an input with its label before it
 export function optionRow(text, el) {
   const row = document.createElement('label');
   row.className = 'row';
@@ -162,17 +162,17 @@ export function optionRow(text, el) {
 const optionWords = (option) => option.split('.')[1]
   .replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/ ([A-Z])(?=[a-z])/g, (m, c) => ' ' + c.toLowerCase());
 // a section of a page: a folding block with its name, open as in the window,
-// and the rows of fields the table gives it, without the custom rows: field()
-// makes the field of each (or none); the fields without label share the row
-// of the next one with a label (X, Y, Z and "Axes ticks"), a field left
-// without one is named as its option, in words. Null if no field is made.
-export function sectionBlock(sec, field) {
+// and the rows of entries the table gives it, without the custom ones:
+// input() makes the input of each (or none); the entries without label share
+// the row of the next one with a label (X, Y, Z and "Axes ticks"), an entry
+// left without one is named as its option, in words. Null if no input is made.
+export function sectionBlock(sec, input) {
   const sd = document.createElement('details');
   sd.open = sec.open;
   const ss = document.createElement('summary');
   ss.textContent = sec.name;
   sd.appendChild(ss);
-  let fields = 0;
+  let inputs = 0;
   for(const row of sec.rows) {
     if(row.length && row[0].kind === 'heading') {
       const h = document.createElement('div');
@@ -183,23 +183,23 @@ export function sectionBlock(sec, field) {
     }
     let group = [];
     for(const f of row.filter((f) => f.kind !== 'custom')) {
-      const el = field(f);
+      const el = input(f);
       if(el) group.push(el);
       if(!f.label && f !== row[row.length - 1]) continue;
       if(group.length) {
         let one = group[0];
         if(group.length > 1) {
           one = document.createElement('div');
-          one.className = 'fields';
+          one.className = 'entries';
           one.append(...group);
         }
         sd.appendChild(optionRow(f.label || optionWords(f.option), one));
-        fields += group.length;
+        inputs += group.length;
       }
       group = [];
     }
   }
-  return fields ? sd : null;
+  return inputs ? sd : null;
 }
 // a page of the Options tab
 function buildPage(page) {
@@ -211,9 +211,9 @@ function buildPage(page) {
   d.appendChild(sum);
   for(const sec of page.sections) {
     const sd = sectionBlock(sec, (f) => {
-      const el = optionField(f.kind, f.option, (v) => setOption(f.option, v));
+      const el = optionInput(f.kind, f.option, (v) => setOption(f.option, v));
       el.title = f.option;
-      optionFields.push([f.option, f.kind, el]);
+      optionEntries.push([f.option, f.kind, el]);
       if(page.name === 'Mesh' && ['General', 'Advanced'].includes(sec.name))
         meshing.add(f.option);
       return el;
@@ -242,8 +242,8 @@ function buildOptions() {
 // views not seen yet given what the page kept for them (see settleViews())
 export function readOptions() {
   settleViews();
-  for(const [name, kind, el] of optionFields)
-    setField(el, kind, optionValue(name, kind));
+  for(const [name, kind, el] of optionEntries)
+    setInput(el, kind, optionValue(name, kind));
   updateViews();
 }
 export function showTab(id) {

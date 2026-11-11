@@ -139,8 +139,8 @@ static Fl_Button *boundButton(const std::string &option)
   return dynamic_cast<Fl_Button *>(boundWidget(option));
 }
 
-// the titles of the headings of the sections (see FieldHeading), and the
-// groups of the numbers with - and + buttons (see FieldStepper), by option
+// the titles of the headings of the sections (see EntryHeading), and the
+// groups of the numbers with - and + buttons (see EntryStepper), by option
 static std::map<std::string, Fl_Widget *> &headings()
 {
   static std::map<std::string, Fl_Widget *> h;
@@ -936,16 +936,16 @@ static Fl_Input *input(int x, int y, int w, int h, const char *label,
 // the rows are laid out here. What the interface adds: the custom rows by
 // name, built by a function given the left edge, the top and the width of
 // their place (a custom row alone in its row returns the rows it takes), and
-// the callbacks of the fields that do more than set their option
+// the callbacks of the entries that do more than set their option
 struct pageBuilders {
   std::map<std::string, std::function<int(int x, int y, int w)>> custom;
   std::map<std::string, Fl_Callback *> hooks;
 };
 
-// the option of a field, with the key of the action that sets it (see
+// the option of a entry, with the key of the action that sets it (see
 // GetOptionShortcuts()), as the tooltip of its widget (kept: FLTK keeps the
 // pointer)
-static const char *fieldTooltip(const std::string &option)
+static const char *entryTooltip(const std::string &option)
 {
   static std::deque<std::string> kept;
   std::string tip = option;
@@ -965,14 +965,14 @@ static void step_cb(Fl_Widget *w, void *data)
 
 // a number with its - and + buttons, and its label after them, in a group
 // (de)activated together (see steppers()); width is that of the section
-static Fl_Widget *stepperField(const optionField &f, int x, int y, int w,
+static Fl_Widget *stepperEntry(const optionEntry &f, int x, int y, int w,
                                int width, const char *option, Fl_Callback *cb)
 {
   int sw = (int)(1.5 * FL_NORMAL_SIZE);
   Fl_Group *g = new Fl_Group(x, y, w + width / 2, BH);
   Fl_Value_Input *v =
     valueInput(x + sw, y, w - 2 * sw, BH, nullptr, option, cb);
-  if(f.flags & FieldOnRelease) v->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
+  if(f.flags & EntryOnRelease) v->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
   if(CTX::instance()->inputScrolling && !GetOptionRange(f.option)) v->step(1);
   Fl_Button *minus = new Fl_Button(x, y, sw, BH, "-");
   minus->callback(step_cb, v);
@@ -986,34 +986,34 @@ static Fl_Widget *stepperField(const optionField &f, int x, int y, int w,
   return v;
 }
 
-// the widget of a field, bound to its option; width is that of the section
-static Fl_Widget *fieldWidget(const optionField &f, int x, int y, int w,
+// the widget of a entry, bound to its option; width is that of the section
+static Fl_Widget *entryWidget(const optionEntry &f, int x, int y, int w,
                               int width, const pageBuilders &b)
 {
   const char *label = f.label.empty() ? nullptr : f.label.c_str();
-  const char *option = fieldTooltip(f.option);
+  const char *option = entryTooltip(f.option);
   auto h = b.hooks.find(f.option);
   Fl_Callback *cb = (h != b.hooks.end()) ? h->second : option_cb;
   switch(f.kind) {
-  case FieldCheck: return checkButton(x, y, w, BH, label, option, cb);
-  case FieldNumber: {
-    if(f.flags & FieldStepper)
-      return stepperField(f, x, y, w, width, option, cb);
+  case EntryCheck: return checkButton(x, y, w, BH, label, option, cb);
+  case EntryNumber: {
+    if(f.flags & EntryStepper)
+      return stepperEntry(f, x, y, w, width, option, cb);
     Fl_Value_Input *v =
-      (f.flags & FieldFloat) ?
+      (f.flags & EntryFloat) ?
         valueInput<inputValueFloat>(x, y, w, BH, label, option, cb) :
         valueInput(x, y, w, BH, label, option, cb);
-    if(f.flags & FieldOnRelease) v->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
+    if(f.flags & EntryOnRelease) v->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
     return v;
   }
-  case FieldChoice: return choice(x, y, w, BH, label, option, nullptr, cb);
-  case FieldText: return input(x, y, w, BH, label, option, cb);
+  case EntryChoice: return choice(x, y, w, BH, label, option, nullptr, cb);
+  case EntryText: return input(x, y, w, BH, label, option, cb);
   default: return nullptr;
   }
 }
 
-// a custom field: built by its name (none for a space)
-static int customField(const optionField &f, int x, int y, int w,
+// a custom entry: built by its name (none for a space)
+static int customEntry(const optionEntry &f, int x, int y, int w,
                        const pageBuilders &b)
 {
   if(f.option.empty()) return 0;
@@ -1034,14 +1034,14 @@ static Fl_Group *buildSection(const optionSection &s, int L, int width,
                              height - 2 * WB - BH, s.name.c_str());
   if(!s.open) o->hide();
   int BW = width - 4 * WB, x = L + 2 * WB, r = 1;
-  // the second column: after the field of the first and a label of 7 em
+  // the second column: after the entry of the first and a label of 7 em
   int C2 = x + IW + 7 * FL_NORMAL_SIZE, RW = BW - IW - 7 * FL_NORMAL_SIZE;
   for(const optionRow &row : s.rows) {
     int y = 2 * WB + r * BH;
     r++;
     if(row.empty()) continue;
-    const optionField &f = row[0];
-    if(f.kind == FieldHeading) {
+    const optionEntry &f = row[0];
+    if(f.kind == EntryHeading) {
       Fl_Box *line = new Fl_Box(x, y, BW, 2);
       line->box(FL_ENGRAVED_FRAME);
       line->labeltype(FL_NO_LABEL);
@@ -1050,41 +1050,41 @@ static Fl_Group *buildSection(const optionSection &s, int L, int width,
       headings()[f.option] = title;
       continue;
     }
-    if(row.size() == 1 && f.kind == FieldCustom) {
-      r += customField(f, x, y, width, b) - 1;
+    if(row.size() == 1 && f.kind == EntryCustom) {
+      r += customEntry(f, x, y, width, b) - 1;
       continue;
     }
-    // the fields in columns: check buttons share the row, the other fields
-    // the width of one, by weight; a field of the second column, or a custom
-    // field without weight, is placed apart (a check button alone before the
+    // the entries in columns: check buttons share the row, the other entries
+    // the width of one, by weight; a entry of the second column, or a custom
+    // entry without weight, is placed apart (a check button alone before the
     // second column runs up to it)
     bool columns = false, apart = false;
     int total = 0;
-    for(const optionField &g : row) {
-      if(g.kind == FieldCheck) columns = true;
-      if(g.flags & (FieldColumn2 | FieldColumn2Half)) apart = true;
+    for(const optionEntry &g : row) {
+      if(g.kind == EntryCheck) columns = true;
+      if(g.flags & (EntryColumn2 | EntryColumn2Half)) apart = true;
       else if(g.weight > 0) total += g.weight;
     }
     if(apart) columns = false;
     int span = columns ? BW : IW, cum = 0;
-    for(const optionField &g : row) {
-      if(g.flags & (FieldColumn2 | FieldColumn2Half)) {
-        fieldWidget(g, C2, y, (g.flags & FieldColumn2Half) ? RW / 2 : RW,
+    for(const optionEntry &g : row) {
+      if(g.flags & (EntryColumn2 | EntryColumn2Half)) {
+        entryWidget(g, C2, y, (g.flags & EntryColumn2Half) ? RW / 2 : RW,
                     width, b);
         continue;
       }
       if(g.weight <= 0) {
-        customField(g, x, y, width, b);
+        customEntry(g, x, y, width, b);
         continue;
       }
       int x0 = x + span * cum / total;
       cum += g.weight;
       int w = x + span * cum / total - x0 - (columns && cum < total ? WB : 0);
-      if(apart && g.kind == FieldCheck && total == g.weight) w = C2 - x - WB;
-      if(g.kind == FieldCustom)
-        customField(g, x0, y, w, b);
+      if(apart && g.kind == EntryCheck && total == g.weight) w = C2 - x - WB;
+      if(g.kind == EntryCustom)
+        customEntry(g, x0, y, w, b);
       else
-        fieldWidget(g, x0, y, w, width, b);
+        entryWidget(g, x0, y, w, width, b);
     }
   }
   o->end();
@@ -1166,7 +1166,7 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
   scroll->type(Fl_Scroll::VERTICAL);
 
   // The pages, from the table of OptionPages.h; what the table cannot say is
-  // built here by name (see pageBuilders), and the fields that do more than
+  // built here by name (see pageBuilders), and the entries that do more than
   // set their option get their callback
   pageBuilders b;
   for(const char *o : {"General.RotationCenterX", "General.RotationCenterY",
@@ -1180,7 +1180,7 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
   b.hooks["Solver.AlwaysListen"] = solver_listen_cb;
   b.hooks["View.TimeStep"] = view_options_timestep_cb;
 
-  // a button beside the fields of a row, at the right of their label
+  // a button beside the entries of a row, at the right of their label
   auto button = [](int x, int y, const char *label, Fl_Callback *cb) {
     Fl_Button *p = new Fl_Button(x + 2 * IW - 4 * WB, y, BB, BH, label);
     p->callback(cb);
@@ -1213,7 +1213,7 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
   auto viewChoice = [](Fl_Choice **choiceOf, const char *label,
                        const char *option) {
     return [=](int x, int y, int) {
-      *choiceOf = choice(x, y, IW, BH, label, fieldTooltip(option), nullptr,
+      *choiceOf = choice(x, y, IW, BH, label, entryTooltip(option), nullptr,
                          option_cb, nullptr, -1);
       (*choiceOf)->add("Self");
       return 1;
@@ -1242,7 +1242,7 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
           Fl_Value_Input *v =
             valueInput(x + j * ss, y + i * BH, ss, BH,
                        j == 2 ? labels[i] : nullptr,
-                       fieldTooltip(c + ".Transform" + axes[i] + axes[j]));
+                       entryTooltip(c + ".Transform" + axes[i] + axes[j]));
           v->minimum(-1.);
           v->maximum(1.);
           if(CTX::instance()->inputScrolling) v->step(0.1);
@@ -1251,7 +1251,7 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
         }
         // (the offsets and the raise of a view follow the view shown, see
         // updateViewGroup())
-        const char *offset = fieldTooltip(c + ".Offset" + axes[i]);
+        const char *offset = entryTooltip(c + ".Offset" + axes[i]);
         Fl_Value_Input *off =
           raise ? valueInput<inputValueFloat>(x + IW, y + i * BH, 7 * IW / 10,
                                               BH, nullptr, offset) :
@@ -1267,7 +1267,7 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
         if(raise) {
           Fl_Value_Input *r = valueInput<inputValueFloat>(
             x + 2 * IW - 3 * WB, y + i * BH, 7 * IW / 10, BH, nullptr,
-            fieldTooltip(c + ".Raise" + axes[i]));
+            entryTooltip(c + ".Raise" + axes[i]));
           r->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
           r->callback(option_cb);
         }
@@ -1412,7 +1412,7 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
     Fl_Group *row = new Fl_Group(x + WB + IW, y, W, BH);
     for(int i = 0; i < 9; i++)
       valueInput(x + WB + IW + i * w, y, (i < 8) ? w : W - 8 * w, BH, nullptr,
-                 fieldTooltip("View.ComponentMap" + std::to_string(i)), -1, 9,
+                 entryTooltip("View.ComponentMap" + std::to_string(i)), -1, 9,
                  1, option_cb);
     row->end();
     return 0;
@@ -1435,7 +1435,7 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
       maps.push_back(last);
     }
     view.colormap = choice(x, y, IW, BH, "Predefined colormap",
-                           fieldTooltip("View.ColormapNumber"), &maps[0],
+                           entryTooltip("View.ColormapNumber"), &maps[0],
                            view_colormap_cb);
     // the keys go to the map widget below
     view.colormap->clear_visible_focus();

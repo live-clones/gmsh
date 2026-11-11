@@ -125,7 +125,7 @@
 //   for a key in no menu).
 // - A button of the status bar: an item of the "Status bar" menu of
 //   Actions.cpp, with its icon (IconStrokes.cpp), and its line in fltkActions.cpp.
-// - A field of the option window: a row of the table of OptionPages.cpp
+// - An entry of the option window: a row of the table of OptionPages.cpp
 //   (src/common), shown by both interfaces.
 // Then run the tests of benchmarks/gui (see its README.txt), which check the
 // registry, the menus and the selection workflows of the FLTK interface.

@@ -20,7 +20,7 @@
 import {$, download, gmsh, setStatus} from './app.mjs';
 import {web} from './gmshweb.mjs';
 import {menuItems, registry} from './actions.mjs';
-import {getViewOption, optionField, sectionBlock, setField, setViewOption, showTab, viewPage, views} from './options.mjs';
+import {getViewOption, optionInput, sectionBlock, setInput, setViewOption, showTab, viewPage, views} from './options.mjs';
 import {groupOpen} from './parameters.mjs';
 import {draw} from './scene.mjs';
 import {popupMenu, showAnimation} from './statusbar.mjs';
@@ -51,7 +51,7 @@ export const viewTags = () => [...gmsh.view.getTags()];
 export const viewNum = (i, n) => gmsh.option.getNumber(`View[${i}].${n}`);
 // The list is made again only when what it shows changes (the views, their
 // names, groups, time steps and range type, the options shown): otherwise the
-// values are written in its fields as they are, so that a field being typed
+// values are written in its inputs as they are, so that an input being typed
 // in while a solver runs (and shows new views several times a second) stays
 let viewsKey = '';
 const viewUpdates = [];
@@ -144,7 +144,7 @@ function viewOptionRows(tag, i) {
       const option = f.option;
       if(applies[option] === false || applies[option] === 0) return null;
       const kind = option in sliders ? 'range' : f.kind;
-      const el = optionField(kind, option, (v) => setViewOptionOf(tag, option, v),
+      const el = optionInput(kind, option, (v) => setViewOptionOf(tag, option, v),
                              sliders[option]);
       el.title = option.replace('View.', `View[${i}].`);
       if(option === 'View.TimeStep') Object.assign(el, {min: 0, max: steps - 1, step: 1});
@@ -152,7 +152,7 @@ function viewOptionRows(tag, i) {
       viewUpdates.push((ts) => {
         const k = ts.indexOf(tag);
         if(k >= 0 && el !== document.activeElement)
-          setField(el, kind, getViewOption(option, k));
+          setInput(el, kind, getViewOption(option, k));
       });
       return el;
     });

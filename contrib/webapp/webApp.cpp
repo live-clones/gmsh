@@ -630,7 +630,7 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebActions()
 // The pages of the option window (see OptionPages.h), in JSON: [{"name",
 // "sections": [{"name", "open", "rows": [[{"kind" ("check", "number",
 // "choice", "text", "heading" or "custom"), "option", "label"}]]}]}]; the page
-// shows the fields of the options it has, not the custom rows
+// shows the entries of the options it has, not the custom rows
 EMSCRIPTEN_KEEPALIVE const char *gmshWebOptionPages()
 {
   static const char *kinds[] = {"check", "number",  "choice",

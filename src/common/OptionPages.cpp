@@ -5,29 +5,29 @@
 
 #include "OptionPages.h"
 
-optionField check(const std::string &option, const std::string &label,
+optionEntry check(const std::string &option, const std::string &label,
                   int weight, int flags)
-{ return {FieldCheck, option, label, weight, flags}; }
+{ return {EntryCheck, option, label, weight, flags}; }
 
-optionField number(const std::string &option, const std::string &label,
+optionEntry number(const std::string &option, const std::string &label,
                    int weight, int flags)
-{ return {FieldNumber, option, label, weight, flags}; }
+{ return {EntryNumber, option, label, weight, flags}; }
 
-optionField choice(const std::string &option, const std::string &label,
+optionEntry choice(const std::string &option, const std::string &label,
                    int weight, int flags)
-{ return {FieldChoice, option, label, weight, flags}; }
+{ return {EntryChoice, option, label, weight, flags}; }
 
-optionField text(const std::string &option, const std::string &label,
+optionEntry text(const std::string &option, const std::string &label,
                  int weight, int flags)
-{ return {FieldText, option, label, weight, flags}; }
+{ return {EntryText, option, label, weight, flags}; }
 
-optionField heading(const std::string &title)
-{ return {FieldHeading, title, "", 1, 0}; }
+optionEntry heading(const std::string &title)
+{ return {EntryHeading, title, "", 1, 0}; }
 
-optionField custom(const std::string &name, int weight)
-{ return {FieldCustom, name, "", weight, 0}; }
+optionEntry custom(const std::string &name, int weight)
+{ return {EntryCustom, name, "", weight, 0}; }
 
-optionField space(int weight) { return {FieldCustom, "", "", weight, 0}; }
+optionEntry space(int weight) { return {EntryCustom, "", "", weight, 0}; }
 
 // a section, open or not when its page is first shown
 static optionSection section(const std::string &name, bool open,
@@ -80,7 +80,7 @@ static optionPage generalPage()
      section(
        "Axes", false,
        {{choice("General.Axes", "Axes mode"),
-         check("General.AxesMikado", "Mikado style", 1, FieldColumn2)},
+         check("General.AxesMikado", "Mikado style", 1, EntryColumn2)},
         {number("General.AxesTicksX", ""), number("General.AxesTicksY", ""),
          number("General.AxesTicksZ", "Axes ticks")},
         {text("General.AxesFormatX", ""), text("General.AxesFormatY", ""),
@@ -168,9 +168,9 @@ static optionPage geometryPage()
               {check("Geometry.Volumes", "Volumes"),
                check("Geometry.VolumeLabels", "Volume labels")},
               {choice("Geometry.LabelType", "Label type")},
-              {number("Geometry.Normals", "", 1, FieldOnRelease),
+              {number("Geometry.Normals", "", 1, EntryOnRelease),
                number("Geometry.Tangents", "Normals and tangents", 1,
-                      FieldOnRelease)}}),
+                      EntryOnRelease)}}),
      section("Transfo", false,
              {{choice("Geometry.Transform", "Main window transform")},
               {custom("Geometry transformation")}}),
@@ -206,12 +206,12 @@ static optionPage meshPage()
         {check("Mesh.RecombineAll", "Recombine all triangular meshes")},
         {choice("Mesh.SubdivisionAlgorithm", "Subdivision algorithm")},
         {number("Mesh.Smoothing", "Smoothing steps")},
-        {number("Mesh.MeshSizeFactor", "Element size factor", 1, FieldFloat)},
+        {number("Mesh.MeshSizeFactor", "Element size factor", 1, EntryFloat)},
         {number("Mesh.MeshSizeMin", ""),
          number("Mesh.MeshSizeMax", "Min/Max element size")},
         {number("Mesh.ElementOrder", "Element order"),
          check("Mesh.SecondOrderIncomplete", "Incomplete elements", 1,
-               FieldColumn2)}}),
+               EntryColumn2)}}),
      section("Advanced", false,
              {{check("Mesh.MeshSizeFromPoints",
                      "Compute element sizes using point values")},
@@ -240,30 +240,30 @@ static optionPage meshPage()
          choice("Mesh.DrawSkinOnly", "")},
         {choice("Mesh.LabelType", "Label"),
          number("Mesh.LabelSampling", "Sampling", 1,
-                FieldColumn2Half | FieldOnRelease)},
+                EntryColumn2Half | EntryOnRelease)},
         {custom("Mesh element types")},
-        {number("Mesh.QualityInf", "", 1, FieldOnRelease),
-         number("Mesh.QualitySup", "", 1, FieldOnRelease),
+        {number("Mesh.QualityInf", "", 1, EntryOnRelease),
+         number("Mesh.QualitySup", "", 1, EntryOnRelease),
          choice("Mesh.QualityType", "Quality range", 2)},
-        {number("Mesh.RadiusInf", "", 1, FieldOnRelease),
-         number("Mesh.RadiusSup", "Size range", 1, FieldOnRelease)},
-        {number("Mesh.Normals", "", 1, FieldOnRelease),
-         number("Mesh.Tangents", "Normals and tangents", 1, FieldOnRelease)}}),
+        {number("Mesh.RadiusInf", "", 1, EntryOnRelease),
+         number("Mesh.RadiusSup", "Size range", 1, EntryOnRelease)},
+        {number("Mesh.Normals", "", 1, EntryOnRelease),
+         number("Mesh.Tangents", "Normals and tangents", 1, EntryOnRelease)}}),
      section(
        "Aspect", false,
-       {{number("Mesh.Explode", "Element shrinking factor", 1, FieldOnRelease)},
+       {{number("Mesh.Explode", "Element shrinking factor", 1, EntryOnRelease)},
         {choice("Mesh.NodeType", "Point display")},
         {number("Mesh.PointSize", "Point size")},
         {number("Mesh.LineWidth", "Line width")},
         {number("Mesh.NumSubEdges", "High-order element subdivisions", 1,
-                FieldOnRelease)}}),
+                EntryOnRelease)}}),
      section("Color", false,
              {{check("Mesh.Light", "Enable lighting")},
               {choice("Mesh.LightLines", "Edge lighting")},
               {check("Mesh.LightTwoSide", "Use two-side lighting")},
               {check("Mesh.SmoothNormals", "Smooth normals")},
               {number("Mesh.AngleSmoothNormals", "Smoothing threshold angle", 1,
-                      FieldOnRelease)},
+                      EntryOnRelease)},
               {number("Mesh.Opacity", "", 1),
                choice("Mesh.OpacityMode", "Opacity", 3)},
               {choice("Mesh.ColorCarousel", "Coloring mode")},
@@ -306,29 +306,29 @@ static optionPage viewPage()
     {section("General", true,
              {{choice("View.Type", "Plot type")},
               {text("View.Name", "View name")},
-              {number("View.TimeStep", "Step", 1, FieldStepper)},
-              {number("View.NbIso", "Intervals", 1, FieldOnRelease),
-               text("View.NumberFormat", "Format", 1, FieldColumn2Half)},
+              {number("View.TimeStep", "Step", 1, EntryStepper)},
+              {number("View.NbIso", "Intervals", 1, EntryOnRelease),
+               text("View.NumberFormat", "Format", 1, EntryColumn2Half)},
               {choice("View.IntervalsType", "Intervals type"),
-               choice("View.ScaleType", "", 1, FieldColumn2)},
+               choice("View.ScaleType", "", 1, EntryColumn2)},
               {choice("View.RangeType", "Range mode"),
-               check("View.SaturateValues", "Saturate", 1, FieldColumn2)},
+               check("View.SaturateValues", "Saturate", 1, EntryColumn2)},
               {custom("Range minimum", 1),
-               number("View.CustomMin", "Custom min", 3, FieldOnRelease),
+               number("View.CustomMin", "Custom min", 3, EntryOnRelease),
                number("View.ScaleThreshold", "Threshold", 1,
-                      FieldColumn2Half | FieldOnRelease)},
+                      EntryColumn2Half | EntryOnRelease)},
               {custom("Range maximum", 1),
-               number("View.CustomMax", "Custom max", 3, FieldOnRelease)},
+               number("View.CustomMax", "Custom max", 3, EntryOnRelease)},
               {check("View.AdaptVisualizationGrid", "Adapt visualization grid"),
-               choice("View.AdaptSkinOnly", "", 1, FieldColumn2)},
+               choice("View.AdaptSkinOnly", "", 1, EntryColumn2)},
               {number("View.MaxRecursionLevel", "Maximum recursion level", 1,
-                FieldStepper | FieldOnRelease)},
+                      EntryStepper | EntryOnRelease)},
               {number("View.TargetError", "Target visualization error", 1,
-                      FieldFloat | FieldOnRelease)}}),
+                      EntryFloat | EntryOnRelease)}}),
      section(
        "Axes", false,
        {{choice("View.Axes", "Axes mode"),
-         check("View.AxesMikado", "Mikado style", 1, FieldColumn2)},
+         check("View.AxesMikado", "Mikado style", 1, EntryColumn2)},
         {number("View.AxesTicksX", ""), number("View.AxesTicksY", ""),
          number("View.AxesTicksZ", "Axes ticks")},
         {text("View.AxesFormatX", ""), text("View.AxesFormatY", ""),
@@ -355,41 +355,41 @@ static optionPage viewPage()
         {space(), check("View.DrawSkinOnly", "Hide interior faces")},
         {custom("View element types"),
          number("View.Sampling", "Sampling", 1,
-                FieldColumn2Half | FieldOnRelease)},
+                EntryColumn2Half | EntryOnRelease)},
         {choice("View.Boundary", "Element boundary mode")},
-        {number("View.Normals", "", 1, FieldOnRelease),
-         number("View.Tangents", "Normals and tangents", 1, FieldOnRelease)},
-        {custom("View field types")},
+        {number("View.Normals", "", 1, EntryOnRelease),
+         number("View.Tangents", "Normals and tangents", 1, EntryOnRelease)},
+        {custom("View entry types")},
         {choice("View.ForceNumComponents", ""), custom("Component map")}}),
      section("Transfo", false,
              {{custom("View transformation")},
               {number("View.NormalRaise", "Normal raise", 1,
-                      FieldFloat | FieldOnRelease)},
+                      EntryFloat | EntryOnRelease)},
               {check("View.UseGeneralizedRaise",
                      "Use general transformation expressions")},
               {custom("Generalized raise view")},
               {number("View.GeneralizedRaiseFactor", "Factor", 1,
-                      FieldFloat | FieldOnRelease)},
+                      EntryFloat | EntryOnRelease)},
               {text("View.GeneralizedRaiseX", "X expression")},
               {text("View.GeneralizedRaiseY", "Y expression")},
               {text("View.GeneralizedRaiseZ", "Z expression")}}),
      section(
        "Aspect", false,
-       {{number("View.Explode", "Element shrinking factor", 1, FieldOnRelease)},
+       {{number("View.Explode", "Element shrinking factor", 1, EntryOnRelease)},
         {choice("View.PointType", "Point display")},
         {number("View.PointSize", "Point size")},
         {choice("View.LineType", "Line display"),
-         check("View.Stipple", "Stipple", 1, FieldColumn2)},
+         check("View.Stipple", "Stipple", 1, EntryColumn2)},
         {number("View.LineWidth", ""),
          number("View.OutlineWidth", "Line / outline width")},
         {choice("View.VectorType", "Vector display")},
         {number("View.ArrowSizeMin", ""),
          number("View.ArrowSizeMax", "Arrow size")},
         {number("View.DisplacementFactor", "Displacement factor", 1,
-                FieldFloat | FieldOnRelease)},
+                EntryFloat | EntryOnRelease)},
         {custom("External view")},
         {choice("View.GlyphLocation", "Glyph location"),
-         choice("View.CenterGlyphs", "", 1, FieldColumn2)},
+         choice("View.CenterGlyphs", "", 1, EntryColumn2)},
         {choice("View.TensorType", "Tensor display")}}),
      section("Color", false,
              {{check("View.Light", "Enable lighting")},
@@ -397,7 +397,7 @@ static optionPage viewPage()
               {check("View.LightTwoSide", "Use two-side lighting")},
               {check("View.SmoothNormals", "Smooth normals")},
               {number("View.AngleSmoothNormals", "Smoothing threshold angle", 1,
-                      FieldOnRelease)},
+                      EntryOnRelease)},
               {number("View.Opacity", "Opacity")},
               {custom("View colors")}}),
      section("Map", false, {{custom("Colormap")}, {custom("Colorbar")}})}};
