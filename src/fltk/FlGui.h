@@ -256,7 +256,7 @@ public:
   // toggles the module open or closed based on its current state
   void toggleModule(const std::string &name);
   // open module in tree
-  void openModule(const std::string &name);
+  void openModule(const std::string &name) override;
   // open tree item
   void openTreeItem(const std::string &name);
   // close tree item
@@ -299,6 +299,12 @@ public:
   void viewVisibilityChanged(int num) override;
   void viewOpenedOrClosed(int num) override;
   void viewColorMapChanged(int num) override;
+  void viewsChanged(bool numberChanged) override;
+  void fieldsChanged() override;
+  void entitiesChanged() override;
+  void parametersChanged() override;
+  void setCurrentWindow(int index) override;
+  void splitCurrentWindow(char how, double ratio) override;
 };
 
 // the engine that draws text, chosen by name (General.GraphicsFontEngine):

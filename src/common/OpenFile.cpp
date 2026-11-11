@@ -10,6 +10,7 @@
 #include "GmshMessage.h"
 #include "GModelIO_GEO.h"
 #include "Options.h"
+#include "GuiListener.h"
 #include "GModel.h"
 #include "Numeric.h"
 #include "Context.h"
@@ -228,11 +229,7 @@ int ParseFile(const std::string &fileName, bool close, bool errorIfMissing)
   gmsh_yylineno = old_yylineno;
   gmsh_yyviewindex = old_yyviewindex;
 
-#if defined(HAVE_FLTK) && defined(HAVE_POST)
-  if(FlGui::available()) {
-    FlGui::instance()->updateViews(true);
-  }
-#endif
+  Gui()->viewsChanged(true);
 
   return 1;
 #endif
@@ -569,14 +566,14 @@ int MergeFile(const std::string &fileName, bool errorIfMissing,
 
   if(importPhysicalsInOnelab) Msg::ImportPhysicalGroupsInOnelab();
 
-#if defined(HAVE_FLTK) && defined(HAVE_POST)
-  if(FlGui::available()) {
+#if defined(HAVE_POST)
+  if(Gui()->running()) {
     // go directly to the first non-empty step after the one that is requested
     for(std::size_t i = numViewsBefore; i < PView::list.size(); i++)
       opt_view_timestep(i, GMSH_SET | GMSH_GUI,
                         PView::list[i]->getData()->getFirstNonEmptyTimeStep(
                           opt_view_timestep(i, GMSH_GET, 0)));
-    FlGui::instance()->updateViews(numViewsBefore != (int)PView::list.size());
+    Gui()->viewsChanged(numViewsBefore != (int)PView::list.size());
   }
 #endif
 
@@ -766,14 +763,10 @@ void ClearProject()
   std::string base = (getenv("PWD") ? "" : CTX::instance()->homeDir);
   GModel::current()->setFileName(base + CTX::instance()->defaultFileName);
   GModel::current()->setName("");
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) {
-    FlGui::instance()->resetVisibility();
-    FlGui::instance()->updateViews(true);
-    FlGui::instance()->updateFields();
-    GModel::current()->setSelection(0);
-  }
-#endif
+  Gui()->entitiesChanged();
+  Gui()->viewsChanged(true);
+  Gui()->fieldsChanged();
+  GModel::current()->setSelection(0);
   Msg::ResetErrorCounter();
 }
 
@@ -853,13 +846,13 @@ void OpenProject(const std::string &fileName, bool errorIfMissing)
     GModel::current()->addAutomaticExtrusionConstraints({10}, {1}, true, {});
 
 #if defined(HAVE_FLTK)
-  if(FlGui::available()) {
-    mergeWatchedFiles();
-    FlGui::instance()->resetVisibility();
-    FlGui::instance()->updateViews(true);
-    FlGui::instance()->updateFields();
-    GModel::current()->setSelection(0);
-  }
+  if(FlGui::available()) mergeWatchedFiles();
+#endif
+  Gui()->entitiesChanged();
+  Gui()->viewsChanged(true);
+  Gui()->fieldsChanged();
+  GModel::current()->setSelection(0);
+#if defined(HAVE_FLTK)
 #endif
 }
 

@@ -18,6 +18,7 @@
 
 #include "gmshLocalNetworkClient.h"
 #include "onelabUtils.h"
+#include "GuiListener.h"
 
 #if defined(HAVE_FLTK)
 #include <FL/Fl.H>
@@ -433,13 +434,13 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
     std::size_t n = PView::list.size();
 #endif
     if(onelabUtils::mergeSolverFile(message)) {
-#if defined(HAVE_FLTK)
+#if defined(HAVE_OPENGL)
       drawContext::global()->draw();
-      if(FlGui::available() && n != PView::list.size()) {
-        FlGui::instance()->rebuildTree();
-        FlGui::instance()->openModule("Post-processing");
-      }
 #endif
+      if(n != PView::list.size()) {
+        Gui()->parametersChanged();
+        Gui()->openModule("Post-processing");
+      }
     }
   } break;
   case GmshSocket::GMSH_OPEN_PROJECT: OpenProject(message);
@@ -463,9 +464,8 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
 #if defined(HAVE_POST)
     PView::fillVertexArray(this, length, &message[0], swap);
 #endif
-#if defined(HAVE_FLTK)
-    if(FlGui::available())
-      FlGui::instance()->updateViews(n != (int)PView::list.size());
+    Gui()->viewsChanged(n != (int)PView::list.size());
+#if defined(HAVE_OPENGL)
     drawContext::global()->draw();
 #endif
   } break;

@@ -25,6 +25,7 @@
 #include "GmshGlobal.h"
 #include "GModel.h"
 #include "Options.h"
+#include "GuiListener.h"
 #include "Context.h"
 #include "OpenFile.h"
 #include "StringUtils.h"
@@ -1630,12 +1631,8 @@ void Msg::ImportPhysicalGroupsInOnelab()
       _onelabClient->clear(tmp);
     }
 
-#if defined(HAVE_FLTK)
-    if(guiHere()){
-      FlGui::instance()->resetVisibility();
-      FlGui::instance()->rebuildTree();
-    }
-#endif
+    Gui()->entitiesChanged();
+    Gui()->parametersChanged();
   }
 #endif
 }

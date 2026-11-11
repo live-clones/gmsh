@@ -638,9 +638,7 @@
 #include "drawContext.h"
 #endif
 
-#if defined(HAVE_FLTK)
-#include "FlGui.h"
-#endif
+#include "GuiListener.h"
 
 #if defined(HAVE_POPPLER)
 #include "gmshPopplerWrapper.h"
@@ -10403,19 +10401,13 @@ yyreduce:
         GModel::current()->createOverlaps((yyvsp[(2) - (3)].d));
       }
       else if(!strcmp((yyvsp[(1) - (3)].c), "SetCurrentWindow")) {
-#if defined(HAVE_FLTK)
-        if(FlGui::available()) FlGui::instance()->setCurrentOpenglWindow((int)(yyvsp[(2) - (3)].d));
-#endif
+        Gui()->setCurrentWindow((int)(yyvsp[(2) - (3)].d));
       }
       else if(!strcmp((yyvsp[(1) - (3)].c), "SplitCurrentWindowHorizontal")) {
-#if defined(HAVE_FLTK)
-        if(FlGui::available()) FlGui::instance()->splitCurrentOpenglWindow('h', (yyvsp[(2) - (3)].d));
-#endif
+        Gui()->splitCurrentWindow('h', (yyvsp[(2) - (3)].d));
       }
       else if(!strcmp((yyvsp[(1) - (3)].c), "SplitCurrentWindowVertical")) {
-#if defined(HAVE_FLTK)
-        if(FlGui::available()) FlGui::instance()->splitCurrentOpenglWindow('v', (yyvsp[(2) - (3)].d));
-#endif
+        Gui()->splitCurrentWindow('v', (yyvsp[(2) - (3)].d));
       }
       else {
 	yymsg(0, "Unknown command '%s'", (yyvsp[(1) - (3)].c));
@@ -10427,9 +10419,7 @@ yyreduce:
   case 267:
 #line 3144 "Gmsh.y"
     {
-#if defined(HAVE_FLTK)
-      if(FlGui::available()) FlGui::instance()->splitCurrentOpenglWindow('u');
-#endif
+      Gui()->splitCurrentWindow('u', 0.5);
     ;}
     break;
 

@@ -39,9 +39,7 @@
 #include "PViewDataGModel.h"
 #include "PViewOptions.h"
 #endif
-#if defined(HAVE_FLTK)
-#include "FlGui.h"
-#endif
+#include "GuiListener.h"
 
 #if defined(HAVE_QUADMESHINGTOOLS)
 #include "cppUtils.h"
@@ -152,10 +150,8 @@ int buildBackgroundField(
   int idxtypeVT = 7; /* Post type: VT */
   d->importList(idxtypeVT, numElements, datalist, false);
 
-#if defined(HAVE_FLTK)
   view->getOptions()->visible = 0;
-  if(FlGui::available()) FlGui::instance()->updateViews(true);
-#endif
+  Gui()->viewsChanged(true);
 
   /* singularities */
   if(global_singularity_list.size() > 0) {
@@ -2380,9 +2376,7 @@ int quadqsCleanup(GModel *gm)
 #if defined(HAVE_POST)
   PView *view = PView::getViewByName("guiding_field");
   delete view;
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) FlGui::instance()->updateViews(true);
-#endif
+  Gui()->viewsChanged(true);
 #endif
   return 0;
 }

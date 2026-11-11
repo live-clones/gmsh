@@ -53,9 +53,7 @@
 #include "drawContext.h"
 #endif
 
-#if defined(HAVE_FLTK)
-#include "FlGui.h"
-#endif
+#include "GuiListener.h"
 
 #if defined(HAVE_POPPLER)
 #include "gmshPopplerWrapper.h"
@@ -3119,19 +3117,13 @@ Command :
         GModel::current()->createOverlaps($2);
       }
       else if(!strcmp($1, "SetCurrentWindow")) {
-#if defined(HAVE_FLTK)
-        if(FlGui::available()) FlGui::instance()->setCurrentOpenglWindow((int)$2);
-#endif
+        Gui()->setCurrentWindow((int)$2);
       }
       else if(!strcmp($1, "SplitCurrentWindowHorizontal")) {
-#if defined(HAVE_FLTK)
-        if(FlGui::available()) FlGui::instance()->splitCurrentOpenglWindow('h', $2);
-#endif
+        Gui()->splitCurrentWindow('h', $2);
       }
       else if(!strcmp($1, "SplitCurrentWindowVertical")) {
-#if defined(HAVE_FLTK)
-        if(FlGui::available()) FlGui::instance()->splitCurrentOpenglWindow('v', $2);
-#endif
+        Gui()->splitCurrentWindow('v', $2);
       }
       else {
 	yymsg(0, "Unknown command '%s'", $1);
@@ -3140,9 +3132,7 @@ Command :
     }
   | tUnsplitWindow tEND
     {
-#if defined(HAVE_FLTK)
-      if(FlGui::available()) FlGui::instance()->splitCurrentOpenglWindow('u');
-#endif
+      Gui()->splitCurrentWindow('u', 0.5);
     }
   | tPlugin '(' tSTRING ')' '.' tSTRING tEND
      {

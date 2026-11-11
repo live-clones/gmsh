@@ -13,10 +13,11 @@ class drawContext;
 // What the core tells a graphical user interface, if one runs, and asks it.
 // The interface registers itself (SetGuiListener(): the FLTK graphical user
 // interface in FlGui.cpp, the web page in webApp.cpp) and Gui() gives it, or a
-// listener that does nothing. The option functions of Options.cpp call it when
-// an option is set for the interface (GMSH_GUI), so that they know nothing of
-// a toolkit; what they ask is where the scene is, and what the desktop looks
-// like.
+// listener that does nothing. The core calls it, so that it knows nothing of
+// a toolkit: the option functions of Options.cpp when an option is set for the
+// interface (GMSH_GUI), the readers when a model or views came in, a script
+// for the windows; what they ask is where the scene is, and what the desktop
+// looks like.
 class guiListener {
 public:
   virtual ~guiListener() {}
@@ -59,6 +60,17 @@ public:
   virtual void viewVisibilityChanged(int num) {}
   virtual void viewOpenedOrClosed(int num) {}
   virtual void viewColorMapChanged(int num) {} // -1: of all the views
+  // views came or went (numberChanged) or changed, the mesh size fields
+  // changed, the entities of the model changed, the ONELAB parameters changed
+  virtual void viewsChanged(bool numberChanged) {}
+  virtual void fieldsChanged() {}
+  virtual void entitiesChanged() {}
+  virtual void parametersChanged() {}
+  // what a script or a solver asks: a module of the tree opened, the current
+  // window set by its index, or split ('h', 'v', or 'u' to unsplit)
+  virtual void openModule(const std::string &name) {}
+  virtual void setCurrentWindow(int index) {}
+  virtual void splitCurrentWindow(char how, double ratio) {}
 };
 
 // the listener of the interface that runs, or one that does nothing

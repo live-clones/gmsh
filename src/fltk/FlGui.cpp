@@ -1372,6 +1372,29 @@ void FlGui::viewColorMapChanged(int num)
   if(num < 0 || num == options->view.index) options->view.colorbar->redraw();
 }
 
+void FlGui::viewsChanged(bool numberChanged) { updateViews(numberChanged); }
+
+void FlGui::fieldsChanged() { updateFields(); }
+
+// (the tree and the visibility window are touched by the thread of the
+// interface only)
+void FlGui::entitiesChanged()
+{
+  if(onMainThread()) resetVisibility();
+}
+
+void FlGui::parametersChanged()
+{
+  if(onMainThread()) rebuildTree();
+}
+
+void FlGui::setCurrentWindow(int index) { setCurrentOpenglWindow(index); }
+
+void FlGui::splitCurrentWindow(char how, double ratio)
+{
+  splitCurrentOpenglWindow(how, ratio);
+}
+
 void fltkFontEngine(const std::string &engine)
 {
   drawContextGlobal *old = drawContext::global();
