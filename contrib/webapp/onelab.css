@@ -1,3 +1,20 @@
+/*
+   Gmsh web app - Copyright (C) 2026 C. Geuzaine and J.-F. Remacle
+
+   This program is free software: you can redistribute it and/or modify it under
+   the terms of the GNU Affero General Public License as published by the Free
+   Software Foundation, either version 3 of the License, or (at your option) any
+   later version.
+
+   This program is distributed in the hope that it will be useful, but WITHOUT
+   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+   FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
+   details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 /* light, or dark (data-theme, set as the colour scheme chosen in the
    options or the browser's, see pageTheme() below) */
 :root { color-scheme: light;
@@ -103,6 +120,7 @@ body.noSide #side, body.noSide #split { display: none; }
 #keysDialog form { float: right; }
 #keysDialog h3 { margin: 4px 0 6px; }
 #keysDialog p { color: var(--muted); margin: 0 0 8px; }
+#keysDialog a { color: inherit; }
 #keysDialog td { padding: 2px 12px 2px 0; vertical-align: top; }
 #keysDialog td:first-child { white-space: nowrap; font-family: monospace; }
 /* as the graphical interface: the panel down to the status bar, the

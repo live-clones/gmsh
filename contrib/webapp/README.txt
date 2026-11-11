@@ -1,5 +1,10 @@
 The Gmsh web app: Gmsh compiled to WebAssembly with Emscripten (experimental)
 
+The web app is provided under the GNU Affero General Public License, Version 3
+or later (see LICENSE.txt here): whoever runs a modified version for others to
+use over a network must offer them its source code. Gmsh and GetDP, which it
+combines, keep their GNU General Public License, Version 2 or later.
+
 Build (needs emsdk, by default in ~/src/emsdk, and the GetDP sources, by
 default in ../getdp next to the Gmsh sources):
 

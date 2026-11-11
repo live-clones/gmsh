@@ -1,7 +1,17 @@
-// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
+// Gmsh web app - Copyright (C) 2026 C. Geuzaine and J.-F. Remacle
 //
-// See the LICENSE.txt file in the Gmsh root directory for license information.
-// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// This program is free software: you can redistribute it and/or modify it under
+// the terms of the GNU Affero General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
+// details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 // The action registry (src/common/Actions.cpp): the buttons of the Geometry
 // and Mesh modules and the items of the menus, and what the page does for
@@ -456,5 +466,6 @@ export function build() {
     tr.insertCell().textContent = r.label;
     tr.insertCell().textContent = r.help;
   }
+  $('aboutVersion').textContent = gmsh.option.getString('General.Version');
   $('keys').addEventListener('click', () => $('keysDialog').showModal());
 }

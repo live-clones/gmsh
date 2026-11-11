@@ -31,6 +31,7 @@ their own respective license:
 * tinyobjloader: MIT License
 * tinyxml2: Zlib License
 * voro++: BSD-type License
+* webapp: GNU Affero General Public License (AGPL) v. 3 or later
 * zipper: Zlib License
 
 See each subdirectory for the detailed license terms.
