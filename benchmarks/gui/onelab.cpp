@@ -13,7 +13,7 @@
 #include <vector>
 #include "gmsh.h"
 #include "FlGui.h"
-#include "onelabGroup.h"
+#include "onelabActions.h"
 #include "GmshMessage.h"
 
 // no display: the test is skipped (ctest reads 77 as skipped)

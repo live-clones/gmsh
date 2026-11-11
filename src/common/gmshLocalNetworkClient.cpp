@@ -20,8 +20,9 @@
 #include "onelabUtils.h"
 
 #if defined(HAVE_FLTK)
+#include <FL/Fl.H>
 #include "FlGui.h"
-#include "onelabGroup.h"
+#include "onelabActions.h"
 #include "drawContext.h"
 #endif
 

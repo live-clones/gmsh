@@ -45,7 +45,7 @@
 #if defined(HAVE_FLTK)
 #include <FL/fl_ask.H>
 #include "FlGui.h"
-#include "onelabGroup.h"
+#include "onelabActions.h"
 #include "graphicWindow.h"
 #include "fileActions.h"
 #include "drawContext.h"

@@ -9,6 +9,7 @@
 #include "FlGui.h"
 #include "Options.h"
 #include "onelabGroup.h"
+#include "onelabActions.h"
 #include "solverButton.h"
 #include "fileDialogs.h"
 

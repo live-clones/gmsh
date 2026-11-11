@@ -27,6 +27,8 @@ set(SRC
     editorWindow.cpp
     onelabContextWindow.cpp
     onelabGroup.cpp
+    onelabActions.cpp
+    onelabParameters.cpp
     helpWindow.cpp
     fileDialogs.cpp
     extraDialogs.cpp

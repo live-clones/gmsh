@@ -13,6 +13,8 @@
 #include "paletteWindow.h"
 #include "onelab.h"
 #include "onelabGroup.h"
+#include "onelabActions.h"
+#include "onelabParameters.h"
 #include "onelabContextWindow.h"
 #include "drawContext.h"
 

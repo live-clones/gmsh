@@ -31,7 +31,7 @@
 #include "helpWindow.h"
 #include "editorWindow.h"
 #include "visibilityWindow.h"
-#include "onelabGroup.h"
+#include "onelabActions.h"
 #include "fileDialogs.h"
 #include "extraDialogs.h"
 #include "windowPlacement.h"

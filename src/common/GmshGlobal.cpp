@@ -59,7 +59,7 @@
 #include "FlGui.h"
 #include "graphicWindow.h"
 #include "drawContext.h"
-#include "onelabGroup.h"
+#include "onelabActions.h"
 
 #endif
 
