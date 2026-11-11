@@ -32,12 +32,12 @@
 // STRINGS
 
 StringXString GeneralOptions_String[] = {
-  { F|O, "AxesFormatX" , opt_general_axes_format0 , "%.3g" ,
-    "Number format for X-axis (in standard C form)" },
-  { F|O, "AxesFormatY" , opt_general_axes_format1 , "%.3g" ,
-    "Number format for Y-axis (in standard C form)" },
-  { F|O, "AxesFormatZ" , opt_general_axes_format2 , "%.3g" ,
-    "Number format for Z-axis (in standard C form)" },
+  { F|O, "AxesFormatX" , opt_general_axes_format0 , "" ,
+    "Number format for X-axis (in standard C form); use adaptive automatic default if empty" },
+  { F|O, "AxesFormatY" , opt_general_axes_format1 , "" ,
+    "Number format for Y-axis (in standard C form); use adaptive automatic default if empty" },
+  { F|O, "AxesFormatZ" , opt_general_axes_format2 , "" ,
+    "Number format for Z-axis (in standard C form); use adaptive automatic default if empty" },
   { F|O, "AxesLabelX" , opt_general_axes_label0 , "" ,
     "X-axis label" },
   { F|O, "AxesLabelY" , opt_general_axes_label1 , "" ,

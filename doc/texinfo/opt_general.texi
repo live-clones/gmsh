@@ -2,18 +2,18 @@
 
 @ftable @code
 @item General.AxesFormatX
-Number format for X-axis (in standard C form)@*
-Default value: @code{"%.3g"}@*
+Number format for X-axis (in standard C form); use adaptive automatic default if empty@*
+Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.AxesFormatY
-Number format for Y-axis (in standard C form)@*
-Default value: @code{"%.3g"}@*
+Number format for Y-axis (in standard C form); use adaptive automatic default if empty@*
+Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.AxesFormatZ
-Number format for Z-axis (in standard C form)@*
-Default value: @code{"%.3g"}@*
+Number format for Z-axis (in standard C form); use adaptive automatic default if empty@*
+Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.AxesLabelX

@@ -379,7 +379,7 @@ private:
   // for initPosition()
   double _projection[16], _modelBase[16];
   void drawAxis(double xmin, double ymin, double zmin, double xmax, double ymax,
-                double zmax, int nticks, int mikado);
+                double zmax, const std::vector<double> &ticks, int mikado);
   bool generateTextureForImage(const std::string &name, int page,
                                GLuint &imageTexture, GLuint &imageW,
                                GLuint &imageH);
