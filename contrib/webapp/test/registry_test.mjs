@@ -18,8 +18,9 @@
 // it): every name of the table is an action of the registry that Gmsh does not
 // do itself, every icon of the status bar has strokes, every button of the
 // status bar has an icon or a label; the actions the page does not have are
-// listed. The counterpart of benchmarks/gui/registry.cpp for the FLTK
-// graphical user interface.
+// listed. Then the pages of the option window (src/common/OptionPages.cpp):
+// every field is an option of its kind. The counterpart of
+// benchmarks/gui/registry.cpp for the FLTK graphical user interface.
 //
 // Usage: node test/registry_test.mjs (with the node of emsdk, for example)
 
@@ -34,6 +35,7 @@ const call = (name, ret, types, args) => gmsh.lib.ccall('gmshWeb' + name, ret, t
 const web = {
   actions: () => call('Actions', 'string', [], []),
   icon: (name) => call('Icon', 'string', ['string'], [name]),
+  optionPages: () => call('OptionPages', 'string', [], []),
 };
 gmsh.option.setNumber('General.Terminal', 0);
 
@@ -68,6 +70,23 @@ for(const [menu, root] of Object.entries(registry)) walk(root, menu);
 for(const name of pageActions)
   if(!actions.has(name)) fail(name + ': in pageActions, not an action of the registry');
 
-console.log(`${items} items, ${pageActions.size} page actions, ${fails} failures`);
+// the fields of the option pages: options of their kind
+let fields = 0;
+for(const page of JSON.parse(web.optionPages()))
+  for(const sec of page.sections)
+    for(const row of sec.rows)
+      for(const f of row) {
+        if(f.kind === 'custom' || f.kind === 'heading') continue;
+        fields++;
+        try {
+          if(f.kind === 'text') gmsh.option.getString(f.option);
+          else gmsh.option.getNumber(f.option);
+        }
+        catch(e) {
+          fail(`${page.name} page: ${f.option} is not a ${f.kind} option`);
+        }
+      }
+
+console.log(`${items} items, ${pageActions.size} page actions, ${fields} option fields, ${fails} failures`);
 gmsh.finalize();
 process.exit(fails ? 1 : 0);

@@ -46,11 +46,13 @@
 #include "GmshConfig.h"
 #include "Actions.h"
 #include "IconStrokes.h"
+#include "OptionPages.h"
 #include "ScriptStyles.h"
 #include "Context.h"
 #include "ColorContrast.h"
 #include "GmshDefines.h"
 #include "GmshGlobal.h"
+#include "GuiListener.h"
 #include "GmshMessage.h"
 #include "GModel.h"
 #include "OpenFile.h"
@@ -78,6 +80,28 @@ namespace {
   // CSS pixel
   int _width = 0, _height = 0;
   double _scale = 1.;
+
+  // what the core asks the page (see GuiListener.h): its scene, whose point
+  // of view the options General.Rotation... are, and whether the browser is
+  // dark
+  class webListener : public guiListener {
+  public:
+    bool running() override { return true; }
+    drawContext *scene() override
+    {
+      return _view ? _view->getDrawContext() : nullptr;
+    }
+    int desktopDark() override
+    {
+      return EM_ASM_INT({
+        if(typeof matchMedia !== 'function') return 0;
+        return matchMedia('(prefers-color-scheme: dark)').matches ? 1 : 0;
+      });
+    }
+  };
+  webListener _listener;
+  // registered as the module loads, before the options are read
+  const int _listening = (SetGuiListener(&_listener), 0);
 
   // the host of the interaction: the canvas of the page, whose events come
   // through gmshWebMouse() and which reads back what it is to show
@@ -600,6 +624,41 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebActions()
     json += std::string(json.size() > 1 ? "," : "") + JsonString(menu) + ":" +
             jsonItem(GetActionMenu(menu));
   json += "}";
+  return json.c_str();
+}
+
+// The pages of the option window (see OptionPages.h), in JSON: [{"name",
+// "sections": [{"name", "open", "rows": [[{"kind" ("check", "number",
+// "choice", "text", "heading" or "custom"), "option", "label"}]]}]}]; the page
+// shows the fields of the options it has, not the custom rows
+EMSCRIPTEN_KEEPALIVE const char *gmshWebOptionPages()
+{
+  static const char *kinds[] = {"check", "number",  "choice",
+                                "text",  "heading", "custom"};
+  static std::string json;
+  json = "[";
+  for(const optionPage &p : OptionPages()) {
+    json += std::string(json.size() > 1 ? "," : "") +
+            "{\"name\":" + JsonString(p.name) + ",\"sections\":[";
+    for(std::size_t k = 0; k < p.sections.size(); k++) {
+      const optionSection &s = p.sections[k];
+      json += std::string(k ? "," : "") + "{\"name\":" + JsonString(s.name) +
+              ",\"open\":" + (s.open ? "true" : "false") + ",\"rows\":[";
+      for(std::size_t r = 0; r < s.rows.size(); r++) {
+        json += std::string(r ? "," : "") + "[";
+        for(std::size_t i = 0; i < s.rows[r].size(); i++) {
+          const optionField &f = s.rows[r][i];
+          json += std::string(i ? "," : "") + "{\"kind\":\"" + kinds[f.kind] +
+                  "\",\"option\":" + JsonString(f.option) +
+                  ",\"label\":" + JsonString(f.label) + "}";
+        }
+        json += "]";
+      }
+      json += "]}";
+    }
+    json += "]}";
+  }
+  json += "]";
   return json.c_str();
 }
 

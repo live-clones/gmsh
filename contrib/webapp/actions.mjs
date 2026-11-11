@@ -291,8 +291,8 @@ const pageActions = {
   'selection_quit': {run: () => tool === Tool.Operation ? operationKey('q') : setTool(Tool.None),
                      available: () => !!tool},
   'escape': {run: () => escape()},
-  'options_solver': {run: () => showTab('modelTab')},
-  'options_post': {run: () => showViewOptions(firstView())},
+  'options_solver': {run: () => showOptions('Solver')},
+  'options_post': {run: () => showOptions('Post-processing')},
   'view_prev': {run: () => sceneAction('view_prev')},
   'view_next': {run: () => sceneAction('view_next')}
 };

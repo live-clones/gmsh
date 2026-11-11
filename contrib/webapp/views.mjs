@@ -20,7 +20,7 @@
 import {$, download, gmsh, setStatus} from './app.mjs';
 import {web} from './gmshweb.mjs';
 import {menuItems, registry} from './actions.mjs';
-import {getViewOption, optionField, optionRow, setField, setViewOption, showTab, views} from './options.mjs';
+import {getViewOption, optionField, sectionBlock, setField, setViewOption, showTab, viewPage, views} from './options.mjs';
 import {groupOpen} from './parameters.mjs';
 import {draw} from './scene.mjs';
 import {popupMenu, showAnimation} from './statusbar.mjs';
@@ -29,39 +29,22 @@ import {popupMenu, showAnimation} from './statusbar.mjs';
 // (in the branches their Group option names), each shown or hidden by its box,
 // with the menu of its button (its options, its export, the visibility and
 // the removal of views). The options of a view are set under it, and only
-// there; the page keeps them by the name of the view, so that the views a
-// solver makes again at each run get them back, and those applied to all the
-// views also go to the views to come (see settleViews())
+// there: the sections of the View page of the option window (see
+// options.mjs), folded but the first; the page keeps them by the name of the
+// view, so that the views a solver makes again at each run get them back, and
+// those applied to all the views also go to the views to come (see
+// settleViews())
 export const viewSettings = new Map(); // view name -> {View.X: value}
 export const allViewSettings = {}; // View.X -> value, for every view
 export const settledViews = new Set(); // the views (tags) given their settings
 export const viewOptionsOpen = new Set(); // the views whose options are shown
-// The options of the views shown, by name: [kind, label, range if not
-// Gmsh's] (the choices and ranges from Gmsh); set under a view, and given to
-// all the views by its button (see applyToAllViews())
-const viewOptions = {
-  IntervalsType: ['choice', 'Intervals'],
-  NbIso: ['number', 'Number of intervals'],
-  RangeType: ['choice', 'Range'],
-  CustomMin: ['number', 'Minimum'],
-  CustomMax: ['number', 'Maximum'],
-  TimeStep: ['number', 'Time step'],
-  ScaleType: ['choice', 'Scale'],
-  NormalRaise: ['range', 'Normal raise', {min: -0.5, max: 0.5, step: 0.01}],
-  ShowScale: ['check', 'Color scale'],
-  ShowElement: ['check', 'Element outlines'],
-  Opacity: ['range', 'Opacity'],
-  // (for the views with vectors, or tensors)
-  VectorType: ['choice', 'Vector display'],
-  ArrowSizeMax: ['number', 'Arrow size (pixels)'],
-  DisplacementFactor: ['number', 'Displacement factor'],
-  GlyphLocation: ['choice', 'Glyph location'],
-  TensorType: ['choice', 'Tensor display']};
-// those shown under a view, in this order, when they apply to it
-const perViewOptions = ['IntervalsType', 'NbIso', 'RangeType', 'CustomMin',
-  'CustomMax', 'ScaleType', 'TimeStep', 'VectorType', 'ArrowSizeMax',
-  'DisplacementFactor', 'GlyphLocation', 'TensorType', 'NormalRaise',
-  'ShowScale', 'ShowElement', 'Opacity'];
+// the options shown as sliders, the raise as a fraction of the size of the
+// view (see raiseUnit() in options.mjs)
+const sliders = {'View.Opacity': null,
+                 'View.NormalRaise': {min: -0.5, max: 0.5, step: 0.01}};
+// the options a view's name or data makes its own: not given to all the views
+const ownOptions = ['View.Name', 'View.Type', 'View.TimeStep', 'View.CustomMin',
+  'View.CustomMax', 'View.AxesLabelX', 'View.AxesLabelY', 'View.AxesLabelZ'];
 // what the view of index i holds: 1 scalars, 2 vectors, 4 tensors (or-ed)
 const viewContent = (i) => web.viewContent(i);
 export const viewTags = () => [...gmsh.view.getTags()];
@@ -139,40 +122,47 @@ export function showViews() {
   updateViews();
   showAnimation();
 }
-// the options of a view, under it: those that apply to what it holds, and a
-// button that gives them to all the views
+// the options of a view, under it: the sections of the View page, with the
+// rows that apply to what the view holds, and a button that gives them to all
+// the views
 function viewOptionRows(tag, i) {
   const box = document.createElement('div');
   box.className = 'viewOptions';
   const steps = viewNum(i, 'NbTimeStep');
-  const content = viewContent(i);
+  const content = viewContent(i), vectors = content & 2, tensors = content & 4;
+  // the options that apply to some views only
+  const custom = viewNum(i, 'RangeType') === 2;
+  const applies = {
+    'View.TimeStep': steps > 1, 'View.CustomMin': custom, 'View.CustomMax': custom,
+    'View.VectorType': vectors, 'View.ArrowSizeMin': vectors, 'View.ArrowSizeMax': vectors,
+    'View.GlyphLocation': vectors, 'View.CenterGlyphs': vectors,
+    'View.DisplacementFactor': vectors && viewNum(i, 'VectorType') === 5,
+    'View.TensorType': tensors};
   const shown = [];
-  for(const name of perViewOptions) {
-    const [kind, text, range] = viewOptions[name];
-    if(name === 'TimeStep' && steps < 2) continue;
-    if(name.startsWith('Custom') && viewNum(i, 'RangeType') !== 2) continue;
-    if(['VectorType', 'ArrowSizeMax', 'GlyphLocation'].includes(name) && !(content & 2))
-      continue;
-    if(name === 'DisplacementFactor' &&
-       (!(content & 2) || viewNum(i, 'VectorType') !== 5))
-      continue;
-    if(name === 'TensorType' && !(content & 4)) continue;
-    const option = 'View.' + name;
-    const el = optionField(kind, option, (v) => setViewOptionOf(tag, option, v), range);
-    el.title = `View[${i}].${name}`;
-    if(name === 'TimeStep') Object.assign(el, {min: 0, max: steps - 1, step: 1});
-    box.appendChild(optionRow(text, el));
-    shown.push(option);
-    viewUpdates.push((ts) => {
-      const k = ts.indexOf(tag);
-      if(k >= 0 && el !== document.activeElement)
-        setField(el, kind, getViewOption(option, k));
+  for(const sec of viewPage().sections) {
+    const sd = sectionBlock(sec, (f) => {
+      const option = f.option;
+      if(applies[option] === false || applies[option] === 0) return null;
+      const kind = option in sliders ? 'range' : f.kind;
+      const el = optionField(kind, option, (v) => setViewOptionOf(tag, option, v),
+                             sliders[option]);
+      el.title = option.replace('View.', `View[${i}].`);
+      if(option === 'View.TimeStep') Object.assign(el, {min: 0, max: steps - 1, step: 1});
+      shown.push(option);
+      viewUpdates.push((ts) => {
+        const k = ts.indexOf(tag);
+        if(k >= 0 && el !== document.activeElement)
+          setField(el, kind, getViewOption(option, k));
+      });
+      return el;
     });
+    if(sd) box.appendChild(sd);
   }
   const all = document.createElement('button');
   all.textContent = 'Apply to all views';
   all.title = 'Give these options to all the views, and to the views to come ' +
-    '(the time step and a custom range stay those of each view)';
+    '(the name, the plot type, the time step, a custom range and the axes ' +
+    'labels stay those of each view)';
   all.addEventListener('click', () => applyToAllViews(tag, shown));
   box.appendChild(all);
   return box;
@@ -201,7 +191,7 @@ function applyToAllViews(tag, options) {
   const i = viewTags().indexOf(tag);
   if(i < 0) return;
   for(const option of options) {
-    if(['View.TimeStep', 'View.CustomMin', 'View.CustomMax'].includes(option)) continue;
+    if(ownOptions.includes(option)) continue;
     const v = getViewOption(option, i);
     allViewSettings[option] = v;
     for(let k = 0; k < views(); k++) {

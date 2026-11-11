@@ -13,9 +13,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-// The Options tab: the main Gmsh options as in the option window of the FLTK
-// graphical user interface, bound to their options by name, the colour scheme
-// of the page, and the tabs of the panel
+// The Options tab: the pages of the option window of the FLTK graphical user
+// interface (src/common/OptionPages.cpp), their fields bound to their options
+// by name, the colour scheme of the page, and the tabs of the panel
 
 import {$, gmsh} from './app.mjs';
 import {web} from './gmshweb.mjs';
@@ -25,40 +25,16 @@ import {draw} from './scene.mjs';
 import {keepViewOption, settleViews, updateViews, viewNum, viewTags} from './views.mjs';
 import {readVisibility} from './visibility.mjs';
 
-// the main Gmsh options, as in the option window of the FLTK interface:
-// [option, kind, label, range if not Gmsh's]; the options of the views are set
-// under each view in the Post-processing module (see views.mjs)
-const optionGroups = [
-  ['General', [
-    ['General.Axes', 'choice', 'Axes'],
-    ['General.SmallAxes', 'check', 'Small axes'],
-    ['General.Orthographic', 'choice', 'Projection'],
-    ['General.Shading', 'choice', 'Shading'],
-    ['General.ColorScheme', 'choice', 'Colors']]],
-  ['Geometry', [
-    ['Geometry.Points', 'check', 'Points'],
-    ['Geometry.Curves', 'check', 'Curves'],
-    ['Geometry.Surfaces', 'check', 'Surfaces'],
-    ['Geometry.Volumes', 'check', 'Volumes'],
-    ['Geometry.Opacity', 'range', 'Opacity']]],
-  ['Mesh', [
-    ['Mesh.Algorithm', 'choice', '2D algorithm'],
-    ['Mesh.Algorithm3D', 'choice', '3D algorithm'],
-    ['Mesh.MeshSizeFactor', 'number', 'Element size factor'],
-    ['Mesh.ElementOrder', 'number', 'Element order'],
-    ['Mesh.RecombineAll', 'check', 'Recombine all triangles'],
-    ['Mesh.Nodes', 'check', 'Nodes'],
-    ['Mesh.Lines', 'check', '1D elements'],
-    ['Mesh.SurfaceEdges', 'check', '2D element edges'],
-    ['Mesh.SurfaceFaces', 'check', '2D element faces'],
-    ['Mesh.VolumeEdges', 'check', '3D element edges'],
-    ['Mesh.VolumeFaces', 'check', '3D element faces'],
-    ['Mesh.Opacity', 'range', 'Opacity']]],
-];
-// the options that change the mesh: the next run meshes again
-const meshing = new Set(['Mesh.Algorithm', 'Mesh.Algorithm3D',
-  'Mesh.MeshSizeFactor', 'Mesh.ElementOrder', 'Mesh.RecombineAll']);
-const optionFields = [];
+// the pages of the option window (see gmshWebOptionPages() in webApp.cpp):
+// the Options tab shows all but the one of the views, whose options are set
+// under each view in the Post-processing module (see views.mjs); the options
+// that change the mesh, those of the first two sections of the Mesh page: the
+// next run meshes again; the options that are strings
+let pages = [];
+export const viewPage = () => pages.find((p) => p.name === 'View');
+const meshing = new Set();
+export const textOptions = new Set();
+const optionFields = []; // [option, kind, field]
 export const views = () => gmsh.option.getNumber('PostProcessing.NbViews');
 // The normal raise of a view is in model units per unit of its values: the
 // slider gives it as a fraction of the size of the view for its largest
@@ -73,16 +49,21 @@ function raiseUnit(i) {
 }
 export function setViewOption(name, i, v) {
   if(name === 'View.NormalRaise') v *= raiseUnit(i);
-  gmsh.option.setNumber(name.replace('View.', `View[${i}].`), v);
+  const option = name.replace('View.', `View[${i}].`);
+  if(textOptions.has(name)) gmsh.option.setString(option, v);
+  else gmsh.option.setNumber(option, v);
 }
 export function getViewOption(name, i) {
-  const v = gmsh.option.getNumber(name.replace('View.', `View[${i}].`));
+  const option = name.replace('View.', `View[${i}].`);
+  if(textOptions.has(name)) return gmsh.option.getString(option);
+  const v = gmsh.option.getNumber(option);
   if(name !== 'View.NormalRaise') return v;
   const u = raiseUnit(i);
   return u ? v / u : 0;
 }
 export function setOption(name, v) {
-  gmsh.option.setNumber(name, v);
+  if(typeof v === 'string') gmsh.option.setString(name, v);
+  else gmsh.option.setNumber(name, v);
   keepOption(name, v);
   draw();
 }
@@ -132,9 +113,9 @@ const optionChoices = (option) =>
   JSON.parse(web.optionChoices(option));
 const optionRange = (option) =>
   JSON.parse(web.optionRange(option));
-// the field of an option of a kind (check, number, range or choice), which
-// gives change() its new value; its choices, or the range of a slider, from
-// Gmsh unless given
+// the field of an option of a kind (check, number, range, choice or text),
+// which gives change() its new value; its choices, or the range of a slider,
+// from Gmsh unless given
 export function optionField(kind, option, change, range) {
   let el;
   if(kind === 'choice') {
@@ -148,7 +129,7 @@ export function optionField(kind, option, change, range) {
   }
   else {
     el = document.createElement('input');
-    el.type = {check: 'checkbox', number: 'number', range: 'range'}[kind];
+    el.type = {check: 'checkbox', number: 'number', range: 'range', text: 'text'}[kind];
     const r = range || optionRange(option);
     if(kind === 'range') Object.assign(el, r || {min: 0, max: 1, step: 0.05});
     if(kind === 'number') {
@@ -157,13 +138,17 @@ export function optionField(kind, option, change, range) {
     }
   }
   el.addEventListener(kind === 'range' ? 'input' : 'change', () =>
-    change(kind === 'check' ? (el.checked ? 1 : 0) : Number(el.value)));
+    change(kind === 'check' ? (el.checked ? 1 : 0) :
+           kind === 'text' ? el.value : Number(el.value)));
   return el;
 }
 export function setField(el, kind, v) {
   if(kind === 'check') el.checked = !!v;
   else el.value = String(v);
 }
+// the value of an option as its field shows it
+const optionValue = (option, kind) =>
+  kind === 'text' ? gmsh.option.getString(option) : gmsh.option.getNumber(option);
 // a field with its label before it
 export function optionRow(text, el) {
   const row = document.createElement('label');
@@ -173,36 +158,92 @@ export function optionRow(text, el) {
   row.append(label, el);
   return row;
 }
-function buildOptions() {
-  const tab = $('optionsTab');
-  for(const [group, options] of optionGroups) {
-    const d = document.createElement('details');
-    d.open = true;
-    d.id = 'options' + group;
-    const sum = document.createElement('summary');
-    sum.textContent = group;
-    d.appendChild(sum);
-    for(const [name, kind, text, range] of options) {
-      const el = optionField(kind, name, (v) => setOption(name, v), range);
-      el.title = name;
-      d.appendChild(optionRow(text, el));
-      optionFields.push([name, kind, el]);
+// the name of an option as words ("Scale type" for View.ScaleType)
+const optionWords = (option) => option.split('.')[1]
+  .replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/ ([A-Z])(?=[a-z])/g, (m, c) => ' ' + c.toLowerCase());
+// a section of a page: a folding block with its name, open as in the window,
+// and the rows of fields the table gives it, without the custom rows: field()
+// makes the field of each (or none); the fields without label share the row
+// of the next one with a label (X, Y, Z and "Axes ticks"), a field left
+// without one is named as its option, in words. Null if no field is made.
+export function sectionBlock(sec, field) {
+  const sd = document.createElement('details');
+  sd.open = sec.open;
+  const ss = document.createElement('summary');
+  ss.textContent = sec.name;
+  sd.appendChild(ss);
+  let fields = 0;
+  for(const row of sec.rows) {
+    if(row.length && row[0].kind === 'heading') {
+      const h = document.createElement('div');
+      h.className = 'heading';
+      h.textContent = row[0].option;
+      sd.appendChild(h);
+      continue;
     }
-    if(group === 'Mesh') {
-      const note = document.createElement('div');
-      note.className = 'note';
-      note.textContent = 'Run meshes again after a change of the first five';
-      d.appendChild(note);
+    let group = [];
+    for(const f of row.filter((f) => f.kind !== 'custom')) {
+      const el = field(f);
+      if(el) group.push(el);
+      if(!f.label && f !== row[row.length - 1]) continue;
+      if(group.length) {
+        let one = group[0];
+        if(group.length > 1) {
+          one = document.createElement('div');
+          one.className = 'fields';
+          one.append(...group);
+        }
+        sd.appendChild(optionRow(f.label || optionWords(f.option), one));
+        fields += group.length;
+      }
+      group = [];
     }
-    tab.appendChild(d);
   }
+  return fields ? sd : null;
+}
+// a page of the Options tab
+function buildPage(page) {
+  const d = document.createElement('details');
+  d.open = ['General', 'Geometry', 'Mesh'].includes(page.name);
+  d.id = 'options' + page.name;
+  const sum = document.createElement('summary');
+  sum.textContent = page.name;
+  d.appendChild(sum);
+  for(const sec of page.sections) {
+    const sd = sectionBlock(sec, (f) => {
+      const el = optionField(f.kind, f.option, (v) => setOption(f.option, v));
+      el.title = f.option;
+      optionFields.push([f.option, f.kind, el]);
+      if(page.name === 'Mesh' && ['General', 'Advanced'].includes(sec.name))
+        meshing.add(f.option);
+      return el;
+    });
+    if(sd) d.appendChild(sd);
+  }
+  if(page.name === 'Mesh') {
+    const note = document.createElement('div');
+    note.className = 'note';
+    note.textContent = 'Run meshes again after a change of the General or Advanced options';
+    d.appendChild(note);
+  }
+  return d;
+}
+function buildOptions() {
+  pages = JSON.parse(web.optionPages());
+  for(const page of pages)
+    for(const sec of page.sections)
+      for(const row of sec.rows)
+        for(const f of row)
+          if(f.kind === 'text') textOptions.add(f.option);
+  for(const page of pages)
+    if(page.name !== 'View') $('optionsTab').appendChild(buildPage(page));
 }
 // the options as Gmsh has them (a model sets some, its views their own), the
 // views not seen yet given what the page kept for them (see settleViews())
 export function readOptions() {
   settleViews();
   for(const [name, kind, el] of optionFields)
-    setField(el, kind, gmsh.option.getNumber(name));
+    setField(el, kind, optionValue(name, kind));
   updateViews();
 }
 export function showTab(id) {
@@ -214,12 +255,12 @@ export function showTab(id) {
   if(id === 'clipTab') readClipping();
   if(id === 'visTab') readVisibility();
 }
-// the Options tab, at the options of a group
-export function showOptions(group) {
+// the Options tab, at the options of a page
+export function showOptions(page) {
   showTab('optionsTab');
-  if(group) {
-    $('options' + group).open = true;
-    $('options' + group).scrollIntoView({block: 'start'});
+  if(page) {
+    $('options' + page).open = true;
+    $('options' + page).scrollIntoView({block: 'start'});
   }
 }
 

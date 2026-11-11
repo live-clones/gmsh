@@ -72,6 +72,7 @@ export const web = {
   scriptStyles: (file, text) => call('ScriptStyles', S, [S, S], [file, text]),
   // the options, the views and the colours (see options.mjs, views.mjs,
   // parameters.mjs)
+  optionPages: () => call('OptionPages', S, [], []),
   optionChoices: (option) => call('OptionChoices', S, [S], [option]),
   optionRange: (option) => call('OptionRange', S, [S], [option]),
   viewContent: (i) => call('ViewContent', N, [N], [i]),
