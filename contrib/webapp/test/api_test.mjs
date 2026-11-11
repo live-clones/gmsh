@@ -13,13 +13,13 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-// A check of the JavaScript API (api/gmsh.mjs, copied into ./build next to
-// libgmsh.mjs and libgmsh.wasm by ./build.sh), which is also an example of its
+// A check of the JavaScript API (api/gmsh.mjs, copied into ../build next to
+// libgmsh.mjs and libgmsh.wasm by ../build.sh), which is also an example of its
 // use: tutorial t1 built through the API, meshed, and read back.
 //
-// Usage: node api_test.mjs (with the node of emsdk, for example)
+// Usage: node test/api_test.mjs (with the node of emsdk, for example)
 
-import createGmsh from './build/gmsh.mjs';
+import createGmsh from '../build/gmsh.mjs';
 
 const gmsh = await createGmsh({ print: () => {}, printErr: () => {} });
 const check = (what, ok) => console.log((ok ? 'ok   ' : 'FAIL ') + what);

@@ -17,7 +17,7 @@
 // as onelab.html does: open the .pro file (or the .geo), "check", then
 // "compute"; e.g.
 //
-//   node run_models.mjs ~/src/getdp/tutorials/*/
+//   node test/run_models.mjs ~/src/getdp/tutorials/*/
 //
 // Each directory is copied in the in-memory filesystem, without the files
 // earlier runs left (meshes, results, databases), so that the models are
@@ -26,12 +26,12 @@
 
 import fs from 'fs';
 import path from 'path';
-import createGmsh from './build/gmsh.mjs';
-import {findModel} from './files.mjs';
+import createGmsh from '../build/gmsh.mjs';
+import {findModel} from '../files.mjs';
 
 const dirs = process.argv.slice(2);
 if(!dirs.length) {
-  console.log('Usage: node run_models.mjs <model directory> ...');
+  console.log('Usage: node test/run_models.mjs <model directory> ...');
   process.exit(1);
 }
 const verbose = !!process.env.VERBOSE;

@@ -15,7 +15,7 @@
 
 // The files of a model in the in-memory filesystem of the module (FS), as the
 // page (onelab.html), the solver's worker (solver.js) and the tests
-// (run_models.mjs) handle them.
+// (test/run_models.mjs) handle them.
 
 // the files under a directory, with their time of change, but those of a
 // macOS archive (__MACOSX)
