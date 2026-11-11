@@ -66,12 +66,12 @@ static void stringColorsChanged()
 // General routines for string options
 
 // an option set by its name for the graphical interface (GMSH_GUI): the
-// widgets bound to it show its new value (see guiListener::showOption(); the
+// widgets bound to it show its new value (see guiListener::optionChanged(); the
 // option functions that do more for the interface tell it themselves)
 static void showInGui(int action, const char *category, int num,
                       const char *name)
 {
-  if(action & GMSH_GUI) Gui()->showOption(category, num, name);
+  if(action & GMSH_GUI) Gui()->optionChanged(category, num, name);
 }
 
 // The options of each category (see DefaultOptions.h): its name, its title in
@@ -546,7 +546,7 @@ void InitOptionsGUI(int num)
     SetColorOptionsGUI(num, c.colors);
   }
 
-  Gui()->showOptions();
+  Gui()->optionsChanged();
 }
 
 static void PrintOptionCategory(int level, int diff, int help, const char *cat,
