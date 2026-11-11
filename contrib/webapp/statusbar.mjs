@@ -24,6 +24,7 @@ import {openMenu} from './models.mjs';
 import {readOptions, views} from './options.mjs';
 import {draw} from './scene.mjs';
 import {modifiers} from './shortcuts.js';
+import {operationKey} from './tools.mjs';
 import {showViews} from './views.mjs';
 
 // The popups over the page: the menu of a model (Open model), of the graphs
@@ -270,5 +271,10 @@ export function build() {
   app.narrow.addEventListener('change', () => showSide(!app.narrow.matches));
   if(app.narrow.matches) document.body.classList.add('noSide');
   buildStatusBar();
+  // the buttons of an operation under way: its keys e, u and q, which a
+  // phone has not
+  for(const k of ['e', 'u', 'q'])
+    $('statusbar').querySelector(`[data-act=op_${k}]`)
+      .addEventListener('click', () => operationKey(k));
   showSelection();
 }

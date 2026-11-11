@@ -81,16 +81,24 @@ async function compileWasm(url) {
     return WebAssembly.compile(await (await fetch(url)).arrayBuffer());
   }
 }
-const wasm = await compileWasm(new URL('./build/libgmsh.wasm', import.meta.url));
+// (a module that cannot be loaded, or started, said in the status)
+const cannotLoad = (e) => {
+  progress(false);
+  setStatus('Could not load Gmsh: ' + (e.message || e), true);
+  throw e;
+};
+const wasm = await compileWasm(new URL('./build/libgmsh.wasm', import.meta.url))
+  .catch(cannotLoad);
 setStatus('Starting...');
 progress(true);
 const gmsh = await createGmsh({
   canvas: $('canvas'), print: log, printErr: log,
   instantiateWasm: (imports, done) => {
-    WebAssembly.instantiate(wasm, imports).then((i) => done(i, wasm));
+    WebAssembly.instantiate(wasm, imports).then((i) => done(i, wasm))
+      .catch((e) => { try { cannotLoad(e); } catch(x) {} });
     return {};
   },
-});
+}).catch(cannotLoad);
 setGmsh(gmsh);
 gmsh.initialize([], false);
 gmsh.option.setNumber('General.Terminal', 1);

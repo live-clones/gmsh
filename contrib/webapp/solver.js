@@ -61,7 +61,8 @@ async function handle(m) {
   if(m.type === 'init') {
     gmsh = await createGmsh({
       instantiateWasm: (imports, done) => {
-        WebAssembly.instantiate(m.module, imports).then((i) => done(i, m.module));
+        WebAssembly.instantiate(m.module, imports).then((i) => done(i, m.module))
+          .catch((err) => post({type: 'failed', text: String(err)}));
         return {};
       },
       print: (text) => post({type: 'log', text}),

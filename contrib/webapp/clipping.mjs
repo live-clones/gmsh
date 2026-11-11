@@ -174,10 +174,20 @@ function applyClip(adjusting) {
   setNum('General.ClipWholeElements', adjusting || cap ? 0 : whole);
   setNum('General.ClipOnlyDrawIntersectingVolume', layer);
   setNum('General.ClipOnlyVolume', only);
-  setNum('General.DrawBoundingBoxes', adjusting ? 1 : 0);
+  // the bounding box shown while a value is adjusted, then as
+  // General.DrawBoundingBoxes has it
+  if(adjusting) {
+    if(savedBBox < 0) savedBBox = gmsh.option.getNumber('General.DrawBoundingBoxes');
+    setNum('General.DrawBoundingBoxes', 1);
+  }
+  else if(savedBBox >= 0) {
+    setNum('General.DrawBoundingBoxes', savedBBox);
+    savedBBox = -1;
+  }
   clipStates();
   draw();
 }
+let savedBBox = -1;
 function clipMode(box) {
   clipBoxMode = box;
   $('clipPlanes').classList.toggle('on', !box);

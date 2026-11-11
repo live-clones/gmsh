@@ -81,9 +81,10 @@ export const web = {
     call('ReadableColor', N, [N, N, N, N, N], [rgb, bg, fg, dark, what]),
   // the ONELAB loop (see solverClient.mjs)
   onelabSet: (json) => call('OnelabSet', N, [S], [json]),
+  onelabMacro: (name) => call('OnelabMacro', N, [S], [name]),
   onelabStart: (action) => call('OnelabStart', null, [S], [action]),
   onelabGmsh: (pass) => call('OnelabGmsh', S, [S], [pass]),
-  onelabNext: (pass) => call('OnelabNext', N, [S], [pass]),
+  onelabNext: (goOn) => call('OnelabNext', N, [N], [goOn ? 1 : 0]),
   onelabMerge: (name) => call('OnelabMerge', null, [S], [name]),
   onelabUpdateGraphs: () => call('OnelabUpdateGraphs', null, [], []),
   onelabForgetSolvers: () => call('OnelabForgetSolvers', null, [], []),

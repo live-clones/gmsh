@@ -16,10 +16,9 @@
 // The editor of a file of the model (its script, an input file of a solver),
 // in the colours of its language, with Find and Go to line
 
-import {$, FS, lines, setStatus} from './app.mjs';
+import {$, FS, setStatus} from './app.mjs';
 import {web} from './gmshweb.mjs';
 import {reloadScript, scriptFile} from './actions.mjs';
-import {escape} from './tools.mjs';
 
 // A file of the model edited (its script, or an input file of a solver), in
 // the colors of its language (see GetScriptStyles() in ScriptStyles.cpp):

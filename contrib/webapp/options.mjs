@@ -137,9 +137,12 @@ export function optionInput(kind, option, change, range) {
       if(r) Object.assign(el, {min: r.min, max: r.max});
     }
   }
-  el.addEventListener(kind === 'range' ? 'input' : 'change', () =>
+  el.addEventListener(kind === 'range' ? 'input' : 'change', () => {
+    // (an emptied number field is no value, not 0)
+    if(kind === 'number' && el.value.trim() === '') return;
     change(kind === 'check' ? (el.checked ? 1 : 0) :
-           kind === 'text' ? el.value : Number(el.value)));
+           kind === 'text' ? el.value : Number(el.value));
+  });
   return el;
 }
 export function setInput(el, kind, v) {
@@ -182,10 +185,11 @@ export function sectionBlock(sec, input) {
       continue;
     }
     let group = [];
-    for(const f of row.filter((f) => f.kind !== 'custom')) {
+    const entries = row.filter((f) => f.kind !== 'custom');
+    for(const f of entries) {
       const el = input(f);
       if(el) group.push(el);
-      if(!f.label && f !== row[row.length - 1]) continue;
+      if(!f.label && f !== entries[entries.length - 1]) continue;
       if(group.length) {
         let one = group[0];
         if(group.length > 1) {
@@ -242,8 +246,10 @@ function buildOptions() {
 // views not seen yet given what the page kept for them (see settleViews())
 export function readOptions() {
   settleViews();
+  // (not the input being typed in: this runs at each step of a run or an
+  // animation)
   for(const [name, kind, el] of optionEntries)
-    setInput(el, kind, optionValue(name, kind));
+    if(el !== document.activeElement) setInput(el, kind, optionValue(name, kind));
   updateViews();
 }
 export function showTab(id) {

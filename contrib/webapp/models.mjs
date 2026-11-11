@@ -63,7 +63,10 @@ function forgetModel(keepFiles = false) {
 }
 export async function openFiles(entries, open = '') {
   // entries: [path, Uint8Array]
-  if(app.busy) return;
+  if(app.busy) {
+    setStatus('Wait for the run to end', true);
+    return;
+  }
   forgetModel();
   const dir = newModelDirectory();
   app.modelDir = dir;
@@ -198,7 +201,14 @@ export function build() {
     e.preventDefault();
     $('drop').style.display = 'none';
     const entries = [];
-    for(const f of e.dataTransfer.files) entries.push([f.name, await readFile(f)]);
+    try {
+      for(const f of e.dataTransfer.files) entries.push([f.name, await readFile(f)]);
+    } catch(err) {
+      // (a folder is a file that cannot be read)
+      setStatus('Drop the files of a model, or a .zip: a folder opens from ' +
+                'Open model', true);
+      return;
+    }
     openFiles(entries);
   });
 }

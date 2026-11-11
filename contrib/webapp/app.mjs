@@ -103,6 +103,7 @@ export function download(path, keep = false) {
   a.href = URL.createObjectURL(new Blob([FS.readFile(path)]));
   a.download = path.slice(path.lastIndexOf('/') + 1);
   a.click();
-  URL.revokeObjectURL(a.href);
+  // (some browsers start the download after click() returns)
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   if(!keep) FS.unlink(path);
 }

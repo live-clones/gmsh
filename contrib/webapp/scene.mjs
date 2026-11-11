@@ -21,7 +21,6 @@
 import {$, canvas, status} from './app.mjs';
 import {web} from './gmshweb.mjs';
 import {modifiers} from './shortcuts.js';
-import {run} from './solverClient.mjs';
 import {openQuickMenu, showSide, sideOver} from './statusbar.mjs';
 import {showNotes, tool, toolStatus} from './tools.mjs';
 
@@ -100,7 +99,12 @@ function mouse(kind, e, wheel = 0) {
   }
   else
     lasso.style.display = 'none';
-  if(tool) toolStatus();
+  // (the notes of a query or a measurement too: an event that picked drew
+  // the frame itself)
+  if(tool) {
+    toolStatus();
+    showNotes();
+  }
   // (a frame drawn by the event itself, after picking, starts the studio
   // frames again; they stop at once if there are none to add)
   if(redraw) draw();

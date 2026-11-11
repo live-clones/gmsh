@@ -82,9 +82,11 @@ function changedFiles() {
   }
   return {files, transfer};
 }
-// the database the worker sent, with the graphs asked for here since it was
-// given the page's (see setGraph())
+// the database the worker sent, with the graphs asked for and the values
+// typed here since it was given the page's (see setGraph() and
+// parameterRow()): its own copy of the parameters does not have them
 export const graphEdits = new Map();
+export const valueEdits = new Map();
 function setDatabase(db) {
   // (one that cannot be read leaves the parameters as they are)
   try {
@@ -95,10 +97,12 @@ function setDatabase(db) {
   }
   gmsh.onelab.clear();
   gmsh.onelab.set(db);
-  if(!graphEdits.size) return;
+  if(!graphEdits.size && !valueEdits.size) return;
   for(const p of getParameters()) {
-    if(!graphEdits.has(p.name)) continue;
-    p.attributes = Object.assign({}, p.attributes, {Graph: graphEdits.get(p.name)});
+    if(!graphEdits.has(p.name) && !valueEdits.has(p.name)) continue;
+    if(graphEdits.has(p.name))
+      p.attributes = Object.assign({}, p.attributes, {Graph: graphEdits.get(p.name)});
+    if(valueEdits.has(p.name)) p.values = valueEdits.get(p.name);
     setParameter(p);
   }
 }
@@ -117,8 +121,9 @@ function solve(solver) {
       const {files, transfer} = changedFiles();
       worker.postMessage({type: 'run', dir: app.modelDir, cwd: FS.cwd(), files,
                           db: gmsh.onelab.get(), args: solver.args}, transfer);
-      // the worker has the graphs asked for now
+      // the worker has the graphs asked for and the values typed now
       graphEdits.clear();
+      valueEdits.clear();
     });
   });
 }
@@ -207,6 +212,8 @@ export async function run(action) {
   let errors = 0;
   try {
     web.onelabStart(action);
+    // (after a stop too, the next pass is asked for, without going on: the
+    // loop then ends as it does in the FLTK interface, its database saved)
     do {
       const solvers = JSON.parse(
         web.onelabGmsh(pass));
@@ -215,13 +222,14 @@ export async function run(action) {
         if(stopping) break;
         errors += await solve(s);
       }
-    } while(!stopping &&
-            web.onelabNext(pass));
+    } while(web.onelabNext(!stopping));
     errors += web.errorCount();
   } catch(e) {
     // (an error of the file system is not an Error, but has a name)
     log('*** ' + (e.message || e.name || e));
     errors++;
+    // the loop ended all the same
+    try { web.onelabNext(false); } catch(e2) {}
   }
   const ms = (performance.now() - t0).toFixed(0);
   app.busy = false;

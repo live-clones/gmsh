@@ -63,11 +63,13 @@ export function installShortcuts(Module, run) {
   const table = JSON.parse(Module.ccall('gmshWebShortcuts', 'string', ['string'],
                                         [mac ? 'Cmd+' : 'Ctrl+']));
   window.addEventListener('keydown', (e) => {
-    // not while typing in a field
+    // not while typing in a field, in a dialog (whose Escape closes it), nor
+    // the arrows of a slider
     const t = e.target;
     if(t.isContentEditable || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' ||
        (t.tagName === 'INPUT' && !['checkbox', 'radio', 'range', 'button']
-         .includes(t.type)))
+         .includes(t.type)) ||
+       t.closest('dialog') || (t.type === 'range' && e.key.startsWith('Arrow')))
       return;
     const key = keyOf(e);
     const mods = modifiers(e);
@@ -75,7 +77,10 @@ export function installShortcuts(Module, run) {
     const digit = /^[0-9]$/.test(key);
     const matches = (s, m) => s.key === key &&
       ((s.mods & AnyModifiers) || (s.mods & ~AnyModifiers) === m);
-    let found = table.filter((s) => matches(s, mods));
+    // (a key with its exact modifiers before one taking any: Shift+Escape
+    // before Escape)
+    let found = table.filter((s) => matches(s, mods))
+      .sort((a, b) => (a.mods & AnyModifiers) - (b.mods & AnyModifiers));
     if(!found.length && digit && (mods & ModShift))
       found = table.filter((s) => matches(s, mods & ~ModShift));
     for(const s of found) {

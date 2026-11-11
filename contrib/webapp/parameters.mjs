@@ -21,7 +21,7 @@ import {$, app, gmsh} from './app.mjs';
 import {web} from './gmshweb.mjs';
 import {editFile} from './editor.mjs';
 import {draw} from './scene.mjs';
-import {graphEdits, run, showSolverProgress} from './solverClient.mjs';
+import {graphEdits, run, showSolverProgress, valueEdits} from './solverClient.mjs';
 import {placePopup} from './statusbar.mjs';
 
 // the parameters, in the JSON of the ONELAB database
@@ -124,6 +124,28 @@ function parameterRow(p, name) {
   // where the colour the model asks for shows: as the fill of the field, of
   // the label of a check box, or as the text of a menu
   let el, tint;
+  // a string the model made a button of (as the FLTK interface does): a
+  // script parsed, a file merged or an action for a custom interface
+  const macro = p.type === 'string' && p.attributes &&
+    ['Gmsh', 'GmshMergeFile', 'GmshParseString', 'Action'].includes(p.attributes.Macro);
+  if(macro) {
+    el = document.createElement('button');
+    el.textContent = label.textContent;
+    label.textContent = '';
+    el.addEventListener('click', (e) => {
+      e.preventDefault();
+      // (a script or a file changes the model: not during a run)
+      if(app.busy && p.attributes.Macro !== 'Action') return;
+      if(web.onelabMacro(p.name) & 1)
+        run('check');
+      else {
+        showParameters();
+        draw();
+      }
+    });
+    row.appendChild(el);
+    return row;
+  }
   if(p.readOnly) {
     el = document.createElement('span');
     el.className = 'out';
@@ -256,6 +278,8 @@ function parameterRow(p, name) {
       // the parameter as it is now (the row may have been given new values)
       p = getParameters().find((q) => q.name === p.name) || p;
       p.values = [v];
+      // (kept over the database the solver running sends back)
+      if(app.busy) valueEdits.set(p.name, p.values);
       if(setParameter(p) & 1)
         run('check');
       else {

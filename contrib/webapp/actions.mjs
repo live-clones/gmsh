@@ -337,13 +337,17 @@ export function keyLabels(name) {
 // size of the mesh in the status; on the script, of a new model if there is
 // none; an option, kept (see keepOptionOf() in options.mjs)
 async function gmshAction(item, view) {
-  if(app.busy) return;
   const module = moduleOf(item);
   const run = () => web.action(item.id, view);
   // (an option, named as it is: kept)
   if(item.name.includes('.')) {
     run();
     keepOptionOf(item.name.split('=')[0], view);
+    return;
+  }
+  // while a solver runs, the page answers but the model is not changed
+  if(app.busy && (module === 'Mesh' || module === 'Geometry')) {
+    setStatus('Wait for the run to end');
     return;
   }
   if(module === 'Mesh') {

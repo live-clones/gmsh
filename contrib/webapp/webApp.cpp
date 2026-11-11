@@ -980,14 +980,16 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebOnelabGmsh(const char *what)
 }
 
 // the end of a pass, once the solvers have run and their database is back:
-// returns 1 if there is another pass (a loop over parameters), else the loop
-// is finished
-EMSCRIPTEN_KEEPALIVE int gmshWebOnelabNext(const char *what)
+// returns 1 if there is another pass (a loop over parameters, unless goOn is
+// 0: stopped), else the loop is finished
+EMSCRIPTEN_KEEPALIVE int gmshWebOnelabNext(int goOn)
 {
   Msg::NoThrow noThrow;
   if(!_loop) return 0;
   for(onelab::client *c : _loop->solvers()) _loop->solverDone(c);
-  if(_loop->nextPass()) return 1;
+  // (stopped: the graphs updated and the end of the loop done all the same,
+  // as in the FLTK interface)
+  if(_loop->nextPass(goOn != 0)) return 1;
   _loop->finish();
   _loop.reset();
   return 0;
@@ -1003,7 +1005,7 @@ EMSCRIPTEN_KEEPALIVE int gmshWebOnelab(const char *what)
   do {
     gmshWebOnelabGmsh(pass.c_str());
     for(auto *c : solvers()) c->run();
-  } while(gmshWebOnelabNext(pass.c_str()));
+  } while(gmshWebOnelabNext(1));
   return Msg::GetErrorCount();
 }
 
@@ -1063,8 +1065,17 @@ EMSCRIPTEN_KEEPALIVE void gmshWebOnelabUpdateGraphs()
   onelabUtils::updateGraphs();
 }
 
+// the button of a string parameter with a "Macro" attribute pressed (see
+// onelabUtils::runMacro()): as gmshWebOnelabSet(), what to do next
+EMSCRIPTEN_KEEPALIVE int gmshWebOnelabMacro(const char *name)
+{
+  Msg::NoThrow noThrow;
+  return onelabUtils::runMacro(name) & 3;
+}
+
 // change a parameter, given in JSON as gmsh.onelab.get() gives them: returns
-// 1 if the model is to be checked, 2 if other parameters were reset, or -1
+// 1 if the model is to be checked, 2 if other parameters were reset (0 for a
+// parameter that cannot be read)
 EMSCRIPTEN_KEEPALIVE int gmshWebOnelabSet(const char *json)
 {
   Msg::NoThrow noThrow;
@@ -1072,7 +1083,8 @@ EMSCRIPTEN_KEEPALIVE int gmshWebOnelabSet(const char *json)
   if(n.fromJSON(json)) return onelabUtils::setParameter(n) & 3;
   onelab::string s;
   if(s.fromJSON(json)) return onelabUtils::setParameter(s) & 3;
-  return -1;
+  Msg::Error("Could not read the parameter '%s'", json);
+  return 0;
 }
 
 // extract a zip archive (e.g. a model with its included files) in a directory
