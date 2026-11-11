@@ -332,7 +332,7 @@ int MergeFile(const std::string &fileName, bool errorIfMissing,
     ~drawAgain() { CTX::instance()->geom.draw = 1; }
   } drawAgain;
 
-#if defined(HAVE_FLTK) && defined(HAVE_POST)
+#if defined(HAVE_POST)
   int numViewsBefore = PView::list.size();
 #endif
   int status = 0;

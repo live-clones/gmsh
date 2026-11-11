@@ -24,6 +24,9 @@
 #include <FL/Fl.H>
 #include "FlGui.h"
 #include "onelabActions.h"
+#endif
+
+#if defined(HAVE_OPENGL)
 #include "drawContext.h"
 #endif
 
@@ -430,9 +433,7 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
     Msg::Error("%s - %s", _name.c_str(), message.c_str());
     break;
   case GmshSocket::GMSH_MERGE_FILE: {
-#if defined(HAVE_FLTK)
     std::size_t n = PView::list.size();
-#endif
     if(onelabUtils::mergeSolverFile(message)) {
 #if defined(HAVE_OPENGL)
       drawContext::global()->draw();
@@ -458,9 +459,7 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
               TimeOfDay() - timer);
     break;
   case GmshSocket::GMSH_VERTEX_ARRAY: {
-#if defined(HAVE_FLTK)
     int n = PView::list.size();
-#endif
 #if defined(HAVE_POST)
     PView::fillVertexArray(this, length, &message[0], swap);
 #endif
