@@ -6638,10 +6638,10 @@ associated utilities
 on one hand, and the graphics
 (@url{@value{GITLAB-PREFIX}/src/graphics,src/graphics})
 and interface
-(@url{@value{GITLAB-PREFIX}/src/fltk,src/fltk},
-@url{@value{GITLAB-PREFIX}/contrib/webapp,contrib/webapp},
+(@url{@value{GITLAB-PREFIX}/api,api},
 @url{@value{GITLAB-PREFIX}/src/parser,src/parser},
-@url{@value{GITLAB-PREFIX}/api,api}) code on
+@url{@value{GITLAB-PREFIX}/src/fltk,src/fltk},
+@url{@value{GITLAB-PREFIX}/contrib/webapp,contrib/webapp}) code on
 the other.
 
 The geometry module is based on a model class
