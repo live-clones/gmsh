@@ -359,7 +359,7 @@ static optionPage viewPage()
         {choice("View.Boundary", "Element boundary mode")},
         {number("View.Normals", "", 1, EntryOnRelease),
          number("View.Tangents", "Normals and tangents", 1, EntryOnRelease)},
-        {custom("View entry types")},
+        {custom("View field types")},
         {choice("View.ForceNumComponents", ""), custom("Component map")}}),
      section("Transfo", false,
              {{custom("View transformation")},
