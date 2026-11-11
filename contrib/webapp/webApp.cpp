@@ -647,7 +647,7 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebOptionPages()
       for(std::size_t r = 0; r < s.rows.size(); r++) {
         json += std::string(r ? "," : "") + "[";
         for(std::size_t i = 0; i < s.rows[r].size(); i++) {
-          const optionField &f = s.rows[r][i];
+          const optionEntry &f = s.rows[r][i];
           json += std::string(i ? "," : "") + "{\"kind\":\"" + kinds[f.kind] +
                   "\",\"option\":" + JsonString(f.option) +
                   ",\"label\":" + JsonString(f.label) + "}";
