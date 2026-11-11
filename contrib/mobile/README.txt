@@ -1,6 +1,11 @@
 This directory contains the source code for the ONELAB app, the mobile version
 of ONELAB for iOS and Android devices.
 
+DEPRECATED: the mobile app is no longer developed. It is replaced by the ONELAB
+web app (contrib/webapp, running at https://onelab.info/webapp/), which runs
+Gmsh and GetDP in the browser on any device, and can be installed from the
+browser as an app on a phone or a tablet.
+
 Copyright (C) 2014-2026 Christophe Geuzaine and Maxime Graulich, University of Liege
 
 The ONELAB (http://onelab.info) mobile app is a finite element package based on
