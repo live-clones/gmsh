@@ -24,6 +24,7 @@
 //
 // Contributors: Thomas Toulorge, Jonathan Lambrechts
 
+#include <iostream>
 #include "GmshMessage.h"
 #include "GFace.h"
 #include "BasisFactory.h"

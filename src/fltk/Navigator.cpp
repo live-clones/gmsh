@@ -5,6 +5,7 @@
 //
 // Contributed by Gilles Marckmann <gilles.marckmann@ec-nantes.fr>
 
+#include <iostream>
 #include <stdio.h>
 #include <algorithm>
 #include "Navigator.h"

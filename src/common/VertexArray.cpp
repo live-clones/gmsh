@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <algorithm>
+#include <thread>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "VertexArray.h"
@@ -59,6 +60,8 @@ static inline void fillCornerKey(CornerKey<N> &k, double *x, double *y,
     for(int d = 0; d < 4; d++) k.c[4 * i + d] = c[i][d];
   }
 }
+
+void UniqueElementFilter::ShardLock::_yield() { std::this_thread::yield(); }
 
 // room for n keys at most half full, the keys already there hashed again
 void UniqueElementFilter::Shard::reserve(std::size_t n)

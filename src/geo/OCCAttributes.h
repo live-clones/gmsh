@@ -6,6 +6,7 @@
 #ifndef OCC_ATTRIBUTES_H
 #define OCC_ATTRIBUTES_H
 
+#include <iostream>
 #include <vector>
 #include <string>
 #include "GmshConfig.h"

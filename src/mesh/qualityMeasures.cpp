@@ -16,6 +16,7 @@
 #include "polynomialBasis.h"
 #include "JacobianBasis.h"
 #include "GmshMessage.h"
+#include <iostream>
 #include <limits>
 #include <string.h>
 

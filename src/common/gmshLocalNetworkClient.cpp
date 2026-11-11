@@ -4,6 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "GmshConfig.h"
+#include <sstream>
 #include <cstdint>
 #include "GmshGlobal.h"
 #include "Context.h"

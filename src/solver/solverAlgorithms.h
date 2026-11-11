@@ -10,6 +10,7 @@
 #ifndef SOLVERALGORITHMS_H
 #define SOLVERALGORITHMS_H
 
+#include <iostream>
 #include "dofManager.h"
 #include "terms.h"
 #include "quadratureRules.h"
