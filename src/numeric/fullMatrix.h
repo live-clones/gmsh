@@ -11,23 +11,10 @@
 #include <cmath>
 #include <cstdio>
 #include <complex>
-#include <iostream>
 
-#if defined(HAVE_EIGEN)
-#ifdef Success // in X11 header X.h
-#undef Success
-#endif
-#include <sstream>
-#include <Eigen/Core>
-#endif
-
-// GCC 14 sees the AVX stores of Eigen's vectorized assignment into the small
-// vectors below (e.g. of size 3) without the run-time size checks that keep
-// them in bounds
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Warray-bounds"
-#endif
+// With Eigen, the operations that use it are defined in fullMatrix.cpp (for
+// int, double and std::complex<double>), so that Eigen is not parsed and its
+// products not compiled in every file that includes this header
 
 template <class scalar> class fullMatrix;
 
@@ -42,10 +29,6 @@ private:
   scalar *_data; // pointer on the first element
   bool _ownData;
   friend class fullMatrix<scalar>;
-
-#if defined(HAVE_EIGEN)
-  typedef Eigen::Map<Eigen::Matrix<scalar, Eigen::Dynamic, 1> > EigenVec;
-#endif
 
 public:
   // Instantiate a zero size fullVector
@@ -149,63 +132,45 @@ public:
     _r = r;
     _data = data;
   }
-  inline void scale(const scalar s)
+  void scale(const scalar s)
+#if !defined(HAVE_EIGEN)
   {
-#if defined(HAVE_EIGEN)
-    EigenVec vv(_data, _r);
-    vv *= s;
-#else
     if(s == scalar(0.))
       for(int i = 0; i < _r; ++i) _data[i] = scalar(0.);
     else if(s == -1.)
       for(int i = 0; i < _r; ++i) _data[i] = -_data[i];
     else
       for(int i = 0; i < _r; ++i) _data[i] *= s;
-#endif
   }
-  inline void setAll(const scalar &m)
+#endif
+  ;
+  void setAll(const scalar &m)
+#if !defined(HAVE_EIGEN)
   {
-#if defined(HAVE_EIGEN)
-    EigenVec vv(_data, _r);
-    vv.setConstant(m);
-#else
     for(int i = 0; i < _r; i++) set(i, m);
+  }
 #endif
-  }
+  ;
   void setAll(const fullVector<scalar> &m)
-#if defined(HAVE_EIGEN)
-  {
-    EigenVec vv(_data, _r);
-    EigenVec vm(m._data, m._r);
-    vv = vm;
-  }
-#elif !defined(HAVE_BLAS)
+#if !defined(HAVE_EIGEN) && !defined(HAVE_BLAS)
   {
     for(int i = 0; i < _r; i++) _data[i] = m._data[i];
   }
 #endif
   ;
   // Scalar product
-  inline scalar operator*(const fullVector<scalar> &other)
+  scalar operator*(const fullVector<scalar> &other)
+#if !defined(HAVE_EIGEN)
   {
-#if defined(HAVE_EIGEN)
-    EigenVec vv(_data, _r), vother(other._data, other._r);
-    scalar s = vv.dot(vother);
-    return s;
-#else
     scalar s = 0.;
     for(int i = 0; i < _r; ++i) s += _data[i] * other._data[i];
     return s;
-#endif
   }
+#endif
+  ;
   // v(i) = v(i) + alpha * x(i)
   void axpy(const fullVector<scalar> &x, scalar alpha = 1.)
-#if defined(HAVE_EIGEN)
-  {
-    EigenVec vv(_data, _r), vx(x._data, x._r);
-    vv.noalias() += alpha * vx;
-  }
-#elif !defined(HAVE_BLAS)
+#if !defined(HAVE_EIGEN) && !defined(HAVE_BLAS)
   {
     for(int i = 0; i < _r; i++) _data[i] += alpha * x._data[i];
   }
@@ -235,11 +200,6 @@ private:
   int _r, _c; // size of the matrix
   scalar *_data; // pointer on the first element
   friend class fullVector<scalar>;
-
-#if defined(HAVE_EIGEN)
-  typedef Eigen::Map<Eigen::Matrix<scalar, Eigen::Dynamic, Eigen::Dynamic> > EigenMat;
-  typedef Eigen::Map<Eigen::Matrix<scalar, Eigen::Dynamic, 1> > EigenVec;
-#endif
 
 public:
   fullMatrix(scalar *original, int r, int c)
@@ -440,22 +400,15 @@ public:
     int cind = _c * ind;
     for(int i = 0; i < _r; i++) _data[cind + i] = x(i);
   }
-  inline void setAll(const scalar &m)
+  void setAll(const scalar &m)
+#if !defined(HAVE_EIGEN)
   {
-#if defined(HAVE_EIGEN)
-    EigenMat ma(_data, _r, _c);
-    ma.setConstant(m);
-#else
     for(int i = 0; i < _r * _c; i++) _data[i] = m;
+  }
 #endif
-  }
+  ;
   void setAll(const fullMatrix<scalar> &m)
-#if defined(HAVE_EIGEN)
-  {
-    EigenMat ma(_data, _r, _c), mm(m._data, m._r, m._c);
-    ma = mm;
-  }
-#elif !defined(HAVE_BLAS)
+#if !defined(HAVE_EIGEN) && !defined(HAVE_BLAS)
   {
     if(_r != m._r || _c != m._c) {
       Msg::Error("Dense matrix sizes do not match in setAll");
@@ -466,12 +419,7 @@ public:
 #endif
   ;
   void scale(const scalar s)
-#if defined(HAVE_EIGEN)
-  {
-    EigenMat ma(_data, _r, _c);
-    ma *= s;
-  }
-#elif !defined(HAVE_BLAS)
+#if !defined(HAVE_EIGEN) && !defined(HAVE_BLAS)
   {
     if(s == 0.) // this is not really correct nan*0 (or inf*0) is expected to
                 // give nan
@@ -485,34 +433,24 @@ public:
   {
     for(int i = 0; i < _r * _c; ++i) _data[i] += a;
   }
-  inline void add(const fullMatrix<scalar> &m)
+  void add(const fullMatrix<scalar> &m)
+#if !defined(HAVE_EIGEN)
   {
-#if defined(HAVE_EIGEN)
-    EigenMat ma(_data, _r, _c), mm(m._data, m._r, m._c);
-    ma.noalias() += mm;
-#else
     for(int i = 0; i < _r; i++)
       for(int j = 0; j < _c; j++) (*this)(i, j) += m(i, j);
-#endif
   }
-  inline void add(const fullMatrix<scalar> &m, const scalar &a)
+#endif
+  ;
+  void add(const fullMatrix<scalar> &m, const scalar &a)
+#if !defined(HAVE_EIGEN)
   {
-#if defined(HAVE_EIGEN)
-    EigenMat ma(_data, _r, _c), mm(m._data, m._r, m._c);
-    ma.noalias() += a * mm;
-#else
     for(int i = 0; i < _r; i++)
       for(int j = 0; j < _c; j++) (*this)(i, j) += a * m(i, j);
+  }
 #endif
-  }
+  ;
   void mult(const fullVector<scalar> &x, fullVector<scalar> &y) const
-#if defined(HAVE_EIGEN)
-  {
-    EigenMat ma(_data, _r, _c);
-    EigenVec vx(x._data, x._r), vy(y._data, y._r);
-    vy = ma * vx;
-  }
-#elif !defined(HAVE_BLAS)
+#if !defined(HAVE_EIGEN) && !defined(HAVE_BLAS)
   {
     y.scale(scalar(0.));
     for(int i = 0; i < _r; i++)
@@ -521,13 +459,7 @@ public:
 #endif
   ;
   void multAddy(const fullVector<scalar> &x, fullVector<scalar> &y) const
-#if defined(HAVE_EIGEN)
-  {
-    EigenMat ma(_data, _r, _c);
-    EigenVec vx(x._data, x._r), vy(y._data, y._r);
-    vy += ma * vx;
-  }
-#elif !defined(HAVE_BLAS)
+#if !defined(HAVE_EIGEN) && !defined(HAVE_BLAS)
   {
     for(int i = 0; i < _r; i++)
       for(int j = 0; j < _c; j++) y._data[i] += (*this)(i, j) * x(j);
@@ -535,12 +467,7 @@ public:
 #endif
   ;
   void mult(const fullMatrix<scalar> &b, fullMatrix<scalar> &c) const
-#if defined(HAVE_EIGEN)
-  {
-    EigenMat ma(_data, _r, _c), mb(b._data, b._r, b._c), mc(c._data, c._r, c._c);
-    mc.noalias() = ma * mb;
-  }
-#elif !defined(HAVE_BLAS)
+#if !defined(HAVE_EIGEN) && !defined(HAVE_BLAS)
   {
     c.scale(scalar(0.));
     for(int i = 0; i < _r; i++)
@@ -733,9 +660,5 @@ public:
   bool getOwnData() const { return _ownData; };
   void setOwnData(bool ownData) { _ownData = ownData; };
 };
-
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic pop
-#endif
 
 #endif

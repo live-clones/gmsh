@@ -15,7 +15,6 @@
 #include "Chain.h"
 #include "OS.h"
 #include "GModel.h"
-#include "Options.h"
 
 std::vector<int> vecN0(int n);
 

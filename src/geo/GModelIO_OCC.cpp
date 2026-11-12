@@ -3,6 +3,8 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <fstream>
+#include <sstream>
 #include <algorithm>
 #include <numeric>
 #include <utility>

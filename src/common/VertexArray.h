@@ -11,7 +11,6 @@
 #include <set>
 #include <unordered_map>
 #include <atomic>
-#include <thread>
 #include <cstdint>
 #include "SVector3.h"
 #include "SBoundingBox3d.h"
@@ -131,6 +130,10 @@ private:
   // a spin lock held for one probe of the table (about one cache miss:
   // spinning is cheaper than the kernel), one per cache line
   class alignas(64) ShardLock {
+  private:
+    // std::this_thread::yield(), out of line to keep <thread> out of here
+    static void _yield();
+
   public:
     ShardLock() : _locked(false) {}
     void lock()
@@ -141,7 +144,7 @@ private:
           // let the thread that holds the lock run if it was descheduled, e.g.
           // when there are more threads than cores
           if(++spins > 1000) {
-            std::this_thread::yield();
+            _yield();
             spins = 0;
           }
         }

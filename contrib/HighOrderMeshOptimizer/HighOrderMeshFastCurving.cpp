@@ -27,6 +27,7 @@
 #include <cstdio>
 #include <sstream>
 #include <fstream>
+#include <iostream>
 #include <string>
 #include <cmath>
 #include "HighOrderMeshFastCurving.h"

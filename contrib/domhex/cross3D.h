@@ -10,6 +10,7 @@
 #define CROSS_3D_H
 
 #include <ostream>
+#include <iostream>
 using std::ostream;
 
 /* Defined in SVector3.h */

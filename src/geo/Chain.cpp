@@ -5,6 +5,7 @@
 //
 // Contributor(s): Matti Pellikka (initial implementation)
 
+#include <sstream>
 #include "Chain.h"
 #include "MLine.h"
 #include "MTriangle.h"

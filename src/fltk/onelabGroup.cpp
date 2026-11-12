@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <sstream>
 #include <FL/Fl.H>
 #include "GmshConfig.h"
 #include <cstdint>

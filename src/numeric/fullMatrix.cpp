@@ -442,10 +442,145 @@ bool fullMatrix<double>::svd(fullMatrix<double> &V, fullVector<double> &S)
 
 #if defined(HAVE_EIGEN)
 
-// The dense decompositions with Eigen, here rather than in the header: Eigen's
-// solvers are then compiled once, not in every file that calls them
+// The operations with Eigen, here rather than in the header: Eigen is then
+// parsed, and its products and solvers compiled, once and not in every file
+// that includes fullMatrix.h
 
+#ifdef Success // in X11 header X.h
+#undef Success
+#endif
 #include <Eigen/Dense>
+
+// GCC 14 sees the AVX stores of Eigen's vectorized assignment into small
+// vectors (e.g. of size 3) without the run-time size checks that keep them in
+// bounds
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+#endif
+
+template <class scalar>
+using EigenMat =
+  Eigen::Map<Eigen::Matrix<scalar, Eigen::Dynamic, Eigen::Dynamic>>;
+template <class scalar>
+using EigenVec = Eigen::Map<Eigen::Matrix<scalar, Eigen::Dynamic, 1>>;
+
+template <class scalar> void fullVector<scalar>::scale(const scalar s)
+{
+  EigenVec<scalar> vv(_data, _r);
+  vv *= s;
+}
+
+template <class scalar> void fullVector<scalar>::setAll(const scalar &m)
+{
+  EigenVec<scalar> vv(_data, _r);
+  vv.setConstant(m);
+}
+
+template <class scalar>
+void fullVector<scalar>::setAll(const fullVector<scalar> &m)
+{
+  EigenVec<scalar> vv(_data, _r);
+  EigenVec<scalar> vm(m._data, m._r);
+  vv = vm;
+}
+
+template <class scalar>
+scalar fullVector<scalar>::operator*(const fullVector<scalar> &other)
+{
+  EigenVec<scalar> vv(_data, _r), vother(other._data, other._r);
+  scalar s = vv.dot(vother);
+  return s;
+}
+
+template <class scalar>
+void fullVector<scalar>::axpy(const fullVector<scalar> &x, scalar alpha)
+{
+  EigenVec<scalar> vv(_data, _r), vx(x._data, x._r);
+  vv.noalias() += alpha * vx;
+}
+
+template <class scalar> void fullMatrix<scalar>::setAll(const scalar &m)
+{
+  EigenMat<scalar> ma(_data, _r, _c);
+  ma.setConstant(m);
+}
+
+template <class scalar>
+void fullMatrix<scalar>::setAll(const fullMatrix<scalar> &m)
+{
+  EigenMat<scalar> ma(_data, _r, _c), mm(m._data, m._r, m._c);
+  ma = mm;
+}
+
+template <class scalar> void fullMatrix<scalar>::scale(const scalar s)
+{
+  EigenMat<scalar> ma(_data, _r, _c);
+  ma *= s;
+}
+
+template <class scalar>
+void fullMatrix<scalar>::add(const fullMatrix<scalar> &m)
+{
+  EigenMat<scalar> ma(_data, _r, _c), mm(m._data, m._r, m._c);
+  ma.noalias() += mm;
+}
+
+template <class scalar>
+void fullMatrix<scalar>::add(const fullMatrix<scalar> &m, const scalar &a)
+{
+  EigenMat<scalar> ma(_data, _r, _c), mm(m._data, m._r, m._c);
+  ma.noalias() += a * mm;
+}
+
+template <class scalar>
+void fullMatrix<scalar>::mult(const fullVector<scalar> &x,
+                              fullVector<scalar> &y) const
+{
+  EigenMat<scalar> ma(_data, _r, _c);
+  EigenVec<scalar> vx(x._data, x._r), vy(y._data, y._r);
+  vy = ma * vx;
+}
+
+template <class scalar>
+void fullMatrix<scalar>::multAddy(const fullVector<scalar> &x,
+                                  fullVector<scalar> &y) const
+{
+  EigenMat<scalar> ma(_data, _r, _c);
+  EigenVec<scalar> vx(x._data, x._r), vy(y._data, y._r);
+  vy += ma * vx;
+}
+
+template <class scalar>
+void fullMatrix<scalar>::mult(const fullMatrix<scalar> &b,
+                              fullMatrix<scalar> &c) const
+{
+  EigenMat<scalar> ma(_data, _r, _c), mb(b._data, b._r, b._c),
+    mc(c._data, c._r, c._c);
+  mc.noalias() = ma * mb;
+}
+
+#define INSTANTIATE(T)                                                         \
+  template void fullVector<T>::scale(const T);                                 \
+  template void fullVector<T>::setAll(const T &);                              \
+  template void fullVector<T>::setAll(const fullVector<T> &);                  \
+  template T fullVector<T>::operator*(const fullVector<T> &);                  \
+  template void fullVector<T>::axpy(const fullVector<T> &, T);                 \
+  template void fullMatrix<T>::setAll(const T &);                              \
+  template void fullMatrix<T>::setAll(const fullMatrix<T> &);                  \
+  template void fullMatrix<T>::scale(const T);                                 \
+  template void fullMatrix<T>::add(const fullMatrix<T> &);                     \
+  template void fullMatrix<T>::add(const fullMatrix<T> &, const T &);          \
+  template void fullMatrix<T>::mult(const fullVector<T> &, fullVector<T> &)    \
+    const;                                                                     \
+  template void fullMatrix<T>::multAddy(const fullVector<T> &,                 \
+                                        fullVector<T> &) const;                \
+  template void fullMatrix<T>::mult(const fullMatrix<T> &, fullMatrix<T> &)    \
+    const;
+INSTANTIATE(int)
+INSTANTIATE(double)
+INSTANTIATE(std::complex<double>)
+#undef INSTANTIATE
 
 template <class scalar>
 bool fullMatrix<scalar>::luSolve(const fullVector<scalar> &rhs,
@@ -457,9 +592,9 @@ bool fullMatrix<scalar>::luSolve(const fullVector<scalar> &rhs,
                _r, _c, result._r, rhs._r);
     return false;
   }
-  EigenMat ma(_data, _r, _c);
-  EigenVec vb(rhs._data, rhs._r);
-  EigenVec vx(result._data, result._r);
+  EigenMat<scalar> ma(_data, _r, _c);
+  EigenVec<scalar> vb(rhs._data, rhs._r);
+  EigenVec<scalar> vx(result._data, result._r);
   vx = ma.colPivHouseholderQr().solve(vb);
   return true;
 }
@@ -473,8 +608,8 @@ bool fullMatrix<scalar>::invert(fullMatrix<scalar> &result) const
     return false;
   }
   result.resize(_r, _c);
-  EigenMat ma(_data, _r, _c);
-  EigenMat mi(result._data, _r, _c);
+  EigenMat<scalar> ma(_data, _r, _c);
+  EigenMat<scalar> mi(result._data, _r, _c);
   mi = ma.inverse();
   return true;
 }
@@ -486,14 +621,14 @@ template <class scalar> bool fullMatrix<scalar>::invertInPlace()
                _r, _c);
     return false;
   }
-  EigenMat ma(_data, _r, _c);
+  EigenMat<scalar> ma(_data, _r, _c);
   ma = ma.inverse();
   return true;
 }
 
 template <class scalar> scalar fullMatrix<scalar>::determinant() const
 {
-  EigenMat ma(_data, _r, _c);
+  EigenMat<scalar> ma(_data, _r, _c);
   return ma.determinant();
 }
 
@@ -504,20 +639,21 @@ bool fullMatrix<scalar>::eig(fullVector<double> &eigenValReal,
                              fullMatrix<scalar> &rightEigenVect,
                              bool sortRealPart)
 {
-  EigenMat ma(_data, _r, _c);
+  EigenMat<scalar> ma(_data, _r, _c);
   Eigen::EigenSolver<Eigen::Matrix<scalar, Eigen::Dynamic, Eigen::Dynamic>> es(
     ma);
   if(es.info() != Eigen::Success) {
     Msg::Warning("Eigen could not compute eigenvalues/eigenvectors");
     return false;
   }
-  EigenVec vr(eigenValReal._data, eigenValReal._r);
+  EigenVec<scalar> vr(eigenValReal._data, eigenValReal._r);
   vr = es.eigenvalues().real();
-  EigenVec vi(eigenValImag._data, eigenValImag._r);
+  EigenVec<scalar> vi(eigenValImag._data, eigenValImag._r);
   vi = es.eigenvalues().imag();
-  EigenMat mr(rightEigenVect._data, rightEigenVect._r, rightEigenVect._c);
+  EigenMat<scalar> mr(rightEigenVect._data, rightEigenVect._r,
+                      rightEigenVect._c);
   mr = es.eigenvectors().real();
-  EigenMat ml(leftEigenVect._data, leftEigenVect._r, leftEigenVect._c);
+  EigenMat<scalar> ml(leftEigenVect._data, leftEigenVect._r, leftEigenVect._c);
   // FIXME: only true for symmetric matrices - compute the true left
   // eigenvectors!
   ml = mr;
@@ -531,9 +667,9 @@ bool fullMatrix<scalar>::eig(fullVector<double> &eigenValReal,
 template <class scalar>
 bool fullMatrix<scalar>::svd(fullMatrix<scalar> &V, fullVector<scalar> &S)
 {
-  EigenMat ma(_data, _r, _c);
-  EigenMat mv(V._data, V._r, V._c);
-  EigenVec vs(S._data, S._r);
+  EigenMat<scalar> ma(_data, _r, _c);
+  EigenMat<scalar> mv(V._data, V._r, V._c);
+  EigenVec<scalar> vs(S._data, S._r);
   Eigen::BDCSVD<Eigen::Matrix<scalar, Eigen::Dynamic, Eigen::Dynamic>> svd(
     ma, Eigen::ComputeThinU | Eigen::ComputeThinV);
   ma = svd.matrixU();
@@ -553,6 +689,10 @@ template bool fullMatrix<double>::eig(fullVector<double> &,
                                       fullMatrix<double> &, bool);
 template bool fullMatrix<double>::svd(fullMatrix<double> &,
                                       fullVector<double> &);
+
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
 #endif
 

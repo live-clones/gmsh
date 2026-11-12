@@ -6,6 +6,7 @@
 #ifndef OUTPUT_RANGE_H
 #define OUTPUT_RANGE_H
 
+#include <sstream>
 #include <string>
 #include <stdio.h>
 #include <stdlib.h>
