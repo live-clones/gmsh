@@ -75,8 +75,11 @@ download() # url, directory it extracts to
 
 # OpenCASCADE: static, modeling algorithms and STEP/IGES, no visualization;
 # without the conversion of signals to exceptions (there are no signals), as
-# its setjmp next to C++ exceptions makes code that Binaryen cannot read
+# its setjmp next to C++ exceptions makes code that Binaryen cannot read; with
+# <mutex>, which some of its sources use without including it, as the libc++
+# of Emscripten 7 no longer brings it in through other headers
 NOSIG="-UOCC_CONVERT_SIGNALS"
+MUTEX="-include mutex"
 if [ $OCC == 1 -a ! -f "$DEPS/occt/lib/libTKernel.a" ]; then
   download https://github.com/Open-Cascade-SAS/OCCT/archive/refs/tags/V$OCCT_VERSION.tar.gz \
     OCCT-$OCCT_VERSION
@@ -86,7 +89,7 @@ if [ $OCC == 1 -a ! -f "$DEPS/occt/lib/libTKernel.a" ]; then
     -DUSE_OPENGL=0 -DUSE_GLES2=0 -DUSE_FREETYPE=0 -DUSE_TK=0 -DUSE_XLIB=0 \
     -DBUILD_MODULE_Draw=0 -DBUILD_MODULE_Visualization=0 \
     -DBUILD_MODULE_ApplicationFramework=0 -DBUILD_DOC_Overview=0 \
-    -DCMAKE_C_FLAGS="$EXC $NOSIG" -DCMAKE_CXX_FLAGS="$EXC $NOSIG" \
+    -DCMAKE_C_FLAGS="$EXC $NOSIG" -DCMAKE_CXX_FLAGS="$EXC $NOSIG $MUTEX" \
     -DCMAKE_INSTALL_PREFIX="$DEPS/occt"
   emmake make -j$JOBS
   emmake make install
