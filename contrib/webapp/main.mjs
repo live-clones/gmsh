@@ -91,6 +91,16 @@ const wasm = await compileWasm(new URL('./build/libgmsh.wasm', import.meta.url))
   .catch(cannotLoad);
 setStatus('Starting...');
 progress(true);
+const params = new URLSearchParams(location.search);
+// a test of the speed of the drawing (see scene.mjs): with ?pdb=0 the canvas
+// is not kept after each frame, which the browsers of some phones copy at
+// every frame otherwise. The context is made here, before Gmsh asks for one
+// with preserveDrawingBuffer (src/graphics/offscreenContext.cpp), and gets
+// this one, with the same attributes otherwise
+if(params.get('pdb') === '0')
+  $('canvas').getContext('webgl2', {alpha: false, depth: true, stencil: false,
+                                    antialias: false,
+                                    preserveDrawingBuffer: false});
 const gmsh = await createGmsh({
   canvas: $('canvas'), print: log, printErr: log,
   instantiateWasm: (imports, done) => {
@@ -115,7 +125,6 @@ solverClient.build(wasm);
 $('run').disabled = $('reset').disabled = false;
 setStatus('Open a model, or drop its files here');
 progress(false);
-const params = new URLSearchParams(location.search);
 try {
   if(params.get('zip')) {
     const url = params.get('zip');

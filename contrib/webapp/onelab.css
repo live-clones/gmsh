@@ -270,6 +270,11 @@ body.noSide #side, body.noSide #split { display: none; }
          background: var(--hover-bg); border: 1px solid var(--border);
          border-radius: 3px; white-space: pre-line; pointer-events: none;
          z-index: 1; }
+/* the speed of the drawing, when the address asks for it (scene.mjs) */
+#speed { position: fixed; padding: 4px 6px; background: var(--hover-bg);
+         border: 1px solid var(--border); border-radius: 3px;
+         white-space: pre-line; font-size: 12px; z-index: 1; }
+#speed button { display: block; margin-top: 4px; }
 #lasso { position: fixed; display: none; border: 1px dashed var(--lasso);
          background: var(--lasso-fill); pointer-events: none; z-index: 1; }
 #drop { position: fixed; inset: 0; display: none; place-items: center;
