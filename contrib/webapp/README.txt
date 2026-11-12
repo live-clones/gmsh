@@ -15,6 +15,12 @@ Serve the Gmsh source tree over HTTP and open the pages, e.g.
 
   http://localhost:8000/contrib/webapp/onelab.html
 
+or with serve.py, which serves them the same way and gives the assistant of
+the page the source of Gmsh, read only (its tools search_source and
+read_source), that of this tree or of another one:
+
+  python3 serve.py 8000 --source ~/src/gmsh
+
 onelab.html is the ONELAB app: it opens a model (a .pro file with the .geo of the same name and the files they
 include, given as files, a folder, a zip archive, or ?zip=<url>), shows its
 parameters, and runs Gmsh and GetDP, in the page.

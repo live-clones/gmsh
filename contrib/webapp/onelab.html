@@ -2269,6 +2269,63 @@ const assistantTools = [
     }),
   },
 ];
+// the source of Gmsh, read only, when the page is served by serve.py (not
+// by a plain web server): its tools are given to the assistant then
+async function fromSource(what, args) {
+  const query = new URLSearchParams();
+  for(const [k, v] of Object.entries(args))
+    if(v !== null && v !== undefined) query.set(k, v);
+  return (await fetch('/source/' + what + '?' + query)).json();
+}
+const sourceInstructions = `You have read-only access to the local source \
+code of Gmsh with search_source and read_source.
+- Before concluding that a feature of Gmsh does not exist or is not \
+supported, look for its implementation in the source.
+- For complex features, notably the geometry kernels and the boolean \
+operations, prefer examining the source.
+- Do not assume that this version of Gmsh is exactly the official one.
+- Use the source to find the actual syntax of commands before trying them \
+(the .geo language is read by src/parser/Gmsh.y; its examples are the .geo \
+files). The Gmsh of the page may have been built without parts of that \
+source: the kernels of get_model_state are those it has.`;
+const sourceTools = [
+  {
+    name: 'search_source',
+    description: 'Search the source of Gmsh (C++, the parser of the .geo language, ' +
+      'CMake, Python, .geo files, the documentation) for a text: the files, the numbers ' +
+      'and the text of the lines that have it, Gmsh itself (src, api) first.',
+    parameters: {type: 'object', additionalProperties: false,
+                 required: ['query', 'path', 'max_results'],
+                 properties: {
+                   query: {type: 'string', description: 'The text searched, as it is ' +
+                     '(not a regular expression); case-insensitive if it has no capitals'},
+                   path: {type: ['string', 'null'], description: 'A directory or a file ' +
+                     'to search in, relative to the root of the source (e.g. src/parser), ' +
+                     'or null for all of it'},
+                   max_results: {type: ['integer', 'null'], description: 'The most lines ' +
+                     'given (50 if null, at most 200)'}}},
+    instructions: sourceInstructions,
+    run: (args) => fromSource('search', args),
+  },
+  {
+    name: 'read_source',
+    description: 'Read lines of a file of the source of Gmsh, numbered, at most 400 ' +
+      'at once (its total_lines say how many it has), or the entries of a directory.',
+    parameters: {type: 'object', additionalProperties: false,
+                 required: ['path', 'start_line', 'end_line'],
+                 properties: {
+                   path: {type: 'string', description: 'The file or directory, relative ' +
+                     'to the root of the source (e.g. src/parser/Gmsh.y, or "" for the root)'},
+                   start_line: {type: ['integer', 'null'], description: 'The first line ' +
+                     '(1 if null)'},
+                   end_line: {type: ['integer', 'null'], description: 'The last line ' +
+                     '(start_line + 199 if null)'}}},
+    run: (args) => fromSource('read', args),
+  },
+];
+fetch('/source/info').then((r) => r.json()).then((info) => {
+  if(info.root) assistantTools.push(...sourceTools);
+}).catch(() => {});
 installAssistant(assistantTools, () => showKeyDialog());
 
 // the mesh partitioned, into the number of parts the form of the module asks
