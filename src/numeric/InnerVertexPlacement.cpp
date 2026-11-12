@@ -8,6 +8,9 @@
 #include "InnerVertexPlacement.h"
 #include "GmshDefines.h"
 #include "pointsGenerators.h"
+#include "BasisFactory.h"
+#include "ElementType.h"
+#include "nodalBasis.h"
 
 namespace {
   typedef std::pair<std::pair<int, int>, int> mytuple;
@@ -75,32 +78,39 @@ fullMatrix<double> gmshGenerateInnerVertexPlacementTriangle(int order)
   fullMatrix<int> coordinates;
   double2int(monomials, coordinates);
 
-  std::map<std::pair<int, int>, int> coord2idx;
-  for(int i = 0; i < szInc; ++i) {
-    int u = coordinates(i, 0);
-    int v = coordinates(i, 1);
-    coord2idx[std::make_pair(u, v)] = i;
+  // Lagrange basis of an edge between -1 and +1
+  const nodalBasis *edgeBasis =
+    BasisFactory::getNodalBasis(ElementType::getType(TYPE_LIN, order));
+
+  std::vector<int> edgeIdx[3];
+  for(int i = 0; i < 3; ++i) {
+    edgeIdx[i].resize(order + 1);
+    edgeIdx[i][0] = i;
+    edgeIdx[i][1] = (i + 1) % 3;
+    for(int q = 0; q < order - 1; ++q)
+      edgeIdx[i][q + 2] = 3 + i * (order - 1) + q;
   }
 
-  int &n = order;
-  fullMatrix<double> M(szInt, szInc, true);
-  for(int i = 0; i < szInt; ++i) {
-    int u = coordinates(szInc + i, 0);
-    int v = coordinates(szInc + i, 1);
-    int q = n - u - v;
-    double xi = (double)u / n;
-    double eta = (double)v / n;
-    double rho = (double)q / n;
+  const int nTau = 2 * order - 5;
+  fullMatrix<double> xTau(nTau, 1), sf;
+  for(int m = 0; m < nTau; ++m) xTau(m, 0) = -1 + (double)(m + 3) / order;
+  edgeBasis->f(xTau, sf); // sf(m, q): line shape function q at the m-th tau
 
-    M(i, coord2idx[std::make_pair(u + v, 0)]) += xi;
-    M(i, coord2idx[std::make_pair(u + q, v)]) += xi;
-    M(i, coord2idx[std::make_pair(0, v + u)]) += eta;
-    M(i, coord2idx[std::make_pair(u, v + q)]) += eta;
-    M(i, coord2idx[std::make_pair(0, v)]) += rho;
-    M(i, coord2idx[std::make_pair(u, 0)]) += rho;
-    M(i, coord2idx[std::make_pair(n, 0)]) -= xi;
-    M(i, coord2idx[std::make_pair(0, n)]) -= eta;
-    M(i, coord2idx[std::make_pair(0, 0)]) -= rho;
+  fullMatrix<double> M(szInt, szInc, true);
+  for(int r = 0; r < szInt; ++r) {
+    const int u = coordinates(szInc + r, 0), v = coordinates(szInc + r, 1);
+    const int a[3] = {order - u - v, u, v};
+    const double l[3] = {(double)a[0] / order, (double)a[1] / order,
+                         (double)a[2] / order};
+    for(int i = 0; i < 3; ++i) {
+      const int j = (i + 1) % 3;
+      const int m = order - a[i] + a[j] - 3; // row of tau in sf
+      const double tau = (double)(m + 3) / (2 * order);
+      const double w = l[i] * l[j] / (tau * (1. - tau));
+      for(int q = 0; q <= order; ++q) M(r, edgeIdx[i][q]) += w * sf(m, q);
+      M(r, i) += l[i] - w * (1. - tau);
+      M(r, j) -= w * tau;
+    }
   }
   return M;
 }
