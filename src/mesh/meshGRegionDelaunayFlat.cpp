@@ -570,6 +570,113 @@ public:
     return true;
   }
 
+  // pairs the edges of the new tets with a small hash table, giving the same
+  // links as sorting them; returns false with nothing linked if an edge
+  // occurs more than twice
+  struct pairSlot {
+    std::uint64_t key;
+    std::uint32_t tetFace, stamp;
+  };
+  std::vector<pairSlot> pairTab;
+  std::vector<std::uint32_t> pairs;
+  std::uint32_t pairStamp = 0;
+  // 2^64 divided by the golden ratio (Fibonacci hashing): spreads nearby
+  // vertex pairs over the whole table
+  static constexpr std::uint64_t fibHash = 0x9e3779b97f4a7c15ull;
+  bool linkShellEdges(const std::vector<std::uint32_t> &newTets, std::size_t n)
+  {
+    // A power of two at least 4n, so the table stays at most 3/4 full. The
+    // top bits of the hash index it
+    std::size_t size = 16;
+    int shift = 60;
+    while(size < 4 * n) {
+      size <<= 1;
+      shift--;
+    }
+    if(pairTab.size() < size) pairTab.resize(size);
+    if(++pairStamp == 0) {
+      for(auto &e : pairTab) e.stamp = 0;
+      pairStamp = 1;
+    }
+    pairs.clear();
+    for(std::size_t k = 0; k < n; k++) {
+      const std::uint32_t s = newTets[k];
+      const std::uint32_t f0 = tetV[4 * s + 0];
+      const std::uint32_t f1 = tetV[4 * s + 1];
+      const std::uint32_t f2 = tetV[4 * s + 2];
+      const std::uint64_t key[3] = {edgeKey(f0, f2), edgeKey(f0, f1),
+                                    edgeKey(f1, f2)};
+      for(int j = 0; j < 3; j++) {
+        const auto tf = static_cast<std::uint32_t>(4 * k + 1 + j);
+        std::size_t h = static_cast<std::size_t>((key[j] * fibHash) >> shift);
+        while(true) {
+          pairSlot &e = pairTab[h];
+          if(e.stamp != pairStamp) {
+            e.key = key[j];
+            e.tetFace = tf;
+            e.stamp = pairStamp;
+            break;
+          }
+          if(e.key == key[j]) {
+            if(e.tetFace == FLAT_NONE) return false;
+            pairs.push_back(e.tetFace);
+            pairs.push_back(tf);
+            e.tetFace = FLAT_NONE;
+            break;
+          }
+          h = (h + 1) & (size - 1);
+        }
+      }
+    }
+    for(std::size_t i = 0; i < pairs.size(); i += 2) {
+      const std::uint32_t tf1 = pairs[i], tf2 = pairs[i + 1];
+      const std::uint32_t t1 = newTets[tf1 >> 2];
+      const std::uint32_t t2 = newTets[tf2 >> 2];
+      hot[t1].N[tf1 & 3] = 4 * t2 + (tf2 & 3);
+      hot[t2].N[tf2 & 3] = 4 * t1 + (tf1 & 3);
+    }
+    return true;
+  }
+
+  // the order of more than two equal edges is unspecified, so that case keeps
+  // the sort
+  void linkShellEdgesSorted(const std::vector<std::uint32_t> &newTets,
+                            std::size_t n)
+  {
+    struct shellEdge {
+      std::uint32_t a, b;
+      std::uint32_t tetFace;
+    };
+    std::vector<shellEdge> edges;
+    edges.reserve(3 * n);
+    for(std::size_t k = 0; k < n; k++) {
+      const std::uint32_t s = newTets[k];
+      const std::uint32_t f0 = tetV[4 * s + 0];
+      const std::uint32_t f1 = tetV[4 * s + 1];
+      const std::uint32_t f2 = tetV[4 * s + 2];
+      const auto tf = static_cast<std::uint32_t>(4 * k);
+      edges.push_back({std::min(f0, f2), std::max(f0, f2), tf + 1});
+      edges.push_back({std::min(f0, f1), std::max(f0, f1), tf + 2});
+      edges.push_back({std::min(f1, f2), std::max(f1, f2), tf + 3});
+    }
+    std::sort(edges.begin(), edges.end(),
+              [](const shellEdge &e1, const shellEdge &e2) {
+                if(e1.a != e2.a) return e1.a < e2.a;
+                return e1.b < e2.b;
+              });
+    for(std::size_t i = 0; i + 1 < edges.size(); i++) {
+      const shellEdge &e1 = edges[i];
+      const shellEdge &e2 = edges[i + 1];
+      if(e1.a == e2.a && e1.b == e2.b) {
+        const std::uint32_t t1 = newTets[e1.tetFace >> 2];
+        const std::uint32_t t2 = newTets[e2.tetFace >> 2];
+        hot[t1].N[e1.tetFace & 3] = 4 * t2 + (e2.tetFace & 3);
+        hot[t2].N[e2.tetFace & 3] = 4 * t1 + (e1.tetFace & 3);
+        ++i;
+      }
+    }
+  }
+
   // same as insertVertexB()
   bool insertVertexF(std::vector<std::uint32_t> &shell,
                      std::vector<std::uint32_t> &cavity, int vIdx, double lc1,
@@ -610,40 +717,8 @@ public:
     }
     if(!onePointIsTooClose) {
       // internal faces: same shell-edge matching as insertVertexB
-      struct shellEdge {
-        std::uint32_t a, b;
-        std::uint32_t tetFace;
-      };
-      std::vector<shellEdge> edges;
-      edges.reserve(3 * shell.size());
-      for(std::size_t k = 0; k < shell.size(); k++) {
-        const std::uint32_t s = newTets[k];
-        const std::uint32_t f0 = tetV[4 * s + 0];
-        const std::uint32_t f1 = tetV[4 * s + 1];
-        const std::uint32_t f2 = tetV[4 * s + 2];
-        edges.push_back({std::min(f0, f2), std::max(f0, f2),
-                         (std::uint32_t)(4 * k + 1)});
-        edges.push_back({std::min(f0, f1), std::max(f0, f1),
-                         (std::uint32_t)(4 * k + 2)});
-        edges.push_back({std::min(f1, f2), std::max(f1, f2),
-                         (std::uint32_t)(4 * k + 3)});
-      }
-      std::sort(edges.begin(), edges.end(),
-                [](const shellEdge &e1, const shellEdge &e2) {
-                  if(e1.a != e2.a) return e1.a < e2.a;
-                  return e1.b < e2.b;
-                });
-      for(std::size_t i = 0; i + 1 < edges.size(); i++) {
-        const shellEdge &e1 = edges[i];
-        const shellEdge &e2 = edges[i + 1];
-        if(e1.a == e2.a && e1.b == e2.b) {
-          const std::uint32_t t1 = newTets[e1.tetFace >> 2];
-          const std::uint32_t t2 = newTets[e2.tetFace >> 2];
-          hot[t1].N[e1.tetFace & 3] = 4 * t2 + (e2.tetFace & 3);
-          hot[t2].N[e2.tetFace & 3] = 4 * t1 + (e1.tetFace & 3);
-          ++i;
-        }
-      }
+      if(!linkShellEdges(newTets, shell.size()))
+        linkShellEdgesSorted(newTets, shell.size());
       // outward faces: the packed neighbor of the shell face gives both the
       // outside tet and its back face; as in the object kernel, do not
       // connect across an embedded face
