@@ -130,6 +130,11 @@ const std::vector<scriptShape> &scriptShapes();
 // is missing or the command was not added (see scriptLastCommandAdded())
 bool scriptAddShape(const std::string &shape, std::vector<std::string> values,
                     const std::string &fileName);
+// commands of the .geo language, as they are (those of the assistant of the
+// web app), added as one command: false if they were not added (see
+// scriptLastCommandAdded()); the programs written next to the script do not
+// get them
+bool scriptAddGeo(const std::string &text, const std::string &fileName);
 void scriptAddWedge(const std::string &fileName, const std::string &x,
                     const std::string &y, const std::string &z,
                     const std::string &dx, const std::string &dy,

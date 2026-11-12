@@ -645,6 +645,18 @@ EMSCRIPTEN_KEEPALIVE int gmshWebAddShape(const char *shape, const char *values)
   return added ? 0 : 1;
 }
 
+// Add commands of the .geo language (those of the assistant, see
+// assistant.mjs) to the script of the current model, as one command, as a
+// shape is added: returns 1 if they were not added (with errors)
+EMSCRIPTEN_KEEPALIVE int gmshWebAddGeo(const char *text)
+{
+  Msg::NoThrow noThrow;
+  bool added = scriptAddGeo(text, GModel::current()->getFileName());
+  GModel::current()->setSelection(0);
+  SetBoundingBox();
+  return added ? 0 : 1;
+}
+
 // what the view of index i holds, over all its steps: 1 if scalars, 2 if
 // vectors, 4 if tensors (or-ed), for the page to show the options that apply
 EMSCRIPTEN_KEEPALIVE int gmshWebViewContent(int i)

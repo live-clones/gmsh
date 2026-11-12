@@ -129,6 +129,17 @@
   #keyDialog .note { color: var(--muted); font-size: 13px; min-height: 1.3em; margin: 6px 0; }
   #keyDialog .note.error { color: var(--error); }
   #keyDialog .buttons { display: flex; gap: 6px; justify-content: flex-end; }
+  #assistantMessages .msg { margin: 6px 0 6px 8px; white-space: pre-wrap;
+                            overflow-wrap: anywhere; }
+  #assistantMessages .msg.user { font-weight: bold; }
+  #assistantMessages .msg.tool, #assistantMessages .msg.note { color: var(--muted);
+                                                               font-size: 13px; }
+  #assistantMessages .msg.error, #assistantMessages .msg.failed { color: var(--error); }
+  #assistantMessages pre { margin: 2px 0 0; padding: 4px; font-size: 12px;
+                           background: var(--out-bg); border-radius: 3px;
+                           white-space: pre-wrap; }
+  #assistantInput { display: block; width: calc(100% - 8px); margin: 6px 0 0 8px;
+                    box-sizing: border-box; resize: vertical; }
   /* as the graphical interface: the panel down to the status bar, the
      messages under the scene only */
   /* (scrolled up and down only: Safari let it move sideways) */
@@ -146,7 +157,8 @@
                                         min-width: 0; }
   #side .row input[type=checkbox] { width: auto; justify-self: start; }
   #side details details { margin-left: 10px; }
-  #tabs { display: flex; gap: 2px; margin: 0 -8px 6px; padding: 0 8px;
+  /* (on more rows if the panel is too narrow for the tabs) */
+  #tabs { display: flex; flex-wrap: wrap; gap: 2px; margin: 0 -8px 6px; padding: 0 8px;
           border-bottom: 1px solid var(--line); }
   #tabs button { border: 1px solid transparent; border-bottom: none;
                  background: none; padding: 4px 7px; cursor: pointer;
@@ -418,7 +430,8 @@
   <div id="tabs"><button data-tab="modelTab" class="on">Model</button><button
     data-tab="optionsTab">Options</button><button
     data-tab="clipTab">Clipping</button><button
-    data-tab="visTab">Visibility</button></div>
+    data-tab="visTab">Visibility</button><button
+    data-tab="assistantTab">Assistant</button></div>
   <div id="modelTab">
     <!-- the modules of the graphical interface's tree, before the parameters -->
     <details id="modules" open><summary>Modules</summary>
@@ -463,6 +476,14 @@
     <div class="buttons"><button id="visAll">All</button><button
       id="visNone">None</button><button id="visInvert">Invert</button></div>
     <div id="visList"></div>
+  </div>
+  <div id="assistantTab" hidden>
+    <div id="assistantMessages"></div>
+    <textarea id="assistantInput" rows="3" spellcheck="false"
+      placeholder="Ask the assistant to build or change the model (Enter to send)"></textarea>
+    <div class="buttons"><button id="assistantSend">Send</button><button
+      id="assistantNew" title="Start a new conversation">New</button><button
+      id="assistantKey" title="The key of the provider of the models">Key...</button></div>
   </div>
 </div>
 <dialog id="scriptDialog"><form method="dialog">
@@ -534,7 +555,7 @@
 import createGmsh from './build/gmsh.mjs';
 import {installShortcuts, shortcutsHelp, modifiers, ModShift} from './shortcuts.js';
 import {listFiles, writeFile, findModel, removeDirectory} from './files.mjs';
-import {installKeyDialog} from './assistant.mjs';
+import {installKeyDialog, installAssistant} from './assistant.mjs';
 
 const $ = (id) => document.getElementById(id);
 const canvas = $('canvas'), status = $('status'), logText = $('logText');
@@ -547,11 +568,15 @@ function setStatus(text, error = false) {
 // the messages of Gmsh and GetDP, the errors also in the status bar
 const lines = [];
 let lastError = '';
+// the errors and warnings while a tool of the assistant runs (see
+// assistantTools), null otherwise
+let collected = null;
 function log(t) {
   // without the colours of the terminal
   t = t.replace(/\x1b\[[0-9;]*m/g, '');
   const kind = /^Error|^\*\*\*/.test(t) ? 'error' : /^Warning/.test(t) ? 'warning' : '';
   if(kind === 'error') lastError = t;
+  if(kind && collected) collected.push(t);
   else if(busyLabel) busyLine = t.replace(/^Info *: */, '');
   lines.push([t, kind]);
   if(lines.length > 2000) lines.shift();
@@ -2136,6 +2161,116 @@ async function addShape(shape) {
     `Added a ${shapes[shape].label.toLowerCase()} to ${$('model').textContent}`;
   setStatus(text, !!errors);
 }
+
+// The tools of the assistant (see assistant.mjs): what it may do on the model,
+// as the user does it in the page, each with the errors and warnings it gave
+// (messages)
+async function collecting(act) {
+  collected = [];
+  try {
+    const result = await act();
+    // (an error of a command given again when it is not added)
+    const messages = [...new Set(collected.map((t) => t.replace(/ \(not added to the script\)$/, '')))];
+    return messages.length ? {...result, messages} : result;
+  }
+  finally {
+    collected = null;
+  }
+}
+const busyResult = {error: 'The page is busy (a model is checked or computed): try again later'};
+// the model as the assistant sees it (the end of its script if it is long)
+function modelState() {
+  const f = gmsh.model.getFileName(), s = scriptFile();
+  let script = s ? new TextDecoder().decode(FS.readFile(s)) : '';
+  if(script.length > 20000) script = '...\n' + script.slice(-20000);
+  const entities = gmsh.model.getEntities(), count = [0, 0, 0, 0];
+  for(const [dim] of entities) count[dim]++;
+  let boundingBox = null;
+  if(entities.length) {
+    try { boundingBox = gmsh.model.getBoundingBox(-1, -1).map((v) => Number(v.toPrecision(6))); }
+    catch(e) {}
+  }
+  const n = (o) => gmsh.option.getNumber('Mesh.' + o);
+  const built = gmsh.option.getString('General.BuildOptions');
+  return {
+    file: f.slice(f.lastIndexOf('/') + 1), script,
+    entities: {points: count[0], curves: count[1], surfaces: count[2], volumes: count[3]},
+    boundingBox,
+    physicalGroups: gmsh.model.getPhysicalGroups().map(
+      ([dim, tag]) => ({dim, tag, name: gmsh.model.getPhysicalName(dim, tag)})),
+    mesh: {nodes: n('NbNodes'), triangles: n('NbTriangles'), quadrangles: n('NbQuadrangles'),
+           tetrahedra: n('NbTetrahedra'), hexahedra: n('NbHexahedra')},
+    kernels: ['Built-in'].concat(/OpenCASCADE/.test(built) ? ['OpenCASCADE'] : [],
+                                 /DiscreteCAD/.test(built) ? ['Discrete'] : []),
+  };
+}
+const noArguments = {type: 'object', properties: {}, required: [], additionalProperties: false};
+const assistantTools = [
+  {
+    name: 'get_model_state',
+    description: 'The model open in the page: its file, its script (the end of it if ' +
+      'it is long), its numbers of entities by dimension, its bounding box, physical ' +
+      'groups and mesh, and the geometry kernels Gmsh has here.',
+    parameters: noArguments,
+    run: () => modelState(),
+  },
+  {
+    name: 'add_geo',
+    description: 'Add commands of the .geo language to the script of the model (of a ' +
+      'new model if none is open), read together: {added: true}, or {added: false} with ' +
+      'the error messages, and nothing added.',
+    parameters: {type: 'object', additionalProperties: false, required: ['commands'],
+                 properties: {commands: {type: 'string', description: 'One or more ' +
+                   'commands of the .geo language, separated by new lines'}}},
+    run: ({commands}) => collecting(async () => {
+      if(busy) return busyResult;
+      if(/\b(SystemCall|Exit)\b/.test(commands))
+        return {added: false, error: 'SystemCall and Exit are not for the assistant'};
+      if(!modelDir) await newModel();
+      const wasEmpty = isEmpty();
+      lastError = '';
+      const errors = Module.ccall('gmshWebAddGeo', 'number', ['string'], [commands]);
+      showModelName();
+      showAll();
+      fitIfWasEmpty(wasEmpty);
+      setStatus(errors ? 'The assistant\'s commands were not added' :
+                `The assistant added commands to ${$('model').textContent}`, !!errors);
+      return {added: !errors};
+    }),
+  },
+  {
+    name: 'undo_last',
+    description: 'Remove the last command added to the script of the model, and read ' +
+      'the script again.',
+    parameters: noArguments,
+    run: () => collecting(async () => {
+      if(busy) return busyResult;
+      if(!scriptFile()) return {error: 'The model has no script'};
+      await runItem(findItem('script_remove_last'));
+      return {done: true};
+    }),
+  },
+  {
+    name: 'mesh',
+    description: 'Mesh the model up to a dimension (1: the curves, 2: the surfaces, ' +
+      '3: the volumes): the numbers of nodes and elements.',
+    parameters: {type: 'object', additionalProperties: false, required: ['dimension'],
+                 properties: {dimension: {type: 'integer', enum: [1, 2, 3]}}},
+    run: ({dimension}) => collecting(async () => {
+      if(busy) return busyResult;
+      lastError = '';
+      try { gmsh.model.mesh.generate(dimension); }
+      catch(e) { lastError = lastError || e.message; }
+      draw();
+      const mesh = modelState().mesh;
+      setStatus(`The assistant meshed ${$('model').textContent}: ${mesh.nodes} nodes` +
+                (lastError ? ', with errors' : ''), !!lastError);
+      return {mesh};
+    }),
+  },
+];
+installAssistant(assistantTools, () => showKeyDialog());
+
 // the mesh partitioned, into the number of parts the form of the module asks
 let partitions = '4';
 function partitionForm() {

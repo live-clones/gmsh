@@ -1768,6 +1768,14 @@ bool scriptAddShape(const std::string &shape, std::vector<std::string> v,
   return scriptLastCommandAdded();
 }
 
+bool scriptAddGeo(const std::string &text, const std::string &fileName)
+{
+  // (no calls for the programs: what the commands amount to in the API is
+  // not known)
+  scriptAdd(text, fileName);
+  return scriptLastCommandAdded();
+}
+
 // a transformation: of the entities, or of their copy (Duplicata), whose
 // entities the copy gives
 static std::vector<apiCall>
