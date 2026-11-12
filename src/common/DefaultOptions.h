@@ -615,6 +615,16 @@ StringXNumber GeneralOptions_Number[] = {
     "working on a remote host without GLX)" },
   { F|O, "DrawBoundingBoxes" , opt_general_draw_bounding_box, 0. ,
     "Draw bounding boxes" },
+  { F|S, "EditorOffsetX" , opt_general_editor_offset0 , 150. ,
+    "Horizontal offset (in pixels) of the upper left corner of the editor "
+    "window, relative to the upper left corner of the graphic window" },
+  { F|S, "EditorOffsetY" , opt_general_editor_offset1 , 50. ,
+    "Vertical offset (in pixels) of the upper left corner of the editor "
+    "window, relative to the upper left corner of the graphic window" },
+  { F|S, "EditorHeight" , opt_general_editor_size1 , 0. ,
+    "Height (in pixels) of the editor window (0: 36 times the font size)" },
+  { F|S, "EditorWidth" , opt_general_editor_size0 , 0. ,
+    "Width (in pixels) of the editor window (0: 48 times the font size)" },
 
   { F|O, "ExpertMode" , opt_general_expert_mode, 0. ,
     "Enable expert mode (to disable all the messages meant for inexperienced "

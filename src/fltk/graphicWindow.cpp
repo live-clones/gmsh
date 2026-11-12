@@ -958,7 +958,8 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
     _menuwin = new mainWindow(std::max(CTX::instance()->menuSize[0], minw),
                               CTX::instance()->menuSize[1],
                               CTX::instance()->nonModalWindows ? true : false,
-                              "Gmsh", CTX::instance()->menuOffset);
+                              "Gmsh", CTX::instance()->menuOffset, nullptr,
+                              &CTX::instance()->menuSize[1]);
     _menuwin->callback(quit_cb);
     _menuwin->box(GMSH_WINDOW_BOX);
     _onelab = new onelabGroup(0, 0, _menuwin->w(), _menuwin->h());
@@ -1034,7 +1035,8 @@ void graphicWindow::detachMenu()
     new mainWindow(std::max(_onelab->w(), _onelab->getMinWindowWidth()),
                    CTX::instance()->menuSize[1],
                    CTX::instance()->nonModalWindows ? true : false, "Gmsh",
-                   CTX::instance()->menuOffset);
+                   CTX::instance()->menuOffset, nullptr,
+                   &CTX::instance()->menuSize[1]);
   _menuwin->callback(quit_cb);
   _menuwin->box(GMSH_WINDOW_BOX);
   _onelab->box(FL_FLAT_BOX);
@@ -1161,12 +1163,6 @@ int graphicWindow::getMenuWidth()
 {
   if(!_onelab) return 0;
   return _onelab->w();
-}
-
-int graphicWindow::getMenuHeight()
-{
-  if(!_menuwin) return 0;
-  return _menuwin->h();
 }
 
 bool graphicWindow::split(openglWindow *g, char how, double ratio)

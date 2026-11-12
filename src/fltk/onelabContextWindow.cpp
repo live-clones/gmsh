@@ -184,7 +184,6 @@ onelabContextWindow::~onelabContextWindow()
 
 void onelabContextWindow::show(int dim, int tag)
 {
-  FlGui::instance()->lastContextWindow = win;
 
   _dim = dim;
   _tag = tag;

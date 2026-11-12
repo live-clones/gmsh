@@ -305,6 +305,7 @@ public:
     reclassifyOffset[2];
   int pluginOffset[2], pluginSize[2], fieldOffset[2], fieldSize[2], optHeight;
   int fileChooserOffset[2], extraOffset[2], extraSize[2];
+  int editorOffset[2], editorSize[2];
   // use the system menu bar on macOS?
   int systemMenuBar;
   // use the native file chooser?

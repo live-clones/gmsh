@@ -2274,6 +2274,30 @@ double opt_general_plugin_size1(OPT_ARGS_NUM)
   return CTX::instance()->pluginSize[1];
 }
 
+double opt_general_editor_offset0(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->editorOffset[0] = (int)val;
+  return CTX::instance()->editorOffset[0];
+}
+
+double opt_general_editor_offset1(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->editorOffset[1] = (int)val;
+  return CTX::instance()->editorOffset[1];
+}
+
+double opt_general_editor_size0(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->editorSize[0] = (int)val;
+  return CTX::instance()->editorSize[0];
+}
+
+double opt_general_editor_size1(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->editorSize[1] = (int)val;
+  return CTX::instance()->editorSize[1];
+}
+
 double opt_general_field_offset0(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->fieldOffset[0] = (int)val;

@@ -22,7 +22,7 @@
 #include "FlGui.h"
 #include "hintInput.h"
 #include "graphicWindow.h"
-#include "windowPlacement.h"
+#include "paletteWindow.h"
 #include "editorWindow.h"
 #include "fileActions.h"
 #include "Context.h"
@@ -42,11 +42,17 @@ static std::string withKey(const char *text, char key)
 }
 
 // the window of an editor, which tells it when it is activated, and closes
-// with Cmd+W (Ctrl+W)
-class editorFrame : public Fl_Double_Window {
+// with Cmd+W (Ctrl+W); its offset and its size are kept in the options
+class editorFrame : public gmshWindow {
 public:
   std::function<void()> activated;
-  editorFrame(int w, int h) : Fl_Double_Window(w, h) {}
+  editorFrame(int w, int h)
+    : gmshWindow(w, h, false, nullptr, CTX::instance()->editorOffset,
+                 &CTX::instance()->editorSize[0],
+                 &CTX::instance()->editorSize[1])
+  {
+  }
+  void show() override { _showOnDesktop(); }
   int handle(int event) override
   {
     if((event == FL_FOCUS || event == FL_ENTER) && activated) activated();
@@ -56,7 +62,7 @@ public:
       do_callback();
       return 1;
     }
-    return Fl_Double_Window::handle(event);
+    return gmshWindow::handle(event);
   }
 };
 
@@ -226,8 +232,14 @@ public:
     _text->add_modify_callback(_modified_cb, this);
     _win->resizable(_editor);
     // (not narrower than the buttons and the fields, which keep their width)
-    _win->size_range(left + WB + sw + WB + lw + wb, 4 * BH);
+    int minW = left + WB + sw + WB + lw + wb, minH = 4 * BH;
+    _win->size_range(minW, minH);
     _win->end();
+    // the size the user left the editor at, if any
+    int *size = CTX::instance()->editorSize;
+    if(size[0] > 0 || size[1] > 0)
+      _win->size(size[0] > 0 ? std::max(size[0], minW) : width,
+                 size[1] > 0 ? std::max(size[1], minH) : height);
     colors();
     load();
   }
@@ -355,7 +367,6 @@ public:
   }
   void show()
   {
-    if(!_win->shown()) centerWindow(_win);
     _win->show();
     _editor->take_focus();
   }

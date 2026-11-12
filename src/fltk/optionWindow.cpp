@@ -1134,7 +1134,8 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
 
   win = new paletteWindow(winWidth, winHeight,
                           CTX::instance()->nonModalWindows ? true : false,
-                          nullptr, CTX::instance()->optOffset);
+                          nullptr, CTX::instance()->optOffset, nullptr,
+                          &CTX::instance()->optHeight);
   win->box(GMSH_WINDOW_BOX);
   // the tabs show the category, the view list the views
   win->label("Options");

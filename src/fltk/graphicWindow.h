@@ -115,7 +115,6 @@ public:
   void tilePushed();
   void tileReleased();
   void setMenuWidth(int w);
-  int getMenuHeight();
   void showMenu();
   void hideMenu();
   void showHideMenu();

@@ -423,8 +423,7 @@ static void default_fatal_error_handler(const char *fmt, ...)
 
 FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
              void (*error_handler)(const char *fmt, ...))
-  : _quitShouldExit(quitShouldExit), lastContextWindow(nullptr),
-    fullscreen(nullptr)
+  : _quitShouldExit(quitShouldExit), fullscreen(nullptr)
 {
   if(error_handler) {
     Fl::error = error_handler;
@@ -1203,32 +1202,9 @@ void FlGui::storeCurrentWindowsInfo()
                                graph[0]->getMessageHeight() :
                                CTX::instance()->msgSize;
   CTX::instance()->menuSize[0] = graph[0]->getMenuWidth();
-  if(graph[0]->isMenuDetached()) {
-    CTX::instance()->detachedMenu = 1;
-    CTX::instance()->menuSize[1] = graph[0]->getMenuHeight();
-    storeWindowOffset(graph[0]->getMenuWindow(), CTX::instance()->menuOffset);
-  }
-  else
-    CTX::instance()->detachedMenu = 0;
-  storeWindowOffset(options->win, CTX::instance()->optOffset);
-  CTX::instance()->optHeight = ((paletteWindow *)options->win)->desktopH();
-  storeWindowOffset(plugins->win, CTX::instance()->pluginOffset);
-  CTX::instance()->pluginSize[0] = ((paletteWindow *)plugins->win)->desktopW();
-  CTX::instance()->pluginSize[1] = ((paletteWindow *)plugins->win)->desktopH();
-  storeWindowOffset(fields->win, CTX::instance()->fieldOffset);
-  CTX::instance()->fieldSize[0] = ((paletteWindow *)fields->win)->desktopW();
-  CTX::instance()->fieldSize[1] = ((paletteWindow *)fields->win)->desktopH();
-  storeWindowOffset(stats->win, CTX::instance()->statOffset);
-  storeWindowOffset(visibility->win, CTX::instance()->visOffset);
-  storeWindowOffset(highordertools->win, CTX::instance()->hotOffset);
-  storeWindowOffset(clipping->win, CTX::instance()->clipOffset);
-  if(partition->win)
-    storeWindowOffset(partition->win, CTX::instance()->partOffset);
-  storeWindowOffset(classify->win, CTX::instance()->reclassifyOffset);
-  storeWindowOffset(manip->win, CTX::instance()->manipOffset);
-  storeWindowOffset(lastContextWindow ? lastContextWindow :
-                                        elementaryContext->win,
-                    CTX::instance()->ctxOffset);
+  CTX::instance()->detachedMenu = graph[0]->isMenuDetached() ? 1 : 0;
+  // the other windows, each in the options given to its constructor
+  gmshWindow::storeAll();
 #if defined(HAVE_3M)
   storeWindowPosition3M();
 #endif

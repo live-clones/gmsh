@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <string>
+#include <vector>
 #include <FL/Fl.H>
 #include <FL/Fl_Double_Window.H>
 #include "windowPlacement.h"
@@ -48,16 +49,26 @@ public:
 };
 
 // The windows of the FLTK graphical user interface, main and tool windows:
-// placed on the desktop
-// at their offset from the main graphic window (see windowPlacement.h), with
-// the title bar and the widgets in the style of the theme
+// placed on the desktop at their offset from the main graphic window (see
+// windowPlacement.h), with the title bar and the widgets in the style of the
+// theme. The options that give a window its offset and its size are also
+// where storeAll() puts them back, when the options are saved
 class gmshWindow : public Fl_Double_Window {
+private:
+  // every window, and when each was last shown on the desktop (0: never)
+  inline static std::vector<gmshWindow *> _all;
+  inline static unsigned _shows = 0;
+  unsigned _shownAt = 0;
+  // the options keeping the width and the height, if any
+  int *_keptW, *_keptH;
+
 protected:
   // position relative to the main graphic window, applied when shown
   int *_offset;
   void _showOnDesktop()
   {
     if(_offset) placeWindow(this, _offset);
+    _shownAt = ++_shows;
     if(non_modal() && !shown()) Fl_Double_Window::show(); // fix ordering
     Fl_Double_Window::show();
     titleBarColor(this);
@@ -76,12 +87,39 @@ protected:
   }
 
 public:
-  gmshWindow(int w, int h, bool nonModal, const char *l, int *offset)
-    : Fl_Double_Window(w, h, l), _offset(offset)
+  // offset, keptW and keptH: the options that keep the offset, the width and
+  // the height (any of them may be null)
+  gmshWindow(int w, int h, bool nonModal, const char *l, int *offset,
+             int *keptW = nullptr, int *keptH = nullptr)
+    : Fl_Double_Window(w, h, l), _keptW(keptW), _keptH(keptH), _offset(offset)
   {
     if(nonModal) set_non_modal();
+    _all.push_back(this);
   }
-  ~gmshWindow() { forgetWindow(this); }
+  ~gmshWindow()
+  {
+    forgetWindow(this);
+    _all.erase(std::find(_all.begin(), _all.end(), this));
+  }
+  // the size on the desktop (see paletteWindow, which can be docked)
+  virtual int desktopW() const { return w(); }
+  virtual int desktopH() const { return h(); }
+  // the offset and the size of every window shown on the desktop, put back in
+  // their options; of the windows sharing an option, the one shown last
+  static void storeAll()
+  {
+    std::vector<gmshWindow *> shown;
+    for(gmshWindow *w : _all)
+      if(w->_shownAt) shown.push_back(w);
+    std::sort(shown.begin(), shown.end(), [](gmshWindow *a, gmshWindow *b) {
+      return a->_shownAt < b->_shownAt;
+    });
+    for(gmshWindow *w : shown) {
+      if(w->_offset) storeWindowOffset(w, w->_offset);
+      if(w->_keptW) *w->_keptW = w->desktopW();
+      if(w->_keptH) *w->_keptH = w->desktopH();
+    }
+  }
   virtual void draw()
   {
     gmshStyleWidgets(this);
@@ -149,9 +187,11 @@ public:
     return r;
   }
   paletteWindow(int w, int h, bool nonModal, const char *l = nullptr,
-                int *offset = nullptr)
-    : gmshWindow(w, h, nonModal, l, offset), _width(w), _resized(nullptr),
-      _resizedData(nullptr), _minW(0), _minH(0), _maxW(0), _maxH(0),
+                int *offset = nullptr, int *keptW = nullptr,
+                int *keptH = nullptr)
+    : gmshWindow(w, h, nonModal, l, offset, keptW, keptH), _width(w),
+      _resized(nullptr), _resizedData(nullptr), _minW(0), _minH(0), _maxW(0),
+      _maxH(0),
       _dockable(false), _floating(false), _pushed(false), _desktopBorder(true),
       _desktopNonModal(false), _desktopW(w), _desktopH(h), _revealed(nullptr),
       _revealedData(nullptr)
@@ -186,8 +226,8 @@ public:
     forgetWindow(this);
   }
   // the size on the desktop, also while docked
-  int desktopW() const { return parent() ? _desktopW : w(); }
-  int desktopH() const { return parent() ? _desktopH : h(); }
+  virtual int desktopW() const { return parent() ? _desktopW : w(); }
+  virtual int desktopH() const { return parent() ? _desktopH : h(); }
   // docked, the window is shown again (its tab chosen, unfolded): a tool
   // refreshes there what it skips while hidden
   void whenRevealed(void (*cb)(void *), void *data)

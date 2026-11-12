@@ -139,9 +139,6 @@ public:
   meshContextWindow *meshContext;
   physicalContextWindow *physicalContext;
   onelabContextWindow *onelabContext;
-  // the context window shown last, whose place is stored (see
-  // storeCurrentWindowsInfo())
-  Fl_Window *lastContextWindow;
   helpWindow *help;
   onelabGroup *onelab;
   openglWindow *fullscreen;

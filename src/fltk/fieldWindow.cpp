@@ -138,7 +138,9 @@ fieldWindow::fieldWindow(int deltaFontSize)
 
   win = new paletteWindow(width, height,
                           CTX::instance()->nonModalWindows ? true : false,
-                          "Size fields", CTX::instance()->fieldOffset);
+                          "Size fields", CTX::instance()->fieldOffset,
+                          &CTX::instance()->fieldSize[0],
+                          &CTX::instance()->fieldSize[1]);
   win->box(GMSH_WINDOW_BOX);
 
 #if defined(HAVE_MESH)

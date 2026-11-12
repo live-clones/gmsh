@@ -342,7 +342,9 @@ pluginWindow::pluginWindow(int deltaFontSize)
 
   win = new paletteWindow(width, height,
                           CTX::instance()->nonModalWindows ? true : false,
-                          "Plugins", CTX::instance()->pluginOffset);
+                          "Plugins", CTX::instance()->pluginOffset,
+                          &CTX::instance()->pluginSize[0],
+                          &CTX::instance()->pluginSize[1]);
   win->box(GMSH_WINDOW_BOX);
 
   search = searchBox(

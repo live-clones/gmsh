@@ -22,8 +22,9 @@ public:
   // between light and dark meanwhile, see FlGui)
   inline static void (*focusHook)() = nullptr;
   mainWindow(int w, int h, bool nonModal, const char *l = nullptr,
-             int *offset = nullptr)
-    : gmshWindow(w, h, nonModal, l, offset)
+             int *offset = nullptr, int *keptW = nullptr,
+             int *keptH = nullptr)
+    : gmshWindow(w, h, nonModal, l, offset, keptW, keptH)
   {
   }
   virtual int handle(int event)
