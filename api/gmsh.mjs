@@ -7722,6 +7722,380 @@ export function wrapGmsh(Module) {
     }
   };
 
+  // Discrete CAD modeler functions
+  gmsh.model.discrete = {};
+
+  /**
+   * gmsh.model.discrete.addBox(x, y, z, dx, dy, dz, tag = -1)
+   *
+   * Add a parallelepipedic box in the discrete CAD representation, defined by
+   * a point (`x', `y', `z') and the extents along the x-, y- and z-axes. Its
+   * 6 surfaces are triangulated exactly, with 2 triangles each. If `tag' is
+   * positive, set the tag explicitly; otherwise a new tag is selected
+   * automatically. Return the tag of the box.
+   *
+   * Return an integer.
+   */
+  gmsh.model.discrete.addBox = function(x, y, z, dx, dy, dz, tag = -1) {
+    const tmp = [];
+    try {
+      const api_result_ = M._gmshModelDiscreteAddBox(x, y, z, dx, dy, dz, tag, ierr);
+      _check();
+      return api_result_;
+    }
+    finally {
+      tmp.forEach((p) => M._free(p));
+    }
+  };
+
+  /**
+   * gmsh.model.discrete.addSphere(xc, yc, zc, radius, tag = -1, tolerance = -1.)
+   *
+   * Add a sphere of center (`xc', `yc', `zc') and radius `radius' in the
+   * discrete CAD representation. Its 2 surfaces, the hemispheres, are
+   * triangulated at most `tolerance' away from the exact sphere
+   * (`Geometry.DiscreteTolerance' times the radius if `tolerance' is not
+   * positive). If `tag' is positive, set the tag explicitly; otherwise a new
+   * tag is selected automatically. Return the tag of the sphere.
+   *
+   * Return an integer.
+   */
+  gmsh.model.discrete.addSphere = function(xc, yc, zc, radius, tag = -1, tolerance = -1.) {
+    const tmp = [];
+    try {
+      const api_result_ = M._gmshModelDiscreteAddSphere(xc, yc, zc, radius, tag, tolerance, ierr);
+      _check();
+      return api_result_;
+    }
+    finally {
+      tmp.forEach((p) => M._free(p));
+    }
+  };
+
+  /**
+   * gmsh.model.discrete.addRectangle(x, y, z, dx, dy, tag = -1)
+   *
+   * Add a rectangle in the discrete CAD representation, defined by a point
+   * (`x', `y', `z') and the extents along the x- and y-axes, triangulated
+   * exactly with 2 triangles. If `tag' is positive, set the tag explicitly;
+   * otherwise a new tag is selected automatically. Return the tag of the
+   * rectangle.
+   *
+   * Return an integer.
+   */
+  gmsh.model.discrete.addRectangle = function(x, y, z, dx, dy, tag = -1) {
+    const tmp = [];
+    try {
+      const api_result_ = M._gmshModelDiscreteAddRectangle(x, y, z, dx, dy, tag, ierr);
+      _check();
+      return api_result_;
+    }
+    finally {
+      tmp.forEach((p) => M._free(p));
+    }
+  };
+
+  /**
+   * gmsh.model.discrete.addDisk(xc, yc, zc, rx, ry, tag = -1, zAxis = [], xAxis = [], tolerance = -1.)
+   *
+   * Add a disk in the discrete CAD representation, defined by the center
+   * (`xc', `yc', `zc') and the radius `rx' along the x-axis and `ry' along
+   * the y-axis. If a vector `zAxis' of size 3 is provided, use it as the
+   * normal to the disk; if a vector `xAxis' of size 3 is provided, use it to
+   * define the x-axis. Its boundary, split into 2 arcs, is at most
+   * `tolerance' away from the exact ellipse (`Geometry.DiscreteTolerance'
+   * times the largest radius if `tolerance' is not positive). If `tag' is
+   * positive, set the tag explicitly; otherwise a new tag is selected
+   * automatically. Return the tag of the disk.
+   *
+   * Return an integer.
+   */
+  gmsh.model.discrete.addDisk = function(xc, yc, zc, rx, ry, tag = -1, zAxis = [], xAxis = [], tolerance = -1.) {
+    const tmp = [];
+    try {
+      const [api_zAxis_, api_zAxis_n] = _ivector(zAxis, 'double', tmp);
+      const [api_xAxis_, api_xAxis_n] = _ivector(xAxis, 'double', tmp);
+      const api_result_ = M._gmshModelDiscreteAddDisk(xc, yc, zc, rx, ry, tag, api_zAxis_, api_zAxis_n, api_xAxis_, api_xAxis_n, tolerance, ierr);
+      _check();
+      return api_result_;
+    }
+    finally {
+      tmp.forEach((p) => M._free(p));
+    }
+  };
+
+  /**
+   * gmsh.model.discrete.addCylinder(x, y, z, dx, dy, dz, r, tag = -1, tolerance = -1.)
+   *
+   * Add a cylinder in the discrete CAD representation, defined by the center
+   * (`x', `y', `z') of its first circular face, the 3 components (`dx', `dy',
+   * `dz') of the vector defining its axis and its radius `r'. Its 3 surfaces,
+   * the lateral surface and the 2 disks, are triangulated at most `tolerance'
+   * away from the exact cylinder (`Geometry.DiscreteTolerance' times `r' if
+   * `tolerance' is not positive). If `tag' is positive, set the tag
+   * explicitly; otherwise a new tag is selected automatically. Return the tag
+   * of the cylinder.
+   *
+   * Return an integer.
+   */
+  gmsh.model.discrete.addCylinder = function(x, y, z, dx, dy, dz, r, tag = -1, tolerance = -1.) {
+    const tmp = [];
+    try {
+      const api_result_ = M._gmshModelDiscreteAddCylinder(x, y, z, dx, dy, dz, r, tag, tolerance, ierr);
+      _check();
+      return api_result_;
+    }
+    finally {
+      tmp.forEach((p) => M._free(p));
+    }
+  };
+
+  /**
+   * gmsh.model.discrete.addCone(x, y, z, dx, dy, dz, r1, r2, tag = -1, tolerance = -1.)
+   *
+   * Add a cone in the discrete CAD representation, defined by the center
+   * (`x', `y', `z') of its first circular face, the 3 components of the
+   * vector (`dx', `dy', `dz') defining its axis and the two radii `r1' and
+   * `r2' of the faces (one of them can be zero, giving an apex). Its
+   * surfaces, the lateral surface (holding the apex, if any) and the disks,
+   * are triangulated at most `tolerance' away from the exact cone
+   * (`Geometry.DiscreteTolerance' times the largest radius if `tolerance' is
+   * not positive). If `tag' is positive, set the tag explicitly; otherwise a
+   * new tag is selected automatically. Return the tag of the cone.
+   *
+   * Return an integer.
+   */
+  gmsh.model.discrete.addCone = function(x, y, z, dx, dy, dz, r1, r2, tag = -1, tolerance = -1.) {
+    const tmp = [];
+    try {
+      const api_result_ = M._gmshModelDiscreteAddCone(x, y, z, dx, dy, dz, r1, r2, tag, tolerance, ierr);
+      _check();
+      return api_result_;
+    }
+    finally {
+      tmp.forEach((p) => M._free(p));
+    }
+  };
+
+  /**
+   * gmsh.model.discrete.addTorus(x, y, z, r1, r2, tag = -1, zAxis = [], tolerance = -1.)
+   *
+   * Add a torus in the discrete CAD representation, defined by its center
+   * (`x', `y', `z') and its 2 radii `r1' (of its center circle) and `r2' (of
+   * its section), with r2 < r1. If a vector `zAxis' of size 3 is provided,
+   * use it as the axis of the torus (instead of the z-axis). Its 2 surfaces,
+   * the halves on either side of its equatorial plane bounded by its outer
+   * and inner equators, are triangulated at most `tolerance' away from the
+   * exact torus (`Geometry.DiscreteTolerance' times `r2' if `tolerance' is
+   * not positive). If `tag' is positive, set the tag explicitly; otherwise a
+   * new tag is selected automatically. Return the tag of the torus.
+   *
+   * Return an integer.
+   */
+  gmsh.model.discrete.addTorus = function(x, y, z, r1, r2, tag = -1, zAxis = [], tolerance = -1.) {
+    const tmp = [];
+    try {
+      const [api_zAxis_, api_zAxis_n] = _ivector(zAxis, 'double', tmp);
+      const api_result_ = M._gmshModelDiscreteAddTorus(x, y, z, r1, r2, tag, api_zAxis_, api_zAxis_n, tolerance, ierr);
+      _check();
+      return api_result_;
+    }
+    finally {
+      tmp.forEach((p) => M._free(p));
+    }
+  };
+
+  /**
+   * gmsh.model.discrete.fuse(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true)
+   *
+   * Compute the boolean union (the fusion) of the volumes `objectDimTags' and
+   * `toolDimTags' (vectors of (dim, tag) pairs) in the discrete CAD
+   * representation, exactly on their triangulations. The surfaces of the
+   * result keep the parameters of those they come from. Return the resulting
+   * volumes in `outDimTags', and the correspondance between input and
+   * resulting entities in `outDimTagsMap'. If `tag' is positive, try to set
+   * the tag explicitly (only valid if the boolean operation results in a
+   * single entity). Remove the object if `removeObject' is set. Remove the
+   * tool if `removeTool' is set.
+   *
+   * Return `outDimTags', `outDimTagsMap'.
+   */
+  gmsh.model.discrete.fuse = function(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true) {
+    const tmp = [];
+    try {
+      const [api_objectDimTags_, api_objectDimTags_n] = _ivectorpair(objectDimTags, tmp);
+      const [api_toolDimTags_, api_toolDimTags_n] = _ivectorpair(toolDimTags, tmp);
+      const api_outDimTags_ = _alloc(8, tmp);
+      const api_outDimTagsMap_ = _alloc(12, tmp);
+      M._gmshModelDiscreteFuse(api_objectDimTags_, api_objectDimTags_n, api_toolDimTags_, api_toolDimTags_n, api_outDimTags_, api_outDimTags_ + 4, api_outDimTagsMap_, api_outDimTagsMap_ + 4, api_outDimTagsMap_ + 8, tag, removeObject ? 1 : 0, removeTool ? 1 : 0, ierr);
+      _check();
+      return [
+        _ovectorpair(api_outDimTags_),
+        _ovectorvector(api_outDimTagsMap_, 'int', true)];
+    }
+    finally {
+      tmp.forEach((p) => M._free(p));
+    }
+  };
+
+  /**
+   * gmsh.model.discrete.intersect(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true)
+   *
+   * Compute the boolean intersection (the common parts) of the volumes
+   * `objectDimTags' and `toolDimTags' (vectors of (dim, tag) pairs) in the
+   * discrete CAD representation, exactly on their triangulations. The
+   * surfaces of the result keep the parameters of those they come from.
+   * Return the resulting volumes in `outDimTags', and the correspondance
+   * between input and resulting entities in `outDimTagsMap'. If `tag' is
+   * positive, try to set the tag explicitly (only valid if the boolean
+   * operation results in a single entity). Remove the object if
+   * `removeObject' is set. Remove the tool if `removeTool' is set.
+   *
+   * Return `outDimTags', `outDimTagsMap'.
+   */
+  gmsh.model.discrete.intersect = function(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true) {
+    const tmp = [];
+    try {
+      const [api_objectDimTags_, api_objectDimTags_n] = _ivectorpair(objectDimTags, tmp);
+      const [api_toolDimTags_, api_toolDimTags_n] = _ivectorpair(toolDimTags, tmp);
+      const api_outDimTags_ = _alloc(8, tmp);
+      const api_outDimTagsMap_ = _alloc(12, tmp);
+      M._gmshModelDiscreteIntersect(api_objectDimTags_, api_objectDimTags_n, api_toolDimTags_, api_toolDimTags_n, api_outDimTags_, api_outDimTags_ + 4, api_outDimTagsMap_, api_outDimTagsMap_ + 4, api_outDimTagsMap_ + 8, tag, removeObject ? 1 : 0, removeTool ? 1 : 0, ierr);
+      _check();
+      return [
+        _ovectorpair(api_outDimTags_),
+        _ovectorvector(api_outDimTagsMap_, 'int', true)];
+    }
+    finally {
+      tmp.forEach((p) => M._free(p));
+    }
+  };
+
+  /**
+   * gmsh.model.discrete.cut(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true)
+   *
+   * Compute the boolean difference between the volumes `objectDimTags' and
+   * `toolDimTags' (vectors of (dim, tag) pairs) in the discrete CAD
+   * representation, exactly on their triangulations. The surfaces of the
+   * result keep the parameters of those they come from. Return the resulting
+   * volumes in `outDimTags', and the correspondance between input and
+   * resulting entities in `outDimTagsMap'. If `tag' is positive, try to set
+   * the tag explicitly (only valid if the boolean operation results in a
+   * single entity). Remove the object if `removeObject' is set. Remove the
+   * tool if `removeTool' is set.
+   *
+   * Return `outDimTags', `outDimTagsMap'.
+   */
+  gmsh.model.discrete.cut = function(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true) {
+    const tmp = [];
+    try {
+      const [api_objectDimTags_, api_objectDimTags_n] = _ivectorpair(objectDimTags, tmp);
+      const [api_toolDimTags_, api_toolDimTags_n] = _ivectorpair(toolDimTags, tmp);
+      const api_outDimTags_ = _alloc(8, tmp);
+      const api_outDimTagsMap_ = _alloc(12, tmp);
+      M._gmshModelDiscreteCut(api_objectDimTags_, api_objectDimTags_n, api_toolDimTags_, api_toolDimTags_n, api_outDimTags_, api_outDimTags_ + 4, api_outDimTagsMap_, api_outDimTagsMap_ + 4, api_outDimTagsMap_ + 8, tag, removeObject ? 1 : 0, removeTool ? 1 : 0, ierr);
+      _check();
+      return [
+        _ovectorpair(api_outDimTags_),
+        _ovectorvector(api_outDimTagsMap_, 'int', true)];
+    }
+    finally {
+      tmp.forEach((p) => M._free(p));
+    }
+  };
+
+  /**
+   * gmsh.model.discrete.importShapes(fileName, angle, curveAngle = Math.PI, tolerance = -1.)
+   *
+   * Import the triangulations of the surfaces of the mesh file `fileName'
+   * (STL, MSH, OBJ, PLY, OFF, VTK or MESH format) in the discrete CAD
+   * representation, and build their topology: the surfaces are the triangles
+   * of the same surface of the file connected across edges shared by two
+   * triangles whose normals make an angle smaller than `angle' (in radians),
+   * the curves are along the edges between two surfaces, the boundary edges
+   * (of one triangle), the non-manifold edges (of more than two triangles)
+   * and the sharp edges inside a surface (embedded in it), split where more
+   * or less than two of them meet and, if `curveAngle' is less than Pi, where
+   * they turn by more than `curveAngle', and the volumes are the cells of
+   * space bounded by the surfaces (the cells of a connected piece of the
+   * triangulation inside a cell of another one are volumes if its triangles
+   * point out of them, holes if they point into them, as STL normals point
+   * out of solids). Each surface is oriented outwards of a volume whose outer
+   * boundary it is on, if any (the included volume for the boundary of an
+   * inclusion). The surfaces whose nodes are at most `tolerance' away from a
+   * plane, a sphere, a cylinder, a cone or a torus
+   * (`Geometry.DiscreteTolerance' times the size of the triangulation if
+   * `tolerance' is not positive) are recognized as such and get the
+   * parameters of the corresponding primitives (with a seam, or split in two
+   * halves, where needed); the others are split into their pieces on such
+   * surfaces up to the precision of the coordinates of their nodes (for a
+   * part whose faces meet tangentially), the rest into pieces that a single
+   * map can parametrize. Return the volumes and the surfaces bounding no
+   * volume in `outDimTags'.
+   *
+   * Return `outDimTags'.
+   */
+  gmsh.model.discrete.importShapes = function(fileName, angle, curveAngle = Math.PI, tolerance = -1.) {
+    const tmp = [];
+    try {
+      const api_fileName_ = _istring(fileName, tmp);
+      const api_outDimTags_ = _alloc(8, tmp);
+      M._gmshModelDiscreteImportShapes(api_fileName_, angle, api_outDimTags_, api_outDimTags_ + 4, curveAngle, tolerance, ierr);
+      _check();
+      return _ovectorpair(api_outDimTags_);
+    }
+    finally {
+      tmp.forEach((p) => M._free(p));
+    }
+  };
+
+  /**
+   * gmsh.model.discrete.addTriangulation(coord, triangles, angle, curveAngle = Math.PI, tolerance = -1.)
+   *
+   * Add the triangulation given by the coordinates `coord' of its nodes
+   * (concatenated: [n1x, n1y, n1z, n2x, ...]) and its triangles `triangles'
+   * (the indices of their 3 nodes, from 0, concatenated) in the discrete CAD
+   * representation, and build its topology as `importShapes'. Return the
+   * volumes and the surfaces bounding no volume in `outDimTags'.
+   *
+   * Return `outDimTags'.
+   */
+  gmsh.model.discrete.addTriangulation = function(coord, triangles, angle, curveAngle = Math.PI, tolerance = -1.) {
+    const tmp = [];
+    try {
+      const [api_coord_, api_coord_n] = _ivector(coord, 'double', tmp);
+      const [api_triangles_, api_triangles_n] = _ivector(triangles, 'size', tmp);
+      const api_outDimTags_ = _alloc(8, tmp);
+      M._gmshModelDiscreteAddTriangulation(api_coord_, api_coord_n, api_triangles_, api_triangles_n, angle, api_outDimTags_, api_outDimTags_ + 4, curveAngle, tolerance, ierr);
+      _check();
+      return _ovectorpair(api_outDimTags_);
+    }
+    finally {
+      tmp.forEach((p) => M._free(p));
+    }
+  };
+
+  /**
+   * gmsh.model.discrete.synchronize()
+   *
+   * Synchronize the discrete CAD representation with the current Gmsh model:
+   * its points, curves, surfaces and volumes become discrete entities of the
+   * model, whose geometry is their polylines and triangulations, and replace
+   * the entities of the previous synchronization. Without synchronization the
+   * entities in the discrete CAD representation are not available to any
+   * function outside of the discrete CAD modeler functions.
+   */
+  gmsh.model.discrete.synchronize = function() {
+    const tmp = [];
+    try {
+      M._gmshModelDiscreteSynchronize(ierr);
+      _check();
+    }
+    finally {
+      tmp.forEach((p) => M._free(p));
+    }
+  };
+
   // Post-processing view functions
   gmsh.view = {};
 

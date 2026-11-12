@@ -253,6 +253,36 @@ module gmsh
         gmshViewSetVisibilityPerWindow
   end type gmsh_view_t
 
+  type, public :: gmsh_model_discrete_t
+    contains
+    procedure, nopass :: addBox => &
+        gmshModelDiscreteAddBox
+    procedure, nopass :: addSphere => &
+        gmshModelDiscreteAddSphere
+    procedure, nopass :: addRectangle => &
+        gmshModelDiscreteAddRectangle
+    procedure, nopass :: addDisk => &
+        gmshModelDiscreteAddDisk
+    procedure, nopass :: addCylinder => &
+        gmshModelDiscreteAddCylinder
+    procedure, nopass :: addCone => &
+        gmshModelDiscreteAddCone
+    procedure, nopass :: addTorus => &
+        gmshModelDiscreteAddTorus
+    procedure, nopass :: fuse => &
+        gmshModelDiscreteFuse
+    procedure, nopass :: intersect => &
+        gmshModelDiscreteIntersect
+    procedure, nopass :: cut => &
+        gmshModelDiscreteCut
+    procedure, nopass :: importShapes => &
+        gmshModelDiscreteImportShapes
+    procedure, nopass :: addTriangulation => &
+        gmshModelDiscreteAddTriangulation
+    procedure, nopass :: synchronize => &
+        gmshModelDiscreteSynchronize
+  end type gmsh_model_discrete_t
+
   type, public :: gmsh_model_occ_mesh_t
     contains
     procedure, nopass :: setSize => &
@@ -786,6 +816,7 @@ module gmsh
     type(gmsh_model_mesh_t) :: mesh
     type(gmsh_model_geo_t) :: geo
     type(gmsh_model_occ_t) :: occ
+    type(gmsh_model_discrete_t) :: discrete
     contains
     procedure, nopass :: add => &
         gmshModelAdd
@@ -14383,6 +14414,836 @@ module gmsh
          size=real(size, c_double), &
          ierr_=ierr)
   end subroutine gmshModelOccMeshSetSize
+
+  !> Add a parallelepipedic box in the discrete CAD representation, defined by a
+  !! point (`x', `y', `z') and the extents along the x-, y- and z-axes. Its 6
+  !! surfaces are triangulated exactly, with 2 triangles each. If `tag' is
+  !! positive, set the tag explicitly; otherwise a new tag is selected
+  !! automatically. Return the tag of the box.
+  function gmshModelDiscreteAddBox(x, &
+                                   y, &
+                                   z, &
+                                   dx, &
+                                   dy, &
+                                   dz, &
+                                   tag, &
+                                   ierr)
+    interface
+    function C_API(x, &
+                   y, &
+                   z, &
+                   dx, &
+                   dy, &
+                   dz, &
+                   tag, &
+                   ierr_) &
+      bind(C, name="gmshModelDiscreteAddBox")
+      use, intrinsic :: iso_c_binding
+      integer(c_int) :: C_API
+      real(c_double), value, intent(in) :: x
+      real(c_double), value, intent(in) :: y
+      real(c_double), value, intent(in) :: z
+      real(c_double), value, intent(in) :: dx
+      real(c_double), value, intent(in) :: dy
+      real(c_double), value, intent(in) :: dz
+      integer(c_int), value, intent(in) :: tag
+      integer(c_int), intent(out), optional :: ierr_
+    end function C_API
+    end interface
+    integer(c_int) :: gmshModelDiscreteAddBox
+    real(c_double), intent(in) :: x
+    real(c_double), intent(in) :: y
+    real(c_double), intent(in) :: z
+    real(c_double), intent(in) :: dx
+    real(c_double), intent(in) :: dy
+    real(c_double), intent(in) :: dz
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
+    gmshModelDiscreteAddBox = C_API(x=real(x, c_double), &
+                              y=real(y, c_double), &
+                              z=real(z, c_double), &
+                              dx=real(dx, c_double), &
+                              dy=real(dy, c_double), &
+                              dz=real(dz, c_double), &
+                              tag=optval_c_int(-1, tag), &
+                              ierr_=ierr)
+  end function gmshModelDiscreteAddBox
+
+  !> Add a sphere of center (`xc', `yc', `zc') and radius `radius' in the
+  !! discrete CAD representation. Its 2 surfaces, the hemispheres, are
+  !! triangulated at most `tolerance' away from the exact sphere
+  !! (`Geometry.DiscreteTolerance' times the radius if `tolerance' is not
+  !! positive). If `tag' is positive, set the tag explicitly; otherwise a new
+  !! tag is selected automatically. Return the tag of the sphere.
+  function gmshModelDiscreteAddSphere(xc, &
+                                      yc, &
+                                      zc, &
+                                      radius, &
+                                      tag, &
+                                      tolerance, &
+                                      ierr)
+    interface
+    function C_API(xc, &
+                   yc, &
+                   zc, &
+                   radius, &
+                   tag, &
+                   tolerance, &
+                   ierr_) &
+      bind(C, name="gmshModelDiscreteAddSphere")
+      use, intrinsic :: iso_c_binding
+      integer(c_int) :: C_API
+      real(c_double), value, intent(in) :: xc
+      real(c_double), value, intent(in) :: yc
+      real(c_double), value, intent(in) :: zc
+      real(c_double), value, intent(in) :: radius
+      integer(c_int), value, intent(in) :: tag
+      real(c_double), value, intent(in) :: tolerance
+      integer(c_int), intent(out), optional :: ierr_
+    end function C_API
+    end interface
+    integer(c_int) :: gmshModelDiscreteAddSphere
+    real(c_double), intent(in) :: xc
+    real(c_double), intent(in) :: yc
+    real(c_double), intent(in) :: zc
+    real(c_double), intent(in) :: radius
+    integer, intent(in), optional :: tag
+    real(c_double), intent(in), optional :: tolerance
+    integer(c_int), intent(out), optional :: ierr
+    gmshModelDiscreteAddSphere = C_API(xc=real(xc, c_double), &
+                                 yc=real(yc, c_double), &
+                                 zc=real(zc, c_double), &
+                                 radius=real(radius, c_double), &
+                                 tag=optval_c_int(-1, tag), &
+                                 tolerance=optval_c_double(-1., tolerance), &
+                                 ierr_=ierr)
+  end function gmshModelDiscreteAddSphere
+
+  !> Add a rectangle in the discrete CAD representation, defined by a point
+  !! (`x', `y', `z') and the extents along the x- and y-axes, triangulated
+  !! exactly with 2 triangles. If `tag' is positive, set the tag explicitly;
+  !! otherwise a new tag is selected automatically. Return the tag of the
+  !! rectangle.
+  function gmshModelDiscreteAddRectangle(x, &
+                                         y, &
+                                         z, &
+                                         dx, &
+                                         dy, &
+                                         tag, &
+                                         ierr)
+    interface
+    function C_API(x, &
+                   y, &
+                   z, &
+                   dx, &
+                   dy, &
+                   tag, &
+                   ierr_) &
+      bind(C, name="gmshModelDiscreteAddRectangle")
+      use, intrinsic :: iso_c_binding
+      integer(c_int) :: C_API
+      real(c_double), value, intent(in) :: x
+      real(c_double), value, intent(in) :: y
+      real(c_double), value, intent(in) :: z
+      real(c_double), value, intent(in) :: dx
+      real(c_double), value, intent(in) :: dy
+      integer(c_int), value, intent(in) :: tag
+      integer(c_int), intent(out), optional :: ierr_
+    end function C_API
+    end interface
+    integer(c_int) :: gmshModelDiscreteAddRectangle
+    real(c_double), intent(in) :: x
+    real(c_double), intent(in) :: y
+    real(c_double), intent(in) :: z
+    real(c_double), intent(in) :: dx
+    real(c_double), intent(in) :: dy
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
+    gmshModelDiscreteAddRectangle = C_API(x=real(x, c_double), &
+                                    y=real(y, c_double), &
+                                    z=real(z, c_double), &
+                                    dx=real(dx, c_double), &
+                                    dy=real(dy, c_double), &
+                                    tag=optval_c_int(-1, tag), &
+                                    ierr_=ierr)
+  end function gmshModelDiscreteAddRectangle
+
+  !> Add a disk in the discrete CAD representation, defined by the center (`xc',
+  !! `yc', `zc') and the radius `rx' along the x-axis and `ry' along the y-axis.
+  !! If a vector `zAxis' of size 3 is provided, use it as the normal to the
+  !! disk; if a vector `xAxis' of size 3 is provided, use it to define the
+  !! x-axis. Its boundary, split into 2 arcs, is at most `tolerance' away from
+  !! the exact ellipse (`Geometry.DiscreteTolerance' times the largest radius if
+  !! `tolerance' is not positive). If `tag' is positive, set the tag explicitly;
+  !! otherwise a new tag is selected automatically. Return the tag of the disk.
+  function gmshModelDiscreteAddDisk(xc, &
+                                    yc, &
+                                    zc, &
+                                    rx, &
+                                    ry, &
+                                    tag, &
+                                    zAxis, &
+                                    xAxis, &
+                                    tolerance, &
+                                    ierr)
+    interface
+    function C_API(xc, &
+                   yc, &
+                   zc, &
+                   rx, &
+                   ry, &
+                   tag, &
+                   api_zAxis_, &
+                   api_zAxis_n_, &
+                   api_xAxis_, &
+                   api_xAxis_n_, &
+                   tolerance, &
+                   ierr_) &
+      bind(C, name="gmshModelDiscreteAddDisk")
+      use, intrinsic :: iso_c_binding
+      integer(c_int) :: C_API
+      real(c_double), value, intent(in) :: xc
+      real(c_double), value, intent(in) :: yc
+      real(c_double), value, intent(in) :: zc
+      real(c_double), value, intent(in) :: rx
+      real(c_double), value, intent(in) :: ry
+      integer(c_int), value, intent(in) :: tag
+      real(c_double), dimension(*), optional :: api_zAxis_
+      integer(c_size_t), value, intent(in) :: api_zAxis_n_
+      real(c_double), dimension(*), optional :: api_xAxis_
+      integer(c_size_t), value, intent(in) :: api_xAxis_n_
+      real(c_double), value, intent(in) :: tolerance
+      integer(c_int), intent(out), optional :: ierr_
+    end function C_API
+    end interface
+    integer(c_int) :: gmshModelDiscreteAddDisk
+    real(c_double), intent(in) :: xc
+    real(c_double), intent(in) :: yc
+    real(c_double), intent(in) :: zc
+    real(c_double), intent(in) :: rx
+    real(c_double), intent(in) :: ry
+    integer, intent(in), optional :: tag
+    real(c_double), dimension(:), intent(in), optional :: zAxis
+    real(c_double), dimension(:), intent(in), optional :: xAxis
+    real(c_double), intent(in), optional :: tolerance
+    integer(c_int), intent(out), optional :: ierr
+    gmshModelDiscreteAddDisk = C_API(xc=real(xc, c_double), &
+                               yc=real(yc, c_double), &
+                               zc=real(zc, c_double), &
+                               rx=real(rx, c_double), &
+                               ry=real(ry, c_double), &
+                               tag=optval_c_int(-1, tag), &
+                               api_zAxis_=zAxis, &
+                               api_zAxis_n_=size_gmsh_double(zAxis), &
+                               api_xAxis_=xAxis, &
+                               api_xAxis_n_=size_gmsh_double(xAxis), &
+                               tolerance=optval_c_double(-1., tolerance), &
+                               ierr_=ierr)
+  end function gmshModelDiscreteAddDisk
+
+  !> Add a cylinder in the discrete CAD representation, defined by the center
+  !! (`x', `y', `z') of its first circular face, the 3 components (`dx', `dy',
+  !! `dz') of the vector defining its axis and its radius `r'. Its 3 surfaces,
+  !! the lateral surface and the 2 disks, are triangulated at most `tolerance'
+  !! away from the exact cylinder (`Geometry.DiscreteTolerance' times `r' if
+  !! `tolerance' is not positive). If `tag' is positive, set the tag explicitly;
+  !! otherwise a new tag is selected automatically. Return the tag of the
+  !! cylinder.
+  function gmshModelDiscreteAddCylinder(x, &
+                                        y, &
+                                        z, &
+                                        dx, &
+                                        dy, &
+                                        dz, &
+                                        r, &
+                                        tag, &
+                                        tolerance, &
+                                        ierr)
+    interface
+    function C_API(x, &
+                   y, &
+                   z, &
+                   dx, &
+                   dy, &
+                   dz, &
+                   r, &
+                   tag, &
+                   tolerance, &
+                   ierr_) &
+      bind(C, name="gmshModelDiscreteAddCylinder")
+      use, intrinsic :: iso_c_binding
+      integer(c_int) :: C_API
+      real(c_double), value, intent(in) :: x
+      real(c_double), value, intent(in) :: y
+      real(c_double), value, intent(in) :: z
+      real(c_double), value, intent(in) :: dx
+      real(c_double), value, intent(in) :: dy
+      real(c_double), value, intent(in) :: dz
+      real(c_double), value, intent(in) :: r
+      integer(c_int), value, intent(in) :: tag
+      real(c_double), value, intent(in) :: tolerance
+      integer(c_int), intent(out), optional :: ierr_
+    end function C_API
+    end interface
+    integer(c_int) :: gmshModelDiscreteAddCylinder
+    real(c_double), intent(in) :: x
+    real(c_double), intent(in) :: y
+    real(c_double), intent(in) :: z
+    real(c_double), intent(in) :: dx
+    real(c_double), intent(in) :: dy
+    real(c_double), intent(in) :: dz
+    real(c_double), intent(in) :: r
+    integer, intent(in), optional :: tag
+    real(c_double), intent(in), optional :: tolerance
+    integer(c_int), intent(out), optional :: ierr
+    gmshModelDiscreteAddCylinder = C_API(x=real(x, c_double), &
+                                   y=real(y, c_double), &
+                                   z=real(z, c_double), &
+                                   dx=real(dx, c_double), &
+                                   dy=real(dy, c_double), &
+                                   dz=real(dz, c_double), &
+                                   r=real(r, c_double), &
+                                   tag=optval_c_int(-1, tag), &
+                                   tolerance=optval_c_double(-1., tolerance), &
+                                   ierr_=ierr)
+  end function gmshModelDiscreteAddCylinder
+
+  !> Add a cone in the discrete CAD representation, defined by the center (`x',
+  !! `y', `z') of its first circular face, the 3 components of the vector (`dx',
+  !! `dy', `dz') defining its axis and the two radii `r1' and `r2' of the faces
+  !! (one of them can be zero, giving an apex). Its surfaces, the lateral
+  !! surface (holding the apex, if any) and the disks, are triangulated at most
+  !! `tolerance' away from the exact cone (`Geometry.DiscreteTolerance' times
+  !! the largest radius if `tolerance' is not positive). If `tag' is positive,
+  !! set the tag explicitly; otherwise a new tag is selected automatically.
+  !! Return the tag of the cone.
+  function gmshModelDiscreteAddCone(x, &
+                                    y, &
+                                    z, &
+                                    dx, &
+                                    dy, &
+                                    dz, &
+                                    r1, &
+                                    r2, &
+                                    tag, &
+                                    tolerance, &
+                                    ierr)
+    interface
+    function C_API(x, &
+                   y, &
+                   z, &
+                   dx, &
+                   dy, &
+                   dz, &
+                   r1, &
+                   r2, &
+                   tag, &
+                   tolerance, &
+                   ierr_) &
+      bind(C, name="gmshModelDiscreteAddCone")
+      use, intrinsic :: iso_c_binding
+      integer(c_int) :: C_API
+      real(c_double), value, intent(in) :: x
+      real(c_double), value, intent(in) :: y
+      real(c_double), value, intent(in) :: z
+      real(c_double), value, intent(in) :: dx
+      real(c_double), value, intent(in) :: dy
+      real(c_double), value, intent(in) :: dz
+      real(c_double), value, intent(in) :: r1
+      real(c_double), value, intent(in) :: r2
+      integer(c_int), value, intent(in) :: tag
+      real(c_double), value, intent(in) :: tolerance
+      integer(c_int), intent(out), optional :: ierr_
+    end function C_API
+    end interface
+    integer(c_int) :: gmshModelDiscreteAddCone
+    real(c_double), intent(in) :: x
+    real(c_double), intent(in) :: y
+    real(c_double), intent(in) :: z
+    real(c_double), intent(in) :: dx
+    real(c_double), intent(in) :: dy
+    real(c_double), intent(in) :: dz
+    real(c_double), intent(in) :: r1
+    real(c_double), intent(in) :: r2
+    integer, intent(in), optional :: tag
+    real(c_double), intent(in), optional :: tolerance
+    integer(c_int), intent(out), optional :: ierr
+    gmshModelDiscreteAddCone = C_API(x=real(x, c_double), &
+                               y=real(y, c_double), &
+                               z=real(z, c_double), &
+                               dx=real(dx, c_double), &
+                               dy=real(dy, c_double), &
+                               dz=real(dz, c_double), &
+                               r1=real(r1, c_double), &
+                               r2=real(r2, c_double), &
+                               tag=optval_c_int(-1, tag), &
+                               tolerance=optval_c_double(-1., tolerance), &
+                               ierr_=ierr)
+  end function gmshModelDiscreteAddCone
+
+  !> Add a torus in the discrete CAD representation, defined by its center (`x',
+  !! `y', `z') and its 2 radii `r1' (of its center circle) and `r2' (of its
+  !! section), with r2 < r1. If a vector `zAxis' of size 3 is provided, use it
+  !! as the axis of the torus (instead of the z-axis). Its 2 surfaces, the
+  !! halves on either side of its equatorial plane bounded by its outer and
+  !! inner equators, are triangulated at most `tolerance' away from the exact
+  !! torus (`Geometry.DiscreteTolerance' times `r2' if `tolerance' is not
+  !! positive). If `tag' is positive, set the tag explicitly; otherwise a new
+  !! tag is selected automatically. Return the tag of the torus.
+  function gmshModelDiscreteAddTorus(x, &
+                                     y, &
+                                     z, &
+                                     r1, &
+                                     r2, &
+                                     tag, &
+                                     zAxis, &
+                                     tolerance, &
+                                     ierr)
+    interface
+    function C_API(x, &
+                   y, &
+                   z, &
+                   r1, &
+                   r2, &
+                   tag, &
+                   api_zAxis_, &
+                   api_zAxis_n_, &
+                   tolerance, &
+                   ierr_) &
+      bind(C, name="gmshModelDiscreteAddTorus")
+      use, intrinsic :: iso_c_binding
+      integer(c_int) :: C_API
+      real(c_double), value, intent(in) :: x
+      real(c_double), value, intent(in) :: y
+      real(c_double), value, intent(in) :: z
+      real(c_double), value, intent(in) :: r1
+      real(c_double), value, intent(in) :: r2
+      integer(c_int), value, intent(in) :: tag
+      real(c_double), dimension(*), optional :: api_zAxis_
+      integer(c_size_t), value, intent(in) :: api_zAxis_n_
+      real(c_double), value, intent(in) :: tolerance
+      integer(c_int), intent(out), optional :: ierr_
+    end function C_API
+    end interface
+    integer(c_int) :: gmshModelDiscreteAddTorus
+    real(c_double), intent(in) :: x
+    real(c_double), intent(in) :: y
+    real(c_double), intent(in) :: z
+    real(c_double), intent(in) :: r1
+    real(c_double), intent(in) :: r2
+    integer, intent(in), optional :: tag
+    real(c_double), dimension(:), intent(in), optional :: zAxis
+    real(c_double), intent(in), optional :: tolerance
+    integer(c_int), intent(out), optional :: ierr
+    gmshModelDiscreteAddTorus = C_API(x=real(x, c_double), &
+                                y=real(y, c_double), &
+                                z=real(z, c_double), &
+                                r1=real(r1, c_double), &
+                                r2=real(r2, c_double), &
+                                tag=optval_c_int(-1, tag), &
+                                api_zAxis_=zAxis, &
+                                api_zAxis_n_=size_gmsh_double(zAxis), &
+                                tolerance=optval_c_double(-1., tolerance), &
+                                ierr_=ierr)
+  end function gmshModelDiscreteAddTorus
+
+  !> Compute the boolean union (the fusion) of the volumes `objectDimTags' and
+  !! `toolDimTags' (vectors of (dim, tag) pairs) in the discrete CAD
+  !! representation, exactly on their triangulations. The surfaces of the result
+  !! keep the parameters of those they come from. Return the resulting volumes
+  !! in `outDimTags', and the correspondance between input and resulting
+  !! entities in `outDimTagsMap'. If `tag' is positive, try to set the tag
+  !! explicitly (only valid if the boolean operation results in a single
+  !! entity). Remove the object if `removeObject' is set. Remove the tool if
+  !! `removeTool' is set.
+  subroutine gmshModelDiscreteFuse(objectDimTags, &
+                                   toolDimTags, &
+                                   outDimTags, &
+                                   outDimTagsMap, &
+                                   outDimTagsMap_n, &
+                                   tag, &
+                                   removeObject, &
+                                   removeTool, &
+                                   ierr)
+    interface
+    subroutine C_API(api_objectDimTags_, &
+                     api_objectDimTags_n_, &
+                     api_toolDimTags_, &
+                     api_toolDimTags_n_, &
+                     api_outDimTags_, &
+                     api_outDimTags_n_, &
+                     api_outDimTagsMap_, &
+                     api_outDimTagsMap_n_, &
+                     api_outDimTagsMap_nn_, &
+                     tag, &
+                     removeObject, &
+                     removeTool, &
+                     ierr_) &
+      bind(C, name="gmshModelDiscreteFuse")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), dimension(*) :: api_objectDimTags_
+      integer(c_size_t), value, intent(in) :: api_objectDimTags_n_
+      integer(c_int), dimension(*) :: api_toolDimTags_
+      integer(c_size_t), value, intent(in) :: api_toolDimTags_n_
+      type(c_ptr), intent(out) :: api_outDimTags_
+      integer(c_size_t), intent(out) :: api_outDimTags_n_
+      type(c_ptr), intent(out) :: api_outDimTagsMap_
+      type(c_ptr), intent(out) :: api_outDimTagsMap_n_
+      integer(c_size_t) :: api_outDimTagsMap_nn_
+      integer(c_int), value, intent(in) :: tag
+      integer(c_int), value, intent(in) :: removeObject
+      integer(c_int), value, intent(in) :: removeTool
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer(c_int), dimension(:,:), intent(in) :: objectDimTags
+    integer(c_int), dimension(:,:), intent(in) :: toolDimTags
+    integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
+    integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTagsMap
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: outDimTagsMap_n
+    integer, intent(in), optional :: tag
+    logical, intent(in), optional :: removeObject
+    logical, intent(in), optional :: removeTool
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_outDimTags_
+    integer(c_size_t) :: api_outDimTags_n_
+    type(c_ptr) :: api_outDimTagsMap_, api_outDimTagsMap_n_
+    integer(c_size_t) :: api_outDimTagsMap_nn_
+    call C_API(api_objectDimTags_=objectDimTags, &
+         api_objectDimTags_n_=size_gmsh_pair(objectDimTags), &
+         api_toolDimTags_=toolDimTags, &
+         api_toolDimTags_n_=size_gmsh_pair(toolDimTags), &
+         api_outDimTags_=api_outDimTags_, &
+         api_outDimTags_n_=api_outDimTags_n_, &
+         api_outDimTagsMap_=api_outDimTagsMap_, &
+         api_outDimTagsMap_n_=api_outDimTagsMap_n_, &
+         api_outDimTagsMap_nn_=api_outDimTagsMap_nn_, &
+         tag=optval_c_int(-1, tag), &
+         removeObject=optval_c_bool(.true., removeObject), &
+         removeTool=optval_c_bool(.true., removeTool), &
+         ierr_=ierr)
+    outDimTags = ovectorpair_(api_outDimTags_, &
+      api_outDimTags_n_)
+    call ovectorvectorpair_(api_outDimTagsMap_, &
+      api_outDimTagsMap_n_, &
+      api_outDimTagsMap_nn_, &
+      outDimTagsMap, &
+      outDimTagsMap_n)
+  end subroutine gmshModelDiscreteFuse
+
+  !> Compute the boolean intersection (the common parts) of the volumes
+  !! `objectDimTags' and `toolDimTags' (vectors of (dim, tag) pairs) in the
+  !! discrete CAD representation, exactly on their triangulations. The surfaces
+  !! of the result keep the parameters of those they come from. Return the
+  !! resulting volumes in `outDimTags', and the correspondance between input and
+  !! resulting entities in `outDimTagsMap'. If `tag' is positive, try to set the
+  !! tag explicitly (only valid if the boolean operation results in a single
+  !! entity). Remove the object if `removeObject' is set. Remove the tool if
+  !! `removeTool' is set.
+  subroutine gmshModelDiscreteIntersect(objectDimTags, &
+                                        toolDimTags, &
+                                        outDimTags, &
+                                        outDimTagsMap, &
+                                        outDimTagsMap_n, &
+                                        tag, &
+                                        removeObject, &
+                                        removeTool, &
+                                        ierr)
+    interface
+    subroutine C_API(api_objectDimTags_, &
+                     api_objectDimTags_n_, &
+                     api_toolDimTags_, &
+                     api_toolDimTags_n_, &
+                     api_outDimTags_, &
+                     api_outDimTags_n_, &
+                     api_outDimTagsMap_, &
+                     api_outDimTagsMap_n_, &
+                     api_outDimTagsMap_nn_, &
+                     tag, &
+                     removeObject, &
+                     removeTool, &
+                     ierr_) &
+      bind(C, name="gmshModelDiscreteIntersect")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), dimension(*) :: api_objectDimTags_
+      integer(c_size_t), value, intent(in) :: api_objectDimTags_n_
+      integer(c_int), dimension(*) :: api_toolDimTags_
+      integer(c_size_t), value, intent(in) :: api_toolDimTags_n_
+      type(c_ptr), intent(out) :: api_outDimTags_
+      integer(c_size_t), intent(out) :: api_outDimTags_n_
+      type(c_ptr), intent(out) :: api_outDimTagsMap_
+      type(c_ptr), intent(out) :: api_outDimTagsMap_n_
+      integer(c_size_t) :: api_outDimTagsMap_nn_
+      integer(c_int), value, intent(in) :: tag
+      integer(c_int), value, intent(in) :: removeObject
+      integer(c_int), value, intent(in) :: removeTool
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer(c_int), dimension(:,:), intent(in) :: objectDimTags
+    integer(c_int), dimension(:,:), intent(in) :: toolDimTags
+    integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
+    integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTagsMap
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: outDimTagsMap_n
+    integer, intent(in), optional :: tag
+    logical, intent(in), optional :: removeObject
+    logical, intent(in), optional :: removeTool
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_outDimTags_
+    integer(c_size_t) :: api_outDimTags_n_
+    type(c_ptr) :: api_outDimTagsMap_, api_outDimTagsMap_n_
+    integer(c_size_t) :: api_outDimTagsMap_nn_
+    call C_API(api_objectDimTags_=objectDimTags, &
+         api_objectDimTags_n_=size_gmsh_pair(objectDimTags), &
+         api_toolDimTags_=toolDimTags, &
+         api_toolDimTags_n_=size_gmsh_pair(toolDimTags), &
+         api_outDimTags_=api_outDimTags_, &
+         api_outDimTags_n_=api_outDimTags_n_, &
+         api_outDimTagsMap_=api_outDimTagsMap_, &
+         api_outDimTagsMap_n_=api_outDimTagsMap_n_, &
+         api_outDimTagsMap_nn_=api_outDimTagsMap_nn_, &
+         tag=optval_c_int(-1, tag), &
+         removeObject=optval_c_bool(.true., removeObject), &
+         removeTool=optval_c_bool(.true., removeTool), &
+         ierr_=ierr)
+    outDimTags = ovectorpair_(api_outDimTags_, &
+      api_outDimTags_n_)
+    call ovectorvectorpair_(api_outDimTagsMap_, &
+      api_outDimTagsMap_n_, &
+      api_outDimTagsMap_nn_, &
+      outDimTagsMap, &
+      outDimTagsMap_n)
+  end subroutine gmshModelDiscreteIntersect
+
+  !> Compute the boolean difference between the volumes `objectDimTags' and
+  !! `toolDimTags' (vectors of (dim, tag) pairs) in the discrete CAD
+  !! representation, exactly on their triangulations. The surfaces of the result
+  !! keep the parameters of those they come from. Return the resulting volumes
+  !! in `outDimTags', and the correspondance between input and resulting
+  !! entities in `outDimTagsMap'. If `tag' is positive, try to set the tag
+  !! explicitly (only valid if the boolean operation results in a single
+  !! entity). Remove the object if `removeObject' is set. Remove the tool if
+  !! `removeTool' is set.
+  subroutine gmshModelDiscreteCut(objectDimTags, &
+                                  toolDimTags, &
+                                  outDimTags, &
+                                  outDimTagsMap, &
+                                  outDimTagsMap_n, &
+                                  tag, &
+                                  removeObject, &
+                                  removeTool, &
+                                  ierr)
+    interface
+    subroutine C_API(api_objectDimTags_, &
+                     api_objectDimTags_n_, &
+                     api_toolDimTags_, &
+                     api_toolDimTags_n_, &
+                     api_outDimTags_, &
+                     api_outDimTags_n_, &
+                     api_outDimTagsMap_, &
+                     api_outDimTagsMap_n_, &
+                     api_outDimTagsMap_nn_, &
+                     tag, &
+                     removeObject, &
+                     removeTool, &
+                     ierr_) &
+      bind(C, name="gmshModelDiscreteCut")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), dimension(*) :: api_objectDimTags_
+      integer(c_size_t), value, intent(in) :: api_objectDimTags_n_
+      integer(c_int), dimension(*) :: api_toolDimTags_
+      integer(c_size_t), value, intent(in) :: api_toolDimTags_n_
+      type(c_ptr), intent(out) :: api_outDimTags_
+      integer(c_size_t), intent(out) :: api_outDimTags_n_
+      type(c_ptr), intent(out) :: api_outDimTagsMap_
+      type(c_ptr), intent(out) :: api_outDimTagsMap_n_
+      integer(c_size_t) :: api_outDimTagsMap_nn_
+      integer(c_int), value, intent(in) :: tag
+      integer(c_int), value, intent(in) :: removeObject
+      integer(c_int), value, intent(in) :: removeTool
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer(c_int), dimension(:,:), intent(in) :: objectDimTags
+    integer(c_int), dimension(:,:), intent(in) :: toolDimTags
+    integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
+    integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTagsMap
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: outDimTagsMap_n
+    integer, intent(in), optional :: tag
+    logical, intent(in), optional :: removeObject
+    logical, intent(in), optional :: removeTool
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_outDimTags_
+    integer(c_size_t) :: api_outDimTags_n_
+    type(c_ptr) :: api_outDimTagsMap_, api_outDimTagsMap_n_
+    integer(c_size_t) :: api_outDimTagsMap_nn_
+    call C_API(api_objectDimTags_=objectDimTags, &
+         api_objectDimTags_n_=size_gmsh_pair(objectDimTags), &
+         api_toolDimTags_=toolDimTags, &
+         api_toolDimTags_n_=size_gmsh_pair(toolDimTags), &
+         api_outDimTags_=api_outDimTags_, &
+         api_outDimTags_n_=api_outDimTags_n_, &
+         api_outDimTagsMap_=api_outDimTagsMap_, &
+         api_outDimTagsMap_n_=api_outDimTagsMap_n_, &
+         api_outDimTagsMap_nn_=api_outDimTagsMap_nn_, &
+         tag=optval_c_int(-1, tag), &
+         removeObject=optval_c_bool(.true., removeObject), &
+         removeTool=optval_c_bool(.true., removeTool), &
+         ierr_=ierr)
+    outDimTags = ovectorpair_(api_outDimTags_, &
+      api_outDimTags_n_)
+    call ovectorvectorpair_(api_outDimTagsMap_, &
+      api_outDimTagsMap_n_, &
+      api_outDimTagsMap_nn_, &
+      outDimTagsMap, &
+      outDimTagsMap_n)
+  end subroutine gmshModelDiscreteCut
+
+  !> Import the triangulations of the surfaces of the mesh file `fileName' (STL,
+  !! MSH, OBJ, PLY, OFF, VTK or MESH format) in the discrete CAD representation,
+  !! and build their topology: the surfaces are the triangles of the same
+  !! surface of the file connected across edges shared by two triangles whose
+  !! normals make an angle smaller than `angle' (in radians), the curves are
+  !! along the edges between two surfaces, the boundary edges (of one triangle),
+  !! the non-manifold edges (of more than two triangles) and the sharp edges
+  !! inside a surface (embedded in it), split where more or less than two of
+  !! them meet and, if `curveAngle' is less than Pi, where they turn by more
+  !! than `curveAngle', and the volumes are the cells of space bounded by the
+  !! surfaces (the cells of a connected piece of the triangulation inside a cell
+  !! of another one are volumes if its triangles point out of them, holes if
+  !! they point into them, as STL normals point out of solids). Each surface is
+  !! oriented outwards of a volume whose outer boundary it is on, if any (the
+  !! included volume for the boundary of an inclusion). The surfaces whose nodes
+  !! are at most `tolerance' away from a plane, a sphere, a cylinder, a cone or
+  !! a torus (`Geometry.DiscreteTolerance' times the size of the triangulation
+  !! if `tolerance' is not positive) are recognized as such and get the
+  !! parameters of the corresponding primitives (with a seam, or split in two
+  !! halves, where needed); the others are split into their pieces on such
+  !! surfaces up to the precision of the coordinates of their nodes (for a part
+  !! whose faces meet tangentially), the rest into pieces that a single map can
+  !! parametrize. Return the volumes and the surfaces bounding no volume in
+  !! `outDimTags'.
+  subroutine gmshModelDiscreteImportShapes(fileName, &
+                                           angle, &
+                                           outDimTags, &
+                                           curveAngle, &
+                                           tolerance, &
+                                           ierr)
+    interface
+    subroutine C_API(fileName, &
+                     angle, &
+                     api_outDimTags_, &
+                     api_outDimTags_n_, &
+                     curveAngle, &
+                     tolerance, &
+                     ierr_) &
+      bind(C, name="gmshModelDiscreteImportShapes")
+      use, intrinsic :: iso_c_binding
+      character(len=1, kind=c_char), dimension(*), intent(in) :: fileName
+      real(c_double), value, intent(in) :: angle
+      type(c_ptr), intent(out) :: api_outDimTags_
+      integer(c_size_t), intent(out) :: api_outDimTags_n_
+      real(c_double), value, intent(in) :: curveAngle
+      real(c_double), value, intent(in) :: tolerance
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    character(len=*), intent(in) :: fileName
+    real(c_double), intent(in) :: angle
+    integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
+    real(c_double), intent(in), optional :: curveAngle
+    real(c_double), intent(in), optional :: tolerance
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_outDimTags_
+    integer(c_size_t) :: api_outDimTags_n_
+    call C_API(fileName=istring_(fileName), &
+         angle=real(angle, c_double), &
+         api_outDimTags_=api_outDimTags_, &
+         api_outDimTags_n_=api_outDimTags_n_, &
+         curveAngle=optval_c_double(M_PI, curveAngle), &
+         tolerance=optval_c_double(-1., tolerance), &
+         ierr_=ierr)
+    outDimTags = ovectorpair_(api_outDimTags_, &
+      api_outDimTags_n_)
+  end subroutine gmshModelDiscreteImportShapes
+
+  !> Add the triangulation given by the coordinates `coord' of its nodes
+  !! (concatenated: [n1x, n1y, n1z, n2x, ...]) and its triangles `triangles'
+  !! (the indices of their 3 nodes, from 0, concatenated) in the discrete CAD
+  !! representation, and build its topology as `importShapes'. Return the
+  !! volumes and the surfaces bounding no volume in `outDimTags'.
+  subroutine gmshModelDiscreteAddTriangulation(coord, &
+                                               triangles, &
+                                               angle, &
+                                               outDimTags, &
+                                               curveAngle, &
+                                               tolerance, &
+                                               ierr)
+    interface
+    subroutine C_API(api_coord_, &
+                     api_coord_n_, &
+                     api_triangles_, &
+                     api_triangles_n_, &
+                     angle, &
+                     api_outDimTags_, &
+                     api_outDimTags_n_, &
+                     curveAngle, &
+                     tolerance, &
+                     ierr_) &
+      bind(C, name="gmshModelDiscreteAddTriangulation")
+      use, intrinsic :: iso_c_binding
+      real(c_double), dimension(*) :: api_coord_
+      integer(c_size_t), value, intent(in) :: api_coord_n_
+      integer(c_size_t), dimension(*) :: api_triangles_
+      integer(c_size_t), value, intent(in) :: api_triangles_n_
+      real(c_double), value, intent(in) :: angle
+      type(c_ptr), intent(out) :: api_outDimTags_
+      integer(c_size_t), intent(out) :: api_outDimTags_n_
+      real(c_double), value, intent(in) :: curveAngle
+      real(c_double), value, intent(in) :: tolerance
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    real(c_double), dimension(:), intent(in) :: coord
+    integer(c_size_t), dimension(:), intent(in) :: triangles
+    real(c_double), intent(in) :: angle
+    integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
+    real(c_double), intent(in), optional :: curveAngle
+    real(c_double), intent(in), optional :: tolerance
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_outDimTags_
+    integer(c_size_t) :: api_outDimTags_n_
+    call C_API(api_coord_=coord, &
+         api_coord_n_=size_gmsh_double(coord), &
+         api_triangles_=triangles, &
+         api_triangles_n_=size_gmsh_size(triangles), &
+         angle=real(angle, c_double), &
+         api_outDimTags_=api_outDimTags_, &
+         api_outDimTags_n_=api_outDimTags_n_, &
+         curveAngle=optval_c_double(M_PI, curveAngle), &
+         tolerance=optval_c_double(-1., tolerance), &
+         ierr_=ierr)
+    outDimTags = ovectorpair_(api_outDimTags_, &
+      api_outDimTags_n_)
+  end subroutine gmshModelDiscreteAddTriangulation
+
+  !> Synchronize the discrete CAD representation with the current Gmsh model:
+  !! its points, curves, surfaces and volumes become discrete entities of the
+  !! model, whose geometry is their polylines and triangulations, and replace
+  !! the entities of the previous synchronization. Without synchronization the
+  !! entities in the discrete CAD representation are not available to any
+  !! function outside of the discrete CAD modeler functions.
+  subroutine gmshModelDiscreteSynchronize(ierr)
+    interface
+    subroutine C_API(ierr_) &
+      bind(C, name="gmshModelDiscreteSynchronize")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(ierr_=ierr)
+  end subroutine gmshModelDiscreteSynchronize
 
   !> Add a new post-processing view, with name `name'. If `tag' is positive use
   !! it (and remove the view with that tag if it already exists), otherwise

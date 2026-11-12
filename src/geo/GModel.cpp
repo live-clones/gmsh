@@ -68,13 +68,18 @@
 #include "PViewDataGModel.h"
 #endif
 
+#if defined(HAVE_DISCRETECAD)
+#include "DiscreteCADModeler.h"
+#endif
+
 std::vector<GModel *> GModel::list;
 int GModel::_current = -1;
 
 GModel::GModel(const std::string &name)
   : _name(name), _visible(1), _elementOctree(nullptr), _geo_internals(nullptr),
     _occ_internals(nullptr), _acis_internals(nullptr),
-    _parasolid_internals(nullptr), _fields(nullptr),
+    _parasolid_internals(nullptr), _discreteCAD_internals(nullptr),
+    _fields(nullptr),
     _currentMeshEntity(nullptr), _numPartitions(0), normals(nullptr),
     lcCallback(nullptr)
 {
@@ -124,6 +129,7 @@ GModel::~GModel()
   deleteOCCInternals();
   deleteACISInternals();
   deleteParasolidInternals();
+  deleteDiscreteCADInternals();
 #if defined(HAVE_MESH)
   delete _fields;
 #endif
@@ -220,6 +226,7 @@ void GModel::destroy(bool keepName)
   destroyMeshCaches();
 
   resetOCCInternals();
+  resetDiscreteCADInternals();
 
   if(normals) delete normals;
   normals = nullptr;
@@ -3893,6 +3900,7 @@ int GModel::readGEO(const std::string &name)
   // that should also be applied to entities from OCC_Internals
   if(GModel::current()->getOCCInternals())
     GModel::current()->getOCCInternals()->synchronize(GModel::current());
+  GModel::current()->synchronizeDiscreteCADInternals();
   GModel::current()->getGEOInternals()->synchronize(GModel::current());
   return 1;
 }
@@ -4117,3 +4125,36 @@ int GModel::writeParasolidSTEP(const std::string &fn)
 }
 
 #endif
+
+void GModel::createDiscreteCADInternals()
+{
+#if defined(HAVE_DISCRETECAD)
+  if(_discreteCAD_internals) delete _discreteCAD_internals;
+  _discreteCAD_internals = new DiscreteCAD_Internals;
+#else
+  Msg::Error("Gmsh requires the discrete CAD modeler (DISCRETECAD)");
+#endif
+}
+
+void GModel::deleteDiscreteCADInternals()
+{
+#if defined(HAVE_DISCRETECAD)
+  if(_discreteCAD_internals) delete _discreteCAD_internals;
+#endif
+  _discreteCAD_internals = nullptr;
+}
+
+void GModel::resetDiscreteCADInternals()
+{
+#if defined(HAVE_DISCRETECAD)
+  if(_discreteCAD_internals) _discreteCAD_internals->reset();
+#endif
+}
+
+void GModel::synchronizeDiscreteCADInternals()
+{
+#if defined(HAVE_DISCRETECAD)
+  if(_discreteCAD_internals && _discreteCAD_internals->getChanged())
+    _discreteCAD_internals->synchronize(this);
+#endif
+}

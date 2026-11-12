@@ -427,9 +427,18 @@ static void getAllParameters(MVertex *v, GFace *gf,
 {
   params.clear();
 
+  // on a discrete surface, the parameters of the point, unless it is on a
+  // seam (two parameters, given by the seam curve)
   if(gf->geomType() == GEntity::DiscreteSurface) {
-    params.push_back(gf->parFromPoint(SPoint3(v->x(), v->y(), v->z())));
-    return;
+    bool seam = false;
+    if(v->onWhat() && v->onWhat()->dim() == 1)
+      seam = static_cast<GEdge *>(v->onWhat())->isSeam(gf);
+    else if(v->onWhat() && v->onWhat()->dim() == 0)
+      seam = static_cast<GVertex *>(v->onWhat())->isOnSeam(gf);
+    if(!seam) {
+      params.push_back(gf->parFromPoint(SPoint3(v->x(), v->y(), v->z())));
+      return;
+    }
   }
 
   if(v->onWhat()->dim() == 0) {

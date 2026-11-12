@@ -144,6 +144,7 @@ static void scriptAddCommand(const std::string &text,
     }
     while(!feof(gmsh_yyin)) { gmsh_yyparse(); }
 
+    GModel::current()->synchronizeDiscreteCADInternals();
     GModel::current()->getGEOInternals()->synchronize(GModel::current());
     if(GModel::current()->getOCCInternals())
       GModel::current()->getOCCInternals()->synchronize(GModel::current());
@@ -1007,6 +1008,40 @@ static std::string occFactory()
   return "";
 }
 
+// the discrete CAD factory, kept for its primitives whose options are those
+// of the whole solids (full angles, no rounded corners) and for its boolean
+// operations; the other commands switch to OpenCASCADE, as with the built-in
+// factory (the programs, without a discrete CAD kernel in the API, make the
+// shapes of OpenCASCADE)
+static bool discreteFactory()
+{
+#if defined(HAVE_PARSER) && defined(HAVE_DISCRETECAD)
+  return gmsh_yyfactory == "Discrete";
+#else
+  return false;
+#endif
+}
+
+static bool defaultOption(const std::string &value, const std::string &def)
+{
+  std::string v;
+  for(char c : value)
+    if(c != ' ') v += c;
+  return v.empty() || v == def;
+}
+
+static bool checkDiscrete(std::ostringstream &sstream, bool wholeSolid,
+                          const std::string &what)
+{
+  if(discreteFactory()) {
+    if(wholeSolid) return true;
+    Msg::Info("%s not available with the Discrete geometry kernel: "
+              "OpenCASCADE used", what.c_str());
+  }
+  sstream << occFactory();
+  return false;
+}
+
 void scriptSetFactory(const std::string &factory, const std::string &fileName)
 {
   // (the calls of the programs follow the factory of the script)
@@ -1456,8 +1491,9 @@ void scriptAddDisk(const std::string &fileName, const std::string &x,
 {
   int tag = nextTag(2);
   std::ostringstream sstream;
-  sstream << occFactory() << "Disk(" << tag << ") = {" << x << ", " << y << ", "
-          << z << ", " << rx << ", " << ry << "};";
+  checkDiscrete(sstream, true, "Disk");
+  sstream << "Disk(" << tag << ") = {" << x << ", " << y << ", " << z << ", "
+          << rx << ", " << ry << "};";
   scriptAdd(sstream.str(), fileName, [=] {
     return std::vector<apiCall>{
       call("model/occ/addDisk",
@@ -1474,9 +1510,11 @@ void scriptAddRectangle(const std::string &fileName, const std::string &x,
 {
   int tag = nextTag(2);
   std::ostringstream sstream;
-  sstream << occFactory() << "Rectangle(" << tag << ") = {" << x << ", " << y
-          << ", " << z << ", " << dx << ", " << dy;
-  if(roundedRadius.size()) sstream << ", " << roundedRadius;
+  const bool discrete = checkDiscrete(
+    sstream, defaultOption(roundedRadius, "0"), "Rounded rectangle");
+  sstream << "Rectangle(" << tag << ") = {" << x << ", " << y << ", " << z
+          << ", " << dx << ", " << dy;
+  if(roundedRadius.size() && !discrete) sstream << ", " << roundedRadius;
   sstream << "};";
   scriptAdd(sstream.str(), fileName, [=] {
     return std::vector<apiCall>{
@@ -1494,13 +1532,21 @@ void scriptAddSphere(const std::string &fileName, const std::string &x,
 {
   int tag = nextTag(3);
   std::ostringstream sstream;
-  sstream << occFactory() << "Sphere(" << tag << ") = {" << x << ", " << y
-          << ", " << z << ", " << r;
+  const bool discrete =
+    checkDiscrete(sstream,
+                  defaultOption(alpha1, "-Pi/2") &&
+                    defaultOption(alpha2, "Pi/2") &&
+                    defaultOption(alpha3, "2*Pi"),
+                  "Sphere with angles");
+  sstream << "Sphere(" << tag << ") = {" << x << ", " << y << ", " << z << ", "
+          << r;
   bool a2 = alpha1.size() && alpha2.size();
   bool a3 = a2 && alpha3.size();
-  if(alpha1.size()) sstream << ", " << alpha1;
-  if(a2) sstream << ", " << alpha2;
-  if(a3) sstream << ", " << alpha3;
+  if(!discrete) {
+    if(alpha1.size()) sstream << ", " << alpha1;
+    if(a2) sstream << ", " << alpha2;
+    if(a3) sstream << ", " << alpha3;
+  }
   sstream << "};";
   scriptAdd(sstream.str(), fileName, [=] {
     return std::vector<apiCall>{call(
@@ -1519,9 +1565,11 @@ void scriptAddCylinder(const std::string &fileName, const std::string &x,
 {
   int tag = nextTag(3);
   std::ostringstream sstream;
-  sstream << occFactory() << "Cylinder(" << tag << ") = {" << x << ", " << y
-          << ", " << z << ", " << dx << ", " << dy << ", " << dz << ", " << r;
-  if(alpha.size()) sstream << ", " << alpha;
+  const bool discrete = checkDiscrete(sstream, defaultOption(alpha, "2*Pi"),
+                                      "Cylinder with an angle");
+  sstream << "Cylinder(" << tag << ") = {" << x << ", " << y << ", " << z
+          << ", " << dx << ", " << dy << ", " << dz << ", " << r;
+  if(alpha.size() && !discrete) sstream << ", " << alpha;
   sstream << "};";
   scriptAdd(sstream.str(), fileName, [=] {
     return std::vector<apiCall>{
@@ -1539,8 +1587,9 @@ void scriptAddBox(const std::string &fileName, const std::string &x,
 {
   int tag = nextTag(3);
   std::ostringstream sstream;
-  sstream << occFactory() << "Box(" << tag << ") = {" << x << ", " << y << ", "
-          << z << ", " << dx << ", " << dy << ", " << dz << "};";
+  checkDiscrete(sstream, true, "Box");
+  sstream << "Box(" << tag << ") = {" << x << ", " << y << ", " << z << ", "
+          << dx << ", " << dy << ", " << dz << "};";
   scriptAdd(sstream.str(), fileName, [=] {
     return std::vector<apiCall>{
       call("model/occ/addBox",
@@ -1556,9 +1605,11 @@ void scriptAddTorus(const std::string &fileName, const std::string &x,
 {
   int tag = nextTag(3);
   std::ostringstream sstream;
-  sstream << occFactory() << "Torus(" << tag << ") = {" << x << ", " << y
-          << ", " << z << ", " << r1 << ", " << r2;
-  if(alpha.size()) sstream << ", " << alpha;
+  const bool discrete = checkDiscrete(sstream, defaultOption(alpha, "2*Pi"),
+                                      "Torus with an angle");
+  sstream << "Torus(" << tag << ") = {" << x << ", " << y << ", " << z << ", "
+          << r1 << ", " << r2;
+  if(alpha.size() && !discrete) sstream << ", " << alpha;
   sstream << "};";
   scriptAdd(sstream.str(), fileName, [=] {
     return std::vector<apiCall>{
@@ -1577,10 +1628,11 @@ void scriptAddCone(const std::string &fileName, const std::string &x,
 {
   int tag = nextTag(3);
   std::ostringstream sstream;
-  sstream << occFactory() << "Cone(" << tag << ") = {" << x << ", " << y << ", "
-          << z << ", " << dx << ", " << dy << ", " << dz << ", " << r1 << ", "
-          << r2;
-  if(alpha.size()) sstream << ", " << alpha;
+  const bool discrete = checkDiscrete(sstream, defaultOption(alpha, "2*Pi"),
+                                      "Cone with an angle");
+  sstream << "Cone(" << tag << ") = {" << x << ", " << y << ", " << z << ", "
+          << dx << ", " << dy << ", " << dz << ", " << r1 << ", " << r2;
+  if(alpha.size() && !discrete) sstream << ", " << alpha;
   sstream << "};";
   scriptAdd(sstream.str(), fileName, [=] {
     return std::vector<apiCall>{
@@ -1978,7 +2030,8 @@ void scriptBoolean(const std::string &fileName, const std::string &op,
                    const std::vector<std::pair<int, int> > &tool,
                    int deleteObject, int deleteTool)
 {
-  std::string s = occFactory() + op + "{ " + dimTags2String(object);
+  std::string s =
+    (discreteFactory() ? "" : occFactory()) + op + "{ " + dimTags2String(object);
   if(deleteObject) s += "Delete; ";
   s += "}{ " + dimTags2String(tool);
   if(deleteTool) s += "Delete; ";

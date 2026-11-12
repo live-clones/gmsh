@@ -14,6 +14,7 @@ their own respective license:
 * QuadTri: Gmsh License
 * bamg: GNU Lesser General Public License (LGPL) v. 2.1 or later
 * blossom: Gmsh License
+* discreteCADModeler: GNU Affero General Public License (AGPL) v. 3 or later
 * domhex: Gmsh License
 * eigen: BSD License
 * fonts: SIL Open Font License 1.1

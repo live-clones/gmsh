@@ -87,14 +87,16 @@ static glyphList *geomGlyphs(drawContext *ctx)
   return &_geomGlyphs;
 }
 
-// is this entity drawn by the pass? Not when hidden, and never the discrete,
-// partition and boundary layer entities, which only carry a mesh
+// is this entity drawn by the pass? Not when hidden, and never the partition
+// and boundary layer entities, which only carry a mesh, nor the discrete
+// curves without a geometry (a discretization)
 static bool geomDrawn(drawContext *ctx, GEntity *e)
 {
   if(!ctx->passWants(geometryEntityIsTransparent(e)) || !e->getVisibility()) return false;
   switch(e->geomType()) {
-  case GEntity::BoundaryLayerPoint:
   case GEntity::DiscreteCurve:
+    return static_cast<GEdge *>(e)->haveParametrization();
+  case GEntity::BoundaryLayerPoint:
   case GEntity::PartitionCurve:
   case GEntity::BoundaryLayerCurve:
   case GEntity::PartitionSurface:

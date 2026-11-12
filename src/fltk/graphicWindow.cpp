@@ -105,12 +105,18 @@ test:
       Msg::Error("Unable to open file '%s'", name.c_str());
       return;
     }
+#if defined(HAVE_DISCRETECAD)
+    int factory = fl_choice("Which geometry kernel do you want to use?",
+                            "Built-in", "OpenCASCADE", "Discrete");
+#else
     int factory = fl_choice("Which geometry kernel do you want to use?",
                             "Built-in", "OpenCASCADE", nullptr);
+#endif
     time_t now;
     time(&now);
     fprintf(fp, "// Gmsh project created on %s", ctime(&now));
-    if(factory) fprintf(fp, "SetFactory(\"OpenCASCADE\");\n");
+    if(factory == 1) fprintf(fp, "SetFactory(\"OpenCASCADE\");\n");
+    if(factory == 2) fprintf(fp, "SetFactory(\"Discrete\");\n");
     fclose(fp);
     OpenProject(name);
     drawContext::global()->draw();

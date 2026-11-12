@@ -416,7 +416,7 @@ void exactinit(REAL maxx, REAL maxy, REAL maxz)
 /*                                                                           */
 /*****************************************************************************/
 
-static int fast_expansion_sum_zeroelim(const int elen,
+int fast_expansion_sum_zeroelim(const int elen,
                                        const REAL* const __restrict__ e,
                                        const int flen,
                                        const REAL* const __restrict__ f,
@@ -521,7 +521,7 @@ static int fast_expansion_sum_zeroelim(const int elen,
 /*                                                                           */
 /*****************************************************************************/
 
-static int scale_expansion_zeroelim(const int elen,
+int scale_expansion_zeroelim(const int elen,
                                     const REAL* const __restrict__ e,
                                     const REAL b,
                                     REAL* const __restrict__ h)
@@ -1240,6 +1240,174 @@ REAL orient3d(const REAL* const __restrict__ pa,
   // getchar();
 
   return orient3dadapt(pa, pb, pc, pd, permanent);
+}
+
+/* orient3d() without its static filter, which is only valid for coordinates */
+/*   in the ranges given to exactinit(): the exact sign whatever the         */
+/*   coordinates.                                                            */
+REAL orient3dDynamic(const REAL* const __restrict__ pa,
+                     const REAL* const __restrict__ pb,
+                     const REAL* const __restrict__ pc,
+                     const REAL* const __restrict__ pd)
+{
+  REAL adx, bdx, cdx, ady, bdy, cdy, adz, bdz, cdz;
+  REAL bdxcdy, cdxbdy, cdxady, adxcdy, adxbdy, bdxady;
+  REAL det;
+  REAL permanent, errbound;
+
+  adx = pa[0] - pd[0];
+  bdx = pb[0] - pd[0];
+  cdx = pc[0] - pd[0];
+  ady = pa[1] - pd[1];
+  bdy = pb[1] - pd[1];
+  cdy = pc[1] - pd[1];
+  adz = pa[2] - pd[2];
+  bdz = pb[2] - pd[2];
+  cdz = pc[2] - pd[2];
+
+  bdxcdy = bdx * cdy;
+  cdxbdy = cdx * bdy;
+  cdxady = cdx * ady;
+  adxcdy = adx * cdy;
+  adxbdy = adx * bdy;
+  bdxady = bdx * ady;
+
+  det = adz * (bdxcdy - cdxbdy)
+      + bdz * (cdxady - adxcdy)
+      + cdz * (adxbdy - bdxady);
+
+  permanent = (Absolute(bdxcdy) + Absolute(cdxbdy)) * Absolute(adz)
+            + (Absolute(cdxady) + Absolute(adxcdy)) * Absolute(bdz)
+            + (Absolute(adxbdy) + Absolute(bdxady)) * Absolute(cdz);
+  errbound = o3derrboundA * permanent;
+  if ((det > errbound) || (-det > errbound)) {
+    return det;
+  }
+  return orient3dadapt(pa, pb, pc, pd, permanent);
+}
+
+/* The exact value of orient2d() as an expansion in h (at most 12            */
+/*   components), from orient2dexact(): the number of components.           */
+int orient2dExact(const REAL* const __restrict__ pa,
+                  const REAL* const __restrict__ pb,
+                  const REAL* const __restrict__ pc,
+                  REAL* const __restrict__ h)
+{
+  INEXACT REAL axby1, axcy1, bxcy1, bxay1, cxay1, cxby1;
+  REAL axby0, axcy0, bxcy0, bxay0, cxay0, cxby0;
+  REAL aterms[4], bterms[4], cterms[4];
+  INEXACT REAL aterms3, bterms3, cterms3;
+  REAL v[8];
+  int vlength;
+
+  INEXACT REAL bvirt;
+  REAL avirt, bround, around;
+  INEXACT REAL c;
+  INEXACT REAL abig;
+  REAL ahi, alo, bhi, blo;
+  REAL err1, err2, err3;
+  INEXACT REAL _i, _j;
+  REAL _0;
+
+  Two_Product(pa[0], pb[1], axby1, axby0);
+  Two_Product(pa[0], pc[1], axcy1, axcy0);
+  Two_Two_Diff(axby1, axby0, axcy1, axcy0,
+               aterms3, aterms[2], aterms[1], aterms[0]);
+  aterms[3] = aterms3;
+
+  Two_Product(pb[0], pc[1], bxcy1, bxcy0);
+  Two_Product(pb[0], pa[1], bxay1, bxay0);
+  Two_Two_Diff(bxcy1, bxcy0, bxay1, bxay0,
+               bterms3, bterms[2], bterms[1], bterms[0]);
+  bterms[3] = bterms3;
+
+  Two_Product(pc[0], pa[1], cxay1, cxay0);
+  Two_Product(pc[0], pb[1], cxby1, cxby0);
+  Two_Two_Diff(cxay1, cxay0, cxby1, cxby0,
+               cterms3, cterms[2], cterms[1], cterms[0]);
+  cterms[3] = cterms3;
+
+  vlength = fast_expansion_sum_zeroelim(4, aterms, 4, bterms, v);
+  return fast_expansion_sum_zeroelim(vlength, v, 4, cterms, h);
+}
+
+/* The exact value of orient3d() as an expansion in h (at most 96            */
+/*   components), from orient3dexact(): the number of components.           */
+int orient3dExact(const REAL* const __restrict__ pa,
+                  const REAL* const __restrict__ pb,
+                  const REAL* const __restrict__ pc,
+                  const REAL* const __restrict__ pd,
+                  REAL* const __restrict__ h)
+{
+  INEXACT REAL axby1, bxcy1, cxdy1, dxay1, axcy1, bxdy1;
+  INEXACT REAL bxay1, cxby1, dxcy1, axdy1, cxay1, dxby1;
+  REAL axby0, bxcy0, cxdy0, dxay0, axcy0, bxdy0;
+  REAL bxay0, cxby0, dxcy0, axdy0, cxay0, dxby0;
+  REAL ab[4], bc[4], cd[4], da[4], ac[4], bd[4];
+  REAL temp8[8];
+  int templen;
+  REAL abc[12], bcd[12], cda[12], dab[12];
+  int abclen, bcdlen, cdalen, dablen;
+  REAL adet[24], bdet[24], cdet[24], ddet[24];
+  int alen, blen, clen, dlen;
+  REAL abdet[48], cddet[48];
+  int ablen, cdlen;
+  int i;
+
+  INEXACT REAL bvirt;
+  REAL avirt, bround, around;
+  INEXACT REAL c;
+  INEXACT REAL abig;
+  REAL ahi, alo, bhi, blo;
+  REAL err1, err2, err3;
+  INEXACT REAL _i, _j;
+  REAL _0;
+
+  Two_Product(pa[0], pb[1], axby1, axby0);
+  Two_Product(pb[0], pa[1], bxay1, bxay0);
+  Two_Two_Diff(axby1, axby0, bxay1, bxay0, ab[3], ab[2], ab[1], ab[0]);
+
+  Two_Product(pb[0], pc[1], bxcy1, bxcy0);
+  Two_Product(pc[0], pb[1], cxby1, cxby0);
+  Two_Two_Diff(bxcy1, bxcy0, cxby1, cxby0, bc[3], bc[2], bc[1], bc[0]);
+
+  Two_Product(pc[0], pd[1], cxdy1, cxdy0);
+  Two_Product(pd[0], pc[1], dxcy1, dxcy0);
+  Two_Two_Diff(cxdy1, cxdy0, dxcy1, dxcy0, cd[3], cd[2], cd[1], cd[0]);
+
+  Two_Product(pd[0], pa[1], dxay1, dxay0);
+  Two_Product(pa[0], pd[1], axdy1, axdy0);
+  Two_Two_Diff(dxay1, dxay0, axdy1, axdy0, da[3], da[2], da[1], da[0]);
+
+  Two_Product(pa[0], pc[1], axcy1, axcy0);
+  Two_Product(pc[0], pa[1], cxay1, cxay0);
+  Two_Two_Diff(axcy1, axcy0, cxay1, cxay0, ac[3], ac[2], ac[1], ac[0]);
+
+  Two_Product(pb[0], pd[1], bxdy1, bxdy0);
+  Two_Product(pd[0], pb[1], dxby1, dxby0);
+  Two_Two_Diff(bxdy1, bxdy0, dxby1, dxby0, bd[3], bd[2], bd[1], bd[0]);
+
+  templen = fast_expansion_sum_zeroelim(4, cd, 4, da, temp8);
+  cdalen = fast_expansion_sum_zeroelim(templen, temp8, 4, ac, cda);
+  templen = fast_expansion_sum_zeroelim(4, da, 4, ab, temp8);
+  dablen = fast_expansion_sum_zeroelim(templen, temp8, 4, bd, dab);
+  for (i = 0; i < 4; i++) {
+    bd[i] = -bd[i];
+    ac[i] = -ac[i];
+  }
+  templen = fast_expansion_sum_zeroelim(4, ab, 4, bc, temp8);
+  abclen = fast_expansion_sum_zeroelim(templen, temp8, 4, ac, abc);
+  templen = fast_expansion_sum_zeroelim(4, bc, 4, cd, temp8);
+  bcdlen = fast_expansion_sum_zeroelim(templen, temp8, 4, bd, bcd);
+
+  alen = scale_expansion_zeroelim(bcdlen, bcd, pa[2], adet);
+  blen = scale_expansion_zeroelim(cdalen, cda, -pb[2], bdet);
+  clen = scale_expansion_zeroelim(dablen, dab, pc[2], cdet);
+  dlen = scale_expansion_zeroelim(abclen, abc, -pd[2], ddet);
+
+  ablen = fast_expansion_sum_zeroelim(alen, adet, blen, bdet, abdet);
+  cdlen = fast_expansion_sum_zeroelim(clen, cdet, dlen, ddet, cddet);
+  return fast_expansion_sum_zeroelim(ablen, abdet, cdlen, cddet, h);
 }
 
 /*****************************************************************************/

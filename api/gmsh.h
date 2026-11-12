@@ -3793,6 +3793,251 @@ namespace gmsh { // Top-level functions
 
     } // namespace occ
 
+    namespace discrete { // Discrete CAD modeler functions
+
+      // gmsh::model::discrete::addBox
+      //
+      // Add a parallelepipedic box in the discrete CAD representation, defined by
+      // a point (`x', `y', `z') and the extents along the x-, y- and z-axes. Its 6
+      // surfaces are triangulated exactly, with 2 triangles each. If `tag' is
+      // positive, set the tag explicitly; otherwise a new tag is selected
+      // automatically. Return the tag of the box.
+      GMSH_API int addBox(const double x,
+                          const double y,
+                          const double z,
+                          const double dx,
+                          const double dy,
+                          const double dz,
+                          const int tag = -1);
+
+      // gmsh::model::discrete::addSphere
+      //
+      // Add a sphere of center (`xc', `yc', `zc') and radius `radius' in the
+      // discrete CAD representation. Its 2 surfaces, the hemispheres, are
+      // triangulated at most `tolerance' away from the exact sphere
+      // (`Geometry.DiscreteTolerance' times the radius if `tolerance' is not
+      // positive). If `tag' is positive, set the tag explicitly; otherwise a new
+      // tag is selected automatically. Return the tag of the sphere.
+      GMSH_API int addSphere(const double xc,
+                             const double yc,
+                             const double zc,
+                             const double radius,
+                             const int tag = -1,
+                             const double tolerance = -1.);
+
+      // gmsh::model::discrete::addRectangle
+      //
+      // Add a rectangle in the discrete CAD representation, defined by a point
+      // (`x', `y', `z') and the extents along the x- and y-axes, triangulated
+      // exactly with 2 triangles. If `tag' is positive, set the tag explicitly;
+      // otherwise a new tag is selected automatically. Return the tag of the
+      // rectangle.
+      GMSH_API int addRectangle(const double x,
+                                const double y,
+                                const double z,
+                                const double dx,
+                                const double dy,
+                                const int tag = -1);
+
+      // gmsh::model::discrete::addDisk
+      //
+      // Add a disk in the discrete CAD representation, defined by the center
+      // (`xc', `yc', `zc') and the radius `rx' along the x-axis and `ry' along the
+      // y-axis. If a vector `zAxis' of size 3 is provided, use it as the normal to
+      // the disk; if a vector `xAxis' of size 3 is provided, use it to define the
+      // x-axis. Its boundary, split into 2 arcs, is at most `tolerance' away from
+      // the exact ellipse (`Geometry.DiscreteTolerance' times the largest radius
+      // if `tolerance' is not positive). If `tag' is positive, set the tag
+      // explicitly; otherwise a new tag is selected automatically. Return the tag
+      // of the disk.
+      GMSH_API int addDisk(const double xc,
+                           const double yc,
+                           const double zc,
+                           const double rx,
+                           const double ry,
+                           const int tag = -1,
+                           const std::vector<double> & zAxis = std::vector<double>(),
+                           const std::vector<double> & xAxis = std::vector<double>(),
+                           const double tolerance = -1.);
+
+      // gmsh::model::discrete::addCylinder
+      //
+      // Add a cylinder in the discrete CAD representation, defined by the center
+      // (`x', `y', `z') of its first circular face, the 3 components (`dx', `dy',
+      // `dz') of the vector defining its axis and its radius `r'. Its 3 surfaces,
+      // the lateral surface and the 2 disks, are triangulated at most `tolerance'
+      // away from the exact cylinder (`Geometry.DiscreteTolerance' times `r' if
+      // `tolerance' is not positive). If `tag' is positive, set the tag
+      // explicitly; otherwise a new tag is selected automatically. Return the tag
+      // of the cylinder.
+      GMSH_API int addCylinder(const double x,
+                               const double y,
+                               const double z,
+                               const double dx,
+                               const double dy,
+                               const double dz,
+                               const double r,
+                               const int tag = -1,
+                               const double tolerance = -1.);
+
+      // gmsh::model::discrete::addCone
+      //
+      // Add a cone in the discrete CAD representation, defined by the center (`x',
+      // `y', `z') of its first circular face, the 3 components of the vector
+      // (`dx', `dy', `dz') defining its axis and the two radii `r1' and `r2' of
+      // the faces (one of them can be zero, giving an apex). Its surfaces, the
+      // lateral surface (holding the apex, if any) and the disks, are triangulated
+      // at most `tolerance' away from the exact cone (`Geometry.DiscreteTolerance'
+      // times the largest radius if `tolerance' is not positive). If `tag' is
+      // positive, set the tag explicitly; otherwise a new tag is selected
+      // automatically. Return the tag of the cone.
+      GMSH_API int addCone(const double x,
+                           const double y,
+                           const double z,
+                           const double dx,
+                           const double dy,
+                           const double dz,
+                           const double r1,
+                           const double r2,
+                           const int tag = -1,
+                           const double tolerance = -1.);
+
+      // gmsh::model::discrete::addTorus
+      //
+      // Add a torus in the discrete CAD representation, defined by its center
+      // (`x', `y', `z') and its 2 radii `r1' (of its center circle) and `r2' (of
+      // its section), with r2 < r1. If a vector `zAxis' of size 3 is provided, use
+      // it as the axis of the torus (instead of the z-axis). Its 2 surfaces, the
+      // halves on either side of its equatorial plane bounded by its outer and
+      // inner equators, are triangulated at most `tolerance' away from the exact
+      // torus (`Geometry.DiscreteTolerance' times `r2' if `tolerance' is not
+      // positive). If `tag' is positive, set the tag explicitly; otherwise a new
+      // tag is selected automatically. Return the tag of the torus.
+      GMSH_API int addTorus(const double x,
+                            const double y,
+                            const double z,
+                            const double r1,
+                            const double r2,
+                            const int tag = -1,
+                            const std::vector<double> & zAxis = std::vector<double>(),
+                            const double tolerance = -1.);
+
+      // gmsh::model::discrete::fuse
+      //
+      // Compute the boolean union (the fusion) of the volumes `objectDimTags' and
+      // `toolDimTags' (vectors of (dim, tag) pairs) in the discrete CAD
+      // representation, exactly on their triangulations. The surfaces of the
+      // result keep the parameters of those they come from. Return the resulting
+      // volumes in `outDimTags', and the correspondance between input and
+      // resulting entities in `outDimTagsMap'. If `tag' is positive, try to set
+      // the tag explicitly (only valid if the boolean operation results in a
+      // single entity). Remove the object if `removeObject' is set. Remove the
+      // tool if `removeTool' is set.
+      GMSH_API void fuse(const gmsh::vectorpair & objectDimTags,
+                         const gmsh::vectorpair & toolDimTags,
+                         gmsh::vectorpair & outDimTags,
+                         std::vector<gmsh::vectorpair> & outDimTagsMap,
+                         const int tag = -1,
+                         const bool removeObject = true,
+                         const bool removeTool = true);
+
+      // gmsh::model::discrete::intersect
+      //
+      // Compute the boolean intersection (the common parts) of the volumes
+      // `objectDimTags' and `toolDimTags' (vectors of (dim, tag) pairs) in the
+      // discrete CAD representation, exactly on their triangulations. The surfaces
+      // of the result keep the parameters of those they come from. Return the
+      // resulting volumes in `outDimTags', and the correspondance between input
+      // and resulting entities in `outDimTagsMap'. If `tag' is positive, try to
+      // set the tag explicitly (only valid if the boolean operation results in a
+      // single entity). Remove the object if `removeObject' is set. Remove the
+      // tool if `removeTool' is set.
+      GMSH_API void intersect(const gmsh::vectorpair & objectDimTags,
+                              const gmsh::vectorpair & toolDimTags,
+                              gmsh::vectorpair & outDimTags,
+                              std::vector<gmsh::vectorpair> & outDimTagsMap,
+                              const int tag = -1,
+                              const bool removeObject = true,
+                              const bool removeTool = true);
+
+      // gmsh::model::discrete::cut
+      //
+      // Compute the boolean difference between the volumes `objectDimTags' and
+      // `toolDimTags' (vectors of (dim, tag) pairs) in the discrete CAD
+      // representation, exactly on their triangulations. The surfaces of the
+      // result keep the parameters of those they come from. Return the resulting
+      // volumes in `outDimTags', and the correspondance between input and
+      // resulting entities in `outDimTagsMap'. If `tag' is positive, try to set
+      // the tag explicitly (only valid if the boolean operation results in a
+      // single entity). Remove the object if `removeObject' is set. Remove the
+      // tool if `removeTool' is set.
+      GMSH_API void cut(const gmsh::vectorpair & objectDimTags,
+                        const gmsh::vectorpair & toolDimTags,
+                        gmsh::vectorpair & outDimTags,
+                        std::vector<gmsh::vectorpair> & outDimTagsMap,
+                        const int tag = -1,
+                        const bool removeObject = true,
+                        const bool removeTool = true);
+
+      // gmsh::model::discrete::importShapes
+      //
+      // Import the triangulations of the surfaces of the mesh file `fileName'
+      // (STL, MSH, OBJ, PLY, OFF, VTK or MESH format) in the discrete CAD
+      // representation, and build their topology: the surfaces are the triangles
+      // of the same surface of the file connected across edges shared by two
+      // triangles whose normals make an angle smaller than `angle' (in radians),
+      // the curves are along the edges between two surfaces, the boundary edges
+      // (of one triangle), the non-manifold edges (of more than two triangles) and
+      // the sharp edges inside a surface (embedded in it), split where more or
+      // less than two of them meet and, if `curveAngle' is less than Pi, where
+      // they turn by more than `curveAngle', and the volumes are the cells of
+      // space bounded by the surfaces (the cells of a connected piece of the
+      // triangulation inside a cell of another one are volumes if its triangles
+      // point out of them, holes if they point into them, as STL normals point out
+      // of solids). Each surface is oriented outwards of a volume whose outer
+      // boundary it is on, if any (the included volume for the boundary of an
+      // inclusion). The surfaces whose nodes are at most `tolerance' away from a
+      // plane, a sphere, a cylinder, a cone or a torus
+      // (`Geometry.DiscreteTolerance' times the size of the triangulation if
+      // `tolerance' is not positive) are recognized as such and get the parameters
+      // of the corresponding primitives (with a seam, or split in two halves,
+      // where needed); the others are split into their pieces on such surfaces up
+      // to the precision of the coordinates of their nodes (for a part whose faces
+      // meet tangentially), the rest into pieces that a single map can
+      // parametrize. Return the volumes and the surfaces bounding no volume in
+      // `outDimTags'.
+      GMSH_API void importShapes(const std::string & fileName,
+                                 const double angle,
+                                 gmsh::vectorpair & outDimTags,
+                                 const double curveAngle = M_PI,
+                                 const double tolerance = -1.);
+
+      // gmsh::model::discrete::addTriangulation
+      //
+      // Add the triangulation given by the coordinates `coord' of its nodes
+      // (concatenated: [n1x, n1y, n1z, n2x, ...]) and its triangles `triangles'
+      // (the indices of their 3 nodes, from 0, concatenated) in the discrete CAD
+      // representation, and build its topology as `importShapes'. Return the
+      // volumes and the surfaces bounding no volume in `outDimTags'.
+      GMSH_API void addTriangulation(const std::vector<double> & coord,
+                                     const std::vector<std::size_t> & triangles,
+                                     const double angle,
+                                     gmsh::vectorpair & outDimTags,
+                                     const double curveAngle = M_PI,
+                                     const double tolerance = -1.);
+
+      // gmsh::model::discrete::synchronize
+      //
+      // Synchronize the discrete CAD representation with the current Gmsh model:
+      // its points, curves, surfaces and volumes become discrete entities of the
+      // model, whose geometry is their polylines and triangulations, and replace
+      // the entities of the previous synchronization. Without synchronization the
+      // entities in the discrete CAD representation are not available to any
+      // function outside of the discrete CAD modeler functions.
+      GMSH_API void synchronize();
+
+    } // namespace discrete
+
   } // namespace model
 
   namespace view { // Post-processing view functions

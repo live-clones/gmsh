@@ -8,6 +8,7 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "discreteEdge.h"
+#include "SVector3.h"
 #include "MLine.h"
 #include "MEdge.h"
 #include "GModelIO_GEO.h"
@@ -96,9 +97,37 @@ SVector3 discreteEdge::firstDer(double par) const
   return der;
 }
 
+void discreteEdge::setReparamOnFace(const GFace *face,
+                                    const std::vector<SPoint2> &uv,
+                                    const std::vector<SPoint2> &otherSide)
+{
+  if(uv.size() != _discretization.size() ||
+     (!otherSide.empty() && otherSide.size() != _discretization.size())) {
+    Msg::Error("Wrong number of parameters of curve %d on surface %d", tag(),
+               face->tag());
+    return;
+  }
+  _onFace[0][face] = uv;
+  if(otherSide.empty())
+    _onFace[1].erase(face);
+  else
+    _onFace[1][face] = otherSide;
+}
+
 SPoint2 discreteEdge::reparamOnFace(const GFace *face, double epar,
                                     int dir) const
 {
+  // as OpenCASCADE: dir 1 for one side of a seam, any other for the other
+  const int side = (dir != 1 && isSeam(face)) ? 1 : 0;
+  auto it = _onFace[side].find(face);
+  if(it != _onFace[side].end()) {
+    const std::vector<SPoint2> &uv = it->second;
+    double tLoc;
+    int i;
+    if(!_getLocalParameter(epar, i, tLoc))
+      return epar <= 0. ? uv.front() : uv.back();
+    return uv[i] + (uv[i + 1] - uv[i]) * tLoc;
+  }
   GPoint p = point(epar);
   double guess[2];
   GPoint ps = face->closestPoint(SPoint3(p.x(), p.y(), p.z()), guess);
@@ -107,6 +136,20 @@ SPoint2 discreteEdge::reparamOnFace(const GFace *face, double epar,
 
 int discreteEdge::minimumMeshSegments() const
 {
+  // a straight discretization: as a line
+  bool straight = _discretization.size() >= 2;
+  if(straight) {
+    const SPoint3 &a = _discretization.front(), &b = _discretization.back();
+    const SVector3 ab(a, b);
+    const double l = ab.norm();
+    for(std::size_t i = 1; i + 1 < _discretization.size() && straight; i++) {
+      const SVector3 ap(a, _discretization[i]);
+      if(l == 0. || crossprod(ab, ap).norm() > 1.e-10 * l * l) straight = false;
+    }
+  }
+  if(straight)
+    return std::max(CTX::instance()->mesh.minLineNodes - 1,
+                    meshAttributes.minimumMeshSegments);
   return std::max(CTX::instance()->mesh.minCurveNodes,
                   meshAttributes.minimumMeshSegments);
 }

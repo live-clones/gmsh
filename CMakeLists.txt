@@ -44,6 +44,7 @@ opt(BUILD_IOS "Enable iOS library target (experimental)" OFF)
 opt(CGNS "Enable CGNS import/export (experimental)" ${DEFAULT})
 opt(CGNS_CPEX0045 "Enable high-order CGNS import/export following CPEX0045 (experimental)" OFF)
 opt(COVERAGE "Enable code coverage instrumentation (GCC/Clang only)" OFF)
+opt(DISCRETECAD "Enable the discrete CAD modeler" ${DEFAULT})
 opt(DOMHEX "Enable experimental DOMHEX code" ${DEFAULT})
 opt(EIGEN "Enable Eigen for linear algebra (instead of Blas/Lapack)" ON)
 opt(FFMPEG "Enable FFmpeg for MP4 movie export" ${DEFAULT})
@@ -967,6 +968,13 @@ if(HAVE_MESH)
     add_subdirectory(contrib/domhex)
     include_directories(contrib/domhex)
     set_config_option(HAVE_DOMHEX "DomHex")
+  endif()
+
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/discreteCADModeler AND
+     ENABLE_DISCRETECAD)
+    add_subdirectory(contrib/discreteCADModeler)
+    include_directories(contrib/discreteCADModeler)
+    set_config_option(HAVE_DISCRETECAD "DiscreteCAD")
   endif()
 
   if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadTri AND ENABLE_QUADTRI)
@@ -2343,6 +2351,10 @@ macro(filter_tests IN OUT)
       file(STRINGS ${FILE} BAD2 REGEX ".*occ.*synchronize.*")
       file(STRINGS ${FILE} BAD3 REGEX ".*[mM]erge.*brep.*")
     endif()
+    # discrete CAD modeler
+    if(NOT HAVE_DISCRETECAD AND NOT BAD1 AND NOT BAD2 AND NOT BAD3)
+      file(STRINGS ${FILE} BAD1 REGEX "^SetFactory.*Discrete.*")
+    endif()
     # Metis
     if(NOT HAVE_METIS AND NOT BAD1 AND NOT BAD2 AND NOT BAD3)
       file(STRINGS ${FILE} BAD1 REGEX ".*PartitionMesh.*")
@@ -2361,7 +2373,8 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
   include(CTest)
   file(GLOB_RECURSE ALLFILES
        tutorials/*.geo examples/*.geo benchmarks/?d/*.geo benchmarks/extrude/*.geo
-       benchmarks/occ/*.geo benchmarks/io_msh/polytopes.geo
+       benchmarks/occ/*.geo benchmarks/discreteCADModel/*.geo
+       benchmarks/io_msh/polytopes.geo
        benchmarks/io_msh/read_back.geo benchmarks/io_msh/faces.geo
        benchmarks/io_msh/views.geo
        benchmarks/io_vtk/*.geo)

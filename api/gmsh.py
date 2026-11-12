@@ -10029,6 +10029,548 @@ class model:
             set_size = setSize
 
 
+    class discrete:
+        """
+        Discrete CAD modeler functions
+        """
+
+        @staticmethod
+        def addBox(x, y, z, dx, dy, dz, tag=-1):
+            """
+            gmsh.model.discrete.addBox(x, y, z, dx, dy, dz, tag=-1)
+
+            Add a parallelepipedic box in the discrete CAD representation, defined by a
+            point (`x', `y', `z') and the extents along the x-, y- and z-axes. Its 6
+            surfaces are triangulated exactly, with 2 triangles each. If `tag' is
+            positive, set the tag explicitly; otherwise a new tag is selected
+            automatically. Return the tag of the box.
+
+            Return an integer.
+
+            Types:
+            - `x': double
+            - `y': double
+            - `z': double
+            - `dx': double
+            - `dy': double
+            - `dz': double
+            - `tag': integer
+            """
+            ierr = c_int()
+            api_result_ = lib.gmshModelDiscreteAddBox(
+                c_double(x),
+                c_double(y),
+                c_double(z),
+                c_double(dx),
+                c_double(dy),
+                c_double(dz),
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return api_result_
+        add_box = addBox
+
+        @staticmethod
+        def addSphere(xc, yc, zc, radius, tag=-1, tolerance=-1.):
+            """
+            gmsh.model.discrete.addSphere(xc, yc, zc, radius, tag=-1, tolerance=-1.)
+
+            Add a sphere of center (`xc', `yc', `zc') and radius `radius' in the
+            discrete CAD representation. Its 2 surfaces, the hemispheres, are
+            triangulated at most `tolerance' away from the exact sphere
+            (`Geometry.DiscreteTolerance' times the radius if `tolerance' is not
+            positive). If `tag' is positive, set the tag explicitly; otherwise a new
+            tag is selected automatically. Return the tag of the sphere.
+
+            Return an integer.
+
+            Types:
+            - `xc': double
+            - `yc': double
+            - `zc': double
+            - `radius': double
+            - `tag': integer
+            - `tolerance': double
+            """
+            ierr = c_int()
+            api_result_ = lib.gmshModelDiscreteAddSphere(
+                c_double(xc),
+                c_double(yc),
+                c_double(zc),
+                c_double(radius),
+                c_int(tag),
+                c_double(tolerance),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return api_result_
+        add_sphere = addSphere
+
+        @staticmethod
+        def addRectangle(x, y, z, dx, dy, tag=-1):
+            """
+            gmsh.model.discrete.addRectangle(x, y, z, dx, dy, tag=-1)
+
+            Add a rectangle in the discrete CAD representation, defined by a point
+            (`x', `y', `z') and the extents along the x- and y-axes, triangulated
+            exactly with 2 triangles. If `tag' is positive, set the tag explicitly;
+            otherwise a new tag is selected automatically. Return the tag of the
+            rectangle.
+
+            Return an integer.
+
+            Types:
+            - `x': double
+            - `y': double
+            - `z': double
+            - `dx': double
+            - `dy': double
+            - `tag': integer
+            """
+            ierr = c_int()
+            api_result_ = lib.gmshModelDiscreteAddRectangle(
+                c_double(x),
+                c_double(y),
+                c_double(z),
+                c_double(dx),
+                c_double(dy),
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return api_result_
+        add_rectangle = addRectangle
+
+        @staticmethod
+        def addDisk(xc, yc, zc, rx, ry, tag=-1, zAxis=[], xAxis=[], tolerance=-1.):
+            """
+            gmsh.model.discrete.addDisk(xc, yc, zc, rx, ry, tag=-1, zAxis=[], xAxis=[], tolerance=-1.)
+
+            Add a disk in the discrete CAD representation, defined by the center (`xc',
+            `yc', `zc') and the radius `rx' along the x-axis and `ry' along the y-axis.
+            If a vector `zAxis' of size 3 is provided, use it as the normal to the
+            disk; if a vector `xAxis' of size 3 is provided, use it to define the
+            x-axis. Its boundary, split into 2 arcs, is at most `tolerance' away from
+            the exact ellipse (`Geometry.DiscreteTolerance' times the largest radius if
+            `tolerance' is not positive). If `tag' is positive, set the tag explicitly;
+            otherwise a new tag is selected automatically. Return the tag of the disk.
+
+            Return an integer.
+
+            Types:
+            - `xc': double
+            - `yc': double
+            - `zc': double
+            - `rx': double
+            - `ry': double
+            - `tag': integer
+            - `zAxis': vector of doubles
+            - `xAxis': vector of doubles
+            - `tolerance': double
+            """
+            api_zAxis_, api_zAxis_n_ = _ivectordouble(zAxis)
+            api_xAxis_, api_xAxis_n_ = _ivectordouble(xAxis)
+            ierr = c_int()
+            api_result_ = lib.gmshModelDiscreteAddDisk(
+                c_double(xc),
+                c_double(yc),
+                c_double(zc),
+                c_double(rx),
+                c_double(ry),
+                c_int(tag),
+                api_zAxis_, api_zAxis_n_,
+                api_xAxis_, api_xAxis_n_,
+                c_double(tolerance),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return api_result_
+        add_disk = addDisk
+
+        @staticmethod
+        def addCylinder(x, y, z, dx, dy, dz, r, tag=-1, tolerance=-1.):
+            """
+            gmsh.model.discrete.addCylinder(x, y, z, dx, dy, dz, r, tag=-1, tolerance=-1.)
+
+            Add a cylinder in the discrete CAD representation, defined by the center
+            (`x', `y', `z') of its first circular face, the 3 components (`dx', `dy',
+            `dz') of the vector defining its axis and its radius `r'. Its 3 surfaces,
+            the lateral surface and the 2 disks, are triangulated at most `tolerance'
+            away from the exact cylinder (`Geometry.DiscreteTolerance' times `r' if
+            `tolerance' is not positive). If `tag' is positive, set the tag explicitly;
+            otherwise a new tag is selected automatically. Return the tag of the
+            cylinder.
+
+            Return an integer.
+
+            Types:
+            - `x': double
+            - `y': double
+            - `z': double
+            - `dx': double
+            - `dy': double
+            - `dz': double
+            - `r': double
+            - `tag': integer
+            - `tolerance': double
+            """
+            ierr = c_int()
+            api_result_ = lib.gmshModelDiscreteAddCylinder(
+                c_double(x),
+                c_double(y),
+                c_double(z),
+                c_double(dx),
+                c_double(dy),
+                c_double(dz),
+                c_double(r),
+                c_int(tag),
+                c_double(tolerance),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return api_result_
+        add_cylinder = addCylinder
+
+        @staticmethod
+        def addCone(x, y, z, dx, dy, dz, r1, r2, tag=-1, tolerance=-1.):
+            """
+            gmsh.model.discrete.addCone(x, y, z, dx, dy, dz, r1, r2, tag=-1, tolerance=-1.)
+
+            Add a cone in the discrete CAD representation, defined by the center (`x',
+            `y', `z') of its first circular face, the 3 components of the vector (`dx',
+            `dy', `dz') defining its axis and the two radii `r1' and `r2' of the faces
+            (one of them can be zero, giving an apex). Its surfaces, the lateral
+            surface (holding the apex, if any) and the disks, are triangulated at most
+            `tolerance' away from the exact cone (`Geometry.DiscreteTolerance' times
+            the largest radius if `tolerance' is not positive). If `tag' is positive,
+            set the tag explicitly; otherwise a new tag is selected automatically.
+            Return the tag of the cone.
+
+            Return an integer.
+
+            Types:
+            - `x': double
+            - `y': double
+            - `z': double
+            - `dx': double
+            - `dy': double
+            - `dz': double
+            - `r1': double
+            - `r2': double
+            - `tag': integer
+            - `tolerance': double
+            """
+            ierr = c_int()
+            api_result_ = lib.gmshModelDiscreteAddCone(
+                c_double(x),
+                c_double(y),
+                c_double(z),
+                c_double(dx),
+                c_double(dy),
+                c_double(dz),
+                c_double(r1),
+                c_double(r2),
+                c_int(tag),
+                c_double(tolerance),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return api_result_
+        add_cone = addCone
+
+        @staticmethod
+        def addTorus(x, y, z, r1, r2, tag=-1, zAxis=[], tolerance=-1.):
+            """
+            gmsh.model.discrete.addTorus(x, y, z, r1, r2, tag=-1, zAxis=[], tolerance=-1.)
+
+            Add a torus in the discrete CAD representation, defined by its center (`x',
+            `y', `z') and its 2 radii `r1' (of its center circle) and `r2' (of its
+            section), with r2 < r1. If a vector `zAxis' of size 3 is provided, use it
+            as the axis of the torus (instead of the z-axis). Its 2 surfaces, the
+            halves on either side of its equatorial plane bounded by its outer and
+            inner equators, are triangulated at most `tolerance' away from the exact
+            torus (`Geometry.DiscreteTolerance' times `r2' if `tolerance' is not
+            positive). If `tag' is positive, set the tag explicitly; otherwise a new
+            tag is selected automatically. Return the tag of the torus.
+
+            Return an integer.
+
+            Types:
+            - `x': double
+            - `y': double
+            - `z': double
+            - `r1': double
+            - `r2': double
+            - `tag': integer
+            - `zAxis': vector of doubles
+            - `tolerance': double
+            """
+            api_zAxis_, api_zAxis_n_ = _ivectordouble(zAxis)
+            ierr = c_int()
+            api_result_ = lib.gmshModelDiscreteAddTorus(
+                c_double(x),
+                c_double(y),
+                c_double(z),
+                c_double(r1),
+                c_double(r2),
+                c_int(tag),
+                api_zAxis_, api_zAxis_n_,
+                c_double(tolerance),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return api_result_
+        add_torus = addTorus
+
+        @staticmethod
+        def fuse(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True):
+            """
+            gmsh.model.discrete.fuse(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True)
+
+            Compute the boolean union (the fusion) of the volumes `objectDimTags' and
+            `toolDimTags' (vectors of (dim, tag) pairs) in the discrete CAD
+            representation, exactly on their triangulations. The surfaces of the result
+            keep the parameters of those they come from. Return the resulting volumes
+            in `outDimTags', and the correspondance between input and resulting
+            entities in `outDimTagsMap'. If `tag' is positive, try to set the tag
+            explicitly (only valid if the boolean operation results in a single
+            entity). Remove the object if `removeObject' is set. Remove the tool if
+            `removeTool' is set.
+
+            Return `outDimTags', `outDimTagsMap'.
+
+            Types:
+            - `objectDimTags': vector of pairs of integers
+            - `toolDimTags': vector of pairs of integers
+            - `outDimTags': vector of pairs of integers
+            - `outDimTagsMap': vector of vectors of pairs of integers
+            - `tag': integer
+            - `removeObject': boolean
+            - `removeTool': boolean
+            """
+            api_objectDimTags_, api_objectDimTags_n_ = _ivectorpair(objectDimTags)
+            api_toolDimTags_, api_toolDimTags_n_ = _ivectorpair(toolDimTags)
+            api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
+            api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_ = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelDiscreteFuse(
+                api_objectDimTags_, api_objectDimTags_n_,
+                api_toolDimTags_, api_toolDimTags_n_,
+                byref(api_outDimTags_), byref(api_outDimTags_n_),
+                byref(api_outDimTagsMap_), byref(api_outDimTagsMap_n_), byref(api_outDimTagsMap_nn_),
+                c_int(tag),
+                c_int(bool(removeObject)),
+                c_int(bool(removeTool)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return (
+                _ovectorpair(api_outDimTags_, api_outDimTags_n_.value),
+                _ovectorvectorpair(api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_))
+
+        @staticmethod
+        def intersect(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True):
+            """
+            gmsh.model.discrete.intersect(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True)
+
+            Compute the boolean intersection (the common parts) of the volumes
+            `objectDimTags' and `toolDimTags' (vectors of (dim, tag) pairs) in the
+            discrete CAD representation, exactly on their triangulations. The surfaces
+            of the result keep the parameters of those they come from. Return the
+            resulting volumes in `outDimTags', and the correspondance between input and
+            resulting entities in `outDimTagsMap'. If `tag' is positive, try to set the
+            tag explicitly (only valid if the boolean operation results in a single
+            entity). Remove the object if `removeObject' is set. Remove the tool if
+            `removeTool' is set.
+
+            Return `outDimTags', `outDimTagsMap'.
+
+            Types:
+            - `objectDimTags': vector of pairs of integers
+            - `toolDimTags': vector of pairs of integers
+            - `outDimTags': vector of pairs of integers
+            - `outDimTagsMap': vector of vectors of pairs of integers
+            - `tag': integer
+            - `removeObject': boolean
+            - `removeTool': boolean
+            """
+            api_objectDimTags_, api_objectDimTags_n_ = _ivectorpair(objectDimTags)
+            api_toolDimTags_, api_toolDimTags_n_ = _ivectorpair(toolDimTags)
+            api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
+            api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_ = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelDiscreteIntersect(
+                api_objectDimTags_, api_objectDimTags_n_,
+                api_toolDimTags_, api_toolDimTags_n_,
+                byref(api_outDimTags_), byref(api_outDimTags_n_),
+                byref(api_outDimTagsMap_), byref(api_outDimTagsMap_n_), byref(api_outDimTagsMap_nn_),
+                c_int(tag),
+                c_int(bool(removeObject)),
+                c_int(bool(removeTool)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return (
+                _ovectorpair(api_outDimTags_, api_outDimTags_n_.value),
+                _ovectorvectorpair(api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_))
+
+        @staticmethod
+        def cut(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True):
+            """
+            gmsh.model.discrete.cut(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True)
+
+            Compute the boolean difference between the volumes `objectDimTags' and
+            `toolDimTags' (vectors of (dim, tag) pairs) in the discrete CAD
+            representation, exactly on their triangulations. The surfaces of the result
+            keep the parameters of those they come from. Return the resulting volumes
+            in `outDimTags', and the correspondance between input and resulting
+            entities in `outDimTagsMap'. If `tag' is positive, try to set the tag
+            explicitly (only valid if the boolean operation results in a single
+            entity). Remove the object if `removeObject' is set. Remove the tool if
+            `removeTool' is set.
+
+            Return `outDimTags', `outDimTagsMap'.
+
+            Types:
+            - `objectDimTags': vector of pairs of integers
+            - `toolDimTags': vector of pairs of integers
+            - `outDimTags': vector of pairs of integers
+            - `outDimTagsMap': vector of vectors of pairs of integers
+            - `tag': integer
+            - `removeObject': boolean
+            - `removeTool': boolean
+            """
+            api_objectDimTags_, api_objectDimTags_n_ = _ivectorpair(objectDimTags)
+            api_toolDimTags_, api_toolDimTags_n_ = _ivectorpair(toolDimTags)
+            api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
+            api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_ = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelDiscreteCut(
+                api_objectDimTags_, api_objectDimTags_n_,
+                api_toolDimTags_, api_toolDimTags_n_,
+                byref(api_outDimTags_), byref(api_outDimTags_n_),
+                byref(api_outDimTagsMap_), byref(api_outDimTagsMap_n_), byref(api_outDimTagsMap_nn_),
+                c_int(tag),
+                c_int(bool(removeObject)),
+                c_int(bool(removeTool)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return (
+                _ovectorpair(api_outDimTags_, api_outDimTags_n_.value),
+                _ovectorvectorpair(api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_))
+
+        @staticmethod
+        def importShapes(fileName, angle, curveAngle=pi, tolerance=-1.):
+            """
+            gmsh.model.discrete.importShapes(fileName, angle, curveAngle=pi, tolerance=-1.)
+
+            Import the triangulations of the surfaces of the mesh file `fileName' (STL,
+            MSH, OBJ, PLY, OFF, VTK or MESH format) in the discrete CAD representation,
+            and build their topology: the surfaces are the triangles of the same
+            surface of the file connected across edges shared by two triangles whose
+            normals make an angle smaller than `angle' (in radians), the curves are
+            along the edges between two surfaces, the boundary edges (of one triangle),
+            the non-manifold edges (of more than two triangles) and the sharp edges
+            inside a surface (embedded in it), split where more or less than two of
+            them meet and, if `curveAngle' is less than Pi, where they turn by more
+            than `curveAngle', and the volumes are the cells of space bounded by the
+            surfaces (the cells of a connected piece of the triangulation inside a cell
+            of another one are volumes if its triangles point out of them, holes if
+            they point into them, as STL normals point out of solids). Each surface is
+            oriented outwards of a volume whose outer boundary it is on, if any (the
+            included volume for the boundary of an inclusion). The surfaces whose nodes
+            are at most `tolerance' away from a plane, a sphere, a cylinder, a cone or
+            a torus (`Geometry.DiscreteTolerance' times the size of the triangulation
+            if `tolerance' is not positive) are recognized as such and get the
+            parameters of the corresponding primitives (with a seam, or split in two
+            halves, where needed); the others are split into their pieces on such
+            surfaces up to the precision of the coordinates of their nodes (for a part
+            whose faces meet tangentially), the rest into pieces that a single map can
+            parametrize. Return the volumes and the surfaces bounding no volume in
+            `outDimTags'.
+
+            Return `outDimTags'.
+
+            Types:
+            - `fileName': string
+            - `angle': double
+            - `outDimTags': vector of pairs of integers
+            - `curveAngle': double
+            - `tolerance': double
+            """
+            api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelDiscreteImportShapes(
+                c_char_p(fileName.encode()),
+                c_double(angle),
+                byref(api_outDimTags_), byref(api_outDimTags_n_),
+                c_double(curveAngle),
+                c_double(tolerance),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
+        import_shapes = importShapes
+
+        @staticmethod
+        def addTriangulation(coord, triangles, angle, curveAngle=pi, tolerance=-1.):
+            """
+            gmsh.model.discrete.addTriangulation(coord, triangles, angle, curveAngle=pi, tolerance=-1.)
+
+            Add the triangulation given by the coordinates `coord' of its nodes
+            (concatenated: [n1x, n1y, n1z, n2x, ...]) and its triangles `triangles'
+            (the indices of their 3 nodes, from 0, concatenated) in the discrete CAD
+            representation, and build its topology as `importShapes'. Return the
+            volumes and the surfaces bounding no volume in `outDimTags'.
+
+            Return `outDimTags'.
+
+            Types:
+            - `coord': vector of doubles
+            - `triangles': vector of sizes
+            - `angle': double
+            - `outDimTags': vector of pairs of integers
+            - `curveAngle': double
+            - `tolerance': double
+            """
+            api_coord_, api_coord_n_ = _ivectordouble(coord)
+            api_triangles_, api_triangles_n_ = _ivectorsize(triangles)
+            api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelDiscreteAddTriangulation(
+                api_coord_, api_coord_n_,
+                api_triangles_, api_triangles_n_,
+                c_double(angle),
+                byref(api_outDimTags_), byref(api_outDimTags_n_),
+                c_double(curveAngle),
+                c_double(tolerance),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
+        add_triangulation = addTriangulation
+
+        @staticmethod
+        def synchronize():
+            """
+            gmsh.model.discrete.synchronize()
+
+            Synchronize the discrete CAD representation with the current Gmsh model:
+            its points, curves, surfaces and volumes become discrete entities of the
+            model, whose geometry is their polylines and triangulations, and replace
+            the entities of the previous synchronization. Without synchronization the
+            entities in the discrete CAD representation are not available to any
+            function outside of the discrete CAD modeler functions.
+            """
+            ierr = c_int()
+            lib.gmshModelDiscreteSynchronize(
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+
+
 class view:
     """
     Post-processing view functions
