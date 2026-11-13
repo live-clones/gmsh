@@ -106,6 +106,8 @@ public:
       case TYPE_PRI: return _ctx->color.mesh.prism;
       case TYPE_PYR: return _ctx->color.mesh.pyramid;
       case TYPE_TRIH: return _ctx->color.mesh.trihedron;
+      case TYPE_POLYG: return _ctx->color.mesh.polygon;
+      case TYPE_POLYH: return _ctx->color.mesh.polyhedron;
       default: return _ctx->color.mesh.node;
       }
     }

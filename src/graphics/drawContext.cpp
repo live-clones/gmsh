@@ -542,13 +542,14 @@ static bool meshUsesEntityColors()
 bool meshColorsAreTransparent()
 {
   CTX *ctx = CTX::instance();
-  unsigned int c[30] = {
+  unsigned int c[32] = {
     ctx->color.mesh.line,       ctx->color.mesh.triangle,
     ctx->color.mesh.quadrangle, ctx->color.mesh.tetrahedron,
     ctx->color.mesh.hexahedron, ctx->color.mesh.prism,
     ctx->color.mesh.pyramid,    ctx->color.mesh.trihedron,
+    ctx->color.mesh.polygon,    ctx->color.mesh.polyhedron,
     ctx->color.fg,              ctx->color.geom.selection};
-  int n = 10;
+  int n = 12;
   int carousel = ctx->mesh.colorCarousel;
   if(carousel >= 1 && carousel <= 3)
     for(int i = 0; i < 20; i++) c[n++] = ctx->color.mesh.carousel[i];
