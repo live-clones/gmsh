@@ -840,6 +840,8 @@ void UnzipFile(const std::string &fileName, const std::string &prependDir)
     zipFile.openEntry(it->c_str());
     std::string name = dir + *it;
     Msg::Info("Extracting file `%s'", name.c_str());
+    // (its folder too: a zip need not list the folders of its files)
+    CreatePath(name);
     std::ofstream ofs;
     ofs.open(name.c_str());
     if(ofs.is_open()) {

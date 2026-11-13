@@ -57,7 +57,10 @@ export function removeDirectory(FS, dir) {
 // directory first (a model may have others in subdirectories)
 export function findModel(FS, dir) {
   const depth = (f) => f.split('/').length;
-  const files = [...listFiles(FS, dir).keys()].sort((a, b) => depth(a) - depth(b));
+  // (not a hidden file, such as a .gitignore)
+  const files = [...listFiles(FS, dir).keys()]
+    .filter((f) => !f.slice(f.lastIndexOf('/') + 1).startsWith('.'))
+    .sort((a, b) => depth(a) - depth(b));
   const pro = files.filter((f) => f.endsWith('.pro'));
   const geo = files.filter((f) => f.endsWith('.geo'));
   return pro.find((f) => geo.includes(f.replace(/\.pro$/, '.geo'))) ||

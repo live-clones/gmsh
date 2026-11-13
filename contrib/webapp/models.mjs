@@ -80,8 +80,11 @@ export async function openFiles(entries, open = '') {
       writeFile(FS, dir + '/' + path, data);
   }
   // the file asked for (a zip may hold several models), or the one found
-  const file = (open && FS.analyzePath(dir + '/' + open).exists) ?
-    dir + '/' + open : findModel(FS, dir);
+  if(open && !FS.analyzePath(dir + '/' + open).exists) {
+    setStatus(`No ${open} in the files given`, true);
+    return;
+  }
+  const file = open ? dir + '/' + open : findModel(FS, dir);
   if(!file) {
     setStatus('No model found');
     return;
