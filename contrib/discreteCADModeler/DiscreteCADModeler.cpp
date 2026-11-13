@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cmath>
+#include <cstdio>
 #include "DiscreteCADModeler.h"
 #include "DiscreteCADHeal.h"
 #include "DiscreteCADMeshBoolean.h"
@@ -80,6 +81,19 @@ namespace {
   }
 
   const double pi = 3.14159265358979323846;
+
+  // the report of a step of the import of triangulations, added to the list
+  // of the reports however the step ends
+  struct stepReport {
+    std::vector<std::string> &reports;
+    std::string text;
+    ~stepReport() { reports.push_back(text); }
+  };
+
+  std::string plural(std::size_t n, const char *one, const char *many)
+  {
+    return std::to_string(n) + " " + (n == 1 ? one : many);
+  }
 
   void normalize(double v[3])
   {
@@ -420,6 +434,7 @@ void DiscreteCAD_Internals::reset()
   _volumes.clear();
   for(int dim = 0; dim < 4; dim++) _maxTag[dim] = 0;
   _synchronized.clear();
+  _reports.clear();
   _changed = false;
 }
 
@@ -2562,6 +2577,19 @@ bool DiscreteCAD_Internals::_build(
             cells.size(), cells.size() == 1 ? "" : "s", surfaces.size(),
             surfaces.size() == 1 ? "" : "s", curves.size(),
             curves.size() == 1 ? "" : "s");
+  _built = plural(cells.size(), "volume", "volumes") + ", " +
+           plural(surfaces.size(), "surface", "surfaces") + " and " +
+           plural(curves.size(), "curve", "curves");
+  if(recognize) {
+    char tol[32];
+    snprintf(tol, sizeof(tol), "%g", tolerance);
+    _built += "\n" + plural(recognized[1], "plane", "planes") + ", " +
+              plural(recognized[2], "sphere", "spheres") + ", " +
+              plural(recognized[3], "cylinder", "cylinders") + ", " +
+              plural(recognized[4], "cone", "cones") + " and " +
+              plural(recognized[5], "torus", "tori") +
+              " recognized (tolerance " + tol + ")";
+  }
   if(recognize)
     Msg::Info("Discrete CAD triangulation: %d plane%s, %d sphere%s, %d "
               "cylinder%s, %d cone%s and %d tor%s recognized (tolerance %g, "
@@ -2668,9 +2696,13 @@ bool DiscreteCAD_Internals::importShapes(
   std::vector<double> coord;
   std::vector<std::size_t> triangles;
   std::vector<int> pieces;
+  stepReport report{_reports, "Failed (see the messages)"};
   if(!_readTriangulations(fileName, coord, triangles, pieces)) return false;
-  return addTriangulation(coord, triangles, pieces, angle, curveAngle,
-                          tolerance, outDimTags);
+  if(!addTriangulation(coord, triangles, pieces, angle, curveAngle, tolerance,
+                       outDimTags))
+    return false;
+  report.text = _built;
+  return true;
 }
 
 bool DiscreteCAD_Internals::importTriangulations(
@@ -2680,6 +2712,7 @@ bool DiscreteCAD_Internals::importTriangulations(
   std::vector<double> coord;
   std::vector<std::size_t> triangles;
   std::vector<int> pieces;
+  stepReport report{_reports, "Failed (see the messages)"};
   if(!_readTriangulations(fileName, coord, triangles, pieces)) return false;
   std::vector<std::array<int, 3> > tri;
   std::vector<int> piece;
@@ -2695,9 +2728,13 @@ bool DiscreteCAD_Internals::importTriangulations(
     sf.raw = true;
     outDimTags.push_back({2, t});
   }
-  Msg::Info("Discrete CAD import: %lu triangulation%s, %lu triangles",
-            trianglesOf.size(), trianglesOf.size() == 1 ? "" : "s",
-            tri.size());
+  std::set<int> nodes;
+  for(auto &t : tri) nodes.insert(t.begin(), t.end());
+  report.text = plural(tri.size(), "triangle", "triangles") + " and " +
+                plural(nodes.size(), "node", "nodes") + " read, in " +
+                plural(trianglesOf.size(), "triangulation", "triangulations") +
+                " (the surfaces of the file)";
+  Msg::Info("Discrete CAD import: %s", report.text.c_str());
   _changed = true;
   return true;
 }
@@ -2731,6 +2768,7 @@ static bool rawSurfaces(const std::map<int, DiscreteCAD_Internals::Surface> &s,
 
 bool DiscreteCAD_Internals::heal(const std::vector<int> &surfaceTags)
 {
+  stepReport report{_reports, "Failed (see the messages)"};
   std::vector<int> raw;
   if(!rawSurfaces(_surfaces, surfaceTags, "heal", raw)) return false;
   std::vector<std::array<int, 3> > tri;
@@ -2753,12 +2791,34 @@ bool DiscreteCAD_Internals::heal(const std::vector<int> &surfaceTags)
       _surfaces.erase(s);
       emptied++;
     }
-  Msg::Info("Discrete CAD heal: %d degenerate and %d duplicated triangles "
-            "removed (%d surfaces emptied); %d components (%d closed): %d "
-            "closed and %d open ones turned over, %d triangles turned over "
-            "in all",
-            r.degenerate, r.duplicated, emptied, r.components, r.closed,
-            r.reversedClosed, r.reversedOpen, r.reversedTriangles);
+  // (what was done, in words)
+  std::string removed =
+    plural(r.degenerate, "degenerate triangle", "degenerate triangles") +
+    " (two nodes the same) and " +
+    plural(r.duplicated, "duplicated triangle", "duplicated triangles") +
+    " (the same three nodes) removed";
+  if(emptied)
+    removed += ", " +
+               plural(emptied, "triangulation", "triangulations") +
+               " left empty removed";
+  const std::string pieces =
+    plural(r.components, "piece", "pieces") +
+    " (triangles connected by their edges): " + std::to_string(r.closed) +
+    " closed, " + std::to_string(r.components - r.closed) + " open";
+  std::string turned;
+  if(!r.reversedTriangles)
+    turned = "no triangle turned over: all were oriented consistently";
+  else
+    turned = plural(r.reversedTriangles, "triangle", "triangles") +
+             " turned over: those against their neighbors, and " +
+             plural(r.reversedClosed, "closed piece", "closed pieces") +
+             " of negative volume and " +
+             plural(r.reversedOpen, "open piece", "open pieces") +
+             " against the winding number of the others";
+  report.text = removed + "\n" + pieces + "\n" + turned;
+  Msg::Info("Discrete CAD heal: %s", removed.c_str());
+  Msg::Info("Discrete CAD heal: %s", pieces.c_str());
+  Msg::Info("Discrete CAD heal: %s", turned.c_str());
   _changed = true;
   return true;
 }
@@ -2768,6 +2828,7 @@ bool DiscreteCAD_Internals::classify(
   std::vector<std::pair<int, int> > &outDimTags)
 {
   outDimTags.clear();
+  stepReport report{_reports, "Failed (see the messages)"};
   std::vector<int> raw;
   if(!rawSurfaces(_surfaces, surfaceTags, "classify", raw)) return false;
   std::vector<std::array<int, 3> > tri;
@@ -2781,8 +2842,11 @@ bool DiscreteCAD_Internals::classify(
   for(int s : raw) _surfaces.erase(s);
   std::set<std::pair<int, int> > barrier;
   _patches(tri, piece, angle, label, barrier);
-  return _build(tri, label, barrier, angle, curveAngle, 0., false, nullptr,
-                nullptr, outDimTags);
+  if(!_build(tri, label, barrier, angle, curveAngle, 0., false, nullptr,
+             nullptr, outDimTags))
+    return false;
+  report.text = _built;
+  return true;
 }
 
 bool DiscreteCAD_Internals::recognize(
@@ -2790,6 +2854,7 @@ bool DiscreteCAD_Internals::recognize(
   double tolerance, std::vector<std::pair<int, int> > &outDimTags)
 {
   outDimTags.clear();
+  stepReport report{_reports, "Failed (see the messages)"};
   // the surfaces and volumes given, and those connected to them by their
   // curves or bounded by them
   std::set<int> surfaces, volumes;
@@ -2903,8 +2968,11 @@ bool DiscreteCAD_Internals::recognize(
       parent[find(e.second[0])] = find(e.second[1]);
   std::vector<int> label(nt);
   for(std::size_t i = 0; i < nt; i++) label[i] = (int)find(i);
-  return _build(tri, label, barrier, angle, pi, tolerance, true, &corners,
-                &volumeOf, outDimTags);
+  if(!_build(tri, label, barrier, angle, pi, tolerance, true, &corners,
+             &volumeOf, outDimTags))
+    return false;
+  report.text = _built;
+  return true;
 }
 
 void DiscreteCAD_Internals::synchronize(GModel *model)

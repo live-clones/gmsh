@@ -90,6 +90,10 @@ private:
   bool _changed;
   // the entities copied into the model by the last synchronize
   std::vector<std::pair<int, int> > _synchronized;
+  // what the steps of the import of triangulations did, and the topology the
+  // last one built
+  std::vector<std::string> _reports;
+  std::string _built;
   bool _exists(int dim, int tag) const;
   // a free tag of dimension dim if tag <= 0, else tag if it is free
   bool _assignTag(int dim, int &tag);
@@ -201,6 +205,10 @@ public:
   DiscreteCAD_Internals();
   void reset();
   bool getChanged() const { return _changed; }
+  // what the steps of the import of triangulations did (importShapes,
+  // importTriangulations, heal, classify, recognize), in the order they were
+  // made, in a few lines for each (for the interfaces)
+  const std::vector<std::string> &getReports() const { return _reports; }
   // a box with a corner at (x, y, z) and extents dx, dy, dz; tag is the tag
   // of the volume (a new one if tag <= 0)
   bool addBox(int &tag, double x, double y, double z, double dx, double dy,
