@@ -3908,8 +3908,22 @@ Extrude :
           (regions, edges, radii, outDimTags, true);
         VectorOfPairs2ListOfShapes(outDimTags, $$);
       }
+#if defined(HAVE_DISCRETECAD)
+      else if(gmsh_yyfactory == "Discrete" &&
+              GModel::current()->getDiscreteCADInternals()){
+        std::vector<int> regions, edges;
+        ListOfDouble2Vector($3, regions); ListOfDouble2Vector($6, edges);
+        std::vector<double> radii;
+        ListOfDouble2Vector($9, radii);
+        std::vector<std::pair<int, int> > outDimTags;
+        r = GModel::current()->getDiscreteCADInternals()->fillet
+          (regions, edges, radii, outDimTags, true);
+        VectorOfPairs2ListOfShapes(outDimTags, $$);
+      }
+#endif
       else{
-        yymsg(0, "Fillet only available with OpenCASCADE geometry kernel");
+        yymsg(0, "Fillet only available with OpenCASCADE and Discrete geometry "
+              "kernels");
       }
       if(!r) yymsg(0, "Could not fillet shapes");
       List_Delete($3);

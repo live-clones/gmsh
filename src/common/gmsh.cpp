@@ -7736,6 +7736,22 @@ GMSH_API void gmsh::model::discrete::cut(
                    tag, removeObject, removeTool);
 }
 
+GMSH_API void gmsh::model::discrete::fillet(const std::vector<int> &volumeTags,
+                                            const std::vector<int> &curveTags,
+                                            const std::vector<double> &radii,
+                                            vectorpair &outDimTags,
+                                            const bool removeVolume)
+{
+  if(!_checkInit()) return;
+  outDimTags.clear();
+#if defined(HAVE_DISCRETECAD)
+  _discreteCAD()->fillet(volumeTags, curveTags, radii, outDimTags,
+                         removeVolume);
+#else
+  Msg::Error("Discrete CAD modeler not available");
+#endif
+}
+
 GMSH_API void gmsh::model::discrete::importShapes(
   const std::string &fileName, const double angle, vectorpair &outDimTags,
   const double curveAngle, const double tolerance)

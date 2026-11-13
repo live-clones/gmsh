@@ -2045,7 +2045,8 @@ void scriptBoolean(const std::string &fileName, const std::string &op,
 void scriptFillet(const std::string &fileName, const std::vector<int> &regions,
                   const std::vector<int> &edges, const std::string &radius)
 {
-  scriptAdd(occFactory() + "Fillet " + vector2String(regions) +
+  scriptAdd((discreteFactory() ? "" : occFactory()) + "Fillet " +
+              vector2String(regions) +
               vector2String(edges) + "{" + radius + "}",
             fileName, [=] {
               return std::vector<apiCall>{call(

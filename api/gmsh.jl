@@ -9272,6 +9272,42 @@ function cut(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTo
 end
 
 """
+    gmsh.model.discrete.fillet(volumeTags, curveTags, radii, removeVolume = true)
+
+Fillet the volumes `volumeTags` on the curves `curveTags` with radii `radii` in
+the discrete CAD representation. The `radii` vector can either contain a single
+radius or as many radii as `curveTags`. The curves continuing the given ones
+tangentially are filleted too. The ball rolling on the two surfaces of each
+curve removes the solid between it and a convex curve, and fills the space
+between it and a concave one, exactly on the triangulations; three fillets of
+the same radius and kind meeting at a point are joined by the part of the ball
+touching their three surfaces. The fillets on a cylinder, a torus or a sphere
+get its exact geometry. Return the filleted volumes in `outDimTags` as a vector
+of (dim, tag) pairs. Remove the original volume if `removeVolume` is set.
+
+Return `outDimTags`.
+
+Types:
+ - `volumeTags`: vector of integers
+ - `curveTags`: vector of integers
+ - `radii`: vector of doubles
+ - `outDimTags`: vector of pairs of integers
+ - `removeVolume`: boolean
+"""
+function fillet(volumeTags, curveTags, radii, removeVolume = true)
+    api_outDimTags_ = Ref{Ptr{Cint}}()
+    api_outDimTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelDiscreteFillet, gmsh.lib), Cvoid,
+          (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          convert(Vector{Cint}, volumeTags), length(volumeTags), convert(Vector{Cint}, curveTags), length(curveTags), convert(Vector{Cdouble}, radii), length(radii), api_outDimTags_, api_outDimTags_n_, removeVolume, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own = true)
+    outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
+    return outDimTags
+end
+
+"""
     gmsh.model.discrete.importShapes(fileName, angle, curveAngle = pi, tolerance = -1.)
 
 Import the triangulations of the surfaces of the mesh file `fileName` (STL, MSH,

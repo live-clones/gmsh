@@ -8005,6 +8005,39 @@ export function wrapGmsh(Module) {
   };
 
   /**
+   * gmsh.model.discrete.fillet(volumeTags, curveTags, radii, removeVolume = true)
+   *
+   * Fillet the volumes `volumeTags' on the curves `curveTags' with radii
+   * `radii' in the discrete CAD representation. The `radii' vector can either
+   * contain a single radius or as many radii as `curveTags'. The curves
+   * continuing the given ones tangentially are filleted too. The ball rolling
+   * on the two surfaces of each curve removes the solid between it and a
+   * convex curve, and fills the space between it and a concave one, exactly
+   * on the triangulations; three fillets of the same radius and kind meeting
+   * at a point are joined by the part of the ball touching their three
+   * surfaces. The fillets on a cylinder, a torus or a sphere get its exact
+   * geometry. Return the filleted volumes in `outDimTags' as a vector of
+   * (dim, tag) pairs. Remove the original volume if `removeVolume' is set.
+   *
+   * Return `outDimTags'.
+   */
+  gmsh.model.discrete.fillet = function(volumeTags, curveTags, radii, removeVolume = true) {
+    const tmp = [];
+    try {
+      const [api_volumeTags_, api_volumeTags_n] = _ivector(volumeTags, 'int', tmp);
+      const [api_curveTags_, api_curveTags_n] = _ivector(curveTags, 'int', tmp);
+      const [api_radii_, api_radii_n] = _ivector(radii, 'double', tmp);
+      const api_outDimTags_ = _alloc(8, tmp);
+      M._gmshModelDiscreteFillet(api_volumeTags_, api_volumeTags_n, api_curveTags_, api_curveTags_n, api_radii_, api_radii_n, api_outDimTags_, api_outDimTags_ + 4, removeVolume ? 1 : 0, ierr);
+      _check();
+      return _ovectorpair(api_outDimTags_);
+    }
+    finally {
+      tmp.forEach((p) => M._free(p));
+    }
+  };
+
+  /**
    * gmsh.model.discrete.importShapes(fileName, angle, curveAngle = Math.PI, tolerance = -1.)
    *
    * Import the triangulations of the surfaces of the mesh file `fileName'

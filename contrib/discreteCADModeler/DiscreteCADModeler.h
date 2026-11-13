@@ -52,7 +52,8 @@ public:
   // curves used twice in its loops, with the parameters of their nodes on
   // their two sides (the side of the curve used forwards first), the curves
   // inside it (its creases), and, for an analytic surface, the map from its
-  // parameters to its points (its exact geometry)
+  // parameters to its points (its exact geometry), or only the surface for a
+  // primitive (its geometry stays its triangulation)
   struct Surface {
     std::vector<int> curves;
     std::vector<std::array<int, 3> > triangles;
@@ -140,6 +141,10 @@ private:
   std::vector<std::vector<std::vector<int> > >
   _cells(const std::vector<std::array<int, 3> > &triangles,
          const std::vector<int> &surfaceOf) const;
+  // the fillets of a volume along the curves of radiusOf (see fillet)
+  bool _filletVolume(int volume, const std::map<int, double> &radiusOf,
+                     bool removeVolume,
+                     std::vector<std::pair<int, int> > &outDimTags);
 
 public:
   DiscreteCAD_Internals();
@@ -179,13 +184,28 @@ public:
   // triangulations: the resulting volumes in outDimTags (the first one with
   // the tag tag if positive), and
   // those coming from each input entity in outDimTagsMap; the surfaces of the
-  // result keep the parameters of those they come from
+  // result keep the parameters of those they come from. The nodes of the
+  // result closer than merge times its size are merged; the triangles coming
+  // from a surface of alias (its keys) are part of the surfaces of those of
+  // the surface it gives.
   bool booleanOperation(
     int op, const std::vector<std::pair<int, int> > &objectDimTags,
     const std::vector<std::pair<int, int> > &toolDimTags,
     std::vector<std::pair<int, int> > &outDimTags,
     std::vector<std::vector<std::pair<int, int> > > &outDimTagsMap, int tag,
-    bool removeObject, bool removeTool);
+    bool removeObject, bool removeTool, double merge = 1.e-12,
+    const std::map<int, int> *alias = nullptr);
+  // the volumes volumeTags filleted along the curves curveTags (and the
+  // curves continuing them tangentially) with the radii (one, or one for each
+  // curve): the ball of radius r rolling on the two surfaces of each curve
+  // removes the solid between it and the curve if it is convex, fills the
+  // space between them if it is concave; three fillets of the same radius
+  // and kind meeting at a vertex are joined by the part of the ball touching
+  // their three surfaces. The resulting volumes in outDimTags.
+  bool fillet(const std::vector<int> &volumeTags,
+              const std::vector<int> &curveTags,
+              const std::vector<double> &radii,
+              std::vector<std::pair<int, int> > &outDimTags, bool removeVolume);
   // a triangulation (3 coordinates per node, 3 node indices from 0 per
   // triangle, and for each triangle the piece of the input it belongs to, if
   // not empty) and its topology: its surfaces, the triangles connected across

@@ -6600,6 +6600,38 @@ namespace gmsh { // Top-level functions
         outDimTagsMap.resize(api_outDimTagsMap_nn_); for(size_t i = 0; i < api_outDimTagsMap_nn_; ++i){ outDimTagsMap[i].resize(api_outDimTagsMap_n_[i] / 2); for(size_t j = 0; j < api_outDimTagsMap_n_[i] / 2; ++j){ outDimTagsMap[i][j].first = api_outDimTagsMap_[i][j * 2 + 0]; outDimTagsMap[i][j].second = api_outDimTagsMap_[i][j * 2 + 1]; } gmshFree(api_outDimTagsMap_[i]); } gmshFree(api_outDimTagsMap_); gmshFree(api_outDimTagsMap_n_);
       }
 
+      // gmsh::model::discrete::fillet
+      //
+      // Fillet the volumes `volumeTags' on the curves `curveTags' with radii
+      // `radii' in the discrete CAD representation. The `radii' vector can either
+      // contain a single radius or as many radii as `curveTags'. The curves
+      // continuing the given ones tangentially are filleted too. The ball rolling
+      // on the two surfaces of each curve removes the solid between it and a
+      // convex curve, and fills the space between it and a concave one, exactly on
+      // the triangulations; three fillets of the same radius and kind meeting at a
+      // point are joined by the part of the ball touching their three surfaces.
+      // The fillets on a cylinder, a torus or a sphere get its exact geometry.
+      // Return the filleted volumes in `outDimTags' as a vector of (dim, tag)
+      // pairs. Remove the original volume if `removeVolume' is set.
+      inline void fillet(const std::vector<int> & volumeTags,
+                         const std::vector<int> & curveTags,
+                         const std::vector<double> & radii,
+                         gmsh::vectorpair & outDimTags,
+                         const bool removeVolume = true)
+      {
+        int ierr = 0;
+        int *api_volumeTags_; size_t api_volumeTags_n_; vector2ptr(volumeTags, &api_volumeTags_, &api_volumeTags_n_);
+        int *api_curveTags_; size_t api_curveTags_n_; vector2ptr(curveTags, &api_curveTags_, &api_curveTags_n_);
+        double *api_radii_; size_t api_radii_n_; vector2ptr(radii, &api_radii_, &api_radii_n_);
+        int *api_outDimTags_; size_t api_outDimTags_n_;
+        gmshModelDiscreteFillet(api_volumeTags_, api_volumeTags_n_, api_curveTags_, api_curveTags_n_, api_radii_, api_radii_n_, &api_outDimTags_, &api_outDimTags_n_, (int)removeVolume, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_volumeTags_);
+        gmshFree(api_curveTags_);
+        gmshFree(api_radii_);
+        outDimTags.resize(api_outDimTags_n_ / 2); for(size_t i = 0; i < api_outDimTags_n_ / 2; ++i){ outDimTags[i].first = api_outDimTags_[i * 2 + 0]; outDimTags[i].second = api_outDimTags_[i * 2 + 1]; } gmshFree(api_outDimTags_);
+      }
+
       // gmsh::model::discrete::importShapes
       //
       // Import the triangulations of the surfaces of the mesh file `fileName'

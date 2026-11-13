@@ -10462,6 +10462,48 @@ class model:
                 _ovectorvectorpair(api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_))
 
         @staticmethod
+        def fillet(volumeTags, curveTags, radii, removeVolume=True):
+            """
+            gmsh.model.discrete.fillet(volumeTags, curveTags, radii, removeVolume=True)
+
+            Fillet the volumes `volumeTags' on the curves `curveTags' with radii
+            `radii' in the discrete CAD representation. The `radii' vector can either
+            contain a single radius or as many radii as `curveTags'. The curves
+            continuing the given ones tangentially are filleted too. The ball rolling
+            on the two surfaces of each curve removes the solid between it and a convex
+            curve, and fills the space between it and a concave one, exactly on the
+            triangulations; three fillets of the same radius and kind meeting at a
+            point are joined by the part of the ball touching their three surfaces. The
+            fillets on a cylinder, a torus or a sphere get its exact geometry. Return
+            the filleted volumes in `outDimTags' as a vector of (dim, tag) pairs.
+            Remove the original volume if `removeVolume' is set.
+
+            Return `outDimTags'.
+
+            Types:
+            - `volumeTags': vector of integers
+            - `curveTags': vector of integers
+            - `radii': vector of doubles
+            - `outDimTags': vector of pairs of integers
+            - `removeVolume': boolean
+            """
+            api_volumeTags_, api_volumeTags_n_ = _ivectorint(volumeTags)
+            api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
+            api_radii_, api_radii_n_ = _ivectordouble(radii)
+            api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelDiscreteFillet(
+                api_volumeTags_, api_volumeTags_n_,
+                api_curveTags_, api_curveTags_n_,
+                api_radii_, api_radii_n_,
+                byref(api_outDimTags_), byref(api_outDimTags_n_),
+                c_int(bool(removeVolume)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
+
+        @staticmethod
         def importShapes(fileName, angle, curveAngle=pi, tolerance=-1.):
             """
             gmsh.model.discrete.importShapes(fileName, angle, curveAngle=pi, tolerance=-1.)

@@ -3570,6 +3570,24 @@ GMSH_API void gmshModelDiscreteCut(const int * objectDimTags, const size_t objec
                                    const int removeTool,
                                    int * ierr);
 
+/* Fillet the volumes `volumeTags' on the curves `curveTags' with radii
+ * `radii' in the discrete CAD representation. The `radii' vector can either
+ * contain a single radius or as many radii as `curveTags'. The curves
+ * continuing the given ones tangentially are filleted too. The ball rolling
+ * on the two surfaces of each curve removes the solid between it and a convex
+ * curve, and fills the space between it and a concave one, exactly on the
+ * triangulations; three fillets of the same radius and kind meeting at a
+ * point are joined by the part of the ball touching their three surfaces. The
+ * fillets on a cylinder, a torus or a sphere get its exact geometry. Return
+ * the filleted volumes in `outDimTags' as a vector of (dim, tag) pairs.
+ * Remove the original volume if `removeVolume' is set. */
+GMSH_API void gmshModelDiscreteFillet(const int * volumeTags, const size_t volumeTags_n,
+                                      const int * curveTags, const size_t curveTags_n,
+                                      const double * radii, const size_t radii_n,
+                                      int ** outDimTags, size_t * outDimTags_n,
+                                      const int removeVolume,
+                                      int * ierr);
+
 /* Import the triangulations of the surfaces of the mesh file `fileName' (STL,
  * MSH, OBJ, PLY, OFF, VTK or MESH format) in the discrete CAD representation,
  * and build their topology: the surfaces are the triangles of the same

@@ -256,6 +256,14 @@ double discreteEdge::curvature(double par) const
   return R = 0.0 ? 1.E22 : 1. / R;
 }
 
+SBoundingBox3d discreteEdge::bounds(bool fast)
+{
+  if(_discretization.empty()) return GEdge::bounds(fast);
+  SBoundingBox3d bbox;
+  for(auto &p : _discretization) bbox += p;
+  return bbox;
+}
+
 Range<double> discreteEdge::parBounds(int i) const
 {
   return Range<double>(0, (double)(_discretization.size() - 1));

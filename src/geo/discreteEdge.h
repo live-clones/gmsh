@@ -49,6 +49,8 @@ public:
   virtual double curvature(double par) const;
   virtual bool haveParametrization() { return !_pars.empty(); }
   virtual Range<double> parBounds(int) const;
+  // the bounds of its discretization, if it has one (of its mesh otherwise)
+  virtual SBoundingBox3d bounds(bool fast = false);
   int createGeometry();
   virtual void mesh(bool verbose);
   int minimumDrawSegments() const { return 2 * _pars.size(); }

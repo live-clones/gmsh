@@ -4738,6 +4738,22 @@ GMSH_API void gmshModelDiscreteCut(const int * objectDimTags, const size_t objec
   }
 }
 
+GMSH_API void gmshModelDiscreteFillet(const int * volumeTags, const size_t volumeTags_n, const int * curveTags, const size_t curveTags_n, const double * radii, const size_t radii_n, int ** outDimTags, size_t * outDimTags_n, const int removeVolume, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_volumeTags_(volumeTags, volumeTags + volumeTags_n);
+    std::vector<int> api_curveTags_(curveTags, curveTags + curveTags_n);
+    std::vector<double> api_radii_(radii, radii + radii_n);
+    gmsh::vectorpair api_outDimTags_;
+    gmsh::model::discrete::fillet(api_volumeTags_, api_curveTags_, api_radii_, api_outDimTags_, removeVolume);
+    vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelDiscreteImportShapes(const char * fileName, const double angle, int ** outDimTags, size_t * outDimTags_n, const double curveAngle, const double tolerance, int * ierr)
 {
   if(ierr) *ierr = 0;

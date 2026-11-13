@@ -456,8 +456,11 @@ namespace {
   {
     const double c = std::sqrt(r1 * r1 - r2 * r2);
     const double k = std::sqrt((r1 - r2) / (r1 + r2));
-    return 2. * r2 / c * std::atan(k * std::tan(a / 2.)) +
-           2. * pi * r2 / c * std::floor((a + pi) / (2. * pi));
+    // (the angle brought into [-pi, pi) first: at pi, tan(pi / 2) is a large
+    // positive number with the period counted once more)
+    const double m = std::floor((a + pi) / (2. * pi));
+    return 2. * r2 / c * std::atan(k * std::tan((a - 2. * pi * m) / 2.)) +
+           2. * pi * r2 / c * m;
   }
   double conformalAngle(double r1, double r2, double s)
   {
@@ -1998,8 +2001,9 @@ void analyticParameters(const DiscreteCADAnalyticSurface &s,
     const double r1 = s.r1, r2 = s.r2, cc = std::sqrt(r1 * r1 - r2 * r2);
     const double ratio = std::sqrt((r1 - r2) / (r1 + r2));
     auto conformal = [&](double a) {
-      return 2. * r2 / cc * std::atan(ratio * std::tan(a / 2.)) +
-             2. * pi * r2 / cc * std::floor((a + pi) / (2. * pi));
+      const double m = std::floor((a + pi) / (2. * pi));
+      return 2. * r2 / cc * std::atan(ratio * std::tan((a - 2. * pi * m) / 2.)) +
+             2. * pi * r2 / cc * m;
     };
     // phi after the cut, its conformal coordinate, and its range in each half
     std::vector<std::array<double, 3> > sc(nt);

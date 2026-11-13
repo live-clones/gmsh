@@ -626,6 +626,14 @@ bool DiscreteCAD_Internals::addSphere(int &tag, double xc, double yc,
   Volume volume;
   volume.surfaces.push_back(_addSurface({a, b}, north));
   volume.surfaces.push_back(_addSurface({-b, -a}, south));
+  for(int h = 0; h < 2; h++) {
+    DiscreteCADAnalyticSurface &a = _surfaces[volume.surfaces[h]].analytic.surface;
+    a.type = DiscreteCADAnalyticSurface::SPHERE;
+    a.o[0] = xc;
+    a.o[1] = yc;
+    a.o[2] = zc;
+    a.r1 = radius;
+  }
   // the stereographic projections from the opposite poles, on the unit disk
   for(int h = 0; h < 2; h++)
     _setUV(volume.surfaces[h], [&](int n) {
@@ -703,6 +711,16 @@ void DiscreteCAD_Internals::_setUV(
 void DiscreteCAD_Internals::_planarUV(int surface, const double o[3],
                                       const double eu[3], const double ev[3])
 {
+  // (its plane through one of its nodes, o being only the origin of its
+  // parameters)
+  DiscreteCADAnalyticSurface &a = _surfaces[surface].analytic.surface;
+  a.type = DiscreteCADAnalyticSurface::PLANE;
+  for(int k = 0; k < 3; k++)
+    a.o[k] = _nodes[_surfaces[surface].triangles[0][0]][k];
+  a.axis[0] = eu[1] * ev[2] - eu[2] * ev[1];
+  a.axis[1] = eu[2] * ev[0] - eu[0] * ev[2];
+  a.axis[2] = eu[0] * ev[1] - eu[1] * ev[0];
+  normalize(a.axis);
   _setUV(surface, [&](int n) {
     const std::array<double, 3> &x = _nodes[n];
     const double d[3] = {x[0] - o[0], x[1] - o[1], x[2] - o[2]};
@@ -827,6 +845,19 @@ bool DiscreteCAD_Internals::addCone(int &tag, double x, double y, double z,
   Volume volume;
   const int lateral = _addSurface(loop, triangles);
   volume.surfaces.push_back(lateral);
+  {
+    DiscreteCADAnalyticSurface &a = _surfaces[lateral].analytic.surface;
+    a.type = r1 == r2 ? DiscreteCADAnalyticSurface::CYLINDER :
+                        DiscreteCADAnalyticSurface::CONE;
+    // (a cone from its apex, its axis towards its points)
+    const double w = r1 == r2 ? 0. : -r1 * h / (r2 - r1);
+    const double s = r2 >= r1 ? 1. : -1.;
+    for(int k = 0; k < 3; k++) {
+      a.o[k] = f.o[k] + w * f.e[2][k];
+      a.axis[k] = (r1 == r2 ? 1. : s) * f.e[2][k];
+    }
+    a.r1 = r1 == r2 ? r1 : std::atan(std::abs(r2 - r1) / h);
+  }
   // with an apex, a disk: the parameters (r / rmax) (cos(theta), sin(theta)),
   // the apex at the center as an embedded vertex
   if(apex) {
@@ -1000,6 +1031,14 @@ bool DiscreteCAD_Internals::addTorus(int &tag, double x, double y, double z,
       equator[hp][0], equator[hp][1], -equator[(hp + 1) % 2][1],
       -equator[(hp + 1) % 2][0]};
     const int half = _addSurface(loops, triangles);
+    DiscreteCADAnalyticSurface &a = _surfaces[half].analytic.surface;
+    a.type = DiscreteCADAnalyticSurface::TORUS;
+    for(int k = 0; k < 3; k++) {
+      a.o[k] = f.o[k];
+      a.axis[k] = f.e[2][k];
+    }
+    a.r1 = r1;
+    a.r2 = r2;
     std::map<int, std::array<double, 2> > uv;
     for(int i = 0; i < nt; i++)
       for(int j = hp * np / 2; j <= (hp + 1) * np / 2; j++) {
@@ -1052,7 +1091,8 @@ bool DiscreteCAD_Internals::booleanOperation(
   const std::vector<std::pair<int, int> > &toolDimTags,
   std::vector<std::pair<int, int> > &outDimTags,
   std::vector<std::vector<std::pair<int, int> > > &outDimTagsMap, int tag,
-  bool removeObject, bool removeTool)
+  bool removeObject, bool removeTool, double merge,
+  const std::map<int, int> *alias)
 {
   outDimTags.clear();
   outDimTagsMap.clear();
@@ -1163,8 +1203,8 @@ bool DiscreteCAD_Internals::booleanOperation(
       lo[k] = std::min(lo[k], rxyz[3 * v + k]);
       hi[k] = std::max(hi[k], rxyz[3 * v + k]);
     }
-  const double merge =
-    1.e-12 * std::sqrt((hi[0] - lo[0]) * (hi[0] - lo[0]) +
+  const double close =
+    merge * std::sqrt((hi[0] - lo[0]) * (hi[0] - lo[0]) +
                        (hi[1] - lo[1]) * (hi[1] - lo[1]) +
                        (hi[2] - lo[2]) * (hi[2] - lo[2]));
   std::map<int, int> merged;
@@ -1180,7 +1220,7 @@ bool DiscreteCAD_Internals::booleanOperation(
       if(a == b) continue;
       const std::array<double, 3> &x = _nodes[a], &y = _nodes[b];
       if(std::abs(x[0] - y[0]) + std::abs(x[1] - y[1]) +
-           std::abs(x[2] - y[2]) > merge)
+           std::abs(x[2] - y[2]) > close)
         continue;
       if(a > b) std::swap(a, b);
       merged[b] = a;
@@ -1305,7 +1345,13 @@ bool DiscreteCAD_Internals::booleanOperation(
   // curves of the surfaces (between triangles coming from two triangles of a
   // surface across one of them)
   std::vector<int> label(nt), surfaceOf;
-  for(std::size_t i = 0; i < nt; i++) label[i] = origins[birth[i]].surface;
+  for(std::size_t i = 0; i < nt; i++) {
+    label[i] = origins[birth[i]].surface;
+    if(alias) {
+      auto it = alias->find(label[i]);
+      if(it != alias->end()) label[i] = it->second;
+    }
+  }
   std::set<std::pair<int, int> > inputCreases, creases;
   std::set<int> inputSurfaces;
   for(auto &o : origins) inputSurfaces.insert(o.surface);

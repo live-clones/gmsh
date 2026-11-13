@@ -15,6 +15,7 @@
 
 set(SRC
   DiscreteCADModeler.cpp
+  DiscreteCADFillet.cpp
   DiscreteCADMeshBoolean.cpp
   DiscreteCADRecognition.cpp
 )

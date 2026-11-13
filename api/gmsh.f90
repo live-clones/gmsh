@@ -275,6 +275,8 @@ module gmsh
         gmshModelDiscreteIntersect
     procedure, nopass :: cut => &
         gmshModelDiscreteCut
+    procedure, nopass :: fillet => &
+        gmshModelDiscreteFillet
     procedure, nopass :: importShapes => &
         gmshModelDiscreteImportShapes
     procedure, nopass :: addTriangulation => &
@@ -15098,6 +15100,70 @@ module gmsh
       outDimTagsMap, &
       outDimTagsMap_n)
   end subroutine gmshModelDiscreteCut
+
+  !> Fillet the volumes `volumeTags' on the curves `curveTags' with radii
+  !! `radii' in the discrete CAD representation. The `radii' vector can either
+  !! contain a single radius or as many radii as `curveTags'. The curves
+  !! continuing the given ones tangentially are filleted too. The ball rolling
+  !! on the two surfaces of each curve removes the solid between it and a convex
+  !! curve, and fills the space between it and a concave one, exactly on the
+  !! triangulations; three fillets of the same radius and kind meeting at a
+  !! point are joined by the part of the ball touching their three surfaces. The
+  !! fillets on a cylinder, a torus or a sphere get its exact geometry. Return
+  !! the filleted volumes in `outDimTags' as a vector of (dim, tag) pairs.
+  !! Remove the original volume if `removeVolume' is set.
+  subroutine gmshModelDiscreteFillet(volumeTags, &
+                                     curveTags, &
+                                     radii, &
+                                     outDimTags, &
+                                     removeVolume, &
+                                     ierr)
+    interface
+    subroutine C_API(api_volumeTags_, &
+                     api_volumeTags_n_, &
+                     api_curveTags_, &
+                     api_curveTags_n_, &
+                     api_radii_, &
+                     api_radii_n_, &
+                     api_outDimTags_, &
+                     api_outDimTags_n_, &
+                     removeVolume, &
+                     ierr_) &
+      bind(C, name="gmshModelDiscreteFillet")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), dimension(*) :: api_volumeTags_
+      integer(c_size_t), value, intent(in) :: api_volumeTags_n_
+      integer(c_int), dimension(*) :: api_curveTags_
+      integer(c_size_t), value, intent(in) :: api_curveTags_n_
+      real(c_double), dimension(*) :: api_radii_
+      integer(c_size_t), value, intent(in) :: api_radii_n_
+      type(c_ptr), intent(out) :: api_outDimTags_
+      integer(c_size_t), intent(out) :: api_outDimTags_n_
+      integer(c_int), value, intent(in) :: removeVolume
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer(c_int), dimension(:), intent(in) :: volumeTags
+    integer(c_int), dimension(:), intent(in) :: curveTags
+    real(c_double), dimension(:), intent(in) :: radii
+    integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
+    logical, intent(in), optional :: removeVolume
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_outDimTags_
+    integer(c_size_t) :: api_outDimTags_n_
+    call C_API(api_volumeTags_=volumeTags, &
+         api_volumeTags_n_=size_gmsh_int(volumeTags), &
+         api_curveTags_=curveTags, &
+         api_curveTags_n_=size_gmsh_int(curveTags), &
+         api_radii_=radii, &
+         api_radii_n_=size_gmsh_double(radii), &
+         api_outDimTags_=api_outDimTags_, &
+         api_outDimTags_n_=api_outDimTags_n_, &
+         removeVolume=optval_c_bool(.true., removeVolume), &
+         ierr_=ierr)
+    outDimTags = ovectorpair_(api_outDimTags_, &
+      api_outDimTags_n_)
+  end subroutine gmshModelDiscreteFillet
 
   !> Import the triangulations of the surfaces of the mesh file `fileName' (STL,
   !! MSH, OBJ, PLY, OFF, VTK or MESH format) in the discrete CAD representation,

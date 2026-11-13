@@ -3524,7 +3524,10 @@ Fillet volumes (first list) on some curves (second list), using the
 provided radii (third list). The radius list can either contain a single
 radius, as many radii as curves, or twice as many as curves (in which
 case different radii are provided for the begin and end points of the
-curves). @code{Fillet} is only available with the OpenCASCADE kernel.
+curves). @code{Fillet} is only available with the OpenCASCADE and the
+Discrete kernels; with the Discrete kernel, the radius list contains a
+single radius or as many radii as curves, and the curves continuing the
+given ones tangentially are filleted too.
 
 @item Chamfer @{ @var{expression-list} @} @{ @var{expression-list} @} @{ @var{expression-list} @} @{ @var{expression-list} @}
 Chamfer volumes (first list) on some curves (second list), using the
