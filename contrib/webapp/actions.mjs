@@ -23,6 +23,7 @@ import {$, FS, Module, app, download, gmsh, progress, setStatus} from './app.mjs
 import {web} from './gmshweb.mjs';
 import {readClipping} from './clipping.mjs';
 import {editFile, editScript} from './editor.mjs';
+import {showPlugins} from './plugins.mjs';
 import {openFiles, openMenu} from './models.mjs';
 import {colorScheme, keepOptionOf, optionRow, readOptions, setColorScheme, showOptions, showTab} from './options.mjs';
 import {draw} from './scene.mjs';
@@ -254,6 +255,7 @@ const pageActions = {
   // View: the menu of a view
   'view_options': {run: (view, tag) => { if(!viewOptionsOpen.delete(tag)) viewOptionsOpen.add(tag); },
                    check: (view, tag) => viewOptionsOpen.has(tag)},
+  'view_plugins': {run: (view, tag) => showPlugins(tag)},
   'view_export_pos': {run: (view, tag) => exportView(tag, 'pos')},
   'view_export_msh': {run: (view, tag) => exportView(tag, 'msh')},
   // Status bar (the buttons are made from the registry, see statusbar.mjs)
@@ -277,6 +279,7 @@ const pageActions = {
   'file_open': {run: () => openMenu(true)},
   // Tools
   'options': {run: () => showOptions()},
+  'plugins': {run: () => showPlugins()},
   'visibility': {run: () => showTab('visTab')},
   'clipping': {run: () => showTab('clipTab')},
   // Window
@@ -293,6 +296,7 @@ const pageActions = {
   'escape': {run: () => escape()},
   'options_solver': {run: () => showOptions('Solver')},
   'options_post': {run: () => showOptions('Post-processing')},
+  'plugins_view': {run: () => showPlugins(firstView())},
   'view_prev': {run: () => sceneAction('view_prev')},
   'view_next': {run: () => sceneAction('view_next')}
 };

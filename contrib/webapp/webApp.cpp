@@ -59,6 +59,10 @@
 #include "OS.h"
 #include "PView.h"
 #include "PViewData.h"
+#if defined(HAVE_PLUGINS)
+#include "Plugin.h"
+#include "PluginManager.h"
+#endif
 #include "Options.h"
 #include "Shortcuts.h"
 #include "StringUtils.h"
@@ -1115,6 +1119,131 @@ EMSCRIPTEN_KEEPALIVE int gmshWebReadableColor(int rgb, int bg, int fg, int dark,
   if(what == 0) return ReadableTextColor(rgb, bg, bg, dark);
   unsigned int fill = ReadableFillColor(rgb, fg, dark);
   return what == 1 ? fill : ContrastingColor(fill);
+}
+
+// The plugins (src/plugin), for the Plugins tab of the page (plugins.mjs), as
+// the plugin window of the FLTK graphical user interface shows them
+
+#if defined(HAVE_PLUGINS)
+static std::string jsonNumber(double v)
+{
+  if(!std::isfinite(v)) return "null";
+  char buf[32];
+  snprintf(buf, sizeof(buf), "%.16g", v);
+  return buf;
+}
+
+static GMSH_Plugin *findPlugin(const char *name)
+{
+  GMSH_Plugin *p = PluginManager::instance()->find(name);
+  if(!p) Msg::Error("Unknown plugin '%s'", name);
+  return p;
+}
+#endif
+
+// the plugins of the post-processing views and of the mesh: [{"name", "post"
+// (whether it runs on views), "short" and "help", "author", "num" and "str"
+// (the numeric and string options: [{"name", "value"}], their values now)}]
+EMSCRIPTEN_KEEPALIVE const char *gmshWebPlugins()
+{
+  Msg::NoThrow noThrow;
+  static std::string json;
+  json = "[";
+#if defined(HAVE_PLUGINS)
+  for(auto it = PluginManager::instance()->begin();
+      it != PluginManager::instance()->end(); ++it) {
+    GMSH_Plugin *p = it->second;
+    bool post = p->getType() == GMSH_Plugin::GMSH_POST_PLUGIN;
+    if(!post && p->getType() != GMSH_Plugin::GMSH_MESH_PLUGIN) continue;
+    std::string num, str;
+    for(int i = 0; i < p->getNbOptions(); i++)
+      num += std::string(i ? "," : "") +
+             "{\"name\":" + JsonString(p->getOption(i)->str) +
+             ",\"value\":" + jsonNumber(p->getOption(i)->def) + "}";
+    for(int i = 0; i < p->getNbOptionsStr(); i++)
+      str += std::string(i ? "," : "") +
+             "{\"name\":" + JsonString(p->getOptionStr(i)->str) +
+             ",\"value\":" + JsonString(p->getOptionStr(i)->def) + "}";
+    json += std::string(json.size() > 1 ? "," : "") +
+            "{\"name\":" + JsonString(p->getName()) +
+            ",\"post\":" + (post ? "true" : "false") +
+            ",\"short\":" + JsonString(p->getShortHelp()) +
+            ",\"help\":" + JsonString(p->getHelp()) +
+            ",\"author\":" + JsonString(p->getAuthor()) +
+            ",\"num\":[" + num + "],\"str\":[" + str + "]}";
+  }
+#endif
+  json += "]";
+  return json.c_str();
+}
+
+// the sliders of the numeric options of a plugin for the view of the given
+// index: [[step, min, max] or null (a field) for each option]
+EMSCRIPTEN_KEEPALIVE const char *gmshWebPluginRanges(const char *name,
+                                                    int view)
+{
+  Msg::NoThrow noThrow;
+  static std::string json;
+  json = "[";
+#if defined(HAVE_PLUGINS)
+  GMSH_Plugin *p = findPlugin(name);
+  for(int i = 0; p && i < p->getNbOptions(); i++) {
+    double step = 0., min = 0., max = 0.;
+    bool slider = view >= 0 && p->optionCallback(i, view, 1, step) &&
+                  p->optionCallback(i, view, 2, min) &&
+                  p->optionCallback(i, view, 3, max);
+    json += std::string(i ? "," : "") +
+            (slider ? "[" + jsonNumber(step) + "," + jsonNumber(min) + "," +
+                        jsonNumber(max) + "]" :
+                      "null");
+  }
+#endif
+  json += "]";
+  return json.c_str();
+}
+
+// an option of a plugin being edited (numeric if text is null): the plugin
+// may draw a preview of what it will do (a cutting plane...), which a
+// negative option removes; 1 if the scene is to be drawn again
+EMSCRIPTEN_KEEPALIVE int gmshWebPluginPreview(const char *name, int option,
+                                              double value, const char *text)
+{
+  Msg::NoThrow noThrow;
+#if defined(HAVE_PLUGINS)
+  // (a negative option: no preview any more)
+  if(option < 0) {
+    bool drawn = GMSH_Plugin::preview;
+    GMSH_Plugin::preview = nullptr;
+    return drawn ? 1 : 0;
+  }
+  GMSH_Plugin *p = findPlugin(name);
+  if(!p) return 0;
+  if(text) {
+    std::string s(text);
+    return p->optionStrCallback(option, -1, 0, s) ? 1 : 0;
+  }
+  return p->optionCallback(option, -1, 0, value) ? 1 : 0;
+#else
+  return 0;
+#endif
+}
+
+// run a plugin, with the options the page set (gmsh.plugin.setNumber...), on
+// the views of the given indices, separated by commas (none: on the view its
+// View option gives), as the FLTK graphical user interface does; the views
+// are then to be shown again
+EMSCRIPTEN_KEEPALIVE void gmshWebPluginRun(const char *name, const char *views)
+{
+  Msg::NoThrow noThrow;
+#if defined(HAVE_PLUGINS)
+  GMSH_Plugin *p = findPlugin(name);
+  if(!p) return;
+  std::vector<int> list;
+  for(const std::string &s : SplitString(views, ','))
+    if(!s.empty()) list.push_back(atoi(s.c_str()));
+  PluginManager::instance()->runOnViews(p, list);
+  GMSH_Plugin::preview = nullptr;
+#endif
 }
 
 } // extern "C"

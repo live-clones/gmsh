@@ -82,6 +82,14 @@ export const web = {
   // the ONELAB loop (see solverClient.mjs)
   onelabSet: (json) => call('OnelabSet', N, [S], [json]),
   onelabMacro: (name) => call('OnelabMacro', N, [S], [name]),
+  // the plugins (see plugins.mjs): their list and options, the sliders of
+  // their options for a view, the preview of an option being edited (a
+  // negative option removes it; 1 if the scene is to be drawn again), a run
+  plugins: () => JSON.parse(call('Plugins', S, [], [])),
+  pluginRanges: (name, view) => JSON.parse(call('PluginRanges', S, [S, N], [name, view])),
+  pluginPreview: (name, option, value = 0, text = null) =>
+    call('PluginPreview', N, [S, N, N, S], [name, option, value, text]),
+  pluginRun: (name, views) => call('PluginRun', null, [S, S], [name, views.join(',')]),
   onelabStart: (action) => call('OnelabStart', null, [S], [action]),
   onelabGmsh: (pass) => call('OnelabGmsh', S, [S], [pass]),
   onelabNext: (goOn) => call('OnelabNext', N, [N], [goOn ? 1 : 0]),

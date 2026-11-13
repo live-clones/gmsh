@@ -75,7 +75,7 @@ cp "$HERE/onelab.html" "$HERE/onelab.css" "$HERE/main.mjs" "$HERE/app.mjs" \
   "$HERE/gmshweb.mjs" "$HERE/scene.mjs" "$HERE/statusbar.mjs" "$HERE/tools.mjs" \
   "$HERE/actions.mjs" "$HERE/parameters.mjs" "$HERE/views.mjs" \
   "$HERE/solverClient.mjs" "$HERE/options.mjs" "$HERE/clipping.mjs" \
-  "$HERE/visibility.mjs" "$HERE/editor.mjs" "$HERE/models.mjs" \
+  "$HERE/visibility.mjs" "$HERE/plugins.mjs" "$HERE/editor.mjs" "$HERE/models.mjs" \
   "$HERE/shortcuts.js" "$HERE/solver.js" "$HERE/files.mjs" \
   "$HERE/manifest.webmanifest" "$SITE"
 mkdir -p "$SITE/icons"

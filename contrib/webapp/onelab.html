@@ -95,7 +95,8 @@
   <div id="tabs"><button data-tab="modelTab" class="on">Model</button><button
     data-tab="optionsTab">Options</button><button
     data-tab="clipTab">Clipping</button><button
-    data-tab="visTab">Visibility</button></div>
+    data-tab="visTab">Visibility</button><button
+    data-tab="plugTab">Plugins</button></div>
   <div id="modelTab">
     <!-- the modules of the graphical interface's tree, before the parameters -->
     <details id="modules" open><summary>Modules</summary>
@@ -140,6 +141,12 @@
     <div class="buttons"><button id="visAll">All</button><button
       id="visNone">None</button><button id="visInvert">Invert</button></div>
     <div id="visList"></div>
+  </div>
+  <div id="plugTab" hidden>
+    <div class="row wide"><span>Filter</span><input id="plugFilter" type="search"
+      placeholder="name or description"></div>
+    <div id="plugList"></div>
+    <div id="plugForm"></div>
   </div>
 </div>
 <dialog id="scriptDialog"><form method="dialog">

@@ -167,57 +167,14 @@ static void plugin_run_cb(Fl_Widget *w, void *data)
     sxn->def = p->dialogBox->value[i]->value();
   }
 
-  // a failure (the plugins throw) reported, the next views still run
-  auto attempt = [p](const std::function<void()> &f) {
-    try {
-      f();
-    } catch(const std::exception &e) {
-      Msg::Error("Plugin(%s) failed: %s", p->getName().c_str(), e.what());
-    }
-  };
-
-  if(p->getType() == GMSH_Plugin::GMSH_POST_PLUGIN) {
-    GMSH_PostPlugin *pp = (GMSH_PostPlugin *)p;
-    // the View option, set to each view the plugin runs on
-    StringXNumber *opt = nullptr;
-    for(int j = 0; j < pp->getNbOptions(); j++)
-      if(std::string(pp->getOption(j)->str) == "View") opt = pp->getOption(j);
-    // run on all selected views
-    bool no_view_selected = true;
-    Fl_Multi_Browser *views = FlGui::instance()->plugins->views->browser;
-    for(int i = 1; i <= views->size(); i++) {
-      if(!views->selected(i)) continue;
-      no_view_selected = false;
-      if(i - 1 >= (int)PView::list.size()) {
-        attempt([pp] {
-          pp->execute(nullptr);
-          add_scripting(pp, nullptr);
-        });
-        continue;
-      }
-      PView *view = PView::list[i - 1];
-      if(view->getData()->isRemote()) {
-        attempt([pp, view] { pp->executeRemote(view); });
-        continue;
-      }
-      // run on the selected view, whatever the View option says
-      double old = opt ? opt->def : 0.;
-      if(opt) opt->def = view->getIndex();
-      attempt([pp, view] {
-        pp->execute(view);
-        add_scripting(pp, view);
-      });
-      if(opt) opt->def = old;
-    }
-    if(no_view_selected)
-      attempt([pp] {
-        pp->execute(nullptr);
-        add_scripting(pp, nullptr);
-      });
-  }
-  else
-    attempt([p] { p->run(); });
-
+  // the views chosen (none: the one the View option gives)
+  std::vector<int> chosen;
+  Fl_Multi_Browser *views = FlGui::instance()->plugins->views->browser;
+  for(int i = 1; i <= views->size(); i++)
+    if(views->selected(i)) chosen.push_back(i - 1);
+  PluginManager::instance()->runOnViews(p, chosen, [p](PView *view) {
+    add_scripting((GMSH_PostPlugin *)p, view);
+  });
   FlGui::instance()->updateViews(true);
   GMSH_Plugin::preview = nullptr;
   drawContext::global()->draw();

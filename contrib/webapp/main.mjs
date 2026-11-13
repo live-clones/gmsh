@@ -32,10 +32,12 @@
 //   what the page does for them (pageActions) and the keyboard shortcuts;
 // - parameters.mjs, views.mjs, solverClient.mjs: the ONELAB parameters, the
 //   views and the loop that runs Gmsh and the solvers;
-// - options.mjs, clipping.mjs, visibility.mjs: the other tabs of the panel;
+// - options.mjs, clipping.mjs, visibility.mjs, plugins.mjs: the other tabs
+//   of the panel;
 // - editor.mjs, models.mjs: the editor of a file, the models opened.
-// To add a panel: a module with its build(), listed here; a menu item or a
-// module button: see Actions.h, then pageActions in actions.mjs.
+// To add a panel: a module with its build(), listed here and in deploy.sh; a
+// menu item or a module button: see Actions.h, then pageActions in
+// actions.mjs.
 import createGmsh from './build/gmsh.mjs';
 import {app, setGmsh, setStatus, log, progress, $} from './app.mjs';
 import * as scene from './scene.mjs';
@@ -44,6 +46,7 @@ import * as parameters from './parameters.mjs';
 import * as options from './options.mjs';
 import * as clipping from './clipping.mjs';
 import * as visibility from './visibility.mjs';
+import * as plugins from './plugins.mjs';
 import * as actions from './actions.mjs';
 import * as editor from './editor.mjs';
 import * as views from './views.mjs';
@@ -118,7 +121,7 @@ gmsh.option.setNumber('General.NoPopup', 1);
 
 // the parts of the page, in an order where each finds what it needs built
 for(const part of [scene, actions, statusbar, parameters, options, clipping,
-                   visibility, editor, views, models])
+                   visibility, plugins, editor, views, models])
   if(part.build) part.build();
 solverClient.build(wasm);
 
