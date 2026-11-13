@@ -414,6 +414,16 @@ Numeric options:
 Default value: @code{-1}
 @end table
 
+@item Plugin(DualMesh)
+Plugin(DualMesh) replaces the first order mesh of the current model by its barycentric dual: each node becomes a polygon (in 2D) or a polyhedron (in 3D) around it, one for each surface or volume it belongs to, whose vertices are the centres of the elements, the centres of their faces and the middles of their edges around the node, and the node itself if it lies on a curve. The polygons are subdivided into the triangles and the polyhedra into the tetrahedra of the barycentric subdivision of the elements, which are valid whenever the elements are. The lines on curves are split at their middle.@*
+@*
+If `Voronoi' is set, the triangles of a 2D mesh and the tetrahedra of a 3D mesh are represented by their circumcentres, and the middles of the edges and the centres of the faces between two of them are dropped: the cells are then the Voronoi cells of the nodes where the mesh is Delaunay. Each cell is subdivided into the triangles or the tetrahedra joining its node to fans of triangles on its edges or faces, and an element whose circumcentre would invert one of these is represented by its centre instead: its circumcentre if it lies inside, its centroid otherwise (as are the triangles of the surfaces of a 3D mesh, and the triangular faces).
+Numeric options:
+@table @code
+@item Voronoi
+Default value: @code{0}
+@end table
+
 @item Plugin(DuplicateNodes)
 This plugin enhances 2D meshes by inserting dummy zero-measure elements along each edge of every element. This facilitates straightforward implementation of the discontinuous Galerkin method (DG) within the tempered finite element method (TFEM) framework, enabling users to efficiently use DG in FEM-based implementations. For more information about TFEM-DG, see the companion papers `DG = FEM + flat elements' (Part I: Diffusion, Part II: Convection).@*
 @*
