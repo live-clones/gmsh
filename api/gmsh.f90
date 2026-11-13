@@ -279,6 +279,14 @@ module gmsh
         gmshModelDiscreteFillet
     procedure, nopass :: importShapes => &
         gmshModelDiscreteImportShapes
+    procedure, nopass :: importTriangulations => &
+        gmshModelDiscreteImportTriangulations
+    procedure, nopass :: heal => &
+        gmshModelDiscreteHeal
+    procedure, nopass :: classify => &
+        gmshModelDiscreteClassify
+    procedure, nopass :: recognize => &
+        gmshModelDiscreteRecognize
     procedure, nopass :: addTriangulation => &
         gmshModelDiscreteAddTriangulation
     procedure, nopass :: synchronize => &
@@ -15232,6 +15240,174 @@ module gmsh
     outDimTags = ovectorpair_(api_outDimTags_, &
       api_outDimTags_n_)
   end subroutine gmshModelDiscreteImportShapes
+
+  !> Import the triangulations of the surfaces of the mesh file `fileName' (STL,
+  !! MSH, OBJ, PLY, OFF, VTK or MESH format) in the discrete CAD representation
+  !! as they are read, the first step of `importShapes': a raw surface for each
+  !! surface of the file, without curves (the nodes at the same coordinates
+  !! merged), to be healed with `heal' and replaced by its topology with
+  !! `classify'. Return the surfaces in `outDimTags'.
+  subroutine gmshModelDiscreteImportTriangulations(fileName, &
+                                                   outDimTags, &
+                                                   ierr)
+    interface
+    subroutine C_API(fileName, &
+                     api_outDimTags_, &
+                     api_outDimTags_n_, &
+                     ierr_) &
+      bind(C, name="gmshModelDiscreteImportTriangulations")
+      use, intrinsic :: iso_c_binding
+      character(len=1, kind=c_char), dimension(*), intent(in) :: fileName
+      type(c_ptr), intent(out) :: api_outDimTags_
+      integer(c_size_t), intent(out) :: api_outDimTags_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    character(len=*), intent(in) :: fileName
+    integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_outDimTags_
+    integer(c_size_t) :: api_outDimTags_n_
+    call C_API(fileName=istring_(fileName), &
+         api_outDimTags_=api_outDimTags_, &
+         api_outDimTags_n_=api_outDimTags_n_, &
+         ierr_=ierr)
+    outDimTags = ovectorpair_(api_outDimTags_, &
+      api_outDimTags_n_)
+  end subroutine gmshModelDiscreteImportTriangulations
+
+  !> Heal together the raw surfaces `surfaceTags' of the discrete CAD
+  !! representation (see `importTriangulations'; all of them if `surfaceTags' is
+  !! empty): remove their degenerate triangles and their duplicated ones, and
+  !! orient their triangles, as their neighbors across the edges shared by two
+  !! triangles, then each closed component so that its volume is positive and
+  !! each open one so that the generalized winding number of all the triangles
+  !! is the nearest to whole numbers around it.
+  subroutine gmshModelDiscreteHeal(surfaceTags, &
+                                   ierr)
+    interface
+    subroutine C_API(api_surfaceTags_, &
+                     api_surfaceTags_n_, &
+                     ierr_) &
+      bind(C, name="gmshModelDiscreteHeal")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), dimension(*) :: api_surfaceTags_
+      integer(c_size_t), value, intent(in) :: api_surfaceTags_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer(c_int), dimension(:), intent(in) :: surfaceTags
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(api_surfaceTags_=surfaceTags, &
+         api_surfaceTags_n_=size_gmsh_int(surfaceTags), &
+         ierr_=ierr)
+  end subroutine gmshModelDiscreteHeal
+
+  !> Replace the raw surfaces `surfaceTags' of the discrete CAD representation
+  !! (see `importTriangulations'; all of them if `surfaceTags' is empty) by
+  !! their topology, as `importShapes' builds it but without recognizing
+  !! analytic surfaces, each raw surface a surface of the file: the surfaces
+  !! split where the normals of the triangles make an angle larger than `angle'
+  !! (in radians), the curves split where they turn by more than `curveAngle',
+  !! and the volumes they bound. Return the volumes and the surfaces bounding no
+  !! volume in `outDimTags'.
+  subroutine gmshModelDiscreteClassify(surfaceTags, &
+                                       angle, &
+                                       outDimTags, &
+                                       curveAngle, &
+                                       ierr)
+    interface
+    subroutine C_API(api_surfaceTags_, &
+                     api_surfaceTags_n_, &
+                     angle, &
+                     api_outDimTags_, &
+                     api_outDimTags_n_, &
+                     curveAngle, &
+                     ierr_) &
+      bind(C, name="gmshModelDiscreteClassify")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), dimension(*) :: api_surfaceTags_
+      integer(c_size_t), value, intent(in) :: api_surfaceTags_n_
+      real(c_double), value, intent(in) :: angle
+      type(c_ptr), intent(out) :: api_outDimTags_
+      integer(c_size_t), intent(out) :: api_outDimTags_n_
+      real(c_double), value, intent(in) :: curveAngle
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer(c_int), dimension(:), intent(in) :: surfaceTags
+    real(c_double), intent(in) :: angle
+    integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
+    real(c_double), intent(in), optional :: curveAngle
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_outDimTags_
+    integer(c_size_t) :: api_outDimTags_n_
+    call C_API(api_surfaceTags_=surfaceTags, &
+         api_surfaceTags_n_=size_gmsh_int(surfaceTags), &
+         angle=real(angle, c_double), &
+         api_outDimTags_=api_outDimTags_, &
+         api_outDimTags_n_=api_outDimTags_n_, &
+         curveAngle=optval_c_double(M_PI, curveAngle), &
+         ierr_=ierr)
+    outDimTags = ovectorpair_(api_outDimTags_, &
+      api_outDimTags_n_)
+  end subroutine gmshModelDiscreteClassify
+
+  !> Recognize the analytic surfaces of the entities `dimTags' of the discrete
+  !! CAD representation (volumes or surfaces, see `classify'; all of them if
+  !! `dimTags' is empty) and of those connected to them by their curves, as
+  !! `importShapes' does: their surfaces joined across the curves that only cut
+  !! smooth surfaces, then those whose nodes are at most `tolerance' away from a
+  !! plane, a sphere, a cylinder, a cone or a torus
+  !! (`Geometry.DiscreteTolerance' times the size of the triangulation if
+  !! `tolerance' is not positive), the normals of their triangles making an
+  !! angle smaller than `angle' (in radians) with those of the surface, get the
+  !! parameters of the corresponding primitives, the others are split into their
+  !! pieces on such surfaces, the rest into pieces that a single map can
+  !! parametrize. The curves are kept where they are sharp, and the volumes keep
+  !! their tags. Return the volumes and the surfaces bounding no volume in
+  !! `outDimTags'.
+  subroutine gmshModelDiscreteRecognize(dimTags, &
+                                        angle, &
+                                        outDimTags, &
+                                        tolerance, &
+                                        ierr)
+    interface
+    subroutine C_API(api_dimTags_, &
+                     api_dimTags_n_, &
+                     angle, &
+                     api_outDimTags_, &
+                     api_outDimTags_n_, &
+                     tolerance, &
+                     ierr_) &
+      bind(C, name="gmshModelDiscreteRecognize")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), dimension(*) :: api_dimTags_
+      integer(c_size_t), value, intent(in) :: api_dimTags_n_
+      real(c_double), value, intent(in) :: angle
+      type(c_ptr), intent(out) :: api_outDimTags_
+      integer(c_size_t), intent(out) :: api_outDimTags_n_
+      real(c_double), value, intent(in) :: tolerance
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer(c_int), dimension(:,:), intent(in) :: dimTags
+    real(c_double), intent(in) :: angle
+    integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
+    real(c_double), intent(in), optional :: tolerance
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_outDimTags_
+    integer(c_size_t) :: api_outDimTags_n_
+    call C_API(api_dimTags_=dimTags, &
+         api_dimTags_n_=size_gmsh_pair(dimTags), &
+         angle=real(angle, c_double), &
+         api_outDimTags_=api_outDimTags_, &
+         api_outDimTags_n_=api_outDimTags_n_, &
+         tolerance=optval_c_double(-1., tolerance), &
+         ierr_=ierr)
+    outDimTags = ovectorpair_(api_outDimTags_, &
+      api_outDimTags_n_)
+  end subroutine gmshModelDiscreteRecognize
 
   !> Add the triangulation given by the coordinates `coord' of its nodes
   !! (concatenated: [n1x, n1y, n1z, n2x, ...]) and its triangles `triangles'

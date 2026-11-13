@@ -8083,6 +8083,117 @@ export function wrapGmsh(Module) {
   };
 
   /**
+   * gmsh.model.discrete.importTriangulations(fileName)
+   *
+   * Import the triangulations of the surfaces of the mesh file `fileName'
+   * (STL, MSH, OBJ, PLY, OFF, VTK or MESH format) in the discrete CAD
+   * representation as they are read, the first step of `importShapes': a raw
+   * surface for each surface of the file, without curves (the nodes at the
+   * same coordinates merged), to be healed with `heal' and replaced by its
+   * topology with `classify'. Return the surfaces in `outDimTags'.
+   *
+   * Return `outDimTags'.
+   */
+  gmsh.model.discrete.importTriangulations = function(fileName) {
+    const tmp = [];
+    try {
+      const api_fileName_ = _istring(fileName, tmp);
+      const api_outDimTags_ = _alloc(8, tmp);
+      M._gmshModelDiscreteImportTriangulations(api_fileName_, api_outDimTags_, api_outDimTags_ + 4, ierr);
+      _check();
+      return _ovectorpair(api_outDimTags_);
+    }
+    finally {
+      tmp.forEach((p) => M._free(p));
+    }
+  };
+
+  /**
+   * gmsh.model.discrete.heal(surfaceTags)
+   *
+   * Heal together the raw surfaces `surfaceTags' of the discrete CAD
+   * representation (see `importTriangulations'; all of them if `surfaceTags'
+   * is empty): remove their degenerate triangles and their duplicated ones,
+   * and orient their triangles, as their neighbors across the edges shared by
+   * two triangles, then each closed component so that its volume is positive
+   * and each open one so that the generalized winding number of all the
+   * triangles is the nearest to whole numbers around it.
+   */
+  gmsh.model.discrete.heal = function(surfaceTags) {
+    const tmp = [];
+    try {
+      const [api_surfaceTags_, api_surfaceTags_n] = _ivector(surfaceTags, 'int', tmp);
+      M._gmshModelDiscreteHeal(api_surfaceTags_, api_surfaceTags_n, ierr);
+      _check();
+    }
+    finally {
+      tmp.forEach((p) => M._free(p));
+    }
+  };
+
+  /**
+   * gmsh.model.discrete.classify(surfaceTags, angle, curveAngle = Math.PI)
+   *
+   * Replace the raw surfaces `surfaceTags' of the discrete CAD representation
+   * (see `importTriangulations'; all of them if `surfaceTags' is empty) by
+   * their topology, as `importShapes' builds it but without recognizing
+   * analytic surfaces, each raw surface a surface of the file: the surfaces
+   * split where the normals of the triangles make an angle larger than
+   * `angle' (in radians), the curves split where they turn by more than
+   * `curveAngle', and the volumes they bound. Return the volumes and the
+   * surfaces bounding no volume in `outDimTags'.
+   *
+   * Return `outDimTags'.
+   */
+  gmsh.model.discrete.classify = function(surfaceTags, angle, curveAngle = Math.PI) {
+    const tmp = [];
+    try {
+      const [api_surfaceTags_, api_surfaceTags_n] = _ivector(surfaceTags, 'int', tmp);
+      const api_outDimTags_ = _alloc(8, tmp);
+      M._gmshModelDiscreteClassify(api_surfaceTags_, api_surfaceTags_n, angle, api_outDimTags_, api_outDimTags_ + 4, curveAngle, ierr);
+      _check();
+      return _ovectorpair(api_outDimTags_);
+    }
+    finally {
+      tmp.forEach((p) => M._free(p));
+    }
+  };
+
+  /**
+   * gmsh.model.discrete.recognize(dimTags, angle, tolerance = -1.)
+   *
+   * Recognize the analytic surfaces of the entities `dimTags' of the discrete
+   * CAD representation (volumes or surfaces, see `classify'; all of them if
+   * `dimTags' is empty) and of those connected to them by their curves, as
+   * `importShapes' does: their surfaces joined across the curves that only
+   * cut smooth surfaces, then those whose nodes are at most `tolerance' away
+   * from a plane, a sphere, a cylinder, a cone or a torus
+   * (`Geometry.DiscreteTolerance' times the size of the triangulation if
+   * `tolerance' is not positive), the normals of their triangles making an
+   * angle smaller than `angle' (in radians) with those of the surface, get
+   * the parameters of the corresponding primitives, the others are split into
+   * their pieces on such surfaces, the rest into pieces that a single map can
+   * parametrize. The curves are kept where they are sharp, and the volumes
+   * keep their tags. Return the volumes and the surfaces bounding no volume
+   * in `outDimTags'.
+   *
+   * Return `outDimTags'.
+   */
+  gmsh.model.discrete.recognize = function(dimTags, angle, tolerance = -1.) {
+    const tmp = [];
+    try {
+      const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
+      const api_outDimTags_ = _alloc(8, tmp);
+      M._gmshModelDiscreteRecognize(api_dimTags_, api_dimTags_n, angle, api_outDimTags_, api_outDimTags_ + 4, tolerance, ierr);
+      _check();
+      return _ovectorpair(api_outDimTags_);
+    }
+    finally {
+      tmp.forEach((p) => M._free(p));
+    }
+  };
+
+  /**
    * gmsh.model.discrete.addTriangulation(coord, triangles, angle, curveAngle = Math.PI, tolerance = -1.)
    *
    * Add the triangulation given by the coordinates `coord' of its nodes

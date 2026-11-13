@@ -7766,6 +7766,55 @@ GMSH_API void gmsh::model::discrete::importShapes(
 #endif
 }
 
+GMSH_API void gmsh::model::discrete::importTriangulations(
+  const std::string &fileName, vectorpair &outDimTags)
+{
+  if(!_checkInit()) return;
+  outDimTags.clear();
+#if defined(HAVE_DISCRETECAD)
+  _discreteCAD()->importTriangulations(fileName, outDimTags);
+#else
+  Msg::Error("Discrete CAD modeler not available");
+#endif
+}
+
+GMSH_API void gmsh::model::discrete::heal(const std::vector<int> &surfaceTags)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_DISCRETECAD)
+  _discreteCAD()->heal(surfaceTags);
+#else
+  Msg::Error("Discrete CAD modeler not available");
+#endif
+}
+
+GMSH_API void gmsh::model::discrete::classify(
+  const std::vector<int> &surfaceTags, const double angle,
+  vectorpair &outDimTags, const double curveAngle)
+{
+  if(!_checkInit()) return;
+  outDimTags.clear();
+#if defined(HAVE_DISCRETECAD)
+  _discreteCAD()->classify(surfaceTags, angle, curveAngle, outDimTags);
+#else
+  Msg::Error("Discrete CAD modeler not available");
+#endif
+}
+
+GMSH_API void gmsh::model::discrete::recognize(const vectorpair &dimTags,
+                                               const double angle,
+                                               vectorpair &outDimTags,
+                                               const double tolerance)
+{
+  if(!_checkInit()) return;
+  outDimTags.clear();
+#if defined(HAVE_DISCRETECAD)
+  _discreteCAD()->recognize(dimTags, angle, tolerance, outDimTags);
+#else
+  Msg::Error("Discrete CAD modeler not available");
+#endif
+}
+
 GMSH_API void gmsh::model::discrete::addTriangulation(
   const std::vector<double> &coord, const std::vector<std::size_t> &triangles,
   const double angle, vectorpair &outDimTags, const double curveAngle,

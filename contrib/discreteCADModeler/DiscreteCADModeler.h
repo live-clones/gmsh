@@ -40,10 +40,14 @@ public:
   struct Vertex {
     int node;
   };
-  // an open polyline from the node of vertex v0 to the node of vertex v1
+  // an open polyline from the node of vertex v0 to the node of vertex v1,
+  // smooth if it only cuts a smooth surface (a seam, a cut into pieces that
+  // a map can parametrize, the boundary between its pieces on analytic
+  // surfaces), not along a sharp edge or a boundary of a triangulation
   struct Curve {
     int v0, v1;
     std::vector<int> nodes;
+    bool smooth = false;
   };
   // a triangulation (oriented outwards for the surfaces of a volume) bounded
   // by loops of curves, a negative tag for a curve used backwards, the
@@ -53,7 +57,9 @@ public:
   // their two sides (the side of the curve used forwards first), the curves
   // inside it (its creases), and, for an analytic surface, the map from its
   // parameters to its points (its exact geometry), or only the surface for a
-  // primitive (its geometry stays its triangulation)
+  // primitive (its geometry stays its triangulation); a raw surface is the
+  // triangulation of a piece of a file, as read, without curves (see
+  // importTriangulations)
   struct Surface {
     std::vector<int> curves;
     std::vector<std::array<int, 3> > triangles;
@@ -62,6 +68,7 @@ public:
     std::map<int, std::array<std::vector<std::array<double, 2> >, 2> > seams;
     std::vector<int> embeddedCurves;
     DiscreteCADAnalyticMap analytic;
+    bool raw = false;
   };
   // a closed shell of surfaces, a negative tag for a surface used reversed
   struct Volume {
@@ -111,6 +118,8 @@ private:
   // remove a volume, and its surfaces, curves and vertices that no other
   // entity uses
   void _removeVolume(int tag);
+  // remove the curves and vertices that no surface uses
+  void _removeUnused();
   std::vector<std::array<int, 3> > _fillEllipse(const Frame &f, double rx,
                                                 double ry, double w,
                                                 const std::vector<int> &ring);
@@ -121,15 +130,17 @@ private:
   // the parameters of the corners of their triangles jump, for those with
   // hasUV) and along the creases inside the surfaces (embedded curves), split
   // where more or less than two of them meet, where their kind changes and
-  // where they turn by more than curveAngle, the closed ones in two arcs; the
-  // parameters made continuous across the seams of the surfaces that do not
-  // go around them. The surface of each triangle in surfaceOf.
+  // where they turn by more than curveAngle and at the nodes of corners, the
+  // closed ones in two arcs; the parameters made continuous across the seams
+  // of the surfaces that do not go around them. The surface of each triangle
+  // in surfaceOf.
   void _addTopology(const std::vector<std::array<int, 3> > &triangles,
                     const std::vector<int> &label,
                     std::vector<std::array<std::array<double, 2>, 3> > &uv,
                     const std::vector<char> &hasUV,
                     const std::set<std::pair<int, int> > &creases,
-                    double curveAngle, std::vector<int> &surfaceOf);
+                    double curveAngle, std::vector<int> &surfaceOf,
+                    const std::set<int> *corners = nullptr);
   // the volumes bounded by the surfaces of a triangulation (the surface of
   // each triangle in surfaceOf): the cells of space between them, found by
   // turning around their edges; those of a connected piece of the
@@ -141,6 +152,46 @@ private:
   std::vector<std::vector<std::vector<int> > >
   _cells(const std::vector<std::array<int, 3> > &triangles,
          const std::vector<int> &surfaceOf) const;
+  // the triangles of a triangulation (3 coordinates per node, 3 node indices
+  // from 0 per triangle) on the nodes of the modeler, those at the same
+  // coordinates merged, and the piece of each one (0 if pieces is empty)
+  bool _mergeNodes(const std::vector<double> &coord,
+                   const std::vector<std::size_t> &triangles,
+                   const std::vector<int> &pieces,
+                   std::vector<std::array<int, 3> > &tri,
+                   std::vector<int> &piece);
+  // the degenerate triangles and the copies removed, the others oriented as
+  // their neighbors across the edges of two triangles
+  bool _cleanTriangles(std::vector<std::array<int, 3> > &tri,
+                       std::vector<int> &piece);
+  // the patches of a triangulation (the label of each triangle): the
+  // triangles of the same piece connected across edges of two triangles that
+  // are not sharp (see addTriangulation), and the edges between them in
+  // barrier (the sharp ones, and those between two pieces)
+  void _patches(const std::vector<std::array<int, 3> > &tri,
+                const std::vector<int> &piece, double angle,
+                std::vector<int> &label,
+                std::set<std::pair<int, int> > &barrier);
+  // the surfaces, curves, vertices and volumes of a triangulation split into
+  // patches (the label of each triangle) along the edges of barrier: its
+  // patches on analytic surfaces if recognize (see addTriangulation), the
+  // others split into pieces that a map can parametrize, their topology (see
+  // _addTopology, curves split at the nodes of corners), its volumes (see
+  // _cells; that of the triangles pointing out of them in volumeOf, by their
+  // nodes from the smallest one, keeps its tag). The volumes and the surfaces
+  // bounding none in outDimTags.
+  bool _build(std::vector<std::array<int, 3> > &tri, std::vector<int> &label,
+              const std::set<std::pair<int, int> > &barrier, double angle,
+              double curveAngle, double tolerance, bool recognize,
+              const std::set<int> *corners,
+              const std::map<std::array<int, 3>, int> *volumeOf,
+              std::vector<std::pair<int, int> > &outDimTags);
+  // the triangles of the surfaces of a mesh file, each surface a piece (see
+  // importShapes)
+  bool _readTriangulations(const std::string &fileName,
+                           std::vector<double> &coord,
+                           std::vector<std::size_t> &triangles,
+                           std::vector<int> &pieces);
   // the fillets of a volume along the curves of radiusOf (see fillet)
   bool _filletVolume(int volume, const std::map<int, double> &radiusOf,
                      bool removeVolume,
@@ -234,6 +285,32 @@ public:
   bool importShapes(const std::string &fileName, double angle,
                     double curveAngle, double tolerance,
                     std::vector<std::pair<int, int> > &outDimTags);
+  // the steps of importShapes, one at a time: the triangulations of the
+  // surfaces of a mesh file as read, a raw surface for each one, without
+  // curves (their nodes at the same coordinates merged), in outDimTags
+  bool importTriangulations(const std::string &fileName,
+                            std::vector<std::pair<int, int> > &outDimTags);
+  // the raw surfaces surfaceTags (all of them if empty) healed together:
+  // their degenerate triangles and their copies removed, their triangles
+  // oriented (see DiscreteCADHeal.h)
+  bool heal(const std::vector<int> &surfaceTags);
+  // the raw surfaces surfaceTags (all of them if empty) replaced by their
+  // topology (see addTriangulation, each raw surface a piece), without
+  // analytic surfaces: the volumes and the surfaces bounding none in
+  // outDimTags
+  bool classify(const std::vector<int> &surfaceTags, double angle,
+                double curveAngle,
+                std::vector<std::pair<int, int> > &outDimTags);
+  // the analytic surfaces of the volumes and surfaces dimTags (all of them if
+  // empty), and of those connected to them by their curves (see
+  // addTriangulation): their surfaces
+  // across smooth curves joined, then split into their pieces on analytic
+  // surfaces, the rest into pieces that a map can parametrize; their curves
+  // kept where sharp, split where they were; the volumes keep their tags. The
+  // volumes and the surfaces bounding none in outDimTags.
+  bool recognize(const std::vector<std::pair<int, int> > &dimTags,
+                 double angle, double tolerance,
+                 std::vector<std::pair<int, int> > &outDimTags);
   // the entities copied into the model, replacing those of the previous call
   void synchronize(GModel *model);
 };

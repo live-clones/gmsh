@@ -9357,6 +9357,130 @@ end
 const import_shapes = importShapes
 
 """
+    gmsh.model.discrete.importTriangulations(fileName)
+
+Import the triangulations of the surfaces of the mesh file `fileName` (STL, MSH,
+OBJ, PLY, OFF, VTK or MESH format) in the discrete CAD representation as they
+are read, the first step of `importShapes`: a raw surface for each surface of
+the file, without curves (the nodes at the same coordinates merged), to be
+healed with `heal` and replaced by its topology with `classify`. Return the
+surfaces in `outDimTags`.
+
+Return `outDimTags`.
+
+Types:
+ - `fileName`: string
+ - `outDimTags`: vector of pairs of integers
+"""
+function importTriangulations(fileName)
+    api_outDimTags_ = Ref{Ptr{Cint}}()
+    api_outDimTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelDiscreteImportTriangulations, gmsh.lib), Cvoid,
+          (Ptr{Cchar}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          fileName, api_outDimTags_, api_outDimTags_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own = true)
+    outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
+    return outDimTags
+end
+const import_triangulations = importTriangulations
+
+"""
+    gmsh.model.discrete.heal(surfaceTags)
+
+Heal together the raw surfaces `surfaceTags` of the discrete CAD representation
+(see `importTriangulations`; all of them if `surfaceTags` is empty): remove
+their degenerate triangles and their duplicated ones, and orient their
+triangles, as their neighbors across the edges shared by two triangles, then
+each closed component so that its volume is positive and each open one so that
+the generalized winding number of all the triangles is the nearest to whole
+numbers around it.
+
+Types:
+ - `surfaceTags`: vector of integers
+"""
+function heal(surfaceTags)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelDiscreteHeal, gmsh.lib), Cvoid,
+          (Ptr{Cint}, Csize_t, Ptr{Cint}),
+          convert(Vector{Cint}, surfaceTags), length(surfaceTags), ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+
+"""
+    gmsh.model.discrete.classify(surfaceTags, angle, curveAngle = pi)
+
+Replace the raw surfaces `surfaceTags` of the discrete CAD representation (see
+`importTriangulations`; all of them if `surfaceTags` is empty) by their
+topology, as `importShapes` builds it but without recognizing analytic surfaces,
+each raw surface a surface of the file: the surfaces split where the normals of
+the triangles make an angle larger than `angle` (in radians), the curves split
+where they turn by more than `curveAngle`, and the volumes they bound. Return
+the volumes and the surfaces bounding no volume in `outDimTags`.
+
+Return `outDimTags`.
+
+Types:
+ - `surfaceTags`: vector of integers
+ - `angle`: double
+ - `outDimTags`: vector of pairs of integers
+ - `curveAngle`: double
+"""
+function classify(surfaceTags, angle, curveAngle = pi)
+    api_outDimTags_ = Ref{Ptr{Cint}}()
+    api_outDimTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelDiscreteClassify, gmsh.lib), Cvoid,
+          (Ptr{Cint}, Csize_t, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cdouble, Ptr{Cint}),
+          convert(Vector{Cint}, surfaceTags), length(surfaceTags), angle, api_outDimTags_, api_outDimTags_n_, curveAngle, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own = true)
+    outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
+    return outDimTags
+end
+
+"""
+    gmsh.model.discrete.recognize(dimTags, angle, tolerance = -1.)
+
+Recognize the analytic surfaces of the entities `dimTags` of the discrete CAD
+representation (volumes or surfaces, see `classify`; all of them if `dimTags` is
+empty) and of those connected to them by their curves, as `importShapes` does:
+their surfaces joined across the curves that only cut smooth surfaces, then
+those whose nodes are at most `tolerance` away from a plane, a sphere, a
+cylinder, a cone or a torus (`Geometry.DiscreteTolerance` times the size of the
+triangulation if `tolerance` is not positive), the normals of their triangles
+making an angle smaller than `angle` (in radians) with those of the surface, get
+the parameters of the corresponding primitives, the others are split into their
+pieces on such surfaces, the rest into pieces that a single map can parametrize.
+The curves are kept where they are sharp, and the volumes keep their tags.
+Return the volumes and the surfaces bounding no volume in `outDimTags`.
+
+Return `outDimTags`.
+
+Types:
+ - `dimTags`: vector of pairs of integers
+ - `angle`: double
+ - `outDimTags`: vector of pairs of integers
+ - `tolerance`: double
+"""
+function recognize(dimTags, angle, tolerance = -1.)
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
+    api_outDimTags_ = Ref{Ptr{Cint}}()
+    api_outDimTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelDiscreteRecognize, gmsh.lib), Cvoid,
+          (Ptr{Cint}, Csize_t, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cdouble, Ptr{Cint}),
+          api_dimTags_, api_dimTags_n_, angle, api_outDimTags_, api_outDimTags_n_, tolerance, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own = true)
+    outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
+    return outDimTags
+end
+
+"""
     gmsh.model.discrete.addTriangulation(coord, triangles, angle, curveAngle = pi, tolerance = -1.)
 
 Add the triangulation given by the coordinates `coord` of its nodes

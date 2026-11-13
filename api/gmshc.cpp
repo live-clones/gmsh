@@ -4767,6 +4767,63 @@ GMSH_API void gmshModelDiscreteImportShapes(const char * fileName, const double 
   }
 }
 
+GMSH_API void gmshModelDiscreteImportTriangulations(const char * fileName, int ** outDimTags, size_t * outDimTags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_outDimTags_;
+    gmsh::model::discrete::importTriangulations(fileName, api_outDimTags_);
+    vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelDiscreteHeal(const int * surfaceTags, const size_t surfaceTags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_surfaceTags_(surfaceTags, surfaceTags + surfaceTags_n);
+    gmsh::model::discrete::heal(api_surfaceTags_);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelDiscreteClassify(const int * surfaceTags, const size_t surfaceTags_n, const double angle, int ** outDimTags, size_t * outDimTags_n, const double curveAngle, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_surfaceTags_(surfaceTags, surfaceTags + surfaceTags_n);
+    gmsh::vectorpair api_outDimTags_;
+    gmsh::model::discrete::classify(api_surfaceTags_, angle, api_outDimTags_, curveAngle);
+    vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelDiscreteRecognize(const int * dimTags, const size_t dimTags_n, const double angle, int ** outDimTags, size_t * outDimTags_n, const double tolerance, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_dimTags_(dimTags_n/2);
+    for(size_t i = 0; i < dimTags_n/2; ++i){
+      api_dimTags_[i].first = dimTags[i * 2 + 0];
+      api_dimTags_[i].second = dimTags[i * 2 + 1];
+    }
+    gmsh::vectorpair api_outDimTags_;
+    gmsh::model::discrete::recognize(api_dimTags_, angle, api_outDimTags_, tolerance);
+    vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelDiscreteAddTriangulation(const double * coord, const size_t coord_n, const size_t * triangles, const size_t triangles_n, const double angle, int ** outDimTags, size_t * outDimTags_n, const double curveAngle, const double tolerance, int * ierr)
 {
   if(ierr) *ierr = 0;

@@ -126,6 +126,10 @@ void VectorOfPairs2ListOfShapes(const std::vector<std::pair<int, int> > &v, List
 void DiscreteShapeFromFile(const char *fileName, double angle,
                            double curveAngle, double tolerance,
                            List_T *shapes);
+void DiscreteClassify(List_T *list, double angle, double curveAngle,
+                      List_T *shapes);
+void DiscreteRecognize(List_T *list, double angle, double tolerance,
+                       List_T *shapes);
 void addPeriodicEdge(int, int, const std::vector<double>&);
 void addPeriodicFace(int, int, const std::map<int, int>&);
 void addPeriodicFace(int, int, const std::vector<double>&);
@@ -216,7 +220,7 @@ struct doubleXstring{
 %token tRotate tTranslate tSymmetry tDilate tExtrude tAffine tClosest
 %token tBooleanUnion tBooleanIntersection tBooleanDifference tBooleanSection
 %token tBooleanFragments tThickSolid
-%token tRecombine tSmoother tSplit tDelete tCoherence tHealShapes
+%token tRecombine tSmoother tSplit tDelete tCoherence tHealShapes tRecognizeShapes
 %token tIntersect tMeshAlgorithm tReverseMesh tMeshSize tMeshSizeFromBoundary
 %token tLayers tScaleLast tHole tAlias tAliasWithOptions tCopyOptions
 %token tQuadTriAddVerts tQuadTriNoNewVerts
@@ -4114,11 +4118,46 @@ Boolean :
         GModel::current()->getOCCInternals()->importShapes(tmp, true, out);
         VectorOfPairs2ListOfShapes(out, $$);
       }
+#if defined(HAVE_DISCRETECAD)
+      else if(gmsh_yyfactory == "Discrete" &&
+              GModel::current()->getDiscreteCADInternals()){
+        std::vector<std::pair<int, int> > out;
+        std::string tmp = FixRelativePath(gmsh_yyname, $3);
+        r = GModel::current()->getDiscreteCADInternals()->importTriangulations
+          (tmp, out);
+        VectorOfPairs2ListOfShapes(out, $$);
+      }
+#endif
       else{
-        yymsg(0, "ShapeFromFile only available with OpenCASCADE geometry kernel");
+        yymsg(0, "ShapeFromFile only available with OpenCASCADE and Discrete "
+              "geometry kernels");
       }
       if(!r) yymsg(0, "Could import shape");
       Free($3);
+    }
+  | tClassifySurfaces '{' ListOfShapes '}' '{' FExpr '}'
+    {
+      $$ = List_Create(2, 1, sizeof(Shape));
+      DiscreteClassify($3, $6, M_PI, $$);
+      List_Delete($3);
+    }
+  | tClassifySurfaces '{' ListOfShapes '}' '{' FExpr ',' FExpr '}'
+    {
+      $$ = List_Create(2, 1, sizeof(Shape));
+      DiscreteClassify($3, $6, $8, $$);
+      List_Delete($3);
+    }
+  | tRecognizeShapes '{' ListOfShapes '}' '{' FExpr '}'
+    {
+      $$ = List_Create(2, 1, sizeof(Shape));
+      DiscreteRecognize($3, $6, -1., $$);
+      List_Delete($3);
+    }
+  | tRecognizeShapes '{' ListOfShapes '}' '{' FExpr ',' FExpr '}'
+    {
+      $$ = List_Create(2, 1, sizeof(Shape));
+      DiscreteRecognize($3, $6, $8, $$);
+      List_Delete($3);
     }
   | tShapeFromFile '(' StringExprVar ',' FExpr ')'
     {
@@ -4974,6 +5013,38 @@ Coherence :
         GModel::current()->getGEOInternals()->mergeVertices(tags);
       List_Delete($4);
     }
+  | tHealShapes '{' ListOfShapes '}'
+    {
+      std::vector<std::pair<int, int> > in, out;
+      ListOfShapes2VectorOfPairs($3, in);
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()) {
+        GModel::current()->getOCCInternals()->healShapes
+          (in, out, CTX::instance()->geom.tolerance,
+           CTX::instance()->geom.occFixDegenerated,
+           CTX::instance()->geom.occFixSmallEdges,
+           CTX::instance()->geom.occFixSmallFaces,
+           CTX::instance()->geom.occSewFaces,
+           CTX::instance()->geom.occMakeSolids);
+      }
+#if defined(HAVE_DISCRETECAD)
+      else if(gmsh_yyfactory == "Discrete" &&
+              GModel::current()->getDiscreteCADInternals()) {
+        std::vector<int> surfaces;
+        for(auto &p : in) {
+          if(p.first == 2) surfaces.push_back(p.second);
+          else yymsg(0, "HealShapes only heals surfaces with the Discrete "
+                     "geometry kernel");
+        }
+        if(!GModel::current()->getDiscreteCADInternals()->heal(surfaces))
+          yymsg(0, "Could not heal shapes");
+      }
+#endif
+      else {
+        yymsg(0, "HealShapes only available with OpenCASCADE and Discrete "
+              "geometry kernels");
+      }
+      List_Delete($3);
+    }
   | tHealShapes tEND
     {
       if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()) {
@@ -4986,6 +5057,14 @@ Coherence :
            CTX::instance()->geom.occSewFaces,
            CTX::instance()->geom.occMakeSolids);
       }
+#if defined(HAVE_DISCRETECAD)
+      else if(gmsh_yyfactory == "Discrete" &&
+              GModel::current()->getDiscreteCADInternals()) {
+        if(!GModel::current()->getDiscreteCADInternals()->heal
+           (std::vector<int>()))
+          yymsg(0, "Could not heal shapes");
+      }
+#endif
       else {
         yymsg(0, "HealShapes only available with OpenCASCADE geometry kernel");
       }
@@ -6947,6 +7026,54 @@ void DiscreteShapeFromFile(const char *fileName, double angle,
 #endif
   yymsg(0, "ShapeFromFile with angles only available with Discrete geometry "
         "kernel");
+}
+
+// the raw surfaces of the discrete CAD modeler (all of them if the list is
+// empty) replaced by their topology: surfaces split where the normals turn by
+// more than angle, curves where they turn by more than curveAngle
+void DiscreteClassify(List_T *list, double angle, double curveAngle,
+                      List_T *shapes)
+{
+#if defined(HAVE_DISCRETECAD)
+  if(gmsh_yyfactory == "Discrete" &&
+     GModel::current()->getDiscreteCADInternals()){
+    std::vector<std::pair<int, int> > in, out;
+    ListOfShapes2VectorOfPairs(list, in);
+    std::vector<int> surfaces;
+    for(auto &p : in) {
+      if(p.first == 2) surfaces.push_back(p.second);
+      else yymsg(0, "ClassifySurfaces only classifies surfaces");
+    }
+    if(!GModel::current()->getDiscreteCADInternals()->classify
+       (surfaces, angle, curveAngle, out))
+      yymsg(0, "Could not classify surfaces");
+    VectorOfPairs2ListOfShapes(out, shapes);
+    return;
+  }
+#endif
+  yymsg(0, "ClassifySurfaces of shapes only available with Discrete geometry "
+        "kernel");
+}
+
+// the analytic surfaces of shapes of the discrete CAD modeler (the normals of
+// their triangles within angle of those of the surfaces, their nodes within
+// tolerance)
+void DiscreteRecognize(List_T *list, double angle, double tolerance,
+                       List_T *shapes)
+{
+#if defined(HAVE_DISCRETECAD)
+  if(gmsh_yyfactory == "Discrete" &&
+     GModel::current()->getDiscreteCADInternals()){
+    std::vector<std::pair<int, int> > in, out;
+    ListOfShapes2VectorOfPairs(list, in);
+    if(!GModel::current()->getDiscreteCADInternals()->recognize
+       (in, angle, tolerance, out))
+      yymsg(0, "Could not recognize shapes");
+    VectorOfPairs2ListOfShapes(out, shapes);
+    return;
+  }
+#endif
+  yymsg(0, "RecognizeShapes only available with Discrete geometry kernel");
 }
 
 void yyerror(const char *s)

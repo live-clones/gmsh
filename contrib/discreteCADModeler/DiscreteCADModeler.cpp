@@ -17,6 +17,7 @@
 #include <cctype>
 #include <cmath>
 #include "DiscreteCADModeler.h"
+#include "DiscreteCADHeal.h"
 #include "DiscreteCADMeshBoolean.h"
 #include "DiscreteCADRecognition.h"
 #include "GmshMessage.h"
@@ -1061,11 +1062,17 @@ void DiscreteCAD_Internals::_removeVolume(int tag)
   const std::vector<int> surfaces = vit->second.surfaces;
   _volumes.erase(vit);
   // the entities still used
-  std::set<int> usedSurfaces, usedCurves, usedVertices;
+  std::set<int> usedSurfaces;
   for(auto &v : _volumes)
     for(int s : v.second.surfaces) usedSurfaces.insert(std::abs(s));
   for(int s : surfaces)
     if(!usedSurfaces.count(std::abs(s))) _surfaces.erase(std::abs(s));
+  _removeUnused();
+}
+
+void DiscreteCAD_Internals::_removeUnused()
+{
+  std::set<int> usedCurves, usedVertices;
   for(auto &s : _surfaces) {
     for(int c : s.second.curves) usedCurves.insert(std::abs(c));
     for(int c : s.second.embeddedCurves) usedCurves.insert(c);
@@ -1450,7 +1457,7 @@ void DiscreteCAD_Internals::_addTopology(
   std::vector<std::array<std::array<double, 2>, 3> > &uv,
   const std::vector<char> &hasUV,
   const std::set<std::pair<int, int> > &creases, double curveAngle,
-  std::vector<int> &surfaceOf)
+  std::vector<int> &surfaceOf, const std::set<int> *corners)
 {
   const std::size_t nt = triangles.size();
 
@@ -1623,7 +1630,7 @@ void DiscreteCAD_Internals::_addTopology(
     const std::vector<int> &nb = neighbors[n];
     return nb.size() != 2 ||
            special[std::minmax(n, nb[0])] != special[std::minmax(n, nb[1])] ||
-           turn(nb[0], n, nb[1]) > curveAngle;
+           turn(nb[0], n, nb[1]) > curveAngle || (corners && corners->count(n));
   };
   std::map<int, int> vertexOf;
   auto vertex = [&](int n) {
@@ -1961,12 +1968,13 @@ DiscreteCAD_Internals::_cells(const std::vector<std::array<int, 3> > &triangles,
   return volumes;
 }
 
-bool DiscreteCAD_Internals::addTriangulation(
+bool DiscreteCAD_Internals::_mergeNodes(
   const std::vector<double> &coord, const std::vector<std::size_t> &triangles,
-  const std::vector<int> &pieces, double angle, double curveAngle,
-  double tolerance, std::vector<std::pair<int, int> > &outDimTags)
+  const std::vector<int> &pieces, std::vector<std::array<int, 3> > &tri,
+  std::vector<int> &piece)
 {
-  outDimTags.clear();
+  tri.clear();
+  piece.clear();
   const std::size_t nn = coord.size() / 3;
   if(coord.size() % 3 || triangles.size() % 3 ||
      (!pieces.empty() && pieces.size() != triangles.size() / 3)) {
@@ -1981,14 +1989,9 @@ bool DiscreteCAD_Internals::addTriangulation(
     return false;
   }
 
-  // the nodes, those at the same coordinates merged; the triangles, without
-  // the degenerate ones and the copies
+  // the nodes, those at the same coordinates merged
   std::map<std::array<double, 3>, int> nodeOf;
   std::vector<int> node(nn, -1);
-  std::vector<std::array<int, 3> > tri;
-  std::vector<int> piece;
-  std::set<std::array<int, 3> > sorted;
-  std::size_t degenerate = 0, copies = 0;
   for(std::size_t i = 0; i < triangles.size() / 3; i++) {
     std::array<int, 3> t;
     for(int k = 0; k < 3; k++) {
@@ -2003,6 +2006,20 @@ bool DiscreteCAD_Internals::addTriangulation(
       }
       t[k] = node[n];
     }
+    tri.push_back(t);
+    piece.push_back(pieces.empty() ? 0 : pieces[i]);
+  }
+  return true;
+}
+
+bool DiscreteCAD_Internals::_cleanTriangles(
+  std::vector<std::array<int, 3> > &tri, std::vector<int> &piece)
+{
+  // the triangles, without the degenerate ones and the copies
+  std::set<std::array<int, 3> > sorted;
+  std::size_t degenerate = 0, copies = 0, kept = 0;
+  for(std::size_t i = 0; i < tri.size(); i++) {
+    const std::array<int, 3> t = tri[i];
     if(t[0] == t[1] || t[1] == t[2] || t[2] == t[0]) {
       degenerate++;
       continue;
@@ -2013,9 +2030,12 @@ bool DiscreteCAD_Internals::addTriangulation(
       copies++;
       continue;
     }
-    tri.push_back(t);
-    piece.push_back(pieces.empty() ? 0 : pieces[i]);
+    tri[kept] = t;
+    piece[kept] = piece[i];
+    kept++;
   }
+  tri.resize(kept);
+  piece.resize(kept);
   if(degenerate || copies)
     Msg::Warning("Discrete CAD triangulation: %lu degenerate and %lu "
                  "duplicate triangles ignored",
@@ -2064,6 +2084,19 @@ bool DiscreteCAD_Internals::addTriangulation(
   }
   if(!orientable)
     Msg::Warning("Discrete CAD triangulation not orientable");
+  return true;
+}
+
+void DiscreteCAD_Internals::_patches(
+  const std::vector<std::array<int, 3> > &tri, const std::vector<int> &piece,
+  double angle, std::vector<int> &label,
+  std::set<std::pair<int, int> > &barrier)
+{
+  const std::size_t nt = tri.size();
+  std::map<std::pair<int, int>, std::vector<std::size_t> > edgeTriangles;
+  for(std::size_t i = 0; i < nt; i++)
+    for(int k = 0; k < 3; k++)
+      edgeTriangles[std::minmax(tri[i][k], tri[i][(k + 1) % 3])].push_back(i);
 
   // the surfaces: the triangles of the same piece connected across edges of
   // two triangles that are not sharp
@@ -2192,15 +2225,40 @@ bool DiscreteCAD_Internals::addTriangulation(
   }
   for(auto &e : inner)
     if(!sharp.count(std::make_pair(e[0], e[1]))) parent[find(e[2])] = find(e[3]);
-  std::vector<int> label(nt);
+  label.assign(nt, 0);
   for(std::size_t i = 0; i < nt; i++) label[i] = (int)find(i);
+  barrier = sharp;
+  for(auto &e : edgeTriangles)
+    if(e.second.size() == 2 && piece[e.second[0]] != piece[e.second[1]])
+      barrier.insert(e.first);
+}
+
+bool DiscreteCAD_Internals::_build(
+  std::vector<std::array<int, 3> > &tri, std::vector<int> &label,
+  const std::set<std::pair<int, int> > &barrier, double angle,
+  double curveAngle, double tolerance, bool recognize,
+  const std::set<int> *corners,
+  const std::map<std::array<int, 3>, int> *volumeOf,
+  std::vector<std::pair<int, int> > &outDimTags)
+{
+  const std::size_t nt = tri.size();
+  const std::set<std::pair<int, int> > &sharp = barrier;
+  std::map<std::pair<int, int>, std::vector<std::size_t> > edgeTriangles;
+  for(std::size_t i = 0; i < nt; i++)
+    for(int k = 0; k < 3; k++)
+      edgeTriangles[std::minmax(tri[i][k], tri[i][(k + 1) % 3])].push_back(i);
+  std::vector<std::size_t> parent(nt);
+  std::function<std::size_t(std::size_t)> find = [&](std::size_t i) {
+    while(parent[i] != i) i = parent[i] = parent[parent[i]];
+    return i;
+  };
 
   // the analytic surfaces: the planes, spheres, cylinders, cones and tori
   // within the tolerance of the nodes of the surfaces or, for those on none,
   // of their pieces (see segmentSurface), with the parameters of the
   // primitives (a sphere or a torus split in two halves if needed, the apex of
   // a cone inside its surface an embedded vertex)
-  if(tolerance <= 0.) {
+  if(recognize && tolerance <= 0.) {
     double lo[3] = {1e300, 1e300, 1e300}, hi[3] = {-1e300, -1e300, -1e300};
     for(auto &t : tri)
       for(int n : t)
@@ -2219,15 +2277,15 @@ bool DiscreteCAD_Internals::addTriangulation(
   int recognized[6] = {0, 0, 0, 0, 0, 0};
   std::vector<DiscreteCADAnalyticMap> maps;
   std::vector<int> mapOf(nt, -1);
-  double precision;
-  {
+  double precision = 0.;
+  if(recognize) {
     std::set<int> used;
     for(auto &t : tri) used.insert(t.begin(), t.end());
     std::vector<std::array<double, 3> > x;
     for(int n : used) x.push_back(_nodes[n]);
     precision = coordinatePrecision(x);
   }
-  {
+  if(recognize) {
     std::map<int, std::vector<std::size_t> > trianglesOf;
     for(std::size_t i = 0; i < nt; i++) trianglesOf[label[i]].push_back(i);
     int next = (int)nt;
@@ -2421,11 +2479,30 @@ bool DiscreteCAD_Internals::addTriangulation(
     }
   }
 
-  // the surfaces, curves and vertices, and the volumes
+  // the surfaces, curves and vertices, and the volumes; the curves that only
+  // cut smooth surfaces marked
   std::vector<int> surfaceOf;
-  _addTopology(tri, label, uv, hasUV, sharp, curveAngle, surfaceOf);
+  _addTopology(tri, label, uv, hasUV, sharp, curveAngle, surfaceOf, corners);
   for(std::size_t i = 0; i < nt; i++)
     if(mapOf[i] >= 0) _surfaces[surfaceOf[i]].analytic = maps[mapOf[i]];
+  {
+    std::set<int> curves;
+    for(int s : std::set<int>(surfaceOf.begin(), surfaceOf.end())) {
+      for(int c : _surfaces[s].curves) curves.insert(std::abs(c));
+      for(int c : _surfaces[s].embeddedCurves) curves.insert(c);
+    }
+    for(int c : curves) {
+      Curve &cv = _curves[c];
+      cv.smooth = true;
+      for(std::size_t j = 0; j + 1 < cv.nodes.size() && cv.smooth; j++) {
+        const std::pair<int, int> e = std::minmax(cv.nodes[j], cv.nodes[j + 1]);
+        auto it = edgeTriangles.find(e);
+        if(it == edgeTriangles.end() || it->second.size() != 2 ||
+           barrier.count(e))
+          cv.smooth = false;
+      }
+    }
+  }
   std::vector<std::vector<std::vector<int> > > cells = _cells(tri, surfaceOf);
   // (the apexes of the cones inside their surfaces)
   for(int a : apexes) {
@@ -2457,12 +2534,21 @@ bool DiscreteCAD_Internals::addTriangulation(
     for(int &c : sf.curves) c = -c;
   }
   for(auto &cell : cells) {
+    std::vector<int> shells;
+    for(auto &shell : cell)
+      for(int s : shell) shells.push_back(signOf[std::abs(s)] > 0 ? s : -s);
+    // (the tag of the volume of its first triangle pointing out of it)
     int t = -1;
+    if(volumeOf && !shells.empty()) {
+      std::array<int, 3> k = _surfaces[std::abs(shells[0])].triangles[0];
+      if(shells[0] < 0) std::swap(k[1], k[2]);
+      std::rotate(k.begin(), std::min_element(k.begin(), k.end()), k.end());
+      auto it = volumeOf->find(k);
+      if(it != volumeOf->end() && !_volumes.count(it->second)) t = it->second;
+    }
     _assignTag(3, t);
     _volumes[t] = Volume();
-    for(auto &shell : cell)
-      for(int s : shell)
-        _volumes[t].surfaces.push_back(signOf[std::abs(s)] > 0 ? s : -s);
+    _volumes[t].surfaces = shells;
     outDimTags.push_back({3, t});
   }
   std::set<int> surfaces(surfaceOf.begin(), surfaceOf.end());
@@ -2476,29 +2562,46 @@ bool DiscreteCAD_Internals::addTriangulation(
             cells.size(), cells.size() == 1 ? "" : "s", surfaces.size(),
             surfaces.size() == 1 ? "" : "s", curves.size(),
             curves.size() == 1 ? "" : "s");
-  Msg::Info("Discrete CAD triangulation: %d plane%s, %d sphere%s, %d "
-            "cylinder%s, %d cone%s and %d tor%s recognized (tolerance %g, "
-            "precision of the coordinates %g)",
-            recognized[1], recognized[1] == 1 ? "" : "s", recognized[2],
-            recognized[2] == 1 ? "" : "s", recognized[3],
-            recognized[3] == 1 ? "" : "s", recognized[4],
-            recognized[4] == 1 ? "" : "s", recognized[5],
-            recognized[5] == 1 ? "us" : "i", tolerance, precision);
+  if(recognize)
+    Msg::Info("Discrete CAD triangulation: %d plane%s, %d sphere%s, %d "
+              "cylinder%s, %d cone%s and %d tor%s recognized (tolerance %g, "
+              "precision of the coordinates %g)",
+              recognized[1], recognized[1] == 1 ? "" : "s", recognized[2],
+              recognized[2] == 1 ? "" : "s", recognized[3],
+              recognized[3] == 1 ? "" : "s", recognized[4],
+              recognized[4] == 1 ? "" : "s", recognized[5],
+              recognized[5] == 1 ? "us" : "i", tolerance, precision);
   _changed = true;
   return true;
 }
 
-bool DiscreteCAD_Internals::importShapes(
-  const std::string &fileName, double angle, double curveAngle,
+bool DiscreteCAD_Internals::addTriangulation(
+  const std::vector<double> &coord, const std::vector<std::size_t> &triangles,
+  const std::vector<int> &pieces, double angle, double curveAngle,
   double tolerance, std::vector<std::pair<int, int> > &outDimTags)
 {
   outDimTags.clear();
+  std::vector<std::array<int, 3> > tri;
+  std::vector<int> piece, label;
+  if(!_mergeNodes(coord, triangles, pieces, tri, piece) ||
+     !_cleanTriangles(tri, piece))
+    return false;
+  std::set<std::pair<int, int> > barrier;
+  _patches(tri, piece, angle, label, barrier);
+  return _build(tri, label, barrier, angle, curveAngle, tolerance, true,
+                nullptr, nullptr, outDimTags);
+}
+
+bool DiscreteCAD_Internals::_readTriangulations(
+  const std::string &fileName, std::vector<double> &coord,
+  std::vector<std::size_t> &triangles, std::vector<int> &pieces)
+{
+  coord.clear();
+  triangles.clear();
+  pieces.clear();
   std::string ext = SplitFileName(fileName)[2];
   std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
-  std::vector<double> coord;
-  std::vector<std::size_t> triangles;
-  std::vector<int> pieces;
   std::size_t others = 0;
   int status = 0;
   {
@@ -2554,8 +2657,254 @@ bool DiscreteCAD_Internals::importShapes(
     Msg::Error("Discrete CAD import: no triangles in '%s'", fileName.c_str());
     return false;
   }
+  return true;
+}
+
+bool DiscreteCAD_Internals::importShapes(
+  const std::string &fileName, double angle, double curveAngle,
+  double tolerance, std::vector<std::pair<int, int> > &outDimTags)
+{
+  outDimTags.clear();
+  std::vector<double> coord;
+  std::vector<std::size_t> triangles;
+  std::vector<int> pieces;
+  if(!_readTriangulations(fileName, coord, triangles, pieces)) return false;
   return addTriangulation(coord, triangles, pieces, angle, curveAngle,
                           tolerance, outDimTags);
+}
+
+bool DiscreteCAD_Internals::importTriangulations(
+  const std::string &fileName, std::vector<std::pair<int, int> > &outDimTags)
+{
+  outDimTags.clear();
+  std::vector<double> coord;
+  std::vector<std::size_t> triangles;
+  std::vector<int> pieces;
+  if(!_readTriangulations(fileName, coord, triangles, pieces)) return false;
+  std::vector<std::array<int, 3> > tri;
+  std::vector<int> piece;
+  if(!_mergeNodes(coord, triangles, pieces, tri, piece)) return false;
+  std::map<int, std::vector<std::array<int, 3> > > trianglesOf;
+  for(std::size_t i = 0; i < tri.size(); i++)
+    trianglesOf[piece[i]].push_back(tri[i]);
+  for(auto &p : trianglesOf) {
+    int t = -1;
+    _assignTag(2, t);
+    Surface &sf = _surfaces[t];
+    sf.triangles = p.second;
+    sf.raw = true;
+    outDimTags.push_back({2, t});
+  }
+  Msg::Info("Discrete CAD import: %lu triangulation%s, %lu triangles",
+            trianglesOf.size(), trianglesOf.size() == 1 ? "" : "s",
+            tri.size());
+  _changed = true;
+  return true;
+}
+
+// the raw surfaces among tags, all of them if tags is empty (an error for the
+// others)
+static bool rawSurfaces(const std::map<int, DiscreteCAD_Internals::Surface> &s,
+                        const std::vector<int> &tags, const char *what,
+                        std::vector<int> &raw)
+{
+  if(tags.empty())
+    for(auto &it : s)
+      if(it.second.raw) raw.push_back(it.first);
+  std::set<int> seen;
+  for(int t : tags) {
+    auto it = s.find(t);
+    if(it == s.end() || !it->second.raw) {
+      Msg::Error("Discrete CAD %s: surface %d is not a triangulation as read "
+                 "(see importTriangulations)",
+                 what, t);
+      return false;
+    }
+    if(seen.insert(t).second) raw.push_back(t);
+  }
+  if(raw.empty()) {
+    Msg::Error("Discrete CAD %s: no surfaces", what);
+    return false;
+  }
+  return true;
+}
+
+bool DiscreteCAD_Internals::heal(const std::vector<int> &surfaceTags)
+{
+  std::vector<int> raw;
+  if(!rawSurfaces(_surfaces, surfaceTags, "heal", raw)) return false;
+  std::vector<std::array<int, 3> > tri;
+  std::vector<int> surfaceOf;
+  for(int s : raw)
+    for(auto &t : _surfaces[s].triangles) {
+      tri.push_back(t);
+      surfaceOf.push_back(s);
+    }
+  DiscreteCADHealReport r;
+  std::vector<std::size_t> kept;
+  removeBadTriangles(tri, r, &kept);
+  orientTriangles(_nodes, tri, r);
+  for(int s : raw) _surfaces[s].triangles.clear();
+  for(std::size_t i = 0; i < tri.size(); i++)
+    _surfaces[surfaceOf[kept[i]]].triangles.push_back(tri[i]);
+  int emptied = 0;
+  for(int s : raw)
+    if(_surfaces[s].triangles.empty()) {
+      _surfaces.erase(s);
+      emptied++;
+    }
+  Msg::Info("Discrete CAD heal: %d degenerate and %d duplicated triangles "
+            "removed (%d surfaces emptied); %d components (%d closed): %d "
+            "closed and %d open ones turned over, %d triangles turned over "
+            "in all",
+            r.degenerate, r.duplicated, emptied, r.components, r.closed,
+            r.reversedClosed, r.reversedOpen, r.reversedTriangles);
+  _changed = true;
+  return true;
+}
+
+bool DiscreteCAD_Internals::classify(
+  const std::vector<int> &surfaceTags, double angle, double curveAngle,
+  std::vector<std::pair<int, int> > &outDimTags)
+{
+  outDimTags.clear();
+  std::vector<int> raw;
+  if(!rawSurfaces(_surfaces, surfaceTags, "classify", raw)) return false;
+  std::vector<std::array<int, 3> > tri;
+  std::vector<int> piece, label;
+  for(std::size_t p = 0; p < raw.size(); p++)
+    for(auto &t : _surfaces[raw[p]].triangles) {
+      tri.push_back(t);
+      piece.push_back((int)p);
+    }
+  if(!_cleanTriangles(tri, piece)) return false;
+  for(int s : raw) _surfaces.erase(s);
+  std::set<std::pair<int, int> > barrier;
+  _patches(tri, piece, angle, label, barrier);
+  return _build(tri, label, barrier, angle, curveAngle, 0., false, nullptr,
+                nullptr, outDimTags);
+}
+
+bool DiscreteCAD_Internals::recognize(
+  const std::vector<std::pair<int, int> > &dimTags, double angle,
+  double tolerance, std::vector<std::pair<int, int> > &outDimTags)
+{
+  outDimTags.clear();
+  // the surfaces and volumes given, and those connected to them by their
+  // curves or bounded by them
+  std::set<int> surfaces, volumes;
+  std::vector<int> stack;
+  auto addVolume = [&](int v) {
+    if(!volumes.insert(v).second) return;
+    for(int s : _volumes[v].surfaces) stack.push_back(std::abs(s));
+  };
+  // (all of them if dimTags is empty)
+  if(dimTags.empty())
+    for(auto &s : _surfaces)
+      if(!s.second.raw) stack.push_back(s.first);
+  for(auto &dt : dimTags) {
+    if(dt.first == 3 && _volumes.count(dt.second))
+      addVolume(dt.second);
+    else if(dt.first == 2 && _surfaces.count(dt.second) &&
+            !_surfaces[dt.second].raw)
+      stack.push_back(dt.second);
+    else {
+      Msg::Error("Discrete CAD recognize: no %s %d%s", entityName(dt.first),
+                 dt.second,
+                 dt.first == 2 && _surfaces.count(dt.second) ?
+                   " that is not a triangulation as read (classify it)" :
+                   "");
+      return false;
+    }
+  }
+  std::map<int, std::vector<int> > surfacesOfCurve, volumesOfSurface;
+  for(auto &s : _surfaces) {
+    for(int c : s.second.curves) surfacesOfCurve[std::abs(c)].push_back(s.first);
+    for(int c : s.second.embeddedCurves)
+      surfacesOfCurve[c].push_back(s.first);
+  }
+  for(auto &v : _volumes)
+    for(int s : v.second.surfaces)
+      volumesOfSurface[std::abs(s)].push_back(v.first);
+  while(!stack.empty()) {
+    const int s = stack.back();
+    stack.pop_back();
+    if(!surfaces.insert(s).second) continue;
+    for(int v : volumesOfSurface[s]) addVolume(v);
+    const Surface &sf = _surfaces[s];
+    std::vector<int> curves = sf.embeddedCurves;
+    for(int c : sf.curves) curves.push_back(std::abs(c));
+    for(int c : curves)
+      for(int t : surfacesOfCurve[c])
+        if(!surfaces.count(t)) stack.push_back(t);
+  }
+
+  // the triangles pointing out of the volumes, by their nodes from the
+  // smallest one
+  std::map<std::array<int, 3>, int> volumeOf;
+  for(int v : volumes)
+    for(int s : _volumes[v].surfaces)
+      for(auto t : _surfaces[std::abs(s)].triangles) {
+        if(s < 0) std::swap(t[1], t[2]);
+        std::rotate(t.begin(), std::min_element(t.begin(), t.end()), t.end());
+        volumeOf[t] = v;
+      }
+  // the edges of the curves that are not smooth, and the nodes of the
+  // vertices between two of them only (where a curve was split as it turned,
+  // not the two arcs of a closed curve, split anew)
+  std::set<std::pair<int, int> > barrier;
+  std::set<int> corners;
+  {
+    std::set<int> curves;
+    for(int s : surfaces) {
+      for(int c : _surfaces[s].curves) curves.insert(std::abs(c));
+      for(int c : _surfaces[s].embeddedCurves) curves.insert(c);
+    }
+    std::map<int, std::vector<int> > curvesOfVertex;
+    for(int c : curves) {
+      const Curve &cv = _curves[c];
+      curvesOfVertex[cv.v0].push_back(c);
+      curvesOfVertex[cv.v1].push_back(c);
+      if(cv.smooth) continue;
+      for(std::size_t j = 0; j + 1 < cv.nodes.size(); j++)
+        barrier.insert(std::minmax(cv.nodes[j], cv.nodes[j + 1]));
+    }
+    for(auto &cv : curvesOfVertex) {
+      if(cv.second.size() != 2) continue;
+      const Curve &a = _curves[cv.second[0]], &b = _curves[cv.second[1]];
+      if(a.smooth || b.smooth || std::minmax(a.v0, a.v1) == std::minmax(b.v0, b.v1))
+        continue;
+      corners.insert(_vertices[cv.first].node);
+    }
+  }
+
+  // their triangles, the patches across the other edges
+  std::vector<std::array<int, 3> > tri;
+  for(int s : surfaces)
+    for(auto &t : _surfaces[s].triangles) tri.push_back(t);
+  for(int v : volumes) _volumes.erase(v);
+  for(int s : surfaces) _surfaces.erase(s);
+  _removeUnused();
+  std::vector<int> piece(tri.size(), 0);
+  if(!_cleanTriangles(tri, piece)) return false;
+  const std::size_t nt = tri.size();
+  std::vector<std::size_t> parent(nt);
+  for(std::size_t i = 0; i < nt; i++) parent[i] = i;
+  std::function<std::size_t(std::size_t)> find = [&](std::size_t i) {
+    while(parent[i] != i) i = parent[i] = parent[parent[i]];
+    return i;
+  };
+  std::map<std::pair<int, int>, std::vector<std::size_t> > edgeTriangles;
+  for(std::size_t i = 0; i < nt; i++)
+    for(int k = 0; k < 3; k++)
+      edgeTriangles[std::minmax(tri[i][k], tri[i][(k + 1) % 3])].push_back(i);
+  for(auto &e : edgeTriangles)
+    if(e.second.size() == 2 && !barrier.count(e.first))
+      parent[find(e.second[0])] = find(e.second[1]);
+  std::vector<int> label(nt);
+  for(std::size_t i = 0; i < nt; i++) label[i] = (int)find(i);
+  return _build(tri, label, barrier, angle, pi, tolerance, true, &corners,
+                &volumeOf, outDimTags);
 }
 
 void DiscreteCAD_Internals::synchronize(GModel *model)
@@ -2721,7 +3070,7 @@ void DiscreteCAD_Internals::synchronize(GModel *model)
     created.push_back(ge);
   }
   for(auto &it : _surfaces) {
-    if(taken(2, it.first)) continue;
+    if(it.second.raw || taken(2, it.first)) continue;
     discreteFace *gf = new discreteFace(model, it.first, false);
     std::vector<int> tags, signs;
     for(int c : it.second.curves) {
@@ -2937,6 +3286,28 @@ void DiscreteCAD_Internals::synchronize(GModel *model)
   for(GEntity *e : created) e->deleteMesh();
   model->resetMaxVertexNumber(maxVertex);
   model->resetMaxElementNumber(maxElement);
+  // the raw surfaces: their triangulations, as meshes without geometry
+  for(auto &it : _surfaces) {
+    if(!it.second.raw || taken(2, it.first)) continue;
+    discreteFace *gf = new discreteFace(model, it.first, false);
+    gf->setNativeType(GEntity::DiscreteCADModel);
+    model->add(gf);
+    std::map<int, MVertex *> vertexOf;
+    for(auto &t : it.second.triangles) {
+      MVertex *v[3];
+      for(int k = 0; k < 3; k++) {
+        MVertex *&mv = vertexOf[t[k]];
+        if(!mv) {
+          const std::array<double, 3> &x = _nodes[t[k]];
+          mv = new MVertex(x[0], x[1], x[2], gf);
+          gf->mesh_vertices.push_back(mv);
+        }
+        v[k] = mv;
+      }
+      gf->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
+    }
+    _synchronized.push_back({2, it.first});
+  }
   _changed = false;
   // the bounding box of the model (and its characteristic length), as the
   // other kernels
