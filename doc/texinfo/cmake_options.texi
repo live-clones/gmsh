@@ -72,6 +72,8 @@ Enable MUMPS sparse direct linear solver (default: OFF)
 Enable Netgen 3D frontal mesh generator (default: ON)
 @item ENABLE_NII2MESH
 Enable 3D voxel image to a triangulated mesh (default: ON)
+@item ENABLE_NONCONFORMAL_REFINEMENT
+Enable non-conformal refinement plugin (default: ON)
 @item ENABLE_NUMPY
 Enable fullMatrix and numpy array conversion for private API (default: OFF)
 @item ENABLE_PETSC4PY

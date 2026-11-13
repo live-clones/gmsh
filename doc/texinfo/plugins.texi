@@ -1040,6 +1040,22 @@ Default value: @code{-1}
 Default value: @code{-1}
 @end table
 
+@item Plugin(NonConformalRefinement)
+Plugin(NonConformalRefinement) splits the first order elements of highest dimension of the current mesh through the middle of their edges, up to `MaxLevel' times, until their longest edge is smaller than the mesh size field `SizeField' (the background field if negative). The elements with hanging nodes become polygons and polyhedra. The field is evaluated at the centre and edge midpoints of the elements, and also at their corners if `SampleCorners' is set. If `Balance' is positive, the refinement levels of elements sharing an edge differ by at most `Balance'. If `OnGeometry' is set, the new nodes on curves and surfaces are placed on the geometry.
+Numeric options:
+@table @code
+@item SizeField
+Default value: @code{-1}
+@item MaxLevel
+Default value: @code{4}
+@item Balance
+Default value: @code{1}
+@item OnGeometry
+Default value: @code{1}
+@item SampleCorners
+Default value: @code{1}
+@end table
+
 @item Plugin(Particles)
 Plugin(Particles) computes the trajectory of particules in the force field given by the `TimeStep'-th time step of a vector view `View'.@*
 @*

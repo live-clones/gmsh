@@ -67,6 +67,7 @@ opt(MSVC_STATIC_RUNTIME "Enable static Visual C++ runtime" OFF)
 opt(MUMPS "Enable MUMPS sparse direct linear solver" OFF)
 opt(NETGEN "Enable Netgen 3D frontal mesh generator" ${DEFAULT})
 opt(NII2MESH "Enable 3D voxel image to a triangulated mesh" ${DEFAULT})
+opt(NONCONFORMAL_REFINEMENT "Enable non-conformal refinement plugin" ${DEFAULT})
 opt(NUMPY "Enable fullMatrix and numpy array conversion for private API" OFF)
 opt(PETSC4PY "Enable petsc4py wrappers for petsc matrices for private API" OFF)
 opt(OCC "Enable OpenCASCADE CAD kernel" ${DEFAULT})
@@ -948,6 +949,13 @@ if(HAVE_MESH)
     add_subdirectory(contrib/BoundaryLayers)
     include_directories(contrib/BoundaryLayers)
     set_config_option(HAVE_BOUNDARY_LAYERS "BoundaryLayers")
+  endif()
+
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/NonConformalRefinement
+     AND ENABLE_NONCONFORMAL_REFINEMENT)
+    add_subdirectory(contrib/NonConformalRefinement)
+    include_directories(contrib/NonConformalRefinement)
+    set_config_option(HAVE_NONCONFORMAL_REFINEMENT "NonConformalRefinement")
   endif()
 
   if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/OctreeSizeField
