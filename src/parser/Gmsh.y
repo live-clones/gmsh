@@ -339,8 +339,13 @@ GeoFormatItem :
   | Colorify    { return 1; }
   | SetPartition{ return 1; }
   | Visibility  { return 1; }
-  | Extrude     { List_Delete($1); return 1; }
-  | Boolean     { List_Delete($1); return 1; }
+  // (the commands giving shapes, used as statements, with or without a
+  // semicolon: without, the token read to know it is not one is the next
+  // statement's, which the parser goes on with instead of returning)
+  | Extrude     { List_Delete($1); }
+  | Extrude tEND { List_Delete($1); return 1; }
+  | Boolean     { List_Delete($1); }
+  | Boolean tEND { List_Delete($1); return 1; }
   | BooleanShape{ return 1; }
   | Constraints { return 1; }
   | Coherence   { return 1; }
@@ -5013,7 +5018,7 @@ Coherence :
         GModel::current()->getGEOInternals()->mergeVertices(tags);
       List_Delete($4);
     }
-  | tHealShapes '{' ListOfShapes '}'
+  | tHealShapes '{' ListOfShapes '}' tEND
     {
       std::vector<std::pair<int, int> > in, out;
       ListOfShapes2VectorOfPairs($3, in);
