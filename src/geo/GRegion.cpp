@@ -254,30 +254,30 @@ void GRegion::setColor(unsigned int val, bool recursive)
 int GRegion::delFace(GFace *face)
 {
   const auto found = std::find(l_faces.begin(), l_faces.end(), face);
+  if(found == l_faces.end()) return 0;
 
-  if(found == l_faces.end()) { return 0; }
-
-  const auto pos = std::distance(l_faces.begin(), found);
-
+  const std::size_t pos = std::distance(l_faces.begin(), found);
   l_faces.erase(found);
+  if(pos >= l_dirs.size()) return 0;
 
-  if(l_dirs.empty()) { return 0; }
-
-  if(l_dirs.size() < static_cast<std::size_t>(pos)) {
-    l_dirs.erase(std::prev(l_dirs.end()));
-    return 0;
-  }
-
-  const auto orientation = l_dirs.at(pos);
-
-  l_dirs.erase(std::next(l_dirs.begin(), pos));
-
+  const int orientation = l_dirs[pos];
+  l_dirs.erase(l_dirs.begin() + pos);
   return orientation;
 }
 
 std::vector<GEntity *> GRegion::boundaryEntities() const
 {
   return std::vector<GEntity *>(l_faces.begin(), l_faces.end());
+}
+
+// Whether the surface is already used with this sign: a surface can be used
+// twice, with opposite signs
+static bool hasFace(const std::vector<GFace *> &faces,
+                    const std::vector<int> &dirs, GFace *gf, int sign)
+{
+  for(std::size_t i = 0; i < faces.size(); i++)
+    if(faces[i] == gf && (i < dirs.size() ? dirs[i] : 1) == sign) return true;
+  return false;
 }
 
 void GRegion::setBoundFaces(const std::set<int> &tagFaces)
@@ -304,20 +304,21 @@ void GRegion::setBoundFaces(const std::vector<int> &tagFaces,
     std::set<int> tags;
     tags.insert(tagFaces.begin(), tagFaces.end());
     setBoundFaces(tags);
+    return;
   }
-  for(std::size_t i = 0; i != tagFaces.size(); i++) {
+  std::vector<GFace *> faces;
+  std::vector<int> signs;
+  for(std::size_t i = 0; i < tagFaces.size(); i++) {
     GFace *gf = model()->getFaceByTag(tagFaces[i]);
     if(gf) {
-      if(std::find(l_faces.begin(), l_faces.end(), gf) == l_faces.end()) {
-        l_faces.push_back(gf);
-        gf->addRegion(this);
-        l_dirs.push_back(signFaces[i]);
-      }
+      faces.push_back(gf);
+      signs.push_back(signFaces[i]);
     }
     else {
       Msg::Error("Unknown surface %d in volume %d", tagFaces[i], tag());
     }
   }
+  setBoundFaces(faces, signs);
 }
 
 void GRegion::setBoundFaces(const std::vector<GFace *> &faces,
@@ -325,11 +326,11 @@ void GRegion::setBoundFaces(const std::vector<GFace *> &faces,
 {
   for(std::size_t i = 0; i < faces.size(); i++) {
     GFace *gf = faces[i];
-    if(std::find(l_faces.begin(), l_faces.end(), gf) != l_faces.end())
-      continue;
+    const int sign = i < signFaces.size() ? signFaces[i] : 1;
+    if(hasFace(l_faces, l_dirs, gf, sign)) continue;
     l_faces.push_back(gf);
     gf->addRegion(this);
-    l_dirs.push_back(i < signFaces.size() ? signFaces[i] : 1);
+    l_dirs.push_back(sign);
   }
 }
 

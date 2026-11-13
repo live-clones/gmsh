@@ -2374,7 +2374,7 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
        # benchmarks/hexdom/*.geo # fails on windows and macos
        benchmarks/io_msh/polytopes.geo
        benchmarks/io_msh/read_back.geo benchmarks/io_msh/faces.geo
-       benchmarks/io_msh/views.geo
+       benchmarks/io_msh/views.geo benchmarks/io_msh/seam.geo
        benchmarks/io_vtk/*.geo)
   # fails on the CI machines, not understood yet:
   list(FILTER ALLFILES EXCLUDE REGEX "io_vtk/vtu_roundtrip.geo$")
@@ -2390,6 +2390,9 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
   # test c++ and c api tutorials with dynamic builds
   if(ENABLE_BUILD_DYNAMIC)
     file(GLOB_RECURSE ALLFILES tutorials/c++/*.cpp tutorials/c/*.c)
+    if(HAVE_OCC AND HAVE_METIS)
+      list(APPEND ALLFILES ${CMAKE_CURRENT_SOURCE_DIR}/examples/api/seam_brep.cpp)
+    endif()
     filter_tests("${ALLFILES}" TESTFILES)
     foreach(TESTFILE ${TESTFILES})
       get_filename_component(TEST ${TESTFILE} NAME)
@@ -2407,6 +2410,9 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
       endif()
       add_test(${TEST} ${TEST} -nopopup)
     endforeach()
+    if(HAVE_OCC AND HAVE_METIS)
+      add_test(seam_brep_partition seam_brep_cpp --partition -nopopup)
+    endif()
     #if(HAVE_HIERARCHICAL_BASIS AND HAVE_EIGEN)
     #  add_subdirectory(contrib/HierarchicalBasis/tests)
     #endif()
