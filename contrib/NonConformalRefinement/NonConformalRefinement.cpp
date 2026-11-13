@@ -46,7 +46,7 @@ GMSH_NonConformalRefinementPlugin::GMSH_NonConformalRefinementPlugin()
                      {GMSH_FULLRC, "MaxLevel", nullptr, 4.},
                      {GMSH_FULLRC, "Balance", nullptr, 1.},
                      {GMSH_FULLRC, "OnGeometry", nullptr, 1.},
-                     {GMSH_FULLRC, "SampleCorners", nullptr, 1.}})
+                     {GMSH_FULLRC, "SampleSpacing", nullptr, 0.}})
 {
 }
 
@@ -58,10 +58,14 @@ std::string GMSH_NonConformalRefinementPlugin::getHelp() const
          "than the mesh size field `SizeField' (the background field if "
          "negative). The elements with hanging nodes become polygons and "
          "polyhedra. The field is evaluated at the centre and edge midpoints "
-         "of the elements, and also at their corners if `SampleCorners' is "
-         "set. If `Balance' is positive, the refinement levels of elements "
-         "sharing an edge differ by at most `Balance'. If `OnGeometry' is set, "
-         "the new nodes on curves and surfaces are placed on the geometry.";
+         "of the elements, which allows large jumps of sizes between "
+         "neighboring elements; if `SampleSpacing' is positive, it is instead "
+         "evaluated on a grid of points of the elements including their "
+         "corners, at most `SampleSpacing' apart (e.g. the smallest size of "
+         "the field), so that no region of smaller sizes is missed. If "
+         "`Balance' is positive, the refinement levels of elements sharing an "
+         "edge differ by at most `Balance'. If `OnGeometry' is set, the new "
+         "nodes on curves and surfaces are placed on the geometry.";
 }
 
 namespace {
@@ -637,6 +641,90 @@ namespace {
     }
   };
 
+  // is the size field smaller than h at a point of a grid of the element, with
+  // n intervals along its edges?
+  bool smallerOnGrid(const Leaf &l, int n, double h, Field *field, GEntity *ge)
+  {
+    double c[8][3];
+    for(int i = 0; i < shape(l.type).numCorners; i++) {
+      c[i][0] = l.v[i]->x();
+      c[i][1] = l.v[i]->y();
+      c[i][2] = l.v[i]->z();
+    }
+    // the point of weights w on the corners
+    auto smaller = [&](const double *w, int nw) {
+      double p[3] = {0., 0., 0.};
+      for(int i = 0; i < nw; i++)
+        for(int d = 0; d < 3; d++) p[d] += w[i] * c[i][d];
+      return (*field)(p[0], p[1], p[2], ge) < h;
+    };
+    double w[8];
+    switch(l.type) {
+    case TYPE_TRI:
+      for(int i = 0; i <= n; i++)
+        for(int j = 0; i + j <= n; j++) {
+          double a = (double)i / n, b = (double)j / n;
+          w[0] = 1 - a - b, w[1] = a, w[2] = b;
+          if(smaller(w, 3)) return true;
+        }
+      return false;
+    case TYPE_TET:
+      for(int i = 0; i <= n; i++)
+        for(int j = 0; i + j <= n; j++)
+          for(int k = 0; i + j + k <= n; k++) {
+            double a = (double)i / n, b = (double)j / n, d = (double)k / n;
+            w[0] = 1 - a - b - d, w[1] = a, w[2] = b, w[3] = d;
+            if(smaller(w, 4)) return true;
+          }
+      return false;
+    case TYPE_QUA:
+      for(int i = 0; i <= n; i++)
+        for(int j = 0; j <= n; j++) {
+          double u = (double)i / n, v = (double)j / n;
+          w[0] = (1 - u) * (1 - v), w[1] = u * (1 - v), w[2] = u * v,
+          w[3] = (1 - u) * v;
+          if(smaller(w, 4)) return true;
+        }
+      return false;
+    case TYPE_HEX:
+      for(int i = 0; i <= n; i++)
+        for(int j = 0; j <= n; j++)
+          for(int k = 0; k <= n; k++) {
+            double u = (double)i / n, v = (double)j / n, t = (double)k / n;
+            double q[4] = {(1 - u) * (1 - v), u * (1 - v), u * v, (1 - u) * v};
+            for(int m = 0; m < 4; m++) {
+              w[m] = (1 - t) * q[m];
+              w[m + 4] = t * q[m];
+            }
+            if(smaller(w, 8)) return true;
+          }
+      return false;
+    case TYPE_PRI:
+      for(int i = 0; i <= n; i++)
+        for(int j = 0; i + j <= n; j++)
+          for(int k = 0; k <= n; k++) {
+            double a = (double)i / n, b = (double)j / n, t = (double)k / n;
+            double q[3] = {1 - a - b, a, b};
+            for(int m = 0; m < 3; m++) {
+              w[m] = (1 - t) * q[m];
+              w[m + 3] = t * q[m];
+            }
+            if(smaller(w, 6)) return true;
+          }
+      return false;
+    default: // pyramid: square sections shrinking to the apex
+      for(int i = 0; i <= n; i++)
+        for(int j = 0; j <= n; j++)
+          for(int k = 0; k <= n; k++) {
+            double u = (double)i / n, v = (double)j / n, t = (double)k / n;
+            w[0] = (1 - t) * (1 - u) * (1 - v), w[1] = (1 - t) * u * (1 - v),
+            w[2] = (1 - t) * u * v, w[3] = (1 - t) * (1 - u) * v, w[4] = t;
+            if(smaller(w, 5)) return true;
+          }
+      return false;
+    }
+  }
+
   // the corners of an element, for a leaf
   bool leaf(MElement *e, Leaf &l)
   {
@@ -710,7 +798,7 @@ int GMSH_NonConformalRefinementPlugin::run()
   int maxLevel = (int)option(1);
   int balance = std::max(0, (int)option(2));
   bool onGeometry = (int)option(3);
-  bool sampleCorners = (int)option(4);
+  double sampleSpacing = option(4);
 
   double t0 = TimeOfDay();
 
@@ -813,11 +901,21 @@ int GMSH_NonConformalRefinementPlugin::run()
       for(std::size_t k = 0; k < ls.size(); k++) {
         Leaf &l = ls[k];
         if(l.level >= maxLevel || l.sized) continue;
-        // the smallest size at the middle of the edges and at the centre,
-        // which sees a region of small sizes reaching half way across the
-        // element, and at the corners if asked, which sees one touching it:
-        // no element then touches a region of smaller sizes, but the levels
-        // can only grow one by one away from it
+        // on a grid with points at most sampleSpacing apart, corners and edge
+        // midpoints included, which sees a region of small sizes touching the
+        // element: no element then touches a region of smaller sizes, but the
+        // levels can only grow one by one away from it
+        if(sampleSpacing > 0.) {
+          double h = r.size(l);
+          int n = std::max(2, (int)std::ceil(h / sampleSpacing));
+          if(smallerOnGrid(l, n, h, field, entities[e]))
+            large[k] = 1;
+          else
+            l.sized = true;
+          continue;
+        }
+        // otherwise at the middle of the edges and at the centre, which only
+        // sees a region of small sizes reaching half way across the element
         const Shape &s = shape(l.type);
         int n = s.numCorners;
         double x = 0., y = 0., z = 0.;
@@ -827,9 +925,6 @@ int GMSH_NonConformalRefinementPlugin::run()
           x += v->x();
           y += v->y();
           z += v->z();
-          if(sampleCorners)
-            size =
-              std::min(size, (*field)(v->x(), v->y(), v->z(), entities[e]));
         }
         size = std::min(size, (*field)(x / n, y / n, z / n, entities[e]));
         for(int i = 0; i < s.numEdges; i++) {

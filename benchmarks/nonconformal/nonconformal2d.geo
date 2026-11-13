@@ -5,12 +5,20 @@
 // front, where the sizes jump by `jump' at the edges of a thin band, and near
 // the holes. The elements next to finer ones, which have hanging nodes, become
 // polygons (in red); nothing constrains the levels of neighboring elements
-// (`Balance' is 0), and the sizes are only evaluated at the middle of the edges
-// and at the centre of the elements (`SampleCorners' is 0), so that the jumps
-// are kept. The new nodes on the holes are placed on the geometry.
+// (`Balance' is 0). By default the sizes are only evaluated at the middle of
+// the edges and at the centre of the elements (`SampleSpacing' is 0), and an
+// element only partly in the band can stay coarse; with a positive `spacing',
+// they are evaluated on a grid of points of the elements at most `spacing'
+// apart: all the elements touching the band are then refined, and the sizes
+// only jump where the field does, at the edges of the band. The new nodes on
+// the holes are placed on the geometry.
 
 jump = DefineNumber[16, Name "Parameters/Size jump at the front",
                     Choices{2 = "2", 4 = "4", 8 = "8", 16 = "16"}];
+spacing = DefineNumber[0, Name "Parameters/Sample spacing",
+                       Choices{0 = "0 (centre and edge midpoints)",
+                               0.0015 = "1.5 mm (size in the band)",
+                               0.006 = "6 mm", 0.024 = "2.4 cm"}];
 
 SetFactory("OpenCASCADE");
 
@@ -66,7 +74,7 @@ Field[4].FieldsList = {1, 3};
 Plugin(NonConformalRefinement).SizeField = 4;
 Plugin(NonConformalRefinement).MaxLevel = 8;
 Plugin(NonConformalRefinement).Balance = 0;
-Plugin(NonConformalRefinement).SampleCorners = 0;
+Plugin(NonConformalRefinement).SampleSpacing = spacing;
 Plugin(NonConformalRefinement).OnGeometry = 1;
 Plugin(NonConformalRefinement).Run;
 

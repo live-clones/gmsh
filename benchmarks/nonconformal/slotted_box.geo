@@ -3,20 +3,28 @@
 // A thin box (5 m x 2 m x 2 m) with a 3 m x 2 mm slot on its top face, as in
 // the shielding effectiveness study of A. Touzalin's thesis (2025). The surface
 // is first meshed with triangles of about 25 cm (lambda/12 at 100 MHz), graded
-// down to the width of the slot at its ends only. Plugin(NonConformalRefinement)
-// then refines the elements in nested rectangular zones around the slot, each
-// 2 elements wide, from elements of about 2 mm (h / 2^7) next to the slot to
-// elements smaller than h, their size growing by `jump' from one zone to the
-// next. The elements next to finer ones, which have hanging nodes, become
-// polygons (in red); nothing constrains the levels of neighboring elements
-// (`Balance' is 0). The sizes are evaluated at the corners of the elements as
-// well as at the middle of their edges and at their centre (`SampleCorners'),
-// so that no coarse element touches the slot: near the zones, the sizes then
-// grow by 2 from one row of elements to the next. With jump = 4, the zones have
-// elements of 2, 8, 31 and 125 mm, up to 4, 20, 82 and 332 mm from the slot.
+// down to the width of the slot at its ends only.
+// Plugin(NonConformalRefinement) then refines the elements in nested
+// rectangular zones around the slot, each 2 elements wide, from elements of
+// about 2 mm (h / 2^7) next to the slot to elements smaller than h, their size
+// growing by `jump' from one zone to the next. The elements next to finer ones,
+// which have hanging nodes, become polygons (in red); nothing constrains the
+// levels of neighboring elements (`Balance' is 0). By default the sizes are
+// evaluated on a grid of points of the elements, corners included, at most the
+// width of the slot apart (`SampleSpacing'), so that no coarse element touches
+// the slot: near the zones, the sizes then grow by 2 from one row of elements
+// to the next. With `spacing' = 0, they are only evaluated at the middle of the
+// edges and at the centre of the elements: the zones then end with the jumps
+// of sizes, but coarse elements can touch the slot. With jump = 4, the zones
+// have elements of 2, 8, 31 and 125 mm, up to 4, 20, 82 and 332 mm from the
+// slot.
 
 jump = DefineNumber[4, Name "Parameters/Size jump between zones",
                     Choices{2 = "2", 4 = "4", 8 = "8", 16 = "16"}];
+spacing = DefineNumber[0.002, Name "Parameters/Sample spacing",
+                       Choices{0 = "0 (centre and edge midpoints)",
+                               0.002 = "2 mm (width of the slot)",
+                               0.008 = "8 mm", 0.032 = "3.2 cm"}];
 
 SetFactory("OpenCASCADE");
 
@@ -75,7 +83,7 @@ Field[20].FieldsList = {10:10 + zones - 1};
 Plugin(NonConformalRefinement).SizeField = 20;
 Plugin(NonConformalRefinement).MaxLevel = 8;
 Plugin(NonConformalRefinement).Balance = 0;
-Plugin(NonConformalRefinement).SampleCorners = 1;
+Plugin(NonConformalRefinement).SampleSpacing = spacing;
 Plugin(NonConformalRefinement).Run;
 
 // color the elements by type (the edges take the color of their element when
@@ -86,6 +94,7 @@ Mesh.SurfaceFaces = 1;
 Mesh.ColorCarousel = 0;
 Mesh.Color.Triangles = {235, 228, 215};
 Mesh.Color.Polygons = {240, 110, 90};
-General.Trackball = 0;
-General.RotationX = -60;
-General.RotationZ = -30;
+General.TrackballQuaternion0 = 0.482963;
+General.TrackballQuaternion1 = 0.129410;
+General.TrackballQuaternion2 = 0.224144;
+General.TrackballQuaternion3 = 0.836516;

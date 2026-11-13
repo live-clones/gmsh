@@ -5,14 +5,21 @@
 // mixed mesh around a spherical front crossing both parts, where the sizes
 // jump by `jump' at the edges of a thin band. The elements next to finer ones,
 // which have hanging nodes, become polyhedra (in red); nothing constrains the
-// levels of neighboring elements (`Balance' is 0), and the sizes are only
-// evaluated at the middle of the edges and at the centre of the elements
-// (`SampleCorners' is 0), so that the jumps are kept. The new nodes on the
-// boundary are placed on the geometry. A clipping plane shows the layer of
-// elements it cuts.
+// levels of neighboring elements (`Balance' is 0). By default the sizes are
+// only evaluated at the middle of the edges and at the centre of the elements
+// (`SampleSpacing' is 0), and an element only partly in the band can stay
+// coarse; with a positive `spacing', they are evaluated on a grid of points of
+// the elements at most `spacing' apart: all the elements touching the band are
+// then refined, and the sizes only jump where the field does, at the edges of
+// the band. The new nodes on the boundary are placed on the geometry. A
+// clipping plane shows the layer of elements it cuts.
 
 jump = DefineNumber[8, Name "Parameters/Size jump at the front",
                     Choices{2 = "2", 4 = "4", 8 = "8", 16 = "16"}];
+spacing = DefineNumber[0, Name "Parameters/Sample spacing",
+                       Choices{0 = "0 (centre and edge midpoints)",
+                               0.025 = "2.5 cm (size in the band)",
+                               0.05 = "5 cm", 0.1 = "10 cm"}];
 
 SetFactory("OpenCASCADE");
 
@@ -28,29 +35,29 @@ Extrude{0, 0, -1}{ Surface{base()}; Layers{5}; Recombine; }
 Mesh.MeshSizeMax = 0.3;
 Mesh 3;
 
-// refine around a spherical front crossing the cylinder and the dome: 5 cm
-// in a band of 10 cm on each side of the sphere, jumping by `jump' outside it
+// refine around a spherical front crossing the cylinder and the dome: 2.5 cm
+// in a band of 2.5 cm on each side of the sphere, jumping by `jump' outside it
 // and growing to the size of the mesh further away
-fine = 0.05;
+fine = 0.025;
 Field[2] = MathEval;
 Field[2].F = "Abs(Sqrt((x + 1.2)^2 + y^2 + (z + 0.2)^2) - 2)";
 Field[3] = Threshold;
 Field[3].InField = 2;
 Field[3].SizeMin = fine;
 Field[3].SizeMax = jump * fine;
-Field[3].DistMin = 2 * fine;
-Field[3].DistMax = 2 * fine + 1e-5;
+Field[3].DistMin = fine;
+Field[3].DistMax = fine + 1e-5;
 Field[3].StopAtDistMax = 1;
 Field[4] = MathEval;
-Field[4].F = Sprintf("%g + 0.5 * Abs(Sqrt((x + 1.2)^2 + y^2 + (z + 0.2)^2) - 2)",
-                     jump * fine);
+Field[4].F = Sprintf(
+  "%g + 0.5 * Abs(Sqrt((x + 1.2)^2 + y^2 + (z + 0.2)^2) - 2)", jump * fine);
 Field[1] = Min;
 Field[1].FieldsList = {3, 4};
 
 Plugin(NonConformalRefinement).SizeField = 1;
 Plugin(NonConformalRefinement).MaxLevel = 8;
 Plugin(NonConformalRefinement).Balance = 0;
-Plugin(NonConformalRefinement).SampleCorners = 0;
+Plugin(NonConformalRefinement).SampleSpacing = spacing;
 Plugin(NonConformalRefinement).OnGeometry = 1;
 Plugin(NonConformalRefinement).Run;
 
@@ -74,6 +81,7 @@ General.Clip0D = 0;
 Mesh.Clip = 1;
 General.ClipWholeElements = 1;
 General.ClipOnlyDrawIntersectingVolume = 1;
-General.Trackball = 0;
-General.RotationX = -70;
-General.RotationZ = -20;
+General.TrackballQuaternion0 = 0.564863;
+General.TrackballQuaternion1 = 0.099601;
+General.TrackballQuaternion2 = 0.142244;
+General.TrackballQuaternion3 = 0.806707;
