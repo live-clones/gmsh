@@ -1006,22 +1006,14 @@ static std::vector<double> skinKey(PViewData *data, PViewOptions *opt,
   return k;
 }
 
-// the faces of a polyhedron, each as indices in its nodes (the fans that draw
-// its faces go through them all)
+// the faces of a polyhedron, each as indices in its nodes
 static void polyhedronFaces(MPolyhedron *ph, std::vector<std::vector<int> > &faces)
 {
-  faces.clear();
-  std::vector<MVertex *> fv;
-  int rep = 0;
-  for(int f = 0; f < ph->getNumFaces(); f++) {
-    ph->getFaceVertices(f, fv);
-    std::vector<int> idx;
-    for(int t = 0; t + 2 < (int)fv.size(); t++) {
-      std::array<int, 3> is = ph->getFaceRepIndices(false, rep++);
-      if(!t) idx = {is[0], is[1]};
-      idx.push_back(is[2]);
-    }
-    faces.push_back(idx);
+  faces.resize(ph->getNumPolygons());
+  for(int f = 0; f < ph->getNumPolygons(); f++) {
+    faces[f].clear();
+    for(int i = ph->getPolygonStart(f); i < ph->getPolygonStart(f + 1); i++)
+      faces[f].push_back(ph->getPolygonVertexIndex(i));
   }
 }
 

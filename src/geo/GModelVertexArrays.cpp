@@ -229,6 +229,9 @@ static bool removeInteriorFaces()
 // onto each other
 static int repPerFace(MElement *ele, bool curved)
 {
+  // the triangles of a polytope are not grouped face by face, as many per face
+  // (fans of faces of different sizes, or the boundary of its given simplices)
+  if(ele->getType() == TYPE_POLYG || ele->getType() == TYPE_POLYH) return 0;
   int numRep = ele->getNumFacesRep(curved), numFaces = ele->getNumFaces();
   if(numFaces <= 0 || numRep <= 0 || numRep % numFaces) return 0;
   return numRep / numFaces;
