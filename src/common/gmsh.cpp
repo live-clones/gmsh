@@ -7790,26 +7790,23 @@ GMSH_API void gmsh::model::discrete::heal(const std::vector<int> &surfaceTags)
 
 GMSH_API void gmsh::model::discrete::classify(
   const std::vector<int> &surfaceTags, const double angle,
-  vectorpair &outDimTags, const double curveAngle)
+  vectorpair &outDimTags, const double curveAngle, const double tolerance)
 {
   if(!_checkInit()) return;
   outDimTags.clear();
 #if defined(HAVE_DISCRETECAD)
-  _discreteCAD()->classify(surfaceTags, angle, curveAngle, outDimTags);
+  _discreteCAD()->classify(surfaceTags, angle, curveAngle, tolerance,
+                           outDimTags);
 #else
   Msg::Error("Discrete CAD modeler not available");
 #endif
 }
 
-GMSH_API void gmsh::model::discrete::recognize(const vectorpair &dimTags,
-                                               const double angle,
-                                               vectorpair &outDimTags,
-                                               const double tolerance)
+GMSH_API void gmsh::model::discrete::recognize(const vectorpair &dimTags)
 {
   if(!_checkInit()) return;
-  outDimTags.clear();
 #if defined(HAVE_DISCRETECAD)
-  _discreteCAD()->recognize(dimTags, angle, tolerance, outDimTags);
+  _discreteCAD()->recognize(dimTags);
 #else
   Msg::Error("Discrete CAD modeler not available");
 #endif

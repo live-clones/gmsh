@@ -9410,15 +9410,20 @@ function heal(surfaceTags)
 end
 
 """
-    gmsh.model.discrete.classify(surfaceTags, angle, curveAngle = pi)
+    gmsh.model.discrete.classify(surfaceTags, angle, curveAngle = pi, tolerance = -1.)
 
 Replace the raw surfaces `surfaceTags` of the discrete CAD representation (see
 `importTriangulations`; all of them if `surfaceTags` is empty) by their
-topology, as `importShapes` builds it but without recognizing analytic surfaces,
-each raw surface a surface of the file: the surfaces split where the normals of
-the triangles make an angle larger than `angle` (in radians), the curves split
-where they turn by more than `curveAngle`, and the volumes they bound. Return
-the volumes and the surfaces bounding no volume in `outDimTags`.
+topology, as `importShapes` builds it, each raw surface a surface of the file:
+the surfaces split where the normals of the triangles make an angle larger than
+`angle` (in radians) and into their pieces on planes, spheres, cylinders, cones
+and tori within `tolerance` (`Geometry.DiscreteTolerance` times the size of the
+triangulation if `tolerance` is not positive), for faces meeting tangentially,
+the curves split where they turn by more than `curveAngle`, and the volumes they
+bound. The surfaces on such analytic surfaces get the parameters of the
+corresponding primitives, but their geometry stays their triangulation until
+`recognize` makes it exact. Return the volumes and the surfaces bounding no
+volume in `outDimTags`.
 
 Return `outDimTags`.
 
@@ -9427,14 +9432,15 @@ Types:
  - `angle`: double
  - `outDimTags`: vector of pairs of integers
  - `curveAngle`: double
+ - `tolerance`: double
 """
-function classify(surfaceTags, angle, curveAngle = pi)
+function classify(surfaceTags, angle, curveAngle = pi, tolerance = -1.)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelDiscreteClassify, gmsh.lib), Cvoid,
-          (Ptr{Cint}, Csize_t, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cdouble, Ptr{Cint}),
-          convert(Vector{Cint}, surfaceTags), length(surfaceTags), angle, api_outDimTags_, api_outDimTags_n_, curveAngle, ierr)
+          (Ptr{Cint}, Csize_t, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cdouble, Cdouble, Ptr{Cint}),
+          convert(Vector{Cint}, surfaceTags), length(surfaceTags), angle, api_outDimTags_, api_outDimTags_n_, curveAngle, tolerance, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own = true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
@@ -9442,42 +9448,26 @@ function classify(surfaceTags, angle, curveAngle = pi)
 end
 
 """
-    gmsh.model.discrete.recognize(dimTags, angle, tolerance = -1.)
+    gmsh.model.discrete.recognize(dimTags)
 
-Recognize the analytic surfaces of the entities `dimTags` of the discrete CAD
-representation (volumes or surfaces, see `classify`; all of them if `dimTags` is
-empty) and of those connected to them by their curves, as `importShapes` does:
-their surfaces joined across the curves that only cut smooth surfaces, then
-those whose nodes are at most `tolerance` away from a plane, a sphere, a
-cylinder, a cone or a torus (`Geometry.DiscreteTolerance` times the size of the
-triangulation if `tolerance` is not positive), the normals of their triangles
-making an angle smaller than `angle` (in radians) with those of the surface, get
-the parameters of the corresponding primitives, the others are split into their
-pieces on such surfaces, the rest into pieces that a single map can parametrize.
-The curves are kept where they are sharp, and the volumes keep their tags.
-Return the volumes and the surfaces bounding no volume in `outDimTags`.
-
-Return `outDimTags`.
+Make exact the surfaces `dimTags` of the discrete CAD representation, and those
+of the volumes `dimTags` (all of them if `dimTags` is empty), on planes,
+spheres, cylinders, cones and tori (see `classify`): their geometry, and that of
+the curves where two of them meet, given by the analytic surfaces instead of
+their triangulations.
 
 Types:
  - `dimTags`: vector of pairs of integers
- - `angle`: double
- - `outDimTags`: vector of pairs of integers
- - `tolerance`: double
 """
-function recognize(dimTags, angle, tolerance = -1.)
+function recognize(dimTags)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
     api_dimTags_n_ = length(api_dimTags_)
-    api_outDimTags_ = Ref{Ptr{Cint}}()
-    api_outDimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelDiscreteRecognize, gmsh.lib), Cvoid,
-          (Ptr{Cint}, Csize_t, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cdouble, Ptr{Cint}),
-          api_dimTags_, api_dimTags_n_, angle, api_outDimTags_, api_outDimTags_n_, tolerance, ierr)
+          (Ptr{Cint}, Csize_t, Ptr{Cint}),
+          api_dimTags_, api_dimTags_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own = true)
-    outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
-    return outDimTags
+    return nothing
 end
 
 """

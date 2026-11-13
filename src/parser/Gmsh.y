@@ -127,9 +127,7 @@ void DiscreteShapeFromFile(const char *fileName, double angle,
                            double curveAngle, double tolerance,
                            List_T *shapes);
 void DiscreteClassify(List_T *list, double angle, double curveAngle,
-                      List_T *shapes);
-void DiscreteRecognize(List_T *list, double angle, double tolerance,
-                       List_T *shapes);
+                      double tolerance, List_T *shapes);
 void addPeriodicEdge(int, int, const std::vector<double>&);
 void addPeriodicFace(int, int, const std::map<int, int>&);
 void addPeriodicFace(int, int, const std::vector<double>&);
@@ -4147,25 +4145,19 @@ Boolean :
   | tClassifySurfaces '{' ListOfShapes '}' '{' FExpr '}'
     {
       $$ = List_Create(2, 1, sizeof(Shape));
-      DiscreteClassify($3, $6, M_PI, $$);
+      DiscreteClassify($3, $6, M_PI, -1., $$);
       List_Delete($3);
     }
   | tClassifySurfaces '{' ListOfShapes '}' '{' FExpr ',' FExpr '}'
     {
       $$ = List_Create(2, 1, sizeof(Shape));
-      DiscreteClassify($3, $6, $8, $$);
+      DiscreteClassify($3, $6, $8, -1., $$);
       List_Delete($3);
     }
-  | tRecognizeShapes '{' ListOfShapes '}' '{' FExpr '}'
+  | tClassifySurfaces '{' ListOfShapes '}' '{' FExpr ',' FExpr ',' FExpr '}'
     {
       $$ = List_Create(2, 1, sizeof(Shape));
-      DiscreteRecognize($3, $6, -1., $$);
-      List_Delete($3);
-    }
-  | tRecognizeShapes '{' ListOfShapes '}' '{' FExpr ',' FExpr '}'
-    {
-      $$ = List_Create(2, 1, sizeof(Shape));
-      DiscreteRecognize($3, $6, $8, $$);
+      DiscreteClassify($3, $6, $8, $10, $$);
       List_Delete($3);
     }
   | tShapeFromFile '(' StringExprVar ',' FExpr ')'
@@ -5052,6 +5044,22 @@ Coherence :
         yymsg(0, "HealShapes only available with OpenCASCADE and Discrete "
               "geometry kernels");
       }
+      List_Delete($3);
+    }
+  | tRecognizeShapes '{' ListOfShapes '}' tEND
+    {
+#if defined(HAVE_DISCRETECAD)
+      if(gmsh_yyfactory == "Discrete" &&
+         GModel::current()->getDiscreteCADInternals()) {
+        std::vector<std::pair<int, int> > in;
+        ListOfShapes2VectorOfPairs($3, in);
+        if(!GModel::current()->getDiscreteCADInternals()->recognize(in))
+          yymsg(0, "Could not recognize shapes");
+      }
+      else
+#endif
+        yymsg(0, "RecognizeShapes only available with Discrete geometry "
+              "kernel");
       List_Delete($3);
     }
   | tHealShapes tEND
@@ -7039,9 +7047,10 @@ void DiscreteShapeFromFile(const char *fileName, double angle,
 
 // the raw surfaces of the discrete CAD modeler (all of them if the list is
 // empty) replaced by their topology: surfaces split where the normals turn by
-// more than angle, curves where they turn by more than curveAngle
+// more than angle and into their pieces on analytic surfaces within tolerance,
+// curves split where they turn by more than curveAngle
 void DiscreteClassify(List_T *list, double angle, double curveAngle,
-                      List_T *shapes)
+                      double tolerance, List_T *shapes)
 {
 #if defined(HAVE_DISCRETECAD)
   if(gmsh_yyfactory == "Discrete" &&
@@ -7054,7 +7063,7 @@ void DiscreteClassify(List_T *list, double angle, double curveAngle,
       else yymsg(0, "ClassifySurfaces only classifies surfaces");
     }
     if(!GModel::current()->getDiscreteCADInternals()->classify
-       (surfaces, angle, curveAngle, out))
+       (surfaces, angle, curveAngle, tolerance, out))
       yymsg(0, "Could not classify surfaces");
     VectorOfPairs2ListOfShapes(out, shapes);
     return;
@@ -7062,27 +7071,6 @@ void DiscreteClassify(List_T *list, double angle, double curveAngle,
 #endif
   yymsg(0, "ClassifySurfaces of shapes only available with Discrete geometry "
         "kernel");
-}
-
-// the analytic surfaces of shapes of the discrete CAD modeler (the normals of
-// their triangles within angle of those of the surfaces, their nodes within
-// tolerance)
-void DiscreteRecognize(List_T *list, double angle, double tolerance,
-                       List_T *shapes)
-{
-#if defined(HAVE_DISCRETECAD)
-  if(gmsh_yyfactory == "Discrete" &&
-     GModel::current()->getDiscreteCADInternals()){
-    std::vector<std::pair<int, int> > in, out;
-    ListOfShapes2VectorOfPairs(list, in);
-    if(!GModel::current()->getDiscreteCADInternals()->recognize
-       (in, angle, tolerance, out))
-      yymsg(0, "Could not recognize shapes");
-    VectorOfPairs2ListOfShapes(out, shapes);
-    return;
-  }
-#endif
-  yymsg(0, "RecognizeShapes only available with Discrete geometry kernel");
 }
 
 void yyerror(const char *s)
