@@ -16,6 +16,7 @@
 set(SRC
   DiscreteCADModeler.cpp
   DiscreteCADFillet.cpp
+  DiscreteCADHeal.cpp
   DiscreteCADWinding.cpp
   DiscreteCADWindingPlugin.cpp
   DiscreteCADMeshBoolean.cpp

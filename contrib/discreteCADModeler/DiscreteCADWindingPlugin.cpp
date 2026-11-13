@@ -18,6 +18,7 @@
 #include <map>
 #include <numeric>
 #include "DiscreteCADWindingPlugin.h"
+#include "DiscreteCADHeal.h"
 #include "DiscreteCADWinding.h"
 #include "GModel.h"
 #include "GFace.h"
@@ -32,7 +33,8 @@ GMSH_WindingNumberPlugin::GMSH_WindingNumberPlugin()
                      {GMSH_FULLRC, "Resolution", nullptr, 300, ""},
                      {GMSH_FULLRC, "IsoSurface", nullptr, 1, ""},
                      {GMSH_FULLRC, "IsoResolution", nullptr, 100, ""},
-                     {GMSH_FULLRC, "Beta", nullptr, 2., ""}})
+                     {GMSH_FULLRC, "Beta", nullptr, 2., ""},
+                     {GMSH_FULLRC, "Orient", nullptr, 1, ""}})
 {
 }
 
@@ -59,7 +61,13 @@ std::string GMSH_WindingNumberPlugin::getHelp() const
          "the box of the triangles, with `Resolution' cells along the longest "
          "side of the plane; and, if `IsoSurface' is set, the surface where "
          "it is 1/2 (the closed surface the triangles bound), on a grid of "
-         "`IsoResolution' cells along the longest side of the box.";
+         "`IsoResolution' cells along the longest side of the box.\n\n"
+         "If `Orient' is set, the degenerate and duplicated triangles are "
+         "removed and the triangles oriented first, as the discrete CAD "
+         "modeler heals them (see DiscreteCADHeal.h): as their neighbors, "
+         "then each closed component so that its volume is positive, each "
+         "open one so that the winding number is the nearest to whole "
+         "numbers around it.";
 }
 
 PView *GMSH_WindingNumberPlugin::execute(PView *v)
@@ -71,6 +79,7 @@ PView *GMSH_WindingNumberPlugin::execute(PView *v)
   const bool iso = option(5) != 0.;
   const int isoResolution = std::max(2, (int)option(6));
   const double beta = std::max(1., option(7));
+  const bool orient = option(8) != 0.;
 
   // the triangles of the surfaces: their mesh, or else their triangulations
   // (their nodes merged by coordinates)
@@ -110,6 +119,16 @@ PView *GMSH_WindingNumberPlugin::execute(PView *v)
     Msg::Error("Plugin(WindingNumber) needs triangles: merge a STL file, or "
                "mesh the surfaces");
     return v;
+  }
+  if(orient) {
+    DiscreteCADHealReport r;
+    removeBadTriangles(t, r);
+    orientTriangles(x, t, r);
+    Msg::Info("Plugin(WindingNumber): %d degenerate and %d duplicated "
+              "triangles removed; %d components (%d closed): %d closed and %d "
+              "open ones turned over, %d triangles turned over in all",
+              r.degenerate, r.duplicated, r.components, r.closed,
+              r.reversedClosed, r.reversedOpen, r.reversedTriangles);
   }
 
   // the connected pieces (through their nodes), by decreasing size, and
