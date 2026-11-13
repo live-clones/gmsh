@@ -77,6 +77,10 @@
 #include "BoundaryLayer.h"
 #endif
 
+#if defined(HAVE_DISCRETECAD)
+#include "DiscreteCADWindingPlugin.h"
+#endif
+
 // HAVE_PLUGIN_LOADING is only defined when compiling the shared library with
 // the private API (which exports what plugins need) on a system with dlopen
 #if defined(HAVE_PLUGIN_LOADING)
@@ -229,6 +233,9 @@ void PluginManager::registerDefaultPlugins()
     add(new GMSH_SpanningTreePlugin());
 #if defined(HAVE_BOUNDARY_LAYERS)
     add(new GMSH_BoundaryLayerPlugin());
+#endif
+#if defined(HAVE_DISCRETECAD)
+    add(new GMSH_WindingNumberPlugin());
 #endif
   }
 
