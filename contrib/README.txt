@@ -26,7 +26,6 @@ their own respective license:
 * NonConformalRefinement: GNU Affero General Public License (AGPL) v. 3 or
   later
 * OctreeSizeField: Gmsh License
-* onelab: MIT/X11 License
 * QuadMeshingTools: Gmsh License
 * QuadTri: Gmsh License
 * stb: MIT License or public domain (stb_truetype)

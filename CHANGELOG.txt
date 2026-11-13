@@ -28,7 +28,7 @@ and post-processing views; new Curvature Curve/Surface, CreateMeshEdges/Faces
 and CreateOverlaps parser functions; new H(div)/L2 and reorganized H(curl)
 hierarchical basis functions; new Plugin(DuplicateNodes), removed
 Plugin(CVTRemesh) and Plugin(CurvedBndDist); upgraded bundled contrib/Netgen to
-v6.2.2608; fix MeshAdapt regression introduced in 4.12 on thin cones/cylinders;
+v6.2.2608; removed the ONELAB metamodels (contrib/onelab, .ol files); fix MeshAdapt regression introduced in 4.12 on thin cones/cylinders;
 reproducible multi-threaded 1D and 2D meshing; periodic node correspondences are
 now computed for transfinite, extruded and subdivided meshes (periodicity
 constraints no longer need to be redefined after meshing); boolean operations

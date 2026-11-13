@@ -90,8 +90,6 @@ Add TBB libraries in list of OCC libraries (default: OFF)
 Enable the octree-based automatic mesh size field (default: ON)
 @item ENABLE_ONELAB
 Enable ONELAB solver interface (default: ON)
-@item ENABLE_ONELAB_METAMODEL
-Enable ONELAB metamodels (experimental) (default: ON)
 @item ENABLE_OPENACC
 Enable OpenACC (default: OFF)
 @item ENABLE_OPENMP

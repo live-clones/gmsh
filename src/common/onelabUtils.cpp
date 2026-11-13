@@ -363,7 +363,7 @@ namespace onelabUtils {
     auto it = onelab::server::instance()->findClient("Gmsh");
     if(it == onelab::server::instance()->lastClient()) return redraw;
 
-    // do nothing in case of a metamodel
+    // do nothing if a client drives Gmsh itself
     std::vector<onelab::number> pn;
     onelab::server::instance()->get(pn, "IsPyMetamodel");
     if(pn.size() && pn[0].getValue()) return redraw;
@@ -492,10 +492,6 @@ namespace onelabUtils {
         Msg::Error("Unknown client to run in batch mode (%d)", num);
         return;
       }
-
-      onelab::number n("0Metamodel/Batch", CTX::instance()->batch);
-      n.setVisible(false);
-      onelab::server::instance()->set(n);
 
       // create client
       onelab::localNetworkClient *c = nullptr;
@@ -641,19 +637,8 @@ namespace onelabUtils {
 
   bool incrementLoops()
   {
-    bool ret = false;
-    if(onelabUtils::incrementLoop("3"))
-      ret = true;
-    else if(onelabUtils::incrementLoop("2"))
-      ret = true;
-    else if(onelabUtils::incrementLoop("1"))
-      ret = true;
-
-    // Define ONELAB parameter indicating whether or not in a loop
-    onelab::number n("0Metamodel/Loop", ret ? 1 : 0);
-    n.setVisible(false);
-    onelab::server::instance()->set(n);
-    return ret;
+    return onelabUtils::incrementLoop("3") || onelabUtils::incrementLoop("2") ||
+           onelabUtils::incrementLoop("1");
   }
 
   bool updateGraphs()
@@ -783,13 +768,7 @@ namespace onelabUtils {
 
   void archiveOutputFiles(const std::string &fileName)
   {
-    std::string stamp;
-    std::vector<onelab::string> ps;
-    onelab::server::instance()->get(ps, "0Metamodel/9Tag");
-    if(ps.size() && ps[0].getValue().size())
-      stamp.assign(timeStamp() + "_" + ps[0].getValue());
-    else
-      stamp.assign(timeStamp());
+    std::string stamp = timeStamp();
 
     // add time stamp in all output files in the db, and rename them on disk
     std::vector<onelab::string> strings;
@@ -826,36 +805,6 @@ namespace onelabUtils {
     }
   }
 
-  void archiveSolutionFiles(const std::string &fileName)
-  {
-    // extract tag from db fileName, use fileName as tag otherwise
-    std::vector<std::string> split = SplitFileName(fileName);
-    std::string dir = split[0] + "archive/";
-    std::string tag = split[1];
-    if(!tag.compare(0, 6, "onelab"))
-      tag.assign(tag.substr(6)); // cut off 'onelab' if present
-
-    // add tag to all solution files in the db, and rename them on disk
-    std::vector<onelab::string> strings;
-    onelab::server::instance()->get(strings, "0Metamodel/9Solution files");
-    if(strings.size()) {
-      std::vector<std::string> names = strings[0].getChoices();
-      if(names.size()) {
-        for(std::size_t j = 0; j < names.size(); j++) {
-          std::vector<std::string> split = SplitFileName(names[j]);
-          std::string old = names[j];
-          CreateSingleDir(dir);
-          names[j] = dir + split[1] + tag + split[2];
-          Msg::Info("Renaming '%s' into '%s'", old.c_str(), names[j].c_str());
-          rename(old.c_str(), names[j].c_str());
-        }
-        strings[0].setValue(names[0]);
-        strings[0].setChoices(names);
-        onelab::server::instance()->set(strings[0]);
-      }
-    }
-  }
-
   void loadDb(const std::string &name)
   {
     Msg::StatusBar(true, "Loading database '%s'...", name.c_str());
@@ -878,14 +827,14 @@ namespace onelabUtils {
     std::vector<onelab::string> allStrings, persistentStrings;
     onelab::server::instance()->get(allNumbers);
     onelab::server::instance()->get(allStrings);
-    bool ismetamodel = false;
+    bool drivesGmsh = false;
     for(std::size_t i = 0; i < allNumbers.size(); i++) {
       if(allNumbers[i].getAttribute("Persistent") == "1")
         persistentNumbers.push_back(allNumbers[i]);
-      // these 2 should always be persistent
+      // these 2 (set by clients that drive Gmsh) should always be persistent
       if(allNumbers[i].getName() == "IsMetamodel" ||
          allNumbers[i].getName() == "IsPyMetamodel"){
-        ismetamodel = allNumbers[i].getValue() ? true : false;
+        drivesGmsh = allNumbers[i].getValue() ? true : false;
         persistentNumbers.push_back(allNumbers[i]);
       }
     }
@@ -897,10 +846,10 @@ namespace onelabUtils {
     // clear the db
     onelab::server::instance()->clear();
 
-    // run Gmsh client for non-metamodels (we need to check ismetamodel here
+    // run the Gmsh client unless a client drives Gmsh (we need to check here
     // since the db has been cleared and the check cannot work in
     // runGmshClient!)
-    if(runGmshClient && !ismetamodel){
+    if(runGmshClient && !drivesGmsh){
       onelabUtils::runGmshClient("reset", CTX::instance()->solver.autoMesh);
     }
 
