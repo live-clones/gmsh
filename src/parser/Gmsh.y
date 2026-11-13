@@ -343,7 +343,9 @@ GeoFormatItem :
   | Delete tEND { return 1; }
   | Colorify    { return 1; }
   | SetPartition{ return 1; }
-  | Visibility  { return 1; }
+  // (with or without a semicolon too)
+  | Visibility  { }
+  | Visibility tEND { return 1; }
   | Extrude     { List_Delete($1); }
   | Extrude tEND { List_Delete($1); return 1; }
   | Boolean     { List_Delete($1); }
