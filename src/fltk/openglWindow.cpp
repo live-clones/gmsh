@@ -104,7 +104,7 @@ openglWindow::~openglWindow()
   if(_lastHandled == this) _lastHandled = nullptr;
   _setLock(false);
   Fl::remove_timeout(_studioSampleCb, this);
-  Fl::remove_timeout(_fireCb, this);
+  Fl::remove_timeout(_phlogistonCb, this);
   delete _ctx;
   if(Nautilus) delete Nautilus;
 }
@@ -365,7 +365,7 @@ void openglWindow::draw()
       cameraView(cam, side * eye.x, side * eye.y, side * eye.z, view);
       gmshLoadMatrix(view);
       _ctx->draw3d();
-      _burn(side < 0); // the same frame for both eyes
+      _releasePhlogiston(side < 0); // the same frame for both eyes
       _ctx->draw2d();
       _drawScreenMessage();
       _drawBorder();
@@ -385,7 +385,7 @@ void openglWindow::draw()
       _ctx->draw3d();
       memcpy(_frameView, _ctx->model, sizeof(_frameView));
     }
-    _burn();
+    _releasePhlogiston();
     _ctx->draw2d();
     _studioFrame();
     if(CTX::instance()->camera && CTX::instance()->gamepad &&
@@ -554,35 +554,18 @@ void openglWindow::_studioSampleCb(void *data)
   w->Fl_Gl_Window::redraw();
 }
 
-// The fire lit by spinning the model: drawn over the scene at its current
+// The phlogiston a spun model gives off: drawn over the scene at its current
 // level, which dies down in a couple of seconds once the spinning stops,
-// with a frame every 30 ms in the meantime. Not accumulated: the studio
-// frames start over as long as it burns.
-void openglWindow::_burn(bool sameFrame)
+// with a frame every 30 ms in the meantime (see sceneView::releasePhlogiston())
+void openglWindow::_releasePhlogiston(bool sameFrame)
 {
-  if(!sameFrame) Fl::remove_timeout(_fireCb, this);
-  if(!CTX::instance()->phlogiston) _fire = 0.;
-  if(_fire <= 0.) return;
-  double now = TimeOfDay();
-  if(!_printW && !sameFrame) {
-    _fire *= exp(-(now - _fireTime) / 1.5);
-    _fireTime = now;
-  }
-  if(_fire < 0.02) {
-    _fire = 0.;
-    return;
-  }
-  glImmediate::flush();
+  if(!sameFrame) Fl::remove_timeout(_phlogistonCb, this);
   int w = _printW ? _printW : pixel_w(), h = _printW ? _printH : pixel_h();
-  if(!glShader::fire(w, h, _fire, now)) {
-    _fire = 0.;
-    return;
-  }
-  _ctx->studioSample = 0;
-  if(!_printW && !sameFrame) Fl::add_timeout(0.03, _fireCb, this);
+  bool decay = !_printW && !sameFrame;
+  if(releasePhlogiston(w, h, decay) && decay) Fl::add_timeout(0.03, _phlogistonCb, this);
 }
 
-void openglWindow::_fireCb(void *data) { ((openglWindow *)data)->redraw(); }
+void openglWindow::_phlogistonCb(void *data) { ((openglWindow *)data)->redraw(); }
 
 openglWindow *openglWindow::_lastHandled = nullptr;
 

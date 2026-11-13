@@ -108,6 +108,7 @@ void drawContextOffscreen::drawCurrentOpenglWindow(bool make_current,
     _ctx->draw3d();
     memcpy(_frameView, _ctx->model, sizeof(_frameView));
   }
+  if(afterScene) afterScene(_width, _height);
   _ctx->draw2d();
   // all the frames of the studio shading, as a print of a window has them; on
   // the screen, they are added a few at a time (see drawStudioFrames())

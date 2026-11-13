@@ -138,9 +138,9 @@ protected:
     double xyz[3];
   };
   std::vector<pinnedNote> _pinned;
-  // a model spun hard enough catches fire: how much is alight and when that
-  // was last drawn (the host draws the flames)
-  double _fire, _fireTime;
+  // a model spun hard enough gives off its phlogiston: how much, and when
+  // that was last drawn (the host draws it)
+  double _phlogiston, _phlogistonTime;
 
   // what the interaction asks of the host
   // the picture changed
@@ -193,6 +193,11 @@ public:
   // a mouse event; the host counts clicks and reports a double click only
   // when acceptsDoubleClick() says the view takes one
   void handleMouse(const paneInput &in);
+  // the phlogiston given off at its current level, over what draw3d() drew
+  // in a picture of width x height pixels, the level dying down if decay (not
+  // in a print, nor for the second eye of a stereo frame); true while some is
+  // still given off, for the host to draw another frame in about 30 ms
+  bool releasePhlogiston(int width, int height, bool decay);
   bool acceptsDoubleClick() const;
   // the pointer left the view
   void pointerLeft();

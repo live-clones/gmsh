@@ -118,7 +118,8 @@ function drawNow() {
     canvas.height = h;
   }
   const start = showSpeed ? performance.now() : 0;
-  web.draw(w, h, dpr);
+  // (2: the scene gives off phlogiston, less over the next frames)
+  if(web.draw(w, h, dpr) === 2) setTimeout(draw, 30);
   if(showSpeed) speedFrame(performance.now() - start, dpr);
   drawn = [w, h, dpr];
   studioFrames();

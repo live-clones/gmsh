@@ -313,7 +313,9 @@ namespace {
 extern "C" {
 
 // draw on the canvas of width x height device pixels, scale being the number
-// of them per CSS pixel (the devicePixelRatio of the page)
+// of them per CSS pixel (the devicePixelRatio of the page): 1, or 2 while the
+// scene gives off phlogiston (sceneView::releasePhlogiston()), for the page
+// to draw it again shortly
 EMSCRIPTEN_KEEPALIVE int gmshWebDraw(int width, int height, double scale)
 {
   Msg::NoThrow noThrow;
@@ -322,8 +324,13 @@ EMSCRIPTEN_KEEPALIVE int gmshWebDraw(int width, int height, double scale)
   _width = width;
   _height = height;
   _scale = scale;
+  bool releasing = false;
+  _view->afterScene = [&releasing](int w, int h) {
+    if(_scene) releasing = _scene->releasePhlogiston(w, h, true);
+  };
   draw();
-  return 1;
+  _view->afterScene = nullptr;
+  return releasing ? 2 : 1;
 }
 
 // add the next frames of the studio shading (General.Shading) to what the

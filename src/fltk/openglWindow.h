@@ -21,7 +21,7 @@ int openglWindowMode();
 void resetOpenglMode();
 
 // An Fl_Gl_Window showing a scene: it draws the frames (the studio
-// accumulation, the prints, the fire), and hands the events of FLTK to the
+// accumulation, the prints, the phlogiston), and hands the events of FLTK to the
 // interaction it inherits from sceneView, whose host it is.
 class openglWindow : public Fl_Gl_Window, public sceneView {
 private:
@@ -59,11 +59,11 @@ private:
   void _cameraMatrices();
   void _studioFrame();
   static void _studioSampleCb(void *data);
-  // the fire lit by spinning the model (see sceneView), drawn over the scene;
+  // the phlogiston a spun model gives off (see sceneView), drawn over the scene;
   // sameFrame: the other eye of a stereo pair, drawn at the level the first
   // of them left
-  void _burn(bool sameFrame = false);
-  static void _fireCb(void *data);
+  void _releasePhlogiston(bool sameFrame = false);
+  static void _phlogistonCb(void *data);
 
 protected:
   void draw();

@@ -20,6 +20,8 @@
 #include "OS.h"
 #include "StringUtils.h"
 #include "Context.h"
+#include "glImmediate.h"
+#include "glShader.h"
 
 // the scenes there are
 static std::vector<sceneView *> &_scenes()
@@ -32,8 +34,8 @@ sceneView::sceneView(drawContext *ctx)
   : _w(1), _h(1), _selection(ENT_NONE), _trySelection(0), _addQuery(false),
     _highlightedDim(-1), _highlightedTag(0), _highlightedWas(0),
     _pickStepTime(0.), _stepping(false), _hoverBehind(false), _spin(0.),
-    _spinFrom(0.), _spinPath(0.), _spinHot(0.), _ctx(ctx), _fire(0.),
-    _fireTime(0.), addPointMode(0), lassoMode(false), selectionMode(false),
+    _spinFrom(0.), _spinPath(0.), _spinHot(0.), _ctx(ctx), _phlogiston(0.),
+    _phlogistonTime(0.), addPointMode(0), lassoMode(false), selectionMode(false),
     endSelection(0), undoSelection(0), quitSelection(0), changeSelection(0)
 {
   _selectionElements = false;
@@ -569,9 +571,9 @@ void sceneView::handleMouse(const paneInput &in)
       // (m1) and (!shift) and (!alt)  => rotation
       else if(in.button == 0 && !shift && !alt) {
         // How fast the model is spun, in window sizes per second: kept up
-        // past a point for a quarter of a second, it catches fire, the
-        // faster the sooner, and the fire goes on building as long as the
-        // spinning does, up to half as much again as a full blaze. The
+        // past a point for a quarter of a second, it gives off its
+        // phlogiston, the faster the sooner, and more of it as long as the
+        // spinning lasts, up to half as much again as a full release. The
         // speed is the path drawn over a few hundredths of a second, not
         // one event's step over the time since the previous one: events
         // can arrive in clumps microseconds apart, as they do on X11,
@@ -590,8 +592,8 @@ void sceneView::handleMouse(const paneInput &in)
           const double catches = 8.;
           _spinHot = (_spin > catches) ? _spinHot + dt : 0.;
           if(_spinHot > 0.25 && CTX::instance()->phlogiston) {
-            if(_fire <= 0.) _fireTime = now;
-            _fire = std::min(1.5, _fire + 1.5 * (_spin / catches - 1.) * dt);
+            if(_phlogiston <= 0.) _phlogistonTime = now;
+            _phlogiston = std::min(1.5, _phlogiston + 1.5 * (_spin / catches - 1.) * dt);
           }
           _spinPath = 0.;
           _spinFrom = now;
@@ -934,4 +936,28 @@ void sceneView::drawTooltip(const std::string &text)
   _hoverAnchor[0] = cx;
   _hoverAnchor[1] = cy;
   hostRedraw();
+}
+
+bool sceneView::releasePhlogiston(int width, int height, bool decay)
+{
+  if(!CTX::instance()->phlogiston) _phlogiston = 0.;
+  if(_phlogiston <= 0.) return false;
+  double now = TimeOfDay();
+  if(decay) {
+    _phlogiston *= exp(-(now - _phlogistonTime) / 1.5);
+    _phlogistonTime = now;
+  }
+  if(_phlogiston < 0.02) {
+    _phlogiston = 0.;
+    return false;
+  }
+  glImmediate::flush();
+  if(!glShader::phlogiston(width, height, _phlogiston, now)) {
+    _phlogiston = 0.;
+    return false;
+  }
+  // (not accumulated: the studio frames start over as long as any is given
+  // off)
+  _ctx->studioSample = 0;
+  return true;
 }
