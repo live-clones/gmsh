@@ -262,10 +262,10 @@ public:
   // triangle, and for each triangle the piece of the input it belongs to, if
   // not empty) and its topology: its surfaces, the triangles connected across
   // edges of two triangles whose normals make an angle smaller than angle (in
-  // the same piece), the curves between them, along its boundaries, its
-  // non-manifold edges and its sharp edges inside a surface (embedded in it),
-  // split where they turn by more than curveAngle, and
-  // its volumes, the cells of space they bound (see _cells), every surface
+  // the same piece), the curves between them, along its boundaries and its
+  // non-manifold edges (not the sharp edges inside a surface), split where
+  // they turn by more than curveAngle, and its volumes, the cells of space
+  // they bound (see _cells), every surface
   // oriented outwards of the first volume whose outer shell it is on, or else
   // of the first volume it bounds. The surfaces whose nodes are at most
   // tolerance away from a plane, a sphere, a cylinder, a cone or a torus
@@ -273,8 +273,8 @@ public:
   // tolerance <= 0) get the parameters of the primitives (see
   // analyticParameters), the others are split into their pieces on such
   // surfaces up to the precision of the coordinates (see segmentSurface), the
-  // rest into pieces that a single map can parametrize (as classifySurfaces
-  // does). The volumes and the surfaces bounding none in outDimTags.
+  // rest parametrized as they are, cut open into a disk along seams if they
+  // are not one. The volumes and the surfaces bounding none in outDimTags.
   bool addTriangulation(const std::vector<double> &coord,
                         const std::vector<std::size_t> &triangles,
                         const std::vector<int> &pieces, double angle,

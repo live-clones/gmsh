@@ -95,6 +95,170 @@ namespace {
     return std::to_string(n) + " " + (n == 1 ? one : many);
   }
 
+  // A triangulation cut open into a disk, the triangles of the copies of its
+  // nodes (and the node of each copy in nodeOfCopy): the corners of a node
+  // share a copy if they are connected across uncut edges of two triangles.
+  // The cut: the edges of two triangles that a spanning tree of the
+  // triangles, grown from the triangle farthest from the boundary, does not
+  // cross, without the branches ending inside the triangulation (it then
+  // joins its boundaries and goes around its handles: a cut graph); for a
+  // closed triangulation of genus 0, a path between two nodes far apart. The
+  // edges of one triangle or more than two are boundaries, never cut.
+  std::vector<std::array<int, 3> >
+  cutOpen(const std::vector<std::array<int, 3> > &t,
+          std::vector<int> &nodeOfCopy)
+  {
+    const std::size_t nt = t.size();
+    std::map<std::pair<int, int>, std::vector<std::size_t> > edges;
+    for(std::size_t i = 0; i < nt; i++)
+      for(int k = 0; k < 3; k++)
+        edges[std::minmax(t[i][k], t[i][(k + 1) % 3])].push_back(i);
+    // the triangles across the edges of two triangles, by their distance to
+    // the boundary
+    std::vector<std::vector<std::size_t> > across(nt);
+    std::vector<int> distance(nt, -1);
+    std::vector<std::size_t> queue;
+    for(auto &e : edges) {
+      if(e.second.size() == 2) {
+        across[e.second[0]].push_back(e.second[1]);
+        across[e.second[1]].push_back(e.second[0]);
+      }
+      else
+        for(std::size_t i : e.second)
+          if(distance[i] < 0) {
+            distance[i] = 0;
+            queue.push_back(i);
+          }
+    }
+    if(queue.empty()) {
+      distance[0] = 0;
+      queue.push_back(0);
+    }
+    for(std::size_t q = 0; q < queue.size(); q++)
+      for(std::size_t j : across[queue[q]])
+        if(distance[j] < 0) {
+          distance[j] = distance[queue[q]] + 1;
+          queue.push_back(j);
+        }
+    // (the spanning tree, of each connected piece)
+    std::set<std::pair<int, int> > crossed;
+    std::vector<char> reached(nt, 0);
+    std::vector<std::size_t> order(nt);
+    for(std::size_t i = 0; i < nt; i++) order[i] = i;
+    std::stable_sort(order.begin(), order.end(),
+                     [&](std::size_t a, std::size_t b) {
+                       return distance[a] > distance[b];
+                     });
+    auto sharedEdge = [&](std::size_t i, std::size_t j) -> std::pair<int, int> {
+      for(int k = 0; k < 3; k++) {
+        const int a = t[i][k], b = t[i][(k + 1) % 3];
+        for(int l = 0; l < 3; l++)
+          if(std::minmax(a, b) == std::minmax(t[j][l], t[j][(l + 1) % 3]))
+            return std::minmax(a, b);
+      }
+      return std::pair<int, int>(-1, -1);
+    };
+    for(std::size_t seed : order) {
+      if(reached[seed]) continue;
+      reached[seed] = 1;
+      std::vector<std::size_t> front = {seed};
+      for(std::size_t q = 0; q < front.size(); q++)
+        for(std::size_t j : across[front[q]])
+          if(!reached[j]) {
+            reached[j] = 1;
+            crossed.insert(sharedEdge(front[q], j));
+            front.push_back(j);
+          }
+    }
+    // the cut, its branches ending inside pruned
+    std::set<std::pair<int, int> > cut;
+    std::map<int, int> degree;
+    std::map<int, std::vector<std::pair<int, int> > > cutAt;
+    bool closed = true;
+    for(auto &e : edges) {
+      if(e.second.size() != 2) {
+        closed = false;
+        degree[e.first.first]++;
+        degree[e.first.second]++;
+      }
+      else if(!crossed.count(e.first)) {
+        cut.insert(e.first);
+        degree[e.first.first]++;
+        degree[e.first.second]++;
+        cutAt[e.first.first].push_back(e.first);
+        cutAt[e.first.second].push_back(e.first);
+      }
+    }
+    std::vector<int> leaves;
+    for(auto &d : degree)
+      if(d.second == 1) leaves.push_back(d.first);
+    while(!leaves.empty()) {
+      const int n = leaves.back();
+      leaves.pop_back();
+      if(degree[n] != 1) continue;
+      for(auto &e : cutAt[n]) {
+        if(!cut.erase(e)) continue;
+        const int m = e.first == n ? e.second : e.first;
+        degree[n]--;
+        if(--degree[m] == 1) leaves.push_back(m);
+        break;
+      }
+    }
+    if(closed && cut.empty()) {
+      // (a path between two nodes far apart: from the node farthest from a
+      // node to the one farthest from it)
+      std::map<int, std::vector<int> > neighbors;
+      for(auto &e : edges) {
+        neighbors[e.first.first].push_back(e.first.second);
+        neighbors[e.first.second].push_back(e.first.first);
+      }
+      auto farthest = [&](int from, std::map<int, int> &previous) {
+        previous.clear();
+        previous[from] = from;
+        std::vector<int> front = {from};
+        for(std::size_t q = 0; q < front.size(); q++)
+          for(int m : neighbors[front[q]])
+            if(!previous.count(m)) {
+              previous[m] = front[q];
+              front.push_back(m);
+            }
+        return front.back();
+      };
+      std::map<int, int> previous;
+      const int u = farthest(t[0][0], previous);
+      const int w = farthest(u, previous);
+      for(int n = w; n != u; n = previous[n])
+        cut.insert(std::minmax(n, previous[n]));
+    }
+    // the copies of the nodes
+    std::vector<std::size_t> parent(3 * nt);
+    for(std::size_t c = 0; c < 3 * nt; c++) parent[c] = c;
+    std::function<std::size_t(std::size_t)> find = [&](std::size_t c) {
+      while(parent[c] != c) c = parent[c] = parent[parent[c]];
+      return c;
+    };
+    auto corner = [&](std::size_t i, int n) {
+      int k = 0;
+      while(k < 2 && t[i][k] != n) k++;
+      return 3 * i + k;
+    };
+    for(auto &e : edges) {
+      if(e.second.size() != 2 || cut.count(e.first)) continue;
+      for(int n : {e.first.first, e.first.second})
+        parent[find(corner(e.second[0], n))] = find(corner(e.second[1], n));
+    }
+    std::map<std::size_t, int> copyOf;
+    nodeOfCopy.clear();
+    std::vector<std::array<int, 3> > copies(nt);
+    for(std::size_t i = 0; i < nt; i++)
+      for(int k = 0; k < 3; k++) {
+        auto it = copyOf.insert({find(3 * i + k), (int)nodeOfCopy.size()});
+        if(it.second) nodeOfCopy.push_back(t[i][k]);
+        copies[i][k] = it.first->second;
+      }
+    return copies;
+  }
+
   void normalize(double v[3])
   {
     const double l = std::sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
@@ -2407,74 +2571,29 @@ bool DiscreteCAD_Internals::_build(
       if(!hasUV[i]) label[i] = (int)find(i);
   }
 
-  // the other surfaces split into pieces that a single map can parametrize,
-  // as classifySurfaces does (in a temporary model, a discrete surface for
-  // each surface)
-  std::set<std::pair<int, int> > cuts;
-  {
-    TemporaryModel tmp;
-    std::map<int, discreteFace *> faceOf;
-    std::map<std::pair<int, int>, MVertex *> vertexOf; // (label, node)
-    std::map<MVertex *, int> nodeOf;
-    for(std::size_t i = 0; i < nt; i++) {
-      if(hasUV[i]) continue;
-      discreteFace *&gf = faceOf[label[i]];
-      if(!gf) {
-        gf = new discreteFace(tmp.model, (int)faceOf.size(), false);
-        tmp.model->add(gf);
-      }
-      MVertex *v[3];
-      for(int k = 0; k < 3; k++) {
-        MVertex *&mv = vertexOf[{label[i], tri[i][k]}];
-        if(!mv) {
-          const std::array<double, 3> &x = _nodes[tri[i][k]];
-          mv = new MVertex(x[0], x[1], x[2], gf);
-          gf->mesh_vertices.push_back(mv);
-          nodeOf[mv] = tri[i][k];
-        }
-        v[k] = mv;
-      }
-      gf->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
-    }
-    std::vector<MLine *> cut;
-    computeEdgeCut(tmp.model, cut, CTX::instance()->mesh.reparamMaxTriangles);
-    for(MLine *l : cut) {
-      cuts.insert(std::minmax(nodeOf[l->getVertex(0)], nodeOf[l->getVertex(1)]));
-      delete l;
-    }
-  }
-  if(!cuts.empty()) {
-    for(std::size_t i = 0; i < nt; i++) parent[i] = i;
-    for(auto &e : edgeTriangles) {
-      if(e.second.size() != 2 || cuts.count(e.first)) continue;
-      const std::size_t i = e.second[0], j = e.second[1];
-      if(label[i] == label[j]) parent[find(i)] = find(j);
-    }
-    for(std::size_t i = 0; i < nt; i++) label[i] = (int)find(i);
-  }
-
-  // their parameters, computed on their triangulations as createGeometry
-  // would (the boolean operations then interpolate them)
+  // the parameters of the other surfaces, computed on their triangulations
+  // as createGeometry would, each one cut open into a disk along seams if it
+  // is not one (see cutOpen; the boolean operations then interpolate them)
   {
     TemporaryModel tmp;
     std::map<int, std::vector<std::size_t> > trianglesOf;
     for(std::size_t i = 0; i < nt; i++)
       if(!hasUV[i]) trianglesOf[label[i]].push_back(i);
+    int failed = 0;
     for(auto &tl : trianglesOf) {
-      std::map<int, MVertex *> vertexOf;
-      std::vector<MTriangle *> ts;
-      for(std::size_t i : tl.second) {
-        MVertex *v[3];
-        for(int k = 0; k < 3; k++) {
-          MVertex *&mv = vertexOf[tri[i][k]];
-          if(!mv) {
-            const std::array<double, 3> &x = _nodes[tri[i][k]];
-            mv = new MVertex(x[0], x[1], x[2]);
-          }
-          v[k] = mv;
-        }
-        ts.push_back(new MTriangle(v[0], v[1], v[2]));
+      std::vector<std::array<int, 3> > lt;
+      for(std::size_t i : tl.second) lt.push_back(tri[i]);
+      std::vector<int> nodeOfCopy;
+      const std::vector<std::array<int, 3> > copies = cutOpen(lt, nodeOfCopy);
+      std::vector<MVertex *> vertexOf(nodeOfCopy.size());
+      for(std::size_t c = 0; c < nodeOfCopy.size(); c++) {
+        const std::array<double, 3> &x = _nodes[nodeOfCopy[c]];
+        vertexOf[c] = new MVertex(x[0], x[1], x[2]);
       }
+      std::vector<MTriangle *> ts;
+      for(auto &t : copies)
+        ts.push_back(
+          new MTriangle(vertexOf[t[0]], vertexOf[t[1]], vertexOf[t[2]]));
       std::vector<MVertex *> nodes;
       std::vector<SPoint2> nodesUV;
       std::vector<SPoint3> nodesXYZ;
@@ -2489,14 +2608,22 @@ bool DiscreteCAD_Internals::_build(
           hasUV[i] = 1;
         }
       }
+      else
+        failed++;
       for(MTriangle *t : ts) delete t;
-      for(auto &v : vertexOf) delete v.second;
+      for(MVertex *v : vertexOf) delete v;
     }
+    if(failed)
+      Msg::Warning("Discrete CAD triangulation: %d surface%s not parametrized",
+                   failed, failed == 1 ? "" : "s");
   }
 
   // the surfaces, curves and vertices, and the volumes
+  // (the curves where different surfaces meet, and the seams of the surfaces;
+  // the sharp edges inside a surface left out)
   std::vector<int> surfaceOf;
-  _addTopology(tri, label, uv, hasUV, sharp, curveAngle, surfaceOf);
+  _addTopology(tri, label, uv, hasUV, std::set<std::pair<int, int> >(),
+               curveAngle, surfaceOf);
   for(std::size_t i = 0; i < nt; i++) {
     if(mapOf[i] < 0) continue;
     _surfaces[surfaceOf[i]].analytic = maps[mapOf[i]];
