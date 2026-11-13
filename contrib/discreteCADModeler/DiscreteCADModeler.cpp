@@ -85,10 +85,29 @@ namespace {
   // the report of a step of the import of triangulations, added to the list
   // of the reports however the step ends
   struct stepReport {
-    std::vector<std::string> &reports;
+    std::vector<DiscreteCAD_Internals::Report> &reports;
     std::string text;
-    ~stepReport() { reports.push_back(text); }
+    std::vector<DiscreteCAD_Internals::ReportItem> items;
+    ~stepReport() { reports.push_back({text, items}); }
+    // an item: the triangles (dim 2), the edges (1) or the nodes (0) given
+    // by their nodes, if there are some, with their values (1 if none)
+    void add(const std::string &label, int dim, const std::vector<int> &nodes,
+             const std::vector<double> &values = std::vector<double>())
+    {
+      if(nodes.empty()) return;
+      DiscreteCAD_Internals::ReportItem it;
+      it.label = label;
+      it.dim = dim;
+      it.nodes = nodes;
+      it.values = values;
+      it.values.resize(nodes.size() / (dim + 1), 1.);
+      items.push_back(it);
+    }
   };
+
+  // a value in [0, 1) for each number, scattered (the colors of the pieces,
+  // volumes or surfaces of a report)
+  double scattered(int n) { return (double)(((unsigned)n * 2654435761u) % 997) / 997.; }
 
   std::string plural(std::size_t n, const char *one, const char *many)
   {
@@ -2839,6 +2858,78 @@ bool DiscreteCAD_Internals::importTriangulations(
                 plural(trianglesOf.size(), "triangulation", "triangulations") +
                 " (the surfaces of the file)";
   Msg::Info("Discrete CAD import: %s", report.text.c_str());
+
+  // their defects, and their pieces
+  DiscreteCADDefects d;
+  findDefects(_nodes, tri, d);
+  auto ofTriangles = [&](const std::vector<std::size_t> &which) {
+    std::vector<int> n;
+    for(std::size_t i : which) n.insert(n.end(), tri[i].begin(), tri[i].end());
+    return n;
+  };
+  auto ofEdges = [&](const std::vector<std::pair<int, int> > &which) {
+    std::vector<int> n;
+    for(auto &e : which) {
+      n.push_back(e.first);
+      n.push_back(e.second);
+    }
+    return n;
+  };
+  report.add(plural(d.degenerate.size(), "degenerate triangle",
+                    "degenerate triangles") + " (two nodes the same, or no area)",
+             2, ofTriangles(d.degenerate));
+  report.add(plural(d.duplicated.size(), "duplicated triangle",
+                    "duplicated triangles") + " (the nodes of another one)",
+             2, ofTriangles(d.duplicated));
+  report.add(plural(d.needles.size(), "needle", "needles") +
+               " (an angle smaller than a degree)",
+             2, ofTriangles(d.needles));
+  report.add(plural(d.free.size(), "free edge", "free edges") +
+               " (of one triangle: holes and gaps)",
+             1, ofEdges(d.free));
+  report.add(plural(d.nonManifold.size(), "non-manifold edge",
+                    "non-manifold edges") + " (of more than two triangles)",
+             1, ofEdges(d.nonManifold));
+  report.add(plural(d.misoriented.size(), "edge", "edges") +
+               " between triangles of opposite orientations",
+             1, ofEdges(d.misoriented));
+  report.add(plural(d.tJunctions.size(), "T-junction", "T-junctions") +
+               " (a node inside an edge of other triangles)",
+             0, d.tJunctions);
+  std::vector<int> closedNodes, openNodes;
+  std::vector<double> closedValues, openValues;
+  for(std::size_t i = 0; i < tri.size(); i++) {
+    const int p = d.piece[i];
+    if(p < 0) continue;
+    std::vector<int> &n = d.closed[p] ? closedNodes : openNodes;
+    n.insert(n.end(), tri[i].begin(), tri[i].end());
+    (d.closed[p] ? closedValues : openValues).push_back(scattered(p));
+  }
+  int closed = 0;
+  for(char c : d.closed) closed += c;
+  const int open = (int)d.closed.size() - closed;
+  report.add(plural(closed, "closed piece", "closed pieces") +
+               " (triangles connected by their edges, without free or "
+               "non-manifold edge)",
+             2, closedNodes, closedValues);
+  report.add(plural(open, "open piece", "open pieces"), 2, openNodes,
+             openValues);
+  const std::string defects =
+    plural(d.degenerate.size(), "degenerate", "degenerate") + ", " +
+    plural(d.duplicated.size(), "duplicated triangle", "duplicated triangles") +
+    ", " + plural(d.needles.size(), "needle", "needles") + "; " +
+    plural(d.free.size(), "free edge", "free edges") + ", " +
+    plural(d.nonManifold.size(), "non-manifold edge", "non-manifold edges") +
+    ", " +
+    plural(d.misoriented.size(), "edge", "edges") +
+    " between opposite orientations, " +
+    plural(d.tJunctions.size(), "T-junction", "T-junctions");
+  const std::string piecesText = plural(d.closed.size(), "piece", "pieces") +
+                             ": " + std::to_string(closed) + " closed, " +
+                             std::to_string(open) + " open";
+  report.text += "\n" + defects + "\n" + piecesText;
+  Msg::Info("Discrete CAD import: %s", defects.c_str());
+  Msg::Info("Discrete CAD import: %s", piecesText.c_str());
   _changed = true;
   return true;
 }
@@ -2884,8 +2975,64 @@ bool DiscreteCAD_Internals::heal(const std::vector<int> &surfaceTags)
     }
   DiscreteCADHealReport r;
   std::vector<std::size_t> kept;
+  const std::vector<std::array<int, 3> > before = tri;
   removeBadTriangles(tri, r, &kept);
-  orientTriangles(_nodes, tri, r);
+  std::vector<int> component;
+  std::vector<char> turnedOver;
+  orientTriangles(_nodes, tri, r, &component, &turnedOver);
+  {
+    // (the triangles removed, and those turned over)
+    std::vector<int> degenerate, duplicated;
+    std::vector<char> isKept(before.size(), 0);
+    for(std::size_t i : kept) isKept[i] = 1;
+    for(std::size_t i = 0; i < before.size(); i++) {
+      if(isKept[i]) continue;
+      const std::array<int, 3> &t = before[i];
+      std::vector<int> &n =
+        (t[0] == t[1] || t[1] == t[2] || t[2] == t[0]) ? degenerate : duplicated;
+      n.insert(n.end(), t.begin(), t.end());
+    }
+    report.add(plural(degenerate.size() / 3, "degenerate triangle",
+                      "degenerate triangles") + " removed",
+               2, degenerate);
+    report.add(plural(duplicated.size() / 3, "duplicated triangle",
+                      "duplicated triangles") + " removed",
+               2, duplicated);
+    static const char *why[4] = {"", " turned over against their neighbors",
+                                 " turned over with closed pieces of negative "
+                                 "volume",
+                                 " turned over with open pieces against the "
+                                 "winding number"};
+    for(int w = 1; w <= 3; w++) {
+      std::vector<int> n;
+      for(std::size_t i = 0; i < tri.size(); i++)
+        if(turnedOver[i] == w) n.insert(n.end(), tri[i].begin(), tri[i].end());
+      report.add(plural(n.size() / 3, "triangle", "triangles") + why[w], 2, n);
+    }
+    // (the pieces, closed or open)
+    std::map<std::pair<int, int>, int> count;
+    for(auto &t : tri)
+      for(int k = 0; k < 3; k++) count[std::minmax(t[k], t[(k + 1) % 3])]++;
+    std::set<int> openPieces;
+    for(std::size_t i = 0; i < tri.size(); i++)
+      for(int k = 0; k < 3; k++)
+        if(count[std::minmax(tri[i][k], tri[i][(k + 1) % 3])] != 2)
+          openPieces.insert(component[i]);
+    std::vector<int> closedNodes, openNodes;
+    std::vector<double> closedValues, openValues;
+    for(std::size_t i = 0; i < tri.size(); i++) {
+      const bool open = openPieces.count(component[i]) > 0;
+      (open ? openNodes : closedNodes)
+        .insert((open ? openNodes : closedNodes).end(), tri[i].begin(),
+                tri[i].end());
+      (open ? openValues : closedValues).push_back(scattered(component[i]));
+    }
+    report.add(plural(r.closed, "closed piece", "closed pieces") +
+                 ", oriented outwards (the volumes)",
+               2, closedNodes, closedValues);
+    report.add(plural(r.components - r.closed, "open piece", "open pieces"), 2,
+               openNodes, openValues);
+  }
   for(int s : raw) _surfaces[s].triangles.clear();
   for(std::size_t i = 0; i < tri.size(); i++)
     _surfaces[surfaceOf[kept[i]]].triangles.push_back(tri[i]);
@@ -2950,6 +3097,30 @@ bool DiscreteCAD_Internals::classify(
              outDimTags))
     return false;
   report.text = _built;
+  std::vector<int> volumeNodes, freeNodes;
+  std::vector<double> volumeValues, freeValues;
+  int volumes = 0, free = 0;
+  for(auto &dt : outDimTags) {
+    if(dt.first == 3) {
+      volumes++;
+      for(int s : _volumes[dt.second].surfaces)
+        for(auto &t : _surfaces[std::abs(s)].triangles) {
+          volumeNodes.insert(volumeNodes.end(), t.begin(), t.end());
+          volumeValues.push_back(scattered(dt.second));
+        }
+    }
+    else {
+      free++;
+      for(auto &t : _surfaces[dt.second].triangles) {
+        freeNodes.insert(freeNodes.end(), t.begin(), t.end());
+        freeValues.push_back(scattered(dt.second));
+      }
+    }
+  }
+  report.add(plural(volumes, "volume", "volumes") + " (their surfaces)", 2,
+             volumeNodes, volumeValues);
+  report.add(plural(free, "surface", "surfaces") + " bounding no volume", 2,
+             freeNodes, freeValues);
   return true;
 }
 
@@ -2977,9 +3148,18 @@ bool DiscreteCAD_Internals::recognize(
   // same surface)
   int made[6] = {0, 0, 0, 0, 0, 0}, already = 0, freeform = 0;
   std::set<std::vector<double> > counted;
+  std::vector<int> faceNodes[6];
+  std::vector<double> faceValues[6];
   for(int s : surfaces) {
     Surface &sf = _surfaces[s];
-    if(sf.raw || sf.analytic.kind == DiscreteCADAnalyticMap::NONE) {
+    const int type = sf.raw || sf.analytic.kind == DiscreteCADAnalyticMap::NONE ?
+                       0 :
+                       (int)sf.analytic.surface.type;
+    for(auto &t : sf.triangles) {
+      faceNodes[type].insert(faceNodes[type].end(), t.begin(), t.end());
+      faceValues[type].push_back(scattered(s));
+    }
+    if(!type) {
       freeform++;
       continue;
     }
@@ -3007,6 +3187,19 @@ bool DiscreteCAD_Internals::recognize(
     report.text += "\n" + plural(freeform, "surface", "surfaces") +
                    " on no plane, sphere, cylinder, cone or torus (within the "
                    "tolerance of the classification) left as triangulated";
+  static const char *kinds[6][2] = {{"free form surface", "free form surfaces"},
+                                    {"plane", "planes"},
+                                    {"sphere", "spheres"},
+                                    {"cylinder", "cylinders"},
+                                    {"cone", "cones"},
+                                    {"torus", "tori"}};
+  for(int k = 1; k <= 6; k++) {
+    const int type = k % 6;
+    std::set<double> faces(faceValues[type].begin(), faceValues[type].end());
+    report.add(plural(faces.size(), "face", "faces") + " on " +
+                 kinds[type][1],
+               2, faceNodes[type], faceValues[type]);
+  }
   Msg::Info("Discrete CAD recognize: %s", report.text.c_str());
   _changed = true;
   return true;

@@ -72,6 +72,20 @@ public:
   struct Volume {
     std::vector<int> surfaces;
   };
+  // what a step of the import of triangulations did: a few lines, and the
+  // things it found or changed, to be shown (points, lines or triangles, by
+  // the nodes of the modeler, dim + 1 for each one, with a value for each
+  // one: a piece, a volume, a surface)
+  struct ReportItem {
+    std::string label;
+    int dim;
+    std::vector<int> nodes;
+    std::vector<double> values;
+  };
+  struct Report {
+    std::string text;
+    std::vector<ReportItem> items;
+  };
   // an orthonormal frame: origin o and axes e[0], e[1], e[2]
   struct Frame {
     double o[3], e[3][3];
@@ -90,7 +104,7 @@ private:
   std::vector<std::pair<int, int> > _synchronized;
   // what the steps of the import of triangulations did, and the topology the
   // last one built
-  std::vector<std::string> _reports;
+  std::vector<Report> _reports;
   std::string _built;
   bool _exists(int dim, int tag) const;
   // a free tag of dimension dim if tag <= 0, else tag if it is free
@@ -200,8 +214,9 @@ public:
   bool getChanged() const { return _changed; }
   // what the steps of the import of triangulations did (importShapes,
   // importTriangulations, heal, classify, recognize), in the order they were
-  // made, in a few lines for each (for the interfaces)
-  const std::vector<std::string> &getReports() const { return _reports; }
+  // made (for the interfaces), and the nodes their items are on
+  const std::vector<Report> &getReports() const { return _reports; }
+  const std::vector<std::array<double, 3> > &getNodes() const { return _nodes; }
   // a box with a corner at (x, y, z) and extents dx, dy, dz; tag is the tag
   // of the volume (a new one if tag <= 0)
   bool addBox(int &tag, double x, double y, double z, double dx, double dy,

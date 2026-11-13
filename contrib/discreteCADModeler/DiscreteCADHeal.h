@@ -47,10 +47,34 @@ void removeBadTriangles(std::vector<std::array<int, 3> > &triangles,
 // triangles is the nearest to whole numbers, and not negative, at points on
 // both sides of it, about a tenth of its size away (where a component turned
 // over makes the winding number fractional: see Takayama, Jacobson, Kavan
-// and Sorkine-Hornung, 2014). The component of each triangle in component.
+// and Sorkine-Hornung, 2014). The component of each triangle in component,
+// and whether each one ends turned over in turned: 0 if not, 1 against its
+// neighbors, 2 with a closed component of negative volume, 3 with an open
+// one against the winding number.
 void orientTriangles(const std::vector<std::array<double, 3> > &x,
                      std::vector<std::array<int, 3> > &triangles,
                      DiscreteCADHealReport &report,
-                     std::vector<int> *component = nullptr);
+                     std::vector<int> *component = nullptr,
+                     std::vector<char> *turned = nullptr);
+
+// The defects of a soup of triangles, as it is: the triangles degenerate (two
+// nodes the same, or no area), duplicated (the nodes of one before) and
+// needles (an angle smaller than a degree); the edges free (of one triangle:
+// holes and gaps), non-manifold (of more than two triangles) and misoriented
+// (two triangles along them the same way); the nodes of T-junctions (inside a
+// free edge of other triangles); the pieces (the triangles connected across
+// edges of two triangles), the piece of each triangle and whether each piece
+// is closed. The edges and the pieces are those of the triangles neither
+// degenerate nor duplicated (their piece is -1).
+struct DiscreteCADDefects {
+  std::vector<std::size_t> degenerate, duplicated, needles;
+  std::vector<std::pair<int, int> > free, nonManifold, misoriented;
+  std::vector<int> tJunctions;
+  std::vector<int> piece;
+  std::vector<char> closed;
+};
+void findDefects(const std::vector<std::array<double, 3> > &x,
+                 const std::vector<std::array<int, 3> > &triangles,
+                 DiscreteCADDefects &defects);
 
 #endif

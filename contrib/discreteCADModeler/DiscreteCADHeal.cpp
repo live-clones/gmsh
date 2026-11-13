@@ -15,6 +15,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <functional>
 #include <map>
 #include <memory>
 #include <set>
@@ -49,7 +50,7 @@ void removeBadTriangles(std::vector<std::array<int, 3> > &triangles,
 void orientTriangles(const std::vector<std::array<double, 3> > &x,
                      std::vector<std::array<int, 3> > &triangles,
                      DiscreteCADHealReport &report,
-                     std::vector<int> *componentOf)
+                     std::vector<int> *componentOf, std::vector<char> *turned)
 {
   const std::size_t nt = triangles.size();
   std::map<std::pair<int, int>, std::vector<std::size_t> > edges;
@@ -61,9 +62,13 @@ void orientTriangles(const std::vector<std::array<double, 3> > &x,
       if(triangles[i][k] == a && triangles[i][(k + 1) % 3] == b) return true;
     return false;
   };
-  auto reverse = [&](std::size_t i) {
+  // (the last reason each triangle was turned over for, and whether it was
+  // an odd number of times)
+  std::vector<char> why(nt, 0), odd(nt, 0);
+  auto reverse = [&](std::size_t i, char reason) {
     std::swap(triangles[i][1], triangles[i][2]);
-    report.reversedTriangles++;
+    why[i] = reason;
+    odd[i] = !odd[i];
   };
 
   // the components, each oriented as its first triangle, across the edges of
@@ -85,7 +90,7 @@ void orientTriangles(const std::vector<std::array<double, 3> > &x,
         if(l.size() != 2) continue;
         const std::size_t j = l[0] == i ? l[1] : l[0];
         if(component[j] >= 0) continue;
-        if(forwards(j, a, b)) reverse(j);
+        if(forwards(j, a, b)) reverse(j, 1);
         component[j] = c;
         components[c].push_back(j);
         stack.push_back(j);
@@ -113,7 +118,7 @@ void orientTriangles(const std::vector<std::array<double, 3> > &x,
     if(!closed[c]) continue;
     report.closed++;
     if(volume(components[c]) < 0.) {
-      for(std::size_t i : components[c]) reverse(i);
+      for(std::size_t i : components[c]) reverse(i, 2);
       report.reversedClosed++;
     }
   }
@@ -182,7 +187,7 @@ void orientTriangles(const std::vector<std::array<double, 3> > &x,
         turned += penalty(w[i] - 2. * m[i]);
       }
       if(turned < 0.7 * now - 1.e-3 * q.size()) {
-        for(std::size_t i : tc) reverse(i);
+        for(std::size_t i : tc) reverse(i, 3);
         report.reversedOpen++;
         changed = true;
         all.reset(new DiscreteCADWinding(x, triangles));
@@ -191,4 +196,176 @@ void orientTriangles(const std::vector<std::array<double, 3> > &x,
     if(!changed) break;
   }
   if(componentOf) *componentOf = component;
+  for(std::size_t i = 0; i < nt; i++)
+    if(odd[i]) report.reversedTriangles++;
+  if(turned) {
+    turned->assign(nt, 0);
+    for(std::size_t i = 0; i < nt; i++)
+      if(odd[i]) (*turned)[i] = why[i];
+  }
+}
+
+void findDefects(const std::vector<std::array<double, 3> > &x,
+                 const std::vector<std::array<int, 3> > &triangles,
+                 DiscreteCADDefects &d)
+{
+  d = DiscreteCADDefects();
+  const std::size_t nt = triangles.size();
+  auto sub = [&](int a, int b, double v[3]) {
+    for(int k = 0; k < 3; k++) v[k] = x[b][k] - x[a][k];
+  };
+  auto norm = [](const double v[3]) {
+    return std::sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+  };
+
+  // the triangles
+  std::set<std::array<int, 3> > seen;
+  for(std::size_t i = 0; i < nt; i++) {
+    const std::array<int, 3> &t = triangles[i];
+    if(t[0] == t[1] || t[1] == t[2] || t[2] == t[0]) {
+      d.degenerate.push_back(i);
+      continue;
+    }
+    std::array<int, 3> key = t;
+    std::sort(key.begin(), key.end());
+    if(!seen.insert(key).second) {
+      d.duplicated.push_back(i);
+      continue;
+    }
+    double e[3][3], l[3];
+    for(int k = 0; k < 3; k++) {
+      sub(t[k], t[(k + 1) % 3], e[k]);
+      l[k] = norm(e[k]);
+    }
+    const double c[3] = {e[0][1] * e[2][2] - e[0][2] * e[2][1],
+                         e[0][2] * e[2][0] - e[0][0] * e[2][2],
+                         e[0][0] * e[2][1] - e[0][1] * e[2][0]};
+    const double area2 = norm(c);
+    const double longest = std::max(l[0], std::max(l[1], l[2]));
+    if(!(area2 > 1e-14 * longest * longest)) {
+      d.degenerate.push_back(i);
+      continue;
+    }
+    // (an acute angle whose sine is that of a degree or less)
+    for(int k = 0; k < 3; k++) {
+      const double s = area2 / (l[k] * l[(k + 2) % 3]);
+      if(s < std::sin(M_PI / 180.)) {
+        double dot = 0.;
+        for(int m = 0; m < 3; m++) dot -= e[k][m] * e[(k + 2) % 3][m];
+        if(dot > 0.) {
+          d.needles.push_back(i);
+          break;
+        }
+      }
+    }
+  }
+
+  // the edges, of the triangles neither degenerate nor duplicated
+  std::vector<char> bad(nt, 0);
+  for(std::size_t i : d.degenerate) bad[i] = 1;
+  for(std::size_t i : d.duplicated) bad[i] = 1;
+  std::map<std::pair<int, int>, std::vector<std::size_t> > edges;
+  for(std::size_t i = 0; i < nt; i++)
+    for(int k = 0; k < 3; k++) {
+      const int a = triangles[i][k], b = triangles[i][(k + 1) % 3];
+      if(!bad[i]) edges[std::minmax(a, b)].push_back(i);
+    }
+  auto forwards = [&](std::size_t i, int a, int b) {
+    for(int k = 0; k < 3; k++)
+      if(triangles[i][k] == a && triangles[i][(k + 1) % 3] == b) return true;
+    return false;
+  };
+  std::vector<std::size_t> parent(nt);
+  for(std::size_t i = 0; i < nt; i++) parent[i] = i;
+  std::function<std::size_t(std::size_t)> find = [&](std::size_t i) {
+    while(parent[i] != i) i = parent[i] = parent[parent[i]];
+    return i;
+  };
+  for(auto &e : edges) {
+    if(e.second.size() == 1)
+      d.free.push_back(e.first);
+    else if(e.second.size() > 2)
+      d.nonManifold.push_back(e.first);
+    else {
+      const std::size_t i = e.second[0], j = e.second[1];
+      if(forwards(i, e.first.first, e.first.second) ==
+         forwards(j, e.first.first, e.first.second))
+        d.misoriented.push_back(e.first);
+      parent[find(i)] = find(j);
+    }
+  }
+
+  // the pieces, closed if they have no edge of one triangle or more than two
+  // (none for the degenerate and duplicated triangles)
+  std::map<std::size_t, int> pieceOfRoot;
+  d.piece.assign(nt, -1);
+  for(std::size_t i = 0; i < nt; i++) {
+    if(bad[i]) continue;
+    auto it = pieceOfRoot.insert({find(i), (int)pieceOfRoot.size()}).first;
+    d.piece[i] = it->second;
+  }
+  d.closed.assign(pieceOfRoot.size(), 1);
+  for(auto &e : edges)
+    if(e.second.size() != 2)
+      for(std::size_t i : e.second) d.closed[d.piece[i]] = 0;
+
+  // the T-junctions: the nodes of free edges inside other free edges (within
+  // a thousandth of their length), found in the cells of a grid
+  if(d.free.empty()) return;
+  double h = 0.;
+  for(auto &e : d.free) {
+    double v[3];
+    sub(e.first, e.second, v);
+    h += norm(v);
+  }
+  h /= d.free.size();
+  if(!(h > 0.)) return;
+  std::map<std::array<long, 3>, std::vector<int> > cells;
+  auto cell = [&](const std::array<double, 3> &p) {
+    return std::array<long, 3>{{(long)std::floor(p[0] / h),
+                                (long)std::floor(p[1] / h),
+                                (long)std::floor(p[2] / h)}};
+  };
+  std::set<int> ends;
+  for(auto &e : d.free) {
+    ends.insert(e.first);
+    ends.insert(e.second);
+  }
+  for(int n : ends) cells[cell(x[n])].push_back(n);
+  std::set<int> found;
+  for(auto &e : d.free) {
+    const std::array<double, 3> &a = x[e.first], &b = x[e.second];
+    double ab[3];
+    sub(e.first, e.second, ab);
+    const double l = norm(ab);
+    if(!(l > 0.)) continue;
+    const double tol = 1e-3 * l;
+    std::array<long, 3> lo = cell(a), hi = cell(b);
+    for(int k = 0; k < 3; k++) {
+      if(lo[k] > hi[k]) std::swap(lo[k], hi[k]);
+      lo[k]--;
+      hi[k]++;
+    }
+    for(long i = lo[0]; i <= hi[0]; i++)
+      for(long j = lo[1]; j <= hi[1]; j++)
+        for(long k = lo[2]; k <= hi[2]; k++) {
+          auto it = cells.find({{i, j, k}});
+          if(it == cells.end()) continue;
+          for(int c : it->second) {
+            if(c == e.first || c == e.second || found.count(c)) continue;
+            double ac[3];
+            sub(e.first, c, ac);
+            const double s = (ac[0] * ab[0] + ac[1] * ab[1] + ac[2] * ab[2]) /
+                             (l * l);
+            if(s <= 1e-3 || s >= 1. - 1e-3) continue;
+            double dist = 0.;
+            for(int m = 0; m < 3; m++) {
+              const double q = a[m] + s * ab[m] - x[c][m];
+              dist += q * q;
+            }
+            if(std::sqrt(dist) < tol) found.insert(c);
+          }
+        }
+  }
+  d.tJunctions.assign(found.begin(), found.end());
 }
