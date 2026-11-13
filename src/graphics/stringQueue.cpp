@@ -258,8 +258,7 @@ void stringQueue::flush(double f)
   gmshMatrixMode(GMSH_MODELVIEW);
   gmshPushMatrix();
   gmshLoadIdentity();
-  GLint vp[4];
-  glGetIntegerv(GL_VIEWPORT, vp);
+  const int *vp = gmshViewport();
   gmshScale(2. / vp[2], 2. / vp[3], 1.);
   gmshTranslate(-vp[2] / 2., -vp[3] / 2., 0.);
 
@@ -275,7 +274,9 @@ void stringQueue::flush(double f)
   // stack with the fixed function pipeline, by hand with the shader one. The
   // transparency pass keeps its own blending.
   GLboolean wasDepth = glIsEnabled(GL_DEPTH_TEST);
-  GLboolean wasBlend = glIsEnabled(GL_BLEND);
+  bool wasBlend = gmshBlendEnabled();
+  GLint wasSrc[2], wasDst[2];
+  gmshGetBlendFunc(wasSrc, wasDst);
   bool ownBlend = !glShader::transparentPass();
   if(!shaders) {
     // glPopAttrib() does not restore the lighting we remember ourselves
@@ -295,8 +296,8 @@ void stringQueue::flush(double f)
   gmshLighting(false);
   glDisable(GL_DEPTH_TEST);
   if(ownBlend) {
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    gmshBlend(true);
+    gmshBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   }
 
   // the strings in [start, end), found in the atlas: the strings of the scene
@@ -407,9 +408,13 @@ void stringQueue::flush(double f)
   glDepthFunc(wasFunc);
   if(!shaders)
     glPopAttrib();
-  else {
-    if(wasDepth) glEnable(GL_DEPTH_TEST);
-    if(ownBlend && !wasBlend) glDisable(GL_BLEND);
+  else if(wasDepth)
+    glEnable(GL_DEPTH_TEST);
+  // the blending as it was, in what we keep of it too (glPopAttrib() only
+  // puts back OpenGL's)
+  if(ownBlend) {
+    gmshBlendFuncSeparate(wasSrc[0], wasDst[0], wasSrc[1], wasDst[1]);
+    gmshBlend(wasBlend);
   }
   gmshLighting(wasLit);
   for(int i = 0; i < 6; i++)

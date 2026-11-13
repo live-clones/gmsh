@@ -190,7 +190,7 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   render_mode = drawContext::GMSH_SELECT;
 
   bool oldLighting = gmshLightingEnabled();
-  GLboolean oldBlend = glIsEnabled(GL_BLEND);
+  GLboolean oldBlend = gmshBlendEnabled();
   GLfloat oldClear[4];
   glGetFloatv(GL_COLOR_CLEAR_VALUE, oldClear);
 
@@ -205,7 +205,7 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   glDepthFunc(GL_LESS);
   gmshDepthTest(true);
   gmshLighting(false);
-  glDisable(GL_BLEND);
+  gmshBlend(false);
   // the faces at their true depth, not pushed back behind their edges: the
   // point read back must lie on them, and the dimensions are told apart by
   // their depth ranges instead (see setPickColor())
@@ -316,7 +316,7 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   CTX::instance()->polygonOffset = oldOffset;
   glClearColor(oldClear[0], oldClear[1], oldClear[2], oldClear[3]);
   if(oldLighting) gmshLighting(true);
-  if(oldBlend) glEnable(GL_BLEND);
+  if(oldBlend) gmshBlend(true);
   if(!glShader::enabled()) glShadeModel(GL_SMOOTH);
   _pickColor = _pickColorActive = false;
   render_mode = drawContext::GMSH_RENDER;

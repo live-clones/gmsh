@@ -94,7 +94,7 @@ void drawContextOffscreen::drawCurrentOpenglWindow(bool make_current,
   _ctx->viewport[2] = (int)(_width / _scale + 0.5);
   _ctx->viewport[3] = (int)(_height / _scale + 0.5);
   _ctx->setHighResolutionPixelFactor(_scale);
-  glViewport(0, 0, _width, _height);
+  gmshViewport(0, 0, _width, _height);
   setPixelFactor(_scale);
 
   drawContext::setClearColor();
@@ -128,7 +128,7 @@ bool drawContextOffscreen::drawStudioFrames(double budget)
   if(!_ctx || !_screen || !glShader::enabled() || ctx->shading < 1) return false;
   int n = ctx->studioSamples;
   if(_ctx->studioSample + 1 >= n) return false;
-  glViewport(0, 0, _width, _height);
+  gmshViewport(0, 0, _width, _height);
   setPixelFactor(_scale);
   if(!_ctx->drawStudioFrames(_ctx->studioSample + 1, _width, _height,
                              _frameView, budget))

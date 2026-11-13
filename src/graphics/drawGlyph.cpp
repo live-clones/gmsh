@@ -260,8 +260,7 @@ void drawContext::drawString(const std::string &s, double x, double y, double z,
   world2Viewport(xyz, w);
   // in true pixels, as world2Viewport works (drawContext's viewport is in
   // toolkit coordinates)
-  GLint vp[4];
-  glGetIntegerv(GL_VIEWPORT, vp);
+  const int *vp = gmshViewport();
   if(w[2] < 0. || w[2] > 1. || w[0] < vp[0] || w[0] > vp[0] + vp[2] ||
      w[1] < vp[1] || w[1] > vp[1] + vp[3])
     return; // the primitive is culled
@@ -479,8 +478,7 @@ void drawContext::drawImage(const std::string &name, double x, double y,
     h *= fact * s[1] / pixel_equiv_y;
     // nothing is drawn if the anchor is behind the eye or off the window
     // (an invalid raster position)
-    GLint vp[4];
-    glGetIntegerv(GL_VIEWPORT, vp);
+    const int *vp = gmshViewport();
     if(pos[2] < 0. || pos[2] > 1. || pos[0] < vp[0] || pos[0] > vp[0] + vp[2] ||
        pos[1] < vp[1] || pos[1] > vp[1] + vp[3])
       valid = GL_FALSE;
@@ -490,8 +488,8 @@ void drawContext::drawImage(const std::string &name, double x, double y,
     // the transparency pass has a blending of its own
     bool ownBlend = !glShader::transparentPass();
     if(ownBlend) {
-      glEnable(GL_BLEND);
-      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      gmshBlend(true);
+      gmshBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     }
     gmshTexture(img->tex, GMSH_TEXTURE_IMAGE);
     gmshBegin(GL_QUADS);
@@ -505,7 +503,7 @@ void drawContext::drawImage(const std::string &name, double x, double y,
     gmshVertex3d(x, y, z);
     gmshEnd();
     gmshTexture(0); // draws what is waiting, as the texture is going away
-    if(ownBlend) glDisable(GL_BLEND);
+    if(ownBlend) gmshBlend(false);
   }
   if(billboard) {
     gmshPopMatrix();

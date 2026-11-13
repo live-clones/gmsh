@@ -9,6 +9,7 @@
 #include <cmath>
 #include <cstddef>
 #include "glShader.h"
+#include "glImmediate.h"
 #include "Context.h"
 #include "glMatrix.h"
 #include "GmshMessage.h"
@@ -1115,8 +1116,8 @@ void main()
     bindNoShadow(which);
     glApi::Uniform1i(_u.shadowPass, 1);
     glApi::Uniform1f(_u.seed, sample > 0 ? 0.7318f * sample : -1.f);
-    glGetIntegerv(GL_VIEWPORT, _shadowViewport);
-    glViewport(0, 0, size, size);
+    for(int i = 0; i < 4; i++) _shadowViewport[i] = gmshViewport()[i];
+    gmshViewport(0, 0, size, size);
     glEnable(GL_DEPTH_TEST);
     glDepthMask(GL_TRUE);
     glDepthFunc(GL_LESS);
@@ -1131,8 +1132,8 @@ void main()
     _shadowPass = -1;
     glApi::Uniform1i(_u.shadowPass, 0);
     glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
-    glViewport(_shadowViewport[0], _shadowViewport[1], _shadowViewport[2],
-               _shadowViewport[3]);
+    gmshViewport(_shadowViewport[0], _shadowViewport[1], _shadowViewport[2],
+                 _shadowViewport[3]);
     if(!fromEye) {
       if(which)
         setDomeOff();
@@ -1179,16 +1180,13 @@ void main()
       fullscreenPass(int width, int height, GLuint program)
       {
         _depth = glIsEnabled(GL_DEPTH_TEST);
-        _blend = glIsEnabled(GL_BLEND);
-        glGetIntegerv(GL_VIEWPORT, _vp);
+        _blend = gmshBlendEnabled();
+        for(int i = 0; i < 4; i++) _vp[i] = gmshViewport()[i];
         glGetFloatv(GL_COLOR_CLEAR_VALUE, _clear);
-        glGetIntegerv(GL_BLEND_SRC_RGB, &_func[0]);
-        glGetIntegerv(GL_BLEND_DST_RGB, &_func[1]);
-        glGetIntegerv(GL_BLEND_SRC_ALPHA, &_func[2]);
-        glGetIntegerv(GL_BLEND_DST_ALPHA, &_func[3]);
-        glViewport(0, 0, width, height);
+        gmshGetBlendFunc(_src, _dst);
+        gmshViewport(0, 0, width, height);
         glDisable(GL_DEPTH_TEST);
-        glDisable(GL_BLEND);
+        gmshBlend(false);
         glApi::UseProgram(program);
         glApi::BindVertexArray(_c->vao);
         // the vertices come from gl_VertexID; an attribute left enabled
@@ -1199,20 +1197,17 @@ void main()
       void draw() { glDrawArrays(GL_TRIANGLES, 0, 3); }
       ~fullscreenPass()
       {
-        glViewport(_vp[0], _vp[1], _vp[2], _vp[3]);
+        gmshViewport(_vp[0], _vp[1], _vp[2], _vp[3]);
         glClearColor(_clear[0], _clear[1], _clear[2], _clear[3]);
-        if(glApi::BlendFuncSeparate)
-          glApi::BlendFuncSeparate(_func[0], _func[1], _func[2], _func[3]);
-        else
-          glBlendFunc(_func[0], _func[1]);
+        gmshBlendFuncSeparate(_src[0], _dst[0], _src[1], _dst[1]);
         _depth ? glEnable(GL_DEPTH_TEST) : glDisable(GL_DEPTH_TEST);
-        _blend ? glEnable(GL_BLEND) : glDisable(GL_BLEND);
+        gmshBlend(_blend);
         glApi::UseProgram(_program);
         glApi::BindVertexArray(_c->vao);
       }
 
     private:
-      GLint _vp[4], _func[4];
+      GLint _vp[4], _src[2], _dst[2];
       GLfloat _clear[4];
       GLboolean _depth, _blend;
     };
@@ -1342,14 +1337,14 @@ void main()
         glClearColor(0.f, 0.f, 0.f, 0.f);
         glClear(GL_COLOR_BUFFER_BIT);
       }
-      glEnable(GL_BLEND);
-      glBlendFunc(GL_ONE, GL_ONE);
+      gmshBlend(true);
+      gmshBlendFunc(GL_ONE, GL_ONE);
       glApi::Uniform1f(_uBlitScale, 1.f);
       pass.draw();
 
       // and the average put back on the window
       glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
-      glDisable(GL_BLEND);
+      gmshBlend(false);
       glBindTexture(GL_TEXTURE_2D, _c->accTex);
       glApi::Uniform1f(_uBlitScale, 1.f / count);
       pass.draw();
@@ -1665,8 +1660,7 @@ void main()
     int segments = count / 2;
     glApi::BindVertexArray(_c->vao);
 
-    GLint vp[4];
-    glGetIntegerv(GL_VIEWPORT, vp);
+    const int *vp = gmshViewport();
     float view[2] = {(float)vp[2], (float)vp[3]};
     glApi::Uniform2fv(_u.viewport, 1, view);
     glApi::Uniform1f(_u.lineWidth, (float)width);
@@ -2179,8 +2173,7 @@ void main()
     }
 
     // the whole window, as that is what the depth is copied from
-    GLint vp[4];
-    glGetIntegerv(GL_VIEWPORT, vp);
+    const int *vp = gmshViewport();
     int w = vp[0] + vp[2], h = vp[1] + vp[3];
     if(w < 1 || h < 1) return false;
 
@@ -2210,8 +2203,8 @@ void main()
     glClearColor(clear[0], clear[1], clear[2], clear[3]);
 
     // every fragment is added, none hides another
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_ONE, GL_ONE);
+    gmshBlend(true);
+    gmshBlendFunc(GL_ONE, GL_ONE);
     glEnable(GL_DEPTH_TEST);
     glDepthMask(GL_FALSE);
     glApi::Uniform1i(_u.oitPass, 1);
@@ -2250,20 +2243,17 @@ void main()
 
     // the averaged colour, laid over the window with the fragments' coverage
     glDisable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);
+    gmshBlend(true);
     // the window's alpha (kept by saved images) must end up as covered as the
     // pixel is, which a plain SRC_ALPHA blend would square: blend it apart
-    if(glApi::BlendFuncSeparate)
-      glApi::BlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE,
-                               GL_ONE_MINUS_SRC_ALPHA);
-    else
-      // the window's alpha comes out squared, as the ordinary blend always
-      // did
-      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    // (without separate blending it comes out squared, as the ordinary blend
+    // always did)
+    gmshBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE,
+                          GL_ONE_MINUS_SRC_ALPHA);
     glDrawArrays(GL_TRIANGLES, 0, 3);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    gmshBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    glDisable(GL_BLEND);
+    gmshBlend(false);
     glEnable(GL_DEPTH_TEST);
     glApi::UseProgram(_program);
   }

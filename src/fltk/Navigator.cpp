@@ -44,8 +44,8 @@ void Navigator::drawIcons()
   gmshColor4ubv((GLubyte *)&CTX::instance()->color.smallAxes);
 
   double scale = l / 100.;
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  gmshBlend(true);
+  gmshBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glEnable(GL_LINE_SMOOTH);
 
   switch(mode) {
@@ -578,7 +578,7 @@ void Navigator::drawIcons()
   default: break;
   }
 
-  glDisable(GL_BLEND);
+  gmshBlend(false);
   glDisable(GL_LINE_SMOOTH);
   gmshPopMatrix();
 }

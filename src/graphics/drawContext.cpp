@@ -576,9 +576,7 @@ bool meshEntityIsTransparent(GEntity *e)
 static void dashDistances(VertexArray *va, int first, int count,
                           std::vector<float> &dash)
 {
-  GLint glvp[4];
-  glGetIntegerv(GL_VIEWPORT, glvp);
-  int viewport[4] = {glvp[0], glvp[1], glvp[2], glvp[3]};
+  const int *viewport = gmshViewport();
   const double *modelview = glImmediate::matrix(GMSH_MODELVIEW);
   const double *projection = glImmediate::matrix(GMSH_PROJECTION);
   dash.assign(first + count, 0.f);
@@ -753,6 +751,10 @@ static std::size_t stringsInFrame()
 
 void drawContext::draw3d()
 {
+  // the blending and viewport kept by glImmediate, as the host or another
+  // window may have changed OpenGL's
+  glImmediate::syncState();
+
   checkClipPlanesChanged();
 
   deleteOrphanVertexArrayBuffers();
@@ -832,8 +834,8 @@ void drawContext::draw3d()
       // no summing buffers: blend in drawing order. The geometry and the
       // mesh are not sorted, so they must not write depth, or a face in
       // front would hide what is behind it.
-      glEnable(GL_BLEND);
-      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      gmshBlend(true);
+      gmshBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
       gmshDepthMask(false);
     }
     glImmediate::alphaScale(geomScale, geomFilled);
@@ -849,7 +851,7 @@ void drawContext::draw3d()
     if(summed)
       glShader::endTransparent();
     else
-      glDisable(GL_BLEND);
+      gmshBlend(false);
     transparencyPass = TRANSPARENCY_ALL;
   }
 
@@ -1184,8 +1186,8 @@ void drawContext::drawStudioFloor()
   n[up] = 1.;
 
   gmshShadingModel(2);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  gmshBlend(true);
+  gmshBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   // hidden by the model, but hiding nothing itself: whatever hangs below
   // it (glyphs, a view raised further than its data) stays visible
   gmshDepthMask(false);
@@ -1196,7 +1198,7 @@ void drawContext::drawStudioFloor()
   gmshEnd();
   gmshShadingModel(1);
   gmshDepthMask(true);
-  glDisable(GL_BLEND);
+  gmshBlend(false);
 }
 
 void drawContext::draw2d()
@@ -1309,8 +1311,8 @@ void drawContext::drawTextBox(const std::string &text, double x, double y,
   // they are kept in an atlas and drawn at the end of the frame otherwise,
   // which would put the labels of a colour scale over the box.
   global()->flushString();
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  gmshBlend(true);
+  gmshBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   // the tint, when there is one, so that the box is told at a glance from a
   // box that has none; and it hides what it is on rather than taking the
   // colour of it, as a note stuck on the picture would
@@ -1347,7 +1349,7 @@ void drawContext::drawTextBox(const std::string &text, double x, double y,
   gmshVertex2d(x, yb);
   gmshEnd();
   glImmediate::flush();
-  glDisable(GL_BLEND);
+  gmshBlend(false);
 
   // the text, a line at a time from the top, with no halo: the box is its
   // contrast
@@ -1544,8 +1546,8 @@ void drawContext::drawBackgroundImage(bool threeD)
 
   Msg::Debug("Background image: x=%g y=%g w=%g h=%g", x, y, w, h);
 
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  gmshBlend(true);
+  gmshBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   gmshTexture(_bgImageTexture, GMSH_TEXTURE_IMAGE);
   gmshBegin(GL_QUADS);
   if(threeD) {
@@ -1575,7 +1577,7 @@ void drawContext::drawBackgroundImage(bool threeD)
   }
   gmshEnd();
   gmshTexture(0); // draws what is waiting, as the texture is going away
-  glDisable(GL_BLEND);
+  gmshBlend(false);
 }
 
 void drawContext::initProjection()
@@ -2084,18 +2086,14 @@ void drawContext::unproject(double winx, double winy, double p[3], double d[3])
 // the current matrices are ours (a core profile has no matrix stack)
 void drawContext::viewport2World(double vp[3], double xyz[3])
 {
-  GLint glvp[4];
-  glGetIntegerv(GL_VIEWPORT, glvp);
-  int viewport[4] = {glvp[0], glvp[1], glvp[2], glvp[3]};
+  const int *viewport = gmshViewport();
   glMatrix::unProject(vp, glImmediate::matrix(GMSH_MODELVIEW),
                       glImmediate::matrix(GMSH_PROJECTION), viewport, xyz);
 }
 
 void drawContext::world2Viewport(double xyz[3], double vp[3])
 {
-  GLint glvp[4];
-  glGetIntegerv(GL_VIEWPORT, glvp);
-  int viewport[4] = {glvp[0], glvp[1], glvp[2], glvp[3]};
+  const int *viewport = gmshViewport();
   glMatrix::project(xyz, glImmediate::matrix(GMSH_MODELVIEW),
                     glImmediate::matrix(GMSH_PROJECTION), viewport, vp);
 }

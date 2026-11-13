@@ -498,8 +498,8 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
   if(pl.first && !inModelCoordinates) {
     int alpha = CTX::instance()->unpackAlpha(opt->color.background2d);
     if(alpha != 0) {
-      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-      glEnable(GL_BLEND);
+      gmshBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      gmshBlend(true);
       gmshColor4ubv((const void *)&opt->color.background2d);
       gmshBegin(GL_QUADS);
       gmshVertex2d(xleft, ytop);
@@ -507,7 +507,7 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
       gmshVertex2d(xleft + width, ytop - height);
       gmshVertex2d(xleft, ytop - height);
       gmshEnd();
-      glDisable(GL_BLEND);
+      gmshBlend(false);
     }
   }
 
@@ -571,8 +571,8 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
     CTX::instance()->unpackBlue(opt->color.axes), 25);
   bool blend = (opt->getAxes() > 2);
   if(blend) {
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_BLEND);
+    gmshBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    gmshBlend(true);
   }
 
   // y ticks, their numbers and the horizontal grid: on the left of the frame
@@ -650,7 +650,7 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
     if(opt->showScale && !minor)
       ctx->drawStringCenter(l.xt[i].label, x, ybot - l.numX, 0.);
   }
-  if(blend) glDisable(GL_BLEND);
+  if(blend) gmshBlend(false);
 
   if(opt->showScale && l.xmult.size())
     ctx->drawStringRight(l.xmult, xleft + width, ybot - l.multX, 0.);

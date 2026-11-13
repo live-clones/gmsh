@@ -209,8 +209,8 @@ void openglWindow::_drawLasso()
   // flush before changing the blending, which the collector does not track
   glImmediate::flush();
   glDisable(GL_DEPTH_TEST);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  gmshBlend(true);
+  gmshBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   unsigned int fg = CTX::instance()->color.fg;
   gmshColor4ub((unsigned char)CTX::instance()->unpackRed(fg),
                (unsigned char)CTX::instance()->unpackGreen(fg),
@@ -223,7 +223,7 @@ void openglWindow::_drawLasso()
   gmshEnd();
   glImmediate::flush();
   // white blended to one minus the destination: an inversion
-  glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
+  gmshBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
   gmshColor3d(1., 1., 1.);
   if(selectionMode && CTX::instance()->mouseSelection)
     gmshLineStipple(1, 0x0F0F);
@@ -248,7 +248,7 @@ void openglWindow::_drawLasso()
   glImmediate::flush();
   gmshLineStippleOff();
   gmshLineWidth(1.);
-  glDisable(GL_BLEND);
+  gmshBlend(false);
   glEnable(GL_DEPTH_TEST);
 }
 
@@ -306,7 +306,7 @@ void openglWindow::draw()
     _ctx->viewport[2] = (int)(_printW / _printScale + 0.5);
     _ctx->viewport[3] = (int)(_printH / _printScale + 0.5);
     _ctx->setHighResolutionPixelFactor(_printScale);
-    glViewport(0, 0, _printW, _printH);
+    gmshViewport(0, 0, _printW, _printH);
   }
   else {
     _ctx->viewport[2] = w();
@@ -314,7 +314,7 @@ void openglWindow::draw()
     // the factor changes when the window moves across displays
     _ctx->setHighResolutionPixelFactor(w() ? (double)pixel_w() / (double)w() :
                                              1.);
-    glViewport(0, 0, pixel_w(), pixel_h());
+    gmshViewport(0, 0, pixel_w(), pixel_h());
   }
   drawContext::global()->setPixelFactor(_ctx->highResolutionPixelFactor());
 
@@ -698,6 +698,7 @@ bool openglWindow::hostBeginGL()
   _setLock(true);
   make_current();
   glShader::setContext(context());
+  glImmediate::syncState();
   return true;
 }
 

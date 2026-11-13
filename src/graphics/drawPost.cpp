@@ -762,8 +762,8 @@ public:
     // pass sums it in any order with its own blending
     bool blend = viewIsTransparent(p) && !glShader::transparentPass();
     if(blend) {
-      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-      glEnable(GL_BLEND);
+      gmshBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      gmshBlend(true);
       if(p->va_triangles && p->va_triangles->getNumVertices() &&
          eyeChanged(_ctx, p)) {
         Msg::Debug("Sorting View[%d] for transparency", p->getIndex());
@@ -823,7 +823,7 @@ public:
     }
 
     if(blend) {
-      glDisable(GL_BLEND);
+      gmshBlend(false);
       gmshDepthTest(true);
     }
 
