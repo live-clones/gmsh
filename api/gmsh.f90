@@ -5381,9 +5381,12 @@ module gmsh
   !> Add polyhedra classified on the volume `tag'. `elementTags' contains the
   !! tags (unique, strictly positive identifiers) of the polyhedra; if empty,
   !! new tags are assigned automatically. `numFaces' contains the number of
-  !! faces of each polyhedron, `faceSizes' the number of nodes of each face, and
-  !! `nodeTags' the tags of the nodes of all the faces, concatenated. A sub-
-  !! tetrahedralization can be given with `setPolytopeSimplices'.
+  !! faces of each polyhedron: [nf1, nf2, ...]; `faceSizes' the number of nodes
+  !! of each face, polyhedron by polyhedron: [e1f1N, ..., e1f(nf1)N, e2f1N,
+  !! ...], of length sum(numFaces); and `nodeTags' the tags of the nodes of all
+  !! the faces, in the same order: [e1f1n1, ..., e1f1nN, e1f2n1, ..., e2f1n1,
+  !! ...], of length sum(faceSizes). A sub-tetrahedralization can be given with
+  !! `setPolytopeSimplices'.
   subroutine gmshModelMeshAddPolyhedra(tag, &
                                        elementTags, &
                                        numFaces, &
@@ -5433,11 +5436,13 @@ module gmsh
          ierr_=ierr)
   end subroutine gmshModelMeshAddPolyhedra
 
-  !> Get the polyhedra classified on the volume `tag': their tags `elementTags',
-  !! the number of faces `numFaces' of each polyhedron, the number of nodes
-  !! `faceSizes' of each face, and the tags of the nodes of all the faces
-  !! concatenated in `nodeTags'. If `tag' < 0, get the polyhedra of all the
-  !! volumes.
+  !> Get the polyhedra classified on the volume `tag': their tags `elementTags':
+  !! [e1, e2, ...], the number of faces `numFaces' of each polyhedron: [nf1,
+  !! nf2, ...], the number of nodes `faceSizes' of each face, polyhedron by
+  !! polyhedron: [e1f1N, ..., e1f(nf1)N, e2f1N, ...], and the tags of the nodes
+  !! of all the faces in the same order in `nodeTags': [e1f1n1, ..., e1f1nN,
+  !! e1f2n1, ..., e2f1n1, ...]. This is the layout taken by `addPolyhedra'. If
+  !! `tag' < 0, get the polyhedra of all the volumes.
   subroutine gmshModelMeshGetPolyhedra(elementTags, &
                                        numFaces, &
                                        faceSizes, &
@@ -6980,11 +6985,16 @@ module gmsh
   !! for all elements: [e1f1n1, ..., e1f1nN, e1f2n1, ...], and `faceSizes' the
   !! number of nodes of each face: [e1f1N, e1f2N, ...]. Faces are returned for
   !! each element in their canonical order, with elements in the same order as
-  !! in `getElements' and `getElementsByType'. If `primary' is set, only the
-  !! primary (corner) nodes of the faces are returned. If `tag' < 0, get the
-  !! face nodes for all entities. If `numTasks' > 1, only compute and return the
-  !! part of the data indexed by `task' (for C++ only; output vectors must be
-  !! preallocated).
+  !! in `getElements' and `getElementsByType'. Except for polyhedra, the number
+  !! of faces is the same for all the elements of a given type (e.g. 4 for
+  !! tetrahedra, 5 for prisms, 6 for hexahedra), and is equal to the length of
+  !! `faceSizes' divided by the number of elements; faces of different sizes
+  !! (e.g. triangles and quadrangles for prisms and pyramids) are thus returned
+  !! in a single call. Use `getPolyhedra' to get the number of faces of each
+  !! polyhedron. If `primary' is set, only the primary (corner) nodes of the
+  !! faces are returned. If `tag' < 0, get the face nodes for all entities. If
+  !! `numTasks' > 1, only compute and return the part of the data indexed by
+  !! `task' (for C++ only; output vectors must be preallocated).
   subroutine gmshModelMeshGetElementFaceNodes(elementType, &
                                               nodeTags, &
                                               faceSizes, &
