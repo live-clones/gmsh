@@ -92,12 +92,15 @@ def main():
             gmsh.option.setNumber(v + 'Visible', 0)
         shown += gmsh.option.getNumber(v + 'Visible') > 0
 
-    # the mesh: its surfaces, unless views are shown
+    # the mesh: its surfaces, unless views are shown (made again from the
+    # .geo for a model whose results are graphs alone)
     gmsh.option.setNumber('Mesh.VolumeEdges', 0)
     gmsh.option.setNumber('Mesh.VolumeFaces', 0)
     if shown:
         gmsh.option.setNumber('Mesh.SurfaceEdges', 0)
     else:
+        if gmsh.model.mesh.getNodes()[0].size == 0:
+            gmsh.model.mesh.generate(gmsh.model.getDimension())
         gmsh.option.setNumber('Mesh.SurfaceFaces', 1)
         gmsh.option.setNumber('Mesh.ColorCarousel', 0)
         for t in ['Triangles', 'Quadrangles']:

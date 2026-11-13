@@ -26,6 +26,7 @@
 // with parameters the ONELAB numbers set before the run, as name=value;...
 // (e.g. a shorter time for a model that runs long).
 
+import {execFileSync} from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import createGmsh from '../build/gmsh.mjs';
@@ -47,7 +48,7 @@ const FS = Module.FS;
 gmsh.initialize([], false);
 
 // the files of the model, without what earlier runs left (as deploy.sh packs
-// them)
+// them: those it tracks for a git checkout of its own)
 const skip = /\.(msh|pre|res|pos|db|db\.json|png|jpg|jpeg|gif|mp4|out)$/i;
 function copy(src, dst) {
   for(const f of fs.readdirSync(src)) {
@@ -57,7 +58,13 @@ function copy(src, dst) {
   }
 }
 const work = '/model';
-copy(dir, work);
+if(fs.existsSync(path.join(dir, '.git'))) {
+  for(const f of execFileSync('git', ['ls-files'], {cwd: dir}).toString().split('\n'))
+    if(f && !skip.test(f))
+      writeFile(FS, work + '/' + f, fs.readFileSync(path.join(dir, f)));
+}
+else
+  copy(dir, work);
 const file = open ? work + '/' + open : findModel(FS, work);
 FS.chdir(file.slice(0, file.lastIndexOf('/')));
 gmsh.option.setNumber('General.Terminal', 1);
