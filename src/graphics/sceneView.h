@@ -123,8 +123,15 @@ protected:
   // the point being placed in addPointMode
   double _point[3];
   // the point of the model under the pointer, at (x, y) in the units of the
-  // window: false if there is none (see pickedModelPoint())
-  bool _modelPointAt(int x, int y, double xyz[3]);
+  // window, and the entity it is on: false if there is none (see
+  // pickedModelPoint())
+  bool _modelPointAt(int x, int y, double xyz[3], GEntity **on);
+  // the point being placed moved where the pointer is (see handleMouse())
+  void _placePoint();
+  // a model with no entities yet: points are placed on the plane z = 0, over
+  // a grid around the origin
+  static bool _onGround();
+  void _drawGround();
   // What the cursor is over, written in a box in the picture rather than in
   // a window of its own, which some window managers showed and hid with a
   // flicker on every move: the text, where the cursor was when it was last
@@ -177,8 +184,15 @@ public:
   // elementaryContextWindow::updatePoint() for the other values)
   int addPointMode;
   // the point being placed, drawn over the scene (by the host, after
-  // draw3d()) in addPointMode
+  // draw3d()) in addPointMode, with what helps reading where it is: dashed
+  // lines along X, Y and Z to the planes of the corner of the model's box
+  // (of the origin for a model with no entities, over a grid of the plane
+  // z = 0), and a small triad in the colours of the axes
   void drawPointToAdd();
+  // the point placed with the pointer (mode: see addPointMode), or not (0):
+  // its coordinates are shown by the cursor and what it is on is highlighted
+  // while it is
+  void setAddPointMode(int mode);
   // a lasso is being drawn; a selection waits for clicks
   bool lassoMode, selectionMode;
   // what the keys ask of the selection, read at its next step

@@ -531,7 +531,7 @@ EMSCRIPTEN_KEEPALIVE int gmshWebPlacePoint(int on)
   if(!_view || !_view->getDrawContext()) return 0;
   if(!_scene) _scene = new webView();
   _scene->setDrawContext(_view->getDrawContext());
-  _scene->addPointMode = on ? 1 : 0;
+  _scene->setAddPointMode(on ? 1 : 0);
   _scene->placedMoved = false;
   return 1;
 }

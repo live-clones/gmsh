@@ -524,17 +524,13 @@ static void runSelection(const std::string &operation,
 // of the dialog) until 'e' adds it, as a tool of the current window
 static void add_new_point_based_entity(const std::string &what, int pane)
 {
-  opt_general_axes(0, GMSH_SET | GMSH_GUI, 3);
-  opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
-  drawContext::global()->draw();
-
   FlGui::instance()->elementaryContext->show(pane);
 
   std::string name = what;
   std::transform(name.begin(), name.end(), name.begin(), ::tolower);
   auto pointMode = [](int mode) {
     for(openglWindow *gl : FlGui::instance()->openglWindows())
-      gl->addPointMode = mode;
+      gl->setAddPointMode(mode);
   };
   sceneTool::start(
     new functionTool(
