@@ -3578,6 +3578,18 @@ int ConvertOldPartitioningToNewOne(GModel *model)
   std::set<int> partitions;
   std::vector<GEntity *> entities;
   model->getEntities(entities);
+  // converted already: partition entities made from partition entities would
+  // have them as parents, which unpartitioning deletes before their children
+  for(GEntity *ge : entities) {
+    if(ge->geomType() == GEntity::PartitionPoint ||
+       ge->geomType() == GEntity::PartitionCurve ||
+       ge->geomType() == GEntity::PartitionSurface ||
+       ge->geomType() == GEntity::PartitionVolume) {
+      Msg::Warning("The mesh has partition entities already: the old "
+                   "partitioning is not converted again");
+      return 1;
+    }
+  }
   for(std::size_t i = 0; i < entities.size(); i++) {
     for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
       MElement *e = entities[i]->getMeshElement(j);
