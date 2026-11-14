@@ -383,19 +383,29 @@ Msg::NoThrow::NoThrow() : _abortOnError(CTX::instance()->abortOnError)
 
 Msg::NoThrow::~NoThrow() { CTX::instance()->abortOnError = _abortOnError; }
 
+// (copied under the lock of the threads that set them)
 std::string Msg::GetFirstWarning()
 {
-  return _firstWarning;
+  std::string s;
+#pragma omp critical(MsgWarning)
+  s = _firstWarning;
+  return s;
 }
 
 std::string Msg::GetFirstError()
 {
-  return _firstError;
+  std::string s;
+#pragma omp critical(MsgError)
+  s = _firstError;
+  return s;
 }
 
 std::string Msg::GetLastError()
 {
-  return _lastError;
+  std::string s;
+#pragma omp critical(MsgError)
+  s = _lastError;
+  return s;
 }
 
 void Msg::SetExecutableName(const std::string &name)
@@ -566,10 +576,10 @@ void Msg::Error(const char *fmt, ...)
 #if defined(HAVE_FLTK)
     if(FlGui::available()) return; // don't throw if GUI is running
 #endif
-    throw std::runtime_error(_lastError);
+    throw std::runtime_error(str);
   }
   else if(CTX::instance()->abortOnError == 3) {
-    throw std::runtime_error(_lastError);
+    throw std::runtime_error(str);
   }
   else if(CTX::instance()->abortOnError == 4) {
     Exit(1);
