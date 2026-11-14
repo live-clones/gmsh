@@ -681,35 +681,34 @@ double zipTolerance(const std::vector<std::array<double, 3> > &x,
       best = std::min(best, d2);
     });
     if(best >= 1e300) continue;
-    const double d = std::sqrt(best);
-    histogram[(int)std::floor(2. * std::log10(std::max(d, 1e-300)))]++;
+    // (nodes on another free edge counted a billionth of the free edges away)
+    const double d = std::max(std::sqrt(best), 1e-9 * median);
+    histogram[(int)std::floor(2. * std::log10(d))]++;
     counted++;
   }
   if(histogram.empty()) {
     if(why) *why = "no free edges near each other";
     return 0.;
   }
-  // the first peak and the main one, the emptiest bin between them
+  // the peaks of the cracks (much shorter than the free edges), the main
+  // peak after the last of them (the gaps between parts), the emptiest bin
+  // between the two
   const int lo = histogram.begin()->first, hi = histogram.rbegin()->first;
   auto count = [&](int b) {
     auto it = histogram.find(b);
     return it == histogram.end() ? 0 : it->second;
   };
-  const int significant = std::max(5, counted / 200);
-  int first = lo, main = lo;
-  for(int b = lo; b <= hi; b++) {
-    if(count(b) > count(main)) main = b;
-  }
-  for(int b = lo; b <= hi; b++)
-    if(count(b) >= significant && count(b) >= count(b - 1) &&
-       count(b) >= count(b + 1)) {
-      first = b;
-      break;
-    }
-  char text[256];
   auto edge = [](int b) { return std::pow(10., 0.5 * b); };
-  // (cracks: much shorter than the free edges)
-  if(edge(first + 1) > 0.01 * median) {
+  const int significant = std::max(5, counted / 200);
+  int lastCrack = lo - 1;
+  for(int b = lo; b <= hi && edge(b + 1) <= 0.01 * median; b++)
+    if(count(b) >= significant && count(b) >= count(b - 1) &&
+       count(b) >= count(b + 1))
+      lastCrack = b;
+  char text[256];
+  if(lastCrack < lo) {
+    int first = lo;
+    while(first < hi && !count(first)) first++;
     snprintf(text, sizeof(text),
              "no cracks: the nearest free edges are %g to %g away, the free "
              "edges %g long",
@@ -717,15 +716,21 @@ double zipTolerance(const std::vector<std::array<double, 3> > &x,
     if(why) *why = text;
     return 0.;
   }
-  int valley = first + 1;
-  if(main > first + 1) {
-    for(int b = first + 1; b < main; b++)
+  int main = lastCrack + 1;
+  for(int b = lastCrack + 1; b <= hi; b++)
+    if(count(b) > count(main)) main = b;
+  int valley = lastCrack + 1;
+  if(main > lastCrack + 1 && count(main) >= significant) {
+    for(int b = lastCrack + 1; b < main; b++)
       if(count(b) < count(valley)) valley = b;
   }
   else {
     // (only cracks: the first bin after them with few nodes)
-    while(valley <= hi && count(valley) > count(first) / 20) valley++;
+    while(valley <= hi && count(valley) > count(lastCrack) / 20) valley++;
+    main = lastCrack;
   }
+  int first = lo;
+  while(first < lastCrack && count(first) < significant) first++;
   const double tolerance = edge(valley + 1);
   snprintf(text, sizeof(text),
            "proposed %g: the cracks from %g, the gaps between parts around %g, "
