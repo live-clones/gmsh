@@ -2065,9 +2065,9 @@ export function wrap{2}(Module) {{
   const _P = wasm64 ? (p) => BigInt(p) : (p) => p;
   const _S = _P;
   const _N = (v) => typeof v === 'bigint' ? Number(v) : v;
-  const _getp = wasm64 ? (a) => Number(M.HEAPU64[a / 8]) : (a) => M.HEAPU32[a >>> 2];
+  const _getp = wasm64 ? (a) => Number(M.HEAPU64[a / 8]) : (a) => M.HEAPU32[a / 4];
   const _setp = wasm64 ? (a, v) => {{ M.HEAPU64[a / 8] = BigInt(v); }}
-                       : (a, v) => {{ M.HEAPU32[a >>> 2] = v; }};
+                       : (a, v) => {{ M.HEAPU32[a / 4] = v; }};
 
   // what the C API is given (freed after each call) and gives back (freed
   // with gmshFree once read); the memory views are read again every time, as
@@ -2183,7 +2183,7 @@ export function wrap{2}(Module) {{
     return v;
   }};
   const _check = () => {{
-    if(M.HEAP32[ierr >> 2])
+    if(M.HEAP32[ierr / 4])
       throw new Error({6}.logger.getLastError());
   }};
 
@@ -2914,9 +2914,9 @@ class API:
                 return ["const " + p + " = _ifun(" + n + ");"], ["_P(" + p + ")", "_P(0)"], None
             # outputs: slots for what the C function writes
             if k in ('oint', 'osize', 'odouble', 'ostring'):
-                ret = {'oint': "M.HEAP32[" + p + " >> 2]",
+                ret = {'oint': "M.HEAP32[" + p + " / 4]",
                        'osize': "_getp(" + p + ")",
-                       'odouble': "M.HEAPF64[" + p + " >> 3]",
+                       'odouble': "M.HEAPF64[" + p + " / 8]",
                        'ostring': "_ostring(" + p + ")"}[k]
                 return ["const " + p + " = _alloc(8, tmp);"], ["_P(" + p + ")"], ret
             if k in ('ovectorint', 'ovectorsize', 'ovectordouble'):
@@ -2971,7 +2971,7 @@ class API:
             self.fwrite(f, ind + "  " + ("const api_result_ = " if rtype else "") +
                         call + "\n")
             if name == "getLastError" and c_mpath == ns + "Logger":
-                self.fwrite(f, ind + "  if(M.HEAP32[ierr >> 2])\n" + ind +
+                self.fwrite(f, ind + "  if(M.HEAP32[ierr / 4])\n" + ind +
                             "    throw new Error('Could not get last error');\n")
             else:
                 self.fwrite(f, ind + "  _check();\n")

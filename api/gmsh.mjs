@@ -51,9 +51,9 @@ export function wrapGmsh(Module) {
   const _P = wasm64 ? (p) => BigInt(p) : (p) => p;
   const _S = _P;
   const _N = (v) => typeof v === 'bigint' ? Number(v) : v;
-  const _getp = wasm64 ? (a) => Number(M.HEAPU64[a / 8]) : (a) => M.HEAPU32[a >>> 2];
+  const _getp = wasm64 ? (a) => Number(M.HEAPU64[a / 8]) : (a) => M.HEAPU32[a / 4];
   const _setp = wasm64 ? (a, v) => { M.HEAPU64[a / 8] = BigInt(v); }
-                       : (a, v) => { M.HEAPU32[a >>> 2] = v; };
+                       : (a, v) => { M.HEAPU32[a / 4] = v; };
 
   // what the C API is given (freed after each call) and gives back (freed
   // with gmshFree once read); the memory views are read again every time, as
@@ -169,7 +169,7 @@ export function wrapGmsh(Module) {
     return v;
   };
   const _check = () => {
-    if(M.HEAP32[ierr >> 2])
+    if(M.HEAP32[ierr / 4])
       throw new Error(gmsh.logger.getLastError());
   };
 
@@ -348,7 +348,7 @@ export function wrapGmsh(Module) {
       const api_value_ = _alloc(8, tmp);
       M._gmshOptionGetNumber(_P(api_name_), _P(api_value_), _P(ierr));
       _check();
-      return M.HEAPF64[api_value_ >> 3];
+      return M.HEAPF64[api_value_ / 8];
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -444,10 +444,10 @@ export function wrapGmsh(Module) {
       M._gmshOptionGetColor(_P(api_name_), _P(api_r_), _P(api_g_), _P(api_b_), _P(api_a_), _P(ierr));
       _check();
       return [
-        M.HEAP32[api_r_ >> 2],
-        M.HEAP32[api_g_ >> 2],
-        M.HEAP32[api_b_ >> 2],
-        M.HEAP32[api_a_ >> 2]];
+        M.HEAP32[api_r_ / 4],
+        M.HEAP32[api_g_ / 4],
+        M.HEAP32[api_b_ / 4],
+        M.HEAP32[api_a_ / 4]];
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -1026,12 +1026,12 @@ export function wrapGmsh(Module) {
       M._gmshModelGetBoundingBox(dim, tag, _P(api_xmin_), _P(api_ymin_), _P(api_zmin_), _P(api_xmax_), _P(api_ymax_), _P(api_zmax_), _P(ierr));
       _check();
       return [
-        M.HEAPF64[api_xmin_ >> 3],
-        M.HEAPF64[api_ymin_ >> 3],
-        M.HEAPF64[api_zmin_ >> 3],
-        M.HEAPF64[api_xmax_ >> 3],
-        M.HEAPF64[api_ymax_ >> 3],
-        M.HEAPF64[api_zmax_ >> 3]];
+        M.HEAPF64[api_xmin_ / 8],
+        M.HEAPF64[api_ymin_ / 8],
+        M.HEAPF64[api_zmin_ / 8],
+        M.HEAPF64[api_xmax_ / 8],
+        M.HEAPF64[api_ymax_ / 8],
+        M.HEAPF64[api_zmax_ / 8]];
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -1189,8 +1189,8 @@ export function wrapGmsh(Module) {
       M._gmshModelGetParent(dim, tag, _P(api_parentDim_), _P(api_parentTag_), _P(ierr));
       _check();
       return [
-        M.HEAP32[api_parentDim_ >> 2],
-        M.HEAP32[api_parentTag_ >> 2]];
+        M.HEAP32[api_parentDim_ / 4],
+        M.HEAP32[api_parentTag_ / 4]];
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -1569,7 +1569,7 @@ export function wrapGmsh(Module) {
       const api_value_ = _alloc(8, tmp);
       M._gmshModelGetVisibility(dim, tag, _P(api_value_), _P(ierr));
       _check();
-      return M.HEAP32[api_value_ >> 2];
+      return M.HEAP32[api_value_ / 4];
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -1632,10 +1632,10 @@ export function wrapGmsh(Module) {
       M._gmshModelGetColor(dim, tag, _P(api_r_), _P(api_g_), _P(api_b_), _P(api_a_), _P(ierr));
       _check();
       return [
-        M.HEAP32[api_r_ >> 2],
-        M.HEAP32[api_g_ >> 2],
-        M.HEAP32[api_b_ >> 2],
-        M.HEAP32[api_a_ >> 2]];
+        M.HEAP32[api_r_ / 4],
+        M.HEAP32[api_g_ / 4],
+        M.HEAP32[api_b_ / 4],
+        M.HEAP32[api_a_ / 4]];
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -1898,7 +1898,7 @@ export function wrapGmsh(Module) {
       const api_parentTag_ = _alloc(8, tmp);
       M._gmshModelMeshGetBoundaryOverlapParent(dim, tag, _P(api_parentTag_), overlapIndex, _P(ierr));
       _check();
-      return M.HEAP32[api_parentTag_ >> 2];
+      return M.HEAP32[api_parentTag_ / 4];
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -1928,7 +1928,7 @@ export function wrapGmsh(Module) {
       const api_overlappedEntityTag_ = _alloc(8, tmp);
       M._gmshModelMeshGetOverlapOverlappedEntity(dim, overlapTag, _P(api_overlappedEntityTag_), overlapIndex, _P(ierr));
       _check();
-      return M.HEAP32[api_overlappedEntityTag_ >> 2];
+      return M.HEAP32[api_overlappedEntityTag_ / 4];
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -2277,8 +2277,8 @@ export function wrapGmsh(Module) {
       return [
         _ovector(api_coord_, 'double'),
         _ovector(api_parametricCoord_, 'double'),
-        M.HEAP32[api_dim_ >> 2],
-        M.HEAP32[api_tag_ >> 2]];
+        M.HEAP32[api_dim_ / 4],
+        M.HEAP32[api_tag_ / 4]];
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -2539,10 +2539,10 @@ export function wrapGmsh(Module) {
       M._gmshModelMeshGetElement(_S(elementTag), _P(api_elementType_), _P(api_nodeTags_), _P(api_nodeTags_ + _PS), _P(api_dim_), _P(api_tag_), _P(ierr));
       _check();
       return [
-        M.HEAP32[api_elementType_ >> 2],
+        M.HEAP32[api_elementType_ / 4],
         _ovector(api_nodeTags_, 'size'),
-        M.HEAP32[api_dim_ >> 2],
-        M.HEAP32[api_tag_ >> 2]];
+        M.HEAP32[api_dim_ / 4],
+        M.HEAP32[api_tag_ / 4]];
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -2575,11 +2575,11 @@ export function wrapGmsh(Module) {
       _check();
       return [
         _getp(api_elementTag_),
-        M.HEAP32[api_elementType_ >> 2],
+        M.HEAP32[api_elementType_ / 4],
         _ovector(api_nodeTags_, 'size'),
-        M.HEAPF64[api_u_ >> 3],
-        M.HEAPF64[api_v_ >> 3],
-        M.HEAPF64[api_w_ >> 3]];
+        M.HEAPF64[api_u_ / 8],
+        M.HEAPF64[api_v_ / 8],
+        M.HEAPF64[api_w_ / 8]];
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -2632,9 +2632,9 @@ export function wrapGmsh(Module) {
       M._gmshModelMeshGetLocalCoordinatesInElement(_S(elementTag), x, y, z, _P(api_u_), _P(api_v_), _P(api_w_), _P(ierr));
       _check();
       return [
-        M.HEAPF64[api_u_ >> 3],
-        M.HEAPF64[api_v_ >> 3],
-        M.HEAPF64[api_w_ >> 3]];
+        M.HEAPF64[api_u_ / 8],
+        M.HEAPF64[api_v_ / 8],
+        M.HEAPF64[api_w_ / 8]];
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -2712,11 +2712,11 @@ export function wrapGmsh(Module) {
       _check();
       return [
         _ostring(api_elementName_),
-        M.HEAP32[api_dim_ >> 2],
-        M.HEAP32[api_order_ >> 2],
-        M.HEAP32[api_numNodes_ >> 2],
+        M.HEAP32[api_dim_ / 4],
+        M.HEAP32[api_order_ / 4],
+        M.HEAP32[api_numNodes_ / 4],
         _ovector(api_localNodeCoord_, 'double'),
-        M.HEAP32[api_numPrimaryNodes_ >> 2]];
+        M.HEAP32[api_numPrimaryNodes_ / 4]];
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -3227,9 +3227,9 @@ export function wrapGmsh(Module) {
       M._gmshModelMeshGetBasisFunctions(elementType, _P(api_localCoord_), _S(api_localCoord_n), _P(api_functionSpaceType_), _P(api_numComponents_), _P(api_basisFunctions_), _P(api_basisFunctions_ + _PS), _P(api_numOrientations_), _P(api_wantedOrientations_), _S(api_wantedOrientations_n), _P(ierr));
       _check();
       return [
-        M.HEAP32[api_numComponents_ >> 2],
+        M.HEAP32[api_numComponents_ / 4],
         _ovector(api_basisFunctions_, 'double'),
-        M.HEAP32[api_numOrientations_ >> 2]];
+        M.HEAP32[api_numOrientations_ / 4]];
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -3284,7 +3284,7 @@ export function wrapGmsh(Module) {
       const api_basisFunctionsOrientation_ = _alloc(8, tmp);
       M._gmshModelMeshGetBasisFunctionsOrientationForElement(_S(elementTag), _P(api_functionSpaceType_), _P(api_basisFunctionsOrientation_), periodic ? 1 : 0, _P(ierr));
       _check();
-      return M.HEAP32[api_basisFunctionsOrientation_ >> 2];
+      return M.HEAP32[api_basisFunctionsOrientation_ / 4];
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -4370,7 +4370,7 @@ export function wrapGmsh(Module) {
       M._gmshModelMeshGetPeriodicNodes(dim, tag, _P(api_tagMaster_), _P(api_nodeTags_), _P(api_nodeTags_ + _PS), _P(api_nodeTagsMaster_), _P(api_nodeTagsMaster_ + _PS), _P(api_affineTransform_), _P(api_affineTransform_ + _PS), includeHighOrderNodes ? 1 : 0, _P(ierr));
       _check();
       return [
-        M.HEAP32[api_tagMaster_ >> 2],
+        M.HEAP32[api_tagMaster_ / 4],
         _ovector(api_nodeTags_, 'size'),
         _ovector(api_nodeTagsMaster_, 'size'),
         _ovector(api_affineTransform_, 'double')];
@@ -4411,7 +4411,7 @@ export function wrapGmsh(Module) {
       M._gmshModelMeshGetPeriodicKeys(elementType, _P(api_functionSpaceType_), tag, _P(api_tagMaster_), _P(api_typeKeys_), _P(api_typeKeys_ + _PS), _P(api_typeKeysMaster_), _P(api_typeKeysMaster_ + _PS), _P(api_entityKeys_), _P(api_entityKeys_ + _PS), _P(api_entityKeysMaster_), _P(api_entityKeysMaster_ + _PS), _P(api_coord_), _P(api_coord_ + _PS), _P(api_coordMaster_), _P(api_coordMaster_ + _PS), returnCoord ? 1 : 0, _P(ierr));
       _check();
       return [
-        M.HEAP32[api_tagMaster_ >> 2],
+        M.HEAP32[api_tagMaster_ / 4],
         _ovector(api_typeKeys_, 'int'),
         _ovector(api_typeKeysMaster_, 'int'),
         _ovector(api_entityKeys_, 'size'),
@@ -4836,7 +4836,7 @@ export function wrapGmsh(Module) {
       const api_value_ = _alloc(8, tmp);
       M._gmshModelMeshFieldGetNumber(tag, _P(api_option_), _P(api_value_), _P(ierr));
       _check();
-      return M.HEAPF64[api_value_ >> 3];
+      return M.HEAPF64[api_value_ / 8];
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -7036,13 +7036,13 @@ export function wrapGmsh(Module) {
       M._gmshModelOccGetDistance(dim1, tag1, dim2, tag2, _P(api_distance_), _P(api_x1_), _P(api_y1_), _P(api_z1_), _P(api_x2_), _P(api_y2_), _P(api_z2_), _P(ierr));
       _check();
       return [
-        M.HEAPF64[api_distance_ >> 3],
-        M.HEAPF64[api_x1_ >> 3],
-        M.HEAPF64[api_y1_ >> 3],
-        M.HEAPF64[api_z1_ >> 3],
-        M.HEAPF64[api_x2_ >> 3],
-        M.HEAPF64[api_y2_ >> 3],
-        M.HEAPF64[api_z2_ >> 3]];
+        M.HEAPF64[api_distance_ / 8],
+        M.HEAPF64[api_x1_ / 8],
+        M.HEAPF64[api_y1_ / 8],
+        M.HEAPF64[api_z1_ / 8],
+        M.HEAPF64[api_x2_ / 8],
+        M.HEAPF64[api_y2_ / 8],
+        M.HEAPF64[api_z2_ / 8]];
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -7548,12 +7548,12 @@ export function wrapGmsh(Module) {
       M._gmshModelOccGetBoundingBox(dim, tag, _P(api_xmin_), _P(api_ymin_), _P(api_zmin_), _P(api_xmax_), _P(api_ymax_), _P(api_zmax_), _P(ierr));
       _check();
       return [
-        M.HEAPF64[api_xmin_ >> 3],
-        M.HEAPF64[api_ymin_ >> 3],
-        M.HEAPF64[api_zmin_ >> 3],
-        M.HEAPF64[api_xmax_ >> 3],
-        M.HEAPF64[api_ymax_ >> 3],
-        M.HEAPF64[api_zmax_ >> 3]];
+        M.HEAPF64[api_xmin_ / 8],
+        M.HEAPF64[api_ymin_ / 8],
+        M.HEAPF64[api_zmin_ / 8],
+        M.HEAPF64[api_xmax_ / 8],
+        M.HEAPF64[api_ymax_ / 8],
+        M.HEAPF64[api_zmax_ / 8]];
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -7626,7 +7626,7 @@ export function wrapGmsh(Module) {
       const api_mass_ = _alloc(8, tmp);
       M._gmshModelOccGetMass(dim, tag, _P(api_mass_), _P(ierr));
       _check();
-      return M.HEAPF64[api_mass_ >> 3];
+      return M.HEAPF64[api_mass_ / 8];
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -7650,9 +7650,9 @@ export function wrapGmsh(Module) {
       M._gmshModelOccGetCenterOfMass(dim, tag, _P(api_x_), _P(api_y_), _P(api_z_), _P(ierr));
       _check();
       return [
-        M.HEAPF64[api_x_ >> 3],
-        M.HEAPF64[api_y_ >> 3],
-        M.HEAPF64[api_z_ >> 3]];
+        M.HEAPF64[api_x_ / 8],
+        M.HEAPF64[api_y_ / 8],
+        M.HEAPF64[api_z_ / 8]];
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -7922,8 +7922,8 @@ export function wrapGmsh(Module) {
         _ostring(api_dataType_),
         _ovector(api_tags_, 'size'),
         _ovectorvector(api_data_, 'double'),
-        M.HEAPF64[api_time_ >> 3],
-        M.HEAP32[api_numComponents_ >> 2]];
+        M.HEAPF64[api_time_ / 8],
+        M.HEAP32[api_numComponents_ / 4]];
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -7954,8 +7954,8 @@ export function wrapGmsh(Module) {
         _ostring(api_dataType_),
         _ovector(api_tags_, 'size'),
         _ovector(api_data_, 'double'),
-        M.HEAPF64[api_time_ >> 3],
-        M.HEAP32[api_numComponents_ >> 2]];
+        M.HEAPF64[api_time_ / 8],
+        M.HEAP32[api_numComponents_ / 4]];
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -8182,7 +8182,7 @@ export function wrapGmsh(Module) {
       _check();
       return [
         _ovector(api_values_, 'double'),
-        M.HEAPF64[api_distance_ >> 3]];
+        M.HEAPF64[api_distance_ / 8]];
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -8260,7 +8260,7 @@ export function wrapGmsh(Module) {
       const api_value_ = _alloc(8, tmp);
       M._gmshViewOptionGetNumber(tag, _P(api_name_), _P(api_value_), _P(ierr));
       _check();
-      return M.HEAPF64[api_value_ >> 3];
+      return M.HEAPF64[api_value_ / 8];
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -8345,10 +8345,10 @@ export function wrapGmsh(Module) {
       M._gmshViewOptionGetColor(tag, _P(api_name_), _P(api_r_), _P(api_g_), _P(api_b_), _P(api_a_), _P(ierr));
       _check();
       return [
-        M.HEAP32[api_r_ >> 2],
-        M.HEAP32[api_g_ >> 2],
-        M.HEAP32[api_b_ >> 2],
-        M.HEAP32[api_a_ >> 2]];
+        M.HEAP32[api_r_ / 4],
+        M.HEAP32[api_g_ / 4],
+        M.HEAP32[api_b_ / 4],
+        M.HEAP32[api_a_ / 4]];
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -9477,7 +9477,7 @@ export function wrapGmsh(Module) {
     try {
       const api_message_ = _alloc(8, tmp);
       M._gmshLoggerGetLastError(_P(api_message_), _P(ierr));
-      if(M.HEAP32[ierr >> 2])
+      if(M.HEAP32[ierr / 4])
         throw new Error('Could not get last error');
       return _ostring(api_message_);
     }
