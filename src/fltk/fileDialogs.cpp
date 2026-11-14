@@ -426,6 +426,24 @@ int latexFileDialog(const char *name)
 
 // Save movie (mpeg or mp4) dialog
 
+// not modal, so that the scene can be used between previews; FLTK closes only
+// modal windows on Escape, and offers it to the other windows too: Escape in
+// this one, and only in this one, cancels it
+class movieWindow : public Fl_Double_Window {
+public:
+  Fl_Button *cancel = nullptr;
+  movieWindow(int w, int h, const char *l) : Fl_Double_Window(w, h, l) {}
+  int handle(int event)
+  {
+    if(event == FL_SHORTCUT && Fl::event_key() == FL_Escape &&
+       Fl::first_window() == this && cancel && cancel->active_r()) {
+      cancel->do_callback();
+      return 1;
+    }
+    return Fl_Double_Window::handle(event);
+  }
+};
+
 int mpegFileDialog(const char *name, int format)
 {
   struct _mpegFileDialog {
@@ -444,7 +462,8 @@ int mpegFileDialog(const char *name, int format)
     dialog = new _mpegFileDialog;
     int h = 4 * WB + 11 * BH, w = 3 * BB + 4 * WB, y = WB;
     int ww = w - 2 * WB;
-    dialog->window = new Fl_Double_Window(w, h, "Movie Options");
+    movieWindow *window = new movieWindow(w, h, "Movie Options");
+    dialog->window = window;
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->window->set_non_modal();
     {
@@ -519,6 +538,7 @@ int mpegFileDialog(const char *name, int format)
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->preview = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Preview");
     dialog->cancel = new Fl_Button(3 * WB + 2 * BB, y + WB, BB, BH, "Cancel");
+    window->cancel = dialog->cancel;
     dialog->buttons->end();
 
     dialog->window->end();
