@@ -104,10 +104,28 @@ public:
     std::vector<int> free, open, closed, merged, inserted, refused;
     std::vector<ReportItem> items;
   };
+  // how the faces recognize finds on analytic surfaces change with its
+  // tolerance: the tolerance used, the one proposed (0 if none), the precision
+  // of the coordinates, the largest distance of the surfaces fitted kept; the
+  // distances of the nearest surfaces fitted to the classified faces, the
+  // number of faces by half decade b (from 10^(b/2) to 10^((b+1)/2)) from the
+  // half decade first; for each classified face, the distances of the plane,
+  // sphere, cylinder, cone and torus fitted to it (by type, 1 to 5: see
+  // simplestSurface), the rounding of its coordinates, and its triangles (an
+  // item, the face of each one as value)
+  struct Fit {
+    double tolerance = 0., proposed = 0., precision = 0., reach = 0.;
+    int first = 0;
+    std::vector<int> counts;
+    std::vector<std::array<double, 6> > deviations;
+    std::vector<double> rounding;
+    ReportItem faces;
+  };
   struct Report {
     std::string text;
     std::vector<ReportItem> items;
     Zip zip;
+    Fit fit;
   };
   // an orthonormal frame: origin o and axes e[0], e[1], e[2]
   struct Frame {
@@ -221,7 +239,8 @@ private:
   bool _build(std::vector<std::array<int, 3> > &tri, std::vector<int> &label,
               const std::set<std::pair<int, int> > &barrier, double angle,
               double curveAngle, double tolerance, bool recognize,
-              std::vector<std::pair<int, int> > &outDimTags);
+              std::vector<std::pair<int, int> > &outDimTags,
+              Fit *fit = nullptr);
   // the triangles of the surfaces of a mesh file, each surface a piece (see
   // importShapes)
   bool _readTriangulations(const std::string &fileName,

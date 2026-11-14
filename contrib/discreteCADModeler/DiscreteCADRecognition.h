@@ -96,11 +96,22 @@ struct DiscreteCADAnalyticMap {
 // the simplest analytic surface (a plane, a sphere, a cylinder, a cone or a
 // torus) whose distance to the nodes x of a triangulation is at most
 // tolerance, the normals of its triangles making an angle smaller than angle
-// with its normals at their centroids (type NONE if there is none)
+// with its normals at their centroids (type NONE if there is none); with the
+// distances of the surfaces of each type fitted to them in deviations (by
+// type, infinite for those farther than reach, or not fitted: when one is
+// on the nodes up to the rounding of their coordinates, the others are not)
 DiscreteCADAnalyticSurface
 recognizeSurface(const std::vector<std::array<double, 3> > &x,
                  const std::vector<std::array<int, 3> > &triangles,
-                 double tolerance, double angle);
+                 double tolerance, double angle, double reach = 0.,
+                 std::array<double, 6> *deviations = nullptr);
+
+// the type of the surface recognizeSurface chooses within tolerance from
+// the distances of the surfaces of each type fitted (see recognizeSurface):
+// the simplest one at most twice as far as the nearest one (rounding apart)
+DiscreteCADAnalyticSurface::Type
+simplestSurface(const std::array<double, 6> &deviations, double tolerance,
+                double rounding);
 
 // the angle between the sheets of a triangulation along its edges shared by
 // two triangles (edges: their nodes and their two triangles, consistently

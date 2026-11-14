@@ -17,6 +17,7 @@
 #include <atomic>
 #include <cmath>
 #include <functional>
+#include <limits>
 #include <map>
 #include <queue>
 #include <set>
@@ -851,9 +852,12 @@ void DiscreteCADAnalyticMap::setReference(
 DiscreteCADAnalyticSurface
 recognizeSurface(const std::vector<std::array<double, 3> > &x,
                  const std::vector<std::array<int, 3> > &triangles,
-                 double tolerance, double angle)
+                 double tolerance, double angle, double reach,
+                 std::array<double, 6> *deviations)
 {
   typedef DiscreteCADAnalyticSurface Analytic;
+  if(deviations) deviations->fill(std::numeric_limits<double>::infinity());
+  reach = std::max(reach, tolerance);
   const std::size_t n = x.size(), nt = triangles.size();
   if(n < 3 || !nt) return Analytic();
 
@@ -908,9 +912,11 @@ recognizeSurface(const std::vector<std::array<double, 3> > &x,
   const double rounding = 1.e-12 * size;
   auto choice = [&]() {
     double nearest = 1e300;
-    for(auto &c : candidates) nearest = std::min(nearest, c.second);
     for(auto &c : candidates)
-      if(c.second <= 2. * nearest + rounding) return c.first;
+      if(c.second <= tolerance) nearest = std::min(nearest, c.second);
+    for(auto &c : candidates)
+      if(c.second <= tolerance && c.second <= 2. * nearest + rounding)
+        return c.first;
     return Analytic();
   };
   const double cosAngle = std::cos(angle);
@@ -923,7 +929,7 @@ recognizeSurface(const std::vector<std::array<double, 3> > &x,
     double deviation = 0.;
     for(std::size_t i = 0; i < n; i++) {
       const double d = std::abs(s.distance(x[i].data()));
-      if(!(d <= tolerance)) return false;
+      if(!(d <= reach)) return false;
       deviation = std::max(deviation, d);
     }
     int side = 0;
@@ -939,6 +945,8 @@ recognizeSurface(const std::vector<std::array<double, 3> > &x,
       side = sd;
     }
     candidates.push_back({s, deviation});
+    if(deviations)
+      (*deviations)[s.type] = std::min((*deviations)[s.type], deviation);
     return deviation <= rounding;
   };
 
@@ -962,7 +970,7 @@ recognizeSurface(const std::vector<std::array<double, 3> > &x,
 
   // (the others only if the nodes can be within the tolerance of a Darboux
   // cyclide, as spheres, cylinders, cones and tori are)
-  if(!nearCyclide(y, sample, scaledTolerance)) return choice();
+  if(!nearCyclide(y, sample, reach / size)) return choice();
 
   // a sphere: the algebraic fit |y|^2 + d.y + e = 0, then the geometric one
   if(n >= 10) {
@@ -1200,6 +1208,19 @@ recognizeSurface(const std::vector<std::array<double, 3> > &x,
     }
   }
   return choice();
+}
+
+DiscreteCADAnalyticSurface::Type
+simplestSurface(const std::array<double, 6> &deviations, double tolerance,
+                double rounding)
+{
+  double nearest = 1e300;
+  for(int t = 1; t < 6; t++)
+    if(deviations[t] <= tolerance) nearest = std::min(nearest, deviations[t]);
+  for(int t = 1; t < 6; t++)
+    if(deviations[t] <= tolerance && deviations[t] <= 2. * nearest + rounding)
+      return (DiscreteCADAnalyticSurface::Type)t;
+  return DiscreteCADAnalyticSurface::NONE;
 }
 
 void sheetAngles(const std::vector<std::array<double, 3> > &x,

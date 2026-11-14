@@ -92,7 +92,8 @@ namespace {
     std::string text;
     std::vector<DiscreteCAD_Internals::ReportItem> items;
     DiscreteCAD_Internals::Zip zip;
-    ~stepReport() { reports.push_back({text, items, zip}); }
+    DiscreteCAD_Internals::Fit fit;
+    ~stepReport() { reports.push_back({text, items, zip, fit}); }
     // an item: the triangles (dim 2), the edges (1) or the nodes (0) given
     // by their nodes, if there are some, with their values (1 if none)
     void add(const std::string &label, int dim, const std::vector<int> &nodes,
@@ -117,6 +118,72 @@ namespace {
   {
     return std::to_string(n) + " " + (n == 1 ? one : many);
   }
+
+  // a tolerance for recognize, in fit.proposed: in the distribution of the
+  // distances of the nearest surfaces fitted to the classified faces (by half
+  // decades, in fit; those nearer than twice the precision of the coordinates
+  // counted there), the middle of the highest run of half decades with few
+  // faces (fewer than 3, or than one in 200) between two with more: between
+  // the faces on analytic surfaces, up to the rounding of their coordinates
+  // or to the tolerance of the modeler that made them, and those only near
+  // such surfaces (free form surfaces near a sphere, a cone...); 0 if there
+  // is none. What it is made of
+  std::string fitTolerance(DiscreteCAD_Internals::Fit &fit)
+  {
+    const double floor = std::max(2. * fit.precision, 1.e-300);
+    std::vector<int> bins;
+    for(auto &dv : fit.deviations) {
+      double m = 1e300;
+      for(int t = 1; t < 6; t++) m = std::min(m, dv[t]);
+      if(m <= fit.reach)
+        bins.push_back((int)std::floor(2. * std::log10(std::max(m, floor))));
+    }
+    fit.proposed = 0.;
+    fit.counts.clear();
+    char text[256];
+    if(bins.empty()) {
+      snprintf(text, sizeof(text),
+               "no tolerance proposed: no face within %g of a plane, a sphere, "
+               "a cylinder, a cone or a torus",
+               fit.reach);
+      return text;
+    }
+    fit.first = *std::min_element(bins.begin(), bins.end());
+    for(int b : bins) {
+      const std::size_t i = (std::size_t)(b - fit.first);
+      if(fit.counts.size() <= i) fit.counts.resize(i + 1, 0);
+      fit.counts[i]++;
+    }
+    auto edge = [&](int i) { return std::pow(10., 0.5 * (fit.first + i)); };
+    const int few = std::max(3, (int)bins.size() / 200);
+    const int nb = (int)fit.counts.size();
+    // (the highest run, from its first half decade to the one after its last)
+    int from = -1, to = -1;
+    for(int i = 0, last = -1; i < nb; i++) {
+      if(fit.counts[i] < few) continue;
+      if(last >= 0 && i - last > 1) {
+        from = last + 1;
+        to = i;
+      }
+      last = i;
+    }
+    if(from < 0) {
+      snprintf(text, sizeof(text),
+               "no tolerance proposed: the faces from %g to %g away from "
+               "their nearest surfaces, without a gap",
+               edge(0), edge(nb));
+      return text;
+    }
+    int below = 0, above = 0;
+    for(int i = 0; i < nb; i++) (i < to ? below : above) += fit.counts[i];
+    fit.proposed = std::pow(10., 0.25 * (2 * fit.first + from + to));
+    snprintf(text, sizeof(text),
+             "proposed %g: %d faces within %g of their nearest surfaces, %d "
+             "others from %g (the coordinates within %g)",
+             fit.proposed, below, edge(from), above, edge(to), fit.precision);
+    return text;
+  }
+
 
   // A triangulation cut open into a disk, the triangles of the copies of its
   // nodes (and the node of each copy in nodeOfCopy): the corners of a node
@@ -2444,7 +2511,7 @@ bool DiscreteCAD_Internals::_build(
   std::vector<std::array<int, 3> > &tri, std::vector<int> &label,
   const std::set<std::pair<int, int> > &barrier, double angle,
   double curveAngle, double tolerance, bool recognize,
-  std::vector<std::pair<int, int> > &outDimTags)
+  std::vector<std::pair<int, int> > &outDimTags, Fit *fit)
 {
   const std::size_t nt = tri.size();
   const std::set<std::pair<int, int> > &sharp = barrier;
@@ -2463,8 +2530,11 @@ bool DiscreteCAD_Internals::_build(
   // on none, of their pieces (see segmentSurface), with the parameters of the
   // primitives (a sphere or a torus split in two halves if needed, the apex of
   // a cone inside its surface an embedded vertex)
+  // (the distances of the surfaces fitted to the surfaces kept up to ten
+  // times the tolerance, or the default one, for the report)
   std::string given = "given";
-  if(recognize && tolerance <= 0.) {
+  double reach = 0.;
+  if(recognize) {
     double lo[3] = {1e300, 1e300, 1e300}, hi[3] = {-1e300, -1e300, -1e300};
     for(auto &t : tri)
       for(int n : t)
@@ -2475,11 +2545,15 @@ bool DiscreteCAD_Internals::_build(
     const double size = std::sqrt((hi[0] - lo[0]) * (hi[0] - lo[0]) +
                                   (hi[1] - lo[1]) * (hi[1] - lo[1]) +
                                   (hi[2] - lo[2]) * (hi[2] - lo[2]));
-    tolerance = CTX::instance()->geom.discreteTolerance * size;
-    char g[128];
-    snprintf(g, sizeof(g), "Geometry.DiscreteTolerance %g times the size %g",
-             CTX::instance()->geom.discreteTolerance, size);
-    given = g;
+    const double byDefault = CTX::instance()->geom.discreteTolerance * size;
+    if(tolerance <= 0.) {
+      tolerance = byDefault;
+      char g[128];
+      snprintf(g, sizeof(g), "Geometry.DiscreteTolerance %g times the size %g",
+               CTX::instance()->geom.discreteTolerance, size);
+      given = g;
+    }
+    reach = 10. * std::max(tolerance, byDefault);
   }
   std::vector<std::array<std::array<double, 2>, 3> > uv(nt);
   std::vector<char> hasUV(nt, 0);
@@ -2494,6 +2568,13 @@ bool DiscreteCAD_Internals::_build(
     std::vector<std::array<double, 3> > x;
     for(int n : used) x.push_back(_nodes[n]);
     precision = coordinatePrecision(x);
+    if(fit) {
+      fit->tolerance = tolerance;
+      fit->precision = precision;
+      fit->reach = reach;
+      fit->faces.label = "classified faces";
+      fit->faces.dim = 2;
+    }
   }
   if(recognize) {
     std::map<int, std::vector<std::size_t> > trianglesOf;
@@ -2527,8 +2608,28 @@ bool DiscreteCAD_Internals::_build(
       localTriangles(tl.second, x, lt, global);
       std::vector<int> pieceOf;
       std::vector<DiscreteCADAnalyticSurface> analytic;
+      std::array<double, 6> deviations;
       const DiscreteCADAnalyticSurface as =
-        recognizeSurface(x, lt, tolerance, angle);
+        recognizeSurface(x, lt, tolerance, angle, reach, &deviations);
+      if(fit) {
+        // (as recognizeSurface rounds)
+        double lo[3] = {1e300, 1e300, 1e300}, hi[3] = {-1e300, -1e300, -1e300};
+        for(auto &p : x)
+          for(int k = 0; k < 3; k++) {
+            lo[k] = std::min(lo[k], p[k]);
+            hi[k] = std::max(hi[k], p[k]);
+          }
+        double d = 0.;
+        for(int k = 0; k < 3; k++) d += (hi[k] - lo[k]) * (hi[k] - lo[k]);
+        const double face = (double)fit->deviations.size();
+        fit->deviations.push_back(deviations);
+        fit->rounding.push_back(1.e-12 * std::sqrt(d) / 2.);
+        for(std::size_t i : tl.second) {
+          fit->faces.nodes.insert(fit->faces.nodes.end(), tri[i].begin(),
+                                  tri[i].end());
+          fit->faces.values.push_back(face);
+        }
+      }
       if(as.type != DiscreteCADAnalyticSurface::NONE) {
         pieceOf.assign(lt.size(), 0);
         analytic.push_back(as);
@@ -3359,8 +3460,9 @@ bool DiscreteCAD_Internals::recognize(
   for(auto &s : _surfaces) before.insert(s.first);
   for(auto &v : _volumes) beforeVolumes.insert(v.first);
   if(!_build(tri, label, barrier, angle, curveAngle, tolerance, true,
-             outDimTags))
+             outDimTags, &report.fit))
     return false;
+  const std::string proposed = fitTolerance(report.fit);
 
   // (the tags kept)
   std::map<int, int> renamed;
@@ -3420,7 +3522,7 @@ bool DiscreteCAD_Internals::recognize(
                 " built again: " + std::to_string(faces[1] + faces[2] + faces[3] +
                                                   faces[4] + faces[5]) +
                 " faces made exact, " + std::to_string(faces[0]) +
-                " left as triangulated";
+                " left as triangulated\n" + proposed;
   static const char *kinds[6][2] = {{"free form surface", "free form surfaces"},
                                     {"plane", "planes"},
                                     {"sphere", "spheres"},
