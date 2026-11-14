@@ -1155,6 +1155,20 @@ static void Mesh3D(GModel *m)
                  CTX::instance()->mesh.timer[2], t2 - t1);
 }
 
+// A 3D mesh would keep nodes that a change of the 2D mesh deletes (a
+// recombination, a quad topology optimization), and would not match the new 2D
+// mesh: it is deleted, as when meshing in 2D again
+static void deleteVolumeMeshBefore(GModel *m, const char *what)
+{
+  for(auto it = m->firstRegion(); it != m->lastRegion(); ++it) {
+    if((*it)->getNumMeshElements()) {
+      Msg::Warning("Deleting the 3D mesh, which %s would invalidate", what);
+      std::for_each(m->firstRegion(), m->lastRegion(), deMeshGRegion());
+      return;
+    }
+  }
+}
+
 void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter,
                   double quality)
 {
@@ -1283,6 +1297,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter,
     }
   }
   else if(how == "QuadCavityRemeshing") {
+    deleteVolumeMeshBefore(m, "optimizing the quad topology");
     for(GFace *gf : m->getFaces()) {
       if(gf->meshStatistics.status == GFace::DONE) {
         gf->meshStatistics.status = GFace::PENDING;
@@ -1297,6 +1312,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter,
     }
   }
   else if(how == "QuadQuasiStructured") {
+    deleteVolumeMeshBefore(m, "optimizing the quad topology");
     // The following methods only act on faces whose status is PENDING
     for(GFace *gf : m->getFaces()) {
       if(gf->meshStatistics.status == GFace::DONE) {
@@ -1381,16 +1397,7 @@ void RecombineMesh(GModel *m)
   Msg::StatusBar(true, "Recombining 2D mesh...");
   double t1 = Cpu(), w1 = TimeOfDay();
 
-  // a 3D mesh would keep nodes the recombination deletes, and would not match
-  // the new 2D mesh: deleted, as when meshing in 2D again
-  for(auto it = m->firstRegion(); it != m->lastRegion(); ++it) {
-    if((*it)->getNumMeshElements()) {
-      Msg::Warning("Deleting the 3D mesh, which recombining the 2D mesh would "
-                   "invalidate");
-      std::for_each(m->firstRegion(), m->lastRegion(), deMeshGRegion());
-      break;
-    }
-  }
+  deleteVolumeMeshBefore(m, "recombining the 2D mesh");
 
   for(auto it = m->firstFace(); it != m->lastFace(); ++it) {
     GFace *gf = *it;
