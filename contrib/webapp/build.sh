@@ -19,12 +19,17 @@
 # library and its JavaScript API with the WebGL drawing, with OpenCASCADE, and with GetDP run in-process as the ONELAB solver
 # (onelab.html). The dependencies (OpenCASCADE, and PETSc and SLEPc with
 # SuiteSparse and f2c BLAS/LAPACK for GetDP, all without Fortran or MPI) are
-# downloaded and built once, in ./build/deps.
+# downloaded and built once, in ./build/deps, in a directory per version (a
+# new version is built next to the old one).
 #
-# Usage: ./build.sh [--no-occ] [--no-getdp] [extra cmake options for Gmsh]
+# Usage: ./build.sh [--wasm64] [--no-occ] [--no-getdp] [extra cmake options for Gmsh]
+# --wasm64: 64-bit WebAssembly (Memory64: up to 16 GB, for the browsers that
+#           support it), built in ./build64 with its own dependencies
 # EMSDK: where emsdk is installed (default: ~/src/emsdk)
 # GETDP: the GetDP sources (default: getdp next to the Gmsh sources)
-# BUILD: the build directory (default: ./build)
+# OCCT_SRC: an OpenCASCADE git checkout to build from (its HEAD, extracted
+#           with git archive), instead of downloading release $OCCT_VERSION
+# BUILD: the build directory (default: ./build, or ./build64 with --wasm64)
 #
 # Testing:
 #   python3 -m http.server 8000 --bind 127.0.0.1 --directory ~/src/gmsh
@@ -37,17 +42,19 @@ EMSDK=${EMSDK:-$HOME/src/emsdk}
 GETDP=${GETDP:-$SRC/../getdp}
 JOBS=${JOBS:-$(sysctl -n hw.ncpu 2>/dev/null || nproc)}
 OCCT_VERSION=8_0_1
-PETSC_VERSION=3.25.1
-SUITESPARSE_VERSION=7.12.2
-SLEPC_VERSION=3.25.0
+PETSC_VERSION=3.26.1
+SUITESPARSE_VERSION=7.14.1
+SLEPC_VERSION=3.26.1
 
 OCC=1
 WITH_GETDP=1
-while [[ "$1" == --no-* ]]; do
+WASM64=0
+while [[ "$1" == --* ]]; do
   case "$1" in
     --no-occ) OCC=0 ;;
     --no-getdp) WITH_GETDP=0 ;;
-    *) echo "Usage: $0 [--no-occ] [--no-getdp] [cmake options]"; exit 1 ;;
+    --wasm64) WASM64=1 ;;
+    *) echo "Usage: $0 [--wasm64] [--no-occ] [--no-getdp] [cmake options]"; exit 1 ;;
   esac
   shift
 done
@@ -72,12 +79,22 @@ echo "Using $(emcc --version | head -1)"
 # which cannot work with Emscripten
 unset FC F77 F90
 
-B=${BUILD:-$HERE/build}
+if [ $WASM64 == 1 ]; then
+  B=${BUILD:-$HERE/build64}
+else
+  B=${BUILD:-$HERE/build}
+fi
 DEPS="$B/deps"
 mkdir -p "$DEPS/src"
 # C++ exceptions caught (Gmsh, GetDP and OpenCASCADE report errors through
-# them), with the native exception handling of WebAssembly
+# them), with the native exception handling of WebAssembly; and the 64-bit
+# memory for every library with --wasm64 (the flag goes wherever EXC goes)
 EXC="-fwasm-exceptions"
+if [ $WASM64 == 1 ]; then
+  # (-m64 rather than Emscripten's deprecated -sMEMORY64=1: PETSc passes it on
+  # to all the files of the packages it builds, -sMEMORY64 only to some)
+  EXC="$EXC -m64"
+fi
 # the Emscripten toolchain only looks for packages in its own sysroot
 FIND="-DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=BOTH -DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=BOTH"
 
@@ -93,17 +110,30 @@ download() # url, directory it extracts to
 # without the conversion of signals to exceptions (there are no signals), as
 # its setjmp next to C++ exceptions makes code that Binaryen cannot read
 NOSIG="-UOCC_CONVERT_SIGNALS"
-if [ $OCC == 1 -a ! -f "$DEPS/occt/lib/libTKernel.a" ]; then
-  download https://github.com/Open-Cascade-SAS/OCCT/archive/refs/tags/V$OCCT_VERSION.tar.gz \
-    OCCT-$OCCT_VERSION
-  mkdir -p "$DEPS/build/occt" && cd "$DEPS/build/occt"
-  emcmake cmake "$DEPS/src/OCCT-$OCCT_VERSION" -DCMAKE_BUILD_TYPE=Release \
+if [ -n "$OCCT_SRC" ]; then
+  OCCT_ID=git-$(git -C "$OCCT_SRC" rev-parse --short HEAD)
+else
+  OCCT_ID=$OCCT_VERSION
+fi
+OCCT="$DEPS/occt-$OCCT_ID"
+if [ $OCC == 1 -a ! -f "$OCCT/lib/libTKernel.a" ]; then
+  if [ -n "$OCCT_SRC" ]; then
+    if [ ! -d "$DEPS/src/OCCT-$OCCT_ID" ]; then
+      mkdir -p "$DEPS/src/OCCT-$OCCT_ID"
+      git -C "$OCCT_SRC" archive HEAD | tar -x -C "$DEPS/src/OCCT-$OCCT_ID"
+    fi
+  else
+    download https://github.com/Open-Cascade-SAS/OCCT/archive/refs/tags/V$OCCT_VERSION.tar.gz \
+      OCCT-$OCCT_VERSION
+  fi
+  mkdir -p "$DEPS/build/occt-$OCCT_ID" && cd "$DEPS/build/occt-$OCCT_ID"
+  emcmake cmake "$DEPS/src/OCCT-$OCCT_ID" -DCMAKE_BUILD_TYPE=Release \
     -DBUILD_LIBRARY_TYPE=Static -DBUILD_RELEASE_DISABLE_EXCEPTIONS=0 \
     -DUSE_OPENGL=0 -DUSE_GLES2=0 -DUSE_FREETYPE=0 -DUSE_TK=0 -DUSE_XLIB=0 \
     -DBUILD_MODULE_Draw=0 -DBUILD_MODULE_Visualization=0 \
     -DBUILD_MODULE_ApplicationFramework=0 -DBUILD_DOC_Overview=0 \
     -DCMAKE_C_FLAGS="$EXC $NOSIG" -DCMAKE_CXX_FLAGS="$EXC $NOSIG" \
-    -DCMAKE_INSTALL_PREFIX="$DEPS/occt"
+    -DCMAKE_INSTALL_PREFIX="$OCCT"
   emmake make -j$JOBS
   emmake make install
 fi
@@ -112,22 +142,23 @@ fi
 # SuiteSparse (UMFPACK is GetDP's default direct solver when MUMPS is absent)
 # and SLEPc (eigenvalue problems); complex arithmetic, which GetDP's frequency
 # domain and eigenvalue models need (real problems are solved as complex ones)
-if [ $WITH_GETDP == 1 -a ! -f "$DEPS/petsc/lib/libslepc.a" ]; then
+PETSC="$DEPS/petsc-$PETSC_VERSION"
+if [ $WITH_GETDP == 1 -a ! -f "$PETSC/lib/libslepc.a" ]; then
   download https://web.cels.anl.gov/projects/petsc/download/release-snapshots/petsc-$PETSC_VERSION.tar.gz \
     petsc-$PETSC_VERSION
   cd "$DEPS/src/petsc-$PETSC_VERSION"
   export PETSC_DIR=$PWD PETSC_ARCH=arch-wasm
-  python3 ./configure --prefix="$DEPS/petsc" \
+  python3 ./configure --prefix="$PETSC" \
     --with-cc=emcc --with-cxx=em++ --with-fc=0 --with-ranlib=emranlib \
     --with-ar=emar --with-shared-libraries=0 --with-mpi=0 --with-batch \
-    --with-debugging=0 --COPTFLAGS=-O2 --CXXOPTFLAGS=-O2 \
-    --CFLAGS="$EXC" --CXXFLAGS="$EXC" --with-x=0 --with-ssl=0 \
+    --with-debugging=0 --COPTFLAGS="-O2 $EXC" --CXXOPTFLAGS="-O2 $EXC" \
+    --CFLAGS="$EXC" --CXXFLAGS="$EXC" --LDFLAGS="$EXC" --with-x=0 --with-ssl=0 \
     --with-pthread=0 --with-openmp=0 --with-scalar-type=complex \
     --known-sdot-returns-double=0 --known-snrm2-returns-double=0 \
     --download-f2cblaslapack=1 \
     --download-suitesparse=https://github.com/DrTimothyAldenDavis/SuiteSparse/archive/v$SUITESPARSE_VERSION.tar.gz \
     --download-slepc=https://gitlab.com/slepc/slepc/-/archive/v$SLEPC_VERSION/slepc-v$SLEPC_VERSION.tar.gz \
-    --download-suitesparse-cmake-arguments="-DCMAKE_TOOLCHAIN_FILE=$EMSDK/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake -DSUITESPARSE_USE_FORTRAN=OFF"
+    --download-suitesparse-cmake-arguments="-DCMAKE_TOOLCHAIN_FILE=$EMSDK/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake -DSUITESPARSE_USE_FORTRAN=OFF -DCMAKE_C_FLAGS='$EXC' -DCMAKE_CXX_FLAGS='$EXC'"
   # Emscripten's sys/procfs.h does not compile on its own, but configure only
   # preprocesses it
   sed -i.bak 's|^#define PETSC_HAVE_SYS_PROCFS_H 1|/* #undef PETSC_HAVE_SYS_PROCFS_H */|' \
@@ -142,15 +173,22 @@ if [ $WITH_GETDP == 1 -a ! -f "$DEPS/petsc/lib/libslepc.a" ]; then
 fi
 
 # zlib (for compressed files and zip archives), from Emscripten's ports
-embuilder build zlib > /dev/null
+if [ $WASM64 == 1 ]; then
+  embuilder build zlib --wasm64 > /dev/null
+else
+  embuilder build zlib > /dev/null
+fi
 
 # Gmsh
 GMSH_OPTIONS="-DENABLE_FLTK=0 -DENABLE_GRAPHICS=1 -DENABLE_OPENMP=0"
 GMSH_OPTIONS="$GMSH_OPTIONS -DENABLE_BUILD_DYNAMIC=0 -DENABLE_FFMPEG=0"
 GMSH_OPTIONS="$GMSH_OPTIONS -DENABLE_ZIPPER=1 -DENABLE_PRIVATE_API=1"
 if [ $OCC == 1 ]; then
-  export CASROOT="$DEPS/occt"
+  export CASROOT="$OCCT"
+  # (the headers given, as a cache of an earlier build keeps those of the
+  # OpenCASCADE it was configured with)
   GMSH_OPTIONS="$GMSH_OPTIONS -DENABLE_OCC=1 -DENABLE_OCC_CAF=0"
+  GMSH_OPTIONS="$GMSH_OPTIONS -DOCC_INC=$OCCT/include/opencascade"
 else
   GMSH_OPTIONS="$GMSH_OPTIONS -DENABLE_OCC=0"
 fi
@@ -172,7 +210,7 @@ if [ $WITH_GETDP == 1 ]; then
   LIBS="$B/getdp/libgetdp.a"
   for l in slepc petsc spqr umfpack klu cholmod amd colamd ccolamd camd btf \
            suitesparseconfig f2clapack f2cblas; do
-    LIBS="$LIBS;$DEPS/petsc/lib/lib$l.a"
+    LIBS="$LIBS;$PETSC/lib/lib$l.a"
   done
   gmsh_cmake -DWEBAPP_GETDP_INC="$GETDP/src/kernel" -DWEBAPP_GETDP_LIBS="$LIBS" "$@"
 else
@@ -183,7 +221,7 @@ fi
 if [ $WITH_GETDP == 1 ]; then
   emmake make get_headers > /dev/null
   mkdir -p "$B/getdp" && cd "$B/getdp"
-  PETSC_DIR="$DEPS/petsc" PETSC_ARCH= SLEPC_DIR="$DEPS/petsc" \
+  PETSC_DIR="$PETSC" PETSC_ARCH= SLEPC_DIR="$PETSC" \
     emcmake cmake "$GETDP" \
     -DCMAKE_BUILD_TYPE=Release $FIND -DDEFAULT=0 -DENABLE_KERNEL=1 \
     -DENABLE_PETSC=1 -DENABLE_SLEPC=1 -DENABLE_NR=1 -DENABLE_BLAS_LAPACK=0 -DENABLE_FORTRAN=0 \

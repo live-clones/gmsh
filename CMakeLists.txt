@@ -1887,7 +1887,13 @@ elseif(EMSCRIPTEN)
   # WebAssembly build: the virtual filesystem, and memory limits increased to
   # handle OpenCASCADE models
   set(FLAGS "-sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=268435456")
-  set(FLAGS "${FLAGS} -sMAXIMUM_MEMORY=4294967296 -sSTACK_SIZE=5242880")
+  if(CMAKE_CXX_FLAGS MATCHES "-m64|MEMORY64")
+    # wasm64 (Memory64: -m64, or -sMEMORY64=1, in the compile flags): up to
+    # 16 GB
+    set(FLAGS "${FLAGS} -sMAXIMUM_MEMORY=17179869184 -sSTACK_SIZE=5242880")
+  else()
+    set(FLAGS "${FLAGS} -sMAXIMUM_MEMORY=4294967296 -sSTACK_SIZE=5242880")
+  endif()
   # (all the symbols are exported, as the JavaScript API calls them by name,
   # with the allocation functions of the C library it hands arguments with)
   set(FLAGS "${FLAGS} -sFILESYSTEM=1 -sEXPORT_ALL=1")
