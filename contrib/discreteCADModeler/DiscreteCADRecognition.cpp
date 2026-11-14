@@ -14,11 +14,13 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <algorithm>
+#include <atomic>
 #include <cmath>
 #include <functional>
 #include <map>
 #include <queue>
 #include <set>
+#include <thread>
 #include "DiscreteCADRecognition.h"
 
 namespace {
@@ -169,6 +171,77 @@ namespace {
     return true;
   }
 
+  // whether the points y (scaled: |y| <= 1) can all be within delta of a
+  // Darboux cyclide, a quartic a |y|^4 + |y|^2 b.y + y.C.y + d.y + e = 0
+  // (planes, spheres, cylinders, cones and tori are): the values of its 14
+  // monomials at the points, times its coefficients (a unit vector), are
+  // then at most delta times the norms of the gradients of the monomials
+  // (twice, for the higher orders), so the least singular value of these
+  // values is; false only if a lower bound of it (1 / |R^-1|, R of their QR
+  // factorization) is larger
+  bool nearCyclide(const std::vector<std::array<double, 3> > &y,
+                   const std::vector<std::size_t> &points, double delta)
+  {
+    const int nc = 14;
+    const std::size_t np = points.size();
+    if(np < (std::size_t)nc) return true;
+    std::vector<double> a(np * nc);
+    double gradients = 0., frobenius = 0.;
+    for(std::size_t i = 0; i < np; i++) {
+      const double *p = y[points[i]].data();
+      const double r2 = p[0] * p[0] + p[1] * p[1] + p[2] * p[2];
+      double *row = &a[i * nc];
+      row[0] = r2 * r2;
+      for(int k = 0; k < 3; k++) {
+        row[1 + k] = r2 * p[k];
+        row[4 + k] = p[k] * p[k];
+        row[10 + k] = p[k];
+      }
+      row[7] = p[0] * p[1];
+      row[8] = p[0] * p[2];
+      row[9] = p[1] * p[2];
+      row[13] = 1.;
+      for(int j = 0; j < nc; j++) frobenius += row[j] * row[j];
+      // (the sum of the squares of the norms of their gradients)
+      gradients += 16. * r2 * r2 * r2 + 11. * r2 * r2 + 6. * r2 + 3.;
+    }
+    // (with the rounding of the factorization)
+    const double bound =
+      2. * delta * std::sqrt(gradients) + 1.e-13 * std::sqrt(frobenius);
+    // R, in the first rows (Householder reflections)
+    for(int j = 0; j < nc; j++) {
+      double s = 0.;
+      for(std::size_t i = j; i < np; i++) s += a[i * nc + j] * a[i * nc + j];
+      if(!(s > 0.)) return true;
+      const double alpha = a[j * nc + j] > 0. ? -std::sqrt(s) : std::sqrt(s);
+      const double v0 = a[j * nc + j] - alpha;
+      const double vv = s - a[j * nc + j] * a[j * nc + j] + v0 * v0;
+      if(vv > 0.)
+        for(int c = j + 1; c < nc; c++) {
+          double d = v0 * a[j * nc + c];
+          for(std::size_t i = j + 1; i < np; i++) d += a[i * nc + j] * a[i * nc + c];
+          const double f = 2. * d / vv;
+          a[j * nc + c] -= f * v0;
+          for(std::size_t i = j + 1; i < np; i++) a[i * nc + c] -= f * a[i * nc + j];
+        }
+      a[j * nc + j] = alpha;
+    }
+    // |R^-1|, column by column (the least singular value is at most the
+    // least diagonal entry)
+    for(int j = 0; j < nc; j++)
+      if(!(std::abs(a[j * nc + j]) > bound)) return true;
+    double inverse = 0.;
+    std::vector<double> z(nc);
+    for(int c = 0; c < nc; c++) {
+      for(int i = nc - 1; i >= 0; i--) {
+        double v = i == c ? 1. : 0.;
+        for(int k = i + 1; k < nc; k++) v -= a[i * nc + k] * z[k];
+        z[i] = v / a[i * nc + i];
+        inverse += z[i] * z[i];
+      }
+    }
+    return !(1. / std::sqrt(inverse) > bound);
+  }
   typedef std::function<void(const std::vector<double> &,
                              std::vector<double> &)>
     Residuals;
@@ -887,6 +960,10 @@ recognizeSurface(const std::vector<std::array<double, 3> > &x,
     if(accept(s)) return choice();
   }
 
+  // (the others only if the nodes can be within the tolerance of a Darboux
+  // cyclide, as spheres, cylinders, cones and tori are)
+  if(!nearCyclide(y, sample, scaledTolerance)) return choice();
+
   // a sphere: the algebraic fit |y|^2 + d.y + e = 0, then the geometric one
   if(n >= 10) {
     std::vector<double> a, b, sol;
@@ -1389,85 +1466,135 @@ void segmentSurface(const std::vector<std::array<double, 3> > &x,
     return agrees(t, s, side);
   };
 
-  // the regions grown from the seeds
-  std::vector<int> stamp(nt, 0), nodeStamp(n, 0), order(nt);
+  // the regions grown from the seeds, by decreasing area: the rings around
+  // a seed (at least 2 rings, 30 triangles and 16 nodes), fewer if no surface
+  // fits them (a small face); the triangles of the smallest one tested no
+  // other seeds. The rings of the next seeds fitted at once by the threads of
+  // the machine, from the pieces as they are, then taken in turn: those
+  // after a seed whose region grows fitted again (on a free form surface,
+  // the seeds fail, the batches grow)
+  std::vector<int> stamp(nt, 0), order(nt);
   std::vector<char> tried(nt, 0);
   int current = 0;
   for(std::size_t t = 0; t < nt; t++) order[t] = (int)t;
   std::stable_sort(order.begin(), order.end(),
                    [&](int a, int b) { return area[a] > area[b]; });
-  for(int seed : order) {
-    if(piece[seed] >= 0 || tried[seed]) continue;
-    // the rings around the seed (at least 2 rings, 30 triangles and 16 nodes),
-    // fewer if no surface fits them (a small face)
-    current++;
-    std::vector<int> region = {seed}, best;
+  struct Trial {
+    std::vector<int> region;
+    std::size_t smallest = 1;
+    bool fits = false;
+    Analytic s;
+  };
+  struct Marks {
+    std::vector<int> triangle, node;
+    int current = 0;
+  };
+  auto trial = [&](int seed, Marks &m, Trial &tr) {
+    if(m.triangle.empty()) {
+      m.triangle.assign(nt, 0);
+      m.node.assign(n, 0);
+    }
+    m.current++;
+    tr.region = {seed};
+    m.triangle[seed] = m.current;
     std::vector<std::pair<std::size_t, std::size_t> > rings; // triangles, nodes
-    stamp[seed] = current;
     std::size_t nodes = 0, front = 0;
     for(int ring = 0; ring < 10; ring++) {
-      for(std::size_t j = front; j < region.size(); j++)
+      for(std::size_t j = front; j < tr.region.size(); j++)
         for(int k = 0; k < 3; k++) {
-          int &ns = nodeStamp[triangles[region[j]][k]];
-          if(ns != current) {
-            ns = current;
+          int &ns = m.node[triangles[tr.region[j]][k]];
+          if(ns != m.current) {
+            ns = m.current;
             nodes++;
           }
         }
-      rings.push_back({region.size(), nodes});
-      if(ring >= 2 && region.size() >= 30 && nodes >= 16) break;
-      const std::size_t end = region.size();
+      rings.push_back({tr.region.size(), nodes});
+      if(ring >= 2 && tr.region.size() >= 30 && nodes >= 16) break;
+      const std::size_t end = tr.region.size();
       for(std::size_t j = front; j < end; j++)
-        for(int u : neighbors[region[j]])
-          if(piece[u] < 0 && stamp[u] != current) {
-            stamp[u] = current;
-            region.push_back(u);
+        for(int u : neighbors[tr.region[j]])
+          if(piece[u] < 0 && m.triangle[u] != m.current) {
+            m.triangle[u] = m.current;
+            tr.region.push_back(u);
           }
       front = end;
-      if(region.size() == end) break;
+      if(tr.region.size() == end) break;
     }
-    // (the triangles of the smallest one tested are no other seeds)
-    Analytic s;
-    std::size_t smallest = 1;
     for(std::size_t r = rings.size(); r-- > 0 && rings[r].second >= 16;) {
-      smallest = rings[r].first;
-      std::vector<int> seedRegion(region.begin(), region.begin() + smallest);
-      s = fit(seedRegion, tau);
-      if(s.type == Analytic::NONE) continue;
-      best = seedRegion;
+      tr.smallest = rings[r].first;
+      std::vector<int> seedRegion(tr.region.begin(),
+                                  tr.region.begin() + tr.smallest);
+      tr.s = fit(seedRegion, tau);
+      if(tr.s.type == Analytic::NONE) continue;
+      tr.fits = true;
       break;
     }
-    for(std::size_t j = 0; j < smallest; j++) tried[region[j]] = 1;
-    if(best.empty()) continue;
-    // the region grown on the surface, refitted as it grows
-    current++;
-    region = best;
-    int side = 0;
-    for(int t : region) {
-      stamp[t] = current;
-      agrees(t, s, side);
+  };
+  const unsigned threads = std::max(1u, std::thread::hardware_concurrency());
+  std::vector<Marks> marks(threads);
+  std::size_t next = 0, batch = threads;
+  while(true) {
+    std::vector<std::size_t> seeds; // (in order)
+    for(std::size_t i = next; i < nt && seeds.size() < batch; i++)
+      if(piece[order[i]] < 0 && !tried[order[i]]) seeds.push_back(i);
+    if(seeds.empty()) break;
+    std::vector<Trial> trials(seeds.size());
+    std::atomic<std::size_t> taken(0);
+    auto work = [&](unsigned w) {
+      for(std::size_t j; (j = taken++) < seeds.size();)
+        trial(order[seeds[j]], marks[w], trials[j]);
+    };
+    if(threads > 1 && seeds.size() >= 4 * threads) {
+      std::vector<std::thread> pool;
+      for(unsigned w = 1; w < threads; w++) pool.emplace_back(work, w);
+      work(0);
+      for(auto &t : pool) t.join();
     }
-    for(int pass = 0; pass < 20; pass++) {
-      const std::size_t before = region.size();
-      std::vector<int> queue = region;
-      while(!queue.empty()) {
-        const int t = queue.back();
-        queue.pop_back();
-        for(int u : neighbors[t]) {
-          if(piece[u] >= 0 || stamp[u] == current || !on(u, s, tau, side))
-            continue;
-          stamp[u] = current;
-          region.push_back(u);
-          queue.push_back(u);
-        }
+    else
+      work(0);
+    next = seeds.back() + 1;
+    batch = std::min<std::size_t>(2 * batch, 64 * threads);
+    for(std::size_t j = 0; j < seeds.size(); j++) {
+      const int seed = order[seeds[j]];
+      if(piece[seed] >= 0 || tried[seed]) continue;
+      Trial &tr = trials[j];
+      for(std::size_t k = 0; k < tr.smallest; k++) tried[tr.region[k]] = 1;
+      if(!tr.fits) continue;
+      // the region grown on the surface, refitted as it grows
+      Analytic s = tr.s;
+      std::vector<int> region(tr.region.begin(), tr.region.begin() + tr.smallest);
+      current++;
+      int side = 0;
+      for(int t : region) {
+        stamp[t] = current;
+        agrees(t, s, side);
       }
-      if(region.size() == before) break;
-      const Analytic r = fit(region, tau);
-      if(r.type == Analytic::NONE) break;
-      s = r;
+      for(int pass = 0; pass < 20; pass++) {
+        const std::size_t before = region.size();
+        std::vector<int> queue = region;
+        while(!queue.empty()) {
+          const int t = queue.back();
+          queue.pop_back();
+          for(int u : neighbors[t]) {
+            if(piece[u] >= 0 || stamp[u] == current || !on(u, s, tau, side))
+              continue;
+            stamp[u] = current;
+            region.push_back(u);
+            queue.push_back(u);
+          }
+        }
+        if(region.size() == before) break;
+        const Analytic r = fit(region, tau);
+        if(r.type == Analytic::NONE) break;
+        s = r;
+      }
+      for(int t : region) piece[t] = (int)surfaces.size();
+      surfaces.push_back(s);
+      // (the seeds after it fitted again, from the pieces as they are now)
+      next = seeds[j] + 1;
+      batch = threads;
+      break;
     }
-    for(int t : region) piece[t] = (int)surfaces.size();
-    surfaces.push_back(s);
   }
   // the components of the free triangles left, fitted as a whole: a small
   // face meeting others tangentially whose seed rings spill over them before
