@@ -75,7 +75,7 @@ cp "$HERE/onelab.html" "$HERE/onelab.css" "$HERE/main.mjs" "$HERE/app.mjs" \
   "$HERE/gmshweb.mjs" "$HERE/scene.mjs" "$HERE/statusbar.mjs" "$HERE/tools.mjs" \
   "$HERE/actions.mjs" "$HERE/parameters.mjs" "$HERE/views.mjs" \
   "$HERE/solverClient.mjs" "$HERE/options.mjs" "$HERE/clipping.mjs" \
-  "$HERE/visibility.mjs" "$HERE/editor.mjs" "$HERE/models.mjs" \
+  "$HERE/visibility.mjs" "$HERE/plugins.mjs" "$HERE/editor.mjs" "$HERE/models.mjs" \
   "$HERE/shortcuts.js" "$HERE/solver.js" "$HERE/files.mjs" \
   "$HERE/manifest.webmanifest" "$SITE"
 mkdir -p "$SITE/icons"
@@ -92,9 +92,12 @@ rm -rf "$SITE/viewer.html" "$SITE/tutorials"
 # .pro with a .geo of the same name) or for a .pro or .geo file in one (opened
 # instead, for a directory of several models), with its title (by default the
 # first heading of its README.md, whose "... tutorial N:" goes above the
-# title, else its name), a note, a label above the title, and the Gmsh
-# options its thumbnail is drawn with and the ONELAB parameters it is run
-# with for it (see thumbnails/render.py and run.mjs)
+# title, else its name), a note, a label above the title, the Gmsh options
+# its thumbnail is drawn with and the ONELAB parameters it is run with for it
+# (see thumbnails/render.py and run.mjs), and the directory packed instead of
+# its own, for a model that includes files of the directories above (opened
+# in it). A directory that is a git checkout of its own is packed with the
+# files it tracks, not the results left in it (and still without meshes...)
 html() { sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g'; }
 rm -rf "$SITE/models" "$SITE/thumbnails"
 mkdir "$SITE/models" "$SITE/thumbnails"
@@ -118,11 +121,15 @@ group() {
 }
 model() {
   local path=$1 title=$2 note=$3 label=$4 options=${5//$'\n'/ } parameters=$6
-  local dir name zip open=""
+  local root=$7 dir name zip open=""
   if [ -f "$path" ]; then
     dir=$(dirname "$path")
     open=$(basename "$path")
     name=${open%.*}
+    if [ -n "$root" ]; then
+      dir=${root%/}
+      open=${path#$dir/}
+    fi
   else
     dir=${path%/}
     name=$(basename "$dir")
@@ -146,8 +153,14 @@ model() {
          zip -q "$SITE/models/$zip.zip" -@)
     fi
   elif [ ! -f "$SITE/models/$zip.zip" ]; then
-    (cd "$dir" && zip -q -r "$SITE/models/$zip.zip" . -x '*.msh' '*.pre' \
-       '*.res' '*.pos' '*.db' '*.db.json' '*.png' '*.jpg' '*.out' '*.mp4')
+    if [ -d "$dir/.git" ]; then
+      (cd "$dir" && git ls-files |
+         grep -Eiv '\.(msh|pre|res|pos|db|db\.json|png|jpg|out|mp4)$' |
+         zip -q "$SITE/models/$zip.zip" -@)
+    else
+      (cd "$dir" && zip -q -r "$SITE/models/$zip.zip" . -x '*.msh' '*.pre' \
+         '*.res' '*.pos' '*.db' '*.db.json' '*.png' '*.jpg' '*.out' '*.mp4')
+    fi
   fi
   printf '%s|%s|%s|%s|%s\n' "$name" "$dir" "$open" "$options" \
     "$parameters" >> "$THUMBS"
@@ -237,16 +250,14 @@ model "$M/ElectricMachines/im_3kW.pro" "Induction machine" \
   "3 kW four-pole induction machine"
 model "$M/ElectricMachines/srm.pro" "Switched reluctance machine" "Simple SRM" \
   "" "$OUTLINES"
-model "$M/Inductor/inductor.pro" "Inductor" \
-  "2D and 3D model of an inductor/core system"
 model "$M/ElectromechanicalRelay/relay.pro" "Electromechanical relay" \
   "2D model of an electro-mechanical relay" "" "View[3].Visible=1;" \
   "Input/31Time max.=0.05"
 group "Magnetics and induction"
 model "$M/Magnets/magnets.pro" "Magnets" \
   "3D force computation of a collection of magnets"
-model "$M/MagneticForces" "Magnetic forces" \
-  "Forces between magnets, 3D OpenCASCADE geometry"
+model "$M/MagnetInTube/magnet_in_tube.pro" "Magnet in a tube" \
+  "Magnet falling in a conducting tube, slowed by eddy currents"
 model "$M/Magnetometer/magnetometer.pro" "Magnetometer" \
   "3D model of a xylophone-bar magnetometer" "" "" \
   "Input/0Type of analysis=0"
@@ -256,6 +267,19 @@ model "$M/Superconductors/helix.pro" "Superconducting wire" \
   "2D and 3D H-formulation of HTS with nonlinear power law" "" \
   "View[2].Visible=1; View[3].Visible=0; View[2].ForceNumComponents=1;
    View[2].ComponentMap0=2; General.ScaleX=2.6; General.ScaleY=2.6;"
+# (the Life-HTS models include its lib directory: Life-HTS is packed; the
+# thumbnail of the magnet, whose full run did not end in half an hour, was
+# drawn by hand after ten time steps: View[1].TimeStep=10, its current density)
+# (the thumbnail of the cylinder: its current density, run on a finer mesh
+# and zoomed)
+model "$M/Life-HTS/cylinder/cylinder.pro" "Superconducting cylinder" \
+  "Life-HTS: axisymmetric bulk HTS cylinder" "" \
+  "View[6].Visible=0; View[3].Visible=1; View[3].TimeStep=80; View[3].Light=0;
+   Geometry.Curves=0; General.ScaleX=6; General.ScaleY=6;
+   General.TranslationX=0.044;" \
+  "Input/2Mesh/1Mesh size multiplier (-)=1.5" "$M/Life-HTS"
+model "$M/Life-HTS/magnet/magnet.pro" "Superconducting magnet" \
+  "Life-HTS: 3D bulk HTS magnetized by a coil" "" "" "" "$M/Life-HTS"
 group "Waves"
 model "$M/Waveguides/waveguide2D_straight.pro" "Straight waveguide" \
   "2D model of a rectangular metallic waveguide"
@@ -267,7 +291,21 @@ model "$M/Waveguides/waveguide2D_MMI.pro" "Multi-mode interference coupler" \
   "2D model of an MMI"
 model "$M/AcousticScattering/scattering.pro" "Acoustic wave scattering" \
   "2D models of multiple acoustic scattering"
-group "Heat and flow"
+model "$M/TimeReversal/TR.pro" "Time reversal" \
+  "2D model of time reversal of acoustic waves"
+# (the thumbnail of the dipole: the magnitude of its field, on a log scale)
+model "$M/Antennas/dipole.pro" "Dipole antenna" "2D and 3D models of a dipole" \
+  "" "View[2].Visible=0; Plugin(MathEval).Expression0=\"Sqrt(v0^2+v1^2+v2^2)\";
+   Plugin(MathEval).View=0; Plugin(MathEval).Run; View[3].ScaleType=2;
+   View[3].Light=0; View[3].IntervalsType=2; View[3].ShowScale=0;
+   General.Trackball=0; General.RotationZ=90;"
+model "$M/Shielding/main.pro" "Electromagnetic shielding" \
+  "2D and 3D models of shielding cavities"
+model "$M/BlochPeriodicWaveguides/rhombus.pro" "Periodic waveguide" \
+  "Bloch modes in a periodic waveguide of rhombi"
+group "Mechanics, heat and flow"
+model "$M/ElasticityKirsch/kirsch.pro" "Kirsch problem" \
+  "Elastic stresses around a hole in a plate under tension"
 model "$M/ThermalConduction/contact.pro" "Thermal conduction" \
   "Heat conduction after a transient heat flux pulse" "" \
   "View[0].TimeStep=10; View[0].RangeType=3;"

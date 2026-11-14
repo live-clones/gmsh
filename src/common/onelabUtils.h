@@ -97,7 +97,6 @@ namespace onelabUtils {
   std::string timeStamp();
   void saveDb(const std::string &fileName);
   void archiveOutputFiles(const std::string &fileName);
-  void archiveSolutionFiles(const std::string &fileName);
   void loadDb(const std::string &name);
   void resetDb(bool runGmshClient);
   // what an interface does when the user changes a parameter, besides storing

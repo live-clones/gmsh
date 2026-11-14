@@ -94,8 +94,8 @@ namespace {
     double modelview[16], projection[16];
     double clip[6][4];
     bool clipOn[6], clipOutside;
-    // the blending, which the callers switch with plain OpenGL calls around
-    // the primitives they hand over: it is read back rather than set here
+    // the blending, which the callers switch around the primitives they hand
+    // over (see gmshBlend())
     bool blend;
     GLint blendSrc[2], blendDst[2]; // colour, then alpha
     bool lighting, twoSide;
@@ -164,7 +164,98 @@ namespace {
   double _clipPlane[6][4] = {{0.}}, _clipEye[6][4] = {{0.}};
   bool _clipOn[6] = {false, false, false, false, false, false};
   bool _clipOutside = false;
+  // OpenGL's own state, kept to avoid asking for it (see gmshBlend())
+  bool _blend = false;
+  GLint _blendSrc[2] = {GL_ONE, GL_ONE}, _blendDst[2] = {GL_ZERO, GL_ZERO};
+  int _viewport[4] = {0, 0, 0, 0};
+
+  // the blending set in OpenGL, without touching what we keep
+  void _applyBlend(bool on, const GLint src[2], const GLint dst[2])
+  {
+    if(!on) {
+      glDisable(GL_BLEND);
+      return;
+    }
+    glEnable(GL_BLEND);
+    if(glApi::BlendFuncSeparate)
+      glApi::BlendFuncSeparate(src[0], dst[0], src[1], dst[1]);
+    else
+      glBlendFunc(src[0], dst[0]);
+  }
 } // namespace
+
+void gmshBlend(bool on)
+{
+  _blend = on;
+  if(on)
+    glEnable(GL_BLEND);
+  else
+    glDisable(GL_BLEND);
+}
+
+bool gmshBlendEnabled() { return _blend; }
+
+void gmshBlendFunc(GLenum src, GLenum dst)
+{
+  _blendSrc[0] = _blendSrc[1] = src;
+  _blendDst[0] = _blendDst[1] = dst;
+  glBlendFunc(src, dst);
+}
+
+void gmshBlendFuncSeparate(GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha,
+                           GLenum dstAlpha)
+{
+  if(!glApi::BlendFuncSeparate) {
+    gmshBlendFunc(srcRGB, dstRGB);
+    return;
+  }
+  _blendSrc[0] = srcRGB;
+  _blendDst[0] = dstRGB;
+  _blendSrc[1] = srcAlpha;
+  _blendDst[1] = dstAlpha;
+  glApi::BlendFuncSeparate(srcRGB, dstRGB, srcAlpha, dstAlpha);
+}
+
+void gmshGetBlendFunc(GLint src[2], GLint dst[2])
+{
+  for(int i = 0; i < 2; i++) {
+    src[i] = _blendSrc[i];
+    dst[i] = _blendDst[i];
+  }
+}
+
+void gmshViewport(int x, int y, int w, int h)
+{
+  _viewport[0] = x;
+  _viewport[1] = y;
+  _viewport[2] = w;
+  _viewport[3] = h;
+  glViewport(x, y, w, h);
+}
+
+const int *gmshViewport() { return _viewport; }
+
+void glImmediate::syncState()
+{
+  _blend = glIsEnabled(GL_BLEND) ? true : false;
+  // the colour's and the alpha's factors are the same ones when the driver
+  // has no separate blending, whose enums it would reject
+  if(glApi::BlendFuncSeparate) {
+    glGetIntegerv(GL_BLEND_SRC_RGB, &_blendSrc[0]);
+    glGetIntegerv(GL_BLEND_DST_RGB, &_blendDst[0]);
+    glGetIntegerv(GL_BLEND_SRC_ALPHA, &_blendSrc[1]);
+    glGetIntegerv(GL_BLEND_DST_ALPHA, &_blendDst[1]);
+  }
+  else {
+    glGetIntegerv(GL_BLEND_SRC, &_blendSrc[0]);
+    glGetIntegerv(GL_BLEND_DST, &_blendDst[0]);
+    _blendSrc[1] = _blendSrc[0];
+    _blendDst[1] = _blendDst[0];
+  }
+  GLint vp[4];
+  glGetIntegerv(GL_VIEWPORT, vp);
+  for(int i = 0; i < 4; i++) _viewport[i] = vp[i];
+}
 
 void gmshColor4ub(unsigned char r, unsigned char g, unsigned char b,
                   unsigned char a)
@@ -624,9 +715,7 @@ namespace {
   // carries on along a strip, as OpenGL's stipple did
   void _dashDistances(std::size_t first, bool carry)
   {
-    GLint vp[4];
-    glGetIntegerv(GL_VIEWPORT, vp);
-    int viewport[4] = {vp[0], vp[1], vp[2], vp[3]};
+    const int *viewport = gmshViewport();
     std::size_t count = _batchPos.size() / 3;
     double run = 0.;
     for(std::size_t i = first; i + 1 < count; i += 2) {
@@ -650,43 +739,6 @@ namespace {
   }
 } // namespace
 
-namespace {
-  // switch the blending, colour and alpha factors together
-  // the blend function in force; the colour's and the alpha's are the same
-  // one when the driver has no separate blending (OpenGL 1.4), whose enums
-  // it would reject
-  void _getBlend(GLint src[2], GLint dst[2])
-  {
-    src[0] = src[1] = GL_ONE;
-    dst[0] = dst[1] = GL_ZERO;
-    if(glApi::BlendFuncSeparate) {
-      glGetIntegerv(GL_BLEND_SRC_RGB, &src[0]);
-      glGetIntegerv(GL_BLEND_DST_RGB, &dst[0]);
-      glGetIntegerv(GL_BLEND_SRC_ALPHA, &src[1]);
-      glGetIntegerv(GL_BLEND_DST_ALPHA, &dst[1]);
-    }
-    else {
-      glGetIntegerv(GL_BLEND_SRC, &src[0]);
-      glGetIntegerv(GL_BLEND_DST, &dst[0]);
-      src[1] = src[0];
-      dst[1] = dst[0];
-    }
-  }
-
-  void _setBlend(bool on, const GLint src[2], const GLint dst[2])
-  {
-    if(!on) {
-      glDisable(GL_BLEND);
-      return;
-    }
-    glEnable(GL_BLEND);
-    if(glApi::BlendFuncSeparate)
-      glApi::BlendFuncSeparate(src[0], dst[0], src[1], dst[1]);
-    else
-      glBlendFunc(src[0], dst[0]);
-  }
-} // namespace
-
 void glImmediate::flush()
 {
   if(_batchPos.empty()) return;
@@ -695,10 +747,15 @@ void glImmediate::flush()
     // the state the primitives were collected under, not the current one:
     // the blending is OpenGL's own, so it is set here and the caller's put
     // back afterwards
-    GLboolean wasBlend = glIsEnabled(GL_BLEND);
-    GLint wasSrc[2], wasDst[2];
-    _getBlend(wasSrc, wasDst);
-    _setBlend(_batchState.blend, _batchState.blendSrc, _batchState.blendDst);
+    bool blendChanged = _batchState.blend != _blend;
+    if(_blend && !blendChanged)
+      for(int i = 0; i < 2; i++)
+        if(_batchState.blendSrc[i] != _blendSrc[i] ||
+           _batchState.blendDst[i] != _blendDst[i])
+          blendChanged = true;
+    if(blendChanged)
+      _applyBlend(_batchState.blend, _batchState.blendSrc,
+                  _batchState.blendDst);
     glShader::setMatrices(_batchState.modelview, _batchState.projection);
     glShader::setLighting(_batchState.lighting, _batchState.twoSide);
     glShader::setPointSize(_batchState.pointSize);
@@ -721,7 +778,7 @@ void glImmediate::flush()
                               &_batchCol[0], &_batchTex[0], &_batchDash[0],
                               _batchState.texture, _batchState.textureMode,
                               count);
-    _setBlend(wasBlend ? true : false, wasSrc, wasDst);
+    if(blendChanged) _applyBlend(_blend, _blendSrc, _blendDst);
   }
   _batchPos.clear();
   _batchNrm.clear();
@@ -746,10 +803,10 @@ namespace {
       for(int j = 0; j < 4; j++) b.clip[i][j] = _clipEye[i][j];
     }
     b.clipOutside = _clipOutside;
-    b.blend = glIsEnabled(GL_BLEND) ? true : false;
+    b.blend = _blend;
     b.blendSrc[0] = b.blendSrc[1] = GL_ONE;
     b.blendDst[0] = b.blendDst[1] = GL_ZERO;
-    if(b.blend) _getBlend(b.blendSrc, b.blendDst);
+    if(b.blend) gmshGetBlendFunc(b.blendSrc, b.blendDst);
     b.lighting = _lighting;
     b.twoSide = _twoSide;
     b.pointSize = _pointSize;

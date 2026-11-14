@@ -264,6 +264,26 @@ inline void gmshDepthMask(bool on)
   if(glShader::enabled()) glImmediate::flush();
   glDepthMask(on ? GL_TRUE : GL_FALSE);
 }
+// The blending and the viewport, kept by us as well as by OpenGL: the
+// collector compares the blending at every primitive, and asking OpenGL for
+// it is a round trip to another process with WebGL (Firefox). They must be
+// set through these calls; glImmediate::syncState() reads them back from
+// OpenGL, for a frame drawn after code that set them directly. The blending
+// is collected with the primitives, so changing it does not flush.
+void gmshBlend(bool on);
+bool gmshBlendEnabled();
+void gmshBlendFunc(GLenum src, GLenum dst);
+// the colour's and the alpha's factors; the colour's alone without separate
+// blending (OpenGL 1.4)
+void gmshBlendFuncSeparate(GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha,
+                           GLenum dstAlpha);
+void gmshGetBlendFunc(GLint src[2], GLint dst[2]);
+void gmshViewport(int x, int y, int w, int h);
+const int *gmshViewport();
+namespace glImmediate {
+  void syncState();
+}
+
 inline bool gmshPolygonFilled()
 {
   // a compatibility profile answers with two values (front and back), a

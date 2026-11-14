@@ -32,10 +32,12 @@
 //   what the page does for them (pageActions) and the keyboard shortcuts;
 // - parameters.mjs, views.mjs, solverClient.mjs: the ONELAB parameters, the
 //   views and the loop that runs Gmsh and the solvers;
-// - options.mjs, clipping.mjs, visibility.mjs: the other tabs of the panel;
+// - options.mjs, clipping.mjs, visibility.mjs, plugins.mjs: the other tabs
+//   of the panel;
 // - editor.mjs, models.mjs: the editor of a file, the models opened.
-// To add a panel: a module with its build(), listed here; a menu item or a
-// module button: see Actions.h, then pageActions in actions.mjs.
+// To add a panel: a module with its build(), listed here and in deploy.sh; a
+// menu item or a module button: see Actions.h, then pageActions in
+// actions.mjs.
 import createGmsh from './build/gmsh.mjs';
 import {app, setGmsh, setStatus, log, progress, $} from './app.mjs';
 import * as scene from './scene.mjs';
@@ -44,6 +46,7 @@ import * as parameters from './parameters.mjs';
 import * as options from './options.mjs';
 import * as clipping from './clipping.mjs';
 import * as visibility from './visibility.mjs';
+import * as plugins from './plugins.mjs';
 import * as actions from './actions.mjs';
 import * as editor from './editor.mjs';
 import * as views from './views.mjs';
@@ -91,6 +94,16 @@ const wasm = await compileWasm(new URL('./build/libgmsh.wasm', import.meta.url))
   .catch(cannotLoad);
 setStatus('Starting...');
 progress(true);
+const params = new URLSearchParams(location.search);
+// a test of the speed of the drawing (see scene.mjs): with ?pdb=0 the canvas
+// is not kept after each frame, which the browsers of some phones copy at
+// every frame otherwise. The context is made here, before Gmsh asks for one
+// with preserveDrawingBuffer (src/graphics/offscreenContext.cpp), and gets
+// this one, with the same attributes otherwise
+if(params.get('pdb') === '0')
+  $('canvas').getContext('webgl2', {alpha: false, depth: true, stencil: false,
+                                    antialias: false,
+                                    preserveDrawingBuffer: false});
 const gmsh = await createGmsh({
   canvas: $('canvas'), print: log, printErr: log,
   instantiateWasm: (imports, done) => {
@@ -108,14 +121,13 @@ gmsh.option.setNumber('General.NoPopup', 1);
 
 // the parts of the page, in an order where each finds what it needs built
 for(const part of [scene, actions, statusbar, parameters, options, clipping,
-                   visibility, editor, views, models])
+                   visibility, plugins, editor, views, models])
   if(part.build) part.build();
 solverClient.build(wasm);
 
 $('run').disabled = $('reset').disabled = false;
 setStatus('Open a model, or drop its files here');
 progress(false);
-const params = new URLSearchParams(location.search);
 try {
   if(params.get('zip')) {
     const url = params.get('zip');

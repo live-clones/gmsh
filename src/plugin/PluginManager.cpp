@@ -11,6 +11,9 @@
 #include "GmshConfig.h"
 #include "StringUtils.h"
 #include "Context.h"
+#include "GmshMessage.h"
+#include "PView.h"
+#include "PViewData.h"
 #include "Plugin.h"
 #include "PluginManager.h"
 #include "Isosurface.h"
@@ -77,6 +80,14 @@
 #include "BoundaryLayer.h"
 #endif
 
+#if defined(HAVE_NONCONFORMAL_REFINEMENT)
+#include "NonConformalRefinement.h"
+#endif
+
+#if defined(HAVE_DUAL_MESH)
+#include "DualMesh.h"
+#endif
+
 // HAVE_PLUGIN_LOADING is only defined when compiling the shared library with
 // the private API (which exports what plugins need) on a system with dlopen
 #if defined(HAVE_PLUGIN_LOADING)
@@ -118,6 +129,47 @@ int PluginManager::action(const std::string &pluginName,
   else
     throw std::runtime_error("Unknown action '" + action + "' of Plugin(" +
                              pluginName + ")");
+}
+
+void PluginManager::runOnViews(GMSH_Plugin *p, const std::vector<int> &views,
+                               const std::function<void(PView *)> &after)
+{
+  auto attempt = [p](const std::function<void()> &f) {
+    try {
+      f();
+    } catch(const std::exception &e) {
+      Msg::Error("Plugin(%s) failed: %s", p->getName().c_str(), e.what());
+    }
+  };
+  if(p->getType() != GMSH_Plugin::GMSH_POST_PLUGIN) {
+    attempt([p] { p->run(); });
+    return;
+  }
+  GMSH_PostPlugin *pp = (GMSH_PostPlugin *)p;
+  auto execute = [&](PView *view) {
+    attempt([&] {
+      pp->execute(view);
+      if(after) after(view);
+    });
+  };
+  if(views.empty()) execute(nullptr);
+  StringXNumber *opt = pp->findOption("View");
+  for(int i : views) {
+    if(i < 0 || i >= (int)PView::list.size()) {
+      execute(nullptr);
+      continue;
+    }
+    PView *view = PView::list[i];
+    if(view->getData()->isRemote()) {
+      attempt([&] { pp->executeRemote(view); });
+      continue;
+    }
+    // the view the plugin runs on, whatever the View option says
+    double old = opt ? opt->def : 0.;
+    if(opt) opt->def = view->getIndex();
+    execute(view);
+    if(opt) opt->def = old;
+  }
 }
 
 void PluginManager::setPluginOption(const std::string &pluginName,
@@ -229,6 +281,12 @@ void PluginManager::registerDefaultPlugins()
     add(new GMSH_SpanningTreePlugin());
 #if defined(HAVE_BOUNDARY_LAYERS)
     add(new GMSH_BoundaryLayerPlugin());
+#endif
+#if defined(HAVE_NONCONFORMAL_REFINEMENT)
+    add(new GMSH_NonConformalRefinementPlugin());
+#endif
+#if defined(HAVE_DUAL_MESH)
+    add(new GMSH_DualMeshPlugin());
 #endif
   }
 

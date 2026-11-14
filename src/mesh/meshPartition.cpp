@@ -1233,10 +1233,29 @@ static int getNumFacets(MElement *e, MEdge *) { return e->getNumEdges(); }
 static MFace getFacet(MElement *e, int i, MFace *) { return e->getFace(i); }
 static MEdge getFacet(MElement *e, int i, MEdge *) { return e->getEdge(i); }
 
+static int getFacetOrientation(const MFace &reference, const MFace &element)
+{
+  int rotation;
+  bool swap;
+  if(!reference.computeCorrespondence(element, rotation, swap)) return 0;
+  return swap ? -1 : 1;
+}
+
+static int getFacetOrientation(const MEdge &reference, const MEdge &element)
+{
+  if(reference.getVertex(0) == element.getVertex(0) &&
+     reference.getVertex(1) == element.getVertex(1))
+    return 1;
+  if(reference.getVertex(0) == element.getVertex(1) &&
+     reference.getVertex(1) == element.getVertex(0))
+    return -1;
+  return 0;
+}
+
 template <class KEY, class HASH, class EQUAL> class BRepDistributor {
 private:
   std::unordered_map<KEY, std::size_t, HASH, EQUAL> _owner;
-  std::vector<std::set<GEntity *, GEntityPtrFullLessThan> > _bounds;
+  std::vector<setorientity> _bounds;
 
 public:
   std::size_t newComponent()
@@ -1258,11 +1277,14 @@ public:
       offset[i + 1] = offset[i] + cand[i]->getNumMeshElements();
     const std::size_t chunkSize = 4096;
     const std::size_t numChunks = (offset.back() + chunkSize - 1) / chunkSize;
-    std::set<std::pair<std::size_t, std::size_t>> hits; // component, cand.
+    // A component may touch only one side of a neighbor even when the
+    // unsplit entity had both signed uses, so retain the orientation too.
+    using Hit = std::pair<std::pair<std::size_t, std::size_t>, int>;
+    std::set<Hit> hits; // (component, candidate), orientation
     const int nthreads = CTX::instance()->numThreadsFor(offset.back(), 10000);
 #pragma omp parallel num_threads(nthreads)
     {
-      std::set<std::pair<std::size_t, std::size_t>> myHits;
+      std::set<Hit> myHits;
 #pragma omp for schedule(dynamic, 1)
       for(std::size_t c = 0; c < numChunks; c++) {
         const std::size_t end = std::min(offset.back(), (c + 1) * chunkSize);
@@ -1273,20 +1295,26 @@ public:
           while(i >= offset[k + 1]) k++;
           MElement *e = cand[k]->getMeshElement(i - offset[k]);
           for(int j = 0; j < getNumFacets(e, (KEY *)nullptr); j++) {
-            auto it = _owner.find(getFacet(e, j, (KEY *)nullptr));
-            if(it != _owner.end()) myHits.insert(std::make_pair(it->second, k));
+            KEY facet = getFacet(e, j, (KEY *)nullptr);
+            auto it = _owner.find(facet);
+            if(it == _owner.end()) continue;
+            const int ori = getFacetOrientation(facet, it->first);
+            if(ori)
+              myHits.insert(std::make_pair(std::make_pair(it->second, k), ori));
           }
         }
       }
 #pragma omp critical
       hits.insert(myHits.begin(), myHits.end());
     }
-    for(auto it = hits.begin(); it != hits.end(); ++it)
-      _bounds[it->first].insert(cand[it->second]);
+    for(const auto &hit : hits)
+      _bounds[hit.first.first].insert(
+        std::make_pair(hit.second, cand[hit.first.second]));
   }
-  bool touches(std::size_t component, GEntity *neighbor) const
+  bool touches(std::size_t component, GEntity *neighbor, int orientation) const
   {
-    return _bounds[component].find(neighbor) != _bounds[component].end();
+    return _bounds[component].find(std::make_pair(orientation, neighbor)) !=
+           _bounds[component].end();
   }
   bool empty() const { return _owner.empty(); }
 };
@@ -1308,6 +1336,43 @@ static void maxEntitySize(ITERATOR it_beg, ITERATOR it_end, int geomType,
       eind += (*it)->getMeshElement(i)->getNumPrimaryVertices();
     maxElements = std::max(maxElements, ne);
     maxEind = std::max(maxEind, eind);
+  }
+}
+
+// Detach every signed use of a boundary entity. The reverse adjacency lists
+// contain each neighbor only once, while a seam occurs twice in its boundary.
+// Keep one entry per use so the split components can restore both signs.
+static void detachBoundaryUses(GEdge *edge, std::vector<GFace *> &brep,
+                               std::vector<int> &orientations)
+{
+  for(auto face : edge->faces()) {
+    const std::vector<GEdge *> &edges = face->edges();
+    const std::vector<int> &dirs = face->edgeOrientations();
+    std::size_t count = 0;
+    for(std::size_t i = 0; i < edges.size(); i++) {
+      if(edges[i] != edge) continue;
+      brep.push_back(face);
+      orientations.push_back(i < dirs.size() ? dirs[i] : 1);
+      count++;
+    }
+    for(std::size_t i = 0; i < count; i++) face->delEdge(edge);
+  }
+}
+
+static void detachBoundaryUses(GFace *face, std::vector<GRegion *> &brep,
+                               std::vector<int> &orientations)
+{
+  for(auto region : face->regions()) {
+    const std::vector<GFace *> &faces = region->faces();
+    const std::vector<int> &dirs = region->faceOrientations();
+    std::size_t count = 0;
+    for(std::size_t i = 0; i < faces.size(); i++) {
+      if(faces[i] != face) continue;
+      brep.push_back(region);
+      orientations.push_back(i < dirs.size() ? dirs[i] : 1);
+      count++;
+    }
+    for(std::size_t i = 0; i < count; i++) region->delFace(face);
   }
 }
 
@@ -1484,12 +1549,7 @@ divideNonConnectedEntities(GModel *model, int dim,
           ret = true;
           PendingEdgeSplit split;
           split.edge = edge;
-          split.brep = edge->faces();
-          split.orientations.reserve(split.brep.size());
-          for(auto itBRep = split.brep.begin(); itBRep != split.brep.end();
-              ++itBRep) {
-            split.orientations.push_back((*itBRep)->delEdge(edge));
-          }
+          detachBoundaryUses(edge, split.brep, split.orientations);
           for(std::size_t i = 0; i < connectedElements.size(); i++) {
             std::size_t comp = distributor.newComponent();
             split.components.push_back(comp);
@@ -1530,7 +1590,9 @@ divideNonConnectedEntities(GModel *model, int dim,
           pedge->addElement(split.elements[i][j]);
         // Move B-Rep: only to the surfaces this component really bounds
         for(std::size_t j = 0; j < split.brep.size(); j++) {
-          if(!distributor.touches(split.components[i], split.brep[j])) continue;
+          if(!distributor.touches(split.components[i], split.brep[j],
+                                  split.orientations[j]))
+            continue;
           split.brep[j]->setEdge(pedge, split.orientations[j]);
           pedge->addFace(split.brep[j]);
         }
@@ -1622,12 +1684,7 @@ divideNonConnectedEntities(GModel *model, int dim,
           ret = true;
           PendingFaceSplit split;
           split.face = face;
-          std::list<GRegion *> BRepRegions = face->regions();
-          split.brep.assign(BRepRegions.begin(), BRepRegions.end());
-          split.orientations.reserve(split.brep.size());
-          for(std::size_t j = 0; j < split.brep.size(); j++) {
-            split.orientations.push_back(split.brep[j]->delFace(face));
-          }
+          detachBoundaryUses(face, split.brep, split.orientations);
           for(std::size_t i = 0; i < connectedElements.size(); i++) {
             std::size_t comp = distributor.newComponent();
             split.components.push_back(comp);
@@ -1667,7 +1724,9 @@ divideNonConnectedEntities(GModel *model, int dim,
           pface->addElement(split.elements[i][j]);
         // Move B-Rep: only to the volumes this component really bounds
         for(std::size_t j = 0; j < split.brep.size(); j++) {
-          if(!distributor.touches(split.components[i], split.brep[j])) continue;
+          if(!distributor.touches(split.components[i], split.brep[j],
+                                  split.orientations[j]))
+            continue;
           split.brep[j]->setFace(pface, split.orientations[j]);
           pface->addRegion(split.brep[j]);
         }
@@ -2119,35 +2178,17 @@ assignPartitionBoundary(GModel *model, MVertex *ve, MElement *reference,
 static int computeOrientation(MElement *reference, MElement *element)
 {
   if(element->getDim() == 2) {
-    std::vector<MVertex *> vertices;
-    element->getVertices(vertices);
-    MFace face = element->getFace(0);
+    const MFace face = element->getFace(0);
     for(int i = 0; i < reference->getNumFaces(); i++) {
-      if(reference->getFace(i) == face) {
-        std::vector<MVertex *> referenceVertices;
-        reference->getFaceVertices(i, referenceVertices);
-
-        if(referenceVertices == vertices)
-          return 1;
-        else
-          return -1;
-      }
+      const int ori = getFacetOrientation(reference->getFace(i), face);
+      if(ori) return ori;
     }
   }
   else if(element->getDim() == 1) {
-    std::vector<MVertex *> vertices;
-    element->getVertices(vertices);
-    MEdge face = element->getEdge(0);
+    const MEdge edge = element->getEdge(0);
     for(int i = 0; i < reference->getNumEdges(); i++) {
-      if(reference->getEdge(i) == face) {
-        std::vector<MVertex *> referenceVertices;
-        reference->getEdgeVertices(i, referenceVertices);
-
-        if(referenceVertices == vertices)
-          return 1;
-        else
-          return -1;
-      }
+      const int ori = getFacetOrientation(reference->getEdge(i), edge);
+      if(ori) return ori;
     }
   }
   else if(element->getDim() == 0) {
@@ -2379,16 +2420,16 @@ static void createPartitionBoundaries(
     model->setMaxElementNumber(firstNum + firstRecord[numChunks] - 1);
 
   // Finally, the partition entities are created and the facets added to
-  // them, in the order of the graph. Every facet records the entities it
-  // bounds, unless already recorded; a zero orientation cannot happen on a
+  // them, in the order of the graph. Every facet records the signed entities
+  // it bounds, unless already recorded; a zero orientation cannot happen on a
   // conformal mesh (see assignNewEntityBRep): the pair is left for another
   // facet. Consecutive facets mostly belong to the same partition entity, so
   // the last one and the entities it bounds are kept at hand.
-  std::unordered_map<GEntity *, std::vector<GEntity *>> bounds;
+  std::unordered_map<GEntity *, std::vector<std::pair<int, GEntity *>>> bounds;
   std::vector<int> partitions, lastPartitions;
   GEntity *lastReference = nullptr, *lastOther = nullptr;
   PART_ENTITY *pe = nullptr;
-  std::vector<GEntity *> *peBounds = nullptr;
+  std::vector<std::pair<int, GEntity *>> *peBounds = nullptr;
   for(std::size_t c = 0; c < numChunks; c++) {
     for(std::size_t r = 0; r < records[c].size(); r++) {
       const facetRecord &rec = records[c][r];
@@ -2419,10 +2460,11 @@ static void createPartitionBoundaries(
       addFacetElement(pe, facets[c][r]);
       for(std::size_t j = rec.first; j < rec.last; j++) {
         GEntity *b = entities[c][j];
+        const auto bound = std::make_pair(orientations[c][j], b);
         if(!orientations[c][j] ||
-           std::find(peBounds->begin(), peBounds->end(), b) != peBounds->end())
+           std::find(peBounds->begin(), peBounds->end(), bound) != peBounds->end())
           continue;
-        peBounds->push_back(b);
+        peBounds->push_back(bound);
         addPartitionBoundary(b, pe, orientations[c][j]);
       }
     }
@@ -2438,10 +2480,9 @@ static void assignNewEntityBRep(Graph &graph,
                                 const elementEntityMap &elementToEntity)
 {
   // The pairs of entities (of an element, of a neighbor of dimension one
-  // less) are found in parallel, by chunks of elements, each chunk keeping
-  // the first element pair of each entity pair, then merged in the order of
-  // the chunks: the orientation of an entity pair is the one of its first
-  // element pair in the graph, as when this was serial.
+  // less) are found in parallel, by chunks of elements. Keep the first
+  // occurrence of each signed entity pair, then merge in chunk order. A
+  // periodic seam can bound the same entity with both orientations.
   struct entityPair {
     GEntity *g1, *g2;
     int ori;
@@ -2455,7 +2496,7 @@ static void assignNewEntityBRep(Graph &graph,
   const int nthreads = CTX::instance()->numThreadsFor(graph.ne(), 10000);
 #pragma omp parallel for schedule(dynamic, 1) num_threads(nthreads)
   for(std::size_t c = 0; c < numChunks; c++) {
-    std::set<std::pair<GEntity *, GEntity *>> seen;
+    hashmapentity seen;
     const std::size_t end = std::min(graph.ne(), (c + 1) * chunkSize);
     for(std::size_t i = c * chunkSize; i < end; i++) {
       MElement *current = graph.element(i);
@@ -2464,29 +2505,26 @@ static void assignNewEntityBRep(Graph &graph,
         if(current->getDim() != neighbor->getDim() + 1) continue;
         GEntity *g1 = entityOf(current);
         GEntity *g2 = entityOf(neighbor);
-        if(seen.count(std::make_pair(g1, g2))) continue;
         const int ori = computeOrientation(current, neighbor);
         // A zero orientation means the elements are neighbors in the
         // node-based dual graph without one being a facet of the other,
         // which cannot happen on a conformal mesh. Record nothing: MSH4
         // encodes the orientation as the sign of the tag, so a 0 would read
-        // back as -1. Leave the pair unmarked, so another element pair can
-        // still establish the relation with a real orientation.
+        // back as -1. Another element pair can still establish the relation
+        // with a real orientation.
         if(!ori) continue;
-        seen.insert(std::make_pair(g1, g2));
+        if(!seen[g1].insert(std::make_pair(ori, g2)).second) continue;
         entityPair p = {g1, g2, ori};
         pairs[c].push_back(p);
       }
     }
   }
 
-  std::set<std::pair<GEntity *, GEntity *> > brepWithoutOri;
   hashmapentity brep;
   for(std::size_t c = 0; c < numChunks; c++) {
     for(std::size_t k = 0; k < pairs[c].size(); k++) {
       const entityPair &p = pairs[c][k];
-      if(brepWithoutOri.insert(std::make_pair(p.g1, p.g2)).second)
-        brep[p.g1].insert(std::make_pair(p.ori, p.g2));
+      brep[p.g1].insert(std::make_pair(p.ori, p.g2));
     }
   }
 
@@ -2619,10 +2657,7 @@ static bool splitPartitionCurvesAtJunctions(GModel *model)
     ret = true;
     PendingCurveSplit split;
     split.edge = edge;
-    split.brep = edge->faces();
-    split.orientations.reserve(split.brep.size());
-    for(std::size_t j = 0; j < split.brep.size(); j++)
-      split.orientations.push_back(split.brep[j]->delEdge(edge));
+    detachBoundaryUses(edge, split.brep, split.orientations);
     for(std::size_t i = 0; i < components.size(); i++) {
       std::size_t comp = distributor.newComponent();
       split.components.push_back(comp);
@@ -2652,7 +2687,9 @@ static bool splitPartitionCurvesAtJunctions(GModel *model)
       for(std::size_t j = 0; j < split.elements[i].size(); j++)
         pedge->addElement(split.elements[i][j]);
       for(std::size_t j = 0; j < split.brep.size(); j++) {
-        if(!distributor.touches(split.components[i], split.brep[j])) continue;
+        if(!distributor.touches(split.components[i], split.brep[j],
+                                split.orientations[j]))
+          continue;
         split.brep[j]->setEdge(pedge, split.orientations[j]);
         pedge->addFace(split.brep[j]);
       }

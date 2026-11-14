@@ -120,8 +120,9 @@ protected:
   // where the last click was, and where the pointer is: the lasso rectangle
   // goes from one to the other
   mousePosition _click, _curr;
-  // the point being placed in addPointMode
-  double _point[3];
+  // where a click would place the shape being placed (see shapePlacement),
+  // shown by the cursor, with what it is on
+  void _hoverPlacement();
   // What the cursor is over, written in a box in the picture rather than in
   // a window of its own, which some window managers showed and hid with a
   // flicker on every move: the text, where the cursor was when it was last
@@ -138,9 +139,9 @@ protected:
     double xyz[3];
   };
   std::vector<pinnedNote> _pinned;
-  // a model spun hard enough catches fire: how much is alight and when that
-  // was last drawn (the host draws the flames)
-  double _fire, _fireTime;
+  // a model spun hard enough gives off its phlogiston: how much, and when
+  // that was last drawn (the host draws it)
+  double _phlogiston, _phlogistonTime;
 
   // what the interaction asks of the host
   // the picture changed
@@ -158,10 +159,6 @@ protected:
   // drawn (the pass would mix with it), in which case nothing is picked
   virtual bool hostBeginGL() { return true; }
   virtual void hostEndGL() {}
-  // the point being placed: which of its coordinates the dialog holds fixed,
-  // and where the pointer moved it (mode: see addPointMode)
-  virtual bool hostFrozenCoordinate(int coord) { return false; }
-  virtual void hostPointMoved(const double p[3], int mode) {}
   // the ONELAB parameters of the entities: whether there are any, and show
   // those of one entity
   virtual bool hostHasOnelabContext() { return false; }
@@ -170,9 +167,12 @@ protected:
   virtual void hostQuickAccess() {}
 
 public:
-  // the entity being created follows the pointer: 0 none, 1 a point (see
-  // elementaryContextWindow::updatePoint() for the other values)
-  int addPointMode;
+  // the point of the model under the window point (x, y), on the point,
+  // curve or surface picked itself, and that entity if on is given: false if
+  // there is none (see pickedModelPoint())
+  bool modelPointAt(int x, int y, double xyz[3], GEntity **on = nullptr);
+  // where the last click was, in the units of the window
+  const double *clickPosition() const { return _click.win; }
   // a lasso is being drawn; a selection waits for clicks
   bool lassoMode, selectionMode;
   // what the keys ask of the selection, read at its next step
@@ -193,6 +193,11 @@ public:
   // a mouse event; the host counts clicks and reports a double click only
   // when acceptsDoubleClick() says the view takes one
   void handleMouse(const paneInput &in);
+  // the phlogiston given off at its current level, over what draw3d() drew
+  // in a picture of width x height pixels, the level dying down if decay (not
+  // in a print, nor for the second eye of a stereo frame); true while some is
+  // still given off, for the host to draw another frame in about 30 ms
+  bool releasePhlogiston(int width, int height, bool decay);
   bool acceptsDoubleClick() const;
   // the pointer left the view
   void pointerLeft();
@@ -252,12 +257,6 @@ public:
   bool measureClick();
   // a measurement waits for its second point
   bool measuring() const { return _ctx->numMarks() == 1; }
-  void setPoint(double x, double y, double z)
-  {
-    _point[0] = x;
-    _point[1] = y;
-    _point[2] = z;
-  }
 };
 
 #endif

@@ -31,15 +31,22 @@ public:
   Fl_Input *input[80];
   Fl_Value_Input *value[10];
   Fl_Group *group[20];
+  // the locks of the coordinates of the position and the work plane of the
+  // shape being placed (see shapePlacement)
   Fl_Check_Button *butt[3];
+  Fl_Choice *plane;
 
 public:
   elementaryContextWindow(int deltaFontSize = 0);
   ~elementaryContextWindow() { Fl::delete_widget(win); }
   void show(int pane);
   void hide() { win->hide(); }
-  void updatePoint(double pt[3], int which);
-  bool frozenPointCoord(int coord);
+  // the values of the inputs of a pane
+  std::vector<std::string> paneValues(int pane);
+  // the shape of a pane placed with the pointer, from the values of its
+  // inputs; the inputs and the locks shown as the placement has them
+  void startPlacement(int pane);
+  void showPlacement();
   // adds the entity of the pane to the script, unless a value it needs is
   // missing
   bool addShape(int pane);

@@ -24,6 +24,69 @@ import {modifiers} from './shortcuts.js';
 import {openQuickMenu, showSide, sideOver} from './statusbar.mjs';
 import {showNotes, tool, toolStatus} from './tools.mjs';
 
+// Tests of the speed of the drawing, given in the address of the page:
+// ?scale=1.5 draws at most that many pixels a CSS pixel (the screens of
+// phones have up to 3.5), ?pdb=0 does not keep the canvas after each frame
+// (see main.mjs), and ?fps=1, or either of the others, shows the size of the
+// canvas, the graphics processor, the time of the frames as they are drawn,
+// and a button that draws for a few seconds without a pause
+const speedTest = new URLSearchParams(location.search);
+const maxScale = Number(speedTest.get('scale')) || Infinity;
+const showSpeed = ['pdb', 'scale', 'fps'].some((k) => speedTest.has(k));
+let speedBox = null, speedFrames = [], gpu = '';
+function speedFrame(cpu, dpr) {
+  if(!speedBox) {
+    speedBox = document.createElement('div');
+    speedBox.id = 'speed';
+    document.body.append(speedBox);
+    const gl = canvas.getContext('webgl2');
+    const info = gl && gl.getExtension('WEBGL_debug_renderer_info');
+    gpu = !gl ? 'no WebGL 2' :
+      gl.getParameter(info ? info.UNMASKED_RENDERER_WEBGL : gl.RENDERER) +
+      (gl.getContextAttributes().preserveDrawingBuffer ? ', canvas kept' :
+       ', canvas not kept');
+  }
+  // the last frames, those drawn one after the other (a pause of the view
+  // is not a slow frame)
+  const now = performance.now();
+  speedFrames.push([now, cpu]);
+  if(speedFrames.length > 30) speedFrames.shift();
+  let gaps = 0, n = 0, cpus = 0;
+  for(let i = 0; i < speedFrames.length; i++) {
+    cpus += speedFrames[i][1];
+    const gap = i ? speedFrames[i][0] - speedFrames[i - 1][0] : 1e9;
+    if(gap < 500) { gaps += gap; n++; }
+  }
+  const at = canvas.getBoundingClientRect();
+  speedBox.style.left = (at.left + 6) + 'px';
+  speedBox.style.top = (at.top + 6) + 'px';
+  speedBox.textContent =
+    `${canvas.width} x ${canvas.height} pixels, ${dpr.toFixed(2)} a CSS ` +
+    `pixel (screen ${window.devicePixelRatio})\n${gpu}\n` +
+    `draw ${(cpus / speedFrames.length).toFixed(1)} ms of the processor` +
+    (n ? `, ${(gaps / n).toFixed(1)} ms a frame (${(1000 * n / gaps)
+          .toFixed(0)} a second)` : '') + '\n';
+  const bench = document.createElement('button');
+  bench.textContent = 'Draw for 3 s';
+  bench.onclick = () => {
+    const start = performance.now();
+    let count = 0;
+    const next = () => {
+      const t = performance.now();
+      if(t - start < 3000) {
+        drawNow();
+        count++;
+        requestAnimationFrame(next);
+      }
+      else
+        speedBox.append(`${count} frames in 3 s: ` +
+                        `${(3000 / count).toFixed(1)} ms a frame`);
+    };
+    requestAnimationFrame(next);
+  };
+  speedBox.append(bench);
+}
+
 // the studio shading (General.Shading) converges while the view is still: a
 // few of its frames at each animation frame after a frame is drawn, until
 // the next one (each run its own number, the older ones then stop)
@@ -43,18 +106,24 @@ export function draw() {
   studio++;
   requestAnimationFrame(() => {
     pending = false;
-    const dpr = window.devicePixelRatio || 1;
-    const w = Math.round(canvas.clientWidth * dpr);
-    const h = Math.round(canvas.clientHeight * dpr);
-    if(canvas.width !== w || canvas.height !== h) {
-      canvas.width = w;
-      canvas.height = h;
-    }
-    web.draw(w, h, dpr);
-    drawn = [w, h, dpr];
-    studioFrames();
-    showNotes();
+    drawNow();
   });
+}
+function drawNow() {
+  const dpr = Math.min(window.devicePixelRatio || 1, maxScale);
+  const w = Math.round(canvas.clientWidth * dpr);
+  const h = Math.round(canvas.clientHeight * dpr);
+  if(canvas.width !== w || canvas.height !== h) {
+    canvas.width = w;
+    canvas.height = h;
+  }
+  const start = showSpeed ? performance.now() : 0;
+  // (2: the scene gives off phlogiston, less over the next frames)
+  if(web.draw(w, h, dpr) === 2) setTimeout(draw, 30);
+  if(showSpeed) speedFrame(performance.now() - start, dpr);
+  drawn = [w, h, dpr];
+  studioFrames();
+  showNotes();
 }
 // the mouse: the events of the canvas go to the same interaction as in the
 // graphical interface (src/graphics/sceneView.cpp, through webApp.cpp):
@@ -62,6 +131,10 @@ export function draw() {
 // zooms at the cursor, Ctrl+click starts a lasso to zoom on, Ctrl+right click
 // resets the view; what is under the cursor is named in a box by it
 export const lasso = $('lasso'), hover = $('hover');
+// what shows the shape being placed again after an event of the scene (a
+// click puts it), if one is being placed: its form
+export let placementChanged = null;
+export function setPlacementChanged(f) { placementChanged = f; }
 function mouse(kind, e, wheel = 0) {
   const mods = modifiers(e, true);
   // the page numbers the buttons 0 left, 1 middle, 2 right; the scene 0
@@ -70,6 +143,7 @@ function mouse(kind, e, wheel = 0) {
   const at = canvas.getBoundingClientRect();
   const redraw = web.mouse(kind, e.clientX - at.left, e.clientY - at.top,
                            canvas.clientWidth, canvas.clientHeight, button, wheel, mods);
+  if(placementChanged) placementChanged();
   // the boxes over the canvas, placed in the window
   // the box hangs from the point the view keeps, so it follows the pointer
   // only once it has strayed, as in the graphical interface

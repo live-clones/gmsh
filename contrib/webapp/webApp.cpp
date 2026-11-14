@@ -59,6 +59,10 @@
 #include "OS.h"
 #include "PView.h"
 #include "PViewData.h"
+#if defined(HAVE_PLUGINS)
+#include "Plugin.h"
+#include "PluginManager.h"
+#endif
 #include "Options.h"
 #include "Shortcuts.h"
 #include "StringUtils.h"
@@ -67,6 +71,7 @@
 #include "onelab.h"
 #include "onelabUtils.h"
 #include "sceneView.h"
+#include "shapePlacement.h"
 #include "scriptStringInterface.h"
 #include "selectionDriver.h"
 #include "sceneTool.h"
@@ -309,7 +314,9 @@ namespace {
 extern "C" {
 
 // draw on the canvas of width x height device pixels, scale being the number
-// of them per CSS pixel (the devicePixelRatio of the page)
+// of them per CSS pixel (the devicePixelRatio of the page): 1, or 2 while the
+// scene gives off phlogiston (sceneView::releasePhlogiston()), for the page
+// to draw it again shortly
 EMSCRIPTEN_KEEPALIVE int gmshWebDraw(int width, int height, double scale)
 {
   Msg::NoThrow noThrow;
@@ -318,8 +325,13 @@ EMSCRIPTEN_KEEPALIVE int gmshWebDraw(int width, int height, double scale)
   _width = width;
   _height = height;
   _scale = scale;
+  bool releasing = false;
+  _view->afterScene = [&releasing](int w, int h) {
+    if(_scene) releasing = _scene->releasePhlogiston(w, h, true);
+  };
   draw();
-  return 1;
+  _view->afterScene = nullptr;
+  return releasing ? 2 : 1;
 }
 
 // add the next frames of the studio shading (General.Shading) to what the
@@ -486,7 +498,91 @@ EMSCRIPTEN_KEEPALIVE int gmshWebTool(int tool)
   sceneTool::stop();
   if(tool == 1) sceneTool::start(newQueryTool(), _scene);
   if(tool == 2) sceneTool::start(newMeasureTool(), _scene);
+  if(tool == 4) sceneTool::start(newRotationCenterTool(), _scene);
   return 1;
+}
+
+// the name of the tool under way ("Query", "Rotation center"...), "" if
+// none: a tool of one click ends by itself
+EMSCRIPTEN_KEEPALIVE const char *gmshWebToolName()
+{
+  static std::string name;
+  sceneTool *t = sceneTool::current();
+  name = t ? t->name() : "";
+  return name.c_str();
+}
+
+// The placing of a shape of the script (see shapePlacement): started with
+// the name of the shape and the values of its fields (separated by new
+// lines), the clicks of the canvas setting its position; stopped. Returns 0
+// if it did not start
+EMSCRIPTEN_KEEPALIVE int gmshWebPlacementStart(const char *name,
+                                               const char *values)
+{
+  Msg::NoThrow noThrow;
+  if(!gmshWebTool(0)) return 0;
+  int shape = -1;
+  for(std::size_t i = 0; i < scriptShapes().size(); i++)
+    if(scriptShapes()[i].name == name) shape = i;
+  std::vector<std::string> v;
+  std::istringstream in(values);
+  for(std::string s; std::getline(in, s);) v.push_back(s);
+  sceneTool::start(newPlacementTool(), _scene);
+  shapePlacement::start(shape, v);
+  return shapePlacement::current() ? 1 : 0;
+}
+
+EMSCRIPTEN_KEEPALIVE void gmshWebPlacementStop()
+{
+  Msg::NoThrow noThrow;
+  sceneTool::stop();
+  shapePlacement::stop();
+}
+
+// the placement under way, in JSON: {"changes" (how many times the scene
+// changed it), "values" (of the fields), "locked" (the coordinates), "plane"
+// (0 XY, 1 YZ, 2 XZ, 3 facing the view)}, or "" if none
+EMSCRIPTEN_KEEPALIVE const char *gmshWebPlacement()
+{
+  static std::string json;
+  json = "";
+  shapePlacement *p = shapePlacement::current();
+  if(!p) return json.c_str();
+  json = "{\"changes\":" + std::to_string(p->changes()) + ",\"values\":[";
+  for(std::size_t i = 0; i < p->values().size(); i++)
+    json += std::string(i ? "," : "") + JsonString(p->values()[i]);
+  json += "],\"locked\":[";
+  for(int i = 0; i < 3; i++)
+    json += std::string(i ? "," : "") + (p->locked(i) ? "true" : "false");
+  json += "],\"plane\":" + std::to_string((int)p->plane()) + "}";
+  return json.c_str();
+}
+
+// a field typed (a coordinate of the position typed is locked), a lock, the
+// work plane
+EMSCRIPTEN_KEEPALIVE void gmshWebPlacementSet(int i, const char *value)
+{
+  if(shapePlacement *p = shapePlacement::current()) p->setValue(i, value);
+}
+
+EMSCRIPTEN_KEEPALIVE void gmshWebPlacementLock(int i, int on)
+{
+  if(shapePlacement *p = shapePlacement::current()) p->setLocked(i, on != 0);
+}
+
+EMSCRIPTEN_KEEPALIVE void gmshWebPlacementPlane(int plane)
+{
+  if(shapePlacement *p = shapePlacement::current())
+    p->setPlane((shapePlacement::Plane)plane);
+}
+
+// the shape added to the script of the current model: 1 if it was not (with
+// errors), as gmshWebAddShape()
+EMSCRIPTEN_KEEPALIVE int gmshWebPlacementAdd()
+{
+  Msg::NoThrow noThrow;
+  shapePlacement *p = shapePlacement::current();
+  return (p && p->add()) ? 0 : 1;
 }
 
 // Start an operation on selected entities (see selectionDriver), or stop the
@@ -1115,6 +1211,131 @@ EMSCRIPTEN_KEEPALIVE int gmshWebReadableColor(int rgb, int bg, int fg, int dark,
   if(what == 0) return ReadableTextColor(rgb, bg, bg, dark);
   unsigned int fill = ReadableFillColor(rgb, fg, dark);
   return what == 1 ? fill : ContrastingColor(fill);
+}
+
+// The plugins (src/plugin), for the Plugins tab of the page (plugins.mjs), as
+// the plugin window of the FLTK graphical user interface shows them
+
+#if defined(HAVE_PLUGINS)
+static std::string jsonNumber(double v)
+{
+  if(!std::isfinite(v)) return "null";
+  char buf[32];
+  snprintf(buf, sizeof(buf), "%.16g", v);
+  return buf;
+}
+
+static GMSH_Plugin *findPlugin(const char *name)
+{
+  GMSH_Plugin *p = PluginManager::instance()->find(name);
+  if(!p) Msg::Error("Unknown plugin '%s'", name);
+  return p;
+}
+#endif
+
+// the plugins of the post-processing views and of the mesh: [{"name", "post"
+// (whether it runs on views), "short" and "help", "author", "num" and "str"
+// (the numeric and string options: [{"name", "value"}], their values now)}]
+EMSCRIPTEN_KEEPALIVE const char *gmshWebPlugins()
+{
+  Msg::NoThrow noThrow;
+  static std::string json;
+  json = "[";
+#if defined(HAVE_PLUGINS)
+  for(auto it = PluginManager::instance()->begin();
+      it != PluginManager::instance()->end(); ++it) {
+    GMSH_Plugin *p = it->second;
+    bool post = p->getType() == GMSH_Plugin::GMSH_POST_PLUGIN;
+    if(!post && p->getType() != GMSH_Plugin::GMSH_MESH_PLUGIN) continue;
+    std::string num, str;
+    for(int i = 0; i < p->getNbOptions(); i++)
+      num += std::string(i ? "," : "") +
+             "{\"name\":" + JsonString(p->getOption(i)->str) +
+             ",\"value\":" + jsonNumber(p->getOption(i)->def) + "}";
+    for(int i = 0; i < p->getNbOptionsStr(); i++)
+      str += std::string(i ? "," : "") +
+             "{\"name\":" + JsonString(p->getOptionStr(i)->str) +
+             ",\"value\":" + JsonString(p->getOptionStr(i)->def) + "}";
+    json += std::string(json.size() > 1 ? "," : "") +
+            "{\"name\":" + JsonString(p->getName()) +
+            ",\"post\":" + (post ? "true" : "false") +
+            ",\"short\":" + JsonString(p->getShortHelp()) +
+            ",\"help\":" + JsonString(p->getHelp()) +
+            ",\"author\":" + JsonString(p->getAuthor()) +
+            ",\"num\":[" + num + "],\"str\":[" + str + "]}";
+  }
+#endif
+  json += "]";
+  return json.c_str();
+}
+
+// the sliders of the numeric options of a plugin for the view of the given
+// index: [[step, min, max] or null (a field) for each option]
+EMSCRIPTEN_KEEPALIVE const char *gmshWebPluginRanges(const char *name,
+                                                    int view)
+{
+  Msg::NoThrow noThrow;
+  static std::string json;
+  json = "[";
+#if defined(HAVE_PLUGINS)
+  GMSH_Plugin *p = findPlugin(name);
+  for(int i = 0; p && i < p->getNbOptions(); i++) {
+    double step = 0., min = 0., max = 0.;
+    bool slider = view >= 0 && p->optionCallback(i, view, 1, step) &&
+                  p->optionCallback(i, view, 2, min) &&
+                  p->optionCallback(i, view, 3, max);
+    json += std::string(i ? "," : "") +
+            (slider ? "[" + jsonNumber(step) + "," + jsonNumber(min) + "," +
+                        jsonNumber(max) + "]" :
+                      "null");
+  }
+#endif
+  json += "]";
+  return json.c_str();
+}
+
+// an option of a plugin being edited (numeric if text is null): the plugin
+// may draw a preview of what it will do (a cutting plane...), which a
+// negative option removes; 1 if the scene is to be drawn again
+EMSCRIPTEN_KEEPALIVE int gmshWebPluginPreview(const char *name, int option,
+                                              double value, const char *text)
+{
+  Msg::NoThrow noThrow;
+#if defined(HAVE_PLUGINS)
+  // (a negative option: no preview any more)
+  if(option < 0) {
+    bool drawn = GMSH_Plugin::preview;
+    GMSH_Plugin::preview = nullptr;
+    return drawn ? 1 : 0;
+  }
+  GMSH_Plugin *p = findPlugin(name);
+  if(!p) return 0;
+  if(text) {
+    std::string s(text);
+    return p->optionStrCallback(option, -1, 0, s) ? 1 : 0;
+  }
+  return p->optionCallback(option, -1, 0, value) ? 1 : 0;
+#else
+  return 0;
+#endif
+}
+
+// run a plugin, with the options the page set (gmsh.plugin.setNumber...), on
+// the views of the given indices, separated by commas (none: on the view its
+// View option gives), as the FLTK graphical user interface does; the views
+// are then to be shown again
+EMSCRIPTEN_KEEPALIVE void gmshWebPluginRun(const char *name, const char *views)
+{
+  Msg::NoThrow noThrow;
+#if defined(HAVE_PLUGINS)
+  GMSH_Plugin *p = findPlugin(name);
+  if(!p) return;
+  std::vector<int> list;
+  for(const std::string &s : SplitString(views, ','))
+    if(!s.empty()) list.push_back(atoi(s.c_str()));
+  PluginManager::instance()->runOnViews(p, list);
+  GMSH_Plugin::preview = nullptr;
+#endif
 }
 
 } // extern "C"

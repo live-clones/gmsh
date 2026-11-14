@@ -143,10 +143,11 @@ body.noSide #side, body.noSide #split { display: none; }
 #side .row .entries { display: flex; gap: 4px; min-width: 0; }
 #side .row .entries input, #side .row .entries select { flex: 1; min-width: 0; }
 #side .heading { font-weight: bold; margin: 6px 0 2px; }
-#tabs { display: flex; gap: 2px; margin: 0 -8px 6px; padding: 0 8px;
+/* (on several rows when the panel is too narrow for them all) */
+#tabs { display: flex; flex-wrap: wrap; gap: 2px; margin: 0 -8px 6px; padding: 0 8px;
         border-bottom: 1px solid var(--line); }
 #tabs button { border: 1px solid transparent; border-bottom: none;
-               background: none; padding: 4px 7px; cursor: pointer;
+               background: none; padding: 4px 7px; cursor: pointer; white-space: nowrap;
                border-radius: 4px 4px 0 0; color: var(--tab); font: inherit; }
 #tabs button.on { border-color: var(--line); background: var(--bg); color: var(--fg);
                   margin-bottom: -1px; }
@@ -205,6 +206,20 @@ body.noSide #side, body.noSide #split { display: none; }
                    text-overflow: ellipsis; white-space: nowrap; }
 /* a check box before its name, which takes the rest of the row */
 #side .row.item { grid-template-columns: auto minmax(0, 1fr); }
+/* the Plugins tab (plugins.mjs) */
+#plugList { max-height: 30vh; overflow-y: auto; border: 1px solid var(--line);
+            margin: 4px 0 8px 8px; }
+#plugList .plugin { display: block; width: 100%; text-align: left; border: none;
+                    background: none; color: inherit; font: inherit; padding: 3px 6px;
+                    cursor: pointer; }
+#plugList .plugin small { display: block; color: var(--muted); overflow: hidden;
+                          text-overflow: ellipsis; white-space: nowrap; }
+#plugList .plugin:hover { background: var(--menu-hover); }
+#plugList .plugin.on { background: var(--menu-hover); font-weight: bold; }
+#plugForm .plugTitle { font-weight: bold; margin: 4px 0 2px 8px; }
+#plugForm details { margin: 0 0 6px 8px; }
+#plugForm summary { cursor: pointer; color: var(--muted); }
+#plugForm .plugHelp { white-space: pre-line; margin-left: 0; }
 #side .slider { display: flex; gap: 4px; align-items: center; }
 #side .row .slider input[type=range] { flex: 1; min-width: 0; width: auto; }
 #side .row .slider input[type=number] { flex: none; width: 76px; }
@@ -270,6 +285,11 @@ body.noSide #side, body.noSide #split { display: none; }
          background: var(--hover-bg); border: 1px solid var(--border);
          border-radius: 3px; white-space: pre-line; pointer-events: none;
          z-index: 1; }
+/* the speed of the drawing, when the address asks for it (scene.mjs) */
+#speed { position: fixed; padding: 4px 6px; background: var(--hover-bg);
+         border: 1px solid var(--border); border-radius: 3px;
+         white-space: pre-line; font-size: 12px; z-index: 1; }
+#speed button { display: block; margin-top: 4px; }
 #lasso { position: fixed; display: none; border: 1px dashed var(--lasso);
          background: var(--lasso-fill); pointer-events: none; z-index: 1; }
 #drop { position: fixed; inset: 0; display: none; place-items: center;

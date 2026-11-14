@@ -15,6 +15,7 @@
 #cmakedefine HAVE_BLOSSOM
 #cmakedefine HAVE_DLOPEN
 #cmakedefine HAVE_DOMHEX
+#cmakedefine HAVE_DUAL_MESH
 #cmakedefine HAVE_EIGEN
 #cmakedefine HAVE_FFMPEG
 #cmakedefine HAVE_FLTK
@@ -41,6 +42,7 @@
 #cmakedefine HAVE_MUMPS
 #cmakedefine HAVE_NETGEN
 #cmakedefine HAVE_NII2MESH
+#cmakedefine HAVE_NONCONFORMAL_REFINEMENT
 #cmakedefine HAVE_NUMPY
 #cmakedefine HAVE_NO_SOCKLEN_T
 #cmakedefine HAVE_NO_VSNPRINTF
@@ -49,7 +51,6 @@
 #cmakedefine HAVE_OCTREE_SIZE_FIELD
 #cmakedefine HAVE_ONELAB
 #cmakedefine HAVE_ONELAB2
-#cmakedefine HAVE_ONELAB_METAMODEL
 #cmakedefine HAVE_UDT
 #cmakedefine HAVE_OPENGL
 #cmakedefine HAVE_OPTHOM

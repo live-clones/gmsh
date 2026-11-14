@@ -129,7 +129,6 @@ class client :
   _GMSH_PARAMETER_QUERY_ALL = 25
   _GMSH_PARAMETER_QUERY_END = 26
   _GMSH_CONNECT = 27
-  _GMSH_OLPARSE = 28
   _GMSH_PARAMETER_NOT_FOUND = 29
   _GMSH_PARAMETER_CLEAR = 31
   _GMSH_PARAMETER_UPDATE = 32
@@ -376,17 +375,6 @@ class client :
       return
     self._send(self._GMSH_ERROR, str(msg))
 
-  def preProcess(self, name, filename) :
-    if not self.socket :
-      return
-    msg = [name, filename]
-    self._send(self._GMSH_OLPARSE, '\0'.join(msg))
-    (t, msg) = self._receive()
-    if t == self._GMSH_OLPARSE :
-      if msg == "true" :
-          return True
-    return False
-
   def isChanged(self, name) :
     if not self.socket :
       return
@@ -445,9 +433,8 @@ class client :
         self._createSocket()
         self._send(self._GMSH_START, str(os.getpid()))
     self.action = self.getString(self.name + '/Action', False)
+    # the client drives Gmsh itself: do not let Gmsh reload its own model
     self.setNumber('IsPyMetamodel',values=[1],visible=0)
-    self.loop = self.getNumber('0Metamodel/Loop', warn_if_not_found=False)
-    self.batch = self.getNumber('0Metamodel/Batch', warn_if_not_found=False)
     self.sendInfo("Performing OneLab '" + self.action + "'")
     if self.action == "initialize":
       self.finalize()
@@ -561,52 +548,6 @@ class client :
     p = path(self.wdir,inp)
     self.checkFile(p)
     return p
-
-  def solutionFiles(self, client, list) :
-    self.defineNumber('0Metamodel/9Use restored solution', values=[0], choices=[0,1])
-    self.defineString('0Metamodel/9Tag', values=[''])
-    if list :
-      if self.getNumber('0Metamodel/9Use restored solution') :
-        solFiles = self.getStringChoices('0Metamodel/9Solution files')
-        for i in solFiles:
-          self.checkFile(i)
-      else :
-        solFiles = list
-        self.setString('0Metamodel/9Solution files', values=[solFiles[0]],
-                       choices=solFiles, readOnly=1)
-        for i in solFiles:
-          if not self.fileExists(i) :
-            self.setChanged(client, 'true')
-    return solFiles
-
-  def needsCompute(self, client) :
-    # Avoid recomputation when a database with restored solutions has just been loaded
-    # Otherwise, stop using restored solutions when the client elmer has changed
-    if self.useRestoredSolution() == 2: # we have just loaded a database
-      self.setRestoredSolution(1)
-      self.setChanged(client, 'false') # do not compute
-    else :
-      if self.isChanged(client):
-        self.setRestoredSolution(0)
-        return True
-    return False
-
-  def willCompute(self, client) : # Inform user about the value of needsCompute
-    if self.useRestoredSolution() == 2: # special value
-      return False
-    else :
-      return True if self.isChanged(client) else False
-
-  def useRestoredSolution(self) :
-    return self.getNumber('0Metamodel/9Use restored solution')
-
-  def setRestoredSolution(self, val) :
-    self.setNumber('0Metamodel/9Use restored solution', values=[val])
-
-  def outputFiles(self, list) :
-    if list :
-      self.setString('0Metamodel/9Output files', values=[list[0]],
-                     choices=list, visible=1)
 
 # tool to extract the (i, j)th element in an array file
 # from rlcompleter import readline

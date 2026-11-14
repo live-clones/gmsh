@@ -23,9 +23,10 @@ import {$, FS, Module, app, download, gmsh, progress, setStatus} from './app.mjs
 import {web} from './gmshweb.mjs';
 import {readClipping} from './clipping.mjs';
 import {editFile, editScript} from './editor.mjs';
+import {showPlugins} from './plugins.mjs';
 import {openFiles, openMenu} from './models.mjs';
 import {colorScheme, keepOptionOf, optionRow, readOptions, setColorScheme, showOptions, showTab} from './options.mjs';
-import {draw} from './scene.mjs';
+import {draw, placementChanged, setPlacementChanged} from './scene.mjs';
 import {ModShift, installShortcuts, shortcutsHelp} from './shortcuts.js';
 import {run, showAll} from './solverClient.mjs';
 import {fullscreenElement, fullscreenEnabled, installApp, openQuickMenu, playing, popupMenu,
@@ -65,11 +66,18 @@ const menuButton = (text, title, items) => [text + ' ▾', title, (e) => {
 // The form under the buttons of a module: the fields of a shape to add, or
 // those of the operation under way, each given to change(name, value) ("1"
 // or "0" for a check box), Enter in one doing enter(); then its buttons
+// what the panel shown does when it closes, or another replaces it
+let panelClosed = null;
 export function showPanel(module, title, fields = [], change, enter, buttons = []) {
+  if(panelClosed) {
+    const f = panelClosed;
+    panelClosed = null;
+    f();
+  }
   const panel = $('panel');
   panel.textContent = '';
   panel.hidden = !module;
-  if(!module) return;
+  if(!module) return [];
   module.appendChild(panel);
   module.open = true;
   const name = document.createElement('div');
@@ -101,6 +109,7 @@ export function showPanel(module, title, fields = [], change, enter, buttons = [
   buttonRow(panel, buttons);
   // (not on a phone, whose keyboard would cover the form)
   if(inputs.length && !app.narrow.matches) inputs[0].focus({preventScroll: true});
+  return inputs;
 }
 // Mesh: the actions done through the API, timed, and the mesh saved (the
 // operations on picked entities are in tools.mjs, the partition form below the
@@ -179,13 +188,81 @@ function saveScript() {
 function startShape(shape) {
   if(tool === Tool.Operation) stopOperation();
   const {label, fields} = shapes[shape];
-  showPanel($('moduleGeometry'), label,
-            fields.map(([name, value]) => ({name, kind: 'text', value})),
-            (name, value) => { fields.find((f) => f[0] === name)[1] = value; },
-            () => addShape(shape),
-            [['Add', `Add the ${label.toLowerCase()} to the script`, () => addShape(shape)],
-             ['Close', 'Close the form', () => showPanel(null)]]);
+  const planes = ['XY', 'YZ', 'XZ', 'Facing the view'];
+  const inputs = showPanel(
+    $('moduleGeometry'), label,
+    [...fields.map(([name, value]) => ({name, kind: 'text', value})),
+     {name: 'Work plane', kind: planes.join('|'), value: planes[0]}],
+    (name, value) => {
+      if(name === 'Work plane') web.placementPlane(planes.indexOf(value));
+      else {
+        // (a coordinate of the position typed is locked: one changed, not the
+        // fields committed again by Add)
+        const i = fields.findIndex((f) => f[0] === name);
+        if(value === fields[i][1]) return;
+        fields[i][1] = value;
+        web.placementSet(i, value);
+        showPlacement(true);
+      }
+      draw();
+    },
+    () => addShape(shape),
+    [['Add', `Add the ${label.toLowerCase()} to the script (e)`, () => addShape(shape)],
+     ['Close', 'Close the form', () => showPanel(null)]]);
+  // the locks of the coordinates of the position (its first three fields),
+  // under them
+  const locks = [], row = document.createElement('div');
+  row.className = 'row';
+  const name = document.createElement('span');
+  name.textContent = 'Locked';
+  const boxes = document.createElement('span');
+  boxes.className = 'entries';
+  ['x', 'y', 'z'].forEach((c, i) => {
+    const box = document.createElement('label');
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.title = `Keep ${c} as it is when clicking (key ${c}; Shift+${c} keeps all but it)`;
+    cb.addEventListener('change', () => { web.placementLock(i, cb.checked); draw(); });
+    box.append(cb, c.toUpperCase());
+    boxes.append(box);
+    locks.push(cb);
+  });
+  row.append(name, boxes);
+  if(inputs[2]) inputs[2].closest('.row').after(row);
+  // the placement (see shapePlacement), whose state the form shows again
+  // when the scene changes it (a click puts the position, a key locks), but
+  // in a field being typed in
+  const typing = new Set();
+  fields.forEach((f, i) => {
+    inputs[i].addEventListener('input', () => typing.add(i));
+    inputs[i].addEventListener('change', () => typing.delete(i));
+  });
+  let changes = -1;
+  const showPlacement = (always = false) => {
+    const s = web.placement();
+    if(!s || (!always && s.changes === changes)) return;
+    changes = s.changes;
+    s.values.forEach((v, i) => {
+      fields[i][1] = v;
+      if(inputs[i] && !typing.has(i)) inputs[i].value = v;
+    });
+    s.locked.forEach((on, i) => { locks[i].checked = on; });
+  };
+  web.placementStart(shape, fields.map((f) => f[1]));
+  placementShape = shape;
+  setTool(Tool.Placement);
+  setPlacementChanged(showPlacement);
+  panelClosed = () => {
+    web.placementStop();
+    setPlacementChanged(null);
+    placementShape = null;
+    if(tool === Tool.Placement) setTool(Tool.None);
+    draw();
+  };
+  showPlacement(true);
 }
+// the shape being placed, which 'e' adds
+let placementShape = null;
 // the model's name, which changes when a model that is not a .geo file is
 // given one by the first command added to it
 export function showModelName() {
@@ -199,10 +276,12 @@ async function addShape(shape) {
   if(!app.modelDir) await newModel();
   const wasEmpty = isEmpty();
   app.lastError = '';
-  const errors = web.addShape(shape, shapes[shape].fields.map((f) => f[1]).join('\n'));
+  const errors = placementShape === shape ? web.placementAdd() :
+    web.addShape(shape, shapes[shape].fields.map((f) => f[1]).join('\n'));
   showModelName();
   showAll();
-  fitIfWasEmpty(wasEmpty);
+  // (not while placing, which keeps the view still, see shapePlacement)
+  if(placementShape !== shape) fitIfWasEmpty(wasEmpty);
   const text = errors ? `Not added: ${app.lastError.replace(/^Error *: */, '')}` :
     `Added a ${shapes[shape].label.toLowerCase()} to ${$('model').textContent}`;
   setStatus(text, !!errors);
@@ -242,6 +321,7 @@ const pageActions = {
   'mesh_save': {run: saveMesh},
   'mesh_partition': {run: partitionForm},
   // Quick access: the scene
+  'scene_rotation_center': {run: () => setTool(Tool.RotationCenter)},
   'query': {run: () => toggleTool(Tool.Query), check: () => tool === Tool.Query},
   'measure': {run: () => toggleTool(Tool.Measure), check: () => tool === Tool.Measure},
   'window_full_screen': {run: toggleFullscreen, check: () => !!fullscreenElement(),
@@ -254,6 +334,7 @@ const pageActions = {
   // View: the menu of a view
   'view_options': {run: (view, tag) => { if(!viewOptionsOpen.delete(tag)) viewOptionsOpen.add(tag); },
                    check: (view, tag) => viewOptionsOpen.has(tag)},
+  'view_plugins': {run: (view, tag) => showPlugins(tag)},
   'view_export_pos': {run: (view, tag) => exportView(tag, 'pos')},
   'view_export_msh': {run: (view, tag) => exportView(tag, 'msh')},
   // Status bar (the buttons are made from the registry, see statusbar.mjs)
@@ -277,6 +358,7 @@ const pageActions = {
   'file_open': {run: () => openMenu(true)},
   // Tools
   'options': {run: () => showOptions()},
+  'plugins': {run: () => showPlugins()},
   'visibility': {run: () => showTab('visTab')},
   'clipping': {run: () => showTab('clipTab')},
   // Window
@@ -286,13 +368,15 @@ const pageActions = {
   // Keys: the keys in no menu
   'project_reload': {run: () => run('check')},
   'solver_run': {run: () => run('compute')},
-  'selection_end': {run: () => operationKey('e'), available: () => tool === Tool.Operation},
+  'selection_end': {run: () => tool === Tool.Placement ? addShape(placementShape) : operationKey('e'),
+                    available: () => tool === Tool.Operation || tool === Tool.Placement},
   'selection_undo': {run: () => operationKey('u'), available: () => tool === Tool.Operation},
   'selection_quit': {run: () => tool === Tool.Operation ? operationKey('q') : setTool(Tool.None),
                      available: () => !!tool},
   'escape': {run: () => escape()},
   'options_solver': {run: () => showOptions('Solver')},
   'options_post': {run: () => showOptions('Post-processing')},
+  'plugins_view': {run: () => showPlugins(firstView())},
   'view_prev': {run: () => sceneAction('view_prev')},
   'view_next': {run: () => sceneAction('view_next')}
 };
@@ -328,6 +412,8 @@ export async function runItem(item, {view = -1, tag, mods = 0, el = null} = {}) 
   if(item.kind === 'operation') startOperation(item);
   else if(item.kind === 'shape') startShape(item.name);
   else await item.run(view, tag, mods, el);
+  // (a key may have changed the shape being placed: a lock)
+  if(placementChanged) placementChanged();
 }
 // the keys of an item, as the platform names them ("Alt+x, Alt+Shift+x"), or ''
 export function keyLabels(name) {

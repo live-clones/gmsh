@@ -40,16 +40,18 @@
 //   pure topology once tetrahedra exist (they need not be planar).
 //
 // What is recomputed rather than stored: the triangles that draw the faces
-// (fans from the first node of each face), the normal of an edge (that of the
-// first face holding it), the integration points (the rules of the
-// tetrahedra, in a shared buffer), and the edges, which are cached in _edges
-// the first time they are asked for (drawing, the API, plugins), as pairs of
+// (the boundary of the given tetrahedra, which is the actual surface of the
+// polyhedron, cached in _repTriangles; fans from the first node of each face
+// otherwise), the normal of an edge (that of the first face holding it), the
+// integration points (the rules of the tetrahedra, in a shared buffer), and
+// the edges, which are cached in _edges the first time they are asked for
+// (drawing, the API, plugins), as pairs of
 // node indices with each edge once whatever the orientation of the faces.
 class MPolyhedron : public MElement {
 private:
   std::vector<MVertex *> _vertices;
   mutable std::vector<int> _data; // mutable: the computed tetrahedra
-  mutable std::vector<int> _edges;
+  mutable std::vector<int> _edges, _repTriangles;
   int _numBoundary, _numFaces, _tetOffset;
   mutable bool _givenTetrahedra;
 
@@ -57,6 +59,8 @@ private:
   // build the edge cache, or the fan tetrahedra, if not there yet
   void _ensureEdges() const;
   void _ensureTetrahedra() const;
+  // the triangles on the boundary of the given tetrahedra, oriented outwards
+  void _ensureRepTriangles() const;
   int _findTetrahedron(double x, double y, double z, double bary[4]) const;
 
 public:
@@ -67,9 +71,7 @@ public:
   virtual int getDim() const { return 3; }
   virtual std::size_t getNumVertices() const { return _vertices.size(); }
   virtual int getNumVolumeVertices() const
-  {
-    return (int)_vertices.size() - _numBoundary;
-  }
+  { return (int)_vertices.size() - _numBoundary; }
   virtual MVertex *getVertex(int num) { return _vertices[num]; }
   virtual const MVertex *getVertex(int num) const { return _vertices[num]; }
 
@@ -95,9 +97,7 @@ public:
   }
   virtual int getNumEdgesRep(bool curved) { return getNumEdges(); }
   std::array<int, 2> getEdgeRepIndices(bool curved, int num) const
-  {
-    return getEdgeIndices(num);
-  }
+  { return getEdgeIndices(num); }
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z,
                           SVector3 *n);
 
@@ -134,9 +134,7 @@ public:
   virtual int getTypeForMSH() const { return MSH_POLYH_; }
   virtual void reverse();
   virtual int numCommonNodesInDualGraph(const MElement *const other) const
-  {
-    return 1;
-  }
+  { return 1; }
 
   // set the faces, as a flat list of vertices plus the offset of each face in
   // it (numFaces + 1 entries), and the given sub-tetrahedralization, as
@@ -164,9 +162,7 @@ public:
   int getNumPolygons() const { return _numFaces; }
   int getPolygonStart(int i) const { return _data[i]; }
   MVertex *getPolygonVertex(int i) const
-  {
-    return _vertices[_faceIndices()[i]];
-  }
+  { return _vertices[_faceIndices()[i]]; }
   int getPolygonVertexIndex(int i) const { return _faceIndices()[i]; }
   int getNumTetrahedra() const
   {
@@ -190,9 +186,7 @@ public:
   // volumes of the tetrahedra)
   virtual double getVolume();
   virtual void pnt(double u, double v, double w, SPoint3 &p) const
-  {
-    p = SPoint3(u, v, w);
-  }
+  { p = SPoint3(u, v, w); }
   virtual void pnt(double u, double v, double w, double *p) const
   {
     p[0] = u;
@@ -217,13 +211,9 @@ public:
   // point (or the closest one), and zero on the other nodes
   virtual const nodalBasis *getFunctionSpace(int order = -1,
                                              bool serendip = false) const
-  {
-    return nullptr;
-  }
+  { return nullptr; }
   virtual const JacobianBasis *getJacobianFuncSpace(int orderElement = -1) const
-  {
-    return nullptr;
-  }
+  { return nullptr; }
   virtual void getShapeFunctions(double u, double v, double w, double s[],
                                  int order = -1) const;
   virtual void getGradShapeFunctions(double u, double v, double w,

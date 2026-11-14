@@ -94,7 +94,7 @@ void drawContextOffscreen::drawCurrentOpenglWindow(bool make_current,
   _ctx->viewport[2] = (int)(_width / _scale + 0.5);
   _ctx->viewport[3] = (int)(_height / _scale + 0.5);
   _ctx->setHighResolutionPixelFactor(_scale);
-  glViewport(0, 0, _width, _height);
+  gmshViewport(0, 0, _width, _height);
   setPixelFactor(_scale);
 
   drawContext::setClearColor();
@@ -108,6 +108,7 @@ void drawContextOffscreen::drawCurrentOpenglWindow(bool make_current,
     _ctx->draw3d();
     memcpy(_frameView, _ctx->model, sizeof(_frameView));
   }
+  if(afterScene) afterScene(_width, _height);
   _ctx->draw2d();
   // all the frames of the studio shading, as a print of a window has them; on
   // the screen, they are added a few at a time (see drawStudioFrames())
@@ -128,7 +129,7 @@ bool drawContextOffscreen::drawStudioFrames(double budget)
   if(!_ctx || !_screen || !glShader::enabled() || ctx->shading < 1) return false;
   int n = ctx->studioSamples;
   if(_ctx->studioSample + 1 >= n) return false;
-  glViewport(0, 0, _width, _height);
+  gmshViewport(0, 0, _width, _height);
   setPixelFactor(_scale);
   if(!_ctx->drawStudioFrames(_ctx->studioSample + 1, _width, _height,
                              _frameView, budget))

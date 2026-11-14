@@ -20,6 +20,7 @@
 import {$, gmsh} from './app.mjs';
 import {web} from './gmshweb.mjs';
 import {readClipping} from './clipping.mjs';
+import {readPlugins} from './plugins.mjs';
 import {recolorParameters} from './parameters.mjs';
 import {draw} from './scene.mjs';
 import {keepViewOption, settleViews, updateViews, viewNum, viewTags} from './views.mjs';
@@ -260,6 +261,7 @@ export function showTab(id) {
   // the model may have changed size
   if(id === 'clipTab') readClipping();
   if(id === 'visTab') readVisibility();
+  if(id === 'plugTab') readPlugins();
 }
 // the Options tab, at the options of a page
 export function showOptions(page) {

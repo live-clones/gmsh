@@ -9,6 +9,7 @@
 #include <cmath>
 #include <cstddef>
 #include "glShader.h"
+#include "glImmediate.h"
 #include "Context.h"
 #include "glMatrix.h"
 #include "GmshMessage.h"
@@ -428,14 +429,14 @@ void main()
 }
 )";
 
-  // The fire: a march down the window's depth from each pixel, leaning
+  // The phlogiston: a march down the window's depth from each pixel, leaning
   // sideways more the further it goes, through a turbulence that drifts up
-  // with time. Every pixel of the model met on the way feeds the flame, the
+  // with time. Every pixel of the model met on the way gives off some, the
   // near ones most, so tongues rise from the outline and the model itself
-  // glows through a veil. The frame is put back with the air above the
-  // flames shimmering, the flames laid over it with a black body's colours,
-  // a soft glow around them and a few embers rising.
-  const char *fireFragmentBody = R"(
+  // glows through a veil. The frame is put back with the phlogisticated air
+  // above it shimmering, the phlogiston laid over it with a black body's
+  // colours, a soft glow around it and a few motes rising.
+  const char *phlogistonFragmentBody = R"(
 uniform sampler2D uDepth;
 uniform sampler2D uFrame;
 uniform sampler2D uReveal;
@@ -505,13 +506,13 @@ void main()
   gBack = texelFetch(uDepth, ivec2(0, whole.y - 1), 0).r;
   vec2 p = gl_FragCoord.xy;
   float H = size.y;
-  // past a full blaze the flames only get taller
+  // past a full release the tongues only get taller
   float reach = 0.3 * H * uLevel;
   float level = min(uLevel, 1.0);
   float rise = uTime * 0.4 * H;
   bool onModel = drawn(ivec2(p));
 
-  // the turbulence at this pixel, for the shimmer and the embers
+  // the turbulence at this pixel, for the shimmer and the motes
   vec2 c0 = vec2(p.x, p.y + rise) * (9.0 / H);
   vec2 warp0 = vec2(fbm(c0 + vec2(0.0, 0.6 * uTime)),
                     fbm(c0 + vec2(5.2, 1.3 - 0.4 * uTime)));
@@ -546,29 +547,29 @@ void main()
   glow *= 2.5 * level / float(N);
   if(glow <= 0.002) discard;
 
-  // the frame, seen through the hot air above the flames
+  // the frame, seen through the phlogisticated air above the tongues
   vec2 shimmer = onModel ? vec2(0.0) : (warp0 - 0.5) * 0.02 * H * min(glow, 0.5);
   vec2 uv = clamp((p + shimmer) / size, vec2(0.0), vec2(1.0));
   vec3 frame = texture(uFrame, uv).rgb;
 
-  // the flames over it: on the model a veil it glows through, above it a
-  // body of their own; a soft orange glow around; embers in the updraft
-  vec3 fire = blackBody(heat);
+  // the phlogiston over it: on the model a veil it glows through, above it
+  // a body of its own; a soft orange glow around; motes in the updraft
+  vec3 given = blackBody(heat);
   float alpha = (onModel ? 0.65 : 0.95) * smoothstep(0.0, 0.5, heat);
-  vec3 c = mix(frame, fire, alpha);
-  // the model reddens all over as it burns, the flames or not
+  vec3 c = mix(frame, given, alpha);
+  // the model reddens all over as it gives it off, the tongues or not
   if(onModel) c = mix(c, vec3(1.0, 0.3, 0.05), 0.4 * smoothstep(0.0, 0.3, glow) * (1.0 - alpha));
   c += vec3(1.0, 0.45, 0.12) * 0.35 * glow * (1.0 - alpha);
-  // A few embers in the updraft: one in some of the cells of a grid that
-  // scrolls up faster than the flames, and sways with the same turbulence.
+  // A few motes in the updraft: one in some of the cells of a grid that
+  // scrolls up faster than the tongues, and sways with the same turbulence.
   // Each is a streak drawn out behind itself rather than a dot, of its own
-  // size, with a halo, and cools from yellow to red as it leaves the fire.
+  // size, with a halo, and cools from yellow to red as it leaves the model.
   if(!onModel) {
     float cellSize = H / 70.0;
     vec2 ep = vec2(p.x - 0.06 * H * (warp0.x - 0.5), p.y - 1.4 * rise);
     vec2 base = floor(ep / cellSize);
-    float ember = 0.0;
-    // the neighbouring cells too, or a spark would be cut off square where
+    float mote = 0.0;
+    // the neighbouring cells too, or a mote would be cut off square where
     // its halo crosses into them
     for(int j = -1; j <= 1; j++) {
       for(int i = -1; i <= 1; i++) {
@@ -581,13 +582,13 @@ void main()
         d.y *= (d.y < 0.0) ? 0.16 : 1.3;
         float size = 0.6 + 0.9 * hash(cell + 9.4);
         float r = length(d);
-        ember += smoothstep(size + 0.7, 0.3 * size, r) +
+        mote += smoothstep(size + 0.7, 0.3 * size, r) +
                  0.22 * smoothstep(5.0 * size, 0.0, r);
       }
     }
-    vec3 spark = mix(vec3(1.0, 0.25, 0.05), vec3(1.0, 0.8, 0.45),
+    vec3 moteColor = mix(vec3(1.0, 0.25, 0.05), vec3(1.0, 0.8, 0.45),
                      smoothstep(0.02, 0.3, glow));
-    c += spark * 1.8 * ember * smoothstep(0.0, 0.15, glow) * (1.0 - alpha);
+    c += moteColor * 1.8 * mote * smoothstep(0.0, 0.15, glow) * (1.0 - alpha);
   }
   fColor = vec4(min(c, vec3(1.0)), 1.0);
 }
@@ -632,11 +633,12 @@ void main()
     GLuint _blitProgram = 0;
     GLint _uBlitTex = -1, _uBlitScale = -1;
     bool _blitTried = false;
-    // the fire and its program
-    GLuint _fireProgram = 0;
-    GLint _uFireDepth = -1, _uFireFrame = -1, _uFireLevel = -1, _uFireTime = -1;
-    GLint _uFireReveal = -1, _uFireRevealOn = -1;
-    bool _fireTried = false;
+    // the phlogiston and its program
+    GLuint _phlogistonProgram = 0;
+    GLint _uPhlogistonDepth = -1, _uPhlogistonFrame = -1;
+    GLint _uPhlogistonLevel = -1, _uPhlogistonTime = -1;
+    GLint _uPhlogistonReveal = -1, _uPhlogistonRevealOn = -1;
+    bool _phlogistonTried = false;
     bool _tried = false;
     // the program failed to build in a context made for it (kept across
     // contexts, unlike the rest)
@@ -648,7 +650,7 @@ void main()
     GLuint _oitProgram = 0;
     GLint _uAccum = -1, _uReveal = -1;
     bool _oitOn = false, _oitFailed = false, _oitTried = false;
-    // whether the summing buffers were drawn into since the fire last
+    // whether the summing buffers were drawn into since the phlogiston last
     // looked: their light let through says where transparent things are,
     // which the depth does not
     bool _oitUsed = false;
@@ -670,9 +672,9 @@ void main()
       GLuint accFbo = 0, accTex = 0, accCopy = 0;
       int accWidth = 0, accHeight = 0;
       GLenum accCopyFormat = 0;
-      GLuint fireFbo = 0, fireDepth = 0, fireFrame = 0;
-      int fireWidth = 0, fireHeight = 0;
-      GLenum fireDepthFormat = 0;
+      GLuint phlogistonFbo = 0, phlogistonDepth = 0, phlogistonFrame = 0;
+      int phlogistonWidth = 0, phlogistonHeight = 0;
+      GLenum phlogistonDepthFormat = 0;
       GLuint pickFbo = 0, pickColorTex = 0, pickDepthTex = 0, pickDepthRb = 0;
       int pickWidth = 0, pickHeight = 0;
     };
@@ -945,10 +947,11 @@ void main()
     _blitProgram = 0;
     _uBlitTex = _uBlitScale = -1;
     _blitTried = false;
-    _fireProgram = 0;
-    _uFireDepth = _uFireFrame = _uFireLevel = _uFireTime = -1;
-    _uFireReveal = _uFireRevealOn = -1;
-    _fireTried = false;
+    _phlogistonProgram = 0;
+    _uPhlogistonDepth = _uPhlogistonFrame = -1;
+    _uPhlogistonLevel = _uPhlogistonTime = -1;
+    _uPhlogistonReveal = _uPhlogistonRevealOn = -1;
+    _phlogistonTried = false;
     _tried = false;
     _oitProgram = 0;
     _uAccum = _uReveal = -1;
@@ -1115,8 +1118,8 @@ void main()
     bindNoShadow(which);
     glApi::Uniform1i(_u.shadowPass, 1);
     glApi::Uniform1f(_u.seed, sample > 0 ? 0.7318f * sample : -1.f);
-    glGetIntegerv(GL_VIEWPORT, _shadowViewport);
-    glViewport(0, 0, size, size);
+    for(int i = 0; i < 4; i++) _shadowViewport[i] = gmshViewport()[i];
+    gmshViewport(0, 0, size, size);
     glEnable(GL_DEPTH_TEST);
     glDepthMask(GL_TRUE);
     glDepthFunc(GL_LESS);
@@ -1131,8 +1134,8 @@ void main()
     _shadowPass = -1;
     glApi::Uniform1i(_u.shadowPass, 0);
     glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
-    glViewport(_shadowViewport[0], _shadowViewport[1], _shadowViewport[2],
-               _shadowViewport[3]);
+    gmshViewport(_shadowViewport[0], _shadowViewport[1], _shadowViewport[2],
+                 _shadowViewport[3]);
     if(!fromEye) {
       if(which)
         setDomeOff();
@@ -1179,16 +1182,13 @@ void main()
       fullscreenPass(int width, int height, GLuint program)
       {
         _depth = glIsEnabled(GL_DEPTH_TEST);
-        _blend = glIsEnabled(GL_BLEND);
-        glGetIntegerv(GL_VIEWPORT, _vp);
+        _blend = gmshBlendEnabled();
+        for(int i = 0; i < 4; i++) _vp[i] = gmshViewport()[i];
         glGetFloatv(GL_COLOR_CLEAR_VALUE, _clear);
-        glGetIntegerv(GL_BLEND_SRC_RGB, &_func[0]);
-        glGetIntegerv(GL_BLEND_DST_RGB, &_func[1]);
-        glGetIntegerv(GL_BLEND_SRC_ALPHA, &_func[2]);
-        glGetIntegerv(GL_BLEND_DST_ALPHA, &_func[3]);
-        glViewport(0, 0, width, height);
+        gmshGetBlendFunc(_src, _dst);
+        gmshViewport(0, 0, width, height);
         glDisable(GL_DEPTH_TEST);
-        glDisable(GL_BLEND);
+        gmshBlend(false);
         glApi::UseProgram(program);
         glApi::BindVertexArray(_c->vao);
         // the vertices come from gl_VertexID; an attribute left enabled
@@ -1199,20 +1199,17 @@ void main()
       void draw() { glDrawArrays(GL_TRIANGLES, 0, 3); }
       ~fullscreenPass()
       {
-        glViewport(_vp[0], _vp[1], _vp[2], _vp[3]);
+        gmshViewport(_vp[0], _vp[1], _vp[2], _vp[3]);
         glClearColor(_clear[0], _clear[1], _clear[2], _clear[3]);
-        if(glApi::BlendFuncSeparate)
-          glApi::BlendFuncSeparate(_func[0], _func[1], _func[2], _func[3]);
-        else
-          glBlendFunc(_func[0], _func[1]);
+        gmshBlendFuncSeparate(_src[0], _dst[0], _src[1], _dst[1]);
         _depth ? glEnable(GL_DEPTH_TEST) : glDisable(GL_DEPTH_TEST);
-        _blend ? glEnable(GL_BLEND) : glDisable(GL_BLEND);
+        gmshBlend(_blend);
         glApi::UseProgram(_program);
         glApi::BindVertexArray(_c->vao);
       }
 
     private:
-      GLint _vp[4], _func[4];
+      GLint _vp[4], _src[2], _dst[2];
       GLfloat _clear[4];
       GLboolean _depth, _blend;
     };
@@ -1342,14 +1339,14 @@ void main()
         glClearColor(0.f, 0.f, 0.f, 0.f);
         glClear(GL_COLOR_BUFFER_BIT);
       }
-      glEnable(GL_BLEND);
-      glBlendFunc(GL_ONE, GL_ONE);
+      gmshBlend(true);
+      gmshBlendFunc(GL_ONE, GL_ONE);
       glApi::Uniform1f(_uBlitScale, 1.f);
       pass.draw();
 
       // and the average put back on the window
       glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
-      glDisable(GL_BLEND);
+      gmshBlend(false);
       glBindTexture(GL_TEXTURE_2D, _c->accTex);
       glApi::Uniform1f(_uBlitScale, 1.f / count);
       pass.draw();
@@ -1377,22 +1374,22 @@ void main()
   }
 
   namespace {
-    bool buildFire()
+    bool buildPhlogiston()
     {
-      if(_fireTried) return _fireProgram != 0;
-      _fireTried = true;
-      GLuint p = buildFullscreenProgram(fireFragmentBody);
+      if(_phlogistonTried) return _phlogistonProgram != 0;
+      _phlogistonTried = true;
+      GLuint p = buildFullscreenProgram(phlogistonFragmentBody);
       if(!p) {
-        Msg::Debug("Could not link the fire program");
+        Msg::Debug("Could not link the phlogiston program");
         return false;
       }
-      _uFireDepth = glApi::GetUniformLocation(p, "uDepth");
-      _uFireFrame = glApi::GetUniformLocation(p, "uFrame");
-      _uFireReveal = glApi::GetUniformLocation(p, "uReveal");
-      _uFireRevealOn = glApi::GetUniformLocation(p, "uRevealOn");
-      _uFireLevel = glApi::GetUniformLocation(p, "uLevel");
-      _uFireTime = glApi::GetUniformLocation(p, "uTime");
-      _fireProgram = p;
+      _uPhlogistonDepth = glApi::GetUniformLocation(p, "uDepth");
+      _uPhlogistonFrame = glApi::GetUniformLocation(p, "uFrame");
+      _uPhlogistonReveal = glApi::GetUniformLocation(p, "uReveal");
+      _uPhlogistonRevealOn = glApi::GetUniformLocation(p, "uRevealOn");
+      _uPhlogistonLevel = glApi::GetUniformLocation(p, "uLevel");
+      _uPhlogistonTime = glApi::GetUniformLocation(p, "uTime");
+      _phlogistonProgram = p;
       return true;
     }
 
@@ -1405,13 +1402,13 @@ void main()
       _c->accWidth = _c->accHeight = 0;
     }
 
-    void dropFireBuffers()
+    void dropPhlogistonBuffers()
     {
-      if(_c->fireFbo) glApi::DeleteFramebuffers(1, &_c->fireFbo);
-      if(_c->fireDepth) glDeleteTextures(1, &_c->fireDepth);
-      if(_c->fireFrame) glDeleteTextures(1, &_c->fireFrame);
-      _c->fireFbo = _c->fireDepth = _c->fireFrame = 0;
-      _c->fireWidth = _c->fireHeight = 0;
+      if(_c->phlogistonFbo) glApi::DeleteFramebuffers(1, &_c->phlogistonFbo);
+      if(_c->phlogistonDepth) glDeleteTextures(1, &_c->phlogistonDepth);
+      if(_c->phlogistonFrame) glDeleteTextures(1, &_c->phlogistonFrame);
+      _c->phlogistonFbo = _c->phlogistonDepth = _c->phlogistonFrame = 0;
+      _c->phlogistonWidth = _c->phlogistonHeight = 0;
     }
 
     // A blit of the depth needs the format of the window's depth buffer,
@@ -1434,12 +1431,12 @@ void main()
     // be the window's own, unknown: tried like the transparency buffers'
     bool copyDepthToTexture(int width, int height, GLenum format)
     {
-      if(!_c->fireFbo) {
-        glApi::GenFramebuffers(1, &_c->fireFbo);
-        glApi::BindFramebuffer(GL_FRAMEBUFFER, _c->fireFbo);
+      if(!_c->phlogistonFbo) {
+        glApi::GenFramebuffers(1, &_c->phlogistonFbo);
+        glApi::BindFramebuffer(GL_FRAMEBUFFER, _c->phlogistonFbo);
         bool stencil = (format == GL_DEPTH24_STENCIL8);
-        glGenTextures(1, &_c->fireDepth);
-        glBindTexture(GL_TEXTURE_2D, _c->fireDepth);
+        glGenTextures(1, &_c->phlogistonDepth);
+        glBindTexture(GL_TEXTURE_2D, _c->phlogistonDepth);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -1450,34 +1447,36 @@ void main()
         glTexImage2D(GL_TEXTURE_2D, 0, format, width, height + 1, 0,
                      stencil ? GL_DEPTH_STENCIL : GL_DEPTH_COMPONENT,
                      stencil ? GL_UNSIGNED_INT_24_8 : GL_UNSIGNED_INT, nullptr);
-        // and the frame itself, for the shimmer of the air over the flames
-        glGenTextures(1, &_c->fireFrame);
-        glBindTexture(GL_TEXTURE_2D, _c->fireFrame);
+        // and the frame itself, for the shimmer of the phlogisticated air (RGB:
+        // a framebuffer without alpha, as a web page's canvas is, can only be
+        // copied into a texture without alpha)
+        glGenTextures(1, &_c->phlogistonFrame);
+        glBindTexture(GL_TEXTURE_2D, _c->phlogistonFrame);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA,
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, width, height, 0, GL_RGB,
                      GL_UNSIGNED_BYTE, nullptr);
         glBindTexture(GL_TEXTURE_2D, 0);
         glApi::FramebufferTexture2D(
           GL_FRAMEBUFFER,
           stencil ? GL_DEPTH_STENCIL_ATTACHMENT : GL_DEPTH_ATTACHMENT,
-          GL_TEXTURE_2D, _c->fireDepth, 0);
+          GL_TEXTURE_2D, _c->phlogistonDepth, 0);
         const GLenum none = GL_NONE;
         glApi::DrawBuffers(1, &none);
         if(glApi::CheckFramebufferStatus(GL_FRAMEBUFFER) !=
            GL_FRAMEBUFFER_COMPLETE) {
-          dropFireBuffers();
+          dropPhlogistonBuffers();
           return false;
         }
-        _c->fireWidth = width;
-        _c->fireHeight = height;
+        _c->phlogistonWidth = width;
+        _c->phlogistonHeight = height;
       }
       while(glGetError() != GL_NO_ERROR) {}
       // the whole copy is cleared first, so that the row over the window's
       // own holds a depth of one; the blit covers the rest of it
-      glApi::BindFramebuffer(GL_DRAW_FRAMEBUFFER, _c->fireFbo);
+      glApi::BindFramebuffer(GL_DRAW_FRAMEBUFFER, _c->phlogistonFbo);
       GLboolean wasMask = GL_TRUE, wasScissor = glIsEnabled(GL_SCISSOR_TEST);
       glGetBooleanv(GL_DEPTH_WRITEMASK, &wasMask);
       GLdouble wasClear = 1.;
@@ -1493,20 +1492,21 @@ void main()
       glApi::BlitFramebuffer(0, 0, width, height, 0, 0, width, height,
                              GL_DEPTH_BUFFER_BIT, GL_NEAREST);
       if(glGetError() == GL_NO_ERROR) return true;
-      dropFireBuffers();
+      dropPhlogistonBuffers();
       return false;
     }
   } // namespace
 
-  bool fire(int width, int height, double level, double time)
+  bool phlogiston(int width, int height, double level, double time)
   {
     if(width < 1 || height < 1 || level <= 0.) return false;
     if(!ensure() || !glApi::haveFramebufferObjects() ||
-       !glApi::BlitFramebuffer || !buildFire())
+       !glApi::BlitFramebuffer || !buildPhlogiston())
       return false;
-    if(_c->fireFbo && (_c->fireWidth != width || _c->fireHeight != height))
-      dropFireBuffers();
-    bool ok = withDepthFormat(_c->fireDepthFormat, [&](GLenum format) {
+    if(_c->phlogistonFbo &&
+       (_c->phlogistonWidth != width || _c->phlogistonHeight != height))
+      dropPhlogistonBuffers();
+    bool ok = withDepthFormat(_c->phlogistonDepthFormat, [&](GLenum format) {
       return copyDepthToTexture(width, height, format);
     });
     glApi::BindFramebuffer(GL_FRAMEBUFFER, _window);
@@ -1519,17 +1519,17 @@ void main()
     if(drawBuf == GL_NONE) drawBuf = GL_BACK;
     glReadBuffer(_window ? GL_COLOR_ATTACHMENT0 : (GLenum)drawBuf);
     glApi::ActiveTexture(GL_TEXTURE0 + 1);
-    glBindTexture(GL_TEXTURE_2D, _c->fireFrame);
+    glBindTexture(GL_TEXTURE_2D, _c->phlogistonFrame);
     glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, width, height);
 
-    // the window drawn over, wherever the fire reaches; what is changed is
-    // put back afterwards
+    // the window drawn over, wherever the phlogiston reaches; what is changed
+    // is put back afterwards
     {
-      fullscreenPass pass(width, height, _fireProgram);
+      fullscreenPass pass(width, height, _phlogistonProgram);
       glApi::ActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, _c->fireDepth);
-      glApi::Uniform1i(_uFireDepth, 0);
-      glApi::Uniform1i(_uFireFrame, 1);
+      glBindTexture(GL_TEXTURE_2D, _c->phlogistonDepth);
+      glApi::Uniform1i(_uPhlogistonDepth, 0);
+      glApi::Uniform1i(_uPhlogistonFrame, 1);
       // the transparent things drawn this frame, from the summing buffers; on
       // unit 4, as units 2 and 3 hold the shadow maps of the main program for
       // the whole frame and a texture bound over one of them is read as black
@@ -1538,10 +1538,10 @@ void main()
       _oitUsed = false;
       glApi::ActiveTexture(GL_TEXTURE0 + 4);
       glBindTexture(GL_TEXTURE_2D, reveal ? _c->oitReveal : 0);
-      glApi::Uniform1i(_uFireReveal, 4);
-      glApi::Uniform1i(_uFireRevealOn, reveal ? 1 : 0);
-      glApi::Uniform1f(_uFireLevel, (float)level);
-      glApi::Uniform1f(_uFireTime, (float)fmod(time, 100.));
+      glApi::Uniform1i(_uPhlogistonReveal, 4);
+      glApi::Uniform1i(_uPhlogistonRevealOn, reveal ? 1 : 0);
+      glApi::Uniform1f(_uPhlogistonLevel, (float)level);
+      glApi::Uniform1f(_uPhlogistonTime, (float)fmod(time, 100.));
       pass.draw();
     }
     glApi::ActiveTexture(GL_TEXTURE0 + 4);
@@ -1665,8 +1665,7 @@ void main()
     int segments = count / 2;
     glApi::BindVertexArray(_c->vao);
 
-    GLint vp[4];
-    glGetIntegerv(GL_VIEWPORT, vp);
+    const int *vp = gmshViewport();
     float view[2] = {(float)vp[2], (float)vp[3]};
     glApi::Uniform2fv(_u.viewport, 1, view);
     glApi::Uniform1f(_u.lineWidth, (float)width);
@@ -2129,9 +2128,9 @@ void main()
     // the transparency buffers were made to match the window
     dropOitBuffers();
     _c->oitDepthFormat = 0;
-    // the fire copies the depth of what it burns: its format was chosen for
-    // the window too
-    _c->fireDepthFormat = 0;
+    // the phlogiston pass copies the depth of what gives it off: its format
+    // was chosen for the window too
+    _c->phlogistonDepthFormat = 0;
     Msg::Debug("Printing into a %dx%d buffer", width, height);
     return true;
   }
@@ -2158,10 +2157,10 @@ void main()
     _printFbo = _printColor = _printDepth = 0;
     dropOitBuffers();
     _c->oitDepthFormat = 0;
-    // the fire copies the depth of what it burns: its format was chosen for
-    // the window too
-    dropFireBuffers();
-    _c->fireDepthFormat = 0;
+    // the phlogiston pass copies the depth of what gives it off: its format
+    // was chosen for the window too
+    dropPhlogistonBuffers();
+    _c->phlogistonDepthFormat = 0;
     // a picture of a few thousand pixels a side leaves buffers of hundreds of
     // megabytes behind otherwise: they are kept for a window, which is small
     // and drawn again and again, not for a print
@@ -2179,8 +2178,7 @@ void main()
     }
 
     // the whole window, as that is what the depth is copied from
-    GLint vp[4];
-    glGetIntegerv(GL_VIEWPORT, vp);
+    const int *vp = gmshViewport();
     int w = vp[0] + vp[2], h = vp[1] + vp[3];
     if(w < 1 || h < 1) return false;
 
@@ -2210,8 +2208,8 @@ void main()
     glClearColor(clear[0], clear[1], clear[2], clear[3]);
 
     // every fragment is added, none hides another
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_ONE, GL_ONE);
+    gmshBlend(true);
+    gmshBlendFunc(GL_ONE, GL_ONE);
     glEnable(GL_DEPTH_TEST);
     glDepthMask(GL_FALSE);
     glApi::Uniform1i(_u.oitPass, 1);
@@ -2250,20 +2248,17 @@ void main()
 
     // the averaged colour, laid over the window with the fragments' coverage
     glDisable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);
+    gmshBlend(true);
     // the window's alpha (kept by saved images) must end up as covered as the
     // pixel is, which a plain SRC_ALPHA blend would square: blend it apart
-    if(glApi::BlendFuncSeparate)
-      glApi::BlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE,
-                               GL_ONE_MINUS_SRC_ALPHA);
-    else
-      // the window's alpha comes out squared, as the ordinary blend always
-      // did
-      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    // (without separate blending it comes out squared, as the ordinary blend
+    // always did)
+    gmshBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE,
+                          GL_ONE_MINUS_SRC_ALPHA);
     glDrawArrays(GL_TRIANGLES, 0, 3);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    gmshBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    glDisable(GL_BLEND);
+    gmshBlend(false);
     glEnable(GL_DEPTH_TEST);
     glApi::UseProgram(_program);
   }

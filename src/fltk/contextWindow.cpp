@@ -22,6 +22,8 @@
 #endif
 #include "GModelIO_OCC.h"
 #include "scriptStringInterface.h"
+#include "shapePlacement.h"
+#include "sceneView.h"
 #include "selectionDriver.h"
 #include "OpenFile.h"
 #include "Context.h"
@@ -30,61 +32,6 @@
 #include "VertexArray.h"
 #include "mathEvaluator.h"
 #include "GmshMessage.h"
-
-static bool getval(const char *str, double &val)
-{
-  std::vector<std::string> var;
-  std::vector<double> valVar;
-
-  // we should probably use the actual .geo parser instead...
-  for(auto it = gmsh_yysymbols.begin(); it != gmsh_yysymbols.end(); it++) {
-    if(it->second.value.size() == 1) {
-      var.push_back(it->first);
-      valVar.push_back(it->second.value[0]);
-    }
-  }
-
-  std::vector<std::string> expr(1);
-  expr[0] = str;
-  std::vector<double> res(1);
-  mathEvaluator f(expr, var);
-  if(expr.empty()) return false;
-  if(!f.eval(valVar, res)) return false;
-  val = res[0];
-  return true;
-}
-
-static void draw_stl(std::vector<SPoint3> &vertices,
-                     std::vector<SVector3> &normals,
-                     std::vector<int> &triangles)
-{
-  bool fill = gmshPolygonFilled();
-  if(CTX::instance()->geom.surfaceType == 1)
-    gmshPolygonFill(false);
-  else
-    gmshPolygonFill(true);
-  gmshLightTwoSide(true);
-  gmshColor4ubv((GLubyte *)&CTX::instance()->color.geom.highlight[0]);
-
-  VertexArray va(3, triangles.size());
-  for(std::size_t i = 0; i < triangles.size(); i += 3) {
-    SPoint3 p1 = vertices[triangles[i]];
-    SPoint3 p2 = vertices[triangles[i + 1]];
-    SPoint3 p3 = vertices[triangles[i + 2]];
-    SVector3 n1 = normals[triangles[i]];
-    SVector3 n2 = normals[triangles[i + 1]];
-    SVector3 n3 = normals[triangles[i + 2]];
-    double x[3] = {p1.x(), p2.x(), p3.x()};
-    double y[3] = {p1.y(), p2.y(), p3.y()};
-    double z[3] = {p1.z(), p2.z(), p3.z()};
-    SVector3 nn[3] = {n1, n2, n3};
-    va.add(x, y, z, nn);
-  }
-  va.finalize();
-
-  drawVertexArray(&va, GL_TRIANGLES, GMSH_DRAW_LIGHT);
-  gmshPolygonFill(fill);
-}
 
 // the inputs of each pane of the elementary context window, one for each field
 // of its shape (see scriptShapes()): the first one, and how many
@@ -96,123 +43,118 @@ static int paneFirst(int pane)
   return first;
 }
 
-// the values of the first inputs of a pane (all by default), if they evaluate
-static bool paneValues(int pane, double *v, int count = -1)
-{
-  elementaryContextWindow *e = FlGui::instance()->elementaryContext;
-  if(count < 0) count = paneSize(pane);
-  for(int i = 0; i < count; i++)
-    if(!getval(e->input[paneFirst(pane) + i]->value(), v[i])) return false;
-  return true;
-}
-
-static void elementary_draw_point_cb(Fl_Widget *w, void *data)
-{
-  if(data) return; // we are here from do_callback()
-  double v[3]; // x, y, z, whatever the mesh size
-  if(!paneValues(1, v, 3)) return;
-  FlGui::instance()->getCurrentOpenglWindow()->setPoint(v[0], v[1], v[2]);
-  drawContext::global()->draw();
-}
-
-static void draw_arc(double xc, double yc, double zc, double rx, double ry,
-                     double angle1, double angle2)
-{
-  if(angle2 <= angle1) return;
-  gmshColor4ubv((GLubyte *)&CTX::instance()->color.geom.highlight[0]);
-  gmshBegin(GL_LINE_STRIP);
-  const int N = 30;
-  for(int i = 0; i < N; i++) {
-    double t = angle1 + (double)i / (double)(N - 1) * (angle2 - angle1);
-    gmshVertex3d(xc + rx * cos(t), yc + ry * sin(t), zc);
-  }
-  gmshEnd();
-}
-
-// the shapes OpenCASCADE triangulates for the preview
-static bool makeSTL(int pane, const double *v, std::vector<SPoint3> &p,
-                    std::vector<SVector3> &n, std::vector<int> &t)
-{
-  OCC_Internals *o = GModel::current()->getOCCInternals();
-  switch(pane) {
-  case 4: return o->makeDiskSTL(v[0], v[1], v[2], v[3], v[4], p, n, t);
-  case 5:
-    return o->makeRectangleSTL(v[0], v[1], v[2], v[3], v[4], v[5], p, n, t);
-  case 6:
-    return o->makeSphereSTL(v[0], v[1], v[2], v[3], v[4], v[5], v[6], p, n, t);
-  case 7:
-    return o->makeCylinderSTL(v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], p,
-                              n, t);
-  case 8: return o->makeBoxSTL(v[0], v[1], v[2], v[3], v[4], v[5], p, n, t);
-  case 9: return o->makeTorusSTL(v[0], v[1], v[2], v[3], v[4], v[5], p, n, t);
-  case 10:
-    return o->makeConeSTL(v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], v[8],
-                          p, n, t);
-  case 11:
-    return o->makeWedgeSTL(v[0], v[1], v[2], v[3], v[4], v[5], v[6], p, n, t);
-  }
-  return false;
-}
-
-static int previewPane = 2; // the pane draw_preview() draws
-
-static void draw_preview(void *context)
-{
-  // only while its pane is shown (the window closed or another pane chosen,
-  // whatever way, takes it away)
-  if(!FlGui::available()) return;
-  elementaryContextWindow *e = FlGui::instance()->elementaryContext;
-  if(!e || !e->win->visible() || !e->group[previewPane]->visible()) return;
-  if(!GModel::current()->getOCCInternals())
-    GModel::current()->createOCCInternals();
-  double v[9];
-  if(!paneValues(previewPane, v)) return;
-  if(previewPane == 2)
-    draw_arc(v[0], v[1], v[2], v[3], v[3], v[4], v[5]);
-  else if(previewPane == 3)
-    draw_arc(v[0], v[1], v[2], v[3], v[4], v[5], v[6]);
-  else {
-    std::vector<SPoint3> vertices;
-    std::vector<SVector3> normals;
-    std::vector<int> triangles;
-    if(makeSTL(previewPane, v, vertices, normals, triangles))
-      draw_stl(vertices, normals, triangles);
-  }
-}
-
-// the preview of the pane of the input, redrawn unless we are here from
-// updatePoint()
-static void elementary_draw_cb(Fl_Widget *w, void *data)
-{
-  elementaryContextWindow *e = FlGui::instance()->elementaryContext;
-  for(int k = 2; k < 12; k++)
-    if(w->parent() == e->group[k]) previewPane = k;
-  drawContext::setDrawGeomTransientFunction(draw_preview);
-  if(!data) drawContext::global()->draw();
-}
-
-bool elementaryContextWindow::addShape(int pane)
+std::vector<std::string> elementaryContextWindow::paneValues(int pane)
 {
   std::vector<std::string> v;
   for(int i = 0; i < paneSize(pane); i++)
     v.push_back(input[paneFirst(pane) + i]->value());
-  return scriptAddShape(scriptShapes()[pane].name, v,
+  return v;
+}
+
+// The shape of a pane placed (see shapePlacement): its fields, its locks and
+// the work plane are those of the placement, the window showing them again
+// when the scene changes them
+void elementaryContextWindow::startPlacement(int pane)
+{
+  shapePlacement::start(pane, paneValues(pane), [this] { showPlacement(); });
+  if(shapePlacement *p = shapePlacement::current()) {
+    for(int i = 0; i < 3; i++) p->setLocked(i, butt[i]->value());
+    p->setPlane((shapePlacement::Plane)plane->value());
+  }
+}
+
+void elementaryContextWindow::showPlacement()
+{
+  shapePlacement *p = shapePlacement::current();
+  if(!p) return;
+  int pane = p->shape();
+  for(int i = 0; i < paneSize(pane) && i < (int)p->values().size(); i++)
+    input[paneFirst(pane) + i]->value(p->values()[i].c_str());
+  for(int i = 0; i < 3; i++) butt[i]->value(p->locked(i));
+}
+
+// the pane shown, while a shape is placed: the placement goes on with it
+static int shownPane(elementaryContextWindow *e)
+{
+  for(int k = 1; k < 12; k++)
+    if(e->group[k]->visible()) return k;
+  return -1;
+}
+
+static void redrawScenes()
+{
+  for(sceneView *v : sceneView::all()) v->askRedraw();
+}
+
+static void elementary_tab_cb(Fl_Widget *w, void *data)
+{
+  elementaryContextWindow *e = FlGui::instance()->elementaryContext;
+  int pane = shownPane(e);
+  if(shapePlacement::current() && pane > 0 &&
+     pane != shapePlacement::current()->shape()) {
+    e->startPlacement(pane);
+    redrawScenes();
+  }
+}
+
+// a field typed: the placement takes it (a coordinate of the position typed
+// is locked)
+static void elementary_value_cb(Fl_Widget *w, void *data)
+{
+  elementaryContextWindow *e = FlGui::instance()->elementaryContext;
+  shapePlacement *p = shapePlacement::current();
+  if(!p) return;
+  int pane = p->shape();
+  for(int i = 0; i < paneSize(pane); i++) {
+    if(e->input[paneFirst(pane) + i] != w) continue;
+    p->setValue(i, e->input[paneFirst(pane) + i]->value());
+    e->showPlacement();
+    redrawScenes();
+  }
+}
+
+static void elementary_lock_cb(Fl_Widget *w, void *data)
+{
+  elementaryContextWindow *e = FlGui::instance()->elementaryContext;
+  if(shapePlacement *p = shapePlacement::current()) {
+    for(int i = 0; i < 3; i++) p->setLocked(i, e->butt[i]->value());
+    redrawScenes();
+  }
+}
+
+static void elementary_plane_cb(Fl_Widget *w, void *data)
+{
+  elementaryContextWindow *e = FlGui::instance()->elementaryContext;
+  if(shapePlacement *p = shapePlacement::current()) {
+    p->setPlane((shapePlacement::Plane)e->plane->value());
+    redrawScenes();
+  }
+}
+
+bool elementaryContextWindow::addShape(int pane)
+{
+  return scriptAddShape(scriptShapes()[pane].name, paneValues(pane),
                         GModel::current()->getFileName());
 }
 
 static void elementary_add_cb(Fl_Widget *w, void *data)
 {
   int pane = (int)(intptr_t)data;
-  if(!FlGui::instance()->elementaryContext->addShape(pane)) return;
+  shapePlacement *p = shapePlacement::current();
+  bool placing = p && p->shape() == pane;
+  if(placing) {
+    if(!p->add()) return;
+  }
+  else if(!FlGui::instance()->elementaryContext->addShape(pane))
+    return;
   FlGui::instance()->resetVisibility();
   if(pane == 0) {
     FlGui::instance()->rebuildTree();
     return;
   }
   GModel::current()->setSelection(0);
-  // (the shape added is drawn now, not its preview)
-  drawContext::setDrawGeomTransientFunction(nullptr);
-  SetBoundingBox();
+  // (while placing, at its end: the view would jump, see shapePlacement)
+  if(!placing) SetBoundingBox();
   drawContext::global()->draw();
 }
 
@@ -243,7 +185,8 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
   FL_NORMAL_SIZE -= deltaFontSize;
 
   int width = TW;
-  int height = 5 * WB + 10 * BH;
+  // (a row under the tabs for the work plane)
+  int height = 6 * WB + 11 * BH, tabH = height - 4 * WB - 2 * BH;
 
   win = new paletteWindow(width, height,
                           CTX::instance()->nonModalWindows ? true : false,
@@ -253,15 +196,15 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
   // the panes of the shapes, in two sets of tabs: the fields of each (see
   // scriptShapes()) in a column, those of the Cone after its axis in a second
   // one, and the button that adds it
-  tab1 = new accentTabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);
+  tab1 = new accentTabs(WB, WB, width - 2 * WB, tabH);
   for(int pane = 0, k = 0; pane < 12; pane++) {
     if(pane == 6) {
       tab1->end();
-      tab2 = new accentTabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);
+      tab2 = new accentTabs(WB, WB, width - 2 * WB, tabH);
     }
     const scriptShape &shape = scriptShapes()[pane];
-    group[pane] = new Fl_Group(WB, WB + BH, width - 2 * WB,
-                               height - 3 * WB - 2 * BH, shape.label.c_str());
+    group[pane] = new Fl_Group(WB, WB + BH, width - 2 * WB, tabH - BH,
+                               shape.label.c_str());
     for(std::size_t i = 0; i < shape.fields.size(); i++, k++) {
       int x = 2 * WB, row = i + 1;
       if(shape.name == "add_cone" && i >= 6) {
@@ -272,12 +215,10 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
                               shape.fields[i].first.c_str());
       input[k]->value(shape.fields[i].second.c_str());
       input[k]->align(FL_ALIGN_RIGHT);
-      if(pane)
-        input[k]->callback(pane == 1 ? elementary_draw_point_cb :
-                                       elementary_draw_cb);
+      if(pane) input[k]->callback(elementary_value_cb);
     }
-    Fl_Button *o = new Fl_Button(width - BB - 2 * WB, height - 3 * WB - 2 * BH,
-                                 BB, BH, "Add");
+    Fl_Button *o =
+      new Fl_Button(width - BB - 2 * WB, tabH - BH, BB, BH, "Add");
     o->callback(elementary_add_cb, (void *)(intptr_t)pane);
     group[pane]->end();
   }
@@ -301,14 +242,34 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
     }
     int cw = 1.2 * BH, zw = 3 * BH, bx = width - WB - 2 * cw - 2 * WB - zw;
     butt[0] = new Fl_Check_Button(bx, height - WB - BH, cw, BH, "X");
-    butt[0]->tooltip("Toggle (x) or exclusive unselect (Shift+x)");
+    butt[0]->tooltip("Keep the x coordinate as it is when clicking: toggle "
+                     "(x), or keep all but it (Shift+x); a coordinate typed "
+                     "is kept");
     butt[1] = new Fl_Check_Button(bx + cw + WB, height - WB - BH, cw, BH, "Y");
-    butt[1]->tooltip("Toggle (y) or exclusive unselect (Shift+y)");
+    butt[1]->tooltip("Keep the y coordinate as it is when clicking: toggle "
+                     "(y), or keep all but it (Shift+y); a coordinate typed "
+                     "is kept");
     butt[2] = new Fl_Check_Button(bx + 2 * (cw + WB), height - WB - BH, zw, BH,
-                                  "Z freeze");
-    butt[2]->tooltip("Toggle (z) or exclusive unselect (Shift+z)");
+                                  "Z lock");
+    butt[2]->tooltip("Keep the z coordinate as it is when clicking: toggle "
+                     "(z), or keep all but it (Shift+z); a coordinate typed "
+                     "is kept");
+    for(int i = 0; i < 3; i++) butt[i]->callback(elementary_lock_cb);
+  }
+  {
+    // the plane a click places the shape on, off the model
+    static Fl_Menu_Item planes[] = {
+      {"XY", 0, nullptr}, {"YZ", 0, nullptr}, {"XZ", 0, nullptr},
+      {"Facing the view", 0, nullptr}, {nullptr}};
+    plane = new Fl_Choice(WB, height - 2 * WB - 2 * BH, IW, BH, "Work plane");
+    plane->menu(planes);
+    plane->align(FL_ALIGN_RIGHT);
+    plane->tooltip("The plane a click places the shape on, off the model");
+    plane->callback(elementary_plane_cb);
   }
 
+  tab1->callback(elementary_tab_cb);
+  tab2->callback(elementary_tab_cb);
   tab1->show();
   tab2->hide();
 
@@ -317,30 +278,6 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
   ((paletteWindow *)win)->fixedLayout(width, height, 2 * WB);
 
   FL_NORMAL_SIZE += deltaFontSize;
-}
-
-bool elementaryContextWindow::frozenPointCoord(int coord)
-{
-  if(coord < 0 || coord > 2) return false;
-  return butt[coord]->value() ? true : false;
-}
-
-void elementaryContextWindow::updatePoint(double pt[3], int which)
-{
-  for(int i = 0; i < 3; i++) {
-    if(!frozenPointCoord(i)) {
-      char str[32];
-      sprintf(str, "%g", pt[i]);
-      if(which == 1) {
-        for(int k = 1; k < 12; k++) {
-          // the callback finds the pane from the widget
-          Fl_Input *in = input[paneFirst(k) + i];
-          in->value(str);
-          if(in->parent()->active()) in->do_callback(in, (void *)"no_redraw");
-        }
-      }
-    }
-  }
 }
 
 void elementaryContextWindow::show(int pane)

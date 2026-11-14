@@ -226,37 +226,12 @@ void onelabSaveDatabase()
   if(!onelabStart("save")) return;
   std::string fileName = "onelab.db";
 
-  // special handling for metamodels: add user defined tag, if any
-  std::vector<onelab::string> ps;
-  onelab::server::instance()->get(ps, "0Metamodel/9Tag");
-  if(ps.size() && ps[0].getValue().size()) {
-    fileName.assign("onelab_" + ps[0].getValue() + ".db");
-  }
-
-  // special handling for metamodels: save db in "restore" mode"
-  double restoreMode = 0.;
-  std::vector<onelab::number> pn;
-  onelab::server::instance()->get(pn, "0Metamodel/9Use restored solution");
-  if(pn.size()) {
-    restoreMode = pn[0].getValue();
-    pn[0].setValue(2); // special value
-    onelab::server::instance()->set(pn[0]);
-  }
-
   std::string db;
   db.assign(SplitFileName(GModel::current()->getFileName())[0] + fileName);
   bool saved = false;
   if(fileChooser(FILE_CHOOSER_CREATE, "Save", "*.db", db.c_str())) {
-    if(!restoreMode) onelabUtils::archiveSolutionFiles(fileChooserGetName(1));
     onelabUtils::saveDb(fileChooserGetName(1));
     saved = true;
-  }
-
-  // special handling for metamodels: switch back to normal "run" mode"
-  onelab::server::instance()->get(pn, "0Metamodel/9Use restored solution");
-  if(pn.size()) {
-    pn[0].setValue(0);
-    onelab::server::instance()->set(pn[0]);
   }
   // (nothing to check when the chooser was cancelled)
   if(saved) onelabRun("check");

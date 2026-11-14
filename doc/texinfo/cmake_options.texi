@@ -28,6 +28,8 @@ Enable high-order CGNS import/export following CPEX0045 (experimental) (default:
 Enable code coverage instrumentation (GCC/Clang only) (default: OFF)
 @item ENABLE_DOMHEX
 Enable experimental DOMHEX code (default: ON)
+@item ENABLE_DUAL_MESH
+Enable dual mesh plugin (default: ON)
 @item ENABLE_EIGEN
 Enable Eigen for linear algebra (instead of Blas/Lapack) (default: ON)
 @item ENABLE_FFMPEG
@@ -72,6 +74,8 @@ Enable MUMPS sparse direct linear solver (default: OFF)
 Enable Netgen 3D frontal mesh generator (default: ON)
 @item ENABLE_NII2MESH
 Enable 3D voxel image to a triangulated mesh (default: ON)
+@item ENABLE_NONCONFORMAL_REFINEMENT
+Enable non-conformal refinement plugin (default: ON)
 @item ENABLE_NUMPY
 Enable fullMatrix and numpy array conversion for private API (default: OFF)
 @item ENABLE_PETSC4PY
@@ -88,8 +92,6 @@ Add TBB libraries in list of OCC libraries (default: OFF)
 Enable the octree-based automatic mesh size field (default: ON)
 @item ENABLE_ONELAB
 Enable ONELAB solver interface (default: ON)
-@item ENABLE_ONELAB_METAMODEL
-Enable ONELAB metamodels (experimental) (default: ON)
 @item ENABLE_OPENACC
 Enable OpenACC (default: OFF)
 @item ENABLE_OPENMP

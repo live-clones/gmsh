@@ -56,6 +56,22 @@ export const web = {
   colorScheme: (dark) => call('ColorScheme', N, [N], [dark]),
   // the tools and the operations (see tools.mjs)
   tool: (t) => call('Tool', N, [N], [t]),
+  // the tool under way ("" if none: a tool of one click ends by itself)
+  toolName: () => call('ToolName', S, [], []),
+  // the placing of a shape (see shapePlacement): started with the values of
+  // its fields, stopped, its state ({changes, values, locked, plane}, or null),
+  // a field typed, a lock, the work plane, the shape added (1 if it was not)
+  placementStart: (name, values) =>
+    call('PlacementStart', N, [S, S], [name, values.join('\n')]),
+  placementStop: () => call('PlacementStop', null, [], []),
+  placement: () => {
+    const s = call('Placement', S, [], []);
+    return s ? JSON.parse(s) : null;
+  },
+  placementSet: (i, value) => call('PlacementSet', null, [N, S], [i, value]),
+  placementLock: (i, on) => call('PlacementLock', null, [N, N], [i, on ? 1 : 0]),
+  placementPlane: (plane) => call('PlacementPlane', null, [N], [plane]),
+  placementAdd: () => call('PlacementAdd', N, [], []),
   measuring: () => call('Measuring', N, [], []),
   notes: () => call('Notes', S, [], []),
   operation: (name) => call('Operation', S, [S], [name]),
@@ -82,6 +98,14 @@ export const web = {
   // the ONELAB loop (see solverClient.mjs)
   onelabSet: (json) => call('OnelabSet', N, [S], [json]),
   onelabMacro: (name) => call('OnelabMacro', N, [S], [name]),
+  // the plugins (see plugins.mjs): their list and options, the sliders of
+  // their options for a view, the preview of an option being edited (a
+  // negative option removes it; 1 if the scene is to be drawn again), a run
+  plugins: () => JSON.parse(call('Plugins', S, [], [])),
+  pluginRanges: (name, view) => JSON.parse(call('PluginRanges', S, [S, N], [name, view])),
+  pluginPreview: (name, option, value = 0, text = null) =>
+    call('PluginPreview', N, [S, N, N, S], [name, option, value, text]),
+  pluginRun: (name, views) => call('PluginRun', null, [S, S], [name, views.join(',')]),
   onelabStart: (action) => call('OnelabStart', null, [S], [action]),
   onelabGmsh: (pass) => call('OnelabGmsh', S, [S], [pass]),
   onelabNext: (goOn) => call('OnelabNext', N, [N], [goOn ? 1 : 0]),

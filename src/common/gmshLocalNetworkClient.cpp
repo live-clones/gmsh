@@ -35,11 +35,6 @@
 #include "PView.h"
 #endif
 
-#if defined(HAVE_ONELAB_METAMODEL)
-#include "OnelabClients.h"
-#include "metamodel.h"
-#endif
-
 class onelabGmshServer : public GmshServer {
 private:
   onelab::localNetworkClient *_client;
@@ -496,16 +491,8 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
     }
   } break;
   case GmshSocket::GMSH_OLPARSE: {
+    // .ol files were preprocessed by the ONELAB metamodels, now removed
     std::string reply = "unavailable";
-#if defined(HAVE_ONELAB_METAMODEL)
-    std::string::size_type first = 0;
-    std::string clientName = onelab::parameter::getNextToken(message, first);
-    std::string fullName = onelab::parameter::getNextToken(message, first);
-    preProcess(clientName, fullName); // contrib/onelab/OnelabParser.cpp
-    Msg::Info("Done preprocessing file '%s'", fullName.c_str());
-    reply =
-      onelab::server::instance()->getChanged(clientName) ? "true" : "false";
-#endif
     getGmshServer()->SendMessage(GmshSocket::GMSH_OLPARSE,
                                  (int)reply.size(), &reply[0]);
   } break;

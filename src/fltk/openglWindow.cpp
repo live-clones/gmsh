@@ -22,6 +22,7 @@
 #include "VertexArray.h"
 #include "glMatrix.h"
 #include "glShader.h"
+#include "shapePlacement.h"
 #include "Context.h"
 #include "ColorContrast.h"
 #include <cstring>
@@ -104,7 +105,7 @@ openglWindow::~openglWindow()
   if(_lastHandled == this) _lastHandled = nullptr;
   _setLock(false);
   Fl::remove_timeout(_studioSampleCb, this);
-  Fl::remove_timeout(_fireCb, this);
+  Fl::remove_timeout(_phlogistonCb, this);
   delete _ctx;
   if(Nautilus) delete Nautilus;
 }
@@ -209,8 +210,8 @@ void openglWindow::_drawLasso()
   // flush before changing the blending, which the collector does not track
   glImmediate::flush();
   glDisable(GL_DEPTH_TEST);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  gmshBlend(true);
+  gmshBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   unsigned int fg = CTX::instance()->color.fg;
   gmshColor4ub((unsigned char)CTX::instance()->unpackRed(fg),
                (unsigned char)CTX::instance()->unpackGreen(fg),
@@ -223,7 +224,7 @@ void openglWindow::_drawLasso()
   gmshEnd();
   glImmediate::flush();
   // white blended to one minus the destination: an inversion
-  glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
+  gmshBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
   gmshColor3d(1., 1., 1.);
   if(selectionMode && CTX::instance()->mouseSelection)
     gmshLineStipple(1, 0x0F0F);
@@ -248,7 +249,7 @@ void openglWindow::_drawLasso()
   glImmediate::flush();
   gmshLineStippleOff();
   gmshLineWidth(1.);
-  glDisable(GL_BLEND);
+  gmshBlend(false);
   glEnable(GL_DEPTH_TEST);
 }
 
@@ -306,7 +307,7 @@ void openglWindow::draw()
     _ctx->viewport[2] = (int)(_printW / _printScale + 0.5);
     _ctx->viewport[3] = (int)(_printH / _printScale + 0.5);
     _ctx->setHighResolutionPixelFactor(_printScale);
-    glViewport(0, 0, _printW, _printH);
+    gmshViewport(0, 0, _printW, _printH);
   }
   else {
     _ctx->viewport[2] = w();
@@ -314,30 +315,23 @@ void openglWindow::draw()
     // the factor changes when the window moves across displays
     _ctx->setHighResolutionPixelFactor(w() ? (double)pixel_w() / (double)w() :
                                              1.);
-    glViewport(0, 0, pixel_w(), pixel_h());
+    gmshViewport(0, 0, pixel_w(), pixel_h());
   }
   drawContext::global()->setPixelFactor(_ctx->highResolutionPixelFactor());
 
   drawContext::setClearColor();
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-  if(lassoMode || addPointMode) {
-    // the scene with the lasso rectangle or the point to add on top (drawing
-    // into the front buffer, as was done before, left the frame black on
-    // current implementations)
+  if(lassoMode) {
+    // the scene with the lasso rectangle on top (drawing into the front
+    // buffer, as was done before, left the frame black on current
+    // implementations)
     if(CTX::instance()->fastRedraw) {
       CTX::instance()->mesh.draw = 0;
       CTX::instance()->post.draw = 0;
     }
     _ctx->draw3d();
-    if(addPointMode) {
-      gmshColor4ubv((GLubyte *)&CTX::instance()->color.geom.highlight[0]);
-      gmshPointSize(CTX::instance()->geom.pointSize);
-      gmshBegin(GL_POINTS);
-      gmshVertex3d(_point[0], _point[1], _point[2]);
-      gmshEnd();
-    }
     _ctx->draw2d();
-    if(lassoMode) _drawLasso();
+    _drawLasso();
     _drawScreenMessage();
     _drawBorder();
     CTX::instance()->mesh.draw = 1;
@@ -365,7 +359,7 @@ void openglWindow::draw()
       cameraView(cam, side * eye.x, side * eye.y, side * eye.z, view);
       gmshLoadMatrix(view);
       _ctx->draw3d();
-      _burn(side < 0); // the same frame for both eyes
+      _releasePhlogiston(side < 0); // the same frame for both eyes
       _ctx->draw2d();
       _drawScreenMessage();
       _drawBorder();
@@ -385,7 +379,7 @@ void openglWindow::draw()
       _ctx->draw3d();
       memcpy(_frameView, _ctx->model, sizeof(_frameView));
     }
-    _burn();
+    _releasePhlogiston();
     _ctx->draw2d();
     _studioFrame();
     if(CTX::instance()->camera && CTX::instance()->gamepad &&
@@ -554,35 +548,18 @@ void openglWindow::_studioSampleCb(void *data)
   w->Fl_Gl_Window::redraw();
 }
 
-// The fire lit by spinning the model: drawn over the scene at its current
+// The phlogiston a spun model gives off: drawn over the scene at its current
 // level, which dies down in a couple of seconds once the spinning stops,
-// with a frame every 30 ms in the meantime. Not accumulated: the studio
-// frames start over as long as it burns.
-void openglWindow::_burn(bool sameFrame)
+// with a frame every 30 ms in the meantime (see sceneView::releasePhlogiston())
+void openglWindow::_releasePhlogiston(bool sameFrame)
 {
-  if(!sameFrame) Fl::remove_timeout(_fireCb, this);
-  if(!CTX::instance()->phlogiston) _fire = 0.;
-  if(_fire <= 0.) return;
-  double now = TimeOfDay();
-  if(!_printW && !sameFrame) {
-    _fire *= exp(-(now - _fireTime) / 1.5);
-    _fireTime = now;
-  }
-  if(_fire < 0.02) {
-    _fire = 0.;
-    return;
-  }
-  glImmediate::flush();
+  if(!sameFrame) Fl::remove_timeout(_phlogistonCb, this);
   int w = _printW ? _printW : pixel_w(), h = _printW ? _printH : pixel_h();
-  if(!glShader::fire(w, h, _fire, now)) {
-    _fire = 0.;
-    return;
-  }
-  _ctx->studioSample = 0;
-  if(!_printW && !sameFrame) Fl::add_timeout(0.03, _fireCb, this);
+  bool decay = !_printW && !sameFrame;
+  if(releasePhlogiston(w, h, decay) && decay) Fl::add_timeout(0.03, _phlogistonCb, this);
 }
 
-void openglWindow::_fireCb(void *data) { ((openglWindow *)data)->redraw(); }
+void openglWindow::_phlogistonCb(void *data) { ((openglWindow *)data)->redraw(); }
 
 openglWindow *openglWindow::_lastHandled = nullptr;
 
@@ -611,7 +588,7 @@ int openglWindow::handle(int event)
     // as Alt and the wheel do, one entity at a time: a trackpad has no
     // notches to count
     if(Fl::event_state(FL_ALT) && CTX::instance()->mouseSelection &&
-       !lassoMode && !addPointMode &&
+       !lassoMode && !shapePlacement::current() &&
        (Fl::event_key() == FL_Up || Fl::event_key() == FL_Down)) {
       stepPick((Fl::event_key() == FL_Down) ? 1 : -1);
       return 1;
@@ -698,21 +675,12 @@ bool openglWindow::hostBeginGL()
   _setLock(true);
   make_current();
   glShader::setContext(context());
+  glImmediate::syncState();
   return true;
 }
 
 void openglWindow::hostEndGL() { _setLock(false); }
 
-bool openglWindow::hostFrozenCoordinate(int coord)
-{
-  return FlGui::instance()->elementaryContext->frozenPointCoord(coord);
-}
-
-void openglWindow::hostPointMoved(const double p[3], int mode)
-{
-  double pt[3] = {p[0], p[1], p[2]};
-  FlGui::instance()->elementaryContext->updatePoint(pt, mode);
-}
 
 bool openglWindow::hostHasOnelabContext()
 {
