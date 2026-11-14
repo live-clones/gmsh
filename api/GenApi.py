@@ -2054,8 +2054,23 @@ export function wrap{2}(Module) {{
       throw new Error('The WebAssembly module does not export ' + name);
   }}
 
+  // A module built for wasm32 has 32-bit pointers and size_t; one built for
+  // wasm64 (Memory64) has 64-bit ones, which its functions take and return as
+  // BigInt: _P() and _S() convert what is passed, the pointer slots are _PS
+  // bytes, and _getp()/_setp() read and write them. (gmshFree, which accepts a
+  // null pointer, tells which: a wasm32 function refuses a BigInt.)
+  let wasm64 = false;
+  try {{ M._gmshFree(0n); wasm64 = true; }} catch(e) {{}}
+  const _PS = wasm64 ? 8 : 4;
+  const _P = wasm64 ? (p) => BigInt(p) : (p) => p;
+  const _S = _P;
+  const _N = (v) => typeof v === 'bigint' ? Number(v) : v;
+  const _getp = wasm64 ? (a) => Number(M.HEAPU64[a / 8]) : (a) => M.HEAPU32[a >>> 2];
+  const _setp = wasm64 ? (a, v) => {{ M.HEAPU64[a / 8] = BigInt(v); }}
+                       : (a, v) => {{ M.HEAPU32[a >>> 2] = v; }};
+
   // what the C API is given (freed after each call) and gives back (freed
-  // with {6}Free once read); the memory views are read again every time, as
+  // with gmshFree once read); the memory views are read again every time, as
   // the memory may grow during a call
   const ierr = M._malloc(4);
   const _alloc = (n, tmp) => {{
@@ -2063,25 +2078,33 @@ export function wrap{2}(Module) {{
     tmp.push(p);
     return p;
   }};
-  const _free = (p) => {{ if(p) M._{6}Free(p); }};
+  const _free = (p) => {{ if(p) M._gmshFree(_P(p)); }};
   const _istring = (s, tmp) => {{
     const n = M.lengthBytesUTF8(s) + 1;
     const p = _alloc(n, tmp);
     M.stringToUTF8(s, p, n);
     return p;
   }};
-  const _heap = {{int: 'HEAP32', size: 'HEAPU32', double: 'HEAPF64'}};
-  const _shift = {{int: 2, size: 2, double: 3}};
+  // vectors of size_t: 64-bit in wasm64, given and returned as numbers
+  // (exact up to 2^53), returned as a Float64Array there and as a Uint32Array
+  // in wasm32
+  const _heap = {{int: 'HEAP32', size: wasm64 ? 'HEAPU64' : 'HEAPU32', double: 'HEAPF64'}};
+  const _bytes = {{int: 4, size: _PS, double: 8}};
   const _ivector = (v, type, tmp) => {{
-    const n = v.length;
-    const p = _alloc(n << _shift[type], tmp);
-    M[_heap[type]].set(v, p >> _shift[type]);
+    const n = v.length, b = _bytes[type];
+    const p = _alloc(n * b, tmp);
+    if(type === 'size' && wasm64) {{
+      const h = M.HEAPU64, o = p / 8;
+      for(let i = 0; i < n; i++) h[o + i] = BigInt(v[i]);
+    }}
+    else
+      M[_heap[type]].set(v, p / b);
     return [p, n];
   }};
   const _ivectorstring = (v, tmp) => {{
-    const p = _alloc(4 * v.length, tmp);
+    const p = _alloc(_PS * v.length, tmp);
     for(let i = 0; i < v.length; i++)
-      M.HEAPU32[(p >> 2) + i] = _istring(v[i], tmp);
+      _setp(p + _PS * i, _istring(v[i], tmp));
     return [p, v.length];
   }};
   const _ivectorpair = (v, tmp) => {{
@@ -2094,11 +2117,11 @@ export function wrap{2}(Module) {{
   }};
   const _ivectorvector = (v, type, tmp) => {{
     const nn = v.length;
-    const pp = _alloc(4 * nn, tmp), pn = _alloc(4 * nn, tmp);
+    const pp = _alloc(_PS * nn, tmp), pn = _alloc(_PS * nn, tmp);
     for(let i = 0; i < nn; i++) {{
       const [p, n] = _ivector(v[i], type, tmp);
-      M.HEAPU32[(pp >> 2) + i] = p;
-      M.HEAPU32[(pn >> 2) + i] = n;
+      _setp(pp + _PS * i, p);
+      _setp(pn + _PS * i, n);
     }}
     return [pp, pn, nn];
   }};
@@ -2106,20 +2129,25 @@ export function wrap{2}(Module) {{
     if(!M.addFunction)
       throw new Error('The WebAssembly module does not export addFunction');
     return M.addFunction((dim, tag, x, y, z, lc, data) =>
-      f(dim, tag, x, y, z, lc), 'diiddddi');
+      f(dim, tag, x, y, z, lc), 'diiddddp');
   }};
   const _ostring = (o) => {{
-    const p = M.HEAPU32[o >> 2];
+    const p = _getp(o);
     const s = M.UTF8ToString(p);
     _free(p);
     return s;
   }};
   const _read = (p, n, type) => {{
-    const s = _shift[type];
-    return M[_heap[type]].slice(p >> s, (p >> s) + n);
+    const b = _bytes[type];
+    if(type === 'size' && wasm64) {{
+      const h = M.HEAPU64, o = p / 8, v = new Float64Array(n);
+      for(let i = 0; i < n; i++) v[i] = Number(h[o + i]);
+      return v;
+    }}
+    return M[_heap[type]].slice(p / b, p / b + n);
   }};
   const _ovector = (o, type) => {{
-    const p = M.HEAPU32[o >> 2], n = M.HEAPU32[(o >> 2) + 1];
+    const p = _getp(o), n = _getp(o + _PS);
     const v = _read(p, n, type);
     _free(p);
     return v;
@@ -2131,10 +2159,10 @@ export function wrap{2}(Module) {{
   }};
   const _ovectorpair = (o) => _pairs(_ovector(o, 'int'));
   const _ovectorstring = (o) => {{
-    const p = M.HEAPU32[o >> 2], n = M.HEAPU32[(o >> 2) + 1];
+    const p = _getp(o), n = _getp(o + _PS);
     const v = [];
     for(let i = 0; i < n; i++) {{
-      const q = M.HEAPU32[(p >> 2) + i];
+      const q = _getp(p + _PS * i);
       v.push(M.UTF8ToString(q));
       _free(q);
     }}
@@ -2142,11 +2170,10 @@ export function wrap{2}(Module) {{
     return v;
   }};
   const _ovectorvector = (o, type, pairs) => {{
-    const pp = M.HEAPU32[o >> 2], pn = M.HEAPU32[(o >> 2) + 1];
-    const nn = M.HEAPU32[(o >> 2) + 2];
+    const pp = _getp(o), pn = _getp(o + _PS), nn = _getp(o + 2 * _PS);
     const v = [];
     for(let i = 0; i < nn; i++) {{
-      const p = M.HEAPU32[(pp >> 2) + i], n = M.HEAPU32[(pn >> 2) + i];
+      const p = _getp(pp + _PS * i), n = _getp(pn + _PS * i);
       const w = _read(p, n, type);
       v.push(pairs ? _pairs(w) : w);
       _free(p);
@@ -2858,53 +2885,53 @@ class API:
         def marshal(a):
             k, n = a.kind, a.name
             p = "api_" + n + "_"
-            scalar = {'ibool': n + " ? 1 : 0", 'iint': n, 'isize': n,
-                      'idouble': n, 'ivoidstar': n}
+            scalar = {'ibool': n + " ? 1 : 0", 'iint': n, 'isize': "_S(" + n + ")",
+                      'idouble': n, 'ivoidstar': "_P(" + n + ")"}
             if k in scalar:
                 return [], [scalar[k]], None
             if k == 'istring':
-                return ["const " + p + " = _istring(" + n + ", tmp);"], [p], None
+                return ["const " + p + " = _istring(" + n + ", tmp);"], ["_P(" + p + ")"], None
             vtype = {'int': 'int', 'size': 'size', 'double': 'double'}
             if k in ('ivectorint', 'ivectorsize', 'ivectordouble'):
                 t = k[len('ivector'):]
                 return (["const [" + p + ", " + p + "n] = _ivector(" + n +
-                         ", '" + t + "', tmp);"], [p, p + "n"], None)
+                         ", '" + t + "', tmp);"], ["_P(" + p + ")", "_S(" + p + "n)"], None)
             if k == 'ivectorstring':
                 return (["const [" + p + ", " + p + "n] = _ivectorstring(" + n +
-                         ", tmp);"], [p, p + "n"], None)
+                         ", tmp);"], ["_P(" + p + ")", "_S(" + p + "n)"], None)
             if k == 'ivectorpair':
                 return (["const [" + p + ", " + p + "n] = _ivectorpair(" + n +
-                         ", tmp);"], [p, p + "n"], None)
+                         ", tmp);"], ["_P(" + p + ")", "_S(" + p + "n)"], None)
             if k.startswith('ivectorvector'):
                 t = k[len('ivectorvector'):]
                 return (["const [" + p + ", " + p + "n, " + p +
                          "nn] = _ivectorvector(" + n + ", '" + t + "', tmp);"],
-                        [p, p + "n", p + "nn"], None)
+                        ["_P(" + p + ")", "_P(" + p + "n)", "_S(" + p + "nn)"], None)
             if k == 'iargcargv':
                 return (["const [api_argv_, api_argc_] = _ivectorstring(argv, tmp);"],
-                        ["api_argc_", "api_argv_"], None)
+                        ["api_argc_", "_P(api_argv_)"], None)
             if k == 'isizefun':
-                return ["const " + p + " = _ifun(" + n + ");"], [p, "0"], None
+                return ["const " + p + " = _ifun(" + n + ");"], ["_P(" + p + ")", "_P(0)"], None
             # outputs: slots for what the C function writes
             if k in ('oint', 'osize', 'odouble', 'ostring'):
                 ret = {'oint': "M.HEAP32[" + p + " >> 2]",
-                       'osize': "M.HEAPU32[" + p + " >> 2]",
+                       'osize': "_getp(" + p + ")",
                        'odouble': "M.HEAPF64[" + p + " >> 3]",
                        'ostring': "_ostring(" + p + ")"}[k]
-                return ["const " + p + " = _alloc(8, tmp);"], [p], ret
+                return ["const " + p + " = _alloc(8, tmp);"], ["_P(" + p + ")"], ret
             if k in ('ovectorint', 'ovectorsize', 'ovectordouble'):
                 t = k[len('ovector'):]
-                return (["const " + p + " = _alloc(8, tmp);"],
-                        [p, p + " + 4"], "_ovector(" + p + ", '" + t + "')")
+                return (["const " + p + " = _alloc(2 * _PS, tmp);"],
+                        ["_P(" + p + ")", "_P(" + p + " + _PS)"], "_ovector(" + p + ", '" + t + "')")
             if k in ('ovectorstring', 'ovectorpair'):
-                return (["const " + p + " = _alloc(8, tmp);"],
-                        [p, p + " + 4"], "_" + k + "(" + p + ")")
+                return (["const " + p + " = _alloc(2 * _PS, tmp);"],
+                        ["_P(" + p + ")", "_P(" + p + " + _PS)"], "_" + k + "(" + p + ")")
             if k.startswith('ovectorvector'):
                 t = k[len('ovectorvector'):]
                 ret = ("_ovectorvector(" + p + ", 'int', true)" if t == 'pair'
                        else "_ovectorvector(" + p + ", '" + t + "')")
-                return (["const " + p + " = _alloc(12, tmp);"],
-                        [p, p + " + 4", p + " + 8"], ret)
+                return (["const " + p + " = _alloc(3 * _PS, tmp);"],
+                        ["_P(" + p + ")", "_P(" + p + " + _PS)", "_P(" + p + " + 2 * _PS)"], ret)
             raise Exception("No JavaScript marshalling for " + k)
 
         def write_function(f, fun, c_mpath, js_mpath, indent):
@@ -2940,7 +2967,7 @@ class API:
             self.fwrite(f, ind + "try {\n")
             for line in pre:
                 self.fwrite(f, ind + "  " + line + "\n")
-            call = "M._" + c_name + "(" + ", ".join(cargs + ["ierr"]) + ");"
+            call = "M._" + c_name + "(" + ", ".join(cargs + ["_P(ierr)"]) + ");"
             self.fwrite(f, ind + "  " + ("const api_result_ = " if rtype else "") +
                         call + "\n")
             if name == "getLastError" and c_mpath == ns + "Logger":
@@ -2948,7 +2975,7 @@ class API:
                             "    throw new Error('Could not get last error');\n")
             else:
                 self.fwrite(f, ind + "  _check();\n")
-            r = (["api_result_"] if rtype else []) + rets
+            r = (["_N(api_result_)"] if rtype else []) + rets
             if len(r) == 1:
                 self.fwrite(f, ind + "  return " + r[0] + ";\n")
             elif len(r) > 1:

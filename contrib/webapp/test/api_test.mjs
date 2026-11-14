@@ -53,8 +53,11 @@ check('vectorpair input (getBoundary of the surface: 4 curves)',
 
 gmsh.model.mesh.generate(2);
 const [nodeTags, coord, param] = gmsh.model.mesh.getNodes();
+// (size_t vectors: Uint32Array with a wasm32 module, Float64Array with a
+// wasm64 one)
 check('typed arrays (getNodes): ' + nodeTags.length + ' nodes, coord x3',
-      nodeTags instanceof Uint32Array && coord instanceof Float64Array &&
+      (nodeTags instanceof Uint32Array || nodeTags instanceof Float64Array) &&
+      coord instanceof Float64Array &&
       coord.length === 3 * nodeTags.length && nodeTags.length > 100);
 const [types, elTags, elNodes] = gmsh.model.mesh.getElements(2);  // ovectorvector*
 check('vector of vectors (getElements: triangles, 3 nodes each)',

@@ -40,6 +40,21 @@ export function wrapGmsh(Module) {
       throw new Error('The WebAssembly module does not export ' + name);
   }
 
+  // A module built for wasm32 has 32-bit pointers and size_t; one built for
+  // wasm64 (Memory64) has 64-bit ones, which its functions take and return as
+  // BigInt: _P() and _S() convert what is passed, the pointer slots are _PS
+  // bytes, and _getp()/_setp() read and write them. (gmshFree, which accepts a
+  // null pointer, tells which: a wasm32 function refuses a BigInt.)
+  let wasm64 = false;
+  try { M._gmshFree(0n); wasm64 = true; } catch(e) {}
+  const _PS = wasm64 ? 8 : 4;
+  const _P = wasm64 ? (p) => BigInt(p) : (p) => p;
+  const _S = _P;
+  const _N = (v) => typeof v === 'bigint' ? Number(v) : v;
+  const _getp = wasm64 ? (a) => Number(M.HEAPU64[a / 8]) : (a) => M.HEAPU32[a >>> 2];
+  const _setp = wasm64 ? (a, v) => { M.HEAPU64[a / 8] = BigInt(v); }
+                       : (a, v) => { M.HEAPU32[a >>> 2] = v; };
+
   // what the C API is given (freed after each call) and gives back (freed
   // with gmshFree once read); the memory views are read again every time, as
   // the memory may grow during a call
@@ -49,25 +64,33 @@ export function wrapGmsh(Module) {
     tmp.push(p);
     return p;
   };
-  const _free = (p) => { if(p) M._gmshFree(p); };
+  const _free = (p) => { if(p) M._gmshFree(_P(p)); };
   const _istring = (s, tmp) => {
     const n = M.lengthBytesUTF8(s) + 1;
     const p = _alloc(n, tmp);
     M.stringToUTF8(s, p, n);
     return p;
   };
-  const _heap = {int: 'HEAP32', size: 'HEAPU32', double: 'HEAPF64'};
-  const _shift = {int: 2, size: 2, double: 3};
+  // vectors of size_t: 64-bit in wasm64, given and returned as numbers
+  // (exact up to 2^53), returned as a Float64Array there and as a Uint32Array
+  // in wasm32
+  const _heap = {int: 'HEAP32', size: wasm64 ? 'HEAPU64' : 'HEAPU32', double: 'HEAPF64'};
+  const _bytes = {int: 4, size: _PS, double: 8};
   const _ivector = (v, type, tmp) => {
-    const n = v.length;
-    const p = _alloc(n << _shift[type], tmp);
-    M[_heap[type]].set(v, p >> _shift[type]);
+    const n = v.length, b = _bytes[type];
+    const p = _alloc(n * b, tmp);
+    if(type === 'size' && wasm64) {
+      const h = M.HEAPU64, o = p / 8;
+      for(let i = 0; i < n; i++) h[o + i] = BigInt(v[i]);
+    }
+    else
+      M[_heap[type]].set(v, p / b);
     return [p, n];
   };
   const _ivectorstring = (v, tmp) => {
-    const p = _alloc(4 * v.length, tmp);
+    const p = _alloc(_PS * v.length, tmp);
     for(let i = 0; i < v.length; i++)
-      M.HEAPU32[(p >> 2) + i] = _istring(v[i], tmp);
+      _setp(p + _PS * i, _istring(v[i], tmp));
     return [p, v.length];
   };
   const _ivectorpair = (v, tmp) => {
@@ -80,11 +103,11 @@ export function wrapGmsh(Module) {
   };
   const _ivectorvector = (v, type, tmp) => {
     const nn = v.length;
-    const pp = _alloc(4 * nn, tmp), pn = _alloc(4 * nn, tmp);
+    const pp = _alloc(_PS * nn, tmp), pn = _alloc(_PS * nn, tmp);
     for(let i = 0; i < nn; i++) {
       const [p, n] = _ivector(v[i], type, tmp);
-      M.HEAPU32[(pp >> 2) + i] = p;
-      M.HEAPU32[(pn >> 2) + i] = n;
+      _setp(pp + _PS * i, p);
+      _setp(pn + _PS * i, n);
     }
     return [pp, pn, nn];
   };
@@ -92,20 +115,25 @@ export function wrapGmsh(Module) {
     if(!M.addFunction)
       throw new Error('The WebAssembly module does not export addFunction');
     return M.addFunction((dim, tag, x, y, z, lc, data) =>
-      f(dim, tag, x, y, z, lc), 'diiddddi');
+      f(dim, tag, x, y, z, lc), 'diiddddp');
   };
   const _ostring = (o) => {
-    const p = M.HEAPU32[o >> 2];
+    const p = _getp(o);
     const s = M.UTF8ToString(p);
     _free(p);
     return s;
   };
   const _read = (p, n, type) => {
-    const s = _shift[type];
-    return M[_heap[type]].slice(p >> s, (p >> s) + n);
+    const b = _bytes[type];
+    if(type === 'size' && wasm64) {
+      const h = M.HEAPU64, o = p / 8, v = new Float64Array(n);
+      for(let i = 0; i < n; i++) v[i] = Number(h[o + i]);
+      return v;
+    }
+    return M[_heap[type]].slice(p / b, p / b + n);
   };
   const _ovector = (o, type) => {
-    const p = M.HEAPU32[o >> 2], n = M.HEAPU32[(o >> 2) + 1];
+    const p = _getp(o), n = _getp(o + _PS);
     const v = _read(p, n, type);
     _free(p);
     return v;
@@ -117,10 +145,10 @@ export function wrapGmsh(Module) {
   };
   const _ovectorpair = (o) => _pairs(_ovector(o, 'int'));
   const _ovectorstring = (o) => {
-    const p = M.HEAPU32[o >> 2], n = M.HEAPU32[(o >> 2) + 1];
+    const p = _getp(o), n = _getp(o + _PS);
     const v = [];
     for(let i = 0; i < n; i++) {
-      const q = M.HEAPU32[(p >> 2) + i];
+      const q = _getp(p + _PS * i);
       v.push(M.UTF8ToString(q));
       _free(q);
     }
@@ -128,11 +156,10 @@ export function wrapGmsh(Module) {
     return v;
   };
   const _ovectorvector = (o, type, pairs) => {
-    const pp = M.HEAPU32[o >> 2], pn = M.HEAPU32[(o >> 2) + 1];
-    const nn = M.HEAPU32[(o >> 2) + 2];
+    const pp = _getp(o), pn = _getp(o + _PS), nn = _getp(o + 2 * _PS);
     const v = [];
     for(let i = 0; i < nn; i++) {
-      const p = M.HEAPU32[(pp >> 2) + i], n = M.HEAPU32[(pn >> 2) + i];
+      const p = _getp(pp + _PS * i), n = _getp(pn + _PS * i);
       const w = _read(p, n, type);
       v.push(pairs ? _pairs(w) : w);
       _free(p);
@@ -165,7 +192,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_argv_, api_argc_] = _ivectorstring(argv, tmp);
-      M._gmshInitialize(api_argc_, api_argv_, readConfigFiles ? 1 : 0, run ? 1 : 0, ierr);
+      M._gmshInitialize(api_argc_, _P(api_argv_), readConfigFiles ? 1 : 0, run ? 1 : 0, _P(ierr));
       _check();
     }
     finally {
@@ -183,9 +210,9 @@ export function wrapGmsh(Module) {
   gmsh.isInitialized = function() {
     const tmp = [];
     try {
-      const api_result_ = M._gmshIsInitialized(ierr);
+      const api_result_ = M._gmshIsInitialized(_P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -201,7 +228,7 @@ export function wrapGmsh(Module) {
   gmsh.finalize = function() {
     const tmp = [];
     try {
-      M._gmshFinalize(ierr);
+      M._gmshFinalize(_P(ierr));
       _check();
     }
     finally {
@@ -220,7 +247,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_fileName_ = _istring(fileName, tmp);
-      M._gmshOpen(api_fileName_, ierr);
+      M._gmshOpen(_P(api_fileName_), _P(ierr));
       _check();
     }
     finally {
@@ -239,7 +266,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_fileName_ = _istring(fileName, tmp);
-      M._gmshMerge(api_fileName_, ierr);
+      M._gmshMerge(_P(api_fileName_), _P(ierr));
       _check();
     }
     finally {
@@ -256,7 +283,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_fileName_ = _istring(fileName, tmp);
-      M._gmshWrite(api_fileName_, ierr);
+      M._gmshWrite(_P(api_fileName_), _P(ierr));
       _check();
     }
     finally {
@@ -273,7 +300,7 @@ export function wrapGmsh(Module) {
   gmsh.clear = function() {
     const tmp = [];
     try {
-      M._gmshClear(ierr);
+      M._gmshClear(_P(ierr));
       _check();
     }
     finally {
@@ -296,7 +323,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_name_ = _istring(name, tmp);
-      M._gmshOptionSetNumber(api_name_, value, ierr);
+      M._gmshOptionSetNumber(_P(api_name_), value, _P(ierr));
       _check();
     }
     finally {
@@ -319,7 +346,7 @@ export function wrapGmsh(Module) {
     try {
       const api_name_ = _istring(name, tmp);
       const api_value_ = _alloc(8, tmp);
-      M._gmshOptionGetNumber(api_name_, api_value_, ierr);
+      M._gmshOptionGetNumber(_P(api_name_), _P(api_value_), _P(ierr));
       _check();
       return M.HEAPF64[api_value_ >> 3];
     }
@@ -341,7 +368,7 @@ export function wrapGmsh(Module) {
     try {
       const api_name_ = _istring(name, tmp);
       const api_value_ = _istring(value, tmp);
-      M._gmshOptionSetString(api_name_, api_value_, ierr);
+      M._gmshOptionSetString(_P(api_name_), _P(api_value_), _P(ierr));
       _check();
     }
     finally {
@@ -364,7 +391,7 @@ export function wrapGmsh(Module) {
     try {
       const api_name_ = _istring(name, tmp);
       const api_value_ = _alloc(8, tmp);
-      M._gmshOptionGetString(api_name_, api_value_, ierr);
+      M._gmshOptionGetString(_P(api_name_), _P(api_value_), _P(ierr));
       _check();
       return _ostring(api_value_);
     }
@@ -387,7 +414,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_name_ = _istring(name, tmp);
-      M._gmshOptionSetColor(api_name_, r, g, b, a, ierr);
+      M._gmshOptionSetColor(_P(api_name_), r, g, b, a, _P(ierr));
       _check();
     }
     finally {
@@ -414,7 +441,7 @@ export function wrapGmsh(Module) {
       const api_g_ = _alloc(8, tmp);
       const api_b_ = _alloc(8, tmp);
       const api_a_ = _alloc(8, tmp);
-      M._gmshOptionGetColor(api_name_, api_r_, api_g_, api_b_, api_a_, ierr);
+      M._gmshOptionGetColor(_P(api_name_), _P(api_r_), _P(api_g_), _P(api_b_), _P(api_a_), _P(ierr));
       _check();
       return [
         M.HEAP32[api_r_ >> 2],
@@ -435,7 +462,7 @@ export function wrapGmsh(Module) {
   gmsh.option.restoreDefaults = function() {
     const tmp = [];
     try {
-      M._gmshOptionRestoreDefaults(ierr);
+      M._gmshOptionRestoreDefaults(_P(ierr));
       _check();
     }
     finally {
@@ -455,7 +482,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_name_ = _istring(name, tmp);
-      M._gmshModelAdd(api_name_, ierr);
+      M._gmshModelAdd(_P(api_name_), _P(ierr));
       _check();
     }
     finally {
@@ -471,7 +498,7 @@ export function wrapGmsh(Module) {
   gmsh.model.remove = function() {
     const tmp = [];
     try {
-      M._gmshModelRemove(ierr);
+      M._gmshModelRemove(_P(ierr));
       _check();
     }
     finally {
@@ -489,8 +516,8 @@ export function wrapGmsh(Module) {
   gmsh.model.list = function() {
     const tmp = [];
     try {
-      const api_names_ = _alloc(8, tmp);
-      M._gmshModelList(api_names_, api_names_ + 4, ierr);
+      const api_names_ = _alloc(2 * _PS, tmp);
+      M._gmshModelList(_P(api_names_), _P(api_names_ + _PS), _P(ierr));
       _check();
       return _ovectorstring(api_names_);
     }
@@ -510,7 +537,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_name_ = _alloc(8, tmp);
-      M._gmshModelGetCurrent(api_name_, ierr);
+      M._gmshModelGetCurrent(_P(api_name_), _P(ierr));
       _check();
       return _ostring(api_name_);
     }
@@ -529,7 +556,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_name_ = _istring(name, tmp);
-      M._gmshModelSetCurrent(api_name_, ierr);
+      M._gmshModelSetCurrent(_P(api_name_), _P(ierr));
       _check();
     }
     finally {
@@ -549,7 +576,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_fileName_ = _alloc(8, tmp);
-      M._gmshModelGetFileName(api_fileName_, ierr);
+      M._gmshModelGetFileName(_P(api_fileName_), _P(ierr));
       _check();
       return _ostring(api_fileName_);
     }
@@ -567,7 +594,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_fileName_ = _istring(fileName, tmp);
-      M._gmshModelSetFileName(api_fileName_, ierr);
+      M._gmshModelSetFileName(_P(api_fileName_), _P(ierr));
       _check();
     }
     finally {
@@ -589,8 +616,8 @@ export function wrapGmsh(Module) {
   gmsh.model.getEntities = function(dim = -1) {
     const tmp = [];
     try {
-      const api_dimTags_ = _alloc(8, tmp);
-      M._gmshModelGetEntities(api_dimTags_, api_dimTags_ + 4, dim, ierr);
+      const api_dimTags_ = _alloc(2 * _PS, tmp);
+      M._gmshModelGetEntities(_P(api_dimTags_), _P(api_dimTags_ + _PS), dim, _P(ierr));
       _check();
       return _ovectorpair(api_dimTags_);
     }
@@ -608,7 +635,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_name_ = _istring(name, tmp);
-      M._gmshModelSetEntityName(dim, tag, api_name_, ierr);
+      M._gmshModelSetEntityName(dim, tag, _P(api_name_), _P(ierr));
       _check();
     }
     finally {
@@ -627,7 +654,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_name_ = _alloc(8, tmp);
-      M._gmshModelGetEntityName(dim, tag, api_name_, ierr);
+      M._gmshModelGetEntityName(dim, tag, _P(api_name_), _P(ierr));
       _check();
       return _ostring(api_name_);
     }
@@ -645,7 +672,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_name_ = _istring(name, tmp);
-      M._gmshModelRemoveEntityName(api_name_, ierr);
+      M._gmshModelRemoveEntityName(_P(api_name_), _P(ierr));
       _check();
     }
     finally {
@@ -666,8 +693,8 @@ export function wrapGmsh(Module) {
   gmsh.model.getPhysicalGroups = function(dim = -1) {
     const tmp = [];
     try {
-      const api_dimTags_ = _alloc(8, tmp);
-      M._gmshModelGetPhysicalGroups(api_dimTags_, api_dimTags_ + 4, dim, ierr);
+      const api_dimTags_ = _alloc(2 * _PS, tmp);
+      M._gmshModelGetPhysicalGroups(_P(api_dimTags_), _P(api_dimTags_ + _PS), dim, _P(ierr));
       _check();
       return _ovectorpair(api_dimTags_);
     }
@@ -691,9 +718,9 @@ export function wrapGmsh(Module) {
   gmsh.model.getPhysicalGroupsEntities = function(dim = -1) {
     const tmp = [];
     try {
-      const api_dimTags_ = _alloc(8, tmp);
-      const api_entities_ = _alloc(12, tmp);
-      M._gmshModelGetPhysicalGroupsEntities(api_dimTags_, api_dimTags_ + 4, api_entities_, api_entities_ + 4, api_entities_ + 8, dim, ierr);
+      const api_dimTags_ = _alloc(2 * _PS, tmp);
+      const api_entities_ = _alloc(3 * _PS, tmp);
+      M._gmshModelGetPhysicalGroupsEntities(_P(api_dimTags_), _P(api_dimTags_ + _PS), _P(api_entities_), _P(api_entities_ + _PS), _P(api_entities_ + 2 * _PS), dim, _P(ierr));
       _check();
       return [
         _ovectorpair(api_dimTags_),
@@ -715,8 +742,8 @@ export function wrapGmsh(Module) {
   gmsh.model.getEntitiesForPhysicalGroup = function(dim, tag) {
     const tmp = [];
     try {
-      const api_tags_ = _alloc(8, tmp);
-      M._gmshModelGetEntitiesForPhysicalGroup(dim, tag, api_tags_, api_tags_ + 4, ierr);
+      const api_tags_ = _alloc(2 * _PS, tmp);
+      M._gmshModelGetEntitiesForPhysicalGroup(dim, tag, _P(api_tags_), _P(api_tags_ + _PS), _P(ierr));
       _check();
       return _ovector(api_tags_, 'int');
     }
@@ -737,8 +764,8 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_name_ = _istring(name, tmp);
-      const api_dimTags_ = _alloc(8, tmp);
-      M._gmshModelGetEntitiesForPhysicalName(api_name_, api_dimTags_, api_dimTags_ + 4, ierr);
+      const api_dimTags_ = _alloc(2 * _PS, tmp);
+      M._gmshModelGetEntitiesForPhysicalName(_P(api_name_), _P(api_dimTags_), _P(api_dimTags_ + _PS), _P(ierr));
       _check();
       return _ovectorpair(api_dimTags_);
     }
@@ -758,8 +785,8 @@ export function wrapGmsh(Module) {
   gmsh.model.getPhysicalGroupsForEntity = function(dim, tag) {
     const tmp = [];
     try {
-      const api_physicalTags_ = _alloc(8, tmp);
-      M._gmshModelGetPhysicalGroupsForEntity(dim, tag, api_physicalTags_, api_physicalTags_ + 4, ierr);
+      const api_physicalTags_ = _alloc(2 * _PS, tmp);
+      M._gmshModelGetPhysicalGroupsForEntity(dim, tag, _P(api_physicalTags_), _P(api_physicalTags_ + _PS), _P(ierr));
       _check();
       return _ovector(api_physicalTags_, 'int');
     }
@@ -783,9 +810,9 @@ export function wrapGmsh(Module) {
     try {
       const [api_tags_, api_tags_n] = _ivector(tags, 'int', tmp);
       const api_name_ = _istring(name, tmp);
-      const api_result_ = M._gmshModelAddPhysicalGroup(dim, api_tags_, api_tags_n, tag, api_name_, ierr);
+      const api_result_ = M._gmshModelAddPhysicalGroup(dim, _P(api_tags_), _S(api_tags_n), tag, _P(api_name_), _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -802,7 +829,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      M._gmshModelRemovePhysicalGroups(api_dimTags_, api_dimTags_n, ierr);
+      M._gmshModelRemovePhysicalGroups(_P(api_dimTags_), _S(api_dimTags_n), _P(ierr));
       _check();
     }
     finally {
@@ -819,7 +846,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_name_ = _istring(name, tmp);
-      M._gmshModelSetPhysicalName(dim, tag, api_name_, ierr);
+      M._gmshModelSetPhysicalName(dim, tag, _P(api_name_), _P(ierr));
       _check();
     }
     finally {
@@ -838,7 +865,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_name_ = _alloc(8, tmp);
-      M._gmshModelGetPhysicalName(dim, tag, api_name_, ierr);
+      M._gmshModelGetPhysicalName(dim, tag, _P(api_name_), _P(ierr));
       _check();
       return _ostring(api_name_);
     }
@@ -856,7 +883,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_name_ = _istring(name, tmp);
-      M._gmshModelRemovePhysicalName(api_name_, ierr);
+      M._gmshModelRemovePhysicalName(_P(api_name_), _P(ierr));
       _check();
     }
     finally {
@@ -873,7 +900,7 @@ export function wrapGmsh(Module) {
   gmsh.model.setTag = function(dim, tag, newTag) {
     const tmp = [];
     try {
-      M._gmshModelSetTag(dim, tag, newTag, ierr);
+      M._gmshModelSetTag(dim, tag, newTag, _P(ierr));
       _check();
     }
     finally {
@@ -898,8 +925,8 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      const api_outDimTags_ = _alloc(8, tmp);
-      M._gmshModelGetBoundary(api_dimTags_, api_dimTags_n, api_outDimTags_, api_outDimTags_ + 4, combined ? 1 : 0, oriented ? 1 : 0, recursive ? 1 : 0, ierr);
+      const api_outDimTags_ = _alloc(2 * _PS, tmp);
+      M._gmshModelGetBoundary(_P(api_dimTags_), _S(api_dimTags_n), _P(api_outDimTags_), _P(api_outDimTags_ + _PS), combined ? 1 : 0, oriented ? 1 : 0, recursive ? 1 : 0, _P(ierr));
       _check();
       return _ovectorpair(api_outDimTags_);
     }
@@ -921,9 +948,9 @@ export function wrapGmsh(Module) {
   gmsh.model.getAdjacencies = function(dim, tag) {
     const tmp = [];
     try {
-      const api_upward_ = _alloc(8, tmp);
-      const api_downward_ = _alloc(8, tmp);
-      M._gmshModelGetAdjacencies(dim, tag, api_upward_, api_upward_ + 4, api_downward_, api_downward_ + 4, ierr);
+      const api_upward_ = _alloc(2 * _PS, tmp);
+      const api_downward_ = _alloc(2 * _PS, tmp);
+      M._gmshModelGetAdjacencies(dim, tag, _P(api_upward_), _P(api_upward_ + _PS), _P(api_downward_), _P(api_downward_ + _PS), _P(ierr));
       _check();
       return [
         _ovector(api_upward_, 'int'),
@@ -946,9 +973,9 @@ export function wrapGmsh(Module) {
   gmsh.model.isEntityOrphan = function(dim, tag) {
     const tmp = [];
     try {
-      const api_result_ = M._gmshModelIsEntityOrphan(dim, tag, ierr);
+      const api_result_ = M._gmshModelIsEntityOrphan(dim, tag, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -968,8 +995,8 @@ export function wrapGmsh(Module) {
   gmsh.model.getEntitiesInBoundingBox = function(xmin, ymin, zmin, xmax, ymax, zmax, dim = -1) {
     const tmp = [];
     try {
-      const api_dimTags_ = _alloc(8, tmp);
-      M._gmshModelGetEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, api_dimTags_, api_dimTags_ + 4, dim, ierr);
+      const api_dimTags_ = _alloc(2 * _PS, tmp);
+      M._gmshModelGetEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, _P(api_dimTags_), _P(api_dimTags_ + _PS), dim, _P(ierr));
       _check();
       return _ovectorpair(api_dimTags_);
     }
@@ -996,7 +1023,7 @@ export function wrapGmsh(Module) {
       const api_xmax_ = _alloc(8, tmp);
       const api_ymax_ = _alloc(8, tmp);
       const api_zmax_ = _alloc(8, tmp);
-      M._gmshModelGetBoundingBox(dim, tag, api_xmin_, api_ymin_, api_zmin_, api_xmax_, api_ymax_, api_zmax_, ierr);
+      M._gmshModelGetBoundingBox(dim, tag, _P(api_xmin_), _P(api_ymin_), _P(api_zmin_), _P(api_xmax_), _P(api_ymax_), _P(api_zmax_), _P(ierr));
       _check();
       return [
         M.HEAPF64[api_xmin_ >> 3],
@@ -1021,9 +1048,9 @@ export function wrapGmsh(Module) {
   gmsh.model.getDimension = function() {
     const tmp = [];
     try {
-      const api_result_ = M._gmshModelGetDimension(ierr);
+      const api_result_ = M._gmshModelGetDimension(_P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -1046,9 +1073,9 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_boundary_, api_boundary_n] = _ivector(boundary, 'int', tmp);
-      const api_result_ = M._gmshModelAddDiscreteEntity(dim, tag, api_boundary_, api_boundary_n, ierr);
+      const api_result_ = M._gmshModelAddDiscreteEntity(dim, tag, _P(api_boundary_), _S(api_boundary_n), _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -1067,7 +1094,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      M._gmshModelRemoveEntities(api_dimTags_, api_dimTags_n, recursive ? 1 : 0, ierr);
+      M._gmshModelRemoveEntities(_P(api_dimTags_), _S(api_dimTags_n), recursive ? 1 : 0, _P(ierr));
       _check();
     }
     finally {
@@ -1086,7 +1113,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_entityType_ = _alloc(8, tmp);
-      M._gmshModelGetEntityType(dim, tag, api_entityType_, ierr);
+      M._gmshModelGetEntityType(dim, tag, _P(api_entityType_), _P(ierr));
       _check();
       return _ostring(api_entityType_);
     }
@@ -1107,7 +1134,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_entityType_ = _alloc(8, tmp);
-      M._gmshModelGetType(dim, tag, api_entityType_, ierr);
+      M._gmshModelGetType(dim, tag, _P(api_entityType_), _P(ierr));
       _check();
       return _ostring(api_entityType_);
     }
@@ -1132,9 +1159,9 @@ export function wrapGmsh(Module) {
   gmsh.model.getEntityProperties = function(dim, tag) {
     const tmp = [];
     try {
-      const api_integers_ = _alloc(8, tmp);
-      const api_reals_ = _alloc(8, tmp);
-      M._gmshModelGetEntityProperties(dim, tag, api_integers_, api_integers_ + 4, api_reals_, api_reals_ + 4, ierr);
+      const api_integers_ = _alloc(2 * _PS, tmp);
+      const api_reals_ = _alloc(2 * _PS, tmp);
+      M._gmshModelGetEntityProperties(dim, tag, _P(api_integers_), _P(api_integers_ + _PS), _P(api_reals_), _P(api_reals_ + _PS), _P(ierr));
       _check();
       return [
         _ovector(api_integers_, 'int'),
@@ -1159,7 +1186,7 @@ export function wrapGmsh(Module) {
     try {
       const api_parentDim_ = _alloc(8, tmp);
       const api_parentTag_ = _alloc(8, tmp);
-      M._gmshModelGetParent(dim, tag, api_parentDim_, api_parentTag_, ierr);
+      M._gmshModelGetParent(dim, tag, _P(api_parentDim_), _P(api_parentTag_), _P(ierr));
       _check();
       return [
         M.HEAP32[api_parentDim_ >> 2],
@@ -1180,9 +1207,9 @@ export function wrapGmsh(Module) {
   gmsh.model.getNumberOfPartitions = function() {
     const tmp = [];
     try {
-      const api_result_ = M._gmshModelGetNumberOfPartitions(ierr);
+      const api_result_ = M._gmshModelGetNumberOfPartitions(_P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -1200,8 +1227,8 @@ export function wrapGmsh(Module) {
   gmsh.model.getPartitions = function(dim, tag) {
     const tmp = [];
     try {
-      const api_partitions_ = _alloc(8, tmp);
-      M._gmshModelGetPartitions(dim, tag, api_partitions_, api_partitions_ + 4, ierr);
+      const api_partitions_ = _alloc(2 * _PS, tmp);
+      M._gmshModelGetPartitions(dim, tag, _P(api_partitions_), _P(api_partitions_ + _PS), _P(ierr));
       _check();
       return _ovector(api_partitions_, 'int');
     }
@@ -1227,8 +1254,8 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_parametricCoord_, api_parametricCoord_n] = _ivector(parametricCoord, 'double', tmp);
-      const api_coord_ = _alloc(8, tmp);
-      M._gmshModelGetValue(dim, tag, api_parametricCoord_, api_parametricCoord_n, api_coord_, api_coord_ + 4, ierr);
+      const api_coord_ = _alloc(2 * _PS, tmp);
+      M._gmshModelGetValue(dim, tag, _P(api_parametricCoord_), _S(api_parametricCoord_n), _P(api_coord_), _P(api_coord_ + _PS), _P(ierr));
       _check();
       return _ovector(api_coord_, 'double');
     }
@@ -1256,8 +1283,8 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_parametricCoord_, api_parametricCoord_n] = _ivector(parametricCoord, 'double', tmp);
-      const api_derivatives_ = _alloc(8, tmp);
-      M._gmshModelGetDerivative(dim, tag, api_parametricCoord_, api_parametricCoord_n, api_derivatives_, api_derivatives_ + 4, ierr);
+      const api_derivatives_ = _alloc(2 * _PS, tmp);
+      M._gmshModelGetDerivative(dim, tag, _P(api_parametricCoord_), _S(api_parametricCoord_n), _P(api_derivatives_), _P(api_derivatives_ + _PS), _P(ierr));
       _check();
       return _ovector(api_derivatives_, 'double');
     }
@@ -1287,8 +1314,8 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_parametricCoord_, api_parametricCoord_n] = _ivector(parametricCoord, 'double', tmp);
-      const api_derivatives_ = _alloc(8, tmp);
-      M._gmshModelGetSecondDerivative(dim, tag, api_parametricCoord_, api_parametricCoord_n, api_derivatives_, api_derivatives_ + 4, ierr);
+      const api_derivatives_ = _alloc(2 * _PS, tmp);
+      M._gmshModelGetSecondDerivative(dim, tag, _P(api_parametricCoord_), _S(api_parametricCoord_n), _P(api_derivatives_), _P(api_derivatives_ + _PS), _P(ierr));
       _check();
       return _ovector(api_derivatives_, 'double');
     }
@@ -1313,8 +1340,8 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_parametricCoord_, api_parametricCoord_n] = _ivector(parametricCoord, 'double', tmp);
-      const api_curvatures_ = _alloc(8, tmp);
-      M._gmshModelGetCurvature(dim, tag, api_parametricCoord_, api_parametricCoord_n, api_curvatures_, api_curvatures_ + 4, ierr);
+      const api_curvatures_ = _alloc(2 * _PS, tmp);
+      M._gmshModelGetCurvature(dim, tag, _P(api_parametricCoord_), _S(api_parametricCoord_n), _P(api_curvatures_), _P(api_curvatures_ + _PS), _P(ierr));
       _check();
       return _ovector(api_curvatures_, 'double');
     }
@@ -1337,11 +1364,11 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_parametricCoord_, api_parametricCoord_n] = _ivector(parametricCoord, 'double', tmp);
-      const api_curvatureMax_ = _alloc(8, tmp);
-      const api_curvatureMin_ = _alloc(8, tmp);
-      const api_directionMax_ = _alloc(8, tmp);
-      const api_directionMin_ = _alloc(8, tmp);
-      M._gmshModelGetPrincipalCurvatures(tag, api_parametricCoord_, api_parametricCoord_n, api_curvatureMax_, api_curvatureMax_ + 4, api_curvatureMin_, api_curvatureMin_ + 4, api_directionMax_, api_directionMax_ + 4, api_directionMin_, api_directionMin_ + 4, ierr);
+      const api_curvatureMax_ = _alloc(2 * _PS, tmp);
+      const api_curvatureMin_ = _alloc(2 * _PS, tmp);
+      const api_directionMax_ = _alloc(2 * _PS, tmp);
+      const api_directionMin_ = _alloc(2 * _PS, tmp);
+      M._gmshModelGetPrincipalCurvatures(tag, _P(api_parametricCoord_), _S(api_parametricCoord_n), _P(api_curvatureMax_), _P(api_curvatureMax_ + _PS), _P(api_curvatureMin_), _P(api_curvatureMin_ + _PS), _P(api_directionMax_), _P(api_directionMax_ + _PS), _P(api_directionMin_), _P(api_directionMin_ + _PS), _P(ierr));
       _check();
       return [
         _ovector(api_curvatureMax_, 'double'),
@@ -1369,8 +1396,8 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_parametricCoord_, api_parametricCoord_n] = _ivector(parametricCoord, 'double', tmp);
-      const api_normals_ = _alloc(8, tmp);
-      M._gmshModelGetNormal(tag, api_parametricCoord_, api_parametricCoord_n, api_normals_, api_normals_ + 4, ierr);
+      const api_normals_ = _alloc(2 * _PS, tmp);
+      M._gmshModelGetNormal(tag, _P(api_parametricCoord_), _S(api_parametricCoord_n), _P(api_normals_), _P(api_normals_ + _PS), _P(ierr));
       _check();
       return _ovector(api_normals_, 'double');
     }
@@ -1395,8 +1422,8 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_coord_, api_coord_n] = _ivector(coord, 'double', tmp);
-      const api_parametricCoord_ = _alloc(8, tmp);
-      M._gmshModelGetParametrization(dim, tag, api_coord_, api_coord_n, api_parametricCoord_, api_parametricCoord_ + 4, ierr);
+      const api_parametricCoord_ = _alloc(2 * _PS, tmp);
+      M._gmshModelGetParametrization(dim, tag, _P(api_coord_), _S(api_coord_n), _P(api_parametricCoord_), _P(api_parametricCoord_ + _PS), _P(ierr));
       _check();
       return _ovector(api_parametricCoord_, 'double');
     }
@@ -1416,9 +1443,9 @@ export function wrapGmsh(Module) {
   gmsh.model.getParametrizationBounds = function(dim, tag) {
     const tmp = [];
     try {
-      const api_min_ = _alloc(8, tmp);
-      const api_max_ = _alloc(8, tmp);
-      M._gmshModelGetParametrizationBounds(dim, tag, api_min_, api_min_ + 4, api_max_, api_max_ + 4, ierr);
+      const api_min_ = _alloc(2 * _PS, tmp);
+      const api_max_ = _alloc(2 * _PS, tmp);
+      M._gmshModelGetParametrizationBounds(dim, tag, _P(api_min_), _P(api_min_ + _PS), _P(api_max_), _P(api_max_ + _PS), _P(ierr));
       _check();
       return [
         _ovector(api_min_, 'double'),
@@ -1444,9 +1471,9 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_coord_, api_coord_n] = _ivector(coord, 'double', tmp);
-      const api_result_ = M._gmshModelIsInside(dim, tag, api_coord_, api_coord_n, parametric ? 1 : 0, ierr);
+      const api_result_ = M._gmshModelIsInside(dim, tag, _P(api_coord_), _S(api_coord_n), parametric ? 1 : 0, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -1471,9 +1498,9 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_coord_, api_coord_n] = _ivector(coord, 'double', tmp);
-      const api_closestCoord_ = _alloc(8, tmp);
-      const api_parametricCoord_ = _alloc(8, tmp);
-      M._gmshModelGetClosestPoint(dim, tag, api_coord_, api_coord_n, api_closestCoord_, api_closestCoord_ + 4, api_parametricCoord_, api_parametricCoord_ + 4, ierr);
+      const api_closestCoord_ = _alloc(2 * _PS, tmp);
+      const api_parametricCoord_ = _alloc(2 * _PS, tmp);
+      M._gmshModelGetClosestPoint(dim, tag, _P(api_coord_), _S(api_coord_n), _P(api_closestCoord_), _P(api_closestCoord_ + _PS), _P(api_parametricCoord_), _P(api_parametricCoord_ + _PS), _P(ierr));
       _check();
       return [
         _ovector(api_closestCoord_, 'double'),
@@ -1500,8 +1527,8 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_parametricCoord_, api_parametricCoord_n] = _ivector(parametricCoord, 'double', tmp);
-      const api_surfaceParametricCoord_ = _alloc(8, tmp);
-      M._gmshModelReparametrizeOnSurface(dim, tag, api_parametricCoord_, api_parametricCoord_n, surfaceTag, api_surfaceParametricCoord_, api_surfaceParametricCoord_ + 4, which, ierr);
+      const api_surfaceParametricCoord_ = _alloc(2 * _PS, tmp);
+      M._gmshModelReparametrizeOnSurface(dim, tag, _P(api_parametricCoord_), _S(api_parametricCoord_n), surfaceTag, _P(api_surfaceParametricCoord_), _P(api_surfaceParametricCoord_ + _PS), which, _P(ierr));
       _check();
       return _ovector(api_surfaceParametricCoord_, 'double');
     }
@@ -1521,7 +1548,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      M._gmshModelSetVisibility(api_dimTags_, api_dimTags_n, value, recursive ? 1 : 0, ierr);
+      M._gmshModelSetVisibility(_P(api_dimTags_), _S(api_dimTags_n), value, recursive ? 1 : 0, _P(ierr));
       _check();
     }
     finally {
@@ -1540,7 +1567,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_value_ = _alloc(8, tmp);
-      M._gmshModelGetVisibility(dim, tag, api_value_, ierr);
+      M._gmshModelGetVisibility(dim, tag, _P(api_value_), _P(ierr));
       _check();
       return M.HEAP32[api_value_ >> 2];
     }
@@ -1558,7 +1585,7 @@ export function wrapGmsh(Module) {
   gmsh.model.setVisibilityPerWindow = function(value, windowIndex = 0) {
     const tmp = [];
     try {
-      M._gmshModelSetVisibilityPerWindow(value, windowIndex, ierr);
+      M._gmshModelSetVisibilityPerWindow(value, windowIndex, _P(ierr));
       _check();
     }
     finally {
@@ -1578,7 +1605,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      M._gmshModelSetColor(api_dimTags_, api_dimTags_n, r, g, b, a, recursive ? 1 : 0, ierr);
+      M._gmshModelSetColor(_P(api_dimTags_), _S(api_dimTags_n), r, g, b, a, recursive ? 1 : 0, _P(ierr));
       _check();
     }
     finally {
@@ -1602,7 +1629,7 @@ export function wrapGmsh(Module) {
       const api_g_ = _alloc(8, tmp);
       const api_b_ = _alloc(8, tmp);
       const api_a_ = _alloc(8, tmp);
-      M._gmshModelGetColor(dim, tag, api_r_, api_g_, api_b_, api_a_, ierr);
+      M._gmshModelGetColor(dim, tag, _P(api_r_), _P(api_g_), _P(api_b_), _P(api_a_), _P(ierr));
       _check();
       return [
         M.HEAP32[api_r_ >> 2],
@@ -1623,7 +1650,7 @@ export function wrapGmsh(Module) {
   gmsh.model.setCoordinates = function(tag, x, y, z) {
     const tmp = [];
     try {
-      M._gmshModelSetCoordinates(tag, x, y, z, ierr);
+      M._gmshModelSetCoordinates(tag, x, y, z, _P(ierr));
       _check();
     }
     finally {
@@ -1641,7 +1668,7 @@ export function wrapGmsh(Module) {
     try {
       const api_name_ = _istring(name, tmp);
       const [api_values_, api_values_n] = _ivectorstring(values, tmp);
-      M._gmshModelSetAttribute(api_name_, api_values_, api_values_n, ierr);
+      M._gmshModelSetAttribute(_P(api_name_), _P(api_values_), _S(api_values_n), _P(ierr));
       _check();
     }
     finally {
@@ -1660,8 +1687,8 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_name_ = _istring(name, tmp);
-      const api_values_ = _alloc(8, tmp);
-      M._gmshModelGetAttribute(api_name_, api_values_, api_values_ + 4, ierr);
+      const api_values_ = _alloc(2 * _PS, tmp);
+      M._gmshModelGetAttribute(_P(api_name_), _P(api_values_), _P(api_values_ + _PS), _P(ierr));
       _check();
       return _ovectorstring(api_values_);
     }
@@ -1680,8 +1707,8 @@ export function wrapGmsh(Module) {
   gmsh.model.getAttributeNames = function() {
     const tmp = [];
     try {
-      const api_names_ = _alloc(8, tmp);
-      M._gmshModelGetAttributeNames(api_names_, api_names_ + 4, ierr);
+      const api_names_ = _alloc(2 * _PS, tmp);
+      M._gmshModelGetAttributeNames(_P(api_names_), _P(api_names_ + _PS), _P(ierr));
       _check();
       return _ovectorstring(api_names_);
     }
@@ -1699,7 +1726,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_name_ = _istring(name, tmp);
-      M._gmshModelRemoveAttribute(api_name_, ierr);
+      M._gmshModelRemoveAttribute(_P(api_name_), _P(ierr));
       _check();
     }
     finally {
@@ -1719,7 +1746,7 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.generate = function(dim = 3) {
     const tmp = [];
     try {
-      M._gmshModelMeshGenerate(dim, ierr);
+      M._gmshModelMeshGenerate(dim, _P(ierr));
       _check();
     }
     finally {
@@ -1739,7 +1766,7 @@ export function wrapGmsh(Module) {
     try {
       const [api_elementTags_, api_elementTags_n] = _ivector(elementTags, 'size', tmp);
       const [api_partitions_, api_partitions_n] = _ivector(partitions, 'int', tmp);
-      M._gmshModelMeshPartition(numPart, api_elementTags_, api_elementTags_n, api_partitions_, api_partitions_n, ierr);
+      M._gmshModelMeshPartition(numPart, _P(api_elementTags_), _S(api_elementTags_n), _P(api_partitions_), _S(api_partitions_n), _P(ierr));
       _check();
     }
     finally {
@@ -1764,9 +1791,9 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.createOverlaps = function(layers = 1, createBoundaries = true) {
     const tmp = [];
     try {
-      const api_result_ = M._gmshModelMeshCreateOverlaps(layers, createBoundaries ? 1 : 0, ierr);
+      const api_result_ = M._gmshModelMeshCreateOverlaps(layers, createBoundaries ? 1 : 0, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -1789,9 +1816,9 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.getPartitionEntities = function(dim, tag, partition, overlapIndex = 0) {
     const tmp = [];
     try {
-      const api_entityTags_ = _alloc(8, tmp);
-      const api_overlapEntities_ = _alloc(8, tmp);
-      M._gmshModelMeshGetPartitionEntities(dim, tag, partition, api_entityTags_, api_entityTags_ + 4, api_overlapEntities_, api_overlapEntities_ + 4, overlapIndex, ierr);
+      const api_entityTags_ = _alloc(2 * _PS, tmp);
+      const api_overlapEntities_ = _alloc(2 * _PS, tmp);
+      M._gmshModelMeshGetPartitionEntities(dim, tag, partition, _P(api_entityTags_), _P(api_entityTags_ + _PS), _P(api_overlapEntities_), _P(api_overlapEntities_ + _PS), overlapIndex, _P(ierr));
       _check();
       return [
         _ovector(api_entityTags_, 'int'),
@@ -1818,8 +1845,8 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.getOverlapBoundary = function(dim, tag, partition, overlapIndex = 0) {
     const tmp = [];
     try {
-      const api_entityTags_ = _alloc(8, tmp);
-      M._gmshModelMeshGetOverlapBoundary(dim, tag, partition, api_entityTags_, api_entityTags_ + 4, overlapIndex, ierr);
+      const api_entityTags_ = _alloc(2 * _PS, tmp);
+      M._gmshModelMeshGetOverlapBoundary(dim, tag, partition, _P(api_entityTags_), _P(api_entityTags_ + _PS), overlapIndex, _P(ierr));
       _check();
       return _ovector(api_entityTags_, 'int');
     }
@@ -1846,8 +1873,8 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.getOverlapInterfaceBoundary = function(dim, tag, partition, overlapIndex = 0) {
     const tmp = [];
     try {
-      const api_entityTags_ = _alloc(8, tmp);
-      M._gmshModelMeshGetOverlapInterfaceBoundary(dim, tag, partition, api_entityTags_, api_entityTags_ + 4, overlapIndex, ierr);
+      const api_entityTags_ = _alloc(2 * _PS, tmp);
+      M._gmshModelMeshGetOverlapInterfaceBoundary(dim, tag, partition, _P(api_entityTags_), _P(api_entityTags_ + _PS), overlapIndex, _P(ierr));
       _check();
       return _ovector(api_entityTags_, 'int');
     }
@@ -1869,7 +1896,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_parentTag_ = _alloc(8, tmp);
-      M._gmshModelMeshGetBoundaryOverlapParent(dim, tag, api_parentTag_, overlapIndex, ierr);
+      M._gmshModelMeshGetBoundaryOverlapParent(dim, tag, _P(api_parentTag_), overlapIndex, _P(ierr));
       _check();
       return M.HEAP32[api_parentTag_ >> 2];
     }
@@ -1899,7 +1926,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_overlappedEntityTag_ = _alloc(8, tmp);
-      M._gmshModelMeshGetOverlapOverlappedEntity(dim, overlapTag, api_overlappedEntityTag_, overlapIndex, ierr);
+      M._gmshModelMeshGetOverlapOverlappedEntity(dim, overlapTag, _P(api_overlappedEntityTag_), overlapIndex, _P(ierr));
       _check();
       return M.HEAP32[api_overlappedEntityTag_ >> 2];
     }
@@ -1916,7 +1943,7 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.unpartition = function() {
     const tmp = [];
     try {
-      M._gmshModelMeshUnpartition(ierr);
+      M._gmshModelMeshUnpartition(_P(ierr));
       _check();
     }
     finally {
@@ -1936,7 +1963,7 @@ export function wrapGmsh(Module) {
     try {
       const api_fileName_ = _istring(fileName, tmp);
       const [api_partitions_, api_partitions_n] = _ivector(partitions, 'int', tmp);
-      M._gmshModelMeshWritePartitions(api_fileName_, api_partitions_, api_partitions_n, ierr);
+      M._gmshModelMeshWritePartitions(_P(api_fileName_), _P(api_partitions_), _S(api_partitions_n), _P(ierr));
       _check();
     }
     finally {
@@ -1964,7 +1991,7 @@ export function wrapGmsh(Module) {
     try {
       const api_method_ = _istring(method, tmp);
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      M._gmshModelMeshOptimize(api_method_, force ? 1 : 0, niter, api_dimTags_, api_dimTags_n, quality, ierr);
+      M._gmshModelMeshOptimize(_P(api_method_), force ? 1 : 0, niter, _P(api_dimTags_), _S(api_dimTags_n), quality, _P(ierr));
       _check();
     }
     finally {
@@ -1980,7 +2007,7 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.recombine = function() {
     const tmp = [];
     try {
-      M._gmshModelMeshRecombine(ierr);
+      M._gmshModelMeshRecombine(_P(ierr));
       _check();
     }
     finally {
@@ -1997,7 +2024,7 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.refine = function() {
     const tmp = [];
     try {
-      M._gmshModelMeshRefine(ierr);
+      M._gmshModelMeshRefine(_P(ierr));
       _check();
     }
     finally {
@@ -2014,7 +2041,7 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.setOrder = function(order) {
     const tmp = [];
     try {
-      M._gmshModelMeshSetOrder(order, ierr);
+      M._gmshModelMeshSetOrder(order, _P(ierr));
       _check();
     }
     finally {
@@ -2034,8 +2061,8 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.getLastEntityError = function() {
     const tmp = [];
     try {
-      const api_dimTags_ = _alloc(8, tmp);
-      M._gmshModelMeshGetLastEntityError(api_dimTags_, api_dimTags_ + 4, ierr);
+      const api_dimTags_ = _alloc(2 * _PS, tmp);
+      M._gmshModelMeshGetLastEntityError(_P(api_dimTags_), _P(api_dimTags_ + _PS), _P(ierr));
       _check();
       return _ovectorpair(api_dimTags_);
     }
@@ -2055,8 +2082,8 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.getLastNodeError = function() {
     const tmp = [];
     try {
-      const api_nodeTags_ = _alloc(8, tmp);
-      M._gmshModelMeshGetLastNodeError(api_nodeTags_, api_nodeTags_ + 4, ierr);
+      const api_nodeTags_ = _alloc(2 * _PS, tmp);
+      M._gmshModelMeshGetLastNodeError(_P(api_nodeTags_), _P(api_nodeTags_ + _PS), _P(ierr));
       _check();
       return _ovector(api_nodeTags_, 'size');
     }
@@ -2078,7 +2105,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      M._gmshModelMeshClear(api_dimTags_, api_dimTags_n, ierr);
+      M._gmshModelMeshClear(_P(api_dimTags_), _S(api_dimTags_n), _P(ierr));
       _check();
     }
     finally {
@@ -2098,7 +2125,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_elementTags_, api_elementTags_n] = _ivector(elementTags, 'size', tmp);
-      M._gmshModelMeshRemoveElements(dim, tag, api_elementTags_, api_elementTags_n, ierr);
+      M._gmshModelMeshRemoveElements(dim, tag, _P(api_elementTags_), _S(api_elementTags_n), _P(ierr));
       _check();
     }
     finally {
@@ -2117,7 +2144,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      M._gmshModelMeshReverse(api_dimTags_, api_dimTags_n, ierr);
+      M._gmshModelMeshReverse(_P(api_dimTags_), _S(api_dimTags_n), _P(ierr));
       _check();
     }
     finally {
@@ -2134,7 +2161,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_elementTags_, api_elementTags_n] = _ivector(elementTags, 'size', tmp);
-      M._gmshModelMeshReverseElements(api_elementTags_, api_elementTags_n, ierr);
+      M._gmshModelMeshReverseElements(_P(api_elementTags_), _S(api_elementTags_n), _P(ierr));
       _check();
     }
     finally {
@@ -2156,7 +2183,7 @@ export function wrapGmsh(Module) {
     try {
       const [api_affineTransform_, api_affineTransform_n] = _ivector(affineTransform, 'double', tmp);
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      M._gmshModelMeshAffineTransform(api_affineTransform_, api_affineTransform_n, api_dimTags_, api_dimTags_n, ierr);
+      M._gmshModelMeshAffineTransform(_P(api_affineTransform_), _S(api_affineTransform_n), _P(api_dimTags_), _S(api_dimTags_n), _P(ierr));
       _check();
     }
     finally {
@@ -2186,10 +2213,10 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.getNodes = function(dim = -1, tag = -1, includeBoundary = false, returnParametricCoord = true) {
     const tmp = [];
     try {
-      const api_nodeTags_ = _alloc(8, tmp);
-      const api_coord_ = _alloc(8, tmp);
-      const api_parametricCoord_ = _alloc(8, tmp);
-      M._gmshModelMeshGetNodes(api_nodeTags_, api_nodeTags_ + 4, api_coord_, api_coord_ + 4, api_parametricCoord_, api_parametricCoord_ + 4, dim, tag, includeBoundary ? 1 : 0, returnParametricCoord ? 1 : 0, ierr);
+      const api_nodeTags_ = _alloc(2 * _PS, tmp);
+      const api_coord_ = _alloc(2 * _PS, tmp);
+      const api_parametricCoord_ = _alloc(2 * _PS, tmp);
+      M._gmshModelMeshGetNodes(_P(api_nodeTags_), _P(api_nodeTags_ + _PS), _P(api_coord_), _P(api_coord_ + _PS), _P(api_parametricCoord_), _P(api_parametricCoord_ + _PS), dim, tag, includeBoundary ? 1 : 0, returnParametricCoord ? 1 : 0, _P(ierr));
       _check();
       return [
         _ovector(api_nodeTags_, 'size'),
@@ -2212,10 +2239,10 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.getNodesByElementType = function(elementType, tag = -1, returnParametricCoord = true) {
     const tmp = [];
     try {
-      const api_nodeTags_ = _alloc(8, tmp);
-      const api_coord_ = _alloc(8, tmp);
-      const api_parametricCoord_ = _alloc(8, tmp);
-      M._gmshModelMeshGetNodesByElementType(elementType, api_nodeTags_, api_nodeTags_ + 4, api_coord_, api_coord_ + 4, api_parametricCoord_, api_parametricCoord_ + 4, tag, returnParametricCoord ? 1 : 0, ierr);
+      const api_nodeTags_ = _alloc(2 * _PS, tmp);
+      const api_coord_ = _alloc(2 * _PS, tmp);
+      const api_parametricCoord_ = _alloc(2 * _PS, tmp);
+      M._gmshModelMeshGetNodesByElementType(elementType, _P(api_nodeTags_), _P(api_nodeTags_ + _PS), _P(api_coord_), _P(api_coord_ + _PS), _P(api_parametricCoord_), _P(api_parametricCoord_ + _PS), tag, returnParametricCoord ? 1 : 0, _P(ierr));
       _check();
       return [
         _ovector(api_nodeTags_, 'size'),
@@ -2241,11 +2268,11 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.getNode = function(nodeTag) {
     const tmp = [];
     try {
-      const api_coord_ = _alloc(8, tmp);
-      const api_parametricCoord_ = _alloc(8, tmp);
+      const api_coord_ = _alloc(2 * _PS, tmp);
+      const api_parametricCoord_ = _alloc(2 * _PS, tmp);
       const api_dim_ = _alloc(8, tmp);
       const api_tag_ = _alloc(8, tmp);
-      M._gmshModelMeshGetNode(nodeTag, api_coord_, api_coord_ + 4, api_parametricCoord_, api_parametricCoord_ + 4, api_dim_, api_tag_, ierr);
+      M._gmshModelMeshGetNode(_S(nodeTag), _P(api_coord_), _P(api_coord_ + _PS), _P(api_parametricCoord_), _P(api_parametricCoord_ + _PS), _P(api_dim_), _P(api_tag_), _P(ierr));
       _check();
       return [
         _ovector(api_coord_, 'double'),
@@ -2271,7 +2298,7 @@ export function wrapGmsh(Module) {
     try {
       const [api_coord_, api_coord_n] = _ivector(coord, 'double', tmp);
       const [api_parametricCoord_, api_parametricCoord_n] = _ivector(parametricCoord, 'double', tmp);
-      M._gmshModelMeshSetNode(nodeTag, api_coord_, api_coord_n, api_parametricCoord_, api_parametricCoord_n, ierr);
+      M._gmshModelMeshSetNode(_S(nodeTag), _P(api_coord_), _S(api_coord_n), _P(api_parametricCoord_), _S(api_parametricCoord_n), _P(ierr));
       _check();
     }
     finally {
@@ -2297,7 +2324,7 @@ export function wrapGmsh(Module) {
       const [api_nodeTags_, api_nodeTags_n] = _ivector(nodeTags, 'size', tmp);
       const [api_coord_, api_coord_n] = _ivector(coord, 'double', tmp);
       const [api_parametricCoord_, api_parametricCoord_n] = _ivector(parametricCoord, 'double', tmp);
-      M._gmshModelMeshSetNodes(api_nodeTags_, api_nodeTags_n, api_coord_, api_coord_n, api_parametricCoord_, api_parametricCoord_n, dim, tag, ierr);
+      M._gmshModelMeshSetNodes(_P(api_nodeTags_), _S(api_nodeTags_n), _P(api_coord_), _S(api_coord_n), _P(api_parametricCoord_), _S(api_parametricCoord_n), dim, tag, _P(ierr));
       _check();
     }
     finally {
@@ -2313,7 +2340,7 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.rebuildNodeCache = function(onlyIfNecessary = true) {
     const tmp = [];
     try {
-      M._gmshModelMeshRebuildNodeCache(onlyIfNecessary ? 1 : 0, ierr);
+      M._gmshModelMeshRebuildNodeCache(onlyIfNecessary ? 1 : 0, _P(ierr));
       _check();
     }
     finally {
@@ -2329,7 +2356,7 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.rebuildElementCache = function(onlyIfNecessary = true) {
     const tmp = [];
     try {
-      M._gmshModelMeshRebuildElementCache(onlyIfNecessary ? 1 : 0, ierr);
+      M._gmshModelMeshRebuildElementCache(onlyIfNecessary ? 1 : 0, _P(ierr));
       _check();
     }
     finally {
@@ -2351,9 +2378,9 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.getNodesForPhysicalGroup = function(dim, tag) {
     const tmp = [];
     try {
-      const api_nodeTags_ = _alloc(8, tmp);
-      const api_coord_ = _alloc(8, tmp);
-      M._gmshModelMeshGetNodesForPhysicalGroup(dim, tag, api_nodeTags_, api_nodeTags_ + 4, api_coord_, api_coord_ + 4, ierr);
+      const api_nodeTags_ = _alloc(2 * _PS, tmp);
+      const api_coord_ = _alloc(2 * _PS, tmp);
+      M._gmshModelMeshGetNodesForPhysicalGroup(dim, tag, _P(api_nodeTags_), _P(api_nodeTags_ + _PS), _P(api_coord_), _P(api_coord_ + _PS), _P(ierr));
       _check();
       return [
         _ovector(api_nodeTags_, 'size'),
@@ -2375,9 +2402,9 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_maxTag_ = _alloc(8, tmp);
-      M._gmshModelMeshGetMaxNodeTag(api_maxTag_, ierr);
+      M._gmshModelMeshGetMaxNodeTag(_P(api_maxTag_), _P(ierr));
       _check();
-      return M.HEAPU32[api_maxTag_ >> 2];
+      return _getp(api_maxTag_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -2403,7 +2430,7 @@ export function wrapGmsh(Module) {
       const [api_nodeTags_, api_nodeTags_n] = _ivector(nodeTags, 'size', tmp);
       const [api_coord_, api_coord_n] = _ivector(coord, 'double', tmp);
       const [api_parametricCoord_, api_parametricCoord_n] = _ivector(parametricCoord, 'double', tmp);
-      M._gmshModelMeshAddNodes(dim, tag, api_nodeTags_, api_nodeTags_n, api_coord_, api_coord_n, api_parametricCoord_, api_parametricCoord_n, ierr);
+      M._gmshModelMeshAddNodes(dim, tag, _P(api_nodeTags_), _S(api_nodeTags_n), _P(api_coord_), _S(api_coord_n), _P(api_parametricCoord_), _S(api_parametricCoord_n), _P(ierr));
       _check();
     }
     finally {
@@ -2422,7 +2449,7 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.reclassifyNodes = function() {
     const tmp = [];
     try {
-      M._gmshModelMeshReclassifyNodes(ierr);
+      M._gmshModelMeshReclassifyNodes(_P(ierr));
       _check();
     }
     finally {
@@ -2446,7 +2473,7 @@ export function wrapGmsh(Module) {
     try {
       const [api_min_, api_min_n] = _ivector(min, 'double', tmp);
       const [api_max_, api_max_n] = _ivector(max, 'double', tmp);
-      M._gmshModelMeshRelocateNodes(dim, tag, api_min_, api_min_n, api_max_, api_max_n, ierr);
+      M._gmshModelMeshRelocateNodes(dim, tag, _P(api_min_), _S(api_min_n), _P(api_max_), _S(api_max_n), _P(ierr));
       _check();
     }
     finally {
@@ -2476,10 +2503,10 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.getElements = function(dim = -1, tag = -1) {
     const tmp = [];
     try {
-      const api_elementTypes_ = _alloc(8, tmp);
-      const api_elementTags_ = _alloc(12, tmp);
-      const api_nodeTags_ = _alloc(12, tmp);
-      M._gmshModelMeshGetElements(api_elementTypes_, api_elementTypes_ + 4, api_elementTags_, api_elementTags_ + 4, api_elementTags_ + 8, api_nodeTags_, api_nodeTags_ + 4, api_nodeTags_ + 8, dim, tag, ierr);
+      const api_elementTypes_ = _alloc(2 * _PS, tmp);
+      const api_elementTags_ = _alloc(3 * _PS, tmp);
+      const api_nodeTags_ = _alloc(3 * _PS, tmp);
+      M._gmshModelMeshGetElements(_P(api_elementTypes_), _P(api_elementTypes_ + _PS), _P(api_elementTags_), _P(api_elementTags_ + _PS), _P(api_elementTags_ + 2 * _PS), _P(api_nodeTags_), _P(api_nodeTags_ + _PS), _P(api_nodeTags_ + 2 * _PS), dim, tag, _P(ierr));
       _check();
       return [
         _ovector(api_elementTypes_, 'int'),
@@ -2506,10 +2533,10 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_elementType_ = _alloc(8, tmp);
-      const api_nodeTags_ = _alloc(8, tmp);
+      const api_nodeTags_ = _alloc(2 * _PS, tmp);
       const api_dim_ = _alloc(8, tmp);
       const api_tag_ = _alloc(8, tmp);
-      M._gmshModelMeshGetElement(elementTag, api_elementType_, api_nodeTags_, api_nodeTags_ + 4, api_dim_, api_tag_, ierr);
+      M._gmshModelMeshGetElement(_S(elementTag), _P(api_elementType_), _P(api_nodeTags_), _P(api_nodeTags_ + _PS), _P(api_dim_), _P(api_tag_), _P(ierr));
       _check();
       return [
         M.HEAP32[api_elementType_ >> 2],
@@ -2540,14 +2567,14 @@ export function wrapGmsh(Module) {
     try {
       const api_elementTag_ = _alloc(8, tmp);
       const api_elementType_ = _alloc(8, tmp);
-      const api_nodeTags_ = _alloc(8, tmp);
+      const api_nodeTags_ = _alloc(2 * _PS, tmp);
       const api_u_ = _alloc(8, tmp);
       const api_v_ = _alloc(8, tmp);
       const api_w_ = _alloc(8, tmp);
-      M._gmshModelMeshGetElementByCoordinates(x, y, z, api_elementTag_, api_elementType_, api_nodeTags_, api_nodeTags_ + 4, api_u_, api_v_, api_w_, dim, strict ? 1 : 0, ierr);
+      M._gmshModelMeshGetElementByCoordinates(x, y, z, _P(api_elementTag_), _P(api_elementType_), _P(api_nodeTags_), _P(api_nodeTags_ + _PS), _P(api_u_), _P(api_v_), _P(api_w_), dim, strict ? 1 : 0, _P(ierr));
       _check();
       return [
-        M.HEAPU32[api_elementTag_ >> 2],
+        _getp(api_elementTag_),
         M.HEAP32[api_elementType_ >> 2],
         _ovector(api_nodeTags_, 'size'),
         M.HEAPF64[api_u_ >> 3],
@@ -2575,8 +2602,8 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.getElementsByCoordinates = function(x, y, z, dim = -1, strict = false) {
     const tmp = [];
     try {
-      const api_elementTags_ = _alloc(8, tmp);
-      M._gmshModelMeshGetElementsByCoordinates(x, y, z, api_elementTags_, api_elementTags_ + 4, dim, strict ? 1 : 0, ierr);
+      const api_elementTags_ = _alloc(2 * _PS, tmp);
+      M._gmshModelMeshGetElementsByCoordinates(x, y, z, _P(api_elementTags_), _P(api_elementTags_ + _PS), dim, strict ? 1 : 0, _P(ierr));
       _check();
       return _ovector(api_elementTags_, 'size');
     }
@@ -2602,7 +2629,7 @@ export function wrapGmsh(Module) {
       const api_u_ = _alloc(8, tmp);
       const api_v_ = _alloc(8, tmp);
       const api_w_ = _alloc(8, tmp);
-      M._gmshModelMeshGetLocalCoordinatesInElement(elementTag, x, y, z, api_u_, api_v_, api_w_, ierr);
+      M._gmshModelMeshGetLocalCoordinatesInElement(_S(elementTag), x, y, z, _P(api_u_), _P(api_v_), _P(api_w_), _P(ierr));
       _check();
       return [
         M.HEAPF64[api_u_ >> 3],
@@ -2626,8 +2653,8 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.getElementTypes = function(dim = -1, tag = -1) {
     const tmp = [];
     try {
-      const api_elementTypes_ = _alloc(8, tmp);
-      M._gmshModelMeshGetElementTypes(api_elementTypes_, api_elementTypes_ + 4, dim, tag, ierr);
+      const api_elementTypes_ = _alloc(2 * _PS, tmp);
+      M._gmshModelMeshGetElementTypes(_P(api_elementTypes_), _P(api_elementTypes_ + _PS), dim, tag, _P(ierr));
       _check();
       return _ovector(api_elementTypes_, 'int');
     }
@@ -2650,9 +2677,9 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_familyName_ = _istring(familyName, tmp);
-      const api_result_ = M._gmshModelMeshGetElementType(api_familyName_, order, serendip ? 1 : 0, ierr);
+      const api_result_ = M._gmshModelMeshGetElementType(_P(api_familyName_), order, serendip ? 1 : 0, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -2679,9 +2706,9 @@ export function wrapGmsh(Module) {
       const api_dim_ = _alloc(8, tmp);
       const api_order_ = _alloc(8, tmp);
       const api_numNodes_ = _alloc(8, tmp);
-      const api_localNodeCoord_ = _alloc(8, tmp);
+      const api_localNodeCoord_ = _alloc(2 * _PS, tmp);
       const api_numPrimaryNodes_ = _alloc(8, tmp);
-      M._gmshModelMeshGetElementProperties(elementType, api_elementName_, api_dim_, api_order_, api_numNodes_, api_localNodeCoord_, api_localNodeCoord_ + 4, api_numPrimaryNodes_, ierr);
+      M._gmshModelMeshGetElementProperties(elementType, _P(api_elementName_), _P(api_dim_), _P(api_order_), _P(api_numNodes_), _P(api_localNodeCoord_), _P(api_localNodeCoord_ + _PS), _P(api_numPrimaryNodes_), _P(ierr));
       _check();
       return [
         _ostring(api_elementName_),
@@ -2714,9 +2741,9 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.getElementsByType = function(elementType, tag = -1, task = 0, numTasks = 1) {
     const tmp = [];
     try {
-      const api_elementTags_ = _alloc(8, tmp);
-      const api_nodeTags_ = _alloc(8, tmp);
-      M._gmshModelMeshGetElementsByType(elementType, api_elementTags_, api_elementTags_ + 4, api_nodeTags_, api_nodeTags_ + 4, tag, task, numTasks, ierr);
+      const api_elementTags_ = _alloc(2 * _PS, tmp);
+      const api_nodeTags_ = _alloc(2 * _PS, tmp);
+      M._gmshModelMeshGetElementsByType(elementType, _P(api_elementTags_), _P(api_elementTags_ + _PS), _P(api_nodeTags_), _P(api_nodeTags_ + _PS), tag, _S(task), _S(numTasks), _P(ierr));
       _check();
       return [
         _ovector(api_elementTags_, 'size'),
@@ -2738,9 +2765,9 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_maxTag_ = _alloc(8, tmp);
-      M._gmshModelMeshGetMaxElementTag(api_maxTag_, ierr);
+      M._gmshModelMeshGetMaxElementTag(_P(api_maxTag_), _P(ierr));
       _check();
-      return M.HEAPU32[api_maxTag_ >> 2];
+      return _getp(api_maxTag_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -2770,9 +2797,9 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_elementTags_, api_elementTags_n] = _ivector(elementTags, 'size', tmp);
-      const api_elementsQuality_ = _alloc(8, tmp);
+      const api_elementsQuality_ = _alloc(2 * _PS, tmp);
       const api_qualityName_ = _istring(qualityName, tmp);
-      M._gmshModelMeshGetElementQualities(api_elementTags_, api_elementTags_n, api_elementsQuality_, api_elementsQuality_ + 4, api_qualityName_, task, numTasks, ierr);
+      M._gmshModelMeshGetElementQualities(_P(api_elementTags_), _S(api_elementTags_n), _P(api_elementsQuality_), _P(api_elementsQuality_ + _PS), _P(api_qualityName_), _S(task), _S(numTasks), _P(ierr));
       _check();
       return _ovector(api_elementsQuality_, 'double');
     }
@@ -2801,7 +2828,7 @@ export function wrapGmsh(Module) {
       const [api_elementTypes_, api_elementTypes_n] = _ivector(elementTypes, 'int', tmp);
       const [api_elementTags_, api_elementTags_n, api_elementTags_nn] = _ivectorvector(elementTags, 'size', tmp);
       const [api_nodeTags_, api_nodeTags_n, api_nodeTags_nn] = _ivectorvector(nodeTags, 'size', tmp);
-      M._gmshModelMeshAddElements(dim, tag, api_elementTypes_, api_elementTypes_n, api_elementTags_, api_elementTags_n, api_elementTags_nn, api_nodeTags_, api_nodeTags_n, api_nodeTags_nn, ierr);
+      M._gmshModelMeshAddElements(dim, tag, _P(api_elementTypes_), _S(api_elementTypes_n), _P(api_elementTags_), _P(api_elementTags_n), _S(api_elementTags_nn), _P(api_nodeTags_), _P(api_nodeTags_n), _S(api_nodeTags_nn), _P(ierr));
       _check();
     }
     finally {
@@ -2825,7 +2852,7 @@ export function wrapGmsh(Module) {
     try {
       const [api_elementTags_, api_elementTags_n] = _ivector(elementTags, 'size', tmp);
       const [api_nodeTags_, api_nodeTags_n] = _ivector(nodeTags, 'size', tmp);
-      M._gmshModelMeshAddElementsByType(tag, elementType, api_elementTags_, api_elementTags_n, api_nodeTags_, api_nodeTags_n, ierr);
+      M._gmshModelMeshAddElementsByType(tag, elementType, _P(api_elementTags_), _S(api_elementTags_n), _P(api_nodeTags_), _S(api_nodeTags_n), _P(ierr));
       _check();
     }
     finally {
@@ -2850,7 +2877,7 @@ export function wrapGmsh(Module) {
       const [api_elementTags_, api_elementTags_n] = _ivector(elementTags, 'size', tmp);
       const [api_nodeTags_, api_nodeTags_n] = _ivector(nodeTags, 'size', tmp);
       const [api_numNodes_, api_numNodes_n] = _ivector(numNodes, 'int', tmp);
-      M._gmshModelMeshAddPolygons(tag, api_elementTags_, api_elementTags_n, api_nodeTags_, api_nodeTags_n, api_numNodes_, api_numNodes_n, ierr);
+      M._gmshModelMeshAddPolygons(tag, _P(api_elementTags_), _S(api_elementTags_n), _P(api_nodeTags_), _S(api_nodeTags_n), _P(api_numNodes_), _S(api_numNodes_n), _P(ierr));
       _check();
     }
     finally {
@@ -2871,10 +2898,10 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.getPolygons = function(tag = -1) {
     const tmp = [];
     try {
-      const api_elementTags_ = _alloc(8, tmp);
-      const api_nodeTags_ = _alloc(8, tmp);
-      const api_numNodes_ = _alloc(8, tmp);
-      M._gmshModelMeshGetPolygons(api_elementTags_, api_elementTags_ + 4, api_nodeTags_, api_nodeTags_ + 4, api_numNodes_, api_numNodes_ + 4, tag, ierr);
+      const api_elementTags_ = _alloc(2 * _PS, tmp);
+      const api_nodeTags_ = _alloc(2 * _PS, tmp);
+      const api_numNodes_ = _alloc(2 * _PS, tmp);
+      M._gmshModelMeshGetPolygons(_P(api_elementTags_), _P(api_elementTags_ + _PS), _P(api_nodeTags_), _P(api_nodeTags_ + _PS), _P(api_numNodes_), _P(api_numNodes_ + _PS), tag, _P(ierr));
       _check();
       return [
         _ovector(api_elementTags_, 'size'),
@@ -2906,7 +2933,7 @@ export function wrapGmsh(Module) {
       const [api_numFaces_, api_numFaces_n] = _ivector(numFaces, 'int', tmp);
       const [api_faceSizes_, api_faceSizes_n] = _ivector(faceSizes, 'int', tmp);
       const [api_nodeTags_, api_nodeTags_n] = _ivector(nodeTags, 'size', tmp);
-      M._gmshModelMeshAddPolyhedra(tag, api_elementTags_, api_elementTags_n, api_numFaces_, api_numFaces_n, api_faceSizes_, api_faceSizes_n, api_nodeTags_, api_nodeTags_n, ierr);
+      M._gmshModelMeshAddPolyhedra(tag, _P(api_elementTags_), _S(api_elementTags_n), _P(api_numFaces_), _S(api_numFaces_n), _P(api_faceSizes_), _S(api_faceSizes_n), _P(api_nodeTags_), _S(api_nodeTags_n), _P(ierr));
       _check();
     }
     finally {
@@ -2930,11 +2957,11 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.getPolyhedra = function(tag = -1) {
     const tmp = [];
     try {
-      const api_elementTags_ = _alloc(8, tmp);
-      const api_numFaces_ = _alloc(8, tmp);
-      const api_faceSizes_ = _alloc(8, tmp);
-      const api_nodeTags_ = _alloc(8, tmp);
-      M._gmshModelMeshGetPolyhedra(api_elementTags_, api_elementTags_ + 4, api_numFaces_, api_numFaces_ + 4, api_faceSizes_, api_faceSizes_ + 4, api_nodeTags_, api_nodeTags_ + 4, tag, ierr);
+      const api_elementTags_ = _alloc(2 * _PS, tmp);
+      const api_numFaces_ = _alloc(2 * _PS, tmp);
+      const api_faceSizes_ = _alloc(2 * _PS, tmp);
+      const api_nodeTags_ = _alloc(2 * _PS, tmp);
+      M._gmshModelMeshGetPolyhedra(_P(api_elementTags_), _P(api_elementTags_ + _PS), _P(api_numFaces_), _P(api_numFaces_ + _PS), _P(api_faceSizes_), _P(api_faceSizes_ + _PS), _P(api_nodeTags_), _P(api_nodeTags_ + _PS), tag, _P(ierr));
       _check();
       return [
         _ovector(api_elementTags_, 'size'),
@@ -2968,11 +2995,11 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.getPolytopeSimplices = function(elementType, tag = -1) {
     const tmp = [];
     try {
-      const api_elementTags_ = _alloc(8, tmp);
-      const api_numSimplices_ = _alloc(8, tmp);
-      const api_nodeTags_ = _alloc(8, tmp);
-      const api_given_ = _alloc(8, tmp);
-      M._gmshModelMeshGetPolytopeSimplices(elementType, api_elementTags_, api_elementTags_ + 4, api_numSimplices_, api_numSimplices_ + 4, api_nodeTags_, api_nodeTags_ + 4, api_given_, api_given_ + 4, tag, ierr);
+      const api_elementTags_ = _alloc(2 * _PS, tmp);
+      const api_numSimplices_ = _alloc(2 * _PS, tmp);
+      const api_nodeTags_ = _alloc(2 * _PS, tmp);
+      const api_given_ = _alloc(2 * _PS, tmp);
+      M._gmshModelMeshGetPolytopeSimplices(elementType, _P(api_elementTags_), _P(api_elementTags_ + _PS), _P(api_numSimplices_), _P(api_numSimplices_ + _PS), _P(api_nodeTags_), _P(api_nodeTags_ + _PS), _P(api_given_), _P(api_given_ + _PS), tag, _P(ierr));
       _check();
       return [
         _ovector(api_elementTags_, 'size'),
@@ -3001,7 +3028,7 @@ export function wrapGmsh(Module) {
       const [api_elementTags_, api_elementTags_n] = _ivector(elementTags, 'size', tmp);
       const [api_numSimplices_, api_numSimplices_n] = _ivector(numSimplices, 'int', tmp);
       const [api_nodeTags_, api_nodeTags_n] = _ivector(nodeTags, 'size', tmp);
-      M._gmshModelMeshSetPolytopeSimplices(api_elementTags_, api_elementTags_n, api_numSimplices_, api_numSimplices_n, api_nodeTags_, api_nodeTags_n, ierr);
+      M._gmshModelMeshSetPolytopeSimplices(_P(api_elementTags_), _S(api_elementTags_n), _P(api_numSimplices_), _S(api_numSimplices_n), _P(api_nodeTags_), _S(api_nodeTags_n), _P(ierr));
       _check();
     }
     finally {
@@ -3023,7 +3050,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      M._gmshModelMeshCreatePolytopeSimplices(api_dimTags_, api_dimTags_n, ierr);
+      M._gmshModelMeshCreatePolytopeSimplices(_P(api_dimTags_), _S(api_dimTags_n), _P(ierr));
       _check();
     }
     finally {
@@ -3053,9 +3080,9 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_integrationType_ = _istring(integrationType, tmp);
-      const api_localCoord_ = _alloc(8, tmp);
-      const api_weights_ = _alloc(8, tmp);
-      M._gmshModelMeshGetIntegrationPoints(elementType, api_integrationType_, api_localCoord_, api_localCoord_ + 4, api_weights_, api_weights_ + 4, ierr);
+      const api_localCoord_ = _alloc(2 * _PS, tmp);
+      const api_weights_ = _alloc(2 * _PS, tmp);
+      M._gmshModelMeshGetIntegrationPoints(elementType, _P(api_integrationType_), _P(api_localCoord_), _P(api_localCoord_ + _PS), _P(api_weights_), _P(api_weights_ + _PS), _P(ierr));
       _check();
       return [
         _ovector(api_localCoord_, 'double'),
@@ -3091,10 +3118,10 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_localCoord_, api_localCoord_n] = _ivector(localCoord, 'double', tmp);
-      const api_jacobians_ = _alloc(8, tmp);
-      const api_determinants_ = _alloc(8, tmp);
-      const api_coord_ = _alloc(8, tmp);
-      M._gmshModelMeshGetJacobians(elementType, api_localCoord_, api_localCoord_n, api_jacobians_, api_jacobians_ + 4, api_determinants_, api_determinants_ + 4, api_coord_, api_coord_ + 4, tag, task, numTasks, ierr);
+      const api_jacobians_ = _alloc(2 * _PS, tmp);
+      const api_determinants_ = _alloc(2 * _PS, tmp);
+      const api_coord_ = _alloc(2 * _PS, tmp);
+      M._gmshModelMeshGetJacobians(elementType, _P(api_localCoord_), _S(api_localCoord_n), _P(api_jacobians_), _P(api_jacobians_ + _PS), _P(api_determinants_), _P(api_determinants_ + _PS), _P(api_coord_), _P(api_coord_ + _PS), tag, _S(task), _S(numTasks), _P(ierr));
       _check();
       return [
         _ovector(api_jacobians_, 'double'),
@@ -3127,10 +3154,10 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_localCoord_, api_localCoord_n] = _ivector(localCoord, 'double', tmp);
-      const api_jacobians_ = _alloc(8, tmp);
-      const api_determinants_ = _alloc(8, tmp);
-      const api_coord_ = _alloc(8, tmp);
-      M._gmshModelMeshGetJacobian(elementTag, api_localCoord_, api_localCoord_n, api_jacobians_, api_jacobians_ + 4, api_determinants_, api_determinants_ + 4, api_coord_, api_coord_ + 4, ierr);
+      const api_jacobians_ = _alloc(2 * _PS, tmp);
+      const api_determinants_ = _alloc(2 * _PS, tmp);
+      const api_coord_ = _alloc(2 * _PS, tmp);
+      M._gmshModelMeshGetJacobian(_S(elementTag), _P(api_localCoord_), _S(api_localCoord_n), _P(api_jacobians_), _P(api_jacobians_ + _PS), _P(api_determinants_), _P(api_determinants_ + _PS), _P(api_coord_), _P(api_coord_ + _PS), _P(ierr));
       _check();
       return [
         _ovector(api_jacobians_, 'double'),
@@ -3194,10 +3221,10 @@ export function wrapGmsh(Module) {
       const [api_localCoord_, api_localCoord_n] = _ivector(localCoord, 'double', tmp);
       const api_functionSpaceType_ = _istring(functionSpaceType, tmp);
       const api_numComponents_ = _alloc(8, tmp);
-      const api_basisFunctions_ = _alloc(8, tmp);
+      const api_basisFunctions_ = _alloc(2 * _PS, tmp);
       const api_numOrientations_ = _alloc(8, tmp);
       const [api_wantedOrientations_, api_wantedOrientations_n] = _ivector(wantedOrientations, 'int', tmp);
-      M._gmshModelMeshGetBasisFunctions(elementType, api_localCoord_, api_localCoord_n, api_functionSpaceType_, api_numComponents_, api_basisFunctions_, api_basisFunctions_ + 4, api_numOrientations_, api_wantedOrientations_, api_wantedOrientations_n, ierr);
+      M._gmshModelMeshGetBasisFunctions(elementType, _P(api_localCoord_), _S(api_localCoord_n), _P(api_functionSpaceType_), _P(api_numComponents_), _P(api_basisFunctions_), _P(api_basisFunctions_ + _PS), _P(api_numOrientations_), _P(api_wantedOrientations_), _S(api_wantedOrientations_n), _P(ierr));
       _check();
       return [
         M.HEAP32[api_numComponents_ >> 2],
@@ -3231,8 +3258,8 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_functionSpaceType_ = _istring(functionSpaceType, tmp);
-      const api_basisFunctionsOrientation_ = _alloc(8, tmp);
-      M._gmshModelMeshGetBasisFunctionsOrientation(elementType, api_functionSpaceType_, api_basisFunctionsOrientation_, api_basisFunctionsOrientation_ + 4, tag, task, numTasks, periodic ? 1 : 0, ierr);
+      const api_basisFunctionsOrientation_ = _alloc(2 * _PS, tmp);
+      M._gmshModelMeshGetBasisFunctionsOrientation(elementType, _P(api_functionSpaceType_), _P(api_basisFunctionsOrientation_), _P(api_basisFunctionsOrientation_ + _PS), tag, _S(task), _S(numTasks), periodic ? 1 : 0, _P(ierr));
       _check();
       return _ovector(api_basisFunctionsOrientation_, 'int');
     }
@@ -3255,7 +3282,7 @@ export function wrapGmsh(Module) {
     try {
       const api_functionSpaceType_ = _istring(functionSpaceType, tmp);
       const api_basisFunctionsOrientation_ = _alloc(8, tmp);
-      M._gmshModelMeshGetBasisFunctionsOrientationForElement(elementTag, api_functionSpaceType_, api_basisFunctionsOrientation_, periodic ? 1 : 0, ierr);
+      M._gmshModelMeshGetBasisFunctionsOrientationForElement(_S(elementTag), _P(api_functionSpaceType_), _P(api_basisFunctionsOrientation_), periodic ? 1 : 0, _P(ierr));
       _check();
       return M.HEAP32[api_basisFunctionsOrientation_ >> 2];
     }
@@ -3276,9 +3303,9 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_functionSpaceType_ = _istring(functionSpaceType, tmp);
-      const api_result_ = M._gmshModelMeshGetNumberOfOrientations(elementType, api_functionSpaceType_, ierr);
+      const api_result_ = M._gmshModelMeshGetNumberOfOrientations(elementType, _P(api_functionSpaceType_), _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -3302,9 +3329,9 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_nodeTags_, api_nodeTags_n] = _ivector(nodeTags, 'size', tmp);
-      const api_edgeTags_ = _alloc(8, tmp);
-      const api_edgeOrientations_ = _alloc(8, tmp);
-      M._gmshModelMeshGetEdges(api_nodeTags_, api_nodeTags_n, api_edgeTags_, api_edgeTags_ + 4, api_edgeOrientations_, api_edgeOrientations_ + 4, ierr);
+      const api_edgeTags_ = _alloc(2 * _PS, tmp);
+      const api_edgeOrientations_ = _alloc(2 * _PS, tmp);
+      M._gmshModelMeshGetEdges(_P(api_nodeTags_), _S(api_nodeTags_n), _P(api_edgeTags_), _P(api_edgeTags_ + _PS), _P(api_edgeOrientations_), _P(api_edgeOrientations_ + _PS), _P(ierr));
       _check();
       return [
         _ovector(api_edgeTags_, 'size'),
@@ -3331,9 +3358,9 @@ export function wrapGmsh(Module) {
     try {
       const [api_nodeTags_, api_nodeTags_n] = _ivector(nodeTags, 'size', tmp);
       const [api_faceSizes_, api_faceSizes_n] = _ivector(faceSizes, 'int', tmp);
-      const api_faceTags_ = _alloc(8, tmp);
-      const api_faceOrientations_ = _alloc(8, tmp);
-      M._gmshModelMeshGetFaces(api_nodeTags_, api_nodeTags_n, api_faceSizes_, api_faceSizes_n, api_faceTags_, api_faceTags_ + 4, api_faceOrientations_, api_faceOrientations_ + 4, ierr);
+      const api_faceTags_ = _alloc(2 * _PS, tmp);
+      const api_faceOrientations_ = _alloc(2 * _PS, tmp);
+      M._gmshModelMeshGetFaces(_P(api_nodeTags_), _S(api_nodeTags_n), _P(api_faceSizes_), _S(api_faceSizes_n), _P(api_faceTags_), _P(api_faceTags_ + _PS), _P(api_faceOrientations_), _P(api_faceOrientations_ + _PS), _P(ierr));
       _check();
       return [
         _ovector(api_faceTags_, 'size'),
@@ -3359,9 +3386,9 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_nodeTags_, api_nodeTags_n] = _ivector(nodeTags, 'size', tmp);
-      const api_faceTags_ = _alloc(8, tmp);
-      const api_faceOrientations_ = _alloc(8, tmp);
-      M._gmshModelMeshGetFacesByType(faceType, api_nodeTags_, api_nodeTags_n, api_faceTags_, api_faceTags_ + 4, api_faceOrientations_, api_faceOrientations_ + 4, ierr);
+      const api_faceTags_ = _alloc(2 * _PS, tmp);
+      const api_faceOrientations_ = _alloc(2 * _PS, tmp);
+      M._gmshModelMeshGetFacesByType(faceType, _P(api_nodeTags_), _S(api_nodeTags_n), _P(api_faceTags_), _P(api_faceTags_ + _PS), _P(api_faceOrientations_), _P(api_faceOrientations_ + _PS), _P(ierr));
       _check();
       return [
         _ovector(api_faceTags_, 'size'),
@@ -3382,7 +3409,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      M._gmshModelMeshCreateEdges(api_dimTags_, api_dimTags_n, ierr);
+      M._gmshModelMeshCreateEdges(_P(api_dimTags_), _S(api_dimTags_n), _P(ierr));
       _check();
     }
     finally {
@@ -3400,7 +3427,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      M._gmshModelMeshCreateFaces(api_dimTags_, api_dimTags_n, ierr);
+      M._gmshModelMeshCreateFaces(_P(api_dimTags_), _S(api_dimTags_n), _P(ierr));
       _check();
     }
     finally {
@@ -3420,9 +3447,9 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.getAllEdges = function() {
     const tmp = [];
     try {
-      const api_edgeTags_ = _alloc(8, tmp);
-      const api_edgeNodes_ = _alloc(8, tmp);
-      M._gmshModelMeshGetAllEdges(api_edgeTags_, api_edgeTags_ + 4, api_edgeNodes_, api_edgeNodes_ + 4, ierr);
+      const api_edgeTags_ = _alloc(2 * _PS, tmp);
+      const api_edgeNodes_ = _alloc(2 * _PS, tmp);
+      M._gmshModelMeshGetAllEdges(_P(api_edgeTags_), _P(api_edgeTags_ + _PS), _P(api_edgeNodes_), _P(api_edgeNodes_ + _PS), _P(ierr));
       _check();
       return [
         _ovector(api_edgeTags_, 'size'),
@@ -3446,10 +3473,10 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.getAllFaces = function() {
     const tmp = [];
     try {
-      const api_faceTags_ = _alloc(8, tmp);
-      const api_faceNodes_ = _alloc(8, tmp);
-      const api_faceSizes_ = _alloc(8, tmp);
-      M._gmshModelMeshGetAllFaces(api_faceTags_, api_faceTags_ + 4, api_faceNodes_, api_faceNodes_ + 4, api_faceSizes_, api_faceSizes_ + 4, ierr);
+      const api_faceTags_ = _alloc(2 * _PS, tmp);
+      const api_faceNodes_ = _alloc(2 * _PS, tmp);
+      const api_faceSizes_ = _alloc(2 * _PS, tmp);
+      M._gmshModelMeshGetAllFaces(_P(api_faceTags_), _P(api_faceTags_ + _PS), _P(api_faceNodes_), _P(api_faceNodes_ + _PS), _P(api_faceSizes_), _P(api_faceSizes_ + _PS), _P(ierr));
       _check();
       return [
         _ovector(api_faceTags_, 'size'),
@@ -3472,7 +3499,7 @@ export function wrapGmsh(Module) {
     try {
       const [api_edgeTags_, api_edgeTags_n] = _ivector(edgeTags, 'size', tmp);
       const [api_edgeNodes_, api_edgeNodes_n] = _ivector(edgeNodes, 'size', tmp);
-      M._gmshModelMeshAddEdges(api_edgeTags_, api_edgeTags_n, api_edgeNodes_, api_edgeNodes_n, ierr);
+      M._gmshModelMeshAddEdges(_P(api_edgeTags_), _S(api_edgeTags_n), _P(api_edgeNodes_), _S(api_edgeNodes_n), _P(ierr));
       _check();
     }
     finally {
@@ -3493,7 +3520,7 @@ export function wrapGmsh(Module) {
       const [api_faceTags_, api_faceTags_n] = _ivector(faceTags, 'size', tmp);
       const [api_faceNodes_, api_faceNodes_n] = _ivector(faceNodes, 'size', tmp);
       const [api_faceSizes_, api_faceSizes_n] = _ivector(faceSizes, 'int', tmp);
-      M._gmshModelMeshAddFaces(api_faceTags_, api_faceTags_n, api_faceNodes_, api_faceNodes_n, api_faceSizes_, api_faceSizes_n, ierr);
+      M._gmshModelMeshAddFaces(_P(api_faceTags_), _S(api_faceTags_n), _P(api_faceNodes_), _S(api_faceNodes_n), _P(api_faceSizes_), _S(api_faceSizes_n), _P(ierr));
       _check();
     }
     finally {
@@ -3535,10 +3562,10 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_functionSpaceType_ = _istring(functionSpaceType, tmp);
-      const api_typeKeys_ = _alloc(8, tmp);
-      const api_entityKeys_ = _alloc(8, tmp);
-      const api_coord_ = _alloc(8, tmp);
-      M._gmshModelMeshGetKeys(elementType, api_functionSpaceType_, api_typeKeys_, api_typeKeys_ + 4, api_entityKeys_, api_entityKeys_ + 4, api_coord_, api_coord_ + 4, tag, returnCoord ? 1 : 0, ierr);
+      const api_typeKeys_ = _alloc(2 * _PS, tmp);
+      const api_entityKeys_ = _alloc(2 * _PS, tmp);
+      const api_coord_ = _alloc(2 * _PS, tmp);
+      M._gmshModelMeshGetKeys(elementType, _P(api_functionSpaceType_), _P(api_typeKeys_), _P(api_typeKeys_ + _PS), _P(api_entityKeys_), _P(api_entityKeys_ + _PS), _P(api_coord_), _P(api_coord_ + _PS), tag, returnCoord ? 1 : 0, _P(ierr));
       _check();
       return [
         _ovector(api_typeKeys_, 'int'),
@@ -3561,10 +3588,10 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_functionSpaceType_ = _istring(functionSpaceType, tmp);
-      const api_typeKeys_ = _alloc(8, tmp);
-      const api_entityKeys_ = _alloc(8, tmp);
-      const api_coord_ = _alloc(8, tmp);
-      M._gmshModelMeshGetKeysForElement(elementTag, api_functionSpaceType_, api_typeKeys_, api_typeKeys_ + 4, api_entityKeys_, api_entityKeys_ + 4, api_coord_, api_coord_ + 4, returnCoord ? 1 : 0, ierr);
+      const api_typeKeys_ = _alloc(2 * _PS, tmp);
+      const api_entityKeys_ = _alloc(2 * _PS, tmp);
+      const api_coord_ = _alloc(2 * _PS, tmp);
+      M._gmshModelMeshGetKeysForElement(_S(elementTag), _P(api_functionSpaceType_), _P(api_typeKeys_), _P(api_typeKeys_ + _PS), _P(api_entityKeys_), _P(api_entityKeys_ + _PS), _P(api_coord_), _P(api_coord_ + _PS), returnCoord ? 1 : 0, _P(ierr));
       _check();
       return [
         _ovector(api_typeKeys_, 'int'),
@@ -3588,9 +3615,9 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_functionSpaceType_ = _istring(functionSpaceType, tmp);
-      const api_result_ = M._gmshModelMeshGetNumberOfKeys(elementType, api_functionSpaceType_, ierr);
+      const api_result_ = M._gmshModelMeshGetNumberOfKeys(elementType, _P(api_functionSpaceType_), _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -3616,8 +3643,8 @@ export function wrapGmsh(Module) {
       const [api_typeKeys_, api_typeKeys_n] = _ivector(typeKeys, 'int', tmp);
       const [api_entityKeys_, api_entityKeys_n] = _ivector(entityKeys, 'size', tmp);
       const api_functionSpaceType_ = _istring(functionSpaceType, tmp);
-      const api_infoKeys_ = _alloc(8, tmp);
-      M._gmshModelMeshGetKeysInformation(api_typeKeys_, api_typeKeys_n, api_entityKeys_, api_entityKeys_n, elementType, api_functionSpaceType_, api_infoKeys_, api_infoKeys_ + 4, ierr);
+      const api_infoKeys_ = _alloc(2 * _PS, tmp);
+      M._gmshModelMeshGetKeysInformation(_P(api_typeKeys_), _S(api_typeKeys_n), _P(api_entityKeys_), _S(api_entityKeys_n), elementType, _P(api_functionSpaceType_), _P(api_infoKeys_), _P(api_infoKeys_ + _PS), _P(ierr));
       _check();
       return _ovectorpair(api_infoKeys_);
     }
@@ -3643,8 +3670,8 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.getBarycenters = function(elementType, tag, fast, primary, task = 0, numTasks = 1) {
     const tmp = [];
     try {
-      const api_barycenters_ = _alloc(8, tmp);
-      M._gmshModelMeshGetBarycenters(elementType, tag, fast ? 1 : 0, primary ? 1 : 0, api_barycenters_, api_barycenters_ + 4, task, numTasks, ierr);
+      const api_barycenters_ = _alloc(2 * _PS, tmp);
+      M._gmshModelMeshGetBarycenters(elementType, tag, fast ? 1 : 0, primary ? 1 : 0, _P(api_barycenters_), _P(api_barycenters_ + _PS), _S(task), _S(numTasks), _P(ierr));
       _check();
       return _ovector(api_barycenters_, 'double');
     }
@@ -3671,8 +3698,8 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.getElementEdgeNodes = function(elementType, tag = -1, primary = false, task = 0, numTasks = 1) {
     const tmp = [];
     try {
-      const api_nodeTags_ = _alloc(8, tmp);
-      M._gmshModelMeshGetElementEdgeNodes(elementType, api_nodeTags_, api_nodeTags_ + 4, tag, primary ? 1 : 0, task, numTasks, ierr);
+      const api_nodeTags_ = _alloc(2 * _PS, tmp);
+      M._gmshModelMeshGetElementEdgeNodes(elementType, _P(api_nodeTags_), _P(api_nodeTags_ + _PS), tag, primary ? 1 : 0, _S(task), _S(numTasks), _P(ierr));
       _check();
       return _ovector(api_nodeTags_, 'size');
     }
@@ -3706,9 +3733,9 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.getElementFaceNodes = function(elementType, tag = -1, primary = false, task = 0, numTasks = 1) {
     const tmp = [];
     try {
-      const api_nodeTags_ = _alloc(8, tmp);
-      const api_faceSizes_ = _alloc(8, tmp);
-      M._gmshModelMeshGetElementFaceNodes(elementType, api_nodeTags_, api_nodeTags_ + 4, api_faceSizes_, api_faceSizes_ + 4, tag, primary ? 1 : 0, task, numTasks, ierr);
+      const api_nodeTags_ = _alloc(2 * _PS, tmp);
+      const api_faceSizes_ = _alloc(2 * _PS, tmp);
+      M._gmshModelMeshGetElementFaceNodes(elementType, _P(api_nodeTags_), _P(api_nodeTags_ + _PS), _P(api_faceSizes_), _P(api_faceSizes_ + _PS), tag, primary ? 1 : 0, _S(task), _S(numTasks), _P(ierr));
       _check();
       return [
         _ovector(api_nodeTags_, 'size'),
@@ -3739,8 +3766,8 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.getElementFaceNodesByType = function(elementType, faceType, tag = -1, primary = false, task = 0, numTasks = 1) {
     const tmp = [];
     try {
-      const api_nodeTags_ = _alloc(8, tmp);
-      M._gmshModelMeshGetElementFaceNodesByType(elementType, faceType, api_nodeTags_, api_nodeTags_ + 4, tag, primary ? 1 : 0, task, numTasks, ierr);
+      const api_nodeTags_ = _alloc(2 * _PS, tmp);
+      M._gmshModelMeshGetElementFaceNodesByType(elementType, faceType, _P(api_nodeTags_), _P(api_nodeTags_ + _PS), tag, primary ? 1 : 0, _S(task), _S(numTasks), _P(ierr));
       _check();
       return _ovector(api_nodeTags_, 'size');
     }
@@ -3760,9 +3787,9 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.getGhostElements = function(dim, tag) {
     const tmp = [];
     try {
-      const api_elementTags_ = _alloc(8, tmp);
-      const api_partitions_ = _alloc(8, tmp);
-      M._gmshModelMeshGetGhostElements(dim, tag, api_elementTags_, api_elementTags_ + 4, api_partitions_, api_partitions_ + 4, ierr);
+      const api_elementTags_ = _alloc(2 * _PS, tmp);
+      const api_partitions_ = _alloc(2 * _PS, tmp);
+      M._gmshModelMeshGetGhostElements(dim, tag, _P(api_elementTags_), _P(api_elementTags_ + _PS), _P(api_partitions_), _P(api_partitions_ + _PS), _P(ierr));
       _check();
       return [
         _ovector(api_elementTags_, 'size'),
@@ -3784,7 +3811,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      M._gmshModelMeshSetSize(api_dimTags_, api_dimTags_n, size, ierr);
+      M._gmshModelMeshSetSize(_P(api_dimTags_), _S(api_dimTags_n), size, _P(ierr));
       _check();
     }
     finally {
@@ -3806,8 +3833,8 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      const api_sizes_ = _alloc(8, tmp);
-      M._gmshModelMeshGetSizes(api_dimTags_, api_dimTags_n, api_sizes_, api_sizes_ + 4, ierr);
+      const api_sizes_ = _alloc(2 * _PS, tmp);
+      M._gmshModelMeshGetSizes(_P(api_dimTags_), _S(api_dimTags_n), _P(api_sizes_), _P(api_sizes_ + _PS), _P(ierr));
       _check();
       return _ovector(api_sizes_, 'double');
     }
@@ -3828,7 +3855,7 @@ export function wrapGmsh(Module) {
     try {
       const [api_parametricCoord_, api_parametricCoord_n] = _ivector(parametricCoord, 'double', tmp);
       const [api_sizes_, api_sizes_n] = _ivector(sizes, 'double', tmp);
-      M._gmshModelMeshSetSizeAtParametricPoints(dim, tag, api_parametricCoord_, api_parametricCoord_n, api_sizes_, api_sizes_n, ierr);
+      M._gmshModelMeshSetSizeAtParametricPoints(dim, tag, _P(api_parametricCoord_), _S(api_parametricCoord_n), _P(api_sizes_), _S(api_sizes_n), _P(ierr));
       _check();
     }
     finally {
@@ -3853,7 +3880,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_callback_ = _ifun(callback);
-      M._gmshModelMeshSetSizeCallback(api_callback_, 0, ierr);
+      M._gmshModelMeshSetSizeCallback(_P(api_callback_), _P(0), _P(ierr));
       _check();
     }
     finally {
@@ -3869,7 +3896,7 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.removeSizeCallback = function() {
     const tmp = [];
     try {
-      M._gmshModelMeshRemoveSizeCallback(ierr);
+      M._gmshModelMeshRemoveSizeCallback(_P(ierr));
       _check();
     }
     finally {
@@ -3890,7 +3917,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_meshType_ = _istring(meshType, tmp);
-      M._gmshModelMeshSetTransfiniteCurve(tag, numNodes, api_meshType_, coef, ierr);
+      M._gmshModelMeshSetTransfiniteCurve(tag, numNodes, _P(api_meshType_), coef, _P(ierr));
       _check();
     }
     finally {
@@ -3914,7 +3941,7 @@ export function wrapGmsh(Module) {
     try {
       const api_arrangement_ = _istring(arrangement, tmp);
       const [api_cornerTags_, api_cornerTags_n] = _ivector(cornerTags, 'int', tmp);
-      M._gmshModelMeshSetTransfiniteSurface(tag, api_arrangement_, api_cornerTags_, api_cornerTags_n, ierr);
+      M._gmshModelMeshSetTransfiniteSurface(tag, _P(api_arrangement_), _P(api_cornerTags_), _S(api_cornerTags_n), _P(ierr));
       _check();
     }
     finally {
@@ -3933,7 +3960,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_cornerTags_, api_cornerTags_n] = _ivector(cornerTags, 'int', tmp);
-      M._gmshModelMeshSetTransfiniteVolume(tag, api_cornerTags_, api_cornerTags_n, ierr);
+      M._gmshModelMeshSetTransfiniteVolume(tag, _P(api_cornerTags_), _S(api_cornerTags_n), _P(ierr));
       _check();
     }
     finally {
@@ -3958,7 +3985,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      M._gmshModelMeshSetTransfiniteAutomatic(api_dimTags_, api_dimTags_n, cornerAngle, recombine ? 1 : 0, ierr);
+      M._gmshModelMeshSetTransfiniteAutomatic(_P(api_dimTags_), _S(api_dimTags_n), cornerAngle, recombine ? 1 : 0, _P(ierr));
       _check();
     }
     finally {
@@ -3977,7 +4004,7 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.setRecombine = function(dim, tag, angle = 45.) {
     const tmp = [];
     try {
-      M._gmshModelMeshSetRecombine(dim, tag, angle, ierr);
+      M._gmshModelMeshSetRecombine(dim, tag, angle, _P(ierr));
       _check();
     }
     finally {
@@ -3994,7 +4021,7 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.setSmoothing = function(dim, tag, val) {
     const tmp = [];
     try {
-      M._gmshModelMeshSetSmoothing(dim, tag, val, ierr);
+      M._gmshModelMeshSetSmoothing(dim, tag, val, _P(ierr));
       _check();
     }
     finally {
@@ -4014,7 +4041,7 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.setReverse = function(dim, tag, val = true) {
     const tmp = [];
     try {
-      M._gmshModelMeshSetReverse(dim, tag, val ? 1 : 0, ierr);
+      M._gmshModelMeshSetReverse(dim, tag, val ? 1 : 0, _P(ierr));
       _check();
     }
     finally {
@@ -4033,7 +4060,7 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.setAlgorithm = function(dim, tag, val) {
     const tmp = [];
     try {
-      M._gmshModelMeshSetAlgorithm(dim, tag, val, ierr);
+      M._gmshModelMeshSetAlgorithm(dim, tag, val, _P(ierr));
       _check();
     }
     finally {
@@ -4051,7 +4078,7 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.setSizeFromBoundary = function(dim, tag, val) {
     const tmp = [];
     try {
-      M._gmshModelMeshSetSizeFromBoundary(dim, tag, val, ierr);
+      M._gmshModelMeshSetSizeFromBoundary(dim, tag, val, _P(ierr));
       _check();
     }
     finally {
@@ -4070,7 +4097,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_tags_, api_tags_n] = _ivector(tags, 'int', tmp);
-      M._gmshModelMeshSetCompound(dim, api_tags_, api_tags_n, ierr);
+      M._gmshModelMeshSetCompound(dim, _P(api_tags_), _S(api_tags_n), _P(ierr));
       _check();
     }
     finally {
@@ -4089,7 +4116,7 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.setOutwardOrientation = function(tag) {
     const tmp = [];
     try {
-      M._gmshModelMeshSetOutwardOrientation(tag, ierr);
+      M._gmshModelMeshSetOutwardOrientation(tag, _P(ierr));
       _check();
     }
     finally {
@@ -4108,7 +4135,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      M._gmshModelMeshRemoveConstraints(api_dimTags_, api_dimTags_n, ierr);
+      M._gmshModelMeshRemoveConstraints(_P(api_dimTags_), _S(api_dimTags_n), _P(ierr));
       _check();
     }
     finally {
@@ -4133,7 +4160,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_tags_, api_tags_n] = _ivector(tags, 'int', tmp);
-      M._gmshModelMeshEmbed(dim, api_tags_, api_tags_n, inDim, inTag, ierr);
+      M._gmshModelMeshEmbed(dim, _P(api_tags_), _S(api_tags_n), inDim, inTag, _P(ierr));
       _check();
     }
     finally {
@@ -4152,7 +4179,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      M._gmshModelMeshRemoveEmbedded(api_dimTags_, api_dimTags_n, dim, ierr);
+      M._gmshModelMeshRemoveEmbedded(_P(api_dimTags_), _S(api_dimTags_n), dim, _P(ierr));
       _check();
     }
     finally {
@@ -4171,8 +4198,8 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.getEmbedded = function(dim, tag) {
     const tmp = [];
     try {
-      const api_dimTags_ = _alloc(8, tmp);
-      M._gmshModelMeshGetEmbedded(dim, tag, api_dimTags_, api_dimTags_ + 4, ierr);
+      const api_dimTags_ = _alloc(2 * _PS, tmp);
+      M._gmshModelMeshGetEmbedded(dim, tag, _P(api_dimTags_), _P(api_dimTags_ + _PS), _P(ierr));
       _check();
       return _ovectorpair(api_dimTags_);
     }
@@ -4191,7 +4218,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_ordering_, api_ordering_n] = _ivector(ordering, 'size', tmp);
-      M._gmshModelMeshReorderElements(elementType, tag, api_ordering_, api_ordering_n, ierr);
+      M._gmshModelMeshReorderElements(elementType, tag, _P(api_ordering_), _S(api_ordering_n), _P(ierr));
       _check();
     }
     finally {
@@ -4216,11 +4243,11 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.computeRenumbering = function(method = "RCMK", elementTags = []) {
     const tmp = [];
     try {
-      const api_oldTags_ = _alloc(8, tmp);
-      const api_newTags_ = _alloc(8, tmp);
+      const api_oldTags_ = _alloc(2 * _PS, tmp);
+      const api_newTags_ = _alloc(2 * _PS, tmp);
       const api_method_ = _istring(method, tmp);
       const [api_elementTags_, api_elementTags_n] = _ivector(elementTags, 'size', tmp);
-      M._gmshModelMeshComputeRenumbering(api_oldTags_, api_oldTags_ + 4, api_newTags_, api_newTags_ + 4, api_method_, api_elementTags_, api_elementTags_n, ierr);
+      M._gmshModelMeshComputeRenumbering(_P(api_oldTags_), _P(api_oldTags_ + _PS), _P(api_newTags_), _P(api_newTags_ + _PS), _P(api_method_), _P(api_elementTags_), _S(api_elementTags_n), _P(ierr));
       _check();
       return [
         _ovector(api_oldTags_, 'size'),
@@ -4244,7 +4271,7 @@ export function wrapGmsh(Module) {
     try {
       const [api_oldTags_, api_oldTags_n] = _ivector(oldTags, 'size', tmp);
       const [api_newTags_, api_newTags_n] = _ivector(newTags, 'size', tmp);
-      M._gmshModelMeshRenumberNodes(api_oldTags_, api_oldTags_n, api_newTags_, api_newTags_n, ierr);
+      M._gmshModelMeshRenumberNodes(_P(api_oldTags_), _S(api_oldTags_n), _P(api_newTags_), _S(api_newTags_n), _P(ierr));
       _check();
     }
     finally {
@@ -4266,7 +4293,7 @@ export function wrapGmsh(Module) {
     try {
       const [api_oldTags_, api_oldTags_n] = _ivector(oldTags, 'size', tmp);
       const [api_newTags_, api_newTags_n] = _ivector(newTags, 'size', tmp);
-      M._gmshModelMeshRenumberElements(api_oldTags_, api_oldTags_n, api_newTags_, api_newTags_n, ierr);
+      M._gmshModelMeshRenumberElements(_P(api_oldTags_), _S(api_oldTags_n), _P(api_newTags_), _S(api_newTags_n), _P(ierr));
       _check();
     }
     finally {
@@ -4292,7 +4319,7 @@ export function wrapGmsh(Module) {
       const [api_tags_, api_tags_n] = _ivector(tags, 'int', tmp);
       const [api_tagsMaster_, api_tagsMaster_n] = _ivector(tagsMaster, 'int', tmp);
       const [api_affineTransform_, api_affineTransform_n] = _ivector(affineTransform, 'double', tmp);
-      M._gmshModelMeshSetPeriodic(dim, api_tags_, api_tags_n, api_tagsMaster_, api_tagsMaster_n, api_affineTransform_, api_affineTransform_n, ierr);
+      M._gmshModelMeshSetPeriodic(dim, _P(api_tags_), _S(api_tags_n), _P(api_tagsMaster_), _S(api_tagsMaster_n), _P(api_affineTransform_), _S(api_affineTransform_n), _P(ierr));
       _check();
     }
     finally {
@@ -4312,8 +4339,8 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_tags_, api_tags_n] = _ivector(tags, 'int', tmp);
-      const api_tagMaster_ = _alloc(8, tmp);
-      M._gmshModelMeshGetPeriodic(dim, api_tags_, api_tags_n, api_tagMaster_, api_tagMaster_ + 4, ierr);
+      const api_tagMaster_ = _alloc(2 * _PS, tmp);
+      M._gmshModelMeshGetPeriodic(dim, _P(api_tags_), _S(api_tags_n), _P(api_tagMaster_), _P(api_tagMaster_ + _PS), _P(ierr));
       _check();
       return _ovector(api_tagMaster_, 'int');
     }
@@ -4337,10 +4364,10 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_tagMaster_ = _alloc(8, tmp);
-      const api_nodeTags_ = _alloc(8, tmp);
-      const api_nodeTagsMaster_ = _alloc(8, tmp);
-      const api_affineTransform_ = _alloc(8, tmp);
-      M._gmshModelMeshGetPeriodicNodes(dim, tag, api_tagMaster_, api_nodeTags_, api_nodeTags_ + 4, api_nodeTagsMaster_, api_nodeTagsMaster_ + 4, api_affineTransform_, api_affineTransform_ + 4, includeHighOrderNodes ? 1 : 0, ierr);
+      const api_nodeTags_ = _alloc(2 * _PS, tmp);
+      const api_nodeTagsMaster_ = _alloc(2 * _PS, tmp);
+      const api_affineTransform_ = _alloc(2 * _PS, tmp);
+      M._gmshModelMeshGetPeriodicNodes(dim, tag, _P(api_tagMaster_), _P(api_nodeTags_), _P(api_nodeTags_ + _PS), _P(api_nodeTagsMaster_), _P(api_nodeTagsMaster_ + _PS), _P(api_affineTransform_), _P(api_affineTransform_ + _PS), includeHighOrderNodes ? 1 : 0, _P(ierr));
       _check();
       return [
         M.HEAP32[api_tagMaster_ >> 2],
@@ -4375,13 +4402,13 @@ export function wrapGmsh(Module) {
     try {
       const api_functionSpaceType_ = _istring(functionSpaceType, tmp);
       const api_tagMaster_ = _alloc(8, tmp);
-      const api_typeKeys_ = _alloc(8, tmp);
-      const api_typeKeysMaster_ = _alloc(8, tmp);
-      const api_entityKeys_ = _alloc(8, tmp);
-      const api_entityKeysMaster_ = _alloc(8, tmp);
-      const api_coord_ = _alloc(8, tmp);
-      const api_coordMaster_ = _alloc(8, tmp);
-      M._gmshModelMeshGetPeriodicKeys(elementType, api_functionSpaceType_, tag, api_tagMaster_, api_typeKeys_, api_typeKeys_ + 4, api_typeKeysMaster_, api_typeKeysMaster_ + 4, api_entityKeys_, api_entityKeys_ + 4, api_entityKeysMaster_, api_entityKeysMaster_ + 4, api_coord_, api_coord_ + 4, api_coordMaster_, api_coordMaster_ + 4, returnCoord ? 1 : 0, ierr);
+      const api_typeKeys_ = _alloc(2 * _PS, tmp);
+      const api_typeKeysMaster_ = _alloc(2 * _PS, tmp);
+      const api_entityKeys_ = _alloc(2 * _PS, tmp);
+      const api_entityKeysMaster_ = _alloc(2 * _PS, tmp);
+      const api_coord_ = _alloc(2 * _PS, tmp);
+      const api_coordMaster_ = _alloc(2 * _PS, tmp);
+      M._gmshModelMeshGetPeriodicKeys(elementType, _P(api_functionSpaceType_), tag, _P(api_tagMaster_), _P(api_typeKeys_), _P(api_typeKeys_ + _PS), _P(api_typeKeysMaster_), _P(api_typeKeysMaster_ + _PS), _P(api_entityKeys_), _P(api_entityKeys_ + _PS), _P(api_entityKeysMaster_), _P(api_entityKeysMaster_ + _PS), _P(api_coord_), _P(api_coord_ + _PS), _P(api_coordMaster_), _P(api_coordMaster_ + _PS), returnCoord ? 1 : 0, _P(ierr));
       _check();
       return [
         M.HEAP32[api_tagMaster_ >> 2],
@@ -4405,7 +4432,7 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.importStl = function() {
     const tmp = [];
     try {
-      M._gmshModelMeshImportStl(ierr);
+      M._gmshModelMeshImportStl(_P(ierr));
       _check();
     }
     finally {
@@ -4425,9 +4452,9 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.getDuplicateNodes = function(dimTags = []) {
     const tmp = [];
     try {
-      const api_tags_ = _alloc(8, tmp);
+      const api_tags_ = _alloc(2 * _PS, tmp);
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      M._gmshModelMeshGetDuplicateNodes(api_tags_, api_tags_ + 4, api_dimTags_, api_dimTags_n, ierr);
+      M._gmshModelMeshGetDuplicateNodes(_P(api_tags_), _P(api_tags_ + _PS), _P(api_dimTags_), _S(api_dimTags_n), _P(ierr));
       _check();
       return _ovector(api_tags_, 'size');
     }
@@ -4447,7 +4474,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      M._gmshModelMeshRemoveDuplicateNodes(api_dimTags_, api_dimTags_n, ierr);
+      M._gmshModelMeshRemoveDuplicateNodes(_P(api_dimTags_), _S(api_dimTags_n), _P(ierr));
       _check();
     }
     finally {
@@ -4466,7 +4493,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      M._gmshModelMeshRemoveDuplicateElements(api_dimTags_, api_dimTags_n, ierr);
+      M._gmshModelMeshRemoveDuplicateElements(_P(api_dimTags_), _S(api_dimTags_n), _P(ierr));
       _check();
     }
     finally {
@@ -4483,7 +4510,7 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.splitQuadrangles = function(quality = 1., tag = -1) {
     const tmp = [];
     try {
-      M._gmshModelMeshSplitQuadrangles(quality, tag, ierr);
+      M._gmshModelMeshSplitQuadrangles(quality, tag, _P(ierr));
       _check();
     }
     finally {
@@ -4500,7 +4527,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_elementTags_, api_elementTags_n] = _ivector(elementTags, 'size', tmp);
-      M._gmshModelMeshSetVisibility(api_elementTags_, api_elementTags_n, value, ierr);
+      M._gmshModelMeshSetVisibility(_P(api_elementTags_), _S(api_elementTags_n), value, _P(ierr));
       _check();
     }
     finally {
@@ -4519,8 +4546,8 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_elementTags_, api_elementTags_n] = _ivector(elementTags, 'size', tmp);
-      const api_values_ = _alloc(8, tmp);
-      M._gmshModelMeshGetVisibility(api_elementTags_, api_elementTags_n, api_values_, api_values_ + 4, ierr);
+      const api_values_ = _alloc(2 * _PS, tmp);
+      M._gmshModelMeshGetVisibility(_P(api_elementTags_), _S(api_elementTags_n), _P(api_values_), _P(api_values_ + _PS), _P(ierr));
       _check();
       return _ovector(api_values_, 'int');
     }
@@ -4550,9 +4577,9 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.classifySurfaces = function(angle, boundary = true, forReparametrization = false, curveAngle = Math.PI, exportDiscrete = true) {
     const tmp = [];
     try {
-      const api_oldSurfaceTags_ = _alloc(8, tmp);
-      const api_newSurfaceTags_ = _alloc(8, tmp);
-      M._gmshModelMeshClassifySurfaces(angle, api_oldSurfaceTags_, api_oldSurfaceTags_ + 4, api_newSurfaceTags_, api_newSurfaceTags_ + 4, boundary ? 1 : 0, forReparametrization ? 1 : 0, curveAngle, exportDiscrete ? 1 : 0, ierr);
+      const api_oldSurfaceTags_ = _alloc(2 * _PS, tmp);
+      const api_newSurfaceTags_ = _alloc(2 * _PS, tmp);
+      M._gmshModelMeshClassifySurfaces(angle, _P(api_oldSurfaceTags_), _P(api_oldSurfaceTags_ + _PS), _P(api_newSurfaceTags_), _P(api_newSurfaceTags_ + _PS), boundary ? 1 : 0, forReparametrization ? 1 : 0, curveAngle, exportDiscrete ? 1 : 0, _P(ierr));
       _check();
       return [
         _ovector(api_oldSurfaceTags_, 'int'),
@@ -4576,7 +4603,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      M._gmshModelMeshCreateGeometry(api_dimTags_, api_dimTags_n, ierr);
+      M._gmshModelMeshCreateGeometry(_P(api_dimTags_), _S(api_dimTags_n), _P(ierr));
       _check();
     }
     finally {
@@ -4597,7 +4624,7 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.createTopology = function(makeSimplyConnected = true, exportDiscrete = true) {
     const tmp = [];
     try {
-      M._gmshModelMeshCreateTopology(makeSimplyConnected ? 1 : 0, exportDiscrete ? 1 : 0, ierr);
+      M._gmshModelMeshCreateTopology(makeSimplyConnected ? 1 : 0, exportDiscrete ? 1 : 0, _P(ierr));
       _check();
     }
     finally {
@@ -4627,7 +4654,7 @@ export function wrapGmsh(Module) {
       const [api_domainTags_, api_domainTags_n] = _ivector(domainTags, 'int', tmp);
       const [api_subdomainTags_, api_subdomainTags_n] = _ivector(subdomainTags, 'int', tmp);
       const [api_dims_, api_dims_n] = _ivector(dims, 'int', tmp);
-      M._gmshModelMeshAddHomologyRequest(api_type_, api_domainTags_, api_domainTags_n, api_subdomainTags_, api_subdomainTags_n, api_dims_, api_dims_n, ierr);
+      M._gmshModelMeshAddHomologyRequest(_P(api_type_), _P(api_domainTags_), _S(api_domainTags_n), _P(api_subdomainTags_), _S(api_subdomainTags_n), _P(api_dims_), _S(api_dims_n), _P(ierr));
       _check();
     }
     finally {
@@ -4643,7 +4670,7 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.clearHomologyRequests = function() {
     const tmp = [];
     try {
-      M._gmshModelMeshClearHomologyRequests(ierr);
+      M._gmshModelMeshClearHomologyRequests(_P(ierr));
       _check();
     }
     finally {
@@ -4663,8 +4690,8 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.computeHomology = function() {
     const tmp = [];
     try {
-      const api_dimTags_ = _alloc(8, tmp);
-      M._gmshModelMeshComputeHomology(api_dimTags_, api_dimTags_ + 4, ierr);
+      const api_dimTags_ = _alloc(2 * _PS, tmp);
+      M._gmshModelMeshComputeHomology(_P(api_dimTags_), _P(api_dimTags_ + _PS), _P(ierr));
       _check();
       return _ovectorpair(api_dimTags_);
     }
@@ -4685,8 +4712,8 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.computeCrossField = function() {
     const tmp = [];
     try {
-      const api_viewTags_ = _alloc(8, tmp);
-      M._gmshModelMeshComputeCrossField(api_viewTags_, api_viewTags_ + 4, ierr);
+      const api_viewTags_ = _alloc(2 * _PS, tmp);
+      M._gmshModelMeshComputeCrossField(_P(api_viewTags_), _P(api_viewTags_ + _PS), _P(ierr));
       _check();
       return _ovector(api_viewTags_, 'int');
     }
@@ -4713,9 +4740,9 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_fieldType_ = _istring(fieldType, tmp);
-      const api_result_ = M._gmshModelMeshFieldAdd(api_fieldType_, tag, ierr);
+      const api_result_ = M._gmshModelMeshFieldAdd(_P(api_fieldType_), tag, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -4730,7 +4757,7 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.field.remove = function(tag) {
     const tmp = [];
     try {
-      M._gmshModelMeshFieldRemove(tag, ierr);
+      M._gmshModelMeshFieldRemove(tag, _P(ierr));
       _check();
     }
     finally {
@@ -4748,8 +4775,8 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.field.list = function() {
     const tmp = [];
     try {
-      const api_tags_ = _alloc(8, tmp);
-      M._gmshModelMeshFieldList(api_tags_, api_tags_ + 4, ierr);
+      const api_tags_ = _alloc(2 * _PS, tmp);
+      M._gmshModelMeshFieldList(_P(api_tags_), _P(api_tags_ + _PS), _P(ierr));
       _check();
       return _ovector(api_tags_, 'int');
     }
@@ -4769,7 +4796,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_fileType_ = _alloc(8, tmp);
-      M._gmshModelMeshFieldGetType(tag, api_fileType_, ierr);
+      M._gmshModelMeshFieldGetType(tag, _P(api_fileType_), _P(ierr));
       _check();
       return _ostring(api_fileType_);
     }
@@ -4787,7 +4814,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_option_ = _istring(option, tmp);
-      M._gmshModelMeshFieldSetNumber(tag, api_option_, value, ierr);
+      M._gmshModelMeshFieldSetNumber(tag, _P(api_option_), value, _P(ierr));
       _check();
     }
     finally {
@@ -4807,7 +4834,7 @@ export function wrapGmsh(Module) {
     try {
       const api_option_ = _istring(option, tmp);
       const api_value_ = _alloc(8, tmp);
-      M._gmshModelMeshFieldGetNumber(tag, api_option_, api_value_, ierr);
+      M._gmshModelMeshFieldGetNumber(tag, _P(api_option_), _P(api_value_), _P(ierr));
       _check();
       return M.HEAPF64[api_value_ >> 3];
     }
@@ -4826,7 +4853,7 @@ export function wrapGmsh(Module) {
     try {
       const api_option_ = _istring(option, tmp);
       const api_value_ = _istring(value, tmp);
-      M._gmshModelMeshFieldSetString(tag, api_option_, api_value_, ierr);
+      M._gmshModelMeshFieldSetString(tag, _P(api_option_), _P(api_value_), _P(ierr));
       _check();
     }
     finally {
@@ -4846,7 +4873,7 @@ export function wrapGmsh(Module) {
     try {
       const api_option_ = _istring(option, tmp);
       const api_value_ = _alloc(8, tmp);
-      M._gmshModelMeshFieldGetString(tag, api_option_, api_value_, ierr);
+      M._gmshModelMeshFieldGetString(tag, _P(api_option_), _P(api_value_), _P(ierr));
       _check();
       return _ostring(api_value_);
     }
@@ -4865,7 +4892,7 @@ export function wrapGmsh(Module) {
     try {
       const api_option_ = _istring(option, tmp);
       const [api_values_, api_values_n] = _ivector(values, 'double', tmp);
-      M._gmshModelMeshFieldSetNumbers(tag, api_option_, api_values_, api_values_n, ierr);
+      M._gmshModelMeshFieldSetNumbers(tag, _P(api_option_), _P(api_values_), _S(api_values_n), _P(ierr));
       _check();
     }
     finally {
@@ -4884,8 +4911,8 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_option_ = _istring(option, tmp);
-      const api_values_ = _alloc(8, tmp);
-      M._gmshModelMeshFieldGetNumbers(tag, api_option_, api_values_, api_values_ + 4, ierr);
+      const api_values_ = _alloc(2 * _PS, tmp);
+      M._gmshModelMeshFieldGetNumbers(tag, _P(api_option_), _P(api_values_), _P(api_values_ + _PS), _P(ierr));
       _check();
       return _ovector(api_values_, 'double');
     }
@@ -4902,7 +4929,7 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.field.setAsBackgroundMesh = function(tag) {
     const tmp = [];
     try {
-      M._gmshModelMeshFieldSetAsBackgroundMesh(tag, ierr);
+      M._gmshModelMeshFieldSetAsBackgroundMesh(tag, _P(ierr));
       _check();
     }
     finally {
@@ -4918,7 +4945,7 @@ export function wrapGmsh(Module) {
   gmsh.model.mesh.field.setAsBoundaryLayer = function(tag) {
     const tmp = [];
     try {
-      M._gmshModelMeshFieldSetAsBoundaryLayer(tag, ierr);
+      M._gmshModelMeshFieldSetAsBoundaryLayer(tag, _P(ierr));
       _check();
     }
     finally {
@@ -4945,9 +4972,9 @@ export function wrapGmsh(Module) {
   gmsh.model.geo.addPoint = function(x, y, z, meshSize = 0., tag = -1) {
     const tmp = [];
     try {
-      const api_result_ = M._gmshModelGeoAddPoint(x, y, z, meshSize, tag, ierr);
+      const api_result_ = M._gmshModelGeoAddPoint(x, y, z, meshSize, tag, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -4967,9 +4994,9 @@ export function wrapGmsh(Module) {
   gmsh.model.geo.addLine = function(startTag, endTag, tag = -1) {
     const tmp = [];
     try {
-      const api_result_ = M._gmshModelGeoAddLine(startTag, endTag, tag, ierr);
+      const api_result_ = M._gmshModelGeoAddLine(startTag, endTag, tag, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -4991,9 +5018,9 @@ export function wrapGmsh(Module) {
   gmsh.model.geo.addCircleArc = function(startTag, centerTag, endTag, tag = -1, nx = 0., ny = 0., nz = 0.) {
     const tmp = [];
     try {
-      const api_result_ = M._gmshModelGeoAddCircleArc(startTag, centerTag, endTag, tag, nx, ny, nz, ierr);
+      const api_result_ = M._gmshModelGeoAddCircleArc(startTag, centerTag, endTag, tag, nx, ny, nz, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -5015,9 +5042,9 @@ export function wrapGmsh(Module) {
   gmsh.model.geo.addEllipseArc = function(startTag, centerTag, majorTag, endTag, tag = -1, nx = 0., ny = 0., nz = 0.) {
     const tmp = [];
     try {
-      const api_result_ = M._gmshModelGeoAddEllipseArc(startTag, centerTag, majorTag, endTag, tag, nx, ny, nz, ierr);
+      const api_result_ = M._gmshModelGeoAddEllipseArc(startTag, centerTag, majorTag, endTag, tag, nx, ny, nz, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -5039,9 +5066,9 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_pointTags_, api_pointTags_n] = _ivector(pointTags, 'int', tmp);
-      const api_result_ = M._gmshModelGeoAddSpline(api_pointTags_, api_pointTags_n, tag, ierr);
+      const api_result_ = M._gmshModelGeoAddSpline(_P(api_pointTags_), _S(api_pointTags_n), tag, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -5063,9 +5090,9 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_pointTags_, api_pointTags_n] = _ivector(pointTags, 'int', tmp);
-      const api_result_ = M._gmshModelGeoAddBSpline(api_pointTags_, api_pointTags_n, tag, ierr);
+      const api_result_ = M._gmshModelGeoAddBSpline(_P(api_pointTags_), _S(api_pointTags_n), tag, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -5085,9 +5112,9 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_pointTags_, api_pointTags_n] = _ivector(pointTags, 'int', tmp);
-      const api_result_ = M._gmshModelGeoAddBezier(api_pointTags_, api_pointTags_n, tag, ierr);
+      const api_result_ = M._gmshModelGeoAddBezier(_P(api_pointTags_), _S(api_pointTags_n), tag, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -5109,9 +5136,9 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_pointTags_, api_pointTags_n] = _ivector(pointTags, 'int', tmp);
-      const api_result_ = M._gmshModelGeoAddPolyline(api_pointTags_, api_pointTags_n, tag, ierr);
+      const api_result_ = M._gmshModelGeoAddPolyline(_P(api_pointTags_), _S(api_pointTags_n), tag, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -5133,9 +5160,9 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_curveTags_, api_curveTags_n] = _ivector(curveTags, 'int', tmp);
-      const api_result_ = M._gmshModelGeoAddCompoundSpline(api_curveTags_, api_curveTags_n, numIntervals, tag, ierr);
+      const api_result_ = M._gmshModelGeoAddCompoundSpline(_P(api_curveTags_), _S(api_curveTags_n), numIntervals, tag, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -5157,9 +5184,9 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_curveTags_, api_curveTags_n] = _ivector(curveTags, 'int', tmp);
-      const api_result_ = M._gmshModelGeoAddCompoundBSpline(api_curveTags_, api_curveTags_n, numIntervals, tag, ierr);
+      const api_result_ = M._gmshModelGeoAddCompoundBSpline(_P(api_curveTags_), _S(api_curveTags_n), numIntervals, tag, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -5183,9 +5210,9 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_curveTags_, api_curveTags_n] = _ivector(curveTags, 'int', tmp);
-      const api_result_ = M._gmshModelGeoAddCurveLoop(api_curveTags_, api_curveTags_n, tag, reorient ? 1 : 0, ierr);
+      const api_result_ = M._gmshModelGeoAddCurveLoop(_P(api_curveTags_), _S(api_curveTags_n), tag, reorient ? 1 : 0, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -5204,8 +5231,8 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_curveTags_, api_curveTags_n] = _ivector(curveTags, 'int', tmp);
-      const api_tags_ = _alloc(8, tmp);
-      M._gmshModelGeoAddCurveLoops(api_curveTags_, api_curveTags_n, api_tags_, api_tags_ + 4, ierr);
+      const api_tags_ = _alloc(2 * _PS, tmp);
+      M._gmshModelGeoAddCurveLoops(_P(api_curveTags_), _S(api_curveTags_n), _P(api_tags_), _P(api_tags_ + _PS), _P(ierr));
       _check();
       return _ovector(api_tags_, 'int');
     }
@@ -5229,9 +5256,9 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_wireTags_, api_wireTags_n] = _ivector(wireTags, 'int', tmp);
-      const api_result_ = M._gmshModelGeoAddPlaneSurface(api_wireTags_, api_wireTags_n, tag, ierr);
+      const api_result_ = M._gmshModelGeoAddPlaneSurface(_P(api_wireTags_), _S(api_wireTags_n), tag, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -5253,9 +5280,9 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_wireTags_, api_wireTags_n] = _ivector(wireTags, 'int', tmp);
-      const api_result_ = M._gmshModelGeoAddSurfaceFilling(api_wireTags_, api_wireTags_n, tag, sphereCenterTag, ierr);
+      const api_result_ = M._gmshModelGeoAddSurfaceFilling(_P(api_wireTags_), _S(api_wireTags_n), tag, sphereCenterTag, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -5276,9 +5303,9 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_surfaceTags_, api_surfaceTags_n] = _ivector(surfaceTags, 'int', tmp);
-      const api_result_ = M._gmshModelGeoAddSurfaceLoop(api_surfaceTags_, api_surfaceTags_n, tag, ierr);
+      const api_result_ = M._gmshModelGeoAddSurfaceLoop(_P(api_surfaceTags_), _S(api_surfaceTags_n), tag, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -5300,9 +5327,9 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_shellTags_, api_shellTags_n] = _ivector(shellTags, 'int', tmp);
-      const api_result_ = M._gmshModelGeoAddVolume(api_shellTags_, api_shellTags_n, tag, ierr);
+      const api_result_ = M._gmshModelGeoAddVolume(_P(api_shellTags_), _S(api_shellTags_n), tag, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -5329,9 +5356,9 @@ export function wrapGmsh(Module) {
       const api_geometry_ = _istring(geometry, tmp);
       const [api_numbers_, api_numbers_n] = _ivector(numbers, 'double', tmp);
       const [api_strings_, api_strings_n] = _ivectorstring(strings, tmp);
-      const api_result_ = M._gmshModelGeoAddGeometry(api_geometry_, api_numbers_, api_numbers_n, api_strings_, api_strings_n, tag, ierr);
+      const api_result_ = M._gmshModelGeoAddGeometry(_P(api_geometry_), _P(api_numbers_), _S(api_numbers_n), _P(api_strings_), _S(api_strings_n), tag, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -5352,9 +5379,9 @@ export function wrapGmsh(Module) {
   gmsh.model.geo.addPointOnGeometry = function(geometryTag, x, y, z = 0., meshSize = 0., tag = -1) {
     const tmp = [];
     try {
-      const api_result_ = M._gmshModelGeoAddPointOnGeometry(geometryTag, x, y, z, meshSize, tag, ierr);
+      const api_result_ = M._gmshModelGeoAddPointOnGeometry(geometryTag, x, y, z, meshSize, tag, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -5378,10 +5405,10 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      const api_outDimTags_ = _alloc(8, tmp);
+      const api_outDimTags_ = _alloc(2 * _PS, tmp);
       const [api_numElements_, api_numElements_n] = _ivector(numElements, 'int', tmp);
       const [api_heights_, api_heights_n] = _ivector(heights, 'double', tmp);
-      M._gmshModelGeoExtrude(api_dimTags_, api_dimTags_n, dx, dy, dz, api_outDimTags_, api_outDimTags_ + 4, api_numElements_, api_numElements_n, api_heights_, api_heights_n, recombine ? 1 : 0, ierr);
+      M._gmshModelGeoExtrude(_P(api_dimTags_), _S(api_dimTags_n), dx, dy, dz, _P(api_outDimTags_), _P(api_outDimTags_ + _PS), _P(api_numElements_), _S(api_numElements_n), _P(api_heights_), _S(api_heights_n), recombine ? 1 : 0, _P(ierr));
       _check();
       return _ovectorpair(api_outDimTags_);
     }
@@ -5409,10 +5436,10 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      const api_outDimTags_ = _alloc(8, tmp);
+      const api_outDimTags_ = _alloc(2 * _PS, tmp);
       const [api_numElements_, api_numElements_n] = _ivector(numElements, 'int', tmp);
       const [api_heights_, api_heights_n] = _ivector(heights, 'double', tmp);
-      M._gmshModelGeoRevolve(api_dimTags_, api_dimTags_n, x, y, z, ax, ay, az, angle, api_outDimTags_, api_outDimTags_ + 4, api_numElements_, api_numElements_n, api_heights_, api_heights_n, recombine ? 1 : 0, ierr);
+      M._gmshModelGeoRevolve(_P(api_dimTags_), _S(api_dimTags_n), x, y, z, ax, ay, az, angle, _P(api_outDimTags_), _P(api_outDimTags_ + _PS), _P(api_numElements_), _S(api_numElements_n), _P(api_heights_), _S(api_heights_n), recombine ? 1 : 0, _P(ierr));
       _check();
       return _ovectorpair(api_outDimTags_);
     }
@@ -5441,10 +5468,10 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      const api_outDimTags_ = _alloc(8, tmp);
+      const api_outDimTags_ = _alloc(2 * _PS, tmp);
       const [api_numElements_, api_numElements_n] = _ivector(numElements, 'int', tmp);
       const [api_heights_, api_heights_n] = _ivector(heights, 'double', tmp);
-      M._gmshModelGeoTwist(api_dimTags_, api_dimTags_n, x, y, z, dx, dy, dz, ax, ay, az, angle, api_outDimTags_, api_outDimTags_ + 4, api_numElements_, api_numElements_n, api_heights_, api_heights_n, recombine ? 1 : 0, ierr);
+      M._gmshModelGeoTwist(_P(api_dimTags_), _S(api_dimTags_n), x, y, z, dx, dy, dz, ax, ay, az, angle, _P(api_outDimTags_), _P(api_outDimTags_ + _PS), _P(api_numElements_), _S(api_numElements_n), _P(api_heights_), _S(api_heights_n), recombine ? 1 : 0, _P(ierr));
       _check();
       return _ovectorpair(api_outDimTags_);
     }
@@ -5473,10 +5500,10 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      const api_outDimTags_ = _alloc(8, tmp);
+      const api_outDimTags_ = _alloc(2 * _PS, tmp);
       const [api_numElements_, api_numElements_n] = _ivector(numElements, 'int', tmp);
       const [api_heights_, api_heights_n] = _ivector(heights, 'double', tmp);
-      M._gmshModelGeoExtrudeBoundaryLayer(api_dimTags_, api_dimTags_n, api_outDimTags_, api_outDimTags_ + 4, api_numElements_, api_numElements_n, api_heights_, api_heights_n, recombine ? 1 : 0, second ? 1 : 0, viewIndex, ierr);
+      M._gmshModelGeoExtrudeBoundaryLayer(_P(api_dimTags_), _S(api_dimTags_n), _P(api_outDimTags_), _P(api_outDimTags_ + _PS), _P(api_numElements_), _S(api_numElements_n), _P(api_heights_), _S(api_heights_n), recombine ? 1 : 0, second ? 1 : 0, viewIndex, _P(ierr));
       _check();
       return _ovectorpair(api_outDimTags_);
     }
@@ -5495,7 +5522,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      M._gmshModelGeoTranslate(api_dimTags_, api_dimTags_n, dx, dy, dz, ierr);
+      M._gmshModelGeoTranslate(_P(api_dimTags_), _S(api_dimTags_n), dx, dy, dz, _P(ierr));
       _check();
     }
     finally {
@@ -5515,7 +5542,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      M._gmshModelGeoRotate(api_dimTags_, api_dimTags_n, x, y, z, ax, ay, az, angle, ierr);
+      M._gmshModelGeoRotate(_P(api_dimTags_), _S(api_dimTags_n), x, y, z, ax, ay, az, angle, _P(ierr));
       _check();
     }
     finally {
@@ -5535,7 +5562,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      M._gmshModelGeoDilate(api_dimTags_, api_dimTags_n, x, y, z, a, b, c, ierr);
+      M._gmshModelGeoDilate(_P(api_dimTags_), _S(api_dimTags_n), x, y, z, a, b, c, _P(ierr));
       _check();
     }
     finally {
@@ -5554,7 +5581,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      M._gmshModelGeoMirror(api_dimTags_, api_dimTags_n, a, b, c, d, ierr);
+      M._gmshModelGeoMirror(_P(api_dimTags_), _S(api_dimTags_n), a, b, c, d, _P(ierr));
       _check();
     }
     finally {
@@ -5574,7 +5601,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      M._gmshModelGeoSymmetrize(api_dimTags_, api_dimTags_n, a, b, c, d, ierr);
+      M._gmshModelGeoSymmetrize(_P(api_dimTags_), _S(api_dimTags_n), a, b, c, d, _P(ierr));
       _check();
     }
     finally {
@@ -5595,8 +5622,8 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      const api_outDimTags_ = _alloc(8, tmp);
-      M._gmshModelGeoCopy(api_dimTags_, api_dimTags_n, api_outDimTags_, api_outDimTags_ + 4, ierr);
+      const api_outDimTags_ = _alloc(2 * _PS, tmp);
+      M._gmshModelGeoCopy(_P(api_dimTags_), _S(api_dimTags_n), _P(api_outDimTags_), _P(api_outDimTags_ + _PS), _P(ierr));
       _check();
       return _ovectorpair(api_outDimTags_);
     }
@@ -5617,7 +5644,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      M._gmshModelGeoRemove(api_dimTags_, api_dimTags_n, recursive ? 1 : 0, ierr);
+      M._gmshModelGeoRemove(_P(api_dimTags_), _S(api_dimTags_n), recursive ? 1 : 0, _P(ierr));
       _check();
     }
     finally {
@@ -5634,7 +5661,7 @@ export function wrapGmsh(Module) {
   gmsh.model.geo.removeAllDuplicates = function() {
     const tmp = [];
     try {
-      M._gmshModelGeoRemoveAllDuplicates(ierr);
+      M._gmshModelGeoRemoveAllDuplicates(_P(ierr));
       _check();
     }
     finally {
@@ -5656,8 +5683,8 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_pointTags_, api_pointTags_n] = _ivector(pointTags, 'int', tmp);
-      const api_curveTags_ = _alloc(8, tmp);
-      M._gmshModelGeoSplitCurve(tag, api_pointTags_, api_pointTags_n, api_curveTags_, api_curveTags_ + 4, ierr);
+      const api_curveTags_ = _alloc(2 * _PS, tmp);
+      M._gmshModelGeoSplitCurve(tag, _P(api_pointTags_), _S(api_pointTags_n), _P(api_curveTags_), _P(api_curveTags_ + _PS), _P(ierr));
       _check();
       return _ovector(api_curveTags_, 'int');
     }
@@ -5677,9 +5704,9 @@ export function wrapGmsh(Module) {
   gmsh.model.geo.getMaxTag = function(dim) {
     const tmp = [];
     try {
-      const api_result_ = M._gmshModelGeoGetMaxTag(dim, ierr);
+      const api_result_ = M._gmshModelGeoGetMaxTag(dim, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -5695,7 +5722,7 @@ export function wrapGmsh(Module) {
   gmsh.model.geo.setMaxTag = function(dim, maxTag) {
     const tmp = [];
     try {
-      M._gmshModelGeoSetMaxTag(dim, maxTag, ierr);
+      M._gmshModelGeoSetMaxTag(dim, maxTag, _P(ierr));
       _check();
     }
     finally {
@@ -5718,9 +5745,9 @@ export function wrapGmsh(Module) {
     try {
       const [api_tags_, api_tags_n] = _ivector(tags, 'int', tmp);
       const api_name_ = _istring(name, tmp);
-      const api_result_ = M._gmshModelGeoAddPhysicalGroup(dim, api_tags_, api_tags_n, tag, api_name_, ierr);
+      const api_result_ = M._gmshModelGeoAddPhysicalGroup(dim, _P(api_tags_), _S(api_tags_n), tag, _P(api_name_), _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -5738,7 +5765,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      M._gmshModelGeoRemovePhysicalGroups(api_dimTags_, api_dimTags_n, ierr);
+      M._gmshModelGeoRemovePhysicalGroups(_P(api_dimTags_), _S(api_dimTags_n), _P(ierr));
       _check();
     }
     finally {
@@ -5759,7 +5786,7 @@ export function wrapGmsh(Module) {
   gmsh.model.geo.synchronize = function() {
     const tmp = [];
     try {
-      M._gmshModelGeoSynchronize(ierr);
+      M._gmshModelGeoSynchronize(_P(ierr));
       _check();
     }
     finally {
@@ -5781,7 +5808,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      M._gmshModelGeoMeshSetSize(api_dimTags_, api_dimTags_n, size, ierr);
+      M._gmshModelGeoMeshSetSize(_P(api_dimTags_), _S(api_dimTags_n), size, _P(ierr));
       _check();
     }
     finally {
@@ -5802,7 +5829,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_meshType_ = _istring(meshType, tmp);
-      M._gmshModelGeoMeshSetTransfiniteCurve(tag, nPoints, api_meshType_, coef, ierr);
+      M._gmshModelGeoMeshSetTransfiniteCurve(tag, nPoints, _P(api_meshType_), coef, _P(ierr));
       _check();
     }
     finally {
@@ -5827,7 +5854,7 @@ export function wrapGmsh(Module) {
     try {
       const api_arrangement_ = _istring(arrangement, tmp);
       const [api_cornerTags_, api_cornerTags_n] = _ivector(cornerTags, 'int', tmp);
-      M._gmshModelGeoMeshSetTransfiniteSurface(tag, api_arrangement_, api_cornerTags_, api_cornerTags_n, ierr);
+      M._gmshModelGeoMeshSetTransfiniteSurface(tag, _P(api_arrangement_), _P(api_cornerTags_), _S(api_cornerTags_n), _P(ierr));
       _check();
     }
     finally {
@@ -5846,7 +5873,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_cornerTags_, api_cornerTags_n] = _ivector(cornerTags, 'int', tmp);
-      M._gmshModelGeoMeshSetTransfiniteVolume(tag, api_cornerTags_, api_cornerTags_n, ierr);
+      M._gmshModelGeoMeshSetTransfiniteVolume(tag, _P(api_cornerTags_), _S(api_cornerTags_n), _P(ierr));
       _check();
     }
     finally {
@@ -5866,7 +5893,7 @@ export function wrapGmsh(Module) {
   gmsh.model.geo.mesh.setRecombine = function(dim, tag, angle = 45.) {
     const tmp = [];
     try {
-      M._gmshModelGeoMeshSetRecombine(dim, tag, angle, ierr);
+      M._gmshModelGeoMeshSetRecombine(dim, tag, angle, _P(ierr));
       _check();
     }
     finally {
@@ -5884,7 +5911,7 @@ export function wrapGmsh(Module) {
   gmsh.model.geo.mesh.setSmoothing = function(dim, tag, val) {
     const tmp = [];
     try {
-      M._gmshModelGeoMeshSetSmoothing(dim, tag, val, ierr);
+      M._gmshModelGeoMeshSetSmoothing(dim, tag, val, _P(ierr));
       _check();
     }
     finally {
@@ -5904,7 +5931,7 @@ export function wrapGmsh(Module) {
   gmsh.model.geo.mesh.setReverse = function(dim, tag, val = true) {
     const tmp = [];
     try {
-      M._gmshModelGeoMeshSetReverse(dim, tag, val ? 1 : 0, ierr);
+      M._gmshModelGeoMeshSetReverse(dim, tag, val ? 1 : 0, _P(ierr));
       _check();
     }
     finally {
@@ -5922,7 +5949,7 @@ export function wrapGmsh(Module) {
   gmsh.model.geo.mesh.setAlgorithm = function(dim, tag, val) {
     const tmp = [];
     try {
-      M._gmshModelGeoMeshSetAlgorithm(dim, tag, val, ierr);
+      M._gmshModelGeoMeshSetAlgorithm(dim, tag, val, _P(ierr));
       _check();
     }
     finally {
@@ -5940,7 +5967,7 @@ export function wrapGmsh(Module) {
   gmsh.model.geo.mesh.setSizeFromBoundary = function(dim, tag, val) {
     const tmp = [];
     try {
-      M._gmshModelGeoMeshSetSizeFromBoundary(dim, tag, val, ierr);
+      M._gmshModelGeoMeshSetSizeFromBoundary(dim, tag, val, _P(ierr));
       _check();
     }
     finally {
@@ -5967,9 +5994,9 @@ export function wrapGmsh(Module) {
   gmsh.model.occ.addPoint = function(x, y, z, meshSize = 0., tag = -1) {
     const tmp = [];
     try {
-      const api_result_ = M._gmshModelOccAddPoint(x, y, z, meshSize, tag, ierr);
+      const api_result_ = M._gmshModelOccAddPoint(x, y, z, meshSize, tag, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -5989,9 +6016,9 @@ export function wrapGmsh(Module) {
   gmsh.model.occ.addLine = function(startTag, endTag, tag = -1) {
     const tmp = [];
     try {
-      const api_result_ = M._gmshModelOccAddLine(startTag, endTag, tag, ierr);
+      const api_result_ = M._gmshModelOccAddLine(startTag, endTag, tag, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -6013,9 +6040,9 @@ export function wrapGmsh(Module) {
   gmsh.model.occ.addCircleArc = function(startTag, middleTag, endTag, tag = -1, center = true) {
     const tmp = [];
     try {
-      const api_result_ = M._gmshModelOccAddCircleArc(startTag, middleTag, endTag, tag, center ? 1 : 0, ierr);
+      const api_result_ = M._gmshModelOccAddCircleArc(startTag, middleTag, endTag, tag, center ? 1 : 0, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -6040,9 +6067,9 @@ export function wrapGmsh(Module) {
     try {
       const [api_zAxis_, api_zAxis_n] = _ivector(zAxis, 'double', tmp);
       const [api_xAxis_, api_xAxis_n] = _ivector(xAxis, 'double', tmp);
-      const api_result_ = M._gmshModelOccAddCircle(x, y, z, r, tag, angle1, angle2, api_zAxis_, api_zAxis_n, api_xAxis_, api_xAxis_n, ierr);
+      const api_result_ = M._gmshModelOccAddCircle(x, y, z, r, tag, angle1, angle2, _P(api_zAxis_), _S(api_zAxis_n), _P(api_xAxis_), _S(api_xAxis_n), _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -6064,9 +6091,9 @@ export function wrapGmsh(Module) {
   gmsh.model.occ.addEllipseArc = function(startTag, centerTag, majorTag, endTag, tag = -1) {
     const tmp = [];
     try {
-      const api_result_ = M._gmshModelOccAddEllipseArc(startTag, centerTag, majorTag, endTag, tag, ierr);
+      const api_result_ = M._gmshModelOccAddEllipseArc(startTag, centerTag, majorTag, endTag, tag, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -6092,9 +6119,9 @@ export function wrapGmsh(Module) {
     try {
       const [api_zAxis_, api_zAxis_n] = _ivector(zAxis, 'double', tmp);
       const [api_xAxis_, api_xAxis_n] = _ivector(xAxis, 'double', tmp);
-      const api_result_ = M._gmshModelOccAddEllipse(x, y, z, r1, r2, tag, angle1, angle2, api_zAxis_, api_zAxis_n, api_xAxis_, api_xAxis_n, ierr);
+      const api_result_ = M._gmshModelOccAddEllipse(x, y, z, r1, r2, tag, angle1, angle2, _P(api_zAxis_), _S(api_zAxis_n), _P(api_xAxis_), _S(api_xAxis_n), _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -6121,9 +6148,9 @@ export function wrapGmsh(Module) {
     try {
       const [api_pointTags_, api_pointTags_n] = _ivector(pointTags, 'int', tmp);
       const [api_tangents_, api_tangents_n] = _ivector(tangents, 'double', tmp);
-      const api_result_ = M._gmshModelOccAddSpline(api_pointTags_, api_pointTags_n, tag, api_tangents_, api_tangents_n, ierr);
+      const api_result_ = M._gmshModelOccAddSpline(_P(api_pointTags_), _S(api_pointTags_n), tag, _P(api_tangents_), _S(api_tangents_n), _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -6149,9 +6176,9 @@ export function wrapGmsh(Module) {
       const [api_weights_, api_weights_n] = _ivector(weights, 'double', tmp);
       const [api_knots_, api_knots_n] = _ivector(knots, 'double', tmp);
       const [api_multiplicities_, api_multiplicities_n] = _ivector(multiplicities, 'int', tmp);
-      const api_result_ = M._gmshModelOccAddBSpline(api_pointTags_, api_pointTags_n, tag, degree, api_weights_, api_weights_n, api_knots_, api_knots_n, api_multiplicities_, api_multiplicities_n, ierr);
+      const api_result_ = M._gmshModelOccAddBSpline(_P(api_pointTags_), _S(api_pointTags_n), tag, degree, _P(api_weights_), _S(api_weights_n), _P(api_knots_), _S(api_knots_n), _P(api_multiplicities_), _S(api_multiplicities_n), _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -6172,9 +6199,9 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_pointTags_, api_pointTags_n] = _ivector(pointTags, 'int', tmp);
-      const api_result_ = M._gmshModelOccAddBezier(api_pointTags_, api_pointTags_n, tag, ierr);
+      const api_result_ = M._gmshModelOccAddBezier(_P(api_pointTags_), _S(api_pointTags_n), tag, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -6196,9 +6223,9 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_curveTags_, api_curveTags_n] = _ivector(curveTags, 'int', tmp);
-      const api_result_ = M._gmshModelOccAddWire(api_curveTags_, api_curveTags_n, tag, checkClosed ? 1 : 0, ierr);
+      const api_result_ = M._gmshModelOccAddWire(_P(api_curveTags_), _S(api_curveTags_n), tag, checkClosed ? 1 : 0, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -6224,9 +6251,9 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_curveTags_, api_curveTags_n] = _ivector(curveTags, 'int', tmp);
-      const api_result_ = M._gmshModelOccAddCurveLoop(api_curveTags_, api_curveTags_n, tag, ierr);
+      const api_result_ = M._gmshModelOccAddCurveLoop(_P(api_curveTags_), _S(api_curveTags_n), tag, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -6247,9 +6274,9 @@ export function wrapGmsh(Module) {
   gmsh.model.occ.addRectangle = function(x, y, z, dx, dy, tag = -1, roundedRadius = 0.) {
     const tmp = [];
     try {
-      const api_result_ = M._gmshModelOccAddRectangle(x, y, z, dx, dy, tag, roundedRadius, ierr);
+      const api_result_ = M._gmshModelOccAddRectangle(x, y, z, dx, dy, tag, roundedRadius, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -6274,9 +6301,9 @@ export function wrapGmsh(Module) {
     try {
       const [api_zAxis_, api_zAxis_n] = _ivector(zAxis, 'double', tmp);
       const [api_xAxis_, api_xAxis_n] = _ivector(xAxis, 'double', tmp);
-      const api_result_ = M._gmshModelOccAddDisk(xc, yc, zc, rx, ry, tag, api_zAxis_, api_zAxis_n, api_xAxis_, api_xAxis_n, ierr);
+      const api_result_ = M._gmshModelOccAddDisk(xc, yc, zc, rx, ry, tag, _P(api_zAxis_), _S(api_zAxis_n), _P(api_xAxis_), _S(api_xAxis_n), _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -6298,9 +6325,9 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_wireTags_, api_wireTags_n] = _ivector(wireTags, 'int', tmp);
-      const api_result_ = M._gmshModelOccAddPlaneSurface(api_wireTags_, api_wireTags_n, tag, ierr);
+      const api_result_ = M._gmshModelOccAddPlaneSurface(_P(api_wireTags_), _S(api_wireTags_n), tag, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -6336,9 +6363,9 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_pointTags_, api_pointTags_n] = _ivector(pointTags, 'int', tmp);
-      const api_result_ = M._gmshModelOccAddSurfaceFilling(wireTag, tag, api_pointTags_, api_pointTags_n, degree, numPointsOnCurves, numIter, anisotropic ? 1 : 0, tol2d, tol3d, tolAng, tolCurv, maxDegree, maxSegments, ierr);
+      const api_result_ = M._gmshModelOccAddSurfaceFilling(wireTag, tag, _P(api_pointTags_), _S(api_pointTags_n), degree, numPointsOnCurves, numIter, anisotropic ? 1 : 0, tol2d, tol3d, tolAng, tolCurv, maxDegree, maxSegments, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -6362,9 +6389,9 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_type_ = _istring(type, tmp);
-      const api_result_ = M._gmshModelOccAddBSplineFilling(wireTag, tag, api_type_, ierr);
+      const api_result_ = M._gmshModelOccAddBSplineFilling(wireTag, tag, _P(api_type_), _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -6388,9 +6415,9 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_type_ = _istring(type, tmp);
-      const api_result_ = M._gmshModelOccAddBezierFilling(wireTag, tag, api_type_, ierr);
+      const api_result_ = M._gmshModelOccAddBezierFilling(wireTag, tag, _P(api_type_), _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -6425,9 +6452,9 @@ export function wrapGmsh(Module) {
       const [api_multiplicitiesU_, api_multiplicitiesU_n] = _ivector(multiplicitiesU, 'int', tmp);
       const [api_multiplicitiesV_, api_multiplicitiesV_n] = _ivector(multiplicitiesV, 'int', tmp);
       const [api_wireTags_, api_wireTags_n] = _ivector(wireTags, 'int', tmp);
-      const api_result_ = M._gmshModelOccAddBSplineSurface(api_pointTags_, api_pointTags_n, numPointsU, tag, degreeU, degreeV, api_weights_, api_weights_n, api_knotsU_, api_knotsU_n, api_knotsV_, api_knotsV_n, api_multiplicitiesU_, api_multiplicitiesU_n, api_multiplicitiesV_, api_multiplicitiesV_n, api_wireTags_, api_wireTags_n, wire3D ? 1 : 0, ierr);
+      const api_result_ = M._gmshModelOccAddBSplineSurface(_P(api_pointTags_), _S(api_pointTags_n), numPointsU, tag, degreeU, degreeV, _P(api_weights_), _S(api_weights_n), _P(api_knotsU_), _S(api_knotsU_n), _P(api_knotsV_), _S(api_knotsV_n), _P(api_multiplicitiesU_), _S(api_multiplicitiesU_n), _P(api_multiplicitiesV_), _S(api_multiplicitiesV_n), _P(api_wireTags_), _S(api_wireTags_n), wire3D ? 1 : 0, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -6454,9 +6481,9 @@ export function wrapGmsh(Module) {
     try {
       const [api_pointTags_, api_pointTags_n] = _ivector(pointTags, 'int', tmp);
       const [api_wireTags_, api_wireTags_n] = _ivector(wireTags, 'int', tmp);
-      const api_result_ = M._gmshModelOccAddBezierSurface(api_pointTags_, api_pointTags_n, numPointsU, tag, api_wireTags_, api_wireTags_n, wire3D ? 1 : 0, ierr);
+      const api_result_ = M._gmshModelOccAddBezierSurface(_P(api_pointTags_), _S(api_pointTags_n), numPointsU, tag, _P(api_wireTags_), _S(api_wireTags_n), wire3D ? 1 : 0, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -6480,9 +6507,9 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_wireTags_, api_wireTags_n] = _ivector(wireTags, 'int', tmp);
-      const api_result_ = M._gmshModelOccAddTrimmedSurface(surfaceTag, api_wireTags_, api_wireTags_n, wire3D ? 1 : 0, tag, ierr);
+      const api_result_ = M._gmshModelOccAddTrimmedSurface(surfaceTag, _P(api_wireTags_), _S(api_wireTags_n), wire3D ? 1 : 0, tag, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -6505,9 +6532,9 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_surfaceTags_, api_surfaceTags_n] = _ivector(surfaceTags, 'int', tmp);
-      const api_result_ = M._gmshModelOccAddSurfaceLoop(api_surfaceTags_, api_surfaceTags_n, tag, sewing ? 1 : 0, ierr);
+      const api_result_ = M._gmshModelOccAddSurfaceLoop(_P(api_surfaceTags_), _S(api_surfaceTags_n), tag, sewing ? 1 : 0, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -6529,9 +6556,9 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_shellTags_, api_shellTags_n] = _ivector(shellTags, 'int', tmp);
-      const api_result_ = M._gmshModelOccAddVolume(api_shellTags_, api_shellTags_n, tag, ierr);
+      const api_result_ = M._gmshModelOccAddVolume(_P(api_shellTags_), _S(api_shellTags_n), tag, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -6553,9 +6580,9 @@ export function wrapGmsh(Module) {
   gmsh.model.occ.addSphere = function(xc, yc, zc, radius, tag = -1, angle1 = -Math.PI/2, angle2 = Math.PI/2, angle3 = 2*Math.PI) {
     const tmp = [];
     try {
-      const api_result_ = M._gmshModelOccAddSphere(xc, yc, zc, radius, tag, angle1, angle2, angle3, ierr);
+      const api_result_ = M._gmshModelOccAddSphere(xc, yc, zc, radius, tag, angle1, angle2, angle3, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -6575,9 +6602,9 @@ export function wrapGmsh(Module) {
   gmsh.model.occ.addBox = function(x, y, z, dx, dy, dz, tag = -1) {
     const tmp = [];
     try {
-      const api_result_ = M._gmshModelOccAddBox(x, y, z, dx, dy, dz, tag, ierr);
+      const api_result_ = M._gmshModelOccAddBox(x, y, z, dx, dy, dz, tag, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -6599,9 +6626,9 @@ export function wrapGmsh(Module) {
   gmsh.model.occ.addCylinder = function(x, y, z, dx, dy, dz, r, tag = -1, angle = 2*Math.PI) {
     const tmp = [];
     try {
-      const api_result_ = M._gmshModelOccAddCylinder(x, y, z, dx, dy, dz, r, tag, angle, ierr);
+      const api_result_ = M._gmshModelOccAddCylinder(x, y, z, dx, dy, dz, r, tag, angle, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -6624,9 +6651,9 @@ export function wrapGmsh(Module) {
   gmsh.model.occ.addCone = function(x, y, z, dx, dy, dz, r1, r2, tag = -1, angle = 2*Math.PI) {
     const tmp = [];
     try {
-      const api_result_ = M._gmshModelOccAddCone(x, y, z, dx, dy, dz, r1, r2, tag, angle, ierr);
+      const api_result_ = M._gmshModelOccAddCone(x, y, z, dx, dy, dz, r1, r2, tag, angle, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -6650,9 +6677,9 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_zAxis_, api_zAxis_n] = _ivector(zAxis, 'double', tmp);
-      const api_result_ = M._gmshModelOccAddWedge(x, y, z, dx, dy, dz, tag, ltx, api_zAxis_, api_zAxis_n, ierr);
+      const api_result_ = M._gmshModelOccAddWedge(x, y, z, dx, dy, dz, tag, ltx, _P(api_zAxis_), _S(api_zAxis_n), _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -6675,9 +6702,9 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_zAxis_, api_zAxis_n] = _ivector(zAxis, 'double', tmp);
-      const api_result_ = M._gmshModelOccAddTorus(x, y, z, r1, r2, tag, angle, api_zAxis_, api_zAxis_n, ierr);
+      const api_result_ = M._gmshModelOccAddTorus(x, y, z, r1, r2, tag, angle, _P(api_zAxis_), _S(api_zAxis_n), _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -6706,10 +6733,10 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_wireTags_, api_wireTags_n] = _ivector(wireTags, 'int', tmp);
-      const api_outDimTags_ = _alloc(8, tmp);
+      const api_outDimTags_ = _alloc(2 * _PS, tmp);
       const api_continuity_ = _istring(continuity, tmp);
       const api_parametrization_ = _istring(parametrization, tmp);
-      M._gmshModelOccAddThruSections(api_wireTags_, api_wireTags_n, api_outDimTags_, api_outDimTags_ + 4, tag, makeSolid ? 1 : 0, makeRuled ? 1 : 0, maxDegree, api_continuity_, api_parametrization_, smoothing ? 1 : 0, ierr);
+      M._gmshModelOccAddThruSections(_P(api_wireTags_), _S(api_wireTags_n), _P(api_outDimTags_), _P(api_outDimTags_ + _PS), tag, makeSolid ? 1 : 0, makeRuled ? 1 : 0, maxDegree, _P(api_continuity_), _P(api_parametrization_), smoothing ? 1 : 0, _P(ierr));
       _check();
       return _ovectorpair(api_outDimTags_);
     }
@@ -6734,8 +6761,8 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_excludeSurfaceTags_, api_excludeSurfaceTags_n] = _ivector(excludeSurfaceTags, 'int', tmp);
-      const api_outDimTags_ = _alloc(8, tmp);
-      M._gmshModelOccAddThickSolid(volumeTag, api_excludeSurfaceTags_, api_excludeSurfaceTags_n, offset, api_outDimTags_, api_outDimTags_ + 4, tag, ierr);
+      const api_outDimTags_ = _alloc(2 * _PS, tmp);
+      M._gmshModelOccAddThickSolid(volumeTag, _P(api_excludeSurfaceTags_), _S(api_excludeSurfaceTags_n), offset, _P(api_outDimTags_), _P(api_outDimTags_ + _PS), tag, _P(ierr));
       _check();
       return _ovectorpair(api_outDimTags_);
     }
@@ -6762,10 +6789,10 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      const api_outDimTags_ = _alloc(8, tmp);
+      const api_outDimTags_ = _alloc(2 * _PS, tmp);
       const [api_numElements_, api_numElements_n] = _ivector(numElements, 'int', tmp);
       const [api_heights_, api_heights_n] = _ivector(heights, 'double', tmp);
-      M._gmshModelOccExtrude(api_dimTags_, api_dimTags_n, dx, dy, dz, api_outDimTags_, api_outDimTags_ + 4, api_numElements_, api_numElements_n, api_heights_, api_heights_n, recombine ? 1 : 0, ierr);
+      M._gmshModelOccExtrude(_P(api_dimTags_), _S(api_dimTags_n), dx, dy, dz, _P(api_outDimTags_), _P(api_outDimTags_ + _PS), _P(api_numElements_), _S(api_numElements_n), _P(api_heights_), _S(api_heights_n), recombine ? 1 : 0, _P(ierr));
       _check();
       return _ovectorpair(api_outDimTags_);
     }
@@ -6794,10 +6821,10 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      const api_outDimTags_ = _alloc(8, tmp);
+      const api_outDimTags_ = _alloc(2 * _PS, tmp);
       const [api_numElements_, api_numElements_n] = _ivector(numElements, 'int', tmp);
       const [api_heights_, api_heights_n] = _ivector(heights, 'double', tmp);
-      M._gmshModelOccRevolve(api_dimTags_, api_dimTags_n, x, y, z, ax, ay, az, angle, api_outDimTags_, api_outDimTags_ + 4, api_numElements_, api_numElements_n, api_heights_, api_heights_n, recombine ? 1 : 0, ierr);
+      M._gmshModelOccRevolve(_P(api_dimTags_), _S(api_dimTags_n), x, y, z, ax, ay, az, angle, _P(api_outDimTags_), _P(api_outDimTags_ + _PS), _P(api_numElements_), _S(api_numElements_n), _P(api_heights_), _S(api_heights_n), recombine ? 1 : 0, _P(ierr));
       _check();
       return _ovectorpair(api_outDimTags_);
     }
@@ -6824,9 +6851,9 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      const api_outDimTags_ = _alloc(8, tmp);
+      const api_outDimTags_ = _alloc(2 * _PS, tmp);
       const api_trihedron_ = _istring(trihedron, tmp);
-      M._gmshModelOccAddPipe(api_dimTags_, api_dimTags_n, wireTag, api_outDimTags_, api_outDimTags_ + 4, api_trihedron_, ierr);
+      M._gmshModelOccAddPipe(_P(api_dimTags_), _S(api_dimTags_n), wireTag, _P(api_outDimTags_), _P(api_outDimTags_ + _PS), _P(api_trihedron_), _P(ierr));
       _check();
       return _ovectorpair(api_outDimTags_);
     }
@@ -6853,8 +6880,8 @@ export function wrapGmsh(Module) {
       const [api_volumeTags_, api_volumeTags_n] = _ivector(volumeTags, 'int', tmp);
       const [api_curveTags_, api_curveTags_n] = _ivector(curveTags, 'int', tmp);
       const [api_radii_, api_radii_n] = _ivector(radii, 'double', tmp);
-      const api_outDimTags_ = _alloc(8, tmp);
-      M._gmshModelOccFillet(api_volumeTags_, api_volumeTags_n, api_curveTags_, api_curveTags_n, api_radii_, api_radii_n, api_outDimTags_, api_outDimTags_ + 4, removeVolume ? 1 : 0, ierr);
+      const api_outDimTags_ = _alloc(2 * _PS, tmp);
+      M._gmshModelOccFillet(_P(api_volumeTags_), _S(api_volumeTags_n), _P(api_curveTags_), _S(api_curveTags_n), _P(api_radii_), _S(api_radii_n), _P(api_outDimTags_), _P(api_outDimTags_ + _PS), removeVolume ? 1 : 0, _P(ierr));
       _check();
       return _ovectorpair(api_outDimTags_);
     }
@@ -6884,8 +6911,8 @@ export function wrapGmsh(Module) {
       const [api_curveTags_, api_curveTags_n] = _ivector(curveTags, 'int', tmp);
       const [api_surfaceTags_, api_surfaceTags_n] = _ivector(surfaceTags, 'int', tmp);
       const [api_distances_, api_distances_n] = _ivector(distances, 'double', tmp);
-      const api_outDimTags_ = _alloc(8, tmp);
-      M._gmshModelOccChamfer(api_volumeTags_, api_volumeTags_n, api_curveTags_, api_curveTags_n, api_surfaceTags_, api_surfaceTags_n, api_distances_, api_distances_n, api_outDimTags_, api_outDimTags_ + 4, removeVolume ? 1 : 0, ierr);
+      const api_outDimTags_ = _alloc(2 * _PS, tmp);
+      M._gmshModelOccChamfer(_P(api_volumeTags_), _S(api_volumeTags_n), _P(api_curveTags_), _S(api_curveTags_n), _P(api_surfaceTags_), _S(api_surfaceTags_n), _P(api_distances_), _S(api_distances_n), _P(api_outDimTags_), _P(api_outDimTags_ + _PS), removeVolume ? 1 : 0, _P(ierr));
       _check();
       return _ovectorpair(api_outDimTags_);
     }
@@ -6908,8 +6935,8 @@ export function wrapGmsh(Module) {
     try {
       const [api_volumeTags_, api_volumeTags_n] = _ivector(volumeTags, 'int', tmp);
       const [api_surfaceTags_, api_surfaceTags_n] = _ivector(surfaceTags, 'int', tmp);
-      const api_outDimTags_ = _alloc(8, tmp);
-      M._gmshModelOccDefeature(api_volumeTags_, api_volumeTags_n, api_surfaceTags_, api_surfaceTags_n, api_outDimTags_, api_outDimTags_ + 4, removeVolume ? 1 : 0, ierr);
+      const api_outDimTags_ = _alloc(2 * _PS, tmp);
+      M._gmshModelOccDefeature(_P(api_volumeTags_), _S(api_volumeTags_n), _P(api_surfaceTags_), _S(api_surfaceTags_n), _P(api_outDimTags_), _P(api_outDimTags_ + _PS), removeVolume ? 1 : 0, _P(ierr));
       _check();
       return _ovectorpair(api_outDimTags_);
     }
@@ -6933,9 +6960,9 @@ export function wrapGmsh(Module) {
   gmsh.model.occ.fillet2D = function(edgeTag1, edgeTag2, radius, tag = -1, pointTag = -1, reverse = false) {
     const tmp = [];
     try {
-      const api_result_ = M._gmshModelOccFillet2D(edgeTag1, edgeTag2, radius, tag, pointTag, reverse ? 1 : 0, ierr);
+      const api_result_ = M._gmshModelOccFillet2D(edgeTag1, edgeTag2, radius, tag, pointTag, reverse ? 1 : 0, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -6955,9 +6982,9 @@ export function wrapGmsh(Module) {
   gmsh.model.occ.chamfer2D = function(edgeTag1, edgeTag2, distance1, distance2, tag = -1) {
     const tmp = [];
     try {
-      const api_result_ = M._gmshModelOccChamfer2D(edgeTag1, edgeTag2, distance1, distance2, tag, ierr);
+      const api_result_ = M._gmshModelOccChamfer2D(edgeTag1, edgeTag2, distance1, distance2, tag, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -6976,8 +7003,8 @@ export function wrapGmsh(Module) {
   gmsh.model.occ.offsetCurve = function(curveLoopTag, offset) {
     const tmp = [];
     try {
-      const api_outDimTags_ = _alloc(8, tmp);
-      M._gmshModelOccOffsetCurve(curveLoopTag, offset, api_outDimTags_, api_outDimTags_ + 4, ierr);
+      const api_outDimTags_ = _alloc(2 * _PS, tmp);
+      M._gmshModelOccOffsetCurve(curveLoopTag, offset, _P(api_outDimTags_), _P(api_outDimTags_ + _PS), _P(ierr));
       _check();
       return _ovectorpair(api_outDimTags_);
     }
@@ -7006,7 +7033,7 @@ export function wrapGmsh(Module) {
       const api_x2_ = _alloc(8, tmp);
       const api_y2_ = _alloc(8, tmp);
       const api_z2_ = _alloc(8, tmp);
-      M._gmshModelOccGetDistance(dim1, tag1, dim2, tag2, api_distance_, api_x1_, api_y1_, api_z1_, api_x2_, api_y2_, api_z2_, ierr);
+      M._gmshModelOccGetDistance(dim1, tag1, dim2, tag2, _P(api_distance_), _P(api_x1_), _P(api_y1_), _P(api_z1_), _P(api_x2_), _P(api_y2_), _P(api_z2_), _P(ierr));
       _check();
       return [
         M.HEAPF64[api_distance_ >> 3],
@@ -7036,10 +7063,10 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      const api_outDimTags_ = _alloc(8, tmp);
-      const api_distances_ = _alloc(8, tmp);
-      const api_coord_ = _alloc(8, tmp);
-      M._gmshModelOccGetClosestEntities(x, y, z, api_dimTags_, api_dimTags_n, api_outDimTags_, api_outDimTags_ + 4, api_distances_, api_distances_ + 4, api_coord_, api_coord_ + 4, n, ierr);
+      const api_outDimTags_ = _alloc(2 * _PS, tmp);
+      const api_distances_ = _alloc(2 * _PS, tmp);
+      const api_coord_ = _alloc(2 * _PS, tmp);
+      M._gmshModelOccGetClosestEntities(x, y, z, _P(api_dimTags_), _S(api_dimTags_n), _P(api_outDimTags_), _P(api_outDimTags_ + _PS), _P(api_distances_), _P(api_distances_ + _PS), _P(api_coord_), _P(api_coord_ + _PS), n, _P(ierr));
       _check();
       return [
         _ovectorpair(api_outDimTags_),
@@ -7069,9 +7096,9 @@ export function wrapGmsh(Module) {
     try {
       const [api_objectDimTags_, api_objectDimTags_n] = _ivectorpair(objectDimTags, tmp);
       const [api_toolDimTags_, api_toolDimTags_n] = _ivectorpair(toolDimTags, tmp);
-      const api_outDimTags_ = _alloc(8, tmp);
-      const api_outDimTagsMap_ = _alloc(12, tmp);
-      M._gmshModelOccFuse(api_objectDimTags_, api_objectDimTags_n, api_toolDimTags_, api_toolDimTags_n, api_outDimTags_, api_outDimTags_ + 4, api_outDimTagsMap_, api_outDimTagsMap_ + 4, api_outDimTagsMap_ + 8, tag, removeObject ? 1 : 0, removeTool ? 1 : 0, ierr);
+      const api_outDimTags_ = _alloc(2 * _PS, tmp);
+      const api_outDimTagsMap_ = _alloc(3 * _PS, tmp);
+      M._gmshModelOccFuse(_P(api_objectDimTags_), _S(api_objectDimTags_n), _P(api_toolDimTags_), _S(api_toolDimTags_n), _P(api_outDimTags_), _P(api_outDimTags_ + _PS), _P(api_outDimTagsMap_), _P(api_outDimTagsMap_ + _PS), _P(api_outDimTagsMap_ + 2 * _PS), tag, removeObject ? 1 : 0, removeTool ? 1 : 0, _P(ierr));
       _check();
       return [
         _ovectorpair(api_outDimTags_),
@@ -7101,9 +7128,9 @@ export function wrapGmsh(Module) {
     try {
       const [api_objectDimTags_, api_objectDimTags_n] = _ivectorpair(objectDimTags, tmp);
       const [api_toolDimTags_, api_toolDimTags_n] = _ivectorpair(toolDimTags, tmp);
-      const api_outDimTags_ = _alloc(8, tmp);
-      const api_outDimTagsMap_ = _alloc(12, tmp);
-      M._gmshModelOccIntersect(api_objectDimTags_, api_objectDimTags_n, api_toolDimTags_, api_toolDimTags_n, api_outDimTags_, api_outDimTags_ + 4, api_outDimTagsMap_, api_outDimTagsMap_ + 4, api_outDimTagsMap_ + 8, tag, removeObject ? 1 : 0, removeTool ? 1 : 0, ierr);
+      const api_outDimTags_ = _alloc(2 * _PS, tmp);
+      const api_outDimTagsMap_ = _alloc(3 * _PS, tmp);
+      M._gmshModelOccIntersect(_P(api_objectDimTags_), _S(api_objectDimTags_n), _P(api_toolDimTags_), _S(api_toolDimTags_n), _P(api_outDimTags_), _P(api_outDimTags_ + _PS), _P(api_outDimTagsMap_), _P(api_outDimTagsMap_ + _PS), _P(api_outDimTagsMap_ + 2 * _PS), tag, removeObject ? 1 : 0, removeTool ? 1 : 0, _P(ierr));
       _check();
       return [
         _ovectorpair(api_outDimTags_),
@@ -7133,9 +7160,9 @@ export function wrapGmsh(Module) {
     try {
       const [api_objectDimTags_, api_objectDimTags_n] = _ivectorpair(objectDimTags, tmp);
       const [api_toolDimTags_, api_toolDimTags_n] = _ivectorpair(toolDimTags, tmp);
-      const api_outDimTags_ = _alloc(8, tmp);
-      const api_outDimTagsMap_ = _alloc(12, tmp);
-      M._gmshModelOccCut(api_objectDimTags_, api_objectDimTags_n, api_toolDimTags_, api_toolDimTags_n, api_outDimTags_, api_outDimTags_ + 4, api_outDimTagsMap_, api_outDimTagsMap_ + 4, api_outDimTagsMap_ + 8, tag, removeObject ? 1 : 0, removeTool ? 1 : 0, ierr);
+      const api_outDimTags_ = _alloc(2 * _PS, tmp);
+      const api_outDimTagsMap_ = _alloc(3 * _PS, tmp);
+      M._gmshModelOccCut(_P(api_objectDimTags_), _S(api_objectDimTags_n), _P(api_toolDimTags_), _S(api_toolDimTags_n), _P(api_outDimTags_), _P(api_outDimTags_ + _PS), _P(api_outDimTagsMap_), _P(api_outDimTagsMap_ + _PS), _P(api_outDimTagsMap_ + 2 * _PS), tag, removeObject ? 1 : 0, removeTool ? 1 : 0, _P(ierr));
       _check();
       return [
         _ovectorpair(api_outDimTags_),
@@ -7169,9 +7196,9 @@ export function wrapGmsh(Module) {
     try {
       const [api_objectDimTags_, api_objectDimTags_n] = _ivectorpair(objectDimTags, tmp);
       const [api_toolDimTags_, api_toolDimTags_n] = _ivectorpair(toolDimTags, tmp);
-      const api_outDimTags_ = _alloc(8, tmp);
-      const api_outDimTagsMap_ = _alloc(12, tmp);
-      M._gmshModelOccFragment(api_objectDimTags_, api_objectDimTags_n, api_toolDimTags_, api_toolDimTags_n, api_outDimTags_, api_outDimTags_ + 4, api_outDimTagsMap_, api_outDimTagsMap_ + 4, api_outDimTagsMap_ + 8, tag, removeObject ? 1 : 0, removeTool ? 1 : 0, ierr);
+      const api_outDimTags_ = _alloc(2 * _PS, tmp);
+      const api_outDimTagsMap_ = _alloc(3 * _PS, tmp);
+      M._gmshModelOccFragment(_P(api_objectDimTags_), _S(api_objectDimTags_n), _P(api_toolDimTags_), _S(api_toolDimTags_n), _P(api_outDimTags_), _P(api_outDimTags_ + _PS), _P(api_outDimTagsMap_), _P(api_outDimTagsMap_ + _PS), _P(api_outDimTagsMap_ + 2 * _PS), tag, removeObject ? 1 : 0, removeTool ? 1 : 0, _P(ierr));
       _check();
       return [
         _ovectorpair(api_outDimTags_),
@@ -7192,7 +7219,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      M._gmshModelOccTranslate(api_dimTags_, api_dimTags_n, dx, dy, dz, ierr);
+      M._gmshModelOccTranslate(_P(api_dimTags_), _S(api_dimTags_n), dx, dy, dz, _P(ierr));
       _check();
     }
     finally {
@@ -7212,7 +7239,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      M._gmshModelOccRotate(api_dimTags_, api_dimTags_n, x, y, z, ax, ay, az, angle, ierr);
+      M._gmshModelOccRotate(_P(api_dimTags_), _S(api_dimTags_n), x, y, z, ax, ay, az, angle, _P(ierr));
       _check();
     }
     finally {
@@ -7232,7 +7259,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      M._gmshModelOccDilate(api_dimTags_, api_dimTags_n, x, y, z, a, b, c, ierr);
+      M._gmshModelOccDilate(_P(api_dimTags_), _S(api_dimTags_n), x, y, z, a, b, c, _P(ierr));
       _check();
     }
     finally {
@@ -7251,7 +7278,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      M._gmshModelOccMirror(api_dimTags_, api_dimTags_n, a, b, c, d, ierr);
+      M._gmshModelOccMirror(_P(api_dimTags_), _S(api_dimTags_n), a, b, c, d, _P(ierr));
       _check();
     }
     finally {
@@ -7271,7 +7298,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      M._gmshModelOccSymmetrize(api_dimTags_, api_dimTags_n, a, b, c, d, ierr);
+      M._gmshModelOccSymmetrize(_P(api_dimTags_), _S(api_dimTags_n), a, b, c, d, _P(ierr));
       _check();
     }
     finally {
@@ -7292,7 +7319,7 @@ export function wrapGmsh(Module) {
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
       const [api_affineTransform_, api_affineTransform_n] = _ivector(affineTransform, 'double', tmp);
-      M._gmshModelOccAffineTransform(api_dimTags_, api_dimTags_n, api_affineTransform_, api_affineTransform_n, ierr);
+      M._gmshModelOccAffineTransform(_P(api_dimTags_), _S(api_dimTags_n), _P(api_affineTransform_), _S(api_affineTransform_n), _P(ierr));
       _check();
     }
     finally {
@@ -7312,8 +7339,8 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      const api_outDimTags_ = _alloc(8, tmp);
-      M._gmshModelOccCopy(api_dimTags_, api_dimTags_n, api_outDimTags_, api_outDimTags_ + 4, ierr);
+      const api_outDimTags_ = _alloc(2 * _PS, tmp);
+      M._gmshModelOccCopy(_P(api_dimTags_), _S(api_dimTags_n), _P(api_outDimTags_), _P(api_outDimTags_ + _PS), _P(ierr));
       _check();
       return _ovectorpair(api_outDimTags_);
     }
@@ -7334,7 +7361,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      M._gmshModelOccRemove(api_dimTags_, api_dimTags_n, recursive ? 1 : 0, ierr);
+      M._gmshModelOccRemove(_P(api_dimTags_), _S(api_dimTags_n), recursive ? 1 : 0, _P(ierr));
       _check();
     }
     finally {
@@ -7352,7 +7379,7 @@ export function wrapGmsh(Module) {
   gmsh.model.occ.removeAllDuplicates = function() {
     const tmp = [];
     try {
-      M._gmshModelOccRemoveAllDuplicates(ierr);
+      M._gmshModelOccRemoveAllDuplicates(_P(ierr));
       _check();
     }
     finally {
@@ -7373,9 +7400,9 @@ export function wrapGmsh(Module) {
   gmsh.model.occ.healShapes = function(dimTags = [], tolerance = 1e-8, fixDegenerated = true, fixSmallEdges = true, fixSmallFaces = true, sewFaces = true, makeSolids = true) {
     const tmp = [];
     try {
-      const api_outDimTags_ = _alloc(8, tmp);
+      const api_outDimTags_ = _alloc(2 * _PS, tmp);
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      M._gmshModelOccHealShapes(api_outDimTags_, api_outDimTags_ + 4, api_dimTags_, api_dimTags_n, tolerance, fixDegenerated ? 1 : 0, fixSmallEdges ? 1 : 0, fixSmallFaces ? 1 : 0, sewFaces ? 1 : 0, makeSolids ? 1 : 0, ierr);
+      M._gmshModelOccHealShapes(_P(api_outDimTags_), _P(api_outDimTags_ + _PS), _P(api_dimTags_), _S(api_dimTags_n), tolerance, fixDegenerated ? 1 : 0, fixSmallEdges ? 1 : 0, fixSmallFaces ? 1 : 0, sewFaces ? 1 : 0, makeSolids ? 1 : 0, _P(ierr));
       _check();
       return _ovectorpair(api_outDimTags_);
     }
@@ -7393,7 +7420,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      M._gmshModelOccConvertToNURBS(api_dimTags_, api_dimTags_n, ierr);
+      M._gmshModelOccConvertToNURBS(_P(api_dimTags_), _S(api_dimTags_n), _P(ierr));
       _check();
     }
     finally {
@@ -7417,9 +7444,9 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_fileName_ = _istring(fileName, tmp);
-      const api_outDimTags_ = _alloc(8, tmp);
+      const api_outDimTags_ = _alloc(2 * _PS, tmp);
       const api_format_ = _istring(format, tmp);
-      M._gmshModelOccImportShapes(api_fileName_, api_outDimTags_, api_outDimTags_ + 4, highestDimOnly ? 1 : 0, api_format_, ierr);
+      M._gmshModelOccImportShapes(_P(api_fileName_), _P(api_outDimTags_), _P(api_outDimTags_ + _PS), highestDimOnly ? 1 : 0, _P(api_format_), _P(ierr));
       _check();
       return _ovectorpair(api_outDimTags_);
     }
@@ -7446,8 +7473,8 @@ export function wrapGmsh(Module) {
   gmsh.model.occ.importShapesNativePointer = function(shape, highestDimOnly = true) {
     const tmp = [];
     try {
-      const api_outDimTags_ = _alloc(8, tmp);
-      M._gmshModelOccImportShapesNativePointer(shape, api_outDimTags_, api_outDimTags_ + 4, highestDimOnly ? 1 : 0, ierr);
+      const api_outDimTags_ = _alloc(2 * _PS, tmp);
+      M._gmshModelOccImportShapesNativePointer(_P(shape), _P(api_outDimTags_), _P(api_outDimTags_ + _PS), highestDimOnly ? 1 : 0, _P(ierr));
       _check();
       return _ovectorpair(api_outDimTags_);
     }
@@ -7468,8 +7495,8 @@ export function wrapGmsh(Module) {
   gmsh.model.occ.getEntities = function(dim = -1) {
     const tmp = [];
     try {
-      const api_dimTags_ = _alloc(8, tmp);
-      M._gmshModelOccGetEntities(api_dimTags_, api_dimTags_ + 4, dim, ierr);
+      const api_dimTags_ = _alloc(2 * _PS, tmp);
+      M._gmshModelOccGetEntities(_P(api_dimTags_), _P(api_dimTags_ + _PS), dim, _P(ierr));
       _check();
       return _ovectorpair(api_dimTags_);
     }
@@ -7491,8 +7518,8 @@ export function wrapGmsh(Module) {
   gmsh.model.occ.getEntitiesInBoundingBox = function(xmin, ymin, zmin, xmax, ymax, zmax, dim = -1) {
     const tmp = [];
     try {
-      const api_dimTags_ = _alloc(8, tmp);
-      M._gmshModelOccGetEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, api_dimTags_, api_dimTags_ + 4, dim, ierr);
+      const api_dimTags_ = _alloc(2 * _PS, tmp);
+      M._gmshModelOccGetEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, _P(api_dimTags_), _P(api_dimTags_ + _PS), dim, _P(ierr));
       _check();
       return _ovectorpair(api_dimTags_);
     }
@@ -7518,7 +7545,7 @@ export function wrapGmsh(Module) {
       const api_xmax_ = _alloc(8, tmp);
       const api_ymax_ = _alloc(8, tmp);
       const api_zmax_ = _alloc(8, tmp);
-      M._gmshModelOccGetBoundingBox(dim, tag, api_xmin_, api_ymin_, api_zmin_, api_xmax_, api_ymax_, api_zmax_, ierr);
+      M._gmshModelOccGetBoundingBox(dim, tag, _P(api_xmin_), _P(api_ymin_), _P(api_zmin_), _P(api_xmax_), _P(api_ymax_), _P(api_zmax_), _P(ierr));
       _check();
       return [
         M.HEAPF64[api_xmin_ >> 3],
@@ -7545,9 +7572,9 @@ export function wrapGmsh(Module) {
   gmsh.model.occ.getCurveLoops = function(surfaceTag) {
     const tmp = [];
     try {
-      const api_curveLoopTags_ = _alloc(8, tmp);
-      const api_curveTags_ = _alloc(12, tmp);
-      M._gmshModelOccGetCurveLoops(surfaceTag, api_curveLoopTags_, api_curveLoopTags_ + 4, api_curveTags_, api_curveTags_ + 4, api_curveTags_ + 8, ierr);
+      const api_curveLoopTags_ = _alloc(2 * _PS, tmp);
+      const api_curveTags_ = _alloc(3 * _PS, tmp);
+      M._gmshModelOccGetCurveLoops(surfaceTag, _P(api_curveLoopTags_), _P(api_curveLoopTags_ + _PS), _P(api_curveTags_), _P(api_curveTags_ + _PS), _P(api_curveTags_ + 2 * _PS), _P(ierr));
       _check();
       return [
         _ovector(api_curveLoopTags_, 'int'),
@@ -7570,9 +7597,9 @@ export function wrapGmsh(Module) {
   gmsh.model.occ.getSurfaceLoops = function(volumeTag) {
     const tmp = [];
     try {
-      const api_surfaceLoopTags_ = _alloc(8, tmp);
-      const api_surfaceTags_ = _alloc(12, tmp);
-      M._gmshModelOccGetSurfaceLoops(volumeTag, api_surfaceLoopTags_, api_surfaceLoopTags_ + 4, api_surfaceTags_, api_surfaceTags_ + 4, api_surfaceTags_ + 8, ierr);
+      const api_surfaceLoopTags_ = _alloc(2 * _PS, tmp);
+      const api_surfaceTags_ = _alloc(3 * _PS, tmp);
+      M._gmshModelOccGetSurfaceLoops(volumeTag, _P(api_surfaceLoopTags_), _P(api_surfaceLoopTags_ + _PS), _P(api_surfaceTags_), _P(api_surfaceTags_ + _PS), _P(api_surfaceTags_ + 2 * _PS), _P(ierr));
       _check();
       return [
         _ovector(api_surfaceLoopTags_, 'int'),
@@ -7597,7 +7624,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_mass_ = _alloc(8, tmp);
-      M._gmshModelOccGetMass(dim, tag, api_mass_, ierr);
+      M._gmshModelOccGetMass(dim, tag, _P(api_mass_), _P(ierr));
       _check();
       return M.HEAPF64[api_mass_ >> 3];
     }
@@ -7620,7 +7647,7 @@ export function wrapGmsh(Module) {
       const api_x_ = _alloc(8, tmp);
       const api_y_ = _alloc(8, tmp);
       const api_z_ = _alloc(8, tmp);
-      M._gmshModelOccGetCenterOfMass(dim, tag, api_x_, api_y_, api_z_, ierr);
+      M._gmshModelOccGetCenterOfMass(dim, tag, _P(api_x_), _P(api_y_), _P(api_z_), _P(ierr));
       _check();
       return [
         M.HEAPF64[api_x_ >> 3],
@@ -7643,8 +7670,8 @@ export function wrapGmsh(Module) {
   gmsh.model.occ.getMatrixOfInertia = function(dim, tag) {
     const tmp = [];
     try {
-      const api_mat_ = _alloc(8, tmp);
-      M._gmshModelOccGetMatrixOfInertia(dim, tag, api_mat_, api_mat_ + 4, ierr);
+      const api_mat_ = _alloc(2 * _PS, tmp);
+      M._gmshModelOccGetMatrixOfInertia(dim, tag, _P(api_mat_), _P(api_mat_ + _PS), _P(ierr));
       _check();
       return _ovector(api_mat_, 'double');
     }
@@ -7664,9 +7691,9 @@ export function wrapGmsh(Module) {
   gmsh.model.occ.getMaxTag = function(dim) {
     const tmp = [];
     try {
-      const api_result_ = M._gmshModelOccGetMaxTag(dim, ierr);
+      const api_result_ = M._gmshModelOccGetMaxTag(dim, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -7682,7 +7709,7 @@ export function wrapGmsh(Module) {
   gmsh.model.occ.setMaxTag = function(dim, maxTag) {
     const tmp = [];
     try {
-      M._gmshModelOccSetMaxTag(dim, maxTag, ierr);
+      M._gmshModelOccSetMaxTag(dim, maxTag, _P(ierr));
       _check();
     }
     finally {
@@ -7703,7 +7730,7 @@ export function wrapGmsh(Module) {
   gmsh.model.occ.synchronize = function() {
     const tmp = [];
     try {
-      M._gmshModelOccSynchronize(ierr);
+      M._gmshModelOccSynchronize(_P(ierr));
       _check();
     }
     finally {
@@ -7725,7 +7752,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
-      M._gmshModelOccMeshSetSize(api_dimTags_, api_dimTags_n, size, ierr);
+      M._gmshModelOccMeshSetSize(_P(api_dimTags_), _S(api_dimTags_n), size, _P(ierr));
       _check();
     }
     finally {
@@ -7749,9 +7776,9 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_name_ = _istring(name, tmp);
-      const api_result_ = M._gmshViewAdd(api_name_, tag, ierr);
+      const api_result_ = M._gmshViewAdd(_P(api_name_), tag, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -7766,7 +7793,7 @@ export function wrapGmsh(Module) {
   gmsh.view.remove = function(tag) {
     const tmp = [];
     try {
-      M._gmshViewRemove(tag, ierr);
+      M._gmshViewRemove(tag, _P(ierr));
       _check();
     }
     finally {
@@ -7786,9 +7813,9 @@ export function wrapGmsh(Module) {
   gmsh.view.getIndex = function(tag) {
     const tmp = [];
     try {
-      const api_result_ = M._gmshViewGetIndex(tag, ierr);
+      const api_result_ = M._gmshViewGetIndex(tag, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -7805,8 +7832,8 @@ export function wrapGmsh(Module) {
   gmsh.view.getTags = function() {
     const tmp = [];
     try {
-      const api_tags_ = _alloc(8, tmp);
-      M._gmshViewGetTags(api_tags_, api_tags_ + 4, ierr);
+      const api_tags_ = _alloc(2 * _PS, tmp);
+      M._gmshViewGetTags(_P(api_tags_), _P(api_tags_ + _PS), _P(ierr));
       _check();
       return _ovector(api_tags_, 'int');
     }
@@ -7839,7 +7866,7 @@ export function wrapGmsh(Module) {
       const api_dataType_ = _istring(dataType, tmp);
       const [api_tags_, api_tags_n] = _ivector(tags, 'size', tmp);
       const [api_data_, api_data_n, api_data_nn] = _ivectorvector(data, 'double', tmp);
-      M._gmshViewAddModelData(tag, step, api_modelName_, api_dataType_, api_tags_, api_tags_n, api_data_, api_data_n, api_data_nn, time, numComponents, partition, ierr);
+      M._gmshViewAddModelData(tag, step, _P(api_modelName_), _P(api_dataType_), _P(api_tags_), _S(api_tags_n), _P(api_data_), _P(api_data_n), _S(api_data_nn), time, numComponents, partition, _P(ierr));
       _check();
     }
     finally {
@@ -7863,7 +7890,7 @@ export function wrapGmsh(Module) {
       const api_dataType_ = _istring(dataType, tmp);
       const [api_tags_, api_tags_n] = _ivector(tags, 'size', tmp);
       const [api_data_, api_data_n] = _ivector(data, 'double', tmp);
-      M._gmshViewAddHomogeneousModelData(tag, step, api_modelName_, api_dataType_, api_tags_, api_tags_n, api_data_, api_data_n, time, numComponents, partition, ierr);
+      M._gmshViewAddHomogeneousModelData(tag, step, _P(api_modelName_), _P(api_dataType_), _P(api_tags_), _S(api_tags_n), _P(api_data_), _S(api_data_n), time, numComponents, partition, _P(ierr));
       _check();
     }
     finally {
@@ -7885,11 +7912,11 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_dataType_ = _alloc(8, tmp);
-      const api_tags_ = _alloc(8, tmp);
-      const api_data_ = _alloc(12, tmp);
+      const api_tags_ = _alloc(2 * _PS, tmp);
+      const api_data_ = _alloc(3 * _PS, tmp);
       const api_time_ = _alloc(8, tmp);
       const api_numComponents_ = _alloc(8, tmp);
-      M._gmshViewGetModelData(tag, step, api_dataType_, api_tags_, api_tags_ + 4, api_data_, api_data_ + 4, api_data_ + 8, api_time_, api_numComponents_, ierr);
+      M._gmshViewGetModelData(tag, step, _P(api_dataType_), _P(api_tags_), _P(api_tags_ + _PS), _P(api_data_), _P(api_data_ + _PS), _P(api_data_ + 2 * _PS), _P(api_time_), _P(api_numComponents_), _P(ierr));
       _check();
       return [
         _ostring(api_dataType_),
@@ -7917,11 +7944,11 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_dataType_ = _alloc(8, tmp);
-      const api_tags_ = _alloc(8, tmp);
-      const api_data_ = _alloc(8, tmp);
+      const api_tags_ = _alloc(2 * _PS, tmp);
+      const api_data_ = _alloc(2 * _PS, tmp);
       const api_time_ = _alloc(8, tmp);
       const api_numComponents_ = _alloc(8, tmp);
-      M._gmshViewGetHomogeneousModelData(tag, step, api_dataType_, api_tags_, api_tags_ + 4, api_data_, api_data_ + 4, api_time_, api_numComponents_, ierr);
+      M._gmshViewGetHomogeneousModelData(tag, step, _P(api_dataType_), _P(api_tags_), _P(api_tags_ + _PS), _P(api_data_), _P(api_data_ + _PS), _P(api_time_), _P(api_numComponents_), _P(ierr));
       _check();
       return [
         _ostring(api_dataType_),
@@ -7955,7 +7982,7 @@ export function wrapGmsh(Module) {
     try {
       const api_dataType_ = _istring(dataType, tmp);
       const [api_data_, api_data_n] = _ivector(data, 'double', tmp);
-      M._gmshViewAddListData(tag, api_dataType_, numEle, api_data_, api_data_n, ierr);
+      M._gmshViewAddListData(tag, _P(api_dataType_), numEle, _P(api_data_), _S(api_data_n), _P(ierr));
       _check();
     }
     finally {
@@ -7976,10 +8003,10 @@ export function wrapGmsh(Module) {
   gmsh.view.getListData = function(tag, returnAdaptive = false) {
     const tmp = [];
     try {
-      const api_dataType_ = _alloc(8, tmp);
-      const api_numElements_ = _alloc(8, tmp);
-      const api_data_ = _alloc(12, tmp);
-      M._gmshViewGetListData(tag, api_dataType_, api_dataType_ + 4, api_numElements_, api_numElements_ + 4, api_data_, api_data_ + 4, api_data_ + 8, returnAdaptive ? 1 : 0, ierr);
+      const api_dataType_ = _alloc(2 * _PS, tmp);
+      const api_numElements_ = _alloc(2 * _PS, tmp);
+      const api_data_ = _alloc(3 * _PS, tmp);
+      M._gmshViewGetListData(tag, _P(api_dataType_), _P(api_dataType_ + _PS), _P(api_numElements_), _P(api_numElements_ + _PS), _P(api_data_), _P(api_data_ + _PS), _P(api_data_ + 2 * _PS), returnAdaptive ? 1 : 0, _P(ierr));
       _check();
       return [
         _ovectorstring(api_dataType_),
@@ -8014,7 +8041,7 @@ export function wrapGmsh(Module) {
       const [api_coord_, api_coord_n] = _ivector(coord, 'double', tmp);
       const [api_data_, api_data_n] = _ivectorstring(data, tmp);
       const [api_style_, api_style_n] = _ivectorstring(style, tmp);
-      M._gmshViewAddListDataString(tag, api_coord_, api_coord_n, api_data_, api_data_n, api_style_, api_style_n, ierr);
+      M._gmshViewAddListDataString(tag, _P(api_coord_), _S(api_coord_n), _P(api_data_), _S(api_data_n), _P(api_style_), _S(api_style_n), _P(ierr));
       _check();
     }
     finally {
@@ -8034,10 +8061,10 @@ export function wrapGmsh(Module) {
   gmsh.view.getListDataStrings = function(tag, dim) {
     const tmp = [];
     try {
-      const api_coord_ = _alloc(8, tmp);
-      const api_data_ = _alloc(8, tmp);
-      const api_style_ = _alloc(8, tmp);
-      M._gmshViewGetListDataStrings(tag, dim, api_coord_, api_coord_ + 4, api_data_, api_data_ + 4, api_style_, api_style_ + 4, ierr);
+      const api_coord_ = _alloc(2 * _PS, tmp);
+      const api_data_ = _alloc(2 * _PS, tmp);
+      const api_style_ = _alloc(2 * _PS, tmp);
+      M._gmshViewGetListDataStrings(tag, dim, _P(api_coord_), _P(api_coord_ + _PS), _P(api_data_), _P(api_data_ + _PS), _P(api_style_), _P(api_style_ + _PS), _P(ierr));
       _check();
       return [
         _ovector(api_coord_, 'double'),
@@ -8073,7 +8100,7 @@ export function wrapGmsh(Module) {
       const [api_exp_, api_exp_n] = _ivector(exp, 'double', tmp);
       const [api_coefGeo_, api_coefGeo_n] = _ivector(coefGeo, 'double', tmp);
       const [api_expGeo_, api_expGeo_n] = _ivector(expGeo, 'double', tmp);
-      M._gmshViewSetInterpolationMatrices(tag, api_type_, d, api_coef_, api_coef_n, api_exp_, api_exp_n, dGeo, api_coefGeo_, api_coefGeo_n, api_expGeo_, api_expGeo_n, ierr);
+      M._gmshViewSetInterpolationMatrices(tag, _P(api_type_), d, _P(api_coef_), _S(api_coef_n), _P(api_exp_), _S(api_exp_n), dGeo, _P(api_coefGeo_), _S(api_coefGeo_n), _P(api_expGeo_), _S(api_expGeo_n), _P(ierr));
       _check();
     }
     finally {
@@ -8094,9 +8121,9 @@ export function wrapGmsh(Module) {
   gmsh.view.addAlias = function(refTag, copyOptions = false, tag = -1) {
     const tmp = [];
     try {
-      const api_result_ = M._gmshViewAddAlias(refTag, copyOptions ? 1 : 0, tag, ierr);
+      const api_result_ = M._gmshViewAddAlias(refTag, copyOptions ? 1 : 0, tag, _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -8116,7 +8143,7 @@ export function wrapGmsh(Module) {
     try {
       const api_what_ = _istring(what, tmp);
       const api_how_ = _istring(how, tmp);
-      M._gmshViewCombine(api_what_, api_how_, remove ? 1 : 0, copyOptions ? 1 : 0, ierr);
+      M._gmshViewCombine(_P(api_what_), _P(api_how_), remove ? 1 : 0, copyOptions ? 1 : 0, _P(ierr));
       _check();
     }
     finally {
@@ -8146,12 +8173,12 @@ export function wrapGmsh(Module) {
   gmsh.view.probe = function(tag, x, y, z, step = -1, numComp = -1, gradient = false, distanceMax = 0., xElemCoord = [], yElemCoord = [], zElemCoord = [], dim = -1) {
     const tmp = [];
     try {
-      const api_values_ = _alloc(8, tmp);
+      const api_values_ = _alloc(2 * _PS, tmp);
       const api_distance_ = _alloc(8, tmp);
       const [api_xElemCoord_, api_xElemCoord_n] = _ivector(xElemCoord, 'double', tmp);
       const [api_yElemCoord_, api_yElemCoord_n] = _ivector(yElemCoord, 'double', tmp);
       const [api_zElemCoord_, api_zElemCoord_n] = _ivector(zElemCoord, 'double', tmp);
-      M._gmshViewProbe(tag, x, y, z, api_values_, api_values_ + 4, api_distance_, step, numComp, gradient ? 1 : 0, distanceMax, api_xElemCoord_, api_xElemCoord_n, api_yElemCoord_, api_yElemCoord_n, api_zElemCoord_, api_zElemCoord_n, dim, ierr);
+      M._gmshViewProbe(tag, x, y, z, _P(api_values_), _P(api_values_ + _PS), _P(api_distance_), step, numComp, gradient ? 1 : 0, distanceMax, _P(api_xElemCoord_), _S(api_xElemCoord_n), _P(api_yElemCoord_), _S(api_yElemCoord_n), _P(api_zElemCoord_), _S(api_zElemCoord_n), dim, _P(ierr));
       _check();
       return [
         _ovector(api_values_, 'double'),
@@ -8172,7 +8199,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_fileName_ = _istring(fileName, tmp);
-      M._gmshViewWrite(tag, api_fileName_, append ? 1 : 0, ierr);
+      M._gmshViewWrite(tag, _P(api_fileName_), append ? 1 : 0, _P(ierr));
       _check();
     }
     finally {
@@ -8189,7 +8216,7 @@ export function wrapGmsh(Module) {
   gmsh.view.setVisibilityPerWindow = function(tag, value, windowIndex = 0) {
     const tmp = [];
     try {
-      M._gmshViewSetVisibilityPerWindow(tag, value, windowIndex, ierr);
+      M._gmshViewSetVisibilityPerWindow(tag, value, windowIndex, _P(ierr));
       _check();
     }
     finally {
@@ -8210,7 +8237,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_name_ = _istring(name, tmp);
-      M._gmshViewOptionSetNumber(tag, api_name_, value, ierr);
+      M._gmshViewOptionSetNumber(tag, _P(api_name_), value, _P(ierr));
       _check();
     }
     finally {
@@ -8231,7 +8258,7 @@ export function wrapGmsh(Module) {
     try {
       const api_name_ = _istring(name, tmp);
       const api_value_ = _alloc(8, tmp);
-      M._gmshViewOptionGetNumber(tag, api_name_, api_value_, ierr);
+      M._gmshViewOptionGetNumber(tag, _P(api_name_), _P(api_value_), _P(ierr));
       _check();
       return M.HEAPF64[api_value_ >> 3];
     }
@@ -8251,7 +8278,7 @@ export function wrapGmsh(Module) {
     try {
       const api_name_ = _istring(name, tmp);
       const api_value_ = _istring(value, tmp);
-      M._gmshViewOptionSetString(tag, api_name_, api_value_, ierr);
+      M._gmshViewOptionSetString(tag, _P(api_name_), _P(api_value_), _P(ierr));
       _check();
     }
     finally {
@@ -8271,7 +8298,7 @@ export function wrapGmsh(Module) {
     try {
       const api_name_ = _istring(name, tmp);
       const api_value_ = _alloc(8, tmp);
-      M._gmshViewOptionGetString(tag, api_name_, api_value_, ierr);
+      M._gmshViewOptionGetString(tag, _P(api_name_), _P(api_value_), _P(ierr));
       _check();
       return _ostring(api_value_);
     }
@@ -8291,7 +8318,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_name_ = _istring(name, tmp);
-      M._gmshViewOptionSetColor(tag, api_name_, r, g, b, a, ierr);
+      M._gmshViewOptionSetColor(tag, _P(api_name_), r, g, b, a, _P(ierr));
       _check();
     }
     finally {
@@ -8315,7 +8342,7 @@ export function wrapGmsh(Module) {
       const api_g_ = _alloc(8, tmp);
       const api_b_ = _alloc(8, tmp);
       const api_a_ = _alloc(8, tmp);
-      M._gmshViewOptionGetColor(tag, api_name_, api_r_, api_g_, api_b_, api_a_, ierr);
+      M._gmshViewOptionGetColor(tag, _P(api_name_), _P(api_r_), _P(api_g_), _P(api_b_), _P(api_a_), _P(ierr));
       _check();
       return [
         M.HEAP32[api_r_ >> 2],
@@ -8337,7 +8364,7 @@ export function wrapGmsh(Module) {
   gmsh.view.option.copy = function(refTag, tag) {
     const tmp = [];
     try {
-      M._gmshViewOptionCopy(refTag, tag, ierr);
+      M._gmshViewOptionCopy(refTag, tag, _P(ierr));
       _check();
     }
     finally {
@@ -8363,9 +8390,9 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_coordinates_, api_coordinates_n] = _ivector(coordinates, 'double', tmp);
-      const api_triangles_ = _alloc(8, tmp);
+      const api_triangles_ = _alloc(2 * _PS, tmp);
       const [api_edges_, api_edges_n] = _ivector(edges, 'size', tmp);
-      M._gmshAlgorithmTriangulate(api_coordinates_, api_coordinates_n, api_triangles_, api_triangles_ + 4, api_edges_, api_edges_n, ierr);
+      M._gmshAlgorithmTriangulate(_P(api_coordinates_), _S(api_coordinates_n), _P(api_triangles_), _P(api_triangles_ + _PS), _P(api_edges_), _S(api_edges_n), _P(ierr));
       _check();
       return _ovector(api_triangles_, 'size');
     }
@@ -8390,10 +8417,10 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const [api_coordinates_, api_coordinates_n] = _ivector(coordinates, 'double', tmp);
-      const api_tetrahedra_ = _alloc(8, tmp);
-      const api_steiner_ = _alloc(8, tmp);
+      const api_tetrahedra_ = _alloc(2 * _PS, tmp);
+      const api_steiner_ = _alloc(2 * _PS, tmp);
       const [api_triangles_, api_triangles_n] = _ivector(triangles, 'size', tmp);
-      M._gmshAlgorithmTetrahedralize(api_coordinates_, api_coordinates_n, api_tetrahedra_, api_tetrahedra_ + 4, api_steiner_, api_steiner_ + 4, api_triangles_, api_triangles_n, ierr);
+      M._gmshAlgorithmTetrahedralize(_P(api_coordinates_), _S(api_coordinates_n), _P(api_tetrahedra_), _P(api_tetrahedra_ + _PS), _P(api_steiner_), _P(api_steiner_ + _PS), _P(api_triangles_), _S(api_triangles_n), _P(ierr));
       _check();
       return [
         _ovector(api_tetrahedra_, 'size'),
@@ -8420,9 +8447,9 @@ export function wrapGmsh(Module) {
       const [api_coord_, api_coord_n] = _ivector(coord, 'double', tmp);
       const [api_sizeAtNode_, api_sizeAtNode_n] = _ivector(sizeAtNode, 'double', tmp);
       const [api_tetraIn_, api_tetraIn_n] = _ivector(tetraIn, 'size', tmp);
-      const api_steiner_ = _alloc(8, tmp);
-      const api_tetraOut_ = _alloc(8, tmp);
-      M._gmshAlgorithmRefineTetrahedra(api_coord_, api_coord_n, api_sizeAtNode_, api_sizeAtNode_n, api_tetraIn_, api_tetraIn_n, api_steiner_, api_steiner_ + 4, api_tetraOut_, api_tetraOut_ + 4, ierr);
+      const api_steiner_ = _alloc(2 * _PS, tmp);
+      const api_tetraOut_ = _alloc(2 * _PS, tmp);
+      M._gmshAlgorithmRefineTetrahedra(_P(api_coord_), _S(api_coord_n), _P(api_sizeAtNode_), _S(api_sizeAtNode_n), _P(api_tetraIn_), _S(api_tetraIn_n), _P(api_steiner_), _P(api_steiner_ + _PS), _P(api_tetraOut_), _P(api_tetraOut_ + _PS), _P(ierr));
       _check();
       return [
         _ovector(api_steiner_, 'double'),
@@ -8449,7 +8476,7 @@ export function wrapGmsh(Module) {
     try {
       const api_name_ = _istring(name, tmp);
       const api_option_ = _istring(option, tmp);
-      M._gmshPluginSetNumber(api_name_, api_option_, value, ierr);
+      M._gmshPluginSetNumber(_P(api_name_), _P(api_option_), value, _P(ierr));
       _check();
     }
     finally {
@@ -8471,7 +8498,7 @@ export function wrapGmsh(Module) {
       const api_name_ = _istring(name, tmp);
       const api_option_ = _istring(option, tmp);
       const api_value_ = _istring(value, tmp);
-      M._gmshPluginSetString(api_name_, api_option_, api_value_, ierr);
+      M._gmshPluginSetString(_P(api_name_), _P(api_option_), _P(api_value_), _P(ierr));
       _check();
     }
     finally {
@@ -8493,9 +8520,9 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_name_ = _istring(name, tmp);
-      const api_result_ = M._gmshPluginRun(api_name_, ierr);
+      const api_result_ = M._gmshPluginRun(_P(api_name_), _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -8517,7 +8544,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_fileName_ = _istring(fileName, tmp);
-      M._gmshPluginLoad(api_fileName_, ierr);
+      M._gmshPluginLoad(_P(api_fileName_), _P(ierr));
       _check();
     }
     finally {
@@ -8536,7 +8563,7 @@ export function wrapGmsh(Module) {
   gmsh.graphics.draw = function() {
     const tmp = [];
     try {
-      M._gmshGraphicsDraw(ierr);
+      M._gmshGraphicsDraw(_P(ierr));
       _check();
     }
     finally {
@@ -8556,7 +8583,7 @@ export function wrapGmsh(Module) {
   gmsh.fltk.initialize = function() {
     const tmp = [];
     try {
-      M._gmshFltkInitialize(ierr);
+      M._gmshFltkInitialize(_P(ierr));
       _check();
     }
     finally {
@@ -8573,7 +8600,7 @@ export function wrapGmsh(Module) {
   gmsh.fltk.finalize = function() {
     const tmp = [];
     try {
-      M._gmshFltkFinalize(ierr);
+      M._gmshFltkFinalize(_P(ierr));
       _check();
     }
     finally {
@@ -8592,7 +8619,7 @@ export function wrapGmsh(Module) {
   gmsh.fltk.wait = function(time = -1.) {
     const tmp = [];
     try {
-      M._gmshFltkWait(time, ierr);
+      M._gmshFltkWait(time, _P(ierr));
       _check();
     }
     finally {
@@ -8611,7 +8638,7 @@ export function wrapGmsh(Module) {
   gmsh.fltk.update = function() {
     const tmp = [];
     try {
-      M._gmshFltkUpdate(ierr);
+      M._gmshFltkUpdate(_P(ierr));
       _check();
     }
     finally {
@@ -8630,7 +8657,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_action_ = _istring(action, tmp);
-      M._gmshFltkAwake(api_action_, ierr);
+      M._gmshFltkAwake(_P(api_action_), _P(ierr));
       _check();
     }
     finally {
@@ -8646,7 +8673,7 @@ export function wrapGmsh(Module) {
   gmsh.fltk.lock = function() {
     const tmp = [];
     try {
-      M._gmshFltkLock(ierr);
+      M._gmshFltkLock(_P(ierr));
       _check();
     }
     finally {
@@ -8662,7 +8689,7 @@ export function wrapGmsh(Module) {
   gmsh.fltk.unlock = function() {
     const tmp = [];
     try {
-      M._gmshFltkUnlock(ierr);
+      M._gmshFltkUnlock(_P(ierr));
       _check();
     }
     finally {
@@ -8683,7 +8710,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_optionFileName_ = _istring(optionFileName, tmp);
-      M._gmshFltkRun(api_optionFileName_, ierr);
+      M._gmshFltkRun(_P(api_optionFileName_), _P(ierr));
       _check();
     }
     finally {
@@ -8702,9 +8729,9 @@ export function wrapGmsh(Module) {
   gmsh.fltk.isAvailable = function() {
     const tmp = [];
     try {
-      const api_result_ = M._gmshFltkIsAvailable(ierr);
+      const api_result_ = M._gmshFltkIsAvailable(_P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -8723,11 +8750,11 @@ export function wrapGmsh(Module) {
   gmsh.fltk.selectEntities = function(dim = -1) {
     const tmp = [];
     try {
-      const api_dimTags_ = _alloc(8, tmp);
-      const api_result_ = M._gmshFltkSelectEntities(api_dimTags_, api_dimTags_ + 4, dim, ierr);
+      const api_dimTags_ = _alloc(2 * _PS, tmp);
+      const api_result_ = M._gmshFltkSelectEntities(_P(api_dimTags_), _P(api_dimTags_ + _PS), dim, _P(ierr));
       _check();
       return [
-        api_result_,
+        _N(api_result_),
         _ovectorpair(api_dimTags_)];
     }
     finally {
@@ -8745,11 +8772,11 @@ export function wrapGmsh(Module) {
   gmsh.fltk.selectElements = function() {
     const tmp = [];
     try {
-      const api_elementTags_ = _alloc(8, tmp);
-      const api_result_ = M._gmshFltkSelectElements(api_elementTags_, api_elementTags_ + 4, ierr);
+      const api_elementTags_ = _alloc(2 * _PS, tmp);
+      const api_result_ = M._gmshFltkSelectElements(_P(api_elementTags_), _P(api_elementTags_ + _PS), _P(ierr));
       _check();
       return [
-        api_result_,
+        _N(api_result_),
         _ovector(api_elementTags_, 'size')];
     }
     finally {
@@ -8767,11 +8794,11 @@ export function wrapGmsh(Module) {
   gmsh.fltk.selectViews = function() {
     const tmp = [];
     try {
-      const api_viewTags_ = _alloc(8, tmp);
-      const api_result_ = M._gmshFltkSelectViews(api_viewTags_, api_viewTags_ + 4, ierr);
+      const api_viewTags_ = _alloc(2 * _PS, tmp);
+      const api_result_ = M._gmshFltkSelectViews(_P(api_viewTags_), _P(api_viewTags_ + _PS), _P(ierr));
       _check();
       return [
-        api_result_,
+        _N(api_result_),
         _ovector(api_viewTags_, 'int')];
     }
     finally {
@@ -8797,13 +8824,13 @@ export function wrapGmsh(Module) {
   gmsh.fltk.pick = function(x, y, dim = -1, elements = false, w = 5, h = 5) {
     const tmp = [];
     try {
-      const api_dimTags_ = _alloc(8, tmp);
-      const api_elementTags_ = _alloc(8, tmp);
-      const api_viewTags_ = _alloc(8, tmp);
-      const api_result_ = M._gmshFltkPick(api_dimTags_, api_dimTags_ + 4, api_elementTags_, api_elementTags_ + 4, api_viewTags_, api_viewTags_ + 4, x, y, dim, elements ? 1 : 0, w, h, ierr);
+      const api_dimTags_ = _alloc(2 * _PS, tmp);
+      const api_elementTags_ = _alloc(2 * _PS, tmp);
+      const api_viewTags_ = _alloc(2 * _PS, tmp);
+      const api_result_ = M._gmshFltkPick(_P(api_dimTags_), _P(api_dimTags_ + _PS), _P(api_elementTags_), _P(api_elementTags_ + _PS), _P(api_viewTags_), _P(api_viewTags_ + _PS), x, y, dim, elements ? 1 : 0, w, h, _P(ierr));
       _check();
       return [
-        api_result_,
+        _N(api_result_),
         _ovectorpair(api_dimTags_),
         _ovector(api_elementTags_, 'size'),
         _ovector(api_viewTags_, 'int')];
@@ -8824,7 +8851,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_how_ = _istring(how, tmp);
-      M._gmshFltkSplitCurrentWindow(api_how_, ratio, ierr);
+      M._gmshFltkSplitCurrentWindow(_P(api_how_), ratio, _P(ierr));
       _check();
     }
     finally {
@@ -8842,7 +8869,7 @@ export function wrapGmsh(Module) {
   gmsh.fltk.setCurrentWindow = function(windowIndex = 0) {
     const tmp = [];
     try {
-      M._gmshFltkSetCurrentWindow(windowIndex, ierr);
+      M._gmshFltkSetCurrentWindow(windowIndex, _P(ierr));
       _check();
     }
     finally {
@@ -8860,7 +8887,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_message_ = _istring(message, tmp);
-      M._gmshFltkSetStatusMessage(api_message_, graphics ? 1 : 0, ierr);
+      M._gmshFltkSetStatusMessage(_P(api_message_), graphics ? 1 : 0, _P(ierr));
       _check();
     }
     finally {
@@ -8876,7 +8903,7 @@ export function wrapGmsh(Module) {
   gmsh.fltk.showContextWindow = function(dim, tag) {
     const tmp = [];
     try {
-      M._gmshFltkShowContextWindow(dim, tag, ierr);
+      M._gmshFltkShowContextWindow(dim, tag, _P(ierr));
       _check();
     }
     finally {
@@ -8893,7 +8920,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_name_ = _istring(name, tmp);
-      M._gmshFltkOpenTreeItem(api_name_, ierr);
+      M._gmshFltkOpenTreeItem(_P(api_name_), _P(ierr));
       _check();
     }
     finally {
@@ -8910,7 +8937,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_name_ = _istring(name, tmp);
-      M._gmshFltkCloseTreeItem(api_name_, ierr);
+      M._gmshFltkCloseTreeItem(_P(api_name_), _P(ierr));
       _check();
     }
     finally {
@@ -8932,9 +8959,9 @@ export function wrapGmsh(Module) {
   gmsh.parser.getNames = function(search = "") {
     const tmp = [];
     try {
-      const api_names_ = _alloc(8, tmp);
+      const api_names_ = _alloc(2 * _PS, tmp);
       const api_search_ = _istring(search, tmp);
-      M._gmshParserGetNames(api_names_, api_names_ + 4, api_search_, ierr);
+      M._gmshParserGetNames(_P(api_names_), _P(api_names_ + _PS), _P(api_search_), _P(ierr));
       _check();
       return _ovectorstring(api_names_);
     }
@@ -8955,7 +8982,7 @@ export function wrapGmsh(Module) {
     try {
       const api_name_ = _istring(name, tmp);
       const [api_value_, api_value_n] = _ivector(value, 'double', tmp);
-      M._gmshParserSetNumber(api_name_, api_value_, api_value_n, ierr);
+      M._gmshParserSetNumber(_P(api_name_), _P(api_value_), _S(api_value_n), _P(ierr));
       _check();
     }
     finally {
@@ -8975,7 +9002,7 @@ export function wrapGmsh(Module) {
     try {
       const api_name_ = _istring(name, tmp);
       const [api_value_, api_value_n] = _ivectorstring(value, tmp);
-      M._gmshParserSetString(api_name_, api_value_, api_value_n, ierr);
+      M._gmshParserSetString(_P(api_name_), _P(api_value_), _S(api_value_n), _P(ierr));
       _check();
     }
     finally {
@@ -8995,8 +9022,8 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_name_ = _istring(name, tmp);
-      const api_value_ = _alloc(8, tmp);
-      M._gmshParserGetNumber(api_name_, api_value_, api_value_ + 4, ierr);
+      const api_value_ = _alloc(2 * _PS, tmp);
+      M._gmshParserGetNumber(_P(api_name_), _P(api_value_), _P(api_value_ + _PS), _P(ierr));
       _check();
       return _ovector(api_value_, 'double');
     }
@@ -9017,8 +9044,8 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_name_ = _istring(name, tmp);
-      const api_value_ = _alloc(8, tmp);
-      M._gmshParserGetString(api_name_, api_value_, api_value_ + 4, ierr);
+      const api_value_ = _alloc(2 * _PS, tmp);
+      M._gmshParserGetString(_P(api_name_), _P(api_value_), _P(api_value_ + _PS), _P(ierr));
       _check();
       return _ovectorstring(api_value_);
     }
@@ -9037,7 +9064,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_name_ = _istring(name, tmp);
-      M._gmshParserClear(api_name_, ierr);
+      M._gmshParserClear(_P(api_name_), _P(ierr));
       _check();
     }
     finally {
@@ -9054,7 +9081,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_fileName_ = _istring(fileName, tmp);
-      M._gmshParserParse(api_fileName_, ierr);
+      M._gmshParserParse(_P(api_fileName_), _P(ierr));
       _check();
     }
     finally {
@@ -9075,7 +9102,7 @@ export function wrapGmsh(Module) {
     try {
       const api_data_ = _istring(data, tmp);
       const api_format_ = _istring(format, tmp);
-      M._gmshOnelabSet(api_data_, api_format_, ierr);
+      M._gmshOnelabSet(_P(api_data_), _P(api_format_), _P(ierr));
       _check();
     }
     finally {
@@ -9097,7 +9124,7 @@ export function wrapGmsh(Module) {
       const api_data_ = _alloc(8, tmp);
       const api_name_ = _istring(name, tmp);
       const api_format_ = _istring(format, tmp);
-      M._gmshOnelabGet(api_data_, api_name_, api_format_, ierr);
+      M._gmshOnelabGet(_P(api_data_), _P(api_name_), _P(api_format_), _P(ierr));
       _check();
       return _ostring(api_data_);
     }
@@ -9117,9 +9144,9 @@ export function wrapGmsh(Module) {
   gmsh.onelab.getNames = function(search = "") {
     const tmp = [];
     try {
-      const api_names_ = _alloc(8, tmp);
+      const api_names_ = _alloc(2 * _PS, tmp);
       const api_search_ = _istring(search, tmp);
-      M._gmshOnelabGetNames(api_names_, api_names_ + 4, api_search_, ierr);
+      M._gmshOnelabGetNames(_P(api_names_), _P(api_names_ + _PS), _P(api_search_), _P(ierr));
       _check();
       return _ovectorstring(api_names_);
     }
@@ -9140,7 +9167,7 @@ export function wrapGmsh(Module) {
     try {
       const api_name_ = _istring(name, tmp);
       const [api_value_, api_value_n] = _ivector(value, 'double', tmp);
-      M._gmshOnelabSetNumber(api_name_, api_value_, api_value_n, ierr);
+      M._gmshOnelabSetNumber(_P(api_name_), _P(api_value_), _S(api_value_n), _P(ierr));
       _check();
     }
     finally {
@@ -9160,7 +9187,7 @@ export function wrapGmsh(Module) {
     try {
       const api_name_ = _istring(name, tmp);
       const [api_value_, api_value_n] = _ivectorstring(value, tmp);
-      M._gmshOnelabSetString(api_name_, api_value_, api_value_n, ierr);
+      M._gmshOnelabSetString(_P(api_name_), _P(api_value_), _S(api_value_n), _P(ierr));
       _check();
     }
     finally {
@@ -9180,8 +9207,8 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_name_ = _istring(name, tmp);
-      const api_value_ = _alloc(8, tmp);
-      M._gmshOnelabGetNumber(api_name_, api_value_, api_value_ + 4, ierr);
+      const api_value_ = _alloc(2 * _PS, tmp);
+      M._gmshOnelabGetNumber(_P(api_name_), _P(api_value_), _P(api_value_ + _PS), _P(ierr));
       _check();
       return _ovector(api_value_, 'double');
     }
@@ -9202,8 +9229,8 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_name_ = _istring(name, tmp);
-      const api_value_ = _alloc(8, tmp);
-      M._gmshOnelabGetString(api_name_, api_value_, api_value_ + 4, ierr);
+      const api_value_ = _alloc(2 * _PS, tmp);
+      M._gmshOnelabGetString(_P(api_name_), _P(api_value_), _P(api_value_ + _PS), _P(ierr));
       _check();
       return _ovectorstring(api_value_);
     }
@@ -9224,9 +9251,9 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_name_ = _istring(name, tmp);
-      const api_result_ = M._gmshOnelabGetChanged(api_name_, ierr);
+      const api_result_ = M._gmshOnelabGetChanged(_P(api_name_), _P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -9243,7 +9270,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_name_ = _istring(name, tmp);
-      M._gmshOnelabSetChanged(api_name_, value, ierr);
+      M._gmshOnelabSetChanged(_P(api_name_), value, _P(ierr));
       _check();
     }
     finally {
@@ -9261,7 +9288,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_name_ = _istring(name, tmp);
-      M._gmshOnelabClear(api_name_, ierr);
+      M._gmshOnelabClear(_P(api_name_), _P(ierr));
       _check();
     }
     finally {
@@ -9281,7 +9308,7 @@ export function wrapGmsh(Module) {
     try {
       const api_name_ = _istring(name, tmp);
       const api_command_ = _istring(command, tmp);
-      M._gmshOnelabRun(api_name_, api_command_, ierr);
+      M._gmshOnelabRun(_P(api_name_), _P(api_command_), _P(ierr));
       _check();
     }
     finally {
@@ -9302,7 +9329,7 @@ export function wrapGmsh(Module) {
     try {
       const api_message_ = _istring(message, tmp);
       const api_level_ = _istring(level, tmp);
-      M._gmshLoggerWrite(api_message_, api_level_, ierr);
+      M._gmshLoggerWrite(_P(api_message_), _P(api_level_), _P(ierr));
       _check();
     }
     finally {
@@ -9318,7 +9345,7 @@ export function wrapGmsh(Module) {
   gmsh.logger.start = function() {
     const tmp = [];
     try {
-      M._gmshLoggerStart(ierr);
+      M._gmshLoggerStart(_P(ierr));
       _check();
     }
     finally {
@@ -9336,8 +9363,8 @@ export function wrapGmsh(Module) {
   gmsh.logger.get = function() {
     const tmp = [];
     try {
-      const api_log_ = _alloc(8, tmp);
-      M._gmshLoggerGet(api_log_, api_log_ + 4, ierr);
+      const api_log_ = _alloc(2 * _PS, tmp);
+      M._gmshLoggerGet(_P(api_log_), _P(api_log_ + _PS), _P(ierr));
       _check();
       return _ovectorstring(api_log_);
     }
@@ -9354,7 +9381,7 @@ export function wrapGmsh(Module) {
   gmsh.logger.stop = function() {
     const tmp = [];
     try {
-      M._gmshLoggerStop(ierr);
+      M._gmshLoggerStop(_P(ierr));
       _check();
     }
     finally {
@@ -9372,9 +9399,9 @@ export function wrapGmsh(Module) {
   gmsh.logger.getWallTime = function() {
     const tmp = [];
     try {
-      const api_result_ = M._gmshLoggerGetWallTime(ierr);
+      const api_result_ = M._gmshLoggerGetWallTime(_P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -9391,9 +9418,9 @@ export function wrapGmsh(Module) {
   gmsh.logger.getCpuTime = function() {
     const tmp = [];
     try {
-      const api_result_ = M._gmshLoggerGetCpuTime(ierr);
+      const api_result_ = M._gmshLoggerGetCpuTime(_P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -9410,9 +9437,9 @@ export function wrapGmsh(Module) {
   gmsh.logger.getMemory = function() {
     const tmp = [];
     try {
-      const api_result_ = M._gmshLoggerGetMemory(ierr);
+      const api_result_ = M._gmshLoggerGetMemory(_P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -9429,9 +9456,9 @@ export function wrapGmsh(Module) {
   gmsh.logger.getTotalMemory = function() {
     const tmp = [];
     try {
-      const api_result_ = M._gmshLoggerGetTotalMemory(ierr);
+      const api_result_ = M._gmshLoggerGetTotalMemory(_P(ierr));
       _check();
-      return api_result_;
+      return _N(api_result_);
     }
     finally {
       tmp.forEach((p) => M._free(p));
@@ -9449,7 +9476,7 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       const api_message_ = _alloc(8, tmp);
-      M._gmshLoggerGetLastError(api_message_, ierr);
+      M._gmshLoggerGetLastError(_P(api_message_), _P(ierr));
       if(M.HEAP32[ierr >> 2])
         throw new Error('Could not get last error');
       return _ostring(api_message_);
