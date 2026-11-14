@@ -127,9 +127,12 @@ unsigned int PViewOptions::getColor(int i, int nb)
   return colorTable.table[index];
 }
 
+// (an empty custom range, which a view gets when it is created with a custom
+// range type, e.g. from View.RangeType = 2 in the option file, is the range of
+// its values)
 void PViewOptions::getRange(PViewData *data, double &min, double &max)
 {
-  if(rangeType == Custom) {
+  if(rangeType == Custom && customMin != customMax) {
     min = customMin;
     max = customMax;
   }

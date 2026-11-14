@@ -261,7 +261,9 @@ void PView::getAdaptiveRange(double &min, double &max)
 {
   min = 0.;
   max = -1.;
-  if(_options->rangeType == PViewOptions::Custom) {
+  // (an empty custom range is the range of the values: none)
+  if(_options->rangeType == PViewOptions::Custom &&
+     _options->customMin != _options->customMax) {
     min = _options->customMin;
     max = _options->customMax;
   }
