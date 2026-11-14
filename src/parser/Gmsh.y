@@ -5014,6 +5014,28 @@ Coherence :
         GModel::current()->getGEOInternals()->mergeVertices(tags);
       List_Delete($4);
     }
+  | tHealShapes '{' ListOfShapes '}' '{' FExpr '}' tEND
+    {
+#if defined(HAVE_DISCRETECAD)
+      if(gmsh_yyfactory == "Discrete" &&
+         GModel::current()->getDiscreteCADInternals()) {
+        std::vector<std::pair<int, int> > in;
+        ListOfShapes2VectorOfPairs($3, in);
+        std::vector<int> surfaces;
+        for(auto &p : in) {
+          if(p.first == 2) surfaces.push_back(p.second);
+          else yymsg(0, "HealShapes only heals surfaces with the Discrete "
+                     "geometry kernel");
+        }
+        if(!GModel::current()->getDiscreteCADInternals()->heal(surfaces, $6))
+          yymsg(0, "Could not heal shapes");
+      }
+      else
+#endif
+        yymsg(0, "HealShapes with a tolerance only available with Discrete "
+              "geometry kernel");
+      List_Delete($3);
+    }
   | tHealShapes '{' ListOfShapes '}' tEND
     {
       std::vector<std::pair<int, int> > in, out;
@@ -5036,7 +5058,7 @@ Coherence :
           else yymsg(0, "HealShapes only heals surfaces with the Discrete "
                      "geometry kernel");
         }
-        if(!GModel::current()->getDiscreteCADInternals()->heal(surfaces))
+        if(!GModel::current()->getDiscreteCADInternals()->heal(surfaces, -1.))
           yymsg(0, "Could not heal shapes");
       }
 #endif
@@ -5078,7 +5100,7 @@ Coherence :
       else if(gmsh_yyfactory == "Discrete" &&
               GModel::current()->getDiscreteCADInternals()) {
         if(!GModel::current()->getDiscreteCADInternals()->heal
-           (std::vector<int>()))
+           (std::vector<int>(), -1.))
           yymsg(0, "Could not heal shapes");
       }
 #endif

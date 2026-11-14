@@ -2961,7 +2961,8 @@ static bool rawSurfaces(const std::map<int, DiscreteCAD_Internals::Surface> &s,
   return true;
 }
 
-bool DiscreteCAD_Internals::heal(const std::vector<int> &surfaceTags)
+bool DiscreteCAD_Internals::heal(const std::vector<int> &surfaceTags,
+                                 double tolerance)
 {
   stepReport report{_reports, "Failed (see the messages)"};
   std::vector<int> raw;
@@ -2977,6 +2978,14 @@ bool DiscreteCAD_Internals::heal(const std::vector<int> &surfaceTags)
   std::vector<std::size_t> kept;
   const std::vector<std::array<int, 3> > before = tri;
   removeBadTriangles(tri, r, &kept);
+  // (the cracks zipped: the triangle of the input each one comes from)
+  std::string proposed;
+  if(!(tolerance > 0.)) tolerance = zipTolerance(_nodes, tri, &proposed);
+  DiscreteCADZipReport z;
+  std::vector<std::size_t> zipped;
+  zipFreeEdges(_nodes, tri, tolerance, z, &zipped);
+  for(std::size_t &i : zipped) i = kept[i];
+  kept = zipped;
   std::vector<int> component;
   std::vector<char> turnedOver;
   orientTriangles(_nodes, tri, r, &component, &turnedOver);
@@ -2998,6 +3007,26 @@ bool DiscreteCAD_Internals::heal(const std::vector<int> &surfaceTags)
     report.add(plural(duplicated.size() / 3, "duplicated triangle",
                       "duplicated triangles") + " removed",
                2, duplicated);
+    report.add(plural(z.merged.size(), "node", "nodes") +
+                 " of free edges merged into nodes of others (cracks)",
+               0, z.merged);
+    report.add(plural(z.inserted.size(), "node", "nodes") +
+                 " inserted into free edges (T-junctions)",
+               0, z.inserted);
+    {
+      std::map<std::pair<int, int>, int> count;
+      for(auto &t : tri)
+        for(int k = 0; k < 3; k++) count[std::minmax(t[k], t[(k + 1) % 3])]++;
+      std::vector<int> left;
+      for(auto &c : count)
+        if(c.second == 1) {
+          left.push_back(c.first.first);
+          left.push_back(c.first.second);
+        }
+      report.add(plural(left.size() / 2, "free edge", "free edges") +
+                   " left (holes and gaps wider than the tolerance)",
+                 1, left);
+    }
     static const char *why[4] = {"", " turned over against their neighbors",
                                  " turned over with closed pieces of negative "
                                  "volume",
@@ -3066,8 +3095,39 @@ bool DiscreteCAD_Internals::heal(const std::vector<int> &surfaceTags)
              " of negative volume and " +
              plural(r.reversedOpen, "open piece", "open pieces") +
              " against the winding number of the others";
-  report.text = removed + "\n" + pieces + "\n" + turned;
+  char tol[64];
+  snprintf(tol, sizeof(tol), "%g", tolerance);
+  const std::string zip =
+    "cracks zipped within " + std::string(tol) +
+    (proposed.empty() ? std::string("") : " (" + proposed + ")") + ": " +
+    plural(z.merged.size(), "node", "nodes") + " merged, " +
+    plural(z.inserted.size(), "node", "nodes") + " inserted into free edges; " +
+    std::to_string(z.freeBefore) + " free edges, " +
+    std::to_string(z.freeAfter) + " left";
+  // (what is left)
+  DiscreteCADDefects after;
+  findDefects(_nodes, tri, after);
+  const std::string left =
+    "left: " + plural(after.free.size(), "free edge", "free edges") + ", " +
+    plural(after.nonManifold.size(), "non-manifold edge", "non-manifold edges") +
+    ", " + plural(after.misoriented.size(), "misoriented edge", "misoriented edges") +
+    ", " + plural(after.tJunctions.size(), "T-junction", "T-junctions") + ", " +
+    plural(after.needles.size(), "needle", "needles");
+  report.add(plural(after.nonManifold.size(), "non-manifold edge",
+                    "non-manifold edges") + " left (of more than two triangles)",
+             1, [&] {
+               std::vector<int> n;
+               for(auto &e : after.nonManifold) {
+                 n.push_back(e.first);
+                 n.push_back(e.second);
+               }
+               return n;
+             }());
+  report.text = removed + "\n" + zip + "\n" + pieces + "\n" + turned + "\n" +
+                left;
   Msg::Info("Discrete CAD heal: %s", removed.c_str());
+  Msg::Info("Discrete CAD heal: %s", zip.c_str());
+  Msg::Info("Discrete CAD heal: %s", left.c_str());
   Msg::Info("Discrete CAD heal: %s", pieces.c_str());
   Msg::Info("Discrete CAD heal: %s", turned.c_str());
   _changed = true;

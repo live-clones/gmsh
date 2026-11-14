@@ -7778,11 +7778,12 @@ GMSH_API void gmsh::model::discrete::importTriangulations(
 #endif
 }
 
-GMSH_API void gmsh::model::discrete::heal(const std::vector<int> &surfaceTags)
+GMSH_API void gmsh::model::discrete::heal(const std::vector<int> &surfaceTags,
+                                          const double tolerance)
 {
   if(!_checkInit()) return;
 #if defined(HAVE_DISCRETECAD)
-  _discreteCAD()->heal(surfaceTags);
+  _discreteCAD()->heal(surfaceTags, tolerance);
 #else
   Msg::Error("Discrete CAD modeler not available");
 #endif

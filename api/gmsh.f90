@@ -15279,28 +15279,37 @@ module gmsh
 
   !> Heal together the raw surfaces `surfaceTags' of the discrete CAD
   !! representation (see `importTriangulations'; all of them if `surfaceTags' is
-  !! empty): remove their degenerate triangles and their duplicated ones, and
-  !! orient their triangles, as their neighbors across the edges shared by two
-  !! triangles, then each closed component so that its volume is positive and
-  !! each open one so that the generalized winding number of all the triangles
-  !! is the nearest to whole numbers around it.
+  !! empty): remove their degenerate triangles and their duplicated ones, zip
+  !! their cracks (the nodes of their free edges, of one triangle, within
+  !! `tolerance' of a node of another free edge merged into it, those within
+  !! `tolerance' of the inside of a free edge inserted into it; the tolerance
+  !! proposed from the distances between the free edges if `tolerance' is not
+  !! positive), and orient their triangles, as their neighbors across the edges
+  !! shared by two triangles, then each closed component so that its volume is
+  !! positive and each open one so that the generalized winding number of all
+  !! the triangles is the nearest to whole numbers around it.
   subroutine gmshModelDiscreteHeal(surfaceTags, &
+                                   tolerance, &
                                    ierr)
     interface
     subroutine C_API(api_surfaceTags_, &
                      api_surfaceTags_n_, &
+                     tolerance, &
                      ierr_) &
       bind(C, name="gmshModelDiscreteHeal")
       use, intrinsic :: iso_c_binding
       integer(c_int), dimension(*) :: api_surfaceTags_
       integer(c_size_t), value, intent(in) :: api_surfaceTags_n_
+      real(c_double), value, intent(in) :: tolerance
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:), intent(in) :: surfaceTags
+    real(c_double), intent(in), optional :: tolerance
     integer(c_int), intent(out), optional :: ierr
     call C_API(api_surfaceTags_=surfaceTags, &
          api_surfaceTags_n_=size_gmsh_int(surfaceTags), &
+         tolerance=optval_c_double(-1., tolerance), &
          ierr_=ierr)
   end subroutine gmshModelDiscreteHeal
 

@@ -17,6 +17,7 @@
 #define DISCRETE_CAD_HEAL_H
 
 #include <array>
+#include <string>
 #include <vector>
 
 // The healing of a soup of triangles (a STL file of separate parts, with
@@ -56,6 +57,33 @@ void orientTriangles(const std::vector<std::array<double, 3> > &x,
                      DiscreteCADHealReport &report,
                      std::vector<int> *component = nullptr,
                      std::vector<char> *turned = nullptr);
+
+// The cracks of a soup of triangles zipped: the nodes of its free edges
+// (edges of one triangle) within tolerance of a node of another free edge
+// merged into it (closest pairs first, never into more than two distinct
+// triangles along an edge; a triangle with the two nodes collapses), and
+// those within tolerance of the inside of a free edge inserted into it, its
+// triangle split (a T-junction), until nothing changes; the degenerate and
+// duplicated triangles then made removed. For each triangle left, the
+// triangle of the input it comes from in origin; the nodes merged away, the
+// nodes inserted and the free edges before and after in the report.
+struct DiscreteCADZipReport {
+  std::vector<int> merged, inserted;
+  std::size_t freeBefore = 0, freeAfter = 0;
+};
+void zipFreeEdges(const std::vector<std::array<double, 3> > &x,
+                  std::vector<std::array<int, 3> > &triangles, double tolerance,
+                  DiscreteCADZipReport &report,
+                  std::vector<std::size_t> *origin = nullptr);
+
+// A tolerance for zipFreeEdges: in the distribution of the distances from the
+// nodes of free edges to the nearest free edge not touching them, the
+// emptiest half decade between the cracks (the first peak) and the gaps
+// between parts (the main peak), its upper end; 0 if there is no free edge.
+// What it is made of in why.
+double zipTolerance(const std::vector<std::array<double, 3> > &x,
+                    const std::vector<std::array<int, 3> > &triangles,
+                    std::string *why = nullptr);
 
 // The defects of a soup of triangles, as it is: the triangles degenerate (two
 // nodes the same, or no area), duplicated (the nodes of one before) and

@@ -4780,12 +4780,12 @@ GMSH_API void gmshModelDiscreteImportTriangulations(const char * fileName, int *
   }
 }
 
-GMSH_API void gmshModelDiscreteHeal(const int * surfaceTags, const size_t surfaceTags_n, int * ierr)
+GMSH_API void gmshModelDiscreteHeal(const int * surfaceTags, const size_t surfaceTags_n, const double tolerance, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_surfaceTags_(surfaceTags, surfaceTags + surfaceTags_n);
-    gmsh::model::discrete::heal(api_surfaceTags_);
+    gmsh::model::discrete::heal(api_surfaceTags_, tolerance);
   }
   catch(...){
     if(ierr) *ierr = 1;

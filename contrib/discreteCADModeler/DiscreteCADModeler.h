@@ -307,9 +307,11 @@ public:
   bool importTriangulations(const std::string &fileName,
                             std::vector<std::pair<int, int> > &outDimTags);
   // the raw surfaces surfaceTags (all of them if empty) healed together:
-  // their degenerate triangles and their copies removed, their triangles
-  // oriented (see DiscreteCADHeal.h)
-  bool heal(const std::vector<int> &surfaceTags);
+  // their degenerate triangles and their copies removed, their cracks zipped
+  // within tolerance (the nodes of their free edges merged, inserted into the
+  // free edges they are on; the tolerance proposed by zipTolerance if it is
+  // not positive), their triangles oriented (see DiscreteCADHeal.h)
+  bool heal(const std::vector<int> &surfaceTags, double tolerance);
   // the raw surfaces surfaceTags (all of them if empty) replaced by their
   // topology, as addTriangulation builds it (each raw surface a piece): the
   // surfaces on analytic surfaces within tolerance get the parameters of their

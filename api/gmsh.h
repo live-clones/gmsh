@@ -4047,11 +4047,16 @@ namespace gmsh { // Top-level functions
       // Heal together the raw surfaces `surfaceTags' of the discrete CAD
       // representation (see `importTriangulations'; all of them if `surfaceTags'
       // is empty): remove their degenerate triangles and their duplicated ones,
-      // and orient their triangles, as their neighbors across the edges shared by
-      // two triangles, then each closed component so that its volume is positive
-      // and each open one so that the generalized winding number of all the
-      // triangles is the nearest to whole numbers around it.
-      GMSH_API void heal(const std::vector<int> & surfaceTags);
+      // zip their cracks (the nodes of their free edges, of one triangle, within
+      // `tolerance' of a node of another free edge merged into it, those within
+      // `tolerance' of the inside of a free edge inserted into it; the tolerance
+      // proposed from the distances between the free edges if `tolerance' is not
+      // positive), and orient their triangles, as their neighbors across the edges
+      // shared by two triangles, then each closed component so that its volume is
+      // positive and each open one so that the generalized winding number of all
+      // the triangles is the nearest to whole numbers around it.
+      GMSH_API void heal(const std::vector<int> & surfaceTags,
+                         const double tolerance = -1.);
 
       // gmsh::model::discrete::classify
       //
