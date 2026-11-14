@@ -1226,7 +1226,11 @@ static void findPartitionComponents(
 // component, the neighbors it was found to touch, so that the BRep can be
 // distributed among the components instead of duplicated onto all of them.
 // The components claim their boundary keys (faces for surfaces, edges for
-// curves), then the candidate neighbors are probed in a single pass.
+// curves), then the candidate neighbors are probed in a single pass. A key can
+// be claimed by several components: a partition boundary that runs along a
+// model curve (or surface) is carried both by a piece of that model entity and
+// by a partition entity, so the same mesh edge (or face) belongs to a
+// component of each, and both must be credited with the neighbors touching it.
 // The facets (faces in 3D, edges in 2D) of an element
 static int getNumFacets(MElement *e, MFace *) { return e->getNumFaces(); }
 static int getNumFacets(MElement *e, MEdge *) { return e->getNumEdges(); }
@@ -1254,7 +1258,11 @@ static int getFacetOrientation(const MEdge &reference, const MEdge &element)
 
 template <class KEY, class HASH, class EQUAL> class BRepDistributor {
 private:
-  std::unordered_map<KEY, std::size_t, HASH, EQUAL> _owner;
+  struct Owner {
+    std::size_t component;
+    int orientation; // relative to the stored map key
+  };
+  std::unordered_map<KEY, std::vector<Owner>, HASH, EQUAL> _owners;
   std::vector<setorientity> _bounds;
 
 public:
@@ -1265,7 +1273,11 @@ public:
   }
   void claim(const KEY &key, std::size_t component)
   {
-    _owner.insert(std::make_pair(key, component));
+    auto inserted = _owners.emplace(key, std::vector<Owner>());
+    auto it = inserted.first;
+    // Coincident entities can carry the facet in opposite orientations.
+    const int ori = inserted.second ? 1 : getFacetOrientation(it->first, key);
+    it->second.push_back({component, ori});
   }
   // Probes the facets of all the elements of the candidate neighbors, in
   // parallel: the owners are only read, the hits are merged at the end
@@ -1296,11 +1308,13 @@ public:
           MElement *e = cand[k]->getMeshElement(i - offset[k]);
           for(int j = 0; j < getNumFacets(e, (KEY *)nullptr); j++) {
             KEY facet = getFacet(e, j, (KEY *)nullptr);
-            auto it = _owner.find(facet);
-            if(it == _owner.end()) continue;
+            auto it = _owners.find(facet);
+            if(it == _owners.end()) continue;
             const int ori = getFacetOrientation(facet, it->first);
-            if(ori)
-              myHits.insert(std::make_pair(std::make_pair(it->second, k), ori));
+            if(!ori) continue;
+            for(const auto &owner : it->second)
+              myHits.insert(std::make_pair(std::make_pair(owner.component, k),
+                                          ori * owner.orientation));
           }
         }
       }
@@ -1316,7 +1330,6 @@ public:
     return _bounds[component].find(std::make_pair(orientation, neighbor)) !=
            _bounds[component].end();
   }
-  bool empty() const { return _owner.empty(); }
 };
 
 // The per-entity graphs below are reused from one partition entity to the
