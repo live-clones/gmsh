@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <cmath>
 #include <utility>
 #include <list>
 #include <map>
@@ -392,12 +393,33 @@ qmTriangle::gamma
 }
 */
 
-static PolyMesh::Face *Walk(PolyMesh::Face *f, double x, double y)
+// is (pos[0], pos[1]) in f (on its boundary included)?
+static bool inFace(PolyMesh::Face *f, const double *pos)
 {
+  PolyMesh::HalfEdge *he = f->he;
+  PolyMesh::Vertex *v0 = he->v, *v1 = he->next->v, *v2 = he->next->next->v;
+  return robustPredicates::orient2d(v0->position, v1->position, pos) <= 0 &&
+         robustPredicates::orient2d(v1->position, v2->position, pos) <= 0 &&
+         robustPredicates::orient2d(v2->position, v0->position, pos) <= 0;
+}
+
+// the face of pm that contains (x, y), walking from f; nullptr if there is none
+// (a point outside the mesh, or not a number). A walk in a Delaunay mesh never
+// visits more faces than the mesh has; in a degenerate one it may go round in
+// circles, and the faces are then searched one by one
+static PolyMesh::Face *Walk(PolyMesh *pm, PolyMesh::Face *f, double x,
+                            double y)
+{
+  if(!std::isfinite(x) || !std::isfinite(y)) return nullptr;
   double POS[2] = {x, y};
   PolyMesh::HalfEdge *he = f->he;
 
-  while(1) {
+  for(std::size_t steps = 0;; steps++) {
+    if(steps > pm->faces.size()) {
+      for(auto face : pm->faces)
+        if(inFace(face, POS)) return face;
+      return nullptr;
+    }
     PolyMesh::Vertex *v0 = he->v;
     PolyMesh::Vertex *v1 = he->next->v;
     PolyMesh::Vertex *v2 = he->next->next->v;
@@ -436,6 +458,7 @@ static PolyMesh::Face *Walk(PolyMesh::Face *f, double x, double y)
                  v1->position.x(), v1->position.y(), v1->position.z(),
                  v2->position.x(), v2->position.y(), v2->position.z(),
                  s0, s1, s2);
+      return nullptr;
     }
     if(he == nullptr) break;
   }
@@ -488,8 +511,13 @@ static int recover_edge(PolyMesh *pm, PolyMesh::Vertex *v_start,
 
   if(_list.empty()) { return -1; }
 
+  // (in a degenerate mesh, e.g. with aligned points, the walk along the edge
+  // and the swaps that follow may never end: they are bounded)
+  const std::size_t maxSteps = pm->hedges.size() + 10;
+
   // find all intersections
   while(1) {
+    if(_list.size() > maxSteps) return -4;
     he = _list.back();
     he = he->opposite;
     if(!he) return -2;
@@ -525,7 +553,12 @@ static int recover_edge(PolyMesh *pm, PolyMesh::Vertex *v_start,
   int nbIntersection = _list.size();
   // printf("%d intersections\n", nbIntersection);
   // int K = 100;
+  // (an edge crossing k others is recovered in O(k^2) swaps, each of which may
+  // wait for O(k) others: a generous bound)
+  const std::size_t k = nbIntersection + 1, maxPasses = 10 * k * k * k + 1000;
+  std::size_t passes = 0;
   while(!_list.empty()) {
+    if(passes++ > maxPasses) return -4;
     he = *_list.begin();
     _list.erase(_list.begin());
     // ensure that swap is allowed (convex quad)
@@ -595,7 +628,7 @@ void GFaceDelaunayRefinement(size_t faceTag)
       GPoint gp = gf->closestPoint(cc, uv);
       if(gp.succeeded()) {
         PolyMesh::Face *f = he->f;
-        f = Walk(f, gp.u(), gp.v());
+        f = Walk(pm, f, gp.u(), gp.v());
         if(f && f->data == (int)faceTag) {
           std::vector<PolyMesh::HalfEdge *> _touched;
           pm->split_triangle(-1, gp.u(), gp.v(), 0, f,
@@ -664,6 +697,7 @@ struct nodeCopies {
     for(size_t i = 0; i < nbCopies; i++) {
       if(fabs(u[i] - _u) < 1.e-9 && fabs(v[i] - _v) < 1.e-9) return;
     }
+    if(nbCopies == 8) return;
     u[nbCopies] = _u;
     v[nbCopies] = _v;
     nbCopies++;
@@ -777,7 +811,9 @@ void addPoints(PolyMesh *pm, std::vector<double> &pts, SBoundingBox3d &bb)
 
   for(size_t i = 0; i < N; i++) {
     size_t I = IND[i];
-    f = Walk(f, X[I], Y[I]);
+    PolyMesh::Face *g = Walk(pm, f, X[I], Y[I]);
+    if(!g) continue;
+    f = g;
     pm->split_triangle(i, X[I], Y[I], 0, f, delaunayEdgeCriterionPlaneIsotropic,
                        nullptr);
   }
@@ -810,7 +846,13 @@ PolyMesh *GFaceInitialMesh(int faceTag, int recover,
       double x = it->second.u[i];
       double y = it->second.v[i];
       // find face in which lies x,y
-      f = Walk(f, x, y);
+      PolyMesh::Face *g = Walk(pm, f, x, y);
+      if(!g) {
+        Msg::Error("Could not locate node %zu (%g, %g) in the initial mesh of "
+                   "surface %d", it->first, x, y, faceTag);
+        return pm;
+      }
+      f = g;
       // split f and then swap edges to recover delaunayness
       pm->split_triangle(-1, x, y, 0, f, delaunayEdgeCriterionPlaneIsotropic,
                          nullptr);
@@ -835,10 +877,12 @@ PolyMesh *GFaceInitialMesh(int faceTag, int recover,
         for(auto l : e->lines) {
           auto c0 = copies.find(l->getVertex(0)->getNum());
           auto c1 = copies.find(l->getVertex(1)->getNum());
-          if(c0 == copies.end() || c1 == copies.end())
+          if(c0 == copies.end() || c1 == copies.end()) {
             Msg::Error("unable to find %zu %zu %d %d",
                        l->getVertex(0)->getNum(), l->getVertex(1)->getNum(),
                        c0 == copies.end(), c1 == copies.end());
+            continue;
+          }
           if(c0->second.nbCopies > c1->second.nbCopies) {
             auto cc = c0;
             c0 = c1;
@@ -851,7 +895,7 @@ PolyMesh *GFaceInitialMesh(int faceTag, int recover,
             int result = recover_edge(pm, v0, v1);
             if(result < 0) {
               Msg::Warning("Impossible to recover edge %zu %zu (error tag %d)",
-                           l->getVertex(0)->getNum(), l->getVertex(0)->getNum(),
+                           l->getVertex(0)->getNum(), l->getVertex(1)->getNum(),
                            result);
             }
             else {
@@ -870,8 +914,13 @@ PolyMesh *GFaceInitialMesh(int faceTag, int recover,
     // the first 4 vertices are "infinite vertices" --> color them with tag -2
     // meaning exterior
     PolyMesh::HalfEdge *other_side = Color(pm->vertices[0]->he, -2);
-    // other_side is inthernal to the face --> color them with tag faceTag
-    other_side = Color(other_side, faceTag);
+    // other_side is internal to the face --> color them with tag faceTag; there
+    // is none if no edge of the boundary could be recovered
+    if(other_side)
+      Color(other_side, faceTag);
+    else
+      Msg::Warning("No boundary edge recovered in the initial mesh of "
+                   "surface %d", faceTag);
     // holes will be tagged -1
 
     // flip edges that have been scrambled
