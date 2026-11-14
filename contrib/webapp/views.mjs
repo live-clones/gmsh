@@ -50,9 +50,11 @@ const viewContent = (i) => web.viewContent(i);
 export const viewTags = () => [...gmsh.view.getTags()];
 export const viewNum = (i, n) => gmsh.option.getNumber(`View[${i}].${n}`);
 // The list is made again only when what it shows changes (the views, their
-// names, groups, time steps and range type, the options shown): otherwise the
-// values are written in its inputs as they are, so that an input being typed
-// in while a solver runs (and shows new views several times a second) stays
+// names, groups, whether they have several time steps, range and vector type,
+// the options shown), not as a run adds time steps: otherwise the values are
+// written in its inputs as they are, so that an input being typed in, or a
+// row being clicked, while a solver runs (and shows new views several times a
+// second) stays where it is
 let viewsKey = '';
 const viewUpdates = [];
 export function updateViews() {
@@ -65,7 +67,7 @@ export function showViews() {
   const group = (i) => gmsh.option.getString(`View[${i}].Group`);
   $('modulePost').hidden = !tags.length;
   const key = JSON.stringify(tags.map((t, i) => [
-    t, name(i), group(i), viewNum(i, 'NbTimeStep'), viewNum(i, 'RangeType'),
+    t, name(i), group(i), viewNum(i, 'NbTimeStep') > 1, viewNum(i, 'RangeType'),
     viewNum(i, 'VectorType'), viewOptionsOpen.has(t)]));
   if(key !== viewsKey) {
     viewsKey = key;
@@ -151,8 +153,10 @@ function viewOptionRows(tag, i) {
       shown.push(option);
       viewUpdates.push((ts) => {
         const k = ts.indexOf(tag);
-        if(k >= 0 && el !== document.activeElement)
-          setInput(el, kind, getViewOption(option, k));
+        if(k < 0) return;
+        // the time steps a run adds
+        if(option === 'View.TimeStep') el.max = viewNum(k, 'NbTimeStep') - 1;
+        if(el !== document.activeElement) setInput(el, kind, getViewOption(option, k));
       });
       return el;
     });
