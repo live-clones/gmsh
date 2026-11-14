@@ -1554,6 +1554,15 @@ void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
   removed.clear();
   model->remove(toRemove, removed);
   Msg::Debug("Destroying %zu model entities during second pass", removed.size());
+  // these were on the boundary of entities that remain, whose mesh would keep
+  // their deleted nodes
+  for(std::size_t i = 0; i < removed.size(); i++) {
+    if(removed[i]->getNumMeshVertices()) {
+      Msg::Info("Deleting the mesh, whose boundary entities were removed");
+      model->deleteMesh();
+      break;
+    }
+  }
   for(std::size_t i = 0; i < removed.size(); i++) delete removed[i];
 
   // delete all physical groups before sync only if there is no mesh (if there
