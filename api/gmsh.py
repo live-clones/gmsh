@@ -10617,23 +10617,20 @@ class model:
                 raise Exception(logger.getLastError())
 
         @staticmethod
-        def classify(surfaceTags, angle, curveAngle=pi, tolerance=-1.):
+        def classify(surfaceTags, angle, curveAngle=pi):
             """
-            gmsh.model.discrete.classify(surfaceTags, angle, curveAngle=pi, tolerance=-1.)
+            gmsh.model.discrete.classify(surfaceTags, angle, curveAngle=pi)
 
             Replace the raw surfaces `surfaceTags' of the discrete CAD representation
             (see `importTriangulations'; all of them if `surfaceTags' is empty) by
-            their topology, as `importShapes' builds it, each raw surface a surface of
-            the file: the surfaces split where the normals of the triangles make an
-            angle larger than `angle' (in radians) and into their pieces on planes,
-            spheres, cylinders, cones and tori within `tolerance'
-            (`Geometry.DiscreteTolerance' times the size of the triangulation if
-            `tolerance' is not positive), for faces meeting tangentially, the curves
-            split where they turn by more than `curveAngle', and the volumes they
-            bound. The surfaces on such analytic surfaces get the parameters of the
-            corresponding primitives, but their geometry stays their triangulation
-            until `recognize' makes it exact. Return the volumes and the surfaces
-            bounding no volume in `outDimTags'.
+            their faces, as `importShapes' finds them before recognizing analytic
+            surfaces, each raw surface a surface of the file: the triangles connected
+            across edges shared by two triangles whose normals make an angle smaller
+            than `angle' (in radians), with their curves, split where they turn by more
+            than `curveAngle', and the volumes they bound, each face parametrized as it
+            is (cut open into a disk along seams if it is not one). These classified
+            surfaces are to be recognized with `recognize'. Return the volumes and the
+            surfaces bounding no volume in `outDimTags'.
 
             Return `outDimTags'.
 
@@ -10642,7 +10639,6 @@ class model:
             - `angle': double
             - `outDimTags': vector of pairs of integers
             - `curveAngle': double
-            - `tolerance': double
             """
             api_surfaceTags_, api_surfaceTags_n_ = _ivectorint(surfaceTags)
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
@@ -10652,33 +10648,47 @@ class model:
                 c_double(angle),
                 byref(api_outDimTags_), byref(api_outDimTags_n_),
                 c_double(curveAngle),
-                c_double(tolerance),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
-        def recognize(dimTags):
+        def recognize(dimTags, tolerance=-1.):
             """
-            gmsh.model.discrete.recognize(dimTags)
+            gmsh.model.discrete.recognize(dimTags, tolerance=-1.)
 
-            Make exact the surfaces `dimTags' of the discrete CAD representation, and
-            those of the volumes `dimTags' (all of them if `dimTags' is empty), on
-            planes, spheres, cylinders, cones and tori (see `classify'): their
-            geometry, and that of the curves where two of them meet, given by the
-            analytic surfaces instead of their triangulations.
+            Build again the classified surfaces `dimTags' of the discrete CAD
+            representation (see `classify'), and those of the volumes `dimTags' (all of
+            them if `dimTags' is empty), with the classified surfaces they share curves
+            or volumes with, as `importShapes' builds them: the surfaces whose nodes
+            are at most `tolerance' away from a plane, a sphere, a cylinder, a cone or
+            a torus (`Geometry.DiscreteTolerance' times the size of their triangulation
+            if `tolerance' is not positive) are made exact (their geometry, and that of
+            the curves where two of them meet, given by the analytic surfaces), the
+            others are split into their pieces on such surfaces (for faces meeting
+            tangentially). The tags of the volumes, and of the surfaces left whole, are
+            kept. Return the volumes and the surfaces bounding no volume in
+            `outDimTags'.
+
+            Return `outDimTags'.
 
             Types:
             - `dimTags': vector of pairs of integers
+            - `outDimTags': vector of pairs of integers
+            - `tolerance': double
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
+            api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
             lib.gmshModelDiscreteRecognize(
                 api_dimTags_, api_dimTags_n_,
+                byref(api_outDimTags_), byref(api_outDimTags_n_),
+                c_double(tolerance),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+            return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
         def addTriangulation(coord, triangles, angle, curveAngle=pi, tolerance=-1.):

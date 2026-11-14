@@ -3647,30 +3647,35 @@ GMSH_API void gmshModelDiscreteHeal(const int * surfaceTags, const size_t surfac
 
 /* Replace the raw surfaces `surfaceTags' of the discrete CAD representation
  * (see `importTriangulations'; all of them if `surfaceTags' is empty) by
- * their topology, as `importShapes' builds it, each raw surface a surface of
- * the file: the surfaces split where the normals of the triangles make an
- * angle larger than `angle' (in radians) and into their pieces on planes,
- * spheres, cylinders, cones and tori within `tolerance'
- * (`Geometry.DiscreteTolerance' times the size of the triangulation if
- * `tolerance' is not positive), for faces meeting tangentially, the curves
- * split where they turn by more than `curveAngle', and the volumes they
- * bound. The surfaces on such analytic surfaces get the parameters of the
- * corresponding primitives, but their geometry stays their triangulation
- * until `recognize' makes it exact. Return the volumes and the surfaces
- * bounding no volume in `outDimTags'. */
+ * their faces, as `importShapes' finds them before recognizing analytic
+ * surfaces, each raw surface a surface of the file: the triangles connected
+ * across edges shared by two triangles whose normals make an angle smaller
+ * than `angle' (in radians), with their curves, split where they turn by more
+ * than `curveAngle', and the volumes they bound, each face parametrized as it
+ * is (cut open into a disk along seams if it is not one). These classified
+ * surfaces are to be recognized with `recognize'. Return the volumes and the
+ * surfaces bounding no volume in `outDimTags'. */
 GMSH_API void gmshModelDiscreteClassify(const int * surfaceTags, const size_t surfaceTags_n,
                                         const double angle,
                                         int ** outDimTags, size_t * outDimTags_n,
                                         const double curveAngle,
-                                        const double tolerance,
                                         int * ierr);
 
-/* Make exact the surfaces `dimTags' of the discrete CAD representation, and
- * those of the volumes `dimTags' (all of them if `dimTags' is empty), on
- * planes, spheres, cylinders, cones and tori (see `classify'): their
- * geometry, and that of the curves where two of them meet, given by the
- * analytic surfaces instead of their triangulations. */
+/* Build again the classified surfaces `dimTags' of the discrete CAD
+ * representation (see `classify'), and those of the volumes `dimTags' (all of
+ * them if `dimTags' is empty), with the classified surfaces they share curves
+ * or volumes with, as `importShapes' builds them: the surfaces whose nodes
+ * are at most `tolerance' away from a plane, a sphere, a cylinder, a cone or
+ * a torus (`Geometry.DiscreteTolerance' times the size of their triangulation
+ * if `tolerance' is not positive) are made exact (their geometry, and that of
+ * the curves where two of them meet, given by the analytic surfaces), the
+ * others are split into their pieces on such surfaces (for faces meeting
+ * tangentially). The tags of the volumes, and of the surfaces left whole, are
+ * kept. Return the volumes and the surfaces bounding no volume in
+ * `outDimTags'. */
 GMSH_API void gmshModelDiscreteRecognize(const int * dimTags, const size_t dimTags_n,
+                                         int ** outDimTags, size_t * outDimTags_n,
+                                         const double tolerance,
                                          int * ierr);
 
 /* Add the triangulation given by the coordinates `coord' of its nodes

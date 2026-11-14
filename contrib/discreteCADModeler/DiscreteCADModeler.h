@@ -52,11 +52,11 @@ public:
   // curves used twice in its loops, with the parameters of their nodes on
   // their two sides (the side of the curve used forwards first), the curves
   // inside it (its creases), and, for an analytic surface, the map from its
-  // parameters to its points (its exact geometry, if exact; else the map only
-  // gives its parameters, see classify), or only the surface for a primitive
-  // (its geometry stays its triangulation); a raw surface is the
+  // parameters to its points (its exact geometry), or only the surface for a
+  // primitive (its geometry stays its triangulation); a raw surface is the
   // triangulation of a piece of a file, as read, without curves (see
-  // importTriangulations)
+  // importTriangulations); a classified one, a face of such triangulations
+  // to be recognized, with the angles it was classified with (see classify)
   struct Surface {
     std::vector<int> curves;
     std::vector<std::array<int, 3> > triangles;
@@ -65,8 +65,9 @@ public:
     std::map<int, std::array<std::vector<std::array<double, 2> >, 2> > seams;
     std::vector<int> embeddedCurves;
     DiscreteCADAnalyticMap analytic;
-    bool exact = true;
     bool raw = false;
+    bool classified = false;
+    double angle = 0., curveAngle = 0.;
   };
   // a closed shell of surfaces, a negative tag for a surface used reversed
   struct Volume {
@@ -209,15 +210,17 @@ private:
                 std::vector<int> &label,
                 std::set<std::pair<int, int> > &barrier);
   // the surfaces, curves, vertices and volumes of a triangulation split into
-  // patches (the label of each triangle) along the edges of barrier: its
-  // patches on analytic surfaces, and its smooth patches split into their
-  // pieces on such surfaces (see addTriangulation), with the maps of the
-  // analytic surfaces (exact or not), the others split into pieces that a map
-  // can parametrize, their topology (see _addTopology), its volumes (see
-  // _cells). The volumes and the surfaces bounding none in outDimTags.
+  // patches (the label of each triangle) along the edges of barrier: if
+  // recognize, its patches on analytic surfaces within tolerance, and its
+  // smooth patches split into their pieces on such surfaces (see
+  // addTriangulation), with the maps of the analytic surfaces; the others
+  // (all of them if not recognize, then classified surfaces) split into
+  // pieces that a map can parametrize, their topology (see _addTopology), its
+  // volumes (see _cells). The volumes and the surfaces bounding none in
+  // outDimTags.
   bool _build(std::vector<std::array<int, 3> > &tri, std::vector<int> &label,
               const std::set<std::pair<int, int> > &barrier, double angle,
-              double curveAngle, double tolerance, bool exact,
+              double curveAngle, double tolerance, bool recognize,
               std::vector<std::pair<int, int> > &outDimTags);
   // the triangles of the surfaces of a mesh file, each surface a piece (see
   // importShapes)
@@ -335,17 +338,25 @@ public:
   // not positive), their triangles oriented (see DiscreteCADHeal.h)
   bool heal(const std::vector<int> &surfaceTags, double tolerance);
   // the raw surfaces surfaceTags (all of them if empty) replaced by their
-  // topology, as addTriangulation builds it (each raw surface a piece): the
-  // surfaces on analytic surfaces within tolerance get the parameters of their
-  // maps, but their geometry stays their triangulation until they are
-  // recognized. The volumes and the surfaces bounding none in outDimTags
+  // faces, split where the normals turn by more than angle (each raw surface
+  // a piece, see _patches), their curves (split where they turn by more than
+  // curveAngle) and the volumes they bound, the faces parametrized as they
+  // are (classified surfaces, see recognize). The volumes and the surfaces
+  // bounding none in outDimTags
   bool classify(const std::vector<int> &surfaceTags, double angle,
-                double curveAngle, double tolerance,
+                double curveAngle,
                 std::vector<std::pair<int, int> > &outDimTags);
-  // the surfaces dimTags, and those of the volumes dimTags (all of them if
-  // empty), on analytic surfaces (see classify) made exact: their geometry,
-  // and that of the curves where two of them meet, given by their maps
-  bool recognize(const std::vector<std::pair<int, int> > &dimTags);
+  // the classified surfaces dimTags, and those of the volumes dimTags (all of
+  // them if empty), with those they share curves or volumes with, built again
+  // as addTriangulation builds them: those within tolerance of a plane, a
+  // sphere, a cylinder, a cone or a torus on it (exact: their geometry, and
+  // that of the curves where two of them meet, given by the analytic
+  // surfaces), the others split into their pieces on such surfaces (faces
+  // meeting tangentially); the tags of the volumes, and of the surfaces left
+  // whole, kept. The volumes and the surfaces bounding none in outDimTags
+  bool recognize(const std::vector<std::pair<int, int> > &dimTags,
+                 double tolerance,
+                 std::vector<std::pair<int, int> > &outDimTags);
   // the entities copied into the model, replacing those of the previous call
   void synchronize(GModel *model);
 };
