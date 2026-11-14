@@ -11,6 +11,8 @@
 #include "BasisFactory.h"
 #include "ElementType.h"
 #include "nodalBasis.h"
+#include "MTriangle.h"
+#include "MTetrahedron.h"
 
 namespace {
   typedef std::pair<std::pair<int, int>, int> mytuple;
@@ -71,45 +73,52 @@ fullMatrix<double> gmshGenerateInnerVertexPlacementTriangle(int order)
   if(order < 3) return fullMatrix<double>();
 
   const int szInc = 3 * order;
-  const int szComp = (order + 1) * (order + 2) / 2;
-  const int szInt = szComp - szInc;
+  const int szInt = (order + 1) * (order + 2) / 2 - szInc;
 
   fullMatrix<double> monomials = gmshGenerateMonomialsTriangle(order, false);
   fullMatrix<int> coordinates;
   double2int(monomials, coordinates);
 
-  // Lagrange basis of an edge between -1 and +1
-  const nodalBasis *edgeBasis =
+  std::map<std::pair<int, int>, int> coord2idx;
+  for(int i = 0; i < szInc; ++i)
+    coord2idx[std::make_pair(coordinates(i, 0), coordinates(i, 1))] = i;
+  auto col = [&](const int b[3]) {
+    return coord2idx[std::make_pair(b[1], b[2])];
+  };
+
+  // Lagrange basis of an edge (on [-1, 1]), whose nodes are numbered as the
+  // monomials
+  const nodalBasis *lineBasis =
     BasisFactory::getNodalBasis(ElementType::getType(TYPE_LIN, order));
+  const fullMatrix<double> lineMonomials = gmshGenerateMonomialsLine(order);
 
-  std::vector<int> edgeIdx[3];
-  for(int i = 0; i < 3; ++i) {
-    edgeIdx[i].resize(order + 1);
-    edgeIdx[i][0] = i;
-    edgeIdx[i][1] = (i + 1) % 3;
-    for(int q = 0; q < order - 1; ++q)
-      edgeIdx[i][q + 2] = 3 + i * (order - 1) + q;
-  }
-
-  const int nTau = 2 * order - 5;
-  fullMatrix<double> xTau(nTau, 1), sf;
-  for(int m = 0; m < nTau; ++m) xTau(m, 0) = -1 + (double)(m + 3) / order;
-  edgeBasis->f(xTau, sf); // sf(m, q): line shape function q at the m-th tau
-
+  std::vector<double> sfLine(lineBasis->getNumShapeFunctions());
   fullMatrix<double> M(szInt, szInc, true);
   for(int r = 0; r < szInt; ++r) {
     const int u = coordinates(szInc + r, 0), v = coordinates(szInc + r, 1);
     const int a[3] = {order - u - v, u, v};
-    const double l[3] = {(double)a[0] / order, (double)a[1] / order,
-                         (double)a[2] / order};
-    for(int i = 0; i < 3; ++i) {
-      const int j = (i + 1) % 3;
-      const int m = order - a[i] + a[j] - 3; // row of tau in sf
-      const double tau = (double)(m + 3) / (2 * order);
-      const double w = l[i] * l[j] / (tau * (1. - tau));
-      for(int q = 0; q <= order; ++q) M(r, edgeIdx[i][q]) += w * sf(m, q);
-      M(r, i) += l[i] - w * (1. - tau);
-      M(r, j) -= w * tau;
+    double l[3];
+    for(int i = 0; i < 3; ++i) l[i] = (double)a[i] / order;
+
+    // affine part: + lambda_i P_i
+    for(int i = 0; i < 3; ++i) M(r, i) += l[i];
+
+    // edge terms: + we (phi(tau) - (1 - tau) P_i - tau P_j)
+    for(int e = 0; e < 3; ++e) {
+      const int i = MTriangle::edges_tri(e, 0);
+      const int j = MTriangle::edges_tri(e, 1);
+      const double tau = 0.5 * (1. - l[i] + l[j]);
+      const double we = l[i] * l[j] / (tau * (1. - tau));
+      lineBasis->f(2. * tau - 1., 0., 0., &sfLine[0]);
+      for(int q = 0; q <= order; ++q) {
+        const int s = (int)lineMonomials(q, 0);
+        int b[3] = {0, 0, 0};
+        b[i] = order - s;
+        b[j] = s;
+        M(r, col(b)) += we * sfLine[q];
+      }
+      M(r, i) -= we * (1. - tau);
+      M(r, j) -= we * tau;
     }
   }
   return M;
@@ -159,63 +168,89 @@ fullMatrix<double> gmshGenerateInnerVertexPlacementTetrahedron(int order)
   if(order < 4) return fullMatrix<double>();
 
   const int szInt = (order - 3) * (order - 2) * (order - 1) / 6;
-  const int szComp = (order + 1) * (order + 2) * (order + 3) / 6;
-  const int szInc = szComp - szInt;
+  const int szInc = (order + 1) * (order + 2) * (order + 3) / 6 - szInt;
 
   fullMatrix<double> monomials = gmshGenerateMonomialsTetrahedron(order, false);
   fullMatrix<int> coordinates;
   double2int(monomials, coordinates);
 
   std::map<mytuple, int> coord2idx;
-  for(int i = 0; i < szInc; ++i) {
-    int u = coordinates(i, 0);
-    int v = coordinates(i, 1);
-    int w = coordinates(i, 2);
-    coord2idx[make_mytuple(u, v, w)] = i;
-  }
+  for(int i = 0; i < szInc; ++i)
+    coord2idx[make_mytuple(coordinates(i, 0), coordinates(i, 1),
+                           coordinates(i, 2))] = i;
+  auto col = [&](const int b[4]) {
+    return coord2idx[make_mytuple(b[1], b[2], b[3])];
+  };
 
-  int &n = order;
+  // Lagrange basis of an edge (on [-1, 1]) and of a face (on (0, 0), (1, 0),
+  // (0, 1)), whose nodes are numbered as the monomials
+  const nodalBasis *lineBasis =
+    BasisFactory::getNodalBasis(ElementType::getType(TYPE_LIN, order));
+  const nodalBasis *triBasis =
+    BasisFactory::getNodalBasis(ElementType::getType(TYPE_TRI, order));
+  const fullMatrix<double> lineMonomials = gmshGenerateMonomialsLine(order);
+  fullMatrix<double> triMonomials = gmshGenerateMonomialsTriangle(order, false);
+  fullMatrix<int> triCoord;
+  double2int(triMonomials, triCoord);
+  const fullMatrix<double> triRule =
+    gmshGenerateInnerVertexPlacementTriangle(order);
+  const int szIncTri = 3 * order;
+
+  std::vector<double> sfLine(lineBasis->getNumShapeFunctions());
+  std::vector<double> sfTri(triBasis->getNumShapeFunctions());
   fullMatrix<double> M(szInt, szInc, true);
-  for(int i = 0; i < szInt; ++i) {
-    int u = coordinates(szInc + i, 0);
-    int v = coordinates(szInc + i, 1);
-    int w = coordinates(szInc + i, 2);
-    int q = n - u - v - w;
-    double xi = (double)u / n;
-    double eta = (double)v / n;
-    double zeta = (double)w / n;
-    double rho = (double)q / n;
+  for(int r = 0; r < szInt; ++r) {
+    const int u = coordinates(szInc + r, 0), v = coordinates(szInc + r, 1),
+              w = coordinates(szInc + r, 2);
+    const int a[4] = {order - u - v - w, u, v, w};
+    double l[4];
+    for(int i = 0; i < 4; ++i) l[i] = (double)a[i] / order;
 
-    M(i, coord2idx[make_mytuple(u + v, 0, w)]) += xi;
-    M(i, coord2idx[make_mytuple(u + w, v, 0)]) += xi;
-    M(i, coord2idx[make_mytuple(u + q, v, w)]) += xi;
-    M(i, coord2idx[make_mytuple(0, v + u, w)]) += eta;
-    M(i, coord2idx[make_mytuple(u, v + w, 0)]) += eta;
-    M(i, coord2idx[make_mytuple(u, v + q, w)]) += eta;
-    M(i, coord2idx[make_mytuple(0, v, w + u)]) += zeta;
-    M(i, coord2idx[make_mytuple(u, 0, w + v)]) += zeta;
-    M(i, coord2idx[make_mytuple(u, v, w + q)]) += zeta;
-    M(i, coord2idx[make_mytuple(0, v, w)]) += rho;
-    M(i, coord2idx[make_mytuple(u, 0, w)]) += rho;
-    M(i, coord2idx[make_mytuple(u, v, 0)]) += rho;
+    // affine part: + lambda_i P_i
+    for(int i = 0; i < 4; ++i) M(r, i) += l[i];
 
-    M(i, coord2idx[make_mytuple(n - q, 0, 0)]) -= xi;
-    M(i, coord2idx[make_mytuple(n - w, 0, w)]) -= xi;
-    M(i, coord2idx[make_mytuple(n - v, v, 0)]) -= xi;
-    M(i, coord2idx[make_mytuple(0, n - q, 0)]) -= eta;
-    M(i, coord2idx[make_mytuple(0, n - w, w)]) -= eta;
-    M(i, coord2idx[make_mytuple(u, n - u, 0)]) -= eta;
-    M(i, coord2idx[make_mytuple(0, 0, n - q)]) -= zeta;
-    M(i, coord2idx[make_mytuple(0, v, n - v)]) -= zeta;
-    M(i, coord2idx[make_mytuple(u, 0, n - u)]) -= zeta;
-    M(i, coord2idx[make_mytuple(0, 0, w)]) -= rho;
-    M(i, coord2idx[make_mytuple(0, v, 0)]) -= rho;
-    M(i, coord2idx[make_mytuple(u, 0, 0)]) -= rho;
+    // edge terms: + we (phi(tau) - (1 - tau) P_i - tau P_j)
+    for(int e = 0; e < 6; ++e) {
+      const int i = MTetrahedron::edges_tetra(e, 0);
+      const int j = MTetrahedron::edges_tetra(e, 1);
+      const double tau = 0.5 * (1. - l[i] + l[j]);
+      const double we = l[i] * l[j] / (tau * (1. - tau));
+      lineBasis->f(2. * tau - 1., 0., 0., &sfLine[0]);
+      for(int q = 0; q <= order; ++q) {
+        const int s = (int)lineMonomials(q, 0);
+        int b[4] = {0, 0, 0, 0};
+        b[i] = order - s;
+        b[j] = s;
+        M(r, col(b)) += we * sfLine[q];
+      }
+      M(r, i) -= we * (1. - tau);
+      M(r, j) -= we * tau;
+    }
 
-    M(i, coord2idx[make_mytuple(n, 0, 0)]) += xi;
-    M(i, coord2idx[make_mytuple(0, n, 0)]) += eta;
-    M(i, coord2idx[make_mytuple(0, 0, n)]) += zeta;
-    M(i, coord2idx[make_mytuple(0, 0, 0)]) += rho;
+    // face terms: + wf (phi(s_j, s_k) - triRule(s_j, s_k))
+    for(int f = 0; f < 4; ++f) {
+      int fv[3];
+      for(int c = 0; c < 3; ++c) fv[c] = MTetrahedron::faces_tetra(f, c);
+      const int m = 6 - fv[0] - fv[1] - fv[2];
+      std::vector<int> fCol(triCoord.size1()); // column of each face node
+      for(int c = 0; c < triCoord.size1(); ++c) {
+        int b[4] = {0, 0, 0, 0};
+        b[fv[0]] = order - triCoord(c, 0) - triCoord(c, 1);
+        b[fv[1]] = triCoord(c, 0);
+        b[fv[2]] = triCoord(c, 1);
+        fCol[c] = col(b);
+      }
+      double s[3];
+      for(int c = 0; c < 3; ++c) s[c] = l[fv[c]] + l[m] / 3.;
+      const double wf = l[fv[0]] * l[fv[1]] * l[fv[2]] / (s[0] * s[1] * s[2]);
+      triBasis->f(s[1], s[2], 0., &sfTri[0]);
+      for(int p = 0; p < triRule.size1(); ++p) {
+        const double c = wf * sfTri[szIncTri + p];
+        M(r, fCol[szIncTri + p]) += c;
+        for(int cc = 0; cc < szIncTri; ++cc)
+          M(r, fCol[cc]) -= c * triRule(p, cc);
+      }
+    }
   }
   return M;
 }
