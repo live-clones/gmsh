@@ -1744,13 +1744,17 @@ new model file, and choose for example @file{mymodel.geo} as file
 name. Then in the tree menu, open the `Geometry' module and choose for
 example `Rectangle' in its `Add' menu. A context window with parameters will open, docked on the
 right of the graphic area: you can enter some parameters in this window
-(e.g. the width and height of the rectangle) and move the mouse to place
-it on the canvas. If you don't
-want to place the rectangle with the mouse, select `X', `Y' and `Z
-freeze' in the window and enter the coordinates manually in the context
-window. Once you are done, either press @kbd{e} (see the status message
-on the top of the graphic window) or click on the `Add' button in the
-context window; press @kbd{Escape} to stop placing rectangles.
+(e.g. the width and height of the rectangle) and click in the graphic
+window to place it: on the model under the mouse, or else on the work plane
+chosen in the context window (the plane XY through the origin by default,
+whose grid is drawn), a mark showing where a click would put it. A
+coordinate typed in the context window stays as it is when clicking: it is
+locked, as the `X', `Y' and `Z lock' check boxes show (the keys @kbd{x},
+@kbd{y} and @kbd{z} toggle them), and the work plane goes through it. You
+can rotate, pan and zoom as usual meanwhile. Once you are done, either press
+@kbd{e} (see the status message on the top of the graphic window) or click
+on the `Add' button in the context window; press @kbd{Escape} to stop
+placing rectangles.
 
 @iftex
 @sp 1

@@ -131,6 +131,10 @@ function drawNow() {
 // zooms at the cursor, Ctrl+click starts a lasso to zoom on, Ctrl+right click
 // resets the view; what is under the cursor is named in a box by it
 export const lasso = $('lasso'), hover = $('hover');
+// what shows the shape being placed again after an event of the scene (a
+// click puts it), if one is being placed: its form
+export let placementChanged = null;
+export function setPlacementChanged(f) { placementChanged = f; }
 function mouse(kind, e, wheel = 0) {
   const mods = modifiers(e, true);
   // the page numbers the buttons 0 left, 1 middle, 2 right; the scene 0
@@ -139,6 +143,7 @@ function mouse(kind, e, wheel = 0) {
   const at = canvas.getBoundingClientRect();
   const redraw = web.mouse(kind, e.clientX - at.left, e.clientY - at.top,
                            canvas.clientWidth, canvas.clientHeight, button, wheel, mods);
+  if(placementChanged) placementChanged();
   // the boxes over the canvas, placed in the window
   // the box hangs from the point the view keeps, so it follows the pointer
   // only once it has strayed, as in the graphical interface

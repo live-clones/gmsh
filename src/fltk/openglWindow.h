@@ -75,8 +75,6 @@ protected:
   void hostCursor(bool cross);
   bool hostBeginGL();
   void hostEndGL();
-  bool hostFrozenCoordinate(int coord);
-  void hostPointMoved(const double p[3], int mode);
   bool hostHasOnelabContext();
   void hostShowOnelabContext(int dim, int tag);
   void hostQuickAccess();

@@ -15,6 +15,7 @@
 #cmakedefine HAVE_BLOSSOM
 #cmakedefine HAVE_DLOPEN
 #cmakedefine HAVE_DOMHEX
+#cmakedefine HAVE_DUAL_MESH
 #cmakedefine HAVE_EIGEN
 #cmakedefine HAVE_FFMPEG
 #cmakedefine HAVE_FLTK

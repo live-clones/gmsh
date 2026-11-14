@@ -30,6 +30,7 @@ set(SRC
   drawContextOffscreen.cpp
   sceneView.cpp
   sceneTool.cpp
+  shapePlacement.cpp
   selectionDriver.cpp
   gl2ps.cpp
   gl2gif.cpp

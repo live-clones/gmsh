@@ -1635,7 +1635,13 @@ void drawContext::initProjection()
 
   double clip_near, clip_far;
   if(CTX::instance()->ortho) {
-    clip_near = -zmax * s[2] * CTX::instance()->clipFactor;
+    // (at least as deep as the window is wide: zoomed out, what it shows far
+    // around the model, as the grid of the work plane of a shape being
+    // placed, is not cut by the planes; the depth of an orthographic view
+    // being linear, its resolution is ample)
+    double w = std::max(std::max(fabs(vxmin), fabs(vxmax)),
+                        std::max(fabs(vymin), fabs(vymax)));
+    clip_near = -std::max(zmax * s[2], w) * CTX::instance()->clipFactor;
     clip_far = -clip_near;
   }
   else {

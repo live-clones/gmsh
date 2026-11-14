@@ -22,6 +22,7 @@
 #include "VertexArray.h"
 #include "glMatrix.h"
 #include "glShader.h"
+#include "shapePlacement.h"
 #include "Context.h"
 #include "ColorContrast.h"
 #include <cstring>
@@ -320,24 +321,17 @@ void openglWindow::draw()
 
   drawContext::setClearColor();
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-  if(lassoMode || addPointMode) {
-    // the scene with the lasso rectangle or the point to add on top (drawing
-    // into the front buffer, as was done before, left the frame black on
-    // current implementations)
+  if(lassoMode) {
+    // the scene with the lasso rectangle on top (drawing into the front
+    // buffer, as was done before, left the frame black on current
+    // implementations)
     if(CTX::instance()->fastRedraw) {
       CTX::instance()->mesh.draw = 0;
       CTX::instance()->post.draw = 0;
     }
     _ctx->draw3d();
-    if(addPointMode) {
-      gmshColor4ubv((GLubyte *)&CTX::instance()->color.geom.highlight[0]);
-      gmshPointSize(CTX::instance()->geom.pointSize);
-      gmshBegin(GL_POINTS);
-      gmshVertex3d(_point[0], _point[1], _point[2]);
-      gmshEnd();
-    }
     _ctx->draw2d();
-    if(lassoMode) _drawLasso();
+    _drawLasso();
     _drawScreenMessage();
     _drawBorder();
     CTX::instance()->mesh.draw = 1;
@@ -594,7 +588,7 @@ int openglWindow::handle(int event)
     // as Alt and the wheel do, one entity at a time: a trackpad has no
     // notches to count
     if(Fl::event_state(FL_ALT) && CTX::instance()->mouseSelection &&
-       !lassoMode && !addPointMode &&
+       !lassoMode && !shapePlacement::current() &&
        (Fl::event_key() == FL_Up || Fl::event_key() == FL_Down)) {
       stepPick((Fl::event_key() == FL_Down) ? 1 : -1);
       return 1;
@@ -687,16 +681,6 @@ bool openglWindow::hostBeginGL()
 
 void openglWindow::hostEndGL() { _setLock(false); }
 
-bool openglWindow::hostFrozenCoordinate(int coord)
-{
-  return FlGui::instance()->elementaryContext->frozenPointCoord(coord);
-}
-
-void openglWindow::hostPointMoved(const double p[3], int mode)
-{
-  double pt[3] = {p[0], p[1], p[2]};
-  FlGui::instance()->elementaryContext->updatePoint(pt, mode);
-}
 
 bool openglWindow::hostHasOnelabContext()
 {

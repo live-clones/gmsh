@@ -6,6 +6,7 @@ their own respective license:
 * blossom: Gmsh License
 * BoundaryLayers: GNU Affero General Public License (AGPL) v. 3 or later
 * domhex: Gmsh License
+* DualMesh: GNU Affero General Public License (AGPL) v. 3 or later
 * eigen: BSD License
 * fonts: SIL Open Font License 1.1
 * gmm: GNU Lesser General Public License (LGPL), v. 3 or later

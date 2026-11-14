@@ -8,6 +8,8 @@
 //   Boris Martin
 
 #include <cstdio>
+#include <cmath>
+#include <charconv>
 #include <fstream>
 #include <vector>
 #include <map>
@@ -3454,6 +3456,23 @@ static void writeMSH4Entities(
     fprintf(fp, "$EndEntities\n");
 }
 
+// "%zu" and "%.16g" without printf, whose per-call cost dominates the ASCII
+// save of large meshes; the output is the same. std::to_chars for doubles
+// needs gcc 11 (or MSVC): elsewhere doubles still go through snprintf
+static char *writeMSH4Number(char *p, std::size_t v)
+{
+  return std::to_chars(p, p + 24, v).ptr;
+}
+
+static char *writeMSH4Double(char *p, double v)
+{
+#if defined(__cpp_lib_to_chars)
+  if(std::isfinite(v)) // printf and to_chars spell nan differently
+    return std::to_chars(p, p + 32, v, std::chars_format::general, 16).ptr;
+#endif
+  return p + snprintf(p, 32, "%.16g", v);
+}
+
 template <class It>
 static void writeMSH4EntityNodes(GEntity *ge, FILE *fp, bool binary,
                                  int saveParametric, double scalingFactor,
@@ -3500,30 +3519,30 @@ static void writeMSH4EntityNodes(GEntity *ge, FILE *fp, bool binary,
     fwrite(&coord[0], sizeof(double), n * numVerts, fp);
   }
   else {
+    char line[256];
     if(version >= 4.1) {
-      for(auto it = begin; it != end; ++it)
-        fprintf(fp, "%zu\n", (*it)->getNum());
+      for(auto it = begin; it != end; ++it) {
+        char *p = writeMSH4Number(line, (*it)->getNum());
+        *p++ = '\n';
+        fwrite(line, 1, p - line, fp);
+      }
     }
     for(auto it = begin; it != end; ++it) {
       MVertex *mv = *it;
-      double x = mv->x() * scalingFactor;
-      double y = mv->y() * scalingFactor;
-      double z = mv->z() * scalingFactor;
-      if(version < 4.1) fprintf(fp, "%zu ", mv->getNum());
-      if(n == 5) {
-        double u, v;
-        mv->getParameter(0, u);
-        mv->getParameter(1, v);
-        fprintf(fp, "%.16g %.16g %.16g %.16g %.16g\n", x, y, z, u, v);
+      double c[5] = {mv->x() * scalingFactor, mv->y() * scalingFactor,
+                     mv->z() * scalingFactor, 0., 0.};
+      if(n >= 4) mv->getParameter(0, c[3]);
+      if(n == 5) mv->getParameter(1, c[4]);
+      char *p = line;
+      if(version < 4.1) {
+        p = writeMSH4Number(p, mv->getNum());
+        *p++ = ' ';
       }
-      else if(n == 4) {
-        double u;
-        mv->getParameter(0, u);
-        fprintf(fp, "%.16g %.16g %.16g %.16g\n", x, y, z, u);
+      for(std::size_t i = 0; i < n; i++) {
+        p = writeMSH4Double(p, c[i]);
+        *p++ = (i + 1 < n) ? ' ' : '\n';
       }
-      else {
-        fprintf(fp, "%.16g %.16g %.16g\n", x, y, z);
-      }
+      fwrite(line, 1, p - line, fp);
     }
   }
 }
@@ -4296,13 +4315,19 @@ static void writeMSH4Elements(
           }
         }
         else {
+          std::vector<char> line;
           for(std::size_t i = 0; i < N; i++) {
             MElement *e = it->second[i];
-            fprintf(fp, "%zu ", e->getNum());
-            for(std::size_t i = 0; i < e->getNumVertices(); i++) {
-              fprintf(fp, "%zu ", e->getVertex(i)->getNum());
+            std::size_t nv = e->getNumVertices();
+            line.resize(25 * (nv + 1) + 1);
+            char *p = writeMSH4Number(line.data(), e->getNum());
+            *p++ = ' ';
+            for(std::size_t j = 0; j < nv; j++) {
+              p = writeMSH4Number(p, e->getVertex(j)->getNum());
+              *p++ = ' ';
             }
-            fprintf(fp, "\n");
+            *p++ = '\n';
+            fwrite(line.data(), 1, p - line.data(), fp);
           }
         }
       }

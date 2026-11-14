@@ -189,6 +189,7 @@ public:
       return false;
     return true;
   }
+  virtual bool hasStaticIntegrationPoints() const { return true; }
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
   static int edges_prism(const int edge, const int vert)
   {

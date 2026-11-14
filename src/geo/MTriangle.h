@@ -164,6 +164,7 @@ public:
       return false;
     return true;
   }
+  virtual bool hasStaticIntegrationPoints() const { return true; }
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
   virtual SPoint3 circumcenter();
   virtual double getVolume();

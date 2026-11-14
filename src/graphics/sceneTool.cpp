@@ -8,6 +8,14 @@
 #include "selectionDriver.h"
 #include "drawContext.h"
 #include "GModel.h"
+#include "GVertex.h"
+#include "GEdge.h"
+#include "GFace.h"
+#include "GRegion.h"
+#include "MElement.h"
+#include "PView.h"
+#include "PViewData.h"
+#include "GuiListener.h"
 #include "GmshMessage.h"
 #include "Context.h"
 #include "Options.h"
@@ -151,6 +159,76 @@ sceneTool *newMeasureTool()
       return true;
     },
     clearClicks);
+}
+
+bool pickedModelPoint(const drawContext *ctx, const scenePicks &p,
+                      double xyz[3])
+{
+  if(p.vertices.size()) {
+    xyz[0] = p.vertices[0]->x();
+    xyz[1] = p.vertices[0]->y();
+    xyz[2] = p.vertices[0]->z();
+    return true;
+  }
+  if(!ctx->pickPoint(xyz)) return false;
+  SPoint3 pc(xyz[0], xyz[1], xyz[2]);
+  GPoint gp;
+  if(p.edges.size()) {
+    double t;
+    gp = p.edges[0]->closestPoint(pc, t);
+  }
+  else if(p.faces.size()) {
+    double uv[2] = {0., 0.};
+    gp = p.faces[0]->closestPoint(pc, uv);
+  }
+  if(gp.succeeded()) {
+    xyz[0] = gp.x();
+    xyz[1] = gp.y();
+    xyz[2] = gp.z();
+  }
+  return true;
+}
+
+sceneTool *newRotationCenterTool()
+{
+  // (no mesh elements picked for it, which rebuilt the arrays of the mesh
+  // twice, a freeze of seconds on a large mesh, to give the barycentre of an
+  // element: the point clicked comes from the depth of the pick)
+  return new functionTool(
+    "Rotation center", ENT_ALL, false,
+    [](sceneView *) {
+      return std::string("Select point on geometry, mesh or "
+                         "post-processing view\n[Press Escape to abort]");
+    },
+    [](char ib, sceneView *s, const scenePicks &p) {
+      // ('e' ends it as 'q' does, nothing set)
+      if(ib != 'l') return ib != 'q' && ib != 'e';
+      SPoint3 pc(0., 0., 0.);
+      double xyz[3];
+      if(pickedModelPoint(s->getDrawContext(), p, xyz))
+        pc.setPosition(xyz[0], xyz[1], xyz[2]);
+      else if(p.elements.size())
+        pc = p.elements[0]->barycenter();
+      else if(p.edges.size())
+        pc = p.edges[0]->bounds().center();
+      else if(p.faces.size())
+        pc = p.faces[0]->bounds().center();
+      else if(p.regions.size())
+        pc = p.regions[0]->bounds().center();
+      else if(p.views.size() && p.views[0]->getData())
+        pc = p.views[0]->getData()->getBoundingBox().center();
+      opt_general_rotation_center_cg(0, GMSH_SET | GMSH_GUI, 0);
+      opt_general_rotation_center0(0, GMSH_SET | GMSH_GUI, pc.x());
+      opt_general_rotation_center1(0, GMSH_SET | GMSH_GUI, pc.y());
+      opt_general_rotation_center2(0, GMSH_SET | GMSH_GUI, pc.z());
+      s->getDrawContext()->recenterForRotationCenterChange(pc);
+      Gui()->sceneTransformChanged();
+      return false;
+    },
+    []() {
+      GModel::current()->setSelection(0);
+      for(sceneView *v : sceneView::all()) v->askRedraw();
+    });
 }
 
 operationTool::operationTool(

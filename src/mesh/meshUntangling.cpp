@@ -306,27 +306,39 @@ namespace {
     return tets;
   }
 
-  const std::array<std::array<double, 3>, 4> tet_ideal_shape = {
-    array<double, 3>{.5, 0, -1. / (2. * std::sqrt(2.))},
-    array<double, 3>{-.5, 0, -1. / (2. * std::sqrt(2.))},
-    array<double, 3>{0, .5, 1. / (2. * std::sqrt(2.))},
-    array<double, 3>{0, -.5, 1. / (2. * std::sqrt(2.))},
+  // 1 / sqrt(2) and 1 / (2 sqrt(2)), written out (std::sqrt is not constexpr)
+  constexpr double inv_sqrt2 = 0.7071067811865475;
+  constexpr double inv_2sqrt2 = 0.35355339059327373;
+
+  constexpr std::array<std::array<double, 3>, 4> tet_ideal_shape = {
+    array<double, 3>{.5, 0, -inv_2sqrt2},
+    array<double, 3>{-.5, 0, -inv_2sqrt2},
+    array<double, 3>{0, .5, inv_2sqrt2},
+    array<double, 3>{0, -.5, inv_2sqrt2},
   };
 
-  const std::vector<std::array<double, 3>> unit_cube = {
-    {0., 0., 0.}, {1., 0., 0.}, {1., 1., 0.}, {0., 1., 0.},
-    {0., 0., 1.}, {1., 0., 1.}, {1., 1., 1.}, {0., 1., 1.}};
-
-  const std::vector<std::array<double, 3>> unit_pyr = {
+  constexpr std::array<std::array<double, 3>, 8> unit_cube = {{
     {0., 0., 0.},
     {1., 0., 0.},
     {1., 1., 0.},
     {0., 1., 0.},
-    {0.5, 0.5, 1. / std::sqrt(2.)}};
+    {0., 0., 1.},
+    {1., 0., 1.},
+    {1., 1., 1.},
+    {0., 1., 1.},
+  }};
 
-  std::vector<std::array<std::array<double, 3>, 4>> tetsFromHexTargetShape(
-    HexDcp dcp = TO_32TETS,
-    const std::vector<std::array<double, 3>> &target = unit_cube)
+  constexpr std::array<std::array<double, 3>, 5> unit_pyr = {{
+    {0., 0., 0.},
+    {1., 0., 0.},
+    {1., 1., 0.},
+    {0., 1., 0.},
+    {0.5, 0.5, inv_sqrt2},
+  }};
+
+  template <class Target>
+  std::vector<std::array<std::array<double, 3>, 4>>
+  tetsFromHexTargetShape(HexDcp dcp, const Target &target)
   {
     if(target.size() != 8) {
       Msg::Error("target shape, wrong size, expects 8 and not %li",

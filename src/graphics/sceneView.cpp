@@ -22,6 +22,7 @@
 #include "Context.h"
 #include "glImmediate.h"
 #include "glShader.h"
+#include "shapePlacement.h"
 
 // the scenes there are
 static std::vector<sceneView *> &_scenes()
@@ -35,12 +36,11 @@ sceneView::sceneView(drawContext *ctx)
     _highlightedDim(-1), _highlightedTag(0), _highlightedWas(0),
     _pickStepTime(0.), _stepping(false), _hoverBehind(false), _spin(0.),
     _spinFrom(0.), _spinPath(0.), _spinHot(0.), _ctx(ctx), _phlogiston(0.),
-    _phlogistonTime(0.), addPointMode(0), lassoMode(false), selectionMode(false),
+    _phlogistonTime(0.), lassoMode(false), selectionMode(false),
     endSelection(0), undoSelection(0), quitSelection(0), changeSelection(0)
 {
   _selectionElements = false;
   _scenes().push_back(this);
-  for(int i = 0; i < 3; i++) _point[i] = 0.;
   for(int i = 0; i < 4; i++) _trySelectionXYWH[i] = 0;
   _stepAnchor[0] = _stepAnchor[1] = 0.;
   _hoverAnchor[0] = _hoverAnchor[1] = 0.;
@@ -529,7 +529,8 @@ void sceneView::handleMouse(const paneInput &in)
     // With Alt, the wheel steps through the entities under the cursor
     // instead of zooming: a click then picks the one the hover names,
     // rather than the drawing order deciding which of them wins.
-    if(alt && CTX::instance()->mouseSelection && !lassoMode && !addPointMode) {
+    if(alt && CTX::instance()->mouseSelection && !lassoMode &&
+       !shapePlacement::current()) {
       // _prev is left alone: it is what a move is measured against, and
       // nothing has moved
       _stepPick(direction ? -1 : 1, true);
@@ -668,30 +669,9 @@ void sceneView::handleMouse(const paneInput &in)
   case paneInput::Move:
     _curr.set(_ctx, x, y);
     if(lassoMode) { hostRedraw(); }
-    else if(addPointMode && !shift) {
+    else if(shapePlacement::current()) {
       hostCursor(true);
-      // find line in real space corresponding to current cursor position
-      double p[3], d[3];
-      _ctx->unproject(_curr.win[0], _curr.win[1], p, d);
-      // find closest point to the center of gravity
-      double r[3] = {CTX::instance()->cg[0] - p[0],
-                     CTX::instance()->cg[1] - p[1],
-                     CTX::instance()->cg[2] - p[2]},
-             t;
-      t = prosca(r, d);
-      for(int i = 0; i < 3; i++) {
-        if(!hostFrozenCoordinate(i)) {
-          _point[i] = p[i] + t * d[i];
-          if(CTX::instance()->geom.snap[i]) {
-            double d = _point[i] / CTX::instance()->geom.snap[i];
-            double f = floor(d);
-            double c = ceil(d);
-            double n = (d - f < c - d) ? f : c;
-            _point[i] = n * CTX::instance()->geom.snap[i];
-          }
-        }
-      }
-      hostPointMoved(_point, addPointMode);
+      _hoverPlacement();
       hostRedraw();
     }
     else { // hover mode
@@ -733,7 +713,6 @@ void sceneView::cancelSelection()
   quitSelection = 0;
   selectionMode = false;
   lassoMode = false;
-  addPointMode = 0;
   hostCursor(false);
 }
 
@@ -960,4 +939,41 @@ bool sceneView::releasePhlogiston(int width, int height, bool decay)
   // off)
   _ctx->studioSample = 0;
   return true;
+}
+
+bool sceneView::modelPointAt(int x, int y, double xyz[3], GEntity **on)
+{
+  // (the geometry only: the point placed is a point of the geometry)
+  scenePicks p;
+  if(on) *on = nullptr;
+  if(!_select(ENT_ALL, false, false, false, x, y, 5, 5, p.vertices, p.edges,
+              p.faces, p.regions, p.elements, p.points, p.views))
+    return false;
+  if(!pickedModelPoint(_ctx, p, xyz)) return false;
+  if(on) *on = firstEntity(p.vertices, p.edges, p.faces, p.regions);
+  return true;
+}
+
+void sceneView::_hoverPlacement()
+{
+  shapePlacement *p = shapePlacement::current();
+  double xyz[3];
+  GEntity *on = nullptr;
+  bool onModel = modelPointAt((int)_curr.win[0], (int)_curr.win[1], xyz, &on);
+  if(!onModel) p->planePoint(_ctx, _curr.win[0], _curr.win[1], xyz);
+  p->hover(xyz);
+  _highlight(on);
+  // where a click would put it (the locked coordinates as they are), and on
+  // what
+  const double *h = p->hovered();
+  char tmp[256];
+  snprintf(tmp, sizeof(tmp), "%g, %g, %g", h[0], h[1], h[2]);
+  std::string text = tmp;
+  if(on) {
+    std::string info = on->getInfoString(true, true);
+    text += "\non " + info.substr(0, info.find('\n'));
+  }
+  else
+    text += "\non " + p->planeName();
+  drawTooltip(text);
 }

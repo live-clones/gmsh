@@ -168,6 +168,7 @@ public:
       return false;
     return true;
   }
+  virtual bool hasStaticIntegrationPoints() const { return true; }
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
   virtual double angleShapeMeasure();
   // Computes the minimum inradius of the all the circles tangents to

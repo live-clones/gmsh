@@ -28,6 +28,7 @@
 #include "visibilityWindow.h"
 #include "contextWindow.h"
 #include "sceneTool.h"
+#include "shapePlacement.h"
 #include "Actions.h"
 #include "Options.h"
 #include "Context.h"
@@ -206,17 +207,22 @@ int main(int argc, char **argv)
   // --- a point placed with the mouse
   before = script();
   runItem(actionItem{"Point", ItemShape, "add_point", {}, ""});
-  check(running() && gl()->addPointMode == 1, "add point: started");
+  check(running() && shapePlacement::current(), "add point: started");
   key(SE); check(running() && !CTX::instance()->mouseSelection, "add point: Shift+Escape switches picking off, still running");
   key(SE);
-  key(U); check(running() && gl()->addPointMode == 1 && script() == before, "add point: 'u' does nothing");
+  key(U); check(running() && shapePlacement::current() && script() == before, "add point: 'u' does nothing");
+  press('x');
+  check(shapePlacement::current() && shapePlacement::current()->locked(0) &&
+          FlGui::instance()->elementaryContext->butt[0]->value(),
+        "add point: 'x' locks x, the window shows it");
+  press('x');
   key(END); check(running() && script().find("Point(") != std::string::npos, "add point: 'e' adds a point, goes on");
   {
     int points = count(script(), "Point(");
     press('e');
     check(running() && count(script(), "Point(") == points + 1, "add point: a key press 'e' adds one point, not two");
   }
-  key(E); check(!running() && gl()->addPointMode == 0, "add point: Escape ends it");
+  key(E); check(!running() && !shapePlacement::current(), "add point: Escape ends it");
   gmsh::open("gui_keys.geo"); gmsh::model::mesh::generate(2); settle();
 
   // --- the rotation center
