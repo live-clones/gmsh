@@ -14,12 +14,16 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <algorithm>
+#include <climits>
 #include <cmath>
 #include <cstdio>
 #include <functional>
+#include <limits>
 #include <map>
 #include <memory>
+#include <queue>
 #include <set>
+#include <unordered_map>
 #include "DiscreteCADHeal.h"
 #include "DiscreteCADWinding.h"
 
@@ -413,16 +417,53 @@ namespace {
     return s;
   }
 
-  // a grid of nodes, by cells of size h
-  struct nodeGrid {
+  // a grid by cells of size h (those with something in them), the indices of
+  // points or segments in each one
+  struct hashGrid {
+    struct hash {
+      std::size_t operator()(const std::array<long, 3> &c) const
+      {
+        return (std::size_t)c[0] * 73856093u ^ (std::size_t)c[1] * 19349663u ^
+               (std::size_t)c[2] * 83492791u;
+      }
+    };
     double h;
-    std::map<std::array<long, 3>, std::vector<int> > cells;
+    std::unordered_map<std::array<long, 3>, std::vector<int>, hash> cells;
     std::array<long, 3> cell(const std::array<double, 3> &p) const
     {
       return {{(long)std::floor(p[0] / h), (long)std::floor(p[1] / h),
                (long)std::floor(p[2] / h)}};
     }
-    // the nodes in the cells of the box [lo - r, hi + r]
+    void add(int i, const std::array<double, 3> &p) { cells[cell(p)].push_back(i); }
+    // (a segment in the cells of its points every half cell: each point of it
+    // a quarter of a cell from one of them at most)
+    void add(int i, const std::array<double, 3> &a, const std::array<double, 3> &b)
+    {
+      const int n = 1 + (int)std::ceil(2. * std::sqrt(distance2(a, b)) / h);
+      std::array<long, 3> last = {{LONG_MIN, 0, 0}};
+      for(int j = 0; j <= n; j++) {
+        std::array<double, 3> p;
+        for(int k = 0; k < 3; k++) p[k] = a[k] + (b[k] - a[k]) * j / n;
+        const std::array<long, 3> c = cell(p);
+        if(c == last) continue;
+        cells[c].push_back(i);
+        last = c;
+      }
+    }
+    // the indices in the cells r cells away from the cell c
+    template <class F> void ring(const std::array<long, 3> &c, long r, F f) const
+    {
+      for(long i = -r; i <= r; i++)
+        for(long j = -r; j <= r; j++)
+          for(long k = -r; k <= r; k++) {
+            if(std::max(std::labs(i), std::max(std::labs(j), std::labs(k))) != r)
+              continue;
+            auto it = cells.find({{c[0] + i, c[1] + j, c[2] + k}});
+            if(it == cells.end()) continue;
+            for(int n : it->second) f(n);
+          }
+    }
+    // the indices in the cells of the box [lo - r, hi + r]
     template <class F>
     void around(const std::array<double, 3> &lo, const std::array<double, 3> &hi,
                 double r, F f) const
@@ -443,189 +484,467 @@ namespace {
     }
   };
 
-  // the degenerate and duplicated triangles removed (the first copy kept),
-  // with their origins
-  void compact(std::vector<std::array<int, 3> > &t, std::vector<std::size_t> &from)
-  {
-    std::set<std::array<int, 3> > seen;
-    std::size_t j = 0;
-    for(std::size_t i = 0; i < t.size(); i++) {
-      const std::array<int, 3> c = t[i];
-      if(c[0] == c[1] || c[1] == c[2] || c[2] == c[0]) continue;
-      std::array<int, 3> key = c;
-      std::sort(key.begin(), key.end());
-      if(!seen.insert(key).second) continue;
-      t[j] = c;
-      from[j] = from[i];
-      j++;
+  // an event to come: the nodes a and b merged ('m'), or the node a inserted
+  // into the free edge b ('t'), at the distance d
+  struct candidate {
+    double d;
+    char kind;
+    int a, b;
+    bool operator>(const candidate &o) const
+    {
+      if(d != o.d) return d > o.d;
+      if(kind != o.kind) return kind > o.kind;
+      if(a != o.a) return a > o.a;
+      return b > o.b;
     }
-    t.resize(j);
-    from.resize(j);
-  }
+  };
 } // namespace
 
 void zipFreeEdges(const std::vector<std::array<double, 3> > &x,
                   std::vector<std::array<int, 3> > &t, double tolerance,
-                  DiscreteCADZipReport &report, std::vector<std::size_t> *origin)
+                  DiscreteCADZipReport &report, std::vector<std::size_t> *origin,
+                  double reach)
 {
   report = DiscreteCADZipReport();
-  std::vector<std::size_t> from(t.size());
-  for(std::size_t i = 0; i < t.size(); i++) from[i] = i;
-  std::map<std::pair<int, int>, std::vector<std::size_t> > edges;
-  std::vector<std::pair<int, int> > free;
-  edgesOf(t, edges, free);
-  report.freeBefore = free.size();
-  const double tol2 = tolerance * tolerance;
-  for(int iter = 0; tolerance > 0. && iter < 20 && !free.empty(); iter++) {
-    bool changed = false;
-    // the nodes of the free edges, and their triangles
-    std::set<int> nodes;
-    for(auto &e : free) {
-      nodes.insert(e.first);
-      nodes.insert(e.second);
-    }
-    std::map<int, std::vector<std::size_t> > trianglesOf;
-    for(std::size_t i = 0; i < t.size(); i++)
-      for(int n : t[i])
-        if(nodes.count(n)) trianglesOf[n].push_back(i);
-
-    // the nodes merged, the closest pairs first
-    nodeGrid g{tolerance, {}};
-    for(int n : nodes) g.cells[g.cell(x[n])].push_back(n);
-    std::vector<std::pair<double, std::pair<int, int> > > pairs;
-    for(int n : nodes)
-      g.around(x[n], x[n], tolerance, [&](int m) {
-        if(m <= n) return;
-        const double d2 = distance2(x[n], x[m]);
-        if(d2 < tol2) pairs.push_back({d2, {n, m}});
-      });
-    std::sort(pairs.begin(), pairs.end());
-    std::map<int, int> rep;
-    std::function<int(int)> find = [&](int n) {
-      auto it = rep.find(n);
-      if(it == rep.end() || it->second == n) return n;
-      return it->second = find(it->second);
-    };
-    // (each merge made in the triangles of the two nodes, unless it would put
-    // more than two distinct triangles along an edge: copies of a triangle
-    // count once, those of the two nodes, shorter than the tolerance,
-    // collapse)
-    for(auto &p : pairs) {
-      const int a = find(p.second.first), b = find(p.second.second);
-      if(a == b || distance2(x[a], x[b]) >= tol2) continue;
-      const int keep = std::min(a, b), away = std::max(a, b);
-      std::vector<std::size_t> &tk = trianglesOf[keep], &ta = trianglesOf[away];
-      bool ok = true;
-      std::map<int, std::set<std::array<int, 3> > > at;
-      for(const std::vector<std::size_t> *l : {&tk, &ta})
-        for(std::size_t i : *l) {
-          std::array<int, 3> tr = t[i];
-          int seen = 0;
-          for(int &n : tr) {
-            if(n == away) n = keep;
-            if(n == keep) seen++;
-          }
-          if(seen != 1) continue;
-          std::array<int, 3> key = tr;
-          std::sort(key.begin(), key.end());
-          for(int n : tr)
-            if(n != keep) at[n].insert(key);
-        }
-      for(auto &e : at)
-        if(e.second.size() > 2) ok = false;
-      if(!ok) continue;
-      for(std::size_t i : ta)
-        for(int &n : t[i])
-          if(n == away) n = keep;
-      tk.insert(tk.end(), ta.begin(), ta.end());
-      ta.clear();
-      rep[away] = keep;
-      report.merged.push_back(away);
-      changed = true;
-    }
-    if(!rep.empty()) {
-      for(auto &tr : t)
-        for(int &n : tr) n = find(n);
-      compact(t, from);
-      edgesOf(t, edges, free);
-    }
-
-    // the nodes inside free edges inserted into them, splitting their
-    // triangles (one edge of a triangle at a time)
-    nodes.clear();
-    double h = 0.;
-    for(auto &e : free) {
-      nodes.insert(e.first);
-      nodes.insert(e.second);
-      h += std::sqrt(distance2(x[e.first], x[e.second]));
-    }
-    if(free.empty()) break;
-    h = std::max(tolerance, h / free.size());
-    nodeGrid ge{h, {}};
-    for(int n : nodes) ge.cells[ge.cell(x[n])].push_back(n);
-    std::map<std::size_t, std::pair<std::pair<int, int>,
-                                    std::vector<std::pair<double, int> > > >
-      inserts; // triangle -> (edge, (parameter, node))
-    for(auto &e : free) {
-      const std::size_t i = edges[e][0];
-      auto it = inserts.find(i);
-      if(it != inserts.end() && it->second.first != e) continue;
-      std::vector<std::pair<double, int> > found;
-      ge.around(x[e.first], x[e.second], tolerance, [&](int c) {
-        if(c == t[i][0] || c == t[i][1] || c == t[i][2]) return;
-        double d2;
-        const double s = project(x[e.first], x[e.second], x[c], d2);
-        if(d2 >= tol2 || distance2(x[c], x[e.first]) < tol2 ||
-           distance2(x[c], x[e.second]) < tol2 || s <= 0. || s >= 1.)
-          return;
-        found.push_back({s, c});
-      });
-      if(found.empty()) continue;
-      std::sort(found.begin(), found.end());
-      found.erase(std::unique(found.begin(), found.end(),
-                              [](const std::pair<double, int> &p,
-                                 const std::pair<double, int> &q) {
-                                return p.second == q.second;
-                              }),
-                  found.end());
-      inserts[i] = {e, found};
-    }
-    for(auto &ins : inserts) {
-      const std::size_t i = ins.first;
-      const std::array<int, 3> tr = t[i];
-      // (the edge in the order of the triangle: u to v, then w)
-      int k = 0;
-      while(k < 3 && std::minmax(tr[k], tr[(k + 1) % 3]) != ins.second.first) k++;
-      if(k == 3) continue;
-      const int u = tr[k], v = tr[(k + 1) % 3], w = tr[(k + 2) % 3];
-      std::vector<int> chain = {u};
-      std::vector<std::pair<double, int> > f = ins.second.second;
-      if(u != ins.second.first.first) std::reverse(f.begin(), f.end());
-      for(auto &p : f) {
-        chain.push_back(p.second);
-        report.inserted.push_back(p.second);
-      }
-      chain.push_back(v);
-      t[i] = {{chain[0], chain[1], w}};
-      for(std::size_t j = 1; j + 1 < chain.size(); j++) {
-        t.push_back({{chain[j], chain[j + 1], w}});
-        from.push_back(from[i]);
-      }
-      changed = true;
-    }
-    if(!inserts.empty()) {
-      compact(t, from);
-      edgesOf(t, edges, free);
-    }
-    if(!changed) break;
+  const double inf = std::numeric_limits<double>::infinity();
+  const std::size_t n0 = t.size();
+  std::vector<std::size_t> from(n0);
+  std::vector<char> alive(n0, 1);
+  // the triangles of each node (and some that do not have it any more)
+  std::vector<std::vector<std::size_t> > at(x.size());
+  for(std::size_t i = 0; i < n0; i++) {
+    from[i] = i;
+    if(t[i][0] == t[i][1] || t[i][1] == t[i][2] || t[i][2] == t[i][0])
+      alive[i] = 0;
+    else
+      for(int n : t[i]) at[n].push_back(i);
   }
-  report.freeAfter = free.size();
-  if(origin) *origin = from;
+  auto has = [&](std::size_t i, int n) {
+    return t[i][0] == n || t[i][1] == n || t[i][2] == n;
+  };
+  auto along = [&](int a, int b, std::vector<std::size_t> &l) {
+    l.clear();
+    for(std::size_t i : at[a])
+      if(alive[i] && has(i, a) && has(i, b)) l.push_back(i);
+  };
+  std::vector<std::size_t> l;
+  auto isFree = [&](int n) {
+    for(std::size_t i : at[n]) {
+      if(!alive[i] || !has(i, n)) continue;
+      for(int m : t[i]) {
+        if(m == n) continue;
+        along(n, m, l);
+        if(l.size() == 1) return true;
+      }
+    }
+    return false;
+  };
+  // the nodes merged into others
+  std::vector<int> rep(x.size());
+  for(std::size_t n = 0; n < x.size(); n++) rep[n] = (int)n;
+  auto find = [&](int n) {
+    while(rep[n] != n) n = rep[n] = rep[rep[n]];
+    return n;
+  };
+  // the pieces, by the triangles that are their roots (the path from each
+  // triangle to its root kept: the roots it had, with the level from which
+  // their piece was closed), with their triangles left and their edges of
+  // one triangle or more than two
+  std::vector<std::size_t> up(n0), size(n0, 1);
+  std::vector<int> open(n0, 0), live(n0);
+  std::vector<double> closedAt(n0, inf);
+  for(std::size_t i = 0; i < n0; i++) {
+    up[i] = i;
+    live[i] = alive[i];
+  }
+  auto root = [&](std::size_t i) {
+    while(up[i] != i) i = up[i];
+    return i;
+  };
+  auto unite = [&](std::size_t i, std::size_t j) {
+    i = root(i);
+    j = root(j);
+    if(i == j) return;
+    if(size[i] < size[j]) std::swap(i, j);
+    up[j] = i;
+    size[i] += size[j];
+    open[i] += open[j];
+    live[i] += live[j];
+  };
+  auto roots = [&](const std::vector<std::size_t> &tri) {
+    std::vector<std::size_t> r;
+    for(std::size_t i : tri) r.push_back(root(i));
+    std::sort(r.begin(), r.end());
+    r.erase(std::unique(r.begin(), r.end()), r.end());
+    return r;
+  };
+
+  // the free edges and the pieces of the input
+  int freeCount = 0, openCount = 0, closedCount = 0;
+  std::vector<std::pair<int, int> > odd;
+  for(std::size_t i = 0; i < n0; i++) {
+    if(!alive[i]) continue;
+    for(int k = 0; k < 3; k++) {
+      const int a = t[i][k], b = t[i][(k + 1) % 3];
+      along(a, b, l);
+      if(*std::min_element(l.begin(), l.end()) != i) continue;
+      if(l.size() == 2)
+        unite(l[0], l[1]);
+      else
+        odd.push_back(std::minmax(a, b));
+      if(l.size() == 1) report.freeEdges.push_back(std::minmax(a, b));
+    }
+  }
+  for(auto &e : odd) {
+    along(e.first, e.second, l);
+    for(std::size_t r : roots(l)) open[r]++;
+  }
+  for(std::size_t i = 0; i < n0; i++) {
+    if(up[i] != i || !live[i]) continue;
+    if(open[i])
+      openCount++;
+    else {
+      closedCount++;
+      closedAt[i] = 0.;
+    }
+  }
+  freeCount = (int)report.freeEdges.size();
+  report.freeBefore = report.freeEdges.size();
+  report.open = openCount;
+  report.closed = closedCount;
+
+  // the reach of the events, the grids of the nodes and of the free edges
+  std::vector<double> lengths;
+  for(auto &e : report.freeEdges)
+    lengths.push_back(std::sqrt(distance2(x[e.first], x[e.second])));
+  double median = 0.;
+  if(!lengths.empty()) {
+    std::nth_element(lengths.begin(), lengths.begin() + lengths.size() / 2,
+                     lengths.end());
+    median = lengths[lengths.size() / 2];
+  }
+  reach = std::max(tolerance, reach * median);
+  if(!(reach > 0.) || report.freeEdges.empty()) reach = 0.;
+  report.reach = reach;
+  // (a point within reach of a node, or a node within reach of a free edge,
+  // is in a cell next to its cell)
+  hashGrid nodes{std::max(1.5 * reach, median), {}};
+  hashGrid edges{nodes.h, {}};
+  std::vector<std::pair<int, int> > fe;
+  std::vector<int> stamp;
+  int visit = 0;
+  std::vector<char> free(x.size(), 0);
+  std::vector<double> nonFreeAt(x.size(), inf);
+  std::priority_queue<candidate, std::vector<candidate>, std::greater<candidate> >
+    queue;
+  // (a node into a free edge: inside it, and its ends more than twice as far
+  // from it as the edge)
+  auto into = [&](int c, int id) {
+    const int u = fe[id].first, v = fe[id].second;
+    if(c == u || c == v) return;
+    double d2;
+    const double s = project(x[u], x[v], x[c], d2);
+    if(s <= 0. || s >= 1. || d2 > reach * reach ||
+       std::min(distance2(x[c], x[u]), distance2(x[c], x[v])) <= 4. * d2)
+      return;
+    queue.push({std::sqrt(d2), 't', c, id});
+  };
+  // (the events of a node of free edges: with the nodes of free edges, the
+  // larger ones only for the nodes of the input, and into the free edges)
+  auto fromNode = [&](int n, bool all) {
+    nodes.around(x[n], x[n], nodes.h, [&](int m) {
+      if(m == n || (!all && m < n)) return;
+      const double d2 = distance2(x[n], x[m]);
+      if(d2 <= reach * reach)
+        queue.push({std::sqrt(d2), 'm', std::min(n, m), std::max(n, m)});
+    });
+    visit++;
+    edges.around(x[n], x[n], edges.h, [&](int id) {
+      if(stamp[id] == visit) return;
+      stamp[id] = visit;
+      into(n, id);
+    });
+  };
+  auto addEdge = [&](int a, int b) {
+    const int id = (int)fe.size();
+    fe.push_back(std::minmax(a, b));
+    stamp.push_back(0);
+    edges.add(id, x[a], x[b]);
+    return id;
+  };
+  if(reach > 0.) {
+    for(auto &e : report.freeEdges) {
+      addEdge(e.first, e.second);
+      free[e.first] = free[e.second] = 1;
+    }
+    for(std::size_t n = 0; n < x.size(); n++)
+      if(free[n]) nodes.add((int)n, x[n]);
+    for(std::size_t n = 0; n < x.size(); n++)
+      if(free[n]) fromNode((int)n, false);
+  }
+
+  // an event changes the triangles along the edges E: they and their pieces
+  // taken out of the counts before it, back in after it
+  std::vector<std::pair<int, int> > E;
+  std::vector<std::size_t> touched;
+  std::set<std::pair<int, int> > freeBefore;
+  double level = 0.;
+  auto collect = [&](std::vector<std::size_t> &tri) {
+    for(auto &e : E) {
+      along(e.first, e.second, l);
+      tri.insert(tri.end(), l.begin(), l.end());
+    }
+  };
+  auto count = [&](int sign) {
+    for(auto &e : E) {
+      along(e.first, e.second, l);
+      if(l.size() == 1) freeCount += sign;
+      if(l.size() == 0 || l.size() == 2) continue;
+      for(std::size_t r : roots(l)) open[r] += sign;
+    }
+  };
+  auto pieces = [&](int sign) {
+    for(std::size_t r : roots(touched)) {
+      if(!live[r]) continue;
+      (open[r] ? openCount : closedCount) += sign;
+      if(sign > 0) {
+        if(open[r])
+          closedAt[r] = inf;
+        else if(closedAt[r] == inf)
+          closedAt[r] = level;
+      }
+    }
+  };
+  auto start = [&]() {
+    std::sort(E.begin(), E.end());
+    E.erase(std::unique(E.begin(), E.end()), E.end());
+    touched.clear();
+    collect(touched);
+    pieces(-1);
+    count(-1);
+    freeBefore.clear();
+    for(auto &e : E) {
+      along(e.first, e.second, l);
+      if(l.size() == 1) freeBefore.insert(e);
+    }
+  };
+  auto finish = [&]() {
+    for(auto &e : E) {
+      along(e.first, e.second, l);
+      if(l.size() == 2) unite(l[0], l[1]);
+    }
+    count(1);
+    collect(touched);
+    pieces(1);
+    // (the nodes that are no more, or newly, on free edges, the new free
+    // edges)
+    std::set<int> seen;
+    for(auto &e : E)
+      for(int n : {e.first, e.second}) {
+        if(find(n) != n || !seen.insert(n).second) continue;
+        const bool f = isFree(n);
+        if(f && !free[n]) {
+          free[n] = 1;
+          nonFreeAt[n] = inf;
+          nodes.add(n, x[n]);
+          fromNode(n, true);
+        }
+        else if(!f && free[n]) {
+          free[n] = 0;
+          nonFreeAt[n] = level;
+        }
+      }
+    for(auto &e : E) {
+      if(freeBefore.count(e) || find(e.first) != e.first ||
+         find(e.second) != e.second)
+        continue;
+      along(e.first, e.second, l);
+      if(l.size() != 1) continue;
+      const int id = addEdge(e.first, e.second);
+      nodes.around(x[e.first], x[e.second], reach, [&](int m) {
+        if(free[m] && find(m) == m) into(m, id);
+      });
+    }
+  };
+  auto kill = [&](std::size_t i) {
+    alive[i] = 0;
+    live[root(i)]--;
+  };
+  auto log = [&](char kind, int a, int b, int c) {
+    report.events.push_back(
+      {kind, level, a, b, c, freeCount, openCount, closedCount});
+  };
+  std::set<std::array<int, 3> > refused;
+  auto refuse = [&](int a, int b, int c) {
+    if(refused.insert(std::array<int, 3>{{a, b, c}}).second) log('r', a, b, c);
+  };
+
+  // a merged into b, unless more than two distinct triangles would be along
+  // an edge (the triangles with both collapse)
+  auto merge = [&](int a, int b) {
+    std::map<int, std::set<std::array<int, 3> > > around;
+    std::vector<std::size_t> tri;
+    for(int n : {a, b})
+      for(std::size_t i : at[n])
+        if(alive[i] && has(i, n)) tri.push_back(i);
+    std::sort(tri.begin(), tri.end());
+    tri.erase(std::unique(tri.begin(), tri.end()), tri.end());
+    for(std::size_t i : tri) {
+      std::array<int, 3> tr = t[i];
+      int seen = 0;
+      for(int &n : tr) {
+        if(n == a) n = b;
+        if(n == b) seen++;
+      }
+      if(seen != 1) continue;
+      std::sort(tr.begin(), tr.end());
+      for(int n : tr)
+        if(n != b) around[n].insert(tr);
+    }
+    for(auto &e : around)
+      if(e.second.size() > 2) {
+        refuse(std::min(a, b), std::max(a, b), -1);
+        return;
+      }
+    E.clear();
+    for(std::size_t i : tri)
+      for(int k = 0; k < 3; k++) {
+        const int p = t[i][k], q = t[i][(k + 1) % 3];
+        const int pp = p == a ? b : p, qq = q == a ? b : q;
+        E.push_back(std::minmax(p, q));
+        if(pp != qq) E.push_back(std::minmax(pp, qq));
+      }
+    start();
+    for(std::size_t i : tri)
+      for(int &n : t[i])
+        if(n == a) n = b;
+    rep[a] = b;
+    at[b] = tri;
+    at[a].clear();
+    std::set<std::array<int, 3> > copies;
+    for(std::size_t i : tri) {
+      if(t[i][0] == t[i][1] || t[i][1] == t[i][2] || t[i][2] == t[i][0]) {
+        kill(i);
+        continue;
+      }
+      std::array<int, 3> key = t[i];
+      std::sort(key.begin(), key.end());
+      if(!copies.insert(key).second) kill(i);
+    }
+    finish();
+    log('m', a, b, -1);
+  };
+
+  // c inserted into the free edge uv of the triangle i, split in two, unless
+  // more than two triangles would be along an edge
+  auto insert = [&](int c, int u, int v, std::size_t i) {
+    int k = 0;
+    while(std::minmax(t[i][k], t[i][(k + 1) % 3]) != std::minmax(u, v)) k++;
+    const int p = t[i][k], q = t[i][(k + 1) % 3], w = t[i][(k + 2) % 3];
+    std::vector<std::size_t> pc, cq, cw;
+    along(p, c, pc);
+    along(c, q, cq);
+    along(c, w, cw);
+    if(pc.size() > 1 || cq.size() > 1 || !cw.empty()) {
+      refuse(c, u, v);
+      return;
+    }
+    E = {std::minmax(p, q), std::minmax(q, w), std::minmax(w, p),
+         std::minmax(p, c), std::minmax(c, q), std::minmax(c, w)};
+    start();
+    const std::size_t j = t.size();
+    t[i] = {{p, c, w}};
+    t.push_back({{c, q, w}});
+    alive.push_back(1);
+    from.push_back(from[i]);
+    up.push_back(j);
+    size.push_back(1);
+    open.push_back(0);
+    live.push_back(1);
+    closedAt.push_back(inf);
+    // (c may have been in i before)
+    if(std::find(at[c].begin(), at[c].end(), i) == at[c].end()) at[c].push_back(i);
+    for(int n : {c, q, w}) at[n].push_back(j);
+    finish();
+    log('t', c, u, v);
+  };
+
+  // the events, from the closest; the triangles as they are when they reach
+  // the tolerance
+  std::vector<std::array<int, 3> > zipped;
+  std::vector<std::size_t> zippedFrom;
+  std::size_t within = 0;
+  bool taken = false;
+  auto take = [&]() {
+    for(std::size_t i = 0; i < t.size(); i++)
+      if(alive[i]) {
+        zipped.push_back(t[i]);
+        zippedFrom.push_back(from[i]);
+      }
+    report.freeAfter = freeCount;
+    within = report.events.size();
+    taken = true;
+  };
+  // (at most so many events, should they never end)
+  const std::size_t most = 100 * (report.freeEdges.size() + 1);
+  while(!queue.empty() && report.events.size() < most) {
+    const candidate e = queue.top();
+    queue.pop();
+    if(!taken && e.d > tolerance) take();
+    if(e.kind == 'm') {
+      const int a = find(e.a), b = find(e.b);
+      if(a == b || !free[a] || !free[b]) continue;
+      const double d = std::sqrt(distance2(x[a], x[b]));
+      if(d > e.d) {
+        // (moved away by a merge before)
+        if(d <= reach) queue.push({d, 'm', std::min(a, b), std::max(a, b)});
+        continue;
+      }
+      level = std::max(level, e.d);
+      merge(std::max(a, b), std::min(a, b));
+    }
+    else {
+      const int c = find(e.a);
+      if(!free[c]) continue;
+      if(c != e.a) {
+        // (merged before: the node it was merged into)
+        into(c, e.b);
+        continue;
+      }
+      const int u = fe[e.b].first, v = fe[e.b].second;
+      if(find(u) != u || find(v) != v) continue;
+      along(u, v, l);
+      if(l.size() != 1 || has(l[0], c)) continue;
+      level = std::max(level, e.d);
+      insert(c, u, v, l[0]);
+    }
+  }
+  if(!taken) take();
+
+  for(std::size_t k = 0; k < within; k++) {
+    const DiscreteCADZipReport::Event &e = report.events[k];
+    if(e.kind == 'm') report.merged.push_back(e.a);
+    if(e.kind == 't') report.inserted.push_back(e.a);
+  }
+  for(auto &e : report.freeEdges)
+    report.freeLevel.push_back(
+      std::max(nonFreeAt[find(e.first)], nonFreeAt[find(e.second)]));
+  // (the first root of each triangle whose piece was closed)
+  report.closedLevel.assign(n0, inf);
+  for(std::size_t i = 0; i < n0; i++) {
+    std::size_t r = i;
+    while(closedAt[r] == inf && up[r] != r) r = up[r];
+    report.closedLevel[i] = closedAt[r];
+  }
+  t = zipped;
+  if(origin) *origin = zippedFrom;
 }
 
 double zipTolerance(const std::vector<std::array<double, 3> > &x,
-                    const std::vector<std::array<int, 3> > &t, std::string *why)
+                    const std::vector<std::array<int, 3> > &t, std::string *why,
+                    std::map<int, int> *distribution)
 {
+  if(distribution) distribution->clear();
   std::map<std::pair<int, int>, std::vector<std::size_t> > edges;
   std::vector<std::pair<int, int> > free;
   edgesOf(t, edges, free);
@@ -645,20 +964,19 @@ double zipTolerance(const std::vector<std::array<double, 3> > &x,
   std::nth_element(sorted.begin(), sorted.begin() + sorted.size() / 2, sorted.end());
   const double median = sorted[sorted.size() / 2];
   if(!(median > 0.)) return 0.;
-  // the free edges in the cells of a grid, by their middles
-  nodeGrid g{median, {}};
-  std::vector<std::array<double, 3> > middle(free.size());
-  for(std::size_t k = 0; k < free.size(); k++) {
-    for(int c = 0; c < 3; c++)
-      middle[k][c] = 0.5 * (x[free[k].first][c] + x[free[k].second][c]);
-    g.cells[g.cell(middle[k])].push_back((int)k);
-  }
-  double longest = *std::max_element(lengths.begin(), lengths.end());
-  const double reach = std::min(4. * median + 0.5 * longest, 10. * median);
+  // the free edges in the cells of a grid
+  hashGrid g{median, {}};
+  for(std::size_t k = 0; k < free.size(); k++)
+    g.add((int)k, x[free[k].first], x[free[k].second]);
+  const double reach = 10. * median;
   // the distances from the nodes to the free edges not within three edges of
-  // them along the free edges, in half decades
+  // them along the free edges, in half decades (the cells r cells away from
+  // that of a node, and those nearer, have all the free edges up to r - 1/4
+  // cells from it)
   std::map<int, int> histogram;
   int counted = 0;
+  std::vector<int> stamp(free.size(), -1);
+  int visit = 0;
   for(auto &n : freeAt) {
     std::set<std::size_t> near;
     std::set<int> seen = {n.first};
@@ -674,18 +992,27 @@ double zipTolerance(const std::vector<std::array<double, 3> > &x,
       front = next;
     }
     double best = 1e300;
-    g.around(x[n.first], x[n.first], reach, [&](int k) {
-      if(near.count(k)) return;
-      double d2;
-      project(x[free[k].first], x[free[k].second], x[n.first], d2);
-      best = std::min(best, d2);
-    });
-    if(best >= 1e300) continue;
+    visit++;
+    const std::array<long, 3> c = g.cell(x[n.first]);
+    for(long r = 0;; r++) {
+      g.ring(c, r, [&](int k) {
+        if(stamp[k] == visit) return;
+        stamp[k] = visit;
+        if(near.count(k)) return;
+        double d2;
+        project(x[free[k].first], x[free[k].second], x[n.first], d2);
+        best = std::min(best, d2);
+      });
+      const double sure = (r - 0.25) * median;
+      if(sure > reach || (sure > 0. && best <= sure * sure)) break;
+    }
+    if(best > reach * reach) continue;
     // (nodes on another free edge counted a billionth of the free edges away)
     const double d = std::max(std::sqrt(best), 1e-9 * median);
     histogram[(int)std::floor(2. * std::log10(d))]++;
     counted++;
   }
+  if(distribution) *distribution = histogram;
   if(histogram.empty()) {
     if(why) *why = "no free edges near each other";
     return 0.;
@@ -732,10 +1059,14 @@ double zipTolerance(const std::vector<std::array<double, 3> > &x,
   int first = lo;
   while(first < lastCrack && count(first) < significant) first++;
   const double tolerance = edge(valley + 1);
+  // (from 0 if the first are nodes on other free edges)
+  char start[64] = "0";
+  if(edge(first + 1) <= 1e-9 * median || edge(first) > 1e-9 * median)
+    snprintf(start, sizeof(start), "%g", edge(first));
   snprintf(text, sizeof(text),
-           "proposed %g: the cracks from %g, the gaps between parts around %g, "
+           "proposed %g: the cracks from %s, the gaps between parts around %g, "
            "the free edges %g long",
-           tolerance, edge(first), edge(main), median);
+           tolerance, start, edge(main), median);
   if(why) *why = text;
   return tolerance;
 }

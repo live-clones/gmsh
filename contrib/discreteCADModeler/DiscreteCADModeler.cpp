@@ -88,7 +88,8 @@ namespace {
     std::vector<DiscreteCAD_Internals::Report> &reports;
     std::string text;
     std::vector<DiscreteCAD_Internals::ReportItem> items;
-    ~stepReport() { reports.push_back({text, items}); }
+    DiscreteCAD_Internals::Zip zip;
+    ~stepReport() { reports.push_back({text, items, zip}); }
     // an item: the triangles (dim 2), the edges (1) or the nodes (0) given
     // by their nodes, if there are some, with their values (1 if none)
     void add(const std::string &label, int dim, const std::vector<int> &nodes,
@@ -2978,12 +2979,79 @@ bool DiscreteCAD_Internals::heal(const std::vector<int> &surfaceTags,
   std::vector<std::size_t> kept;
   const std::vector<std::array<int, 3> > before = tri;
   removeBadTriangles(tri, r, &kept);
-  // (the cracks zipped: the triangle of the input each one comes from)
+  // (the cracks zipped: the triangle of the input each one comes from; the
+  // events up to twice the length of the free edges, for the zipping within
+  // other tolerances)
   std::string proposed;
-  if(!(tolerance > 0.)) tolerance = zipTolerance(_nodes, tri, &proposed);
+  std::map<int, int> distances;
+  const double tolerance0 = zipTolerance(_nodes, tri, &proposed, &distances);
+  if(tolerance > 0.)
+    proposed.clear();
+  else
+    tolerance = tolerance0;
+  const std::vector<std::array<int, 3> > unzipped = tri;
   DiscreteCADZipReport z;
   std::vector<std::size_t> zipped;
-  zipFreeEdges(_nodes, tri, tolerance, z, &zipped);
+  zipFreeEdges(_nodes, tri, tolerance, z, &zipped, 2.);
+  {
+    DiscreteCAD_Internals::Zip &zip = report.zip;
+    zip.tolerance = tolerance;
+    zip.proposed = tolerance0;
+    zip.reach = z.reach;
+    if(!distances.empty()) {
+      zip.first = distances.begin()->first;
+      zip.counts.assign(distances.rbegin()->first - zip.first + 1, 0);
+      for(auto &d : distances) zip.counts[d.first - zip.first] = d.second;
+    }
+    int merged = 0, inserted = 0, refused = 0;
+    auto step = [&](double level, int free, int open, int closed) {
+      zip.levels.push_back(level);
+      zip.free.push_back(free);
+      zip.open.push_back(open);
+      zip.closed.push_back(closed);
+      zip.merged.push_back(merged);
+      zip.inserted.push_back(inserted);
+      zip.refused.push_back(refused);
+    };
+    step(0., (int)z.freeBefore, z.open, z.closed);
+    DiscreteCAD_Internals::ReportItem edges{"free edges", 1, {}, z.freeLevel},
+      nodes{"nodes merged", 1, {}, {}}, points{"nodes inserted", 0, {}, {}},
+      no{"merges and insertions refused", 1, {}, {}},
+      closed{"pieces closed", 2, {}, {}};
+    for(auto &e : z.freeEdges) edges.nodes.insert(edges.nodes.end(), {e.first, e.second});
+    auto d2 = [&](int a, int b) {
+      double d = 0.;
+      for(int k = 0; k < 3; k++)
+        d += (_nodes[a][k] - _nodes[b][k]) * (_nodes[a][k] - _nodes[b][k]);
+      return d;
+    };
+    for(auto &e : z.events) {
+      if(e.kind == 'm') {
+        merged++;
+        nodes.nodes.insert(nodes.nodes.end(), {e.a, e.b});
+        nodes.values.push_back(e.level);
+      }
+      else if(e.kind == 't') {
+        inserted++;
+        points.nodes.push_back(e.a);
+        points.values.push_back(e.level);
+      }
+      else {
+        refused++;
+        no.nodes.insert(no.nodes.end(),
+                        {e.a, e.c >= 0 && d2(e.a, e.c) < d2(e.a, e.b) ? e.c : e.b});
+        no.values.push_back(e.level);
+      }
+      step(e.level, e.free, e.open, e.closed);
+    }
+    for(std::size_t i = 0; i < unzipped.size(); i++)
+      if(z.closedLevel[i] > 0. && z.closedLevel[i] <= z.reach) {
+        closed.nodes.insert(closed.nodes.end(), unzipped[i].begin(),
+                            unzipped[i].end());
+        closed.values.push_back(z.closedLevel[i]);
+      }
+    zip.items = {edges, nodes, points, no, closed};
+  }
   for(std::size_t &i : zipped) i = kept[i];
   kept = zipped;
   std::vector<int> component;

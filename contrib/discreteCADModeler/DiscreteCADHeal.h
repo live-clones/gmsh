@@ -17,6 +17,7 @@
 #define DISCRETE_CAD_HEAL_H
 
 #include <array>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -58,32 +59,60 @@ void orientTriangles(const std::vector<std::array<double, 3> > &x,
                      std::vector<int> *component = nullptr,
                      std::vector<char> *turned = nullptr);
 
-// The cracks of a soup of triangles zipped: the nodes of its free edges
-// (edges of one triangle) within tolerance of a node of another free edge
-// merged into it (closest pairs first, never into more than two distinct
-// triangles along an edge; a triangle with the two nodes collapses), and
-// those within tolerance of the inside of a free edge inserted into it, its
-// triangle split (a T-junction), until nothing changes; the degenerate and
-// duplicated triangles then made removed. For each triangle left, the
-// triangle of the input it comes from in origin; the nodes merged away, the
-// nodes inserted and the free edges before and after in the report.
+// The cracks of a soup of triangles zipped, as a filtration: the events from
+// the closest, each one made at its level (its distance, or the level of the
+// event that made it possible if that is larger), the zipping within a
+// tolerance being the events of levels up to it. An event merges a node of a
+// free edge (an edge of one triangle) into a node of another free edge
+// (never into more than two distinct triangles along an edge: the merge is
+// refused; the triangles with the two nodes collapse, the copies of a
+// triangle are removed), or inserts a node of a free edge into the inside of
+// another free edge, its triangle split (a T-junction; unless one of the ends
+// of the edge is less than twice as far from the node as the edge, where the
+// merge with it comes first). For each triangle left, the triangle of the
+// input it comes from in origin; in the report, the nodes merged away, the
+// nodes inserted, and the free edges before and after the zipping within the
+// tolerance, and the events up to reach times the median length of the free
+// edges (or the tolerance if it is larger): their kinds, levels and nodes,
+// and after each one the free edges, the open pieces and the closed ones (the
+// triangles connected across edges of two triangles, closed if none of their
+// edges has one triangle or more than two); the level from which each free
+// edge of the input is zipped (its two nodes, or those they are merged into,
+// on no free edge) and from which the piece of each triangle of the input is
+// closed (0 if it is from the start; infinite if not within reach).
 struct DiscreteCADZipReport {
   std::vector<int> merged, inserted;
   std::size_t freeBefore = 0, freeAfter = 0;
+  struct Event {
+    // 'm': a merged into b; 't': a inserted into the edge bc; 'r': the merge
+    // of a and b refused
+    char kind;
+    double level;
+    int a, b, c;
+    int free, open, closed;
+  };
+  double reach = 0.;
+  int open = 0, closed = 0;
+  std::vector<Event> events;
+  std::vector<std::pair<int, int> > freeEdges;
+  std::vector<double> freeLevel, closedLevel;
 };
 void zipFreeEdges(const std::vector<std::array<double, 3> > &x,
                   std::vector<std::array<int, 3> > &triangles, double tolerance,
                   DiscreteCADZipReport &report,
-                  std::vector<std::size_t> *origin = nullptr);
+                  std::vector<std::size_t> *origin = nullptr,
+                  double reach = 0.);
 
 // A tolerance for zipFreeEdges: in the distribution of the distances from the
 // nodes of free edges to the nearest free edge not touching them, the
 // emptiest half decade between the cracks (the first peak) and the gaps
 // between parts (the main peak), its upper end; 0 if there is no free edge.
-// What it is made of in why.
+// What it is made of in why; the distribution in histogram (the number of
+// nodes by half decade b, from 10^(b/2) to 10^((b+1)/2)).
 double zipTolerance(const std::vector<std::array<double, 3> > &x,
                     const std::vector<std::array<int, 3> > &triangles,
-                    std::string *why = nullptr);
+                    std::string *why = nullptr,
+                    std::map<int, int> *histogram = nullptr);
 
 // The defects of a soup of triangles, as it is: the triangles degenerate (two
 // nodes the same, or no area), duplicated (the nodes of one before) and

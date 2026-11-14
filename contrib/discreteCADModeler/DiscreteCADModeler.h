@@ -82,9 +82,31 @@ public:
     std::vector<int> nodes;
     std::vector<double> values;
   };
+  // how the zipping of the cracks by heal goes as its tolerance grows: the
+  // tolerance used, the one proposed, the largest level of its events; the
+  // distances from the nodes of the free edges to the nearest free edge not
+  // near them, the number of nodes by half decade b (from 10^(b/2) to
+  // 10^((b+1)/2)) from the half decade first; before the zipping, then after
+  // each event (by levels: the tolerance from which it is made), the free
+  // edges, the open and the closed pieces, the nodes merged and inserted,
+  // the merges and insertions refused; the free edges of the input, the
+  // nodes merged (lines to the nodes they are merged into), inserted, those
+  // whose merge or insertion is refused (lines to the other node, or to the
+  // nearest end of the edge) and the triangles of the pieces closed by the
+  // zipping, each one with its level as value (infinite for the free edges
+  // not zipped within the largest level)
+  struct Zip {
+    double tolerance = 0., proposed = 0., reach = 0.;
+    int first = 0;
+    std::vector<int> counts;
+    std::vector<double> levels;
+    std::vector<int> free, open, closed, merged, inserted, refused;
+    std::vector<ReportItem> items;
+  };
   struct Report {
     std::string text;
     std::vector<ReportItem> items;
+    Zip zip;
   };
   // an orthonormal frame: origin o and axes e[0], e[1], e[2]
   struct Frame {
