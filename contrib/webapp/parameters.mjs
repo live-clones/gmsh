@@ -144,6 +144,8 @@ function parameterRow(p, name) {
       }
     });
     row.appendChild(el);
+    // (no value to show again: its label is in the key of the tree)
+    rowUpdates.set(p.name, () => {});
     return row;
   }
   if(p.readOnly) {
