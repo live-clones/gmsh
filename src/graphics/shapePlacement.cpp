@@ -233,35 +233,48 @@ void shapePlacement::_drawGrid(drawContext *ctx) const
   int k = planeAxis(_plane);
   if(k < 0) return;
   CTX *c = CTX::instance();
-  // its two axes, around the model and the origin, a quarter wider; or as
-  // far as the view goes for a model with no entities
+  // its two axes, and where it is along the third
   int a = (k + 1) % 3, b = (k + 2) % 3;
-  double lo[3], hi[3];
-  GModel *m = GModel::current();
-  bool empty = !m->getNumVertices() && !m->getNumEdges() && !m->getNumFaces() &&
-               !m->getNumRegions();
-  if(empty) {
-    double ext =
-      std::max(std::max(std::abs(ctx->vxmin), std::abs(ctx->vxmax)),
-               std::max(std::abs(ctx->vymin), std::abs(ctx->vymax))) /
-      ctx->s[0];
-    for(int i = 0; i < 3; i++) {
-      lo[i] = -ext;
-      hi[i] = ext;
+  double pos[3], off = 0.;
+  bool hasPos = position(pos);
+  if(_locked[k] && hasPos) off = pos[k];
+  // all the window shows of it, a plane of construction having no end: where
+  // the lines of sight through the corners and the center of the window meet
+  // it, with the position and the point under the pointer
+  double lo[3] = {0., 0., 0.}, hi[3] = {0., 0., 0.};
+  bool any = false;
+  auto take = [&](const double q[3]) {
+    for(int i : {a, b}) {
+      lo[i] = any ? std::min(lo[i], q[i]) : q[i];
+      hi[i] = any ? std::max(hi[i], q[i]) : q[i];
     }
+    any = true;
+  };
+  double W = ctx->viewport[2], H = ctx->viewport[3];
+  const double corners[5][2] = {
+    {0., 0.}, {W, 0.}, {0., H}, {W, H}, {0.5 * W, 0.5 * H}};
+  for(auto &w : corners) {
+    double p[3], d[3];
+    ctx->unproject(w[0], w[1], p, d);
+    if(std::abs(d[k]) < 1e-6 * norm3(d)) continue; // along the plane
+    double t = (off - p[k]) / d[k];
+    if(!c->ortho && t < 0.) continue; // behind the eye
+    double q[3] = {p[0] + t * d[0], p[1] + t * d[1], p[2] + t * d[2]};
+    take(q);
   }
-  else {
-    double size = 0.;
-    for(int i = 0; i < 3; i++) {
-      lo[i] = std::min(0., c->min[i]);
-      hi[i] = std::max(0., c->max[i]);
-      size = std::max(size, hi[i] - lo[i]);
-    }
-    for(int i = 0; i < 3; i++) {
-      lo[i] -= 0.25 * size;
-      hi[i] += 0.25 * size;
-    }
+  if(!any) return;
+  if(hasPos) take(pos);
+  if(_hoverOn) take(_hover);
+  // (not past a hundred windows, for a plane seen edge on)
+  double window = (ctx->vxmax - ctx->vxmin) / ctx->s[0];
+  for(int i : {a, b}) {
+    double mid = 0.5 * (lo[i] + hi[i]);
+    double half = std::min(0.5 * (hi[i] - lo[i]), 50. * window);
+    lo[i] = mid - half;
+    hi[i] = mid + half;
   }
+  // a round step, about as dense on the screen at any zoom (or the snapping
+  // step, if not too fine)
   double size = std::max(hi[a] - lo[a], hi[b] - lo[b]);
   if(!(size > 0.)) return;
   double step[3] = {0., 0., 0.};
@@ -269,8 +282,6 @@ void shapePlacement::_drawGrid(drawContext *ctx) const
     step[i] = (c->geom.snap[i] > 0. && size / c->geom.snap[i] < 200.) ?
                 c->geom.snap[i] :
                 roundStep(size);
-  double pos[3], off = 0.;
-  if(_locked[k] && position(pos)) off = pos[k];
   int na0 = (int)floor(lo[a] / step[a]), na1 = (int)ceil(hi[a] / step[a]);
   int nb0 = (int)floor(lo[b] / step[b]), nb1 = (int)ceil(hi[b] / step[b]);
   for(int pass = 0; pass < 2; pass++) {
