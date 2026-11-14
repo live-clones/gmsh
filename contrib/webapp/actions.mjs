@@ -26,7 +26,7 @@ import {editFile, editScript} from './editor.mjs';
 import {showPlugins} from './plugins.mjs';
 import {openFiles, openMenu} from './models.mjs';
 import {colorScheme, keepOptionOf, optionRow, readOptions, setColorScheme, showOptions, showTab} from './options.mjs';
-import {draw, setPointPlaced} from './scene.mjs';
+import {draw, placementChanged, setPlacementChanged} from './scene.mjs';
 import {ModShift, installShortcuts, shortcutsHelp} from './shortcuts.js';
 import {run, showAll} from './solverClient.mjs';
 import {fullscreenElement, fullscreenEnabled, installApp, openQuickMenu, playing, popupMenu,
@@ -188,29 +188,79 @@ function saveScript() {
 function startShape(shape) {
   if(tool === Tool.Operation) stopOperation();
   const {label, fields} = shapes[shape];
+  const planes = ['XY', 'YZ', 'XZ', 'Facing the view'];
   const inputs = showPanel(
     $('moduleGeometry'), label,
-    fields.map(([name, value]) => ({name, kind: 'text', value})),
-    (name, value) => { fields.find((f) => f[0] === name)[1] = value; },
+    [...fields.map(([name, value]) => ({name, kind: 'text', value})),
+     {name: 'Work plane', kind: planes.join('|'), value: planes[0]}],
+    (name, value) => {
+      if(name === 'Work plane') web.placementPlane(planes.indexOf(value));
+      else {
+        // (a coordinate of the position typed is locked)
+        const i = fields.findIndex((f) => f[0] === name);
+        fields[i][1] = value;
+        web.placementSet(i, value);
+        showPlacement(true);
+      }
+      draw();
+    },
     () => addShape(shape),
-    [['Add', `Add the ${label.toLowerCase()} to the script`, () => addShape(shape)],
+    [['Add', `Add the ${label.toLowerCase()} to the script (e)`, () => addShape(shape)],
      ['Close', 'Close the form', () => showPanel(null)]]);
-  // its position (the first three fields of every shape) follows the
-  // pointer, as long as the form is open
-  web.placePoint(true);
-  setPointPlaced((p) => {
-    for(let i = 0; i < 3; i++) {
-      fields[i][1] = String(Number(p[i].toPrecision(6)));
-      if(inputs[i]) inputs[i].value = fields[i][1];
-    }
+  // the locks of the coordinates of the position (its first three fields),
+  // under them
+  const locks = [], row = document.createElement('div');
+  row.className = 'row';
+  const name = document.createElement('span');
+  name.textContent = 'Locked';
+  const boxes = document.createElement('span');
+  boxes.className = 'entries';
+  ['x', 'y', 'z'].forEach((c, i) => {
+    const box = document.createElement('label');
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.title = `Keep ${c} as it is when clicking (key ${c}; Shift+${c} keeps all but it)`;
+    cb.addEventListener('change', () => { web.placementLock(i, cb.checked); draw(); });
+    box.append(cb, c.toUpperCase());
+    boxes.append(box);
+    locks.push(cb);
   });
+  row.append(name, boxes);
+  if(inputs[2]) inputs[2].closest('.row').after(row);
+  // the placement (see shapePlacement), whose state the form shows again
+  // when the scene changes it (a click puts the position, a key locks), but
+  // in a field being typed in
+  const typing = new Set();
+  fields.forEach((f, i) => {
+    inputs[i].addEventListener('input', () => typing.add(i));
+    inputs[i].addEventListener('change', () => typing.delete(i));
+  });
+  let changes = -1;
+  const showPlacement = (always = false) => {
+    const s = web.placement();
+    if(!s || (!always && s.changes === changes)) return;
+    changes = s.changes;
+    s.values.forEach((v, i) => {
+      fields[i][1] = v;
+      if(inputs[i] && !typing.has(i)) inputs[i].value = v;
+    });
+    s.locked.forEach((on, i) => { locks[i].checked = on; });
+  };
+  web.placementStart(shape, fields.map((f) => f[1]));
+  placementShape = shape;
+  setTool(Tool.Placement);
+  setPlacementChanged(showPlacement);
   panelClosed = () => {
-    web.placePoint(false);
-    setPointPlaced(null);
+    web.placementStop();
+    setPlacementChanged(null);
+    placementShape = null;
+    if(tool === Tool.Placement) setTool(Tool.None);
     draw();
   };
-  setStatus('The position follows the pointer (Shift holds it), or type it');
+  showPlacement(true);
 }
+// the shape being placed, which 'e' adds
+let placementShape = null;
 // the model's name, which changes when a model that is not a .geo file is
 // given one by the first command added to it
 export function showModelName() {
@@ -224,7 +274,8 @@ async function addShape(shape) {
   if(!app.modelDir) await newModel();
   const wasEmpty = isEmpty();
   app.lastError = '';
-  const errors = web.addShape(shape, shapes[shape].fields.map((f) => f[1]).join('\n'));
+  const errors = placementShape === shape ? web.placementAdd() :
+    web.addShape(shape, shapes[shape].fields.map((f) => f[1]).join('\n'));
   showModelName();
   showAll();
   fitIfWasEmpty(wasEmpty);
@@ -314,7 +365,8 @@ const pageActions = {
   // Keys: the keys in no menu
   'project_reload': {run: () => run('check')},
   'solver_run': {run: () => run('compute')},
-  'selection_end': {run: () => operationKey('e'), available: () => tool === Tool.Operation},
+  'selection_end': {run: () => tool === Tool.Placement ? addShape(placementShape) : operationKey('e'),
+                    available: () => tool === Tool.Operation || tool === Tool.Placement},
   'selection_undo': {run: () => operationKey('u'), available: () => tool === Tool.Operation},
   'selection_quit': {run: () => tool === Tool.Operation ? operationKey('q') : setTool(Tool.None),
                      available: () => !!tool},
@@ -357,6 +409,8 @@ export async function runItem(item, {view = -1, tag, mods = 0, el = null} = {}) 
   if(item.kind === 'operation') startOperation(item);
   else if(item.kind === 'shape') startShape(item.name);
   else await item.run(view, tag, mods, el);
+  // (a key may have changed the shape being placed: a lock)
+  if(placementChanged) placementChanged();
 }
 // the keys of an item, as the platform names them ("Alt+x, Alt+Shift+x"), or ''
 export function keyLabels(name) {

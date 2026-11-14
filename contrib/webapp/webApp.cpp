@@ -71,6 +71,7 @@
 #include "onelab.h"
 #include "onelabUtils.h"
 #include "sceneView.h"
+#include "shapePlacement.h"
 #include "scriptStringInterface.h"
 #include "selectionDriver.h"
 #include "sceneTool.h"
@@ -118,15 +119,6 @@ namespace {
     bool picked = false;
     webView() : sceneView(nullptr) {}
     void hostRedraw() { redrawAsked = true; }
-    // the point being placed (addPointMode), and whether it moved since the
-    // page last read it (see gmshWebPlacedPoint())
-    double placed[3] = {0., 0., 0.};
-    bool placedMoved = false;
-    void hostPointMoved(const double p[3], int mode)
-    {
-      for(int i = 0; i < 3; i++) placed[i] = p[i];
-      placedMoved = true;
-    }
     void hostCursor(bool c) { cross = c; }
     bool hostBeginGL()
     {
@@ -335,9 +327,7 @@ EMSCRIPTEN_KEEPALIVE int gmshWebDraw(int width, int height, double scale)
   _scale = scale;
   bool releasing = false;
   _view->afterScene = [&releasing](int w, int h) {
-    if(!_scene) return;
-    _scene->drawPointToAdd();
-    releasing = _scene->releasePhlogiston(w, h, true);
+    if(_scene) releasing = _scene->releasePhlogiston(w, h, true);
   };
   draw();
   _view->afterScene = nullptr;
@@ -522,33 +512,77 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebToolName()
   return name.c_str();
 }
 
-// Place a point with the pointer (on), for the form of a shape, or stop: the
-// point follows the pointer, onto the model under it (see sceneView), and is
-// drawn over the scene
-EMSCRIPTEN_KEEPALIVE int gmshWebPlacePoint(int on)
+// The placing of a shape of the script (see shapePlacement): started with
+// the name of the shape and the values of its fields (separated by new
+// lines), the clicks of the canvas setting its position; stopped. Returns 0
+// if it did not start
+EMSCRIPTEN_KEEPALIVE int gmshWebPlacementStart(const char *name,
+                                               const char *values)
 {
   Msg::NoThrow noThrow;
-  if(!_view || !_view->getDrawContext()) return 0;
-  if(!_scene) _scene = new webView();
-  _scene->setDrawContext(_view->getDrawContext());
-  _scene->setAddPointMode(on ? 1 : 0);
-  _scene->placedMoved = false;
-  return 1;
+  if(!gmshWebTool(0)) return 0;
+  int shape = -1;
+  for(std::size_t i = 0; i < scriptShapes().size(); i++)
+    if(scriptShapes()[i].name == name) shape = i;
+  std::vector<std::string> v;
+  std::istringstream in(values);
+  for(std::string s; std::getline(in, s);) v.push_back(s);
+  sceneTool::start(newPlacementTool(), _scene);
+  shapePlacement::start(shape, v);
+  return shapePlacement::current() ? 1 : 0;
 }
 
-// the point placed, if it moved since the last call: "[x, y, z]", else ""
-EMSCRIPTEN_KEEPALIVE const char *gmshWebPlacedPoint()
+EMSCRIPTEN_KEEPALIVE void gmshWebPlacementStop()
+{
+  Msg::NoThrow noThrow;
+  sceneTool::stop();
+  shapePlacement::stop();
+}
+
+// the placement under way, in JSON: {"changes" (how many times the scene
+// changed it), "values" (of the fields), "locked" (the coordinates), "plane"
+// (0 XY, 1 YZ, 2 XZ, 3 facing the view)}, or "" if none
+EMSCRIPTEN_KEEPALIVE const char *gmshWebPlacement()
 {
   static std::string json;
   json = "";
-  if(_scene && _scene->placedMoved) {
-    _scene->placedMoved = false;
-    char buf[128];
-    snprintf(buf, sizeof(buf), "[%.10g,%.10g,%.10g]", _scene->placed[0],
-             _scene->placed[1], _scene->placed[2]);
-    json = buf;
-  }
+  shapePlacement *p = shapePlacement::current();
+  if(!p) return json.c_str();
+  json = "{\"changes\":" + std::to_string(p->changes()) + ",\"values\":[";
+  for(std::size_t i = 0; i < p->values().size(); i++)
+    json += std::string(i ? "," : "") + JsonString(p->values()[i]);
+  json += "],\"locked\":[";
+  for(int i = 0; i < 3; i++)
+    json += std::string(i ? "," : "") + (p->locked(i) ? "true" : "false");
+  json += "],\"plane\":" + std::to_string((int)p->plane()) + "}";
   return json.c_str();
+}
+
+// a field typed (a coordinate of the position typed is locked), a lock, the
+// work plane
+EMSCRIPTEN_KEEPALIVE void gmshWebPlacementSet(int i, const char *value)
+{
+  if(shapePlacement *p = shapePlacement::current()) p->setValue(i, value);
+}
+
+EMSCRIPTEN_KEEPALIVE void gmshWebPlacementLock(int i, int on)
+{
+  if(shapePlacement *p = shapePlacement::current()) p->setLocked(i, on != 0);
+}
+
+EMSCRIPTEN_KEEPALIVE void gmshWebPlacementPlane(int plane)
+{
+  if(shapePlacement *p = shapePlacement::current())
+    p->setPlane((shapePlacement::Plane)plane);
+}
+
+// the shape added to the script of the current model: 1 if it was not (with
+// errors), as gmshWebAddShape()
+EMSCRIPTEN_KEEPALIVE int gmshWebPlacementAdd()
+{
+  Msg::NoThrow noThrow;
+  shapePlacement *p = shapePlacement::current();
+  return (p && p->add()) ? 0 : 1;
 }
 
 // Start an operation on selected entities (see selectionDriver), or stop the

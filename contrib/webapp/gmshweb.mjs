@@ -58,13 +58,20 @@ export const web = {
   tool: (t) => call('Tool', N, [N], [t]),
   // the tool under way ("" if none: a tool of one click ends by itself)
   toolName: () => call('ToolName', S, [], []),
-  // a point placed with the pointer (for a shape): started or stopped, and
-  // where it is if it moved since last asked ([x, y, z], or null)
-  placePoint: (on) => call('PlacePoint', N, [N], [on ? 1 : 0]),
-  placedPoint: () => {
-    const p = call('PlacedPoint', S, [], []);
-    return p ? JSON.parse(p) : null;
+  // the placing of a shape (see shapePlacement): started with the values of
+  // its fields, stopped, its state ({changes, values, locked, plane}, or null),
+  // a field typed, a lock, the work plane, the shape added (1 if it was not)
+  placementStart: (name, values) =>
+    call('PlacementStart', N, [S, S], [name, values.join('\n')]),
+  placementStop: () => call('PlacementStop', null, [], []),
+  placement: () => {
+    const s = call('Placement', S, [], []);
+    return s ? JSON.parse(s) : null;
   },
+  placementSet: (i, value) => call('PlacementSet', null, [N, S], [i, value]),
+  placementLock: (i, on) => call('PlacementLock', null, [N, N], [i, on ? 1 : 0]),
+  placementPlane: (plane) => call('PlacementPlane', null, [N], [plane]),
+  placementAdd: () => call('PlacementAdd', N, [], []),
   measuring: () => call('Measuring', N, [], []),
   notes: () => call('Notes', S, [], []),
   operation: (name) => call('Operation', S, [S], [name]),

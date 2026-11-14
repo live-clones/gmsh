@@ -22,6 +22,7 @@
 #include "Context.h"
 #include "glImmediate.h"
 #include "glShader.h"
+#include "shapePlacement.h"
 
 // the scenes there are
 static std::vector<sceneView *> &_scenes()
@@ -35,12 +36,11 @@ sceneView::sceneView(drawContext *ctx)
     _highlightedDim(-1), _highlightedTag(0), _highlightedWas(0),
     _pickStepTime(0.), _stepping(false), _hoverBehind(false), _spin(0.),
     _spinFrom(0.), _spinPath(0.), _spinHot(0.), _ctx(ctx), _phlogiston(0.),
-    _phlogistonTime(0.), addPointMode(0), lassoMode(false), selectionMode(false),
+    _phlogistonTime(0.), lassoMode(false), selectionMode(false),
     endSelection(0), undoSelection(0), quitSelection(0), changeSelection(0)
 {
   _selectionElements = false;
   _scenes().push_back(this);
-  for(int i = 0; i < 3; i++) _point[i] = 0.;
   for(int i = 0; i < 4; i++) _trySelectionXYWH[i] = 0;
   _stepAnchor[0] = _stepAnchor[1] = 0.;
   _hoverAnchor[0] = _hoverAnchor[1] = 0.;
@@ -529,7 +529,8 @@ void sceneView::handleMouse(const paneInput &in)
     // With Alt, the wheel steps through the entities under the cursor
     // instead of zooming: a click then picks the one the hover names,
     // rather than the drawing order deciding which of them wins.
-    if(alt && CTX::instance()->mouseSelection && !lassoMode && !addPointMode) {
+    if(alt && CTX::instance()->mouseSelection && !lassoMode &&
+       !shapePlacement::current()) {
       // _prev is left alone: it is what a move is measured against, and
       // nothing has moved
       _stepPick(direction ? -1 : 1, true);
@@ -668,10 +669,9 @@ void sceneView::handleMouse(const paneInput &in)
   case paneInput::Move:
     _curr.set(_ctx, x, y);
     if(lassoMode) { hostRedraw(); }
-    else if(addPointMode && !shift) {
+    else if(shapePlacement::current()) {
       hostCursor(true);
-      _placePoint();
-      hostPointMoved(_point, addPointMode);
+      _hoverPlacement();
       hostRedraw();
     }
     else { // hover mode
@@ -713,7 +713,6 @@ void sceneView::cancelSelection()
   quitSelection = 0;
   selectionMode = false;
   lassoMode = false;
-  addPointMode = 0;
   hostCursor(false);
 }
 
@@ -942,161 +941,39 @@ bool sceneView::releasePhlogiston(int width, int height, bool decay)
   return true;
 }
 
-bool sceneView::_modelPointAt(int x, int y, double xyz[3], GEntity **on)
+bool sceneView::modelPointAt(int x, int y, double xyz[3], GEntity **on)
 {
   // (the geometry only: the point placed is a point of the geometry)
   scenePicks p;
-  *on = nullptr;
+  if(on) *on = nullptr;
   if(!_select(ENT_ALL, false, false, false, x, y, 5, 5, p.vertices, p.edges,
               p.faces, p.regions, p.elements, p.points, p.views))
     return false;
   if(!pickedModelPoint(_ctx, p, xyz)) return false;
-  *on = firstEntity(p.vertices, p.edges, p.faces, p.regions);
+  if(on) *on = firstEntity(p.vertices, p.edges, p.faces, p.regions);
   return true;
 }
 
-bool sceneView::_onGround()
+void sceneView::_hoverPlacement()
 {
-  GModel *m = GModel::current();
-  return !m->getNumVertices() && !m->getNumEdges() && !m->getNumFaces() &&
-         !m->getNumRegions();
-}
-
-void sceneView::_placePoint()
-{
-  CTX *ctx = CTX::instance();
-  // on the model under the pointer (on its point, curve or surface itself),
-  // as it is; elsewhere, on the plane z = 0 for a model with no entities, or
-  // on the plane through the center of gravity facing the viewer, snapped
-  // (Geometry.Snap)
-  double m[3];
+  shapePlacement *p = shapePlacement::current();
+  double xyz[3];
   GEntity *on = nullptr;
-  bool onModel = _modelPointAt((int)_curr.win[0], (int)_curr.win[1], m, &on);
-  bool ground = false;
-  if(!onModel) {
-    // the line in real space of the cursor
-    double p[3], d[3], t;
-    _ctx->unproject(_curr.win[0], _curr.win[1], p, d);
-    ground = _onGround() && std::abs(d[2]) > 1e-6 * norm3(d);
-    if(ground)
-      t = -p[2] / d[2];
-    else {
-      // its closest point to the center of gravity
-      double r[3] = {ctx->cg[0] - p[0], ctx->cg[1] - p[1], ctx->cg[2] - p[2]};
-      t = prosca(r, d);
-    }
-    for(int i = 0; i < 3; i++) {
-      m[i] = p[i] + t * d[i];
-      if(ctx->geom.snap[i]) {
-        double d = m[i] / ctx->geom.snap[i];
-        double f = floor(d);
-        double c = ceil(d);
-        double n = (d - f < c - d) ? f : c;
-        m[i] = n * ctx->geom.snap[i];
-      }
-    }
-    if(ground) m[2] = 0.;
-  }
-  for(int i = 0; i < 3; i++)
-    if(!hostFrozenCoordinate(i)) _point[i] = m[i];
-  // where it is, by the cursor, and what it is on
+  bool onModel = modelPointAt((int)_curr.win[0], (int)_curr.win[1], xyz, &on);
+  if(!onModel) p->planePoint(_ctx, _curr.win[0], _curr.win[1], xyz);
+  p->hover(xyz);
   _highlight(on);
+  // where a click would put it (the locked coordinates as they are), and on
+  // what
+  const double *h = p->hovered();
   char tmp[256];
-  snprintf(tmp, sizeof(tmp), "%g, %g, %g", _point[0], _point[1], _point[2]);
+  snprintf(tmp, sizeof(tmp), "%g, %g, %g", h[0], h[1], h[2]);
   std::string text = tmp;
   if(on) {
     std::string info = on->getInfoString(true, true);
     text += "\non " + info.substr(0, info.find('\n'));
   }
-  else if(ground)
-    text += "\non the plane z = 0";
+  else
+    text += "\non " + p->planeName();
   drawTooltip(text);
-}
-
-void sceneView::setAddPointMode(int mode)
-{
-  addPointMode = mode;
-  if(!mode) pointerLeft();
-}
-
-void sceneView::_drawGround()
-{
-  // around the origin, as far as the view goes, every round step (or the
-  // snapping step, if not too fine)
-  CTX *ctx = CTX::instance();
-  double ext = std::max(std::max(std::abs(_ctx->vxmin), std::abs(_ctx->vxmax)),
-                        std::max(std::abs(_ctx->vymin), std::abs(_ctx->vymax))) /
-               _ctx->s[0];
-  if(!(ext > 0.)) return;
-  double step = pow(10., floor(log10(ext / 5.)));
-  if(ctx->geom.snap[0] > 0. && ext / ctx->geom.snap[0] < 100.)
-    step = ctx->geom.snap[0];
-  int n = (int)ceil(ext / step);
-  // the foreground faintly over the background
-  auto mix = [ctx](double a, int comp) {
-    unsigned int fg = ctx->color.fg, bg = ctx->color.bg;
-    int f = comp == 0 ? ctx->unpackRed(fg) : comp == 1 ? ctx->unpackGreen(fg) :
-                                                         ctx->unpackBlue(fg);
-    int b = comp == 0 ? ctx->unpackRed(bg) : comp == 1 ? ctx->unpackGreen(bg) :
-                                                         ctx->unpackBlue(bg);
-    return (unsigned char)(b + a * (f - b));
-  };
-  for(int pass = 0; pass < 2; pass++) {
-    // the lines, then the axes through the origin over them
-    double a = pass ? 0.45 : 0.15;
-    gmshColor4ub(mix(a, 0), mix(a, 1), mix(a, 2), 255);
-    gmshBegin(GL_LINES);
-    for(int i = -n; i <= n; i++) {
-      if((i == 0) != (pass == 1)) continue;
-      gmshVertex3d(i * step, -n * step, 0.);
-      gmshVertex3d(i * step, n * step, 0.);
-      gmshVertex3d(-n * step, i * step, 0.);
-      gmshVertex3d(n * step, i * step, 0.);
-    }
-    gmshEnd();
-  }
-}
-
-void sceneView::drawPointToAdd()
-{
-  if(!addPointMode) return;
-  CTX *ctx = CTX::instance();
-  // over what is drawn: on the model, it lies at the depth of its surface
-  gmshDepthTest(false);
-  bool ground = _onGround();
-  if(ground) _drawGround();
-  // the corner its coordinates are read against: of the model's box, or the
-  // origin
-  double b[3] = {0., 0., 0.};
-  if(!ground)
-    for(int i = 0; i < 3; i++) b[i] = ctx->min[i];
-  const unsigned char colors[3][3] = {
-    {220, 50, 50}, {40, 160, 40}, {50, 90, 230}};
-  double len = 30. * _ctx->pixel_equiv_x / _ctx->s[0];
-  for(int i = 0; i < 3; i++) {
-    gmshColor4ub(colors[i][0], colors[i][1], colors[i][2], 255);
-    double q[3] = {_point[0], _point[1], _point[2]};
-    q[i] = b[i];
-    gmshLineWidth(ctx->geom.curveWidth);
-    gmshLineStipple(1, 0x0F0F);
-    gmshBegin(GL_LINES);
-    gmshVertex3d(_point[0], _point[1], _point[2]);
-    gmshVertex3d(q[0], q[1], q[2]);
-    gmshEnd();
-    gmshLineStippleOff();
-    double e[3] = {_point[0], _point[1], _point[2]};
-    e[i] += len;
-    gmshLineWidth(2. * ctx->geom.curveWidth);
-    gmshBegin(GL_LINES);
-    gmshVertex3d(_point[0], _point[1], _point[2]);
-    gmshVertex3d(e[0], e[1], e[2]);
-    gmshEnd();
-  }
-  gmshLineWidth(1.);
-  gmshColor4ubv((GLubyte *)&ctx->color.geom.highlight[0]);
-  gmshPointSize(ctx->geom.pointSize);
-  gmshBegin(GL_POINTS);
-  gmshVertex3d(_point[0], _point[1], _point[2]);
-  gmshEnd();
-  gmshDepthTest(true);
 }

@@ -57,6 +57,7 @@
 #include "Context.h"
 #include "selectionDriver.h"
 #include "sceneTool.h"
+#include "shapePlacement.h"
 #include "Actions.h"
 #include "gmshPopplerWrapper.h"
 
@@ -86,7 +87,6 @@ static void pickRotationCenter();
 static void endSelection();
 static void undoSelection();
 static void quitSelection();
-static void freezeAxis(int i, bool allBut);
 static void escape();
 static void pluginsOfView();
 
@@ -215,12 +215,6 @@ static const std::map<std::string, fltkAction> &actions()
     {"selection_end", endSelection},
     {"selection_undo", undoSelection},
     {"selection_quit", quitSelection},
-    {"freeze_x", [] { freezeAxis(0, false); }},
-    {"freeze_y", [] { freezeAxis(1, false); }},
-    {"freeze_z", [] { freezeAxis(2, false); }},
-    {"freeze_but_x", [] { freezeAxis(0, true); }},
-    {"freeze_but_y", [] { freezeAxis(1, true); }},
-    {"freeze_but_z", [] { freezeAxis(2, true); }},
     {"escape", escape},
     {"options_solver", [] { FlGui::instance()->options->showGroup(4); }},
     {"options_post", [] { FlGui::instance()->options->showGroup(5); }},
@@ -273,17 +267,6 @@ static void setSelectionFlag(int sceneView::*flag)
 static void endSelection() { setSelectionFlag(&sceneView::endSelection); }
 static void undoSelection() { setSelectionFlag(&sceneView::undoSelection); }
 static void quitSelection() { setSelectionFlag(&sceneView::quitSelection); }
-
-// placing an elementary entity with the mouse: the axis i frozen or not, or
-// all the axes but i frozen
-static void freezeAxis(int i, bool allBut)
-{
-  elementaryContextWindow *e = FlGui::instance()->elementaryContext;
-  if(allBut)
-    for(int j = 0; j < 3; j++) e->butt[j]->value(j != i);
-  else
-    e->butt[i]->value(!e->butt[i]->value());
-}
 
 // Escape cancels what is under way, one thing at a time: a lasso, then the
 // selection (a tool, or the API waiting for one: as 'q'), then full screen
@@ -520,49 +503,25 @@ static void runSelection(const std::string &operation,
   sceneTool::start(t, FlGui::instance()->getCurrentOpenglWindow(), window);
 }
 
-// a point, or a shape placed at points, following the mouse (and the values
-// of the dialog) until 'e' adds it, as a tool of the current window
-static void add_new_point_based_entity(const std::string &what, int pane)
+// a shape placed with the pointer (see shapePlacement): a click puts it, its
+// fields in the elementary context window, 'e' adds it, Escape stops; the
+// window closes at the end
+static void placeShape(int pane)
 {
-  FlGui::instance()->elementaryContext->show(pane);
-
-  std::string name = what;
-  std::transform(name.begin(), name.end(), name.begin(), ::tolower);
-  auto pointMode = [](int mode) {
-    for(openglWindow *gl : FlGui::instance()->openglWindows())
-      gl->setAddPointMode(mode);
-  };
-  sceneTool::start(
-    new functionTool(
-      "Add " + what, ENT_NONE, false,
-      [name](sceneView *) {
-        return "Move mouse and/or enter coordinates\n[Press 'Shift' to hold "
-               "position, 'e' to add " +
-               name + " or Escape to abort]";
-      },
-      [pane, pointMode](char ib, sceneView *, const scenePicks &) {
-        if(ib == 'q') return false;
-        if(ib == 'e') {
-          FlGui::instance()->elementaryContext->addShape(pane);
-          FlGui::instance()->resetVisibility();
-        }
-        // (the point follows the mouse again)
-        pointMode(1);
-        return true;
-      },
-      [pointMode]() {
-        drawContext::setDrawGeomTransientFunction(nullptr);
-        if(!FlGui::available()) return;
-        pointMode(0);
-        FlGui::instance()->elementaryContext->hide();
-        // at the end, not during creation to avoid having things jumping
-        // around
-        SetBoundingBox();
-        drawContext::global()->draw();
-      }),
-    FlGui::instance()->getCurrentOpenglWindow(),
-    (Fl_Window *)FlGui::instance()->elementaryContext->win);
-  pointMode(1);
+  elementaryContextWindow *e = FlGui::instance()->elementaryContext;
+  // (the tool first: starting it ends the one under way, a placement too)
+  sceneTool::start(newPlacementTool([]() {
+                     if(!FlGui::available()) return;
+                     FlGui::instance()->elementaryContext->hide();
+                     // at the end, not while placing, or the view jumps
+                     SetBoundingBox();
+                     drawContext::global()->draw();
+                   }),
+                   FlGui::instance()->getCurrentOpenglWindow(),
+                   (Fl_Window *)e->win);
+  e->show(pane);
+  e->startPlacement(pane);
+  drawContext::global()->draw();
 }
 
 // after an operation on the mesh, which processes events: the GUI may have
@@ -639,5 +598,5 @@ static void startShape(const std::string &shape)
   // (by pane of the elementary context window)
   for(int pane = 1; pane < (int)scriptShapes().size(); pane++)
     if(shape == scriptShapes()[pane].name)
-      add_new_point_based_entity(scriptShapes()[pane].label, pane);
+      placeShape(pane);
 }

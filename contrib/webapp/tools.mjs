@@ -84,7 +84,8 @@ function operationDone(name) {
 // or Escape (or q); what they find is printed in the messages, and pinned to
 // the model in boxes the page draws (showNotes())
 // (the numbers of gmshWebTool(), and the operation)
-export const Tool = {None: 0, Query: 1, Measure: 2, Operation: 3, RotationCenter: 4};
+export const Tool = {None: 0, Query: 1, Measure: 2, Operation: 3, RotationCenter: 4,
+                     Placement: 5};
 export let tool = Tool.None;
 // a tool started, or stopped if it is under way
 export const toggleTool = (t) => setTool(tool === t ? Tool.None : t);
@@ -94,8 +95,12 @@ export function setTool(t) {
     showPanel(null);
     showOperationKeys(false);
   }
+  // (a shape being placed: its form closes, which stops it; the placement
+  // starts with its form, see startShape() in actions.mjs)
+  const was = tool;
   tool = t;
-  web.tool(t);
+  if(was === Tool.Placement && t !== Tool.Placement) showPanel(null);
+  if(t !== Tool.Placement) web.tool(t);
   for(const [a, n] of [['query', Tool.Query], ['measure', Tool.Measure]])
     $('statusbar').querySelector(`[data-act=${a}]`).classList.toggle('on', tool === n);
   showSelection();
@@ -119,8 +124,13 @@ export function toolStatus() {
       showOperationKeys(false);
     }
   }
-  // (one click ends the choice of the center of rotation)
+  // (one click ends the choice of the center of rotation; Escape in the scene
+  // the placing of a shape, whose form then closes)
   if(tool === Tool.RotationCenter && !web.toolName()) tool = Tool.None;
+  if(tool === Tool.Placement && !web.toolName()) {
+    tool = Tool.None;
+    showPanel(null);
+  }
   if(!tool) {
     if(app.statusBefore && status.textContent === app.statusBefore.tool)
       setStatus(app.statusBefore.text, app.statusBefore.error);
@@ -133,6 +143,9 @@ export function toolStatus() {
     'Click to query the model, Ctrl+click to add a query (Escape to stop)' :
     tool === Tool.RotationCenter ?
     'Click a point of the model to rotate around it (Escape to stop)' :
+    tool === Tool.Placement ?
+    'Click to place it, on the model or the work plane, or type its values; ' +
+    'x, y or z locks a coordinate (Escape to stop)' :
     web.measuring() ?
     'Click the second point (Escape to stop)' :
     'Click the first point (Escape to stop)');

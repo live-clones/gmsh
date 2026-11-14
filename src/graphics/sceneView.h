@@ -120,18 +120,9 @@ protected:
   // where the last click was, and where the pointer is: the lasso rectangle
   // goes from one to the other
   mousePosition _click, _curr;
-  // the point being placed in addPointMode
-  double _point[3];
-  // the point of the model under the pointer, at (x, y) in the units of the
-  // window, and the entity it is on: false if there is none (see
-  // pickedModelPoint())
-  bool _modelPointAt(int x, int y, double xyz[3], GEntity **on);
-  // the point being placed moved where the pointer is (see handleMouse())
-  void _placePoint();
-  // a model with no entities yet: points are placed on the plane z = 0, over
-  // a grid around the origin
-  static bool _onGround();
-  void _drawGround();
+  // where a click would place the shape being placed (see shapePlacement),
+  // shown by the cursor, with what it is on
+  void _hoverPlacement();
   // What the cursor is over, written in a box in the picture rather than in
   // a window of its own, which some window managers showed and hid with a
   // flicker on every move: the text, where the cursor was when it was last
@@ -168,10 +159,6 @@ protected:
   // drawn (the pass would mix with it), in which case nothing is picked
   virtual bool hostBeginGL() { return true; }
   virtual void hostEndGL() {}
-  // the point being placed: which of its coordinates the dialog holds fixed,
-  // and where the pointer moved it (mode: see addPointMode)
-  virtual bool hostFrozenCoordinate(int coord) { return false; }
-  virtual void hostPointMoved(const double p[3], int mode) {}
   // the ONELAB parameters of the entities: whether there are any, and show
   // those of one entity
   virtual bool hostHasOnelabContext() { return false; }
@@ -180,19 +167,12 @@ protected:
   virtual void hostQuickAccess() {}
 
 public:
-  // the entity being created follows the pointer: 0 none, 1 a point (see
-  // elementaryContextWindow::updatePoint() for the other values)
-  int addPointMode;
-  // the point being placed, drawn over the scene (by the host, after
-  // draw3d()) in addPointMode, with what helps reading where it is: dashed
-  // lines along X, Y and Z to the planes of the corner of the model's box
-  // (of the origin for a model with no entities, over a grid of the plane
-  // z = 0), and a small triad in the colours of the axes
-  void drawPointToAdd();
-  // the point placed with the pointer (mode: see addPointMode), or not (0):
-  // its coordinates are shown by the cursor and what it is on is highlighted
-  // while it is
-  void setAddPointMode(int mode);
+  // the point of the model under the window point (x, y), on the point,
+  // curve or surface picked itself, and that entity if on is given: false if
+  // there is none (see pickedModelPoint())
+  bool modelPointAt(int x, int y, double xyz[3], GEntity **on = nullptr);
+  // where the last click was, in the units of the window
+  const double *clickPosition() const { return _click.win; }
   // a lasso is being drawn; a selection waits for clicks
   bool lassoMode, selectionMode;
   // what the keys ask of the selection, read at its next step
@@ -277,12 +257,6 @@ public:
   bool measureClick();
   // a measurement waits for its second point
   bool measuring() const { return _ctx->numMarks() == 1; }
-  void setPoint(double x, double y, double z)
-  {
-    _point[0] = x;
-    _point[1] = y;
-    _point[2] = z;
-  }
 };
 
 #endif

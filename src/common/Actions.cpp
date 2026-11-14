@@ -26,6 +26,7 @@
 
 #if defined(HAVE_OPENGL)
 #include "drawContext.h"
+#include "shapePlacement.h"
 #endif
 
 #if defined(HAVE_POST)
@@ -298,6 +299,22 @@ static actionItem guiAction(const std::string &label, const std::string &name,
                             const std::string &help = "",
                             std::function<bool()> available = nullptr)
 { return {label, ItemAction, name, {}, help, nullptr, available}; }
+// a key locking a coordinate of the shape being placed (see shapePlacement),
+// or all but it
+static actionItem lockAction(const std::string &name, const std::string &help,
+                             int i, bool allBut)
+{
+#if defined(HAVE_OPENGL)
+  return action("", name, help,
+                [i, allBut](int, drawContext *) {
+                  if(shapePlacement *p = shapePlacement::current())
+                    p->toggleLock(i, allBut);
+                },
+                [] { return shapePlacement::current() != nullptr; });
+#else
+  return action("", name, help, [](int, drawContext *) {}, [] { return false; });
+#endif
+}
 // an operation on the entities picked (see selectionDriver)
 static actionItem operation(const std::string &label, const std::string &name,
                             const std::string &help = "")
@@ -1074,24 +1091,19 @@ static actionItem keysOnly()
       .key('u'),
     guiAction("", "selection_quit", "Stop the selection under way, as Escape")
       .key('q'),
-    guiAction("", "freeze_x",
-              "Toggle x coordinate freeze in geometry creation mode")
-      .key('x'),
-    guiAction("", "freeze_y",
-              "Toggle y coordinate freeze in geometry creation mode")
-      .key('y'),
-    guiAction("", "freeze_z",
-              "Toggle z coordinate freeze in geometry creation mode")
-      .key('z'),
-    guiAction("", "freeze_but_x",
-              "Move only along x coordinate in geometry creation mode")
-      .key('x', ModShift),
-    guiAction("", "freeze_but_y",
-              "Move only along y coordinate in geometry creation mode")
-      .key('y', ModShift),
-    guiAction("", "freeze_but_z",
-              "Move only along z coordinate in geometry creation mode")
-      .key('z', ModShift),
+    // the coordinates of the shape being placed (see shapePlacement)
+    lockAction("freeze_x", "Lock or unlock the x coordinate of the shape being "
+               "placed", 0, false).key('x'),
+    lockAction("freeze_y", "Lock or unlock the y coordinate of the shape being "
+               "placed", 1, false).key('y'),
+    lockAction("freeze_z", "Lock or unlock the z coordinate of the shape being "
+               "placed", 2, false).key('z'),
+    lockAction("freeze_but_x", "Lock all but the x coordinate of the shape "
+               "being placed", 0, true).key('x', ModShift),
+    lockAction("freeze_but_y", "Lock all but the y coordinate of the shape "
+               "being placed", 1, true).key('y', ModShift),
+    lockAction("freeze_but_z", "Lock all but the z coordinate of the shape "
+               "being placed", 2, true).key('z', ModShift),
     guiAction("", "escape",
               "Stop the selection under way (query, measurement, operation on "
               "the entities picked...), cancel a lasso, or leave full screen")

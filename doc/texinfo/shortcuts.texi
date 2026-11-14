@@ -26,11 +26,11 @@ Undo the last pick of the selection under way
 @item w
 Merge the files matching the watch pattern
 @item x
-Toggle x coordinate freeze in geometry creation mode
+Lock or unlock the x coordinate of the shape being placed
 @item y
-Toggle y coordinate freeze in geometry creation mode
+Lock or unlock the y coordinate of the shape being placed
 @item z
-Toggle z coordinate freeze in geometry creation mode
+Lock or unlock the z coordinate of the shape being placed
 @item Escape (with any modifier)
 Stop the selection under way (query, measurement, operation on the entities picked...), cancel a lasso, or leave full screen
 @item Left arrow
@@ -58,11 +58,11 @@ Show post-processing view plugins
 @item Shift+w
 Show post-processing view options
 @item Shift+x
-Move only along x coordinate in geometry creation mode
+Lock all but the x coordinate of the shape being placed
 @item Shift+y
-Move only along y coordinate in geometry creation mode
+Lock all but the y coordinate of the shape being placed
 @item Shift+z
-Move only along z coordinate in geometry creation mode
+Lock all but the z coordinate of the shape being placed
 @item Shift+Escape
 Toggle mouse selection on/off (a selection under way goes on)
 @item Ctrl+0 or 9
