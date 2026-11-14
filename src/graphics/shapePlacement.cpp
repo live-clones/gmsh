@@ -30,6 +30,10 @@
 
 shapePlacement *shapePlacement::_current = nullptr;
 
+// (see below)
+static double windowSize(drawContext *ctx);
+static double snapStep(int i, double size);
+
 // the value of an expression of the .geo language, with the variables of the
 // script read so far
 static bool evaluate(const std::string &str, double &val)
@@ -69,6 +73,7 @@ void shapePlacement::start(int shape, const std::vector<std::string> &values,
 void shapePlacement::stop()
 {
   if(!_current) return;
+  if(_current->_addedAny) SetBoundingBox();
   delete _current;
   _current = nullptr;
   drawContext::setDrawGeomTransientFunction(nullptr);
@@ -148,12 +153,14 @@ void shapePlacement::planePoint(drawContext *ctx, double x, double y,
   }
   double po[3] = {o[0] - p[0], o[1] - p[1], o[2] - p[2]};
   double t = dn ? prosca(po, n) / dn : 0.;
+  double size = windowSize(ctx);
   for(int i = 0; i < 3; i++) {
     xyz[i] = p[i] + t * d[i];
-    if(i != k && c->geom.snap[i] > 0.) {
-      double v = xyz[i] / c->geom.snap[i];
+    if(i != k && size > 0.) {
+      double step = snapStep(i, size);
+      double v = xyz[i] / step;
       double f = floor(v), cl = ceil(v);
-      xyz[i] = ((v - f < cl - v) ? f : cl) * c->geom.snap[i];
+      xyz[i] = ((v - f < cl - v) ? f : cl) * step;
     }
   }
   if(k >= 0) xyz[k] = o[k];
@@ -196,12 +203,18 @@ void shapePlacement::drop(const double xyz[3])
 
 bool shapePlacement::add()
 {
-  if(!scriptAddShape(scriptShapes()[_shape].name, _values,
-                     GModel::current()->getFileName()))
-    return false;
+  // the model is read again, which makes its bounding box again, on which the
+  // view is framed: the box is kept as it was while placing, or the view
+  // would jump (it is made again at the end, see stop())
+  CTX *c = CTX::instance();
+  double mn[3] = {c->min[0], c->min[1], c->min[2]};
+  double mx[3] = {c->max[0], c->max[1], c->max[2]};
+  bool added = scriptAddShape(scriptShapes()[_shape].name, _values,
+                              GModel::current()->getFileName());
+  SetBoundingBox(mn[0], mx[0], mn[1], mx[1], mn[2], mx[2]);
+  if(!added) return false;
   GModel::current()->setSelection(0);
-  SetBoundingBox();
-  _added = true;
+  _added = _addedAny = true;
   return true;
 }
 
@@ -226,6 +239,32 @@ static double roundStep(double length)
   else if(raw / step >= 2.)
     step *= 2.;
   return step;
+}
+
+// what the window shows across, in the units of the model
+static double windowSize(drawContext *ctx)
+{
+  return (ctx->vxmax - ctx->vxmin) / ctx->s[0];
+}
+
+// The steps along axis i, for a window showing size across: the snapping
+// step (Geometry.Snap) while it is of use at that zoom, neither coarser than
+// a tenth of the window nor finer than a two hundredth; else round steps
+// that follow the zoom, the points snapped to a fifth of the lines of the grid
+static bool snapApplies(int i, double size)
+{
+  double snap = CTX::instance()->geom.snap[i];
+  return snap > 0. && snap <= size / 10. && snap >= size / 200.;
+}
+static double gridStep(int i, double size)
+{
+  return snapApplies(i, size) ? CTX::instance()->geom.snap[i] :
+                                roundStep(size);
+}
+static double snapStep(int i, double size)
+{
+  return snapApplies(i, size) ? CTX::instance()->geom.snap[i] :
+                                roundStep(size) / 5.;
 }
 
 void shapePlacement::_drawGrid(drawContext *ctx) const
@@ -273,15 +312,15 @@ void shapePlacement::_drawGrid(drawContext *ctx) const
     lo[i] = mid - half;
     hi[i] = mid + half;
   }
-  // a round step, about as dense on the screen at any zoom (or the snapping
-  // step, if not too fine)
+  // the step of the window (see gridStep()), about as dense on the screen at
+  // any zoom; coarser by tens where the plane, seen edge on, goes far
   double size = std::max(hi[a] - lo[a], hi[b] - lo[b]);
-  if(!(size > 0.)) return;
+  if(!(size > 0.) || !(window > 0.)) return;
   double step[3] = {0., 0., 0.};
-  for(int i : {a, b})
-    step[i] = (c->geom.snap[i] > 0. && size / c->geom.snap[i] < 200.) ?
-                c->geom.snap[i] :
-                roundStep(size);
+  for(int i : {a, b}) {
+    step[i] = gridStep(i, window);
+    while((hi[i] - lo[i]) / step[i] > 400.) step[i] *= 10.;
+  }
   int na0 = (int)floor(lo[a] / step[a]), na1 = (int)ceil(hi[a] / step[a]);
   int nb0 = (int)floor(lo[b] / step[b]), nb1 = (int)ceil(hi[b] / step[b]);
   for(int pass = 0; pass < 2; pass++) {

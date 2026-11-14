@@ -141,7 +141,8 @@ static void elementary_add_cb(Fl_Widget *w, void *data)
 {
   int pane = (int)(intptr_t)data;
   shapePlacement *p = shapePlacement::current();
-  if(p && p->shape() == pane) {
+  bool placing = p && p->shape() == pane;
+  if(placing) {
     if(!p->add()) return;
   }
   else if(!FlGui::instance()->elementaryContext->addShape(pane))
@@ -152,7 +153,8 @@ static void elementary_add_cb(Fl_Widget *w, void *data)
     return;
   }
   GModel::current()->setSelection(0);
-  SetBoundingBox();
+  // (while placing, at its end: the view would jump, see shapePlacement)
+  if(!placing) SetBoundingBox();
   drawContext::global()->draw();
 }
 

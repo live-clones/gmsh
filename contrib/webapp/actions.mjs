@@ -196,8 +196,10 @@ function startShape(shape) {
     (name, value) => {
       if(name === 'Work plane') web.placementPlane(planes.indexOf(value));
       else {
-        // (a coordinate of the position typed is locked)
+        // (a coordinate of the position typed is locked: one changed, not the
+        // fields committed again by Add)
         const i = fields.findIndex((f) => f[0] === name);
+        if(value === fields[i][1]) return;
         fields[i][1] = value;
         web.placementSet(i, value);
         showPlacement(true);
@@ -278,7 +280,8 @@ async function addShape(shape) {
     web.addShape(shape, shapes[shape].fields.map((f) => f[1]).join('\n'));
   showModelName();
   showAll();
-  fitIfWasEmpty(wasEmpty);
+  // (not while placing, which keeps the view still, see shapePlacement)
+  if(placementShape !== shape) fitIfWasEmpty(wasEmpty);
   const text = errors ? `Not added: ${app.lastError.replace(/^Error *: */, '')}` :
     `Added a ${shapes[shape].label.toLowerCase()} to ${$('model').textContent}`;
   setStatus(text, !!errors);

@@ -38,8 +38,10 @@ private:
   // where a click would put the position, if the pointer is over the scene
   bool _hoverOn = false;
   double _hover[3] = {0., 0., 0.};
-  // the shape just added is drawn, not its preview, until a field changes
-  bool _added = false;
+  // the shape just added is drawn, not its preview, until a field changes;
+  // whether any was (the bounding box of the model is then made again at the
+  // end, not while placing, or the view would jump)
+  bool _added = false, _addedAny = false;
   void _changedByScene();
   void _drawGrid(drawContext *ctx) const;
   void _drawPreview() const;
