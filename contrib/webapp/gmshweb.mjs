@@ -18,12 +18,14 @@
 import {Module} from './app.mjs';
 
 const call = (name, ret, types, args) => Module.ccall('gmshWeb' + name, ret, types, args);
-const N = 'number', S = 'string';
+// (a pointer is given as 'pointer', which ccall converts for a wasm64 module,
+// whose functions take pointers as BigInt)
+const N = 'number', S = 'string', P = 'pointer';
 // a function of webApp.cpp that writes doubles in a buffer: the values, or
 // null if it returned 0
 function doubles(name, count) {
   const xy = Module._malloc(8 * count);
-  const ok = call(name, N, [N], [xy]);
+  const ok = call(name, N, [P], [xy]);
   const v = ok ? Array.from(Module.HEAPF64.subarray(xy / 8, xy / 8 + count)) : null;
   Module._free(xy);
   return v;
@@ -40,7 +42,7 @@ export const web = {
   // what the pointer is over, and where the box hangs: [text, x, y]
   hoverText: () => {
     const xy = Module._malloc(2 * 8);
-    const text = call('HoverText', S, [N], [xy]);
+    const text = call('HoverText', S, [P], [xy]);
     const a = Module.HEAPF64.subarray(xy / 8, xy / 8 + 2);
     const r = [text, a[0], a[1]];
     Module._free(xy);
