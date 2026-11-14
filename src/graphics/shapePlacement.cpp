@@ -12,6 +12,7 @@
 #include "sceneView.h"
 #include "drawContext.h"
 #include "glImmediate.h"
+#include "glShader.h"
 #include "VertexArray.h"
 #include "GModel.h"
 #include "GModelIO_OCC.h"
@@ -312,6 +313,9 @@ static void drawArc(double xc, double yc, double zc, double rx, double ry,
   gmshEnd();
 }
 
+// translucent, as it is not added yet: what it cuts into shows through it (in
+// the order the triangles come, which a convex shape hardly shows), and it
+// writes no depth, so that the model behind it is drawn
 static void drawTriangles(std::vector<SPoint3> &vertices,
                           std::vector<SVector3> &normals,
                           std::vector<int> &triangles)
@@ -319,7 +323,16 @@ static void drawTriangles(std::vector<SPoint3> &vertices,
   bool fill = gmshPolygonFilled();
   gmshPolygonFill(CTX::instance()->geom.surfaceType != 1);
   gmshLightTwoSide(true);
-  gmshColor4ubv((GLubyte *)&CTX::instance()->color.geom.highlight[0]);
+  unsigned int c = CTX::instance()->color.geom.highlight[0];
+  gmshColor4ub(CTX::instance()->unpackRed(c), CTX::instance()->unpackGreen(c),
+               CTX::instance()->unpackBlue(c), 100);
+  // (the transparency pass has a blending of its own)
+  bool ownBlend = !glShader::transparentPass();
+  if(ownBlend) {
+    gmshBlend(true);
+    gmshBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  }
+  gmshDepthMask(false);
   VertexArray va(3, triangles.size());
   for(std::size_t i = 0; i < triangles.size(); i += 3) {
     double x[3], y[3], z[3];
@@ -335,6 +348,8 @@ static void drawTriangles(std::vector<SPoint3> &vertices,
   }
   va.finalize();
   drawVertexArray(&va, GL_TRIANGLES, GMSH_DRAW_LIGHT);
+  gmshDepthMask(true);
+  if(ownBlend) gmshBlend(false);
   gmshPolygonFill(fill);
 }
 
@@ -390,8 +405,13 @@ void shapePlacement::draw(void *context)
 {
   shapePlacement *p = _current;
   drawContext *ctx = (drawContext *)context;
-  // (not in a picking pass: what a click finds is the model)
+  // (not in a picking pass: what a click finds is the model; once a frame:
+  // in the pass of the opaque geometry, or in the transparent one if there
+  // is none, see drawContext::drawGeom())
   if(!p || !ctx || ctx->render_mode == drawContext::GMSH_SELECT) return;
+  if(ctx->transparencyPass == TRANSPARENCY_TRANSPARENT &&
+     !geometryColorsAreTransparent())
+    return;
   CTX *c = CTX::instance();
   p->_drawGrid(ctx);
   if(!p->_added) p->_drawPreview();
