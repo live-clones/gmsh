@@ -496,9 +496,17 @@ static void debugViews(BDS_Mesh *m, GFace *gf, const char *what)
 
 // Delete the faces that were not tagged as belonging to the face, then the
 // edges left without any face, classifying the surviving edges and their
-// endpoints. Finally drop the four fake points of the enclosing box.
-static void pruneAndCleanupBDS(BDS_Mesh *m, BDS_GeomEntity *CLASS_F)
+// endpoints. Finally drop the four fake points of the enclosing box. Returns
+// false if a face of the surface touches one of them: the boundary did not
+// separate the surface from the box, and the mesh is not that of the surface
+static bool pruneAndCleanupBDS(BDS_Mesh *m, BDS_GeomEntity *CLASS_F)
 {
+  for(BDS_Face *t : m->triangles) {
+    BDS_Point *n[4];
+    if(!t->deleted && t->g && t->getNodes(n) &&
+       (n[0]->iD < 0 || n[1]->iD < 0 || n[2]->iD < 0))
+      return false;
+  }
   {
     auto itt = m->triangles.begin();
     while(itt != m->triangles.end()) {
@@ -530,6 +538,7 @@ static void pruneAndCleanupBDS(BDS_Mesh *m, BDS_GeomEntity *CLASS_F)
   m->del_point(m->find_point(-2));
   m->del_point(m->find_point(-3));
   m->del_point(m->find_point(-4));
+  return true;
 }
 
 // Recombine the surface mesh into quadrangles, for the recombination
@@ -1548,7 +1557,13 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
     computeSizeField(m, recoverMap);
   }
 
-  pruneAndCleanupBDS(m, &CLASS_F);
+  if(!pruneAndCleanupBDS(m, &CLASS_F)) {
+    Msg::Error("Surface %d: its boundary does not enclose it in the parametric "
+               "plane", gf->tag());
+    delete m;
+    gf->meshStatistics.status = GFace::FAILED;
+    return false;
+  }
 
   if(debug) debugViews(m, gf, "recovered");
 
@@ -2139,7 +2154,13 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
 
   colorExteriorTriangles(m, &CLASS_F, &CLASS_EXTERIOR, false);
 
-  pruneAndCleanupBDS(m, &CLASS_F);
+  if(!pruneAndCleanupBDS(m, &CLASS_F)) {
+    Msg::Error("Surface %d: its boundary does not enclose it in the parametric "
+               "plane", gf->tag());
+    delete m;
+    gf->meshStatistics.status = GFace::FAILED;
+    return false;
+  }
 
   if(debug) debugViews(m, gf, "recovered");
 
