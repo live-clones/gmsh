@@ -415,6 +415,14 @@ export async function runItem(item, {view = -1, tag, mods = 0, el = null} = {}) 
   // (a key may have changed the shape being placed: a lock)
   if(placementChanged) placementChanged();
 }
+// an item run by its name (e.g. 'mesh_3d'), for the page that embeds this one;
+// false if the page has no such item now
+export async function runNamed(name) {
+  const item = findItem(name);
+  if(!item || !canRunItem(item)) return false;
+  await runItem(item);
+  return true;
+}
 // the keys of an item, as the platform names them ("Alt+x, Alt+Shift+x"), or ''
 export function keyLabels(name) {
   return shortcuts.filter((s) => s.action === name).map((s) => s.label).join(', ');

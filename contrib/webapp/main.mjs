@@ -55,6 +55,7 @@ import * as solverClient from './solverClient.mjs';
 import * as models from './models.mjs';
 import {openFiles, fetchFile} from './models.mjs';
 import {draw} from './scene.mjs';
+import {runNamed} from './actions.mjs';
 
 // the WebAssembly code, compiled once for the page and for the solver's
 // worker as it is downloaded, with how much has come in the status: the size
@@ -113,6 +114,8 @@ const wasm = await compileWasm(new URL(buildDir + 'libgmsh.wasm', import.meta.ur
 setStatus('Starting...');
 progress(true);
 const params = new URLSearchParams(location.search);
+// embedded in another page (?embed=1): the scene alone (see onelab.css)
+if(params.get('embed') === '1') document.body.classList.add('embed');
 // a test of the speed of the drawing (see scene.mjs): with ?pdb=0 the canvas
 // is not kept after each frame, which the browsers of some phones copy at
 // every frame otherwise. The context is made here, before Gmsh asks for one
@@ -166,3 +169,50 @@ try {
   progress(false);
 }
 draw();
+
+// A page of the same site that embeds this one in a frame (a talk's slides)
+// drives it with messages {id, cmd, ...}: 'open' a model (url of a zip, with
+// open for the file in it, or of a .geo/.pro with files for the others next
+// to it), run an 'action' of the registry by name (e.g. mesh_3d), set an
+// 'option' (name, value: a number or a string) or a 'color' (name, r, g, b),
+// or 'embed' (on: true or false) to show or hide the panels; each answered
+// with {id, ok, error}. 'ready' is posted to it once Gmsh is loaded.
+if(window.parent !== window) {
+  const reply = (id, ok, error = '') =>
+    window.parent.postMessage({id, ok, error}, location.origin);
+  window.addEventListener('message', async (e) => {
+    if(e.origin !== location.origin || !e.data || !e.data.cmd) return;
+    const m = e.data;
+    try {
+      if(m.cmd === 'open') {
+        if(m.url.endsWith('.zip'))
+          await openFiles([[m.url.split('/').pop(), await fetchFile(m.url)]], m.open || '');
+        else {
+          const base = m.url.slice(0, m.url.lastIndexOf('/') + 1);
+          const entries = [];
+          for(const n of [m.url.slice(base.length)].concat(m.files || []))
+            entries.push([n, await fetchFile(base + n)]);
+          await openFiles(entries);
+        }
+      }
+      else if(m.cmd === 'action') {
+        if(!await runNamed(m.name)) throw new Error('No action ' + m.name + ' now');
+      }
+      else if(m.cmd === 'option') {
+        if(typeof m.value === 'number') gmsh.option.setNumber(m.name, m.value);
+        else gmsh.option.setString(m.name, m.value);
+      }
+      else if(m.cmd === 'color') gmsh.option.setColor(m.name, m.r, m.g, m.b);
+      else if(m.cmd === 'embed') {
+        document.body.classList.toggle('embed', !!m.on);
+        window.dispatchEvent(new Event('resize'));
+      }
+      else throw new Error('Unknown command ' + m.cmd);
+      draw();
+      reply(m.id, true);
+    } catch(err) {
+      reply(m.id, false, err.message || String(err));
+    }
+  });
+  window.parent.postMessage({id: 'ready', ok: true}, location.origin);
+}

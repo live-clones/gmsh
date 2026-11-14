@@ -54,6 +54,11 @@ html { touch-action: manipulation; }
 /* the panel hidden (the sidebar button of the status bar) */
 body.noSide { grid-template-columns: 0 0 minmax(0, 1fr); }
 body.noSide #side, body.noSide #split { display: none; }
+/* embedded in another page (?embed=1, e.g. a slide of a talk): the scene
+   alone, filling the frame */
+body.embed { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+body.embed > :is(#bar, #side, #split, #log, #statusbar, #drop) { display: none !important; }
+body.embed #canvas { grid-row: 1; grid-column: 1; }
 /* the status bar of the graphical interface, under the scene and the
    messages: the buttons of the view and of the animation, the status */
 #statusbar { grid-row: 4; grid-column: 1 / 4; display: flex; align-items: center; gap: 1px;
