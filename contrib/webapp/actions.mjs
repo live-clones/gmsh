@@ -26,7 +26,7 @@ import {editFile, editScript} from './editor.mjs';
 import {showPlugins} from './plugins.mjs';
 import {openFiles, openMenu} from './models.mjs';
 import {colorScheme, keepOptionOf, optionRow, readOptions, setColorScheme, showOptions, showTab} from './options.mjs';
-import {draw} from './scene.mjs';
+import {draw, setPointPlaced} from './scene.mjs';
 import {ModShift, installShortcuts, shortcutsHelp} from './shortcuts.js';
 import {run, showAll} from './solverClient.mjs';
 import {fullscreenElement, fullscreenEnabled, installApp, openQuickMenu, playing, popupMenu,
@@ -66,11 +66,18 @@ const menuButton = (text, title, items) => [text + ' ▾', title, (e) => {
 // The form under the buttons of a module: the fields of a shape to add, or
 // those of the operation under way, each given to change(name, value) ("1"
 // or "0" for a check box), Enter in one doing enter(); then its buttons
+// what the panel shown does when it closes, or another replaces it
+let panelClosed = null;
 export function showPanel(module, title, fields = [], change, enter, buttons = []) {
+  if(panelClosed) {
+    const f = panelClosed;
+    panelClosed = null;
+    f();
+  }
   const panel = $('panel');
   panel.textContent = '';
   panel.hidden = !module;
-  if(!module) return;
+  if(!module) return [];
   module.appendChild(panel);
   module.open = true;
   const name = document.createElement('div');
@@ -102,6 +109,7 @@ export function showPanel(module, title, fields = [], change, enter, buttons = [
   buttonRow(panel, buttons);
   // (not on a phone, whose keyboard would cover the form)
   if(inputs.length && !app.narrow.matches) inputs[0].focus({preventScroll: true});
+  return inputs;
 }
 // Mesh: the actions done through the API, timed, and the mesh saved (the
 // operations on picked entities are in tools.mjs, the partition form below the
@@ -180,12 +188,28 @@ function saveScript() {
 function startShape(shape) {
   if(tool === Tool.Operation) stopOperation();
   const {label, fields} = shapes[shape];
-  showPanel($('moduleGeometry'), label,
-            fields.map(([name, value]) => ({name, kind: 'text', value})),
-            (name, value) => { fields.find((f) => f[0] === name)[1] = value; },
-            () => addShape(shape),
-            [['Add', `Add the ${label.toLowerCase()} to the script`, () => addShape(shape)],
-             ['Close', 'Close the form', () => showPanel(null)]]);
+  const inputs = showPanel(
+    $('moduleGeometry'), label,
+    fields.map(([name, value]) => ({name, kind: 'text', value})),
+    (name, value) => { fields.find((f) => f[0] === name)[1] = value; },
+    () => addShape(shape),
+    [['Add', `Add the ${label.toLowerCase()} to the script`, () => addShape(shape)],
+     ['Close', 'Close the form', () => showPanel(null)]]);
+  // its position (the first three fields of every shape) follows the
+  // pointer, as long as the form is open
+  web.placePoint(true);
+  setPointPlaced((p) => {
+    for(let i = 0; i < 3; i++) {
+      fields[i][1] = String(Number(p[i].toPrecision(6)));
+      if(inputs[i]) inputs[i].value = fields[i][1];
+    }
+  });
+  panelClosed = () => {
+    web.placePoint(false);
+    setPointPlaced(null);
+    draw();
+  };
+  setStatus('The position follows the pointer (Shift holds it), or type it');
 }
 // the model's name, which changes when a model that is not a .geo file is
 // given one by the first command added to it
@@ -243,6 +267,7 @@ const pageActions = {
   'mesh_save': {run: saveMesh},
   'mesh_partition': {run: partitionForm},
   // Quick access: the scene
+  'scene_rotation_center': {run: () => setTool(Tool.RotationCenter)},
   'query': {run: () => toggleTool(Tool.Query), check: () => tool === Tool.Query},
   'measure': {run: () => toggleTool(Tool.Measure), check: () => tool === Tool.Measure},
   'window_full_screen': {run: toggleFullscreen, check: () => !!fullscreenElement(),

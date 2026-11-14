@@ -122,6 +122,9 @@ protected:
   mousePosition _click, _curr;
   // the point being placed in addPointMode
   double _point[3];
+  // the point of the model under the pointer, at (x, y) in the units of the
+  // window: false if there is none (see pickedModelPoint())
+  bool _modelPointAt(int x, int y, double xyz[3]);
   // What the cursor is over, written in a box in the picture rather than in
   // a window of its own, which some window managers showed and hid with a
   // flicker on every move: the text, where the cursor was when it was last
@@ -173,6 +176,9 @@ public:
   // the entity being created follows the pointer: 0 none, 1 a point (see
   // elementaryContextWindow::updatePoint() for the other values)
   int addPointMode;
+  // the point being placed, drawn over the scene (by the host, after
+  // draw3d()) in addPointMode
+  void drawPointToAdd();
   // a lasso is being drawn; a selection waits for clicks
   bool lassoMode, selectionMode;
   // what the keys ask of the selection, read at its next step

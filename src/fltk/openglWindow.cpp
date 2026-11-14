@@ -329,13 +329,7 @@ void openglWindow::draw()
       CTX::instance()->post.draw = 0;
     }
     _ctx->draw3d();
-    if(addPointMode) {
-      gmshColor4ubv((GLubyte *)&CTX::instance()->color.geom.highlight[0]);
-      gmshPointSize(CTX::instance()->geom.pointSize);
-      gmshBegin(GL_POINTS);
-      gmshVertex3d(_point[0], _point[1], _point[2]);
-      gmshEnd();
-    }
+    drawPointToAdd();
     _ctx->draw2d();
     if(lassoMode) _drawLasso();
     _drawScreenMessage();

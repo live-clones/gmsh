@@ -670,7 +670,22 @@ void sceneView::handleMouse(const paneInput &in)
     if(lassoMode) { hostRedraw(); }
     else if(addPointMode && !shift) {
       hostCursor(true);
-      // find line in real space corresponding to current cursor position
+      // (what the cursor was over before is not looked at while placing)
+      pointerLeft();
+      // on the model under the pointer (on its point, curve or surface
+      // itself), as it is
+      double m[3];
+      if(_modelPointAt((int)_curr.win[0], (int)_curr.win[1], m)) {
+        for(int i = 0; i < 3; i++)
+          if(!hostFrozenCoordinate(i)) _point[i] = m[i];
+        hostPointMoved(_point, addPointMode);
+        hostRedraw();
+        _prev = _curr;
+        return;
+      }
+      // elsewhere, on the plane through the center of gravity facing the
+      // viewer: find line in real space corresponding to current cursor
+      // position
       double p[3], d[3];
       _ctx->unproject(_curr.win[0], _curr.win[1], p, d);
       // find closest point to the center of gravity
@@ -960,4 +975,27 @@ bool sceneView::releasePhlogiston(int width, int height, bool decay)
   // off)
   _ctx->studioSample = 0;
   return true;
+}
+
+bool sceneView::_modelPointAt(int x, int y, double xyz[3])
+{
+  // (the geometry only: the point placed is a point of the geometry)
+  scenePicks p;
+  if(!_select(ENT_ALL, false, false, false, x, y, 5, 5, p.vertices, p.edges,
+              p.faces, p.regions, p.elements, p.points, p.views))
+    return false;
+  return pickedModelPoint(_ctx, p, xyz);
+}
+
+void sceneView::drawPointToAdd()
+{
+  if(!addPointMode) return;
+  // over what is drawn: on the model, it lies at the depth of its surface
+  gmshDepthTest(false);
+  gmshColor4ubv((GLubyte *)&CTX::instance()->color.geom.highlight[0]);
+  gmshPointSize(CTX::instance()->geom.pointSize);
+  gmshBegin(GL_POINTS);
+  gmshVertex3d(_point[0], _point[1], _point[2]);
+  gmshEnd();
+  gmshDepthTest(true);
 }

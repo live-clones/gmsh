@@ -56,6 +56,15 @@ export const web = {
   colorScheme: (dark) => call('ColorScheme', N, [N], [dark]),
   // the tools and the operations (see tools.mjs)
   tool: (t) => call('Tool', N, [N], [t]),
+  // the tool under way ("" if none: a tool of one click ends by itself)
+  toolName: () => call('ToolName', S, [], []),
+  // a point placed with the pointer (for a shape): started or stopped, and
+  // where it is if it moved since last asked ([x, y, z], or null)
+  placePoint: (on) => call('PlacePoint', N, [N], [on ? 1 : 0]),
+  placedPoint: () => {
+    const p = call('PlacedPoint', S, [], []);
+    return p ? JSON.parse(p) : null;
+  },
   measuring: () => call('Measuring', N, [], []),
   notes: () => call('Notes', S, [], []),
   operation: (name) => call('Operation', S, [S], [name]),

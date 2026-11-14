@@ -118,6 +118,15 @@ namespace {
     bool picked = false;
     webView() : sceneView(nullptr) {}
     void hostRedraw() { redrawAsked = true; }
+    // the point being placed (addPointMode), and whether it moved since the
+    // page last read it (see gmshWebPlacedPoint())
+    double placed[3] = {0., 0., 0.};
+    bool placedMoved = false;
+    void hostPointMoved(const double p[3], int mode)
+    {
+      for(int i = 0; i < 3; i++) placed[i] = p[i];
+      placedMoved = true;
+    }
     void hostCursor(bool c) { cross = c; }
     bool hostBeginGL()
     {
@@ -326,7 +335,9 @@ EMSCRIPTEN_KEEPALIVE int gmshWebDraw(int width, int height, double scale)
   _scale = scale;
   bool releasing = false;
   _view->afterScene = [&releasing](int w, int h) {
-    if(_scene) releasing = _scene->releasePhlogiston(w, h, true);
+    if(!_scene) return;
+    _scene->drawPointToAdd();
+    releasing = _scene->releasePhlogiston(w, h, true);
   };
   draw();
   _view->afterScene = nullptr;
@@ -497,7 +508,47 @@ EMSCRIPTEN_KEEPALIVE int gmshWebTool(int tool)
   sceneTool::stop();
   if(tool == 1) sceneTool::start(newQueryTool(), _scene);
   if(tool == 2) sceneTool::start(newMeasureTool(), _scene);
+  if(tool == 4) sceneTool::start(newRotationCenterTool(), _scene);
   return 1;
+}
+
+// the name of the tool under way ("Query", "Rotation center"...), "" if
+// none: a tool of one click ends by itself
+EMSCRIPTEN_KEEPALIVE const char *gmshWebToolName()
+{
+  static std::string name;
+  sceneTool *t = sceneTool::current();
+  name = t ? t->name() : "";
+  return name.c_str();
+}
+
+// Place a point with the pointer (on), for the form of a shape, or stop: the
+// point follows the pointer, onto the model under it (see sceneView), and is
+// drawn over the scene
+EMSCRIPTEN_KEEPALIVE int gmshWebPlacePoint(int on)
+{
+  Msg::NoThrow noThrow;
+  if(!_view || !_view->getDrawContext()) return 0;
+  if(!_scene) _scene = new webView();
+  _scene->setDrawContext(_view->getDrawContext());
+  _scene->addPointMode = on ? 1 : 0;
+  _scene->placedMoved = false;
+  return 1;
+}
+
+// the point placed, if it moved since the last call: "[x, y, z]", else ""
+EMSCRIPTEN_KEEPALIVE const char *gmshWebPlacedPoint()
+{
+  static std::string json;
+  json = "";
+  if(_scene && _scene->placedMoved) {
+    _scene->placedMoved = false;
+    char buf[128];
+    snprintf(buf, sizeof(buf), "[%.10g,%.10g,%.10g]", _scene->placed[0],
+             _scene->placed[1], _scene->placed[2]);
+    json = buf;
+  }
+  return json.c_str();
 }
 
 // Start an operation on selected entities (see selectionDriver), or stop the

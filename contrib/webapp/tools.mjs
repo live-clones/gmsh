@@ -84,7 +84,7 @@ function operationDone(name) {
 // or Escape (or q); what they find is printed in the messages, and pinned to
 // the model in boxes the page draws (showNotes())
 // (the numbers of gmshWebTool(), and the operation)
-export const Tool = {None: 0, Query: 1, Measure: 2, Operation: 3};
+export const Tool = {None: 0, Query: 1, Measure: 2, Operation: 3, RotationCenter: 4};
 export let tool = Tool.None;
 // a tool started, or stopped if it is under way
 export const toggleTool = (t) => setTool(tool === t ? Tool.None : t);
@@ -119,6 +119,8 @@ export function toolStatus() {
       showOperationKeys(false);
     }
   }
+  // (one click ends the choice of the center of rotation)
+  if(tool === Tool.RotationCenter && !web.toolName()) tool = Tool.None;
   if(!tool) {
     if(app.statusBefore && status.textContent === app.statusBefore.tool)
       setStatus(app.statusBefore.text, app.statusBefore.error);
@@ -129,6 +131,8 @@ export function toolStatus() {
     app.statusBefore = {text: status.textContent, error: status.classList.contains('error')};
   app.statusBefore.tool = text || (tool === Tool.Query ?
     'Click to query the model, Ctrl+click to add a query (Escape to stop)' :
+    tool === Tool.RotationCenter ?
+    'Click a point of the model to rotate around it (Escape to stop)' :
     web.measuring() ?
     'Click the second point (Escape to stop)' :
     'Click the first point (Escape to stop)');

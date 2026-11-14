@@ -131,6 +131,10 @@ function drawNow() {
 // zooms at the cursor, Ctrl+click starts a lasso to zoom on, Ctrl+right click
 // resets the view; what is under the cursor is named in a box by it
 export const lasso = $('lasso'), hover = $('hover');
+// what takes the point placed with the pointer (see gmshWebPlacePoint()), if
+// one is being placed: the form of a shape
+export let pointPlaced = null;
+export function setPointPlaced(f) { pointPlaced = f; }
 function mouse(kind, e, wheel = 0) {
   const mods = modifiers(e, true);
   // the page numbers the buttons 0 left, 1 middle, 2 right; the scene 0
@@ -139,6 +143,10 @@ function mouse(kind, e, wheel = 0) {
   const at = canvas.getBoundingClientRect();
   const redraw = web.mouse(kind, e.clientX - at.left, e.clientY - at.top,
                            canvas.clientWidth, canvas.clientHeight, button, wheel, mods);
+  if(pointPlaced) {
+    const p = web.placedPoint();
+    if(p) pointPlaced(p);
+  }
   // the boxes over the canvas, placed in the window
   // the box hangs from the point the view keeps, so it follows the pointer
   // only once it has strayed, as in the graphical interface
@@ -280,6 +288,9 @@ export function build() {
       if(pinching) return;
       touchDown = {t: e.timeStamp, x: e.clientX, y: e.clientY};
     }
+    // (a touch screen has no pointer moving over the scene: the point being
+    // placed goes where it is touched)
+    if(pointPlaced && e.pointerType !== 'mouse') mouse(0, e);
     pressed = true;
     mouse(1, e);
   });

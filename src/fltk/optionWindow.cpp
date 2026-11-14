@@ -437,63 +437,10 @@ void options_restore_defaults_cb(Fl_Widget *w, void *data)
 
 void general_options_rotation_center_select_cb(Fl_Widget *w, void *data)
 {
-  // one click, as a tool of the current window (see sceneTool): the point
-  // clicked, from the depth of the pick (no need to pick mesh elements for
-  // it, which rebuilt the arrays of the mesh twice, a freeze of seconds on a
-  // large mesh, to give the barycentre of an element)
-  sceneTool::start(
-    new functionTool(
-      "Rotation center", ENT_ALL, false,
-      [](sceneView *) {
-        return std::string("Select point on geometry, mesh or "
-                           "post-processing view\n[Press Escape to abort]");
-      },
-      [](char ib, sceneView *s, const scenePicks &p) {
-        // ('e' ends it as 'q' does, nothing set)
-        if(ib != 'l') return ib != 'q' && ib != 'e';
-        SPoint3 pc(0., 0., 0.);
-        drawContext *ctx = s->getDrawContext();
-        double xyz[3];
-        if(p.vertices.size())
-          pc.setPosition(p.vertices[0]->x(), p.vertices[0]->y(),
-                         p.vertices[0]->z());
-        else if(ctx->pickPoint(xyz)) {
-          pc.setPosition(xyz[0], xyz[1], xyz[2]);
-          // on the curve or surface itself, not on the polyline or the
-          // triangulation it is drawn as
-          double t, uv[2] = {0., 0.};
-          if(p.edges.size()) {
-            GPoint gp = p.edges[0]->closestPoint(pc, t);
-            if(gp.succeeded()) pc.setPosition(gp.x(), gp.y(), gp.z());
-          }
-          else if(p.faces.size()) {
-            GPoint gp = p.faces[0]->closestPoint(pc, uv);
-            if(gp.succeeded()) pc.setPosition(gp.x(), gp.y(), gp.z());
-          }
-        }
-        else if(p.elements.size())
-          pc = p.elements[0]->barycenter();
-        else if(p.edges.size())
-          pc = p.edges[0]->bounds().center();
-        else if(p.faces.size())
-          pc = p.faces[0]->bounds().center();
-        else if(p.regions.size())
-          pc = p.regions[0]->bounds().center();
-        else if(p.views.size() && p.views[0]->getData())
-          pc = p.views[0]->getData()->getBoundingBox().center();
-        opt_general_rotation_center0(0, GMSH_SET | GMSH_GUI, pc.x());
-        opt_general_rotation_center1(0, GMSH_SET | GMSH_GUI, pc.y());
-        opt_general_rotation_center2(0, GMSH_SET | GMSH_GUI, pc.z());
-        ctx->recenterForRotationCenterChange(pc);
-        FlGui::instance()->manip->update();
-        return false;
-      },
-      []() {
-        GModel::current()->setSelection(0);
-        drawContext::global()->draw();
-      }),
-    FlGui::instance()->getCurrentOpenglWindow(),
-    (Fl_Window *)FlGui::instance()->options->win);
+  // one click, as a tool of the current window (see sceneTool)
+  sceneTool::start(newRotationCenterTool(),
+                   FlGui::instance()->getCurrentOpenglWindow(),
+                   (Fl_Window *)FlGui::instance()->options->win);
 }
 
 void general_options_axes_fit_cb(Fl_Widget *w, void *data)

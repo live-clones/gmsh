@@ -13,6 +13,7 @@
 #include "SPoint2.h"
 
 class sceneView;
+class drawContext;
 class selectionDriver;
 class GVertex;
 class GEdge;
@@ -153,6 +154,15 @@ private:
 sceneTool *newQueryTool();
 // the measurement: two clicks give a distance
 sceneTool *newMeasureTool();
+// the centre of rotation: one click on a point of the model sets it
+sceneTool *newRotationCenterTool();
+
+// the point of the model the last pick of ctx hit (see
+// drawContext::pickPoint()), on the point, curve or surface picked itself
+// rather than on the polyline or triangulation it is drawn as; false if the
+// pick hit nothing of the 3D scene
+bool pickedModelPoint(const drawContext *ctx, const scenePicks &p,
+                      double xyz[3]);
 
 // an operation on selected entities (see selectionDriver), with the values
 // of its fields from value(); changed() is told each time it changes the
