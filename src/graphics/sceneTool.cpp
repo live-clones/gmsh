@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <algorithm>
 #include "sceneTool.h"
 #include "sceneView.h"
 #include "selectionDriver.h"
@@ -34,11 +35,19 @@ static void beginTool(sceneTool *t, sceneView *s)
   Msg::StatusGl("%s", t->status(s).c_str());
 }
 
+// is s still a scene? (ending a tool, or one of its steps, may process events
+// that delete it, e.g. by unsplitting the window)
+static bool alive(sceneView *s)
+{
+  const std::vector<sceneView *> &all = sceneView::all();
+  return std::find(all.begin(), all.end(), s) != all.end();
+}
+
 void sceneTool::start(sceneTool *tool, sceneView *s, const void *owner)
 {
   stop();
   if(!tool) return;
-  if(!s) {
+  if(!s || !alive(s)) {
     delete tool;
     return;
   }
@@ -87,7 +96,7 @@ bool sceneTool::step()
   _depth--;
   // (unless the step ended it, or started another tool)
   if(_current == t) {
-    if(more)
+    if(more && alive(s))
       beginTool(t, s);
     else
       stop();
