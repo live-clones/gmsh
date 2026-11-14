@@ -77,9 +77,9 @@ void orientTriangles(const std::vector<std::array<double, 3> > &x,
 // and after each one the free edges, the open pieces and the closed ones (the
 // triangles connected across edges of two triangles, closed if none of their
 // edges has one triangle or more than two); the level from which each free
-// edge of the input is zipped (its two nodes, or those they are merged into,
-// on no free edge) and from which the piece of each triangle of the input is
-// closed (0 if it is from the start; infinite if not within reach).
+// edge of the input is zipped (none of the free edges it is made of left:
+// renamed by merges, split by insertions) and from which the piece of each
+// triangle of the input is closed (0 if it is from the start; infinite if not within reach).
 struct DiscreteCADZipReport {
   std::vector<int> merged, inserted;
   std::size_t freeBefore = 0, freeAfter = 0;

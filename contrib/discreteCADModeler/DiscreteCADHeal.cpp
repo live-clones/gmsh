@@ -634,7 +634,14 @@ void zipFreeEdges(const std::vector<std::array<double, 3> > &x,
   std::vector<int> stamp;
   int visit = 0;
   std::vector<char> free(x.size(), 0);
-  std::vector<double> nonFreeAt(x.size(), inf);
+  // the free edge of the input each free edge is part of (-1: none), the
+  // number of free edges each one of the input is made of, and the level from
+  // which it is none
+  std::map<std::pair<int, int>, int> partOf;
+  std::vector<int> parts(report.freeEdges.size(), 1);
+  std::vector<double> zippedAt(report.freeEdges.size(), inf);
+  for(std::size_t k = 0; k < report.freeEdges.size(); k++)
+    partOf[report.freeEdges[k]] = (int)k;
   std::priority_queue<candidate, std::vector<candidate>, std::greater<candidate> >
     queue;
   // (a node into a free edge: inside it, and its ends more than twice as far
@@ -687,7 +694,7 @@ void zipFreeEdges(const std::vector<std::array<double, 3> > &x,
   // taken out of the counts before it, back in after it
   std::vector<std::pair<int, int> > E;
   std::vector<std::size_t> touched;
-  std::set<std::pair<int, int> > freeBefore;
+  std::map<std::pair<int, int>, int> freeBefore;
   double level = 0.;
   auto collect = [&](std::vector<std::size_t> &tri) {
     for(auto &e : E) {
@@ -725,10 +732,14 @@ void zipFreeEdges(const std::vector<std::array<double, 3> > &x,
     freeBefore.clear();
     for(auto &e : E) {
       along(e.first, e.second, l);
-      if(l.size() == 1) freeBefore.insert(e);
+      if(l.size() != 1) continue;
+      auto o = partOf.find(e);
+      freeBefore[e] = o == partOf.end() ? -1 : o->second;
     }
   };
-  auto finish = [&]() {
+  // (the edge each edge after the event comes from)
+  auto finish = [&](std::function<std::pair<int, int>(const std::pair<int, int> &)>
+                      parent) {
     for(auto &e : E) {
       along(e.first, e.second, l);
       if(l.size() == 2) unite(l[0], l[1]);
@@ -745,15 +756,29 @@ void zipFreeEdges(const std::vector<std::array<double, 3> > &x,
         const bool f = isFree(n);
         if(f && !free[n]) {
           free[n] = 1;
-          nonFreeAt[n] = inf;
           nodes.add(n, x[n]);
           fromNode(n, true);
         }
-        else if(!f && free[n]) {
+        else if(!f && free[n])
           free[n] = 0;
-          nonFreeAt[n] = level;
-        }
       }
+    // (the free edges made, parts of those they come from, and those no
+    // more)
+    for(auto &e : E) {
+      if(freeBefore.count(e)) continue;
+      along(e.first, e.second, l);
+      if(l.size() != 1) continue;
+      auto p = freeBefore.find(parent(e));
+      const int o = p == freeBefore.end() ? -1 : p->second;
+      partOf[e] = o;
+      if(o >= 0) parts[o]++;
+    }
+    for(auto &f : freeBefore) {
+      along(f.first.first, f.first.second, l);
+      if(l.size() == 1) continue;
+      partOf.erase(f.first);
+      if(f.second >= 0 && --parts[f.second] == 0) zippedAt[f.second] = level;
+    }
     for(auto &e : E) {
       if(freeBefore.count(e) || find(e.first) != e.first ||
          find(e.second) != e.second)
@@ -831,7 +856,10 @@ void zipFreeEdges(const std::vector<std::array<double, 3> > &x,
       std::sort(key.begin(), key.end());
       if(!copies.insert(key).second) kill(i);
     }
-    finish();
+    finish([a, b](const std::pair<int, int> &e) -> std::pair<int, int> {
+      if(e.first != b && e.second != b) return e;
+      return std::minmax(a, e.first == b ? e.second : e.first);
+    });
     log('m', a, b, -1);
   };
 
@@ -865,7 +893,10 @@ void zipFreeEdges(const std::vector<std::array<double, 3> > &x,
     // (c may have been in i before)
     if(std::find(at[c].begin(), at[c].end(), i) == at[c].end()) at[c].push_back(i);
     for(int n : {c, q, w}) at[n].push_back(j);
-    finish();
+    finish([p, q, c](const std::pair<int, int> &e) -> std::pair<int, int> {
+      if(e == std::minmax(p, c) || e == std::minmax(c, q)) return std::minmax(p, q);
+      return e;
+    });
     log('t', c, u, v);
   };
 
@@ -926,9 +957,7 @@ void zipFreeEdges(const std::vector<std::array<double, 3> > &x,
     if(e.kind == 'm') report.merged.push_back(e.a);
     if(e.kind == 't') report.inserted.push_back(e.a);
   }
-  for(auto &e : report.freeEdges)
-    report.freeLevel.push_back(
-      std::max(nonFreeAt[find(e.first)], nonFreeAt[find(e.second)]));
+  report.freeLevel = zippedAt;
   // (the first root of each triangle whose piece was closed)
   report.closedLevel.assign(n0, inf);
   for(std::size_t i = 0; i < n0; i++) {
