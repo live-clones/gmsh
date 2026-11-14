@@ -33,4 +33,14 @@ each model's files, kills a run stuck for twice its time, and keeps the logs
 
   benchmarks/gui/fuzz.sh bin 60 1,2,3 /tmp/fuzz tutorials/t1.geo tutorials/t5.geo
 
+A failed run keeps its scratch copy (the model as the actions left it), and a
+stuck one a sample of its stacks on macOS. The run's home is its scratch copy
+(GMSH_HOME), so the options it saves never reach the user's own.
+
+Memory errors are found with a library built with -fsanitize=address; an
+FLTK library that was not gives false container-overflow reports:
+
+  ASAN_OPTIONS=detect_leaks=0:detect_container_overflow=0 \
+    benchmarks/gui/fuzz.sh asan 60 1,2,3 /tmp/fuzz tutorials/t5.geo
+
 The windows open on screen while it runs: do not use the computer meanwhile.

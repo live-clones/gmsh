@@ -6,9 +6,11 @@
 #   benchmarks/gui/fuzz.sh <build dir> <seconds> <seeds> <output dir> model...
 # e.g.
 #   benchmarks/gui/fuzz.sh bin 60 1,2,3 /tmp/fuzz tutorials/t1.geo tutorials/t5.geo
-# The windows of the interface open on screen while a run goes: do not use the
-# computer meanwhile. A run that does not end by itself is killed after twice
-# its time.
+# A run that failed keeps its scratch copy (the model as the actions left
+# it) in the output directory, and a stuck one the sample of its stacks on
+# macOS. The windows of the interface open on screen while a run goes: do not
+# use the computer meanwhile. A run that does not end by itself is killed
+# after twice its time.
 if [ $# -lt 5 ]; then
   echo "Usage: $0 <build dir> <seconds> <seeds> <output dir> model.geo ..."
   exit 1
@@ -35,8 +37,13 @@ for model in "$@"; do
     while kill -0 $pid 2>/dev/null && [ $waited -lt $timeout ]; do sleep 1; waited=$((waited + 1)); done
     if kill -0 $pid 2>/dev/null; then
       echo "    stuck after $timeout s: killed" | tee -a "$run.log"
-      kill -9 $pid 2>/dev/null
+      # where it is stuck, on macOS
+      run_pid=$(pgrep -P $pid gui_fuzz)
+      command -v sample > /dev/null && [ -n "$run_pid" ] &&
+        sample $run_pid 3 -file "$run.sample" > /dev/null 2>&1
+      kill -9 $run_pid $pid 2>/dev/null
       failed=$((failed + 1))
+      cp -R "$scratch" "$run.files"
     else
       wait $pid; status=$?
       if [ $status -ne 0 ]; then
@@ -46,6 +53,7 @@ for model in "$@"; do
         sleep 2
         report=$(ls -t ~/Library/Logs/DiagnosticReports/gui_fuzz-*.ips 2>/dev/null | head -1)
         [ -n "$report" ] && cp "$report" "$run.ips"
+        cp -R "$scratch" "$run.files"
       else
         tail -1 "$run.log"
       fi

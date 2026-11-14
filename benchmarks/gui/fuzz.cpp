@@ -16,8 +16,10 @@
 // menu bar, the menus of the views, pointer moves, drags and wheels in the
 // scene, the windows split and unsplit, hidden and shown (never the full
 // screen window, never Minimize: FLTK's capture of the window for the Dock
-// hangs). A modal window gets Escape, then its close callback. At the end
-// the model's files are left where they are: run in a scratch copy.
+// hangs). A modal window gets Escape, then its close callback. When the time
+// is up, what the actions still wait in is closed the same way. The run's
+// home (GMSH_HOME) is the current directory, and the model's files are left
+// where they are: run in a scratch copy.
 // Without a model argument, 77: ctest skips it.
 #include <cstdio>
 #include <cstdlib>
@@ -89,15 +91,17 @@ static void click(double fx, double fy, bool ctrl = false)
   Fl::e_y = (int)(fy * g->h());
   Fl::e_x_root = g->x_root() + Fl::e_x;
   Fl::e_y_root = g->y_root() + Fl::e_y;
+  // (each event may process others, which may delete the pane)
+  Fl_Widget_Tracker alive(g);
   Fl::e_state = ctrl ? FL_CTRL : 0;
   ((Fl_Widget *)g)->handle(FL_MOVE);
   Fl::e_keysym = FL_Button + 1;
   Fl::e_state = FL_BUTTON1 | (ctrl ? FL_CTRL : 0);
   Fl::e_is_click = 1;
   Fl::e_clicks = 0;
-  ((Fl_Widget *)g)->handle(FL_PUSH);
+  if(alive.exists()) ((Fl_Widget *)g)->handle(FL_PUSH);
   Fl::e_state = ctrl ? FL_CTRL : 0;
-  ((Fl_Widget *)g)->handle(FL_RELEASE);
+  if(alive.exists()) ((Fl_Widget *)g)->handle(FL_RELEASE);
   Fl::awake();
 }
 
@@ -110,6 +114,8 @@ static void pointer(int what)
   Fl::e_y = pick(g->h());
   Fl::e_x_root = g->x_root() + Fl::e_x;
   Fl::e_y_root = g->y_root() + Fl::e_y;
+  // (each event may process others, which may delete the pane)
+  Fl_Widget_Tracker alive(g);
   if(what == 0) {
     Fl::e_state = 0;
     ((Fl_Widget *)g)->handle(FL_MOVE);
@@ -119,13 +125,13 @@ static void pointer(int what)
     Fl::e_keysym = FL_Button + button;
     Fl::e_state = FL_BUTTON1 << (button - 1);
     ((Fl_Widget *)g)->handle(FL_PUSH);
-    for(int i = 0; i < 3; i++) {
+    for(int i = 0; i < 3 && alive.exists(); i++) {
       Fl::e_x += pick(40) - 20;
       Fl::e_y += pick(40) - 20;
       ((Fl_Widget *)g)->handle(FL_DRAG);
     }
     Fl::e_state = 0;
-    ((Fl_Widget *)g)->handle(FL_RELEASE);
+    if(alive.exists()) ((Fl_Widget *)g)->handle(FL_RELEASE);
   }
   else {
     Fl::e_dy = pick(7) - 3;
@@ -341,6 +347,43 @@ static void oneAction()
   }
 }
 
+// once the time is up, what the actions are still waiting in (a dialog, a
+// selection, a window run by a loop of its own) is ended as a user would end
+// it, one thing a tick, so that the loops return; a run still nested after
+// 10 s is a real hang, and says so
+static void windDown(void *)
+{
+  if(depth == 0 || !FlGui::available()) return;
+  if(TimeOfDay() > stopAt + 10) {
+    log("still nested 10 s after the time is up: hang");
+    return;
+  }
+  Fl::repeat_timeout(0.05, windDown);
+  FlGui *g = FlGui::instance();
+  if(Fl_Window *m = Fl::modal()) {
+    if(m->shown() && m != g->graph[0]->getWindow()) {
+      log("  wind down: Escape then close modal");
+      escapeIn(m);
+      if(m->shown()) m->do_callback();
+      return;
+    }
+  }
+  if(sceneTool::current()) {
+    log("  wind down: selection_quit");
+    g->runShortcut("selection_quit");
+    return;
+  }
+  for(Fl_Window *w = Fl::first_window(); w; w = Fl::next_window(w)) {
+    if(w != g->graph[0]->getWindow() && !dynamic_cast<openglWindow *>(w) &&
+       !w->parent() && w->callback()) {
+      log(std::string("  wind down: close ") +
+          (w->label() ? w->label() : "window"));
+      w->do_callback();
+      return;
+    }
+  }
+}
+
 static void tick(void *)
 {
   if(done) return;
@@ -349,6 +392,7 @@ static void tick(void *)
     log("time is up");
     // (a solver listening would wait forever)
     opt_solver_listen(0, GMSH_SET | GMSH_GUI, 0);
+    if(depth > 0) Fl::add_timeout(0.05, windDown);
     return;
   }
   // the next tick is set first: an action may open a dialog that waits in a
@@ -371,6 +415,9 @@ int main(int argc, char **argv)
   unsigned seed = argc > 3 ? (unsigned)atoi(argv[3]) : 1;
   rng.seed(seed);
   printf("seed %u, %g s, %s\n", seed, seconds, argv[1]);
+  // the files of the user's home (.gmshrc, .gmsh-options, which the actions
+  // save) are neither read nor written: the run's home is where it runs
+  SetEnvironmentVar("GMSH_HOME", ".");
   std::vector<std::string> args = {"gui_fuzz", "-nopopup"};
   gmsh::initialize();
   gmsh::option::setNumber("General.Terminal", 1);
