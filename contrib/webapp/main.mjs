@@ -20,7 +20,9 @@
 // the comments of the page, is that interface, src/fltk, which the page
 // follows.) A model is opened from files, a folder, a zip archive, or a URL
 // (?zip=<url>, with &open=<file> for a zip of several models, or ?model=<url
-// of the .pro>&files=<other files, next to it, separated by commas>).
+// of the .pro>&files=<other files, next to it, separated by commas>). Gmsh is
+// the 64-bit module (build64/) where the browser supports it, else the 32-bit
+// one (build/).
 //
 // The page is in modules, one per panel, each with its functions and a
 // build() that makes its part of the page once Gmsh is loaded, called below:
@@ -38,7 +40,6 @@
 // To add a panel: a module with its build(), listed here and in deploy.sh; a
 // menu item or a module button: see Actions.h, then pageActions in
 // actions.mjs.
-import createGmsh from './build/gmsh.mjs';
 import {app, setGmsh, setStatus, log, progress, $} from './app.mjs';
 import * as scene from './scene.mjs';
 import * as statusbar from './statusbar.mjs';
@@ -90,7 +91,24 @@ const cannotLoad = (e) => {
   setStatus('Could not load Gmsh: ' + (e.message || e), true);
   throw e;
 };
-const wasm = await compileWasm(new URL('./build/libgmsh.wasm', import.meta.url))
+// The module: the 64-bit one (build64/, Memory64: up to 16 GB) where the
+// browser can run it and the site has it, else the 32-bit one (build/, 4 GB);
+// ?wasm=32 or ?wasm=64 in the address chooses
+const memory64 = WebAssembly.validate(new Uint8Array(
+  [0, 97, 115, 109, 1, 0, 0, 0, 5, 3, 1, 4, 1])); // a memory of 64-bit addresses
+async function buildDirectory() {
+  const want = new URLSearchParams(location.search).get('wasm');
+  if(want === '32' || !memory64) return './build/';
+  if(want === '64') return './build64/';
+  try {
+    const r = await fetch(new URL('./build64/libgmsh.wasm', import.meta.url), {method: 'HEAD'});
+    if(r.ok) return './build64/';
+  } catch(e) {}
+  return './build/';
+}
+const buildDir = await buildDirectory();
+const {default: createGmsh} = await import(buildDir + 'gmsh.mjs').catch(cannotLoad);
+const wasm = await compileWasm(new URL(buildDir + 'libgmsh.wasm', import.meta.url))
   .catch(cannotLoad);
 setStatus('Starting...');
 progress(true);
@@ -123,7 +141,7 @@ gmsh.option.setNumber('General.NoPopup', 1);
 for(const part of [scene, actions, statusbar, parameters, options, clipping,
                    visibility, plugins, editor, views, models])
   if(part.build) part.build();
-solverClient.build(wasm);
+solverClient.build(wasm, buildDir);
 
 $('run').disabled = $('reset').disabled = false;
 setStatus('Open a model, or drop its files here');

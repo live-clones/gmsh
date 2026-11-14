@@ -29,6 +29,8 @@
 # GETDP: the GetDP sources (default: getdp next to the Gmsh sources)
 # ONELAB_DOC: the onelab_doc sources (default: onelab_doc next to them)
 # BUILD: the build directory (default: ./build)
+# BUILD64: the build directory of the 64-bit module (default: build64 next to
+#          BUILD)
 # DEST: where the site goes (default: gmsh.info:.wwwonelab/webapp/)
 
 set -e
@@ -68,6 +70,15 @@ cp "$B/gmsh.mjs" "$B/libgmsh.mjs" "$B/libgmsh.wasm" "$SITE/build"
 # progress of its loading
 wc -c < "$B/libgmsh.wasm" | tr -d ' ' > "$SITE/build/libgmsh.wasm.size"
 if [ -d "$B/templates" ]; then cp "$B"/templates/* "$SITE/build/templates"; fi
+# the 64-bit module of build.sh --wasm64 too, if there is one (in build64,
+# next to the build directory), which the page takes where the browser can
+# run it (see main.mjs)
+B64=${BUILD64:-$(dirname "$B")/build64}
+if [ -f "$B64/libgmsh.wasm" ]; then
+  mkdir -p "$SITE/build64"
+  cp "$B64/gmsh.mjs" "$B64/libgmsh.mjs" "$B64/libgmsh.wasm" "$SITE/build64"
+  wc -c < "$B64/libgmsh.wasm" | tr -d ' ' > "$SITE/build64/libgmsh.wasm.size"
+fi
 
 # the page, its stylesheet and modules (see README.txt), with the manifest
 # and the icons that make it an app on a phone's home screen

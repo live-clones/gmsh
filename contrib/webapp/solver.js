@@ -19,7 +19,8 @@
 // stays free to draw what it is sent and to answer its user. The messages
 // play the part of the ONELAB socket:
 //
-//   page -> worker: {type: 'init', module}, a compiled libgmsh.wasm
+//   page -> worker: {type: 'init', module, dir}, a compiled libgmsh.wasm and
+//                   the directory of its build (build/ or build64/)
 //                   {type: 'forget', dir}: a model's directory, to remove
 //                   {type: 'run', dir, cwd, files, db, args}: the files of the
 //                   model changed since they were last sent ([path, bytes]),
@@ -35,7 +36,6 @@
 //                   errors: 1, failed: true} if the run broke the worker)
 //                   {type: 'failed', text}: the worker could not start
 
-import createGmsh from './build/gmsh.mjs';
 import {listFiles, writeFile, removeDirectory} from './files.mjs';
 
 let gmsh, FS;
@@ -59,6 +59,7 @@ self.onmessage = async (e) => {
 
 async function handle(m) {
   if(m.type === 'init') {
+    const {default: createGmsh} = await import(m.dir + 'gmsh.mjs');
     gmsh = await createGmsh({
       instantiateWasm: (imports, done) => {
         WebAssembly.instantiate(m.module, imports).then((i) => done(i, m.module))

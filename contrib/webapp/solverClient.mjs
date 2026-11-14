@@ -62,7 +62,7 @@ function startWorker() {
     solverEnd({errors: 1});
   };
   worker.onerror = (e) => failed(e.message);
-  worker.postMessage({type: 'init', module: wasm});
+  worker.postMessage({type: 'init', module: wasm, dir: buildDir});
 }
 // a file the solver wrote, written here too, not to be sent back
 function fromSolver(path, data) {
@@ -249,9 +249,10 @@ export async function run(action) {
 
 // the page built, once Gmsh is loaded (see main.mjs): the worker started
 // with the compiled code
-let wasm;
-export function build(code) {
+let wasm, buildDir;
+export function build(code, dir) {
   wasm = code;
+  buildDir = dir;
   startWorker();
   $('run').addEventListener('click', () => {
     if(app.busy) {
