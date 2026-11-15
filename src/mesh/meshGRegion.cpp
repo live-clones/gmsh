@@ -345,9 +345,17 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
 
   if(CTX::instance()->mesh.algo3d == ALGO_3D_PDEL3D) {
     int ret = meshGRegionParallelDelaunay(regions);
-    if(ret == 1) Msg::Error("Parallel Delaunay 3D mesh failed");
-    if(ret != 2) return;
-    Msg::Warning("Falling back to Delaunay (del3d)");
+    if(!ret) return;
+    // del3d takes over, when the input is not supported (2) and when the
+    // parallel mesher failed (1), from volumes without what that left in them
+    // (the Steiner points of its boundary recovery)
+    if(ret == 1) {
+      for(GRegion *gr : regions) gr->deleteMesh();
+      Msg::Warning("Parallel Delaunay 3D mesh failed: falling back to "
+                   "Delaunay (del3d)");
+    }
+    else
+      Msg::Warning("Falling back to Delaunay (del3d)");
   }
   if(CTX::instance()->mesh.algo3d != ALGO_3D_RTREE &&
      CTX::instance()->mesh.algo3d != ALGO_3D_DELAUNAY &&

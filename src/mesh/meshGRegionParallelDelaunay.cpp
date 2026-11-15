@@ -3283,8 +3283,8 @@ namespace pdel3d {
       std::set<std::uint32_t> s(volumes[i].begin(), volumes[i].end());
       complete(s);
       if(volumeOfSurfaces.count(s)) {
-        Msg::Error("Volumes %zu and %u are bounded by the same surfaces", i,
-                   volumeOfSurfaces[s]);
+        Msg::Warning("Volumes %zu and %u are bounded by the same surfaces", i,
+                     volumeOfSurfaces[s]);
         return false;
       }
       volumeOfSurfaces[s] = (std::uint32_t)i;
@@ -3319,10 +3319,10 @@ namespace pdel3d {
         }
       }
       if(!found[i]) {
-        Msg::Error("Volume %zu was not found in the tetrahedralization (its "
-                   "bounding surfaces "
-                   "do not enclose a single connected component)",
-                   i);
+        Msg::Warning("Volume %zu was not found in the tetrahedralization (its "
+                     "bounding surfaces "
+                     "do not enclose a single connected component)",
+                     i);
         ok = false;
       }
     }
@@ -4101,7 +4101,7 @@ namespace {
     }
     gr->tetrahedra.clear();
     if(flat) {
-      Msg::Error("%zu flat tet(s) in the recovered mesh", flat);
+      Msg::Warning("%zu flat tet(s) in the recovered mesh", flat);
       return false;
     }
     // adjacencies through the sorted facets
@@ -4163,7 +4163,7 @@ namespace {
               });
     for(std::size_t i = 0; i + 1 < edges.size(); i += 2) {
       if(edges[i].a != edges[i + 1].a || edges[i].b != edges[i + 1].b) {
-        Msg::Error("Hull edge without two hull facets in the recovered mesh");
+        Msg::Warning("Hull edge without two hull facets in the recovered mesh");
         return false;
       }
       m.neigh[edges[i].ref] = edges[i + 1].ref;
@@ -5081,13 +5081,13 @@ static int meshRegions(std::vector<GRegion *> &regions, splitQuadRecovery &sqr,
       Msg::Info("Most triangles are missing: global boundary recovery");
     if(!local) {
       if(!recoverBoundary(m, s, regions, sqr, sizeFactor)) {
-        Msg::Error("Boundary recovery failed");
+        Msg::Warning("Boundary recovery failed");
         return 1;
       }
       remap();
     }
     if(missing || missingLines) {
-      Msg::Error(
+      Msg::Warning(
         "%zu triangle(s) and %zu line(s) still missing after boundary recovery",
         missing, missingLines);
       return 1;
@@ -5140,7 +5140,7 @@ static int meshRegions(std::vector<GRegion *> &regions, splitQuadRecovery &sqr,
     opt.verbosity = verbosity;
     pdel3d::refine(m, opt);
     if(sd.failed) {
-      Msg::Error("Mesh size evaluation failed");
+      Msg::Warning("Mesh size evaluation failed");
       return 1;
     }
   }
