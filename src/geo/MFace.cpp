@@ -54,7 +54,8 @@ static void sortVertices(MVertex *const *v, int n, char *s)
   }
 
   for(int i = 0; i < n; i++) s[i] = i;
-  std::sort(s, s + n, [v](char a, char b) { return compare(v[a], v[b]); });
+  std::sort(s, s + n,
+            [v](char a, char b) { return compare(v[int(a)], v[int(b)]); });
 }
 
 static void sortVertices(MVertex *const *v, int n, int *s)
