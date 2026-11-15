@@ -1,5 +1,7 @@
 5.0.0 (Work-in-progress): improved performance of default meshing algorithms;
-new parallel 3D Delaunay algorithm; improved graphics performance and entity
+new parallel 3D Delaunay algorithm; new experimental discrete CAD modeler
+(primitives, boolean operations, fillets and import of triangulations, with
+recognition of analytic surfaces); improved graphics performance and entity
 selection; new shader rendering pipeline with order-independent transparency and
 studio shading; redesigned GUI, with tools docked to the right of the graphics
 window by default and automatic dark mode; new JavaScript API and web interface;

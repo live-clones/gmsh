@@ -5,6 +5,7 @@ their own respective license:
 * bamg: GNU Lesser General Public License (LGPL) v. 2.1 or later
 * blossom: Gmsh License
 * BoundaryLayers: GNU Affero General Public License (AGPL) v. 3 or later
+* discreteCADModeler: GNU Affero General Public License (AGPL) v. 3 or later
 * domhex: Gmsh License
 * DualMesh: GNU Affero General Public License (AGPL) v. 3 or later
 * eigen: BSD License
