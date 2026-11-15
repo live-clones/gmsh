@@ -545,8 +545,8 @@ static void drawNumberGlyphs(drawContext *ctx, PView *p, int numNodes,
   }
 }
 
-static void drawNormalVectorGlyphs(drawContext *ctx, PView *p, int numNodes,
-                                   double **xyz)
+static void drawNormalVectorGlyphs(drawContext *ctx, PView *p, int ent,
+                                   int ele, int numNodes, double **xyz)
 {
   PViewOptions *opt = p->getOptions();
 
@@ -555,12 +555,8 @@ static void drawNormalVectorGlyphs(drawContext *ctx, PView *p, int numNodes,
     pc += SPoint3(xyz[i][0], xyz[i][1], xyz[i][2]);
   pc /= (double)numNodes;
 
-  SVector3 t1(xyz[1][0] - xyz[0][0], xyz[1][1] - xyz[0][1],
-              xyz[1][2] - xyz[0][2]);
-  SVector3 t2(xyz[2][0] - xyz[0][0], xyz[2][1] - xyz[0][1],
-              xyz[2][2] - xyz[0][2]);
-  SVector3 n = crossprod(t1, t2);
-  n.normalize();
+  double n[3];
+  p->getData(true)->getNormal(opt->timeStep, ent, ele, xyz, n);
 
   for(int i = 0; i < 3; i++)
     n[i] *= opt->normals * ctx->pixel_equiv_x / ctx->s[i];
@@ -653,7 +649,7 @@ static void drawGlyphs(drawContext *ctx, PView *p)
         if(numbersNow)
           drawNumberGlyphs(ctx, p, el.numNodes, el.numComp, el.xyz, el.val);
         if(normal)
-          drawNormalVectorGlyphs(ctx, p, el.numNodes, el.xyz);
+          drawNormalVectorGlyphs(ctx, p, el.ent, el.ele, el.numNodes, el.xyz);
         else if(tangent)
           drawTangentVectorGlyphs(ctx, p, el.numNodes, el.xyz);
       }

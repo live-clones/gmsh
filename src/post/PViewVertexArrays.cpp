@@ -288,8 +288,8 @@ static void changeCoordinates(drawTarget *p, int ient, int iele, int numNodes,
     }
   }
 
-  if(opt->normalRaise &&
-     (type == TYPE_LIN || type == TYPE_TRI || type == TYPE_QUA)) {
+  if(opt->normalRaise && (type == TYPE_LIN || type == TYPE_TRI ||
+                          type == TYPE_QUA || type == TYPE_POLYG)) {
     SVector3 n;
     if(type == TYPE_LIN) {
       // assumes lines in z=const plane, and raises in that plane
@@ -301,6 +301,9 @@ static void changeCoordinates(drawTarget *p, int ient, int iele, int numNodes,
       n = crossprod(t, p);
       n.normalize();
     }
+    else if(type == TYPE_POLYG)
+      p->view->getData(true)->getNormal(opt->timeStep, ient, iele, xyz,
+                                        n.data());
     else
       n = normal3(xyz);
     for(int i = 0; i < numNodes; i++) {
@@ -1183,13 +1186,13 @@ static bool findSkin(PView *p, const flatElements &flat, bool keptOnly,
   for(int t = 0; t < nthreads; t++) {
     FaceMatcher<std::uint32_t, std::uint32_t> matcher;
     std::vector<std::vector<int> > faces;
-    std::uint64_t hash[256]; // (a polyhedron has 255 faces at most)
+    std::vector<std::uint64_t> hash; // (of the faces of an element)
     std::vector<std::uint32_t> k;
     for(auto &c : chunks) {
       std::size_t ip = 0;
       for(std::size_t e = 0; e < c.elem.size(); e++) {
         const std::uint32_t *ids = &c.ids[c.first[e]];
-        int nf = 0;
+        hash.clear();
         auto hashFace = [&](int, const int *fi, int n) {
           std::uint32_t few[8] = {}, *kk = few; // (on the stack if they fit)
           if(n > 8) {
@@ -1197,9 +1200,9 @@ static bool findSkin(PView *p, const flatElements &flat, bool keptOnly,
             kk = k.data();
           }
           for(int j = 0; j < n; j++) kk[j] = ids[fi[j]];
-          hash[nf++] = matcher.share(kk, n, nthreads) == t ?
-                         matcher.hashOf(kk, n, entKey[c.ent[e]]) :
-                         0;
+          hash.push_back(matcher.share(kk, n, nthreads) == t ?
+                           matcher.hashOf(kk, n, entKey[c.ent[e]]) :
+                           0);
         };
         if(c.shape[e] == 4)
           forFaces(c, e, ip, faces, hashFace);
@@ -1209,7 +1212,7 @@ static bool findSkin(PView *p, const flatElements &flat, bool keptOnly,
           for(int i = 0; i < sh.numTriangles; i++)
             hashFace(i, sh.triangles[i], 3);
         }
-        for(int f = 0; f < nf; f++)
+        for(int f = 0; f < (int)hash.size(); f++)
           if(hash[f]) matcher.add(hash[f], c.elem[e], f);
         if(c.shape[e] == 4) ip++;
       }
@@ -1567,6 +1570,16 @@ static void addScalarPolyhedron(drawTarget *p, int ient, int iele,
     static_cast<MPolyhedron *>(data->getElement(opt->timeStep, ient, iele));
   if(!polyhedron) return; // list data: the faces are unknown
 
+  if(opt->boundary > 1) {
+    // its edges, not those of the triangles its faces are drawn with
+    opt->boundary -= 2;
+    for(int i = 0; i < polyhedron->getNumEdges(); i++) {
+      std::array<int, 2> is = polyhedron->getEdgeIndices(i);
+      addScalarLine(p, xyz, val, pre, is[0], is[1], true);
+    }
+    opt->boundary += 2;
+    return;
+  }
   if(opt->boundary > 0) {
     opt->boundary--;
     for(int i = 0; i < polyhedron->getNumFacesRep(false); i++) {
@@ -1586,34 +1599,18 @@ static void addScalarPolyhedron(drawTarget *p, int ient, int iele,
     }
     if(p->collect == drawTarget::COLLECT_CAPS) return;
     // (the field is linear on each tetrahedron: a face is drawn by the
-    // triangles the tetrahedra have on it, those with their three nodes on it)
-    std::vector<std::vector<int> > faces;
-    polyhedronFaces(polyhedron, faces);
-    std::vector<std::vector<char> > onFace;
-    for(std::size_t f = 0; f < faces.size(); f++) {
+    // triangles the tetrahedra have on it)
+    bool any = false;
+    for(int f = 0; f < polyhedron->getNumPolygons() && !any; f++)
+      any = p->skin->polyhedronFace(p->element, f);
+    if(!any) return;
+    std::vector<std::vector<int> > triangles;
+    polyhedron->getFaceTriangles(triangles);
+    for(std::size_t f = 0; f < triangles.size(); f++) {
       if(!p->skin->polyhedronFace(p->element, (int)f)) continue;
-      onFace.push_back(std::vector<char>(numNodes, 0));
-      for(int n : faces[f]) onFace.back()[n] = 1;
-    }
-    // (the triangles on the boundary of the tetrahedra: those that only one
-    // of them has)
-    std::map<std::array<int, 3>, std::array<int, 3> > boundary;
-    for(int i = 0; i < polyhedron->getNumTetrahedra(); i++) {
-      std::array<int, 4> is = polyhedron->getTetrahedronIndices(i);
-      for(int j = 0; j < 4; j++) {
-        const int *t = tetTriangles[j];
-        std::array<int, 3> tri = {is[t[0]], is[t[1]], is[t[2]]}, key = tri;
-        std::sort(key.begin(), key.end());
-        if(!boundary.erase(key)) boundary[key] = tri;
-      }
-    }
-    for(auto &b : boundary) {
-      const std::array<int, 3> &t = b.second;
-      for(auto &on : onFace)
-        if(on[t[0]] && on[t[1]] && on[t[2]]) {
-          addScalarTriangle(p, xyz, val, pre, t[0], t[1], t[2], true);
-          break;
-        }
+      const std::vector<int> &t = triangles[f];
+      for(std::size_t i = 0; i + 2 < t.size(); i += 3)
+        addScalarTriangle(p, xyz, val, pre, t[i], t[i + 1], t[i + 2], true);
     }
     return;
   }

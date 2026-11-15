@@ -354,6 +354,11 @@ void GMSH_PostPlugin::createListData(
       e.numNodes = getNumCornerNodes(data, step0, ent, ele);
       if(!e.numNodes) continue;
       e.type = data->getType(step0, ent, ele);
+      if(e.type == TYPE_POLYG || e.type == TYPE_POLYH) {
+        // skipped (with a warning, once) before anything is computed on them
+        for(auto o : out) o->incrementList(1, e.type, e.numNodes);
+        continue;
+      }
       e.dim = data->getDimension(step0, ent, ele);
       e.numComp = data->getNumComponents(step0, ent, ele);
       e.x.resize(e.numNodes);

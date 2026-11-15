@@ -10,6 +10,7 @@
 #include "OctreePost.h"
 #include "fullMatrix.h"
 #include "ElementType.h"
+#include "MElement.h"
 
 std::map<std::string, interpolationMatrices> PViewData::_interpolationSchemes;
 
@@ -140,6 +141,24 @@ GEntity *PViewData::getEntity(int step, int ent)
 {
   Msg::Error("Cannot get entity from this view");
   return nullptr;
+}
+
+void PViewData::getNormal(int step, int ent, int ele, double **xyz,
+                          double n[3])
+{
+  int num = 3;
+  if(getType(step, ent, ele) == TYPE_POLYG) {
+    MElement *e = getElement(step, ent, ele);
+    if(e) num = (int)e->getNumPrimaryVertices();
+  }
+  n[0] = n[1] = n[2] = 0.;
+  for(int i = 0; i < num; i++) {
+    const double *a = xyz[i], *b = xyz[(i + 1) % num];
+    n[0] += (a[1] - b[1]) * (a[2] + b[2]);
+    n[1] += (a[2] - b[2]) * (a[0] + b[0]);
+    n[2] += (a[0] - b[0]) * (a[1] + b[1]);
+  }
+  norme(n);
 }
 
 MElement *PViewData::getElement(int step, int ent, int ele)
