@@ -2448,9 +2448,11 @@ const get_node = getNode
     gmsh.model.mesh.setNode(nodeTag, coord, parametricCoord)
 
 Set the coordinates and the parametric coordinates (if any) of the node with tag
-`tag`. This function relies on an internal cache (a vector in case of dense node
-numbering, a map otherwise); for large meshes accessing nodes in bulk is often
-preferable.
+`tag`. The simplices computed for the polygons and polyhedra using the node are
+not computed again: reset them if need be with `setPolytopeSimplices`, giving 0
+simplices. This function relies on an internal cache (a vector in case of dense
+node numbering, a map otherwise); for large meshes accessing nodes in bulk is
+often preferable.
 
 Types:
  - `nodeTag`: size
@@ -2671,7 +2673,13 @@ elements of the corresponding type. `nodeTags` is also a vector of the same
 length as `elementTypes`; each entry is a vector of length equal to the number
 of elements of the given type times the number N of nodes for this type of
 element, that contains the node tags of all the elements of the given type,
-concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...].
+concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...]. For polygons and polyhedra
+(types 34 and 35) the number of nodes differs from one element to the next: the
+nodes of an element are its boundary nodes (the nodes returned by `getPolygons`,
+in the same order; each node of the faces returned by `getPolyhedra`, once),
+followed by the nodes that only its sub-simplices use, if they were given (see
+`getPolytopeSimplices`). The number of nodes of each element thus follows from
+`getPolygons` or `getPolyhedra`, and `getPolytopeSimplices`.
 
 Return `elementTypes`, `elementTags`, `nodeTags`.
 
@@ -2951,9 +2959,15 @@ containing the tags (unique, strictly positive identifiers) of the elements of
 the corresponding type. `nodeTags` is a vector of length equal to the number of
 elements of the given type times the number N of nodes for this type of element,
 that contains the node tags of all the elements of the given type, concatenated:
-[e1n1, e1n2, ..., e1nN, e2n1, ...]. If `numTasks` > 1, only compute and return
-the part of the data indexed by `task` (for C++ only; output vectors must be
-preallocated).
+[e1n1, e1n2, ..., e1nN, e2n1, ...]. For polygons and polyhedra (types 34 and 35)
+the number of nodes differs from one element to the next: the nodes of an
+element are its boundary nodes (the nodes returned by `getPolygons`, in the same
+order; each node of the faces returned by `getPolyhedra`, once), followed by the
+nodes that only its sub-simplices use, if they were given (see
+`getPolytopeSimplices`). The number of nodes of each element thus follows from
+`getPolygons` or `getPolyhedra`, and `getPolytopeSimplices`. If `numTasks` > 1,
+only compute and return the part of the data indexed by `task` (for C++ only;
+output vectors must be preallocated).
 
 Return `elementTags`, `nodeTags`.
 
@@ -4044,11 +4058,17 @@ const get_barycenters = getBarycenters
 Get the nodes on the edges of all elements of type `elementType` classified on
 the entity of tag `tag`. `nodeTags` contains the node tags of the edges for all
 the elements: [e1a1n1, e1a1n2, e1a2n1, ...]. Data is returned by element, with
-elements in the same order as in `getElements` and `getElementsByType`. If
-`primary` is set, only the primary (begin/end) nodes of the edges are returned.
-If `tag` < 0, get the edge nodes for all entities. If `numTasks` > 1, only
-compute and return the part of the data indexed by `task` (for C++ only; output
-vector must be preallocated).
+elements in the same order as in `getElements` and `getElementsByType`. Except
+for polygons and polyhedra, the number of edges is the same for all the elements
+of a given type (e.g. 3 for triangles, 6 for tetrahedra, 12 for hexahedra), and
+is equal to the number of edges returned divided by the number of elements. A
+polygon has as many edges as nodes: use `getPolygons` to get the number of nodes
+of each polygon. A polyhedron has half as many edges as the sum of the sizes of
+its faces, each edge being shared by two faces: use `getPolyhedra` to get the
+sizes of the faces of each polyhedron. If `primary` is set, only the primary
+(begin/end) nodes of the edges are returned. If `tag` < 0, get the edge nodes
+for all entities. If `numTasks` > 1, only compute and return the part of the
+data indexed by `task` (for C++ only; output vector must be preallocated).
 
 Return `nodeTags`.
 
@@ -4083,13 +4103,13 @@ nodes of each face: [e1f1N, e1f2N, ...]. Faces are returned for each element in
 their canonical order, with elements in the same order as in `getElements` and
 `getElementsByType`. Except for polyhedra, the number of faces is the same for
 all the elements of a given type (e.g. 4 for tetrahedra, 5 for prisms, 6 for
-hexahedra), and is equal to the length of `faceSizes` divided by the number of
-elements; faces of different sizes (e.g. triangles and quadrangles for prisms
-and pyramids) are thus returned in a single call. Use `getPolyhedra` to get the
-number of faces of each polyhedron. If `primary` is set, only the primary
-(corner) nodes of the faces are returned. If `tag` < 0, get the face nodes for
-all entities. If `numTasks` > 1, only compute and return the part of the data
-indexed by `task` (for C++ only; output vectors must be preallocated).
+hexahedra, 1 for polygons), and is equal to the length of `faceSizes` divided by
+the number of elements; faces of different sizes (e.g. triangles and quadrangles
+for prisms and pyramids) are thus returned in a single call. Use `getPolyhedra`
+to get the number of faces of each polyhedron. If `primary` is set, only the
+primary (corner) nodes of the faces are returned. If `tag` < 0, get the face
+nodes for all entities. If `numTasks` > 1, only compute and return the part of
+the data indexed by `task` (for C++ only; output vectors must be preallocated).
 
 Return `nodeTags`, `faceSizes`.
 

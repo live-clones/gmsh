@@ -2053,6 +2053,15 @@ gmsh::model::mesh::affineTransform(const std::vector<double> &affineTransform,
                    _getEntityName(ge->dim(), ge->tag()).c_str());
     }
   }
+  // the sub-simplices computed for the polygons and polyhedra depend on the
+  // positions of the nodes (a mirrored tetrahedron is negative): compute them
+  // again when needed
+  for(auto gf : GModel::current()->getFaces())
+    for(auto p : gf->polygons)
+      if(!p->hasGivenTriangles()) p->setTriangles({});
+  for(auto gr : GModel::current()->getRegions())
+    for(auto p : gr->polyhedra)
+      if(!p->hasGivenTetrahedra()) p->setTetrahedra({});
   // the nodes moved: what is drawn of the mesh is built again
   CTX::instance()->meshChanged();
 }
@@ -2822,7 +2831,13 @@ GMSH_API void gmsh::model::mesh::addPolygons(
     return;
   }
   std::size_t n = 0;
-  for(auto m : numNodes) n += m;
+  for(auto m : numNodes) {
+    if(m < 3) {
+      Msg::Error("A polygon needs at least 3 nodes");
+      return;
+    }
+    n += m;
+  }
   if(n != nodeTags.size() ||
      (!elementTags.empty() && elementTags.size() != numNodes.size())) {
     Msg::Error("Wrong number of node tags or element tags for polygons");
@@ -2832,11 +2847,10 @@ GMSH_API void gmsh::model::mesh::addPolygons(
   std::vector<MVertex *> nodes;
   std::size_t idx = 0;
   for(std::size_t i = 0; i < numNodes.size(); i++) {
-    if(numNodes[i] < 3) {
-      Msg::Error("A polygon needs at least 3 nodes");
+    if(!_getNodes(nodeTags, idx, numNodes[i], nodes)) {
+      for(auto e : elements) delete e;
       return;
     }
-    if(!_getNodes(nodeTags, idx, numNodes[i], nodes)) return;
     idx += numNodes[i];
     elements.push_back(
       new MPolygon(nodes, elementTags.empty() ? 0 : elementTags[i]));
@@ -2875,8 +2889,20 @@ GMSH_API void gmsh::model::mesh::addPolyhedra(
     return;
   }
   std::size_t nf = 0, nn = 0;
-  for(auto m : numFaces) nf += m;
-  for(auto m : faceSizes) nn += m;
+  for(auto m : numFaces) {
+    if(m < 4) {
+      Msg::Error("A polyhedron needs at least 4 faces");
+      return;
+    }
+    nf += m;
+  }
+  for(auto m : faceSizes) {
+    if(m < 3) {
+      Msg::Error("A face of a polyhedron needs at least 3 nodes");
+      return;
+    }
+    nn += m;
+  }
   if(nf != faceSizes.size() || nn != nodeTags.size() ||
      (!elementTags.empty() && elementTags.size() != numFaces.size())) {
     Msg::Error("Wrong number of face sizes, node tags or element tags for "
@@ -2887,10 +2913,6 @@ GMSH_API void gmsh::model::mesh::addPolyhedra(
   std::vector<MVertex *> nodes;
   std::size_t face = 0, idx = 0;
   for(std::size_t i = 0; i < numFaces.size(); i++) {
-    if(numFaces[i] < 4) {
-      Msg::Error("A polyhedron needs at least 4 faces");
-      return;
-    }
     std::vector<int> offsets = {0};
     std::size_t n = 0;
     for(int j = 0; j < numFaces[i]; j++) {
@@ -2898,7 +2920,10 @@ GMSH_API void gmsh::model::mesh::addPolyhedra(
       offsets.push_back((int)n);
     }
     face += numFaces[i];
-    if(!_getNodes(nodeTags, idx, n, nodes)) return;
+    if(!_getNodes(nodeTags, idx, n, nodes)) {
+      for(auto e : elements) delete e;
+      return;
+    }
     idx += n;
     MPolyhedron *p =
       new MPolyhedron(nodes, elementTags.empty() ? 0 : elementTags[i]);
@@ -2983,34 +3008,43 @@ GMSH_API void gmsh::model::mesh::setPolytopeSimplices(
     return;
   }
   std::vector<MVertex *> nodes;
-  std::size_t idx = 0;
-  for(std::size_t i = 0; i < elementTags.size(); i++) {
-    MElement *e = GModel::current()->getMeshElementByTag(elementTags[i]);
-    if(!e) {
-      Msg::Error("Unknown element %zu", elementTags[i]);
-      return;
+  // everything is checked first, so that an error leaves the mesh as it was
+  for(int pass = 0; pass < 2; pass++) {
+    std::size_t idx = 0;
+    for(std::size_t i = 0; i < elementTags.size(); i++) {
+      MElement *e = GModel::current()->getMeshElementByTag(elementTags[i]);
+      if(!e) {
+        Msg::Error("Unknown element %zu", elementTags[i]);
+        return;
+      }
+      int k = (e->getType() == TYPE_POLYG) ? 3 :
+              (e->getType() == TYPE_POLYH) ? 4 :
+                                             0;
+      if(!k) {
+        Msg::Error("Element %zu is not a polytope", elementTags[i]);
+        return;
+      }
+      if(numSimplices[i] < 0) {
+        Msg::Error("Negative number of simplices for polytope %zu",
+                   elementTags[i]);
+        return;
+      }
+      std::size_t n = (std::size_t)numSimplices[i] * k;
+      if(idx + n > nodeTags.size()) {
+        Msg::Error("Not enough node tags for the simplices of the polytopes");
+        return;
+      }
+      if(!_getNodes(nodeTags, idx, n, nodes)) return;
+      idx += n;
+      if(!pass) continue;
+      if(e->getType() == TYPE_POLYG)
+        static_cast<MPolygon *>(e)->setTriangles(nodes);
+      else
+        static_cast<MPolyhedron *>(e)->setTetrahedra(nodes);
     }
-    int k = (e->getType() == TYPE_POLYG) ? 3 :
-            (e->getType() == TYPE_POLYH) ? 4 :
-                                           0;
-    if(!k) {
-      Msg::Error("Element %zu is not a polytope", elementTags[i]);
-      return;
-    }
-    std::size_t n = numSimplices[i] * k;
-    if(idx + n > nodeTags.size()) {
-      Msg::Error("Not enough node tags for the simplices of the polytopes");
-      return;
-    }
-    if(!_getNodes(nodeTags, idx, n, nodes)) return;
-    idx += n;
-    if(e->getType() == TYPE_POLYG)
-      static_cast<MPolygon *>(e)->setTriangles(nodes);
-    else
-      static_cast<MPolyhedron *>(e)->setTetrahedra(nodes);
+    if(pass && idx != nodeTags.size())
+      Msg::Warning("Too many node tags for the simplices of the polytopes");
   }
-  if(idx != nodeTags.size())
-    Msg::Warning("Too many node tags for the simplices of the polytopes");
   GModel::current()->destroyMeshCaches();
 }
 
@@ -3351,7 +3385,21 @@ GMSH_API void gmsh::model::mesh::getJacobians(
                          coord, tag);
   }
   // get data
-  {
+  if(familyType == TYPE_POLYG || familyType == TYPE_POLYH) {
+    // the reference coordinates of polygons and polyhedra are the physical
+    // ones
+    const size_t begin = (task * numElements) / numTasks;
+    const size_t end = ((task + 1) * numElements) / numTasks;
+    for(size_t idx = begin * numPoints; idx < end * numPoints; idx++) {
+      if(haveDeterminants) determinants[idx] = 1.;
+      if(haveJacobians)
+        for(int k = 0; k < 9; k++) jacobians[9 * idx + k] = (k % 4) ? 0. : 1.;
+      if(havePoints)
+        for(int k = 0; k < 3; k++)
+          coord[3 * idx + k] = localCoord[3 * (idx % numPoints) + k];
+    }
+  }
+  else {
     const size_t begin = (task * numElements) / numTasks;
     const size_t end = ((task + 1) * numElements) / numTasks;
     if(haveDeterminants && haveJacobians && havePoints) {
@@ -3594,6 +3642,16 @@ GMSH_API void gmsh::model::mesh::getJacobian(
   jacobians.resize(9 * numPoints);
   determinants.resize(numPoints);
   coord.resize(3 * numPoints);
+  if(e->getType() == TYPE_POLYG || e->getType() == TYPE_POLYH) {
+    // the reference coordinates of polygons and polyhedra are the physical
+    // ones
+    for(int k = 0; k < numPoints; k++) {
+      determinants[k] = 1.;
+      for(int l = 0; l < 9; l++) jacobians[9 * k + l] = (l % 4) ? 0. : 1.;
+      for(int l = 0; l < 3; l++) coord[3 * k + l] = localCoord[3 * k + l];
+    }
+    return;
+  }
   for(int k = 0; k < numPoints; k++) {
     double value[1256][3];
     e->getGradShapeFunctions(localCoord[3 * k], localCoord[3 * k + 1],
@@ -4089,7 +4147,13 @@ GMSH_API void gmsh::model::mesh::getFaces(
   faceTags.clear();
   orientations.clear();
   std::size_t numFaces = faceSizes.size(), numNodes = 0;
-  for(auto n : faceSizes) numNodes += n;
+  for(auto n : faceSizes) {
+    if(n < 3) {
+      Msg::Error("A face needs at least 3 nodes");
+      return;
+    }
+    numNodes += n;
+  }
   if(numNodes != nodeTags.size()) {
     Msg::Error("Face sizes do not match the number of face nodes");
     return;
@@ -4208,7 +4272,13 @@ gmsh::model::mesh::addFaces(const std::vector<std::size_t> &faceTags,
 {
   if(!_checkInit()) return;
   std::size_t numNodes = 0;
-  for(auto n : faceSizes) numNodes += n;
+  for(auto n : faceSizes) {
+    if(n < 3) {
+      Msg::Error("A face needs at least 3 nodes");
+      return;
+    }
+    numNodes += n;
+  }
   if(faceTags.size() != faceSizes.size() || numNodes != faceNodes.size()) {
     Msg::Error("Wrong number of face sizes or face nodes");
     return;
@@ -4490,6 +4560,10 @@ gmsh::model::mesh::getNumberOfKeys(const int elementType,
       int newType = ElementType::getType(familyType, basisOrder, false);
       basis = BasisFactory::getNodalBasis(newType);
     }
+    if(!basis) {
+      Msg::Error("No Lagrange basis for elements of type %d", elementType);
+      return 0;
+    }
     numberOfKeys = basis->getNumShapeFunctions();
   }
   else {
@@ -4541,6 +4615,10 @@ GMSH_API void gmsh::model::mesh::getKeysInformation(
     else {
       int newType = ElementType::getType(familyType, basisOrder, false);
       basis = BasisFactory::getNodalBasis(newType);
+    }
+    if(!basis) {
+      Msg::Error("No Lagrange basis for elements of type %d", elementType);
+      return;
     }
     std::size_t numberOfKeys = basis->getNumShapeFunctions();
     std::size_t numberOfBubble = basis->getNumBubbleShapeFunctions();
@@ -4762,20 +4840,39 @@ GMSH_API void gmsh::model::mesh::getElementEdgeNodes(
     return;
   }
   if(!numElements || !numEdgesPerEle || !numNodesPerEdge) return;
-  if(numEdgesPerEle * numNodesPerEdge * numElements != nodeTags.size()) {
+  // the number of edges is fixed for a given element type, except for polygons
+  // and polyhedra, for which the edges are counted element by element
+  bool variable = (familyType == TYPE_POLYG || familyType == TYPE_POLYH);
+  std::vector<std::size_t> nePrefix;
+  if(variable) {
+    nePrefix.reserve(numElements + 1);
+    nePrefix.push_back(0);
+    for(std::size_t i = 0; i < entities.size(); i++) {
+      GEntity *ge = entities[i];
+      for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType); j++)
+        nePrefix.push_back(
+          nePrefix.back() +
+          ge->getMeshElementByType(familyType, j)->getNumEdges());
+    }
+  }
+  std::size_t numEdges =
+    variable ? nePrefix.back() : numEdgesPerEle * numElements;
+  if(numEdges * numNodesPerEdge != nodeTags.size()) {
     if(numTasks > 1)
       Msg::Warning("Nodes should be preallocated if numTasks > 1");
-    nodeTags.resize(numEdgesPerEle * numNodesPerEdge * numElements);
+    nodeTags.resize(numEdges * numNodesPerEdge);
   }
   const size_t begin = (task * numElements) / numTasks;
   const size_t end = ((task + 1) * numElements) / numTasks;
   size_t o = 0;
-  size_t idx = numEdgesPerEle * numNodesPerEdge * begin;
+  size_t idx =
+    numNodesPerEdge * (variable ? nePrefix[begin] : numEdgesPerEle * begin);
   for(std::size_t i = 0; i < entities.size(); i++) {
     GEntity *ge = entities[i];
     for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType); j++) {
       if(o >= begin && o < end) {
         MElement *e = ge->getMeshElementByType(familyType, j);
+        if(variable) numEdgesPerEle = e->getNumEdges();
         for(int k = 0; k < numEdgesPerEle; k++) {
           std::vector<MVertex *> v;
           // we could use e->getHighOrderEdge() here if we decide to remove
@@ -4827,7 +4924,8 @@ GMSH_API void gmsh::model::mesh::getElementFaceNodes(
   };
 
   // the numbers of faces and of face nodes are fixed for a given element type,
-  // except for polyhedra, for which they are counted element by element
+  // except for polygons and polyhedra, for which they are counted element by
+  // element
   std::size_t numElements = 0;
   for(std::size_t i = 0; i < entities.size(); i++)
     numElements += entities[i]->getNumMeshElementsByType(familyType);
@@ -4836,7 +4934,7 @@ GMSH_API void gmsh::model::mesh::getElementFaceNodes(
     return;
   }
   if(!numElements) return;
-  bool variable = (familyType == TYPE_POLYH);
+  bool variable = (familyType == TYPE_POLYG || familyType == TYPE_POLYH);
   std::size_t nfConst = 0, nnConst = 0;
   std::vector<std::size_t> nfPrefix, nnPrefix;
   if(variable) {
@@ -4940,7 +5038,7 @@ GMSH_API void gmsh::model::mesh::getElementFaceNodesByType(
     return;
   }
   if(!numElements) return;
-  bool variable = (familyType == TYPE_POLYH);
+  bool variable = (familyType == TYPE_POLYG || familyType == TYPE_POLYH);
   std::size_t nnConst = 0;
   std::vector<std::size_t> nnPrefix;
   if(variable) {
