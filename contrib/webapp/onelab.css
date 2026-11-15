@@ -82,21 +82,21 @@ body.embed #canvas { grid-row: 1; grid-column: 1; }
           cursor: pointer; }
 #status:hover { text-decoration: underline; }
 #status.error { color: var(--error); }
-#quickMenu, #quickMenu .submenu { position: fixed; z-index: 3; padding: 4px; display: flex;
+#quickMenu, #quickSubmenu { position: fixed; z-index: 3; padding: 4px; display: flex;
              flex-direction: column; max-height: 80vh; overflow: auto;
              background: var(--bg); color: var(--fg);
              border: 1px solid var(--border); border-radius: 4px;
              box-shadow: 0 2px 8px var(--shadow); min-width: 220px; }
-#quickMenu[hidden], #quickMenu .submenu[hidden] { display: none; }
-#quickMenu .submenu { z-index: 4; min-width: 120px; }
-#quickMenu button { display: flex; gap: 6px; text-align: left; border: none;
+#quickMenu[hidden], #quickSubmenu[hidden] { display: none; }
+#quickSubmenu { z-index: 4; min-width: 120px; }
+:is(#quickMenu, #quickSubmenu) button { display: flex; gap: 6px; text-align: left; border: none;
                     background: none; padding: 3px 8px; border-radius: 3px;
                     font: inherit; color: inherit; cursor: pointer; }
-#quickMenu button:hover, #quickMenu button.open { background: var(--menu-hover); }
+:is(#quickMenu, #quickSubmenu) button:hover, #quickMenu button.open { background: var(--menu-hover); }
 #quickMenu .arrow { margin-left: auto; padding-left: 12px; color: var(--muted); }
-#quickMenu .mark { width: 1em; flex: none; }
-#quickMenu .head { color: var(--muted); font-size: 12px; padding: 6px 8px 1px; }
-#quickMenu hr { border: none; border-top: 1px solid var(--line2); margin: 3px 0; width: 100%; }
+:is(#quickMenu, #quickSubmenu) .mark { width: 1em; flex: none; }
+:is(#quickMenu, #quickSubmenu) .head { color: var(--muted); font-size: 12px; padding: 6px 8px 1px; }
+:is(#quickMenu, #quickSubmenu) hr { border: none; border-top: 1px solid var(--line2); margin: 3px 0; width: 100%; }
 /* (the edges of a phone's screen, the notch and the home indicator, which
    the page reaches: viewport-fit=cover) */
 #bar { grid-column: 1 / 4; display: flex; flex-wrap: wrap; gap: 4px 10px;
@@ -321,7 +321,7 @@ body.embed #canvas { grid-row: 1; grid-column: 1; }
   /* a number with its buttons under its name, for room */
   #side .row:has(.withGraph) { grid-template-columns: minmax(0, 1fr); gap: 2px; }
   #side .buttons button, #side .seg button, #side .pair button { min-height: 36px; }
-  #quickMenu button { padding: 7px 10px; }
+  :is(#quickMenu, #quickSubmenu) button { padding: 7px 10px; }
   #openMenu button { padding: 10px 8px; }
   #graphMenu td { padding: 6px 8px; }
   #graphMenu input { width: 20px; height: 20px; }

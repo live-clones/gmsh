@@ -29,14 +29,16 @@ import {showViews} from './views.mjs';
 
 // The popups over the page: the menu of a model (Open model), of the graphs
 // and of the range of a parameter, and the menus of popupMenu() (quick access,
-// the module buttons, a view, the models of a folder), all in #quickMenu; each
+// the module buttons, a view, the models of a folder), all in #quickMenu (and
+// its submenus in #quickSubmenu); each
 // closed by a click elsewhere but on the buttons that open it (its
 // selector), or by Escape (closePopup()). A popup is placed in the window.
 const popups = [
   ['openMenu', '#open', () => openMenu(false)],
   ['graphMenu', '#graphMenu, .graphButton'],
   ['rangeMenu', '#rangeMenu, .rangeButton'],
-  ['quickMenu', '#quickMenu, [data-act=quick_access], .menuButton, #model']];
+  ['quickMenu', '#quickMenu, #quickSubmenu, [data-act=quick_access], .menuButton, #model',
+   () => closeQuickMenu()]];
 // the first popup open closed: false if none is open
 export function closePopup(target = null) {
   for(const [id, keep, close] of popups) {
@@ -177,17 +179,22 @@ export function openQuickMenu(x, y, above = false) {
 // (x, y) in the window or above it; the button that opened it (owner) closes
 // it again
 let menuOwner = null;
+function closeQuickMenu() {
+  $('quickMenu').hidden = true;
+  $('quickSubmenu').hidden = true;
+}
 export function popupMenu(items, x, y, {above = false, owner = null} = {}) {
   const menu = $('quickMenu');
   if(owner && owner === menuOwner && !menu.hidden) {
-    menu.hidden = true;
+    closeQuickMenu();
     return;
   }
   menuOwner = owner;
   menu.textContent = '';
-  // (the submenu, in the menu so that a click in it is in the menu)
-  const sub = document.createElement('div');
-  sub.className = 'submenu';
+  // (the submenu beside the menu, not in it: Safari clips what is in a menu
+  // that scrolls, even placed outside of it)
+  const sub = $('quickSubmenu');
+  sub.textContent = '';
   sub.hidden = true;
   let opened = null;
   const open = (b, item) => {
@@ -235,7 +242,7 @@ export function popupMenu(items, x, y, {above = false, owner = null} = {}) {
       mark.textContent = checked ? '✓' : '';
       b.append(mark, document.createTextNode(label));
       b.addEventListener('click', () => {
-        menu.hidden = true;
+        closeQuickMenu();
         act();
         showViews();
         readOptions();
@@ -252,7 +259,6 @@ export function popupMenu(items, x, y, {above = false, owner = null} = {}) {
     }
   };
   fillMenu(menu, items());
-  menu.appendChild(sub);
   menu.hidden = false;
   placePopup(menu, x, above ? y - menu.offsetHeight - 2 : y);
 }
