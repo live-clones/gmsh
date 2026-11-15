@@ -1157,6 +1157,11 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
     delete[] elementsRead;
     return nullptr;
   }
+  if(elementRead != totalNumRead) {
+    Msg::Error("Fewer elements in the blocks than in the section header");
+    delete[] elementsRead;
+    return nullptr;
+  }
   // (the element constructors of several threads may leave a smaller one)
   GModel::current()->setMaxElementNumber(maxElementNum);
 
@@ -1189,9 +1194,25 @@ static bool readMSH4SizeT(FILE *fp, bool binary, bool swap, std::size_t &v)
   return fscanf(fp, "%zu", &v) == 1;
 }
 
+// What is left of the file, in bytes: no count read from it can be larger
+// (each value takes at least a byte), which is checked before allocating.
+static std::size_t remainingBytes(FILE *fp)
+{
+  long pos = ftell(fp);
+  if(pos < 0 || fseek(fp, 0, SEEK_END)) // (not a file: unknown)
+    return std::numeric_limits<std::size_t>::max();
+  long end = ftell(fp);
+  fseek(fp, pos, SEEK_SET);
+  return (end > pos) ? (std::size_t)(end - pos) : 0;
+}
+
 static bool readMSH4SizeTs(FILE *fp, bool binary, bool swap, std::size_t n,
                            std::vector<std::size_t> &v)
 {
+  if(n > remainingBytes(fp)) {
+    Msg::Error("Count %zu larger than what is left of the file", n);
+    return false;
+  }
   v.resize(n);
   if(!n) return true;
   if(binary) {
@@ -1303,6 +1324,10 @@ readMSH4Polytopes(GModel *const model, FILE *fp, bool binary, bool &dense,
   std::size_t elementRead = 0;
   std::size_t minElementNum = std::numeric_limits<std::size_t>::max();
 
+  if(totalNumRead > remainingBytes(fp)) {
+    Msg::Error("More polytopes in the section header than the file can hold");
+    return nullptr;
+  }
   std::pair<MElement *, GEntity *> *elementsRead =
     new std::pair<MElement *, GEntity *>[totalNumRead];
   Msg::StartProgressMeter(totalNumRead);
@@ -1337,7 +1362,7 @@ readMSH4Polytopes(GModel *const model, FILE *fp, bool binary, bool &dense,
                  "instead of $Polytopes", elmType);
       return fail();
     }
-    if(elementRead + numElements > totalNumRead) {
+    if(numElements > totalNumRead - elementRead) {
       Msg::Error("More polytopes in the blocks than in the section header");
       return fail();
     }
@@ -1432,6 +1457,12 @@ readMSH4Polytopes(GModel *const model, FILE *fp, bool binary, bool &dense,
     }
     elementRead += numElements;
   }
+  if(elementRead != totalNumRead) {
+    Msg::Error("Fewer polytopes in the blocks than in the section header");
+    return fail();
+  }
+  // (the element constructors of several threads may leave a smaller one)
+  GModel::current()->setMaxElementNumber(maxElementNum);
 
   // if the vertex numbering is dense, we fill the vector cache, otherwise we
   // fill the map cache
@@ -2657,16 +2688,36 @@ int GModel::_readMSH4(const std::string &name)
       // (the elements of an entity of one partition are marked with it)
       GEntity *last = nullptr;
       int part = 0;
+      auto isGhost = [](GEntity *entity) {
+        return entity->geomType() == GEntity::GhostCurve ||
+               entity->geomType() == GEntity::GhostSurface ||
+               entity->geomType() == GEntity::GhostVolume;
+      };
       auto addToEntity = [&](MElement *e, GEntity *entity) {
         if(entity != last) {
           last = entity;
           part = singlePartitionOf(entity);
         }
         if(part) e->setPartition(part);
-        if(entity->geomType() != GEntity::GhostCurve &&
-           entity->geomType() != GEntity::GhostSurface &&
-           entity->geomType() != GEntity::GhostVolume)
-          entity->addElement(e);
+        if(!isGhost(entity)) entity->addElement(e);
+      };
+      // an element whose tag is in the model already: skipped, but if the one
+      // in the model was only read as a ghost cell (of the file of another
+      // partition) it goes to the entity of this one
+      auto skipDuplicate = [&](MElement *e, GEntity *entity,
+                               std::pair<MElement *, int> &known) {
+        if(!hadElementsBefore) // should not happen
+          Msg::Warning("Skipping duplicate element %zu", e->getNum());
+        else if(!sameElement(e, known.first))
+          conflicts++;
+        else if(!isGhost(entity)) {
+          GEntity *owner = getEntityByTag(e->getDim(), known.second);
+          if(owner && isGhost(owner)) {
+            addToEntity(known.first, entity);
+            known.second = entity->tag();
+          }
+        }
+        delete e;
       };
       if(dense) {
         if(_elementVectorCache.size() < maxElementNum + 1)
@@ -2692,13 +2743,9 @@ int GModel::_readMSH4(const std::string &name)
         for(std::size_t i = 0; i < totalNumRead; i++) {
           MElement *e = elementsRead[i].first;
           if(isNew[i]) { addToEntity(e, elementsRead[i].second); }
-          else {
-            if(!hadElementsBefore) // should not happen
-              Msg::Warning("Skipping duplicate element %zu", e->getNum());
-            else if(!sameElement(e, _elementVectorCache[tags[i]].first))
-              conflicts++;
-            delete e;
-          }
+          else
+            skipDuplicate(e, elementsRead[i].second,
+                          _elementVectorCache[tags[i]]);
         }
       }
       else {
@@ -2709,13 +2756,8 @@ int GModel::_readMSH4(const std::string &name)
           auto r = _elementMapCache.insert(e->getNum(),
                                            std::make_pair(e, entity->tag()));
           if(r.second) { addToEntity(e, entity); }
-          else {
-            if(!hadElementsBefore) // should not happen
-              Msg::Warning("Skipping duplicate element %zu", e->getNum());
-            else if(!sameElement(e, r.first.first))
-              conflicts++;
-            delete e;
-          }
+          else
+            skipDuplicate(e, entity, r.first);
         }
       }
       delete[] elementsRead;

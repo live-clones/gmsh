@@ -8,6 +8,8 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GModel.h"
+#include "MPolygon.h"
+#include "MPolyhedron.h"
 #include "GmshDefines.h"
 #include "StringUtils.h"
 #include "Context.h"
@@ -654,6 +656,65 @@ static void writeViewsOnSeveralMeshes(
 }
 #endif
 
+// What becomes of the polygons and polyhedra of the mesh in a format that
+// cannot hold them: false if the file cannot be written.
+static bool checkPolytopes(int format)
+{
+  std::size_t polygons = 0, polyhedra = 0, given = 0;
+  GModel *m = GModel::current();
+  for(auto gf : m->getFaces()) {
+    polygons += gf->polygons.size();
+    for(auto p : gf->polygons) given += p->hasGivenTriangles();
+  }
+  for(auto gr : m->getRegions()) {
+    polyhedra += gr->polyhedra.size();
+    for(auto p : gr->polyhedra) given += p->hasGivenTetrahedra();
+  }
+  if(!polygons && !polyhedra) return true;
+  switch(format) {
+  case FORMAT_UNV:
+  case FORMAT_INP:
+  case FORMAT_NEU:
+  case FORMAT_MATLAB:
+  case FORMAT_IR3:
+    // (their groups would name elements that are not written, or the
+    // elements would be written as lists of nodes)
+    Msg::Error("Polygons and polyhedra cannot be saved in this format");
+    return false;
+  case FORMAT_STL:
+  case FORMAT_X3D:
+  case FORMAT_VRML:
+  case FORMAT_PLY2:
+  case FORMAT_TOCHNOG:
+  case FORMAT_MESH:
+  case FORMAT_MAIL:
+  case FORMAT_BDF:
+  case FORMAT_DIFF:
+  case FORMAT_KEY:
+  case FORMAT_RAD:
+  case FORMAT_CELUM:
+  case FORMAT_P3D:
+    Msg::Warning("%zu polygons and polyhedra are not saved in this format",
+                 polygons + polyhedra);
+    break;
+  case FORMAT_OBJ:
+  case FORMAT_OFF:
+    if(polyhedra)
+      Msg::Warning("%zu polyhedra are not saved in this format", polyhedra);
+    break;
+  case FORMAT_VTK:
+  case FORMAT_VTU:
+  case FORMAT_PVTU:
+  case FORMAT_MED:
+    if(given)
+      Msg::Warning("The triangles and tetrahedra given for %zu polygons and "
+                   "polyhedra, and the nodes only they use, are not saved in "
+                   "this format", given);
+    break;
+  }
+  return true;
+}
+
 void CreateOutputFile(const std::string &fileName, int format,
                       bool status)
 {
@@ -668,7 +729,9 @@ void CreateOutputFile(const std::string &fileName, int format,
   if(status)
     Msg::StatusBar(true, "Writing '%s'...", name.c_str());
 
-  switch (format) {
+  if(format != FORMAT_AUTO && !checkPolytopes(format))
+    error = true;
+  else switch (format) {
 
   case FORMAT_AUTO:
     {

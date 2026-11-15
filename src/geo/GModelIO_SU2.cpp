@@ -29,6 +29,16 @@ static std::string physicalName(GModel *m, int dim, int num)
 int GModel::writeSU2(const std::string &name, bool saveAll,
                      double scalingFactor)
 {
+  std::size_t numPolytopes = 0;
+  for(auto it = firstFace(); it != lastFace(); ++it)
+    numPolytopes += (*it)->polygons.size();
+  for(auto it = firstRegion(); it != lastRegion(); ++it)
+    numPolytopes += (*it)->polyhedra.size();
+  if(numPolytopes) {
+    Msg::Error("Polygons and polyhedra cannot be saved in SU2 format");
+    return 0;
+  }
+
   FILE *fp = Fopen(name.c_str(), "w");
   if(!fp) {
     Msg::Error("Unable to open file '%s'", name.c_str());

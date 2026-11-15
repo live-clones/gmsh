@@ -83,6 +83,19 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
                  "cause information loss");
   }
 
+  if(version < 4.0) {
+    std::size_t numPolytopes = 0;
+    for(auto it = firstFace(); it != lastFace(); ++it)
+      numPolytopes += (*it)->polygons.size();
+    for(auto it = firstRegion(); it != lastRegion(); ++it)
+      numPolytopes += (*it)->polyhedra.size();
+    if(numPolytopes) {
+      Msg::Error("Polygons and polyhedra cannot be saved in MSH %g format: "
+                 "use MSH 4.2", version);
+      return 0;
+    }
+  }
+
   if(CTX::instance()->mesh.createEdges) createMEdges();
   if(CTX::instance()->mesh.createFaces) createMFaces();
 
