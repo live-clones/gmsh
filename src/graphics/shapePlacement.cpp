@@ -365,13 +365,12 @@ static void drawArc(double xc, double yc, double zc, double rx, double ry,
 
 // translucent, as it is not added yet: what it cuts into shows through it (in
 // the order the triangles come, which a convex shape hardly shows), and it
-// writes no depth, so that the model behind it is drawn
+// writes no depth, so that the model behind it is drawn; the edges of the
+// triangles for a wireframe, as the surfaces
 static void drawTriangles(std::vector<SPoint3> &vertices,
                           std::vector<SVector3> &normals,
                           std::vector<int> &triangles)
 {
-  bool fill = gmshPolygonFilled();
-  gmshPolygonFill(CTX::instance()->geom.surfaceType != 1);
   gmshLightTwoSide(true);
   unsigned int c = CTX::instance()->color.geom.highlight[0];
   gmshColor4ub(CTX::instance()->unpackRed(c), CTX::instance()->unpackGreen(c),
@@ -397,10 +396,15 @@ static void drawTriangles(std::vector<SPoint3> &vertices,
     va.add(x, y, z, nn);
   }
   va.finalize();
-  drawVertexArray(&va, GL_TRIANGLES, GMSH_DRAW_LIGHT);
+  if(CTX::instance()->geom.surfaceType == 1) {
+    VertexArray *edges = va.edges();
+    drawVertexArray(edges, GL_LINES, GMSH_DRAW_LIGHT);
+    delete edges;
+  }
+  else
+    drawVertexArray(&va, GL_TRIANGLES, GMSH_DRAW_LIGHT);
   gmshDepthMask(true);
   if(ownBlend) gmshBlend(false);
-  gmshPolygonFill(fill);
 }
 
 // the shapes OpenCASCADE triangulates for the preview, by their index in

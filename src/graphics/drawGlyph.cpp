@@ -114,15 +114,19 @@ namespace {
     for(int i = 0; i < 9; i++) n[i] = (det != 0.) ? c[i] * id : a[i];
   }
 
-  // hand a tessellation over, transformed
-  void emit(const Tessellation &t, const double m[16])
+  // hand a tessellation over, transformed: its triangles, or their edges
+  // for a wireframe
+  void emit(const Tessellation &t, const double m[16], bool wire = false)
   {
     if(t.empty()) return;
     double n[9];
     normalMatrix(m, n);
-    gmshBegin(GL_TRIANGLES);
+    gmshBegin(wire ? GL_LINES : GL_TRIANGLES);
     std::size_t num = t.pos.size() / 3;
-    for(std::size_t i = 0; i < num; i++) {
+    for(std::size_t k = 0; k < (wire ? 2 * num : num); k++) {
+      // (the edges of triangle j: its vertices 0 1, 1 2 and 2 0)
+      std::size_t j = k / 6, e = k % 6;
+      std::size_t i = wire ? 3 * j + ((e + 1) / 2) % 3 : k;
       const float *p = &t.pos[3 * i];
       const float *q = &t.nrm[3 * i];
       // the normals must be unit length: the transform carries the size of
@@ -514,7 +518,7 @@ void drawContext::drawImage(const std::string &name, double x, double y,
 }
 
 void drawContext::drawSphere(double R, double x, double y, double z, int n1,
-                             int n2, int light)
+                             int n2, int light, bool wire)
 {
   // the caller says how finely this one is divided, so it is built here
   Tessellation t;
@@ -522,7 +526,7 @@ void drawContext::drawSphere(double R, double x, double y, double z, int n1,
   double m[16];
   glMatrix::translate(x, y, z, m);
   if(light) gmshLighting(true);
-  emit(t, m);
+  emit(t, m, wire);
   gmshLighting(false);
 }
 

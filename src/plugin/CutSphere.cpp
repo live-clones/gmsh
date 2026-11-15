@@ -29,13 +29,10 @@ GMSH_CutSpherePlugin::GMSH_CutSpherePlugin()
 void GMSH_CutSpherePlugin::drawPreview(void *context)
 {
 #if defined(HAVE_OPENGL)
-  bool fill = gmshPolygonFilled();
-  gmshPolygonFill(false);
   gmshColor4ubv((GLubyte *)&CTX::instance()->color.fg);
   gmshLineWidth((float)CTX::instance()->lineWidth);
   drawContext *ctx = (drawContext *)context;
-  ctx->drawSphere(option(3), option(0), option(1), option(2), 40, 40, 1);
-  gmshPolygonFill(fill);
+  ctx->drawSphere(option(3), option(0), option(1), option(2), 40, 40, 1, true);
 #endif
 }
 

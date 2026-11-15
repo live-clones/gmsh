@@ -308,6 +308,10 @@ public:
   // merge another vertex array into this one; a given color replaces the
   // colors of the merged data
   void merge(VertexArray *va, const unsigned char *color = nullptr);
+  // a new array of the edges of the triangles of this one, each once, with
+  // the normals and colors of their vertices (a wireframe drawn as lines,
+  // which OpenGL ES and WebGL have no polygon mode for)
+  VertexArray *edges();
   // the element pointers are only needed for picking, which uses the arrays of
   // the entities themselves
 

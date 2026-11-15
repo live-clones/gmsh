@@ -39,7 +39,7 @@
 
 GFace::GFace(GModel *model, int tag)
   : GEntity(model, tag), r1(nullptr), r2(nullptr), stl_from_mesh(false),
-    va_geom_triangles(nullptr), compoundSurface(nullptr)
+    va_geom_triangles(nullptr), va_geom_lines(nullptr), compoundSurface(nullptr)
 {
   meshStatistics.status = GFace::PENDING;
   meshStatistics.refineAllEdges = false;
@@ -55,6 +55,8 @@ GFace::~GFace()
   // mesh)
   delete va_geom_triangles;
   va_geom_triangles = nullptr;
+  delete va_geom_lines;
+  va_geom_lines = nullptr;
 
   GFace::deleteMesh();
 }
@@ -185,6 +187,8 @@ void GFace::deleteGeometryVertexArrays()
   if(!va_geom_triangles) return;
   delete va_geom_triangles;
   va_geom_triangles = nullptr;
+  delete va_geom_lines;
+  va_geom_lines = nullptr;
   // what the surfaces of the model are drawn from is merged from these
   CTX::instance()->geomChanged(ENT_SURFACE);
 }
@@ -1647,6 +1651,14 @@ bool GFace::fillVertexArray(bool force)
     }
   }
   va_geom_triangles->finalize();
+  return true;
+}
+
+bool GFace::fillLineVertexArray()
+{
+  if(va_geom_lines) return true;
+  if(!fillVertexArray()) return false;
+  va_geom_lines = va_geom_triangles->edges();
   return true;
 }
 

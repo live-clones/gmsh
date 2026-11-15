@@ -657,8 +657,9 @@ public:
                   double style, int line_num = 0);
   void drawImage(const std::string &s, double x, double y, double z,
                  int align = 0);
+  // (wire: the edges of its triangles)
   void drawSphere(double R, double x, double y, double z, int n1, int n2,
-                  int light);
+                  int light, bool wire = false);
   // a sphere of a point size, or a marker (see GLYPH_MARKER)
   void drawSphere(double size, double x, double y, double z, int light,
                   bool marker = false);

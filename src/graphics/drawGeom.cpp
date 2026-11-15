@@ -231,8 +231,11 @@ static std::vector<double> keptToken(drawContext *ctx, int dim, bool pick)
     tok.push_back(c->entityColorsStamp);
     tok.push_back(c->color.geom.point);
   }
-  else if(dim == 2)
+  else if(dim == 2) {
     tok.push_back(c->entityColorsStamp);
+    // (the wireframe holds the edges of the triangles)
+    tok.push_back(c->geom.surfaceType == 1);
+  }
   else if(dim == 1) {
     std::vector<double> more = {(double)c->entityColorsStamp,
                                 (double)c->geom.numSubEdges,
@@ -269,7 +272,9 @@ static keptArray &getKept(drawContext *ctx, GModel *m, int dim, bool pick)
   keptArray &ka = pick ? km.picked[dim] : km.shown[ctx->transparencyPass][dim];
   if(ka.va && keptToken(ctx, dim, pick) == ka.token) return ka;
   delete ka.va;
-  ka.va = new VertexArray(dim + 1, dim ? 1000 : (int)m->getNumVertices() + 1);
+  bool wire = (dim == 2 && c->geom.surfaceType == 1);
+  ka.va = new VertexArray(wire ? 2 : dim + 1,
+                          dim ? 1000 : (int)m->getNumVertices() + 1);
   ka.tags.clear();
   ka.start.clear();
   ka.base = 0;
@@ -279,8 +284,11 @@ static keptArray &getKept(drawContext *ctx, GModel *m, int dim, bool pick)
   forKeptEntities(ctx, m, dim, [&](GEntity *e) {
     GFace *f = (dim == 2) ? static_cast<GFace *>(e) : nullptr;
     if(f) {
-      f->fillVertexArray();
-      if(!f->va_geom_triangles) {
+      if(wire)
+        f->fillLineVertexArray();
+      else
+        f->fillVertexArray();
+      if(!(wire ? f->va_geom_lines : f->va_geom_triangles)) {
         ka.incomplete = true;
         return;
       }
@@ -303,7 +311,7 @@ static keptArray &getKept(drawContext *ctx, GModel *m, int dim, bool pick)
       });
     }
     else
-      ka.va->merge(f->va_geom_triangles,
+      ka.va->merge(wire ? f->va_geom_lines : f->va_geom_triangles,
                    pick ? (const unsigned char *)black : nullptr);
   });
   ka.start.push_back(ka.va->getNumVertices());
@@ -401,13 +409,16 @@ static bool drawKept(drawContext *ctx, GModel *m, int dim)
   gl2psPointSize((float)(c->geom.pointSize * c->print.epsPointSizeFactor));
   gmshLineWidth((float)width);
   gl2psLineWidth((float)(width * c->print.epsLineWidthFactor));
-  if(dim == 2) gmshPolygonFill(c->geom.surfaceType > 1);
-  GLenum type = (dim == 0) ? GL_POINTS : (dim == 1) ? GL_LINES : GL_TRIANGLES;
+  // (a wireframe is drawn from the edges of the triangles)
+  GLenum type = GL_TRIANGLES;
+  if(dim == 0)
+    type = GL_POINTS;
+  else if(dim == 1 || c->geom.surfaceType == 1)
+    type = GL_LINES;
   int flags = pick ? GMSH_DRAW_IDENTIFIERS : GMSH_DRAW_COLORS;
   if(dim == 2 && !pick && c->geom.light) flags |= GMSH_DRAW_LIGHT;
   if(dim == 2 && c->polygonOffset) flags |= GMSH_DRAW_OFFSET;
   drawVertexArray(ka.va, type, flags, pick ? &runs : nullptr);
-  if(dim == 2) gmshPolygonFill(true);
   return true;
 }
 
@@ -507,12 +518,14 @@ static void drawGeomSurface(drawContext *ctx, GFace *f, bool sel)
   bool shown = c->geom.surfaces || f->getSelection() == GEntity::SelectShow;
   // wireframe and solid need a triangulation, which a surface of the
   // built-in kernel only has once it is meshed: a cross until then
-  bool filled = shown && c->geom.surfaceType > 0 && f->fillVertexArray();
+  bool solid = c->geom.surfaceType > 1;
+  bool filled = shown && c->geom.surfaceType > 0 &&
+                (solid ? f->fillVertexArray() : f->fillLineVertexArray());
   if((shown && !filled) || c->geom.surfaceLabels || c->geom.normals)
     f->buildRepresentationCross();
 
   if(shown) {
-    VertexArray *va = f->va_geom_triangles;
+    VertexArray *va = solid ? f->va_geom_triangles : f->va_geom_lines;
     if(filled) {
       // already in the merged array, unless selected: then drawn again on
       // top, which needs the depth test to accept equal depths
@@ -526,14 +539,11 @@ static void drawGeomSurface(drawContext *ctx, GFace *f, bool sel)
         }
         // a picking pass draws the surface as it is shown, wireframe or
         // solid: what is visible is what is picked
-        bool solid = c->geom.surfaceType > 1;
         gmshLightTwoSide(solid && c->geom.lightTwoSide);
-        gmshPolygonFill(solid);
-        drawVertexArray(va, GL_TRIANGLES,
-                            (c->geom.light ? GMSH_DRAW_LIGHT : 0) |
-                              (colors ? GMSH_DRAW_COLORS : 0) |
-                              (c->polygonOffset ? GMSH_DRAW_OFFSET : 0));
-        gmshPolygonFill(true);
+        drawVertexArray(va, solid ? GL_TRIANGLES : GL_LINES,
+                        (c->geom.light ? GMSH_DRAW_LIGHT : 0) |
+                          (colors ? GMSH_DRAW_COLORS : 0) |
+                          (c->polygonOffset ? GMSH_DRAW_OFFSET : 0));
         if(merged) glDepthFunc(GL_LESS);
       }
     }

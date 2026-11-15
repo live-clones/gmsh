@@ -229,12 +229,6 @@ bool gmshLineStippleEnabled();
 int gmshLineStippleFactor();
 unsigned short gmshLineStipplePattern();
 
-inline void gmshPolygonFill(bool fill)
-{
-  if(glShader::enabled()) glImmediate::flush();
-  glPolygonMode(GL_FRONT_AND_BACK, fill ? GL_FILL : GL_LINE);
-}
-
 // The depth test, and whether it writes. What is waiting was collected to be
 // drawn the way it was when it was collected: turning the test off with
 // glDisable() alone leaves the queue for later, under whatever state is in
@@ -282,15 +276,6 @@ void gmshViewport(int x, int y, int w, int h);
 const int *gmshViewport();
 namespace glImmediate {
   void syncState();
-}
-
-inline bool gmshPolygonFilled()
-{
-  // a compatibility profile answers with two values (front and back), a
-  // core profile with one
-  GLint mode[2] = {GL_FILL, GL_FILL};
-  glGetIntegerv(GL_POLYGON_MODE, mode);
-  return mode[0] == GL_FILL;
 }
 
 // The projection and modelview matrices and their stacks, kept by us as a

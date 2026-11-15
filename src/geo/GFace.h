@@ -258,6 +258,8 @@ public:
 
   // fill the vertex array using an STL triangulation
   bool fillVertexArray(bool force = false);
+  // fill the vertex array of the edges of that triangulation (the wireframe)
+  bool fillLineVertexArray();
 
   // store the STL triangulation as the mesh of the surface
   bool storeSTLAsMesh();
@@ -387,8 +389,8 @@ public:
   bool stl_from_mesh;
 
   // a vertex array containing a geometrical representation of the
-  // surface
-  VertexArray *va_geom_triangles;
+  // surface, and one of its edges
+  VertexArray *va_geom_triangles, *va_geom_lines;
 
   // a array for accessing the transfinite vertices using a pair of
   // indices
