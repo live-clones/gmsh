@@ -17,6 +17,7 @@
 #include <cstring>
 #include <set>
 #include <map>
+#include <memory>
 #include <algorithm>
 #include <queue>
 #include <unordered_map>
@@ -1097,15 +1098,27 @@ namespace {
     if(invalidCavities) Msg::Error("%d invalid cavities", invalidCavities);
   }
 
+  // the 8 corners of a box around the vertices, scale times their bounding box
+  // (a cube as wide as its largest side if cube is set, also for flat sets),
+  // split into 6 tets
   static void initialCube(std::vector<Vert *> &v, Vert *box[8],
-                          tetContainer &allocator)
+                          tetContainer &allocator, double scale, bool cube)
   {
     SBoundingBox3d bbox;
     for(size_t i = 0; i < v.size(); i++) {
       Vert *pv = v[i];
       bbox += SPoint3(pv->x(), pv->y(), pv->z());
     }
-    bbox *= 1.3;
+    if(cube) {
+      const SPoint3 c = bbox.center();
+      double h = 0.5 * std::max({bbox.max().x() - bbox.min().x(),
+                                 bbox.max().y() - bbox.min().y(),
+                                 bbox.max().z() - bbox.min().z()});
+      if(h == 0.) h = 1.; // (a single point)
+      bbox = SBoundingBox3d(c.x() - h, c.y() - h, c.z() - h, c.x() + h,
+                            c.y() + h, c.z() + h);
+    }
+    bbox *= scale;
     box[0] =
       new Vert(bbox.min().x(), bbox.min().y(), bbox.min().z(), bbox.diag());
     box[1] =
@@ -1150,13 +1163,154 @@ namespace {
   }
 
   static void delaunayTriangulation(std::vector<Vert *> &S, Vert *box[8],
-                                    tetContainer &allocator)
+                                    tetContainer &allocator, double scale,
+                                    bool cube)
   {
     // sorting the points along a Hilbert curve, in coarse-to-fine rounds,
     // makes every walk start close to its target
     SortHilbert(S);
-    if(!allocator.size()) { initialCube(S, box, allocator); }
+    if(!allocator.size()) { initialCube(S, box, allocator, scale, cube); }
     delaunayTrgl(S, allocator);
+  }
+
+  // The tets of the Delaunay tetrahedralization of the vertices (numbered 1
+  // to N, those of the box after), with a positive volume. The tets without a
+  // box corner are of it; those whose circumsphere held a corner are missing,
+  // near the convex hull, and are built face by face from the surface around
+  // the others (gift wrapping): beyond an open face, the vertex whose sphere
+  // through the face holds no other, the smallest number among cospherical
+  // ones. Their vertices are those of the tets with a box corner. Elsewhere
+  // the surface is that of the convex hull, so the open faces to start from
+  // are those at an edge where it is not convex, and those beyond which an
+  // unused vertex lies
+  static void tetsWithoutBox(tetContainer &allocator, std::size_t N,
+                             const std::vector<Vert *> &vertices,
+                             std::vector<std::array<Vert *, 4>> &tets)
+  {
+    using key = std::array<std::size_t, 3>;
+    struct face {
+      Vert *v[3];
+      double in; // orient3d of the face and a point inside: the outer side
+                 // has the other sign
+    };
+    auto keyOf = [](Vert *a, Vert *b, Vert *c) {
+      key k = {a->getNum(), b->getNum(), c->getNum()};
+      std::sort(k.begin(), k.end());
+      return k;
+    };
+    auto orient = [](Vert *a, Vert *b, Vert *c, Vert *d) {
+      return robustPredicates::orient3d((double *)a, (double *)b, (double *)c,
+                                        (double *)d);
+    };
+    auto add = [&](Vert *a, Vert *b, Vert *c, Vert *d) {
+      if(orient(a, b, c, d) > 0) std::swap(c, d); // (a positive volume)
+      tets.push_back({a, b, c, d});
+    };
+    auto boxed = [N](const Tet *t) {
+      for(int k = 0; k < 4; k++)
+        if(t->V[k]->getNum() > N) return true;
+      return false;
+    };
+    const int fac[4][3] = {{0, 1, 2}, {1, 3, 2}, {2, 3, 0}, {1, 0, 3}};
+
+    std::map<key, face> open;
+    std::vector<Vert *> candidates;
+    std::vector<char> used(N + 1, 0), candidate(N + 1, 0);
+    for(std::size_t i = 0; i < allocator.size(); i++) {
+      Tet *t = allocator(i);
+      if(!t->V[0]) continue;
+      if(boxed(t)) {
+        for(int k = 0; k < 4; k++) {
+          std::size_t n = t->V[k]->getNum();
+          if(n <= N && !candidate[n]) {
+            candidate[n] = 1;
+            candidates.push_back(t->V[k]);
+          }
+        }
+        continue;
+      }
+      add(t->V[0], t->V[1], t->V[2], t->V[3]);
+      for(int k = 0; k < 4; k++) {
+        used[t->V[k]->getNum()] = 1;
+        if(!boxed(t->T[k])) continue;
+        Vert *a = t->V[fac[k][0]], *b = t->V[fac[k][1]], *c = t->V[fac[k][2]];
+        open[keyOf(a, b, c)] = {{a, b, c},
+                                orient(a, b, c, t->getOppositeVertex(k))};
+      }
+    }
+
+    // the faces to start from
+    std::vector<key> queue;
+    std::map<std::pair<std::size_t, std::size_t>, std::vector<key>> edges;
+    for(auto &f : open) {
+      for(int j = 0; j < 3; j++) {
+        std::size_t a = f.second.v[j]->getNum(),
+                    b = f.second.v[(j + 1) % 3]->getNum();
+        edges[{std::min(a, b), std::max(a, b)}].push_back(f.first);
+      }
+    }
+    for(auto &e : edges) {
+      bool reflex = e.second.size() != 2;
+      for(int s = 0; s < 2 && !reflex; s++) {
+        const face &f = open.at(e.second[s]), &g = open.at(e.second[1 - s]);
+        for(int j = 0; j < 3; j++) {
+          Vert *far = g.v[j];
+          if(far->getNum() == e.first.first || far->getNum() == e.first.second)
+            continue;
+          if(orient(f.v[0], f.v[1], f.v[2], far) * f.in < 0) reflex = true;
+        }
+      }
+      if(reflex) queue.insert(queue.end(), e.second.begin(), e.second.end());
+    }
+    for(Vert *v : vertices) {
+      if(used[v->getNum()]) continue;
+      for(auto &f : open)
+        if(orient(f.second.v[0], f.second.v[1], f.second.v[2], v) *
+             f.second.in < 0)
+          queue.push_back(f.first);
+    }
+
+    // gift wrapping
+    while(!queue.empty()) {
+      auto it = open.find(queue.back());
+      queue.pop_back();
+      if(it == open.end()) continue; // (closed meanwhile)
+      const face f = it->second;
+      open.erase(it);
+      Vert *best = nullptr;
+      double bestSide = 0.;
+      for(Vert *q : candidates) {
+        const double s = orient(f.v[0], f.v[1], f.v[2], q);
+        if(s == 0. || (s > 0.) == (f.in > 0.)) continue; // not beyond
+        if(best) {
+          // (insphere is positive inside when the 4 points have a positive
+          // orient3d)
+          const double inside =
+            robustPredicates::insphere((double *)f.v[0], (double *)f.v[1],
+                                       (double *)f.v[2], (double *)best,
+                                       (double *)q) *
+            (bestSide > 0. ? 1. : -1.);
+          if(inside < 0. || (inside == 0. && q->getNum() > best->getNum()))
+            continue;
+        }
+        best = q;
+        bestSide = s;
+      }
+      if(!best) continue; // a face of the convex hull
+      add(f.v[0], f.v[1], f.v[2], best);
+      // its other faces close open faces, or are open
+      for(int j = 0; j < 3; j++) {
+        Vert *a = f.v[j], *b = f.v[(j + 1) % 3], *c = f.v[(j + 2) % 3];
+        key k = keyOf(a, b, best);
+        auto o = open.find(k);
+        if(o != open.end())
+          open.erase(o);
+        else {
+          open[k] = {{a, b, best}, orient(a, b, best, c)};
+          queue.push_back(k);
+        }
+      }
+    }
   }
 
   void delaunayTriangulation(std::vector<MVertex *> &S,
@@ -1164,7 +1318,6 @@ namespace {
                              std::vector<std::int64_t> *neighbors)
   {
     std::vector<MVertex *> _temp;
-    std::vector<Vert *> _vertices;
     std::size_t N = S.size();
     _temp.resize(N + 1 + 8);
     double maxx = 0, maxy = 0, maxz = 0;
@@ -1175,10 +1328,9 @@ namespace {
       maxy = std::max(maxy, fabs(mv->y()));
       maxz = std::max(maxz, fabs(mv->z()));
       bbox += mv->point();
+      _temp[i + 1] = mv;
     }
     double d = 1 * sqrt(maxx * maxx + maxy * maxy + maxz * maxz);
-
-    tetContainer allocator(S.size() * 10);
 
     // Perturb the nodes by up to Mesh.RandomFactor3D times the size of the
     // model (the boundary recovery restores them): the nodes of curved CAD
@@ -1186,48 +1338,95 @@ namespace {
     // which sends the in-sphere tests to the exact arithmetic. Without it
     // (benchmarks/3d, October 2026), del3d still succeeds everywhere, but is
     // 2-2.5x slower on crux, fil and percolation. See also pdel3d
-    // (meshGRegionParallelDelaunay.cpp), which depends on it more
-    for(std::size_t i = 0; i < N; i++) {
-      MVertex *mv = S[i];
-      double dx =
-        d * CTX::instance()->mesh.randFactor3d * (double)rand() / RAND_MAX;
-      double dy =
-        d * CTX::instance()->mesh.randFactor3d * (double)rand() / RAND_MAX;
-      double dz =
-        d * CTX::instance()->mesh.randFactor3d * (double)rand() / RAND_MAX;
-      mv->x() += dx;
-      mv->y() += dy;
-      mv->z() += dz;
-      Vert *v = new Vert(mv->x(), mv->y(), mv->z(), 1.e22, i + 1);
-      _vertices.push_back(v);
-      _temp[v->getNum()] = mv;
-    }
-
-    // the static filters bound the coordinate differences, up to the size of
-    // the enclosing cube of initialCube()
-    if(!bbox.empty()) {
-      const SPoint3 a = bbox.min(), b = bbox.max();
-      robustPredicates::exactinit(1.3 * (b.x() - a.x()), 1.3 * (b.y() - a.y()),
-                                  1.3 * (b.z() - a.z()));
-    }
-
-    Vert *box[8];
-    delaunayTriangulation(_vertices, box, allocator);
-
-    for(int i = 0; i < 8; i++) {
-      Vert *v = box[i];
-      if(removeBox) { v->setNum(0); }
-      else {
-        v->setNum(N + i + 1);
-        MVertex *mv = new MVertex(v->x(), v->y(), v->z(), nullptr, N + (i + 1));
-        _temp[v->getNum()] = mv;
-        S.push_back(mv);
+    // (meshGRegionParallelDelaunay.cpp), which depends on it more. Not when
+    // the box is removed: that is the tetrahedralization of the vertices
+    // themselves, where they are
+    if(!removeBox) {
+      for(std::size_t i = 0; i < N; i++) {
+        MVertex *mv = S[i];
+        double dx =
+          d * CTX::instance()->mesh.randFactor3d * (double)rand() / RAND_MAX;
+        double dy =
+          d * CTX::instance()->mesh.randFactor3d * (double)rand() / RAND_MAX;
+        double dz =
+          d * CTX::instance()->mesh.randFactor3d * (double)rand() / RAND_MAX;
+        mv->x() += dx;
+        mv->y() += dy;
+        mv->z() += dz;
       }
     }
 
+    // The box around the vertices, 1.3 times their bounding box. When it is
+    // removed, a cube 10 times as large, so that it takes few of the tets of
+    // the Delaunay tetrahedralization of the vertices (see tetsWithoutBox()),
+    // and further away when it takes them all, as when the vertices are
+    // nearly coplanar
+    std::vector<Vert *> _vertices;
+    Vert *box[8];
+    std::unique_ptr<tetContainer> allocator;
+    for(double scale = removeBox ? 10. : 1.3;; scale *= 100.) {
+      for(std::size_t i = 0; i < _vertices.size(); i++) delete _vertices[i];
+      _vertices.clear();
+      // (without the box, a vertex at the place of another is left out, in no
+      // tet)
+      std::set<std::array<double, 3>> placed;
+      for(std::size_t i = 0; i < N; i++) {
+        if(removeBox &&
+           !placed.insert({S[i]->x(), S[i]->y(), S[i]->z()}).second)
+          continue;
+        _vertices.push_back(
+          new Vert(S[i]->x(), S[i]->y(), S[i]->z(), 1.e22, i + 1));
+      }
+      allocator.reset(new tetContainer(N * 10));
+
+      // the static filters bound the coordinate differences, up to the size
+      // of the box of initialCube()
+      if(!bbox.empty()) {
+        const SPoint3 a = bbox.min(), b = bbox.max();
+        double ex = b.x() - a.x(), ey = b.y() - a.y(), ez = b.z() - a.z();
+        if(removeBox) ex = ey = ez = std::max({ex, ey, ez, 1.});
+        robustPredicates::exactinit(scale * ex, scale * ey, scale * ez);
+      }
+
+      delaunayTriangulation(_vertices, box, *allocator, scale, removeBox);
+      if(!removeBox || scale > 1.e5) break;
+      bool tetWithoutBox = false;
+      for(std::size_t i = 0; i < allocator->size() && !tetWithoutBox; i++) {
+        Tet *t = (*allocator)(i);
+        tetWithoutBox = t->V[0] && t->V[0]->getNum() <= N &&
+                        t->V[1]->getNum() <= N && t->V[2]->getNum() <= N &&
+                        t->V[3]->getNum() <= N;
+      }
+      if(tetWithoutBox) break;
+      for(int i = 0; i < 8; i++) delete box[i];
+    }
+
+    if(removeBox) {
+      std::vector<std::array<Vert *, 4>> tets;
+      tetsWithoutBox(*allocator, N, _vertices, tets);
+      if(tets.empty())
+        Msg::Warning("No tetrahedron with the %zu points: fewer than 4, or "
+                     "all coplanar", N);
+      for(auto &t : tets)
+        T.push_back(new MTetrahedron(_temp[t[0]->getNum()], _temp[t[1]->getNum()],
+                                     _temp[t[2]->getNum()], _temp[t[3]->getNum()]));
+      for(int i = 0; i < 8; i++) delete box[i];
+      for(std::size_t i = 0; i < _vertices.size(); i++) delete _vertices[i];
+      return;
+    }
+
+    // (the box corners are vertices of the tets too)
+    for(int i = 0; i < 8; i++) {
+      Vert *v = box[i];
+      v->setNum(N + i + 1);
+      MVertex *mv = new MVertex(v->x(), v->y(), v->z(), nullptr, N + (i + 1));
+      _temp[v->getNum()] = mv;
+      S.push_back(mv);
+    }
+
     std::vector<Tet *> outTets;
-    for(std::size_t i = 0; i < allocator.size(); i++) {
-      Tet *t = allocator(i);
+    for(std::size_t i = 0; i < allocator->size(); i++) {
+      Tet *t = (*allocator)(i);
       if(t->V[0]) {
         if(t->V[0]->getNum() && t->V[1]->getNum() && t->V[2]->getNum() &&
            t->V[3]->getNum()) {
