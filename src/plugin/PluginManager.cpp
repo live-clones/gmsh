@@ -88,6 +88,10 @@
 #include "DualMesh.h"
 #endif
 
+#if defined(HAVE_DISCRETECAD)
+#include "DiscreteCADWindingPlugin.h"
+#endif
+
 // HAVE_PLUGIN_LOADING is only defined when compiling the shared library with
 // the private API (which exports what plugins need) on a system with dlopen
 #if defined(HAVE_PLUGIN_LOADING)
@@ -287,6 +291,9 @@ void PluginManager::registerDefaultPlugins()
 #endif
 #if defined(HAVE_DUAL_MESH)
     add(new GMSH_DualMeshPlugin());
+#endif
+#if defined(HAVE_DISCRETECAD)
+    add(new GMSH_WindingNumberPlugin());
 #endif
   }
 

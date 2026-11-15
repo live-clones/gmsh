@@ -227,7 +227,7 @@ Default value: @code{6}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.HighOrderOptimize
-Optimize high-order meshes? (0: none, 1: optimization, 2: elastic+optimization, 3: elastic, 4: fast curving)@*
+Optimize high-order meshes (0: None, 1: Optimization, 2: Elastic and optimization, 3: Elastic, 4: Fast curving)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -389,6 +389,11 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.MaxRetries
 Maximum number of times meshing is retried on curves and surfaces with a pending mesh; also controls maximum number of recursive subdivisions when self-intersecting 1D meshes are detected@*
 Default value: @code{10}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.RepairSelfIntersecting1DMesh
+Subdivide the curve meshes and retry when the surface meshers cannot recover them, or when a surface fails to mesh (0: keep the curve meshes and mark the surface as failed)@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MeshOnlyVisible
@@ -661,11 +666,6 @@ Reconnect the tetrahedra that the parallel 3D optimizer could not improve otherw
 Default value: @code{0.5}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.PackSizemapMethod
-Size map for the PACK guiding field (same methods as QuadqsSizemapMethod, configured independently)@*
-Default value: @code{3}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Mesh.PartitionHexWeight
 Weight of hexahedral element for METIS load balancing (-1: automatic)@*
 Default value: @code{-1}@*
@@ -763,6 +763,11 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.QuadqsSizemapMethod
 Size map method in QuadQuasiStructured. 0: default, 1: cross-field,2: cross-field + CAD small features adaptation,3: from background mesh (e.g. sizes in current triangulation),4: cross-field + CAD small features adaptation (clamped by background mesh)@*
+Default value: @code{3}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PackSizemapMethod
+Size map for the PACK guiding field (same methods as QuadqsSizemapMethod, configured independently)@*
 Default value: @code{3}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -893,11 +898,6 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Renumber
 Renumber nodes and elements in a continuous sequence after mesh generation@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.RepairSelfIntersecting1DMesh
-Subdivide the curve meshes and retry when the surface meshers cannot recover them, or when a surface fails to mesh (0: keep the curve meshes and mark the surface as failed)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 

@@ -1547,4 +1547,30 @@ Default value: @code{-1}
 Default value: @code{-1}
 @end table
 
+@item Plugin(WindingNumber)
+Plugin(WindingNumber) shows the inside and the outside of the triangles of the surfaces of the model, a soup with holes, gaps and overlaps (a STL file merged, or the mesh of surfaces, or else their triangulations), through their generalized winding number: the sum of the solid angles of the triangles seen from a point, over 4 Pi (1 inside a closed surface oriented outwards, 0 outside, 2 where two closed surfaces overlap, in between near holes and gaps; inside where it is above 1/2). It is computed fast, as Barill et al. (2018): the triangles far from a point through the moments of their boxes, `Beta' times the radius of a box away (more is more accurate).@*
+@*
+The triangles are those of the surface `Surface', or of all the surfaces if it is negative; of their connected piece `Piece' (0 for the largest, 1 for the next one... the pieces are listed in the messages), or of all of them if it is negative.@*
+@*
+Plugin(WindingNumber) creates list-based views: the winding number on the plane normal to the axis `Axis' (0, 1 or 2 for x, y or z; the three planes if it is negative) at `Position' (0 to 1) across the box of the triangles, with `Resolution' cells along the longest side of the plane; and, if `IsoSurface' is set, the surface where it is 1/2 (the closed surface the triangles bound), on a grid of `IsoResolution' cells along the longest side of the box.
+Numeric options:
+@table @code
+@item Surface
+Default value: @code{-1}
+@item Piece
+Default value: @code{-1}
+@item Axis
+Default value: @code{-1}
+@item Position
+Default value: @code{0.5}
+@item Resolution
+Default value: @code{300}
+@item IsoSurface
+Default value: @code{1}
+@item IsoResolution
+Default value: @code{100}
+@item Beta
+Default value: @code{2}
+@end table
+
 @end ftable

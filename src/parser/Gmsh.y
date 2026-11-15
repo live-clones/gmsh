@@ -21,6 +21,9 @@
 #include "GModel.h"
 #include "GModelIO_GEO.h"
 #include "GModelIO_OCC.h"
+#if defined(HAVE_DISCRETECAD)
+#include "DiscreteCADModeler.h"
+#endif
 #include "GeoDefines.h"
 #include "ExtrudeParams.h"
 #include "Options.h"
@@ -118,6 +121,9 @@ void ListOfDouble2Vector(List_T *list, std::vector<int> &v);
 void ListOfDouble2Vector(List_T *list, std::vector<double> &v);
 void ListOfShapes2VectorOfPairs(List_T *list, std::vector<std::pair<int, int> > &v);
 void VectorOfPairs2ListOfShapes(const std::vector<std::pair<int, int> > &v, List_T *list);
+void DiscreteShapeFromFile(const char *fileName, double angle,
+                           double curveAngle, double tolerance,
+                           List_T *shapes);
 void addPeriodicEdge(int, int, const std::vector<double>&);
 void addPeriodicFace(int, int, const std::map<int, int>&);
 void addPeriodicFace(int, int, const std::vector<double>&);
@@ -295,6 +301,7 @@ GeoFormatItem :
       if(GModel::current()->getOCCInternals() &&
          GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      GModel::current()->synchronizeDiscreteCADInternals();
       gmsh_yyfactory = $3;
       if(gmsh_yyfactory == "OpenCASCADE"){
         if(!GModel::current()->getOCCInternals())
@@ -303,6 +310,10 @@ GeoFormatItem :
           GModel::current()->getOCCInternals()->setMaxTag
             (dim, std::max(GModel::current()->getOCCInternals()->getMaxTag(dim),
                            GModel::current()->getGEOInternals()->getMaxTag(dim)));
+      }
+      else if(gmsh_yyfactory == "Discrete"){
+        if(!GModel::current()->getDiscreteCADInternals())
+          GModel::current()->createDiscreteCADInternals();
       }
       else {
         if(gmsh_yyfactory != "Built-in" && gmsh_yyfactory != "Gmsh")
@@ -1959,6 +1970,16 @@ Shape :
           r = GModel::current()->getOCCInternals()->addSphere
             (num, param[0], param[1], param[2], param[3], a1, a2, a3);
         }
+#if defined(HAVE_DISCRETECAD)
+        else if(gmsh_yyfactory == "Discrete" &&
+                GModel::current()->getDiscreteCADInternals()){
+          if(param.size() == 4)
+            r = GModel::current()->getDiscreteCADInternals()->addSphere
+              (num, param[0], param[1], param[2], param[3], -1.);
+          else
+            yymsg(0, "Sphere requires 4 parameters with the Discrete geometry kernel");
+        }
+#endif
         else{
           yymsg(0, "Sphere only available with OpenCASCADE geometry kernel");
         }
@@ -2004,6 +2025,16 @@ Shape :
           yymsg(0, "Box requires 6 parameters");
         }
       }
+#if defined(HAVE_DISCRETECAD)
+      else if(gmsh_yyfactory == "Discrete" &&
+              GModel::current()->getDiscreteCADInternals()){
+        if(param.size() == 6)
+          r = GModel::current()->getDiscreteCADInternals()->addBox
+            (num, param[0], param[1], param[2], param[3], param[4], param[5]);
+        else
+          yymsg(0, "Box requires 6 parameters with the Discrete geometry kernel");
+      }
+#endif
       else{
         yymsg(0, "Box only available with OpenCASCADE geometry kernel");
       }
@@ -2027,6 +2058,17 @@ Shape :
           yymsg(0, "Torus requires 5 ou 6 parameters");
         }
       }
+#if defined(HAVE_DISCRETECAD)
+      else if(gmsh_yyfactory == "Discrete" &&
+              GModel::current()->getDiscreteCADInternals()){
+        if(param.size() == 5)
+          r = GModel::current()->getDiscreteCADInternals()->addTorus
+            (num, param[0], param[1], param[2], param[3], param[4],
+             std::vector<double>(), -1.);
+        else
+          yymsg(0, "Torus requires 5 parameters with the Discrete geometry kernel");
+      }
+#endif
       else{
         yymsg(0, "Torus only available with OpenCASCADE geometry kernel");
       }
@@ -2050,6 +2092,16 @@ Shape :
           yymsg(0, "Rectangle requires 5 ou 6 parameters");
         }
       }
+#if defined(HAVE_DISCRETECAD)
+      else if(gmsh_yyfactory == "Discrete" &&
+              GModel::current()->getDiscreteCADInternals()){
+        if(param.size() == 5)
+          r = GModel::current()->getDiscreteCADInternals()->addRectangle
+            (num, param[0], param[1], param[2], param[3], param[4]);
+        else
+          yymsg(0, "Rectangle requires 5 parameters with the Discrete geometry kernel");
+      }
+#endif
       else{
         yymsg(0, "Rectangle only available with OpenCASCADE geometry kernel");
       }
@@ -2073,6 +2125,18 @@ Shape :
           yymsg(0, "Disk requires 4 or 5 parameters");
         }
       }
+#if defined(HAVE_DISCRETECAD)
+      else if(gmsh_yyfactory == "Discrete" &&
+              GModel::current()->getDiscreteCADInternals()){
+        if(param.size() == 4 || param.size() == 5)
+          r = GModel::current()->getDiscreteCADInternals()->addDisk
+            (num, param[0], param[1], param[2], param[3],
+             param.size() == 5 ? param[4] : param[3], std::vector<double>(),
+             std::vector<double>(), -1.);
+        else
+          yymsg(0, "Disk requires 4 or 5 parameters with the Discrete geometry kernel");
+      }
+#endif
       else{
         yymsg(0, "Disk only available with OpenCASCADE geometry kernel");
       }
@@ -2097,6 +2161,17 @@ Shape :
           yymsg(0, "Cylinder requires 7 or 8 parameters");
         }
       }
+#if defined(HAVE_DISCRETECAD)
+      else if(gmsh_yyfactory == "Discrete" &&
+              GModel::current()->getDiscreteCADInternals()){
+        if(param.size() == 7)
+          r = GModel::current()->getDiscreteCADInternals()->addCylinder
+            (num, param[0], param[1], param[2], param[3], param[4], param[5],
+             param[6], -1.);
+        else
+          yymsg(0, "Cylinder requires 7 parameters with the Discrete geometry kernel");
+      }
+#endif
       else{
         yymsg(0, "Cylinder only available with OpenCASCADE geometry kernel");
       }
@@ -2121,6 +2196,17 @@ Shape :
           yymsg(0, "Cone requires 8 or 9 parameters");
         }
       }
+#if defined(HAVE_DISCRETECAD)
+      else if(gmsh_yyfactory == "Discrete" &&
+              GModel::current()->getDiscreteCADInternals()){
+        if(param.size() == 8)
+          r = GModel::current()->getDiscreteCADInternals()->addCone
+            (num, param[0], param[1], param[2], param[3], param[4], param[5],
+             param[6], param[7], -1.);
+        else
+          yymsg(0, "Cone requires 8 parameters with the Discrete geometry kernel");
+      }
+#endif
       else{
         yymsg(0, "Cone only available with OpenCASCADE geometry kernel");
       }
@@ -2509,6 +2595,7 @@ Transform :
         if(GModel::current()->getOCCInternals() &&
            GModel::current()->getOCCInternals()->getChanged())
           GModel::current()->getOCCInternals()->synchronize(GModel::current());
+        GModel::current()->synchronizeDiscreteCADInternals();
         if(GModel::current()->getGEOInternals()->getChanged())
           GModel::current()->getGEOInternals()->synchronize(GModel::current());
         bool combined = (action == "CombinedBoundary" ||
@@ -2979,6 +3066,7 @@ Command :
         if(GModel::current()->getOCCInternals() &&
            GModel::current()->getOCCInternals()->getChanged())
           GModel::current()->getOCCInternals()->synchronize(GModel::current());
+        GModel::current()->synchronizeDiscreteCADInternals();
         if(GModel::current()->getGEOInternals()->getChanged())
           GModel::current()->getGEOInternals()->synchronize(GModel::current());
         std::string tmp = FixRelativePath(gmsh_yyname, $2);
@@ -2988,6 +3076,7 @@ Command :
         if(GModel::current()->getOCCInternals() &&
            GModel::current()->getOCCInternals()->getChanged())
           GModel::current()->getOCCInternals()->synchronize(GModel::current());
+        GModel::current()->synchronizeDiscreteCADInternals();
         if(GModel::current()->getGEOInternals()->getChanged())
           GModel::current()->getGEOInternals()->synchronize(GModel::current());
         std::string tmp = FixRelativePath(gmsh_yyname, $2);
@@ -2999,6 +3088,7 @@ Command :
         if(GModel::current()->getOCCInternals() &&
            GModel::current()->getOCCInternals()->getChanged())
           GModel::current()->getOCCInternals()->synchronize(GModel::current());
+        GModel::current()->synchronizeDiscreteCADInternals();
         if(GModel::current()->getGEOInternals()->getChanged())
           GModel::current()->getGEOInternals()->synchronize(GModel::current());
         std::string tmp = FixRelativePath(gmsh_yyname, $2);
@@ -3099,6 +3189,7 @@ Command :
         if(GModel::current()->getOCCInternals() &&
            GModel::current()->getOCCInternals()->getChanged())
           GModel::current()->getOCCInternals()->synchronize(GModel::current());
+        GModel::current()->synchronizeDiscreteCADInternals();
         if(GModel::current()->getGEOInternals()->getChanged())
           GModel::current()->getGEOInternals()->synchronize(GModel::current());
 	GModel::current()->mesh((int)$2, true);
@@ -3196,6 +3287,7 @@ Command :
       // force sync
       if(GModel::current()->getOCCInternals())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      GModel::current()->synchronizeDiscreteCADInternals();
       GModel::current()->getGEOInternals()->synchronize(GModel::current());
     }
    | tNewModel tEND
@@ -3209,6 +3301,7 @@ Command :
       if(GModel::current()->getOCCInternals() &&
          GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      GModel::current()->synchronizeDiscreteCADInternals();
       if(GModel::current()->getGEOInternals()->getChanged())
         GModel::current()->getGEOInternals()->synchronize(GModel::current());
       SetBoundingBox();
@@ -3291,6 +3384,7 @@ Command :
       if(GModel::current()->getOCCInternals() &&
          GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      GModel::current()->synchronizeDiscreteCADInternals();
       if(GModel::current()->getGEOInternals()->getChanged())
         GModel::current()->getGEOInternals()->synchronize(GModel::current());
       GModel::current()->refineMesh(CTX::instance()->mesh.secondOrderLinear,
@@ -3303,6 +3397,7 @@ Command :
       if(GModel::current()->getOCCInternals() &&
          GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      GModel::current()->synchronizeDiscreteCADInternals();
       if(GModel::current()->getGEOInternals()->getChanged())
         GModel::current()->getGEOInternals()->synchronize(GModel::current());
       GModel::current()->recombineMesh();
@@ -3803,8 +3898,22 @@ Extrude :
           (regions, edges, radii, outDimTags, true);
         VectorOfPairs2ListOfShapes(outDimTags, $$);
       }
+#if defined(HAVE_DISCRETECAD)
+      else if(gmsh_yyfactory == "Discrete" &&
+              GModel::current()->getDiscreteCADInternals()){
+        std::vector<int> regions, edges;
+        ListOfDouble2Vector($3, regions); ListOfDouble2Vector($6, edges);
+        std::vector<double> radii;
+        ListOfDouble2Vector($9, radii);
+        std::vector<std::pair<int, int> > outDimTags;
+        r = GModel::current()->getDiscreteCADInternals()->fillet
+          (regions, edges, radii, outDimTags, true);
+        VectorOfPairs2ListOfShapes(outDimTags, $$);
+      }
+#endif
       else{
-        yymsg(0, "Fillet only available with OpenCASCADE geometry kernel");
+        yymsg(0, "Fillet only available with OpenCASCADE and Discrete geometry "
+              "kernels");
       }
       if(!r) yymsg(0, "Could not fillet shapes");
       List_Delete($3);
@@ -3962,6 +4071,22 @@ Boolean :
           (-1, (OCC_Internals::BooleanOperator)$1, object, tool, out, outMap, $4, $8);
         VectorOfPairs2ListOfShapes(out, $$);
       }
+#if defined(HAVE_DISCRETECAD)
+      else if(gmsh_yyfactory == "Discrete" &&
+              GModel::current()->getDiscreteCADInternals()){
+        std::vector<std::pair<int, int > > object, tool, out;
+        std::vector<std::vector<std::pair<int, int > > > outMap;
+        ListOfShapes2VectorOfPairs($3, object);
+        ListOfShapes2VectorOfPairs($7, tool);
+        if($1 > OCC_Internals::Difference)
+          yymsg(0, "Only BooleanUnion, BooleanIntersection and BooleanDifference "
+                "available with the Discrete geometry kernel");
+        else
+          r = GModel::current()->getDiscreteCADInternals()->booleanOperation
+            ($1, object, tool, out, outMap, -1, $4, $8);
+        VectorOfPairs2ListOfShapes(out, $$);
+      }
+#endif
       else{
         yymsg(0, "Boolean operators only available with OpenCASCADE geometry kernel");
       }
@@ -3985,6 +4110,24 @@ Boolean :
       if(!r) yymsg(0, "Could import shape");
       Free($3);
     }
+  | tShapeFromFile '(' StringExprVar ',' FExpr ')'
+    {
+      $$ = List_Create(2, 1, sizeof(Shape));
+      DiscreteShapeFromFile($3, $5, M_PI, -1., $$);
+      Free($3);
+    }
+  | tShapeFromFile '(' StringExprVar ',' FExpr ',' FExpr ')'
+    {
+      $$ = List_Create(2, 1, sizeof(Shape));
+      DiscreteShapeFromFile($3, $5, $7, -1., $$);
+      Free($3);
+    }
+  | tShapeFromFile '(' StringExprVar ',' FExpr ',' FExpr ',' FExpr ')'
+    {
+      $$ = List_Create(2, 1, sizeof(Shape));
+      DiscreteShapeFromFile($3, $5, $7, $9, $$);
+      Free($3);
+    }
 ;
 
 BooleanShape :
@@ -4003,6 +4146,21 @@ BooleanShape :
         r = GModel::current()->getOCCInternals()->booleanOperator
           ((int)$3, (OCC_Internals::BooleanOperator)$1, object, tool, out, outMap, $8, $12);
       }
+#if defined(HAVE_DISCRETECAD)
+      else if(gmsh_yyfactory == "Discrete" &&
+              GModel::current()->getDiscreteCADInternals()){
+        std::vector<std::pair<int, int> > object, tool, out;
+        std::vector<std::vector<std::pair<int, int > > > outMap;
+        ListOfShapes2VectorOfPairs($7, object);
+        ListOfShapes2VectorOfPairs($11, tool);
+        if($1 > OCC_Internals::Difference)
+          yymsg(0, "Only BooleanUnion, BooleanIntersection and BooleanDifference "
+                "available with the Discrete geometry kernel");
+        else
+          r = GModel::current()->getDiscreteCADInternals()->booleanOperation
+            ($1, object, tool, out, outMap, (int)$3, $8, $12);
+      }
+#endif
       if(!r) yymsg(0, "Could not apply boolean operator");
       List_Delete($7);
       List_Delete($11);
@@ -4140,6 +4298,7 @@ Constraints :
       if(GModel::current()->getOCCInternals() &&
          GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      GModel::current()->synchronizeDiscreteCADInternals();
       int type = (int)$6[0];
       double coef = $6[1];
       int npoints = ((int)$5 < 2) ? 2 : (int)$5;
@@ -4181,6 +4340,7 @@ Constraints :
       if(GModel::current()->getOCCInternals() &&
          GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      GModel::current()->synchronizeDiscreteCADInternals();
       std::vector<int> corners; ListOfDouble2Vector($4, corners);
       if(!$3){
         GModel::current()->getGEOInternals()->setTransfiniteSurface(0, $5, corners);
@@ -4226,6 +4386,7 @@ Constraints :
       if(GModel::current()->getOCCInternals() &&
          GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      GModel::current()->synchronizeDiscreteCADInternals();
       std::vector<int> corners; ListOfDouble2Vector($4, corners);
       if(!$3){
         GModel::current()->getGEOInternals()->setTransfiniteVolume(0, corners);
@@ -4266,6 +4427,7 @@ Constraints :
       if(GModel::current()->getOCCInternals() &&
          GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      GModel::current()->synchronizeDiscreteCADInternals();
       if(!$2){
         GModel::current()->getGEOInternals()->setTransfiniteVolumeQuadTri(0);
         for(GModel::riter it = GModel::current()->firstRegion();
@@ -4309,6 +4471,7 @@ Constraints :
       if(GModel::current()->getOCCInternals() &&
          GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      GModel::current()->synchronizeDiscreteCADInternals();
       for(int i = 0; i < List_Nbr($4); i++){
         double d;
         List_Read($4, i, &d);
@@ -4326,6 +4489,7 @@ Constraints :
       if(GModel::current()->getOCCInternals() &&
          GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      GModel::current()->synchronizeDiscreteCADInternals();
       for(int i = 0; i < List_Nbr($4); i++){
         double d;
         List_Read($4, i, &d);
@@ -4343,6 +4507,7 @@ Constraints :
       if(GModel::current()->getOCCInternals() &&
          GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      GModel::current()->synchronizeDiscreteCADInternals();
       if(!$3){
         GModel::current()->getGEOInternals()->setRecombine(2, 0, $4);
         for(GModel::fiter it = GModel::current()->firstFace();
@@ -4373,6 +4538,7 @@ Constraints :
       if(GModel::current()->getOCCInternals() &&
          GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      GModel::current()->synchronizeDiscreteCADInternals();
       if(!$3){
         GModel::current()->getGEOInternals()->setRecombine(3, 0, 0.);
         for(GModel::riter it = GModel::current()->firstRegion();
@@ -4399,6 +4565,7 @@ Constraints :
       if(GModel::current()->getOCCInternals() &&
          GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      GModel::current()->synchronizeDiscreteCADInternals();
       if(!$3){
         GModel::current()->getGEOInternals()->setSmoothing(0, (int)$5);
         for(GModel::fiter it = GModel::current()->firstFace();
@@ -4623,6 +4790,7 @@ Constraints :
       if(GModel::current()->getOCCInternals() &&
          GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      GModel::current()->synchronizeDiscreteCADInternals();
       if(!$3){
         GModel::current()->getGEOInternals()->setReverseMesh($2, 0);
         switch ($2) {
@@ -4669,6 +4837,7 @@ Constraints :
       if(GModel::current()->getOCCInternals() &&
          GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      GModel::current()->synchronizeDiscreteCADInternals();
       if(GModel::current()->getGEOInternals()->getChanged())
         GModel::current()->getGEOInternals()->synchronize(GModel::current());
       if(!$3){
@@ -4723,6 +4892,7 @@ Constraints :
       if(GModel::current()->getOCCInternals() &&
          GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      GModel::current()->synchronizeDiscreteCADInternals();
       if(GModel::current()->getGEOInternals()->getChanged())
         GModel::current()->getGEOInternals()->synchronize(GModel::current());
       for(int i = 0; i < List_Nbr($3); i++){
@@ -5584,6 +5754,7 @@ FExpr_Multi :
       if(GModel::current()->getOCCInternals() &&
          GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      GModel::current()->synchronizeDiscreteCADInternals();
       if(GModel::current()->getGEOInternals()->getChanged())
         GModel::current()->getGEOInternals()->synchronize(GModel::current());
       $$ = List_Create(9, 1, sizeof(double));
@@ -5614,6 +5785,7 @@ FExpr_Multi :
       if(GModel::current()->getOCCInternals() &&
          GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      GModel::current()->synchronizeDiscreteCADInternals();
       if(GModel::current()->getGEOInternals()->getChanged())
         GModel::current()->getGEOInternals()->synchronize(GModel::current());
       $$ = List_Create(9, 1, sizeof(double));
@@ -5637,6 +5809,7 @@ FExpr_Multi :
       if(GModel::current()->getOCCInternals() &&
          GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      GModel::current()->synchronizeDiscreteCADInternals();
       if(GModel::current()->getGEOInternals()->getChanged())
         GModel::current()->getGEOInternals()->synchronize(GModel::current());
       $$ = List_Create(9, 1, sizeof(double));
@@ -5657,6 +5830,7 @@ FExpr_Multi :
       if(GModel::current()->getOCCInternals() &&
          GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      GModel::current()->synchronizeDiscreteCADInternals();
       if(GModel::current()->getGEOInternals()->getChanged())
         GModel::current()->getGEOInternals()->synchronize(GModel::current());
       $$ = List_Create(9, 1, sizeof(double));
@@ -5676,6 +5850,7 @@ FExpr_Multi :
       if(GModel::current()->getOCCInternals() &&
          GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      GModel::current()->synchronizeDiscreteCADInternals();
       if(GModel::current()->getGEOInternals()->getChanged())
         GModel::current()->getGEOInternals()->synchronize(GModel::current());
       $$ = List_Create(9, 1, sizeof(double));
@@ -6740,6 +6915,30 @@ void VectorOfPairs2ListOfShapes(const std::vector<std::pair<int, int> > &v, List
   }
 }
 
+// the triangulations of a mesh file imported in the discrete CAD modeler, and
+// their topology (surfaces split where the normals turn by more than angle,
+// curves where they turn by more than curveAngle, analytic surfaces
+// recognized within tolerance)
+void DiscreteShapeFromFile(const char *fileName, double angle,
+                           double curveAngle, double tolerance,
+                           List_T *shapes)
+{
+#if defined(HAVE_DISCRETECAD)
+  if(gmsh_yyfactory == "Discrete" &&
+     GModel::current()->getDiscreteCADInternals()){
+    std::vector<std::pair<int, int> > out;
+    std::string tmp = FixRelativePath(gmsh_yyname, fileName);
+    if(!GModel::current()->getDiscreteCADInternals()->importShapes
+       (tmp, angle, curveAngle, tolerance, out))
+      yymsg(0, "Could not import shape");
+    VectorOfPairs2ListOfShapes(out, shapes);
+    return;
+  }
+#endif
+  yymsg(0, "ShapeFromFile with angles only available with Discrete geometry "
+        "kernel");
+}
+
 void yyerror(const char *s)
 {
   if(gmsh_yyname.empty())
@@ -6786,6 +6985,7 @@ void addPeriodicFace(int iTarget, int iSource,
   if(GModel::current()->getOCCInternals() &&
      GModel::current()->getOCCInternals()->getChanged())
     GModel::current()->getOCCInternals()->synchronize(GModel::current());
+  GModel::current()->synchronizeDiscreteCADInternals();
   if(GModel::current()->getGEOInternals()->getChanged())
     GModel::current()->getGEOInternals()->synchronize(GModel::current());
 
@@ -6805,6 +7005,7 @@ void addPeriodicFace(int iTarget, int iSource,
   if(GModel::current()->getOCCInternals() &&
      GModel::current()->getOCCInternals()->getChanged())
     GModel::current()->getOCCInternals()->synchronize(GModel::current());
+  GModel::current()->synchronizeDiscreteCADInternals();
   if(GModel::current()->getGEOInternals()->getChanged())
     GModel::current()->getGEOInternals()->synchronize(GModel::current());
 
@@ -6830,6 +7031,7 @@ void addPeriodicEdge(int iTarget,int iSource,
   if(GModel::current()->getOCCInternals() &&
      GModel::current()->getOCCInternals()->getChanged())
     GModel::current()->getOCCInternals()->synchronize(GModel::current());
+  GModel::current()->synchronizeDiscreteCADInternals();
   if(GModel::current()->getGEOInternals()->getChanged())
     GModel::current()->getGEOInternals()->synchronize(GModel::current());
 
@@ -6891,6 +7093,7 @@ void addEmbedded(int dim, std::vector<int> tags, int dim2, int tag2)
   if(GModel::current()->getOCCInternals() &&
      GModel::current()->getOCCInternals()->getChanged())
     GModel::current()->getOCCInternals()->synchronize(GModel::current());
+  GModel::current()->synchronizeDiscreteCADInternals();
   if(GModel::current()->getGEOInternals()->getChanged())
     GModel::current()->getGEOInternals()->synchronize(GModel::current());
 
@@ -6955,6 +7158,7 @@ void removeEmbedded(const std::vector<std::pair<int, int> > &dimTags,
   if(GModel::current()->getOCCInternals() &&
      GModel::current()->getOCCInternals()->getChanged())
     GModel::current()->getOCCInternals()->synchronize(GModel::current());
+  GModel::current()->synchronizeDiscreteCADInternals();
   if(GModel::current()->getGEOInternals()->getChanged())
     GModel::current()->getGEOInternals()->synchronize(GModel::current());
 
@@ -6987,6 +7191,7 @@ void getAllElementaryTags(int dim, List_T *out)
   if(GModel::current()->getOCCInternals() &&
      GModel::current()->getOCCInternals()->getChanged())
     GModel::current()->getOCCInternals()->synchronize(GModel::current());
+  GModel::current()->synchronizeDiscreteCADInternals();
   if(GModel::current()->getGEOInternals()->getChanged())
     GModel::current()->getGEOInternals()->synchronize(GModel::current());
 
@@ -7003,6 +7208,7 @@ void getAllPhysicalTags(int dim, List_T *out)
   if(GModel::current()->getOCCInternals() &&
      GModel::current()->getOCCInternals()->getChanged())
     GModel::current()->getOCCInternals()->synchronize(GModel::current());
+  GModel::current()->synchronizeDiscreteCADInternals();
   if(GModel::current()->getGEOInternals()->getChanged())
     GModel::current()->getGEOInternals()->synchronize(GModel::current());
 
@@ -7019,6 +7225,7 @@ void getElementaryTagsForPhysicalGroups(int dim, List_T *in, List_T *out)
   if(GModel::current()->getOCCInternals() &&
      GModel::current()->getOCCInternals()->getChanged())
     GModel::current()->getOCCInternals()->synchronize(GModel::current());
+  GModel::current()->synchronizeDiscreteCADInternals();
   if(GModel::current()->getGEOInternals()->getChanged())
     GModel::current()->getGEOInternals()->synchronize(GModel::current());
 
@@ -7042,6 +7249,7 @@ void getElementaryTagsForPhysicalNames(int dim, List_T *in, List_T *out)
   if(GModel::current()->getOCCInternals() &&
      GModel::current()->getOCCInternals()->getChanged())
     GModel::current()->getOCCInternals()->synchronize(GModel::current());
+  GModel::current()->synchronizeDiscreteCADInternals();
   if(GModel::current()->getGEOInternals()->getChanged())
     GModel::current()->getGEOInternals()->synchronize(GModel::current());
 
@@ -7066,6 +7274,7 @@ void getElementaryTagsInBoundingBox(int dim, double x1, double y1, double z1,
   if(GModel::current()->getOCCInternals() &&
      GModel::current()->getOCCInternals()->getChanged())
     GModel::current()->getOCCInternals()->synchronize(GModel::current());
+  GModel::current()->synchronizeDiscreteCADInternals();
   if(GModel::current()->getGEOInternals()->getChanged())
     GModel::current()->getGEOInternals()->synchronize(GModel::current());
 
@@ -7083,6 +7292,7 @@ void getParentTags(int dim, List_T *in, List_T *out)
   if(GModel::current()->getOCCInternals() &&
      GModel::current()->getOCCInternals()->getChanged())
     GModel::current()->getOCCInternals()->synchronize(GModel::current());
+  GModel::current()->synchronizeDiscreteCADInternals();
   if(GModel::current()->getGEOInternals()->getChanged())
     GModel::current()->getGEOInternals()->synchronize(GModel::current());
 
@@ -7105,6 +7315,7 @@ void getBoundingBox(int dim, List_T *in, List_T *out)
   if(GModel::current()->getOCCInternals() &&
      GModel::current()->getOCCInternals()->getChanged())
     GModel::current()->getOCCInternals()->synchronize(GModel::current());
+  GModel::current()->synchronizeDiscreteCADInternals();
   if(GModel::current()->getGEOInternals()->getChanged())
     GModel::current()->getGEOInternals()->synchronize(GModel::current());
 
@@ -7128,6 +7339,7 @@ void setVisibility(int dim, int visible, bool recursive)
   if(GModel::current()->getOCCInternals() &&
      GModel::current()->getOCCInternals()->getChanged())
     GModel::current()->getOCCInternals()->synchronize(GModel::current());
+  GModel::current()->synchronizeDiscreteCADInternals();
   if(GModel::current()->getGEOInternals()->getChanged())
     GModel::current()->getGEOInternals()->synchronize(GModel::current());
 
@@ -7144,6 +7356,7 @@ void setVisibility(const std::vector<std::pair<int, int> > &dimTags,
   if(GModel::current()->getOCCInternals() &&
      GModel::current()->getOCCInternals()->getChanged())
     GModel::current()->getOCCInternals()->synchronize(GModel::current());
+  GModel::current()->synchronizeDiscreteCADInternals();
   if(GModel::current()->getGEOInternals()->getChanged())
     GModel::current()->getGEOInternals()->synchronize(GModel::current());
 
@@ -7160,6 +7373,7 @@ void setColor(const std::vector<std::pair<int, int> > &dimTags,
   if(GModel::current()->getOCCInternals() &&
      GModel::current()->getOCCInternals()->getChanged())
     GModel::current()->getOCCInternals()->synchronize(GModel::current());
+  GModel::current()->synchronizeDiscreteCADInternals();
   if(GModel::current()->getGEOInternals()->getChanged())
     GModel::current()->getGEOInternals()->synchronize(GModel::current());
 

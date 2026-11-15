@@ -119,6 +119,7 @@ std::string GEntity::getInfoString(bool additional, bool multiline)
   case OpenCascadeModel: sstream << " (OCC)"; break;
   case AcisModel: sstream << " (ACIS)"; break;
   case ParasolidModel: sstream << " (Parasolid)"; break;
+  case DiscreteCADModel: sstream << " (discrete CAD)"; break;
   default: break;
   }
 

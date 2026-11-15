@@ -26,6 +26,8 @@ Enable CGNS import/export (experimental) (default: ON)
 Enable high-order CGNS import/export following CPEX0045 (experimental) (default: OFF)
 @item ENABLE_COVERAGE
 Enable code coverage instrumentation (GCC/Clang only) (default: OFF)
+@item ENABLE_DISCRETECAD
+Enable the discrete CAD modeler (default: ON)
 @item ENABLE_DOMHEX
 Enable experimental DOMHEX code (default: ON)
 @item ENABLE_DUAL_MESH
@@ -134,6 +136,8 @@ Use system versions of contrib libraries, when possible (default: OFF)
 Enable libtcmalloc (fast malloc that does not release memory) (default: OFF)
 @item ENABLE_TESTS
 Enable tests (default: ON)
+@item ENABLE_GUI_TESTS
+Enable the tests of the graphical user interface, which open windows (benchmarks/gui) (default: OFF)
 @item ENABLE_TINYOBJLOADER
 Enable TibyObjLoader for reading Wavefront files) (default: ON)
 @item ENABLE_TINYXML2
