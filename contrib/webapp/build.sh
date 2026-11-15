@@ -15,21 +15,27 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-# Build the Gmsh web app with Emscripten, in ./build: the Gmsh
+# Build the Gmsh web app with Emscripten, in ./build and ./build64: the Gmsh
 # library and its JavaScript API with the WebGL drawing, with OpenCASCADE, and with GetDP run in-process as the ONELAB solver
 # (onelab.html). The dependencies (OpenCASCADE, and PETSc and SLEPc with
 # SuiteSparse and f2c BLAS/LAPACK for GetDP, all without Fortran or MPI) are
-# downloaded and built once, in ./build/deps, in a directory per version (a
-# new version is built next to the old one).
+# downloaded and built once, in the deps directory of each build, in a
+# directory per version (a new version is built next to the old one).
 #
-# Usage: ./build.sh [--wasm64] [--no-occ] [--no-getdp] [extra cmake options for Gmsh]
-# --wasm64: 64-bit WebAssembly (Memory64: up to 16 GB, for the browsers that
-#           support it), built in ./build64 with its own dependencies
+# Both modules that deploy.sh puts on the site are built, one after the other:
+# the 32-bit one in ./build and the 64-bit one (Memory64: up to 16 GB, for the
+# browsers that support it) in ./build64, with its own dependencies.
+#
+# Usage: ./build.sh [--wasm32 | --wasm64] [--no-occ] [--no-getdp] [extra cmake options for Gmsh]
+# --wasm32: build the 32-bit module only
+# --wasm64: build the 64-bit module only
 # EMSDK: where emsdk is installed (default: ~/src/emsdk)
 # GETDP: the GetDP sources (default: getdp next to the Gmsh sources)
 # OCCT_SRC: an OpenCASCADE git checkout to build from (its HEAD, extracted
 #           with git archive), instead of downloading release $OCCT_VERSION
-# BUILD: the build directory (default: ./build, or ./build64 with --wasm64)
+# BUILD: the build directory of the 32-bit module (default: ./build)
+# BUILD64: the build directory of the 64-bit module (default: build64 next to
+#          BUILD)
 #
 # Testing:
 #   python3 -m http.server 8000 --bind 127.0.0.1 --directory ~/src/gmsh
@@ -46,18 +52,28 @@ PETSC_VERSION=3.26.1
 SUITESPARSE_VERSION=7.14.1
 SLEPC_VERSION=3.26.1
 
+# without --wasm32 or --wasm64, both modules: the script runs itself for each
+ARGS=("$@")
 OCC=1
 WITH_GETDP=1
-WASM64=0
+WASM64=
 while [[ "$1" == --* ]]; do
   case "$1" in
     --no-occ) OCC=0 ;;
     --no-getdp) WITH_GETDP=0 ;;
+    --wasm32) WASM64=0 ;;
     --wasm64) WASM64=1 ;;
-    *) echo "Usage: $0 [--wasm64] [--no-occ] [--no-getdp] [cmake options]"; exit 1 ;;
+    *) echo "Usage: $0 [--wasm32 | --wasm64] [--no-occ] [--no-getdp] [cmake options]"; exit 1 ;;
   esac
   shift
 done
+if [ -z "$WASM64" ]; then
+  echo "Building the 32-bit module"
+  "$0" --wasm32 "${ARGS[@]}"
+  echo "Building the 64-bit module"
+  "$0" --wasm64 "${ARGS[@]}"
+  exit 0
+fi
 if [ $WITH_GETDP == 1 -a ! -f "$GETDP/src/kernel/getdp.h" ]; then
   echo "GetDP sources not found in $GETDP: building without GetDP"
   WITH_GETDP=0
@@ -79,10 +95,9 @@ echo "Using $(emcc --version | head -1)"
 # which cannot work with Emscripten
 unset FC F77 F90
 
+B=${BUILD:-$HERE/build}
 if [ $WASM64 == 1 ]; then
-  B=${BUILD:-$HERE/build64}
-else
-  B=${BUILD:-$HERE/build}
+  B=${BUILD64:-$(dirname "$B")/build64}
 fi
 DEPS="$B/deps"
 mkdir -p "$DEPS/src"

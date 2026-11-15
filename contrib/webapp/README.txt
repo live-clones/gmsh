@@ -12,7 +12,10 @@ default in ../getdp next to the Gmsh sources):
 
 The first build downloads and builds OpenCASCADE, and PETSc with SuiteSparse,
 SLEPc and f2c BLAS/LAPACK for GetDP, in ./build/deps (about half an hour); then
-Gmsh and GetDP. "./build.sh --no-occ --no-getdp" builds Gmsh alone.
+Gmsh and GetDP. "./build.sh --no-occ --no-getdp" builds Gmsh alone. Two modules
+are built, each with its own dependencies: the 32-bit one in ./build and the
+64-bit one (Memory64) in ./build64, which the page takes where the browser
+supports it; "./build.sh --wasm32" or "--wasm64" builds one of them only.
 
 Serve the Gmsh source tree over HTTP and open the pages, e.g.
 

@@ -16,7 +16,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 # Deploy the web app demo on https://onelab.info/webapp/: the site is made in
-# build/site, with the pages, the module of build.sh (run it first) and GetDP's
+# build/site, with the pages, the modules of build.sh (run it first) and GetDP's
 # templates, and the models (the Gmsh and GetDP tutorials and those of
 # onelab_doc), packed as zips and shown on the landing page (index.html) with
 # their thumbnails; then it is copied to the web server.
@@ -70,7 +70,7 @@ cp "$B/gmsh.mjs" "$B/libgmsh.mjs" "$B/libgmsh.wasm" "$SITE/build"
 # progress of its loading
 wc -c < "$B/libgmsh.wasm" | tr -d ' ' > "$SITE/build/libgmsh.wasm.size"
 if [ -d "$B/templates" ]; then cp "$B"/templates/* "$SITE/build/templates"; fi
-# the 64-bit module of build.sh --wasm64 too, if there is one (in build64,
+# the 64-bit module of build.sh too, if there is one (in build64,
 # next to the build directory), which the page takes where the browser can
 # run it (see main.mjs)
 B64=${BUILD64:-$(dirname "$B")/build64}
