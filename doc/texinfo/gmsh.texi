@@ -310,7 +310,8 @@ Entities can either be built in a @emph{bottom-up} manner (first points,
 then curves, surfaces and volumes) with the built-in and OpenCASCADE
 kernels, or in a @emph{top-down} constructive solid geometry fashion
 (solids on which boolean operations are performed) with the OpenCASCADE
-kernel. Both methodologies can also be combined. Finally, groups of
+kernel or the discrete CAD modeler. Both methodologies can also be
+combined. Finally, groups of
 model entities (called ``physical groups'') can be defined, based on the
 elementary geometric entities. (See @ref{Elementary entities vs physical
 groups}, for more information about how physical groups affect the way
@@ -367,6 +368,22 @@ and automatic pipeline based on reparametrization}. Journal of
 Computational Physics, 417, 109575, 2020.}. The parametrization is then
 used for meshing, in exactly the same way as for CAD entities. See
 @ref{t13} for an example.
+
+Gmsh also provides a @emph{discrete CAD modeler}, which represents
+shapes by triangulations instead of exact curves and surfaces. It
+creates primitives (boxes, spheres, cylinders, cones, tori, rectangles
+and disks), imports triangulations (e.g. STL files) whose planes,
+spheres, cylinders, cones and tori it recognizes, and performs boolean
+operations and fillets directly on the triangulations. The resulting
+entities are discrete entities that come with their parametrization, and
+with their exact geometry when they lie on such analytic surfaces. The
+discrete CAD modeler is selected with @code{SetFactory("Discrete")} in
+@file{.geo} scripts, and with the @code{discrete} prefix in the API
+(@pxref{Namespace gmsh/model/discrete}). See
+@url{@value{GITLAB-PREFIX}/benchmarks/discreteCADModel,benchmarks/discreteCADModel}
+and
+@url{@value{GITLAB-PREFIX}/examples/api/discrete_primitives.py,examples/api/discrete_primitives.py}
+for examples.
 
 @c -------------------------------------------------------------------------
 @c Mesh module
@@ -2994,6 +3011,19 @@ Merge a BREP, STEP or IGES file and return the tags of the
 highest-dimensional entities. Only available with the OpenCASCADE
 geometry kernel.
 
+@item ShapeFromFile( @var{string-expression}, @var{expression} <, @var{expression} <, @var{expression} > > );
+Import the triangulations of the surfaces of a mesh file (in STL, MSH,
+OBJ, PLY, OFF, VTK or MESH format) and build their topology. The
+surfaces are split along the edges where the normals of the triangles
+make an angle larger than the first @var{expression} (in radians). The
+curves along these edges are split where they turn by more than the
+second @var{expression} (Pi by default). The surfaces whose nodes are
+closer than the third @var{expression} to a plane, a sphere, a cylinder,
+a cone or a torus are recognized as such
+(@code{Geometry.DiscreteTolerance} times the size of the triangulation
+by default). Return the tags of the volumes, and of the surfaces
+bounding no volume. Only available with the Discrete geometry kernel.
+
 @item Draw;
 Redraw the scene.
 
@@ -3085,7 +3115,8 @@ Change the name of the current model.
 @item SetFactory(@var{string-expression});
 Change the current geometry kernel (i.e. determines the CAD kernel that
 is used for all subsequent geometrical commands). Currently available
-kernels: @code{"Built-in"} and @code{"OpenCASCADE"}.
+kernels: @code{"Built-in"}, @code{"OpenCASCADE"} and @code{"Discrete"}
+(the discrete CAD modeler).
 
 @item SyncModel;
 Force an immediate transfer from the old geometrical database into the
@@ -3115,7 +3146,14 @@ Both the built-in and the OpenCASCADE CAD kernels can be used in the
 scripting language, by specifying @code{SetFactory("Built-in")} or
 @code{SetFactory("OpenCASCADE")}, respectively, before geometrical
 scripting commands. If @code{SetFactory} is not specified, the built-in
-kernel is used.
+kernel is used. @code{SetFactory("Discrete")} selects the discrete CAD
+modeler, which provides the @code{Sphere}, @code{Box}, @code{Cylinder},
+@code{Cone}, @code{Torus}, @code{Rectangle} and @code{Disk} primitives,
+the @code{BooleanUnion}, @code{BooleanIntersection} and
+@code{BooleanDifference} operations, @code{Fillet}, and
+@code{ShapeFromFile} to import triangulations; see
+@url{@value{GITLAB-PREFIX}/benchmarks/discreteCADModel,benchmarks/discreteCADModel}
+for examples.
 
 A bottom-up boundary representation approach can be used by first
 defining points (using the @code{Point} command), then curves (using
@@ -3335,13 +3373,14 @@ available with the OpenCASCADE kernel.
 Create a disk. When four expressions are provided on the right hand
 side (3 coordinates of the center and the radius), the disk is circular.
 A fifth expression defines the radius along Y, leading to an ellipse.
-@code{Disk} is only available with the OpenCASCADE kernel.
+@code{Disk} is only available with the OpenCASCADE and Discrete kernels.
 
 @item Rectangle ( @var{expression} ) = @{ @var{expression-list} @};
 Create a rectangle. The 3 first expressions define the lower-left
 corner; the next 2 define the width and height. If a 6th expression is
 provided, it defines a radius to round the rectangle
-corners. @code{Rectangle} is only available with the OpenCASCADE kernel.
+corners. @code{Rectangle} is only available with the OpenCASCADE and
+Discrete kernels (without rounded corners with the latter).
 
 @item Surface Loop ( @var{expression} ) = @{ @var{expression-list} @} < Using Sewing >;
 Create a surface loop (a shell). The @var{expression} inside the
@@ -3403,29 +3442,33 @@ radius. Additional expressions define 3 angle limits. The first two
 optional arguments define the polar angle opening (from -Pi/2 to
 Pi/2). The optional `angle3' argument defines the azimuthal opening
 (from 0 to 2*Pi). @code{Sphere} is only available with the OpenCASCADE
-kernel.
+and Discrete kernels (without angle limits with the latter).
 
 @item Box ( @var{expression} ) = @{ @var{expression-list} @};
 Create a box, defined by the 3 coordinates of a point and the 3
-extents. @code{Box} is only available with the OpenCASCADE kernel.
+extents. @code{Box} is only available with the OpenCASCADE and Discrete
+kernels.
 
 @item Cylinder ( @var{expression} ) = @{ @var{expression-list} @};
 Create a cylinder, defined by the 3 coordinates of the center of the
 first circular face, the 3 components of the vector defining its axis
 and its radius. An additional expression defines the angular
-opening. @code{Cylinder} is only available with the OpenCASCADE kernel.
+opening. @code{Cylinder} is only available with the OpenCASCADE and
+Discrete kernels (without angular opening with the latter).
 
 @item Torus ( @var{expression} ) = @{ @var{expression-list} @};
 Create a torus, defined by the 3 coordinates of its center and 2 radii.
 An additional expression defines the angular opening. @code{Torus} is
-only available with the OpenCASCADE kernel.
+only available with the OpenCASCADE and Discrete kernels (without
+angular opening with the latter).
 
 @item Cone ( @var{expression} ) = @{ @var{expression-list} @};
 Create a cone, defined by the 3 coordinates of the center of the first
 circular face, the 3 components of the vector defining its axis and the
 two radii of the faces (these radii can be zero). An additional
 expression defines the angular opening. @code{Cone} is only available
-with the OpenCASCADE kernel.
+with the OpenCASCADE and Discrete kernels (without angular opening with
+the latter).
 
 @item Wedge ( @var{expression} ) = @{ @var{expression-list} @};
 Create a right angular wedge, defined by the 3 coordinates of the
@@ -3643,7 +3686,10 @@ Again, see
 @url{@value{GITLAB-PREFIX}/examples/boolean/,examples/boolean}
 for examples.
 
-Boolean operations are only available with the OpenCASCADE geometry kernel.
+Boolean operations are only available with the OpenCASCADE and Discrete
+geometry kernels. With the Discrete kernel, only @code{BooleanUnion},
+@code{BooleanIntersection} and @code{BooleanDifference} are available,
+on volumes.
 
 @c .........................................................................
 @c Transformations
@@ -4655,7 +4701,10 @@ generally, for functions outside of @code{gmsh/model/geo} or
 @code{gmsh/model/occ} to manipulate them. 1D and 2D meshing algorithms
 use the @emph{parametrization} of the underlying geometrical curve or
 surface to generate the mesh. Discrete entities can be remeshed provided
-that a parametrization is explicitly recomputed for them.
+that a parametrization is explicitly recomputed for them. The discrete
+CAD modeler (@code{gmsh/model/discrete} namespace) creates discrete
+entities that come with their parametrization; they must also be
+synchronized with the model.
 @item
 Mesh data is made of @emph{elements} (points, lines, triangles,
 quadrangles, tetrahedra, hexahedra, prisms, pyramids, ...), defined by
