@@ -30,6 +30,7 @@
 #include "GModelIO_GEO.h"
 #include "GModelIO_OCC.h"
 #include "OpenFile.h"
+#include "OS.h"
 #include "StringUtils.h"
 #include "discreteVertex.h"
 #include "discreteEdge.h"
@@ -3052,24 +3053,82 @@ bool DiscreteCAD_Internals::heal(const std::vector<int> &surfaceTags,
       tri.push_back(t);
       surfaceOf.push_back(s);
     }
+  // (each stage said when it starts, but the first one, and what it did when
+  // it is done, with its time)
+  const double wall = TimeOfDay(), cpu = Cpu();
+  double stage = wall;
+  auto done = [&](const std::string &what) {
+    const double now = TimeOfDay();
+    Msg::Info("Discrete CAD heal: %s (Wall %gs)", what.c_str(), now - stage);
+    stage = now;
+  };
+  Msg::StatusBar(true, "Healing %s of %s...",
+                 plural(tri.size(), "triangle", "triangles").c_str(),
+                 plural(raw.size(), "triangulation", "triangulations").c_str());
+
+  // the degenerate and duplicated triangles removed
   DiscreteCADHealReport r;
   std::vector<std::size_t> kept;
-  const std::vector<std::array<int, 3> > before = tri;
-  removeBadTriangles(tri, r, &kept);
-  // (the cracks zipped: the triangle of the input each one comes from; the
+  removeBadTriangles(tri, r, &kept, &_nodes);
+  {
+    std::vector<int> degenerate, duplicated;
+    std::vector<char> isKept(surfaceOf.size(), 0);
+    for(std::size_t i : kept) isKept[i] = 1;
+    std::size_t i = 0;
+    for(int s : raw)
+      for(auto &t : _surfaces[s].triangles) {
+        if(isKept[i++]) continue;
+        std::vector<int> &n = isDegenerate(t, &_nodes) ? degenerate : duplicated;
+        n.insert(n.end(), t.begin(), t.end());
+      }
+    report.add(plural(degenerate.size() / 3, "degenerate triangle",
+                      "degenerate triangles") + " removed",
+               2, degenerate);
+    report.add(plural(duplicated.size() / 3, "duplicated triangle",
+                      "duplicated triangles") + " removed",
+               2, duplicated);
+  }
+  std::string removed =
+    plural(r.degenerate, "degenerate triangle", "degenerate triangles") +
+    " (two nodes the same, or no area) and " +
+    plural(r.duplicated, "duplicated triangle", "duplicated triangles") +
+    " (the same three nodes) removed";
+  done(removed);
+
+  // the cracks zipped: the triangle of the input each one comes from; the
   // events up to twice the length of the free edges, for the zipping within
-  // other tolerances)
+  // other tolerances
+  Msg::Info("Discrete CAD heal: the distances across the cracks, for the "
+            "tolerance...");
   std::string proposed;
   std::map<int, int> distances;
   const double tolerance0 = zipTolerance(_nodes, tri, &proposed, &distances);
-  if(tolerance > 0.)
+  char tol[64];
+  if(tolerance > 0.) {
+    snprintf(tol, sizeof(tol), "%g", tolerance);
+    done("tolerance " + std::string(tol) + " given (" + proposed + ")");
     proposed.clear();
-  else
+  }
+  else {
     tolerance = tolerance0;
+    done(proposed);
+  }
+  snprintf(tol, sizeof(tol), "%g", tolerance);
+  Msg::Info("Discrete CAD heal: zipping the cracks within %s...", tol);
   const std::vector<std::array<int, 3> > unzipped = tri;
   DiscreteCADZipReport z;
   std::vector<std::size_t> zipped;
   zipFreeEdges(_nodes, tri, tolerance, z, &zipped, 2.);
+  const std::string closing =
+    plural(z.merged.size(), "node", "nodes") + " merged, " +
+    plural(z.inserted.size(), "node", "nodes") + " inserted into free edges; " +
+    std::to_string(z.freeBefore) + " free edges, " +
+    std::to_string(z.freeAfter) + " left";
+  const std::string cracks =
+    "cracks zipped within " + std::string(tol) +
+    (proposed.empty() ? std::string("") : " (" + proposed + ")") + ": " +
+    closing;
+  done("cracks zipped: " + closing);
   {
     DiscreteCAD_Internals::Zip &zip = report.zip;
     zip.tolerance = tolerance;
@@ -3131,37 +3190,43 @@ bool DiscreteCAD_Internals::heal(const std::vector<int> &surfaceTags,
   }
   for(std::size_t &i : zipped) i = kept[i];
   kept = zipped;
+
+  // the triangles oriented
+  Msg::Info("Discrete CAD heal: orienting the triangles as their neighbors, "
+            "then the pieces outwards (the open ones by the winding "
+            "number)...");
   std::vector<int> component;
   std::vector<char> turnedOver;
   orientTriangles(_nodes, tri, r, &component, &turnedOver);
+  const std::string pieces =
+    plural(r.components, "piece", "pieces") +
+    " (triangles connected by their edges): " + std::to_string(r.closed) +
+    " closed, " + std::to_string(r.components - r.closed) + " open";
+  std::string turned;
+  if(!r.reversedTriangles)
+    turned = "no triangle turned over: all were oriented consistently";
+  else
+    turned = plural(r.reversedTriangles, "triangle", "triangles") +
+             " turned over: those against their neighbors, and " +
+             plural(r.reversedClosed, "closed piece", "closed pieces") +
+             " of negative volume and " +
+             plural(r.reversedOpen, "open piece", "open pieces") +
+             " against the winding number of the others";
+  Msg::Info("Discrete CAD heal: %s", pieces.c_str());
+  done(turned);
   {
-    // (the triangles removed, and those turned over)
-    std::vector<int> degenerate, duplicated;
-    std::vector<char> isKept(before.size(), 0);
-    for(std::size_t i : kept) isKept[i] = 1;
-    for(std::size_t i = 0; i < before.size(); i++) {
-      if(isKept[i]) continue;
-      const std::array<int, 3> &t = before[i];
-      std::vector<int> &n =
-        (t[0] == t[1] || t[1] == t[2] || t[2] == t[0]) ? degenerate : duplicated;
-      n.insert(n.end(), t.begin(), t.end());
-    }
-    report.add(plural(degenerate.size() / 3, "degenerate triangle",
-                      "degenerate triangles") + " removed",
-               2, degenerate);
-    report.add(plural(duplicated.size() / 3, "duplicated triangle",
-                      "duplicated triangles") + " removed",
-               2, duplicated);
+    // (the nodes merged and inserted, the free edges left, the triangles
+    // turned over)
     report.add(plural(z.merged.size(), "node", "nodes") +
                  " of free edges merged into nodes of others (cracks)",
                0, z.merged);
     report.add(plural(z.inserted.size(), "node", "nodes") +
                  " inserted into free edges (T-junctions)",
                0, z.inserted);
+    std::map<std::pair<int, int>, int> count;
+    for(auto &t : tri)
+      for(int k = 0; k < 3; k++) count[std::minmax(t[k], t[(k + 1) % 3])]++;
     {
-      std::map<std::pair<int, int>, int> count;
-      for(auto &t : tri)
-        for(int k = 0; k < 3; k++) count[std::minmax(t[k], t[(k + 1) % 3])]++;
       std::vector<int> left;
       for(auto &c : count)
         if(c.second == 1) {
@@ -3184,9 +3249,6 @@ bool DiscreteCAD_Internals::heal(const std::vector<int> &surfaceTags,
       report.add(plural(n.size() / 3, "triangle", "triangles") + why[w], 2, n);
     }
     // (the pieces, closed or open)
-    std::map<std::pair<int, int>, int> count;
-    for(auto &t : tri)
-      for(int k = 0; k < 3; k++) count[std::minmax(t[k], t[(k + 1) % 3])]++;
     std::set<int> openPieces;
     for(std::size_t i = 0; i < tri.size(); i++)
       for(int k = 0; k < 3; k++)
@@ -3216,40 +3278,16 @@ bool DiscreteCAD_Internals::heal(const std::vector<int> &surfaceTags,
       _surfaces.erase(s);
       emptied++;
     }
-  // (what was done, in words)
-  std::string removed =
-    plural(r.degenerate, "degenerate triangle", "degenerate triangles") +
-    " (two nodes the same) and " +
-    plural(r.duplicated, "duplicated triangle", "duplicated triangles") +
-    " (the same three nodes) removed";
-  if(emptied)
-    removed += ", " +
-               plural(emptied, "triangulation", "triangulations") +
-               " left empty removed";
-  const std::string pieces =
-    plural(r.components, "piece", "pieces") +
-    " (triangles connected by their edges): " + std::to_string(r.closed) +
-    " closed, " + std::to_string(r.components - r.closed) + " open";
-  std::string turned;
-  if(!r.reversedTriangles)
-    turned = "no triangle turned over: all were oriented consistently";
-  else
-    turned = plural(r.reversedTriangles, "triangle", "triangles") +
-             " turned over: those against their neighbors, and " +
-             plural(r.reversedClosed, "closed piece", "closed pieces") +
-             " of negative volume and " +
-             plural(r.reversedOpen, "open piece", "open pieces") +
-             " against the winding number of the others";
-  char tol[64];
-  snprintf(tol, sizeof(tol), "%g", tolerance);
-  const std::string zip =
-    "cracks zipped within " + std::string(tol) +
-    (proposed.empty() ? std::string("") : " (" + proposed + ")") + ": " +
-    plural(z.merged.size(), "node", "nodes") + " merged, " +
-    plural(z.inserted.size(), "node", "nodes") + " inserted into free edges; " +
-    std::to_string(z.freeBefore) + " free edges, " +
-    std::to_string(z.freeAfter) + " left";
-  // (what is left)
+  if(emptied) {
+    const std::string empty =
+      plural(emptied, "triangulation", "triangulations") +
+      " left empty removed";
+    removed += ", " + empty;
+    Msg::Info("Discrete CAD heal: %s", empty.c_str());
+  }
+
+  // what is left
+  Msg::Info("Discrete CAD heal: the defects left...");
   DiscreteCADDefects after;
   findDefects(_nodes, tri, after);
   const std::string left =
@@ -3268,13 +3306,11 @@ bool DiscreteCAD_Internals::heal(const std::vector<int> &surfaceTags,
                }
                return n;
              }());
-  report.text = removed + "\n" + zip + "\n" + pieces + "\n" + turned + "\n" +
+  report.text = removed + "\n" + cracks + "\n" + pieces + "\n" + turned + "\n" +
                 left;
-  Msg::Info("Discrete CAD heal: %s", removed.c_str());
-  Msg::Info("Discrete CAD heal: %s", zip.c_str());
-  Msg::Info("Discrete CAD heal: %s", left.c_str());
-  Msg::Info("Discrete CAD heal: %s", pieces.c_str());
-  Msg::Info("Discrete CAD heal: %s", turned.c_str());
+  done(left);
+  Msg::StatusBar(true, "Done healing (Wall %gs, CPU %gs)", TimeOfDay() - wall,
+                 Cpu() - cpu);
   _changed = true;
   return true;
 }
