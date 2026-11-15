@@ -235,11 +235,18 @@ private:
   char _visible;
 
 public:
-  // (after buildPartitionIndex())
+  // (after buildPartitionIndex()) a partition is shown when some of the
+  // entities it does not share with other partitions are: the interfaces
+  // are shown with any of the partitions they separate
   VisPartition(int tag) : _tag(tag), _visible(1)
   {
     auto it = _partitionIndex.find(tag);
-    if(it != _partitionIndex.end()) _visible = anyVisible(it->second);
+    if(it == _partitionIndex.end()) return;
+    std::vector<GEntity *> own;
+    std::vector<int> tmp;
+    for(GEntity *ge : it->second)
+      if(partitionsOf(ge, tmp)->size() == 1) own.push_back(ge);
+    _visible = anyVisible(own.empty() ? it->second : own);
   }
   ~VisPartition() {}
   int getTag() const { return _tag; }
