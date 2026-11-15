@@ -398,6 +398,24 @@ Vertex InterpolateCurve(Curve *c, double u, int const derivee)
     return V;
   }
   else if(derivee == 2) {
+    if((c->Typ == MSH_SEGM_CIRC || c->Typ == MSH_SEGM_CIRC_INV ||
+        c->Typ == MSH_SEGM_ELLI || c->Typ == MSH_SEGM_ELLI_INV) &&
+       List_Nbr(c->Control_Points) >= 2) {
+      // exact for circles and ellipses: differences of differences are too
+      // noisy for the curvature computed from them
+      bool inv = (c->Typ == MSH_SEGM_CIRC_INV || c->Typ == MSH_SEGM_ELLI_INV);
+      double dt = c->Circle.t2 - c->Circle.t1;
+      double theta = c->Circle.t1 + dt * (inv ? 1. - u : u) - c->Circle.incl;
+      double x = -c->Circle.f1 * std::cos(theta);
+      double y = -c->Circle.f2 * std::sin(theta);
+      double ci = std::cos(c->Circle.incl), si = std::sin(c->Circle.incl);
+      V.Pos.X = dt * dt * (x * ci - y * si);
+      V.Pos.Y = dt * dt * (x * si + y * ci);
+      V.Pos.Z = 0.;
+      Projette(&V, c->Circle.invmat);
+      V.u = u;
+      return V;
+    }
     double const eps1 = (u < eps) ? 0.0 : eps;
     double const eps2 = (u > 1 - eps) ? 0.0 : eps;
     Vertex D[2];
