@@ -27,38 +27,21 @@
 #include "DiscreteCADHeal.h"
 #include "DiscreteCADWinding.h"
 
-bool isDegenerate(const std::array<int, 3> &t,
-                  const std::vector<std::array<double, 3> > *x)
+bool isDegenerate(const std::array<int, 3> &t)
 {
-  if(t[0] == t[1] || t[1] == t[2] || t[2] == t[0]) return true;
-  if(!x) return false;
-  double e[3][3], longest = 0.;
-  for(int k = 0; k < 3; k++) {
-    double l = 0.;
-    for(int m = 0; m < 3; m++) {
-      e[k][m] = (*x)[t[(k + 1) % 3]][m] - (*x)[t[k]][m];
-      l += e[k][m] * e[k][m];
-    }
-    longest = std::max(longest, l);
-  }
-  const double c[3] = {e[0][1] * e[2][2] - e[0][2] * e[2][1],
-                       e[0][2] * e[2][0] - e[0][0] * e[2][2],
-                       e[0][0] * e[2][1] - e[0][1] * e[2][0]};
-  return !(std::sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2]) >
-           1e-14 * longest);
+  return t[0] == t[1] || t[1] == t[2] || t[2] == t[0];
 }
 
 void removeBadTriangles(std::vector<std::array<int, 3> > &triangles,
                         DiscreteCADHealReport &report,
-                        std::vector<std::size_t> *kept,
-                        const std::vector<std::array<double, 3> > *x)
+                        std::vector<std::size_t> *kept)
 {
   if(kept) kept->clear();
   std::set<std::array<int, 3> > seen;
   std::size_t j = 0;
   for(std::size_t i = 0; i < triangles.size(); i++) {
     const std::array<int, 3> &t = triangles[i];
-    if(isDegenerate(t, x)) {
+    if(isDegenerate(t)) {
       report.degenerate++;
       continue;
     }
@@ -272,7 +255,7 @@ void findDefects(const std::vector<std::array<double, 3> > &x,
   std::set<std::array<int, 3> > seen;
   for(std::size_t i = 0; i < nt; i++) {
     const std::array<int, 3> &t = triangles[i];
-    if(isDegenerate(t, &x)) {
+    if(isDegenerate(t)) {
       d.degenerate.push_back(i);
       continue;
     }
@@ -291,6 +274,11 @@ void findDefects(const std::vector<std::array<double, 3> > &x,
                          e[0][2] * e[2][0] - e[0][0] * e[2][2],
                          e[0][0] * e[2][1] - e[0][1] * e[2][0]};
     const double area2 = norm(c);
+    const double longest = std::max(l[0], std::max(l[1], l[2]));
+    if(!(area2 > 1e-14 * longest * longest)) {
+      d.needles.push_back(i);
+      continue;
+    }
     // (an acute angle whose sine is that of a degree or less)
     for(int k = 0; k < 3; k++) {
       const double s = area2 / (l[k] * l[(k + 2) % 3]);
@@ -663,22 +651,7 @@ void zipFreeEdges(const std::vector<std::array<double, 3> > &x,
                      lengths.end());
     median = lengths[lengths.size() / 2];
   }
-  // (the distances made 0: up to the rounding of the coordinates)
-  double lo[3] = {inf, inf, inf}, hi[3] = {-inf, -inf, -inf};
-  for(std::size_t i = 0; i < n0; i++)
-    if(alive[i])
-      for(int n : t[i])
-        for(int k = 0; k < 3; k++) {
-          lo[k] = std::min(lo[k], x[n][k]);
-          hi[k] = std::max(hi[k], x[n][k]);
-        }
-  const double rounding =
-    report.freeEdges.empty() ?
-      0. :
-      1e-14 * std::sqrt((hi[0] - lo[0]) * (hi[0] - lo[0]) +
-                        (hi[1] - lo[1]) * (hi[1] - lo[1]) +
-                        (hi[2] - lo[2]) * (hi[2] - lo[2]));
-  reach = std::max(rounding, std::max(tolerance, reach * median));
+  reach = std::max(tolerance, reach * median);
   if(!(reach > 0.) || report.freeEdges.empty()) reach = 0.;
   report.reach = reach;
   // (a point within reach of a node, or a node within reach of a free edge,
@@ -976,8 +949,7 @@ void zipFreeEdges(const std::vector<std::array<double, 3> > &x,
   while(!queue.empty() && report.events.size() < most) {
     const candidate e = queue.top();
     queue.pop();
-    const double at = e.d <= rounding ? 0. : e.d;
-    if(!taken && at > tolerance) take();
+    if(!taken && e.d > tolerance) take();
     if(e.kind == 'm') {
       const int a = find(e.a), b = find(e.b);
       if(a == b || !free[a] || !free[b]) continue;
@@ -987,7 +959,7 @@ void zipFreeEdges(const std::vector<std::array<double, 3> > &x,
         if(d <= reach) queue.push({d, 'm', std::min(a, b), std::max(a, b)});
         continue;
       }
-      level = std::max(level, at);
+      level = std::max(level, e.d);
       merge(std::max(a, b), std::min(a, b));
     }
     else {
@@ -1002,7 +974,7 @@ void zipFreeEdges(const std::vector<std::array<double, 3> > &x,
       if(find(u) != u || find(v) != v) continue;
       along(u, v, l);
       if(l.size() != 1 || has(l[0], c)) continue;
-      level = std::max(level, at);
+      level = std::max(level, e.d);
       insert(c, u, v, l[0]);
     }
   }

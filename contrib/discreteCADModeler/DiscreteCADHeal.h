@@ -36,20 +36,15 @@ struct DiscreteCADHealReport {
   int reversedTriangles = 0;
 };
 
-// Whether a triangle is degenerate: two nodes the same or, with the
-// coordinates x, no area (twice its area at most 1e-14 times the square of
-// its longest edge)
-bool isDegenerate(const std::array<int, 3> &t,
-                  const std::vector<std::array<double, 3> > *x = nullptr);
+// Whether a triangle is degenerate: two nodes the same (a triangle without
+// area is not: only its topology counts)
+bool isDegenerate(const std::array<int, 3> &t);
 
-// The degenerate triangles (see isDegenerate: those without area too with
-// the coordinates x, then leaving cracks for zipFreeEdges to close) and the
-// duplicated ones (the same nodes) removed; the index of each one kept in the
-// input in kept
+// The degenerate triangles and the duplicated ones (the same nodes) removed;
+// the index of each one kept in the input in kept
 void removeBadTriangles(std::vector<std::array<int, 3> > &triangles,
                         DiscreteCADHealReport &report,
-                        std::vector<std::size_t> *kept = nullptr,
-                        const std::vector<std::array<double, 3> > *x = nullptr);
+                        std::vector<std::size_t> *kept = nullptr);
 
 // The triangles oriented as their neighbors across the edges of two
 // triangles, each component (the triangles so connected) as its first
@@ -80,11 +75,8 @@ void orientTriangles(const std::vector<std::array<double, 3> > &x,
 
 // The cracks of a soup of triangles zipped, as a filtration: the events from
 // the closest, each one made at its level (its distance, or the level of the
-// event that made it possible if that is larger; 0 for a distance of at most
-// 1e-14 times the size of the triangles, the rounding of their coordinates,
-// as across the cracks the triangles without area leave, see isDegenerate),
-// the zipping within a tolerance being the events of levels up to it. An
-// event merges a node of a
+// event that made it possible if that is larger), the zipping within a
+// tolerance being the events of levels up to it. An event merges a node of a
 // free edge (an edge of one triangle) into a node of another free edge
 // (never into more than two distinct triangles along an edge: the merge is
 // refused; the triangles with the two nodes collapse, the copies of a
@@ -137,8 +129,8 @@ double zipTolerance(const std::vector<std::array<double, 3> > &x,
                     std::map<int, int> *histogram = nullptr);
 
 // The defects of a soup of triangles, as it is: the triangles degenerate (two
-// nodes the same, or no area), duplicated (the nodes of one before) and
-// needles (an angle smaller than a degree); the edges free (of one triangle:
+// nodes the same), duplicated (the nodes of one before) and needles (no area,
+// or an angle smaller than a degree); the edges free (of one triangle:
 // holes and gaps), non-manifold (of more than two triangles) and misoriented
 // (two triangles along them the same way); the nodes of T-junctions (inside a
 // free edge of other triangles); the pieces (the triangles connected across

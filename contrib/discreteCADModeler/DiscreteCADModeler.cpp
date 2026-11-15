@@ -2955,13 +2955,13 @@ bool DiscreteCAD_Internals::importTriangulations(
     return n;
   };
   report.add(plural(d.degenerate.size(), "degenerate triangle",
-                    "degenerate triangles") + " (two nodes the same, or no area)",
+                    "degenerate triangles") + " (two nodes the same)",
              2, ofTriangles(d.degenerate));
   report.add(plural(d.duplicated.size(), "duplicated triangle",
                     "duplicated triangles") + " (the nodes of another one)",
              2, ofTriangles(d.duplicated));
   report.add(plural(d.needles.size(), "needle", "needles") +
-               " (an angle smaller than a degree)",
+               " (no area, or an angle smaller than a degree)",
              2, ofTriangles(d.needles));
   report.add(plural(d.free.size(), "free edge", "free edges") +
                " (of one triangle: holes and gaps)",
@@ -3069,7 +3069,7 @@ bool DiscreteCAD_Internals::heal(const std::vector<int> &surfaceTags,
   // the degenerate and duplicated triangles removed
   DiscreteCADHealReport r;
   std::vector<std::size_t> kept;
-  removeBadTriangles(tri, r, &kept, &_nodes);
+  removeBadTriangles(tri, r, &kept);
   {
     std::vector<int> degenerate, duplicated;
     std::vector<char> isKept(surfaceOf.size(), 0);
@@ -3078,7 +3078,7 @@ bool DiscreteCAD_Internals::heal(const std::vector<int> &surfaceTags,
     for(int s : raw)
       for(auto &t : _surfaces[s].triangles) {
         if(isKept[i++]) continue;
-        std::vector<int> &n = isDegenerate(t, &_nodes) ? degenerate : duplicated;
+        std::vector<int> &n = isDegenerate(t) ? degenerate : duplicated;
         n.insert(n.end(), t.begin(), t.end());
       }
     report.add(plural(degenerate.size() / 3, "degenerate triangle",
@@ -3090,7 +3090,7 @@ bool DiscreteCAD_Internals::heal(const std::vector<int> &surfaceTags,
   }
   std::string removed =
     plural(r.degenerate, "degenerate triangle", "degenerate triangles") +
-    " (two nodes the same, or no area) and " +
+    " (two nodes the same) and " +
     plural(r.duplicated, "duplicated triangle", "duplicated triangles") +
     " (the same three nodes) removed";
   done(removed);
