@@ -528,6 +528,16 @@ static std::size_t getSizeOfEind(GModel *model)
 // = no elements found, 2 = error.
 static int makeGraph(GModel *model, Graph &graph, int selectDim)
 {
+  bool polytopes = false;
+  for(auto gf : model->getFaces())
+    if(gf->polygons.size()) polytopes = true;
+  for(auto gr : model->getRegions())
+    if(gr->polyhedra.size()) polytopes = true;
+  if(polytopes) {
+    Msg::Error("Partitioning meshes with polygons or polyhedra is not "
+               "implemented");
+    return 2;
+  }
   std::size_t eindSize = 0;
   if(selectDim < 0) {
     graph.ne(model->getNumMeshElements());

@@ -13,6 +13,8 @@
 #include "MPyramid.h"
 #include "MPrism.h"
 #include "MHexahedron.h"
+#include "MPolygon.h"
+#include "MPolyhedron.h"
 #include "Context.h"
 #include "meshGFaceOptimize.h"
 #include "qualityMeasures.h"
@@ -554,8 +556,13 @@ void RelocateVertices(GFace *gf, int niter, double tol)
   if(!niter) return;
   Msg::Debug("relocate vertices (face %i)", gf->tag());
 
+  // the nodes that do not move: those of the boundary layers, and those of
+  // the polygons, whose shape is not looked at
   std::set<MVertex *> vs;
   getAllBoundaryLayerVertices(gf, vs);
+  for(auto p : gf->polygons)
+    for(std::size_t i = 0; i < p->getNumVertices(); i++)
+      vs.insert(p->getVertex(i));
 
   VertexToElementCSR adj;
   adj.add(gf->triangles);
@@ -614,13 +621,19 @@ void RelocateVertices(GRegion *region, int niter, double tol, int nthreads,
   adj.add(region->hexahedra);
   adj.finalize();
 
+  // the nodes of the polyhedra do not move: their shape is not looked at
+  std::set<MVertex *> fixed;
+  for(auto p : region->polyhedra)
+    for(std::size_t i = 0; i < p->getNumVertices(); i++)
+      fixed.insert(p->getVertex(i));
+
   // the vertices that move (inside the region), numbered in MVertex::_index
   // (-1 for the others)
   std::vector<MVertex *> vertices;
   std::vector<ElementSpan> elements;
   for(std::size_t k = 0; k < adj.numVertices(); k++) {
     MVertex *v = adj.vertex(k);
-    if(v->onWhat()->dim() != 3) {
+    if(v->onWhat()->dim() != 3 || fixed.count(v)) {
       v->setIndex(-1);
       continue;
     }

@@ -1836,6 +1836,16 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
 {
   if(CTX::instance()->abortOnError && Msg::GetErrorCount()) return;
 
+  if(order > 1) {
+    std::size_t numPolytopes = 0;
+    for(auto gf : m->getFaces()) numPolytopes += gf->polygons.size();
+    for(auto gr : m->getRegions()) numPolytopes += gr->polyhedra.size();
+    if(numPolytopes)
+      Msg::Warning("%zu polygons and polyhedra are left as they are: the mesh "
+                   "is not conforming where they touch the elements that get "
+                   "new nodes", numPolytopes);
+  }
+
   // replace all the elements in the mesh with second order elements
   // by creating unique vertices on the edges/faces of the mesh:
   //

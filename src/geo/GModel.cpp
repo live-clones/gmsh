@@ -3795,6 +3795,11 @@ void GModel::makeDiscreteRegionsSimplyConnected()
             }
           }
         }
+        if(e->getType() == TYPE_POLYH) {
+          // moved as it is: the nodes alone do not make a polyhedron
+          r->polyhedra.push_back((MPolyhedron *)e);
+          continue;
+        }
         MElementFactory factory;
         MElement *e2 = factory.create(e->getTypeForMSH(), verts, e->getNum(),
                                       e->getPartition());
@@ -3852,6 +3857,11 @@ void GModel::makeDiscreteFacesSimplyConnected()
               touched.insert(verts[k]);
             }
           }
+        }
+        if(e->getType() == TYPE_POLYG) {
+          // moved as it is: the nodes alone do not make a polygon
+          f->polygons.push_back((MPolygon *)e);
+          continue;
         }
         MElementFactory factory;
         MElement *e2 = factory.create(e->getTypeForMSH(), verts, e->getNum(),
@@ -3917,10 +3927,22 @@ void GModel::setPhysicalNumToEntitiesInBox(int EntityDimension,
   setPhysicalNumToEntitiesInBox(EntityDimension, PhysicalNumber, box);
 }
 
+// The classification only keeps the triangles.
+static void warnNonTriangles(GModel *m)
+{
+  std::size_t n = 0;
+  for(auto gf : m->getFaces())
+    n += gf->quadrangles.size() + gf->polygons.size();
+  if(n)
+    Msg::Warning("Only triangles are classified: %zu quadrangles and polygons "
+                 "are removed", n);
+}
+
 void GModel::classifySurfaces(double angleThreshold, bool includeBoundary,
                               bool forReparametrization,
                               double curveAngleThreshold)
 {
+  warnNonTriangles(this);
   auto splitMap = std::map<int, std::vector<int>>();
   classifyFaces(this, angleThreshold, includeBoundary, forReparametrization,
                 curveAngleThreshold, splitMap);
@@ -3931,6 +3953,7 @@ void GModel::classifySurfaces(double angleThreshold, bool includeBoundary,
                               double curveAngleThreshold,
                               std::map<int, std::vector<int>> &splitMap)
 {
+  warnNonTriangles(this);
   classifyFaces(this, angleThreshold, includeBoundary, forReparametrization,
                 curveAngleThreshold, splitMap);
 }
