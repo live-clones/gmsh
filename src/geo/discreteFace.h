@@ -7,6 +7,7 @@
 #define DISCRETE_FACE_H
 
 #include <algorithm>
+#include <functional>
 #include "GModel.h"
 #include "GFace.h"
 #include "MTriangle.h"
@@ -36,7 +37,29 @@ private:
     bool checkPlanar();
   };
   param _param;
-  void _createGeometryFromSTL();
+  ModelType _nativeType = UnknownModel;
+  // the exact geometry of an analytic surface, if given: its point at the
+  // parameters (u, v), the derivatives d of the point (d[0] = dx/du,
+  // d[1] = dx/dv, d[2] = d2x/du2, d[3] = d2x/dv2, d[4] = d2x/dudv), and the
+  // parameters of its point nearest to a point (near the parameters guess, if
+  // not null)
+  std::function<SPoint3(double, double)> _exactPoint;
+  std::function<void(double, double, SVector3[5])> _exactDerivatives;
+  std::function<SPoint2(const SPoint3 &, const double *)> _exactParameters;
+  GPoint _intersectionWithCircle(const SVector3 &n1, const SVector3 &n2,
+                                 const SVector3 &p, const double &R,
+                                 double uv[2]);
+  GPoint _intersectionWithCircleSpatial(const SVector3 &n1, const SVector3 &n2,
+                                        const SVector3 &p, const double &R,
+                                        double uv[2]);
+  // the intersection with a circle found on the chart moved onto the exact
+  // surface
+  GPoint _exactIntersectionWithCircle(GPoint gp, const SVector3 &n1,
+                                      const SVector3 &n2, const SVector3 &p,
+                                      const double &R, double uv[2]);
+  // (planar: the parametrization of a planar surface replaced by the
+  // coordinates in its mean plane)
+  void _createGeometryFromSTL(bool planar = true);
   GPoint _closestPoint(const SPoint3 &p, const double guess[2],
                        SVector3 *normal = nullptr) const;
   // the chart triangle containing (u, v), and the barycentric coordinates of
@@ -80,7 +103,36 @@ public:
   virtual void secondDer(const SPoint2 &param, SVector3 &dudu, SVector3 &dvdv,
                          SVector3 &dudv) const;
   int createGeometry();
+  // the geometry and parametrization from a triangulation (3 node indices per
+  // triangle) whose nodes have the coordinates xyz and the parameters uv,
+  // instead of those computed from the mesh by createGeometry()
+  void setParametrization(const std::vector<SPoint2> &uv,
+                          const std::vector<SPoint3> &xyz,
+                          const std::vector<int> &triangles);
   virtual bool haveParametrization() { return !_param.empty(); }
+  // the exact geometry of the surface, if it is analytic (see _exactPoint):
+  // its points, derivatives, normals and curvatures are then computed from
+  // it, the parametrization only giving the domain of the parameters
+  void setExactGeometry(
+    const std::function<SPoint3(double, double)> &point,
+    const std::function<void(double, double, SVector3[5])> &derivatives,
+    const std::function<SPoint2(const SPoint3 &, const double *)> &parameters)
+  {
+    _exactPoint = point;
+    _exactDerivatives = derivatives;
+    _exactParameters = parameters;
+  }
+  bool haveExactGeometry() const { return (bool)_exactPoint; }
+  // the parameters of the point of the exact surface nearest to p, near the
+  // parameters guess, even outside the domain (false without exact geometry)
+  bool exactParameters(const SPoint3 &p, const SPoint2 &guess,
+                       SPoint2 &uv) const
+  {
+    if(!_exactParameters) return false;
+    const double g[2] = {guess.x(), guess.y()};
+    uv = _exactParameters(p, g);
+    return true;
+  }
   virtual void mesh(bool verbose);
   int trianglePosition(double par1, double par2, double &u, double &v) const;
   GPoint intersectionWithCircle(const SVector3 &n1, const SVector3 &n2,
@@ -96,6 +148,11 @@ public:
   bool writeParametrization(FILE *fp, bool binary);
   bool readParametrization(FILE *fp, bool binary);
   virtual void resetMeshAttributes();
+  // UnknownModel, or the modeler that created the entity (the discrete CAD
+  // modeler); a GEO synchronize removes the discrete entities of unknown
+  // origin that the GEO internals do not hold
+  void setNativeType(ModelType type) { _nativeType = type; }
+  virtual ModelType getNativeType() const { return _nativeType; }
 };
 
 #endif

@@ -406,6 +406,11 @@ static actionItem geometryModule()
            [](int, drawContext *) {
              scriptSetFactory("OpenCASCADE", scriptFile());
            }),
+#if defined(HAVE_DISCRETECAD)
+    action(
+      "Discrete", "kernel_discrete", "",
+      [](int, drawContext *) { scriptSetFactory("Discrete", scriptFile()); }),
+#endif
   };
   std::vector<actionItem> add = {
     shape("Parameter", "add_parameter"),
