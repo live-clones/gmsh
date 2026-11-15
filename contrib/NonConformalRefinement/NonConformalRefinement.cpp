@@ -44,7 +44,7 @@
 GMSH_NonConformalRefinementPlugin::GMSH_NonConformalRefinementPlugin()
   : GMSH_MeshPlugin({{GMSH_FULLRC, "SizeField", nullptr, -1.},
                      {GMSH_FULLRC, "MaxLevel", nullptr, 4.},
-                     {GMSH_FULLRC, "Balance", nullptr, 1.},
+                     {GMSH_FULLRC, "MaxLevelDifference", nullptr, 1.},
                      {GMSH_FULLRC, "OnGeometry", nullptr, 1.},
                      {GMSH_FULLRC, "SampleSpacing", nullptr, 0.}})
 {
@@ -63,9 +63,12 @@ std::string GMSH_NonConformalRefinementPlugin::getHelp() const
          "evaluated on a grid of points of the elements including their "
          "corners, at most `SampleSpacing' apart (e.g. the smallest size of "
          "the field), so that no region of smaller sizes is missed. If "
-         "`Balance' is positive, the refinement levels of elements sharing an "
-         "edge differ by at most `Balance'. If `OnGeometry' is set, the new "
-         "nodes on curves and surfaces are placed on the geometry.";
+         "`MaxLevelDifference' is positive, the elements sharing an edge "
+         "differ by at most `MaxLevelDifference' levels of refinement (the "
+         "edge then holds at most 2^`MaxLevelDifference' - 1 hanging nodes): "
+         "the sizes are graded away from the small ones, a factor 2 per level, "
+         "without the field having to describe it. If `OnGeometry' is set, the "
+         "new nodes on curves and surfaces are placed on the geometry.";
 }
 
 namespace {
@@ -193,9 +196,20 @@ namespace {
   // triangulate a planar convex polygon whose nodes may be aligned (hanging
   // nodes), without dropping any node, by clipping the convex corners whose
   // triangle holds no other node; the triangulation only depends on the set of
-  // nodes, so that the two polyhedra sharing a face triangulate it the same way
-  void triangulate(const V *nodes, int numNodes, std::vector<V> &tris)
+  // nodes, so that the two polyhedra sharing a face triangulate it the same way.
+  // The corners are looked for with the nodes placed on the geometry at their
+  // flat positions: on the geometry a hanging node is off its edge, and would
+  // be cut off as the same triangle in the two faces sharing the edge.
+  void triangulate(const V *nodes, int numNodes, std::vector<V> &tris,
+                   const std::unordered_map<V, SPoint3> *flat)
   {
+    auto pos = [&](V v) {
+      if(flat && flat->size()) {
+        auto it = flat->find(v);
+        if(it != flat->end()) return it->second;
+      }
+      return v->point();
+    };
     std::vector<V> ring(nodes, nodes + numNodes);
     auto first = std::min_element(ring.begin(), ring.end(), [](V x, V y) {
       return x->getNum() < y->getNum();
@@ -206,16 +220,19 @@ namespace {
 
     // the normal (Newell), whose norm is twice the area
     double n[3] = {0., 0., 0.};
+    std::vector<SPoint3> p(ring.size());
+    for(std::size_t i = 0; i < ring.size(); i++) p[i] = pos(ring[i]);
     for(std::size_t i = 0; i < ring.size(); i++) {
-      V a = ring[i], b = ring[(i + 1) % ring.size()];
-      n[0] += (a->y() - b->y()) * (a->z() + b->z());
-      n[1] += (a->z() - b->z()) * (a->x() + b->x());
-      n[2] += (a->x() - b->x()) * (a->y() + b->y());
+      const SPoint3 &a = p[i], &b = p[(i + 1) % ring.size()];
+      n[0] += (a.y() - b.y()) * (a.z() + b.z());
+      n[1] += (a.z() - b.z()) * (a.x() + b.x());
+      n[2] += (a.x() - b.x()) * (a.y() + b.y());
     }
     double eps = 1e-10 * std::sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
-    auto cross = [&](V a, V b, V c) {
-      double u[3] = {b->x() - a->x(), b->y() - a->y(), b->z() - a->z()};
-      double v[3] = {c->x() - a->x(), c->y() - a->y(), c->z() - a->z()};
+    auto cross = [&](int ia, int ib, int ic) {
+      const SPoint3 &a = p[ia], &b = p[ib], &c = p[ic];
+      double u[3] = {b.x() - a.x(), b.y() - a.y(), b.z() - a.z()};
+      double v[3] = {c.x() - a.x(), c.y() - a.y(), c.z() - a.z()};
       return (u[1] * v[2] - u[2] * v[1]) * n[0] +
              (u[2] * v[0] - u[0] * v[2]) * n[1] +
              (u[0] * v[1] - u[1] * v[0]) * n[2];
@@ -224,15 +241,13 @@ namespace {
     while(ring.size() > 3) {
       int N = (int)ring.size(), ear = -1;
       for(int i = 0; i < N && ear < 0; i++) {
-        V a = ring[(i + N - 1) % N], b = ring[i], c = ring[(i + 1) % N];
+        int a = (i + N - 1) % N, b = i, c = (i + 1) % N;
         if(cross(a, b, c) <= eps) continue; // aligned (or reflex)
         bool ok = true;
-        for(int j = 0; j < N && ok; j++) {
-          V p = ring[j];
-          if(p != a && p != b && p != c && cross(a, b, p) >= -eps &&
-             cross(b, c, p) >= -eps && cross(c, a, p) >= -eps)
+        for(int j = 0; j < N && ok; j++)
+          if(j != a && j != b && j != c && cross(a, b, j) >= -eps &&
+             cross(b, c, j) >= -eps && cross(c, a, j) >= -eps)
             ok = false;
-        }
         if(ok) ear = i;
       }
       if(ear < 0) {
@@ -244,6 +259,7 @@ namespace {
       tris.insert(tris.end(),
                   {ring[(ear + N - 1) % N], ring[ear], ring[(ear + 1) % N]});
       ring.erase(ring.begin() + ear);
+      p.erase(p.begin() + ear);
     }
     tris.insert(tris.end(), ring.begin(), ring.end());
   }
@@ -313,6 +329,23 @@ namespace {
       for(int i = 0; i < n; i++) s += v[i]->point();
       return s * (1. / n);
     }
+    // the same with the nodes at their flat positions; false if none has one
+    // (the centre is then the usual one)
+    bool hasFlat(const V *v, int n) const
+    {
+      for(int i = 0; i < n; i++)
+        if(flat.count(v[i])) return true;
+      return false;
+    }
+    SPoint3 flatCentre(const V *v, int n) const
+    {
+      SPoint3 s(0., 0., 0.);
+      for(int i = 0; i < n; i++) {
+        auto it = flat.find(v[i]);
+        s += (it == flat.end()) ? v[i]->point() : it->second;
+      }
+      return s * (1. / n);
+    }
     // a new node on a curve or a surface, in the middle of the nodes v in the
     // parametric space; if that point is far from their straight centre
     // (compared to the size h of the edge or face), as at a pole or where the
@@ -320,17 +353,29 @@ namespace {
     V onCurve(GEdge *c, double t, const V *v, int n, double h)
     {
       SPoint3 s = centre(v, n);
+      if(!onGeometry) {
+        // (left at the centre, with the parameter)
+        V m = new MEdgeVertex(s.x(), s.y(), s.z(), c, t);
+        newNodes.push_back(m);
+        return m;
+      }
       GPoint p = c->point(t);
       if(s.distance(SPoint3(p.x(), p.y(), p.z())) > 0.1 * h)
         p = c->closestPoint(s, t);
       V m = new MEdgeVertex(p.x(), p.y(), p.z(), c, t);
       newNodes.push_back(m);
       straight[m] = s;
+      flat[m] = flatCentre(v, n);
       return m;
     }
     V onSurface(GFace *f, SPoint2 uv, const V *v, int n, double h)
     {
       SPoint3 s = centre(v, n);
+      if(!onGeometry) {
+        V m = new MFaceVertex(s.x(), s.y(), s.z(), f, uv.x(), uv.y());
+        newNodes.push_back(m);
+        return m;
+      }
       GPoint p = f->point(uv);
       if(s.distance(SPoint3(p.x(), p.y(), p.z())) > 0.1 * h) {
         double guess[2] = {uv.x(), uv.y()};
@@ -340,13 +385,20 @@ namespace {
       V m = new MFaceVertex(p.x(), p.y(), p.z(), f, uv.x(), uv.y());
       newNodes.push_back(m);
       straight[m] = s;
+      flat[m] = flatCentre(v, n);
       return m;
     }
 
   public:
     std::vector<V> newNodes;
+    // place the new nodes of the curves and surfaces on the geometry, or only
+    // give them their parameters
+    bool onGeometry = true;
     // the straight position of the nodes placed on the geometry
     std::unordered_map<V, SPoint3> straight;
+    // where the new nodes would be had none been placed on the geometry (for
+    // those it changes): the positions the faces are triangulated with
+    std::unordered_map<V, SPoint3> flat;
 
     // place the new nodes on the geometry: register the edges of the curves
     // and of the surfaces, and the faces of the surfaces
@@ -369,6 +421,7 @@ namespace {
       }
       V nv = new MVertex(x / n, y / n, z / n, ge);
       newNodes.push_back(nv);
+      if(flat.size() && hasFlat(v, n)) flat[nv] = flatCentre(v, n);
       return nv;
     }
     V findMid(V a, V b) const
@@ -642,8 +695,10 @@ namespace {
   };
 
   // is the size field smaller than h at a point of a grid of the element, with
-  // n intervals along its edges?
-  bool smallerOnGrid(const Leaf &l, int n, double h, Field *field, GEntity *ge)
+  // n intervals along its edges? (nonPositive is set if it is not positive
+  // there)
+  bool smallerOnGrid(const Leaf &l, int n, double h, Field *field, GEntity *ge,
+                     bool &nonPositive)
   {
     double c[8][3];
     for(int i = 0; i < shape(l.type).numCorners; i++) {
@@ -656,7 +711,9 @@ namespace {
       double p[3] = {0., 0., 0.};
       for(int i = 0; i < nw; i++)
         for(int d = 0; d < 3; d++) p[d] += w[i] * c[i][d];
-      return (*field)(p[0], p[1], p[2], ge) < h;
+      double size = (*field)(p[0], p[1], p[2], ge);
+      if(size <= 0.) nonPositive = true;
+      return size < h;
     };
     double w[8];
     switch(l.type) {
@@ -741,6 +798,23 @@ namespace {
     return true;
   }
 
+  // the element a leaf of level 0 stands for, among the elements old from next
+  // on: the leaves of level 0 are in the order of the elements, and the
+  // elements in between were refined and are deleted
+  MElement *original(const Leaf &l, std::vector<MElement *> &old,
+                     std::size_t &next)
+  {
+    while(next < old.size()) {
+      MElement *e = old[next++];
+      bool same = (e->getType() == l.type);
+      for(int i = 0; same && i < shape(l.type).numCorners; i++)
+        same = (e->getVertex(i) == l.v[i]);
+      if(same) return e;
+      delete e;
+    }
+    return nullptr;
+  }
+
   // is the Jacobian of a volume element with a node on the boundary negative at
   // one of its corners (except at the apex of a pyramid)?
   bool isInverted(MElement *e)
@@ -796,11 +870,36 @@ int GMSH_NonConformalRefinementPlugin::run()
   }
   field->ensureUpdated();
   int maxLevel = (int)option(1);
-  int balance = std::max(0, (int)option(2));
+  int maxDifference = std::max(0, (int)option(2));
   bool onGeometry = (int)option(3);
   double sampleSpacing = option(4);
 
   double t0 = TimeOfDay();
+
+  // the elements with hanging nodes of a previous refinement cannot be
+  // refined again, and ghost cells are elements of other entities
+  for(auto gf : m->getFaces()) {
+    if(gf->polygons.size()) {
+      Msg::Error("Plugin(NonConformalRefinement) does not refine meshes that "
+                 "already have polygons or polyhedra");
+      return 0;
+    }
+    if(gf->geomType() == GEntity::GhostSurface) {
+      Msg::Error("Plugin(NonConformalRefinement) does not handle ghost cells");
+      return 0;
+    }
+  }
+  for(auto gr : m->getRegions()) {
+    if(gr->polyhedra.size()) {
+      Msg::Error("Plugin(NonConformalRefinement) does not refine meshes that "
+                 "already have polygons or polyhedra");
+      return 0;
+    }
+    if(gr->geomType() == GEntity::GhostVolume) {
+      Msg::Error("Plugin(NonConformalRefinement) does not handle ghost cells");
+      return 0;
+    }
+  }
 
   int dim = 2;
   for(auto gr : m->getRegions())
@@ -870,9 +969,11 @@ int GMSH_NonConformalRefinementPlugin::run()
     if(l.size()) lines.push_back({ge, l});
   }
 
-  // place the new nodes of the curves and surfaces on the geometry
+  // the new nodes of the curves and surfaces get their parameters, and are
+  // placed on the geometry if asked for
   Refiner r;
-  if(onGeometry) {
+  r.onGeometry = onGeometry;
+  {
     for(auto &l : lines)
       if(l.first->haveParametrization())
         for(auto &e : l.second) r.addCurve(l.first, e[0], e[1]);
@@ -888,7 +989,22 @@ int GMSH_NonConformalRefinementPlugin::run()
                          shape(l.type).numCorners);
   }
 
+  // the size field is sampled at a bounded number of points along the edges
+  // of an element: a spacing much smaller than the elements would take
+  // forever
+  const int maxSamples = (dim == 3) ? 100 : 1000;
+  if(sampleSpacing > 0.) {
+    double h = 0.;
+    for(auto &ls : leaves)
+      for(auto &l : ls) h = std::max(h, r.size(l));
+    if(h / sampleSpacing > maxSamples)
+      Msg::Warning("SampleSpacing is too small for the elements: the size "
+                   "field is sampled at %d points at most along their edges",
+                   maxSamples);
+  }
+
   // refine until all the elements are small enough
+  bool warned = false;
   for(int pass = 1;; pass++) {
     std::size_t refined = 0, total = 0;
     for(std::size_t e = 0; e < entities.size(); e++) {
@@ -898,18 +1014,20 @@ int GMSH_NonConformalRefinementPlugin::run()
       std::vector<char> large(ls.size(), 0);
       int nthreads = CTX::instance()->numThreadsFor(ls.size(), 1000);
 #pragma omp parallel for schedule(dynamic, 256) num_threads(nthreads)
-      for(std::size_t k = 0; k < ls.size(); k++) {
+      for(std::size_t k = 0; k < ls.size(); k++) try {
         Leaf &l = ls[k];
         if(l.level >= maxLevel || l.sized) continue;
         // on a grid with points at most sampleSpacing apart, corners and edge
         // midpoints included, which sees a region of small sizes touching the
         // element: no element then touches a region of smaller sizes, but the
         // levels can only grow one by one away from it
+        bool nonPositive = false;
         if(sampleSpacing > 0.) {
           double h = r.size(l);
-          int n = std::max(2, (int)std::ceil(h / sampleSpacing));
-          if(smallerOnGrid(l, n, h, field, entities[e]))
-            large[k] = 1;
+          int n = (int)std::min((double)maxSamples,
+                                std::max(2., std::ceil(h / sampleSpacing)));
+          if(smallerOnGrid(l, n, h, field, entities[e], nonPositive))
+            large[k] = nonPositive ? 3 : 1;
           else
             l.sized = true;
           continue;
@@ -934,18 +1052,34 @@ int GMSH_NonConformalRefinementPlugin::run()
                                          0.5 * (a->z() + b->z()), entities[e]));
         }
         if(r.size(l) > size)
-          large[k] = 1;
+          large[k] = (size <= 0.) ? 3 : 1;
         else
           l.sized = true;
       }
+      catch(...) {
+        // (an error of the field, thrown when run through the API: it cannot
+        // leave the parallel loop)
+        large[k] = 2;
+      }
+      if(!warned && std::find(large.begin(), large.end(), 3) != large.end()) {
+        Msg::Warning("The mesh size field is not positive everywhere: the "
+                     "elements are refined %d times there", maxLevel);
+        warned = true;
+      }
+      if(std::find(large.begin(), large.end(), 2) != large.end()) {
+        Msg::Error("Plugin(NonConformalRefinement) could not evaluate the "
+                   "mesh size field");
+        return 0;
+      }
 
-      // refine them, and the ones that are not balanced
+      // refine them, and the ones with too many levels of hanging nodes
       std::vector<Leaf> next;
       next.reserve(ls.size());
       for(std::size_t k = 0; k < ls.size(); k++) {
         Leaf &l = ls[k];
         bool split = large[k];
-        if(!split && balance && l.level < maxLevel && r.hanging(l, balance))
+        if(!split && maxDifference && l.level < maxLevel &&
+           r.hanging(l, maxDifference))
           split = true;
         if(split) {
           r.refine(l, entities[e], next);
@@ -970,19 +1104,24 @@ int GMSH_NonConformalRefinementPlugin::run()
   for(std::size_t e = 0; e < entities.size(); e++) {
     if(dim == 3) {
       GRegion *gr = static_cast<GRegion *>(entities[e]);
-      for(auto el : gr->tetrahedra) delete el;
-      for(auto el : gr->hexahedra) delete el;
-      for(auto el : gr->prisms) delete el;
-      for(auto el : gr->pyramids) delete el;
+      // (the elements that were not refined are kept, with their tags)
+      std::vector<MElement *> old;
+      old.insert(old.end(), gr->tetrahedra.begin(), gr->tetrahedra.end());
+      old.insert(old.end(), gr->hexahedra.begin(), gr->hexahedra.end());
+      old.insert(old.end(), gr->prisms.begin(), gr->prisms.end());
+      old.insert(old.end(), gr->pyramids.begin(), gr->pyramids.end());
+      std::size_t next = 0;
       gr->tetrahedra.clear();
       gr->hexahedra.clear();
       gr->prisms.clear();
       gr->pyramids.clear();
       for(auto &l : leaves[e]) {
+        MElement *orig = l.level ? nullptr : original(l, old, next);
         if(!r.hanging(l)) {
-          gr->addElement(standardElement(l));
+          gr->addElement(orig ? orig : standardElement(l));
           continue;
         }
+        delete orig;
         const Shape &s = shape(l.type);
         rings.clear();
         for(int i = 0; i < s.numFaces; i++) {
@@ -995,7 +1134,7 @@ int GMSH_NonConformalRefinementPlugin::run()
         V o = r.newNode(l.v, s.numCorners, gr);
         for(int i = 0; i < rings.size(); i++) {
           tris.clear();
-          triangulate(rings.ring(i), rings.ringSize(i), tris);
+          triangulate(rings.ring(i), rings.ringSize(i), tris, &r.flat);
           for(std::size_t j = 0; j < tris.size(); j += 3)
             tets.insert(tets.end(), {o, tris[j], tris[j + 1], tris[j + 2]});
         }
@@ -1004,29 +1143,35 @@ int GMSH_NonConformalRefinementPlugin::run()
         gr->addPolyhedron(p);
         numPolytopes++;
       }
+      while(next < old.size()) delete old[next++];
       numElements += gr->getNumMeshElements();
     }
     else {
       GFace *gf = static_cast<GFace *>(entities[e]);
-      for(auto el : gf->triangles) delete el;
-      for(auto el : gf->quadrangles) delete el;
+      std::vector<MElement *> old;
+      old.insert(old.end(), gf->triangles.begin(), gf->triangles.end());
+      old.insert(old.end(), gf->quadrangles.begin(), gf->quadrangles.end());
+      std::size_t next = 0;
       gf->triangles.clear();
       gf->quadrangles.clear();
       for(auto &l : leaves[e]) {
+        MElement *o = l.level ? nullptr : original(l, old, next);
         const Shape &s = shape(l.type);
         std::vector<V> ring, tris;
         r.ring(l.v, s.numCorners, ring);
         if((int)ring.size() == s.numCorners) {
-          gf->addElement(standardElement(l));
+          gf->addElement(o ? o : standardElement(l));
           continue;
         }
+        delete o;
         // a polygon, triangulated without new nodes
         auto p = new MPolygon(ring);
-        triangulate(ring.data(), (int)ring.size(), tris);
+        triangulate(ring.data(), (int)ring.size(), tris, &r.flat);
         p->setTriangles(tris);
         gf->addPolygon(p);
         numPolytopes++;
       }
+      while(next < old.size()) delete old[next++];
       numElements += gf->getNumMeshElements();
     }
   }
@@ -1034,13 +1179,21 @@ int GMSH_NonConformalRefinementPlugin::run()
   // ... the faces of the volumes, with their new nodes...
   for(auto &f : faces) {
     GFace *gf = f.first;
-    for(auto el : gf->triangles) delete el;
-    for(auto el : gf->quadrangles) delete el;
+    // (in the order of the leaves; those left whole are kept)
+    std::vector<MElement *> old;
+    old.insert(old.end(), gf->triangles.begin(), gf->triangles.end());
+    old.insert(old.end(), gf->quadrangles.begin(), gf->quadrangles.end());
     gf->triangles.clear();
     gf->quadrangles.clear();
-    for(auto &l : f.second) {
+    for(std::size_t k = 0; k < f.second.size(); k++) {
+      Leaf &l = f.second[k];
       rings.clear();
       r.faces(l.v, shape(l.type).numCorners, rings);
+      if(rings.size() == 1 && rings.ringSize(0) == rings.corners[0]) {
+        gf->addElement(old[k]);
+        continue;
+      }
+      delete old[k];
       for(int i = 0; i < rings.size(); i++) {
         const V *ring = rings.ring(i);
         int n = rings.ringSize(i);
@@ -1055,7 +1208,7 @@ int GMSH_NonConformalRefinementPlugin::run()
         else {
           std::vector<V> tris;
           auto p = new MPolygon(std::vector<V>(ring, ring + n));
-          triangulate(ring, n, tris);
+          triangulate(ring, n, tris, &r.flat);
           p->setTriangles(tris);
           gf->addPolygon(p);
         }
@@ -1066,12 +1219,18 @@ int GMSH_NonConformalRefinementPlugin::run()
   // ... and the lines
   for(auto &l : lines) {
     GEdge *ge = l.first;
-    for(auto el : ge->lines) delete el;
+    std::vector<MLine *> old = ge->lines;
     ge->lines.clear();
-    for(auto &e : l.second) {
+    for(std::size_t k = 0; k < l.second.size(); k++) {
+      auto &e = l.second[k];
       std::vector<V> nodes(1, e[0]);
       r.edgeNodes(e[0], e[1], nodes);
       nodes.push_back(e[1]);
+      if(nodes.size() == 2) {
+        ge->addLine(old[k]);
+        continue;
+      }
+      delete old[k];
       for(std::size_t i = 0; i + 1 < nodes.size(); i++) {
         if(nodes[i]->onWhat()->dim() > 1) nodes[i]->setEntity(ge);
         ge->addLine(new MLine(nodes[i], nodes[i + 1]));
@@ -1111,6 +1270,16 @@ int GMSH_NonConformalRefinementPlugin::run()
                    moved);
     if(inverted) Msg::Warning("%zu inverted elements", inverted);
   }
+
+  // (the new nodes are not added to the periodic node correspondences)
+  std::vector<GEntity *> all;
+  m->getEntities(all);
+  for(auto ge : all)
+    if(ge->correspondingVertices.size()) {
+      Msg::Warning("Plugin(NonConformalRefinement) does not extend the "
+                   "periodic node correspondences to the new nodes");
+      break;
+    }
 
   m->destroyMeshCaches();
   CTX::instance()->meshChanged();

@@ -1053,14 +1053,14 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(NonConformalRefinement)
-Plugin(NonConformalRefinement) splits the first order elements of highest dimension of the current mesh through the middle of their edges, up to `MaxLevel' times, until their longest edge is smaller than the mesh size field `SizeField' (the background field if negative). The elements with hanging nodes become polygons and polyhedra. The field is evaluated at the centre and edge midpoints of the elements, which allows large jumps of sizes between neighboring elements; if `SampleSpacing' is positive, it is instead evaluated on a grid of points of the elements including their corners, at most `SampleSpacing' apart (e.g. the smallest size of the field), so that no region of smaller sizes is missed. If `Balance' is positive, the refinement levels of elements sharing an edge differ by at most `Balance'. If `OnGeometry' is set, the new nodes on curves and surfaces are placed on the geometry.
+Plugin(NonConformalRefinement) splits the first order elements of highest dimension of the current mesh through the middle of their edges, up to `MaxLevel' times, until their longest edge is smaller than the mesh size field `SizeField' (the background field if negative). The elements with hanging nodes become polygons and polyhedra. The field is evaluated at the centre and edge midpoints of the elements, which allows large jumps of sizes between neighboring elements; if `SampleSpacing' is positive, it is instead evaluated on a grid of points of the elements including their corners, at most `SampleSpacing' apart (e.g. the smallest size of the field), so that no region of smaller sizes is missed. If `MaxLevelDifference' is positive, the elements sharing an edge differ by at most `MaxLevelDifference' levels of refinement (the edge then holds at most 2^`MaxLevelDifference' - 1 hanging nodes): the sizes are graded away from the small ones, a factor 2 per level, without the field having to describe it. If `OnGeometry' is set, the new nodes on curves and surfaces are placed on the geometry.
 Numeric options:
 @table @code
 @item SizeField
 Default value: @code{-1}
 @item MaxLevel
 Default value: @code{4}
-@item Balance
+@item MaxLevelDifference
 Default value: @code{1}
 @item OnGeometry
 Default value: @code{1}
