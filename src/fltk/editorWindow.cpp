@@ -15,6 +15,7 @@
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Double_Window.H>
 #include <FL/Fl_Input.H>
+#include <FL/Fl_Return_Button.H>
 #include <FL/Fl_Text_Buffer.H>
 #include <FL/Fl_Text_Editor.H>
 #include <FL/fl_ask.H>
@@ -164,39 +165,15 @@ public:
     _win->box(GMSH_WINDOW_BOX);
     _win->callback(_close_cb, this);
 
-    // the buttons, then the fields to find a text and to go to a line, the
-    // space between them taking what the width of the window adds, as the
-    // tool bar of the messages
-    int bh = BH - 4, wb = WB / 2, bb = BB - 3 * WB, top = bh + 2 * wb;
-    Fl_Group *bar = new Fl_Group(0, 0, width, top);
-    bar->box(GMSH_SIMPLE_TOP_BOX);
-    Fl_Button *save = new Fl_Button(wb, wb, bb, bh, "Save");
-    save->shortcut(FL_COMMAND | 's');
-    save->copy_tooltip(withKey("Save the file", 'S').c_str());
-    save->callback(_save_cb, this);
-    // (the model read again: only from a .geo script, which is what the
-    // geometry module reads; a .pro, or a program of the API, is only saved)
-    std::string ext = SplitFileName(_fileName)[2];
-    bool geo = (ext == ".geo" || ext == ".GEO");
-    int rw = geo ? 2 * bb : 0;
-    std::vector<Fl_Button *> buttons = {save};
-    if(geo) {
-      Fl_Button *reload =
-        new Fl_Button(wb + bb + WB, wb, rw, bh, "Save and reload");
-      reload->shortcut(FL_COMMAND | 'r');
-      reload->copy_tooltip(
-        withKey("Save the file, then read the model again", 'R').c_str());
-      reload->callback(_reload_cb, this);
-      buttons.push_back(reload);
-    }
-    for(Fl_Button *b : buttons) {
-      b->labelsize(FL_NORMAL_SIZE - 1);
-      b->box(FL_THIN_UP_BOX);
-    }
+    // the fields to find a text and to go to a line at the top right, the
+    // space before them taking what the width of the window adds, as the tool
+    // bar of the messages
+    int bh = BH - 4, wb = WB / 2, top = bh + 2 * wb;
     int lw = (int)(1.3 * BB), sw = 2 * BB;
     int lx = width - wb - lw, sx = lx - WB - sw;
-    int left = wb + bb + WB + (geo ? rw + WB : 0);
-    Fl_Box *space = new Fl_Box(left, wb, std::max(1, sx - WB - left), bh);
+    Fl_Group *bar = new Fl_Group(0, 0, width, top);
+    bar->box(GMSH_SIMPLE_TOP_BOX);
+    Fl_Box *space = new Fl_Box(wb, wb, std::max(1, sx - WB - wb), bh);
     static std::string findHelp =
       withKey("Find the text: the first one as it is typed, the next one on "
               "Enter",
@@ -221,18 +198,50 @@ public:
     bar->resizable(space);
     bar->end();
 
+    // the buttons at the bottom right, as in the other dialogs: Save, and
+    // Save and reload on Return - only for a .geo script, which is what the
+    // geometry module reads (a .pro, or a program of the API, is only saved)
+    std::string ext = SplitFileName(_fileName)[2];
+    bool geo = (ext == ".geo" || ext == ".GEO");
+    fl_font(FL_HELVETICA, FL_NORMAL_SIZE);
+    // (the label, and the arrow of the Return button, as wide as it is high)
+    int rw = std::max(BB, (int)fl_width("Save and reload") + BH + 4 * WB);
+    int bottom = BH + 2 * WB, by = height - bottom + WB;
+    int bx = width - WB - (geo ? rw + WB : 0) - BB;
+    Fl_Group *buttons = new Fl_Group(0, height - bottom, width, bottom);
+    buttons->box(GMSH_SIMPLE_TOP_BOX);
+    Fl_Box *rest = new Fl_Box(WB, by, std::max(1, bx - 2 * WB), BH);
+    Fl_Button *save = new Fl_Button(bx, by, BB, BH, "Save");
+    save->shortcut(FL_COMMAND | 's');
+    save->copy_tooltip(withKey("Save the file", 'S').c_str());
+    save->callback(_save_cb, this);
+    if(geo) {
+      Fl_Button *reload =
+        new Fl_Return_Button(bx + BB + WB, by, rw, BH, "Save and reload");
+      reload->copy_tooltip(
+        withKey("Save the file, then read the model again", 'R').c_str());
+      reload->callback(_reload_cb, this);
+      // (Cmd+R too)
+      Fl_Button *reloadKey = new Fl_Button(0, 0, 0, 0);
+      reloadKey->shortcut(FL_COMMAND | 'r');
+      reloadKey->callback(_reload_cb, this);
+    }
+    buttons->resizable(rest);
+    buttons->end();
+
     _text = new Fl_Text_Buffer();
     _style = new Fl_Text_Buffer();
     _text->tab_distance(4);
-    _editor = new Fl_Text_Editor(0, top, width, height - top);
+    _editor = new Fl_Text_Editor(0, top, width, height - top - bottom);
     _editor->box(GMSH_SIMPLE_TOP_BOX);
     _editor->buffer(_text);
     _editor->tab_nav(0); // Tab inserts a tab
     _editor->highlight_data(_style, _styles, 6, StylePlain, nullptr, nullptr);
     _text->add_modify_callback(_modified_cb, this);
     _win->resizable(_editor);
-    // (not narrower than the buttons and the fields, which keep their width)
-    int minW = left + WB + sw + WB + lw + wb, minH = 4 * BH;
+    // (not narrower than the fields or the buttons, which keep their width)
+    int minW = std::max(wb + WB + sw + WB + lw + wb, width - bx + WB);
+    int minH = 4 * BH + bottom;
     _win->size_range(minW, minH);
     _win->end();
     // the size the user left the editor at, if any
