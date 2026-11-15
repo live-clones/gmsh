@@ -35,22 +35,27 @@ Mesh 3;
 Plugin(DualMesh).Voronoi = voronoi;
 Plugin(DualMesh).Run;
 
-// show the polyhedra cut by the plane y = 0
-Geometry.Points = 0;
-Geometry.Curves = 0;
-Geometry.Surfaces = 0;
-Mesh.SurfaceFaces = 0;
-Mesh.SurfaceEdges = 0;
-Mesh.VolumeFaces = 1;
-Mesh.VolumeEdges = 1;
-General.Clip0A = 0;
-General.Clip0B = 1;
-General.Clip0C = 0;
-General.Clip0D = 0;
-Mesh.Clip = 1;
-General.ClipWholeElements = 1;
-General.ClipOnlyDrawIntersectingVolume = 1;
-General.TrackballQuaternion0 = 0.564863;
-General.TrackballQuaternion1 = 0.099601;
-General.TrackballQuaternion2 = 0.142244;
-General.TrackballQuaternion3 = 0.806707;
+// set up the view when the file is first opened only, so that changing a
+// parameter keeps the current one
+DefineConstant[ viewSet = {0, Name "Parameters/View set", Visible 0} ];
+If(!viewSet)
+  // show the polyhedra cut by the plane y = 0
+  Geometry.Points = 0;
+  Geometry.Curves = 0;
+  Geometry.Surfaces = 0;
+  Mesh.SurfaceFaces = 0;
+  Mesh.SurfaceEdges = 0;
+  Mesh.VolumeFaces = 1;
+  Mesh.VolumeEdges = 1;
+  General.Clip0A = 0;
+  General.Clip0B = 1;
+  General.Clip0C = 0;
+  General.Clip0D = 0;
+  Mesh.Clip = 1;
+  General.ClipWholeElements = 1;
+  General.TrackballQuaternion0 = 0.564863;
+  General.TrackballQuaternion1 = 0.099601;
+  General.TrackballQuaternion2 = 0.142244;
+  General.TrackballQuaternion3 = 0.806707;
+  SetNumber["Parameters/View set", 1];
+EndIf

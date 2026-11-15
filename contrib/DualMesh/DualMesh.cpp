@@ -15,6 +15,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstdint>
 #include <unordered_map>
 #include <vector>
@@ -31,6 +32,7 @@
 #include "MPyramid.h"
 #include "MPolygon.h"
 #include "MPolyhedron.h"
+#include "MVertex.h"
 #include "Context.h"
 #include "Hash.h"
 #include "OS.h"
@@ -53,6 +55,13 @@ std::string GMSH_DualMeshPlugin::getHelp() const
          "tetrahedra of the barycentric subdivision of the elements, which "
          "are valid whenever the elements are. The lines on curves are split "
          "at their middle.\n\n"
+         "The cells are cut along the curves of the surfaces and the surfaces "
+         "of the volumes, embedded ones and seams included: a node on a curve "
+         "embedded in a surface, or on a surface embedded in a volume, gets a "
+         "cell on each side, so that the lines are edges of the polygons and "
+         "the polygons faces of the polyhedra. Where an embedded curve or "
+         "surface ends, the cell goes around its end and has it as a slit. "
+         "Curves and points embedded in volumes do not cut the cells.\n\n"
          "If `Voronoi' is set, the triangles of a 2D mesh and the "
          "tetrahedra of a 3D mesh are represented by their circumcentres, and "
          "the middles of the edges and the centres of the faces between two "
@@ -70,8 +79,9 @@ namespace {
   typedef MVertex *V;
   typedef std::uintptr_t P;
 
-  // the keys of the hash tables compare the node pointers (the tables are
-  // never iterated, so their order does not matter)
+  // the keys of the hash tables compare the node pointers: the tables are
+  // looked up, or iterated by node number (see byNumber()), so that their
+  // order does not matter
   struct EdgeKey {
     V a, b;
     EdgeKey(V x, V y) : a(x), b(y)
@@ -171,45 +181,59 @@ namespace {
   }
 
   // order items around a centre, each item being linked to two others by the
-  // keys it shares with them: the sequence of (item, key in, key out), from an
-  // end if the chain is open (a key used once); false if not all the items
-  // could be chained (several fans)
-  template <class K>
-  bool chain(const std::vector<std::array<K, 2>> &links,
-             std::vector<std::pair<int, std::array<K, 2>>> &seq, bool &open)
+  // keys it shares with them, into fans: the sequences of (item, key in, key
+  // out), one fan after the other (fan i from starts[i] to starts[i + 1]). A
+  // fan ends at a key that is used once or for which cut() is true (an edge on
+  // a curve, a face on a surface), and is then open; the items left make
+  // closed fans.
+  template <class K, class C>
+  void fans(const std::vector<std::array<K, 2>> &links, C cut,
+            std::vector<std::pair<int, std::array<K, 2>>> &seq,
+            std::vector<int> &starts, std::vector<char> &open)
   {
     int n = (int)links.size();
     seq.clear();
-    open = false;
-    if(!n) return true;
-    // an end: a key used once
-    int start = 0, side = 0;
-    for(int i = 0; i < n && !open; i++)
-      for(int j = 0; j < 2 && !open; j++) {
-        int c = 0;
-        for(int k = 0; k < n && c < 2; k++)
-          c += (links[k][0] == links[i][j]) + (links[k][1] == links[i][j]);
-        if(c == 1) {
-          start = i;
-          side = j;
-          open = true;
-        }
-      }
+    starts.assign(1, 0);
+    open.clear();
     std::vector<char> done(n, 0);
-    int cur = start;
-    K in = links[start][side];
-    while(true) {
-      done[cur] = 1;
-      K out = (links[cur][0] == in) ? links[cur][1] : links[cur][0];
-      seq.push_back({cur, {in, out}});
-      int next = -1;
-      for(int i = 0; i < n && next < 0; i++)
-        if(!done[i] && (links[i][0] == out || links[i][1] == out)) next = i;
-      if(next < 0) break;
-      in = out;
-      cur = next;
-    }
-    return (int)seq.size() == n;
+    auto isEnd = [&](const K &key) {
+      if(cut(key)) return true;
+      int c = 0;
+      for(int k = 0; k < n; k++)
+        c += (links[k][0] == key) + (links[k][1] == key);
+      return c == 1;
+    };
+    auto walk = [&](int cur, K in) {
+      while(true) {
+        done[cur] = 1;
+        K out = (links[cur][0] == in) ? links[cur][1] : links[cur][0];
+        seq.push_back({cur, {in, out}});
+        if(cut(out)) break;
+        int next = -1;
+        for(int i = 0; i < n && next < 0; i++)
+          if(!done[i] && (links[i][0] == out || links[i][1] == out)) next = i;
+        if(next < 0) break;
+        in = out;
+        cur = next;
+      }
+      starts.push_back((int)seq.size());
+    };
+    // the open fans from their ends, then the closed ones
+    for(int pass = 0; pass < 2; pass++)
+      for(int i = 0; i < n; i++) {
+        if(done[i]) continue;
+        if(pass) {
+          walk(i, links[i][0]);
+          open.push_back(0);
+          continue;
+        }
+        for(int j = 0; j < 2; j++)
+          if(isEnd(links[i][j])) {
+            walk(i, links[i][j]);
+            open.push_back(1);
+            break;
+          }
+      }
   }
 
   SVector3 pos(V v) { return SVector3(v->x(), v->y(), v->z()); }
@@ -217,7 +241,8 @@ namespace {
   // the circumcentre of a triangle (n = 3) or of a tetrahedron (n = 4), and
   // whether it lies inside, its barycentric coordinates all above a small
   // tolerance; false if the simplex is flat
-  bool circumcentre(const V *v, int n, SVector3 &c, bool &inside)
+  bool circumcentre(const V *v, int n, SVector3 &c, bool &inside,
+                    double *bary = nullptr)
   {
     const double eps = 1e-6;
     SVector3 a = pos(v[0]), u = pos(v[1]) - a, w = pos(v[2]) - a, p;
@@ -246,20 +271,27 @@ namespace {
     c = a + p;
     inside = true;
     for(int i = 0; i < n; i++) inside &= l[i] >= eps;
+    if(bary)
+      for(int i = 0; i < n; i++) bary[i] = l[i];
     return true;
   }
 
   // the centre of an element or a face: its circumcentre if circumcentres are
   // asked for and it is a simplex holding it, its centroid otherwise
-  SVector3 centrePoint(const V *v, int n, bool circumcentres, bool &circ)
+  // (with its weights on the nodes, if asked for)
+  SVector3 centrePoint(const V *v, int n, bool circumcentres, bool &circ,
+                       double *w = nullptr)
   {
     SVector3 c(0., 0., 0.);
     circ = false;
-    if(circumcentres && (n == 3 || n == 4) && circumcentre(v, n, c, circ) &&
+    if(circumcentres && (n == 3 || n == 4) && circumcentre(v, n, c, circ, w) &&
        circ)
       return c;
     c = SVector3(0., 0., 0.);
-    for(int i = 0; i < n; i++) c += pos(v[i]);
+    for(int i = 0; i < n; i++) {
+      c += pos(v[i]);
+      if(w) w[i] = 1. / n;
+    }
     return c * (1. / n);
   }
 
@@ -284,18 +316,68 @@ namespace {
     V centreNode(const V *v, int n, bool simplex, GEntity *ge)
     {
       bool circ;
-      SVector3 c = centrePoint(v, n, voronoi && simplex, circ);
+      double w[4];
+      SVector3 c = centrePoint(v, n, voronoi && simplex, circ, w);
       if(voronoi && simplex) {
         numCircum[n - 3] += circ;
         numCentroid[n - 3] += !circ;
       }
-      return newNode(c, ge);
+      return newNode(c, ge, v, w, n);
     }
     V newNode(const SVector3 &c, GEntity *ge)
     {
       V nv = new MVertex(c.x(), c.y(), c.z(), ge);
       newNodes.push_back(nv);
       return nv;
+    }
+    // a new node in the edge or the face of nodes v, with weights w on them:
+    // on a curve or a surface that has a parametrization, with the same mean
+    // of the parameters of these nodes as its parameters (those of a node on
+    // the end of a closed curve or on a seam taken next to the others)
+    V newNode(const SVector3 &c, GEntity *ge, const V *v, const double *w, int n)
+    {
+      if(ge->dim() == 1 && n == 2 && ge->haveParametrization()) {
+        GEdge *e = static_cast<GEdge *>(ge);
+        double t[2];
+        bool ok = true;
+        for(int i = 0; i < 2; i++) {
+          ok &= reparamMeshVertexOnEdge(v[i], e, t[i]);
+          if(ok && e->periodic(0) && v[i]->onWhat()->dim() == 0) {
+            double other;
+            ok &= reparamMeshVertexOnEdge(v[1 - i], e, other);
+            Range<double> r = e->parBounds(0);
+            if(std::abs(r.high() - other) < std::abs(r.low() - other))
+              t[i] = r.high();
+          }
+        }
+        if(ok) {
+          V nv = new MEdgeVertex(c.x(), c.y(), c.z(), e,
+                                 w[0] * t[0] + w[1] * t[1]);
+          newNodes.push_back(nv);
+          return nv;
+        }
+      }
+      else if(ge->dim() == 2 && ge->haveParametrization()) {
+        GFace *f = static_cast<GFace *>(ge);
+        SPoint2 p0, p;
+        double uv[2] = {0., 0.};
+        bool ok = true;
+        for(int i = 1; i < n && ok; i++) {
+          SPoint2 q0;
+          ok = reparamMeshEdgeOnFace(v[0], v[i], f, q0, p);
+          if(i == 1) p0 = q0;
+          for(int k = 0; k < 2; k++) {
+            if(i == 1) uv[k] += w[0] * p0[k];
+            uv[k] += w[i] * (p[k] + p0[k] - q0[k]);
+          }
+        }
+        if(ok) {
+          V nv = new MFaceVertex(c.x(), c.y(), c.z(), f, uv[0], uv[1]);
+          newNodes.push_back(nv);
+          return nv;
+        }
+      }
+      return newNode(c, ge);
     }
     // the middle of an edge, on the curve or surface holding it if any
     V mid(V a, V b, GEntity *ge)
@@ -304,8 +386,10 @@ namespace {
       auto it = _mid.find(k);
       if(it != _mid.end()) return it->second;
       auto ot = edgeOwner.find(k);
+      V v[2] = {a, b};
+      double w[2] = {0.5, 0.5};
       return _mid[k] = newNode((pos(a) + pos(b)) * 0.5,
-                               ot == edgeOwner.end() ? ge : ot->second);
+                               ot == edgeOwner.end() ? ge : ot->second, v, w, 2);
     }
     // the centre of a face, on the surface holding it if any
     V centre(const V *f, int n, GEntity *ge)
@@ -326,17 +410,34 @@ namespace {
       v[i] = e->getVertex(i);
   }
 
+  // the entries of a table keyed on nodes, by node number: the polygons, the
+  // polyhedra and the nodes are created in this order, not in the order of the
+  // table, which changes from one run to the next
+  template <class M> std::vector<typename M::value_type *> byNumber(M &table)
+  {
+    std::vector<typename M::value_type *> v;
+    for(auto &a : table) v.push_back(&a);
+    std::sort(v.begin(), v.end(),
+              [](typename M::value_type *x, typename M::value_type *y) {
+                return x->first->getNum() < y->first->getNum();
+              });
+    return v;
+  }
+
   // the dual of the 2D elements of a surface: a polygon around each node,
   // whose vertices are the centres of the elements around it and the middles
-  // of the edges between them, plus the node itself and the middles of its
-  // edges on the boundary of the surface. The polygons are subdivided into
-  // the triangles joining their node to their edges: the triangles of the
-  // barycentric subdivision of the elements. With circumcentres, the triangles
-  // are represented by their circumcentres wherever these lie, and the middles
-  // of the edges between two such triangles are dropped (unless the edges are
-  // on a curve): the polygon of a node whose triangles all are is then its
-  // Voronoi cell. A triangle whose circumcentre inverts one of the triangles
-  // of the subdivision falls back to its centre, until all are valid.
+  // of the edges between them. The elements around a node whose edges are on
+  // curves (the boundary of the surface, its seam, curves embedded in it) are
+  // cut there into fans, each giving a polygon that also has the node itself
+  // and the middles of the two edges it ends at: the lines of the curves are
+  // then edges of the polygons. The polygons are subdivided into the triangles
+  // joining their node to their edges: the triangles of the barycentric
+  // subdivision of the elements. With circumcentres, the triangles are
+  // represented by their circumcentres wherever these lie, and the middles of
+  // the edges between two such triangles are dropped: the polygon of a node
+  // whose triangles all are is then its Voronoi cell. A triangle whose
+  // circumcentre inverts one of the triangles of the subdivision falls back to
+  // its centre, until all are valid.
   void dual2D(GFace *gf, std::vector<MElement *> &elements, bool circumcentres,
               Dual &d, std::vector<MPolygon *> &polygons, int &passes)
   {
@@ -357,16 +458,19 @@ namespace {
         state[e] = 0;
     }
 
-    // the elements around each node, in order: (element, node in, node out),
-    // and whether the edge to the node out is on a curve
+    // the fans of elements around each node, in order: (element, node in,
+    // node out); one polygon by fan
     std::vector<V> nodes;
     std::vector<int> seqStart(1, 0);
     std::vector<std::pair<int, std::array<V, 2>>> seqs;
-    std::vector<char> open, onCurve;
+    std::vector<char> open;
     {
       std::vector<std::array<V, 2>> links;
       std::vector<std::pair<int, std::array<V, 2>>> seq;
-      for(auto &a : around) {
+      std::vector<int> starts;
+      std::vector<char> opens;
+      for(auto *pa : byNumber(around)) {
+        auto &a = *pa;
         V v = a.first;
         links.clear();
         for(auto &ei : a.second) {
@@ -375,18 +479,18 @@ namespace {
           links.push_back(
             {ev[4 * e + (i + n - 1) % n], ev[4 * e + (i + 1) % n]});
         }
-        bool o;
-        if(!chain(links, seq, o))
-          Msg::Warning("Node %zu has several fans of elements on surface %d",
-                       v->getNum(), gf->tag());
-        nodes.push_back(v);
-        open.push_back(o);
-        for(auto &s : seq) {
-          seqs.push_back({a.second[s.first].first, s.second});
-          auto it = d.edgeOwner.find(EdgeKey(v, s.second[1]));
-          onCurve.push_back(it != d.edgeOwner.end() && it->second->dim() == 1);
+        auto onCurve = [&](V w) {
+          auto it = d.edgeOwner.find(EdgeKey(v, w));
+          return it != d.edgeOwner.end() && it->second->dim() == 1;
+        };
+        fans(links, onCurve, seq, starts, opens);
+        for(std::size_t f = 0; f < opens.size(); f++) {
+          nodes.push_back(v);
+          open.push_back(opens[f]);
+          for(int j = starts[f]; j < starts[f + 1]; j++)
+            seqs.push_back({a.second[seq[j].first].first, seq[j].second});
+          seqStart.push_back((int)seqs.size());
         }
-        seqStart.push_back((int)seqs.size());
       }
     }
     around.clear();
@@ -405,7 +509,7 @@ namespace {
       for(int j = 0; j < n; j++) {
         int e = seqs[s0 + j].first;
         r.push_back({e, nullptr});
-        if((open[k] && j == n - 1) || onCurve[s0 + j] || state[e] ||
+        if((open[k] && j == n - 1) || state[e] ||
            state[seqs[s0 + (j + 1) % n].first])
           r.push_back({-1, seqs[s0 + j].second[1]});
       }
@@ -478,7 +582,11 @@ namespace {
               elementNode[e] = d.centre(&ev[4 * e], n, gf);
             }
             else {
-              elementNode[e] = d.newNode(circ[e], gf);
+              double w[3];
+              SVector3 cc;
+              bool in;
+              circumcentre(&ev[4 * e], 3, cc, in, w);
+              elementNode[e] = d.newNode(circ[e], gf, &ev[4 * e], w, 3);
               d.numCircum[0]++;
             }
           }
@@ -536,8 +644,13 @@ namespace {
   // the dual of the 3D elements of a volume: a polyhedron around each node,
   // whose faces are dual to the edges at the node. The vertices of the dual
   // face of an edge are the centres of the elements around it and of the faces
-  // between them, plus the middle of the edge if it is on the boundary of the
-  // volume. The polyhedra are subdivided into the tetrahedra joining their
+  // between them. The elements around an edge whose faces are on surfaces (the
+  // boundary of the volume, surfaces embedded in it) are cut there into fans,
+  // each giving a dual face that also has the middle of the edge; and the
+  // elements around a node are on one side or another of the surfaces through
+  // it, each side giving a polyhedron, closed by the duals of the faces of the
+  // surfaces (cut at the curves as in 2D): the polygons of the surfaces are
+  // then faces of the polyhedra. The polyhedra are subdivided into the tetrahedra joining their
   // node to a fan of triangles on each of their faces, centred at the middle
   // of the edge: these are the tetrahedra of the barycentric subdivision of
   // the elements. With circumcentres, the tetrahedra are represented by their
@@ -620,13 +733,17 @@ namespace {
                                   d.voronoi && faceSize[f] == 3, in);
     }
 
-    // the elements around each edge, in order: (element, face in, face out)
-    std::vector<int> seqStart(nd + 1, 0);
+    // the fans of elements around each edge, in order: (element, face in,
+    // face out); one dual face (ring) by fan
+    std::vector<int> ringEdge, seqStart(1, 0);
     std::vector<std::array<int, 3>> seqs;
-    std::vector<char> open(nd);
+    std::vector<char> open;
     {
       std::vector<std::array<int, 2>> links;
       std::vector<std::pair<int, std::array<int, 2>>> seq;
+      std::vector<int> starts;
+      std::vector<char> opens;
+      auto cut = [&](int f) { return onSurface[f] != 0; };
       for(int ed = 0; ed < nd; ed++) {
         links.clear();
         for(auto &ek : edgeElements[ed]) {
@@ -635,28 +752,29 @@ namespace {
             {elementFace[6 * ek.first + t.edgeFaces[ek.second][0]],
              elementFace[6 * ek.first + t.edgeFaces[ek.second][1]]});
         }
-        bool o;
-        if(!chain(links, seq, o))
-          Msg::Warning("Edge with several fans of elements in volume %d",
-                       gr->tag());
-        open[ed] = o;
-        for(auto &s : seq)
-          seqs.push_back(
-            {edgeElements[ed][s.first].first, s.second[0], s.second[1]});
-        seqStart[ed + 1] = (int)seqs.size();
+        fans(links, cut, seq, starts, opens);
+        for(std::size_t f = 0; f < opens.size(); f++) {
+          ringEdge.push_back(ed);
+          open.push_back(opens[f]);
+          for(int j = starts[f]; j < starts[f + 1]; j++)
+            seqs.push_back({edgeElements[ed][seq[j].first].first,
+                            seq[j].second[0], seq[j].second[1]});
+          seqStart.push_back((int)seqs.size());
+        }
       }
     }
+    int nr = (int)ringEdge.size();
     edgeElements.clear();
     edgeElements.shrink_to_fit();
 
-    // the dual face of an edge, as references to the centre of an element (<
+    // a dual face of an edge, as references to the centre of an element (<
     // ne), of a face (< ne + nf) or to the middle of the edge, and the centre
     // of its fan
-    auto ring = [&](int ed, std::vector<int> &r, int &centre) {
+    auto ring = [&](int rg, std::vector<int> &r, int &centre) {
       r.clear();
-      int s0 = seqStart[ed], n = seqStart[ed + 1] - s0;
-      bool exact = !open[ed];
-      if(open[ed]) {
+      int ed = ringEdge[rg], s0 = seqStart[rg], n = seqStart[rg + 1] - s0;
+      bool exact = !open[rg];
+      if(open[rg]) {
         r.push_back(ne + nf + ed);
         r.push_back(ne + seqs[s0][1]);
       }
@@ -664,7 +782,7 @@ namespace {
         int e = seqs[s0 + j][0], fo = seqs[s0 + j][2];
         r.push_back(e);
         exact &= state[e] == 0;
-        if((open[ed] && j == n - 1) || onSurface[fo] || state[e] ||
+        if((open[rg] && j == n - 1) || state[e] ||
            state[seqs[s0 + (j + 1) % n][0]])
           r.push_back(ne + fo);
       }
@@ -683,9 +801,9 @@ namespace {
     passes = 0;
     for(bool changed = circumcentres; changed; passes++) {
       changed = false;
-      for(int ed = 0; ed < nd; ed++) {
-        int c;
-        ring(ed, r, c);
+      for(int rg = 0; rg < nr; rg++) {
+        int c, ed = ringEdge[rg];
+        ring(rg, r, c);
         bool circumcentres = false;
         for(auto k : r) circumcentres |= (k < ne && !state[k]);
         if(!circumcentres) continue;
@@ -744,82 +862,129 @@ namespace {
       return d.mid(edgeVerts[ed][0], edgeVerts[ed][1], gr);
     };
 
-    // the dual faces at each node, and the boundary faces
-    std::unordered_map<V, std::vector<int>> nodeEdges, nodeBoundary;
-    for(int ed = 0; ed < nd; ed++)
-      for(int j = 0; j < 2; j++) nodeEdges[edgeVerts[ed][j]].push_back(ed);
+    // the dual faces at each node, and the faces on surfaces
+    std::unordered_map<V, std::vector<int>> nodeRings, nodeBoundary;
+    for(int rg = 0; rg < nr; rg++)
+      for(int j = 0; j < 2; j++)
+        nodeRings[edgeVerts[ringEdge[rg]][j]].push_back(rg);
     for(int f = 0; f < nf; f++)
-      if(faceElements[f][1] < 0)
+      if(faceElements[f][1] < 0 || onSurface[f])
         for(int j = 0; j < faceSize[f]; j++)
           nodeBoundary[faceVerts[f][j]].push_back(f);
 
     // the polyhedra
     std::vector<V> nodes, tets, rn, bcentres;
-    std::vector<int> offsets;
+    std::vector<int> offsets, side, starts;
+    std::vector<char> opens;
+    std::vector<std::pair<int, int>> elementRing;
     std::vector<std::array<V, 2>> blinks;
     std::vector<std::pair<int, std::array<V, 2>>> bseq;
-    std::vector<std::pair<GFace *, int>> bnd;
-    for(auto &a : nodeEdges) {
-      V v = a.first;
-      nodes.clear();
-      tets.clear();
-      offsets.assign(1, 0);
-      for(int ed : a.second) {
-        int c;
-        ring(ed, r, c);
-        rn.clear();
-        for(auto k : r) rn.push_back(node(k, ed));
-        V vc = node(c, ed);
-        nodes.insert(nodes.end(), rn.begin(), rn.end());
-        offsets.push_back((int)nodes.size());
-        int n = (int)rn.size();
-        for(int i = 0; i < n; i++) {
-          V p = rn[i], q = rn[(i + 1) % n];
-          if(p != vc && q != vc) tets.insert(tets.end(), {v, vc, p, q});
-        }
-      }
-      // the boundary faces of the polyhedron, one by surface: the middles of
-      // the edges and the centres of the faces around the node, and the node
-      // itself if it is on a curve
-      bnd.clear();
+    std::vector<std::pair<std::array<int, 2>, int>> bnd; // (surface, copy), face
+    for(auto *pa : byNumber(nodeRings)) {
+      V v = pa->first;
+      const std::vector<int> &rings = pa->second;
+      int numRings = (int)rings.size();
+      // the sides of the surfaces through the node: the dual faces whose fans
+      // share an element are on the same side
+      side.resize(numRings);
+      for(int i = 0; i < numRings; i++) side[i] = i;
+      auto root = [&](int i) {
+        while(side[i] != i) i = side[i];
+        return i;
+      };
+      elementRing.clear();
+      for(int i = 0; i < numRings; i++)
+        for(int j = seqStart[rings[i]]; j < seqStart[rings[i] + 1]; j++)
+          elementRing.push_back({seqs[j][0], i});
+      std::sort(elementRing.begin(), elementRing.end());
+      for(std::size_t k = 1; k < elementRing.size(); k++)
+        if(elementRing[k].first == elementRing[k - 1].first)
+          side[root(elementRing[k].second)] = root(elementRing[k - 1].second);
+      auto sideOf = [&](int e) {
+        auto it = std::lower_bound(elementRing.begin(), elementRing.end(),
+                                   std::pair<int, int>(e, 0));
+        return root(it->second);
+      };
       auto bt = nodeBoundary.find(v);
-      if(bt != nodeBoundary.end())
-        for(int f : bt->second) {
-          auto ot = d.faceOwner.find(FaceKey(faceVerts[f].data(), faceSize[f]));
-          bnd.push_back({ot == d.faceOwner.end() ? nullptr : ot->second, f});
+
+      // a polyhedron by side
+      for(int s = 0; s < numRings; s++) {
+        if(root(s) != s) continue;
+        nodes.clear();
+        tets.clear();
+        offsets.assign(1, 0);
+        for(int i = 0; i < numRings; i++) {
+          if(root(i) != s) continue;
+          int c, rg = rings[i], ed = ringEdge[rg];
+          ring(rg, r, c);
+          rn.clear();
+          for(auto k : r) rn.push_back(node(k, ed));
+          V vc = node(c, ed);
+          nodes.insert(nodes.end(), rn.begin(), rn.end());
+          offsets.push_back((int)nodes.size());
+          int n = (int)rn.size();
+          for(int k = 0; k < n; k++) {
+            V p = rn[k], q = rn[(k + 1) % n];
+            if(p != vc && q != vc) tets.insert(tets.end(), {v, vc, p, q});
+          }
         }
-      std::sort(
-        bnd.begin(), bnd.end(),
-        [](const std::pair<GFace *, int> &x, const std::pair<GFace *, int> &y) {
-          return x.first < y.first;
-        });
-      for(std::size_t b0 = 0; b0 < bnd.size();) {
-        std::size_t b1 = b0;
-        blinks.clear();
-        bcentres.clear();
-        while(b1 < bnd.size() && bnd[b1].first == bnd[b0].first) {
-          int f = bnd[b1].second, n = faceSize[f], j = 0;
-          while(faceVerts[f][j] != v) j++;
-          blinks.push_back(
-            {faceVerts[f][(j + n - 1) % n], faceVerts[f][(j + 1) % n]});
-          bcentres.push_back(node(ne + f, -1));
-          b1++;
+        // its faces on the surfaces, as the polygons of the node on these
+        // surfaces: by surface, the centres of the faces around the node and
+        // the middles of their edges, in fans cut at the edges on curves,
+        // which also have the node itself. Around the border of an embedded
+        // surface, this side is on both sides of the faces: they are then
+        // taken twice, the second time apart
+        bnd.clear();
+        if(bt != nodeBoundary.end())
+          for(int f : bt->second) {
+            int copy = 0;
+            for(int j = 0; j < 2; j++) {
+              int e = faceElements[f][j];
+              if(e < 0 || sideOf(e) != s) continue;
+              auto ot =
+                d.faceOwner.find(FaceKey(faceVerts[f].data(), faceSize[f]));
+              int tag = (ot == d.faceOwner.end()) ? 0 : ot->second->tag();
+              bnd.push_back({{tag, copy++}, f});
+            }
+          }
+        std::stable_sort(bnd.begin(), bnd.end(),
+                         [](const std::pair<std::array<int, 2>, int> &x,
+                            const std::pair<std::array<int, 2>, int> &y) {
+                           return x.first < y.first;
+                         });
+        auto onCurve = [&](V w) {
+          auto it = d.edgeOwner.find(EdgeKey(v, w));
+          return it != d.edgeOwner.end() && it->second->dim() == 1;
+        };
+        for(std::size_t b0 = 0; b0 < bnd.size();) {
+          std::size_t b1 = b0;
+          blinks.clear();
+          bcentres.clear();
+          while(b1 < bnd.size() && bnd[b1].first == bnd[b0].first) {
+            int f = bnd[b1].second, n = faceSize[f], j = 0;
+            while(faceVerts[f][j] != v) j++;
+            blinks.push_back(
+              {faceVerts[f][(j + n - 1) % n], faceVerts[f][(j + 1) % n]});
+            bcentres.push_back(node(ne + f, -1));
+            b1++;
+          }
+          fans(blinks, onCurve, bseq, starts, opens);
+          for(std::size_t k = 0; k < opens.size(); k++) {
+            if(opens[k]) nodes.push_back(v);
+            for(int j = starts[k]; j < starts[k + 1]; j++) {
+              if(j == starts[k]) nodes.push_back(d.mid(v, bseq[j].second[0], gr));
+              nodes.push_back(bcentres[bseq[j].first]);
+              if(opens[k] || j + 1 < starts[k + 1])
+                nodes.push_back(d.mid(v, bseq[j].second[1], gr));
+            }
+            offsets.push_back((int)nodes.size());
+          }
+          b0 = b1;
         }
-        bool o;
-        chain(blinks, bseq, o);
-        if(o) nodes.push_back(v);
-        for(std::size_t j = 0; j < bseq.size(); j++) {
-          if(j == 0) nodes.push_back(d.mid(v, bseq[j].second[0], gr));
-          nodes.push_back(bcentres[bseq[j].first]);
-          if(o || j + 1 < bseq.size())
-            nodes.push_back(d.mid(v, bseq[j].second[1], gr));
-        }
-        offsets.push_back((int)nodes.size());
-        b0 = b1;
+        auto p = new MPolyhedron(nodes);
+        p->setPolygonsAndTetrahedra(nodes, offsets, tets);
+        polyhedra.push_back(p);
       }
-      auto p = new MPolyhedron(nodes);
-      p->setPolygonsAndTetrahedra(nodes, offsets, tets);
-      polyhedra.push_back(p);
     }
   }
 
@@ -830,18 +995,6 @@ int GMSH_DualMeshPlugin::run()
   GModel *m = GModel::current();
   double t0 = TimeOfDay();
 
-  int dim = 0;
-  for(auto gr : m->getRegions())
-    if(gr->tetrahedra.size() + gr->hexahedra.size() + gr->prisms.size() +
-       gr->pyramids.size())
-      dim = 3;
-  if(!dim)
-    for(auto gf : m->getFaces())
-      if(gf->triangles.size() + gf->quadrangles.size()) dim = 2;
-  if(!dim) {
-    Msg::Warning("Plugin(DualMesh): no 2D or 3D elements");
-    return 0;
-  }
   std::vector<GEntity *> entities;
   m->getEntities(entities);
   for(auto ge : entities) {
@@ -856,11 +1009,31 @@ int GMSH_DualMeshPlugin::run()
         return 0;
       }
     }
+    // (ghost cells are elements of other entities)
+    if(ge->geomType() == GEntity::GhostCurve ||
+       ge->geomType() == GEntity::GhostSurface ||
+       ge->geomType() == GEntity::GhostVolume) {
+      Msg::Error("Plugin(DualMesh) does not handle ghost cells");
+      return 0;
+    }
+  }
+
+  int dim = 0;
+  for(auto gr : m->getRegions())
+    if(gr->tetrahedra.size() + gr->hexahedra.size() + gr->prisms.size() +
+       gr->pyramids.size())
+      dim = 3;
+  if(!dim)
+    for(auto gf : m->getFaces())
+      if(gf->triangles.size() + gf->quadrangles.size()) dim = 2;
+  if(!dim) {
+    Msg::Warning("Plugin(DualMesh): no 2D or 3D elements");
+    return 0;
   }
 
   // the curves and surfaces holding the edges and faces of the mesh
   Dual d;
-  d.voronoi = (int)option(0);
+  d.voronoi = (option(0) != 0.);
   for(auto ge : m->getEdges())
     for(auto l : ge->lines)
       d.edgeOwner[EdgeKey(l->getVertex(0), l->getVertex(1))] = ge;
@@ -929,6 +1102,14 @@ int GMSH_DualMeshPlugin::run()
     ge->lines = lines;
   }
   for(auto v : d.newNodes) v->onWhat()->addMeshVertex(v);
+
+  // (the new nodes are not added to the periodic node correspondences)
+  for(auto ge : entities)
+    if(ge->correspondingVertices.size()) {
+      Msg::Warning("Plugin(DualMesh) does not extend the periodic node "
+                   "correspondences to the new nodes");
+      break;
+    }
 
   m->destroyMeshCaches();
   CTX::instance()->meshChanged();

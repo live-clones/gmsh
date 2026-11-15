@@ -32,6 +32,12 @@ Mesh 2;
 Plugin(DualMesh).Voronoi = voronoi;
 Plugin(DualMesh).Run;
 
-Geometry.Points = 0;
-Geometry.Curves = 0;
-Mesh.SurfaceFaces = 1;
+// set up the view when the file is first opened only, so that changing a
+// parameter keeps the current one
+DefineConstant[ viewSet = {0, Name "Parameters/View set", Visible 0} ];
+If(!viewSet)
+  Geometry.Points = 0;
+  Geometry.Curves = 0;
+  Mesh.SurfaceFaces = 1;
+  SetNumber["Parameters/View set", 1];
+EndIf
