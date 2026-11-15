@@ -62,6 +62,7 @@
 #include "meshGFaceDelaunay.h"
 #include "meshGFaceOptimize.h"
 #include "meshGRegionDelaunay.h"
+#include "meshGRegionBoundaryRecovery.h"
 #include "meshGRegionHxt.h"
 #include "meshGRegionParallelDelaunay.h"
 #include "gmshCrossFields.h"
@@ -8669,29 +8670,40 @@ GMSH_API void gmsh::algorithm::tetrahedralize(
     v->setIndex(j);
     verts[j++] = v;
   }
+  for(std::size_t i = 0; i < triangles.size(); i++) {
+    if(triangles[i] < 1 || triangles[i] > verts.size()) {
+      Msg::Error("Unknown point %zu in triangle %zu", triangles[i], i / 3 + 1);
+      for(std::size_t k = 0; k < verts.size(); k++) delete verts[k];
+      return;
+    }
+  }
   std::vector<MTriangle> trianglesToRecover;
   for(std::size_t i = 0; i < triangles.size(); i += 3)
     trianglesToRecover.emplace_back(verts[triangles[i] - 1],
                                     verts[triangles[i + 1] - 1],
                                     verts[triangles[i + 2] - 1]);
 
+  // the Delaunay tetrahedralization of the points by the 3D algorithm chosen,
+  // in which the triangles are then recovered (HXT does both)
   std::vector<MTetrahedron *> tets;
   if(CTX::instance()->mesh.algo3d == ALGO_3D_HXT) {
     delaunayMeshIn3DHxt(verts, tets, trianglesToRecover);
   }
-  else if(CTX::instance()->mesh.algo3d == ALGO_3D_PDEL3D) {
-    if(triangles.size() > 0)
-      Msg::Error("3D constrained delaunay tetrahedralization is currently only "
-                 "available using HXT");
-    delaunayMeshIn3DParallel(verts, tets);
-  }
   else {
-    if(triangles.size() > 0)
-      Msg::Error("3D constrained delaunay tetrahedralization is currently only "
-                 "available using HXT");
-    delaunayMeshIn3D(verts, tets, true);
+    if(CTX::instance()->mesh.algo3d == ALGO_3D_PDEL3D)
+      delaunayMeshIn3DParallel(verts, tets);
+    else
+      delaunayMeshIn3D(verts, tets, true);
+    if(tets.size() && trianglesToRecover.size() &&
+       !recoverTrianglesInTetrahedra(verts, tets, trianglesToRecover)) {
+      for(std::size_t i = 0; i < tets.size(); i++) delete tets[i];
+      tets.clear();
+    }
   }
-  if(tets.empty()) return;
+  if(tets.empty()) {
+    for(std::size_t i = 0; i < verts.size(); i++) delete verts[i];
+    return;
+  }
 
   if(verts.size() > coord.size() / 3) {
     // Steiner Points!

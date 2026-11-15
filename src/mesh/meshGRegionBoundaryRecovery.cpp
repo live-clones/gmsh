@@ -8,7 +8,10 @@
 #include <string.h>
 #include <assert.h>
 #include <sstream>
+#include <array>
+#include <algorithm>
 #include "GmshConfig.h"
+#include "GmshMessage.h"
 #include "meshGRegionBoundaryRecovery.h"
 
 #if defined(HAVE_TETGENBR)
@@ -1380,6 +1383,100 @@ namespace tetgenBR {
     return runCore(in, out);
   }
 
+  bool recoverTrianglesInTetrahedra(std::vector<MVertex *> &v,
+                                    std::vector<MTetrahedron *> &tets,
+                                    const std::vector<MTriangle> &triangles)
+  {
+    boundaryRecoveryInput in;
+    in.carve = false; // the convex hull is kept
+    in.postprocess = false; // the tets are not optimized
+    in.verbose = false;
+    const std::size_t nv = v.size(), nt = tets.size();
+    in.xyz.resize(3 * nv);
+    for(std::size_t i = 0; i < nv; i++) {
+      v[i]->setIndex((long)i);
+      in.xyz[3 * i] = v[i]->x();
+      in.xyz[3 * i + 1] = v[i]->y();
+      in.xyz[3 * i + 2] = v[i]->z();
+    }
+    in.tetNode.resize(4 * nt);
+    for(std::size_t t = 0; t < nt; t++)
+      for(int k = 0; k < 4; k++)
+        in.tetNode[4 * t + k] = (std::uint32_t)tets[t]->getVertex(k)->getIndex();
+    // the neighbors, through the sorted facets (opposite to each node)
+    struct facet {
+      std::array<std::uint32_t, 3> n;
+      std::size_t ref; // 4 * tet + position
+      bool operator<(const facet &o) const { return n < o.n; }
+    };
+    std::vector<facet> facets(4 * nt);
+    for(std::size_t t = 0; t < nt; t++) {
+      for(int k = 0; k < 4; k++) {
+        facet &f = facets[4 * t + k];
+        for(int j = 0, i = 0; j < 4; j++)
+          if(j != k) f.n[i++] = in.tetNode[4 * t + j];
+        std::sort(f.n.begin(), f.n.end());
+        f.ref = 4 * t + k;
+      }
+    }
+    std::sort(facets.begin(), facets.end());
+    in.tetNeighbors.assign(4 * nt, -1);
+    for(std::size_t i = 0; i + 1 < facets.size(); i++) {
+      if(facets[i].n != facets[i + 1].n) continue;
+      in.tetNeighbors[facets[i].ref] = (std::int64_t)(facets[i + 1].ref / 4);
+      in.tetNeighbors[facets[i + 1].ref] = (std::int64_t)(facets[i].ref / 4);
+      i++;
+    }
+    // the triangles; a vertex in no tet has the place of another, which
+    // stands for it (the tetrahedralizations leave duplicates out)
+    std::vector<char> used(nv, 0);
+    for(std::uint32_t n : in.tetNode) used[n] = 1;
+    std::map<std::array<double, 3>, std::uint32_t> place;
+    for(std::size_t i = 0; i < nv; i++)
+      if(used[i]) place[{v[i]->x(), v[i]->y(), v[i]->z()}] = (std::uint32_t)i;
+    for(const MTriangle &t : triangles) {
+      for(int k = 0; k < 3; k++) {
+        const MVertex *tv = t.getVertex(k);
+        std::uint32_t n = (std::uint32_t)tv->getIndex();
+        if(!used[n]) {
+          auto it = place.find({tv->x(), tv->y(), tv->z()});
+          if(it != place.end()) n = it->second;
+        }
+        in.triNode.push_back(n);
+      }
+      in.triTag.push_back(1);
+    }
+
+    boundaryRecoveryOutput out;
+    const int err = runCore(in, out);
+    if(err) {
+      Msg::Error("Could not recover the %zu triangles in the "
+                 "tetrahedralization (error %d)", triangles.size(), err);
+      return false;
+    }
+    // the Steiner points after the vertices, and the new tets, with a
+    // positive volume
+    for(std::size_t k = 0; k < out.steinerXYZ.size() / 3; k++) {
+      MVertex *sv = new MVertex(out.steinerXYZ[3 * k], out.steinerXYZ[3 * k + 1],
+                                out.steinerXYZ[3 * k + 2]);
+      sv->setIndex((long)v.size());
+      v.push_back(sv);
+    }
+    for(MTetrahedron *t : tets) delete t;
+    tets.clear();
+    tets.reserve(out.tetNode.size() / 4);
+    for(std::size_t t = 0; t < out.tetNode.size() / 4; t++) {
+      MVertex *n[4];
+      for(int k = 0; k < 4; k++) n[k] = v[out.tetNode[4 * t + k]];
+      // (orient3d is robustPredicates::orient3d in this file)
+      if(orient3d(n[0]->point().data(), n[1]->point().data(),
+                  n[2]->point().data(), n[3]->point().data()) > 0)
+        std::swap(n[2], n[3]);
+      tets.push_back(new MTetrahedron(n[0], n[1], n[2], n[3]));
+    }
+    return true;
+  }
+
   MVertex *newSteinerVertex(const boundaryRecoveryOutput &out, std::size_t k,
                             const std::map<int, GEdge *> &curves,
                             const std::map<int, GFace *> &surfaces,
@@ -1429,6 +1526,14 @@ int meshGRegionBoundaryRecoveryFlat(const boundaryRecoveryInput &in,
                                     boundaryRecoveryOutput &out)
 {
   return -1;
+}
+
+bool recoverTrianglesInTetrahedra(std::vector<MVertex *> &v,
+                                  std::vector<MTetrahedron *> &tets,
+                                  const std::vector<MTriangle> &triangles)
+{
+  Msg::Error("Recovering triangles requires TetGen's boundary recovery");
+  return false;
 }
 
 MVertex *newSteinerVertex(const boundaryRecoveryOutput &out, std::size_t k,

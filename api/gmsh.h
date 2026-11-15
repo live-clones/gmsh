@@ -4158,8 +4158,12 @@ namespace gmsh { // Top-level functions
     // triplets of x, y, z coordinates, with (optional) constrained triangles given
     // in the `triangles' vector as triplets of indexes (with numbering starting at
     // 1), and return the tetrahedra as concatenated quadruplets of point indexes
-    // (with numbering starting at 1) in `tetrahedra'. Steiner points might be
-    // added in the `steiner' vector.
+    // (with numbering starting at 1) in `tetrahedra'. The tetrahedra fill the
+    // convex hull of the points; a point with the coordinates of another is in no
+    // tetrahedron. The points are tetrahedralized with the Delaunay, parallel
+    // Delaunay or HXT algorithm depending on the `Mesh.Algorithm3D' option.
+    // Steiner points might be added in the `steiner' vector to recover the
+    // constrained triangles: they are numbered after the given points.
     GMSH_API void tetrahedralize(const std::vector<double> & coordinates,
                                  std::vector<std::size_t> & tetrahedra,
                                  std::vector<double> & steiner,
