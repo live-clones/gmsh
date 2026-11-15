@@ -34,7 +34,7 @@ protected:
   int _npts;
   IntPt *_pts;
 
-  MSubTetrahedron(const std::vector<MVertex *> &v, int num, int part,
+  MSubTetrahedron(const std::vector<MVertex *> &v, std::size_t num, int part,
                   bool owner, int orig)
     : MTetrahedron(v, num, part), _owner(owner), _orig_N(orig), _base(nullptr),
       _pOrder(-1), _npts(0), _pts(nullptr)
@@ -45,13 +45,13 @@ protected:
 
 public:
   MSubTetrahedron(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3,
-                  int num = 0, int part = 0, bool owner = false,
+                  std::size_t num = 0, int part = 0, bool owner = false,
                   MElement *orig = nullptr)
     : MTetrahedron(v0, v1, v2, v3, num, part), _owner(owner), _orig(orig),
       _base(nullptr), _pOrder(-1), _npts(0), _pts(nullptr)
   {
   }
-  MSubTetrahedron(const std::vector<MVertex *> &v, int num = 0, int part = 0,
+  MSubTetrahedron(const std::vector<MVertex *> &v, std::size_t num = 0, int part = 0,
                   bool owner = false, MElement *orig = nullptr)
     : MTetrahedron(v, num, part), _owner(owner), _orig(orig), _base(nullptr),
       _pOrder(-1), _npts(0), _pts(nullptr)
@@ -146,7 +146,7 @@ protected:
   int _npts;
   IntPt *_pts;
 
-  MSubTriangle(const std::vector<MVertex *> &v, int num, int part, bool owner,
+  MSubTriangle(const std::vector<MVertex *> &v, std::size_t num, int part, bool owner,
                int orig)
     : MTriangle(v, num, part), _owner(owner), _orig_N(orig), _base(nullptr),
       _pOrder(-1), _npts(0), _pts(nullptr)
@@ -155,13 +155,13 @@ protected:
   virtual void updateParent(
     GModel *gm); // NEVER ever use this ! (except for reading msh files !)
 public:
-  MSubTriangle(MVertex *v0, MVertex *v1, MVertex *v2, int num = 0, int part = 0,
+  MSubTriangle(MVertex *v0, MVertex *v1, MVertex *v2, std::size_t num = 0, int part = 0,
                bool owner = false, MElement *orig = nullptr)
     : MTriangle(v0, v1, v2, num, part), _owner(owner), _orig(orig),
       _base(nullptr), _pOrder(-1), _npts(0), _pts(nullptr)
   {
   }
-  MSubTriangle(const std::vector<MVertex *> &v, int num = 0, int part = 0,
+  MSubTriangle(const std::vector<MVertex *> &v, std::size_t num = 0, int part = 0,
                bool owner = false, MElement *orig = nullptr)
     : MTriangle(v, num, part), _owner(owner), _orig(orig), _base(nullptr),
       _pOrder(-1), _npts(0), _pts(nullptr)
@@ -256,7 +256,7 @@ protected:
   int _npts;
   IntPt *_pts;
 
-  MSubLine(const std::vector<MVertex *> &v, int num, int part, bool owner,
+  MSubLine(const std::vector<MVertex *> &v, std::size_t num, int part, bool owner,
            int orig)
     : MLine(v, num, part), _owner(owner), _orig_N(orig), _base(nullptr),
       _pOrder(-1), _npts(0), _pts(nullptr)
@@ -265,13 +265,13 @@ protected:
   virtual void updateParent(
     GModel *gm); // NEVER ever use this ! (except for reading msh files !)
 public:
-  MSubLine(MVertex *v0, MVertex *v1, int num = 0, int part = 0,
+  MSubLine(MVertex *v0, MVertex *v1, std::size_t num = 0, int part = 0,
            bool owner = false, MElement *orig = nullptr)
     : MLine(v0, v1, num, part), _owner(owner), _orig(orig), _base(nullptr),
       _pOrder(-1), _npts(0), _pts(nullptr)
   {
   }
-  MSubLine(const std::vector<MVertex *> &v, int num = 0, int part = 0,
+  MSubLine(const std::vector<MVertex *> &v, std::size_t num = 0, int part = 0,
            bool owner = false, MElement *orig = nullptr)
     : MLine(v, num, part), _owner(owner), _orig(orig), _base(nullptr),
       _pOrder(-1), _npts(0), _pts(nullptr)
@@ -365,7 +365,7 @@ protected:
   int _npts;
   IntPt *_pts;
 
-  MSubPoint(const std::vector<MVertex *> &v, int num, int part, bool owner,
+  MSubPoint(const std::vector<MVertex *> &v, std::size_t num, int part, bool owner,
             int orig)
     : MPoint(v, num, part), _owner(owner), _orig_N(orig), _base(nullptr),
       _pOrder(-1), _npts(0), _pts(nullptr)
@@ -374,13 +374,13 @@ protected:
   virtual void updateParent(
     GModel *gm); // NEVER ever use this ! (except for reading msh files !)
 public:
-  MSubPoint(MVertex *v0, int num = 0, int part = 0, bool owner = false,
+  MSubPoint(MVertex *v0, std::size_t num = 0, int part = 0, bool owner = false,
             MElement *orig = nullptr)
     : MPoint(v0, num, part), _owner(owner), _orig(orig), _base(nullptr),
       _pOrder(-1), _npts(0), _pts(nullptr)
   {
   }
-  MSubPoint(const std::vector<MVertex *> &v, int num = 0, int part = 0,
+  MSubPoint(const std::vector<MVertex *> &v, std::size_t num = 0, int part = 0,
             bool owner = false, MElement *orig = nullptr)
     : MPoint(v, num, part), _owner(owner), _orig(orig), _base(nullptr),
       _pOrder(-1), _npts(0), _pts(nullptr)

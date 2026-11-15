@@ -49,7 +49,7 @@ protected:
 
 public:
   MPrism(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
-         MVertex *v5, int num = 0, int part = 0)
+         MVertex *v5, std::size_t num = 0, int part = 0)
     : MElement(num, part)
   {
     _v[0] = v0;
@@ -59,7 +59,7 @@ public:
     _v[4] = v4;
     _v[5] = v5;
   }
-  MPrism(const std::vector<MVertex *> &v, int num = 0, int part = 0)
+  MPrism(const std::vector<MVertex *> &v, std::size_t num = 0, int part = 0)
     : MElement(num, part)
   {
     for(int i = 0; i < 6; i++) _v[i] = v[i];
@@ -275,7 +275,7 @@ public:
   MPrism15(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
            MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, MVertex *v9,
            MVertex *v10, MVertex *v11, MVertex *v12, MVertex *v13, MVertex *v14,
-           int num = 0, int part = 0)
+           std::size_t num = 0, int part = 0)
     : MPrism(v0, v1, v2, v3, v4, v5, num, part)
   {
     _vs[0] = v6;
@@ -289,7 +289,7 @@ public:
     _vs[8] = v14;
     for(int i = 0; i < 9; i++) _vs[i]->setPolynomialOrder(2);
   }
-  MPrism15(const std::vector<MVertex *> &v, int num = 0, int part = 0)
+  MPrism15(const std::vector<MVertex *> &v, std::size_t num = 0, int part = 0)
     : MPrism(v, num, part)
   {
     for(int i = 0; i < 9; i++) _vs[i] = v[6 + i];
@@ -418,7 +418,7 @@ public:
   MPrism18(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
            MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, MVertex *v9,
            MVertex *v10, MVertex *v11, MVertex *v12, MVertex *v13, MVertex *v14,
-           MVertex *v15, MVertex *v16, MVertex *v17, int num = 0, int part = 0)
+           MVertex *v15, MVertex *v16, MVertex *v17, std::size_t num = 0, int part = 0)
     : MPrism(v0, v1, v2, v3, v4, v5, num, part)
   {
     _vs[0] = v6;
@@ -435,7 +435,7 @@ public:
     _vs[11] = v17;
     for(int i = 0; i < 12; i++) _vs[i]->setPolynomialOrder(2);
   }
-  MPrism18(const std::vector<MVertex *> &v, int num = 0, int part = 0)
+  MPrism18(const std::vector<MVertex *> &v, std::size_t num = 0, int part = 0)
     : MPrism(v, num, part)
   {
     for(int i = 0; i < 12; i++) _vs[i] = v[6 + i];
@@ -535,14 +535,14 @@ protected:
 
 public:
   MPrismN(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
-          MVertex *v5, const std::vector<MVertex *> &v, char order, int num = 0,
+          MVertex *v5, const std::vector<MVertex *> &v, char order, std::size_t num = 0,
           int part = 0)
     : MPrism(v0, v1, v2, v3, v4, v5, num, part), _vs(v), _order(order)
   {
     for(std::size_t i = 0; i < _vs.size(); i++)
       _vs[i]->setPolynomialOrder(_order);
   }
-  MPrismN(const std::vector<MVertex *> &v, char order, int num = 0,
+  MPrismN(const std::vector<MVertex *> &v, char order, std::size_t num = 0,
           int part = 0)
     : MPrism(v, num, part), _order(order)
   {

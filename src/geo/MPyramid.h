@@ -54,7 +54,7 @@ protected:
 
 public:
   MPyramid(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
-           int num = 0, int part = 0)
+           std::size_t num = 0, int part = 0)
     : MElement(num, part)
   {
     _v[0] = v0;
@@ -63,7 +63,7 @@ public:
     _v[3] = v3;
     _v[4] = v4;
   }
-  MPyramid(const std::vector<MVertex *> &v, int num = 0, int part = 0)
+  MPyramid(const std::vector<MVertex *> &v, std::size_t num = 0, int part = 0)
     : MElement(num, part)
   {
     for(int i = 0; i < 5; i++) _v[i] = v[i];
@@ -276,7 +276,7 @@ protected:
 
 public:
   MPyramidN(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
-            const std::vector<MVertex *> &v, char order, int num = 0,
+            const std::vector<MVertex *> &v, char order, std::size_t num = 0,
             int part = 0)
     : MPyramid(v0, v1, v2, v3, v4, num, part), _vs(v), _order(order)
   {
@@ -284,7 +284,7 @@ public:
       _vs[i]->setPolynomialOrder(_order);
     getFunctionSpace(order);
   }
-  MPyramidN(const std::vector<MVertex *> &v, char order, int num = 0,
+  MPyramidN(const std::vector<MVertex *> &v, char order, std::size_t num = 0,
             int part = 0)
     : MPyramid(v[0], v[1], v[2], v[3], v[4], num, part), _order(order)
   {

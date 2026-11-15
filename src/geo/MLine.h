@@ -28,13 +28,13 @@ protected:
   }
 
 public:
-  MLine(MVertex *v0, MVertex *v1, int num = 0, int part = 0)
+  MLine(MVertex *v0, MVertex *v1, std::size_t num = 0, int part = 0)
     : MElement(num, part)
   {
     _v[0] = v0;
     _v[1] = v1;
   }
-  MLine(const std::vector<MVertex *> &v, int num = 0, int part = 0)
+  MLine(const std::vector<MVertex *> &v, std::size_t num = 0, int part = 0)
     : MElement(num, part)
   {
     for(int i = 0; i < 2; i++) _v[i] = v[i];
@@ -130,13 +130,13 @@ protected:
   MVertex *_vs[1];
 
 public:
-  MLine3(MVertex *v0, MVertex *v1, MVertex *v2, int num = 0, int part = 0)
+  MLine3(MVertex *v0, MVertex *v1, MVertex *v2, std::size_t num = 0, int part = 0)
     : MLine(v0, v1, num, part)
   {
     _vs[0] = v2;
     _vs[0]->setPolynomialOrder(2);
   }
-  MLine3(const std::vector<MVertex *> &v, int num = 0, int part = 0)
+  MLine3(const std::vector<MVertex *> &v, std::size_t num = 0, int part = 0)
     : MLine(v, num, part)
   {
     _vs[0] = v[2];
@@ -209,13 +209,13 @@ protected:
 
 public:
   MLineN(MVertex *v0, MVertex *v1, const std::vector<MVertex *> &vs,
-         int num = 0, int part = 0)
+         std::size_t num = 0, int part = 0)
     : MLine(v0, v1, num, part), _vs(vs)
   {
     for(std::size_t i = 0; i < _vs.size(); i++)
       _vs[i]->setPolynomialOrder(_vs.size() + 1);
   }
-  MLineN(const std::vector<MVertex *> &v, int num = 0, int part = 0)
+  MLineN(const std::vector<MVertex *> &v, std::size_t num = 0, int part = 0)
     : MLine(v[0], v[1], num, part)
   {
     for(std::size_t i = 2; i < v.size(); i++) _vs.push_back(v[i]);
