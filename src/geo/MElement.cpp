@@ -1017,6 +1017,24 @@ double MElement::_jacobianFromGradients(const double (*gsf)[3],
   return _computeDeterminantAndRegularize(this, jac);
 }
 
+// The shape functions (or their gradients) of an element: on the stack, except
+// for the polygons and polyhedra with more nodes than any other element.
+namespace {
+  template <class T> class ShapeBuffer {
+    T _stack[1256], *_heap;
+
+  public:
+    ShapeBuffer(const MElement *e) : _heap(nullptr)
+    {
+      if(e->getNumShapeFunctions() > 1256)
+        _heap = new T[e->getNumShapeFunctions()];
+    }
+    ~ShapeBuffer() { delete[] _heap; }
+    T *get() { return _heap ? _heap : _stack; }
+  };
+  typedef double Gradient[3];
+} // namespace
+
 double MElement::getJacobian(double u, double v, double w,
                              double jac[3][3]) const
 {
@@ -1103,7 +1121,8 @@ double MElement::getPrimaryJacobian(double u, double v, double w,
   jac[1][0] = jac[1][1] = jac[1][2] = 0.;
   jac[2][0] = jac[2][1] = jac[2][2] = 0.;
 
-  double gsf[1256][3];
+  ShapeBuffer<Gradient> buffer(this);
+  Gradient *gsf = buffer.get();
   getGradShapeFunctions(u, v, w, gsf, 1);
   for(std::size_t i = 0; i < getNumPrimaryShapeFunctions(); i++) {
     const MVertex *v = getShapeFunctionNode(i);
@@ -1274,7 +1293,8 @@ void MElement::pnt(const std::vector<double> &sf, SPoint3 &p) const
 void MElement::primaryPnt(double u, double v, double w, SPoint3 &p)
 {
   double x = 0., y = 0., z = 0.;
-  double sf[1256];
+  ShapeBuffer<double> buffer(this);
+  double *sf = buffer.get();
   getShapeFunctions(u, v, w, sf, 1);
   for(std::size_t j = 0; j < getNumPrimaryShapeFunctions(); j++) {
     const MVertex *v = getShapeFunctionNode(j);
@@ -1389,7 +1409,8 @@ double MElement::_interpolateFromShapeFunctions(const double *sf,
 double MElement::interpolate(double val[], double u, double v, double w,
                              int stride, int order)
 {
-  double sf[1256];
+  ShapeBuffer<double> buffer(this);
+  double *sf = buffer.get();
   getShapeFunctions(u, v, w, sf, order);
   return _interpolateFromShapeFunctions(sf, val, stride);
 }
@@ -1414,7 +1435,8 @@ void MElement::interpolateGrad(double val[], double u, double v, double w,
                                double f[], int stride, double invjac[3][3],
                                int order)
 {
-  double gsf[1256][3];
+  ShapeBuffer<Gradient> buffer(this);
+  Gradient *gsf = buffer.get();
   getGradShapeFunctions(u, v, w, gsf, order);
   double inv[3][3];
   if(!invjac) {
@@ -1432,7 +1454,8 @@ void MElement::interpolateCurl(double val[], double u, double v, double w,
   double fx[3], fy[3], fz[3], jac[3][3], inv[3][3];
   getJacobian(u, v, w, jac);
   inv3x3(jac, inv);
-  double gsf[1256][3];
+  ShapeBuffer<Gradient> buffer(this);
+  Gradient *gsf = buffer.get();
   getGradShapeFunctions(u, v, w, gsf, order);
   _interpolateGradFromGradients(gsf, &val[0], fx, stride, inv);
   _interpolateGradFromGradients(gsf, &val[1], fy, stride, inv);
@@ -1448,7 +1471,8 @@ double MElement::interpolateDiv(double val[], double u, double v, double w,
   double fx[3], fy[3], fz[3], jac[3][3], inv[3][3];
   getJacobian(u, v, w, jac);
   inv3x3(jac, inv);
-  double gsf[1256][3];
+  ShapeBuffer<Gradient> buffer(this);
+  Gradient *gsf = buffer.get();
   getGradShapeFunctions(u, v, w, gsf, order);
   _interpolateGradFromGradients(gsf, &val[0], fx, stride, inv);
   _interpolateGradFromGradients(gsf, &val[1], fy, stride, inv);

@@ -53,10 +53,14 @@ static void sortVertices(MVertex *const *v, int n, char *s)
     return;
   }
 
-  std::vector<MVertex *> sorted(v, v + n);
-  std::sort(sorted.begin(), sorted.end(), compare);
-  for(int i = 0; i < n; i++)
-    s[i] = std::distance(v, std::find(v, v + n, sorted[i]));
+  for(int i = 0; i < n; i++) s[i] = i;
+  std::sort(s, s + n, [v](char a, char b) { return compare(v[a], v[b]); });
+}
+
+static void sortVertices(MVertex *const *v, int n, int *s)
+{
+  for(int i = 0; i < n; i++) s[i] = i;
+  std::sort(s, s + n, [v](int a, int b) { return compare(v[a], v[b]); });
 }
 
 void MFace::_initialize(MVertex *const *v, int n)

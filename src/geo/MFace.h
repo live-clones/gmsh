@@ -28,11 +28,12 @@ private:
   char _si[4]; // sorted indices
   int _n;
   MVertex **_p; // non-null iff _n > 4
-  char *_psi() const { return reinterpret_cast<char *>(_p + _n); }
+  int *_psi() const { return reinterpret_cast<int *>(_p + _n); }
   static MVertex **_alloc(int n)
   {
-    // (n nodes, then n chars rounded up to whole pointers)
-    return new MVertex *[n + (n + sizeof(MVertex *) - 1) / sizeof(MVertex *)];
+    // (n nodes, then n ints rounded up to whole pointers)
+    return new MVertex *[n + (n * sizeof(int) + sizeof(MVertex *) - 1) /
+                               sizeof(MVertex *)];
   }
 
   void _initialize(MVertex *const *v, int n);

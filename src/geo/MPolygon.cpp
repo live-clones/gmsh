@@ -7,7 +7,8 @@
 #include "MPolygon.h"
 #include "GmshMessage.h"
 
-MPolygon::MPolygon(const std::vector<MVertex *> &vertices, int num, int part)
+MPolygon::MPolygon(const std::vector<MVertex *> &vertices, std::size_t num,
+                   int part)
   : MElement(num, part), _vertices(vertices),
     _numBoundary((int)vertices.size()), _givenTriangles(false)
 {
@@ -104,8 +105,13 @@ void MPolygon::_ensureTriangles() const
       if(cr < 0.) continue; // reflex
       bool ok = true;
       for(int j = 0; j < n && ok; j++) {
+        // (a node repeated in the boundary, as on the bridge to a hole, is
+        // not in the way of the ears at its other occurrences)
         int p = ring[j];
-        if(p != a && p != b && p != c && inside(p, a, b, c)) ok = false;
+        MVertex *vp = _vertices[p];
+        if(p != a && p != b && p != c && vp != _vertices[a] &&
+           vp != _vertices[b] && vp != _vertices[c] && inside(p, a, b, c))
+          ok = false;
       }
       if(ok) ear = i;
     }

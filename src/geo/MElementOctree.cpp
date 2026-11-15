@@ -7,6 +7,8 @@
 #include <map>
 #include "GModel.h"
 #include "MElement.h"
+#include "MPolygon.h"
+#include "MPolyhedron.h"
 #include "MElementOctree.h"
 #include "Octree.h"
 #include "Context.h"
@@ -135,7 +137,10 @@ static double offElement(MElement *e, const double *P, double tol)
   double uvw[3];
   e->xyz2uvw(const_cast<double *>(P), uvw);
   int dim = e->getDim();
-  for(int k = dim; k < 3; k++) uvw[k] = 0.;
+  // (the coordinates of a polygon are those of space: it looks itself at how
+  // far off its plane the point is)
+  if(e->getType() != TYPE_POLYG)
+    for(int k = dim; k < 3; k++) uvw[k] = 0.;
   if(!e->isInside(uvw[0], uvw[1], uvw[2], tol)) return -1.;
   if(dim == 3) return 0.;
   SPoint3 q;
@@ -150,6 +155,12 @@ void MElementOctree::_insert(MElement *e)
   int dim = e->getDim();
   if(dim < 0 || dim > 3) return;
   Octree_Insert(e, _octree[dim]);
+  // subdivide the polytopes now: the searches, which can run in several
+  // threads, locate the points in their sub-simplices
+  if(e->getType() == TYPE_POLYG)
+    static_cast<MPolygon *>(e)->getNumTriangles();
+  else if(e->getType() == TYPE_POLYH)
+    static_cast<MPolyhedron *>(e)->getNumTetrahedra();
   _maxOrder = std::max(_maxOrder, e->getPolynomialOrder());
 }
 

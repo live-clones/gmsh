@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <climits>
 #include <set>
+#include <map>
 #include "MPolyhedron.h"
 #include "GmshMessage.h"
 
@@ -40,8 +41,8 @@ namespace {
   }
 } // namespace
 
-MPolyhedron::MPolyhedron(const std::vector<MVertex *> &vertices, int num,
-                         int part)
+MPolyhedron::MPolyhedron(const std::vector<MVertex *> &vertices,
+                         std::size_t num, int part)
   : MElement(num, part), _numFaces(0), _tetOffset(0), _givenTetrahedra(false)
 {
   // each node once, in the order of its first occurrence
@@ -136,7 +137,7 @@ void MPolyhedron::_ensureEdges() const
 
 void MPolyhedron::_ensureTetrahedra() const
 {
-  if((int)_data.size() > _tetOffset || !_numFaces) return;
+  if((int)_data.size() > _tetOffset || !_numFaces || _vertices.empty()) return;
 
   // fan from the first vertex: each face not holding the apex is fanned into
   // triangles from its first vertex, and each triangle gives a tetrahedron,
@@ -190,6 +191,76 @@ void MPolyhedron::_ensureRepTriangles() const
       _repTriangles.insert(_repTriangles.end(), faces[i].second.begin(),
                            faces[i].second.end());
     i = j;
+  }
+}
+
+void MPolyhedron::getFaceTriangles(
+  std::vector<std::vector<int> > &triangles) const
+{
+  triangles.assign(_numFaces, std::vector<int>());
+  // the triangles on the boundary of the tetrahedra: those that only one of
+  // them has
+  std::map<std::array<int, 3>, std::array<int, 3> > boundary;
+  for(int i = 0; i < getNumTetrahedra(); i++) {
+    std::array<int, 4> t = getTetrahedronIndices(i);
+    std::array<int, 3> fs[4] = {{t[0], t[2], t[1]},
+                                {t[0], t[1], t[3]},
+                                {t[0], t[3], t[2]},
+                                {t[1], t[2], t[3]}};
+    for(auto &f : fs) {
+      std::array<int, 3> key = f;
+      std::sort(key.begin(), key.end());
+      if(!boundary.erase(key)) boundary[key] = f;
+    }
+  }
+  // the nodes inside the faces, grouped when they share a triangle, and the
+  // face nodes of the triangles of each group
+  int numNodes = (int)_vertices.size();
+  std::vector<char> onFaces(numNodes, 0);
+  const int *f = _faceIndices();
+  for(int i = 0; i < _data[_numFaces]; i++) onFaces[f[i]] = 1;
+  std::vector<int> group(numNodes);
+  for(int i = 0; i < numNodes; i++) group[i] = i;
+  auto root = [&](int n) {
+    while(group[n] != n) n = group[n];
+    return n;
+  };
+  auto inside = [&](const std::array<int, 3> &t) {
+    for(int n : t)
+      if(!onFaces[n]) return root(n);
+    return -1;
+  };
+  for(auto &b : boundary) {
+    int g = inside(b.second);
+    for(int n : b.second)
+      if(!onFaces[n]) group[root(n)] = g;
+  }
+  std::vector<std::vector<int> > around(numNodes);
+  for(auto &b : boundary) {
+    int g = inside(b.second);
+    for(int n : b.second)
+      if(g >= 0 && onFaces[n]) around[g].push_back(n);
+  }
+  // a triangle is on the first face that has its nodes, or the face nodes
+  // around its group
+  std::vector<char> on(numNodes);
+  for(int i = 0; i < _numFaces; i++) {
+    on.assign(numNodes, 0);
+    for(int j = _data[i]; j < _data[i + 1]; j++) on[f[j]] = 1;
+    for(auto &b : boundary) {
+      std::array<int, 3> &t = b.second;
+      if(t[0] < 0) continue; // on a previous face
+      int g = inside(t);
+      bool ok = true;
+      if(g < 0)
+        ok = on[t[0]] && on[t[1]] && on[t[2]];
+      else
+        for(int n : around[g])
+          if(!on[n]) ok = false;
+      if(!ok) continue;
+      triangles[i].insert(triangles[i].end(), t.begin(), t.end());
+      t[0] = -1;
+    }
   }
 }
 
@@ -263,8 +334,13 @@ void MPolyhedron::reverse()
   for(int i = 0; i < _numFaces; i++)
     std::reverse(_data.begin() + _numFaces + 1 + _data[i],
                  _data.begin() + _numFaces + 1 + _data[i + 1]);
-  for(std::size_t i = _tetOffset; i + 3 < _data.size(); i += 4)
-    std::swap(_data[i + 2], _data[i + 3]);
+  // the given tetrahedra follow; the computed ones are oriented from the
+  // coordinates, whatever the faces: compute them again when needed
+  if(_givenTetrahedra)
+    for(std::size_t i = _tetOffset; i + 3 < _data.size(); i += 4)
+      std::swap(_data[i + 2], _data[i + 3]);
+  else
+    _data.resize(_tetOffset);
   _repTriangles.clear();
 }
 
@@ -404,7 +480,7 @@ void MPolyhedron::getGradShapeFunctions(double u, double v, double w,
   for(int k = 0; k < 4; k++) {
     int a = (k + 1) % 4, b = (k + 2) % 4, c = (k + 3) % 4;
     SVector3 g = crossprod(p[b] - p[a], p[c] - p[a]) * (1. / det);
-    if(k % 2) g = -g; // orientation of the opposite face alternates
+    if(k % 2 == 0) g = -g; // orientation of the opposite face alternates
     for(int d = 0; d < 3; d++) s[is[k]][d] = g[d];
   }
 }

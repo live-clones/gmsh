@@ -64,7 +64,7 @@ private:
   int _findTetrahedron(double x, double y, double z, double bary[4]) const;
 
 public:
-  MPolyhedron(const std::vector<MVertex *> &vertices, int num = 0,
+  MPolyhedron(const std::vector<MVertex *> &vertices, std::size_t num = 0,
               int part = 0);
   ~MPolyhedron() {}
 
@@ -74,6 +74,7 @@ public:
   { return (int)_vertices.size() - _numBoundary; }
   virtual MVertex *getVertex(int num) { return _vertices[num]; }
   virtual const MVertex *getVertex(int num) const { return _vertices[num]; }
+  virtual void setVertex(int num, MVertex *v) { _vertices[num] = v; }
 
   virtual int getNumEdges() const
   {
@@ -159,6 +160,11 @@ public:
     _ensureTetrahedra();
     _givenTetrahedra = true;
   }
+  // the triangles the sub-tetrahedra have on each face, as 3 indices in the
+  // nodes per triangle: the fields being linear on each tetrahedron, they are
+  // what shows a field on a face. They may use nodes inside the face (its
+  // centre, say), which are not among the nodes of the face.
+  void getFaceTriangles(std::vector<std::vector<int> > &triangles) const;
   int getNumPolygons() const { return _numFaces; }
   int getPolygonStart(int i) const { return _data[i]; }
   MVertex *getPolygonVertex(int i) const
@@ -176,9 +182,10 @@ public:
   }
   MTetrahedron getTetrahedron(int num) const
   {
+    // with a tag given: a temporary must not take a new one from the model
     std::array<int, 4> is = getTetrahedronIndices(num);
     return MTetrahedron(_vertices[is[0]], _vertices[is[1]], _vertices[is[2]],
-                        _vertices[is[3]]);
+                        _vertices[is[3]], 1, getPartition());
   }
 
   // geometry: the reference coordinates are the physical coordinates, and the
