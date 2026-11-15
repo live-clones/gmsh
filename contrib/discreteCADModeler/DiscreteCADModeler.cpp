@@ -2289,74 +2289,22 @@ bool DiscreteCAD_Internals::_mergeNodes(
 bool DiscreteCAD_Internals::_cleanTriangles(
   std::vector<std::array<int, 3> > &tri, std::vector<int> &piece)
 {
-  // the triangles, without the degenerate ones and the copies
-  std::set<std::array<int, 3> > sorted;
-  std::size_t degenerate = 0, copies = 0, kept = 0;
-  for(std::size_t i = 0; i < tri.size(); i++) {
-    const std::array<int, 3> t = tri[i];
-    if(t[0] == t[1] || t[1] == t[2] || t[2] == t[0]) {
-      degenerate++;
-      continue;
-    }
-    std::array<int, 3> key = t;
-    std::sort(key.begin(), key.end());
-    if(!sorted.insert(key).second) {
-      copies++;
-      continue;
-    }
-    tri[kept] = t;
-    piece[kept] = piece[i];
-    kept++;
-  }
-  tri.resize(kept);
-  piece.resize(kept);
-  if(degenerate || copies)
-    Msg::Warning("Discrete CAD triangulation: %lu degenerate and %lu "
+  DiscreteCADHealReport r;
+  std::vector<std::size_t> kept;
+  removeBadTriangles(tri, r, &kept);
+  for(std::size_t j = 0; j < kept.size(); j++) piece[j] = piece[kept[j]];
+  piece.resize(kept.size());
+  if(r.degenerate || r.duplicated)
+    Msg::Warning("Discrete CAD triangulation: %d degenerate and %d "
                  "duplicate triangles ignored",
-                 degenerate, copies);
-  const std::size_t nt = tri.size();
-  if(!nt) {
+                 r.degenerate, r.duplicated);
+  if(tri.empty()) {
     Msg::Error("Discrete CAD triangulation without triangles");
     return false;
   }
-
-  // the triangles oriented as their neighbors across the edges of two
-  // triangles
-  std::map<std::pair<int, int>, std::vector<std::size_t> > edgeTriangles;
-  for(std::size_t i = 0; i < nt; i++)
-    for(int k = 0; k < 3; k++)
-      edgeTriangles[std::minmax(tri[i][k], tri[i][(k + 1) % 3])].push_back(i);
-  auto along = [&](std::size_t i, int a, int b) {
-    for(int k = 0; k < 3; k++)
-      if(tri[i][k] == a) return tri[i][(k + 1) % 3] == b;
-    return false;
-  };
-  std::vector<char> oriented(nt, 0);
-  bool orientable = true;
-  for(std::size_t first = 0; first < nt; first++) {
-    if(oriented[first]) continue;
-    oriented[first] = 1;
-    std::vector<std::size_t> stack = {first};
-    while(!stack.empty()) {
-      const std::size_t i = stack.back();
-      stack.pop_back();
-      for(int k = 0; k < 3; k++) {
-        const int a = tri[i][k], b = tri[i][(k + 1) % 3];
-        const std::vector<std::size_t> &et = edgeTriangles[std::minmax(a, b)];
-        if(et.size() != 2) continue;
-        const std::size_t j = et[0] == i ? et[1] : et[0];
-        const bool consistent = along(j, b, a);
-        if(!oriented[j]) {
-          if(!consistent) std::swap(tri[j][1], tri[j][2]);
-          oriented[j] = 1;
-          stack.push_back(j);
-        }
-        else if(!consistent)
-          orientable = false;
-      }
-    }
-  }
-  if(!orientable)
+  std::vector<std::vector<std::size_t> > components;
+  std::vector<char> closed, turned;
+  if(!orientAsNeighbors(tri, components, closed, turned))
     Msg::Warning("Discrete CAD triangulation not orientable");
   return true;
 }
@@ -2511,10 +2459,17 @@ bool DiscreteCAD_Internals::_build(
   std::vector<std::array<int, 3> > &tri, std::vector<int> &label,
   const std::set<std::pair<int, int> > &barrier, double angle,
   double curveAngle, double tolerance, bool recognize,
-  std::vector<std::pair<int, int> > &outDimTags, Fit *fit)
+  std::vector<std::pair<int, int> > &outDimTags, Fit *fit,
+  const std::map<int, std::vector<std::array<std::array<double, 2>, 3> > >
+    *charts)
 {
   const std::size_t nt = tri.size();
   const std::set<std::pair<int, int> > &sharp = barrier;
+  // (the labels given, and the number of triangles of each one, for the
+  // charts)
+  const std::vector<int> labelOf = charts ? label : std::vector<int>();
+  std::map<int, std::size_t> countOf;
+  for(int l : labelOf) countOf[l]++;
   std::map<std::pair<int, int>, std::vector<std::size_t> > edgeTriangles;
   for(std::size_t i = 0; i < nt; i++)
     for(int k = 0; k < 3; k++)
@@ -2703,9 +2658,10 @@ bool DiscreteCAD_Internals::_build(
       if(!hasUV[i]) label[i] = (int)find(i);
   }
 
-  // the parameters of the other surfaces, computed on their triangulations
-  // as createGeometry would, each one cut open into a disk along seams if it
-  // is not one (see cutOpen; the boolean operations then interpolate them)
+  // the parameters of the other surfaces, those of charts for a label left
+  // whole, or else computed on their triangulations as createGeometry would,
+  // each one cut open into a disk along seams if it is not one (see cutOpen;
+  // the boolean operations then interpolate them)
   {
     TemporaryModel tmp;
     std::map<int, std::vector<std::size_t> > trianglesOf;
@@ -2713,6 +2669,18 @@ bool DiscreteCAD_Internals::_build(
       if(!hasUV[i]) trianglesOf[label[i]].push_back(i);
     int failed = 0;
     for(auto &tl : trianglesOf) {
+      if(charts) {
+        const int l = labelOf[tl.second[0]];
+        auto c = charts->find(l);
+        if(c != charts->end() && c->second.size() == tl.second.size() &&
+           countOf[l] == tl.second.size()) {
+          for(std::size_t j = 0; j < tl.second.size(); j++) {
+            uv[tl.second[j]] = c->second[j];
+            hasUV[tl.second[j]] = 1;
+          }
+          continue;
+        }
+      }
       std::vector<std::array<int, 3> > lt;
       for(std::size_t i : tl.second) lt.push_back(tri[i]);
       std::vector<int> nodeOfCopy;
@@ -3422,8 +3390,9 @@ bool DiscreteCAD_Internals::recognize(
     }
 
   // their triangles, each one with its surface (as a piece, see _patches,
-  // for the sharp edges inside them), and the tags of the volumes and of the
-  // surfaces by their triangles (their number and the first one), to be kept
+  // for the sharp edges inside them) and its parameters (kept for those left
+  // whole), and the tags of the volumes and of the surfaces by their
+  // triangles (their number and the first one), to be kept
   std::vector<std::array<int, 3> > tri;
   std::vector<int> label;
   typedef std::pair<std::size_t, std::array<int, 3> > Signature;
@@ -3438,12 +3407,15 @@ bool DiscreteCAD_Internals::recognize(
     return g;
   };
   std::map<Signature, int> oldSurface, oldVolume;
+  std::map<int, std::vector<std::array<std::array<double, 2>, 3> > > charts;
   int piece = 0;
   for(int s : surfaces) {
-    for(auto &t : _surfaces[s].triangles) {
+    const Surface &sf = _surfaces[s];
+    for(auto &t : sf.triangles) {
       tri.push_back(t);
       label.push_back(piece);
     }
+    if(sf.uv.size() == sf.triangles.size()) charts[piece] = sf.uv;
     piece++;
     oldSurface[signature({s})] = s;
   }
@@ -3460,7 +3432,7 @@ bool DiscreteCAD_Internals::recognize(
   for(auto &s : _surfaces) before.insert(s.first);
   for(auto &v : _volumes) beforeVolumes.insert(v.first);
   if(!_build(tri, label, barrier, angle, curveAngle, tolerance, true,
-             outDimTags, &report.fit))
+             outDimTags, &report.fit, &charts))
     return false;
   const std::string proposed = fitTolerance(report.fit);
 

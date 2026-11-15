@@ -42,8 +42,18 @@ void removeBadTriangles(std::vector<std::array<int, 3> > &triangles,
                         DiscreteCADHealReport &report,
                         std::vector<std::size_t> *kept = nullptr);
 
-// The triangles oriented: as their neighbors across the edges of two
-// triangles, each component so made then outwards: a closed one so that its
+// The triangles oriented as their neighbors across the edges of two
+// triangles, each component (the triangles so connected) as its first
+// triangle: the triangles of each component, whether it is closed (no edge of
+// one triangle or of more than two), and whether each triangle is turned
+// over. False if a component is not orientable (a triangle reached both
+// ways).
+bool orientAsNeighbors(std::vector<std::array<int, 3> > &triangles,
+                       std::vector<std::vector<std::size_t> > &components,
+                       std::vector<char> &closed, std::vector<char> &turned);
+
+// The triangles oriented: as their neighbors (see orientAsNeighbors), each
+// component so made then outwards: a closed one so that its
 // volume is positive, an open one (a part of a surface with holes, or a sheet
 // closing another component) so that the winding number of all the
 // triangles is the nearest to whole numbers, and not negative, at points on

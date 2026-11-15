@@ -216,7 +216,8 @@ private:
                    std::vector<std::array<int, 3> > &tri,
                    std::vector<int> &piece);
   // the degenerate triangles and the copies removed, the others oriented as
-  // their neighbors across the edges of two triangles
+  // their neighbors across the edges of two triangles, as heal does (see
+  // removeBadTriangles and orientAsNeighbors)
   bool _cleanTriangles(std::vector<std::array<int, 3> > &tri,
                        std::vector<int> &piece);
   // the patches of a triangulation (the label of each triangle): the
@@ -233,14 +234,18 @@ private:
   // smooth patches split into their pieces on such surfaces (see
   // addTriangulation), with the maps of the analytic surfaces; the others
   // (all of them if not recognize, then classified surfaces) split into
-  // pieces that a map can parametrize, their topology (see _addTopology), its
-  // volumes (see _cells). The volumes and the surfaces bounding none in
-  // outDimTags.
+  // pieces that a map can parametrize (the parameters of the triangles of a
+  // label in charts, in their order, kept if they are left as one surface),
+  // their topology (see _addTopology), its volumes (see _cells). The volumes
+  // and the surfaces bounding none in outDimTags.
   bool _build(std::vector<std::array<int, 3> > &tri, std::vector<int> &label,
               const std::set<std::pair<int, int> > &barrier, double angle,
               double curveAngle, double tolerance, bool recognize,
               std::vector<std::pair<int, int> > &outDimTags,
-              Fit *fit = nullptr);
+              Fit *fit = nullptr,
+              const std::map<int, std::vector<std::array<std::array<double, 2>,
+                                                         3> > > *charts =
+                nullptr);
   // the triangles of the surfaces of a mesh file, each surface a piece (see
   // importShapes)
   bool _readTriangulations(const std::string &fileName,

@@ -52,10 +52,9 @@ void removeBadTriangles(std::vector<std::array<int, 3> > &triangles,
   triangles.resize(j);
 }
 
-void orientTriangles(const std::vector<std::array<double, 3> > &x,
-                     std::vector<std::array<int, 3> > &triangles,
-                     DiscreteCADHealReport &report,
-                     std::vector<int> *componentOf, std::vector<char> *turned)
+bool orientAsNeighbors(std::vector<std::array<int, 3> > &triangles,
+                       std::vector<std::vector<std::size_t> > &components,
+                       std::vector<char> &closed, std::vector<char> &turned)
 {
   const std::size_t nt = triangles.size();
   std::map<std::pair<int, int>, std::vector<std::size_t> > edges;
@@ -67,19 +66,10 @@ void orientTriangles(const std::vector<std::array<double, 3> > &x,
       if(triangles[i][k] == a && triangles[i][(k + 1) % 3] == b) return true;
     return false;
   };
-  // (the last reason each triangle was turned over for, and whether it was
-  // an odd number of times)
-  std::vector<char> why(nt, 0), odd(nt, 0);
-  auto reverse = [&](std::size_t i, char reason) {
-    std::swap(triangles[i][1], triangles[i][2]);
-    why[i] = reason;
-    odd[i] = !odd[i];
-  };
-
-  // the components, each oriented as its first triangle, across the edges of
-  // two triangles
   std::vector<int> component(nt, -1);
-  std::vector<std::vector<std::size_t> > components;
+  components.clear();
+  turned.assign(nt, 0);
+  bool orientable = true;
   for(std::size_t s = 0; s < nt; s++) {
     if(component[s] >= 0) continue;
     const int c = (int)components.size();
@@ -94,21 +84,54 @@ void orientTriangles(const std::vector<std::array<double, 3> > &x,
         const std::vector<std::size_t> &l = edges[std::minmax(a, b)];
         if(l.size() != 2) continue;
         const std::size_t j = l[0] == i ? l[1] : l[0];
-        if(component[j] >= 0) continue;
-        if(forwards(j, a, b)) reverse(j, 1);
+        if(component[j] >= 0) {
+          if(forwards(j, a, b)) orientable = false;
+          continue;
+        }
+        if(forwards(j, a, b)) {
+          std::swap(triangles[j][1], triangles[j][2]);
+          turned[j] = 1;
+        }
         component[j] = c;
         components[c].push_back(j);
         stack.push_back(j);
       }
     }
   }
-  report.components = (int)components.size();
-
-  // the closed ones outwards: their volume positive
-  std::vector<char> closed(components.size(), 1);
+  closed.assign(components.size(), 1);
   for(auto &e : edges)
     if(e.second.size() != 2)
       for(std::size_t i : e.second) closed[component[i]] = 0;
+  return orientable;
+}
+
+void orientTriangles(const std::vector<std::array<double, 3> > &x,
+                     std::vector<std::array<int, 3> > &triangles,
+                     DiscreteCADHealReport &report,
+                     std::vector<int> *componentOf, std::vector<char> *turned)
+{
+  const std::size_t nt = triangles.size();
+  // (the last reason each triangle was turned over for, and whether it was
+  // an odd number of times)
+  std::vector<char> why(nt, 0), odd(nt, 0);
+  auto reverse = [&](std::size_t i, char reason) {
+    std::swap(triangles[i][1], triangles[i][2]);
+    why[i] = reason;
+    odd[i] = !odd[i];
+  };
+
+  // the components, each oriented as its first triangle
+  std::vector<std::vector<std::size_t> > components;
+  std::vector<char> closed, first;
+  orientAsNeighbors(triangles, components, closed, first);
+  std::vector<int> component(nt, -1);
+  for(std::size_t c = 0; c < components.size(); c++)
+    for(std::size_t i : components[c]) component[i] = (int)c;
+  for(std::size_t i = 0; i < nt; i++)
+    if(first[i]) why[i] = odd[i] = 1;
+  report.components = (int)components.size();
+
+  // the closed ones outwards: their volume positive
   auto volume = [&](const std::vector<std::size_t> &c) {
     double v = 0.;
     for(std::size_t i : c) {
