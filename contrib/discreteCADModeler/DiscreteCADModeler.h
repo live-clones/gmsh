@@ -83,9 +83,11 @@ public:
     std::vector<int> nodes;
     std::vector<double> values;
   };
-  // how the zipping of the cracks by heal goes as its tolerance grows: the
-  // tolerance used, the one proposed, the largest level of its events; the
-  // distances from the nodes of the free edges to the nearest free edge not
+  // how the zipping of the cracks by heal goes as its tolerance grows (of
+  // all the pieces together: heal keeps its events for the pieces it closes,
+  // and zips the cracks of the others each piece alone): the tolerance used,
+  // the one proposed, the largest level of its events; the distances from
+  // the nodes of the free edges to the nearest free edge not
   // near them, the number of nodes by half decade b (from 10^(b/2) to
   // 10^((b+1)/2)) from the half decade first; before the zipping, then after
   // each event (by levels: the tolerance from which it is made), the free
@@ -356,10 +358,12 @@ public:
   bool importTriangulations(const std::string &fileName,
                             std::vector<std::pair<int, int> > &outDimTags);
   // the raw surfaces surfaceTags (all of them if empty) healed together:
-  // their degenerate triangles and their copies removed, their cracks zipped
-  // within tolerance (the nodes of their free edges merged, inserted into the
-  // free edges they are on; the tolerance proposed by zipTolerance if it is
-  // not positive), their triangles oriented (see DiscreteCADHeal.h)
+  // their degenerate triangles and their copies removed, their triangles
+  // oriented, the open pieces bounding volumes found by the winding number
+  // (see DiscreteCADHeal.h), the pieces closed within tolerance by the
+  // zipping of their cracks (the nodes of their free edges merged, inserted
+  // into the free edges they are on; the tolerance proposed by zipTolerance
+  // if it is not positive), the others left as they are
   bool heal(const std::vector<int> &surfaceTags, double tolerance);
   // the raw surfaces surfaceTags (all of them if empty) replaced by their
   // faces, split where the normals turn by more than angle (each raw surface

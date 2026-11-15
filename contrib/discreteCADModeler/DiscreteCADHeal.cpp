@@ -14,6 +14,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <algorithm>
+#include <atomic>
 #include <climits>
 #include <cmath>
 #include <cstdio>
@@ -23,6 +24,7 @@
 #include <memory>
 #include <queue>
 #include <set>
+#include <thread>
 #include <unordered_map>
 #include "DiscreteCADHeal.h"
 #include "DiscreteCADWinding.h"
@@ -172,7 +174,10 @@ void orientTriangles(const std::vector<std::array<double, 3> > &x,
   });
   for(int pass = 0; pass < 3; pass++) {
     bool changed = false;
-    std::unique_ptr<DiscreteCADWinding> all(new DiscreteCADWinding(x, triangles));
+    // (the winding number of all the triangles as they are when the pass
+    // starts, less twice that of the components turned over since)
+    DiscreteCADWinding all(x, triangles);
+    std::vector<std::unique_ptr<DiscreteCADWinding> > since;
     for(std::size_t c : open) {
       const std::vector<std::size_t> &tc = components[c];
       // (the size of the component, and the points a tenth of it away from
@@ -210,10 +215,14 @@ void orientTriangles(const std::vector<std::array<double, 3> > &x,
       if(q.empty()) continue;
       std::vector<std::array<int, 3> > own;
       for(std::size_t i : tc) own.push_back(triangles[i]);
-      DiscreteCADWinding mine(x, own);
+      std::unique_ptr<DiscreteCADWinding> mine(new DiscreteCADWinding(x, own));
       std::vector<double> w, m;
-      all->evaluate(q, w);
-      mine.evaluate(q, m);
+      all.evaluate(q, w);
+      for(auto &s : since) {
+        s->evaluate(q, m);
+        for(std::size_t i = 0; i < q.size(); i++) w[i] -= 2. * m[i];
+      }
+      mine->evaluate(q, m);
       double now = 0., turned = 0.;
       for(std::size_t i = 0; i < q.size(); i++) {
         now += penalty(w[i]);
@@ -223,7 +232,7 @@ void orientTriangles(const std::vector<std::array<double, 3> > &x,
         for(std::size_t i : tc) reverse(i, 3);
         report.reversedOpen++;
         changed = true;
-        all.reset(new DiscreteCADWinding(x, triangles));
+        since.push_back(std::move(mine));
       }
     }
     if(!changed) break;
@@ -235,6 +244,118 @@ void orientTriangles(const std::vector<std::array<double, 3> > &x,
     turned->assign(nt, 0);
     for(std::size_t i = 0; i < nt; i++)
       if(odd[i]) (*turned)[i] = why[i];
+  }
+}
+
+void componentKinds(const std::vector<std::array<double, 3> > &x,
+                    const std::vector<std::array<int, 3> > &triangles,
+                    const std::vector<int> &component, std::vector<char> &kind)
+{
+  const std::size_t nt = triangles.size();
+  int nc = 0;
+  for(int c : component) nc = std::max(nc, c + 1);
+  std::vector<std::vector<std::size_t> > members(nc);
+  for(std::size_t i = 0; i < nt; i++) members[component[i]].push_back(i);
+  std::map<std::pair<int, int>, int> count;
+  for(auto &t : triangles)
+    for(int k = 0; k < 3; k++) count[std::minmax(t[k], t[(k + 1) % 3])]++;
+  kind.assign(nc, 'c');
+  for(std::size_t i = 0; i < nt; i++)
+    for(int k = 0; k < 3; k++)
+      if(count[std::minmax(triangles[i][k], triangles[i][(k + 1) % 3])] != 2)
+        kind[component[i]] = 'o';
+
+  // (behind b and in front f: whole numbers one apart, not negative, around
+  // a volume; half numbers one apart around a sheet)
+  auto near = [](double w, double to) { return std::abs(w - to) < 0.2; };
+  auto bounds = [&](double b, double f) {
+    return near(b - f, 1.) && near(b, std::round(b)) && f > -0.2;
+  };
+  auto sheet = [&](double b, double f) {
+    return near(b - f, 1.) && near(b - std::floor(b), 0.5);
+  };
+  // (the points of the open components, the area of the triangle of each
+  // pair; the winding numbers of all the triangles there in one go, those of
+  // the triangles of each component by the threads of the machine, the
+  // largest components first)
+  const std::size_t samples = 200;
+  std::vector<std::vector<double> > area(nc), own(nc);
+  std::vector<std::array<double, 3> > q;
+  std::vector<std::size_t> start(nc + 1, 0);
+  for(int c = 0; c < nc; c++) {
+    start[c] = q.size();
+    if(kind[c] == 'c') continue;
+    const std::vector<std::size_t> &tc = members[c];
+    const std::size_t stride = (tc.size() + samples - 1) / samples;
+    for(std::size_t s = 0; s < tc.size(); s += stride) {
+      const std::array<int, 3> &t = triangles[tc[s]];
+      double e[3][3], g[3], longest = 0.;
+      for(int k = 0; k < 3; k++) {
+        double l = 0.;
+        for(int m = 0; m < 3; m++) {
+          e[k][m] = x[t[(k + 1) % 3]][m] - x[t[k]][m];
+          l += e[k][m] * e[k][m];
+        }
+        longest = std::max(longest, l);
+        g[k] = (x[t[0]][k] + x[t[1]][k] + x[t[2]][k]) / 3.;
+      }
+      // (the normal of the triangle, outwards: e0 x -e2)
+      const double n[3] = {e[2][1] * e[0][2] - e[2][2] * e[0][1],
+                           e[2][2] * e[0][0] - e[2][0] * e[0][2],
+                           e[2][0] * e[0][1] - e[2][1] * e[0][0]};
+      const double l = std::sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
+      if(!(l > 1e-14 * longest)) continue;
+      const double d = 0.02 * std::sqrt(l) / l;
+      for(int side = -1; side <= 1; side += 2)
+        q.push_back({{g[0] + side * d * n[0], g[1] + side * d * n[1],
+                      g[2] + side * d * n[2]}});
+      area[c].push_back(l);
+    }
+  }
+  start[nc] = q.size();
+  std::vector<double> w;
+  {
+    DiscreteCADWinding all(x, triangles);
+    all.evaluate(q, w);
+  }
+  std::vector<int> order;
+  for(int c = 0; c < nc; c++)
+    if(!area[c].empty()) order.push_back(c);
+  std::sort(order.begin(), order.end(), [&](int a, int b) {
+    return members[a].size() > members[b].size();
+  });
+  std::atomic<std::size_t> next(0);
+  auto work = [&]() {
+    for(std::size_t k; (k = next++) < order.size();) {
+      const int c = order[k];
+      std::vector<std::array<int, 3> > t;
+      for(std::size_t i : members[c]) t.push_back(triangles[i]);
+      DiscreteCADWinding mine(x, t);
+      for(std::size_t i = start[c]; i < start[c + 1]; i++)
+        own[c].push_back(mine(q[i].data()));
+    }
+  };
+  std::vector<std::thread> threads;
+  const unsigned n = std::max(1u, std::thread::hardware_concurrency());
+  for(unsigned t = 1; t < n; t++) threads.emplace_back(work);
+  work();
+  for(auto &t : threads) t.join();
+
+  for(int c : order) {
+    const std::vector<double> &m = own[c];
+    const double *a = &w[start[c]];
+    double total = 0., alone = 0., with = 0., flat = 0.;
+    for(std::size_t s = 0; s < area[c].size(); s++) {
+      total += area[c][s];
+      if(bounds(m[2 * s], m[2 * s + 1])) alone += area[c][s];
+      if(bounds(a[2 * s], a[2 * s + 1])) with += area[c][s];
+      if(sheet(m[2 * s], m[2 * s + 1]) || sheet(a[2 * s], a[2 * s + 1]))
+        flat += area[c][s];
+    }
+    kind[c] = alone >= 0.5 * total ? 'v' :
+              with >= 0.5 * total  ? 'w' :
+              flat >= 0.5 * total  ? 's' :
+                                     'o';
   }
 }
 

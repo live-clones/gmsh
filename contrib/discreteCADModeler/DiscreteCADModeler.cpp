@@ -3095,9 +3095,49 @@ bool DiscreteCAD_Internals::heal(const std::vector<int> &surfaceTags,
     " (the same three nodes) removed";
   done(removed);
 
-  // the cracks zipped: the triangle of the input each one comes from; the
-  // events up to twice the length of the free edges, for the zipping within
-  // other tolerances
+  // the triangles oriented
+  Msg::Info("Discrete CAD heal: orienting the triangles as their neighbors, "
+            "then the pieces outwards (the open ones by the winding "
+            "number)...");
+  std::vector<int> component;
+  std::vector<char> turnedOver;
+  orientTriangles(_nodes, tri, r, &component, &turnedOver);
+  const std::string pieces =
+    plural(r.components, "piece", "pieces") +
+    " (triangles connected by their edges): " + std::to_string(r.closed) +
+    " closed, " + std::to_string(r.components - r.closed) + " open";
+  std::string turned;
+  if(!r.reversedTriangles)
+    turned = "no triangle turned over: all were oriented consistently";
+  else
+    turned = plural(r.reversedTriangles, "triangle", "triangles") +
+             " turned over: those against their neighbors, and " +
+             plural(r.reversedClosed, "closed piece", "closed pieces") +
+             " of negative volume and " +
+             plural(r.reversedOpen, "open piece", "open pieces") +
+             " against the winding number of the others";
+  Msg::Info("Discrete CAD heal: %s", pieces.c_str());
+  done(turned);
+
+  // the open pieces bounding volumes
+  Msg::Info("Discrete CAD heal: the open pieces bounding volumes, by the "
+            "winding number of their triangles...");
+  std::vector<char> kind;
+  componentKinds(_nodes, tri, component, kind);
+  std::map<char, int> kinds;
+  for(char k : kind) kinds[k]++;
+  const std::string open =
+    r.components == r.closed ?
+      std::string("no open piece") :
+      plural(r.components - r.closed, "open piece", "open pieces") + ": " +
+        std::to_string(kinds['v'] + kinds['w']) + " bounding volumes (" +
+        std::to_string(kinds['v']) + " alone, with holes, " +
+        std::to_string(kinds['w']) + " with other pieces), " +
+        plural(kinds['s'], "sheet", "sheets") + ", " +
+        std::to_string(kinds['o']) + " other";
+  done(open);
+
+  // the tolerance
   Msg::Info("Discrete CAD heal: the distances across the cracks, for the "
             "tolerance...");
   std::string proposed;
@@ -3113,22 +3153,144 @@ bool DiscreteCAD_Internals::heal(const std::vector<int> &surfaceTags,
     tolerance = tolerance0;
     done(proposed);
   }
+
+  // the volumes closed within the tolerance: the cracks zipped as a
+  // filtration (its events up to twice the length of the free edges, for
+  // other tolerances), its events kept for the pieces it closes within the
+  // tolerance; the cracks of each other piece zipped within it, the piece
+  // alone (never sewn to another one)
   snprintf(tol, sizeof(tol), "%g", tolerance);
-  Msg::Info("Discrete CAD heal: zipping the cracks within %s...", tol);
+  Msg::Info("Discrete CAD heal: closing the volumes within %s...", tol);
   const std::vector<std::array<int, 3> > unzipped = tri;
   DiscreteCADZipReport z;
   std::vector<std::size_t> zipped;
   zipFreeEdges(_nodes, tri, tolerance, z, &zipped, 2.);
-  const std::string closing =
-    plural(z.merged.size(), "node", "nodes") + " merged, " +
-    plural(z.inserted.size(), "node", "nodes") + " inserted into free edges; " +
-    std::to_string(z.freeBefore) + " free edges, " +
-    std::to_string(z.freeAfter) + " left";
+  auto closes = [&](std::size_t i) {
+    return z.closedLevel[i] > 0. && z.closedLevel[i] <= tolerance;
+  };
+  std::vector<std::array<int, 3> > shells;
+  std::vector<std::size_t> shellFrom;
+  for(std::size_t j = 0; j < tri.size(); j++)
+    if(closes(zipped[j])) {
+      shells.push_back(tri[j]);
+      shellFrom.push_back(zipped[j]);
+    }
+  // (the shells oriented again, should pieces closed together have been
+  // oriented against each other)
+  DiscreteCADHealReport rs;
+  std::vector<char> turnedShell;
+  orientTriangles(_nodes, shells, rs, nullptr, &turnedShell);
+  // (the triangles of the shells, then those of the other pieces: the
+  // triangle of the input each one comes from, and why it ends turned over;
+  // the nodes merged and inserted, the pieces of the shells, the other
+  // pieces closed alone)
+  std::vector<std::size_t> from;
+  std::vector<char> why;
+  tri.clear();
+  for(std::size_t j = 0; j < shells.size(); j++) {
+    const char a = turnedOver[shellFrom[j]], b = turnedShell[j];
+    tri.push_back(shells[j]);
+    from.push_back(shellFrom[j]);
+    why.push_back(a && b ? 0 : b ? b : a);
+  }
+  std::vector<char> inShell(_nodes.size(), 0);
+  std::set<int> shellPieces;
+  std::vector<std::vector<std::size_t> > members(kind.size());
+  for(std::size_t i = 0; i < unzipped.size(); i++)
+    if(closes(i)) {
+      for(int n : unzipped[i]) inShell[n] = 1;
+      shellPieces.insert(component[i]);
+    }
+    else
+      members[component[i]].push_back(i);
+  std::vector<int> mergedNodes, insertedNodes;
+  for(int n : z.merged)
+    if(inShell[n]) mergedNodes.push_back(n);
+  for(int n : z.inserted)
+    if(inShell[n]) insertedNodes.push_back(n);
+  std::vector<char> closedAlone(kind.size(), 0);
+  for(std::size_t c = 0; c < members.size(); c++) {
+    if(members[c].empty()) continue;
+    std::vector<std::array<int, 3> > t;
+    for(std::size_t i : members[c]) t.push_back(unzipped[i]);
+    std::vector<std::size_t> o(t.size());
+    for(std::size_t j = 0; j < t.size(); j++) o[j] = j;
+    if(kind[c] != 'c') {
+      DiscreteCADZipReport zc;
+      zipFreeEdges(_nodes, t, tolerance, zc, &o, 0.);
+      mergedNodes.insert(mergedNodes.end(), zc.merged.begin(), zc.merged.end());
+      insertedNodes.insert(insertedNodes.end(), zc.inserted.begin(),
+                           zc.inserted.end());
+      if(zc.closedLevel[0] > 0. && zc.closedLevel[0] <= tolerance)
+        closedAlone[c] = 1;
+    }
+    for(std::size_t j = 0; j < t.size(); j++) {
+      tri.push_back(t[j]);
+      from.push_back(members[c][o[j]]);
+      why.push_back(turnedOver[from.back()]);
+    }
+  }
+  // (the pieces bounding volumes left open, by the level from which the
+  // zipping closes them)
+  std::map<int, double> openFrom;
+  std::map<int, std::size_t> openSize;
+  for(std::size_t i = 0; i < unzipped.size(); i++) {
+    const int c = component[i];
+    if(closes(i) || closedAlone[c] || (kind[c] != 'v' && kind[c] != 'w'))
+      continue;
+    auto it = openFrom.insert({c, z.closedLevel[i]}).first;
+    it->second = std::min(it->second, z.closedLevel[i]);
+    openSize[c]++;
+  }
+  std::vector<std::pair<double, int> > nearest;
+  for(auto &o : openFrom)
+    if(o.second <= z.reach) nearest.push_back({o.second, o.first});
+  std::sort(nearest.begin(), nearest.end());
+  int alone = 0;
+  for(char a : closedAlone) alone += a;
+  std::string closing =
+    plural(rs.closed + alone, "closed piece", "closed pieces") + " made of " +
+    plural(shellPieces.size() + alone, "open piece", "open pieces") +
+    ", the cracks of the others zipped, each piece alone (" +
+    plural(mergedNodes.size(), "node", "nodes") + " merged, " +
+    plural(insertedNodes.size(), "node", "nodes") +
+    " inserted into free edges in all)";
+  if(rs.reversedTriangles)
+    closing += ", " +
+               plural(rs.reversedTriangles, "triangle", "triangles") +
+               " of them turned over again";
+  closing += "; " +
+             plural(openFrom.size(), "piece bounding a volume",
+                    "pieces bounding volumes") +
+             " left open";
+  if(!openFrom.empty()) {
+    closing += ":";
+    if(!nearest.empty()) {
+      closing += " " + std::to_string(nearest.size()) + " closing from";
+      for(std::size_t k = 0; k < nearest.size() && k < 3; k++) {
+        char level[64];
+        snprintf(level, sizeof(level), "%g", nearest[k].first);
+        closing += std::string(k ? ", " : " ") + level + " (" +
+                   plural(openSize[nearest[k].second], "triangle",
+                          "triangles") +
+                   ")";
+      }
+      if(nearest.size() > 3) closing += ", ...";
+    }
+    if(openFrom.size() > nearest.size()) {
+      char reach[64];
+      snprintf(reach, sizeof(reach), "%g", z.reach);
+      closing += std::string(nearest.empty() ? " " : ", ") +
+                 std::to_string(openFrom.size() - nearest.size()) +
+                 " not within " + reach;
+    }
+  }
+  if(!z.freeBefore) closing = "nothing to close: no free edge";
   const std::string cracks =
-    "cracks zipped within " + std::string(tol) +
+    "volumes closed within " + std::string(tol) +
     (proposed.empty() ? std::string("") : " (" + proposed + ")") + ": " +
     closing;
-  done("cracks zipped: " + closing);
+  done(closing);
   {
     DiscreteCAD_Internals::Zip &zip = report.zip;
     zip.tolerance = tolerance;
@@ -3188,86 +3350,10 @@ bool DiscreteCAD_Internals::heal(const std::vector<int> &surfaceTags,
       }
     zip.items = {edges, nodes, points, no, closed};
   }
-  for(std::size_t &i : zipped) i = kept[i];
-  kept = zipped;
-
-  // the triangles oriented
-  Msg::Info("Discrete CAD heal: orienting the triangles as their neighbors, "
-            "then the pieces outwards (the open ones by the winding "
-            "number)...");
-  std::vector<int> component;
-  std::vector<char> turnedOver;
-  orientTriangles(_nodes, tri, r, &component, &turnedOver);
-  const std::string pieces =
-    plural(r.components, "piece", "pieces") +
-    " (triangles connected by their edges): " + std::to_string(r.closed) +
-    " closed, " + std::to_string(r.components - r.closed) + " open";
-  std::string turned;
-  if(!r.reversedTriangles)
-    turned = "no triangle turned over: all were oriented consistently";
-  else
-    turned = plural(r.reversedTriangles, "triangle", "triangles") +
-             " turned over: those against their neighbors, and " +
-             plural(r.reversedClosed, "closed piece", "closed pieces") +
-             " of negative volume and " +
-             plural(r.reversedOpen, "open piece", "open pieces") +
-             " against the winding number of the others";
-  Msg::Info("Discrete CAD heal: %s", pieces.c_str());
-  done(turned);
   {
-    // (the nodes merged and inserted, the free edges left, the triangles
-    // turned over)
-    report.add(plural(z.merged.size(), "node", "nodes") +
-                 " of free edges merged into nodes of others (cracks)",
-               0, z.merged);
-    report.add(plural(z.inserted.size(), "node", "nodes") +
-                 " inserted into free edges (T-junctions)",
-               0, z.inserted);
-    std::map<std::pair<int, int>, int> count;
-    for(auto &t : tri)
-      for(int k = 0; k < 3; k++) count[std::minmax(t[k], t[(k + 1) % 3])]++;
-    {
-      std::vector<int> left;
-      for(auto &c : count)
-        if(c.second == 1) {
-          left.push_back(c.first.first);
-          left.push_back(c.first.second);
-        }
-      report.add(plural(left.size() / 2, "free edge", "free edges") +
-                   " left (holes and gaps wider than the tolerance)",
-                 1, left);
-    }
-    static const char *why[4] = {"", " turned over against their neighbors",
-                                 " turned over with closed pieces of negative "
-                                 "volume",
-                                 " turned over with open pieces against the "
-                                 "winding number"};
-    for(int w = 1; w <= 3; w++) {
-      std::vector<int> n;
-      for(std::size_t i = 0; i < tri.size(); i++)
-        if(turnedOver[i] == w) n.insert(n.end(), tri[i].begin(), tri[i].end());
-      report.add(plural(n.size() / 3, "triangle", "triangles") + why[w], 2, n);
-    }
-    // (the pieces, closed or open)
-    std::set<int> openPieces;
-    for(std::size_t i = 0; i < tri.size(); i++)
-      for(int k = 0; k < 3; k++)
-        if(count[std::minmax(tri[i][k], tri[i][(k + 1) % 3])] != 2)
-          openPieces.insert(component[i]);
-    std::vector<int> closedNodes, openNodes;
-    std::vector<double> closedValues, openValues;
-    for(std::size_t i = 0; i < tri.size(); i++) {
-      const bool open = openPieces.count(component[i]) > 0;
-      (open ? openNodes : closedNodes)
-        .insert((open ? openNodes : closedNodes).end(), tri[i].begin(),
-                tri[i].end());
-      (open ? openValues : closedValues).push_back(scattered(component[i]));
-    }
-    report.add(plural(r.closed, "closed piece", "closed pieces") +
-                 ", oriented outwards (the volumes)",
-               2, closedNodes, closedValues);
-    report.add(plural(r.components - r.closed, "open piece", "open pieces"), 2,
-               openNodes, openValues);
+    std::vector<std::size_t> input(from.size());
+    for(std::size_t j = 0; j < from.size(); j++) input[j] = kept[from[j]];
+    kept = input;
   }
   for(int s : raw) _surfaces[s].triangles.clear();
   for(std::size_t i = 0; i < tri.size(); i++)
@@ -3296,18 +3382,80 @@ bool DiscreteCAD_Internals::heal(const std::vector<int> &surfaceTags,
     ", " + plural(after.misoriented.size(), "misoriented edge", "misoriented edges") +
     ", " + plural(after.tJunctions.size(), "T-junction", "T-junctions") + ", " +
     plural(after.needles.size(), "needle", "needles");
-  report.add(plural(after.nonManifold.size(), "non-manifold edge",
-                    "non-manifold edges") + " left (of more than two triangles)",
-             1, [&] {
-               std::vector<int> n;
-               for(auto &e : after.nonManifold) {
-                 n.push_back(e.first);
-                 n.push_back(e.second);
-               }
-               return n;
-             }());
-  report.text = removed + "\n" + cracks + "\n" + pieces + "\n" + turned + "\n" +
-                left;
+  {
+    auto ofEdges = [](const std::vector<std::pair<int, int> > &which) {
+      std::vector<int> n;
+      for(auto &e : which) {
+        n.push_back(e.first);
+        n.push_back(e.second);
+      }
+      return n;
+    };
+    // (the nodes merged and inserted, the free edges left, the triangles
+    // turned over)
+    report.add(plural(mergedNodes.size(), "node", "nodes") +
+                 " of free edges merged into nodes of others (cracks)",
+               0, mergedNodes);
+    report.add(plural(insertedNodes.size(), "node", "nodes") +
+                 " inserted into free edges (T-junctions)",
+               0, insertedNodes);
+    report.add(plural(after.free.size(), "free edge", "free edges") +
+                 " left (of the volumes not closed within the tolerance, "
+                 "and of the sheets)",
+               1, ofEdges(after.free));
+    static const char *because[4] = {
+      "", " turned over against their neighbors",
+      " turned over with closed pieces of negative volume",
+      " turned over with open pieces against the winding number"};
+    for(int w = 1; w <= 3; w++) {
+      std::vector<int> n;
+      for(std::size_t i = 0; i < tri.size(); i++)
+        if(why[i] == w) n.insert(n.end(), tri[i].begin(), tri[i].end());
+      report.add(plural(n.size() / 3, "triangle", "triangles") + because[w], 2,
+                 n);
+    }
+    // (the pieces: closed, or open by their kind)
+    static const std::string kindNames[5][2] = {
+      {"closed piece, oriented outwards (a volume)",
+       "closed pieces, oriented outwards (the volumes)"},
+      {"open piece bounding a volume alone (holes wider than the tolerance)",
+       "open pieces bounding volumes alone (holes wider than the "
+       "tolerance)"},
+      {"open piece bounding a volume with others (gaps wider than the "
+       "tolerance)",
+       "open pieces bounding volumes with others (gaps wider than the "
+       "tolerance)"},
+      {"sheet (an open piece)", "sheets (open pieces)"},
+      {"other open piece", "other open pieces"}};
+    std::vector<int> nodes[5];
+    std::vector<double> values[5];
+    std::set<int> counted[5];
+    for(std::size_t i = 0; i < tri.size(); i++) {
+      const int p = after.piece[i];
+      int k = 4, id = p;
+      if(p >= 0 && after.closed[p])
+        k = 0;
+      else {
+        id = component[from[i]];
+        const char c = kind[id];
+        k = c == 'v' ? 1 : c == 'w' ? 2 : c == 's' ? 3 : 4;
+        id += (int)after.closed.size();
+      }
+      nodes[k].insert(nodes[k].end(), tri[i].begin(), tri[i].end());
+      values[k].push_back(scattered(id));
+      counted[k].insert(id);
+    }
+    for(int k = 0; k < 5; k++)
+      report.add(std::to_string(counted[k].size()) + " " +
+                   kindNames[k][counted[k].size() == 1 ? 0 : 1],
+                 2, nodes[k], values[k]);
+    report.add(plural(after.nonManifold.size(), "non-manifold edge",
+                      "non-manifold edges") +
+                 " left (of more than two triangles)",
+               1, ofEdges(after.nonManifold));
+  }
+  report.text = removed + "\n" + pieces + "\n" + turned + "\n" + open + "\n" +
+                cracks + "\n" + left;
   done(left);
   Msg::StatusBar(true, "Done healing (Wall %gs, CPU %gs)", TimeOfDay() - wall,
                  Cpu() - cpu);

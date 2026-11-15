@@ -73,6 +73,19 @@ void orientTriangles(const std::vector<std::array<double, 3> > &x,
                      std::vector<int> *component = nullptr,
                      std::vector<char> *turned = nullptr);
 
+// The kind of each component of a soup of triangles oriented outwards (see
+// orientTriangles; the component of each triangle in component), from the
+// winding numbers just behind and in front of its triangles (a fiftieth of
+// their size away), on at least half of its area: 'c' closed (no edge of one
+// triangle or of more than two); 'v' bounding a volume by its own triangles
+// (about whole numbers one apart, not negative), with holes; 'w' bounding a
+// volume with other components only (so for the winding number of all the
+// triangles, not for its own); 's' a sheet (about half numbers one apart);
+// 'o' other
+void componentKinds(const std::vector<std::array<double, 3> > &x,
+                    const std::vector<std::array<int, 3> > &triangles,
+                    const std::vector<int> &component, std::vector<char> &kind);
+
 // The cracks of a soup of triangles zipped, as a filtration: the events from
 // the closest, each one made at its level (its distance, or the level of the
 // event that made it possible if that is larger), the zipping within a
