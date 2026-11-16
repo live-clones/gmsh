@@ -109,6 +109,11 @@ class ObjContribFuncBarrierFixMinMovMax : public ObjContribFuncBarrierMovMax {
 protected:
   std::string getNamePrefix() { return "BarrierFixMinMovMax"; }
   void initialize(double vMin, double vMax);
+  // the maximum target is only reached if the fixed minimum barrier holds
+  bool targetReached(double vMin, double vMax)
+  {
+    return (vMax <= _target) && (vMin > _fixedMinBarrier);
+  }
   inline double compute(double v);
   inline double computeDiff(double v);
 

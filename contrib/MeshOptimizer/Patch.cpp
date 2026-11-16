@@ -324,6 +324,13 @@ void Patch::initScaledNodeDispSq(LengthScaling scaling)
       break;
     }
     }
+    // straight elements have no distance to straight: fall back on their size
+    if(maxDSq == 0.) {
+      for(int iEl = 0; iEl < nEl(); iEl++) {
+        const double d = _el[iEl]->maxEdge(), dd = d * d;
+        if(dd > maxDSq) maxDSq = dd;
+      }
+    }
     _invLengthScaleSq = 1. / maxDSq;
   }
 }
