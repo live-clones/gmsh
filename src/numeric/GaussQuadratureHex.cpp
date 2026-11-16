@@ -8,15 +8,16 @@
 #include "GaussIntegration.h"
 #include "GaussLegendre1D.h"
 
-constexpr double a1 = 0.40824826;
-constexpr double ma1 = -0.40824826;
-constexpr double a2 = 0.81649658;
-constexpr double ma2 = -0.81649658;
-constexpr double b1 = 0.70710678;
-constexpr double mb1 = -0.70710678;
-constexpr double c1 = 0.57735027;
-constexpr double mc1 = -0.57735027;
-constexpr double w1 = 1.3333333333;
+// degree 3 rule: sqrt(1/6), sqrt(2/3), sqrt(1/2), sqrt(1/3) and 4/3
+constexpr double a1 = 0.408248290463863;
+constexpr double ma1 = -0.408248290463863;
+constexpr double a2 = 0.816496580927726;
+constexpr double ma2 = -0.816496580927726;
+constexpr double b1 = 0.707106781186548;
+constexpr double mb1 = -0.707106781186548;
+constexpr double c1 = 0.577350269189626;
+constexpr double mc1 = -0.577350269189626;
+constexpr double w1 = 1.333333333333333;
 constexpr double xh6[6] = {a1, a1, ma1, ma1, ma2, a2};
 constexpr double yh6[6] = {b1, mb1, b1, mb1, 0., 0.};
 constexpr double zh6[6] = {mc1, mc1, c1, c1, mc1, c1};
