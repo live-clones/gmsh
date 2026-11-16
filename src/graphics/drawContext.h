@@ -26,6 +26,7 @@ class GEdge;
 class GFace;
 class GRegion;
 class MElement;
+class MVertex;
 class PView;
 
 #if defined(HAVE_VISUDEV)
@@ -218,6 +219,11 @@ std::vector<std::string> queryPoint(const double xyz[3], GEntity *entity,
 // The mesh element a query reports at a point when the pick found none there,
 // in the mesh that is drawn (see drawQuery.cpp)
 MElement *queryElement(const double xyz[3], double pixel);
+// The mesh node closest to a point, among the nodes of the elements around it
+// and of the element given (if any), and how far it is: none if further than
+// tol (a number of pixels times the size of one), unless tol is negative
+MVertex *closestNode(const double xyz[3], MElement *element, double &dist,
+                     double tol = -1.);
 // What a measurement says of the two points it was given (see drawQuery.cpp)
 std::vector<std::string> measurePoints(const double a[3], const double b[3]);
 // Whether the point of the model behind what was drawn of a view at xyz is
