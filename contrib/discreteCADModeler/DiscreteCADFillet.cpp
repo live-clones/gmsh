@@ -743,6 +743,14 @@ bool DiscreteCAD_Internals::_filletVolume(
   // one left out
   std::vector<std::vector<Section> > sections(chains.size());
   double widest = 0.;
+  // (the curves of the segments before and after node j of a chain: the same
+  // one at the ends of an open chain, which has one segment less than nodes)
+  auto segmentsAt = [](const Chain &ch, std::size_t j) {
+    const std::size_t ms = ch.segment.size();
+    const std::size_t before = j > 0 ? j - 1 : ch.closed ? ms - 1 : 0;
+    return std::make_pair(ch.segment[std::min(before, ms - 1)],
+                          ch.segment[std::min(j, ms - 1)]);
+  };
   for(std::size_t k = 0; k < chains.size(); k++) {
     const Chain &ch = chains[k];
     const std::size_t m = ch.nodes.size();
@@ -750,8 +758,8 @@ bool DiscreteCAD_Internals::_filletVolume(
     std::vector<std::size_t> kept;
     for(std::size_t j = 0; j < m; j++) {
       const bool end = !ch.closed && (j == 0 || j + 1 == m);
-      const bool meet = (j > 0 || ch.closed) &&
-                        ch.segment[(j + m - 1) % m] != ch.segment[j];
+      const std::pair<int, int> sg = segmentsAt(ch, j);
+      const bool meet = sg.first != sg.second;
       if(!end && !meet &&
          angle(X[ch.nodes[j]] - X[ch.nodes[(j + m - 1) % m]],
                X[ch.nodes[(j + 1) % m]] - X[ch.nodes[j]]) < 1.e-4)
@@ -763,8 +771,8 @@ bool DiscreteCAD_Internals::_filletVolume(
       const std::size_t j = kept[i];
       if(ch.s[j] <= cut[k][0] + gap || ch.s[j] >= cut[k][1] - gap) continue;
       Vec t = ch.tangent[j];
-      const int in = ch.segment[(j + m - 1) % m], out = ch.segment[j];
-      if((j > 0 || ch.closed) && in != out) {
+      const int in = segmentsAt(ch, j).first, out = segmentsAt(ch, j).second;
+      if(in != out) {
         // (where two curves meet tangentially: the mean of their tangents
         // there, along the chain)
         bool fin = true, fout = true;
@@ -789,7 +797,7 @@ bool DiscreteCAD_Internals::_filletVolume(
                    X[ch.nodes[j]][0], X[ch.nodes[j]][1], X[ch.nodes[j]][2]);
         return false;
       }
-      if((j > 0 || ch.closed) && in != out) {
+      if(in != out) {
         // (where the surface the ball rolls on changes, its contact on the
         // curve between them)
         const std::pair<int, int> &fin = ch.faces[j], &fout = ch.faces[(j + 1) % m];

@@ -1763,8 +1763,8 @@ namespace {
           int &v = used[tri[3 * t + k]];
           if(v < 0) {
             v = (int)x.size() / 3;
-            x.insert(x.end(), &xyz[3 * tri[3 * t + k]],
-                     &xyz[3 * tri[3 * t + k] + 3]);
+            const double *p = xyz.data() + 3 * tri[3 * t + k];
+            x.insert(x.end(), p, p + 3);
           }
           t2.push_back(v);
         }
