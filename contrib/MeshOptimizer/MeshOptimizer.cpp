@@ -30,6 +30,7 @@
 #include <limits>
 #include <string.h>
 #include <stack>
+#include <exception>
 #include "Context.h"
 #include "GmshConfig.h"
 #include "GModel.h"
@@ -458,74 +459,83 @@ namespace {
 
   int nthreads = CTX::instance()->numThreads;
   if(!nthreads) nthreads = Msg::GetMaxThreads();
+    std::exception_ptr exception;
 #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
     for(size_t iPatch = 0; iPatch < toOptimize.size(); ++iPatch) {
-      // Initialize optimization and output if asked
-      if(par.nCurses) {
-        mvbold(true);
-        mvprintCenter(10, " PATCH %5i ", iPatch);
-        mvbold(false);
-      }
-      if(par.verbose > 1)
-        Msg::Info("Optimizing patch %i/%i composed of %i elements, "
-                  "%i boundary elements",
-                  iPatch, toOptimize.size() - 1,
-                  toOptimize[iPatch].first.size(), bndElts[iPatch].size());
-      MeshOpt opt(e2eOpt, bndEl2Ent, toOptimize[iPatch].first,
-                  toOptimize[iPatch].second, bndElts[iPatch], par);
-      if(par.verbose > 3) {
-        std::ostringstream ossI1;
-        ossI1 << "initial_patch-" << iPatch << ".msh";
-        opt.patch.writeMSH(ossI1.str().c_str());
-      }
+      try {
+        // Initialize optimization and output if asked
+        if(par.nCurses) {
+          mvbold(true);
+          mvprintCenter(10, " PATCH %5i ", iPatch);
+          mvbold(false);
+        }
+        if(par.verbose > 1)
+          Msg::Info("Optimizing patch %i/%i composed of %i elements, "
+                    "%i boundary elements",
+                    iPatch, toOptimize.size() - 1,
+                    toOptimize[iPatch].first.size(), bndElts[iPatch].size());
+        MeshOpt opt(e2eOpt, bndEl2Ent, toOptimize[iPatch].first,
+                    toOptimize[iPatch].second, bndElts[iPatch], par);
+        if(par.verbose > 3) {
+          std::ostringstream ossI1;
+          ossI1 << "initial_patch-" << iPatch << ".msh";
+          opt.patch.writeMSH(ossI1.str().c_str());
+        }
 
-      // Optimize patch
-      int success = -1;
-      if(opt.patch.nPC() > 0)
-        success = opt.optimize(par);
-      else if(par.verbose > 1)
-        Msg::Info("Patch %i has no degree of freedom, skipping", iPatch);
+        // Optimize patch
+        int success = -1;
+        if(opt.patch.nPC() > 0)
+          success = opt.optimize(par);
+        else if(par.verbose > 1)
+          Msg::Info("Patch %i has no degree of freedom, skipping", iPatch);
 
-      if(par.verbose > 3) {
-        std::ostringstream ossI2;
-        ossI2 << "final_patch-" << iPatch << ".msh";
-        opt.patch.writeMSH(ossI2.str().c_str());
-      }
+        if(par.verbose > 3) {
+          std::ostringstream ossI2;
+          ossI2 << "final_patch-" << iPatch << ".msh";
+          opt.patch.writeMSH(ossI2.str().c_str());
+        }
 
-      // Evaluate mesh and update it if (partial) success
-      opt.updateResults();
+        // Evaluate mesh and update it if (partial) success
+        opt.updateResults();
 
 #pragma omp critical(optimizeDisjointPatches1)
-      {
-        if(newObjFunctionRange.size() == 0) {
-          newObjFunctionRange = opt.objFunction()->minMax();
-          objFunctionNames = opt.objFunction()->names();
-        }
-        else {
-          for(size_t i = 0; i < newObjFunctionRange.size(); i++) {
-            newObjFunctionRange[i].first =
-              std::min(newObjFunctionRange[i].first,
-                       opt.objFunction()->minMax()[i].first);
-            newObjFunctionRange[i].second =
-              std::max(newObjFunctionRange[i].second,
-                       opt.objFunction()->minMax()[i].second);
+        {
+          if(newObjFunctionRange.size() == 0) {
+            newObjFunctionRange = opt.objFunction()->minMax();
+            objFunctionNames = opt.objFunction()->names();
+          }
+          else {
+            for(size_t i = 0; i < newObjFunctionRange.size(); i++) {
+              newObjFunctionRange[i].first =
+                std::min(newObjFunctionRange[i].first,
+                         opt.objFunction()->minMax()[i].first);
+              newObjFunctionRange[i].second =
+                std::max(newObjFunctionRange[i].second,
+                         opt.objFunction()->minMax()[i].second);
+            }
           }
         }
-      }
 
-      if(success >= 0) opt.patch.updateGEntityPositions();
+        if(success >= 0) opt.patch.updateGEntityPositions();
 
 #pragma omp critical(optimizeDisjointPatches2)
-      {
-        par.success = std::min(par.success, success);
-        nbPatchSuccess[success + 1]++;
-      }
+        {
+          par.success = std::min(par.success, success);
+          nbPatchSuccess[success + 1]++;
+        }
 
-      if(par.nCurses) {
-        displayMinMaxVal(nbPatchSuccess, objFunctionNames, newObjFunctionRange);
-        displayResultTable(nbPatchSuccess, toOptimize.size());
-        updateDisplayPatchHistory(_patchHistory, opt.objFunction()->minMaxStr(),
-                                  iPatch, -1);
+        if(par.nCurses) {
+          displayMinMaxVal(nbPatchSuccess, objFunctionNames,
+                           newObjFunctionRange);
+          displayResultTable(nbPatchSuccess, toOptimize.size());
+          updateDisplayPatchHistory(_patchHistory,
+                                    opt.objFunction()->minMaxStr(), iPatch, -1);
+        }
+      } catch(...) {
+        // an exception must not leave the OpenMP region: keep the first one
+        // and rethrow it after the loop
+#pragma omp critical(optimizeDisjointPatchesException)
+        if(!exception) exception = std::current_exception();
       }
     }
 
@@ -533,6 +543,7 @@ namespace {
       delete[] _patchHistory.back();
       _patchHistory.pop_back();
     }
+    if(exception) std::rethrow_exception(exception);
   }
 
   MElement *getWorstElement(elSet &badElts, const elEntMap &element2entity,
