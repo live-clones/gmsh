@@ -318,9 +318,12 @@ public:
   // dimensions (containers ordered or hashed by number, point ids), and a
   // meshing with several threads numbers nodes and elements in the order the
   // threads happen to create them: this makes the mesh independent of the
-  // threads
+  // threads. With curvesInOrder (after the 1D and 2D passes) the node lists of
+  // the curves are in order along them and are left so, their new nodes
+  // numbered where they are
   void renumberMeshCanonically(std::size_t maxVertexBefore,
-                               std::size_t maxElementBefore);
+                               std::size_t maxElementBefore,
+                               bool curvesInOrder = false);
   // the largest node and element numbers in use (the counters above can be
   // larger)
   void getMaxMeshNumbersInUse(std::size_t &maxVertex,

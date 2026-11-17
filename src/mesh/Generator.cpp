@@ -687,7 +687,7 @@ static void Mesh1D(GModel *m)
   Msg::StopProgressMeter();
 
   // numbered as the threads created them: renumber canonically
-  m->renumberMeshCanonically(maxVertexBefore, maxElementBefore);
+  m->renumberMeshCanonically(maxVertexBefore, maxElementBefore, true);
   CheckEmptyMesh(m, 1);
   double t2 = Cpu(), w2 = TimeOfDay();
   CTX::instance()->mesh.timer[0] = w2 - w1;
@@ -887,7 +887,7 @@ static void Mesh2D(GModel *m)
     Msg::StopProgressMeter();
   }
   MatchPeriodicNodes(m);
-  m->renumberMeshCanonically(maxVertexBefore, maxElementBefore);
+  m->renumberMeshCanonically(maxVertexBefore, maxElementBefore, true);
 
   if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
     replaceBadQuadDominantMeshes(m);

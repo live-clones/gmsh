@@ -2091,7 +2091,8 @@ void GModel::getMaxMeshNumbersInUse(std::size_t &maxVertex,
 }
 
 void GModel::renumberMeshCanonically(std::size_t maxVertexBefore,
-                                     std::size_t maxElementBefore)
+                                     std::size_t maxElementBefore,
+                                     bool curvesInOrder)
 {
   destroyMeshCaches();
   std::vector<GEntity *> entities;
@@ -2133,9 +2134,22 @@ void GModel::renumberMeshCanonically(std::size_t maxVertexBefore,
   };
   std::vector<std::size_t> first(entities.size());
   std::vector<MVertex *> order;
+  // with curvesInOrder the nodes of a curve are listed along it, and stay so:
+  // the new ones (those of a curve split by the surface mesher are among the
+  // old ones) are numbered where they are
+  std::map<std::size_t, std::vector<MVertex *>> onCurve;
   for(std::size_t i = 0; i < entities.size(); i++) {
     GEntity *ge = entities[i];
     std::vector<MVertex *> &list = ge->mesh_vertices;
+    if(curvesInOrder && ge->dim() == 1) {
+      first[i] = list.size();
+      for(MVertex *v : list) {
+        if(!pending(v, i)) continue;
+        owner[v->getNum() - minNum] = 0;
+        onCurve[i].push_back(v);
+      }
+      continue;
+    }
     order.clear();
     for(MVertex *v : list)
       if(v->getNum() <= maxVertexBefore) order.push_back(v);
@@ -2159,6 +2173,9 @@ void GModel::renumberMeshCanonically(std::size_t maxVertexBefore,
   for(std::size_t i = 0; i < entities.size(); i++) {
     std::vector<MVertex *> &list = entities[i]->mesh_vertices;
     for(std::size_t j = first[i]; j < list.size(); j++) list[j]->forceNum(++nv);
+    auto it = onCurve.find(i);
+    if(it != onCurve.end())
+      for(MVertex *v : it->second) v->forceNum(++nv);
   }
   resetMaxVertexNumber(nv);
   resetMaxElementNumber(ne);
