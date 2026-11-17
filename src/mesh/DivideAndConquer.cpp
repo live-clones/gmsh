@@ -318,7 +318,6 @@ int DocRecord::BuildDelaunay()
 int DocRecord::DListInsert(PointNumero centerPoint, PointNumero newPoint)
 {
   DListRecord *p, *newp;
-  double alpha1, alpha, beta, xx, yy;
   int first;
 
   newp = new DListRecord;
@@ -340,57 +339,55 @@ int DocRecord::DListInsert(PointNumero centerPoint, PointNumero newPoint)
   }
 
   // If we are here, the double-linked circular list has 2 or more
-  // elements, so we have to calculate where to put the new one
+  // elements, so we have to calculate where to put the new one: before the
+  // first element whose angle around the center, counted from the first
+  // point of the list, is larger than the one of the new point (the first
+  // point itself closes the turn).
+  //
+  // The angles are compared with the exact orientation predicate: computed
+  // with atan2, the angles of the nearly aligned points of a long boundary
+  // (hundreds of thousands of points on the seam of a thin cylinder) differ
+  // by less than its accuracy, and a wrong order breaks the triangulation.
 
   p = *dlist;
   first = p->point_num;
 
-  DPoint center = points[centerPoint].where;
-
-  // first, compute polar coord. of the first point
-  yy = (double)(points[first].where.v - center.v);
-  xx = (double)(points[first].where.h - center.h);
-  alpha1 = atan2(yy, xx);
-
-  // compute polar coord of the point to insert
-  yy = (double)(points[newPoint].where.v - center.v);
-  xx = (double)(points[newPoint].where.h - center.h);
-  beta = atan2(yy, xx) - alpha1;
-  if(beta <= 0) beta += 2. * M_PI;
+  const double c[2] = {(double)points[centerPoint].where.h,
+                       (double)points[centerPoint].where.v};
+  const double f[2] = {(double)points[first].where.h,
+                       (double)points[first].where.v};
+  // the quarter of the turn a point is in: 1 on the left of the direction of
+  // the first point, 2 opposite to it, 3 on its right, 4 in its direction
+  auto part = [&](const double q[2]) {
+    double o = robustPredicates::orient2d((double *)c, (double *)f,
+                                          (double *)q);
+    if(o > 0.) return 1;
+    if(o < 0.) return 3;
+    int k = (f[0] != c[0]) ? 0 : 1;
+    return ((q[k] > c[k]) == (f[k] > c[k])) ? 4 : 2;
+  };
+  const double n[2] = {(double)points[newPoint].where.h,
+                       (double)points[newPoint].where.v};
+  const int partNew = part(n);
 
   do {
-    yy = (double)(points[Succ(p)->point_num].where.v - center.v);
-    xx = (double)(points[Succ(p)->point_num].where.h - center.h);
-    alpha = atan2(yy, xx) - alpha1;
-    if(alpha <= -1.e-15 || Succ(p)->point_num == first)
-      alpha += 2. * M_PI;
-    else if(abs(alpha) <= 1e-15 &&
-            IsRightOf(centerPoint, first, Succ(p)->point_num))
-      alpha += 2. * M_PI;
-    if(alpha >= beta + 1e-15) {
+    PointNumero next = Succ(p)->point_num;
+    bool before = (next == first);
+    if(!before) {
+      const double q[2] = {(double)points[next].where.h,
+                           (double)points[next].where.v};
+      int partNext = part(q);
+      if(partNew != partNext)
+        before = (partNew < partNext);
+      else if(partNew == 1 || partNew == 3)
+        before = robustPredicates::orient2d((double *)c, (double *)n,
+                                            (double *)q) > 0.;
+    }
+    if(before) {
       Succ(newp) = Succ(p);
       Succ(p) = newp;
       Pred(newp) = p;
       Pred(Succ(newp)) = newp;
-      return 1;
-    }
-    else if(alpha >= beta - 1e-15) {
-      // Angles more or less the same. To keep consistency with rest of
-      // algorithm check with IsLeftOf to see which point should be first
-      if(IsRightOf(centerPoint, Succ(p)->point_num, newPoint)) {
-        // New point should become before Succ(p)
-        Succ(newp) = Succ(p);
-        Succ(p) = newp;
-        Pred(newp) = p;
-        Pred(Succ(newp)) = newp;
-      }
-      else {
-        // New point should become after Succ(p)
-        Succ(newp) = Succ(Succ(p));
-        Succ(Succ(p)) = newp;
-        Pred(newp) = Succ(p);
-        Pred(Succ(newp)) = newp;
-      }
       return 1;
     }
     p = Succ(p);
