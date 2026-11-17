@@ -117,6 +117,26 @@ export function wrapGmsh(Module) {
     return M.addFunction((dim, tag, x, y, z, lc, data) =>
       f(dim, tag, x, y, z, lc), 'diiddddp');
   };
+  // the callback gets a copy of the metric; it can change it in place or
+  // return a new one (a mesh size, 6 components or a 3x3 matrix)
+  const _imetricfun = (f) => {
+    if(!M.addFunction)
+      throw new Error('The WebAssembly module does not export addFunction');
+    return M.addFunction((dim, tag, x, y, z, lc, metric, data) => {
+      const o = Number(metric) / 8;
+      const m = Array.from(M.HEAPF64.subarray(o, o + 6));
+      let r = f(dim, tag, x, y, z, lc, m);
+      if(r === undefined || r === null) r = m;
+      else if(typeof r === 'number')
+        r = [1 / (r * r), 0, 1 / (r * r), 0, 0, 1 / (r * r)];
+      else if(r.length === 3)
+        r = [r[0][0], r[1][0], r[1][1], r[2][0], r[2][1], r[2][2]];
+      else if(r.length !== 6)
+        throw new Error('Invalid metric: expected a mesh size, 6 ' +
+                        'components or a 3x3 matrix');
+      M.HEAPF64.set(r, o);
+    }, 'viiddddpp');
+  };
   const _ostring = (o) => {
     const p = _getp(o);
     const s = M.UTF8ToString(p);
@@ -3919,6 +3939,53 @@ export function wrapGmsh(Module) {
     const tmp = [];
     try {
       M._gmshModelMeshRemoveSizeCallback(_P(ierr));
+      _check();
+    }
+    finally {
+      tmp.forEach((p) => M._free(p));
+    }
+  };
+
+  /**
+   * gmsh.model.mesh.setMetricCallback(callback)
+   *
+   * Set a mesh metric callback for the current model. The callback function
+   * should take seven arguments as input (`dim', `tag', `x', `y', `z', `lc'
+   * and `metric'). The first two integer arguments correspond to the
+   * dimension `dim' and tag `tag' of the entity being meshed. The next four
+   * double precision arguments correspond to the coordinates `x', `y' and `z'
+   * around which to prescribe the metric and to the (smallest) mesh size `lc'
+   * that would be prescribed if the callback had not been called. The last
+   * argument `metric' contains the 6 components of the symmetric metric
+   * tensor that would be prescribed if the callback had not been called,
+   * given as [m11, m21, m22, m31, m32, m33]. The callback function should
+   * modify `metric' in place; in Python, Julia and JavaScript it can also
+   * return the desired metric, as 6 components, a 3x3 matrix or a single mesh
+   * size. The metric callback is called after the mesh size callback; meshing
+   * algorithms that do not support anisotropic mesh sizes use the smallest
+   * size prescribed by the metric.
+   */
+  gmsh.model.mesh.setMetricCallback = function(callback) {
+    const tmp = [];
+    try {
+      const api_callback_ = _imetricfun(callback);
+      M._gmshModelMeshSetMetricCallback(_P(api_callback_), _P(0), _P(ierr));
+      _check();
+    }
+    finally {
+      tmp.forEach((p) => M._free(p));
+    }
+  };
+
+  /**
+   * gmsh.model.mesh.removeMetricCallback()
+   *
+   * Remove the mesh metric callback from the current model.
+   */
+  gmsh.model.mesh.removeMetricCallback = function() {
+    const tmp = [];
+    try {
+      M._gmshModelMeshRemoveMetricCallback(_P(ierr));
       _check();
     }
     finally {

@@ -4002,7 +4002,8 @@ namespace {
     // without a size field or a callback the size is a constant per volume
     // (its own size, the global one): no evaluation per point
     GModel *gm = regions.empty() ? nullptr : regions[0]->model();
-    if(gm && gm->getFields()->getBackgroundField() <= 0 && !gm->lcCallback) {
+    if(gm && gm->getFields()->getBackgroundField() <= 0 && !gm->lcCallback &&
+       !gm->metricCallback) {
       std::vector<double> lc(regions.size());
       for(std::size_t r = 0; r < regions.size(); r++)
         lc[r] = std::min(lcGlob, regions[r]->getMeshSize());

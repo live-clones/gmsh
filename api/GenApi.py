@@ -921,6 +921,74 @@ def iargcargv():
     return a
 
 
+def imetricfun(name):
+    sig = "void(int, int, double, double, double, double, double *)"
+    a = arg(name, None, None, None, "", "", False)
+    a.cpp = "std::function<" + sig + "> " + name
+    a.c_arg = ("std::bind(" + name + ", std::placeholders::_1, " +
+               "std::placeholders::_2, std::placeholders::_3, " +
+               "std::placeholders::_4, std::placeholders::_5, " +
+               "std::placeholders::_6, std::placeholders::_7, " + name + "_data)")
+    a.c = ("void (*" + name + ")" +
+           "(int dim, int tag, double x, double y, double z, double lc, " +
+           "double * metric, void * data), void * " + name + "_data")
+    a.cwrap_pre = "struct " + name + """_caller_  {
+          static void call(int dim, int tag, double x, double y, double z, double lc, double * metric, void * callbackp_) {
+            (*static_cast<std::function<""" + sig + """>*> (callbackp_))(dim, tag, x, y, z, lc, metric);
+          }
+        };
+        // FIXME memory leak
+        auto *""" + name + "_ptr_ = new std::function<" + sig + ">(" + name + """);
+"""
+    a.cwrap_arg = "&" + name + "_caller_::call, " + name + "_ptr_"
+    # the callback gets a copy of the metric; it can change it in place or
+    # return a new one
+    # (the globals keep the callback alive: their names must differ from the
+    # ones of the size callback)
+    a.python_pre = (
+        "global api_metric_" + name + "_type_\n" +
+        "            api_metric_" + name + "_type_ = CFUNCTYPE(None, c_int, c_int, c_double, " +
+        "c_double, c_double, c_double, POINTER(c_double), c_void_p)\n" +
+        "            def api_metric_" + name + "_wrapper_(dim, tag, x, y, z, lc, metric, _):\n" +
+        "                m = [metric[i] for i in range(6)]\n" +
+        "                r = " + name + "(dim, tag, x, y, z, lc, m)\n" +
+        "                for i, v in enumerate(_imetric(m if r is None else r)):\n" +
+        "                    metric[i] = v\n" +
+        "            global api_metric_" + name + "_\n" +
+        "            api_metric_" + name + "_ = api_metric_" + name + "_type_(api_metric_" + name + "_wrapper_)")
+    a.python_arg = "api_metric_" + name + "_, None"
+    a.julia_pre = (
+        "function api_" + name + "__(dim, tag, x, y, z, lc, metric, data)\n" +
+        "        m = unsafe_wrap(Array, metric, 6)\n" +
+        "        r = " + name + "(dim, tag, x, y, z, lc, m)\n" +
+        "        if r isa Number\n" +
+        "            m .= (1 / r^2, 0, 1 / r^2, 0, 0, 1 / r^2)\n" +
+        "        elseif r isa AbstractMatrix\n" +
+        "            m .= (r[1, 1], r[2, 1], r[2, 2], r[3, 1], r[3, 2], r[3, 3])\n" +
+        "        elseif r !== nothing\n" +
+        "            m .= r\n" +
+        "        end\n" +
+        "        return nothing\n" +
+        "    end\n" +
+        "    api_" + name + "_ = @cfunction($api_" + name + "__" +
+        ", Cvoid, (Cint, Cint, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cdouble}, Ptr{Cvoid}))")
+    a.julia_arg = "api_" + name + "_, C_NULL"
+    a.julia_ctype = "Ptr{Cvoid}, Ptr{Cvoid}"
+    _fortran_fun(a, name)
+    return a
+
+
+# a callback is a C function pointer followed by a user data pointer, which the
+# Fortran API leaves null
+def _fortran_fun(a, name):
+    a.fortran_args = [name]
+    a.fortran_types = ["type(c_funptr), value, intent(in)"]
+    a.fortran_c_api = ["type(c_funptr), value, intent(in)",
+                       "type(c_ptr), value, intent(in)"]
+    a.fortran_c_args = [name, name + "_data"]
+    a.fortran_call = name + "=" + name + ", &" + name + "_data=c_null_ptr"
+
+
 def isizefun(name):
     a = arg(name, None, None, None, "", "", False)
     a.cpp = "std::function<double(int, int, double, double, double, double)> " + name
@@ -955,10 +1023,7 @@ def isizefun(name):
         ", Cdouble, (Cint, Cint, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cvoid}))")
     a.julia_arg = "api_" + name + "_, C_NULL"
     a.julia_ctype = "Ptr{Cvoid}, Ptr{Cvoid}"
-    a.fortran_args = [name]
-    a.fortran_types = ["type(c_funptr), value, intent(in)"]
-    a.fortran_c_api = ["type(c_funptr), value, intent(in)"]
-    a.fortran_c_args = [name]
+    _fortran_fun(a, name)
     return a
 
 
@@ -979,7 +1044,7 @@ for _kind in ['ibool', 'iint', 'isize', 'idouble', 'istring', 'ivoidstar',
               'ivectorvectordouble', 'ostring', 'ovectorint', 'ovectorsize',
               'ovectordouble', 'ovectorstring', 'ovectorpair',
               'ovectorvectorint', 'ovectorvectorsize', 'ovectorvectordouble',
-              'ovectorvectorpair', 'iargcargv', 'isizefun']:
+              'ovectorvectorpair', 'iargcargv', 'isizefun', 'imetricfun']:
     globals()[_kind] = _with_kind(globals()[_kind], _kind)
 oint.kind = 'oint'
 osize.kind = 'osize'
@@ -1530,6 +1595,20 @@ def _ivectorvectordouble(os):
 
 def _iargcargv(o):
     return c_int(len(o)), (c_char_p * len(o))(*(s.encode() for s in o))
+
+def _imetric(m):
+    # the 6 components of a metric given as a mesh size, 6 components or a
+    # 3x3 matrix
+    try:
+        n = len(m)
+    except TypeError:
+        return [1. / m**2, 0., 1. / m**2, 0., 0., 1. / m**2]
+    if n == 3:
+        return [m[0][0], m[1][0], m[1][1], m[2][0], m[2][1], m[2][2]]
+    if n != 6:
+        raise ValueError("Invalid metric: expected a mesh size, 6 components "
+                         "or a 3x3 matrix")
+    return m
 
 # {2} Python API begins here
 """
@@ -2130,6 +2209,26 @@ export function wrap{2}(Module) {{
       throw new Error('The WebAssembly module does not export addFunction');
     return M.addFunction((dim, tag, x, y, z, lc, data) =>
       f(dim, tag, x, y, z, lc), 'diiddddp');
+  }};
+  // the callback gets a copy of the metric; it can change it in place or
+  // return a new one (a mesh size, 6 components or a 3x3 matrix)
+  const _imetricfun = (f) => {{
+    if(!M.addFunction)
+      throw new Error('The WebAssembly module does not export addFunction');
+    return M.addFunction((dim, tag, x, y, z, lc, metric, data) => {{
+      const o = Number(metric) / 8;
+      const m = Array.from(M.HEAPF64.subarray(o, o + 6));
+      let r = f(dim, tag, x, y, z, lc, m);
+      if(r === undefined || r === null) r = m;
+      else if(typeof r === 'number')
+        r = [1 / (r * r), 0, 1 / (r * r), 0, 0, 1 / (r * r)];
+      else if(r.length === 3)
+        r = [r[0][0], r[1][0], r[1][1], r[2][0], r[2][1], r[2][2]];
+      else if(r.length !== 6)
+        throw new Error('Invalid metric: expected a mesh size, 6 ' +
+                        'components or a 3x3 matrix');
+      M.HEAPF64.set(r, o);
+    }}, 'viiddddpp');
   }};
   const _ostring = (o) => {{
     const p = _getp(o);
@@ -2912,6 +3011,8 @@ class API:
                         ["api_argc_", "_P(api_argv_)"], None)
             if k == 'isizefun':
                 return ["const " + p + " = _ifun(" + n + ");"], ["_P(" + p + ")", "_P(0)"], None
+            if k == 'imetricfun':
+                return ["const " + p + " = _imetricfun(" + n + ");"], ["_P(" + p + ")", "_P(0)"], None
             # outputs: slots for what the C function writes
             if k in ('oint', 'osize', 'odouble', 'ostring'):
                 ret = {'oint': "M.HEAP32[" + p + " / 4]",

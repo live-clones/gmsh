@@ -5179,6 +5179,20 @@ GMSH_API void gmsh::model::mesh::removeSizeCallback()
   GModel::current()->lcCallback = nullptr;
 }
 
+GMSH_API void gmsh::model::mesh::setMetricCallback(
+  std::function<void(int, int, double, double, double, double, double *)>
+    callback)
+{
+  if(!_checkInit()) return;
+  GModel::current()->metricCallback = callback;
+}
+
+GMSH_API void gmsh::model::mesh::removeMetricCallback()
+{
+  if(!_checkInit()) return;
+  GModel::current()->metricCallback = nullptr;
+}
+
 GMSH_API void
 gmsh::model::mesh::setTransfiniteCurve(const int tag, const int numNodes,
                                        const std::string &meshType,

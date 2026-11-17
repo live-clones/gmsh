@@ -530,6 +530,12 @@ mesh.add('setSizeCallback', doc, None, isizefun('callback'))
 doc = '''Remove the mesh size callback from the current model.'''
 mesh.add('removeSizeCallback', doc, None)
 
+doc = '''Set a mesh metric callback for the current model. The callback function should take seven arguments as input (`dim', `tag', `x', `y', `z', `lc' and `metric'). The first two integer arguments correspond to the dimension `dim' and tag `tag' of the entity being meshed. The next four double precision arguments correspond to the coordinates `x', `y' and `z' around which to prescribe the metric and to the (smallest) mesh size `lc' that would be prescribed if the callback had not been called. The last argument `metric' contains the 6 components of the symmetric metric tensor that would be prescribed if the callback had not been called, given as [m11, m21, m22, m31, m32, m33]. The callback function should modify `metric' in place; in Python, Julia and JavaScript it can also return the desired metric, as 6 components, a 3x3 matrix or a single mesh size. The metric callback is called after the mesh size callback; meshing algorithms that do not support anisotropic mesh sizes use the smallest size prescribed by the metric.'''
+mesh.add('setMetricCallback', doc, None, imetricfun('callback'))
+
+doc = '''Remove the mesh metric callback from the current model.'''
+mesh.add('removeMetricCallback', doc, None)
+
 doc = '''Set a transfinite meshing constraint on the curve `tag', with `numNodes' nodes distributed according to `meshType' and `coef'. Currently supported types are "Progression" (geometrical progression with power `coef'), "Bump" (refinement toward both extremities of the curve) and "Beta" (beta law).'''
 mesh.add('setTransfiniteCurve', doc, None, iint('tag'), iint('numNodes'), istring('meshType', '"Progression"'), idouble('coef', '1.'))
 

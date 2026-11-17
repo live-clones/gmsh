@@ -50,6 +50,7 @@ bug fixes.
   mesh/addPolyhedra, mesh/getPolyhedra, mesh/getPolytopeSimplices,
   mesh/setPolytopeSimplices, mesh/createPolytopeSimplices,
   mesh/getFacesByType, mesh/getElementFaceNodesByType,
+  mesh/setMetricCallback, mesh/removeMetricCallback,
   algorithm/refineTetrahedra, plugin/load, fltk/pick
 
 * Incompatible API changes: new optional arguments to mesh/optimize and

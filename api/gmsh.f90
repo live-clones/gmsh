@@ -738,6 +738,10 @@ module gmsh
         gmshModelMeshSetSizeCallback
     procedure, nopass :: removeSizeCallback => &
         gmshModelMeshRemoveSizeCallback
+    procedure, nopass :: setMetricCallback => &
+        gmshModelMeshSetMetricCallback
+    procedure, nopass :: removeMetricCallback => &
+        gmshModelMeshRemoveMetricCallback
     procedure, nopass :: setTransfiniteCurve => &
         gmshModelMeshSetTransfiniteCurve
     procedure, nopass :: setTransfiniteSurface => &
@@ -7343,16 +7347,19 @@ module gmsh
                                           ierr)
     interface
     subroutine C_API(callback, &
+                     callback_data, &
                      ierr_) &
       bind(C, name="gmshModelMeshSetSizeCallback")
       use, intrinsic :: iso_c_binding
       type(c_funptr), value, intent(in) :: callback
+      type(c_ptr), value, intent(in) :: callback_data
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     type(c_funptr), value, intent(in) :: callback
     integer(c_int), intent(out), optional :: ierr
     call C_API(callback=callback, &
+         callback_data=c_null_ptr, &
          ierr_=ierr)
   end subroutine gmshModelMeshSetSizeCallback
 
@@ -7368,6 +7375,54 @@ module gmsh
     integer(c_int), intent(out), optional :: ierr
     call C_API(ierr_=ierr)
   end subroutine gmshModelMeshRemoveSizeCallback
+
+  !> Set a mesh metric callback for the current model. The callback function
+  !! should take seven arguments as input (`dim', `tag', `x', `y', `z', `lc' and
+  !! `metric'). The first two integer arguments correspond to the dimension
+  !! `dim' and tag `tag' of the entity being meshed. The next four double
+  !! precision arguments correspond to the coordinates `x', `y' and `z' around
+  !! which to prescribe the metric and to the (smallest) mesh size `lc' that
+  !! would be prescribed if the callback had not been called. The last argument
+  !! `metric' contains the 6 components of the symmetric metric tensor that
+  !! would be prescribed if the callback had not been called, given as [m11,
+  !! m21, m22, m31, m32, m33]. The callback function should modify `metric' in
+  !! place; in Python, Julia and JavaScript it can also return the desired
+  !! metric, as 6 components, a 3x3 matrix or a single mesh size. The metric
+  !! callback is called after the mesh size callback; meshing algorithms that do
+  !! not support anisotropic mesh sizes use the smallest size prescribed by the
+  !! metric.
+  subroutine gmshModelMeshSetMetricCallback(callback, &
+                                            ierr)
+    interface
+    subroutine C_API(callback, &
+                     callback_data, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshSetMetricCallback")
+      use, intrinsic :: iso_c_binding
+      type(c_funptr), value, intent(in) :: callback
+      type(c_ptr), value, intent(in) :: callback_data
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    type(c_funptr), value, intent(in) :: callback
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(callback=callback, &
+         callback_data=c_null_ptr, &
+         ierr_=ierr)
+  end subroutine gmshModelMeshSetMetricCallback
+
+  !> Remove the mesh metric callback from the current model.
+  subroutine gmshModelMeshRemoveMetricCallback(ierr)
+    interface
+    subroutine C_API(ierr_) &
+      bind(C, name="gmshModelMeshRemoveMetricCallback")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(ierr_=ierr)
+  end subroutine gmshModelMeshRemoveMetricCallback
 
   !> Set a transfinite meshing constraint on the curve `tag', with `numNodes'
   !! nodes distributed according to `meshType' and `coef'. Currently supported

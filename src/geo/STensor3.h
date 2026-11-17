@@ -43,6 +43,8 @@ public:
   void setMat(const fullMatrix<double> &mat);
   inline double &operator()(int i, int j) { return _val[getIndex(i, j)]; }
   inline double operator()(int i, int j) const { return _val[getIndex(i, j)]; }
+  // the 6 components M11, M21, M22, M31, M32, M33
+  inline double *data() { return _val; }
   SMetric3 invert() const;
   double determinant() const;
   SMetric3 operator+(const SMetric3 &other) const

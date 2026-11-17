@@ -81,7 +81,7 @@ GModel::GModel(const std::string &name)
     _parasolid_internals(nullptr), _discreteCAD_internals(nullptr),
     _fields(nullptr),
     _currentMeshEntity(nullptr), _numPartitions(0), normals(nullptr),
-    lcCallback(nullptr)
+    lcCallback(nullptr), metricCallback(nullptr)
 {
   static std::atomic<std::size_t> numModels(0);
   _serial = ++numModels;
