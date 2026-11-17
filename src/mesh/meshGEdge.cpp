@@ -226,7 +226,7 @@ struct F_LcB {
 };
 
 struct F_Lc {
-  double operator()(GEdge *ge, double t)
+  double operator()(GEdge *ge, double t, double *xp = nullptr)
   {
     GPoint p = ge->point(t);
     Range<double> bounds = ge->parBounds(0);
@@ -241,12 +241,13 @@ struct F_Lc {
     lc_here = std::min(lc_here, BGM_MeshSize(ge, t, 0, p.x(), p.y(), p.z()));
     //    printf("%d LC HERE %g %g\n",ge->tag(),t,lc_here);
     SVector3 der = ge->firstDer(t);
+    if(xp) *xp = der.norm();
     return norm(der) / lc_here;
   }
 };
 
 struct F_Lc_aniso {
-  double operator()(GEdge *ge, double t)
+  double operator()(GEdge *ge, double t, double *xp = nullptr)
   {
     GPoint p = ge->point(t);
     SMetric3 lc_here;
@@ -275,6 +276,7 @@ struct F_Lc_aniso {
     }
 
     SVector3 der = ge->firstDer(t);
+    if(xp) *xp = der.norm();
     return std::sqrt(dot(der, lc_here, der));
   }
 };
@@ -408,6 +410,22 @@ struct F_One {
   }
 };
 
+// F_Lc and F_Lc_aniso also return |x'(t)| in xp, so the caller does not need
+// to call firstDer again for each point
+template <typename function>
+static void evalPoint(function &f, GEdge *ge, IntPoint &P)
+{
+  P.lc = f(ge, P.t);
+}
+static void evalPoint(F_Lc &f, GEdge *ge, IntPoint &P)
+{
+  P.lc = f(ge, P.t, &P.xp);
+}
+static void evalPoint(F_Lc_aniso &f, GEdge *ge, IntPoint &P)
+{
+  P.lc = f(ge, P.t, &P.xp);
+}
+
 static double trapezoidal(IntPoint *const P1, IntPoint *const P2)
 {
   return 0.5 * (P1->lc + P2->lc) * (P2->t - P1->t);
@@ -423,7 +441,7 @@ static void RecursiveIntegration(GEdge *ge, IntPoint *from, IntPoint *to,
   (*depth)++;
 
   P.t = 0.5 * (from->t + to->t);
-  P.lc = f(ge, P.t);
+  evalPoint(f, ge, P);
 
   double const val1 = trapezoidal(from, to);
   double const val2 = trapezoidal(from, &P);
@@ -456,12 +474,12 @@ static double Integration(GEdge *ge, double t1, double t2, function f,
   int depth = 0;
 
   from.t = t1;
-  from.lc = f(ge, from.t);
+  evalPoint(f, ge, from);
   from.p = 0.0;
   Points.push_back(from);
 
   to.t = t2;
-  to.lc = f(ge, to.t);
+  evalPoint(f, ge, to);
 
   RecursiveIntegration(ge, &from, &to, f, Points, Prec, &depth);
 
@@ -837,12 +855,8 @@ int meshGEdgeProcessing(GEdge *ge, const double t_begin, double t_end, int &N,
                       CTX::instance()->mesh.lcIntegrationPrecision);
     }
 
+    // the integration already filled xp for every point
     // we should maybe provide an option to disable the smoothing
-    for(std::size_t i = 0; i < Points.size(); i++) {
-      IntPoint &pt = Points[i];
-      SVector3 der = ge->firstDer(pt.t);
-      pt.xp = der.norm();
-    }
     if(CTX::instance()->mesh.algo2d != ALGO_2D_BAMG)
       a = smoothPrimitive(ge, std::sqrt(CTX::instance()->mesh.smoothRatio),
                           Points);
