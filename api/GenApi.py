@@ -955,11 +955,19 @@ def isizefun(name):
         ", Cdouble, (Cint, Cint, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cvoid}))")
     a.julia_arg = "api_" + name + "_, C_NULL"
     a.julia_ctype = "Ptr{Cvoid}, Ptr{Cvoid}"
+    _fortran_fun(a, name)
+    return a
+
+
+# a callback is a C function pointer followed by a user data pointer, which the
+# Fortran API leaves null
+def _fortran_fun(a, name):
     a.fortran_args = [name]
     a.fortran_types = ["type(c_funptr), value, intent(in)"]
-    a.fortran_c_api = ["type(c_funptr), value, intent(in)"]
-    a.fortran_c_args = [name]
-    return a
+    a.fortran_c_api = ["type(c_funptr), value, intent(in)",
+                       "type(c_ptr), value, intent(in)"]
+    a.fortran_c_args = [name, name + "_data"]
+    a.fortran_call = name + "=" + name + ", &" + name + "_data=c_null_ptr"
 
 
 # the kind of each argument (its constructor), which write_js() marshals by

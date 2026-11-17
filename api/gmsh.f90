@@ -7343,16 +7343,19 @@ module gmsh
                                           ierr)
     interface
     subroutine C_API(callback, &
+                     callback_data, &
                      ierr_) &
       bind(C, name="gmshModelMeshSetSizeCallback")
       use, intrinsic :: iso_c_binding
       type(c_funptr), value, intent(in) :: callback
+      type(c_ptr), value, intent(in) :: callback_data
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     type(c_funptr), value, intent(in) :: callback
     integer(c_int), intent(out), optional :: ierr
     call C_API(callback=callback, &
+         callback_data=c_null_ptr, &
          ierr_=ierr)
   end subroutine gmshModelMeshSetSizeCallback
 
