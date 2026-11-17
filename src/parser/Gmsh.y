@@ -1798,7 +1798,11 @@ Shape :
       int num = (int)$4;
       std::vector<int> tags; ListOfDouble2Vector($7, tags);
       bool r = true;
-      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      // ("Loop" is not a keyword, so that it can be the name of a variable)
+      if(strcmp($2, "Loop")){
+        yymsg(0, "Unknown command 'Curve %s' ('Curve Loop' expected)", $2);
+      }
+      else if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         r = GModel::current()->getOCCInternals()->addCurveLoop(num, tags);
       }
       else{
@@ -2270,7 +2274,10 @@ Shape :
       int num = (int)$4;
       std::vector<int> tags; ListOfDouble2Vector($7, tags);
       bool r = true;
-      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(strcmp($2, "Loop")){
+        yymsg(0, "Unknown command 'Surface %s' ('Surface Loop' expected)", $2);
+      }
+      else if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         r = GModel::current()->getOCCInternals()->addSurfaceLoop(num, tags, $8);
       }
       else{
