@@ -1625,14 +1625,18 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
 // edge loop, taking care of periodic surfaces with seams; it also fills the
 // recoverMap to link BDS points with mesh nodes. If merged is given, the nodes
 // that cannot be told apart in the parametric plane are merged and the chains
-// of merged nodes returned, for restoreMergedBoundaryNodes
+// of merged nodes returned, for restoreMergedBoundaryNodes. With reorder, a
+// curve that does not follow the previous one in the parametric plane is
+// exchanged with one further in the loop that does: the order of the loop is
+// only topological, and cannot tell apart the curves that leave a point
+// shared by more than two of them (e.g. the pole of a sphere cut there)
 
 static bool buildConsecutiveListOfVertices(
   GFace *gf, GEdgeLoop &gel, std::vector<BDS_Point *> &result,
   SBoundingBox3d &bbox, BDS_Mesh *m,
   std::map<BDS_Point *, MVertex *, PointLessThan> &recoverMap, int &count,
   int countTot, double tol, bool seam_the_first = false,
-  std::vector<std::vector<MVertex *>> *merged = nullptr)
+  std::vector<std::vector<MVertex *>> *merged = nullptr, bool reorder = false)
 {
   result.clear();
   count = 0;
@@ -1649,6 +1653,31 @@ static bool buildConsecutiveListOfVertices(
   std::vector<GEdgeSigned> signedEdges(gel.begin(), gel.end());
   std::vector<SPoint2> coords;
   std::vector<MVertex *> verts;
+
+  // the side of each seam that the list went along already (1 or -1): when
+  // reordering, the second time has to be on the other one
+  std::map<GEdge *, int> side;
+
+  // does this curve start, by either of its ends, where the list ends?
+  auto follows = [&](GEdge *ge) {
+    Range<double> range = ge->parBoundsOnFace(gf);
+    bool seam = ge->isSeam(gf);
+    auto used = side.find(ge);
+    int done = (used != side.end()) ? used->second : 0;
+    for(int end = 0; end < 2; end++) {
+      GVertex *gv = end ? ge->getEndVertex() : ge->getBeginVertex();
+      if(!gv || gv->mesh_vertices.empty() ||
+         gv->mesh_vertices[0] != verts.back())
+        continue;
+      double t = end ? range.high() : range.low();
+      if((done != 1 &&
+          coords.back().distance(ge->reparamOnFace(gf, t, 1)) < tol) ||
+         (seam && done != -1 &&
+          coords.back().distance(ge->reparamOnFace(gf, t, -1)) < tol))
+        return true;
+    }
+    return false;
+  };
 
 #if 0 // for debugging - don't remove
   printf("curve loop for surface %d\n", gf->tag());
@@ -1676,6 +1705,21 @@ static bool buildConsecutiveListOfVertices(
 
   for(int initial_dir = 0; initial_dir < 2; initial_dir++) {
     if(coords.size()) break; // we succeeded with initial_dir == 0
+
+    signedEdges.assign(gel.begin(), gel.end());
+    side.clear();
+    std::vector<bool> exchanged(signedEdges.size(), false);
+    // put at position i a curve further in the loop that follows the list
+    auto exchange = [&](std::size_t i) {
+      if(!reorder || exchanged[i]) return false;
+      for(std::size_t j = i + 1; j < signedEdges.size(); j++) {
+        if(!follows(signedEdges[j].getEdge())) continue;
+        std::swap(signedEdges[i], signedEdges[j]);
+        exchanged[i] = true;
+        return true;
+      }
+      return false;
+    };
 
     for(std::size_t i = 0; i < signedEdges.size(); i++) {
       std::vector<SPoint2> p, p_alt, p_rev, p_alt_rev;
@@ -1730,6 +1774,7 @@ static bool buildConsecutiveListOfVertices(
             coords = p_rev;
           verts = v_rev;
         }
+        if(seam && reorder) side[ge] = seam_the_first ? -1 : 1;
       }
       else {
         // Preserve the topological junction before choosing the closest
@@ -1752,6 +1797,10 @@ static bool buildConsecutiveListOfVertices(
             coords.insert(coords.end(), p_rev.begin(), p_rev.end());
             verts.pop_back();
             verts.insert(verts.end(), v_rev.begin(), v_rev.end());
+          }
+          else if(exchange(i)) {
+            i--;
+            continue;
           }
           else {
             Msg::Debug("Distances (%g, %g) in parametric space larger than "
@@ -1776,11 +1825,19 @@ static bool buildConsecutiveListOfVertices(
                            coords.back().distance(p_alt.front()) : incompatible;
           double dist4 = verts.back() == v_rev.front() ?
                            coords.back().distance(p_alt_rev.front()) : incompatible;
+          auto used = side.find(ge);
+          if(used != side.end()) {
+            if(used->second == 1)
+              dist1 = dist2 = incompatible;
+            else
+              dist3 = dist4 = incompatible;
+          }
           if(dist1 < dist2 && dist1 < dist3 && dist1 < dist4 && dist1 < tol) {
             coords.pop_back();
             coords.insert(coords.end(), p.begin(), p.end());
             verts.pop_back();
             verts.insert(verts.end(), v.begin(), v.end());
+            if(reorder) side[ge] = 1;
           }
           else if(dist2 < dist1 && dist2 < dist3 && dist2 < dist4 &&
                   dist2 < tol) {
@@ -1788,6 +1845,7 @@ static bool buildConsecutiveListOfVertices(
             coords.insert(coords.end(), p_rev.begin(), p_rev.end());
             verts.pop_back();
             verts.insert(verts.end(), v_rev.begin(), v_rev.end());
+            if(reorder) side[ge] = 1;
           }
           else if(dist3 < dist1 && dist3 < dist2 && dist3 < dist4 &&
                   dist3 < tol) {
@@ -1795,6 +1853,7 @@ static bool buildConsecutiveListOfVertices(
             coords.insert(coords.end(), p_alt.begin(), p_alt.end());
             verts.pop_back();
             verts.insert(verts.end(), v.begin(), v.end());
+            if(reorder) side[ge] = -1;
           }
           else if(dist4 < dist1 && dist4 < dist2 && dist4 < dist3 &&
                   dist4 < tol) {
@@ -1802,6 +1861,11 @@ static bool buildConsecutiveListOfVertices(
             coords.insert(coords.end(), p_alt_rev.begin(), p_alt_rev.end());
             verts.pop_back();
             verts.insert(verts.end(), v_rev.begin(), v_rev.end());
+            if(reorder) side[ge] = -1;
+          }
+          else if(exchange(i)) {
+            i--;
+            continue;
           }
           else {
             Msg::Debug("Distances (%g, %g, %g, %g) in parametric space larger "
@@ -2050,6 +2114,12 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
           break;
         }
       }
+      // last resort: let the parametric plane order the curves of the loop
+      for(int i = 0; i < 6 && !ok; i++)
+        for(int seamFirst = 0; seamFirst < 2 && !ok; seamFirst++)
+          ok = buildConsecutiveListOfVertices(
+            gf, *it, edgeLoop_BDS, bbox, m, recoverMap, nbPointsLocal,
+            nbPointsTotal, fact[i] * LC2D, seamFirst, toMerge, true);
       if(!ok) {
         gf->meshStatistics.status = GFace::FAILED;
         Msg::Error("The 1D mesh seems not to be forming a closed loop");
