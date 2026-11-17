@@ -37,14 +37,23 @@ void CTX::init()
   char *byte = (char*)&word;
   bigEndian = (byte[0] ? 0 : 1);
 
-  if(homeDir.empty()) homeDir = GetEnvironmentVar("GMSH_HOME");
+  // on Windows don't accept the top directory or anything partially expanded
+  // like Settings\%USERPROFILE%
+  auto dir = [](const char *var) {
+    std::string d = GetEnvironmentVar(var);
 #if defined(WIN32)
-  if(homeDir.empty()) homeDir = GetEnvironmentVar("APPDATA");
-#else
-  if(homeDir.empty()) homeDir = GetEnvironmentVar("HOME");
+    if(d == "/" || d.find_first_of("%$") != std::string::npos) d.clear();
 #endif
-  if(homeDir.empty()) homeDir = GetEnvironmentVar("TMP");
-  if(homeDir.empty()) homeDir = GetEnvironmentVar("TEMP");
+    return d;
+  };
+  if(homeDir.empty()) homeDir = dir("GMSH_HOME");
+#if defined(WIN32)
+  if(homeDir.empty()) homeDir = dir("APPDATA");
+#else
+  if(homeDir.empty()) homeDir = dir("HOME");
+#endif
+  if(homeDir.empty()) homeDir = dir("TMP");
+  if(homeDir.empty()) homeDir = dir("TEMP");
   int len = homeDir.size();
   if(len && homeDir[len - 1] != '/') homeDir += "/";
 

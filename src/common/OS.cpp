@@ -252,6 +252,16 @@ static unsigned int utf8FromUtf16(char *dst, unsigned int dstlen,
   return count;
 }
 
+// UTF-8 string of any length from srclen UTF-16 code units (a code unit gives
+// at most 3 bytes)
+static std::string utf8FromUtf16(const wchar_t *src, std::size_t srclen)
+{
+  std::vector<char> dst(3 * srclen + 1);
+  unsigned int n =
+    utf8FromUtf16(&dst[0], (unsigned int)dst.size(), src, (unsigned int)srclen);
+  return std::string(&dst[0], n);
+}
+
 static wchar_t *wbuf[3] = {nullptr, nullptr, nullptr};
 
 static void setwbuf(int i, const char *f)
@@ -289,14 +299,7 @@ std::string GetEnvironmentVar(const std::string &var)
   setwbuf(0, var.c_str());
   const wchar_t *wtmp = _wgetenv(wbuf[0]);
   if(!wtmp) return "";
-  char tmp[MAX_PATH];
-  utf8FromUtf16(tmp, MAX_PATH, wtmp, wcslen(wtmp));
-  // Don't accept top dir or anything partially expanded like
-  // Settings\%USERPROFILE%, etc.
-  if(!strcmp(tmp, "/") || strstr(tmp, "%") || strstr(tmp, "$"))
-    return "";
-  else
-    return std::string(tmp);
+  return utf8FromUtf16(wtmp, wcslen(wtmp));
 #else
   const char *tmp = getenv(var.c_str());
   if(!tmp) return "";
@@ -426,13 +429,14 @@ std::string GetExecutableFileName()
 {
   std::string name = "";
 #if defined(WIN32) && !defined(__CYGWIN__)
-  wchar_t src[MAX_PATH];
-  unsigned long size = GetModuleFileNameW(nullptr, src, MAX_PATH);
-  if(size) {
-    char dst[MAX_PATH];
-    utf8FromUtf16(dst, MAX_PATH, src, size);
-    name = std::string(dst);
+  // a name that does not fit is truncated to the size of the buffer
+  std::vector<wchar_t> src(MAX_PATH);
+  unsigned long size = GetModuleFileNameW(nullptr, &src[0], src.size());
+  while(size == src.size() && src.size() < 32768) {
+    src.resize(2 * src.size());
+    size = GetModuleFileNameW(nullptr, &src[0], src.size());
   }
+  name = utf8FromUtf16(&src[0], size);
 #elif defined(__APPLE__)
   char path[PATH_MAX];
   uint32_t size = sizeof(path);
@@ -457,12 +461,12 @@ std::string GetAbsolutePath(const std::string &fileName)
 {
 #if defined(WIN32) && !defined(__CYGWIN__)
   setwbuf(0, fileName.c_str());
-  wchar_t path[MAX_PATH];
-  unsigned long size = GetFullPathNameW(wbuf[0], MAX_PATH, path, nullptr);
+  // without a buffer this returns the size needed, final 0 included
+  unsigned long size = GetFullPathNameW(wbuf[0], 0, nullptr, nullptr);
   if(size) {
-    char dst[MAX_PATH];
-    utf8FromUtf16(dst, MAX_PATH, path, size);
-    return std::string(dst);
+    std::vector<wchar_t> path(size);
+    size = GetFullPathNameW(wbuf[0], size, &path[0], nullptr);
+    if(size && size < path.size()) return utf8FromUtf16(&path[0], size);
   }
 #else
   char path[4096];
