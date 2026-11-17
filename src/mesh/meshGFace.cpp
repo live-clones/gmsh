@@ -1623,13 +1623,16 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
 
 // this function buils a list of BDS points that are consecutive in one given
 // edge loop, taking care of periodic surfaces with seams; it also fills the
-// recoverMap to link BDS points with mesh nodes
+// recoverMap to link BDS points with mesh nodes. If merged is given, the nodes
+// that cannot be told apart in the parametric plane are merged and the chains
+// of merged nodes returned, for restoreMergedBoundaryNodes
 
 static bool buildConsecutiveListOfVertices(
   GFace *gf, GEdgeLoop &gel, std::vector<BDS_Point *> &result,
   SBoundingBox3d &bbox, BDS_Mesh *m,
   std::map<BDS_Point *, MVertex *, PointLessThan> &recoverMap, int &count,
-  int countTot, double tol, bool seam_the_first = false)
+  int countTot, double tol, bool seam_the_first = false,
+  std::vector<std::vector<MVertex *>> *merged = nullptr)
 {
   result.clear();
   count = 0;
@@ -1845,6 +1848,43 @@ static bool buildConsecutiveListOfVertices(
     return false;
   }
 
+  // Merge the runs of consecutive nodes that fall within the tolerance of the
+  // first node of the run. The tolerance is the mismatch between the pcurves
+  // at the junctions of the curves: at that scale the pcurves of tiny curves
+  // fold over their neighbours, and the loop intersects itself
+  if(merged) {
+    std::size_t n = verts.size(), start = n;
+    for(std::size_t i = 0; i < n && start == n; i++)
+      if(coords[i].distance(coords[(i + n - 1) % n]) >= tol) start = i;
+    if(start < n) {
+      // start the loop on a node away from the previous one
+      std::rotate(coords.begin(), coords.begin() + start, coords.end());
+      std::rotate(verts.begin(), verts.begin() + start, verts.end());
+      std::vector<SPoint2> c;
+      std::vector<std::vector<MVertex *>> runs;
+      for(std::size_t i = 0; i < n; i++) {
+        if(i && coords[i].distance(c.back()) < tol)
+          runs.back().push_back(verts[i]);
+        else {
+          c.push_back(coords[i]);
+          runs.push_back({verts[i]});
+        }
+      }
+      coords = c;
+      verts.clear();
+      for(std::size_t i = 0; i < runs.size(); i++) {
+        verts.push_back(runs[i].front());
+        if(runs[i].size() > 1) {
+          Msg::Info("Surface %d: merging %zu boundary nodes closer than %g in "
+                    "the parametric plane",
+                    gf->tag(), runs[i].size(), tol);
+          merged->push_back(runs[i]);
+          merged->back().push_back(runs[(i + 1) % runs.size()].front());
+        }
+      }
+    }
+  }
+
   std::map<BDS_Point *, MVertex *, PointLessThan> recoverMapLocal;
 
   for(std::size_t i = 0; i < verts.size(); i++) {
@@ -1916,6 +1956,42 @@ static GEdge *getGEdge(GFace *gf, MVertex *v1, MVertex *v2)
   return nullptr;
 }
 
+// Put back the boundary nodes merged by buildConsecutiveListOfVertices. Each
+// chain holds the node that was kept, the nodes that were removed and the node
+// that follows them in the loop: the triangle on the boundary edge from the
+// kept node to the following one is replaced by a fan from its third node
+static bool restoreMergedBoundaryNodes(
+  GFace *gf, const std::vector<std::vector<MVertex *>> &merged)
+{
+  for(auto &c : merged) {
+    MVertex *kept = c.front(), *next = c.back();
+    MTriangle *found = nullptr;
+    int n = 0, ik = 0, in = 0;
+    for(MTriangle *t : gf->triangles) {
+      int i = -1, j = -1;
+      for(int k = 0; k < 3; k++) {
+        if(t->getVertex(k) == kept) i = k;
+        if(t->getVertex(k) == next) j = k;
+      }
+      if(i < 0 || j < 0) continue;
+      found = t;
+      ik = i;
+      in = j;
+      n++;
+    }
+    if(n != 1) return false;
+    for(std::size_t k = 0; k + 2 < c.size(); k++) {
+      MVertex *v[3] = {found->getVertex(0), found->getVertex(1),
+                       found->getVertex(2)};
+      v[ik] = c[k];
+      v[in] = c[k + 1];
+      gf->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
+    }
+    found->setVertex(ik, c[c.size() - 2]);
+  }
+  return true;
+}
+
 static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
                                   bool repairSelfIntersecting1dMesh,
                                   bool debug = true)
@@ -1948,6 +2024,11 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
   std::vector<std::vector<BDS_Point *>> edgeLoops_BDS;
   SBoundingBox3d bbox;
   int nbPointsTotal = 0;
+  // the boundary nodes are only merged once the 1D mesh was found to
+  // intersect itself
+  std::vector<std::vector<MVertex *>> merged;
+  std::vector<std::vector<MVertex *>> *toMerge =
+    (RECUR_ITER > 0) ? &merged : nullptr;
   {
     for(auto it = gf->edgeLoops.begin(); it != gf->edgeLoops.end(); it++) {
       std::vector<BDS_Point *> edgeLoop_BDS;
@@ -1957,13 +2038,14 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
       for(int i = 0; i < 6; i++) {
         if(buildConsecutiveListOfVertices(gf, *it, edgeLoop_BDS, bbox, m,
                                           recoverMap, nbPointsLocal,
-                                          nbPointsTotal, fact[i] * LC2D)) {
+                                          nbPointsTotal, fact[i] * LC2D, false,
+                                          toMerge)) {
           ok = true;
           break;
         }
         if(buildConsecutiveListOfVertices(
              gf, *it, edgeLoop_BDS, bbox, m, recoverMap, nbPointsLocal,
-             nbPointsTotal, fact[i] * LC2D, true)) {
+             nbPointsTotal, fact[i] * LC2D, true, toMerge)) {
           ok = true;
           break;
         }
@@ -2302,6 +2384,13 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
 
   if(!repairDuplicateTriangles(gf)) {
     Msg::Error("Surface %d has duplicate triangles", gf->tag());
+    gf->meshStatistics.status = GFace::FAILED;
+    return false;
+  }
+
+  if(!restoreMergedBoundaryNodes(gf, merged)) {
+    Msg::Error("Surface %d: could not restore the merged boundary nodes",
+               gf->tag());
     gf->meshStatistics.status = GFace::FAILED;
     return false;
   }
