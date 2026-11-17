@@ -2566,7 +2566,11 @@ bool OCC_Internals::addSurfaceLoop(int &tag,
       TopoDS_Shell shell = TopoDS::Shell(exp0.Current());
       if(CTX::instance()->geom.occAutoFix) {
         // make sure faces in shell are oriented correctly
+        // (and only that: fixing the faces checks every curve on its surface,
+        // which takes seconds for a few hundred faces, and replaces the
+        // surfaces it changes by new ones)
         ShapeFix_Shell fix(shell);
+        fix.FixFaceMode() = 0;
         fix.Perform();
         shell = fix.Shell();
       }
@@ -2597,6 +2601,7 @@ bool OCC_Internals::addSurfaceLoop(int &tag,
     if(CTX::instance()->geom.occAutoFix) {
       // make sure faces in shell are oriented correctly
       ShapeFix_Shell fix(shell);
+      fix.FixFaceMode() = 0;
       fix.Perform();
       shell = fix.Shell();
     }
@@ -2631,7 +2636,9 @@ bool OCC_Internals::addVolume(int &tag, const std::vector<int> &shellTags)
     result = s.Solid();
     if(CTX::instance()->geom.occAutoFix) {
       // make sure the volume is finite
+      // (not that its faces are valid, see addSurfaceLoop())
       ShapeFix_Solid fix(result);
+      fix.FixShellTool()->FixFaceMode() = 0;
       fix.Perform();
       result = TopoDS::Solid(fix.Solid());
     }
