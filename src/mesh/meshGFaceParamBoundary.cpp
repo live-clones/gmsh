@@ -81,7 +81,8 @@ bool ParametricDomainChecker::inside(const SPoint2 &pp, int &N) const
   return true;
 }
 
-void trueBoundary(GFace *gf, std::vector<SPoint2> &bnd, int debug)
+void trueBoundary(GFace *gf, std::vector<SPoint2> &bnd, int debug,
+                  const std::map<GEdge *, int> *oneSide)
 {
   FILE *view_t = nullptr;
   if(debug) {
@@ -98,7 +99,11 @@ void trueBoundary(GFace *gf, std::vector<SPoint2> &bnd, int debug)
     Range<double> r = ge->parBoundsOnFace(gf);
     SPoint2 p[300];
     int NITER = ge->isSeam(gf) ? 2 : 1;
+    int only = 0;
+    if(oneSide && oneSide->count(ge)) only = oneSide->find(ge)->second;
     for(int i = 0; i < NITER; i++) {
+      // (reparamOnFace takes the side 1 for i = 1, the other one for i = 0)
+      if(only && (only == 1) != (i == 1)) continue;
       int count = NITER == 2 ? 300 : 300;
       for(int k = 0; k < count; k++) {
         double t = (double)k / (count - 1);

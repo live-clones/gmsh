@@ -2070,9 +2070,6 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
   std::map<BDS_Point *, MVertex *, PointLessThan> recoverMap;
   std::multimap<MVertex *, BDS_Point *> recoverMultiMapInv;
 
-  std::vector<SPoint2> true_boundary;
-  trueBoundary(gf, true_boundary, debug);
-
   Range<double> rangeU = gf->parBounds(0);
   Range<double> rangeV = gf->parBounds(1);
 
@@ -2145,6 +2142,48 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
       INV[it->second] = it->first;
     }
   }
+
+  // A seam that is only once in the loops bounds the surface on one side
+  // only, the other side being in a part of the periodic surface that was cut
+  // away (a torus cut through the crossing of its two seams): find that side
+  // from the first mesh edge of the seam in the loops, so that the other one
+  // is left out of the boundary used to tell if a point is in the surface
+  std::map<GEdge *, int> seamSide;
+  for(GEdge *ge : gf->edges()) {
+    if(!ge->isSeam(gf) || ge->lines.empty() || seamSide.count(ge)) continue;
+    int n = 0;
+    for(auto &loop : gf->edgeLoops) n += loop.count(ge);
+    if(n != 1) continue;
+    Range<double> range = ge->parBoundsOnFace(gf);
+    MVertex *v[2] = {ge->lines[0]->getVertex(0), ge->lines[0]->getVertex(1)};
+    double t[2];
+    for(int i = 0; i < 2; i++) {
+      if(v[i]->onWhat() == ge)
+        v[i]->getParameter(0, t[i]);
+      else
+        t[i] = (ge->getBeginVertex() &&
+                ge->getBeginVertex()->mesh_vertices[0] == v[i]) ?
+                 range.low() : range.high();
+    }
+    for(auto &loop : edgeLoops_BDS) {
+      for(std::size_t j = 0; j < loop.size(); j++) {
+        BDS_Point *p[2] = {loop[j], loop[(j + 1) % loop.size()]};
+        MVertex *w[2] = {recoverMap[p[0]], recoverMap[p[1]]};
+        if(w[0] == v[1] && w[1] == v[0]) std::swap(p[0], p[1]);
+        else if(w[0] != v[0] || w[1] != v[1]) continue;
+        double d[2] = {0., 0.};
+        for(int i = 0; i < 2; i++) {
+          SPoint2 uv(p[i]->u, p[i]->v);
+          d[0] += uv.distance(ge->reparamOnFace(gf, t[i], 1));
+          d[1] += uv.distance(ge->reparamOnFace(gf, t[i], -1));
+        }
+        seamSide[ge] = (d[0] <= d[1]) ? 1 : -1;
+      }
+    }
+  }
+
+  std::vector<SPoint2> true_boundary;
+  trueBoundary(gf, true_boundary, debug, &seamSide);
 
   if(nbPointsTotal < 3) {
     Msg::Warning("Mesh generation of surface %d skipped: only %d nodes on "
