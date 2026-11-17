@@ -282,7 +282,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCWriteSTEPNonManifold
-Enable non-manifold STEP exports with the OpenCASCADE kernel@*
+Enable non-manifold STEP exports with the OpenCASCADE kernel, in which the volumes and the surfaces keep the surfaces and the curves they share@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 

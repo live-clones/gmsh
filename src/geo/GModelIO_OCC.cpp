@@ -5244,6 +5244,11 @@ bool OCC_Internals::exportShapes(GModel *model, const std::string &fileName,
   BRep_Builder b;
   TopoDS_Compound c;
   b.MakeCompound(c);
+  std::vector<std::string> split = SplitFileName(fileName);
+  const bool step = (format == "step" || split[2] == ".step" ||
+                     split[2] == ".stp" || split[2] == ".STEP" ||
+                     split[2] == ".STP");
+  std::vector<GFace *> freeFaces;
   for(auto it = model->firstRegion(); it != model->lastRegion(); it++) {
     GRegion *gr = *it;
     if(onlyVisible) {
@@ -5273,7 +5278,49 @@ bool OCC_Internals::exportShapes(GModel *model, const std::string &fileName,
     }
     if(gf->getNativeType() == GEntity::OpenCascadeModel) {
       Msg::Debug("Adding surface %d to exported compound", gf->tag());
-      b.Add(c, *(TopoDS_Face *)gf->getNativePtr());
+      freeFaces.push_back(gf);
+    }
+  }
+  // In a STEP file each surface of the compound is a model of its own, and is
+  // read back with its own copy of the curves and points it shares with the
+  // others. So in a non-manifold STEP export the surfaces connected by their
+  // curves are exported as a shell (the option does the same for the surfaces
+  // shared by volumes, see below).
+  const bool shells = step && CTX::instance()->geom.occWriteSTEPNonManifold;
+  {
+    std::map<GFace *, int> group;
+    for(GFace *gf : freeFaces) group[gf] = -1;
+    int numGroups = 0;
+    std::vector<std::vector<GFace *>> groups;
+    for(GFace *start : freeFaces) {
+      if(group[start] >= 0) continue;
+      groups.push_back(std::vector<GFace *>());
+      std::vector<GFace *> stack(1, start);
+      group[start] = numGroups;
+      while(!stack.empty()) {
+        GFace *gf = stack.back();
+        stack.pop_back();
+        groups.back().push_back(gf);
+        if(!shells) continue;
+        for(GEdge *ge : gf->edges()) {
+          for(GFace *other : ge->faces()) {
+            auto ito = group.find(other);
+            if(ito == group.end() || ito->second >= 0) continue;
+            ito->second = numGroups;
+            stack.push_back(other);
+          }
+        }
+      }
+      numGroups++;
+    }
+    for(auto &g : groups) {
+      if(g.size() == 1) { b.Add(c, *(TopoDS_Face *)g[0]->getNativePtr()); }
+      else {
+        TopoDS_Shell shell;
+        b.MakeShell(shell);
+        for(GFace *gf : g) b.Add(shell, *(TopoDS_Face *)gf->getNativePtr());
+        b.Add(c, shell);
+      }
     }
   }
   for(auto it = model->firstEdge(); it != model->lastEdge(); it++) {
@@ -5321,8 +5368,6 @@ bool OCC_Internals::exportShapes(GModel *model, const std::string &fileName,
     }
   }
 
-  std::vector<std::string> split = SplitFileName(fileName);
-
   try {
     if(format == "brep" || split[2] == ".brep" || split[2] == ".BREP") {
 #if OCC_VERSION_HEX < 0x070600
@@ -5339,16 +5384,17 @@ bool OCC_Internals::exportShapes(GModel *model, const std::string &fileName,
     else if(format == "xao" || split[2] == ".xao" || split[2] == ".XAO") {
       _writeXAO(c, model, fileName);
     }
-    else if(format == "step" || split[2] == ".step" || split[2] == ".stp" ||
-            split[2] == ".STEP" || split[2] == ".STP") {
+    else if(step) {
       STEPControl_Writer writer;
       setTargetUnit(CTX::instance()->geom.occTargetUnit);
       setOCCSTEPHeader(writer);
       Interface_Static::SetIVal("write.surfacecurve.mode",
                                 CTX::instance()->geom.occWriteParametricCurves);
-      // activating this helps prevent duplicate entities in 3D STEP exports
-      // (see #3440), but does not seem effective in 2D (see #906), and could
-      // lead to regressions (see #2673)
+      // activating this prevents duplicate entities in STEP exports of volumes
+      // sharing surfaces (see #3440); the surfaces sharing curves are dealt
+      // with above (see #906). A volume inside another one is then read back
+      // as a third volume, for the cavity (see #2673): the file only holds the
+      // shells.
       Interface_Static::SetIVal("write.step.nonmanifold",
                                 CTX::instance()->geom.occWriteSTEPNonManifold);
       if(writer.Transfer(c, STEPControl_AsIs) == IFSelect_RetDone) {

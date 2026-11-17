@@ -1183,7 +1183,8 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "OCCWriteParametricCurves" , opt_geometry_occ_write_parametric_curves , 1. ,
     "Write parametric curves in STEP exports with the OpenCASCADE kernel" },
   { F|O, "OCCWriteSTEPNonManifold" , opt_geometry_occ_write_step_non_manifold , 1. ,
-    "Enable non-manifold STEP exports with the OpenCASCADE kernel" },
+    "Enable non-manifold STEP exports with the OpenCASCADE kernel, in which the "
+    "volumes and the surfaces keep the surfaces and the curves they share" },
   { F|O, "OCCMakeSolids" , opt_geometry_occ_make_solids , 0. ,
     "Fix shells and make solids when importing STEP, IGES and BREP models with the "
     "OpenCASCADE kernel" },
