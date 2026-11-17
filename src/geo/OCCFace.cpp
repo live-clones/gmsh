@@ -36,6 +36,9 @@
 #include <IntTools_Context.hxx>
 #include <ShapeAnalysis.hxx>
 #include <BRep_Tool.hxx>
+#include <ShapeAnalysis_Surface.hxx>
+#include <Precision.hxx>
+#include <gp_Pnt2d.hxx>
 #include <ShapeFix_Wire.hxx>
 #include <Standard_Version.hxx>
 #include <TopExp_Explorer.hxx>
@@ -160,8 +163,32 @@ void OCCFace::_setup()
     if(!v) { Msg::Error("Unknown point in surface %d", tag()); }
     else if(vertex.Orientation() == TopAbs_INTERNAL &&
             CTX::instance()->geom.occAutoEmbed) {
-      Msg::Debug("Adding embedded point %d in surface %d", v->tag(), tag());
-      embedded_vertices.insert(v);
+      // A point with a large tolerance can be given as internal to a surface
+      // it is far from: OpenCASCADE takes a point for a ball of the radius of
+      // its tolerance, and the boolean operations find it on every surface
+      // that the ball touches. Embedding it would drag the mesh of the
+      // surface to the point. (Only such a point can be far from the surface,
+      // so the others, i.e. all of them in a sound model, cost nothing.)
+      double tol = BRep_Tool::Tolerance(vertex), dist = 0.;
+      bool far = false;
+      if(tol > 1e-5) {
+        gp_Pnt pnt = BRep_Tool::Pnt(vertex);
+        ShapeAnalysis_Surface sas(BRep_Tool::Surface(_s));
+        gp_Pnt2d uv = sas.ValueOfUV(pnt, Precision::Confusion());
+        dist = sas.Value(uv).Distance(pnt);
+        Bnd_Box box;
+        BRepBndLib::Add(_s, box);
+        far = dist > 1e-4 * (box.IsVoid() ? 0. : sqrt(box.SquareExtent()));
+      }
+      if(far) {
+        Msg::Warning("Point %d is internal to surface %d for OpenCASCADE but "
+                     "at distance %g from it (the tolerance of the point is "
+                     "%g): not embedding it", v->tag(), tag(), dist, tol);
+      }
+      else {
+        Msg::Debug("Adding embedded point %d in surface %d", v->tag(), tag());
+        embedded_vertices.insert(v);
+      }
     }
   }
 
