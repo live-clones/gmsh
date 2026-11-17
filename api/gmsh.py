@@ -263,6 +263,20 @@ def _ivectorvectordouble(os):
 def _iargcargv(o):
     return c_int(len(o)), (c_char_p * len(o))(*(s.encode() for s in o))
 
+def _imetric(m):
+    # the 6 components of a metric given as a mesh size, 6 components or a
+    # 3x3 matrix
+    try:
+        n = len(m)
+    except TypeError:
+        return [1. / m**2, 0., 1. / m**2, 0., 0., 1. / m**2]
+    if n == 3:
+        return [m[0][0], m[1][0], m[1][1], m[2][0], m[2][1], m[2][2]]
+    if n != 6:
+        raise ValueError("Invalid metric: expected a mesh size, 6 components "
+                         "or a 3x3 matrix")
+    return m
+
 # Gmsh Python API begins here
 
 def initialize(argv=[], readConfigFiles=True, run=False, interruptible=True):
@@ -4934,6 +4948,61 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
         remove_size_callback = removeSizeCallback
+
+        @staticmethod
+        def setMetricCallback(callback):
+            """
+            gmsh.model.mesh.setMetricCallback(callback)
+
+            Set a mesh metric callback for the current model. The callback function
+            should take seven arguments as input (`dim', `tag', `x', `y', `z', `lc' and
+            `metric'). The first two integer arguments correspond to the dimension
+            `dim' and tag `tag' of the entity being meshed. The next four double
+            precision arguments correspond to the coordinates `x', `y' and `z' around
+            which to prescribe the metric and to the (smallest) mesh size `lc' that
+            would be prescribed if the callback had not been called. The last argument
+            `metric' contains the 6 components of the symmetric metric tensor that
+            would be prescribed if the callback had not been called, given as [m11,
+            m21, m22, m31, m32, m33]. The callback function should modify `metric' in
+            place; in Python, Julia and JavaScript it can also return the desired
+            metric, as 6 components, a 3x3 matrix or a single mesh size. The metric
+            callback is called after the mesh size callback; meshing algorithms that do
+            not support anisotropic mesh sizes use the smallest size prescribed by the
+            metric.
+
+            Types:
+            - `callback': 
+            """
+            global api_metric_callback_type_
+            api_metric_callback_type_ = CFUNCTYPE(None, c_int, c_int, c_double, c_double, c_double, c_double, POINTER(c_double), c_void_p)
+            def api_metric_callback_wrapper_(dim, tag, x, y, z, lc, metric, _):
+                m = [metric[i] for i in range(6)]
+                r = callback(dim, tag, x, y, z, lc, m)
+                for i, v in enumerate(_imetric(m if r is None else r)):
+                    metric[i] = v
+            global api_metric_callback_
+            api_metric_callback_ = api_metric_callback_type_(api_metric_callback_wrapper_)
+            ierr = c_int()
+            lib.gmshModelMeshSetMetricCallback(
+                api_metric_callback_, None,
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        set_metric_callback = setMetricCallback
+
+        @staticmethod
+        def removeMetricCallback():
+            """
+            gmsh.model.mesh.removeMetricCallback()
+
+            Remove the mesh metric callback from the current model.
+            """
+            ierr = c_int()
+            lib.gmshModelMeshRemoveMetricCallback(
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        remove_metric_callback = removeMetricCallback
 
         @staticmethod
         def setTransfiniteCurve(tag, numNodes, meshType="Progression", coef=1.):

@@ -866,8 +866,10 @@ public:
   void clearHomologyRequests();
   void computeHomology(std::vector<std::pair<int, int>> &newPhysicals);
 
-  // mesh size callback
+  // mesh size and metric callbacks
   std::function<double(int, int, double, double, double, double)> lcCallback;
+  std::function<void(int, int, double, double, double, double, double *)>
+    metricCallback;
 
   // compute automatic sizing field from curvature
   void computeSizeField();

@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <cmath>
 #include "BackgroundMeshTools.h"
 #include "GFace.h"
 #include "GVertex.h"
@@ -208,6 +209,55 @@ SMetric3 buildMetricTangentToSurface(SVector3 &t1, SVector3 &t2, double l_t1,
   return Metric;
 }
 
+// the smallest mesh size prescribed by a metric, or 0 if the metric is not
+// positive definite
+static double smallestSize(const SMetric3 &m)
+{
+  const double a = m(0, 0), b = m(1, 0), c = m(1, 1);
+  const double d = m(2, 0), e = m(2, 1), f = m(2, 2);
+  // positive definite if the 3 pivots of the Cholesky factorization are
+  // positive (written so that NaNs fail)
+  if(!(a > 0.)) return 0.;
+  const double c1 = c - b * b / a;
+  if(!(c1 > 0.)) return 0.;
+  const double e1 = e - b * d / a;
+  if(!(f - d * d / a - e1 * e1 / c1 > 0.)) return 0.;
+  // largest eigenvalue of a symmetric 3x3 matrix A: with q = tr(A) / 3 and
+  // B = (A - q I) / p it is q + 2 p cos(acos(det(B) / 2) / 3)
+  const double q = (a + c + f) / 3.;
+  const double p =
+    std::sqrt(((a - q) * (a - q) + (c - q) * (c - q) + (f - q) * (f - q) +
+               2. * (b * b + d * d + e * e)) /
+              6.);
+  double lmax = q;
+  if(p > 0.) {
+    const double a2 = (a - q) / p, c2 = (c - q) / p, f2 = (f - q) / p;
+    const double b2 = b / p, d2 = d / p, e2 = e / p;
+    double r = 0.5 * (a2 * (c2 * f2 - e2 * e2) - b2 * (b2 * f2 - e2 * d2) +
+                      d2 * (b2 * e2 - c2 * d2));
+    r = std::max(-1., std::min(1., r));
+    lmax = q + 2. * p * std::cos(std::acos(r) / 3.);
+  }
+  return std::isfinite(lmax) ? 1. / std::sqrt(lmax) : 0.;
+}
+
+// let the metric callback change the metric m, whose smallest size is lc; a
+// metric that is not positive definite is refused
+static void metricFromCallback(GEntity *ge, double X, double Y, double Z,
+                               double lc, SMetric3 &m)
+{
+  int dim = (ge ? ge->dim() : -1);
+  int tag = (ge ? ge->tag() : -1);
+  SMetric3 m0(m);
+  GModel::current()->metricCallback(dim, tag, X, Y, Z, lc, m.data());
+  if(smallestSize(m) <= 0.) {
+    Msg::Error("Mesh metric callback returned a metric that is not positive "
+               "definite at point (%g, %g, %g)",
+               X, Y, Z);
+    m = m0;
+  }
+}
+
 double BGM_MeshSizeWithoutScaling(GEntity *ge, double U, double V, double X,
                                   double Y, double Z)
 {
@@ -253,6 +303,13 @@ double BGM_MeshSizeWithoutScaling(GEntity *ge, double U, double V, double X,
     int dim = (ge ? ge->dim() : -1);
     int tag = (ge ? ge->tag() : -1);
     lc = GModel::current()->lcCallback(dim, tag, X, Y, Z, lc);
+  }
+
+  // smallest lc of the metric from callback
+  if(GModel::current()->metricCallback && lc > 0.) {
+    SMetric3 m(1. / (lc * lc));
+    metricFromCallback(ge, X, Y, Z, lc, m);
+    lc = smallestSize(m);
   }
 
   return lc;
@@ -334,6 +391,20 @@ SMetric3 BGM_MeshMetric(GEntity *ge, double U, double V, double X, double Y,
   SMetric3 m = (CTX::instance()->mesh.lcFromCurvature > 0 && ge->dim() < 3) ?
                  intersection(m1, LC_MVertex_CURV_ANISO(ge, U, V)) :
                  m1;
+
+  // lc from callback: as in the isotropic case the callback gets the size
+  // that would be prescribed without it (here the smallest one), and the size
+  // it returns replaces the metric, unless it is the same
+  if(GModel::current()->lcCallback) {
+    double lc0 = smallestSize(m);
+    double lc1 =
+      GModel::current()->lcCallback(ge->dim(), ge->tag(), X, Y, Z, lc0);
+    if(lc1 != lc0 && lc1 > 0.) m = SMetric3(1. / (lc1 * lc1));
+  }
+
+  // metric from callback
+  if(GModel::current()->metricCallback)
+    metricFromCallback(ge, X, Y, Z, smallestSize(m), m);
 
   // apply global size factor
   if(CTX::instance()->mesh.lcFactor != 0 &&

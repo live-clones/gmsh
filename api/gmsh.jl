@@ -4323,6 +4323,64 @@ end
 const remove_size_callback = removeSizeCallback
 
 """
+    gmsh.model.mesh.setMetricCallback(callback)
+
+Set a mesh metric callback for the current model. The callback function should
+take seven arguments as input (`dim`, `tag`, `x`, `y`, `z`, `lc` and `metric`).
+The first two integer arguments correspond to the dimension `dim` and tag `tag`
+of the entity being meshed. The next four double precision arguments correspond
+to the coordinates `x`, `y` and `z` around which to prescribe the metric and to
+the (smallest) mesh size `lc` that would be prescribed if the callback had not
+been called. The last argument `metric` contains the 6 components of the
+symmetric metric tensor that would be prescribed if the callback had not been
+called, given as [m11, m21, m22, m31, m32, m33]. The callback function should
+modify `metric` in place; in Python, Julia and JavaScript it can also return the
+desired metric, as 6 components, a 3x3 matrix or a single mesh size. The metric
+callback is called after the mesh size callback; meshing algorithms that do not
+support anisotropic mesh sizes use the smallest size prescribed by the metric.
+
+Types:
+ - `callback`: 
+"""
+function setMetricCallback(callback)
+    function api_callback__(dim, tag, x, y, z, lc, metric, data)
+        m = unsafe_wrap(Array, metric, 6)
+        r = callback(dim, tag, x, y, z, lc, m)
+        if r isa Number
+            m .= (1 / r^2, 0, 1 / r^2, 0, 0, 1 / r^2)
+        elseif r isa AbstractMatrix
+            m .= (r[1, 1], r[2, 1], r[2, 2], r[3, 1], r[3, 2], r[3, 3])
+        elseif r !== nothing
+            m .= r
+        end
+        return nothing
+    end
+    api_callback_ = @cfunction($api_callback__, Cvoid, (Cint, Cint, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cdouble}, Ptr{Cvoid}))
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshSetMetricCallback, gmsh.lib), Cvoid,
+          (Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cint}),
+          api_callback_, C_NULL, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const set_metric_callback = setMetricCallback
+
+"""
+    gmsh.model.mesh.removeMetricCallback()
+
+Remove the mesh metric callback from the current model.
+"""
+function removeMetricCallback()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshRemoveMetricCallback, gmsh.lib), Cvoid,
+          (Ptr{Cint},),
+          ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const remove_metric_callback = removeMetricCallback
+
+"""
     gmsh.model.mesh.setTransfiniteCurve(tag, numNodes, meshType = "Progression", coef = 1.)
 
 Set a transfinite meshing constraint on the curve `tag`, with `numNodes` nodes
