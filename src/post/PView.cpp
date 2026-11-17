@@ -445,6 +445,17 @@ void PView::setChanged(bool val)
   // reset the eye position everytime we change the view so that the
   // arrays get resorted for transparency
   if(_changed) _eye = SPoint3(0., 0., 0.);
+  // the views that draw this one as their data source, or raise by it, show
+  // its options
+  if(_changed) {
+    for(PView *v : list) {
+      if(v == this || v->_changed) continue;
+      PViewOptions *o = v->getOptions();
+      if(o && (o->externalViewIndex == _index ||
+               (o->useGenRaise && o->viewIndexForGenRaise == _index)))
+        v->setChanged(true);
+    }
+  }
 }
 
 void PView::animate(bool time, int incr)

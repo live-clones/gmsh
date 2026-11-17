@@ -2207,7 +2207,8 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "Explode" , opt_view_explode , 1. ,
     "Element shrinking factor (between 0 and 1)" },
   { F|O, "ExternalView" , opt_view_external_view , -1. ,
-    "Index of the view used to color vector fields (-1: self)" },
+    "Index of the view used to color vector fields, with its components and "
+    "range (-1: self)" },
 
   { F|O, "ForceNumComponents" , opt_view_force_num_components , 0. ,
     "Force the number of components to display, mapped by View.ComponentMapN" },

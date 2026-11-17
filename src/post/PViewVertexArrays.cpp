@@ -198,9 +198,13 @@ static void getLineNormal(drawTarget *p, double x[2], double y[2], double z[2],
   }
 }
 
+// The values of another view on an element. A data source (source = true) is
+// read as its own view shows it: with the components that view forces, the
+// eigenvalue it shows of a tensor, and its range, unless this view has a
+// custom range of its own.
 static bool getExternalValues(drawTarget *p, int index, int ient, int iele,
                               int numNodes, int numComp, double **val,
-                              int &numComp2, double **val2)
+                              int &numComp2, double **val2, bool source = false)
 {
   PViewOptions *opt = p->opt;
 
@@ -215,16 +219,43 @@ static bool getExternalValues(drawTarget *p, int index, int ient, int iele,
 
   PView *p2 = PView::list[index];
   PViewData *data2 = p2->getData(true); // use adaptive data if available
+  PViewOptions *opt2 = source ? p2->getOptions() : nullptr;
 
   if(iele >= data2->getNumElements(opt->timeStep, ient)) return false;
 
   if(!data2->skipElement(opt->timeStep, ient, iele) &&
      data2->getNumNodes(opt->timeStep, ient, iele) == numNodes) {
     numComp2 = data2->getNumComponents(opt->timeStep, ient, iele);
-    for(int i = 0; i < numNodes; i++)
-      for(int j = 0; j < numComp2; j++)
-        data2->getValue(opt->timeStep, ient, iele, i, j, val2[i][j]);
-    opt->getRange(data2, opt->externalMin, opt->externalMax);
+    if(opt2 && opt2->forceNumComponents) {
+      int n = std::min(opt2->forceNumComponents, 9);
+      for(int i = 0; i < numNodes; i++) {
+        for(int j = 0; j < n; j++) {
+          int comp = opt2->componentMap[j];
+          val2[i][j] = 0.;
+          if(comp >= 0 && comp < numComp2)
+            data2->getValue(opt->timeStep, ient, iele, i, comp, val2[i][j]);
+        }
+      }
+      numComp2 = n;
+    }
+    else {
+      for(int i = 0; i < numNodes; i++)
+        for(int j = 0; j < numComp2; j++)
+          data2->getValue(opt->timeStep, ient, iele, i, j, val2[i][j]);
+    }
+    if(opt2 && numComp2 == 9 &&
+       (opt2->tensorType == PViewOptions::MaxEigenValue ||
+        opt2->tensorType == PViewOptions::MinEigenValue)) {
+      int rep = (opt2->tensorType == PViewOptions::MaxEigenValue) ? 1 : 2;
+      for(int i = 0; i < numNodes; i++)
+        val2[i][0] = ComputeScalarRep(9, val2[i], rep);
+      numComp2 = 1;
+    }
+    if(opt2 && !(opt->rangeType == PViewOptions::Custom &&
+                 opt->customMin != opt->customMax))
+      opt2->getRange(data2, opt->externalMin, opt->externalMax);
+    else
+      opt->getRange(data2, opt->externalMin, opt->externalMax);
     return true;
   }
   return false;
@@ -1711,8 +1742,8 @@ static void addVectorElement(drawTarget *p, int ient, int iele, int numNodes,
   int numComp2;
   static thread_local nodeRows rows;
   double **val2 = rows.get(numNodes, 9);
-  getExternalValues(p, opt->externalViewIndex, ient, iele, numNodes, 3, val,
-                    numComp2, val2);
+  bool external = getExternalValues(p, opt->externalViewIndex, ient, iele,
+                                    numNodes, 3, val, numComp2, val2, true);
 
   if(opt->vectorType == PViewOptions::Displacement) {
     for(int i = 0; i < numNodes; i++)
@@ -1781,19 +1812,24 @@ static void addVectorElement(drawTarget *p, int ient, int iele, int numNodes,
     // allows to preserve the min/max)
     SPoint3 pc(0., 0., 0.);
     double d[3] = {0., 0., 0.};
-    double v2 = 0.;
+    // (the value of an external view colours the arrow: its length stays the
+    // norm of the vector)
+    double v2 = 0., length = 0.;
     for(int i = 0; i < numNodes; i++) {
       pc += SPoint3(xyz[i][0], xyz[i][1], xyz[i][2]);
-      v2 += opt->saturateValues ?
-              saturateVector(val[i], numComp2, val2[i], opt->externalMin,
-                             opt->externalMax) :
-              ComputeScalarRep(numComp2, val2[i]);
+      double v = opt->saturateValues ?
+                   saturateVector(val[i], numComp2, val2[i], opt->externalMin,
+                                  opt->externalMax) :
+                   ComputeScalarRep(numComp2, val2[i]);
+      v2 += v;
+      length += external ? ComputeScalarRep(3, val[i]) : v;
       for(int j = 0; j < 3; j++) d[j] += val[i][j];
     }
     pc /= (double)numNodes;
     v2 /= (double)numNodes;
+    length /= (double)numNodes;
     norme(d);
-    for(int i = 0; i < 3; i++) d[i] *= v2;
+    for(int i = 0; i < 3; i++) d[i] *= length;
 
     // need tolerance since we compare computed results (the average)
     // instead of the raw data used to compute bounds

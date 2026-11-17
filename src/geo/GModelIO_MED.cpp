@@ -432,6 +432,42 @@ int GModel::readMED(const std::string &name, int meshIndex)
 #endif
     nodeTags.clear();
 
+  // what is returned once the mesh is read: 2 if the file has fields to read
+  auto finish = [&]() {
+#if(MED_MAJOR_NUM >= 3)
+    bool postpro = (MEDnField(fid) > 0) ? true : false;
+#else
+    bool postpro = (MEDnChamp(fid, 0) > 0) ? true : false;
+#endif
+    if(MEDfermer(fid) < 0) {
+      Msg::Error("Unable to close file '%s'", name.c_str());
+      return 0;
+    }
+    return postpro ? 2 : 1;
+  };
+
+  // a file that repeats the mesh already in the model (e.g. a result file
+  // written with its own copy of the mesh) does not add it a second time: its
+  // fields go on the nodes and the elements that are there
+  if(merged && getNumMeshVertices() == (std::size_t)numNodes) {
+    std::size_t first = CTX::instance()->mesh.firstNodeTag;
+    bool same = true;
+    for(int i = 0; i < numNodes && same; i++) {
+      MVertex *v = getMeshVertexByTag(nodeTags.empty() ? first + i :
+                                                         nodeTags[i]);
+      same = v && v->x() == coord[spaceDim * i] &&
+             v->y() == ((spaceDim > 1) ? coord[spaceDim * i + 1] : 0.) &&
+             v->z() == ((spaceDim > 2) ? coord[spaceDim * i + 2] : 0.);
+    }
+    if(same) {
+      Msg::Info("Mesh '%s' is already in the model: not read again", meshName);
+      // (fields without tags are numbered from these)
+      _checkPointedMaxVertexNum = first - 1;
+      _checkPointedMaxElementNum = CTX::instance()->mesh.firstElementTag - 1;
+      return finish();
+    }
+  }
+
   for(int i = 0; i < numNodes; i++)
     verts[i] = new MVertex(coord[spaceDim * i],
                            (spaceDim > 1) ? coord[spaceDim * i + 1] : 0.,
@@ -755,18 +791,7 @@ int GModel::readMED(const std::string &name, int meshIndex)
   }
 
   // check if we need to read some post-processing data later
-#if(MED_MAJOR_NUM >= 3)
-  bool postpro = (MEDnField(fid) > 0) ? true : false;
-#else
-  bool postpro = (MEDnChamp(fid, 0) > 0) ? true : false;
-#endif
-
-  if(MEDfermer(fid) < 0) {
-    Msg::Error("Unable to close file '%s'", name.c_str());
-    return 0;
-  }
-
-  return postpro ? 2 : 1;
+  return finish();
 }
 
 template <class T>
