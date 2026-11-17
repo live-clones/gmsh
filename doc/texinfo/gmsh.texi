@@ -3272,7 +3272,10 @@ optional next two the start and end angle.
 Create an ellipse arc. If four @var{expression}s are provided on the
 right-hand-side they define the start point, the center point, a point
 anywhere on the major axis and the end point. If the first point is a
-major axis point, the third expression can be omitted. With the
+major axis point, the third expression can be omitted. If the start and
+end points are symmetric with respect to an axis of the ellipse, they do
+not determine its radii: the major axis point is then taken to be on the
+ellipse. With the
 OpenCASCADE kernel, if between 5 and 7 expressions are provided, the
 first three define the coordinates of the center, the next two define
 the major (along the x-axis) and minor radii (along the y-axis), and the

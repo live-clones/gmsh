@@ -1099,13 +1099,27 @@ bool OCC_Internals::addEllipseArc(int &tag, int startTag, int centerTag,
     double x1v = Square(x1.Dot(v.XYZ()));
     double x2u = Square(x2.Dot(u.XYZ()));
     double x2v = Square(x2.Dot(v.XYZ()));
-    if(IsEqual(x1u, x2u) || IsEqual(x1v, x2v)) {
-      Msg::Error("Cannot create ellipse arc with start and end point symmetric "
-                 "with respect to major or minor axis");
-      return false;
+    double a2, b2;
+    double eps = 1e-10 * (x1u + x1v + x2u + x2v);
+    if(std::abs(x1u - x2u) < eps || std::abs(x1v - x2v) < eps) {
+      // the start and end point are symmetric with respect to an axis: they
+      // give the same equation twice, not the two radii. The major axis point
+      // is then taken to be on the ellipse
+      a2 = (majorPnt.XYZ() - centerPnt.XYZ()).SquareModulus();
+      double xu = (x1v >= x2v) ? x1u : x2u, xv = (x1v >= x2v) ? x1v : x2v;
+      b2 = (a2 > xu) ? xv / (1. - xu / a2) : 0.;
+      if(b2 <= 0. || std::abs(x1u / a2 + x1v / b2 - 1.) > 1e-6 ||
+         std::abs(x2u / a2 + x2v / b2 - 1.) > 1e-6) {
+        Msg::Error("Cannot create ellipse arc with start and end point "
+                   "symmetric with respect to an axis, and a major axis point "
+                   "that is not on the same ellipse");
+        return false;
+      }
     }
-    double a2 = (x1v * x2u - x1u * x2v) / (x1v - x2v);
-    double b2 = (x1u * x2v - x1v * x2u) / (x1u - x2u);
+    else {
+      a2 = (x1v * x2u - x1u * x2v) / (x1v - x2v);
+      b2 = (x1u * x2v - x1v * x2u) / (x1u - x2u);
+    }
     if(a2 <= 0.0 || b2 <= 0.0) {
       Msg::Error("Invalid radii during creation of ellipse arc");
       return false;
