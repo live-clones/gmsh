@@ -83,6 +83,15 @@ void main()
     vec3 c0 = vec3(aGlyph0.x, aGlyph1.x, aGlyph2.x);
     vec3 c1 = vec3(aGlyph0.y, aGlyph1.y, aGlyph2.y);
     vec3 c2 = vec3(aGlyph0.z, aGlyph1.z, aGlyph2.z);
+    // (scaled to order one first: the products of the columns of a glyph of
+    // a tiny model underflow, and its normals vanish)
+    vec3 big = max(abs(c0), max(abs(c1), abs(c2)));
+    float s = max(big.x, max(big.y, big.z));
+    if(s > 0.0) {
+      c0 /= s;
+      c1 /= s;
+      c2 /= s;
+    }
     n = mat3(cross(c1, c2), cross(c2, c0), cross(c0, c1)) * n;
   }
   vec4 clip;

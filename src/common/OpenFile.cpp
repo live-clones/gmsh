@@ -65,10 +65,13 @@ static void FinishUpBoundingBox()
   for(int i = 0; i < 3; i++)
     range[i] = CTX::instance()->max[i] - CTX::instance()->min[i];
 
-  // OCC tolerance is 1e-7
-  double tol = std::max(1e-6, CTX::instance()->geom.tolerance);
+  // OCC tolerance is 1e-7. A direction is flat if it is thinner than this,
+  // and much thinner than the others: a tiny model is not flat
+  double largest = std::max(range[0], std::max(range[1], range[2]));
+  double tol = std::min(std::max(1e-6, CTX::instance()->geom.tolerance),
+                        1e-3 * largest);
 
-  if(range[0] < tol && range[1] < tol && range[2] < tol) {
+  if(largest <= 0.) {
     CTX::instance()->min[0] -= 1.;
     CTX::instance()->min[1] -= 1.;
     CTX::instance()->max[0] += 1.;
