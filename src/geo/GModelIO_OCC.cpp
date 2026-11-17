@@ -4784,14 +4784,6 @@ static void setShapeAttributes(OCCAttributesRTree *attributes,
     TopoDS_Shape shape = shapeTool->GetShape(label);
     shape.Location(isRef ? loc : partLoc);
 
-    if(CTX::instance()->geom.occImportLabels == 2) {
-      // FIXME: this is necessary for endcaps.stp (cf. #693), but has a big
-      // performance hit on STEP files with lots of references -- leaving out
-      // until we understand why it's necessary: there should be a better way!)
-      if(isRef && !loc.IsIdentity() && loc != shapeTool->GetLocation(label))
-        shapeTool->SetShape(label, shape);
-    }
-
     int dim =
       (shape.ShapeType() == TopAbs_VERTEX) ? 0 :
       (shape.ShapeType() == TopAbs_EDGE || shape.ShapeType() == TopAbs_WIRE) ?
@@ -4859,39 +4851,75 @@ static void setShapeAttributes(OCCAttributesRTree *attributes,
       Msg::Info(" - Color (%g, %g, %g) (%dD & Curves)", r, g, b, dim);
       attributes->insert(new OCCAttributes(dim, shape, r, g, b, 1., 2));
     }
-    // check explicit coloring of boundary entities
-    if(dim == 3) {
-      TopExp_Explorer xp2(shape, TopAbs_FACE);
-      while(xp2.More()) {
-        if(colorTool->GetColor(xp2.Current(), XCAFDoc_ColorGen, col) ||
-           colorTool->GetColor(xp2.Current(), XCAFDoc_ColorSurf, col) ||
-           colorTool->GetColor(xp2.Current(), XCAFDoc_ColorCurv, col)) {
+    // check explicit coloring of boundary entities. The document knows the
+    // sub-shapes of the shape as it stores it, i.e. without the location of
+    // the instance: a face of the located shape is not found (it is another
+    // shape for OpenCASCADE, since version 7.4), and neither is its colour.
+    // So the colours are asked for the sub-shapes of the stored shape, and
+    // given to those of the located one, which come in the same order.
+    TopoDS_Shape stored = shapeTool->GetShape(label);
+    // (with inherit, a sub-shape without a colour gets the one of the shape)
+    Quantity_Color own;
+    bool hasOwn = colorTool->GetColor(label, XCAFDoc_ColorGen, own) ||
+                  colorTool->GetColor(label, XCAFDoc_ColorSurf, own);
+    auto subColors = [&](TopAbs_ShapeEnum type, int subDim, const char *what,
+                         bool inherit = false) {
+      TopExp_Explorer xp(shape, type), xps(stored, type);
+      for(; xp.More() && xps.More(); xp.Next(), xps.Next()) {
+        bool found =
+          colorTool->GetColor(xps.Current(), XCAFDoc_ColorGen, col) ||
+          colorTool->GetColor(xps.Current(), XCAFDoc_ColorSurf, col) ||
+          colorTool->GetColor(xps.Current(), XCAFDoc_ColorCurv, col);
+        if(!found && inherit && hasOwn) {
+          col = own;
+          found = true;
+        }
+        if(found) {
           double r, g, b;
           getColorRGB(col, r, g, b);
-          Msg::Info(" - Color (%g, %g, %g) (Surface)", r, g, b);
-          TopoDS_Face face = TopoDS::Face(xp2.Current());
-          attributes->insert(new OCCAttributes(2, face, r, g, b, 1.));
+          Msg::Info(" - Color (%g, %g, %g) (%s)", r, g, b, what);
+          attributes->insert(
+            new OCCAttributes(subDim, xp.Current(), r, g, b, 1.));
         }
-        xp2.Next();
       }
+    };
+    // the names given to the sub-shapes, after the name of the shape
+    auto subNames = [&](TopAbs_ShapeEnum type, int subDim, const char *what) {
+      TopExp_Explorer xp(shape, type), xps(stored, type);
+      for(; xp.More() && xps.More(); xp.Next(), xps.Next()) {
+        TDF_Label sub;
+        Handle(TDataStd_Name) n;
+        if(!shapeTool->FindSubShape(label, xps.Current(), sub) ||
+           !sub.FindAttribute(TDataStd_Name::GetID(), n))
+          continue;
+        std::string name = TCollection_AsciiString(n->Get()).ToCString();
+        if(name.empty()) continue;
+        if(!phys.empty())
+          name = phys + (phys.back() == '/' ? "" : "/") + name;
+        Msg::Info(" - Label '%s' (%s)", name.c_str(), what);
+        attributes->insert(new OCCAttributes(subDim, xp.Current(), name));
+      }
+    };
+    if(dim == 3) {
+      subColors(TopAbs_FACE, 2, "Surface");
+      subNames(TopAbs_FACE, 2, "Surface");
+      subNames(TopAbs_EDGE, 1, "Curve");
     }
     else if(dim == 2) {
-      TopExp_Explorer xp1(shape, TopAbs_EDGE);
-      while(xp1.More()) {
-        if(colorTool->GetColor(xp1.Current(), XCAFDoc_ColorGen, col) ||
-           colorTool->GetColor(xp1.Current(), XCAFDoc_ColorSurf, col) ||
-           colorTool->GetColor(xp1.Current(), XCAFDoc_ColorCurv, col)) {
-          double r, g, b;
-          getColorRGB(col, r, g, b);
-          Msg::Info(" - Color (%g, %g, %g) (Curve)", r, g, b);
-          TopoDS_Edge edge = TopoDS::Edge(xp1.Current());
-          attributes->insert(new OCCAttributes(1, edge, r, g, b, 1.));
-        }
-        xp1.Next();
+      // (the surfaces of a shell, which is not an entity of the model: they
+      // are the ones that can show its colour)
+      if(shape.ShapeType() != TopAbs_FACE) {
+        subColors(TopAbs_FACE, 2, "Surface", true);
+        subNames(TopAbs_FACE, 2, "Surface");
       }
+      subColors(TopAbs_EDGE, 1, "Curve");
+      subNames(TopAbs_EDGE, 1, "Curve");
     }
   }
-  else {
+  else if(!shapeTool->IsSimpleShape(label)) {
+    // (the children of a shape that is not free are its sub-shapes: they are
+    // dealt with above, where its instances are, and are not shapes of their
+    // own where the shape was defined)
     for(TDF_ChildIterator it(label); it.More(); it.Next()) {
       setShapeAttributes(attributes, shapeTool, colorTool, materialTool,
                          layerTool, it.Value(), partLoc, phys, false);
@@ -4958,8 +4986,11 @@ bool OCC_Internals::importShapes(const std::string &fileName,
       Interface_Static::SetIVal("read.step.ideas", 1);
       Interface_Static::SetIVal("read.step.nonmanifold", 1);
 #if defined(HAVE_OCC_CAF)
-      // Interface_Static::SetIVal("read.stepcaf.subshapes.name", 1);
       STEPCAFControl_Reader cafreader;
+      // the names of the surfaces and curves, with those of the parts (the
+      // parameter only exists once a reader has been created)
+      Interface_Static::SetIVal("read.stepcaf.subshapes.name",
+                                CTX::instance()->geom.occImportLabels ? 1 : 0);
       if(cafreader.ReadFile(fileName.c_str()) != IFSelect_RetDone) {
         Msg::Error("Could not read file '%s'", fileName.c_str());
         return false;
