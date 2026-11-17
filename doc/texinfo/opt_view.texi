@@ -442,7 +442,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.ExternalView
-Index of the view used to color vector fields (-1: self)@*
+Index of the view used to color vector fields, with its components and range (-1: self)@*
 Default value: @code{-1}@*
 Saved in: @code{General.OptionsFileName}
 
