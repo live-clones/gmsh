@@ -1022,8 +1022,10 @@ void refineRegionFlat(GRegion *gr, int maxIter,
       break;
     }
     if(!K.qNormalize()) {
-      if(K.smallList.empty())
+      if(K.smallList.empty()) {
         Msg::Warning("No tetrahedra in region %d", gr->tag());
+        warnIfBoundaryIsOpen(gr);
+      }
       break;
     }
 

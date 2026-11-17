@@ -2641,8 +2641,10 @@ refineRegionMTet4(GRegion *gr, int maxIter, double worstTetRadiusTarget,
       break;
     }
     if(allTets.empty()) {
-      if(!allTets.totalSize())
+      if(!allTets.totalSize()) {
         Msg::Warning("No tetrahedra in region %d", gr->tag());
+        warnIfBoundaryIsOpen(gr);
+      }
       break;
     }
 

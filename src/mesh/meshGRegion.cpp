@@ -4,6 +4,9 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <stdlib.h>
+#include <map>
+#include <set>
+#include <string>
 #include <vector>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
@@ -23,6 +26,7 @@
 #include "GEdge.h"
 #include "discreteFace.h"
 #include "discreteEdge.h"
+#include "MEdge.h"
 #include "MLine.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
@@ -332,6 +336,54 @@ regionGroupBoundary::~regionGroupBoundary()
   }
   _gr->embeddedEdges() = _embEdges;
   _gr->embeddedVertices() = _embVertices;
+}
+
+std::size_t warnIfBoundaryIsOpen(GRegion *gr)
+{
+  std::map<MEdge, int, MEdgeLessThan> uses;
+  for(GFace *gf : gr->faces()) {
+    for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
+      MElement *e = gf->getMeshElement(i);
+      for(int j = 0; j < e->getNumEdges(); j++) uses[e->getEdge(j)]++;
+    }
+  }
+  std::size_t open = 0;
+  std::set<int> curves, points;
+  for(auto &u : uses) {
+    if(u.second != 1) continue;
+    open++;
+    // the curve of the edge is the one of a node inside it, or one between
+    // the points of its two nodes
+    GEntity *ge[2] = {u.first.getVertex(0)->onWhat(),
+                      u.first.getVertex(1)->onWhat()};
+    if(ge[0] && ge[0]->dim() == 1)
+      curves.insert(ge[0]->tag());
+    else if(ge[1] && ge[1]->dim() == 1)
+      curves.insert(ge[1]->tag());
+    else
+      for(int i = 0; i < 2; i++)
+        if(ge[i] && ge[i]->dim() == 0) points.insert(ge[i]->tag());
+  }
+  if(!open) return 0;
+  // (a few of them are enough to find the place)
+  auto list = [](const std::set<int> &tags) {
+    std::string s;
+    int n = 0;
+    for(int t : tags) {
+      if(n++ == 20) return s + " ...";
+      s += " " + std::to_string(t);
+    }
+    return s;
+  };
+  std::string where;
+  if(curves.size()) where += " on curve(s)" + list(curves);
+  if(points.size())
+    where += std::string(curves.size() ? " and" : "") + " between point(s)" +
+             list(points);
+  Msg::Warning("The boundary of volume %d is not closed: %zu edge(s) of its "
+               "surface mesh are in a single element,%s",
+               gr->tag(), open, where.c_str());
+  return open;
 }
 
 void MeshDelaunayVolume(std::vector<GRegion *> &regions)
