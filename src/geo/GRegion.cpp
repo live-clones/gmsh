@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <set>
 #include <sstream>
 #include "GModel.h"
 #include "GRegion.h"
@@ -276,14 +277,6 @@ std::vector<GEntity *> GRegion::boundaryEntities() const
 
 // Whether the surface is already used with this sign: a surface can be used
 // twice, with opposite signs
-static bool hasFace(const std::vector<GFace *> &faces,
-                    const std::vector<int> &dirs, GFace *gf, int sign)
-{
-  for(std::size_t i = 0; i < faces.size(); i++)
-    if(faces[i] == gf && (i < dirs.size() ? dirs[i] : 1) == sign) return true;
-  return false;
-}
-
 void GRegion::setBoundFaces(const std::set<int> &tagFaces)
 {
   for(auto it = tagFaces.begin(); it != tagFaces.end(); ++it) {
@@ -328,10 +321,16 @@ void GRegion::setBoundFaces(const std::vector<int> &tagFaces,
 void GRegion::setBoundFaces(const std::vector<GFace *> &faces,
                             const std::vector<int> &signFaces)
 {
+  // a volume can be bounded by tens of thousands of surfaces (e.g. in a
+  // discrete model): looking for each new surface in the list of the ones
+  // already there would take a time quadratic in their number
+  std::set<std::pair<GFace *, int> > known;
+  for(std::size_t i = 0; i < l_faces.size(); i++)
+    known.insert(std::make_pair(l_faces[i], i < l_dirs.size() ? l_dirs[i] : 1));
   for(std::size_t i = 0; i < faces.size(); i++) {
     GFace *gf = faces[i];
     const int sign = i < signFaces.size() ? signFaces[i] : 1;
-    if(hasFace(l_faces, l_dirs, gf, sign)) continue;
+    if(!known.insert(std::make_pair(gf, sign)).second) continue;
     l_faces.push_back(gf);
     gf->addRegion(this);
     l_dirs.push_back(sign);
