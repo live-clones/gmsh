@@ -55,6 +55,7 @@
 /************************************************************************/
 #include "concorde.h"
 #include "match.h"
+#include <stdint.h>
 #define NDEBUG   /* remove this to turn assertions on */
 #include <assert.h>
 
@@ -115,31 +116,26 @@ typedef struct edge {
 } edge;
 
 typedef struct node {
-    int   edg_list;
-    int   matched_edge;
-
-    /* These are for the augmenting path tree */
+    /* fields read on every tree walk visit come first */
+    char  label;
+    char  status;
+    char  hit;
     int   child;
     int   sibling;
     int   parent;
-    int   parent_edge;
-
-    /* These are for the blossom_tree */
-    int   blossom_next;
-    int   blossom_parent;
+    int   edg_list;
     int   blossom_root;
+    int   pi;
+    int   blossom_parent;
+    int   walk_stamp;   /* for grow_tree_dirty, see mark_dirty */
+
+    int   matched_edge;
+    int   parent_edge;
+    int   tree_root;
+    int   blossom_next;
     int   blossom_next_edge;
     int   penultimate;
-
-    int   pi;
     int   mark;      /* unused pseudo nodes are linked by mark */
-    int   tree_root;
-
-    char  status;
-    char  label;
-    char  hit;
-
-    int   dummy;    /* just to pad to multiple of 8 bytes */
 } node;
 
 typedef struct nodeptr {
@@ -184,10 +180,14 @@ typedef struct stats {
 typedef struct graph {
     edge *edgelist;
     node *nodelist;
+    edge *edgemem;    /* unaligned blocks behind edgelist and nodelist */
+    node *nodemem;
     int nnodes;
     int nedges;
     int max_nedges;
     int unused;
+    int *pen_stamp;   /* penultimate is valid where this equals pen_tag */
+    int pen_tag;
     int unmatched;
     nodeptr *roots;
     int unmatched_count;
@@ -198,6 +198,7 @@ typedef struct srkstuff {
     shrink_T shrinks;
     int shrinks_max;
     int expands_max;
+    int walk_tag;
     int shrinks_[SHRINKS_SIZE];
 } srkstuff;
 
@@ -220,6 +221,7 @@ static void
     label_penultimate (graph *G, node *n, int label),
     fix_matching (graph *G, node *oldnode, node *x),
     fix_tree (graph *G, node *oldnode, node *x, node *y),
+    mark_dirty (graph *G, node *n, int tag),
     flip_cycle (graph *G, node *node_i),
     augment_path (graph *G, node *node_i, int fractional),
     vereinigung (graph *G, int x, int y),
@@ -240,12 +242,15 @@ static int
     add_to_tree (graph *G, edge *e, node *node_i, node *node_j, int fractional),
     checkout_node (graph *G, node *n, int fractional, srkstuff *srk),
     grow_tree_no_shrink (graph *G, node *n, int fractional, srkstuff *srk),
+    grow_tree_dirty (graph *G, node *n, int fractional, srkstuff *srk),
+    grow_tree_list (graph *G, int *wake, int nwake, int fractional,
+               srkstuff *srk),
     grow_tree (graph *G, node *n, int fractional, stats *scount, srkstuff *srk,
-               int *found_aug),
+               int *found_aug, int *wake, int nwake),
     apply_dual_change (graph *G, node *n, int delta),
     find_parity_sum (graph *G, int n),
     parity_correction (graph *G, stats *scount),
-    find_single_dual_change (graph *G, node *n),
+    find_single_dual_change (graph *G, node *n, int *wake, int *nwake),
     find_dual_change_forest (graph *G, node *n),
     make_dual_change_forest (graph *G, stats *scount),
     match_main_more_in_forest (graph *G, stats *scount, srkstuff *srk),
@@ -272,7 +277,8 @@ static node
     *shrink_blossom (graph *G, node *node_i, node *node_j, node *node_k,
         edge *e, stats *scount),
     *common_parent (graph *G, node *node_i, node *node_j, int *size),
-    *find_below (graph *G, node *n, int blossom);
+    *find_below (graph *G, node *n, int blossom),
+    *find_pen (graph *G, node *x, node *old);
 
 #else
 
@@ -287,6 +293,7 @@ static void
     label_penultimate (),
     fix_matching (),
     fix_tree (),
+    mark_dirty (),
     flip_cycle (),
     augment_path (),
     vereinigung (),
@@ -307,6 +314,8 @@ static int
     add_to_tree (),
     checkout_node (),
     grow_tree_no_shrink (),
+    grow_tree_dirty (),
+    grow_tree_list (),
     grow_tree (),
     apply_dual_change (),
     find_parity_sum (),
@@ -331,7 +340,8 @@ static int
 static node
     *shrink_blossom (),
     *common_parent (),
-    *find_below ();
+    *find_below (),
+    *find_pen ();
 
 #endif
 
@@ -377,9 +387,12 @@ double *totalzeit;
 
     G.edgelist = (edge *) NULL;
     G.nodelist = (node *) NULL;
+    G.edgemem = (edge *) NULL;
+    G.nodemem = (node *) NULL;
     G.unused = -1;
     G.unmatched = -1;
     G.roots = (nodeptr *) NULL;
+    G.pen_stamp = (int *) NULL;
 
     srk.expands.node = (int *) NULL;
     srk.shrinks.ary = (shrink_ary_T *) NULL;
@@ -533,9 +546,12 @@ double *totalzeit;
 
 CLEANUP:
 
-    CC_IFFREE (G.nodelist, node);
-    CC_IFFREE (G.edgelist, edge);
+    CC_IFFREE (G.nodemem, node);
+    CC_IFFREE (G.edgemem, edge);
+    G.nodelist = (node *) NULL;
+    G.edgelist = (edge *) NULL;
     CC_IFFREE (G.roots, nodeptr);
+    CC_IFFREE (G.pen_stamp, int);
     CC_IFFREE (srk.expands.node, int);
     CC_IFFREE (srk.shrinks.ary, shrink_ary_T); 
     if (!dat) {
@@ -675,7 +691,9 @@ srkstuff *srk;
 	n->blossom_parent = -1;
 	n->tree_root = -1;
         n->hit = 0;
+        n->walk_stamp = 0;
     }
+    srk->walk_tag = 0;
 #if 0
     /* Take all 0-slack edges directly, old version */
     count = 0;
@@ -734,7 +752,15 @@ srkstuff *srk;
     srk->expands_max = ncount / 10 + 10;
     srk->expands.node = CC_SAFE_MALLOC (srk->expands_max, int);
 
-    if (!srk->shrinks.ary || !srk->expands.node) {
+    if (!G->pen_stamp)
+        G->pen_stamp = CC_SAFE_MALLOC (3 * ncount / 2 + 1, int);
+    if (G->pen_stamp) {
+        for (i = 0; i <= 3 * ncount / 2; i++)
+            G->pen_stamp[i] = 0;
+    }
+    G->pen_tag = 0;
+
+    if (!srk->shrinks.ary || !srk->expands.node || !G->pen_stamp) {
         fprintf (stderr, "out of memory in init\n");
         CC_IFFREE (srk->shrinks.ary, shrink_ary_T);
         CC_IFFREE (srk->expands.node, int);
@@ -845,6 +871,7 @@ node *newnode;
     node *n, *node_k;
     node *nodelist = G->nodelist;
     int nn = INODE(newnode);
+    int ni;
     edge *e;
     int ei, einext;
 
@@ -856,20 +883,21 @@ node *newnode;
     do {
         ei = n->edg_list;
         n->edg_list = -1;
+        ni = INODE(n);
         for (; ei != -1; ei = einext) {
-            e = PEDGE(ei/2);
-            einext = e->ptrs[ei % 2];
-	    if ((nodelist[e->nod1].blossom_parent == nn) &&
-                (nodelist[e->nod2].blossom_parent == nn)) {
-                e->ptrs[ei % 2] = n->edg_list;
+            e = PEDGE((unsigned) ei >> 1);
+            einext = e->ptrs[ei & 1];
+            /* n is in the new blossom, so only the other end needs a look */
+	    if (nodelist[OTHEREND_INT (e, ni)].blossom_parent == nn) {
+                e->ptrs[ei & 1] = n->edg_list;
                 n->edg_list = ei;
             } else {
-		if (e->nod1 == INODE(n)) {    /* nod1 is in new blossom */
+		if (e->nod1 == ni) {    /* nod1 is in new blossom */
 		    e->nod1 = nn;
 		} else {                      /* nod2 is in new blossom */
 		    e->nod2 = nn;
                 }
-                e->ptrs[ei % 2] = newnode->edg_list;
+                e->ptrs[ei & 1] = newnode->edg_list;
                 newnode->edg_list = ei;
 	    } 
 	}
@@ -1031,6 +1059,35 @@ int label;
     }
 }
 
+/* the child of old holding x, which is what label_penultimate wrote into */
+/* x->penultimate; the walk is memoized in penultimate for this pen_tag */
+
+#ifdef CC_PROTOTYPE_ANSI
+static node *find_pen (graph *G, node *x, node *old)
+#else
+static node *find_pen (G, x, old)
+graph *G;
+node *x, *old;
+#endif
+{
+    node *n, *r;
+    int o = INODE(old), tag = G->pen_tag;
+
+    for (r = x; r->blossom_parent != o; r = PNODE(r->blossom_parent)) {
+        if (G->pen_stamp[INODE(r)] == tag) {
+            r = PNODE(r->penultimate);
+            break;
+        }
+    }
+    for (n = x; n != r; n = PNODE(n->blossom_parent)) {
+        if (G->pen_stamp[INODE(n)] == tag)
+            break;
+        G->pen_stamp[INODE(n)] = tag;
+        n->penultimate = INODE(r);
+    }
+    return r;
+}
+
 #ifdef CC_PROTOTYPE_ANSI
 static int lower_edges (graph *G, node *old)
 #else
@@ -1040,7 +1097,7 @@ node *old;
 #endif
 {
     edge *e;
-    int ei, einext;
+    int ei, einext, i;
     node *x;
 
 #if PRINT_LEVEL
@@ -1048,18 +1105,24 @@ node *old;
     fflush (stdout);
 #endif
 
+    if (G->pen_tag == INTEGER_MAX) {   /* restart the tags before overflow */
+        for (i = 0; i <= 3 * G->nnodes / 2; i++)
+            G->pen_stamp[i] = 0;
+        G->pen_tag = 0;
+    }
+    G->pen_tag++;
     for (ei = old->edg_list; ei != -1; ei = einext) {
-        e = PEDGE(ei/2);
-        einext = e->ptrs[ei % 2];
+        e = PEDGE((unsigned) ei >> 1);
+        einext = e->ptrs[ei & 1];
 	if (e->nod1 == INODE(old)) {
-	    x = PNODE(e->orig_nod1);
-	    e->nod1 = x->penultimate;
+	    x = find_pen (G, PNODE(e->orig_nod1), old);
+	    e->nod1 = INODE(x);
 	} else {
-	    x = PNODE(e->orig_nod2);
-	    e->nod2 = x->penultimate;
+	    x = find_pen (G, PNODE(e->orig_nod2), old);
+	    e->nod2 = INODE(x);
 	}
-        e->ptrs[ei % 2] = PNODE(x->penultimate)->edg_list;
-        PNODE(x->penultimate)->edg_list = ei;
+        e->ptrs[ei & 1] = x->edg_list;
+        x->edg_list = ei;
     }
     return 0;
 }
@@ -1202,11 +1265,7 @@ stats *scount;
     child = oldnode->child;
     parent = oldnode->parent;
 
-    n = memo = PNODE(oldnode->blossom_root);
-    do {
-	label_penultimate (G, n, INODE(n));
-	n = PNODE(n->blossom_next);
-    } while (n != memo);
+    memo = PNODE(oldnode->blossom_root);
 
     if (G->edgelist[oldnode->matched_edge].nod1 == INODE(oldnode))
 	x = PNODE(G->edgelist[oldnode->matched_edge].orig_nod1);
@@ -1222,7 +1281,10 @@ stats *scount;
         fprintf (stderr, "lower_edges failed\n");
         return 1;
     }
-    fix_matching (G, oldnode, PNODE(x->penultimate));
+    /* still under oldnode until the loop below, and lower_edges memoized */
+    x = find_pen (G, x, oldnode);
+    y = find_pen (G, y, oldnode);
+    fix_matching (G, oldnode, x);
 
     n = memo;
     do {
@@ -1238,7 +1300,7 @@ stats *scount;
         n->hit = n->hit | oldnode->hit;
     } while (n != memo);
 
-    fix_tree (G, oldnode, PNODE(x->penultimate), PNODE(y->penultimate));
+    fix_tree (G, oldnode, x, y);
 
     /* update tree roots */
 
@@ -1527,6 +1589,9 @@ srkstuff *srk;
 #endif
 {
     node *m;
+    node *nodelist = G->nodelist;
+    edge *edgelist = G->edgelist;
+    int ni = INODE(n);
     int augmented;
     edge *e;
     int ei;
@@ -1536,10 +1601,10 @@ srkstuff *srk;
     fflush (stdout);
 #endif
  
-    for (ei = n->edg_list; ei != -1; ei = e->ptrs[ei % 2]) {
-        e = PEDGE(ei/2);
+    for (ei = n->edg_list; ei != -1; ei = e->ptrs[ei & 1]) {
+        e = edgelist + ((unsigned) ei >> 1);
         if (e->slack == 0) {
-            m = OTHEREND (e, n, G->nodelist);
+            m = nodelist + OTHEREND_INT (e, ni);
 	    if (m->label == PLUS) {
 		return augment_blossom (G, e, fractional, srk);
 	    }
@@ -1608,17 +1673,150 @@ srkstuff *srk;
     }
 }
 
+/* Stamp n as dirty for the walk with this tag and stamp its ancestors as */
+/* having a dirty node below. walk_stamp is 2*tag below, 2*tag+1 dirty.   */
+
+#ifdef CC_PROTOTYPE_ANSI
+static void mark_dirty (graph *G, node *n, int tag)
+#else
+static void mark_dirty (G, n, tag)
+graph *G;
+node *n;
+int tag;
+#endif
+{
+    int sub = 2 * tag;
+
+    n->walk_stamp = sub + 1;
+    while (n->parent != -1) {
+        n = PNODE(n->parent);
+        if (n->walk_stamp >= sub)
+            break;
+        n->walk_stamp = sub;
+    }
+}
+
+/* Same events as grow_tree_no_shrink, but only checks out the dirty nodes. */
+/* Clean nodes found nothing in the previous walk and nothing they see has  */
+/* changed since, so skipping them and their clean subtrees keeps the DFS  */
+/* order of every event.                                                    */
+
+#ifdef CC_PROTOTYPE_ANSI
+static int grow_tree_dirty (graph *G, node *n, int fractional, srkstuff *srk)
+#else
+static int grow_tree_dirty (G, n, fractional, srk)
+graph *G;
+node *n;
+int fractional;
+srkstuff *srk;
+#endif
+{
+    int augmented, ch, old_child;
+    int sub = 2 * srk->walk_tag;
+    expand_T *expands = &(srk->expands);
+    int expands_max = srk->expands_max;
+    node *c = n, *j;
+
+    while (1) {
+        if (c->walk_stamp == sub + 1) {
+            if (c->label == PLUS) {
+                old_child = c->child;
+                if ((augmented = checkout_node (G, c, fractional, srk)) > 0) {
+                    return augmented;
+                }
+                /* the full walk visits the added nodes next */
+                for (ch = c->child; ch != old_child; ch = j->sibling) {
+                    j = PNODE(ch);
+                    j->walk_stamp = sub + 1;
+                    PNODE(j->child)->walk_stamp = sub + 1;
+                }
+            } else {
+                if (c->blossom_root != -1 && c->pi == 0) {
+                    if (expands->length < expands_max) {
+                        expands->node[expands->length] = c - G->nodelist;
+                        expands->length++;
+                        if (expands->length == expands_max) {
+                            printf ("   WARNING: expands = expands_max = %i\n",
+                                    expands_max);
+                            fflush (stdout);
+                        }
+                    }
+                }
+            }
+        }
+        for (ch = c->child; ch != -1 && PNODE(ch)->walk_stamp < sub;
+             ch = PNODE(ch)->sibling);
+        if (ch == -1) {
+            while (1) {
+                if (c == n) return 0;
+                for (ch = c->sibling;
+                     ch != -1 && PNODE(ch)->walk_stamp < sub;
+                     ch = PNODE(ch)->sibling);
+                if (ch != -1) break;
+                c = PNODE(c->parent);
+            }
+        }
+        c = PNODE(ch);
+    }
+}
+
+/* same events as a full walk if only the nodes in wake can act */
+
+#ifdef CC_PROTOTYPE_ANSI
+static int grow_tree_list (graph *G, int *wake, int nwake, int fractional,
+                           srkstuff *srk)
+#else
+static int grow_tree_list (G, wake, nwake, fractional, srk)
+graph *G;
+int *wake;
+int nwake;
+int fractional;
+srkstuff *srk;
+#endif
+{
+    int i, ci, old, augmented;
+    node *c;
+    expand_T *expands = &(srk->expands);
+
+    for (i = 0; i < nwake; i++) {
+        c = PNODE(wake[i]);
+        if (c->label == PLUS) {
+            old = c->child;
+            if ((augmented = checkout_node (G, c, fractional, srk)) > 0) {
+                return augmented;
+            }
+            for (ci = c->child; ci != old; ci = PNODE(ci)->sibling) {
+                if ((augmented = grow_tree_no_shrink (G, PNODE(ci),
+                                                fractional, srk)) > 0) {
+                    return augmented;
+                }
+            }
+        } else if (expands->length < srk->expands_max) {
+            expands->node[expands->length] = wake[i];
+            expands->length++;
+            if (expands->length == srk->expands_max) {
+                printf ("   WARNING: expands = expands_max = %i\n",
+                        srk->expands_max);
+                fflush (stdout);
+            }
+        }
+    }
+    return 0;
+}
+
 #ifdef CC_PROTOTYPE_ANSI
 static int grow_tree (graph *G, node *n, int fractional, stats *scount,
-                      srkstuff *srk, int *found_aug)
+                      srkstuff *srk, int *found_aug, int *wake, int nwake)
 #else
-static int grow_tree (G, n, fractional, scount, srk, found_aug)
+static int grow_tree (G, n, fractional, scount, srk, found_aug, wake, nwake)
 graph *G;
 node *n;
 int fractional;
 stats *scount;
 srkstuff *srk;
 int *found_aug;
+int *wake;
+int nwake;
 #endif
 {
     int i, size;
@@ -1629,17 +1827,40 @@ int *found_aug;
     int *shrinks_ = srk->shrinks_;
     shrink_T *shrinks = &(srk->shrinks);
     int old_shrinks_len;
+    int full = 1, ei;
+    node *m;
 
     *found_aug = 0;
-
     do {
+        node_i = n;
         FIND_SURFACE (n);
 	shrinks->length = 0;
 	expands->length = 0;
+        if (n != node_i)
+            wake = (int *) NULL;
 
-	if (grow_tree_no_shrink (G, n, fractional, srk)) {
+	if (wake ? grow_tree_list (G, wake, nwake, fractional, srk)
+            : full ? grow_tree_no_shrink (G, n, fractional, srk)
+                   : grow_tree_dirty (G, n, fractional, srk)) {
             *found_aug = 1;
 	    return 0;         
+        }
+
+        /* After a walk with no shrinks that saw every pi == 0 MINUS     */
+        /* blossom, only the expansions below can make the next walk find */
+        /* something, so it can be restricted to the nodes they touch.   */
+        /* The wake list walk skips nodes, so it does not qualify.        */
+        full = (wake || shrinks->length > 0 ||
+                expands->length >= srk->expands_max);
+        wake = (int *) NULL;
+        if (!full) {
+            /* restart the tags before 2 * walk_tag + 1 overflows */
+            if (srk->walk_tag == INTEGER_MAX) {
+                for (i = 0; i <= 3 * G->nnodes / 2; i++)
+                    G->nodelist[i].walk_stamp = 0;
+                srk->walk_tag = 0;
+            }
+            srk->walk_tag++;
         }
 
         /* found no new match edge, so do shrinks */
@@ -1721,9 +1942,32 @@ int *found_aug;
 	     * this node might be shrunk already */
 	    if (G->nodelist[expands->node[i]].blossom_root != -1 &&
                 G->nodelist[expands->node[i]].blossom_parent == -1) {
-		if (expand_blossom (G, G->nodelist+expands->node[i], scount)) {
+                newnode = G->nodelist + expands->node[i];
+                if (!full) {
+                    /* PLUS nodes with a tight edge to the blossom see new */
+                    /* labels at its ends after the expansion              */
+                    for (ei = newnode->edg_list; ei != -1;
+                         ei = e->ptrs[ei & 1]) {
+                        e = PEDGE((unsigned) ei >> 1);
+                        if (e->slack == 0) {
+                            m = OTHEREND (e, newnode, G->nodelist);
+                            if (m->label == PLUS)
+                                mark_dirty (G, m, srk->walk_tag);
+                        }
+                    }
+                    node_k = PNODE(newnode->blossom_root);
+                }
+		if (expand_blossom (G, newnode, scount)) {
                     fprintf (stderr, "expand_blossom failed\n");
                     return 1;
+                }
+                if (!full) {
+                    m = node_k;
+                    do {
+                        if (m->label != NIX)
+                            mark_dirty (G, m, srk->walk_tag);
+                        m = PNODE(m->blossom_next);
+                    } while (m != node_k);
                 }
 	    }
 	}
@@ -1757,14 +2001,14 @@ int delta;
 	if (c->label == PLUS) {
             c->hit = 1;
 	    c->pi += delta;
-	    for (ei = c->edg_list; ei != -1; ei = e->ptrs[ei % 2]) {
-		e = PEDGE(ei/2);
+	    for (ei = c->edg_list; ei != -1; ei = e->ptrs[ei & 1]) {
+		e = PEDGE((unsigned) ei >> 1);
 		e->slack -= delta;
 	    }
 	} else if (c->label == MINUS) {
 	    c->pi -= delta;
-	    for (ei = c->edg_list; ei != -1; ei = e->ptrs[ei % 2]) {
-		e = PEDGE(ei/2);
+	    for (ei = c->edg_list; ei != -1; ei = e->ptrs[ei & 1]) {
+		e = PEDGE((unsigned) ei >> 1);
 		e->slack += delta;
 	    }
 	}
@@ -1785,17 +2029,21 @@ int delta;
 }
 
 #ifdef CC_PROTOTYPE_ANSI
-static int find_single_dual_change (graph *G, node *n)
+static int find_single_dual_change (graph *G, node *n, int *wake,
+                                    int *nwake)
 #else
-static int find_single_dual_change (G, n)
+static int find_single_dual_change (G, n, wake, nwake)
 graph *G;
 node *n;
+int *wake;
+int *nwake;
 #endif
 {
     edge *e;
     int ei;
     int lab;
     int delta;
+    int nd = 0, cin;
     node *c = n;
     node *stop = G->nodelist - 1;
 
@@ -1806,24 +2054,47 @@ node *n;
 
     delta = INTEGER_MAX;
 
+    /* wake gets the nodes, in DFS order, that the change by delta can wake */
     while (1) {
+        cin = 0;
 	if (c->label == PLUS) {
-	    for (ei = c->edg_list; ei != -1; ei = e->ptrs[ei % 2]) {
-		e = PEDGE(ei/2);
-		if (e->slack < 2 * delta) {
+	    for (ei = c->edg_list; ei != -1; ei = e->ptrs[ei & 1]) {
+		e = PEDGE((unsigned) ei >> 1);
+		if (e->slack <= 2 * delta) {
 		    lab = OTHEREND (e, c, G->nodelist)->label;
 		    if (lab == PLUS) {
-			delta = e->slack / 2;
+			if (e->slack < 2 * delta) {
+			    delta = e->slack / 2;
+			    nd = 0;
+			    cin = 0;
+			}
+			if (e->slack == 2 * delta && !cin) {
+			    cin = 1;
+			    if (wake) wake[nd] = INODE(c);
+			    nd++;
+			}
 		    } else if (lab == NIX) {
 			if (e->slack < delta) {
 			    delta = e->slack;
+			    nd = 0;
+			    cin = 0;
+			}
+			if (e->slack == delta && !cin) {
+			    cin = 1;
+			    if (wake) wake[nd] = INODE(c);
+			    nd++;
 			}
 		    }
 		}
 	    }
 	} else if (c->label == MINUS) {
-	    if (c->blossom_root != -1 && c->pi < delta) {
-		delta = c->pi;
+	    if (c->blossom_root != -1 && c->pi <= delta) {
+		if (c->pi < delta) {
+		    delta = c->pi;
+		    nd = 0;
+		}
+		if (wake) wake[nd] = INODE(c);
+		nd++;
 	    }
 	}
 
@@ -1833,13 +2104,17 @@ node *n;
 	    c = PNODE(c->child);
 	} else {
 	    while (PNODE(c->sibling) == stop) {
-		if (c == n) return delta ; /* this if is for childless n */
+		if (c == n) goto DONE; /* this if is for childless n */
 		c = PNODE(c->parent);
-		if (c == n) return delta;
+		if (c == n) goto DONE;
 	    }
 	    c = PNODE(c->sibling);
 	}
     }
+DONE:
+    if (nwake)
+        *nwake = nd;
+    return delta;
 }
 
 #ifdef CC_PROTOTYPE_ANSI
@@ -1866,8 +2141,8 @@ node *n;
 
     while (1) {
 	if (c->label == PLUS) {
-	    for (ei = c->edg_list; ei != -1; ei = e->ptrs[ei % 2]) {
-		e = PEDGE(ei/2);
+	    for (ei = c->edg_list; ei != -1; ei = e->ptrs[ei & 1]) {
+		e = PEDGE((unsigned) ei >> 1);
 		o = OTHEREND (e, c, G->nodelist);
 		switch (o->label) {
 #ifdef GREEDY_DUAL_CHANGE
@@ -2235,32 +2510,42 @@ srkstuff *srk;
 #endif
 {
     node *n;
-    int i, delta;
+    int i, delta, nwake;
     int found_aug = 0;
+    int *wake = CC_SAFE_MALLOC (G->nnodes + 1, int);
+
+    if (!wake) {
+        fprintf (stderr, "out of memory in match_main_frac\n");
+        return 1;
+    }
 
     /* Just work with one tree   */
 
     for (i = 0, n = G->nodelist; i < G->nnodes; i++, n++) {
         if (n->status == UNMATCHED) {
 	    init_tree (G, n);
-            if (grow_tree (G, n, 1, scount, srk, &found_aug)) {
+            if (grow_tree (G, n, 1, scount, srk, &found_aug,
+                           (int *) NULL, 0)) {
                 fprintf (stderr, "grow_tree failed\n");
-                return 1;
+                goto FAILURE;
             }
             while (!found_aug) {
                 scount->dualchange_count++;
-                delta = find_single_dual_change (G, n);
+                delta = find_single_dual_change (G, n, wake, &nwake);
                 if (delta != 0) {
                     if (apply_dual_change (G, n, delta)) {
 		      //                        fprintf (stderr, "apply_dual_change failed\n");
-                        return 1;
+                        goto FAILURE;
                     }
                 } else {
                     scount->dualzero_count++;
                 }
-                if (grow_tree (G, n, 1, scount, srk, &found_aug)) {
+                /* no shrinks here, so walked PLUS nodes are tight */
+                /* only to MINUS nodes */
+                if (grow_tree (G, n, 1, scount, srk, &found_aug,
+                               delta != 0 ? wake : (int *) NULL, nwake)) {
                     fprintf (stderr, "grow_tree failed\n");
-                    return 1;
+                    goto FAILURE;
                 }
 	    }
 #if PRINT_LEVEL
@@ -2271,7 +2556,12 @@ srkstuff *srk;
     //    printf (" %i Dual Changes, %i with delta=0 ",
     //             scount->dualchange_count, scount->dualzero_count);
     //    fflush (stdout);
+    CC_FREE (wake, int);
     return 0;
+
+FAILURE:
+    CC_FREE (wake, int);
+    return 1;
 }
 
 #ifdef CC_PROTOTYPE_ANSI
@@ -2333,7 +2623,7 @@ srkstuff *srk;
     for (np = roots + G->unmatched; np != rstop; np = roots + np->next) {
         n = PNODE(np->surf);
         if (np->status == UNMATCHED) {
-            if (grow_tree (G, n, 0, scount, srk, &found_aug)) {
+            if (grow_tree (G, n, 0, scount, srk, &found_aug, (int *) NULL, 0)) {
 	      //                fprintf (stderr, "grow_tree failed\n");
                 return 1;
             }
@@ -2371,7 +2661,8 @@ srkstuff *srk;
             for (np = roots + G->unmatched; np != rstop; np = roots+np->next) {
 		n = PNODE(np->surf);
                 if (np->status == UNMATCHED) {
-		    if (grow_tree (G, n, 0, scount, srk, &found_aug)) {
+		    if (grow_tree (G, n, 0, scount, srk, &found_aug,
+                                   (int *) NULL, 0)) {
 		      //                        fprintf (stderr, "grow_tree failed\n");
                         return 1;
                     }
@@ -2462,7 +2753,8 @@ srkstuff *srk;
             for (np = roots + G->unmatched; np != rstop; np = roots+np->next) {
 		n = PNODE(np->surf);
                 if (np->status == UNMATCHED) {
-		    if (grow_tree (G, n, 0, scount, srk, &found_aug)) {
+		    if (grow_tree (G, n, 0, scount, srk, &found_aug,
+                                   (int *) NULL, 0)) {
 		      //                        fprintf (stderr, "grow_tree failed\n");
                         return 1;
                     }
@@ -2491,7 +2783,8 @@ srkstuff *srk;
             for (np = roots + G->unmatched; np != rstop; np = roots+np->next) {
 		n = PNODE(np->surf);
                 if (np->status == UNMATCHED) {
-		    delta2 = find_single_dual_change (G, n);
+		    delta2 = find_single_dual_change (G, n, (int *) NULL,
+                                                      (int *) NULL);
 		    if (delta2 < delta) {
 		        delta = delta2;
                     }
@@ -2584,7 +2877,7 @@ srkstuff *srk;
         n = PNODE(np->surf);
         init_tree (G, n);
         do {
-            if (grow_tree (G, n, 0, scount, srk, &found_aug)) {
+            if (grow_tree (G, n, 0, scount, srk, &found_aug, (int *) NULL, 0)) {
 	      //                fprintf (stderr, "grow_tree failed\n");
                 return 1;
             }
@@ -2596,7 +2889,8 @@ srkstuff *srk;
             } else {
                 scount->dualchange_count++;
                 n = PNODE(np->surf);
-	        delta = find_single_dual_change (G, n);
+	        delta = find_single_dual_change (G, n, (int *) NULL,
+                                                 (int *) NULL);
 
 	        if (delta == 0) {
 	            scount->dualzero_count++;
@@ -2900,7 +3194,7 @@ srkstuff *srk;
     init_tree (G, newnode);
     newnode->tree_root = INODE(newnode);
 
-    if (grow_tree (G, newnode, 0, scount, srk, &found_aug)) {
+    if (grow_tree (G, newnode, 0, scount, srk, &found_aug, (int *) NULL, 0)) {
         fprintf (stderr, "grow_tree failed\n");
         return 1;
     }
@@ -2910,7 +3204,8 @@ srkstuff *srk;
     }
 
     while (p->blossom_parent != -1) {
-        delta = find_single_dual_change (G, newnode);
+        delta = find_single_dual_change (G, newnode, (int *) NULL,
+                                         (int *) NULL);
         fflush (stdout);
         if (delta == 0) {
             printf ("O"); fflush (stdout);
@@ -2919,7 +3214,8 @@ srkstuff *srk;
 	  //            fprintf (stderr, "apply_dual_change failed\n");
             return 1;
         }
-        if (grow_tree (G, newnode, 0, scount, srk, &found_aug)) {
+        if (grow_tree (G, newnode, 0, scount, srk, &found_aug,
+                       (int *) NULL, 0)) {
             fprintf (stderr, "grow_tree failed\n");
             return 1;
         }
@@ -3735,11 +4031,14 @@ int *elist, *elen;
     }
 
     G->nnodes = ncount;
-    G->nodelist = CC_SAFE_MALLOC ((3*ncount/2+1), node);
-    if (!G->nodelist) {
+    /* 64-byte aligned so that a node never straddles two cache lines, */
+    /* the spare node absorbs the offset */
+    G->nodemem = CC_SAFE_MALLOC ((3*ncount/2+2), node);
+    if (!G->nodemem) {
         fprintf (stderr, "out of memory in build_graph\n");
         return 1;
     }
+    G->nodelist = (node *) (((uintptr_t) G->nodemem + 63) & ~(uintptr_t) 63);
     for (i = 0; i < 3*ncount/2 + 1; i++) {
         G->nodelist[i].blossom_parent = -1;
         G->nodelist[i].matched_edge = -1;
@@ -3758,12 +4057,15 @@ int *elist, *elen;
     G->nedges = ecount;
     G->max_nedges = ecount + (1.5 * ncount);
 
-    G->edgelist = CC_SAFE_MALLOC (G->max_nedges, edge);
-    if (!G->edgelist) {
+    /* two spare 32-byte edges absorb the offset */
+    G->edgemem = CC_SAFE_MALLOC (G->max_nedges + 2, edge);
+    if (!G->edgemem) {
         fprintf (stderr, "out of memory in build_graph\n");
-        CC_FREE (G->nodelist, node);
+        CC_FREE (G->nodemem, node);
+        G->nodelist = (node *) NULL;
         return 1;
     }
+    G->edgelist = (edge *) (((uintptr_t) G->edgemem + 63) & ~(uintptr_t) 63);
 
     for (i = 0; i < ncount; i++) {
         G->nodelist[i].mark = 0;
