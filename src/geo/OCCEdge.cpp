@@ -67,7 +67,9 @@ OCCEdge::OCCEdge(GModel *m, TopoDS_Edge c, int num, GVertex *v1, GVertex *v2)
       umin -= utol;
       umax += utol;
     }
-    _projector.Init(_curve, umin, umax);
+    _projectorBounds[0] = umin;
+    _projectorBounds[1] = umax;
+    _projectors.resize(std::max(1, Msg::GetMaxThreads()), nullptr);
 
     // keep track of number of poles for drawing
     if(_curve->DynamicType() == STANDARD_TYPE(Geom_BSplineCurve))
@@ -75,6 +77,32 @@ OCCEdge::OCCEdge(GModel *m, TopoDS_Edge c, int num, GVertex *v1, GVertex *v2)
     else if(_curve->DynamicType() == STANDARD_TYPE(Geom_BezierCurve))
       _nbpoles = Handle(Geom_BezierCurve)::DownCast(_curve)->NbPoles();
   }
+}
+
+OCCEdge::~OCCEdge()
+{
+  for(std::size_t i = 0; i < _projectors.size(); i++) delete _projectors[i];
+}
+
+// The projector is stateful (it stores the result of the last projection), so
+// each thread needs its own. It is created the first time a given thread
+// projects on this curve. If we end up with more threads than we prepared for,
+// the caller's own projector is used instead of a cached one: slower, but
+// always correct.
+
+GeomAPI_ProjectPointOnCurve &
+OCCEdge::_projector(GeomAPI_ProjectPointOnCurve &fallback) const
+{
+  std::size_t t = (std::size_t)Msg::GetThreadNum();
+  if(t >= _projectors.size()) {
+    fallback.Init(_curve, _projectorBounds[0], _projectorBounds[1]);
+    return fallback;
+  }
+  if(!_projectors[t]) {
+    _projectors[t] = new GeomAPI_ProjectPointOnCurve();
+    _projectors[t]->Init(_curve, _projectorBounds[0], _projectorBounds[1]);
+  }
+  return *_projectors[t];
 }
 
 void OCCEdge::delFace(GFace *f)
@@ -223,21 +251,23 @@ bool OCCEdge::_project(const double p[3], double &u, double xyz[3]) const
   }
 
   gp_Pnt pnt(p[0], p[1], p[2]);
-  _projector.Perform(pnt);
+  GeomAPI_ProjectPointOnCurve ownProjector;
+  GeomAPI_ProjectPointOnCurve &projector = _projector(ownProjector);
+  projector.Perform(pnt);
 
-  if(!_projector.NbPoints()) {
+  if(!projector.NbPoints()) {
     Msg::Debug("Projection of point (%g, %g, %g) on curve %d failed", p[0],
                p[1], p[2], tag());
     return false;
   }
 
-  u = _projector.LowerDistanceParameter();
+  u = projector.LowerDistanceParameter();
 
   if(u < _s0 || u > _s1)
     Msg::Debug("Point projection is out of curve parameter bounds");
 
   if(xyz) {
-    pnt = _projector.NearestPoint();
+    pnt = projector.NearestPoint();
     xyz[0] = pnt.X();
     xyz[1] = pnt.Y();
     xyz[2] = pnt.Z();
