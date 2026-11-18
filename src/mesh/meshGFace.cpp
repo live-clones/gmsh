@@ -1158,7 +1158,9 @@ initialTriangulation(GFace *gf, BDS_Mesh *m, std::vector<BDS_Point *> &points,
 enum class EdgeRecovery {
   Recovered, // every model edge is now an edge of the triangulation
   Failed, // unrecoverable, the face is marked FAILED
-  Retry // the 1D mesh self-intersects; it has been refined, mesh again
+  Retry, // the 1D mesh self-intersects; it has been refined, mesh again
+  Deferred // the 1D mesh self-intersects; the face is left PENDING until the
+           // faces are meshed serially
 };
 
 // Force the edges of the 1D mesh into the initial triangulation. Curves whose
@@ -1231,6 +1233,17 @@ recoverBoundaryEdges(GFace *gf, BDS_Mesh *m, std::vector<GEdge *> &edges,
                  noSubdivisionHint());
       gf->meshStatistics.status = GFace::FAILED;
       return EdgeRecovery::Failed;
+    }
+    // splitting the curves is not thread safe: it replaces their meshes and
+    // deletes those of the adjacent surfaces, which other threads may be
+    // reading or building. As for periodic surfaces, leave the surface for the
+    // passes that Mesh2D() runs serially
+    if(Msg::GetNumThreads() != 1) {
+      gf->meshStatistics.status = GFace::PENDING;
+      Msg::Info("Surface %d has self-intersections in its 1D mesh: serializing "
+                "this one",
+                gf->tag());
+      return EdgeRecovery::Deferred;
     }
     if(gf->meshStatistics.refineAllEdges) {
       Msg::Info("8-| Splitting all edges and trying again");
@@ -1526,6 +1539,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
     RECUR_ITER, repairSelfIntersecting1dMesh, debug);
   if(rec != EdgeRecovery::Recovered) {
     delete m;
+    if(rec == EdgeRecovery::Deferred) return true;
     if(rec == EdgeRecovery::Retry &&
        RECUR_ITER < CTX::instance()->mesh.maxRetries)
       return meshGenerator(gf, RECUR_ITER + 1, repairSelfIntersecting1dMesh,
