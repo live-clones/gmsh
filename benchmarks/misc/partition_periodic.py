@@ -1,7 +1,9 @@
 # Partitions periodic meshes with Mesh.PartitionPeriodic, and checks that the
 # partition entities cut from the periodic entities are periodic, in memory
 # and after writing and reading the mesh: each has a master in the same
-# partitions, and all its nodes are the images of the nodes of the master
+# partitions, and all its nodes are the images of the nodes of the master.
+# This holds for all the partition entities on a periodic entity, including
+# the partition curves and points inside periodic surfaces.
 import gmsh
 import math
 import os
@@ -54,8 +56,8 @@ def check(what):
         master, nodes, masterNodes, tfo = gmsh.model.mesh.getPeriodicNodes(
             dim, tag, True)
         if master == tag:
-            # all the pieces of a periodic entity of its dimension are periodic
-            if pdim == dim and gmsh.model.mesh.getPeriodic(pdim, [ptag])[0] != ptag:
+            # all the partition entities on a periodic entity are periodic
+            if gmsh.model.mesh.getPeriodic(pdim, [ptag])[0] != ptag:
                 raise Exception('%s: entity (%d, %d) is not periodic' %
                                 (what, dim, tag))
             continue
@@ -79,8 +81,8 @@ def check(what):
 
 gmsh.initialize()
 gmsh.option.setNumber('General.Verbosity', 2)
-gmsh.option.setNumber('Mesh.PartitionPeriodic', 1)
 tmp = os.path.join(tempfile.mkdtemp(), 'partition_periodic.msh')
+gmsh.option.setNumber('Mesh.PartitionPeriodic', 1)
 for model, size, order, parts, algo in [
         (box, 0.2, 1, 4, 1), (box, 0.1, 1, 16, 2), (box, 0.15, 2, 7, 3),
         (wedge, 0.1, 1, 5, 2), (wedge, 0.15, 2, 12, 1),

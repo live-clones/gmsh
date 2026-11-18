@@ -677,7 +677,7 @@ Default value: @code{-1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PartitionPeriodic
-Partition periodic meshes so that the elements matched by the periodicity are in the same partition, and make the partition entities periodic@*
+Partition periodic meshes as if glued along the periodic entities: the partition entities on all the copies of a periodic entity are cut the same way, have the partitions of all the copies, and are periodic@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
