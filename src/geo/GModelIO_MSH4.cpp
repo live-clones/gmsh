@@ -1541,6 +1541,11 @@ static bool readMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
       continue;
     }
 
+    // the corresponding nodes not given in the file are found from the
+    // transformation, except for partition entities: all their nodes are
+    // given, and their boundaries need not match those of their master
+    const bool findNodes = !slave->getParentEntity();
+
     std::size_t correspondingVertexSize = 0;
     if(binary) {
       std::size_t numAffine;
@@ -1552,7 +1557,7 @@ static bool readMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
           return false;
         }
         if(swap) SwapBytes((char *)&tfo[0], sizeof(double), numAffine);
-        slave->setMeshMaster(master, tfo);
+        slave->setMeshMaster(master, tfo, findNodes);
       }
       else {
         slave->setMeshMaster(master);
@@ -1572,7 +1577,7 @@ static bool readMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
           for(std::size_t i = 0; i < numAffine; i++) {
             if(fscanf(fp, "%lf", &tfo[i]) != 1) { return false; }
           }
-          slave->setMeshMaster(master, tfo);
+          slave->setMeshMaster(master, tfo, findNodes);
         }
         else {
           slave->setMeshMaster(master);
@@ -1593,7 +1598,7 @@ static bool readMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
                     &tfo[12], &tfo[13], &tfo[14], &tfo[15]) != 16) {
             return false;
           }
-          slave->setMeshMaster(master, tfo);
+          slave->setMeshMaster(master, tfo, findNodes);
           if(fscanf(fp, "%zu", &correspondingVertexSize) != 1) { return false; }
         }
         else {
@@ -4594,7 +4599,7 @@ static void writeMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
       std::map<MVertex *, MVertex *, MVertexPtrLessThan> corrVert;
       corrVert.insert(g_slave->correspondingVertices.begin(),
                       g_slave->correspondingVertices.end());
-      if(CTX::instance()->mesh.hoSavePeriodic)
+      if(CTX::instance()->mesh.hoSavePeriodic || g_slave->getParentEntity())
         corrVert.insert(g_slave->correspondingHighOrderVertices.begin(),
                         g_slave->correspondingHighOrderVertices.end());
 

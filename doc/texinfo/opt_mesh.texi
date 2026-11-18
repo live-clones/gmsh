@@ -676,6 +676,11 @@ Weight of line element for METIS load balancing (-1: automatic)@*
 Default value: @code{-1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.PartitionPeriodic
+Partition periodic meshes so that the elements matched by the periodicity are in the same partition, and make the partition entities periodic@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.PartitionPrismWeight
 Weight of prismatic element (wedge) for METIS load balancing (-1: automatic)@*
 Default value: @code{-1}@*

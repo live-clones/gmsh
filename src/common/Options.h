@@ -561,6 +561,7 @@ double opt_mesh_partition_tet_weight(OPT_ARGS_NUM);
 double opt_mesh_partition_tri_weight(OPT_ARGS_NUM);
 double opt_mesh_partition_line_weight(OPT_ARGS_NUM);
 double opt_mesh_partition_create_topology(OPT_ARGS_NUM);
+double opt_mesh_partition_periodic(OPT_ARGS_NUM);
 double opt_mesh_partition_create_physicals(OPT_ARGS_NUM);
 double opt_mesh_partition_create_ghost_cells(OPT_ARGS_NUM);
 double opt_mesh_partition_old_style_msh2(OPT_ARGS_NUM);

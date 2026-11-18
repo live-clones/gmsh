@@ -5125,6 +5125,12 @@ double opt_mesh_partition_create_physicals(OPT_ARGS_NUM)
   return CTX::instance()->mesh.partitionCreatePhysicals;
 }
 
+double opt_mesh_partition_periodic(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.partitionPeriodic = val;
+  return CTX::instance()->mesh.partitionPeriodic;
+}
+
 double opt_mesh_partition_create_topology(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.partitionCreateTopology = val;

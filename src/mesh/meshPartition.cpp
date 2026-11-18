@@ -685,17 +685,19 @@ static void correctTopology(const Graph &graph, std::vector<idx_t> &epart)
 
 // Partition the dual graph with the multithreaded k-way algorithm of mt-metis,
 // translating the METIS options it supports. Returns a METIS error code.
-static int partitionGraphMtMetis(Graph &graph, const idx_t *metisOptions,
+static int partitionGraphMtMetis(std::size_t ne, const idx_t *graphXadj,
+                                 const idx_t *graphAdjncy,
+                                 const idx_t *graphVwgt, std::size_t numPart,
+                                 const idx_t *metisOptions,
                                  std::vector<idx_t> &epart, idx_t &objval)
 {
-  const std::size_t ne = graph.ne();
   if(ne > std::numeric_limits<mtmetis_vtx_type>::max()) {
     Msg::Error("Graph too large for mt-metis (32-bit vertex indices)");
     return METIS_ERROR_INPUT;
   }
   int64_t totalWeight = ne;
-  if(graph.vwgt())
-    totalWeight = std::accumulate(graph.vwgt(), graph.vwgt() + ne, int64_t(0));
+  if(graphVwgt)
+    totalWeight = std::accumulate(graphVwgt, graphVwgt + ne, int64_t(0));
   if(totalWeight > std::numeric_limits<mtmetis_wgt_type>::max()) {
     Msg::Error("Total element weight too large for mt-metis (32-bit weights)");
     return METIS_ERROR_INPUT;
@@ -728,18 +730,18 @@ static int partitionGraphMtMetis(Graph &graph, const idx_t *metisOptions,
   // and 32-bit vertex indices and weights
   std::vector<mtmetis_adj_type> xadjCopy;
   const mtmetis_adj_type *xadj =
-    reinterpret_cast<const mtmetis_adj_type *>(graph.xadj());
+    reinterpret_cast<const mtmetis_adj_type *>(graphXadj);
   if(sizeof(idx_t) != sizeof(mtmetis_adj_type)) {
-    xadjCopy.assign(graph.xadj(), graph.xadj() + ne + 1);
+    xadjCopy.assign(graphXadj, graphXadj + ne + 1);
     xadj = xadjCopy.data();
   }
-  std::vector<mtmetis_vtx_type> adjncy(graph.adjncy(),
-                                       graph.adjncy() + graph.xadj(ne));
+  std::vector<mtmetis_vtx_type> adjncy(graphAdjncy,
+                                       graphAdjncy + graphXadj[ne]);
   std::vector<mtmetis_wgt_type> vwgt;
-  if(graph.vwgt()) vwgt.assign(graph.vwgt(), graph.vwgt() + ne);
+  if(graphVwgt) vwgt.assign(graphVwgt, graphVwgt + ne);
   std::vector<mtmetis_pid_type> where(ne);
   mtmetis_vtx_type nvtxs = ne, ncon = 1;
-  mtmetis_pid_type nparts = graph.nparts();
+  mtmetis_pid_type nparts = numPart;
   mtmetis_wgt_type edgecut = 0;
 
   int err = MTMETIS_PartGraphKway(
@@ -760,9 +762,147 @@ static int partitionGraphMtMetis(Graph &graph, const idx_t *metisOptions,
 
 #endif
 
-// Partition a graph created by makeGraph using Metis library. Returns: 0 =
-// success, 1 = error, 2 = exception thrown.
-static int partitionGraph(Graph &graph, bool verbose)
+// The numbers of the primary nodes of an element, sorted
+static std::vector<std::size_t> sortedPrimaryNodes(MElement *e)
+{
+  std::vector<std::size_t> nodes(e->getNumPrimaryVertices());
+  for(std::size_t i = 0; i < nodes.size(); i++)
+    nodes[i] = e->getVertex(i)->getNum();
+  std::sort(nodes.begin(), nodes.end());
+  return nodes;
+}
+
+// The same for the nodes that the primary nodes of an element of a periodic
+// entity correspond to on its mesh master (empty if one has no counterpart)
+static std::vector<std::size_t> sortedPrimaryMasterNodes(MElement *e,
+                                                         GEntity *periodic)
+{
+  std::vector<std::size_t> nodes(e->getNumPrimaryVertices());
+  for(std::size_t i = 0; i < nodes.size(); i++) {
+    auto it = periodic->correspondingVertices.find(e->getVertex(i));
+    if(it == periodic->correspondingVertices.end())
+      return std::vector<std::size_t>();
+    nodes[i] = it->second->getNum();
+  }
+  std::sort(nodes.begin(), nodes.end());
+  return nodes;
+}
+
+// Groups the elements of the graph that the periodicity of the mesh requires
+// in the same partition: each element of a periodic entity, the element it
+// corresponds to on the mesh master, and for both an element of the highest
+// dimension that they bound. The partitions then cut a periodic entity and its
+// master along matching lines. Returns for each element the first element of
+// its group (itself if it is alone); empty if there are no groups.
+static std::vector<idx_t> groupPeriodicElements(const Graph &graph)
+{
+  std::vector<idx_t> root(graph.ne());
+  for(std::size_t i = 0; i < root.size(); i++) root[i] = i;
+  auto find = [&](idx_t i) {
+    while(root[i] != i) {
+      root[i] = root[root[i]];
+      i = root[i];
+    }
+    return i;
+  };
+  auto tie = [&](idx_t a, idx_t b) {
+    a = find(a);
+    b = find(b);
+    if(a != b) root[std::max(a, b)] = std::min(a, b);
+  };
+  auto bulk = [&](idx_t i) {
+    if(graph.element(i)->getDim() == graph.dim()) return i;
+    for(idx_t k = graph.xadj(i); k < graph.xadj(i + 1); k++) {
+      const idx_t n = graph.adjncy(k);
+      if(graph.element(n)->getDim() == graph.dim()) return n;
+    }
+    return i;
+  };
+
+  // the elements of an entity are contiguous in the graph
+  const std::vector<std::pair<GEntity *, std::size_t>> &begin =
+    graph.entityBegin();
+  std::map<GEntity *, std::pair<std::size_t, std::size_t>> range;
+  for(std::size_t i = 0; i < begin.size(); i++)
+    range[begin[i].first] = std::make_pair(
+      begin[i].second, i + 1 < begin.size() ? begin[i + 1].second : graph.ne());
+
+  std::size_t numTied = 0, numMissing = 0;
+  for(std::size_t i = 0; i < begin.size(); i++) {
+    GEntity *periodic = begin[i].first;
+    GEntity *master = periodic->getMeshMaster();
+    if(master == periodic || !range.count(master)) continue;
+    std::map<std::vector<std::size_t>, idx_t> masterElements;
+    for(std::size_t j = range[master].first; j < range[master].second; j++)
+      masterElements[sortedPrimaryNodes(graph.element(j))] = j;
+    for(std::size_t j = range[periodic].first; j < range[periodic].second;
+        j++) {
+      auto it = masterElements.find(
+        sortedPrimaryMasterNodes(graph.element(j), periodic));
+      if(it == masterElements.end()) {
+        numMissing++;
+        continue;
+      }
+      tie(j, it->second);
+      tie(j, bulk(j));
+      tie(it->second, bulk(it->second));
+      numTied++;
+    }
+  }
+  if(numMissing)
+    Msg::Warning("%zu elements of periodic entities have no counterpart on "
+                 "the mesh master: the partitions will not be periodic there",
+                 numMissing);
+  if(!numTied) return std::vector<idx_t>();
+  for(std::size_t i = 0; i < root.size(); i++) root[i] = find(i);
+  return root;
+}
+
+// Builds the graph where each group of elements is a single vertex, with the
+// weight of the group and the neighbours of all its elements. Fills the index
+// of the vertex each element belongs to.
+static void contractGraph(const Graph &graph, const std::vector<idx_t> &root,
+                          std::vector<idx_t> &index, std::vector<idx_t> &xadj,
+                          std::vector<idx_t> &adjncy, std::vector<idx_t> &vwgt)
+{
+  const std::size_t ne = graph.ne();
+  index.assign(ne, 0);
+  idx_t num = 0;
+  for(std::size_t i = 0; i < ne; i++)
+    if(root[i] == (idx_t)i) index[i] = num++;
+  for(std::size_t i = 0; i < ne; i++) index[i] = index[root[i]];
+
+  // the elements of each group
+  std::vector<idx_t> first(num + 1, 0), members(ne);
+  for(std::size_t i = 0; i < ne; i++) first[index[i] + 1]++;
+  for(idx_t i = 0; i < num; i++) first[i + 1] += first[i];
+  std::vector<idx_t> next(first.begin(), first.end() - 1);
+  for(std::size_t i = 0; i < ne; i++) members[next[index[i]]++] = i;
+
+  xadj.assign(num + 1, 0);
+  adjncy.clear();
+  adjncy.reserve(graph.xadj(ne));
+  vwgt.assign(num, 0);
+  std::vector<idx_t> seen(num, -1);
+  for(idx_t i = 0; i < num; i++) {
+    for(idx_t j = first[i]; j < first[i + 1]; j++) {
+      const idx_t e = members[j];
+      vwgt[i] += graph.vwgt() ? graph.vwgt()[e] : 1;
+      for(idx_t k = graph.xadj(e); k < graph.xadj(e + 1); k++) {
+        const idx_t n = index[graph.adjncy(k)];
+        if(n == i || seen[n] == i) continue;
+        seen[n] = i;
+        adjncy.push_back(n);
+      }
+    }
+    xadj[i + 1] = adjncy.size();
+  }
+}
+
+// Partition a graph created by makeGraph using Metis library. With periodic
+// set, the elements matched by the periodicity of the mesh are kept in the
+// same partition. Returns: 0 = success, 1 = error, 2 = exception thrown.
+static int partitionGraph(Graph &graph, bool verbose, bool periodic = false)
 {
   // A single part needs no partitioner (METIS k-way divides by log2(nparts));
   // the dual graph is still built, as the partition topology walks it
@@ -884,7 +1024,6 @@ static int partitionGraph(Graph &graph, bool verbose)
     metisOptions[METIS_OPTION_NUMBERING] = 0;
 
     idx_t objval;
-    std::vector<idx_t> epart(graph.ne());
     idx_t ne = graph.ne();
     idx_t numPart = graph.nparts();
     idx_t ncon = 1;
@@ -893,22 +1032,40 @@ static int partitionGraph(Graph &graph, bool verbose)
     int metisError = 0;
     graph.createDualGraph(false);
 
+    // METIS works on the graph itself, or on the graph where the elements
+    // matched by the periodicity are merged
+    idx_t *xadj = graph.xadj(), *adjncy = graph.adjncy(), *vwgt = graph.vwgt();
+    std::vector<idx_t> root, index, mergedXadj, mergedAdjncy, mergedVwgt;
+    if(periodic) root = groupPeriodicElements(graph);
+    if(root.size()) {
+      contractGraph(graph, root, index, mergedXadj, mergedAdjncy, mergedVwgt);
+      ne = mergedVwgt.size();
+      xadj = mergedXadj.data();
+      adjncy = mergedAdjncy.data();
+      vwgt = mergedVwgt.data();
+      if(verbose)
+        Msg::Info("Periodic mesh: %zu elements merged in the graph",
+                  graph.ne() - (std::size_t)ne);
+    }
+    std::vector<idx_t> epart(ne);
+
     double t1 = TimeOfDay();
 #if defined(HAVE_MTMETIS)
     if(CTX::instance()->mesh.metisAlgorithm == 3) {
-      metisError = partitionGraphMtMetis(graph, metisOptions, epart, objval);
+      metisError = partitionGraphMtMetis(ne, xadj, adjncy, vwgt, numPart,
+                                         metisOptions, epart, objval);
     }
     else
 #endif
     if(metisOptions[METIS_OPTION_PTYPE] == METIS_PTYPE_KWAY) {
-      metisError = METIS_PartGraphKway(
-        &ne, &ncon, graph.xadj(), graph.adjncy(), graph.vwgt(), nullptr,
-        nullptr, &numPart, nullptr, nullptr, metisOptions, &objval, &epart[0]);
+      metisError = METIS_PartGraphKway(&ne, &ncon, xadj, adjncy, vwgt, nullptr,
+                                       nullptr, &numPart, nullptr, nullptr,
+                                       metisOptions, &objval, &epart[0]);
     }
     else {
       metisError = METIS_PartGraphRecursive(
-        &ne, &ncon, graph.xadj(), graph.adjncy(), graph.vwgt(), nullptr,
-        nullptr, &numPart, nullptr, nullptr, metisOptions, &objval, &epart[0]);
+        &ne, &ncon, xadj, adjncy, vwgt, nullptr, nullptr, &numPart, nullptr,
+        nullptr, metisOptions, &objval, &epart[0]);
     }
     if(verbose)
       Msg::Info("Partitioned graph of %lu vertices in %g s", graph.ne(),
@@ -940,7 +1097,22 @@ static int partitionGraph(Graph &graph, bool verbose)
     }
 
     // Check and correct the topology
-    correctTopology(graph, epart);
+    if(root.size()) {
+      // back to the elements; those merged with others keep the partition of
+      // their group, which holds an element of the highest dimension
+      std::vector<idx_t> merged(epart);
+      epart.resize(graph.ne());
+      for(std::size_t i = 0; i < epart.size(); i++) epart[i] = merged[index[i]];
+      merged = epart;
+      correctTopology(graph, epart);
+      std::vector<char> alone(graph.ne(), 1);
+      for(std::size_t i = 0; i < epart.size(); i++)
+        if(root[i] != (idx_t)i) alone[i] = alone[root[i]] = 0;
+      for(std::size_t i = 0; i < epart.size(); i++)
+        if(!alone[i]) epart[i] = merged[i];
+    }
+    else
+      correctTopology(graph, epart);
     graph.partition(epart);
     if(verbose) Msg::Info("%d partitions, %d total edge-cuts", numPart, objval);
   } catch(...) {
@@ -3206,6 +3378,99 @@ static void fixEmbeddedVertices(GModel *model)
     entityCheckForEmbedded<2>(*it, mvToPartitionVertex);
   }
 }
+
+static std::vector<int> partitionsOf(GEntity *ge)
+{
+  switch(ge->geomType()) {
+  case GEntity::PartitionPoint:
+    return static_cast<partitionVertex *>(ge)->getPartitions();
+  case GEntity::PartitionCurve:
+    return static_cast<partitionEdge *>(ge)->getPartitions();
+  case GEntity::PartitionSurface:
+    return static_cast<partitionFace *>(ge)->getPartitions();
+  case GEntity::PartitionVolume:
+    return static_cast<partitionRegion *>(ge)->getPartitions();
+  default: return std::vector<int>();
+  }
+}
+
+// Makes the partition entities cut from a periodic entity periodic, with as
+// mesh master the partition entity cut from its master that their elements
+// correspond to (which exists if the mesh was partitioned with the elements
+// matched by the periodicity in the same partition).
+static void setPeriodicPartitionEntities(GModel *model)
+{
+  // the partition entities cut from each entity, per dimension
+  std::vector<GEntity *> entities;
+  model->getEntities(entities);
+  std::map<std::pair<GEntity *, int>, std::vector<GEntity *>> pieces;
+  for(GEntity *ge : entities) {
+    GEntity *parent = ge->getParentEntity();
+    if(parent) pieces[std::make_pair(parent, ge->dim())].push_back(ge);
+  }
+
+  std::size_t numPeriodic = 0, numFailed = 0, numBoundary = 0;
+  for(auto &p : pieces) {
+    GEntity *parent = p.first.first;
+    GEntity *parentMaster = parent->getMeshMaster();
+    if(parentMaster == parent) continue;
+    std::map<std::vector<std::size_t>, GEntity *> masterElements;
+    auto itm = pieces.find(std::make_pair(parentMaster, p.first.second));
+    if(itm != pieces.end()) {
+      for(GEntity *ge : itm->second)
+        for(std::size_t i = 0; i < ge->getNumMeshElements(); i++)
+          masterElements[sortedPrimaryNodes(ge->getMeshElement(i))] = ge;
+    }
+    for(GEntity *ge : p.second) {
+      GEntity *master = nullptr;
+      bool ok = ge->getNumMeshElements();
+      std::map<MVertex *, MVertex *> nodes, highOrderNodes;
+      for(std::size_t i = 0; i < ge->getNumMeshElements() && ok; i++) {
+        MElement *e = ge->getMeshElement(i);
+        auto it = masterElements.find(sortedPrimaryMasterNodes(e, parent));
+        if(it == masterElements.end() || (master && master != it->second)) {
+          ok = false;
+          break;
+        }
+        master = it->second;
+        for(std::size_t j = 0; j < e->getNumVertices(); j++) {
+          MVertex *v = e->getVertex(j);
+          auto itv = parent->correspondingVertices.find(v);
+          if(itv != parent->correspondingVertices.end())
+            nodes.insert(*itv);
+          else {
+            itv = parent->correspondingHighOrderVertices.find(v);
+            if(itv != parent->correspondingHighOrderVertices.end())
+              highOrderNodes.insert(*itv);
+          }
+        }
+      }
+      // the correspondence must hold for the whole of both, in the same
+      // partitions
+      if(ok && (master->getNumMeshElements() != ge->getNumMeshElements() ||
+                partitionsOf(master) != partitionsOf(ge)))
+        ok = false;
+      if(ok) {
+        ge->setMeshMaster(master, parent->affineTransform, false);
+        ge->correspondingVertices = nodes;
+        ge->correspondingHighOrderVertices = highOrderNodes;
+        numPeriodic++;
+      }
+      else if(ge->dim() == parent->dim())
+        numFailed++;
+      else
+        numBoundary++;
+    }
+  }
+  if(numFailed)
+    Msg::Warning("%zu partition entities of periodic entities do not "
+                 "correspond to a partition entity of the mesh master",
+                 numFailed);
+  Msg::Info("%zu periodic partition entities (%zu partition boundaries in "
+            "periodic entities are cut differently in the mesh master)",
+            numPeriodic, numBoundary);
+}
+
 // Partition a mesh into n parts. Returns: 0 = success, 1 = error
 
 int PartitionMesh(GModel *model, int numPart)
@@ -3218,7 +3483,8 @@ int PartitionMesh(GModel *model, int numPart)
   Graph graph(model);
   if(makeGraph(model, graph, -1)) return 1;
   graph.nparts(numPart);
-  if(partitionGraph(graph, true)) return 1;
+  const bool periodic = CTX::instance()->mesh.partitionPeriodic;
+  if(partitionGraph(graph, true, periodic)) return 1;
 
   std::vector<std::size_t> elmCount[TYPE_MAX_NUM + 1];
   for(int i = 0; i < TYPE_MAX_NUM + 1; i++) { elmCount[i].resize(numPart, 0); }
@@ -3275,6 +3541,7 @@ int PartitionMesh(GModel *model, int numPart)
   assignPhysicals(model);
   assignMeshVertices(model);
   fixEmbeddedVertices(model);
+  if(periodic) setPeriodicPartitionEntities(model);
 
   if(CTX::instance()->mesh.partitionCreateGhostCells) {
     double t4 = Cpu(), w4 = TimeOfDay();

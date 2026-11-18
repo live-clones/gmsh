@@ -88,6 +88,7 @@ struct contextMeshOptions {
   int createEdges, createFaces;
   // partitioning
   int numPartitions, partitionCreateTopology, partitionCreateGhostCells;
+    int partitionPeriodic;
   int partitionCreatePhysicals, partitionSplitMeshFiles, partitionSplitLocalBrep;
   int partitionSaveTopologyFile, partitionTriWeight, partitionQuaWeight;
   int partitionTetWeight, partitionHexWeight, partitionLinWeight;
