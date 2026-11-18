@@ -26,6 +26,7 @@ public:
   Fl_Check_Button *setGhostCells;
   Fl_Check_Button *setTopology;
   Fl_Check_Button *setPhysical;
+  Fl_Check_Button *setPeriodic;
   // Group 1
   Fl_Choice *choiceMetisAlg;
   Fl_Toggle_Button *toggleButtonAdvMetis;

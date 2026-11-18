@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <string>
 #include <FL/Fl.H>
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Choice.H>
@@ -59,6 +60,7 @@ void partitionWindow::write_all_options()
   CTX::instance()->mesh.partitionCreateGhostCells = setGhostCells->value();
   CTX::instance()->mesh.partitionCreateTopology = setTopology->value();
   CTX::instance()->mesh.partitionCreatePhysicals = setPhysical->value();
+  CTX::instance()->mesh.partitionPeriodic = setPeriodic->value();
 
   // Group 1: the algorithm kept if its item was not changed
   if(choiceMetisAlg->value() !=
@@ -89,6 +91,7 @@ void partitionWindow::read_all_options(bool defaults)
   setGhostCells->value((int)value("PartitionCreateGhostCells"));
   setTopology->value((int)value("PartitionCreateTopology"));
   setPhysical->value((int)value("PartitionCreatePhysicals"));
+  setPeriodic->value((int)value("PartitionPeriodic"));
 
   // Group 1
   choiceMetisAlg->value(
@@ -245,6 +248,7 @@ partitionWindow::partitionWindow(int deltaFontSize)
       Fl_Value_Input *const o =
         new Fl_Value_Input(WB, y, IW, BH, "Number of partitions");
       inputNumPartition = o;
+      o->tooltip("Mesh.NbPartitions");
       o->minimum(0);
       o->maximum(std::numeric_limits<unsigned short>::max());
       if(CTX::instance()->inputScrolling) o->step(1);
@@ -256,17 +260,26 @@ partitionWindow::partitionWindow(int deltaFontSize)
       Fl_Check_Button *const o = new Fl_Check_Button(2 * WB + 2 * BB, y, 2 * BB,
                                                      BH, "Create ghost cells");
       setGhostCells = o;
+      o->tooltip("Mesh.PartitionCreateGhostCells");
     }
     {
       Fl_Check_Button *const o =
         new Fl_Check_Button(WB, y, 2 * BB, BH, "Create partition topology");
       setTopology = o;
+      o->tooltip("Mesh.PartitionCreateTopology");
     }
     y += BH + WB;
     {
       Fl_Check_Button *const o =
         new Fl_Check_Button(WB, y, 2 * BB, BH, "Create physical groups");
       setPhysical = o;
+      o->tooltip("Mesh.PartitionCreatePhysicals");
+    }
+    {
+      Fl_Check_Button *const o = new Fl_Check_Button(
+        2 * WB + 2 * BB, y, 2 * BB, BH, "Make partitions periodic");
+      setPeriodic = o;
+      o->tooltip("Mesh.PartitionPeriodic");
     }
     y += BH + WB;
     // Box (line)
@@ -290,6 +303,7 @@ partitionWindow::partitionWindow(int deltaFontSize)
     {
       Fl_Choice *const o = new Fl_Choice(WB, y, BB, BH, "Algorithm");
       choiceMetisAlg = o;
+      o->tooltip("Mesh.MetisAlgorithm");
       o->menu(metisAlgMenu);
       o->align(FL_ALIGN_RIGHT);
     }
@@ -321,6 +335,7 @@ partitionWindow::partitionWindow(int deltaFontSize)
       Fl_Choice *const o =
         new Fl_Choice(WB, y, IW + 2 * FL_NORMAL_SIZE, BH, "Edge matching");
       choiceEdgeMatch = o;
+      o->tooltip("Mesh.MetisEdgeMatching");
       o->menu(metisEdgeMatchingMenu);
       o->align(FL_ALIGN_RIGHT);
     }
@@ -330,6 +345,7 @@ partitionWindow::partitionWindow(int deltaFontSize)
       Fl_Choice *const o = new Fl_Choice(WB, y, IW + 2 * FL_NORMAL_SIZE, BH,
                                          "Refinement algorithm");
       choiceRefineAlg = o;
+      o->tooltip("Mesh.MetisRefinementAlgorithm");
       o->menu(metisRefineAlgMenu);
       o->align(FL_ALIGN_RIGHT);
     }
@@ -342,6 +358,7 @@ partitionWindow::partitionWindow(int deltaFontSize)
         Fl_Value_Input *o = new Fl_Value_Input(
           (col + 1) * WB + col * (w / 3 - WB), y, BB / 2, BH, weights[i].label);
         inputWeight[i] = o;
+        o->copy_tooltip((std::string("Mesh.") + weights[i].option).c_str());
         o->minimum(-1);
         o->maximum(std::numeric_limits<int>::max());
         if(CTX::instance()->inputScrolling) o->step(1);
