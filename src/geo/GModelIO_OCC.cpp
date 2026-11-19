@@ -3077,12 +3077,9 @@ void OCC_Internals::_setExtrudedAttributes(
 
   bool extrude_attributes = (e ? true : false);
 
-  if(extrude_attributes && r && angle >= 2 * M_PI) {
-    // OCC removes the origin edge from e.g. disks, which makes it impossible to
-    // generate the 2D surface mesh by extrusion of the 1D edge mesh
-    Msg::Warning("Extruded meshes by revolution only for angle < 2*Pi");
-    extrude_attributes = false;
-  }
+  // after a full turn the last layer of an extruded mesh is the source
+  // itself: there is no copy of the source to mesh
+  const bool copies = !(r && std::abs(angle) >= 2 * M_PI - 1e-12);
 
   TopExp_Explorer exp0;
 
@@ -3090,7 +3087,7 @@ void OCC_Internals::_setExtrudedAttributes(
     TopoDS_Face face = TopoDS::Face(exp0.Current());
     TopoDS_Shape bot = p ? p->FirstShape(face) : r->FirstShape(face);
     TopoDS_Shape top = p ? p->LastShape(face) : r->LastShape(face);
-    if(extrude_attributes) {
+    if(extrude_attributes && copies) {
       ExtrudeParams *ee = new ExtrudeParams(COPIED_ENTITY);
       ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, az, x, y, z, angle);
       ee->mesh = e->mesh;
@@ -3109,7 +3106,7 @@ void OCC_Internals::_setExtrudedAttributes(
     TopoDS_Edge edge = TopoDS::Edge(exp0.Current());
     TopoDS_Shape bot = p ? p->FirstShape(edge) : r->FirstShape(edge);
     TopoDS_Shape top = p ? p->LastShape(edge) : r->LastShape(edge);
-    if(extrude_attributes) {
+    if(extrude_attributes && copies) {
       ExtrudeParams *ee = new ExtrudeParams(COPIED_ENTITY);
       ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, az, x, y, z, angle);
       ee->mesh = e->mesh;

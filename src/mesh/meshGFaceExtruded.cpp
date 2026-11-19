@@ -317,6 +317,12 @@ int MeshExtrudedSurface(
       Msg::Error("Unknown source curve %d for extrusion", ep->geo.Source);
       return 0;
     }
+    // after a full turn the last layer is the source curve, which need not
+    // bound the surface
+    pos.insert(from->mesh_vertices);
+    if(from->getBeginVertex())
+      pos.insert(from->getBeginVertex()->mesh_vertices);
+    if(from->getEndVertex()) pos.insert(from->getEndVertex()->mesh_vertices);
     extrudeMesh(from, gf, pos, constrainedEdges);
   }
   else {

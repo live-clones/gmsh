@@ -240,6 +240,14 @@ static void insertAllVertices(GRegion *gr, MVertexRTree &pos)
   std::vector<MVertex *> embedded = gr->getEmbeddedMeshVertices();
   pos.insert(embedded);
   std::vector<GFace *> faces = gr->faces();
+  // after a full turn the last layer of an extruded mesh is the source
+  // surface, which does not bound the volume
+  ExtrudeParams *ep = gr->meshAttributes.extrude;
+  if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY) {
+    GFace *from = gr->model()->getFaceByTag(std::abs(ep->geo.Source));
+    if(from && std::find(faces.begin(), faces.end(), from) == faces.end())
+      faces.push_back(from);
+  }
   for(auto itf = faces.begin(); itf != faces.end(); itf++) {
     pos.insert((*itf)->mesh_vertices);
     std::vector<MVertex *> embedded = (*itf)->getEmbeddedMeshVertices();
