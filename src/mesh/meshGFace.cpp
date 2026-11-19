@@ -2311,6 +2311,17 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
       return true;
     }
 
+    // an edge that is on no curve (e.g. a degenerate edge at the pole of a
+    // sphere) cannot be split: trying again would fail the same way
+    if(edgesNotRecovered.empty() && !gf->meshStatistics.refineAllEdges) {
+      Msg::Error("Surface %d: could not recover a boundary edge in the "
+                 "initial mesh",
+                 gf->tag());
+      gf->meshStatistics.status = GFace::FAILED;
+      delete m;
+      return false;
+    }
+
     if(!gf->meshStatistics.refineAllEdges)
       Msg::Info(":-( There are %d intersections in the 1D mesh (curves%s)",
                 edgesNotRecovered.size(), sstream.str().c_str());
