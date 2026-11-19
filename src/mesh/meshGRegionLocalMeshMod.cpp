@@ -439,7 +439,8 @@ bool faceSwap(std::vector<MTet4 *> &newTets, MTet4 *t1, int iLocalFace,
   return true;
 }
 
-bool buildVertexCavity_recur(MTet4 *t, MVertex *v, std::vector<MTet4 *> &cavity)
+static bool buildVertexCavity_recur(MTet4 *t, MVertex *v,
+                                    std::vector<MTet4 *> &cavity)
 {
   if(t->isDeleted()) {
     Msg::Warning("A deleted tet is a neighbor of a non deleted tet"
@@ -460,22 +461,26 @@ bool buildVertexCavity_recur(MTet4 *t, MVertex *v, std::vector<MTet4 *> &cavity)
   }
   for(int i = 0; i < 3; i++) {
     MTet4 *neigh = t->getNeigh(vFac[iV][i]);
-    if(neigh) {
-      bool found = false;
-      for(std::size_t j = 0; j < cavity.size(); j++) {
-        if(cavity[j] == neigh) {
-          found = true;
-          j = cavity.size();
-        }
-      }
-      if(!found) {
-        cavity.push_back(neigh);
-        if(!buildVertexCavity_recur(neigh, v, cavity))
-          return false;
-      }
+    if(neigh && !neigh->isMarked()) {
+      neigh->setMarked(true);
+      cavity.push_back(neigh);
+      if(!buildVertexCavity_recur(neigh, v, cavity)) return false;
     }
   }
   return true;
+}
+
+// the tets around node v, starting from t. The star of a node can hold
+// thousands of tets (e.g. a node facing a finely meshed surface): the tets are
+// marked instead of searched in the list
+static bool buildVertexCavity(MTet4 *t, MVertex *v,
+                              std::vector<MTet4 *> &cavity)
+{
+  cavity.push_back(t);
+  t->setMarked(true);
+  const bool ok = buildVertexCavity_recur(t, v, cavity);
+  for(auto c : cavity) c->setMarked(false);
+  return ok;
 }
 
 // sliver removal by compound mesh modif postulate : the edge cannot be swopped
@@ -500,8 +505,7 @@ bool collapseVertex(std::vector<MTet4 *> &newTets, MTet4 *t, int iVertex,
 
   std::vector<MTet4 *> cavity_v;
   std::vector<MTet4 *> outside;
-  cavity_v.push_back(t);
-  if(!buildVertexCavity_recur(t, v, cavity_v)) return false;
+  if(!buildVertexCavity(t, v, cavity_v)) return false;
 
   std::vector<MTet4 *> toDelete;
   std::vector<MTet4 *> toUpdate;
@@ -587,9 +591,7 @@ bool smoothVertex(MTet4 *t, int iVertex, const qmTetrahedron::Measures &cr)
   if(t->tet()->getVertex(iVertex)->onWhat()->dim() < 3) return false;
 
   std::vector<MTet4 *> cavity;
-  cavity.push_back(t);
-  if(!buildVertexCavity_recur(t, t->tet()->getVertex(iVertex), cavity))
-    return false;
+  if(!buildVertexCavity(t, t->tet()->getVertex(iVertex), cavity)) return false;
 
   double xcg = 0, ycg = 0, zcg = 0;
   double vTot = 0;
