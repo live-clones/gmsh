@@ -2325,6 +2325,10 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
       return;
     }
 
+    // the end points do not give the orientation of a closed curve
+    if(forward.first == forward.second)
+      sign = localEdge->closedMasterOrientation(masterEdge, tfo);
+
     if(masterEdge->getMeshMaster() != localEdge) {
       localEdge->setMeshMaster(masterEdge, tfo);
       Msg::Info("Setting curve master %d - %d", localEdge->tag(),

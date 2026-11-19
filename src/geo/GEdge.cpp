@@ -86,6 +86,23 @@ void GEdge::setMeshMaster(GEdge *ge, int ori)
   }
 }
 
+int GEdge::closedMasterOrientation(GEdge *ge,
+                                   const std::vector<double> &tfo) const
+{
+  // compare the point at a quarter of the curve with the transformed points at
+  // a quarter and at three quarters of the master
+  Range<double> r = parBounds(0), mr = ge->parBounds(0);
+  GPoint q = point(0.75 * r.low() + 0.25 * r.high());
+  GPoint q1 = ge->point(0.75 * mr.low() + 0.25 * mr.high());
+  GPoint q3 = ge->point(0.25 * mr.low() + 0.75 * mr.high());
+  if(!q.succeeded() || !q1.succeeded() || !q3.succeeded()) return 1;
+  SPoint3 p(q.x(), q.y(), q.z());
+  SPoint3 p1(q1.x(), q1.y(), q1.z()), p3(q3.x(), q3.y(), q3.z());
+  p1.transform(tfo);
+  p3.transform(tfo);
+  return (p.distance(p1) <= p.distance(p3)) ? 1 : -1;
+}
+
 void GEdge::setMeshMaster(GEdge *ge, const std::vector<double> &tfo)
 {
   if(!getBeginVertex() || !ge->getBeginVertex() || !getEndVertex() ||
@@ -111,7 +128,10 @@ void GEdge::setMeshMaster(GEdge *ge, const std::vector<double> &tfo)
 
   if((d00.norm() < tol) && (d11.norm() < tol)) {
     GEntity::setMeshMaster(ge, tfo);
-    masterOrientation = 1;
+    // the end points do not give the orientation of a closed curve
+    const bool closed = getBeginVertex() == getEndVertex() &&
+                        ge->getBeginVertex() == ge->getEndVertex();
+    masterOrientation = closed ? closedMasterOrientation(ge, tfo) : 1;
     vertexCounterparts[getBeginVertex()] = ge->getBeginVertex();
     vertexCounterparts[getEndVertex()] = ge->getEndVertex();
     getBeginVertex()->setMeshMaster(ge->getBeginVertex(), tfo);

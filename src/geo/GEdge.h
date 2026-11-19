@@ -83,6 +83,11 @@ public:
   // specify mesh master and edgeCounterparts, deduce transformation
   void setMeshMaster(GEdge *master, int sign);
 
+  // orientation (1 or -1) of this closed curve with respect to its closed
+  // master transformed by tfo
+  int closedMasterOrientation(GEdge *master,
+                              const std::vector<double> &tfo) const;
+
   void reverse();
 
   // add/delete a face bounded by this edge
