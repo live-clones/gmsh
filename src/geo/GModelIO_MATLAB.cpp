@@ -150,6 +150,39 @@ int GModel::writeMATLAB(const std::string &name, bool binary, bool saveAll,
       }
       fprintf(fp, "];\n");
     }
+    // Names of the physical groups: dimension, tag, name
+    bool names = false;
+    for(int dim = 0; dim <= 3; dim++) {
+      std::map<int, std::vector<GEntity *>> groups;
+      getPhysicalGroups(dim, groups);
+      for(auto &g : groups) {
+        std::string name = getPhysicalName(dim, g.first);
+        if(name.empty()) continue;
+        if(!names) fprintf(fp, "msh.PHYSICAL_NAMES = {\n");
+        names = true;
+        std::string quoted;
+        for(char c : name) quoted += (c == '\'') ? "''" : std::string(1, c);
+        fprintf(fp, " %d %d '%s';\n", dim, g.first, quoted.c_str());
+      }
+    }
+    if(names) fprintf(fp, "};\n");
+    // Periodic nodes: dimension, entity, master entity, node, master node
+    bool periodic = false;
+    for(auto ge : entities) {
+      GEntity *master = ge->getMeshMaster();
+      if(master == ge) continue;
+      for(auto *nodes :
+          {&ge->correspondingVertices, &ge->correspondingHighOrderVertices}) {
+        for(auto &p : *nodes) {
+          if(p.first->getIndex() < 0 || p.second->getIndex() < 0) continue;
+          if(!periodic) fprintf(fp, "msh.PERIODIC = [\n");
+          periodic = true;
+          fprintf(fp, " %d %d %d %ld %ld\n", ge->dim(), ge->tag(),
+                  master->tag(), p.first->getIndex(), p.second->getIndex());
+        }
+      }
+    }
+    if(periodic) fprintf(fp, "];\n");
   }
 
   fclose(fp);
