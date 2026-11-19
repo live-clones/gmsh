@@ -754,6 +754,7 @@ public:
   // operations; hot[].radius plays the role of the stored MTet4 quality, and
   // links to deleted tets are treated as absent
   std::vector<std::uint32_t> smoothCavity;
+  std::vector<std::uint8_t> inSmoothCavity; // marks the tets of smoothCavity
   std::vector<double> smoothQuals;
 
   bool vertexCavityFlat(std::uint32_t t, std::uint32_t vIdx)
@@ -775,14 +776,8 @@ public:
       const std::uint32_t np = hot[t].N[vFac[iV][i]];
       if(np != FLAT_NONE && !tetDeleted[np >> 2]) {
         const std::uint32_t neigh = np >> 2;
-        bool found = false;
-        for(std::size_t j = 0; j < smoothCavity.size(); j++) {
-          if(smoothCavity[j] == neigh) {
-            found = true;
-            j = smoothCavity.size();
-          }
-        }
-        if(!found) {
+        if(!inSmoothCavity[neigh]) {
+          inSmoothCavity[neigh] = 1;
           smoothCavity.push_back(neigh);
           if(!vertexCavityFlat(neigh, vIdx)) return false;
         }
@@ -798,9 +793,15 @@ public:
     const std::uint32_t vIdx = tetV[4 * t + iVertex];
     if(!movable[vIdx]) return false;
 
+    // the star of a node can hold thousands of tets (e.g. a node facing a
+    // finely meshed surface): mark its tets instead of searching the list
+    inSmoothCavity.resize(hot.size(), 0);
     smoothCavity.clear();
     smoothCavity.push_back(t);
-    if(!vertexCavityFlat(t, vIdx)) return false;
+    inSmoothCavity[t] = 1;
+    const bool ok = vertexCavityFlat(t, vIdx);
+    for(auto s : smoothCavity) inSmoothCavity[s] = 0;
+    if(!ok) return false;
 
     double xcg = 0, ycg = 0, zcg = 0;
     double vTot = 0;
