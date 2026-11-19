@@ -112,6 +112,7 @@
 #include <ShapeFix_Wireframe.hxx>
 #include <Standard_Version.hxx>
 #include <StepData_StepModel.hxx>
+#include <StepRepr_RepresentationItem.hxx>
 #include <TopExp.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopoDS.hxx>
@@ -160,6 +161,10 @@
 #include <TDF_Label.hxx>
 #include <TDF_Tool.hxx>
 #include <TDataStd_Name.hxx>
+#include <TransferBRep.hxx>
+#include <Transfer_TransientProcess.hxx>
+#include <XSControl_TransferReader.hxx>
+#include <XSControl_WorkSession.hxx>
 #include <TDocStd_Document.hxx>
 #include <XCAFApp_Application.hxx>
 #include <XCAFDoc_Color.hxx>
@@ -4924,6 +4929,40 @@ static void setShapeAttributes(OCCAttributesRTree *attributes,
   }
 }
 
+// Give the shapes that have no name the name of the STEP representation item
+// they were built from. OpenCASCADE names the shapes after the products, and
+// their sub-shapes after the shells, faces and edges: the names of other items
+// are lost, e.g. when a file holds a single product made of several named
+// surface models or solids.
+static void nameShapesFromItems(const STEPCAFControl_Reader &reader,
+                                const Handle(XCAFDoc_ShapeTool) &shapeTool)
+{
+  Handle(XSControl_WorkSession) ws = reader.Reader().WS();
+  if(ws.IsNull() || ws->Model().IsNull() || ws->TransferReader().IsNull())
+    return;
+  Handle(Transfer_TransientProcess) tp =
+    ws->TransferReader()->TransientProcess();
+  if(tp.IsNull()) return;
+  for(int i = 1; i <= ws->Model()->NbEntities(); i++) {
+    Handle(StepRepr_RepresentationItem) item =
+      Handle(StepRepr_RepresentationItem)::DownCast(ws->Model()->Value(i));
+    if(item.IsNull() || item->Name().IsNull() || item->Name()->IsEmpty())
+      continue;
+    TopoDS_Shape shape = TransferBRep::ShapeResult(tp, item);
+    TDF_Label label;
+    Handle(TDataStd_Name) n;
+    if(shape.IsNull() || !shapeTool->FindShape(shape, label) ||
+       label.FindAttribute(TDataStd_Name::GetID(), n))
+      continue;
+    TDataStd_Name::Set(label, item->Name()->String());
+  }
+}
+
+template <class T>
+static void nameShapesFromItems(const T &, const Handle(XCAFDoc_ShapeTool) &)
+{
+}
+
 template <class T>
 void readAttributes(OCCAttributesRTree *attributes, T &reader,
                     const std::string &format)
@@ -4940,8 +4979,13 @@ void readAttributes(OCCAttributesRTree *attributes, T &reader,
     dummy_app->Close(doc);
   }
   dummy_app->NewDocument(format.c_str(), doc);
-  // transfer STEP/IGES into the document, and get the main label
+  // transfer STEP/IGES into the document, and get the main label. Shapes
+  // without a name are left without one, instead of being given the name of
+  // their type ("SHELL", "COMPOUND", ...) or of their label
+  const bool autoNaming = XCAFDoc_ShapeTool::AutoNaming();
+  XCAFDoc_ShapeTool::SetAutoNaming(false);
   reader.Transfer(doc);
+  XCAFDoc_ShapeTool::SetAutoNaming(autoNaming);
   TDF_Label mainLabel = doc->Main();
   Handle(XCAFDoc_ShapeTool) shapeTool =
     XCAFDoc_DocumentTool::ShapeTool(mainLabel);
@@ -4951,6 +4995,7 @@ void readAttributes(OCCAttributesRTree *attributes, T &reader,
     XCAFDoc_DocumentTool::MaterialTool(mainLabel);
   Handle(XCAFDoc_LayerTool) layerTool =
     XCAFDoc_DocumentTool::LayerTool(mainLabel);
+  nameShapesFromItems(reader, shapeTool);
   // traverse the labels recursively to set attributes on shapes
   setShapeAttributes(attributes, shapeTool, colorTool, materialTool, layerTool,
                      mainLabel, TopLoc_Location(), "", false);
