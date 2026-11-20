@@ -2517,7 +2517,9 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
   delete m;
 
   if(!repairDuplicateTriangles(gf)) {
-    Msg::Error("Surface %d has duplicate triangles", gf->tag());
+    Msg::Error("Surface %d has duplicate triangles: the mesh size is too "
+               "large for this periodic surface",
+               gf->tag());
     gf->meshStatistics.status = GFace::FAILED;
     return false;
   }
