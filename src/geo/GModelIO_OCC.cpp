@@ -4241,6 +4241,29 @@ bool OCC_Internals::booleanOperator(
     // bind all remaining entities
     _multiBind(result, -1, outDimTags, false, true, false);
     _toPreserve.clear();
+    // a surface kept from an argument keeps the orientation it had there, e.g.
+    // a surface of the tool of a difference then points into the result: if it
+    // bounds a single volume, give it the orientation it has in that volume
+    NCollection_IndexedDataMap<TopoDS_Shape, NCollection_List<TopoDS_Shape>,
+                               TopTools_ShapeMapHasher>
+      solids;
+    NCollection_DataMap<int, TopoDS_Shape>::Iterator its(_tagSolid);
+    for(; its.More(); its.Next())
+      TopExp::MapShapesAndAncestors(its.Value(), TopAbs_FACE, TopAbs_SOLID,
+                                    solids);
+    for(TopExp_Explorer exp(result, TopAbs_FACE); exp.More(); exp.Next()) {
+      const TopoDS_Shape &face = exp.Current();
+      if(!_faceTag.IsBound(face) || !solids.Contains(face) ||
+         solids.FindFromKey(face).Extent() != 1 ||
+         face.Orientation() == TopAbs_INTERNAL)
+        continue;
+      int t = _faceTag.Find(face);
+      if(_tagFace.Find(t).Orientation() == face.Orientation()) continue;
+      _faceTag.UnBind(face);
+      _faceTag.Bind(face, t);
+      _tagFace.Bind(t, face); // replaces the old face
+      _toRemove.insert(std::make_pair(2, t)); // recreate the model surface
+    }
   }
 
   if(tag < 0) {
