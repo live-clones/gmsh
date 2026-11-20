@@ -1908,6 +1908,17 @@ bool OCC_Internals::addPlaneSurface(int &tag, const std::vector<int> &wireTags)
     return false;
   }
 
+  // fixing the face can replace a wire by a new one, e.g. when the curves of
+  // the curve loop were not given head to tail. Rebind the tag of the curve
+  // loop to the new wire (the wires of the face are in the order of the curve
+  // loops): the recursive bind below would otherwise give it the next free
+  // tag, which a curve loop defined later may ask for
+  TopExp_Explorer exp0(result, TopAbs_WIRE);
+  for(std::size_t i = 0; exp0.More() && i < wires.size(); exp0.Next(), i++) {
+    TopoDS_Wire wire = TopoDS::Wire(exp0.Current());
+    if(!_wireTag.IsBound(wire)) _bind(wire, std::abs(wireTags[i]), false);
+  }
+
   if(tag < 0) tag = getMaxTag(2) + 1;
   _bind(result, tag, true);
   return true;
