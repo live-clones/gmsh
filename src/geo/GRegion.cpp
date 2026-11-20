@@ -157,6 +157,7 @@ void GRegion::resetMeshAttributes()
   meshAttributes.extrude = nullptr;
   meshAttributes.QuadTri = NO_QUADTRI;
   meshAttributes.meshSize = MAX_LC;
+  meshAttributes.outwardOrientation = false;
 }
 
 SBoundingBox3d GRegion::bounds(bool fast)
@@ -812,164 +813,109 @@ bool GRegion::reorder(const int elementType,
   return false;
 }
 
-static void setRand(double r[6])
-{
-  for(int i = 0; i < 6; i++)
-    r[i] = 0.0001 * ((double)rand() / (double)RAND_MAX);
-}
-
-// X_1 (1-u-v) + X_2 u + X_3 v = P_x + t N_x
-// Y_1 (1-u-v) + Y_2 u + Y_3 v = P_y + t N_y
-// Z_1 (1-u-v) + Z_2 u + Z_3 v = P_z + t N_z
-
-static int intersectLineTriangle(double X[3], double Y[3], double Z[3],
-                                 double P[3], double N[3],
-                                 const double eps_prec)
-{
-  double mat[3][3], det;
-  double b[3], res[3];
-
-  mat[0][0] = X[1] - X[0];
-  mat[0][1] = X[2] - X[0];
-  mat[0][2] = N[0];
-
-  mat[1][0] = Y[1] - Y[0];
-  mat[1][1] = Y[2] - Y[0];
-  mat[1][2] = N[1];
-
-  mat[2][0] = Z[1] - Z[0];
-  mat[2][1] = Z[2] - Z[0];
-  mat[2][2] = N[2];
-
-  b[0] = P[0] - X[0];
-  b[1] = P[1] - Y[0];
-  b[2] = P[2] - Z[0];
-
-  if(!sys3x3_with_tol(mat, b, res, &det)) { return 0; }
-  if(res[0] >= eps_prec && res[0] <= 1.0 - eps_prec && res[1] >= eps_prec &&
-     res[1] <= 1.0 - eps_prec && 1 - res[0] - res[1] >= eps_prec &&
-     1 - res[0] - res[1] <= 1.0 - eps_prec) {
-    // the line clearly intersects the triangle
-    return (res[2] > 0) ? 1 : 0;
-  }
-  else if(res[0] < -eps_prec || res[0] > 1.0 + eps_prec || res[1] < -eps_prec ||
-          res[1] > 1.0 + eps_prec || 1 - res[0] - res[1] < -eps_prec ||
-          1 - res[0] - res[1] > 1.0 + eps_prec) {
-    // the line clearly does NOT intersect the triangle
-    return 0;
-  }
-  else {
-    // the intersection is not robust, try another triangle
-    return -10000;
-  }
-}
-
 bool GRegion::setOutwardOrientationMeshConstraint()
 {
-  // perform intersection check in normalized coordinates
-  SBoundingBox3d bbox = bounds();
-  double scaling = norm(SVector3(bbox.max(), bbox.min()));
-  if(!scaling) {
-    Msg::Warning("Bad scaling in GRegion::setOutwardOrientationMeshConstraint");
-    scaling = 1.;
+  meshAttributes.outwardOrientation = true;
+  // if the surfaces are meshed, reorient their meshes now; otherwise this is
+  // done once they are
+  return orientSurfaceMeshesOutwards();
+}
+
+// Orient the meshes of the surfaces bounding the volume so that their normals
+// point out of it, for any CAD kernel (the boundary signs of a volume of the
+// built-in kernel are those given by the user). Two surfaces sharing a curve
+// are consistently oriented if their mesh edges along the curve are traversed
+// in opposite directions; the orientation of each set of surfaces connected in
+// this way (a shell) is then given by the sign of the volume it encloses,
+// positive for the outer shell (the one enclosing the largest volume) and
+// negative for the shells around cavities.
+bool GRegion::orientSurfaceMeshesOutwards()
+{
+  std::vector<GFace *> f;
+  std::set<GFace *> seen;
+  for(auto gf : faces()) {
+    if(!seen.insert(gf).second) continue; // on both sides of the volume
+    if(!gf->getNumMeshElements()) return false;
+    f.push_back(gf);
   }
-  double rrr[6];
-  setRand(rrr);
+  if(f.empty()) return false;
 
-  std::vector<GFace *> f = faces();
-  auto it = f.begin();
-  while(it != f.end()) {
-    GFace *gf = (*it);
-    gf->buildSTLTriangulation();
-    if(gf->stl_triangles.size() < 3) {
-      Msg::Warning("No valid STL triangulation found for surface %d - skipping "
-                   "outward orientation constraint for volume %d",
-                   gf->tag(), tag());
-      return false;
-    }
-    int nb_intersect = 0;
-    for(std::size_t i = 0; i < gf->stl_triangles.size(); i += 3) {
-      SPoint3 p1 = gf->stl_vertices_xyz[gf->stl_triangles[i]];
-      SPoint3 p2 = gf->stl_vertices_xyz[gf->stl_triangles[i + 1]];
-      SPoint3 p3 = gf->stl_vertices_xyz[gf->stl_triangles[i + 2]];
-      double X[3] = {p1.x(), p2.x(), p3.x()};
-      double Y[3] = {p1.y(), p2.y(), p3.y()};
-      double Z[3] = {p1.z(), p2.z(), p3.z()};
-      for(int j = 0; j < 3; j++) {
-        X[j] /= scaling;
-        Y[j] /= scaling;
-        Z[j] /= scaling;
+  // the mesh edges on the bounding curves, with the surfaces they are in and
+  // their direction there
+  std::map<std::pair<std::size_t, std::size_t>,
+           std::vector<std::pair<int, int>>>
+    edges;
+  std::vector<double> flux(f.size(), 0.);
+  for(std::size_t i = 0; i < f.size(); i++) {
+    for(std::size_t k = 0; k < f[i]->getNumMeshElements(); k++) {
+      MElement *e = f[i]->getMeshElement(k);
+      for(int l = 0; l < e->getNumEdges(); l++) {
+        MEdge me = e->getEdge(l);
+        MVertex *v0 = me.getVertex(0), *v1 = me.getVertex(1);
+        if(v0->onWhat()->dim() > 1 || v1->onWhat()->dim() > 1) continue;
+        std::size_t n0 = v0->getNum(), n1 = v1->getNum();
+        edges[std::make_pair(std::min(n0, n1), std::max(n0, n1))].push_back(
+          std::make_pair((int)i, n0 < n1 ? 1 : -1));
       }
-      double P[3] = {(X[0] + X[1] + X[2]) / 3., (Y[0] + Y[1] + Y[2]) / 3.,
-                     (Z[0] + Z[1] + Z[2]) / 3.};
-      double v1[3] = {X[0] - X[1], Y[0] - Y[1], Z[0] - Z[1]};
-      double v2[3] = {X[2] - X[1], Y[2] - Y[1], Z[2] - Z[1]};
-      double N[3];
-      prodve(v1, v2, N);
-      norme(v1);
-      norme(v2);
-      norme(N);
-      N[0] += rrr[0] * v1[0] + rrr[1] * v2[0];
-      N[1] += rrr[2] * v1[1] + rrr[3] * v2[1];
-      N[2] += rrr[4] * v1[2] + rrr[5] * v2[2];
-      norme(N);
-      auto it_b = f.begin();
-      while(it_b != f.end()) {
-        GFace *gf_b = (*it_b);
-        gf_b->buildSTLTriangulation();
-        if(gf_b->stl_triangles.size() < 3) { return false; }
-        for(std::size_t i_b = 0; i_b < gf_b->stl_triangles.size(); i_b += 3) {
-          SPoint3 p1 = gf_b->stl_vertices_xyz[gf_b->stl_triangles[i_b]];
-          SPoint3 p2 = gf_b->stl_vertices_xyz[gf_b->stl_triangles[i_b + 1]];
-          SPoint3 p3 = gf_b->stl_vertices_xyz[gf_b->stl_triangles[i_b + 2]];
-          double X_b[3] = {p1.x(), p2.x(), p3.x()};
-          double Y_b[3] = {p1.y(), p2.y(), p3.y()};
-          double Z_b[3] = {p1.z(), p2.z(), p3.z()};
-          for(int j = 0; j < 3; j++) {
-            X_b[j] /= scaling;
-            Y_b[j] /= scaling;
-            Z_b[j] /= scaling;
-          }
-          if(!(std::abs(X[0] - X_b[0]) < 1e-12 &&
-               std::abs(X[1] - X_b[1]) < 1e-12 &&
-               std::abs(X[2] - X_b[2]) < 1e-12 &&
-               std::abs(Y[0] - Y_b[0]) < 1e-12 &&
-               std::abs(Y[1] - Y_b[1]) < 1e-12 &&
-               std::abs(Y[2] - Y_b[2]) < 1e-12 &&
-               std::abs(Z[0] - Z_b[0]) < 1e-12 &&
-               std::abs(Z[1] - Z_b[1]) < 1e-12 &&
-               std::abs(Z[2] - Z_b[2]) < 1e-12)) {
-            int inters = intersectLineTriangle(X_b, Y_b, Z_b, P, N, 1.e-9);
-            nb_intersect += inters;
-          }
-        }
-        ++it_b;
+      // the contribution of the element to the enclosed volume (the flux of
+      // x/3 through it), positive if its normal points out
+      SPoint3 a = e->getVertex(0)->point();
+      for(std::size_t l = 1; l + 1 < e->getNumPrimaryVertices(); l++) {
+        SVector3 b(a, e->getVertex(l)->point());
+        SVector3 c(a, e->getVertex(l + 1)->point());
+        flux[i] += dot(SVector3(a.x(), a.y(), a.z()), crossprod(b, c)) / 6.;
       }
-      Msg::Debug("Volume %d, surface %d: %d intersections", tag(), gf->tag(),
-                 nb_intersect);
-      if(nb_intersect >= 0)
-        break; // negative value means intersection is not "robust"
-    }
-
-    if(nb_intersect < 0) { setRand(rrr); }
-    else {
-      if(nb_intersect % 2 == 1) {
-        // odd nb of intersections: the normal points inside the region
-        gf->meshAttributes.reverseMesh = true;
-        Msg::Info("Setting reverse mesh attribute on surface %d", gf->tag());
-      }
-      else {
-        gf->meshAttributes.reverseMesh = false;
-      }
-#if defined(HAVE_MESH)
-      // if a mesh already exists, reorient it
-      orientMeshGFace o;
-      o(gf);
-#endif
-      ++it;
     }
   }
 
+  // the relative orientations of the surfaces sharing a curve that bounds no
+  // other surface of the volume
+  std::vector<std::map<int, int>> adj(f.size());
+  for(auto &kv : edges) {
+    if(kv.second.size() != 2) continue;
+    int i = kv.second[0].first, j = kv.second[1].first;
+    if(i == j) continue;
+    int rel = (kv.second[0].second == kv.second[1].second) ? -1 : 1;
+    adj[i].insert(std::make_pair(j, rel));
+    adj[j].insert(std::make_pair(i, rel));
+  }
+
+  // the shells, and the orientation of each surface with respect to the first
+  // surface of its shell
+  std::vector<int> ori(f.size(), 0), shell(f.size(), -1);
+  std::vector<double> volume;
+  for(std::size_t i = 0; i < f.size(); i++) {
+    if(ori[i]) continue;
+    int s = volume.size();
+    volume.push_back(0.);
+    ori[i] = 1;
+    shell[i] = s;
+    std::vector<int> stack(1, i);
+    while(!stack.empty()) {
+      int j = stack.back();
+      stack.pop_back();
+      volume[s] += ori[j] * flux[j];
+      for(auto &n : adj[j]) {
+        if(ori[n.first]) continue;
+        ori[n.first] = ori[j] * n.second;
+        shell[n.first] = s;
+        stack.push_back(n.first);
+      }
+    }
+  }
+  std::size_t outer = 0;
+  for(std::size_t s = 1; s < volume.size(); s++)
+    if(std::abs(volume[s]) > std::abs(volume[outer])) outer = s;
+
+  for(std::size_t i = 0; i < f.size(); i++) {
+    double v = volume[shell[i]] * (shell[i] == (int)outer ? 1 : -1);
+    if(ori[i] * v >= 0) continue;
+    for(std::size_t k = 0; k < f[i]->getNumMeshElements(); k++)
+      f[i]->getMeshElement(k)->reverse();
+    f[i]->meshAttributes.reverseMesh = !f[i]->meshAttributes.reverseMesh;
+    Msg::Debug("Reversed the mesh of surface %d to point out of volume %d",
+               f[i]->tag(), tag());
+  }
   return true;
 }
 

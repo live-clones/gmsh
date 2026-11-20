@@ -1950,8 +1950,12 @@ bool GenerateMesh(GModel *m, int ask, bool nested)
   // the geometrical entities and/or the user orientation constraints
   if(m->getMeshStatus() >= 1)
     std::for_each(m->firstEdge(), m->lastEdge(), orientMeshGEdge());
-  if(m->getMeshStatus() >= 2)
+  if(m->getMeshStatus() >= 2) {
     std::for_each(m->firstFace(), m->lastFace(), orientMeshGFace());
+    for(GRegion *gr : m->getRegions())
+      if(gr->meshAttributes.outwardOrientation)
+        gr->orientSurfaceMeshesOutwards();
+  }
 
   // Optimize quality of 3D tet mesh
   const double wallOptimize = TimeOfDay(), cpuOptimize = Cpu();

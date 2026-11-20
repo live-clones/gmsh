@@ -105,7 +105,22 @@ public:
     std::vector<GEntity *> entities(l_edges.begin(), l_edges.end());
     return entities;
   }
+  // the orientations of the bounding curves with respect to the
+  // parametrization of the surface (as used to mesh it in the parametric
+  // plane)
   virtual std::vector<int> const &edgeOrientations() const { return l_dirs; }
+  // the orientation (1 or -1) of the normal of the surface, and of its mesh,
+  // with respect to the normal of its parametrization (du x dv)
+  virtual int normalOrientation() const { return 1; }
+  // the orientations of the bounding curves with respect to the normal of the
+  // surface: the curves turn counterclockwise around the normal
+  std::vector<int> boundaryOrientations() const
+  {
+    std::vector<int> o(edgeOrientations());
+    if(normalOrientation() < 0)
+      for(auto &s : o) s = -s;
+    return o;
+  }
   void set(const std::vector<GEdge *> &f) { l_edges = f; }
   void setOrientations(const std::vector<int> &f) { l_dirs = f; }
   void setEdge(GEdge *const f, int const orientation)

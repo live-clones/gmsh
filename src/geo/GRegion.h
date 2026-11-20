@@ -155,6 +155,8 @@ public:
     int QuadTri;
     // global mesh size constraint for the volume
     double meshSize;
+    // orient the meshes of the bounding surfaces outwards
+    bool outwardOrientation;
   } meshAttributes;
 
   virtual double getMeshSize() const { return meshAttributes.meshSize; }
@@ -188,7 +190,11 @@ public:
 
   // set the reverseMesh constraint in the bounding surfaces so that the
   // boundary mesh has outward pointing normals, based on the STL triangulation
+  // set the constraint to orient the meshes of the bounding surfaces so that
+  // their normals point out of the volume, and orient them if they exist
   bool setOutwardOrientationMeshConstraint();
+  // orient the existing meshes of the bounding surfaces outwards
+  bool orientSurfaceMeshesOutwards();
 
   virtual bool isFullyDiscrete();
 };

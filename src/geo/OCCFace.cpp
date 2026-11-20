@@ -307,8 +307,7 @@ SVector3 OCCFace::normal(const SPoint2 &param) const
   SVector3 t2(dv.X(), dv.Y(), dv.Z());
   SVector3 n(crossprod(t1, t2));
   n.normalize();
-  if(_s.Orientation() == TopAbs_REVERSED) return n * (-1.);
-  return n;
+  return n * (double)normalOrientation();
 }
 
 std::pair<SVector3, SVector3> OCCFace::firstDer(const SPoint2 &param) const

@@ -619,7 +619,7 @@ void writeMSHEntities(FILE *fp, GModel *gm) // also used in MSH2
   }
   for(auto it = gm->firstFace(); it != gm->lastFace(); ++it) {
     std::vector<GEdge *> const &edges = (*it)->edges();
-    std::vector<int> const &ori = (*it)->edgeOrientations();
+    std::vector<int> const ori = (*it)->boundaryOrientations();
     fprintf(fp, "%d %d ", (*it)->tag(), (int)edges.size());
     std::vector<int> tags;
     for(auto ite = edges.begin(); ite != edges.end(); ite++)

@@ -3456,7 +3456,7 @@ static void writeMSH4Entities(
       std::vector<GEdge *> const &embEdges =
         version < 4.2 ? (*it)->embeddedEdges() : noEdges;
 
-      std::vector<int> const &ori = (*it)->edgeOrientations();
+      std::vector<int> const ori = (*it)->boundaryOrientations();
       std::size_t edgesSize = edges.size() + embEdges.size();
 
       int entityTag = (*it)->tag();
@@ -3622,7 +3622,7 @@ static void writeMSH4Entities(
       std::vector<GEdge *> const &embEdges =
         version < 4.2 ? (*it)->embeddedEdges() : noEdges;
 
-      std::vector<int> const &ori = (*it)->edgeOrientations();
+      std::vector<int> const ori = (*it)->boundaryOrientations();
       fprintf(fp, "%d ", (*it)->tag());
       if(partition) {
         partitionFace *pf = static_cast<partitionFace *>(*it);

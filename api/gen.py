@@ -161,7 +161,7 @@ model.add('removePhysicalName', doc, None, istring('name'))
 doc = '''Set the tag of the entity of dimension `dim' and tag `tag' to the new value `newTag'.'''
 model.add('setTag', doc, None, iint('dim'), iint('tag'), iint('newTag'))
 
-doc = '''Get the boundary of the model entities `dimTags', given as a vector of (dim, tag) pairs. Return in `outDimTags' the boundary of the individual entities (if `combined' is false) or the boundary of the combined geometrical shape formed by all input entities (if `combined' is true). Return tags multiplied by the sign of the boundary entity if `oriented' is true. Apply the boundary operator recursively down to dimension 0 (i.e. to points) if `recursive' is true.'''
+doc = '''Get the boundary of the model entities `dimTags', given as a vector of (dim, tag) pairs. Return in `outDimTags' the boundary of the individual entities (if `combined' is false) or the boundary of the combined geometrical shape formed by all input entities (if `combined' is true). Return tags multiplied by the sign of the boundary entity if `oriented' is true: for a surface, positive if the curve is oriented counterclockwise around the normal of the surface; for a volume, the sign of the surface in the volume (with the OpenCASCADE kernel, positive if the normal of the surface points out of the volume). Apply the boundary operator recursively down to dimension 0 (i.e. to points) if `recursive' is true.'''
 model.add('getBoundary', doc, None, ivectorpair('dimTags'), ovectorpair('outDimTags'), ibool('combined', 'true', 'True'), ibool('oriented', 'false', 'False'), ibool('recursive', 'false', 'False'))
 
 doc = '''Get the upward and downward adjacencies of the model entity of dimension `dim' and tag `tag'. The `upward' vector returns the tags of adjacent entities of dimension `dim' + 1; the `downward' vector returns the tags of adjacent entities of dimension `dim' - 1.'''
@@ -569,7 +569,7 @@ mesh.add('setSizeFromBoundary', doc, None, iint('dim'), iint('tag'), iint('val')
 doc = '''Set a compound meshing constraint on the model entities of dimension `dim' and tags `tags'. During meshing, compound entities are treated as a single discrete entity, which is automatically reparametrized.'''
 mesh.add('setCompound', doc, None, iint('dim'), ivectorint('tags'))
 
-doc = '''Set meshing constraints on the bounding surfaces of the volume of tag `tag' so that all surfaces are oriented with outward pointing normals; and if a mesh already exists, reorient it. Currently only available with the OpenCASCADE kernel, as it relies on the STL triangulation.'''
+doc = '''Set meshing constraints on the bounding surfaces of the volume of tag `tag' so that all surfaces are oriented with outward pointing normals; and if a mesh already exists, reorient it. The orientation is computed from the surface mesh, for any CAD kernel.'''
 mesh.add('setOutwardOrientation', doc, None, iint('tag'))
 
 doc = '''Remove all meshing constraints from the model entities `dimTags', given as a vector of (dim, tag) pairs. If `dimTags' is empty, remove all constraings.'''

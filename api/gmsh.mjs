@@ -936,8 +936,12 @@ export function wrapGmsh(Module) {
    * entities (if `combined' is false) or the boundary of the combined
    * geometrical shape formed by all input entities (if `combined' is true).
    * Return tags multiplied by the sign of the boundary entity if `oriented'
-   * is true. Apply the boundary operator recursively down to dimension 0
-   * (i.e. to points) if `recursive' is true.
+   * is true: for a surface, positive if the curve is oriented
+   * counterclockwise around the normal of the surface; for a volume, the sign
+   * of the surface in the volume (with the OpenCASCADE kernel, positive if
+   * the normal of the surface points out of the volume). Apply the boundary
+   * operator recursively down to dimension 0 (i.e. to points) if `recursive'
+   * is true.
    *
    * Return `outDimTags'.
    */
@@ -4232,8 +4236,8 @@ export function wrapGmsh(Module) {
    *
    * Set meshing constraints on the bounding surfaces of the volume of tag
    * `tag' so that all surfaces are oriented with outward pointing normals;
-   * and if a mesh already exists, reorient it. Currently only available with
-   * the OpenCASCADE kernel, as it relies on the STL triangulation.
+   * and if a mesh already exists, reorient it. The orientation is computed
+   * from the surface mesh, for any CAD kernel.
    */
   gmsh.model.mesh.setOutwardOrientation = function(tag) {
     const tmp = [];
