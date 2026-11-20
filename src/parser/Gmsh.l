@@ -21,15 +21,30 @@ char  *strsave(char *ptr);
 void   skipcomments(void);
 void   skipline(void);
 
+// reads one line, ended by "\n", "\r\n" or "\r" (the "\n" of a "\r\n" that
+// does not fit in the buffer is left for the next call, which counts the line)
 #define YY_INPUT(buf,result,max_size)					\
   {									\
     int c = '*', n;							\
     for(n = 0; n < (int) max_size && (c = fgetc(yyin)) != EOF &&        \
            c != '\n' && c != '\r'; ++n)                                 \
       buf[n] = (char) c;                                                \
-    if(c == '\n' || c == '\r') {                                        \
+    if(c == '\n') {                                                     \
       buf[n++] = (char) c;                                              \
-      if(c == '\n') yylineno++;                                         \
+      yylineno++;                                                       \
+    }                                                                   \
+    else if(c == '\r') {                                                \
+      buf[n++] = (char) c;                                              \
+      int c2 = fgetc(yyin);                                             \
+      if(c2 == '\n' && n < (int) max_size) {                            \
+        buf[n++] = (char) c2;                                           \
+        yylineno++;                                                     \
+      }                                                                 \
+      else {                                                            \
+        if(c2 != EOF) ungetc(c2, yyin);                                 \
+        else if(!ferror(yyin)) clearerr(yyin); /* line not parsed yet */\
+        if(c2 != '\n') yylineno++;                                      \
+      }                                                                 \
     }                                                                   \
     if(c == EOF && ferror(yyin))                                        \
       Msg::Error("Input in flex scanner failed");			\
@@ -427,7 +442,7 @@ char *strsave(char *ptr)
 void skipline()
 {
   int c;
-  while ((c = yyinput()) != '\n' && c != '\0') {}
+  while ((c = yyinput()) != '\n' && c != '\r' && c != '\0') {}
   // TODO: would be clever to skip the current buffer because whole line already
   // in it
 }
@@ -573,7 +588,7 @@ void skipTest(const char *skip, const char *until,
 
     for(i = 1; i < l; i++) {
       chars[i] = yyinput();
-      if(chars[i] == '\n') {
+      if(chars[i] == '\n' || chars[i] == '\r') {
         unput(chars[i]); chars[i] = 0; l = i; flag_EOL_EOF = 1;
         break;
       }
