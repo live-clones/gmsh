@@ -552,6 +552,7 @@ double opt_mesh_partition_metis_refinement_algorithm(OPT_ARGS_NUM);
 double opt_mesh_partition_metis_max_load_imbalance(OPT_ARGS_NUM);
 double opt_mesh_partition_metis_objective(OPT_ARGS_NUM);
 double opt_mesh_partition_metis_min_conn(OPT_ARGS_NUM);
+double opt_mesh_partition_metis_contiguous(OPT_ARGS_NUM);
 double opt_mesh_partition_hex_weight(OPT_ARGS_NUM);
 double opt_mesh_partition_pri_weight(OPT_ARGS_NUM);
 double opt_mesh_partition_pyr_weight(OPT_ARGS_NUM);

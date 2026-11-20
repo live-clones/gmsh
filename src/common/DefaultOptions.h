@@ -1566,6 +1566,9 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "MetisAlgorithm" , opt_mesh_partition_metis_algorithm, 2. ,
     "METIS partitioning algorithm 'ptype' (1: Recursive, 2: K-way, 3: Multithreaded "
     "k-way with mt-metis, if available)" },
+  { F|O, "MetisContiguous" , opt_mesh_partition_metis_contiguous, 0. ,
+    "Make METIS create contiguous partitions with the K-way algorithm, if the "
+    "mesh is connected ('contig')" },
   { F|O, "MetisEdgeMatching" , opt_mesh_partition_metis_edge_matching, 2. ,
     "METIS edge matching type 'ctype' (1: Random, 2: Sorted Heavy-Edge)" },
   { F|O, "MetisMaxLoadImbalance" , opt_mesh_partition_metis_max_load_imbalance, -1. ,

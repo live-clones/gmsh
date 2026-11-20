@@ -95,7 +95,7 @@ struct contextMeshOptions {
   int partitionPriWeight, partitionPyrWeight, partitionTrihWeight;
   int partitionOldStyleMsh2, partitionConvertMsh2;
   int metisAlgorithm, metisEdgeMatching, metisRefinementAlgorithm;
-  int metisObjective, metisMinConn;
+  int metisObjective, metisMinConn, metisContiguous;
   double metisMaxLoadImbalance;
   int overlapLayers;
   // mesh display

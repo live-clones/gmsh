@@ -77,7 +77,7 @@ HDF5 1.14.6, CGNS 4.5.2 and MED 6.0.1; bug fixes.
   (replacing the adapted .pvtu export dialog); Mesh.SaveViews (to save views
   with the mesh in MSH/VTU/MED), Mesh.FlatRefineDelaunay2D/3D,
   Mesh.FlatOptimize3D, Negative Mesh.OptimizePyramids places the pyramid apex
-  along the face normal, Mesh.PartitionSplitLocalBrep,
+  along the face normal, Mesh.PartitionSplitLocalBrep, Mesh.MetisContiguous,
   Mesh.CreateEdges/CreateFaces, Mesh.NbEdges/NbFaces/NbPolygons/NbPolyhedra,
   View.Color.Polygons/Polyhedra, Mesh.Algorithm3D = 11 (or -algo pdel3d) for the
   parallel Delaunay algorithm, Mesh.OptimizeReconnectionThreshold/Points/

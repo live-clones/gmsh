@@ -608,6 +608,27 @@ static int makeGraph(GModel *model, Graph &graph, int selectDim)
 
 // Make lower-dim elements follow the bulk they bound, adopting a higher-dim
 // neighbor's partition; sweeps codim 1..3, so the highest-dimensional one wins.
+// whether a graph in CSR form is connected
+static bool isConnected(idx_t n, const idx_t *xadj, const idx_t *adjncy)
+{
+  if(n < 2) return true;
+  std::vector<char> seen(n, 0);
+  std::vector<idx_t> stack(1, 0);
+  seen[0] = 1;
+  idx_t numSeen = 1;
+  while(!stack.empty()) {
+    idx_t i = stack.back();
+    stack.pop_back();
+    for(idx_t k = xadj[i]; k < xadj[i + 1]; k++) {
+      if(seen[adjncy[k]]) continue;
+      seen[adjncy[k]] = 1;
+      numSeen++;
+      stack.push_back(adjncy[k]);
+    }
+  }
+  return numSeen == n;
+}
+
 static void correctTopology(const Graph &graph, std::vector<idx_t> &epart)
 {
   for(int codim : {1, 2, 3}) {
@@ -991,6 +1012,15 @@ static int partitionGraph(Graph &graph, bool verbose,
       if(verbose)
         Msg::Info("Periodic mesh: partitioning the mesh glued along the "
                   "periodic entities");
+    }
+    // contiguous partitions with K-way, if the graph is connected (METIS stops
+    // with an error otherwise)
+    if(CTX::instance()->mesh.metisContiguous &&
+       CTX::instance()->mesh.metisAlgorithm == 2) {
+      if(isConnected(ne, xadj, adjncy))
+        metisOptions[METIS_OPTION_CONTIG] = 1;
+      else if(verbose)
+        Msg::Info("Mesh not connected: partitions may not be contiguous");
     }
     std::vector<idx_t> epart(ne);
 

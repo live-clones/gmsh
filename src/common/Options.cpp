@@ -5953,6 +5953,12 @@ double opt_mesh_partition_metis_min_conn(OPT_ARGS_NUM)
   return CTX::instance()->mesh.metisMinConn;
 }
 
+double opt_mesh_partition_metis_contiguous(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.metisContiguous = (int)val;
+  return CTX::instance()->mesh.metisContiguous;
+}
+
 double opt_mesh_clip(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.clip = (int)val;

@@ -451,6 +451,11 @@ METIS partitioning algorithm 'ptype' (1: Recursive, 2: K-way, 3: Multithreaded k
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.MetisContiguous
+Make METIS create contiguous partitions with the K-way algorithm, if the mesh is connected ('contig')@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.MetisEdgeMatching
 METIS edge matching type 'ctype' (1: Random, 2: Sorted Heavy-Edge)@*
 Default value: @code{2}@*
