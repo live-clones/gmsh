@@ -1665,6 +1665,14 @@ bool OCC_Internals::addWire(int &tag, const std::vector<int> &curveTags,
       Msg::Error("Curve loop is not closed");
       return false;
     }
+    if(CTX::instance()->geom.occAutoFix) {
+      // order and orient the curves head to tail, so that fixing a surface
+      // built on the wire does not replace it by a new one
+      ShapeFix_Wire fix;
+      fix.Load(wire);
+      fix.FixReorder();
+      wire = fix.Wire();
+    }
     if(tag < 0) tag = getMaxTag(-1) + 1;
     if(reversed) {
       Msg::Debug("Reversing wire %d because its first curve was provided "
