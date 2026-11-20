@@ -4135,6 +4135,15 @@ bool OCC_Internals::booleanOperator(
     return false;
   }
 
+  // a union or the fragments of shapes cannot be empty: OpenCASCADE sometimes
+  // returns an empty shape without reporting an error; keep the arguments
+  if((op == OCC_Internals::Union || op == OCC_Internals::Fragments) &&
+     (result.IsNull() || !TopExp_Explorer(result, TopAbs_VERTEX).More())) {
+    Msg::Error("%s failed - OpenCASCADE returned an empty shape",
+               op == OCC_Internals::Union ? "Union" : "Fragments");
+    return false;
+  }
+
   std::vector<std::pair<int, int>> inDimTags;
   inDimTags.insert(inDimTags.end(), objectDimTags.begin(), objectDimTags.end());
   inDimTags.insert(inDimTags.end(), toolDimTags.begin(), toolDimTags.end());
