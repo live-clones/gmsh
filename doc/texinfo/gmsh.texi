@@ -5421,7 +5421,21 @@ each block lists the tags of the elements of partition
 @code{partitionTag} that are ghosts in partition @code{ghostPartitionTag}
 (an element that is a ghost in several partitions appears in several
 blocks). @code{numGhostElements} is the total number of element tags in
-the blocks.
+the blocks. The ghost elements of a partition are the elements of the
+other partitions, of all dimensions, that share a node with its elements
+(@code{Mesh.PartitionCreateGhostCells}); the partition of an element is
+that of its partition entity (the first one for an entity of several
+partitions). They make it possible to read some partitions of a mesh
+with the elements of the other partitions that touch them, without
+reading the whole file (see @code{gmsh/model/mesh/merge} in the API). In
+the file of a single partition (@code{Mesh.PartitionSplitMeshFiles}), the
+ghost elements of the partition are saved in their partition entities,
+with their nodes, and @code{$GhostElements} only has the blocks of the
+partition.
+Gmsh does not write ghost entities (@code{numGhostEntities} in
+@code{$PartitionedEntities} is 0); in files of older versions, they hold
+the ghost elements of each partition (of the highest dimension only),
+also given in @code{$GhostElements}.
 
 In the post-processing sections (@code{$NodeData}, @code{$ElementData},
 @code{$ElementNodeData}), the records (the tags of the nodes or elements

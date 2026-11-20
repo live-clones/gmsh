@@ -877,15 +877,11 @@ int GMSH_NonConformalRefinementPlugin::run()
   double t0 = TimeOfDay();
 
   // the elements with hanging nodes of a previous refinement cannot be
-  // refined again, and ghost cells are elements of other entities
+  // refined again, and ghost cells would refer to elements replaced
   for(auto gf : m->getFaces()) {
     if(gf->polygons.size()) {
       Msg::Error("Plugin(NonConformalRefinement) does not refine meshes that "
                  "already have polygons or polyhedra");
-      return 0;
-    }
-    if(gf->geomType() == GEntity::GhostSurface) {
-      Msg::Error("Plugin(NonConformalRefinement) does not handle ghost cells");
       return 0;
     }
   }
@@ -895,10 +891,10 @@ int GMSH_NonConformalRefinementPlugin::run()
                  "already have polygons or polyhedra");
       return 0;
     }
-    if(gr->geomType() == GEntity::GhostVolume) {
-      Msg::Error("Plugin(NonConformalRefinement) does not handle ghost cells");
-      return 0;
-    }
+  }
+  if(!m->getGhostCells().empty()) {
+    Msg::Error("Plugin(NonConformalRefinement) does not handle ghost cells");
+    return 0;
   }
 
   int dim = 2;

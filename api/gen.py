@@ -275,6 +275,9 @@ mesh.add('generate', doc, None, iint('dim', '3'))
 doc = '''Partition the mesh of the current model into `numPart' partitions. Optionally, `elementTags' and `partitions' can be provided to specify the partition of each element explicitly.'''
 mesh.add('partition', doc, None, iint('numPart'), ivectorsize('elementTags', 'std::vector<std::size_t>()','[]', '[]'), ivectorint('partitions', 'std::vector<int>()','[]', '[]'))
 
+doc = '''Merge the mesh of the MSH file `fileName' into the current model. If `partitions' is not empty, only read the given partitions of a partitioned mesh (in an MSH 4 file): their elements, the nodes of these elements and the partition entities that contain them (with the physical groups of their parent entities); and, if `ghosts' is set, their ghost cells, i.e. the elements of the other partitions, of all dimensions, that share a node with them (see the `Mesh.PartitionCreateGhostCells' option; if the file has no ghost cells, a warning is issued and the whole mesh is read). All the entities of the file are created, and the elements read keep their partition. In a partial read, the sections of the file other than the entities, the nodes, the elements, the periodicity and the ghost elements are skipped, and the periodic node correspondences only include the nodes read. Post-processing data in the file is not read.'''
+mesh.add('merge', doc, None, istring('fileName'), ivectorint('partitions', 'std::vector<int>()', '[]', '[]'), ibool('ghosts', 'false', 'False'))
+
 doc = '''Generate node-based overlaps (of highest dimension) for all partitions, with a number of layers equal to `layers'. The overlaps of the bounding entities (i.e. "boundary overlaps") and the inner boundaries of the overlaps (i.e. "overlap boundaries") are always built: the `createBoundaries' flag is currently ignored. Return the index of the newly created overlap group, which can be passed as `overlapIndex' to the query functions (indices are assigned sequentially from 0, so the index is also the position of the group).'''
 mesh.add('createOverlaps', doc, oint, iint('layers', '1'), ibool('createBoundaries', 'true', 'True'))
 
@@ -512,8 +515,8 @@ mesh.add('getElementFaceNodes', doc, None, iint('elementType'), ovectorsize('nod
 doc = '''Get the nodes on the faces with `faceType' primary nodes (3 for triangular faces, 4 for quadrangular faces, etc.) of all elements of type `elementType' classified on the entity of tag `tag'. `nodeTags' contains the node tags of these faces for all elements: [e1f1n1, ..., e1f1nN, e1f2n1, ...], with the same number of nodes N for each face. Faces are returned for each element in their canonical order, with elements in the same order as in `getElements' and `getElementsByType'. If `primary' is set, only the primary (corner) nodes of the faces are returned. If `tag' < 0, get the face nodes for all entities. If `numTasks' > 1, only compute and return the part of the data indexed by `task' (for C++ only; output vector must be preallocated).'''
 mesh.add('getElementFaceNodesByType', doc, None, iint('elementType'), iint('faceType'), ovectorsize('nodeTags'), iint('tag', '-1'), ibool('primary', 'false', 'False'), isize('task', '0'), isize('numTasks', '1'))
 
-doc = '''Get the ghost elements `elementTags' and their associated `partitions' stored in the ghost entity of dimension `dim' and tag `tag'.'''
-mesh.add('getGhostElements', doc, None, iint('dim'), iint('tag'), ovectorsize('elementTags'), ovectorint('partitions'))
+doc = '''Get the tags `elementTags' of the ghost elements of the partition `partition', i.e. of the elements of other partitions that share a node with its elements (see the `Mesh.PartitionCreateGhostCells' option), and the partitions `partitions' they belong to (0 for an element of an entity shared by several partitions).'''
+mesh.add('getGhostElements', doc, None, iint('partition'), ovectorsize('elementTags'), ovectorint('partitions'))
 
 doc = '''Set a mesh size constraint on the model entities `dimTags', given as a vector of (dim, tag) pairs. Currently only entities of dimension 0 (points) are handled.'''
 mesh.add('setSize', doc, None, ivectorpair('dimTags'), idouble('size'))

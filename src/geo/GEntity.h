@@ -129,9 +129,6 @@ public:
     PartitionCurve,
     PartitionSurface,
     PartitionVolume,
-    GhostCurve,
-    GhostSurface,
-    GhostVolume,
     OverlapSurface,
     OverlapVolume,
   };
@@ -179,9 +176,6 @@ public:
       "Partition curve",
       "Partition surface",
       "Partition volume",
-      "Ghost curve",
-      "Ghost surface",
-      "Ghost volume",
       "Overlap surface",
       "Overlap volume"};
     unsigned int type = (unsigned int)geomType();

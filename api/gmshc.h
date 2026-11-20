@@ -624,6 +624,24 @@ GMSH_API void gmshModelMeshPartition(const int numPart,
                                      const int * partitions, const size_t partitions_n,
                                      int * ierr);
 
+/* Merge the mesh of the MSH file `fileName' into the current model. If
+ * `partitions' is not empty, only read the given partitions of a partitioned
+ * mesh (in an MSH 4 file): their elements, the nodes of these elements and
+ * the partition entities that contain them (with the physical groups of their
+ * parent entities); and, if `ghosts' is set, their ghost cells, i.e. the
+ * elements of the other partitions, of all dimensions, that share a node with
+ * them (see the `Mesh.PartitionCreateGhostCells' option; if the file has no
+ * ghost cells, a warning is issued and the whole mesh is read). All the
+ * entities of the file are created, and the elements read keep their
+ * partition. In a partial read, the sections of the file other than the
+ * entities, the nodes, the elements, the periodicity and the ghost elements
+ * are skipped, and the periodic node correspondences only include the nodes
+ * read. Post-processing data in the file is not read. */
+GMSH_API void gmshModelMeshMerge(const char * fileName,
+                                 const int * partitions, const size_t partitions_n,
+                                 const int ghosts,
+                                 int * ierr);
+
 /* Generate node-based overlaps (of highest dimension) for all partitions,
  * with a number of layers equal to `layers'. The overlaps of the bounding
  * entities (i.e. "boundary overlaps") and the inner boundaries of the
@@ -1610,10 +1628,12 @@ GMSH_API void gmshModelMeshGetElementFaceNodesByType(const int elementType,
                                                      const size_t numTasks,
                                                      int * ierr);
 
-/* Get the ghost elements `elementTags' and their associated `partitions'
- * stored in the ghost entity of dimension `dim' and tag `tag'. */
-GMSH_API void gmshModelMeshGetGhostElements(const int dim,
-                                            const int tag,
+/* Get the tags `elementTags' of the ghost elements of the partition
+ * `partition', i.e. of the elements of other partitions that share a node
+ * with its elements (see the `Mesh.PartitionCreateGhostCells' option), and
+ * the partitions `partitions' they belong to (0 for an element of an entity
+ * shared by several partitions). */
+GMSH_API void gmshModelMeshGetGhostElements(const int partition,
                                             size_t ** elementTags, size_t * elementTags_n,
                                             int ** partitions, size_t * partitions_n,
                                             int * ierr);

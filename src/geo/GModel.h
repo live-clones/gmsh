@@ -87,11 +87,18 @@ private:
   int _writePartitionedMSH3(const std::string &baseName, double version,
                             bool binary, bool saveAll, bool saveParametric,
                             double scalingFactor);
-  int _readMSH4(const std::string &name);
-  int _writeMSH4(const std::string &name, double version, bool binary,
-                 bool saveAll, bool saveParametric, double scalingFactor,
-                 bool append, const std::vector<int> &partitionsToSave = {},
-                 std::map<GEntity *, SBoundingBox3d> *entityBounds = nullptr);
+  int _readMSH4(const std::string &name,
+                const std::vector<int> &partitions = std::vector<int>(),
+                bool ghosts = false, bool meshOnly = false);
+  // (ghostCells: the ghost cells of each partition, by the dimension and tag
+  // of the partition entity of their elements, if already found)
+  int _writeMSH4(
+    const std::string &name, double version, bool binary, bool saveAll,
+    bool saveParametric, double scalingFactor, bool append,
+    const std::vector<int> &partitionsToSave = {},
+    std::map<GEntity *, SBoundingBox3d> *entityBounds = nullptr,
+    const std::vector<std::map<std::pair<int, int>, std::vector<MElement *>>>
+      *ghostCells = nullptr);
   int _writePartitionedMSH4(const std::string &baseName, double version,
                             bool binary, bool saveAll, bool saveParametric,
                             double scalingFactor);
@@ -122,9 +129,9 @@ protected:
   TagMap<std::pair<MElement *, int>> _elementMapCache;
   std::map<int, int> _elementIndexCache;
 
-  // ghost cell information (stores partitions for each element acting
-  // as a ghost cell)
-  // /!\ Use only for compatibility with mesh format msh2 and msh3
+  // the ghost cells of a partitioned mesh: for each element that is a ghost in
+  // other partitions (i.e. that shares a node with their elements), these
+  // partitions
   std::multimap<MElement *, short> _ghostCells;
 
   // an octree for fast mesh element lookup
@@ -760,7 +767,7 @@ public:
   // create partition overlaps
   int createOverlaps(int layers, bool createBoundaries=true);
 
-  // /!\ Use only for compatibility with mesh format msh2 and msh3
+  // the ghost cells (see _ghostCells)
   std::multimap<MElement *, short> &getGhostCells() { return _ghostCells; }
   void addGhostCells(MElement *elm, short partition)
   {
@@ -934,7 +941,13 @@ public:
   int writeParasolidSTEP(const std::string &name);
 
   // Gmsh mesh file format
-  int readMSH(const std::string &name);
+  // read (merge) an MSH file; for MSH4, if partitions is not empty, only
+  // these partitions of a partitioned mesh, with their ghost cells if ghosts is
+  // set (the elements of the other partitions that share a node with them); if
+  // meshOnly is set, the post-processing data is not read
+  int readMSH(const std::string &name,
+              const std::vector<int> &partitions = std::vector<int>(),
+              bool ghosts = false, bool meshOnly = false);
   int writeMSH(const std::string &name, double version = 2.2,
                bool binary = false, bool saveAll = false,
                bool saveParametric = false, double scalingFactor = 1.0,

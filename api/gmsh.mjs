@@ -1795,6 +1795,36 @@ export function wrapGmsh(Module) {
   };
 
   /**
+   * gmsh.model.mesh.merge(fileName, partitions = [], ghosts = false)
+   *
+   * Merge the mesh of the MSH file `fileName' into the current model. If
+   * `partitions' is not empty, only read the given partitions of a
+   * partitioned mesh (in an MSH 4 file): their elements, the nodes of these
+   * elements and the partition entities that contain them (with the physical
+   * groups of their parent entities); and, if `ghosts' is set, their ghost
+   * cells, i.e. the elements of the other partitions, of all dimensions, that
+   * share a node with them (see the `Mesh.PartitionCreateGhostCells' option;
+   * if the file has no ghost cells, a warning is issued and the whole mesh is
+   * read). All the entities of the file are created, and the elements read
+   * keep their partition. In a partial read, the sections of the file other
+   * than the entities, the nodes, the elements, the periodicity and the ghost
+   * elements are skipped, and the periodic node correspondences only include
+   * the nodes read. Post-processing data in the file is not read.
+   */
+  gmsh.model.mesh.merge = function(fileName, partitions = [], ghosts = false) {
+    const tmp = [];
+    try {
+      const api_fileName_ = _istring(fileName, tmp);
+      const [api_partitions_, api_partitions_n] = _ivector(partitions, 'int', tmp);
+      M._gmshModelMeshMerge(_P(api_fileName_), _P(api_partitions_), _S(api_partitions_n), ghosts ? 1 : 0, _P(ierr));
+      _check();
+    }
+    finally {
+      tmp.forEach((p) => M._free(p));
+    }
+  };
+
+  /**
    * gmsh.model.mesh.createOverlaps(layers = 1, createBoundaries = true)
    *
    * Generate node-based overlaps (of highest dimension) for all partitions,
@@ -3819,19 +3849,22 @@ export function wrapGmsh(Module) {
   };
 
   /**
-   * gmsh.model.mesh.getGhostElements(dim, tag)
+   * gmsh.model.mesh.getGhostElements(partition)
    *
-   * Get the ghost elements `elementTags' and their associated `partitions'
-   * stored in the ghost entity of dimension `dim' and tag `tag'.
+   * Get the tags `elementTags' of the ghost elements of the partition
+   * `partition', i.e. of the elements of other partitions that share a node
+   * with its elements (see the `Mesh.PartitionCreateGhostCells' option), and
+   * the partitions `partitions' they belong to (0 for an element of an entity
+   * shared by several partitions).
    *
    * Return `elementTags', `partitions'.
    */
-  gmsh.model.mesh.getGhostElements = function(dim, tag) {
+  gmsh.model.mesh.getGhostElements = function(partition) {
     const tmp = [];
     try {
       const api_elementTags_ = _alloc(2 * _PS, tmp);
       const api_partitions_ = _alloc(2 * _PS, tmp);
-      M._gmshModelMeshGetGhostElements(dim, tag, _P(api_elementTags_), _P(api_elementTags_ + _PS), _P(api_partitions_), _P(api_partitions_ + _PS), _P(ierr));
+      M._gmshModelMeshGetGhostElements(partition, _P(api_elementTags_), _P(api_elementTags_ + _PS), _P(api_partitions_), _P(api_partitions_ + _PS), _P(ierr));
       _check();
       return [
         _ovector(api_elementTags_, 'size'),

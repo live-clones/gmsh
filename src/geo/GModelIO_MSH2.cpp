@@ -27,9 +27,6 @@
 #include "GmshMessage.h"
 #include "Context.h"
 #include "OS.h"
-#include "ghostEdge.h"
-#include "ghostFace.h"
-#include "ghostRegion.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
@@ -726,12 +723,6 @@ static void writeElementMSH(FILE *fp, GModel *model, GEntity *ge, T *ele,
      ge->getParentEntity()->dim() > ge->dim())
     return; // ignore partition boundaries
 
-  if(CTX::instance()->mesh.partitionOldStyleMsh2 &&
-     (ge->geomType() == GEntity::GhostCurve ||
-      ge->geomType() == GEntity::GhostSurface ||
-      ge->geomType() == GEntity::GhostVolume))
-    return; // ignore ghost entities
-
   std::vector<short> ghosts;
   if(model->getGhostCells().size()) {
     auto itp = model->getGhostCells().equal_range(ele);
@@ -764,12 +755,6 @@ static void writeElementsMSH(FILE *fp, GModel *model, GEntity *ge,
   if(CTX::instance()->mesh.partitionOldStyleMsh2 && ge->getParentEntity() &&
      ge->getParentEntity()->dim() > ge->dim())
     return; // ignore partition boundaries
-
-  if(CTX::instance()->mesh.partitionOldStyleMsh2 &&
-     (ge->geomType() == GEntity::GhostCurve ||
-      ge->geomType() == GEntity::GhostSurface ||
-      ge->geomType() == GEntity::GhostVolume))
-    return; // ignore ghost entities
 
   // Hack to save each partition as a separate physical entity
   if(saveSinglePartition < 0) {
@@ -811,12 +796,6 @@ static int getNumElementsMSH(GEntity *ge, bool saveAll, int saveSinglePartition)
   if(CTX::instance()->mesh.partitionOldStyleMsh2 && ge->getParentEntity() &&
      ge->getParentEntity()->dim() > ge->dim())
     return 0; // ignore partition boundaries
-
-  if(CTX::instance()->mesh.partitionOldStyleMsh2 &&
-     (ge->geomType() == GEntity::GhostCurve ||
-      ge->geomType() == GEntity::GhostSurface ||
-      ge->geomType() == GEntity::GhostVolume))
-    return 0; // ignore ghost entities
 
   int n = 0, p = saveAll ? 1 : ge->physicals.size();
 

@@ -1009,13 +1009,10 @@ int GMSH_DualMeshPlugin::run()
         return 0;
       }
     }
-    // (ghost cells are elements of other entities)
-    if(ge->geomType() == GEntity::GhostCurve ||
-       ge->geomType() == GEntity::GhostSurface ||
-       ge->geomType() == GEntity::GhostVolume) {
-      Msg::Error("Plugin(DualMesh) does not handle ghost cells");
-      return 0;
-    }
+  }
+  if(!m->getGhostCells().empty()) {
+    Msg::Error("Plugin(DualMesh) does not handle ghost cells");
+    return 0;
   }
 
   int dim = 0;

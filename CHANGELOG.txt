@@ -14,9 +14,11 @@ handling); improved performance of mesh partitioning pipeline and added support
 for partition overlaps; new ability to save only the local partitioned Brep;
 improved performance of high-order element generation (now also for prisms of
 any order) and adaptive view visualization (with target error relative to
-range); Thread-safe MathEval/MathEvalAniso/Param mesh size fields; new MSH4.2
-revision of the MSH file format with support for embedded entities in $Entities
-and $PartitionedEntities, efficient blocked $NodeData, $ElementData,
+range); new partial reading of partitioned MSH4 files, with ghost cells of all
+dimensions (ghost entities were removed); Thread-safe
+MathEval/MathEvalAniso/Param mesh size fields; new MSH4.2 revision of the MSH
+file format with support for embedded entities in $Entities and
+$PartitionedEntities, efficient blocked $NodeData, $ElementData,
 $ElementNodeData and $GhostElements sections, and support for $Edges and $Faces
 sections (see the reference manual for detailed changes); new polytope
 implementation with support in the API and MSH4.2 format, which replaces the old
@@ -51,7 +53,7 @@ HDF5 1.14.6, CGNS 4.5.2 and MED 6.0.1; bug fixes.
   mesh/setPolytopeSimplices, mesh/createPolytopeSimplices,
   mesh/getFacesByType, mesh/getElementFaceNodesByType,
   mesh/setMetricCallback, mesh/removeMetricCallback,
-  algorithm/refineTetrahedra, plugin/load, fltk/pick
+  algorithm/refineTetrahedra, plugin/load, fltk/pick, mesh/merge
 
 * Incompatible API changes: new optional arguments to mesh/optimize and
   mesh/relocateNodes; new arguments to mesh/classifySurfaces; new and/or
@@ -66,7 +68,7 @@ HDF5 1.14.6, CGNS 4.5.2 and MED 6.0.1; bug fixes.
   mesh/getBasisFunctionsOrientationForElement (true by default: the elements
   touching periodic curves and surfaces are oriented with the tags of the master
   nodes, so that mesh/getPeriodicKeys maps the keys of all the hierarchical
-  function spaces one-to-one)
+  function spaces one-to-one); mesh/getGhostElements takes a partition
 
 * New or modified options: Geometry/Mesh/View.Opacity/OpacityMode,
   General.Shaders, General.Brightness, General.GraphicsCacheSize,

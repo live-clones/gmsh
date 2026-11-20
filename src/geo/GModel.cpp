@@ -222,6 +222,7 @@ void GModel::destroy(bool keepName)
 
   // The overlap managers point into the entities deleted above
   clearOverlaps();
+  _ghostCells.clear();
 
   destroyMeshCaches();
 
@@ -271,6 +272,7 @@ void GModel::deleteMesh()
   for(auto it = firstEdge(); it != lastEdge(); ++it) (*it)->deleteMesh();
   for(auto it = firstVertex(); it != lastVertex(); ++it) (*it)->deleteMesh();
   destroyMeshCaches();
+  _ghostCells.clear();
   _meshEdges.clear();
   _meshFaces.clear();
   _currentMeshEntity = nullptr;
@@ -576,10 +578,7 @@ void GModel::_forgetParent(GEntity *e)
   case GEntity::PartitionPoint:
   case GEntity::PartitionCurve:
   case GEntity::PartitionSurface:
-  case GEntity::PartitionVolume:
-  case GEntity::GhostCurve:
-  case GEntity::GhostSurface:
-  case GEntity::GhostVolume: return;
+  case GEntity::PartitionVolume: return;
   default: break;
   }
   for(GVertex *v : vertices)

@@ -1865,6 +1865,37 @@ function partition(numPart, elementTags = Csize_t[], partitions = Cint[])
 end
 
 """
+    gmsh.model.mesh.merge(fileName, partitions = Cint[], ghosts = false)
+
+Merge the mesh of the MSH file `fileName` into the current model. If
+`partitions` is not empty, only read the given partitions of a partitioned mesh
+(in an MSH 4 file): their elements, the nodes of these elements and the
+partition entities that contain them (with the physical groups of their parent
+entities); and, if `ghosts` is set, their ghost cells, i.e. the elements of the
+other partitions, of all dimensions, that share a node with them (see the
+`Mesh.PartitionCreateGhostCells` option; if the file has no ghost cells, a
+warning is issued and the whole mesh is read). All the entities of the file are
+created, and the elements read keep their partition. In a partial read, the
+sections of the file other than the entities, the nodes, the elements, the
+periodicity and the ghost elements are skipped, and the periodic node
+correspondences only include the nodes read. Post-processing data in the file is
+not read.
+
+Types:
+ - `fileName`: string
+ - `partitions`: vector of integers
+ - `ghosts`: boolean
+"""
+function merge(fileName, partitions = Cint[], ghosts = false)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshMerge, gmsh.lib), Cvoid,
+          (Ptr{Cchar}, Ptr{Cint}, Csize_t, Cint, Ptr{Cint}),
+          fileName, convert(Vector{Cint}, partitions), length(partitions), ghosts, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+
+"""
     gmsh.model.mesh.createOverlaps(layers = 1, createBoundaries = true)
 
 Generate node-based overlaps (of highest dimension) for all partitions, with a
@@ -4177,28 +4208,30 @@ end
 const get_element_face_nodes_by_type = getElementFaceNodesByType
 
 """
-    gmsh.model.mesh.getGhostElements(dim, tag)
+    gmsh.model.mesh.getGhostElements(partition)
 
-Get the ghost elements `elementTags` and their associated `partitions` stored in
-the ghost entity of dimension `dim` and tag `tag`.
+Get the tags `elementTags` of the ghost elements of the partition `partition`,
+i.e. of the elements of other partitions that share a node with its elements
+(see the `Mesh.PartitionCreateGhostCells` option), and the partitions
+`partitions` they belong to (0 for an element of an entity shared by several
+partitions).
 
 Return `elementTags`, `partitions`.
 
 Types:
- - `dim`: integer
- - `tag`: integer
+ - `partition`: integer
  - `elementTags`: vector of sizes
  - `partitions`: vector of integers
 """
-function getGhostElements(dim, tag)
+function getGhostElements(partition)
     api_elementTags_ = Ref{Ptr{Csize_t}}()
     api_elementTags_n_ = Ref{Csize_t}()
     api_partitions_ = Ref{Ptr{Cint}}()
     api_partitions_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetGhostElements, gmsh.lib), Cvoid,
-          (Cint, Cint, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
-          dim, tag, api_elementTags_, api_elementTags_n_, api_partitions_, api_partitions_n_, ierr)
+          (Cint, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          partition, api_elementTags_, api_elementTags_n_, api_partitions_, api_partitions_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     elementTags = unsafe_wrap(Array, api_elementTags_[], api_elementTags_n_[], own = true)
     partitions = unsafe_wrap(Array, api_partitions_[], api_partitions_n_[], own = true)

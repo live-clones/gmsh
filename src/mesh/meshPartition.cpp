@@ -60,11 +60,9 @@ typedef std::vector<std::pair<MElement *, int>> elementPartitionList;
 #include "partitionFace.h"
 #include "partitionEdge.h"
 #include "partitionVertex.h"
-#include "ghostRegion.h"
-#include "ghostFace.h"
-#include "ghostEdge.h"
 #include "MFaceHash.h"
 #include "MEdgeHash.h"
+#include "MLine.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
 #include "MTetrahedron.h"
@@ -85,8 +83,6 @@ extern "C" {
 // Graph of the mesh for partitioning purposes.
 class Graph {
 private:
-  // The GModel
-  GModel *_model;
   // The number of partitions
   std::size_t _nparts;
   // The number of elements
@@ -126,8 +122,7 @@ private:
 
 public:
   Graph(GModel *model)
-    : _model(model), _nparts(0), _ne(0), _nn(0), _dim(0), _vwgt(nullptr),
-      _trackVertex(false)
+    : _nparts(0), _ne(0), _nn(0), _dim(0), _vwgt(nullptr), _trackVertex(false)
   {
   }
   ~Graph() { clear(); }
@@ -239,60 +234,6 @@ public:
       std::sort(elements[i].begin(), elements[i].end(), MElementPtrLessThan());
 
     return elements;
-  }
-  std::vector<GEntity *> createGhostEntities()
-  {
-    std::vector<GEntity *> ghostEntities(_nparts, (GEntity *)nullptr);
-    int elementaryNumber = _model->getMaxElementaryNumber(_dim);
-    for(std::size_t i = 1; i <= _nparts; i++) {
-      switch(_dim) {
-      case 1:
-        ghostEntities[i - 1] = new ghostEdge(_model, ++elementaryNumber, i);
-        _model->add(static_cast<ghostEdge *>(ghostEntities[i - 1]));
-        break;
-      case 2:
-        ghostEntities[i - 1] = new ghostFace(_model, ++elementaryNumber, i);
-        _model->add(static_cast<ghostFace *>(ghostEntities[i - 1]));
-        break;
-      case 3:
-        ghostEntities[i - 1] = new ghostRegion(_model, ++elementaryNumber, i);
-        _model->add(static_cast<ghostRegion *>(ghostEntities[i - 1]));
-        break;
-      default: break;
-      }
-    }
-    return ghostEntities;
-  }
-  void assignGhostCells()
-  {
-    std::vector<GEntity *> ghostEntities = createGhostEntities();
-    for(std::size_t i = 0; i < _ne; i++) {
-      std::set<int> ghostCellsPartition;
-      for(idx_t j = _xadj[i]; j < _xadj[i + 1]; j++) {
-        if(_partition[i] != _partition[_adjncy[j]] &&
-           ghostCellsPartition.find(_partition[_adjncy[j]]) ==
-             ghostCellsPartition.end()) {
-          if(_element[i]->getDim() == _dim) {
-            switch(_dim) {
-            case 1:
-              static_cast<ghostEdge *>(ghostEntities[_partition[_adjncy[j]]])
-                ->addElement(_element[i], _partition[i] + 1);
-              break;
-            case 2:
-              static_cast<ghostFace *>(ghostEntities[_partition[_adjncy[j]]])
-                ->addElement(_element[i], _partition[i] + 1);
-              break;
-            case 3:
-              static_cast<ghostRegion *>(ghostEntities[_partition[_adjncy[j]]])
-                ->addElement(_element[i], _partition[i] + 1);
-              break;
-            default: break;
-            }
-            ghostCellsPartition.insert(_partition[_adjncy[j]]);
-          }
-        }
-      }
-    }
   }
   // Builds the element-element (dual) graph in CSR form. The neighbor search
   // is done in a single pass: the previous version probed the node-element
@@ -3591,6 +3532,72 @@ static std::vector<int> partitionsOf(GEntity *ge)
   }
 }
 
+// The ghost cells of each partition: the elements of the other partitions, of
+// all dimensions, that share a node with its elements (or the copy of a node
+// through the periodicity, if the mesh is partitioned glued along it). The
+// partitions of the elements of each node are those of their partition
+// entities: for most nodes one, kept in a vector; for the others (the nodes
+// on the boundaries of the partitions) several, kept in a hash map.
+static void assignGhostCells(GModel *model, const periodicClasses *copies)
+{
+  model->getGhostCells().clear();
+  std::vector<GEntity *> entities;
+  model->getEntities(entities);
+  std::vector<std::pair<GEntity *, std::vector<int>>> parts;
+  for(GEntity *ge : entities) {
+    std::vector<int> p = partitionsOf(ge);
+    if(p.size() && ge->getNumMeshElements()) parts.push_back({ge, p});
+  }
+  auto num = [copies](MVertex *v) {
+    return (copies ? copies->rep(v) : v)->getNum();
+  };
+  std::vector<int> first(model->getMaxVertexNumber() + 1, 0);
+  std::vector<char> several(first.size(), 0);
+  std::unordered_map<std::size_t, std::vector<int>> more;
+  for(auto &ep : parts) {
+    for(std::size_t i = 0; i < ep.first->getNumMeshElements(); i++) {
+      MElement *e = ep.first->getMeshElement(i);
+      for(std::size_t j = 0; j < e->getNumVertices(); j++) {
+        std::size_t n = num(e->getVertex(j));
+        for(int p : ep.second) {
+          if(!first[n])
+            first[n] = p;
+          else if(first[n] != p) {
+            std::vector<int> &m = more[n];
+            if(!several[n]) m.push_back(first[n]);
+            several[n] = 1;
+            if(std::find(m.begin(), m.end(), p) == m.end()) m.push_back(p);
+          }
+        }
+      }
+    }
+  }
+  std::size_t numGhosts = 0;
+  std::vector<int> ghosts;
+  for(auto &ep : parts) {
+    const std::vector<int> &own = ep.second;
+    auto add = [&](int p) {
+      if(std::find(own.begin(), own.end(), p) == own.end() &&
+         std::find(ghosts.begin(), ghosts.end(), p) == ghosts.end())
+        ghosts.push_back(p);
+    };
+    for(std::size_t i = 0; i < ep.first->getNumMeshElements(); i++) {
+      MElement *e = ep.first->getMeshElement(i);
+      ghosts.clear();
+      for(std::size_t j = 0; j < e->getNumVertices(); j++) {
+        std::size_t n = num(e->getVertex(j));
+        if(several[n])
+          for(int p : more[n]) add(p);
+        else
+          add(first[n]);
+      }
+      for(int p : ghosts) model->addGhostCells(e, p);
+      numGhosts += ghosts.size();
+    }
+  }
+  Msg::Info("%zu ghost cells", numGhosts);
+}
+
 static void setPartitions(GEntity *ge, const std::vector<int> &partitions)
 {
   switch(ge->geomType()) {
@@ -3835,16 +3842,7 @@ int PartitionMesh(GModel *model, int numPart)
   if(CTX::instance()->mesh.partitionCreateGhostCells) {
     double t4 = Cpu(), w4 = TimeOfDay();
     Msg::StatusBar(true, "Creating ghost cells...");
-    graph.clearDualGraph();
-    if(copies) {
-      // the ghost cells are also the neighbors through the periodicity
-      std::vector<idx_t> xadj, adjncy;
-      createGluedDualGraph(graph, classes, true, xadj, adjncy);
-      graph.swapDualGraph(xadj, adjncy);
-    }
-    else
-      graph.createDualGraph(true);
-    graph.assignGhostCells();
+    assignGhostCells(model, copies);
     double t5 = Cpu(), w5 = TimeOfDay();
     Msg::StatusBar(true, "Done creating ghost cells (Wall %gs, CPU %gs)",
                    w5 - w4, t5 - t4);
@@ -3925,10 +3923,6 @@ int UnpartitionMesh(GModel *model)
       model->remove(pedge);
       delete pedge;
     }
-    else if(edge->geomType() == GEntity::GhostCurve) {
-      model->remove(edge);
-      delete edge;
-    }
   }
 
   // Loop over surfaces
@@ -3957,10 +3951,6 @@ int UnpartitionMesh(GModel *model)
 
       model->remove(pface);
       delete pface;
-    }
-    else if(face->geomType() == GEntity::GhostSurface) {
-      model->remove(face);
-      delete face;
     }
     else if(face->geomType() == GEntity::OverlapSurface) {
       face->deleteMesh();
@@ -4011,10 +4001,6 @@ int UnpartitionMesh(GModel *model)
       model->remove(pregion);
       delete pregion;
     }
-    else if(region->geomType() == GEntity::GhostVolume) {
-      model->remove(region);
-      delete region;
-    }
     else if(region->geomType() == GEntity::OverlapVolume) {
       region->deleteMesh();
       model->remove(region);
@@ -4024,6 +4010,7 @@ int UnpartitionMesh(GModel *model)
 
   model->setNumPartitions(0);
   model->clearOverlaps();
+  model->getGhostCells().clear();
 
   std::map<std::pair<int, int>, std::string> physicalNames =
     model->getPhysicalNames();
@@ -4103,37 +4090,16 @@ int PartitionUsingThisSplit(GModel *model,
   assignMeshVertices(model);
   fixEmbeddedVertices(model);
 
-  if (!elmGhosts.empty()) {
+  // the ghost cells given (by their partition with a minus sign), or found
+  if(!elmGhosts.empty()) {
+    model->getGhostCells().clear();
     std::sort(elmGhosts.begin(), elmGhosts.end());
     auto last = std::unique(elmGhosts.begin(), elmGhosts.end());
     elmGhosts.erase(last, elmGhosts.end());
-    std::vector<GEntity *> ghostEntities = graph.createGhostEntities();
-    for (auto elmGhost : elmGhosts) {
-      MElement *el = elmGhost.first;
-      int part = elmGhost.second;
-      if(el->getDim() == graph.dim()) {
-        switch(graph.dim()) {
-          case 1:
-            static_cast<ghostEdge *>(ghostEntities[part - 1])
-              ->addElement(el, elmToPartition[el]);
-            break;
-          case 2:
-            static_cast<ghostFace *>(ghostEntities[part - 1])
-              ->addElement(el, elmToPartition[el]);
-            break;
-          case 3:
-            static_cast<ghostRegion *>(ghostEntities[part - 1])
-              ->addElement(el, elmToPartition[el]);
-            break;
-          default: break;
-        }
-      }
-    }
+    for(auto &g : elmGhosts) model->addGhostCells(g.first, g.second);
   }
   else if(CTX::instance()->mesh.partitionCreateGhostCells) {
-    graph.clearDualGraph();
-    graph.createDualGraph(true);
-    graph.assignGhostCells();
+    assignGhostCells(model, nullptr);
   }
   elmToPartition.clear();
 

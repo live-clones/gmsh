@@ -28,9 +28,6 @@
 #include "partitionEdge.h"
 #include "partitionFace.h"
 #include "partitionRegion.h"
-#include "ghostEdge.h"
-#include "ghostFace.h"
-#include "ghostRegion.h"
 #include "gmshSurface.h"
 #include "MVertex.h"
 #include "MPoint.h"
@@ -824,12 +821,6 @@ GMSH_API void gmsh::model::getPartitions(const int dim, const int tag,
     p = static_cast<partitionFace *>(ge)->getPartitions();
   else if(ge->geomType() == GEntity::PartitionVolume)
     p = static_cast<partitionRegion *>(ge)->getPartitions();
-  else if(ge->geomType() == GEntity::GhostCurve)
-    p.push_back(static_cast<ghostEdge *>(ge)->getPartition());
-  else if(ge->geomType() == GEntity::GhostSurface)
-    p.push_back(static_cast<ghostFace *>(ge)->getPartition());
-  else if(ge->geomType() == GEntity::GhostVolume)
-    p.push_back(static_cast<ghostRegion *>(ge)->getPartition());
 
   for(std::size_t i = 0; i < p.size(); i++) partitions.push_back(p[i]);
 }
@@ -1364,6 +1355,23 @@ GMSH_API void gmsh::model::mesh::generate(const int dim)
 {
   if(!_checkInit()) return;
   GModel::current()->mesh(dim);
+  CTX::instance()->meshChanged();
+}
+
+GMSH_API void gmsh::model::mesh::merge(const std::string &fileName,
+                                       const std::vector<int> &partitions,
+                                       const bool ghosts)
+{
+  if(!_checkInit()) return;
+  GModel *m = GModel::current();
+  if(!m->readMSH(fileName, partitions, ghosts, true)) {
+    Msg::Error("Could not merge mesh file '%s'", fileName.c_str());
+    return;
+  }
+  for(int dim = 0; dim < 4; dim++)
+    m->getGEOInternals()->setMaxTag(
+      dim, std::max(m->getGEOInternals()->getMaxTag(dim),
+                    m->getMaxElementaryNumber(dim)));
   CTX::instance()->meshChanged();
 }
 
@@ -5097,29 +5105,22 @@ GMSH_API void gmsh::model::mesh::getElementFaceNodesByType(
 }
 
 GMSH_API void
-gmsh::model::mesh::getGhostElements(const int dim, const int tag,
+gmsh::model::mesh::getGhostElements(const int partition,
                                     std::vector<std::size_t> &elementTags,
                                     std::vector<int> &partitions)
 {
   if(!_checkInit()) return;
   elementTags.clear();
   partitions.clear();
-  GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
-  if(!ge) {
-    Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
-    return;
-  }
-  std::map<MElement *, int, MElementPtrLessThan> ghostCells;
-  if(ge->geomType() == GEntity::GhostCurve)
-    ghostCells = static_cast<ghostEdge *>(ge)->getGhostCells();
-  else if(ge->geomType() == GEntity::GhostSurface)
-    ghostCells = static_cast<ghostFace *>(ge)->getGhostCells();
-  else if(ge->geomType() == GEntity::GhostVolume)
-    ghostCells = static_cast<ghostRegion *>(ge)->getGhostCells();
-
-  for(auto it = ghostCells.begin(); it != ghostCells.end(); it++) {
-    elementTags.push_back(it->first->getNum());
-    partitions.push_back(it->second);
+  std::vector<std::pair<std::size_t, int>> ghosts;
+  for(auto &g : GModel::current()->getGhostCells())
+    if(g.second == partition)
+      ghosts.push_back(
+        std::make_pair(g.first->getNum(), g.first->getPartition()));
+  std::sort(ghosts.begin(), ghosts.end());
+  for(auto &g : ghosts) {
+    elementTags.push_back(g.first);
+    partitions.push_back(g.second);
   }
 }
 

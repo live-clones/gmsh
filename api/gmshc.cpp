@@ -1030,6 +1030,18 @@ GMSH_API void gmshModelMeshPartition(const int numPart, const size_t * elementTa
   }
 }
 
+GMSH_API void gmshModelMeshMerge(const char * fileName, const int * partitions, const size_t partitions_n, const int ghosts, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_partitions_(partitions, partitions + partitions_n);
+    gmsh::model::mesh::merge(fileName, api_partitions_, ghosts);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API int gmshModelMeshCreateOverlaps(const int layers, const int createBoundaries, int * ierr)
 {
   int result_api_ = 0;
@@ -2149,13 +2161,13 @@ GMSH_API void gmshModelMeshGetElementFaceNodesByType(const int elementType, cons
   }
 }
 
-GMSH_API void gmshModelMeshGetGhostElements(const int dim, const int tag, size_t ** elementTags, size_t * elementTags_n, int ** partitions, size_t * partitions_n, int * ierr)
+GMSH_API void gmshModelMeshGetGhostElements(const int partition, size_t ** elementTags, size_t * elementTags_n, int ** partitions, size_t * partitions_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<std::size_t> api_elementTags_;
     std::vector<int> api_partitions_;
-    gmsh::model::mesh::getGhostElements(dim, tag, api_elementTags_, api_partitions_);
+    gmsh::model::mesh::getGhostElements(partition, api_elementTags_, api_partitions_);
     vector2ptr(api_elementTags_, elementTags, elementTags_n);
     vector2ptr(api_partitions_, partitions, partitions_n);
   }
