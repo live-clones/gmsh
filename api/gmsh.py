@@ -6650,9 +6650,11 @@ class model:
             by the curves `curveTags'. `curveTags' should contain (signed) tags of
             model entities of dimension 1 forming a closed loop: a negative tag
             signifies that the underlying curve is considered with reversed
-            orientation. If `tag' is positive, set the tag explicitly; otherwise a new
-            tag is selected automatically. If `reorient' is set, automatically reorient
-            the curves if necessary. Return the tag of the curve loop.
+            orientation. The curves can be given in any order, but their orientations
+            must be consistent, unless `reorient' is set: in that case the curves are
+            automatically reoriented if necessary. The curve loop is oriented according
+            to its first curve. If `tag' is positive, set the tag explicitly; otherwise
+            a new tag is selected automatically. Return the tag of the curve loop.
 
             Return an integer.
 
@@ -8012,10 +8014,12 @@ class model:
             gmsh.model.occ.addWire(curveTags, tag=-1, checkClosed=False)
 
             Add a wire (open or closed) in the OpenCASCADE CAD representation, formed
-            by the curves `curveTags'. Note that an OpenCASCADE wire can be made of
-            curves that share geometrically identical (but topologically different)
-            points. If `tag' is positive, set the tag explicitly; otherwise a new tag
-            is selected automatically. Return the tag of the wire.
+            by the curves `curveTags', given in any order and orientation: the wire is
+            oriented according to the orientation of its first curve, reversed if its
+            tag is negative. Note that an OpenCASCADE wire can be made of curves that
+            share geometrically identical (but topologically different) points. If
+            `tag' is positive, set the tag explicitly; otherwise a new tag is selected
+            automatically. Return the tag of the wire.
 
             Return an integer.
 
@@ -8043,13 +8047,13 @@ class model:
 
             Add a curve loop (a closed wire) in the OpenCASCADE CAD representation,
             formed by the curves `curveTags'. `curveTags' should contain tags of curves
-            forming a closed loop. Negative tags can be specified for compatibility
-            with the built-in kernel, but are simply ignored: the wire is oriented
-            according to the orientation of its first curve. Note that an OpenCASCADE
-            curve loop can be made of curves that share geometrically identical (but
-            topologically different) points. If `tag' is positive, set the tag
-            explicitly; otherwise a new tag is selected automatically. Return the tag
-            of the curve loop.
+            forming a closed loop, in any order and orientation: the curve loop is
+            oriented according to the orientation of its first curve, reversed if its
+            tag is negative (the signs of the other tags are ignored). Note that an
+            OpenCASCADE curve loop can be made of curves that share geometrically
+            identical (but topologically different) points. If `tag' is positive, set
+            the tag explicitly; otherwise a new tag is selected automatically. Return
+            the tag of the curve loop.
 
             Return an integer.
 

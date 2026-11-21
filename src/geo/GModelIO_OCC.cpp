@@ -1648,6 +1648,7 @@ bool OCC_Internals::addWire(int &tag, const std::vector<int> &curveTags,
     BRepBuilderAPI_MakeWire w;
     TopoDS_Wire wire;
     bool reversed = false;
+    NCollection_List<TopoDS_Shape> edges;
     for(std::size_t i = 0; i < curveTags.size(); i++) {
       // all curve tags are > 0 for OCC, and the orientation of the wire is
       // dictated by the orientation of the first curve in the wire; to improve
@@ -1661,13 +1662,27 @@ bool OCC_Internals::addWire(int &tag, const std::vector<int> &curveTags,
       }
       TopoDS_Edge edge = TopoDS::Edge(_tagEdge.Find(t));
       w.Add(edge);
+      edges.Append(edge);
     }
     w.Build();
-    if(!w.IsDone()) {
-      Msg::Error("Could not create wire");
-      return false;
+    int numEdges = 0;
+    if(w.IsDone())
+      for(TopExp_Explorer exp(w.Wire(), TopAbs_EDGE); exp.More(); exp.Next())
+        numEdges++;
+    if(numEdges < (int)curveTags.size()) {
+      // the curves are not given head to tail: let OpenCASCADE order them
+      // (they must still be connected)
+      BRepBuilderAPI_MakeWire w2;
+      w2.Add(edges);
+      w2.Build();
+      if(!w2.IsDone()) {
+        Msg::Error("Could not create wire: its curves are not connected");
+        return false;
+      }
+      wire = w2.Wire();
     }
-    wire = w.Wire();
+    else
+      wire = w.Wire();
     if(checkClosed && !wire.Closed()) {
       Msg::Error("Curve loop is not closed");
       return false;
