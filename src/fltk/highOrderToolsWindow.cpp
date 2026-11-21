@@ -40,12 +40,9 @@ static void highordertools_runp_cb(Fl_Widget *w, void *data)
   bool incomplete = (bool)o->butt[0]->value();
   bool onlyVisible = (bool)o->butt[1]->value();
 
-  if(order == 1)
-    SetOrder1(GModel::current());
-  else
-    SetOrderN(GModel::current(), order, linear, incomplete, onlyVisible);
-
-  FixPeriodicMesh(GModel::current());
+  // (as the API and the SetOrder command: also fixes periodic meshes and
+  // renumbers)
+  GModel::current()->setOrderN(order, linear, incomplete, onlyVisible);
 
   /*
   distanceFromMeshToGeometry_t dist;

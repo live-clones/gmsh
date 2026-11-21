@@ -3202,11 +3202,10 @@ Command :
 	GModel::current()->mesh((int)$2, true);
       }
       else if(!strcmp($1, "SetOrder")) {
-#if defined(HAVE_MESH)
-        SetOrderN(GModel::current(), $2, CTX::instance()->mesh.secondOrderLinear,
-                  CTX::instance()->mesh.secondOrderIncomplete,
-                  CTX::instance()->mesh.meshOnlyVisible);
-#endif
+        // (as the API: also fixes periodic meshes and renumbers)
+        GModel::current()->setOrderN($2, CTX::instance()->mesh.secondOrderLinear,
+                                     CTX::instance()->mesh.secondOrderIncomplete,
+                                     CTX::instance()->mesh.meshOnlyVisible);
       }
       else if(!strcmp($1, "PartitionMesh")) {
         GModel::current()->partitionMesh($2);
