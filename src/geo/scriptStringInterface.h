@@ -183,5 +183,11 @@ void scriptDeleteEntities(const std::string &fileName,
 void scriptSetVisibilityAll(int mode, const std::string &fileName);
 void scriptSetVisibility(int mode, const std::vector<std::pair<int, int> > &l,
                          const std::string &fileName);
+void scriptSetColor(unsigned int color,
+                    const std::vector<std::pair<int, int>> &l,
+                    const std::string &fileName);
+// append the visibility of all the entities and the colours given to them to
+// the file
+void scriptSaveVisibilityAndColors(const std::string &fileName);
 
 #endif

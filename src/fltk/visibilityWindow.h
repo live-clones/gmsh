@@ -45,6 +45,5 @@ public:
 void showVisibility();
 void updateVisibility();
 void updateVisibilityList();
-void visibility_save(const std::string &fileName);
 
 #endif

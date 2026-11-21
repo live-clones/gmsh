@@ -864,48 +864,12 @@ void updateVisibilityList() { readVisibility(true, false); }
 
 static void list_only_cb(Fl_Widget *w, void *data) { updateVisibilityList(); }
 
-void visibility_save(const std::string &fileName)
-{
-  // get the whole visibility information in geo format
-  std::vector<int> state[4][2];
-  for(int dim = 0; dim < 4; dim++) {
-    std::vector<GEntity *> entities;
-    GModel::current()->getEntities(entities, dim);
-    for(GEntity *ge : entities)
-      state[dim][ge->getVisibility() ? 1 : 0].push_back(ge->tag());
-  }
-  std::vector<std::pair<int, int> > entities;
-  int mode = 0, on = 0, off = 0;
-  for(int i = 0; i < 4; i++) {
-    on += state[i][1].size();
-    off += state[i][0].size();
-  }
-  if(on > off) {
-    scriptSetVisibilityAll(1, fileName);
-    if(!off) return;
-    mode = 0;
-  }
-  else {
-    scriptSetVisibilityAll(0, fileName);
-    if(!on) return;
-    mode = 1;
-  }
-  for(int i = 0; i < 4; i++) {
-    if(state[i][mode].size()) {
-      for(std::size_t j = 0; j < state[i][mode].size(); j++) {
-        entities.push_back(std::make_pair(i, state[i][mode][j]));
-      }
-    }
-  }
-  scriptSetVisibility(mode, entities, fileName);
-}
-
 static void visibility_save_cb(Fl_Widget *w, void *data)
 {
-  Msg::StatusBar(true, "Appending visibility info to '%s'...",
+  Msg::StatusBar(true, "Appending visibility and colors to '%s'...",
                  GModel::current()->getFileName().c_str());
-  visibility_save(GModel::current()->getFileName());
-  Msg::StatusBar(true, "Done appending visibility info");
+  scriptSaveVisibilityAndColors(GModel::current()->getFileName());
+  Msg::StatusBar(true, "Done appending visibility and colors");
 }
 
 // The rows of the Numeric and Interactive tabs: the nodes and the elements,

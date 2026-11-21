@@ -17,6 +17,7 @@
 #include "OpenFile.h"
 #include "CreateFile.h"
 #include "OS.h"
+#include "scriptStringInterface.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
@@ -45,7 +46,6 @@
 #include "FlGui.h"
 #include "graphicWindow.h"
 #include "openglWindow.h"
-#include "visibilityWindow.h"
 #endif
 
 #if defined(HAVE_OPENGL)
@@ -1099,12 +1099,10 @@ void CreateOutputFile(const std::string &fileName, int format,
       Msg::Error("No Parasolid CAD data found for XMT export");
     break;
 
-#if defined(HAVE_FLTK)
   case FORMAT_VIS:
     UnlinkFile(name);
-    visibility_save(name);
+    scriptSaveVisibilityAndColors(name);
     break;
-#endif
 
 #if defined(HAVE_OPENGL)
   case FORMAT_PPM:

@@ -585,8 +585,10 @@ int MergeFile(const std::string &fileName, bool errorIfMissing,
 
   CTX::instance()->fileread = true;
 
-  // merge the associated option file if there is one
+  // merge the associated option file if there is one, then the visibility and
+  // colors of the entities (which mesh files, among others, do not store)
   if(!StatFile(fileName + ".opt")) MergeFile(fileName + ".opt");
+  if(!StatFile(fileName + ".vis")) MergeFile(fileName + ".vis");
   return status;
 }
 

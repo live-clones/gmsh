@@ -40,6 +40,7 @@
 #include "pluginWindow.h"
 #include "statisticsWindow.h"
 #include "visibilityWindow.h"
+#include "scriptStringInterface.h"
 #include "highOrderToolsWindow.h"
 #include "clippingWindow.h"
 #include "partitionDialog.h"
@@ -817,7 +818,7 @@ int FlGui::run(const std::string &optionFileName)
     PrintOptions(0, GMSH_FULLRC, 1, 0, optionFileName.c_str());
     int old = CTX::instance()->expertMode;
     CTX::instance()->expertMode = 1; // disable warning if non-geo file
-    visibility_save(optionFileName);
+    scriptSaveVisibilityAndColors(optionFileName);
     CTX::instance()->expertMode = old;
   }
 

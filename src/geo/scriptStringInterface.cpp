@@ -2102,3 +2102,51 @@ void scriptSetVisibility(int mode, const std::vector<std::pair<int, int> > &l,
                      {aDimTags(l), aInt(mode ? 1 : 0), aBool(false, true)})};
             });
 }
+
+void scriptSetColor(unsigned int color,
+                    const std::vector<std::pair<int, int>> &l,
+                    const std::string &fileName)
+{
+  CTX *ctx = CTX::instance();
+  int r = ctx->unpackRed(color), g = ctx->unpackGreen(color),
+      b = ctx->unpackBlue(color), a = ctx->unpackAlpha(color);
+  std::string rgba =
+    std::to_string(r) + ", " + std::to_string(g) + ", " + std::to_string(b);
+  if(a != 255) rgba += ", " + std::to_string(a);
+  scriptAdd(
+    "Color {" + rgba + "} {\n  " + dimTags2String(l) + "\n}", fileName, [=] {
+      return std::vector<apiCall>{
+        call("model/setColor",
+             {aDimTags(l), aInt(r), aInt(g), aInt(b), aInt(a, a == 255)})};
+    });
+}
+
+void scriptSaveVisibilityAndColors(const std::string &fileName)
+{
+  // the visibility of all the entities, as the state of most of them followed
+  // by the exceptions
+  std::vector<int> state[4][2];
+  std::map<unsigned int, std::vector<std::pair<int, int>>> colors;
+  for(int dim = 0; dim < 4; dim++) {
+    std::vector<GEntity *> entities;
+    GModel::current()->getEntities(entities, dim);
+    for(GEntity *ge : entities) {
+      state[dim][ge->getVisibility() ? 1 : 0].push_back(ge->tag());
+      if(ge->useColor()) colors[ge->getColor()].push_back({dim, ge->tag()});
+    }
+  }
+  int on = 0, off = 0;
+  for(int i = 0; i < 4; i++) {
+    on += state[i][1].size();
+    off += state[i][0].size();
+  }
+  int mode = (on > off) ? 0 : 1;
+  scriptSetVisibilityAll(mode ? 0 : 1, fileName);
+  std::vector<std::pair<int, int>> entities;
+  for(int i = 0; i < 4; i++)
+    for(int tag : state[i][mode]) entities.push_back({i, tag});
+  if(entities.size()) scriptSetVisibility(mode, entities, fileName);
+  // the colours given to entities (in the GUI, a script or the API), which
+  // are not saved in mesh files
+  for(auto &c : colors) scriptSetColor(c.first, c.second, fileName);
+}

@@ -1918,6 +1918,15 @@ options (and how to reset them to their default values), see @ref{Gmsh
 options}. A full list of options with their current values is also
 available using the `Help->Current Options' menu.
 
+The visibility and the colors of the entities, which mesh files do not
+store, are not options: they can be saved in the `Gmsh visibility'
+format in `File->Export' (or with @code{gmsh/write} in the API). A file
+with the same filename as the model and an extra @file{.vis} extension
+added is automatically loaded when the model is opened, after its
+@file{.opt} file: e.g. colors given to entities with
+@code{gmsh/model/setColor} are kept by saving both @file{model.msh} and
+@file{model.msh.vis}.
+
 Finally, note that the GUI can also be run (and modified) using the API:
 see @ref{Namespace gmsh/fltk} for details.
 

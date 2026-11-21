@@ -31,6 +31,7 @@
 #include "helpWindow.h"
 #include "editorWindow.h"
 #include "visibilityWindow.h"
+#include "scriptStringInterface.h"
 #include "onelabActions.h"
 #include "fileDialogs.h"
 #include "extraDialogs.h"
@@ -605,8 +606,9 @@ void fileQuit()
   else if(CTX::instance()->optionsSave == 2) {
     std::string fileName = GModel::current()->getFileName() + ".opt";
     PrintOptions(0, GMSH_FULLRC, 1, 0, fileName.c_str());
-    // also save the visibility, as FlGui::run() does with its option file
-    visibility_save(fileName);
+    // also save the visibility and the colors of the entities, as FlGui::run()
+    // does with its option file
+    scriptSaveVisibilityAndColors(fileName);
   }
 
   if(FlGui::instance()->quitShouldExit()) { Msg::Exit(0); }
