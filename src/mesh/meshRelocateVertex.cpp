@@ -423,8 +423,7 @@ void relocateVertexOfPyramid(MVertex *ver, const std::vector<MElement *> &lt,
 }
 
 template <class Elements>
-static void relocateVertexGolden(MVertex *ver, const Elements &lt,
-                                 double relax, double tol,
+static void relocateVertexGolden(MVertex *ver, const Elements &lt, double tol,
                                  bool signedQuality = false)
 {
   if(ver->onWhat()->dim() != 3) return;
@@ -699,7 +698,6 @@ void RelocateVertices(GRegion *region, int niter, double tol, int nthreads,
   const double qTet = 0.5, qOther = 0.9;
   std::vector<char> active(n, 1), moved(n, 0);
   for(int pass = 0; pass < niter + 2; pass++) {
-    double relax = std::min((double)(pass + 1) / niter, 1.0);
     for(int c = 0; c < nbColors; c++) {
       const std::vector<int> &list = byColor[c];
 #pragma omp parallel for schedule(dynamic, 64) num_threads(nthreads)
@@ -709,7 +707,7 @@ void RelocateVertices(GRegion *region, int niter, double tol, int nthreads,
         if(skipGoodVertices && goodElements(elements[i], qTet, qOther))
           continue;
         const SPoint3 before = vertices[i]->point();
-        relocateVertexGolden(vertices[i], elements[i], relax, tol, true);
+        relocateVertexGolden(vertices[i], elements[i], tol, true);
         moved[i] = before.distance(vertices[i]->point()) > 1.e-3 * length[i];
       }
     }
@@ -1093,10 +1091,9 @@ void RelocateVerticesOfPyramids(GRegion *region, int niter, double tol)
 
   for(int i = 0; i < niter + 2; i++) {
     auto it = adj.begin();
-    double relax = std::min((double)(i + 1) / niter, 1.0);
     while(it != adj.end()) {
       if(_vts.find(it->first) != _vts.end())
-        relocateVertexGolden(it->first, it->second, relax, tol);
+        relocateVertexGolden(it->first, it->second, tol);
       ++it;
     }
   }
