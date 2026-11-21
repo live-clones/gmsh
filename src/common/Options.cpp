@@ -4171,6 +4171,12 @@ double opt_geometry_occ_fix_small_faces(OPT_ARGS_NUM)
   return CTX::instance()->geom.occFixSmallFaces;
 }
 
+double opt_geometry_occ_fix_tolerances(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.occFixTolerances = val ? 1 : 0;
+  return CTX::instance()->geom.occFixTolerances;
+}
+
 double opt_geometry_occ_sew_faces(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) { CTX::instance()->geom.occSewFaces = val ? 1 : 0; }

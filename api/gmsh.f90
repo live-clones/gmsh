@@ -13932,8 +13932,14 @@ module gmsh
 
   !> Apply various healing procedures to the entities `dimTags' (given as a
   !! vector of (dim, tag) pairs), or to all the entities in the model if
-  !! `dimTags' is empty, in the OpenCASCADE CAD representation. Return the
-  !! healed entities in `outDimTags'.
+  !! `dimTags' is empty, in the OpenCASCADE CAD representation: recompute the
+  !! tolerances to the smallest ones the geometry needs (if `fixTolerances' is
+  !! set), fix the degenerated curves and surfaces, the small curves and the
+  !! small surfaces, sew the surfaces sharing geometrically identical curves
+  !! (with tolerance `tolerance'), and make volumes from the closed shells of
+  !! surfaces bounding no volume. The entities are healed together, the changes
+  !! applied to the rest of the model, and the entities keep their tag unless
+  !! they are removed or merged. Return the healed entities in `outDimTags'.
   subroutine gmshModelOccHealShapes(outDimTags, &
                                     dimTags, &
                                     tolerance, &
@@ -13942,6 +13948,7 @@ module gmsh
                                     fixSmallFaces, &
                                     sewFaces, &
                                     makeSolids, &
+                                    fixTolerances, &
                                     ierr)
     interface
     subroutine C_API(api_outDimTags_, &
@@ -13954,6 +13961,7 @@ module gmsh
                      fixSmallFaces, &
                      sewFaces, &
                      makeSolids, &
+                     fixTolerances, &
                      ierr_) &
       bind(C, name="gmshModelOccHealShapes")
       use, intrinsic :: iso_c_binding
@@ -13967,6 +13975,7 @@ module gmsh
       integer(c_int), value, intent(in) :: fixSmallFaces
       integer(c_int), value, intent(in) :: sewFaces
       integer(c_int), value, intent(in) :: makeSolids
+      integer(c_int), value, intent(in) :: fixTolerances
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
@@ -13978,6 +13987,7 @@ module gmsh
     logical, intent(in), optional :: fixSmallFaces
     logical, intent(in), optional :: sewFaces
     logical, intent(in), optional :: makeSolids
+    logical, intent(in), optional :: fixTolerances
     integer(c_int), intent(out), optional :: ierr
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
@@ -13991,6 +14001,7 @@ module gmsh
          fixSmallFaces=optval_c_bool(.true., fixSmallFaces), &
          sewFaces=optval_c_bool(.true., sewFaces), &
          makeSolids=optval_c_bool(.true., makeSolids), &
+         fixTolerances=optval_c_bool(.true., fixTolerances), &
          ierr_=ierr)
     outDimTags = ovectorpair_(api_outDimTags_, &
       api_outDimTags_n_)

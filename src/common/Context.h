@@ -138,7 +138,7 @@ struct contextGeometryOptions {
   double discreteTolerance;
   int occAutoFix, occAutoEmbed, occFastUnbind;
   int occFixDegenerated, occFixSmallEdges, occFixSmallFaces;
-  int occSewFaces, occMakeSolids, occParallel;
+  int occSewFaces, occMakeSolids, occFixTolerances, occParallel;
   int occBoundsUseSTL, occDisableSTL, occImportLabels, occExportOnlyVisible;
   int occWriteParametricCurves, occWriteSTEPNonManifold;
   int occBooleanCheckInverted, occBooleanGlue, occBooleanNonDestructive;

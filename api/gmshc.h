@@ -3336,8 +3336,14 @@ GMSH_API void gmshModelOccRemoveAllDuplicates(int * ierr);
 
 /* Apply various healing procedures to the entities `dimTags' (given as a
  * vector of (dim, tag) pairs), or to all the entities in the model if
- * `dimTags' is empty, in the OpenCASCADE CAD representation. Return the
- * healed entities in `outDimTags'. */
+ * `dimTags' is empty, in the OpenCASCADE CAD representation: recompute the
+ * tolerances to the smallest ones the geometry needs (if `fixTolerances' is
+ * set), fix the degenerated curves and surfaces, the small curves and the
+ * small surfaces, sew the surfaces sharing geometrically identical curves
+ * (with tolerance `tolerance'), and make volumes from the closed shells of
+ * surfaces bounding no volume. The entities are healed together, the changes
+ * applied to the rest of the model, and the entities keep their tag unless
+ * they are removed or merged. Return the healed entities in `outDimTags'. */
 GMSH_API void gmshModelOccHealShapes(int ** outDimTags, size_t * outDimTags_n,
                                      const int * dimTags, const size_t dimTags_n,
                                      const double tolerance,
@@ -3346,6 +3352,7 @@ GMSH_API void gmshModelOccHealShapes(int ** outDimTags, size_t * outDimTags_n,
                                      const int fixSmallFaces,
                                      const int sewFaces,
                                      const int makeSolids,
+                                     const int fixTolerances,
                                      int * ierr);
 
 /* Convert the entities `dimTags' to NURBS. */

@@ -27,6 +27,8 @@ class ExtrudeParams;
 #include <NCollection_IndexedMap.hxx>
 #include <NCollection_DataMap.hxx>
 #include <TopTools_ShapeMapHasher.hxx>
+#include <Standard_Handle.hxx>
+class ShapeBuild_ReShape;
 
 class BRepSweep_Prism;
 class BRepSweep_Revol;
@@ -131,9 +133,12 @@ private:
   void _addShapeToMaps(const TopoDS_Shape &shape);
 
   // apply various healing algorithms to try to fix the shape
-  void _healShape(TopoDS_Shape &myshape, double tolerance, bool fixDegenerated,
-                  bool fixSmallEdges, bool fixSmallFaces, bool sewFaces,
-                  bool makeSolids, double scaling = 0.0);
+  // heal a shape, recording the replacements in the context (if any)
+  void
+  _healShape(TopoDS_Shape &myshape, double tolerance, bool fixDegenerated,
+             bool fixSmallEdges, bool fixSmallFaces, bool sewFaces,
+             bool makeSolids, bool fixTolerances, double scaling = 1.0,
+             const opencascade::handle<ShapeBuild_ReShape> &context = nullptr);
 
   // apply a geometrical transformation
   bool _transform(const std::vector<std::pair<int, int> > &inDimTags,
@@ -414,10 +419,11 @@ public:
   bindShapes(const std::map<std::pair<int, int>, TopoDS_Shape> &dimTagShape);
 
   // apply various healing algorithms to try to fix the shapes
-  bool healShapes(const std::vector<std::pair<int, int> > &inDimTags,
-                  std::vector<std::pair<int, int> > &outDimTags,
+  bool healShapes(const std::vector<std::pair<int, int>> &inDimTags,
+                  std::vector<std::pair<int, int>> &outDimTags,
                   double tolerance, bool fixDegenerated, bool fixSmallEdges,
-                  bool fixSmallFaces, bool sewFaces, bool makeSolids);
+                  bool fixSmallFaces, bool sewFaces, bool makeSolids,
+                  bool fixTolerances);
 
   // convert shapes to NURBS
   bool convertToNURBS(const std::vector<std::pair<int, int> > &dimTags);
@@ -854,10 +860,11 @@ public:
   {
     return _error("import shape");
   }
-  bool healShapes(const std::vector<std::pair<int, int> > &inDimTags,
-                  std::vector<std::pair<int, int> > &outDimTags,
+  bool healShapes(const std::vector<std::pair<int, int>> &inDimTags,
+                  std::vector<std::pair<int, int>> &outDimTags,
                   double tolerance, bool fixDegenerated, bool fixSmallEdges,
-                  bool fixSmallFaces, bool sewFaces, bool makeSolids)
+                  bool fixSmallFaces, bool sewFaces, bool makeSolids,
+                  bool fixTolerances)
   {
     return _error("heal shapes");
   }

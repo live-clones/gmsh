@@ -1431,8 +1431,8 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
   headings()["Open CASCADE model healing options:"]->deactivate();
   for(const char *o :
       {"Geometry.OCCFixDegenerated", "Geometry.OCCFixSmallEdges",
-       "Geometry.OCCFixSmallFaces", "Geometry.OCCSewFaces",
-       "Geometry.OCCMakeSolids", "Geometry.OCCScaling"})
+       "Geometry.OCCFixSmallFaces", "Geometry.OCCFixTolerances",
+       "Geometry.OCCSewFaces", "Geometry.OCCMakeSolids", "Geometry.OCCScaling"})
     boundWidget(o)->deactivate();
 #endif
 #if !defined(HAVE_NETGEN)

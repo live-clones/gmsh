@@ -997,8 +997,8 @@ occ.add('remove', doc, None, ivectorpair('dimTags'), ibool('recursive', 'false',
 doc = '''Remove all duplicate entities in the OpenCASCADE CAD representation (different entities at the same geometrical location) after intersecting (using boolean fragments) all highest dimensional entities.'''
 occ.add('removeAllDuplicates', doc, None)
 
-doc = '''Apply various healing procedures to the entities `dimTags' (given as a vector of (dim, tag) pairs), or to all the entities in the model if `dimTags' is empty, in the OpenCASCADE CAD representation. Return the healed entities in `outDimTags'.'''
-occ.add('healShapes', doc, None, ovectorpair('outDimTags'), ivectorpair('dimTags', 'gmsh::vectorpair()', '[]', '[]'), idouble('tolerance', '1e-8'), ibool('fixDegenerated', 'true', 'True'), ibool('fixSmallEdges', 'true', 'True'), ibool('fixSmallFaces', 'true', 'True'), ibool('sewFaces', 'true', 'True'), ibool('makeSolids', 'true', 'True'))
+doc = '''Apply various healing procedures to the entities `dimTags' (given as a vector of (dim, tag) pairs), or to all the entities in the model if `dimTags' is empty, in the OpenCASCADE CAD representation: recompute the tolerances to the smallest ones the geometry needs (if `fixTolerances' is set), fix the degenerated curves and surfaces, the small curves and the small surfaces, sew the surfaces sharing geometrically identical curves (with tolerance `tolerance'), and make volumes from the closed shells of surfaces bounding no volume. The entities are healed together, the changes applied to the rest of the model, and the entities keep their tag unless they are removed or merged. Return the healed entities in `outDimTags'.'''
+occ.add('healShapes', doc, None, ovectorpair('outDimTags'), ivectorpair('dimTags', 'gmsh::vectorpair()', '[]', '[]'), idouble('tolerance', '1e-8'), ibool('fixDegenerated', 'true', 'True'), ibool('fixSmallEdges', 'true', 'True'), ibool('fixSmallFaces', 'true', 'True'), ibool('sewFaces', 'true', 'True'), ibool('makeSolids', 'true', 'True'), ibool('fixTolerances', 'true', 'True'))
 
 doc = '''Convert the entities `dimTags' to NURBS.'''
 occ.add('convertToNURBS', doc, None, ivectorpair('dimTags'))

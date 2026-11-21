@@ -8557,11 +8557,18 @@ end
 const remove_all_duplicates = removeAllDuplicates
 
 """
-    gmsh.model.occ.healShapes(dimTags = Tuple{Cint,Cint}[], tolerance = 1e-8, fixDegenerated = true, fixSmallEdges = true, fixSmallFaces = true, sewFaces = true, makeSolids = true)
+    gmsh.model.occ.healShapes(dimTags = Tuple{Cint,Cint}[], tolerance = 1e-8, fixDegenerated = true, fixSmallEdges = true, fixSmallFaces = true, sewFaces = true, makeSolids = true, fixTolerances = true)
 
 Apply various healing procedures to the entities `dimTags` (given as a vector of
 (dim, tag) pairs), or to all the entities in the model if `dimTags` is empty, in
-the OpenCASCADE CAD representation. Return the healed entities in `outDimTags`.
+the OpenCASCADE CAD representation: recompute the tolerances to the smallest
+ones the geometry needs (if `fixTolerances` is set), fix the degenerated curves
+and surfaces, the small curves and the small surfaces, sew the surfaces sharing
+geometrically identical curves (with tolerance `tolerance`), and make volumes
+from the closed shells of surfaces bounding no volume. The entities are healed
+together, the changes applied to the rest of the model, and the entities keep
+their tag unless they are removed or merged. Return the healed entities in
+`outDimTags`.
 
 Return `outDimTags`.
 
@@ -8574,16 +8581,17 @@ Types:
  - `fixSmallFaces`: boolean
  - `sewFaces`: boolean
  - `makeSolids`: boolean
+ - `fixTolerances`: boolean
 """
-function healShapes(dimTags = Tuple{Cint,Cint}[], tolerance = 1e-8, fixDegenerated = true, fixSmallEdges = true, fixSmallFaces = true, sewFaces = true, makeSolids = true)
+function healShapes(dimTags = Tuple{Cint,Cint}[], tolerance = 1e-8, fixDegenerated = true, fixSmallEdges = true, fixSmallFaces = true, sewFaces = true, makeSolids = true, fixTolerances = true)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
     api_dimTags_n_ = length(api_dimTags_)
     ierr = Ref{Cint}()
     ccall((:gmshModelOccHealShapes, gmsh.lib), Cvoid,
-          (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}, Csize_t, Cdouble, Cint, Cint, Cint, Cint, Cint, Ptr{Cint}),
-          api_outDimTags_, api_outDimTags_n_, api_dimTags_, api_dimTags_n_, tolerance, fixDegenerated, fixSmallEdges, fixSmallFaces, sewFaces, makeSolids, ierr)
+          (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}, Csize_t, Cdouble, Cint, Cint, Cint, Cint, Cint, Cint, Ptr{Cint}),
+          api_outDimTags_, api_outDimTags_n_, api_dimTags_, api_dimTags_n_, tolerance, fixDegenerated, fixSmallEdges, fixSmallFaces, sewFaces, makeSolids, fixTolerances, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own = true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]

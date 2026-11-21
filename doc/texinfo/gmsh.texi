@@ -3825,10 +3825,11 @@ all operands.
 
 @item HealShapes;
 Apply the shape healing procedure(s), according to
-@code{Geometry.OCCFixDegenerated}, @code{Geometry.OCCFixSmallEdges},
-@code{Geometry.OCCFixSmallFaces}, @code{Geometry.OCCSewFaces},
-@code{Geometry.OCCMakeSolids}. Only available with the OpenCASCADE
-geometry kernel.
+@code{Geometry.OCCFixTolerances}, @code{Geometry.OCCFixDegenerated},
+@code{Geometry.OCCFixSmallEdges}, @code{Geometry.OCCFixSmallFaces},
+@code{Geometry.OCCSewFaces}, @code{Geometry.OCCMakeSolids}, to all the
+entities of the model. The entities keep their tag unless they are
+removed or merged. Only available with the OpenCASCADE geometry kernel.
 
 @item < Recursive > Delete @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
 Delete all elementary entities whose tags are given in

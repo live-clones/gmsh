@@ -9690,14 +9690,20 @@ class model:
         remove_all_duplicates = removeAllDuplicates
 
         @staticmethod
-        def healShapes(dimTags=[], tolerance=1e-8, fixDegenerated=True, fixSmallEdges=True, fixSmallFaces=True, sewFaces=True, makeSolids=True):
+        def healShapes(dimTags=[], tolerance=1e-8, fixDegenerated=True, fixSmallEdges=True, fixSmallFaces=True, sewFaces=True, makeSolids=True, fixTolerances=True):
             """
-            gmsh.model.occ.healShapes(dimTags=[], tolerance=1e-8, fixDegenerated=True, fixSmallEdges=True, fixSmallFaces=True, sewFaces=True, makeSolids=True)
+            gmsh.model.occ.healShapes(dimTags=[], tolerance=1e-8, fixDegenerated=True, fixSmallEdges=True, fixSmallFaces=True, sewFaces=True, makeSolids=True, fixTolerances=True)
 
             Apply various healing procedures to the entities `dimTags' (given as a
             vector of (dim, tag) pairs), or to all the entities in the model if
-            `dimTags' is empty, in the OpenCASCADE CAD representation. Return the
-            healed entities in `outDimTags'.
+            `dimTags' is empty, in the OpenCASCADE CAD representation: recompute the
+            tolerances to the smallest ones the geometry needs (if `fixTolerances' is
+            set), fix the degenerated curves and surfaces, the small curves and the
+            small surfaces, sew the surfaces sharing geometrically identical curves
+            (with tolerance `tolerance'), and make volumes from the closed shells of
+            surfaces bounding no volume. The entities are healed together, the changes
+            applied to the rest of the model, and the entities keep their tag unless
+            they are removed or merged. Return the healed entities in `outDimTags'.
 
             Return `outDimTags'.
 
@@ -9710,6 +9716,7 @@ class model:
             - `fixSmallFaces': boolean
             - `sewFaces': boolean
             - `makeSolids': boolean
+            - `fixTolerances': boolean
             """
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
@@ -9723,6 +9730,7 @@ class model:
                 c_int(bool(fixSmallFaces)),
                 c_int(bool(sewFaces)),
                 c_int(bool(makeSolids)),
+                c_int(bool(fixTolerances)),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())

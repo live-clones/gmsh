@@ -266,6 +266,11 @@ Fix small faces when importing STEP, IGES and BREP models with the OpenCASCADE k
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.OCCFixTolerances
+Recompute the tolerances (to the smallest ones the geometry needs) when importing STEP, IGES and BREP models with the OpenCASCADE kernel@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.OCCExportOnlyVisible
 Only consider visible shapes when exporting STEP or BREP models with the OpenCASCADE kernel@*
 Default value: @code{0}@*

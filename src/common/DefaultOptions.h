@@ -1174,6 +1174,9 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "OCCFixSmallFaces" , opt_geometry_occ_fix_small_faces , 0. ,
     "Fix small faces when importing STEP, IGES and BREP models with the "
     "OpenCASCADE kernel" },
+  { F|O, "OCCFixTolerances" , opt_geometry_occ_fix_tolerances , 0. ,
+    "Recompute the tolerances (to the smallest ones the geometry needs) when "
+    "importing STEP, IGES and BREP models with the OpenCASCADE kernel" },
   { F|O, "OCCExportOnlyVisible" , opt_geometry_occ_export_only_visible , 0. ,
     "Only consider visible shapes when exporting STEP or BREP models with the "
     "OpenCASCADE kernel" },

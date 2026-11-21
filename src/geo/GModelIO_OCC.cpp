@@ -110,6 +110,12 @@
 #include <ShapeFix_FixSmallFace.hxx>
 #include <ShapeFix_Shape.hxx>
 #include <ShapeFix_Wireframe.hxx>
+#include <TopoDS_Iterator.hxx>
+#include <Precision.hxx>
+#include <ShapeFix_Face.hxx>
+#include <ShapeFix_Wire.hxx>
+#include <ShapeFix_ShapeTolerance.hxx>
+#include <ShapeFix_Solid.hxx>
 #include <Standard_Version.hxx>
 #include <StepData_StepModel.hxx>
 #include <StepRepr_RepresentationItem.hxx>
@@ -5139,7 +5145,8 @@ bool OCC_Internals::importShapes(const std::string &fileName,
     CTX::instance()->geom.occFixDegenerated,
     CTX::instance()->geom.occFixSmallEdges,
     CTX::instance()->geom.occFixSmallFaces, CTX::instance()->geom.occSewFaces,
-    CTX::instance()->geom.occMakeSolids, CTX::instance()->geom.occScaling);
+    CTX::instance()->geom.occMakeSolids, CTX::instance()->geom.occFixTolerances,
+    CTX::instance()->geom.occScaling);
 
   _multiBind(result, -1, outDimTags, highestDimOnly, true);
 
@@ -6239,10 +6246,79 @@ void OCC_Internals::_addShapeToMaps(const TopoDS_Shape &shape)
   }
 }
 
+// Count the distinct shapes of each type, and the total area of the faces
+static void healStatistics(const TopoDS_Shape &shape, int n[8], double &area)
+{
+  const TopAbs_ShapeEnum types[8] = {
+    TopAbs_COMPOUND, TopAbs_COMPSOLID, TopAbs_SOLID, TopAbs_SHELL,
+    TopAbs_WIRE,     TopAbs_FACE,      TopAbs_EDGE,  TopAbs_VERTEX};
+  for(int i = 0; i < 8; i++) {
+    NCollection_IndexedMap<TopoDS_Shape, TopTools_ShapeMapHasher> m;
+    TopExp::MapShapes(shape, types[i], m);
+    n[i] = m.Extent();
+    if(types[i] != TopAbs_FACE) continue;
+    area = 0.;
+    for(int k = 1; k <= m.Extent(); k++) {
+      GProp_GProps system;
+      BRepGProp::SurfaceProperties(m(k), system);
+      area += system.Mass();
+    }
+  }
+}
+
+// The distinct sub-shapes of a given type
+static std::vector<TopoDS_Shape> healSubShapes(const TopoDS_Shape &shape,
+                                               TopAbs_ShapeEnum type)
+{
+  NCollection_IndexedMap<TopoDS_Shape, TopTools_ShapeMapHasher> m;
+  TopExp::MapShapes(shape, type, m);
+  std::vector<TopoDS_Shape> v;
+  for(int k = 1; k <= m.Extent(); k++) v.push_back(m(k));
+  return v;
+}
+
+// The final replacement of a shape in a healing context (a null shape if it
+// was removed)
+static TopoDS_Shape healedValue(const Handle(ShapeBuild_ReShape) & context,
+                                const TopoDS_Shape &shape)
+{
+  TopoDS_Shape s = shape;
+  for(int i = 0; i < 100; i++) {
+    TopoDS_Shape n = context->Value(s);
+    if(n.IsNull() || n.IsSame(s)) return n;
+    s = n;
+  }
+  return s;
+}
+
+// Record in `context' the replacements made by a fixing tool that used its own
+// context `own', for the sub-shapes of `shape' (the shape before the fix)
+static void healRecord(const Handle(ShapeBuild_ReShape) & context,
+                       const Handle(ShapeBuild_ReShape) & own,
+                       const TopoDS_Shape &shape)
+{
+  if(own.IsNull()) return;
+  for(auto t : {TopAbs_SOLID, TopAbs_SHELL, TopAbs_FACE, TopAbs_WIRE,
+                TopAbs_EDGE, TopAbs_VERTEX}) {
+    for(auto &sub : healSubShapes(shape, t)) {
+      TopoDS_Shape n = healedValue(own, sub);
+      if(n.IsNull())
+        context->Remove(sub);
+      else if(!n.IsSame(sub) || n.Orientation() != sub.Orientation())
+        context->Replace(sub, n);
+    }
+  }
+}
+
+// All the replacements made by the steps below are recorded in `context', so
+// that they can be applied to the rest of the model (when healing some of its
+// shapes) and their tags kept (see healShapes())
 void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
                                bool fixDegenerated, bool fixSmallEdges,
                                bool fixSmallFaces, bool sewFaces,
-                               bool makeSolids, double scaling)
+                               bool makeSolids, bool fixTolerances,
+                               double scaling,
+                               const Handle(ShapeBuild_ReShape) & ctx)
 {
   if(scaling != 1.0) {
     Msg::Info("Scaling geometry (factor: %g)", scaling);
@@ -6253,193 +6329,125 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
   }
 
   if(!fixDegenerated && !fixSmallEdges && !fixSmallFaces && !sewFaces &&
-     !makeSolids)
+     !makeSolids && !fixTolerances)
     return;
 
   Msg::Info("Healing shapes (tolerance: %g)", tolerance);
   double t1 = Cpu(), w1 = TimeOfDay();
 
-  _somap.Clear();
-  _shmap.Clear();
-  _fmap.Clear();
-  _wmap.Clear();
-  _emap.Clear();
-  _vmap.Clear();
-  _addShapeToMaps(myshape);
+  Handle(ShapeBuild_ReShape) context = ctx;
+  if(context.IsNull()) context = new ShapeBuild_ReShape();
 
-  TopExp_Explorer exp0, exp1;
-  int nrc = 0, nrcs = 0;
-  int nrso = _somap.Extent(), nrsh = _shmap.Extent(), nrf = _fmap.Extent();
-  int nrw = _wmap.Extent(), nre = _emap.Extent(), nrv = _vmap.Extent();
-  for(exp0.Init(myshape, TopAbs_COMPOUND); exp0.More(); exp0.Next()) nrc++;
-  for(exp0.Init(myshape, TopAbs_COMPSOLID); exp0.More(); exp0.Next()) nrcs++;
+  int n0[8];
+  double area0;
+  healStatistics(myshape, n0, area0);
 
-  double surfacecont = 0;
-  for(exp0.Init(myshape, TopAbs_FACE); exp0.More(); exp0.Next()) {
-    TopoDS_Face face = TopoDS::Face(exp0.Current());
-    GProp_GProps system;
-    BRepGProp::SurfaceProperties(face, system);
-    surfacecont += system.Mass();
+  if(fixTolerances) {
+    // shapes can carry tolerances much larger than the gaps in their geometry
+    // (e.g. from the tool that wrote them), which merge points that should be
+    // distinct and that the fixes below can only increase: give the curves
+    // the deviation of their parametric curves from their 3D curves, and the
+    // points what the ends of their curves need
+    Msg::Info(" - Fixing tolerances");
+    ShapeFix_ShapeTolerance stol;
+    stol.SetTolerance(myshape, Precision::Confusion());
+    ShapeAnalysis_Edge sae;
+    for(auto &e : healSubShapes(myshape, TopAbs_EDGE)) {
+      double dev = 0.;
+      sae.CheckSameParameter(TopoDS::Edge(e), dev);
+      if(dev > Precision::Confusion()) stol.SetTolerance(e, dev, TopAbs_EDGE);
+    }
+    BRepLib::UpdateTolerances(myshape);
   }
 
   if(fixDegenerated) {
+    // (degenerated edges are kept: they are the poles of spheres or the apex of
+    // cones; the face fixes add the missing ones)
     Msg::Info(" - Fixing degenerated edges and faces");
-
-    {
-      ShapeBuild_ReShape rebuild;
-      for(exp1.Init(myshape, TopAbs_EDGE); exp1.More(); exp1.Next()) {
-        TopoDS_Edge edge = TopoDS::Edge(exp1.Current());
-        if(BRep_Tool::Degenerated(edge)) rebuild.Remove(edge);
+    for(auto &f : healSubShapes(myshape, TopAbs_FACE)) {
+      TopoDS_Face face = TopoDS::Face(f.Oriented(TopAbs_FORWARD));
+      ShapeFix_Face sff(face);
+      sff.SetContext(context);
+      sff.FixAddNaturalBoundMode() = true;
+      sff.FixSmallAreaWireMode() = true;
+      sff.Perform();
+      if(sff.Status(ShapeExtend_DONE)) {
+        if(sff.Status(ShapeExtend_DONE1)) Msg::Info(" . Some wires fixed");
+        if(sff.Status(ShapeExtend_DONE2))
+          Msg::Info(" . Orientation of wires fixed");
+        if(sff.Status(ShapeExtend_DONE3)) Msg::Info(" . Missing seam added");
+        if(sff.Status(ShapeExtend_DONE4))
+          Msg::Info(" . Small area wire removed");
+        if(sff.Status(ShapeExtend_DONE5)) Msg::Info(" . Natural bounds added");
+        context->Replace(face, sff.Face());
       }
-      myshape = rebuild.Apply(myshape);
     }
-
-    {
-      ShapeBuild_ReShape rebuild;
-      for(exp0.Init(myshape, TopAbs_FACE); exp0.More(); exp0.Next()) {
-        TopoDS_Face face = TopoDS::Face(exp0.Current());
-
-        ShapeFix_Face sff(face);
-        sff.FixAddNaturalBoundMode() = true;
-        sff.FixSmallAreaWireMode() = true;
-        sff.Perform();
-
-        if(sff.Status(ShapeExtend_DONE1) || sff.Status(ShapeExtend_DONE2) ||
-           sff.Status(ShapeExtend_DONE3) || sff.Status(ShapeExtend_DONE4) ||
-           sff.Status(ShapeExtend_DONE5)) {
-          Msg::Info(" . Repaired face");
-          if(sff.Status(ShapeExtend_DONE1))
-            Msg::Info(" . Some wires are fixed");
-          else if(sff.Status(ShapeExtend_DONE2))
-            Msg::Info(" . Orientation of wires fixed");
-          else if(sff.Status(ShapeExtend_DONE3))
-            Msg::Info(" . Missing seam added");
-          else if(sff.Status(ShapeExtend_DONE4))
-            Msg::Info(" . Small area wire removed");
-          else if(sff.Status(ShapeExtend_DONE5))
-            Msg::Info(" . Natural bounds added");
-
-          TopoDS_Face newface = sff.Face();
-          rebuild.Replace(face, newface);
-        }
-      }
-      myshape = rebuild.Apply(myshape);
-    }
-
-    {
-      ShapeBuild_ReShape rebuild;
-      for(exp1.Init(myshape, TopAbs_EDGE); exp1.More(); exp1.Next()) {
-        TopoDS_Edge edge = TopoDS::Edge(exp1.Current());
-        if(BRep_Tool::Degenerated(edge)) rebuild.Remove(edge);
-      }
-      myshape = rebuild.Apply(myshape);
-    }
+    myshape = context->Apply(myshape);
   }
 
   if(fixSmallEdges) {
     Msg::Info(" - Fixing small edges");
-
-    {
-      ShapeBuild_ReShape rebuild;
-
-      for(exp0.Init(myshape, TopAbs_FACE); exp0.More(); exp0.Next()) {
-        TopoDS_Face face = TopoDS::Face(exp0.Current());
-
-        for(exp1.Init(face, TopAbs_WIRE); exp1.More(); exp1.Next()) {
-          TopoDS_Wire oldwire = TopoDS::Wire(exp1.Current());
-          ShapeFix_Wire sfw(oldwire, face, tolerance);
-          sfw.ModifyTopologyMode() = true;
-          sfw.ClosedWireMode() = true;
-          bool replace = false;
-          replace = sfw.FixReorder() || replace;
-          replace = sfw.FixConnected() || replace;
-
-          if(sfw.FixSmall(false, tolerance) &&
-             !(sfw.StatusSmall(ShapeExtend_FAIL1) ||
-               sfw.StatusSmall(ShapeExtend_FAIL2) ||
-               sfw.StatusSmall(ShapeExtend_FAIL3))) {
-            Msg::Info(" . Fixed small edge in wire");
-            replace = true;
-          }
-          else if(sfw.StatusSmall(ShapeExtend_FAIL1))
-            Msg::Warning("Failed to fix small edge in wire, edge cannot be "
-                         "checked (no 3d curve and no pcurve)");
-          else if(sfw.StatusSmall(ShapeExtend_FAIL2))
-            Msg::Warning("Failed to fix small edge in wire, edge is null-"
-                         "length and has different vertives at begin and end, "
-                         "and lockvtx is True or ModifiyTopologyMode is False");
-          else if(sfw.StatusSmall(ShapeExtend_FAIL3))
-            Msg::Warning("Failed to fix small edge in wire, CheckConnected has "
-                         "failed");
-
-          replace = sfw.FixEdgeCurves() || replace;
-          replace = sfw.FixDegenerated() || replace;
-          replace = sfw.FixSelfIntersection() || replace;
-          replace = sfw.FixLacking(true) || replace;
-          if(replace) {
-            TopoDS_Wire newwire = sfw.Wire();
-            rebuild.Replace(oldwire, newwire);
-          }
+    for(auto &f : healSubShapes(myshape, TopAbs_FACE)) {
+      // (the wires of a reversed face are reversed: fixing them on a reversed
+      // face breaks e.g. periodic faces)
+      TopoDS_Face face = TopoDS::Face(f.Oriented(TopAbs_FORWARD));
+      for(TopExp_Explorer exp(face, TopAbs_WIRE); exp.More(); exp.Next()) {
+        TopoDS_Wire oldwire = TopoDS::Wire(exp.Current());
+        ShapeFix_Wire sfw(oldwire, face, tolerance);
+        sfw.SetContext(context);
+        sfw.ModifyTopologyMode() = true;
+        sfw.ClosedWireMode() = true;
+        bool replace = false;
+        replace = sfw.FixReorder() || replace;
+        replace = sfw.FixConnected() || replace;
+        if(sfw.FixSmall(false, tolerance)) {
+          Msg::Info(" . Fixed small edge in wire");
+          replace = true;
         }
+        else if(sfw.StatusSmall(ShapeExtend_FAIL))
+          Msg::Warning("Failed to fix small edge in a wire of a face");
+        replace = sfw.FixEdgeCurves() || replace;
+        replace = sfw.FixDegenerated() || replace;
+        replace = sfw.FixSelfIntersection() || replace;
+        // (not forced: adding an edge for a gap smaller than the tolerance
+        // creates tiny curves)
+        replace = sfw.FixLacking(false) || replace;
+        if(replace) context->Replace(oldwire, sfw.Wire());
       }
-      myshape = rebuild.Apply(myshape);
     }
+    myshape = context->Apply(myshape);
 
-    {
-      ShapeBuild_ReShape rebuild;
-
-      for(exp1.Init(myshape, TopAbs_EDGE); exp1.More(); exp1.Next()) {
-        TopoDS_Edge edge = TopoDS::Edge(exp1.Current());
-        GProp_GProps system;
-        BRepGProp::LinearProperties(edge, system);
-        if(system.Mass() < tolerance) {
-          Msg::Info("  - Removing degenerated edge");
-          rebuild.Remove(edge);
-        }
+    // gaps and small edges across the faces, with its own context whose
+    // replacements are then recorded (but not if there are degenerated edges:
+    // ShapeFix_Wireframe::FixSmallEdges crashes on them, and FixWireGaps breaks
+    // e.g. the periodic faces of cones)
+    bool degenerated = false;
+    for(auto &e : healSubShapes(myshape, TopAbs_EDGE))
+      degenerated = degenerated || BRep_Tool::Degenerated(TopoDS::Edge(e));
+    if(!degenerated) {
+      ShapeFix_Wireframe sfwf;
+      sfwf.Load(myshape);
+      sfwf.SetPrecision(tolerance);
+      sfwf.ModeDropSmallEdges() = true;
+      if(sfwf.FixWireGaps()) {
+        if(sfwf.StatusWireGaps(ShapeExtend_DONE1))
+          Msg::Info(" . Some 2D gaps fixed");
+        if(sfwf.StatusWireGaps(ShapeExtend_DONE2))
+          Msg::Info(" . Some 3D gaps fixed");
+        if(sfwf.StatusWireGaps(ShapeExtend_FAIL1))
+          Msg::Info(" . Failed to fix some 2D gaps");
+        if(sfwf.StatusWireGaps(ShapeExtend_FAIL2))
+          Msg::Info(" . Failed to fix some 3D gaps");
       }
-      myshape = rebuild.Apply(myshape);
-    }
-
-    {
-      ShapeBuild_ReShape rebuild;
-      for(exp1.Init(myshape, TopAbs_EDGE); exp1.More(); exp1.Next()) {
-        TopoDS_Edge edge = TopoDS::Edge(exp1.Current());
-        if(BRep_Tool::Degenerated(edge)) rebuild.Remove(edge);
+      if(sfwf.FixSmallEdges()) {
+        if(sfwf.StatusSmallEdges(ShapeExtend_DONE1))
+          Msg::Info(" . Some small edges fixed");
+        if(sfwf.StatusSmallEdges(ShapeExtend_FAIL1))
+          Msg::Info(" . Failed to fix some small edges");
       }
-      myshape = rebuild.Apply(myshape);
+      healRecord(context, sfwf.Context(), myshape);
     }
-
-    ShapeFix_Wireframe sfwf;
-    sfwf.SetPrecision(tolerance);
-    sfwf.Load(myshape);
-    sfwf.ModeDropSmallEdges() = true;
-
-    if(sfwf.FixWireGaps()) {
-      Msg::Info(" - Fixing wire gaps");
-      if(sfwf.StatusWireGaps(ShapeExtend_OK)) Msg::Info("  no gaps found");
-      if(sfwf.StatusWireGaps(ShapeExtend_DONE1))
-        Msg::Info(" . Some 2D gaps fixed");
-      if(sfwf.StatusWireGaps(ShapeExtend_DONE2))
-        Msg::Info(" . Some 3D gaps fixed");
-      if(sfwf.StatusWireGaps(ShapeExtend_FAIL1))
-        Msg::Info(" . Failed to fix some 2D gaps");
-      if(sfwf.StatusWireGaps(ShapeExtend_FAIL2))
-        Msg::Info(" . Failed to fix some 3D gaps");
-    }
-
-    sfwf.SetPrecision(tolerance);
-
-    if(sfwf.FixSmallEdges()) {
-      Msg::Info(" - Fixing wire frames");
-      if(sfwf.StatusSmallEdges(ShapeExtend_OK))
-        Msg::Info(" . No small edges found");
-      if(sfwf.StatusSmallEdges(ShapeExtend_DONE1))
-        Msg::Info(" . Some small edges fixed");
-      if(sfwf.StatusSmallEdges(ShapeExtend_FAIL1))
-        Msg::Info(" . Failed to fix some small edges");
-    }
-
-    myshape = sfwf.Shape();
+    myshape = context->Apply(myshape);
   }
 
   if(fixSmallFaces) {
@@ -6448,170 +6456,199 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
     sffsm.Init(myshape);
     sffsm.SetPrecision(tolerance);
     sffsm.Perform();
-    myshape = sffsm.FixShape();
+    healRecord(context, sffsm.Context(), myshape);
+    myshape = context->Apply(myshape);
   }
 
   if(sewFaces) {
+    // replace each face by the sewn one, with the same orientation, so that
+    // the shapes containing the faces (e.g. solids) are kept, as well as the
+    // shapes that contain no face
     Msg::Info(" - Sewing faces");
-
-    BRepBuilderAPI_Sewing sewedObj(tolerance);
-
-    for(exp0.Init(myshape, TopAbs_FACE); exp0.More(); exp0.Next()) {
-      TopoDS_Face face = TopoDS::Face(exp0.Current());
-      sewedObj.Add(face);
+    BRepBuilderAPI_Sewing sewing(tolerance);
+    std::vector<TopoDS_Shape> faces = healSubShapes(myshape, TopAbs_FACE);
+    for(auto &f : faces) sewing.Add(f);
+    sewing.Perform();
+    int n = 0;
+    for(auto &f : faces) {
+      if(!sewing.IsModified(f)) continue;
+      TopoDS_Shape sewn = sewing.Modified(f);
+      if(sewn.IsNull() || sewn.ShapeType() != TopAbs_FACE) continue;
+      sewn.Orientation(f.Orientation());
+      context->Replace(f, sewn);
+      n++;
     }
-
-    sewedObj.Perform();
-
-    if(!sewedObj.SewedShape().IsNull())
-      myshape = sewedObj.SewedShape();
-    else
-      Msg::Info(" . Could not sew");
-  }
-
-  {
-    ShapeBuild_ReShape rebuild;
-    for(exp1.Init(myshape, TopAbs_EDGE); exp1.More(); exp1.Next()) {
-      TopoDS_Edge edge = TopoDS::Edge(exp1.Current());
-      if(BRep_Tool::Degenerated(edge)) rebuild.Remove(edge);
+    // record the edges and vertices that were merged, to keep their tags
+    for(auto t : {TopAbs_EDGE, TopAbs_VERTEX}) {
+      for(auto &e : healSubShapes(myshape, t)) {
+        if(!sewing.IsModifiedSubShape(e)) continue;
+        TopoDS_Shape sewn = sewing.ModifiedSubShape(e);
+        if(!sewn.IsNull() && sewn.ShapeType() == t && !context->IsRecorded(e))
+          context->Replace(e, sewn);
+      }
     }
-    myshape = rebuild.Apply(myshape);
+    Msg::Info(" . %d faces sewn", n);
+    myshape = context->Apply(myshape);
   }
 
   if(makeSolids) {
+    // a solid for each closed shell made of faces that are in no solid
     Msg::Info(" - Making solids");
-
-    BRepBuilderAPI_MakeSolid ms;
-    int count = 0;
-    for(exp0.Init(myshape, TopAbs_SHELL); exp0.More(); exp0.Next()) {
-      count++;
-      ms.Add(TopoDS::Shell(exp0.Current()));
+    NCollection_IndexedMap<TopoDS_Shape, TopTools_ShapeMapHasher> inSolids;
+    for(TopExp_Explorer exp(myshape, TopAbs_SOLID); exp.More(); exp.Next())
+      TopExp::MapShapes(exp.Current(), TopAbs_FACE, inSolids);
+    BRepBuilderAPI_Sewing sewing(tolerance);
+    int nfree = 0;
+    for(auto &f : healSubShapes(myshape, TopAbs_FACE)) {
+      if(inSolids.Contains(f)) continue;
+      sewing.Add(f);
+      nfree++;
     }
-
-    if(!count) { Msg::Info(" . Could not make solid (no shells)"); }
-    else {
-      BRepCheck_Analyzer ba(ms);
-      if(ba.IsValid()) {
-        ShapeFix_Shape sfs;
-        sfs.Init(ms);
-        sfs.SetPrecision(tolerance);
-        sfs.SetMaxTolerance(tolerance);
-        sfs.Perform();
-        myshape = sfs.Shape();
-        for(exp0.Init(myshape, TopAbs_SOLID); exp0.More(); exp0.Next()) {
-          TopoDS_Solid solid = TopoDS::Solid(exp0.Current());
-          TopoDS_Solid newsolid = solid;
-          BRepLib::OrientClosedSolid(newsolid);
-          ShapeBuild_ReShape rebuild;
-          rebuild.Replace(solid, newsolid);
-          myshape = rebuild.Apply(myshape, TopAbs_COMPSOLID);
-        }
+    std::vector<TopoDS_Shape> solids;
+    if(nfree) {
+      sewing.Perform();
+      for(auto &f : healSubShapes(myshape, TopAbs_FACE)) {
+        if(inSolids.Contains(f) || !sewing.IsModified(f)) continue;
+        TopoDS_Shape sewn = sewing.Modified(f);
+        if(sewn.IsNull() || sewn.ShapeType() != TopAbs_FACE) continue;
+        sewn.Orientation(f.Orientation());
+        context->Replace(f, sewn);
       }
-      else
-        Msg::Info(" . Could not make solid");
+      myshape = context->Apply(myshape);
+      // the shells, and a shell for each face in no shell (e.g. a sphere)
+      std::vector<TopoDS_Shell> shells;
+      NCollection_IndexedMap<TopoDS_Shape, TopTools_ShapeMapHasher> inShells;
+      for(TopExp_Explorer exp(sewing.SewedShape(), TopAbs_SHELL); exp.More();
+          exp.Next()) {
+        shells.push_back(TopoDS::Shell(exp.Current()));
+        TopExp::MapShapes(exp.Current(), TopAbs_FACE, inShells);
+      }
+      for(TopExp_Explorer exp(sewing.SewedShape(), TopAbs_FACE); exp.More();
+          exp.Next()) {
+        if(inShells.Contains(exp.Current())) continue;
+        BRep_Builder b;
+        TopoDS_Shell shell;
+        b.MakeShell(shell);
+        b.Add(shell, exp.Current());
+        shells.push_back(shell);
+      }
+      for(auto &shell : shells) {
+        if(!BRep_Tool::IsClosed(shell)) continue;
+        ShapeFix_Solid sfs;
+        TopoDS_Solid solid = sfs.SolidFromShell(shell);
+        if(solid.IsNull() || !BRepCheck_Analyzer(solid).IsValid()) continue;
+        solids.push_back(solid);
+      }
     }
+    if(solids.size()) {
+      // (the faces are also kept as such in the compound, as they are in the
+      // model)
+      BRep_Builder b;
+      TopoDS_Compound c;
+      b.MakeCompound(c);
+      b.Add(c, myshape);
+      for(auto &solid : solids) b.Add(c, solid);
+      myshape = c;
+    }
+    Msg::Info(" . %d solids made", (int)solids.size());
   }
 
-  double newsurfacecont = 0;
-  for(exp0.Init(myshape, TopAbs_FACE); exp0.More(); exp0.Next()) {
-    TopoDS_Face face = TopoDS::Face(exp0.Current());
-    GProp_GProps system;
-    BRepGProp::SurfaceProperties(face, system);
-    newsurfacecont += system.Mass();
-  }
-
-  _somap.Clear();
-  _shmap.Clear();
-  _fmap.Clear();
-  _wmap.Clear();
-  _emap.Clear();
-  _vmap.Clear();
-  _addShapeToMaps(myshape);
-  int nnrc = 0, nnrcs = 0;
-  int nnrso = _somap.Extent(), nnrsh = _shmap.Extent(), nnrf = _fmap.Extent();
-  int nnrw = _wmap.Extent(), nnre = _emap.Extent(), nnrv = _vmap.Extent();
-  for(exp0.Init(myshape, TopAbs_COMPOUND); exp0.More(); exp0.Next()) nnrc++;
-  for(exp0.Init(myshape, TopAbs_COMPSOLID); exp0.More(); exp0.Next()) nnrcs++;
+  int n1[8];
+  double area1;
+  healStatistics(myshape, n1, area1);
 
   double t2 = Cpu(), w2 = TimeOfDay();
   Msg::Info("Done healing shapes (Wall %gs, CPU %gs):", w2 - w1, t2 - t1);
-  Msg::Info(" - Compounds          : %d (%d)", nnrc, nrc);
-  Msg::Info(" - Composite solids   : %d (%d)", nnrcs, nrcs);
-  Msg::Info(" - Solids             : %d (%d)", nnrso, nrso);
-  Msg::Info(" - Shells             : %d (%d)", nnrsh, nrsh);
-  Msg::Info(" - Wires              : %d (%d)", nnrw, nrw);
-  Msg::Info(" - Faces              : %d (%d)", nnrf, nrf);
-  Msg::Info(" - Edges              : %d (%d)", nnre, nre);
-  Msg::Info(" - Vertices           : %d (%d)", nnrv, nrv);
-  Msg::Info(" - Total surface area : %g (%g)", newsurfacecont, surfacecont);
+  Msg::Info(" - Compounds          : %d (%d)", n1[0], n0[0]);
+  Msg::Info(" - Composite solids   : %d (%d)", n1[1], n0[1]);
+  Msg::Info(" - Solids             : %d (%d)", n1[2], n0[2]);
+  Msg::Info(" - Shells             : %d (%d)", n1[3], n0[3]);
+  Msg::Info(" - Wires              : %d (%d)", n1[4], n0[4]);
+  Msg::Info(" - Faces              : %d (%d)", n1[5], n0[5]);
+  Msg::Info(" - Edges              : %d (%d)", n1[6], n0[6]);
+  Msg::Info(" - Vertices           : %d (%d)", n1[7], n0[7]);
+  Msg::Info(" - Total surface area : %g (%g)", area1, area0);
 }
 
 bool OCC_Internals::healShapes(
   const std::vector<std::pair<int, int>> &inDimTags,
   std::vector<std::pair<int, int>> &outDimTags, double tolerance,
   bool fixDegenerated, bool fixSmallEdges, bool fixSmallFaces, bool sewFaces,
-  bool makeSolids)
+  bool makeSolids, bool fixTolerances)
 {
+  // a compound with all the shapes with tags (the model), and one with the
+  // shapes to heal
   BRep_Builder b;
-  TopoDS_Compound c;
-  b.MakeCompound(c);
-
-  // construct a compound with all the shapes with tags
-  _somap.Clear();
-  _shmap.Clear();
-  _fmap.Clear();
-  _wmap.Clear();
-  _emap.Clear();
-  _vmap.Clear();
-  NCollection_DataMap<int, TopoDS_Shape>::Iterator exp0(_tagVertex);
-  for(; exp0.More(); exp0.Next()) _addShapeToMaps(exp0.Value());
-  NCollection_DataMap<int, TopoDS_Shape>::Iterator exp1(_tagEdge);
-  for(; exp1.More(); exp1.Next()) _addShapeToMaps(exp1.Value());
-  NCollection_DataMap<int, TopoDS_Shape>::Iterator exp2(_tagFace);
-  for(; exp2.More(); exp2.Next()) _addShapeToMaps(exp2.Value());
-  NCollection_DataMap<int, TopoDS_Shape>::Iterator exp3(_tagSolid);
-  for(; exp3.More(); exp3.Next()) _addShapeToMaps(exp3.Value());
-  for(int i = 1; i <= _vmap.Extent(); i++) b.Add(c, _vmap(i));
-  for(int i = 1; i <= _emap.Extent(); i++) b.Add(c, _emap(i));
-  for(int i = 1; i <= _wmap.Extent(); i++) b.Add(c, _wmap(i));
-  for(int i = 1; i <= _fmap.Extent(); i++) b.Add(c, _fmap(i));
-  for(int i = 1; i <= _shmap.Extent(); i++) b.Add(c, _shmap(i));
-  for(int i = 1; i <= _somap.Extent(); i++) b.Add(c, _somap(i));
-
-  std::vector<TopoDS_Shape> toHeal;
-  for(std::size_t i = 0; i < inDimTags.size(); i++) {
-    int dim = inDimTags[i].first;
-    int tag = inDimTags[i].second;
-    if(!_isBound(dim, tag)) {
-      Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d", dim,
-                 tag);
-      return false;
-    }
-    toHeal.push_back(_find(dim, tag));
+  TopoDS_Compound model, toHeal;
+  b.MakeCompound(model);
+  b.MakeCompound(toHeal);
+  NCollection_DataMap<int, TopoDS_Shape> *maps[6] = {
+    &_tagSolid, &_tagShell, &_tagFace, &_tagWire, &_tagEdge, &_tagVertex};
+  const int dims[6] = {3, -2, 2, -1, 1, 0};
+  for(int i = 0; i < 6; i++) {
+    NCollection_DataMap<int, TopoDS_Shape>::Iterator it(*maps[i]);
+    for(; it.More(); it.Next()) b.Add(model, it.Value());
   }
-
-  // unbind everything
-  _unbind();
-
-  if(toHeal.empty()) { // heal all the shapes
-    _healShape(c, tolerance, fixDegenerated, fixSmallEdges, fixSmallFaces,
-               sewFaces, makeSolids, 1.0);
-  }
+  if(inDimTags.empty()) { toHeal = model; }
   else {
-    for(std::size_t i = 0; i < toHeal.size(); i++) {
-      TopoDS_Shape olds = toHeal[i];
-      TopoDS_Shape news = olds;
-      _healShape(news, tolerance, fixDegenerated, fixSmallEdges, fixSmallFaces,
-                 sewFaces, makeSolids, 1.0);
-      ShapeBuild_ReShape rebuild;
-      rebuild.Replace(olds, news);
-      c = TopoDS::Compound(rebuild.Apply(c));
+    for(auto &dt : inDimTags) {
+      if(!_isBound(dt.first, dt.second)) {
+        Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d",
+                   dt.first, dt.second);
+        return false;
+      }
+      b.Add(toHeal, _find(dt.first, dt.second));
     }
   }
 
-  // rebind
-  _multiBind(c, -1, outDimTags, false, true);
+  // heal the shapes together (they can share sub-shapes), and apply the same
+  // replacements to the rest of the model
+  Handle(ShapeBuild_ReShape) context = new ShapeBuild_ReShape();
+  TopoDS_Shape healed = toHeal;
+  _healShape(healed, tolerance, fixDegenerated, fixSmallEdges, fixSmallFaces,
+             sewFaces, makeSolids, fixTolerances, 1.0, context);
+  TopoDS_Compound result;
+  b.MakeCompound(result);
+  TopoDS_Shape rest = context->Apply(model);
+  b.Add(result, rest);
+  // the new shapes (e.g. the solids made from free faces)
+  NCollection_IndexedMap<TopoDS_Shape, TopTools_ShapeMapHasher> inRest;
+  TopExp::MapShapes(rest, inRest);
+  std::vector<TopoDS_Shape> stack(1, healed);
+  while(!stack.empty()) {
+    TopoDS_Shape sh = stack.back();
+    stack.pop_back();
+    if(sh.ShapeType() == TopAbs_COMPOUND) {
+      for(TopoDS_Iterator it(sh); it.More(); it.Next())
+        stack.push_back(it.Value());
+    }
+    else if(!inRest.Contains(sh)) {
+      b.Add(result, sh);
+      inRest.Add(sh);
+    }
+  }
 
+  // keep the tags: a shape left unchanged keeps its tag, a shape replaced by
+  // another one gives it its tag (unless the new one already got a tag, e.g.
+  // when several shapes are merged), a shape removed loses it
+  for(int i = 0; i < 6; i++) {
+    std::vector<std::pair<int, TopoDS_Shape>> bound;
+    NCollection_DataMap<int, TopoDS_Shape>::Iterator it(*maps[i]);
+    for(; it.More(); it.Next()) bound.push_back({it.Key(), it.Value()});
+    for(auto &tb : bound) {
+      TopoDS_Shape n = healedValue(context, tb.second);
+      if(!n.IsNull() && n.IsSame(tb.second) &&
+         n.Orientation() == tb.second.Orientation())
+        continue;
+      _unbind(tb.second, dims[i], tb.first, false);
+      if(!n.IsNull() && n.ShapeType() == tb.second.ShapeType() &&
+         !_isBound(dims[i], n))
+        _bind(n, dims[i], tb.first, false);
+    }
+  }
+
+  // bind the new shapes
+  _multiBind(result, -1, outDimTags, false, true);
   return true;
 }
 

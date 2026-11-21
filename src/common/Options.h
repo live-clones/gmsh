@@ -436,6 +436,7 @@ double opt_geometry_occ_disable_stl(OPT_ARGS_NUM);
 double opt_geometry_occ_fix_degenerated(OPT_ARGS_NUM);
 double opt_geometry_occ_fix_small_edges(OPT_ARGS_NUM);
 double opt_geometry_occ_fix_small_faces(OPT_ARGS_NUM);
+double opt_geometry_occ_fix_tolerances(OPT_ARGS_NUM);
 double opt_geometry_occ_sew_faces(OPT_ARGS_NUM);
 double opt_geometry_occ_make_solids(OPT_ARGS_NUM);
 double opt_geometry_occ_parallel(OPT_ARGS_NUM);

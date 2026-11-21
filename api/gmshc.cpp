@@ -4390,7 +4390,7 @@ GMSH_API void gmshModelOccRemoveAllDuplicates(int * ierr)
   }
 }
 
-GMSH_API void gmshModelOccHealShapes(int ** outDimTags, size_t * outDimTags_n, const int * dimTags, const size_t dimTags_n, const double tolerance, const int fixDegenerated, const int fixSmallEdges, const int fixSmallFaces, const int sewFaces, const int makeSolids, int * ierr)
+GMSH_API void gmshModelOccHealShapes(int ** outDimTags, size_t * outDimTags_n, const int * dimTags, const size_t dimTags_n, const double tolerance, const int fixDegenerated, const int fixSmallEdges, const int fixSmallFaces, const int sewFaces, const int makeSolids, const int fixTolerances, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
@@ -4400,7 +4400,7 @@ GMSH_API void gmshModelOccHealShapes(int ** outDimTags, size_t * outDimTags_n, c
       api_dimTags_[i].first = dimTags[i * 2 + 0];
       api_dimTags_[i].second = dimTags[i * 2 + 1];
     }
-    gmsh::model::occ::healShapes(api_outDimTags_, api_dimTags_, tolerance, fixDegenerated, fixSmallEdges, fixSmallFaces, sewFaces, makeSolids);
+    gmsh::model::occ::healShapes(api_outDimTags_, api_dimTags_, tolerance, fixDegenerated, fixSmallEdges, fixSmallFaces, sewFaces, makeSolids, fixTolerances);
     vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
   }
   catch(...){

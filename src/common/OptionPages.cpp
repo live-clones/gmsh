@@ -155,6 +155,7 @@ static optionPage geometryPage()
                      "Remove degenerated edges and faces")},
               {check("Geometry.OCCFixSmallEdges", "Remove small edges")},
               {check("Geometry.OCCFixSmallFaces", "Remove small faces")},
+              {check("Geometry.OCCFixTolerances", "Recompute tolerances")},
               {check("Geometry.OCCSewFaces", "Sew faces")},
               {check("Geometry.OCCMakeSolids", "Fix shells and make solids")},
               {number("Geometry.OCCScaling", "Global model scaling")}}),

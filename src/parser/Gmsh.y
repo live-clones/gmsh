@@ -4981,7 +4981,8 @@ Coherence :
            CTX::instance()->geom.occFixSmallEdges,
            CTX::instance()->geom.occFixSmallFaces,
            CTX::instance()->geom.occSewFaces,
-           CTX::instance()->geom.occMakeSolids);
+           CTX::instance()->geom.occMakeSolids,
+           CTX::instance()->geom.occFixTolerances);
       }
       else {
         yymsg(0, "HealShapes only available with OpenCASCADE geometry kernel");

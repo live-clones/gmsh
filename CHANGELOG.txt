@@ -41,9 +41,10 @@ longer need to be redefined after meshing); boolean operations now return the
 entities of the result that are not on the boundary of other ones (including
 embedded ones), plus the arguments left unchanged, each once and regardless of
 Geometry.OCCBooleanPreserveNumbering; improved import of STEP names and colors;
-Gmsh now requires C++17, CMake 3.10 and FLTK 1.4.0, supports OCC 8, and uses
-Eigen 5.0 by default; official binary builds now use FLTK 1.5-dev, OCC 8.0.1,
-HDF5 1.14.6, CGNS 4.5.2 and MED 6.0.1; bug fixes.
+improved shape healing, with new Geometry.OCCFixTolerances option; Gmsh now
+requires C++17, CMake 3.10 and FLTK 1.4.0, supports OCC 8, and uses Eigen 5.0 by
+default; official binary builds now use FLTK 1.5-dev, OCC 8.0.1, HDF5 1.14.6,
+CGNS 4.5.2 and MED 6.0.1; bug fixes.
 
 * New API functions: mesh/createOverlaps, mesh/getPartitionEntities,
   mesh/getOverlapBoundary, mesh/getOverlapInterfaceBoundary,
@@ -55,9 +56,10 @@ HDF5 1.14.6, CGNS 4.5.2 and MED 6.0.1; bug fixes.
   mesh/setMetricCallback, mesh/removeMetricCallback,
   algorithm/refineTetrahedra, plugin/load, fltk/pick, mesh/merge
 
-* Incompatible API changes: new optional arguments to mesh/optimize and
-  mesh/relocateNodes; new arguments to mesh/classifySurfaces; new and/or
-  modified arguments to mesh/getFaces and mesh/getElementFaceNodes (use
+* Incompatible API changes: new optional arguments to mesh/optimize,
+  mesh/relocateNodes and occ/healShapes; new arguments to
+  mesh/classifySurfaces; new and/or modified arguments to mesh/getFaces and
+  mesh/getElementFaceNodes (use
   getFacesByType and getElementFaceNodesByType for the old behavior),
   mesh/getAllFaces, mesh/addFaces; hierarchical basis function type keys
   (mesh/getKeys, mesh/getKeysForElement, mesh/getPeriodicKeys) are now 4 times

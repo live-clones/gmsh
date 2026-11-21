@@ -3715,8 +3715,14 @@ namespace gmsh { // Top-level functions
       //
       // Apply various healing procedures to the entities `dimTags' (given as a
       // vector of (dim, tag) pairs), or to all the entities in the model if
-      // `dimTags' is empty, in the OpenCASCADE CAD representation. Return the
-      // healed entities in `outDimTags'.
+      // `dimTags' is empty, in the OpenCASCADE CAD representation: recompute the
+      // tolerances to the smallest ones the geometry needs (if `fixTolerances' is
+      // set), fix the degenerated curves and surfaces, the small curves and the
+      // small surfaces, sew the surfaces sharing geometrically identical curves
+      // (with tolerance `tolerance'), and make volumes from the closed shells of
+      // surfaces bounding no volume. The entities are healed together, the changes
+      // applied to the rest of the model, and the entities keep their tag unless
+      // they are removed or merged. Return the healed entities in `outDimTags'.
       GMSH_API void healShapes(gmsh::vectorpair & outDimTags,
                                const gmsh::vectorpair & dimTags = gmsh::vectorpair(),
                                const double tolerance = 1e-8,
@@ -3724,7 +3730,8 @@ namespace gmsh { // Top-level functions
                                const bool fixSmallEdges = true,
                                const bool fixSmallFaces = true,
                                const bool sewFaces = true,
-                               const bool makeSolids = true);
+                               const bool makeSolids = true,
+                               const bool fixTolerances = true);
 
       // gmsh::model::occ::convertToNURBS
       //

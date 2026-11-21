@@ -7515,14 +7515,14 @@ GMSH_API void gmsh::model::occ::removeAllDuplicates()
 GMSH_API void gmsh::model::occ::healShapes(
   vectorpair &outDimTags, const vectorpair &inDimTags, const double tolerance,
   const bool fixDegenerated, const bool fixSmallEdges, const bool fixSmallFaces,
-  const bool sewFaces, const bool makeSolids)
+  const bool sewFaces, const bool makeSolids, const bool fixTolerances)
 {
   if(!_checkInit()) return;
   _createOcc();
   outDimTags.clear();
   GModel::current()->getOCCInternals()->healShapes(
     inDimTags, outDimTags, tolerance, fixDegenerated, fixSmallEdges,
-    fixSmallFaces, sewFaces, makeSolids);
+    fixSmallFaces, sewFaces, makeSolids, fixTolerances);
 }
 
 GMSH_API void gmsh::model::occ::convertToNURBS(const vectorpair &inDimTags)
