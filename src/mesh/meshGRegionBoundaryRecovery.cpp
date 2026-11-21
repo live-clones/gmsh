@@ -137,8 +137,20 @@ namespace tetgenBR {
 #define TETLIBRARY
 #endif
   // TetGen's messages: at their natural level, or as debug output when the
-  // caller does not want them (a failed local recovery is not an error)
+  // caller does not want them (a failed local recovery is not an error). TetGen
+  // prints some lines in several pieces (e.g. a PLC error and then the point
+  // where it occurs): the pieces are joined until the end of the line
   static bool tetgenQuiet = false;
+  static std::string tetgenLine;
+  static void tetgenFlush()
+  {
+    if(tetgenLine.empty()) return;
+    if(tetgenQuiet)
+      Msg::Debug("%s", tetgenLine.c_str());
+    else
+      Msg::Auto("%s", tetgenLine.c_str());
+    tetgenLine.clear();
+  }
   static void tetgenPrintf(const char *fmt, ...)
   {
     char str[5000];
@@ -146,10 +158,12 @@ namespace tetgenBR {
     va_start(args, fmt);
     vsnprintf(str, sizeof(str), fmt, args);
     va_end(args);
-    if(tetgenQuiet)
-      Msg::Debug("%s", str);
-    else
-      Msg::Auto("%s", str);
+    for(const char *c = str; *c; c++) {
+      if(*c == '\n')
+        tetgenFlush();
+      else
+        tetgenLine += *c;
+    }
   }
 #define printf tetgenPrintf
 #include "tetgenBR.h"
@@ -945,6 +959,7 @@ namespace tetgenBR {
           }
       }
     }
+    tetgenBR::tetgenFlush();
     delete m->in;
     delete m->b;
     delete m;
@@ -1249,6 +1264,8 @@ namespace tetgenBR {
     else if(err == 3) {
         std::map<int, MVertex *> all;
         std::vector<GFace *> f = gr->faces();
+        f.insert(f.end(), gr->embeddedFaces().begin(),
+                 gr->embeddedFaces().end());
         for(auto it = f.begin(); it != f.end(); ++it) {
           GFace *gf = *it;
           for(std::size_t i = 0; i < gf->triangles.size(); i++) {
@@ -1309,45 +1326,74 @@ namespace tetgenBR {
            tetgenBR::sevent.f_vertices2[2]}};
         int ftags[2] = {tetgenBR::sevent.f_marker1, tetgenBR::sevent.f_marker2};
         int etags[2] = {tetgenBR::sevent.s_marker1, tetgenBR::sevent.s_marker2};
-        std::ostringstream pb;
+        std::vector<GEntity *> ents;
+        auto addEntity = [&](GEntity *ge) {
+          if(!ge || std::find(ents.begin(), ents.end(), ge) != ents.end())
+            return;
+          ents.push_back(ge);
+          gr->model()->addLastMeshEntityError(ge);
+        };
         std::vector<double> x, y, z, val;
         for(int f = 0; f < 2; f++) {
+          bool tagged = false;
           if(ftags[f] > 0) {
             GFace *gf = gr->model()->getFaceByTag(ftags[f]);
             if(gf) {
-              gr->model()->addLastMeshEntityError(gf);
-              pb << " surface " << ftags[f];
+              addEntity(gf);
+              tagged = true;
             }
           }
           if(etags[f] > 0) {
             GEdge *ge = gr->model()->getEdgeByTag(etags[f]);
             if(ge) {
-              gr->model()->addLastMeshEntityError(ge);
-              pb << " curve " << etags[f];
+              addEntity(ge);
+              tagged = true;
             }
           }
           for(int i = 0; i < 3; i++) {
-            MVertex *v = all[vtags[f][i]];
-            if(v) {
-              gr->model()->addLastMeshVertexError(v);
-              x.push_back(v->x());
-              y.push_back(v->y());
-              z.push_back(v->z());
-              val.push_back(f);
-            }
+            auto it = all.find(vtags[f][i]);
+            if(it == all.end()) continue;
+            MVertex *v = it->second;
+            gr->model()->addLastMeshVertexError(v);
+            x.push_back(v->x());
+            y.push_back(v->y());
+            z.push_back(v->z());
+            val.push_back(f);
+            // segments created by TetGen from the edges of the triangles have
+            // no tag: use the entities of their nodes
+            if(!tagged && v->onWhat() && v->onWhat()->dim() > 0)
+              addEntity(v->onWhat());
           }
+        }
+        std::ostringstream pb;
+        for(std::size_t i = 0; i < ents.size(); i++) {
+          pb << (!i                    ? " on " :
+                 (i + 1 < ents.size()) ? ", " :
+                                         " and ")
+             << (ents[i]->dim() == 2 ? "surface " : "curve ") << ents[i]->tag();
         }
         if(pnt) {
           double px = tetgenBR::sevent.int_point[0];
           double py = tetgenBR::sevent.int_point[1];
           double pz = tetgenBR::sevent.int_point[2];
-          pb << ", intersection (" << px << "," << py << "," << pz << ")";
+          pb << ", at (" << px << "," << py << "," << pz << ")";
           x.push_back(px);
           y.push_back(py);
           z.push_back(pz);
           val.push_back(3.);
         }
-        Msg::Error("Invalid boundary mesh (%s) on%s", what.c_str(),
+        else if(!x.empty()) {
+          // no single point for overlaps: give the center of their nodes
+          double cx = 0., cy = 0., cz = 0.;
+          for(std::size_t i = 0; i < x.size(); i++) {
+            cx += x[i];
+            cy += y[i];
+            cz += z[i];
+          }
+          pb << ", near (" << cx / x.size() << "," << cy / x.size() << ","
+             << cz / x.size() << ")";
+        }
+        Msg::Error("Invalid boundary mesh (%s)%s", what.c_str(),
                    pb.str().c_str());
 #if defined(HAVE_POST)
         new PView("Boundary mesh issue", x, y, z, val);
