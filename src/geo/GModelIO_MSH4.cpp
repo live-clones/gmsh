@@ -603,13 +603,21 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
 // selectMSH4Partitions()): the blocks of some entities only, the others being
 // skipped, and of these only the nodes or the elements of some tags; or, for
 // the elements, only their records (the tag, then the node tags), given to a
-// function without making any element
+// function without making any element; or the elements made from records kept
+// before, without reading the section
+struct msh4Records {
+  GEntity *entity;
+  int type;
+  std::vector<std::size_t> data;
+};
 struct msh4Filter {
   std::function<bool(GEntity *)> block;
   std::vector<char> tags;
   std::size_t count = 0; // (the number of tags)
-  std::function<void(GEntity *, const std::size_t *, std::size_t, std::size_t)>
-    records; // (entity, records, number of records, values per record)
+  std::function<void(GEntity *, int, const std::size_t *, std::size_t,
+                     std::size_t)>
+    records; // (entity, type, records, number of records, values per record)
+  std::vector<msh4Records> kept; // (the records of the elements kept)
   bool keep(std::size_t tag) const { return tag < tags.size() && tags[tag]; }
 };
 
@@ -951,8 +959,11 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
   std::size_t numBlock = 0, minTag = 0, maxTag = 0;
   totalNumRead = 0;
   maxElementNum = 0;
+  // (the elements made from the records kept, without reading the file)
+  const bool fromKept = filter && !filter->kept.empty();
 
-  if(binary) {
+  if(fromKept) {}
+  else if(binary) {
     std::size_t data[4];
     if(fread(data, sizeof(std::size_t), 4, fp) != 4) { return nullptr; }
     if(swap) SwapBytes((char *)data, sizeof(std::size_t), 4);
@@ -1068,6 +1079,25 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
     return true;
   };
 
+  if(fromKept) {
+    for(const msh4Records &r : filter->kept) {
+      const int numVert = MElement::getInfoMSH(r.type);
+      const std::size_t num = r.data.size() / (1 + numVert);
+      if(elementRead + num > totalNumRead) {
+        delete[] elementsRead;
+        return nullptr;
+      }
+      pending.push_back(
+        {r.entity, r.type, numVert, elementRead, pendingData.size(), num});
+      pendingData.insert(pendingData.end(), r.data.begin(), r.data.end());
+      elementRead += num;
+      if(pendingData.size() >= (1 << 23) && !makePending()) {
+        delete[] elementsRead;
+        return nullptr;
+      }
+    }
+  }
+
   for(std::size_t i = 0; i < numBlock; i++) {
     int entityTag = 0, entityDim = 0, elmType = 0;
     std::size_t numElements = 0;
@@ -1153,7 +1183,7 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
         if(filter) { // (the records only, or the elements kept only)
           std::size_t kept = 0;
           if(filter->records)
-            filter->records(entity, &pendingData[offset], num, n);
+            filter->records(entity, elmType, &pendingData[offset], num, n);
           else {
             for(std::size_t r = 0; r < num; r++) {
               const std::size_t *d = &pendingData[offset + r * n];
@@ -1210,7 +1240,7 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
             }
             p = q;
           }
-          filter->records(entity, &record[0], 1, record.size());
+          filter->records(entity, elmType, &record[0], 1, record.size());
           continue;
         }
         if(filter && (!filter->keep(elmTag) || elementRead >= totalNumRead))
@@ -2504,7 +2534,9 @@ static int singlePartitionOf(GEntity *ge)
 // whose tags are marked in the element filter, of the partitions owners); the
 // nodes, those of these elements. They are found from the records of the
 // elements of the $Elements section (whose data starts at pos), in the blocks
-// of the partition entities of the partitions and of the owners only.
+// of the partition entities of the partitions and of the owners only; the
+// records of the elements kept are kept in the element filter, to make the
+// elements from without reading the section again.
 static bool selectMSH4Partitions(GModel *const model, FILE *fp, bool binary,
                                  bool swap, double version, std::int64_t pos,
                                  const std::set<int> &ghostTags,
@@ -2529,9 +2561,10 @@ static bool selectMSH4Partitions(GModel *const model, FILE *fp, bool binary,
   };
   msh4Filter select;
   select.block = [&](GEntity *ge) { return in(ge, all); };
-  select.records = [&](GEntity *ge, const std::size_t *d, std::size_t num,
-                       std::size_t n) {
+  select.records = [&](GEntity *ge, int type, const std::size_t *d,
+                       std::size_t num, std::size_t n) {
     const bool mine = in(ge, own);
+    std::vector<msh4Records> &kept = elements.kept;
     for(std::size_t r = 0; r < num; r++) {
       const std::size_t *e = &d[r * n];
       if(mine)
@@ -2539,6 +2572,9 @@ static bool selectMSH4Partitions(GModel *const model, FILE *fp, bool binary,
       else if(!elements.keep(e[0]))
         continue;
       for(std::size_t k = 1; k < n; k++) mark(nodes.tags, e[k]);
+      if(kept.empty() || kept.back().entity != ge || kept.back().type != type)
+        kept.push_back({ge, type, {}});
+      kept.back().data.insert(kept.back().data.end(), e, e + n);
     }
   };
   bool dense;
@@ -2595,14 +2631,15 @@ int GModel::_readMSH4(const std::string &name,
   // sections are first skipped, then, with the ghost cells, those of the
   // partitions read from the $GhostElements section; the elements and nodes to
   // read are selected, and the file is read again from the $Nodes section with
-  // them. The sections that are not about the mesh of the partitions are
-  // skipped. If the ghost cells are asked for and the file has none, the whole
-  // mesh is read.
+  // them, the elements being made from the records kept by the selection,
+  // without reading the $Elements section again. The sections that are not
+  // about the mesh of the partitions are skipped. If the ghost cells are asked
+  // for and the file has none, the whole mesh is read.
   bool partial = !partitions.empty();
   msh4Filter nodeFilter, elementFilter, skipAll, missing;
   skipAll.block = [](GEntity *) { return false; };
   bool selected = false, refilled = false;
-  std::int64_t nodesPos = -1, elementsPos = -1;
+  std::int64_t nodesPos = -1, elementsPos = -1, elementsEnd = -1;
   std::set<int> owners; // (the partitions of the ghost cells)
   auto select = [&]() {
     if(!partitioned || nodesPos < 0 || elementsPos < 0 ||
@@ -2662,6 +2699,7 @@ int GModel::_readMSH4(const std::string &name,
         readMSH4Elements(this, fp, binary, dense, num, maxNum, swap, version,
                          ghostTags, &skipAll);
       Msg::StopProgressMeter();
+      if(none) elementsEnd = msh4Tell(fp);
       if(!none || (!ghosts && !select())) {
         if(none) delete[] none;
         Msg::Error("Could not read elements");
@@ -2914,9 +2952,13 @@ int GModel::_readMSH4(const std::string &name,
       std::size_t totalNumRead = 0, maxElementNum = 0;
       std::pair<MElement *, GEntity *> *elementsRead = nullptr;
       if(!strncmp(&str[1], "Elements", 8)) {
+        // (in a partial read, from the records kept: the section is skipped)
+        if(partial && !elementFilter.kept.empty() && elementsEnd >= 0)
+          msh4Seek(fp, elementsEnd);
         elementsRead = readMSH4Elements(this, fp, binary, dense, totalNumRead,
                                         maxElementNum, swap, version, ghostTags,
                                         partial ? &elementFilter : nullptr);
+        std::vector<msh4Records>().swap(elementFilter.kept);
       }
       else if(!strncmp(&str[1], "Polytopes", 9)) {
         elementsRead = readMSH4Polytopes(this, fp, binary, dense, totalNumRead,
