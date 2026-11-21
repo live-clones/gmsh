@@ -1169,6 +1169,25 @@ static void deleteVolumeMeshBefore(GModel *m, const char *what)
   }
 }
 
+// Create the elements of order `order' and optimize them as set by the options
+static void MeshHighOrder(GModel *m, int order)
+{
+  SetOrderN(m, order, CTX::instance()->mesh.secondOrderLinear,
+            CTX::instance()->mesh.secondOrderIncomplete,
+            CTX::instance()->mesh.meshOnlyVisible);
+
+  if(CTX::instance()->mesh.hoOptimize == 2 ||
+     CTX::instance()->mesh.hoOptimize == 3)
+    OptimizeMesh(m, "HighOrderElastic");
+
+  if(CTX::instance()->mesh.hoOptimize == 1 ||
+     CTX::instance()->mesh.hoOptimize == 2)
+    OptimizeMesh(m, "HighOrder");
+
+  if(CTX::instance()->mesh.hoOptimize == 4)
+    OptimizeMesh(m, "HighOrderFastCurving");
+}
+
 void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter,
                   double quality)
 {
@@ -1191,6 +1210,26 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter,
   else
     Msg::StatusBar(true, "Optimizing mesh (%s)...", how.c_str());
   double t1 = Cpu(), w1 = TimeOfDay();
+
+  // the methods other than the high-order ones handle first order elements
+  // (some silently made the mesh linear or tangled it): optimize the first
+  // order mesh, then recreate the high-order elements
+  int order = 1;
+  if(how.compare(0, 9, "HighOrder")) {
+    std::vector<GEntity *> entities;
+    m->getEntities(entities);
+    for(auto ge : entities) {
+      if(!force && ge->isFullyDiscrete()) continue;
+      for(std::size_t i = 0; i < ge->getNumMeshElements(); i++)
+        order = std::max(order, ge->getMeshElement(i)->getPolynomialOrder());
+    }
+    if(order > 1) {
+      Msg::Info("Optimizing the first order mesh, then recreating the order "
+                "%d elements",
+                order);
+      SetOrder1(m, false, !force);
+    }
+  }
 
   if(how == "" || how == "Gmsh" || how == "Optimize") {
     for(auto it = m->firstRegion(); it != m->lastRegion(); it++) {
@@ -1350,7 +1389,6 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter,
   else if(how == "HXT" || how =="HXT_FlipOnly") {
 #ifndef HAVE_HXT
     Msg::Error("Optimizing using HXT requires the HXT module");
-    return;
 #else
     if(how == "HXT_FlipOnly")
       optimizeMeshHXT(m, quality, true);
@@ -1366,6 +1404,8 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter,
 
   // elements were deleted or replaced
   m->destroyMeshCaches();
+
+  if(order > 1) MeshHighOrder(m, order);
 
   double t2 = Cpu(), w2 = TimeOfDay();
   Msg::StatusBar(true, "Done optimizing mesh (Wall %gs, CPU %gs)", w2 - w1,
@@ -1989,23 +2029,7 @@ bool GenerateMesh(GModel *m, int ask, bool nested)
     BarycentricRefineMesh(m);
 
   if(m->getMeshStatus() && CTX::instance()->mesh.order > 1) {
-    // Create high order elements
-    SetOrderN(m, CTX::instance()->mesh.order,
-              CTX::instance()->mesh.secondOrderLinear,
-              CTX::instance()->mesh.secondOrderIncomplete,
-              CTX::instance()->mesh.meshOnlyVisible);
-
-    // Optimize high order elements
-    if(CTX::instance()->mesh.hoOptimize == 2 ||
-       CTX::instance()->mesh.hoOptimize == 3)
-      OptimizeMesh(m, "HighOrderElastic");
-
-    if(CTX::instance()->mesh.hoOptimize == 1 ||
-       CTX::instance()->mesh.hoOptimize == 2)
-      OptimizeMesh(m, "HighOrder");
-
-    if(CTX::instance()->mesh.hoOptimize == 4)
-      OptimizeMesh(m, "HighOrderFastCurving");
+    MeshHighOrder(m, CTX::instance()->mesh.order);
   }
 
   // make sure periodic meshes are actually periodic and store periodic node

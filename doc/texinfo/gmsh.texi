@@ -4160,7 +4160,10 @@ optimizer, @code{"HighOrderElastic"} for high-order elastic smoother,
 @code{"UntangleTets"} for untangling tetrahedral meshes,
 @code{"UntangleTris"} for untangling xy-planar triangular meshes,
 @code{"Laplace2D"} for Laplace smoothing, @code{"Relocate2D"} and
-@code{"Relocate3D"} for node relocation).
+@code{"Relocate3D"} for node relocation). The algorithms other than the
+high-order ones optimize the first order mesh: the high-order elements
+are then recreated, and optimized according to
+@code{Mesh.HighOrderOptimize}.
 
 @item AdaptMesh @{ @var{expression-list} @} @{ @var{expression-list} @} @{ @{ @var{expression-list} < , @dots{} >  @} @};
 Perform adaptive mesh generation. Documentation not yet available.
