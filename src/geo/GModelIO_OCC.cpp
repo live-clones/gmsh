@@ -1908,6 +1908,7 @@ bool OCC_Internals::addPlaneSurface(int &tag, const std::vector<int> &wireTags)
   }
 
   TopoDS_Face result;
+  std::vector<TopoDS_Face> others;
   if(wires.size() == 0) {
     Msg::Error("Plane surface requires at least one curve loop");
     return false;
@@ -1932,25 +1933,56 @@ bool OCC_Internals::addPlaneSurface(int &tag, const std::vector<int> &wireTags)
       ShapeFix_Face fix(result);
       fix.Perform();
       result = fix.Face();
+      // a curve loop crossing or touching itself, e.g. a figure eight, does
+      // not bound a single face: fixing splits it into several, which are all
+      // kept
+      std::vector<TopoDS_Face> faces;
+      for(TopExp_Explorer e(fix.Result(), TopAbs_FACE); e.More(); e.Next())
+        faces.push_back(TopoDS::Face(e.Current()));
+      if(faces.size() > 1) {
+        result = faces[0];
+        others.assign(faces.begin() + 1, faces.end());
+      }
     }
   } catch(Standard_Failure &err) {
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
   }
 
-  // fixing the face can replace a wire by a new one, e.g. when the curves of
-  // the curve loop were not given head to tail. Rebind the tag of the curve
-  // loop to the new wire (the wires of the face are in the order of the curve
-  // loops): the recursive bind below would otherwise give it the next free
-  // tag, which a curve loop defined later may ask for
-  TopExp_Explorer exp0(result, TopAbs_WIRE);
-  for(std::size_t i = 0; exp0.More() && i < wires.size(); exp0.Next(), i++) {
-    TopoDS_Wire wire = TopoDS::Wire(exp0.Current());
-    if(!_wireTag.IsBound(wire)) _bind(wire, std::abs(wireTags[i]), false);
+  if(tag < 0) tag = getMaxTag(2) + 1;
+
+  if(others.empty()) {
+    // fixing the face can replace a wire by a new one, e.g. when the curves of
+    // the curve loop were not given head to tail. Rebind the tag of the curve
+    // loop to the new wire (the wires of the face are in the order of the
+    // curve loops): the recursive bind below would otherwise give it the next
+    // free tag, which a curve loop defined later may ask for
+    TopExp_Explorer exp0(result, TopAbs_WIRE);
+    for(std::size_t i = 0; exp0.More() && i < wires.size(); exp0.Next(), i++) {
+      TopoDS_Wire wire = TopoDS::Wire(exp0.Current());
+      if(!_wireTag.IsBound(wire)) _bind(wire, std::abs(wireTags[i]), false);
+    }
+    _bind(result, tag, true);
+    return true;
   }
 
-  if(tag < 0) tag = getMaxTag(2) + 1;
-  _bind(result, tag, true);
+  // the face was split: the curve loop bounds none of the parts, so it keeps
+  // its tag, and the wires of the parts get none, for the same reason
+  others.insert(others.begin(), result);
+  std::string tags;
+  for(std::size_t i = 0; i < others.size(); i++) {
+    int t = i ? getMaxTag(2) + 1 : tag;
+    _bind(others[i], t, false);
+    for(TopExp_Explorer e(others[i], TopAbs_EDGE); e.More(); e.Next()) {
+      TopoDS_Edge edge = TopoDS::Edge(e.Current());
+      if(!_edgeTag.IsBound(edge)) _bind(edge, getMaxTag(1) + 1, true);
+    }
+    if(i) tags += (i + 1 < others.size() ? ", " : " and ");
+    tags += std::to_string(t);
+  }
+  Msg::Warning("Plane surface %d split into surfaces %s: its curve loop "
+               "crosses or touches itself",
+               tag, tags.c_str());
   return true;
 }
 
