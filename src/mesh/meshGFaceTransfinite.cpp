@@ -52,8 +52,12 @@ void findTransfiniteCorners(GFace *gf, std::vector<MVertex *> &corners)
       corners.push_back(gf->meshAttributes.corners[i]->mesh_vertices[0]);
   }
   else {
-    // try to find the corners automatically
-    std::vector<GEdge *> fedges = gf->edges();
+    // try to find the corners automatically (skipping the degenerate curves,
+    // e.g. at the pole of a sphere, as computeEdgeLoops() does: the loop of the
+    // other curves is closed)
+    std::vector<GEdge *> fedges;
+    for(auto ge : gf->edges())
+      if(!ge->degenerate(0)) fedges.push_back(ge);
     GEdgeLoop el(fedges);
     for(auto it = el.begin(); it != el.end(); it++)
       corners.push_back(it->getBeginVertex()->mesh_vertices[0]);
