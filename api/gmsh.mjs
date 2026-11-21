@@ -6972,7 +6972,10 @@ export function wrapGmsh(Module) {
    * "ConstantNormal", "Darboux", "GuideAC", "GuidePlan",
    * "GuideACWithContact", "GuidePlanWithContact"). If `trihedron' is not
    * provided, "DiscreteTrihedron" is assumed. Return the pipe in
-   * `outDimTags'.
+   * `outDimTags', as for `extrude': for each entity, the entity at the end of
+   * the wire, the swept entity and the lateral entities (if
+   * `Geometry.ExtrudeReturnLateralEntities' is set). For a curve or a point
+   * along a wire of several curves, only the swept entities are returned.
    *
    * Return `outDimTags'.
    */

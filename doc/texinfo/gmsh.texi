@@ -3556,8 +3556,9 @@ Extrude entities in @var{extrude-list} using a translation along their
 normal. Only available with the built-in geometry kernel.
 
 @item Extrude @{ @var{extrude-list} @} Using Wire @{ @var{expression-list} @}
-Extrude entities in @var{extrude-list} along the given wire. Only
-available with the OpenCASCADE geometry kernel.
+Extrude entities in @var{extrude-list} along the given wire, returning the
+same entities as the other extrusions. Only available with the OpenCASCADE
+geometry kernel.
 
 @item ThruSections @{ @var{expression-list} @}
 Create surfaces through the given curve loops or

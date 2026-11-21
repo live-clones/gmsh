@@ -3072,7 +3072,11 @@ GMSH_API void gmshModelOccRevolve(const int * dimTags, const size_t dimTags_n,
  * "DiscreteTrihedron", "CorrectedFrenet", "Fixed", "Frenet",
  * "ConstantNormal", "Darboux", "GuideAC", "GuidePlan", "GuideACWithContact",
  * "GuidePlanWithContact"). If `trihedron' is not provided,
- * "DiscreteTrihedron" is assumed. Return the pipe in `outDimTags'. */
+ * "DiscreteTrihedron" is assumed. Return the pipe in `outDimTags', as for
+ * `extrude': for each entity, the entity at the end of the wire, the swept
+ * entity and the lateral entities (if `Geometry.ExtrudeReturnLateralEntities'
+ * is set). For a curve or a point along a wire of several curves, only the
+ * swept entities are returned. */
 GMSH_API void gmshModelOccAddPipe(const int * dimTags, const size_t dimTags_n,
                                   const int wireTag,
                                   int ** outDimTags, size_t * outDimTags_n,
