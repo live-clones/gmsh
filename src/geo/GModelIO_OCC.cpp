@@ -6622,6 +6622,15 @@ void OCC_Internals::synchronize(GModel *model)
       }
     }
   }
+  // the physical groups (defined in the built-in kernel) no longer refer to the
+  // entities removed without another entity taking their tag: a group left
+  // empty is deleted, which frees its tag
+  std::map<int, std::vector<int>> gone[4];
+  for(auto &p : toRemove)
+    if(p.first >= 0 && !model->getEntityByTag(p.first, p.second))
+      gone[p.first][p.second] = {};
+  for(int dim = 0; dim < 4; dim++)
+    model->getGEOInternals()->replaceInPhysicalGroups(dim, gone[dim]);
   restorePeriodicity(model, this, periodic, replacedBy);
 
   // if fuzzy boolean tolerance was used, some vertex positions should be

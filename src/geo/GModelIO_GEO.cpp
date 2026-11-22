@@ -1095,8 +1095,10 @@ void GEO_Internals::replaceInPhysicalGroups(
 {
   const int types[4] = {MSH_PHYSICAL_POINT, MSH_PHYSICAL_LINE,
                         MSH_PHYSICAL_SURFACE, MSH_PHYSICAL_VOLUME};
+  const char *names[4] = {"point", "curve", "surface", "volume"};
   if(dim < 0 || dim > 3 || replace.empty() || !Tree_Nbr(PhysicalGroups))
     return;
+  std::vector<int> emptied;
   List_T *groups = Tree2List(PhysicalGroups);
   for(int i = 0; i < List_Nbr(groups); i++) {
     PhysicalGroup *p;
@@ -1121,8 +1123,20 @@ void GEO_Internals::replaceInPhysicalGroups(
     std::set<int> added;
     for(auto num : entities)
       if(added.insert(num).second) List_Add(p->Entities, &num);
+    if(!List_Nbr(p->Entities)) emptied.push_back(p->Num);
   }
   List_Delete(groups);
+  // deleting the groups left empty frees their tags and their names
+  for(auto num : emptied) {
+    Msg::Info("Removing physical %s %d: its entities no longer exist",
+              names[dim], num);
+    switch(dim) {
+    case 0: DeletePhysicalPoint(num); break;
+    case 1: DeletePhysicalLine(num); break;
+    case 2: DeletePhysicalSurface(num); break;
+    case 3: DeletePhysicalVolume(num); break;
+    }
+  }
 }
 
 void GEO_Internals::removeAllDuplicates()
