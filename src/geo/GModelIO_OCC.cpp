@@ -7,6 +7,7 @@
 #include <sstream>
 #include <algorithm>
 #include <numeric>
+#include <memory>
 #include <utility>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
@@ -843,6 +844,69 @@ void OCC_Internals::_multiBind(const TopoDS_Shape &shape, int tag,
     std::pair<int, int> p(0, t);
     if(!exists || !returnNewOnly) outDimTags.push_back(p);
     count++;
+  }
+}
+
+// the shape types that are bound to tags, by decreasing dimension, and their
+// dimension (-2 for shells, -1 for wires)
+static const TopAbs_ShapeEnum boundTypes[6] = {TopAbs_SOLID, TopAbs_SHELL,
+                                               TopAbs_FACE,  TopAbs_WIRE,
+                                               TopAbs_EDGE,  TopAbs_VERTEX};
+static const int boundDims[6] = {3, -2, 2, -1, 1, 0};
+
+void OCC_Internals::_getBoundShapes(
+  const TopoDS_Shape &shape,
+  std::vector<std::tuple<int, int, TopoDS_Shape>> &bound)
+{
+  for(int k = 0; k < 6; k++) {
+    NCollection_IndexedMap<TopoDS_Shape, TopTools_ShapeMapHasher> shapes;
+    TopExp::MapShapes(shape, boundTypes[k], shapes);
+    for(int i = 1; i <= shapes.Extent(); i++) {
+      int dim = boundDims[k];
+      if(_isBound(dim, shapes(i)))
+        bound.push_back(std::make_tuple(dim, _find(dim, shapes(i)), shapes(i)));
+    }
+  }
+}
+
+void OCC_Internals::_bindFromHistory(
+  const std::vector<std::tuple<int, int, TopoDS_Shape>> &bound,
+  BRepBuilderAPI_MakeShape &op, const TopoDS_Shape &result)
+{
+  if(result.IsNull()) return;
+  NCollection_IndexedMap<TopoDS_Shape, TopTools_ShapeMapHasher> shapes;
+  TopExp::MapShapes(result, shapes);
+  try {
+    for(auto &[dim, tag, shape] : bound) {
+      // the tag is still taken, e.g. by a shape also on the boundary of an
+      // entity left alone
+      if(_isBound(dim, tag)) continue;
+      // the shape is unchanged (still in the result, whatever the history
+      // says: fillets report unchanged curves as deleted, defeaturing points
+      // as modified into several), or modified into a single one
+      int i = shapes.FindIndex(shape);
+      if(!i) {
+        const NCollection_List<TopoDS_Shape> &modified = op.Modified(shape);
+        if(modified.Extent() != 1) continue;
+        i = shapes.FindIndex(modified.First());
+      }
+      if(i && shapes(i).ShapeType() == shape.ShapeType() &&
+         !_isBound(dim, shapes(i))) {
+        _bind(shapes(i), dim, tag, false);
+        if(dim >= 0) _inherited[std::make_pair(dim, tag)] = shapes(i);
+      }
+    }
+  } catch(Standard_Failure &err) {
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+  }
+  // new tags for the other shapes: a recursive bind of a shape bound above
+  // would not descend into it
+  for(int k = 0; k < 6; k++) {
+    for(int i = 1; i <= shapes.Extent(); i++) {
+      int dim = boundDims[k];
+      if(shapes(i).ShapeType() == boundTypes[k] && !_isBound(dim, shapes(i)))
+        _bind(shapes(i), dim, getMaxTag(dim) + 1, false);
+    }
   }
 }
 
@@ -3669,13 +3733,17 @@ bool OCC_Internals::_fillet(int mode, const std::vector<int> &volumeTags,
   BRep_Builder b;
   TopoDS_Compound c;
   b.MakeCompound(c);
+  std::vector<std::tuple<int, int, TopoDS_Shape>> bound;
   for(std::size_t i = 0; i < volumeTags.size(); i++) {
     if(!_isBound(3, volumeTags[i])) {
       Msg::Error("Unknown OpenCASCADE volume with tag %d", volumeTags[i]);
       return false;
     }
     TopoDS_Shape shape = _find(3, volumeTags[i]);
-    if(removeVolume) _unbind(shape, 3, volumeTags[i], true);
+    if(removeVolume) {
+      _getBoundShapes(shape, bound);
+      _unbind(shape, 3, volumeTags[i], true);
+    }
     if(CTX::instance()->geom.occAutoFix) {
       // make sure the volume is finite
       ShapeFix_Solid fix(TopoDS::Solid(shape));
@@ -3702,6 +3770,7 @@ bool OCC_Internals::_fillet(int mode, const std::vector<int> &volumeTags,
         return false;
       }
       result = f.Shape();
+      _bindFromHistory(bound, f, result);
     }
     else { // chamfer
       BRepFilletAPI_MakeChamfer f(c);
@@ -3719,6 +3788,7 @@ bool OCC_Internals::_fillet(int mode, const std::vector<int> &volumeTags,
         return false;
       }
       result = f.Shape();
+      _bindFromHistory(bound, f, result);
     }
   } catch(Standard_Failure &err) {
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
@@ -3729,10 +3799,6 @@ bool OCC_Internals::_fillet(int mode, const std::vector<int> &volumeTags,
     Msg::Error("%s produces empty shape", mode ? "Chamfer" : "Fillet");
     return false;
   }
-
-  // TODO: if removeVolume and CTX::instance()->geom.occBooleanPreserveNumbering
-  // are set we could use Generated(), Modified() and IsDeleted() in a similar
-  // way as what we do for boolean operation, in order to try to preserve tags
 
   _multiBind(result, -1, outDimTags, true, true);
   return true;
@@ -3795,9 +3861,11 @@ bool OCC_Internals::defeature(const std::vector<int> &volumeTags,
     defeat.AddFaceToRemove(face);
   }
 
+  std::vector<std::tuple<int, int, TopoDS_Shape>> bound;
   if(removeVolume) {
     for(std::size_t i = 0; i < volumeTags.size(); i++) {
       TopoDS_Shape shape = _find(3, volumeTags[i]);
+      _getBoundShapes(shape, bound);
       _unbind(shape, 3, volumeTags[i], true);
     }
   }
@@ -3826,10 +3894,7 @@ bool OCC_Internals::defeature(const std::vector<int> &volumeTags,
     return false;
   }
 
-  // TODO: if removeVolume and CTX::instance()->geom.occBooleanPreserveNumbering
-  // are set we could use Generated(), Modified() and IsDeleted() in a similar
-  // way as what we do for boolean operation, in order to try to preserve tags
-
+  _bindFromHistory(bound, defeat, result);
   _multiBind(result, -1, outDimTags, true, true);
   return true;
 #else
@@ -4128,10 +4193,13 @@ bool OCC_Internals::booleanOperator(
   std::vector<TopoDS_Shape> mapOriginal;
   std::vector<NCollection_List<TopoDS_Shape>> mapModified, mapGenerated;
   std::vector<bool> mapDeleted;
+  // the operation, kept for its history (see _bindFromHistory)
+  std::unique_ptr<BRepBuilderAPI_MakeShape> algo;
   try {
     switch(op) {
     case OCC_Internals::Union: {
-      BRepAlgoAPI_Fuse fuse;
+      algo = std::make_unique<BRepAlgoAPI_Fuse>();
+      auto &fuse = static_cast<BRepAlgoAPI_Fuse &>(*algo);
       fuse.SetArguments(objectShapes);
       fuse.SetTools(toolShapes);
       _setBooleanOptions(fuse);
@@ -4176,7 +4244,8 @@ bool OCC_Internals::booleanOperator(
       }
     } break;
     case OCC_Internals::Intersection: {
-      BRepAlgoAPI_Common common;
+      algo = std::make_unique<BRepAlgoAPI_Common>();
+      auto &common = static_cast<BRepAlgoAPI_Common &>(*algo);
       common.SetArguments(objectShapes);
       common.SetTools(toolShapes);
       _setBooleanOptions(common);
@@ -4209,7 +4278,8 @@ bool OCC_Internals::booleanOperator(
     } break;
 
     case OCC_Internals::Difference: {
-      BRepAlgoAPI_Cut cut;
+      algo = std::make_unique<BRepAlgoAPI_Cut>();
+      auto &cut = static_cast<BRepAlgoAPI_Cut &>(*algo);
       cut.SetArguments(objectShapes);
       cut.SetTools(toolShapes);
       _setBooleanOptions(cut);
@@ -4245,7 +4315,8 @@ bool OCC_Internals::booleanOperator(
 
     case OCC_Internals::Fragments:
     default: {
-      BRepAlgoAPI_BuilderAlgo fragments;
+      algo = std::make_unique<BRepAlgoAPI_BuilderAlgo>();
+      auto &fragments = static_cast<BRepAlgoAPI_BuilderAlgo &>(*algo);
       objectShapes.Append(toolShapes);
       toolShapes.Clear();
       fragments.SetArguments(objectShapes);
@@ -4299,7 +4370,17 @@ bool OCC_Internals::booleanOperator(
   inDimTags.insert(inDimTags.end(), toolDimTags.begin(), toolDimTags.end());
   std::size_t numObjects = objectDimTags.size();
 
-  if(tag >= 0 || !CTX::instance()->geom.occBooleanPreserveNumbering) {
+  // with Geometry.OCCBooleanPreserveNumbering = 2, the bound shapes of the
+  // arguments that are removed, whose tags go to the shapes they become (see
+  // _bindFromHistory)
+  int preserve = CTX::instance()->geom.occBooleanPreserveNumbering;
+  std::vector<std::tuple<int, int, TopoDS_Shape>> bound;
+  for(std::size_t i = 0; preserve >= 2 && i < inDimTags.size(); i++) {
+    if((i < numObjects) ? removeObject : removeTool)
+      _getBoundShapes(mapOriginal[i], bound);
+  }
+
+  if(tag >= 0 || !preserve) {
     // if we specify the tag explicitly, or if we don't care about preserving
     // the numering, just go ahead and bind the resulting shape (and sub-shapes)
     for(std::size_t i = 0; i < inDimTags.size(); i++) {
@@ -4315,8 +4396,18 @@ bool OCC_Internals::booleanOperator(
         }
       }
     }
-    _multiBind(result, tag, outDimTags, (tag >= 0) ? true : false, true,
-               false);
+    if(tag >= 0 && preserve >= 2) {
+      // the entities on the boundary of the result keep their tags
+      _multiBind(result, tag, outDimTags, true, false, false);
+      TopoDS_Compound c;
+      BRep_Builder b;
+      b.MakeCompound(c);
+      for(auto &p : outDimTags) b.Add(c, _find(p.first, p.second));
+      _bindFromHistory(bound, *algo, c);
+    }
+    else
+      _multiBind(result, tag, outDimTags, (tag >= 0) ? true : false, true,
+                 false);
   }
   else {
     // otherwise, try to preserve the numbering of the input shapes that did not
@@ -4365,6 +4456,8 @@ bool OCC_Internals::booleanOperator(
           if(tag != t)
             Msg::Info("Could not preserve tag of %dD object %d (->%d)", dim,
                       tag, t);
+          else
+            _inherited[std::make_pair(dim, tag)] = mapModified[i].First();
           _toPreserve.insert(std::make_pair(dim, t));
         }
         Msg::Debug("BOOL (%d,%d) replaced by 1", dim, tag);
@@ -4380,7 +4473,9 @@ bool OCC_Internals::booleanOperator(
       }
     }
     for(int d = -2; d <= 3; d++) _recomputeMaxTag(d);
+    // the entities on the boundary of the arguments can keep their tags too;
     // bind all remaining entities
+    if(preserve >= 2) _bindFromHistory(bound, *algo, result);
     _multiBind(result, -1, outDimTags, false, true, false);
     _toPreserve.clear();
     // a surface kept from an argument keeps the orientation it had there, e.g.
@@ -4623,6 +4718,8 @@ bool OCC_Internals::_transform(
 
   std::vector<TopoDS_Shape> inShapes;
   _addSimpleShapes(c, inShapes);
+  std::vector<std::tuple<int, int, TopoDS_Shape>> bound;
+  _getBoundShapes(c, bound);
 
   TopoDS_Shape result;
   if(tfo) {
@@ -4658,7 +4755,8 @@ bool OCC_Internals::_transform(
     }
   }
 
-  // try to re-bind trasnformed shapes to same tags as original shapes
+  // re-bind the transformed shapes, and their sub-shapes, to the tags of the
+  // original ones
   std::vector<TopoDS_Shape> outShapes;
   _addSimpleShapes(result, outShapes);
 
@@ -4672,11 +4770,10 @@ bool OCC_Internals::_transform(
     int tag = inDimTags[i].second;
     if(CTX::instance()->geom.occFastUnbind) {
       // bypass safe _unbind checks by unbinding the shape and all its subshapes
-      // without checking dependencies: this is a bit dangerous, as one could
-      // translate e.g. the face of a cube (this is not allowed!) - which will
-      // unbind the face of the cube. But the original face will actually be
-      // re-bound (with a warning) at the next syncronization point, so it's not
-      // too bad...
+      // without checking dependencies: a sub-shape still on the boundary of an
+      // entity that is not transformed, e.g. a point shared with a curve that
+      // is not, is then unbound too; if the model has it, it gets its tag back
+      // at the next synchronization
       _unbindWithoutChecks(inShapes[i]);
     }
     else {
@@ -4686,11 +4783,11 @@ bool OCC_Internals::_transform(
       // loop to translate copies of entities leads to quadratic complexity.
       _unbind(inShapes[i], dim, tag, true);
     }
-    // TODO: it would be even better to code a rebind() function to reuse the
-    // tags not only of the shape, but of all the sub-shapes as well
-    _bind(outShapes[i], dim, tag, true);
   }
-
+  _bindFromHistory(bound,
+                   tfo ? (BRepBuilderAPI_MakeShape &)*tfo :
+                         (BRepBuilderAPI_MakeShape &)*gtfo,
+                   result);
   return true;
 }
 
@@ -6027,6 +6124,83 @@ bool const sortByInvDim(std::pair<int, int> const &lhs,
   return lhs.first > rhs.first;
 }
 
+// the physical groups and the mesh constraints of a model entity, given to the
+// entity that replaces it with the same tag
+class inheritedAttributes {
+private:
+  int _dim, _tag;
+  std::vector<int> _physicals, _corners;
+  double _meshSize = 0.;
+  decltype(GEdge::meshAttributes) _edge{};
+  decltype(GFace::meshAttributes) _face{};
+  decltype(GRegion::meshAttributes) _region{};
+
+public:
+  inheritedAttributes(GEntity *ge)
+    : _dim(ge->dim()), _tag(ge->tag()), _physicals(ge->physicals)
+  {
+    std::vector<GVertex *> corners;
+    switch(_dim) {
+    case 0: _meshSize = ((GVertex *)ge)->prescribedMeshSizeAtVertex(); break;
+    case 1: _edge = ((GEdge *)ge)->meshAttributes; break;
+    case 2:
+      _face = ((GFace *)ge)->meshAttributes;
+      corners = _face.corners;
+      break;
+    case 3:
+      _region = ((GRegion *)ge)->meshAttributes;
+      corners = _region.corners;
+      break;
+    }
+    // the transfinite corners can be replaced too: keep their tags
+    for(auto v : corners) _corners.push_back(v->tag());
+  }
+  void apply(GModel *model)
+  {
+    GEntity *ge = model->getEntityByTag(_dim, _tag);
+    if(!ge) return;
+    for(auto p : _physicals) {
+      if(std::find(ge->physicals.begin(), ge->physicals.end(), p) ==
+         ge->physicals.end())
+        ge->physicals.push_back(p);
+    }
+    std::vector<GVertex *> corners;
+    for(auto t : _corners) {
+      GVertex *v = model->getVertexByTag(t);
+      if(v) corners.push_back(v);
+    }
+    if(corners.size() != _corners.size()) corners.clear();
+    // the extrusion parameters and a mesh size set on the shape (see
+    // setMeshSize) are those of the new entity
+    switch(_dim) {
+    case 0:
+      if(((GVertex *)ge)->prescribedMeshSizeAtVertex() == MAX_LC)
+        ((GVertex *)ge)->setPrescribedMeshSizeAtVertex(_meshSize);
+      break;
+    case 1: {
+      GEdge *e = (GEdge *)ge;
+      ExtrudeParams *extrude = e->meshAttributes.extrude;
+      e->meshAttributes = _edge;
+      e->meshAttributes.extrude = extrude;
+    } break;
+    case 2: {
+      GFace *f = (GFace *)ge;
+      ExtrudeParams *extrude = f->meshAttributes.extrude;
+      f->meshAttributes = _face;
+      f->meshAttributes.extrude = extrude;
+      f->meshAttributes.corners = corners;
+    } break;
+    case 3: {
+      GRegion *r = (GRegion *)ge;
+      ExtrudeParams *extrude = r->meshAttributes.extrude;
+      r->meshAttributes = _region;
+      r->meshAttributes.extrude = extrude;
+      r->meshAttributes.corners = corners;
+    } break;
+    }
+  }
+};
+
 void OCC_Internals::synchronize(GModel *model)
 {
   // existing entities can be given new geometry
@@ -6043,6 +6217,17 @@ void OCC_Internals::synchronize(GModel *model)
   std::sort(toRemove.begin(), toRemove.end(), sortByInvDim);
   std::vector<GEntity *> removed;
   model->remove(toRemove, removed);
+  // the entities replaced by a shape given their tag through the history of an
+  // operation (see _bindFromHistory) keep their physical groups and mesh
+  // constraints
+  std::vector<inheritedAttributes> inherited;
+  for(auto ge : removed) {
+    auto it = _inherited.find(std::make_pair(ge->dim(), ge->tag()));
+    if(it != _inherited.end() && _isBound(ge->dim(), ge->tag()) &&
+       _find(ge->dim(), ge->tag()).IsSame(it->second))
+      inherited.push_back(inheritedAttributes(ge));
+  }
+  _inherited.clear();
   Msg::Debug("Destroying %zu entities in model", removed.size());
   for(std::size_t i = 0; i < removed.size(); i++) delete removed[i];
   _toRemove.clear();
@@ -6063,6 +6248,32 @@ void OCC_Internals::synchronize(GModel *model)
   for(; exp2.More(); exp2.Next()) _addShapeToMaps(exp2.Value());
   NCollection_DataMap<int, TopoDS_Shape>::Iterator exp3(_tagSolid);
   for(; exp3.More(); exp3.Next()) _addShapeToMaps(exp3.Value());
+
+  // a shape unbound without checks (see Geometry.OCCFastUnbind) can still be on
+  // the boundary of others, e.g. a point of a translated curve shared with a
+  // curve that was not translated: its entity then stays in the model, so give
+  // the shape its tag back, from the shape given that tag in the meantime
+  NCollection_DataMap<TopoDS_Shape, int, TopTools_ShapeMapHasher> *shapeTag[4] =
+    {&_vertexTag, &_edgeTag, &_faceTag, &_solidTag};
+  NCollection_DataMap<int, TopoDS_Shape> *tagShape[4] = {&_tagVertex, &_tagEdge,
+                                                         &_tagFace, &_tagSolid};
+  NCollection_IndexedMap<TopoDS_Shape, TopTools_ShapeMapHasher> *used[4] = {
+    &_vmap, &_emap, &_fmap, &_somap};
+  for(auto &p : toRemove) {
+    int dim = p.first, tag = p.second;
+    GEntity *ge = (dim >= 0) ? model->getEntityByTag(dim, tag) : nullptr;
+    if(!ge || ge->getNativeType() != GEntity::OpenCascadeModel) continue;
+    TopoDS_Shape shape = *(TopoDS_Shape *)ge->getNativePtr();
+    if(shapeTag[dim]->IsBound(shape) || !used[dim]->Contains(shape)) continue;
+    if(tagShape[dim]->IsBound(tag)) {
+      TopoDS_Shape other = tagShape[dim]->Find(tag);
+      shapeTag[dim]->UnBind(other);
+      tagShape[dim]->UnBind(tag);
+      int t = std::max(model->getMaxElementaryNumber(dim), getMaxTag(dim));
+      _bind(other, dim, t + 1, false);
+    }
+    _bind(shape, dim, tag, false);
+  }
 
   // import all shapes in _maps into the GModel, preserving all explicit tags
   int vTagMax = std::max(model->getMaxElementaryNumber(0), getMaxTag(0));
@@ -6186,6 +6397,8 @@ void OCC_Internals::synchronize(GModel *model)
       }
     }
   }
+
+  for(auto &a : inherited) a.apply(model);
 
   // if fuzzy boolean tolerance was used, some vertex positions should be
   // recomputed (e.g. end point of curves

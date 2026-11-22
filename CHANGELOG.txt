@@ -44,7 +44,11 @@ Geometry.OCCBooleanPreserveNumbering; improved import of STEP names and colors;
 improved shape healing, with new Geometry.OCCFixTolerances option; OpenCASCADE
 curve loops and wires now accept curves in any order and orientation; the colors
 of the entities are now saved with their visibility, in .vis files loaded
-automatically with the model (e.g. model.msh.vis with model.msh); Gmsh now
+automatically with the model (e.g. model.msh.vis with model.msh); OpenCASCADE
+transformations, fillets, chamfers and defeaturing now keep the tags of the
+entities on the boundary of the modified ones (not only of the latter), as do
+boolean operations with new Geometry.OCCBooleanPreserveNumbering=2, and entities
+keeping their tag keep their physical groups and mesh constraints; Gmsh now
 requires C++17, CMake 3.10 and FLTK 1.4.0, supports OCC 8, and uses Eigen 5.0 by
 default; official binary builds now use FLTK 1.5-dev, OCC 8.0.1, HDF5 1.14.6,
 CGNS 4.5.2 and MED 6.0.1; bug fixes.

@@ -3589,7 +3589,9 @@ case different radii are provided for the begin and end points of the
 curves). @code{Fillet} is only available with the OpenCASCADE and the
 Discrete kernels; with the Discrete kernel, the radius list contains a
 single radius or as many radii as curves, and the curves continuing the
-given ones tangentially are filleted too.
+given ones tangentially are filleted too. With the OpenCASCADE kernel, the
+volumes keep their tags, as well as the entities on their boundary that are
+left unchanged or modified into a single one (as with @code{Chamfer}).
 
 @item Chamfer @{ @var{expression-list} @} @{ @var{expression-list} @} @{ @var{expression-list} @} @{ @var{expression-list} @}
 Chamfer volumes (first list) on some curves (second list), using the
@@ -3672,6 +3674,15 @@ with
 If @code{Delete} is specified in the @var{boolean-list}, the tool and/or
 the object is deleted.
 
+The arguments left unchanged or modified into a single entity keep their
+tags (unless the tag of the result is given explicitly, see below). With
+@code{Geometry.OCCBooleanPreserveNumbering} set to 2, the entities on the
+boundary of the deleted arguments keep their tags in the same way, so that
+physical groups and mesh constraints can be defined on them before the
+operation: see
+@url{@value{GITLAB-PREFIX}/examples/boolean/preserve_numbering.geo,preserve_numbering.geo}.
+The other entities get new tags.
+
 As explained in @ref{Floating point expressions}, @var{boolean} can
 be used in an expression, in which case it returns the list of tags of
 the entities resulting from the boolean operation that are not on the
@@ -3723,7 +3734,11 @@ on volumes.
 
 Geometrical transformations can be applied to elementary entities, or to
 copies of elementary entities (using the @code{Duplicata} command: see
-below). The syntax of the transformation commands is:
+below). The transformed entities keep their tags, as well as the entities on
+their boundary; with the OpenCASCADE kernel, an entity on the boundary of
+both a transformed entity and an entity that is not transformed stays with
+the latter, and the transformed entity gets a new one. The syntax of the
+transformation commands is:
 
 @var{transform}:
 @ftable @code

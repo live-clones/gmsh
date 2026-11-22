@@ -4,6 +4,8 @@ import math
 
 gmsh.initialize(sys.argv)
 gmsh.model.add("sphere_cut")
+# boundary entities keep their tags through boolean operations
+gmsh.option.setNumber("Geometry.OCCBooleanPreserveNumbering", 2)
 R = 1
 R1 = 0.95
 sph = gmsh.model.occ.addSphere(0, 0, 0, R, -1, 0, math.pi / 2, math.pi / 2)
@@ -14,7 +16,7 @@ gmsh.model.occ.cut([(3, sph)], [(3, b1), (3, b2), (3, b3)])
 gmsh.model.occ.synchronize()
 
 gmsh.model.removeEntities([(3, sph)])
-gmsh.model.removeEntities([(2, 2), (2, 4), (2, 6)], True)
+gmsh.model.removeEntities([(2, 2), (2, 3), (2, 4)], True)
 if '-nopopup' not in sys.argv:
     gmsh.fltk.run()
 gmsh.finalize()

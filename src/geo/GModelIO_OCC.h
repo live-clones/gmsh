@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <map>
+#include <tuple>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GModel.h"
@@ -32,6 +33,7 @@ class ShapeBuild_ReShape;
 
 class BRepSweep_Prism;
 class BRepSweep_Revol;
+class BRepBuilderAPI_MakeShape;
 class BRepBuilderAPI_Transform;
 class BRepBuilderAPI_GTransform;
 class OCCAttributesRTree;
@@ -73,6 +75,12 @@ private:
   // unbound during boolean operations
   std::set<std::pair<int, int> > _toPreserve;
 
+  // the shapes given the tag of the shape they come from through the history of
+  // an operation (see _bindFromHistory): their model entities keep the physical
+  // groups and the mesh constraints of the entities they replace at the next
+  // synchronization
+  std::map<std::pair<int, int>, TopoDS_Shape> _inherited;
+
   // mesh attributes
   OCCAttributesRTree *_attributes;
 
@@ -110,6 +118,18 @@ private:
                   std::vector<std::pair<int, int> > &outDimTags,
                   bool returnHighestDimOnly, bool recursive = false,
                   bool returnNewOnly = false);
+
+  // the bound shapes of all dimensions in a shape, with their dimension and
+  // tag, before an operation replaces them
+  void _getBoundShapes(const TopoDS_Shape &shape,
+                       std::vector<std::tuple<int, int, TopoDS_Shape>> &bound);
+
+  // give the shapes of the result of an operation the free tags of the shapes
+  // they come from (see _getBoundShapes): a shape left unchanged or modified
+  // into a single one keeps its tag; the others get new tags
+  void
+  _bindFromHistory(const std::vector<std::tuple<int, int, TopoDS_Shape>> &bound,
+                   BRepBuilderAPI_MakeShape &op, const TopoDS_Shape &result);
 
   // is the entity of a given dimension and tag bound?
   bool _isBound(int dim, int tag);

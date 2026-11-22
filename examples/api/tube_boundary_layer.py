@@ -11,11 +11,13 @@ gmsh.option.setNumber("Mesh.MeshSizeMax", 0.1)
 order2 = False
 
 # fuse 2 cylinders and only keep outside shell
-c1 = gmsh.model.occ.addCylinder(0,0,0, 5,0,0, 0.5)
+# boundary entities keep their tags through boolean operations
+gmsh.option.setNumber("Geometry.OCCBooleanPreserveNumbering", 2)
+c1 =gmsh.model.occ.addCylinder(0,0,0, 5,0,0, 0.5)
 c2 = gmsh.model.occ.addCylinder(2,0,-2, 0,0,2, 0.3)
 s = gmsh.model.occ.fuse([(3, c1)], [(3, c2)])
 gmsh.model.occ.remove(gmsh.model.occ.getEntities(3))
-gmsh.model.occ.remove([(2,2), (2,3), (2,5)]) # fixme: automate this
+gmsh.model.occ.remove([(2,2), (2,3), (2,6)]) # fixme: automate this
 gmsh.model.occ.synchronize()
 
 # create boundary layer extrusion, and make extrusion only return "top" surfaces

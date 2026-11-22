@@ -2,13 +2,15 @@ import gmsh
 import sys
 
 gmsh.initialize()
+# boundary entities keep their tags through boolean operations
+gmsh.option.setNumber("Geometry.OCCBooleanPreserveNumbering", 2)
 gmsh.model.occ.addSphere(0,0,0,1, 10)
 gmsh.model.occ.addBox(0.5,0,0,1.3,2,4, 11)
 gmsh.model.occ.fragment([(3,10)], [(3,11)])
 gmsh.model.occ.synchronize()
 
 dim = 2
-tag = 6 # 1
+tag = 13 # 8
 N = 20
 
 bnd = gmsh.model.getBoundary([(dim, tag)], combined=False)

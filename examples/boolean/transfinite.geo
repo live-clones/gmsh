@@ -1,4 +1,6 @@
 SetFactory("OpenCASCADE");
+// boundary entities keep their tags through boolean operations
+Geometry.OCCBooleanPreserveNumbering = 2;
 
 Mesh.Algorithm = 6;
 Mesh.MeshSizeMin = 1;
@@ -15,10 +17,8 @@ N = DefineNumber[ 10, Name "Parameters/N" ];
 
 // simple transfinite mesh
 Transfinite Curve{l()} = N;
-Transfinite Surface{5};
+Transfinite Surface{7};
 
 // transfinite mesh with explicit corners
-Transfinite Curve{9} = 2*N-1;
-l4() = Boundary{ Surface{4}; };
-p4() = Unique(Boundary{ Curve{l4()}; });
-Transfinite Surface{4} = {p4({0:3})};
+Transfinite Curve{12} = 2*N-1;
+Transfinite Surface{4} = {3, 12, 7, 14};
