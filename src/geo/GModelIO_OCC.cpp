@@ -7244,13 +7244,55 @@ bool OCC_Internals::healShapes(
         continue;
       _unbind(tb.second, dims[i], tb.first, false);
       if(!n.IsNull() && n.ShapeType() == tb.second.ShapeType() &&
-         !_isBound(dims[i], n))
+         !_isBound(dims[i], n)) {
         _bind(n, dims[i], tb.first, false);
+        // the model entity keeps its physical groups and mesh constraints
+        if(dims[i] >= 0) _inherited[std::make_pair(dims[i], tb.first)] = n;
+      }
     }
   }
 
   // bind the new shapes
-  _multiBind(result, -1, outDimTags, false, true);
+  std::vector<std::pair<int, int>> all;
+  _multiBind(result, -1, all, false, true);
+
+  // return the healed entities: the shapes of the healed compound that are not
+  // on the boundary of another one of them
+  std::vector<TopoDS_Shape> shapes;
+  NCollection_IndexedMap<TopoDS_Shape, TopTools_ShapeMapHasher> onBoundary;
+  stack.assign(1, healed);
+  while(!stack.empty()) {
+    TopoDS_Shape sh = stack.back();
+    stack.pop_back();
+    if(sh.ShapeType() == TopAbs_COMPOUND ||
+       sh.ShapeType() == TopAbs_COMPSOLID) {
+      // in their order
+      std::vector<TopoDS_Shape> children;
+      for(TopoDS_Iterator it(sh); it.More(); it.Next())
+        children.push_back(it.Value());
+      stack.insert(stack.end(), children.rbegin(), children.rend());
+      continue;
+    }
+    shapes.push_back(sh);
+    NCollection_IndexedMap<TopoDS_Shape, TopTools_ShapeMapHasher> sub;
+    TopExp::MapShapes(sh, sub);
+    for(int i = 1; i <= sub.Extent(); i++)
+      if(!sub(i).IsSame(sh)) onBoundary.Add(sub(i));
+  }
+  std::set<std::pair<int, int>> returned;
+  for(auto &sh : shapes) {
+    int dim = -1;
+    switch(sh.ShapeType()) {
+    case TopAbs_SOLID: dim = 3; break;
+    case TopAbs_FACE: dim = 2; break;
+    case TopAbs_EDGE: dim = 1; break;
+    case TopAbs_VERTEX: dim = 0; break;
+    default: break;
+    }
+    if(dim < 0 || onBoundary.Contains(sh) || !_isBound(dim, sh)) continue;
+    std::pair<int, int> dimTag(dim, _find(dim, sh));
+    if(returned.insert(dimTag).second) outDimTags.push_back(dimTag);
+  }
   return true;
 }
 
