@@ -213,9 +213,10 @@ int GModel::writeRAD(const std::string &name, int saveAll,
     }
   }
 
-  // save node sets for each physical group, for easier load/b.c.
+  // save node sets for each physical group, for easier load/b.c. (the node of
+  // a physical point is e.g. the reference point of a rigid body)
   if(saveGroupsOfNodes & 0x1) {
-    for(int dim = 1; dim <= 3; dim++) {
+    for(int dim = 0; dim <= 3; dim++) {
       for(auto it = groups[dim].begin(); it != groups[dim].end(); it++) {
         std::set<MVertex *> nodes;
         std::vector<GEntity *> &entities = it->second;

@@ -1851,7 +1851,7 @@ public:
     if(oldName.size())
       fprintf(geo, "(%s) = {", oldName.c_str());
     else if(newName.size())
-      fprintf(geo, "(\"%s\") = {", newName.c_str());
+      fprintf(geo, "(\"%s\", %d) = {", newName.c_str(), g.first);
     else
       fprintf(geo, "(%d) = {", g.first);
     for(std::size_t i = 0; i < g.second.size(); i++) {
