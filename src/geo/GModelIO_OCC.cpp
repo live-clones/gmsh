@@ -190,8 +190,51 @@
 #include "GmshDefines.h"
 #endif
 
+#if OCC_VERSION_HEX >= 0x070500
+#include <Message.hxx>
+#include <Message_Messenger.hxx>
+#include <Message_Printer.hxx>
+#include <Message_PrinterOStream.hxx>
+
+// The messages of OpenCASCADE (e.g. the statistics of a STEP export) go through
+// Msg, which honors General.Verbosity, instead of being printed on the standard
+// output: information as debug messages, warnings and failures as warnings (a
+// failed operation is reported by the code calling it)
+class OCCMessagePrinter : public Message_Printer {
+protected:
+  void send(const TCollection_AsciiString &str,
+            const Message_Gravity gravity) const override
+  {
+    std::istringstream lines(str.ToCString());
+    std::string line;
+    while(std::getline(lines, line)) {
+      std::size_t first = line.find_first_not_of(" \t\r");
+      if(first == std::string::npos) continue;
+      line = line.substr(first, line.find_last_not_of(" \t\r") - first + 1);
+      if(gravity >= Message_Warning)
+        Msg::Warning("%s", line.c_str());
+      else
+        Msg::Debug("%s", line.c_str());
+    }
+  }
+};
+
+static void redirectOCCMessages()
+{
+  static bool done = false;
+  if(done) return;
+  done = true;
+  const Handle(Message_Messenger) &messenger = Message::DefaultMessenger();
+  messenger->RemovePrinters(STANDARD_TYPE(Message_PrinterOStream));
+  messenger->AddPrinter(new OCCMessagePrinter());
+}
+#endif
+
 OCC_Internals::OCC_Internals()
 {
+#if OCC_VERSION_HEX >= 0x070500
+  redirectOCCMessages();
+#endif
   for(int i = 0; i < 6; i++)
     _maxTag[i] = CTX::instance()->geom.firstEntityTag - 1;
   _changed = true;
