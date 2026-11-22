@@ -11608,7 +11608,8 @@ class algorithm:
         pairs of u, v coordinates, with (optional) constrained edges given in the
         `edges' vector as pairs of indexes (with numbering starting at 1), and
         return the triangles as concatenated triplets of point indexes (with
-        numbering starting at 1) in `triangles'.
+        numbering starting at 1), oriented counterclockwise in the (u, v) plane, in
+        `triangles'.
 
         Return `triangles'.
 

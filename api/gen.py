@@ -1182,7 +1182,7 @@ option.add('copy', doc, None, iint('refTag'), iint('tag'))
 
 algorithm = gmsh.add_module('algorithm', 'raw algorithms')
 
-doc = '''Triangulate the points given in the `coordinates' vector as concatenated pairs of u, v coordinates, with (optional) constrained edges given in the `edges' vector as pairs of indexes (with numbering starting at 1), and return the triangles as concatenated triplets of point indexes (with numbering starting at 1) in `triangles'.'''
+doc = '''Triangulate the points given in the `coordinates' vector as concatenated pairs of u, v coordinates, with (optional) constrained edges given in the `edges' vector as pairs of indexes (with numbering starting at 1), and return the triangles as concatenated triplets of point indexes (with numbering starting at 1), oriented counterclockwise in the (u, v) plane, in `triangles'.'''
 algorithm.add('triangulate', doc, None, ivectordouble('coordinates'), ovectorsize('triangles'), ivectorsize('edges', 'std::vector<std::size_t>()','[]', '[]'))
 
 doc = '''Tetrahedralize the points given in the `coordinates' vector as concatenated triplets of x, y, z coordinates, with (optional) constrained triangles given in the `triangles' vector as triplets of indexes (with numbering starting at 1), and return the tetrahedra as concatenated quadruplets of point indexes (with numbering starting at 1) in `tetrahedra'. The tetrahedra fill the convex hull of the points; a point with the coordinates of another is in no tetrahedron. The points are tetrahedralized with the Delaunay, parallel Delaunay or HXT algorithm depending on the `Mesh.Algorithm3D' option. Steiner points might be added in the `steiner' vector to recover the constrained triangles: they are numbered after the given points.'''

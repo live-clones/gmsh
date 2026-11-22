@@ -60,6 +60,7 @@
 #include "Field.h"
 #include "meshGFace.h"
 #include "meshGFaceDelaunay.h"
+#include "robustPredicates.h"
 #include "meshGFaceOptimize.h"
 #include "meshGRegionDelaunay.h"
 #include "meshGRegionBoundaryRecovery.h"
@@ -8910,6 +8911,11 @@ gmsh::algorithm::triangulate(const std::vector<double> &coord,
   tri.resize(3 * tris.size());
   for(std::size_t i = 0; i < tris.size(); i++) {
     MTriangle *t = tris[i];
+    // counterclockwise in the (u, v) plane
+    SPoint3 p0 = t->getVertex(0)->point(), p1 = t->getVertex(1)->point(),
+            p2 = t->getVertex(2)->point();
+    if(robustPredicates::orient2d(p0.data(), p1.data(), p2.data()) < 0)
+      t->reverse();
     for(std::size_t j = 0; j < 3; j++)
       tri[3 * i + j] = t->getVertex(j)->getIndex() + 1; // start at 1
   }
