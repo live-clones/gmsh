@@ -2044,8 +2044,8 @@ void GFace::mesh(bool verbose)
   }
 
 #if defined(HAVE_MESH)
-  //  if(compound.size())
-  //    meshAttributes.meshSizeFactor = CTX::instance()->mesh.compoundLcFactor;
+  if(compound.size())
+    meshAttributes.meshSizeFactor = CTX::instance()->mesh.compoundLcFactor;
 
   meshGFace mesher;
   mesher(this, verbose);

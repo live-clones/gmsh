@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <optional>
 #include <sstream>
 #include <limits>
 #include <memory>
@@ -791,6 +792,22 @@ static void Mesh2D(GModel *m)
   Msg::StatusBar(true, "Meshing 2D...");
   double t1 = Cpu(), w1 = TimeOfDay();
 
+  // QuadQS makes its initial quad-dominant meshes with PACK (see
+  // meshGenerator() in meshGFace.cpp): switch Mesh.Algorithm once, while the
+  // faces are meshed, and not in each face, which races between the threads
+  // meshing them in parallel; restored before the QuadQS steps below, or if
+  // meshing throws
+  struct UsePackForQuadqs {
+    int algo2d = CTX::instance()->mesh.algo2d;
+    UsePackForQuadqs()
+    {
+      if(algo2d == ALGO_2D_QUAD_QUASI_STRUCT)
+        CTX::instance()->mesh.algo2d = ALGO_2D_PACK_PRLGRMS;
+    }
+    ~UsePackForQuadqs() { CTX::instance()->mesh.algo2d = algo2d; }
+  };
+  std::optional<UsePackForQuadqs> usePack(std::in_place);
+
   int nthreads = CTX::instance()->numThreads;
   if(CTX::instance()->mesh.maxNumThreads2D > 0)
     nthreads = CTX::instance()->mesh.maxNumThreads2D;
@@ -886,6 +903,7 @@ static void Mesh2D(GModel *m)
 
     Msg::StopProgressMeter();
   }
+  usePack.reset();
   MatchPeriodicNodes(m);
   m->renumberMeshCanonically(maxVertexBefore, maxElementBefore, true);
 

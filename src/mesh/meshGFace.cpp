@@ -2647,18 +2647,12 @@ void meshGFace::operator()(GFace *gf, bool print)
   // duration of the call: both generators and a good deal of the code they
   // call read Mesh.Algorithm directly rather than the algorithm of the face.
   //
-  // In practice this never fires when meshing through GenerateMesh(): it
-  // builds a QuadqsContextUpdater before meshing anything, and that already
-  // moves Mesh.Algorithm off QUAD_QUASI_STRUCT. Kept for the paths that reach
-  // a face some other way, but with the restore tied to the scope: doing it by
-  // hand at the end of the function leaked the changed value whenever the
-  // mesher threw.
-  //
-  // Note that this is not thread safe either way. Faces are meshed in parallel
-  // (the "omp parallel for" over faces in Generator.cpp), so a thread changing
-  // the option races with the others reading it. Passing the effective
-  // algorithm down instead would fix that, but it reaches well beyond this
-  // file.
+  // This never fires when meshing through GenerateMesh(): Mesh2D() in
+  // Generator.cpp switches the option once before meshing the faces in
+  // parallel, as a switch here in each face races between the threads. Kept
+  // for the paths that reach a face some other way, with the restore tied to
+  // the scope: doing it by hand at the end of the function leaked the changed
+  // value whenever the mesher threw.
   RestoreOptionAtEndOfScope restoreAlgo2d(&CTX::instance()->mesh.algo2d);
   if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT)
     CTX::instance()->mesh.algo2d = ALGO_2D_PACK_PRLGRMS;

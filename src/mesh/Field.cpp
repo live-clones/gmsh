@@ -73,7 +73,7 @@ void FieldManager::reset()
 {
   for(auto it = begin(); it != end(); it++) { delete it->second; }
   clear();
-  _guidingField = 0;
+  _guidingField = -1;
 }
 
 Field *FieldManager::get(int id)
@@ -142,7 +142,7 @@ void FieldManager::deleteField(int id)
   }
   delete it->second;
   erase(it);
-  if(id == _guidingField) _guidingField = 0;
+  if(id == _guidingField) _guidingField = -1;
   // the fields that refer to others by id resolve them again
   for(auto &f : *this) f.second->updateNeeded = true;
 }
@@ -3301,7 +3301,7 @@ FieldManager::FieldManager()
   mapTypeName["AutomaticMeshSizeField"] = new FieldFactoryT<OctreeSizeField>();
 #endif
   _backgroundField = -1;
-  _guidingField = 0;
+  _guidingField = -1;
 }
 
 void FieldManager::initialize()
@@ -3392,7 +3392,7 @@ void FieldManager::setGuidingField(int iView)
 void FieldManager::clearGuidingField()
 {
   if(get(_guidingField)) deleteField(_guidingField);
-  _guidingField = 0;
+  _guidingField = -1;
 }
 
 Field *FieldManager::getDirectionField()

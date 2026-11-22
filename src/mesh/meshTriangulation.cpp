@@ -9,7 +9,6 @@
 #include <map>
 #include <unordered_map>
 #include "Context.h"
-#include "gmsh.h"
 #include "GModel.h"
 #include "GFace.h"
 #include "GEdge.h"
@@ -195,27 +194,30 @@ int PolyMesh2GFace(PolyMesh *pm, int faceTag)
 
 int GFace2PolyMesh(int faceTag, PolyMesh **pm)
 {
-  // FIXME using the public API inside Gmsh is not a good idea
-  if(!gmsh::isInitialized()) gmsh::initialize();
   *pm = new PolyMesh;
+  GFace *gf = GModel::current()->getFaceByTag(faceTag);
+  if(!gf) {
+    Msg::Error("Unknown surface %d", faceTag);
+    return -1;
+  }
 
   std::unordered_map<size_t, size_t> nodeLabels;
   std::unordered_map<std::pair<size_t, size_t>, PolyMesh::HalfEdge *, pair_hash>
     opposites;
 
-  // FIXME should probably not use the public API here
-  std::vector<int> elementTypes;
-  std::vector<std::vector<std::size_t> > elementTags;
-  std::vector<std::vector<std::size_t> > nodeTags;
-  gmsh::model::mesh::getElements(elementTypes, elementTags, nodeTags, 2,
-                                 faceTag);
+  // the elements by type, in increasing type order
+  std::map<int, std::vector<MElement *> > elements;
+  for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
+    MElement *e = gf->getMeshElement(i);
+    elements[e->getTypeForMSH()].push_back(e);
+  }
 
-  for(size_t K = 0; K < elementTypes.size(); K++) {
-    int eT = elementTypes[K];
+  for(auto &te : elements) {
+    int eT = te.first;
     int nNod = 0;
-    if(eT == 2)
+    if(eT == MSH_TRI_3)
       nNod = 3;
-    else if(eT == 3)
+    else if(eT == MSH_QUA_4)
       nNod = 4;
     else {
       Msg::Error("GFace2PolyMesh only support quads (element type 3) and "
@@ -224,17 +226,13 @@ int GFace2PolyMesh(int faceTag, PolyMesh **pm)
     }
     PolyMesh::Vertex *v[4] = {nullptr, nullptr, nullptr, nullptr};
 
-    for(size_t i = 0; i < elementTags[K].size(); i++) {
+    for(MElement *e : te.second) {
       for(int j = 0; j < nNod; j++) {
-        size_t nodeTag = nodeTags[K][nNod * i + j];
+        MVertex *mv = e->getVertex(j);
+        size_t nodeTag = mv->getNum();
         auto it = nodeLabels.find(nodeTag);
         if(it == nodeLabels.end()) {
-          // FIXME should probably not use the public API here
-          std::vector<double> coord(3), parametricCoord(3);
-          int entityDim, entityTag;
-          gmsh::model::mesh::getNode(nodeTag, coord, parametricCoord, entityDim,
-                                     entityTag);
-          v[j] = new PolyMesh::Vertex(coord[0], coord[1], coord[2], nodeTag);
+          v[j] = new PolyMesh::Vertex(mv->x(), mv->y(), mv->z(), nodeTag);
           nodeLabels[nodeTag] = (*pm)->vertices.size();
           (*pm)->vertices.push_back(v[j]);
         }

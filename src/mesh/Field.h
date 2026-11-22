@@ -149,6 +149,7 @@ public:
 class FieldManager : public std::map<int, Field *> {
 private:
   int _backgroundField;
+  // the PACK/QuadQS guiding field (-1 if none: 0 is a valid user field id)
   int _guidingField;
   std::vector<int> _boundaryLayerFields;
 

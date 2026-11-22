@@ -11,7 +11,8 @@
 #include <numeric>
 #include <unordered_map>
 #include "GmshMessage.h"
-#include "gmsh.h"
+#include "GModel.h"
+#include "GEdge.h"
 
 using namespace std;
 
@@ -252,10 +253,12 @@ Solution compute_weighted_even_faces(const vector<int>& N,
 void quantizeCurvesForEvenSurfaceSubdivision ( vector<int> &curveTags, vector<int> &N) {
     // --- 1. Lister toutes les surfaces (dim=2) et toutes les courbes (dim=1)
   vector<vector<int>> faces;
-  gmsh::initialize();
+  GModel *m = GModel::current();
   vector<pair<int,int>> surfaces, curves;
-  gmsh::model::getEntities(surfaces, 2);
-  gmsh::model::getEntities(curves,   1);
+  for(auto it = m->firstFace(); it != m->lastFace(); ++it)
+    surfaces.push_back({2, (*it)->tag()});
+  for(auto it = m->firstEdge(); it != m->lastEdge(); ++it)
+    curves.push_back({1, (*it)->tag()});
 
   //    printf("%lu %lu\n",surfaces.size(),curves.size());
 
@@ -274,7 +277,7 @@ void quantizeCurvesForEvenSurfaceSubdivision ( vector<int> &curveTags, vector<in
   for (const auto &s : surfaces) {
     vector<pair<int,int>> boundary;
     // combined=true (pas de doublons), oriented=false, recursive=false
-    gmsh::model::getBoundary({s}, boundary);
+    m->getBoundaryTags({s}, boundary, true, true, false);
     //    printf("face %d %lu bnd\n",s.second,boundary.size());
     vector<int> f;
     f.reserve(boundary.size());
@@ -295,15 +298,8 @@ void quantizeCurvesForEvenSurfaceSubdivision ( vector<int> &curveTags, vector<in
   for (size_t i = 0; i < curveTags.size(); ++i) {
     int ctag = curveTags[i];
 
-    // Ces conteneurs seront remplis par Gmsh (par type d'élément)
-    vector<int> elemTypes;
-    vector<vector<std::size_t>> elemTags, nodeTags;
-
-    gmsh::model::mesh::getElements(elemTypes, elemTags, nodeTags,
-				   /*dim=*/1, /*tag=*/ctag);
-
-    std::size_t count = 0;
-    for (const auto &etags : elemTags) count += etags.size();
+    GEdge *ge = m->getEdgeByTag(ctag);
+    std::size_t count = ge ? ge->getNumMeshElements() : 0;
 
     N[i] = static_cast<int>(count);
   }

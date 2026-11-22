@@ -2831,7 +2831,6 @@ bool patchIsRemeshableWithQuadPattern(
       
       int rot = 0;
       double score = checkPatternMatchingWithRotations(P, sideSizes, rot);
-      printf("%d %d\n",i,score);
       if(score > 0.) {
         double irreg = patternIrregularity(P);
         if(irreg < irreg_min) {
@@ -3018,9 +3017,9 @@ int improveQuadMeshTopologyWithCavityRemeshing(
 
   bool alwaysBuildSurfaceProjector = true;
   if(alwaysBuildSurfaceProjector || !haveNiceParametrization(gf)) {
-    //    ctx.sp = new SurfaceProjector();
-    //    bool okf = fillSurfaceProjector(gf, ctx.sp);
-    //    if(!okf) { return false; }
+    ctx.sp = new SurfaceProjector();
+    bool okf = fillSurfaceProjector(gf, ctx.sp);
+    if(!okf) { return false; }
   }
 
   unordered_map<size_t, size_t> patternSizeLimits;
@@ -3337,7 +3336,6 @@ int meshFaceWithGlobalPattern(GFace *gf, bool invertNormalsForQuality,
   bool meshable = patchIsRemeshableWithQuadPattern(
     patternsToCheck, Ncorners, sideSizes, patternNoAndRot, irreg);
 
-  printf("%d %d %lu %d\n",gf->tag(),okf,sides.size(),meshable);
 
   if(!meshable) {
     //    gf->set(oldEdges);
@@ -3352,12 +3350,12 @@ int meshFaceWithGlobalPattern(GFace *gf, bool invertNormalsForQuality,
   std::vector<MVertex *> oldVertices = gf->mesh_vertices;
 
   /* SurfaceProjector, useful for smoothing */
-  //  SurfaceProjector *sp = new SurfaceProjector();
-  //  bool oksp = fillSurfaceProjector(gf, sp);
-  //  if(!oksp) {
-  //    delete sp;
-  //    sp = nullptr;
-  //  }
+  SurfaceProjector *sp = new SurfaceProjector();
+  bool oksp = fillSurfaceProjector(gf, sp);
+  if(!oksp) {
+    delete sp;
+    sp = nullptr;
+  }
 
   /* do not filter based on quality */
   QualityConstraints qConstraints;
@@ -3367,17 +3365,17 @@ int meshFaceWithGlobalPattern(GFace *gf, bool invertNormalsForQuality,
   GFaceMeshDiff diff;
   int st = remeshPatchWithQuadPattern(gf, patternNoAndRot, sideVertices,
                                       oldElements, oldVertices, qConstraints,
-                                      invertNormalsForQuality, nullptr, diff);
+                                      invertNormalsForQuality, sp, diff);
 
-  //  if(st != 0) {
-  //    if(DBG_VERBOSE) {
-  //      Msg::Debug(
-  //        "remesh cavity: %li quads, failed to remesh path with quad pattern",
-  //        oldElements.size());
-  //    }
-  //    if(sp) delete sp;
-  //    return -1;
-  //  }
+  if(st != 0) {
+    if(DBG_VERBOSE) {
+      Msg::Debug(
+        "remesh cavity: %li quads, failed to remesh path with quad pattern",
+        oldElements.size());
+    }
+    if(sp) delete sp;
+    return -1;
+  }
 
   bool good = false;
   double sicnMin, sicnAvg;
@@ -3387,21 +3385,21 @@ int meshFaceWithGlobalPattern(GFace *gf, bool invertNormalsForQuality,
   size_t nvb = diff.before.intVertices.size();
   size_t nva = diff.after.intVertices.size();
   {
-    //    GeomOptimStats stats;
-    //    GeomOptimOptions opt;
-    //    opt.sp = sp;
-    //    opt.outerLoopIterMax = 100;
-    //    opt.timeMax = 3.;
-    //    opt.localLocking = true;
-    //    opt.dxGlobalMax = 1.e-3;
-    //    opt.dxLocalMax = 1.e-5;
-    //    opt.force3DwithProjection = true;
-    //    opt.withBackup = false;
-    //    bool oko = patchOptimizeGeometryWithKernel(diff.after, opt, stats);
-    //    if(!oko) {
-    //      if(sp) delete sp;
-    //      return -1;
-    //    }
+    GeomOptimStats stats;
+    GeomOptimOptions opt;
+    opt.sp = sp;
+    opt.outerLoopIterMax = 100;
+    opt.timeMax = 3.;
+    opt.localLocking = true;
+    opt.dxGlobalMax = 1.e-3;
+    opt.dxLocalMax = 1.e-5;
+    opt.force3DwithProjection = true;
+    opt.withBackup = false;
+    bool oko = patchOptimizeGeometryWithKernel(diff.after, opt, stats);
+    if(!oko) {
+      if(sp) delete sp;
+      return -1;
+    }
 
     computeSICN(diff.before.elements, sicnMin, sicnAvg);
     computeSICN(diff.after.elements, sicnMinAfter, sicnAvgAfter);
@@ -3429,7 +3427,7 @@ int meshFaceWithGlobalPattern(GFace *gf, bool invertNormalsForQuality,
     gf->meshStatistics.status = GFace::DONE;
   }
 
-  //  if(sp) delete sp;
+  if(sp) delete sp;
 
   //  gf->set(oldEdges);
   return good;
