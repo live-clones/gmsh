@@ -52,6 +52,10 @@
 #include "meshDuplicateVertices.h"
 #include "meshGFaceParamBoundary.h"
 
+#if defined(HAVE_DISCRETECAD)
+#include "DiscreteCADScaffold.h"
+#endif
+
 namespace {
   // Faces are meshed in parallel, so perturbing points with rand() made each
   // face's result depend on how the threads interleaved their draws. Seed a
@@ -2413,6 +2417,9 @@ void meshGFace::operator()(GFace *gf, bool print)
   case ALGO_2D_PACK_PRLGRMS_CSTR:
     algo = "Packing of Parallelograms Constrained";
     break;
+  case ALGO_2D_FRONTAL_SCAFFOLD:
+    algo = "Frontal-Delaunay on the triangulation";
+    break;
   }
 
   if(print)
@@ -2431,7 +2438,31 @@ void meshGFace::operator()(GFace *gf, bool print)
 
   quadMeshRemoveHalfOfOneDMesh halfmesh(gf, periodic);
 
-  if(periodic) {
+  if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_SCAFFOLD) {
+    // no parametrization: the triangulation of a discrete surface is the
+    // geometry, and the initial mesh (DiscreteCADScaffold.cpp in the discrete
+    // CAD modeler)
+#if defined(HAVE_DISCRETECAD)
+    if(gf->geomType() != GEntity::DiscreteSurface) {
+      Msg::Error("Frontal-Delaunay on the triangulation only meshes discrete "
+                 "surfaces, not surface %d",
+                 gf->tag());
+      gf->meshStatistics.status = GFace::FAILED;
+    }
+    else if(!meshGFaceScaffold(gf))
+      gf->meshStatistics.status = GFace::FAILED;
+    else {
+      gf->meshStatistics.status = GFace::DONE;
+      recombineSurfaceMesh(gf);
+      finishSurfaceMesh(gf);
+    }
+#else
+    Msg::Error("Frontal-Delaunay on the triangulation requires the discrete "
+               "CAD modeler (DISCRETECAD)");
+    gf->meshStatistics.status = GFace::FAILED;
+#endif
+  }
+  else if(periodic) {
     // the generators turn debug output on themselves, from
     // CTX::instance()->debugSurface
     if(!meshGeneratorPeriodic(gf, 0, repairSelfIntersecting1dMesh, false)) {

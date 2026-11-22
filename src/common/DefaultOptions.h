@@ -2765,6 +2765,8 @@ OptionChoices = {
     {ALGO_2D_FRONTAL_QUAD, "Frontal-Delaunay for Quads (experimental)"},
     {ALGO_2D_PACK_PRLGRMS, "Packing of parallelograms (experimental)"},
     {ALGO_2D_QUAD_QUASI_STRUCT, "Quasi-Structured Quad (experimental)"},
+    {ALGO_2D_FRONTAL_SCAFFOLD,
+     "Frontal-Delaunay on the triangulation (discrete surfaces, experimental)"},
     {ALGO_2D_INITIAL_ONLY, "Initial Mesh Only"}}},
   {"Mesh.Algorithm3D",
    {{ALGO_3D_DELAUNAY, "Delaunay"}, {ALGO_3D_PDEL3D, "Parallel Delaunay"},

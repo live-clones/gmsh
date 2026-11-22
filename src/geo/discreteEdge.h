@@ -48,6 +48,13 @@ public:
   virtual SVector3 secondDer(double par) const;
   virtual double curvature(double par) const;
   virtual bool haveParametrization() { return !_pars.empty(); }
+  // the points of its discretization, and the segment of it (from the point
+  // i to the point i + 1) at the parameter t, with the local parameter there
+  const std::vector<SPoint3> &discretization() const { return _discretization; }
+  bool segmentAt(double t, int &i, double &tLoc) const
+  {
+    return _getLocalParameter(t, i, tLoc);
+  }
   virtual Range<double> parBounds(int) const;
   // the bounds of its discretization, if it has one (of its mesh otherwise)
   virtual SBoundingBox3d bounds(bool fast = false);
