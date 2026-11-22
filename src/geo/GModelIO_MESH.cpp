@@ -64,14 +64,17 @@ int GModel::readMESH(const std::string &name)
     if(buffer[0] != '#') { // skip comments and empty lines
       str[0] = '\0';
       sscanf(buffer, "%s", str);
-      if(!strncmp(buffer, "Dimension 3", 11)) {
-        // alternative single-line 'Dimension' field used by CGAL
-      }
-      else if(!strncmp(buffer, "Dimension 2", 11)) {
-        Dimension = 2;
-      }
-      else if(!strcmp(str, "Dimension")) {
-        if(!fgets(buffer, sizeof(buffer), fp)) break;
+      if(!strcmp(str, "Dimension")) {
+        // the value is on the next line, or on the same line (e.g. CGAL)
+        int d = 0;
+        if(sscanf(buffer, "%s %d", str, &d) != 2) {
+          if(!fgets(buffer, sizeof(buffer), fp)) break;
+          sscanf(buffer, "%d", &d);
+        }
+        if(d == 2 || d == 3)
+          Dimension = d;
+        else
+          Msg::Warning("Unknown dimension %d in Medit file, assuming 3", d);
       }
       else if(!strcmp(str, "Vertices")) {
         if(!fgets(buffer, sizeof(buffer), fp)) break;
@@ -387,18 +390,6 @@ int GModel::writeMESH(const std::string &name, int elementTagType, bool saveAll,
 
   int numVertices = indexMeshVertices(saveAll);
 
-  fprintf(fp, " MeshVersionFormatted 2\n");
-  fprintf(fp, " Dimension\n");
-  fprintf(fp, " 3\n");
-
-  fprintf(fp, " Vertices\n");
-  fprintf(fp, " %d\n", numVertices);
-  std::vector<GEntity *> entities;
-  getEntities(entities);
-  for(std::size_t i = 0; i < entities.size(); i++)
-    for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++)
-      entities[i]->mesh_vertices[j]->writeMESH(fp, scalingFactor);
-
   int numEdges = 0, numTriangles = 0, numQuadrangles = 0;
   int numTetrahedra = 0, numHexahedra = 0;
   for(auto it = firstEdge(); it != lastEdge(); ++it) {
@@ -414,6 +405,31 @@ int GModel::writeMESH(const std::string &name, int elementTagType, bool saveAll,
     if(saveAll || (*it)->physicals.size()) {
       numTetrahedra += (*it)->tetrahedra.size();
       numHexahedra += (*it)->hexahedra.size();
+    }
+  }
+
+  // a mesh in the z = 0 plane without volume elements is saved as a 2D mesh,
+  // with 2 coordinates per node
+  std::vector<GEntity *> entities;
+  getEntities(entities);
+  bool planar = !numTetrahedra && !numHexahedra;
+  for(std::size_t i = 0; planar && i < entities.size(); i++)
+    for(auto v : entities[i]->mesh_vertices)
+      if(v->getIndex() >= 0 && v->z() != 0.) planar = false;
+
+  fprintf(fp, " MeshVersionFormatted 2\n");
+  fprintf(fp, " Dimension\n");
+  fprintf(fp, " %d\n", planar ? 2 : 3);
+
+  fprintf(fp, " Vertices\n");
+  fprintf(fp, " %d\n", numVertices);
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    for(auto v : entities[i]->mesh_vertices) {
+      if(!planar)
+        v->writeMESH(fp, scalingFactor);
+      else if(v->getIndex() >= 0)
+        fprintf(fp, " %20.14G      %20.14G      %d\n", v->x() * scalingFactor,
+                v->y() * scalingFactor, v->onWhat() ? v->onWhat()->tag() : 0);
     }
   }
 
