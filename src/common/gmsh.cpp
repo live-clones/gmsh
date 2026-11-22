@@ -2397,6 +2397,19 @@ GMSH_API void gmsh::model::mesh::getMaxNodeTag(std::size_t &maxTag)
   maxTag = GModel::current()->getMaxVertexNumber();
 }
 
+// explicit node or element tags must be strictly positive: a tag 0 would be
+// replaced by a new tag, possibly one given to another node or element
+static bool _checkTags(const std::vector<std::size_t> &tags, const char *what)
+{
+  for(auto t : tags) {
+    if(!t) {
+      Msg::Error("%s tags must be strictly positive (tag 0 given)", what);
+      return false;
+    }
+  }
+  return true;
+}
+
 GMSH_API void gmsh::model::mesh::addNodes(
   const int dim, const int tag, const std::vector<std::size_t> &nodeTags,
   const std::vector<double> &coord, const std::vector<double> &parametricCoord)
@@ -2423,6 +2436,7 @@ GMSH_API void gmsh::model::mesh::addNodes(
     }
     param = true;
   }
+  if(!_checkTags(nodeTags, "Node")) return;
   for(int i = 0; i < numNodes; i++) {
     std::size_t tag = (numNodeTags ? nodeTags[i] : 0); // 0 = automatic tag
     double x = coord[3 * i];
@@ -2693,6 +2707,7 @@ static void _addElements(int dim, int tag, GEntity *ge, int type,
     Msg::Error("Wrong number of node tags for element type %d", type);
     return;
   }
+  if(!_checkTags(elementTags, "Element")) return;
   std::vector<MElement *> elements(numEle);
   std::vector<MVertex *> nodes(numNodesPerEle);
   for(std::size_t j = 0; j < numEle; j++) {
@@ -2855,6 +2870,7 @@ GMSH_API void gmsh::model::mesh::addPolygons(
     Msg::Error("Wrong number of node tags or element tags for polygons");
     return;
   }
+  if(!_checkTags(elementTags, "Element")) return;
   std::vector<MElement *> elements;
   std::vector<MVertex *> nodes;
   std::size_t idx = 0;
@@ -2921,6 +2937,7 @@ GMSH_API void gmsh::model::mesh::addPolyhedra(
                "polyhedra");
     return;
   }
+  if(!_checkTags(elementTags, "Element")) return;
   std::vector<MElement *> elements;
   std::vector<MVertex *> nodes;
   std::size_t face = 0, idx = 0;
