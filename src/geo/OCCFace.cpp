@@ -626,6 +626,13 @@ double OCCFace::curvatures(const SPoint2 &param, SVector3 &dirMax,
 bool OCCFace::containsPoint(const SPoint3 &pt) const
 {
   const double tolerance = BRep_Tool::Tolerance(_s);
+  // the point must be on the surface: the classifier below only classifies its
+  // projection on the surface, at whatever distance (e.g. a point on the top
+  // face of a box is "inside" all the faces of the box)
+  double uv[2], xyz[3];
+  if(!_project(pt.data(), uv, xyz) ||
+     pt.distance(SPoint3(xyz[0], xyz[1], xyz[2])) > tolerance)
+    return false;
   BRepClass_FaceClassifier faceClassifier;
   faceClassifier.Perform(_s, gp_Pnt{pt.x(), pt.y(), pt.z()}, tolerance);
   const TopAbs_State state = faceClassifier.State();

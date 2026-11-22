@@ -340,7 +340,13 @@ bool gmshFace::containsPoint(const SPoint3 &pt) const
     // OK to use the normal from the mean plane here: we compensate for the
     // (possibly wrong) orientation at the end
     double n[3] = {meanPlane.a, meanPlane.b, meanPlane.c};
-    norme(n);
+    double nn = norme(n);
+    // the point must be on the plane: the test below only checks its
+    // projection on the plane
+    if(fabs(meanPlane.a * pt.x() + meanPlane.b * pt.y() +
+            meanPlane.c * pt.z() - meanPlane.d) >
+       nn * CTX::instance()->geom.tolerance * CTX::instance()->lc)
+      return false;
     double angle = 0.;
     double v[3] = {pt.x(), pt.y(), pt.z()};
     for(int i = 0; i < List_Nbr(_s->Generatrices); i++) {
