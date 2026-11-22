@@ -3417,11 +3417,22 @@ int GModel::removeDuplicateMeshVertices(double tolerance,
     return 0;
   }
 
-  for(std::size_t i = 0; i < entities.size(); i++) {
-    GEntity *ge = entities[i];
-    // clear list of vertices owned by entity
-    ge->mesh_vertices.clear();
-    // replace vertices in element
+  // the duplicates can be used by the elements of all the entities (e.g. by the
+  // volumes on both sides of a surface whose nodes are merged), and by their
+  // periodic node correspondences, not only by the entities given
+  auto replace = [&](std::map<MVertex *, MVertex *> &corrVtcs) {
+    std::map<MVertex *, MVertex *> tmp;
+    for(auto &c : corrVtcs) {
+      auto t = duplicates.find(c.first), s = duplicates.find(c.second);
+      tmp[t == duplicates.end() ? c.first : t->second] =
+        (s == duplicates.end() ? c.second : s->second);
+    }
+    corrVtcs.swap(tmp);
+  };
+  for(auto ge : entities) ge->mesh_vertices.clear();
+  std::vector<GEntity *> all;
+  getEntities(all);
+  for(auto ge : all) {
     for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
       MElement *e = ge->getMeshElement(j);
       for(std::size_t k = 0; k < e->getNumVertices(); k++) {
@@ -3429,30 +3440,8 @@ int GModel::removeDuplicateMeshVertices(double tolerance,
         if(it != duplicates.end()) e->setVertex(k, it->second);
       }
     }
-    // replace vertices in periodic copies
-    std::map<MVertex *, MVertex *> &corrVtcs = ge->correspondingVertices;
-    if(corrVtcs.size()) {
-      std::map<MVertex *, MVertex *>::iterator cIter;
-      for(cIter = duplicates.begin(); cIter != duplicates.end(); ++cIter) {
-        MVertex *oldTgt = cIter->first;
-        MVertex *newTgt = cIter->second;
-        auto cvIter = corrVtcs.find(oldTgt);
-        if(cvIter != corrVtcs.end()) {
-          MVertex *src = cvIter->second;
-          corrVtcs.erase(cvIter);
-          corrVtcs[newTgt] = src;
-        }
-      }
-      for(cIter = corrVtcs.begin(); cIter != corrVtcs.end(); ++cIter) {
-        MVertex *oldSrc = cIter->second;
-        auto nIter = duplicates.find(oldSrc);
-        if(nIter != duplicates.end()) {
-          MVertex *tgt = cIter->first;
-          MVertex *newSrc = nIter->second;
-          corrVtcs[tgt] = newSrc;
-        }
-      }
-    }
+    replace(ge->correspondingVertices);
+    replace(ge->correspondingHighOrderVertices);
   }
 
   destroyMeshCaches();
