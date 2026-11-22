@@ -35,3 +35,9 @@ c() = Physical Curve{1};
 If(#c() != 4)
   Error("Physical curve 1 should contain the 4 curves of surface 1");
 EndIf
+
+// deleting all the physical groups does not free a second time those deleted
+// before (crash at exit)
+Physical Surface(5) = {1};
+Physical Surface(5) -= {1};
+Delete Physicals;

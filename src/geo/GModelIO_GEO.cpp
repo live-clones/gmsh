@@ -1010,6 +1010,7 @@ void GEO_Internals::resetPhysicalGroups()
   Tree_Action(PhysicalGroups, FreePhysicalGroup);
   Tree_Reset(PhysicalGroups);
   List_Action(DelPhysicalGroups, FreePhysicalGroup);
+  List_Reset(DelPhysicalGroups);
   _changed = true;
 }
 
