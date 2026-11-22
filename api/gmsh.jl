@@ -1878,8 +1878,9 @@ partition entities that contain them (with the physical groups of their parent
 entities); and, if `ghosts` is set, their ghost cells, i.e. the elements of the
 other partitions, of all dimensions, that share a node with them (see the
 `Mesh.PartitionCreateGhostCells` option; if the file has no ghost cells, a
-warning is issued and the whole mesh is read). All the entities of the file are
-created, and the elements read keep their partition. In a partial read, the
+warning is issued and the whole mesh is read). Only the entities with nodes or
+elements read are created, with their parent entities (and without their
+boundaries), and the elements read keep their partition. In a partial read, the
 sections of the file other than the entities, the nodes, the elements, the
 periodicity and the ghost elements are skipped, and the periodic node
 correspondences only include the nodes read. Post-processing data in the file is

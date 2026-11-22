@@ -25,6 +25,7 @@
 #include <cstdint>
 #include <set>
 #include <functional>
+#include <memory>
 
 #include "GmshDefines.h"
 #include "OS.h"
@@ -107,15 +108,97 @@ public:
   }
 };
 
+// (positions in files larger than 2 GB)
+static std::int64_t msh4Tell(FILE *fp)
+{
+#if defined(_WIN32)
+  return _ftelli64(fp);
+#else
+  return ftello(fp);
+#endif
+}
+
+static bool msh4Seek(FILE *fp, std::int64_t pos)
+{
+#if defined(_WIN32)
+  return !_fseeki64(fp, pos, SEEK_SET);
+#else
+  return !fseeko(fp, (off_t)pos, SEEK_SET);
+#endif
+}
+
+// The entities of a partial read (see GModel::_readMSH4()): those of the entity
+// sections are not made when they are read, as most of them have no node nor
+// element read, but their records are kept, with their position in the file
+// and, for partition entities, their partitions and parent. The blocks of
+// nodes and elements to read are chosen from the partitions of the records,
+// and an entity is made from its record, with its parent and without its
+// boundaries, when nodes or elements of its blocks are read.
+class msh4Deferred {
+private:
+  struct record {
+    int tag, parentDim, parentTag;
+    bool partition;
+    std::size_t first, num; // (its partitions in _partitions)
+    std::int64_t pos;
+  };
+  std::vector<record> _records[4]; // (by tag)
+  std::vector<int> _partitions;
+  GModel *_model = nullptr;
+  FILE *_fp = nullptr;
+  bool _binary = false, _swap = false;
+  double _version = 0.;
+  std::unique_ptr<msh4EntityIndex> _index; // (of the entities made)
+  const record *_find(int dim, int tag) const
+  {
+    if(dim < 0 || dim > 3) return nullptr;
+    auto it =
+      std::lower_bound(_records[dim].begin(), _records[dim].end(), tag,
+                       [](const record &r, int t) { return r.tag < t; });
+    return (it != _records[dim].end() && it->tag == tag) ? &*it : nullptr;
+  }
+
+public:
+  void setFile(GModel *model, FILE *fp, bool binary, bool swap, double version)
+  {
+    _model = model;
+    _fp = fp;
+    _binary = binary;
+    _swap = swap;
+    _version = version;
+    const std::size_t none[4] = {0, 0, 0, 0};
+    if(!_index) _index.reset(new msh4EntityIndex(model, none));
+  }
+  void add(int dim, int tag, bool partition, int parentDim, int parentTag,
+           const std::vector<int> &partitions, std::int64_t pos)
+  {
+    if(dim < 0 || dim > 3) return;
+    _records[dim].push_back({tag, parentDim, parentTag, partition,
+                             _partitions.size(), partitions.size(), pos});
+    _partitions.insert(_partitions.end(), partitions.begin(), partitions.end());
+  }
+  void sort()
+  {
+    for(int dim = 0; dim < 4; dim++)
+      std::stable_sort(
+        _records[dim].begin(), _records[dim].end(),
+        [](const record &a, const record &b) { return a.tag < b.tag; });
+  }
+  bool in(int dim, int tag, const std::set<int> &partitions) const;
+  GEntity *make(int dim, int tag);
+};
+
 // The physical tags of an entity: those it has already (e.g. from another
-// file of the partitions of a mesh) are not added again
+// file of the partitions of a mesh) are not added again; only read without
+// the entity (see msh4Deferred)
 static bool readMSH4Physicals(GModel *const model, FILE *fp,
                               GEntity *const entity, bool binary, bool swap,
                               msh4EntityIndex &index)
 {
-  const std::vector<int> before(entity->physicals);
+  std::vector<int> before;
+  if(entity) before = entity->physicals;
   auto add = [&](int tag) {
-    if(std::find(before.begin(), before.end(), tag) == before.end())
+    if(entity && std::find(before.begin(), before.end(), tag) == before.end())
       entity->addPhysicalEntity(tag);
   };
   std::size_t numPhy = 0;
@@ -143,6 +226,7 @@ static bool readMSH4Physicals(GModel *const model, FILE *fp,
   return true;
 }
 
+// The boundaries of an entity (only read without the entity)
 static bool readMSH4BoundingEntities(GModel *const model, FILE *fp,
                                      GEntity *const entity, bool binary,
                                      bool swap, int maxTagEmbed,
@@ -173,6 +257,7 @@ static bool readMSH4BoundingEntities(GModel *const model, FILE *fp,
       if(fscanf(fp, "%d", &brepTags[i]) != 1) { return false; }
     }
   }
+  if(!entity) return true;
 
   for(std::size_t i = 0; i < numBrep; i++) {
     int entityTag = brepTags[i];
@@ -245,6 +330,8 @@ static bool readMSH4BoundingEntities(GModel *const model, FILE *fp,
   return true;
 }
 
+// The embedded entities of an entity, in MSH 4.2 (only read without the
+// entity)
 static bool readMSH4EmbeddedEntities(FILE *fp, GEntity *const entity,
                                      bool binary, bool swap,
                                      msh4EntityIndex &index)
@@ -267,6 +354,7 @@ static bool readMSH4EmbeddedEntities(FILE *fp, GEntity *const entity,
       if(fscanf(fp, "%d", &embTags[i]) != 1) { return false; }
     }
   }
+  if(!entity) return true;
 
   for(std::size_t i = 0; i < numEmb; i++) {
     int dim = embTags[2 * i], tag = embTags[2 * i + 1];
@@ -406,9 +494,95 @@ static bool readMSH4EntityInfo(FILE *fp, bool binary, bool swap, double version,
   return true;
 }
 
+// The record of an entity of dimension dim (of the $PartitionedEntities
+// section if partition): the entity is made if it is not in the model, with
+// its boundaries if bounds; in a partial read (deferred), its record is kept
+// instead, and its data skipped (see msh4Deferred)
+static bool readMSH4Entity(GModel *const model, FILE *fp, bool binary,
+                           bool swap, double version, bool partition, int dim,
+                           int maxTagEmbed, msh4EntityIndex &index,
+                           msh4Deferred *deferred, bool bounds)
+{
+  const std::int64_t pos = msh4Tell(fp);
+  int tag = 0, parentDim = 0, parentTag = 0;
+  std::vector<int> &partitions = index.partitions;
+  double minX = 0., minY = 0., minZ = 0., maxX = 0., maxY = 0., maxZ = 0.;
+  if(!readMSH4EntityInfo(fp, binary, swap, version, partition, dim, tag,
+                         parentDim, parentTag, partitions, minX, minY, minZ,
+                         maxX, maxY, maxZ)) {
+    return false;
+  }
+
+  GEntity *ge = index.get(dim, tag);
+  if(!ge && deferred) {
+    deferred->add(dim, tag, partition, parentDim, parentTag, partitions, pos);
+  }
+  else if(!ge) {
+    GEntity *parent = parentTag ? index.get(parentDim, parentTag) : nullptr;
+    switch(dim) {
+    case 0:
+      if(partition) {
+        partitionVertex *pv = new partitionVertex(model, tag, partitions);
+        if(parent) pv->setParentEntity(parent);
+        ge = pv;
+      }
+      else {
+        ge = new discreteVertex(model, tag, minX, minY, minZ);
+      }
+      model->add(static_cast<GVertex *>(ge));
+      break;
+    case 1:
+      if(partition) {
+        partitionEdge *pe =
+          new partitionEdge(model, tag, nullptr, nullptr, partitions);
+        if(parent) pe->setParentEntity(parent);
+        ge = pe;
+      }
+      else {
+        ge = new discreteEdge(model, tag, nullptr, nullptr);
+      }
+      model->add(static_cast<GEdge *>(ge));
+      break;
+    case 2:
+      if(partition) {
+        partitionFace *pf = new partitionFace(model, tag, partitions);
+        if(parent) pf->setParentEntity(parent);
+        ge = pf;
+      }
+      else {
+        ge = new discreteFace(model, tag);
+      }
+      model->add(static_cast<GFace *>(ge));
+      break;
+    case 3:
+      if(partition) {
+        partitionRegion *pr = new partitionRegion(model, tag, partitions);
+        if(parent) pr->setParentEntity(parent);
+        ge = pr;
+      }
+      else {
+        ge = new discreteRegion(model, tag);
+      }
+      model->add(static_cast<GRegion *>(ge));
+      break;
+    }
+    index.add(ge);
+  }
+
+  if(!readMSH4Physicals(model, fp, ge, binary, swap, index)) return false;
+  if(dim == 0) return true;
+  GEntity *bounded = bounds ? ge : nullptr; // (else only read)
+  if(!readMSH4BoundingEntities(model, fp, bounded, binary, swap, maxTagEmbed,
+                               index))
+    return false;
+  return version < 4.2 ||
+         readMSH4EmbeddedEntities(fp, bounded, binary, swap, index);
+}
+
 static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
                              bool binary, bool swap, double version,
-                             std::set<int> &ghostTags)
+                             std::set<int> &ghostTags,
+                             msh4Deferred *deferred = nullptr)
 {
   if(partition) {
     std::size_t numPartitions = 0;
@@ -482,120 +656,18 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
   // partitioned mesh has as many of them as there are partitions, and
   // nothing refers to them there)
   msh4EntityIndex index(model, numEntities);
-  auto parentOf = [&](int parentDim, int parentTag) {
-    return index.get(parentDim, parentTag);
-  };
   for(int dim = 0; dim < 4; dim++) {
     for(std::size_t i = 0; i < numEntities[dim]; i++) {
-      int tag = 0, parentDim = 0, parentTag = 0;
-      std::vector<int> &partitions = index.partitions;
-      double minX = 0., minY = 0., minZ = 0., maxX = 0., maxY = 0., maxZ = 0.;
-      if(!readMSH4EntityInfo(fp, binary, swap, version, partition, dim, tag,
-                             parentDim, parentTag, partitions, minX, minY, minZ,
-                             maxX, maxY, maxZ)) {
+      // (in a partial read, the boundaries are not set)
+      if(!readMSH4Entity(model, fp, binary, swap, version, partition, dim,
+                         dim ? maxTags[dim - 1] : 0, index, deferred,
+                         !deferred))
         return false;
-      }
-
-      switch(dim) {
-      case 0: {
-        GVertex *gv = static_cast<GVertex *>(index.get(0, tag));
-        if(!gv) {
-          if(partition) {
-            gv = new partitionVertex(model, tag, partitions);
-            if(parentTag)
-              static_cast<partitionVertex *>(gv)->setParentEntity(
-                parentOf(parentDim, parentTag));
-          }
-          else {
-            gv = new discreteVertex(model, tag, minX, minY, minZ);
-          }
-          model->add(gv);
-          index.add(gv);
-        }
-        if(!readMSH4Physicals(model, fp, gv, binary, swap, index))
-          return false;
-      } break;
-      case 1: {
-        GEdge *ge = static_cast<GEdge *>(index.get(1, tag));
-        if(!ge) {
-          if(partition) {
-            ge = new partitionEdge(model, tag, nullptr, nullptr, partitions);
-            if(parentTag)
-              static_cast<partitionEdge *>(ge)->setParentEntity(
-                parentOf(parentDim, parentTag));
-          }
-          else {
-            ge = new discreteEdge(model, tag, nullptr, nullptr);
-          }
-          model->add(ge);
-          index.add(ge);
-        }
-        if(!readMSH4Physicals(model, fp, ge, binary, swap, index))
-          return false;
-        if(!readMSH4BoundingEntities(model, fp, ge, binary, swap, maxTags[0],
-                                    index)) {
-          return false;
-        }
-        if(version >= 4.2 &&
-           !readMSH4EmbeddedEntities(fp, ge, binary, swap, index))
-          return false;
-      } break;
-      case 2: {
-        GFace *gf = static_cast<GFace *>(index.get(2, tag));
-        if(!gf) {
-          if(partition) {
-            gf = new partitionFace(model, tag, partitions);
-            if(parentTag)
-              static_cast<partitionFace *>(gf)->setParentEntity(
-                parentOf(parentDim, parentTag));
-          }
-          else {
-            gf = new discreteFace(model, tag);
-          }
-          model->add(gf);
-          index.add(gf);
-        }
-        if(!readMSH4Physicals(model, fp, gf, binary, swap, index))
-          return false;
-        if(!readMSH4BoundingEntities(model, fp, gf, binary, swap, maxTags[1],
-                                    index)) {
-          return false;
-        }
-        if(version >= 4.2 &&
-           !readMSH4EmbeddedEntities(fp, gf, binary, swap, index))
-          return false;
-      } break;
-      case 3: {
-        GRegion *gr = static_cast<GRegion *>(index.get(3, tag));
-        if(!gr) {
-          if(partition) {
-            gr = new partitionRegion(model, tag, partitions);
-            if(parentTag)
-              static_cast<partitionRegion *>(gr)->setParentEntity(
-                parentOf(parentDim, parentTag));
-          }
-          else {
-            gr = new discreteRegion(model, tag);
-          }
-          model->add(gr);
-          index.add(gr);
-        }
-        if(!readMSH4Physicals(model, fp, gr, binary, swap, index))
-          return false;
-        if(!readMSH4BoundingEntities(model, fp, gr, binary, swap, maxTags[2],
-                                    index)) {
-          return false;
-        }
-        if(version >= 4.2 &&
-           !readMSH4EmbeddedEntities(fp, gr, binary, swap, index))
-          return false;
-      } break;
-      }
     }
-
     if(dim < 3 && version < 4.2)
       maxTags[dim] = model->getMaxElementaryNumber(dim);
   }
+  if(deferred) deferred->sort();
   return true;
 }
 
@@ -604,41 +676,33 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
 // skipped, and of these only the nodes or the elements of some tags; or, for
 // the elements, only their records (the tag, then the node tags), given to a
 // function without making any element; or the elements made from records kept
-// before, without reading the section
+// before, without reading the section. The blocks are chosen from the
+// dimension and the tag of their entity, which is made if need be (see
+// msh4Deferred) when nodes or elements of the block are kept.
 struct msh4Records {
-  GEntity *entity;
-  int type;
+  int dim, tag, type; // (of the entity, of the elements)
   std::vector<std::size_t> data;
 };
 struct msh4Filter {
-  std::function<bool(GEntity *)> block;
+  std::function<bool(int, int)> block; // (entity dimension and tag)
   std::vector<char> tags;
   std::size_t count = 0; // (the number of tags)
-  std::function<void(GEntity *, int, const std::size_t *, std::size_t,
+  std::function<void(int, int, int, const std::size_t *, std::size_t,
                      std::size_t)>
-    records; // (entity, type, records, number of records, values per record)
+    records; // (entity dimension and tag, type, records, number of records,
+             // values per record)
   std::vector<msh4Records> kept; // (the records of the elements kept)
+  std::function<GEntity *(int, int)> make; // (an entity not in the model)
   bool keep(std::size_t tag) const { return tag < tags.size() && tags[tag]; }
+  // the entity of a block whose nodes or elements are kept
+  GEntity *entity(GModel *model, int dim, int tag) const
+  {
+    GEntity *ge = model->getEntityByTag(dim, tag);
+    if(!ge && make) ge = make(dim, tag);
+    if(!ge) Msg::Error("Unknown entity %d of dimension %d", tag, dim);
+    return ge;
+  }
 };
-
-// (positions in files larger than 2 GB)
-static std::int64_t msh4Tell(FILE *fp)
-{
-#if defined(_WIN32)
-  return _ftelli64(fp);
-#else
-  return ftello(fp);
-#endif
-}
-
-static bool msh4Seek(FILE *fp, std::int64_t pos)
-{
-#if defined(_WIN32)
-  return !_fseeki64(fp, pos, SEEK_SET);
-#else
-  return !fseeko(fp, (off_t)pos, SEEK_SET);
-#endif
-}
 
 // skip the data of a block: n records of the given size in a binary file, or
 // of the given number of lines in an ASCII file
@@ -738,7 +802,7 @@ static MVertex **readMSH4Nodes(GModel *const model, FILE *fp, bool binary,
     }
 
     GEntity *entity = model->getEntityByTag(entityDim, entityTag);
-    if(filter && !(entity && filter->block(entity))) {
+    if(filter && !filter->block(entityDim, entityTag)) {
       // (the ASCII 4.1 format has a line for the tag and a line for the
       // coordinates of each node)
       std::size_t n = 3 + (parametric ? entityDim : 0);
@@ -750,7 +814,8 @@ static MVertex **readMSH4Nodes(GModel *const model, FILE *fp, bool binary,
       }
       continue;
     }
-    if(!entity) {
+    // (with a filter, the entity is found or made when nodes are kept)
+    if(!entity && !filter) {
       switch(entityDim) {
       case 0: {
         Msg::Info("Creating discrete point %d with %lu nodes.", entityTag,
@@ -810,6 +875,8 @@ static MVertex **readMSH4Nodes(GModel *const model, FILE *fp, bool binary,
         bool ok = kept.empty() ?
                     skipMSH4Block(fp, true, numNodes, n * sizeof(double), 0) :
                     nodeRead + kept.size() <= totalNumRead;
+        if(ok && !kept.empty() && !entity)
+          ok = (entity = filter->entity(model, entityDim, entityTag));
         if(!ok) {
           delete[] verticesRead;
           return nullptr;
@@ -909,6 +976,11 @@ static MVertex **readMSH4Nodes(GModel *const model, FILE *fp, bool binary,
         if(filter && (!filter->keep(tagNode) || nodeRead >= totalNumRead)) {
           delete mv;
           continue;
+        }
+        if(!entity && !(entity = filter->entity(model, entityDim, entityTag))) {
+          delete mv;
+          delete[] verticesRead;
+          return nullptr;
         }
         mv->setEntity(entity);
         minNodeNum = std::min(minNodeNum, tagNode);
@@ -1083,12 +1155,13 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
     for(const msh4Records &r : filter->kept) {
       const int numVert = MElement::getInfoMSH(r.type);
       const std::size_t num = r.data.size() / (1 + numVert);
-      if(elementRead + num > totalNumRead) {
+      GEntity *entity = filter->entity(model, r.dim, r.tag);
+      if(!entity || elementRead + num > totalNumRead) {
         delete[] elementsRead;
         return nullptr;
       }
       pending.push_back(
-        {r.entity, r.type, numVert, elementRead, pendingData.size(), num});
+        {entity, r.type, numVert, elementRead, pendingData.size(), num});
       pendingData.insert(pendingData.end(), r.data.begin(), r.data.end());
       elementRead += num;
       if(pendingData.size() >= (1 << 23) && !makePending()) {
@@ -1144,8 +1217,8 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
     }
 
     GEntity *entity = model->getEntityByTag(entityDim, entityTag);
-    if(entity ? (filter && !filter->block(entity)) :
-                ghostTags.count(entityTag)) {
+    if(filter ? !filter->block(entityDim, entityTag) :
+                (!entity && ghostTags.count(entityTag))) {
       if(!skipMSH4Block(
            fp, binary, numElements,
            (1 + MElement::getInfoMSH(elmType)) * sizeof(std::size_t), 1)) {
@@ -1154,7 +1227,8 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
       }
       continue;
     }
-    if(!entity) {
+    // (with a filter, the entity is found or made when elements are kept)
+    if(!entity && !filter) {
       Msg::Error("Unknown entity %d of dimension %d", entityTag, entityDim);
       delete[] elementsRead;
       return nullptr;
@@ -1183,7 +1257,8 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
         if(filter) { // (the records only, or the elements kept only)
           std::size_t kept = 0;
           if(filter->records)
-            filter->records(entity, elmType, &pendingData[offset], num, n);
+            filter->records(entityDim, entityTag, elmType, &pendingData[offset],
+                            num, n);
           else {
             for(std::size_t r = 0; r < num; r++) {
               const std::size_t *d = &pendingData[offset + r * n];
@@ -1195,7 +1270,9 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
           }
           num = kept;
           pendingData.resize(offset + num * n);
-          if(elementRead + num > totalNumRead) {
+          if(elementRead + num > totalNumRead ||
+             (num && !entity &&
+              !(entity = filter->entity(model, entityDim, entityTag)))) {
             delete[] elementsRead;
             return nullptr;
           }
@@ -1240,11 +1317,16 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
             }
             p = q;
           }
-          filter->records(entity, elmType, &record[0], 1, record.size());
+          filter->records(entityDim, entityTag, elmType, &record[0], 1,
+                          record.size());
           continue;
         }
         if(filter && (!filter->keep(elmTag) || elementRead >= totalNumRead))
           continue;
+        if(!entity && !(entity = filter->entity(model, entityDim, entityTag))) {
+          delete[] elementsRead;
+          return nullptr;
+        }
 
         std::vector<MVertex *> vertices(numVertPerElm, (MVertex *)nullptr);
 
@@ -1625,8 +1707,12 @@ readMSH4Polytopes(GModel *const model, FILE *fp, bool binary, bool &dense,
   return elementsRead;
 }
 
+// The periodic links: those whose entities are not in the model are read and
+// skipped; in a partial read, a link is kept if its entity has been made (it
+// has nodes read), and its master is made if need be (see msh4Deferred)
 static bool readMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
-                                  bool swap, double version, bool partial)
+                                  bool swap, double version, bool partial,
+                                  msh4Deferred *deferred = nullptr)
 {
   std::size_t numPeriodicLinks = 0;
   if(binary) {
@@ -1672,21 +1758,27 @@ static bool readMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
       break;
     }
 
-    if(!slave) {
+    if(slave && !master && deferred)
+      master = deferred->make(slaveDim, masterTag);
+    if(!partial && !slave)
       Msg::Info("Could not find periodic entity %d of dimension %d", slaveTag,
                 slaveDim);
-      continue;
-    }
-    if(!master) {
+    else if(!partial && !master)
       Msg::Info("Could not find periodic source entity %d of dimension %d",
                 masterTag, slaveDim);
-      continue;
-    }
+    const bool link = slave && master; // (else the link is skipped)
 
     // the corresponding nodes not given in the file are found from the
     // transformation, except for partition entities: all their nodes are
     // given, and their boundaries need not match those of their master
-    const bool findNodes = !slave->getParentEntity();
+    const bool findNodes = link && !slave->getParentEntity();
+    auto setMaster = [&](const std::vector<double> *tfo) {
+      if(!link) return;
+      if(tfo)
+        slave->setMeshMaster(master, *tfo, findNodes);
+      else
+        slave->setMeshMaster(master);
+    };
 
     std::size_t correspondingVertexSize = 0;
     if(binary) {
@@ -1699,10 +1791,10 @@ static bool readMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
           return false;
         }
         if(swap) SwapBytes((char *)&tfo[0], sizeof(double), numAffine);
-        slave->setMeshMaster(master, tfo, findNodes);
+        setMaster(&tfo);
       }
       else {
-        slave->setMeshMaster(master);
+        setMaster(nullptr);
       }
       if(fread(&correspondingVertexSize, sizeof(std::size_t), 1, fp) != 1) {
         return false;
@@ -1719,10 +1811,10 @@ static bool readMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
           for(std::size_t i = 0; i < numAffine; i++) {
             if(fscanf(fp, "%lf", &tfo[i]) != 1) { return false; }
           }
-          slave->setMeshMaster(master, tfo, findNodes);
+          setMaster(&tfo);
         }
         else {
-          slave->setMeshMaster(master);
+          setMaster(nullptr);
         }
         if(fscanf(fp, "%zu", &correspondingVertexSize) != 1) { return false; }
       }
@@ -1740,11 +1832,11 @@ static bool readMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
                     &tfo[12], &tfo[13], &tfo[14], &tfo[15]) != 16) {
             return false;
           }
-          slave->setMeshMaster(master, tfo, findNodes);
+          setMaster(&tfo);
           if(fscanf(fp, "%zu", &correspondingVertexSize) != 1) { return false; }
         }
         else {
-          slave->setMeshMaster(master);
+          setMaster(nullptr);
           if(sscanf(affine, "%zu", &correspondingVertexSize) != 1) {
             return false;
           }
@@ -1767,8 +1859,8 @@ static bool readMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
       MVertex *mv1 = model->getMeshVertexByTag(v1);
       MVertex *mv2 = model->getMeshVertexByTag(v2);
 
-      if(mv1 && mv2) { slave->correspondingVertices[mv1] = mv2; }
-      else if(!partial) { // (a partial read has some of the nodes only)
+      if(link && mv1 && mv2) { slave->correspondingVertices[mv1] = mv2; }
+      else if(link && !partial) { // (a partial read has some of the nodes only)
         if(!mv1) { Msg::Info("Could not find periodic node %d", v1); }
         else if(!mv2) {
           Msg::Info("Could not find periodic node %d", v2);
@@ -2537,33 +2629,65 @@ static int singlePartitionOf(GEntity *ge)
 // of the partition entities of the partitions and of the owners only; the
 // records of the elements kept are kept in the element filter, to make the
 // elements from without reading the section again.
+// whether an entity is in the partitions S (as is an entity that is not a
+// partition entity: there should be none): from its record if it has one,
+// else from the entity in the model
+bool msh4Deferred::in(int dim, int tag, const std::set<int> &S) const
+{
+  const record *r = _find(dim, tag);
+  const std::vector<int> *p = nullptr;
+  if(!r) {
+    GEntity *ge = _model ? _model->getEntityByTag(dim, tag) : nullptr;
+    if(!ge) return false;
+    if(!(p = partitionsOf(ge))) return true;
+  }
+  else if(!r->partition)
+    return true;
+  const int *first = r ? &_partitions[r->first] : p->data();
+  const std::size_t num = r ? r->num : p->size();
+  for(std::size_t i = 0; i < num; i++)
+    if(S.count(first[i])) return true;
+  return false;
+}
+
+// the entity, made from its record (with its parent first) if it is not in
+// the model, the file being read from there and then from where it was
+GEntity *msh4Deferred::make(int dim, int tag)
+{
+  GEntity *ge = _model->getEntityByTag(dim, tag);
+  const record *r = ge ? nullptr : _find(dim, tag);
+  if(!r) return ge;
+  if(r->partition && r->parentTag) make(r->parentDim, r->parentTag);
+  const std::int64_t here = msh4Tell(_fp);
+  const bool ok = msh4Seek(_fp, r->pos) &&
+                  readMSH4Entity(_model, _fp, _binary, _swap, _version,
+                                 r->partition, dim, 0, *_index, nullptr, false);
+  if(!msh4Seek(_fp, here) || !ok) {
+    Msg::Error("Could not read entity %d of dimension %d", tag, dim);
+    return nullptr;
+  }
+  return _model->getEntityByTag(dim, tag);
+}
+
 static bool selectMSH4Partitions(GModel *const model, FILE *fp, bool binary,
                                  bool swap, double version, std::int64_t pos,
                                  const std::set<int> &ghostTags,
                                  const std::vector<int> &partitions,
-                                 const std::set<int> &owners, msh4Filter &nodes,
-                                 msh4Filter &elements)
+                                 const std::set<int> &owners,
+                                 const msh4Deferred &deferred,
+                                 msh4Filter &nodes, msh4Filter &elements)
 {
   std::set<int> own(partitions.begin(), partitions.end()), all(own);
   all.insert(owners.begin(), owners.end());
-  // whether an entity is in the partitions S (as is an entity that is not a
-  // partition entity: there should be none)
-  auto in = [](GEntity *ge, const std::set<int> &S) {
-    const std::vector<int> *p = partitionsOf(ge);
-    if(!p) return true;
-    for(int i : *p)
-      if(S.count(i)) return true;
-    return false;
-  };
   auto mark = [](std::vector<char> &v, std::size_t t) {
     if(t >= v.size()) v.resize(std::max(2 * v.size(), t + 1), 0);
     v[t] = 1;
   };
   msh4Filter select;
-  select.block = [&](GEntity *ge) { return in(ge, all); };
-  select.records = [&](GEntity *ge, int type, const std::size_t *d,
+  select.block = [&](int dim, int tag) { return deferred.in(dim, tag, all); };
+  select.records = [&](int dim, int tag, int type, const std::size_t *d,
                        std::size_t num, std::size_t n) {
-    const bool mine = in(ge, own);
+    const bool mine = deferred.in(dim, tag, own);
     std::vector<msh4Records> &kept = elements.kept;
     for(std::size_t r = 0; r < num; r++) {
       const std::size_t *e = &d[r * n];
@@ -2572,8 +2696,9 @@ static bool selectMSH4Partitions(GModel *const model, FILE *fp, bool binary,
       else if(!elements.keep(e[0]))
         continue;
       for(std::size_t k = 1; k < n; k++) mark(nodes.tags, e[k]);
-      if(kept.empty() || kept.back().entity != ge || kept.back().type != type)
-        kept.push_back({ge, type, {}});
+      if(kept.empty() || kept.back().dim != dim || kept.back().tag != tag ||
+         kept.back().type != type)
+        kept.push_back({dim, tag, type, {}});
       kept.back().data.insert(kept.back().data.end(), e, e + n);
     }
   };
@@ -2587,7 +2712,10 @@ static bool selectMSH4Partitions(GModel *const model, FILE *fp, bool binary,
   delete[] none;
   for(char c : nodes.tags) nodes.count += c;
   for(char c : elements.tags) elements.count += c;
-  nodes.block = elements.block = [all, in](GEntity *ge) { return in(ge, all); };
+  const msh4Deferred *d = &deferred;
+  nodes.block = elements.block = [all, d](int dim, int tag) {
+    return d->in(dim, tag, all);
+  };
   return true;
 }
 
@@ -2632,20 +2760,24 @@ int GModel::_readMSH4(const std::string &name,
   // partitions read from the $GhostElements section; the elements and nodes to
   // read are selected, and the file is read again from the $Nodes section with
   // them, the elements being made from the records kept by the selection,
-  // without reading the $Elements section again. The sections that are not
-  // about the mesh of the partitions are skipped. If the ghost cells are asked
-  // for and the file has none, the whole mesh is read.
+  // without reading the $Elements section again. Only the entities with nodes
+  // or elements read are made, with their parents (see msh4Deferred). The
+  // sections that are not about the mesh of the partitions are skipped. If the
+  // ghost cells are asked for and the file has none, the whole mesh is read.
   bool partial = !partitions.empty();
+  msh4Deferred deferred;
   msh4Filter nodeFilter, elementFilter, skipAll, missing;
-  skipAll.block = [](GEntity *) { return false; };
+  skipAll.block = [](int, int) { return false; };
+  nodeFilter.make = elementFilter.make =
+    missing.make = [&](int dim, int tag) { return deferred.make(dim, tag); };
   bool selected = false, refilled = false;
   std::int64_t nodesPos = -1, elementsPos = -1, elementsEnd = -1;
   std::set<int> owners; // (the partitions of the ghost cells)
   auto select = [&]() {
     if(!partitioned || nodesPos < 0 || elementsPos < 0 ||
        !selectMSH4Partitions(this, fp, binary, swap, version, elementsPos,
-                             ghostTags, partitions, owners, nodeFilter,
-                             elementFilter)) {
+                             ghostTags, partitions, owners, deferred,
+                             nodeFilter, elementFilter)) {
       Msg::Error("Could not select the elements of the partitions");
       return false;
     }
@@ -2665,9 +2797,10 @@ int GModel::_readMSH4(const std::string &name,
         Msg::Warning("No ghost cells in '%s' (see Mesh.PartitionCreateGhost"
                      "Cells): reading the whole mesh",
                      name.c_str());
+        // (from the start, as no entity has been made)
         partial = false;
         clearerr(fp);
-        msh4Seek(fp, nodesPos);
+        msh4Seek(fp, 0);
         str[0] = 'a';
         continue;
       }
@@ -2799,14 +2932,18 @@ int GModel::_readMSH4(const std::string &name,
       }
     }
     else if(!strncmp(&str[1], "Entities", 8)) {
-      if(!readMSH4Entities(this, fp, false, binary, swap, version, ghostTags)) {
+      if(partial) deferred.setFile(this, fp, binary, swap, version);
+      if(!readMSH4Entities(this, fp, false, binary, swap, version, ghostTags,
+                           partial ? &deferred : nullptr)) {
         Msg::Error("Could not read entities");
         fclose(fp);
         return 0;
       }
     }
     else if(!strncmp(&str[1], "PartitionedEntities", 19)) {
-      if(!readMSH4Entities(this, fp, true, binary, swap, version, ghostTags)) {
+      if(partial) deferred.setFile(this, fp, binary, swap, version);
+      if(!readMSH4Entities(this, fp, true, binary, swap, version, ghostTags,
+                           partial ? &deferred : nullptr)) {
         Msg::Error("Could not read partitioned entities");
         fclose(fp);
         return 0;
@@ -2934,8 +3071,8 @@ int GModel::_readMSH4(const std::string &name,
         if(missing.count) {
           Msg::Info("Reading the other node blocks for %zu nodes",
                     missing.count);
-          missing.block = [&nodeFilter](GEntity *ge) {
-            return !nodeFilter.block(ge);
+          missing.block = [&nodeFilter](int dim, int tag) {
+            return !nodeFilter.block(dim, tag);
           };
           msh4Seek(fp, nodesPos);
           str[0] = 'a';
@@ -3074,7 +3211,8 @@ int GModel::_readMSH4(const std::string &name,
       }
     }
     else if(!strncmp(&str[1], "Periodic", 8)) {
-      if(!readMSH4PeriodicNodes(this, fp, binary, swap, version, partial)) {
+      if(!readMSH4PeriodicNodes(this, fp, binary, swap, version, partial,
+                                partial ? &deferred : nullptr)) {
         Msg::Error("Could not read periodic section");
         fclose(fp);
         return 0;
