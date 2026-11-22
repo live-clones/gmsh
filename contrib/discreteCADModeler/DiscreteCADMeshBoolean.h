@@ -32,6 +32,20 @@
 // then those of B). Returns false, with the reason in error, if it cannot
 // compute it (operands that are not closed manifold triangulations without
 // self-intersections).
+//
+// An operand can be open (edges of one triangle, the others with as many
+// triangles in both directions): it has no inside (its volume is zero), the
+// triangles of the other operand are all outside it; its own triangles are
+// classified against the other operand if it is closed (those on its
+// triangles left out: the closed operand carries them), only those on the
+// other one's triangles (coplanar, as for closed operands) if it is open, the
+// others outside. So the union of a closed V and an open S is V and the part
+// of S outside V, the intersection the part of S inside V, V - S is V and,
+// turned over, the part of S inside V (the boundary of V split by S), S - V
+// the part of S outside V. With op 3, the co-refinement of A and B (any
+// triangulations, open, non-manifold, each without self-intersections): all
+// their triangles cut by the other operand, as oriented, but those of B on
+// triangles of A.
 bool meshBoolean(int op, const std::vector<double> &xyzA,
                  const std::vector<int> &triA,
                  const std::vector<double> &xyzB,

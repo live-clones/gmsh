@@ -359,6 +359,227 @@ void componentKinds(const std::vector<std::array<double, 3> > &x,
   }
 }
 
+void boundingNothing(const std::vector<std::array<double, 3> > &x,
+                     const std::vector<std::array<int, 3> > &triangles,
+                     std::vector<char> &nothing, std::vector<double> *behind,
+                     std::vector<double> *front)
+{
+  const std::size_t nt = triangles.size();
+  nothing.assign(nt, 0);
+  const double nan = std::numeric_limits<double>::quiet_NaN();
+  if(behind) behind->assign(nt, nan);
+  if(front) front->assign(nt, nan);
+  std::vector<std::array<double, 3> > q;
+  std::vector<std::size_t> which;
+  for(std::size_t i = 0; i < nt; i++) {
+    const std::array<int, 3> &t = triangles[i];
+    double e[3][3], g[3], longest = 0.;
+    for(int k = 0; k < 3; k++) {
+      double l = 0.;
+      for(int m = 0; m < 3; m++) {
+        e[k][m] = x[t[(k + 1) % 3]][m] - x[t[k]][m];
+        l += e[k][m] * e[k][m];
+      }
+      longest = std::max(longest, l);
+      g[k] = (x[t[0]][k] + x[t[1]][k] + x[t[2]][k]) / 3.;
+    }
+    // (the normal of the triangle, outwards: e0 x -e2, as long as twice its
+    // area; the points a hundred thousandth of the square root of that away)
+    const double n[3] = {e[2][1] * e[0][2] - e[2][2] * e[0][1],
+                         e[2][2] * e[0][0] - e[2][0] * e[0][2],
+                         e[2][0] * e[0][1] - e[2][1] * e[0][0]};
+    const double l = std::sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
+    if(!(l > 1e-14 * longest)) continue;
+    const double d = 1e-5 * std::sqrt(l) / l;
+    for(int side = -1; side <= 1; side += 2)
+      q.push_back({{g[0] + side * d * n[0], g[1] + side * d * n[1],
+                    g[2] + side * d * n[2]}});
+    which.push_back(i);
+  }
+  if(q.empty()) return;
+  std::vector<double> w;
+  DiscreteCADWinding all(x, triangles);
+  all.evaluate(q, w);
+  for(std::size_t k = 0; k < which.size(); k++) {
+    if(std::abs(w[2 * k]) < 0.2 && std::abs(w[2 * k + 1]) < 0.2)
+      nothing[which[k]] = 1;
+    if(behind) (*behind)[which[k]] = w[2 * k];
+    if(front) (*front)[which[k]] = w[2 * k + 1];
+  }
+}
+
+void fillHoles(const std::vector<std::array<double, 3> > &x,
+               const std::vector<std::array<int, 3> > &triangles,
+               std::vector<std::array<int, 3> > &added,
+               std::vector<std::size_t> &beside, int &closed, int &left,
+               std::size_t maxDynamic)
+{
+  added.clear();
+  beside.clear();
+  closed = left = 0;
+  // the edges; the free ones as the triangles closing the holes go along
+  // them (the other way), from each node: the node they go to and the
+  // triangle of the piece along them
+  std::set<std::pair<int, int> > edges;
+  std::map<std::pair<int, int>, int> count;
+  for(auto &t : triangles)
+    for(int k = 0; k < 3; k++) {
+      edges.insert(std::minmax(t[k], t[(k + 1) % 3]));
+      count[std::minmax(t[k], t[(k + 1) % 3])]++;
+    }
+  std::map<int, std::vector<std::pair<int, std::size_t> > > out;
+  for(std::size_t i = 0; i < triangles.size(); i++)
+    for(int k = 0; k < 3; k++) {
+      const int a = triangles[i][k], b = triangles[i][(k + 1) % 3];
+      if(count[std::minmax(a, b)] == 1) out[b].push_back({a, i});
+    }
+  auto area2 = [&](int a, int b, int c) {
+    double u[3], v[3];
+    for(int k = 0; k < 3; k++) {
+      u[k] = x[b][k] - x[a][k];
+      v[k] = x[c][k] - x[a][k];
+    }
+    const double n[3] = {u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2],
+                         u[0] * v[1] - u[1] * v[0]};
+    return std::sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
+  };
+  // (the triangulation of least area of a loop, its diagonals not edges
+  // already; the loop and its first edge i.e. the triangle along it, kept
+  // out of the edges that may close it)
+  auto dynamic = [&](const std::vector<int> &l,
+                     std::vector<std::array<int, 3> > &tris) {
+    const int n = (int)l.size();
+    const double inf = std::numeric_limits<double>::infinity();
+    std::vector<double> W((std::size_t)n * n, 0.);
+    std::vector<int> K((std::size_t)n * n, -1);
+    auto allowed = [&](int i, int j) {
+      if(j == i + 1 || (i == 0 && j == n - 1)) return true;
+      return !edges.count(std::minmax(l[i], l[j]));
+    };
+    for(int len = 2; len < n; len++)
+      for(int i = 0; i + len < n; i++) {
+        const int j = i + len;
+        double best = inf;
+        int bk = -1;
+        if(allowed(i, j))
+          for(int k = i + 1; k < j; k++) {
+            const double a = W[(std::size_t)i * n + k], b = W[(std::size_t)k * n + j];
+            if(a == inf || b == inf) continue;
+            const double w = a + b + area2(l[i], l[k], l[j]);
+            if(w < best) {
+              best = w;
+              bk = k;
+            }
+          }
+        W[(std::size_t)i * n + j] = best;
+        K[(std::size_t)i * n + j] = bk;
+      }
+    if(K[n - 1] < 0) return;
+    std::vector<std::pair<int, int> > stack = {{0, n - 1}};
+    while(!stack.empty()) {
+      const std::pair<int, int> s = stack.back();
+      stack.pop_back();
+      if(s.second - s.first < 2) continue;
+      const int k = K[(std::size_t)s.first * n + s.second];
+      tris.push_back({{l[s.first], l[k], l[s.second]}});
+      stack.push_back({s.first, k});
+      stack.push_back({k, s.second});
+    }
+  };
+  // (the ears of least area cut one by one, their diagonals not edges)
+  auto ears = [&](const std::vector<int> &l,
+                  std::vector<std::array<int, 3> > &tris) {
+    const int n = (int)l.size();
+    std::vector<int> prev(n), next(n);
+    for(int i = 0; i < n; i++) {
+      prev[i] = (i + n - 1) % n;
+      next[i] = (i + 1) % n;
+    }
+    std::set<std::pair<int, int> > made;
+    int alive = n, i0 = 0;
+    while(alive > 3) {
+      double best = std::numeric_limits<double>::infinity();
+      int bi = -1, i = i0;
+      for(int c = 0; c < alive; c++, i = next[i]) {
+        const std::pair<int, int> d = std::minmax(l[prev[i]], l[next[i]]);
+        if(edges.count(d) || made.count(d)) continue;
+        const double w = area2(l[prev[i]], l[i], l[next[i]]);
+        if(w < best) {
+          best = w;
+          bi = i;
+        }
+      }
+      if(bi < 0) return;
+      tris.push_back({{l[prev[bi]], l[bi], l[next[bi]]}});
+      made.insert(std::minmax(l[prev[bi]], l[next[bi]]));
+      next[prev[bi]] = next[bi];
+      prev[next[bi]] = prev[bi];
+      i0 = next[bi];
+      alive--;
+    }
+    tris.push_back({{l[prev[i0]], l[i0], l[next[i0]]}});
+  };
+  auto triangulate = [&](const std::vector<int> &l, std::size_t side) {
+    std::vector<std::array<int, 3> > tris;
+    if(l.size() <= maxDynamic)
+      dynamic(l, tris);
+    else
+      ears(l, tris);
+    if(tris.size() + 2 != l.size()) {
+      left++;
+      return;
+    }
+    for(auto &t : tris) {
+      added.push_back(t);
+      beside.push_back(side);
+      for(int k = 0; k < 3; k++) edges.insert(std::minmax(t[k], t[(k + 1) % 3]));
+    }
+    closed++;
+  };
+  // the loops, followed along the free edges; where one comes back to a node
+  // it went through, the loop from there closed and cut off
+  std::set<std::pair<int, int> > used;
+  for(auto &o : out)
+    for(auto &e : o.second) {
+      if(used.count({o.first, e.first})) continue;
+      used.insert({o.first, e.first});
+      std::vector<int> loop = {o.first};
+      std::vector<std::size_t> along = {e.second};
+      std::map<int, std::size_t> pos = {{o.first, 0}};
+      int cur = e.first;
+      while(true) {
+        auto p = pos.find(cur);
+        if(p != pos.end()) {
+          const std::size_t s = p->second;
+          triangulate(std::vector<int>(loop.begin() + s, loop.end()), along[s]);
+          for(std::size_t k = s + 1; k < loop.size(); k++) pos.erase(loop[k]);
+          loop.resize(s + 1);
+          along.resize(s);
+          if(s == 0) break;
+        }
+        else {
+          pos[cur] = loop.size();
+          loop.push_back(cur);
+        }
+        int to = -1;
+        std::size_t by = 0;
+        for(auto &f : out[cur])
+          if(!used.count({cur, f.first})) {
+            to = f.first;
+            by = f.second;
+            break;
+          }
+        if(to < 0) {
+          left++;
+          break;
+        }
+        used.insert({cur, to});
+        along.push_back(by);
+        cur = to;
+      }
+    }
+}
+
 void findDefects(const std::vector<std::array<double, 3> > &x,
                  const std::vector<std::array<int, 3> > &triangles,
                  DiscreteCADDefects &d)
@@ -1043,7 +1264,8 @@ void zipFreeEdges(const std::vector<std::array<double, 3> > &x,
     if(std::find(at[c].begin(), at[c].end(), i) == at[c].end()) at[c].push_back(i);
     for(int n : {c, q, w}) at[n].push_back(j);
     finish([p, q, c](const std::pair<int, int> &e) -> std::pair<int, int> {
-      if(e == std::minmax(p, c) || e == std::minmax(c, q)) return std::minmax(p, q);
+      const std::pair<int, int> pc = std::minmax(p, c), cq = std::minmax(c, q);
+      if(e == pc || e == cq) return std::minmax(p, q);
       return e;
     });
     log('t', c, u, v);
@@ -1148,9 +1370,10 @@ double zipTolerance(const std::vector<std::array<double, 3> > &x,
     g.add((int)k, x[free[k].first], x[free[k].second]);
   const double reach = 10. * median;
   // the distances from the nodes to the free edges not within three edges of
-  // them along the free edges, in half decades (the cells r cells away from
-  // that of a node, and those nearer, have all the free edges up to r - 1/4
-  // cells from it)
+  // them along the free edges, but those they are inside of (T-junctions:
+  // cracks of no width, the edge one edge away from the node), in half
+  // decades (the cells r cells away from that of a node, and those nearer,
+  // have all the free edges up to r - 1/4 cells from it)
   std::map<int, int> histogram;
   int counted = 0;
   std::vector<int> stamp(free.size(), -1);
@@ -1176,9 +1399,14 @@ double zipTolerance(const std::vector<std::array<double, 3> > &x,
       g.ring(c, r, [&](int k) {
         if(stamp[k] == visit) return;
         stamp[k] = visit;
-        if(near.count(k)) return;
         double d2;
-        project(x[free[k].first], x[free[k].second], x[n.first], d2);
+        const double s =
+          project(x[free[k].first], x[free[k].second], x[n.first], d2);
+        // (inside it within a thousandth of its length, as findDefects)
+        if(near.count(k) &&
+           (s <= 1e-3 || s >= 1. - 1e-3 ||
+            d2 >= 1e-6 * distance2(x[free[k].first], x[free[k].second])))
+          return;
         best = std::min(best, d2);
       });
       const double sure = (r - 0.25) * median;

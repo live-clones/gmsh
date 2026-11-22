@@ -1342,7 +1342,11 @@ SBoundingBox3d GModel::bounds(bool aroundVisible)
   std::size_t numNodes = 0;
   for(std::size_t i = 0; i < entities.size(); i++) {
     if(aroundVisible && !entities[i]->getVisibility()) continue;
-    if(entities[i]->getNativeType() == GEntity::OpenCascadeModel)
+    // (the geometry of the entities of OpenCASCADE and of the discrete CAD
+    // modeler, not only their vertices before they are meshed: the default
+    // mesh size is a tenth of this box)
+    if(entities[i]->getNativeType() == GEntity::OpenCascadeModel ||
+       entities[i]->getNativeType() == GEntity::DiscreteCADModel)
       bb += entities[i]->bounds();
     else if(entities[i]->dim() == 0)
       bb += static_cast<GVertex *>(entities[i])->xyz();

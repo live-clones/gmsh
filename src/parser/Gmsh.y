@@ -2470,6 +2470,12 @@ Transform :
         r = GModel::current()->getOCCInternals()->translate
           (dimTags, $2[0], $2[1], $2[2]);
       }
+#if defined(HAVE_DISCRETECAD)
+      else if(gmsh_yyfactory == "Discrete" &&
+              GModel::current()->getDiscreteCADInternals()){
+        r = GModel::current()->getDiscreteCADInternals()->translate(dimTags, $2[0], $2[1], $2[2]);
+      }
+#endif
       else{
         r = GModel::current()->getGEOInternals()->translate
           (dimTags, $2[0], $2[1], $2[2]);
@@ -2486,6 +2492,13 @@ Transform :
         r = GModel::current()->getOCCInternals()->rotate
           (dimTags, $5[0], $5[1], $5[2], $3[0], $3[1], $3[2], $7);
       }
+#if defined(HAVE_DISCRETECAD)
+      else if(gmsh_yyfactory == "Discrete" &&
+              GModel::current()->getDiscreteCADInternals()){
+        r = GModel::current()->getDiscreteCADInternals()->rotate
+          (dimTags, $5[0], $5[1], $5[2], $3[0], $3[1], $3[2], $7);
+      }
+#endif
       else{
         r = GModel::current()->getGEOInternals()->rotate
           (dimTags, $5[0], $5[1], $5[2], $3[0], $3[1], $3[2], $7);
@@ -2502,6 +2515,13 @@ Transform :
         r = GModel::current()->getOCCInternals()->symmetry
           (dimTags, $2[0], $2[1], $2[2], $2[3]);
       }
+#if defined(HAVE_DISCRETECAD)
+      else if(gmsh_yyfactory == "Discrete" &&
+              GModel::current()->getDiscreteCADInternals()){
+        r = GModel::current()->getDiscreteCADInternals()->symmetry
+          (dimTags, $2[0], $2[1], $2[2], $2[3]);
+      }
+#endif
       else{
         r = GModel::current()->getGEOInternals()->symmetry
           (dimTags, $2[0], $2[1], $2[2], $2[3]);
@@ -2518,6 +2538,13 @@ Transform :
         r = GModel::current()->getOCCInternals()->dilate
           (dimTags, $3[0], $3[1], $3[2], $5, $5, $5);
       }
+#if defined(HAVE_DISCRETECAD)
+      else if(gmsh_yyfactory == "Discrete" &&
+              GModel::current()->getDiscreteCADInternals()){
+        r = GModel::current()->getDiscreteCADInternals()->dilate
+          (dimTags, $3[0], $3[1], $3[2], $5, $5, $5);
+      }
+#endif
       else{
         r = GModel::current()->getGEOInternals()->dilate
           (dimTags, $3[0], $3[1], $3[2], $5, $5, $5);
@@ -2534,6 +2561,13 @@ Transform :
         r = GModel::current()->getOCCInternals()->dilate
           (dimTags, $3[0], $3[1], $3[2], $5[0], $5[1], $5[2]);
       }
+#if defined(HAVE_DISCRETECAD)
+      else if(gmsh_yyfactory == "Discrete" &&
+              GModel::current()->getDiscreteCADInternals()){
+        r = GModel::current()->getDiscreteCADInternals()->dilate
+          (dimTags, $3[0], $3[1], $3[2], $5[0], $5[1], $5[2]);
+      }
+#endif
       else{
         r = GModel::current()->getGEOInternals()->dilate
           (dimTags, $3[0], $3[1], $3[2], $5[0], $5[1], $5[2]);
@@ -2551,8 +2585,18 @@ Transform :
         ListOfDouble2Vector($3, mat);
         r = GModel::current()->getOCCInternals()->affine(dimTags, mat);
       }
+#if defined(HAVE_DISCRETECAD)
+      else if(gmsh_yyfactory == "Discrete" &&
+              GModel::current()->getDiscreteCADInternals()){
+        std::vector<double> mat;
+        ListOfDouble2Vector($3, mat);
+        r = GModel::current()->getDiscreteCADInternals()->affineTransform
+          (dimTags, mat);
+      }
+#endif
       else{
-        yymsg(0, "Affine transform only available with OpenCASCADE geometry kernel");
+        yymsg(0, "Affine transform only available with OpenCASCADE and Discrete "
+              "geometry kernels");
       }
       if(!r) yymsg(0, "Could not transform shapes");
       List_Delete($3);
@@ -2596,6 +2640,13 @@ Transform :
         if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
           r = GModel::current()->getOCCInternals()->copy(inDimTags, outDimTags);
         }
+#if defined(HAVE_DISCRETECAD)
+        else if(gmsh_yyfactory == "Discrete" &&
+                GModel::current()->getDiscreteCADInternals()){
+          r = GModel::current()->getDiscreteCADInternals()->copy
+            (inDimTags, outDimTags);
+        }
+#endif
         else{
           r = GModel::current()->getGEOInternals()->copy(inDimTags, outDimTags);
         }
@@ -2842,6 +2893,14 @@ Delete :
         if(changed)
           GModel::current()->getOCCInternals()->synchronize(GModel::current());
       }
+#if defined(HAVE_DISCRETECAD)
+      else if(gmsh_yyfactory == "Discrete" &&
+              GModel::current()->getDiscreteCADInternals()){
+        GModel::current()->getDiscreteCADInternals()->remove(dimTags);
+        changed = GModel::current()->getDiscreteCADInternals()->getChanged();
+        if(changed) GModel::current()->synchronizeDiscreteCADInternals();
+      }
+#endif
       else{
         GModel::current()->getGEOInternals()->remove(dimTags);
         changed = GModel::current()->getGEOInternals()->getChanged();
@@ -2867,6 +2926,14 @@ Delete :
         if(changed)
           GModel::current()->getOCCInternals()->synchronize(GModel::current());
       }
+#if defined(HAVE_DISCRETECAD)
+      else if(gmsh_yyfactory == "Discrete" &&
+              GModel::current()->getDiscreteCADInternals()){
+        GModel::current()->getDiscreteCADInternals()->remove(dimTags, true);
+        changed = GModel::current()->getDiscreteCADInternals()->getChanged();
+        if(changed) GModel::current()->synchronizeDiscreteCADInternals();
+      }
+#endif
       else{
         GModel::current()->getGEOInternals()->remove(dimTags, true);
         changed = GModel::current()->getGEOInternals()->getChanged();
@@ -4100,9 +4167,12 @@ Boolean :
         std::vector<std::vector<std::pair<int, int > > > outMap;
         ListOfShapes2VectorOfPairs($3, object);
         ListOfShapes2VectorOfPairs($7, tool);
-        if($1 > OCC_Internals::Difference)
-          yymsg(0, "Only BooleanUnion, BooleanIntersection and BooleanDifference "
-                "available with the Discrete geometry kernel");
+        if($1 == OCC_Internals::Fragments)
+          r = GModel::current()->getDiscreteCADInternals()->booleanFragments
+            (object, tool, out, outMap, -1, $4, $8);
+        else if($1 > OCC_Internals::Difference)
+          yymsg(0, "BooleanSection not available with the Discrete geometry "
+                "kernel");
         else
           r = GModel::current()->getDiscreteCADInternals()->booleanOperation
             ($1, object, tool, out, outMap, -1, $4, $8);
@@ -4198,9 +4268,12 @@ BooleanShape :
         std::vector<std::vector<std::pair<int, int > > > outMap;
         ListOfShapes2VectorOfPairs($7, object);
         ListOfShapes2VectorOfPairs($11, tool);
-        if($1 > OCC_Internals::Difference)
-          yymsg(0, "Only BooleanUnion, BooleanIntersection and BooleanDifference "
-                "available with the Discrete geometry kernel");
+        if($1 == OCC_Internals::Fragments)
+          r = GModel::current()->getDiscreteCADInternals()->booleanFragments
+            (object, tool, out, outMap, (int)$3, $8, $12);
+        else if($1 > OCC_Internals::Difference)
+          yymsg(0, "BooleanSection not available with the Discrete geometry "
+                "kernel");
         else
           r = GModel::current()->getDiscreteCADInternals()->booleanOperation
             ($1, object, tool, out, outMap, (int)$3, $8, $12);

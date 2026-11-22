@@ -275,6 +275,22 @@ module gmsh
         gmshModelDiscreteIntersect
     procedure, nopass :: cut => &
         gmshModelDiscreteCut
+    procedure, nopass :: fragment => &
+        gmshModelDiscreteFragment
+    procedure, nopass :: translate => &
+        gmshModelDiscreteTranslate
+    procedure, nopass :: rotate => &
+        gmshModelDiscreteRotate
+    procedure, nopass :: dilate => &
+        gmshModelDiscreteDilate
+    procedure, nopass :: mirror => &
+        gmshModelDiscreteMirror
+    procedure, nopass :: affineTransform => &
+        gmshModelDiscreteAffineTransform
+    procedure, nopass :: copy => &
+        gmshModelDiscreteCopy
+    procedure, nopass :: remove => &
+        gmshModelDiscreteRemove
     procedure, nopass :: fillet => &
         gmshModelDiscreteFillet
     procedure, nopass :: importShapes => &
@@ -14857,15 +14873,18 @@ module gmsh
                                 ierr_=ierr)
   end function gmshModelDiscreteAddTorus
 
-  !> Compute the boolean union (the fusion) of the volumes `objectDimTags' and
-  !! `toolDimTags' (vectors of (dim, tag) pairs) in the discrete CAD
-  !! representation, exactly on their triangulations. The surfaces of the result
-  !! keep the parameters of those they come from. Return the resulting volumes
-  !! in `outDimTags', and the correspondance between input and resulting
-  !! entities in `outDimTagsMap'. If `tag' is positive, try to set the tag
-  !! explicitly (only valid if the boolean operation results in a single
-  !! entity). Remove the object if `removeObject' is set. Remove the tool if
-  !! `removeTool' is set.
+  !> Compute the boolean union (the fusion) of the volumes or surfaces
+  !! `objectDimTags' and `toolDimTags' (vectors of (dim, tag) pairs, each one of
+  !! volumes only or of surfaces only) in the discrete CAD representation,
+  !! exactly on their triangulations. A surface has no inside: the union of a
+  !! volume and a surface is the volume and the part of the surface outside it,
+  !! that of two surfaces both of them, cut along their intersection. The
+  !! surfaces of the result keep the parameters of those they come from. Return
+  !! the resulting volumes, and surfaces in no volume, in `outDimTags', and the
+  !! correspondance between input and resulting entities in `outDimTagsMap'. If
+  !! `tag' is positive, try to set the tag explicitly (only valid if the boolean
+  !! operation results in a single entity). Remove the object if `removeObject'
+  !! is set. Remove the tool if `removeTool' is set.
   subroutine gmshModelDiscreteFuse(objectDimTags, &
                                    toolDimTags, &
                                    outDimTags, &
@@ -14941,15 +14960,18 @@ module gmsh
       outDimTagsMap_n)
   end subroutine gmshModelDiscreteFuse
 
-  !> Compute the boolean intersection (the common parts) of the volumes
-  !! `objectDimTags' and `toolDimTags' (vectors of (dim, tag) pairs) in the
-  !! discrete CAD representation, exactly on their triangulations. The surfaces
-  !! of the result keep the parameters of those they come from. Return the
-  !! resulting volumes in `outDimTags', and the correspondance between input and
-  !! resulting entities in `outDimTagsMap'. If `tag' is positive, try to set the
-  !! tag explicitly (only valid if the boolean operation results in a single
-  !! entity). Remove the object if `removeObject' is set. Remove the tool if
-  !! `removeTool' is set.
+  !> Compute the boolean intersection (the common parts) of the volumes or
+  !! surfaces `objectDimTags' and `toolDimTags' (vectors of (dim, tag) pairs,
+  !! each one of volumes only or of surfaces only) in the discrete CAD
+  !! representation, exactly on their triangulations. A surface has no inside:
+  !! the intersection of a volume and a surface is the part of the surface
+  !! inside the volume. The surfaces of the result keep the parameters of those
+  !! they come from. Return the resulting volumes, and surfaces in no volume, in
+  !! `outDimTags', and the correspondance between input and resulting entities
+  !! in `outDimTagsMap'. If `tag' is positive, try to set the tag explicitly
+  !! (only valid if the boolean operation results in a single entity). Remove
+  !! the object if `removeObject' is set. Remove the tool if `removeTool' is
+  !! set.
   subroutine gmshModelDiscreteIntersect(objectDimTags, &
                                         toolDimTags, &
                                         outDimTags, &
@@ -15025,15 +15047,19 @@ module gmsh
       outDimTagsMap_n)
   end subroutine gmshModelDiscreteIntersect
 
-  !> Compute the boolean difference between the volumes `objectDimTags' and
-  !! `toolDimTags' (vectors of (dim, tag) pairs) in the discrete CAD
-  !! representation, exactly on their triangulations. The surfaces of the result
-  !! keep the parameters of those they come from. Return the resulting volumes
-  !! in `outDimTags', and the correspondance between input and resulting
-  !! entities in `outDimTagsMap'. If `tag' is positive, try to set the tag
-  !! explicitly (only valid if the boolean operation results in a single
-  !! entity). Remove the object if `removeObject' is set. Remove the tool if
-  !! `removeTool' is set.
+  !> Compute the boolean difference between the volumes or surfaces
+  !! `objectDimTags' and `toolDimTags' (vectors of (dim, tag) pairs, each one of
+  !! volumes only or of surfaces only) in the discrete CAD representation,
+  !! exactly on their triangulations. A surface has no inside: a volume minus a
+  !! surface is the volume cut by the part of the surface inside it (split into
+  !! the volumes on its two sides where it goes across, the part embedded in the
+  !! volume otherwise), a surface minus a volume the part of the surface outside
+  !! it. The surfaces of the result keep the parameters of those they come from.
+  !! Return the resulting volumes, and surfaces in no volume, in `outDimTags',
+  !! and the correspondance between input and resulting entities in
+  !! `outDimTagsMap'. If `tag' is positive, try to set the tag explicitly (only
+  !! valid if the boolean operation results in a single entity). Remove the
+  !! object if `removeObject' is set. Remove the tool if `removeTool' is set.
   subroutine gmshModelDiscreteCut(objectDimTags, &
                                   toolDimTags, &
                                   outDimTags, &
@@ -15109,6 +15135,395 @@ module gmsh
       outDimTagsMap_n)
   end subroutine gmshModelDiscreteCut
 
+  !> Compute the boolean fragments (general fuse) of the volumes and surfaces
+  !! `objectDimTags' and `toolDimTags' (vectors of (dim, tag) pairs) in the
+  !! discrete CAD representation, exactly on their triangulations: the pieces of
+  !! space inside at least one of the volumes, split by all their surfaces, the
+  !! volumes in contact sharing the surfaces between them (conformal
+  !! interfaces); the surfaces given cut by the volumes and by each other, their
+  !! parts inside a volume splitting it where they go across it, embedded in it
+  !! otherwise. The surfaces of the result keep the parameters of those they
+  !! come from. Return the resulting volumes, and surfaces in no volume, in
+  !! `outDimTags', and the correspondance between input and resulting entities
+  !! in `outDimTagsMap'. If `tag' is positive, try to set the tag explicitly
+  !! (only valid if the boolean operation results in a single entity). Remove
+  !! the object if `removeObject' is set. Remove the tool if `removeTool' is
+  !! set.
+  subroutine gmshModelDiscreteFragment(objectDimTags, &
+                                       toolDimTags, &
+                                       outDimTags, &
+                                       outDimTagsMap, &
+                                       outDimTagsMap_n, &
+                                       tag, &
+                                       removeObject, &
+                                       removeTool, &
+                                       ierr)
+    interface
+    subroutine C_API(api_objectDimTags_, &
+                     api_objectDimTags_n_, &
+                     api_toolDimTags_, &
+                     api_toolDimTags_n_, &
+                     api_outDimTags_, &
+                     api_outDimTags_n_, &
+                     api_outDimTagsMap_, &
+                     api_outDimTagsMap_n_, &
+                     api_outDimTagsMap_nn_, &
+                     tag, &
+                     removeObject, &
+                     removeTool, &
+                     ierr_) &
+      bind(C, name="gmshModelDiscreteFragment")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), dimension(*) :: api_objectDimTags_
+      integer(c_size_t), value, intent(in) :: api_objectDimTags_n_
+      integer(c_int), dimension(*) :: api_toolDimTags_
+      integer(c_size_t), value, intent(in) :: api_toolDimTags_n_
+      type(c_ptr), intent(out) :: api_outDimTags_
+      integer(c_size_t), intent(out) :: api_outDimTags_n_
+      type(c_ptr), intent(out) :: api_outDimTagsMap_
+      type(c_ptr), intent(out) :: api_outDimTagsMap_n_
+      integer(c_size_t) :: api_outDimTagsMap_nn_
+      integer(c_int), value, intent(in) :: tag
+      integer(c_int), value, intent(in) :: removeObject
+      integer(c_int), value, intent(in) :: removeTool
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer(c_int), dimension(:,:), intent(in) :: objectDimTags
+    integer(c_int), dimension(:,:), intent(in) :: toolDimTags
+    integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
+    integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTagsMap
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: outDimTagsMap_n
+    integer, intent(in), optional :: tag
+    logical, intent(in), optional :: removeObject
+    logical, intent(in), optional :: removeTool
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_outDimTags_
+    integer(c_size_t) :: api_outDimTags_n_
+    type(c_ptr) :: api_outDimTagsMap_, api_outDimTagsMap_n_
+    integer(c_size_t) :: api_outDimTagsMap_nn_
+    call C_API(api_objectDimTags_=objectDimTags, &
+         api_objectDimTags_n_=size_gmsh_pair(objectDimTags), &
+         api_toolDimTags_=toolDimTags, &
+         api_toolDimTags_n_=size_gmsh_pair(toolDimTags), &
+         api_outDimTags_=api_outDimTags_, &
+         api_outDimTags_n_=api_outDimTags_n_, &
+         api_outDimTagsMap_=api_outDimTagsMap_, &
+         api_outDimTagsMap_n_=api_outDimTagsMap_n_, &
+         api_outDimTagsMap_nn_=api_outDimTagsMap_nn_, &
+         tag=optval_c_int(-1, tag), &
+         removeObject=optval_c_bool(.true., removeObject), &
+         removeTool=optval_c_bool(.true., removeTool), &
+         ierr_=ierr)
+    outDimTags = ovectorpair_(api_outDimTags_, &
+      api_outDimTags_n_)
+    call ovectorvectorpair_(api_outDimTagsMap_, &
+      api_outDimTagsMap_n_, &
+      api_outDimTagsMap_nn_, &
+      outDimTagsMap, &
+      outDimTagsMap_n)
+  end subroutine gmshModelDiscreteFragment
+
+  !> Translate the entities `dimTags' (given as a vector of (dim, tag) pairs) in
+  !! the discrete CAD representation along (`dx', `dy', `dz'). The entities on
+  !! their boundaries used by other entities are copied, and the copies
+  !! translated.
+  subroutine gmshModelDiscreteTranslate(dimTags, &
+                                        dx, &
+                                        dy, &
+                                        dz, &
+                                        ierr)
+    interface
+    subroutine C_API(api_dimTags_, &
+                     api_dimTags_n_, &
+                     dx, &
+                     dy, &
+                     dz, &
+                     ierr_) &
+      bind(C, name="gmshModelDiscreteTranslate")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), dimension(*) :: api_dimTags_
+      integer(c_size_t), value, intent(in) :: api_dimTags_n_
+      real(c_double), value, intent(in) :: dx
+      real(c_double), value, intent(in) :: dy
+      real(c_double), value, intent(in) :: dz
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer(c_int), dimension(:,:), intent(in) :: dimTags
+    real(c_double), intent(in) :: dx
+    real(c_double), intent(in) :: dy
+    real(c_double), intent(in) :: dz
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(api_dimTags_=dimTags, &
+         api_dimTags_n_=size_gmsh_pair(dimTags), &
+         dx=real(dx, c_double), &
+         dy=real(dy, c_double), &
+         dz=real(dz, c_double), &
+         ierr_=ierr)
+  end subroutine gmshModelDiscreteTranslate
+
+  !> Rotate the entities `dimTags' (given as a vector of (dim, tag) pairs) in
+  !! the discrete CAD representation by `angle' radians around the axis of
+  !! revolution defined by the point (`x', `y', `z') and the direction (`ax',
+  !! `ay', `az'). The entities on their boundaries used by other entities are
+  !! copied, and the copies rotated.
+  subroutine gmshModelDiscreteRotate(dimTags, &
+                                     x, &
+                                     y, &
+                                     z, &
+                                     ax, &
+                                     ay, &
+                                     az, &
+                                     angle, &
+                                     ierr)
+    interface
+    subroutine C_API(api_dimTags_, &
+                     api_dimTags_n_, &
+                     x, &
+                     y, &
+                     z, &
+                     ax, &
+                     ay, &
+                     az, &
+                     angle, &
+                     ierr_) &
+      bind(C, name="gmshModelDiscreteRotate")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), dimension(*) :: api_dimTags_
+      integer(c_size_t), value, intent(in) :: api_dimTags_n_
+      real(c_double), value, intent(in) :: x
+      real(c_double), value, intent(in) :: y
+      real(c_double), value, intent(in) :: z
+      real(c_double), value, intent(in) :: ax
+      real(c_double), value, intent(in) :: ay
+      real(c_double), value, intent(in) :: az
+      real(c_double), value, intent(in) :: angle
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer(c_int), dimension(:,:), intent(in) :: dimTags
+    real(c_double), intent(in) :: x
+    real(c_double), intent(in) :: y
+    real(c_double), intent(in) :: z
+    real(c_double), intent(in) :: ax
+    real(c_double), intent(in) :: ay
+    real(c_double), intent(in) :: az
+    real(c_double), intent(in) :: angle
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(api_dimTags_=dimTags, &
+         api_dimTags_n_=size_gmsh_pair(dimTags), &
+         x=real(x, c_double), &
+         y=real(y, c_double), &
+         z=real(z, c_double), &
+         ax=real(ax, c_double), &
+         ay=real(ay, c_double), &
+         az=real(az, c_double), &
+         angle=real(angle, c_double), &
+         ierr_=ierr)
+  end subroutine gmshModelDiscreteRotate
+
+  !> Scale the entities `dimTags' (given as a vector of (dim, tag) pairs) in the
+  !! discrete CAD representation by factors `a', `b' and `c' along the three
+  !! coordinate axes; use (`x', `y', `z') as the center of the homothetic
+  !! transformation. The analytic surfaces stay exact if the factors are equal
+  !! (in absolute value), and become their triangulations otherwise. The
+  !! entities on their boundaries used by other entities are copied, and the
+  !! copies scaled.
+  subroutine gmshModelDiscreteDilate(dimTags, &
+                                     x, &
+                                     y, &
+                                     z, &
+                                     a, &
+                                     b, &
+                                     c, &
+                                     ierr)
+    interface
+    subroutine C_API(api_dimTags_, &
+                     api_dimTags_n_, &
+                     x, &
+                     y, &
+                     z, &
+                     a, &
+                     b, &
+                     c, &
+                     ierr_) &
+      bind(C, name="gmshModelDiscreteDilate")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), dimension(*) :: api_dimTags_
+      integer(c_size_t), value, intent(in) :: api_dimTags_n_
+      real(c_double), value, intent(in) :: x
+      real(c_double), value, intent(in) :: y
+      real(c_double), value, intent(in) :: z
+      real(c_double), value, intent(in) :: a
+      real(c_double), value, intent(in) :: b
+      real(c_double), value, intent(in) :: c
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer(c_int), dimension(:,:), intent(in) :: dimTags
+    real(c_double), intent(in) :: x
+    real(c_double), intent(in) :: y
+    real(c_double), intent(in) :: z
+    real(c_double), intent(in) :: a
+    real(c_double), intent(in) :: b
+    real(c_double), intent(in) :: c
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(api_dimTags_=dimTags, &
+         api_dimTags_n_=size_gmsh_pair(dimTags), &
+         x=real(x, c_double), &
+         y=real(y, c_double), &
+         z=real(z, c_double), &
+         a=real(a, c_double), &
+         b=real(b, c_double), &
+         c=real(c, c_double), &
+         ierr_=ierr)
+  end subroutine gmshModelDiscreteDilate
+
+  !> Mirror the entities `dimTags' (given as a vector of (dim, tag) pairs) in
+  !! the discrete CAD representation, with respect to the plane of equation `a'
+  !! * x + `b' * y + `c' * z + `d' = 0. The entities on their boundaries used by
+  !! other entities are copied, and the copies mirrored.
+  subroutine gmshModelDiscreteMirror(dimTags, &
+                                     a, &
+                                     b, &
+                                     c, &
+                                     d, &
+                                     ierr)
+    interface
+    subroutine C_API(api_dimTags_, &
+                     api_dimTags_n_, &
+                     a, &
+                     b, &
+                     c, &
+                     d, &
+                     ierr_) &
+      bind(C, name="gmshModelDiscreteMirror")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), dimension(*) :: api_dimTags_
+      integer(c_size_t), value, intent(in) :: api_dimTags_n_
+      real(c_double), value, intent(in) :: a
+      real(c_double), value, intent(in) :: b
+      real(c_double), value, intent(in) :: c
+      real(c_double), value, intent(in) :: d
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer(c_int), dimension(:,:), intent(in) :: dimTags
+    real(c_double), intent(in) :: a
+    real(c_double), intent(in) :: b
+    real(c_double), intent(in) :: c
+    real(c_double), intent(in) :: d
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(api_dimTags_=dimTags, &
+         api_dimTags_n_=size_gmsh_pair(dimTags), &
+         a=real(a, c_double), &
+         b=real(b, c_double), &
+         c=real(c, c_double), &
+         d=real(d, c_double), &
+         ierr_=ierr)
+  end subroutine gmshModelDiscreteMirror
+
+  !> Apply a general affine transformation matrix `affineTransform' (16 entries
+  !! of a 4x4 matrix, by row; only the 12 first can be provided for convenience)
+  !! to the entities `dimTags' (given as a vector of (dim, tag) pairs) in the
+  !! discrete CAD representation. The analytic surfaces stay exact under
+  !! similarities (rigid motions, symmetries and uniform scalings), and become
+  !! their triangulations under the other transformations. The entities on their
+  !! boundaries used by other entities are copied, and the copies transformed.
+  subroutine gmshModelDiscreteAffineTransform(dimTags, &
+                                              affineTransform, &
+                                              ierr)
+    interface
+    subroutine C_API(api_dimTags_, &
+                     api_dimTags_n_, &
+                     api_affineTransform_, &
+                     api_affineTransform_n_, &
+                     ierr_) &
+      bind(C, name="gmshModelDiscreteAffineTransform")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), dimension(*) :: api_dimTags_
+      integer(c_size_t), value, intent(in) :: api_dimTags_n_
+      real(c_double), dimension(*) :: api_affineTransform_
+      integer(c_size_t), value, intent(in) :: api_affineTransform_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer(c_int), dimension(:,:), intent(in) :: dimTags
+    real(c_double), dimension(:), intent(in) :: affineTransform
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(api_dimTags_=dimTags, &
+         api_dimTags_n_=size_gmsh_pair(dimTags), &
+         api_affineTransform_=affineTransform, &
+         api_affineTransform_n_=size_gmsh_double(affineTransform), &
+         ierr_=ierr)
+  end subroutine gmshModelDiscreteAffineTransform
+
+  !> Copy the entities `dimTags' (given as a vector of (dim, tag) pairs) in the
+  !! discrete CAD representation, with the entities on their boundaries; the new
+  !! entities are returned in `outDimTags'.
+  subroutine gmshModelDiscreteCopy(dimTags, &
+                                   outDimTags, &
+                                   ierr)
+    interface
+    subroutine C_API(api_dimTags_, &
+                     api_dimTags_n_, &
+                     api_outDimTags_, &
+                     api_outDimTags_n_, &
+                     ierr_) &
+      bind(C, name="gmshModelDiscreteCopy")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), dimension(*) :: api_dimTags_
+      integer(c_size_t), value, intent(in) :: api_dimTags_n_
+      type(c_ptr), intent(out) :: api_outDimTags_
+      integer(c_size_t), intent(out) :: api_outDimTags_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer(c_int), dimension(:,:), intent(in) :: dimTags
+    integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_outDimTags_
+    integer(c_size_t) :: api_outDimTags_n_
+    call C_API(api_dimTags_=dimTags, &
+         api_dimTags_n_=size_gmsh_pair(dimTags), &
+         api_outDimTags_=api_outDimTags_, &
+         api_outDimTags_n_=api_outDimTags_n_, &
+         ierr_=ierr)
+    outDimTags = ovectorpair_(api_outDimTags_, &
+      api_outDimTags_n_)
+  end subroutine gmshModelDiscreteCopy
+
+  !> Remove the entities `dimTags' (given as a vector of (dim, tag) pairs) in
+  !! the discrete CAD representation, provided that they are not on the boundary
+  !! of higher-dimensional entities. If `recursive' is true, remove all the
+  !! entities on their boundaries not used by other entities, down to dimension
+  !! 0.
+  subroutine gmshModelDiscreteRemove(dimTags, &
+                                     recursive, &
+                                     ierr)
+    interface
+    subroutine C_API(api_dimTags_, &
+                     api_dimTags_n_, &
+                     recursive, &
+                     ierr_) &
+      bind(C, name="gmshModelDiscreteRemove")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), dimension(*) :: api_dimTags_
+      integer(c_size_t), value, intent(in) :: api_dimTags_n_
+      integer(c_int), value, intent(in) :: recursive
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer(c_int), dimension(:,:), intent(in) :: dimTags
+    logical, intent(in), optional :: recursive
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(api_dimTags_=dimTags, &
+         api_dimTags_n_=size_gmsh_pair(dimTags), &
+         recursive=optval_c_bool(.false., recursive), &
+         ierr_=ierr)
+  end subroutine gmshModelDiscreteRemove
+
   !> Fillet the volumes `volumeTags' on the curves `curveTags' with radii
   !! `radii' in the discrete CAD representation. The `radii' vector can either
   !! contain a single radius or as many radii as `curveTags'. The curves
@@ -15174,30 +15589,34 @@ module gmsh
   end subroutine gmshModelDiscreteFillet
 
   !> Import the triangulations of the surfaces of the mesh file `fileName' (STL,
-  !! MSH, OBJ, PLY, OFF, VTK or MESH format) in the discrete CAD representation,
-  !! and build their topology: the surfaces are the triangles of the same
-  !! surface of the file connected across edges shared by two triangles whose
-  !! normals make an angle smaller than `angle' (in radians), the curves are
-  !! along the edges between two surfaces, the boundary edges (of one triangle),
-  !! the non-manifold edges (of more than two triangles), but not the sharp
-  !! edges inside a surface, split where more or less than two of them meet and,
-  !! if `curveAngle' is less than Pi, where they turn by more than `curveAngle',
-  !! and the volumes are the cells of space bounded by the surfaces (the cells
-  !! of a connected piece of the triangulation inside a cell of another one are
-  !! volumes if its triangles point out of them, holes if they point into them,
-  !! as STL normals point out of solids). Each surface is oriented outwards of a
-  !! volume whose outer boundary it is on, if any (the included volume for the
-  !! boundary of an inclusion). The surfaces whose nodes are at most `tolerance'
-  !! away from a plane, a sphere, a cylinder, a cone or a torus
-  !! (`Geometry.DiscreteTolerance' times the size of the triangulation if
-  !! `tolerance' is not positive) are recognized as such and get the parameters
-  !! of the corresponding primitives (with a seam, or split in two halves, where
-  !! needed); the others are split into their pieces on such surfaces up to the
-  !! precision of the coordinates of their nodes (for a part whose faces meet
-  !! tangentially), the rest parametrized as they are, cut open into a disk
-  !! along seams (curves on both sides of which is the same surface) if they are
-  !! not one. Return the volumes and the surfaces bounding no volume in
-  !! `outDimTags'.
+  !! MSH, OBJ, PLY, OFF, VTK or MESH format), or of the faces of the boundary
+  !! representation `fileName' (BREP, STEP or IGES format, triangulated by
+  !! OpenCASCADE within `Mesh.StlLinearDeflection' and
+  !! `Mesh.StlAngularDeflection'), in the discrete CAD representation, and build
+  !! their topology: the surfaces are the triangles of the same surface of the
+  !! file connected across edges shared by two triangles whose normals make an
+  !! angle smaller than `angle' (in radians), the curves are along the edges
+  !! between two surfaces, the boundary edges (of one triangle), the non-
+  !! manifold edges (of more than two triangles) and the sharp edges inside a
+  !! surface (its embedded curves, but for the chains shorter than
+  !! `Geometry.DiscreteCreaseLength'), split where more or less than two of them
+  !! meet and, if `curveAngle' is less than Pi, where they turn by more than
+  !! `curveAngle', and the volumes are the cells of space bounded by the
+  !! surfaces (the cells of a connected piece of the triangulation inside a cell
+  !! of another one are volumes if its triangles point out of them, holes if
+  !! they point into them, as STL normals point out of solids). Each surface is
+  !! oriented outwards of a volume whose outer boundary it is on, if any (the
+  !! included volume for the boundary of an inclusion). The surfaces whose nodes
+  !! are at most `tolerance' away from a plane, a sphere, a cylinder, a cone or
+  !! a torus (`Geometry.DiscreteTolerance' times the size of the triangulation
+  !! if `tolerance' is not positive) are recognized as such and get the
+  !! parameters of the corresponding primitives (with a seam, or split in two
+  !! halves, where needed); the others are split into their pieces on such
+  !! surfaces up to the precision of the coordinates of their nodes (for a part
+  !! whose faces meet tangentially), the rest parametrized as they are, cut open
+  !! into a disk along seams (curves on both sides of which is the same surface)
+  !! if they are not one. Return the volumes and the surfaces bounding no volume
+  !! in `outDimTags'.
   subroutine gmshModelDiscreteImportShapes(fileName, &
                                            angle, &
                                            outDimTags, &
@@ -15243,11 +15662,13 @@ module gmsh
   end subroutine gmshModelDiscreteImportShapes
 
   !> Import the triangulations of the surfaces of the mesh file `fileName' (STL,
-  !! MSH, OBJ, PLY, OFF, VTK or MESH format) in the discrete CAD representation
-  !! as they are read, the first step of `importShapes': a raw surface for each
-  !! surface of the file, without curves (the nodes at the same coordinates
-  !! merged), to be healed with `heal' and replaced by its topology with
-  !! `classify'. Return the surfaces in `outDimTags'.
+  !! MSH, OBJ, PLY, OFF, VTK or MESH format), or of the faces of the boundary
+  !! representation `fileName' (BREP, STEP or IGES format, triangulated by
+  !! OpenCASCADE), in the discrete CAD representation as they are read, the
+  !! first step of `importShapes': a raw surface for each surface of the file,
+  !! without curves (the nodes at the same coordinates merged), to be healed
+  !! with `heal' and replaced by its topology with `classify'. Return the
+  !! surfaces in `outDimTags'.
   subroutine gmshModelDiscreteImportTriangulations(fileName, &
                                                    outDimTags, &
                                                    ierr)
@@ -15318,9 +15739,11 @@ module gmsh
   !! their faces, as `importShapes' finds them before recognizing analytic
   !! surfaces, each raw surface a surface of the file: the triangles connected
   !! across edges shared by two triangles whose normals make an angle smaller
-  !! than `angle' (in radians), with their curves, split where they turn by more
-  !! than `curveAngle', and the volumes they bound, each face parametrized as it
-  !! is (cut open into a disk along seams if it is not one). These classified
+  !! than `angle' (in radians), with their curves (the sharp edges inside a
+  !! surface its embedded curves, but for the chains shorter than
+  !! `Geometry.DiscreteCreaseLength'), split where they turn by more than
+  !! `curveAngle', and the volumes they bound, each face parametrized as it is
+  !! (cut open into a disk along seams if it is not one). These classified
   !! surfaces are to be recognized with `recognize'. Return the volumes and the
   !! surfaces bounding no volume in `outDimTags'.
   subroutine gmshModelDiscreteClassify(surfaceTags, &

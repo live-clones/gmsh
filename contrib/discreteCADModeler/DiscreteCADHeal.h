@@ -86,6 +86,36 @@ void componentKinds(const std::vector<std::array<double, 3> > &x,
                     const std::vector<std::array<int, 3> > &triangles,
                     const std::vector<int> &component, std::vector<char> &kind);
 
+// The triangles of a soup oriented outwards (see orientTriangles) that bound
+// no volume and are outside all of them: the winding number of all the
+// triangles about 0 just behind and just in front of them (a hundred
+// thousandth of their size away), where they lie on other triangles the
+// other way (a sheet folded on itself, a triangle on a face). Those without
+// area (no side to them) never. The volumes overlapping or touching others
+// (the winding number 2 behind, 1 in front) are kept as they are: the parts
+// of the fragments of the volumes. The winding numbers behind and in front
+// of each triangle in behind and front (NaN for those without area).
+void boundingNothing(const std::vector<std::array<double, 3> > &x,
+                     const std::vector<std::array<int, 3> > &triangles,
+                     std::vector<char> &nothing,
+                     std::vector<double> *behind = nullptr,
+                     std::vector<double> *front = nullptr);
+
+// The holes of a piece of a soup of triangles oriented outwards closed: each
+// loop of its free edges (of one triangle; a loop through a node twice split
+// there) triangulated without new nodes, as Barequet and Sharir (1995) and
+// Liepa (2003), the triangulation of least area with none of its edges an
+// edge of the triangles already (the loops of up to maxDynamic nodes; the
+// longer ones by ears of least area, cut one by one), oriented as the
+// triangles around it. The triangles added, and for each one the triangle of
+// the piece along the first free edge of its loop; the number of loops
+// closed, and of loops left (free edges not making loops).
+void fillHoles(const std::vector<std::array<double, 3> > &x,
+               const std::vector<std::array<int, 3> > &triangles,
+               std::vector<std::array<int, 3> > &added,
+               std::vector<std::size_t> &beside, int &closed, int &left,
+               std::size_t maxDynamic = 400);
+
 // The cracks of a soup of triangles zipped, as a filtration: the events from
 // the closest, each one made at its level (its distance, or the level of the
 // event that made it possible if that is larger), the zipping within a

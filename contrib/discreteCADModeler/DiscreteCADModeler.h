@@ -69,9 +69,12 @@ public:
     bool classified = false;
     double angle = 0., curveAngle = 0.;
   };
-  // a closed shell of surfaces, a negative tag for a surface used reversed
+  // a closed shell of surfaces, a negative tag for a surface used reversed,
+  // and the surfaces inside it (the volume on their two sides: a surface of
+  // a boolean operation with a surface inside a volume, not splitting it)
   struct Volume {
     std::vector<int> surfaces;
+    std::vector<int> embeddedSurfaces;
   };
   // what a step of the import of triangulations did: a few lines, and the
   // things it found or changed, to be shown (points, lines or triangles, by
@@ -177,6 +180,35 @@ private:
   // remove a volume, and its surfaces, curves and vertices that no other
   // entity uses
   void _removeVolume(int tag);
+  // the surfaces of an operand of a boolean operation: those of a volume
+  // (not those inside it), or a surface (open, it has no inside); false if
+  // it is neither
+  bool _operandSurfaces(const std::pair<int, int> &dimTag,
+                        std::vector<int> &surfaces) const;
+  // remove an operand of a boolean operation: a volume (see _removeVolume),
+  // or a surface that no volume uses, with its curves and vertices that no
+  // other entity uses
+  void _removeOperand(const std::pair<int, int> &dimTag);
+  // the surfaces, curves and vertices of the triangles of a boolean operation
+  // (on the nodes of the modeler), triangle i in the triangle fromTriangle[i]
+  // of the surface fromSurface[i] of an operand: the parameters of their
+  // corners interpolated in it, the triangles from the same surface connected
+  // (those from a surface of alias, its keys, taken as from the surface it
+  // gives), their creases along the embedded curves of their surfaces, the
+  // exact geometry of their surfaces; the surface of each triangle in
+  // surfaceOf
+  void _addBooleanTopology(const std::vector<std::array<int, 3> > &triangles,
+                           const std::vector<int> &fromSurface,
+                           const std::vector<std::size_t> &fromTriangle,
+                           const std::map<int, int> *alias,
+                           std::vector<int> &surfaceOf);
+  // the entities dimTags with their boundaries, by dimension, in entities,
+  // with copies on new nodes of those that other entities use (of all of
+  // them if all) in their place: the copy of each such entity in copyOf; the
+  // nodes they use, used by no other entity, in nodes
+  bool _detach(const std::vector<std::pair<int, int> > &dimTags, bool all,
+               std::set<int> entities[4], std::map<int, int> copyOf[4],
+               std::set<int> &nodes);
   // remove the curves and vertices that no surface uses
   void _removeUnused();
   std::vector<std::array<int, 3> > _fillEllipse(const Frame &f, double rx,
@@ -205,10 +237,12 @@ private:
   // inside a cell are volumes if its triangles point out of it, holes if they
   // point into it, and the shell around the piece bounds the cell. For each
   // volume its shells of signed surfaces (negative for a surface oriented
-  // inwards), the outer one first.
+  // inwards), the outer one first; in embedded, if given, the surfaces with
+  // the volume on their two sides (ignored otherwise, with a warning).
   std::vector<std::vector<std::vector<int> > >
   _cells(const std::vector<std::array<int, 3> > &triangles,
-         const std::vector<int> &surfaceOf) const;
+         const std::vector<int> &surfaceOf,
+         std::vector<std::vector<int> > *embedded = nullptr) const;
   // the triangles of a triangulation (3 coordinates per node, 3 node indices
   // from 0 per triangle) on the nodes of the modeler, those at the same
   // coordinates merged, and the piece of each one (0 if pieces is empty)
@@ -313,6 +347,46 @@ public:
     std::vector<std::vector<std::pair<int, int> > > &outDimTagsMap, int tag,
     bool removeObject, bool removeTool, double merge = 1.e-12,
     const std::map<int, int> *alias = nullptr);
+  // the boolean fragments of the volumes objectDimTags and toolDimTags, all
+  // of them split by each other: the pieces of space inside at least one of
+  // them, between their surfaces, the volumes in contact sharing the surfaces
+  // between them, in outDimTags (the first one with the tag tag if positive,
+  // the others with the tag of the only removed volume they are in, if it is
+  // free), and those in each input volume in outDimTagsMap (see
+  // booleanOperation)
+  bool booleanFragments(
+    const std::vector<std::pair<int, int> > &objectDimTags,
+    const std::vector<std::pair<int, int> > &toolDimTags,
+    std::vector<std::pair<int, int> > &outDimTags,
+    std::vector<std::vector<std::pair<int, int> > > &outDimTagsMap, int tag,
+    bool removeObject, bool removeTool, double merge = 1.e-12);
+  // the entities dimTags, with their boundaries, transformed by the affine
+  // map x -> A x + b, matrix the rows of [A b] (12 values, or 16 for a 4x4
+  // matrix whose last row is ignored); the entities of their boundaries that
+  // other entities use are copied, the copies transformed. The analytic
+  // surfaces stay exact under the similarities (rigid motions, symmetries,
+  // uniform dilations), and become their triangulations under the other maps
+  bool affineTransform(const std::vector<std::pair<int, int> > &dimTags,
+                       const std::vector<double> &matrix);
+  bool translate(const std::vector<std::pair<int, int> > &dimTags, double dx,
+                 double dy, double dz);
+  // the rotation of angle around the axis (ax, ay, az) through (x, y, z)
+  bool rotate(const std::vector<std::pair<int, int> > &dimTags, double x,
+              double y, double z, double ax, double ay, double az,
+              double angle);
+  // the dilation of factors a, b, c along x, y, z from (x, y, z)
+  bool dilate(const std::vector<std::pair<int, int> > &dimTags, double x,
+              double y, double z, double a, double b, double c);
+  // the symmetry with respect to the plane a x + b y + c z + d = 0
+  bool symmetry(const std::vector<std::pair<int, int> > &dimTags, double a,
+                double b, double c, double d);
+  // copies of the entities dimTags, with their boundaries, in outDimTags
+  bool copy(const std::vector<std::pair<int, int> > &dimTags,
+            std::vector<std::pair<int, int> > &outDimTags);
+  // remove the entities dimTags (not those that entities left use), and, if
+  // recursive, the entities of their boundaries that no other entity uses
+  void remove(const std::vector<std::pair<int, int> > &dimTags,
+              bool recursive = false);
   // the volumes volumeTags filleted along the curves curveTags (and the
   // curves continuing them tangentially) with the radii (one, or one for each
   // curve): the ball of radius r rolling on the two surfaces of each curve

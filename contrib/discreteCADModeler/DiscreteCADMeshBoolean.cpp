@@ -304,6 +304,10 @@ namespace {
     std::vector<double> _x;
     std::vector<int> _tri;
     int _nvA, _ntA, _nv, _nt;
+    // the operation (3: the co-refinement), the open operands (with free
+    // edges: no inside)
+    int _op = 0;
+    bool _open[2] = {false, false};
     // the edges: their vertices (the smallest first), their triangles (2, or
     // more along the edges where the solids of an operand touch)
     std::vector<std::array<int, 2> > _edges;
@@ -812,7 +816,9 @@ namespace {
       _tri = triA;
       for(int v : triB) _tri.push_back(v + _nvA);
       // the edges, each operand closed and oriented (the triangles along an
-      // edge in both directions, as many: 2, or more where its solids touch)
+      // edge in both directions, as many: 2, or more where its solids touch),
+      // or open (its free edges of one triangle); anything for the
+      // co-refinement
       std::vector<std::array<int, 4> > half(3 * _nt);
       for(int t = 0; t < _nt; t++)
         for(int k = 0; k < 3; k++) {
@@ -829,9 +835,14 @@ namespace {
         int forward = 0;
         for(std::size_t h = i; h < j; h++)
           if(_tri[3 * half[h][2] + half[h][3]] == half[h][0]) forward++;
-        if(2 * forward != (int)(j - i)) {
-          error = "an operand is not a closed oriented triangulation";
-          return false;
+        if(_op != 3 && 2 * forward != (int)(j - i)) {
+          if(j - i != 1) {
+            error = "an operand is not a closed oriented triangulation, nor "
+                    "an open one";
+            return false;
+          }
+          // (the edges of an operand are its own: its vertices)
+          _open[half[i][2] < _ntA ? 0 : 1] = true;
         }
         const int e = (int)_edges.size();
         _edges.push_back({half[i][0], half[i][1]});
@@ -1526,11 +1537,24 @@ namespace {
     }
 
     // the classification of the final triangles of the operand o: their
-    // states
+    // states (4: on the triangles of the other operand, left out: an open
+    // operand on a closed one, B on A in the co-refinement)
     bool _classify(int o, std::vector<int> &inside)
     {
       std::vector<Final> &F = _final[o];
       const int n = (int)F.size();
+      // (the other operand without inside: open, or anything in the
+      // co-refinement; the triangles of a closed operand, those of A in the
+      // co-refinement, all outside it)
+      const bool noInside = _op == 3 || _open[1 - o];
+      if(noInside && (_op == 3 ? o == 0 : !_open[o])) {
+        inside.assign(n, -1);
+        return true;
+      }
+      auto adjusted = [&](int s) {
+        if(s == 2 || s == 3) return (_op == 3 || (!noInside && _open[o])) ? 4 : s;
+        return noInside ? 0 : s;
+      };
       std::vector<int> parent(n);
       for(int i = 0; i < n; i++) parent[i] = i;
       std::function<int(int)> find = [&](int i) {
@@ -1554,11 +1578,12 @@ namespace {
           e[1]++;
           if(F[i].along[k] >= 0) e[2] = 1;
         }
-      for(auto &e : edgeOf)
-        if(e.second[1] % 2) {
-          error = "the result is not closed";
-          return false;
-        }
+      if(!_open[o] && _op != 3)
+        for(auto &e : edgeOf)
+          if(e.second[1] % 2) {
+            error = "the result is not closed";
+            return false;
+          }
       for(int i = 0; i < n; i++)
         for(int k = 0; k < 3; k++) {
           const std::array<int, 3> &e = edgeOf[key(i, k)];
@@ -1569,7 +1594,7 @@ namespace {
         for(int k = 0; k < 3; k++) {
           if(F[i].along[k] < 0) continue;
           const int r = find(i);
-          const int s = _state(F[i], k);
+          const int s = adjusted(_state(F[i], k));
           if(!s) continue;
           auto it = patch.find(r);
           if(it == patch.end())
@@ -1583,6 +1608,7 @@ namespace {
       for(int i = 0; i < n; i++) {
         const int r = find(i);
         auto it = patch.find(r);
+        if(it == patch.end() && noInside) it = patch.emplace(r, -1).first;
         if(it == patch.end()) {
           // a patch not crossed: by rays from one of its input vertices not
           // on the other operand
@@ -1619,6 +1645,7 @@ namespace {
       std::vector<double> all = xyzA;
       all.insert(all.end(), xyzB.begin(), xyzB.end());
       const double delta = _collapseLength(all);
+      _op = op;
       const std::vector<int> keptA = _collapse(xA, tA, delta);
       const std::vector<int> keptB = _collapse(xB, tB, delta);
       if(!_setup(xA, tA, xB, tB)) return false;
@@ -1637,7 +1664,11 @@ namespace {
           const int state = inside[o][i];
           const bool in = state == 1;
           bool keep, flip = false;
-          if(state == 2) // on the other one, oriented the same way: A once
+          if(state == 4) // on the other one, which carries it
+            keep = false;
+          else if(op == 3) // the co-refinement: all of them
+            keep = true;
+          else if(state == 2) // on the other one, oriented the same way: A once
             keep = o == 0 && op != 2;
           else if(state == 3) // oriented the opposite way
             keep = o == 0 && op == 2;

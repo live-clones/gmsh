@@ -1077,6 +1077,11 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "CurveWidth" , opt_geometry_curve_width , 2. ,
     "Display width of lines (in pixels)" },
 
+  { F|O, "DiscreteCreaseLength" , opt_geometry_discrete_crease_length, 0. ,
+    "Minimum length of the chains of sharp edges inside a surface (creases that "
+    "separate nothing, e.g. the crest of a thread fading out at both ends) kept "
+    "as its embedded curves by the classification of the discrete CAD modeler: "
+    "the shorter ones, e.g. the spikes of a scan, are left out" },
   { F|O, "DiscreteTolerance" , opt_geometry_discrete_tolerance, 1.e-3 ,
     "Maximum distance between the triangulations of the discrete CAD modeler "
     "and the exact surfaces, relative to the size of the primitive, when no "

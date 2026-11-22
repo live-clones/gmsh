@@ -4738,6 +4738,146 @@ GMSH_API void gmshModelDiscreteCut(const int * objectDimTags, const size_t objec
   }
 }
 
+GMSH_API void gmshModelDiscreteFragment(const int * objectDimTags, const size_t objectDimTags_n, const int * toolDimTags, const size_t toolDimTags_n, int ** outDimTags, size_t * outDimTags_n, int *** outDimTagsMap, size_t ** outDimTagsMap_n, size_t *outDimTagsMap_nn, const int tag, const int removeObject, const int removeTool, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_objectDimTags_(objectDimTags_n/2);
+    for(size_t i = 0; i < objectDimTags_n/2; ++i){
+      api_objectDimTags_[i].first = objectDimTags[i * 2 + 0];
+      api_objectDimTags_[i].second = objectDimTags[i * 2 + 1];
+    }
+    gmsh::vectorpair api_toolDimTags_(toolDimTags_n/2);
+    for(size_t i = 0; i < toolDimTags_n/2; ++i){
+      api_toolDimTags_[i].first = toolDimTags[i * 2 + 0];
+      api_toolDimTags_[i].second = toolDimTags[i * 2 + 1];
+    }
+    gmsh::vectorpair api_outDimTags_;
+    std::vector<gmsh::vectorpair >api_outDimTagsMap_;
+    gmsh::model::discrete::fragment(api_objectDimTags_, api_toolDimTags_, api_outDimTags_, api_outDimTagsMap_, tag, removeObject, removeTool);
+    vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
+    vectorvectorpair2intptrptr(api_outDimTagsMap_, outDimTagsMap, outDimTagsMap_n, outDimTagsMap_nn);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelDiscreteTranslate(const int * dimTags, const size_t dimTags_n, const double dx, const double dy, const double dz, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_dimTags_(dimTags_n/2);
+    for(size_t i = 0; i < dimTags_n/2; ++i){
+      api_dimTags_[i].first = dimTags[i * 2 + 0];
+      api_dimTags_[i].second = dimTags[i * 2 + 1];
+    }
+    gmsh::model::discrete::translate(api_dimTags_, dx, dy, dz);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelDiscreteRotate(const int * dimTags, const size_t dimTags_n, const double x, const double y, const double z, const double ax, const double ay, const double az, const double angle, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_dimTags_(dimTags_n/2);
+    for(size_t i = 0; i < dimTags_n/2; ++i){
+      api_dimTags_[i].first = dimTags[i * 2 + 0];
+      api_dimTags_[i].second = dimTags[i * 2 + 1];
+    }
+    gmsh::model::discrete::rotate(api_dimTags_, x, y, z, ax, ay, az, angle);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelDiscreteDilate(const int * dimTags, const size_t dimTags_n, const double x, const double y, const double z, const double a, const double b, const double c, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_dimTags_(dimTags_n/2);
+    for(size_t i = 0; i < dimTags_n/2; ++i){
+      api_dimTags_[i].first = dimTags[i * 2 + 0];
+      api_dimTags_[i].second = dimTags[i * 2 + 1];
+    }
+    gmsh::model::discrete::dilate(api_dimTags_, x, y, z, a, b, c);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelDiscreteMirror(const int * dimTags, const size_t dimTags_n, const double a, const double b, const double c, const double d, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_dimTags_(dimTags_n/2);
+    for(size_t i = 0; i < dimTags_n/2; ++i){
+      api_dimTags_[i].first = dimTags[i * 2 + 0];
+      api_dimTags_[i].second = dimTags[i * 2 + 1];
+    }
+    gmsh::model::discrete::mirror(api_dimTags_, a, b, c, d);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelDiscreteAffineTransform(const int * dimTags, const size_t dimTags_n, const double * affineTransform, const size_t affineTransform_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_dimTags_(dimTags_n/2);
+    for(size_t i = 0; i < dimTags_n/2; ++i){
+      api_dimTags_[i].first = dimTags[i * 2 + 0];
+      api_dimTags_[i].second = dimTags[i * 2 + 1];
+    }
+    std::vector<double> api_affineTransform_(affineTransform, affineTransform + affineTransform_n);
+    gmsh::model::discrete::affineTransform(api_dimTags_, api_affineTransform_);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelDiscreteCopy(const int * dimTags, const size_t dimTags_n, int ** outDimTags, size_t * outDimTags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_dimTags_(dimTags_n/2);
+    for(size_t i = 0; i < dimTags_n/2; ++i){
+      api_dimTags_[i].first = dimTags[i * 2 + 0];
+      api_dimTags_[i].second = dimTags[i * 2 + 1];
+    }
+    gmsh::vectorpair api_outDimTags_;
+    gmsh::model::discrete::copy(api_dimTags_, api_outDimTags_);
+    vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelDiscreteRemove(const int * dimTags, const size_t dimTags_n, const int recursive, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_dimTags_(dimTags_n/2);
+    for(size_t i = 0; i < dimTags_n/2; ++i){
+      api_dimTags_[i].first = dimTags[i * 2 + 0];
+      api_dimTags_[i].second = dimTags[i * 2 + 1];
+    }
+    gmsh::model::discrete::remove(api_dimTags_, recursive);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelDiscreteFillet(const int * volumeTags, const size_t volumeTags_n, const int * curveTags, const size_t curveTags_n, const double * radii, const size_t radii_n, int ** outDimTags, size_t * outDimTags_n, const int removeVolume, int * ierr)
 {
   if(ierr) *ierr = 0;

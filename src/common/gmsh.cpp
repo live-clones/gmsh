@@ -7736,6 +7736,110 @@ GMSH_API void gmsh::model::discrete::cut(
                    tag, removeObject, removeTool);
 }
 
+GMSH_API void gmsh::model::discrete::fragment(
+  const vectorpair &objectDimTags, const vectorpair &toolDimTags,
+  vectorpair &outDimTags, std::vector<vectorpair> &outDimTagsMap,
+  const int tag, const bool removeObject, const bool removeTool)
+{
+  if(!_checkInit()) return;
+  outDimTags.clear();
+  outDimTagsMap.clear();
+#if defined(HAVE_DISCRETECAD)
+  _discreteCAD()->booleanFragments(objectDimTags, toolDimTags, outDimTags,
+                                   outDimTagsMap, tag, removeObject,
+                                   removeTool);
+#else
+  Msg::Error("Discrete CAD modeler not available");
+#endif
+}
+
+GMSH_API void gmsh::model::discrete::translate(const vectorpair &dimTags,
+                                               const double dx,
+                                               const double dy,
+                                               const double dz)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_DISCRETECAD)
+  _discreteCAD()->translate(dimTags, dx, dy, dz);
+#else
+  Msg::Error("Discrete CAD modeler not available");
+#endif
+}
+
+GMSH_API void gmsh::model::discrete::rotate(const vectorpair &dimTags,
+                                            const double x, const double y,
+                                            const double z, const double ax,
+                                            const double ay, const double az,
+                                            const double angle)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_DISCRETECAD)
+  _discreteCAD()->rotate(dimTags, x, y, z, ax, ay, az, angle);
+#else
+  Msg::Error("Discrete CAD modeler not available");
+#endif
+}
+
+GMSH_API void gmsh::model::discrete::dilate(const vectorpair &dimTags,
+                                            const double x, const double y,
+                                            const double z, const double a,
+                                            const double b, const double c)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_DISCRETECAD)
+  _discreteCAD()->dilate(dimTags, x, y, z, a, b, c);
+#else
+  Msg::Error("Discrete CAD modeler not available");
+#endif
+}
+
+GMSH_API void gmsh::model::discrete::mirror(const vectorpair &dimTags,
+                                            const double a, const double b,
+                                            const double c, const double d)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_DISCRETECAD)
+  _discreteCAD()->symmetry(dimTags, a, b, c, d);
+#else
+  Msg::Error("Discrete CAD modeler not available");
+#endif
+}
+
+GMSH_API void
+gmsh::model::discrete::affineTransform(const vectorpair &dimTags,
+                                       const std::vector<double> &affineTransform)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_DISCRETECAD)
+  _discreteCAD()->affineTransform(dimTags, affineTransform);
+#else
+  Msg::Error("Discrete CAD modeler not available");
+#endif
+}
+
+GMSH_API void gmsh::model::discrete::copy(const vectorpair &dimTags,
+                                          vectorpair &outDimTags)
+{
+  if(!_checkInit()) return;
+  outDimTags.clear();
+#if defined(HAVE_DISCRETECAD)
+  _discreteCAD()->copy(dimTags, outDimTags);
+#else
+  Msg::Error("Discrete CAD modeler not available");
+#endif
+}
+
+GMSH_API void gmsh::model::discrete::remove(const vectorpair &dimTags,
+                                            const bool recursive)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_DISCRETECAD)
+  _discreteCAD()->remove(dimTags, recursive);
+#else
+  Msg::Error("Discrete CAD modeler not available");
+#endif
+}
+
 GMSH_API void gmsh::model::discrete::fillet(const std::vector<int> &volumeTags,
                                             const std::vector<int> &curveTags,
                                             const std::vector<double> &radii,
