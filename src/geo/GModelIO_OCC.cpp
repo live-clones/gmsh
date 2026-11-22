@@ -2097,6 +2097,17 @@ bool OCC_Internals::addDisk(int &tag, double xc, double yc, double zc,
   return true;
 }
 
+// the normal of a plane face, with its orientation
+static bool planeNormal(const TopoDS_Face &face, gp_Dir &normal)
+{
+  Handle(Geom_Plane) plane =
+    Handle(Geom_Plane)::DownCast(BRep_Tool::Surface(face));
+  if(plane.IsNull()) return false;
+  normal = plane->Axis().Direction();
+  if(face.Orientation() == TopAbs_REVERSED) normal.Reverse();
+  return true;
+}
+
 bool OCC_Internals::addPlaneSurface(int &tag, const std::vector<int> &wireTags)
 {
   if(tag >= 0 && _tagFace.IsBound(tag)) {
@@ -2126,10 +2137,23 @@ bool OCC_Internals::addPlaneSurface(int &tag, const std::vector<int> &wireTags)
 
   try {
     BRepBuilderAPI_MakeFace f(wires[0]);
+    // the curve loops of the holes can be oriented either way: a hole must be
+    // oriented opposite to the outer boundary, otherwise it adds its area to the
+    // face instead of removing it (and the face is wrong, e.g. in booleans). A
+    // face made from a single wire is oriented so that the wire bounds it: the
+    // normal of the face made from a hole tells which way the hole runs
+    gp_Dir outerNormal, holeNormal;
+    bool outerPlane = wires.size() > 1 && planeNormal(f.Face(), outerNormal);
     for(std::size_t i = 1; i < wires.size(); i++) {
       // holes
       TopoDS_Wire w = wires[i];
-      w.Orientation(TopAbs_REVERSED);
+      bool sameWay = true;
+      if(outerPlane) {
+        BRepBuilderAPI_MakeFace h(w, true);
+        if(h.IsDone() && planeNormal(h.Face(), holeNormal))
+          sameWay = (holeNormal.Dot(outerNormal) > 0);
+      }
+      if(sameWay) w.Orientation(TopAbs_REVERSED);
       f.Add(w);
     }
     f.Build();
