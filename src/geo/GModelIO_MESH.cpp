@@ -6,6 +6,7 @@
 // Contributor(s):
 //   Florian Blachère
 
+#include <sstream>
 #include <stdlib.h>
 #include <string.h>
 #include "GModel.h"
@@ -15,6 +16,7 @@
 #include "MQuadrangle.h"
 #include "MTetrahedron.h"
 #include "MHexahedron.h"
+#include "MPrism.h"
 #include "Context.h"
 
 static bool getMeshVertices(int num, int *indices, std::vector<MVertex *> &vec,
@@ -29,6 +31,28 @@ static bool getMeshVertices(int num, int *indices, std::vector<MVertex *> &vec,
       vertices.push_back(vec[indices[i]]);
   }
   return true;
+}
+
+// The node of a Gmsh 18-node prism at each position of a Medit PrismsP2 (as
+// given by the PrismsP2Ordering of libMeshb): corners, edges of the bottom and
+// of the top triangle, vertical edges, then quadrangular faces
+static const int meditPrism18[18] = {0,  1,  2,  3,  4,  5,  6,  9,  7,
+                                     12, 14, 13, 8,  10, 11, 15, 17, 16};
+
+// write an element in a section of a Medit file: its nodes at the positions
+// given by nodes (if not null), or its first numNodes nodes
+static void writeMeditElement(FILE *fp, MElement *e, const int *nodes,
+                              int numNodes, int elementTagType, int elementary,
+                              int physical)
+{
+  if(physical < 0) e->reverse();
+  for(int j = 0; j < numNodes; j++)
+    fprintf(fp, " %ld", e->getVertex(nodes ? nodes[j] : j)->getIndex());
+  fprintf(fp, " %d\n",
+          (elementTagType == 3) ? e->getPartition() :
+          (elementTagType == 2) ? abs(physical) :
+                                  elementary);
+  if(physical < 0) e->reverse();
 }
 
 int GModel::readMESH(const std::string &name)
@@ -55,7 +79,7 @@ int GModel::readMESH(const std::string &name)
   }
 
   std::vector<MVertex *> vertexVector;
-  std::map<int, std::vector<MElement *>> elements[5];
+  std::map<int, std::vector<MElement *>> elements[6];
 
   int Dimension = 3;
 
@@ -260,6 +284,26 @@ int GModel::readMESH(const std::string &name)
           elements[2][cl].push_back(new MQuadrangle(vertices));
         }
       }
+      else if(!strcmp(str, "QuadrilateralsQ2")) {
+        if(!fgets(buffer, sizeof(buffer), fp)) break;
+        int nbe;
+        sscanf(buffer, "%d", &nbe);
+        Msg::Info("%d quadrangles Q2", nbe);
+        for(int i = 0; i < nbe; i++) {
+          if(!fgets(buffer, sizeof(buffer), fp)) break;
+          // the nodes are ordered as in Gmsh (corners, edges, center)
+          int n[9], cl;
+          sscanf(buffer, "%d %d %d %d %d %d %d %d %d %d", &n[0], &n[1], &n[2],
+                 &n[3], &n[4], &n[5], &n[6], &n[7], &n[8], &cl);
+          for(int j = 0; j < 9; j++) n[j]--;
+          std::vector<MVertex *> vertices;
+          if(!getMeshVertices(9, n, vertexVector, vertices)) {
+            fclose(fp);
+            return 0;
+          }
+          elements[2][cl].push_back(new MQuadrangle9(vertices));
+        }
+      }
       else if(!strcmp(str, "Tetrahedra")) {
         if(!fgets(buffer, sizeof(buffer), fp)) break;
         int nbe;
@@ -365,6 +409,48 @@ int GModel::readMESH(const std::string &name)
           elements[4][cl].push_back(new MHexahedron(vertices));
         }
       }
+      else if(!strcmp(str, "Prisms")) {
+        if(!fgets(buffer, sizeof(buffer), fp)) break;
+        int nbe;
+        sscanf(buffer, "%d", &nbe);
+        Msg::Info("%d prisms", nbe);
+        for(int i = 0; i < nbe; i++) {
+          if(!fgets(buffer, sizeof(buffer), fp)) break;
+          int n[6], cl;
+          sscanf(buffer, "%d %d %d %d %d %d %d", &n[0], &n[1], &n[2], &n[3],
+                 &n[4], &n[5], &cl);
+          for(int j = 0; j < 6; j++) n[j]--;
+          std::vector<MVertex *> vertices;
+          if(!getMeshVertices(6, n, vertexVector, vertices)) {
+            fclose(fp);
+            return 0;
+          }
+          elements[5][cl].push_back(new MPrism(vertices));
+        }
+      }
+      else if(!strcmp(str, "PrismsP2")) {
+        if(!fgets(buffer, sizeof(buffer), fp)) break;
+        int nbe;
+        sscanf(buffer, "%d", &nbe);
+        Msg::Info("%d prisms P2", nbe);
+        for(int i = 0; i < nbe; i++) {
+          if(!fgets(buffer, sizeof(buffer), fp)) break;
+          std::istringstream line(buffer);
+          int n[18], cl = 0;
+          for(int j = 0; j < 18; j++) {
+            line >> n[j];
+            n[j]--;
+          }
+          line >> cl;
+          std::vector<MVertex *> medit, vertices(18);
+          if(!getMeshVertices(18, n, vertexVector, medit)) {
+            fclose(fp);
+            return 0;
+          }
+          for(int j = 0; j < 18; j++) vertices[meditPrism18[j]] = medit[j];
+          elements[5][cl].push_back(new MPrism18(vertices));
+        }
+      }
     }
   }
 
@@ -391,7 +477,7 @@ int GModel::writeMESH(const std::string &name, int elementTagType, bool saveAll,
   int numVertices = indexMeshVertices(saveAll);
 
   int numEdges = 0, numTriangles = 0, numQuadrangles = 0;
-  int numTetrahedra = 0, numHexahedra = 0;
+  int numTetrahedra = 0, numHexahedra = 0, numPrisms = 0;
   for(auto it = firstEdge(); it != lastEdge(); ++it) {
     if(saveAll || (*it)->physicals.size()) { numEdges += (*it)->lines.size(); }
   }
@@ -405,6 +491,7 @@ int GModel::writeMESH(const std::string &name, int elementTagType, bool saveAll,
     if(saveAll || (*it)->physicals.size()) {
       numTetrahedra += (*it)->tetrahedra.size();
       numHexahedra += (*it)->hexahedra.size();
+      numPrisms += (*it)->prisms.size();
     }
   }
 
@@ -412,7 +499,7 @@ int GModel::writeMESH(const std::string &name, int elementTagType, bool saveAll,
   // with 2 coordinates per node
   std::vector<GEntity *> entities;
   getEntities(entities);
-  bool planar = !numTetrahedra && !numHexahedra;
+  bool planar = !numTetrahedra && !numHexahedra && !numPrisms;
   for(std::size_t i = 0; planar && i < entities.size(); i++)
     for(auto v : entities[i]->mesh_vertices)
       if(v->getIndex() >= 0 && v->z() != 0.) planar = false;
@@ -464,7 +551,14 @@ int GModel::writeMESH(const std::string &name, int elementTagType, bool saveAll,
     }
   }
   if(numTriangles) {
-    int order = (*firstFace())->triangles[0]->getPolynomialOrder();
+    // (the first surfaces can have quadrangles only)
+    int order = 1;
+    for(auto it = firstFace(); it != lastFace(); ++it) {
+      if(!(*it)->triangles.empty()) {
+        order = (*it)->triangles[0]->getPolynomialOrder();
+        break;
+      }
+    }
     if(order == 4)
       fprintf(fp, " TrianglesP4\n");
     else if(order == 3)
@@ -488,19 +582,38 @@ int GModel::writeMESH(const std::string &name, int elementTagType, bool saveAll,
     }
   }
   if(numQuadrangles) {
-    fprintf(fp, " Quadrilaterals\n");
+    // 9-node quadrangles are saved as QuadrilateralsQ2 (nodes ordered as in
+    // Gmsh) if all the quadrangles have 9 nodes, other high-order quadrangles
+    // as linear ones
+    bool q2 = true, highOrder = false;
+    for(auto it = firstFace(); q2 && it != lastFace(); ++it)
+      for(auto q : (*it)->quadrangles)
+        if(q->getTypeForMSH() != MSH_QUA_9) q2 = false;
+    fprintf(fp, q2 ? " QuadrilateralsQ2\n" : " Quadrilaterals\n");
     fprintf(fp, " %d\n", numQuadrangles);
     for(auto it = firstFace(); it != lastFace(); ++it) {
       int numPhys = (*it)->physicals.size();
       if(saveAll || numPhys) {
-        for(std::size_t i = 0; i < (*it)->quadrangles.size(); i++)
-          (*it)->quadrangles[i]->writeMESH(fp, elementTagType, (*it)->tag(),
-                                           numPhys ? (*it)->physicals[0] : 0);
+        for(auto q : (*it)->quadrangles) {
+          writeMeditElement(fp, q, nullptr, q2 ? 9 : 4, elementTagType,
+                            (*it)->tag(), numPhys ? (*it)->physicals[0] : 0);
+          if(!q2 && q->getNumVertices() > 4) highOrder = true;
+        }
       }
     }
+    if(highOrder)
+      Msg::Warning("High-order quadrangles saved as linear quadrangles in "
+                   "Medit format");
   }
   if(numTetrahedra) {
-    int order = (*firstRegion())->tetrahedra[0]->getPolynomialOrder();
+    // (the first volumes can have no tetrahedra)
+    int order = 1;
+    for(auto it = firstRegion(); it != lastRegion(); ++it) {
+      if(!(*it)->tetrahedra.empty()) {
+        order = (*it)->tetrahedra[0]->getPolynomialOrder();
+        break;
+      }
+    }
     if(order == 4)
       fprintf(fp, " TetrahedraP4\n");
     else if(order == 3)
@@ -524,16 +637,48 @@ int GModel::writeMESH(const std::string &name, int elementTagType, bool saveAll,
     }
   }
   if(numHexahedra) {
+    // high-order hexahedra are saved as linear ones
     fprintf(fp, " Hexahedra\n");
     fprintf(fp, " %d\n", numHexahedra);
+    bool highOrder = false;
     for(auto it = firstRegion(); it != lastRegion(); ++it) {
       int numPhys = (*it)->physicals.size();
       if(saveAll || numPhys) {
-        for(std::size_t i = 0; i < (*it)->hexahedra.size(); i++)
-          (*it)->hexahedra[i]->writeMESH(fp, elementTagType, (*it)->tag(),
-                                         numPhys ? (*it)->physicals[0] : 0);
+        for(auto h : (*it)->hexahedra) {
+          writeMeditElement(fp, h, nullptr, 8, elementTagType, (*it)->tag(),
+                            numPhys ? (*it)->physicals[0] : 0);
+          if(h->getNumVertices() > 8) highOrder = true;
+        }
       }
     }
+    if(highOrder)
+      Msg::Warning("High-order hexahedra saved as linear hexahedra in Medit "
+                   "format");
+  }
+  if(numPrisms) {
+    // the corners of the prisms in Medit files are ordered as in Gmsh (bottom
+    // triangle, then top triangle); 18-node prisms are saved as PrismsP2 if
+    // all the prisms have 18 nodes, other high-order prisms as linear ones
+    bool p2 = true;
+    for(auto it = firstRegion(); p2 && it != lastRegion(); ++it)
+      for(auto p : (*it)->prisms)
+        if(p->getTypeForMSH() != MSH_PRI_18) p2 = false;
+    fprintf(fp, p2 ? " PrismsP2\n" : " Prisms\n");
+    fprintf(fp, " %d\n", numPrisms);
+    bool highOrder = false;
+    for(auto it = firstRegion(); it != lastRegion(); ++it) {
+      int numPhys = (*it)->physicals.size();
+      if(saveAll || numPhys) {
+        int physical = numPhys ? (*it)->physicals[0] : 0;
+        for(auto p : (*it)->prisms) {
+          writeMeditElement(fp, p, p2 ? meditPrism18 : nullptr, p2 ? 18 : 6,
+                            elementTagType, (*it)->tag(), physical);
+          if(!p2 && p->getNumVertices() > 6) highOrder = true;
+        }
+      }
+    }
+    if(highOrder)
+      Msg::Warning("High-order prisms saved as linear prisms in Medit format");
   }
 
   fprintf(fp, " End\n");
