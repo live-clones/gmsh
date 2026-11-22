@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <cmath>
 #include <limits>
+#include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "discreteEdge.h"
 #include "discreteFace.h"

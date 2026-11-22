@@ -10,6 +10,7 @@
 #include <string>
 #include <map>
 #include <utility>
+#include "GmshConfig.h"
 #include "Context.h"
 #include "GmshMessage.h"
 #include "GModel.h"

@@ -10,6 +10,7 @@
 #include <sstream>
 #include <cassert>
 #include <iomanip>
+#include "GmshConfig.h"
 #include "GModel.h"
 #include "OS.h"
 #include "GmshDefines.h"

@@ -4,6 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <vector>
+#include "GmshConfig.h"
 #include "Context.h"
 #include "GModel.h"
 #include "CGNSCommon.h"

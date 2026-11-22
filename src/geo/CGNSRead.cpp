@@ -7,6 +7,7 @@
 //   Thomas Toulorge
 
 #include <cstring>
+#include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GModel.h"
 #include "MVertex.h"

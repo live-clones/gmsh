@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include <math.h>
+#include "GmshConfig.h"
 #include "linearSystemMUMPS.h"
 
 #if defined(HAVE_MUMPS)

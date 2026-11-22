@@ -5,6 +5,7 @@
 //
 // Author: Maxence Reberol
 
+#include "GmshConfig.h"
 #include "qmtCrossField.h"
 
 /* System includes */

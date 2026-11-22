@@ -19,6 +19,7 @@
 // every p4est-specific data structure and every debug/scratch .pos file
 // writer that used to live alongside the algorithm.
 
+#include "GmshConfig.h"
 #include "OctreeSizeField.h"
 #include "GmshMessage.h"
 

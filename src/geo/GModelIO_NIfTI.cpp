@@ -7,6 +7,7 @@
 #include <string>
 #include <algorithm>
 #include <sstream>
+#include "GmshConfig.h"
 #include "GModel.h"
 #include "OS.h"
 #include "MLine.h"

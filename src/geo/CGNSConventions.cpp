@@ -10,6 +10,7 @@
 #include <vector>
 #include <set>
 #include <algorithm>
+#include "GmshConfig.h"
 #include "SVector3.h"
 #include "GmshDefines.h"
 #include "fullMatrix.h"

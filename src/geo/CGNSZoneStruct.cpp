@@ -6,6 +6,7 @@
 // Contributor(s):
 //   Thomas Toulorge
 
+#include "GmshConfig.h"
 #include "Context.h"
 #include "GmshMessage.h"
 #include "MVertex.h"

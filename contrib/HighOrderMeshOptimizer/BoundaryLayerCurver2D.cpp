@@ -24,6 +24,7 @@
 //
 // Contributors: Amaury Johnen
 
+#include "GmshConfig.h"
 #include "BoundaryLayerCurver.h"
 #include "MQuadrangle.h"
 #include "MTriangle.h"

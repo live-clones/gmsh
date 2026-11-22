@@ -5,6 +5,7 @@
 
 #include <set>
 #include <unordered_map>
+#include "GmshConfig.h"
 #include "ShowNeighborElements.h"
 #include "GModel.h"
 #include "MElement.h"

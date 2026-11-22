@@ -6,6 +6,7 @@
 #include <sstream>
 #include <iomanip>
 #include <ctime>
+#include "GmshConfig.h"
 #include "GModel.h"
 #include "OS.h"
 #include "Context.h"

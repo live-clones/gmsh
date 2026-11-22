@@ -13,6 +13,7 @@
 #pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
 
+#include "GmshConfig.h"
 #include "linearSystemEigen.h"
 
 #if defined(__GNUC__) && !defined(__clang__)

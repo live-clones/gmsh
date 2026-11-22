@@ -7,6 +7,7 @@
 #include <math.h>
 #include <sstream>
 #include <iomanip>
+#include "GmshConfig.h"
 #include "GModel.h"
 #include "Context.h"
 #include "CGNSCommon.h"

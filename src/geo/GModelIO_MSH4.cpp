@@ -27,6 +27,7 @@
 #include <functional>
 #include <memory>
 
+#include "GmshConfig.h"
 #include "GmshDefines.h"
 #include "OS.h"
 #include "Context.h"

@@ -5,6 +5,7 @@
 
 #include <set>
 #include <sstream>
+#include "GmshConfig.h"
 #include "GModel.h"
 #include "GRegion.h"
 #include "GFace.h"
