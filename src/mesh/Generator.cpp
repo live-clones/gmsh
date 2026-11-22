@@ -1527,19 +1527,30 @@ static void relocateSlaveVertices(GEdge *slave,
 static void relocateSlaveVertices(std::vector<GEntity *> &entities,
                                   bool useClosestPoint)
 {
-  std::multimap<GEntity *, GEntity *> master2slave;
+  // a master can be the slave of another entity (e.g. a corner curve of a
+  // domain periodic in two directions): relocate the slaves in the order of
+  // their depth in such chains, so that each one is relocated after its
+  // master, and not in the order of the masters in memory
+  std::vector<std::pair<int, GEntity *>> slaves;
   for(std::size_t i = 0; i < entities.size(); ++i) {
     if(entities[i]->dim() == 0) continue;
-    GEntity *master = entities[i]->getMeshMaster();
-    if(master != entities[i]) {
-      master2slave.insert(std::make_pair(master, entities[i]));
-    }
+    int depth = 0;
+    for(GEntity *e = entities[i]; e->getMeshMaster() != e && depth <= 100;
+        e = e->getMeshMaster())
+      depth++;
+    if(depth) slaves.push_back(std::make_pair(depth, entities[i]));
   }
+  std::stable_sort(
+    slaves.begin(), slaves.end(),
+    [](const std::pair<int, GEntity *> &a, const std::pair<int, GEntity *> &b) {
+      return a.first < b.first;
+    });
 
-  for(auto it = master2slave.begin(); it != master2slave.end(); ++it) {
-    if(it->first->dim() == 2) {
-      GFace *master = dynamic_cast<GFace *>(it->first);
-      GFace *slave = dynamic_cast<GFace *>(it->second);
+  for(auto &s : slaves) {
+    GEntity *slaveEntity = s.second, *masterEntity = s.second->getMeshMaster();
+    if(masterEntity->dim() == 2) {
+      GFace *master = dynamic_cast<GFace *>(masterEntity);
+      GFace *slave = dynamic_cast<GFace *>(slaveEntity);
       if(slave->affineTransform.size() < 16) continue;
       Msg::Info("Relocating nodes of slave surface %i using master %i%s",
                 slave->tag(), master->tag(),
@@ -1549,9 +1560,9 @@ static void relocateSlaveVertices(std::vector<GEntity *> &entities,
       relocateSlaveVertices(slave, slave->correspondingHighOrderVertices,
                             useClosestPoint);
     }
-    else if(it->first->dim() == 1) {
-      GEdge *master = dynamic_cast<GEdge *>(it->first);
-      GEdge *slave = dynamic_cast<GEdge *>(it->second);
+    else if(masterEntity->dim() == 1) {
+      GEdge *master = dynamic_cast<GEdge *>(masterEntity);
+      GEdge *slave = dynamic_cast<GEdge *>(slaveEntity);
       if(slave->affineTransform.size() < 16) continue;
       Msg::Info("Relocating nodes of slave curve %i using master %i%s",
                 slave->tag(), master->tag(),

@@ -44,9 +44,9 @@
 
 typedef std::vector<MElement *> elVec;
 typedef elVec::const_iterator elVecConstIter;
-typedef std::set<MElement *> elSet;
+typedef MElementSet elSet;
 typedef elSet::iterator elSetIter;
-typedef std::set<MVertex *> vertSet;
+typedef MVertexSet vertSet;
 typedef std::map<MElement *, GEntity *> elEntMap;
 typedef std::map<MElement *, MElement *> elElMap;
 

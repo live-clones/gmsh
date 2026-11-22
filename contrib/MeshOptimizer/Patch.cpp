@@ -39,8 +39,8 @@
 
 Patch::Patch(const std::map<MElement *, GEntity *> &element2entity,
              const std::map<MElement *, GEntity *> &bndEl2Ent,
-             const std::set<MElement *> &els, std::set<MVertex *> &toFix,
-             const std::set<MElement *> &bndEls, int fixBndNodes)
+             const MElementSet &els, MVertexSet &toFix,
+             const MElementSet &bndEls, int fixBndNodes)
   : _typeLengthScale(LS_NONE), _invLengthScaleSq(0.)
 {
   _dim = (*els.begin())->getDim();
@@ -187,7 +187,7 @@ int Patch::addVert(MVertex *vert)
 }
 
 int Patch::addFreeVert(MVertex *vert, const int iV, const int nPCV,
-                       VertexCoord *param, std::set<MVertex *> &toFix)
+                       VertexCoord *param, MVertexSet &toFix)
 {
   auto itVert = find(_freeVert.begin(), _freeVert.end(), vert);
   if(itVert == _freeVert.end()) {

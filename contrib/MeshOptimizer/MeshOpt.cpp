@@ -39,9 +39,8 @@
 
 MeshOpt::MeshOpt(const std::map<MElement *, GEntity *> &element2entity,
                  const std::map<MElement *, GEntity *> &bndEl2Ent,
-                 const std::set<MElement *> &els, std::set<MVertex *> &toFix,
-                 const std::set<MElement *> &bndEls,
-                 const MeshOptParameters &par)
+                 const MElementSet &els, MVertexSet &toFix,
+                 const MElementSet &bndEls, const MeshOptParameters &par)
   : patch(element2entity, bndEl2Ent, els, toFix, bndEls, par.fixBndNodes),
     _verbose(0), _nCurses(1), _iPass(0), _iter(0), _intervDisplay(0),
     _initObj(0)

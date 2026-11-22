@@ -204,11 +204,13 @@ static void addOneLayer(const std::vector<MElement *> &v,
     for(int j = 0; j < n; j++) { all.insert(e->getVertex(j)); }
   }
   layer.clear();
-  std::sort(d.begin(), d.end());
+  // by number, not by address: the elements are assembled in this order
+  std::sort(d.begin(), d.end(), MElementPtrLessThan());
 
   for(std::size_t i = 0; i < v.size(); i++) {
     MElement *e = v[i];
-    bool found = std::binary_search(d.begin(), d.end(), e);
+    bool found =
+      std::binary_search(d.begin(), d.end(), e, MElementPtrLessThan());
     // element is not yet there
     if(!found) {
       int n = e->getNumPrimaryVertices();

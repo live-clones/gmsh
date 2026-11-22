@@ -33,17 +33,22 @@
 #include "fullMatrix.h"
 #include "SPoint3.h"
 #include "VertexCoord.h"
+#include "MElement.h"
+#include "MVertex.h"
 
 class GEntity;
-class MVertex;
-class MElement;
+
+// elements and nodes ordered by number, not by address, so that the patches
+// and their optimization do not depend on where they are in memory
+typedef std::set<MElement *, MElementPtrLessThan> MElementSet;
+typedef std::set<MVertex *, MVertexPtrLessThan> MVertexSet;
 
 class Patch {
 public:
   Patch(const std::map<MElement *, GEntity *> &element2entity,
         const std::map<MElement *, GEntity *> &bndEl2Ent,
-        const std::set<MElement *> &els, std::set<MVertex *> &toFix,
-        const std::set<MElement *> &bndEls, int fixBndNodes);
+        const MElementSet &els, MVertexSet &toFix, const MElementSet &bndEls,
+        int fixBndNodes);
 
   // Mesh entities and variables
   inline const int &dim() { return _dim; }
@@ -142,7 +147,7 @@ private:
   std::vector<VertexCoord *> _coordFV; // Parametrization for a free vertex
   int addVert(MVertex *vert);
   int addFreeVert(MVertex *vert, const int iV, const int nPCV,
-                  VertexCoord *param, std::set<MVertex *> &toFix);
+                  VertexCoord *param, MVertexSet &toFix);
   static inline int indJB2DBase(int nNod, int l, int i, int j)
   {
     return (l * nNod + i) * nNod + j;

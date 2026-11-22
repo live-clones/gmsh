@@ -43,8 +43,8 @@ public:
   Patch patch;
   MeshOpt(const std::map<MElement *, GEntity *> &element2entity,
           const std::map<MElement *, GEntity *> &bndEl2Ent,
-          const std::set<MElement *> &els, std::set<MVertex *> &toFix,
-          const std::set<MElement *> &bndEls, const MeshOptParameters &par);
+          const MElementSet &els, MVertexSet &toFix, const MElementSet &bndEls,
+          const MeshOptParameters &par);
   ~MeshOpt();
   int optimize(const MeshOptParameters &par);
   void updateMesh(const std::vector<double> &x);
