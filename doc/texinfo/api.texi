@@ -619,7 +619,7 @@ Get the upward and downward adjacencies of the model entity of dimension @code{d
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L367,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L307,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L1153,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L912,Julia}, @url{@value{GITLAB-PREFIX}/api/gmsh.f90#L2001,Fortran}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/x1.cpp#L109,x1.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/x1.py#L93,x1.py}), Julia (@url{@value{GITLAB-PREFIX}/tutorials/julia/x1.jl#L94,x1.jl})
+C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/x1.cpp#L109,x1.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/x1.py#L93,x1.py}, @url{@value{GITLAB-PREFIX}/examples/api/defeature.py#L39,defeature.py}), Julia (@url{@value{GITLAB-PREFIX}/tutorials/julia/x1.jl#L94,x1.jl})
 @end table
 
 @item gmsh/model/isEntityOrphan
@@ -649,7 +649,7 @@ Get the model entities in the bounding box defined by the two points (@code{xmin
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L386,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L324,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L1212,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L969,Julia}, @url{@value{GITLAB-PREFIX}/api/gmsh.f90#L2078,Fortran}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t16.cpp#L134,t16.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t18.cpp#L86,t18.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t20.cpp#L105,t20.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t16.py#L114,t16.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t18.py#L80,t18.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t20.py#L86,t20.py}, @url{@value{GITLAB-PREFIX}/examples/api/merge_partitions.py#L29,merge_partitions.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_3d.py#L80,naca_boundary_layer_3d.py}), Julia (@url{@value{GITLAB-PREFIX}/tutorials/julia/t16.jl#L116,t16.jl}, @url{@value{GITLAB-PREFIX}/tutorials/julia/t18.jl#L77,t18.jl}, @url{@value{GITLAB-PREFIX}/tutorials/julia/t20.jl#L85,t20.jl}), Fortran (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t16.f90#L146,t16.f90}, @url{@value{GITLAB-PREFIX}/tutorials/fortran/t18.f90#L96,t18.f90}, @url{@value{GITLAB-PREFIX}/tutorials/fortran/t20.f90#L102,t20.f90})
+C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t16.cpp#L134,t16.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t18.cpp#L86,t18.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t20.cpp#L105,t20.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t16.py#L114,t16.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t18.py#L80,t18.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t20.py#L86,t20.py}, @url{@value{GITLAB-PREFIX}/examples/api/defeature.py#L30,defeature.py}, @url{@value{GITLAB-PREFIX}/examples/api/merge_partitions.py#L29,merge_partitions.py}, ...), Julia (@url{@value{GITLAB-PREFIX}/tutorials/julia/t16.jl#L116,t16.jl}, @url{@value{GITLAB-PREFIX}/tutorials/julia/t18.jl#L77,t18.jl}, @url{@value{GITLAB-PREFIX}/tutorials/julia/t20.jl#L85,t20.jl}), Fortran (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t16.f90#L146,t16.f90}, @url{@value{GITLAB-PREFIX}/tutorials/fortran/t18.f90#L96,t18.f90}, @url{@value{GITLAB-PREFIX}/tutorials/fortran/t20.f90#L102,t20.f90})
 @end table
 
 @item gmsh/model/getBoundingBox
@@ -665,7 +665,7 @@ Get the bounding box (@code{xmin}, @code{ymin}, @code{zmin}), (@code{xmax}, @cod
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L400,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L337,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L1251,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L1002,Julia}, @url{@value{GITLAB-PREFIX}/api/gmsh.f90#L2140,Fortran}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t18.cpp#L113,t18.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t18.py#L103,t18.py}, @url{@value{GITLAB-PREFIX}/examples/api/periodic_keys.py#L24,periodic_keys.py}), Julia (@url{@value{GITLAB-PREFIX}/tutorials/julia/t18.jl#L101,t18.jl}), Fortran (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t18.f90#L130,t18.f90})
+C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t18.cpp#L113,t18.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t18.py#L103,t18.py}, @url{@value{GITLAB-PREFIX}/examples/api/defeature.py#L40,defeature.py}, @url{@value{GITLAB-PREFIX}/examples/api/periodic_keys.py#L24,periodic_keys.py}), Julia (@url{@value{GITLAB-PREFIX}/tutorials/julia/t18.jl#L101,t18.jl}), Fortran (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t18.f90#L130,t18.f90})
 @end table
 
 @item gmsh/model/getDimension
@@ -743,7 +743,7 @@ Get the type of the entity of dimension @code{dim} and tag @code{tag}. (This is 
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L445,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L376,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L1397,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L1122,Julia}, @url{@value{GITLAB-PREFIX}/api/gmsh.f90#L2305,Fortran}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t21.cpp#L164,t21.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/x1.cpp#L94,x1.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t21.py#L147,t21.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/x1.py#L82,x1.py}, @url{@value{GITLAB-PREFIX}/examples/api/explore.py#L20,explore.py}, @url{@value{GITLAB-PREFIX}/examples/api/overlap.py#L116,overlap.py}, @url{@value{GITLAB-PREFIX}/examples/api/partition.py#L44,partition.py}), Julia (@url{@value{GITLAB-PREFIX}/tutorials/julia/t21.jl#L147,t21.jl}, @url{@value{GITLAB-PREFIX}/tutorials/julia/x1.jl#L81,x1.jl}, @url{@value{GITLAB-PREFIX}/examples/api/explore.jl#L26,explore.jl})
+C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t21.cpp#L164,t21.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/x1.cpp#L94,x1.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t21.py#L147,t21.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/x1.py#L82,x1.py}, @url{@value{GITLAB-PREFIX}/examples/api/defeature.py#L41,defeature.py}, @url{@value{GITLAB-PREFIX}/examples/api/explore.py#L20,explore.py}, @url{@value{GITLAB-PREFIX}/examples/api/overlap.py#L116,overlap.py}, ...), Julia (@url{@value{GITLAB-PREFIX}/tutorials/julia/t21.jl#L147,t21.jl}, @url{@value{GITLAB-PREFIX}/tutorials/julia/x1.jl#L81,x1.jl}, @url{@value{GITLAB-PREFIX}/examples/api/explore.jl#L26,explore.jl})
 @end table
 
 @item gmsh/model/getEntityProperties
@@ -4343,7 +4343,7 @@ integer
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L3283,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2934,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L8577,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L7580,Julia}, @url{@value{GITLAB-PREFIX}/api/gmsh.f90#L12185,Fortran}
 @item Examples:
-Python (@url{@value{GITLAB-PREFIX}/examples/api/boolean.py#L23,boolean.py}, @url{@value{GITLAB-PREFIX}/examples/api/cylinderFFD.py#L32,cylinderFFD.py}, @url{@value{GITLAB-PREFIX}/examples/api/gui.py#L24,gui.py}, @url{@value{GITLAB-PREFIX}/examples/api/preserve_numbering.py#L19,preserve_numbering.py}, @url{@value{GITLAB-PREFIX}/examples/api/tube_boundary_layer.py#L16,tube_boundary_layer.py}), Julia (@url{@value{GITLAB-PREFIX}/examples/api/gui.jl#L24,gui.jl})
+Python (@url{@value{GITLAB-PREFIX}/examples/api/boolean.py#L23,boolean.py}, @url{@value{GITLAB-PREFIX}/examples/api/cylinderFFD.py#L32,cylinderFFD.py}, @url{@value{GITLAB-PREFIX}/examples/api/defeature.py#L15,defeature.py}, @url{@value{GITLAB-PREFIX}/examples/api/gui.py#L24,gui.py}, @url{@value{GITLAB-PREFIX}/examples/api/preserve_numbering.py#L19,preserve_numbering.py}, ...), Julia (@url{@value{GITLAB-PREFIX}/examples/api/gui.jl#L24,gui.jl})
 @end table
 
 @item gmsh/model/occ/addCone
@@ -4514,6 +4514,8 @@ Defeature the volumes @code{volumeTags} by removing the surfaces @code{surfaceTa
 -
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L3483,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3123,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L9051,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L7963,Julia}, @url{@value{GITLAB-PREFIX}/api/gmsh.f90#L12935,Fortran}
+@item Examples:
+Python (@url{@value{GITLAB-PREFIX}/examples/api/defeature.py#L46,defeature.py})
 @end table
 
 @item gmsh/model/occ/fillet2D
@@ -4601,7 +4603,7 @@ Compute the boolean union (the fusion) of the entities @code{objectDimTags} and 
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L3566,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3200,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L9281,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L8165,Julia}, @url{@value{GITLAB-PREFIX}/api/gmsh.f90#L13268,Fortran}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/x5.cpp#L29,x5.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/x5.py#L24,x5.py}, @url{@value{GITLAB-PREFIX}/examples/api/boolean.py#L26,boolean.py}, @url{@value{GITLAB-PREFIX}/examples/api/gui.py#L27,gui.py}, @url{@value{GITLAB-PREFIX}/examples/api/preserve_numbering.py#L39,preserve_numbering.py}, @url{@value{GITLAB-PREFIX}/examples/api/tube_boundary_layer.py#L18,tube_boundary_layer.py}), Julia (@url{@value{GITLAB-PREFIX}/tutorials/julia/x5.jl#L22,x5.jl}, @url{@value{GITLAB-PREFIX}/examples/api/gui.jl#L27,gui.jl})
+C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/x5.cpp#L29,x5.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/x5.py#L24,x5.py}, @url{@value{GITLAB-PREFIX}/examples/api/boolean.py#L26,boolean.py}, @url{@value{GITLAB-PREFIX}/examples/api/defeature.py#L16,defeature.py}, @url{@value{GITLAB-PREFIX}/examples/api/gui.py#L27,gui.py}, @url{@value{GITLAB-PREFIX}/examples/api/preserve_numbering.py#L39,preserve_numbering.py}, ...), Julia (@url{@value{GITLAB-PREFIX}/tutorials/julia/x5.jl#L22,x5.jl}, @url{@value{GITLAB-PREFIX}/examples/api/gui.jl#L27,gui.jl})
 @end table
 
 @item gmsh/model/occ/intersect
@@ -4633,7 +4635,7 @@ Compute the boolean difference between the entities @code{objectDimTags} and @co
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L3601,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3233,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L9370,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L8265,Julia}, @url{@value{GITLAB-PREFIX}/api/gmsh.f90#L13433,Fortran}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t16.cpp#L41,t16.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t16.py#L32,t16.py}, @url{@value{GITLAB-PREFIX}/examples/api/boolean.py#L27,boolean.py}, @url{@value{GITLAB-PREFIX}/examples/api/extend_field.py#L7,extend_field.py}, @url{@value{GITLAB-PREFIX}/examples/api/gui.py#L28,gui.py}, @url{@value{GITLAB-PREFIX}/examples/api/preserve_numbering.py#L38,preserve_numbering.py}, ...), Julia (@url{@value{GITLAB-PREFIX}/tutorials/julia/t16.jl#L30,t16.jl}, @url{@value{GITLAB-PREFIX}/examples/api/gui.jl#L28,gui.jl}, @url{@value{GITLAB-PREFIX}/examples/api/spherical_surf.jl#L13,spherical_surf.jl}), Fortran (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t16.f90#L44,t16.f90})
+C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t16.cpp#L41,t16.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t16.py#L32,t16.py}, @url{@value{GITLAB-PREFIX}/examples/api/boolean.py#L27,boolean.py}, @url{@value{GITLAB-PREFIX}/examples/api/defeature.py#L19,defeature.py}, @url{@value{GITLAB-PREFIX}/examples/api/extend_field.py#L7,extend_field.py}, @url{@value{GITLAB-PREFIX}/examples/api/gui.py#L28,gui.py}, ...), Julia (@url{@value{GITLAB-PREFIX}/tutorials/julia/t16.jl#L30,t16.jl}, @url{@value{GITLAB-PREFIX}/examples/api/gui.jl#L28,gui.jl}, @url{@value{GITLAB-PREFIX}/examples/api/spherical_surf.jl#L13,spherical_surf.jl}), Fortran (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t16.f90#L44,t16.f90})
 @end table
 
 @item gmsh/model/occ/fragment
@@ -4665,7 +4667,7 @@ Translate the entities @code{dimTags} (given as a vector of (dim, tag) pairs) in
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L3634,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3264,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L9462,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L8358,Julia}, @url{@value{GITLAB-PREFIX}/api/gmsh.f90#L13596,Fortran}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t19.cpp#L47,t19.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t20.cpp#L72,t20.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t19.py#L44,t19.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t20.py#L60,t20.py}), Julia (@url{@value{GITLAB-PREFIX}/tutorials/julia/t19.jl#L41,t19.jl}, @url{@value{GITLAB-PREFIX}/tutorials/julia/t20.jl#L58,t20.jl}), Fortran (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t19.f90#L55,t19.f90}, @url{@value{GITLAB-PREFIX}/tutorials/fortran/t20.f90#L70,t20.f90})
+C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t19.cpp#L47,t19.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t20.cpp#L72,t20.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t19.py#L44,t19.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t20.py#L60,t20.py}, @url{@value{GITLAB-PREFIX}/examples/api/defeature.py#L24,defeature.py}), Julia (@url{@value{GITLAB-PREFIX}/tutorials/julia/t19.jl#L41,t19.jl}, @url{@value{GITLAB-PREFIX}/tutorials/julia/t20.jl#L58,t20.jl}), Fortran (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t19.f90#L55,t19.f90}, @url{@value{GITLAB-PREFIX}/tutorials/fortran/t20.f90#L70,t20.f90})
 @end table
 
 @item gmsh/model/occ/rotate
@@ -4753,7 +4755,7 @@ Copy the entities @code{dimTags} in the OpenCASCADE CAD representation; the new 
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L3704,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3328,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L9637,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L8511,Julia}, @url{@value{GITLAB-PREFIX}/api/gmsh.f90#L13865,Fortran}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t19.cpp#L46,t19.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t20.cpp#L77,t20.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t19.py#L43,t19.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t20.py#L64,t20.py}), Julia (@url{@value{GITLAB-PREFIX}/tutorials/julia/t19.jl#L40,t19.jl}, @url{@value{GITLAB-PREFIX}/tutorials/julia/t20.jl#L62,t20.jl}), Fortran (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t19.f90#L54,t19.f90}, @url{@value{GITLAB-PREFIX}/tutorials/fortran/t20.f90#L74,t20.f90})
+C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t19.cpp#L46,t19.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t20.cpp#L77,t20.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t19.py#L43,t19.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t20.py#L64,t20.py}, @url{@value{GITLAB-PREFIX}/examples/api/defeature.py#L23,defeature.py}), Julia (@url{@value{GITLAB-PREFIX}/tutorials/julia/t19.jl#L40,t19.jl}, @url{@value{GITLAB-PREFIX}/tutorials/julia/t20.jl#L62,t20.jl}), Fortran (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t19.f90#L54,t19.f90}, @url{@value{GITLAB-PREFIX}/tutorials/fortran/t20.f90#L74,t20.f90})
 @end table
 
 @item gmsh/model/occ/remove

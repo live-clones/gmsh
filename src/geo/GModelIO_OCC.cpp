@@ -855,6 +855,20 @@ static const TopAbs_ShapeEnum boundTypes[6] = {TopAbs_SOLID, TopAbs_SHELL,
                                                TopAbs_EDGE,  TopAbs_VERTEX};
 static const int boundDims[6] = {3, -2, 2, -1, 1, 0};
 
+// The final replacement of a shape in a healing context (a null shape if it
+// was removed)
+static TopoDS_Shape healedValue(const Handle(ShapeBuild_ReShape) & context,
+                                const TopoDS_Shape &shape)
+{
+  TopoDS_Shape s = shape;
+  for(int i = 0; i < 100; i++) {
+    TopoDS_Shape n = context->Value(s);
+    if(n.IsNull() || n.IsSame(s)) return n;
+    s = n;
+  }
+  return s;
+}
+
 void OCC_Internals::_getBoundShapes(
   const TopoDS_Shape &shape,
   std::vector<std::tuple<int, int, TopoDS_Shape>> &bound)
@@ -867,6 +881,46 @@ void OCC_Internals::_getBoundShapes(
       if(_isBound(dim, shapes(i)))
         bound.push_back(std::make_tuple(dim, _find(dim, shapes(i)), shapes(i)));
     }
+  }
+}
+
+bool OCC_Internals::_fixedVolumes(const std::vector<int> &volumeTags,
+                                 TopoDS_Compound &c,
+                                 const Handle(ShapeBuild_ReShape) & fixed)
+{
+  BRep_Builder b;
+  b.MakeCompound(c);
+  for(auto tag : volumeTags) {
+    if(!_isBound(3, tag)) {
+      Msg::Error("Unknown OpenCASCADE volume with tag %d", tag);
+      return false;
+    }
+    TopoDS_Shape shape = _find(3, tag);
+    if(CTX::instance()->geom.occAutoFix) {
+      // make sure the volume is finite
+      ShapeFix_Solid fix(TopoDS::Solid(shape));
+      fix.SetContext(fixed);
+      fix.Perform();
+      shape = fix.Solid();
+    }
+    b.Add(c, shape);
+  }
+  return true;
+}
+
+void OCC_Internals::_unbindFixedVolumes(
+  const std::vector<int> &volumeTags, const Handle(ShapeBuild_ReShape) & fixed,
+  std::vector<std::tuple<int, int, TopoDS_Shape>> &bound)
+{
+  for(auto tag : volumeTags) {
+    TopoDS_Shape shape = _find(3, tag);
+    std::size_t first = bound.size();
+    _getBoundShapes(shape, bound);
+    for(std::size_t i = first; i < bound.size(); i++) {
+      TopoDS_Shape s = healedValue(fixed, std::get<2>(bound[i]));
+      if(!s.IsNull()) std::get<2>(bound[i]) = s;
+    }
+    _unbind(shape, 3, tag, true);
   }
 }
 
@@ -3779,28 +3833,21 @@ bool OCC_Internals::_fillet(int mode, const std::vector<int> &volumeTags,
   }
 
   // build a single compound shape
-  BRep_Builder b;
   TopoDS_Compound c;
-  b.MakeCompound(c);
-  std::vector<std::tuple<int, int, TopoDS_Shape>> bound;
-  for(std::size_t i = 0; i < volumeTags.size(); i++) {
-    if(!_isBound(3, volumeTags[i])) {
-      Msg::Error("Unknown OpenCASCADE volume with tag %d", volumeTags[i]);
-      return false;
-    }
-    TopoDS_Shape shape = _find(3, volumeTags[i]);
-    if(removeVolume) {
-      _getBoundShapes(shape, bound);
-      _unbind(shape, 3, volumeTags[i], true);
-    }
-    if(CTX::instance()->geom.occAutoFix) {
-      // make sure the volume is finite
-      ShapeFix_Solid fix(TopoDS::Solid(shape));
-      fix.Perform();
-      shape = fix.Solid();
-    }
-    b.Add(c, shape);
+  Handle(ShapeBuild_ReShape) fixed = new ShapeBuild_ReShape();
+  if(!_fixedVolumes(volumeTags, c, fixed)) return false;
+  for(auto &e : edges) {
+    TopoDS_Shape s = healedValue(fixed, e);
+    if(!s.IsNull()) e = TopoDS::Edge(s);
   }
+  for(auto &f : faces) {
+    TopoDS_Shape s = healedValue(fixed, f);
+    if(!s.IsNull()) f = TopoDS::Face(s);
+  }
+  // the volumes are unbound only once the operation has succeeded
+  std::vector<std::tuple<int, int, TopoDS_Shape>> bound;
+  std::vector<int> removed;
+  if(removeVolume) removed = volumeTags;
   TopoDS_Shape result;
   try {
     if(mode == 0) { // fillet
@@ -3819,7 +3866,10 @@ bool OCC_Internals::_fillet(int mode, const std::vector<int> &volumeTags,
         return false;
       }
       result = f.Shape();
-      _bindFromHistory(bound, f, result);
+      if(!result.IsNull()) {
+        _unbindFixedVolumes(removed, fixed, bound);
+        _bindFromHistory(bound, f, result);
+      }
     }
     else { // chamfer
       BRepFilletAPI_MakeChamfer f(c);
@@ -3837,7 +3887,10 @@ bool OCC_Internals::_fillet(int mode, const std::vector<int> &volumeTags,
         return false;
       }
       result = f.Shape();
-      _bindFromHistory(bound, f, result);
+      if(!result.IsNull()) {
+        _unbindFixedVolumes(removed, fixed, bound);
+        _bindFromHistory(bound, f, result);
+      }
     }
   } catch(Standard_Failure &err) {
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
@@ -3882,23 +3935,9 @@ bool OCC_Internals::defeature(const std::vector<int> &volumeTags,
 {
 #if OCC_VERSION_HEX >= 0x070700
   // build a single compound shape
-  BRep_Builder b;
   TopoDS_Compound c;
-  b.MakeCompound(c);
-  for(std::size_t i = 0; i < volumeTags.size(); i++) {
-    if(!_isBound(3, volumeTags[i])) {
-      Msg::Error("Unknown OpenCASCADE volume with tag %d", volumeTags[i]);
-      return false;
-    }
-    TopoDS_Shape shape = _find(3, volumeTags[i]);
-    if(CTX::instance()->geom.occAutoFix) {
-      // make sure the volume is finite
-      ShapeFix_Solid fix(TopoDS::Solid(shape));
-      fix.Perform();
-      shape = fix.Solid();
-    }
-    b.Add(c, shape);
-  }
+  Handle(ShapeBuild_ReShape) fixed = new ShapeBuild_ReShape();
+  if(!_fixedVolumes(volumeTags, c, fixed)) return false;
   BRepAlgoAPI_Defeaturing defeat;
   defeat.SetShape(c);
   for(std::size_t i = 0; i < surfaceTags.size(); i++) {
@@ -3906,17 +3945,9 @@ bool OCC_Internals::defeature(const std::vector<int> &volumeTags,
       Msg::Error("Unknown OpenCASCADE surface with tag %d", surfaceTags[i]);
       return false;
     }
-    TopoDS_Face face = TopoDS::Face(_tagFace.Find(surfaceTags[i]));
-    defeat.AddFaceToRemove(face);
-  }
-
-  std::vector<std::tuple<int, int, TopoDS_Shape>> bound;
-  if(removeVolume) {
-    for(std::size_t i = 0; i < volumeTags.size(); i++) {
-      TopoDS_Shape shape = _find(3, volumeTags[i]);
-      _getBoundShapes(shape, bound);
-      _unbind(shape, 3, volumeTags[i], true);
-    }
+    TopoDS_Shape face = _tagFace.Find(surfaceTags[i]);
+    TopoDS_Shape s = healedValue(fixed, face);
+    defeat.AddFaceToRemove(TopoDS::Face(s.IsNull() ? face : s));
   }
 
   defeat.SetRunParallel(CTX::instance()->geom.occParallel);
@@ -3943,6 +3974,9 @@ bool OCC_Internals::defeature(const std::vector<int> &volumeTags,
     return false;
   }
 
+  // the volumes are unbound only once the operation has succeeded
+  std::vector<std::tuple<int, int, TopoDS_Shape>> bound;
+  if(removeVolume) _unbindFixedVolumes(volumeTags, fixed, bound);
   _bindFromHistory(bound, defeat, result);
   _multiBind(result, -1, outDimTags, true, true);
   return true;
@@ -6857,20 +6891,6 @@ static std::vector<TopoDS_Shape> healSubShapes(const TopoDS_Shape &shape,
   std::vector<TopoDS_Shape> v;
   for(int k = 1; k <= m.Extent(); k++) v.push_back(m(k));
   return v;
-}
-
-// The final replacement of a shape in a healing context (a null shape if it
-// was removed)
-static TopoDS_Shape healedValue(const Handle(ShapeBuild_ReShape) & context,
-                                const TopoDS_Shape &shape)
-{
-  TopoDS_Shape s = shape;
-  for(int i = 0; i < 100; i++) {
-    TopoDS_Shape n = context->Value(s);
-    if(n.IsNull() || n.IsSame(s)) return n;
-    s = n;
-  }
-  return s;
 }
 
 // Record in `context' the replacements made by a fixing tool that used its own

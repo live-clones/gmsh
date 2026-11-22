@@ -61,3 +61,19 @@ EndFor
 If(#s2() != 7 || n != 6)
   Error("Filleted box 42 has %g surfaces, %g of the 6 of the box", #s2(), n);
 EndIf
+
+// surfaces with holes keep their tags too (Geometry.OCCAutoFix rebuilds them
+// before the fillet)
+Box(50) = {40, 0, 0, 2, 1, 0.5};
+Cylinder(51) = {41, 0.5, -1, 0, 0, 3, 0.2};
+v() = BooleanDifference{ Volume{50}; Delete; }{ Volume{51}; Delete; };
+top() = Surface In BoundingBox{39.9, -0.1, 0.49, 42.1, 1.1, 0.51};
+bot() = Surface In BoundingBox{39.9, -0.1, -0.01, 42.1, 1.1, 0.01};
+c() = Curve In BoundingBox{39.9, -0.1, -0.1, 40.1, 0.1, 0.6};
+Fillet{v(0)}{c(0)}{0.1}
+top2() = Surface In BoundingBox{39.9, -0.1, 0.49, 42.1, 1.1, 0.51};
+bot2() = Surface In BoundingBox{39.9, -0.1, -0.01, 42.1, 1.1, 0.01};
+If(#top2() != 1 || #bot2() != 1 || top2(0) != top(0) || bot2(0) != bot(0))
+  Error("Filleted surfaces with a hole %g and %g instead of %g and %g",
+        top2(0), bot2(0), top(0), bot(0));
+EndIf

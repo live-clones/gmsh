@@ -130,6 +130,21 @@ private:
   void _getBoundShapes(const TopoDS_Shape &shape,
                        std::vector<std::tuple<int, int, TopoDS_Shape>> &bound);
 
+  // the compound of the volumes to fillet, chamfer or defeature: with
+  // Geometry.OCCAutoFix, ShapeFix_Solid makes sure they are finite, which can
+  // rebuild some of their faces (e.g. those with holes); the replacements are
+  // recorded in fixed, so that the operation and its history use the new shapes
+  bool _fixedVolumes(const std::vector<int> &volumeTags, TopoDS_Compound &c,
+                     const Handle(ShapeBuild_ReShape) & fixed);
+
+  // once the operation on these volumes has succeeded, unbind them and return
+  // the shapes bound on their boundary (see _getBoundShapes), as replaced in
+  // fixed
+  void
+  _unbindFixedVolumes(const std::vector<int> &volumeTags,
+                      const Handle(ShapeBuild_ReShape) & fixed,
+                      std::vector<std::tuple<int, int, TopoDS_Shape>> &bound);
+
   // give the shapes of the result of an operation the free tags of the shapes
   // they come from (see _getBoundShapes): a shape left unchanged or modified
   // into a single one keeps its tag; the others get new tags. If split is
