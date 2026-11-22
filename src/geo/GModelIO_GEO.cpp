@@ -1090,6 +1090,41 @@ bool GEO_Internals::modifyPhysicalGroup(int dim, int tag, int op,
   return true;
 }
 
+void GEO_Internals::replaceInPhysicalGroups(
+  int dim, const std::map<int, std::vector<int> > &replace)
+{
+  const int types[4] = {MSH_PHYSICAL_POINT, MSH_PHYSICAL_LINE,
+                        MSH_PHYSICAL_SURFACE, MSH_PHYSICAL_VOLUME};
+  if(dim < 0 || dim > 3 || replace.empty() || !Tree_Nbr(PhysicalGroups))
+    return;
+  List_T *groups = Tree2List(PhysicalGroups);
+  for(int i = 0; i < List_Nbr(groups); i++) {
+    PhysicalGroup *p;
+    List_Read(groups, i, &p);
+    if(p->Typ != types[dim]) continue;
+    std::vector<int> entities;
+    bool found = false;
+    for(int j = 0; j < List_Nbr(p->Entities); j++) {
+      int num;
+      List_Read(p->Entities, j, &num);
+      auto it = replace.find(std::abs(num));
+      if(it == replace.end()) {
+        entities.push_back(num);
+        continue;
+      }
+      found = true;
+      // with oriented physical groups, the new entities keep the sign
+      for(auto t : it->second) entities.push_back(num < 0 ? -t : t);
+    }
+    if(!found) continue;
+    List_Reset(p->Entities);
+    std::set<int> added;
+    for(auto num : entities)
+      if(added.insert(num).second) List_Add(p->Entities, &num);
+  }
+  List_Delete(groups);
+}
+
 void GEO_Internals::removeAllDuplicates()
 {
   ReplaceAllDuplicates();

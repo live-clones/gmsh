@@ -1156,7 +1156,8 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "OCCBooleanPreserveNumbering" , opt_geometry_occ_boolean_preserve_numbering , 1. ,
     "Preserve the numbering of entities through OpenCASCADE boolean operations "
     "(0: no, 1: for the arguments left unchanged or modified into a single entity, "
-    "2: also for the entities on their boundary)" },
+    "2: also for the entities on their boundary, and the pieces of split entities "
+    "get their physical groups and periodicity)" },
   { F|O, "OCCBooleanSimplify" , opt_geometry_occ_boolean_simplify , 1. ,
     "Try to simplify the shape resulting from boolean operations (0: none, "
     "1: only for unions, 2: for all boolean operations" },

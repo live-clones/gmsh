@@ -3681,7 +3681,10 @@ boundary of the deleted arguments keep their tags in the same way, so that
 physical groups and mesh constraints can be defined on them before the
 operation: see
 @url{@value{GITLAB-PREFIX}/examples/boolean/preserve_numbering.geo,preserve_numbering.geo}.
-The other entities get new tags.
+The other entities get new tags; with the option set to 2, the pieces into
+which an entity is split get its physical groups, and the pieces of a
+periodic surface or curve are made periodic with the pieces of its master
+that they are the image of.
 
 As explained in @ref{Floating point expressions}, @var{boolean} can
 be used in an expression, in which case it returns the list of tags of

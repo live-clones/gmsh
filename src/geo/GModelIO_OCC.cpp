@@ -12,6 +12,7 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GModelIO_OCC.h"
+#include "GModelIO_GEO.h"
 #include "Context.h"
 #include "OCCVertex.h"
 #include "OCCEdge.h"
@@ -871,7 +872,9 @@ void OCC_Internals::_getBoundShapes(
 
 void OCC_Internals::_bindFromHistory(
   const std::vector<std::tuple<int, int, TopoDS_Shape>> &bound,
-  BRepBuilderAPI_MakeShape &op, const TopoDS_Shape &result)
+  BRepBuilderAPI_MakeShape &op, const TopoDS_Shape &result,
+  std::vector<std::pair<std::pair<int, int>, std::vector<TopoDS_Shape>>>
+    *split)
 {
   if(result.IsNull()) return;
   NCollection_IndexedMap<TopoDS_Shape, TopTools_ShapeMapHasher> shapes;
@@ -885,15 +888,33 @@ void OCC_Internals::_bindFromHistory(
       // says: fillets report unchanged curves as deleted, defeaturing points
       // as modified into several), or modified into a single one
       int i = shapes.FindIndex(shape);
+      NCollection_List<TopoDS_Shape> modified;
       if(!i) {
-        const NCollection_List<TopoDS_Shape> &modified = op.Modified(shape);
-        if(modified.Extent() != 1) continue;
-        i = shapes.FindIndex(modified.First());
+        modified = op.Modified(shape); // a copy: the next call overwrites it
+        if(modified.Extent() == 1) i = shapes.FindIndex(modified.First());
       }
       if(i && shapes(i).ShapeType() == shape.ShapeType() &&
          !_isBound(dim, shapes(i))) {
         _bind(shapes(i), dim, tag, false);
         if(dim >= 0) _inherited[std::make_pair(dim, tag)] = shapes(i);
+      }
+      else if(split && dim >= 0 && !i) {
+        // split into several shapes, or merged into one that took another tag
+        std::vector<TopoDS_Shape> images;
+        NCollection_List<TopoDS_Shape>::Iterator it(modified);
+        for(; it.More(); it.Next()) {
+          if(it.Value().ShapeType() == shape.ShapeType() &&
+             shapes.Contains(it.Value()))
+            images.push_back(it.Value());
+        }
+        if(images.size())
+          split->push_back(std::make_pair(std::make_pair(dim, tag), images));
+      }
+      else if(split && dim >= 0 && i &&
+              shapes(i).ShapeType() == shape.ShapeType()) {
+        // modified into a single shape that took another tag
+        split->push_back(std::make_pair(std::make_pair(dim, tag),
+                                        std::vector<TopoDS_Shape>{shapes(i)}));
       }
     }
   } catch(Standard_Failure &err) {
@@ -907,6 +928,34 @@ void OCC_Internals::_bindFromHistory(
       if(shapes(i).ShapeType() == boundTypes[k] && !_isBound(dim, shapes(i)))
         _bind(shapes(i), dim, getMaxTag(dim) + 1, false);
     }
+  }
+}
+
+void OCC_Internals::_recordSplits(
+  const std::map<std::pair<int, int>, std::vector<int>> &splits)
+{
+  if(splits.empty()) return;
+  // the entities that became old ones in previous operations, before the next
+  // synchronization, now become the new ones
+  for(auto &[dimTag, tags] : _split) {
+    std::vector<int> v;
+    for(auto t : tags) {
+      auto it = splits.find(std::make_pair(dimTag.first, t));
+      for(auto n : (it == splits.end()) ? std::vector<int>{t} : it->second)
+        if(std::find(v.begin(), v.end(), n) == v.end()) v.push_back(n);
+    }
+    tags = v;
+  }
+  // the tag of an entity split before can be given to a new one, split in turn:
+  // the model entity with this tag is the first one
+  for(auto &s : splits) _split.insert(s);
+  // the physical groups are defined by tag in the built-in kernel, both in .geo
+  // files and with the API, and given to the model entities from there
+  for(int dim = 0; dim <= 3; dim++) {
+    std::map<int, std::vector<int>> replace;
+    for(auto &[dimTag, tags] : splits)
+      if(dimTag.first == dim) replace[dimTag.second] = tags;
+    GModel::current()->getGEOInternals()->replaceInPhysicalGroups(dim, replace);
   }
 }
 
@@ -4379,6 +4428,8 @@ bool OCC_Internals::booleanOperator(
     if((i < numObjects) ? removeObject : removeTool)
       _getBoundShapes(mapOriginal[i], bound);
   }
+  // the removed shapes that do not keep their tag, with the shapes they become
+  std::vector<std::pair<std::pair<int, int>, std::vector<TopoDS_Shape>>> split;
 
   if(tag >= 0 || !preserve) {
     // if we specify the tag explicitly, or if we don't care about preserving
@@ -4403,7 +4454,7 @@ bool OCC_Internals::booleanOperator(
       BRep_Builder b;
       b.MakeCompound(c);
       for(auto &p : outDimTags) b.Add(c, _find(p.first, p.second));
-      _bindFromHistory(bound, *algo, c);
+      _bindFromHistory(bound, *algo, c, &split);
     }
     else
       _multiBind(result, tag, outDimTags, (tag >= 0) ? true : false, true,
@@ -4475,7 +4526,7 @@ bool OCC_Internals::booleanOperator(
     for(int d = -2; d <= 3; d++) _recomputeMaxTag(d);
     // the entities on the boundary of the arguments can keep their tags too;
     // bind all remaining entities
-    if(preserve >= 2) _bindFromHistory(bound, *algo, result);
+    if(preserve >= 2) _bindFromHistory(bound, *algo, result, &split);
     _multiBind(result, -1, outDimTags, false, true, false);
     _toPreserve.clear();
     // a surface kept from an argument keeps the orientation it had there, e.g.
@@ -4501,6 +4552,35 @@ bool OCC_Internals::booleanOperator(
       _tagFace.Bind(t, face); // replaces the old face
       _toRemove.insert(std::make_pair(2, t)); // recreate the model surface
     }
+  }
+
+  // with Geometry.OCCBooleanPreserveNumbering = 2, the physical groups and the
+  // periodicity of the removed arguments, and of the entities on their
+  // boundary, go to the entities they become, also when they are split
+  if(preserve >= 2) {
+    for(std::size_t i = 0; i < inDimTags.size(); i++) {
+      if(!((i < numObjects) ? removeObject : removeTool) || mapDeleted[i])
+        continue;
+      std::vector<TopoDS_Shape> images;
+      NCollection_List<TopoDS_Shape>::Iterator it(mapModified[i]);
+      for(; it.More(); it.Next()) images.push_back(it.Value());
+      if(images.empty()) images.push_back(mapOriginal[i]);
+      split.push_back(std::make_pair(inDimTags[i], images));
+    }
+    std::map<std::pair<int, int>, std::vector<int>> splits;
+    for(auto &[dimTag, images] : split) {
+      int dim = dimTag.first;
+      std::vector<int> tags;
+      for(auto &s : images) {
+        if(!_isBound(dim, s)) continue;
+        int t = _find(dim, s);
+        if(std::find(tags.begin(), tags.end(), t) == tags.end())
+          tags.push_back(t);
+      }
+      if(tags.size() && (tags.size() > 1 || tags[0] != dimTag.second))
+        splits.insert(std::make_pair(dimTag, tags));
+    }
+    _recordSplits(splits);
   }
 
   if(tag < 0) {
@@ -6201,6 +6281,114 @@ public:
   }
 };
 
+// a periodicity constraint: slave = tfo(master)
+struct periodicLink {
+  int dim, slave, master;
+  std::vector<double> tfo;
+};
+
+// the periodicity constraints of which the slave or the master is removed; the
+// slaves left in the model lose them, as their master is about to be deleted
+static void getPeriodicLinks(GModel *model,
+                             const std::vector<GEntity *> &removed,
+                             std::vector<periodicLink> &links)
+{
+  if(removed.empty()) return;
+  std::set<GEntity *> gone(removed.begin(), removed.end());
+  std::vector<GEntity *> entities;
+  model->getEntities(entities);
+  entities.insert(entities.end(), removed.begin(), removed.end());
+  // a master removed by another operation can already be deleted
+  std::set<GEntity *> known(entities.begin(), entities.end());
+  for(auto ge : entities) {
+    GEntity *master = ge->getMeshMaster();
+    if(ge->dim() < 1 || master == ge || !known.count(master)) continue;
+    bool slaveGone = gone.count(ge), masterGone = gone.count(master);
+    if(!slaveGone && !masterGone) continue;
+    if(ge->affineTransform.size() == 16)
+      links.push_back({ge->dim(), ge->tag(), master->tag(), ge->affineTransform});
+    if(!slaveGone) ge->setMeshMaster(ge);
+  }
+}
+
+// the center of the points of a model entity
+static SPoint3 pointsCenter(GEntity *ge)
+{
+  SPoint3 c(0., 0., 0.);
+  std::vector<GVertex *> v = ge->vertices();
+  for(auto gv : v) c += gv->xyz();
+  if(v.size()) c *= 1. / v.size();
+  return c;
+}
+
+// set the periodicity constraints again on the entities that replace their
+// slave and master (see OCC_Internals::synchronize): each piece of a split
+// slave gets the piece of the master whose points it is the image of
+static void restorePeriodicity(
+  GModel *model, OCC_Internals *occ, const std::vector<periodicLink> &links,
+  const std::map<std::pair<int, int>, std::vector<int>> &replacedBy)
+{
+  if(links.empty()) return;
+  SBoundingBox3d bb = model->bounds();
+  double tol = 1e-6 * (bb.empty() ? 1. : bb.diag());
+  auto replacing = [&](int dim, int tag) {
+    auto it = replacedBy.find(std::make_pair(dim, tag));
+    return (it == replacedBy.end()) ? std::vector<int>{tag} : it->second;
+  };
+  // surfaces first: they also set the periodicity of their curves
+  for(int dim = 2; dim >= 1; dim--) {
+    for(auto &l : links) {
+      if(l.dim != dim) continue;
+      const char *name = (dim == 2) ? "surface" : "curve";
+      std::vector<int> slaves = replacing(dim, l.slave);
+      std::vector<int> masters = replacing(dim, l.master);
+      if(slaves.empty() || masters.empty()) {
+        Msg::Info("Periodicity of %s %d (master %d) removed", name, l.slave,
+                  l.master);
+        continue;
+      }
+      for(auto s : slaves) {
+        GEntity *gs = model->getEntityByTag(dim, s);
+        if(!gs || gs->getMeshMaster() != gs) continue;
+        SPoint3 cs = pointsCenter(gs);
+        double xs = 0., ys = 0., zs = 0.;
+        occ->getCenterOfMass(dim, s, xs, ys, zs);
+        GEntity *best = nullptr;
+        double bestDist = 0.;
+        for(auto m : masters) {
+          GEntity *gm = model->getEntityByTag(dim, m);
+          if(!gm || gm == gs || gm->vertices().size() != gs->vertices().size() ||
+             gm->edges().size() != gs->edges().size())
+            continue;
+          SPoint3 cm = pointsCenter(gm);
+          cm.transform(l.tfo);
+          if(cm.distance(cs) > tol) continue;
+          // pieces with the same points: the closest center of mass
+          double x = 0., y = 0., z = 0.;
+          occ->getCenterOfMass(dim, m, x, y, z);
+          SPoint3 g(x, y, z);
+          g.transform(l.tfo);
+          double d = g.distance(SPoint3(xs, ys, zs));
+          if(!best || d < bestDist) {
+            best = gm;
+            bestDist = d;
+          }
+        }
+        if(!best) {
+          Msg::Warning("Periodicity of %s %d lost: no %s replacing master %s "
+                       "%d corresponds to it",
+                       name, s, name, name, l.master);
+          continue;
+        }
+        if(dim == 2)
+          ((GFace *)gs)->setMeshMaster((GFace *)best, l.tfo);
+        else
+          ((GEdge *)gs)->setMeshMaster((GEdge *)best, l.tfo);
+      }
+    }
+  }
+}
+
 void OCC_Internals::synchronize(GModel *model)
 {
   // existing entities can be given new geometry
@@ -6218,16 +6406,40 @@ void OCC_Internals::synchronize(GModel *model)
   std::vector<GEntity *> removed;
   model->remove(toRemove, removed);
   // the entities replaced by a shape given their tag through the history of an
-  // operation (see _bindFromHistory) keep their physical groups and mesh
-  // constraints
+  // operation (see _bindFromHistory), or by the same shape, keep their physical
+  // groups and mesh constraints; the entities split or renumbered (see
+  // _recordSplits) give their physical groups to the entities they become
   std::vector<inheritedAttributes> inherited;
+  std::map<std::pair<int, int>, std::vector<int>> replacedBy;
+  std::vector<std::pair<std::pair<int, int>, std::vector<int>>> splitPhysicals;
   for(auto ge : removed) {
-    auto it = _inherited.find(std::make_pair(ge->dim(), ge->tag()));
-    if(it != _inherited.end() && _isBound(ge->dim(), ge->tag()) &&
-       _find(ge->dim(), ge->tag()).IsSame(it->second))
+    std::pair<int, int> dimTag(ge->dim(), ge->tag());
+    std::vector<int> &by = replacedBy[dimTag]; // empty if nothing replaces it
+    auto it = _inherited.find(dimTag);
+    bool same = false;
+    if(_isBound(ge->dim(), ge->tag())) {
+      TopoDS_Shape s = _find(ge->dim(), ge->tag());
+      same = (it != _inherited.end() && s.IsSame(it->second)) ||
+             (ge->getNativeType() == GEntity::OpenCascadeModel &&
+              s.IsSame(*(TopoDS_Shape *)ge->getNativePtr()));
+    }
+    if(same) {
       inherited.push_back(inheritedAttributes(ge));
+      by = {ge->tag()};
+      continue;
+    }
+    auto its = _split.find(dimTag);
+    if(its == _split.end()) continue;
+    by = its->second;
+    if(ge->physicals.size())
+      splitPhysicals.push_back(std::make_pair(dimTag, ge->physicals));
   }
   _inherited.clear();
+  _split.clear();
+  // the periodicity constraints of removed entities (as slaves or masters),
+  // set again on the entities they become (see restorePeriodicity)
+  std::vector<periodicLink> periodic;
+  getPeriodicLinks(model, removed, periodic);
   Msg::Debug("Destroying %zu entities in model", removed.size());
   for(std::size_t i = 0; i < removed.size(); i++) delete removed[i];
   _toRemove.clear();
@@ -6399,6 +6611,18 @@ void OCC_Internals::synchronize(GModel *model)
   }
 
   for(auto &a : inherited) a.apply(model);
+  for(auto &[dimTag, physicals] : splitPhysicals) {
+    for(auto t : replacedBy[dimTag]) {
+      GEntity *ge = model->getEntityByTag(dimTag.first, t);
+      if(!ge) continue;
+      for(auto p : physicals) {
+        if(std::find(ge->physicals.begin(), ge->physicals.end(), p) ==
+           ge->physicals.end())
+          ge->physicals.push_back(p);
+      }
+    }
+  }
+  restorePeriodicity(model, this, periodic, replacedBy);
 
   // if fuzzy boolean tolerance was used, some vertex positions should be
   // recomputed (e.g. end point of curves

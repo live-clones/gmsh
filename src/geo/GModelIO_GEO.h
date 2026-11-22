@@ -130,6 +130,10 @@ public:
   void resetPhysicalGroups();
   bool modifyPhysicalGroup(int dim, int tag, int op,
                            const std::vector<int> &tags);
+  // replace the entities of dimension dim by others in the physical groups,
+  // all at once, e.g. when an OpenCASCADE operation splits them
+  void replaceInPhysicalGroups(int dim,
+                               const std::map<int, std::vector<int> > &replace);
   int getMaxPhysicalTag() const { return _maxPhysicalNum; }
   void setMaxPhysicalTag(int val) { _maxPhysicalNum = val; }
 

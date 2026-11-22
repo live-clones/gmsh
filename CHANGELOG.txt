@@ -45,11 +45,12 @@ of the entities are now saved with their visibility, in .vis files loaded
 automatically with the model (e.g. model.msh.vis with model.msh); OpenCASCADE
 transformations, fillets, chamfers and defeaturing now keep the tags of the
 entities on the boundary of the modified ones (not only of the latter), as do
-boolean operations with new Geometry.OCCBooleanPreserveNumbering=2, and entities
-keeping their tag keep their physical groups and mesh constraints; Gmsh now
-requires C++17, CMake 3.10 and FLTK 1.4.0, supports OCC 8, and uses Eigen 5.0 by
-default; official binary builds now use FLTK 1.5-dev, OCC 8.0.1, HDF5 1.14.6,
-CGNS 4.5.2 and MED 6.0.1; bug fixes.
+boolean operations with new Geometry.OCCBooleanPreserveNumbering=2, which also
+gives the physical groups and the periodicity of split entities to their pieces;
+entities keeping their tag keep their physical groups, mesh constraints and
+periodicity; Gmsh now requires C++17, CMake 3.10 and FLTK 1.4.0, supports OCC 8,
+and uses Eigen 5.0 by default; official binary builds now use FLTK 1.5-dev, OCC
+8.0.1, HDF5 1.14.6, CGNS 4.5.2 and MED 6.0.1; bug fixes.
 
 * New API functions: mesh/createOverlaps, mesh/getPartitionEntities,
   mesh/getOverlapBoundary, mesh/getOverlapInterfaceBoundary,

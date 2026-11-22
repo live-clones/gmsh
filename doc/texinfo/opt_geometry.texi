@@ -227,7 +227,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCBooleanPreserveNumbering
-Preserve the numbering of entities through OpenCASCADE boolean operations (0: no, 1: for the arguments left unchanged or modified into a single entity, 2: also for the entities on their boundary)@*
+Preserve the numbering of entities through OpenCASCADE boolean operations (0: no, 1: for the arguments left unchanged or modified into a single entity, 2: also for the entities on their boundary, and the pieces of split entities get their physical groups and periodicity)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 

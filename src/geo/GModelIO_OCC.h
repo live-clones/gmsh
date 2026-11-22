@@ -81,6 +81,12 @@ private:
   // synchronization
   std::map<std::pair<int, int>, TopoDS_Shape> _inherited;
 
+  // the tags of the entities into which boolean operations split entities, or
+  // renumber them, with Geometry.OCCBooleanPreserveNumbering = 2 (see
+  // _recordSplits): their model entities get the physical groups and the
+  // periodicity of the entities they replace at the next synchronization
+  std::map<std::pair<int, int>, std::vector<int>> _split;
+
   // mesh attributes
   OCCAttributesRTree *_attributes;
 
@@ -126,10 +132,21 @@ private:
 
   // give the shapes of the result of an operation the free tags of the shapes
   // they come from (see _getBoundShapes): a shape left unchanged or modified
-  // into a single one keeps its tag; the others get new tags
+  // into a single one keeps its tag; the others get new tags. If split is
+  // given, return in it the bound shapes that do not keep their tag, with the
+  // shapes of the result they are modified into
+  void _bindFromHistory(
+    const std::vector<std::tuple<int, int, TopoDS_Shape>> &bound,
+    BRepBuilderAPI_MakeShape &op, const TopoDS_Shape &result,
+    std::vector<std::pair<std::pair<int, int>, std::vector<TopoDS_Shape>>>
+      *split = nullptr);
+
+  // the entities (dim, tag) of the keys become the entities (dim, tags) of the
+  // values in an operation (a tag can be both, for an old and a new entity):
+  // replace them in the physical groups, and give the new ones their physical
+  // groups and periodicity at the next synchronization (see _split)
   void
-  _bindFromHistory(const std::vector<std::tuple<int, int, TopoDS_Shape>> &bound,
-                   BRepBuilderAPI_MakeShape &op, const TopoDS_Shape &result);
+  _recordSplits(const std::map<std::pair<int, int>, std::vector<int>> &splits);
 
   // is the entity of a given dimension and tag bound?
   bool _isBound(int dim, int tag);
