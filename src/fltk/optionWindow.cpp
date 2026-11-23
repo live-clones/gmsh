@@ -140,10 +140,6 @@ static Fl_Choice *boundChoice(const std::string &option)
 {
   return dynamic_cast<Fl_Choice *>(boundWidget(option));
 }
-static Fl_Button *boundButton(const std::string &option)
-{
-  return dynamic_cast<Fl_Button *>(boundWidget(option));
-}
 
 // the titles of the headings of the sections (see EntryHeading), and the
 // groups of the numbers with - and + buttons (see EntryStepper), by option
@@ -666,19 +662,6 @@ static void general_session_save_cb(Fl_Widget *w, void *data)
       (CTX::instance()->homeDir + CTX::instance()->sessionFileName).c_str());
 }
 
-// the camera or the gamepad, which moves the camera: the gamepad goes off
-// with the camera, the camera on with the gamepad
-static void general_camera_cb(Fl_Widget *w, void *data)
-{
-  Fl_Button *camera = boundButton("General.Camera"),
-            *gamepad = boundButton("General.Gamepad");
-  if(w == camera && !camera->value() && gamepad->value())
-    opt_general_gamepad(0, GMSH_SET | GMSH_GUI, 0);
-  if(w == gamepad && gamepad->value() && !camera->value())
-    opt_general_camera_mode(0, GMSH_SET | GMSH_GUI, 1);
-  option_cb(w, data);
-}
-
 static void general_arrow_param_cb(Fl_Widget *w, void *data)
 {
   double a = opt_general_arrow_head_radius(0, GMSH_GET, 0);
@@ -1135,7 +1118,6 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
   b.hooks["General.SaveSession"] = general_session_save_cb;
   for(const char *o : {"General.Light0X", "General.Light0Y", "General.Light0Z"})
     b.hooks[o] = general_light_cb;
-  b.hooks["General.Camera"] = b.hooks["General.Gamepad"] = general_camera_cb;
   b.hooks["Solver.AlwaysListen"] = solver_listen_cb;
   b.hooks["View.TimeStep"] = view_options_timestep_cb;
 

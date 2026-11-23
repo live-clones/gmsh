@@ -13,4 +13,8 @@
 // color), with the command it gives otherwise
 void editFile(const std::string &fileName);
 
+// The editors closed, the user asked what to do with the changes of each that
+// are not saved: false if one stays open (the user cancelled)
+bool closeEditors();
+
 #endif

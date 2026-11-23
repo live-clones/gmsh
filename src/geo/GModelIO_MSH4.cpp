@@ -399,6 +399,18 @@ static bool readMSH4EmbeddedEntities(FILE *fp, GEntity *const entity,
   return true;
 }
 
+// what is left of the file to read, in bytes: no count of a section can be
+// larger
+static std::size_t remainingBytes(FILE *fp)
+{
+  long pos = ftell(fp);
+  if(pos < 0 || fseek(fp, 0, SEEK_END)) // (not a file: unknown)
+    return std::numeric_limits<std::size_t>::max();
+  long end = ftell(fp);
+  fseek(fp, pos, SEEK_SET);
+  return (end > pos) ? (std::size_t)(end - pos) : 0;
+}
+
 static bool readMSH4EntityInfo(FILE *fp, bool binary, bool swap, double version,
                                bool partition, int dim, int &tag,
                                int &parentDim, int &parentTag,
@@ -416,6 +428,8 @@ static bool readMSH4EntityInfo(FILE *fp, bool binary, bool swap, double version,
       parentTag = dataInt[2];
       std::size_t numPart;
       if(fread(&numPart, sizeof(std::size_t), 1, fp) != 1) { return false; }
+      if(swap) SwapBytes((char *)&numPart, sizeof(std::size_t), 1);
+      if(!numPart || numPart > remainingBytes(fp)) return false;
       partitions.resize(numPart, 0);
       if(fread(&partitions[0], sizeof(int), numPart, fp) != numPart) {
         return false;
@@ -753,6 +767,12 @@ static MVertex **readMSH4Nodes(GModel *const model, FILE *fp, bool binary,
     }
   }
 
+  if(totalNumRead > remainingBytes(fp)) {
+    Msg::Error("Number of nodes %zu larger than what is left of the file",
+               totalNumRead);
+    return nullptr;
+  }
+
   std::size_t nodeRead = 0;
   std::size_t minNodeNum = std::numeric_limits<std::size_t>::max();
 
@@ -860,6 +880,15 @@ static MVertex **readMSH4Nodes(GModel *const model, FILE *fp, bool binary,
 
     std::size_t n = 3;
     if(parametric) n += entityDim;
+
+    // (the nodes of the blocks are stored in the array sized by the header)
+    if(numNodes > remainingBytes(fp) ||
+       (!filter && numNodes > totalNumRead - nodeRead)) {
+      Msg::Error("Wrong number of nodes (%zu) in the block of entity %d of "
+                 "dimension %d", numNodes, entityTag, entityDim);
+      delete[] verticesRead;
+      return nullptr;
+    }
 
     std::vector<std::size_t> tags(numNodes);
     if(binary) {
@@ -1059,6 +1088,12 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
     }
   }
 
+  if(totalNumRead > remainingBytes(fp)) {
+    Msg::Error("Number of elements %zu larger than what is left of the file",
+               totalNumRead);
+    return nullptr;
+  }
+
   std::size_t elementRead = 0;
   std::size_t minElementNum = std::numeric_limits<std::size_t>::max();
 
@@ -1231,6 +1266,14 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
     // (with a filter, the entity is found or made when elements are kept)
     if(!entity && !filter) {
       Msg::Error("Unknown entity %d of dimension %d", entityTag, entityDim);
+      delete[] elementsRead;
+      return nullptr;
+    }
+    // (the elements of the blocks are stored in the array sized by the header)
+    if(numElements > remainingBytes(fp) ||
+       (!filter && numElements > totalNumRead - elementRead)) {
+      Msg::Error("Wrong number of elements (%zu) in the block of entity %d of "
+                 "dimension %d", numElements, entityTag, entityDim);
       delete[] elementsRead;
       return nullptr;
     }
@@ -1431,16 +1474,6 @@ static bool readMSH4SizeT(FILE *fp, bool binary, bool swap, std::size_t &v)
 
 // What is left of the file, in bytes: no count read from it can be larger
 // (each value takes at least a byte), which is checked before allocating.
-static std::size_t remainingBytes(FILE *fp)
-{
-  long pos = ftell(fp);
-  if(pos < 0 || fseek(fp, 0, SEEK_END)) // (not a file: unknown)
-    return std::numeric_limits<std::size_t>::max();
-  long end = ftell(fp);
-  fseek(fp, pos, SEEK_SET);
-  return (end > pos) ? (std::size_t)(end - pos) : 0;
-}
-
 static bool readMSH4SizeTs(FILE *fp, bool binary, bool swap, std::size_t n,
                            std::vector<std::size_t> &v)
 {
@@ -2918,6 +2951,11 @@ int GModel::_readMSH4(const std::string &name,
       for(int i = 0; i < numPhysicalNames; i++) {
         int dim = 0, tag = 0;
         if(fscanf(fp, "%d %d", &dim, &tag) != 2) {
+          fclose(fp);
+          return 0;
+        }
+        if(dim < 0 || dim > 3) {
+          Msg::Error("Invalid dimension %d of physical name", dim);
           fclose(fp);
           return 0;
         }

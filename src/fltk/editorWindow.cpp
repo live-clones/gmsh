@@ -140,18 +140,7 @@ private:
   }
   static void _close_cb(Fl_Widget *w, void *data)
   {
-    editorWindow *e = (editorWindow *)data;
-    if(e->_modified) {
-      switch(fl_choice("Save the changes to '%s'?", "Cancel", "Save", "Discard",
-                       e->_fileName.c_str())) {
-      case 0: return;
-      case 1:
-        if(!e->save()) return;
-        break;
-      default: e->load(); break;
-      }
-    }
-    e->_win->hide();
+    ((editorWindow *)data)->close();
   }
 
 public:
@@ -320,6 +309,24 @@ public:
     _modified = false;
     _title();
   }
+  // the window closed, its changes saved or discarded as the user chooses:
+  // false if it stays open (the user cancelled, or the file was not saved)
+  bool close()
+  {
+    if(_modified) {
+      _win->show();
+      switch(fl_choice("Save the changes to '%s'?", "Cancel", "Save", "Discard",
+                       _fileName.c_str())) {
+      case 0: return false;
+      case 1:
+        if(!save()) return false;
+        break;
+      default: load(); break;
+      }
+    }
+    _win->hide();
+    return true;
+  }
   // the file written: false if it could not be, or if it changed on disk
   // since it was read (as when the FLTK interface added to a script) and is
   // not to be overwritten
@@ -381,6 +388,13 @@ public:
   }
 };
 
+// one window for each file, kept
+static std::map<std::string, editorWindow *> &editors()
+{
+  static std::map<std::string, editorWindow *> e;
+  return e;
+}
+
 void editFile(const std::string &fileName)
 {
   std::string prog = CTX::instance()->editor;
@@ -390,9 +404,7 @@ void editFile(const std::string &fileName)
     SystemCall(ReplaceSubString("%s", file, FixWindowsPath(prog)));
     return;
   }
-  // one window for each file, kept
-  static std::map<std::string, editorWindow *> editors;
-  editorWindow *&e = editors[fileName];
+  editorWindow *&e = editors()[fileName];
   if(!e)
     e = new editorWindow(fileName);
   else {
@@ -400,4 +412,11 @@ void editFile(const std::string &fileName)
     e->refresh();
   }
   e->show();
+}
+
+bool closeEditors()
+{
+  for(auto &e : editors())
+    if(!e.second->close()) return false;
+  return true;
 }

@@ -74,6 +74,9 @@ test:
       Msg::Error("Unable to open file '%s'", name.c_str());
       return;
     }
+    // (the programs written for a script of this name before are not those
+    // of the new one)
+    scriptRemovePrograms(name);
 #if defined(HAVE_DISCRETECAD)
     int factory = fl_choice("Which geometry kernel do you want to use?",
                             "Built-in", "OpenCASCADE", "Discrete");
@@ -592,6 +595,9 @@ static void destroyGui(void *)
 
 void fileQuit()
 {
+  // (not without asking about the text of the editors that is not saved)
+  if(!closeEditors()) return;
+
   // save persistent info to disk
   if(CTX::instance()->sessionSave) {
     PrintOptions(

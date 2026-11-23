@@ -3291,7 +3291,7 @@ double opt_general_gamepad(OPT_ARGS_NUM)
         // (the gamepad moves a camera: said, and shown in the options)
         if(CTX::instance()->gamepad->active &&
            !opt_general_camera_mode(0, GMSH_GET, 0)) {
-          Msg::Warning("General.CameraMode turned on for the gamepad");
+          Msg::Warning("General.Camera turned on for the gamepad");
           opt_general_camera_mode(0, GMSH_SET | GMSH_GUI, 1);
         }
       }
@@ -3366,7 +3366,15 @@ double opt_general_camera_aperture(OPT_ARGS_NUM)
 
 double opt_general_camera_mode(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->camera = (int)val;
+  if(action & GMSH_SET) {
+    CTX::instance()->camera = (int)val;
+    // (the gamepad moves the camera: said, and shown in the options)
+    if(!CTX::instance()->camera && CTX::instance()->gamepad &&
+       CTX::instance()->gamepad->active) {
+      Msg::Warning("General.Gamepad turned off with the camera");
+      opt_general_gamepad(0, GMSH_SET | GMSH_GUI, 0);
+    }
+  }
   return CTX::instance()->camera;
 }
 

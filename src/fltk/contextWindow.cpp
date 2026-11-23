@@ -73,11 +73,13 @@ void elementaryContextWindow::showPlacement()
   for(int i = 0; i < 3; i++) butt[i]->value(p->locked(i));
 }
 
-// the pane shown, while a shape is placed: the placement goes on with it
+// the pane shown: the one of the set of tabs shown (the hidden set keeps a
+// visible pane too)
 static int shownPane(elementaryContextWindow *e)
 {
-  for(int k = 1; k < 12; k++)
-    if(e->group[k]->visible()) return k;
+  Fl_Widget *g = (e->tab1->visible() ? e->tab1 : e->tab2)->value();
+  for(int k = 0; k < 12; k++)
+    if(e->group[k] == g) return k;
   return -1;
 }
 
@@ -90,6 +92,10 @@ static void elementary_tab_cb(Fl_Widget *w, void *data)
 {
   elementaryContextWindow *e = FlGui::instance()->elementaryContext;
   int pane = shownPane(e);
+  if(pane < 0) return;
+  // (the only pane active, see show(); while a shape is placed, the placement
+  // goes on with the pane shown)
+  e->show(pane);
   if(shapePlacement::current() && pane > 0 &&
      pane != shapePlacement::current()->shape()) {
     e->startPlacement(pane);
@@ -168,6 +174,7 @@ static void elementary_switch_tabs_cb(Fl_Widget *w, void *data)
     FlGui::instance()->elementaryContext->tab2->hide();
     FlGui::instance()->elementaryContext->tab1->show();
   }
+  elementary_tab_cb(nullptr, nullptr);
 }
 
 static void elementary_snap_cb(Fl_Widget *w, void *data)

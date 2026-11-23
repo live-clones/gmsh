@@ -22,6 +22,9 @@ struct scriptLanguage {
 const std::vector<scriptLanguage> &scriptLanguages();
 std::string scriptProgram(const std::string &geoFile, const std::string &lang);
 bool scriptWritesIn(const std::string &lang);
+// the programs written for a script (not the files of the same names written
+// by someone else) removed, as for a script that starts again
+void scriptRemovePrograms(const std::string &geoFile);
 void scriptWriteIn(const std::string &lang, bool on);
 // whether the last command was added to the script: not if the model was
 // busy, or if the command had errors (the model is then read again from the

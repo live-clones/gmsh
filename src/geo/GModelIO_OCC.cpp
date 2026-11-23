@@ -4902,6 +4902,46 @@ bool OCC_Internals::_transform(
   std::vector<std::tuple<int, int, TopoDS_Shape>> bound;
   _getBoundShapes(c, bound);
 
+  // the entities transformed that are also on the boundary of an entity of the
+  // model that is not: such an entity cannot be transformed alone, and such a
+  // sub-entity (e.g. the point a translated curve shares with another curve)
+  // stays as it is with its tag, its image getting a new one. Only known for
+  // the entities of the model, i.e. those synchronized
+  std::set<std::pair<int, int>> all, shared;
+  for(auto &[dim, tag, shape] : bound)
+    if(dim >= 0) all.insert(std::make_pair(dim, tag));
+  for(int dim = 2; dim >= 0; dim--) {
+    for(auto &[d, tag, shape] : bound) {
+      if(d != dim) continue;
+      GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
+      if(!ge || ge->getNativeType() != GEntity::OpenCascadeModel ||
+         !shape.IsSame(*(TopoDS_Shape *)ge->getNativePtr()))
+        continue;
+      std::vector<GEntity *> up;
+      if(dim == 0)
+        for(GEdge *e : static_cast<GVertex *>(ge)->edges()) up.push_back(e);
+      else if(dim == 1)
+        for(GFace *f : static_cast<GEdge *>(ge)->faces()) up.push_back(f);
+      else
+        for(GRegion *r : static_cast<GFace *>(ge)->regions()) up.push_back(r);
+      for(GEntity *u : up) {
+        std::pair<int, int> p(u->dim(), u->tag());
+        if(all.count(p) && !shared.count(p)) continue;
+        if(std::find(inDimTags.begin(), inDimTags.end(),
+                     std::make_pair(dim, tag)) != inDimTags.end()) {
+          const char *names[4] = {"Point", "Curve", "Surface", "Volume"};
+          Msg::Error("%s %d bounds %s %d and cannot be transformed alone: "
+                     "transform the latter, or a copy of the former",
+                     names[dim], tag, (dim == 0) ? "curve" :
+                     (dim == 1) ? "surface" : "volume", u->tag());
+          return false;
+        }
+        shared.insert(std::make_pair(dim, tag));
+        break;
+      }
+    }
+  }
+
   TopoDS_Shape result;
   if(tfo) {
     tfo->Perform(c, true);
@@ -4951,10 +4991,9 @@ bool OCC_Internals::_transform(
     int tag = inDimTags[i].second;
     if(CTX::instance()->geom.occFastUnbind) {
       // bypass safe _unbind checks by unbinding the shape and all its subshapes
-      // without checking dependencies: a sub-shape still on the boundary of an
-      // entity that is not transformed, e.g. a point shared with a curve that
-      // is not, is then unbound too; if the model has it, it gets its tag back
-      // at the next synchronization
+      // without checking dependencies: the shared sub-shapes found above are
+      // bound again below (one that the model does not have yet gets its tag
+      // back at the next synchronization)
       _unbindWithoutChecks(inShapes[i]);
     }
     else {
@@ -4964,6 +5003,11 @@ bool OCC_Internals::_transform(
       // loop to translate copies of entities leads to quadratic complexity.
       _unbind(inShapes[i], dim, tag, true);
     }
+  }
+  for(auto &[dim, tag, shape] : bound) {
+    if(!shared.count(std::make_pair(dim, tag)) || _isBound(dim, tag)) continue;
+    _bind(shape, dim, tag, false);
+    _toRemove.erase(std::make_pair(dim, tag));
   }
   _bindFromHistory(bound,
                    tfo ? (BRepBuilderAPI_MakeShape &)*tfo :
@@ -7305,7 +7349,9 @@ bool OCC_Internals::healShapes(
 
   // keep the tags: a shape left unchanged keeps its tag, a shape replaced by
   // another one gives it its tag (unless the new one already got a tag, e.g.
-  // when several shapes are merged), a shape removed loses it
+  // when several shapes are merged: the entity then becomes the one with that
+  // tag, which gets its physical groups), a shape removed loses it
+  std::map<std::pair<int, int>, std::vector<int>> merged;
   for(int i = 0; i < 6; i++) {
     std::vector<std::pair<int, TopoDS_Shape>> bound;
     NCollection_DataMap<int, TopoDS_Shape>::Iterator it(*maps[i]);
@@ -7323,15 +7369,18 @@ bool OCC_Internals::healShapes(
         _toRemove.insert(std::make_pair(dims[i], tb.first));
         _changed = true;
       }
-      if(!n.IsNull() && n.ShapeType() == tb.second.ShapeType() &&
-         !_isBound(dims[i], n)) {
+      if(n.IsNull() || n.ShapeType() != tb.second.ShapeType()) continue;
+      if(!_isBound(dims[i], n)) {
         _bind(n, dims[i], tb.first, false);
         // the model entity keeps its physical groups and mesh constraints
         if(dims[i] >= 0) _inherited[std::make_pair(dims[i], tb.first)] = n;
       }
+      else if(dims[i] >= 0)
+        merged[std::make_pair(dims[i], tb.first)] = {_find(dims[i], n)};
     }
   }
   for(int d = -2; d <= 3; d++) _recomputeMaxTag(d);
+  _recordSplits(merged);
 
   // bind the new shapes
   std::vector<std::pair<int, int>> all;

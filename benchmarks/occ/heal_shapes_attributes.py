@@ -47,6 +47,27 @@ occ.synchronize()
 if sorted(healed) != sorted(gmsh.model.getEntities(3)):
     errors.append("healShapes() returned %s" % healed)
 
+# two curves merged into one by sewing: the physical groups of both are on
+# the curve that is left
+gmsh.clear()
+occ.addRectangle(5, 0, 0, 1, 1)
+occ.addRectangle(6, 0, 0, 1, 1)
+occ.synchronize()
+shared = [t for _, t in gmsh.model.getEntities(1)
+          if abs(occ.getCenterOfMass(1, t)[0] - 6) < 1e-6]
+gmsh.model.addPhysicalGroup(1, shared[:1], 40)
+gmsh.model.addPhysicalGroup(1, shared[1:], 41)
+occ.healShapes(sewFaces=True, makeSolids=False)
+occ.synchronize()
+left = [t for _, t in gmsh.model.getEntities(1)
+        if abs(occ.getCenterOfMass(1, t)[0] - 6) < 1e-6]
+if len(shared) != 2 or len(left) != 1:
+    errors.append("%d curves sewn into %d" % (len(shared), len(left)))
+for g in (40, 41):
+    if ((1, g) not in gmsh.model.getPhysicalGroups() or
+            list(gmsh.model.getEntitiesForPhysicalGroup(1, g)) != left):
+        errors.append("physical curve %d is not on the sewn curve" % g)
+
 gmsh.finalize()
 
 if errors:

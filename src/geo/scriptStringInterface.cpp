@@ -742,10 +742,11 @@ namespace {
   }
 
   // the kernel whose changes are not synchronized with the model yet: before
-  // the calls on the model, those of the kernel are synchronized ("?" at
-  // first, as the programs may have been written before)
+  // the calls on the model, those of the kernel are synchronized ("?" when
+  // not known: at first, as the programs may have been written before, for
+  // another script, and after a command was taken out of the programs)
   std::string _unsynced = "?";
-  std::string _lastKernel;
+  std::string _lastKernel, _lastScript;
 
   // a call that changes a kernel (its meshing constraints too, which its
   // synchronization gives to the model)
@@ -901,10 +902,15 @@ static void scriptAdd(const std::string &geo, const std::string &fileName,
   std::vector<apiCall> c;
   if(geo.find("SetFactory(") != std::string::npos) c = factoryCalls(tagsBefore);
   for(auto &a : calls()) c.push_back(a);
-  c = synchronized(c);
   // (the script given, or the one made for a model that had none)
   std::string geoFile =
     fileName.size() ? fileName : GModel::current()->getFileName();
+  if(geoFile != _lastScript) {
+    _unsynced = "?";
+    _lastKernel.clear();
+    _lastScript = geoFile;
+  }
+  c = synchronized(c);
   for(auto &lang : langs)
     addToProgram(geoFile, lang, commandText(geo, c, lang));
 }
@@ -947,6 +953,22 @@ void scriptRemoveLastCommand(const std::string &fileName)
   if(!scriptRemoveLastGeoCommand(fileName)) return;
   for(auto &lang : CTX::instance()->scriptLang)
     if(const language *l = languageOf(lang)) removeFromProgram(fileName, l);
+  _unsynced = "?";
+}
+
+void scriptRemovePrograms(const std::string &geoFile)
+{
+  for(auto &lang : scriptLanguages()) {
+    const language *l = languageOf(lang.name);
+    std::string fileName = scriptProgram(geoFile, lang.name);
+    std::ifstream in(fileName.c_str());
+    if(!l || !in) continue;
+    std::stringstream b;
+    b << in.rdbuf();
+    in.close();
+    if(b.str().find(endMark(l)) != std::string::npos) UnlinkFile(fileName);
+  }
+  _unsynced = "?";
 }
 
 static std::string list2String(List_T *list)
