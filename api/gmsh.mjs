@@ -2730,7 +2730,9 @@ export function wrapGmsh(Module) {
    * (`localNodeCoord' vector, of length `dim' times `numNodes') and number of
    * primary (first order) nodes (`numPrimaryNodes'). Polygons and polyhedra
    * have no reference element and a variable number of nodes: `numNodes' and
-   * `numPrimaryNodes' are -1 and `localNodeCoord' is empty.
+   * `numPrimaryNodes' are -1 and `localNodeCoord' is empty. Trihedra (type
+   * 140), which link a quadrangle to two triangles in hex-dominant meshes,
+   * have 4 nodes and no reference element: `localNodeCoord' is empty.
    *
    * Return `elementName', `dim', `order', `numNodes', `localNodeCoord', `numPrimaryNodes'.
    */

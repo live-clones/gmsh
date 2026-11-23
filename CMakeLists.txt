@@ -2430,6 +2430,17 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
     if(HAVE_OCC AND HAVE_METIS)
       add_test(seam_brep_partition seam_brep_cpp --partition -nopopup)
     endif()
+    # the programs written for General.ScriptingLanguages compile (with the
+    # compilers of the build, syntax only)
+    if(NOT WIN32)
+      add_executable(script_programs benchmarks/misc/script_programs.cpp)
+      target_link_libraries(script_programs shared)
+      target_compile_definitions(script_programs PRIVATE
+        TEST_CC="${CMAKE_C_COMPILER}" TEST_CXX="${CMAKE_CXX_COMPILER}"
+        TEST_API_DIR="${CMAKE_CURRENT_SOURCE_DIR}/api")
+      add_test(NAME script_programs COMMAND script_programs)
+      set_tests_properties(script_programs PROPERTIES SKIP_RETURN_CODE 77)
+    endif()
     #if(HAVE_HIERARCHICAL_BASIS AND HAVE_EIGEN)
     #  add_subdirectory(contrib/HierarchicalBasis/tests)
     #endif()

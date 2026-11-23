@@ -3144,6 +3144,13 @@ GMSH_API void gmsh::model::mesh::getElementProperties(
     numNodes = numPrimaryNodes = -1;
     return;
   }
+  if(parentType == TYPE_TRIH) {
+    // no basis: a trihedron only links a quadrangle to two triangles
+    dim = 3;
+    order = 1;
+    numNodes = numPrimaryNodes = 4;
+    return;
+  }
   nodalBasis *basis = nullptr;
   if(parentType == TYPE_PYR)
     basis = new pyramidalBasis(elementType);
@@ -3156,6 +3163,7 @@ GMSH_API void gmsh::model::mesh::getElementProperties(
     ElementType::getNumVertices(ElementType::getPrimaryType(elementType));
   if(numNodes != ElementType::getNumVertices(elementType)) {
     Msg::Error("Size of basis incompatible with element type");
+    delete basis;
     return;
   }
   for(int i = 0; i < basis->points.size1(); i++)
