@@ -6,7 +6,6 @@
 // Contributor(s):
 //   Florian Blachère
 
-#include <sstream>
 #include <stdlib.h>
 #include <string.h>
 #include "GModel.h"
@@ -54,6 +53,42 @@ static void writeMeditElement(FILE *fp, MElement *e, const int *nodes,
                                   elementary);
   if(physical < 0) e->reverse();
 }
+
+// The node of a Gmsh 10-node tetrahedron at each position of a Medit
+// TetrahedraP2: the last two are swapped (see MElement::writeMESH())
+static const int meditTet10[10] = {0, 1, 2, 3, 4, 5, 6, 7, 9, 8};
+
+// The sections of elements of a Medit file: keyword, Gmsh element type, the
+// Gmsh node at each Medit position (if not in the same order), the family of
+// elements (lines, triangles, quadrangles, tetrahedra, hexahedra, prisms) and
+// what they are, for the messages
+struct meditSection {
+  const char *keyword;
+  int type;
+  const int *nodes;
+  int family;
+  const char *what;
+};
+static const meditSection meditSections[] = {
+  {"Edges", MSH_LIN_2, nullptr, 0, "edges"},
+  {"EdgesP2", MSH_LIN_3, nullptr, 0, "edges"},
+  {"EdgesP3", MSH_LIN_4, nullptr, 0, "edges"},
+  {"EdgesP4", MSH_LIN_5, nullptr, 0, "edges"},
+  {"Triangles", MSH_TRI_3, nullptr, 1, "triangles"},
+  {"TrianglesP2", MSH_TRI_6, nullptr, 1, "triangles"},
+  {"TrianglesP3", MSH_TRI_10, nullptr, 1, "triangles"},
+  {"TrianglesP4", MSH_TRI_15, nullptr, 1, "triangles"},
+  {"Quadrilaterals", MSH_QUA_4, nullptr, 2, "quadrangles"},
+  // (the nodes ordered as in Gmsh: corners, edges, center)
+  {"QuadrilateralsQ2", MSH_QUA_9, nullptr, 2, "quadrangles Q2"},
+  {"Tetrahedra", MSH_TET_4, nullptr, 3, "tetrahedra"},
+  {"TetrahedraP2", MSH_TET_10, meditTet10, 3, "tetrahedra"},
+  {"TetrahedraP3", MSH_TET_20, nullptr, 3, "tetrahedra"},
+  {"TetrahedraP4", MSH_TET_35, nullptr, 3, "tetrahedra"},
+  {"Hexahedra", MSH_HEX_8, nullptr, 4, "hexahedra"},
+  {"Prisms", MSH_PRI_6, nullptr, 5, "prisms"},
+  {"PrismsP2", MSH_PRI_18, meditPrism18, 5, "prisms P2"},
+};
 
 int GModel::readMESH(const std::string &name)
 {
@@ -117,338 +152,31 @@ int GModel::readMESH(const std::string &name)
           vertexVector[i] = new MVertex(x, y, z);
         }
       }
-      else if(!strcmp(str, "Edges")) {
+      else {
+        const meditSection *sec = nullptr;
+        for(const meditSection &m : meditSections)
+          if(!strcmp(str, m.keyword)) sec = &m;
+        if(!sec) continue;
         if(!fgets(buffer, sizeof(buffer), fp)) break;
-        int nbe;
+        int nbe = 0;
         sscanf(buffer, "%d", &nbe);
-        Msg::Info("%d edges", nbe);
+        Msg::Info("%d %s", nbe, sec->what);
+        const int numNodes = ElementType::getNumVertices(sec->type);
+        std::vector<int> n(numNodes);
         for(int i = 0; i < nbe; i++) {
           if(!fgets(buffer, sizeof(buffer), fp)) break;
-          int n[2], cl;
-          sscanf(buffer, "%d %d %d", &n[0], &n[1], &cl);
-          for(int j = 0; j < 2; j++) n[j]--;
+          // the node indices (starting at 1), then the reference
+          char *p = buffer;
+          for(int j = 0; j < numNodes; j++)
+            n[sec->nodes ? sec->nodes[j] : j] = strtol(p, &p, 10) - 1;
+          int cl = strtol(p, &p, 10);
           std::vector<MVertex *> vertices;
-          if(!getMeshVertices(2, n, vertexVector, vertices)) {
+          if(!getMeshVertices(numNodes, n.data(), vertexVector, vertices)) {
             fclose(fp);
             return 0;
           }
-          elements[0][cl].push_back(new MLine(vertices));
-        }
-      }
-      else if(!strcmp(str, "EdgesP2")) {
-        if(!fgets(buffer, sizeof(buffer), fp)) break;
-        int nbe;
-        sscanf(buffer, "%d", &nbe);
-        Msg::Info("%d edges", nbe);
-        for(int i = 0; i < nbe; i++) {
-          if(!fgets(buffer, sizeof(buffer), fp)) break;
-          int n[3], cl;
-          sscanf(buffer, "%d %d %d %d", &n[0], &n[1], &n[2], &cl);
-          for(int j = 0; j < 3; j++) n[j]--;
-          std::vector<MVertex *> vertices;
-          if(!getMeshVertices(3, n, vertexVector, vertices)) {
-            fclose(fp);
-            return 0;
-          }
-          elements[0][cl].push_back(new MLine3(vertices));
-        }
-      }
-      else if(!strcmp(str, "EdgesP3")) {
-        if(!fgets(buffer, sizeof(buffer), fp)) break;
-        int nbe;
-        sscanf(buffer, "%d", &nbe);
-        Msg::Info("%d edges", nbe);
-        for(int i = 0; i < nbe; i++) {
-          if(!fgets(buffer, sizeof(buffer), fp)) break;
-          int n[4], cl;
-          sscanf(buffer, "%d %d %d %d %d", &n[0], &n[1], &n[2], &n[3], &cl);
-          for(int j = 0; j < 4; j++) n[j]--;
-          std::vector<MVertex *> vertices;
-          if(!getMeshVertices(4, n, vertexVector, vertices)) {
-            fclose(fp);
-            return 0;
-          }
-          elements[0][cl].push_back(new MLineN(vertices));
-        }
-      }
-      else if(!strcmp(str, "EdgesP4")) {
-        if(!fgets(buffer, sizeof(buffer), fp)) break;
-        int nbe;
-        sscanf(buffer, "%d", &nbe);
-        Msg::Info("%d edges", nbe);
-        for(int i = 0; i < nbe; i++) {
-          if(!fgets(buffer, sizeof(buffer), fp)) break;
-          int n[5], cl;
-          sscanf(buffer, "%d %d %d %d %d  %d", &n[0], &n[1], &n[2], &n[3],
-                 &n[4], &cl);
-          for(int j = 0; j < 5; j++) n[j]--;
-          std::vector<MVertex *> vertices;
-          if(!getMeshVertices(5, n, vertexVector, vertices)) {
-            fclose(fp);
-            return 0;
-          }
-          elements[0][cl].push_back(new MLineN(vertices));
-        }
-      }
-      else if(!strcmp(str, "Triangles")) {
-        if(!fgets(buffer, sizeof(buffer), fp)) break;
-        int nbe;
-        sscanf(buffer, "%d", &nbe);
-        Msg::Info("%d triangles", nbe);
-        for(int i = 0; i < nbe; i++) {
-          if(!fgets(buffer, sizeof(buffer), fp)) break;
-          int n[3], cl;
-          sscanf(buffer, "%d %d %d %d", &n[0], &n[1], &n[2], &cl);
-          for(int j = 0; j < 3; j++) n[j]--;
-          std::vector<MVertex *> vertices;
-          if(!getMeshVertices(3, n, vertexVector, vertices)) {
-            fclose(fp);
-            return 0;
-          }
-          elements[1][cl].push_back(new MTriangle(vertices));
-        }
-      }
-      else if(!strcmp(str, "TrianglesP2")) {
-        if(!fgets(buffer, sizeof(buffer), fp)) break;
-        int nbe;
-        sscanf(buffer, "%d", &nbe);
-        Msg::Info("%d triangles", nbe);
-        for(int i = 0; i < nbe; i++) {
-          if(!fgets(buffer, sizeof(buffer), fp)) break;
-          int n[6], cl;
-          sscanf(buffer, "%d %d %d %d %d %d %d", &n[0], &n[1], &n[2], &n[3],
-                 &n[4], &n[5], &cl);
-          for(int j = 0; j < 6; j++) n[j]--;
-          std::vector<MVertex *> vertices;
-          if(!getMeshVertices(6, n, vertexVector, vertices)) {
-            fclose(fp);
-            return 0;
-          }
-          elements[1][cl].push_back(new MTriangle6(vertices));
-        }
-      }
-      else if(!strcmp(str, "TrianglesP3")) {
-        if(!fgets(buffer, sizeof(buffer), fp)) break;
-        int nbe;
-        sscanf(buffer, "%d", &nbe);
-        Msg::Info("%d triangles", nbe);
-        for(int i = 0; i < nbe; i++) {
-          if(!fgets(buffer, sizeof(buffer), fp)) break;
-          int n[10], cl;
-          sscanf(buffer, "%d %d %d %d %d %d %d %d %d %d %d", &n[0], &n[1],
-                 &n[2], &n[3], &n[4], &n[5], &n[6], &n[7], &n[8], &n[9], &cl);
-          for(int j = 0; j < 10; j++) n[j]--;
-          std::vector<MVertex *> vertices;
-          if(!getMeshVertices(10, n, vertexVector, vertices)) {
-            fclose(fp);
-            return 0;
-          }
-          elements[1][cl].push_back(new MTriangleN(vertices, 3));
-        }
-      }
-      else if(!strcmp(str, "TrianglesP4")) {
-        if(!fgets(buffer, sizeof(buffer), fp)) break;
-        int nbe;
-        sscanf(buffer, "%d", &nbe);
-        Msg::Info("%d triangles", nbe);
-        for(int i = 0; i < nbe; i++) {
-          if(!fgets(buffer, sizeof(buffer), fp)) break;
-          int n[15], cl;
-          sscanf(buffer, "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
-                 &n[0], &n[1], &n[2], &n[3], &n[4], &n[5], &n[6], &n[7], &n[8],
-                 &n[9], &n[10], &n[11], &n[12], &n[13], &n[14], &cl);
-          for(int j = 0; j < 15; j++) n[j]--;
-          std::vector<MVertex *> vertices;
-          if(!getMeshVertices(15, n, vertexVector, vertices)) {
-            fclose(fp);
-            return 0;
-          }
-          elements[1][cl].push_back(new MTriangleN(vertices, 4));
-        }
-      }
-      else if(!strcmp(str, "Quadrilaterals")) {
-        if(!fgets(buffer, sizeof(buffer), fp)) break;
-        int nbe;
-        sscanf(buffer, "%d", &nbe);
-        Msg::Info("%d quadrangles", nbe);
-        for(int i = 0; i < nbe; i++) {
-          if(!fgets(buffer, sizeof(buffer), fp)) break;
-          int n[4], cl;
-          sscanf(buffer, "%d %d %d %d %d", &n[0], &n[1], &n[2], &n[3], &cl);
-          for(int j = 0; j < 4; j++) n[j]--;
-          std::vector<MVertex *> vertices;
-          if(!getMeshVertices(4, n, vertexVector, vertices)) {
-            fclose(fp);
-            return 0;
-          }
-          elements[2][cl].push_back(new MQuadrangle(vertices));
-        }
-      }
-      else if(!strcmp(str, "QuadrilateralsQ2")) {
-        if(!fgets(buffer, sizeof(buffer), fp)) break;
-        int nbe;
-        sscanf(buffer, "%d", &nbe);
-        Msg::Info("%d quadrangles Q2", nbe);
-        for(int i = 0; i < nbe; i++) {
-          if(!fgets(buffer, sizeof(buffer), fp)) break;
-          // the nodes are ordered as in Gmsh (corners, edges, center)
-          int n[9], cl;
-          sscanf(buffer, "%d %d %d %d %d %d %d %d %d %d", &n[0], &n[1], &n[2],
-                 &n[3], &n[4], &n[5], &n[6], &n[7], &n[8], &cl);
-          for(int j = 0; j < 9; j++) n[j]--;
-          std::vector<MVertex *> vertices;
-          if(!getMeshVertices(9, n, vertexVector, vertices)) {
-            fclose(fp);
-            return 0;
-          }
-          elements[2][cl].push_back(new MQuadrangle9(vertices));
-        }
-      }
-      else if(!strcmp(str, "Tetrahedra")) {
-        if(!fgets(buffer, sizeof(buffer), fp)) break;
-        int nbe;
-        sscanf(buffer, "%d", &nbe);
-        Msg::Info("%d tetrahedra", nbe);
-        for(int i = 0; i < nbe; i++) {
-          if(!fgets(buffer, sizeof(buffer), fp)) break;
-          int n[4], cl;
-          sscanf(buffer, "%d %d %d %d %d", &n[0], &n[1], &n[2], &n[3], &cl);
-          for(int j = 0; j < 4; j++) n[j]--;
-          std::vector<MVertex *> vertices;
-          if(!getMeshVertices(4, n, vertexVector, vertices)) {
-            fclose(fp);
-            return 0;
-          }
-          elements[3][cl].push_back(new MTetrahedron(vertices));
-        }
-      }
-      else if(!strcmp(str, "TetrahedraP2")) {
-        if(!fgets(buffer, sizeof(buffer), fp)) break;
-        int nbe;
-        sscanf(buffer, "%d", &nbe);
-        Msg::Info("%d tetrahedra", nbe);
-        for(int i = 0; i < nbe; i++) {
-          if(!fgets(buffer, sizeof(buffer), fp)) break;
-          int n[10], cl;
-          // vertices 8 and 9 are reversed, see MElement::writeMESH()
-          sscanf(buffer, "%d %d %d %d %d %d %d %d %d %d %d", &n[0], &n[1],
-                 &n[2], &n[3], &n[4], &n[5], &n[6], &n[7], &n[9], &n[8], &cl);
-          for(int j = 0; j < 10; j++) n[j]--;
-          std::vector<MVertex *> vertices;
-          if(!getMeshVertices(10, n, vertexVector, vertices)) {
-            fclose(fp);
-            return 0;
-          }
-          elements[3][cl].push_back(new MTetrahedron10(vertices));
-        }
-      }
-      else if(!strcmp(str, "TetrahedraP3")) {
-        if(!fgets(buffer, sizeof(buffer), fp)) break;
-        int nbe;
-        sscanf(buffer, "%d", &nbe);
-        Msg::Info("%d tetrahedra", nbe);
-        for(int i = 0; i < nbe; i++) {
-          if(!fgets(buffer, sizeof(buffer), fp)) break;
-          int n[20], cl;
-          sscanf(
-            buffer,
-            "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
-            &n[0], &n[1], &n[2], &n[3], &n[4], &n[5], &n[6], &n[7], &n[8],
-            &n[9], &n[10], &n[11], &n[12], &n[13], &n[14], &n[15], &n[16],
-            &n[17], &n[18], &n[19], &cl);
-          for(int j = 0; j < 20; j++) n[j]--;
-          std::vector<MVertex *> vertices;
-          if(!getMeshVertices(20, n, vertexVector, vertices)) {
-            fclose(fp);
-            return 0;
-          }
-          elements[3][cl].push_back(new MTetrahedronN(vertices, 3));
-        }
-      }
-      else if(!strcmp(str, "TetrahedraP4")) {
-        if(!fgets(buffer, sizeof(buffer), fp)) break;
-        int nbe;
-        sscanf(buffer, "%d", &nbe);
-        Msg::Info("%d tetrahedra", nbe);
-        for(int i = 0; i < nbe; i++) {
-          if(!fgets(buffer, sizeof(buffer), fp)) break;
-          int n[35], cl;
-          sscanf(buffer,
-                 "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
-                 "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
-                 &n[0], &n[1], &n[2], &n[3], &n[4], &n[5], &n[6], &n[7], &n[8],
-                 &n[9], &n[10], &n[11], &n[12], &n[13], &n[14], &n[15], &n[16],
-                 &n[17], &n[18], &n[19], &n[20], &n[21], &n[22], &n[23], &n[24],
-                 &n[25], &n[26], &n[27], &n[28], &n[29], &n[30], &n[31], &n[32],
-                 &n[33], &n[34], &cl);
-          for(int j = 0; j < 35; j++) n[j]--;
-          std::vector<MVertex *> vertices;
-          if(!getMeshVertices(35, n, vertexVector, vertices)) {
-            fclose(fp);
-            return 0;
-          }
-          elements[3][cl].push_back(new MTetrahedronN(vertices, 4));
-        }
-      }
-      else if(!strcmp(str, "Hexahedra")) {
-        if(!fgets(buffer, sizeof(buffer), fp)) break;
-        int nbe;
-        sscanf(buffer, "%d", &nbe);
-        Msg::Info("%d hexahedra", nbe);
-        for(int i = 0; i < nbe; i++) {
-          if(!fgets(buffer, sizeof(buffer), fp)) break;
-          int n[8], cl;
-          sscanf(buffer, "%d %d %d %d %d %d %d %d %d", &n[0], &n[1], &n[2],
-                 &n[3], &n[4], &n[5], &n[6], &n[7], &cl);
-          for(int j = 0; j < 8; j++) n[j]--;
-          std::vector<MVertex *> vertices;
-          if(!getMeshVertices(8, n, vertexVector, vertices)) {
-            fclose(fp);
-            return 0;
-          }
-          elements[4][cl].push_back(new MHexahedron(vertices));
-        }
-      }
-      else if(!strcmp(str, "Prisms")) {
-        if(!fgets(buffer, sizeof(buffer), fp)) break;
-        int nbe;
-        sscanf(buffer, "%d", &nbe);
-        Msg::Info("%d prisms", nbe);
-        for(int i = 0; i < nbe; i++) {
-          if(!fgets(buffer, sizeof(buffer), fp)) break;
-          int n[6], cl;
-          sscanf(buffer, "%d %d %d %d %d %d %d", &n[0], &n[1], &n[2], &n[3],
-                 &n[4], &n[5], &cl);
-          for(int j = 0; j < 6; j++) n[j]--;
-          std::vector<MVertex *> vertices;
-          if(!getMeshVertices(6, n, vertexVector, vertices)) {
-            fclose(fp);
-            return 0;
-          }
-          elements[5][cl].push_back(new MPrism(vertices));
-        }
-      }
-      else if(!strcmp(str, "PrismsP2")) {
-        if(!fgets(buffer, sizeof(buffer), fp)) break;
-        int nbe;
-        sscanf(buffer, "%d", &nbe);
-        Msg::Info("%d prisms P2", nbe);
-        for(int i = 0; i < nbe; i++) {
-          if(!fgets(buffer, sizeof(buffer), fp)) break;
-          std::istringstream line(buffer);
-          int n[18], cl = 0;
-          for(int j = 0; j < 18; j++) {
-            line >> n[j];
-            n[j]--;
-          }
-          line >> cl;
-          std::vector<MVertex *> medit, vertices(18);
-          if(!getMeshVertices(18, n, vertexVector, medit)) {
-            fclose(fp);
-            return 0;
-          }
-          for(int j = 0; j < 18; j++) vertices[meditPrism18[j]] = medit[j];
-          elements[5][cl].push_back(new MPrism18(vertices));
+          elements[sec->family][cl].push_back(
+            MElementFactory().create(sec->type, vertices));
         }
       }
     }
