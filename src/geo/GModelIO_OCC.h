@@ -75,17 +75,21 @@ private:
   // unbound during boolean operations
   std::set<std::pair<int, int> > _toPreserve;
 
-  // the shapes given the tag of the shape they come from through the history of
-  // an operation (see _bindFromHistory): their model entities keep the physical
-  // groups and the mesh constraints of the entities they replace at the next
-  // synchronization
-  std::map<std::pair<int, int>, TopoDS_Shape> _inherited;
-
-  // the tags of the entities into which boolean operations split entities, or
-  // renumber them, with Geometry.OCCBooleanPreserveNumbering = 2 (see
-  // _recordSplits): their model entities get the physical groups and the
-  // periodicity of the entities they replace at the next synchronization
-  std::map<std::pair<int, int>, std::vector<int>> _split;
+  // what the entities (dim, tag) become through the operations made since the
+  // last synchronization, which gives their attributes to the model entities
+  // that replace them:
+  // - shape is the shape given their tag through the history of an operation
+  //   (see _bindFromHistory): if the tag is still bound to it, the model entity
+  //   keeps its physical groups and mesh constraints;
+  // - tags are the entities into which they are split, merged or renumbered
+  //   (see _recordSplits; by boolean operations with
+  //   Geometry.OCCBooleanPreserveNumbering = 2 and by healing), which get
+  //   their physical groups and periodicity
+  struct replacement {
+    TopoDS_Shape shape;
+    std::vector<int> tags;
+  };
+  std::map<std::pair<int, int>, replacement> _replacedBy;
 
   // mesh attributes
   OCCAttributesRTree *_attributes;
@@ -159,7 +163,7 @@ private:
   // the entities (dim, tag) of the keys become the entities (dim, tags) of the
   // values in an operation (a tag can be both, for an old and a new entity):
   // replace them in the physical groups, and give the new ones their physical
-  // groups and periodicity at the next synchronization (see _split)
+  // groups and periodicity at the next synchronization (see _replacedBy)
   void
   _recordSplits(const std::map<std::pair<int, int>, std::vector<int>> &splits);
 

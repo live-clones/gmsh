@@ -993,7 +993,7 @@ void OCC_Internals::_bindFromHistory(
       if(i && shapes(i).ShapeType() == shape.ShapeType() &&
          !_isBound(dim, shapes(i))) {
         _bind(shapes(i), dim, tag, false);
-        if(dim >= 0) _inherited[std::make_pair(dim, tag)] = shapes(i);
+        if(dim >= 0) _replacedBy[std::make_pair(dim, tag)].shape = shapes(i);
       }
       else if(split && dim >= 0 && !i) {
         // split into several shapes, or merged into one that took another tag
@@ -1034,18 +1034,21 @@ void OCC_Internals::_recordSplits(
   if(splits.empty()) return;
   // the entities that became old ones in previous operations, before the next
   // synchronization, now become the new ones
-  for(auto &[dimTag, tags] : _split) {
+  for(auto &[dimTag, r] : _replacedBy) {
     std::vector<int> v;
-    for(auto t : tags) {
+    for(auto t : r.tags) {
       auto it = splits.find(std::make_pair(dimTag.first, t));
       for(auto n : (it == splits.end()) ? std::vector<int>{t} : it->second)
         if(std::find(v.begin(), v.end(), n) == v.end()) v.push_back(n);
     }
-    tags = v;
+    r.tags = v;
   }
   // the tag of an entity split before can be given to a new one, split in turn:
   // the model entity with this tag is the first one
-  for(auto &s : splits) _split.insert(s);
+  for(auto &[dimTag, tags] : splits) {
+    replacement &r = _replacedBy[dimTag];
+    if(r.tags.empty()) r.tags = tags;
+  }
   // the physical groups are defined by tag in the built-in kernel, both in .geo
   // files and with the API, and given to the model entities from there
   for(int dim = 0; dim <= 3; dim++) {
@@ -4609,7 +4612,7 @@ bool OCC_Internals::booleanOperator(
             Msg::Info("Could not preserve tag of %dD object %d (->%d)", dim,
                       tag, t);
           else
-            _inherited[std::make_pair(dim, tag)] = mapModified[i].First();
+            _replacedBy[std::make_pair(dim, tag)].shape = mapModified[i].First();
           _toPreserve.insert(std::make_pair(dim, t));
         }
         Msg::Debug("BOOL (%d,%d) replaced by 1", dim, tag);
@@ -6560,30 +6563,28 @@ void OCC_Internals::synchronize(GModel *model)
   for(auto ge : removed) {
     std::pair<int, int> dimTag(ge->dim(), ge->tag());
     std::vector<int> &by = replacedBy[dimTag]; // empty if nothing replaces it
-    auto it = _inherited.find(dimTag);
+    auto it = _replacedBy.find(dimTag);
     bool same = false;
     if(_isBound(ge->dim(), ge->tag())) {
       TopoDS_Shape s = _find(ge->dim(), ge->tag());
-      same = (it != _inherited.end() && s.IsSame(it->second)) ||
+      same = (it != _replacedBy.end() && s.IsSame(it->second.shape)) ||
              (ge->getNativeType() == GEntity::OpenCascadeModel &&
               s.IsSame(*(TopoDS_Shape *)ge->getNativePtr()));
     }
-    // (an entity can keep its tag and have been split as well, by an operation
-    // before the one that gave its tag to the shape: its pieces are then the
-    // entities that replace it)
-    auto its = _split.find(dimTag);
     if(same) {
       inherited.push_back(inheritedAttributes(ge));
       by = {ge->tag()};
     }
-    if(its == _split.end()) continue;
-    for(auto t : its->second)
+    // (an entity can keep its tag and have been split as well, by an operation
+    // before the one that gave its tag to the shape: its pieces are then the
+    // entities that replace it)
+    if(it == _replacedBy.end() || it->second.tags.empty()) continue;
+    for(auto t : it->second.tags)
       if(std::find(by.begin(), by.end(), t) == by.end()) by.push_back(t);
     if(ge->physicals.size())
       splitPhysicals.push_back(std::make_pair(dimTag, ge->physicals));
   }
-  _inherited.clear();
-  _split.clear();
+  _replacedBy.clear();
   // the periodicity constraints of removed entities (as slaves or masters),
   // set again on the entities they become (see restorePeriodicity)
   std::vector<periodicLink> periodic;
@@ -7373,7 +7374,8 @@ bool OCC_Internals::healShapes(
       if(!_isBound(dims[i], n)) {
         _bind(n, dims[i], tb.first, false);
         // the model entity keeps its physical groups and mesh constraints
-        if(dims[i] >= 0) _inherited[std::make_pair(dims[i], tb.first)] = n;
+        if(dims[i] >= 0)
+          _replacedBy[std::make_pair(dims[i], tb.first)].shape = n;
       }
       else if(dims[i] >= 0)
         merged[std::make_pair(dims[i], tb.first)] = {_find(dims[i], n)};
