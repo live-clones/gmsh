@@ -2308,6 +2308,11 @@ void GModel::renumberMeshVertices(
 #endif
 }
 
+void GModel::addGhostCells(MElement *elm, short partition)
+{
+  _ghostCells.insert(std::make_pair(elm->getNum(), partition));
+}
+
 void GModel::renumberMeshElements(
   const std::map<std::size_t, std::size_t> &mapping)
 {
@@ -2315,6 +2320,20 @@ void GModel::renumberMeshElements(
   setMaxElementNumber(CTX::instance()->mesh.firstElementTag - 1);
   std::vector<GEntity *> entities;
   getEntities(entities);
+
+  // the ghost cells, which follow their elements
+  std::vector<std::pair<MElement *, short> > ghosts;
+  if(!_ghostCells.empty()) {
+    for(auto ge : entities) {
+      for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
+        MElement *e = ge->getMeshElement(j);
+        auto r = _ghostCells.equal_range(e->getNum());
+        for(auto it = r.first; it != r.second; it++)
+          ghosts.push_back({e, it->second});
+      }
+    }
+    _ghostCells.clear();
+  }
 
   std::map<MElement *, int> old, remap;
   std::size_t npost = 0;
@@ -2398,6 +2417,8 @@ void GModel::renumberMeshElements(
       }
     }
   }
+
+  for(auto &g : ghosts) addGhostCells(g.first, g.second);
 
 #if defined(HAVE_POST)
   // renumber any dependent element post-processing datasets

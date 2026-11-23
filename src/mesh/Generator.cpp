@@ -896,9 +896,13 @@ static void Mesh2D(GModel *m)
       if(exceptions) throw std::runtime_error(Msg::GetLastError());
       if(!nPending) break;
       // iter == 2 is for meshing re-parametrized surfaces; after that, we
-      // serialize (self-intersections of 1D meshes are not thread safe)!
-      if(nIter > 2) nthreads = 1;
-      if(nIter++ > CTX::instance()->mesh.maxRetries) break;
+      // serialize (self-intersections of 1D meshes are not thread safe)! The
+      // surfaces left for the serial passes get one at least, whatever the
+      // number of retries
+      const bool last = (nIter > CTX::instance()->mesh.maxRetries);
+      if(last && nthreads == 1) break;
+      if(last || nIter > 2) nthreads = 1;
+      nIter++;
     }
 
     Msg::StopProgressMeter();

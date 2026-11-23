@@ -3035,6 +3035,10 @@ int GModel::_readMSH4(const std::string &name,
         for(std::size_t i = 0; i < totalNumRead; i++) {
           MVertex *v = verticesRead[i];
           auto r = _vertexMapCache.insert(v->getNum(), v);
+          if(!r.second && !r.first) { // (a tag left without node by a lookup)
+            r.first = v;
+            r.second = true;
+          }
           if(r.second) {
             if(v->onWhat())
               v->onWhat()->addMeshVertex(v);
@@ -3061,8 +3065,10 @@ int GModel::_readMSH4(const std::string &name,
         // is that of its point element): these are sought in the other blocks
         // (of which only the node tags are read, but all), the $Nodes section
         // being read again
+        // (findMeshVertexByTag: getMeshVertexByTag would add the missing tags
+        // to the map cache of a sparse numbering, without node)
         for(std::size_t t = 0; t < nodeFilter.tags.size(); t++) {
-          if(nodeFilter.tags[t] && !getMeshVertexByTag(t)) {
+          if(nodeFilter.tags[t] && !findMeshVertexByTag(t)) {
             missing.tags.resize(std::max(missing.tags.size(), t + 1), 0);
             missing.tags[t] = 1;
             missing.count++;
@@ -5058,24 +5064,32 @@ static void getMSH4GhostCells(GModel *const model, bool saveAll,
   std::vector<GEntity *> entities;
   model->getEntities(entities);
   // the partition entity of each element saved, by tag (its index plus one)
+  // and the element itself
   std::vector<int> entityOf(model->getMaxElementNumber() + 1, 0);
+  std::vector<MElement *> elementOf(entityOf.size(), nullptr);
   for(std::size_t k = 0; k < entities.size(); k++) {
     GEntity *ge = entities[k];
     const std::vector<int> *p = partitionsOf(ge);
     if(!p || p->empty() || (!saveAll && ge->physicals.empty())) continue;
     for(std::size_t i = 0; i < ge->getNumMeshElements(); i++) {
-      std::size_t num = ge->getMeshElement(i)->getNum();
-      if(num >= entityOf.size()) entityOf.resize(num + 1, 0);
+      MElement *e = ge->getMeshElement(i);
+      std::size_t num = e->getNum();
+      if(num >= entityOf.size()) {
+        entityOf.resize(num + 1, 0);
+        elementOf.resize(num + 1, nullptr);
+      }
       entityOf[num] = k + 1;
+      elementOf[num] = e;
     }
   }
   for(auto &g : model->getGhostCells()) {
-    std::size_t num = g.first->getNum();
+    std::size_t num = g.first;
     if(num >= entityOf.size() || !entityOf[num] || g.second < 1 ||
        g.second >= (int)ghosts.size())
       continue;
     GEntity *ge = entities[entityOf[num] - 1];
-    ghosts[g.second][std::make_pair(ge->dim(), ge->tag())].push_back(g.first);
+    ghosts[g.second][std::make_pair(ge->dim(), ge->tag())].push_back(
+      elementOf[num]);
   }
 }
 

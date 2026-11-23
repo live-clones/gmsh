@@ -5131,10 +5131,12 @@ gmsh::model::mesh::getGhostElements(const int partition,
   elementTags.clear();
   partitions.clear();
   std::vector<std::pair<std::size_t, int>> ghosts;
-  for(auto &g : GModel::current()->getGhostCells())
-    if(g.second == partition)
-      ghosts.push_back(
-        std::make_pair(g.first->getNum(), g.first->getPartition()));
+  for(auto &g : GModel::current()->getGhostCells()) {
+    if(g.second != partition) continue;
+    // (not an element any more if the mesh was changed after partitioning)
+    MElement *e = GModel::current()->getMeshElementByTag(g.first);
+    if(e) ghosts.push_back(std::make_pair(g.first, e->getPartition()));
+  }
   std::sort(ghosts.begin(), ghosts.end());
   for(auto &g : ghosts) {
     elementTags.push_back(g.first);

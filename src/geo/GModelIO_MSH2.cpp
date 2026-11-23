@@ -459,7 +459,7 @@ int GModel::_readMSH2(const std::string &name)
           elemreg[num] = elementary;
           elemphy[num] = physical;
           for(std::size_t j = 0; j < ghosts.size(); j++)
-            _ghostCells.insert(std::pair<MElement *, short>(e, ghosts[j]));
+            addGhostCells(e, ghosts[j]);
           if(numElements > 100000)
             Msg::ProgressMeter(i + 1, true, "Reading elements");
         }
@@ -543,8 +543,7 @@ int GModel::_readMSH2(const std::string &name)
             elemphy[num] = physical;
             if(numPartitions > 1)
               for(int j = 0; j < numPartitions - 1; j++)
-                _ghostCells.insert(
-                  std::pair<MElement *, short>(e, -data[5 + j]));
+                addGhostCells(e, -data[5 + j]);
             if(numElements > 100000)
               Msg::ProgressMeter(numElementsPartial + i + 1, true,
                                  "Reading elements");
@@ -726,7 +725,7 @@ static void writeElementMSH(FILE *fp, GModel *model, GEntity *ge, T *ele,
 
   std::vector<short> ghosts;
   if(model->getGhostCells().size()) {
-    auto itp = model->getGhostCells().equal_range(ele);
+    auto itp = model->getGhostCells().equal_range(ele->getNum());
     for(auto it = itp.first; it != itp.second; it++)
       ghosts.push_back(it->second);
   }
@@ -1100,7 +1099,8 @@ int GModel::_writePartitionedMSH2(const std::string &baseName, bool binary,
     FILE *fp = Fopen("ghosts.pos", "w");
     fprintf(fp, "View \"ghosts\"{\n");
     for(auto it = _ghostCells.begin(); it != _ghostCells.end(); it++)
-      it->first->writePOS(fp, false, true, false, false, false, false);
+      if(MElement *e = getMeshElementByTag(it->first))
+        e->writePOS(fp, false, true, false, false, false, false);
     fprintf(fp, "};\n");
     fclose(fp);
   }

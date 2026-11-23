@@ -131,8 +131,9 @@ protected:
 
   // the ghost cells of a partitioned mesh: for each element that is a ghost in
   // other partitions (i.e. that shares a node with their elements), these
-  // partitions
-  std::multimap<MElement *, short> _ghostCells;
+  // partitions, by the tag of the element (not its address: elements are
+  // deleted when the mesh is changed)
+  std::multimap<std::size_t, short> _ghostCells;
 
   // an octree for fast mesh element lookup
   MElementOctree *_elementOctree;
@@ -768,11 +769,8 @@ public:
   int createOverlaps(int layers, bool createBoundaries=true);
 
   // the ghost cells (see _ghostCells)
-  std::multimap<MElement *, short> &getGhostCells() { return _ghostCells; }
-  void addGhostCells(MElement *elm, short partition)
-  {
-    _ghostCells.insert(std::make_pair(elm, partition));
-  }
+  std::multimap<std::size_t, short> &getGhostCells() { return _ghostCells; }
+  void addGhostCells(MElement *elm, short partition);
 
   // perform various coherence tests on the mesh
   void checkMeshCoherence(double tolerance);

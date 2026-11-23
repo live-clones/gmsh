@@ -1246,11 +1246,11 @@ static void setHighOrder(GEdge *ge, edgeContainer &edgeVertices, bool linear,
     std::vector<MVertex *> ve;
     getEdgeVertices(ge, l, ve, edgeVertices, linear, nbPts);
     if(nbPts == 1)
-      lines2.push_back(
-        new MLine3(l->getVertex(0), l->getVertex(1), ve[0], l->getPartition()));
+      lines2.push_back(new MLine3(l->getVertex(0), l->getVertex(1), ve[0],
+                                  l->getNum(), l->getPartition()));
     else
-      lines2.push_back(
-        new MLineN(l->getVertex(0), l->getVertex(1), ve, l->getPartition()));
+      lines2.push_back(new MLineN(l->getVertex(0), l->getVertex(1), ve,
+                                  l->getNum(), l->getPartition()));
     delete l;
   }
   ge->lines = lines2;
@@ -1267,12 +1267,12 @@ static MTriangle *setHighOrder(MTriangle *t, GFace *gf,
   getEdgeVertices(gf, t, v, edgeVertices, linear, nPts);
   if(nPts == 1) {
     return new MTriangle6(t->getVertex(0), t->getVertex(1), t->getVertex(2),
-                          v[0], v[1], v[2], 0, t->getPartition());
+                          v[0], v[1], v[2], t->getNum(), t->getPartition());
   }
   else {
     if(!incomplete) getFaceVertices(gf, t, v, faceVertices, linear, nPts);
     return new MTriangleN(t->getVertex(0), t->getVertex(1), t->getVertex(2), v,
-                          nPts + 1, 0, t->getPartition());
+                          nPts + 1, t->getNum(), t->getPartition());
   }
 }
 
@@ -1287,12 +1287,12 @@ static MQuadrangle *setHighOrder(MQuadrangle *q, GFace *gf,
   if(incomplete) {
     if(nPts == 1) {
       return new MQuadrangle8(q->getVertex(0), q->getVertex(1), q->getVertex(2),
-                              q->getVertex(3), v[0], v[1], v[2], v[3], 0,
-                              q->getPartition());
+                              q->getVertex(3), v[0], v[1], v[2], v[3],
+                              q->getNum(), q->getPartition());
     }
     else {
       return new MQuadrangleN(q->getVertex(0), q->getVertex(1), q->getVertex(2),
-                              q->getVertex(3), v, nPts + 1, 0,
+                              q->getVertex(3), v, nPts + 1, q->getNum(),
                               q->getPartition());
     }
   }
@@ -1300,12 +1300,12 @@ static MQuadrangle *setHighOrder(MQuadrangle *q, GFace *gf,
     getFaceVertices(gf, q, v, faceVertices, linear, nPts);
     if(nPts == 1) {
       return new MQuadrangle9(q->getVertex(0), q->getVertex(1), q->getVertex(2),
-                              q->getVertex(3), v[0], v[1], v[2], v[3], v[4], 0,
-                              q->getPartition());
+                              q->getVertex(3), v[0], v[1], v[2], v[3], v[4],
+                              q->getNum(), q->getPartition());
     }
     else {
       return new MQuadrangleN(q->getVertex(0), q->getVertex(1), q->getVertex(2),
-                              q->getVertex(3), v, nPts + 1, 0,
+                              q->getVertex(3), v, nPts + 1, q->getNum(),
                               q->getPartition());
     }
   }
@@ -1352,7 +1352,7 @@ static MTetrahedron *setHighOrder(MTetrahedron *t, GRegion *gr,
   if(nPts == 1) {
     return new MTetrahedron10(t->getVertex(0), t->getVertex(1), t->getVertex(2),
                               t->getVertex(3), v[0], v[1], v[2], v[3], v[4],
-                              v[5], 0, t->getPartition());
+                              v[5], t->getNum(), t->getPartition());
   }
   else {
     if(!incomplete) {
@@ -1360,7 +1360,7 @@ static MTetrahedron *setHighOrder(MTetrahedron *t, GRegion *gr,
       getVolumeVertices(gr, t, v, nPts);
     }
     return new MTetrahedronN(t->getVertex(0), t->getVertex(1), t->getVertex(2),
-                             t->getVertex(3), v, nPts + 1, 0,
+                             t->getVertex(3), v, nPts + 1, t->getNum(),
                              t->getPartition());
   }
 }
@@ -1379,13 +1379,13 @@ static MHexahedron *setHighOrder(MHexahedron *h, GRegion *gr,
         h->getVertex(0), h->getVertex(1), h->getVertex(2), h->getVertex(3),
         h->getVertex(4), h->getVertex(5), h->getVertex(6), h->getVertex(7),
         v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], v[8], v[9], v[10],
-        v[11], 0, h->getPartition());
+        v[11], h->getNum(), h->getPartition());
     }
     else {
       return new MHexahedronN(h->getVertex(0), h->getVertex(1), h->getVertex(2),
                               h->getVertex(3), h->getVertex(4), h->getVertex(5),
-                              h->getVertex(6), h->getVertex(7), v, nPts + 1, 0,
-                              h->getPartition());
+                              h->getVertex(6), h->getVertex(7), v, nPts + 1,
+                              h->getNum(), h->getPartition());
     }
   }
   else {
@@ -1396,14 +1396,14 @@ static MHexahedron *setHighOrder(MHexahedron *h, GRegion *gr,
         h->getVertex(0), h->getVertex(1), h->getVertex(2), h->getVertex(3),
         h->getVertex(4), h->getVertex(5), h->getVertex(6), h->getVertex(7),
         v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], v[8], v[9], v[10],
-        v[11], v[12], v[13], v[14], v[15], v[16], v[17], v[18], 0,
+        v[11], v[12], v[13], v[14], v[15], v[16], v[17], v[18], h->getNum(),
         h->getPartition());
     }
     else {
       return new MHexahedronN(h->getVertex(0), h->getVertex(1), h->getVertex(2),
                               h->getVertex(3), h->getVertex(4), h->getVertex(5),
-                              h->getVertex(6), h->getVertex(7), v, nPts + 1, 0,
-                              h->getPartition());
+                              h->getVertex(6), h->getVertex(7), v, nPts + 1,
+                              h->getNum(), h->getPartition());
     }
   }
 }
@@ -1420,12 +1420,12 @@ static MPrism *setHighOrder(MPrism *p, GRegion *gr, edgeContainer &edgeVertices,
       return new MPrism15(p->getVertex(0), p->getVertex(1), p->getVertex(2),
                           p->getVertex(3), p->getVertex(4), p->getVertex(5),
                           v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], v[8],
-                          0, p->getPartition());
+                          p->getNum(), p->getPartition());
     }
     else {
       return new MPrismN(p->getVertex(0), p->getVertex(1), p->getVertex(2),
                          p->getVertex(3), p->getVertex(4), p->getVertex(5), v,
-                         nPts + 1, 0, p->getPartition());
+                         nPts + 1, p->getNum(), p->getPartition());
     }
   }
   else {
@@ -1434,13 +1434,13 @@ static MPrism *setHighOrder(MPrism *p, GRegion *gr, edgeContainer &edgeVertices,
       return new MPrism18(p->getVertex(0), p->getVertex(1), p->getVertex(2),
                           p->getVertex(3), p->getVertex(4), p->getVertex(5),
                           v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], v[8],
-                          v[9], v[10], v[11], 0, p->getPartition());
+                          v[9], v[10], v[11], p->getNum(), p->getPartition());
     }
     else {
       getVolumeVertices(gr, p, v, nPts);
       return new MPrismN(p->getVertex(0), p->getVertex(1), p->getVertex(2),
                          p->getVertex(3), p->getVertex(4), p->getVertex(5), v,
-                         nPts + 1, 0, p->getPartition());
+                         nPts + 1, p->getNum(), p->getPartition());
     }
   }
 }
@@ -1458,8 +1458,8 @@ static MPyramid *setHighOrder(MPyramid *p, GRegion *gr,
     if(nPts > 1) { getVolumeVertices(gr, p, v, nPts); }
   }
   return new MPyramidN(p->getVertex(0), p->getVertex(1), p->getVertex(2),
-                       p->getVertex(3), p->getVertex(4), v, nPts + 1, 0,
-                       p->getPartition());
+                       p->getVertex(3), p->getVertex(4), v, nPts + 1,
+                       p->getNum(), p->getPartition());
 }
 
 static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
@@ -1525,7 +1525,7 @@ static void setFirstOrder(GEntity *e, std::vector<T *> &elements,
     std::vector<MVertex *> v1;
     v1.reserve(n);
     for(std::size_t j = 0; j < n; j++) v1.push_back(ele->getVertex(j));
-    elements1.push_back(new T(v1, 0, ele->getPartition()));
+    elements1.push_back(new T(v1, ele->getNum(), ele->getPartition()));
     delete ele;
   }
   elements = elements1;

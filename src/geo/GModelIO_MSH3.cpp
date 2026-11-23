@@ -674,7 +674,7 @@ static void writeElementMSH(FILE *fp, GModel *model, MElement *ele, bool binary,
 {
   if(model->getGhostCells().size()) {
     std::vector<short> ghosts;
-    auto itp = model->getGhostCells().equal_range(ele);
+    auto itp = model->getGhostCells().equal_range(ele->getNum());
     for(auto it = itp.first; it != itp.second; it++)
       ghosts.push_back(it->second);
     ele->writeMSH3(fp, binary, elementary, &ghosts);

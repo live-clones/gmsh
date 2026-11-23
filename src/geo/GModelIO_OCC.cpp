@@ -6524,14 +6524,17 @@ void OCC_Internals::synchronize(GModel *model)
              (ge->getNativeType() == GEntity::OpenCascadeModel &&
               s.IsSame(*(TopoDS_Shape *)ge->getNativePtr()));
     }
+    // (an entity can keep its tag and have been split as well, by an operation
+    // before the one that gave its tag to the shape: its pieces are then the
+    // entities that replace it)
+    auto its = _split.find(dimTag);
     if(same) {
       inherited.push_back(inheritedAttributes(ge));
       by = {ge->tag()};
-      continue;
     }
-    auto its = _split.find(dimTag);
     if(its == _split.end()) continue;
-    by = its->second;
+    for(auto t : its->second)
+      if(std::find(by.begin(), by.end(), t) == by.end()) by.push_back(t);
     if(ge->physicals.size())
       splitPhysicals.push_back(std::make_pair(dimTag, ge->physicals));
   }
@@ -7253,6 +7256,9 @@ bool OCC_Internals::healShapes(
   b.MakeCompound(toHeal);
   NCollection_DataMap<int, TopoDS_Shape> *maps[6] = {
     &_tagSolid, &_tagShell, &_tagFace, &_tagWire, &_tagEdge, &_tagVertex};
+  NCollection_DataMap<TopoDS_Shape, int, TopTools_ShapeMapHasher>
+    *shapeTags[6] = {&_solidTag, &_shellTag, &_faceTag,
+                     &_wireTag,  &_edgeTag,  &_vertexTag};
   const int dims[6] = {3, -2, 2, -1, 1, 0};
   for(int i = 0; i < 6; i++) {
     NCollection_DataMap<int, TopoDS_Shape>::Iterator it(*maps[i]);
@@ -7309,7 +7315,14 @@ bool OCC_Internals::healShapes(
       if(!n.IsNull() && n.IsSame(tb.second) &&
          n.Orientation() == tb.second.Orientation())
         continue;
-      _unbind(tb.second, dims[i], tb.first, false);
+      // (unbound directly: the checked _unbind() looks for the shape in all
+      // the bound ones, which is quadratic when healing changes many shapes)
+      if(!_toPreserve.count(std::make_pair(dims[i], tb.first))) {
+        shapeTags[i]->UnBind(tb.second);
+        maps[i]->UnBind(tb.first);
+        _toRemove.insert(std::make_pair(dims[i], tb.first));
+        _changed = true;
+      }
       if(!n.IsNull() && n.ShapeType() == tb.second.ShapeType() &&
          !_isBound(dims[i], n)) {
         _bind(n, dims[i], tb.first, false);
@@ -7318,6 +7331,7 @@ bool OCC_Internals::healShapes(
       }
     }
   }
+  for(int d = -2; d <= 3; d++) _recomputeMaxTag(d);
 
   // bind the new shapes
   std::vector<std::pair<int, int>> all;

@@ -849,17 +849,28 @@ namespace {
 
 } // namespace
 
+// the maximum tags of the two kernels, by dimension (from -2)
+static std::vector<int> maxTags()
+{
+  std::vector<int> tags;
+  GModel *m = GModel::current();
+  for(int dim = -2; dim <= 3; dim++)
+    tags.push_back(
+      std::max(m->getGEOInternals()->getMaxTag(dim),
+               m->getOCCInternals() ? m->getOCCInternals()->getMaxTag(dim) : 0));
+  return tags;
+}
+
 // the factory set by the script: as the parser, the maximum tags of its
-// kernel raised to those of the other one (the kernel switched from is
-// synchronized before, see synchronized())
-static std::vector<apiCall> factoryCalls()
+// kernel raised to those of the other one, as they were before the command
+// (which may have added entities), the kernel switched from being
+// synchronized before (see synchronized())
+static std::vector<apiCall> factoryCalls(const std::vector<int> &tagsBefore)
 {
   std::string k = kernel();
   std::vector<apiCall> c;
   for(int dim = -2; dim <= 3; dim++) {
-    int t = (k == "occ" && GModel::current()->getOCCInternals()) ?
-              GModel::current()->getOCCInternals()->getMaxTag(dim) :
-              GModel::current()->getGEOInternals()->getMaxTag(dim);
+    int t = tagsBefore[dim + 2];
     if(t > 0)
       c.push_back(call("model/" + k + "/setMaxTag", {aInt(dim), aInt(t)}));
   }
@@ -872,6 +883,7 @@ static std::vector<apiCall> factoryCalls()
 static void scriptAdd(const std::string &geo, const std::string &fileName,
                       std::function<std::vector<apiCall>()> calls = nullptr)
 {
+  const std::vector<int> tagsBefore = maxTags();
   scriptAddCommand(geo, fileName);
   if(!scriptLastCommandAdded() || !calls) return;
   std::vector<std::string> langs;
@@ -887,7 +899,7 @@ static void scriptAdd(const std::string &geo, const std::string &fileName,
   }
   if(langs.empty()) return;
   std::vector<apiCall> c;
-  if(geo.find("SetFactory(") != std::string::npos) c = factoryCalls();
+  if(geo.find("SetFactory(") != std::string::npos) c = factoryCalls(tagsBefore);
   for(auto &a : calls()) c.push_back(a);
   c = synchronized(c);
   // (the script given, or the one made for a model that had none)
