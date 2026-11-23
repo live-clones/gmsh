@@ -1880,9 +1880,8 @@ class PackDiscreteLoops {
   }
 
 public:
-  PackDiscreteLoops()
+  PackDiscreteLoops(GModel *model)
   {
-    GModel *model = GModel::current();
     if(!model || CTX::instance()->mesh.algo2d != ALGO_2D_PACK_PRLGRMS) return;
     for(GFace *face : model->getFaces()) {
       if(face->geomType() != GEntity::DiscreteSurface) continue;
@@ -1933,7 +1932,7 @@ bool GenerateMesh(GModel *m, int ask, bool nested)
   // Initialize pseudo random mesh generator with the same seed
   srand(CTX::instance()->mesh.randomSeed);
 
-  PackDiscreteLoops packDiscreteLoops;
+  PackDiscreteLoops packDiscreteLoops(m);
 
   // Change any high order elements back into first order ones (but skip
   // discrete entities)

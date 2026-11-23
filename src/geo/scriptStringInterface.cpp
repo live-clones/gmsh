@@ -437,7 +437,8 @@ namespace {
         if(c == '"') q += c;
       }
       else {
-        if(c == '"' || c == '\\') q += '\\';
+        // (Julia interpolates "$" in strings)
+        if(c == '"' || c == '\\' || (c == '$' && lang == "jl")) q += '\\';
         q += c;
       }
     }

@@ -3797,6 +3797,11 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
 
   const std::size_t numberOfGaussPoints = localCoord.size() / 3;
   const int familyType = ElementType::getParentType(elementType);
+  if(familyType == TYPE_POLYG || familyType == TYPE_POLYH) {
+    Msg::Error("No basis functions for polygons and polyhedra (see "
+               "getPolytopeSimplices)");
+    return;
+  }
 
   if(fsName == "Lagrange" || fsName == "GradLagrange") { // Lagrange type
     if(!_checkWantedOrientations(wantedOrientations, 1, fsName, familyType))

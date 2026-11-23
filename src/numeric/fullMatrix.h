@@ -12,9 +12,10 @@
 #include <cstdio>
 #include <complex>
 
-// With Eigen, the operations that use it are defined in fullMatrix.cpp (for
-// int, double and std::complex<double>), so that Eigen is not parsed and its
-// products not compiled in every file that includes this header
+// With Eigen, the operations that use it are defined in fullMatrix.cpp, so
+// that Eigen is not parsed and its products not compiled in every file that
+// includes this header; its solvers (luSolve, invert, invertInPlace,
+// determinant, eig, svd) are only there for double
 
 template <class scalar> class fullMatrix;
 

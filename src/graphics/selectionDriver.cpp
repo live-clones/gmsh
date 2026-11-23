@@ -759,7 +759,13 @@ void selectionDriver::_undo()
   if(_picked[_phase].empty()) return;
   std::pair<int, int> p = _picked[_phase].back();
   _picked[_phase].pop_back();
-  if(p.first < 0) _newLoops.erase(p.second);
+  // a new loop is forgotten once no phase has it (the same loop can be the
+  // boundary of a surface and one of its holes)
+  bool stillPicked = false;
+  for(const auto &picked : _picked)
+    if(std::find(picked.begin(), picked.end(), p) != picked.end())
+      stillPicked = true;
+  if(p.first < 0 && !stillPicked) _newLoops.erase(p.second);
   GEntity *e = (p.first < 0) ?
                  nullptr :
                  GModel::current()->getEntityByTag(p.first, p.second);

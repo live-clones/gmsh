@@ -321,15 +321,22 @@ void shapePlacement::_drawGrid(drawContext *ctx) const
     step[i] = gridStep(i, window);
     while((hi[i] - lo[i]) / step[i] > 400.) step[i] *= 10.;
   }
-  int na0 = (int)floor(lo[a] / step[a]), na1 = (int)ceil(hi[a] / step[a]);
-  int nb0 = (int)floor(lo[b] / step[b]), nb1 = (int)ceil(hi[b] / step[b]);
+  // (64-bit indices: far from the origin, e.g. in UTM coordinates, they do
+  // not fit in an int)
+  if(std::abs(lo[a] / step[a]) > 1e15 || std::abs(hi[a] / step[a]) > 1e15 ||
+     std::abs(lo[b] / step[b]) > 1e15 || std::abs(hi[b] / step[b]) > 1e15)
+    return;
+  const long long na0 = (long long)floor(lo[a] / step[a]),
+                  na1 = (long long)ceil(hi[a] / step[a]);
+  const long long nb0 = (long long)floor(lo[b] / step[b]),
+                  nb1 = (long long)ceil(hi[b] / step[b]);
   for(int pass = 0; pass < 2; pass++) {
     // the lines, then the axes through the origin over them
     faintColor(pass ? 0.45 : 0.15);
     gmshBegin(GL_LINES);
     double q[3];
     q[k] = off;
-    for(int i = na0; i <= na1; i++) {
+    for(long long i = na0; i <= na1; i++) {
       if((i == 0) != (pass == 1)) continue;
       q[a] = i * step[a];
       q[b] = nb0 * step[b];
@@ -337,7 +344,7 @@ void shapePlacement::_drawGrid(drawContext *ctx) const
       q[b] = nb1 * step[b];
       gmshVertex3d(q[0], q[1], q[2]);
     }
-    for(int j = nb0; j <= nb1; j++) {
+    for(long long j = nb0; j <= nb1; j++) {
       if((j == 0) != (pass == 1)) continue;
       q[b] = j * step[b];
       q[a] = na0 * step[a];

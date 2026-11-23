@@ -81,7 +81,10 @@ export function showParameters() {
       if(!node.children.has(part)) node.children.set(part, {children: new Map()});
       node = node.children.get(part);
     }
-    node.children.set(parts[parts.length - 1], {parameter: p});
+    // (a parameter can also be the group of others, e.g. "A/B" and "A/B/C")
+    const last = parts[parts.length - 1];
+    if(!node.children.has(last)) node.children.set(last, {children: new Map()});
+    node.children.get(last).parameter = p;
     if(p.attributes && p.attributes.Closed === '1')
       closed.add(parts.slice(0, -1).join('/'));
   }
@@ -90,10 +93,9 @@ export function showParameters() {
   const add = (node, path, parent) => {
     for(const key of [...node.children.keys()].sort(byName)) {
       const child = node.children.get(key);
-      if(child.parameter) {
+      if(child.parameter)
         parent.appendChild(parameterRow(child.parameter, shortName(key)));
-        continue;
-      }
+      if(!child.children.size) continue;
       const branch = path ? path + '/' + key : key;
       const d = document.createElement('details');
       const sum = document.createElement('summary');

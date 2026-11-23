@@ -153,7 +153,7 @@ static double hexVolume(const MHexahedron *h)
 
 // The vertices numbered in the order in which the tets first reach them, the
 // number kept in MVertex::_index (-1 for the vertices of the region that no
-// tet reaches, if any, and 0 in the triangles for the ones of the boundary)
+// tet reaches, if any: the boundary triangles with one are skipped)
 static void createMeshStore(GRegion *gr, HXTCombine::MeshStore &ms,
                             std::vector<MVertex *> &c2v)
 {
@@ -194,14 +194,23 @@ static void createMeshStore(GRegion *gr, HXTCombine::MeshStore &ms,
         ms.tetCorners[4 * t + i] = tets[t]->getVertex(i)->getIndex();
   }
 
+  std::size_t skipped = 0;
   for(auto gf : faces) {
     for(auto t : gf->triangles) {
+      if(t->getVertex(0)->getIndex() < 0 || t->getVertex(1)->getIndex() < 0 ||
+         t->getVertex(2)->getIndex() < 0) {
+        skipped++;
+        continue;
+      }
       ms.triangleColors.push_back(gf->tag());
       for(std::size_t i = 0; i < 3; i++)
-        ms.triangleCorners.push_back(
-          std::max(t->getVertex(i)->getIndex(), 0L));
+        ms.triangleCorners.push_back(t->getVertex(i)->getIndex());
     }
   }
+  if(skipped)
+    Msg::Warning("Skipping %zu boundary triangles of region %d with nodes "
+                 "that no tetrahedron reaches",
+                 skipped, gr->tag());
   computeTetAdjacencies(ms);
 }
 

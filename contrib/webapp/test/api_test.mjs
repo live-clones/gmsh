@@ -22,7 +22,11 @@
 import createGmsh from '../build/gmsh.mjs';
 
 const gmsh = await createGmsh({ print: () => {}, printErr: () => {} });
-const check = (what, ok) => console.log((ok ? 'ok   ' : 'FAIL ') + what);
+// (a failure makes the exit code 1)
+const check = (what, ok) => {
+  console.log((ok ? 'ok   ' : 'FAIL ') + what);
+  if(!ok) process.exitCode = 1;
+};
 
 gmsh.initialize();
 gmsh.option.setNumber('General.Terminal', 0);
