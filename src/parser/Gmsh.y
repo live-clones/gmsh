@@ -169,6 +169,18 @@ struct doubleXstring{
   char *s;
 };
 
+// synchronize the CAD kernels that changed with the model: OpenCASCADE and
+// the discrete CAD modeler, then (unless geo is false) the built-in kernel
+static void syncCAD(bool geo = true)
+{
+  GModel *m = GModel::current();
+  if(m->getOCCInternals() && m->getOCCInternals()->getChanged())
+    m->getOCCInternals()->synchronize(m);
+  m->synchronizeDiscreteCADInternals();
+  if(geo && m->getGEOInternals()->getChanged())
+    m->getGEOInternals()->synchronize(m);
+}
+
 %}
 
 %union {
@@ -298,10 +310,7 @@ GeoFormatItem :
       // synchronize with GModel before switching kernel
       if(GModel::current()->getGEOInternals()->getChanged())
         GModel::current()->getGEOInternals()->synchronize(GModel::current());
-      if(GModel::current()->getOCCInternals() &&
-         GModel::current()->getOCCInternals()->getChanged())
-        GModel::current()->getOCCInternals()->synchronize(GModel::current());
-      GModel::current()->synchronizeDiscreteCADInternals();
+      syncCAD(false);
       gmsh_yyfactory = $3;
       if(gmsh_yyfactory == "OpenCASCADE"){
         if(!GModel::current()->getOCCInternals())
@@ -2599,12 +2608,7 @@ Transform :
         // boundary operations are performed directly on GModel, which enables
         // to compute the boundary of hybrid CAD models; this also automatically
         // binds all boundary entities for OCC models
-        if(GModel::current()->getOCCInternals() &&
-           GModel::current()->getOCCInternals()->getChanged())
-          GModel::current()->getOCCInternals()->synchronize(GModel::current());
-        GModel::current()->synchronizeDiscreteCADInternals();
-        if(GModel::current()->getGEOInternals()->getChanged())
-          GModel::current()->getGEOInternals()->synchronize(GModel::current());
+        syncCAD();
         bool combined = (action == "CombinedBoundary" ||
                          action == "OrientedCombinedBoundary");
         bool oriented = (action == "OrientedBoundary" ||
@@ -3086,34 +3090,19 @@ Command :
 	// make sure we have the latest data from CAD internals in GModel (fixes
 	// bug where we would have no geometry in the picture if the print
 	// command is in the same file as the geometry)
-        if(GModel::current()->getOCCInternals() &&
-           GModel::current()->getOCCInternals()->getChanged())
-          GModel::current()->getOCCInternals()->synchronize(GModel::current());
-        GModel::current()->synchronizeDiscreteCADInternals();
-        if(GModel::current()->getGEOInternals()->getChanged())
-          GModel::current()->getGEOInternals()->synchronize(GModel::current());
+        syncCAD();
         std::string tmp = FixRelativePath(gmsh_yyname, $2);
 	CreateOutputFile(tmp, CTX::instance()->print.fileFormat);
       }
       else if(!strcmp($1, "Save")){
-        if(GModel::current()->getOCCInternals() &&
-           GModel::current()->getOCCInternals()->getChanged())
-          GModel::current()->getOCCInternals()->synchronize(GModel::current());
-        GModel::current()->synchronizeDiscreteCADInternals();
-        if(GModel::current()->getGEOInternals()->getChanged())
-          GModel::current()->getGEOInternals()->synchronize(GModel::current());
+        syncCAD();
         std::string tmp = FixRelativePath(gmsh_yyname, $2);
 	CreateOutputFile(tmp, CTX::instance()->mesh.fileFormat);
       }
       else if(!strcmp($1, "Merge") || !strcmp($1, "MergeWithBoundingBox")){
 	// sync CAD internals here, so that if we e.g. import a STEP file, we
         // have the correct entity tags and the numberings don't clash
-        if(GModel::current()->getOCCInternals() &&
-           GModel::current()->getOCCInternals()->getChanged())
-          GModel::current()->getOCCInternals()->synchronize(GModel::current());
-        GModel::current()->synchronizeDiscreteCADInternals();
-        if(GModel::current()->getGEOInternals()->getChanged())
-          GModel::current()->getGEOInternals()->synchronize(GModel::current());
+        syncCAD();
         std::string tmp = FixRelativePath(gmsh_yyname, $2);
         MergeFile(tmp, true);
       }
@@ -3209,12 +3198,7 @@ Command :
       }
       else if(!strcmp($1, "Mesh")) {
         // part of the operation reading the script, which may hold the lock
-        if(GModel::current()->getOCCInternals() &&
-           GModel::current()->getOCCInternals()->getChanged())
-          GModel::current()->getOCCInternals()->synchronize(GModel::current());
-        GModel::current()->synchronizeDiscreteCADInternals();
-        if(GModel::current()->getGEOInternals()->getChanged())
-          GModel::current()->getGEOInternals()->synchronize(GModel::current());
+        syncCAD();
 	GModel::current()->mesh((int)$2, true);
       }
       else if(!strcmp($1, "SetOrder")) {
@@ -3320,12 +3304,7 @@ Command :
    | tBoundingBox tEND
     {
       CTX::instance()->forcedBBox = 0;
-      if(GModel::current()->getOCCInternals() &&
-         GModel::current()->getOCCInternals()->getChanged())
-        GModel::current()->getOCCInternals()->synchronize(GModel::current());
-      GModel::current()->synchronizeDiscreteCADInternals();
-      if(GModel::current()->getGEOInternals()->getChanged())
-        GModel::current()->getGEOInternals()->synchronize(GModel::current());
+      syncCAD();
       SetBoundingBox();
     }
    | tBoundingBox '{' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr '}' tEND
@@ -3403,12 +3382,7 @@ Command :
     }
    | tRefineMesh tEND
     {
-      if(GModel::current()->getOCCInternals() &&
-         GModel::current()->getOCCInternals()->getChanged())
-        GModel::current()->getOCCInternals()->synchronize(GModel::current());
-      GModel::current()->synchronizeDiscreteCADInternals();
-      if(GModel::current()->getGEOInternals()->getChanged())
-        GModel::current()->getGEOInternals()->synchronize(GModel::current());
+      syncCAD();
       GModel::current()->refineMesh(CTX::instance()->mesh.secondOrderLinear,
                                     CTX::instance()->mesh.algoSubdivide == 1,
                                     CTX::instance()->mesh.algoSubdivide == 2,
@@ -3416,12 +3390,7 @@ Command :
     }
    | tRecombineMesh tEND
     {
-      if(GModel::current()->getOCCInternals() &&
-         GModel::current()->getOCCInternals()->getChanged())
-        GModel::current()->getOCCInternals()->synchronize(GModel::current());
-      GModel::current()->synchronizeDiscreteCADInternals();
-      if(GModel::current()->getGEOInternals()->getChanged())
-        GModel::current()->getGEOInternals()->synchronize(GModel::current());
+      syncCAD();
       GModel::current()->recombineMesh();
     }
   | tTransformMesh '{' RecursiveListOfDouble '}' tEND
@@ -4317,10 +4286,7 @@ Constraints :
     {
       // transfinite constraints are stored in GEO internals in addition to
       // GModel, as they can be copied around during GEO operations
-      if(GModel::current()->getOCCInternals() &&
-         GModel::current()->getOCCInternals()->getChanged())
-        GModel::current()->getOCCInternals()->synchronize(GModel::current());
-      GModel::current()->synchronizeDiscreteCADInternals();
+      syncCAD(false);
       int type = (int)$6[0];
       double coef = $6[1];
       int npoints = ((int)$5 < 2) ? 2 : (int)$5;
@@ -4359,10 +4325,7 @@ Constraints :
     {
       // transfinite constraints are stored in GEO internals in addition to
       // GModel, as they can be copied around during GEO operations
-      if(GModel::current()->getOCCInternals() &&
-         GModel::current()->getOCCInternals()->getChanged())
-        GModel::current()->getOCCInternals()->synchronize(GModel::current());
-      GModel::current()->synchronizeDiscreteCADInternals();
+      syncCAD(false);
       std::vector<int> corners; ListOfDouble2Vector($4, corners);
       if(!$3){
         GModel::current()->getGEOInternals()->setTransfiniteSurface(0, $5, corners);
@@ -4405,10 +4368,7 @@ Constraints :
     {
       // transfinite constraints are stored in GEO internals in addition to
       // GModel, as they can be copied around during GEO operations
-      if(GModel::current()->getOCCInternals() &&
-         GModel::current()->getOCCInternals()->getChanged())
-        GModel::current()->getOCCInternals()->synchronize(GModel::current());
-      GModel::current()->synchronizeDiscreteCADInternals();
+      syncCAD(false);
       std::vector<int> corners; ListOfDouble2Vector($4, corners);
       if(!$3){
         GModel::current()->getGEOInternals()->setTransfiniteVolume(0, corners);
@@ -4446,10 +4406,7 @@ Constraints :
     {
       // transfinite constraints are stored in GEO internals in addition to
       // GModel, as they can be copied around during GEO operations
-      if(GModel::current()->getOCCInternals() &&
-         GModel::current()->getOCCInternals()->getChanged())
-        GModel::current()->getOCCInternals()->synchronize(GModel::current());
-      GModel::current()->synchronizeDiscreteCADInternals();
+      syncCAD(false);
       if(!$2){
         GModel::current()->getGEOInternals()->setTransfiniteVolumeQuadTri(0);
         for(GModel::riter it = GModel::current()->firstRegion();
@@ -4490,10 +4447,7 @@ Constraints :
     {
       // mesh algorithm constraints are stored in GEO internals in addition to
       // GModel, as they can be copied around during GEO operations
-      if(GModel::current()->getOCCInternals() &&
-         GModel::current()->getOCCInternals()->getChanged())
-        GModel::current()->getOCCInternals()->synchronize(GModel::current());
-      GModel::current()->synchronizeDiscreteCADInternals();
+      syncCAD(false);
       for(int i = 0; i < List_Nbr($4); i++){
         double d;
         List_Read($4, i, &d);
@@ -4508,10 +4462,7 @@ Constraints :
     {
       // mesh size from boundary onstraints are stored in GEO internals in
       // addition to GModel, as they can be copied around during GEO operations
-      if(GModel::current()->getOCCInternals() &&
-         GModel::current()->getOCCInternals()->getChanged())
-        GModel::current()->getOCCInternals()->synchronize(GModel::current());
-      GModel::current()->synchronizeDiscreteCADInternals();
+      syncCAD(false);
       for(int i = 0; i < List_Nbr($4); i++){
         double d;
         List_Read($4, i, &d);
@@ -4526,10 +4477,7 @@ Constraints :
     {
       // recombine constraints are stored in GEO internals in addition to
       // GModel, as they can be copied around during GEO operations
-      if(GModel::current()->getOCCInternals() &&
-         GModel::current()->getOCCInternals()->getChanged())
-        GModel::current()->getOCCInternals()->synchronize(GModel::current());
-      GModel::current()->synchronizeDiscreteCADInternals();
+      syncCAD(false);
       if(!$3){
         GModel::current()->getGEOInternals()->setRecombine(2, 0, $4);
         for(GModel::fiter it = GModel::current()->firstFace();
@@ -4557,10 +4505,7 @@ Constraints :
     {
       // recombine constraints are stored in GEO internals in addition to
       // GModel, as they can be copied around during GEO operations
-      if(GModel::current()->getOCCInternals() &&
-         GModel::current()->getOCCInternals()->getChanged())
-        GModel::current()->getOCCInternals()->synchronize(GModel::current());
-      GModel::current()->synchronizeDiscreteCADInternals();
+      syncCAD(false);
       if(!$3){
         GModel::current()->getGEOInternals()->setRecombine(3, 0, 0.);
         for(GModel::riter it = GModel::current()->firstRegion();
@@ -4584,10 +4529,7 @@ Constraints :
     {
       // smoothing constraints are stored in GEO internals in addition to
       // GModel, as they can be copied around during GEO operations
-      if(GModel::current()->getOCCInternals() &&
-         GModel::current()->getOCCInternals()->getChanged())
-        GModel::current()->getOCCInternals()->synchronize(GModel::current());
-      GModel::current()->synchronizeDiscreteCADInternals();
+      syncCAD(false);
       if(!$3){
         GModel::current()->getGEOInternals()->setSmoothing(0, (int)$5);
         for(GModel::fiter it = GModel::current()->firstFace();
@@ -4809,10 +4751,7 @@ Constraints :
     {
       // reverse mesh constraints are stored in GEO internals in addition to
       // GModel, as they can be copied around during GEO operations
-      if(GModel::current()->getOCCInternals() &&
-         GModel::current()->getOCCInternals()->getChanged())
-        GModel::current()->getOCCInternals()->synchronize(GModel::current());
-      GModel::current()->synchronizeDiscreteCADInternals();
+      syncCAD(false);
       if(!$3){
         GModel::current()->getGEOInternals()->setReverseMesh($2, 0);
         switch ($2) {
@@ -4856,12 +4795,7 @@ Constraints :
     }
   | tRelocateMesh GeoEntity012 ListOfDoubleOrAll tEND
     {
-      if(GModel::current()->getOCCInternals() &&
-         GModel::current()->getOCCInternals()->getChanged())
-        GModel::current()->getOCCInternals()->synchronize(GModel::current());
-      GModel::current()->synchronizeDiscreteCADInternals();
-      if(GModel::current()->getGEOInternals()->getChanged())
-        GModel::current()->getGEOInternals()->synchronize(GModel::current());
+      syncCAD();
       if(!$3){
         switch ($2) {
         case 0:
@@ -4911,12 +4845,7 @@ Constraints :
     }
   | tReorientMesh tVolume ListOfDouble tEND
     {
-      if(GModel::current()->getOCCInternals() &&
-         GModel::current()->getOCCInternals()->getChanged())
-        GModel::current()->getOCCInternals()->synchronize(GModel::current());
-      GModel::current()->synchronizeDiscreteCADInternals();
-      if(GModel::current()->getGEOInternals()->getChanged())
-        GModel::current()->getGEOInternals()->synchronize(GModel::current());
+      syncCAD();
       for(int i = 0; i < List_Nbr($3); i++){
         double d;
         List_Read($3, i, &d);
@@ -5774,12 +5703,7 @@ FExpr_Multi :
     }
    | tParametric tBoundingBox GeoEntity12 '{' FExpr '}'
     {
-      if(GModel::current()->getOCCInternals() &&
-         GModel::current()->getOCCInternals()->getChanged())
-        GModel::current()->getOCCInternals()->synchronize(GModel::current());
-      GModel::current()->synchronizeDiscreteCADInternals();
-      if(GModel::current()->getGEOInternals()->getChanged())
-        GModel::current()->getGEOInternals()->synchronize(GModel::current());
+      syncCAD();
       $$ = List_Create(9, 1, sizeof(double));
       GEntity *entity = GModel::current()->getEntityByTag($3, (int)$5);
       if(!entity) {
@@ -5805,12 +5729,7 @@ FExpr_Multi :
     }
   | tNormal tSurface '{' FExpr '}' tParametric '{' FExpr ',' FExpr '}'
     {
-      if(GModel::current()->getOCCInternals() &&
-         GModel::current()->getOCCInternals()->getChanged())
-        GModel::current()->getOCCInternals()->synchronize(GModel::current());
-      GModel::current()->synchronizeDiscreteCADInternals();
-      if(GModel::current()->getGEOInternals()->getChanged())
-        GModel::current()->getGEOInternals()->synchronize(GModel::current());
+      syncCAD();
       $$ = List_Create(9, 1, sizeof(double));
       int tag = (int)$4;
       GFace *gf = GModel::current()->getFaceByTag(tag);
@@ -5829,12 +5748,7 @@ FExpr_Multi :
 
   | tCurvature tSurface '{' FExpr '}' tParametric '{' FExpr ',' FExpr '}'
     {
-      if(GModel::current()->getOCCInternals() &&
-         GModel::current()->getOCCInternals()->getChanged())
-        GModel::current()->getOCCInternals()->synchronize(GModel::current());
-      GModel::current()->synchronizeDiscreteCADInternals();
-      if(GModel::current()->getGEOInternals()->getChanged())
-        GModel::current()->getGEOInternals()->synchronize(GModel::current());
+      syncCAD();
       $$ = List_Create(9, 1, sizeof(double));
       int tag = (int)$4;
       GFace *gf = GModel::current()->getFaceByTag(tag);
@@ -5850,12 +5764,7 @@ FExpr_Multi :
 
   | tCurvature tCurve '{' FExpr '}' tParametric '{' FExpr '}'
     {
-      if(GModel::current()->getOCCInternals() &&
-         GModel::current()->getOCCInternals()->getChanged())
-        GModel::current()->getOCCInternals()->synchronize(GModel::current());
-      GModel::current()->synchronizeDiscreteCADInternals();
-      if(GModel::current()->getGEOInternals()->getChanged())
-        GModel::current()->getGEOInternals()->synchronize(GModel::current());
+      syncCAD();
       $$ = List_Create(9, 1, sizeof(double));
       int tag = (int)$4;
       GEdge *ge = GModel::current()->getEdgeByTag(tag);
@@ -5870,12 +5779,7 @@ FExpr_Multi :
 
   | tParametric tPoint '{' FExpr '}' tIn tSurface '{' FExpr '}'
     {
-      if(GModel::current()->getOCCInternals() &&
-         GModel::current()->getOCCInternals()->getChanged())
-        GModel::current()->getOCCInternals()->synchronize(GModel::current());
-      GModel::current()->synchronizeDiscreteCADInternals();
-      if(GModel::current()->getGEOInternals()->getChanged())
-        GModel::current()->getGEOInternals()->synchronize(GModel::current());
+      syncCAD();
       $$ = List_Create(9, 1, sizeof(double));
       GVertex *gv = GModel::current()->getVertexByTag((int)$4);
       GFace *gf = GModel::current()->getFaceByTag((int)$9);
@@ -7005,12 +6909,7 @@ void yymsg(int level, const char *fmt, ...)
 void addPeriodicFace(int iTarget, int iSource,
                      const std::vector<double>& affineTransform)
 {
-  if(GModel::current()->getOCCInternals() &&
-     GModel::current()->getOCCInternals()->getChanged())
-    GModel::current()->getOCCInternals()->synchronize(GModel::current());
-  GModel::current()->synchronizeDiscreteCADInternals();
-  if(GModel::current()->getGEOInternals()->getChanged())
-    GModel::current()->getGEOInternals()->synchronize(GModel::current());
+  syncCAD();
 
   GFace *target = GModel::current()->getFaceByTag(std::abs(iTarget));
   GFace *source = GModel::current()->getFaceByTag(std::abs(iSource));
@@ -7025,12 +6924,7 @@ void addPeriodicFace(int iTarget, int iSource,
 void addPeriodicFace(int iTarget, int iSource,
                      const std::map<int,int>& edgeCounterparts)
 {
-  if(GModel::current()->getOCCInternals() &&
-     GModel::current()->getOCCInternals()->getChanged())
-    GModel::current()->getOCCInternals()->synchronize(GModel::current());
-  GModel::current()->synchronizeDiscreteCADInternals();
-  if(GModel::current()->getGEOInternals()->getChanged())
-    GModel::current()->getGEOInternals()->synchronize(GModel::current());
+  syncCAD();
 
   Msg::Info("Encoding periodic connection between %d and %d", iTarget, iSource);
   for(auto sIter = edgeCounterparts.begin(); sIter != edgeCounterparts.end();
@@ -7051,12 +6945,7 @@ void addPeriodicFace(int iTarget, int iSource,
 void addPeriodicEdge(int iTarget,int iSource,
                      const std::vector<double>& affineTransform)
 {
-  if(GModel::current()->getOCCInternals() &&
-     GModel::current()->getOCCInternals()->getChanged())
-    GModel::current()->getOCCInternals()->synchronize(GModel::current());
-  GModel::current()->synchronizeDiscreteCADInternals();
-  if(GModel::current()->getGEOInternals()->getChanged())
-    GModel::current()->getGEOInternals()->synchronize(GModel::current());
+  syncCAD();
 
   GEdge *target = GModel::current()->getEdgeByTag(std::abs(iTarget));
   GEdge *source = GModel::current()->getEdgeByTag(std::abs(iSource));
@@ -7113,12 +7002,7 @@ void computeAffineTransformation(SPoint3& origin, SPoint3& axis,
 
 void addEmbedded(int dim, std::vector<int> tags, int dim2, int tag2)
 {
-  if(GModel::current()->getOCCInternals() &&
-     GModel::current()->getOCCInternals()->getChanged())
-    GModel::current()->getOCCInternals()->synchronize(GModel::current());
-  GModel::current()->synchronizeDiscreteCADInternals();
-  if(GModel::current()->getGEOInternals()->getChanged())
-    GModel::current()->getGEOInternals()->synchronize(GModel::current());
+  syncCAD();
 
   if(dim2 == 2){
     GFace *gf = GModel::current()->getFaceByTag(tag2);
@@ -7178,12 +7062,7 @@ void addEmbedded(int dim, std::vector<int> tags, int dim2, int tag2)
 void removeEmbedded(const std::vector<std::pair<int, int> > &dimTags,
                     int rdim)
 {
-  if(GModel::current()->getOCCInternals() &&
-     GModel::current()->getOCCInternals()->getChanged())
-    GModel::current()->getOCCInternals()->synchronize(GModel::current());
-  GModel::current()->synchronizeDiscreteCADInternals();
-  if(GModel::current()->getGEOInternals()->getChanged())
-    GModel::current()->getGEOInternals()->synchronize(GModel::current());
+  syncCAD();
 
   for(std::size_t i = 0; i < dimTags.size(); i++){
     int dim = dimTags[i].first, tag = dimTags[i].second;
@@ -7211,12 +7090,7 @@ void removeEmbedded(const std::vector<std::pair<int, int> > &dimTags,
 
 void getAllElementaryTags(int dim, List_T *out)
 {
-  if(GModel::current()->getOCCInternals() &&
-     GModel::current()->getOCCInternals()->getChanged())
-    GModel::current()->getOCCInternals()->synchronize(GModel::current());
-  GModel::current()->synchronizeDiscreteCADInternals();
-  if(GModel::current()->getGEOInternals()->getChanged())
-    GModel::current()->getGEOInternals()->synchronize(GModel::current());
+  syncCAD();
 
   std::vector<GEntity*> entities;
   GModel::current()->getEntities(entities, dim);
@@ -7228,12 +7102,7 @@ void getAllElementaryTags(int dim, List_T *out)
 
 void getAllPhysicalTags(int dim, List_T *out)
 {
-  if(GModel::current()->getOCCInternals() &&
-     GModel::current()->getOCCInternals()->getChanged())
-    GModel::current()->getOCCInternals()->synchronize(GModel::current());
-  GModel::current()->synchronizeDiscreteCADInternals();
-  if(GModel::current()->getGEOInternals()->getChanged())
-    GModel::current()->getGEOInternals()->synchronize(GModel::current());
+  syncCAD();
 
   std::map<int, std::vector<GEntity*> > groups;
   GModel::current()->getPhysicalGroups(dim, groups);
@@ -7245,12 +7114,7 @@ void getAllPhysicalTags(int dim, List_T *out)
 
 void getElementaryTagsForPhysicalGroups(int dim, List_T *in, List_T *out)
 {
-  if(GModel::current()->getOCCInternals() &&
-     GModel::current()->getOCCInternals()->getChanged())
-    GModel::current()->getOCCInternals()->synchronize(GModel::current());
-  GModel::current()->synchronizeDiscreteCADInternals();
-  if(GModel::current()->getGEOInternals()->getChanged())
-    GModel::current()->getGEOInternals()->synchronize(GModel::current());
+  syncCAD();
 
   std::map<int, std::vector<GEntity*> > groups;
   GModel::current()->getPhysicalGroups(dim, groups);
@@ -7269,12 +7133,7 @@ void getElementaryTagsForPhysicalGroups(int dim, List_T *in, List_T *out)
 
 void getElementaryTagsForPhysicalNames(int dim, List_T *in, List_T *out)
 {
-  if(GModel::current()->getOCCInternals() &&
-     GModel::current()->getOCCInternals()->getChanged())
-    GModel::current()->getOCCInternals()->synchronize(GModel::current());
-  GModel::current()->synchronizeDiscreteCADInternals();
-  if(GModel::current()->getGEOInternals()->getChanged())
-    GModel::current()->getGEOInternals()->synchronize(GModel::current());
+  syncCAD();
 
   List_T *tags = List_Create(10, 10, sizeof(double));
   for(int i = 0; i < List_Nbr(in); i++){
@@ -7294,12 +7153,7 @@ void getElementaryTagsForPhysicalNames(int dim, List_T *in, List_T *out)
 void getElementaryTagsInBoundingBox(int dim, double x1, double y1, double z1,
                                     double x2, double y2, double z2, List_T *out)
 {
-  if(GModel::current()->getOCCInternals() &&
-     GModel::current()->getOCCInternals()->getChanged())
-    GModel::current()->getOCCInternals()->synchronize(GModel::current());
-  GModel::current()->synchronizeDiscreteCADInternals();
-  if(GModel::current()->getGEOInternals()->getChanged())
-    GModel::current()->getGEOInternals()->synchronize(GModel::current());
+  syncCAD();
 
   SBoundingBox3d box(x1, y1, z1, x2, y2, z2);
   std::vector<GEntity*> entities;
@@ -7312,12 +7166,7 @@ void getElementaryTagsInBoundingBox(int dim, double x1, double y1, double z1,
 
 void getParentTags(int dim, List_T *in, List_T *out)
 {
-  if(GModel::current()->getOCCInternals() &&
-     GModel::current()->getOCCInternals()->getChanged())
-    GModel::current()->getOCCInternals()->synchronize(GModel::current());
-  GModel::current()->synchronizeDiscreteCADInternals();
-  if(GModel::current()->getGEOInternals()->getChanged())
-    GModel::current()->getGEOInternals()->synchronize(GModel::current());
+  syncCAD();
 
   for(int i = 0; i < List_Nbr(in); i++){
     double num;
@@ -7335,12 +7184,7 @@ void getParentTags(int dim, List_T *in, List_T *out)
 
 void getBoundingBox(int dim, List_T *in, List_T *out)
 {
-  if(GModel::current()->getOCCInternals() &&
-     GModel::current()->getOCCInternals()->getChanged())
-    GModel::current()->getOCCInternals()->synchronize(GModel::current());
-  GModel::current()->synchronizeDiscreteCADInternals();
-  if(GModel::current()->getGEOInternals()->getChanged())
-    GModel::current()->getGEOInternals()->synchronize(GModel::current());
+  syncCAD();
 
   SBoundingBox3d box;
   for(int i = 0; i < List_Nbr(in); i++){
@@ -7359,12 +7203,7 @@ void getBoundingBox(int dim, List_T *in, List_T *out)
 
 void setVisibility(int dim, int visible, bool recursive)
 {
-  if(GModel::current()->getOCCInternals() &&
-     GModel::current()->getOCCInternals()->getChanged())
-    GModel::current()->getOCCInternals()->synchronize(GModel::current());
-  GModel::current()->synchronizeDiscreteCADInternals();
-  if(GModel::current()->getGEOInternals()->getChanged())
-    GModel::current()->getGEOInternals()->synchronize(GModel::current());
+  syncCAD();
 
   std::vector<GEntity*> entities;
   GModel::current()->getEntities(entities, dim);
@@ -7376,12 +7215,7 @@ void setVisibility(int dim, int visible, bool recursive)
 void setVisibility(const std::vector<std::pair<int, int> > &dimTags,
                    int visible, bool recursive)
 {
-  if(GModel::current()->getOCCInternals() &&
-     GModel::current()->getOCCInternals()->getChanged())
-    GModel::current()->getOCCInternals()->synchronize(GModel::current());
-  GModel::current()->synchronizeDiscreteCADInternals();
-  if(GModel::current()->getGEOInternals()->getChanged())
-    GModel::current()->getGEOInternals()->synchronize(GModel::current());
+  syncCAD();
 
   for(std::size_t i = 0; i < dimTags.size(); i++){
     GEntity *ge = GModel::current()->getEntityByTag
@@ -7393,12 +7227,7 @@ void setVisibility(const std::vector<std::pair<int, int> > &dimTags,
 void setColor(const std::vector<std::pair<int, int> > &dimTags,
               unsigned int val, bool recursive)
 {
-  if(GModel::current()->getOCCInternals() &&
-     GModel::current()->getOCCInternals()->getChanged())
-    GModel::current()->getOCCInternals()->synchronize(GModel::current());
-  GModel::current()->synchronizeDiscreteCADInternals();
-  if(GModel::current()->getGEOInternals()->getChanged())
-    GModel::current()->getGEOInternals()->synchronize(GModel::current());
+  syncCAD();
 
   for(std::size_t i = 0; i < dimTags.size(); i++){
     GEntity *ge = GModel::current()->getEntityByTag
