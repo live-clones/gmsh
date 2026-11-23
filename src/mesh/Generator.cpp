@@ -922,6 +922,36 @@ static void Mesh2D(GModel *m)
     RefineMeshWithBackgroundMeshProjection(m);
 
     OptimizeMesh(m, "QuadQuasiStructured");
+
+    // the extruded curves and surfaces were made from the meshes of their
+    // sources before these were subdivided and optimized: they are made again
+    // from the final ones, those extruded from a point or a curve first, then
+    // the copies (the tops of the extrusions); by the extruded meshers
+    // directly, as the four-sided ones were marked as transfinite meanwhile
+    auto extruded = [](GEntity *ge, bool copy) {
+      ExtrudeParams *ep = (ge->dim() == 1) ?
+        static_cast<GEdge *>(ge)->meshAttributes.extrude :
+        static_cast<GFace *>(ge)->meshAttributes.extrude;
+      return ep && ep->mesh.ExtrudeMesh &&
+             (ep->geo.Mode == COPIED_ENTITY) == copy;
+    };
+    for(int copy = 0; copy < 2; copy++) {
+      for(GEdge *ge : m->getEdges()) {
+        if(!extruded(ge, copy)) continue;
+        deMeshGEdge dem;
+        dem(ge);
+        MeshExtrudedCurve(ge);
+      }
+    }
+    for(int copy = 0; copy < 2; copy++) {
+      for(GFace *gf : m->getFaces()) {
+        if(!extruded(gf, copy)) continue;
+        deMeshGFace dem;
+        dem(gf);
+        MeshExtrudedSurface(gf);
+      }
+    }
+    m->renumberMeshCanonically(maxVertexBefore, maxElementBefore, true);
   }
 
   // not on the surfaces of hex-dominant meshes: PACK placed their points in
