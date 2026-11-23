@@ -19,6 +19,11 @@ For i In {0:1}
   EndFor
 EndFor
 
+v() = Volume{:}; s() = Surface{:};
+If(#v() != 8 || #s() != 64)
+  Error("%g volumes and %g surfaces instead of 8 and 64", #v(), #s());
+EndIf
+
 Mesh.MeshSizeMax = 0.05;
 
 Mesh 3;

@@ -407,7 +407,7 @@ static void tick(void *)
 
 int main(int argc, char **argv)
 {
-  if(argc < 2) {
+  if(argc < 2 || argv[1][0] == '-') { // (ctest gives -nopopup: no model)
     printf("Usage: %s model.geo [seconds] [seed]\n", argv[0]);
     return 77;
   }

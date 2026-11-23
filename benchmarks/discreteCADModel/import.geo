@@ -12,3 +12,9 @@ Cylinder(100) = {35, -50, -176, 0, 100, 0, 5};
 BooleanDifference{ Volume{v(0)}; Delete; }{ Volume{100}; Delete; }
 
 Mesh.MeshSizeMax = 3;
+
+// the model expected
+v() = Volume{:}; s() = Surface{:};
+If(#v() != 1 || #s() != 15)
+  Error("%g volumes and %g surfaces instead of 1 and 15", #v(), #s());
+EndIf

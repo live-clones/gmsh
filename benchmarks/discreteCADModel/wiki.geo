@@ -16,3 +16,9 @@ Cylinder(5) = {0, 0, -1, 0, 0, 2, .3};
 BooleanUnion{ Volume{3}; Delete; }{ Volume{4,5}; Delete; }
 
 BooleanDifference{ Volume{2}; Delete; }{ Volume{3}; Delete; }
+
+// the model expected
+v() = Volume{:}; s() = Surface{:};
+If(#v() != 1 || #s() != 14)
+  Error("%g volumes and %g surfaces instead of 1 and 14", #v(), #s());
+EndIf

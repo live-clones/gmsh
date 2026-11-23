@@ -19,3 +19,11 @@ If(recombine)
 Else
   Extrude {{0, 1, 0}, {0, 0, 0}, 2 * Pi} { Surface{1}; Layers{24}; }
 EndIf
+
+Mesh 3;
+
+// away from the axis every node belongs to one of the 24 layers: nodes
+// duplicated where the last layer closes would add one layer more
+If(x > 0 && Mesh.NbNodes % 24)
+  Error("%g nodes: not a multiple of the 24 layers", Mesh.NbNodes);
+EndIf

@@ -35,3 +35,9 @@ bottom() = Curve In BoundingBox{1.6 - e, 1.1 - e, -e, 2.4 + e, 1.9 + e, e};
 v() = Fillet{v(0)}{bottom()}{0.08};
 
 Mesh.MeshSizeMax = 0.1;
+
+// the model expected
+v() = Volume{:}; s() = Surface{:};
+If(#v() != 1 || #s() != 25)
+  Error("%g volumes and %g surfaces instead of 1 and 25", #v(), #s());
+EndIf

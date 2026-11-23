@@ -333,3 +333,9 @@ Cone(10028) = {2066.6669921875, -113.3330078125, -6.83984375, 0, 0, 9.83984375, 
 part84() = BooleanUnion{ Volume{10003}; Delete; }{ Volume{10004, 10005, 10008, 10011, 10012, 10013, 10014, 10015, 10016, 10017, 10020, 10021, 10022, 10023, 10024, 10025, 10026, 10027}; Delete; };
 part84() = BooleanDifference{ Volume{part84()}; Delete; }{ Volume{10028}; Delete; };
 Mesh.MeshSizeMax = 5;
+
+// the model expected
+v() = Volume{:};
+If(#v() != 10)
+  Error("%g volumes instead of 10", #v());
+EndIf

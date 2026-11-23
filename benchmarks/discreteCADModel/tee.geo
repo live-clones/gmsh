@@ -26,3 +26,9 @@ EndFor
 tee() = BooleanDifference{ Volume{tee()}; Delete; }{ Volume{holes()}; Delete; };
 
 Mesh.MeshSizeMax = 0.06;
+
+// the model expected
+v() = Volume{:}; s() = Surface{:};
+If(#v() != 1 || #s() != 25)
+  Error("%g volumes and %g surfaces instead of 1 and 25", #v(), #s());
+EndIf

@@ -13,3 +13,9 @@ Rectangle(100) = {0, 2, 0, 1, 1};
 Disk(101) = {2, 2.5, 0, 0.5, 0.3};
 
 Mesh.MeshSizeMax = 0.1;
+
+// the model expected
+v() = Volume{:}; s() = Surface{:};
+If(#v() != 5 || #s() != 17)
+  Error("%g volumes and %g surfaces instead of 5 and 17", #v(), #s());
+EndIf

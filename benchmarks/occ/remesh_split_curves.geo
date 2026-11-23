@@ -11,9 +11,13 @@ Mesh.Algorithm = 6;
 Mesh.MeshSizeFromCurvature = 10;
 
 Mesh 2;
+first = Mesh.NbTriangles;
 Mesh 2;
 
 nbtriangles = Mesh.NbTriangles;
 If(nbtriangles == 0)
   Error("No triangular elements created!");
+EndIf
+If(nbtriangles < 0.8 * first || nbtriangles > 1.2 * first)
+  Error("%g triangles in the second pass, %g in the first", nbtriangles, first);
 EndIf

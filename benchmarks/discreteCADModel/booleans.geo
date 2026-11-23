@@ -32,3 +32,9 @@ Box(15) = {9.5, 0.5, -0.5, 2, 2, 2};
 BooleanDifference(16) = { Volume{14}; Delete; }{ Volume{15}; Delete; };
 
 Mesh.MeshSizeMax = 0.1;
+
+// the model expected
+v() = Volume{:}; s() = Surface{:};
+If(#v() != 5 || #s() != 25)
+  Error("%g volumes and %g surfaces instead of 5 and 25", #v(), #s());
+EndIf

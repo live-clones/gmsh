@@ -32,3 +32,9 @@ Box(12) = {11, 0, 0, 1, 1, 1};
 v() = BooleanIntersection{ Volume{11}; Delete; }{ Volume{12}; Delete; };
 
 Mesh.MeshSizeMax = 0.1;
+
+// the model expected
+v() = Volume{:}; s() = Surface{:};
+If(#v() != 6 || #s() != 49)
+  Error("%g volumes and %g surfaces instead of 6 and 49", #v(), #s());
+EndIf
