@@ -1799,37 +1799,6 @@ export function wrapGmsh(Module) {
   };
 
   /**
-   * gmsh.model.mesh.merge(fileName, partitions = [], ghosts = false)
-   *
-   * Merge the mesh of the MSH file `fileName' into the current model. If
-   * `partitions' is not empty, only read the given partitions of a
-   * partitioned mesh (in an MSH 4 file): their elements, the nodes of these
-   * elements and the partition entities that contain them (with the physical
-   * groups of their parent entities); and, if `ghosts' is set, their ghost
-   * cells, i.e. the elements of the other partitions, of all dimensions, that
-   * share a node with them (see the `Mesh.PartitionCreateGhostCells' option;
-   * if the file has no ghost cells, a warning is issued and the whole mesh is
-   * read). Only the entities with nodes or elements read are created, with
-   * their parent entities (and without their boundaries), and the elements
-   * read keep their partition. In a partial read, the sections of the file
-   * other than the entities, the nodes, the elements, the periodicity and the
-   * ghost elements are skipped, and the periodic node correspondences only
-   * include the nodes read. Post-processing data in the file is not read.
-   */
-  gmsh.model.mesh.merge = function(fileName, partitions = [], ghosts = false) {
-    const tmp = [];
-    try {
-      const api_fileName_ = _istring(fileName, tmp);
-      const [api_partitions_, api_partitions_n] = _ivector(partitions, 'int', tmp);
-      M._gmshModelMeshMerge(_P(api_fileName_), _P(api_partitions_), _S(api_partitions_n), ghosts ? 1 : 0, _P(ierr));
-      _check();
-    }
-    finally {
-      tmp.forEach((p) => M._free(p));
-    }
-  };
-
-  /**
    * gmsh.model.mesh.createOverlaps(layers = 1, createBoundaries = true)
    *
    * Generate node-based overlaps (of highest dimension) for all partitions,

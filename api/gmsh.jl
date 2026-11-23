@@ -1869,38 +1869,6 @@ function partition(numPart, elementTags = Csize_t[], partitions = Cint[])
 end
 
 """
-    gmsh.model.mesh.merge(fileName, partitions = Cint[], ghosts = false)
-
-Merge the mesh of the MSH file `fileName` into the current model. If
-`partitions` is not empty, only read the given partitions of a partitioned mesh
-(in an MSH 4 file): their elements, the nodes of these elements and the
-partition entities that contain them (with the physical groups of their parent
-entities); and, if `ghosts` is set, their ghost cells, i.e. the elements of the
-other partitions, of all dimensions, that share a node with them (see the
-`Mesh.PartitionCreateGhostCells` option; if the file has no ghost cells, a
-warning is issued and the whole mesh is read). Only the entities with nodes or
-elements read are created, with their parent entities (and without their
-boundaries), and the elements read keep their partition. In a partial read, the
-sections of the file other than the entities, the nodes, the elements, the
-periodicity and the ghost elements are skipped, and the periodic node
-correspondences only include the nodes read. Post-processing data in the file is
-not read.
-
-Types:
- - `fileName`: string
- - `partitions`: vector of integers
- - `ghosts`: boolean
-"""
-function merge(fileName, partitions = Cint[], ghosts = false)
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshMerge, gmsh.lib), Cvoid,
-          (Ptr{Cchar}, Ptr{Cint}, Csize_t, Cint, Ptr{Cint}),
-          fileName, convert(Vector{Cint}, partitions), length(partitions), ghosts, ierr)
-    ierr[] != 0 && error(gmsh.logger.getLastError())
-    return nothing
-end
-
-"""
     gmsh.model.mesh.createOverlaps(layers = 1, createBoundaries = true)
 
 Generate node-based overlaps (of highest dimension) for all partitions, with a

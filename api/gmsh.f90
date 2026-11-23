@@ -570,8 +570,6 @@ module gmsh
         gmshModelMeshGenerate
     procedure, nopass :: partition => &
         gmshModelMeshPartition
-    procedure, nopass :: merge => &
-        gmshModelMeshMerge
     procedure, nopass :: createOverlaps => &
         gmshModelMeshCreateOverlaps
     procedure, nopass :: getPartitionEntities => &
@@ -3417,50 +3415,6 @@ module gmsh
          api_partitions_n_=size_gmsh_int(partitions), &
          ierr_=ierr)
   end subroutine gmshModelMeshPartition
-
-  !> Merge the mesh of the MSH file `fileName' into the current model. If
-  !! `partitions' is not empty, only read the given partitions of a partitioned
-  !! mesh (in an MSH 4 file): their elements, the nodes of these elements and
-  !! the partition entities that contain them (with the physical groups of their
-  !! parent entities); and, if `ghosts' is set, their ghost cells, i.e. the
-  !! elements of the other partitions, of all dimensions, that share a node with
-  !! them (see the `Mesh.PartitionCreateGhostCells' option; if the file has no
-  !! ghost cells, a warning is issued and the whole mesh is read). Only the
-  !! entities with nodes or elements read are created, with their parent
-  !! entities (and without their boundaries), and the elements read keep their
-  !! partition. In a partial read, the sections of the file other than the
-  !! entities, the nodes, the elements, the periodicity and the ghost elements
-  !! are skipped, and the periodic node correspondences only include the nodes
-  !! read. Post-processing data in the file is not read.
-  subroutine gmshModelMeshMerge(fileName, &
-                                partitions, &
-                                ghosts, &
-                                ierr)
-    interface
-    subroutine C_API(fileName, &
-                     api_partitions_, &
-                     api_partitions_n_, &
-                     ghosts, &
-                     ierr_) &
-      bind(C, name="gmshModelMeshMerge")
-      use, intrinsic :: iso_c_binding
-      character(len=1, kind=c_char), dimension(*), intent(in) :: fileName
-      integer(c_int), dimension(*), optional :: api_partitions_
-      integer(c_size_t), value, intent(in) :: api_partitions_n_
-      integer(c_int), value, intent(in) :: ghosts
-      integer(c_int), intent(out), optional :: ierr_
-    end subroutine C_API
-    end interface
-    character(len=*), intent(in) :: fileName
-    integer(c_int), dimension(:), intent(in), optional :: partitions
-    logical, intent(in), optional :: ghosts
-    integer(c_int), intent(out), optional :: ierr
-    call C_API(fileName=istring_(fileName), &
-         api_partitions_=partitions, &
-         api_partitions_n_=size_gmsh_int(partitions), &
-         ghosts=optval_c_bool(.false., ghosts), &
-         ierr_=ierr)
-  end subroutine gmshModelMeshMerge
 
   !> Generate node-based overlaps (of highest dimension) for all partitions,
   !! with a number of layers equal to `layers'. The overlaps of the bounding

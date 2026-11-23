@@ -10,8 +10,7 @@
 #include "GmshMessage.h"
 #include "Context.h"
 
-int GModel::readMSH(const std::string &name, const std::vector<int> &partitions,
-                    bool ghosts, bool meshOnly)
+int GModel::readMSH(const std::string &name)
 {
   FILE *fp = Fopen(name.c_str(), "rb");
   if(!fp) {
@@ -52,16 +51,12 @@ int GModel::readMSH(const std::string &name, const std::vector<int> &partitions,
         return 0;
       }
       fclose(fp);
-      if(partitions.size() && (version < 4.0 || version >= 5.0)) {
-        Msg::Error("Can only read some partitions of an MSH 4 file");
-        return 0;
-      }
       if(version < 3.0) { return _readMSH2(name); }
       else if(version < 4.0) {
         return _readMSH3(name);
       }
       else if(version < 5.0) {
-        return _readMSH4(name, partitions, ghosts, meshOnly);
+        return _readMSH4(name);
       }
       else {
         Msg::Error("Unknown MSH file version %g", version);

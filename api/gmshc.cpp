@@ -1030,18 +1030,6 @@ GMSH_API void gmshModelMeshPartition(const int numPart, const size_t * elementTa
   }
 }
 
-GMSH_API void gmshModelMeshMerge(const char * fileName, const int * partitions, const size_t partitions_n, const int ghosts, int * ierr)
-{
-  if(ierr) *ierr = 0;
-  try {
-    std::vector<int> api_partitions_(partitions, partitions + partitions_n);
-    gmsh::model::mesh::merge(fileName, api_partitions_, ghosts);
-  }
-  catch(...){
-    if(ierr) *ierr = 1;
-  }
-}
-
 GMSH_API int gmshModelMeshCreateOverlaps(const int layers, const int createBoundaries, int * ierr)
 {
   int result_api_ = 0;

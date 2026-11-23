@@ -13,8 +13,8 @@ improved performance of mesh partitioning pipeline and added support for
 partition overlaps; new ability to save only the local partitioned Brep;
 improved performance of high-order element generation (now also for prisms of
 any order) and adaptive view visualization (with target error relative to
-range); new partial reading of partitioned MSH4 files, with ghost cells of all
-dimensions (ghost entities were removed); Thread-safe
+range); ghost cells of all dimensions, stored per element (ghost entities
+were removed); Thread-safe
 MathEval/MathEvalAniso/Param mesh size fields; new MSH4.2 revision of the MSH
 file format with support for embedded entities in $Entities and
 $PartitionedEntities, efficient blocked $NodeData, $ElementData,
@@ -63,9 +63,9 @@ and uses Eigen 5.0 by default; official binary builds now use FLTK 1.5-dev, OCC
   mesh/setPolytopeSimplices, mesh/createPolytopeSimplices,
   mesh/getFacesByType, mesh/getElementFaceNodesByType,
   mesh/setMetricCallback, mesh/removeMetricCallback,
-  algorithm/refineTetrahedra, plugin/load, fltk/pick, mesh/merge,
-  discrete/addBox, discrete/addSphere, discrete/addCylinder, discrete/addCone,
-  discrete/addTorus, discrete/addRectangle, discrete/addDisk,
+  algorithm/refineTetrahedra, plugin/load, fltk/pick, discrete/addBox,
+  discrete/addSphere, discrete/addCylinder, discrete/addCone, discrete/addTorus,
+  discrete/addRectangle, discrete/addDisk,
   discrete/addTriangulation, discrete/importShapes, discrete/fuse,
   discrete/cut, discrete/intersect, discrete/fillet, discrete/remove,
   discrete/synchronize

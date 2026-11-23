@@ -3,22 +3,23 @@ import itertools
 import os
 import sys
 
-# Read some partitions of a partitioned mesh, with their ghost cells, with
-# `gmsh.model.mesh.merge()', e.g. one per MPI rank of a parallel solver: each
-# rank then only reads (and keeps in memory) its part of the mesh. The ghost
-# cells of a partition are the elements of the other partitions, of all
-# dimensions, that share a node with its elements; they are created by the
-# partitioner with the `Mesh.PartitionCreateGhostCells' option. This checks
-# that reading partitions P with their ghost cells gives exactly the elements
-# of the partition entities of P and the elements that share a node with them,
-# with their nodes, entities, partitions and physical groups as in a full
-# read; and that the file of a partition saved on its own
-# (`Mesh.PartitionSplitMeshFiles') holds the same.
+# Read the mesh of one partition of a partitioned mesh with its ghost cells,
+# e.g. one per MPI rank of a parallel solver: each rank then only reads (and
+# keeps in memory) its part of the mesh. The mesh is saved in one file per
+# partition (`Mesh.PartitionSplitMeshFiles'), with the ghost cells of the
+# partition, i.e. the elements of the other partitions, of all dimensions,
+# that share a node with its elements (`Mesh.PartitionCreateGhostCells'), and
+# only the entities that the partition needs (`Mesh.PartitionSplitLocalBrep').
+# This checks that reading the file of partition p gives exactly the elements
+# of the partition entities of p and the elements that share a node with
+# them, with their nodes, entities, partitions and physical groups as in the
+# whole mesh; and that merging the files of all the partitions gives the
+# whole mesh back.
 
 gmsh.initialize()
 
 # a box with a ball inside, with physical groups of all dimensions, its mesh
-# partitioned in 4 and saved in partitioned MSH files
+# partitioned in 4
 gmsh.model.add("merge_partitions")
 gmsh.model.occ.addBox(0, 0, 0, 1, 1, 1, 1)
 gmsh.model.occ.addSphere(0.5, 0.5, 0.5, 0.25, 2)
@@ -38,17 +39,11 @@ gmsh.option.setNumber("Mesh.MeshSizeMax", 0.1)
 gmsh.model.mesh.generate(3)
 gmsh.option.setNumber("Mesh.PartitionCreateGhostCells", 1)
 gmsh.model.mesh.partition(4)
-files = []
-for version, binary in ((4.2, 1), (4.1, 0)):
-    name = "merge_partitions_{}{}.msh".format(version, "_bin" if binary else "")
-    gmsh.option.setNumber("Mesh.MshFileVersion", version)
-    gmsh.option.setNumber("Mesh.Binary", binary)
-    gmsh.write(name)
-    files.append(name)
 
 
 # the elements of the model (dim, entity, type, nodes, partitions and physical
-# groups of the entity, by tag) and the coordinates of its nodes
+# groups of the entity, by tag), the coordinates of its nodes and its physical
+# groups
 def mesh_data():
     elements = {}
     for dim, tag in gmsh.model.getEntities():
@@ -62,13 +57,20 @@ def mesh_data():
                 elements[int(e)] = (dim, tag, int(t), nodes, parts, phys)
     tags, coord, _ = gmsh.model.mesh.getNodes()
     nodes = {int(t): tuple(coord[3 * i:3 * i + 3]) for i, t in enumerate(tags)}
-    return elements, nodes
+    groups = {(d, t): gmsh.model.getPhysicalName(d, t)
+              for d, t in gmsh.model.getPhysicalGroups()}
+    return elements, nodes, groups
 
 
-def read(name, partitions=[], ghosts=False):
+# the mesh of the files merged, and the warnings and errors
+def read(names):
     gmsh.clear()
-    gmsh.model.mesh.merge(name, partitions, ghosts)
-    return mesh_data()
+    gmsh.logger.start()
+    for name in names:
+        gmsh.merge(name)
+    log = [l for l in gmsh.logger.get() if l.startswith(("Warning", "Error"))]
+    gmsh.logger.stop()
+    return mesh_data(), log
 
 
 def expected(full, partitions, ghosts):
@@ -84,18 +86,20 @@ def expected(full, partitions, ghosts):
 ok = True
 
 
-# whether the mesh read is the expected part of the full mesh
-def check(label, data, full, partitions, ghosts):
+# whether the mesh read is the expected part of the full mesh, without
+# warnings
+def check(label, read_data, full, partitions, ghosts):
     global ok
-    elements, nodes = data
+    (elements, nodes, groups), log = read_data
     good = (set(elements) == expected(full, partitions, ghosts) and
             all(elements[e] == full[0][e] for e in elements))
     needed = set(itertools.chain.from_iterable(d[3] for d in elements.values()))
     good = (good and set(nodes) == needed and
             all(nodes[n] == full[1][n] for n in nodes))
-    print("{}: {} elements, {} nodes: {}".format(label, len(elements),
-                                                 len(nodes),
-                                                 "OK" if good else "FAILED"))
+    good = good and all(full[2].get(g) == n for g, n in groups.items())
+    good = good and not log
+    print("{}: {} elements, {} nodes, {} warnings: {}".format(
+        label, len(elements), len(nodes), len(log), "OK" if good else "FAILED"))
     ok = ok and good
 
 
@@ -111,48 +115,39 @@ def check_ghosts(label, full, partitions):
         ok = ok and good
 
 
-for name in files:
-    full = read(name)
-    check_ghosts(name, full, range(1, 5))
-    cases = [([p], g) for p in range(1, 5) for g in (False, True)]
-    cases += [([1, 3], True)]
-    for partitions, ghosts in cases:
-        check("{}: partitions {}, ghosts {}".format(name, partitions, ghosts),
-              read(name, partitions, ghosts), full, partitions, ghosts)
+files = []
+for version, binary, local in ((4.2, 1, 1), (4.1, 0, 1), (4.2, 1, 0)):
+    gmsh.option.setNumber("Mesh.MshFileVersion", version)
+    gmsh.option.setNumber("Mesh.Binary", binary)
+    name = "merge_partitions_{}{}.msh".format(version, "_bin" if binary else "")
+    gmsh.write(name)
+    files.append(name)
+    gmsh.option.setNumber("Mesh.PartitionSplitMeshFiles", 1)
+    gmsh.option.setNumber("Mesh.PartitionSplitLocalBrep", local)
+    base = "merge_partitions_split_{}{}{}".format(
+        version, "_bin" if binary else "", "_local" if local else "")
+    gmsh.write(base + ".msh")
+    gmsh.option.setNumber("Mesh.PartitionSplitMeshFiles", 0)
+    gmsh.option.setNumber("Mesh.PartitionSplitLocalBrep", 0)
+    split = ["{}_{}.msh".format(base, p) for p in range(1, 5)]
+    files += split + [base + ".msh.geo"]
 
-# the files of the partitions saved on their own: each with its ghost cells
-full = read(files[0])
-gmsh.option.setNumber("Mesh.MshFileVersion", 4.2)
-gmsh.option.setNumber("Mesh.Binary", 1)
-gmsh.option.setNumber("Mesh.PartitionSplitMeshFiles", 1)
-gmsh.write("merge_partitions_split.msh")
-gmsh.option.setNumber("Mesh.PartitionSplitMeshFiles", 0)
-split = ["merge_partitions_split_{}.msh".format(p) for p in range(1, 5)]
-for p in range(1, 5):
-    check(split[p - 1], read(split[p - 1]), full, [p], True)
-    check_ghosts(split[p - 1], full, [p])
-    check("{}: partition {}, ghosts True".format(split[p - 1], p),
-          read(split[p - 1], [p], True), full, [p], True)
-gmsh.clear()
-for name in split:
-    gmsh.model.mesh.merge(name)
-check("all the files of the partitions", mesh_data(), full, range(1, 5), False)
-check_ghosts("all the files of the partitions", full, range(1, 5))
+    full = read([name])[0]
+    for p in range(1, 5):
+        data = read([split[p - 1]])
+        # (without the local Brep, the bounding entities of the entities of
+        # the other partitions are not saved: their warnings are expected)
+        if not local:
+            data = (data[0], [])
+        check(split[p - 1], data, full, [p], True)
+        check_ghosts(split[p - 1], full, [p])
+    data = read(split)
+    if not local:
+        data = (data[0], [])
+    check(base + ": all the files", data, full, range(1, 5), False)
+    check_ghosts(base + ": all the files", full, range(1, 5))
 
-# without ghost cells in the file, the partitions are read with them as the
-# whole mesh, with a warning
-gmsh.clear()
-gmsh.model.mesh.merge(files[0])
-gmsh.option.setNumber("Mesh.PartitionCreateGhostCells", 0)
-gmsh.model.mesh.partition(4)
-gmsh.write("merge_partitions_no_ghosts.msh")
-full = read("merge_partitions_no_ghosts.msh")
-check("no ghost cells in the file: partition 1, ghosts True",
-      read("merge_partitions_no_ghosts.msh", [1], True), full, range(1, 5),
-      False)
-
-for name in files + split + ["merge_partitions_split.msh.geo",
-                             "merge_partitions_no_ghosts.msh"]:
+for name in set(files):
     os.remove(name)
 
 gmsh.finalize()

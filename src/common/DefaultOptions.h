@@ -1720,8 +1720,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "PartitionSplitMeshFiles" , opt_mesh_partition_split_mesh_files , 0 ,
     "Write one file for each mesh partition" },
   { F|O, "PartitionSplitLocalBrep" , opt_mesh_partition_split_local_brep , 0. ,
-    "Only export the subset of the topology (BRep) that is relevant when "
-    "splitting mesh files per partition" },
+    "Only save, in the file of each partition (Mesh.PartitionSplitMeshFiles), "
+    "the entities of the partition and their parents" },
   { F|O, "PartitionTopologyFile" , opt_mesh_partition_save_topology_file , 0 ,
     "Write a .pro file with the partition topology" },
   { F|O, "PartitionOldStyleMsh2" , opt_mesh_partition_old_style_msh2 , 1 ,

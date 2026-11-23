@@ -87,9 +87,13 @@ private:
   int _writePartitionedMSH3(const std::string &baseName, double version,
                             bool binary, bool saveAll, bool saveParametric,
                             double scalingFactor);
-  int _readMSH4(const std::string &name,
-                const std::vector<int> &partitions = std::vector<int>(),
-                bool ghosts = false, bool meshOnly = false);
+  int _readMSH4(const std::string &name);
+  // the nodes and the elements read from a MSH4 file into the model and the
+  // caches (deleted if their tags are taken)
+  void _storeMSH4Nodes(MVertex **nodes, std::size_t num, std::size_t maxNum,
+                       bool dense);
+  void _storeMSH4Elements(std::pair<MElement *, GEntity *> *elements,
+                          std::size_t num, std::size_t maxNum, bool dense);
   // (ghostCells: the ghost cells of each partition, by the dimension and tag
   // of the partition entity of their elements, if already found)
   int _writeMSH4(
@@ -944,13 +948,7 @@ public:
   int writeParasolidSTEP(const std::string &name);
 
   // Gmsh mesh file format
-  // read (merge) an MSH file; for MSH4, if partitions is not empty, only
-  // these partitions of a partitioned mesh, with their ghost cells if ghosts is
-  // set (the elements of the other partitions that share a node with them); if
-  // meshOnly is set, the post-processing data is not read
-  int readMSH(const std::string &name,
-              const std::vector<int> &partitions = std::vector<int>(),
-              bool ghosts = false, bool meshOnly = false);
+  int readMSH(const std::string &name);
   int writeMSH(const std::string &name, double version = 2.2,
                bool binary = false, bool saveAll = false,
                bool saveParametric = false, double scalingFactor = 1.0,

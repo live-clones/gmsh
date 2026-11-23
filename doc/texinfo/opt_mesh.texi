@@ -737,7 +737,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PartitionSplitLocalBrep
-Only export the subset of the topology (BRep) that is relevant when splitting mesh files per partition@*
+Only save, in the file of each partition (Mesh.PartitionSplitMeshFiles), the entities of the partition and their parents@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

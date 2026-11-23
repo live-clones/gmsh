@@ -1365,23 +1365,6 @@ GMSH_API void gmsh::model::mesh::generate(const int dim)
   CTX::instance()->meshChanged();
 }
 
-GMSH_API void gmsh::model::mesh::merge(const std::string &fileName,
-                                       const std::vector<int> &partitions,
-                                       const bool ghosts)
-{
-  if(!_checkInit()) return;
-  GModel *m = GModel::current();
-  if(!m->readMSH(fileName, partitions, ghosts, true)) {
-    Msg::Error("Could not merge mesh file '%s'", fileName.c_str());
-    return;
-  }
-  for(int dim = 0; dim < 4; dim++)
-    m->getGEOInternals()->setMaxTag(
-      dim, std::max(m->getGEOInternals()->getMaxTag(dim),
-                    m->getMaxElementaryNumber(dim)));
-  CTX::instance()->meshChanged();
-}
-
 GMSH_API void
 gmsh::model::mesh::partition(const int numPart,
                              const std::vector<std::size_t> &elementTags,
