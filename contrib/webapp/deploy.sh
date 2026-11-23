@@ -40,6 +40,10 @@ GETDP=${GETDP:-$SRC/../getdp}
 ONELAB_DOC=${ONELAB_DOC:-$SRC/../onelab_doc}
 B=${BUILD:-$HERE/build}
 DEST=${DEST:-gmsh.info:.wwwonelab/webapp/}
+# (rsync --delete empties it of what the site does not have)
+case "$DEST" in
+  ""|/|*:|*:/|"$HOME"|"$HOME/") echo "DEST=$DEST: not a directory for the site"; exit 1 ;;
+esac
 DRY=0
 THUMBNAILS=0
 case "$1" in
@@ -59,7 +63,10 @@ if [ ! -f "$B/libgmsh.wasm" ]; then
   echo "No module in $B: run build.sh first"
   exit 1
 fi
+# made anew, without what an earlier run put there (a 64-bit module no
+# longer built)
 SITE=$B/site
+rm -rf "$SITE"
 mkdir -p "$SITE"
 
 # the module, and GetDP's templates (for a page that sets up a problem on a

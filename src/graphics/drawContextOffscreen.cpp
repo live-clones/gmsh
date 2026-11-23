@@ -50,12 +50,15 @@ bool drawContextOffscreen::begin(int width, int height, double scale,
   _screen = screen;
   // the view of the options (a window takes it from them when it is made);
   // with the context current, as what the previous view holds (images) goes
-  // with it
-  if(!screen || !_ctx || _viewFromOptions) {
+  // with it. On the screen the view is reset in place: the scene of the web
+  // page keeps a pointer to it
+  if(!screen || !_ctx) {
     delete _ctx;
     _ctx = new drawContext();
-    _viewFromOptions = false;
   }
+  else if(_viewFromOptions)
+    _ctx->initView();
+  _viewFromOptions = false;
   // line widths and point sizes in pixels of the screen, as on the desktop;
   // scaled in a picture
   glImmediate::pixelScale(screen ? 1. : scale);

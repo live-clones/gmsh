@@ -44,10 +44,9 @@ void drawContext::setDrawGeomTransientFunction(void (*fct)(void *))
   drawGeomTransient = fct;
 }
 
-drawContext::drawContext(drawTransform *transform)
-  : _transform(transform), _highResolutionPixelFactor(1.), _pickColor(false)
+void drawContext::initView()
 {
-  // initialize from temp values in global context
+  // from the temporary values of the global context (the view of the options)
   for(int i = 0; i < 3; i++) {
     r[i] = CTX::instance()->tmpRotation[i];
     t[i] = CTX::instance()->tmpTranslation[i];
@@ -56,6 +55,13 @@ drawContext::drawContext(drawTransform *transform)
   for(int i = 0; i < 4; i++) {
     quaternion[i] = CTX::instance()->tmpQuaternion[i];
   }
+  _pickCacheValid = false;
+}
+
+drawContext::drawContext(drawTransform *transform)
+  : _transform(transform), _highResolutionPixelFactor(1.), _pickColor(false)
+{
+  initView();
   viewport[0] = viewport[1] = 0;
   viewport[2] = CTX::instance()->glSize[0];
   viewport[3] = CTX::instance()->glSize[1];

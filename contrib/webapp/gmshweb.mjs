@@ -15,9 +15,24 @@
 
 // What the page calls in Gmsh besides its API: the functions of webApp.cpp
 // (gmshWeb*, see the comments there), each as a function of web
-import {Module} from './app.mjs';
+import {Module, log, setStatus} from './app.mjs';
 
-const call = (name, ret, types, args) => Module.ccall('gmshWeb' + name, ret, types, args);
+// a C++ exception or a trap out of one of them goes to the messages and the
+// status bar before it is thrown on; after a trap the module is dead, and the
+// page says to reload it
+let dead = false;
+function call(name, ret, types, args) {
+  if(dead) throw new Error('Gmsh has stopped');
+  try {
+    return Module.ccall('gmshWeb' + name, ret, types, args);
+  } catch(e) {
+    dead = e instanceof WebAssembly.RuntimeError;
+    const what = `Error   : ${e && e.message ? e.message : e} (in gmshWeb${name})`;
+    log(what);
+    setStatus(dead ? 'Gmsh has stopped after an internal error: reload the page' : what, true);
+    throw e;
+  }
+}
 // (a pointer is given as 'pointer', which ccall converts for a wasm64 module,
 // whose functions take pointers as BigInt)
 const N = 'number', S = 'string', P = 'pointer';

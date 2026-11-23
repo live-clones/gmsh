@@ -533,6 +533,8 @@ public:
   void setPickColorFor(GEntity *e, bool front = false);
   static bool pickColorActive() { return _pickColorActive; }
   drawContext(drawTransform *transform = nullptr);
+  // the view (rotation, translation, scale) of the options
+  void initView();
   // factor between the true size in pixels and the size reported by the OS
   // (e.g. 2 on an Apple "retina" display); refreshed by the GUI before each
   // draw, as it changes when a window moves across displays

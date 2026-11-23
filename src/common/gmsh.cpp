@@ -309,8 +309,14 @@ GMSH_API void gmsh::option::restoreDefaults()
 {
   UnlinkFile(CTX::instance()->homeDir + CTX::instance()->sessionFileName);
   UnlinkFile(CTX::instance()->homeDir + CTX::instance()->optionsFileName);
+  // what initialize() set for the API (exceptions on errors, messages on the
+  // terminal) is not an option to restore
+  int abortOnError = CTX::instance()->abortOnError;
+  int terminal = CTX::instance()->terminal;
   ReInitOptions(0);
   InitOptionsGUI(0);
+  CTX::instance()->abortOnError = abortOnError;
+  CTX::instance()->terminal = terminal;
 }
 
 // gmsh::model
