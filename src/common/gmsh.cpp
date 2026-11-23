@@ -7915,6 +7915,17 @@ GMSH_API void gmsh::model::discrete::addTriangulation(
 #endif
 }
 
+GMSH_API void gmsh::model::discrete::remove(const vectorpair &dimTags,
+                                            const bool recursive)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_DISCRETECAD)
+  _discreteCAD()->remove(dimTags, recursive);
+#else
+  Msg::Error("Discrete CAD modeler not available");
+#endif
+}
+
 GMSH_API void gmsh::model::discrete::synchronize()
 {
   if(!_checkInit()) return;

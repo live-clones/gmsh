@@ -10754,6 +10754,31 @@ class model:
         add_triangulation = addTriangulation
 
         @staticmethod
+        def remove(dimTags, recursive=False):
+            """
+            gmsh.model.discrete.remove(dimTags, recursive=False)
+
+            Remove the volumes, and the surfaces that bound no volume, among the
+            entities `dimTags' (given as a vector of (dim, tag) pairs) in the discrete
+            CAD representation; the other entities are left alone. If `recursive' is
+            true, also remove the surfaces of the removed volumes that no other volume
+            uses. The curves and the points are removed with the last surface that uses
+            them.
+
+            Types:
+            - `dimTags': vector of pairs of integers
+            - `recursive': boolean
+            """
+            api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
+            ierr = c_int()
+            lib.gmshModelDiscreteRemove(
+                api_dimTags_, api_dimTags_n_,
+                c_int(bool(recursive)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+
+        @staticmethod
         def synchronize():
             """
             gmsh.model.discrete.synchronize()

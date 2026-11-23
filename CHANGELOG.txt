@@ -67,7 +67,8 @@ and uses Eigen 5.0 by default; official binary builds now use FLTK 1.5-dev, OCC
   discrete/addBox, discrete/addSphere, discrete/addCylinder, discrete/addCone,
   discrete/addTorus, discrete/addRectangle, discrete/addDisk,
   discrete/addTriangulation, discrete/importShapes, discrete/fuse,
-  discrete/cut, discrete/intersect, discrete/fillet, discrete/synchronize
+  discrete/cut, discrete/intersect, discrete/fillet, discrete/remove,
+  discrete/synchronize
 
 * Incompatible API changes: new optional arguments to mesh/optimize,
   mesh/relocateNodes and occ/healShapes; new arguments to

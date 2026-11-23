@@ -6822,6 +6822,24 @@ namespace gmsh { // Top-level functions
         outDimTags.resize(api_outDimTags_n_ / 2); for(size_t i = 0; i < api_outDimTags_n_ / 2; ++i){ outDimTags[i].first = api_outDimTags_[i * 2 + 0]; outDimTags[i].second = api_outDimTags_[i * 2 + 1]; } gmshFree(api_outDimTags_);
       }
 
+      // gmsh::model::discrete::remove
+      //
+      // Remove the volumes, and the surfaces that bound no volume, among the
+      // entities `dimTags' (given as a vector of (dim, tag) pairs) in the discrete
+      // CAD representation; the other entities are left alone. If `recursive' is
+      // true, also remove the surfaces of the removed volumes that no other volume
+      // uses. The curves and the points are removed with the last surface that
+      // uses them.
+      inline void remove(const gmsh::vectorpair & dimTags,
+                         const bool recursive = false)
+      {
+        int ierr = 0;
+        int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
+        gmshModelDiscreteRemove(api_dimTags_, api_dimTags_n_, (int)recursive, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_dimTags_);
+      }
+
       // gmsh::model::discrete::synchronize
       //
       // Synchronize the discrete CAD representation with the current Gmsh model:

@@ -3727,6 +3727,16 @@ GMSH_API void gmshModelDiscreteAddTriangulation(const double * coord, const size
                                                 const double tolerance,
                                                 int * ierr);
 
+/* Remove the volumes, and the surfaces that bound no volume, among the
+ * entities `dimTags' (given as a vector of (dim, tag) pairs) in the discrete
+ * CAD representation; the other entities are left alone. If `recursive' is
+ * true, also remove the surfaces of the removed volumes that no other volume
+ * uses. The curves and the points are removed with the last surface that uses
+ * them. */
+GMSH_API void gmshModelDiscreteRemove(const int * dimTags, const size_t dimTags_n,
+                                      const int recursive,
+                                      int * ierr);
+
 /* Synchronize the discrete CAD representation with the current Gmsh model:
  * its points, curves, surfaces and volumes become discrete entities of the
  * model, whose geometry is their polylines and triangulations, and replace

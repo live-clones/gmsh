@@ -1092,6 +1092,9 @@ discrete.add('importShapes', doc, None, istring('fileName'), idouble('angle'), o
 doc = '''Add the triangulation given by the coordinates `coord' of its nodes (concatenated: [n1x, n1y, n1z, n2x, ...]) and its triangles `triangles' (the indices of their 3 nodes, from 0, concatenated) in the discrete CAD representation, and build its topology as `importShapes'. Return the volumes and the surfaces bounding no volume in `outDimTags'.'''
 discrete.add('addTriangulation', doc, None, ivectordouble('coord'), ivectorsize('triangles'), idouble('angle'), ovectorpair('outDimTags'), idouble('curveAngle', 'M_PI', 'pi', 'pi'), idouble('tolerance', '-1.'))
 
+doc = '''Remove the volumes, and the surfaces that bound no volume, among the entities `dimTags' (given as a vector of (dim, tag) pairs) in the discrete CAD representation; the other entities are left alone. If `recursive' is true, also remove the surfaces of the removed volumes that no other volume uses. The curves and the points are removed with the last surface that uses them.'''
+discrete.add('remove', doc, None, ivectorpair('dimTags'), ibool('recursive', 'false', 'False'))
+
 doc = '''Synchronize the discrete CAD representation with the current Gmsh model: its points, curves, surfaces and volumes become discrete entities of the model, whose geometry is their polylines and triangulations, and replace the entities of the previous synchronization. Without synchronization the entities in the discrete CAD representation are not available to any function outside of the discrete CAD modeler functions.'''
 discrete.add('synchronize', doc, None)
 

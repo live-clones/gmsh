@@ -4146,6 +4146,17 @@ namespace gmsh { // Top-level functions
                                      const double curveAngle = M_PI,
                                      const double tolerance = -1.);
 
+      // gmsh::model::discrete::remove
+      //
+      // Remove the volumes, and the surfaces that bound no volume, among the
+      // entities `dimTags' (given as a vector of (dim, tag) pairs) in the discrete
+      // CAD representation; the other entities are left alone. If `recursive' is
+      // true, also remove the surfaces of the removed volumes that no other volume
+      // uses. The curves and the points are removed with the last surface that
+      // uses them.
+      GMSH_API void remove(const gmsh::vectorpair & dimTags,
+                           const bool recursive = false);
+
       // gmsh::model::discrete::synchronize
       //
       // Synchronize the discrete CAD representation with the current Gmsh model:

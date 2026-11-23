@@ -9534,6 +9534,30 @@ end
 const add_triangulation = addTriangulation
 
 """
+    gmsh.model.discrete.remove(dimTags, recursive = false)
+
+Remove the volumes, and the surfaces that bound no volume, among the entities
+`dimTags` (given as a vector of (dim, tag) pairs) in the discrete CAD
+representation; the other entities are left alone. If `recursive` is true, also
+remove the surfaces of the removed volumes that no other volume uses. The curves
+and the points are removed with the last surface that uses them.
+
+Types:
+ - `dimTags`: vector of pairs of integers
+ - `recursive`: boolean
+"""
+function remove(dimTags, recursive = false)
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelDiscreteRemove, gmsh.lib), Cvoid,
+          (Ptr{Cint}, Csize_t, Cint, Ptr{Cint}),
+          api_dimTags_, api_dimTags_n_, recursive, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+
+"""
     gmsh.model.discrete.synchronize()
 
 Synchronize the discrete CAD representation with the current Gmsh model: its

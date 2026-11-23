@@ -281,6 +281,8 @@ module gmsh
         gmshModelDiscreteImportShapes
     procedure, nopass :: addTriangulation => &
         gmshModelDiscreteAddTriangulation
+    procedure, nopass :: remove => &
+        gmshModelDiscreteRemove
     procedure, nopass :: synchronize => &
         gmshModelDiscreteSynchronize
   end type gmsh_model_discrete_t
@@ -15448,6 +15450,37 @@ module gmsh
     outDimTags = ovectorpair_(api_outDimTags_, &
       api_outDimTags_n_)
   end subroutine gmshModelDiscreteAddTriangulation
+
+  !> Remove the volumes, and the surfaces that bound no volume, among the
+  !! entities `dimTags' (given as a vector of (dim, tag) pairs) in the discrete
+  !! CAD representation; the other entities are left alone. If `recursive' is
+  !! true, also remove the surfaces of the removed volumes that no other volume
+  !! uses. The curves and the points are removed with the last surface that uses
+  !! them.
+  subroutine gmshModelDiscreteRemove(dimTags, &
+                                     recursive, &
+                                     ierr)
+    interface
+    subroutine C_API(api_dimTags_, &
+                     api_dimTags_n_, &
+                     recursive, &
+                     ierr_) &
+      bind(C, name="gmshModelDiscreteRemove")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), dimension(*) :: api_dimTags_
+      integer(c_size_t), value, intent(in) :: api_dimTags_n_
+      integer(c_int), value, intent(in) :: recursive
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer(c_int), dimension(:,:), intent(in) :: dimTags
+    logical, intent(in), optional :: recursive
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(api_dimTags_=dimTags, &
+         api_dimTags_n_=size_gmsh_pair(dimTags), &
+         recursive=optval_c_bool(.false., recursive), &
+         ierr_=ierr)
+  end subroutine gmshModelDiscreteRemove
 
   !> Synchronize the discrete CAD representation with the current Gmsh model:
   !! its points, curves, surfaces and volumes become discrete entities of the

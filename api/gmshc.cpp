@@ -4816,6 +4816,22 @@ GMSH_API void gmshModelDiscreteAddTriangulation(const double * coord, const size
   }
 }
 
+GMSH_API void gmshModelDiscreteRemove(const int * dimTags, const size_t dimTags_n, const int recursive, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_dimTags_(dimTags_n/2);
+    for(size_t i = 0; i < dimTags_n/2; ++i){
+      api_dimTags_[i].first = dimTags[i * 2 + 0];
+      api_dimTags_[i].second = dimTags[i * 2 + 1];
+    }
+    gmsh::model::discrete::remove(api_dimTags_, recursive);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelDiscreteSynchronize(int * ierr)
 {
   if(ierr) *ierr = 0;

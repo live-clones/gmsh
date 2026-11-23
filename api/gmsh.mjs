@@ -8291,6 +8291,28 @@ export function wrapGmsh(Module) {
   };
 
   /**
+   * gmsh.model.discrete.remove(dimTags, recursive = false)
+   *
+   * Remove the volumes, and the surfaces that bound no volume, among the
+   * entities `dimTags' (given as a vector of (dim, tag) pairs) in the
+   * discrete CAD representation; the other entities are left alone. If
+   * `recursive' is true, also remove the surfaces of the removed volumes that
+   * no other volume uses. The curves and the points are removed with the last
+   * surface that uses them.
+   */
+  gmsh.model.discrete.remove = function(dimTags, recursive = false) {
+    const tmp = [];
+    try {
+      const [api_dimTags_, api_dimTags_n] = _ivectorpair(dimTags, tmp);
+      M._gmshModelDiscreteRemove(_P(api_dimTags_), _S(api_dimTags_n), recursive ? 1 : 0, _P(ierr));
+      _check();
+    }
+    finally {
+      tmp.forEach((p) => M._free(p));
+    }
+  };
+
+  /**
    * gmsh.model.discrete.synchronize()
    *
    * Synchronize the discrete CAD representation with the current Gmsh model:
