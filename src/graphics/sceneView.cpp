@@ -302,11 +302,11 @@ void sceneView::_hover()
     std::string::size_type n = text.find('\n');
     if(n != std::string::npos && n && text[n - 1] == ':')
       n = text.find('\n', n + 1);
-    Msg::StatusBar(false,
+    Msg::StatusBar(false, "%s",
                    ReplaceSubString("\n", "", text.substr(0, n)).c_str());
   }
   if(Msg::GetVerbosity() == 99)
-    Msg::Debug(ReplaceSubString("\n", " ", text).c_str());
+    Msg::Debug("%s", ReplaceSubString("\n", " ", text).c_str());
 }
 
 void sceneView::pointerLeft()

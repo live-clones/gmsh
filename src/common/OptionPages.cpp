@@ -5,29 +5,32 @@
 
 #include "OptionPages.h"
 
-optionEntry check(const std::string &option, const std::string &label,
-                  int weight, int flags)
+// the builders of the entries of a row
+static optionEntry check(const std::string &option, const std::string &label,
+                         int weight = 1, int flags = 0)
 { return {EntryCheck, option, label, weight, flags}; }
 
-optionEntry number(const std::string &option, const std::string &label,
-                   int weight, int flags)
+static optionEntry number(const std::string &option, const std::string &label,
+                          int weight = 1, int flags = 0)
 { return {EntryNumber, option, label, weight, flags}; }
 
-optionEntry choice(const std::string &option, const std::string &label,
-                   int weight, int flags)
+static optionEntry choice(const std::string &option, const std::string &label,
+                          int weight = 1, int flags = 0)
 { return {EntryChoice, option, label, weight, flags}; }
 
-optionEntry text(const std::string &option, const std::string &label,
-                 int weight, int flags)
+static optionEntry text(const std::string &option, const std::string &label,
+                        int weight = 1, int flags = 0)
 { return {EntryText, option, label, weight, flags}; }
 
-optionEntry heading(const std::string &title)
+static optionEntry heading(const std::string &title)
 { return {EntryHeading, title, "", 1, 0}; }
 
-optionEntry custom(const std::string &name, int weight)
+static optionEntry custom(const std::string &name, int weight = 0)
 { return {EntryCustom, name, "", weight, 0}; }
 
-optionEntry space(int weight) { return {EntryCustom, "", "", weight, 0}; }
+// a share of a row left empty
+static optionEntry space(int weight = 1)
+{ return {EntryCustom, "", "", weight, 0}; }
 
 // a section, open or not when its page is first shown
 static optionSection section(const std::string &name, bool open,
@@ -410,11 +413,4 @@ const std::vector<optionPage> &OptionPages()
                                                 meshPage(),    solverPage(),
                                                 postPage(),    viewPage()};
   return pages;
-}
-
-const optionPage *GetOptionPage(const std::string &name)
-{
-  for(const optionPage &p : OptionPages())
-    if(p.name == name) return &p;
-  return nullptr;
 }

@@ -53,20 +53,8 @@ struct optionEntry {
   int flags; // optionEntryFlag bits
 };
 
-// a row of entries, and the builders of its entries
+// a row of entries
 typedef std::vector<optionEntry> optionRow;
-optionEntry check(const std::string &option, const std::string &label,
-                  int weight = 1, int flags = 0);
-optionEntry number(const std::string &option, const std::string &label,
-                   int weight = 1, int flags = 0);
-optionEntry choice(const std::string &option, const std::string &label,
-                   int weight = 1, int flags = 0);
-optionEntry text(const std::string &option, const std::string &label,
-                 int weight = 1, int flags = 0);
-optionEntry heading(const std::string &title);
-optionEntry custom(const std::string &name, int weight = 0);
-// a share of a row left empty
-optionEntry space(int weight = 1);
 
 struct optionSection {
   std::string name;
@@ -82,6 +70,5 @@ struct optionPage {
 // The pages: "General", "Geometry", "Mesh", "Solver", "Post-processing" and
 // "View" (the options of a view)
 const std::vector<optionPage> &OptionPages();
-const optionPage *GetOptionPage(const std::string &name);
 
 #endif

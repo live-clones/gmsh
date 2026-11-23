@@ -524,6 +524,8 @@ EMSCRIPTEN_KEEPALIVE int gmshWebPlacementStart(const char *name,
   int shape = -1;
   for(std::size_t i = 0; i < scriptShapes().size(); i++)
     if(scriptShapes()[i].name == name) shape = i;
+  // (a parameter, the first shape, has no position)
+  if(shape < 1) return 0;
   std::vector<std::string> v;
   std::istringstream in(values);
   for(std::string s; std::getline(in, s);) v.push_back(s);

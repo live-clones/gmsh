@@ -7917,7 +7917,8 @@ GMSH_API void gmsh::model::discrete::synchronize()
 {
   if(!_checkInit()) return;
 #if defined(HAVE_DISCRETECAD)
-  _discreteCAD()->synchronize(GModel::current());
+  if(_discreteCAD()->getChanged())
+    _discreteCAD()->synchronize(GModel::current());
 #else
   Msg::Error("Discrete CAD modeler not available");
 #endif
@@ -8882,6 +8883,12 @@ gmsh::algorithm::triangulate(const std::vector<double> &coord,
     Msg::Error("Number of edges index should be even");
     return;
   }
+  for(std::size_t e : edges) {
+    if(e < 1 || e > coord.size() / 2) {
+      Msg::Error("Unknown point %lu in edges to recover", e);
+      return;
+    }
+  }
 #if defined(HAVE_MESH)
   SBoundingBox3d bbox;
   for(std::size_t i = 0; i < coord.size(); i += 2)
@@ -8907,7 +8914,6 @@ gmsh::algorithm::triangulate(const std::vector<double> &coord,
     delaunayMeshIn2D(verts, tris, true, &edgesToRecover);
   }
 
-  if(tris.empty()) return;
   tri.resize(3 * tris.size());
   for(std::size_t i = 0; i < tris.size(); i++) {
     MTriangle *t = tris[i];

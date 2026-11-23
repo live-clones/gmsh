@@ -1122,7 +1122,7 @@ void scriptSetTransfiniteSurface(std::vector<int> &l,
   scriptAdd(sstream.str(), fileName, [=] {
     return std::vector<apiCall>{
       call(meshCall(2, l[0], "setTransfiniteSurface"),
-           {aInt(l[0]), aStr(dir, dir == "Left"), aInts(corners, true)})};
+           {aInt(l[0]), aStr(dir, dir == "Left"), aInts(corners, corners.empty())})};
   });
 }
 
@@ -1136,7 +1136,7 @@ void scriptSetTransfiniteVolume(std::vector<int> &l,
   sstream << ";";
   scriptAdd(sstream.str(), fileName, [=] {
     return std::vector<apiCall>{call(meshCall(3, l[0], "setTransfiniteVolume"),
-                                     {aInt(l[0]), aInts(corners, true)})};
+                                     {aInt(l[0]), aInts(corners, corners.empty())})};
   });
 }
 
@@ -2117,7 +2117,8 @@ void scriptSetColor(unsigned int color,
     "Color {" + rgba + "} {\n  " + dimTags2String(l) + "\n}", fileName, [=] {
       return std::vector<apiCall>{
         call("model/setColor",
-             {aDimTags(l), aInt(r), aInt(g), aInt(b), aInt(a, a == 255)})};
+             {aDimTags(l), aInt(r), aInt(g), aInt(b), aInt(a, a == 255),
+              aBool(false, true)})};
     });
 }
 

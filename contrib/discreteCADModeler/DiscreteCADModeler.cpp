@@ -439,6 +439,12 @@ bool DiscreteCAD_Internals::_assignTag(int dim, int &tag)
     return false;
   }
   GModel *model = GModel::current();
+  // (an entity of the model made by this kernel is replaced by synchronize())
+  GEntity *e = (model && tag > 0) ? model->getEntityByTag(dim, tag) : nullptr;
+  if(e && e->getNativeType() != GEntity::DiscreteCADModel) {
+    Msg::Error("The model already has a %s %d", entityName(dim), tag);
+    return false;
+  }
   GEO_Internals *geo = model ? model->getGEOInternals() : nullptr;
   OCC_Internals *occ = model ? model->getOCCInternals() : nullptr;
   if(tag <= 0) {
@@ -2680,6 +2686,8 @@ void DiscreteCAD_Internals::synchronize(GModel *model)
                entityName(dim), tag, entityName(dim), tag);
     return true;
   };
+  // (recorded as they are added, for the next call to remove them even if this
+  // one is interrupted by an error)
   std::vector<GEntity *> created;
   for(auto &it : _vertices) {
     if(taken(0, it.first)) continue;
@@ -2690,6 +2698,7 @@ void DiscreteCAD_Internals::synchronize(GModel *model)
     model->add(gv);
     node(it.second.node, gv);
     created.push_back(gv);
+    _synchronized.push_back({gv->dim(), gv->tag()});
   }
   for(auto &it : _curves) {
     if(taken(1, it.first)) continue;
@@ -2719,6 +2728,7 @@ void DiscreteCAD_Internals::synchronize(GModel *model)
       });
     }
     created.push_back(ge);
+    _synchronized.push_back({ge->dim(), ge->tag()});
   }
   for(auto &it : _surfaces) {
     if(taken(2, it.first)) continue;
@@ -2745,6 +2755,7 @@ void DiscreteCAD_Internals::synchronize(GModel *model)
         gf->triangles.push_back(
           new MTriangle(node(t[0], gf), node(t[1], gf), node(t[2], gf)));
     created.push_back(gf);
+    _synchronized.push_back({gf->dim(), gf->tag()});
   }
   for(auto &it : _volumes) {
     if(taken(3, it.first)) continue;
@@ -2758,8 +2769,8 @@ void DiscreteCAD_Internals::synchronize(GModel *model)
     gr->setNativeType(GEntity::DiscreteCADModel);
     model->add(gr);
     created.push_back(gr);
+    _synchronized.push_back({gr->dim(), gr->tag()});
   }
-  for(GEntity *e : created) _synchronized.push_back({e->dim(), e->tag()});
   model->createGeometryOfDiscreteEntities(_synchronized);
   std::map<std::pair<int, int>,
            std::vector<const DiscreteCADAnalyticSurface *> >

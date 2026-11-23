@@ -429,15 +429,19 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
     Msg::Error("%s - %s", _name.c_str(), message.c_str());
     break;
   case GmshSocket::GMSH_MERGE_FILE: {
+#if defined(HAVE_POST)
     std::size_t n = PView::list.size();
+#endif
     if(onelabUtils::mergeSolverFile(message)) {
 #if defined(HAVE_OPENGL)
       drawContext::global()->draw();
 #endif
+#if defined(HAVE_POST)
       if(n != PView::list.size()) {
         Gui()->parametersChanged();
         Gui()->openModule("Post-processing");
       }
+#endif
     }
   } break;
   case GmshSocket::GMSH_OPEN_PROJECT: OpenProject(message);
@@ -455,11 +459,11 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
               TimeOfDay() - timer);
     break;
   case GmshSocket::GMSH_VERTEX_ARRAY: {
-    int n = PView::list.size();
 #if defined(HAVE_POST)
+    std::size_t n = PView::list.size();
     PView::fillVertexArray(this, length, &message[0], swap);
+    Gui()->viewsChanged(n != PView::list.size());
 #endif
-    Gui()->viewsChanged(n != (int)PView::list.size());
 #if defined(HAVE_OPENGL)
     drawContext::global()->draw();
 #endif

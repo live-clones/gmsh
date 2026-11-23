@@ -248,10 +248,12 @@ function startShape(shape) {
     });
     s.locked.forEach((on, i) => { locks[i].checked = on; });
   };
-  web.placementStart(shape, fields.map((f) => f[1]));
-  placementShape = shape;
-  setTool(Tool.Placement);
-  setPlacementChanged(showPlacement);
+  // (a shape without a position, a parameter, is not placed: Add adds it)
+  if(web.placementStart(shape, fields.map((f) => f[1]))) {
+    placementShape = shape;
+    setTool(Tool.Placement);
+    setPlacementChanged(showPlacement);
+  }
   panelClosed = () => {
     web.placementStop();
     setPlacementChanged(null);

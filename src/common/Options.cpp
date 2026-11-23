@@ -168,20 +168,19 @@ static void PrintStringOptions(int num, int level, int diff, int help,
   while(s[i].str) {
     if((s[i].level & level) && !(s[i].level & GMSH_DEPRECATED)) {
       if(!diff || s[i].function(num, GMSH_GET, "") != s[i].def) {
-        char tmp[1024];
-        sprintf(tmp, "%s%s = \"%s\";%s%s", prefix, s[i].str,
-                s[i].function(num, GMSH_GET, "").c_str(), help ? " // " : "",
-                help ? s[i].help : "");
+        std::string tmp = std::string(prefix) + s[i].str + " = \"" +
+                          s[i].function(num, GMSH_GET, "") + "\";";
+        if(help) tmp += std::string(" // ") + s[i].help;
         if(file)
-          fprintf(file, "%s\n", tmp);
+          fprintf(file, "%s\n", tmp.c_str());
         else {
           // remove \n, \t, \r
-          for(std::size_t i = 0; i < strlen(tmp); i++)
-            if(tmp[i] == '\n' || tmp[i] == '\t' || tmp[i] == '\r') tmp[i] = ' ';
+          for(char &c : tmp)
+            if(c == '\n' || c == '\t' || c == '\r') c = ' ';
           if(vec)
-            vec->push_back(std::string(tmp) + '\0' + "string");
+            vec->push_back(tmp + '\0' + "string");
           else
-            Msg::Direct("%s", tmp);
+            Msg::Direct("%s", tmp.c_str());
         }
       }
     }
