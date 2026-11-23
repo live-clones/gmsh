@@ -3466,6 +3466,9 @@ int GModel::removeDuplicateMeshVertices(double tolerance,
   }
 
   destroyMeshCaches();
+  // (the numbered mesh edges and faces refer to the nodes deleted below)
+  _meshEdges.clear();
+  _meshFaces.clear();
   _associateEntityWithMeshVertices();
   _storeVerticesInEntities(vertices);
 
@@ -3957,7 +3960,7 @@ void GModel::setPhysicalNumToEntitiesInBox(int EntityDimension,
                                            std::vector<double> p2)
 {
   if(p1.size() != 3 || p2.size() != 3) return;
-  SBoundingBox3d box(p1[0], p1[2], p1[2], p2[0], p2[1], p2[3]);
+  SBoundingBox3d box(p1[0], p1[1], p1[2], p2[0], p2[1], p2[2]);
   setPhysicalNumToEntitiesInBox(EntityDimension, PhysicalNumber, box);
 }
 

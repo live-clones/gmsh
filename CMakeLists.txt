@@ -2472,7 +2472,9 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
       configure_file(${CMAKE_CURRENT_SOURCE_DIR}/api/gmsh.py
                      ${CMAKE_CURRENT_BINARY_DIR}/gmsh.py COPYONLY)
       file(GLOB ALLFILES tutorials/python/*.py examples/api/*.py
-           benchmarks/misc/*.py benchmarks/occ/*.py benchmarks/step/*.py)
+           benchmarks/misc/*.py benchmarks/occ/*.py benchmarks/step/*.py
+           benchmarks/io_msh/wrong_counts.py
+           benchmarks/discreteCADModel/failed_operations.py)
       # need an external solver:
       list(FILTER ALLFILES EXCLUDE REGEX "api/onelab_run.*.py$")
       # writes its file in the source directory:

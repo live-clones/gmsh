@@ -49,7 +49,9 @@ entities on the boundary of the modified ones (not only of the latter), as do
 boolean operations with new Geometry.OCCBooleanPreserveNumbering=2, which also
 gives the physical groups and the periodicity of split entities to their pieces;
 entities keeping their tag keep their physical groups, mesh constraints and
-periodicity; Gmsh now requires C++17, CMake 3.10 and FLTK 1.4.0, supports OCC 8,
+periodicity; transforming an OpenCASCADE entity that bounds another one (e.g. a
+face of a volume) alone is now an error, instead of silently transforming a
+copy; Gmsh now requires C++17, CMake 3.10 and FLTK 1.4.0, supports OCC 8,
 and uses Eigen 5.0 by default; official binary builds now use FLTK 1.5-dev, OCC
 8.0.1, HDF5 1.14.6, CGNS 4.5.2 and MED 6.0.1; bug fixes.
 
@@ -61,7 +63,11 @@ and uses Eigen 5.0 by default; official binary builds now use FLTK 1.5-dev, OCC
   mesh/setPolytopeSimplices, mesh/createPolytopeSimplices,
   mesh/getFacesByType, mesh/getElementFaceNodesByType,
   mesh/setMetricCallback, mesh/removeMetricCallback,
-  algorithm/refineTetrahedra, plugin/load, fltk/pick, mesh/merge
+  algorithm/refineTetrahedra, plugin/load, fltk/pick, mesh/merge,
+  discrete/addBox, discrete/addSphere, discrete/addCylinder, discrete/addCone,
+  discrete/addTorus, discrete/addRectangle, discrete/addDisk,
+  discrete/addTriangulation, discrete/importShapes, discrete/fuse,
+  discrete/cut, discrete/intersect, discrete/fillet, discrete/synchronize
 
 * Incompatible API changes: new optional arguments to mesh/optimize,
   mesh/relocateNodes and occ/healShapes; new arguments to
@@ -90,7 +96,10 @@ and uses Eigen 5.0 by default; official binary builds now use FLTK 1.5-dev, OCC
   Mesh.CreateEdges/CreateFaces, Mesh.NbEdges/NbFaces/NbPolygons/NbPolyhedra,
   View.Color.Polygons/Polyhedra, Mesh.Algorithm3D = 11 (or -algo pdel3d) for the
   parallel Delaunay algorithm, Mesh.OptimizeReconnectionThreshold/Points/
-  Search; General.*OffsetX/Y replace deprecated absolute General.*PositionX/Y.
+  Search; General.*OffsetX/Y replace deprecated absolute General.*PositionX/Y;
+  Geometry.DiscreteTolerance, Mesh.PartitionPeriodic,
+  Mesh.RepairSelfIntersecting1DMesh, Mesh.Recombine3DPrisms/Pyramids/
+  MinimumQuality/Smoothing, View.OutlineWidth, General.FloatingTools.
 
 4.15.2 (March 24, 2026): fixed issue in 3D structured CGNS output.
 

@@ -270,9 +270,36 @@ bool DiscreteCAD_Internals::fillet(const std::vector<int> &volumeTags,
       Msg::Error("Discrete CAD fillet: no discrete CAD volume %d", v);
       return false;
     }
-    std::vector<std::pair<int, int> > out;
-    if(!_filletVolume(v, radiusOf, removeVolume, out)) return false;
-    outDimTags.insert(outDimTags.end(), out.begin(), out.end());
+  }
+  // a fillet that fails leaves the model as it was (an error can also leave
+  // through an exception, see Msg::Error())
+  const auto nodes = _nodes;
+  const auto vertices = _vertices;
+  const auto curves = _curves;
+  const auto surfaces = _surfaces;
+  const auto volumes = _volumes;
+  const int maxTag[4] = {_maxTag[0], _maxTag[1], _maxTag[2], _maxTag[3]};
+  auto restore = [&]() {
+    _nodes = nodes;
+    _vertices = vertices;
+    _curves = curves;
+    _surfaces = surfaces;
+    _volumes = volumes;
+    for(int i = 0; i < 4; i++) _maxTag[i] = maxTag[i];
+    outDimTags.clear();
+  };
+  try {
+    for(int v : volumeTags) {
+      std::vector<std::pair<int, int> > out;
+      if(!_filletVolume(v, radiusOf, removeVolume, out)) {
+        restore();
+        return false;
+      }
+      outDimTags.insert(outDimTags.end(), out.begin(), out.end());
+    }
+  } catch(...) {
+    restore();
+    throw;
   }
   _changed = true;
   return true;

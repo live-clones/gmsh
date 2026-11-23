@@ -1072,6 +1072,13 @@ void DiscreteCAD_Internals::_removeVolume(int tag)
     for(int s : v.second.surfaces) usedSurfaces.insert(std::abs(s));
   for(int s : surfaces)
     if(!usedSurfaces.count(std::abs(s))) _surfaces.erase(std::abs(s));
+  _removeUnused();
+  _changed = true;
+}
+
+void DiscreteCAD_Internals::_removeUnused()
+{
+  std::set<int> usedCurves, usedVertices;
   for(auto &s : _surfaces) {
     for(int c : s.second.curves) usedCurves.insert(std::abs(c));
     for(int c : s.second.embeddedCurves) usedCurves.insert(c);
@@ -1089,7 +1096,32 @@ void DiscreteCAD_Internals::_removeVolume(int tag)
     if(!usedVertices.count(it->first)) it = _vertices.erase(it);
     else ++it;
   }
-  _changed = true;
+}
+
+void DiscreteCAD_Internals::remove(
+  const std::vector<std::pair<int, int> > &dimTags, bool recursive)
+{
+  // the volumes first: their surfaces can then be removed too
+  for(auto &dt : dimTags) {
+    if(dt.first != 3 || !_volumes.count(dt.second)) continue;
+    if(recursive)
+      _removeVolume(dt.second);
+    else
+      _volumes.erase(dt.second);
+    _changed = true;
+  }
+  for(auto &dt : dimTags) {
+    if(dt.first != 2 || !_surfaces.count(dt.second)) continue;
+    bool used = false;
+    for(auto &v : _volumes)
+      for(int s : v.second.surfaces)
+        if(std::abs(s) == dt.second) used = true;
+    if(used) continue; // (on the boundary of a volume, as the other kernels)
+    _surfaces.erase(dt.second);
+    // (the curves and the points only exist on surfaces)
+    _removeUnused();
+    _changed = true;
+  }
 }
 
 bool DiscreteCAD_Internals::booleanOperation(
@@ -1102,6 +1134,23 @@ bool DiscreteCAD_Internals::booleanOperation(
 {
   outDimTags.clear();
   outDimTagsMap.clear();
+
+  // the tag given for the result is free, or that of an operand removed
+  // (checked before anything is changed)
+  if(tag > 0) {
+    bool operand = false;
+    for(auto &dt : objectDimTags)
+      if(removeObject && dt.second == tag) operand = true;
+    for(auto &dt : toolDimTags)
+      if(removeTool && dt.second == tag) operand = true;
+    GEntity *e =
+      GModel::current() ? GModel::current()->getEntityByTag(3, tag) : nullptr;
+    if(!operand && (_exists(3, tag) ||
+                    (e && e->getNativeType() != GEntity::DiscreteCADModel))) {
+      Msg::Error("Volume %d already exists", tag);
+      return false;
+    }
+  }
 
   // the triangulations of the volumes of each operand, oriented outwards,
   // with the input entity, surface and triangle each triangle comes from

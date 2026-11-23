@@ -2835,6 +2835,14 @@ Delete :
         if(changed)
           GModel::current()->getOCCInternals()->synchronize(GModel::current());
       }
+#if defined(HAVE_DISCRETECAD)
+      else if(gmsh_yyfactory == "Discrete" &&
+              GModel::current()->getDiscreteCADInternals()){
+        GModel::current()->getDiscreteCADInternals()->remove(dimTags);
+        changed = GModel::current()->getDiscreteCADInternals()->getChanged();
+        GModel::current()->synchronizeDiscreteCADInternals();
+      }
+#endif
       else{
         GModel::current()->getGEOInternals()->remove(dimTags);
         changed = GModel::current()->getGEOInternals()->getChanged();
@@ -2860,6 +2868,14 @@ Delete :
         if(changed)
           GModel::current()->getOCCInternals()->synchronize(GModel::current());
       }
+#if defined(HAVE_DISCRETECAD)
+      else if(gmsh_yyfactory == "Discrete" &&
+              GModel::current()->getDiscreteCADInternals()){
+        GModel::current()->getDiscreteCADInternals()->remove(dimTags, true);
+        changed = GModel::current()->getDiscreteCADInternals()->getChanged();
+        GModel::current()->synchronizeDiscreteCADInternals();
+      }
+#endif
       else{
         GModel::current()->getGEOInternals()->remove(dimTags, true);
         changed = GModel::current()->getGEOInternals()->getChanged();

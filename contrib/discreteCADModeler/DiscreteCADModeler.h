@@ -111,6 +111,8 @@ private:
   // remove a volume, and its surfaces, curves and vertices that no other
   // entity uses
   void _removeVolume(int tag);
+  // remove the curves and the vertices that no surface uses
+  void _removeUnused();
   std::vector<std::array<int, 3> > _fillEllipse(const Frame &f, double rx,
                                                 double ry, double w,
                                                 const std::vector<int> &ring);
@@ -150,6 +152,12 @@ public:
   DiscreteCAD_Internals();
   void reset();
   bool getChanged() const { return _changed; }
+  // remove the volumes, and the surfaces that bound no volume, among the
+  // entities given (the others are left alone); with recursive, the surfaces
+  // of the volumes that no other volume uses too. The curves and the points
+  // go with the last surface that uses them
+  void remove(const std::vector<std::pair<int, int> > &dimTags,
+              bool recursive = false);
   // a box with a corner at (x, y, z) and extents dx, dy, dz; tag is the tag
   // of the volume (a new one if tag <= 0)
   bool addBox(int &tag, double x, double y, double z, double dx, double dy,
