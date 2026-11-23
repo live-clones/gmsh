@@ -11,7 +11,8 @@
 #include <atomic>
 #include <memory>
 #include <mutex>
-#include <unordered_map>
+#include <map>
+#include <tuple>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GModel.h"
@@ -617,29 +618,6 @@ namespace {
   // Shape functions and gradients at the quadrature points of a rule, evaluated
   // once with the regular basis code and reused by all elements with the same
   // function spaces, element type and rule order.
-  struct quadratureBasisKey {
-    int sfTag; // MSH tag of the function space of the interpolated values
-    int gradTag; // MSH tag of the function space of the geometry (jacobian)
-    int elementType; // element type, selecting the integration rule
-    int ruleOrder; // order passed to getIntegrationPoints()
-    bool operator==(const quadratureBasisKey &other) const
-    {
-      return sfTag == other.sfTag && gradTag == other.gradTag &&
-             elementType == other.elementType && ruleOrder == other.ruleOrder;
-    }
-  };
-
-  struct quadratureBasisHash {
-    std::size_t operator()(const quadratureBasisKey &key) const
-    {
-      std::size_t h = std::hash<int>()(key.sfTag);
-      h = h * 1000003u ^ std::hash<int>()(key.gradTag);
-      h = h * 1000003u ^ std::hash<int>()(key.elementType);
-      h = h * 1000003u ^ std::hash<int>()(key.ruleOrder);
-      return h;
-    }
-  };
-
   struct quadratureBasisData {
     int npts = 0;
     int nsf = 0; // row stride of sf, >= number of shape functions
@@ -654,11 +632,12 @@ namespace {
     { return &gsf[static_cast<std::size_t>(i) * ngrad]; }
   };
 
-  // One cache per thread, so lookups need no lock. The keys are MSH tags, not
-  // basis pointers: BasisFactory::clearAll() deletes the bases at finalize and
-  // a re-initialize can recycle their addresses.
-  thread_local std::unordered_map<quadratureBasisKey, quadratureBasisData,
-                                  quadratureBasisHash>
+  // One cache per thread, so lookups need no lock, by the MSH tags of the
+  // function spaces of the interpolated values and of the geometry, the
+  // element type and the rule order. The keys are MSH tags, not basis
+  // pointers: BasisFactory::clearAll() deletes the bases at finalize and a
+  // re-initialize can recycle their addresses.
+  thread_local std::map<std::tuple<int, int, int, int>, quadratureBasisData>
     quadratureBasisCache;
 
   // Callers choose the rule order, so the key set is not closed. A sweep that
@@ -672,8 +651,8 @@ namespace {
     const nodalBasis *sfSpace = e->getFunctionSpace(sfOrder);
     if(!gradSpace || !sfSpace) return nullptr;
 
-    quadratureBasisKey key{sfSpace->type, gradSpace->type, e->getType(),
-                           ruleOrder};
+    const auto key =
+      std::make_tuple(sfSpace->type, gradSpace->type, e->getType(), ruleOrder);
     auto it = quadratureBasisCache.find(key);
     if(it != quadratureBasisCache.end()) return &it->second;
 
