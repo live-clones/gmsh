@@ -271,8 +271,6 @@ public:
   bool running() override;
   drawContext *scene() override;
   int desktopDark() override;
-  void optionChanged(const std::string &category, int num,
-                     const std::string &name) override;
   void optionsChanged() override;
   void beforeOptionsSaved() override;
   void backgroundImageChanged() override;

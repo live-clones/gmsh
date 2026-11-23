@@ -28,12 +28,8 @@ public:
   virtual drawContext *scene() { return nullptr; }
   // the desktop is dark (1) or light (0), or does not say (-1)
   virtual int desktopDark() { return -1; }
-  // an option set for the interface (num is the view for an option of the
-  // views), or all of them set again: the widgets that show them follow
-  virtual void optionChanged(const std::string &category, int num,
-                             const std::string &name)
-  {
-  }
+  // the options set again: the widgets that show them follow (an option set
+  // alone is shown at the next draw, see optionWindow::showOptions())
   virtual void optionsChanged() {}
   // the sizes and places of the windows stored in the options, about to be
   // saved

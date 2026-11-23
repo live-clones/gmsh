@@ -65,15 +65,6 @@ static void stringColorsChanged()
 
 // General routines for string options
 
-// an option set by its name for the graphical interface (GMSH_GUI): the
-// widgets bound to it show its new value (see guiListener::optionChanged(); the
-// option functions that do more for the interface tell it themselves)
-static void showInGui(int action, const char *category, int num,
-                      const char *name)
-{
-  if(action & GMSH_GUI) Gui()->optionChanged(category, num, name);
-}
-
 // The options of each category (see DefaultOptions.h): its name, its title in
 // the option files, the file of the reference manual that lists them, and its
 // string, number and colour options; in the order of the option files
@@ -137,7 +128,6 @@ bool StringOption(int action, const char *category, int num, const char *name,
     val = s[i].function(num, action | GMSH_SET, s[i].def);
   else
     val = s[i].function(num, action, val);
-  showInGui(action, category, num, name);
   return true;
 }
 
@@ -248,7 +238,6 @@ bool NumberOption(int action, const char *category, int num, const char *name,
   else
     val = s[i].function(num, action, val);
 
-  showInGui(action, category, num, name);
   return true;
 }
 
@@ -345,7 +334,6 @@ bool ColorOption(int action, const char *category, int num, const char *name,
   else
     val = s[i].function(num, action, val);
 
-  showInGui(action, category, num, name);
   return true;
 }
 
@@ -414,15 +402,6 @@ static void switchColorOptions(int num, StringXColor s[], int from, int to)
   for(int i = 0; s[i].str; i++)
     if(s[i].function(num, GMSH_GET, 0) == schemeColor(s[i], from))
       s[i].function(num, GMSH_SET_DEFAULT | GMSH_SET, schemeColor(s[i], to));
-}
-
-static void SetColorOptionsGUI(int num, StringXColor s[])
-{
-  int i = 0;
-  while(s[i].str) {
-    s[i].function(num, GMSH_GUI, 0);
-    i++;
-  }
 }
 
 static void PrintColorOptions(int num, int level, int diff, int help,
@@ -542,7 +521,6 @@ void InitOptionsGUI(int num)
     if(!strcmp(c.name, "View")) continue;
     SetStringOptionsGUI(num, c.strings);
     SetNumberOptionsGUI(num, c.numbers);
-    SetColorOptionsGUI(num, c.colors);
   }
 
   Gui()->optionsChanged();
@@ -3205,15 +3183,10 @@ bool followDesktopColorScheme(bool dark)
   StringXColor *tables[] = {GeneralOptions_Color, GeometryOptions_Color,
                             MeshOptions_Color, SolverOptions_Color,
                             PostProcessingOptions_Color, PrintOptions_Color};
-  for(auto t : tables) {
-    switchColorOptions(0, t, from, to);
-    SetColorOptionsGUI(0, t);
-  }
+  for(auto t : tables) switchColorOptions(0, t, from, to);
 #if defined(HAVE_POST)
-  for(std::size_t i = 0; i < PView::list.size(); i++) {
+  for(std::size_t i = 0; i < PView::list.size(); i++)
     switchColorOptions(i, ViewOptions_Color, from, to);
-    SetColorOptionsGUI(i, ViewOptions_Color);
-  }
   // horrible trick so that opt_view_XXX will act on the reference view
   std::vector<PView *> tmp = PView::list;
   PView::list.clear();
@@ -3239,17 +3212,6 @@ double opt_general_color_scheme(OPT_ARGS_NUM)
       SetDefaultColorOptions(i, ViewOptions_Color);
 #endif
     SetDefaultColorOptions(0, PrintOptions_Color);
-
-    SetColorOptionsGUI(0, GeneralOptions_Color);
-    SetColorOptionsGUI(0, GeometryOptions_Color);
-    SetColorOptionsGUI(0, MeshOptions_Color);
-    SetColorOptionsGUI(0, SolverOptions_Color);
-    SetColorOptionsGUI(0, PostProcessingOptions_Color);
-#if defined(HAVE_POST)
-    for(std::size_t i = 0; i < PView::list.size(); i++)
-      SetColorOptionsGUI(i, ViewOptions_Color);
-#endif
-    SetColorOptionsGUI(0, PrintOptions_Color);
 
 #if defined(HAVE_POST)
     // horrible trick so that opt_view_XXX will act on the reference view

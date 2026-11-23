@@ -318,6 +318,9 @@ static void option_cb(Fl_Widget *w, void *data)
         NumberOption(GMSH_SET | (n == nums[0] ? GMSH_GUI : 0), category, n,
                      name, value);
     }
+    // (the widget shows the value the option took, which can differ from the
+    // one given: having the focus, it is left alone at the next draw)
+    o->showOption(category, nums[0], name);
     if(b.category == "View") linkViews(nums);
   }
   o->updateActive();
@@ -780,6 +783,7 @@ static void toggles_cb(Fl_Widget *w, void *data)
   for(int n : nums)
     NumberOption(GMSH_SET | (n == nums[0] ? GMSH_GUI : 0), category.c_str(), n,
                  names[i].c_str(), value);
+  FlGui::instance()->options->showOption(category, nums[0], names[i]);
   if(category == "View") linkViews(nums);
   option_cb(nullptr, nullptr);
 }

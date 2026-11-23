@@ -1225,12 +1225,6 @@ drawContext *FlGui::scene() { return getCurrentDrawContext(); }
 
 int FlGui::desktopDark() { return ::desktopDark() == 1 ? 1 : 0; }
 
-void FlGui::optionChanged(const std::string &category, int num,
-                          const std::string &name)
-{
-  options->showOption(category, num, name);
-}
-
 void FlGui::optionsChanged() { options->showOptions(); }
 
 void FlGui::beforeOptionsSaved() { storeCurrentWindowsInfo(); }

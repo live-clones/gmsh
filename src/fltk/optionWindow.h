@@ -109,8 +109,8 @@ public:
   void updateViewGroup(int index);
   // the widget bound to an option (the first, if several), or null
   Fl_Widget *widget(const std::string &option) const;
-  // the widgets bound to an option show its value (an option of the views:
-  // only for the view shown, num)
+  // the widgets bound to an option show its value at once (an option of the
+  // views: only for the view shown, num)
   void showOption(const std::string &category, int num,
                   const std::string &name);
   // all the widgets show the values of their options (only those of the
