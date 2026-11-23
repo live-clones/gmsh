@@ -752,7 +752,7 @@ namespace {
   // synchronization gives to the model)
   bool kernelCall(const std::string &name, std::string &kern)
   {
-    for(const char *k : {"geo", "occ"}) {
+    for(const char *k : {"geo", "occ", "discrete"}) {
       std::string p = std::string("model/") + k + "/";
       if(!name.compare(0, p.size(), p)) {
         kern = k;
@@ -870,6 +870,10 @@ static std::vector<apiCall> factoryCalls(const std::vector<int> &tagsBefore)
 {
   std::string k = kernel();
   std::vector<apiCall> c;
+  // (the discrete CAD modeler numbers its entities apart)
+#if defined(HAVE_PARSER)
+  if(gmsh_yyfactory == "Discrete") return c;
+#endif
   for(int dim = -2; dim <= 3; dim++) {
     int t = tagsBefore[dim + 2];
     if(t > 0)
@@ -1043,10 +1047,10 @@ static std::string occFactory()
 }
 
 // the discrete CAD factory, kept for its primitives whose options are those
-// of the whole solids (full angles, no rounded corners) and for its boolean
-// operations; the other commands switch to OpenCASCADE, as with the built-in
-// factory (the programs, without a discrete CAD kernel in the API, make the
-// shapes of OpenCASCADE)
+// of the whole solids (full angles, no rounded corners), its union,
+// intersection and difference, its fillets and Delete; the other shapes
+// switch to OpenCASCADE, and the other commands go to the built-in kernel,
+// as in the parser
 static bool discreteFactory()
 {
 #if defined(HAVE_PARSER) && defined(HAVE_DISCRETECAD)
@@ -1055,6 +1059,10 @@ static bool discreteFactory()
   return false;
 #endif
 }
+
+// the kernel of the calls of the commands that the discrete CAD factory takes
+static std::string discreteOr(const std::string &k)
+{ return discreteFactory() ? "discrete" : k; }
 
 static bool defaultOption(const std::string &value, const std::string &def)
 {
@@ -1525,14 +1533,16 @@ void scriptAddDisk(const std::string &fileName, const std::string &x,
 {
   int tag = nextTag(2);
   std::ostringstream sstream;
-  checkDiscrete(sstream, true, "Disk");
+  const bool discrete = checkDiscrete(sstream, true, "Disk");
   sstream << "Disk(" << tag << ") = {" << x << ", " << y << ", " << z << ", "
           << rx << ", " << ry << "};";
   scriptAdd(sstream.str(), fileName, [=] {
+    std::vector<apiArg> a = {aNum(x),  aNum(y),         aNum(z),
+                             aNum(rx), aNum(ry),        aInt(tag),
+                             aNums({}, true), aNums({}, true)};
+    if(discrete) a.push_back(aNum("-1.", true));
     return std::vector<apiCall>{
-      call("model/occ/addDisk",
-           {aNum(x), aNum(y), aNum(z), aNum(rx), aNum(ry), aInt(tag),
-            aNums({}, true), aNums({}, true)},
+      call(discrete ? "model/discrete/addDisk" : "model/occ/addDisk", a,
            true)};
   });
 }
@@ -1551,6 +1561,11 @@ void scriptAddRectangle(const std::string &fileName, const std::string &x,
   if(roundedRadius.size() && !discrete) sstream << ", " << roundedRadius;
   sstream << "};";
   scriptAdd(sstream.str(), fileName, [=] {
+    if(discrete)
+      return std::vector<apiCall>{
+        call("model/discrete/addRectangle",
+             {aNum(x), aNum(y), aNum(z), aNum(dx), aNum(dy), aInt(tag)},
+             true)};
     return std::vector<apiCall>{
       call("model/occ/addRectangle",
            {aNum(x), aNum(y), aNum(z), aNum(dx), aNum(dy), aInt(tag),
@@ -1583,6 +1598,12 @@ void scriptAddSphere(const std::string &fileName, const std::string &x,
   }
   sstream << "};";
   scriptAdd(sstream.str(), fileName, [=] {
+    if(discrete)
+      return std::vector<apiCall>{
+        call("model/discrete/addSphere",
+             {aNum(x), aNum(y), aNum(z), aNum(r), aInt(tag),
+              aNum("-1.", true)},
+             true)};
     return std::vector<apiCall>{call(
       "model/occ/addSphere",
       {aNum(x), aNum(y), aNum(z), aNum(r), aInt(tag), angle(alpha1, "-Pi/2"),
@@ -1606,6 +1627,12 @@ void scriptAddCylinder(const std::string &fileName, const std::string &x,
   if(alpha.size() && !discrete) sstream << ", " << alpha;
   sstream << "};";
   scriptAdd(sstream.str(), fileName, [=] {
+    if(discrete)
+      return std::vector<apiCall>{
+        call("model/discrete/addCylinder",
+             {aNum(x), aNum(y), aNum(z), aNum(dx), aNum(dy), aNum(dz), aNum(r),
+              aInt(tag), aNum("-1.", true)},
+             true)};
     return std::vector<apiCall>{
       call("model/occ/addCylinder",
            {aNum(x), aNum(y), aNum(z), aNum(dx), aNum(dy), aNum(dz), aNum(r),
@@ -1621,12 +1648,12 @@ void scriptAddBox(const std::string &fileName, const std::string &x,
 {
   int tag = nextTag(3);
   std::ostringstream sstream;
-  checkDiscrete(sstream, true, "Box");
+  const bool discrete = checkDiscrete(sstream, true, "Box");
   sstream << "Box(" << tag << ") = {" << x << ", " << y << ", " << z << ", "
           << dx << ", " << dy << ", " << dz << "};";
   scriptAdd(sstream.str(), fileName, [=] {
     return std::vector<apiCall>{
-      call("model/occ/addBox",
+      call(discrete ? "model/discrete/addBox" : "model/occ/addBox",
            {aNum(x), aNum(y), aNum(z), aNum(dx), aNum(dy), aNum(dz), aInt(tag)},
            true)};
   });
@@ -1646,6 +1673,12 @@ void scriptAddTorus(const std::string &fileName, const std::string &x,
   if(alpha.size() && !discrete) sstream << ", " << alpha;
   sstream << "};";
   scriptAdd(sstream.str(), fileName, [=] {
+    if(discrete)
+      return std::vector<apiCall>{
+        call("model/discrete/addTorus",
+             {aNum(x), aNum(y), aNum(z), aNum(r1), aNum(r2), aInt(tag),
+              aNums({}, true), aNum("-1.", true)},
+             true)};
     return std::vector<apiCall>{
       call("model/occ/addTorus",
            {aNum(x), aNum(y), aNum(z), aNum(r1), aNum(r2), aInt(tag),
@@ -1669,6 +1702,12 @@ void scriptAddCone(const std::string &fileName, const std::string &x,
   if(alpha.size() && !discrete) sstream << ", " << alpha;
   sstream << "};";
   scriptAdd(sstream.str(), fileName, [=] {
+    if(discrete)
+      return std::vector<apiCall>{
+        call("model/discrete/addCone",
+             {aNum(x), aNum(y), aNum(z), aNum(dx), aNum(dy), aNum(dz), aNum(r1),
+              aNum(r2), aInt(tag), aNum("-1.", true)},
+             true)};
     return std::vector<apiCall>{
       call("model/occ/addCone",
            {aNum(x), aNum(y), aNum(z), aNum(dx), aNum(dy), aNum(dz), aNum(r1),
@@ -2056,8 +2095,10 @@ void scriptBoolean(const std::string &fileName, const std::string &op,
                    const std::vector<std::pair<int, int> > &tool,
                    int deleteObject, int deleteTool)
 {
-  std::string s =
-    (discreteFactory() ? "" : occFactory()) + op + "{ " + dimTags2String(object);
+  // (no fragments in the discrete CAD modeler: OpenCASCADE)
+  const bool discrete = discreteFactory() && op != "BooleanFragments";
+  std::string s = (discrete ? "" : occFactory()) + op + "{ " +
+                  dimTags2String(object);
   if(deleteObject) s += "Delete; ";
   s += "}{ " + dimTags2String(tool);
   if(deleteTool) s += "Delete; ";
@@ -2068,7 +2109,7 @@ void scriptBoolean(const std::string &fileName, const std::string &op,
                                                   "fragment";
   scriptAdd(s, fileName, [=] {
     return std::vector<apiCall>{call(
-      "model/occ/" + f,
+      (discrete ? "model/discrete/" : "model/occ/") + f,
       {aDimTags(object), aDimTags(tool), aOut(apiArg::OutDimTags, "result"),
        aOut(apiArg::OutDimTagsMap, "resultMap"), aInt(-1, true),
        aBool(deleteObject != 0, deleteObject != 0),
@@ -2079,12 +2120,13 @@ void scriptBoolean(const std::string &fileName, const std::string &op,
 void scriptFillet(const std::string &fileName, const std::vector<int> &regions,
                   const std::vector<int> &edges, const std::string &radius)
 {
-  scriptAdd((discreteFactory() ? "" : occFactory()) + "Fillet " +
+  const bool discrete = discreteFactory();
+  scriptAdd((discrete ? "" : occFactory()) + "Fillet " +
               vector2String(regions) +
               vector2String(edges) + "{" + radius + "}",
             fileName, [=] {
               return std::vector<apiCall>{call(
-                "model/occ/fillet",
+                discrete ? "model/discrete/fillet" : "model/occ/fillet",
                 {aInts(regions), aInts(edges), aNums({radius}),
                  aOut(apiArg::OutDimTags, "filleted"), aBool(true, true)})};
             });
@@ -2106,7 +2148,7 @@ void scriptDeleteEntities(const std::string &fileName,
                   dimTags2String(l) + "\n}";
   scriptAdd(s, fileName, [=] {
     return std::vector<apiCall>{
-      call("model/" + kernel() + "/remove",
+      call("model/" + discreteOr(kernel()) + "/remove",
            {aDimTags(l), aBool(recursive, !recursive)})};
   });
 }
