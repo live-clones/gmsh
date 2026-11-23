@@ -2474,6 +2474,7 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
       file(GLOB ALLFILES tutorials/python/*.py examples/api/*.py
            benchmarks/misc/*.py benchmarks/occ/*.py benchmarks/step/*.py
            benchmarks/io_msh/wrong_counts.py
+           benchmarks/extrude/extrude_merged_mesh.py
            benchmarks/discreteCADModel/failed_operations.py)
       # need an external solver:
       list(FILTER ALLFILES EXCLUDE REGEX "api/onelab_run.*.py$")

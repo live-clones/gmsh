@@ -331,7 +331,18 @@ void gmshFace::geomProperties(std::vector<int> &integers,
 
 bool gmshFace::haveParametrization()
 {
-  return geomType() != BoundaryLayerSurface;
+  // (as a discrete curve of the built-in kernel, see gmshEdge; a surface
+  // interpolated between its curves, e.g. extruded from a discrete curve, has
+  // no geometry either if one of them is discrete)
+  if(geomType() == BoundaryLayerSurface || geomType() == DiscreteSurface)
+    return false;
+  if(_s->Typ == MSH_SURF_PLAN) return true;
+  for(int i = 0; i < List_Nbr(_s->Generatrices); i++) {
+    Curve *c;
+    List_Read(_s->Generatrices, i, &c);
+    if(c->Typ == MSH_SEGM_DISCRETE) return false;
+  }
+  return true;
 }
 
 bool gmshFace::containsPoint(const SPoint3 &pt) const

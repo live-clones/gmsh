@@ -909,6 +909,11 @@ public:
   int writeGEO(const std::string &name, bool printLabels = true,
                bool onlyPhysicals = false);
   int exportDiscreteGEOInternals();
+  // the boundary of a discrete surface given to the built-in kernel, if it
+  // does not have it yet: the discrete entities read from a mesh are known to
+  // the kernel without it. The other entities of the kernel are left alone
+  // (exportDiscreteGEOInternals() starts the kernel again from the model)
+  bool exportDiscreteGEOBoundary(int surface);
 
   // PY export (mostly a placeholder for now)
   int writePY(const std::string &name, bool printLabels = true,
