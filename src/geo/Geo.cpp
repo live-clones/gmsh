@@ -3023,6 +3023,18 @@ int ExtrudeSurface(int type, int is, double T0, double T1, double T2, double A0,
 
   if(!ps && !gf) return 0;
 
+  // a discrete surface whose boundary the built-in kernel does not know (as
+  // after a mesh is read) would be extruded without lateral surfaces
+  if(ps && ps->Typ == MSH_SURF_DISCRETE && !List_Nbr(ps->Generatrices)) {
+    GFace *f = GModel::current()->getFaceByTag(std::abs(is));
+    if(f && f->edges().size()) {
+      Msg::Error("The boundary of discrete surface %d is not known by the "
+                 "built-in kernel: use CreateTopology before the extrusion",
+                 std::abs(is));
+      return 0;
+    }
+  }
+
   Msg::Debug("Extrude Surface %d", is);
 
   Surface *chapeau = nullptr;

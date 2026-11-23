@@ -14,6 +14,7 @@
 #include "MPrism.h"
 #include "MPyramid.h"
 #include "ExtrudeParams.h"
+#include "meshGEdge.h"
 #include "meshGFace.h"
 #include "meshGRegion.h"
 #include "Context.h"
@@ -289,6 +290,7 @@ void meshGRegionExtruded::operator()(GRegion *gr)
     Msg::Error("Unknown source surface %d for extrusion", ep->geo.Source);
     return;
   }
+  if(!extrudableMesh(from)) return;
 
   extrudeMesh(from, gr, pos);
 

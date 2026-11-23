@@ -89,6 +89,28 @@ static void copyMesh(GEdge *from, GEdge *to)
   createElements(to);
 }
 
+bool extrudableMesh(GEntity *from)
+{
+  const char *what = (from->dim() == 1) ? "curve" : "surface";
+  if(from->getNumMeshElements() &&
+     from->getMeshElement(0)->getPolynomialOrder() > 1) {
+    Msg::Error("Cannot extrude the high-order mesh of %s %d: make it first "
+               "order before the extrusion (SetOrder 1), and set the order of "
+               "the extruded mesh afterwards",
+               what, from->tag());
+    return false;
+  }
+  if(from->dim() == 1 && !from->getNumMeshElements() &&
+     from->mesh_vertices.size()) {
+    Msg::Error("Cannot extrude the mesh of curve %d: it has nodes but no "
+               "elements (the mesh was saved without the elements of its "
+               "curves, see Mesh.SaveAll)",
+               from->tag());
+    return false;
+  }
+  return true;
+}
+
 int MeshExtrudedCurve(GEdge *ge)
 {
   ExtrudeParams *ep = ge->meshAttributes.extrude;
@@ -122,6 +144,9 @@ int MeshExtrudedCurve(GEdge *ge)
             from->meshStatistics.status != GEdge::DONE) {
       // cannot mesh this edge yet: will do it later
       return 1;
+    }
+    else if(!extrudableMesh(from)) {
+      return 0;
     }
     else if(ge->getMeshMaster() != ge) {
       GEdge *gef = dynamic_cast<GEdge *>(ge->getMeshMaster());
