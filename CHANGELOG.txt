@@ -1,11 +1,12 @@
 5.0.0 (Work-in-progress): improved performance of default meshing algorithms;
-new parallel 3D Delaunay algorithm; improved graphics performance and entity
-selection, with new shader rendering pipeline supporting order-independent
-transparency and studio shading; redesigned GUI, with tools docked to the right
-of the graphics window by default and automatic dark mode; new JavaScript API
-and web interface; new capping visualization mode in clipping tool; new
-interactive model query and measurement; improved colorbars and 2D plots; new
-predefined colormaps and symmetric log scale; new built-in fonts used by default
+new parallel 3D Delaunay algorithm (Mesh.Algorithm3D = 11 or -algo pdel3d);
+improved graphics performance and entity selection, with new shader rendering
+pipeline supporting order-independent transparency and studio shading;
+redesigned GUI, with tools docked to the right of the graphics window by default
+and automatic dark mode; new JavaScript API and web interface; new capping
+visualization mode in clipping tool; new interactive model query and
+measurement; improved colorbars and 2D plots; new predefined colormaps and
+symmetric log scale; new built-in fonts used by default
 (removed ZapfDingbats); new headless image and movie export (replaces deprecated
 OSMesa; optional MP4 export with FFmpeg); new faster homology solver (with
 periodicity connection handling); new experimental discrete CAD modeler;
@@ -51,9 +52,12 @@ gives the physical groups and the periodicity of split entities to their pieces;
 entities keeping their tag keep their physical groups, mesh constraints and
 periodicity; transforming an OpenCASCADE entity that bounds another one (e.g. a
 face of a volume) alone is now an error, instead of silently transforming a
-copy; Gmsh now requires C++17, CMake 3.10 and FLTK 1.4.0, supports OCC 8,
-and uses Eigen 5.0 by default; official binary builds now use FLTK 1.5-dev, OCC
-8.0.1, HDF5 1.14.6, CGNS 4.5.2 and MED 6.0.1; bug fixes.
+copy; the Geometry/Mesh/View.Transparency options are renamed Opacity; the
+windows are placed at offsets from the graphic window (General.*OffsetX/Y), the
+absolute General.*PositionX/Y being deprecated; removed View.FakeTransparency;
+Gmsh now requires C++17, CMake 3.10 and FLTK 1.4.0, supports OCC 8, and uses
+Eigen 5.0 by default; official binary builds now use FLTK 1.5-dev, OCC 8.0.1,
+HDF5 1.14.6, CGNS 4.5.2 and MED 6.0.1; bug fixes.
 
 * New API functions: mesh/createOverlaps, mesh/getPartitionEntities,
   mesh/getOverlapBoundary, mesh/getOverlapInterfaceBoundary,
@@ -85,22 +89,6 @@ and uses Eigen 5.0 by default; official binary builds now use FLTK 1.5-dev, OCC
   touching periodic curves and surfaces are oriented with the tags of the master
   nodes, so that mesh/getPeriodicKeys maps the keys of all the hierarchical
   function spaces one-to-one); mesh/getGhostElements takes a partition
-
-* New or modified options: Geometry/Mesh/View.Opacity/OpacityMode,
-  General.Shaders, General.Brightness, General.GraphicsCacheSize,
-  Print.Supersampling, Print.ScalePixelSizes; Mesh/View.DrawSkinOnly,
-  Mesh/View.DrawSkinEdgesOnly, View.AdaptSkinOnly, PostProcessing.SaveAdapted
-  (replacing the adapted .pvtu export dialog); Mesh.SaveViews (to save views
-  with the mesh in MSH/VTU/MED), Mesh.FlatRefineDelaunay2D/3D,
-  Mesh.FlatOptimize3D, Negative Mesh.OptimizePyramids places the pyramid apex
-  along the face normal, Mesh.PartitionSplitLocalBrep, Mesh.MetisContiguous,
-  Mesh.CreateEdges/CreateFaces, Mesh.NbEdges/NbFaces/NbPolygons/NbPolyhedra,
-  View.Color.Polygons/Polyhedra, Mesh.Algorithm3D = 11 (or -algo pdel3d) for the
-  parallel Delaunay algorithm, Mesh.OptimizeReconnectionThreshold/Points/
-  Search; General.*OffsetX/Y replace deprecated absolute General.*PositionX/Y;
-  Geometry.DiscreteTolerance, Mesh.PartitionPeriodic,
-  Mesh.RepairSelfIntersecting1DMesh, Mesh.Recombine3DPrisms/Pyramids/
-  MinimumQuality/Smoothing, View.OutlineWidth, General.FloatingTools.
 
 4.15.2 (March 24, 2026): fixed issue in 3D structured CGNS output.
 
