@@ -97,8 +97,8 @@ static std::map<Fl_Widget *, optionBinding> &bindings()
   return b;
 }
 
-// Bind a widget to the option its tooltip starts with ("Geometry.Points", or
-// "Geometry.Points (Alt+p)" with the key that toggles it)
+// Bind a widget to an option ("Geometry.Points", or "Geometry.Points (Alt+p)"
+// with the key that toggles it: the text of its tooltip)
 // the first widget bound to each option, by its full name (see boundWidget())
 static std::map<std::string, Fl_Widget *> &boundByName()
 {
@@ -121,7 +121,6 @@ static void bind(Fl_Widget *w, const char *option, int offset = 0)
 // optionBinding), or what is added to them
 static void bindValues(Fl_Widget *w, const std::vector<double> &values)
 {
-  if(!bindings().count(w)) bind(w, w->tooltip());
   bindings()[w].values = values;
 }
 
@@ -188,34 +187,28 @@ static void copyColorTable(int from, int to)
   PView::list[to]->setChanged(true);
 }
 
-// the names of the options listed by the tooltip of a menu of toggles
-// ("View.DrawScalars, View.DrawVectors, View.DrawTensors"), without their
-// category
-static std::vector<std::string> menuOptions(Fl_Widget *menu)
-{
+// The menus of toggles, with the category ("View") and the names
+// ("DrawScalars"...) of the options their items set, in order; and the colour
+// buttons with the option each shows (its function in the colour tables of
+// DefaultOptions.h): refreshed with the bound widgets (see showOptions())
+struct toggleBinding {
+  std::string category;
   std::vector<std::string> names;
-  for(std::string s :
-      SplitString(menu->tooltip() ? menu->tooltip() : "", ',')) {
-    s.erase(0, s.find_first_not_of(' '));
-    names.push_back(s.substr(s.find('.') + 1));
-  }
-  return names;
-}
-
-// the category of the options of a menu of toggles ("View")
-static std::string menuCategory(Fl_Widget *menu)
+};
+static std::map<Fl_Menu_Button *, toggleBinding> &toggleMenus()
 {
-  std::string s = menu->tooltip() ? menu->tooltip() : "";
-  return s.substr(0, s.find('.'));
-}
-
-// The menus of toggles, and the colour buttons with the option each shows
-// (its function in the colour tables of DefaultOptions.h): refreshed with the
-// bound widgets (see showOptions())
-static std::vector<Fl_Menu_Button *> &toggleMenus()
-{
-  static std::vector<Fl_Menu_Button *> m;
+  static std::map<Fl_Menu_Button *, toggleBinding> m;
   return m;
+}
+
+static const std::vector<std::string> &menuOptions(Fl_Widget *menu)
+{
+  return toggleMenus()[(Fl_Menu_Button *)menu].names;
+}
+
+static const std::string &menuCategory(Fl_Widget *menu)
+{
+  return toggleMenus()[(Fl_Menu_Button *)menu].category;
 }
 
 struct colorBinding {
@@ -246,9 +239,9 @@ static void linkViews(const std::vector<int> &nums)
   for(auto &b : bindings())
     if(b.second.category == "View" && linked(b.second.name))
       names.push_back(b.second.name);
-  for(Fl_Menu_Button *m : toggleMenus())
-    if(menuCategory(m) == "View")
-      for(const std::string &n : menuOptions(m))
+  for(auto &t : toggleMenus())
+    if(t.second.category == "View")
+      for(const std::string &n : t.second.names)
         if(linked(n)) names.push_back(n);
   int from = nums[0];
   for(std::size_t k = 1; k < nums.size(); k++) {
@@ -513,13 +506,13 @@ static void showValue(Fl_Widget *w, const optionBinding &b)
 // the items of a menu of toggles as their options are
 static void showToggles(Fl_Menu_Button *m)
 {
-  std::string category = menuCategory(m);
+  const std::string &category = menuCategory(m);
   int num = 0;
   if(category == "View") {
     num = FlGui::instance()->options->view.index;
     if(num < 0 || num >= (int)PView::list.size()) return;
   }
-  std::vector<std::string> names = menuOptions(m);
+  const std::vector<std::string> &names = menuOptions(m);
   Fl_Menu_Item *items = (Fl_Menu_Item *)m->menu();
   for(std::size_t i = 0; i < names.size() && items[i].text; i++) {
     double v;
@@ -564,11 +557,11 @@ void optionWindow::showOption(const std::string &category, int num,
   for(auto &b : bindings())
     if(b.second.name == name && b.second.category == category)
       showValue(b.first, b.second);
-  for(Fl_Menu_Button *m : toggleMenus()) {
-    std::vector<std::string> names = menuOptions(m);
-    if(menuCategory(m) == category &&
+  for(auto &t : toggleMenus()) {
+    const std::vector<std::string> &names = t.second.names;
+    if(t.second.category == category &&
        std::find(names.begin(), names.end(), name) != names.end())
-      showToggles(m);
+      showToggles(t.first);
   }
   for(auto &b : colorBindings())
     if(b.second.name == name && b.second.category == category)
@@ -587,8 +580,8 @@ void optionWindow::showOptions(bool shownOnly)
       continue;
     showValue(b.first, b.second);
   }
-  for(Fl_Menu_Button *m : toggleMenus())
-    if(!shownOnly || !shown || shown->contains(m)) showToggles(m);
+  for(auto &t : toggleMenus())
+    if(!shownOnly || !shown || shown->contains(t.first)) showToggles(t.first);
   for(auto &b : colorBindings())
     if(!shownOnly || !shown || shown->contains(b.first))
       showColor(b.first, b.second);
@@ -757,10 +750,10 @@ static void toggles_cb(Fl_Widget *w, void *data)
 {
   Fl_Menu_ *m = (Fl_Menu_ *)w;
   int i = m->value();
-  std::vector<std::string> names = menuOptions(w);
+  const std::vector<std::string> names = menuOptions(w);
   if(!m->mvalue() || i < 0 || i >= (int)names.size()) return;
   double value = m->mvalue()->value() ? 1. : 0.;
-  std::string category = menuCategory(w);
+  const std::string category = menuCategory(w);
   std::vector<int> nums =
     (category == "View") ? viewTargets() : std::vector<int>{0};
   for(int n : nums)
@@ -771,7 +764,8 @@ static void toggles_cb(Fl_Widget *w, void *data)
   option_cb(nullptr, nullptr);
 }
 
-// a menu of toggles: its items set the options its tooltip lists, in order
+// a menu of toggles: its items set the options listed ("View.DrawScalars,
+// View.DrawVectors"), in order, which its tooltip shows
 static Fl_Menu_Button *toggleMenu(int x, int y, int w, int h, const char *label,
                                   const char *options, Fl_Menu_Item *items)
 {
@@ -779,7 +773,12 @@ static Fl_Menu_Button *toggleMenu(int x, int y, int w, int h, const char *label,
   m->tooltip(options);
   m->menu(items);
   m->callback(toggles_cb);
-  toggleMenus().push_back(m);
+  toggleBinding &t = toggleMenus()[m];
+  for(std::string s : SplitString(options, ',')) {
+    s.erase(0, s.find_first_not_of(' '));
+    t.category = s.substr(0, s.find('.'));
+    t.names.push_back(s.substr(s.find('.') + 1));
+  }
   return m;
 }
 
@@ -969,9 +968,8 @@ static int customEntry(const optionEntry &f, int x, int y, int w,
 static Fl_Group *buildSection(const optionSection &s, int L, int width,
                               int height, const pageBuilders &b)
 {
-  Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB,
-                             height - 2 * WB - BH, s.name.c_str());
-  if(!s.open) o->hide();
+  Fl_Group *o =
+    new Fl_Group(L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH);
   int BW = width - 4 * WB, x = L + 2 * WB, r = 1;
   // the second column: after the entry of the first and a label of 7 em
   int C2 = x + IW + 7 * FL_NORMAL_SIZE, RW = BW - IW - 7 * FL_NORMAL_SIZE;
@@ -1392,19 +1390,28 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
     return 1;
   };
 
-  // the pages, each a group of its sections, the first one shown
-  Fl_Group **groups[6] = {&general.group, &geo.group,  &mesh.group,
-                          &solver.group,  &post.group, &view.group};
+  // the pages, each a group of its sections (see _finishSections()), the
+  // first one shown
   int c = 0;
   for(const optionPage &page : OptionPages()) {
     Fl_Group *g = new Fl_Group(L, 0, width, height);
-    g->copy_label((page.name + " Options").c_str());
     if(c) g->hide();
-    for(const optionSection &sec : page.sections)
-      buildSection(sec, L, width, height, b);
+    for(const optionSection &s : page.sections) {
+      section sec;
+      sec.name = s.name;
+      sec.open = s.open;
+      sec.group = buildSection(s, L, width, height, b);
+      _sections[c].push_back(sec);
+    }
     g->end();
-    *groups[c++] = g;
+    _category[c++] = g;
   }
+  general.group = _category[0];
+  geo.group = _category[1];
+  mesh.group = _category[2];
+  solver.group = _category[3];
+  post.group = _category[4];
+  view.group = _category[5];
 
   // what this build cannot do
 #if !defined(_OPENMP)
@@ -1436,13 +1443,7 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
 
   choicesFromTable();
 
-  _category[0] = general.group;
-  _category[1] = geo.group;
-  _category[2] = mesh.group;
-  _category[3] = solver.group;
-  _category[4] = post.group;
-  _category[5] = view.group;
-  for(int c = 0; c < 6; c++) _makeSections(c);
+  for(int c = 0; c < 6; c++) _finishSections(c);
   win->resizable(scroll);
   ((paletteWindow *)win)->sizeRange(winWidth, 12 * BH); // height: layout()
   ((paletteWindow *)win)->whenResized(options_resized_cb, nullptr);
@@ -1451,25 +1452,14 @@ optionWindow::optionWindow(int deltaFontSize) : gmpdoption(nullptr)
   FL_NORMAL_SIZE += deltaFontSize;
 }
 
-void optionWindow::_makeSections(int c)
+void optionWindow::_finishSections(int c)
 {
-  // the groups built as tabs become sections; the tab shown first is open
+  // the header of each section of the page, and the blocks of its widgets
   Fl_Group *g = _category[c];
-  bool first = true;
-  g->label(nullptr);
   g->resizable(nullptr);
-  std::vector<Fl_Group *> groups;
-  for(int i = 0; i < g->children(); i++)
-    if(g->child(i)->as_group()) groups.push_back(g->child(i)->as_group());
-  for(std::size_t i = 0; i < groups.size(); i++) {
-    section sec;
-    sec.group = groups[i];
-    sec.name = sec.group->label();
-    sec.open = first && sec.group->visible();
-    if(sec.open) first = false;
-    sec.group->label(nullptr);
+  for(std::size_t i = 0; i < _sections[c].size(); i++) {
+    section &sec = _sections[c][i];
     sec.group->resizable(nullptr);
-    sec.group->show();
     // the widgets top to bottom, grouped in blocks of those that overlap
     std::vector<Fl_Widget *> w(sec.group->array(),
                                sec.group->array() + sec.group->children());
@@ -1499,7 +1489,6 @@ void optionWindow::_makeSections(int c)
     sec.header->clear_visible_focus();
     sec.header->callback(options_section_cb, (void *)(intptr_t)(100 * c + i));
     g->add(sec.header);
-    _sections[c].push_back(sec);
   }
 }
 

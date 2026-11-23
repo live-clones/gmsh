@@ -61,7 +61,7 @@ private:
   int _current, _rowHeight, _width, _buttonWidth;
   std::vector<Fl_Widget *> _hiddenBySearch;
   searchFilter _filter;
-  void _makeSections(int category);
+  void _finishSections(int category);
   bool _searching();
 
 public:
