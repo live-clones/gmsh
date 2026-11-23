@@ -76,8 +76,10 @@ inline void h1FaceFunctions(HierarchicalBasis &h1, const Dual *x, int flag1,
 
 // The same for the H(curl) functions of the element hcurl
 inline void hcurlFunctions(HierarchicalBasis &hcurl, const Dual *x,
-                           std::vector<Vec> &vertex, std::vector<Vec> &edge,
-                           std::vector<Vec> &face, std::vector<Vec> &bubble)
+                           std::vector<DualVector> &vertex,
+                           std::vector<DualVector> &edge,
+                           std::vector<DualVector> &face,
+                           std::vector<DualVector> &bubble)
 {
   vertex.resize(hcurl.getNumVertexFunction());
   edge.resize(hcurl.getNumEdgeFunction());
@@ -87,7 +89,7 @@ inline void hcurlFunctions(HierarchicalBasis &hcurl, const Dual *x,
 }
 inline void hcurlFaceFunctions(HierarchicalBasis &hcurl, const Dual *x,
                                int flag1, int flag2, int flag3, int faceNumber,
-                               std::vector<Vec> &face)
+                               std::vector<DualVector> &face)
 {
   face.resize(hcurl.getNumQuadFaceFunction() + hcurl.getNumTriFaceFunction());
   hcurl.faceFunctions(x, flag1, flag2, flag3, faceNumber, face);
@@ -211,13 +213,14 @@ inline Dual scaledLegendre(int n, const Dual &x, const Dual &t)
 
 // The Whitney function of the edge from vertex a to vertex b, of affine
 // coordinates a and b: 2 (a grad(b) - b grad(a))
-inline Vec whitney(const Dual &a, const Dual &b)
+inline DualVector whitney(const Dual &a, const Dual &b)
 { return 2. * (a * grad(b) - b * grad(a)); }
 
 // The H(curl) functions of an edge: its lowest order function w, then the
 // gradients of the H1 functions h of the edge of order + 1 (of orders 2 to
 // order + 1); return the number of functions
-inline int hcurlEdge(const Vec &w, const Dual *h, int order, Vec *f)
+inline int hcurlEdge(const DualVector &w, const Dual *h, int order,
+                     DualVector *f)
 {
   f[0] = w;
   for(int k = 0; k < order; k++) f[k + 1] = grad(h[k]);
@@ -239,7 +242,7 @@ inline void hcurlEdgeInfo(int order, std::vector<FunctionInfo> &info)
 // of order l, so that leaving out the gradients of order l gives that space.
 // Return the number of functions.
 inline int hcurlTriangleRotational(const Dual &a, const Dual &b, const Dual &c,
-                                   const Dual &blend, int order, Vec *f)
+                                   const Dual &blend, int order, DualVector *f)
 {
   Dual s = a + b + c;
   int n = 0;
@@ -261,9 +264,10 @@ inline int hcurlTriangleRotational(const Dual &a, const Dual &b, const Dual &c,
 // h1Triangle), then its rotational functions of order l (see
 // hcurlTriangleRotational); return the number of functions
 inline int hcurlTriangle(const Dual &a, const Dual &b, const Dual &c,
-                         const Dual &blend, const Dual *h, int order, Vec *f)
+                         const Dual &blend, const Dual *h, int order,
+                         DualVector *f)
 {
-  std::vector<Vec> r(order * order);
+  std::vector<DualVector> r(order * order);
   hcurlTriangleRotational(a, b, c, blend, order, r.data());
   int n = 0, nr = 0;
   for(int l = 2; l <= order; l++) {
@@ -287,7 +291,8 @@ inline void hcurlTriangleInfo(int order, std::vector<FunctionInfo> &info)
 // grad(l_i(s)) l_j(t) - l_i(s) grad(l_j(t)) for (i, j) in [2, m]^2 with
 // max(i, j) = m, by increasing i, then j; return the number of functions
 inline int hcurlQuadrangleRotational(const Dual &s, const Dual &t,
-                                     const Dual &blend, int order, Vec *f)
+                                     const Dual &blend, int order,
+                                     DualVector *f)
 {
   std::vector<Dual> ls = lobattos(order + 1, s), lt = lobattos(order + 1, t);
   int n = 0;
@@ -307,9 +312,9 @@ inline int hcurlQuadrangleRotational(const Dual &s, const Dual &t,
 // (see h1Quadrangle), then its rotational functions of order l (see
 // hcurlQuadrangleRotational); return the number of functions
 inline int hcurlQuadrangle(const Dual &s, const Dual &t, const Dual &blend,
-                           const Dual *h, int order, Vec *f)
+                           const Dual *h, int order, DualVector *f)
 {
-  std::vector<Vec> r((order + 1) * (order + 1));
+  std::vector<DualVector> r((order + 1) * (order + 1));
   hcurlQuadrangleRotational(s, t, blend, order, r.data());
   int n = 0, nr = 0;
   for(int l = 1; l <= order; l++) {
@@ -328,13 +333,13 @@ inline void hcurlQuadrangleInfo(int order, std::vector<FunctionInfo> &info)
 
 // The curl of an H(curl) function, as a vector field without derivatives: its
 // divergence is then zero, which is exact
-inline Vec curlVec(const Vec &v)
-{ return Vec(Dual(v.curl(0)), Dual(v.curl(1)), Dual(v.curl(2))); }
+inline DualVector curlVec(const DualVector &v)
+{ return DualVector(Dual(v.curl(0)), Dual(v.curl(1)), Dual(v.curl(2))); }
 
 // The Whitney 2-form of the triangular face (a, b, c): 2 (a grad(b) x grad(c) +
 // b grad(c) x grad(a) + c grad(a) x grad(b)), whose normal component is
 // constant on the face and zero on the other faces
-inline Vec whitney2(const Dual &a, const Dual &b, const Dual &c)
+inline DualVector whitney2(const Dual &a, const Dual &b, const Dual &c)
 {
   return 2. * (a * cross(grad(b), grad(c)) + b * cross(grad(c), grad(a)) +
                c * cross(grad(a), grad(b)));

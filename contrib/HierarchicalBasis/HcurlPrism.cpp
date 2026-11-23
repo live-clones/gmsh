@@ -59,7 +59,7 @@ static int numH1Bubbles(int m)
 }
 
 int HcurlPrism::_quadrangle(const Dual *x, int f, int flag1, int flag2,
-                            int flag3, const Dual *h, Vec *out)
+                            int flag3, const Dual *h, DualVector *out)
 {
   Dual L[3], B, T;
   coordinates(x, L, B, T);
@@ -71,7 +71,7 @@ int HcurlPrism::_quadrangle(const Dual *x, int f, int flag1, int flag2,
   Dual w = double(flag2) * x[2];
   auto Ph = [&](int n) { return a * b * kernel(n, b - a); };
   auto Pv = [&](int n) { return B * T * kernel(n, w); };
-  Vec Wh = whitney(a, b), Wv = grad(w);
+  DualVector Wh = whitney(a, b), Wv = grad(w);
   bool swap = (flag3 == -1);
   int n = 0;
   for(int l = 1; l <= _order; l++) {
@@ -89,9 +89,10 @@ int HcurlPrism::_quadrangle(const Dual *x, int f, int flag1, int flag2,
   return n;
 }
 
-void HcurlPrism::functions(const Dual *x, std::vector<Vec> &vertex,
-                           std::vector<Vec> &edge, std::vector<Vec> &face,
-                           std::vector<Vec> &bubble)
+void HcurlPrism::functions(const Dual *x, std::vector<DualVector> &vertex,
+                           std::vector<DualVector> &edge,
+                           std::vector<DualVector> &face,
+                           std::vector<DualVector> &bubble)
 {
   Dual L[3], B, T;
   coordinates(x, L, B, T);
@@ -102,7 +103,7 @@ void HcurlPrism::functions(const Dual *x, std::vector<Vec> &vertex,
   // triangles, and the vertical edges (e2, e4, e5)
   int bottom[3] = {0, 1, 3}, top[3] = {6, 7, 8}, vertical[3] = {2, 4, 5};
   for(int i = 0; i < 3; i++) {
-    Vec w = whitney(L[quadEdges[i][0]], L[quadEdges[i][1]]);
+    DualVector w = whitney(L[quadEdges[i][0]], L[quadEdges[i][1]]);
     hcurlEdge(B * w, &he[bottom[i] * p], p, &edge[bottom[i] * per]);
     hcurlEdge(T * w, &he[top[i] * p], p, &edge[top[i] * per]);
     hcurlEdge(L[i] * whitney(B, T), &he[vertical[i] * p], p,
@@ -117,7 +118,7 @@ void HcurlPrism::functions(const Dual *x, std::vector<Vec> &vertex,
                        &hf[3 * perH1Quad + f * perH1Tri], p, &face[n]);
   // the interior, by increasing order l: the gradients of the H1 bubbles of
   // order l + 1, then R l_k, F grad(w) and F grad(l_k) - l_k grad(F)
-  std::vector<Vec> R(p * p);
+  std::vector<DualVector> R(p * p);
   int nR = hcurlTriangleRotational(L[0], L[1], L[2], Dual(1.), p, R.data());
   std::vector<Dual> F(p * p);
   int nF = h1Triangle(L[0], L[1], L[2], Dual(1.), p + 1, F.data());
@@ -141,7 +142,7 @@ void HcurlPrism::functions(const Dual *x, std::vector<Vec> &vertex,
 }
 
 void HcurlPrism::faceFunctions(const Dual *x, int flag1, int flag2, int flag3,
-                               int faceNumber, std::vector<Vec> &face)
+                               int faceNumber, std::vector<DualVector> &face)
 {
   Dual L[3], B, T;
   coordinates(x, L, B, T);

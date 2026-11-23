@@ -102,22 +102,23 @@ public:
 
   // Each element computes its basis functions at the point x (the reference
   // coordinates u, v, w as dual numbers), each function once, as a dual number
-  // (Dual) for H1 or a vector of dual numbers (Vec) for H(curl) and H(div): the
-  // derivatives (gradients, curls, divergences) follow. functions() gives the
-  // functions in the reference orientation, faceFunctions() replaces those of
-  // face faceNumber by the functions for the orientation of the face given by
-  // the flags. Each element implements the version of its space; the other one
-  // does nothing.
+  // (Dual) for H1 or a vector of dual numbers (DualVector) for H(curl) and
+  // H(div): the derivatives (gradients, curls, divergences) follow. functions()
+  // gives the functions in the reference orientation, faceFunctions() replaces
+  // those of face faceNumber by the functions for the orientation of the face
+  // given by the flags. Each element implements the version of its space; the
+  // other one does nothing.
   virtual void functions(const Dual *x, std::vector<Dual> &vertex,
                          std::vector<Dual> &edge, std::vector<Dual> &face,
                          std::vector<Dual> &bubble);
-  virtual void functions(const Dual *x, std::vector<Vec> &vertex,
-                         std::vector<Vec> &edge, std::vector<Vec> &face,
-                         std::vector<Vec> &bubble);
+  virtual void functions(const Dual *x, std::vector<DualVector> &vertex,
+                         std::vector<DualVector> &edge,
+                         std::vector<DualVector> &face,
+                         std::vector<DualVector> &bubble);
   virtual void faceFunctions(const Dual *x, int flag1, int flag2, int flag3,
                              int faceNumber, std::vector<Dual> &face);
   virtual void faceFunctions(const Dual *x, int flag1, int flag2, int flag3,
-                             int faceNumber, std::vector<Vec> &face);
+                             int faceNumber, std::vector<DualVector> &face);
 
 protected:
   Space _space = H1;
@@ -170,7 +171,7 @@ private:
                  double *bubble, double *quadFaces, double *triFaces);
   // the value or the derivative of a function, depending on the space
   void _store(const Dual &f, double *out) const;
-  void _store(const Vec &f, double *out) const;
+  void _store(const DualVector &f, double *out) const;
 };
 
 #endif

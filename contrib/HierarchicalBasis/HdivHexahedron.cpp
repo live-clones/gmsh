@@ -29,7 +29,8 @@ HdivHexahedron::HdivHexahedron(int order) : _order(order), _hcurl(order)
 // The functions of a face, from the H(curl) functions c of the face: the
 // lowest order function w, then by increasing order l the curls of the
 // rotational functions of order l, after the 2 l - 1 gradients
-static void faceBlock(const Vec &w, const Vec *c, int order, Vec *f)
+static void faceBlock(const DualVector &w, const DualVector *c, int order,
+                      DualVector *f)
 {
   int n = 0, nc = 0;
   f[n++] = w;
@@ -39,19 +40,20 @@ static void faceBlock(const Vec &w, const Vec *c, int order, Vec *f)
   }
 }
 
-void HdivHexahedron::functions(const Dual *x, std::vector<Vec> &vertex,
-                               std::vector<Vec> &edge, std::vector<Vec> &face,
-                               std::vector<Vec> &bubble)
+void HdivHexahedron::functions(const Dual *x, std::vector<DualVector> &vertex,
+                               std::vector<DualVector> &edge,
+                               std::vector<DualVector> &face,
+                               std::vector<DualVector> &bubble)
 {
   Dual a[6];
   hexahedronCoordinates(x, a);
-  std::vector<Vec> cv, ce, cf, cb;
+  std::vector<DualVector> cv, ce, cf, cb;
   hcurlFunctions(_hcurl, x, cv, ce, cf, cb);
   const int perFace = (_order + 1) * (_order + 1),
             perCurlFace = 2 * _order * (_order + 1);
   for(int f = 0; f < 6; f++) {
     const int *h = hexahedronFaces[f];
-    Vec w = a[h[2]] * cross(grad(x[h[0]]), grad(x[h[1]]));
+    DualVector w = a[h[2]] * cross(grad(x[h[0]]), grad(x[h[1]]));
     faceBlock(w, &cf[f * perCurlFace], _order, &face[f * perFace]);
   }
   int n = 0, nc = 0;
@@ -76,13 +78,13 @@ void HdivHexahedron::functions(const Dual *x, std::vector<Vec> &vertex,
 
 void HdivHexahedron::faceFunctions(const Dual *x, int flag1, int flag2,
                                    int flag3, int faceNumber,
-                                   std::vector<Vec> &face)
+                                   std::vector<DualVector> &face)
 {
   Dual a[6], s, t;
   hexahedronCoordinates(x, a);
   const int *h = hexahedronFaces[faceNumber];
   quadrangleCoordinates(x[h[0]], x[h[1]], flag1, flag2, flag3, s, t);
-  std::vector<Vec> cf;
+  std::vector<DualVector> cf;
   hcurlFaceFunctions(_hcurl, x, flag1, flag2, flag3, faceNumber, cf);
   const int perFace = (_order + 1) * (_order + 1),
             perCurlFace = 2 * _order * (_order + 1);

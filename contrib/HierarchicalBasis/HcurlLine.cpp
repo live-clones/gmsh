@@ -23,9 +23,10 @@ HcurlLine::HcurlLine(int order) : _order(order), _h1(order + 1)
   _numQuadFaceFunction = _numTriFaceFunction = _numBubbleFunction = 0;
 }
 
-void HcurlLine::functions(const Dual *x, std::vector<Vec> &vertex,
-                          std::vector<Vec> &edge, std::vector<Vec> &face,
-                          std::vector<Vec> &bubble)
+void HcurlLine::functions(const Dual *x, std::vector<DualVector> &vertex,
+                          std::vector<DualVector> &edge,
+                          std::vector<DualVector> &face,
+                          std::vector<DualVector> &bubble)
 {
   std::vector<Dual> hv, he, hf, hb;
   h1Functions(_h1, x, hv, he, hf, hb);

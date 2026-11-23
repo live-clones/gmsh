@@ -33,7 +33,7 @@ HcurlHexahedron::HcurlHexahedron(int order) : _order(order), _h1(order + 1)
 // then grad(A) B C + A grad(B) C - A B grad(C), (i, j, k) in [2, m]^3 with
 // max(i, j, k) = m; the indices by increasing order
 static int rotationalBubbles(const Dual *x, const std::vector<Dual> *lob, int l,
-                             Vec *f)
+                             DualVector *f)
 {
   const int m = l + 1;
   int n = 0;
@@ -57,9 +57,10 @@ static int rotationalBubbles(const Dual *x, const std::vector<Dual> *lob, int l,
   return n;
 }
 
-void HcurlHexahedron::functions(const Dual *x, std::vector<Vec> &vertex,
-                                std::vector<Vec> &edge, std::vector<Vec> &face,
-                                std::vector<Vec> &bubble)
+void HcurlHexahedron::functions(const Dual *x, std::vector<DualVector> &vertex,
+                                std::vector<DualVector> &edge,
+                                std::vector<DualVector> &face,
+                                std::vector<DualVector> &bubble)
 {
   Dual a[6];
   hexahedronCoordinates(x, a);
@@ -90,7 +91,7 @@ void HcurlHexahedron::functions(const Dual *x, std::vector<Vec> &vertex,
 
 void HcurlHexahedron::faceFunctions(const Dual *x, int flag1, int flag2,
                                     int flag3, int faceNumber,
-                                    std::vector<Vec> &face)
+                                    std::vector<DualVector> &face)
 {
   Dual a[6], s, t;
   hexahedronCoordinates(x, a);

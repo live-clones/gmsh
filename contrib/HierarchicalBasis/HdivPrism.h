@@ -42,11 +42,11 @@ class HdivPrism : public HierarchicalBasis {
 public:
   HdivPrism(int order);
   void functionInfo(std::vector<FunctionInfo> &info) override;
-  void functions(const Dual *x, std::vector<Vec> &vertex,
-                 std::vector<Vec> &edge, std::vector<Vec> &face,
-                 std::vector<Vec> &bubble) override;
+  void functions(const Dual *x, std::vector<DualVector> &vertex,
+                 std::vector<DualVector> &edge, std::vector<DualVector> &face,
+                 std::vector<DualVector> &bubble) override;
   void faceFunctions(const Dual *x, int flag1, int flag2, int flag3,
-                     int faceNumber, std::vector<Vec> &face) override;
+                     int faceNumber, std::vector<DualVector> &face) override;
 
 private:
   int _order;
@@ -55,10 +55,10 @@ private:
   // the functions of quadrilateral face f, from its H(curl) functions c, in
   // the orientation given by the flags
   void _quadrangle(const Dual *x, int f, int flag1, int flag2, int flag3,
-                   const Vec *c, Vec *out);
+                   const DualVector *c, DualVector *out);
   // the functions of triangular face f (0 for the bottom, 1 for the top), the
   // roles of its vertices given by r
-  void _triangleFace(const Dual *x, int f, const int *r, Vec *out);
+  void _triangleFace(const Dual *x, int f, const int *r, DualVector *out);
 };
 
 #endif
