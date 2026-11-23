@@ -1008,6 +1008,10 @@ int GMSH_DualMeshPlugin::run()
         Msg::Error("Plugin(DualMesh) does not handle polygons and polyhedra");
         return 0;
       }
+      if(e->getType() == TYPE_TRIH) {
+        Msg::Error("Plugin(DualMesh) does not handle trihedra");
+        return 0;
+      }
     }
   }
   if(!m->getGhostCells().empty()) {

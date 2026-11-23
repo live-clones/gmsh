@@ -891,6 +891,10 @@ int GMSH_NonConformalRefinementPlugin::run()
                  "already have polygons or polyhedra");
       return 0;
     }
+    if(gr->trihedra.size()) {
+      Msg::Error("Plugin(NonConformalRefinement) does not handle trihedra");
+      return 0;
+    }
   }
   if(!m->getGhostCells().empty()) {
     Msg::Error("Plugin(NonConformalRefinement) does not handle ghost cells");
