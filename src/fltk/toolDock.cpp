@@ -16,6 +16,7 @@
 #include "graphicWindow.h"
 #include "onelabGroup.h"
 #include "Context.h"
+#include "GmshMessage.h"
 
 void dragGhost::follow(const char *label, int rowHeight, int xroot, int yroot)
 {
@@ -729,6 +730,24 @@ void dropped_cb(void *data)
   w->floating(false);
   w->show(); // docks it
   FlGui::instance()->storeFloatingTools();
+}
+
+void dockToolLater(paletteWindow *w)
+{
+  // not from the event of a widget of the window that goes into the dock
+  Fl::remove_timeout(dropped_cb, w);
+  Fl::add_timeout(0., dropped_cb, w);
+}
+
+void floatingToolShown(paletteWindow *w)
+{
+  // where the title bar cannot take the tool to the dock (see _overDock()),
+  // what can is said once
+  static bool said = false;
+  if(said || screenPositionsKnown()) return;
+  said = true;
+  Msg::StatusBar(false, "To dock a tool window, double-click one of its tabs "
+                        "or its background, or press Ctrl+D");
 }
 
 void graphicWindow::_drop_cb(void *data)

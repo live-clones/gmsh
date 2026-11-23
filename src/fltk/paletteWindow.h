@@ -48,6 +48,12 @@ public:
   virtual bool closeTool(Fl_Window *w) = 0;
 };
 
+// a tool shown on the desktop while the main window docks its tools, and a
+// floating tool docked once the click that asked for it is over (see
+// toolDock.cpp)
+void floatingToolShown(paletteWindow *w);
+void dockToolLater(paletteWindow *w);
+
 // The windows of the FLTK graphical user interface, main and tool windows:
 // placed on the desktop at their offset from the main graphic window (see
 // windowPlacement.h), with the title bar and the widgets in the style of the
@@ -205,6 +211,17 @@ public:
   {
     if(!parent() && _dockable && host) host->dragToDock(this);
   }
+  // a double click on a tab or on the background of a floating tool docks it:
+  // true if it does
+  bool dockByDoubleClick()
+  {
+    if(!Fl::event_clicks() || Fl::event_button() != FL_LEFT_MOUSE || parent() ||
+       !_dockable || !host || !host->takesTools())
+      return false;
+    Fl::event_clicks(0);
+    dockToolLater(this);
+    return true;
+  }
   // on the desktop, or in the dock (where a folded or covered window is not
   // shown)
   bool isOpen()
@@ -312,6 +329,7 @@ public:
       if(Fl_Double_Window::handle(event)) return 1;
       if(Fl::event_button() != FL_LEFT_MOUSE || parent() || !_dockable)
         return 0;
+      if(dockByDoubleClick()) return 1;
       _pushed = true;
       _pushX = Fl::event_x();
       _pushY = Fl::event_y();
@@ -360,6 +378,7 @@ public:
     }
     _showOnDesktop();
     watchMoves(this);
+    if(_dockable && host && host->takesTools()) floatingToolShown(this);
   }
   // what a tool started for this window gives as its owner (see sceneTool)
   const void *ownerId() const { return (const Fl_Window *)this; }
