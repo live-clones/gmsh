@@ -110,8 +110,8 @@ public:
 };
 
 // The tool windows: on the desktop or in the dock of the main window (see
-// dockHost), with the sizes their rules allow, and the shortcuts that close
-// them (Escape, and the key that closes a window)
+// paletteWindow::host), with the sizes their rules allow, and the shortcuts
+// that close them (Escape, and the key that closes a window)
 class paletteWindow : public gmshWindow {
 private:
   // the selection this window is for being ended by its closing (see hide())

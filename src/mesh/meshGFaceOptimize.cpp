@@ -1372,7 +1372,7 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = true)
     };
 
     if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS &&
-       CTX::instance()->mesh.algo3d == ALGO_3D_RTREE) {
+       CTX::instance()->mesh.hexDominant()) {
       std::vector<int> partner;
       if(!prematchedBlossom(gf, pairs, cost, t2n, partner)) {
         Msg::Warning(

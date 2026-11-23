@@ -117,6 +117,10 @@ struct contextMeshOptions {
   double timer[3];
   // records minimal and average mesh quality after 2D and 3D mesh generation
   double minQuality, avgQuality;
+  // hex-dominant meshing (Mesh.Algorithm3D = 9), which also changes the
+  // surface meshes: they keep their cross-field directions, and the quads of
+  // PACK are matched for the combination into hexahedra
+  bool hexDominant() const { return algo3d == ALGO_3D_RTREE; }
 };
 
 struct contextGeometryOptions {

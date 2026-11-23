@@ -36,7 +36,7 @@
 #include "MPolyhedron.h"
 #include "Field.h"
 #include "Context.h"
-#include "Hash.h"
+#include "MeshKeys.h"
 #include "OS.h"
 #include "MVertex.h"
 #include "NonConformalRefinement.h"
@@ -75,108 +75,13 @@ namespace {
 
   typedef MVertex *V;
 
-  // the keys of the hash tables compare the node pointers, which are not
-  // dereferenced (the tables are never iterated, so their order does not
-  // matter)
-  typedef std::uintptr_t P;
-
-  struct EdgeKey {
-    V a, b;
-    EdgeKey(V x, V y) : a(x), b(y)
-    {
-      if(a > b) std::swap(a, b);
-    }
-    bool operator==(const EdgeKey &o) const { return a == o.a && b == o.b; }
-  };
-
-  struct EdgeHash {
-    std::size_t operator()(const EdgeKey &k) const
-    { return HashCombine(HashMix((P)k.a), (P)k.b); }
-  };
-
-  // a triangle or a quadrangle, by its sorted corners
-  struct FaceKey {
-    std::array<V, 4> v;
-    FaceKey(const V *f, int n)
-    {
-      v = {f[0], f[1], f[2], n == 4 ? f[3] : nullptr};
-      std::sort(v.begin(), v.begin() + n);
-    }
-    bool operator==(const FaceKey &o) const { return v == o.v; }
-  };
-
-  struct FaceHash {
-    std::size_t operator()(const FaceKey &k) const
-    {
-      std::uint64_t h = HashMix((P)k.v[0]);
-      for(int i = 1; i < 4; i++) h = HashCombine(h, (P)k.v[i]);
-      return h;
-    }
-  };
-
-  // the edges and the faces of the element types, in the Gmsh node ordering (in
-  // 2D, the face is the element itself)
-  struct Shape {
-    int numCorners, numEdges, edges[12][2], numFaces, faceSize[6], faces[6][4];
-  };
-
-  const Shape triShape = {3, 3, {{0, 1}, {1, 2}, {2, 0}}, 1, {3}, {{0, 1, 2}}};
-  const Shape quaShape = {4, 4,   {{0, 1}, {1, 2}, {2, 3}, {3, 0}},
-                          1, {4}, {{0, 1, 2, 3}}};
-  const Shape tetShape = {4,
-                          6,
-                          {{0, 1}, {0, 2}, {0, 3}, {1, 2}, {1, 3}, {2, 3}},
-                          4,
-                          {3, 3, 3, 3},
-                          {{0, 2, 1}, {0, 1, 3}, {0, 3, 2}, {3, 1, 2}}};
-  const Shape hexShape = {8,
-                          12,
-                          {{0, 1},
-                           {0, 3},
-                           {0, 4},
-                           {1, 2},
-                           {1, 5},
-                           {2, 3},
-                           {2, 6},
-                           {3, 7},
-                           {4, 5},
-                           {4, 7},
-                           {5, 6},
-                           {6, 7}},
-                          6,
-                          {4, 4, 4, 4, 4, 4},
-                          {{0, 3, 2, 1},
-                           {0, 1, 5, 4},
-                           {0, 4, 7, 3},
-                           {1, 2, 6, 5},
-                           {2, 3, 7, 6},
-                           {4, 5, 6, 7}}};
-  const Shape priShape = {
-    6,
-    9,
-    {{0, 1}, {0, 2}, {0, 3}, {1, 2}, {1, 4}, {2, 5}, {3, 4}, {3, 5}, {4, 5}},
-    5,
-    {3, 3, 4, 4, 4},
-    {{0, 2, 1}, {3, 4, 5}, {0, 1, 4, 3}, {0, 3, 5, 2}, {1, 2, 5, 4}}};
-  const Shape pyrShape = {
-    5,
-    8,
-    {{0, 1}, {0, 3}, {0, 4}, {1, 2}, {1, 4}, {2, 3}, {2, 4}, {3, 4}},
-    5,
-    {4, 3, 3, 3, 3},
-    {{0, 3, 2, 1}, {0, 1, 4}, {3, 0, 4}, {1, 2, 4}, {2, 3, 4}}};
-
-  const Shape &shape(int type)
-  {
-    switch(type) {
-    case TYPE_TRI: return triShape;
-    case TYPE_QUA: return quaShape;
-    case TYPE_TET: return tetShape;
-    case TYPE_HEX: return hexShape;
-    case TYPE_PRI: return priShape;
-    default: return pyrShape;
-    }
-  }
+  // (see MeshKeys.h)
+  using meshKeys::EdgeKey;
+  using meshKeys::EdgeHash;
+  using meshKeys::FaceKey;
+  using meshKeys::FaceHash;
+  using meshKeys::Shape;
+  using meshKeys::shape;
 
   // an element of the refinement: its type, its refinement level, whether it
   // was found small enough for the size field, and its corners
@@ -550,7 +455,7 @@ namespace {
     // the longest edge
     double size(const Leaf &l) const
     {
-      const Shape &s = shape(l.type);
+      const Shape &s = *shape(l.type);
       double h = 0.;
       for(int i = 0; i < s.numEdges; i++)
         h = std::max(h, edgeLength(l.v[s.edges[i][0]], l.v[s.edges[i][1]]));
@@ -560,7 +465,7 @@ namespace {
     // levels of them if maxDepth > 0)?
     bool hanging(const Leaf &l, int maxDepth = 0) const
     {
-      const Shape &s = shape(l.type);
+      const Shape &s = *shape(l.type);
       for(int i = 0; i < s.numEdges; i++) {
         V a = l.v[s.edges[i][0]], b = l.v[s.edges[i][1]];
         if(maxDepth ? depth(a, b) > maxDepth : findMid(a, b) != nullptr)
@@ -571,7 +476,7 @@ namespace {
 
     void refine(const Leaf &l, GEntity *ge, std::vector<Leaf> &out)
     {
-      const Shape &s = shape(l.type);
+      const Shape &s = *shape(l.type);
       const V *v = l.v;
       for(int i = 0; i < s.numFaces; i++) {
         V f[4];
@@ -701,7 +606,7 @@ namespace {
                      bool &nonPositive)
   {
     double c[8][3];
-    for(int i = 0; i < shape(l.type).numCorners; i++) {
+    for(int i = 0; i < shape(l.type)->numCorners; i++) {
       c[i][0] = l.v[i]->x();
       c[i][1] = l.v[i]->y();
       c[i][2] = l.v[i]->z();
@@ -807,7 +712,7 @@ namespace {
     while(next < old.size()) {
       MElement *e = old[next++];
       bool same = (e->getType() == l.type);
-      for(int i = 0; same && i < shape(l.type).numCorners; i++)
+      for(int i = 0; same && i < shape(l.type)->numCorners; i++)
         same = (e->getVertex(i) == l.v[i]);
       if(same) return e;
       delete e;
@@ -980,13 +885,13 @@ int GMSH_NonConformalRefinementPlugin::run()
     for(auto &f : faces)
       if(f.first->haveParametrization())
         for(auto &l : f.second)
-          r.addSurface(f.first, l.v, shape(l.type).numCorners);
+          r.addSurface(f.first, l.v, shape(l.type)->numCorners);
     if(dim == 2)
       for(std::size_t e = 0; e < entities.size(); e++)
         if(entities[e]->haveParametrization())
           for(auto &l : leaves[e])
             r.addSurface(static_cast<GFace *>(entities[e]), l.v,
-                         shape(l.type).numCorners);
+                         shape(l.type)->numCorners);
   }
 
   // the size field is sampled at a bounded number of points along the edges
@@ -1034,7 +939,7 @@ int GMSH_NonConformalRefinementPlugin::run()
         }
         // otherwise at the middle of the edges and at the centre, which only
         // sees a region of small sizes reaching half way across the element
-        const Shape &s = shape(l.type);
+        const Shape &s = *shape(l.type);
         int n = s.numCorners;
         double x = 0., y = 0., z = 0.;
         double size = std::numeric_limits<double>::max();
@@ -1122,7 +1027,7 @@ int GMSH_NonConformalRefinementPlugin::run()
           continue;
         }
         delete orig;
-        const Shape &s = shape(l.type);
+        const Shape &s = *shape(l.type);
         rings.clear();
         for(int i = 0; i < s.numFaces; i++) {
           V f[4];
@@ -1156,7 +1061,7 @@ int GMSH_NonConformalRefinementPlugin::run()
       gf->quadrangles.clear();
       for(auto &l : leaves[e]) {
         MElement *o = l.level ? nullptr : original(l, old, next);
-        const Shape &s = shape(l.type);
+        const Shape &s = *shape(l.type);
         std::vector<V> ring, tris;
         r.ring(l.v, s.numCorners, ring);
         if((int)ring.size() == s.numCorners) {
@@ -1188,7 +1093,7 @@ int GMSH_NonConformalRefinementPlugin::run()
     for(std::size_t k = 0; k < f.second.size(); k++) {
       Leaf &l = f.second[k];
       rings.clear();
-      r.faces(l.v, shape(l.type).numCorners, rings);
+      r.faces(l.v, shape(l.type)->numCorners, rings);
       if(rings.size() == 1 && rings.ringSize(0) == rings.corners[0]) {
         gf->addElement(old[k]);
         continue;

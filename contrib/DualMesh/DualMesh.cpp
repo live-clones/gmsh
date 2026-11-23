@@ -34,7 +34,7 @@
 #include "MPolyhedron.h"
 #include "MVertex.h"
 #include "Context.h"
-#include "Hash.h"
+#include "MeshKeys.h"
 #include "OS.h"
 #include "DualMesh.h"
 
@@ -77,108 +77,16 @@ std::string GMSH_DualMeshPlugin::getHelp() const
 namespace {
 
   typedef MVertex *V;
-  typedef std::uintptr_t P;
-
   // the keys of the hash tables compare the node pointers: the tables are
   // looked up, or iterated by node number (see byNumber()), so that their
   // order does not matter
-  struct EdgeKey {
-    V a, b;
-    EdgeKey(V x, V y) : a(x), b(y)
-    {
-      if(a > b) std::swap(a, b);
-    }
-    bool operator==(const EdgeKey &o) const { return a == o.a && b == o.b; }
-  };
-
-  struct EdgeHash {
-    std::size_t operator()(const EdgeKey &k) const
-    { return HashCombine(HashMix((P)k.a), (P)k.b); }
-  };
-
-  struct FaceKey {
-    std::array<V, 4> v;
-    FaceKey() : v{nullptr, nullptr, nullptr, nullptr} {}
-    FaceKey(const V *f, int n)
-    {
-      v = {f[0], f[1], f[2], n == 4 ? f[3] : nullptr};
-      std::sort(v.begin(), v.begin() + n);
-    }
-    bool operator==(const FaceKey &o) const { return v == o.v; }
-  };
-
-  struct FaceHash {
-    std::size_t operator()(const FaceKey &k) const
-    {
-      std::uint64_t h = HashMix((P)k.v[0]);
-      for(int i = 1; i < 4; i++) h = HashCombine(h, (P)k.v[i]);
-      return h;
-    }
-  };
-
-  // the edges and the faces of the element types, in the Gmsh node ordering
-  struct Shape {
-    int numCorners, numEdges, edges[12][2], numFaces, faceSize[6], faces[6][4];
-  };
-
-  const Shape triShape = {3, 3, {{0, 1}, {1, 2}, {2, 0}}, 1, {3}, {{0, 1, 2}}};
-  const Shape quaShape = {4, 4,   {{0, 1}, {1, 2}, {2, 3}, {3, 0}},
-                          1, {4}, {{0, 1, 2, 3}}};
-  const Shape tetShape = {4,
-                          6,
-                          {{0, 1}, {0, 2}, {0, 3}, {1, 2}, {1, 3}, {2, 3}},
-                          4,
-                          {3, 3, 3, 3},
-                          {{0, 2, 1}, {0, 1, 3}, {0, 3, 2}, {3, 1, 2}}};
-  const Shape hexShape = {8,
-                          12,
-                          {{0, 1},
-                           {0, 3},
-                           {0, 4},
-                           {1, 2},
-                           {1, 5},
-                           {2, 3},
-                           {2, 6},
-                           {3, 7},
-                           {4, 5},
-                           {4, 7},
-                           {5, 6},
-                           {6, 7}},
-                          6,
-                          {4, 4, 4, 4, 4, 4},
-                          {{0, 3, 2, 1},
-                           {0, 1, 5, 4},
-                           {0, 4, 7, 3},
-                           {1, 2, 6, 5},
-                           {2, 3, 7, 6},
-                           {4, 5, 6, 7}}};
-  const Shape priShape = {
-    6,
-    9,
-    {{0, 1}, {0, 2}, {0, 3}, {1, 2}, {1, 4}, {2, 5}, {3, 4}, {3, 5}, {4, 5}},
-    5,
-    {3, 3, 4, 4, 4},
-    {{0, 2, 1}, {3, 4, 5}, {0, 1, 4, 3}, {0, 3, 5, 2}, {1, 2, 5, 4}}};
-  const Shape pyrShape = {
-    5,
-    8,
-    {{0, 1}, {0, 3}, {0, 4}, {1, 2}, {1, 4}, {2, 3}, {2, 4}, {3, 4}},
-    5,
-    {4, 3, 3, 3, 3},
-    {{0, 3, 2, 1}, {0, 1, 4}, {3, 0, 4}, {1, 2, 4}, {2, 3, 4}}};
-
-  const Shape *shape(int type)
-  {
-    switch(type) {
-    case TYPE_TRI: return &triShape;
-    case TYPE_QUA: return &quaShape;
-    case TYPE_TET: return &tetShape;
-    case TYPE_HEX: return &hexShape;
-    case TYPE_PRI: return &priShape;
-    case TYPE_PYR: return &pyrShape;
-    default: return nullptr;
-    }
-  }
+  // (see MeshKeys.h)
+  using meshKeys::EdgeKey;
+  using meshKeys::EdgeHash;
+  using meshKeys::FaceKey;
+  using meshKeys::FaceHash;
+  using meshKeys::Shape;
+  using meshKeys::shape;
 
   // order items around a centre, each item being linked to two others by the
   // keys it shares with them, into fans: the sequences of (item, key in, key
@@ -631,8 +539,8 @@ namespace {
 
   const Topology &topology(int type)
   {
-    static const Topology tet(tetShape), hex(hexShape), pri(priShape),
-      pyr(pyrShape);
+    static const Topology tet(*shape(TYPE_TET)), hex(*shape(TYPE_HEX)),
+      pri(*shape(TYPE_PRI)), pyr(*shape(TYPE_PYR));
     switch(type) {
     case TYPE_TET: return tet;
     case TYPE_HEX: return hex;

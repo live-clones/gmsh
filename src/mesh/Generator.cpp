@@ -957,7 +957,7 @@ static void Mesh2D(GModel *m)
   // not on the surfaces of hex-dominant meshes: PACK placed their points in
   // 3D for the combination
   if(CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS &&
-     CTX::instance()->mesh.algo3d != ALGO_3D_RTREE) {
+     !CTX::instance()->mesh.hexDominant()) {
     for(GFace *gf : m->getFaces()) {
       if(gf->meshStatistics.status == GFace::DONE) {
         gf->meshStatistics.status = GFace::PENDING;
@@ -1148,7 +1148,7 @@ static void Mesh3D(GModel *m)
 
 #if defined(HAVE_DOMHEX) && defined(HAVE_HXT)
     // the flat filler tetrahedralizes its regions itself
-    const bool fillerAlone = CTX::instance()->mesh.algo3d == ALGO_3D_RTREE;
+    const bool fillerAlone = CTX::instance()->mesh.hexDominant();
 #else
     const bool fillerAlone = false;
 #endif
@@ -1159,7 +1159,7 @@ static void Mesh3D(GModel *m)
     // by new HXT-based code
     for(std::size_t j = 0; j < connected[i].size(); j++) {
       GRegion *gr = connected[i][j];
-      if(CTX::instance()->mesh.algo3d != ALGO_3D_RTREE) continue;
+      if(!CTX::instance()->mesh.hexDominant()) continue;
       CombineFrames frames;
       fillRegionFlat(gr, &frames);
       if(CTX::instance()->mesh.recombine3DAll ||

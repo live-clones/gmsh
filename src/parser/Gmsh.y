@@ -169,6 +169,15 @@ struct doubleXstring{
   char *s;
 };
 
+#if defined(HAVE_DISCRETECAD)
+// the discrete CAD modeler, if it is the factory
+static DiscreteCAD_Internals *discreteFactory()
+{
+  return gmsh_yyfactory == "Discrete" ?
+    GModel::current()->getDiscreteCADInternals() : nullptr;
+}
+#endif
+
 // synchronize the CAD kernels that changed with the model: OpenCASCADE and
 // the discrete CAD modeler, then (unless geo is false) the built-in kernel
 static void syncCAD(bool geo = true)
@@ -1984,10 +1993,9 @@ Shape :
             (num, param[0], param[1], param[2], param[3], a1, a2, a3);
         }
 #if defined(HAVE_DISCRETECAD)
-        else if(gmsh_yyfactory == "Discrete" &&
-                GModel::current()->getDiscreteCADInternals()){
+        else if(DiscreteCAD_Internals *d = discreteFactory()){
           if(param.size() == 4)
-            r = GModel::current()->getDiscreteCADInternals()->addSphere
+            r = d->addSphere
               (num, param[0], param[1], param[2], param[3], -1.);
           else
             yymsg(0, "Sphere requires 4 parameters with the Discrete geometry kernel");
@@ -2039,10 +2047,9 @@ Shape :
         }
       }
 #if defined(HAVE_DISCRETECAD)
-      else if(gmsh_yyfactory == "Discrete" &&
-              GModel::current()->getDiscreteCADInternals()){
+      else if(DiscreteCAD_Internals *d = discreteFactory()){
         if(param.size() == 6)
-          r = GModel::current()->getDiscreteCADInternals()->addBox
+          r = d->addBox
             (num, param[0], param[1], param[2], param[3], param[4], param[5]);
         else
           yymsg(0, "Box requires 6 parameters with the Discrete geometry kernel");
@@ -2072,10 +2079,9 @@ Shape :
         }
       }
 #if defined(HAVE_DISCRETECAD)
-      else if(gmsh_yyfactory == "Discrete" &&
-              GModel::current()->getDiscreteCADInternals()){
+      else if(DiscreteCAD_Internals *d = discreteFactory()){
         if(param.size() == 5)
-          r = GModel::current()->getDiscreteCADInternals()->addTorus
+          r = d->addTorus
             (num, param[0], param[1], param[2], param[3], param[4],
              std::vector<double>(), -1.);
         else
@@ -2106,10 +2112,9 @@ Shape :
         }
       }
 #if defined(HAVE_DISCRETECAD)
-      else if(gmsh_yyfactory == "Discrete" &&
-              GModel::current()->getDiscreteCADInternals()){
+      else if(DiscreteCAD_Internals *d = discreteFactory()){
         if(param.size() == 5)
-          r = GModel::current()->getDiscreteCADInternals()->addRectangle
+          r = d->addRectangle
             (num, param[0], param[1], param[2], param[3], param[4]);
         else
           yymsg(0, "Rectangle requires 5 parameters with the Discrete geometry kernel");
@@ -2139,10 +2144,9 @@ Shape :
         }
       }
 #if defined(HAVE_DISCRETECAD)
-      else if(gmsh_yyfactory == "Discrete" &&
-              GModel::current()->getDiscreteCADInternals()){
+      else if(DiscreteCAD_Internals *d = discreteFactory()){
         if(param.size() == 4 || param.size() == 5)
-          r = GModel::current()->getDiscreteCADInternals()->addDisk
+          r = d->addDisk
             (num, param[0], param[1], param[2], param[3],
              param.size() == 5 ? param[4] : param[3], std::vector<double>(),
              std::vector<double>(), -1.);
@@ -2175,10 +2179,9 @@ Shape :
         }
       }
 #if defined(HAVE_DISCRETECAD)
-      else if(gmsh_yyfactory == "Discrete" &&
-              GModel::current()->getDiscreteCADInternals()){
+      else if(DiscreteCAD_Internals *d = discreteFactory()){
         if(param.size() == 7)
-          r = GModel::current()->getDiscreteCADInternals()->addCylinder
+          r = d->addCylinder
             (num, param[0], param[1], param[2], param[3], param[4], param[5],
              param[6], -1.);
         else
@@ -2210,10 +2213,9 @@ Shape :
         }
       }
 #if defined(HAVE_DISCRETECAD)
-      else if(gmsh_yyfactory == "Discrete" &&
-              GModel::current()->getDiscreteCADInternals()){
+      else if(DiscreteCAD_Internals *d = discreteFactory()){
         if(param.size() == 8)
-          r = GModel::current()->getDiscreteCADInternals()->addCone
+          r = d->addCone
             (num, param[0], param[1], param[2], param[3], param[4], param[5],
              param[6], param[7], -1.);
         else
@@ -2840,10 +2842,9 @@ Delete :
           GModel::current()->getOCCInternals()->synchronize(GModel::current());
       }
 #if defined(HAVE_DISCRETECAD)
-      else if(gmsh_yyfactory == "Discrete" &&
-              GModel::current()->getDiscreteCADInternals()){
-        GModel::current()->getDiscreteCADInternals()->remove(dimTags);
-        changed = GModel::current()->getDiscreteCADInternals()->getChanged();
+      else if(DiscreteCAD_Internals *d = discreteFactory()){
+        d->remove(dimTags);
+        changed = d->getChanged();
         GModel::current()->synchronizeDiscreteCADInternals();
       }
 #endif
@@ -2873,10 +2874,9 @@ Delete :
           GModel::current()->getOCCInternals()->synchronize(GModel::current());
       }
 #if defined(HAVE_DISCRETECAD)
-      else if(gmsh_yyfactory == "Discrete" &&
-              GModel::current()->getDiscreteCADInternals()){
-        GModel::current()->getDiscreteCADInternals()->remove(dimTags, true);
-        changed = GModel::current()->getDiscreteCADInternals()->getChanged();
+      else if(DiscreteCAD_Internals *d = discreteFactory()){
+        d->remove(dimTags, true);
+        changed = d->getChanged();
         GModel::current()->synchronizeDiscreteCADInternals();
       }
 #endif
@@ -3890,14 +3890,13 @@ Extrude :
         VectorOfPairs2ListOfShapes(outDimTags, $$);
       }
 #if defined(HAVE_DISCRETECAD)
-      else if(gmsh_yyfactory == "Discrete" &&
-              GModel::current()->getDiscreteCADInternals()){
+      else if(DiscreteCAD_Internals *d = discreteFactory()){
         std::vector<int> regions, edges;
         ListOfDouble2Vector($3, regions); ListOfDouble2Vector($6, edges);
         std::vector<double> radii;
         ListOfDouble2Vector($9, radii);
         std::vector<std::pair<int, int> > outDimTags;
-        r = GModel::current()->getDiscreteCADInternals()->fillet
+        r = d->fillet
           (regions, edges, radii, outDimTags, true);
         VectorOfPairs2ListOfShapes(outDimTags, $$);
       }
@@ -4063,8 +4062,7 @@ Boolean :
         VectorOfPairs2ListOfShapes(out, $$);
       }
 #if defined(HAVE_DISCRETECAD)
-      else if(gmsh_yyfactory == "Discrete" &&
-              GModel::current()->getDiscreteCADInternals()){
+      else if(DiscreteCAD_Internals *d = discreteFactory()){
         std::vector<std::pair<int, int > > object, tool, out;
         std::vector<std::vector<std::pair<int, int > > > outMap;
         ListOfShapes2VectorOfPairs($3, object);
@@ -4073,7 +4071,7 @@ Boolean :
           yymsg(0, "Only BooleanUnion, BooleanIntersection and BooleanDifference "
                 "available with the Discrete geometry kernel");
         else
-          r = GModel::current()->getDiscreteCADInternals()->booleanOperation
+          r = d->booleanOperation
             ($1, object, tool, out, outMap, -1, $4, $8);
         VectorOfPairs2ListOfShapes(out, $$);
       }
@@ -4138,8 +4136,7 @@ BooleanShape :
           ((int)$3, (OCC_Internals::BooleanOperator)$1, object, tool, out, outMap, $8, $12);
       }
 #if defined(HAVE_DISCRETECAD)
-      else if(gmsh_yyfactory == "Discrete" &&
-              GModel::current()->getDiscreteCADInternals()){
+      else if(DiscreteCAD_Internals *d = discreteFactory()){
         std::vector<std::pair<int, int> > object, tool, out;
         std::vector<std::vector<std::pair<int, int > > > outMap;
         ListOfShapes2VectorOfPairs($7, object);
@@ -4148,7 +4145,7 @@ BooleanShape :
           yymsg(0, "Only BooleanUnion, BooleanIntersection and BooleanDifference "
                 "available with the Discrete geometry kernel");
         else
-          r = GModel::current()->getDiscreteCADInternals()->booleanOperation
+          r = d->booleanOperation
             ($1, object, tool, out, outMap, (int)$3, $8, $12);
       }
 #endif
@@ -6851,11 +6848,10 @@ void DiscreteShapeFromFile(const char *fileName, double angle,
                            List_T *shapes)
 {
 #if defined(HAVE_DISCRETECAD)
-  if(gmsh_yyfactory == "Discrete" &&
-     GModel::current()->getDiscreteCADInternals()){
+  if(DiscreteCAD_Internals *d = discreteFactory()){
     std::vector<std::pair<int, int> > out;
     std::string tmp = FixRelativePath(gmsh_yyname, fileName);
-    if(!GModel::current()->getDiscreteCADInternals()->importShapes
+    if(!d->importShapes
        (tmp, angle, curveAngle, tolerance, out))
       yymsg(0, "Could not import shape");
     VectorOfPairs2ListOfShapes(out, shapes);

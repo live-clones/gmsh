@@ -605,6 +605,13 @@ sizes}) are currently only supported by the ``Delaunay'', ``HXT'' and
 ``Parallel Delaunay'' algorithms are much faster when several threads
 are used.
 
+Hex-dominant meshes are generated with @code{Mesh.Algorithm3D} set to
+9 (``R-tree'', @code{-algo rtree3d}), with the options that @code{-hybrid}
+sets on the command line. This algorithm also changes the surface
+meshes: they keep their cross-field directions, and the quadrangles of
+the ``Packing of parallelograms'' algorithm are matched for the
+combination of the tetrahedra into hexahedra.
+
 When Gmsh is configured with OpenMP support (@pxref{Compiling the source
 code}), most of the meshing steps can be performed in parallel:
 @itemize

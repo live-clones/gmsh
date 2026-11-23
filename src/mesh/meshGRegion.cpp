@@ -409,7 +409,7 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
     else
       Msg::Warning("Falling back to Delaunay (del3d)");
   }
-  if(CTX::instance()->mesh.algo3d != ALGO_3D_RTREE &&
+  if(!CTX::instance()->mesh.hexDominant() &&
      CTX::instance()->mesh.algo3d != ALGO_3D_DELAUNAY &&
      CTX::instance()->mesh.algo3d != ALGO_3D_PDEL3D &&
      CTX::instance()->mesh.algo3d != ALGO_3D_INITIAL_ONLY &&
@@ -459,7 +459,7 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
     }
   }
   else if(CTX::instance()->mesh.algo3d != ALGO_3D_INITIAL_ONLY &&
-          CTX::instance()->mesh.algo3d != ALGO_3D_RTREE) {
+          !CTX::instance()->mesh.hexDominant()) {
     insertVerticesInRegion(gr, CTX::instance()->mesh.maxIterDelaunay3D, 1.,
                            true, &sqr);
     for(auto gr : regions) _deleteUnusedVertices(gr);

@@ -228,17 +228,6 @@ void modelsMenu()
   drawContext::global()->draw();
 }
 
-// the shortcuts of the main menu, whatever window has the focus: as
-// Fl_Menu_::global(), but undone when the menu goes (FLTK's cannot be)
-static Fl_Menu_ *globalMenu = nullptr;
-
-static int globalMenuHandler(int e)
-{
-  if(e != FL_SHORTCUT || Fl::modal() || !globalMenu) return 0;
-  Fl::first_window(globalMenu->window());
-  return globalMenu->handle(e);
-}
-
 void quickAccessMenu()
 {
   // the menu (see Actions.cpp), opened on the item picked last
@@ -777,9 +766,8 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
       if(i >= 0) m->shortcut(i, fltkShortcut("help_keys", true));
     }
 #endif
-    Fl::remove_handler(globalMenuHandler);
-    Fl::add_handler(globalMenuHandler);
-    globalMenu = m;
+    // (its keys, whatever window has the focus: those of the shortcut table,
+    // see FlGui::testGlobalShortcuts())
     fillRecentHistoryMenu();
   }
 
@@ -999,10 +987,6 @@ graphicWindow::~graphicWindow()
   for(openglWindow *w : gl)
     if(sceneTool::scene() == w) sceneTool::stop();
   openglWindow::setLastHandled(nullptr);
-  if(globalMenu && globalMenu == _menuBar()) {
-    Fl::remove_handler(globalMenuHandler);
-    globalMenu = nullptr;
-  }
   _tile->clear();
   _win->clear();
   Fl::delete_widget(_win);

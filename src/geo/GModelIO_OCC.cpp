@@ -4381,20 +4381,6 @@ bool OCC_Internals::booleanOperator(
       else {
         result = fuse.Shape();
       }
-      NCollection_List<TopoDS_Shape>::Iterator it(objectShapes);
-      for(; it.More(); it.Next()) {
-        mapOriginal.push_back(it.Value());
-        mapModified.push_back(fuse.Modified(it.Value()));
-        mapDeleted.push_back(fuse.IsDeleted(it.Value()));
-        mapGenerated.push_back(fuse.Generated(it.Value()));
-      }
-      NCollection_List<TopoDS_Shape>::Iterator it2(toolShapes);
-      for(; it2.More(); it2.Next()) {
-        mapOriginal.push_back(it2.Value());
-        mapModified.push_back(fuse.Modified(it2.Value()));
-        mapDeleted.push_back(fuse.IsDeleted(it2.Value()));
-        mapGenerated.push_back(fuse.Generated(it2.Value()));
-      }
     } break;
     case OCC_Internals::Intersection: {
       algo = std::make_unique<BRepAlgoAPI_Common>();
@@ -4414,20 +4400,6 @@ bool OCC_Internals::booleanOperator(
       if(CTX::instance()->geom.occBooleanSimplify >= 2) common.SimplifyResult();
 #endif
       result = common.Shape();
-      NCollection_List<TopoDS_Shape>::Iterator it(objectShapes);
-      for(; it.More(); it.Next()) {
-        mapOriginal.push_back(it.Value());
-        mapModified.push_back(common.Modified(it.Value()));
-        mapDeleted.push_back(common.IsDeleted(it.Value()));
-        mapGenerated.push_back(common.Generated(it.Value()));
-      }
-      NCollection_List<TopoDS_Shape>::Iterator it2(toolShapes);
-      for(; it2.More(); it2.Next()) {
-        mapOriginal.push_back(it2.Value());
-        mapModified.push_back(common.Modified(it2.Value()));
-        mapDeleted.push_back(common.IsDeleted(it2.Value()));
-        mapGenerated.push_back(common.Generated(it2.Value()));
-      }
     } break;
 
     case OCC_Internals::Difference: {
@@ -4448,20 +4420,6 @@ bool OCC_Internals::booleanOperator(
       if(CTX::instance()->geom.occBooleanSimplify >= 2) cut.SimplifyResult();
 #endif
       result = cut.Shape();
-      NCollection_List<TopoDS_Shape>::Iterator it(objectShapes);
-      for(; it.More(); it.Next()) {
-        mapOriginal.push_back(it.Value());
-        mapModified.push_back(cut.Modified(it.Value()));
-        mapDeleted.push_back(cut.IsDeleted(it.Value()));
-        mapGenerated.push_back(cut.Generated(it.Value()));
-      }
-      NCollection_List<TopoDS_Shape>::Iterator it2(toolShapes);
-      for(; it2.More(); it2.Next()) {
-        mapOriginal.push_back(it2.Value());
-        mapModified.push_back(cut.Modified(it2.Value()));
-        mapDeleted.push_back(cut.IsDeleted(it2.Value()));
-        mapGenerated.push_back(cut.Generated(it2.Value()));
-      }
     } break;
 
       // TODO: implement OCC_Internals::Section:
@@ -4495,14 +4453,19 @@ bool OCC_Internals::booleanOperator(
         fragments.SimplifyResult();
 #endif
       result = fragments.Shape();
-      NCollection_List<TopoDS_Shape>::Iterator it(objectShapes);
-      for(; it.More(); it.Next()) {
-        mapOriginal.push_back(it.Value());
-        mapModified.push_back(fragments.Modified(it.Value()));
-        mapDeleted.push_back(fragments.IsDeleted(it.Value()));
-        mapGenerated.push_back(fragments.Generated(it.Value()));
-      }
     } break;
+    }
+    // what became of the arguments (the objects, then the tools; all in the
+    // objects for the fragments)
+    for(const NCollection_List<TopoDS_Shape> *shapes :
+        {&objectShapes, &toolShapes}) {
+      for(NCollection_List<TopoDS_Shape>::Iterator it(*shapes); it.More();
+          it.Next()) {
+        mapOriginal.push_back(it.Value());
+        mapModified.push_back(algo->Modified(it.Value()));
+        mapDeleted.push_back(algo->IsDeleted(it.Value()));
+        mapGenerated.push_back(algo->Generated(it.Value()));
+      }
     }
   } catch(Standard_Failure &err) {
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());

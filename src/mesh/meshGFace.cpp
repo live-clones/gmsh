@@ -2615,9 +2615,7 @@ void meshGFace::operator()(GFace *gf, bool print)
   dem(gf);
 
   if(MeshTransfiniteSurface(gf)) {
-    if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE) {
-      directions_storage(gf);
-    }
+    if(CTX::instance()->mesh.hexDominant()) directions_storage(gf);
     return;
   }
   if(MeshExtrudedSurface(gf)) return;
@@ -2632,9 +2630,7 @@ void meshGFace::operator()(GFace *gf, bool print)
                 gf->getTypeString().c_str(), gf->getMeshMaster()->tag());
       copyMesh(gff, gf);
       gf->meshStatistics.status = GFace::DONE;
-      if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE) {
-        directions_storage(gf);
-      }
+      if(CTX::instance()->mesh.hexDominant()) directions_storage(gf);
       return;
     }
     else
@@ -2712,7 +2708,7 @@ void meshGFace::operator()(GFace *gf, bool print)
                   false, nullptr);
   }
 
-  if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE) { directions_storage(gf); }
+  if(CTX::instance()->mesh.hexDominant()) directions_storage(gf);
 
   Msg::Debug("Type %d %d triangles generated, %d internal nodes",
              gf->geomType(), gf->triangles.size(), gf->mesh_vertices.size());

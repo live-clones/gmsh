@@ -27,6 +27,7 @@
 #include "MTrihedron.h"
 #include "meshGRegion.h"
 #include "meshCombine3D.h"
+#include "MeshKeys.h"
 
 #if defined(HAVE_HXT)
 
@@ -448,31 +449,14 @@ int meshCombine3D(GRegion *gr, const CombineFrames *frames)
 #endif
 
 namespace {
-  // a face by its vertices sorted by address (3 or 4, the 4th null for a
-  // triangle)
-  struct SortedFace {
-    MVertex *v[4];
-    bool operator==(const SortedFace &o) const
-    {
-      return v[0] == o.v[0] && v[1] == o.v[1] && v[2] == o.v[2] &&
-             v[3] == o.v[3];
-    }
-  };
-  struct SortedFaceHash {
-    std::size_t operator()(const SortedFace &f) const
-    {
-      std::size_t h = 0;
-      for(int i = 0; i < 4; i++)
-        h = h * 0x9E3779B97F4A7C15ull + (std::size_t)f.v[i] / sizeof(void *);
-      return h ^ (h >> 29);
-    }
-  };
+  // a face by its vertices sorted by address (see MeshKeys.h)
+  typedef meshKeys::FaceKey SortedFace;
+  typedef meshKeys::FaceHash SortedFaceHash;
   SortedFace sortedFace(MVertex *a, MVertex *b, MVertex *c,
                         MVertex *d = nullptr)
   {
-    SortedFace f = {{a, b, c, d}};
-    std::sort(f.v, f.v + (d ? 4 : 3));
-    return f;
+    MVertex *v[4] = {a, b, c, d};
+    return SortedFace(v, d ? 4 : 3);
   }
 } // namespace
 
