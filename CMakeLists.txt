@@ -2447,7 +2447,7 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
       set_tests_properties(${TEST} PROPERTIES LABELS gui SKIP_RETURN_CODE 77)
     endforeach()
   endif()
-  # test the Python tutorials and the tests written in Python with dynamic
+  # test the Python tutorials, examples and tests with dynamic
   # builds, if a Python interpreter runs on this machine. The Python module is
   # copied next to the library, where it looks for it first whatever the name
   # of the build directory; a test is skipped, not failed, when the module
@@ -2471,9 +2471,12 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
     else()
       configure_file(${CMAKE_CURRENT_SOURCE_DIR}/api/gmsh.py
                      ${CMAKE_CURRENT_BINARY_DIR}/gmsh.py COPYONLY)
-      file(GLOB ALLFILES tutorials/python/*.py benchmarks/misc/*.py
-           benchmarks/occ/*.py benchmarks/step/*.py
-           examples/api/merge_partitions.py)
+      file(GLOB ALLFILES tutorials/python/*.py examples/api/*.py
+           benchmarks/misc/*.py benchmarks/occ/*.py benchmarks/step/*.py)
+      # need an external solver:
+      list(FILTER ALLFILES EXCLUDE REGEX "api/onelab_run.*.py$")
+      # writes its file in the source directory:
+      list(FILTER ALLFILES EXCLUDE REGEX "api/step_header_data.py$")
       # needs graphics and the path of the executable:
       list(FILTER ALLFILES EXCLUDE REGEX "misc/tiny_model.py$")
       # needs a module that is not part of Gmsh:
