@@ -12,6 +12,7 @@
 #include <utility>
 #include <vector>
 #include "SBoundingBox3d.h"
+#include "scenePicks.h"
 #include "SPoint2.h"
 #include "Camera.h"
 #include "glApi.h"
@@ -418,12 +419,7 @@ private:
   // same as _pickColor, but reachable from the free drawing functions
   static bool _pickColorActive;
   bool _selectColor(int type, bool multiple, bool mesh, bool post, int x, int y,
-                    int w, int h, std::vector<GVertex *> &vertices,
-                    std::vector<GEdge *> &edges, std::vector<GFace *> &faces,
-                    std::vector<GRegion *> &regions,
-                    std::vector<MElement *> &elements,
-                    std::vector<SPoint2> &points,
-                    std::vector<PView *> &views,
+                    int w, int h, scenePicks &picks,
                     std::vector<pickKey> *seen = nullptr);
 public:
   // true during a colour buffer picking pass, where the drawing code must
@@ -610,6 +606,11 @@ public:
   // (seen from the other side when opposite), "1:1" to fit the model without
   // translation, "reset" for no rotation, translation or scaling
   void standardView(const std::string &which, bool opposite);
+  // the point of view of the buttons of the status bar and of their keys:
+  // as standardView() for "x", "y", "z" and "3d", "1:1" first fitting the
+  // bounding box to what is visible if other, and "r" a quarter turn about the
+  // axis out of the screen, clockwise (counterclockwise if other)
+  void pointOfView(const std::string &which, bool other);
   void unproject(double winx, double winy, double p[3], double d[3]);
   // where a point of the model is in the window, in its units and with the
   // matrices of the frame, as unproject() reads them back: false when the
@@ -626,11 +627,7 @@ public:
   // picking pass (see sceneView::beginSelection())
   bool pickElements = false;
   bool select(int type, bool multiple, bool mesh, bool post, int x, int y,
-              int w, int h, std::vector<GVertex *> &vertices,
-              std::vector<GEdge *> &edges, std::vector<GFace *> &faces,
-              std::vector<GRegion *> &regions,
-              std::vector<MElement *> &elements, std::vector<SPoint2> &points,
-              std::vector<PView *> &views, bool through = true);
+              int w, int h, scenePicks &picks, bool through = true);
   void recenterForRotationCenterChange(SPoint3 newRotationCenter);
   int fix2dCoordinates(double *x, double *y);
   void draw3d();

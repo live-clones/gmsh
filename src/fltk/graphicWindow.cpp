@@ -90,51 +90,28 @@ void setPointOfView(const char *str, graphicWindow *g)
   }
   if(gls.empty()) gls.push_back(current);
 
+  const bool shift = Fl::event_state(FL_SHIFT);
   for(std::size_t i = 0; i < gls.size(); i++) {
     drawContext *ctx = gls[i]->getDrawContext();
-    if(!strcmp(str, "r")) {
-      // rotate +90 or -90 (shift) degress around axis perp to the
-      // screen, or sync rotation with first window (Ctrl)
-      double axis[3] = {0., 0., 1.};
-      if(Fl::event_state(FL_CTRL) || Fl::event_state(FL_META)) {
-        if(i != 0) {
-          drawContext *ctx0 = gls[0]->getDrawContext();
-          ctx->setQuaternion(ctx0->quaternion[0], ctx0->quaternion[1],
-                             ctx0->quaternion[2], ctx0->quaternion[3]);
+    drawContext *ctx0 = gls[0]->getDrawContext();
+    // (Ctrl: the rotation, or the translation and the scaling, of the first
+    // viewport given to the others)
+    if(sync && !strcmp(str, "r")) {
+      if(i != 0)
+        ctx->setQuaternion(ctx0->quaternion[0], ctx0->quaternion[1],
+                           ctx0->quaternion[2], ctx0->quaternion[3]);
+    }
+    else if(sync && !strcmp(str, "1:1") && !CTX::instance()->camera) {
+      if(shift) SetBoundingBox(true);
+      if(i != 0) {
+        for(int j = 0; j < 3; j++) {
+          ctx->t[j] = ctx0->t[j];
+          ctx->s[j] = ctx0->s[j];
         }
       }
-      else if(!Fl::event_state(FL_SHIFT)) {
-        ctx->addQuaternionFromAxisAndAngle(axis, -90.);
-        if(CTX::instance()->camera) ctx->camera.tiltHeadRight();
-      }
-      else {
-        ctx->addQuaternionFromAxisAndAngle(axis, 90.);
-        if(CTX::instance()->camera) ctx->camera.tiltHeadLeft();
-      }
     }
-    else if(!strcmp(str, "1:1")) {
-      // if Shift is pressed, reset bounding box around visible entities
-      if(Fl::event_state(FL_SHIFT)) SetBoundingBox(true);
-      // fit the model in the window, or sync translation and scaling with the
-      // first window (Ctrl)
-      if(!CTX::instance()->camera &&
-         (Fl::event_state(FL_CTRL) || Fl::event_state(FL_META))) {
-        if(i != 0) {
-          drawContext *ctx0 = gls[0]->getDrawContext();
-          for(int j = 0; j < 3; j++) {
-            ctx->t[j] = ctx0->t[j];
-            ctx->s[j] = ctx0->s[j];
-          }
-        }
-      }
-      else
-        ctx->standardView(str, false);
-    }
-    else {
-      // an axis pointing out of the screen, or into it (Shift), the
-      // isometric view, or no rotation, translation or scaling
-      ctx->standardView(str, Fl::event_state(FL_SHIFT));
-    }
+    else
+      ctx->pointOfView(str, shift);
   }
   drawContext::global()->draw();
   FlGui::instance()->manip->update();

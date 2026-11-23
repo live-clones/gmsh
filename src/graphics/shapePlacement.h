@@ -92,9 +92,11 @@ public:
   static void draw(void *context);
 };
 
-// the tool that places the shape (the clicks of a scene: its position; 'e':
-// the shape added; Escape: the placement stopped), and what finished() does
-// when it ends
-sceneTool *newPlacementTool(std::function<void()> finished = nullptr);
+// the tool that places a shape (see start()), started with it once the tool
+// before it is over: the clicks of a scene set its position, 'e' adds it,
+// Escape stops the placement; finished() is called when it ends
+sceneTool *newPlacementTool(int shape, const std::vector<std::string> &values,
+                            std::function<void()> changed = nullptr,
+                            std::function<void()> finished = nullptr);
 
 #endif

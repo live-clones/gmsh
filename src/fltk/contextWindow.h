@@ -44,8 +44,11 @@ public:
   // the values of the inputs of a pane
   std::vector<std::string> paneValues(int pane);
   // the shape of a pane placed with the pointer, from the values of its
-  // inputs; the inputs and the locks shown as the placement has them
+  // inputs, instead of the one placed; the locks and the work plane of the
+  // window given to the placement; the inputs and the locks shown as the
+  // placement has them
   void startPlacement(int pane);
+  void placementControls();
   void showPlacement();
   // adds the entity of the pane to the script, unless a value it needs is
   // missing

@@ -943,12 +943,14 @@ static void _set_visibility_by_number(int row, int num, char val,
 // Interactive tab: hidden, shown alone, or shown again (the undo of a hide)
 enum pickAction { PickHide, PickShow, PickUndo };
 
-static void
-_apply_visibility(pickAction action, bool physical, bool pickElements,
-                  std::vector<GVertex *> &vertices, std::vector<GEdge *> &edges,
-                  std::vector<GFace *> &faces, std::vector<GRegion *> &regions,
-                  std::vector<MElement *> &elements)
+static void _apply_visibility(pickAction action, bool physical,
+                              bool pickElements, scenePicks &picks)
 {
+  auto &vertices = picks.vertices;
+  auto &edges = picks.edges;
+  auto &faces = picks.faces;
+  auto &regions = picks.regions;
+  auto &elements = picks.elements;
   bool recursive = recursiveVisibility();
   bool allmodels = allModelsVisibility();
 
@@ -1043,11 +1045,7 @@ static void _visibility_interactive(int row, bool show)
   // what was picked last, for an undo, and when (the model or its mesh may
   // change meanwhile, and what an undo would show again be gone)
   struct picked {
-    std::vector<GVertex *> vertices;
-    std::vector<GEdge *> edges;
-    std::vector<GFace *> faces;
-    std::vector<GRegion *> regions;
-    std::vector<MElement *> elements;
+    scenePicks picks;
     modelStamps stamps;
   };
   auto last = std::make_shared<picked>();
@@ -1062,19 +1060,12 @@ static void _visibility_interactive(int row, bool show)
         if(last->stamps.changed()) *last = picked();
         last->stamps.record();
         if(ib == 'l') {
-          last->vertices = p.vertices;
-          last->edges = p.edges;
-          last->faces = p.faces;
-          last->regions = p.regions;
-          last->elements = p.elements;
+          last->picks = p;
           _apply_visibility(show ? PickShow : PickHide, physical, elements,
-                            last->vertices, last->edges, last->faces,
-                            last->regions, last->elements);
+                            last->picks);
         }
         if(ib == 'u' && !show) // undo only in hide mode
-          _apply_visibility(PickUndo, physical, elements, last->vertices,
-                            last->edges, last->faces, last->regions,
-                            last->elements);
+          _apply_visibility(PickUndo, physical, elements, last->picks);
         if(elements) CTX::instance()->meshChanged();
         return true;
       },

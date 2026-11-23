@@ -526,36 +526,86 @@ void shapePlacement::draw(void *context)
   gmshDepthTest(true);
 }
 
-sceneTool *newPlacementTool(std::function<void()> finished)
+// The tool that places a shape: it starts the placement (once the tool
+// before it is over, which may have been a placement), shows where the
+// pointer would put it, puts it at a click, adds it with 'e'
+class placementTool : public sceneTool {
+public:
+  placementTool(int shape, const std::vector<std::string> &values,
+                std::function<void()> changed, std::function<void()> finished)
+    : _shape(shape), _values(values), _changed(changed), _finished(finished)
+  {
+  }
+  std::string name() const override { return "Place"; }
+  int type() const override { return ENT_NONE; }
+  std::string status(sceneView *) const override
+  {
+    return "Click to place it, on the model or the work plane, or type its "
+           "values\n[Press 'e' to add it, x, y or z to lock a coordinate, "
+           "Escape to stop]";
+  }
+  void begin() override { shapePlacement::start(_shape, _values, _changed); }
+  bool ownsHover() const override { return true; }
+  void hover(sceneView *s) override
+  {
+    shapePlacement *p = shapePlacement::current();
+    if(!p) return;
+    const double *w = s->pointerPosition();
+    double xyz[3];
+    GEntity *on = nullptr;
+    if(!s->modelPointAt((int)w[0], (int)w[1], xyz, &on))
+      p->planePoint(s->getDrawContext(), w[0], w[1], xyz);
+    p->hover(xyz);
+    s->highlight(on);
+    // where a click would put it (the locked coordinates as they are), and
+    // on what
+    const double *h = p->hovered();
+    char tmp[256];
+    snprintf(tmp, sizeof(tmp), "%g, %g, %g", h[0], h[1], h[2]);
+    std::string text = tmp;
+    if(on) {
+      std::string info = on->getInfoString(true, true);
+      text += "\non " + info.substr(0, info.find('\n'));
+    }
+    else
+      text += "\non " + p->planeName();
+    s->drawTooltip(text);
+  }
+  bool step(char ib, sceneView *s, const scenePicks &) override
+  {
+    shapePlacement *p = shapePlacement::current();
+    if(!p || ib == 'q') return false;
+    if(ib == 'c') {
+      const double *w = s->clickPosition();
+      double xyz[3];
+      if(!s->modelPointAt((int)w[0], (int)w[1], xyz))
+        p->planePoint(s->getDrawContext(), w[0], w[1], xyz);
+      p->drop(xyz);
+    }
+    else if(ib == 'e' && p->add())
+      Gui()->entitiesChanged();
+    for(sceneView *v : sceneView::all()) v->askRedraw();
+    return true;
+  }
+  void finish() override
+  {
+    shapePlacement::stop();
+    if(_finished) _finished();
+    for(sceneView *v : sceneView::all()) {
+      v->pointerLeft();
+      v->askRedraw();
+    }
+  }
+
+private:
+  int _shape;
+  std::vector<std::string> _values;
+  std::function<void()> _changed, _finished;
+};
+
+sceneTool *newPlacementTool(int shape, const std::vector<std::string> &values,
+                            std::function<void()> changed,
+                            std::function<void()> finished)
 {
-  return new functionTool(
-    "Place", ENT_NONE, false,
-    [](sceneView *) {
-      return std::string("Click to place it, on the model or the work plane, "
-                         "or type its values\n[Press 'e' to add it, x, y or z "
-                         "to lock a coordinate, Escape to stop]");
-    },
-    [](char ib, sceneView *s, const scenePicks &) {
-      shapePlacement *p = shapePlacement::current();
-      if(!p || ib == 'q') return false;
-      if(ib == 'c') {
-        const double *w = s->clickPosition();
-        double xyz[3];
-        if(!s->modelPointAt((int)w[0], (int)w[1], xyz))
-          p->planePoint(s->getDrawContext(), w[0], w[1], xyz);
-        p->drop(xyz);
-      }
-      else if(ib == 'e' && p->add())
-        Gui()->entitiesChanged();
-      for(sceneView *v : sceneView::all()) v->askRedraw();
-      return true;
-    },
-    [finished]() {
-      shapePlacement::stop();
-      if(finished) finished();
-      for(sceneView *v : sceneView::all()) {
-        v->pointerLeft();
-        v->askRedraw();
-      }
-    });
+  return new placementTool(shape, values, changed, finished);
 }

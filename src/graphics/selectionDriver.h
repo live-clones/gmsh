@@ -13,6 +13,7 @@
 #include <vector>
 #include "Context.h"
 #include "ListUtils.h"
+#include "sceneTool.h"
 
 class GEntity;
 class GVertex;
@@ -30,13 +31,15 @@ class MElement;
 // the script or changes the mesh once all is picked, then starts again, until
 // 'q'. The values an operation needs besides (the translation vector, the name
 // of a group, ...) are its fields(), read by name through the function the
-// host gives, from its dialog or its form.
+// host gives, from its dialog or its form. It is the tool that the host starts
+// on the scene (see sceneTool): changed() is told each time it changes the
+// model (false to end it), finished() when it is over.
 //
 // An operation is a series of phases, each picking entities of a type: a set
 // of them, ended by 'e', or a given number of them one click at a time (the
 // points of a line). 'u' takes back the last entity picked, going back to the
 // phase before if there is none in this one.
-class selectionDriver {
+class selectionDriver : public sceneTool {
 public:
   // the value of a field, "" if it is empty; "1" or "0" for a check box
   typedef std::function<std::string(const std::string &name)> valueFunction;
@@ -62,6 +65,8 @@ private:
   };
   std::string _operation;
   valueFunction _value;
+  std::function<bool(const selectionDriver &)> _changed;
+  std::function<void()> _finished;
   std::vector<field> _fields;
   std::vector<phase> _phases;
   // the current phase (-1 once the operation is over), what each phase
@@ -109,7 +114,9 @@ private:
 
 public:
   // starts the operation (see selectionDriver.cpp for their names)
-  selectionDriver(const std::string &operation, valueFunction value);
+  selectionDriver(const std::string &operation, valueFunction value,
+                  std::function<bool(const selectionDriver &)> changed = nullptr,
+                  std::function<void()> finished = nullptr);
   ~selectionDriver();
   const std::string &operation() const { return _operation; }
   const std::vector<field> &fields() const { return _fields; }
@@ -140,18 +147,19 @@ public:
   static const entityKind entityKinds[4];
   bool active() const { return _phase >= 0; }
   // the clicks pick mesh elements (see sceneView::beginSelection())
-  bool pickElements() const { return _pickElements; }
+  bool pickElements() const override { return _pickElements; }
   // what to pick now, and the two lines that say so
-  int type() const;
+  int type() const override;
   std::string status() const;
+  // as a tool (see sceneTool): its name is the operation
+  std::string name() const override { return _operation; }
+  std::string status(sceneView *) const override { return status(); }
+  bool step(char ib, sceneView *s, const scenePicks &p) override;
+  void finish() override;
   // an answer of the selection ('l', 'r', 'u', 'e' or 'q') and what it
   // picked: true if the operation was carried out (the script or the mesh
   // changed)
-  bool step(char ib, const std::vector<GVertex *> &vertices,
-            const std::vector<GEdge *> &edges,
-            const std::vector<GFace *> &faces,
-            const std::vector<GRegion *> &regions,
-            const std::vector<MElement *> &elements);
+  bool step(char ib, const scenePicks &p);
   // what the phases had picked when the operation was last carried out
   const std::vector<std::vector<std::pair<int, int>>> &done() const
   { return _done; }

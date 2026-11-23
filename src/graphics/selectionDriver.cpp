@@ -207,9 +207,12 @@ void selectionDriver::_use(const std::vector<std::string> &names)
 //   define_embed_surface, define_compound_curve, define_compound_surface;
 // - mesh parts: mesh_delete_elements, mesh_delete_curves, ...,
 //   mesh_reverse_elements, mesh_reverse_curves, ...
-selectionDriver::selectionDriver(const std::string &operation,
-                                 valueFunction value)
-  : _operation(operation), _value(value), _phase(0), _loop(nullptr),
+selectionDriver::selectionDriver(
+  const std::string &operation, valueFunction value,
+  std::function<bool(const selectionDriver &)> changed,
+  std::function<void()> finished)
+  : _operation(operation), _value(value), _changed(changed),
+    _finished(finished), _phase(0), _loop(nullptr),
     _meshParts(false), _pickElements(false), _boundingBox(false), _once(false)
 {
   const std::string &op = operation;
@@ -620,20 +623,29 @@ std::string selectionDriver::status() const
   return "Select " + what + "\n[Press " + keys + "]";
 }
 
-bool selectionDriver::step(char ib, const std::vector<GVertex *> &vertices,
-                           const std::vector<GEdge *> &edges,
-                           const std::vector<GFace *> &faces,
-                           const std::vector<GRegion *> &regions,
-                           const std::vector<MElement *> &elements)
+bool selectionDriver::step(char ib, sceneView *s, const scenePicks &p)
 {
+  if(step(ib, p) && _changed && !_changed(*this)) return false;
+  return active();
+}
+
+void selectionDriver::finish()
+{
+  quit();
+  if(_finished) _finished();
+}
+
+bool selectionDriver::step(char ib, const scenePicks &p)
+{
+  const std::vector<MElement *> &elements = p.elements;
   if(!active()) return false;
   // the model or its mesh changed meanwhile: the elements picked may be gone
   // (the entities are kept by their tags)
   if(_stamps.changed()) _elements.clear();
-  std::vector<GEntity *> entities(vertices.begin(), vertices.end());
-  entities.insert(entities.end(), edges.begin(), edges.end());
-  entities.insert(entities.end(), faces.begin(), faces.end());
-  entities.insert(entities.end(), regions.begin(), regions.end());
+  std::vector<GEntity *> entities(p.vertices.begin(), p.vertices.end());
+  entities.insert(entities.end(), p.edges.begin(), p.edges.end());
+  entities.insert(entities.end(), p.faces.begin(), p.faces.end());
+  entities.insert(entities.end(), p.regions.begin(), p.regions.end());
   bool changed = false;
   switch(ib) {
   case 'l': _pick(entities, elements); break;

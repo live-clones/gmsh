@@ -9257,18 +9257,18 @@ GMSH_API int gmsh::fltk::selectEntities(vectorpair &dimTags, const int dim)
   default: ret = FlGui::instance()->selectEntity(ENT_ALL); break;
   }
   if(!FlGui::available()) return 0; // GUI closed during selection
-  for(std::size_t i = 0; i < FlGui::instance()->selectedVertices.size(); i++)
+  for(std::size_t i = 0; i < FlGui::instance()->selected.vertices.size(); i++)
     dimTags.push_back(
-      std::make_pair(0, FlGui::instance()->selectedVertices[i]->tag()));
-  for(std::size_t i = 0; i < FlGui::instance()->selectedEdges.size(); i++)
+      std::make_pair(0, FlGui::instance()->selected.vertices[i]->tag()));
+  for(std::size_t i = 0; i < FlGui::instance()->selected.edges.size(); i++)
     dimTags.push_back(
-      std::make_pair(1, FlGui::instance()->selectedEdges[i]->tag()));
-  for(std::size_t i = 0; i < FlGui::instance()->selectedFaces.size(); i++)
+      std::make_pair(1, FlGui::instance()->selected.edges[i]->tag()));
+  for(std::size_t i = 0; i < FlGui::instance()->selected.faces.size(); i++)
     dimTags.push_back(
-      std::make_pair(2, FlGui::instance()->selectedFaces[i]->tag()));
-  for(std::size_t i = 0; i < FlGui::instance()->selectedRegions.size(); i++)
+      std::make_pair(2, FlGui::instance()->selected.faces[i]->tag()));
+  for(std::size_t i = 0; i < FlGui::instance()->selected.regions.size(); i++)
     dimTags.push_back(
-      std::make_pair(3, FlGui::instance()->selectedRegions[i]->tag()));
+      std::make_pair(3, FlGui::instance()->selected.regions[i]->tag()));
   return selectionCode(ret);
 #else
   return 0;
@@ -9283,8 +9283,8 @@ GMSH_API int gmsh::fltk::selectElements(std::vector<std::size_t> &elementTags)
   _createFltk();
   char ret = FlGui::instance()->selectEntity(ENT_ALL, true);
   if(!FlGui::available()) return 0; // GUI closed during selection
-  for(std::size_t i = 0; i < FlGui::instance()->selectedElements.size(); i++)
-    elementTags.push_back(FlGui::instance()->selectedElements[i]->getNum());
+  for(std::size_t i = 0; i < FlGui::instance()->selected.elements.size(); i++)
+    elementTags.push_back(FlGui::instance()->selected.elements[i]->getNum());
   return selectionCode(ret);
 #else
   return 0;
@@ -9299,8 +9299,8 @@ GMSH_API int gmsh::fltk::selectViews(std::vector<int> &viewTags)
   _createFltk();
   char ret = FlGui::instance()->selectEntity(ENT_ALL);
   if(!FlGui::available()) return 0; // GUI closed during selection
-  for(std::size_t i = 0; i < FlGui::instance()->selectedViews.size(); i++)
-    viewTags.push_back(FlGui::instance()->selectedViews[i]->getTag());
+  for(std::size_t i = 0; i < FlGui::instance()->selected.views.size(); i++)
+    viewTags.push_back(FlGui::instance()->selected.views[i]->getTag());
   return selectionCode(ret);
 #else
   return 0;
@@ -9330,16 +9330,15 @@ GMSH_API int gmsh::fltk::pick(vectorpair &dimTags,
   case 3: type = ENT_VOLUME; break;
   default: break;
   }
-  std::vector<GVertex *> vertices;
-  std::vector<GEdge *> edges;
-  std::vector<GFace *> faces;
-  std::vector<GRegion *> regions;
-  std::vector<MElement *> ele;
-  std::vector<SPoint2> points;
-  std::vector<PView *> views;
+  scenePicks picks;
   bool ret = gl->pick(type, CTX::instance()->mesh.draw ? true : false, true,
-                      (int)x, (int)y, w, h, vertices, edges, faces, regions,
-                      ele, points, views, elements);
+                      (int)x, (int)y, w, h, picks, elements);
+  const std::vector<GVertex *> &vertices = picks.vertices;
+  const std::vector<GEdge *> &edges = picks.edges;
+  const std::vector<GFace *> &faces = picks.faces;
+  const std::vector<GRegion *> &regions = picks.regions;
+  const std::vector<MElement *> &ele = picks.elements;
+  const std::vector<PView *> &views = picks.views;
   for(std::size_t i = 0; i < vertices.size(); i++)
     dimTags.push_back(std::make_pair(0, vertices[i]->tag()));
   for(std::size_t i = 0; i < edges.size(); i++)

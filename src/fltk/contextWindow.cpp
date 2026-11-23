@@ -51,16 +51,23 @@ std::vector<std::string> elementaryContextWindow::paneValues(int pane)
   return v;
 }
 
-// The shape of a pane placed (see shapePlacement): its fields, its locks and
-// the work plane are those of the placement, the window showing them again
-// when the scene changes them
-void elementaryContextWindow::startPlacement(int pane)
+// The shape of a pane placed (see shapePlacement, started with its tool, see
+// placeShape() in fltkActions.cpp): its fields, its locks and the work plane
+// are those of the placement, the window showing them again when the scene
+// changes them
+void elementaryContextWindow::placementControls()
 {
-  shapePlacement::start(pane, paneValues(pane), [this] { showPlacement(); });
   if(shapePlacement *p = shapePlacement::current()) {
     for(int i = 0; i < 3; i++) p->setLocked(i, butt[i]->value());
     p->setPlane((shapePlacement::Plane)plane->value());
   }
+}
+
+// (another pane shown while a shape is placed: its shape placed instead)
+void elementaryContextWindow::startPlacement(int pane)
+{
+  shapePlacement::start(pane, paneValues(pane), [this] { showPlacement(); });
+  placementControls();
 }
 
 void elementaryContextWindow::showPlacement()

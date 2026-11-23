@@ -54,6 +54,7 @@ void sceneTool::start(sceneTool *tool, sceneView *s, const void *owner)
   _current = tool;
   _scene = s;
   _owner = owner;
+  tool->begin();
   // a pick needs the mouse selection (the "S" button)
   if(!CTX::instance()->mouseSelection)
     opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 1);
@@ -86,8 +87,7 @@ bool sceneTool::step()
   // the next event after it)
   if(!_current || !_scene || _depth) return false;
   scenePicks p;
-  char ib = _scene->selectionStep(p.vertices, p.edges, p.faces, p.regions,
-                                  p.elements, p.points, p.views);
+  char ib = _scene->selectionStep(p);
   if(!ib) return false;
   sceneTool *t = _current;
   sceneView *s = _scene;
@@ -134,9 +134,16 @@ static void clearClicks()
   }
 }
 
+// (Ctrl+click adds a query)
+class queryTool : public functionTool {
+public:
+  using functionTool::functionTool;
+  bool ctrlClickAdds() const override { return true; }
+};
+
 sceneTool *newQueryTool()
 {
-  return new functionTool(
+  return new queryTool(
     "Query", ENT_ALL, true,
     [](sceneView *) {
       return std::string("Click to query the model, Ctrl+click to add a "
@@ -144,18 +151,33 @@ sceneTool *newQueryTool()
     },
     [](char ib, sceneView *s, const scenePicks &p) {
       if(ib == 'q') return false;
-      scenePicks q = p;
-      if(ib == 'l')
-        s->queryClick(q.vertices, q.edges, q.faces, q.regions, q.elements,
-                      q.views);
+      if(ib == 'l') s->queryClick(p);
       return true;
     },
     clearClicks);
 }
 
+// while the measurement waits for its second point, the line follows the
+// cursor over the model, so that its length is seen as it is chosen
+class measureTool : public functionTool {
+public:
+  using functionTool::functionTool;
+  void hovered(sceneView *s) override
+  {
+    drawContext *ctx = s->getDrawContext();
+    if(!ctx || ctx->numMarks() != 1) return;
+    double a[3], p[3];
+    if(ctx->mark(0, a) && ctx->pickPoint(p))
+      ctx->setSegment(a, p);
+    else
+      ctx->clearSegment();
+    s->askRedraw();
+  }
+};
+
 sceneTool *newMeasureTool()
 {
-  return new functionTool(
+  return new measureTool(
     "Measure", ENT_ALL, false,
     [](sceneView *s) {
       return std::string(s->measuring() ? "Click the second point" :
@@ -238,40 +260,4 @@ sceneTool *newRotationCenterTool()
       GModel::current()->setSelection(0);
       for(sceneView *v : sceneView::all()) v->askRedraw();
     });
-}
-
-operationTool::operationTool(
-  const std::string &operation, valueFunction value,
-  std::function<bool(const selectionDriver &)> changed,
-  std::function<void()> finished)
-  : _driver(new selectionDriver(operation, value)), _changed(changed),
-    _finished(finished)
-{
-}
-
-operationTool::~operationTool() { delete _driver; }
-
-bool operationTool::active() const { return _driver->active(); }
-
-std::string operationTool::name() const { return _driver->operation(); }
-
-int operationTool::type() const { return _driver->type(); }
-
-bool operationTool::pickElements() const { return _driver->pickElements(); }
-
-std::string operationTool::status(sceneView *s) const
-{ return _driver->status(); }
-
-bool operationTool::step(char ib, sceneView *s, const scenePicks &p)
-{
-  if(_driver->step(ib, p.vertices, p.edges, p.faces, p.regions, p.elements) &&
-     _changed && !_changed(*_driver))
-    return false;
-  return _driver->active();
-}
-
-void operationTool::finish()
-{
-  _driver->quit();
-  if(_finished) _finished();
 }

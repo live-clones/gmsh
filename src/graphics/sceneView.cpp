@@ -22,7 +22,6 @@
 #include "Context.h"
 #include "glImmediate.h"
 #include "glShader.h"
-#include "shapePlacement.h"
 
 // the scenes there are
 static std::vector<sceneView *> &_scenes()
@@ -60,12 +59,9 @@ sceneView::~sceneView()
 
 const std::vector<sceneView *> &sceneView::all() { return _scenes(); }
 
-bool sceneView::_select(
-  int type, bool multiple, bool mesh, bool post, int x, int y, int w, int h,
-  std::vector<GVertex *> &vertices, std::vector<GEdge *> &edges,
-  std::vector<GFace *> &faces, std::vector<GRegion *> &regions,
-  std::vector<MElement *> &elements, std::vector<SPoint2> &points,
-  std::vector<PView *> &views, bool pickElements, bool through)
+bool sceneView::_select(int type, bool multiple, bool mesh, bool post, int x,
+                        int y, int w, int h, scenePicks &picks,
+                        bool pickElements, bool through)
 {
   // no picking passes when mouse selection is off (General.MouseSelection),
   // which is how users avoid their cost
@@ -74,9 +70,8 @@ bool sceneView::_select(
   // middle of one can deliver a click there): the passes would mix
   if(!hostBeginGL()) return false;
   _ctx->pickElements = pickElements;
-  bool ret = _ctx->select(type, multiple, mesh, post, x, y, w, h, vertices,
-                          edges, faces, regions, elements, points, views,
-                          through);
+  bool ret =
+    _ctx->select(type, multiple, mesh, post, x, y, w, h, picks, through);
   _ctx->pickElements = false;
   hostEndGL();
   return ret;
@@ -159,15 +154,12 @@ void sceneView::_highlight(GEntity *e)
 
 // the entity in front among those picked: a point before a curve, before a
 // surface, before a volume
-static GEntity *firstEntity(std::vector<GVertex *> &vertices,
-                            std::vector<GEdge *> &edges,
-                            std::vector<GFace *> &faces,
-                            std::vector<GRegion *> &regions)
+static GEntity *firstEntity(const scenePicks &p)
 {
-  if(vertices.size()) return vertices[0];
-  if(edges.size()) return edges[0];
-  if(faces.size()) return faces[0];
-  if(regions.size()) return regions[0];
+  if(p.vertices.size()) return p.vertices[0];
+  if(p.edges.size()) return p.edges[0];
+  if(p.faces.size()) return p.faces[0];
+  if(p.regions.size()) return p.regions[0];
   return nullptr;
 }
 
@@ -187,13 +179,14 @@ static const std::string &doubleClickCommand(int dim)
 // and this says which one is current.
 void sceneView::_hover()
 {
-  std::vector<GVertex *> vertices;
-  std::vector<GEdge *> edges;
-  std::vector<GFace *> faces;
-  std::vector<GRegion *> regions;
-  std::vector<MElement *> elements;
-  std::vector<SPoint2> points;
-  std::vector<PView *> views;
+  scenePicks picks;
+  std::vector<GVertex *> &vertices = picks.vertices;
+  std::vector<GEdge *> &edges = picks.edges;
+  std::vector<GFace *> &faces = picks.faces;
+  std::vector<GRegion *> &regions = picks.regions;
+  std::vector<MElement *> &elements = picks.elements;
+  std::vector<SPoint2> &points = picks.points;
+  std::vector<PView *> &views = picks.views;
   // during a selection the meshes and the views are picked whether or not
   // the hover looks at them otherwise: what is highlighted is what a click
   // would take
@@ -202,14 +195,14 @@ void sceneView::_hover()
   // model: a query asks for it on a click, a hover would ask on every move)
   bool res =
     _select(_selection, false, all, all, (int)_curr.win[0], (int)_curr.win[1],
-            5, 5, vertices, edges, faces, regions, elements, points, views);
+            5, 5, picks);
   hostCursor((_selection == ENT_ALL && res) ||
              (_selection == ENT_POINT && vertices.size()) ||
              (_selection == ENT_CURVE && edges.size()) ||
              (_selection == ENT_SURFACE && faces.size()) ||
              (_selection == ENT_VOLUME && regions.size()));
   std::string text, cmd;
-  GEntity *over = firstEntity(vertices, edges, faces, regions);
+  GEntity *over = firstEntity(picks);
   if(over) {
     text = over->getInfoString(true, true);
     cmd = doubleClickCommand(over->dim());
@@ -250,16 +243,9 @@ void sceneView::_hover()
   // and drawn as selected, so that it is not only named but shown
   _highlight(over);
 
-  // while a measurement waits for its second point, the line follows the
-  // cursor over the model, so that its length is seen as it is chosen
-  if(sceneTool::running("Measure") && _ctx->numMarks() == 1) {
-    double a[3], p[3];
-    if(_ctx->mark(0, a) && _ctx->pickPoint(p))
-      _ctx->setSegment(a, p);
-    else
-      _ctx->clearSegment();
-    hostRedraw();
-  }
+  // what the tool under way adds to it
+  if(sceneTool::current() && sceneTool::scene() == this)
+    sceneTool::current()->hovered(this);
 
   // how far under the cursor this one is and whether there is more, whenever
   // there is something to step to. The image of the pick shows only what is
@@ -309,6 +295,77 @@ void sceneView::_hover()
     Msg::Debug("%s", ReplaceSubString("\n", " ", text).c_str());
 }
 
+void sceneView::magnify(double x, double y, double factor)
+{
+  if(!_ctx || !(factor > 0.)) return;
+  _prev.set(_ctx, x, y);
+  if(CTX::instance()->camera) {
+    _ctx->camera.zoom(factor);
+    _ctx->camera.update();
+  }
+  else {
+    _ctx->s[0] *= factor;
+    _ctx->s[1] = _ctx->s[0];
+    _ctx->s[2] = _ctx->s[0];
+    _prev.recenter(_ctx);
+  }
+  hostRedraw();
+  hostViewChanged();
+}
+
+bool sceneView::pinch(int kind, double x, double y, double d)
+{
+  if(!_ctx) return false;
+  double *last = _pinchLast;
+  if(kind == 0) {
+    _pinchStart.set(_ctx, (int)x, (int)y);
+    _pinchStartDistance = d;
+    last[0] = x;
+    last[1] = y;
+    last[2] = d;
+    return false;
+  }
+  if(kind == 2) {
+    CTX::instance()->drawRotationCenter = 0;
+    CTX::instance()->mesh.draw = 1;
+    CTX::instance()->post.draw = 1;
+    return true;
+  }
+  if(_pinchStartDistance <= 0. || d <= 0. || last[2] <= 0.) return false;
+  if(CTX::instance()->camera) {
+    // as the zoom and the translation of a drag
+    Camera *cam = &_ctx->camera;
+    double fact = d / last[2];
+    double h = _ctx->viewport[3];
+    double tx = cam->radians * (x - last[0]) * 2. / h;
+    double ty = cam->radians * (y - last[1]) * 2. / h;
+    cam->zoom(fact);
+    cam->update();
+    cam->moveRight(tx);
+    cam->moveUp(ty);
+  }
+  else {
+    double s = _pinchStart.s[0] * d / _pinchStartDistance;
+    _ctx->s[0] = _ctx->s[1] = _ctx->s[2] = s;
+    // the point under the fingers where the pinch started under them now
+    // (see mousePosition::set())
+    _ctx->t[0] = (_ctx->vxmin + x / _ctx->viewport[2] *
+                                  (_ctx->vxmax - _ctx->vxmin)) / s +
+                 _ctx->t_init[0] / s - _pinchStart.wnr[0];
+    _ctx->t[1] = (_ctx->vymax - y / _ctx->viewport[3] *
+                                  (_ctx->vymax - _ctx->vymin)) / s +
+                 _ctx->t_init[1] / s - _pinchStart.wnr[1];
+  }
+  if(CTX::instance()->fastRedraw) {
+    CTX::instance()->mesh.draw = 0;
+    CTX::instance()->post.draw = 0;
+  }
+  last[0] = x;
+  last[1] = y;
+  last[2] = d;
+  return true;
+}
+
 void sceneView::pointerLeft()
 {
   // nothing under the cursor once it is out of the window
@@ -337,16 +394,16 @@ static void runCommand(const std::string &command)
 // behind it of higher dimension
 void sceneView::_doubleClick(const paneInput &in)
 {
-  std::vector<GVertex *> vertices;
-  std::vector<GEdge *> edges;
-  std::vector<GFace *> faces;
-  std::vector<GRegion *> regions;
-  std::vector<MElement *> elements;
-  std::vector<SPoint2> points;
-  std::vector<PView *> views;
+  scenePicks picks;
+  std::vector<GVertex *> &vertices = picks.vertices;
+  std::vector<GEdge *> &edges = picks.edges;
+  std::vector<GFace *> &faces = picks.faces;
+  std::vector<GRegion *> &regions = picks.regions;
+  std::vector<MElement *> &elements = picks.elements;
+  std::vector<SPoint2> &points = picks.points;
+  std::vector<PView *> &views = picks.views;
   _select(ENT_ALL, false, CTX::instance()->mouseHoverMeshes, true, (int)in.x,
-          (int)in.y, 5, 5, vertices, edges, faces, regions, elements, points,
-          views);
+          (int)in.y, 5, 5, picks);
   GEntity *picked[4] = {vertices.size() ? vertices[0] : nullptr,
                         edges.size() ? edges[0] : nullptr,
                         faces.size() ? faces[0] : nullptr,
@@ -469,8 +526,9 @@ void sceneView::handleMouse(const paneInput &in)
     if(in.button == 0 && !shift && (!alt || lassoMode)) {
       // Ctrl+click adds a query in query mode (when the clicks select), and
       // starts a lasso otherwise
-      _addQuery =
-        sceneTool::running("Query") && CTX::instance()->mouseSelection && ctrl;
+      _addQuery = sceneTool::current() &&
+                  sceneTool::current()->ctrlClickAdds() &&
+                  CTX::instance()->mouseSelection && ctrl;
       if(!lassoMode && ctrl && !_addQuery)
         lassoMode = true;
       else
@@ -530,7 +588,7 @@ void sceneView::handleMouse(const paneInput &in)
     // instead of zooming: a click then picks the one the hover names,
     // rather than the drawing order deciding which of them wins.
     if(alt && CTX::instance()->mouseSelection && !lassoMode &&
-       !shapePlacement::current()) {
+       !sceneTool::ownsHoverOf(this)) {
       // _prev is left alone: it is what a move is measured against, and
       // nothing has moved
       _stepPick(direction ? -1 : 1, true);
@@ -669,9 +727,9 @@ void sceneView::handleMouse(const paneInput &in)
   case paneInput::Move:
     _curr.set(_ctx, x, y);
     if(lassoMode) { hostRedraw(); }
-    else if(shapePlacement::current()) {
+    else if(sceneTool::ownsHoverOf(this)) {
       hostCursor(true);
-      _hoverPlacement();
+      sceneTool::current()->hover(this);
       hostRedraw();
     }
     else { // hover mode
@@ -716,13 +774,7 @@ void sceneView::cancelSelection()
   hostCursor(false);
 }
 
-char sceneView::selectionStep(std::vector<GVertex *> &vertices,
-                              std::vector<GEdge *> &edges,
-                              std::vector<GFace *> &faces,
-                              std::vector<GRegion *> &regions,
-                              std::vector<MElement *> &elements,
-                              std::vector<SPoint2> &points,
-                              std::vector<PView *> &views)
+char sceneView::selectionStep(scenePicks &picks)
 {
   if(changeSelection) {
     Msg::Debug("Changing selection mode to %d", changeSelection);
@@ -754,8 +806,7 @@ char sceneView::selectionStep(std::vector<GVertex *> &vertices,
     }
     else if(_select(_selection, multi, true, true, _trySelectionXYWH[0],
                     _trySelectionXYWH[1], _trySelectionXYWH[2],
-                    _trySelectionXYWH[3], vertices, edges, faces, regions,
-                    elements, points, views, _selectionElements,
+                    _trySelectionXYWH[3], picks, _selectionElements,
                     !_trySelectionFront)) {
       _selection = ENT_NONE;
       selectionMode = false;
@@ -774,17 +825,14 @@ static void printLines(const std::vector<std::string> &lines)
     if(l.size()) Msg::Direct("%s", l.c_str());
 }
 
-bool sceneView::queryClick(std::vector<GVertex *> &vertices,
-                           std::vector<GEdge *> &edges,
-                           std::vector<GFace *> &faces,
-                           std::vector<GRegion *> &regions,
-                           std::vector<MElement *> &elements,
-                           std::vector<PView *> &views)
+bool sceneView::queryClick(const scenePicks &picks)
 {
+  const std::vector<MElement *> &elements = picks.elements;
+  const std::vector<PView *> &views = picks.views;
   double xyz[3];
   if(!_ctx->pickPoint(xyz)) return false;
 
-  GEntity *entity = firstEntity(vertices, edges, faces, regions);
+  GEntity *entity = firstEntity(picks);
   MElement *element = elements.size() ? elements[0] : nullptr;
   // a pick that found a mesh element returns it instead of the entity it
   // belongs to, which the query names as well
@@ -796,25 +844,18 @@ bool sceneView::queryClick(std::vector<GVertex *> &vertices,
   // of the model under it, where the views can be interpolated, and keeps
   // the point on the glyph only when there is nothing behind it.
   if(view) {
-    std::vector<GVertex *> v;
-    std::vector<GEdge *> e;
-    std::vector<GFace *> f;
-    std::vector<GRegion *> r;
-    std::vector<MElement *> el;
-    std::vector<SPoint2> p;
-    std::vector<PView *> vw;
+    scenePicks q;
     double behind[3];
     int at[4];
     _lastSelection(at); // where the click looked, not where the mouse is
     double px = _ctx->pixel_equiv_x / _ctx->s[0];
-    if(pick(ENT_ALL, true, false, at[0], at[1], at[2], at[3], v, e, f, r, el, p,
-            vw) &&
+    if(pick(ENT_ALL, true, false, at[0], at[1], at[2], at[3], q) &&
        _ctx->pickPoint(behind)) {
-      GEntity *under = firstEntity(v, e, f, r);
+      GEntity *under = firstEntity(q);
       if(queryBehind(view, xyz, behind, px)) {
         for(int k = 0; k < 3; k++) xyz[k] = behind[k];
         entity = under;
-        element = el.size() ? el[0] : nullptr;
+        element = q.elements.size() ? q.elements[0] : nullptr;
       }
       else if(!entity) {
         // the glyph is over something else than what it stands for: name
@@ -946,34 +987,9 @@ bool sceneView::modelPointAt(int x, int y, double xyz[3], GEntity **on)
   // (the geometry only: the point placed is a point of the geometry)
   scenePicks p;
   if(on) *on = nullptr;
-  if(!_select(ENT_ALL, false, false, false, x, y, 5, 5, p.vertices, p.edges,
-              p.faces, p.regions, p.elements, p.points, p.views))
-    return false;
+  if(!_select(ENT_ALL, false, false, false, x, y, 5, 5, p)) return false;
   if(!pickedModelPoint(_ctx, p, xyz)) return false;
-  if(on) *on = firstEntity(p.vertices, p.edges, p.faces, p.regions);
+  if(on) *on = firstEntity(p);
   return true;
 }
 
-void sceneView::_hoverPlacement()
-{
-  shapePlacement *p = shapePlacement::current();
-  double xyz[3];
-  GEntity *on = nullptr;
-  bool onModel = modelPointAt((int)_curr.win[0], (int)_curr.win[1], xyz, &on);
-  if(!onModel) p->planePoint(_ctx, _curr.win[0], _curr.win[1], xyz);
-  p->hover(xyz);
-  _highlight(on);
-  // where a click would put it (the locked coordinates as they are), and on
-  // what
-  const double *h = p->hovered();
-  char tmp[256];
-  snprintf(tmp, sizeof(tmp), "%g, %g, %g", h[0], h[1], h[2]);
-  std::string text = tmp;
-  if(on) {
-    std::string info = on->getInfoString(true, true);
-    text += "\non " + info.substr(0, info.find('\n'));
-  }
-  else
-    text += "\non " + p->planeName();
-  drawTooltip(text);
-}

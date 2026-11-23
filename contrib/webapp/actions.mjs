@@ -27,7 +27,7 @@ import {showPlugins} from './plugins.mjs';
 import {openFiles, openMenu} from './models.mjs';
 import {colorScheme, keepOptionOf, optionRow, readOptions, setColorScheme, showOptions, showTab} from './options.mjs';
 import {draw, placementChanged, setPlacementChanged} from './scene.mjs';
-import {ModShift, installShortcuts, shortcutsHelp} from './shortcuts.js';
+import {installShortcuts, shortcutsHelp} from './shortcuts.js';
 import {run, showAll} from './solverClient.mjs';
 import {fullscreenElement, fullscreenEnabled, installApp, openQuickMenu, playing, popupMenu,
         rewindAnimation, sceneAction, setPlaying, toggleFullscreen, toggleMouseSelection,
@@ -348,7 +348,7 @@ const pageActions = {
   'view_y': {run: (view, tag, mods) => sceneAction('view_y', mods)},
   'view_z': {run: (view, tag, mods) => sceneAction('view_z', mods)},
   'view_3d': {run: (view, tag, mods) => sceneAction('view_3d', mods)},
-  'view_rotate': {run: (view, tag, mods) => { if(web.rotate(mods & ModShift ? 1 : 0)) draw(); }},
+  'view_rotate': {run: (view, tag, mods) => sceneAction('view_rotate', mods)},
   'view_1_1': {run: (view, tag, mods) => sceneAction('view_1_1', mods)},
   'mouse_selection': {run: () => toggleMouseSelection()},
   'anim_rewind': {run: rewindAnimation},

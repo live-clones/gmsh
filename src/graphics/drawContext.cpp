@@ -15,6 +15,7 @@
 #include "glShader.h"
 #include "Trackball.h"
 #include "Context.h"
+#include "OpenFile.h"
 #include "Numeric.h"
 #include "GModel.h"
 #include "MElement.h"
@@ -1936,6 +1937,26 @@ double drawContext::fitScale()
   // infinite along a direction in which the box has no size
   const double s = 0.5 * std::min(w / xm, h / ym);
   return (s > 0. && std::isfinite(s)) ? s : 1.;
+}
+
+void drawContext::pointOfView(const std::string &which, bool other)
+{
+  if(which == "r") {
+    double axis[3] = {0., 0., 1.};
+    addQuaternionFromAxisAndAngle(axis, other ? 90. : -90.);
+    if(CTX::instance()->camera) {
+      if(other)
+        camera.tiltHeadLeft();
+      else
+        camera.tiltHeadRight();
+    }
+  }
+  else if(which == "1:1") {
+    if(other) SetBoundingBox(true);
+    standardView(which, false);
+  }
+  else
+    standardView(which, other);
 }
 
 void drawContext::standardView(const std::string &which, bool opposite)

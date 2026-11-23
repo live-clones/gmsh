@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 #include "drawContext.h"
+#include "scenePicks.h"
 
 class GEntity;
 class GVertex;
@@ -90,17 +91,16 @@ private:
   std::string _hoverBehindFor;
   bool _hoverBehind;
   bool _probeBehind();
+  // where a pinch started, and its last step (see pinch())
+  mousePosition _pinchStart;
+  double _pinchStartDistance = 0., _pinchLast[3] = {0., 0., 0.};
   // how fast the model is spun (see the drag in handleMouse()): the speed,
   // smoothed, the path drawn since it was last measured and when that was,
   // and how long it has stayed fast
   double _spin, _spinFrom, _spinPath, _spinHot;
   // a picking pass, between hostBeginGL() and hostEndGL()
   bool _select(int type, bool multiple, bool mesh, bool post, int x, int y,
-               int w, int h, std::vector<GVertex *> &vertices,
-               std::vector<GEdge *> &edges, std::vector<GFace *> &faces,
-               std::vector<GRegion *> &regions,
-               std::vector<MElement *> &elements, std::vector<SPoint2> &points,
-               std::vector<PView *> &views, bool pickElements = false,
+               int w, int h, scenePicks &picks, bool pickElements = false,
                bool through = true);
   // a selection picks the elements of the meshes (see beginSelection())
   bool _selectionElements;
@@ -122,7 +122,6 @@ protected:
   mousePosition _click, _curr;
   // where a click would place the shape being placed (see shapePlacement),
   // shown by the cursor, with what it is on
-  void _hoverPlacement();
   // What the cursor is over, written in a box in the picture rather than in
   // a window of its own, which some window managers showed and hid with a
   // flicker on every move: the text, where the cursor was when it was last
@@ -173,6 +172,10 @@ public:
   bool modelPointAt(int x, int y, double xyz[3], GEntity **on = nullptr);
   // where the last click was, in the units of the window
   const double *clickPosition() const { return _click.win; }
+  // where the pointer is, in the units of the window
+  const double *pointerPosition() const { return _curr.win; }
+  // the entity drawn as selected while the pointer is over it (none if null)
+  void highlight(GEntity *e) { _highlight(e); }
   // a lasso is being drawn; a selection waits for clicks
   bool lassoMode, selectionMode;
   // what the keys ask of the selection, read at its next step
@@ -201,6 +204,17 @@ public:
   bool acceptsDoubleClick() const;
   // the pointer left the view
   void pointerLeft();
+  // a pinch of two fingers: kind 0 when the second finger comes down, 1 as
+  // they move, 2 when one is lifted; (x, y) is the point between them, in the
+  // units of the window, and d how far apart they are. The model is zoomed as
+  // they spread or close and moved with the point between them, so that what
+  // was under the fingers stays under them. True when the picture is to be
+  // drawn again
+  bool pinch(int kind, double x, double y, double d);
+  // a magnification gesture (a pinch on a trackpad): the model zoomed by
+  // factor (more than 1 to bring it closer) about the point (x, y) of the
+  // window, which stays under the pointer
+  void magnify(double x, double y, double factor);
   // step through what is stacked under the cursor (Alt+Up/Down)
   void stepPick(int direction) { _stepPick(direction, false); }
 
@@ -213,24 +227,16 @@ public:
   // it without an answer
   void beginSelection(int type, bool elements = false);
   void cancelSelection();
-  char selectionStep(std::vector<GVertex *> &vertices,
-                     std::vector<GEdge *> &edges, std::vector<GFace *> &faces,
-                     std::vector<GRegion *> &regions,
-                     std::vector<MElement *> &elements,
-                     std::vector<SPoint2> &points, std::vector<PView *> &views);
+  char selectionStep(scenePicks &picks);
   // run one picking pass at the given position (window coordinates) and
   // return what a click there would select (mesh elements if asked),
   // without waiting for a click
   bool pick(int type, bool mesh, bool post, int x, int y, int w, int h,
-            std::vector<GVertex *> &vertices, std::vector<GEdge *> &edges,
-            std::vector<GFace *> &faces, std::vector<GRegion *> &regions,
-            std::vector<MElement *> &elements, std::vector<SPoint2> &points,
-            std::vector<PView *> &views, bool pickElements = false)
+            scenePicks &picks, bool pickElements = false)
   {
     // the kept image was drawn around the pointer, not around this position
     _ctx->invalidatePickCache();
-    return _select(type, false, mesh, post, x, y, w, h, vertices, edges, faces,
-                   regions, elements, points, views, pickElements);
+    return _select(type, false, mesh, post, x, y, w, h, picks, pickElements);
   }
   // show the text in a box by the cursor, or take the box away
   void drawTooltip(const std::string &text);
@@ -247,10 +253,7 @@ public:
   // views), in the messages and pinned to the point (added to the notes with
   // Ctrl). False if the click hit nothing. The query tool
   // runs the selection (see newQueryTool())
-  bool queryClick(std::vector<GVertex *> &vertices, std::vector<GEdge *> &edges,
-                  std::vector<GFace *> &faces, std::vector<GRegion *> &regions,
-                  std::vector<MElement *> &elements,
-                  std::vector<PView *> &views);
+  bool queryClick(const scenePicks &picks);
   // A click of the measurement: its first point, or its second one and the
   // distance between them, in the messages and over the line. False if the
   // click hit nothing

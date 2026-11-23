@@ -1053,9 +1053,7 @@ drawContext *FlGui::getCurrentDrawContext()
 
 char FlGui::selectEntity(int type, bool pickElements)
 {
-  return getCurrentOpenglWindow()->selectEntity(
-    type, pickElements, selectedVertices, selectedEdges, selectedFaces,
-    selectedRegions, selectedElements, selectedPoints, selectedViews);
+  return getCurrentOpenglWindow()->selectEntity(type, pickElements, selected);
 }
 
 void FlGui::setStatus(const std::string &msg, bool opengl)

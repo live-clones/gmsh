@@ -480,7 +480,7 @@ static void runSelection(const std::string &operation,
                          std::function<void()> finished,
                          Fl_Window *window = nullptr)
 {
-  auto *t = new operationTool(
+  auto *t = new selectionDriver(
     operation,
     [operation](const std::string &name) {
       return dialogValue(operation, name);
@@ -509,18 +509,19 @@ static void runSelection(const std::string &operation,
 static void placeShape(int pane)
 {
   elementaryContextWindow *e = FlGui::instance()->elementaryContext;
-  // (the tool first: starting it ends the one under way, a placement too)
-  sceneTool::start(newPlacementTool([]() {
-                     if(!FlGui::available()) return;
-                     FlGui::instance()->elementaryContext->hide();
-                     // at the end, not while placing, or the view jumps
-                     SetBoundingBox();
-                     drawContext::global()->draw();
-                   }),
+  e->show(pane);
+  sceneTool::start(newPlacementTool(
+                     pane, e->paneValues(pane), [e] { e->showPlacement(); },
+                     []() {
+                       if(!FlGui::available()) return;
+                       FlGui::instance()->elementaryContext->hide();
+                       // at the end, not while placing, or the view jumps
+                       SetBoundingBox();
+                       drawContext::global()->draw();
+                     }),
                    FlGui::instance()->getCurrentOpenglWindow(),
                    (Fl_Window *)e->win);
-  e->show(pane);
-  e->startPlacement(pane);
+  e->placementControls();
   drawContext::global()->draw();
 }
 

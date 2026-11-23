@@ -588,7 +588,7 @@ int openglWindow::handle(int event)
     // as Alt and the wheel do, one entity at a time: a trackpad has no
     // notches to count
     if(Fl::event_state(FL_ALT) && CTX::instance()->mouseSelection &&
-       !lassoMode && !shapePlacement::current() &&
+       !lassoMode && !sceneTool::ownsHoverOf(this) &&
        (Fl::event_key() == FL_Up || Fl::event_key() == FL_Down)) {
       stepPick((Fl::event_key() == FL_Down) ? 1 : -1);
       return 1;
@@ -600,6 +600,11 @@ int openglWindow::handle(int event)
   case FL_LEAVE:
     pointerLeft();
     return Fl_Gl_Window::handle(event);
+
+  case FL_ZOOM_GESTURE:
+    // a pinch on a trackpad (macOS): the magnification, times 1000
+    magnify(Fl::event_x(), Fl::event_y(), 1. + Fl::event_dy() / 1000.);
+    return 1;
 
   case FL_PUSH:
   case FL_RELEASE:
@@ -702,11 +707,8 @@ int openglWindow::pixel_h() { return Fl_Gl_Window::pixel_h(); }
 // them until the selection has something to say. Only the API waits so
 // (gmsh::fltk::selectEntities()...): the FLTK interface, like the web page,
 // runs its tools step by step (see sceneTool)
-char openglWindow::selectEntity(
-  int type, bool pickElements, std::vector<GVertex *> &vertices,
-  std::vector<GEdge *> &edges, std::vector<GFace *> &faces,
-  std::vector<GRegion *> &regions, std::vector<MElement *> &elements,
-  std::vector<SPoint2> &points, std::vector<PView *> &views)
+char openglWindow::selectEntity(int type, bool pickElements,
+                                scenePicks &picks)
 {
   if(!FlGui::available()) return 'q';
 
@@ -727,21 +729,14 @@ char openglWindow::selectEntity(
 
   while(1) {
     if(!FlGui::available()) return 'q';
-    vertices.clear();
-    edges.clear();
-    faces.clear();
-    regions.clear();
-    elements.clear();
-    points.clear();
-    views.clear();
+    picks.clear();
     FlGui::wait();
     if(!FlGui::available() || alive.deleted()) return 'q';
     // another selection or a tool was started meanwhile (from a menu during
     // this one): it took the state of the selection, and this one stops as
     // with 'q'
     if(started != mine || sceneTool::current()) return 'q';
-    char ret = selectionStep(vertices, edges, faces, regions, elements, points,
-                             views);
+    char ret = selectionStep(picks);
     if(ret) return ret;
   }
 }

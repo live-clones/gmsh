@@ -97,12 +97,7 @@ public:
                unsigned int type, void *pixels);
   // wait for a selection, of mesh elements if asked (see
   // sceneView::selectionStep() for what is returned): for the API only
-  char selectEntity(int type, bool pickElements,
-                    std::vector<GVertex *> &vertices,
-                    std::vector<GEdge *> &edges, std::vector<GFace *> &faces,
-                    std::vector<GRegion *> &regions,
-                    std::vector<MElement *> &elements,
-                    std::vector<SPoint2> &points, std::vector<PView *> &views);
+  char selectEntity(int type, bool pickElements, scenePicks &picks);
   static openglWindow *getLastHandled() { return _lastHandled; }
   // the next draw is the same picture as the last one (see
   // PixelBuffer::fill): the studio frames that one accumulated are put back

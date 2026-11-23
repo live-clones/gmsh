@@ -10,17 +10,10 @@
 #include <string>
 #include <vector>
 #include "GmshDefines.h"
-#include "SPoint2.h"
+#include "scenePicks.h"
 
 class sceneView;
 class drawContext;
-class selectionDriver;
-class GVertex;
-class GEdge;
-class GFace;
-class GRegion;
-class MElement;
-class PView;
 
 // The scene and the clicks, in three layers, shared by the desktop (src/fltk)
 // and the web page (contrib/webapp):
@@ -33,9 +26,9 @@ class PView;
 //   over: the query, the measurement, an operation, a point being placed. One
 //   tool at a time, started with sceneTool::start(), stepped by the front-end
 //   after the events (it never waits in a loop).
-// - selectionDriver (selectionDriver.h): the operations of the modules, which
-//   operationTool runs as a tool: what each picks, phase by phase, and what it
-//   writes in the script once all is picked.
+// - selectionDriver (selectionDriver.h): the operations of the modules, each a
+//   tool: what each picks, phase by phase, and what it writes in the script
+//   once all is picked.
 //
 // How to add...
 // - An operation of the Geometry or Mesh module: in selectionDriver (see
@@ -50,17 +43,6 @@ class PView;
 //   (see add_new_point_based_entity() in fltkActions.cpp).
 // - What the mouse does to the scene itself: in sceneView, for both
 //   front-ends at once.
-
-// what a click picked
-struct scenePicks {
-  std::vector<GVertex *> vertices;
-  std::vector<GEdge *> edges;
-  std::vector<GFace *> faces;
-  std::vector<GRegion *> regions;
-  std::vector<MElement *> elements;
-  std::vector<SPoint2> points;
-  std::vector<PView *> views;
-};
 
 // A tool takes over the clicks and the keys of a scene: the query, the
 // measurement, an operation on selected entities, the placing of a point, the
@@ -85,6 +67,18 @@ public:
   virtual bool step(char ib, sceneView *s, const scenePicks &p) = 0;
   // the tool is over, however it ended: its step, stop(), another tool
   virtual void finish() {}
+  // the tool starts, the one before it over (see start())
+  virtual void begin() {}
+  // what the pointer is over: shown by the tool itself (the placement of a
+  // shape, see hover()), instead of the hover of the scene and the stepping
+  // through what is under the cursor
+  virtual bool ownsHover() const { return false; }
+  virtual void hover(sceneView *s) {}
+  // after the hover of the scene (the line of a measurement)
+  virtual void hovered(sceneView *s) {}
+  // Ctrl+click adds to what the tool does (a query) rather than starting a
+  // lasso
+  virtual bool ctrlClickAdds() const { return false; }
 
   // the tool under way (nullptr if none), started on the scene s whose
   // clicks it takes (a new one ends the previous one); stop() ends it. The
@@ -98,6 +92,9 @@ public:
   static const void *owner() { return _current ? _owner : nullptr; }
   static bool running(const std::string &name)
   { return _current && _current->name() == name; }
+  // the tool under way on the scene s shows what the pointer is over itself
+  static bool ownsHoverOf(const sceneView *s)
+  { return _current && _scene == s && _current->ownsHover(); }
   // after the events of the scenes: the answer of the selection, if there is
   // one, given to the tool; true if there was one
   static bool step();
@@ -163,31 +160,5 @@ sceneTool *newRotationCenterTool();
 // pick hit nothing of the 3D scene
 bool pickedModelPoint(const drawContext *ctx, const scenePicks &p,
                       double xyz[3]);
-
-// an operation on selected entities (see selectionDriver), with the values
-// of its fields from value(); changed() is told each time it changes the
-// model (false to end it), finished() when it is over
-class operationTool : public sceneTool {
-public:
-  typedef std::function<std::string(const std::string &)> valueFunction;
-  operationTool(const std::string &operation, valueFunction value,
-                std::function<bool(const selectionDriver &)> changed = nullptr,
-                std::function<void()> finished = nullptr);
-  ~operationTool();
-  // false if the operation is unknown (nothing to start)
-  bool active() const;
-  selectionDriver &driver() { return *_driver; }
-  std::string name() const;
-  int type() const;
-  bool pickElements() const;
-  std::string status(sceneView *s) const;
-  bool step(char ib, sceneView *s, const scenePicks &p);
-  void finish();
-
-private:
-  selectionDriver *_driver;
-  std::function<bool(const selectionDriver &)> _changed;
-  std::function<void()> _finished;
-};
 
 #endif

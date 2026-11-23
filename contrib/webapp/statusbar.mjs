@@ -145,9 +145,7 @@ function quickItems() {
     ['View along X', () => sceneAction('view_x')],
     ['View along Y', () => sceneAction('view_y')],
     ['View along Z', () => sceneAction('view_z')],
-    ['Rotate by 90 degrees', () => {
-      if(web.rotate(0)) draw();
-    }],
+    ['Rotate by 90 degrees', () => sceneAction('view_rotate')],
     ['Mouse selection', () => toggleMouseSelection(), !!num('General.MouseSelection')]);
   return items;
 }

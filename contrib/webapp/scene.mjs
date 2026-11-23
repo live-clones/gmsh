@@ -186,13 +186,11 @@ function mouse(kind, e, wheel = 0) {
 }
 // the notches the wheel turned, as the graphical interface counts them (one
 // an event): a mouse wheel reports about a hundred pixels or three lines a
-// notch, a trackpad a few pixels at a time, and a pinch on a trackpad comes
-// as a wheel with Ctrl, in still smaller steps
+// notch, a trackpad a few pixels at a time
 function wheelNotches(e) {
   if(e.deltaMode === 1) return e.deltaY / 3;
   if(e.deltaMode === 2) return 3 * Math.sign(e.deltaY);
-  const n = e.deltaY / (e.ctrlKey ? 2 : 10);
-  return Math.max(-5, Math.min(5, n));
+  return Math.max(-5, Math.min(5, e.deltaY / 10));
 }
 // A touch screen: one finger is the left button (it rotates, picks, queries),
 // two pinch to zoom and move together to pan, about the point between them,
@@ -317,6 +315,16 @@ export function build() {
   canvas.addEventListener('touchstart', (e) => e.preventDefault(), {passive: false});
   canvas.addEventListener('wheel', (e) => {
     e.preventDefault();
+    // a pinch on a trackpad comes as a wheel with Ctrl, in pixels: the model
+    // brought closer as the fingers spread (a negative delta), as in the
+    // graphical interface, whatever the direction of the wheel
+    if(e.ctrlKey && e.deltaMode === 0) {
+      const at = canvas.getBoundingClientRect();
+      const d = Math.max(-50, Math.min(50, e.deltaY));
+      if(web.magnify(e.clientX - at.left, e.clientY - at.top, Math.exp(-d / 100)))
+        draw();
+      return;
+    }
     mouse(4, e, wheelNotches(e));
   }, {passive: false});
   // a double-click opens the quick access menu where it is, as in the

@@ -12,6 +12,7 @@
 #include <vector>
 #include <thread>
 #include "SPoint2.h"
+#include "scenePicks.h"
 #include "gmshScheme.h"
 #include "GuiListener.h"
 
@@ -102,13 +103,8 @@ private:
   std::vector<paletteWindow *> _tools;
 
 public:
-  std::vector<GVertex *> selectedVertices;
-  std::vector<GEdge *> selectedEdges;
-  std::vector<GFace *> selectedFaces;
-  std::vector<GRegion *> selectedRegions;
-  std::vector<MElement *> selectedElements;
-  std::vector<SPoint2> selectedPoints;
-  std::vector<PView *> selectedViews;
+  // what the last selectEntity() picked
+  scenePicks selected;
 
 public:
   std::vector<graphicWindow *> graph;

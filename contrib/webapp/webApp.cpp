@@ -147,9 +147,9 @@ namespace {
   // the operation on selected entities under way (a tool, see sceneTool),
   // the values of the fields of its form, and how many times operations were
   // carried out (for the page to show what changed)
-  operationTool *operation()
+  selectionDriver *operation()
   {
-    auto *t = dynamic_cast<operationTool *>(sceneTool::current());
+    auto *t = dynamic_cast<selectionDriver *>(sceneTool::current());
     return (t && t->active()) ? t : nullptr;
   }
   std::map<std::string, std::string> _values;
@@ -193,19 +193,24 @@ namespace {
   {
     static const std::map<std::string, sceneAction> actions = [] {
       std::map<std::string, sceneAction> m;
-      for(const char *a :
-          {"view_x", "view_y", "view_z", "view_3d", "view_1_1"}) {
-        std::string which = strcmp(a, "view_1_1") ? std::string(a + 5) : "1:1";
+      for(const char *a : {"view_x", "view_y", "view_z", "view_3d",
+                           "view_rotate", "view_1_1"}) {
+        std::string which = !strcmp(a, "view_1_1")    ? "1:1" :
+                            !strcmp(a, "view_rotate") ? "r" :
+                                                        std::string(a + 5);
         m[a] = [which](unsigned mods, drawContext *ctx) {
-          if(which == "1:1" && (mods & ModShift)) SetBoundingBox(true);
-          ctx->standardView(which, mods & ModShift);
+          ctx->pointOfView(which, mods & ModShift);
         };
       }
+      // (the time steps, or the views with PostProcessing.AnimationCycle, as
+      // in the graphical interface)
       m["time_step_prev"] = [](unsigned, drawContext *) {
-        PView::animate(true, -CTX::instance()->post.animStep);
+        PView::animate(!CTX::instance()->post.animCycle,
+                       -CTX::instance()->post.animStep);
       };
       m["time_step_next"] = [](unsigned, drawContext *) {
-        PView::animate(true, CTX::instance()->post.animStep);
+        PView::animate(!CTX::instance()->post.animCycle,
+                       CTX::instance()->post.animStep);
       };
       m["view_prev"] = [](unsigned, drawContext *) {
         PView::animate(false, -CTX::instance()->post.animStep);
@@ -389,66 +394,26 @@ EMSCRIPTEN_KEEPALIVE int gmshWebMouse(int kind, double x, double y, int w,
   return _scene->redrawAsked ? 1 : 0;
 }
 
-// A pinch of two fingers on the canvas: kind 0 when the second finger comes
-// down, 1 as they move, 2 when one is lifted; (x, y) is the point between
-// them (CSS pixels) and d how far apart they are. The model is zoomed as they
-// spread or close and moved with the point between them, so that what was
-// under the fingers stays under them. Returns 1 when the picture is to be
-// drawn again.
+// A pinch of two fingers on the canvas (see sceneView::pinch()), (x, y)
+// and d in CSS pixels: 1 when the picture is to be drawn again
 EMSCRIPTEN_KEEPALIVE int gmshWebPinch(int kind, double x, double y, double d)
 {
   Msg::NoThrow noThrow;
   if(!_view || !_view->getDrawContext()) return 0;
-  drawContext *ctx = _view->getDrawContext();
-  // where the pinch started, and its last step
-  static mousePosition start;
-  static double d0 = 0., last[3] = {0., 0., 0.};
-  if(kind == 0) {
-    start.set(ctx, (int)x, (int)y);
-    d0 = d;
-    last[0] = x;
-    last[1] = y;
-    last[2] = d;
-    return 0;
-  }
-  if(kind == 2) {
-    CTX::instance()->drawRotationCenter = 0;
-    CTX::instance()->mesh.draw = 1;
-    CTX::instance()->post.draw = 1;
-    return 1;
-  }
-  if(d0 <= 0. || d <= 0. || last[2] <= 0.) return 0;
-  if(CTX::instance()->camera) {
-    // as the zoom and the translation of a drag (see sceneView)
-    Camera *cam = &ctx->camera;
-    double fact = d / last[2];
-    double h = ctx->viewport[3];
-    double tx = cam->radians * (x - last[0]) * 2. / h;
-    double ty = cam->radians * (y - last[1]) * 2. / h;
-    cam->zoom(fact);
-    cam->update();
-    cam->moveRight(tx);
-    cam->moveUp(ty);
-  }
-  else {
-    double s = start.s[0] * d / d0;
-    ctx->s[0] = ctx->s[1] = ctx->s[2] = s;
-    // the point under the fingers where the pinch started (start.wnr) under
-    // them now (see mousePosition::set())
-    ctx->t[0] =
-      (ctx->vxmin + x / ctx->viewport[2] * (ctx->vxmax - ctx->vxmin)) / s +
-      ctx->t_init[0] / s - start.wnr[0];
-    ctx->t[1] =
-      (ctx->vymax - y / ctx->viewport[3] * (ctx->vymax - ctx->vymin)) / s +
-      ctx->t_init[1] / s - start.wnr[1];
-  }
-  if(CTX::instance()->fastRedraw) {
-    CTX::instance()->mesh.draw = 0;
-    CTX::instance()->post.draw = 0;
-  }
-  last[0] = x;
-  last[1] = y;
-  last[2] = d;
+  _scene->setDrawContext(_view->getDrawContext());
+  return _scene->pinch(kind, x, y, d) ? 1 : 0;
+}
+
+// A pinch on a trackpad, which the browser gives as a wheel with Ctrl (see
+// sceneView::magnify()), (x, y) in CSS pixels: 1 when the picture is to be
+// drawn again
+EMSCRIPTEN_KEEPALIVE int gmshWebMagnify(double x, double y, double factor)
+{
+  Msg::NoThrow noThrow;
+  if(!_view || !_view->getDrawContext()) return 0;
+  if(!_scene) _scene = new webView();
+  _scene->setDrawContext(_view->getDrawContext());
+  _scene->magnify(x, y, factor);
   return 1;
 }
 
@@ -529,8 +494,7 @@ EMSCRIPTEN_KEEPALIVE int gmshWebPlacementStart(const char *name,
   std::vector<std::string> v;
   std::istringstream in(values);
   for(std::string s; std::getline(in, s);) v.push_back(s);
-  sceneTool::start(newPlacementTool(), _scene);
-  shapePlacement::start(shape, v);
+  sceneTool::start(newPlacementTool(shape, v), _scene);
   return shapePlacement::current() ? 1 : 0;
 }
 
@@ -600,14 +564,14 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebOperation(const char *name)
   json = "";
   if(!gmshWebTool(0) || !name[0]) return json.c_str();
   _values.clear();
-  auto *t = new operationTool(
+  auto *t = new selectionDriver(
     name,
     [](const std::string &n) {
       auto it = _values.find(n);
       if(it != _values.end()) return it->second;
       // the default of the field (of the operation, once it has started)
-      operationTool *o = operation();
-      for(auto &f : o ? o->driver().fields() : selectionDriver::allFields())
+      selectionDriver *o = operation();
+      for(auto &f : o ? o->fields() : selectionDriver::allFields())
         if(f.name == n) return f.value;
       return std::string();
     },
@@ -621,7 +585,7 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebOperation(const char *name)
   }
   sceneTool::start(t, _scene);
   json = "[";
-  for(auto &f : t->driver().fields())
+  for(auto &f : t->fields())
     json += std::string(json.size() > 1 ? "," : "") +
             "{\"name\":" + JsonString(f.name) +
             ",\"kind\":" + JsonString(f.kind) +
@@ -662,7 +626,7 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebOperationState()
 {
   Msg::NoThrow noThrow;
   static std::string json;
-  operationTool *t = operation();
+  selectionDriver *t = operation();
   json = "{\"name\":" + JsonString(t ? t->name() : "") +
          ",\"status\":" + JsonString(t ? t->status(_scene) : "") +
          ",\"changes\":" + std::to_string(_changes) + "}";
@@ -992,24 +956,6 @@ EMSCRIPTEN_KEEPALIVE int gmshWebStopLasso()
   Msg::NoThrow noThrow;
   if(!_scene || !_scene->lassoMode) return 0;
   _scene->lassoMode = false;
-  return 1;
-}
-
-// the view turned by 90 degrees about the axis out of the screen, clockwise
-// or the other way (ccw), as the rotate button of the graphical interface
-EMSCRIPTEN_KEEPALIVE int gmshWebRotate(int ccw)
-{
-  Msg::NoThrow noThrow;
-  if(!_view || !_view->getDrawContext()) return 0;
-  drawContext *ctx = _view->getDrawContext();
-  double axis[3] = {0., 0., 1.};
-  ctx->addQuaternionFromAxisAndAngle(axis, ccw ? 90. : -90.);
-  if(CTX::instance()->camera) {
-    if(ccw)
-      ctx->camera.tiltHeadLeft();
-    else
-      ctx->camera.tiltHeadRight();
-  }
   return 1;
 }
 

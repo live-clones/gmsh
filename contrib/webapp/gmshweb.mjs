@@ -53,6 +53,7 @@ export const web = {
   mouse: (kind, x, y, w, h, button, wheel, mods) =>
     call('Mouse', N, [N, N, N, N, N, N, N, N], [kind, x, y, w, h, button, wheel, mods]),
   pinch: (kind, x, y, d) => call('Pinch', N, [N, N, N, N], [kind, x, y, d]),
+  magnify: (x, y, factor) => call('Magnify', N, [N, N, N], [x, y, factor]),
   mouseLeft: () => call('MouseLeft', null, [], []),
   // what the pointer is over, and where the box hangs: [text, x, y]
   hoverText: () => {
@@ -67,7 +68,6 @@ export const web = {
   // the lasso being drawn: [x0, y0, x1, y1], or null
   lasso: () => doubles('Lasso', 4),
   stopLasso: () => call('StopLasso', N, [], []),
-  rotate: (shift) => call('Rotate', N, [N], [shift]),
   resetView: () => call('ResetView', null, [], []),
   view: (action, mods) => call('View', N, [S, N], [action, mods]),
   colorScheme: (dark) => call('ColorScheme', N, [N], [dark]),
