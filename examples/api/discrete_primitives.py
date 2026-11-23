@@ -53,7 +53,9 @@ d = 0.
 for dim, tag in gmsh.model.getBoundary([(3, sphere)], oriented=False):
     _, coord, _ = gmsh.model.mesh.getNodes(dim, tag, includeBoundary=True)
     for i in range(0, len(coord), 3):
-        d = max(d, abs(math.dist(coord[i:i + 3], (2.5, 0.5, 0.5)) - r))
+        x, y, z = coord[i:i + 3]
+        d = max(d, abs(math.sqrt((x - 2.5)**2 + (y - 0.5)**2 + (z - 0.5)**2) -
+                       r))
 print("sphere: nodes at most {:.2e} from the exact surface (tolerance {})".
       format(d, tolerance))
 

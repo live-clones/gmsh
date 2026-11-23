@@ -2480,6 +2480,8 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
       list(FILTER ALLFILES EXCLUDE REGEX "api/onelab_run.*.py$")
       # writes its file in the source directory:
       list(FILTER ALLFILES EXCLUDE REGEX "api/step_header_data.py$")
+      # measures speed, and takes a minute on slow machines:
+      list(FILTER ALLFILES EXCLUDE REGEX "api/import_perf.py$")
       # needs graphics and the path of the executable:
       list(FILTER ALLFILES EXCLUDE REGEX "misc/tiny_model.py$")
       # needs a module that is not part of Gmsh:

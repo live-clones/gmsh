@@ -158,10 +158,10 @@ gmsh.view.addHomogeneousModelData(v, 0, 'cube', 'NodeData', tags, data, time=0)
 gmsh.view.addHomogeneousModelData(v, 1, 'cube', 'NodeData', tags,
                                   [-d for d in data], time=1)
 
-num3 = gmsh.model.mesh.getElements(3)[1][0].size
-num2 = sum(e.size for e in gmsh.model.mesh.getElements(2)[1])
-num1 = sum(e.size for e in gmsh.model.mesh.getElements(1)[1])
-num0 = sum(e.size for e in gmsh.model.mesh.getElements(0)[1])
+num3 = len(gmsh.model.mesh.getElements(3)[1][0])
+num2 = sum(len(e) for e in gmsh.model.mesh.getElements(2)[1])
+num1 = sum(len(e) for e in gmsh.model.mesh.getElements(1)[1])
+num0 = sum(len(e) for e in gmsh.model.mesh.getElements(0)[1])
 print('%d %s of order %d, %s' % (num3, 'hexahedra' if structured else
       'tetrahedra', order, what))
 

@@ -16,6 +16,12 @@ from collections import Counter
 gmsh.initialize(sys.argv)
 path = os.path.dirname(os.path.abspath(__file__))
 
+# (the colours and the names are read with the OCAF module of OpenCASCADE)
+if 'OpenCASCADE-CAF' not in gmsh.option.getString('General.BuildOptions'):
+    print('Skipped: Gmsh was built without OpenCASCADE-CAF')
+    gmsh.finalize()
+    sys.exit(77)
+
 colors = {(0, 255, 0, 255): 1, (255, 0, 0, 255): 1, (0, 128, 255, 255): 1,
           (225, 225, 225, 255): 3}
 surfaces = {'Shapes/inlet': 1, 'Shapes/outlet': 1, 'Shapes/wall': 2,
