@@ -599,7 +599,7 @@ void dockDivider::draw()
 }
 
 // The docking of the tool windows in the main window (graphicWindow), which
-// the tool windows reach as their dockHost (paletteWindow::host)
+// the tool windows reach as paletteWindow::host
 
 bool graphicWindow::closeTool(Fl_Window *w)
 {

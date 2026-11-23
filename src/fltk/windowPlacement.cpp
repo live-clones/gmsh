@@ -7,7 +7,7 @@
 #include <FL/Fl.H>
 #include <FL/Fl_Window.H>
 #include "windowPlacement.h"
-#include "paletteWindow.h"
+#include "graphicWindow.h"
 #include "desktop.h"
 #include "Context.h"
 #include <FL/platform.H>

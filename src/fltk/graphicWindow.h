@@ -30,7 +30,7 @@ class toolDock;
 class dockDivider;
 class paletteWindow;
 
-class graphicWindow : public dockHost {
+class graphicWindow {
 private:
   bool _autoScrollMessages;
   // while the dock lets its tools go (see setDocking())
@@ -127,19 +127,19 @@ public:
   // windows always float)
   void setDocking(bool docking);
   bool isDockShown();
-  // the dockHost of the tool windows (see paletteWindow.h): toolTornOut()
+  // what the tool windows ask (see paletteWindow::host): toolTornOut()
   // shows a tool torn out of the dock on the desktop, under the pointer;
   // toolMoved() and dragToDock() follow a floating tool moved on the desktop,
   // which is docked when dragged over the dock
-  bool takesTools() const override { return !_undocking; }
-  void dockTool(paletteWindow *w) override;
-  void toolHidden(paletteWindow *w) override;
-  void toolResized(paletteWindow *w) override;
-  void toolTornOut(paletteWindow *w, int x, int y) override;
-  void toolMoved(paletteWindow *w) override;
-  void dragToDock(paletteWindow *w) override;
-  int toolDrop(int event) override;
-  bool closeTool(Fl_Window *w) override;
+  bool takesTools() const { return !_undocking; }
+  void dockTool(paletteWindow *w);
+  void toolHidden(paletteWindow *w);
+  void toolResized(paletteWindow *w);
+  void toolTornOut(paletteWindow *w, int x, int y);
+  void toolMoved(paletteWindow *w);
+  void dragToDock(paletteWindow *w);
+  int toolDrop(int event);
+  bool closeTool(Fl_Window *w);
   // the docked tool used last, if any, and closing it
   paletteWindow *currentDockedTool();
   bool closeDockedTool();

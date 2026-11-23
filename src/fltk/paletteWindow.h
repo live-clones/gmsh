@@ -18,35 +18,11 @@
 
 class paletteWindow;
 
-// The main window that docks the tool windows (see graphicWindow::
-// setDocking()), as the tool windows, the main window and the dock reach it:
+// The main window, which docks the tool windows (see graphicWindow::
+// setDocking()): the tool windows, the main window and the dock reach it
 // through paletteWindow::host, null while the main window does not dock its
 // tools
-class dockHost {
-public:
-  virtual ~dockHost() {}
-  // whether a tool window shown is docked (not while the dock lets its tools
-  // go)
-  virtual bool takesTools() const = 0;
-  // docks a window and shows it
-  virtual void dockTool(paletteWindow *w) = 0;
-  // a docked window hidden, or resized
-  virtual void toolHidden(paletteWindow *w) = 0;
-  virtual void toolResized(paletteWindow *w) = 0;
-  // a floating tool window moved on the desktop, or dragged to the dock by a
-  // tab or its background: an FLTK drag and drop, the one drag the
-  // application can follow under Wayland, which hides where the windows are
-  virtual void toolMoved(paletteWindow *w) = 0;
-  virtual void dragToDock(paletteWindow *w) = 0;
-  // the events of that drag over the main window, and its drop
-  virtual int toolDrop(int event) = 0;
-  // a window torn out of the dock, to be shown on the desktop under the
-  // pointer (root coordinates)
-  virtual void toolTornOut(paletteWindow *w, int x, int y) = 0;
-  // closes the tool shown in the dock if w is the main window, or returns
-  // false (Cmd-W)
-  virtual bool closeTool(Fl_Window *w) = 0;
-};
+class graphicWindow;
 
 // a tool shown on the desktop while the main window docks its tools, and a
 // floating tool docked once the click that asked for it is over (see
@@ -168,7 +144,7 @@ private:
 
 public:
   // the main window while it has a dock
-  inline static dockHost *host = nullptr;
+  inline static graphicWindow *host = nullptr;
   // the tool window being so dragged, until it is dropped: the main window
   // takes the drop over the dock (see graphicWindow::toolDrop())
   inline static paletteWindow *dragged = nullptr;
@@ -207,21 +183,10 @@ public:
   bool dockable() const { return _dockable; }
   void floating(bool f) { _floating = f; }
   bool floating() const { return _floating; }
-  void dragToDock()
-  {
-    if(!parent() && _dockable && host) host->dragToDock(this);
-  }
+  void dragToDock();
   // a double click on a tab or on the background of a floating tool docks it:
   // true if it does
-  bool dockByDoubleClick()
-  {
-    if(!Fl::event_clicks() || Fl::event_button() != FL_LEFT_MOUSE || parent() ||
-       !_dockable || !host || !host->takesTools())
-      return false;
-    Fl::event_clicks(0);
-    dockToolLater(this);
-    return true;
-  }
+  bool dockByDoubleClick();
   // on the desktop, or in the dock (where a folded or covered window is not
   // shown)
   bool isOpen()
@@ -304,101 +269,12 @@ public:
     _resized = cb;
     _resizedData = data;
   }
-  virtual void resize(int x, int y, int w, int h)
-  {
-    bool sized = (w != this->w() || h != this->h());
-    Fl_Double_Window::resize(x, y, w, h);
-    if(!sized) { // only moved
-      if(!parent() && _dockable && _floating && host) host->toolMoved(this);
-      return;
-    }
-    if(!_rules.empty()) {
-      _rules.apply(w - _width);
-      init_sizes();
-    }
-    if(_resized) _resized(_resizedData);
-    if(parent() && host) host->toolResized(this);
-  }
-  virtual int handle(int event)
-  {
-    int up = dragEventUp(this, event);
-    if(up >= 0) return up;
-    switch(event) {
-    case FL_PUSH:
-      dragged = nullptr; // a drag that ended elsewhere, which Wayland hides
-      if(Fl_Double_Window::handle(event)) return 1;
-      if(Fl::event_button() != FL_LEFT_MOUSE || parent() || !_dockable)
-        return 0;
-      if(dockByDoubleClick()) return 1;
-      _pushed = true;
-      _pushX = Fl::event_x();
-      _pushY = Fl::event_y();
-      return 1;
-    case FL_DRAG:
-      if(!_pushed) break;
-      if(abs(Fl::event_x() - _pushX) > 4 || abs(Fl::event_y() - _pushY) > 4) {
-        _pushed = false;
-        dragToDock();
-      }
-      return 1;
-    case FL_RELEASE:
-      if(!_pushed) break;
-      _pushed = false;
-      return 1;
-    case FL_SHORTCUT:
-    case FL_KEYBOARD:
-      // only when the focus is inside: FLTK also gives a key no one used to
-      // the window under the pointer, which Escape must not close while the
-      // scene has the focus (and the main window has keys of its own)
-      if(!contains(Fl::focus())) break;
-      // Escape stops the selection this window is for first, as in the
-      // graphic window (a second one closes it, unless the end of the
-      // selection did); the close key closes it, which ends the selection
-      if(Fl::test_shortcut(FL_Escape) && sceneTool::owner() == ownerId()) {
-        sceneTool::stop();
-        return 1;
-      }
-      if(_closeKey() || Fl::test_shortcut(FL_Escape)) {
-        do_callback();
-        return 1;
-      }
-      break;
-    }
-    return Fl_Double_Window::handle(event);
-  }
-  virtual void show()
-  {
-    if(_dockable && !_floating && host && host->takesTools()) {
-      host->dockTool(this);
-      return;
-    }
-    if(parent()) { // docked
-      Fl_Double_Window::show();
-      return;
-    }
-    _showOnDesktop();
-    watchMoves(this);
-    if(_dockable && host && host->takesTools()) floatingToolShown(this);
-  }
+  void resize(int x, int y, int w, int h) override;
+  int handle(int event) override;
+  void show() override;
   // what a tool started for this window gives as its owner (see sceneTool)
   const void *ownerId() const { return (const Fl_Window *)this; }
-  virtual void hide()
-  {
-    // (hidden below, once: the end of the selection may hide it too)
-    if(_endingTool) return;
-    // FLTK also hides the subwindows of a window it hides: not a close
-    bool docked = parent() && host && top_window()->shown();
-    // closed (by any means): the selection it is for ends
-    if((docked || !parent()) && sceneTool::owner() == ownerId()) {
-      _endingTool = true;
-      sceneTool::stop();
-      _endingTool = false;
-    }
-    if(docked)
-      host->toolHidden(this);
-    else
-      Fl_Double_Window::hide();
-  }
+  void hide() override;
 };
 
 #endif

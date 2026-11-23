@@ -35,6 +35,7 @@ set(SRC
     windowPlacement.cpp
     widthRules.cpp
     toolDock.cpp
+    paletteWindow.cpp
     targetList.cpp
     classificationEditor.cpp
     partitionDialog.cpp

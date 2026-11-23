@@ -10,7 +10,7 @@
 #include <FL/Fl_Double_Window.H>
 #include <FL/fl_ask.H>
 #include "windowPlacement.h"
-#include "paletteWindow.h"
+#include "graphicWindow.h"
 
 // The main graphic window, double buffered like the tool windows: drawn
 // straight to the screen it flickered on Windows and on X11 without a
