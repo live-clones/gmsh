@@ -2447,21 +2447,50 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
       set_tests_properties(${TEST} PROPERTIES LABELS gui SKIP_RETURN_CODE 77)
     endforeach()
   endif()
-  # enable this once we have worked out the path issues on the build machines
-  if(0 AND ENABLE_BUILD_DYNAMIC)
-    find_package(PythonInterp)
-    if(PYTHONINTERP_FOUND)
-      file(GLOB_RECURSE ALLFILES tutorials/python/*.py examples/api/*.py)
+  # test the Python tutorials and the tests written in Python with dynamic
+  # builds, if a Python interpreter runs on this machine. The Python module is
+  # copied next to the library, where it looks for it first whatever the name
+  # of the build directory; a test is skipped, not failed, when the module
+  # cannot load the library or when a module the test needs is missing (see
+  # utils/misc/ctest_python.py)
+  if(ENABLE_BUILD_DYNAMIC)
+    if(CMAKE_VERSION VERSION_LESS 3.12)
+      find_package(PythonInterp 3)
+      set(PYTHON ${PYTHON_EXECUTABLE})
+    else()
+      find_package(Python3 COMPONENTS Interpreter)
+      set(PYTHON ${Python3_EXECUTABLE})
+    endif()
+    set(PYTHON_FAILED 1)
+    if(PYTHON)
+      execute_process(COMMAND ${PYTHON} -c "import ctypes, runpy"
+                      RESULT_VARIABLE PYTHON_FAILED OUTPUT_QUIET ERROR_QUIET)
+    endif()
+    if(PYTHON_FAILED)
+      message(STATUS "No operational Python interpreter: skipping Python tests")
+    else()
+      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/api/gmsh.py
+                     ${CMAKE_CURRENT_BINARY_DIR}/gmsh.py COPYONLY)
+      file(GLOB ALLFILES tutorials/python/*.py benchmarks/misc/*.py
+           benchmarks/occ/*.py benchmarks/step/*.py
+           examples/api/merge_partitions.py)
+      # needs graphics and the path of the executable:
+      list(FILTER ALLFILES EXCLUDE REGEX "misc/tiny_model.py$")
+      # needs a module that is not part of Gmsh:
+      list(FILTER ALLFILES EXCLUDE REGEX "misc/testPyramidalBasis.py$")
+      if(NOT HAVE_MMG)
+        list(FILTER ALLFILES EXCLUDE REGEX "occ/mmg3d_multidomain_bgmesh_check.py$")
+      endif()
       filter_tests("${ALLFILES}" TESTFILES)
       foreach(TESTFILE ${TESTFILES})
         get_filename_component(TEST ${TESTFILE} NAME)
         string(REPLACE "\." "_" TEST ${TEST})
-        add_test(NAME ${TEST} COMMAND ${PYTHON_EXECUTABLE} ${TESTFILE} -nopopup)
-        set_property(TEST ${TEST} APPEND PROPERTY ENVIRONMENT
-                     "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/api")
-        set_property(TEST ${TEST} APPEND PROPERTY ENVIRONMENT
-                     "LD_LIBRARY_PATH=${CMAKE_CURRENT_BINARY_DIR}")
-        endforeach()
+        add_test(NAME ${TEST} COMMAND ${PYTHON}
+                 ${CMAKE_CURRENT_SOURCE_DIR}/utils/misc/ctest_python.py
+                 ${TESTFILE} -nopopup)
+        set_tests_properties(${TEST} PROPERTIES SKIP_RETURN_CODE 77 ENVIRONMENT
+                             "PYTHONPATH=${CMAKE_CURRENT_BINARY_DIR}")
+      endforeach()
     endif()
   endif()
 endif()
