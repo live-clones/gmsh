@@ -26,6 +26,7 @@
 #include <set>
 #include <functional>
 #include <memory>
+#include <sys/stat.h>
 
 #include "GmshConfig.h"
 #include "GmshDefines.h"
@@ -333,15 +334,26 @@ static bool readMSH4EmbeddedEntities(FILE *fp, GEntity *const entity,
 }
 
 // what is left of the file to read, in bytes: no count of a section can be
-// larger
+// larger. The size is taken from the file descriptor, without moving the
+// stream: seeking to its end and back would drop its buffer, i.e. read the
+// file again
 static std::size_t remainingBytes(FILE *fp)
 {
+  struct stat st;
   long pos = ftell(fp);
-  if(pos < 0 || fseek(fp, 0, SEEK_END)) // (not a file: unknown)
-    return std::numeric_limits<std::size_t>::max();
-  long end = ftell(fp);
-  fseek(fp, pos, SEEK_SET);
-  return (end > pos) ? (std::size_t)(end - pos) : 0;
+  if(pos < 0 || fstat(fileno(fp), &st) || !(st.st_mode & S_IFREG))
+    return std::numeric_limits<std::size_t>::max(); // (not a file: unknown)
+  return (st.st_size > pos) ? (std::size_t)(st.st_size - pos) : 0;
+}
+
+// whether a count read in the file is larger than what is left of the file,
+// which is then corrupted. A count of up to a million items is not checked:
+// allocating for it cannot fail, and reading the items fails if the file is
+// too short. This avoids looking up the size of the file for each block of
+// nodes or elements (over the network, on a parallel file system)
+static bool tooLargeCount(FILE *fp, std::size_t count)
+{
+  return count > 1000000 && count > remainingBytes(fp);
 }
 
 static bool readMSH4EntityInfo(FILE *fp, bool binary, bool swap, double version,
@@ -362,7 +374,7 @@ static bool readMSH4EntityInfo(FILE *fp, bool binary, bool swap, double version,
       std::size_t numPart;
       if(fread(&numPart, sizeof(std::size_t), 1, fp) != 1) { return false; }
       if(swap) SwapBytes((char *)&numPart, sizeof(std::size_t), 1);
-      if(!numPart || numPart > remainingBytes(fp)) return false;
+      if(!numPart || tooLargeCount(fp, numPart)) return false;
       partitions.resize(numPart, 0);
       if(fread(&partitions[0], sizeof(int), numPart, fp) != numPart) {
         return false;
@@ -653,7 +665,7 @@ static MVertex **readMSH4Nodes(GModel *const model, FILE *fp, bool binary,
     }
   }
 
-  if(totalNumRead > remainingBytes(fp)) {
+  if(tooLargeCount(fp, totalNumRead)) {
     Msg::Error("Number of nodes %zu larger than what is left of the file",
                totalNumRead);
     return nullptr;
@@ -753,7 +765,7 @@ static MVertex **readMSH4Nodes(GModel *const model, FILE *fp, bool binary,
     if(parametric) n += entityDim;
 
     // (the nodes of the blocks are stored in the array sized by the header)
-    if(numNodes > remainingBytes(fp) ||
+    if(tooLargeCount(fp, numNodes) ||
        numNodes > totalNumRead - nodeRead) {
       Msg::Error("Wrong number of nodes (%zu) in the block of entity %d of "
                  "dimension %d", numNodes, entityTag, entityDim);
@@ -925,7 +937,7 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
     }
   }
 
-  if(totalNumRead > remainingBytes(fp)) {
+  if(tooLargeCount(fp, totalNumRead)) {
     Msg::Error("Number of elements %zu larger than what is left of the file",
                totalNumRead);
     return nullptr;
@@ -1084,7 +1096,7 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
       return nullptr;
     }
     // (the elements of the blocks are stored in the array sized by the header)
-    if(numElements > remainingBytes(fp) ||
+    if(tooLargeCount(fp, numElements) ||
        numElements > totalNumRead - elementRead) {
       Msg::Error("Wrong number of elements (%zu) in the block of entity %d of "
                  "dimension %d", numElements, entityTag, entityDim);
@@ -1242,7 +1254,7 @@ static bool readMSH4SizeT(FILE *fp, bool binary, bool swap, std::size_t &v)
 static bool readMSH4SizeTs(FILE *fp, bool binary, bool swap, std::size_t n,
                            std::vector<std::size_t> &v)
 {
-  if(n > remainingBytes(fp)) {
+  if(tooLargeCount(fp, n)) {
     Msg::Error("Count %zu larger than what is left of the file", n);
     return false;
   }
@@ -1357,7 +1369,7 @@ readMSH4Polytopes(GModel *const model, FILE *fp, bool binary, bool &dense,
   std::size_t elementRead = 0;
   std::size_t minElementNum = std::numeric_limits<std::size_t>::max();
 
-  if(totalNumRead > remainingBytes(fp)) {
+  if(tooLargeCount(fp, totalNumRead)) {
     Msg::Error("More polytopes in the section header than the file can hold");
     return nullptr;
   }
