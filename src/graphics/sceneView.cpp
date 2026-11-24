@@ -399,7 +399,6 @@ void sceneView::_doubleClick(const paneInput &in)
   std::vector<GEdge *> &edges = picks.edges;
   std::vector<GFace *> &faces = picks.faces;
   std::vector<GRegion *> &regions = picks.regions;
-  std::vector<MElement *> &elements = picks.elements;
   std::vector<SPoint2> &points = picks.points;
   std::vector<PView *> &views = picks.views;
   _select(ENT_ALL, false, CTX::instance()->mouseHoverMeshes, true, (int)in.x,
