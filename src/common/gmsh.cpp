@@ -3921,6 +3921,16 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
   }
 }
 
+// the master node of the node v of the periodic entity ge, or nullptr
+static MVertex *_getMasterNode(GEntity *ge, MVertex *v)
+{
+  auto it = ge->correspondingVertices.find(v);
+  if(it != ge->correspondingVertices.end()) return it->second;
+  it = ge->correspondingHighOrderVertices.find(v);
+  if(it != ge->correspondingHighOrderVertices.end()) return it->second;
+  return nullptr;
+}
+
 // the master node of a node on a periodic entity, following the chains of
 // periodic entities (the node itself if it is not on a periodic entity)
 static MVertex *_masterNode(MVertex *v)
@@ -4379,17 +4389,76 @@ static void _addLagrangeKeys(MElement *e, std::vector<int> &typeKeys,
 static int _typeKey(const HierarchicalBasis::Function &f)
 { return 4 * f.position + f.type; }
 
+// whether the nodes a and b are the end nodes of a mesh line of curve c
+static bool _isEdgeOfCurve(GEdge *c, MVertex *a, MVertex *b)
+{
+  for(auto l : c->lines) {
+    MVertex *v0 = l->getVertex(0), *v1 = l->getVertex(1);
+    if((v0 == a && v1 == b) || (v0 == b && v1 == a)) return true;
+  }
+  return false;
+}
+
+// the entity on which lies the mesh node, edge or face given by its nodes, the
+// element it belongs to lying on ge: the entity of the node; for an edge, the
+// curve of which it is a mesh line if any, and ge otherwise (an edge inside ge,
+// possibly joining two boundary curves of ge); ge for a face
+static GEntity *_keyEntity(const std::vector<MVertex *> &nodes, GEntity *ge)
+{
+  if(nodes.size() == 1) return nodes[0]->onWhat();
+  if(nodes.size() == 2 && ge->dim() > 1) {
+    std::vector<GEdge *> curves;
+    for(auto v : nodes) {
+      GEntity *e = v->onWhat();
+      if(!e || e->dim() > 1) return ge; // a node inside ge
+      if(e->dim() == 1)
+        curves.push_back(static_cast<GEdge *>(e));
+      else
+        curves.insert(curves.end(), e->edges().begin(), e->edges().end());
+    }
+    for(auto c : curves)
+      if(_isEdgeOfCurve(c, nodes[0], nodes[1])) return c;
+  }
+  return ge;
+}
+
+// follow the chains of periodic entities from the mesh node, edge or face given
+// by its nodes, the element it belongs to lying on ge: while the entity on which
+// it lies is periodic, its nodes are replaced by their master nodes on that
+// entity, so that it ends on an entity which is not periodic. E.g. for a cell
+// periodic in x and y, an edge along the corner x = 1, y = 1 has its master on
+// the curve x = 0, y = 1, which is itself periodic in y: the edge reached is on
+// the curve x = 0, y = 0. Stops at the last entity whose master nodes are all
+// known
+static void _followPeriodicChains(std::vector<MVertex *> &nodes, GEntity *ge)
+{
+  GEntity *e = _keyEntity(nodes, ge);
+  std::vector<MVertex *> masters(nodes.size());
+  for(int depth = 0; depth < 10 && e && e->getMeshMaster() != e;
+      depth++) { // (no cycles)
+    for(std::size_t i = 0; i < nodes.size(); i++) {
+      masters[i] = _getMasterNode(e, nodes[i]);
+      if(!masters[i]) return;
+    }
+    nodes = masters;
+    e = e->getMeshMaster();
+  }
+}
+
 // the keys of the given functions of a hierarchical basis of element e: the
 // vertex functions keyed by their node, the functions of each edge and face by
 // the global number of the edge or the face, the bubble functions by the
 // element; if master is given, the keys of the corresponding functions of the
 // master entities, the nodes being replaced by their master nodes, and the
-// edges and faces by those of the master nodes
+// edges and faces by those of the master nodes, the master element lying on
+// masterEntity; the chains of periodic entities are then followed (see
+// _followPeriodicChains), so that the master keys are not themselves periodic
 static void _addHierarchicalKeys(
   MElement *e, const std::vector<HierarchicalBasis::Function> &functions,
   std::vector<int> &typeKeys, std::vector<std::size_t> &entityKeys,
   std::vector<double> &coord, bool returnCoord,
-  const std::map<MVertex *, MVertex *> *master = nullptr)
+  const std::map<MVertex *, MVertex *> *master = nullptr,
+  GEntity *masterEntity = nullptr)
 {
   auto node = [&](MVertex *v) {
     if(!master) return v;
@@ -4406,6 +4475,11 @@ static void _addHierarchicalKeys(
     double *xyz = nullptr, nodeXyz[3];
     if(f.type == 0) {
       MVertex *v = node(e->getVertex(f.entity));
+      if(master) {
+        std::vector<MVertex *> n = {v};
+        _followPeriodicChains(n, masterEntity);
+        v = n[0];
+      }
       key = v->getNum();
       nodeXyz[0] = v->x();
       nodeXyz[1] = v->y();
@@ -4415,8 +4489,12 @@ static void _addHierarchicalKeys(
     else if(f.type == 1) {
       if(!edgeDone[f.entity]) {
         MEdge edge = e->getEdge(f.entity);
-        if(master)
-          edge = MEdge(node(edge.getVertex(0)), node(edge.getVertex(1)));
+        if(master) {
+          std::vector<MVertex *> n = {node(edge.getVertex(0)),
+                                      node(edge.getVertex(1))};
+          _followPeriodicChains(n, masterEntity);
+          edge = MEdge(n[0], n[1]);
+        }
         if(returnCoord) {
           MVertex *v[2] = {edge.getVertex(0), edge.getVertex(1)};
           _barycenter(v, 2, edgeXyz[f.entity]);
@@ -4434,6 +4512,7 @@ static void _addHierarchicalKeys(
           std::vector<MVertex *> v(face.getNumVertices());
           for(std::size_t k = 0; k < v.size(); k++)
             v[k] = node(face.getVertex(k));
+          _followPeriodicChains(v, masterEntity);
           face = MFace(v);
         }
         if(returnCoord) {
@@ -5839,16 +5918,6 @@ GMSH_API void gmsh::model::mesh::getPeriodicNodes(
   }
 }
 
-// the master node of the node v of the periodic entity ge, or nullptr
-static MVertex *_getMasterNode(GEntity *ge, MVertex *v)
-{
-  auto it = ge->correspondingVertices.find(v);
-  if(it != ge->correspondingVertices.end()) return it->second;
-  it = ge->correspondingHighOrderVertices.find(v);
-  if(it != ge->correspondingHighOrderVertices.end()) return it->second;
-  return nullptr;
-}
-
 GMSH_API void gmsh::model::mesh::getPeriodicKeys(
   const int elementType, const std::string &functionSpaceType, const int tag,
   int &tagMaster, std::vector<int> &typeKeys, std::vector<int> &typeKeysMaster,
@@ -5900,6 +5969,9 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
                      entityKeys[i]);
         continue;
       }
+      // a master node on a periodic entity (e.g. at a corner of a cell periodic
+      // in several directions): the end of the chain of periodic entities
+      m = _masterNode(m);
       entityKeysMaster[i] = m->getNum();
       if(returnCoord) {
         coordMaster[3 * i] = m->x();
@@ -5912,7 +5984,8 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
 
 #if defined(HAVE_HIERARCHICAL_BASIS)
   // the keys of the elements of the entity, and the same keys with the master
-  // nodes, edges and faces: the elements being oriented with the master nodes
+  // nodes, edges and faces, following the chains of periodic entities: the
+  // elements being oriented with the master nodes at the end of these chains
   // (see _orientation), the basis functions are the same
   if(dim != 1 && dim != 2) {
     Msg::Error("Periodic keys of hierarchical function spaces are only "
@@ -5951,7 +6024,8 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
     _addHierarchicalKeys(e, functions, typeKeys, entityKeys, coord,
                          returnCoord);
     _addHierarchicalKeys(e, functions, typeKeysMaster, entityKeysMaster,
-                         coordMaster, returnCoord, &master);
+                         coordMaster, returnCoord, &master,
+                         ge->getMeshMaster());
   }
 #else
   Msg::Error("Function space '%s' requires the hierarchical basis module",
