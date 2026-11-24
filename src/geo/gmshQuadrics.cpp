@@ -8,6 +8,7 @@
 #include <set>
 #include <cmath>
 #include <numeric>
+#include <cstdlib>
 
 #include "gmshQuadrics.h"
 #include "GModel.h"
