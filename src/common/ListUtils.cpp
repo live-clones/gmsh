@@ -164,11 +164,6 @@ void *List_Pointer_NoChange(List_T *liste, int index)
   return (&liste->array[(size_t)index * liste->size]);
 }
 
-void *List_Pointer_Fast(List_T *liste, int index)
-{
-  return (&liste->array[(size_t)index * liste->size]);
-}
-
 void List_Sort(List_T *liste, int (*fcmp)(const void *a, const void *b))
 {
   if(!liste) return;

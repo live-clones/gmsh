@@ -12,6 +12,12 @@
 static double const fd_eps = 1.0e-8;
 static double const inv_fd_eps = 1.0/1.0e-8;
 
+// the control point i of a curve, i being in range
+static inline Vertex *ControlPoint(List_T *l, int i)
+{
+  return *(Vertex **)List_Pointer_Fast(l, i);
+}
+
 static void InterpolateCatmullRom(Vertex *v[4], double t, Vertex &V)
 {
   V.lc = (1 - t) * v[1]->lc + t * v[2]->lc;
@@ -81,7 +87,6 @@ static Vertex InterpolateCubicSpline(Vertex *v[4], double t, double mat[4][4],
 SPoint2 InterpolateCubicSpline(Vertex *v[4], double t, double mat[4][4],
                                double t1, double t2, gmshSurface *s)
 {
-  Vertex V;
   int i, j;
   double T[4] = {0., 0., 0., 0.};
 
@@ -387,13 +392,12 @@ Vertex InterpolateCurve(Curve *c, double u, int const derivee)
   if(derivee == 1) {
     const double eps1 = (u < eps) ? 0.0 : eps;
     const double eps2 = (u > 1 - eps) ? 0.0 : eps;
-    Vertex D[2];
-    D[0] = InterpolateCurve(c, u - eps1, 0);
-    D[1] = InterpolateCurve(c, u + eps2, 0);
+    const Vertex D0 = InterpolateCurve(c, u - eps1, 0);
+    const Vertex D1 = InterpolateCurve(c, u + eps2, 0);
     const double inv_eps12 = 1.0 / (eps1 + eps2);
-    V.Pos.X = (D[1].Pos.X - D[0].Pos.X) * inv_eps12;
-    V.Pos.Y = (D[1].Pos.Y - D[0].Pos.Y) * inv_eps12;
-    V.Pos.Z = (D[1].Pos.Z - D[0].Pos.Z) * inv_eps12;
+    V.Pos.X = (D1.Pos.X - D0.Pos.X) * inv_eps12;
+    V.Pos.Y = (D1.Pos.Y - D0.Pos.Y) * inv_eps12;
+    V.Pos.Z = (D1.Pos.Z - D0.Pos.Z) * inv_eps12;
     V.u = u;
     return V;
   }
@@ -418,20 +422,18 @@ Vertex InterpolateCurve(Curve *c, double u, int const derivee)
     }
     double const eps1 = (u < eps) ? 0.0 : eps;
     double const eps2 = (u > 1 - eps) ? 0.0 : eps;
-    Vertex D[2];
-    D[0] = InterpolateCurve(c, u - eps1, 1);
-    D[1] = InterpolateCurve(c, u + eps2, 1);
+    const Vertex D0 = InterpolateCurve(c, u - eps1, 1);
+    const Vertex D1 = InterpolateCurve(c, u + eps2, 1);
     const double inv_eps12 = 1.0 / (eps1 + eps2);
-    V.Pos.X = (D[1].Pos.X - D[0].Pos.X) * inv_eps12;
-    V.Pos.Y = (D[1].Pos.Y - D[0].Pos.Y) * inv_eps12;
-    V.Pos.Z = (D[1].Pos.Z - D[0].Pos.Z) * inv_eps12;
+    V.Pos.X = (D1.Pos.X - D0.Pos.X) * inv_eps12;
+    V.Pos.Y = (D1.Pos.Y - D0.Pos.Y) * inv_eps12;
+    V.Pos.Z = (D1.Pos.Z - D0.Pos.Z) * inv_eps12;
     V.u = u;
     return V;
   }
 
   Vertex *v[5];
   double theta, t1, t2, t;
-  Vertex temp1, temp2;
 
   switch(c->Typ) {
   case MSH_SEGM_LINE: {
@@ -453,8 +455,8 @@ Vertex InterpolateCurve(Curve *c, double u, int const derivee)
       t2 = static_cast<double>(i + 1) * inv_N1;
       t = (u - t1) / (t2 - t1);
 
-      List_Read(c->Control_Points, i, &v[1]);
-      List_Read(c->Control_Points, i + 1, &v[2]);
+      v[1] = ControlPoint(c->Control_Points, i);
+      v[2] = ControlPoint(c->Control_Points, i + 1);
 
       if(!c->geometry) {
         V.Pos.X = v[1]->Pos.X + t * (v[2]->Pos.X - v[1]->Pos.X);
@@ -499,7 +501,7 @@ Vertex InterpolateCurve(Curve *c, double u, int const derivee)
       V.Pos.Z = 0.0;
 
       Projette(&V, c->Circle.invmat);
-      List_Read(c->Control_Points, 1, &v[0]);
+      v[0] = ControlPoint(c->Control_Points, 1);
 
       V.Pos.X += v[0]->Pos.X;
       V.Pos.Y += v[0]->Pos.Y;
@@ -534,10 +536,11 @@ Vertex InterpolateCurve(Curve *c, double u, int const derivee)
       t2 = static_cast<double>(i + 1) / static_cast<double>(N - 1);
       t = (u - t1) / (t2 - t1);
 
-      List_Read(c->Control_Points, i, &v[1]);
-      List_Read(c->Control_Points, i + 1, &v[2]);
+      Vertex temp1, temp2;
+      v[1] = ControlPoint(c->Control_Points, i);
+      v[2] = ControlPoint(c->Control_Points, i + 1);
       if(!i) {
-        if(c->beg == c->end) { List_Read(c->Control_Points, N - 2, &v[0]); }
+        if(c->beg == c->end) { v[0] = ControlPoint(c->Control_Points, N - 2); }
         else {
           v[0] = &temp1;
           v[0]->Pos.X = 2. * v[1]->Pos.X - v[2]->Pos.X;
@@ -547,10 +550,10 @@ Vertex InterpolateCurve(Curve *c, double u, int const derivee)
         }
       }
       else {
-        List_Read(c->Control_Points, i - 1, &v[0]);
+        v[0] = ControlPoint(c->Control_Points, i - 1);
       }
       if(i == N - 2) {
-        if(c->beg == c->end) { List_Read(c->Control_Points, 1, &v[3]); }
+        if(c->beg == c->end) { v[3] = ControlPoint(c->Control_Points, 1); }
         else {
           v[3] = &temp2;
           v[3]->Pos.X = 2. * v[2]->Pos.X - v[1]->Pos.X;
@@ -560,7 +563,7 @@ Vertex InterpolateCurve(Curve *c, double u, int const derivee)
         }
       }
       else {
-        List_Read(c->Control_Points, i + 2, &v[3]);
+        v[3] = ControlPoint(c->Control_Points, i + 2);
       }
       if(c->geometry) {
         SPoint2 pp = InterpolateCubicSpline(v, t, c->mat, t1, t2, c->geometry);
