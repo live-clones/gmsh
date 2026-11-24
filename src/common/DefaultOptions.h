@@ -1611,8 +1611,11 @@ StringXNumber MeshOptions_Number[] = {
     "[Deprecated]" },
   { F|O, "MshFileVersion" , opt_mesh_msh_file_version , 4.2 ,
     "Version of the MSH file format to use" },
-  { F|O, "MedFileMinorVersion" , opt_mesh_med_file_minor_version , -1. ,
-    "Minor version of the MED file format to use (-1: use minor version of the MED library)" },
+  { F|O|D, "MedFileMinorVersion" , opt_mesh_med_file_minor_version , -1. ,
+    "[Deprecated]" },
+  { F|O, "MedFileVersion" , opt_mesh_med_file_version , 0. ,
+    "Version of the MED file format to use, e.g. 4.1 or 3.3 (0: version of the "
+    "MED library)" },
   { F|O, "MedImportGroupsOfNodes" , opt_mesh_med_import_groups_of_nodes , 0. ,
     "Import groups of nodes (0: no; 1: create geometrical point for each node)?" },
   { F|O, "MedSingleModel" , opt_mesh_med_single_model , 0. ,

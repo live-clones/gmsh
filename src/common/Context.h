@@ -72,7 +72,7 @@ struct contextMeshOptions {
   int oldInitialDelaunay2D;
   // mesh IO
   int fileFormat, firstElementTag, firstNodeTag;
-  double mshFileVersion, medFileMinorVersion, scalingFactor;
+  double mshFileVersion, medFileVersion, medFileMinorVersion, scalingFactor;
   int medImportGroupsOfNodes, medSingleModel;
   int saveAll, saveViews, saveGroupsOfNodes, saveGroupsOfElements;
   int readGroupsOfElements;

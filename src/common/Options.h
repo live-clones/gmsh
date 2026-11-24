@@ -540,6 +540,7 @@ double opt_mesh_light_two_side(OPT_ARGS_NUM);
 double opt_mesh_file_format(OPT_ARGS_NUM);
 double opt_mesh_newton_convergence_test_xyz(OPT_ARGS_NUM);
 double opt_mesh_msh_file_version(OPT_ARGS_NUM);
+double opt_mesh_med_file_version(OPT_ARGS_NUM);
 double opt_mesh_med_file_minor_version(OPT_ARGS_NUM);
 double opt_mesh_med_import_groups_of_nodes(OPT_ARGS_NUM);
 double opt_mesh_med_single_model(OPT_ARGS_NUM);

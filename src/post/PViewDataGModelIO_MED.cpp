@@ -37,6 +37,7 @@
 
 extern int med2mshElementType(med_geometrie_element med);
 extern int med2mshNodeIndex(med_geometrie_element med, int k);
+extern med_idt medOpenForWriting(const std::string &name, bool create);
 
 // a MED file, closed on every way out
 class medFile {
@@ -475,25 +476,9 @@ bool PViewDataGModel::writeMED(const std::string &fileName, bool saveMesh)
   std::string meshName(model->getName());
   std::string fieldName(getName());
 
-#if (MED_MAJOR_NUM >= 4) || ((MED_MAJOR_NUM >= 3) && (MED_MINOR_NUM >= 3))
-  // MEDfileVersionOpen actually appeared in MED 3.2.1
-  med_int major = MED_MAJOR_NUM, minor = MED_MINOR_NUM,
-          release = MED_RELEASE_NUM;
-  if(CTX::instance()->mesh.medFileMinorVersion >= 0) {
-    minor = (int)CTX::instance()->mesh.medFileMinorVersion;
-    Msg::Info("Forcing MED file version to %d.%d", major, minor);
-  }
   // (read-write: each step updates the field)
-  med_idt fid = MEDfileVersionOpen((char *)fileName.c_str(), MED_ACC_RDWR,
-                                   major, minor, release);
-#else
-  med_idt fid = MEDouvrir((char *)fileName.c_str(), MED_LECTURE_AJOUT);
-#endif
-
-  if(fid < 0) {
-    Msg::Error("Unable to open file '%s'", fileName.c_str());
-    return false;
-  }
+  med_idt fid = medOpenForWriting(fileName, false);
+  if(fid < 0) return false;
   medFile file(fid);
 
   // compute profile: the nodes with data, in the file
