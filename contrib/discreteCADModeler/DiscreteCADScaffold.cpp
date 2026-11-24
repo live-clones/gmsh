@@ -50,6 +50,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <functional>
 #include <map>
 #include <queue>
 #include <string>
@@ -143,6 +144,17 @@ P3 circumCenter(const P3 &a, const P3 &b, const P3 &c)
                       0.5 / w2));
 }
 
+// the agreement of a triangle with the surface: the cosine of the angle
+// between its normal and m (the sum of the normals of F at its nodes), -1 if
+// it has no area
+double agreement(const P3 &a, const P3 &b, const P3 &c, const P3 &m)
+{
+  const P3 n = cross(sub(b, a), sub(c, a));
+  const double ln = norm(n), lm = norm(m);
+  if(!(ln > 0.) || !(lm > 0.)) return -1.;
+  return dot(n, m) / (ln * lm);
+}
+
 // the plane through o of normal n, with an orthonormal frame (e1, e2, n)
 struct Chart {
   P3 o, e1, e2;
@@ -233,6 +245,8 @@ private:
   std::vector<std::pair<GEdge *, double> > _bAt;
   std::vector<double> _bSize;
   std::vector<std::pair<int, int> > _segments;
+  // (their nodes, to know an edge of M that is one)
+  std::set<std::pair<MVertex *, MVertex *> > _segmentNodes;
   // the seams and the embedded curves (curves with the surface on their two
   // sides, inside F), and their number of segments
   std::set<GEdge *> _seams;
@@ -305,6 +319,18 @@ private:
   bool star(int s, std::vector<int> &q, std::vector<int> &out,
             std::vector<int> &tris, bool &boundary) const;
   bool edgeExists(int a, int b) const;
+  bool edgeTaken(int a, int b) const;
+  bool segmentEdge(int a, int b) const
+  {
+    return _v[a].mv && _v[b].mv &&
+           _segmentNodes.count(std::minmax(_v[a].mv, _v[b].mv));
+  }
+  double agreement(int t) const
+  {
+    const Node &a = _v[_t[t].v[0]], &b = _v[_t[t].v[1]], &c = _v[_t[t].v[2]];
+    return ::agreement(a.x, b.x, c.x, add(add(a.n, b.n), c.n));
+  }
+  int flipEdge(int i, int k);
   bool removeNode(int s, bool force = false);
   bool removeBoundaryScaffold();
   long flip();
@@ -313,6 +339,7 @@ private:
   void front();
   bool nearestOnF(const P3 &x, double reach, Location &at, P3 &p);
   void smooth(int passes);
+  void untangle();
   void transfer();
 };
 
@@ -466,6 +493,8 @@ bool Scaffold::collectBoundary()
                (int)_bv.size());
     return false;
   }
+  for(auto &s : _segments)
+    _segmentNodes.insert(std::minmax(_bv[s.first], _bv[s.second]));
   _bSize.assign(_bv.size(), 1e300);
   for(auto &s : _segments) {
     const double l = _bv[s.first]->distance(_bv[s.second]);
@@ -822,7 +851,12 @@ void Scaffold::splitBackgroundEdge(int t1, int k)
 
 // cut the edges of F longer than the mesh size, longest first: the triangles
 // of M then all fit in a chart (F stays the same surface; the edges on the
-// boundary too, or a triangle on a long one could never be small)
+// boundary too, or a triangle on a long one could never be small). An edge is
+// cut once it is the longest edge of the triangle beyond it, the longest
+// edges beyond it cut before (the longest edge propagation path of Rivara,
+// 1997): the triangles of F keep their angles, and F is only as fine as the
+// mesh sizes (cutting an edge of a triangle with a much longer one made fans
+// of ever thinner triangles towards its far vertex, refined without end)
 void Scaffold::refineBackground()
 {
   struct E {
@@ -839,6 +873,51 @@ void Scaffold::refineBackground()
       if(r > 1.) q.push({r, t, a, b});
     }
   };
+  auto length2 = [&](int t, int k) {
+    const P3 d = sub(_x[_ft[t][k]], _x[_ft[t][(k + 1) % 3]]);
+    return dot(d, d);
+  };
+  // the edge ab in t (-1 if it is not one of its edges)
+  auto edgeOf = [&](int t, int a, int b) {
+    for(int k = 0; k < 3; k++) {
+      const int u = _ft[t][k], v = _ft[t][(k + 1) % 3];
+      if((u == a && v == b) || (u == b && v == a)) return k;
+    }
+    return -1;
+  };
+  auto split = [&](int t, int k) {
+    const int t2 = _fnb[t][k], n = (int)_ft.size();
+    splitBackgroundEdge(t, k);
+    _refined++;
+    consider(t);
+    consider(n);
+    if(t2 >= 0) {
+      consider(t2);
+      consider(n + 1);
+    }
+  };
+  std::function<void(int, int)> lepp = [&](int t, int k) {
+    const int a = _ft[t][k], b = _ft[t][(k + 1) % 3];
+    while(true) {
+      const int t2 = _fnb[t][k];
+      const int s = t2 >= 0 ? edgeOf(t2, a, b) : -1;
+      if(s >= 0) {
+        int l = s;
+        for(int j = 0; j < 3; j++)
+          if(length2(t2, j) > length2(t2, l)) l = j;
+        if(l != s) {
+          lepp(t2, l);
+          // (the edge ab is still that of t, unless the path beyond went
+          // through t: it is then cut later, from the triangles made)
+          k = edgeOf(t, a, b);
+          if(k < 0) return;
+          continue;
+        }
+      }
+      break;
+    }
+    split(t, k);
+  };
   for(int t = 0; t < (int)_ft.size(); t++) consider(t);
   while(!q.empty()) {
     const E e = q.top();
@@ -847,15 +926,7 @@ void Scaffold::refineBackground()
     while(k < 3 && !(_ft[e.t][k] == e.a && _ft[e.t][(k + 1) % 3] == e.b)) k++;
     if(k == 3) continue;
     if(_x.size() > 20000000) break;
-    const int t2 = _fnb[e.t][k], n = (int)_ft.size();
-    splitBackgroundEdge(e.t, k);
-    _refined++;
-    consider(e.t);
-    consider(n);
-    if(t2 >= 0) {
-      consider(t2);
-      consider(n + 1);
-    }
+    lepp(e.t, k);
   }
   backgroundNormals();
 }
@@ -988,6 +1059,19 @@ bool Scaffold::edgeExists(int a, int b) const
     }
   }
   return false;
+}
+
+// whether a new edge (a, b) inside M would be one already: an edge of M, or a
+// segment of the 1D mesh (always one of M, on its boundary, or inside it for
+// the seams and the embedded curves; turning around a node from one of its
+// triangles does not see it where the node is between two holes of the face
+// a hair apart, as in the small holes left by faces of one triangle)
+bool Scaffold::edgeTaken(int a, int b) const
+{
+  if(_v[a].mv && _v[b].mv &&
+     _segmentNodes.count(std::minmax(_v[a].mv, _v[b].mv)))
+    return true;
+  return edgeExists(a, b);
 }
 
 // remove the node s, its star retriangulated in the chart at s: inside, the
@@ -1132,7 +1216,7 @@ bool Scaffold::removeNode(int s, bool force)
       for(int i = 0; i + len < m; i++) {
         const int k = i + len;
         if(k != m - 1 || i) // (the new boundary edge, not in M: tested)
-          if(edgeExists(q[i], q[k])) continue;
+          if(edgeTaken(q[i], q[k])) continue;
         for(int j = i + 1; j < k; j++) {
           if(!valid(i, j) || !valid(j, k)) continue;
           const double w = std::min(std::min(worst[i * m + j], worst[j * m + k]),
@@ -1173,7 +1257,7 @@ bool Scaffold::removeNode(int s, bool force)
       if(!empty) continue;
       // (no edge twice: the charts of a curved surface may not see one
       // outside the star)
-      if(n > 3 && edgeExists(q[a], q[c])) continue;
+      if(n > 3 && edgeTaken(q[a], q[c])) continue;
       double score;
       if(!boundary) // minus the height of the lifted plane above s
         score = -(o2(O, u[b], u[c]) * z[a] + o2(u[a], O, u[c]) * z[b] +
@@ -1529,6 +1613,31 @@ bool Scaffold::removeBoundaryScaffold()
   return true;
 }
 
+// the edge k of the triangle i flipped: (a, b, c) and its neighbor (b, a, d)
+// become (c, a, d) and (d, b, c); the neighbor
+int Scaffold::flipEdge(int i, int k)
+{
+  const int n = _t[i].nb[k];
+  const int a = _t[i].v[k], b = _t[i].v[(k + 1) % 3], c = _t[i].v[(k + 2) % 3];
+  const int l = indexOf(n, b);
+  const int d = _t[n].v[(l + 2) % 3];
+  const int tbc = _t[i].nb[(k + 1) % 3], tca = _t[i].nb[(k + 2) % 3];
+  const int tad = _t[n].nb[(l + 1) % 3], tdb = _t[n].nb[(l + 2) % 3];
+  _t[i].v = {c, a, d};
+  _t[i].nb = {tca, tad, n};
+  _t[n].v = {d, b, c};
+  _t[n].nb = {tdb, tbc, i};
+  _t[i].ver++;
+  _t[n].ver++;
+  relink(tad, n, i);
+  relink(tbc, i, n);
+  _v[a].inc = _v[c].inc = _v[d].inc = i;
+  _v[b].inc = n;
+  setRadius(i);
+  setRadius(n);
+  return n;
+}
+
 // Lawson's flips, each decided in the chart at the middle of the edge, the
 // scaffold weighted: the number of flips. The edges are all tested once (from
 // the triangle of lower index), then those of the two triangles of each flip;
@@ -1592,22 +1701,8 @@ long Scaffold::flip()
       if(robustPredicates::orient3dDynamic(L[0], L[1], L[2], L[3]) <= 0.)
         continue;
       if(o2(q[3], q[1], q[2]) <= 0. || o2(q[2], q[0], q[3]) <= 0.) continue;
-      if(edgeExists(c, d)) continue;
-      // (a, b, c) and (b, a, d) become (c, a, d) and (d, b, c)
-      const int tbc = _t[i].nb[(k + 1) % 3], tca = _t[i].nb[(k + 2) % 3];
-      const int tad = _t[n].nb[(l + 1) % 3], tdb = _t[n].nb[(l + 2) % 3];
-      _t[i].v = {c, a, d};
-      _t[i].nb = {tca, tad, n};
-      _t[n].v = {d, b, c};
-      _t[n].nb = {tdb, tbc, i};
-      _t[i].ver++;
-      _t[n].ver++;
-      relink(tad, n, i);
-      relink(tbc, i, n);
-      _v[a].inc = _v[c].inc = _v[d].inc = i;
-      _v[b].inc = n;
-      setRadius(i);
-      setRadius(n);
+      if(edgeTaken(c, d)) continue;
+      flipEdge(i, k);
       flips++;
       again(i);
       again(n);
@@ -2148,6 +2243,122 @@ void Scaffold::smooth(int passes)
   }
 }
 
+// the triangles against F (their normal more than 60 degrees from the normals
+// of F at their nodes: folded, or standing across the surface where the
+// front left a node on the other side of a turn of F) untangled: an edge of
+// such a triangle flipped if that improves the worst of its two triangles
+// (never a segment of the 1D mesh, never into an edge already there), a node
+// of such a triangle moved if that improves the worst triangle of its star:
+// to the point of F nearest to the one a local Winslow untangling gives in
+// the plane of the normals of F at its neighbors (its star is folded, the
+// mean plane of the smoothing is not that of the surface)
+void Scaffold::untangle()
+{
+  const double bad = 0.5;
+  std::vector<int> q, out, tris;
+  bool boundary;
+  long flipped = 0, moved = 0;
+  for(int round = 0; round < 10; round++) {
+    long f = 0, m = 0;
+    for(int i = 0; i < (int)_t.size(); i++) {
+      if(!_t[i].alive) continue;
+      const double ai = agreement(i);
+      if(ai >= bad) continue;
+      int best = -1;
+      double bestAgreement = -2.;
+      for(int k = 0; k < 3; k++) {
+        const int n = _t[i].nb[k];
+        if(n < 0) continue;
+        const int a = _t[i].v[k], b = _t[i].v[(k + 1) % 3],
+                  c = _t[i].v[(k + 2) % 3];
+        const int l = indexOf(n, b);
+        const int d = _t[n].v[(l + 2) % 3];
+        if(c == d || segmentEdge(a, b) || edgeTaken(c, d)) continue;
+        const double before = std::min(ai, agreement(n));
+        const double after =
+          std::min(::agreement(_v[c].x, _v[a].x, _v[d].x,
+                               add(add(_v[c].n, _v[a].n), _v[d].n)),
+                   ::agreement(_v[d].x, _v[b].x, _v[c].x,
+                               add(add(_v[d].n, _v[b].n), _v[c].n)));
+        if(after > before + 1e-12 && after > bestAgreement) {
+          best = k;
+          bestAgreement = after;
+        }
+      }
+      if(best >= 0) {
+        flipEdge(i, best);
+        f++;
+      }
+    }
+    for(std::size_t si = 0; si < _v.size(); si++) {
+      const int s = (int)si;
+      if(!_v[s].alive || _v[s].scaffold || _v[s].boundary || _v[s].mv)
+        continue;
+      if(!star(s, q, out, tris, boundary) || boundary || q.size() < 3 ||
+         q.size() != tris.size())
+        continue;
+      const std::size_t n = q.size();
+      double worst = 1.;
+      for(int t : tris) worst = std::min(worst, agreement(t));
+      if(worst >= bad) continue;
+      // the plane of the normals of F at its neighbors, through their
+      // centroid
+      P3 c = {0., 0., 0.}, nrm = {0., 0., 0.};
+      for(int j : q) {
+        c = add(c, _v[j].x);
+        nrm = add(nrm, _v[j].n);
+      }
+      c = scale(c, 1. / (double)n);
+      if(!(norm(nrm) > 0.)) continue;
+      const Chart C(c, unit(nrm));
+      std::vector<std::array<double, 2> > pts(n + 1);
+      pts[0] = {0., 0.};
+      for(std::size_t j = 0; j < n; j++) pts[j + 1] = C.uv(_v[q[j]].x);
+      std::vector<bool> locked(n + 1, true);
+      locked[0] = false;
+      std::vector<std::array<uint32_t, 3> > T(n);
+      const double h = nodeSize(s);
+      const std::array<std::array<double, 2>, 3> equilateral = {
+        {{{0., 0.}}, {{h, 0.}}, {{0.5 * h, 0.5 * std::sqrt(3.) * h}}}};
+      std::vector<std::array<std::array<double, 2>, 3> > ideal(n,
+                                                               equilateral);
+      for(std::size_t j = 0; j < n; j++)
+        T[j] = {0u, (uint32_t)(j + 1), (uint32_t)((j + 1) % n + 1)};
+      WinslowUntangler::Options options;
+      options.maxOuterIterations = 10;
+      options.maxInnerIterations = 100;
+      options.timeMax = 1.;
+      WinslowUntangler::untangle2D(pts, locked, T, ideal, options);
+      const P3 x = add(C.o, add(scale(C.e1, pts[0][0]), scale(C.e2, pts[0][1])));
+      Location at = _v[s].at;
+      P3 p;
+      if(!nearestOnF(x, norm(sub(x, _v[s].x)) + 2. * h, at, p)) continue;
+      const P3 np = normalAt(at);
+      double after = 1.;
+      for(std::size_t j = 0; j < n; j++) {
+        const Node &a = _v[q[j]], &b = _v[q[(j + 1) % n]];
+        after =
+          std::min(after, ::agreement(p, a.x, b.x, add(add(np, a.n), b.n)));
+      }
+      if(!(after > worst + 1e-12)) continue;
+      _v[s].x = p;
+      _v[s].at = at;
+      _v[s].n = np;
+      for(int t : tris) setRadius(t);
+      m++;
+    }
+    flipped += f;
+    moved += m;
+    if(!f && !m) break;
+  }
+  long left = 0;
+  for(std::size_t i = 0; i < _t.size(); i++)
+    if(_t[i].alive && agreement((int)i) < bad) left++;
+  Msg::Debug("Surface %d: untangled, %ld flips, %ld nodes moved, %ld "
+             "triangles left more than 60 degrees from F",
+             _gf->tag(), flipped, moved, left);
+}
+
 void Scaffold::transfer()
 {
   long scaffold = 0;
@@ -2291,6 +2502,7 @@ bool Scaffold::mesh()
       if(t.alive && t.r < 0.) setRadius((int)(&t - &_t[0]));
   }
   smooth(CTX::instance()->mesh.nbSmoothing);
+  untangle();
   if(debug) dump("M_final");
   transfer();
 
