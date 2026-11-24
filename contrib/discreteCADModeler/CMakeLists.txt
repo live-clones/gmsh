@@ -20,6 +20,7 @@ set(SRC
   DiscreteCADWinding.cpp
   DiscreteCADWindingPlugin.cpp
   DiscreteCADMeshBoolean.cpp
+  DiscreteCADArrangement.cpp
   DiscreteCADRecognition.cpp
   DiscreteCADScaffold.cpp
 )

@@ -1267,7 +1267,8 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "Tolerance" , opt_geometry_tolerance, 1.e-8 ,
     "Geometrical tolerance" },
   { F|O, "ToleranceBoolean" , opt_geometry_tolerance_boolean, 0. ,
-    "Geometrical tolerance for boolean operations" },
+    "Geometrical tolerance for boolean operations (with the Discrete kernel, "
+    "the pieces of fragments thinner than it are part of their neighbors)" },
   { F,   "Transform" , opt_geometry_transform , 0. ,
     "Transform model display coordinates" },
   { F,   "TransformXX" , opt_geometry_transform00 , 1. ,

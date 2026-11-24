@@ -22,6 +22,7 @@
 #include "DiscreteCADModeler.h"
 #include "DiscreteCADHeal.h"
 #include "DiscreteCADMeshBoolean.h"
+#include "DiscreteCADArrangement.h"
 #include "DiscreteCADRecognition.h"
 #include "DiscreteCADWinding.h"
 #include "GmshMessage.h"
@@ -1917,6 +1918,8 @@ bool DiscreteCAD_Internals::booleanFragments(
     std::vector<double> xyz;
     std::vector<int> tri, origin;
     double lo[3], hi[3];
+    // (the points of an arrangement: their index in it)
+    std::vector<int> id;
   };
   auto box = [](Triangulation &t) {
     for(int k = 0; k < 3; k++) {
@@ -2153,82 +2156,173 @@ bool DiscreteCAD_Internals::booleanFragments(
   // the boundary of two pieces is cut the same way in both
   std::vector<Piece> pieces;
   Triangulation all;
-  for(std::size_t i = 0; i < inputs.size(); i++) {
-    const Triangulation &v = inputs[i];
-    if(pieces.empty()) {
-      pieces.push_back({v, {(int)i}});
-      all = v;
-      continue;
-    }
-    double size = 0.;
-    for(int k = 0; k < 3; k++)
-      size = std::max(size, std::max(all.hi[k], v.hi[k]) -
-                              std::min(all.lo[k], v.lo[k]));
-    const double margin = 1e-9 * size;
-    std::vector<Piece> next;
-    bool ok = true;
-    for(Piece &p : pieces) {
-      bool near = true;
-      for(int k = 0; k < 3; k++)
-        if(p.t.lo[k] > v.hi[k] + margin || v.lo[k] > p.t.hi[k] + margin)
-          near = false;
-      if(!near) {
-        next.push_back(p);
-        continue;
+  // (with the mesh arrangements: all the inputs at once, the cells of their
+  // arrangement, each piece the cells inside the same inputs, by their
+  // winding numbers: inputs with self-intersections, crossing or touching
+  // each other)
+  bool arranged = false;
+  if(haveMeshArrangement() && !inputs.empty()) {
+    const double t0 = TimeOfDay();
+    std::vector<double> xyz;
+    std::vector<int> tri, label, originOf;
+    for(std::size_t i = 0; i < inputs.size(); i++) {
+      const int offset = (int)(xyz.size() / 3);
+      xyz.insert(xyz.end(), inputs[i].xyz.begin(), inputs[i].xyz.end());
+      for(int n : inputs[i].tri) tri.push_back(offset + n);
+      for(std::size_t j = 0; j < inputs[i].tri.size() / 3; j++) {
+        label.push_back((int)i);
+        originOf.push_back(inputs[i].origin[j]);
       }
-      Piece in, out;
-      if(!boolean(1, p.t, v, in.t) || !boolean(2, p.t, v, out.t)) {
-        ok = false;
-        break;
-      }
-      in.in = p.in;
-      in.in.insert((int)i);
-      out.in = p.in;
-      if(!in.t.tri.empty()) next.push_back(in);
-      if(!out.t.tri.empty()) next.push_back(out);
     }
-    // (V - U from the operations on U and V, in this order as those on P and
-    // V, which cut the triangles of U the same way: the triangles of V in U u
-    // V, and, turned over, those of U in U n V, and those of U on V oriented
-    // the other way, in U - V, not in U u V; their points that the operations
-    // round differently are one)
-    Triangulation u, common, minus;
-    if(ok)
-      ok = boolean(0, all, v, u) && boolean(1, all, v, common) &&
-           boolean(2, all, v, minus);
-    if(!ok) {
+    std::vector<double> axyz;
+    std::vector<int> atri, abirth;
+    std::vector<std::vector<int> > sets;
+    std::vector<std::array<int, 2> > sides;
+    std::size_t merged = 0;
+    if(!meshArrangement(xyz, tri, label, (int)inputs.size(),
+                        CTX::instance()->geom.toleranceBoolean, axyz, atri,
+                        abirth, sets, sides, merged, error)) {
       Msg::Error("Discrete CAD boolean fragments: %s", error.c_str());
       return false;
     }
-    pointMerger point(merge * diagonal(u));
-    auto fromV = [&](const Triangulation &t, std::size_t j) {
-      return originInput[t.origin[j]] == (int)i;
+    // the triangles of each piece (the inputs it is in) pointing out of it,
+    // and those of the union of the inputs
+    std::map<int, std::size_t> pieceOf;
+    std::vector<std::vector<std::array<int, 3> > > pieceTri;
+    std::vector<std::vector<int> > pieceOrigin;
+    std::vector<std::array<int, 3> > allTri;
+    std::vector<int> allOrigin;
+    for(std::size_t f = 0; f < sides.size(); f++) {
+      const std::array<int, 3> t = {
+        {atri[3 * f], atri[3 * f + 1], atri[3 * f + 2]}};
+      for(int side = 0; side < 2; side++) {
+        const int s = sides[f][side];
+        if(!s) continue;
+        auto it = pieceOf.insert({s, pieces.size()});
+        if(it.second) {
+          Piece p;
+          p.in.insert(sets[s].begin(), sets[s].end());
+          pieces.push_back(p);
+          pieceTri.push_back({});
+          pieceOrigin.push_back({});
+        }
+        // (behind the triangle: as it is; in front: turned over)
+        pieceTri[it.first->second].push_back(
+          side ? std::array<int, 3>{{t[0], t[2], t[1]}} : t);
+        pieceOrigin[it.first->second].push_back(originOf[abirth[f]]);
+        if(!sides[f][1 - side]) {
+          allTri.push_back(pieceTri[it.first->second].back());
+          allOrigin.push_back(originOf[abirth[f]]);
+        }
+      }
+    }
+    auto local = [&](const std::vector<std::array<int, 3> > &ts,
+                     const std::vector<int> &origin, Triangulation &t) {
+      std::map<int, int> node;
+      for(auto &u : ts)
+        for(int n : u) {
+          auto l = node.insert({n, (int)node.size()});
+          if(l.second) {
+            t.xyz.insert(t.xyz.end(), axyz.begin() + 3 * n,
+                         axyz.begin() + 3 * n + 3);
+            t.id.push_back(n);
+          }
+          t.tri.push_back(l.first->second);
+        }
+      t.origin = origin;
+      box(t);
     };
-    std::set<std::array<int, 3> > outer;
-    for(std::size_t j = 0; j < u.tri.size() / 3; j++)
-      if(!fromV(u, j)) outer.insert(sortedKey(ids(point, u, j)));
-    Piece rest;
-    std::vector<std::array<int, 3> > restTri;
-    for(std::size_t j = 0; j < u.tri.size() / 3; j++)
-      if(fromV(u, j)) {
-        restTri.push_back(ids(point, u, j));
-        rest.t.origin.push_back(u.origin[j]);
+    for(std::size_t p = 0; p < pieces.size(); p++)
+      local(pieceTri[p], pieceOrigin[p], pieces[p].t);
+    local(allTri, allOrigin, all);
+    Msg::Info("Discrete CAD boolean fragments: arrangement of %lu volumes "
+              "(%lu triangles) in %lu pieces (%lu triangles), %g s",
+              inputs.size(), tri.size() / 3, pieces.size(), sides.size(),
+              TimeOfDay() - t0);
+    if(merged)
+      Msg::Info("Discrete CAD boolean fragments: %lu cells thinner than %g "
+                "(Geometry.ToleranceBoolean) part of their neighbors",
+                merged, CTX::instance()->geom.toleranceBoolean);
+    arranged = true;
+  }
+  if(!arranged) {
+    for(std::size_t i = 0; i < inputs.size(); i++) {
+      const Triangulation &v = inputs[i];
+      if(pieces.empty()) {
+        pieces.push_back({v, {(int)i}});
+        all = v;
+        continue;
       }
-    for(const Triangulation *t : {&common, &minus})
-      for(std::size_t j = 0; j < t->tri.size() / 3; j++) {
-        if(fromV(*t, j)) continue;
-        std::array<int, 3> n = ids(point, *t, j);
-        if(outer.count(sortedKey(n))) continue;
-        std::swap(n[1], n[2]);
-        restTri.push_back(n);
-        rest.t.origin.push_back(t->origin[j]);
+      double size = 0.;
+      for(int k = 0; k < 3; k++)
+        size = std::max(size, std::max(all.hi[k], v.hi[k]) -
+                                std::min(all.lo[k], v.lo[k]));
+      const double margin = 1e-9 * size;
+      std::vector<Piece> next;
+      bool ok = true;
+      for(Piece &p : pieces) {
+        bool near = true;
+        for(int k = 0; k < 3; k++)
+          if(p.t.lo[k] > v.hi[k] + margin || v.lo[k] > p.t.hi[k] + margin)
+            near = false;
+        if(!near) {
+          next.push_back(p);
+          continue;
+        }
+        Piece in, out;
+        if(!boolean(1, p.t, v, in.t) || !boolean(2, p.t, v, out.t)) {
+          ok = false;
+          break;
+        }
+        in.in = p.in;
+        in.in.insert((int)i);
+        out.in = p.in;
+        if(!in.t.tri.empty()) next.push_back(in);
+        if(!out.t.tri.empty()) next.push_back(out);
       }
-    build(point, restTri, rest.t);
-    rest.in = {(int)i};
-    if(!rest.t.tri.empty()) next.push_back(rest);
-    agree(next, u);
-    all = u;
-    pieces = next;
+      // (V - U from the operations on U and V, in this order as those on P and
+      // V, which cut the triangles of U the same way: the triangles of V in U u
+      // V, and, turned over, those of U in U n V, and those of U on V oriented
+      // the other way, in U - V, not in U u V; their points that the operations
+      // round differently are one)
+      Triangulation u, common, minus;
+      if(ok)
+        ok = boolean(0, all, v, u) && boolean(1, all, v, common) &&
+             boolean(2, all, v, minus);
+      if(!ok) {
+        Msg::Error("Discrete CAD boolean fragments: %s", error.c_str());
+        return false;
+      }
+      pointMerger point(merge * diagonal(u));
+      auto fromV = [&](const Triangulation &t, std::size_t j) {
+        return originInput[t.origin[j]] == (int)i;
+      };
+      std::set<std::array<int, 3> > outer;
+      for(std::size_t j = 0; j < u.tri.size() / 3; j++)
+        if(!fromV(u, j)) outer.insert(sortedKey(ids(point, u, j)));
+      Piece rest;
+      std::vector<std::array<int, 3> > restTri;
+      for(std::size_t j = 0; j < u.tri.size() / 3; j++)
+        if(fromV(u, j)) {
+          restTri.push_back(ids(point, u, j));
+          rest.t.origin.push_back(u.origin[j]);
+        }
+      for(const Triangulation *t : {&common, &minus})
+        for(std::size_t j = 0; j < t->tri.size() / 3; j++) {
+          if(fromV(*t, j)) continue;
+          std::array<int, 3> n = ids(point, *t, j);
+          if(outer.count(sortedKey(n))) continue;
+          std::swap(n[1], n[2]);
+          restTri.push_back(n);
+          rest.t.origin.push_back(t->origin[j]);
+        }
+      build(point, restTri, rest.t);
+      rest.in = {(int)i};
+      if(!rest.t.tri.empty()) next.push_back(rest);
+      agree(next, u);
+      all = u;
+      pieces = next;
+    }
   }
 
   // the nodes of the pieces: those of the inputs kept, the others by their
@@ -2279,14 +2373,37 @@ bool DiscreteCAD_Internals::booleanFragments(
     grid[c].push_back(n);
     return n;
   };
+  // (the points of an arrangement are those of one triangulation: one node
+  // each, those of the inputs their nodes, whatever their coordinates once
+  // rounded)
+  std::map<int, int> arrangementNode;
+  const int nodesBefore = (int)_nodes.size();
+  auto nodeOfPoint = [&](const Triangulation &t, std::size_t v) {
+    const std::array<double, 3> x = {
+      {t.xyz[3 * v], t.xyz[3 * v + 1], t.xyz[3 * v + 2]}};
+    if(t.id.empty()) return nodeAt(x);
+    auto it = arrangementNode.find(t.id[v]);
+    if(it != arrangementNode.end()) return it->second;
+    auto in = nodeOf.find(x);
+    int n;
+    if(in != nodeOf.end() && in->second < nodesBefore)
+      n = in->second;
+    else {
+      // (found by the surfaces given with the volumes, cut afterwards)
+      n = _addNode(x[0], x[1], x[2]);
+      nodeOf[x] = n;
+      grid[cellOf(x)].push_back(n);
+    }
+    arrangementNode[t.id[v]] = n;
+    return n;
+  };
   std::vector<std::array<int, 3> > tri;
   std::vector<int> triOrigin;
   std::vector<std::size_t> triPiece;
   for(std::size_t p = 0; p < pieces.size(); p++) {
     const Triangulation &t = pieces[p].t;
     std::vector<int> node(t.xyz.size() / 3);
-    for(std::size_t v = 0; v < node.size(); v++)
-      node[v] = nodeAt({{t.xyz[3 * v], t.xyz[3 * v + 1], t.xyz[3 * v + 2]}});
+    for(std::size_t v = 0; v < node.size(); v++) node[v] = nodeOfPoint(t, v);
     for(std::size_t i = 0; i < t.tri.size() / 3; i++) {
       tri.push_back({{node[t.tri[3 * i]], node[t.tri[3 * i + 1]],
                       node[t.tri[3 * i + 2]]}});
@@ -2303,7 +2420,7 @@ bool DiscreteCAD_Internals::booleanFragments(
     return it->second = representative(it->second);
   };
   for(auto &t : tri)
-    for(int k = 0; k < 3; k++) {
+    for(int k = 0; k < 3 && !arranged; k++) {
       int a = representative(t[k]), b = representative(t[(k + 1) % 3]);
       if(a == b) continue;
       const std::array<double, 3> &x = _nodes[a], &y = _nodes[b];
@@ -2356,9 +2473,7 @@ bool DiscreteCAD_Internals::booleanFragments(
   for(std::size_t i = 0; i < all.tri.size() / 3; i++) {
     std::array<int, 3> t;
     for(int k = 0; k < 3; k++)
-      t[k] = representative(nodeAt({{all.xyz[3 * all.tri[3 * i + k]],
-                                     all.xyz[3 * all.tri[3 * i + k] + 1],
-                                     all.xyz[3 * all.tri[3 * i + k] + 2]}}));
+      t[k] = representative(nodeOfPoint(all, all.tri[3 * i + k]));
     std::sort(t.begin(), t.end());
     outer.insert(t);
   }
