@@ -88,7 +88,9 @@ HDF5 1.14.6, CGNS 4.5.2 and MED 6.0.1; bug fixes.
   mesh/getBasisFunctionsOrientationForElement (true by default: the elements
   touching periodic curves and surfaces are oriented with the tags of the master
   nodes, so that mesh/getPeriodicKeys maps the keys of all the hierarchical
-  function spaces one-to-one); mesh/getGhostElements takes a partition
+  function spaces one-to-one, to master keys at the end of the chains of
+  periodic entities, which are never periodic themselves);
+  mesh/getGhostElements takes a partition
 
 4.15.2 (March 24, 2026): fixed issue in 3D structured CGNS output.
 

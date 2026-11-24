@@ -1905,12 +1905,12 @@ GMSH_API void gmshModelMeshGetPeriodicNodes(const int dim,
  * chains of periodic entities, so that they are never periodic themselves:
  * e.g. for a cell periodic in x and y, the master keys of the edges along the
  * corner x = 1, y = 1 are those of the edges along x = 0, y = 0, and not
- * those along x = 0, y = 1, which are periodic in y. Such a master key does
- * not lie on the master entity `tagMaster', and its key is its image by a
- * composition of the periodic transformations (e.g. the sum of the
- * translations in x and y), which `coord' and `coordMaster' allow to
- * identify. On surfaces, the keys of "HdivLegendre" function spaces are those
- * of the face functions of the 3D elements. */
+ * those along x = 0, y = 1, which are periodic in y. Such a master key may
+ * lie off the master entity `tagMaster': the location of its key (`coord') is
+ * then that of the master key (`coordMaster') moved by a composition of the
+ * periodic transformations (e.g. the sum of the translations in x and y). On
+ * surfaces, the keys of "HdivLegendre" function spaces are those of the face
+ * functions of the 3D elements. */
 GMSH_API void gmshModelMeshGetPeriodicKeys(const int elementType,
                                            const char * functionSpaceType,
                                            const int tag,
