@@ -6,6 +6,7 @@
 // Contributor(s):
 //   Florian Blachère
 
+#include <cstdlib>
 #include "GModel.h"
 #include "OS.h"
 #include "MPoint.h"
