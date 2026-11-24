@@ -114,17 +114,14 @@ namespace {
   public:
     // what the last event asked for
     bool redrawAsked = false, cross = false;
-    // a picking pass drew into the canvas: the frame is to be drawn again
-    // before the page shows it
-    bool picked = false;
     webView() : sceneView(nullptr) {}
     void hostRedraw() { redrawAsked = true; }
     void hostCursor(bool c) { cross = c; }
+    // (a picking pass draws into a framebuffer of its own, not the canvas,
+    // which keeps its frame)
     bool hostBeginGL()
     {
-      if(!_view || !_view->begin(_width, _height, _scale, true)) return false;
-      picked = true;
-      return true;
+      return _view && _view->begin(_width, _height, _scale, true);
     }
     void hostEndGL() { _view->end(); }
     const std::string &hoverText() const { return _hoverText; }
@@ -369,7 +366,7 @@ EMSCRIPTEN_KEEPALIVE int gmshWebMouse(int kind, double x, double y, int w,
   if(!_scene) _scene = new webView();
   // the view may have been made anew (see gmshWebResetView())
   _scene->setDrawContext(_view->getDrawContext());
-  _scene->redrawAsked = _scene->picked = false;
+  _scene->redrawAsked = false;
   paneInput in;
   in.kind = (paneInput::Kind)kind;
   in.x = x;
@@ -385,12 +382,6 @@ EMSCRIPTEN_KEEPALIVE int gmshWebMouse(int kind, double x, double y, int w,
   in.meta = modifiers & ModMeta;
   _scene->handleMouse(in);
   sceneTool::step();
-  // the picking pass left its image on the canvas: put the frame back now,
-  // before the page shows it
-  if(_scene->picked && _view->begin(_width, _height, _scale, true)) {
-    draw();
-    return 0;
-  }
   return _scene->redrawAsked ? 1 : 0;
 }
 
