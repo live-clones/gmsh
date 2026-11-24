@@ -2431,8 +2431,9 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
       add_test(seam_brep_partition seam_brep_cpp --partition -nopopup)
     endif()
     # the programs written for General.ScriptingLanguages compile (with the
-    # compilers of the build, syntax only)
-    if(NOT WIN32)
+    # compilers of the build, syntax only); the test calls internal functions,
+    # which the shared library only exports with the private API
+    if(NOT WIN32 AND ENABLE_PRIVATE_API)
       add_executable(script_programs benchmarks/misc/script_programs.cpp)
       target_link_libraries(script_programs shared)
       target_compile_definitions(script_programs PRIVATE
