@@ -85,11 +85,27 @@ private:
       SplitFileName(_fileName)[1] + SplitFileName(_fileName)[2];
     _win->copy_label((name + (_modified ? " *" : "")).c_str());
   }
+  // The styles of the whole text computed again (a comment or a string opened
+  // by the edit changes those of what follows), and replaced where they
+  // changed: that span is selected in the style buffer, from which the
+  // display takes what it redraws beyond the edited lines (see
+  // Fl_Text_Display::extend_range_for_styles()). This runs before the
+  // display's own modify callback, FLTK calling the last added first.
   void _restyle()
   {
     char *text = _text->text();
-    _style->text(GetScriptStyles(_fileName, text).c_str());
+    std::string now = GetScriptStyles(_fileName, text);
     free(text);
+    char *was = _style->text();
+    int n = _style->length(), m = (int)now.size(), a = 0, b = 0;
+    while(a < n && a < m && was[a] == now[a]) a++;
+    while(b < n - a && b < m - a && was[n - 1 - b] == now[m - 1 - b]) b++;
+    free(was);
+    _style->replace(a, n - b, now.substr(a, m - a - b).c_str());
+    if(a < m - b)
+      _style->select(a, m - b);
+    else
+      _style->unselect();
   }
   static void _modified_cb(int pos, int inserted, int deleted, int restyled,
                            const char *deletedText, void *data)
