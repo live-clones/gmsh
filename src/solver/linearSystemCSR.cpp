@@ -439,6 +439,115 @@ void linearSystemCSR<std::complex<double> >::getMatrix(INDEX_TYPE *&jptr,
 #undef BB // can be defined by FlGui.h, and clashes with gmm arg name
 #include <gmm/gmm.h>
 
+// ILU(0) with the operations of gmm::ilu_precond in the same order, so the
+// solution is the same bit for bit. Each row of U starts with its diagonal.
+class csrILU0 {
+public:
+  using ind = unsigned int;
+  std::vector<ind> Lp, Li, Up, Ui;
+  std::vector<double> Lv, Uv;
+  csrILU0(std::size_t n, const INDEX_TYPE *jc, const INDEX_TYPE *ir,
+          const double *pr)
+  {
+    if(!n) return;
+    Lp.assign(n + 1, 0);
+    Up.assign(n + 1, 0);
+    // gmm keeps at most the first 1000 entries of a row
+    for(std::size_t i = 0; i < n; i++) {
+      const INDEX_TYPE e = jc[i] + std::min(jc[i + 1] - jc[i], 1000);
+      ind nl = 0, nu = 1;
+      for(INDEX_TYPE p = jc[i]; p < e; p++) {
+        const std::size_t j = static_cast<std::size_t>(ir[p]);
+        if(j < i)
+          nl++;
+        else if(j > i)
+          nu++;
+      }
+      Lp[i + 1] = Lp[i] + nl;
+      Up[i + 1] = Up[i] + nu;
+    }
+    Li.resize(Lp[n]);
+    Lv.resize(Lp[n]);
+    Ui.resize(Up[n]);
+    Uv.resize(Up[n]);
+    double a00 = 0.;
+    for(std::size_t i = 0; i < n; i++) {
+      const INDEX_TYPE e = jc[i] + std::min(jc[i + 1] - jc[i], 1000);
+      ind l = Lp[i], u = Up[i];
+      Ui[u] = i;
+      Uv[u++] = 0.;
+      for(INDEX_TYPE p = jc[i]; p < e; p++) {
+        const ind j = static_cast<ind>(ir[p]);
+        if(j < i) {
+          Li[l] = j;
+          Lv[l++] = pr[p];
+        }
+        else if(j == i)
+          Uv[Up[i]] = pr[p];
+        else {
+          Ui[u] = j;
+          Uv[u++] = pr[p];
+        }
+        if(!i && !j) a00 = pr[p];
+      }
+    }
+    const double prec = gmm::default_tol(double());
+    double maxPivot = std::abs(a00) * prec;
+    if(a00 == 0.) {
+      Uv[Up[0]] = 1.;
+      GMM_WARNING2("pivot 0 is too small");
+    }
+    std::vector<int> pos(n, -1);
+    for(std::size_t i = 1; i < n; i++) {
+      ind pn = Up[i];
+      if(std::abs(Uv[pn]) <= maxPivot) {
+        Uv[pn] = 1.;
+        GMM_WARNING2("pivot " << i << " is too small");
+      }
+      maxPivot = std::max(maxPivot, std::min(std::abs(Uv[pn]) * prec, 1.));
+      for(ind q = Lp[i]; q < Lp[i + 1]; q++) pos[Li[q]] = q;
+      for(ind q = Up[i]; q < Up[i + 1]; q++) pos[Ui[q]] = q;
+      for(ind j = Lp[i]; j < Lp[i + 1]; j++) {
+        const ind r = Li[j];
+        const double m = (Lv[j] /= Uv[Up[r]]);
+        for(pn = Up[r] + 1; pn < Up[r + 1]; pn++) {
+          const ind c = Ui[pn];
+          const int q = pos[c];
+          if(q < 0) continue;
+          if(c < i)
+            Lv[q] -= m * Uv[pn];
+          else
+            Uv[q] -= m * Uv[pn];
+        }
+      }
+      for(ind q = Lp[i]; q < Lp[i + 1]; q++) pos[Li[q]] = -1;
+      for(ind q = Up[i]; q < Up[i + 1]; q++) pos[Ui[q]] = -1;
+    }
+  }
+  void solve(double *x) const
+  {
+    const std::size_t n = Lp.empty() ? 0 : Lp.size() - 1;
+    for(std::size_t i = 0; i < n; i++) {
+      double t = x[i];
+      for(ind k = Lp[i]; k < Lp[i + 1]; k++) t -= Lv[k] * x[Li[k]];
+      x[i] = t;
+    }
+    for(std::size_t i = n; i-- > 0;) {
+      double t = x[i];
+      for(ind k = Up[i] + 1; k < Up[i + 1]; k++) t -= Uv[k] * x[Ui[k]];
+      x[i] = t / Uv[Up[i]];
+    }
+  }
+};
+
+// found by gmm::gmres through argument-dependent lookup
+template <typename V1, typename V2>
+void mult(const csrILU0 &P, const V1 &v1, V2 &v2)
+{
+  gmm::copy(v1, v2);
+  if(gmm::vect_size(v2)) P.solve(&*gmm::vect_begin(v2));
+}
+
 template <> int linearSystemCSRGmm<double>::systemSolve()
 {
   if(!sorted)
@@ -450,17 +559,15 @@ template <> int linearSystemCSRGmm<double>::systemSolve()
   gmm::csr_matrix_ref<double *, INDEX_TYPE *, INDEX_TYPE *, 0> ref(
     (double *)_a->array, (INDEX_TYPE *)_ai->array, (INDEX_TYPE *)_jptr->array,
     _b->size(), _b->size());
-  gmm::csr_matrix<double> M;
-  M.init_with(ref);
 
   //gmm::ildltt_precond<gmm::csr_matrix<double, 0> > P(M, 10, 1.e-10);
-  gmm::ilu_precond<gmm::csr_matrix<double> > P(M);
+  csrILU0 P(_b->size(), ref.jc, ref.ir, ref.pr);
   gmm::iteration iter(_tol);
   iter.set_noisy(_noisy);
   if(_method == "gmres")
-    gmm::gmres(M, *_x, *_b, P, 100, iter);
+    gmm::gmres(ref, *_x, *_b, P, 100, iter);
   else
-    gmm::cg(M, *_x, *_b, P, iter);
+    gmm::cg(ref, *_x, *_b, P, iter);
   if(!iter.converged())
     Msg::Warning("Iterative linear solver has not converged (res = %g)",
                  iter.get_res());
