@@ -374,9 +374,11 @@ static void drawArc(double xc, double yc, double zc, double rx, double ry,
 // the order the triangles come, which a convex shape hardly shows), and it
 // writes no depth, so that the model behind it is drawn; the edges of the
 // triangles for a wireframe, as the surfaces
-static void drawTriangles(std::vector<SPoint3> &vertices,
-                          std::vector<SVector3> &normals,
-                          std::vector<int> &triangles)
+// the triangles moved by offset
+static void drawTriangles(const std::vector<SPoint3> &vertices,
+                          const std::vector<SVector3> &normals,
+                          const std::vector<int> &triangles,
+                          const double offset[3])
 {
   gmshLightTwoSide(true);
   unsigned int c = CTX::instance()->color.geom.highlight[0];
@@ -394,10 +396,10 @@ static void drawTriangles(std::vector<SPoint3> &vertices,
     double x[3], y[3], z[3];
     SVector3 nn[3];
     for(int j = 0; j < 3; j++) {
-      SPoint3 &p = vertices[triangles[i + j]];
-      x[j] = p.x();
-      y[j] = p.y();
-      z[j] = p.z();
+      const SPoint3 &p = vertices[triangles[i + j]];
+      x[j] = p.x() + offset[0];
+      y[j] = p.y() + offset[1];
+      z[j] = p.z() + offset[2];
       nn[j] = normals[triangles[i + j]];
     }
     va.add(x, y, z, nn);
@@ -440,25 +442,48 @@ static bool makeSTL(int shape, const double *v, std::vector<SPoint3> &p,
   return false;
 }
 
+// The triangulation of the preview by OpenCASCADE, made at the origin, and
+// the shape and the values other than the position it was made for: made
+// again when they change, not at each move of the pointer, which only moves
+// the shape (a sphere or a torus took 30 ms)
+static struct {
+  int shape = -1;
+  std::vector<double> values;
+  std::vector<SPoint3> vertices;
+  std::vector<SVector3> normals;
+  std::vector<int> triangles;
+} preview;
+
 void shapePlacement::_drawPreview() const
 {
   // (the point is its mark; the arcs drawn, the others triangulated)
   if(_shape < 2) return;
   double v[16];
-  for(std::size_t i = 0; i < _values.size() && i < 16; i++)
+  const std::size_t n = std::min<std::size_t>(_values.size(), 16);
+  for(std::size_t i = 0; i < n; i++)
     if(!evaluate(_values[i], v[i])) return;
   if(_shape == 2)
     drawArc(v[0], v[1], v[2], v[3], v[3], v[4], v[5]);
   else if(_shape == 3)
     drawArc(v[0], v[1], v[2], v[3], v[4], v[5], v[6]);
-  else {
-    if(!GModel::current()->getOCCInternals())
-      GModel::current()->createOCCInternals();
-    std::vector<SPoint3> vertices;
-    std::vector<SVector3> normals;
-    std::vector<int> triangles;
-    if(makeSTL(_shape, v, vertices, normals, triangles))
-      drawTriangles(vertices, normals, triangles);
+  else if(n > 3) {
+    std::vector<double> values(v + 3, v + n);
+    if(_shape != preview.shape || values != preview.values) {
+      if(!GModel::current()->getOCCInternals())
+        GModel::current()->createOCCInternals();
+      double w[16];
+      std::copy(v, v + n, w);
+      w[0] = w[1] = w[2] = 0.;
+      preview.vertices.clear();
+      preview.normals.clear();
+      preview.triangles.clear();
+      if(!makeSTL(_shape, w, preview.vertices, preview.normals,
+                  preview.triangles))
+        preview.triangles.clear();
+      preview.shape = _shape;
+      preview.values = values;
+    }
+    drawTriangles(preview.vertices, preview.normals, preview.triangles, v);
   }
 }
 
