@@ -475,9 +475,9 @@ bool compute(GModel *source, const Options &options, Result &result, std::string
     if(!types.empty()) throw std::runtime_error("Use a surface-only input mesh, without volume nodes");
     const bool tetRaw = options.raw == RawMode::Tet;
     if(options.filter == FilterMode::Collapse && !tetRaw)
-      throw std::runtime_error("The collapse filter needs the tetrahedron-based raw MAT");
+      throw std::runtime_error("The collapse filter needs the tetrahedron-based raw MAT (--raw tet, RawMode 1); for the legacy pipeline select the legacy filter as well (--filter legacy, FilterMode 0)");
     if(options.filter == FilterMode::Legacy && tetRaw)
-      throw std::runtime_error("The legacy filter needs the legacy raw MAT");
+      throw std::runtime_error("The legacy filter needs the legacy raw MAT (--raw legacy, RawMode 0)");
     auto start = Clock::now();
     matGmsh mat;
     matgmsh::tet::Dual dual;

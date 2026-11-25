@@ -416,3 +416,39 @@ scores differ slightly there (pipe_flange_r0: missing area 0.109 t^2 against
 0.083). Six "good" cases are within 0.005 t of the 0.25 t limit of the
 largest distance (t_junction_h20_r0 and the five assemblies); the assemblies
 were not replayed on macOS.
+
+Default switched to the tetrahedron-based MAT, 26 November 2026
+---------------------------------------------------------------
+gmshMat and Plugin(MatGmsh) now default to --raw tet --filter collapse
+(RawMode 1, FilterMode 1); the legacy raw MAT and filter remain selectable.
+All earlier sections of this file describe the legacy pipeline unless they
+say otherwise. mat_native_skin_sites runs both pipelines; the 12 mat_native
+tests pass on macOS arm64.
+
+The eight inputs of benchmarks/MAT with the defaults, macOS arm64, one thread,
+skin generated at t/10 from the STEP file, total time including the skin mesh:
+
+Case                    t    Sites   Tetrahedra  Certified  Euler raw/kept  Pieces  Wire edges  Seconds  MB
+Doghouse                4    81095   620593      yes         0 /  0         1       0           14.5     495
+Sample2                 4.5  38957   207604      yes         1 /  1         1       0            5.3     250
+Sample3                 4    78452   473679      yes         1 /  1         1       0           11.3     470
+Sample4                 4    206850  1386138     yes         0 /  3         4       4           27.8     1150
+SteppedFilletedBracket  1.6  63768   374910      yes        -9 / -9         1       0            6.3     374
+FlangedPipeT            1.2  75630   753245      yes        -1 / -1         1       0           10.2     506
+DoubleShellCage         1.2  118712  1104953     yes        -4 / -4         1       0           26.2     751
+TwistedDuct             1.2  50803   346416      yes        -2 / -2         1       0            9.0     309
+
+In Sample4 the collapse leaves four edges without surface: the kept surface
+is in four pieces, and gmshMat says so in a warning. None of these inputs has a truth; these runs check the
+certificate and the topology, not the position of the surface.
+
+Stages 2 and 3 on top of the collapse filter were only smoke-tested: with
+--stage extended, TwistedDuct (t 1.2, mesh 0.24) commits 12 layers and adds
+6292 triangles (legacy filter: 1 layer, 3485 triangles), and Doghouse (t 4,
+mesh 0.4) commits 1 layer, with 15 of 4442 free-edge fronts reaching a contact
+in 45 s. Both extensions are partial; so is that of TwistedDuct with the
+legacy filter.
+
+benchmarks/MAT/Doghouse_mat.geo runs the plugin on the Doghouse at mesh size
+0.3 (141 478 sites): certificate passed, one piece, Euler characteristic 0,
+19 s in batch mode with four threads.

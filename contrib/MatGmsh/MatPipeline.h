@@ -22,20 +22,22 @@ struct Mesh {
 
 enum class Stage { Filtered, Projected, Extended };
 
-// Raw MAT. Legacy: dual faces whose circumcentres have a winding number above
-// the threshold, coincident circumcentres merged. Tet: dual faces of the
-// Delaunay edges surrounded by interior tetrahedra only (integer winding at
-// the barycentre), with a certificate of the boundary of their union.
+// Raw MAT. Tet (default): dual faces of the Delaunay edges surrounded by
+// interior tetrahedra only (integer winding at the barycentre), with a
+// certificate of the boundary of their union. Legacy: dual faces whose
+// circumcentres have a winding number above the threshold, coincident
+// circumcentres merged.
 enum class RawMode { Legacy, Tet };
-// Legacy: branch classification by CAD patches. Collapse: erosion thickness
-// and homotopy-preserving collapse (needs RawMode::Tet). None: the raw MAT.
+// Collapse (default): erosion thickness and homotopy-preserving collapse
+// (needs RawMode::Tet). Legacy: branch classification by CAD patches (needs
+// RawMode::Legacy). None: the raw MAT.
 enum class FilterMode { Legacy, Collapse, None };
 
 struct Options {
   double thickness = 1.;
   double windingThreshold = .5;
-  RawMode raw = RawMode::Legacy;
-  FilterMode filter = FilterMode::Legacy;
+  RawMode raw = RawMode::Tet;
+  FilterMode filter = FilterMode::Collapse;
   // FilterMode::Collapse: polygons with an erosion thickness below this
   // fraction of the thickness are removed.
   double collapseThreshold = .21;

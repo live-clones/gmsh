@@ -10,10 +10,13 @@ Stages
 ------
 
 1. A closed, surface-only first-order triangular skin supplies the sites. Gmsh's HXT
-   Delaunay implementation builds the tetrahedra. Their dual polygons are
-   classified using discreteCADModeler's winding numbers, then the existing
-   branch decision tree, mixed-wing and terminal filters. Shared MAT vertex
-   identities and junction incidence are retained.
+   Delaunay implementation builds the tetrahedra. By default the raw MAT is
+   the dual of the interior tetrahedra and the filter is the collapse by
+   erosion thickness: see "Tetrahedron-based raw MAT and collapse filter"
+   below. In the legacy stage 1 (--raw legacy; RawMode 0 and FilterMode 0),
+   the dual polygons are classified using discreteCADModeler's winding
+   numbers, then the existing branch decision tree, mixed-wing and terminal
+   filters. Shared MAT vertex identities and junction incidence are retained.
 
 2. Optional local projection uses the existing CAD-support method. It must
    preserve triangles, branch labels and polygon provenance. The proposal
@@ -70,11 +73,12 @@ it supplies the default surface mesh size (h/10) and extension bound (3 h).
 Tetrahedron-based raw MAT and collapse filter
 ---------------------------------------------
 
-An alternative to stage 1, selected with --raw tet --filter collapse (driver)
-or RawMode 1, FilterMode 1 (plugin). The stages above remain the default.
+The default stage 1 since 26 November 2026: --raw tet --filter collapse
+(driver), RawMode 1 and FilterMode 1 (plugin). The legacy stage 1 is selected
+with --raw legacy (driver) or RawMode 0 and FilterMode 0 (plugin).
 
 Sites. Only the nodes used by a skin triangle are sites (also true of the
-default stage 1): nodes of construction curves or points are ignored.
+legacy stage 1): nodes of construction curves or points are ignored.
 
 Raw MAT. A Delaunay tetrahedron is interior if and only if its exact volume
 is nonzero and the integer winding number of the skin at its barycentre is
@@ -116,9 +120,10 @@ filter also centroid, radius, area, erosion thickness over thickness, and the
 keep and wing flags of each polygon. All indices are zero-based.
 
 --filter none stops at the raw MAT. The legacy filter needs the legacy raw
-MAT and the collapse filter the tetrahedron-based one. Projection and
-extension (stages 2 and 3) accept either filtered MAT; they have only been
-validated on the legacy one.
+MAT and the collapse filter the tetrahedron-based one; the driver selects
+both legacy modes when only one of --raw legacy and --filter legacy is given.
+Projection and extension (stages 2 and 3) accept either filtered MAT; their
+validation (VALIDATION.txt) was done on the legacy one.
 
 Build from the Gmsh root
 ------------------------
@@ -169,19 +174,20 @@ retain support queries. A standalone .msh has no implicit CAD geometry:
 without parametrized faces, identity support patches are used and optional
 CAD projection is skipped with an explicit message.
 
-The default legacy cleanup intentionally retains the historical largest
-component and closed-sheet removal policy for comparison. --keep-components
-selects a different policy retaining disconnected components and closed
-sheets. This is not yet a certification of all multi-solid configurations.
+With the legacy filter, the default cleanup intentionally retains the
+historical largest component and closed-sheet removal policy for comparison.
+--keep-components selects a different policy retaining disconnected
+components and closed sheets. This is not yet a certification of all
+multi-solid configurations. The collapse filter has no such cleanup.
 
 Gmsh plugin
 -----------
 
 Mesh the current model's surfaces, then run Plugin(MatGmsh). Thickness,
 Project, Stage (0 filtered, 1 projected, 2 extended), ExtensionLength,
-ExtensionLayers, ShowStages, LegacyCleanup, RawMode (0 legacy, 1 tetrahedra),
-FilterMode (0 legacy, 1 collapse, 2 none) and CollapseThreshold are numeric
-options.
+ExtensionLayers, ShowStages, LegacyCleanup, RawMode (1 tetrahedra, the
+default; 0 legacy), FilterMode (1 collapse, the default; 0 legacy; 2 none)
+and CollapseThreshold are numeric options.
 OutputPrefix sets optional checkpoint file output (empty disables it).
 The plugin creates branch-colored views for each stage and initially shows
 the last stage. The source CAD and surface mesh are retained. For example:

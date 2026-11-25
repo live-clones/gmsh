@@ -25,6 +25,12 @@ manufactured cases. These sizes halve the edge-size settings used by the
 23 November 2026 native performance audit (0.6 and 0.35 respectively).
 They do not run the MAT pipeline. An OpenCASCADE-enabled Gmsh build is required.
 
+Doghouse_mat.geo does run it: it includes Doghouse.geo, meshes the skin and
+runs Plugin(MatGmsh) with thickness 4, which adds the filtered MAT as a view
+(Gmsh built with ENABLE_MATGMSH; about 20 s):
+
+  gmsh benchmarks/MAT/Doghouse_mat.geo
+
 gmshMat preserves these GEO sizing bounds unless a positive --mesh-size is
 supplied. When the input does not change Mesh.MeshSizeMin/Max, newly generated
 skins default to h/10. Existing surface meshes are reused without remeshing.

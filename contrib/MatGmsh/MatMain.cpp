@@ -14,14 +14,17 @@ int main(int argc, char **argv)
                    "  [--stage filtered|projected|extended] [--project] [--mesh-size s]\n"
                    "  [--source-mesh cached.msh] [--keep-components] [--threads n]\n"
                    "  [--extension-length L] [--extension-layers n]\n"
-                   "  [--raw legacy|tet] [--filter legacy|collapse|none]\n"
-                   "  [--collapse-threshold 0.21] [--complex]\n";
+                   "  [--raw tet|legacy] [--filter collapse|legacy|none]\n"
+                   "  [--collapse-threshold 0.21] [--complex]\n"
+                   "The defaults are --raw tet --filter collapse; --raw legacy or\n"
+                   "--filter legacy alone selects the legacy raw MAT and filter.\n";
       return 1;
     }
     matgmsh_native::Options options;
     std::string input = argv[1], cached;
     std::filesystem::path output;
     double meshSize = 0.; int threads = 1; bool complex = false;
+    bool rawGiven = false, filterGiven = false;
     for(int i = 2; i < argc; ++i) {
       const std::string key = argv[i];
       auto value = [&]() { if(++i == argc) throw std::runtime_error("Missing value for " + key); return std::string(argv[i]); };
@@ -41,6 +44,7 @@ int main(int argc, char **argv)
         if(mode == "legacy") options.raw = matgmsh_native::RawMode::Legacy;
         else if(mode == "tet") options.raw = matgmsh_native::RawMode::Tet;
         else throw std::runtime_error("Unknown raw mode " + mode);
+        rawGiven = true;
       }
       else if(key == "--filter") {
         const std::string mode = value();
@@ -48,6 +52,7 @@ int main(int argc, char **argv)
         else if(mode == "collapse") options.filter = matgmsh_native::FilterMode::Collapse;
         else if(mode == "none") options.filter = matgmsh_native::FilterMode::None;
         else throw std::runtime_error("Unknown filter mode " + mode);
+        filterGiven = true;
       }
       else if(key == "--stage") {
         const std::string stage = value();
@@ -58,6 +63,12 @@ int main(int argc, char **argv)
       }
       else throw std::runtime_error("Unknown argument " + key);
     }
+    // The legacy raw MAT and the legacy filter go together: naming one of
+    // them is enough.
+    if(rawGiven && !filterGiven && options.raw == matgmsh_native::RawMode::Legacy)
+      options.filter = matgmsh_native::FilterMode::Legacy;
+    if(filterGiven && !rawGiven && options.filter == matgmsh_native::FilterMode::Legacy)
+      options.raw = matgmsh_native::RawMode::Legacy;
     if(output.empty()) throw std::runtime_error("--output is required");
     if(std::filesystem::exists(output)) throw std::runtime_error("Output directory already exists; choose a new checkpoint directory");
     if(threads < 1) throw std::runtime_error("--threads must be positive");

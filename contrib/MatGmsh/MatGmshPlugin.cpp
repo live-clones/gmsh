@@ -20,8 +20,8 @@ GMSH_MatGmshPlugin::GMSH_MatGmshPlugin()
        {GMSH_FULLRC, "ExtensionLayers", nullptr, 12., ""},
        {GMSH_FULLRC, "ShowStages", nullptr, 1., ""},
        {GMSH_FULLRC, "LegacyCleanup", nullptr, 1., ""},
-       {GMSH_FULLRC, "RawMode", nullptr, 0., ""},
-       {GMSH_FULLRC, "FilterMode", nullptr, 0., ""},
+       {GMSH_FULLRC, "RawMode", nullptr, 1., ""},
+       {GMSH_FULLRC, "FilterMode", nullptr, 1., ""},
        {GMSH_FULLRC, "CollapseThreshold", nullptr, .21, ""}},
       {{GMSH_FULLRC, "OutputPrefix", nullptr, "matgmsh", ""}})
 {
@@ -41,19 +41,20 @@ std::string GMSH_MatGmshPlugin::getHelp() const
          "`ExtensionLength' bounds the extension distance (0 means three "
          "times Thickness); `ExtensionLayers' controls the number of "
          "layers. Reaching this distance is not a successful contact: "
-         "unresolved fronts are recorded in the report. `LegacyCleanup' "
-         "preserves the historical filtered-MAT cleanup policy.\n\n"
-         "`RawMode' selects the raw MAT: 0 for the dual faces whose "
-         "circumcentres are inside the skin, 1 for the dual faces surrounded "
-         "by interior Delaunay tetrahedra only, with a certificate that the "
-         "union of these tetrahedra has the boundary of the solid. "
-         "`FilterMode' selects the filter: 0 for the classification of "
-         "branches by CAD patches (RawMode 0), 1 for the collapse by "
-         "erosion thickness, which keeps the topology of the raw MAT "
-         "(RawMode 1), 2 for no filter. With FilterMode 1, a polygon is "
-         "removed if its erosion thickness is below `CollapseThreshold' "
-         "times `Thickness' or if it belongs to the wing of a convex CAD "
-         "edge.\n\n"
+         "unresolved fronts are recorded in the report.\n\n"
+         "`RawMode' selects the raw MAT: 1 (default) for the dual faces "
+         "surrounded by interior Delaunay tetrahedra only, with a "
+         "certificate that the union of these tetrahedra has the boundary "
+         "of the solid; 0 for the legacy dual faces whose circumcentres are "
+         "inside the skin. `FilterMode' selects the filter: 1 (default) for "
+         "the collapse by erosion thickness, which keeps the topology of "
+         "the raw MAT (needs RawMode 1); 0 for the legacy classification of "
+         "branches by CAD patches (needs RawMode 0); 2 for no filter. With "
+         "FilterMode 1, a polygon is removed if its erosion thickness is "
+         "below `CollapseThreshold' times `Thickness' or if it belongs to "
+         "the wing of a convex CAD edge. For the legacy pipeline set both "
+         "RawMode and FilterMode to 0; `LegacyCleanup' then preserves the "
+         "historical filtered-MAT cleanup policy.\n\n"
          "The result is displayed in a new list-based view, colored by "
          "branch. With `ShowStages', earlier stages are also available "
          "as initially hidden views. These views do not replace the CAD. "

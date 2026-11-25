@@ -81,10 +81,14 @@ void countNodes(std::size_t &all, std::size_t &referenced)
   referenced = used.size();
 }
 
-Result mat()
+Result mat(bool legacy)
 {
   Options options;
   options.thickness = 1.;
+  if(legacy) {
+    options.raw = RawMode::Legacy;
+    options.filter = FilterMode::Legacy;
+  }
   Result result;
   std::string error;
   check(computeCurrent(options, result, error), "pipeline failed: " + error);
@@ -110,9 +114,12 @@ void constructionCurveDoesNotChangeTheMat()
   std::size_t all = 0, referenced = 0;
   countNodes(all, referenced);
   check(all > referenced, "the construction curve must carry nodes outside the skin");
-  const Result result = mat();
-  check(result.skin.xyz.size() == 3 * referenced,
-        "the nodes of the construction curve must not be sites");
+  // The default pipeline (tetrahedron-based raw MAT, collapse), then the
+  // legacy one.
+  const Result results[2] = {mat(false), mat(true)};
+  for(const Result &result : results)
+    check(result.skin.xyz.size() == 3 * referenced,
+          "the nodes of the construction curve must not be sites");
 
   gmsh::model::mesh::clear({{1, curve}});
   gmsh::model::mesh::clear({{0, a}, {0, b}});
@@ -120,14 +127,20 @@ void constructionCurveDoesNotChangeTheMat()
   countNodes(all, remaining);
   check(all == referenced && remaining == referenced,
         "only the nodes of the construction curve must have been removed");
-  const Result reference = mat();
-  check(result.skin.xyz == reference.skin.xyz && result.skin.triangles == reference.skin.triangles,
-        "both skins must be identical for the comparison to be meaningful");
-  check(result.raw.xyz == reference.raw.xyz && result.raw.triangles == reference.raw.triangles,
-        "the raw MAT must not depend on the construction curve");
-  check(result.filtered.xyz == reference.filtered.xyz &&
-          result.filtered.triangles == reference.filtered.triangles,
-        "the filtered MAT must not depend on the construction curve");
+  for(int legacy = 0; legacy < 2; ++legacy) {
+    const Result &result = results[legacy];
+    const Result reference = mat(legacy != 0);
+    check(result.skin.xyz == reference.skin.xyz && result.skin.triangles == reference.skin.triangles,
+          "both skins must be identical for the comparison to be meaningful");
+    check(!result.raw.triangles.empty() && result.raw.xyz == reference.raw.xyz &&
+            result.raw.triangles == reference.raw.triangles,
+          "the raw MAT must not depend on the construction curve");
+    check(!result.filtered.triangles.empty() && result.filtered.xyz == reference.filtered.xyz &&
+            result.filtered.triangles == reference.filtered.triangles,
+          "the filtered MAT must not depend on the construction curve");
+  }
+  check(results[0].tet.computed && results[0].tet.certified && results[0].collapse.computed &&
+          !results[1].tet.computed, "the default raw MAT is the certified tetrahedron-based one");
 }
 } // namespace
 
