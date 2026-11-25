@@ -1069,9 +1069,11 @@ namespace tetgenBR {
         originalCoordinates[v] = v->point();
       }
       std::vector<MTetrahedron *> tets;
-      // will add 8 MVertices at the end of _vertices
+      // will add 8 MVertices at the end of _vertices; none if there are fewer
+      // than 4 points (not the error count, which an error in another volume
+      // of the same meshing run would have set)
       delaunayMeshIn3D(_vertices, tets, false, &in.tetNeighbors);
-      if(Msg::GetErrorCount()) return false;
+      if(tets.empty()) return false;
       for(std::size_t i = 0; i < _vertices.size(); i++)
         _vertices[i]->setIndex((long)i);
       in.tetNode.resize(4 * tets.size());
@@ -1169,7 +1171,7 @@ namespace tetgenBR {
       _vertices.resize(nv - 8);
       std::vector<MTetrahedron *> tets;
       delaunayMeshIn3D(_vertices, tets, false, &in.tetNeighbors);
-      if(Msg::GetErrorCount()) break;
+      if(tets.empty()) break;
       for(std::size_t i = 0; i < nv; i++) _vertices[i]->setIndex((long)i);
       in.tetNode.resize(4 * tets.size());
       for(std::size_t i = 0; i < tets.size(); i++) {
