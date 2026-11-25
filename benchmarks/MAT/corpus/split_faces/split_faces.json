@@ -1,0 +1,183 @@
+{
+ "name": "split_faces",
+ "level": 3,
+ "family": "split_faces",
+ "params": {
+  "widths": [
+   30,
+   25,
+   35
+  ],
+  "b": 50
+ },
+ "thickness": [
+  4.0
+ ],
+ "junction_fillet": 0.0,
+ "free_edge_fillet": 0.0,
+ "volume": 18000.0,
+ "midsurface_area": 4500.0,
+ "face_role_counts": {
+  "skin": 6,
+  "edge": 8
+ },
+ "midsurface_faces": [
+  {
+   "center": [
+    15.0,
+    25.0,
+    0.0
+   ],
+   "area": 1500.0,
+   "thickness": 4.0
+  },
+  {
+   "center": [
+    42.5,
+    25.0,
+    0.0
+   ],
+   "area": 1250.0,
+   "thickness": 4.0
+  },
+  {
+   "center": [
+    72.5,
+    25.0,
+    0.0
+   ],
+   "area": 1750.0,
+   "thickness": 4.0
+  }
+ ],
+ "representation": "analytic",
+ "face_roles": {
+  "18": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 1500.0
+  },
+  "19": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 1250.0
+  },
+  "20": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 1750.0
+  },
+  "21": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 120.0
+  },
+  "22": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 1500.0
+  },
+  "23": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 1250.0
+  },
+  "24": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 1750.0
+  },
+  "25": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 100.0
+  },
+  "26": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 140.0
+  },
+  "27": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 200.0
+  },
+  "28": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 140.0
+  },
+  "29": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 100.0
+  },
+  "30": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 120.0
+  },
+  "31": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 200.0
+  }
+ },
+ "volume_ratio": 1.0
+}

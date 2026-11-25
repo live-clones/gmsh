@@ -1,0 +1,101 @@
+{
+ "name": "pipe_flange_r0",
+ "level": 2,
+ "family": "pipe_flange",
+ "params": {
+  "pipe_radius": 20,
+  "length": 40,
+  "flange_radius": 40,
+  "fillet": 0
+ },
+ "thickness": [
+  4.0,
+  4.0
+ ],
+ "junction_fillet": 0.0,
+ "free_edge_fillet": 0.0,
+ "volume": 35135.57221319966,
+ "midsurface_area": 8796.459430051429,
+ "face_role_counts": {
+  "edge": 2,
+  "skin": 4
+ },
+ "midsurface_faces": [
+  {
+   "center": [
+    7.105427357601002e-15,
+    -4.635181127810027e-16,
+    20.0
+   ],
+   "area": 5026.548245743669,
+   "thickness": 4.0
+  },
+  {
+   "center": [
+    2.1316282072803006e-14,
+    7.579122514774392e-16,
+    0.0
+   ],
+   "area": 3769.911184307759,
+   "thickness": 4.0
+  }
+ ],
+ "representation": "analytic",
+ "face_roles": {
+  "2": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 9,
+    "fillet": 0
+   },
+   "area": 502.65482457436724
+  },
+  "6": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 1005.3096490716189
+  },
+  "11": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 5252.742916802134
+  },
+  "12": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 4750.0880922277665
+  },
+  "13": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 4008.6722259805833
+  },
+  "14": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 3506.01740140622
+  }
+ },
+ "volume_ratio": 0.9985714278737439
+}

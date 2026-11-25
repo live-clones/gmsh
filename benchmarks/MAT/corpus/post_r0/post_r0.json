@@ -1,0 +1,149 @@
+{
+ "name": "post_r0",
+ "level": 2,
+ "family": "post",
+ "params": {
+  "plate": [
+   80,
+   80
+  ],
+  "radius": 8,
+  "height": 20,
+  "fillet": 0
+ },
+ "thickness": [
+  4.0,
+  4.0
+ ],
+ "junction_fillet": 0.0,
+ "free_edge_fillet": 0.0,
+ "volume": 29219.114736935437,
+ "midsurface_area": 7405.309649148733,
+ "face_role_counts": {
+  "skin": 5,
+  "edge": 5
+ },
+ "midsurface_faces": [
+  {
+   "center": [
+    40.0,
+    40.0,
+    10.0
+   ],
+   "area": 1005.3096491487338,
+   "thickness": 4.0
+  },
+  {
+   "center": [
+    40.0,
+    40.0,
+    0.0
+   ],
+   "area": 6198.938070170251,
+   "thickness": 4.0
+  },
+  {
+   "center": [
+    40.0,
+    40.0,
+    0.0
+   ],
+   "area": 201.06192982974713,
+   "thickness": 4.0
+  }
+ ],
+ "representation": "analytic",
+ "face_roles": {
+  "1": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 6399.999999999999
+  },
+  "2": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 320.0
+  },
+  "4": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 320.0
+  },
+  "5": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 320.0
+  },
+  "6": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 320.0
+  },
+  "8": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 13,
+    "fillet": 0
+   },
+   "area": 201.0619298297471
+  },
+  "13": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 6085.8407346410195
+  },
+  "14": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 1130.9733552923256
+  },
+  "15": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 678.5840131753953
+  },
+  "16": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 113.09733552923258
+  }
+ },
+ "volume_ratio": 0.9864244751836366
+}

@@ -1,0 +1,104 @@
+{
+ "name": "ligament_edge_gap8",
+ "level": 3,
+ "family": "ligament",
+ "params": {
+  "a": 80,
+  "b": 60,
+  "hole": [
+   40,
+   16,
+   8
+  ],
+  "gap": 8
+ },
+ "thickness": [
+  4.0
+ ],
+ "junction_fillet": 0.0,
+ "free_edge_fillet": 0.0,
+ "volume": 18395.752278723783,
+ "midsurface_area": 4598.938070170251,
+ "face_role_counts": {
+  "skin": 2,
+  "edge": 5
+ },
+ "midsurface_faces": [
+  {
+   "center": [
+    40.00000000000001,
+    30.612068911272,
+    0.0
+   ],
+   "area": 4598.938070170251,
+   "thickness": 4.0
+  }
+ ],
+ "representation": "analytic",
+ "face_roles": {
+  "9": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 4598.938070170251
+  },
+  "10": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 320.0
+  },
+  "11": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 4598.938070170251
+  },
+  "12": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 240.0
+  },
+  "13": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 320.0
+  },
+  "14": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 240.0
+  },
+  "15": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 201.06192983353588
+  }
+ },
+ "volume_ratio": 0.9999999998936047
+}

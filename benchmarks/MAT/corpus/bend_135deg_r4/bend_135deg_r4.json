@@ -1,0 +1,180 @@
+{
+ "name": "bend_135deg_r4",
+ "level": 1,
+ "family": "bend",
+ "params": {
+  "angle": 135,
+  "mid_radius": 4,
+  "width": 40
+ },
+ "thickness": [
+  4.0
+ ],
+ "junction_fillet": 0.0,
+ "free_edge_fillet": 0.0,
+ "volume": 12817.771114190811,
+ "midsurface_area": 3204.442778471385,
+ "face_role_counts": {
+  "skin": 6,
+  "edge": 8
+ },
+ "midsurface_faces": [
+  {
+   "center": [
+    20.171572875253812,
+    20.0,
+    0.0
+   ],
+   "area": 1613.7258300203048,
+   "thickness": 4.0
+  },
+  {
+   "center": [
+    43.24122023169731,
+    20.0,
+    2.799578245123856
+   ],
+   "area": 376.99111843077503,
+   "thickness": 4.0
+  },
+  {
+   "center": [
+    32.44365081389596,
+    20.0,
+    17.556349186104047
+   ],
+   "area": 1213.725830020305,
+   "thickness": 4.0
+  }
+ ],
+ "representation": "analytic",
+ "face_roles": {
+  "18": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 1613.7258300203048
+  },
+  "19": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 188.49555921538752
+  },
+  "20": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 1213.725830020305
+  },
+  "21": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 160.0
+  },
+  "22": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 1613.7258300203048
+  },
+  "23": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 565.4866776461625
+  },
+  "24": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 1213.725830020305
+  },
+  "25": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 161.37258300203038
+  },
+  "26": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 37.69911186597295
+  },
+  "27": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 9,
+    "fillet": 0
+   },
+   "area": 121.3725830020305
+  },
+  "28": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 160.00000000000006
+  },
+  "29": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 9,
+    "fillet": 0
+   },
+   "area": 121.3725830020305
+  },
+  "30": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 37.69911186597295
+  },
+  "31": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 161.37258300203038
+  }
+ },
+ "volume_ratio": 1.0000000000238163
+}

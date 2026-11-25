@@ -1,0 +1,89 @@
+{
+ "name": "sphere_cap_R80_25deg",
+ "level": 1,
+ "family": "sphere_cap",
+ "params": {
+  "radius": 80,
+  "polar_angle": 25
+ },
+ "thickness": [
+  4.0
+ ],
+ "junction_fillet": 0.0,
+ "free_edge_fillet": 0.0,
+ "volume": 15073.489374846542,
+ "midsurface_area": 3767.587429686162,
+ "face_role_counts": {
+  "skin": 4,
+  "edge": 2
+ },
+ "midsurface_faces": [
+  {
+   "center": [
+    0.0,
+    -1.0903506981392435e-15,
+    76.252311481466
+   ],
+   "area": 3767.587429686162,
+   "thickness": 4.0
+  }
+ ],
+ "representation": "analytic",
+ "face_roles": {
+  "8": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 1790.7814001727352
+  },
+  "9": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 1790.7814001727338
+  },
+  "10": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 424.86221643243437
+  },
+  "11": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 1979.1607716570466
+  },
+  "12": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 1979.160771657045
+  },
+  "13": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 424.8622164324337
+  }
+ },
+ "volume_ratio": 1.0002083333273937
+}

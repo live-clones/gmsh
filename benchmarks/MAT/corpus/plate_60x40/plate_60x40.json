@@ -1,0 +1,89 @@
+{
+ "name": "plate_60x40",
+ "level": 1,
+ "family": "plate",
+ "params": {
+  "a": 60,
+  "b": 40
+ },
+ "thickness": [
+  4.0
+ ],
+ "junction_fillet": 0.0,
+ "free_edge_fillet": 0.0,
+ "volume": 9600.0,
+ "midsurface_area": 2400.0,
+ "face_role_counts": {
+  "skin": 2,
+  "edge": 4
+ },
+ "midsurface_faces": [
+  {
+   "center": [
+    30.0,
+    20.0,
+    0.0
+   ],
+   "area": 2400.0,
+   "thickness": 4.0
+  }
+ ],
+ "representation": "analytic",
+ "face_roles": {
+  "8": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 2400.0
+  },
+  "9": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 240.0
+  },
+  "10": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 2400.0
+  },
+  "11": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 160.0
+  },
+  "12": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 240.0
+  },
+  "13": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 160.0
+  }
+ },
+ "volume_ratio": 1.0
+}

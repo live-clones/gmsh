@@ -1,0 +1,90 @@
+{
+ "name": "saddle_k0.005",
+ "level": 1,
+ "family": "saddle",
+ "params": {
+  "a": 80,
+  "b": 80,
+  "k": 0.005
+ },
+ "thickness": [
+  4.0
+ ],
+ "junction_fillet": 0.0,
+ "free_edge_fillet": 0.0,
+ "volume": 26195.703112277737,
+ "midsurface_area": 6549.280119802771,
+ "face_role_counts": {
+  "skin": 2,
+  "edge": 4
+ },
+ "midsurface_faces": [
+  {
+   "center": [
+    40.0,
+    40.0,
+    3.4717353859355056e-17
+   ],
+   "area": 6549.280119802771,
+   "thickness": 4.0
+  }
+ ],
+ "representation": "analytic",
+ "face_roles": {
+  "8": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 6548.217097258413
+  },
+  "9": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 323.7531436180016
+  },
+  "10": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 6548.217097258414
+  },
+  "11": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 323.7531436180017
+  },
+  "12": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 323.7531436180018
+  },
+  "13": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 323.7531436180016
+  }
+ },
+ "volume_ratio": 0.9999458960791331
+}

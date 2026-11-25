@@ -1,0 +1,89 @@
+{
+ "name": "strip_w8",
+ "level": 1,
+ "family": "strip",
+ "params": {
+  "a": 100,
+  "b": 8
+ },
+ "thickness": [
+  4.0
+ ],
+ "junction_fillet": 0.0,
+ "free_edge_fillet": 0.0,
+ "volume": 3199.9999999999995,
+ "midsurface_area": 800.0,
+ "face_role_counts": {
+  "skin": 2,
+  "edge": 4
+ },
+ "midsurface_faces": [
+  {
+   "center": [
+    50.0,
+    4.0,
+    0.0
+   ],
+   "area": 800.0,
+   "thickness": 4.0
+  }
+ ],
+ "representation": "analytic",
+ "face_roles": {
+  "8": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 800.0
+  },
+  "9": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 400.0
+  },
+  "10": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 800.0
+  },
+  "11": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 32.0
+  },
+  "12": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 400.0
+  },
+  "13": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 32.0
+  }
+ },
+ "volume_ratio": 0.9999999999999999
+}

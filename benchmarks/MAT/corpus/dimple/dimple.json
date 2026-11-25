@@ -1,0 +1,297 @@
+{
+ "name": "dimple",
+ "level": 3,
+ "family": "dimple",
+ "params": {
+  "a": 80,
+  "b": 80,
+  "profile": [
+   [
+    0,
+    -8
+   ],
+   [
+    10,
+    -8
+   ],
+   [
+    20,
+    0
+   ],
+   [
+    30,
+    0
+   ]
+  ],
+  "mid_radius": 4
+ },
+ "thickness": [
+  4.0
+ ],
+ "junction_fillet": 0.0,
+ "free_edge_fillet": 0.0,
+ "volume": 26577.039988544857,
+ "midsurface_area": 6644.25999713621,
+ "face_role_counts": {
+  "skin": 18,
+  "edge": 4
+ },
+ "midsurface_faces": [
+  {
+   "center": [
+    40.00000000000001,
+    40.00000000000001,
+    0.0
+   ],
+   "area": 3572.5666117691785,
+   "thickness": 4.0
+  },
+  {
+   "center": [
+    40.0,
+    40.0,
+    -8.0
+   ],
+   "area": 232.18340392463148,
+   "thickness": 4.0
+  },
+  {
+   "center": [
+    40.0,
+    40.0,
+    -7.684732416067889
+   ],
+   "area": 167.81605860864673,
+   "thickness": 4.0
+  },
+  {
+   "center": [
+    40.0,
+    40.0,
+    -3.7289972899728996
+   ],
+   "area": 942.477796076938,
+   "thickness": 4.0
+  },
+  {
+   "center": [
+    39.99999999999999,
+    40.0,
+    -0.28753371407678996
+   ],
+   "area": 340.9266263111381,
+   "thickness": 4.0
+  },
+  {
+   "center": [
+    40.0,
+    40.0,
+    0.0
+   ],
+   "area": 1388.289500445676,
+   "thickness": 4.0
+  }
+ ],
+ "representation": "analytic",
+ "face_roles": {
+  "29": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 232.18340392463145
+  },
+  "30": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 39.200330898457004
+  },
+  "31": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 39.20033089845644
+  },
+  "32": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 431.9881505958508
+  },
+  "33": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 431.98815059585087
+  },
+  "34": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 247.4339184722397
+  },
+  "35": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 247.43391847223972
+  },
+  "36": {
+   "role": "skin",
+   "votes": {
+    "skin": 13,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 1388.289500445676
+  },
+  "37": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 3572.5666117691785
+  },
+  "38": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 320.0
+  },
+  "39": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 232.18340392463145
+  },
+  "40": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 134.12309521759903
+  },
+  "41": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 134.1230952175971
+  },
+  "42": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 510.4896454810871
+  },
+  "43": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 510.4896454810871
+  },
+  "44": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 87.98534033148918
+  },
+  "45": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 87.98534033148914
+  },
+  "46": {
+   "role": "skin",
+   "votes": {
+    "skin": 13,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 1388.289500445676
+  },
+  "47": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 3572.5666117691785
+  },
+  "48": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 320.0
+  },
+  "49": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 320.0
+  },
+  "50": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 320.0
+  }
+ },
+ "volume_ratio": 1.0000000000000007
+}

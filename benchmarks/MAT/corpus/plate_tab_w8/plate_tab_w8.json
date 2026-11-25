@@ -1,0 +1,165 @@
+{
+ "name": "plate_tab_w8",
+ "level": 3,
+ "family": "tab",
+ "params": {
+  "outline": [
+   [
+    0,
+    0,
+    0
+   ],
+   [
+    60,
+    0,
+    0
+   ],
+   [
+    60,
+    25,
+    0
+   ],
+   [
+    90,
+    25,
+    0
+   ],
+   [
+    90,
+    33,
+    0
+   ],
+   [
+    60,
+    33,
+    0
+   ],
+   [
+    60,
+    50,
+    0
+   ],
+   [
+    0,
+    50,
+    0
+   ]
+  ]
+ },
+ "thickness": [
+  4.0
+ ],
+ "junction_fillet": 0.0,
+ "free_edge_fillet": 0.0,
+ "volume": 12960.0,
+ "midsurface_area": 3240.0,
+ "face_role_counts": {
+  "skin": 2,
+  "edge": 8
+ },
+ "midsurface_faces": [
+  {
+   "center": [
+    33.33333333333333,
+    25.296296296296298,
+    0.0
+   ],
+   "area": 3240.0,
+   "thickness": 4.0
+  }
+ ],
+ "representation": "analytic",
+ "face_roles": {
+  "12": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 3240.0
+  },
+  "13": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 240.0
+  },
+  "14": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 3240.0
+  },
+  "15": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 100.0
+  },
+  "16": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 120.0
+  },
+  "17": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 32.0
+  },
+  "18": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 120.0
+  },
+  "19": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 68.0
+  },
+  "20": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 240.0
+  },
+  "21": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 200.0
+  }
+ },
+ "volume_ratio": 1.0
+}

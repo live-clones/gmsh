@@ -1,0 +1,71 @@
+{
+ "name": "pipe_R20",
+ "level": 1,
+ "family": "pipe",
+ "params": {
+  "radius": 20,
+  "length": 80
+ },
+ "thickness": [
+  4.0
+ ],
+ "junction_fillet": 0.0,
+ "free_edge_fillet": 0.0,
+ "volume": 40212.385965949376,
+ "midsurface_area": 10053.096491487338,
+ "face_role_counts": {
+  "skin": 2,
+  "edge": 2
+ },
+ "midsurface_faces": [
+  {
+   "center": [
+    7.105427357601002e-15,
+    -4.635181127810027e-16,
+    40.0
+   ],
+   "area": 10053.096491487338,
+   "thickness": 4.0
+  }
+ ],
+ "representation": "analytic",
+ "face_roles": {
+  "6": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 11058.40614063607
+  },
+  "7": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 9,
+    "fillet": 0
+   },
+   "area": 502.65482457436724
+  },
+  "8": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 9,
+    "fillet": 0
+   },
+   "area": 502.65482457436724
+  },
+  "9": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 9047.786842338603
+  }
+ },
+ "volume_ratio": 1.0000000000000004
+}

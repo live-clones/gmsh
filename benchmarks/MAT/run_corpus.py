@@ -11,8 +11,10 @@ and the verdict obtained is compared with the one recorded in corpus.json.
 The exit code is nonzero if a case fails or falls below "good".
 
 Needs gmshMat and the shared Gmsh library in the build directory, Python with
-numpy and scipy, and a C++ compiler with OpenCASCADE (OCC_ROOT, default
-/opt/homebrew/opt/opencascade) for the tessellator of the evaluator.
+numpy and scipy, and, for the tessellator of the evaluator, a C++ compiler
+(CXX, default c++) with OpenCASCADE (prefix MATGMSH_OCC_ROOT, default
+/opt/homebrew/opt/opencascade) and nlohmann/json.hpp (directory
+MATGMSH_JSON_INCLUDE_DIR, default /opt/homebrew/include).
 
 The fusion and evaluation scripts are unmodified copies; they expect the
 directory layout of their original repository, which is recreated under

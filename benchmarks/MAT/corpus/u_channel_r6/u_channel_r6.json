@@ -1,0 +1,287 @@
+{
+ "name": "u_channel_r6",
+ "level": 1,
+ "family": "u_channel",
+ "params": {
+  "points": [
+   [
+    0,
+    40
+   ],
+   [
+    0,
+    0
+   ],
+   [
+    50,
+    0
+   ],
+   [
+    50,
+    40
+   ]
+  ],
+  "mid_radius": 6,
+  "width": 50
+ },
+ "thickness": [
+  4.0
+ ],
+ "junction_fillet": 0.0,
+ "free_edge_fillet": 0.0,
+ "volume": 24969.911183724096,
+ "midsurface_area": 6242.477796076938,
+ "face_role_counts": {
+  "skin": 10,
+  "edge": 12
+ },
+ "midsurface_faces": [
+  {
+   "center": [
+    0.0,
+    25.0,
+    23.0
+   ],
+   "area": 1700.0,
+   "thickness": 4.0
+  },
+  {
+   "center": [
+    2.180281365794511,
+    25.0,
+    2.180281365794511
+   ],
+   "area": 471.23889803846896,
+   "thickness": 4.0
+  },
+  {
+   "center": [
+    25.0,
+    25.0,
+    0.0
+   ],
+   "area": 1900.0,
+   "thickness": 4.0
+  },
+  {
+   "center": [
+    47.819718634205486,
+    25.0,
+    2.18028136579451
+   ],
+   "area": 471.23889803846896,
+   "thickness": 4.0
+  },
+  {
+   "center": [
+    50.0,
+    25.0,
+    23.0
+   ],
+   "area": 1700.0,
+   "thickness": 4.0
+  }
+ ],
+ "representation": "analytic",
+ "face_roles": {
+  "28": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 1700.0
+  },
+  "29": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 314.1592653589793
+  },
+  "30": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 1900.0
+  },
+  "31": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 314.1592653589793
+  },
+  "32": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 1700.0
+  },
+  "33": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 200.0
+  },
+  "34": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 1700.0
+  },
+  "35": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 628.3185307179587
+  },
+  "36": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 1900.0
+  },
+  "37": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 628.3185307179587
+  },
+  "38": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 1700.0
+  },
+  "39": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 136.00000000000003
+  },
+  "40": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 37.69911182556807
+  },
+  "41": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 151.99999999999994
+  },
+  "42": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 37.69911182556825
+  },
+  "43": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 136.0
+  },
+  "44": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 200.0
+  },
+  "45": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 136.0
+  },
+  "46": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 37.69911182556825
+  },
+  "47": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 151.99999999999994
+  },
+  "48": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 37.69911182556807
+  },
+  "49": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 136.00000000000003
+  }
+ },
+ "volume_ratio": 0.9999999999766257
+}

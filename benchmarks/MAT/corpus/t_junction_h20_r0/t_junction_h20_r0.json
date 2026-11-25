@@ -1,0 +1,148 @@
+{
+ "name": "t_junction_h20_r0",
+ "level": 2,
+ "family": "t_junction",
+ "params": {
+  "flange": [
+   80,
+   60
+  ],
+  "rib_height": 20,
+  "fillet": 0
+ },
+ "thickness": [
+  4.0,
+  4.0
+ ],
+ "junction_fillet": 0.0,
+ "free_edge_fillet": 0.0,
+ "volume": 23520.0,
+ "midsurface_area": 5999.999999999999,
+ "face_role_counts": {
+  "skin": 5,
+  "edge": 5
+ },
+ "midsurface_faces": [
+  {
+   "center": [
+    0.0,
+    30.0,
+    10.0
+   ],
+   "area": 1199.9999999999998,
+   "thickness": 4.0
+  },
+  {
+   "center": [
+    -20.0,
+    29.999999999999993,
+    0.0
+   ],
+   "area": 2399.9999999999995,
+   "thickness": 4.0
+  },
+  {
+   "center": [
+    20.0,
+    29.999999999999993,
+    0.0
+   ],
+   "area": 2399.9999999999995,
+   "thickness": 4.0
+  }
+ ],
+ "representation": "analytic",
+ "face_roles": {
+  "1": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 4799.999999999999
+  },
+  "4": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 240.0
+  },
+  "6": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 240.0
+  },
+  "11": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 240.0
+  },
+  "15": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 15,
+    "fillet": 0
+   },
+   "area": 392.0
+  },
+  "16": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 15,
+    "fillet": 0
+   },
+   "area": 392.0
+  },
+  "17": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 2280.0
+  },
+  "18": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 2280.0
+  },
+  "19": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 1080.0
+  },
+  "20": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 1080.0
+  }
+ },
+ "volume_ratio": 0.9800000000000001
+}

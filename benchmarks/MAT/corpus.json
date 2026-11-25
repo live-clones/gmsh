@@ -1,0 +1,3208 @@
+{
+ "description": "Corpus cases whose mid-surface is graded good or perfect with the chain of this tree: gmshMat --raw tet --filter collapse, fusion with the shipped face-pairing walls (fuse.py --gentle --part), evaluator projected_quality.measure(.., 4000, 'surface', True).",
+ "measured": {
+  "date": "2026-11-25",
+  "machine": "dragon3 (Linux, GCC 14.3)",
+  "gmsh_commit": "3141a404f",
+  "mesh": "surface mesh of size thickness/10, generated once per case and shared with the Python prototype of the same MAT",
+  "evaluator_sha256": "64c437748f8d5930d9ba4d086c8cc5dfa150c1020ab3aad8512c15a4489f071a",
+  "replay": "2026-11-26, same machine: run_corpus.py, which meshes the skin from the STEP file, returns the same scores to the last digit on the 71 cases"
+ },
+ "units": "missing_area and off_truth_area in thickness^2, worst_distance in thickness",
+ "counts": {
+  "perfect": 59,
+  "good": 12,
+  "not_included": 149
+ },
+ "cases": [
+  {
+   "name": "bend_135deg_r10",
+   "level": 1,
+   "family": "bend",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.042733850381614764,
+   "mat": {
+    "certified": true,
+    "sites": 44446,
+    "tetrahedra": 301801,
+    "polygons": 89738,
+    "kept_polygons": 65245,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "622cdfe3daa3beff5d0f81ed83c5643497e22e4d62b2b29178991eb64ebb97c2",
+    "truth": "203b321112546fc89e620b2180c92da9a1e8e39686be1c5380cb4dc4f4a20fb8",
+    "metadata": "c7d5d494dc49396e770aab3bd08e7c920f6386bf5541edc953fbea596bdc7c50",
+    "walls": "7c378586bd4493d9deaf4c9393498d99dd6fd4ba6e8675110556fa0f5315274c"
+   }
+  },
+  {
+   "name": "bend_135deg_r4",
+   "level": 1,
+   "family": "bend",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.05000000000014426,
+   "mat": {
+    "certified": true,
+    "sites": 53954,
+    "tetrahedra": 298406,
+    "polygons": 109147,
+    "kept_polygons": 80667,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "6be1cfd027a20aa3e56bb099cd3fe4f7bc4b194a610e162433572bcee0cfbd7e",
+    "truth": "cf1dac1c97df6a6d607da9fb8545c6495b7ade9f9ef068ff27be667aa659a114",
+    "metadata": "c14664071da8815dd2508687aebb7421bc83e60f50db79cf783beb5e768c4c40",
+    "walls": "b79f0c05b8640e76a541f0f90abaf7f418f01b9df6bfa2242b3c40930a46012d"
+   }
+  },
+  {
+   "name": "bend_45deg_r10",
+   "level": 1,
+   "family": "bend",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.046033092010147124,
+   "mat": {
+    "certified": true,
+    "sites": 60010,
+    "tetrahedra": 324856,
+    "polygons": 119757,
+    "kept_polygons": 89521,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "b38b5018680f306848aaa0e27da8a5034658ffd490a69afbe3f2924286ede88d",
+    "truth": "73c5195eab8830d608dd71f1a0b21c6c3e19fa027a59cef376a711036b9cfc14",
+    "metadata": "6602b1fd0b80f75defbc235c7baed7dcdc3ed3ea60dd863f06a598987a083daf",
+    "walls": "6a684bcd7d1b3a6c167e7687c009c72b97d53e1615f8652f8c5c03324e7652dd"
+   }
+  },
+  {
+   "name": "bend_45deg_r4",
+   "level": 1,
+   "family": "bend",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.05000000000014471,
+   "mat": {
+    "certified": true,
+    "sites": 60107,
+    "tetrahedra": 310487,
+    "polygons": 121769,
+    "kept_polygons": 91444,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "f9228f7ecabf04f93c82c13e5e2868e100e10aabf8c148302221dabc9c1c18e5",
+    "truth": "b9490211387a8cbf595ddfb28f6046c1b47c26a1d2ae55b48c061903a3720774",
+    "metadata": "4c2bd0a3de4322e247850171e44a4be54a2314db3feb579b374f0fc1999721c2",
+    "walls": "b81cafed22b43ec419afb2a8805082e644a85f8256fc993fa0d34c28c3a60718"
+   }
+  },
+  {
+   "name": "bend_90deg_r10",
+   "level": 1,
+   "family": "bend",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.045281255491217115,
+   "mat": {
+    "certified": true,
+    "sites": 57516,
+    "tetrahedra": 343649,
+    "polygons": 116165,
+    "kept_polygons": 86025,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "2b53e84964fd33cb0f87571b8f7dc437a964b769dbfe89e9edac68eae6b0c9b2",
+    "truth": "52024c95319d5c27f5f68e452af1b8840718f518f3f407c29662b11e9b7174b0",
+    "metadata": "3649d7aa403d29ec299a499d3b7a23218623f40ef75536862c60f168094ae6c9",
+    "walls": "a007ebfe237f33486608acf6e5c12a37f76a5888bf63d44c9ede06aa803ad620"
+   }
+  },
+  {
+   "name": "bend_90deg_r4",
+   "level": 1,
+   "family": "bend",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.04527713552643065,
+   "mat": {
+    "certified": true,
+    "sites": 59083,
+    "tetrahedra": 314460,
+    "polygons": 119093,
+    "kept_polygons": 88776,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "8b09e110f15d99e59fd39caf58db2c40724a309945a6f4dbfa09f8df5f8a8b0f",
+    "truth": "32d90ea2fa42bed60fbabc6525a7580e7592ac0236bfe50a5a96aba205a5f2f2",
+    "metadata": "5f9d7460ddf49520b797e5eac91a7bbb685999ff632b702441c572a40a1c49fb",
+    "walls": "f8d63196eaedbba8714691e761193dde6db8ffbb6490b2b7b208a090be6c9641"
+   }
+  },
+  {
+   "name": "cone_panel",
+   "level": 1,
+   "family": "cone_panel",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.048988864386205394,
+   "mat": {
+    "certified": true,
+    "sites": 56353,
+    "tetrahedra": 750692,
+    "polygons": 119214,
+    "kept_polygons": 91457,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "ad8bbc6eda2efd2323ae69af54149676f83e7c4a2b2b03f632a1bf57035de1f7",
+    "truth": "61ebe03f805c08ed907d1f72f5122f67cacae8ed1420493a7ed524b848d07110",
+    "metadata": "ec4131e9a2e87be6c992d339988557bdd13f93895c79f26540c9c5ea4ba26cfe",
+    "walls": "f3a0400bb319cbf2daefa6f0fadcc8a40eb18c89caefc2642688eb400dceaf9e"
+   }
+  },
+  {
+   "name": "corrugated",
+   "level": 1,
+   "family": "corrugated",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.04341555383179179,
+   "mat": {
+    "certified": true,
+    "sites": 103221,
+    "tetrahedra": 585808,
+    "polygons": 211483,
+    "kept_polygons": 170901,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "27dc4b7e15d15197ce901fa375143833ffdf645f743b10b89298f9bcd1bf78ea",
+    "truth": "7b217388641b6d3deb3272bef09ab5e31c5abbfada16a94daf4f53e27c7ddcf2",
+    "metadata": "b59008ba0a036b885bb0e0c4db94981b8edd5a9565a68efdd57e298d9006545a",
+    "walls": "cfa03c99f399e1892580d256a1a5102f15c2fe03da76c729a44db93332271cd8"
+   }
+  },
+  {
+   "name": "cylinder_panel_R100_60deg",
+   "level": 1,
+   "family": "cylinder_panel",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.05000793657638918,
+   "mat": {
+    "certified": true,
+    "sites": 101148,
+    "tetrahedra": 1253654,
+    "polygons": 202814,
+    "kept_polygons": 163604,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "100ce552311b560637384c9148e813a5a2965fbab8ce188f176aee6d14ad072d",
+    "truth": "51983bda7a062c184d4267f1c5876197465bc7ffdd3c98ab953e3da2b155a7cb",
+    "metadata": "54354d1760c0749fac6ec018d7cdaf0e8dfd19cd39ed189b850713cd1c21f3f7",
+    "walls": "4f1c5ae082d1b3f91e2501b74339a9249b8200911658fc66b3e7986058f32941"
+   }
+  },
+  {
+   "name": "cylinder_panel_R30_90deg",
+   "level": 1,
+   "family": "cylinder_panel",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.04769172180796186,
+   "mat": {
+    "certified": true,
+    "sites": 47421,
+    "tetrahedra": 545371,
+    "polygons": 95404,
+    "kept_polygons": 70368,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "733c97f3ea9bcfefedc6b9cf85f2595e31bc3b3bb8dd99eb36d72d6d83a5ad37",
+    "truth": "75dd1b98a6543ec24413d9c0e8f3e0ad315df3ab0520d19e18455756a3b10405",
+    "metadata": "78fc1b699fac4513ad9ad724026ff8737c447bd615a61a1e7309c1c6f9ac8531",
+    "walls": "14eed855dd325a69b0eb10934ec6b17fcdc2264682447769c22ceff1aae48001"
+   }
+  },
+  {
+   "name": "cylinder_panel_R60_120deg",
+   "level": 1,
+   "family": "cylinder_panel",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.04684962943500098,
+   "mat": {
+    "certified": true,
+    "sites": 120439,
+    "tetrahedra": 1531779,
+    "polygons": 241805,
+    "kept_polygons": 197351,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "28f8dd6efbb73bc999178e366fcccfe08a0c11194e301178694db359e5f8b11a",
+    "truth": "cfa104cdc2f3bd2b666cb81ed4c4dbe828101ae174c2af53f7f4c47ea27e029c",
+    "metadata": "dc5cceacba1c9ccafab949d6476a822ec37231eb5cc501a6a42bb82c32987234",
+    "walls": "3f71ba88d5e4206b429747eabe5fdc8e551d0181f2ea99722424fc2f1da3e790"
+   }
+  },
+  {
+   "name": "elbow_R40_r12",
+   "level": 1,
+   "family": "elbow",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.04733823740974079,
+   "mat": {
+    "certified": true,
+    "sites": 74851,
+    "tetrahedra": 755259,
+    "polygons": 156763,
+    "kept_polygons": 138384,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "a5cd6ec9732645fba38d45c0e8f59d59d38a5980280d7963538bec59220c329f",
+    "truth": "0d4fff13c93de6a41ea616cf76bbe28fc48fbeec42529a80f80f2e4ba6336e05",
+    "metadata": "c21acb5732578429c7d8d82ea08508773e22a36735aacad3ef6f85c69fc40374",
+    "walls": "6fd78efc844f8bcc0894ee950bb4b83c6b80942987ed1b8db62f7ad5d92ecb7d"
+   }
+  },
+  {
+   "name": "hat_r6",
+   "level": 1,
+   "family": "hat",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.045303368932721015,
+   "mat": {
+    "certified": true,
+    "sites": 105071,
+    "tetrahedra": 613886,
+    "polygons": 212998,
+    "kept_polygons": 168308,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "210b7bc99867cfaffe929e45c417f54ec48c84ef44506192a9cc0ee86d927679",
+    "truth": "b7063db0bfbe9bd26ee3787a8a1763e8797aa80ca8518edecc41cd57f98d096b",
+    "metadata": "e94304c1b47c3df488cd9f6b8a7de3239c9e596dce41e138130d918b8f4a323c",
+    "walls": "d60afb10c71bc74eb205a0890eefea71f0a7850ba8145cd29fbab9156fae2763"
+   }
+  },
+  {
+   "name": "hem_gap0.4",
+   "level": 1,
+   "family": "hem",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.04452181278719858,
+   "mat": {
+    "certified": true,
+    "sites": 76257,
+    "tetrahedra": 397311,
+    "polygons": 154845,
+    "kept_polygons": 121192,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "f7497d582daf888668bc54880d3cdec21613cf839e5886e510150bb639180401",
+    "truth": "dd7f7c2e4c6f118629253b1c47ae8f017987489a04b344ca76cd8053b8ef31f0",
+    "metadata": "fe85ec34c04f790695ed8b7f05e6fce3633aafa0ed15fdebee1d97194357f274",
+    "walls": "64964104e3a8240919f393fd9bf24cf732404b6eb619de1ce5717bcc8a884688"
+   }
+  },
+  {
+   "name": "hem_gap1.0",
+   "level": 1,
+   "family": "hem",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.0441961056186834,
+   "mat": {
+    "certified": true,
+    "sites": 75890,
+    "tetrahedra": 394672,
+    "polygons": 151782,
+    "kept_polygons": 118489,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "2444fb6a4a7659d14ccea659694d38d4faf79c2b612c6c5e696f8cfa7e01ea3d",
+    "truth": "a6cef3c5681f0edcf099139d7a2bf5af9fd5247e375885596fa4d91bbf6b777d",
+    "metadata": "53edb430d450fdd2835211d237cd39d3959dcc2f4cc7ef2ac564ebfafa5537fc",
+    "walls": "8a975dcaf29fdf4336aa9e6d45c1b3891511854388baa5314943bc281ffdeedb"
+   }
+  },
+  {
+   "name": "hem_gap2.0",
+   "level": 1,
+   "family": "hem",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.04560401876469847,
+   "mat": {
+    "certified": true,
+    "sites": 76782,
+    "tetrahedra": 392810,
+    "polygons": 155199,
+    "kept_polygons": 121473,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "8a5451b5c4a1636219c1f99c28d02231f208da9decea9e3a844e71cd884818e9",
+    "truth": "57ab4ae69c4c1ca041853ed01f7644a6026ad327cb70f2ef2782f2ab868111f8",
+    "metadata": "17202feafd4078cc2e79e617dbba5b260331f3687de1cf67e3f40a4b864a4975",
+    "walls": "4cd74dfaca05d6bfce8d4519468e13b12a1eee7ee006fd3a8e909c156c28d405"
+   }
+  },
+  {
+   "name": "joggle_h4",
+   "level": 1,
+   "family": "joggle",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.04796712455622821,
+   "mat": {
+    "certified": true,
+    "sites": 78248,
+    "tetrahedra": 396855,
+    "polygons": 156837,
+    "kept_polygons": 122607,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "f99c80c714b5656910b76eefc7650156a39428b2da41f7bc178051f5b71526e2",
+    "truth": "22ff93314aff5f3f072a4bcc55b6477b8471e81c06a510d23cdda16d39c8ea11",
+    "metadata": "9543cf01806dc50767c8cbc25425043def1796d31f148dfdae127556ad857b9a",
+    "walls": "14e947ee66acc36649251b2bcd51dcf93c60f2bcea5cd86e44b999af3317181c"
+   }
+  },
+  {
+   "name": "joggle_h8",
+   "level": 1,
+   "family": "joggle",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.04796712455625267,
+   "mat": {
+    "certified": true,
+    "sites": 82599,
+    "tetrahedra": 425039,
+    "polygons": 165907,
+    "kept_polygons": 130200,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "710b941adaef01fd5497a6afda3e95cbba3fdc7ac40db2fc0070d84272a59efd",
+    "truth": "4ba4bd4c531ea0ea32f9a40c804b324f5dd49d9b0bd2867b3240f1b700995db9",
+    "metadata": "0057471b2be584f4997c796701a34f1383c99803678ae6634e4924e8ff138d1e",
+    "walls": "311e0d1a78fda29b23100b8ca560026294b612ef78e5a1a0304dadfc6257faa9"
+   }
+  },
+  {
+   "name": "omega_r6",
+   "level": 1,
+   "family": "omega",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.044087691441464585,
+   "mat": {
+    "certified": true,
+    "sites": 105024,
+    "tetrahedra": 597238,
+    "polygons": 213905,
+    "kept_polygons": 171045,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "59fbd90b66568f816b8fc6e37a1568e3cedd5281be66658ead54c41389f62064",
+    "truth": "062aed4d9d5f4a53fa44cda2a97c06320fc793b3239aec1d8cf7327e9a46d0fb",
+    "metadata": "f84ac9ce5fcae5a4550ca86f1d5c20059dc3ccdc24da532abddb21905a7a5d69",
+    "walls": "6f428d14f29a0e2e336cda3fe5c9b6422b71bfe519d95d03e49fe215d2960aa6"
+   }
+  },
+  {
+   "name": "pipe_R20",
+   "level": 1,
+   "family": "pipe",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.04526156771479507,
+   "mat": {
+    "certified": true,
+    "sites": 153252,
+    "tetrahedra": 2002073,
+    "polygons": 307404,
+    "kept_polygons": 276903,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "ddb09982cc255b144584e98d6b00204680b851630c8ab3cba906ea3023149974",
+    "truth": "0ff14f27d7fa8195f260caccdea71300caae748daeaf57df53a5f5a8cb9b61cc",
+    "metadata": "2962348e5a5f92833a7f51e53f322c1b3986963505d12c6455484f4674523318",
+    "walls": "b2d4c05a648341de07bdacc82fa28be5559ae2a14697cbe3ae9db31cb114ffbf"
+   }
+  },
+  {
+   "name": "plate_120x30",
+   "level": 1,
+   "family": "plate",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.04515099192309847,
+   "mat": {
+    "certified": true,
+    "sites": 61315,
+    "tetrahedra": 192521,
+    "polygons": 131209,
+    "kept_polygons": 96017,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "98669a93358d6dae324dbaeab4536407c9ec29eb1d67750495c0f0001b56147e",
+    "truth": "ba8f2299ff8465e868c13e46ef0dcd7b13517b3d33b6f2ba9c0f73f4112c9dbe",
+    "metadata": "90ba5a0b7b7cf46808711d164159c86df3c1446bd0309272c79b3c1312ded655",
+    "walls": "ec9796ba6ef05bb7b95a356f76e9268eeb62840b97b800d5187da7d6629b7cea"
+   }
+  },
+  {
+   "name": "plate_200x200",
+   "level": 1,
+   "family": "plate",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.04489248022771427,
+   "mat": {
+    "certified": true,
+    "sites": 602292,
+    "tetrahedra": 1809459,
+    "polygons": 1207170,
+    "kept_polygons": 1109905,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "0fc529f7eeb0e30568866651ce9228e9e60c6e54c2cc4dba6adea20ab54ea491",
+    "truth": "e1108586b2a307f4a418eab0a28f9ccd93e94d1be5d52764c74318822d58c33c",
+    "metadata": "5abff0cd26bfb2bb7dc93320a5eb399e469150eae8999bb20a151f50f9852a36",
+    "walls": "9d974018b1b129be01d26cf944964460007dc67764d2b01a05b6995d074cffd6"
+   }
+  },
+  {
+   "name": "plate_60x40",
+   "level": 1,
+   "family": "plate",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.04525097208728889,
+   "mat": {
+    "certified": true,
+    "sites": 40870,
+    "tetrahedra": 127428,
+    "polygons": 86561,
+    "kept_polygons": 63243,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "0afdf34e7463b932e19bc194fea89dd0f9f6eeb7c6c1ab19fadd137f128dc587",
+    "truth": "ed7fe52a3336917252debce2dbfbd8d5375086ce0fa9594815239405eba029b7",
+    "metadata": "eda4c88b7a36d880d82238e328f2f86757e0332af43b33f59e4689df0112ccd3",
+    "walls": "4d9198b35e04255d75376e55233abd5bafb63826b41fbc6317e6845b028c1c56"
+   }
+  },
+  {
+   "name": "plate_hole_r10",
+   "level": 1,
+   "family": "plate_hole",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.045911011988601536,
+   "mat": {
+    "certified": true,
+    "sites": 75663,
+    "tetrahedra": 246439,
+    "polygons": 152138,
+    "kept_polygons": 110907,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "8067c4394b99e2cbf21a3a5046189e308d9c2d2dcdbbb9cb90a96ccf6178bb79",
+    "truth": "ebcc4da5b60637f765754c22d24a6c3ca362a34605a4162b89e520c213c00476",
+    "metadata": "fa4d76fc681d980d29be10633d91d130a1bbba416342e707d1a3f3acffdc9842",
+    "walls": "0e359790a3ca7f18ed071481ed37ad530c449da6a31826a6f6f7bcc950f0c260"
+   }
+  },
+  {
+   "name": "plate_hole_r4",
+   "level": 1,
+   "family": "plate_hole",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.046832267579201246,
+   "mat": {
+    "certified": true,
+    "sites": 78278,
+    "tetrahedra": 242250,
+    "polygons": 157373,
+    "kept_polygons": 120478,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "5d6813112fd51ca1485a2dcf446ba0cbf6c9118da1e0204a6ffe8493fa5193f5",
+    "truth": "33ca1dc92a53c2cfeb011ee65370021a608a8d46546966e1c96d07e92a3a7b19",
+    "metadata": "f36156436c63d61ace225e1a68f03295e4bc78a1234d6e4f9874739d2ecc4637",
+    "walls": "ecba189b6d80ff64c42f859f39a33211d469b07851bef140a76d83d3dd29256a"
+   }
+  },
+  {
+   "name": "plate_holes_3",
+   "level": 1,
+   "family": "plate_hole",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.047292649466875565,
+   "mat": {
+    "certified": true,
+    "sites": 112657,
+    "tetrahedra": 376729,
+    "polygons": 228212,
+    "kept_polygons": 168725,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "98449039f72fa4bc0ce1473522a381be512cb2d7ebef2dd629ff405dc0ff79f4",
+    "truth": "28e9a2b968a3d0bf2c62b3dbbe5078a6bea2e203a2176bc9ef3d9b20d01f13a0",
+    "metadata": "912b7248497ad59fe4f81ff5a8c0d3aad68f7b960bdf5381c67214eb45be658d",
+    "walls": "3c4796fd33590ebe0e89b520ef95983b42215f67308d218113fdfa62df1a09dc"
+   }
+  },
+  {
+   "name": "saddle_k0.005",
+   "level": 1,
+   "family": "saddle",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.04718224564518683,
+   "mat": {
+    "certified": true,
+    "sites": 104939,
+    "tetrahedra": 988161,
+    "polygons": 223440,
+    "kept_polygons": 185305,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "e406151714f87d2fe6e1ddad05844833a3f5643669e415d86f844d153394fdff",
+    "truth": "08427fac08bef3033cda214ccc17c78165c784976b68f29be1e90d4e97aa2a03",
+    "metadata": "64d2d15814d86704ce42c2aedc2e5f0f181a187a0201790d7c7163ae7b9e4268",
+    "walls": "02ef99ff938325e8881befce3193bf9bfcdf46ec9ee6566b60fbc233b4e39f5f"
+   }
+  },
+  {
+   "name": "saddle_k0.01",
+   "level": 1,
+   "family": "saddle",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.04668669397230114,
+   "mat": {
+    "certified": true,
+    "sites": 111935,
+    "tetrahedra": 1124648,
+    "polygons": 236811,
+    "kept_polygons": 197263,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "6e95591131e0c370d8044f6b89e1aaab79b73569272102156adb2f50a8c4f341",
+    "truth": "7a5680c7b8288b0d04c6e77928e651b6d883956a4606be81027f9fbe3157741a",
+    "metadata": "e96ae00b6be6c681c505166194b71b7f947232273f12dbb7e1782b6c846b364d",
+    "walls": "33e2a62d386fe6380ac193cf397b4150fb50a2cdbb220d4bfffee897e3904a09"
+   }
+  },
+  {
+   "name": "sphere_cap_R50_40deg",
+   "level": 1,
+   "family": "sphere_cap",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.045511409714373986,
+   "mat": {
+    "certified": true,
+    "sites": 60656,
+    "tetrahedra": 268634,
+    "polygons": 124893,
+    "kept_polygons": 100752,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "8b87b17e19050bd9148d9b6618c099f1ea81de20423e9272e6f365f812addc60",
+    "truth": "cb02241d7c63920710fbc5020b635afeac6d7fea77d92e97ad34cc080ad3b500",
+    "metadata": "ff7e4db8b9108420e0738a0ecc50de2a8e88a6002ac7a8a2d6fcf3cea5865e6c",
+    "walls": "69dbcf110fd09d4637d22cf155eb0f281231f6821514efd9e569cbcca5226222"
+   }
+  },
+  {
+   "name": "sphere_cap_R80_25deg",
+   "level": 1,
+   "family": "sphere_cap",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.04610999123856864,
+   "mat": {
+    "certified": true,
+    "sites": 62305,
+    "tetrahedra": 279073,
+    "polygons": 128695,
+    "kept_polygons": 103227,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "2a39816cef7b89d892ad4cb5eb88abaec13336bdff0e538e7178e037688fadc5",
+    "truth": "5f197e8e784cf5e54baeac64af82bceae138960601bedb04c99e06984676f150",
+    "metadata": "96985ab102fe2936c43b733ff06c0c07ddfbe67efd7082c5e2e8fc9e315ef57d",
+    "walls": "da2fd301986e2e30d7ecfe0ce1e6d266de41a462017c671d66064ba630758c99"
+   }
+  },
+  {
+   "name": "strip_w12",
+   "level": 1,
+   "family": "strip",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.042774896285371684,
+   "mat": {
+    "certified": true,
+    "sites": 24329,
+    "tetrahedra": 72745,
+    "polygons": 48419,
+    "kept_polygons": 22580,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "d3a06383964acd348bdd5302e2c4504a120e406c6aa0794a3aa57da2aa141ad4",
+    "truth": "da8844c8e8d6193972028c7f850655cba2fc238755850d744e9330fcfb1523f2",
+    "metadata": "6da9e4a6c9a0d242fd07aa129a229b6dfcd094e8423958ec2d1ceb3eca3faeea",
+    "walls": "442a5e9c68b7aec59ef39cce92a380a9ca3e229af3238710acd68c6441a3ea5b"
+   }
+  },
+  {
+   "name": "strip_w20",
+   "level": 1,
+   "family": "strip",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.04643914201827274,
+   "mat": {
+    "certified": true,
+    "sites": 36246,
+    "tetrahedra": 108764,
+    "polygons": 72521,
+    "kept_polygons": 44643,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "5d2be9bb19f2fd0d6dd45a8d2ae2a499061a06e11f1670d6cf425ef866906c60",
+    "truth": "fe4261e50fc736147f684bd4cdaf31d20fb20e4da701029c5f0d4f9b94aa228a",
+    "metadata": "9e5ae88afaf01892ecb7073de99c6aac0168d3179fa6cdc5879f314780a5c81b",
+    "walls": "81ccac9f37d3e44edbdca3e2b1ac233866d66797453b70f7f1af528ec264924f"
+   }
+  },
+  {
+   "name": "strip_w8",
+   "level": 1,
+   "family": "strip",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.04468374539624849,
+   "mat": {
+    "certified": true,
+    "sites": 18076,
+    "tetrahedra": 56163,
+    "polygons": 38090,
+    "kept_polygons": 12904,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "c37e43836b01e3e6edf0879b9888e95eb187fe277162b09f23ea8fa31aa72260",
+    "truth": "6cd32b6e3b9905b56024aa5d38ecca88461c50626d8a993cd153a7a60070031d",
+    "metadata": "60ca0745dd5e12ca25685b7f291de9cd83430a64f78c3b0ca4dffed20a48969e",
+    "walls": "7f914ac53de760af57f95906739f04cf14dd3ed477fa90e61d406467bf7edd87"
+   }
+  },
+  {
+   "name": "tray_rb10_rc20",
+   "level": 1,
+   "family": "tray",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.04524897980096116,
+   "mat": {
+    "certified": true,
+    "sites": 221919,
+    "tetrahedra": 1509474,
+    "polygons": 454284,
+    "kept_polygons": 417667,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "723cd38be63f29b69b1bbe002fba730e14f5804626b546b0289bb6e12e144275",
+    "truth": "831723ca406112f0bd91769713a25b895884c4bd2fd3b4461591d80dce225792",
+    "metadata": "61d3b6b2654c741dd9d372fe8e138026f550fb7e0378b33a8d2f7dc414f565b5",
+    "walls": "edf48856a8846871352852ce4b4fd54284a20d538fb91a3ba292ba032367ab20"
+   }
+  },
+  {
+   "name": "tray_rb6_rc10",
+   "level": 1,
+   "family": "tray",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.045382017298611924,
+   "mat": {
+    "certified": true,
+    "sites": 240344,
+    "tetrahedra": 1489880,
+    "polygons": 493584,
+    "kept_polygons": 454948,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "19f096b3e3f445dce46022571c54baa109ddfc10a381e7ba08208c2e701edd49",
+    "truth": "2a6e6c741691ed07ca30cb0cf87d69a67f8bc7a86fe7d99f8a05506847b97251",
+    "metadata": "38995860a202d08abd34c039c7e1d55dfba99c9de555da240d643ba2ed00f32a",
+    "walls": "38fc03f9dddbde65f2b920d3f4f6df351d21438cb758e0a7e35c90546def0746"
+   }
+  },
+  {
+   "name": "tube_40x30_r6",
+   "level": 1,
+   "family": "tube",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.0472996394791265,
+   "mat": {
+    "certified": true,
+    "sites": 195603,
+    "tetrahedra": 1312105,
+    "polygons": 400634,
+    "kept_polygons": 368124,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "c68b8f82f6822577ac71b42bf1059c53a969adce403eb0531e70e3c7e17016f3",
+    "truth": "46cfa5dc472ee88b77d29f82630a707a72c21887d1bce9fac9d9a54a1903b27a",
+    "metadata": "1929d74a721597a92045274972fb72489a9cf2ccd1738df9888c25db7ebc980d",
+    "walls": "e44c2fed81c81e56628fa87061ada22b143bc15027fdfbce34d936ece8126268"
+   }
+  },
+  {
+   "name": "tube_60x20_r8",
+   "level": 1,
+   "family": "tube",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.04518661691021312,
+   "mat": {
+    "certified": true,
+    "sites": 221400,
+    "tetrahedra": 1656866,
+    "polygons": 451668,
+    "kept_polygons": 414822,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "16503557f2f3ef245296f4808840eeb8ed113957d5791427d3b0cd6a0720a78d",
+    "truth": "aed9d857085005898d30c76475093280eb16b52449cd06bc12aad8566fab0571",
+    "metadata": "d0b8deea2bdff5b8cf12c5044ddc1e4b56a6a6a57932e99daccab80746f7185b",
+    "walls": "9c19aa8bdbad0a04d68452f4eca707735a0a56a8b438e10137ad94af0666a4fa"
+   }
+  },
+  {
+   "name": "u_channel_narrow",
+   "level": 1,
+   "family": "u_channel",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.04514199782710619,
+   "mat": {
+    "certified": true,
+    "sites": 86104,
+    "tetrahedra": 519748,
+    "polygons": 174354,
+    "kept_polygons": 138769,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "045b736612d14bb4fb710e688e4b3f356c2f5f545989052420d28eb96def6c8c",
+    "truth": "4cdcc93cea64939bfb3e29cb26be17df72c9c2d3832ede41a241a38da151eb42",
+    "metadata": "cb4cec21bea00729615143ae6d264b81fa838e042ce93117e233328164745251",
+    "walls": "4b2cc9ef7da80ea05f1321f9d109f329735532e4e2c4af2a0ffb0e3bc78720da"
+   }
+  },
+  {
+   "name": "u_channel_r6",
+   "level": 1,
+   "family": "u_channel",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.0447966499364762,
+   "mat": {
+    "certified": true,
+    "sites": 100895,
+    "tetrahedra": 534153,
+    "polygons": 205197,
+    "kept_polygons": 162962,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "33c96de77fc833ceb8013f9762f446f090fc21e77f0ae4fa313f2b116a7cd4b5",
+    "truth": "684de5016e9948eab85a4244ab9b835b7cc6db0c85225d0557b4e333a5a0319f",
+    "metadata": "81d10379fe1b17c34deafce7aacfb8fb6ddc85227430faf2ee3e5e19dc8ddd0c",
+    "walls": "64d973e9cc8de4fadc9b35330b8cedb5d9a46b47628095874bed5cb3bed4aa4a"
+   }
+  },
+  {
+   "name": "z_section_r6",
+   "level": 1,
+   "family": "z_section",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.04529791207316498,
+   "mat": {
+    "certified": true,
+    "sites": 77846,
+    "tetrahedra": 443672,
+    "polygons": 161241,
+    "kept_polygons": 125930,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "c2ac13393db88684f5c7489bf5ef196e173ac4566aec8df00149fa0694d68a19",
+    "truth": "30b46af1bad33c8a79881d8e3d914c5777a90a9476cc7cff467ae94198f3e7e3",
+    "metadata": "1a694b47f01df82646e09a8e0a54d6b17e96443c0005a0e04250f901d72f600a",
+    "walls": "f852c38ca5630ffd14e1799b7a7682013a50e96133ace43286f631827c58502b"
+   }
+  },
+  {
+   "name": "pan_flange_r0",
+   "level": 2,
+   "family": "pan_flange",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.12390272056976495,
+   "off_truth_area": 0.0,
+   "interior_coverage": 0.9998886253049847,
+   "worst_distance": 0.08648026374904438,
+   "mat": {
+    "certified": true,
+    "sites": 273650,
+    "tetrahedra": 1567635,
+    "polygons": 566434,
+    "kept_polygons": 496733,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "8611847e51ac6bc568a0d9c808b7f1b3d0e0cf39d3255956fa1d404ef1be65a2",
+    "truth": "df4dda95586c7019e849b0b938d5dc61c29b180f2ea64256661b6ec18ae8175e",
+    "metadata": "bb4def2dbdc71c9072772dd6f9c563b3023f33089cea8204f8ab81d76db1caab",
+    "walls": "1d3c143bc06245e09a52513c739c2f0d5550a50a7a71a4e19628e6661ba9d3aa"
+   }
+  },
+  {
+   "name": "pan_flange_r3",
+   "level": 2,
+   "family": "pan_flange",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.12390272056976495,
+   "off_truth_area": 0.0,
+   "interior_coverage": 0.9998886253049847,
+   "worst_distance": 0.08648026374904438,
+   "mat": {
+    "certified": true,
+    "sites": 273650,
+    "tetrahedra": 1567635,
+    "polygons": 566434,
+    "kept_polygons": 496733,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "2bcbd83462de5a387f893e4f9301d403b3d13292bc9463a7f6d0f7f27353df28",
+    "truth": "df4dda95586c7019e849b0b938d5dc61c29b180f2ea64256661b6ec18ae8175e",
+    "metadata": "55f83d4d6e854339ed3209574d63b091d38e063de0ca0e51401bcd093add6d52",
+    "walls": "1d3c143bc06245e09a52513c739c2f0d5550a50a7a71a4e19628e6661ba9d3aa"
+   }
+  },
+  {
+   "name": "pipe_flange_r0",
+   "level": 2,
+   "family": "pipe_flange",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.08255277031833487,
+   "off_truth_area": 0.0,
+   "interior_coverage": 0.999849840658317,
+   "worst_distance": 0.09301651067565692,
+   "mat": {
+    "certified": true,
+    "sites": 138602,
+    "tetrahedra": 1147830,
+    "polygons": 282548,
+    "kept_polygons": 229175,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "424bb73da6da07e4196da5a66b4fa38c8650f2bae9009c99b6b169aac4fbb6bd",
+    "truth": "1ae6c9837e29fd3f563ca01ff6a640a95cec785f193a160cf890af31da87f8cd",
+    "metadata": "c2cd485593c3285169e0f8636f512e100879602d5040f8956988e4153ccf34ea",
+    "walls": "1cf82b61490d7e8d4ceba58dcadf2e7ecd98b1dfd2058b20eab8d4c3a82cc68e"
+   }
+  },
+  {
+   "name": "pipe_flange_r3",
+   "level": 2,
+   "family": "pipe_flange",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.08255277031833487,
+   "off_truth_area": 0.0,
+   "interior_coverage": 0.999849840658317,
+   "worst_distance": 0.09301651067565692,
+   "mat": {
+    "certified": true,
+    "sites": 138602,
+    "tetrahedra": 1147830,
+    "polygons": 282548,
+    "kept_polygons": 229175,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "9e0073f93ec0cb3689e73b764b6889639887475981da0d09def4b0b38a14438a",
+    "truth": "1ae6c9837e29fd3f563ca01ff6a640a95cec785f193a160cf890af31da87f8cd",
+    "metadata": "ebec7e5bf8acf47914997377d43223978414e4ed0140940c9b039ccc3d9bd253",
+    "walls": "1cf82b61490d7e8d4ceba58dcadf2e7ecd98b1dfd2058b20eab8d4c3a82cc68e"
+   }
+  },
+  {
+   "name": "post_r0",
+   "level": 2,
+   "family": "post",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "good",
+   "missing_area": 0.007206258348745413,
+   "off_truth_area": 0.0,
+   "interior_coverage": 0.9999844296244644,
+   "worst_distance": 0.11367041953996064,
+   "mat": {
+    "certified": true,
+    "sites": 115871,
+    "tetrahedra": 541896,
+    "polygons": 233466,
+    "kept_polygons": 189274,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "a0ef4d0dfeaf07615907d4b1437ca6fb7255cfe2fa48727b1089963c219310f0",
+    "truth": "417df6d13cad41acf2c5e8c08cc2f3897887f3528883aab656f5517baa6805ac",
+    "metadata": "b707c47678ec11f828d49599be7246fa1cd10c7c3612ccc51ae3556c06f7fb90",
+    "walls": "17200bdb08e36189f988f44ee038d4dcccc8bbf4cbc63bc7aea20a8b2edb6f3a"
+   }
+  },
+  {
+   "name": "t_junction_h20_r0",
+   "level": 2,
+   "family": "t_junction",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "good",
+   "missing_area": 0.3602756229360703,
+   "off_truth_area": 0.0,
+   "interior_coverage": 0.9990392650055039,
+   "worst_distance": 0.25,
+   "mat": {
+    "certified": true,
+    "sites": 94840,
+    "tetrahedra": 443599,
+    "polygons": 198292,
+    "kept_polygons": 153219,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "d1b87818193c1033502b202e034e4a07eaefb02d1c4f4152eb52dbdbb5ffcf62",
+    "truth": "5c5a3655f385840ae1d0be1907e0272c67643a52b005d8bfa52a6bb271d11282",
+    "metadata": "8de81db5d2e53e8df1c66ff7ed7239445c1637e7e08dcddf6b5dc863f88f3489",
+    "walls": "4b24179dad2a9d5f06b68e74df58e78bf552e65f7c0804beb06f746bb66e9108"
+   }
+  },
+  {
+   "name": "x_junction_r0",
+   "level": 2,
+   "family": "x_junction",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "good",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.12468485569320291,
+   "mat": {
+    "certified": true,
+    "sites": 121366,
+    "tetrahedra": 703166,
+    "polygons": 254546,
+    "kept_polygons": 196784,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "93a2630ff44d54f690ca36915dab161b87e1d30e2bfd36a5bbb83337d752c918",
+    "truth": "1d057954ccbb8e23abd49442ec4b8c532fd572aaa4def9e15f1fe3b561611b46",
+    "metadata": "1be2621c4268ec8ce96585efee52dc002e58efb2f5c3949e4b5ecbde51c2568f",
+    "walls": "d54e17cf97c38b6be8c04251820d60627fc0dc8a85e3926feebc2813a9078e08"
+   }
+  },
+  {
+   "name": "acute_corner_20deg",
+   "level": 3,
+   "family": "acute_corner",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.04595978007191049,
+   "mat": {
+    "certified": true,
+    "sites": 31883,
+    "tetrahedra": 118200,
+    "polygons": 63928,
+    "kept_polygons": 37003,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "b222b281ece1bf706d8db237ab315008566a7d047632760c19a989b54ded7573",
+    "truth": "5cac4952fdcd6bdc11f3194b329c178374761917526082b0e2c6a468eef143d5",
+    "metadata": "a154e659798e5edcaad47f46f86e7af22bbbdc560bbf66cf8c3474245f10272c",
+    "walls": "06738bf2d2be4acba52b5f3f2fd60e691ede46b3ea34cad5d723cdfea37327d8"
+   }
+  },
+  {
+   "name": "acute_corner_40deg",
+   "level": 3,
+   "family": "acute_corner",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.04579261486297568,
+   "mat": {
+    "certified": true,
+    "sites": 54811,
+    "tetrahedra": 190902,
+    "polygons": 110017,
+    "kept_polygons": 78616,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "ed5245f0ddb5d2eca2194016a615bb969711f1b4eddb76210a8a2d95c687af64",
+    "truth": "ce4dc5fcd203244dfc17ed4cad88f89be0353993223ddf084b28b06fe8dc66fc",
+    "metadata": "45673cf7e981e96258e01935a7ecbb4717961a25b0c51c640792d1de8b08a604",
+    "walls": "7d3bd4784b460f5b12b51aa43649e485b61f74ad7f4043072159b54b48524464"
+   }
+  },
+  {
+   "name": "bead",
+   "level": 3,
+   "family": "bead",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.04454546398089978,
+   "mat": {
+    "certified": true,
+    "sites": 82590,
+    "tetrahedra": 406965,
+    "polygons": 168863,
+    "kept_polygons": 134340,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "d4774f3d6ee89a6dccee6c0a6c2c5433c09b02cfe43cbc12b1a352e372d7db55",
+    "truth": "bb1c33c74761fb4f36ebc22c0b77dae566c752c315dab7d95e60650241c246ed",
+    "metadata": "820e0bc19627ddce4ab7ea2441623fe75460b6e65af1f99e14569292876cbff9",
+    "walls": "e33c02d7ece850ee3d73965258416f7979c70b6ff470e8afd2c842524a4b4583"
+   }
+  },
+  {
+   "name": "collar",
+   "level": 3,
+   "family": "collar",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.04660028550558541,
+   "mat": {
+    "certified": true,
+    "sites": 110077,
+    "tetrahedra": 580727,
+    "polygons": 222560,
+    "kept_polygons": 175442,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "c1736374b4e12f617bf5efec0b2b06dab4ee957567cab3ae21558e56d8f04f28",
+    "truth": "38615dabd39c64aaed7aeeac517a89956755ab6d4601b4897bbe8ebb26dde63a",
+    "metadata": "d07c16734ceaba1ff8bf56ae4a134aa9a9bb8c48298cd0fbef5d9969a0c944c1",
+    "walls": "4c77321934131fbe3385082549656fc0b99d1a45b02373b0cbb944f6e29b79e3"
+   }
+  },
+  {
+   "name": "dimple",
+   "level": 3,
+   "family": "dimple",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.04660028550558541,
+   "mat": {
+    "certified": true,
+    "sites": 107389,
+    "tetrahedra": 635690,
+    "polygons": 221639,
+    "kept_polygons": 183810,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "f95e7a5a087aed7fbcadac2826f864e943053d1689d0b5c4debd680b5da215d5",
+    "truth": "263ddfc9b752e57d1d5ee8647ba7c538195b9ee6c24a369f5664dd47cbb4241a",
+    "metadata": "b3a66f0aef158418afb15935bdaf550e9bc5674b6297aa01a6068f58f94f501a",
+    "walls": "d9dee4ed4ece9ee78e38515d33ba02dcdd546061bfbd5e6640b6ee559cde6c17"
+   }
+  },
+  {
+   "name": "hat_holes",
+   "level": 3,
+   "family": "combination",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "good",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.10492962203407677,
+   "mat": {
+    "certified": true,
+    "sites": 124545,
+    "tetrahedra": 784230,
+    "polygons": 254460,
+    "kept_polygons": 189664,
+    "wire_edges": 17
+   },
+   "sha256": {
+    "stp": "f6756a2d5d9475480075cca6a5ed67aba79210ab2e32e9d057ffe9bec83ef89e",
+    "truth": "e0a5a4795b4220b64edebef5f4266bebda185b97871a0e2d6e5933983f907070",
+    "metadata": "87b0ac0aaeef651880c8de48e7b0ef8e568a7d33ad1ffb5fbd27f7a98f3bffef",
+    "walls": "d96609eb75c61ab35c36d9c47bebdcc4d5214fc694f09512f120ba608fac42dd"
+   }
+  },
+  {
+   "name": "ligament_edge_gap2",
+   "level": 3,
+   "family": "ligament",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "good",
+   "missing_area": 0.0,
+   "off_truth_area": 0.10479027433654604,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.19462504420958787,
+   "mat": {
+    "certified": true,
+    "sites": 76772,
+    "tetrahedra": 245759,
+    "polygons": 154394,
+    "kept_polygons": 115412,
+    "wire_edges": 4
+   },
+   "sha256": {
+    "stp": "242551cc79828bc0ed4c5354c4493da3887dbf93d5922467fa458a127b834c00",
+    "truth": "ecf203c12cf0c9682c7604f88d764be93a9e6e6a1b5bc0d19a1619da63c54b10",
+    "metadata": "38f7322e0374bba8371634d836bb5dde516cdb1d2875c8a15ba845fdfbd0685f",
+    "walls": "059ffc7981fbd8611dd5e23bfcd4ae7a2ff2e28e970364be0b84fe5159765536"
+   }
+  },
+  {
+   "name": "ligament_edge_gap4",
+   "level": 3,
+   "family": "ligament",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.04704145413756435,
+   "mat": {
+    "certified": true,
+    "sites": 76755,
+    "tetrahedra": 246201,
+    "polygons": 154569,
+    "kept_polygons": 115020,
+    "wire_edges": 26
+   },
+   "sha256": {
+    "stp": "3e56e50946b7ef21b4586dfb386df7e976692076efc026c0086161e1b0401989",
+    "truth": "f2d244825de9113998128b971c2981a7a8309281fe8f3adb82166dcc4cb8e0bc",
+    "metadata": "c54094057fc888d9dad6e248af7939f0fd20db5922326b85c5a71cfb5e1ab38a",
+    "walls": "7b7bde8a5a857d6d352e2556364662864f0c2020094d1d0718afaa062a4ad907"
+   }
+  },
+  {
+   "name": "ligament_edge_gap8",
+   "level": 3,
+   "family": "ligament",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.05000000000014471,
+   "mat": {
+    "certified": true,
+    "sites": 76719,
+    "tetrahedra": 245789,
+    "polygons": 154122,
+    "kept_polygons": 114656,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "bec410da23f9a3c7a945f583d7526571b89d126a61dbba8886443b474a307d79",
+    "truth": "b7adacc3eb9a01430e4ca5fee718756f464d706e3646fe28cb72e8ac661e2919",
+    "metadata": "f51affea3f22ad2477d3502c8d2a71bd5d76a5154de0f6b16429c941f39bc114",
+    "walls": "cb4a81baef60c42a211716a7ebc6bd4c5b605af6ca74ce93782590846e3166d9"
+   }
+  },
+  {
+   "name": "ligament_holes_gap2",
+   "level": 3,
+   "family": "ligament",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "good",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0410160646598317,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.19839184326752132,
+   "mat": {
+    "certified": true,
+    "sites": 94000,
+    "tetrahedra": 312396,
+    "polygons": 188716,
+    "kept_polygons": 138685,
+    "wire_edges": 5
+   },
+   "sha256": {
+    "stp": "13e4caaf35c568c362896b8f140517d241e36813dcd99ffc7e8ec556582408b3",
+    "truth": "6a3275e6822e3efaad711f73012e71f826573b35c721c3b14ecf02c854bb6e10",
+    "metadata": "7a5a0ff731b40059cecfe4bb515f8f3b2d57c6ef4917e3733fc3c1b5e2f5e0fa",
+    "walls": "bcbf49f27e61e9dceebb79ed070bc321e7aa0aa50125ce24f320010092405d38"
+   }
+  },
+  {
+   "name": "ligament_holes_gap4",
+   "level": 3,
+   "family": "ligament",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.04559688129149499,
+   "mat": {
+    "certified": true,
+    "sites": 93918,
+    "tetrahedra": 312338,
+    "polygons": 188743,
+    "kept_polygons": 138066,
+    "wire_edges": 34
+   },
+   "sha256": {
+    "stp": "9976d0c36bb9689ff687fa584e4d9b2b39da01c1f5f69b86b94f7a3644914cf6",
+    "truth": "2f0b1e74721ad855969e9cbef409a6d7b0d1e5b713d7a44bd71cb5f0534cc0d6",
+    "metadata": "b34fdda4209b0333ed1d09cc1774c220cfe1f1332d1197c65aa8562c286ed7ad",
+    "walls": "182212d7aab054c816d88c3552a4dc93e6865d544401e12a78c919874dba6795"
+   }
+  },
+  {
+   "name": "ligament_holes_gap8",
+   "level": 3,
+   "family": "ligament",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.04740113079475349,
+   "mat": {
+    "certified": true,
+    "sites": 93968,
+    "tetrahedra": 313881,
+    "polygons": 188842,
+    "kept_polygons": 138221,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "b220106b35972990fa06912fb0d4b59dcb4a3a7c760e114e2c8168e815d5b518",
+    "truth": "03907a7ed903e0c8923ba9dcb22905d309d96f00eeb4848684ad20d4c8b92eb4",
+    "metadata": "34756f81750236c8b56ec505cd915ca283a14b718466e06c741ab5bd9df1ed82",
+    "walls": "8c788034fcfc6b60172e26583906dc3189c6fd0fb962c3ca653f6276effc0d8b"
+   }
+  },
+  {
+   "name": "plate_round_edges_r1.0",
+   "level": 3,
+   "family": "round_edges",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "good",
+   "missing_area": 0.0813389786187649,
+   "off_truth_area": 0.0,
+   "interior_coverage": 0.9994577401425416,
+   "worst_distance": 0.2156916462084144,
+   "mat": {
+    "certified": true,
+    "sites": 39903,
+    "tetrahedra": 167851,
+    "polygons": 82576,
+    "kept_polygons": 58972,
+    "wire_edges": 5
+   },
+   "sha256": {
+    "stp": "40118faedcd80b122033be692669944d95995c56e1d7f2a098d540ef82a4da40",
+    "truth": "ed7fe52a3336917252debce2dbfbd8d5375086ce0fa9594815239405eba029b7",
+    "metadata": "14559a1d7c5d247612deeede73220a7922fbc9f2496db30804946f67e0aca901",
+    "walls": "2745d9c5756837f87e58d72bc0108bf6a2c0620c1ad6c7b46c88ba6a71ae0321"
+   }
+  },
+  {
+   "name": "plate_tab_w8",
+   "level": 3,
+   "family": "tab",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.04538257545028544,
+   "mat": {
+    "certified": true,
+    "sites": 55680,
+    "tetrahedra": 180758,
+    "polygons": 115436,
+    "kept_polygons": 82029,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "ec443865fc6a5df802f0d4807d39dd4987eeb3e33ce21677effead308efc814e",
+    "truth": "6119f7fcf14f8b48d86a9025d96abcdb5c020cdd6737b7125c999ee254daf62c",
+    "metadata": "3bf8aa85353359a544ba390f5e0a1513a68b41788b9009c743af1d138a59dc74",
+    "walls": "a0327745374f065dc2e1545874fc0045f574f838df284018b63ea484bfc7d9d2"
+   }
+  },
+  {
+   "name": "sliver_face",
+   "level": 3,
+   "family": "split_faces",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.04448095197826333,
+   "mat": {
+    "certified": true,
+    "sites": 66302,
+    "tetrahedra": 200991,
+    "polygons": 134692,
+    "kept_polygons": 103818,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "7e5e1741329e2892f7cb6f0fb0991c14b3b2ce25d016279d9a82ba3958ce29e1",
+    "truth": "47a2f89bf92e927d51601c76f35df7ff12b00e9e37b04876c16d58e74310785c",
+    "metadata": "b0e667db051012a2d4cdb78a429592362c631f5f3174768138a5948f4fb97b29",
+    "walls": "01421f9dadc0dadcec6e2ff9f2d91dbde28c4dd81813fb6c99a3b9a1d891cafb"
+   }
+  },
+  {
+   "name": "slotted_plate",
+   "level": 3,
+   "family": "slot",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.0479439306600977,
+   "mat": {
+    "certified": true,
+    "sites": 110592,
+    "tetrahedra": 360052,
+    "polygons": 222063,
+    "kept_polygons": 154552,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "ffc025ed52e943e4a09e582841777442318f77a78cdcf2f87d7a95085f6a1c93",
+    "truth": "a9cea3cee173920e057315059f775cc98b101231ae2d8051ab0541c9c1c52b6c",
+    "metadata": "a65c8cdb3b08b5192803f7369fd8c0f11194c385d87c5b6d38d84c03f45e904d",
+    "walls": "da1cac6c3c0097a91ef44d4ac2208a179847e41de3e97e0e807452dd8786fe42"
+   }
+  },
+  {
+   "name": "split_faces",
+   "level": 3,
+   "family": "split_faces",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.04465159771141426,
+   "mat": {
+    "certified": true,
+    "sites": 73895,
+    "tetrahedra": 221597,
+    "polygons": 147705,
+    "kept_polygons": 114658,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "a3c21e6b0fbbe9e74d19cbbb090c24d7f057d09a958b3b2e8c29c1afa5e74ed7",
+    "truth": "737c7e0a22737605349c4000728610bcac637ef4b8528c8f39ec6785c2ceeada",
+    "metadata": "7835bf38ca84c637adab63ba52ca1cbe2671a01aa02ca9e5d0de28a4403997dd",
+    "walls": "1c0f445bc85e28675f3610d830db0df9bc7e10ccd3a726e23e155e8c3ec6579d"
+   }
+  },
+  {
+   "name": "thickness_step_6_2",
+   "level": 4,
+   "family": "thickness_step",
+   "thickness": 2.0,
+   "fusion_thickness": 2,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.045145325337479406,
+   "mat": {
+    "certified": true,
+    "sites": 267911,
+    "tetrahedra": 1180743,
+    "polygons": 546613,
+    "kept_polygons": 400010,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "2aaadb79d4906b195b869ce2bc5618c6b28f40fc62025542b0f55eead832c08b",
+    "truth": "6de36bcfd8eb3a218b4a7ccce8633d141284bd9f08c922378990125464a51440",
+    "metadata": "3790bfd486b034a83bf360656f001de0ad135e1aeb7ecf2f423c3558ef82df53",
+    "walls": "b4453ebb3bd31b294f6e2de608ff00f03831aa22d5caecd54561c6fb1a635786"
+   }
+  },
+  {
+   "name": "thickness_step_6_4",
+   "level": 4,
+   "family": "thickness_step",
+   "thickness": 4.0,
+   "fusion_thickness": 4,
+   "verdict": "perfect",
+   "missing_area": 0.0,
+   "off_truth_area": 0.0,
+   "interior_coverage": 1.0,
+   "worst_distance": 0.04455368118079647,
+   "mat": {
+    "certified": true,
+    "sites": 68503,
+    "tetrahedra": 300137,
+    "polygons": 142079,
+    "kept_polygons": 99467,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "0a1527986c9b13c56141401449a8c8feaecffa7eb41c0e848b39e65932216171",
+    "truth": "6de36bcfd8eb3a218b4a7ccce8633d141284bd9f08c922378990125464a51440",
+    "metadata": "94386d29e939aecd5cb83c992f8928b9609af36d4a9624c0d7a488ddb343bae8",
+    "walls": "57d1681142fa121460a3875080ea9deacd8bfc4820e8973323887d314e331209"
+   }
+  },
+  {
+   "name": "assembly_030",
+   "level": 6,
+   "family": "assembly",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "good",
+   "missing_area": 1.3362575866319104,
+   "off_truth_area": 0.4744220895583578,
+   "interior_coverage": 0.999712930481616,
+   "worst_distance": 0.24910705733491398,
+   "mat": {
+    "certified": true,
+    "sites": 1118051,
+    "tetrahedra": 6439733,
+    "polygons": 2326403,
+    "kept_polygons": 2133721,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "ae7fb9d4774d002df5306c9911d9c830d6379f664a6ff64164a68f5f94a26915",
+    "truth": "80409cea66ed2a0ca315233d51247c121ca790572f61bc2a7a66e1a2a2965dac",
+    "metadata": "7b2641b9c3a804d84aeba6cc5c612694f48a59c6d6151e093aebed3a2766565d",
+    "walls": "75bf2ece9e0e70ce70db9e3436ac2f73e38cdcef6e701f60c10bbd4cb90f67ae"
+   }
+  },
+  {
+   "name": "assembly_034",
+   "level": 6,
+   "family": "assembly",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "good",
+   "missing_area": 0.882047691809412,
+   "off_truth_area": 0.35152078634004946,
+   "interior_coverage": 0.9998153599346699,
+   "worst_distance": 0.24992071356279355,
+   "mat": {
+    "certified": true,
+    "sites": 1134832,
+    "tetrahedra": 5269871,
+    "polygons": 2349892,
+    "kept_polygons": 2163348,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "6f862f7284e7c55591ded6c5db728e69178758a253cbdaaa035bea82f122600a",
+    "truth": "ee832e67dc140579c96cbeca6585883be25aae1636d790681be0543232a40a14",
+    "metadata": "96f2ed4df4131559225785a33c3399c65d0d5053272991e426a6c0fd830f33e2",
+    "walls": "2736dba90342878a75bdfce88011588ec0be80ec9f7c733970f1ffb1e1580864"
+   }
+  },
+  {
+   "name": "assembly_036",
+   "level": 6,
+   "family": "assembly",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "good",
+   "missing_area": 1.3629180238458443,
+   "off_truth_area": 0.49672954828885163,
+   "interior_coverage": 0.9998172623412719,
+   "worst_distance": 0.24869497339713628,
+   "mat": {
+    "certified": true,
+    "sites": 1761253,
+    "tetrahedra": 12629580,
+    "polygons": 3695453,
+    "kept_polygons": 3462079,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "cd0a9ba3863822b53883d39503179514b2414ea2442fec82f3c503140e5d4926",
+    "truth": "cb299ae6c88f1c190d53f889833d8859ffd913b60357ea8cbfe1c22e92c1b44c",
+    "metadata": "948e3627c42871ec03e727fb573a4341f450d7cdc57a5f991c2df99087666629",
+    "walls": "01c9d4d17b897de92ee3ef2247979d90a2dee94f34bbc1afd73b77219cc2757d"
+   }
+  },
+  {
+   "name": "assembly_074",
+   "level": 6,
+   "family": "assembly",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "good",
+   "missing_area": 0.7204977993225645,
+   "off_truth_area": 0.27496797541582274,
+   "interior_coverage": 0.999852848839765,
+   "worst_distance": 0.24530580412542904,
+   "mat": {
+    "certified": true,
+    "sites": 1166168,
+    "tetrahedra": 6660563,
+    "polygons": 2483362,
+    "kept_polygons": 2329189,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "795bbed46d9b8b860db5a1d5db79081e130e513458890c6c86f71962e61f9816",
+    "truth": "f75dafeae3e524192cf0446b1bfbd4950f5da510e4726f432fa838a8361eb0e2",
+    "metadata": "5d680a103a2d5c56888cba48dab7e22c1ba81f60a450d8a64642ac21421e085d",
+    "walls": "8b812a582c86d6c9b0d31401a72a7b2bde378ddaa339bb83876d5ef372d5d75a"
+   }
+  },
+  {
+   "name": "assembly_087",
+   "level": 6,
+   "family": "assembly",
+   "thickness": 4.0,
+   "fusion_thickness": 4.0,
+   "verdict": "good",
+   "missing_area": 0.5947896615534627,
+   "off_truth_area": 0.26815870379866674,
+   "interior_coverage": 0.9998992635788841,
+   "worst_distance": 0.24769211607651007,
+   "mat": {
+    "certified": true,
+    "sites": 1402240,
+    "tetrahedra": 8229608,
+    "polygons": 2940625,
+    "kept_polygons": 2710380,
+    "wire_edges": 0
+   },
+   "sha256": {
+    "stp": "010b03bbf1810861ce7e953f60f1cf95c34369762fc6bbae2bf96d3decc377f5",
+    "truth": "c4f1cdb6c474524efbdf9aefc5462db79bfb47380f9473e9dee584c7e7a64bb9",
+    "metadata": "4fe508e74f2e5693ff0ed3da2f7ca8a4868e0015dd5255fb02d143868840d0b5",
+    "walls": "9d75b6546868e90acdb64a1aa58f6bd3fc27c783f1137f737a653f8e1e4190b5"
+   }
+  }
+ ],
+ "not_included": [
+  {
+   "name": "bend_gusset_r2",
+   "level": 2,
+   "family": "bend_gusset",
+   "verdict": "review",
+   "missing_area": 12.34534967992161,
+   "off_truth_area": 8.482553427860157,
+   "interior_coverage": 0.96937607856035
+  },
+  {
+   "name": "channel_gusset_r0",
+   "level": 2,
+   "family": "channel_gusset",
+   "verdict": "review",
+   "missing_area": 0.9362016026506766,
+   "off_truth_area": 0.0,
+   "interior_coverage": 0.9987487950000872
+  },
+  {
+   "name": "channel_gusset_r2",
+   "level": 2,
+   "family": "channel_gusset",
+   "verdict": "review",
+   "missing_area": 25.23245474008777,
+   "off_truth_area": 16.976298747564748,
+   "interior_coverage": 0.9662775908079174
+  },
+  {
+   "name": "corner_joint_r0",
+   "level": 2,
+   "family": "corner_joint",
+   "verdict": "review",
+   "missing_area": 0.5273943083715453,
+   "off_truth_area": 0.0,
+   "interior_coverage": 0.9988280126480633
+  },
+  {
+   "name": "corner_joint_r3",
+   "level": 2,
+   "family": "corner_joint",
+   "verdict": "review",
+   "missing_area": 0.5273943083715453,
+   "off_truth_area": 0.0,
+   "interior_coverage": 0.9988280126480633
+  },
+  {
+   "name": "inclined_rib_45deg_r2",
+   "level": 2,
+   "family": "t_junction",
+   "verdict": "review",
+   "missing_area": 45.269079479232175,
+   "off_truth_area": 33.24254082966753,
+   "interior_coverage": 0.8902567770200432
+  },
+  {
+   "name": "inclined_rib_60deg_r2",
+   "level": 2,
+   "family": "t_junction",
+   "verdict": "review",
+   "missing_area": 26.9838990337822,
+   "off_truth_area": 21.288412806718586,
+   "interior_coverage": 0.934584487190831
+  },
+  {
+   "name": "partial_rib_r2",
+   "level": 2,
+   "family": "t_junction",
+   "verdict": "review",
+   "missing_area": 12.583619214589422,
+   "off_truth_area": 8.576873105889067,
+   "interior_coverage": 0.978806536059639
+  },
+  {
+   "name": "post_r2",
+   "level": 2,
+   "family": "post",
+   "verdict": "review",
+   "missing_area": 10.05128519518209,
+   "off_truth_area": 7.1854440154295505,
+   "interior_coverage": 0.9782824487370595
+  },
+  {
+   "name": "ribbed_plate_2_r2",
+   "level": 2,
+   "family": "ribbed_plate",
+   "verdict": "review",
+   "missing_area": 39.362147192635966,
+   "off_truth_area": 27.222907528521727,
+   "interior_coverage": 0.9629532732304602
+  },
+  {
+   "name": "ribbed_plate_3_r2",
+   "level": 2,
+   "family": "ribbed_plate",
+   "verdict": "review",
+   "missing_area": 59.660031004912575,
+   "off_truth_area": 40.82672250044911,
+   "interior_coverage": 0.9510481796882769
+  },
+  {
+   "name": "t_junction_h20_r2",
+   "level": 2,
+   "family": "t_junction",
+   "verdict": "review",
+   "missing_area": 12.300034713894014,
+   "off_truth_area": 7.844567453092978,
+   "interior_coverage": 0.967199907429616
+  },
+  {
+   "name": "t_junction_h20_r5",
+   "level": 2,
+   "family": "t_junction",
+   "verdict": "review",
+   "missing_area": 30.978368163678635,
+   "off_truth_area": 23.349920318530213,
+   "interior_coverage": 0.9173910182301903
+  },
+  {
+   "name": "t_junction_h40_r0",
+   "level": 2,
+   "family": "t_junction",
+   "verdict": "review",
+   "missing_area": 0.3761066933424083,
+   "off_truth_area": 0.0,
+   "interior_coverage": 0.9991642073481279
+  },
+  {
+   "name": "t_junction_h40_r2",
+   "level": 2,
+   "family": "t_junction",
+   "verdict": "review",
+   "missing_area": 12.568623593711592,
+   "off_truth_area": 7.843962444398377,
+   "interior_coverage": 0.9720697253473075
+  },
+  {
+   "name": "t_junction_h40_r5",
+   "level": 2,
+   "family": "t_junction",
+   "verdict": "review",
+   "missing_area": 29.501225016948222,
+   "off_truth_area": 23.34992031853011,
+   "interior_coverage": 0.9344417221845595
+  },
+  {
+   "name": "tapered_rib_r2",
+   "level": 2,
+   "family": "t_junction",
+   "verdict": "review",
+   "missing_area": 20.568504912997632,
+   "off_truth_area": 13.983465933886958,
+   "interior_coverage": 0.9667579718577817
+  },
+  {
+   "name": "tray_rib_r0",
+   "level": 2,
+   "family": "tray_rib",
+   "verdict": "review",
+   "missing_area": 0.9866559708756123,
+   "off_truth_area": 0.0,
+   "interior_coverage": 0.9991148335369641
+  },
+  {
+   "name": "tray_rib_r2",
+   "level": 2,
+   "family": "tray_rib",
+   "verdict": "review",
+   "missing_area": 25.243299176065534,
+   "off_truth_area": 16.965114601825423,
+   "interior_coverage": 0.9773532796571409
+  },
+  {
+   "name": "waffle_3_r2",
+   "level": 2,
+   "family": "waffle",
+   "verdict": "review",
+   "missing_area": 66.88681502120794,
+   "off_truth_area": 43.568126552030094,
+   "interior_coverage": 0.9418375521554712
+  },
+  {
+   "name": "x_junction_r3",
+   "level": 2,
+   "family": "x_junction",
+   "verdict": "review",
+   "missing_area": 3.1953626930729664,
+   "off_truth_area": 0.0,
+   "interior_coverage": 0.9934454098603631
+  },
+  {
+   "name": "bend_round_edges_r1.0",
+   "level": 3,
+   "family": "round_edges",
+   "verdict": "review",
+   "missing_area": 5.643890008895521,
+   "off_truth_area": 0.0,
+   "interior_coverage": 0.9741761124235759
+  },
+  {
+   "name": "bend_round_edges_r1.5",
+   "level": 3,
+   "family": "round_edges",
+   "verdict": "review",
+   "missing_area": 11.398696588106459,
+   "off_truth_area": 0.0,
+   "interior_coverage": 0.9478447207962801
+  },
+  {
+   "name": "bracket",
+   "level": 3,
+   "family": "combination",
+   "verdict": "review",
+   "missing_area": 12.55772293507999,
+   "off_truth_area": 8.518784891851684,
+   "interior_coverage": 0.967851691667265
+  },
+  {
+   "name": "bracket_round_edges",
+   "level": 3,
+   "family": "combination",
+   "verdict": "review",
+   "missing_area": 6.3853982920950205,
+   "off_truth_area": 0.0,
+   "interior_coverage": 0.9818607032162553
+  },
+  {
+   "name": "channel_holes_gussets",
+   "level": 3,
+   "family": "combination",
+   "verdict": "review",
+   "missing_area": 50.521513292668985,
+   "off_truth_area": 33.972197712099536,
+   "interior_coverage": 0.9560928996516312
+  },
+  {
+   "name": "cylinder_panel_ring_rib",
+   "level": 3,
+   "family": "combination",
+   "verdict": "review",
+   "missing_area": 26.061650546638127,
+   "off_truth_area": 17.058758706722806,
+   "interior_coverage": 0.9531315943834922
+  },
+  {
+   "name": "plate_round_edges_r1.5",
+   "level": 3,
+   "family": "round_edges",
+   "verdict": "review",
+   "missing_area": 0.3444524752869003,
+   "off_truth_area": 0.0,
+   "interior_coverage": 0.9977036501647539
+  },
+  {
+   "name": "ribbed_plate_holes",
+   "level": 3,
+   "family": "combination",
+   "verdict": "review",
+   "missing_area": 40.34997910655873,
+   "off_truth_area": 27.388930348406333,
+   "interior_coverage": 0.9587279401392194
+  },
+  {
+   "name": "tray_two_ribs_hole",
+   "level": 3,
+   "family": "combination",
+   "verdict": "review",
+   "missing_area": 50.78755125951062,
+   "off_truth_area": 33.92236551012537,
+   "interior_coverage": 0.9592046519949355
+  },
+  {
+   "name": "channel_t3_gusset_t6",
+   "level": 4,
+   "family": "channel_gusset",
+   "verdict": "review",
+   "missing_area": 84.29374554738366,
+   "off_truth_area": 56.97408329392087,
+   "interior_coverage": 0.9214328473717224
+  },
+  {
+   "name": "flush_step_6_2",
+   "level": 4,
+   "family": "thickness_step",
+   "verdict": "review",
+   "missing_area": 11.182445926827782,
+   "off_truth_area": 8.523683689755043,
+   "interior_coverage": 0.8993579866585498
+  },
+  {
+   "name": "ribbed_plate_t2_to_6",
+   "level": 4,
+   "family": "ribbed_plate",
+   "verdict": "review",
+   "missing_area": 66.17817775572144,
+   "off_truth_area": 29.237442411541025,
+   "interior_coverage": 0.9534315791749227
+  },
+  {
+   "name": "t_junction_t2_6",
+   "level": 4,
+   "family": "t_junction",
+   "verdict": "review",
+   "missing_area": 98.6549124201762,
+   "off_truth_area": 72.29544028301612,
+   "interior_coverage": 0.9302503451242391
+  },
+  {
+   "name": "t_junction_t4_2",
+   "level": 4,
+   "family": "t_junction",
+   "verdict": "review",
+   "missing_area": 9.886102784940277,
+   "off_truth_area": 6.643984769886111,
+   "interior_coverage": 0.987577817149677
+  },
+  {
+   "name": "t_junction_t6_3",
+   "level": 4,
+   "family": "t_junction",
+   "verdict": "review",
+   "missing_area": 4.404861845242829,
+   "off_truth_area": 0.08799276799897417,
+   "interior_coverage": 0.9922188144064266
+  },
+  {
+   "name": "thickness_step_4_2",
+   "level": 4,
+   "family": "thickness_step",
+   "verdict": "review",
+   "missing_area": 12.308402769836492,
+   "off_truth_area": 0.0,
+   "interior_coverage": 0.950766388920654
+  },
+  {
+   "name": "bracket_t3_hem",
+   "level": 5,
+   "family": "part",
+   "verdict": "review",
+   "missing_area": 16.789001246158858,
+   "off_truth_area": 11.938927426350265,
+   "interior_coverage": 0.9820923979118051
+  },
+  {
+   "name": "crossmember",
+   "level": 5,
+   "family": "part",
+   "verdict": "review",
+   "missing_area": 36.477007093367575,
+   "off_truth_area": 25.496248098052035,
+   "interior_coverage": 0.978957479268472
+  },
+  {
+   "name": "pan_ribs_flange_holes",
+   "level": 5,
+   "family": "part",
+   "verdict": "review",
+   "missing_area": 34.65648675349911,
+   "off_truth_area": 24.58675347264444,
+   "interior_coverage": 0.9720180389154904
+  },
+  {
+   "name": "pipe_flange_bolts_gussets",
+   "level": 5,
+   "family": "part",
+   "verdict": "review",
+   "missing_area": 7.4453397116921085,
+   "off_truth_area": 4.171808125410694,
+   "interior_coverage": 0.9900473877996216
+  },
+  {
+   "name": "assembly_000",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 114.04380720511446,
+   "off_truth_area": 77.7321390187503,
+   "interior_coverage": 0.9862860576650291
+  },
+  {
+   "name": "assembly_001",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 3.8448826172754345,
+   "off_truth_area": 1.3501198049412986,
+   "interior_coverage": 0.9993253866226889
+  },
+  {
+   "name": "assembly_002",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 45.25277547999566,
+   "off_truth_area": 22.53142252840511,
+   "interior_coverage": 0.9912255742711927
+  },
+  {
+   "name": "assembly_003",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 38.93891286552618,
+   "off_truth_area": 20.36875861062844,
+   "interior_coverage": 0.9929461838363182
+  },
+  {
+   "name": "assembly_004",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 2.342956430544946,
+   "off_truth_area": 0.893284037547432,
+   "interior_coverage": 0.999611519445532
+  },
+  {
+   "name": "assembly_005",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 18.036647240416706,
+   "off_truth_area": 9.443454475544652,
+   "interior_coverage": 0.9966228706070819
+  },
+  {
+   "name": "assembly_006",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 53.35097849396946,
+   "off_truth_area": 38.914936220684254,
+   "interior_coverage": 0.9893386266574046
+  },
+  {
+   "name": "assembly_007",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 53.22532975546727,
+   "off_truth_area": 36.36516718599508,
+   "interior_coverage": 0.9903676179164321
+  },
+  {
+   "name": "assembly_008",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 57.973561418091236,
+   "off_truth_area": 29.078683291644456,
+   "interior_coverage": 0.9900769939583919
+  },
+  {
+   "name": "assembly_009",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 48.11650820328202,
+   "off_truth_area": 25.60364945365197,
+   "interior_coverage": 0.9942871158414004
+  },
+  {
+   "name": "assembly_010",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 52.80864033333023,
+   "off_truth_area": 36.32522263888095,
+   "interior_coverage": 0.990264617424983
+  },
+  {
+   "name": "assembly_011",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 41.33128143754423,
+   "off_truth_area": 23.109491415810908,
+   "interior_coverage": 0.9948429427103619
+  },
+  {
+   "name": "assembly_012",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 49.837960923513194,
+   "off_truth_area": 27.227991559491073,
+   "interior_coverage": 0.9946885161888598
+  },
+  {
+   "name": "assembly_013",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 40.340896022566355,
+   "off_truth_area": 22.307495319738585,
+   "interior_coverage": 0.994328010822875
+  },
+  {
+   "name": "assembly_014",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 24.356637316546085,
+   "off_truth_area": 4.8403572411906755,
+   "interior_coverage": 0.994202561702939
+  },
+  {
+   "name": "assembly_015",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 4.388315749177335,
+   "off_truth_area": 1.6393480074550029,
+   "interior_coverage": 0.9993588530172403
+  },
+  {
+   "name": "assembly_016",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 1.6803132384237978,
+   "off_truth_area": 0.6532800470570357,
+   "interior_coverage": 0.9997074788809654
+  },
+  {
+   "name": "assembly_017",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 74.8683752169389,
+   "off_truth_area": 53.86835309087299,
+   "interior_coverage": 0.9843766384750781
+  },
+  {
+   "name": "assembly_018",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 109.656670411389,
+   "off_truth_area": 79.22507983345953,
+   "interior_coverage": 0.9835085985076092
+  },
+  {
+   "name": "assembly_019",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 7.299517223725691,
+   "off_truth_area": 1.6690247966048144,
+   "interior_coverage": 0.9991395285466554
+  },
+  {
+   "name": "assembly_020",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 28.21283741845213,
+   "off_truth_area": 6.094596371187249,
+   "interior_coverage": 0.9959808513143725
+  },
+  {
+   "name": "assembly_021",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 59.72688850891064,
+   "off_truth_area": 32.70238501437474,
+   "interior_coverage": 0.9898244524617177
+  },
+  {
+   "name": "assembly_022",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 6.010259304548206,
+   "off_truth_area": 1.0888522583475728,
+   "interior_coverage": 0.9990737806907396
+  },
+  {
+   "name": "assembly_023",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 2.6622943326556023,
+   "off_truth_area": 0.9135050085998444,
+   "interior_coverage": 0.9995517716203327
+  },
+  {
+   "name": "assembly_024",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 4.15689195471052,
+   "off_truth_area": 2.1143974620884416,
+   "interior_coverage": 0.9994714834534568
+  },
+  {
+   "name": "assembly_025",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 7.055087771729429,
+   "off_truth_area": 1.7941053486201435,
+   "interior_coverage": 0.9992215818807572
+  },
+  {
+   "name": "assembly_026",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 63.86863841989097,
+   "off_truth_area": 34.25112065801186,
+   "interior_coverage": 0.9915467191804458
+  },
+  {
+   "name": "assembly_027",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 45.26052257177305,
+   "off_truth_area": 21.597292565275325,
+   "interior_coverage": 0.9934435478629391
+  },
+  {
+   "name": "assembly_028",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 26.487655728614516,
+   "off_truth_area": 14.639042406283934,
+   "interior_coverage": 0.9936303367097711
+  },
+  {
+   "name": "assembly_029",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 37.08116368023113,
+   "off_truth_area": 20.098195472621015,
+   "interior_coverage": 0.9932374332869847
+  },
+  {
+   "name": "assembly_031",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 2.0332364780732064,
+   "off_truth_area": 0.5774435208186275,
+   "interior_coverage": 0.999519342207537
+  },
+  {
+   "name": "assembly_032",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 43.35498579842374,
+   "off_truth_area": 23.506866923695732,
+   "interior_coverage": 0.9899276247599185
+  },
+  {
+   "name": "assembly_033",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 26.426368603494687,
+   "off_truth_area": 14.703073854954535,
+   "interior_coverage": 0.995316176370186
+  },
+  {
+   "name": "assembly_035",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 17.922511495426658,
+   "off_truth_area": 3.9962571574608012,
+   "interior_coverage": 0.9962454422876634
+  },
+  {
+   "name": "assembly_037",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 1.5600846654614795,
+   "off_truth_area": 0.3902891559455884,
+   "interior_coverage": 0.9997884050648024
+  },
+  {
+   "name": "assembly_038",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 1.6290565145561777,
+   "off_truth_area": 0.6899890954976919,
+   "interior_coverage": 0.9997722261907106
+  },
+  {
+   "name": "assembly_039",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 4.781689306357764,
+   "off_truth_area": 1.3985870658727446,
+   "interior_coverage": 0.9992444414128846
+  },
+  {
+   "name": "assembly_040",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 3.471658321523556,
+   "off_truth_area": 1.0991644878216789,
+   "interior_coverage": 0.9995792503526211
+  },
+  {
+   "name": "assembly_041",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 3.5253561197637424,
+   "off_truth_area": 1.0429808540089884,
+   "interior_coverage": 0.9995583457164026
+  },
+  {
+   "name": "assembly_042",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 74.5933656641227,
+   "off_truth_area": 53.68858421493388,
+   "interior_coverage": 0.9907003413979256
+  },
+  {
+   "name": "assembly_043",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 42.09311819957237,
+   "off_truth_area": 23.721567347432533,
+   "interior_coverage": 0.9921989304492739
+  },
+  {
+   "name": "assembly_044",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 3.081931895770302,
+   "off_truth_area": 0.991311837435032,
+   "interior_coverage": 0.9996339491914227
+  },
+  {
+   "name": "assembly_045",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 50.43806597971047,
+   "off_truth_area": 34.27012127348577,
+   "interior_coverage": 0.9911411270899926
+  },
+  {
+   "name": "assembly_046",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 2.7489117961488976,
+   "off_truth_area": 1.0714310696579568,
+   "interior_coverage": 0.999375010176286
+  },
+  {
+   "name": "assembly_047",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 87.06071833022867,
+   "off_truth_area": 63.35078344370592,
+   "interior_coverage": 0.9880722379038083
+  },
+  {
+   "name": "assembly_048",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 2.361625981842229,
+   "off_truth_area": 0.759924703808633,
+   "interior_coverage": 0.9994967925722589
+  },
+  {
+   "name": "assembly_049",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 1.9385857770436759,
+   "off_truth_area": 0.7888699767309294,
+   "interior_coverage": 0.9995757433386281
+  },
+  {
+   "name": "assembly_050",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 72.73545663290147,
+   "off_truth_area": 39.471835245079426,
+   "interior_coverage": 0.9916817936212595
+  },
+  {
+   "name": "assembly_051",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 64.06292695164254,
+   "off_truth_area": 33.79751633410617,
+   "interior_coverage": 0.9900316903081923
+  },
+  {
+   "name": "assembly_052",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 102.38827130693369,
+   "off_truth_area": 75.26789238764647,
+   "interior_coverage": 0.9858673526993249
+  },
+  {
+   "name": "assembly_053",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 25.159761092154568,
+   "off_truth_area": 14.052227940980364,
+   "interior_coverage": 0.9944361541389838
+  },
+  {
+   "name": "assembly_054",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 84.40849647669873,
+   "off_truth_area": 45.31750024305161,
+   "interior_coverage": 0.9861195087343145
+  },
+  {
+   "name": "assembly_055",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 2.5633862642437184,
+   "off_truth_area": 0.9940049007345304,
+   "interior_coverage": 0.9993667770449127
+  },
+  {
+   "name": "assembly_056",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 4.250690573989774,
+   "off_truth_area": 0.7502067615756925,
+   "interior_coverage": 0.9992486489386961
+  },
+  {
+   "name": "assembly_057",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 3.7684671800208323,
+   "off_truth_area": 1.1796616396101702,
+   "interior_coverage": 0.9991448755120826
+  },
+  {
+   "name": "assembly_058",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 27.522267139905598,
+   "off_truth_area": 14.277346604670178,
+   "interior_coverage": 0.9950234011421892
+  },
+  {
+   "name": "assembly_059",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 49.41677861602018,
+   "off_truth_area": 33.09908477642729,
+   "interior_coverage": 0.9922020891193948
+  },
+  {
+   "name": "assembly_060",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 31.232684113693708,
+   "off_truth_area": 17.850426216139603,
+   "interior_coverage": 0.9954154305568638
+  },
+  {
+   "name": "assembly_061",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 70.25457745693458,
+   "off_truth_area": 36.530058825805376,
+   "interior_coverage": 0.9925954231266605
+  },
+  {
+   "name": "assembly_062",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 36.25149911056351,
+   "off_truth_area": 20.43109522896406,
+   "interior_coverage": 0.993345725594879
+  },
+  {
+   "name": "assembly_063",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 1.5250109935912244,
+   "off_truth_area": 0.5099988859835667,
+   "interior_coverage": 0.9998104068925087
+  },
+  {
+   "name": "assembly_064",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 6.822167731464162,
+   "off_truth_area": 1.7793504050474276,
+   "interior_coverage": 0.9992740146451442
+  },
+  {
+   "name": "assembly_065",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 3.8411033877936456,
+   "off_truth_area": 1.461361115388889,
+   "interior_coverage": 0.9995962219836345
+  },
+  {
+   "name": "assembly_066",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 42.293722417692855,
+   "off_truth_area": 22.034084280117217,
+   "interior_coverage": 0.9907683719408303
+  },
+  {
+   "name": "assembly_067",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 34.88772349006132,
+   "off_truth_area": 18.106135046196236,
+   "interior_coverage": 0.9932979663551136
+  },
+  {
+   "name": "assembly_068",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 3.556933894061453,
+   "off_truth_area": 1.2362758860607321,
+   "interior_coverage": 0.9995182531210025
+  },
+  {
+   "name": "assembly_069",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 45.18778231536017,
+   "off_truth_area": 9.33686932226924,
+   "interior_coverage": 0.994645153084749
+  },
+  {
+   "name": "assembly_070",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 92.93621137758592,
+   "off_truth_area": 66.00498167875718,
+   "interior_coverage": 0.9819653302660917
+  },
+  {
+   "name": "assembly_071",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 2.1219147514406016,
+   "off_truth_area": 0.6776393914683548,
+   "interior_coverage": 0.9996418925995003
+  },
+  {
+   "name": "assembly_072",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 30.00533363138387,
+   "off_truth_area": 16.753719617597692,
+   "interior_coverage": 0.9931206708198649
+  },
+  {
+   "name": "assembly_073",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 57.82731879214147,
+   "off_truth_area": 31.169566541278293,
+   "interior_coverage": 0.9919860730261548
+  },
+  {
+   "name": "assembly_075",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 121.86933808981892,
+   "off_truth_area": 88.0537819939234,
+   "interior_coverage": 0.9856576578745424
+  },
+  {
+   "name": "assembly_076",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 78.87989289759852,
+   "off_truth_area": 42.88128264881453,
+   "interior_coverage": 0.9882667747193593
+  },
+  {
+   "name": "assembly_077",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 2.9410702214333266,
+   "off_truth_area": 1.033234898985217,
+   "interior_coverage": 0.9995148060004756
+  },
+  {
+   "name": "assembly_078",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 119.41153390980848,
+   "off_truth_area": 87.67054230370269,
+   "interior_coverage": 0.9828755991068586
+  },
+  {
+   "name": "assembly_079",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 32.84887089282668,
+   "off_truth_area": 18.145328112415694,
+   "interior_coverage": 0.9941816795201982
+  },
+  {
+   "name": "assembly_080",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 94.48511852664468,
+   "off_truth_area": 68.11518973382817,
+   "interior_coverage": 0.9847691224570153
+  },
+  {
+   "name": "assembly_081",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 40.439716818753965,
+   "off_truth_area": 22.331773510843334,
+   "interior_coverage": 0.9916057357998581
+  },
+  {
+   "name": "assembly_082",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 89.42765964018369,
+   "off_truth_area": 63.61944802100996,
+   "interior_coverage": 0.9845696090057674
+  },
+  {
+   "name": "assembly_083",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 46.19473333431342,
+   "off_truth_area": 25.536042907092,
+   "interior_coverage": 0.9945537267999988
+  },
+  {
+   "name": "assembly_084",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 4.791132131022325,
+   "off_truth_area": 1.258532767311639,
+   "interior_coverage": 0.9994438015805065
+  },
+  {
+   "name": "assembly_085",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 3.4602835186099696,
+   "off_truth_area": 1.2539138909856202,
+   "interior_coverage": 0.9994065246249102
+  },
+  {
+   "name": "assembly_086",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 47.72539076394911,
+   "off_truth_area": 25.517556098280032,
+   "interior_coverage": 0.9898618345700252
+  },
+  {
+   "name": "assembly_088",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 6.181667619155659,
+   "off_truth_area": 2.0875131218118734,
+   "interior_coverage": 0.9993231318577421
+  },
+  {
+   "name": "assembly_089",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 47.25772245419714,
+   "off_truth_area": 31.591858065647813,
+   "interior_coverage": 0.988406848329904
+  },
+  {
+   "name": "assembly_090",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 30.50261038574395,
+   "off_truth_area": 21.323206602280578,
+   "interior_coverage": 0.9945655329496833
+  },
+  {
+   "name": "assembly_091",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 51.450994672291685,
+   "off_truth_area": 28.466085768528146,
+   "interior_coverage": 0.9894078333722397
+  },
+  {
+   "name": "assembly_092",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 95.65515195821598,
+   "off_truth_area": 49.939538210489424,
+   "interior_coverage": 0.9894118991232961
+  },
+  {
+   "name": "assembly_093",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 71.40946220019941,
+   "off_truth_area": 38.76149785327496,
+   "interior_coverage": 0.99162960350281
+  },
+  {
+   "name": "assembly_094",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 105.09412558303552,
+   "off_truth_area": 76.4645553921112,
+   "interior_coverage": 0.9826383962496404
+  },
+  {
+   "name": "assembly_095",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 16.45506279345266,
+   "off_truth_area": 9.154966117204037,
+   "interior_coverage": 0.9964460295431278
+  },
+  {
+   "name": "assembly_096",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 77.44342893937791,
+   "off_truth_area": 53.777523230747434,
+   "interior_coverage": 0.9869691938544236
+  },
+  {
+   "name": "assembly_097",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 48.06696101165086,
+   "off_truth_area": 25.862633906430453,
+   "interior_coverage": 0.9916407408719515
+  },
+  {
+   "name": "assembly_098",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 1.72012875410781,
+   "off_truth_area": 0.624419103737691,
+   "interior_coverage": 0.9997196192938161
+  },
+  {
+   "name": "assembly_099",
+   "level": 6,
+   "family": "assembly",
+   "verdict": "review",
+   "missing_area": 94.02523907017232,
+   "off_truth_area": 50.05588721938982,
+   "interior_coverage": 0.9896488141783227
+  },
+  {
+   "name": "panel_001",
+   "level": 7,
+   "family": "panel",
+   "verdict": "review",
+   "missing_area": 124.46407301550354,
+   "off_truth_area": 40.13490045340975,
+   "interior_coverage": 0.9928463752860959
+  },
+  {
+   "name": "panel_005",
+   "level": 7,
+   "family": "panel",
+   "verdict": "review",
+   "missing_area": 16.901135425575184,
+   "off_truth_area": 5.119393082144549,
+   "interior_coverage": 0.999092689523934
+  },
+  {
+   "name": "panel_009",
+   "level": 7,
+   "family": "panel",
+   "verdict": "review",
+   "missing_area": 10.608331275189784,
+   "off_truth_area": 5.991768699785085,
+   "interior_coverage": 0.9995276990749624
+  },
+  {
+   "name": "panel_011",
+   "level": 7,
+   "family": "panel",
+   "verdict": "review",
+   "missing_area": 182.25698410525877,
+   "off_truth_area": 91.53697771066402,
+   "interior_coverage": 0.988929843249938
+  },
+  {
+   "name": "panel_012",
+   "level": 7,
+   "family": "panel",
+   "verdict": "review",
+   "missing_area": 26.25867821524829,
+   "off_truth_area": 16.154691487334887,
+   "interior_coverage": 0.9989283118192828
+  },
+  {
+   "name": "panel_013",
+   "level": 7,
+   "family": "panel",
+   "verdict": "review",
+   "missing_area": 16.857070014849775,
+   "off_truth_area": 11.187126765668104,
+   "interior_coverage": 0.9993556107040302
+  },
+  {
+   "name": "panel_014",
+   "level": 7,
+   "family": "panel",
+   "verdict": "review",
+   "missing_area": 26.829613452186774,
+   "off_truth_area": 7.469980969973708,
+   "interior_coverage": 0.9988070650612628
+  },
+  {
+   "name": "panel_015",
+   "level": 7,
+   "family": "panel",
+   "verdict": "review",
+   "missing_area": 10.657585950600403,
+   "off_truth_area": 5.449447474662511,
+   "interior_coverage": 0.9993823838843201
+  },
+  {
+   "name": "panel_019",
+   "level": 7,
+   "family": "panel",
+   "verdict": "review",
+   "missing_area": 14.642709335769293,
+   "off_truth_area": 8.976812997178937,
+   "interior_coverage": 0.9991150542962333
+  },
+  {
+   "name": "doghouse_r0",
+   "level": 8,
+   "family": "doghouse",
+   "verdict": "review",
+   "missing_area": 4.4127253709839716,
+   "off_truth_area": 4.085945471625413,
+   "interior_coverage": 0.9983059611586664
+  },
+  {
+   "name": "doghouse_r1",
+   "level": 8,
+   "family": "doghouse",
+   "verdict": "review",
+   "missing_area": 90.15095613444763,
+   "off_truth_area": 63.65088441455999,
+   "interior_coverage": 0.962308993066009
+  },
+  {
+   "name": "trim_strip_000",
+   "level": 8,
+   "family": "trim_strip",
+   "verdict": "review",
+   "missing_area": 16.90229881591367,
+   "off_truth_area": 6.628002055872387,
+   "interior_coverage": 0.9990807873562487
+  },
+  {
+   "name": "trim_strip_001",
+   "level": 8,
+   "family": "trim_strip",
+   "verdict": "review",
+   "missing_area": 14.47930509380664,
+   "off_truth_area": 4.444400683427446,
+   "interior_coverage": 0.9991884760749008
+  }
+ ]
+}

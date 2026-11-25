@@ -1,0 +1,133 @@
+{
+ "name": "plate_holes_3",
+ "level": 1,
+ "family": "plate_hole",
+ "params": {
+  "a": 120,
+  "b": 60,
+  "holes": [
+   [
+    25,
+    30,
+    6
+   ],
+   [
+    60,
+    30,
+    10
+   ],
+   [
+    95,
+    30,
+    4
+   ]
+  ]
+ },
+ "thickness": [
+  4.0
+ ],
+ "junction_fillet": 0.0,
+ "free_edge_fillet": 0.0,
+ "volume": 26889.911661968996,
+ "midsurface_area": 6722.4779166543485,
+ "face_role_counts": {
+  "skin": 2,
+  "edge": 7
+ },
+ "midsurface_faces": [
+  {
+   "center": [
+    60.32712861013122,
+    30.0,
+    0.0
+   ],
+   "area": 6722.4779166543485,
+   "thickness": 4.0
+  }
+ ],
+ "representation": "analytic",
+ "face_roles": {
+  "11": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 6722.4779166543485
+  },
+  "12": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 480.0
+  },
+  "13": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 6722.4779166543485
+  },
+  "14": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 240.0
+  },
+  "15": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 480.0
+  },
+  "16": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 240.0
+  },
+  "17": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 150.7964473751514
+  },
+  "18": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 251.32741229191691
+  },
+  "19": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 100.53096491677151
+  }
+ },
+ "volume_ratio": 0.9999999998271323
+}

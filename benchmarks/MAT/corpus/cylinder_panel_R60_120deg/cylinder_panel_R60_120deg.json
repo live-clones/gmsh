@@ -1,0 +1,90 @@
+{
+ "name": "cylinder_panel_R60_120deg",
+ "level": 1,
+ "family": "cylinder_panel",
+ "params": {
+  "radius": 60,
+  "angle": 120,
+  "length": 60
+ },
+ "thickness": [
+  4.0
+ ],
+ "junction_fillet": 0.0,
+ "free_edge_fillet": 0.0,
+ "volume": 30159.289474585858,
+ "midsurface_area": 7539.822368615503,
+ "face_role_counts": {
+  "skin": 2,
+  "edge": 4
+ },
+ "midsurface_faces": [
+  {
+   "center": [
+    24.809800293980647,
+    42.97183463481174,
+    29.999999999999996
+   ],
+   "area": 7539.822368615503,
+   "thickness": 4.0
+  }
+ ],
+ "representation": "analytic",
+ "face_roles": {
+  "8": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 7791.149780902687
+  },
+  "9": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 240.0000000000006
+  },
+  "10": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 7288.494956328319
+  },
+  "11": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 5,
+    "fillet": 0
+   },
+   "area": 502.65482458055976
+  },
+  "12": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 240.0
+  },
+  "13": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 5,
+    "fillet": 0
+   },
+   "area": 502.65482458055703
+  }
+ },
+ "volume_ratio": 1.0000000000041063
+}

@@ -319,8 +319,8 @@ OFF files were deleted; all eight comparison images were visually inspected.
 Tetrahedron-based raw MAT and collapse filter, 25 November 2026
 ---------------------------------------------------------------
 Branch feature/matgmsh-core-b. The C++ follows the Python prototype validated
-on the synthetic corpus (topology exact on 199 of 200 cases); the comparison
-of the C++ with that prototype on the same cached skins has NOT been run yet.
+on the synthetic corpus (topology exact on 199 of 200 cases). The comparison
+with that prototype is reported below ("Comparison with the Python prototype").
 
 Unit tests (mat_native_skin_sites, mat_native_tet_interior,
 mat_native_collapse): sites restricted to the skin triangles; certificates of
@@ -342,3 +342,77 @@ tetrahedron is interior when the winding number is odd (the prototype tested
 nonzero, which fills a cavity whose shell is oriented like the outer one),
 and the material side of each shell comes from the interior tetrahedra (the
 prototype identified no convex edge on such skins).
+
+Comparison with the Python prototype, 25 November 2026
+------------------------------------------------------
+dragon3 (Linux, GCC 14.3), one core per case, commit 3141a404f. 221 cases:
+the 220 of the synthetic corpus and TwistedDuct, each on the cached skin mesh
+(size t/10) that the prototype used, 222 million sites and 1.37 billion
+tetrahedra in all. No skin of this set has several shells, so the two rules
+above are not exercised here. The largest case (panel_013, 6.3 million sites)
+takes 1947 s for the raw MAT and 243 s for the filter.
+
+Quantity                               Result over the 221 cases
+Sites, tetrahedra                      identical in all
+Interior tetrahedra                    identical in all
+Raw polygons and their vertex cycles   identical in all, in the same order
+Certificate                            same verdict in all: holds in 219,
+                                       fails in assembly_024 and panel_011
+Wing polygons                          identical in 218; 12, 42 and 68 differ
+                                       in bracket_round_edges, panel_001 and
+                                       panel_011 (of 1795, 618 629 and
+                                       483 013 wing polygons)
+Polygons kept by the collapse          identical in 142; at most 3 differ in
+                                       207; at most 19 in all (worst:
+                                       bracket_round_edges, 19 of 140 771
+                                       kept)
+Euler characteristic of the kept set   identical in all
+Erosion thickness over thickness       never bit-identical; largest
+                                       difference per case from 1e-14 to
+                                       0.14 (assembly_024), median 0.023
+Edges left without surface             30 cases have some, the same 30 in the
+                                       prototype; counts differ in two
+                                       (ligament_edge_gap4 26 against 24,
+                                       ligament_holes_gap2 5 against 7)
+
+On the 12 cases examined in detail, the differences of erosion thickness
+come from the centroid of polygons of zero or nearly zero area, which depends
+on the order of summation; the burn time of everything reached through such a
+polygon inherits it, and the kept sets differ where that moves a polygon
+across the threshold 0.21. The three differences in wings were not examined.
+
+In the 30 cases with edges left without surface, the kept polygons alone do
+not have the topology of the raw MAT (they are in several pieces in 29 of
+them); gmshMat reports it as a warning.
+
+Corpus verdicts with the C++ MAT, 25 November 2026
+--------------------------------------------------
+Same runs, followed by the fusion with the face-pairing walls of 9 October
+(fuse.py --gentle --part) and the evaluator, both frozen (see
+tools/README.txt). 220 corpus cases:
+
+Verdict   Cases  With the prototype's MAT
+perfect   59     59, the same cases
+good      12     12, the same cases
+review    149    149
+
+The fusion of panel_009, panel_012, panel_013 and panel_014 needs 40 to
+47 GB of memory (the other cases ran with 32 GB).
+
+The 71 good or perfect cases are shipped in benchmarks/MAT/corpus with their
+scores in benchmarks/MAT/corpus.json. By level: 40 of 40 at level 1, 7 of 28
+at level 2, 17 of 26 at level 3, 2 of 9 at level 4, 0 of 4 at level 5, 5 of
+100 at level 6, 0 of 9 at level 7 and 0 of 4 at level 8 (which holds
+doghouse_r0 and doghouse_r1).
+
+Replay with benchmarks/MAT/run_corpus.py, 26 November 2026. The script
+meshes the skin from the STEP file instead of reading the cached mesh. On
+dragon3 the 71 cases return the scores of corpus.json to the last digit, in
+57 minutes on one core (MAT 35, fusion 19, evaluation 3) and at most 12.6 GB
+(assembly_036). On macOS arm64 the 8 cases tried (bend_90deg_r4, plate_60x40,
+pipe_flange_r0, t_junction_h20_r0, x_junction_r0, hat_holes,
+ligament_edge_gap2, thickness_step_6_2) return the recorded verdict; the
+scores differ slightly there (pipe_flange_r0: missing area 0.109 t^2 against
+0.083). Six "good" cases are within 0.005 t of the 0.25 t limit of the
+largest distance (t_junction_h20_r0 and the five assemblies); the assemblies
+were not replayed on macOS.

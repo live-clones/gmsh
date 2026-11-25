@@ -1,0 +1,108 @@
+{
+ "name": "elbow_R40_r12",
+ "level": 1,
+ "family": "elbow",
+ "params": {
+  "bend_radius": 40,
+  "tube_radius": 12,
+  "angle": 90
+ },
+ "thickness": [
+  4.0
+ ],
+ "junction_fillet": 0.0,
+ "free_edge_fillet": 0.0,
+ "volume": 18949.64044478568,
+ "midsurface_area": 4737.410112522894,
+ "face_role_counts": {
+  "skin": 4,
+  "edge": 4
+ },
+ "midsurface_faces": [
+  {
+   "center": [
+    26.610706484964904,
+    26.610706484964904,
+    4.911348051655208e-16
+   ],
+   "area": 4737.410112522894,
+   "thickness": 4.0
+  }
+ ],
+ "representation": "analytic",
+ "face_roles": {
+  "10": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 1973.9208802178705
+  },
+  "11": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 1973.920880217876
+  },
+  "12": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 14,
+    "fillet": 0
+   },
+   "area": 150.79644717333815
+  },
+  "13": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 2763.4892323050185
+  },
+  "14": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 2763.4892323050262
+  },
+  "15": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 14,
+    "fillet": 0
+   },
+   "area": 150.79644717333912
+  },
+  "16": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 14,
+    "fillet": 0
+   },
+   "area": 150.79644717333804
+  },
+  "17": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 14,
+    "fillet": 0
+   },
+   "area": 150.79644717333915
+  }
+ },
+ "volume_ratio": 0.9999999997200001
+}

@@ -1,0 +1,80 @@
+{
+ "name": "acute_corner_20deg",
+ "level": 3,
+ "family": "acute_corner",
+ "params": {
+  "angle": 20,
+  "length": 100
+ },
+ "thickness": [
+  4.0
+ ],
+ "junction_fillet": 0.0,
+ "free_edge_fillet": 0.0,
+ "volume": 6840.402866513379,
+ "midsurface_area": 1710.1007166283473,
+ "face_role_counts": {
+  "skin": 2,
+  "edge": 3
+ },
+ "midsurface_faces": [
+  {
+   "center": [
+    64.65642069286358,
+    11.400671444189005,
+    0.0
+   ],
+   "area": 1710.1007166283473,
+   "thickness": 4.0
+  }
+ ],
+ "representation": "analytic",
+ "face_roles": {
+  "7": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 1710.1007166283473
+  },
+  "8": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 400.0
+  },
+  "9": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 1710.1007166283473
+  },
+  "10": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 138.91854213354435
+  },
+  "11": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 400.00000000000006
+  }
+ },
+ "volume_ratio": 0.9999999999999986
+}

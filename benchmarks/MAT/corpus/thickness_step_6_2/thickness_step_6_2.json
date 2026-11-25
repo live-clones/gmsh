@@ -1,0 +1,142 @@
+{
+ "name": "thickness_step_6_2",
+ "level": 4,
+ "family": "thickness_step",
+ "params": {
+  "a": [
+   40,
+   40
+  ],
+  "b": 50,
+  "thickness": [
+   6,
+   2
+  ]
+ },
+ "thickness": [
+  6,
+  2
+ ],
+ "junction_fillet": 0.0,
+ "free_edge_fillet": 0.0,
+ "volume": 15999.999999999998,
+ "midsurface_area": 3999.999999999999,
+ "face_role_counts": {
+  "skin": 4,
+  "edge": 6
+ },
+ "midsurface_faces": [
+  {
+   "center": [
+    20.0,
+    25.0,
+    0.0
+   ],
+   "area": 1999.9999999999995,
+   "thickness": 6
+  },
+  {
+   "center": [
+    60.0,
+    25.0,
+    0.0
+   ],
+   "area": 1999.9999999999995,
+   "thickness": 2
+  }
+ ],
+ "representation": "analytic",
+ "face_roles": {
+  "1": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 1999.9999999999995
+  },
+  "3": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 1999.9999999999995
+  },
+  "6": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 300.0
+  },
+  "10": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 100.0
+  },
+  "15": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 320.0
+  },
+  "16": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 100.0
+  },
+  "17": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 320.0
+  },
+  "18": {
+   "role": "edge",
+   "votes": {
+    "skin": 0,
+    "edge": 16,
+    "fillet": 0
+   },
+   "area": 100.0
+  },
+  "19": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 1999.9999999999995
+  },
+  "20": {
+   "role": "skin",
+   "votes": {
+    "skin": 16,
+    "edge": 0,
+    "fillet": 0
+   },
+   "area": 1999.9999999999995
+  }
+ },
+ "volume_ratio": 1.0000000000000002
+}
