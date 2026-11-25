@@ -3,6 +3,7 @@
 # Reports per face the cells whose smallest corner sine, measured against the CAD
 # normal at the cell centroid, is not positive (flipped or invalid), and the
 # smallest sine. Mesh.* options are stripped so any Gmsh version can read the CAD.
+# The last line counts the cells outside the element specification (LIMITS below).
 import sys, math, collections, os, tempfile
 import gmsh
 geo, msh = sys.argv[1], sys.argv[2]
@@ -29,6 +30,27 @@ def sub(a,b): return (a[0]-b[0],a[1]-b[1],a[2]-b[2])
 def cross(a,b): return (a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0])
 def dot(a,b): return a[0]*b[0]+a[1]*b[1]+a[2]*b[2]
 def nrm(a): return math.sqrt(dot(a,a))
+# Element specification, the table of the former contrib/QuadOptimizer/quadQuality.cpp:
+# (preferred, absolute) limits of quadrangles (4) and triangles (3). Warping and angles
+# in degrees, ratio = longest/shortest edge, skew = sum over the corners of the
+# deviation of the angle from 90 (quadrangles) or 60 (triangles) degrees.
+LIMITS = {4: {'warp': (15., 25.), 'ratio': (5., 10.), 'angle_min': (45., 25.), 'angle_max': (135., 160.), 'skew': (125., 160.)},
+          3: {'ratio': (5., 10.), 'angle_min': (20., 10.), 'angle_max': (120., 150.), 'skew': (125., 160.)}}
+def measures(P, warp):
+    n = len(P)
+    normal = (0., 0., 0.)
+    for k in range(n): normal = tuple(x+y for x, y in zip(normal, cross(P[k], P[(k+1)%n])))
+    e = [nrm(sub(P[(k+1)%n], P[k])) for k in range(n)]
+    A = []
+    for k in range(n):
+        p = sub(P[k-1], P[k]); q = sub(P[(k+1)%n], P[k]); den = nrm(p)*nrm(q)
+        a = 180. if den == 0 else math.degrees(math.acos(max(-1., min(1., dot(p, q)/den))))
+        if n == 4 and dot(cross(q, p), normal) < 0: a = 360.-a  # reflex corner
+        A.append(a)
+    return {'warp': warp, 'ratio': max(e)/min(e) if min(e) > 0 else float('inf'), 'angle_min': min(A),
+            'angle_max': max(A), 'skew': sum(abs((60. if n == 3 else 90.)-a) for a in A)}
+spec = [0, 0]  # cells outside the preferred, the absolute specification
+specby = [collections.Counter(), collections.Counter()]  # the same by criterion
 warped = collections.defaultdict(int)
 ind = collections.Counter()  # industrial criteria, over the whole mesh
 area = collections.defaultdict(float)  # mesh area of each face
@@ -61,6 +83,11 @@ for ty, tag, ids in elems:
         ang = [math.degrees(math.acos(max(-1., min(1., dot(sub(P[(k+1)%4], P[k]), sub(P[k-1], P[k]))/(edges[k]*edges[k-1]+1e-300))))) for k in range(4)]
         ind['angle<45'] += min(ang) < 45.
         ind['angle>135'] += max(ang) > 135.
+    m = measures(P, w if n == 4 else 0.)
+    for level in (0, 1):
+        out = [k for k, lim in LIMITS[n].items() if (m[k] <= lim[level] if k == 'angle_min' else m[k] >= lim[level])]
+        spec[level] += bool(out)
+        for k in out: specby[level][('quad_' if n == 4 else 'tri_')+k] += 1
     a2 = (0., 0., 0.)
     for k in range(1, n-1): a2 = tuple(x+y for x, y in zip(a2, cross(sub(P[k], P[0]), sub(P[k+1], P[0]))))
     area[tag] += nrm(a2)/2.
@@ -82,4 +109,6 @@ print(f"slivers: {len(sliver)} faces smaller than 0.05 cell, invalid cells {sum(
 q = max(ind['quads'], 1)
 print(f"industrial: invalid_real={real} quads={ind['quads']} tri%={100.*tri/max(cells,1):.1f} angle<45={ind['angle<45']} angle>135={ind['angle>135']} "
       f"warp>15={ind['warp15']} aspect>5={ind['aspect5']} (quads %: {100.*ind['angle<45']/q:.1f} {100.*ind['angle>135']/q:.1f} {100.*ind['warp15']/q:.1f} {100.*ind['aspect5']/q:.1f})")
+def by(c): return " ".join(f"{k}={v}" for k, v in sorted(c.items())) or "none"
+print(f"specification: absolute={spec[1]} preferred={spec[0]} cells outside, of {cells}; by criterion, absolute: {by(specby[1])}; preferred: {by(specby[0])}")
 gmsh.finalize()
