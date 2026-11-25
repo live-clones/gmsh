@@ -6,6 +6,7 @@
 #include <sstream>
 #include <regex>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "GmshConfig.h"
 #include "GmshDefines.h"
@@ -4394,32 +4395,61 @@ static int _typeKey(const HierarchicalBasis::Function &f)
 
 // The master of the elements of a periodic entity, to key their functions as
 // those of the master entity: the master node of each node of an element, the
-// master entity, and the curve of each mesh line of the model (on surfaces)
+// master entity, and, on surfaces, the curve of each mesh line of the model and,
+// if some curves have no mesh lines, the edges on the boundary of the mesh of
+// the (slave) entity
 struct periodicMaster {
   std::map<MVertex *, MVertex *> nodes;
   GEntity *entity;
   std::unordered_map<MEdge, GEdge *, MEdgeHash, MEdgeEqual> curves;
+  std::unordered_set<MEdge, MEdgeHash, MEdgeEqual> boundary;
 };
+
+// The curve on which lies the mesh edge (a, b) of the master entity, or
+// nullptr: the curve of which it is a mesh line or, if the curves have no mesh
+// lines (e.g. in a mesh read from a file in which only the elements of the
+// physical groups were saved) and the edge is on the boundary of the mesh of
+// the entity, the curve given by the entities of its nodes: the curve on which
+// one of them lies, or else the curve of the master entity without inner nodes
+// joining their points
+static GEdge *_curveOfEdge(MVertex *a, MVertex *b, const periodicMaster &master,
+                           bool boundary)
+{
+  GEntity *ea = a->onWhat(), *eb = b->onWhat();
+  if(!ea || !eb || ea->dim() > 1 || eb->dim() > 1) return nullptr;
+  auto it = master.curves.find(MEdge(a, b));
+  if(it != master.curves.end()) return it->second;
+  if(!boundary) return nullptr;
+  if(ea->dim() == 0) std::swap(ea, eb);
+  if(ea->dim() == 1) // a boundary edge with a node inside a curve is on it
+    return (eb == ea || eb->dim() == 0) ? static_cast<GEdge *>(ea) : nullptr;
+  for(auto c : master.entity->edges()) {
+    GVertex *v0 = c->getBeginVertex(), *v1 = c->getEndVertex();
+    if(c->mesh_vertices.empty() &&
+       ((v0 == ea && v1 == eb) || (v0 == eb && v1 == ea)))
+      return c;
+  }
+  return nullptr;
+}
 
 // Follow the chains of periodic entities from the mesh edge or face given by
 // its nodes, of an element of the master entity: while the entity it lies on
-// (the curve of which it is a mesh line, the master entity otherwise) is
-// periodic, its nodes are replaced by their master nodes on that entity, so
-// that it ends on an entity which is not periodic. E.g. for a cell periodic in
-// x and y, an edge along the corner x = 1, y = 1 has its master on the curve
-// x = 0, y = 1, which is itself periodic in y: the edge reached is on the
-// curve x = 0, y = 0. Stops at the last entity whose master nodes are all
-// known
+// (the curve on which it lies for an edge, see _curveOfEdge, the master entity
+// otherwise) is periodic, its nodes are replaced by their master nodes on that
+// entity, so that it ends on an entity which is not periodic. E.g. for a cell
+// periodic in x and y, an edge along the corner x = 1, y = 1 has its master on
+// the curve x = 0, y = 1, which is itself periodic in y: the edge reached is on
+// the curve x = 0, y = 0. Stops at the last entity whose master nodes are all
+// known. boundary: whether the edge is on the boundary of the mesh of the
+// entity
 static void _followPeriodicChains(std::vector<MVertex *> &nodes,
-                                  const periodicMaster &master)
+                                  const periodicMaster &master,
+                                  bool boundary = false)
 {
   GEntity *e = master.entity;
-  auto onCurve = [](MVertex *v) {
-    return v->onWhat() && v->onWhat()->dim() < 2;
-  };
-  if(nodes.size() == 2 && onCurve(nodes[0]) && onCurve(nodes[1])) {
-    auto it = master.curves.find(MEdge(nodes[0], nodes[1]));
-    if(it != master.curves.end()) e = it->second;
+  if(nodes.size() == 2) {
+    GEdge *c = _curveOfEdge(nodes[0], nodes[1], master, boundary);
+    if(c) e = c;
   }
   std::vector<MVertex *> m(nodes.size());
   for(int i = 0; e->getMeshMaster() != e; i++) {
@@ -4477,9 +4507,10 @@ static void _addHierarchicalKeys(
       if(!edgeDone[f.entity]) {
         MEdge edge = e->getEdge(f.entity);
         if(master) {
+          bool boundary = master->boundary.count(edge) > 0;
           std::vector<MVertex *> n = {node(edge.getVertex(0)),
                                       node(edge.getVertex(1))};
-          _followPeriodicChains(n, *master);
+          _followPeriodicChains(n, *master, boundary);
           edge = MEdge(n[0], n[1]);
         }
         if(returnCoord) {
@@ -5998,9 +6029,23 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
   // (on a curve, the edges of the elements are its mesh lines)
   if(dim == 2) {
     GModel *m = GModel::current();
-    for(auto it = m->firstEdge(); it != m->lastEdge(); ++it)
+    bool noLines = false;
+    for(auto it = m->firstEdge(); it != m->lastEdge(); ++it) {
+      if((*it)->lines.empty()) noLines = true;
       for(auto l : (*it)->lines)
         master.curves[MEdge(l->getVertex(0), l->getVertex(1))] = *it;
+    }
+    // the edges of a single element of the entity, if some curves have no mesh
+    // lines
+    if(noLines) {
+      std::unordered_map<MEdge, int, MEdgeHash, MEdgeEqual> count;
+      for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
+        MElement *e = ge->getMeshElement(j);
+        for(int k = 0; k < e->getNumEdges(); k++) count[e->getEdge(k)]++;
+      }
+      for(auto &c : count)
+        if(c.second == 1) master.boundary.insert(c.first);
+    }
   }
   for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType); j++) {
     MElement *e = ge->getMeshElementByType(familyType, j);
