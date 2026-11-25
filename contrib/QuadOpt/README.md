@@ -33,13 +33,17 @@ Gmsh options in use: `Mesh.PackRecombination`, `Mesh.PackCleanupMethod`,
   replacement.
 - `qoFace.h/.cpp`: `FaceMesh`, shared by everything below: import, orientation,
   protected curves, CAD projection and normals, export; and the geometric
-  measures (`quality`, `warping`, `alignment`).
+  measures (`quality`, `shear`, `warping`, `alignment`).
 - `qoOptimizer.cpp`: `FaceOptimizer`. A cavity is a small disk of cells; every
   re-meshing of it (with up to two interior points) is a candidate, accepted if
   a single energy decreases (cell shape, triangle count, valence after Kinney
-  1997) and all cells are valid. Nodal moves are tangent-plane Winslow. A work
-  queue schedules cavities; at the end, invalid or too warped quads are split
-  along the diagonal closest to the CAD.
+  1997) and all cells are valid. The shape of a quad counts all its corners, not
+  only the worst one: a quad sheared at 45 degrees costs about as much as a
+  triangle. Where a node of the boundary has fewer cells than its angle
+  asks for (a quad with two edges on the boundary), a row of quads along the
+  boundary is a candidate too (Kinney 1997, Fig. 13). Nodal moves are
+  tangent-plane Winslow. A work queue schedules cavities; at the end, invalid or
+  too warped quads are split along the diagonal closest to the CAD.
 - `qoQMorph.cpp`: `FrontAdvance`, the fronts only (Owen et al. 1999, nine front
   types of Wang et al. 2025). It asks the optimizer to smooth and to re-mesh.
 - `qoPatch.h/.cpp`: search of patches with 3 to 6 corners (Bunin 2006) and the

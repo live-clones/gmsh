@@ -6,11 +6,14 @@
 //
 //  - The face is imported into a half-edge complex (qoHalfEdge.h).
 //  - A cavity is a small disk of cells. Every way of re-meshing it with the same
-//    boundary (with or without one or two interior points) is a candidate.
+//    boundary (with or without one or two interior points) is a candidate, and
+//    so is a row of quads along the boundary of the face where a node of it has
+//    too few cells.
 //  - A candidate, like a nodal move (tangent-plane Winslow projected on the CAD),
 //    is applied only if the energy decreases and all its cells are valid, so the
-//    process terminates. The energy is the shape of the cells plus a valence term
-//    after Kinney (CleanUp, 1997): a node should have angle/90 quads around it.
+//    process terminates. The energy is the shape of the cells (all the corners
+//    of a quad count, as in a Winslow energy) plus a valence term after Kinney
+//    (CleanUp, 1997): a node should have angle/90 quads around it.
 //  - A work queue schedules cavities around what changed.
 //  - Warping is not in the energy: an invalid or too warped quad is finally split
 //    in two triangles along the diagonal closest to the CAD.
@@ -51,6 +54,7 @@ namespace QuadOpt {
     constexpr double kFlatQuality = 0.1; // a quad below (angle > ~174) is split
     constexpr double kMinCadAlignment = 0.3; // cosine(cell normal, CAD normal)
     constexpr std::size_t kMaxLoop = 12; // largest cavity boundary
+    constexpr int kMaxInterior = 3; // new points of a candidate
     constexpr std::size_t kMaxCandidates = 4000;
     constexpr double kPatchSizeSlack = 0.25; // a patch keeps its cell count
 
@@ -63,12 +67,14 @@ namespace QuadOpt {
                     : q >= kFlatQuality && warpingWithin(p, maximumWarping);
     }
 
-    double cost(double q, int n)
+    // Cost of a cell of quality q. The quality only sees the worst corner of a
+    // quad: its shear, computed from the corners p, adds the others (qoFace.h).
+    double cost(double q, int n, const SVector3 *p = nullptr)
     {
       q = q > kMinQuality ? std::min(q, 1.) : -1.; // an invalid cell is invalid
       const double bad = std::max(0., 0.3 - q);
       return (1. - q) * (1. - q) + 10. * bad * bad +
-             (n == 3 ? kTriangleCost : 0.);
+             (n == 3 ? kTriangleCost : p && q > 0. ? shear(p) : 0.);
     }
 
     // A node with n cells around an angle theta (degrees) should have theta/90
@@ -100,8 +106,8 @@ namespace QuadOpt {
 
     struct Candidate {
       Pieces pieces;
-      int interior = 0; // new points, at indices loop.size() and loop.size() + 1
-      SVector3 center[2]; // first guesses for them
+      int interior = 0; // new points, at indices loop.size(), loop.size() + 1...
+      SVector3 center[kMaxInterior]; // first guesses for them
     };
 
     // A disk of cells, with everything needed to judge a replacement.
@@ -114,6 +120,7 @@ namespace QuadOpt {
       std::vector<int> count; // old cells at each loop vertex
       std::vector<double> theta; // angle around each loop vertex, degrees
       std::vector<char> triangle; // a triangle outside the cavity touches it
+      std::vector<char> border; // the loop edge leaving the vertex bounds the face
       Points N; // CAD normals at the loop vertices, then at the interior points
       int triangles = 0;
       double energy = 0.; // current energy, valence included
@@ -186,6 +193,7 @@ namespace QuadOpt {
       void partitions(const Cavity &cavity, int maxTriangles,
                       std::vector<Candidate> &out) const;
       void stars(const Cavity &cavity, std::vector<Candidate> &out) const;
+      void rows(const Cavity &cavity, std::vector<Candidate> &out) const;
       double energyOf(const Cavity &cavity, const Candidate &candidate,
                       const Points &Q, int *triangles) const;
       bool placeInterior(Cavity &cavity, const Candidate &candidate,
@@ -256,7 +264,7 @@ namespace QuadOpt {
         const Cell &c = _he.cells[id];
         const Corners p = pointsOf(c);
         const double q = quality(p.data(), c.n, nref);
-        energy += cost(align(c) > kMinCadAlignment ? q : -1., c.n);
+        energy += cost(align(c) > kMinCadAlignment ? q : -1., c.n, p.data());
         if(valid && !(q > kMinQuality)) *valid = false;
       }
       return energy;
@@ -414,13 +422,16 @@ namespace QuadOpt {
             return false;
         }
       }
-      for(int w : cavity.loop) {
+      for(int k = 0; k < cavity.size(); ++k) {
+        const int w = cavity.loop[k];
         cavity.P.push_back(_v[w].p);
         cavity.theta.push_back(angleAround(w));
         char outside = 0;
         for(int id : _he.star[w])
           if(_he.cells[id].n == 3 && !inCavity(id)) outside = 1;
         cavity.triangle.push_back(outside);
+        cavity.border.push_back(
+          _he.cellAt(cavity.loop[(k + 1) % cavity.size()], w) < 0);
       }
       cavity.normal = meanNormal(cavity.P.data(), cavity.size());
       if(!(cavity.normal.norm() > 0.)) return false;
@@ -431,8 +442,7 @@ namespace QuadOpt {
       }
       const SVector3 inner =
         mean.norm() > 0. ? mean * (1. / mean.norm()) : cavity.normal;
-      cavity.N.push_back(inner);
-      cavity.N.push_back(inner);
+      for(int k = 0; k < kMaxInterior; ++k) cavity.N.push_back(inner);
 
       cavity.energy = energyOf(cells, cavity.normal);
       for(int k = 0; k < cavity.size(); ++k)
@@ -462,7 +472,7 @@ namespace QuadOpt {
                                 d < 0 ? SVector3() : cavity.N[d]};
         return acceptable(q, p, n, _options.maximumWarping) &&
                        alignment(p, nv, n) > kMinCadAlignment
-                 ? cost(q, n)
+                 ? cost(q, n, p)
                  : std::numeric_limits<double>::infinity();
       };
       std::function<void(std::vector<Interval>, Pieces &, double, int)>
@@ -563,16 +573,85 @@ namespace QuadOpt {
         }
     }
 
+    // A row of quads along a run of boundary edges of the face, when a vertex
+    // inside the run has fewer cells than its angle asks for: the quad with two
+    // edges on the boundary, which Kinney replaces by a transition (CleanUp,
+    // Fig. 13). A new point faces every vertex inside the run, and what is left
+    // of the cavity, a polygon with two vertices less, is cut into quads in
+    // every way.
+    void FaceOptimizer::rows(const Cavity &cavity,
+                             std::vector<Candidate> &out) const
+    {
+      const int m = cavity.size();
+      for(int first = 0; first < m; ++first) {
+        if(!cavity.border[first] || cavity.border[(first + m - 1) % m]) continue;
+        int length = 1; // edges of the run starting at `first`
+        while(length < m && cavity.border[(first + length) % m]) ++length;
+        if(length < 2 || length > kMaxInterior + 1 || m < length + 3 || m < 6)
+          continue;
+        auto at = [&](int k) { return (first + k + m) % m; };
+        bool lacking = false;
+        for(int k = 1; k < length; ++k)
+          lacking = lacking ||
+                    cavity.count[at(k)] < std::lround(cavity.theta[at(k)] / 90.);
+        if(!lacking) continue;
+
+        Candidate row;
+        row.interior = length - 1;
+        for(int k = 1; k < length; ++k) // new point k - 1 faces vertex k
+          row.center[k - 1] =
+            cavity.P[at(k)] +
+            crossprod(cavity.normal, cavity.P[at(k + 1)] - cavity.P[at(k - 1)]) * 0.35;
+        for(int k = 0; k < length; ++k)
+          row.pieces.push_back(
+            {4,
+             {{at(k), at(k + 1), k == length - 1 ? at(length + 1) : m + k,
+               k == 0 ? at(-1) : m + k - 1}}});
+        std::vector<int> rest = {at(-1)}; // the polygon left above the row
+        for(int k = 1; k < length; ++k) rest.push_back(m + k - 1);
+        for(int i = at(length + 1); i != at(-1); i = (i + 1) % m) rest.push_back(i);
+
+        using Interval = std::pair<int, int>; // sub-polygon i..j of `rest`
+        std::function<void(std::vector<Interval>)> cut =
+          [&](std::vector<Interval> todo) {
+            if(out.size() >= kMaxCandidates) return;
+            while(!todo.empty() && todo.back().second - todo.back().first < 2)
+              todo.pop_back();
+            if(todo.empty()) {
+              out.push_back(row);
+              relax(out.back(), cavity.P);
+              return;
+            }
+            const int i = todo.back().first, j = todo.back().second;
+            todo.pop_back();
+            // The quad (i,k,l,j) on edge (i,j) leaves three polygons with an
+            // even number of vertices, or edges.
+            for(int k = i + 1; k < j; k += 2)
+              for(int l = k + 1; l < j; l += 2) {
+                if((j - l) % 2 == 0) continue;
+                auto next = todo;
+                next.push_back({i, k});
+                next.push_back({k, l});
+                next.push_back({l, j});
+                row.pieces.push_back({4, {{rest[i], rest[k], rest[l], rest[j]}}});
+                cut(next);
+                row.pieces.pop_back();
+              }
+          };
+        cut({{0, int(rest.size()) - 1}});
+      }
+    }
+
     // Energy of the cavity after the candidate; Q = loop positions followed by
-    // the interior point. Infinite if a cell is invalid.
+    // the interior points. Infinite if a cell is invalid.
     double FaceOptimizer::energyOf(const Cavity &cavity,
                                    const Candidate &candidate, const Points &Q,
                                    int *triangles) const
     {
       const int m = cavity.size();
-      int count[kMaxLoop + 2] = {};
-      char hasTriangle[kMaxLoop + 2] = {};
-      double energy = 0., theta[2] = {0., 0.}; // angles at the interior points
+      int count[kMaxLoop + kMaxInterior] = {};
+      char hasTriangle[kMaxLoop + kMaxInterior] = {};
+      double energy = 0., theta[kMaxInterior] = {}; // angles at the interior points
       const double bound = cavity.energy - kGain; // every term is non-negative
       *triangles = 0;
       for(const Piece &piece : candidate.pieces) {
@@ -591,7 +670,7 @@ namespace QuadOpt {
         if(!acceptable(q, p, piece.n, _options.maximumWarping) ||
            alignment(p, nv, piece.n) <= kMinCadAlignment)
           return std::numeric_limits<double>::infinity();
-        energy += cost(q, piece.n);
+        energy += cost(q, piece.n, p);
         *triangles += piece.n == 3;
         if(!(energy < bound)) return std::numeric_limits<double>::infinity();
       }
@@ -637,7 +716,7 @@ namespace QuadOpt {
     {
       const int m = cavity.size();
       std::vector<int> ids = cavity.loop;
-      ids.resize(m + 2, -1);
+      ids.resize(m + kMaxInterior, -1);
       for(int k = 0; k < candidate.interior; ++k)
         ids[m + k] = addVertex(points[k], uv[k]);
       std::vector<Cell> fresh;
@@ -677,10 +756,11 @@ namespace QuadOpt {
       std::vector<Candidate> candidates;
       partitions(cavity, cavity.triangles, candidates); // never add triangles
       stars(cavity, candidates);
+      rows(cavity, candidates);
 
       std::vector<std::pair<double, int> > ranked;
       Points Q = cavity.P;
-      Q.resize(cavity.size() + 2);
+      Q.resize(cavity.size() + kMaxInterior);
       for(std::size_t k = 0; k < candidates.size(); ++k) {
         for(int j = 0; j < candidates[k].interior; ++j)
           Q[cavity.size() + j] = candidates[k].center[j];
@@ -692,8 +772,9 @@ namespace QuadOpt {
       std::sort(ranked.begin(), ranked.end());
       for(std::size_t r = 0; r < ranked.size() && r < 4; ++r) {
         const Candidate &candidate = candidates[ranked[r].second];
-        SVector3 points[2] = {candidate.center[0], candidate.center[1]};
-        double uv[2][2] = {{0., 0.}, {0., 0.}};
+        SVector3 points[kMaxInterior];
+        for(int j = 0; j < kMaxInterior; ++j) points[j] = candidate.center[j];
+        double uv[kMaxInterior][2] = {};
         if(candidate.interior && !placeInterior(cavity, candidate, points, uv))
           continue;
         if(commit(cavity, candidate, points, uv)) {
@@ -1073,6 +1154,8 @@ namespace QuadOpt {
             }
           }
         }
+      // Without the shear of the quads: the triangles that would replace a
+      // sheared quad of such a face are seldom better than it.
       double before = 0.;
       for(int id : cells) {
         const Cell &c = _he.cells[id];

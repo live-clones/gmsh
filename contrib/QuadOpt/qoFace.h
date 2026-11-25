@@ -113,6 +113,26 @@ namespace QuadOpt {
     return std::min(sine, 1.) * std::min(1., 1.5 * lmin / lmax);
   }
 
+  // What the corners of a quad other than its worst one add to its cost: the
+  // sum over them of (1 - sine)^2, in the cell's own mean plane. A sheared quad,
+  // with four corners off, then costs four times what a quad with one such
+  // corner does: like a Winslow energy, and like the skew of an element
+  // specification (the sum of the deviations of the angles from 90 degrees).
+  inline double shear(const SVector3 *p)
+  {
+    const SVector3 normal = meanNormal(p, 4);
+    double sum = 0., worst = 0.;
+    for(int i = 0; i < 4; ++i) {
+      const SVector3 a = p[i] - p[(i + 3) % 4], b = p[(i + 1) % 4] - p[i];
+      const double l = a.norm() * b.norm();
+      const double sine = l > 0. ? dot(crossprod(a, b), normal) / l : 0.;
+      const double d = 1. - std::max(0., std::min(1., sine));
+      sum += d * d;
+      worst = std::max(worst, d * d);
+    }
+    return sum - worst;
+  }
+
   // Alignment of a cell with the CAD: cosine between its normal and the mean of
   // the CAD normals at its vertices; -1 if these diverge too much (a cell too
   // large for the curvature).
