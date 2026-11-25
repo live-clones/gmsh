@@ -1750,14 +1750,10 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Pyramids" , opt_mesh_pyramids , 1. ,
     "Display mesh pyramids?" },
 
-  // the options of the quasi-structured quad flow, which cannot be selected
-  // anymore, are deprecated: they are still read, but neither documented nor
-  // saved
+  // the options of the former quasi-structured quad mesher do nothing: they
+  // are still accepted, but neither documented nor saved
   { F|O|D, "QuadqsSizemapMethod" , opt_mesh_quadqs_sizemap_method, 3 ,
-    "Size map method in QuadQuasiStructured. 0: default, 1: cross-field,"
-      "2: cross-field + CAD small features adaptation,"
-      "3: from background mesh (e.g. sizes in current triangulation),"
-      "4: cross-field + CAD small features adaptation (clamped by background mesh)" },
+    "[Deprecated]" },
   { F|O, "PackCleanupMethod" , opt_mesh_pack_cleanup_method, 1 ,
     "Cavity optimizer after packing of parallelograms when PackRecombination is 0. 1: enabled (0 is also accepted for compatibility), 2: disabled" },
   { F|O, "PackRecombination", opt_mesh_pack_recombination, 0,
@@ -1778,19 +1774,11 @@ StringXNumber MeshOptions_Number[] = {
     "Remesh simple CAD faces with quad patterns after packing of "
       "parallelograms (regular, but the patterns do not follow the size map)" },
   { F|O|D, "QuadqsTopologyOptimizationMethods" , opt_mesh_quadqs_topo_optim_methods, 0. ,
-    "Topology optimization methods in QuadQuasiStructured. 0: default (all),"
-      "100: pattern-based CAD faces,"
-      "010: disk quadrangulation remeshing,"
-      "001: cavity remeshing,"
-      "xxx: combination of multiple methods (e.g. 111 for all)" },
+    "[Deprecated]" },
   { F|O|D, "QuadqsRemeshingBoldness" , opt_mesh_quadqs_remeshing_boldness, 0.66 ,
-    "Controls how much cavity remeshing is allowed to distort"
-      " the quad mesh. From 0 (no quality decrease during remeshing) to 1"
-      " (quality can tend to 0 during remeshing)." },
+    "[Deprecated]" },
   { F|O|D, "QuadqsScalingOnTriangulation" , opt_mesh_quadqs_scaling_on_triangulation, 0.75,
-    "Ratio on the edge length between the triangulation and the quadrangulation."
-      " Use a small ratio (e.g. 0.5) to get a background triangulation finer"
-      " than the quad mesh. Useful to get a more accurate cross-field." },
+    "[Deprecated]" },
   { F|O, "Quadrangles" , opt_mesh_quadrangles , 1. ,
     "Display mesh quadrangles?" },
   { F|O, "QualityInf" , opt_mesh_quality_inf , 0.0 ,

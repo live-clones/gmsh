@@ -86,7 +86,7 @@ there is no quadrangle, if the triangles exceed 5 % of the quadrangles or if an
 element is invalid. Seven are analytic shapes (`analytic_*`: plates with holes
 and a graded size, a drilled cylinder, a sphere, a torus, a pipe tee, a notched
 box meshed with `Mesh.PackPatterns = 1`). Three (`quadqs_fallback_*`) are
-scripts written for the former quasi-structured quad algorithm
-(`Mesh.Algorithm = 11`, `Mesh.Quadqs*` options), which cannot be selected
-anymore: they check that the algorithm falls back to PACK and that the mesh is
-the one of PACK selected explicitly.
+scripts written for the quasi-structured quad algorithm (`Mesh.Algorithm = 11`,
+`Mesh.Quadqs*` options), which has been removed: they check that the algorithm
+falls back to PACK, that its options are still accepted and that the mesh is the
+one of PACK selected explicitly.

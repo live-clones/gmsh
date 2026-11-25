@@ -2425,10 +2425,6 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
   list(FILTER ALLFILES EXCLUDE REGEX "io_vtk/vtu_roundtrip.geo$")
   # calls Mesh 3 explicitly:
   list(FILTER ALLFILES EXCLUDE REGEX "occ/mmg3d_multidomain_bgmesh.geo$")
-  # written for the quasi-structured quad algorithm (Mesh.Algorithm = 11),
-  # which cannot be selected anymore; PACK, used instead, does not mesh the
-  # extruded entities again after its second pass:
-  list(FILTER ALLFILES EXCLUDE REGEX "extrude/quasi_structured.geo$")
   # the self-checking quad cases, which need PACK and its optimizer (the other
   # cases of benchmarks/quads read large CAD files: see run_all.sh there)
   if(HAVE_QUADOPTIMIZER)

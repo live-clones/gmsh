@@ -149,7 +149,7 @@ public:
 class FieldManager : public std::map<int, Field *> {
 private:
   int _backgroundField;
-  // the PACK/QuadQS guiding field (-1 if none: 0 is a valid user field id)
+  // the PACK guiding field (-1 if none: 0 is a valid user field id)
   int _guidingField;
   std::vector<int> _boundaryLayerFields;
 
@@ -182,7 +182,7 @@ public:
       addBoundaryLayerFieldId(tags[i]);
   }
   inline int getBackgroundField() { return _backgroundField; }
-  // scaled cross field of the PACK/QuadQS meshers, kept apart from the
+  // scaled cross field of the PACK mesher, kept apart from the
   // background (size) field, under an id no user field is expected to use
   void setGuidingField(int iView);
   void clearGuidingField();
