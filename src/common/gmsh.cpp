@@ -4395,8 +4395,9 @@ static int _typeKey(const HierarchicalBasis::Function &f)
 
 // The master of the elements of a periodic entity, to key their functions as
 // those of the master entity: the master node of each node of an element, the
-// master entity, and, on surfaces, the curve of each mesh line of the model and
-// the edges on the boundary of the mesh of the (slave) entity
+// master entity, and, on surfaces, the curve of each mesh line of the model and,
+// if some curves have no mesh lines, the edges on the boundary of the mesh of
+// the (slave) entity
 struct periodicMaster {
   std::map<MVertex *, MVertex *> nodes;
   GEntity *entity;
@@ -4409,7 +4410,8 @@ struct periodicMaster {
 // lines (e.g. in a mesh read from a file in which only the elements of the
 // physical groups were saved) and the edge is on the boundary of the mesh of
 // the entity, the curve given by the entities of its nodes: the curve on which
-// one of them lies, or else the curve without inner nodes joining their points
+// one of them lies, or else the curve of the master entity without inner nodes
+// joining their points
 static GEdge *_curveOfEdge(MVertex *a, MVertex *b, const periodicMaster &master,
                            bool boundary)
 {
@@ -4421,7 +4423,7 @@ static GEdge *_curveOfEdge(MVertex *a, MVertex *b, const periodicMaster &master,
   if(ea->dim() == 0) std::swap(ea, eb);
   if(ea->dim() == 1) // a boundary edge with a node inside a curve is on it
     return (eb == ea || eb->dim() == 0) ? static_cast<GEdge *>(ea) : nullptr;
-  for(auto c : static_cast<GVertex *>(ea)->edges()) {
+  for(auto c : master.entity->edges()) {
     GVertex *v0 = c->getBeginVertex(), *v1 = c->getEndVertex();
     if(c->mesh_vertices.empty() &&
        ((v0 == ea && v1 == eb) || (v0 == eb && v1 == ea)))
@@ -6027,18 +6029,23 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
   // (on a curve, the edges of the elements are its mesh lines)
   if(dim == 2) {
     GModel *m = GModel::current();
-    for(auto it = m->firstEdge(); it != m->lastEdge(); ++it)
+    bool noLines = false;
+    for(auto it = m->firstEdge(); it != m->lastEdge(); ++it) {
+      if((*it)->lines.empty()) noLines = true;
       for(auto l : (*it)->lines)
         master.curves[MEdge(l->getVertex(0), l->getVertex(1))] = *it;
-    // the edges of a single element of the entity, for the curves without
-    // mesh lines
-    std::unordered_map<MEdge, int, MEdgeHash, MEdgeEqual> count;
-    for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
-      MElement *e = ge->getMeshElement(j);
-      for(int k = 0; k < e->getNumEdges(); k++) count[e->getEdge(k)]++;
     }
-    for(auto &c : count)
-      if(c.second == 1) master.boundary.insert(c.first);
+    // the edges of a single element of the entity, if some curves have no mesh
+    // lines
+    if(noLines) {
+      std::unordered_map<MEdge, int, MEdgeHash, MEdgeEqual> count;
+      for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
+        MElement *e = ge->getMeshElement(j);
+        for(int k = 0; k < e->getNumEdges(); k++) count[e->getEdge(k)]++;
+      }
+      for(auto &c : count)
+        if(c.second == 1) master.boundary.insert(c.first);
+    }
   }
   for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType); j++) {
     MElement *e = ge->getMeshElementByType(familyType, j);
