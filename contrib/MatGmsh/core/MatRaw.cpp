@@ -27,6 +27,7 @@
 #include <Eigen/Eigenvalues>
 #include <Eigen/Geometry>
 #include "matCircumcenter.h"
+#include "matSkinSites.h"
 #include "matVoronoiVertexMerge.h"
 #include "DiscreteCADWinding.h"
 void matGmsh::orientSurfaceTriangles()
@@ -563,10 +564,14 @@ void matGmsh::createVoronoiSeeds() {
     int type = elemTypes[t];
     if(type == 2) {
       const auto &conn = elemNodeTags[t];
-      for(size_t i = 0; i < conn.size(); i += 3) {
-	del.triangles.push_back(tagToIndex[conn[i+0]]);
-	del.triangles.push_back(tagToIndex[conn[i+1]]);
-	del.triangles.push_back(tagToIndex[conn[i+2]]);
+      for(size_t i = 0; i < conn.size(); ++i) {
+        // operator[] would silently map an unknown tag to the first site.
+        const auto index = tagToIndex.find(conn[i]);
+        if(index == tagToIndex.end())
+          throw std::runtime_error(
+              "A skin triangle uses node " + std::to_string(conn[i]) +
+              ", which is not a node of the model");
+        del.triangles.push_back(index->second);
       }
     }
   }
@@ -743,6 +748,16 @@ void matGmsh::computeVoronoi()
   vor.faceColors.clear();
 
   createVoronoiSeeds();
+
+  // Only the nodes of the skin triangles are sites (see matSkinSites.h).
+  del.unreferencedNodeTags = matgmsh::skinSites::restrictToTriangles(
+      del.seeds, del.nodeTags, del.onWhat, del.seedFaces, del.triangles);
+  if(del.triangles.empty())
+    throw std::runtime_error("The MAT needs a triangulated skin");
+  if(!del.unreferencedNodeTags.empty())
+    std::cout << "MAT sites: ignored " << del.unreferencedNodeTags.size()
+              << " nodes used by no skin triangle; sites="
+              << del.nodeTags.size() << '\n';
 
   std::vector<double> steiner;
   gmsh::option::setNumber("Mesh.RandomFactor3D", 0.0);

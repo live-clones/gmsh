@@ -65,6 +65,8 @@ private:
     std::vector<std::vector<int>> seedFaces;
     std::vector<size_t> triangles;
     std::vector<size_t> tetrahedra;
+    // Model nodes used by no skin triangle; they are not sites.
+    std::vector<size_t> unreferencedNodeTags;
   };
   std::string voronoiSurfaceMeshInput;
 
