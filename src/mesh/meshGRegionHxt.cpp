@@ -37,15 +37,6 @@ extern "C" {
 #include "hxt_tetColor.h"
 }
 
-static int getNumThreads()
-{
-  int nthreads = CTX::instance()->numThreads;
-  if(CTX::instance()->mesh.maxNumThreads3D > 0)
-    nthreads = CTX::instance()->mesh.maxNumThreads3D;
-  if(!nthreads) nthreads = Msg::GetMaxThreads();
-  return nthreads;
-}
-
 static HXTStatus messageCallback(HXTMessage *msg)
 {
   if(msg) Msg::Info("%s", msg->string);
@@ -63,7 +54,7 @@ static HXTStatus nodalSizesCallBack(double *pts, uint32_t *volume,
   HXT_INFO("Computing %smesh sizes...",
            useInterpolatedSize ? "interpolated " : "");
 
-  int nthreads = getNumThreads();
+  int nthreads = CTX::instance()->numThreads3D();
   bool exceptions = false;
 #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
   for(size_t i = 0; i < numPts; i++) {
@@ -248,11 +239,17 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
       double *xyz = &m->vertices.coord[4 * i0];
       // FIXME compute true coordinates
       c2v[i0] = new MEdgeVertex(xyz[0], xyz[1], xyz[2], ge->second, 0);
+      // new vertex (Steiner point of the boundary recovery): register it on
+      // its curve, otherwise it is saved without a tag (node 0)
+      ge->second->mesh_vertices.push_back(c2v[i0]);
     }
     if(!c2v[i1]) {
       // FIXME compute true coordinates
       double *xyz = &m->vertices.coord[4 * i1];
       c2v[i1] = new MEdgeVertex(xyz[0], xyz[1], xyz[2], ge->second, 0);
+      // new vertex (Steiner point of the boundary recovery): register it on
+      // its curve, otherwise it is saved without a tag (node 0)
+      ge->second->mesh_vertices.push_back(c2v[i1]);
     }
     ge->second->lines.push_back(new MLine(c2v[i0], c2v[i1]));
   }
@@ -277,16 +274,19 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
       // FIXME compute true coordinates
       double *xyz = &m->vertices.coord[4 * i0];
       c2v[i0] = new MFaceVertex(xyz[0], xyz[1], xyz[2], gf->second, 0, 0);
+      gf->second->mesh_vertices.push_back(c2v[i0]); // idem, on its surface
     }
     if(!c2v[i1]) {
       // FIXME compute true coordinates
       double *xyz = &m->vertices.coord[4 * i1];
       c2v[i1] = new MFaceVertex(xyz[0], xyz[1], xyz[2], gf->second, 0, 0);
+      gf->second->mesh_vertices.push_back(c2v[i1]); // idem, on its surface
     }
     if(!c2v[i2]) {
       // FIXME compute true coordinates
       double *xyz = &m->vertices.coord[4 * i2];
       c2v[i2] = new MFaceVertex(xyz[0], xyz[1], xyz[2], gf->second, 0, 0);
+      gf->second->mesh_vertices.push_back(c2v[i2]); // idem, on its surface
     }
     gf->second->triangles.push_back(new MTriangle(c2v[i0], c2v[i1], c2v[i2]));
   }
@@ -461,7 +461,7 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
   std::vector<MVertex *> c2v;
   Gmsh2Hxt(regions, mesh, v2c, c2v);
 
-  int nthreads = getNumThreads();
+  int nthreads = CTX::instance()->numThreads3D();
 
   HXTTetMeshOptions options = {
     nthreads, // int defaultThreads;
@@ -522,7 +522,7 @@ static HXTStatus _delaunayMeshIn3DHxt(std::vector<MVertex *> &verts,
   mesh->vertices.num = nvert;
   mesh->vertices.size = nvert;
 
-  int nthreads = getNumThreads();
+  int nthreads = CTX::instance()->numThreads3D();
 
   HXTDelaunayOptions delOptions = {
     nullptr, // bbox
@@ -749,7 +749,7 @@ void optimizeMeshHXT(GModel *pModel, double quality, bool flipOnly)
 
     HXTOptimizeOptions options;
     options.bbox = nullptr;
-    options.numThreads = getNumThreads();
+    options.numThreads = CTX::instance()->numThreads3D();
     if(flipOnly)
       options.numVerticesConstrained = pMesh->vertices.num;
     else
@@ -970,7 +970,7 @@ void refineTetrahedraHxt(const std::vector<double> &coord, const std::vector<dou
   hxtBboxAdd(&bbox, pMesh->vertices.coord, pMesh->vertices.num);
   HXTDelaunayOptions delOptions;
   delOptions.bbox = &bbox;
-  delOptions.delaunayThreads = getNumThreads();
+  delOptions.delaunayThreads = CTX::instance()->numThreads3D();
   delOptions.perfectDelaunay = 0;
   delOptions.allowOuterInsertion = 0;
   delOptions.insertionFirst = pMesh->vertices.num;

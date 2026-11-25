@@ -10,6 +10,7 @@
 #include "MTriangle.h"
 #include "MQuadrangle.h"
 #include "ExtrudeParams.h"
+#include "meshGEdge.h"
 #include "MVertexRTree.h"
 #include "Context.h"
 #include "GmshMessage.h"
@@ -317,6 +318,13 @@ int MeshExtrudedSurface(
       Msg::Error("Unknown source curve %d for extrusion", ep->geo.Source);
       return 0;
     }
+    if(!extrudableMesh(from)) return 0;
+    // after a full turn the last layer is the source curve, which need not
+    // bound the surface
+    pos.insert(from->mesh_vertices);
+    if(from->getBeginVertex())
+      pos.insert(from->getBeginVertex()->mesh_vertices);
+    if(from->getEndVertex()) pos.insert(from->getEndVertex()->mesh_vertices);
     extrudeMesh(from, gf, pos, constrainedEdges);
   }
   else {
@@ -324,6 +332,9 @@ int MeshExtrudedSurface(
     GFace *from = gf->model()->getFaceByTag(std::abs(ep->geo.Source));
     if(!from) {
       Msg::Error("Unknown source surface %d for extrusion", ep->geo.Source);
+      return 0;
+    }
+    else if(!extrudableMesh(from)) {
       return 0;
     }
     else if(from->geomType() != GEntity::DiscreteSurface &&

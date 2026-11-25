@@ -47,7 +47,7 @@ protected:
   }
 
 public:
-  MTetrahedron(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, int num = 0,
+  MTetrahedron(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, std::size_t num = 0,
                int part = 0)
     : MElement(num, part)
   {
@@ -56,7 +56,7 @@ public:
     _v[2] = v2;
     _v[3] = v3;
   }
-  MTetrahedron(const std::vector<MVertex *> &v, int num = 0, int part = 0)
+  MTetrahedron(const std::vector<MVertex *> &v, std::size_t num = 0, int part = 0)
     : MElement(num, part)
   {
     for(int i = 0; i < 4; i++) _v[i] = v[i];
@@ -188,6 +188,7 @@ public:
       return false;
     return true;
   }
+  virtual bool hasStaticIntegrationPoints() const { return true; }
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
   virtual SPoint3 circumcenter();
   static int edges_tetra(const int edge, const int vert)
@@ -247,7 +248,7 @@ protected:
 public:
   MTetrahedron10(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3,
                  MVertex *v4, MVertex *v5, MVertex *v6, MVertex *v7,
-                 MVertex *v8, MVertex *v9, int num = 0, int part = 0)
+                 MVertex *v8, MVertex *v9, std::size_t num = 0, int part = 0)
     : MTetrahedron(v0, v1, v2, v3, num, part)
   {
     _vs[0] = v4;
@@ -258,7 +259,7 @@ public:
     _vs[5] = v9;
     for(int i = 0; i < 6; i++) _vs[i]->setPolynomialOrder(2);
   }
-  MTetrahedron10(const std::vector<MVertex *> &v, int num = 0, int part = 0)
+  MTetrahedron10(const std::vector<MVertex *> &v, std::size_t num = 0, int part = 0)
     : MTetrahedron(v, num, part)
   {
     for(int i = 0; i < 6; i++) _vs[i] = v[4 + i];
@@ -382,14 +383,14 @@ protected:
 
 public:
   MTetrahedronN(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3,
-                const std::vector<MVertex *> &v, char order, int num = 0,
+                const std::vector<MVertex *> &v, char order, std::size_t num = 0,
                 int part = 0)
     : MTetrahedron(v0, v1, v2, v3, num, part), _vs(v), _order(order)
   {
     for(std::size_t i = 0; i < _vs.size(); i++)
       _vs[i]->setPolynomialOrder(_order);
   }
-  MTetrahedronN(const std::vector<MVertex *> &v, char order, int num = 0,
+  MTetrahedronN(const std::vector<MVertex *> &v, char order, std::size_t num = 0,
                 int part = 0)
     : MTetrahedron(v[0], v[1], v[2], v[3], num, part), _order(order)
   {

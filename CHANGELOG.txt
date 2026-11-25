@@ -1,44 +1,63 @@
 5.0.0 (Work-in-progress): improved performance of default meshing algorithms;
-new experimental parallel 3D Delaunay algorithm; improved graphics performance
-and entity selection; new shader rendering pipeline with order-independent
-transparency and studio shading; redesigned GUI, with tools docked to the right
-of the graphics window by default and automatic dark mode; new capping
+new parallel 3D Delaunay algorithm (Mesh.Algorithm3D = 11 or -algo pdel3d);
+improved graphics performance and entity selection, with new shader rendering
+pipeline supporting order-independent transparency and studio shading;
+redesigned GUI, with tools docked to the right of the graphics window by default
+and automatic dark mode; new JavaScript API and web interface; new capping
 visualization mode in clipping tool; new interactive model query and
 measurement; improved colorbars and 2D plots; new predefined colormaps and
-symmetric log scale; new built-in fonts used by default (removed ZapfDingbats);
-new headless image and movie export (replaces deprecated OSMesa); export MP4
-movies with FFmpeg; new experimental JavaScript API and WebGL viewer; new faster
-homology solver (with periodicity connection handling); improved performance of
-mesh partitioning pipeline and added support for partition overlaps; new ability
-to save only the local partitioned Brep; improved performance of high-order
-element generation (now also for prisms of any order) and adaptive view
-visualization (with target error relative to range); Thread-safe
+symmetric log scale; new built-in fonts used by default
+(removed ZapfDingbats); new headless image and movie export (replaces deprecated
+OSMesa; optional MP4 export with FFmpeg); new faster homology solver (with
+periodicity connection handling); new experimental discrete CAD modeler;
+improved performance of mesh partitioning pipeline and added support for
+partition overlaps; new ability to save only the local partitioned Brep;
+improved performance of high-order element generation (now also for prisms of
+any order) and adaptive view visualization (with target error relative to
+range); ghost cells of all dimensions, stored per element (ghost entities
+were removed); Thread-safe
 MathEval/MathEvalAniso/Param mesh size fields; new MSH4.2 revision of the MSH
 file format with support for embedded entities in $Entities and
 $PartitionedEntities, efficient blocked $NodeData, $ElementData,
 $ElementNodeData and $GhostElements sections, and support for $Edges and $Faces
 sections (see the reference manual for detailed changes); new polytope
 implementation with support in the API and MSH4.2 format, which replaces the old
-polygon/polyhedron elements, levelset commands and Plugin(CutMesh); improved
-export of views on several meshes (one file per mesh, plus a name.ext.geo script
-to read them back); the Extend mesh size field is now applied per entity and
-takes an element growth rate as input; rewritten AutomaticMeshSizeField using a
-self-contained octree implementation; improved XAO export that preserves entity
-tags; new VTK/Paraview IO for meshes and post-processing views; new Curvature
+polygon/polyhedron elements, levelset commands and Plugin(CutMesh); new
+Plugin(NonConformalRefinement) and Plugin(DualMesh); improved export of views on
+several meshes (one file per mesh, plus a name.ext.geo script to read them
+back); the Extend mesh size field is now applied per entity and takes an element
+growth rate as input; rewritten AutomaticMeshSizeField using a self-contained
+octree implementation; improved XAO export that preserves entity tags; new
+VTK/Paraview IO for meshes and post-processing views; new Curvature
 Curve/Surface, CreateMeshEdges/Faces and CreateOverlaps parser functions; new
 H(div)/L2 and reorganized H(curl) hierarchical basis functions; new
 Plugin(DuplicateNodes), removed Plugin(CVTRemesh) and Plugin(CurvedBndDist);
-upgraded bundled contrib/Netgen to v6.2.2608; fix MeshAdapt regression
-introduced in 4.12 on thin cones/cylinders; reproducible multi-threaded 1D and
-2D meshing; periodic node correspondences are now computed for transfinite,
-extruded and subdivided meshes (periodicity constraints no longer need to be
-redefined after meshing); boolean operations now return the entities of the
-result that are not on the boundary of other ones (including embedded ones),
-plus the arguments left unchanged, each once and regardless of
-Geometry.OCCBooleanPreserveNumbering; Gmsh now requires C++17 and CMake 3.10,
-and uses Eigen 5.0 by default; added support for OCC 8; official binary builds
-now use OCC 8.0.1 and FLTK 1.4.5 (Linux/Windows) or 1.5.0-dev (macOS); FLTK
-1.4.0 or higher is now required to build the GUI; bug fixes.
+upgraded bundled contrib/Netgen to v6.2.2608; removed the ONELAB metamodels
+(contrib/onelab, .ol files); improved hex-dominant algorithm; fix MeshAdapt
+regression introduced in 4.12 on thin cones/cylinders; reproducible
+multi-threaded 1D and 2D meshing; periodic node correspondences are now computed
+for transfinite, extruded and subdivided meshes (periodicity constraints no
+longer need to be redefined after meshing); boolean operations now return the
+entities of the result that are not on the boundary of other ones (including
+embedded ones), plus the arguments left unchanged, each once and regardless of
+Geometry.OCCBooleanPreserveNumbering; improved import of STEP names and colors;
+improved shape healing, with new Geometry.OCCFixTolerances option; OpenCASCADE
+curve loops and wires now accept curves in any order and orientation; the colors
+of the entities are now saved with their visibility, in .vis files loaded
+automatically with the model (e.g. model.msh.vis with model.msh); OpenCASCADE
+transformations, fillets, chamfers and defeaturing now keep the tags of the
+entities on the boundary of the modified ones (not only of the latter), as do
+boolean operations with new Geometry.OCCBooleanPreserveNumbering=2, which also
+gives the physical groups and the periodicity of split entities to their pieces;
+entities keeping their tag keep their physical groups, mesh constraints and
+periodicity; transforming an OpenCASCADE entity that bounds another one (e.g. a
+face of a volume) alone is now an error, instead of silently transforming a
+copy; the Geometry/Mesh/View.Transparency options are renamed Opacity; the
+windows are placed at offsets from the graphic window (General.*OffsetX/Y), the
+absolute General.*PositionX/Y being deprecated; removed View.FakeTransparency;
+Gmsh now requires C++17, CMake 3.10 and FLTK 1.4.0, supports OCC 8, and uses
+Eigen 5.0 by default; official binary builds now use FLTK 1.5-dev, OCC 8.0.1,
+HDF5 1.14.6, CGNS 4.5.2 and MED 6.0.1; bug fixes.
 
 * New API functions: mesh/createOverlaps, mesh/getPartitionEntities,
   mesh/getOverlapBoundary, mesh/getOverlapInterfaceBoundary,
@@ -47,11 +66,18 @@ now use OCC 8.0.1 and FLTK 1.4.5 (Linux/Windows) or 1.5.0-dev (macOS); FLTK
   mesh/addPolyhedra, mesh/getPolyhedra, mesh/getPolytopeSimplices,
   mesh/setPolytopeSimplices, mesh/createPolytopeSimplices,
   mesh/getFacesByType, mesh/getElementFaceNodesByType,
-  algorithm/refineTetrahedra, plugin/load, fltk/pick
+  mesh/setMetricCallback, mesh/removeMetricCallback,
+  algorithm/refineTetrahedra, plugin/load, fltk/pick, discrete/addBox,
+  discrete/addSphere, discrete/addCylinder, discrete/addCone, discrete/addTorus,
+  discrete/addRectangle, discrete/addDisk,
+  discrete/addTriangulation, discrete/importShapes, discrete/fuse,
+  discrete/cut, discrete/intersect, discrete/fillet, discrete/remove,
+  discrete/synchronize
 
-* Incompatible API changes: new optional arguments to mesh/optimize and
-  mesh/relocateNodes; new arguments to mesh/classifySurfaces; new and/or
-  modified arguments to mesh/getFaces and mesh/getElementFaceNodes (use
+* Incompatible API changes: new optional arguments to mesh/optimize,
+  mesh/relocateNodes and occ/healShapes; new arguments to
+  mesh/classifySurfaces; new and/or modified arguments to mesh/getFaces and
+  mesh/getElementFaceNodes (use
   getFacesByType and getElementFaceNodesByType for the old behavior),
   mesh/getAllFaces, mesh/addFaces; hierarchical basis function type keys
   (mesh/getKeys, mesh/getKeysForElement, mesh/getPeriodicKeys) are now 4 times
@@ -62,20 +88,9 @@ now use OCC 8.0.1 and FLTK 1.4.5 (Linux/Windows) or 1.5.0-dev (macOS); FLTK
   mesh/getBasisFunctionsOrientationForElement (true by default: the elements
   touching periodic curves and surfaces are oriented with the tags of the master
   nodes, so that mesh/getPeriodicKeys maps the keys of all the hierarchical
-  function spaces one-to-one)
-
-* New or modified options: Geometry/Mesh/View.Opacity/OpacityMode,
-  General.Shaders, General.Brightness, General.GraphicsCacheSize,
-  Print.Supersampling, Print.ScalePixelSizes; Mesh/View.DrawSkinOnly,
-  Mesh/View.DrawSkinEdgesOnly, View.AdaptSkinOnly, PostProcessing.SaveAdapted
-  (replacing the adapted .pvtu export dialog); Mesh.SaveViews (to save views
-  with the mesh in MSH/VTU/MED), Mesh.FlatRefineDelaunay2D/3D,
-  Mesh.FlatOptimize3D, Negative Mesh.OptimizePyramids places the pyramid apex
-  along the face normal, Mesh.PartitionSplitLocalBrep,
-  Mesh.CreateEdges/CreateFaces, Mesh.NbEdges/NbFaces/NbPolygons/NbPolyhedra,
-  View.Color.Polygons/Polyhedra, Mesh.Algorithm3D = 11 (or -algo pdel3d) for the
-  parallel Delaunay algorithm, Mesh.OptimizeReconnectionThreshold/Points/
-  Search; General.*OffsetX/Y replace deprecated absolute General.*PositionX/Y.
+  function spaces one-to-one, to master keys at the end of the chains of
+  periodic entities, which are never periodic themselves);
+  mesh/getGhostElements takes a partition
 
 4.15.2 (March 24, 2026): fixed issue in 3D structured CGNS output.
 

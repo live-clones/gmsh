@@ -39,14 +39,14 @@ protected:
   }
 
 public:
-  MTriangle(MVertex *v0, MVertex *v1, MVertex *v2, int num = 0, int part = 0)
+  MTriangle(MVertex *v0, MVertex *v1, MVertex *v2, std::size_t num = 0, int part = 0)
     : MElement(num, part)
   {
     _v[0] = v0;
     _v[1] = v1;
     _v[2] = v2;
   }
-  MTriangle(const std::vector<MVertex *> &v, int num = 0, int part = 0)
+  MTriangle(const std::vector<MVertex *> &v, std::size_t num = 0, int part = 0)
     : MElement(num, part)
   {
     for(int i = 0; i < 3; i++) _v[i] = v[i];
@@ -164,6 +164,7 @@ public:
       return false;
     return true;
   }
+  virtual bool hasStaticIntegrationPoints() const { return true; }
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
   virtual SPoint3 circumcenter();
   virtual double getVolume();
@@ -200,7 +201,7 @@ protected:
 
 public:
   MTriangle6(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
-             MVertex *v5, int num = 0, int part = 0)
+             MVertex *v5, std::size_t num = 0, int part = 0)
     : MTriangle(v0, v1, v2, num, part)
   {
     _vs[0] = v3;
@@ -208,7 +209,7 @@ public:
     _vs[2] = v5;
     for(int i = 0; i < 3; i++) _vs[i]->setPolynomialOrder(2);
   }
-  MTriangle6(const std::vector<MVertex *> &v, int num = 0, int part = 0)
+  MTriangle6(const std::vector<MVertex *> &v, std::size_t num = 0, int part = 0)
     : MTriangle(v, num, part)
   {
     for(int i = 0; i < 3; i++) _vs[i] = v[3 + i];
@@ -327,14 +328,14 @@ protected:
 
 public:
   MTriangleN(MVertex *v0, MVertex *v1, MVertex *v2,
-             const std::vector<MVertex *> &v, char order, int num = 0,
+             const std::vector<MVertex *> &v, char order, std::size_t num = 0,
              int part = 0)
     : MTriangle(v0, v1, v2, num, part), _vs(v), _order(order)
   {
     for(std::size_t i = 0; i < _vs.size(); i++)
       _vs[i]->setPolynomialOrder(_order);
   }
-  MTriangleN(const std::vector<MVertex *> &v, char order, int num = 0,
+  MTriangleN(const std::vector<MVertex *> &v, char order, std::size_t num = 0,
              int part = 0)
     : MTriangle(v[0], v[1], v[2], num, part), _order(order)
   {

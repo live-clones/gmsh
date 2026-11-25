@@ -346,9 +346,12 @@ namespace gmsh { // Top-level functions
     // tag) pairs. Return in `outDimTags' the boundary of the individual entities
     // (if `combined' is false) or the boundary of the combined geometrical shape
     // formed by all input entities (if `combined' is true). Return tags multiplied
-    // by the sign of the boundary entity if `oriented' is true. Apply the boundary
-    // operator recursively down to dimension 0 (i.e. to points) if `recursive' is
-    // true.
+    // by the sign of the boundary entity if `oriented' is true: for a surface,
+    // positive if the curve is oriented counterclockwise around the normal of the
+    // surface; for a volume, the sign of the surface in the volume (with the
+    // OpenCASCADE kernel, positive if the normal of the surface points out of the
+    // volume). Apply the boundary operator recursively down to dimension 0 (i.e.
+    // to points) if `recursive' is true.
     GMSH_API void getBoundary(const gmsh::vectorpair & dimTags,
                               gmsh::vectorpair & outDimTags,
                               const bool combined = true,
@@ -831,10 +834,13 @@ namespace gmsh { // Top-level functions
       // elastic smoother, "HighOrderFastCurving" for fast curving algorithm,
       // "Laplace2D" for Laplace smoothing, "Relocate2D" and "Relocate3D" for node
       // relocation, "UntangleMeshGeometry" for untangling, "HXT" for tetrahedral
-      // optimisation). If `force' is set apply the optimization also to discrete
-      // entities. If `dimTags' (given as a vector of (dim, tag) pairs) is given,
-      // only apply the optimizer to the given entities. For HXT optimizer, the
-      // `quality' argument should be specified
+      // optimisation). The methods other than the high-order ones optimize the
+      // first order mesh: the high-order elements are then recreated, and
+      // optimized according to the `Mesh.HighOrderOptimize' option. If `force' is
+      // set apply the optimization also to discrete entities. If `dimTags' (given
+      // as a vector of (dim, tag) pairs) is given, only apply the optimizer to the
+      // given entities. For HXT optimizer, the `quality' argument should be
+      // specified
       GMSH_API void optimize(const std::string & method = "",
                              const bool force = false,
                              const int niter = 1,
@@ -962,9 +968,11 @@ namespace gmsh { // Top-level functions
       // gmsh::model::mesh::setNode
       //
       // Set the coordinates and the parametric coordinates (if any) of the node
-      // with tag `tag'. This function relies on an internal cache (a vector in
-      // case of dense node numbering, a map otherwise); for large meshes accessing
-      // nodes in bulk is often preferable.
+      // with tag `tag'. The simplices computed for the polygons and polyhedra
+      // using the node are not computed again: reset them if need be with
+      // `setPolytopeSimplices', giving 0 simplices. This function relies on an
+      // internal cache (a vector in case of dense node numbering, a map
+      // otherwise); for large meshes accessing nodes in bulk is often preferable.
       GMSH_API void setNode(const std::size_t nodeTag,
                             const std::vector<double> & coord,
                             const std::vector<double> & parametricCoord);
@@ -1063,7 +1071,13 @@ namespace gmsh { // Top-level functions
       // entry is a vector of length equal to the number of elements of the given
       // type times the number N of nodes for this type of element, that contains
       // the node tags of all the elements of the given type, concatenated: [e1n1,
-      // e1n2, ..., e1nN, e2n1, ...].
+      // e1n2, ..., e1nN, e2n1, ...]. For polygons and polyhedra (types 34 and 35)
+      // the number of nodes differs from one element to the next: the nodes of an
+      // element are its boundary nodes (the nodes returned by `getPolygons', in
+      // the same order; each node of the faces returned by `getPolyhedra', once),
+      // followed by the nodes that only its sub-simplices use, if they were given
+      // (see `getPolytopeSimplices'). The number of nodes of each element thus
+      // follows from `getPolygons' or `getPolyhedra', and `getPolytopeSimplices'.
       GMSH_API void getElements(std::vector<int> & elementTypes,
                                 std::vector<std::vector<std::size_t> > & elementTags,
                                 std::vector<std::vector<std::size_t> > & nodeTags,
@@ -1162,7 +1176,9 @@ namespace gmsh { // Top-level functions
       // (`localNodeCoord' vector, of length `dim' times `numNodes') and number of
       // primary (first order) nodes (`numPrimaryNodes'). Polygons and polyhedra
       // have no reference element and a variable number of nodes: `numNodes' and
-      // `numPrimaryNodes' are -1 and `localNodeCoord' is empty.
+      // `numPrimaryNodes' are -1 and `localNodeCoord' is empty. Trihedra (type
+      // 140), which link a quadrangle to two triangles in hex-dominant meshes,
+      // have 4 nodes and no reference element: `localNodeCoord' is empty.
       GMSH_API void getElementProperties(const int elementType,
                                          std::string & elementName,
                                          int & dim,
@@ -1179,9 +1195,16 @@ namespace gmsh { // Top-level functions
       // elements of the corresponding type. `nodeTags' is a vector of length equal
       // to the number of elements of the given type times the number N of nodes
       // for this type of element, that contains the node tags of all the elements
-      // of the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...]. If
-      // `numTasks' > 1, only compute and return the part of the data indexed by
-      // `task' (for C++ only; output vectors must be preallocated).
+      // of the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...]. For
+      // polygons and polyhedra (types 34 and 35) the number of nodes differs from
+      // one element to the next: the nodes of an element are its boundary nodes
+      // (the nodes returned by `getPolygons', in the same order; each node of the
+      // faces returned by `getPolyhedra', once), followed by the nodes that only
+      // its sub-simplices use, if they were given (see `getPolytopeSimplices').
+      // The number of nodes of each element thus follows from `getPolygons' or
+      // `getPolyhedra', and `getPolytopeSimplices'. If `numTasks' > 1, only
+      // compute and return the part of the data indexed by `task' (for C++ only;
+      // output vectors must be preallocated).
       GMSH_API void getElementsByType(const int elementType,
                                       std::vector<std::size_t> & elementTags,
                                       std::vector<std::size_t> & nodeTags,
@@ -1288,9 +1311,12 @@ namespace gmsh { // Top-level functions
       // Add polyhedra classified on the volume `tag'. `elementTags' contains the
       // tags (unique, strictly positive identifiers) of the polyhedra; if empty,
       // new tags are assigned automatically. `numFaces' contains the number of
-      // faces of each polyhedron, `faceSizes' the number of nodes of each face,
-      // and `nodeTags' the tags of the nodes of all the faces, concatenated. A
-      // sub-tetrahedralization can be given with `setPolytopeSimplices'.
+      // faces of each polyhedron: [nf1, nf2, ...]; `faceSizes' the number of nodes
+      // of each face, polyhedron by polyhedron: [e1f1N, ..., e1f(nf1)N, e2f1N,
+      // ...], of length sum(numFaces); and `nodeTags' the tags of the nodes of all
+      // the faces, in the same order: [e1f1n1, ..., e1f1nN, e1f2n1, ..., e2f1n1,
+      // ...], of length sum(faceSizes). A sub-tetrahedralization can be given with
+      // `setPolytopeSimplices'.
       GMSH_API void addPolyhedra(const int tag,
                                  const std::vector<std::size_t> & elementTags,
                                  const std::vector<int> & numFaces,
@@ -1300,10 +1326,12 @@ namespace gmsh { // Top-level functions
       // gmsh::model::mesh::getPolyhedra
       //
       // Get the polyhedra classified on the volume `tag': their tags
-      // `elementTags', the number of faces `numFaces' of each polyhedron, the
-      // number of nodes `faceSizes' of each face, and the tags of the nodes of all
-      // the faces concatenated in `nodeTags'. If `tag' < 0, get the polyhedra of
-      // all the volumes.
+      // `elementTags': [e1, e2, ...], the number of faces `numFaces' of each
+      // polyhedron: [nf1, nf2, ...], the number of nodes `faceSizes' of each face,
+      // polyhedron by polyhedron: [e1f1N, ..., e1f(nf1)N, e2f1N, ...], and the
+      // tags of the nodes of all the faces in the same order in `nodeTags':
+      // [e1f1n1, ..., e1f1nN, e1f2n1, ..., e2f1n1, ...]. This is the layout taken
+      // by `addPolyhedra'. If `tag' < 0, get the polyhedra of all the volumes.
       GMSH_API void getPolyhedra(std::vector<std::size_t> & elementTags,
                                  std::vector<int> & numFaces,
                                  std::vector<int> & faceSizes,
@@ -1708,10 +1736,18 @@ namespace gmsh { // Top-level functions
       // classified on the entity of tag `tag'. `nodeTags' contains the node tags
       // of the edges for all the elements: [e1a1n1, e1a1n2, e1a2n1, ...]. Data is
       // returned by element, with elements in the same order as in `getElements'
-      // and `getElementsByType'. If `primary' is set, only the primary (begin/end)
-      // nodes of the edges are returned. If `tag' < 0, get the edge nodes for all
-      // entities. If `numTasks' > 1, only compute and return the part of the data
-      // indexed by `task' (for C++ only; output vector must be preallocated).
+      // and `getElementsByType'. Except for polygons and polyhedra, the number of
+      // edges is the same for all the elements of a given type (e.g. 3 for
+      // triangles, 6 for tetrahedra, 12 for hexahedra), and is equal to the number
+      // of edges returned divided by the number of elements. A polygon has as many
+      // edges as nodes: use `getPolygons' to get the number of nodes of each
+      // polygon. A polyhedron has half as many edges as the sum of the sizes of
+      // its faces, each edge being shared by two faces: use `getPolyhedra' to get
+      // the sizes of the faces of each polyhedron. If `primary' is set, only the
+      // primary (begin/end) nodes of the edges are returned. If `tag' < 0, get the
+      // edge nodes for all entities. If `numTasks' > 1, only compute and return
+      // the part of the data indexed by `task' (for C++ only; output vector must
+      // be preallocated).
       GMSH_API void getElementEdgeNodes(const int elementType,
                                         std::vector<std::size_t> & nodeTags,
                                         const int tag = -1,
@@ -1726,7 +1762,13 @@ namespace gmsh { // Top-level functions
       // of the faces for all elements: [e1f1n1, ..., e1f1nN, e1f2n1, ...], and
       // `faceSizes' the number of nodes of each face: [e1f1N, e1f2N, ...]. Faces
       // are returned for each element in their canonical order, with elements in
-      // the same order as in `getElements' and `getElementsByType'. If `primary'
+      // the same order as in `getElements' and `getElementsByType'. Except for
+      // polyhedra, the number of faces is the same for all the elements of a given
+      // type (e.g. 4 for tetrahedra, 5 for prisms, 6 for hexahedra, 1 for
+      // polygons), and is equal to the length of `faceSizes' divided by the number
+      // of elements; faces of different sizes (e.g. triangles and quadrangles for
+      // prisms and pyramids) are thus returned in a single call. Use
+      // `getPolyhedra' to get the number of faces of each polyhedron. If `primary'
       // is set, only the primary (corner) nodes of the faces are returned. If
       // `tag' < 0, get the face nodes for all entities. If `numTasks' > 1, only
       // compute and return the part of the data indexed by `task' (for C++ only;
@@ -1762,10 +1804,12 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::mesh::getGhostElements
       //
-      // Get the ghost elements `elementTags' and their associated `partitions'
-      // stored in the ghost entity of dimension `dim' and tag `tag'.
-      GMSH_API void getGhostElements(const int dim,
-                                     const int tag,
+      // Get the tags `elementTags' of the ghost elements of the partition
+      // `partition', i.e. of the elements of other partitions that share a node
+      // with its elements (see the `Mesh.PartitionCreateGhostCells' option), and
+      // the partitions `partitions' they belong to (0 for an element of an entity
+      // shared by several partitions).
+      GMSH_API void getGhostElements(const int partition,
                                      std::vector<std::size_t> & elementTags,
                                      std::vector<int> & partitions);
 
@@ -1813,6 +1857,30 @@ namespace gmsh { // Top-level functions
       //
       // Remove the mesh size callback from the current model.
       GMSH_API void removeSizeCallback();
+
+      // gmsh::model::mesh::setMetricCallback
+      //
+      // Set a mesh metric callback for the current model. The callback function
+      // should take seven arguments as input (`dim', `tag', `x', `y', `z', `lc'
+      // and `metric'). The first two integer arguments correspond to the dimension
+      // `dim' and tag `tag' of the entity being meshed. The next four double
+      // precision arguments correspond to the coordinates `x', `y' and `z' around
+      // which to prescribe the metric and to the (smallest) mesh size `lc' that
+      // would be prescribed if the callback had not been called. The last argument
+      // `metric' contains the 6 components of the symmetric metric tensor that
+      // would be prescribed if the callback had not been called, given as [m11,
+      // m21, m22, m31, m32, m33]. The callback function should modify `metric' in
+      // place; in Python, Julia and JavaScript it can also return the desired
+      // metric, as 6 components, a 3x3 matrix or a single mesh size. The metric
+      // callback is called after the mesh size callback; meshing algorithms that
+      // do not support anisotropic mesh sizes use the smallest size prescribed by
+      // the metric.
+      GMSH_API void setMetricCallback(std::function<void(int, int, double, double, double, double, double *)> callback);
+
+      // gmsh::model::mesh::removeMetricCallback
+      //
+      // Remove the mesh metric callback from the current model.
+      GMSH_API void removeMetricCallback();
 
       // gmsh::model::mesh::setTransfiniteCurve
       //
@@ -1922,8 +1990,8 @@ namespace gmsh { // Top-level functions
       //
       // Set meshing constraints on the bounding surfaces of the volume of tag
       // `tag' so that all surfaces are oriented with outward pointing normals; and
-      // if a mesh already exists, reorient it. Currently only available with the
-      // OpenCASCADE kernel, as it relies on the STL triangulation.
+      // if a mesh already exists, reorient it. The orientation is computed from
+      // the surface mesh, for any CAD kernel.
       GMSH_API void setOutwardOrientation(const int tag);
 
       // gmsh::model::mesh::removeConstraints
@@ -2054,8 +2122,16 @@ namespace gmsh { // Top-level functions
       // basis functions for sorting purposes. For the hierarchical function
       // spaces, the elements must be oriented with `periodic' set in
       // `getBasisFunctionsOrientation': the basis function of each key is then the
-      // basis function of its master key. On surfaces, the keys of "HdivLegendre"
-      // function spaces are those of the face functions of the 3D elements.
+      // basis function of its master key. The master keys are at the end of the
+      // chains of periodic entities, so that they are never periodic themselves:
+      // e.g. for a cell periodic in x and y, the master keys of the edges along
+      // the corner x = 1, y = 1 are those of the edges along x = 0, y = 0, and not
+      // those along x = 0, y = 1, which are periodic in y. Such a master key may
+      // lie off the master entity `tagMaster': the location of its key (`coord')
+      // is then that of the master key (`coordMaster') moved by a composition of
+      // the periodic transformations (e.g. the sum of the translations in x and
+      // y). On surfaces, the keys of "HdivLegendre" function spaces are those of
+      // the face functions of the 3D elements.
       GMSH_API void getPeriodicKeys(const int elementType,
                                     const std::string & functionSpaceType,
                                     const int tag,
@@ -2403,9 +2479,12 @@ namespace gmsh { // Top-level functions
       // formed by the curves `curveTags'. `curveTags' should contain (signed) tags
       // of model entities of dimension 1 forming a closed loop: a negative tag
       // signifies that the underlying curve is considered with reversed
-      // orientation. If `tag' is positive, set the tag explicitly; otherwise a new
-      // tag is selected automatically. If `reorient' is set, automatically
-      // reorient the curves if necessary. Return the tag of the curve loop.
+      // orientation. The curves can be given in any order, but their orientations
+      // must be consistent, unless `reorient' is set: in that case the curves are
+      // automatically reoriented if necessary. The curve loop is oriented
+      // according to its first curve. If `tag' is positive, set the tag
+      // explicitly; otherwise a new tag is selected automatically. Return the tag
+      // of the curve loop.
       GMSH_API int addCurveLoop(const std::vector<int> & curveTags,
                                 const int tag = -1,
                                 const bool reorient = false);
@@ -2944,10 +3023,12 @@ namespace gmsh { // Top-level functions
       // gmsh::model::occ::addWire
       //
       // Add a wire (open or closed) in the OpenCASCADE CAD representation, formed
-      // by the curves `curveTags'. Note that an OpenCASCADE wire can be made of
-      // curves that share geometrically identical (but topologically different)
-      // points. If `tag' is positive, set the tag explicitly; otherwise a new tag
-      // is selected automatically. Return the tag of the wire.
+      // by the curves `curveTags', given in any order and orientation: the wire is
+      // oriented according to the orientation of its first curve, reversed if its
+      // tag is negative. Note that an OpenCASCADE wire can be made of curves that
+      // share geometrically identical (but topologically different) points. If
+      // `tag' is positive, set the tag explicitly; otherwise a new tag is selected
+      // automatically. Return the tag of the wire.
       GMSH_API int addWire(const std::vector<int> & curveTags,
                            const int tag = -1,
                            const bool checkClosed = false);
@@ -2956,10 +3037,10 @@ namespace gmsh { // Top-level functions
       //
       // Add a curve loop (a closed wire) in the OpenCASCADE CAD representation,
       // formed by the curves `curveTags'. `curveTags' should contain tags of
-      // curves forming a closed loop. Negative tags can be specified for
-      // compatibility with the built-in kernel, but are simply ignored: the wire
-      // is oriented according to the orientation of its first curve. Note that an
-      // OpenCASCADE curve loop can be made of curves that share geometrically
+      // curves forming a closed loop, in any order and orientation: the curve loop
+      // is oriented according to the orientation of its first curve, reversed if
+      // its tag is negative (the signs of the other tags are ignored). Note that
+      // an OpenCASCADE curve loop can be made of curves that share geometrically
       // identical (but topologically different) points. If `tag' is positive, set
       // the tag explicitly; otherwise a new tag is selected automatically. Return
       // the tag of the curve loop.
@@ -3342,7 +3423,11 @@ namespace gmsh { // Top-level functions
       // values: "DiscreteTrihedron", "CorrectedFrenet", "Fixed", "Frenet",
       // "ConstantNormal", "Darboux", "GuideAC", "GuidePlan", "GuideACWithContact",
       // "GuidePlanWithContact"). If `trihedron' is not provided,
-      // "DiscreteTrihedron" is assumed. Return the pipe in `outDimTags'.
+      // "DiscreteTrihedron" is assumed. Return the pipe in `outDimTags', as for
+      // `extrude': for each entity, the entity at the end of the wire, the swept
+      // entity and the lateral entities (if
+      // `Geometry.ExtrudeReturnLateralEntities' is set). For a curve or a point
+      // along a wire of several curves, only the swept entities are returned.
       GMSH_API void addPipe(const gmsh::vectorpair & dimTags,
                             const int wireTag,
                             gmsh::vectorpair & outDimTags,
@@ -3517,13 +3602,12 @@ namespace gmsh { // Top-level functions
       // vectors of (dim, tag) pairs) in the OpenCASCADE CAD representation, making
       // all interfaces conformal. When applied to entities of different
       // dimensions, the lower dimensional entities will be automatically embedded
-      // in the higher dimensional entities if they are not on their boundary. In
-      // order to preserve entity tags, entities should be provided in ascending
-      // dimension order. Return the resulting entities in `outDimTags', and the
-      // correspondance between input and resulting entities in `outDimTagsMap'. If
-      // `tag' is positive, try to set the tag explicitly (only valid if the
-      // boolean operation results in a single entity). Remove the object if
-      // `removeObject' is set. Remove the tool if `removeTool' is set.
+      // in the higher dimensional entities if they are not on their boundary.
+      // Return the resulting entities in `outDimTags', and the correspondance
+      // between input and resulting entities in `outDimTagsMap'. If `tag' is
+      // positive, try to set the tag explicitly (only valid if the boolean
+      // operation results in a single entity). Remove the object if `removeObject'
+      // is set. Remove the tool if `removeTool' is set.
       GMSH_API void fragment(const gmsh::vectorpair & objectDimTags,
                              const gmsh::vectorpair & toolDimTags,
                              gmsh::vectorpair & outDimTags,
@@ -3629,8 +3713,14 @@ namespace gmsh { // Top-level functions
       //
       // Apply various healing procedures to the entities `dimTags' (given as a
       // vector of (dim, tag) pairs), or to all the entities in the model if
-      // `dimTags' is empty, in the OpenCASCADE CAD representation. Return the
-      // healed entities in `outDimTags'.
+      // `dimTags' is empty, in the OpenCASCADE CAD representation: recompute the
+      // tolerances to the smallest ones the geometry needs (if `fixTolerances' is
+      // set), fix the degenerated curves and surfaces, the small curves and the
+      // small surfaces, sew the surfaces sharing geometrically identical curves
+      // (with tolerance `tolerance'), and make volumes from the closed shells of
+      // surfaces bounding no volume. The entities are healed together, the changes
+      // applied to the rest of the model, and the entities keep their tag unless
+      // they are removed or merged. Return the healed entities in `outDimTags'.
       GMSH_API void healShapes(gmsh::vectorpair & outDimTags,
                                const gmsh::vectorpair & dimTags = gmsh::vectorpair(),
                                const double tolerance = 1e-8,
@@ -3638,7 +3728,8 @@ namespace gmsh { // Top-level functions
                                const bool fixSmallEdges = true,
                                const bool fixSmallFaces = true,
                                const bool sewFaces = true,
-                               const bool makeSolids = true);
+                               const bool makeSolids = true,
+                               const bool fixTolerances = true);
 
       // gmsh::model::occ::convertToNURBS
       //
@@ -3791,6 +3882,281 @@ namespace gmsh { // Top-level functions
       } // namespace mesh
 
     } // namespace occ
+
+    namespace discrete { // Discrete CAD modeler functions
+
+      // gmsh::model::discrete::addBox
+      //
+      // Add a parallelepipedic box in the discrete CAD representation, defined by
+      // a point (`x', `y', `z') and the extents along the x-, y- and z-axes. Its 6
+      // surfaces are triangulated exactly, with 2 triangles each. If `tag' is
+      // positive, set the tag explicitly; otherwise a new tag is selected
+      // automatically. Return the tag of the box.
+      GMSH_API int addBox(const double x,
+                          const double y,
+                          const double z,
+                          const double dx,
+                          const double dy,
+                          const double dz,
+                          const int tag = -1);
+
+      // gmsh::model::discrete::addSphere
+      //
+      // Add a sphere of center (`xc', `yc', `zc') and radius `radius' in the
+      // discrete CAD representation. Its 2 surfaces, the hemispheres, are
+      // triangulated at most `tolerance' away from the exact sphere
+      // (`Geometry.DiscreteTolerance' times the radius if `tolerance' is not
+      // positive). If `tag' is positive, set the tag explicitly; otherwise a new
+      // tag is selected automatically. Return the tag of the sphere.
+      GMSH_API int addSphere(const double xc,
+                             const double yc,
+                             const double zc,
+                             const double radius,
+                             const int tag = -1,
+                             const double tolerance = -1.);
+
+      // gmsh::model::discrete::addRectangle
+      //
+      // Add a rectangle in the discrete CAD representation, defined by a point
+      // (`x', `y', `z') and the extents along the x- and y-axes, triangulated
+      // exactly with 2 triangles. If `tag' is positive, set the tag explicitly;
+      // otherwise a new tag is selected automatically. Return the tag of the
+      // rectangle.
+      GMSH_API int addRectangle(const double x,
+                                const double y,
+                                const double z,
+                                const double dx,
+                                const double dy,
+                                const int tag = -1);
+
+      // gmsh::model::discrete::addDisk
+      //
+      // Add a disk in the discrete CAD representation, defined by the center
+      // (`xc', `yc', `zc') and the radius `rx' along the x-axis and `ry' along the
+      // y-axis. If a vector `zAxis' of size 3 is provided, use it as the normal to
+      // the disk; if a vector `xAxis' of size 3 is provided, use it to define the
+      // x-axis. Its boundary, split into 2 arcs, is at most `tolerance' away from
+      // the exact ellipse (`Geometry.DiscreteTolerance' times the largest radius
+      // if `tolerance' is not positive). If `tag' is positive, set the tag
+      // explicitly; otherwise a new tag is selected automatically. Return the tag
+      // of the disk.
+      GMSH_API int addDisk(const double xc,
+                           const double yc,
+                           const double zc,
+                           const double rx,
+                           const double ry,
+                           const int tag = -1,
+                           const std::vector<double> & zAxis = std::vector<double>(),
+                           const std::vector<double> & xAxis = std::vector<double>(),
+                           const double tolerance = -1.);
+
+      // gmsh::model::discrete::addCylinder
+      //
+      // Add a cylinder in the discrete CAD representation, defined by the center
+      // (`x', `y', `z') of its first circular face, the 3 components (`dx', `dy',
+      // `dz') of the vector defining its axis and its radius `r'. Its 3 surfaces,
+      // the lateral surface and the 2 disks, are triangulated at most `tolerance'
+      // away from the exact cylinder (`Geometry.DiscreteTolerance' times `r' if
+      // `tolerance' is not positive). If `tag' is positive, set the tag
+      // explicitly; otherwise a new tag is selected automatically. Return the tag
+      // of the cylinder.
+      GMSH_API int addCylinder(const double x,
+                               const double y,
+                               const double z,
+                               const double dx,
+                               const double dy,
+                               const double dz,
+                               const double r,
+                               const int tag = -1,
+                               const double tolerance = -1.);
+
+      // gmsh::model::discrete::addCone
+      //
+      // Add a cone in the discrete CAD representation, defined by the center (`x',
+      // `y', `z') of its first circular face, the 3 components of the vector
+      // (`dx', `dy', `dz') defining its axis and the two radii `r1' and `r2' of
+      // the faces (one of them can be zero, giving an apex). Its surfaces, the
+      // lateral surface (holding the apex, if any) and the disks, are triangulated
+      // at most `tolerance' away from the exact cone (`Geometry.DiscreteTolerance'
+      // times the largest radius if `tolerance' is not positive). If `tag' is
+      // positive, set the tag explicitly; otherwise a new tag is selected
+      // automatically. Return the tag of the cone.
+      GMSH_API int addCone(const double x,
+                           const double y,
+                           const double z,
+                           const double dx,
+                           const double dy,
+                           const double dz,
+                           const double r1,
+                           const double r2,
+                           const int tag = -1,
+                           const double tolerance = -1.);
+
+      // gmsh::model::discrete::addTorus
+      //
+      // Add a torus in the discrete CAD representation, defined by its center
+      // (`x', `y', `z') and its 2 radii `r1' (of its center circle) and `r2' (of
+      // its section), with r2 < r1. If a vector `zAxis' of size 3 is provided, use
+      // it as the axis of the torus (instead of the z-axis). Its 2 surfaces, the
+      // halves on either side of its equatorial plane bounded by its outer and
+      // inner equators, are triangulated at most `tolerance' away from the exact
+      // torus (`Geometry.DiscreteTolerance' times `r2' if `tolerance' is not
+      // positive). If `tag' is positive, set the tag explicitly; otherwise a new
+      // tag is selected automatically. Return the tag of the torus.
+      GMSH_API int addTorus(const double x,
+                            const double y,
+                            const double z,
+                            const double r1,
+                            const double r2,
+                            const int tag = -1,
+                            const std::vector<double> & zAxis = std::vector<double>(),
+                            const double tolerance = -1.);
+
+      // gmsh::model::discrete::fuse
+      //
+      // Compute the boolean union (the fusion) of the volumes `objectDimTags' and
+      // `toolDimTags' (vectors of (dim, tag) pairs) in the discrete CAD
+      // representation, exactly on their triangulations. The surfaces of the
+      // result keep the parameters of those they come from. Return the resulting
+      // volumes in `outDimTags', and the correspondance between input and
+      // resulting entities in `outDimTagsMap'. If `tag' is positive, try to set
+      // the tag explicitly (only valid if the boolean operation results in a
+      // single entity). Remove the object if `removeObject' is set. Remove the
+      // tool if `removeTool' is set.
+      GMSH_API void fuse(const gmsh::vectorpair & objectDimTags,
+                         const gmsh::vectorpair & toolDimTags,
+                         gmsh::vectorpair & outDimTags,
+                         std::vector<gmsh::vectorpair> & outDimTagsMap,
+                         const int tag = -1,
+                         const bool removeObject = true,
+                         const bool removeTool = true);
+
+      // gmsh::model::discrete::intersect
+      //
+      // Compute the boolean intersection (the common parts) of the volumes
+      // `objectDimTags' and `toolDimTags' (vectors of (dim, tag) pairs) in the
+      // discrete CAD representation, exactly on their triangulations. The surfaces
+      // of the result keep the parameters of those they come from. Return the
+      // resulting volumes in `outDimTags', and the correspondance between input
+      // and resulting entities in `outDimTagsMap'. If `tag' is positive, try to
+      // set the tag explicitly (only valid if the boolean operation results in a
+      // single entity). Remove the object if `removeObject' is set. Remove the
+      // tool if `removeTool' is set.
+      GMSH_API void intersect(const gmsh::vectorpair & objectDimTags,
+                              const gmsh::vectorpair & toolDimTags,
+                              gmsh::vectorpair & outDimTags,
+                              std::vector<gmsh::vectorpair> & outDimTagsMap,
+                              const int tag = -1,
+                              const bool removeObject = true,
+                              const bool removeTool = true);
+
+      // gmsh::model::discrete::cut
+      //
+      // Compute the boolean difference between the volumes `objectDimTags' and
+      // `toolDimTags' (vectors of (dim, tag) pairs) in the discrete CAD
+      // representation, exactly on their triangulations. The surfaces of the
+      // result keep the parameters of those they come from. Return the resulting
+      // volumes in `outDimTags', and the correspondance between input and
+      // resulting entities in `outDimTagsMap'. If `tag' is positive, try to set
+      // the tag explicitly (only valid if the boolean operation results in a
+      // single entity). Remove the object if `removeObject' is set. Remove the
+      // tool if `removeTool' is set.
+      GMSH_API void cut(const gmsh::vectorpair & objectDimTags,
+                        const gmsh::vectorpair & toolDimTags,
+                        gmsh::vectorpair & outDimTags,
+                        std::vector<gmsh::vectorpair> & outDimTagsMap,
+                        const int tag = -1,
+                        const bool removeObject = true,
+                        const bool removeTool = true);
+
+      // gmsh::model::discrete::fillet
+      //
+      // Fillet the volumes `volumeTags' on the curves `curveTags' with radii
+      // `radii' in the discrete CAD representation. The `radii' vector can either
+      // contain a single radius or as many radii as `curveTags'. The curves
+      // continuing the given ones tangentially are filleted too. The ball rolling
+      // on the two surfaces of each curve removes the solid between it and a
+      // convex curve, and fills the space between it and a concave one, exactly on
+      // the triangulations; three fillets of the same radius and kind meeting at a
+      // point are joined by the part of the ball touching their three surfaces.
+      // The fillets on a cylinder, a torus or a sphere get its exact geometry.
+      // Return the filleted volumes in `outDimTags' as a vector of (dim, tag)
+      // pairs. Remove the original volume if `removeVolume' is set.
+      GMSH_API void fillet(const std::vector<int> & volumeTags,
+                           const std::vector<int> & curveTags,
+                           const std::vector<double> & radii,
+                           gmsh::vectorpair & outDimTags,
+                           const bool removeVolume = true);
+
+      // gmsh::model::discrete::importShapes
+      //
+      // Import the triangulations of the surfaces of the mesh file `fileName'
+      // (STL, MSH, OBJ, PLY, OFF, VTK or MESH format) in the discrete CAD
+      // representation, and build their topology: the surfaces are the triangles
+      // of the same surface of the file connected across edges shared by two
+      // triangles whose normals make an angle smaller than `angle' (in radians),
+      // the curves are along the edges between two surfaces, the boundary edges
+      // (of one triangle), the non-manifold edges (of more than two triangles) and
+      // the sharp edges inside a surface (embedded in it), split where more or
+      // less than two of them meet and, if `curveAngle' is less than Pi, where
+      // they turn by more than `curveAngle', and the volumes are the cells of
+      // space bounded by the surfaces (the cells of a connected piece of the
+      // triangulation inside a cell of another one are volumes if its triangles
+      // point out of them, holes if they point into them, as STL normals point out
+      // of solids). Each surface is oriented outwards of a volume whose outer
+      // boundary it is on, if any (the included volume for the boundary of an
+      // inclusion). The surfaces whose nodes are at most `tolerance' away from a
+      // plane, a sphere, a cylinder, a cone or a torus
+      // (`Geometry.DiscreteTolerance' times the size of the triangulation if
+      // `tolerance' is not positive) are recognized as such and get the parameters
+      // of the corresponding primitives (with a seam, or split in two halves,
+      // where needed); the others are split into their pieces on such surfaces up
+      // to the precision of the coordinates of their nodes (for a part whose faces
+      // meet tangentially), the rest into pieces that a single map can
+      // parametrize. Return the volumes and the surfaces bounding no volume in
+      // `outDimTags'.
+      GMSH_API void importShapes(const std::string & fileName,
+                                 const double angle,
+                                 gmsh::vectorpair & outDimTags,
+                                 const double curveAngle = M_PI,
+                                 const double tolerance = -1.);
+
+      // gmsh::model::discrete::addTriangulation
+      //
+      // Add the triangulation given by the coordinates `coord' of its nodes
+      // (concatenated: [n1x, n1y, n1z, n2x, ...]) and its triangles `triangles'
+      // (the indices of their 3 nodes, from 0, concatenated) in the discrete CAD
+      // representation, and build its topology as `importShapes'. Return the
+      // volumes and the surfaces bounding no volume in `outDimTags'.
+      GMSH_API void addTriangulation(const std::vector<double> & coord,
+                                     const std::vector<std::size_t> & triangles,
+                                     const double angle,
+                                     gmsh::vectorpair & outDimTags,
+                                     const double curveAngle = M_PI,
+                                     const double tolerance = -1.);
+
+      // gmsh::model::discrete::remove
+      //
+      // Remove the volumes, and the surfaces that bound no volume, among the
+      // entities `dimTags' (given as a vector of (dim, tag) pairs) in the discrete
+      // CAD representation; the other entities are left alone. If `recursive' is
+      // true, also remove the surfaces of the removed volumes that no other volume
+      // uses. The curves and the points are removed with the last surface that
+      // uses them.
+      GMSH_API void remove(const gmsh::vectorpair & dimTags,
+                           const bool recursive = false);
+
+      // gmsh::model::discrete::synchronize
+      //
+      // Synchronize the discrete CAD representation with the current Gmsh model:
+      // its points, curves, surfaces and volumes become discrete entities of the
+      // model, whose geometry is their polylines and triangulations, and replace
+      // the entities of the previous synchronization. Without synchronization the
+      // entities in the discrete CAD representation are not available to any
+      // function outside of the discrete CAD modeler functions.
+      GMSH_API void synchronize();
+
+    } // namespace discrete
 
   } // namespace model
 
@@ -4112,7 +4478,8 @@ namespace gmsh { // Top-level functions
     // pairs of u, v coordinates, with (optional) constrained edges given in the
     // `edges' vector as pairs of indexes (with numbering starting at 1), and
     // return the triangles as concatenated triplets of point indexes (with
-    // numbering starting at 1) in `triangles'.
+    // numbering starting at 1), oriented counterclockwise in the (u, v) plane, in
+    // `triangles'.
     GMSH_API void triangulate(const std::vector<double> & coordinates,
                               std::vector<std::size_t> & triangles,
                               const std::vector<std::size_t> & edges = std::vector<std::size_t>());
@@ -4123,8 +4490,12 @@ namespace gmsh { // Top-level functions
     // triplets of x, y, z coordinates, with (optional) constrained triangles given
     // in the `triangles' vector as triplets of indexes (with numbering starting at
     // 1), and return the tetrahedra as concatenated quadruplets of point indexes
-    // (with numbering starting at 1) in `tetrahedra'. Steiner points might be
-    // added in the `steiner' vector.
+    // (with numbering starting at 1) in `tetrahedra'. The tetrahedra fill the
+    // convex hull of the points; a point with the coordinates of another is in no
+    // tetrahedron. The points are tetrahedralized with the Delaunay, parallel
+    // Delaunay or HXT algorithm depending on the `Mesh.Algorithm3D' option.
+    // Steiner points might be added in the `steiner' vector to recover the
+    // constrained triangles: they are numbered after the given points.
     GMSH_API void tetrahedralize(const std::vector<double> & coordinates,
                                  std::vector<std::size_t> & tetrahedra,
                                  std::vector<double> & steiner,
@@ -4247,8 +4618,9 @@ namespace gmsh { // Top-level functions
     // Run the event loop of the graphical user interface, i.e. repeatedly call
     // `wait()'. First automatically create the user interface if it has not yet
     // been initialized. If an `optionFileName' is given, load it before entering
-    // the loop, and save all options and visibility information into it after
-    // exiting the loop. Can only be called in the main thread.
+    // the loop, and save all options, and the visibility and colors of the
+    // entities, into it after exiting the loop. Can only be called in the main
+    // thread.
     GMSH_API void run(const std::string & optionFileName = "");
 
     // gmsh::fltk::isAvailable

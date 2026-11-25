@@ -22,6 +22,7 @@ Plugin(MathEval).Run;
 Plugin(MathEval).Expression0 = "Cos(5 * y) * x";
 Plugin(MathEval).Run;
 Delete View[0];
+PostProcessing.CombineRemoveOriginal = 1;
 Combine TimeStepsFromAllViews;
 // ... saved as element-node data (by default), node data and element data, each
 // with the mesh of its elements

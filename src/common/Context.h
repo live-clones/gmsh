@@ -38,6 +38,8 @@ struct contextMeshOptions {
   int nbSmoothing, algo2d, algo3d, algoSubdivide, algoSwitchOnFailure;
   int mmg3dCombineDomains;
   int algoRecombine, recombineAll, recombineOptimizeTopology;
+  int repairSelfIntersecting1dMesh;
+  int packSizemapMethod;
   int recombineNodeRepositioning;
   double recombineMinimumQuality;
   int recombine3DAll, recombine3DPrisms, recombine3DPyramids;
@@ -45,7 +47,6 @@ struct contextMeshOptions {
   int recombine3DSmoothing;
   double recombine3DMinimumQuality;
   int flexibleTransfinite, quasiTransfinite, transfiniteTri, maxRetries;
-  int repairSelfIntersecting1dMesh;
   int order, secondOrderLinear, secondOrderIncomplete;
   int meshOnlyVisible, meshOnlyEmpty;
   int minCircleNodes, minCurveNodes, minLineNodes;
@@ -69,13 +70,12 @@ struct contextMeshOptions {
   double gradation;
   int quadqsSizemapMethod, quadqsTopoOptimMethods;
   double quadqsRemeshingBoldness, quadqsScalingOnTriangulation;
-  int packCleanupMethod, pack3D, packSizemapMethod,
-    packPatterns, packRecombination;
+  int packCleanupMethod, packPatterns, packRecombination;
   double packIntrinsicEdgeLengthFactor;
   int oldInitialDelaunay2D;
   // mesh IO
   int fileFormat, firstElementTag, firstNodeTag;
-  double mshFileVersion, medFileMinorVersion, scalingFactor;
+  double mshFileVersion, medFileVersion, medFileMinorVersion, scalingFactor;
   int medImportGroupsOfNodes, medSingleModel;
   int saveAll, saveViews, saveGroupsOfNodes, saveGroupsOfElements;
   int readGroupsOfElements;
@@ -91,13 +91,14 @@ struct contextMeshOptions {
   int createEdges, createFaces;
   // partitioning
   int numPartitions, partitionCreateTopology, partitionCreateGhostCells;
+    int partitionPeriodic;
   int partitionCreatePhysicals, partitionSplitMeshFiles, partitionSplitLocalBrep;
   int partitionSaveTopologyFile, partitionTriWeight, partitionQuaWeight;
   int partitionTetWeight, partitionHexWeight, partitionLinWeight;
   int partitionPriWeight, partitionPyrWeight, partitionTrihWeight;
   int partitionOldStyleMsh2, partitionConvertMsh2;
   int metisAlgorithm, metisEdgeMatching, metisRefinementAlgorithm;
-  int metisObjective, metisMinConn;
+  int metisObjective, metisMinConn, metisContiguous;
   double metisMaxLoadImbalance;
   int overlapLayers;
   // mesh display
@@ -119,6 +120,10 @@ struct contextMeshOptions {
   double timer[3];
   // records minimal and average mesh quality after 2D and 3D mesh generation
   double minQuality, avgQuality;
+  // hex-dominant meshing (Mesh.Algorithm3D = 9), which also changes the
+  // surface meshes: they keep their cross-field directions, and the quads of
+  // PACK are matched for the combination into hexahedra
+  bool hexDominant() const { return algo3d == ALGO_3D_RTREE; }
 };
 
 struct contextGeometryOptions {
@@ -137,9 +142,10 @@ struct contextGeometryOptions {
   int autoCoherence;
   int autoExtrude; // FIXME: temporary for auto-extrude testing
   double tolerance, toleranceBoolean, snap[3], transform[3][3], offset[3];
+  double discreteTolerance;
   int occAutoFix, occAutoEmbed, occFastUnbind;
   int occFixDegenerated, occFixSmallEdges, occFixSmallFaces;
-  int occSewFaces, occMakeSolids, occParallel;
+  int occSewFaces, occMakeSolids, occFixTolerances, occParallel;
   int occBoundsUseSTL, occDisableSTL, occImportLabels, occExportOnlyVisible;
   int occWriteParametricCurves, occWriteSTEPNonManifold;
   int occBooleanCheckInverted, occBooleanGlue, occBooleanNonDestructive;
@@ -223,6 +229,18 @@ public:
     for(int d = 0; d < 4; d++)
       if(ents & (1 << d)) geom.stamp[d]++;
   }
+  // entities were created or deleted (GModel::add(), remove(), destroy()):
+  // what keeps pointers to entities, as the lists of the GUI do, compares it
+  int entitiesStamp;
+  // the elements and nodes of a mesh deleted or replaced (see
+  // GModel::destroyMeshCaches()), not merely shown otherwise as
+  // meshChanged() says: what keeps pointers to them compares it
+  int meshElementsStamp;
+  void entitiesChanged()
+  {
+    entitiesStamp++;
+    geomChanged();
+  }
   void entityColorsChanged() { entityColorsStamp++; }
   void entityVisibilityChanged() { entityVisibilityStamp++; }
 
@@ -267,6 +285,9 @@ public:
   // how many threads a loop over num items runs on: General.NumThreads (all
   // there are if 0), or 1 if there are fewer items than are worth it
   int numThreadsFor(std::size_t num, std::size_t worthIt) const;
+  // how many threads the 3D meshing stages run on: Mesh.MaxNumThreads3D if
+  // set, else General.NumThreads (all there are if 0)
+  int numThreads3D() const;
   // detached processes (WIN32)?
   int detachedProcess;
   // number of graphical windows/tiles
@@ -293,6 +314,7 @@ public:
     reclassifyOffset[2];
   int pluginOffset[2], pluginSize[2], fieldOffset[2], fieldSize[2], optHeight;
   int fileChooserOffset[2], extraOffset[2], extraSize[2];
+  int editorOffset[2], editorSize[2];
   // use the system menu bar on macOS?
   int systemMenuBar;
   // use the native file chooser?
@@ -465,9 +487,10 @@ public:
   double arrowRelHeadRadius, arrowRelStemRadius, arrowRelStemLength;
   // dynamic variable tracking if the bbox is currently imposed
   int forcedBBox;
-  // enable selection/hover using the mouse; pickElements asks a pick to
-  // return the mesh element under the point it hit, instead of the entity
-  int mouseSelection, mouseHoverMeshes, mouseHoverHighlight, pickElements;
+  // enable selection/hover using the mouse (whether a pick returns the mesh
+  // element under the point it hit is a parameter of the selection, see
+  // sceneView::beginSelection())
+  int mouseSelection, mouseHoverMeshes, mouseHoverHighlight;
   // invert sense of mouse wheel zoom
   int mouseInvertZoom;
   // disable some warnings for expert users?
@@ -557,6 +580,61 @@ public:
   int unpackGreen(unsigned int X);
   int unpackBlue(unsigned int X);
   int unpackAlpha(unsigned int X);
+};
+
+// Whether an operation holds the lock on the model (the GUI processes events
+// during it), saying so if it does: what would change the model does nothing.
+bool modelBusy();
+
+// The lock on the model (CTX::lock) for the span of an operation, given back as
+// it was however the operation ends (an exception: Msg::Error throws without
+// the GUI when General.AbortOnError is 2, the default of the API, and the
+// meshers throw): a part of an operation locking it again, as the meshing a
+// script asks for while it is read, leaves it held. An operation starting
+// takes it only if it is free, in one step:
+//
+//   modelLock lock(modelLock::ifFree);
+//   if(!lock) return; // busy, and said so
+//
+// and a part of the operation holding it takes it unconditionally.
+class modelLock {
+  int _previous;
+  bool _held;
+
+public:
+  enum ifFreeTag { ifFree };
+  modelLock() : _previous(CTX::instance()->lock), _held(true)
+  { CTX::instance()->lock = 1; }
+  explicit modelLock(ifFreeTag)
+    : _previous(CTX::instance()->lock), _held(!modelBusy())
+  {
+    if(_held) CTX::instance()->lock = 1;
+  }
+  ~modelLock()
+  {
+    if(_held) CTX::instance()->lock = _previous;
+  }
+  explicit operator bool() const { return _held; }
+  modelLock(const modelLock &) = delete;
+  modelLock &operator=(const modelLock &) = delete;
+};
+
+// The stamps of the entities and of the mesh elements when pointers to them
+// were kept (by a selection, an editor of the GUI): whether either changed
+// since says whether the pointers may dangle.
+struct modelStamps {
+  int entities, mesh;
+  modelStamps() { record(); }
+  void record()
+  {
+    entities = CTX::instance()->entitiesStamp;
+    mesh = CTX::instance()->meshElementsStamp;
+  }
+  bool changed() const
+  {
+    return entities != CTX::instance()->entitiesStamp ||
+           mesh != CTX::instance()->meshElementsStamp;
+  }
 };
 
 #endif

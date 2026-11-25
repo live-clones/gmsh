@@ -7,6 +7,7 @@
 //   Eric Bechet
 //
 
+#include <iostream>
 #include "terms.h"
 
 void BilinearTermToScalarTerm::get(MElement *ele, int npts, IntPt *GP,

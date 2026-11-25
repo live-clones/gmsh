@@ -48,6 +48,8 @@ class MTet4 {
 
 private:
   bool deleted;
+  // temporary mark, to be reset by the algorithm that sets it
+  bool marked;
   // sign of orient3d on the vertices in storage order, cached by setup();
   // 0 means unknown, in which case inCircumSphere computes it on the fly
   signed char orientSgn;
@@ -64,19 +66,20 @@ private:
 public:
   ~MTet4() {}
   MTet4()
-    : deleted(false), orientSgn(0), circum_radius(0.0), sphTol(1.e300),
-      base(nullptr), gr(nullptr)
+    : deleted(false), marked(false), orientSgn(0), circum_radius(0.0),
+      sphTol(1.e300), base(nullptr), gr(nullptr)
   {
     neigh[0] = neigh[1] = neigh[2] = neigh[3] = nullptr;
   }
   MTet4(MTetrahedron *t, double qual)
-    : deleted(false), orientSgn(0), circum_radius(qual), sphTol(1.e300),
-      base(t), gr(nullptr)
+    : deleted(false), marked(false), orientSgn(0), circum_radius(qual),
+      sphTol(1.e300), base(t), gr(nullptr)
   {
     neigh[0] = neigh[1] = neigh[2] = neigh[3] = nullptr;
   }
   MTet4(MTetrahedron *t, const qmTetrahedron::Measures &qm)
-    : deleted(false), orientSgn(0), sphTol(1.e300), base(t), gr(nullptr)
+    : deleted(false), marked(false), orientSgn(0), sphTol(1.e300), base(t),
+      gr(nullptr)
   {
     neigh[0] = neigh[1] = neigh[2] = neigh[3] = nullptr;
     double vol;
@@ -175,6 +178,8 @@ public:
   GRegion *onWhat() const { return gr; }
   void setOnWhat(GRegion *g) { gr = g; }
   bool isDeleted() const { return deleted; }
+  bool isMarked() const { return marked; }
+  void setMarked(bool const m) { marked = m; }
   void forceRadius(double r) { circum_radius = r; }
   double getRadius() const { return circum_radius; }
   double getQuality() const { return circum_radius; }

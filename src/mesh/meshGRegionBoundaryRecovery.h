@@ -15,6 +15,8 @@ class GEdge;
 class GFace;
 class GRegion;
 class MVertex;
+class MTetrahedron;
+class MTriangle;
 class splitQuadRecovery;
 
 // The boundary recovery on flat arrays: the tetrahedralization of the
@@ -67,6 +69,14 @@ struct boundaryRecoveryOutput {
 // TetGen's error code otherwise (1: out of memory, 3: invalid input)
 int meshGRegionBoundaryRecoveryFlat(const boundaryRecoveryInput &in,
                                     boundaryRecoveryOutput &out);
+
+// Recover the triangles in the tetrahedralization tets of the convex hull of
+// the vertices v, as TetGen does: the tets are replaced, none is removed, and
+// the Steiner points this needed are appended to v. The index of each vertex
+// is set to its position in v. Returns false on failure
+bool recoverTrianglesInTetrahedra(std::vector<MVertex *> &v,
+                                  std::vector<MTetrahedron *> &tets,
+                                  const std::vector<MTriangle> &triangles);
 
 // the mesh vertex of Steiner point k of out: on its curve or surface when
 // known, in gr otherwise; added to the mesh vertices of that entity

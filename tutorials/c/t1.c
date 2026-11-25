@@ -81,12 +81,12 @@ int main(int argc, char **argv)
 
   // The third elementary entity is the surface. In order to define a simple
   // rectangular surface from the four curves defined above, a curve loop has
-  // first to be defined. A curve loop is defined by an ordered list of
-  // connected curves, a sign being associated with each curve (depending on the
-  // orientation of the curve to form a loop). The API function to create curve
-  // loops takes a pointer to an array of integers as first argument, the number
-  // of elements in the array as the second argument, and the curve loop tag
-  // (which must be unique amongst curve loops) as the third argument:
+  // first to be defined. A curve loop is defined by a list of connected curves,
+  // a sign being associated with each curve (depending on the orientation of
+  // the curve to form a loop). The API function to create curve loops takes a
+  // pointer to an array of integers as first argument, the number of elements
+  // in the array as the second argument, and the curve loop tag (which must be
+  // unique amongst curve loops) as the third argument:
   const int cl1[] = {4, 1, -2, 3};
   gmshModelGeoAddCurveLoop(cl1, sizeof(cl1)/sizeof(cl1[0]), 1, 0, &ierr);
 
@@ -94,7 +94,10 @@ int main(int argc, char **argv)
   // positive sign when its own start-to-end direction matches the direction we
   // travel around the loop, and a negative sign otherwise. Curve 2 here was
   // defined from point 3 to point 2, but the loop traverses that edge from 2 to
-  // 3, hence the `-2'.
+  // 3, hence the `-2'. The curves can be listed in any order (Gmsh sorts them),
+  // but their signs must be consistent. With the OpenCASCADE kernel the signs
+  // are not needed: the curves can be given in any order and orientation, and
+  // the loop is oriented according to its first curve.
 
   // We can then define the surface as a list of curve loops (only one here,
   // representing the external contour, since there are no holes): */

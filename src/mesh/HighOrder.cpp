@@ -598,14 +598,16 @@ static void getEdgeVertices(GEdge *ge, MElement *ele,
 {
   if(!ge->haveParametrization()) linear = true;
 
-  std::vector<MVertex *> veOld;
+  // per-thread scratch, reused across the elements of a pass
+  static thread_local std::vector<MVertex *> veOld, veCanon, veEdge;
+  veOld.clear();
+  veEdge.clear();
   ele->getVertices(veOld);
   MVertex *vMin, *vMax;
   const bool increasing = getMinMaxVert(veOld[0], veOld[1], vMin, vMax);
   std::pair<MVertex *, MVertex *> p(vMin, vMax);
 
   // created in the canonical orientation (see canonicalEdgeVertices)
-  std::vector<MVertex *> veCanon, veEdge;
   canonicalEdgeVertices(veOld, increasing, veCanon);
   // Get vertices on geometry if asked
   bool gotVertOnGeo =
@@ -643,13 +645,14 @@ static void getEdgeVertices(GFace *gf, MElement *ele,
 {
   if(!gf->haveParametrization()) linear = true;
 
+  static thread_local std::vector<MVertex *> veOld, veEdge, veCanon;
   for(int i = 0; i < ele->getNumEdges(); i++) {
-    std::vector<MVertex *> veOld;
+    veOld.clear();
     ele->getEdgeVertices(i, veOld);
     MVertex *vMin, *vMax;
     const bool increasing = getMinMaxVert(veOld[0], veOld[1], vMin, vMax);
     std::pair<MVertex *, MVertex *> p(vMin, vMax);
-    std::vector<MVertex *> veEdge;
+    veEdge.clear();
 
     const std::size_t sh = edgeVertices.shardOf(p);
     shardLock<edgeContainer> lock(edgeVertices, sh);
@@ -666,7 +669,6 @@ static void getEdgeVertices(GFace *gf, MElement *ele,
     }
     else { // Vertices do not exist, create them, in the canonical
            // orientation (see canonicalEdgeVertices)
-      std::vector<MVertex *> veCanon;
       canonicalEdgeVertices(veOld, increasing, veCanon);
       // Get vertices on geometry if asked
       bool gotVertOnGeo =
@@ -692,7 +694,7 @@ static void getEdgeVertices(GRegion *gr, MElement *ele,
                             std::vector<MVertex *> &ve,
                             edgeContainer &edgeVertices, int nPts = 1)
 {
-  std::vector<MVertex *> veOld, veEdge, veCanon;
+  static thread_local std::vector<MVertex *> veOld, veEdge, veCanon;
   ve.reserve(ve.size() + ele->getNumEdges() * nPts);
   for(int i = 0; i < ele->getNumEdges(); i++) {
     veOld.clear();
@@ -921,7 +923,10 @@ static void getFaceVerticesOnGeo(GFace *gf,
                                  const std::vector<MVertex *> &vertices,
                                  std::vector<MVertex *> &vf)
 {
-  SPoint2 pts[1000];
+  // sized to the element: a fixed array touched 16 KB of stack per call and
+  // could overflow at very high orders
+  static thread_local std::vector<SPoint2> pts;
+  pts.resize(vertices.size());
   bool reparamOK = true;
   bool onBoundary = false;
   for(std::size_t k = 0; k < vertices.size(); ++k)
@@ -996,7 +1001,8 @@ static void getFaceVertices(GFace *gf, MElement *ele,
 {
   if(!gf->haveParametrization()) linear = true;
 
-  std::vector<MVertex *> boundaryVertices;
+  static thread_local std::vector<MVertex *> boundaryVertices;
+  boundaryVertices.clear();
   {
     std::size_t nCorner = ele->getNumPrimaryVertices();
     boundaryVertices.reserve(nCorner + newVertices.size());
@@ -1131,11 +1137,12 @@ static void getFaceVertices(GRegion *gr, MElement *ele,
                             std::vector<MVertex *> &newVertices,
                             faceContainer &faceVertices, int nPts = 1)
 {
-  std::vector<MVertex *> vCorner;
+  static thread_local std::vector<MVertex *> vCorner, vFace,
+    faceBoundaryVertices, canonical;
+  vCorner.clear();
   ele->getVertices(vCorner);
   // NB: We can get more than corner vertices but we use only corners
 
-  std::vector<MVertex *> vFace, faceBoundaryVertices, canonical;
   for(int i = 0; i < ele->getNumFaces(); i++) {
     MFace face = ele->getFace(i);
     vFace.clear();
@@ -1176,7 +1183,8 @@ static void getFaceVertices(GRegion *gr, MElement *ele,
 static void getVolumeVertices(GRegion *gr, MElement *ele,
                               std::vector<MVertex *> &newVertices, int nPts = 1)
 {
-  std::vector<MVertex *> boundaryVertices;
+  static thread_local std::vector<MVertex *> boundaryVertices;
+  boundaryVertices.clear();
   {
     std::size_t nCorner = ele->getNumPrimaryVertices();
     boundaryVertices.reserve(nCorner + newVertices.size());
@@ -1238,11 +1246,11 @@ static void setHighOrder(GEdge *ge, edgeContainer &edgeVertices, bool linear,
     std::vector<MVertex *> ve;
     getEdgeVertices(ge, l, ve, edgeVertices, linear, nbPts);
     if(nbPts == 1)
-      lines2.push_back(
-        new MLine3(l->getVertex(0), l->getVertex(1), ve[0], l->getPartition()));
+      lines2.push_back(new MLine3(l->getVertex(0), l->getVertex(1), ve[0],
+                                  l->getNum(), l->getPartition()));
     else
-      lines2.push_back(
-        new MLineN(l->getVertex(0), l->getVertex(1), ve, l->getPartition()));
+      lines2.push_back(new MLineN(l->getVertex(0), l->getVertex(1), ve,
+                                  l->getNum(), l->getPartition()));
     delete l;
   }
   ge->lines = lines2;
@@ -1254,16 +1262,17 @@ static MTriangle *setHighOrder(MTriangle *t, GFace *gf,
                                faceContainer &faceVertices, bool linear,
                                bool incomplete, int nPts)
 {
-  std::vector<MVertex *> v;
+  static thread_local std::vector<MVertex *> v;
+  v.clear();
   getEdgeVertices(gf, t, v, edgeVertices, linear, nPts);
   if(nPts == 1) {
     return new MTriangle6(t->getVertex(0), t->getVertex(1), t->getVertex(2),
-                          v[0], v[1], v[2], 0, t->getPartition());
+                          v[0], v[1], v[2], t->getNum(), t->getPartition());
   }
   else {
     if(!incomplete) getFaceVertices(gf, t, v, faceVertices, linear, nPts);
     return new MTriangleN(t->getVertex(0), t->getVertex(1), t->getVertex(2), v,
-                          nPts + 1, 0, t->getPartition());
+                          nPts + 1, t->getNum(), t->getPartition());
   }
 }
 
@@ -1272,17 +1281,18 @@ static MQuadrangle *setHighOrder(MQuadrangle *q, GFace *gf,
                                  faceContainer &faceVertices, bool linear,
                                  bool incomplete, int nPts)
 {
-  std::vector<MVertex *> v;
+  static thread_local std::vector<MVertex *> v;
+  v.clear();
   getEdgeVertices(gf, q, v, edgeVertices, linear, nPts);
   if(incomplete) {
     if(nPts == 1) {
       return new MQuadrangle8(q->getVertex(0), q->getVertex(1), q->getVertex(2),
-                              q->getVertex(3), v[0], v[1], v[2], v[3], 0,
-                              q->getPartition());
+                              q->getVertex(3), v[0], v[1], v[2], v[3],
+                              q->getNum(), q->getPartition());
     }
     else {
       return new MQuadrangleN(q->getVertex(0), q->getVertex(1), q->getVertex(2),
-                              q->getVertex(3), v, nPts + 1, 0,
+                              q->getVertex(3), v, nPts + 1, q->getNum(),
                               q->getPartition());
     }
   }
@@ -1290,12 +1300,12 @@ static MQuadrangle *setHighOrder(MQuadrangle *q, GFace *gf,
     getFaceVertices(gf, q, v, faceVertices, linear, nPts);
     if(nPts == 1) {
       return new MQuadrangle9(q->getVertex(0), q->getVertex(1), q->getVertex(2),
-                              q->getVertex(3), v[0], v[1], v[2], v[3], v[4], 0,
-                              q->getPartition());
+                              q->getVertex(3), v[0], v[1], v[2], v[3], v[4],
+                              q->getNum(), q->getPartition());
     }
     else {
       return new MQuadrangleN(q->getVertex(0), q->getVertex(1), q->getVertex(2),
-                              q->getVertex(3), v, nPts + 1, 0,
+                              q->getVertex(3), v, nPts + 1, q->getNum(),
                               q->getPartition());
     }
   }
@@ -1309,22 +1319,22 @@ static void setHighOrder(GFace *gf, edgeContainer &edgeVertices,
   warmUpCaches(gf->quadrangles, nPts);
 
   std::vector<MTriangle *> triangles2(gf->triangles.size());
-#pragma omp parallel for schedule(static) num_threads(nthreads)                \
-  if(nthreads > 1)
-  for(std::size_t i = 0; i < gf->triangles.size(); i++) {
-    triangles2[i] = setHighOrder(gf->triangles[i], gf, edgeVertices,
-                                 faceVertices, linear, incomplete, nPts);
+  std::vector<MQuadrangle *> quadrangles2(gf->quadrangles.size());
+#pragma omp parallel num_threads(nthreads) if(nthreads > 1)
+  {
+#pragma omp for schedule(static) nowait
+    for(std::size_t i = 0; i < gf->triangles.size(); i++) {
+      triangles2[i] = setHighOrder(gf->triangles[i], gf, edgeVertices,
+                                   faceVertices, linear, incomplete, nPts);
+    }
+#pragma omp for schedule(static) nowait
+    for(std::size_t i = 0; i < gf->quadrangles.size(); i++) {
+      quadrangles2[i] = setHighOrder(gf->quadrangles[i], gf, edgeVertices,
+                                     faceVertices, linear, incomplete, nPts);
+    }
   }
   for(std::size_t i = 0; i < gf->triangles.size(); i++) delete gf->triangles[i];
   gf->triangles = triangles2;
-
-  std::vector<MQuadrangle *> quadrangles2(gf->quadrangles.size());
-#pragma omp parallel for schedule(static) num_threads(nthreads)                \
-  if(nthreads > 1)
-  for(std::size_t i = 0; i < gf->quadrangles.size(); i++) {
-    quadrangles2[i] = setHighOrder(gf->quadrangles[i], gf, edgeVertices,
-                                   faceVertices, linear, incomplete, nPts);
-  }
   for(std::size_t i = 0; i < gf->quadrangles.size(); i++)
     delete gf->quadrangles[i];
   gf->quadrangles = quadrangles2;
@@ -1336,12 +1346,13 @@ static MTetrahedron *setHighOrder(MTetrahedron *t, GRegion *gr,
                                   faceContainer &faceVertices, bool incomplete,
                                   int nPts)
 {
-  std::vector<MVertex *> v;
+  static thread_local std::vector<MVertex *> v;
+  v.clear();
   getEdgeVertices(gr, t, v, edgeVertices, nPts);
   if(nPts == 1) {
     return new MTetrahedron10(t->getVertex(0), t->getVertex(1), t->getVertex(2),
                               t->getVertex(3), v[0], v[1], v[2], v[3], v[4],
-                              v[5], 0, t->getPartition());
+                              v[5], t->getNum(), t->getPartition());
   }
   else {
     if(!incomplete) {
@@ -1349,7 +1360,7 @@ static MTetrahedron *setHighOrder(MTetrahedron *t, GRegion *gr,
       getVolumeVertices(gr, t, v, nPts);
     }
     return new MTetrahedronN(t->getVertex(0), t->getVertex(1), t->getVertex(2),
-                             t->getVertex(3), v, nPts + 1, 0,
+                             t->getVertex(3), v, nPts + 1, t->getNum(),
                              t->getPartition());
   }
 }
@@ -1359,7 +1370,8 @@ static MHexahedron *setHighOrder(MHexahedron *h, GRegion *gr,
                                  faceContainer &faceVertices, bool incomplete,
                                  int nPts)
 {
-  std::vector<MVertex *> v;
+  static thread_local std::vector<MVertex *> v;
+  v.clear();
   getEdgeVertices(gr, h, v, edgeVertices, nPts);
   if(incomplete) {
     if(nPts == 1) {
@@ -1367,13 +1379,13 @@ static MHexahedron *setHighOrder(MHexahedron *h, GRegion *gr,
         h->getVertex(0), h->getVertex(1), h->getVertex(2), h->getVertex(3),
         h->getVertex(4), h->getVertex(5), h->getVertex(6), h->getVertex(7),
         v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], v[8], v[9], v[10],
-        v[11], 0, h->getPartition());
+        v[11], h->getNum(), h->getPartition());
     }
     else {
       return new MHexahedronN(h->getVertex(0), h->getVertex(1), h->getVertex(2),
                               h->getVertex(3), h->getVertex(4), h->getVertex(5),
-                              h->getVertex(6), h->getVertex(7), v, nPts + 1, 0,
-                              h->getPartition());
+                              h->getVertex(6), h->getVertex(7), v, nPts + 1,
+                              h->getNum(), h->getPartition());
     }
   }
   else {
@@ -1384,14 +1396,14 @@ static MHexahedron *setHighOrder(MHexahedron *h, GRegion *gr,
         h->getVertex(0), h->getVertex(1), h->getVertex(2), h->getVertex(3),
         h->getVertex(4), h->getVertex(5), h->getVertex(6), h->getVertex(7),
         v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], v[8], v[9], v[10],
-        v[11], v[12], v[13], v[14], v[15], v[16], v[17], v[18], 0,
+        v[11], v[12], v[13], v[14], v[15], v[16], v[17], v[18], h->getNum(),
         h->getPartition());
     }
     else {
       return new MHexahedronN(h->getVertex(0), h->getVertex(1), h->getVertex(2),
                               h->getVertex(3), h->getVertex(4), h->getVertex(5),
-                              h->getVertex(6), h->getVertex(7), v, nPts + 1, 0,
-                              h->getPartition());
+                              h->getVertex(6), h->getVertex(7), v, nPts + 1,
+                              h->getNum(), h->getPartition());
     }
   }
 }
@@ -1400,19 +1412,20 @@ static MPrism *setHighOrder(MPrism *p, GRegion *gr, edgeContainer &edgeVertices,
                             faceContainer &faceVertices, bool incomplete,
                             int nPts)
 {
-  std::vector<MVertex *> v;
+  static thread_local std::vector<MVertex *> v;
+  v.clear();
   getEdgeVertices(gr, p, v, edgeVertices, nPts);
   if(incomplete) {
     if(nPts == 1) {
       return new MPrism15(p->getVertex(0), p->getVertex(1), p->getVertex(2),
                           p->getVertex(3), p->getVertex(4), p->getVertex(5),
                           v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], v[8],
-                          0, p->getPartition());
+                          p->getNum(), p->getPartition());
     }
     else {
       return new MPrismN(p->getVertex(0), p->getVertex(1), p->getVertex(2),
                          p->getVertex(3), p->getVertex(4), p->getVertex(5), v,
-                         nPts + 1, 0, p->getPartition());
+                         nPts + 1, p->getNum(), p->getPartition());
     }
   }
   else {
@@ -1421,13 +1434,13 @@ static MPrism *setHighOrder(MPrism *p, GRegion *gr, edgeContainer &edgeVertices,
       return new MPrism18(p->getVertex(0), p->getVertex(1), p->getVertex(2),
                           p->getVertex(3), p->getVertex(4), p->getVertex(5),
                           v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], v[8],
-                          v[9], v[10], v[11], 0, p->getPartition());
+                          v[9], v[10], v[11], p->getNum(), p->getPartition());
     }
     else {
       getVolumeVertices(gr, p, v, nPts);
       return new MPrismN(p->getVertex(0), p->getVertex(1), p->getVertex(2),
                          p->getVertex(3), p->getVertex(4), p->getVertex(5), v,
-                         nPts + 1, 0, p->getPartition());
+                         nPts + 1, p->getNum(), p->getPartition());
     }
   }
 }
@@ -1437,15 +1450,16 @@ static MPyramid *setHighOrder(MPyramid *p, GRegion *gr,
                               faceContainer &faceVertices, bool incomplete,
                               int nPts)
 {
-  std::vector<MVertex *> v;
+  static thread_local std::vector<MVertex *> v;
+  v.clear();
   getEdgeVertices(gr, p, v, edgeVertices, nPts);
   if(!incomplete) {
     getFaceVertices(gr, p, v, faceVertices, nPts);
     if(nPts > 1) { getVolumeVertices(gr, p, v, nPts); }
   }
   return new MPyramidN(p->getVertex(0), p->getVertex(1), p->getVertex(2),
-                       p->getVertex(3), p->getVertex(4), v, nPts + 1, 0,
-                       p->getPartition());
+                       p->getVertex(3), p->getVertex(4), v, nPts + 1,
+                       p->getNum(), p->getPartition());
 }
 
 static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
@@ -1458,42 +1472,38 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
   warmUpCaches(gr->pyramids, nPts);
 
   std::vector<MTetrahedron *> tetrahedra2(gr->tetrahedra.size());
-#pragma omp parallel for schedule(static) num_threads(nthreads)                \
-  if(nthreads > 1)
-  for(std::size_t i = 0; i < gr->tetrahedra.size(); i++) {
-    tetrahedra2[i] = setHighOrder(gr->tetrahedra[i], gr, edgeVertices, faceVertices, incomplete,
-                         nPts);
+  std::vector<MHexahedron *> hexahedra2(gr->hexahedra.size());
+  std::vector<MPrism *> prisms2(gr->prisms.size());
+  std::vector<MPyramid *> pyramids2(gr->pyramids.size());
+#pragma omp parallel num_threads(nthreads) if(nthreads > 1)
+  {
+#pragma omp for schedule(static) nowait
+    for(std::size_t i = 0; i < gr->tetrahedra.size(); i++) {
+      tetrahedra2[i] = setHighOrder(gr->tetrahedra[i], gr, edgeVertices,
+                                    faceVertices, incomplete, nPts);
+    }
+#pragma omp for schedule(static) nowait
+    for(std::size_t i = 0; i < gr->hexahedra.size(); i++) {
+      hexahedra2[i] = setHighOrder(gr->hexahedra[i], gr, edgeVertices,
+                                   faceVertices, incomplete, nPts);
+    }
+#pragma omp for schedule(static) nowait
+    for(std::size_t i = 0; i < gr->prisms.size(); i++) {
+      prisms2[i] = setHighOrder(gr->prisms[i], gr, edgeVertices, faceVertices,
+                                incomplete, nPts);
+    }
+#pragma omp for schedule(static) nowait
+    for(std::size_t i = 0; i < gr->pyramids.size(); i++) {
+      pyramids2[i] = setHighOrder(gr->pyramids[i], gr, edgeVertices,
+                                  faceVertices, incomplete, nPts);
+    }
   }
   for(std::size_t i = 0; i < gr->tetrahedra.size(); i++) delete gr->tetrahedra[i];
   gr->tetrahedra = tetrahedra2;
-
-  std::vector<MHexahedron *> hexahedra2(gr->hexahedra.size());
-#pragma omp parallel for schedule(static) num_threads(nthreads)                \
-  if(nthreads > 1)
-  for(std::size_t i = 0; i < gr->hexahedra.size(); i++) {
-    hexahedra2[i] = setHighOrder(gr->hexahedra[i], gr, edgeVertices, faceVertices, incomplete,
-                         nPts);
-  }
   for(std::size_t i = 0; i < gr->hexahedra.size(); i++) delete gr->hexahedra[i];
   gr->hexahedra = hexahedra2;
-
-  std::vector<MPrism *> prisms2(gr->prisms.size());
-#pragma omp parallel for schedule(static) num_threads(nthreads)                \
-  if(nthreads > 1)
-  for(std::size_t i = 0; i < gr->prisms.size(); i++) {
-    prisms2[i] = setHighOrder(gr->prisms[i], gr, edgeVertices, faceVertices, incomplete,
-                         nPts);
-  }
   for(std::size_t i = 0; i < gr->prisms.size(); i++) delete gr->prisms[i];
   gr->prisms = prisms2;
-
-  std::vector<MPyramid *> pyramids2(gr->pyramids.size());
-#pragma omp parallel for schedule(static) num_threads(nthreads)                \
-  if(nthreads > 1)
-  for(std::size_t i = 0; i < gr->pyramids.size(); i++) {
-    pyramids2[i] = setHighOrder(gr->pyramids[i], gr, edgeVertices, faceVertices, incomplete,
-                         nPts);
-  }
   for(std::size_t i = 0; i < gr->pyramids.size(); i++) delete gr->pyramids[i];
   gr->pyramids = pyramids2;
 
@@ -1515,7 +1525,7 @@ static void setFirstOrder(GEntity *e, std::vector<T *> &elements,
     std::vector<MVertex *> v1;
     v1.reserve(n);
     for(std::size_t j = 0; j < n; j++) v1.push_back(ele->getVertex(j));
-    elements1.push_back(new T(v1, 0, ele->getPartition()));
+    elements1.push_back(new T(v1, ele->getNum(), ele->getPartition()));
     delete ele;
   }
   elements = elements1;
@@ -1826,6 +1836,16 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
 {
   if(CTX::instance()->abortOnError && Msg::GetErrorCount()) return;
 
+  if(order > 1) {
+    std::size_t numPolytopes = 0;
+    for(auto gf : m->getFaces()) numPolytopes += gf->polygons.size();
+    for(auto gr : m->getRegions()) numPolytopes += gr->polyhedra.size();
+    if(numPolytopes)
+      Msg::Warning("%zu polygons and polyhedra are left as they are: the mesh "
+                   "is not conforming where they touch the elements that get "
+                   "new nodes", numPolytopes);
+  }
+
   // replace all the elements in the mesh with second order elements
   // by creating unique vertices on the edges/faces of the mesh:
   //
@@ -1842,6 +1862,17 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
   //   9-node quads, 27-node hexas, etc.)
 
   // - if onlyVisible is true, then only the visible entities will be curved.
+
+  // the bases stop at order 10, 9 for hexahedra, prisms and pyramids
+  int maxOrder = 10;
+  for(auto it = m->firstRegion(); it != m->lastRegion(); ++it)
+    if((*it)->hexahedra.size() || (*it)->prisms.size() ||
+       (*it)->pyramids.size())
+      maxOrder = 9;
+  if(order > maxOrder) {
+    Msg::Error("Element order %d not available (maximum %d)", order, maxOrder);
+    return;
+  }
 
   int nPts = order - 1;
 

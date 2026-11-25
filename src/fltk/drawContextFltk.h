@@ -8,11 +8,7 @@
 
 #include "GmshConfig.h"
 #include <algorithm>
-#if !defined(HAVE_NO_STDINT_H)
-#include <stdint.h>
-#elif defined(HAVE_NO_INTPTR_T)
-typedef unsigned long intptr_t;
-#endif
+#include <cstdint>
 #include <FL/x.H>
 #include <FL/gl.h>
 #include "GmshMessage.h"
@@ -46,6 +42,10 @@ public:
         }
       }
     }
+    // the options changed by code that sets them without their names (see
+    // optionWindow::showOptions())
+    if(FlGui::instance()->options->win->shown())
+      FlGui::instance()->options->showOptions(true);
     FlGui::check(rateLimited);
   }
   void drawCurrentOpenglWindow(bool make_current, bool again = false)
@@ -86,7 +86,16 @@ public:
       return s;
     }
   }
-  void setFont(int fontid, int fontsize) { gl_font(fontid, fontsize); }
+  // a font size FLTK can load: a size typed out of all proportion (thousands
+  // of pixels) makes the X11 font code exit
+  static int fontSizeInRange(int fontsize)
+  {
+    return fontsize < 1 ? 1 : fontsize > 512 ? 512 : fontsize;
+  }
+  void setFont(int fontid, int fontsize)
+  {
+    gl_font(fontid, fontSizeInRange(fontsize));
+  }
   double getStringWidth(const char *str) { return gl_width(str); }
   int getStringHeight() { return gl_height(); }
   int getStringDescent() { return gl_descent(); }

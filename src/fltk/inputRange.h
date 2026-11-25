@@ -17,8 +17,10 @@
 #include <FL/Fl_Menu_Button.H>
 #include <FL/Fl_Multiline_Output.H>
 #include "inputValue.h"
+#include "graphMenu.h"
 #include "extraDialogs.h"
 #include "Context.h"
+#include "gmshScheme.h"
 
 class inputRange : public Fl_Group {
 private:
@@ -26,7 +28,7 @@ private:
   Fl_Toggle_Button *_loop_butt;
   Fl_Button *_range_butt, *_graph_butt;
   Fl_Menu_Button *_graph_menu;
-  std::string _loop_val, _graph_val, _number_format;
+  std::string _loop_val, _graph_val;
   double _min, _max, _step, _max_number;
   std::vector<double> _choices;
   std::string _range;
@@ -150,24 +152,22 @@ private:
   void _set_loop_value(const std::string &val)
   {
     _loop_val = val;
-    if(val == "1") {
-      _loop_butt->label("1");
-      _loop_butt->selection_color(FL_GREEN);
-      _loop_butt->value(1);
-    }
-    else if(val == "2") {
-      _loop_butt->label("2");
-      _loop_butt->selection_color(FL_BLUE);
-      _loop_butt->value(1);
-    }
-    else if(val == "3") {
-      _loop_butt->label("3");
-      _loop_butt->selection_color(FL_RED);
+    // the level of the loop, on its colour (see gmshIndicator()) with a digit
+    // that reads on it
+    if(val == "1" || val == "2" || val == "3") {
+      Fl_Color col = gmshIndicator(val == "1" ? IndicatorGreen :
+                                   val == "2" ? IndicatorBlue :
+                                                IndicatorRed);
+      gmshIcon(_loop_butt, nullptr, 0);
+      _loop_butt->copy_label(val.c_str());
+      _loop_butt->selection_color(col);
+      _loop_butt->labelcolor(fl_contrast(FL_FOREGROUND_COLOR, col));
       _loop_butt->value(1);
     }
     else {
-      _loop_butt->label("@-1gmsh_rotate");
       _loop_butt->selection_color(_loop_butt->color());
+      _loop_butt->labelcolor(FL_FOREGROUND_COLOR);
+      gmshIcon(_loop_butt, "loop", FL_NORMAL_SIZE);
       _loop_butt->value(0);
     }
     _loop_butt->redraw();
@@ -176,29 +176,7 @@ private:
   {
     _graph_val = val;
     _graph_val.resize(36, '0');
-    if(update_menu) {
-      int index[36] = {1,  2,  3,  4,  7,  8,  9,  10, 13, 14, 15, 16,
-                       19, 20, 21, 22, 25, 26, 27, 28, 31, 32, 33, 34,
-                       37, 38, 39, 40, 43, 44, 45, 46, 49, 50, 51, 52};
-      for(int i = 0; i < 36; i++) {
-        if(_graph_val[i] != '0')
-          ((Fl_Menu_Item *)_graph_menu->menu())[index[i]].set();
-        else
-          ((Fl_Menu_Item *)_graph_menu->menu())[index[i]].clear();
-      }
-    }
-    bool yellow = false;
-    for(int i = 0; i < 36; i++)
-      if(_graph_val[i] != '0') yellow = true;
-    if(yellow) {
-      _graph_butt->value(1);
-      _graph_butt->selection_color(FL_YELLOW);
-    }
-    else {
-      _graph_butt->value(0);
-      _graph_butt->selection_color(_graph_butt->color());
-    }
-    _graph_butt->redraw();
+    showGraphValue(_graph_val, _graph_butt, _graph_menu, update_menu);
   }
   static void _input_cb(Fl_Widget *w, void *data)
   {
@@ -231,25 +209,14 @@ private:
   static void _graph_menu_cb(Fl_Widget *w, void *data)
   {
     inputRange *b = (inputRange *)data;
-    std::string v;
-    v.resize(36, '0');
-    int index[36] = {1,  2,  3,  4,  7,  8,  9,  10, 13, 14, 15, 16,
-                     19, 20, 21, 22, 25, 26, 27, 28, 31, 32, 33, 34,
-                     37, 38, 39, 40, 43, 44, 45, 46, 49, 50, 51, 52};
-    for(int i = 0; i < 36; i++) {
-      // 1=iso, 2=continuous, 3=discrete, 4=numeric
-      v[i] = b->_graph_menu->menu()[index[i]].value() ? '3' : '0';
-    }
-    b->_set_graph_value(v, false);
+    b->_set_graph_value(graphMenuValue(b->_graph_menu, b->_graph_val), false);
     b->doCallbackOnValues(false);
     b->do_callback();
   }
   static void _graph_menu_reset_cb(Fl_Widget *w, void *data)
   {
     inputRange *b = (inputRange *)data;
-    std::string v;
-    v.resize(36, '0');
-    b->_set_graph_value(v.c_str());
+    b->_set_graph_value(std::string(36, '0'));
     b->doCallbackOnValues(false);
     b->do_callback();
   }
@@ -280,62 +247,20 @@ public:
       _range_butt->tooltip("Edit range or choices");
 
     _loop_butt = new Fl_Toggle_Button(x + input_w + dot_w, y, loop_w, h);
-    _loop_butt->label("@-1gmsh_rotate");
+    gmshIcon(_loop_butt, "loop", FL_NORMAL_SIZE);
     _loop_butt->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE);
     _loop_butt->callback(_loop_butt_cb, this);
     _loop_butt->tooltip("Loop over range or choices (loop level 1, 2 or 3)");
 
     _graph_butt = new Fl_Button(x + input_w + dot_w + loop_w, y, graph_w, h);
-    _graph_butt->label("@-1gmsh_graph");
+    gmshIcon(_graph_butt, "graph", FL_NORMAL_SIZE);
     _graph_butt->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE);
     _graph_butt->tooltip("Draw range or choices on X-Y graph(s)");
 
     _graph_menu =
       new Fl_Menu_Button(x + input_w + dot_w + loop_w, y, graph_w, h);
     _graph_menu->type(Fl_Menu_Button::POPUP123);
-    _graph_menu->add("Top Left/X ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Top Left/Y ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Top Left/X ' ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Top Left/Y ' ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Top Right/X ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Top Right/Y ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Top Right/X ' ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Top Right/Y ' ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Bottom Left/X ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Bottom Left/Y ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Bottom Left/X ' ", 0, _graph_menu_cb, this,
-                     FL_MENU_TOGGLE);
-    _graph_menu->add("Bottom Left/Y ' ", 0, _graph_menu_cb, this,
-                     FL_MENU_TOGGLE);
-    _graph_menu->add("Bottom Right/X ", 0, _graph_menu_cb, this,
-                     FL_MENU_TOGGLE);
-    _graph_menu->add("Bottom Right/Y ", 0, _graph_menu_cb, this,
-                     FL_MENU_TOGGLE);
-    _graph_menu->add("Bottom Right/X ' ", 0, _graph_menu_cb, this,
-                     FL_MENU_TOGGLE);
-    _graph_menu->add("Bottom Right/Y ' ", 0, _graph_menu_cb, this,
-                     FL_MENU_TOGGLE);
-    _graph_menu->add("Top/X ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Top/Y ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Top/X ' ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Top/Y ' ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Bottom/X ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Bottom/Y ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Bottom/X ' ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Bottom/Y ' ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Left/X ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Left/Y ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Left/X ' ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Left/Y ' ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Right/X ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Right/Y ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Right/X ' ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Right/Y ' ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Full/X ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Full/Y ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Full/X ' ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("Full/Y ' ", 0, _graph_menu_cb, this, FL_MENU_TOGGLE);
-    _graph_menu->add("None", 0, _graph_menu_reset_cb, this);
+    addGraphMenu(_graph_menu, _graph_menu_cb, _graph_menu_reset_cb, this);
 
     end(); // close the group
     resizable(_input);

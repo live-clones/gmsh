@@ -8,6 +8,7 @@
 #include "GModel.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
+#include "MPolygon.h"
 #include "OS.h"
 #include "discreteFace.h"
 
@@ -65,6 +66,18 @@ int GModel::readOFF(const std::string &name)
       gf->quadrangles.push_back(new MQuadrangle(vertices[v[0]], vertices[v[1]],
                                                 vertices[v[2]], vertices[v[3]]));
     }
+    else if(n > 4) {
+      std::vector<MVertex *> nodes(n);
+      for(int j = 0; j < n; j++) {
+        int k;
+        if(fscanf(fp, "%d", &k) != 1 || k < 0 || k >= numVertices) {
+          Msg::Error("Could not read face");
+          return 0;
+        }
+        nodes[j] = vertices[k];
+      }
+      gf->polygons.push_back(new MPolygon(nodes));
+    }
     else{
       char buffer[4096];
       if(!fgets(buffer, sizeof(buffer), fp))
@@ -119,6 +132,13 @@ int GModel::writeOFF(const std::string &name, bool saveAll, double scalingFactor
                 (int)gf->quadrangles[i]->getVertex(1)->getIndex() - 1,
                 (int)gf->quadrangles[i]->getVertex(2)->getIndex() - 1,
                 (int)gf->quadrangles[i]->getVertex(3)->getIndex() - 1);
+      for(auto p : gf->polygons) {
+        std::size_t n = p->getNumPrimaryVertices();
+        fprintf(fp, "%zu", n);
+        for(std::size_t i = 0; i < n; i++)
+          fprintf(fp, " %d", (int)p->getVertex(i)->getIndex() - 1);
+        fprintf(fp, "\n");
+      }
     }
   }
 

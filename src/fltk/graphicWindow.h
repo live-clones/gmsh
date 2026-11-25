@@ -6,6 +6,7 @@
 #ifndef GRAPHIC_WINDOW_H
 #define GRAPHIC_WINDOW_H
 
+#include <map>
 #include <string>
 #include <vector>
 #include <FL/Fl.H>
@@ -19,6 +20,7 @@
 #include <FL/Fl_Sys_Menu_Bar.H>
 #endif
 #include <FL/Fl_Menu_Bar.H>
+#include "paletteWindow.h"
 
 class openglWindow;
 class onelabGroup;
@@ -31,30 +33,48 @@ class paletteWindow;
 class graphicWindow {
 private:
   bool _autoScrollMessages;
+  // while the dock lets its tools go (see setDocking())
+  bool _undocking = false;
 #if defined(__APPLE__)
   Fl_Sys_Menu_Bar *_sysbar;
 #endif
   Fl_Menu_Bar *_bar;
+  // the menu bar, in the window or the system's
+  Fl_Menu_ *_menuBar() const
+  {
+#if defined(__APPLE__)
+    if(_sysbar) return _sysbar;
+#endif
+    return _bar;
+  }
   Fl_Tile *_tile;
   Fl_Window *_win, *_menuwin;
   messageBrowser *_browser;
   onelabGroup *_onelab;
   Fl_Box *_bottom;
-  Fl_Button *_butt[15];
+
+  // the buttons of the status bar, by the name of their item (see the "Status
+  // bar" menu of Actions.cpp)
+  std::map<std::string, Fl_Button *> _statusButtons;
   Fl_Progress *_label;
   int _minWidth, _minHeight;
   // the size of the icons of the status bar
   int _iconSize;
   // the width of the menu while it is hidden, to show it again
   int _menuWidth;
+  // where the tiles were pressed (which may start dragging an edge between
+  // them), and the sizes of the menu and the messages at that time (see
+  // tileReleased())
+  int _pushX, _pushY, _pushMenuWidth, _pushMessageHeight;
   std::vector<std::string> _messages;
   // the column of docked tool windows on the right of the tiles, the edge
-  // dragged to change its width, and the box that says what resizes
+  // dragged to change its width, and the box that tells FLTK which part of
+  // the window resizes
   toolDock *_dock;
   dockDivider *_divider;
   Fl_Box *_resbox;
-  // the floating tool being dragged over the dock, docked when the button is
-  // released there
+  // the floating tool window being dragged over the dock; it is docked when
+  // the mouse button is released there
   paletteWindow *_dropping;
   bool _overDock(paletteWindow *w);
   void _dropHint(bool on);
@@ -74,24 +94,27 @@ public:
   Fl_Window *getMenuWindow() { return _menuwin; }
   onelabGroup *getMenu() { return _onelab; }
   Fl_Progress *getProgress() { return _label; }
-  Fl_Button *getSelectionButton() { return _butt[9]; }
-  Fl_Button *getQueryButton() { return _butt[12]; }
-  Fl_Button *getMeasureButton() { return _butt[13]; }
+  // the button of the status bar of the given item, or null
+  Fl_Button *statusButton(const std::string &name)
+  {
+    auto it = _statusButtons.find(name);
+    return it == _statusButtons.end() ? nullptr : it->second;
+  }
   messageBrowser *getMessageBrowser() { return _browser; }
   std::vector<std::string> &getMessages() { return _messages; }
-  int getMinWidth() { return _minWidth; }
-  int getMinHeight() { return _minHeight; }
   void setAutoScroll(bool val) { _autoScrollMessages = val; }
   bool getAutoScroll() { return _autoScrollMessages; }
   void setTitle(const std::string &str);
-  void setStereo(bool st);
   int getGlWidth();
   void setGlWidth(int w);
   int getGlHeight();
   void setGlHeight(int h);
   int getMenuWidth();
+  // called when the tiles are pressed, and when an edge between them is
+  // released
+  void tilePushed();
+  void tileReleased();
   void setMenuWidth(int w);
-  int getMenuHeight();
   void showMenu();
   void hideMenu();
   void showHideMenu();
@@ -99,28 +122,36 @@ public:
   void attachMenu();
   void attachDetachMenu();
   bool isMenuDetached() { return _menuwin ? true : false; }
-  // tool windows shown are docked, in a column visible while one is docked
-  // (see paletteWindow::floating() for the ones kept out)
+  // with docking on, the tool windows are shown docked in a column, which is
+  // visible while a tool is docked (paletteWindow::floating() says which
+  // windows always float)
   void setDocking(bool docking);
   bool isDockShown();
+  // what the tool windows ask (see paletteWindow::host): toolTornOut()
+  // shows a tool torn out of the dock on the desktop, under the pointer;
+  // toolMoved() and dragToDock() follow a floating tool moved on the desktop,
+  // which is docked when dragged over the dock
+  bool takesTools() const { return !_undocking; }
   void dockTool(paletteWindow *w);
   void toolHidden(paletteWindow *w);
   void toolResized(paletteWindow *w);
-  // a tool torn out of the dock, shown on the desktop under the pointer, and
-  // a floating tool moved on the desktop, docked when dragged over the dock
   void toolTornOut(paletteWindow *w, int x, int y);
   void toolMoved(paletteWindow *w);
   void dragToDock(paletteWindow *w);
   int toolDrop(int event);
-  // the tool shown in the dock, used last, if any, and closing it
+  bool closeTool(Fl_Window *w);
+  // the docked tool used last, if any, and closing it
   paletteWindow *currentDockedTool();
   bool closeDockedTool();
-  // runs the entry of the menu bar whose shortcut is the current event
-  bool runMenuShortcut();
+#if defined(__APPLE__)
+  bool hasSystemMenuBar() const { return _sysbar != nullptr; }
+#endif
   int getDockWidth();
   void setDockWidth(int w);
   bool split(openglWindow *g, char how, double ratio);
-  void setAnimButtons(int mode);
+  // the play button as a pause button while the animation plays
+  void setAnimButtons(bool playing);
+  // the animation buttons active when there are views with time steps
   void checkAnimButtons();
   int getMessageHeight();
   void setMessageHeight(int h);
@@ -132,38 +163,48 @@ public:
   void saveMessages(const char *filename);
   void copySelectedMessagesToClipboard();
   void setMessageFontSize(int size);
-  void changeMessageFontSize(int incr);
   void fillRecentHistoryMenu();
 };
 
-void file_quit_cb(Fl_Widget *w, void *data);
-void file_watch_cb(Fl_Widget *w, void *data);
-void mod_geometry_cb(Fl_Widget *w, void *data);
-void mod_mesh_cb(Fl_Widget *w, void *data);
-void mod_solver_cb(Fl_Widget *w, void *data);
-void mod_post_cb(Fl_Widget *w, void *data);
-void mod_back_cb(Fl_Widget *w, void *data);
-void mod_forward_cb(Fl_Widget *w, void *data);
-void geometry_reload_cb(Fl_Widget *w, void *data);
-void onelab_reload_cb(Fl_Widget *w, void *data);
-void mesh_1d_cb(Fl_Widget *w, void *data);
-void mesh_2d_cb(Fl_Widget *w, void *data);
-void mesh_3d_cb(Fl_Widget *w, void *data);
-void help_about_cb(Fl_Widget *w, void *data);
-void status_xyz1p_cb(Fl_Widget *w, void *data);
-void status_options_cb(Fl_Widget *w, void *data);
-void status_query_cb(Fl_Widget *w, void *data);
-// whether a query is waiting for a click (see status_query_cb)
+// What the status bar does, also from the keys and the menus (see
+// fltkActions.cpp):
+// the point of view of the viewports of g (if null, the current viewport, or
+// with Ctrl all those of its window, synced): "x", "y", "z" (the axis out of
+// the screen, or into it with Shift), "3d" (isometric), "1:1" (the model
+// fitted in the window), "r" (rotated by 90 degrees), "reset"
+void setPointOfView(const char *which, graphicWindow *g = nullptr);
+// the query or the measure, the two tools that take the clicks on the model
+// until asked to stop (see sceneTool), started or stopped; whether each
+// waits for a click
+void toggleTool(const std::string &name);
 bool queryMode();
-void status_measure_cb(Fl_Widget *w, void *data);
-// whether a measurement is waiting for a click (see status_measure_cb)
 bool measureMode();
-void status_play_manual(int time, int incr, bool redraw = true);
-void quick_access_cb(Fl_Widget *w, void *data);
-void show_hide_message_cb(Fl_Widget *w, void *data);
-void show_hide_menu_cb(Fl_Widget *w, void *data);
-void attach_detach_menu_cb(Fl_Widget *w, void *data);
-void dock_tool_cb(Fl_Widget *w, void *data);
-void dock_tools_cb(Fl_Widget *w, void *data);
+// colour the buttons of the mouse selection, the query and the measurement
+// according to their states
+void updateModeButtons();
+// the mouse selection on or off (the "S" button of the status bar)
+void toggleMouseSelection();
+// the quick access menu, at the pointer (the button of the status bar, a
+// double click in the scene)
+void quickAccessMenu();
+// the menu of the models, at the pointer, to pick the current one
+void modelsMenu();
+// the window whose status bar button is being clicked (for an action to act
+// on its viewports), or null
+graphicWindow *statusBarWindow();
+// the animation: a step of the time steps (time) or of the views, back to the
+// first step, played or paused (and whether it plays)
+void stepAnimation(int time, int incr, bool redraw = true);
+void rewindAnimation();
+void playOrPauseAnimation();
+bool animationPlaying();
+// the console, the menu and the docked tool windows shown or hidden, the
+// menu attached to the window or detached, and a graphic window added
+void showHideMessages();
+void showHideMenu();
+void attachDetachMenu();
+void dockCurrentTool();
+void dockAllTools();
+void newGraphicWindow();
 
 #endif

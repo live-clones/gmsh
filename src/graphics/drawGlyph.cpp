@@ -114,15 +114,19 @@ namespace {
     for(int i = 0; i < 9; i++) n[i] = (det != 0.) ? c[i] * id : a[i];
   }
 
-  // hand a tessellation over, transformed
-  void emit(const Tessellation &t, const double m[16])
+  // hand a tessellation over, transformed: its triangles, or their edges
+  // for a wireframe
+  void emit(const Tessellation &t, const double m[16], bool wire = false)
   {
     if(t.empty()) return;
     double n[9];
     normalMatrix(m, n);
-    gmshBegin(GL_TRIANGLES);
+    gmshBegin(wire ? GL_LINES : GL_TRIANGLES);
     std::size_t num = t.pos.size() / 3;
-    for(std::size_t i = 0; i < num; i++) {
+    for(std::size_t k = 0; k < (wire ? 2 * num : num); k++) {
+      // (the edges of triangle j: its vertices 0 1, 1 2 and 2 0)
+      std::size_t j = k / 6, e = k % 6;
+      std::size_t i = wire ? 3 * j + ((e + 1) / 2) % 3 : k;
       const float *p = &t.pos[3 * i];
       const float *q = &t.nrm[3 * i];
       // the normals must be unit length: the transform carries the size of
@@ -192,6 +196,10 @@ namespace {
 
       shape[GLYPH_SPHERE].clear();
       shape[GLYPH_SPHERE].sphere(1., n, n);
+      // a few more subdivisions for the markers, whose outline shows its
+      // facets at their size
+      shape[GLYPH_MARKER].clear();
+      shape[GLYPH_MARKER].sphere(1., n + 4, n + 4);
 
       shape[GLYPH_DISK].clear();
       shape[GLYPH_DISK].disk(0., 1., 0., n);
@@ -256,8 +264,7 @@ void drawContext::drawString(const std::string &s, double x, double y, double z,
   world2Viewport(xyz, w);
   // in true pixels, as world2Viewport works (drawContext's viewport is in
   // toolkit coordinates)
-  GLint vp[4];
-  glGetIntegerv(GL_VIEWPORT, vp);
+  const int *vp = gmshViewport();
   if(w[2] < 0. || w[2] > 1. || w[0] < vp[0] || w[0] > vp[0] + vp[2] ||
      w[1] < vp[1] || w[1] > vp[1] + vp[3])
     return; // the primitive is culled
@@ -475,8 +482,7 @@ void drawContext::drawImage(const std::string &name, double x, double y,
     h *= fact * s[1] / pixel_equiv_y;
     // nothing is drawn if the anchor is behind the eye or off the window
     // (an invalid raster position)
-    GLint vp[4];
-    glGetIntegerv(GL_VIEWPORT, vp);
+    const int *vp = gmshViewport();
     if(pos[2] < 0. || pos[2] > 1. || pos[0] < vp[0] || pos[0] > vp[0] + vp[2] ||
        pos[1] < vp[1] || pos[1] > vp[1] + vp[3])
       valid = GL_FALSE;
@@ -486,8 +492,8 @@ void drawContext::drawImage(const std::string &name, double x, double y,
     // the transparency pass has a blending of its own
     bool ownBlend = !glShader::transparentPass();
     if(ownBlend) {
-      glEnable(GL_BLEND);
-      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      gmshBlend(true);
+      gmshBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     }
     gmshTexture(img->tex, GMSH_TEXTURE_IMAGE);
     gmshBegin(GL_QUADS);
@@ -501,7 +507,7 @@ void drawContext::drawImage(const std::string &name, double x, double y,
     gmshVertex3d(x, y, z);
     gmshEnd();
     gmshTexture(0); // draws what is waiting, as the texture is going away
-    if(ownBlend) glDisable(GL_BLEND);
+    if(ownBlend) gmshBlend(false);
   }
   if(billboard) {
     gmshPopMatrix();
@@ -512,7 +518,7 @@ void drawContext::drawImage(const std::string &name, double x, double y,
 }
 
 void drawContext::drawSphere(double R, double x, double y, double z, int n1,
-                             int n2, int light)
+                             int n2, int light, bool wire)
 {
   // the caller says how finely this one is divided, so it is built here
   Tessellation t;
@@ -520,13 +526,12 @@ void drawContext::drawSphere(double R, double x, double y, double z, int n1,
   double m[16];
   glMatrix::translate(x, y, z, m);
   if(light) gmshLighting(true);
-  emit(t, m);
+  emit(t, m, wire);
   gmshLighting(false);
 }
 
-
 void drawContext::drawSphere(double size, double x, double y, double z,
-                             int light)
+                             int light, bool marker)
 {
   // size is a point size: a diameter
   double ss = 0.5 * size * pointPixelFactor() * pixel_equiv_x / s[0];
@@ -536,7 +541,7 @@ void drawContext::drawSphere(double size, double x, double y, double z,
   glMatrix::multiply(t, sc, m);
   _tmpl.update();
   if(light) gmshLighting(true);
-  emit(_tmpl.shape[GLYPH_SPHERE], m);
+  emit(_tmpl.shape[marker ? GLYPH_MARKER : GLYPH_SPHERE], m);
   gmshLighting(false);
 }
 

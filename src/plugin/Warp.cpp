@@ -61,12 +61,19 @@ PView *GMSH_WarpPlugin::execute(PView *v)
     return v;
   }
 
-  // the normal of a surface element, from its first 3 nodes
+  // the normal of a surface element
+  std::vector<double> xyz;
+  std::vector<double *> rows;
   auto normal = [&](int step, int ent, int ele, double n[3]) {
-    double x[3], y[3], z[3];
-    for(int nod = 0; nod < 3; nod++)
-      data1->getNode(step, ent, ele, nod, x[nod], y[nod], z[nod]);
-    normal3points(x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2], n);
+    int num = data1->getNumNodes(step, ent, ele);
+    xyz.resize(3 * num);
+    rows.resize(num);
+    for(int nod = 0; nod < num; nod++) {
+      rows[nod] = &xyz[3 * nod];
+      data1->getNode(step, ent, ele, nod, xyz[3 * nod], xyz[3 * nod + 1],
+                     xyz[3 * nod + 2]);
+    }
+    data1->getNormal(step, ent, ele, rows.data(), n);
   };
 
   // smooth normal field if we don't have an explicit warp field

@@ -30,6 +30,7 @@ template <class scalar> class simpleFunction;
 
 class GEO_Internals;
 class OCC_Internals;
+class DiscreteCAD_Internals;
 class ACIS_Internals;
 class Parasolid_Internals;
 class smooth_normals;
@@ -87,10 +88,21 @@ private:
                             bool binary, bool saveAll, bool saveParametric,
                             double scalingFactor);
   int _readMSH4(const std::string &name);
-  int _writeMSH4(const std::string &name, double version, bool binary,
-                 bool saveAll, bool saveParametric, double scalingFactor,
-                 bool append, const std::vector<int> &partitionsToSave = {},
-                 std::map<GEntity *, SBoundingBox3d> *entityBounds = nullptr);
+  // the nodes and the elements read from a MSH4 file into the model and the
+  // caches (deleted if their tags are taken)
+  void _storeMSH4Nodes(MVertex **nodes, std::size_t num, std::size_t maxNum,
+                       bool dense);
+  void _storeMSH4Elements(std::pair<MElement *, GEntity *> *elements,
+                          std::size_t num, std::size_t maxNum, bool dense);
+  // (ghostCells: the ghost cells of each partition, by the dimension and tag
+  // of the partition entity of their elements, if already found)
+  int _writeMSH4(
+    const std::string &name, double version, bool binary, bool saveAll,
+    bool saveParametric, double scalingFactor, bool append,
+    const std::vector<int> &partitionsToSave = {},
+    std::map<GEntity *, SBoundingBox3d> *entityBounds = nullptr,
+    const std::vector<std::map<std::pair<int, int>, std::vector<MElement *>>>
+      *ghostCells = nullptr);
   int _writePartitionedMSH4(const std::string &baseName, double version,
                             bool binary, bool saveAll, bool saveParametric,
                             double scalingFactor);
@@ -101,6 +113,10 @@ private:
 protected:
   // the name of the model
   std::string _name;
+
+  // a number no other model of the run has: a new model may get the address
+  // of one deleted
+  std::size_t _serial;
 
   // the name of the file the model was read from
   std::string _fileName;
@@ -117,10 +133,11 @@ protected:
   TagMap<std::pair<MElement *, int>> _elementMapCache;
   std::map<int, int> _elementIndexCache;
 
-  // ghost cell information (stores partitions for each element acting
-  // as a ghost cell)
-  // /!\ Use only for compatibility with mesh format msh2 and msh3
-  std::multimap<MElement *, short> _ghostCells;
+  // the ghost cells of a partitioned mesh: for each element that is a ghost in
+  // other partitions (i.e. that shares a node with their elements), these
+  // partitions, by the tag of the element (not its address: elements are
+  // deleted when the mesh is changed)
+  std::multimap<std::size_t, short> _ghostCells;
 
   // an octree for fast mesh element lookup
   MElementOctree *_elementOctree;
@@ -134,10 +151,19 @@ protected:
   GEO_Internals *_geo_internals;
   // OpenCASCADE model internal data
   OCC_Internals *_occ_internals;
+  // the largest tags of the entities not from OpenCASCADE (e.g. built-in), in
+  // each dimension: new OpenCASCADE entities do not take them
+  int _maxNonOCCTag[4];
+  void _keepNonOCCTag(GEntity *e);
+  // the partition entities whose parent e is lose it, e being removed (they
+  // would point to it once it is deleted)
+  void _forgetParent(GEntity *e);
   // ACIS model internal data
   ACIS_Internals *_acis_internals;
   // Parasolid model internal data
   Parasolid_Internals *_parasolid_internals;
+  // discrete CAD modeler internal data
+  DiscreteCAD_Internals *_discreteCAD_internals;
 
   // characteristic length (mesh size) fields
   FieldManager *_fields;
@@ -304,9 +330,12 @@ public:
   // dimensions (containers ordered or hashed by number, point ids), and a
   // meshing with several threads numbers nodes and elements in the order the
   // threads happen to create them: this makes the mesh independent of the
-  // threads
+  // threads. With curvesInOrder (after the 1D and 2D passes) the node lists of
+  // the curves are in order along them and are left so, their new nodes
+  // numbered where they are
   void renumberMeshCanonically(std::size_t maxVertexBefore,
-                               std::size_t maxElementBefore);
+                               std::size_t maxElementBefore,
+                               bool curvesInOrder = false);
   // the largest node and element numbers in use (the counters above can be
   // larger)
   void getMaxMeshNumbersInUse(std::size_t &maxVertex,
@@ -396,6 +425,16 @@ public:
   GEO_Internals *getGEOInternals() { return _geo_internals; }
   ACIS_Internals *getACISInternals() { return _acis_internals; }
   Parasolid_Internals *getParasolidInternals() { return _parasolid_internals; }
+  void createDiscreteCADInternals();
+  void deleteDiscreteCADInternals();
+  void resetDiscreteCADInternals();
+  DiscreteCAD_Internals *getDiscreteCADInternals()
+  {
+    return _discreteCAD_internals;
+  }
+  // copy the entities of the discrete CAD modeler into the model, if they
+  // changed
+  void synchronizeDiscreteCADInternals();
   void deleteGEOInternals();
   void deleteOCCInternals();
   void resetOCCInternals();
@@ -408,6 +447,9 @@ public:
   // get/set the model name
   void setName(const std::string &name) { _name = name; }
   std::string getName() const { return _name; }
+
+  // the number of the model, unique in the run
+  std::size_t getSerial() const { return _serial; }
 
   // get/set the model file name
   void setFileName(const std::string &fileName);
@@ -523,6 +565,10 @@ public:
   // return the highest number associated with an elementary entity of
   // a given dimension (or the highest overall if dim < 0)
   int getMaxElementaryNumber(int dim);
+  int getMaxNonOCCTag(int dim) const
+  {
+    return (dim >= 0 && dim <= 3) ? _maxNonOCCTag[dim] : 0;
+  }
 
   // check if there are no physical entities in the model
   bool noPhysicalGroups();
@@ -705,9 +751,15 @@ public:
     return _lastMeshVertexError;
   }
 
-  // delete or reverse all invisble mesh elements
+  // delete or reverse all invisible mesh elements
   std::size_t removeInvisibleElements();
   std::size_t reverseInvisibleElements();
+  // delete or reverse the mesh elements of the given entities and the given
+  // elements
+  std::size_t removeElements(const std::set<GEntity *> &entities,
+                             const std::set<MElement *> &elements);
+  std::size_t reverseElements(const std::set<GEntity *> &entities,
+                              const std::set<MElement *> &elements);
 
   // the list of partitions
   std::size_t getNumPartitions() const { return _numPartitions; }
@@ -728,12 +780,9 @@ public:
   // create partition overlaps
   int createOverlaps(int layers, bool createBoundaries=true);
 
-  // /!\ Use only for compatibility with mesh format msh2 and msh3
-  std::multimap<MElement *, short> &getGhostCells() { return _ghostCells; }
-  void addGhostCells(MElement *elm, short partition)
-  {
-    _ghostCells.insert(std::make_pair(elm, partition));
-  }
+  // the ghost cells (see _ghostCells)
+  std::multimap<std::size_t, short> &getGhostCells() { return _ghostCells; }
+  void addGhostCells(MElement *elm, short partition);
 
   // perform various coherence tests on the mesh
   void checkMeshCoherence(double tolerance);
@@ -767,7 +816,9 @@ public:
   smooth_normals *normals;
 
   // mesh the model
-  int mesh(int dimension);
+  // not while another operation holds the lock on the model, unless nested in
+  // the operation holding it (see modelLock)
+  int mesh(int dimension, bool nested = false);
 
   // adapt 3d mesh
   int adaptMesh();
@@ -835,8 +886,10 @@ public:
   void clearHomologyRequests();
   void computeHomology(std::vector<std::pair<int, int>> &newPhysicals);
 
-  // mesh size callback
+  // mesh size and metric callbacks
   std::function<double(int, int, double, double, double, double)> lcCallback;
+  std::function<void(int, int, double, double, double, double, double *)>
+    metricCallback;
 
   // compute automatic sizing field from curvature
   void computeSizeField();
@@ -868,6 +921,11 @@ public:
   int writeGEO(const std::string &name, bool printLabels = true,
                bool onlyPhysicals = false);
   int exportDiscreteGEOInternals();
+  // the boundary of a discrete surface given to the built-in kernel, if it
+  // does not have it yet: the discrete entities read from a mesh are known to
+  // the kernel without it. The other entities of the kernel are left alone
+  // (exportDiscreteGEOInternals() starts the kernel again from the model)
+  bool exportDiscreteGEOBoundary(int surface);
 
   // PY export (mostly a placeholder for now)
   int writePY(const std::string &name, bool printLabels = true,

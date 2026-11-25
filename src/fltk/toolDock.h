@@ -114,10 +114,8 @@ private:
   static void _close_cb(Fl_Widget *w, void *data);
 
 public:
-  // set by the main window: a window torn out of the dock, to be shown on
-  // the desktop under the pointer (root coordinates)
-  inline static void (*tornOutHook)(paletteWindow *w, int x, int y) = nullptr;
   toolDock(int x, int y, int w, int h, int rowHeight);
+  ~toolDock();
   // docks the window, or brings it forward, and shows it
   void dock(paletteWindow *pw);
   // a tab or title dragged: whether the drag from (fromX, fromY) to (x, y)
@@ -157,7 +155,8 @@ public:
 // dragged to change the width of the dock
 class dockDivider : public Fl_Box {
 public:
-  // drawn in the selection colour with the drop hint of the dock
+  // drawn in the accent colour (gmshAccent()), as the markers of the dock, with
+  // its drop hint
   bool highlight;
   dockDivider(int x, int y, int w, int h) : Fl_Box(x, y, w, h), highlight(false)
   {

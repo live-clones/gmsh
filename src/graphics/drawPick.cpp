@@ -21,10 +21,6 @@
 
 bool drawContext::_pickColorActive = false;
 
-// The mesh element of an entity under the point a pick hit: the identifiers
-// name entities, not elements, so the element is looked up geometrically, in
-// the octree of the model (nullptr is not an error: the mesh may not be there,
-// or the point may have missed it).
 // The mesh element of a picked entity at the point the pick read back: for a
 // curve or a surface, the closest within a few pixels, as the point is off it
 // by the depth a pixel spans when it is seen obliquely; for a volume, one that
@@ -53,11 +49,11 @@ void drawContext::stepPick(int direction)
 {
   if(direction > 0) {
     if(!_pickLastValid) return;
-    _pickSkip.push_back(_pickLast);
+    _skipPush(_pickLast);
   }
   else {
     if(_pickSkip.empty()) return;
-    _pickSkip.pop_back();
+    _skipPop();
   }
   _pickCacheValid = false;
 }
@@ -66,6 +62,7 @@ void drawContext::resetPick()
 {
   if(_pickSkip.empty()) return;
   _pickSkip.clear();
+  _pickSkipSet.clear();
   _pickCacheValid = false;
 }
 
@@ -85,8 +82,7 @@ void drawContext::setPickColor(int type, int ient, int type2, int ient2,
   // an entity stepped past with the wheel is drawn into neither the colours
   // nor the depth, so that the pass finds what stands behind it
   pickKey key = {type, ient, type2, ient2};
-  bool skip =
-    std::find(_pickSkip.begin(), _pickSkip.end(), key) != _pickSkip.end();
+  bool skip = !_pickSkipSet.empty() && _pickSkipSet.count(key);
 
   // What is closest to the viewer is picked, and among what lies at the same
   // depth the lowest dimension: a point or a curve, a pixel or two wide, is
@@ -142,7 +138,7 @@ bool drawContext::pickSkipped(int type, int ient)
 {
   if(_pickSkip.empty()) return false;
   pickKey key = {type, ient, -1, -1};
-  return std::find(_pickSkip.begin(), _pickSkip.end(), key) != _pickSkip.end();
+  return _pickSkipSet.count(key) > 0;
 }
 
 void drawContext::pickStateFor(int type)
@@ -194,7 +190,7 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   render_mode = drawContext::GMSH_SELECT;
 
   bool oldLighting = gmshLightingEnabled();
-  GLboolean oldBlend = glIsEnabled(GL_BLEND);
+  GLboolean oldBlend = gmshBlendEnabled();
   GLfloat oldClear[4];
   glGetFloatv(GL_COLOR_CLEAR_VALUE, oldClear);
 
@@ -209,7 +205,7 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   glDepthFunc(GL_LESS);
   gmshDepthTest(true);
   gmshLighting(false);
-  glDisable(GL_BLEND);
+  gmshBlend(false);
   // the faces at their true depth, not pushed back behind their edges: the
   // point read back must lie on them, and the dimensions are told apart by
   // their depth ranges instead (see setPickColor())
@@ -320,7 +316,7 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
   CTX::instance()->polygonOffset = oldOffset;
   glClearColor(oldClear[0], oldClear[1], oldClear[2], oldClear[3]);
   if(oldLighting) gmshLighting(true);
-  if(oldBlend) glEnable(GL_BLEND);
+  if(oldBlend) gmshBlend(true);
   if(!glShader::enabled()) glShadeModel(GL_SMOOTH);
   _pickColor = _pickColorActive = false;
   render_mode = drawContext::GMSH_RENDER;
@@ -340,15 +336,16 @@ bool drawContext::_fillPickCache(bool mesh, bool post, int fx, int fy, int fw,
 // Find the objects whose colour shows up in the picking rectangle, and return
 // them ordered by depth.
 bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
-                               int x, int y, int w, int h,
-                               std::vector<GVertex *> &vertices,
-                               std::vector<GEdge *> &edges,
-                               std::vector<GFace *> &faces,
-                               std::vector<GRegion *> &regions,
-                               std::vector<MElement *> &elements,
-                               std::vector<SPoint2> &points,
-                               std::vector<PView *> &views)
+                               int x, int y, int w, int h, scenePicks &picks,
+                               std::vector<pickKey> *seen)
 {
+  auto &vertices = picks.vertices;
+  auto &edges = picks.edges;
+  auto &faces = picks.faces;
+  auto &regions = picks.regions;
+  auto &elements = picks.elements;
+  auto &points = picks.points;
+  auto &views = picks.views;
   if(w < 1) w = 1;
   if(h < 1) h = 1;
   // the rectangle is given by its centre
@@ -448,6 +445,13 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
              (int)found.size(), fw, fh, fx0, fy0, _pickCacheWidth,
              _pickCacheHeight, _pickCacheX, _pickCacheY);
   if(found.empty()) return false;
+  // (all that shows in the rectangle, whatever is asked for: it hides what is
+  // behind)
+  if(seen)
+    for(auto &p : found) {
+      const pickObject &o = _pickObjects[p.first];
+      seen->push_back({o.type, o.ient, o.type2, o.ient2});
+    }
   if(Msg::GetVerbosity() == 99)
     for(auto &p : found)
       Msg::Debug("  found type %d ient %d at depth %g%s",
@@ -544,9 +548,8 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
       GEdge *e = m->getEdgeByTag(o.ient);
       if(e) {
         _pickEntity = e;
-        MElement *ele = getElement(e, _pickPoint, _pickPointValid &&
-                                     CTX::instance()->pickElements,
-                                   pixel_equiv_x / s[0]);
+        MElement *ele = getElement(
+          e, _pickPoint, _pickPointValid && pickElements, pixel_equiv_x / s[0]);
         if(ele)
           elements.push_back(ele);
         else
@@ -558,9 +561,8 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
       GFace *f = m->getFaceByTag(o.ient);
       if(f) {
         _pickEntity = f;
-        MElement *ele = getElement(f, _pickPoint, _pickPointValid &&
-                                     CTX::instance()->pickElements,
-                                   pixel_equiv_x / s[0]);
+        MElement *ele = getElement(
+          f, _pickPoint, _pickPointValid && pickElements, pixel_equiv_x / s[0]);
         if(ele)
           elements.push_back(ele);
         else
@@ -572,9 +574,8 @@ bool drawContext::_selectColor(int type, bool multiple, bool mesh, bool post,
       GRegion *r = m->getRegionByTag(o.ient);
       if(r) {
         _pickEntity = r;
-        MElement *ele = getElement(r, _pickPoint, _pickPointValid &&
-                                     CTX::instance()->pickElements,
-                                   pixel_equiv_x / s[0]);
+        MElement *ele = getElement(
+          r, _pickPoint, _pickPointValid && pickElements, pixel_equiv_x / s[0]);
         if(ele)
           elements.push_back(ele);
         else
@@ -609,18 +610,11 @@ bool drawContext::pickBehind(int type, bool mesh, bool post, int x, int y,
   if(!_pickLastValid) return false;
   pickKey last = _pickLast;
   int candidates = _pickCandidates;
-  _pickSkip.push_back(last);
+  _skipPush(last);
   _pickCacheValid = false;
-  std::vector<GVertex *> vertices;
-  std::vector<GEdge *> edges;
-  std::vector<GFace *> faces;
-  std::vector<GRegion *> regions;
-  std::vector<MElement *> elements;
-  std::vector<SPoint2> points;
-  std::vector<PView *> views;
-  bool found = _selectColor(type, false, mesh, post, x, y, w, h, vertices,
-                            edges, faces, regions, elements, points, views);
-  _pickSkip.pop_back();
+  scenePicks picks;
+  bool found = _selectColor(type, false, mesh, post, x, y, w, h, picks);
+  _skipPop();
   _pickCacheValid = false;
   _pickLast = last;
   _pickLastValid = true;
@@ -629,37 +623,65 @@ bool drawContext::pickBehind(int type, bool mesh, bool post, int x, int y,
 }
 
 bool drawContext::select(int type, bool multiple, bool mesh, bool post, int x,
-                         int y, int w, int h, std::vector<GVertex *> &vertices,
-                         std::vector<GEdge *> &edges,
-                         std::vector<GFace *> &faces,
-                         std::vector<GRegion *> &regions,
-                         std::vector<MElement *> &elements,
-                         std::vector<SPoint2> &points,
-                         std::vector<PView *> &views)
+                         int y, int w, int h, scenePicks &picks, bool through)
 {
-  vertices.clear();
-  edges.clear();
-  faces.clear();
-  regions.clear();
-  elements.clear();
-  points.clear();
-  views.clear();
+  picks.clear();
 
   _pickLastValid = false;
   _pickPointValid = false;
   _pickEntity = nullptr;
-  if(_selectColor(type, multiple, mesh, post, x, y, w, h, vertices, edges,
-                  faces, regions, elements, points, views))
-    return true;
+
+  // A box takes all that is inside it, not only what is in front (as the
+  // selection buffer did), unless asked not to go through: the pass is made
+  // again without what the passes before found, as the wheel steps behind a
+  // single pick, until one finds nothing new
+  if(multiple && through) {
+    std::size_t skipped = _pickSkip.size();
+    std::set<GEntity *> got;
+    std::set<MElement *> gotElements;
+    bool any = false;
+    while(true) {
+      scenePicks q;
+      std::vector<pickKey> seen;
+      _pickCacheValid = false;
+      if(_selectColor(type, true, mesh, post, x, y, w, h, q, &seen)) any = true;
+      for(auto ent : q.vertices)
+        if(got.insert(ent).second) picks.vertices.push_back(ent);
+      for(auto ent : q.edges)
+        if(got.insert(ent).second) picks.edges.push_back(ent);
+      for(auto ent : q.faces)
+        if(got.insert(ent).second) picks.faces.push_back(ent);
+      for(auto ent : q.regions)
+        if(got.insert(ent).second) picks.regions.push_back(ent);
+      for(auto ele : q.elements)
+        if(gotElements.insert(ele).second) picks.elements.push_back(ele);
+      picks.points.insert(picks.points.end(), q.points.begin(),
+                          q.points.end());
+      picks.views.insert(picks.views.end(), q.views.begin(), q.views.end());
+      // (not again what a pass shows although it is skipped: done)
+      bool fresh = false;
+      for(auto &k : seen)
+        if(!_pickSkipSet.count(k)) {
+          _skipPush(k);
+          fresh = true;
+        }
+      if(!fresh) break;
+    }
+    while(_pickSkip.size() > skipped) _skipPop();
+    _pickCacheValid = false;
+    _pickLastValid = false;
+    return any;
+  }
+
+  if(_selectColor(type, multiple, mesh, post, x, y, w, h, picks)) return true;
   // Nothing stands behind the last one: stay on it rather than coming round
   // to the front, so that stepping the other way is what goes back. The
   // steps that found nothing are undone one by one, as the scene may have
   // changed under a cursor that has not moved.
   while(!_pickSkip.empty()) {
-    _pickSkip.pop_back();
+    _skipPop();
     _pickCacheValid = false;
-    if(_selectColor(type, multiple, mesh, post, x, y, w, h, vertices, edges,
-                    faces, regions, elements, points, views))
+    if(_selectColor(type, multiple, mesh, post, x, y, w, h, picks))
       return true;
   }
   return false;

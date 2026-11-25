@@ -7,6 +7,7 @@
 #include <FL/Fl_Scroll.H>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Return_Button.H>
+#include "GmshConfig.h"
 #include "FlGui.h"
 #include "accentTabs.h"
 #include "drawContext.h"
@@ -35,11 +36,6 @@ enum QM_HISTO {
   QMH_SIGE_XY,
   QMH_SIGE_3D
 };
-
-void statistics_cb(Fl_Widget *w, void *data)
-{
-  FlGui::instance()->stats->show();
-}
 
 static void statistics_update_cb(Fl_Widget *w, void *data)
 {
@@ -98,7 +94,7 @@ static void statistics_histogram_cb(Fl_Widget *w, void *data)
     new PView(name, "ElementData", GModel::current(), d);
   }
 
-  FlGui::instance()->updateViews(true, true);
+  FlGui::instance()->updateViews(true);
   drawContext::global()->draw();
 }
 

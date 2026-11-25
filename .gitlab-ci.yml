@@ -91,8 +91,11 @@ windows_msvc_ci:
     - cd build
     - cmake -DGMSH_HOST=gmsh.info -DENABLE_PETSC=1 -DPETSC_ARCH=real_mumps_seq -DPETSC_DIR=/petsc-3.14.4 ${EXTRA_OPTION} ..
     - make package -j 8
-    - PKG=`ls gmsh-*.tar*`
-    - scp ${PKG} geuzaine@gmsh.info:.wwwgmsh/bin/Linux/${PKG/\.tar\.gz/\.tgz}
+    - PKG=`ls gmsh-*.tar.gz`
+    - TGZ=${PKG/\.tar\.gz/\.tgz}
+    - sed "s/\.tar\.gz/.tgz/" ${PKG}.sha256 > ${TGZ}.sha256
+    - scp ${PKG} geuzaine@gmsh.info:.wwwgmsh/bin/Linux/${TGZ}
+    - scp ${TGZ}.sha256 geuzaine@gmsh.info:.wwwgmsh/bin/Linux/
     - ctest -j 8 --output-on-failure
   tags:
     - linux64
@@ -176,7 +179,8 @@ linux-nox-sdk_official_release:
     - cd build
     - c:\cygwin64\bin\bash -c "/usr/bin/cmake -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local;/usr/x86_64-w64-mingw32/sys-root/mingw' -DCMAKE_C_COMPILER=/usr/bin/x86_64-w64-mingw32-gcc.exe -DCMAKE_CXX_COMPILER=/usr/bin/x86_64-w64-mingw32-g++.exe -DCMAKE_Fortran_COMPILER=/usr/bin/x86_64-w64-mingw32-gfortran.exe -DCMAKE_RC_COMPILER=/usr/bin/x86_64-w64-mingw32-windres.exe -DENABLE_OS_SPECIFIC_INSTALL=1 -DENABLE_PETSC=1 -DPETSC_ARCH=real_mumps_seq -DPETSC_DIR=/home/geuzaine/src/petsc ${EXTRA_OPTION} .."
     - c:\cygwin64\bin\bash -c "/usr/bin/make package -j 4"
-    - c:\cygwin64\bin\bash -c "/usr/bin/scp -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa gmsh-*.zip geuzaine@gmsh.info:.wwwgmsh/bin/Windows/"
+    - c:\cygwin64\bin\bash -c "/usr/bin/scp -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa gmsh-*.zip gmsh-*.zip.sha256 geuzaine@gmsh.info:.wwwgmsh/bin/Windows/"
+    - c:\cygwin64\bin\bash -c "test -z ${DEBUG_LIBRARY} || /usr/bin/bash -o igncr ../utils/misc/upload_debug_library.sh"
     - c:\cygwin64\bin\bash -c "/usr/bin/ctest -j 4 --timeout 600 --output-on-failure"
 
 windows_official_snapshot:
@@ -200,6 +204,8 @@ windows_official_release:
 windows-sdk_official_snapshot:
   variables:
     EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
+    # keep the unstripped library on the server, to read crash reports
+    DEBUG_LIBRARY: "1"
   <<: *windows_official
   tags:
     - windows64
@@ -237,10 +243,14 @@ windows-sdk_official_release:
     - cd build
     - cmake -DGMSH_HOST=gmsh.info -DENABLE_OS_SPECIFIC_INSTALL=1 -DENABLE_PETSC=1 -DPETSC_ARCH=real_mumps_seq -DPETSC_DIR=/Users/geuzaine/src/petsc ${EXTRA_OPTION} ..
     - make package -j 4
-    - PKG=`ls gmsh-*.[dt][ma][gr]*`
+    - PKG=`ls gmsh-*.[dt][ma][gr]* | grep -v sha256`
     - '[[ ${PKG} == *.dmg ]] && xcrun notarytool submit ${PKG} --key /Users/geuzaine/AuthKey_4R6P5NYF3T.p8 --key-id 4R6P5NYF3T --issuer 69a6de7c-0b3a-47e3-e053-5b8c7c11a4d1 --wait'
     - '[[ ${PKG} == *.dmg ]] && xcrun stapler staple ${PKG}'
-    - scp ${PKG} geuzaine@gmsh.info:.wwwgmsh/bin/macOS/${PKG/\.tar\.gz/\.tgz}
+    - TGZ=${PKG/\.tar\.gz/\.tgz}
+    # recompute the checksum here, as stapling changes the dmg after CPack
+    - shasum -a 256 ${PKG} | sed "s/\.tar\.gz/.tgz/" > sha256.txt
+    - scp ${PKG} geuzaine@gmsh.info:.wwwgmsh/bin/macOS/${TGZ}
+    - scp sha256.txt geuzaine@gmsh.info:.wwwgmsh/bin/macOS/${TGZ}.sha256
     - ctest -j 4 --output-on-failure
 
 macosx_official_snapshot:
@@ -348,8 +358,11 @@ macosarm-sdk_official_release:
     - cd build_src
     - cmake ${EXTRA_OPTION} ..
     - make package_source
-    - PKG=`ls gmsh-*.tar*`
-    - scp ${PKG} geuzaine@gmsh.info:.wwwgmsh/src/${PKG/\.tar\.gz/\.tgz}
+    - PKG=`ls gmsh-*.tar.gz`
+    - TGZ=${PKG/\.tar\.gz/\.tgz}
+    - sed "s/\.tar\.gz/.tgz/" ${PKG}.sha256 > ${TGZ}.sha256
+    - scp ${PKG} geuzaine@gmsh.info:.wwwgmsh/src/${TGZ}
+    - scp ${TGZ}.sha256 geuzaine@gmsh.info:.wwwgmsh/src/
   tags:
     - linux64
     - docker
@@ -496,7 +509,9 @@ pypi_official_release:
     - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Windows && rm -f gmsh-stable-Windows64* && ln -s gmsh-${VERSION}-Windows64.zip gmsh-stable-Windows64.zip && ln -s gmsh-${VERSION}-Windows64-sdk.zip gmsh-stable-Windows64-sdk.zip"
     - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/macOS && rm -f gmsh-stable-MacOSX* && ln -s gmsh-${VERSION}-MacOSX.dmg gmsh-stable-MacOSX.dmg && ln -s gmsh-${VERSION}-MacOSX-sdk.tgz gmsh-stable-MacOSX-sdk.tgz"
     - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/macOS && rm -f gmsh-stable-MacOSARM* && ln -s gmsh-${VERSION}-MacOSARM.dmg gmsh-stable-MacOSARM.dmg && ln -s gmsh-${VERSION}-MacOSARM-sdk.tgz gmsh-stable-MacOSARM-sdk.tgz"
-    - ssh geuzaine@gmsh.info "cd .wwwgmsh/src && rm -f gmsh-stable-source.tgz && ln -s gmsh-${VERSION}-source.tgz gmsh-stable-source.tgz"
+    - ssh geuzaine@gmsh.info "cd .wwwgmsh/src && rm -f gmsh-stable-source* && ln -s gmsh-${VERSION}-source.tgz gmsh-stable-source.tgz"
+    # checksum files for the stable names, so that they can be checked as such
+    - for DIR in bin/Linux bin/Windows bin/macOS src; do ssh geuzaine@gmsh.info "cd .wwwgmsh/${DIR} && for f in gmsh-${VERSION}-*.sha256; do sed s/${VERSION}/stable/ \$f > gmsh-stable-\${f#gmsh-${VERSION}-}; done"; done
   tags:
     - linux64
     - docker

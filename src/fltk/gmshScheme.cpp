@@ -4,19 +4,22 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <typeinfo>
 #include <FL/Fl.H>
 #include <FL/Fl_Button.H>
+#include <FL/Fl_Group.H>
 #include <FL/Fl_Input_.H>
 #include <FL/Fl_Tabs.H>
+#include <FL/Fl_Browser_.H>
 #include <FL/Fl_Menu_.H>
 #include <FL/Fl_Menu_Bar.H>
+#include <FL/Fl_Menu_Button.H>
 #include <FL/Fl_Menu_Window.H>
 #include <FL/Fl_Tooltip.H>
 #include <FL/Fl_Scrollbar.H>
-#include <FL/Fl_Value_Input.H>
 #include <FL/Fl_Valuator.H>
 #include <FL/Fl_Window.H>
 #include <FL/fl_draw.H>
@@ -25,13 +28,18 @@
 #include <string>
 #include "FlGui.h" // the box types of Gmsh
 #include "Context.h"
+#include "ColorContrast.h"
+#include "GmshMessage.h"
 
 // the default theme, which an empty name also selects: the session files of
-// older versions store an empty theme, and their users get the new look too
+// older versions store an empty theme, and their users get the new look too;
+// read once, as gmshAir(): a theme set during the session is for the next one
+// (see opt_general_gui_theme())
 bool gmshScheme()
 {
-  return CTX::instance()->guiTheme == "gmsh" ||
-         CTX::instance()->guiTheme.empty();
+  static bool scheme =
+    CTX::instance()->guiTheme == "gmsh" || CTX::instance()->guiTheme.empty();
+  return scheme;
 }
 
 int gmshAir()
@@ -85,6 +93,50 @@ void applyGmshColors(bool dark)
     Fl_Tooltip::color(fl_rgb_color(243, 243, 243));
     Fl_Tooltip::textcolor(FL_FOREGROUND_COLOR);
   }
+}
+
+// a colour of FLTK as 0xrrggbb (see ColorContrast.h), and back
+static unsigned int toRGB(Fl_Color c)
+{
+  uchar r, g, b;
+  Fl::get_color(c, r, g, b);
+  return (r << 16) | (g << 8) | b;
+}
+
+static Fl_Color fromRGB(unsigned int rgb, Fl_Color c)
+{
+  if(rgb == toRGB(c)) return c;
+  return fl_rgb_color((rgb >> 16) & 255, (rgb >> 8) & 255, rgb & 255);
+}
+
+Fl_Color adaptedFill(Fl_Color c)
+{
+  return fromRGB(ReadableFillColor(toRGB(c), toRGB(FL_FOREGROUND_COLOR),
+                                   CTX::instance()->guiDark),
+                 c);
+}
+
+Fl_Color adaptedText(Fl_Color c)
+{
+  return fromRGB(ReadableTextColor(toRGB(c), toRGB(FL_BACKGROUND_COLOR),
+                                   toRGB(FL_BACKGROUND2_COLOR),
+                                   CTX::instance()->guiDark),
+                 c);
+}
+
+// chosen by hand: a formula darkens yellow to olive, and greys the others
+Fl_Color gmshIndicator(GmshIndicator i)
+{
+  // a clear tint on a light FLTK interface, and a strong colour on a dark one,
+  // on which its text and icons read; a yellow only stays clean there as a gold
+  static const unsigned char colors[4][2][3] = {
+    {{140, 230, 160}, {35, 134, 54}}, // green
+    {{150, 210, 255}, {31, 111, 235}}, // blue
+    {{255, 180, 175}, {190, 40, 40}}, // red
+    {{250, 220, 100}, {158, 106, 3}} // yellow
+  };
+  const unsigned char *c = colors[i][CTX::instance()->guiDark ? 1 : 0];
+  return fl_rgb_color(c[0], c[1], c[2]);
 }
 
 // The widget under the pointer, when it takes input (a button, a check box,
@@ -237,7 +289,8 @@ static void installBoxes()
   wrap(FL_THIN_DOWN_BOX);
   wrap(FL_ROUND_UP_BOX);
   wrap(FL_ROUND_DOWN_BOX);
-  // the boxes of Gmsh (the folded section headers of the options)
+  // the boxes of Gmsh (the section headers of the options, the frame of the
+  // tree)
   wrap(GMSH_SIMPLE_TOP_BOX);
   wrap(GMSH_SIMPLE_RIGHT_BOX);
   Fl::set_boxtype(FL_UP_BOX, FL_THIN_UP_BOX);
@@ -268,12 +321,24 @@ static void boxWhileHovered(Fl_Widget *w)
   }
 }
 
-// the widget the pointer leaves and the one it enters are drawn again
-static int hover_dispatch(int event, Fl_Window *win)
+int gmshSchemeHandle(int event, Fl_Window *win)
 {
   installBoxes();
+  // the event may delete the widget the pointer was over, through a callback
+  // (Cmd+Q from the API destroys every window, a tree widget rebuilds the
+  // tree): FLTK then clears its own pointers to it, but not this copy, so it
+  // is watched for the span of the event and zeroed by the deletion
   Fl_Widget *before = Fl::belowmouse();
+  Fl::watch_widget_pointer(before);
   int ret = Fl::handle_(event, win);
+  Fl::release_widget_pointer(before);
+  // without the focus rectangle (Fl::visible_focus(0), see below) FLTK does
+  // not give the keyboard focus to a list it is clicked in: given here, so
+  // that the arrows go along its lines
+  if(event == FL_PUSH && !Fl::visible_focus()) {
+    Fl_Browser_ *b = dynamic_cast<Fl_Browser_ *>(Fl::pushed());
+    if(b && b->type() >= FL_HOLD_BROWSER && Fl::focus() != b) Fl::focus(b);
+  }
   Fl_Widget *after = Fl::belowmouse();
   static Fl_Widget *lastTab = nullptr;
   if(before != after) {
@@ -300,6 +365,124 @@ static int hover_dispatch(int event, Fl_Window *win)
   }
   return ret;
 }
+
+// The item under the pointer in a menu, a pull-down or a shortcut menu: a
+// neutral grey, as in Windows and GNOME, the light blue being for what is
+// selected (the rows of the lists, the text of the fields)
+Fl_Color gmshMenuHighlight()
+{ return fl_color_average(FL_BACKGROUND_COLOR, FL_FOREGROUND_COLOR, 0.82f); }
+
+// what a shortcut menu (Fl_Menu_Item::popup()) takes its look from: FLTK's
+// own (the box, the colour, the font of a menu without a widget), but the
+// highlight; nothing without the theme
+const Fl_Menu_ *gmshPopupStyle()
+{
+  if(!gmshScheme()) return nullptr;
+  static Fl_Menu_Button *b = nullptr;
+  if(!b) {
+    Fl_Group *current = Fl_Group::current();
+    Fl_Group::current(nullptr);
+    b = new Fl_Menu_Button(0, 0, 1, 1);
+    Fl_Group::current(current);
+  }
+  b->textsize(FL_NORMAL_SIZE);
+  b->selection_color(gmshMenuHighlight());
+  return b;
+}
+
+// The scrollbars: a track of the colour of what they scroll and a rounded
+// thumb, without the arrows FLTK no longer draws at this width (see
+// gmshScrollbarSize). They are the members of the widgets that scroll, which
+// FLTK creates, so they are styled before the windows holding them are drawn
+// (anything shown or rebuilt is), and drawn again if that changed them. So
+// are the menus: the pull-downs, the menu buttons, the menu bar.
+static int track[4]; // the last track drawn: the whole scrollbar
+
+static void trackBox(int x, int y, int w, int h, Fl_Color c)
+{
+  track[0] = x;
+  track[1] = y;
+  track[2] = w;
+  track[3] = h;
+  fl_color(c);
+  fl_rectf(x, y, w, h);
+}
+
+static void thumbBox(int x, int y, int w, int h, Fl_Color c)
+{
+#if FL_API_VERSION < 10500
+  // FLTK 1.4 draws the arrow buttons whatever the width, after the track and
+  // with the box of the thumb, at both ends, where the thumb never is: they
+  // stay track, and their arrows are drawn in its colour (the label colour)
+  int t = std::min(track[2], track[3]);
+  if(w == t && h == t &&
+     ((x == track[0] && y == track[1]) ||
+      (x + w == track[0] + track[2] && y + h == track[1] + track[3])))
+    return;
+#endif
+  fl_color(c);
+  fl_rounded_rectf(x, y, w, h, std::min(w, h) / 2);
+}
+
+static void styleScrollbar(Fl_Scrollbar *s)
+{
+  Fl_Color track = s->parent() ? s->parent()->color() : FL_BACKGROUND_COLOR;
+  Fl_Color thumb = fl_color_average(FL_FOREGROUND_COLOR, track, 0.35f);
+  if(s->box() == GMSH_TRACK_BOX && s->color() == track &&
+     s->labelcolor() == track && s->slider() == GMSH_THUMB_BOX &&
+     s->selection_color() == thumb)
+    return;
+  s->box(GMSH_TRACK_BOX);
+  s->color(track);
+  s->labelcolor(track);
+  s->slider(GMSH_THUMB_BOX);
+  s->selection_color(thumb);
+  s->redraw();
+}
+
+static void styleWidgetsIn(Fl_Widget *w)
+{
+  if(Fl_Scrollbar *s = dynamic_cast<Fl_Scrollbar *>(w))
+    styleScrollbar(s);
+  else if(Fl_Menu_ *m = dynamic_cast<Fl_Menu_ *>(w))
+    m->selection_color(gmshMenuHighlight());
+  if(Fl_Group *g = w->as_group())
+    for(int i = 0; i < g->children(); i++) styleWidgetsIn(g->child(i));
+}
+
+static void styleWidgets(void *)
+{
+  if(!gmshScheme()) return;
+  for(Fl_Window *win = Fl::first_window(); win; win = Fl::next_window(win))
+    if(win->damage()) styleWidgetsIn(win);
+}
+
+void gmshStyleWidgets(Fl_Widget *w)
+{
+  if(gmshScheme()) styleWidgetsIn(w);
+}
+
+#if !defined(__APPLE__) && !defined(WIN32)
+// a font without Latin letters draws them all as the same empty box
+static bool drawsLetters()
+{
+  int dx, dy, w1, h1, w2, h2;
+  fl_font(FL_HELVETICA, 16);
+  fl_text_extents("i", dx, dy, w1, h1);
+  fl_text_extents("W", dx, dy, w2, h2);
+  return w1 != w2 || h1 != h2;
+}
+
+// a warning for the message console, which does not exist yet
+static std::string fontWarning;
+static void warnFont(void *)
+{
+  if(FlGui::available())
+    Msg::Warning("%s", fontWarning.c_str());
+  else
+    Fl::repeat_timeout(0.1, warnFont);
+}
+#endif
 
 void applyGmshScheme()
 {
@@ -328,6 +511,20 @@ void applyGmshScheme()
     names[1] = x11 ? "B" + family : family + " Bold";
     names[2] = x11 ? "I" + family : family + " Italic";
     names[3] = x11 ? "P" + family : family + " Bold Italic";
+    // Xft takes no missing letter from another font: back to the stock fonts if
+    // this one does not have them
+    if(x11) {
+      const std::string stocks[4] = {stock, Fl::get_font(FL_HELVETICA_BOLD),
+                                     Fl::get_font(FL_HELVETICA_ITALIC),
+                                     Fl::get_font(FL_HELVETICA_BOLD_ITALIC)};
+      Fl::set_font(FL_HELVETICA, names[0].c_str());
+      if(!drawsLetters()) {
+        fontWarning = "Font '" + family + "' cannot draw Latin letters: using "
+                      "the default font of FLTK";
+        Fl::add_timeout(0., warnFont);
+        for(int i = 0; i < 4; i++) names[i] = stocks[i];
+      }
+    }
   }
   Fl::set_font(FL_HELVETICA, names[0].c_str());
   Fl::set_font(FL_HELVETICA_BOLD, names[1].c_str());
@@ -336,7 +533,10 @@ void applyGmshScheme()
 #endif
 
   installBoxes();
-  Fl::event_dispatch(hover_dispatch);
+
+  Fl::set_boxtype(GMSH_THUMB_BOX, thumbBox, 0, 0, 0, 0);
+  Fl::set_boxtype(GMSH_TRACK_BOX, trackBox, 0, 0, 0, 0);
+  if(!Fl::has_check(styleWidgets)) Fl::add_check(styleWidgets);
 
   // no dashed rectangle on the widget with the focus
   Fl::visible_focus(0);

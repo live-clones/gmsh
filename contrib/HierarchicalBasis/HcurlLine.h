@@ -21,9 +21,9 @@ class HcurlLine : public HierarchicalBasis {
 public:
   HcurlLine(int order);
   void functionInfo(std::vector<FunctionInfo> &info) override;
-  void functions(const Dual *x, std::vector<Vec> &vertex,
-                 std::vector<Vec> &edge, std::vector<Vec> &face,
-                 std::vector<Vec> &bubble) override;
+  void functions(const Dual *x, std::vector<DualVector> &vertex,
+                 std::vector<DualVector> &edge, std::vector<DualVector> &face,
+                 std::vector<DualVector> &bubble) override;
 
 protected:
   bool hasParts() const override { return true; }

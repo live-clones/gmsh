@@ -2149,13 +2149,13 @@ GMSH_API void gmshModelMeshGetElementFaceNodesByType(const int elementType, cons
   }
 }
 
-GMSH_API void gmshModelMeshGetGhostElements(const int dim, const int tag, size_t ** elementTags, size_t * elementTags_n, int ** partitions, size_t * partitions_n, int * ierr)
+GMSH_API void gmshModelMeshGetGhostElements(const int partition, size_t ** elementTags, size_t * elementTags_n, int ** partitions, size_t * partitions_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<std::size_t> api_elementTags_;
     std::vector<int> api_partitions_;
-    gmsh::model::mesh::getGhostElements(dim, tag, api_elementTags_, api_partitions_);
+    gmsh::model::mesh::getGhostElements(partition, api_elementTags_, api_partitions_);
     vector2ptr(api_elementTags_, elementTags, elementTags_n);
     vector2ptr(api_partitions_, partitions, partitions_n);
   }
@@ -2227,6 +2227,28 @@ GMSH_API void gmshModelMeshRemoveSizeCallback(int * ierr)
   if(ierr) *ierr = 0;
   try {
     gmsh::model::mesh::removeSizeCallback();
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshSetMetricCallback(void (*callback)(int dim, int tag, double x, double y, double z, double lc, double * metric, void * data), void * callback_data, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::setMetricCallback(std::bind(callback, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7, callback_data));
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshRemoveMetricCallback(int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::removeMetricCallback();
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -4356,7 +4378,7 @@ GMSH_API void gmshModelOccRemoveAllDuplicates(int * ierr)
   }
 }
 
-GMSH_API void gmshModelOccHealShapes(int ** outDimTags, size_t * outDimTags_n, const int * dimTags, const size_t dimTags_n, const double tolerance, const int fixDegenerated, const int fixSmallEdges, const int fixSmallFaces, const int sewFaces, const int makeSolids, int * ierr)
+GMSH_API void gmshModelOccHealShapes(int ** outDimTags, size_t * outDimTags_n, const int * dimTags, const size_t dimTags_n, const double tolerance, const int fixDegenerated, const int fixSmallEdges, const int fixSmallFaces, const int sewFaces, const int makeSolids, const int fixTolerances, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
@@ -4366,7 +4388,7 @@ GMSH_API void gmshModelOccHealShapes(int ** outDimTags, size_t * outDimTags_n, c
       api_dimTags_[i].first = dimTags[i * 2 + 0];
       api_dimTags_[i].second = dimTags[i * 2 + 1];
     }
-    gmsh::model::occ::healShapes(api_outDimTags_, api_dimTags_, tolerance, fixDegenerated, fixSmallEdges, fixSmallFaces, sewFaces, makeSolids);
+    gmsh::model::occ::healShapes(api_outDimTags_, api_dimTags_, tolerance, fixDegenerated, fixSmallEdges, fixSmallFaces, sewFaces, makeSolids, fixTolerances);
     vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
   }
   catch(...){
@@ -4563,6 +4585,246 @@ GMSH_API void gmshModelOccMeshSetSize(const int * dimTags, const size_t dimTags_
       api_dimTags_[i].second = dimTags[i * 2 + 1];
     }
     gmsh::model::occ::mesh::setSize(api_dimTags_, size);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API int gmshModelDiscreteAddBox(const double x, const double y, const double z, const double dx, const double dy, const double dz, const int tag, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::model::discrete::addBox(x, y, z, dx, dy, dz, tag);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+  return result_api_;
+}
+
+GMSH_API int gmshModelDiscreteAddSphere(const double xc, const double yc, const double zc, const double radius, const int tag, const double tolerance, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::model::discrete::addSphere(xc, yc, zc, radius, tag, tolerance);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+  return result_api_;
+}
+
+GMSH_API int gmshModelDiscreteAddRectangle(const double x, const double y, const double z, const double dx, const double dy, const int tag, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::model::discrete::addRectangle(x, y, z, dx, dy, tag);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+  return result_api_;
+}
+
+GMSH_API int gmshModelDiscreteAddDisk(const double xc, const double yc, const double zc, const double rx, const double ry, const int tag, const double * zAxis, const size_t zAxis_n, const double * xAxis, const size_t xAxis_n, const double tolerance, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_zAxis_(zAxis, zAxis + zAxis_n);
+    std::vector<double> api_xAxis_(xAxis, xAxis + xAxis_n);
+    result_api_ = gmsh::model::discrete::addDisk(xc, yc, zc, rx, ry, tag, api_zAxis_, api_xAxis_, tolerance);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+  return result_api_;
+}
+
+GMSH_API int gmshModelDiscreteAddCylinder(const double x, const double y, const double z, const double dx, const double dy, const double dz, const double r, const int tag, const double tolerance, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::model::discrete::addCylinder(x, y, z, dx, dy, dz, r, tag, tolerance);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+  return result_api_;
+}
+
+GMSH_API int gmshModelDiscreteAddCone(const double x, const double y, const double z, const double dx, const double dy, const double dz, const double r1, const double r2, const int tag, const double tolerance, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::model::discrete::addCone(x, y, z, dx, dy, dz, r1, r2, tag, tolerance);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+  return result_api_;
+}
+
+GMSH_API int gmshModelDiscreteAddTorus(const double x, const double y, const double z, const double r1, const double r2, const int tag, const double * zAxis, const size_t zAxis_n, const double tolerance, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_zAxis_(zAxis, zAxis + zAxis_n);
+    result_api_ = gmsh::model::discrete::addTorus(x, y, z, r1, r2, tag, api_zAxis_, tolerance);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+  return result_api_;
+}
+
+GMSH_API void gmshModelDiscreteFuse(const int * objectDimTags, const size_t objectDimTags_n, const int * toolDimTags, const size_t toolDimTags_n, int ** outDimTags, size_t * outDimTags_n, int *** outDimTagsMap, size_t ** outDimTagsMap_n, size_t *outDimTagsMap_nn, const int tag, const int removeObject, const int removeTool, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_objectDimTags_(objectDimTags_n/2);
+    for(size_t i = 0; i < objectDimTags_n/2; ++i){
+      api_objectDimTags_[i].first = objectDimTags[i * 2 + 0];
+      api_objectDimTags_[i].second = objectDimTags[i * 2 + 1];
+    }
+    gmsh::vectorpair api_toolDimTags_(toolDimTags_n/2);
+    for(size_t i = 0; i < toolDimTags_n/2; ++i){
+      api_toolDimTags_[i].first = toolDimTags[i * 2 + 0];
+      api_toolDimTags_[i].second = toolDimTags[i * 2 + 1];
+    }
+    gmsh::vectorpair api_outDimTags_;
+    std::vector<gmsh::vectorpair >api_outDimTagsMap_;
+    gmsh::model::discrete::fuse(api_objectDimTags_, api_toolDimTags_, api_outDimTags_, api_outDimTagsMap_, tag, removeObject, removeTool);
+    vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
+    vectorvectorpair2intptrptr(api_outDimTagsMap_, outDimTagsMap, outDimTagsMap_n, outDimTagsMap_nn);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelDiscreteIntersect(const int * objectDimTags, const size_t objectDimTags_n, const int * toolDimTags, const size_t toolDimTags_n, int ** outDimTags, size_t * outDimTags_n, int *** outDimTagsMap, size_t ** outDimTagsMap_n, size_t *outDimTagsMap_nn, const int tag, const int removeObject, const int removeTool, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_objectDimTags_(objectDimTags_n/2);
+    for(size_t i = 0; i < objectDimTags_n/2; ++i){
+      api_objectDimTags_[i].first = objectDimTags[i * 2 + 0];
+      api_objectDimTags_[i].second = objectDimTags[i * 2 + 1];
+    }
+    gmsh::vectorpair api_toolDimTags_(toolDimTags_n/2);
+    for(size_t i = 0; i < toolDimTags_n/2; ++i){
+      api_toolDimTags_[i].first = toolDimTags[i * 2 + 0];
+      api_toolDimTags_[i].second = toolDimTags[i * 2 + 1];
+    }
+    gmsh::vectorpair api_outDimTags_;
+    std::vector<gmsh::vectorpair >api_outDimTagsMap_;
+    gmsh::model::discrete::intersect(api_objectDimTags_, api_toolDimTags_, api_outDimTags_, api_outDimTagsMap_, tag, removeObject, removeTool);
+    vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
+    vectorvectorpair2intptrptr(api_outDimTagsMap_, outDimTagsMap, outDimTagsMap_n, outDimTagsMap_nn);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelDiscreteCut(const int * objectDimTags, const size_t objectDimTags_n, const int * toolDimTags, const size_t toolDimTags_n, int ** outDimTags, size_t * outDimTags_n, int *** outDimTagsMap, size_t ** outDimTagsMap_n, size_t *outDimTagsMap_nn, const int tag, const int removeObject, const int removeTool, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_objectDimTags_(objectDimTags_n/2);
+    for(size_t i = 0; i < objectDimTags_n/2; ++i){
+      api_objectDimTags_[i].first = objectDimTags[i * 2 + 0];
+      api_objectDimTags_[i].second = objectDimTags[i * 2 + 1];
+    }
+    gmsh::vectorpair api_toolDimTags_(toolDimTags_n/2);
+    for(size_t i = 0; i < toolDimTags_n/2; ++i){
+      api_toolDimTags_[i].first = toolDimTags[i * 2 + 0];
+      api_toolDimTags_[i].second = toolDimTags[i * 2 + 1];
+    }
+    gmsh::vectorpair api_outDimTags_;
+    std::vector<gmsh::vectorpair >api_outDimTagsMap_;
+    gmsh::model::discrete::cut(api_objectDimTags_, api_toolDimTags_, api_outDimTags_, api_outDimTagsMap_, tag, removeObject, removeTool);
+    vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
+    vectorvectorpair2intptrptr(api_outDimTagsMap_, outDimTagsMap, outDimTagsMap_n, outDimTagsMap_nn);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelDiscreteFillet(const int * volumeTags, const size_t volumeTags_n, const int * curveTags, const size_t curveTags_n, const double * radii, const size_t radii_n, int ** outDimTags, size_t * outDimTags_n, const int removeVolume, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_volumeTags_(volumeTags, volumeTags + volumeTags_n);
+    std::vector<int> api_curveTags_(curveTags, curveTags + curveTags_n);
+    std::vector<double> api_radii_(radii, radii + radii_n);
+    gmsh::vectorpair api_outDimTags_;
+    gmsh::model::discrete::fillet(api_volumeTags_, api_curveTags_, api_radii_, api_outDimTags_, removeVolume);
+    vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelDiscreteImportShapes(const char * fileName, const double angle, int ** outDimTags, size_t * outDimTags_n, const double curveAngle, const double tolerance, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_outDimTags_;
+    gmsh::model::discrete::importShapes(fileName, angle, api_outDimTags_, curveAngle, tolerance);
+    vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelDiscreteAddTriangulation(const double * coord, const size_t coord_n, const size_t * triangles, const size_t triangles_n, const double angle, int ** outDimTags, size_t * outDimTags_n, const double curveAngle, const double tolerance, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_coord_(coord, coord + coord_n);
+    std::vector<std::size_t> api_triangles_(triangles, triangles + triangles_n);
+    gmsh::vectorpair api_outDimTags_;
+    gmsh::model::discrete::addTriangulation(api_coord_, api_triangles_, angle, api_outDimTags_, curveAngle, tolerance);
+    vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelDiscreteRemove(const int * dimTags, const size_t dimTags_n, const int recursive, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_dimTags_(dimTags_n/2);
+    for(size_t i = 0; i < dimTags_n/2; ++i){
+      api_dimTags_[i].first = dimTags[i * 2 + 0];
+      api_dimTags_[i].second = dimTags[i * 2 + 1];
+    }
+    gmsh::model::discrete::remove(api_dimTags_, recursive);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelDiscreteSynchronize(int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::discrete::synchronize();
   }
   catch(...){
     if(ierr) *ierr = 1;

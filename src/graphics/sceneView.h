@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 #include "drawContext.h"
+#include "scenePicks.h"
 
 class GEntity;
 class GVertex;
@@ -60,15 +61,21 @@ private:
   // be looked at at the next step: 1 select, -1 unselect, 2 and -2 inside
   // the lasso, in the rectangle (centre, size)
   int _selection, _trySelection, _trySelectionXYWH[4];
+  // a lasso closed with Alt held takes only what is in front, not all that
+  // is inside it
+  bool _trySelectionFront = false;
   // whether the last click asked to add a query to those on the picture
   // (Ctrl+click in query mode) rather than to replace them
   bool _addQuery;
   // what the cursor is over, in a box by it or in the status bar
   void _hover();
   // and drawn as selected while it is: the entity, what its selection was
-  // before, and the change of one for the other (which redraws)
-  GEntity *_highlighted;
+  // before, and the change of one for the other (which redraws). The entity
+  // is kept by its dimension and tag, not by a pointer: a clear, a reload or
+  // a synchronization deletes it while it is highlighted
+  int _highlightedDim, _highlightedTag;
   char _highlightedWas;
+  GEntity *_highlightedEntity() const;
   void _highlight(GEntity *e);
   // step through what is under the cursor, once per press or notch: see
   // _stepPick() for the several ways one of them arrives twice
@@ -84,21 +91,28 @@ private:
   std::string _hoverBehindFor;
   bool _hoverBehind;
   bool _probeBehind();
+  // where a pinch started, and its last step (see pinch())
+  mousePosition _pinchStart;
+  double _pinchStartDistance = 0., _pinchLast[3] = {0., 0., 0.};
   // how fast the model is spun (see the drag in handleMouse()): the speed,
   // smoothed, the path drawn since it was last measured and when that was,
   // and how long it has stayed fast
   double _spin, _spinFrom, _spinPath, _spinHot;
   // a picking pass, between hostBeginGL() and hostEndGL()
   bool _select(int type, bool multiple, bool mesh, bool post, int x, int y,
-               int w, int h, std::vector<GVertex *> &vertices,
-               std::vector<GEdge *> &edges, std::vector<GFace *> &faces,
-               std::vector<GRegion *> &regions,
-               std::vector<MElement *> &elements, std::vector<SPoint2> &points,
-               std::vector<PView *> &views);
-  // should a double click be processed?
-  bool _processDoubleClick(std::size_t num, const std::string &what);
+               int w, int h, scenePicks &picks, bool pickElements = false,
+               bool through = true);
+  // a selection picks the elements of the meshes (see beginSelection())
+  bool _selectionElements;
+  // what a double click on what is under the cursor does
   void _doubleClick(const paneInput &in);
   void _lassoZoom();
+  void _clickSelection(int sign, bool alt);
+  // where the last selection looked, in the units of the window
+  void _lastSelection(int xywh[4])
+  {
+    for(int i = 0; i < 4; i++) xywh[i] = _trySelectionXYWH[i];
+  }
 
 protected:
   // the context whose scene this is: the host's, which draws it
@@ -106,8 +120,8 @@ protected:
   // where the last click was, and where the pointer is: the lasso rectangle
   // goes from one to the other
   mousePosition _click, _curr;
-  // the point being placed in addPointMode
-  double _point[3];
+  // where a click would place the shape being placed (see shapePlacement),
+  // shown by the cursor, with what it is on
   // What the cursor is over, written in a box in the picture rather than in
   // a window of its own, which some window managers showed and hid with a
   // flicker on every move: the text, where the cursor was when it was last
@@ -124,15 +138,17 @@ protected:
     double xyz[3];
   };
   std::vector<pinnedNote> _pinned;
-  // a model spun hard enough catches fire: how much is alight and when that
-  // was last drawn (the host draws the flames)
-  double _fire, _fireTime;
+  // a model spun hard enough gives off its phlogiston: how much, and when
+  // that was last drawn (the host draws it)
+  double _phlogiston, _phlogistonTime;
 
   // what the interaction asks of the host
   // the picture changed
   virtual void hostRedraw() {}
-  // a button was pushed in this view: it is the current one from now on
-  virtual void hostClicked() {}
+  // a button was pushed in this view: it is the current one from now on;
+  // false if the view is gone meanwhile (taking the focus commits an edited
+  // value, whose callback may run events that delete it)
+  virtual bool hostClicked() { return true; }
   // the view moved (rotation, translation, scale): whatever shows the
   // numbers follows
   virtual void hostViewChanged() {}
@@ -142,13 +158,6 @@ protected:
   // drawn (the pass would mix with it), in which case nothing is picked
   virtual bool hostBeginGL() { return true; }
   virtual void hostEndGL() {}
-  // the tools that take over the clicks: see queryMode() and measureMode()
-  virtual bool hostQueryMode() { return false; }
-  virtual bool hostMeasureMode() { return false; }
-  // the point being placed: which of its coordinates the dialog holds fixed,
-  // and where the pointer moved it (mode: see addPointMode)
-  virtual bool hostFrozenCoordinate(int coord) { return false; }
-  virtual void hostPointMoved(const double p[3], int mode) {}
   // the ONELAB parameters of the entities: whether there are any, and show
   // those of one entity
   virtual bool hostHasOnelabContext() { return false; }
@@ -157,59 +166,77 @@ protected:
   virtual void hostQuickAccess() {}
 
 public:
-  // the entity being created follows the pointer: 0 none, 1 a point (see
-  // elementaryContextWindow::updatePoint() for the other values)
-  int addPointMode;
+  // the point of the model under the window point (x, y), on the point,
+  // curve or surface picked itself, and that entity if on is given: false if
+  // there is none (see pickedModelPoint())
+  bool modelPointAt(int x, int y, double xyz[3], GEntity **on = nullptr);
+  // where the last click was, in the units of the window
+  const double *clickPosition() const { return _click.win; }
+  // where the pointer is, in the units of the window
+  const double *pointerPosition() const { return _curr.win; }
+  // the entity drawn as selected while the pointer is over it (none if null)
+  void highlight(GEntity *e) { _highlight(e); }
   // a lasso is being drawn; a selection waits for clicks
   bool lassoMode, selectionMode;
   // what the keys ask of the selection, read at its next step
-  int endSelection, undoSelection, invertSelection, quitSelection,
-    changeSelection;
+  int endSelection, undoSelection, quitSelection, changeSelection;
   // the two lines of Msg::StatusGl(), drawn at the top of the picture
   std::string screenMessage[2];
 
   sceneView(drawContext *ctx);
-  virtual ~sceneView() {}
+  // puts back the entity it highlights, e.g. when a window goes on unsplit
+  virtual ~sceneView();
+  // all the scenes there are (the windows of the desktop, the page)
+  static const std::vector<sceneView *> &all();
+  // the scene to be drawn again
+  void askRedraw() { hostRedraw(); }
   drawContext *getDrawContext() { return _ctx; }
   void setDrawContext(drawContext *ctx) { _ctx = ctx; }
 
   // a mouse event; the host counts clicks and reports a double click only
   // when acceptsDoubleClick() says the view takes one
   void handleMouse(const paneInput &in);
+  // the phlogiston given off at its current level, over what draw3d() drew
+  // in a picture of width x height pixels, the level dying down if decay (not
+  // in a print, nor for the second eye of a stereo frame); true while some is
+  // still given off, for the host to draw another frame in about 30 ms
+  bool releasePhlogiston(int width, int height, bool decay);
   bool acceptsDoubleClick() const;
   // the pointer left the view
   void pointerLeft();
+  // a pinch of two fingers: kind 0 when the second finger comes down, 1 as
+  // they move, 2 when one is lifted; (x, y) is the point between them, in the
+  // units of the window, and d how far apart they are. The model is zoomed as
+  // they spread or close and moved with the point between them, so that what
+  // was under the fingers stays under them. True when the picture is to be
+  // drawn again
+  bool pinch(int kind, double x, double y, double d);
+  // a magnification gesture (a pinch on a trackpad): the model zoomed by
+  // factor (more than 1 to bring it closer) about the point (x, y) of the
+  // window, which stays under the pointer
+  void magnify(double x, double y, double factor);
   // step through what is stacked under the cursor (Alt+Up/Down)
   void stepPick(int direction) { _stepPick(direction, false); }
 
-  // A selection: begin it, then call selectionStep() each time the host has
-  // waited for events. It returns 0 while there is nothing to report, and
-  // otherwise 'l' (selected), 'r' (unselected), 'c' (a click, when the type
-  // is ENT_NONE), 'e' (ended), 'u' (undo), 'i' (invert) or 'q' (quit), the
-  // entities in the vectors; the selection goes on after 'e', 'u' and 'i'.
-  void beginSelection(int type);
-  char selectionStep(std::vector<GVertex *> &vertices,
-                     std::vector<GEdge *> &edges, std::vector<GFace *> &faces,
-                     std::vector<GRegion *> &regions,
-                     std::vector<MElement *> &elements,
-                     std::vector<SPoint2> &points, std::vector<PView *> &views);
+  // A selection (see sceneTool, which runs them): begin it, picking the mesh
+  // elements or not, then call selectionStep() after the events. It returns
+  // 0 while there is nothing to report, and otherwise 'l' (selected), 'r'
+  // (unselected), 'c' (a click, when the type is ENT_NONE), 'e' (ended), 'u'
+  // (undo) or 'q' (quit), the entities in the vectors; each answer ends the
+  // selection, which is begun again for the next one. cancelSelection() ends
+  // it without an answer
+  void beginSelection(int type, bool elements = false);
+  void cancelSelection();
+  char selectionStep(scenePicks &picks);
   // run one picking pass at the given position (window coordinates) and
-  // return what a click there would select, without waiting for a click
+  // return what a click there would select (mesh elements if asked),
+  // without waiting for a click
   bool pick(int type, bool mesh, bool post, int x, int y, int w, int h,
-            std::vector<GVertex *> &vertices, std::vector<GEdge *> &edges,
-            std::vector<GFace *> &faces, std::vector<GRegion *> &regions,
-            std::vector<MElement *> &elements, std::vector<SPoint2> &points,
-            std::vector<PView *> &views)
+            scenePicks &picks, bool pickElements = false)
   {
     // the kept image was drawn around the pointer, not around this position
     _ctx->invalidatePickCache();
-    return _select(type, false, mesh, post, x, y, w, h, vertices, edges, faces,
-                   regions, elements, points, views);
-  }
-  // where the last selection looked, in the units of the window
-  void lastSelection(int xywh[4])
-  {
-    for(int i = 0; i < 4; i++) xywh[i] = _trySelectionXYWH[i];
+    return _select(type, false, mesh, post, x, y, w, h, picks, pickElements);
   }
   // show the text in a box by the cursor, or take the box away
   void drawTooltip(const std::string &text);
@@ -217,13 +244,22 @@ public:
   // boxes pinned before, or is added to them; an empty text removes them all
   void pinTooltip(const std::string &text, const double *xyz = nullptr,
                   bool add = false);
-  bool addQuery() const { return _addQuery; }
-  void setPoint(double x, double y, double z)
-  {
-    _point[0] = x;
-    _point[1] = y;
-    _point[2] = z;
-  }
+  // the notes pinned to the model, for a host that draws them itself
+  std::size_t numPinned() const { return _pinned.size(); }
+  const std::string &pinnedText(std::size_t i) const { return _pinned[i].text; }
+  const double *pinnedPoint(std::size_t i) const { return _pinned[i].xyz; }
+  // A click of the query, with what the selection found there: what the model
+  // holds at the point hit (its entity, element, node, the values of the
+  // views), in the messages and pinned to the point (added to the notes with
+  // Ctrl). False if the click hit nothing. The query tool
+  // runs the selection (see newQueryTool())
+  bool queryClick(const scenePicks &picks);
+  // A click of the measurement: its first point, or its second one and the
+  // distance between them, in the messages and over the line. False if the
+  // click hit nothing
+  bool measureClick();
+  // a measurement waits for its second point
+  bool measuring() const { return _ctx->numMarks() == 1; }
 };
 
 #endif

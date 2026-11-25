@@ -8,6 +8,7 @@
 
 #include <map>
 #include <string>
+#include <initializer_list>
 #include <FL/Fl.H>
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Input.H>
@@ -19,6 +20,10 @@
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Box.H>
 
+// the value of a field of the operations on selected entities: the text of
+// an input or of a choice, "1" or "0" for a check button
+std::string fieldValue(Fl_Widget *w);
+
 class elementaryContextWindow {
 public:
   Fl_Window *win;
@@ -26,15 +31,28 @@ public:
   Fl_Input *input[80];
   Fl_Value_Input *value[10];
   Fl_Group *group[20];
+  // the locks of the coordinates of the position and the work plane of the
+  // shape being placed (see shapePlacement)
   Fl_Check_Button *butt[3];
+  Fl_Choice *plane;
 
 public:
   elementaryContextWindow(int deltaFontSize = 0);
   ~elementaryContextWindow() { Fl::delete_widget(win); }
   void show(int pane);
   void hide() { win->hide(); }
-  void updatePoint(double pt[3], int which);
-  bool frozenPointCoord(int coord);
+  // the values of the inputs of a pane
+  std::vector<std::string> paneValues(int pane);
+  // the shape of a pane placed with the pointer, from the values of its
+  // inputs, instead of the one placed; the locks and the work plane of the
+  // window given to the placement; the inputs and the locks shown as the
+  // placement has them
+  void startPlacement(int pane);
+  void placementControls();
+  void showPlacement();
+  // adds the entity of the pane to the script, unless a value it needs is
+  // missing
+  bool addShape(int pane);
 };
 
 class physicalContextWindow {
@@ -48,8 +66,7 @@ public:
   Fl_Value_Input *value[1];
   Fl_Choice *choice[1];
   int selectedTag;
-  std::string type, mode, selectedName;
-  bool append;
+  std::string type, selectedName;
   std::map<int, std::string> physicalTags;
   std::map<std::string, int> physicalNames;
 
@@ -71,6 +88,9 @@ public:
 
 public:
   transformContextWindow(int deltaFontSize = 0);
+  // the widget of a field of the operations on selected entities, by its name
+  // (see selectionDriver); the extrusion by a rotation has its own mesh fields
+  Fl_Widget *field(const std::string &name, bool rotation = false);
   ~transformContextWindow() { Fl::delete_widget(win); }
   void show(int pane, bool extrude = false, bool selection = true);
   void hide() { win->hide(); }
@@ -85,6 +105,7 @@ public:
 
 public:
   meshContextWindow(int deltaFontSize = 0);
+  Fl_Widget *field(const std::string &name);
   ~meshContextWindow() { Fl::delete_widget(win); }
   void show(int pane);
   void hide() { win->hide(); }

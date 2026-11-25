@@ -124,6 +124,7 @@
 #include <errno.h>
 #include <ctype.h>
 #include <string.h>
+#include <vector>
 //#include <unistd.h>
 #include "mtypes.h"
 #include "frames.h"
@@ -601,7 +602,10 @@ ReadPPM(MpegFrame *mf,
     char    string[71];
     char    *inputLine;
     int	    height = 0, width = 0, maxVal=255;
-    uint8   junk[4096];
+    /* what is skipped of a row: as long as a row (a fixed 4096 bytes
+       overflowed for frames over 1365 pixels wide) */
+    std::vector<uint8> junkData;
+    uint8   *junk;
     int y;
     int	    state;
     int     safe_read_count;
@@ -683,6 +687,8 @@ ReadPPM(MpegFrame *mf,
     mf->rgb_maxval = maxVal;
 
     Frame_AllocPPM(mf);
+    junkData.resize(3 * width + 1);
+    junk = junkData.data();
 
     for ( y = 0; y < Fsize_y; y++ ) {
       safe_fread(mf->ppm_data[y], (int)sizeof(char), 3*Fsize_x, fpointer);
@@ -693,7 +699,7 @@ ReadPPM(MpegFrame *mf,
 
     /* read the leftover stuff to prevent broken pipe */
     for ( y=Fsize_y; y<height; ++y ) {
-      safe_fread(junk, (int)sizeof(char), 3*Fsize_x, fpointer);
+      safe_fread(junk, (int)sizeof(char), 3*width, fpointer);
     }
     return TRUE;
 }
@@ -717,7 +723,9 @@ ReadEYUV(MpegFrame *mf,
          int height)
 {
     int y;
-    uint8   junk[4096];
+    /* what is skipped of a row (see ReadPPM) */
+    std::vector<uint8> junkData(width + 1);
+    uint8   *junk = junkData.data();
     int     safe_read_count;
 
     Fsize_Note(mf->id, width, height);
@@ -783,7 +791,9 @@ ReadAYUV(MpegFrame *mf,
 {
     int x, y;
     struct  YuvLine line1, line2;
-    uint8   junk[4096];
+    /* what is skipped of a row (see ReadPPM) */
+    std::vector<uint8> junkData(2 * width + 1);
+    uint8   *junk = junkData.data();
     int8    *cbptr, *crptr;
     int     safe_read_count;
 
@@ -837,7 +847,9 @@ SeparateLine(FILE *fpointer,
              struct YuvLine *lineptr,
              int width)
 {
-    uint8   junk[4096];
+    /* what is skipped of a row (see ReadPPM) */
+    std::vector<uint8> junkData;
+    uint8   *junk;
     int8    *crptr, *cbptr;
     uint8   *yptr;
     int     num, length;
@@ -856,6 +868,8 @@ SeparateLine(FILE *fpointer,
     }
 
     length = strlen (yuvConversion);
+    junkData.resize(width * (length >> 1) + 1);
+    junk = junkData.data();
 
     if ((length % 2) != 0) {
 	throw "YUV_FORMAT must represent two pixels, hence must be even in length";
@@ -917,7 +931,9 @@ ReadY(MpegFrame *mf,
       int height)
 {
     int y;
-    uint8   junk[4096];
+    /* what is skipped of a row (see ReadPPM) */
+    std::vector<uint8> junkData(width + 1);
+    uint8   *junk = junkData.data();
     int     safe_read_count;
 
     Fsize_Note(mf->id, width, height);

@@ -24,6 +24,9 @@ enum glyphKind {
   // the side of a cylinder or cone; the two radii are parameters of the
   // glyph, not part of its transform
   GLYPH_CYLINDER,
+  // a sphere a little finer, for markers that are larger and few (the volumes
+  // of the geometry)
+  GLYPH_MARKER,
   GLYPH_NUMKINDS
 };
 
@@ -94,9 +97,9 @@ public:
   // what is drawn between the two goes into the list instead of the picture
   void recordBegin();
   void recordEnd();
-  // a sphere of a radius given in pixels
+  // a sphere of a radius given in pixels, or a marker (see GLYPH_MARKER)
   void addSphere(drawContext *ctx, double size, double x, double y, double z,
-                 unsigned int color);
+                 unsigned int color, bool marker = false);
   // an arrow from (x, y, z) along (dx, dy, dz), which are world lengths
   void addArrow(double x, double y, double z, double dx, double dy, double dz,
                 unsigned int color);

@@ -89,6 +89,13 @@ bool PViewDataGModel::addData(GModel *model,
 
   std::size_t stride = data.size() / tags.size();
   if(stride < 1) return false;
+  if(data.size() % tags.size()) {
+    // (e.g. node values of polygons with different numbers of nodes)
+    Msg::Error("Homogeneous data needs the same number of values for all "
+               "the entities (%zu values for %zu entities)", data.size(),
+               tags.size());
+    return false;
+  }
 
   if(numComp < 0) {
     if(_type == ElementNodeData) {

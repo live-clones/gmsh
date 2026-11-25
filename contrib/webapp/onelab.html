@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<!--
+  Gmsh web app - Copyright (C) 2026 C. Geuzaine and J.-F. Remacle
+
+  This program is free software: you can redistribute it and/or modify it under
+  the terms of the GNU Affero General Public License as published by the Free
+  Software Foundation, either version 3 of the License, or (at your option) any
+  later version.
+
+  This program is distributed in the hope that it will be useful, but WITHOUT
+  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+  FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
+  details.
+
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- installable on a phone's or tablet's home screen, where it opens
+     without the bars of the browser (manifest.webmanifest) -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/onelab-180.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ONELAB">
+<meta name="theme-color" content="#ffffff">
+<title>ONELAB web app</title>
+<link rel="stylesheet" href="onelab.css">
+</head>
+<body>
+<!-- before the module loads: the panel closed at first on a small screen
+     (app.narrow in app.mjs), the colours of the page (pageTheme, called by
+     options.mjs), and the offer of the browser to install the page as an app
+     kept for installApp() in statusbar.mjs, which may come first -->
+<script>
+  if(matchMedia('(max-width: 700px), (max-height: 500px)').matches)
+    document.body.classList.add('noSide');
+  // light or dark: as the colour scheme chosen in the options (General.
+  // ColorScheme, kept by the page: 2 dark, 3 as the browser, otherwise
+  // light), before the page is drawn
+  window.pageTheme = (scheme) => {
+    const dark = scheme === 2 ||
+      (scheme === 3 && matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  };
+  try { pageTheme(Number(localStorage.getItem('colorScheme') ?? 3)); }
+  catch(e) { pageTheme(3); }
+  addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    window.installPrompt = e;
+  });
+  addEventListener('appinstalled', () => { window.installPrompt = null; });
+</script>
+<div id="bar">
+  <strong>ONELAB</strong>
+  <span id="open">
+    <button id="openButton" aria-haspopup="menu" aria-expanded="false">Open model &#9662;</button>
+    <span id="openMenu" role="menu" hidden>
+      <button id="openFolder" role="menuitem"><b>Its folder...</b>
+        <small>the folder with the .pro, the .geo and the files they include
+          (best for a GetDP model)</small></button>
+      <button id="openFiles" role="menuitem"><b>Files...</b>
+        <small>a .zip of the model, or files that are a model on their own
+          (.geo, .msh, .step, ...)</small></button>
+      <button id="clearModel" role="menuitem" hidden><b>Clear</b>
+        <small>delete the model, its meshes, results and parameters</small></button>
+      <small class="drop">or drop the files or a .zip on the page</small>
+    </span>
+  </span>
+  <input id="files" type="file" multiple hidden>
+  <input id="folder" type="file" webkitdirectory hidden>
+  <button id="model" title="The models in the folder of this one"></button>
+  <button id="run" disabled>Run</button>
+  <button id="reset" disabled>Reset</button>
+  <button id="keys" title="Keyboard shortcuts and about">?</button>
+</div>
+<dialog id="keysDialog"><form method="dialog"><button>Close</button></form>
+  <h3>Keyboard shortcuts</h3>
+  <p>The keys of Gmsh's graphical interface, in the 3D view or anywhere but
+    a field. A browser keeps some for itself (e.g. Cmd+W, Cmd+T).</p>
+  <table id="keysTable"></table>
+  <h3>About</h3>
+  <p>ONELAB web app, with <a href="https://gmsh.info">Gmsh</a> <span
+    id="aboutVersion"></span> and <a href="https://getdp.info">GetDP</a>,
+    running in your browser. Free software under the <a
+    href="https://www.gnu.org/licenses/agpl-3.0.html">GNU Affero General Public
+    License</a>, version 3 or later: the source code and build recipe are in <a
+    href="https://gitlab.onelab.info/gmsh/gmsh/-/tree/master/contrib/webapp">contrib/webapp</a>
+    of the Gmsh repository. Report issues on <a
+    href="https://gitlab.onelab.info/gmsh/gmsh/issues">gitlab.onelab.info</a>.</p></dialog>
+<div id="side">
+  <div id="tabs"><button data-tab="modelTab" class="on">Model</button><button
+    data-tab="optionsTab">Options</button><button
+    data-tab="clipTab">Clipping</button><button
+    data-tab="visTab">Visibility</button><button
+    data-tab="plugTab">Plugins</button></div>
+  <div id="modelTab">
+    <!-- the modules of the graphical interface's tree, before the parameters -->
+    <details id="modules" open><summary>Modules</summary>
+      <details id="moduleGeometry"><summary>Geometry</summary></details>
+      <details id="moduleMesh"><summary>Mesh</summary></details>
+      <div id="panel" hidden></div>
+      <details id="modulePost" open hidden><summary>Post-processing</summary><div
+        id="viewList"></div></details>
+    </details>
+    <div id="params"></div>
+  </div>
+  <div id="optionsTab" hidden></div>
+  <div id="clipTab" hidden>
+    <div class="seg"><button id="clipPlanes" class="on">Planes</button><button
+      id="clipBox">Box</button></div>
+    <div id="clipPlaneGroup">
+      <div class="row"><span>Plane</span><span class="pair"><select id="clipNum">
+        <option value="0">0</option><option value="1">1</option>
+        <option value="2">2</option><option value="3">3</option>
+        <option value="4">4</option><option value="5">5</option></select><button
+        id="clipInvert" title="Invert the orientation of the plane">Invert</button></span></div>
+      <div class="row"><span>Normal along</span><span class="pair"><button
+        data-axis="0">X</button><button data-axis="1">Y</button><button
+        data-axis="2">Z</button></span></div>
+      <div id="clipCoefs"></div>
+    </div>
+    <div id="clipBoxGroup" hidden></div>
+    <div class="note" id="clipCount"></div>
+    <div id="clipTargets"></div>
+    <div class="buttons"><button id="clipAll">All</button><button
+      id="clipNone">None</button></div>
+    <div id="clipModes"></div>
+    <div class="buttons"><button id="clipReset">Reset</button></div>
+  </div>
+  <div id="visTab" hidden>
+    <div class="seg"><button id="visEntities" class="on">Entities</button><button
+      id="visGroups">Physical groups</button></div>
+    <div class="row wide"><span>Filter</span><input id="visFilter" type="search"
+      placeholder="name or number"></div>
+    <label class="row"><span>Apply to boundaries</span><input id="visRecursive"
+      type="checkbox" checked></label>
+    <div class="buttons"><button id="visAll">All</button><button
+      id="visNone">None</button><button id="visInvert">Invert</button></div>
+    <div id="visList"></div>
+  </div>
+  <div id="plugTab" hidden>
+    <div class="row wide"><span>Filter</span><input id="plugFilter" type="search"
+      placeholder="name or description"></div>
+    <div id="plugList"></div>
+    <div id="plugForm"></div>
+  </div>
+</div>
+<dialog id="scriptDialog"><form method="dialog">
+  <div class="bar"><span class="name" id="scriptName"></span><span class="gap"></span>
+    <input id="scriptFind" type="search" placeholder="Find" spellcheck="false"
+      title="Find the text: the first one as it is typed, the next one on Enter">
+    <input id="scriptLine" type="number" min="1" placeholder="Go to line"
+      title="Go to the line, as an error gives it"></div>
+  <div id="scriptBox"><pre id="scriptColors" aria-hidden="true"></pre>
+    <textarea id="scriptText" spellcheck="false" autocomplete="off" wrap="off"></textarea></div>
+  <div><button value="write" id="scriptWrite" title="Save the file">Save</button>
+    <button value="save" id="scriptSave"
+      title="Save the file, then read the model again">Save and reload</button>
+    <button value="cancel">Cancel</button></div>
+</form></dialog>
+<div id="rangeMenu" hidden>
+  <div class="name" id="rangeName"></div>
+  <input id="rangeText" type="text" spellcheck="false" autocomplete="off">
+  <div class="note" id="rangeNote">min : max, min : max : step, or val1, val2, ...</div>
+  <div class="buttons"><button id="rangeApply">Apply</button><button
+    id="rangeCancel">Cancel</button></div>
+</div>
+<div id="graphMenu" hidden>
+  <div class="name" id="graphName"></div>
+  <table id="graphTable"></table>
+  <div><button id="graphNone">None</button></div>
+</div>
+<div id="split" title="Drag to resize the panel, double-click for its default width"></div>
+<canvas id="canvas"></canvas>
+<details id="log"><summary>Messages</summary><div id="logSplit"
+  title="Drag to resize the messages, double-click for their default height"></div><pre
+  id="logText"></pre></details>
+<div id="statusbar">
+  <!-- the buttons come from the registry (statusbar.mjs); those of an
+       operation under way, and the status -->
+  <button data-act="op_e" title="End the selection (e)" hidden>&#10003;</button>
+  <button data-act="op_u" title="Undo the last selection (u)" hidden>&#8630;</button>
+  <button data-act="op_q" title="Stop the operation (Escape)" hidden>&#10005;</button>
+  <span id="status" title="Show or hide the messages">Loading...</span>
+</div>
+<div id="quickMenu" hidden></div>
+<div id="quickSubmenu" hidden></div>
+<div id="notes"></div>
+<div id="progress" hidden><div></div></div>
+<div id="lasso"></div>
+<div id="hover"></div>
+<div id="drop">drop a model (.pro, .geo and the files they include, or a .zip)</div>
+<script type="module" src="main.mjs"></script>
+</body>
+</html>

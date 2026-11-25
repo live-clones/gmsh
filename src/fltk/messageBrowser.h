@@ -9,17 +9,36 @@
 #include "FlGui.h"
 #include "hintInput.h"
 #include <algorithm>
+#include <deque>
 #include <string>
 #include <vector>
 
+// a browser scrolled to its last line in constant time: bottomline() walks and
+// measures every line, which made a full console slow down each message
+class consoleBrowser : public Fl_Browser {
+public:
+  consoleBrowser(int x, int y, int w, int h, const char *l = 0)
+    : Fl_Browser(x, y, w, h, l)
+  {
+  }
+  void scrollToEnd()
+  {
+    int X, Y, W, H;
+    bbox(X, Y, W, H);
+    vposition(std::max(0, full_height() - H));
+  }
+};
+
 class messageBrowser : public Fl_Group {
 private:
-  Fl_Browser *_browser;
+  consoleBrowser *_browser;
   Fl_Group *_box;
   Fl_Check_Button *_autoscroll;
   Fl_Button *_copy, *_save, *_clear;
   Fl_Input *_search;
   searchFilter _filter;
+  // whether each message added passed the filter, oldest first
+  std::deque<bool> _shown;
 
 public:
   messageBrowser(int x, int y, int w, int h, const char *l = 0)
@@ -62,7 +81,7 @@ public:
     _box->end();
     _box->resizable(0);
 
-    _browser = new Fl_Browser(x, y + bh + 2 * wb, w, h - bh - 2 * wb, l);
+    _browser = new consoleBrowser(x, y + bh + 2 * wb, w, h - bh - 2 * wb, l);
     _browser->box(GMSH_SIMPLE_TOP_BOX);
 #if defined(WIN32) // FL_SCREEN seems to be too tiny on most Windows setups
     _browser->textfont(FL_COURIER);
@@ -81,8 +100,19 @@ public:
   void rebuild(const std::vector<std::string> &messages)
   {
     filter();
-    _browser->clear();
+    clear();
     for(const std::string &m : messages) add(m.c_str());
+  }
+  // the oldest messages gone: the lines they showed removed, without
+  // filtering the others again (a filter of many lines is slow)
+  void removeFirst(std::size_t n)
+  {
+    int lines = 0;
+    for(std::size_t i = 0; i < n && !_shown.empty(); i++) {
+      if(_shown.front()) lines++;
+      _shown.pop_front();
+    }
+    for(int i = 0; i < lines && _browser->size(); i++) _browser->remove(1);
   }
   void box(Fl_Boxtype new_box) { _browser->box(new_box); }
   void textfont(Fl_Font font) { _browser->textfont(font); }
@@ -97,13 +127,19 @@ public:
   void copy_callback(Fl_Callback *cb, void *p) { _copy->callback(cb, p); }
   void save_callback(Fl_Callback *cb, void *p) { _save->callback(cb, p); }
   void clear_callback(Fl_Callback *cb, void *p) { _clear->callback(cb, p); }
-  void bottomline(int line) { _browser->bottomline(line); }
+  void scrollToEnd() { _browser->scrollToEnd(); }
   int size() { return _browser->size(); }
   void add(const char *newtext)
   {
-    if(_filter.matches(newtext)) _browser->add(newtext);
+    bool shown = _filter.matches(newtext);
+    _shown.push_back(shown);
+    if(shown) _browser->add(newtext);
   }
-  void clear() { _browser->clear(); }
+  void clear()
+  {
+    _shown.clear();
+    _browser->clear();
+  }
   const char *text(int line) const { return _browser->text(line); }
   int selected(int line) const { return _browser->selected(line); }
 };

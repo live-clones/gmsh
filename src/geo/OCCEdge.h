@@ -30,12 +30,18 @@ private:
   Handle(Geom_Curve) _curve;
   mutable Handle(Geom2d_Curve) _curve2d;
   mutable GFace *_trimmed;
-  mutable GeomAPI_ProjectPointOnCurve _projector;
+  // the projector keeps state from one projection to the next, so it cannot be
+  // shared between threads (the surfaces bounded by this curve are meshed in
+  // parallel): keep one per thread, created on demand
+  mutable std::vector<GeomAPI_ProjectPointOnCurve *> _projectors;
+  double _projectorBounds[2];
+  GeomAPI_ProjectPointOnCurve &
+  _projector(GeomAPI_ProjectPointOnCurve &fallback) const;
   bool _project(const double p[3], double &u, double xyz[3]) const;
 
 public:
   OCCEdge(GModel *model, TopoDS_Edge c, int num, GVertex *v1, GVertex *v2);
-  virtual ~OCCEdge() {}
+  virtual ~OCCEdge();
   void delFace(GFace *f);
   virtual SBoundingBox3d bounds(bool fast = false);
   virtual Range<double> parBounds(int i) const;

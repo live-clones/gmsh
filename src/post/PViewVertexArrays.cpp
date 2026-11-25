@@ -107,7 +107,8 @@ class drawTarget {
 public:
   PView *view;
   PViewOptions *opt;
-  VertexArray *va_points, *va_lines, *va_triangles, *va_vectors, *va_ellipses;
+  VertexArray *va_points, *va_lines, *va_outlines, *va_triangles, *va_vectors,
+    *va_ellipses;
   smooth_normals *normals;
   // the entity it belongs to
   int ent;
@@ -130,11 +131,11 @@ public:
   double isosMin, isosMax;
   drawTarget(PView *p)
     : view(p), opt(p->getOptions()), va_points(p->va_points),
-      va_lines(p->va_lines), va_triangles(p->va_triangles),
-      va_vectors(p->va_vectors), va_ellipses(p->va_ellipses),
-      normals(p->normals), ent(0), collect(COLLECT_ALL),
-      skinMask(-1), skinShape(nullptr), skin(nullptr), element(0), isosNum(-1),
-      isosMin(0.), isosMax(0.)
+      va_lines(p->va_lines), va_outlines(p->va_outlines),
+      va_triangles(p->va_triangles), va_vectors(p->va_vectors),
+      va_ellipses(p->va_ellipses), normals(p->normals), ent(0),
+      collect(COLLECT_ALL), skinMask(-1), skinShape(nullptr), skin(nullptr),
+      element(0), isosNum(-1), isosMin(0.), isosMax(0.)
   {
   }
 };
@@ -197,9 +198,13 @@ static void getLineNormal(drawTarget *p, double x[2], double y[2], double z[2],
   }
 }
 
+// The values of another view on an element. A data source (source = true) is
+// read as its own view shows it: with the components that view forces, the
+// eigenvalue it shows of a tensor, and its range, unless this view has a
+// custom range of its own.
 static bool getExternalValues(drawTarget *p, int index, int ient, int iele,
                               int numNodes, int numComp, double **val,
-                              int &numComp2, double **val2)
+                              int &numComp2, double **val2, bool source = false)
 {
   PViewOptions *opt = p->opt;
 
@@ -214,16 +219,43 @@ static bool getExternalValues(drawTarget *p, int index, int ient, int iele,
 
   PView *p2 = PView::list[index];
   PViewData *data2 = p2->getData(true); // use adaptive data if available
+  PViewOptions *opt2 = source ? p2->getOptions() : nullptr;
 
   if(iele >= data2->getNumElements(opt->timeStep, ient)) return false;
 
   if(!data2->skipElement(opt->timeStep, ient, iele) &&
      data2->getNumNodes(opt->timeStep, ient, iele) == numNodes) {
     numComp2 = data2->getNumComponents(opt->timeStep, ient, iele);
-    for(int i = 0; i < numNodes; i++)
-      for(int j = 0; j < numComp2; j++)
-        data2->getValue(opt->timeStep, ient, iele, i, j, val2[i][j]);
-    opt->getRange(data2, opt->externalMin, opt->externalMax);
+    if(opt2 && opt2->forceNumComponents) {
+      int n = std::min(opt2->forceNumComponents, 9);
+      for(int i = 0; i < numNodes; i++) {
+        for(int j = 0; j < n; j++) {
+          int comp = opt2->componentMap[j];
+          val2[i][j] = 0.;
+          if(comp >= 0 && comp < numComp2)
+            data2->getValue(opt->timeStep, ient, iele, i, comp, val2[i][j]);
+        }
+      }
+      numComp2 = n;
+    }
+    else {
+      for(int i = 0; i < numNodes; i++)
+        for(int j = 0; j < numComp2; j++)
+          data2->getValue(opt->timeStep, ient, iele, i, j, val2[i][j]);
+    }
+    if(opt2 && numComp2 == 9 &&
+       (opt2->tensorType == PViewOptions::MaxEigenValue ||
+        opt2->tensorType == PViewOptions::MinEigenValue)) {
+      int rep = (opt2->tensorType == PViewOptions::MaxEigenValue) ? 1 : 2;
+      for(int i = 0; i < numNodes; i++)
+        val2[i][0] = ComputeScalarRep(9, val2[i], rep);
+      numComp2 = 1;
+    }
+    if(opt2 && !(opt->rangeType == PViewOptions::Custom &&
+                 opt->customMin != opt->customMax))
+      opt2->getRange(data2, opt->externalMin, opt->externalMax);
+    else
+      opt->getRange(data2, opt->externalMin, opt->externalMax);
     return true;
   }
   return false;
@@ -287,8 +319,8 @@ static void changeCoordinates(drawTarget *p, int ient, int iele, int numNodes,
     }
   }
 
-  if(opt->normalRaise &&
-     (type == TYPE_LIN || type == TYPE_TRI || type == TYPE_QUA)) {
+  if(opt->normalRaise && (type == TYPE_LIN || type == TYPE_TRI ||
+                          type == TYPE_QUA || type == TYPE_POLYG)) {
     SVector3 n;
     if(type == TYPE_LIN) {
       // assumes lines in z=const plane, and raises in that plane
@@ -300,6 +332,9 @@ static void changeCoordinates(drawTarget *p, int ient, int iele, int numNodes,
       n = crossprod(t, p);
       n.normalize();
     }
+    else if(type == TYPE_POLYG)
+      p->view->getData(true)->getNormal(opt->timeStep, ient, iele, xyz,
+                                        n.data());
     else
       n = normal3(xyz);
     for(int i = 0; i < numNodes; i++) {
@@ -512,7 +547,7 @@ static void addOutlineLine(drawTarget *p, double **xyz, unsigned int color,
   }
   SVector3 n[2];
   getLineNormal(p, x, y, z, nullptr, n, true);
-  p->va_lines->add(x, y, z, n, col, true);
+  p->va_outlines->add(x, y, z, n, col, true);
 }
 
 static void addScalarLine(drawTarget *p, double **xyz, double **val, bool pre,
@@ -603,7 +638,7 @@ static void addOutlineEdge(drawTarget *p, double **xyz, unsigned int color,
   }
   unsigned int col[2] = {color, color};
   getLineNormal(p, x, y, z, nullptr, n, false);
-  if(!pre) p->va_lines->add(x, y, z, n, col, true);
+  if(!pre) p->va_outlines->add(x, y, z, n, col, true);
 }
 
 // the edges of a face of n corners
@@ -1005,22 +1040,14 @@ static std::vector<double> skinKey(PViewData *data, PViewOptions *opt,
   return k;
 }
 
-// the faces of a polyhedron, each as indices in its nodes (the fans that draw
-// its faces go through them all)
+// the faces of a polyhedron, each as indices in its nodes
 static void polyhedronFaces(MPolyhedron *ph, std::vector<std::vector<int> > &faces)
 {
-  faces.clear();
-  std::vector<MVertex *> fv;
-  int rep = 0;
-  for(int f = 0; f < ph->getNumFaces(); f++) {
-    ph->getFaceVertices(f, fv);
-    std::vector<int> idx;
-    for(int t = 0; t + 2 < (int)fv.size(); t++) {
-      std::array<int, 3> is = ph->getFaceRepIndices(false, rep++);
-      if(!t) idx = {is[0], is[1]};
-      idx.push_back(is[2]);
-    }
-    faces.push_back(idx);
+  faces.resize(ph->getNumPolygons());
+  for(int f = 0; f < ph->getNumPolygons(); f++) {
+    faces[f].clear();
+    for(int i = ph->getPolygonStart(f); i < ph->getPolygonStart(f + 1); i++)
+      faces[f].push_back(ph->getPolygonVertexIndex(i));
   }
 }
 
@@ -1190,13 +1217,13 @@ static bool findSkin(PView *p, const flatElements &flat, bool keptOnly,
   for(int t = 0; t < nthreads; t++) {
     FaceMatcher<std::uint32_t, std::uint32_t> matcher;
     std::vector<std::vector<int> > faces;
-    std::uint64_t hash[256]; // (a polyhedron has 255 faces at most)
+    std::vector<std::uint64_t> hash; // (of the faces of an element)
     std::vector<std::uint32_t> k;
     for(auto &c : chunks) {
       std::size_t ip = 0;
       for(std::size_t e = 0; e < c.elem.size(); e++) {
         const std::uint32_t *ids = &c.ids[c.first[e]];
-        int nf = 0;
+        hash.clear();
         auto hashFace = [&](int, const int *fi, int n) {
           std::uint32_t few[8] = {}, *kk = few; // (on the stack if they fit)
           if(n > 8) {
@@ -1204,9 +1231,9 @@ static bool findSkin(PView *p, const flatElements &flat, bool keptOnly,
             kk = k.data();
           }
           for(int j = 0; j < n; j++) kk[j] = ids[fi[j]];
-          hash[nf++] = matcher.share(kk, n, nthreads) == t ?
-                         matcher.hashOf(kk, n, entKey[c.ent[e]]) :
-                         0;
+          hash.push_back(matcher.share(kk, n, nthreads) == t ?
+                           matcher.hashOf(kk, n, entKey[c.ent[e]]) :
+                           0);
         };
         if(c.shape[e] == 4)
           forFaces(c, e, ip, faces, hashFace);
@@ -1216,7 +1243,7 @@ static bool findSkin(PView *p, const flatElements &flat, bool keptOnly,
           for(int i = 0; i < sh.numTriangles; i++)
             hashFace(i, sh.triangles[i], 3);
         }
-        for(int f = 0; f < nf; f++)
+        for(int f = 0; f < (int)hash.size(); f++)
           if(hash[f]) matcher.add(hash[f], c.elem[e], f);
         if(c.shape[e] == 4) ip++;
       }
@@ -1433,7 +1460,7 @@ static void addCapOutline(drawTarget *p, double **xyz, unsigned int color,
                           SVector3(n[0], n[1], n[2])};
         unsigned int col[2] = {color, color};
         getLineNormal(p, x, y, z, nullptr, nl, false);
-        p->va_lines->add(x, y, z, nl, col, true);
+        p->va_outlines->add(x, y, z, nl, col, true);
       }
     });
   }
@@ -1574,6 +1601,16 @@ static void addScalarPolyhedron(drawTarget *p, int ient, int iele,
     static_cast<MPolyhedron *>(data->getElement(opt->timeStep, ient, iele));
   if(!polyhedron) return; // list data: the faces are unknown
 
+  if(opt->boundary > 1) {
+    // its edges, not those of the triangles its faces are drawn with
+    opt->boundary -= 2;
+    for(int i = 0; i < polyhedron->getNumEdges(); i++) {
+      std::array<int, 2> is = polyhedron->getEdgeIndices(i);
+      addScalarLine(p, xyz, val, pre, is[0], is[1], true);
+    }
+    opt->boundary += 2;
+    return;
+  }
   if(opt->boundary > 0) {
     opt->boundary--;
     for(int i = 0; i < polyhedron->getNumFacesRep(false); i++) {
@@ -1593,34 +1630,18 @@ static void addScalarPolyhedron(drawTarget *p, int ient, int iele,
     }
     if(p->collect == drawTarget::COLLECT_CAPS) return;
     // (the field is linear on each tetrahedron: a face is drawn by the
-    // triangles the tetrahedra have on it, those with their three nodes on it)
-    std::vector<std::vector<int> > faces;
-    polyhedronFaces(polyhedron, faces);
-    std::vector<std::vector<char> > onFace;
-    for(std::size_t f = 0; f < faces.size(); f++) {
+    // triangles the tetrahedra have on it)
+    bool any = false;
+    for(int f = 0; f < polyhedron->getNumPolygons() && !any; f++)
+      any = p->skin->polyhedronFace(p->element, f);
+    if(!any) return;
+    std::vector<std::vector<int> > triangles;
+    polyhedron->getFaceTriangles(triangles);
+    for(std::size_t f = 0; f < triangles.size(); f++) {
       if(!p->skin->polyhedronFace(p->element, (int)f)) continue;
-      onFace.push_back(std::vector<char>(numNodes, 0));
-      for(int n : faces[f]) onFace.back()[n] = 1;
-    }
-    // (the triangles on the boundary of the tetrahedra: those that only one
-    // of them has)
-    std::map<std::array<int, 3>, std::array<int, 3> > boundary;
-    for(int i = 0; i < polyhedron->getNumTetrahedra(); i++) {
-      std::array<int, 4> is = polyhedron->getTetrahedronIndices(i);
-      for(int j = 0; j < 4; j++) {
-        const int *t = tetTriangles[j];
-        std::array<int, 3> tri = {is[t[0]], is[t[1]], is[t[2]]}, key = tri;
-        std::sort(key.begin(), key.end());
-        if(!boundary.erase(key)) boundary[key] = tri;
-      }
-    }
-    for(auto &b : boundary) {
-      const std::array<int, 3> &t = b.second;
-      for(auto &on : onFace)
-        if(on[t[0]] && on[t[1]] && on[t[2]]) {
-          addScalarTriangle(p, xyz, val, pre, t[0], t[1], t[2], true);
-          break;
-        }
+      const std::vector<int> &t = triangles[f];
+      for(std::size_t i = 0; i + 2 < t.size(); i += 3)
+        addScalarTriangle(p, xyz, val, pre, t[i], t[i + 1], t[i + 2], true);
     }
     return;
   }
@@ -1721,8 +1742,8 @@ static void addVectorElement(drawTarget *p, int ient, int iele, int numNodes,
   int numComp2;
   static thread_local nodeRows rows;
   double **val2 = rows.get(numNodes, 9);
-  getExternalValues(p, opt->externalViewIndex, ient, iele, numNodes, 3, val,
-                    numComp2, val2);
+  bool external = getExternalValues(p, opt->externalViewIndex, ient, iele,
+                                    numNodes, 3, val, numComp2, val2, true);
 
   if(opt->vectorType == PViewOptions::Displacement) {
     for(int i = 0; i < numNodes; i++)
@@ -1791,19 +1812,24 @@ static void addVectorElement(drawTarget *p, int ient, int iele, int numNodes,
     // allows to preserve the min/max)
     SPoint3 pc(0., 0., 0.);
     double d[3] = {0., 0., 0.};
-    double v2 = 0.;
+    // (the value of an external view colours the arrow: its length stays the
+    // norm of the vector)
+    double v2 = 0., length = 0.;
     for(int i = 0; i < numNodes; i++) {
       pc += SPoint3(xyz[i][0], xyz[i][1], xyz[i][2]);
-      v2 += opt->saturateValues ?
-              saturateVector(val[i], numComp2, val2[i], opt->externalMin,
-                             opt->externalMax) :
-              ComputeScalarRep(numComp2, val2[i]);
+      double v = opt->saturateValues ?
+                   saturateVector(val[i], numComp2, val2[i], opt->externalMin,
+                                  opt->externalMax) :
+                   ComputeScalarRep(numComp2, val2[i]);
+      v2 += v;
+      length += external ? ComputeScalarRep(3, val[i]) : v;
       for(int j = 0; j < 3; j++) d[j] += val[i][j];
     }
     pc /= (double)numNodes;
     v2 /= (double)numNodes;
+    length /= (double)numNodes;
     norme(d);
-    for(int i = 0; i < 3; i++) d[i] *= v2;
+    for(int i = 0; i < 3; i++) d[i] *= length;
 
     // need tolerance since we compare computed results (the average)
     // instead of the raw data used to compute bounds
@@ -2287,15 +2313,13 @@ void PView::invalidateClipVertexArrays() { _viewClipToken.erase(this); }
 
 // walk the elements and draw them into vertex arrays: the view's own, or
 // for the passes building what the clipping planes add, a subset of the
-// elements into the two arrays given (everything else those passes produce
+// elements into the three arrays given (everything else those passes produce
 // is thrown away)
-static void addElementsInArrays(PView *p, bool preprocessNormalsOnly,
-                                int collect = drawTarget::COLLECT_ALL,
-                                VertexArray *vaL = nullptr,
-                                VertexArray *vaT = nullptr,
-                                smooth_normals *normals = nullptr,
-                                const elementSpheres *spheres = nullptr,
-                                const viewSkinFaces *skin = nullptr)
+static void addElementsInArrays(
+  PView *p, bool preprocessNormalsOnly, int collect = drawTarget::COLLECT_ALL,
+  VertexArray *vaL = nullptr, VertexArray *vaO = nullptr,
+  VertexArray *vaT = nullptr, smooth_normals *normals = nullptr,
+  const elementSpheres *spheres = nullptr, const viewSkinFaces *skin = nullptr)
 {
   // use adaptive data if available
   PViewData *data = p->getData(true);
@@ -2318,6 +2342,7 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly,
     if(!own) {
       t.collect = collect;
       t.va_lines = vaL;
+      t.va_outlines = vaO;
       t.va_triangles = vaT;
       t.va_points = &points;
       t.va_vectors = &vectors;
@@ -2346,6 +2371,9 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly,
     d->va_points = new VertexArray(1, n / 4);
     d->va_lines = new VertexArray(2, n / 4);
     d->va_lines->setUniqueFilter((own ? p->va_lines : vaL)->getUniqueFilter(true));
+    d->va_outlines = new VertexArray(2, n / 4);
+    d->va_outlines->setUniqueFilter(
+      (own ? p->va_outlines : vaO)->getUniqueFilter(true));
     d->va_triangles = new VertexArray(3, 4 * n);
     d->va_triangles->setUniqueFilter(
       (own ? p->va_triangles : vaT)->getUniqueFilter(true));
@@ -2366,6 +2394,7 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly,
     if(own) {
       p->va_points->merge(targets[t]->va_points);
       p->va_lines->merge(targets[t]->va_lines);
+      p->va_outlines->merge(targets[t]->va_outlines);
       p->va_triangles->merge(targets[t]->va_triangles);
       p->va_vectors->merge(targets[t]->va_vectors);
       p->va_ellipses->merge(targets[t]->va_ellipses);
@@ -2374,10 +2403,12 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly,
     }
     else {
       vaL->merge(targets[t]->va_lines);
+      vaO->merge(targets[t]->va_outlines);
       vaT->merge(targets[t]->va_triangles);
     }
     delete targets[t]->va_points;
     delete targets[t]->va_lines;
+    delete targets[t]->va_outlines;
     delete targets[t]->va_triangles;
     delete targets[t]->va_vectors;
     delete targets[t]->va_ellipses;
@@ -2420,6 +2451,21 @@ private:
   {
     return _estimate(p, p->getData(true)->getNumLines(p->getOptions()->timeStep),
                      false, 10000);
+  }
+  // the edges of the elements, each shared by a few: only shown with
+  // View.ShowElement
+  std::size_t _estimateNumOutlines(PView *p)
+  {
+    PViewData *data = p->getData(true);
+    PViewOptions *opt = p->getOptions();
+    if(!opt->showElement) return 100;
+    int s = opt->timeStep;
+    std::size_t edges =
+      data->getNumLines(s) + 2 * data->getNumTriangles(s) +
+      2 * data->getNumQuadrangles(s) + 2 * data->getNumTetrahedra(s) +
+      3 * data->getNumPrisms(s) + 2 * data->getNumPyramids(s) +
+      3 * data->getNumHexahedra(s);
+    return _estimate(p, edges, true, 10000);
   }
   std::size_t _estimateNumTriangles(PView *p)
   {
@@ -2497,6 +2543,7 @@ public:
 
     p->va_points = new VertexArray(1, _estimateNumPoints(p));
     p->va_lines = new VertexArray(2, _estimateNumLines(p));
+    p->va_outlines = new VertexArray(2, _estimateNumOutlines(p));
     p->va_triangles = new VertexArray(3, _estimateNumTriangles(p));
     p->va_vectors = new VertexArray(2, _estimateNumVectors(p));
     p->va_ellipses = new VertexArray(4, _estimateNumEllipses(p));
@@ -2516,12 +2563,13 @@ public:
 
     if(opt->smoothNormals)
       addElementsInArrays(p, true, drawTarget::COLLECT_ALL, nullptr, nullptr,
-                          nullptr, nullptr, skin);
+                          nullptr, nullptr, nullptr, skin);
     addElementsInArrays(p, false, drawTarget::COLLECT_ALL, nullptr, nullptr,
-                        nullptr, nullptr, skin);
+                        nullptr, nullptr, nullptr, skin);
 
     p->va_points->finalize();
     p->va_lines->finalize();
+    p->va_outlines->finalize();
     p->va_triangles->finalize();
     p->va_vectors->finalize();
     p->va_ellipses->finalize();
@@ -2529,11 +2577,11 @@ public:
     Msg::Debug(
       "%d vertices in vertex arrays (%g MB)",
       p->va_points->getNumVertices() + p->va_lines->getNumVertices() +
-        p->va_triangles->getNumVertices() + p->va_vectors->getNumVertices() +
-        p->va_ellipses->getNumVertices(),
+        p->va_outlines->getNumVertices() + p->va_triangles->getNumVertices() +
+        p->va_vectors->getNumVertices() + p->va_ellipses->getNumVertices(),
       p->va_points->getMemoryInMB() + p->va_lines->getMemoryInMB() +
-        p->va_triangles->getMemoryInMB() + p->va_vectors->getMemoryInMB() +
-        p->va_ellipses->getMemoryInMB());
+        p->va_outlines->getMemoryInMB() + p->va_triangles->getMemoryInMB() +
+        p->va_vectors->getMemoryInMB() + p->va_ellipses->getMemoryInMB());
 
     VertexArray::printStats();
 
@@ -2585,6 +2633,7 @@ bool PView::fillClipVertexArrays()
 
   double t1 = TimeOfDay();
   va_clip_lines = new VertexArray(2, 100);
+  va_clip_outlines = new VertexArray(2, 100);
   va_clip_triangles = new VertexArray(3, 1000);
 
   // the elements the planes may cut, without reading the others
@@ -2599,18 +2648,20 @@ bool PView::fillClipVertexArrays()
     findSkin(this, flat, true, spheres, getSkin(this, data, opt, flat),
              cutSkin);
   // the same walk as for the view's own arrays, into the clip arrays
-  addElementsInArrays(this, false,
-                      whole ? drawTarget::COLLECT_CUT :
-                              drawTarget::COLLECT_CAPS,
-                      va_clip_lines, va_clip_triangles, nullptr, spheres,
-                      skinFound ? &cutSkin : nullptr);
+  addElementsInArrays(
+    this, false, whole ? drawTarget::COLLECT_CUT : drawTarget::COLLECT_CAPS,
+    va_clip_lines, va_clip_outlines, va_clip_triangles, nullptr, spheres,
+    skinFound ? &cutSkin : nullptr);
 
   va_clip_lines->finalize();
+  va_clip_outlines->finalize();
   va_clip_triangles->finalize();
-  if(va_clip_lines->getNumVertices() || va_clip_triangles->getNumVertices())
-    Msg::Debug("View[%d] %s: %d lines, %d triangles in %g s", getIndex(),
-               whole ? "cut elements" : "section",
+  if(va_clip_lines->getNumVertices() || va_clip_outlines->getNumVertices() ||
+     va_clip_triangles->getNumVertices())
+    Msg::Debug("View[%d] %s: %d lines, %d outlines, %d triangles in %g s",
+               getIndex(), whole ? "cut elements" : "section",
                va_clip_lines->getNumVertices(),
+               va_clip_outlines->getNumVertices(),
                va_clip_triangles->getNumVertices(), TimeOfDay() - t1);
   return true;
 }
@@ -2692,6 +2743,11 @@ void PView::fillVertexArray(onelab::localNetworkClient *remote, int length,
     if(p->va_ellipses) delete p->va_ellipses;
     p->va_ellipses = new VertexArray(4, 100);
     p->va_ellipses->fromChar(length, bytes, swap);
+    break;
+  case 6:
+    if(p->va_outlines) delete p->va_outlines;
+    p->va_outlines = new VertexArray(2, 100);
+    p->va_outlines->fromChar(length, bytes, swap);
     break;
   default: Msg::Error("Cannot fill vertex array of type %d", type); return;
   }

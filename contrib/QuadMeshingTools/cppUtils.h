@@ -13,6 +13,8 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <functional>
+#include <iterator>
+#include <iostream>
 
 #include <ostream>
 #include <stdio.h>

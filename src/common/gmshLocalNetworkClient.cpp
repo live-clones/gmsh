@@ -4,11 +4,8 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "GmshConfig.h"
-#if !defined(HAVE_NO_STDINT_H)
-#include <stdint.h>
-#elif defined(HAVE_NO_INTPTR_T)
-typedef unsigned long intptr_t;
-#endif
+#include <sstream>
+#include <cstdint>
 #include "GmshGlobal.h"
 #include "Context.h"
 #include "OS.h"
@@ -22,20 +19,20 @@ typedef unsigned long intptr_t;
 
 #include "gmshLocalNetworkClient.h"
 #include "onelabUtils.h"
+#include "GuiListener.h"
 
 #if defined(HAVE_FLTK)
+#include <FL/Fl.H>
 #include "FlGui.h"
-#include "onelabGroup.h"
+#include "onelabActions.h"
+#endif
+
+#if defined(HAVE_OPENGL)
 #include "drawContext.h"
 #endif
 
 #if defined(HAVE_POST)
 #include "PView.h"
-#endif
-
-#if defined(HAVE_ONELAB_METAMODEL)
-#include "OnelabClients.h"
-#include "metamodel.h"
 #endif
 
 class onelabGmshServer : public GmshServer {
@@ -88,13 +85,21 @@ public:
                 ps[0].setVisible(false);
                 ps[0].setValue("");
                 onelab::server::instance()->set(ps[0]);
-                if(FlGui::available()) onelab_cb(nullptr, (void *)"refresh");
+                if(FlGui::available()) onelabRefresh();
               }
               lastRefresh = start;
             }
           }
-          // wait at most waitint seconds and respond to FLTK events if ready
-          if(Fl::ready()) FlGui::wait(waitint);
+          // wait at most waitint seconds and respond to FLTK events if ready,
+          // and run the timers of FLTK at least every 50 ms, which Fl::ready()
+          // does not count on every platform (nothing else would run them
+          // while no message comes, e.g. while listening)
+          static double lastWait = 0.;
+          double now = TimeOfDay();
+          if(Fl::ready() || now - lastWait > 0.05) {
+            lastWait = now;
+            FlGui::wait(waitint);
+          }
         }
 #endif
         // return to caller (we will be back here soon again)
@@ -134,10 +139,8 @@ public:
         // this is ugly but it leads to the expected result if a single client
         // is instanciated (in general it is recommended to *not* specify the
         // port number, and let the OS assign a port number automatically)
-        if(!first) {
-          tmp << _client->getId();
-          first = false;
-        }
+        if(!first) tmp << _client->getId();
+        first = false;
       }
       sockname = tmp.str();
     }
@@ -425,24 +428,22 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
   case GmshSocket::GMSH_ERROR:
     Msg::Error("%s - %s", _name.c_str(), message.c_str());
     break;
-  case GmshSocket::GMSH_MERGE_FILE:
-    if(CTX::instance()->solver.autoMergeFile) {
-#if defined(HAVE_FLTK)
-      std::size_t n = PView::list.size();
+  case GmshSocket::GMSH_MERGE_FILE: {
+#if defined(HAVE_POST)
+    std::size_t n = PView::list.size();
 #endif
-      bool changedBeforeMerge = onelab::server::instance()->getChanged("Gmsh");
-      MergePostProcessingFile(message, CTX::instance()->solver.autoShowViews,
-                              CTX::instance()->solver.autoShowLastStep, true);
-      onelab::server::instance()->setChanged(changedBeforeMerge, "Gmsh");
-#if defined(HAVE_FLTK)
+    if(onelabUtils::mergeSolverFile(message)) {
+#if defined(HAVE_OPENGL)
       drawContext::global()->draw();
-      if(FlGui::available() && n != PView::list.size()) {
-        FlGui::instance()->rebuildTree(true);
-        FlGui::instance()->openModule("Post-processing");
+#endif
+#if defined(HAVE_POST)
+      if(n != PView::list.size()) {
+        Gui()->parametersChanged();
+        Gui()->openModule("Post-processing");
       }
 #endif
     }
-    break;
+  } break;
   case GmshSocket::GMSH_OPEN_PROJECT: OpenProject(message);
 #if defined(HAVE_FLTK)
     drawContext::global()->draw();
@@ -458,15 +459,12 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
               TimeOfDay() - timer);
     break;
   case GmshSocket::GMSH_VERTEX_ARRAY: {
-#if defined(HAVE_FLTK)
-    int n = PView::list.size();
-#endif
 #if defined(HAVE_POST)
+    std::size_t n = PView::list.size();
     PView::fillVertexArray(this, length, &message[0], swap);
+    Gui()->viewsChanged(n != PView::list.size());
 #endif
-#if defined(HAVE_FLTK)
-    if(FlGui::available())
-      FlGui::instance()->updateViews(n != (int)PView::list.size(), true);
+#if defined(HAVE_OPENGL)
     drawContext::global()->draw();
 #endif
   } break;
@@ -487,6 +485,7 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
       server->Shutdown();
       delete server;
       Msg::Error("Could not connect client '%s'", subClient->getName().c_str());
+      delete subClient;
     }
     else {
       Msg::StatusBar(true, "Running '%s'...", subClient->getName().c_str());
@@ -496,16 +495,8 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
     }
   } break;
   case GmshSocket::GMSH_OLPARSE: {
+    // .ol files were preprocessed by the ONELAB metamodels, now removed
     std::string reply = "unavailable";
-#if defined(HAVE_ONELAB_METAMODEL)
-    std::string::size_type first = 0;
-    std::string clientName = onelab::parameter::getNextToken(message, first);
-    std::string fullName = onelab::parameter::getNextToken(message, first);
-    preProcess(clientName, fullName); // contrib/onelab/OnelabParser.cpp
-    Msg::Info("Done preprocessing file '%s'", fullName.c_str());
-    reply =
-      onelab::server::instance()->getChanged(clientName) ? "true" : "false";
-#endif
     getGmshServer()->SendMessage(GmshSocket::GMSH_OLPARSE,
                                  (int)reply.size(), &reply[0]);
   } break;
@@ -672,6 +663,60 @@ bool gmshLocalNetworkClient::kill()
   }
   setPid(-1);
   return false;
+}
+
+std::vector<std::string> gmshInProcessClient::commandLine()
+{
+  // the command line a network client gets (see onelabUtils::getCommandLine),
+  // as separate arguments, words in double quotes kept whole
+  std::vector<std::string> args(1, _name);
+  std::vector<onelab::string> ps;
+  get(ps, _name + "/Model name");
+  if(ps.size() && ps[0].getValue().size()) args.push_back(ps[0].getValue());
+  get(ps, _name + "/Action");
+  std::string action = ps.empty() ? "" : ps[0].getValue(), command;
+  if(action == "check" || action == "compute") {
+    get(ps, _name + (action == "check" ? "/9CheckCommand" : "/9ComputeCommand"));
+    if(ps.size()) command = ps[0].getValue();
+  }
+  std::string word;
+  bool quoted = false, inWord = false;
+  for(char c : command) {
+    if(c == '"') {
+      quoted = !quoted;
+      inWord = true;
+    }
+    else if(!quoted && (c == ' ' || c == '\t')) {
+      if(inWord) args.push_back(word);
+      word.clear();
+      inWord = false;
+    }
+    else {
+      word += c;
+      inWord = true;
+    }
+  }
+  if(inWord) args.push_back(word);
+  args.push_back(getSocketSwitch());
+  args.push_back(_name);
+  return args;
+}
+
+bool gmshInProcessClient::run()
+{
+  std::vector<std::string> args = commandLine();
+  Msg::StatusBar(true, "Running '%s'...", _name.c_str());
+  setPid(0);
+  int errors = 0;
+  try {
+    errors = _solver(args, onelab::server::instance());
+  } catch(...) {
+    Msg::Error("'%s' stopped on an error", _name.c_str());
+    errors = 1;
+  }
+  setPid(-1);
+  Msg::StatusBar(true, "Done running '%s'", _name.c_str());
+  return !errors;
 }
 
 #endif

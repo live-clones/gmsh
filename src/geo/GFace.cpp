@@ -39,7 +39,7 @@
 
 GFace::GFace(GModel *model, int tag)
   : GEntity(model, tag), r1(nullptr), r2(nullptr), stl_from_mesh(false),
-    va_geom_triangles(nullptr), compoundSurface(nullptr)
+    va_geom_triangles(nullptr), va_geom_lines(nullptr), compoundSurface(nullptr)
 {
   meshStatistics.status = GFace::PENDING;
   meshStatistics.refineAllEdges = false;
@@ -51,7 +51,12 @@ GFace::~GFace()
 {
   for(auto ge : l_edges) ge->delFace(this);
 
-  if(va_geom_triangles) delete va_geom_triangles;
+  // (zeroed: deleteMesh() deletes it again for a triangulation taken from the
+  // mesh)
+  delete va_geom_triangles;
+  va_geom_triangles = nullptr;
+  delete va_geom_lines;
+  va_geom_lines = nullptr;
 
   GFace::deleteMesh();
 }
@@ -82,21 +87,25 @@ bool GFace::isOrphan()
 int GFace::delEdge(GEdge *edge)
 {
   const auto found = std::find(l_edges.begin(), l_edges.end(), edge);
+  if(found == l_edges.end()) return 0;
 
-  if(found != l_edges.end()) { l_edges.erase(found); }
+  const std::size_t pos = std::distance(l_edges.begin(), found);
+  l_edges.erase(found);
+  if(pos >= l_dirs.size()) return 0;
 
-  const auto pos = std::distance(l_edges.begin(), found);
-
-  if(l_dirs.empty()) { return 0; }
-
-  if(l_dirs.size() < static_cast<std::size_t>(pos)) {
-    l_dirs.erase(std::prev(l_dirs.end()));
-    return 0;
-  }
-
-  const auto orientation = l_dirs.at(pos);
-  l_dirs.erase(std::next(begin(l_dirs), pos));
+  const int orientation = l_dirs[pos];
+  l_dirs.erase(l_dirs.begin() + pos);
   return orientation;
+}
+
+// Whether the curve is already used with this sign: a curve can be used twice,
+// with opposite signs (the seam of a periodic surface)
+static bool hasEdge(const std::vector<GEdge *> &edges,
+                    const std::vector<int> &dirs, GEdge *ge, int sign)
+{
+  for(std::size_t i = 0; i < edges.size(); i++)
+    if(edges[i] == ge && (i < dirs.size() ? dirs[i] : 1) == sign) return true;
+  return false;
 }
 
 void GFace::setBoundEdges(const std::vector<int> &tagEdges)
@@ -123,20 +132,21 @@ void GFace::setBoundEdges(const std::vector<int> &tagEdges,
   if(signEdges.size() != tagEdges.size()) {
     Msg::Error("Wrong number of curve signs in surface %d", tag());
     setBoundEdges(tagEdges);
+    return;
   }
-  for(std::vector<int>::size_type i = 0; i < tagEdges.size(); i++) {
+  std::vector<GEdge *> edges;
+  std::vector<int> signs;
+  for(std::size_t i = 0; i < tagEdges.size(); i++) {
     GEdge *ge = model()->getEdgeByTag(tagEdges[i]);
     if(ge) {
-      if(std::find(l_edges.begin(), l_edges.end(), ge) == l_edges.end()) {
-        l_edges.push_back(ge);
-        l_dirs.push_back(signEdges[i]);
-        ge->addFace(this);
-      }
+      edges.push_back(ge);
+      signs.push_back(signEdges[i]);
     }
     else {
       Msg::Error("Unknown curve %d in surface %d", tagEdges[i], tag());
     }
   }
+  setBoundEdges(edges, signs);
 }
 
 void GFace::setBoundEdges(const std::vector<GEdge *> &edges,
@@ -144,10 +154,10 @@ void GFace::setBoundEdges(const std::vector<GEdge *> &edges,
 {
   for(std::size_t i = 0; i < edges.size(); i++) {
     GEdge *ge = edges[i];
-    if(std::find(l_edges.begin(), l_edges.end(), ge) != l_edges.end())
-      continue;
+    const int sign = i < signEdges.size() ? signEdges[i] : 1;
+    if(hasEdge(l_edges, l_dirs, ge, sign)) continue;
     l_edges.push_back(ge);
-    l_dirs.push_back(i < signEdges.size() ? signEdges[i] : 1);
+    l_dirs.push_back(sign);
     ge->addFace(this);
   }
 }
@@ -177,6 +187,8 @@ void GFace::deleteGeometryVertexArrays()
   if(!va_geom_triangles) return;
   delete va_geom_triangles;
   va_geom_triangles = nullptr;
+  delete va_geom_lines;
+  va_geom_lines = nullptr;
   // what the surfaces of the model are drawn from is merged from these
   CTX::instance()->geomChanged(ENT_SURFACE);
 }
@@ -1642,6 +1654,14 @@ bool GFace::fillVertexArray(bool force)
   return true;
 }
 
+bool GFace::fillLineVertexArray()
+{
+  if(va_geom_lines) return true;
+  if(!fillVertexArray()) return false;
+  va_geom_lines = va_geom_triangles->edges();
+  return true;
+}
+
 bool GFace::storeSTLAsMesh()
 {
   // as the STL might be non-conforming, we make no effort to have a conformal
@@ -2024,8 +2044,8 @@ void GFace::mesh(bool verbose)
   }
 
 #if defined(HAVE_MESH)
-  //  if(compound.size())
-  //    meshAttributes.meshSizeFactor = CTX::instance()->mesh.compoundLcFactor;
+  if(compound.size())
+    meshAttributes.meshSizeFactor = CTX::instance()->mesh.compoundLcFactor;
 
   meshGFace mesher;
   mesher(this, verbose);
@@ -2304,6 +2324,10 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
                  forward.first->tag(), forward.second->tag(), master->tag());
       return;
     }
+
+    // the end points do not give the orientation of a closed curve
+    if(forward.first == forward.second)
+      sign = localEdge->closedMasterOrientation(masterEdge, tfo);
 
     if(masterEdge->getMeshMaster() != localEdge) {
       localEdge->setMeshMaster(masterEdge, tfo);

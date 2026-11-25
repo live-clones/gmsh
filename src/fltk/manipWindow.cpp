@@ -4,7 +4,6 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <FL/Fl_Box.H>
-#include <FL/Fl_Return_Button.H>
 #include "FlGui.h"
 #include "manipWindow.h"
 #include "paletteWindow.h"
@@ -12,8 +11,6 @@
 #include "openglWindow.h"
 #include "Options.h"
 #include "Context.h"
-
-void manip_cb(Fl_Widget *w, void *data) { FlGui::instance()->manip->show(); }
 
 static void manip_update_cb(Fl_Widget *w, void *data)
 {
@@ -74,17 +71,8 @@ manipWindow::manipWindow(int deltaFontSize)
     row->end();
   }
 
+  // (the ranges are set by update(), when the window is shown)
   for(int i = 0; i < 9; i++) {
-    if(i < 3) {
-      value[i]->minimum(0.);
-      value[i]->maximum(360.);
-      if(CTX::instance()->inputScrolling) value[i]->step(1.);
-    }
-    else if(i > 5) {
-      value[i]->minimum(0.1);
-      value[i]->maximum(100.);
-      if(CTX::instance()->inputScrolling) value[i]->step(0.1);
-    }
     value[i]->align(FL_ALIGN_RIGHT);
     value[i]->callback(manip_update_cb);
   }
@@ -92,7 +80,7 @@ manipWindow::manipWindow(int deltaFontSize)
   {
     Fl_Button *o =
       new Fl_Button(width - BB - WB, height - BH - WB, BB, BH, "Reset");
-    o->callback(status_xyz1p_cb, (void *)"reset");
+    o->callback([](Fl_Widget *, void *) { setPointOfView("reset"); });
   }
 
   win->end();

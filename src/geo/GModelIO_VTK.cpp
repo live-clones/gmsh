@@ -6,6 +6,7 @@
 // Contributor(s):
 //   Florian Blachère
 
+#include <cstdlib>
 #include "GModel.h"
 #include "OS.h"
 #include "MPoint.h"
@@ -358,7 +359,8 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
           std::size_t k = 1;
           bool ok = !ints.empty();
           for(int f = 0; ok && f < ints[0]; f++) {
-            ok = k < ints.size() && k + ints[k] < ints.size() + 1 &&
+            ok = k < ints.size() && ints[k] >= 3 &&
+                 k + ints[k] < ints.size() + 1 &&
                  nodesAt(&ints[k + 1], ints[k], fv);
             if(!ok) break;
             v.insert(v.end(), fv.begin(), fv.end());

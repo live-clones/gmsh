@@ -4,6 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <stdlib.h>
+#include "GmshConfig.h"
 #include "GmshGlobal.h"
 
 #if (defined(WIN32) || defined(_WIN32)) && (defined(__MINGW32__) || (defined(_MSC_VER) && !defined(HAVE_FLTK)))

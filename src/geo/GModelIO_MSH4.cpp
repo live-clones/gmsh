@@ -8,6 +8,8 @@
 //   Boris Martin
 
 #include <cstdio>
+#include <cmath>
+#include <charconv>
 #include <fstream>
 #include <vector>
 #include <map>
@@ -20,7 +22,13 @@
 #include <type_traits>
 #include <stdexcept>
 #include <variant>
+#include <cstdint>
+#include <set>
+#include <functional>
+#include <memory>
+#include <sys/stat.h>
 
+#include "GmshConfig.h"
 #include "GmshDefines.h"
 #include "OS.h"
 #include "Context.h"
@@ -31,9 +39,6 @@
 #include "partitionEdge.h"
 #include "partitionVertex.h"
 #include "discreteEdge.h"
-#include "ghostFace.h"
-#include "ghostEdge.h"
-#include "ghostRegion.h"
 #include "MPoint.h"
 #include "MLine.h"
 #include "MTriangle.h"
@@ -43,6 +48,8 @@
 #include "MPrism.h"
 #include "MPyramid.h"
 #include "MTrihedron.h"
+#include "MPolygon.h"
+#include "MPolyhedron.h"
 #include "StringUtils.h"
 #include "Overlap.h"
 
@@ -103,10 +110,36 @@ public:
   }
 };
 
+// (positions in files larger than 2 GB, see skipMSH4Block())
+static std::int64_t msh4Tell(FILE *fp)
+{
+#if defined(_WIN32)
+  return _ftelli64(fp);
+#else
+  return ftello(fp);
+#endif
+}
+
+static bool msh4Seek(FILE *fp, std::int64_t pos)
+{
+#if defined(_WIN32)
+  return !_fseeki64(fp, pos, SEEK_SET);
+#else
+  return !fseeko(fp, (off_t)pos, SEEK_SET);
+#endif
+}
+
+// The physical tags of an entity: those it has already (e.g. from another
+// file of the partitions of a mesh) are not added again
 static bool readMSH4Physicals(GModel *const model, FILE *fp,
                               GEntity *const entity, bool binary, bool swap,
                               msh4EntityIndex &index)
 {
+  const std::vector<int> before(entity->physicals);
+  auto add = [&](int tag) {
+    if(std::find(before.begin(), before.end(), tag) == before.end())
+      entity->addPhysicalEntity(tag);
+  };
   std::size_t numPhy = 0;
   if(binary) {
     if(fread(&numPhy, sizeof(std::size_t), 1, fp) != 1) { return false; }
@@ -119,16 +152,14 @@ static bool readMSH4Physicals(GModel *const model, FILE *fp,
     }
     if(swap) SwapBytes((char *)phyTags.data(), sizeof(int), numPhy);
 
-    for(std::size_t i = 0; i < numPhy; i++) {
-      entity->addPhysicalEntity(phyTags[i]);
-    }
+    for(std::size_t i = 0; i < numPhy; i++) add(phyTags[i]);
   }
   else {
     if(fscanf(fp, "%zu", &numPhy) != 1) { return false; }
     for(std::size_t i = 0; i < numPhy; i++) {
       int phyTag = 0;
       if(fscanf(fp, "%d", &phyTag) != 1) { return false; }
-      entity->addPhysicalEntity(phyTag);
+      add(phyTag);
     }
   }
   return true;
@@ -236,6 +267,7 @@ static bool readMSH4BoundingEntities(GModel *const model, FILE *fp,
   return true;
 }
 
+// The embedded entities of an entity, in MSH 4.2
 static bool readMSH4EmbeddedEntities(FILE *fp, GEntity *const entity,
                                      bool binary, bool swap,
                                      msh4EntityIndex &index)
@@ -301,6 +333,29 @@ static bool readMSH4EmbeddedEntities(FILE *fp, GEntity *const entity,
   return true;
 }
 
+// what is left of the file to read, in bytes: no count of a section can be
+// larger. The size is taken from the file descriptor, without moving the
+// stream: seeking to its end and back would drop its buffer, i.e. read the
+// file again
+static std::size_t remainingBytes(FILE *fp)
+{
+  struct stat st;
+  long pos = ftell(fp);
+  if(pos < 0 || fstat(fileno(fp), &st) || !(st.st_mode & S_IFREG))
+    return std::numeric_limits<std::size_t>::max(); // (not a file: unknown)
+  return (st.st_size > pos) ? (std::size_t)(st.st_size - pos) : 0;
+}
+
+// whether a count read in the file is larger than what is left of the file,
+// which is then corrupted. A count of up to a million items is not checked:
+// allocating for it cannot fail, and reading the items fails if the file is
+// too short. This avoids looking up the size of the file for each block of
+// nodes or elements (over the network, on a parallel file system)
+static bool tooLargeCount(FILE *fp, std::size_t count)
+{
+  return count > 1000000 && count > remainingBytes(fp);
+}
+
 static bool readMSH4EntityInfo(FILE *fp, bool binary, bool swap, double version,
                                bool partition, int dim, int &tag,
                                int &parentDim, int &parentTag,
@@ -318,6 +373,8 @@ static bool readMSH4EntityInfo(FILE *fp, bool binary, bool swap, double version,
       parentTag = dataInt[2];
       std::size_t numPart;
       if(fread(&numPart, sizeof(std::size_t), 1, fp) != 1) { return false; }
+      if(swap) SwapBytes((char *)&numPart, sizeof(std::size_t), 1);
+      if(!numPart || tooLargeCount(fp, numPart)) return false;
       partitions.resize(numPart, 0);
       if(fread(&partitions[0], sizeof(int), numPart, fp) != numPart) {
         return false;
@@ -397,13 +454,90 @@ static bool readMSH4EntityInfo(FILE *fp, bool binary, bool swap, double version,
   return true;
 }
 
+// The record of an entity of dimension dim (of the $PartitionedEntities
+// section if partition): the entity is made if it is not in the model
+static bool readMSH4Entity(GModel *const model, FILE *fp, bool binary,
+                           bool swap, double version, bool partition, int dim,
+                           int maxTagEmbed, msh4EntityIndex &index)
+{
+  int tag = 0, parentDim = 0, parentTag = 0;
+  std::vector<int> &partitions = index.partitions;
+  double minX = 0., minY = 0., minZ = 0., maxX = 0., maxY = 0., maxZ = 0.;
+  if(!readMSH4EntityInfo(fp, binary, swap, version, partition, dim, tag,
+                         parentDim, parentTag, partitions, minX, minY, minZ,
+                         maxX, maxY, maxZ)) {
+    return false;
+  }
+
+  GEntity *ge = index.get(dim, tag);
+  if(!ge) {
+    GEntity *parent = parentTag ? index.get(parentDim, parentTag) : nullptr;
+    switch(dim) {
+    case 0:
+      if(partition) {
+        partitionVertex *pv = new partitionVertex(model, tag, partitions);
+        if(parent) pv->setParentEntity(parent);
+        ge = pv;
+      }
+      else {
+        ge = new discreteVertex(model, tag, minX, minY, minZ);
+      }
+      model->add(static_cast<GVertex *>(ge));
+      break;
+    case 1:
+      if(partition) {
+        partitionEdge *pe =
+          new partitionEdge(model, tag, nullptr, nullptr, partitions);
+        if(parent) pe->setParentEntity(parent);
+        ge = pe;
+      }
+      else {
+        ge = new discreteEdge(model, tag, nullptr, nullptr);
+      }
+      model->add(static_cast<GEdge *>(ge));
+      break;
+    case 2:
+      if(partition) {
+        partitionFace *pf = new partitionFace(model, tag, partitions);
+        if(parent) pf->setParentEntity(parent);
+        ge = pf;
+      }
+      else {
+        ge = new discreteFace(model, tag);
+      }
+      model->add(static_cast<GFace *>(ge));
+      break;
+    case 3:
+      if(partition) {
+        partitionRegion *pr = new partitionRegion(model, tag, partitions);
+        if(parent) pr->setParentEntity(parent);
+        ge = pr;
+      }
+      else {
+        ge = new discreteRegion(model, tag);
+      }
+      model->add(static_cast<GRegion *>(ge));
+      break;
+    }
+    index.add(ge);
+  }
+
+  if(!readMSH4Physicals(model, fp, ge, binary, swap, index)) return false;
+  if(dim == 0) return true;
+  if(!readMSH4BoundingEntities(model, fp, ge, binary, swap, maxTagEmbed,
+                               index))
+    return false;
+  return version < 4.2 || readMSH4EmbeddedEntities(fp, ge, binary, swap, index);
+}
+
 static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
-                             bool binary, bool swap, double version)
+                             bool binary, bool swap, double version,
+                             std::set<int> &ghostTags)
 {
   if(partition) {
     std::size_t numPartitions = 0;
     std::size_t ghostSize = 0;
-    std::vector<int> ghostTags;
+    std::vector<int> ghostData;
 
     if(binary) {
       if(fread(&numPartitions, sizeof(std::size_t), 1, fp) != 1) {
@@ -414,21 +548,21 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
       if(fread(&ghostSize, sizeof(std::size_t), 1, fp) != 1) { return false; }
       if(swap) SwapBytes((char *)&ghostSize, sizeof(std::size_t), 1);
       if(ghostSize) {
-        ghostTags.resize(2 * ghostSize);
-        if(fread(&ghostTags[0], sizeof(int), 2 * ghostSize, fp) !=
+        ghostData.resize(2 * ghostSize);
+        if(fread(&ghostData[0], sizeof(int), 2 * ghostSize, fp) !=
            2 * ghostSize) {
           return false;
         }
-        if(swap) SwapBytes((char *)&ghostTags[0], sizeof(int), 2 * ghostSize);
+        if(swap) SwapBytes((char *)&ghostData[0], sizeof(int), 2 * ghostSize);
       }
     }
     else {
       if(fscanf(fp, "%zu", &numPartitions) != 1) { return false; }
       if(fscanf(fp, "%zu", &ghostSize) != 1) { return false; }
       if(ghostSize) {
-        ghostTags.resize(2 * ghostSize);
+        ghostData.resize(2 * ghostSize);
         for(std::size_t i = 0; i < 2 * ghostSize; i += 2) {
-          if(fscanf(fp, "%d %d", &ghostTags[i], &ghostTags[i + 1]) != 2) {
+          if(fscanf(fp, "%d %d", &ghostData[i], &ghostData[i + 1]) != 2) {
             return false;
           }
         }
@@ -437,26 +571,10 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
 
     model->setNumPartitions(numPartitions);
     Msg::Info("%zu partitions", model->getNumPartitions());
-    for(std::size_t i = 0; i < 2 * ghostSize; i += 2) {
-      switch(model->getDim()) {
-      case 1: {
-        ghostEdge *ghostEntities =
-          new ghostEdge(model, ghostTags[i], ghostTags[i + 1]);
-        model->add(ghostEntities);
-      } break;
-      case 2: {
-        ghostFace *ghostEntities =
-          new ghostFace(model, ghostTags[i], ghostTags[i + 1]);
-        model->add(ghostEntities);
-      } break;
-      case 3: {
-        ghostRegion *ghostEntities =
-          new ghostRegion(model, ghostTags[i], ghostTags[i + 1]);
-        model->add(ghostEntities);
-      } break;
-      default: break;
-      }
-    }
+    // (the ghost entities of the files of older versions, whose elements are
+    // skipped: the ghost cells are given by the $GhostElements section)
+    for(std::size_t i = 0; i < 2 * ghostSize; i += 2)
+      ghostTags.insert(ghostData[i]);
   }
 
   std::size_t numEntities[4] = {0, 0, 0, 0};
@@ -488,119 +606,29 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
   // partitioned mesh has as many of them as there are partitions, and
   // nothing refers to them there)
   msh4EntityIndex index(model, numEntities);
-  auto parentOf = [&](int parentDim, int parentTag) {
-    return index.get(parentDim, parentTag);
-  };
   for(int dim = 0; dim < 4; dim++) {
     for(std::size_t i = 0; i < numEntities[dim]; i++) {
-      int tag = 0, parentDim = 0, parentTag = 0;
-      std::vector<int> &partitions = index.partitions;
-      double minX = 0., minY = 0., minZ = 0., maxX = 0., maxY = 0., maxZ = 0.;
-      if(!readMSH4EntityInfo(fp, binary, swap, version, partition, dim, tag,
-                             parentDim, parentTag, partitions, minX, minY, minZ,
-                             maxX, maxY, maxZ)) {
+      if(!readMSH4Entity(model, fp, binary, swap, version, partition, dim,
+                         dim ? maxTags[dim - 1] : 0, index))
         return false;
-      }
-
-      switch(dim) {
-      case 0: {
-        GVertex *gv = static_cast<GVertex *>(index.get(0, tag));
-        if(!gv) {
-          if(partition) {
-            gv = new partitionVertex(model, tag, partitions);
-            if(parentTag)
-              static_cast<partitionVertex *>(gv)->setParentEntity(
-                parentOf(parentDim, parentTag));
-          }
-          else {
-            gv = new discreteVertex(model, tag, minX, minY, minZ);
-          }
-          model->add(gv);
-          index.add(gv);
-        }
-        if(!readMSH4Physicals(model, fp, gv, binary, swap, index))
-          return false;
-      } break;
-      case 1: {
-        GEdge *ge = static_cast<GEdge *>(index.get(1, tag));
-        if(!ge) {
-          if(partition) {
-            ge = new partitionEdge(model, tag, nullptr, nullptr, partitions);
-            if(parentTag)
-              static_cast<partitionEdge *>(ge)->setParentEntity(
-                parentOf(parentDim, parentTag));
-          }
-          else {
-            ge = new discreteEdge(model, tag, nullptr, nullptr);
-          }
-          model->add(ge);
-          index.add(ge);
-        }
-        if(!readMSH4Physicals(model, fp, ge, binary, swap, index))
-          return false;
-        if(!readMSH4BoundingEntities(model, fp, ge, binary, swap, maxTags[0],
-                                    index)) {
-          return false;
-        }
-        if(version >= 4.2 &&
-           !readMSH4EmbeddedEntities(fp, ge, binary, swap, index))
-          return false;
-      } break;
-      case 2: {
-        GFace *gf = static_cast<GFace *>(index.get(2, tag));
-        if(!gf) {
-          if(partition) {
-            gf = new partitionFace(model, tag, partitions);
-            if(parentTag)
-              static_cast<partitionFace *>(gf)->setParentEntity(
-                parentOf(parentDim, parentTag));
-          }
-          else {
-            gf = new discreteFace(model, tag);
-          }
-          model->add(gf);
-          index.add(gf);
-        }
-        if(!readMSH4Physicals(model, fp, gf, binary, swap, index))
-          return false;
-        if(!readMSH4BoundingEntities(model, fp, gf, binary, swap, maxTags[1],
-                                    index)) {
-          return false;
-        }
-        if(version >= 4.2 &&
-           !readMSH4EmbeddedEntities(fp, gf, binary, swap, index))
-          return false;
-      } break;
-      case 3: {
-        GRegion *gr = static_cast<GRegion *>(index.get(3, tag));
-        if(!gr) {
-          if(partition) {
-            gr = new partitionRegion(model, tag, partitions);
-            if(parentTag)
-              static_cast<partitionRegion *>(gr)->setParentEntity(
-                parentOf(parentDim, parentTag));
-          }
-          else {
-            gr = new discreteRegion(model, tag);
-          }
-          model->add(gr);
-          index.add(gr);
-        }
-        if(!readMSH4Physicals(model, fp, gr, binary, swap, index))
-          return false;
-        if(!readMSH4BoundingEntities(model, fp, gr, binary, swap, maxTags[2],
-                                    index)) {
-          return false;
-        }
-        if(version >= 4.2 &&
-           !readMSH4EmbeddedEntities(fp, gr, binary, swap, index))
-          return false;
-      } break;
-      }
     }
-
     if(dim < 3 && version < 4.2)
       maxTags[dim] = model->getMaxElementaryNumber(dim);
+  }
+  return true;
+}
+
+// skip the data of a block: n records of the given size in a binary file, or
+// of the given number of lines in an ASCII file
+static bool skipMSH4Block(FILE *fp, bool binary, std::size_t n,
+                          std::size_t bytes, std::size_t lines)
+{
+  if(binary) return msh4Seek(fp, msh4Tell(fp) + (std::int64_t)(n * bytes));
+  char buf[4096]; // (the end of the line of the block header first)
+  for(std::size_t i = 0; i < n * lines + 1;) {
+    if(!fgets(buf, sizeof(buf), fp)) return false;
+    std::size_t l = strlen(buf);
+    if(l && buf[l - 1] == '\n') i++;
   }
   return true;
 }
@@ -635,6 +663,12 @@ static MVertex **readMSH4Nodes(GModel *const model, FILE *fp, bool binary,
         return nullptr;
       }
     }
+  }
+
+  if(tooLargeCount(fp, totalNumRead)) {
+    Msg::Error("Number of nodes %zu larger than what is left of the file",
+               totalNumRead);
+    return nullptr;
   }
 
   std::size_t nodeRead = 0;
@@ -729,6 +763,15 @@ static MVertex **readMSH4Nodes(GModel *const model, FILE *fp, bool binary,
 
     std::size_t n = 3;
     if(parametric) n += entityDim;
+
+    // (the nodes of the blocks are stored in the array sized by the header)
+    if(tooLargeCount(fp, numNodes) ||
+       numNodes > totalNumRead - nodeRead) {
+      Msg::Error("Wrong number of nodes (%zu) in the block of entity %d of "
+                 "dimension %d", numNodes, entityTag, entityDim);
+      delete[] verticesRead;
+      return nullptr;
+    }
 
     std::vector<std::size_t> tags(numNodes);
     if(binary) {
@@ -865,13 +908,12 @@ static MVertex **readMSH4Nodes(GModel *const model, FILE *fp, bool binary,
 static std::pair<MElement *, GEntity *> *
 readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
                  std::size_t &totalNumRead, std::size_t &maxElementNum,
-                 bool swap, double version)
+                 bool swap, double version, const std::set<int> &ghostTags)
 {
   char str[10000]; // 1000 nodes for order 9 hex, 10 digits each
   std::size_t numBlock = 0, minTag = 0, maxTag = 0;
   totalNumRead = 0;
   maxElementNum = 0;
-
   if(binary) {
     std::size_t data[4];
     if(fread(data, sizeof(std::size_t), 4, fp) != 4) { return nullptr; }
@@ -893,6 +935,12 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
         return nullptr;
       }
     }
+  }
+
+  if(tooLargeCount(fp, totalNumRead)) {
+    Msg::Error("Number of elements %zu larger than what is left of the file",
+               totalNumRead);
+    return nullptr;
   }
 
   std::size_t elementRead = 0;
@@ -1032,19 +1080,28 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
     }
 
     GEntity *entity = model->getEntityByTag(entityDim, entityTag);
+    // (the ghost entities of the files of older versions)
+    if(!entity && ghostTags.count(entityTag)) {
+      if(!skipMSH4Block(
+           fp, binary, numElements,
+           (1 + MElement::getInfoMSH(elmType)) * sizeof(std::size_t), 1)) {
+        delete[] elementsRead;
+        return nullptr;
+      }
+      continue;
+    }
     if(!entity) {
       Msg::Error("Unknown entity %d of dimension %d", entityTag, entityDim);
       delete[] elementsRead;
       return nullptr;
     }
-    if(entity->geomType() == GEntity::GhostCurve) {
-      static_cast<ghostEdge *>(entity)->haveMesh(true);
-    }
-    else if(entity->geomType() == GEntity::GhostSurface) {
-      static_cast<ghostFace *>(entity)->haveMesh(true);
-    }
-    else if(entity->geomType() == GEntity::GhostVolume) {
-      static_cast<ghostRegion *>(entity)->haveMesh(true);
+    // (the elements of the blocks are stored in the array sized by the header)
+    if(tooLargeCount(fp, numElements) ||
+       numElements > totalNumRead - elementRead) {
+      Msg::Error("Wrong number of elements (%zu) in the block of entity %d of "
+                 "dimension %d", numElements, entityTag, entityDim);
+      delete[] elementsRead;
+      return nullptr;
     }
 
     const int numVertPerElm = MElement::getInfoMSH(elmType);
@@ -1066,10 +1123,10 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
         if(swap)
           SwapBytes((char *)&pendingData[offset], sizeof(std::size_t),
                     num * n);
+        left -= num;
         pending.push_back(
           {entity, elmType, numVertPerElm, elementRead, offset, num});
         elementRead += num;
-        left -= num;
         if(pendingData.size() >= maxData && !makePending()) {
           delete[] elementsRead;
           return nullptr;
@@ -1155,6 +1212,11 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
     delete[] elementsRead;
     return nullptr;
   }
+  if(elementRead != totalNumRead) {
+    Msg::Error("Fewer elements in the blocks than in the section header");
+    delete[] elementsRead;
+    return nullptr;
+  }
   // (the element constructors of several threads may leave a smaller one)
   GModel::current()->setMaxElementNumber(maxElementNum);
 
@@ -1187,9 +1249,15 @@ static bool readMSH4SizeT(FILE *fp, bool binary, bool swap, std::size_t &v)
   return fscanf(fp, "%zu", &v) == 1;
 }
 
+// What is left of the file, in bytes: no count read from it can be larger
+// (each value takes at least a byte), which is checked before allocating.
 static bool readMSH4SizeTs(FILE *fp, bool binary, bool swap, std::size_t n,
                            std::vector<std::size_t> &v)
 {
+  if(tooLargeCount(fp, n)) {
+    Msg::Error("Count %zu larger than what is left of the file", n);
+    return false;
+  }
   v.resize(n);
   if(!n) return true;
   if(binary) {
@@ -1301,6 +1369,10 @@ readMSH4Polytopes(GModel *const model, FILE *fp, bool binary, bool &dense,
   std::size_t elementRead = 0;
   std::size_t minElementNum = std::numeric_limits<std::size_t>::max();
 
+  if(tooLargeCount(fp, totalNumRead)) {
+    Msg::Error("More polytopes in the section header than the file can hold");
+    return nullptr;
+  }
   std::pair<MElement *, GEntity *> *elementsRead =
     new std::pair<MElement *, GEntity *>[totalNumRead];
   Msg::StartProgressMeter(totalNumRead);
@@ -1335,7 +1407,7 @@ readMSH4Polytopes(GModel *const model, FILE *fp, bool binary, bool &dense,
                  "instead of $Polytopes", elmType);
       return fail();
     }
-    if(elementRead + numElements > totalNumRead) {
+    if(numElements > totalNumRead - elementRead) {
       Msg::Error("More polytopes in the blocks than in the section header");
       return fail();
     }
@@ -1345,16 +1417,6 @@ readMSH4Polytopes(GModel *const model, FILE *fp, bool binary, bool &dense,
       Msg::Error("Unknown entity %d of dimension %d", entityTag, entityDim);
       return fail();
     }
-    if(entity->geomType() == GEntity::GhostCurve) {
-      static_cast<ghostEdge *>(entity)->haveMesh(true);
-    }
-    else if(entity->geomType() == GEntity::GhostSurface) {
-      static_cast<ghostFace *>(entity)->haveMesh(true);
-    }
-    else if(entity->geomType() == GEntity::GhostVolume) {
-      static_cast<ghostRegion *>(entity)->haveMesh(true);
-    }
-
     std::vector<std::size_t> offsets;
     if(!readMSH4SizeTs(fp, binary, swap, numElements + 1, offsets))
       return fail();
@@ -1430,6 +1492,12 @@ readMSH4Polytopes(GModel *const model, FILE *fp, bool binary, bool &dense,
     }
     elementRead += numElements;
   }
+  if(elementRead != totalNumRead) {
+    Msg::Error("Fewer polytopes in the blocks than in the section header");
+    return fail();
+  }
+  // (the element constructors of several threads may leave a smaller one)
+  GModel::current()->setMaxElementNumber(maxElementNum);
 
   // if the vertex numbering is dense, we fill the vector cache, otherwise we
   // fill the map cache
@@ -1450,6 +1518,8 @@ readMSH4Polytopes(GModel *const model, FILE *fp, bool binary, bool &dense,
   return elementsRead;
 }
 
+// The periodic links: those whose entities are not in the model are read and
+// skipped
 static bool readMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
                                   bool swap, double version)
 {
@@ -1497,16 +1567,25 @@ static bool readMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
       break;
     }
 
-    if(!slave) {
+    if(!slave)
       Msg::Info("Could not find periodic entity %d of dimension %d", slaveTag,
                 slaveDim);
-      continue;
-    }
-    if(!master) {
+    else if(!master)
       Msg::Info("Could not find periodic source entity %d of dimension %d",
                 masterTag, slaveDim);
-      continue;
-    }
+    const bool link = slave && master; // (else the link is skipped)
+
+    // the corresponding nodes not given in the file are found from the
+    // transformation, except for partition entities: all their nodes are
+    // given, and their boundaries need not match those of their master
+    const bool findNodes = link && !slave->getParentEntity();
+    auto setMaster = [&](const std::vector<double> *tfo) {
+      if(!link) return;
+      if(tfo)
+        slave->setMeshMaster(master, *tfo, findNodes);
+      else
+        slave->setMeshMaster(master);
+    };
 
     std::size_t correspondingVertexSize = 0;
     if(binary) {
@@ -1519,10 +1598,10 @@ static bool readMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
           return false;
         }
         if(swap) SwapBytes((char *)&tfo[0], sizeof(double), numAffine);
-        slave->setMeshMaster(master, tfo);
+        setMaster(&tfo);
       }
       else {
-        slave->setMeshMaster(master);
+        setMaster(nullptr);
       }
       if(fread(&correspondingVertexSize, sizeof(std::size_t), 1, fp) != 1) {
         return false;
@@ -1539,10 +1618,10 @@ static bool readMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
           for(std::size_t i = 0; i < numAffine; i++) {
             if(fscanf(fp, "%lf", &tfo[i]) != 1) { return false; }
           }
-          slave->setMeshMaster(master, tfo);
+          setMaster(&tfo);
         }
         else {
-          slave->setMeshMaster(master);
+          setMaster(nullptr);
         }
         if(fscanf(fp, "%zu", &correspondingVertexSize) != 1) { return false; }
       }
@@ -1560,11 +1639,11 @@ static bool readMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
                     &tfo[12], &tfo[13], &tfo[14], &tfo[15]) != 16) {
             return false;
           }
-          slave->setMeshMaster(master, tfo);
+          setMaster(&tfo);
           if(fscanf(fp, "%zu", &correspondingVertexSize) != 1) { return false; }
         }
         else {
-          slave->setMeshMaster(master);
+          setMaster(nullptr);
           if(sscanf(affine, "%zu", &correspondingVertexSize) != 1) {
             return false;
           }
@@ -1587,8 +1666,8 @@ static bool readMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
       MVertex *mv1 = model->getMeshVertexByTag(v1);
       MVertex *mv2 = model->getMeshVertexByTag(v2);
 
-      if(mv1 && mv2) { slave->correspondingVertices[mv1] = mv2; }
-      else {
+      if(link && mv1 && mv2) { slave->correspondingVertices[mv1] = mv2; }
+      else if(link) {
         if(!mv1) { Msg::Info("Could not find periodic node %d", v1); }
         else if(!mv2) {
           Msg::Info("Could not find periodic node %d", v2);
@@ -1599,58 +1678,20 @@ static bool readMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
   return true;
 }
 
-// In MSH 4.2, ghost elements come in blocks of the elements of a partition that
-// are ghosts in another: `numBlocks numGhostElements`, then for each block
-// `partitionTag ghostPartitionTag numElementsInBlock` and the element tags.
-// Before, each element is given with its partition and the list of partitions
-// where it is a ghost.
-static bool readMSH4GhostElements(GModel *const model, FILE *fp, bool binary,
-                                  bool swap, double version)
+// The ghost elements: in MSH 4.2, in blocks of the elements of a partition that
+// are ghosts in another, `numBlocks numGhostElements`, then for each block
+// `partitionTag ghostPartitionTag numElementsInBlock` and the element tags;
+// before, each element with its partition and the partitions where it is a
+// ghost. f(tag, partition, ghostPartition) is called for each element and
+// each partition where it is a ghost.
+template <class F>
+static bool readMSH4GhostElements(FILE *fp, bool binary, bool swap,
+                                  double version, F f)
 {
-  // the ghost entity of each partition
-  std::vector<GEntity *> ghostEntities(model->getNumPartitions() + 1, nullptr);
-  std::vector<GEntity *> entities;
-  model->getEntities(entities);
-  for(std::size_t i = 0; i < entities.size(); i++) {
-    GEntity *ge = entities[i];
-    int partNum = -1;
-    if(ge->geomType() == GEntity::GhostCurve)
-      partNum = static_cast<ghostEdge *>(ge)->getPartition();
-    else if(ge->geomType() == GEntity::GhostSurface)
-      partNum = static_cast<ghostFace *>(ge)->getPartition();
-    else if(ge->geomType() == GEntity::GhostVolume)
-      partNum = static_cast<ghostRegion *>(ge)->getPartition();
-    if(partNum >= 0 && partNum < (int)ghostEntities.size())
-      ghostEntities[partNum] = ge;
-  }
-  // add element elm of partition partNum as a ghost in partition ghostPartition
-  auto addGhost = [&](MElement *elm, int partNum, int ghostPartition) {
-    if(ghostPartition < 0 || ghostPartition >= (int)ghostEntities.size()) {
-      Msg::Error("Invalid partition %d in ghost elements", ghostPartition);
-      return false;
-    }
-    GEntity *ge = ghostEntities[ghostPartition];
-    if(!ge) {
-      Msg::Warning("Missing ghost entity on partition %d", ghostPartition);
-    }
-    else if(ge->geomType() == GEntity::GhostCurve) {
-      static_cast<ghostEdge *>(ge)->addElement(elm, partNum);
-    }
-    else if(ge->geomType() == GEntity::GhostSurface) {
-      static_cast<ghostFace *>(ge)->addElement(elm, partNum);
-    }
-    else if(ge->geomType() == GEntity::GhostVolume) {
-      static_cast<ghostRegion *>(ge)->addElement(elm, partNum);
-    }
-    return true;
-  };
-
-  std::vector<std::size_t> header;
   if(version >= 4.2) {
+    std::vector<std::size_t> header, tags;
     if(!readMSH4SizeTs(fp, binary, swap, 2, header)) return false;
-    std::size_t numBlocks = header[0];
-    std::vector<std::size_t> tags;
-    for(std::size_t b = 0; b < numBlocks; b++) {
+    for(std::size_t b = 0; b < header[0]; b++) {
       int part[2] = {0, 0}; // partitionTag ghostPartitionTag
       if(binary) {
         if(fread(part, sizeof(int), 2, fp) != 2) return false;
@@ -1662,55 +1703,40 @@ static bool readMSH4GhostElements(GModel *const model, FILE *fp, bool binary,
       std::size_t num = 0;
       if(!readMSH4SizeT(fp, binary, swap, num)) return false;
       if(!readMSH4SizeTs(fp, binary, swap, num, tags)) return false;
-      for(auto tag : tags) {
-        MElement *elm = model->getMeshElementByTag(tag);
-        if(!elm) {
-          Msg::Error("No element with tag %zu", tag);
-          continue;
-        }
-        if(!addGhost(elm, part[0], part[1])) return false;
-      }
+      for(std::size_t tag : tags) f(tag, part[0], part[1]);
     }
     return true;
   }
-
   std::size_t numGhostCells = 0;
   if(!readMSH4SizeT(fp, binary, swap, numGhostCells)) return false;
   for(std::size_t i = 0; i < numGhostCells; i++) {
-    std::size_t elmTag = 0;
+    std::size_t elmTag = 0, numGhostPartitions = 0;
     int partNum = 0;
-    std::size_t numGhostPartitions = 0;
-
     if(binary) {
-      if(fread(&elmTag, sizeof(std::size_t), 1, fp) != 1) { return false; }
-      if(swap) SwapBytes((char *)&elmTag, sizeof(std::size_t), 1);
-      if(fread(&partNum, sizeof(int), 1, fp) != 1) { return false; }
-      if(swap) SwapBytes((char *)&partNum, sizeof(int), 1);
-      if(fread(&numGhostPartitions, sizeof(std::size_t), 1, fp) != 1) {
+      if(fread(&elmTag, sizeof(std::size_t), 1, fp) != 1) return false;
+      if(fread(&partNum, sizeof(int), 1, fp) != 1) return false;
+      if(fread(&numGhostPartitions, sizeof(std::size_t), 1, fp) != 1)
         return false;
-      }
-      if(swap) SwapBytes((char *)&numGhostPartitions, sizeof(std::size_t), 1);
-    }
-    else {
-      if(fscanf(fp, "%zu %d %zu", &elmTag, &partNum, &numGhostPartitions) !=
-         3) {
-        return false;
+      if(swap) {
+        SwapBytes((char *)&elmTag, sizeof(std::size_t), 1);
+        SwapBytes((char *)&partNum, sizeof(int), 1);
+        SwapBytes((char *)&numGhostPartitions, sizeof(std::size_t), 1);
       }
     }
-
-    MElement *elm = model->getMeshElementByTag(elmTag);
-    if(!elm) Msg::Error("No element with tag %zu", elmTag);
-
+    else if(fscanf(fp, "%zu %d %zu", &elmTag, &partNum, &numGhostPartitions) !=
+            3) {
+      return false;
+    }
     for(std::size_t j = 0; j < numGhostPartitions; j++) {
       int ghostPartition = 0;
       if(binary) {
-        if(fread(&ghostPartition, sizeof(int), 1, fp) != 1) { return false; }
+        if(fread(&ghostPartition, sizeof(int), 1, fp) != 1) return false;
         if(swap) SwapBytes((char *)&ghostPartition, sizeof(int), 1);
       }
-      else {
-        if(fscanf(fp, "%d", &ghostPartition) != 1) { return false; }
+      else if(fscanf(fp, "%d", &ghostPartition) != 1) {
+        return false;
       }
-      if(elm && !addGhost(elm, partNum, ghostPartition)) return false;
+      f(elmTag, partNum, ghostPartition);
     }
   }
   return true;
@@ -1838,36 +1864,53 @@ static bool readMSH4Overlaps(GModel *const model, FILE *fp, bool binary)
                    dim, coveredTag, coveredEntity->getTypeString().c_str());
         return false;
       }
-      auto overlapEntity = new typename EntityTraits<dim>::OverlapEntity(
-        model, covered, partition);
-      overlapEntity->setTag(tag);
 
       auto foundEntity = model->getEntityByTag(dim, tag);
-      if(foundEntity) {
-        Msg::Error("Volume overlap with tag %d already exists in model, "
-                   "and is of type %s",
-                   tag, foundEntity->getTypeString().c_str());
-        delete overlapEntity;
-        return false;
-      }
+      auto existing =
+        dynamic_cast<typename EntityTraits<dim>::OverlapEntity *>(foundEntity);
 
-      // Register in the manager only once the model owns the entity, so the
-      // failure path does not leave a dangling pointer in the manager
-      if(!model->add(overlapEntity)) {
-        Msg::Error("Could not add volume overlap with tag %d to model", tag);
-        delete overlapEntity;
-        return false;
-      }
-      mgr->addOverlap(overlapEntity);
-
-      for(size_t i = 0; i < numElements; i++) {
-        size_t elementTag = 0;
-        if(binary) {
-          if(fread(&elementTag, sizeof(size_t), 1, fp) != 1) { return false; }
+      // If an overlap exists with correct covered entity and partition,
+      // we assume it was already loaded and its elements can be skipped.
+      const bool reread = existing && existing->getCovered() == covered &&
+                          existing->owningPartition() == partition;
+      typename EntityTraits<dim>::OverlapEntity *overlapEntity = existing;
+      if(!reread) {
+        if(foundEntity) {
+          // Tag taken by a non-overlap entity
+          // or an overlap with wrong covered entity or partition.
+          Msg::Error("Volume overlap with tag %d already exists in model, "
+                     "and is of type %s",
+                     tag, foundEntity->getTypeString().c_str());
+          return false;
         }
-        else {
+        overlapEntity = new typename EntityTraits<dim>::OverlapEntity(
+          model, covered, partition);
+        overlapEntity->setTag(tag);
+
+        if(!model->add(overlapEntity)) {
+          Msg::Error("Could not add volume overlap with tag %d to model", tag);
+          delete overlapEntity;
+          return false;
+        }
+        mgr->addOverlap(overlapEntity);
+      }
+
+      std::vector<size_t> elementTags(numElements);
+      if(binary) {
+        if(fread(elementTags.data(), sizeof(size_t), numElements, fp) !=
+           numElements) {
+          return false;
+        }
+      }
+      else {
+        for(auto &elementTag : elementTags) {
           if(fscanf(fp, "%zu", &elementTag) != 1) { return false; }
         }
+      }
+      // Refill an overlap emptied by clearing the mesh since it was read
+      if(reread && overlapEntity->getNumMeshElements()) continue;
+
+      for(size_t elementTag : elementTags) {
         MElement *element = model->getMeshElementByTag(elementTag);
 
         if(!element) {
@@ -2348,29 +2391,28 @@ static bool readMSH4Faces(GModel *const model, FILE *fp, bool binary, bool swap,
   return true;
 }
 
+// the partitions of a partition entity, nullptr for another entity
+static const std::vector<int> *partitionsOf(GEntity *ge)
+{
+  switch(ge->geomType()) {
+  case GEntity::PartitionPoint:
+    return &static_cast<partitionVertex *>(ge)->getPartitions();
+  case GEntity::PartitionCurve:
+    return &static_cast<partitionEdge *>(ge)->getPartitions();
+  case GEntity::PartitionSurface:
+    return &static_cast<partitionFace *>(ge)->getPartitions();
+  case GEntity::PartitionVolume:
+    return &static_cast<partitionRegion *>(ge)->getPartitions();
+  default: return nullptr;
+  }
+}
+
 // the partition of the elements of an entity that belongs to one partition
 // only, 0 otherwise
 static int singlePartitionOf(GEntity *ge)
 {
-  switch(ge->geomType()) {
-  case GEntity::PartitionPoint: {
-    auto p = static_cast<partitionVertex *>(ge);
-    return p->numPartitions() == 1 ? p->getPartition(0) : 0;
-  }
-  case GEntity::PartitionCurve: {
-    auto p = static_cast<partitionEdge *>(ge);
-    return p->numPartitions() == 1 ? p->getPartition(0) : 0;
-  }
-  case GEntity::PartitionSurface: {
-    auto p = static_cast<partitionFace *>(ge);
-    return p->numPartitions() == 1 ? p->getPartition(0) : 0;
-  }
-  case GEntity::PartitionVolume: {
-    auto p = static_cast<partitionRegion *>(ge);
-    return p->numPartitions() == 1 ? p->getPartition(0) : 0;
-  }
-  default: return 0;
-  }
+  const std::vector<int> *p = partitionsOf(ge);
+  return (p && p->size() == 1) ? (*p)[0] : 0;
 }
 
 // a node or an element read in a model where its tag is already taken: the
@@ -2391,9 +2433,295 @@ static bool sameElement(MElement *e, MElement *f)
   return true;
 }
 
+// the next section of a MSH file, whose "$Name" line is put in str (unless
+// already there); false at the end of the file
+static bool nextMSH4Section(FILE *fp, char *str, int size)
+{
+  while(str[0] != '$')
+    if(!fgets(str, size, fp) || feof(fp)) return false;
+  return !feof(fp);
+}
+
+// past the end of the section whose "$Name" line is in str (or past the line
+// in str if it is its "$EndName" line)
+static void endMSH4Section(FILE *fp, char *str, int size,
+                           const std::string &endSectionName)
+{
+  while(strncmp(&str[1], endSectionName.c_str(), endSectionName.size())) {
+    if(!fgets(str, size, fp) || feof(fp)) break;
+  }
+  str[0] = 'a';
+}
+
+// the line of a $MeshFormat section
+static bool readMSH4Format(FILE *fp, double &version, bool &binary, bool &swap)
+{
+  char str[256];
+  if(!fgets(str, sizeof(str), fp) || feof(fp)) return false;
+  int format;
+  std::size_t size;
+  if(sscanf(str, "%lf %d %zu", &version, &format, &size) != 3) return false;
+  if(format) {
+    binary = true;
+    Msg::Debug("Mesh is in binary format");
+    int one;
+    if(fread(&one, sizeof(int), 1, fp) != 1) return false;
+    if(one != 1) {
+      swap = true;
+      Msg::Debug("Swapping bytes from binary file");
+    }
+  }
+  if(binary && size != sizeof(std::size_t)) {
+    Msg::Error("Binary file has sizeof(size_t) = %d, not matching "
+               "machine sizeof(size_t) = %d",
+               size, sizeof(std::size_t));
+    return false;
+  }
+  if(binary && version < 4.1) {
+    Msg::Error("Can only read MSH 4.0 format in ASCII mode");
+    return false;
+  }
+  return true;
+}
+
+static bool readMSH4PhysicalNames(GModel *const model, FILE *fp)
+{
+  char str[256];
+  if(!fgets(str, sizeof(str), fp) || feof(fp)) return false;
+  int numPhysicalNames = 0;
+  if(sscanf(str, "%d", &numPhysicalNames) != 1) return false;
+  std::vector<GModel::piter> iterators;
+  model->getInnerPhysicalNamesIterators(iterators);
+  for(int i = 0; i < numPhysicalNames; i++) {
+    int dim = 0, tag = 0;
+    if(fscanf(fp, "%d %d", &dim, &tag) != 2) return false;
+    if(dim < 0 || dim > 3) {
+      Msg::Error("Invalid dimension %d of physical name", dim);
+      return false;
+    }
+    char name[256];
+    if(!fgets(name, sizeof(name), fp)) return false;
+    std::string physicalName = ExtractDoubleQuotedString(name, 256);
+    if(physicalName.size())
+      iterators[dim] =
+        model->setPhysicalName(iterators[dim], physicalName, dim, tag);
+  }
+  return true;
+}
+
+// the ghost cells of the $GhostElements section
+static bool readMSH4Ghosts(GModel *const model, FILE *fp, bool binary,
+                           bool swap, double version)
+{
+  std::size_t num = 0, unknown = 0;
+  auto add = [&](std::size_t tag, int, int ghostPartition) {
+    MElement *e = model->getMeshElementByTag(tag);
+    if(e)
+      model->addGhostCells(e, ghostPartition);
+    else
+      unknown++;
+    num++;
+  };
+  if(!readMSH4GhostElements(fp, binary, swap, version, add)) {
+    Msg::Error("Could not read ghost elements");
+    return false;
+  }
+  Msg::Info("%zu ghost element%s", num, num > 1 ? "s" : "");
+  if(unknown) Msg::Warning("%zu unknown ghost elements", unknown);
+  return true;
+}
+
+void GModel::_storeMSH4Nodes(MVertex **verticesRead, std::size_t totalNumRead,
+                             std::size_t maxNodeNum, bool dense)
+{
+  std::size_t conflicts = 0; // tags of other nodes already there
+  bool hadNodesBefore =
+    !_vertexVectorCache.empty() || !_vertexMapCache.empty();
+  if(hadNodesBefore) {
+    // the vector cache is kept, or taken back from the map cache, if the
+    // numbering of all the nodes is fairly dense (e.g. the partitions of
+    // a mesh read from several files, sparse one by one, dense together);
+    // otherwise the map cache takes the previous nodes
+    maxNodeNum = std::max(maxNodeNum, getMaxVertexNumber());
+    dense = maxNodeNum < 10 * (getNumMeshVertices() + totalNumRead);
+    if(!dense && !_vertexVectorCache.empty()) {
+      for(std::size_t i = 0; i < _vertexVectorCache.size(); i++) {
+        MVertex *v = _vertexVectorCache[i];
+        if(v) _vertexMapCache[v->getNum()] = v;
+      }
+      _vertexVectorCache.clear();
+    }
+    else if(dense && !_vertexMapCache.empty()) {
+      _vertexVectorCache.resize(maxNodeNum + 1, nullptr);
+      for(auto &p : _vertexMapCache) _vertexVectorCache[p.first] = p.second;
+      _vertexMapCache.clear();
+    }
+  }
+  // populate map cache with just-read nodes, and put them in entity if not
+  // already in cache
+  if(dense) {
+    if(_vertexVectorCache.size() < maxNodeNum + 1)
+      _vertexVectorCache.resize(maxNodeNum + 1, nullptr);
+    // the new nodes go in the cache by several threads, each taking the
+    // tags of its share (the accesses to the cache are what costs), then
+    // in their entities one by one
+    std::vector<std::size_t> tags(totalNumRead);
+    for(std::size_t i = 0; i < totalNumRead; i++)
+      tags[i] = verticesRead[i]->getNum();
+    std::vector<std::uint8_t> isNew(totalNumRead, 0);
+    int nthreads = CTX::instance()->numThreadsFor(totalNumRead, 100000);
+#pragma omp parallel for schedule(static, 1) num_threads(nthreads)
+    for(int t = 0; t < nthreads; t++) {
+      for(std::size_t i = 0; i < totalNumRead; i++) {
+        if(nthreads > 1 && (int)(tags[i] % nthreads) != t) continue;
+        if(!_vertexVectorCache[tags[i]]) {
+          _vertexVectorCache[tags[i]] = verticesRead[i];
+          isNew[i] = 1;
+        }
+      }
+    }
+    for(std::size_t i = 0; i < totalNumRead; i++) {
+      MVertex *v = verticesRead[i];
+      if(isNew[i]) {
+        if(v->onWhat())
+          v->onWhat()->addMeshVertex(v);
+        else // should not happen
+          Msg::Error("Node %zu not classified on any entity", v->getNum());
+      }
+      else {
+        if(!hadNodesBefore) // should not happen
+          Msg::Warning("Skipping duplicate node %zu", v->getNum());
+        else if(!sameNode(v, _vertexVectorCache[tags[i]]))
+          conflicts++;
+        delete v;
+      }
+    }
+  }
+  else {
+    _vertexMapCache.reserve(_vertexMapCache.size() + totalNumRead);
+    for(std::size_t i = 0; i < totalNumRead; i++) {
+      MVertex *v = verticesRead[i];
+      auto r = _vertexMapCache.insert(v->getNum(), v);
+      if(!r.second && !r.first) { // (a tag left without node by a lookup)
+        r.first = v;
+        r.second = true;
+      }
+      if(r.second) {
+        if(v->onWhat())
+          v->onWhat()->addMeshVertex(v);
+        else // should not happen
+          Msg::Error("Node %zu not classified on any entity", v->getNum());
+      }
+      else {
+        if(!hadNodesBefore) // should not happen
+          Msg::Warning("Skipping duplicate node %zu", v->getNum());
+        else if(!sameNode(v, r.first))
+          conflicts++;
+        delete v;
+      }
+    }
+  }
+  delete[] verticesRead;
+  if(conflicts)
+    Msg::Warning("Skipping %zu nodes whose tags are those of other nodes "
+                 "in the model", conflicts);
+}
+
+void GModel::_storeMSH4Elements(std::pair<MElement *, GEntity *> *elementsRead,
+                                std::size_t totalNumRead,
+                                std::size_t maxElementNum, bool dense)
+{
+  std::size_t conflicts = 0; // (as for the nodes)
+  bool hadElementsBefore =
+    !_elementVectorCache.empty() || !_elementMapCache.empty();
+  if(hadElementsBefore) {
+    // (as for the nodes)
+    maxElementNum = std::max(maxElementNum, getMaxElementNumber());
+    dense = maxElementNum < 10 * (getNumMeshElements() + totalNumRead);
+    if(!dense && !_elementVectorCache.empty()) {
+      for(std::size_t i = 0; i < _elementVectorCache.size(); i++) {
+        std::pair<MElement *, int> p = _elementVectorCache[i];
+        if(p.first) _elementMapCache[p.first->getNum()] = p;
+      }
+      _elementVectorCache.clear();
+    }
+    else if(dense && !_elementMapCache.empty()) {
+      _elementVectorCache.resize(maxElementNum + 1,
+                                 std::make_pair(nullptr, 0));
+      for(auto &p : _elementMapCache)
+        _elementVectorCache[p.first] = p.second;
+      _elementMapCache.clear();
+    }
+  }
+  // (the elements of an entity of one partition are marked with it)
+  GEntity *last = nullptr;
+  int part = 0;
+  auto addToEntity = [&](MElement *e, GEntity *entity) {
+    if(entity != last) {
+      last = entity;
+      part = singlePartitionOf(entity);
+    }
+    if(part) e->setPartition(part);
+    entity->addElement(e);
+  };
+  // an element whose tag is in the model already: skipped
+  auto skipDuplicate = [&](MElement *e, GEntity *entity,
+                           std::pair<MElement *, int> &known) {
+    if(!hadElementsBefore) // should not happen
+      Msg::Warning("Skipping duplicate element %zu", e->getNum());
+    else if(!sameElement(e, known.first))
+      conflicts++;
+    delete e;
+  };
+  if(dense) {
+    if(_elementVectorCache.size() < maxElementNum + 1)
+      _elementVectorCache.resize(maxElementNum + 1,
+                                 std::make_pair(nullptr, 0));
+    // (as for the nodes)
+    std::vector<std::size_t> tags(totalNumRead);
+    for(std::size_t i = 0; i < totalNumRead; i++)
+      tags[i] = elementsRead[i].first->getNum();
+    std::vector<std::uint8_t> isNew(totalNumRead, 0);
+    int nthreads = CTX::instance()->numThreadsFor(totalNumRead, 100000);
+#pragma omp parallel for schedule(static, 1) num_threads(nthreads)
+    for(int t = 0; t < nthreads; t++) {
+      for(std::size_t i = 0; i < totalNumRead; i++) {
+        if(nthreads > 1 && (int)(tags[i] % nthreads) != t) continue;
+        if(!_elementVectorCache[tags[i]].first) {
+          _elementVectorCache[tags[i]] = std::make_pair(
+            elementsRead[i].first, elementsRead[i].second->tag());
+          isNew[i] = 1;
+        }
+      }
+    }
+    for(std::size_t i = 0; i < totalNumRead; i++) {
+      MElement *e = elementsRead[i].first;
+      if(isNew[i]) { addToEntity(e, elementsRead[i].second); }
+      else
+        skipDuplicate(e, elementsRead[i].second,
+                      _elementVectorCache[tags[i]]);
+    }
+  }
+  else {
+    _elementMapCache.reserve(_elementMapCache.size() + totalNumRead);
+    for(std::size_t i = 0; i < totalNumRead; i++) {
+      MElement *e = elementsRead[i].first;
+      GEntity *entity = elementsRead[i].second;
+      auto r = _elementMapCache.insert(e->getNum(),
+                                       std::make_pair(e, entity->tag()));
+      if(r.second) { addToEntity(e, entity); }
+      else
+        skipDuplicate(e, entity, r.first);
+    }
+  }
+  delete[] elementsRead;
+  if(conflicts)
+    Msg::Warning("Skipping %zu elements whose tags are those of other "
+                 "elements in the model", conflicts);
+}
+
 int GModel::_readMSH4(const std::string &name)
 {
-  bool partitioned = false;
   FILE *fp = Fopen(name.c_str(), "rb");
   if(!fp) {
     Msg::Error("Unable to open file '%s'", name.c_str());
@@ -2404,305 +2732,69 @@ int GModel::_readMSH4(const std::string &name)
   double version = 1.0;
   bool binary = false, swap = false;
 
-  while(1) {
-    while(str[0] != '$') {
-      if(!fgets(str, sizeof(str), fp) || feof(fp)) break;
-    }
+  // the tags of the ghost entities of the files of older versions
+  std::set<int> ghostTags;
 
-    if(feof(fp)) break;
-
+  while(nextMSH4Section(fp, str, sizeof(str))) {
     std::string sectionName(&str[1]);
     std::string endSectionName = "End" + sectionName;
 
     if(!strncmp(&str[1], "MeshFormat", 10)) {
-      if(!fgets(str, sizeof(str), fp) || feof(fp)) {
+      if(!readMSH4Format(fp, version, binary, swap)) {
         fclose(fp);
         return 0;
-      }
-
-      int format;
-      std::size_t size;
-      if(sscanf(str, "%lf %d %zu", &version, &format, &size) != 3) {
-        fclose(fp);
-        return 0;
-      }
-      if(format) {
-        binary = true;
-        Msg::Debug("Mesh is in binary format");
-        int one;
-        if(fread(&one, sizeof(int), 1, fp) != 1) {
-          fclose(fp);
-          return 0;
-        }
-        if(one != 1) {
-          swap = true;
-          Msg::Debug("Swapping bytes from binary file");
-        }
-      }
-
-      if(binary && size != sizeof(std::size_t)) {
-        Msg::Error("Binary file has sizeof(size_t) = %d, not matching "
-                   "machine sizeof(size_t) = %d",
-                   size, sizeof(std::size_t));
-        return false;
-      }
-      if(binary && version < 4.1) {
-        Msg::Error("Can only read MSH 4.0 format in ASCII mode");
-        return false;
       }
     }
     else if(!strncmp(&str[1], "PhysicalNames", 13)) {
-      if(!fgets(str, sizeof(str), fp) || feof(fp)) {
+      if(!readMSH4PhysicalNames(this, fp)) {
         fclose(fp);
         return 0;
-      }
-      int numPhysicalNames = 0;
-      if(sscanf(str, "%d", &numPhysicalNames) != 1) {
-        fclose(fp);
-        return 0;
-      }
-      std::vector<GModel::piter> iterators;
-      getInnerPhysicalNamesIterators(iterators);
-      for(int i = 0; i < numPhysicalNames; i++) {
-        int dim = 0, tag = 0;
-        if(fscanf(fp, "%d %d", &dim, &tag) != 2) {
-          fclose(fp);
-          return 0;
-        }
-        char name[256];
-        if(!fgets(name, sizeof(name), fp)) {
-          fclose(fp);
-          return 0;
-        }
-        std::string physicalName = ExtractDoubleQuotedString(name, 256);
-        if(physicalName.size())
-          iterators[dim] =
-            setPhysicalName(iterators[dim], physicalName, dim, tag);
       }
     }
     else if(!strncmp(&str[1], "Entities", 8)) {
-      if(!readMSH4Entities(this, fp, false, binary, swap, version)) {
+      if(!readMSH4Entities(this, fp, false, binary, swap, version, ghostTags)) {
         Msg::Error("Could not read entities");
         fclose(fp);
         return 0;
       }
     }
     else if(!strncmp(&str[1], "PartitionedEntities", 19)) {
-      if(!readMSH4Entities(this, fp, true, binary, swap, version)) {
+      if(!readMSH4Entities(this, fp, true, binary, swap, version, ghostTags)) {
         Msg::Error("Could not read partitioned entities");
         fclose(fp);
         return 0;
       }
-      partitioned = true;
     }
     else if(!strncmp(&str[1], "Nodes", 5)) {
-      std::size_t conflicts = 0; // tags of other nodes already there
-      bool hadNodesBefore =
-        !_vertexVectorCache.empty() || !_vertexMapCache.empty();
       bool dense = false;
-      std::size_t totalNumRead = 0, maxNodeNum;
-      MVertex **verticesRead = readMSH4Nodes(
-        this, fp, binary, dense, totalNumRead, maxNodeNum, swap, version);
+      std::size_t num = 0, maxNum;
+      MVertex **nodes = readMSH4Nodes(this, fp, binary, dense, num, maxNum,
+                                      swap, version);
       Msg::StopProgressMeter();
-      if(!verticesRead) {
+      if(!nodes) {
         Msg::Error("Could not read nodes");
         fclose(fp);
-        return false;
+        return 0;
       }
-      if(hadNodesBefore) {
-        // the vector cache is kept, or taken back from the map cache, if the
-        // numbering of all the nodes is fairly dense (e.g. the partitions of
-        // a mesh read from several files, sparse one by one, dense together);
-        // otherwise the map cache takes the previous nodes
-        maxNodeNum = std::max(maxNodeNum, getMaxVertexNumber());
-        dense = maxNodeNum < 10 * (getNumMeshVertices() + totalNumRead);
-        if(!dense && !_vertexVectorCache.empty()) {
-          for(std::size_t i = 0; i < _vertexVectorCache.size(); i++) {
-            MVertex *v = _vertexVectorCache[i];
-            if(v) _vertexMapCache[v->getNum()] = v;
-          }
-          _vertexVectorCache.clear();
-        }
-        else if(dense && !_vertexMapCache.empty()) {
-          _vertexVectorCache.resize(maxNodeNum + 1, nullptr);
-          for(auto &p : _vertexMapCache) _vertexVectorCache[p.first] = p.second;
-          _vertexMapCache.clear();
-        }
-      }
-      // populate map cache with just-read nodes, and put them in entity if not
-      // already in cache
-      if(dense) {
-        if(_vertexVectorCache.size() < maxNodeNum + 1)
-          _vertexVectorCache.resize(maxNodeNum + 1, nullptr);
-        // the new nodes go in the cache by several threads, each taking the
-        // tags of its share (the accesses to the cache are what costs), then
-        // in their entities one by one
-        std::vector<std::size_t> tags(totalNumRead);
-        for(std::size_t i = 0; i < totalNumRead; i++)
-          tags[i] = verticesRead[i]->getNum();
-        std::vector<std::uint8_t> isNew(totalNumRead, 0);
-        int nthreads = CTX::instance()->numThreadsFor(totalNumRead, 100000);
-#pragma omp parallel for schedule(static, 1) num_threads(nthreads)
-        for(int t = 0; t < nthreads; t++) {
-          for(std::size_t i = 0; i < totalNumRead; i++) {
-            if(nthreads > 1 && (int)(tags[i] % nthreads) != t) continue;
-            if(!_vertexVectorCache[tags[i]]) {
-              _vertexVectorCache[tags[i]] = verticesRead[i];
-              isNew[i] = 1;
-            }
-          }
-        }
-        for(std::size_t i = 0; i < totalNumRead; i++) {
-          MVertex *v = verticesRead[i];
-          if(isNew[i]) {
-            if(v->onWhat())
-              v->onWhat()->addMeshVertex(v);
-            else // should not happen
-              Msg::Error("Node %zu not classified on any entity", v->getNum());
-          }
-          else {
-            if(!hadNodesBefore) // should not happen
-              Msg::Warning("Skipping duplicate node %zu", v->getNum());
-            else if(!sameNode(v, _vertexVectorCache[tags[i]]))
-              conflicts++;
-            delete v;
-          }
-        }
-      }
-      else {
-        _vertexMapCache.reserve(_vertexMapCache.size() + totalNumRead);
-        for(std::size_t i = 0; i < totalNumRead; i++) {
-          MVertex *v = verticesRead[i];
-          auto r = _vertexMapCache.insert(v->getNum(), v);
-          if(r.second) {
-            if(v->onWhat())
-              v->onWhat()->addMeshVertex(v);
-            else // should not happen
-              Msg::Error("Node %zu not classified on any entity", v->getNum());
-          }
-          else {
-            if(!hadNodesBefore) // should not happen
-              Msg::Warning("Skipping duplicate node %zu", v->getNum());
-            else if(!sameNode(v, r.first))
-              conflicts++;
-            delete v;
-          }
-        }
-      }
-      delete[] verticesRead;
-      if(conflicts)
-        Msg::Warning("Skipping %zu nodes whose tags are those of other nodes "
-                     "in the model", conflicts);
+      _storeMSH4Nodes(nodes, num, maxNum, dense);
     }
     else if(!strncmp(&str[1], "Elements", 8) ||
             !strncmp(&str[1], "Polytopes", 9)) {
-      std::size_t conflicts = 0; // (as for the nodes)
-      bool hadElementsBefore =
-        !_elementVectorCache.empty() || !_elementMapCache.empty();
       bool dense = false;
-      std::size_t totalNumRead = 0, maxElementNum = 0;
-      std::pair<MElement *, GEntity *> *elementsRead = nullptr;
-      if(!strncmp(&str[1], "Elements", 8)) {
-        elementsRead = readMSH4Elements(this, fp, binary, dense, totalNumRead,
-                                        maxElementNum, swap, version);
-      }
-      else if(!strncmp(&str[1], "Polytopes", 9)) {
-        elementsRead = readMSH4Polytopes(this, fp, binary, dense, totalNumRead,
-                                         maxElementNum, swap, version);
-      }
+      std::size_t num = 0, maxNum = 0;
+      std::pair<MElement *, GEntity *> *elements =
+        !strncmp(&str[1], "Elements", 8) ?
+          readMSH4Elements(this, fp, binary, dense, num, maxNum, swap, version,
+                           ghostTags) :
+          readMSH4Polytopes(this, fp, binary, dense, num, maxNum, swap,
+                            version);
       Msg::StopProgressMeter();
-      if(!elementsRead) {
+      if(!elements) {
         Msg::Error("Could not read elements");
         fclose(fp);
         return 0;
       }
-      if(hadElementsBefore) {
-        // (as for the nodes)
-        maxElementNum = std::max(maxElementNum, getMaxElementNumber());
-        dense = maxElementNum < 10 * (getNumMeshElements() + totalNumRead);
-        if(!dense && !_elementVectorCache.empty()) {
-          for(std::size_t i = 0; i < _elementVectorCache.size(); i++) {
-            std::pair<MElement *, int> p = _elementVectorCache[i];
-            if(p.first) _elementMapCache[p.first->getNum()] = p;
-          }
-          _elementVectorCache.clear();
-        }
-        else if(dense && !_elementMapCache.empty()) {
-          _elementVectorCache.resize(maxElementNum + 1,
-                                     std::make_pair(nullptr, 0));
-          for(auto &p : _elementMapCache)
-            _elementVectorCache[p.first] = p.second;
-          _elementMapCache.clear();
-        }
-      }
-      // (the elements of an entity of one partition are marked with it)
-      GEntity *last = nullptr;
-      int part = 0;
-      auto addToEntity = [&](MElement *e, GEntity *entity) {
-        if(entity != last) {
-          last = entity;
-          part = singlePartitionOf(entity);
-        }
-        if(part) e->setPartition(part);
-        if(entity->geomType() != GEntity::GhostCurve &&
-           entity->geomType() != GEntity::GhostSurface &&
-           entity->geomType() != GEntity::GhostVolume)
-          entity->addElement(e);
-      };
-      if(dense) {
-        if(_elementVectorCache.size() < maxElementNum + 1)
-          _elementVectorCache.resize(maxElementNum + 1,
-                                     std::make_pair(nullptr, 0));
-        // (as for the nodes)
-        std::vector<std::size_t> tags(totalNumRead);
-        for(std::size_t i = 0; i < totalNumRead; i++)
-          tags[i] = elementsRead[i].first->getNum();
-        std::vector<std::uint8_t> isNew(totalNumRead, 0);
-        int nthreads = CTX::instance()->numThreadsFor(totalNumRead, 100000);
-#pragma omp parallel for schedule(static, 1) num_threads(nthreads)
-        for(int t = 0; t < nthreads; t++) {
-          for(std::size_t i = 0; i < totalNumRead; i++) {
-            if(nthreads > 1 && (int)(tags[i] % nthreads) != t) continue;
-            if(!_elementVectorCache[tags[i]].first) {
-              _elementVectorCache[tags[i]] = std::make_pair(
-                elementsRead[i].first, elementsRead[i].second->tag());
-              isNew[i] = 1;
-            }
-          }
-        }
-        for(std::size_t i = 0; i < totalNumRead; i++) {
-          MElement *e = elementsRead[i].first;
-          if(isNew[i]) { addToEntity(e, elementsRead[i].second); }
-          else {
-            if(!hadElementsBefore) // should not happen
-              Msg::Warning("Skipping duplicate element %zu", e->getNum());
-            else if(!sameElement(e, _elementVectorCache[tags[i]].first))
-              conflicts++;
-            delete e;
-          }
-        }
-      }
-      else {
-        _elementMapCache.reserve(_elementMapCache.size() + totalNumRead);
-        for(std::size_t i = 0; i < totalNumRead; i++) {
-          MElement *e = elementsRead[i].first;
-          GEntity *entity = elementsRead[i].second;
-          auto r = _elementMapCache.insert(e->getNum(),
-                                           std::make_pair(e, entity->tag()));
-          if(r.second) { addToEntity(e, entity); }
-          else {
-            if(!hadElementsBefore) // should not happen
-              Msg::Warning("Skipping duplicate element %zu", e->getNum());
-            else if(!sameElement(e, r.first.first))
-              conflicts++;
-            delete e;
-          }
-        }
-      }
-      delete[] elementsRead;
-      if(conflicts)
-        Msg::Warning("Skipping %zu elements whose tags are those of other "
-                     "elements in the model", conflicts);
+      _storeMSH4Elements(elements, num, maxNum, dense);
     }
     else if(!strncmp(&str[1], "Edges", 5)) {
       bool ok = readMSH4Edges(this, fp, binary, swap);
@@ -2730,8 +2822,7 @@ int GModel::_readMSH4(const std::string &name)
       }
     }
     else if(!strncmp(&str[1], "GhostElements", 13)) {
-      if(!readMSH4GhostElements(this, fp, binary, swap, version)) {
-        Msg::Error("Could not read ghost elements");
+      if(!readMSH4Ghosts(this, fp, binary, swap, version)) {
         fclose(fp);
         return 0;
       }
@@ -2821,14 +2912,11 @@ int GModel::_readMSH4(const std::string &name)
       }
     }
 
-    while(strncmp(&str[1], endSectionName.c_str(), endSectionName.size())) {
-      if(!fgets(str, sizeof(str), fp) || feof(fp)) { break; }
-    }
-    str[0] = 'a';
+
+    endMSH4Section(fp, str, sizeof(str), endSectionName);
   }
 
   fclose(fp);
-
   return 1;
 }
 
@@ -2874,62 +2962,75 @@ static void writeMSH4BoundingBox(SBoundingBox3d boundBox, FILE *fp,
   }
 }
 
-static void writeMSH4EmbeddedEntities(FILE *fp, GEntity *const entity,
-                                      bool binary)
-{
-  std::vector<int> tags; // (dim, tag) pairs
-  auto add = [&tags](GEntity *e) {
-    tags.push_back(e->dim());
-    tags.push_back(e->tag());
-  };
-  if(entity->dim() == 2) {
-    GFace *gf = static_cast<GFace *>(entity);
-    for(auto v : gf->embeddedVertices()) add(v);
-    for(auto e : gf->embeddedEdges()) add(e);
-  }
-  else if(entity->dim() == 3) {
-    GRegion *gr = static_cast<GRegion *>(entity);
-    for(auto v : gr->embeddedVertices()) add(v);
-    for(auto e : gr->embeddedEdges()) add(e);
-    for(auto f : gr->embeddedFaces()) add(f);
-  }
-  std::size_t numEmb = tags.size() / 2;
-  if(binary) {
-    fwrite(&numEmb, sizeof(std::size_t), 1, fp);
-    if(numEmb) fwrite(tags.data(), sizeof(int), tags.size(), fp);
-  }
-  else {
-    fprintf(fp, "%zu ", numEmb);
-    for(auto t : tags) fprintf(fp, "%d ", t);
-  }
-}
-
-static void writeMSH4Entities(
-  GModel *const model, FILE *fp, bool partition, bool binary,
-  double scalingFactor, double version,
-  std::map<GEntity *, SBoundingBox3d> *entityBounds,
-  const std::vector<int> &partitionsToSave,
-  const EntityToVerticesMap &entitiesWithSubsetToExport)
-{
-  std::set<GEntity *, GEntityPtrFullLessThan> ghost;
+// The entities of a $Entities or $PartitionedEntities section
+struct msh4EntitySets {
   std::set<GRegion *, GEntityPtrLessThan> regions;
   std::set<GFace *, GEntityPtrLessThan> faces;
   std::set<GEdge *, GEntityPtrLessThan> edges;
   std::set<GVertex *, GEntityPtrLessThan> vertices;
-  const std::vector<GEdge *> noEdges;
+  void insert(GEntity *e)
+  {
+    switch(e->dim()) {
+    case 0: vertices.insert(static_cast<GVertex *>(e)); break;
+    case 1: edges.insert(static_cast<GEdge *>(e)); break;
+    case 2: faces.insert(static_cast<GFace *>(e)); break;
+    case 3: regions.insert(static_cast<GRegion *>(e)); break;
+    }
+  }
+  bool has(GEntity *e) const
+  {
+    switch(e->dim()) {
+    case 0: return vertices.count(static_cast<GVertex *>(e));
+    case 1: return edges.count(static_cast<GEdge *>(e));
+    case 2: return faces.count(static_cast<GFace *>(e));
+    case 3: return regions.count(static_cast<GRegion *>(e));
+    default: return false;
+    }
+  }
+};
+
+// The entities to write: the partition entities if partition (of the
+// partitions to save, with Mesh.PartitionSplitLocalBrep), or the others; in
+// the file of some partitions with Mesh.PartitionSplitLocalBrep, only the
+// parents of their partition entities (partitionSets)
+static void
+getMSH4EntitiesToWrite(GModel *const model, bool partition,
+                       const std::vector<int> &partitionsToSave,
+                       const EntityToVerticesMap &entitiesWithSubsetToExport,
+                       msh4EntitySets &sets,
+                       const msh4EntitySets *partitionSets = nullptr)
+{
+  std::set<GRegion *, GEntityPtrLessThan> &regions = sets.regions;
+  std::set<GFace *, GEntityPtrLessThan> &faces = sets.faces;
+  std::set<GEdge *, GEntityPtrLessThan> &edges = sets.edges;
+  std::set<GVertex *, GEntityPtrLessThan> &vertices = sets.vertices;
 
   const bool acceptAllPartitions =
     partitionsToSave.empty() || !CTX::instance()->mesh.partitionSplitLocalBrep;
+
+  if(partitionSets) {
+    auto addParent = [&](GEntity *e) {
+      GEntity *parent = e->getParentEntity();
+      if(parent)
+        sets.insert(parent);
+      else if(!partitionsOf(e))
+        sets.insert(e);
+    };
+    for(auto e : partitionSets->vertices) addParent(e);
+    for(auto e : partitionSets->edges) addParent(e);
+    for(auto e : partitionSets->faces) addParent(e);
+    for(auto e : partitionSets->regions) addParent(e);
+    return;
+  }
 
   if(partition) {
     auto isInPartition = [&](GEntity *entity) {
       if(acceptAllPartitions) return true;
       auto parts = getEntityPartition(entity, false);
-      return std::any_of(partitionsToSave.begin(), partitionsToSave.end(),
-                         [&](int p) {
-                           return std::find(parts.begin(), parts.end(), p) !=
-                                  parts.end();
-                         });
+      return std::any_of(parts.begin(), parts.end(), [&](int p) {
+        return std::binary_search(partitionsToSave.begin(),
+                                  partitionsToSave.end(), p);
+      });
     };
     for(auto it = model->firstVertex(); it != model->lastVertex(); ++it) {
       if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
@@ -2942,19 +3043,16 @@ static void writeMSH4Entities(
         continue;
       if((*it)->geomType() == GEntity::PartitionCurve && isInPartition(*it))
         edges.insert(*it);
-      if((*it)->geomType() == GEntity::GhostCurve) ghost.insert(*it);
     }
     for(auto it = model->firstFace(); it != model->lastFace(); ++it) {
       if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
         continue;
       if((*it)->geomType() == GEntity::PartitionSurface && isInPartition(*it))
         faces.insert(*it);
-      if((*it)->geomType() == GEntity::GhostSurface) ghost.insert(*it);
     }
     for(auto it = model->firstRegion(); it != model->lastRegion(); ++it) {
       if((*it)->geomType() == GEntity::PartitionVolume && isInPartition(*it))
         regions.insert(*it);
-      if((*it)->geomType() == GEntity::GhostVolume) ghost.insert(*it);
     }
     // Add partially saved entities
     if(!entitiesWithSubsetToExport.empty()) {
@@ -3020,422 +3118,185 @@ static void writeMSH4Entities(
     for(auto it = model->firstEdge(); it != model->lastEdge(); ++it) {
       if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
         continue;
-      if((*it)->geomType() != GEntity::PartitionCurve &&
-         (*it)->geomType() != GEntity::GhostCurve)
-        edges.insert(*it);
+      if((*it)->geomType() != GEntity::PartitionCurve) edges.insert(*it);
     }
     for(auto it = model->firstFace(); it != model->lastFace(); ++it) {
       if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
         continue;
       if((*it)->geomType() != GEntity::PartitionSurface &&
-         (*it)->geomType() != GEntity::GhostSurface &&
          (*it)->geomType() != GEntity::OverlapSurface)
         faces.insert(*it);
     }
     for(auto it = model->firstRegion(); it != model->lastRegion(); ++it) {
       if((*it)->geomType() != GEntity::PartitionVolume &&
-         (*it)->geomType() != GEntity::GhostVolume &&
          (*it)->geomType() != GEntity::OverlapVolume)
         regions.insert(*it);
     }
   }
+}
 
-  if(partition)
-    fprintf(fp, "$PartitionedEntities\n");
-  else
-    fprintf(fp, "$Entities\n");
+// the bounding entities of an entity written, as written: those that are
+// written too, with their orientation (MSH 4.1 adds the embedded curves of a
+// surface, with their tag offset by the largest curve tag)
+static std::vector<int> msh4BoundingTags(GEntity *e, const msh4EntitySets &sets,
+                                         double version, int maxEdgeTag)
+{
+  std::vector<int> tags;
+  if(e->dim() == 1) {
+    GEdge *ge = static_cast<GEdge *>(e);
+    // (the end vertex negative)
+    if(ge->getBeginVertex() && sets.has(ge->getBeginVertex()))
+      tags.push_back(ge->getBeginVertex()->tag());
+    if(ge->getEndVertex() && sets.has(ge->getEndVertex()))
+      tags.push_back(-ge->getEndVertex()->tag());
+  }
+  else if(e->dim() == 2) {
+    GFace *gf = static_cast<GFace *>(e);
+    const std::vector<GEdge *> &edges = gf->edges();
+    const std::vector<int> ori = gf->boundaryOrientations();
+    const bool oriented = (ori.size() == edges.size());
+    for(std::size_t i = 0; i < edges.size(); i++)
+      if(sets.has(edges[i]))
+        tags.push_back((oriented && ori[i] <= 0) ? -edges[i]->tag() :
+                                                   edges[i]->tag());
+    if(version < 4.2)
+      for(auto ge : gf->embeddedEdges())
+        if(sets.has(ge)) tags.push_back(ge->tag() + maxEdgeTag);
+  }
+  else if(e->dim() == 3) {
+    GRegion *gr = static_cast<GRegion *>(e);
+    const std::vector<GFace *> &faces = gr->faces();
+    const std::vector<int> &ori = gr->faceOrientations();
+    const bool oriented = (ori.size() == faces.size());
+    for(std::size_t i = 0; i < faces.size(); i++)
+      if(sets.has(faces[i]))
+        tags.push_back((oriented && ori[i] <= 0) ? -faces[i]->tag() :
+                                                   faces[i]->tag());
+  }
+  return tags;
+}
 
+// the embedded entities of an entity (MSH 4.2), those that are written
+static void writeMSH4EmbeddedEntities(FILE *fp, GEntity *const entity,
+                                      bool binary, const msh4EntitySets &sets)
+{
+  std::vector<int> tags; // (dim, tag) pairs
+  auto add = [&](GEntity *e) {
+    if(!sets.has(e)) return;
+    tags.push_back(e->dim());
+    tags.push_back(e->tag());
+  };
+  if(entity->dim() == 2) {
+    GFace *gf = static_cast<GFace *>(entity);
+    for(auto v : gf->embeddedVertices()) add(v);
+    for(auto e : gf->embeddedEdges()) add(e);
+  }
+  else if(entity->dim() == 3) {
+    GRegion *gr = static_cast<GRegion *>(entity);
+    for(auto v : gr->embeddedVertices()) add(v);
+    for(auto e : gr->embeddedEdges()) add(e);
+    for(auto f : gr->embeddedFaces()) add(f);
+  }
+  std::size_t numEmb = tags.size() / 2;
   if(binary) {
-    if(partition) {
-      std::size_t numPartitions = model->getNumPartitions();
-      fwrite(&numPartitions, sizeof(std::size_t), 1, fp);
-
-      // write the ghostentities' tag
-      std::size_t ghostSize = ghost.size();
-      std::vector<int> tags;
-      if(ghostSize) {
-        tags.resize(2 * ghostSize);
-        int index = 0;
-        for(auto it = ghost.begin(); it != ghost.end(); ++it) {
-          if((*it)->geomType() == GEntity::GhostCurve) {
-            tags[index] = (*it)->tag();
-            tags[++index] = static_cast<ghostEdge *>(*it)->getPartition();
-          }
-          else if((*it)->geomType() == GEntity::GhostSurface) {
-            tags[index] = (*it)->tag();
-            tags[++index] = static_cast<ghostFace *>(*it)->getPartition();
-          }
-          else if((*it)->geomType() == GEntity::GhostVolume) {
-            tags[index] = (*it)->tag();
-            tags[++index] = static_cast<ghostRegion *>(*it)->getPartition();
-          }
-          index++;
-        }
-      }
-      fwrite(&ghostSize, sizeof(std::size_t), 1, fp);
-      if(ghostSize) { fwrite(&tags[0], sizeof(int), 2 * ghostSize, fp); }
-    }
-    std::size_t verticesSize = vertices.size();
-    std::size_t edgesSize = edges.size();
-    std::size_t facesSize = faces.size();
-    std::size_t regionsSize = regions.size();
-    fwrite(&verticesSize, sizeof(std::size_t), 1, fp);
-    fwrite(&edgesSize, sizeof(std::size_t), 1, fp);
-    fwrite(&facesSize, sizeof(std::size_t), 1, fp);
-    fwrite(&regionsSize, sizeof(std::size_t), 1, fp);
-
-    for(auto it = vertices.begin(); it != vertices.end(); ++it) {
-      int entityTag = (*it)->tag();
-      fwrite(&entityTag, sizeof(int), 1, fp);
-      if(partition) {
-        partitionVertex *pv = static_cast<partitionVertex *>(*it);
-        int parentEntityDim = 0, parentEntityTag = 0;
-        if(pv->getParentEntity()) {
-          parentEntityDim = pv->getParentEntity()->dim();
-          parentEntityTag = pv->getParentEntity()->tag();
-        }
-        fwrite(&parentEntityDim, sizeof(int), 1, fp);
-        fwrite(&parentEntityTag, sizeof(int), 1, fp);
-        std::vector<int> partitions(pv->getPartitions().begin(),
-                                    pv->getPartitions().end()); // FIXME
-        std::size_t numPart = partitions.size();
-        fwrite(&numPart, sizeof(std::size_t), 1, fp);
-        fwrite(&partitions[0], sizeof(int), partitions.size(), fp);
-      }
-      SBoundingBox3d bb = entityBounds ? (*entityBounds)[*it] : (*it)->bounds();
-      writeMSH4BoundingBox(bb, fp, scalingFactor, binary, 0, version);
-      writeMSH4Physicals(fp, *it, binary);
-    }
-
-    int maxEdgeTag = 0;
-    for(auto it = edges.begin(); it != edges.end(); ++it) {
-      std::vector<GVertex *> vertices;
-      std::vector<int> ori;
-
-      maxEdgeTag = std::max(maxEdgeTag, (*it)->tag());
-
-      if((*it)->getBeginVertex()) {
-        vertices.push_back((*it)->getBeginVertex());
-        ori.push_back(1);
-      }
-      if((*it)->getEndVertex()) { // convention that the end vertex is negative
-        vertices.push_back((*it)->getEndVertex());
-        ori.push_back(-1);
-      }
-      std::size_t verticesSize = vertices.size();
-      int entityTag = (*it)->tag();
-      fwrite(&entityTag, sizeof(int), 1, fp);
-      if(partition) {
-        partitionEdge *pe = static_cast<partitionEdge *>(*it);
-        int parentEntityDim = 0, parentEntityTag = 0;
-        if(pe->getParentEntity()) {
-          parentEntityDim = pe->getParentEntity()->dim();
-          parentEntityTag = pe->getParentEntity()->tag();
-        }
-        fwrite(&parentEntityDim, sizeof(int), 1, fp);
-        fwrite(&parentEntityTag, sizeof(int), 1, fp);
-        std::vector<int> partitions(pe->getPartitions().begin(),
-                                    pe->getPartitions().end()); // FIXME
-        std::size_t numPart = partitions.size();
-        fwrite(&numPart, sizeof(std::size_t), 1, fp);
-        fwrite(&partitions[0], sizeof(int), partitions.size(), fp);
-      }
-      SBoundingBox3d bb = entityBounds ? (*entityBounds)[*it] : (*it)->bounds();
-      writeMSH4BoundingBox(bb, fp, scalingFactor, binary, 1, version);
-      writeMSH4Physicals(fp, *it, binary);
-      fwrite(&verticesSize, sizeof(std::size_t), 1, fp);
-      int oriI = 0;
-      for(auto itv = vertices.begin(); itv != vertices.end(); itv++) {
-        int brepTag = ori[oriI] * (*itv)->tag();
-        fwrite(&brepTag, sizeof(int), 1, fp);
-        oriI++;
-      }
-      if(version >= 4.2) writeMSH4EmbeddedEntities(fp, *it, binary);
-    }
-
-    for(auto it = faces.begin(); it != faces.end(); ++it) {
-      std::vector<GEdge *> const &edges = (*it)->edges();
-      // MSH 4.1 stores the embedded curves with the bounding curves, with a
-      // tag offset by the largest curve tag
-      std::vector<GEdge *> const &embEdges =
-        version < 4.2 ? (*it)->embeddedEdges() : noEdges;
-
-      std::vector<int> const &ori = (*it)->edgeOrientations();
-      std::size_t edgesSize = edges.size() + embEdges.size();
-
-      int entityTag = (*it)->tag();
-      fwrite(&entityTag, sizeof(int), 1, fp);
-      if(partition) {
-        partitionFace *pf = static_cast<partitionFace *>(*it);
-        int parentEntityDim = 0, parentEntityTag = 0;
-        if(pf->getParentEntity()) {
-          parentEntityDim = pf->getParentEntity()->dim();
-          parentEntityTag = pf->getParentEntity()->tag();
-        }
-        fwrite(&parentEntityDim, sizeof(int), 1, fp);
-        fwrite(&parentEntityTag, sizeof(int), 1, fp);
-        std::vector<int> partitions(pf->getPartitions().begin(),
-                                    pf->getPartitions().end()); // FIXME
-        std::size_t numPart = partitions.size();
-        fwrite(&numPart, sizeof(std::size_t), 1, fp);
-        fwrite(&partitions[0], sizeof(int), partitions.size(), fp);
-      }
-      SBoundingBox3d bb = entityBounds ? (*entityBounds)[*it] : (*it)->bounds();
-      writeMSH4BoundingBox(bb, fp, scalingFactor, binary, 2, version);
-      writeMSH4Physicals(fp, *it, binary);
-      fwrite(&edgesSize, sizeof(std::size_t), 1, fp);
-      std::vector<int> tags, signs;
-      for(auto ite = edges.begin(); ite != edges.end(); ite++)
-        tags.push_back((*ite)->tag());
-
-      signs.insert(signs.end(), ori.begin(), ori.end());
-
-      for(auto ite = embEdges.begin(); ite != embEdges.end(); ite++) {
-        tags.push_back((*ite)->tag() + maxEdgeTag);
-        signs.push_back(1);
-      }
-
-      if(tags.size() == signs.size()) {
-        for(std::size_t i = 0; i < tags.size(); i++)
-          tags[i] *= (signs[i] > 0 ? 1 : -1);
-      }
-      for(std::size_t i = 0; i < tags.size(); i++) {
-        int brepTag = tags[i];
-        fwrite(&brepTag, sizeof(int), 1, fp);
-      }
-      if(version >= 4.2) writeMSH4EmbeddedEntities(fp, *it, binary);
-    }
-
-    for(auto it = regions.begin(); it != regions.end(); ++it) {
-      std::vector<GFace *> faces = (*it)->faces();
-      std::vector<int> const &ori = (*it)->faceOrientations();
-      std::size_t facesSize = faces.size();
-      int entityTag = (*it)->tag();
-      fwrite(&entityTag, sizeof(int), 1, fp);
-      if(partition) {
-        partitionRegion *pr = static_cast<partitionRegion *>(*it);
-        int parentEntityDim = 0, parentEntityTag = 0;
-        if(pr->getParentEntity()) {
-          parentEntityDim = pr->getParentEntity()->dim();
-          parentEntityTag = pr->getParentEntity()->tag();
-        }
-        fwrite(&parentEntityDim, sizeof(int), 1, fp);
-        fwrite(&parentEntityTag, sizeof(int), 1, fp);
-        std::vector<int> partitions(pr->getPartitions().begin(),
-                                    pr->getPartitions().end()); // FIXME
-        std::size_t numPart = partitions.size();
-        fwrite(&numPart, sizeof(std::size_t), 1, fp);
-        fwrite(&partitions[0], sizeof(int), partitions.size(), fp);
-      }
-      SBoundingBox3d bb = entityBounds ? (*entityBounds)[*it] : (*it)->bounds();
-      writeMSH4BoundingBox(bb, fp, scalingFactor, binary, 3, version);
-      writeMSH4Physicals(fp, *it, binary);
-      fwrite(&facesSize, sizeof(std::size_t), 1, fp);
-      std::vector<int> tags, signs;
-      for(auto itf = faces.begin(); itf != faces.end(); itf++)
-        tags.push_back((*itf)->tag());
-      for(auto itf = ori.begin(); itf != ori.end(); itf++)
-        signs.push_back(*itf);
-      if(tags.size() == signs.size()) {
-        for(std::size_t i = 0; i < tags.size(); i++)
-          tags[i] *= (signs[i] > 0 ? 1 : -1);
-      }
-      for(std::size_t i = 0; i < tags.size(); i++) {
-        int brepTag = tags[i];
-        fwrite(&brepTag, sizeof(int), 1, fp);
-      }
-      if(version >= 4.2) writeMSH4EmbeddedEntities(fp, *it, binary);
-    }
-    fprintf(fp, "\n");
+    fwrite(&numEmb, sizeof(std::size_t), 1, fp);
+    if(numEmb) fwrite(tags.data(), sizeof(int), tags.size(), fp);
   }
-  else { // not binary --
-    if(partition) {
-      fprintf(fp, "%zu\n", model->getNumPartitions());
-
-      // write the ghostentities' tag
-      std::size_t ghostSize = ghost.size();
-      std::vector<int> tags;
-      if(ghostSize) {
-        tags.resize(2 * ghostSize);
-        int index = 0;
-        for(auto it = ghost.begin(); it != ghost.end(); ++it) {
-          if((*it)->geomType() == GEntity::GhostCurve) {
-            tags[index] = (*it)->tag();
-            tags[++index] = static_cast<ghostEdge *>(*it)->getPartition();
-          }
-          else if((*it)->geomType() == GEntity::GhostSurface) {
-            tags[index] = (*it)->tag();
-            tags[++index] = static_cast<ghostFace *>(*it)->getPartition();
-          }
-          else if((*it)->geomType() == GEntity::GhostVolume) {
-            tags[index] = (*it)->tag();
-            tags[++index] = static_cast<ghostRegion *>(*it)->getPartition();
-          }
-          index++;
-        }
-      }
-      fprintf(fp, "%zu\n", ghostSize);
-      if(ghostSize) {
-        for(std::size_t i = 0; i < 2 * ghostSize; i += 2) {
-          fprintf(fp, "%d %d\n", tags[i], tags[i + 1]);
-        }
-      }
-    }
-    fprintf(fp, "%zu %zu %zu %zu\n", vertices.size(), edges.size(),
-            faces.size(), regions.size());
-
-    for(auto it = vertices.begin(); it != vertices.end(); ++it) {
-      fprintf(fp, "%d ", (*it)->tag());
-      if(partition) {
-        partitionVertex *pv = static_cast<partitionVertex *>(*it);
-        int parentEntityDim = 0, parentEntityTag = 0;
-        if(pv->getParentEntity()) {
-          parentEntityDim = pv->getParentEntity()->dim();
-          parentEntityTag = pv->getParentEntity()->tag();
-        }
-        fprintf(fp, "%d %d ", parentEntityDim, parentEntityTag);
-        std::vector<int> partitions(pv->getPartitions().begin(),
-                                    pv->getPartitions().end()); // FIXME
-        fprintf(fp, "%zu ", partitions.size());
-        for(std::size_t i = 0; i < partitions.size(); i++)
-          fprintf(fp, "%d ", partitions[i]);
-      }
-      SBoundingBox3d bb = entityBounds ? (*entityBounds)[*it] : (*it)->bounds();
-      writeMSH4BoundingBox(bb, fp, scalingFactor, binary, 0, version);
-      writeMSH4Physicals(fp, *it, binary);
-      fprintf(fp, "\n");
-    }
-
-    int maxEdgeTag = 0;
-    for(auto it = edges.begin(); it != edges.end(); ++it) {
-      maxEdgeTag = std::max(maxEdgeTag, (*it)->tag());
-      std::vector<GVertex *> vertices;
-      std::vector<int> ori;
-      if((*it)->getBeginVertex()) {
-        vertices.push_back((*it)->getBeginVertex());
-        ori.push_back(1);
-      }
-      if((*it)->getEndVertex()) { // I use the convention that the end vertex is
-                                  // negative
-        vertices.push_back((*it)->getEndVertex());
-        ori.push_back(-1);
-      }
-      fprintf(fp, "%d ", (*it)->tag());
-      if(partition) {
-        partitionEdge *pe = static_cast<partitionEdge *>(*it);
-        int parentEntityDim = 0, parentEntityTag = 0;
-        if(pe->getParentEntity()) {
-          parentEntityDim = pe->getParentEntity()->dim();
-          parentEntityTag = pe->getParentEntity()->tag();
-        }
-        fprintf(fp, "%d %d ", parentEntityDim, parentEntityTag);
-        std::vector<int> partitions(pe->getPartitions().begin(),
-                                    pe->getPartitions().end()); // FIXME
-        fprintf(fp, "%zu ", partitions.size());
-        for(std::size_t i = 0; i < partitions.size(); i++)
-          fprintf(fp, "%d ", partitions[i]);
-      }
-      SBoundingBox3d bb = entityBounds ? (*entityBounds)[*it] : (*it)->bounds();
-      writeMSH4BoundingBox(bb, fp, scalingFactor, binary, 1, version);
-      writeMSH4Physicals(fp, *it, binary);
-      fprintf(fp, "%zu ", vertices.size());
-      int oriI = 0;
-      for(auto itv = vertices.begin(); itv != vertices.end(); itv++) {
-        fprintf(fp, "%d ", ori[oriI] * (*itv)->tag());
-        oriI++;
-      }
-      if(version >= 4.2) writeMSH4EmbeddedEntities(fp, *it, binary);
-      fprintf(fp, "\n");
-    }
-
-    for(auto it = faces.begin(); it != faces.end(); ++it) {
-      std::vector<GEdge *> const &edges = (*it)->edges();
-      std::vector<GEdge *> const &embEdges =
-        version < 4.2 ? (*it)->embeddedEdges() : noEdges;
-
-      std::vector<int> const &ori = (*it)->edgeOrientations();
-      fprintf(fp, "%d ", (*it)->tag());
-      if(partition) {
-        partitionFace *pf = static_cast<partitionFace *>(*it);
-        int parentEntityDim = 0, parentEntityTag = 0;
-        if(pf->getParentEntity()) {
-          parentEntityDim = pf->getParentEntity()->dim();
-          parentEntityTag = pf->getParentEntity()->tag();
-        }
-        fprintf(fp, "%d %d ", parentEntityDim, parentEntityTag);
-        std::vector<int> partitions(pf->getPartitions().begin(),
-                                    pf->getPartitions().end()); // FIXME
-        fprintf(fp, "%zu ", partitions.size());
-        for(std::size_t i = 0; i < partitions.size(); i++)
-          fprintf(fp, "%d ", partitions[i]);
-      }
-      SBoundingBox3d bb = entityBounds ? (*entityBounds)[*it] : (*it)->bounds();
-      writeMSH4BoundingBox(bb, fp, scalingFactor, binary, 2, version);
-      writeMSH4Physicals(fp, *it, binary);
-      fprintf(fp, "%zu ", edges.size() + embEdges.size());
-      std::vector<int> tags, signs;
-      for(auto ite = edges.begin(); ite != edges.end(); ite++)
-        tags.push_back((*ite)->tag());
-      for(auto ite = ori.begin(); ite != ori.end(); ite++)
-        signs.push_back(*ite);
-      for(auto ite = embEdges.begin(); ite != embEdges.end(); ite++) {
-        tags.push_back((*ite)->tag() + maxEdgeTag);
-        signs.push_back(1);
-      }
-      if(tags.size() == signs.size()) {
-        for(std::size_t i = 0; i < tags.size(); i++)
-          tags[i] *= (signs[i] > 0 ? 1 : -1);
-      }
-      for(std::size_t i = 0; i < tags.size(); i++) fprintf(fp, "%d ", tags[i]);
-      if(version >= 4.2) writeMSH4EmbeddedEntities(fp, *it, binary);
-      fprintf(fp, "\n");
-    }
-
-    for(auto it = regions.begin(); it != regions.end(); ++it) {
-      std::vector<GFace *> const &faces = (*it)->faces();
-      std::vector<int> const &ori = (*it)->faceOrientations();
-      fprintf(fp, "%d ", (*it)->tag());
-      if(partition) {
-        partitionRegion *pr = static_cast<partitionRegion *>(*it);
-        int parentEntityDim = 0, parentEntityTag = 0;
-        if(pr->getParentEntity()) {
-          parentEntityDim = pr->getParentEntity()->dim();
-          parentEntityTag = pr->getParentEntity()->tag();
-        }
-        fprintf(fp, "%d %d ", parentEntityDim, parentEntityTag);
-
-        fprintf(fp, "%zu ", pr->getPartitions().size());
-
-        for(auto const partition : pr->getPartitions()) {
-          fprintf(fp, "%d ", partition);
-        }
-      }
-      SBoundingBox3d bb = entityBounds ? (*entityBounds)[*it] : (*it)->bounds();
-      writeMSH4BoundingBox(bb, fp, scalingFactor, binary, 3, version);
-      writeMSH4Physicals(fp, *it, binary);
-      fprintf(fp, "%zu ", faces.size());
-
-      std::vector<int> tags(faces.size());
-      std::transform(begin(faces), end(faces), begin(tags),
-                     [](const GFace *const face) { return face->tag(); });
-
-      std::vector<int> signs(ori.begin(), ori.end());
-
-      if(tags.size() == signs.size()) {
-        for(std::size_t i = 0; i < tags.size(); i++)
-          tags[i] *= (signs[i] > 0 ? 1 : -1);
-      }
-
-      for(auto const tag : tags) { fprintf(fp, "%d ", tag); }
-      if(version >= 4.2) writeMSH4EmbeddedEntities(fp, *it, binary);
-      fprintf(fp, "\n");
-    }
+  else {
+    fprintf(fp, "%zu ", numEmb);
+    for(auto t : tags) fprintf(fp, "%d ", t);
   }
+}
 
-  if(partition)
-    fprintf(fp, "$EndPartitionedEntities\n");
+static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
+                              bool binary, double scalingFactor,
+                              double version,
+                              std::map<GEntity *, SBoundingBox3d> *entityBounds,
+                              const msh4EntitySets &sets)
+{
+  auto writeInt = [&](int v) {
+    if(binary)
+      fwrite(&v, sizeof(int), 1, fp);
+    else
+      fprintf(fp, "%d ", v);
+  };
+  auto writeSize = [&](std::size_t v) {
+    if(binary)
+      fwrite(&v, sizeof(std::size_t), 1, fp);
+    else
+      fprintf(fp, "%zu ", v);
+  };
+  int maxEdgeTag = 0;
+  for(auto e : sets.edges) maxEdgeTag = std::max(maxEdgeTag, e->tag());
+  auto write = [&](GEntity *e) {
+    writeInt(e->tag());
+    if(partition) {
+      const GEntity *parent = e->getParentEntity();
+      writeInt(parent ? parent->dim() : 0);
+      writeInt(parent ? parent->tag() : 0);
+      const std::vector<int> &partitions =
+        (e->dim() == 0) ? static_cast<partitionVertex *>(e)->getPartitions() :
+        (e->dim() == 1) ? static_cast<partitionEdge *>(e)->getPartitions() :
+        (e->dim() == 2) ? static_cast<partitionFace *>(e)->getPartitions() :
+                          static_cast<partitionRegion *>(e)->getPartitions();
+      writeSize(partitions.size());
+      for(int p : partitions) writeInt(p);
+    }
+    SBoundingBox3d bb = entityBounds ? (*entityBounds)[e] : e->bounds();
+    writeMSH4BoundingBox(bb, fp, scalingFactor, binary, e->dim(), version);
+    writeMSH4Physicals(fp, e, binary);
+    if(e->dim() > 0) {
+      const std::vector<int> tags =
+        msh4BoundingTags(e, sets, version, maxEdgeTag);
+      writeSize(tags.size());
+      for(int t : tags) writeInt(t);
+      if(version >= 4.2) writeMSH4EmbeddedEntities(fp, e, binary, sets);
+    }
+    if(!binary) fprintf(fp, "\n");
+  };
+
+  fprintf(fp, partition ? "$PartitionedEntities\n" : "$Entities\n");
+  if(partition) {
+    // (no ghost entities: the ghost cells are in $GhostElements)
+    if(binary) {
+      writeSize(model->getNumPartitions());
+      writeSize(0);
+    }
+    else
+      fprintf(fp, "%zu\n0\n", model->getNumPartitions());
+  }
+  if(binary) {
+    writeSize(sets.vertices.size());
+    writeSize(sets.edges.size());
+    writeSize(sets.faces.size());
+    writeSize(sets.regions.size());
+  }
   else
-    fprintf(fp, "$EndEntities\n");
+    fprintf(fp, "%zu %zu %zu %zu\n", sets.vertices.size(), sets.edges.size(),
+            sets.faces.size(), sets.regions.size());
+  for(auto e : sets.vertices) write(e);
+  for(auto e : sets.edges) write(e);
+  for(auto e : sets.faces) write(e);
+  for(auto e : sets.regions) write(e);
+  if(binary) fprintf(fp, "\n");
+  fprintf(fp, partition ? "$EndPartitionedEntities\n" : "$EndEntities\n");
+}
+
+// "%zu" and "%.16g" without printf, whose per-call cost dominates the ASCII
+// save of large meshes; the output is the same. std::to_chars for doubles
+// needs gcc 11 (or MSVC): elsewhere doubles still go through snprintf
+static char *writeMSH4Number(char *p, std::size_t v)
+{
+  return std::to_chars(p, p + 24, v).ptr;
+}
+
+static char *writeMSH4Double(char *p, double v)
+{
+#if defined(__cpp_lib_to_chars)
+  if(std::isfinite(v)) // printf and to_chars spell nan differently
+    return std::to_chars(p, p + 32, v, std::chars_format::general, 16).ptr;
+#endif
+  return p + snprintf(p, 32, "%.16g", v);
 }
 
 template <class It>
@@ -3484,30 +3345,30 @@ static void writeMSH4EntityNodes(GEntity *ge, FILE *fp, bool binary,
     fwrite(&coord[0], sizeof(double), n * numVerts, fp);
   }
   else {
+    char line[256];
     if(version >= 4.1) {
-      for(auto it = begin; it != end; ++it)
-        fprintf(fp, "%zu\n", (*it)->getNum());
+      for(auto it = begin; it != end; ++it) {
+        char *p = writeMSH4Number(line, (*it)->getNum());
+        *p++ = '\n';
+        fwrite(line, 1, p - line, fp);
+      }
     }
     for(auto it = begin; it != end; ++it) {
       MVertex *mv = *it;
-      double x = mv->x() * scalingFactor;
-      double y = mv->y() * scalingFactor;
-      double z = mv->z() * scalingFactor;
-      if(version < 4.1) fprintf(fp, "%zu ", mv->getNum());
-      if(n == 5) {
-        double u, v;
-        mv->getParameter(0, u);
-        mv->getParameter(1, v);
-        fprintf(fp, "%.16g %.16g %.16g %.16g %.16g\n", x, y, z, u, v);
+      double c[5] = {mv->x() * scalingFactor, mv->y() * scalingFactor,
+                     mv->z() * scalingFactor, 0., 0.};
+      if(n >= 4) mv->getParameter(0, c[3]);
+      if(n == 5) mv->getParameter(1, c[4]);
+      char *p = line;
+      if(version < 4.1) {
+        p = writeMSH4Number(p, mv->getNum());
+        *p++ = ' ';
       }
-      else if(n == 4) {
-        double u;
-        mv->getParameter(0, u);
-        fprintf(fp, "%.16g %.16g %.16g %.16g\n", x, y, z, u);
+      for(std::size_t i = 0; i < n; i++) {
+        p = writeMSH4Double(p, c[i]);
+        *p++ = (i + 1 < n) ? ' ' : '\n';
       }
-      else {
-        fprintf(fp, "%.16g %.16g %.16g\n", x, y, z);
-      }
+      fwrite(line, 1, p - line, fp);
     }
   }
 }
@@ -3658,16 +3519,10 @@ static void getEntitiesToSave(GModel *const model, bool partitioned,
   auto matchesPartition = [&](const std::vector<int> &entityPartitions) {
     // if no partition is specified, save all partitions
     if(partitionsToSave.empty()) return true;
-    for(int p : partitionsToSave)
-      if(std::find(entityPartitions.begin(), entityPartitions.end(), p) !=
-         entityPartitions.end())
+    for(int p : entityPartitions)
+      if(std::binary_search(partitionsToSave.begin(), partitionsToSave.end(), p))
         return true;
     return false;
-  };
-  auto matchesGhost = [&](int ghostPartition) {
-    if(partitionsToSave.empty()) return false;
-    return std::find(partitionsToSave.begin(), partitionsToSave.end(),
-                     ghostPartition) != partitionsToSave.end();
   };
   if(partitioned) {
     for(auto it = model->firstVertex(); it != model->lastVertex(); ++it) {
@@ -3687,10 +3542,6 @@ static void getEntitiesToSave(GModel *const model, bool partitioned,
         if(matchesPartition(pe->getPartitions()))
           edges.insert(pe);
       }
-      else if((*it)->geomType() == GEntity::GhostCurve) {
-        ghostEdge *ge = static_cast<ghostEdge *>(*it);
-        if(matchesGhost(ge->getPartition())) edges.insert(ge);
-      }
     }
     for(auto it = model->firstFace(); it != model->lastFace(); ++it) {
       if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
@@ -3700,20 +3551,12 @@ static void getEntitiesToSave(GModel *const model, bool partitioned,
         if(matchesPartition(pf->getPartitions()))
           faces.insert(pf);
       }
-      else if((*it)->geomType() == GEntity::GhostSurface) {
-        ghostFace *gf = static_cast<ghostFace *>(*it);
-        if(matchesGhost(gf->getPartition())) faces.insert(gf);
-      }
     }
     for(auto it = model->firstRegion(); it != model->lastRegion(); ++it) {
       if((*it)->geomType() == GEntity::PartitionVolume) {
         partitionRegion *pr = static_cast<partitionRegion *>(*it);
         if(matchesPartition(pr->getPartitions()))
           regions.insert(pr);
-      }
-      else if((*it)->geomType() == GEntity::GhostVolume) {
-        ghostRegion *gr = static_cast<ghostRegion *>(*it);
-        if(matchesGhost(gr->getPartition())) regions.insert(gr);
       }
     }
   }
@@ -3729,22 +3572,19 @@ static void getEntitiesToSave(GModel *const model, bool partitioned,
       if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
         continue;
       if((*it)->geomType() != GEntity::PartitionCurve &&
-         (saveAll || (!saveAll && (*it)->getPhysicalEntities().size() != 0) ||
-          (*it)->geomType() == GEntity::GhostCurve))
+         (saveAll || (!saveAll && (*it)->getPhysicalEntities().size() != 0)))
         edges.insert(*it);
     }
     for(auto it = model->firstFace(); it != model->lastFace(); ++it) {
       if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
         continue;
       if((*it)->geomType() != GEntity::PartitionSurface &&
-         (saveAll || (!saveAll && (*it)->getPhysicalEntities().size() != 0) ||
-          (*it)->geomType() == GEntity::GhostSurface))
+         (saveAll || (!saveAll && (*it)->getPhysicalEntities().size() != 0)))
         faces.insert(*it);
     }
     for(auto it = model->firstRegion(); it != model->lastRegion(); ++it) {
       if((*it)->geomType() != GEntity::PartitionVolume &&
-         (saveAll || (!saveAll && (*it)->getPhysicalEntities().size() != 0) ||
-          (*it)->geomType() == GEntity::GhostVolume))
+         (saveAll || (!saveAll && (*it)->getPhysicalEntities().size() != 0)))
         regions.insert(*it);
     }
   }
@@ -4011,7 +3851,8 @@ static void writeMSH4Elements(
   const std::vector<int> &partitionsToSave, bool binary, bool saveAll,
   double version,
   const std::variant<std::monostate, CoveredElementsMap<2>,
-                     CoveredElementsMap<3>> &overlapElements)
+                     CoveredElementsMap<3>> &overlapElements,
+  const std::map<std::pair<int, int>, std::vector<MElement *>> &ghostElements)
 {
   /**
    * If the mesh is partitioned and only one partition is saved, we save
@@ -4041,8 +3882,7 @@ static void writeMSH4Elements(
         if(partitions.size() != 1)
           Msg::Error("Overlap boundary with more than one partition.");
         int partition = *partitions.begin();
-        if(std::find(partitionsToSave.begin(), partitionsToSave.end(),
-                     partition) != partitionsToSave.end()) {
+        if(std::binary_search(partitionsToSave.begin(), partitionsToSave.end(), partition)) {
           if constexpr(std::is_same_v<ContainerType,
                                       std::unordered_set<GEdge *>>) {
             auto cast = static_cast<GEdge *>(entity);
@@ -4090,8 +3930,7 @@ static void writeMSH4Elements(
   }
 
   for(auto it = edges.begin(); it != edges.end(); ++it) {
-    if(!saveAll && (*it)->physicals.size() == 0 &&
-       (*it)->geomType() != GEntity::GhostCurve && overlapBnd2D.count(*it) == 0)
+    if(!saveAll && (*it)->physicals.size() == 0 && overlapBnd2D.count(*it) == 0)
       continue;
 
     numElements += (*it)->lines.size();
@@ -4103,7 +3942,6 @@ static void writeMSH4Elements(
 
   for(auto it = faces.begin(); it != faces.end(); ++it) {
     if(!saveAll && (*it)->physicals.size() == 0 &&
-       (*it)->geomType() != GEntity::GhostSurface &&
        overlapBnd3D.count(*it) == 0)
       continue;
 
@@ -4136,9 +3974,7 @@ static void writeMSH4Elements(
         // elements are referenced by tag in $Overlaps2D and the reader has no
         // tolerance for missing ones, so the physicals/saveAll filter must not
         // drop them
-        if(faces.count(pface) &&
-           (saveAll || pface->physicals.size() ||
-            pface->geomType() == GEntity::GhostSurface))
+        if(faces.count(pface) && (saveAll || pface->physicals.size()))
           continue; // already saved
 
         numElements += elements.size();
@@ -4151,9 +3987,7 @@ static void writeMSH4Elements(
   }
 
   for(auto it = regions.begin(); it != regions.end(); ++it) {
-    if(!saveAll && (*it)->physicals.size() == 0 &&
-       (*it)->geomType() != GEntity::GhostVolume)
-      continue;
+    if(!saveAll && (*it)->physicals.size() == 0) continue;
 
     numElements += (*it)->tetrahedra.size();
     for(std::size_t i = 0; i < (*it)->tetrahedra.size(); i++) {
@@ -4199,9 +4033,7 @@ static void writeMSH4Elements(
         // elements are referenced by tag in $Overlaps3D and the reader has no
         // tolerance for missing ones, so the physicals/saveAll filter must not
         // drop them
-        if(regions.count(pregion) &&
-           (saveAll || pregion->physicals.size() ||
-            pregion->geomType() == GEntity::GhostVolume))
+        if(regions.count(pregion) && (saveAll || pregion->physicals.size()))
           continue; // already saved
 
         numElements += elements.size();
@@ -4210,6 +4042,20 @@ static void writeMSH4Elements(
           elementsByType[3][p].push_back(element);
         }
       }
+    }
+  }
+
+  // the ghost cells of the partitions saved, in their partition entities
+  // (unless saved there already, as elements covered by overlaps)
+  for(auto &g : ghostElements) {
+    const int dim = g.first.first, tag = g.first.second;
+    std::unordered_set<MElement *> saved;
+    for(auto &b : elementsByType[dim])
+      if(b.first.first == tag) saved.insert(b.second.begin(), b.second.end());
+    for(MElement *e : g.second) {
+      if(saved.count(e)) continue;
+      elementsByType[dim][std::make_pair(tag, e->getTypeForMSH())].push_back(e);
+      numElements++;
     }
   }
 
@@ -4283,13 +4129,19 @@ static void writeMSH4Elements(
           }
         }
         else {
+          std::vector<char> line;
           for(std::size_t i = 0; i < N; i++) {
             MElement *e = it->second[i];
-            fprintf(fp, "%zu ", e->getNum());
-            for(std::size_t i = 0; i < e->getNumVertices(); i++) {
-              fprintf(fp, "%zu ", e->getVertex(i)->getNum());
+            std::size_t nv = e->getNumVertices();
+            line.resize(25 * (nv + 1) + 1);
+            char *p = writeMSH4Number(line.data(), e->getNum());
+            *p++ = ' ';
+            for(std::size_t j = 0; j < nv; j++) {
+              p = writeMSH4Number(p, e->getVertex(j)->getNum());
+              *p++ = ' ';
             }
-            fprintf(fp, "\n");
+            *p++ = '\n';
+            fwrite(line.data(), 1, p - line.data(), fp);
           }
         }
       }
@@ -4328,12 +4180,12 @@ static void edgesOrFacesToSave(GModel *const model, const Set &set,
   entities.insert(entities.end(), regions.begin(), regions.end());
   for(const auto &mgr : model->getOverlapManagers()) {
     for(const auto &of : std::get<0>(mgr.getAllOverlaps()))
-      if(std::find(partitionsToSave.begin(), partitionsToSave.end(),
-                   of->owningPartition()) != partitionsToSave.end())
+      if(std::binary_search(partitionsToSave.begin(), partitionsToSave.end(),
+                            of->owningPartition()))
         entities.push_back(of);
     for(const auto &orr : std::get<1>(mgr.getAllOverlaps()))
-      if(std::find(partitionsToSave.begin(), partitionsToSave.end(),
-                   orr->owningPartition()) != partitionsToSave.end())
+      if(std::binary_search(partitionsToSave.begin(), partitionsToSave.end(),
+                            orr->owningPartition()))
         entities.push_back(orr);
   }
   std::vector<MElement *> elements;
@@ -4480,8 +4332,12 @@ static void writeMSH4Faces(GModel *const model, FILE *fp, bool binary,
   fprintf(fp, "$EndFaces\n");
 }
 
+// (only the links between the entities written, if given)
 static void writeMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
-                                   double version)
+                                   double version,
+                                   const msh4EntitySets *written = nullptr,
+                                   const msh4EntitySets *writtenPartition =
+                                     nullptr)
 {
   // To avoid saving correspondences bwteen nodes that are not saved (either in
   // the same file or not at all, e.g. in the partitioned case, or simply if
@@ -4491,11 +4347,20 @@ static void writeMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
   // The current choice is to save everything, and not complain if a node is not
   // found when reading the file. This should be reevaluated at some point.
 
+  auto isWritten = [&](GEntity *e) {
+    return !written || written->has(e) ||
+           (writtenPartition && writtenPartition->has(e));
+  };
   std::size_t count = 0;
-  std::vector<GEntity *> entities;
+  std::vector<GEntity *> entities, linked;
   model->getEntities(entities);
-  for(std::size_t i = 0; i < entities.size(); i++)
-    if(entities[i]->getMeshMaster() != entities[i]) count++;
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    GEntity *master = entities[i]->getMeshMaster();
+    if(master != entities[i] && isWritten(entities[i]) && isWritten(master))
+      linked.push_back(entities[i]);
+  }
+  entities.swap(linked);
+  count = entities.size();
 
   if(!count) return;
 
@@ -4514,7 +4379,7 @@ static void writeMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
       std::map<MVertex *, MVertex *, MVertexPtrLessThan> corrVert;
       corrVert.insert(g_slave->correspondingVertices.begin(),
                       g_slave->correspondingVertices.end());
-      if(CTX::instance()->mesh.hoSavePeriodic)
+      if(CTX::instance()->mesh.hoSavePeriodic || g_slave->getParentEntity())
         corrVert.insert(g_slave->correspondingHighOrderVertices.begin(),
                         g_slave->correspondingHighOrderVertices.end());
 
@@ -4586,38 +4451,72 @@ static void writeMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
   fprintf(fp, "$EndPeriodic\n");
 }
 
-static void writeMSH4GhostCells(GModel *const model, FILE *fp,
-                                const std::vector<int> &partitionsToSave,
-                                bool binary, double version)
+// The ghost cells of each partition (see GModel::getGhostCells()), by the
+// dimension and tag of the partition entity of their elements: only those of
+// the elements saved
+typedef std::vector<std::map<std::pair<int, int>, std::vector<MElement *>>>
+  msh4GhostCells;
+static void getMSH4GhostCells(GModel *const model, bool saveAll,
+                              msh4GhostCells &ghosts)
 {
+  ghosts.clear();
+  if(model->getGhostCells().empty()) return;
+  ghosts.resize(model->getNumPartitions() + 1);
   std::vector<GEntity *> entities;
   model->getEntities(entities);
-  // the tags of the elements of each partition that are ghosts in another
+  // the partition entity of each element saved, by tag (its index plus one)
+  // and the element itself
+  std::vector<int> entityOf(model->getMaxElementNumber() + 1, 0);
+  std::vector<MElement *> elementOf(entityOf.size(), nullptr);
+  for(std::size_t k = 0; k < entities.size(); k++) {
+    GEntity *ge = entities[k];
+    const std::vector<int> *p = partitionsOf(ge);
+    if(!p || p->empty() || (!saveAll && ge->physicals.empty())) continue;
+    for(std::size_t i = 0; i < ge->getNumMeshElements(); i++) {
+      MElement *e = ge->getMeshElement(i);
+      std::size_t num = e->getNum();
+      if(num >= entityOf.size()) {
+        entityOf.resize(num + 1, 0);
+        elementOf.resize(num + 1, nullptr);
+      }
+      entityOf[num] = k + 1;
+      elementOf[num] = e;
+    }
+  }
+  for(auto &g : model->getGhostCells()) {
+    std::size_t num = g.first;
+    if(num >= entityOf.size() || !entityOf[num] || g.second < 1 ||
+       g.second >= (int)ghosts.size())
+      continue;
+    GEntity *ge = entities[entityOf[num] - 1];
+    ghosts[g.second][std::make_pair(ge->dim(), ge->tag())].push_back(
+      elementOf[num]);
+  }
+}
+
+// The ghost cells of the partitions saved (all if partitionsToSave is empty),
+// in blocks of the elements of a partition that are ghosts in another: the
+// partition of an element is that of its partition entity, or, for an entity
+// of several partitions, the first
+static void writeMSH4GhostCells(GModel *const model, FILE *fp,
+                                const std::vector<int> &partitionsToSave,
+                                bool binary, double version,
+                                const msh4GhostCells &ghosts)
+{
   std::map<std::pair<int, int>, std::vector<std::size_t>> blocks;
   std::size_t numGhosts = 0;
-  for(std::size_t i = 0; i < entities.size(); i++) {
-    std::map<MElement *, int, MElementPtrLessThan> ghostElements;
-    int partition = -1;
-    if(entities[i]->geomType() == GEntity::GhostCurve) {
-      ghostElements = static_cast<ghostEdge *>(entities[i])->getGhostCells();
-      partition = static_cast<ghostEdge *>(entities[i])->getPartition();
-    }
-    else if(entities[i]->geomType() == GEntity::GhostSurface) {
-      ghostElements = static_cast<ghostFace *>(entities[i])->getGhostCells();
-      partition = static_cast<ghostFace *>(entities[i])->getPartition();
-    }
-    else if(entities[i]->geomType() == GEntity::GhostVolume) {
-      ghostElements = static_cast<ghostRegion *>(entities[i])->getGhostCells();
-      partition = static_cast<ghostRegion *>(entities[i])->getPartition();
-    }
-    if(partitionsToSave.empty() ||
-       std::find(partitionsToSave.begin(), partitionsToSave.end(), partition) !=
-         partitionsToSave.end()) {
-      for(auto it = ghostElements.begin(); it != ghostElements.end(); ++it) {
-        blocks[std::make_pair(it->second, partition)].push_back(
-          it->first->getNum());
-        numGhosts++;
-      }
+  for(std::size_t q = 1; q < ghosts.size(); q++) {
+    if(!partitionsToSave.empty() &&
+       !std::binary_search(partitionsToSave.begin(), partitionsToSave.end(),
+                           (int)q))
+      continue;
+    for(auto &g : ghosts[q]) {
+      GEntity *ge = model->getEntityByTag(g.first.first, g.first.second);
+      const std::vector<int> *p = ge ? partitionsOf(ge) : nullptr;
+      if(!p || p->empty()) continue;
+      std::vector<std::size_t> &tags = blocks[std::make_pair(p->front(), q)];
+      for(MElement *e : g.second) tags.push_back(e->getNum());
+      numGhosts += g.second.size();
     }
   }
   if(blocks.empty()) return;
@@ -4759,8 +4658,7 @@ static void writeMSH4Overlaps(GModel *const model, FILE *fp,
     std::vector<typename EntityTraits<dim>::OverlapEntity *> overlapsToSave;
     for(const auto &overlap : allOverlaps) {
       if(partitionsToSave.empty() ||
-         std::find(partitionsToSave.begin(), partitionsToSave.end(),
-                   overlap->owningPartition()) != partitionsToSave.end()) {
+         std::binary_search(partitionsToSave.begin(), partitionsToSave.end(), overlap->owningPartition())) {
         overlapsToSave.push_back(overlap);
       }
     }
@@ -4867,11 +4765,10 @@ static void writeMSH4EntityOverlapPairs(FILE *fp, bool binary,
     for(const auto &boundary : boundaries) {
       auto partitions = boundary->getPartitions();
       if(partitionsToSave.empty() ||
-         std::any_of(partitionsToSave.begin(), partitionsToSave.end(),
-                     [&](int p) {
-                       return std::find(partitions.begin(), partitions.end(),
-                                        p) != partitions.end();
-                     })) {
+         std::any_of(partitions.begin(), partitions.end(), [&](int p) {
+           return std::binary_search(partitionsToSave.begin(),
+                                     partitionsToSave.end(), p);
+         })) {
         boundariesToSave.push_back(boundary);
       }
     }
@@ -4991,10 +4888,66 @@ writeMSH4OverlapInterfaceBoundaries(GModel *const model, FILE *fp,
   fprintf(fp, "$EndOverlapInterfaceBoundaries%dD\n", dim);
 }
 
-int GModel::_writeMSH4(const std::string &name, double version, bool binary,
-                       bool saveAll, bool saveParametric, double scalingFactor,
-                       bool append, const std::vector<int> &partitionsToSave,
-                       std::map<GEntity *, SBoundingBox3d> *entityBounds)
+// In the file of some partitions, their ghost cells (elements of the others,
+// saved in their partition entities, by dimension and tag) and the nodes to
+// save on the entities that are not saved: those of the elements of the
+// partitions and of their ghost cells (the entities of the ghost cells are
+// declared even if no nodes of theirs are saved)
+static void getMSH4GhostCellsToSave(
+  GModel *const model, const std::vector<int> &partitionsToSave, bool saveAll,
+  const msh4GhostCells &ghosts,
+  std::map<std::pair<int, int>, std::vector<MElement *>> &ghostElements,
+  EntityToVerticesMap &nodes)
+{
+  if(ghosts.empty()) return;
+  std::set<GRegion *, GEntityPtrLessThan> regions;
+  std::set<GFace *, GEntityPtrLessThan> faces;
+  std::set<GEdge *, GEntityPtrLessThan> edges;
+  std::set<GVertex *, GEntityPtrLessThan> vertices;
+  getEntitiesToSave(model, true, partitionsToSave, saveAll, regions, faces,
+                    edges, vertices);
+  std::unordered_set<GEntity *> saved;
+  saved.insert(regions.begin(), regions.end());
+  saved.insert(faces.begin(), faces.end());
+  saved.insert(edges.begin(), edges.end());
+  saved.insert(vertices.begin(), vertices.end());
+  for(int q : partitionsToSave) {
+    if(q < 1 || q >= (int)ghosts.size()) continue;
+    for(auto &g : ghosts[q]) {
+      GEntity *ge = model->getEntityByTag(g.first.first, g.first.second);
+      if(!ge || saved.count(ge)) continue;
+      std::vector<MElement *> &v = ghostElements[g.first];
+      v.insert(v.end(), g.second.begin(), g.second.end());
+    }
+  }
+  if(ghostElements.empty()) return;
+  auto add = [&](MElement *e) {
+    for(std::size_t j = 0; j < e->getNumVertices(); j++) {
+      MVertex *v = e->getVertex(j);
+      if(v->onWhat() && !saved.count(v->onWhat())) nodes[v->onWhat()].insert(v);
+    }
+  };
+  for(GEntity *ge : saved)
+    if(saveAll || ge->physicals.size())
+      for(std::size_t i = 0; i < ge->getNumMeshElements(); i++)
+        add(ge->getMeshElement(i));
+  for(auto &g : ghostElements) {
+    // (a ghost cell of several of the partitions once)
+    std::sort(g.second.begin(), g.second.end(), MElementPtrLessThan());
+    g.second.erase(std::unique(g.second.begin(), g.second.end()),
+                   g.second.end());
+    nodes[model->getEntityByTag(g.first.first, g.first.second)];
+    for(MElement *e : g.second) add(e);
+  }
+}
+
+int GModel::_writeMSH4(
+  const std::string &name, double version, bool binary, bool saveAll,
+  bool saveParametric, double scalingFactor, bool append,
+  const std::vector<int> &partitionsToSaveIn,
+  std::map<GEntity *, SBoundingBox3d> *entityBounds,
+  const std::vector<std::map<std::pair<int, int>, std::vector<MElement *>>>
+    *ghostCells)
 {
   FILE *fp = nullptr;
   if(append)
@@ -5038,14 +4991,13 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
     fprintf(fp, "$EndPhysicalNames\n");
   }
 
-  // entities (the non-partitioned ones)
-  writeMSH4Entities(this, fp, false, binary, scalingFactor, version,
-                    entityBounds, {}, {});
-
   // check if the mesh is partitioned... and if we actually have elements in the
   // partitioned entities
   bool partitioned = getNumPartitions() > 0;
+  // Sort to enable binary search instead of std::find (faster for large lists)
+  std::vector<int> partitionsToSave(partitionsToSaveIn);
   if(partitioned) {
+    std::sort(partitionsToSave.begin(), partitionsToSave.end());
     std::vector<GEntity *> entities;
     getEntities(entities);
     std::size_t partEnt = 0;
@@ -5053,10 +5005,7 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
       if(ge->geomType() == GEntity::PartitionPoint ||
          ge->geomType() == GEntity::PartitionCurve ||
          ge->geomType() == GEntity::PartitionSurface ||
-         ge->geomType() == GEntity::PartitionVolume ||
-         ge->geomType() == GEntity::GhostCurve ||
-         ge->geomType() == GEntity::GhostSurface ||
-         ge->geomType() == GEntity::GhostVolume)
+         ge->geomType() == GEntity::PartitionVolume)
         partEnt++;
     }
     if(!partEnt) {
@@ -5096,11 +5045,36 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
         this, partitionsToSave, std::get<2>(nonOwnedEntitiesToSave));
   }
 
-  // partitioned entities (use entitiesWithSubsetToExport to limit nodes)
+  // The ghost cells; and, in the file of some partitions only, theirs:
+  // elements of the other partitions, saved in their partition entities with
+  // the nodes that they need (as are the nodes of the elements of the
+  // partitions on the entities of the others)
+  msh4GhostCells foundGhostCells;
+  if(partitioned && !ghostCells) {
+    getMSH4GhostCells(this, saveAll, foundGhostCells);
+    ghostCells = &foundGhostCells;
+  }
+  std::map<std::pair<int, int>, std::vector<MElement *>> ghostElements;
+  if(partitioned && !partitionsToSave.empty())
+    getMSH4GhostCellsToSave(this, partitionsToSave, saveAll, *ghostCells,
+                            ghostElements, entitiesWithSubsetToExport);
+
+  // the entities, and the partition entities (use entitiesWithSubsetToExport
+  // to limit nodes); in the file of some partitions with
+  // Mesh.PartitionSplitLocalBrep, only the parents of their partition entities
+  const bool localBrep = partitioned && !partitionsToSave.empty() &&
+                         CTX::instance()->mesh.partitionSplitLocalBrep;
+  msh4EntitySets entitySets, partitionSets;
+  if(partitioned)
+    getMSH4EntitiesToWrite(this, true, partitionsToSave,
+                           entitiesWithSubsetToExport, partitionSets);
+  getMSH4EntitiesToWrite(this, false, {}, {}, entitySets,
+                         localBrep ? &partitionSets : nullptr);
+  writeMSH4Entities(this, fp, false, binary, scalingFactor, version,
+                    entityBounds, entitySets);
   if(partitioned)
     writeMSH4Entities(this, fp, true, binary, scalingFactor, version,
-                      entityBounds, partitionsToSave,
-                      entitiesWithSubsetToExport);
+                      entityBounds, partitionSets);
 
   // nodes
   writeMSH4Nodes(this, fp, partitioned, partitionsToSave, binary,
@@ -5109,7 +5083,7 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
 
   // elements
   writeMSH4Elements(this, fp, partitioned, partitionsToSave, binary, saveAll,
-                    version, nonOwnedEntitiesToSave);
+                    version, nonOwnedEntitiesToSave, ghostElements);
 
   // edges
   writeMSH4Edges(this, fp, binary, partitioned, partitionsToSave);
@@ -5118,10 +5092,14 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
   writeMSH4Faces(this, fp, binary, partitioned, partitionsToSave, version);
 
   // periodic
-  writeMSH4PeriodicNodes(this, fp, binary, version);
+  writeMSH4PeriodicNodes(this, fp, binary, version,
+                         localBrep ? &entitySets : nullptr,
+                         localBrep ? &partitionSets : nullptr);
 
   // ghostCells
-  writeMSH4GhostCells(this, fp, partitionsToSave, binary, version);
+  if(partitioned)
+    writeMSH4GhostCells(this, fp, partitionsToSave, binary, version,
+                        *ghostCells);
 
   // overlaps
   if(partitioned && overlapDim > 0) {
@@ -5176,6 +5154,10 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
     entityBounds[entities[i]] = bounds[i];
   }
 
+  // the ghost cells of all the partitions, found once
+  msh4GhostCells ghostCells;
+  getMSH4GhostCells(this, saveAll || noPhysicalGroups(), ghostCells);
+
   bool exceptions = false;
 #pragma omp parallel for num_threads(nthreads)
   for(std::size_t part = 1; part <= getNumPartitions(); part++) {
@@ -5194,7 +5176,7 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
     }
     try { // OpenMP forbids leaving block via exception
       _writeMSH4(sstream.str(), version, binary, saveAll, saveParametric,
-                 scalingFactor, false, {(int)part}, &entityBounds);
+                 scalingFactor, false, {(int)part}, &entityBounds, &ghostCells);
     } catch(...) {
       exceptions = true;
     }

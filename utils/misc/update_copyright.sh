@@ -24,5 +24,4 @@ done
 #   contrib/mobile/androidUtils.cpp
 #   contrib/mobile/iOS/Onelab/AboutViewController.mm
 #   contrib/mobile/Android/app/src/main/java/org/geuz/onelab/AboutActivity.java
-#   contrib/onelab/README.txt
-#   contrib/onelab/python/onelab.py
+#   utils/solvers/python/onelab.py

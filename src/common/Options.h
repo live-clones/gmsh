@@ -8,23 +8,7 @@
 
 #include <string>
 #include "ColorTable.h"
-
-#define GMSH_SET (1 << 0)
-#define GMSH_GET (1 << 1)
-#define GMSH_GUI (1 << 2)
-#define GMSH_SET_DEFAULT (1 << 3)
-#define GMSH_GET_DEFAULT (1 << 4)
-
-#define GMSH_SESSIONRC (1 << 0)
-#define GMSH_OPTIONSRC (1 << 1)
-#define GMSH_FULLRC (1 << 2)
-#define GMSH_DEPRECATED (1 << 3)
-
-// action is a combination of GMSH_SET, GMSH_GET, GMSH_GUI
-
-#define OPT_ARGS_STR int num, int action, const std::string &val
-#define OPT_ARGS_NUM int num, int action, double val
-#define OPT_ARGS_COL int num, int action, unsigned int val
+#include "OptionEntries.h"
 
 // STRINGS
 
@@ -199,6 +183,10 @@ double opt_general_plugin_offset0(OPT_ARGS_NUM);
 double opt_general_plugin_offset1(OPT_ARGS_NUM);
 double opt_general_plugin_size0(OPT_ARGS_NUM);
 double opt_general_plugin_size1(OPT_ARGS_NUM);
+double opt_general_editor_offset0(OPT_ARGS_NUM);
+double opt_general_editor_offset1(OPT_ARGS_NUM);
+double opt_general_editor_size0(OPT_ARGS_NUM);
+double opt_general_editor_size1(OPT_ARGS_NUM);
 double opt_general_field_offset0(OPT_ARGS_NUM);
 double opt_general_field_offset1(OPT_ARGS_NUM);
 double opt_general_field_size0(OPT_ARGS_NUM);
@@ -416,6 +404,7 @@ double opt_geometry_first_physical_tag(OPT_ARGS_NUM);
 double opt_geometry_highlight_orphans(OPT_ARGS_NUM);
 double opt_geometry_tolerance(OPT_ARGS_NUM);
 double opt_geometry_tolerance_boolean(OPT_ARGS_NUM);
+double opt_geometry_discrete_tolerance(OPT_ARGS_NUM);
 double opt_geometry_normals(OPT_ARGS_NUM);
 double opt_geometry_tangents(OPT_ARGS_NUM);
 double opt_geometry_points(OPT_ARGS_NUM);
@@ -447,6 +436,7 @@ double opt_geometry_occ_disable_stl(OPT_ARGS_NUM);
 double opt_geometry_occ_fix_degenerated(OPT_ARGS_NUM);
 double opt_geometry_occ_fix_small_edges(OPT_ARGS_NUM);
 double opt_geometry_occ_fix_small_faces(OPT_ARGS_NUM);
+double opt_geometry_occ_fix_tolerances(OPT_ARGS_NUM);
 double opt_geometry_occ_sew_faces(OPT_ARGS_NUM);
 double opt_geometry_occ_make_solids(OPT_ARGS_NUM);
 double opt_geometry_occ_parallel(OPT_ARGS_NUM);
@@ -550,6 +540,7 @@ double opt_mesh_light_two_side(OPT_ARGS_NUM);
 double opt_mesh_file_format(OPT_ARGS_NUM);
 double opt_mesh_newton_convergence_test_xyz(OPT_ARGS_NUM);
 double opt_mesh_msh_file_version(OPT_ARGS_NUM);
+double opt_mesh_med_file_version(OPT_ARGS_NUM);
 double opt_mesh_med_file_minor_version(OPT_ARGS_NUM);
 double opt_mesh_med_import_groups_of_nodes(OPT_ARGS_NUM);
 double opt_mesh_med_single_model(OPT_ARGS_NUM);
@@ -563,6 +554,7 @@ double opt_mesh_partition_metis_refinement_algorithm(OPT_ARGS_NUM);
 double opt_mesh_partition_metis_max_load_imbalance(OPT_ARGS_NUM);
 double opt_mesh_partition_metis_objective(OPT_ARGS_NUM);
 double opt_mesh_partition_metis_min_conn(OPT_ARGS_NUM);
+double opt_mesh_partition_metis_contiguous(OPT_ARGS_NUM);
 double opt_mesh_partition_hex_weight(OPT_ARGS_NUM);
 double opt_mesh_partition_pri_weight(OPT_ARGS_NUM);
 double opt_mesh_partition_pyr_weight(OPT_ARGS_NUM);
@@ -572,6 +564,7 @@ double opt_mesh_partition_tet_weight(OPT_ARGS_NUM);
 double opt_mesh_partition_tri_weight(OPT_ARGS_NUM);
 double opt_mesh_partition_line_weight(OPT_ARGS_NUM);
 double opt_mesh_partition_create_topology(OPT_ARGS_NUM);
+double opt_mesh_partition_periodic(OPT_ARGS_NUM);
 double opt_mesh_partition_create_physicals(OPT_ARGS_NUM);
 double opt_mesh_partition_create_ghost_cells(OPT_ARGS_NUM);
 double opt_mesh_partition_old_style_msh2(OPT_ARGS_NUM);
@@ -597,7 +590,6 @@ double opt_mesh_mmg3d_combine_domains(OPT_ARGS_NUM);
 double opt_mesh_algo_switch_on_failure(OPT_ARGS_NUM);
 double opt_mesh_algo_recombine(OPT_ARGS_NUM);
 double opt_mesh_max_retries(OPT_ARGS_NUM);
-double opt_mesh_repair_self_intersecting_1d_mesh(OPT_ARGS_NUM);
 double opt_mesh_recombine_all(OPT_ARGS_NUM);
 double opt_mesh_recombine_optimize_topology(OPT_ARGS_NUM);
 double opt_mesh_recombine_node_repositioning(OPT_ARGS_NUM);
@@ -701,12 +693,12 @@ double opt_mesh_reproducible(OPT_ARGS_NUM);
 double opt_mesh_ignore_parametrization(OPT_ARGS_NUM);
 double opt_mesh_ignore_edges(OPT_ARGS_NUM);
 double opt_mesh_ignore_faces(OPT_ARGS_NUM);
+double opt_mesh_repair_self_intersecting_1d_mesh(OPT_ARGS_NUM);
+double opt_mesh_pack_sizemap_method(OPT_ARGS_NUM);
 double opt_mesh_quadqs_sizemap_method(OPT_ARGS_NUM);
 double opt_mesh_pack_cleanup_method(OPT_ARGS_NUM);
 double opt_mesh_pack_recombination(OPT_ARGS_NUM);
-double opt_mesh_pack_sizemap_method(OPT_ARGS_NUM);
 double opt_mesh_pack_intrinsic_edge_length_factor(OPT_ARGS_NUM);
-double opt_mesh_pack_3d(OPT_ARGS_NUM);
 double opt_mesh_pack_patterns(OPT_ARGS_NUM);
 double opt_mesh_quadqs_topo_optim_methods(OPT_ARGS_NUM);
 double opt_mesh_quadqs_remeshing_boldness(OPT_ARGS_NUM);
@@ -861,6 +853,7 @@ double opt_view_glyph_location(OPT_ARGS_NUM);
 double opt_view_center_glyphs(OPT_ARGS_NUM);
 double opt_view_point_size(OPT_ARGS_NUM);
 double opt_view_line_width(OPT_ARGS_NUM);
+double opt_view_outline_width(OPT_ARGS_NUM);
 double opt_view_point_type(OPT_ARGS_NUM);
 double opt_view_line_type(OPT_ARGS_NUM);
 double opt_view_clip(OPT_ARGS_NUM);
@@ -1001,46 +994,36 @@ unsigned int opt_view_color_text3d(OPT_ARGS_COL);
 unsigned int opt_view_color_axes(OPT_ARGS_COL);
 unsigned int opt_view_color_background2d(OPT_ARGS_COL);
 
-// Data structures and global functions
-
-typedef struct {
-  const char *str;
-  int int1, int2, int3, int4;
-} StringX4Int;
-
-typedef struct {
-  int level;
-  const char *str;
-  std::string (*function)(int num, int action, const std::string &val);
-  std::string def;
-  const char *help;
-} StringXString;
-
-typedef struct {
-  int level;
-  const char *str;
-  double (*function)(int num, int action, double val);
-  double def;
-  const char *help;
-} StringXNumber;
-
-typedef struct {
-  int level;
-  const char *str;
-  unsigned int (*function)(int num, int action, unsigned int val);
-  // the defaults are stored in individual bytes so that we can initialize
-  // them statically independently of the machine endianness. They will be
-  // packed into unsigned ints at runtime
-  unsigned char def1[4], def2[4], def3[4], def4[4];
-  const char *help;
-} StringXColor;
+// Global functions (the table entries are in OptionEntries.h)
 
 void InitOptions(int num);
 void InitOptionsGUI(int num);
 void ReInitOptions(int num);
+// General.ColorScheme = 3 goes on to the colours for a light or dark desktop,
+// if not there yet: the ones the user changed are kept
+bool followDesktopColorScheme(bool dark);
 void PrintOptions(int num, int level, int diff, int help, const char *filename,
                   std::vector<std::string> *vec = nullptr);
 void PrintOptionsDoc();
+// the names of the options of a category ("General", "Mesh", ...), as the
+// scripts write them after "Category." ("Color.Name" for a color)
+std::vector<std::string> GetOptionNames(const std::string &category);
+
+// The values an option ("Mesh.Algorithm") takes, with their labels, in the
+// order the interfaces list them: none if it takes any value; without those
+// this build lacks the module for (see OptionChoices in DefaultOptions.h)
+std::vector<std::pair<double, std::string>>
+GetOptionChoices(const std::string &option);
+
+// The range of a number option, and the step of the fields that set it (see
+// OptionRanges in DefaultOptions.h); null if it has none
+struct OptionRange {
+  double min, max, step;
+};
+const OptionRange *GetOptionRange(const std::string &option);
+
+// The help of an option, with the values it takes (see GetOptionChoices())
+std::string GetOptionHelp(const std::string &option, const char *help);
 
 bool StringOption(int action, const char *category, int num, const char *name,
                   std::string &val, bool warnIfUnknown = true);

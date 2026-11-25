@@ -60,11 +60,9 @@ typedef std::vector<std::pair<MElement *, int>> elementPartitionList;
 #include "partitionFace.h"
 #include "partitionEdge.h"
 #include "partitionVertex.h"
-#include "ghostRegion.h"
-#include "ghostFace.h"
-#include "ghostEdge.h"
 #include "MFaceHash.h"
 #include "MEdgeHash.h"
+#include "MLine.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
 #include "MTetrahedron.h"
@@ -85,8 +83,6 @@ extern "C" {
 // Graph of the mesh for partitioning purposes.
 class Graph {
 private:
-  // The GModel
-  GModel *_model;
   // The number of partitions
   std::size_t _nparts;
   // The number of elements
@@ -126,8 +122,7 @@ private:
 
 public:
   Graph(GModel *model)
-    : _model(model), _nparts(0), _ne(0), _nn(0), _dim(0), _vwgt(nullptr),
-      _trackVertex(false)
+    : _nparts(0), _ne(0), _nn(0), _dim(0), _vwgt(nullptr), _trackVertex(false)
   {
   }
   ~Graph() { clear(); }
@@ -205,6 +200,11 @@ public:
     std::vector<idx_t>().swap(_xadj);
     std::vector<idx_t>().swap(_adjncy);
   }
+  void swapDualGraph(std::vector<idx_t> &xadj, std::vector<idx_t> &adjncy)
+  {
+    _xadj.swap(xadj);
+    _adjncy.swap(adjncy);
+  }
   void eraseVertex()
   {
     if(_trackVertex) {
@@ -234,60 +234,6 @@ public:
       std::sort(elements[i].begin(), elements[i].end(), MElementPtrLessThan());
 
     return elements;
-  }
-  std::vector<GEntity *> createGhostEntities()
-  {
-    std::vector<GEntity *> ghostEntities(_nparts, (GEntity *)nullptr);
-    int elementaryNumber = _model->getMaxElementaryNumber(_dim);
-    for(std::size_t i = 1; i <= _nparts; i++) {
-      switch(_dim) {
-      case 1:
-        ghostEntities[i - 1] = new ghostEdge(_model, ++elementaryNumber, i);
-        _model->add(static_cast<ghostEdge *>(ghostEntities[i - 1]));
-        break;
-      case 2:
-        ghostEntities[i - 1] = new ghostFace(_model, ++elementaryNumber, i);
-        _model->add(static_cast<ghostFace *>(ghostEntities[i - 1]));
-        break;
-      case 3:
-        ghostEntities[i - 1] = new ghostRegion(_model, ++elementaryNumber, i);
-        _model->add(static_cast<ghostRegion *>(ghostEntities[i - 1]));
-        break;
-      default: break;
-      }
-    }
-    return ghostEntities;
-  }
-  void assignGhostCells()
-  {
-    std::vector<GEntity *> ghostEntities = createGhostEntities();
-    for(std::size_t i = 0; i < _ne; i++) {
-      std::set<int> ghostCellsPartition;
-      for(idx_t j = _xadj[i]; j < _xadj[i + 1]; j++) {
-        if(_partition[i] != _partition[_adjncy[j]] &&
-           ghostCellsPartition.find(_partition[_adjncy[j]]) ==
-             ghostCellsPartition.end()) {
-          if(_element[i]->getDim() == _dim) {
-            switch(_dim) {
-            case 1:
-              static_cast<ghostEdge *>(ghostEntities[_partition[_adjncy[j]]])
-                ->addElement(_element[i], _partition[i] + 1);
-              break;
-            case 2:
-              static_cast<ghostFace *>(ghostEntities[_partition[_adjncy[j]]])
-                ->addElement(_element[i], _partition[i] + 1);
-              break;
-            case 3:
-              static_cast<ghostRegion *>(ghostEntities[_partition[_adjncy[j]]])
-                ->addElement(_element[i], _partition[i] + 1);
-              break;
-            default: break;
-            }
-            ghostCellsPartition.insert(_partition[_adjncy[j]]);
-          }
-        }
-      }
-    }
   }
   // Builds the element-element (dual) graph in CSR form. The neighbor search
   // is done in a single pass: the previous version probed the node-element
@@ -528,6 +474,16 @@ static std::size_t getSizeOfEind(GModel *model)
 // = no elements found, 2 = error.
 static int makeGraph(GModel *model, Graph &graph, int selectDim)
 {
+  bool polytopes = false;
+  for(auto gf : model->getFaces())
+    if(gf->polygons.size()) polytopes = true;
+  for(auto gr : model->getRegions())
+    if(gr->polyhedra.size()) polytopes = true;
+  if(polytopes) {
+    Msg::Error("Partitioning meshes with polygons or polyhedra is not "
+               "implemented");
+    return 2;
+  }
   std::size_t eindSize = 0;
   if(selectDim < 0) {
     graph.ne(model->getNumMeshElements());
@@ -652,6 +608,27 @@ static int makeGraph(GModel *model, Graph &graph, int selectDim)
 
 // Make lower-dim elements follow the bulk they bound, adopting a higher-dim
 // neighbor's partition; sweeps codim 1..3, so the highest-dimensional one wins.
+// whether a graph in CSR form is connected
+static bool isConnected(idx_t n, const idx_t *xadj, const idx_t *adjncy)
+{
+  if(n < 2) return true;
+  std::vector<char> seen(n, 0);
+  std::vector<idx_t> stack(1, 0);
+  seen[0] = 1;
+  idx_t numSeen = 1;
+  while(!stack.empty()) {
+    idx_t i = stack.back();
+    stack.pop_back();
+    for(idx_t k = xadj[i]; k < xadj[i + 1]; k++) {
+      if(seen[adjncy[k]]) continue;
+      seen[adjncy[k]] = 1;
+      numSeen++;
+      stack.push_back(adjncy[k]);
+    }
+  }
+  return numSeen == n;
+}
+
 static void correctTopology(const Graph &graph, std::vector<idx_t> &epart)
 {
   for(int codim : {1, 2, 3}) {
@@ -675,17 +652,19 @@ static void correctTopology(const Graph &graph, std::vector<idx_t> &epart)
 
 // Partition the dual graph with the multithreaded k-way algorithm of mt-metis,
 // translating the METIS options it supports. Returns a METIS error code.
-static int partitionGraphMtMetis(Graph &graph, const idx_t *metisOptions,
+static int partitionGraphMtMetis(std::size_t ne, const idx_t *graphXadj,
+                                 const idx_t *graphAdjncy,
+                                 const idx_t *graphVwgt, std::size_t numPart,
+                                 const idx_t *metisOptions,
                                  std::vector<idx_t> &epart, idx_t &objval)
 {
-  const std::size_t ne = graph.ne();
   if(ne > std::numeric_limits<mtmetis_vtx_type>::max()) {
     Msg::Error("Graph too large for mt-metis (32-bit vertex indices)");
     return METIS_ERROR_INPUT;
   }
   int64_t totalWeight = ne;
-  if(graph.vwgt())
-    totalWeight = std::accumulate(graph.vwgt(), graph.vwgt() + ne, int64_t(0));
+  if(graphVwgt)
+    totalWeight = std::accumulate(graphVwgt, graphVwgt + ne, int64_t(0));
   if(totalWeight > std::numeric_limits<mtmetis_wgt_type>::max()) {
     Msg::Error("Total element weight too large for mt-metis (32-bit weights)");
     return METIS_ERROR_INPUT;
@@ -718,18 +697,18 @@ static int partitionGraphMtMetis(Graph &graph, const idx_t *metisOptions,
   // and 32-bit vertex indices and weights
   std::vector<mtmetis_adj_type> xadjCopy;
   const mtmetis_adj_type *xadj =
-    reinterpret_cast<const mtmetis_adj_type *>(graph.xadj());
+    reinterpret_cast<const mtmetis_adj_type *>(graphXadj);
   if(sizeof(idx_t) != sizeof(mtmetis_adj_type)) {
-    xadjCopy.assign(graph.xadj(), graph.xadj() + ne + 1);
+    xadjCopy.assign(graphXadj, graphXadj + ne + 1);
     xadj = xadjCopy.data();
   }
-  std::vector<mtmetis_vtx_type> adjncy(graph.adjncy(),
-                                       graph.adjncy() + graph.xadj(ne));
+  std::vector<mtmetis_vtx_type> adjncy(graphAdjncy,
+                                       graphAdjncy + graphXadj[ne]);
   std::vector<mtmetis_wgt_type> vwgt;
-  if(graph.vwgt()) vwgt.assign(graph.vwgt(), graph.vwgt() + ne);
+  if(graphVwgt) vwgt.assign(graphVwgt, graphVwgt + ne);
   std::vector<mtmetis_pid_type> where(ne);
   mtmetis_vtx_type nvtxs = ne, ncon = 1;
-  mtmetis_pid_type nparts = graph.nparts();
+  mtmetis_pid_type nparts = numPart;
   mtmetis_wgt_type edgecut = 0;
 
   int err = MTMETIS_PartGraphKway(
@@ -750,10 +729,158 @@ static int partitionGraphMtMetis(Graph &graph, const idx_t *metisOptions,
 
 #endif
 
-// Partition a graph created by makeGraph using Metis library. Returns: 0 =
-// success, 1 = error, 2 = exception thrown.
-static int partitionGraph(Graph &graph, bool verbose)
+// The classes of the nodes identified by the periodicity of the mesh, through
+// all the periodic entities (of all dimensions, high-order nodes included) and
+// the chains of masters. With Mesh.PartitionPeriodic, the mesh is partitioned
+// as the mesh where the nodes of each class are glued, and the partition
+// topology is made the same on all the copies of the periodic entities: a
+// partition entity on a periodic entity has the partitions of all its copies,
+// and is cut where any of its copies is cut.
+class periodicClasses {
+private:
+  // the representative (the node of lowest number) of the class of each node
+  // in a class of several nodes
+  std::unordered_map<MVertex *, MVertex *> _rep;
+  // the nodes of each class, from its representative
+  std::unordered_map<MVertex *, std::vector<MVertex *>> _members;
+  // the periodic model entities: the mesh masters and their slaves
+  std::set<GEntity *> _entities;
+
+public:
+  void build(GModel *model)
+  {
+    std::unordered_map<MVertex *, MVertex *> up;
+    auto find = [&up](MVertex *v) {
+      MVertex *r = v;
+      for(auto it = up.find(r); it != up.end() && it->second != r;
+          it = up.find(r))
+        r = it->second;
+      while(v != r) {
+        MVertex *&next = up[v];
+        v = next;
+        next = r;
+      }
+      return r;
+    };
+    std::vector<MVertex *> nodes;
+    auto tie = [&](MVertex *a, MVertex *b) {
+      if(!up.count(a)) nodes.push_back(a);
+      if(!up.count(b)) nodes.push_back(b);
+      up.emplace(a, a);
+      up.emplace(b, b);
+      a = find(a);
+      b = find(b);
+      if(a == b) return;
+      if(b->getNum() < a->getNum()) std::swap(a, b);
+      up[b] = a;
+    };
+    std::vector<GEntity *> entities;
+    model->getEntities(entities);
+    for(GEntity *ge : entities) {
+      GEntity *master = ge->getMeshMaster();
+      if(master == ge) continue;
+      _entities.insert(ge);
+      _entities.insert(master);
+      for(auto &p : ge->correspondingVertices) tie(p.first, p.second);
+      for(auto &p : ge->correspondingHighOrderVertices) tie(p.first, p.second);
+    }
+    for(MVertex *v : nodes) {
+      MVertex *r = find(v);
+      _rep[v] = r;
+      _members[r].push_back(v);
+    }
+    for(auto &m : _members)
+      std::sort(m.second.begin(), m.second.end(), MVertexPtrLessThan());
+  }
+  bool empty() const { return _rep.empty(); }
+  bool isPeriodic(MVertex *v) const { return _rep.count(v); }
+  // the representative of the class of a node, itself if it is alone
+  MVertex *rep(MVertex *v) const
+  {
+    auto it = _rep.find(v);
+    return it == _rep.end() ? v : it->second;
+  }
+  // the nodes of each class, from its representative
+  const std::unordered_map<MVertex *, std::vector<MVertex *>> &members() const
+  { return _members; }
+  // whether the model entity is periodic (is a mesh master or has one)
+  bool isPeriodic(GEntity *ge) const { return ge && _entities.count(ge); }
+};
+
+// Builds the dual graph of the mesh where the nodes of each periodic class are
+// glued: the elements on both sides of a periodic boundary are then neighbors,
+// as in the interior of the mesh. The dual graph of the graph is cleared.
+static void createGluedDualGraph(Graph &graph, const periodicClasses &classes,
+                                 bool connectedAll, std::vector<idx_t> &xadj,
+                                 std::vector<idx_t> &adjncy)
 {
+  // the node of the graph each node of the graph is glued to
+  std::vector<idx_t> glue(graph.nn());
+  std::iota(glue.begin(), glue.end(), 0);
+  for(auto &m : classes.members()) {
+    idx_t first = -1;
+    for(MVertex *v : m.second) {
+      const idx_t i = graph.vertex(v->getNum() - 1);
+      if(i < 0) continue; // high-order node, or not in the graph
+      if(first < 0)
+        first = i;
+      else
+        glue[i] = first;
+    }
+  }
+  const std::size_t size = graph.eptr(graph.ne());
+  std::vector<idx_t> eind(size);
+  for(std::size_t i = 0; i < size; i++) {
+    eind[i] = graph.eind(i);
+    graph.eind(i, glue[eind[i]]);
+  }
+  graph.clearDualGraph();
+  graph.createDualGraph(connectedAll);
+  graph.swapDualGraph(xadj, adjncy);
+  for(std::size_t i = 0; i < size; i++) graph.eind(i, eind[i]);
+}
+
+// The numbers of the primary nodes of an element, sorted
+static std::vector<std::size_t> sortedPrimaryNodes(MElement *e)
+{
+  std::vector<std::size_t> nodes(e->getNumPrimaryVertices());
+  for(std::size_t i = 0; i < nodes.size(); i++)
+    nodes[i] = e->getVertex(i)->getNum();
+  std::sort(nodes.begin(), nodes.end());
+  return nodes;
+}
+
+// The same for the nodes that the primary nodes of an element of a periodic
+// entity correspond to on its mesh master (empty if one has no counterpart)
+static std::vector<std::size_t> sortedPrimaryMasterNodes(MElement *e,
+                                                         GEntity *periodic)
+{
+  std::vector<std::size_t> nodes(e->getNumPrimaryVertices());
+  for(std::size_t i = 0; i < nodes.size(); i++) {
+    auto it = periodic->correspondingVertices.find(e->getVertex(i));
+    if(it == periodic->correspondingVertices.end())
+      return std::vector<std::size_t>();
+    nodes[i] = it->second->getNum();
+  }
+  std::sort(nodes.begin(), nodes.end());
+  return nodes;
+}
+
+// Partition a graph created by makeGraph using Metis library. With classes,
+// METIS partitions the mesh where the nodes of each periodic class are glued.
+// Returns: 0 = success, 1 = error, 2 = exception thrown.
+static int partitionGraph(Graph &graph, bool verbose,
+                          const periodicClasses *classes = nullptr)
+{
+  // A single part needs no partitioner (METIS k-way divides by log2(nparts));
+  // the dual graph is still built, as the partition topology walks it
+  if(graph.nparts() == 1) {
+    graph.createDualGraph(false);
+    graph.partition(std::vector<idx_t>(graph.ne(), 0));
+    if(verbose) Msg::Info("1 partition, skipping METIS");
+    return 0;
+  }
+
 #ifdef HAVE_METIS
   std::stringstream opt;
   try {
@@ -865,31 +992,55 @@ static int partitionGraph(Graph &graph, bool verbose)
     metisOptions[METIS_OPTION_NUMBERING] = 0;
 
     idx_t objval;
-    std::vector<idx_t> epart(graph.ne());
     idx_t ne = graph.ne();
     idx_t numPart = graph.nparts();
     idx_t ncon = 1;
     graph.fillDefaultWeights();
 
     int metisError = 0;
+    std::vector<idx_t> gluedXadj, gluedAdjncy;
+    if(classes && !classes->empty())
+      createGluedDualGraph(graph, *classes, false, gluedXadj, gluedAdjncy);
     graph.createDualGraph(false);
+
+    // METIS works on the graph itself, or on the graph of the mesh glued along
+    // the periodic entities
+    idx_t *xadj = graph.xadj(), *adjncy = graph.adjncy();
+    if(gluedXadj.size()) {
+      xadj = gluedXadj.data();
+      adjncy = gluedAdjncy.data();
+      if(verbose)
+        Msg::Info("Periodic mesh: partitioning the mesh glued along the "
+                  "periodic entities");
+    }
+    // contiguous partitions with K-way, if the graph is connected (METIS stops
+    // with an error otherwise)
+    if(CTX::instance()->mesh.metisContiguous &&
+       CTX::instance()->mesh.metisAlgorithm == 2) {
+      if(isConnected(ne, xadj, adjncy))
+        metisOptions[METIS_OPTION_CONTIG] = 1;
+      else if(verbose)
+        Msg::Info("Mesh not connected: partitions may not be contiguous");
+    }
+    std::vector<idx_t> epart(ne);
 
     double t1 = TimeOfDay();
 #if defined(HAVE_MTMETIS)
     if(CTX::instance()->mesh.metisAlgorithm == 3) {
-      metisError = partitionGraphMtMetis(graph, metisOptions, epart, objval);
+      metisError = partitionGraphMtMetis(ne, xadj, adjncy, graph.vwgt(),
+                                         numPart, metisOptions, epart, objval);
     }
     else
 #endif
     if(metisOptions[METIS_OPTION_PTYPE] == METIS_PTYPE_KWAY) {
       metisError = METIS_PartGraphKway(
-        &ne, &ncon, graph.xadj(), graph.adjncy(), graph.vwgt(), nullptr,
-        nullptr, &numPart, nullptr, nullptr, metisOptions, &objval, &epart[0]);
+        &ne, &ncon, xadj, adjncy, graph.vwgt(), nullptr, nullptr, &numPart,
+        nullptr, nullptr, metisOptions, &objval, &epart[0]);
     }
     else {
       metisError = METIS_PartGraphRecursive(
-        &ne, &ncon, graph.xadj(), graph.adjncy(), graph.vwgt(), nullptr,
-        nullptr, &numPart, nullptr, nullptr, metisOptions, &objval, &epart[0]);
+        &ne, &ncon, xadj, adjncy, graph.vwgt(), nullptr, nullptr, &numPart,
+        nullptr, nullptr, metisOptions, &objval, &epart[0]);
     }
     if(verbose)
       Msg::Info("Partitioned graph of %lu vertices in %g s", graph.ne(),
@@ -1224,10 +1375,29 @@ static int getNumFacets(MElement *e, MEdge *) { return e->getNumEdges(); }
 static MFace getFacet(MElement *e, int i, MFace *) { return e->getFace(i); }
 static MEdge getFacet(MElement *e, int i, MEdge *) { return e->getEdge(i); }
 
+static int getFacetOrientation(const MFace &reference, const MFace &element)
+{
+  int rotation;
+  bool swap;
+  if(!reference.computeCorrespondence(element, rotation, swap)) return 0;
+  return swap ? -1 : 1;
+}
+
+static int getFacetOrientation(const MEdge &reference, const MEdge &element)
+{
+  if(reference.getVertex(0) == element.getVertex(0) &&
+     reference.getVertex(1) == element.getVertex(1))
+    return 1;
+  if(reference.getVertex(0) == element.getVertex(1) &&
+     reference.getVertex(1) == element.getVertex(0))
+    return -1;
+  return 0;
+}
+
 template <class KEY, class HASH, class EQUAL> class BRepDistributor {
 private:
   std::unordered_map<KEY, std::size_t, HASH, EQUAL> _owner;
-  std::vector<std::set<GEntity *, GEntityPtrFullLessThan> > _bounds;
+  std::vector<setorientity> _bounds;
 
 public:
   std::size_t newComponent()
@@ -1249,11 +1419,14 @@ public:
       offset[i + 1] = offset[i] + cand[i]->getNumMeshElements();
     const std::size_t chunkSize = 4096;
     const std::size_t numChunks = (offset.back() + chunkSize - 1) / chunkSize;
-    std::set<std::pair<std::size_t, std::size_t>> hits; // component, cand.
+    // A component may touch only one side of a neighbor even when the
+    // unsplit entity had both signed uses, so retain the orientation too.
+    using Hit = std::pair<std::pair<std::size_t, std::size_t>, int>;
+    std::set<Hit> hits; // (component, candidate), orientation
     const int nthreads = CTX::instance()->numThreadsFor(offset.back(), 10000);
 #pragma omp parallel num_threads(nthreads)
     {
-      std::set<std::pair<std::size_t, std::size_t>> myHits;
+      std::set<Hit> myHits;
 #pragma omp for schedule(dynamic, 1)
       for(std::size_t c = 0; c < numChunks; c++) {
         const std::size_t end = std::min(offset.back(), (c + 1) * chunkSize);
@@ -1264,20 +1437,26 @@ public:
           while(i >= offset[k + 1]) k++;
           MElement *e = cand[k]->getMeshElement(i - offset[k]);
           for(int j = 0; j < getNumFacets(e, (KEY *)nullptr); j++) {
-            auto it = _owner.find(getFacet(e, j, (KEY *)nullptr));
-            if(it != _owner.end()) myHits.insert(std::make_pair(it->second, k));
+            KEY facet = getFacet(e, j, (KEY *)nullptr);
+            auto it = _owner.find(facet);
+            if(it == _owner.end()) continue;
+            const int ori = getFacetOrientation(facet, it->first);
+            if(ori)
+              myHits.insert(std::make_pair(std::make_pair(it->second, k), ori));
           }
         }
       }
 #pragma omp critical
       hits.insert(myHits.begin(), myHits.end());
     }
-    for(auto it = hits.begin(); it != hits.end(); ++it)
-      _bounds[it->first].insert(cand[it->second]);
+    for(const auto &hit : hits)
+      _bounds[hit.first.first].insert(
+        std::make_pair(hit.second, cand[hit.first.second]));
   }
-  bool touches(std::size_t component, GEntity *neighbor) const
+  bool touches(std::size_t component, GEntity *neighbor, int orientation) const
   {
-    return _bounds[component].find(neighbor) != _bounds[component].end();
+    return _bounds[component].find(std::make_pair(orientation, neighbor)) !=
+           _bounds[component].end();
   }
   bool empty() const { return _owner.empty(); }
 };
@@ -1299,6 +1478,43 @@ static void maxEntitySize(ITERATOR it_beg, ITERATOR it_end, int geomType,
       eind += (*it)->getMeshElement(i)->getNumPrimaryVertices();
     maxElements = std::max(maxElements, ne);
     maxEind = std::max(maxEind, eind);
+  }
+}
+
+// Detach every signed use of a boundary entity. The reverse adjacency lists
+// contain each neighbor only once, while a seam occurs twice in its boundary.
+// Keep one entry per use so the split components can restore both signs.
+static void detachBoundaryUses(GEdge *edge, std::vector<GFace *> &brep,
+                               std::vector<int> &orientations)
+{
+  for(auto face : edge->faces()) {
+    const std::vector<GEdge *> &edges = face->edges();
+    const std::vector<int> &dirs = face->edgeOrientations();
+    std::size_t count = 0;
+    for(std::size_t i = 0; i < edges.size(); i++) {
+      if(edges[i] != edge) continue;
+      brep.push_back(face);
+      orientations.push_back(i < dirs.size() ? dirs[i] : 1);
+      count++;
+    }
+    for(std::size_t i = 0; i < count; i++) face->delEdge(edge);
+  }
+}
+
+static void detachBoundaryUses(GFace *face, std::vector<GRegion *> &brep,
+                               std::vector<int> &orientations)
+{
+  for(auto region : face->regions()) {
+    const std::vector<GFace *> &faces = region->faces();
+    const std::vector<int> &dirs = region->faceOrientations();
+    std::size_t count = 0;
+    for(std::size_t i = 0; i < faces.size(); i++) {
+      if(faces[i] != face) continue;
+      brep.push_back(region);
+      orientations.push_back(i < dirs.size() ? dirs[i] : 1);
+      count++;
+    }
+    for(std::size_t i = 0; i < count; i++) region->delFace(face);
   }
 }
 
@@ -1475,12 +1691,7 @@ divideNonConnectedEntities(GModel *model, int dim,
           ret = true;
           PendingEdgeSplit split;
           split.edge = edge;
-          split.brep = edge->faces();
-          split.orientations.reserve(split.brep.size());
-          for(auto itBRep = split.brep.begin(); itBRep != split.brep.end();
-              ++itBRep) {
-            split.orientations.push_back((*itBRep)->delEdge(edge));
-          }
+          detachBoundaryUses(edge, split.brep, split.orientations);
           for(std::size_t i = 0; i < connectedElements.size(); i++) {
             std::size_t comp = distributor.newComponent();
             split.components.push_back(comp);
@@ -1521,7 +1732,9 @@ divideNonConnectedEntities(GModel *model, int dim,
           pedge->addElement(split.elements[i][j]);
         // Move B-Rep: only to the surfaces this component really bounds
         for(std::size_t j = 0; j < split.brep.size(); j++) {
-          if(!distributor.touches(split.components[i], split.brep[j])) continue;
+          if(!distributor.touches(split.components[i], split.brep[j],
+                                  split.orientations[j]))
+            continue;
           split.brep[j]->setEdge(pedge, split.orientations[j]);
           pedge->addFace(split.brep[j]);
         }
@@ -1613,12 +1826,7 @@ divideNonConnectedEntities(GModel *model, int dim,
           ret = true;
           PendingFaceSplit split;
           split.face = face;
-          std::list<GRegion *> BRepRegions = face->regions();
-          split.brep.assign(BRepRegions.begin(), BRepRegions.end());
-          split.orientations.reserve(split.brep.size());
-          for(std::size_t j = 0; j < split.brep.size(); j++) {
-            split.orientations.push_back(split.brep[j]->delFace(face));
-          }
+          detachBoundaryUses(face, split.brep, split.orientations);
           for(std::size_t i = 0; i < connectedElements.size(); i++) {
             std::size_t comp = distributor.newComponent();
             split.components.push_back(comp);
@@ -1658,7 +1866,9 @@ divideNonConnectedEntities(GModel *model, int dim,
           pface->addElement(split.elements[i][j]);
         // Move B-Rep: only to the volumes this component really bounds
         for(std::size_t j = 0; j < split.brep.size(); j++) {
-          if(!distributor.touches(split.components[i], split.brep[j])) continue;
+          if(!distributor.touches(split.components[i], split.brep[j],
+                                  split.orientations[j]))
+            continue;
           split.brep[j]->setFace(pface, split.orientations[j]);
           pface->addRegion(split.brep[j]);
         }
@@ -2069,11 +2279,14 @@ template <class PART_ENTITY>
 using partitionEntityMap =
   std::map<std::vector<int>, std::vector<partitionEntityEntry<PART_ENTITY>>>;
 
+// The parent of the new entity is the parent of the reference entity, unless
+// given.
 template <class PART_ENTITY>
 static PART_ENTITY *createPartitionEntity(
   GModel *model, int &numEntity, const std::vector<int> &partitions,
   GEntity *referenceEntity, PART_ENTITY **newEntity,
-  partitionEntityMap<PART_ENTITY> &pentities, GEntity *otherEntity = nullptr)
+  partitionEntityMap<PART_ENTITY> &pentities, GEntity *otherEntity = nullptr,
+  GEntity *parentEntity = nullptr)
 {
   std::vector<partitionEntityEntry<PART_ENTITY>> &same = pentities[partitions];
   for(std::size_t i = 0; i < same.size(); i++)
@@ -2082,7 +2295,8 @@ static PART_ENTITY *createPartitionEntity(
 
   // Create new entity and add it to the model
   PART_ENTITY *ppe = new PART_ENTITY(model, ++numEntity, partitions);
-  ppe->setParentEntity(referenceEntity->getParentEntity());
+  ppe->setParentEntity(parentEntity ? parentEntity :
+                                      referenceEntity->getParentEntity());
   partitionEntityEntry<PART_ENTITY> entry = {referenceEntity, otherEntity, ppe};
   same.push_back(entry);
   model->add(ppe);
@@ -2110,35 +2324,17 @@ assignPartitionBoundary(GModel *model, MVertex *ve, MElement *reference,
 static int computeOrientation(MElement *reference, MElement *element)
 {
   if(element->getDim() == 2) {
-    std::vector<MVertex *> vertices;
-    element->getVertices(vertices);
-    MFace face = element->getFace(0);
+    const MFace face = element->getFace(0);
     for(int i = 0; i < reference->getNumFaces(); i++) {
-      if(reference->getFace(i) == face) {
-        std::vector<MVertex *> referenceVertices;
-        reference->getFaceVertices(i, referenceVertices);
-
-        if(referenceVertices == vertices)
-          return 1;
-        else
-          return -1;
-      }
+      const int ori = getFacetOrientation(reference->getFace(i), face);
+      if(ori) return ori;
     }
   }
   else if(element->getDim() == 1) {
-    std::vector<MVertex *> vertices;
-    element->getVertices(vertices);
-    MEdge face = element->getEdge(0);
+    const MEdge edge = element->getEdge(0);
     for(int i = 0; i < reference->getNumEdges(); i++) {
-      if(reference->getEdge(i) == face) {
-        std::vector<MVertex *> referenceVertices;
-        reference->getEdgeVertices(i, referenceVertices);
-
-        if(referenceVertices == vertices)
-          return 1;
-        else
-          return -1;
-      }
+      const int ori = getFacetOrientation(reference->getEdge(i), edge);
+      if(ori) return ori;
     }
   }
   else if(element->getDim() == 0) {
@@ -2236,6 +2432,79 @@ static void addFacetElement(partitionFace *pf, MElement *e)
 static void addFacetElement(partitionEdge *pe, MElement *e)
 { pe->addLine(static_cast<MLine *>(e)); }
 
+// The edges of the periodic surfaces of a 3D mesh, for the partition curves
+// with Mesh.PartitionPeriodic: a partition curve on a periodic surface is
+// found from the surfaces sharing any of the copies of its edges (neighbors in
+// the dual graph of the glued mesh), and created on all the copies, with the
+// partitions of all of them.
+struct periodicEdges {
+  const periodicClasses *classes;
+  // the periodic model entity of each edge of the periodic surfaces (a curve
+  // for the edges of the periodic curves)
+  std::unordered_map<MEdge, GEntity *, MEdgeHash, MEdgeEqual> entity;
+  void build(GModel *model)
+  {
+    for(GFace *gf : model->getFaces()) {
+      if(!classes->isPeriodic(gf->getParentEntity())) continue;
+      for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
+        MElement *e = gf->getMeshElement(i);
+        for(int j = 0; j < e->getNumEdges(); j++)
+          entity.emplace(e->getEdge(j), gf->getParentEntity());
+      }
+    }
+    for(GEdge *ge : model->getEdges()) {
+      GEntity *parent = ge->getParentEntity();
+      if(!parent || parent->dim() != 1 || !classes->isPeriodic(parent))
+        continue;
+      for(std::size_t i = 0; i < ge->lines.size(); i++)
+        entity[ge->lines[i]->getEdge(0)] = parent;
+    }
+  }
+};
+
+// The periodic model entity of a facet, if on a periodic surface or curve
+static GEntity *periodicFacetEntity(const periodicEdges *periodic,
+                                    const MEdge &f)
+{
+  if(!periodic) return nullptr;
+  auto it = periodic->entity.find(f);
+  return it == periodic->entity.end() ? nullptr : it->second;
+}
+static GEntity *periodicFacetEntity(const periodicEdges *, const MFace &)
+{ return nullptr; }
+
+// Whether two facets are copies of each other through the periodicity: the
+// classes of their nodes are the same
+template <class FACET>
+static bool isCopy(const periodicClasses &classes, const FACET &a,
+                   const FACET &b)
+{
+  const std::size_t n = a.getNumVertices();
+  if(b.getNumVertices() != n || n > 4) return false;
+  MVertex *ra[4], *rb[4];
+  for(std::size_t i = 0; i < n; i++) {
+    ra[i] = classes.rep(a.getVertex(i));
+    rb[i] = classes.rep(b.getVertex(i));
+  }
+  std::sort(ra, ra + n);
+  std::sort(rb, rb + n);
+  return std::equal(ra, ra + n, rb);
+}
+
+// The index of the first facet of an element, from first, that is on a
+// periodic surface and is a copy of the facet f; -1 if none
+template <class FACET>
+static int findCopy(const periodicEdges *periodic, MElement *e, const FACET &f,
+                    int first = 0)
+{
+  for(int k = first; k < getNumFacets(e, (FACET *)nullptr); k++) {
+    FACET g = getFacet(e, k, (FACET *)nullptr);
+    GEntity *pe = periodicFacetEntity(periodic, g);
+    if(pe && pe->dim() == 2 && isCopy(*periodic->classes, g, f)) return k;
+  }
+  return -1;
+}
+
 // Creates the partition entities bounding the parts of a mesh of dimension
 // dim, made of the facets (faces in 3D, edges in 2D) of the elements of
 // dimension dim shared by elements in different parts. The part of the
@@ -2252,12 +2521,17 @@ static void addFacetElement(partitionEdge *pe, MElement *e)
 // facet of each partition entity: a partition curve can bound several
 // surfaces, through different facets. A partition surface of a 3D mesh is
 // also distinguished by the volume on the other side, as a surface can only
-// bound two volumes.
+// bound two volumes. With periodic, the facets on the periodic surfaces are
+// found from all their copies, created on each of them, with the partitions of
+// all of them, and their entities are distinguished by the periodic surface
+// they are on, which is their parent; the facets on the periodic curves are
+// left to the partition entities of the curves.
 template <class FACET, class PART_ENTITY>
 static void createPartitionBoundaries(
   Graph &graph, GModel *model, const std::vector<std::vector<int>> &lists,
   partitionEntityMap<PART_ENTITY> &pentities,
-  const elementEntityMap &elementToEntity, int &numEntity)
+  const elementEntityMap &elementToEntity, int &numEntity,
+  const periodicEdges *periodic = nullptr)
 {
   const int dim = graph.dim();
   // the order of the reference element
@@ -2278,6 +2552,10 @@ static void createPartitionBoundaries(
     std::size_t element; // reference element in the graph
     int facet; // facet of the reference element
     std::size_t first, last; // elements sharing it, in sharingByChunk
+    // for a facet on a periodic surface: the surface, and the partitions of
+    // all the copies of the facet
+    GEntity *periodic;
+    std::vector<int> partitions;
   };
   const std::size_t chunkSize = 4096;
   const std::size_t numChunks = (graph.ne() + chunkSize - 1) / chunkSize;
@@ -2305,12 +2583,19 @@ static void createPartitionBoundaries(
 
         for(int k = 0; k < getNumFacets(e, (FACET *)nullptr); k++) {
           FACET f = getFacet(e, k, (FACET *)nullptr);
-          // the elements sharing the facet (more than 2 if non-manifold)
+          GEntity *pe = periodicFacetEntity(periodic, f);
+          if(pe && pe->dim() < dim) continue; // on a periodic curve
+          // on a periodic surface, the copies of the facet are handled with it
+          const periodicEdges *copies = pe ? periodic : nullptr;
+          if(copies && findCopy(copies, e, f) != k) continue;
+          // the elements sharing the facet (more than 2 if non-manifold), or
+          // any of its copies
           sharing.assign(1, (idx_t)i);
           for(idx_t j = graph.xadj(i); j < graph.xadj(i + 1); j++) {
             const idx_t n = graph.adjncy(j);
             MElement *en = graph.element(n);
-            if(en && en->getDim() == dim && hasFacet(en, f))
+            if(en && en->getDim() == dim &&
+               (copies ? findCopy(copies, en, f) >= 0 : hasFacet(en, f)))
               sharing.push_back(n);
           }
           std::sort(sharing.begin(), sharing.end(), before);
@@ -2327,9 +2612,43 @@ static void createPartitionBoundaries(
           std::sort(partitions.begin(), partitions.end());
           if(partitions.front() == partitions.back()) continue;
           std::vector<idx_t> &buffer = sharingByChunk[c];
-          facetRecord r = {i, k, buffer.size(), buffer.size() + sharing.size()};
-          buffer.insert(buffer.end(), sharing.begin(), sharing.end());
-          records[c].push_back(r);
+          if(!copies) {
+            facetRecord r = {i,
+                             k,
+                             buffer.size(),
+                             buffer.size() + sharing.size(),
+                             nullptr,
+                             std::vector<int>()};
+            buffer.insert(buffer.end(), sharing.begin(), sharing.end());
+            records[c].push_back(r);
+            continue;
+          }
+          // a facet on each copy, from the first element sharing it, with the
+          // partitions of all of them
+          partitions.erase(std::unique(partitions.begin(), partitions.end()),
+                           partitions.end());
+          std::vector<FACET> found;
+          for(std::size_t j = 0; j < sharing.size(); j++) {
+            MElement *ej = graph.element(sharing[j]);
+            for(int kj = findCopy(copies, ej, f); kj >= 0;
+                kj = findCopy(copies, ej, f, kj + 1)) {
+              FACET g = getFacet(ej, kj, (FACET *)nullptr);
+              if(std::find(found.begin(), found.end(), g) != found.end())
+                continue;
+              found.push_back(g);
+              facetRecord r = {(std::size_t)sharing[j],
+                               kj,
+                               buffer.size(),
+                               buffer.size(),
+                               periodicFacetEntity(periodic, g),
+                               partitions};
+              for(std::size_t l = 0; l < sharing.size(); l++)
+                if(hasFacet(graph.element(sharing[l]), g))
+                  buffer.push_back(sharing[l]);
+              r.last = buffer.size();
+              records[c].push_back(r);
+            }
+          }
         }
       }
     }
@@ -2370,29 +2689,33 @@ static void createPartitionBoundaries(
     model->setMaxElementNumber(firstNum + firstRecord[numChunks] - 1);
 
   // Finally, the partition entities are created and the facets added to
-  // them, in the order of the graph. Every facet records the entities it
-  // bounds, unless already recorded; a zero orientation cannot happen on a
+  // them, in the order of the graph. Every facet records the signed entities
+  // it bounds, unless already recorded; a zero orientation cannot happen on a
   // conformal mesh (see assignNewEntityBRep): the pair is left for another
   // facet. Consecutive facets mostly belong to the same partition entity, so
   // the last one and the entities it bounds are kept at hand.
-  std::unordered_map<GEntity *, std::vector<GEntity *>> bounds;
+  std::unordered_map<GEntity *, std::vector<std::pair<int, GEntity *>>> bounds;
   std::vector<int> partitions, lastPartitions;
   GEntity *lastReference = nullptr, *lastOther = nullptr;
   PART_ENTITY *pe = nullptr;
-  std::vector<GEntity *> *peBounds = nullptr;
+  std::vector<std::pair<int, GEntity *>> *peBounds = nullptr;
   for(std::size_t c = 0; c < numChunks; c++) {
     for(std::size_t r = 0; r < records[c].size(); r++) {
       const facetRecord &rec = records[c][r];
-      partitions.clear();
-      for(std::size_t j = rec.first; j < rec.last; j++) {
-        const std::vector<int> &l =
-          lists[graph.partition(sharingByChunk[c][j])];
-        partitions.insert(partitions.end(), l.begin(), l.end());
+      if(rec.periodic)
+        partitions = rec.partitions;
+      else {
+        partitions.clear();
+        for(std::size_t j = rec.first; j < rec.last; j++) {
+          const std::vector<int> &l =
+            lists[graph.partition(sharingByChunk[c][j])];
+          partitions.insert(partitions.end(), l.begin(), l.end());
+        }
+        std::sort(partitions.begin(), partitions.end());
+        partitions.erase(std::unique(partitions.begin(), partitions.end()),
+                         partitions.end());
       }
-      std::sort(partitions.begin(), partitions.end());
-      partitions.erase(std::unique(partitions.begin(), partitions.end()),
-                       partitions.end());
-      GEntity *reference = entities[c][rec.first];
+      GEntity *reference = rec.periodic ? rec.periodic : entities[c][rec.first];
       // in 3D, a partition surface bounds the volumes on both sides
       GEntity *other = (dim == 3 && rec.last - rec.first == 2) ?
                          entities[c][rec.first + 1] :
@@ -2401,7 +2724,7 @@ static void createPartitionBoundaries(
          partitions != lastPartitions) {
         PART_ENTITY *newEntity = nullptr;
         pe = createPartitionEntity(model, numEntity, partitions, reference,
-                                   &newEntity, pentities, other);
+                                   &newEntity, pentities, other, rec.periodic);
         peBounds = &bounds[pe];
         lastReference = reference;
         lastOther = other;
@@ -2410,10 +2733,11 @@ static void createPartitionBoundaries(
       addFacetElement(pe, facets[c][r]);
       for(std::size_t j = rec.first; j < rec.last; j++) {
         GEntity *b = entities[c][j];
+        const auto bound = std::make_pair(orientations[c][j], b);
         if(!orientations[c][j] ||
-           std::find(peBounds->begin(), peBounds->end(), b) != peBounds->end())
+           std::find(peBounds->begin(), peBounds->end(), bound) != peBounds->end())
           continue;
-        peBounds->push_back(b);
+        peBounds->push_back(bound);
         addPartitionBoundary(b, pe, orientations[c][j]);
       }
     }
@@ -2429,10 +2753,9 @@ static void assignNewEntityBRep(Graph &graph,
                                 const elementEntityMap &elementToEntity)
 {
   // The pairs of entities (of an element, of a neighbor of dimension one
-  // less) are found in parallel, by chunks of elements, each chunk keeping
-  // the first element pair of each entity pair, then merged in the order of
-  // the chunks: the orientation of an entity pair is the one of its first
-  // element pair in the graph, as when this was serial.
+  // less) are found in parallel, by chunks of elements. Keep the first
+  // occurrence of each signed entity pair, then merge in chunk order. A
+  // periodic seam can bound the same entity with both orientations.
   struct entityPair {
     GEntity *g1, *g2;
     int ori;
@@ -2446,7 +2769,7 @@ static void assignNewEntityBRep(Graph &graph,
   const int nthreads = CTX::instance()->numThreadsFor(graph.ne(), 10000);
 #pragma omp parallel for schedule(dynamic, 1) num_threads(nthreads)
   for(std::size_t c = 0; c < numChunks; c++) {
-    std::set<std::pair<GEntity *, GEntity *>> seen;
+    hashmapentity seen;
     const std::size_t end = std::min(graph.ne(), (c + 1) * chunkSize);
     for(std::size_t i = c * chunkSize; i < end; i++) {
       MElement *current = graph.element(i);
@@ -2455,29 +2778,26 @@ static void assignNewEntityBRep(Graph &graph,
         if(current->getDim() != neighbor->getDim() + 1) continue;
         GEntity *g1 = entityOf(current);
         GEntity *g2 = entityOf(neighbor);
-        if(seen.count(std::make_pair(g1, g2))) continue;
         const int ori = computeOrientation(current, neighbor);
         // A zero orientation means the elements are neighbors in the
         // node-based dual graph without one being a facet of the other,
         // which cannot happen on a conformal mesh. Record nothing: MSH4
         // encodes the orientation as the sign of the tag, so a 0 would read
-        // back as -1. Leave the pair unmarked, so another element pair can
-        // still establish the relation with a real orientation.
+        // back as -1. Another element pair can still establish the relation
+        // with a real orientation.
         if(!ori) continue;
-        seen.insert(std::make_pair(g1, g2));
+        if(!seen[g1].insert(std::make_pair(ori, g2)).second) continue;
         entityPair p = {g1, g2, ori};
         pairs[c].push_back(p);
       }
     }
   }
 
-  std::set<std::pair<GEntity *, GEntity *> > brepWithoutOri;
   hashmapentity brep;
   for(std::size_t c = 0; c < numChunks; c++) {
     for(std::size_t k = 0; k < pairs[c].size(); k++) {
       const entityPair &p = pairs[c][k];
-      if(brepWithoutOri.insert(std::make_pair(p.g1, p.g2)).second)
-        brep[p.g1].insert(std::make_pair(p.ori, p.g2));
+      brep[p.g1].insert(std::make_pair(p.ori, p.g2));
     }
   }
 
@@ -2518,7 +2838,9 @@ static void assignNewEntityBRep(Graph &graph,
 // the partition point created at that junction ends up attached to the middle
 // of it. Cut such curves at their junction nodes, so that every node shared
 // between two partition curves is an extremity of both.
-static bool splitPartitionCurvesAtJunctions(GModel *model)
+static bool
+splitPartitionCurvesAtJunctions(GModel *model,
+                                const periodicClasses *classes = nullptr)
 {
   std::set<GEdge *, GEntityPtrLessThan> edges = model->getEdges();
 
@@ -2536,6 +2858,18 @@ static bool splitPartitionCurvesAtJunctions(GModel *model)
     }
   }
   if(junction.empty()) return false;
+
+  // with a periodic topology, a junction cuts the curves through all the
+  // copies of its node
+  if(classes) {
+    std::vector<MVertex *> copies;
+    for(MVertex *v : junction) {
+      if(!classes->isPeriodic(v)) continue;
+      const std::vector<MVertex *> &m = classes->members().at(classes->rep(v));
+      copies.insert(copies.end(), m.begin(), m.end());
+    }
+    junction.insert(copies.begin(), copies.end());
+  }
 
   bool ret = false;
   int elementaryNumber = model->getMaxElementaryNumber(1);
@@ -2610,10 +2944,7 @@ static bool splitPartitionCurvesAtJunctions(GModel *model)
     ret = true;
     PendingCurveSplit split;
     split.edge = edge;
-    split.brep = edge->faces();
-    split.orientations.reserve(split.brep.size());
-    for(std::size_t j = 0; j < split.brep.size(); j++)
-      split.orientations.push_back(split.brep[j]->delEdge(edge));
+    detachBoundaryUses(edge, split.brep, split.orientations);
     for(std::size_t i = 0; i < components.size(); i++) {
       std::size_t comp = distributor.newComponent();
       split.components.push_back(comp);
@@ -2643,7 +2974,9 @@ static bool splitPartitionCurvesAtJunctions(GModel *model)
       for(std::size_t j = 0; j < split.elements[i].size(); j++)
         pedge->addElement(split.elements[i][j]);
       for(std::size_t j = 0; j < split.brep.size(); j++) {
-        if(!distributor.touches(split.components[i], split.brep[j])) continue;
+        if(!distributor.touches(split.components[i], split.brep[j],
+                                split.orientations[j]))
+          continue;
         split.brep[j]->setEdge(pedge, split.orientations[j]);
         pedge->addFace(split.brep[j]);
       }
@@ -2658,10 +2991,11 @@ static bool splitPartitionCurvesAtJunctions(GModel *model)
 }
 
 // Create the new entities between each partitions (sigma and bndSigma).
+// With classes, the partition curves on the periodic surfaces and the
+// partition points on the periodic entities are the same on all their copies.
 static void createPartitionTopology(
-  GModel *model,
-  const std::vector<std::vector<MElement *> > &boundaryElements,
-  Graph &meshGraph)
+  GModel *model, const std::vector<std::vector<MElement *>> &boundaryElements,
+  Graph &meshGraph, const periodicClasses *classes = nullptr)
 {
   int meshDim = model->getMeshDim();
   elementEntityMap elementToEntity;
@@ -2722,7 +3056,14 @@ static void createPartitionTopology(
     else {
       Graph subGraph(model);
       makeGraph(model, subGraph, 2);
-      subGraph.createDualGraph(false);
+      if(classes) {
+        // the surfaces on both sides of a periodic boundary are neighbors
+        std::vector<idx_t> xadj, adjncy;
+        createGluedDualGraph(subGraph, *classes, false, xadj, adjncy);
+        subGraph.swapDualGraph(xadj, adjncy);
+      }
+      else
+        subGraph.createDualGraph(false);
       std::vector<idx_t> part(subGraph.ne());
       int partIndex = 0;
 
@@ -2747,8 +3088,14 @@ static void createPartitionTopology(
       // the partition curves are the edges between partition surfaces with
       // different partitions
       int numEdgeEntity = model->getMaxElementaryNumber(1);
+      periodicEdges periodic;
+      if(classes) {
+        periodic.classes = classes;
+        periodic.build(model);
+      }
       createPartitionBoundaries<MEdge>(subGraph, model, partitionLists, pedges,
-                                       elementToEntity, numEdgeEntity);
+                                       elementToEntity, numEdgeEntity,
+                                       classes ? &periodic : nullptr);
     }
 
     partitionLists.clear();
@@ -2758,7 +3105,7 @@ static void createPartitionTopology(
     // a partition point will be created at every junction of partition
     // curves, so the curves running through those junctions have to be cut
     // there first, or the point ends up bounding the middle of a curve
-    splitPartitionCurvesAtJunctions(model);
+    splitPartitionCurvesAtJunctions(model, classes);
     elementToEntity.clear();
     elementToEntity.fill(model, 1);
   }
@@ -2815,8 +3162,15 @@ static void createPartitionTopology(
       }
     }
     int numVertexEntity = model->getMaxElementaryNumber(0);
+    // the nodes of the periodic classes, by class
+    std::map<MVertex *, std::vector<MVertex *>, MVertexPtrLessThan>
+      periodicNodes;
     for(auto it = vertexToElement.begin(); it != vertexToElement.end(); ++it) {
       MVertex *v = it->first;
+      if(classes && classes->isPeriodic(v)) {
+        periodicNodes[classes->rep(v)].push_back(v);
+        continue;
+      }
 
       std::vector<int> partitions;
       getPartitionInVector(partitions, it->second, partitionLists);
@@ -2835,6 +3189,48 @@ static void createPartitionTopology(
           boundaryEntityAndRefElement.insert(std::make_pair(
             elementToEntity.get(it->second[i].first), it->second[i].first));
 
+        assignBrep(boundaryEntityAndRefElement, pv);
+      }
+    }
+    // a partition point on a periodic entity is created on all the copies of
+    // its node that are on partition curves (except on the model points),
+    // with the partitions of all of them, each in its own partition entity,
+    // whose parent is the periodic model entity of its node
+    for(auto it = periodicNodes.begin(); it != periodicNodes.end(); ++it) {
+      std::vector<MVertex *> &copies = it->second;
+      std::sort(copies.begin(), copies.end(), MVertexPtrLessThan());
+      elementPartitionList all;
+      for(MVertex *v : copies) {
+        const elementPartitionList &l = vertexToElement[v];
+        all.insert(all.end(), l.begin(), l.end());
+      }
+      std::vector<int> partitions;
+      getPartitionInVector(partitions, all, partitionLists);
+      if(partitions.size() < 2) continue;
+      if(!getReferenceElement(all, partitionLists)) continue;
+      for(MVertex *v : copies) {
+        // the point of a model point is already there, with the partitions of
+        // all its copies
+        if(v->onWhat() && v->onWhat()->dim() == 0) continue;
+        const elementPartitionList &own = vertexToElement[v];
+        GEntity *parent = v->onWhat();
+        if(parent && parent->getParentEntity())
+          parent = parent->getParentEntity();
+        if(!classes->isPeriodic(parent)) {
+          MElement *reference = getReferenceElement(own, partitionLists);
+          if(!reference) reference = own[0].first;
+          parent = elementToEntity.get(reference)->getParentEntity();
+        }
+        partitionVertex *pv =
+          new partitionVertex(model, ++numVertexEntity, partitions);
+        pv->setParentEntity(parent);
+        model->add(pv);
+        pv->addPoint(new MPoint(v));
+        std::map<GEntity *, MElement *, GEntityPtrFullLessThan>
+          boundaryEntityAndRefElement;
+        for(std::size_t i = 0; i < own.size(); i++)
+          boundaryEntityAndRefElement.insert(
+            std::make_pair(elementToEntity.get(own[i].first), own[i].first));
         assignBrep(boundaryEntityAndRefElement, pv);
       }
     }
@@ -3150,6 +3546,248 @@ static void fixEmbeddedVertices(GModel *model)
     entityCheckForEmbedded<2>(*it, mvToPartitionVertex);
   }
 }
+
+static std::vector<int> partitionsOf(GEntity *ge)
+{
+  switch(ge->geomType()) {
+  case GEntity::PartitionPoint:
+    return static_cast<partitionVertex *>(ge)->getPartitions();
+  case GEntity::PartitionCurve:
+    return static_cast<partitionEdge *>(ge)->getPartitions();
+  case GEntity::PartitionSurface:
+    return static_cast<partitionFace *>(ge)->getPartitions();
+  case GEntity::PartitionVolume:
+    return static_cast<partitionRegion *>(ge)->getPartitions();
+  default: return std::vector<int>();
+  }
+}
+
+// The ghost cells of each partition: the elements of the other partitions, of
+// all dimensions, that share a node with its elements (or the copy of a node
+// through the periodicity, if the mesh is partitioned glued along it). The
+// partitions of the elements of each node are those of their partition
+// entities: for most nodes one, kept in a vector; for the others (the nodes
+// on the boundaries of the partitions) several, kept in a hash map.
+static void assignGhostCells(GModel *model, const periodicClasses *copies)
+{
+  model->getGhostCells().clear();
+  std::vector<GEntity *> entities;
+  model->getEntities(entities);
+  std::vector<std::pair<GEntity *, std::vector<int>>> parts;
+  for(GEntity *ge : entities) {
+    std::vector<int> p = partitionsOf(ge);
+    if(p.size() && ge->getNumMeshElements()) parts.push_back({ge, p});
+  }
+  auto num = [copies](MVertex *v) {
+    return (copies ? copies->rep(v) : v)->getNum();
+  };
+  std::vector<int> first(model->getMaxVertexNumber() + 1, 0);
+  std::vector<char> several(first.size(), 0);
+  std::unordered_map<std::size_t, std::vector<int>> more;
+  for(auto &ep : parts) {
+    for(std::size_t i = 0; i < ep.first->getNumMeshElements(); i++) {
+      MElement *e = ep.first->getMeshElement(i);
+      for(std::size_t j = 0; j < e->getNumVertices(); j++) {
+        std::size_t n = num(e->getVertex(j));
+        for(int p : ep.second) {
+          if(!first[n])
+            first[n] = p;
+          else if(first[n] != p) {
+            std::vector<int> &m = more[n];
+            if(!several[n]) m.push_back(first[n]);
+            several[n] = 1;
+            if(std::find(m.begin(), m.end(), p) == m.end()) m.push_back(p);
+          }
+        }
+      }
+    }
+  }
+  std::size_t numGhosts = 0;
+  std::vector<int> ghosts;
+  for(auto &ep : parts) {
+    const std::vector<int> &own = ep.second;
+    auto add = [&](int p) {
+      if(std::find(own.begin(), own.end(), p) == own.end() &&
+         std::find(ghosts.begin(), ghosts.end(), p) == ghosts.end())
+        ghosts.push_back(p);
+    };
+    for(std::size_t i = 0; i < ep.first->getNumMeshElements(); i++) {
+      MElement *e = ep.first->getMeshElement(i);
+      ghosts.clear();
+      for(std::size_t j = 0; j < e->getNumVertices(); j++) {
+        std::size_t n = num(e->getVertex(j));
+        if(several[n])
+          for(int p : more[n]) add(p);
+        else
+          add(first[n]);
+      }
+      for(int p : ghosts) model->addGhostCells(e, p);
+      numGhosts += ghosts.size();
+    }
+  }
+  Msg::Info("%zu ghost cells", numGhosts);
+}
+
+static void setPartitions(GEntity *ge, const std::vector<int> &partitions)
+{
+  switch(ge->geomType()) {
+  case GEntity::PartitionPoint:
+    static_cast<partitionVertex *>(ge)->setPartitions(partitions);
+    break;
+  case GEntity::PartitionCurve:
+    static_cast<partitionEdge *>(ge)->setPartitions(partitions);
+    break;
+  case GEntity::PartitionSurface:
+    static_cast<partitionFace *>(ge)->setPartitions(partitions);
+    break;
+  default: break;
+  }
+}
+
+// Creates the partition entities as createNewEntities() does, those cut from
+// the periodic model entities having the partitions of all the copies of
+// their elements: while the entities are created, an element whose copies are
+// in several partitions is in a temporary partition that stands for the list
+// of these partitions. The partition entities cut from a periodic entity and
+// from its mesh master are then cut the same way, with the same partitions.
+static void createNewPeriodicEntities(GModel *model, Graph &graph,
+                                      const periodicClasses &classes)
+{
+  // the copies of an element are the elements with nodes of the same classes
+  auto key = [&classes](MElement *e) {
+    std::vector<std::size_t> nodes(e->getNumPrimaryVertices());
+    for(std::size_t i = 0; i < nodes.size(); i++)
+      nodes[i] = classes.rep(e->getVertex(i))->getNum();
+    std::sort(nodes.begin(), nodes.end());
+    return nodes;
+  };
+  std::vector<GEntity *> entities;
+  model->getEntities(entities);
+  std::map<std::vector<std::size_t>, std::vector<int>> partitions;
+  for(GEntity *ge : entities) {
+    if(!classes.isPeriodic(ge)) continue;
+    for(std::size_t i = 0; i < ge->getNumMeshElements(); i++) {
+      MElement *e = ge->getMeshElement(i);
+      partitions[key(e)].push_back(e->getPartition());
+    }
+  }
+  for(auto &p : partitions) {
+    std::sort(p.second.begin(), p.second.end());
+    p.second.erase(std::unique(p.second.begin(), p.second.end()),
+                   p.second.end());
+  }
+
+  // a temporary partition for each list of several partitions
+  const int numPart = model->getNumPartitions();
+  std::map<std::vector<int>, int> temporary;
+  std::vector<std::pair<MElement *, int>> own;
+  for(GEntity *ge : entities) {
+    if(!classes.isPeriodic(ge)) continue;
+    for(std::size_t i = 0; i < ge->getNumMeshElements(); i++) {
+      MElement *e = ge->getMeshElement(i);
+      const std::vector<int> &list = partitions[key(e)];
+      if(list.size() < 2) continue;
+      auto it =
+        temporary.emplace(list, numPart + (int)temporary.size() + 1).first;
+      own.push_back(std::make_pair(e, e->getPartition()));
+      e->setPartition(it->second);
+    }
+  }
+
+  model->setNumPartitions(numPart + temporary.size());
+  createNewEntities(model, &graph);
+  model->setNumPartitions(numPart);
+
+  // back to the partitions of the elements, and to the lists of partitions
+  for(auto &o : own) o.first->setPartition(o.second);
+  std::vector<std::vector<int>> lists(temporary.size());
+  for(auto &t : temporary) lists[t.second - numPart - 1] = t.first;
+  entities.clear();
+  model->getEntities(entities);
+  for(GEntity *ge : entities) {
+    std::vector<int> part = partitionsOf(ge);
+    if(part.size() == 1 && part[0] > numPart)
+      setPartitions(ge, lists[part[0] - numPart - 1]);
+  }
+}
+
+// Makes the partition entities cut from a periodic entity periodic, with as
+// mesh master the partition entity cut from its master that their elements
+// correspond to (which exists once the partition entities are cut the same
+// way on all the copies of the periodic entities).
+static void setPeriodicPartitionEntities(GModel *model)
+{
+  // the partition entities cut from each entity, per dimension
+  std::vector<GEntity *> entities;
+  model->getEntities(entities);
+  std::map<std::pair<GEntity *, int>, std::vector<GEntity *>> pieces;
+  for(GEntity *ge : entities) {
+    GEntity *parent = ge->getParentEntity();
+    if(parent) pieces[std::make_pair(parent, ge->dim())].push_back(ge);
+  }
+
+  std::size_t numPeriodic = 0, numFailed = 0, numBoundary = 0;
+  for(auto &p : pieces) {
+    GEntity *parent = p.first.first;
+    GEntity *parentMaster = parent->getMeshMaster();
+    if(parentMaster == parent) continue;
+    std::map<std::vector<std::size_t>, GEntity *> masterElements;
+    auto itm = pieces.find(std::make_pair(parentMaster, p.first.second));
+    if(itm != pieces.end()) {
+      for(GEntity *ge : itm->second)
+        for(std::size_t i = 0; i < ge->getNumMeshElements(); i++)
+          masterElements[sortedPrimaryNodes(ge->getMeshElement(i))] = ge;
+    }
+    for(GEntity *ge : p.second) {
+      GEntity *master = nullptr;
+      bool ok = ge->getNumMeshElements();
+      std::map<MVertex *, MVertex *> nodes, highOrderNodes;
+      for(std::size_t i = 0; i < ge->getNumMeshElements() && ok; i++) {
+        MElement *e = ge->getMeshElement(i);
+        auto it = masterElements.find(sortedPrimaryMasterNodes(e, parent));
+        if(it == masterElements.end() || (master && master != it->second)) {
+          ok = false;
+          break;
+        }
+        master = it->second;
+        for(std::size_t j = 0; j < e->getNumVertices(); j++) {
+          MVertex *v = e->getVertex(j);
+          auto itv = parent->correspondingVertices.find(v);
+          if(itv != parent->correspondingVertices.end())
+            nodes.insert(*itv);
+          else {
+            itv = parent->correspondingHighOrderVertices.find(v);
+            if(itv != parent->correspondingHighOrderVertices.end())
+              highOrderNodes.insert(*itv);
+          }
+        }
+      }
+      // the correspondence must hold for the whole of both, in the same
+      // partitions
+      if(ok && (master->getNumMeshElements() != ge->getNumMeshElements() ||
+                partitionsOf(master) != partitionsOf(ge)))
+        ok = false;
+      if(ok) {
+        ge->setMeshMaster(master, parent->affineTransform, false);
+        ge->correspondingVertices = nodes;
+        ge->correspondingHighOrderVertices = highOrderNodes;
+        numPeriodic++;
+      }
+      else if(ge->dim() == parent->dim())
+        numFailed++;
+      else
+        numBoundary++;
+    }
+  }
+  if(numFailed)
+    Msg::Warning("%zu partition entities of periodic entities do not "
+                 "correspond to a partition entity of the mesh master",
+                 numFailed);
+  Msg::Info("%zu periodic partition entities (%zu partition boundaries in "
+            "periodic entities are cut differently in the mesh master)",
+            numPeriodic, numBoundary);
+}
+
 // Partition a mesh into n parts. Returns: 0 = success, 1 = error
 
 int PartitionMesh(GModel *model, int numPart)
@@ -3159,10 +3797,17 @@ int PartitionMesh(GModel *model, int numPart)
   Msg::StatusBar(true, "Partitioning mesh...");
   double t1 = Cpu(), w1 = TimeOfDay();
 
+  // with Mesh.PartitionPeriodic, the mesh is partitioned as the mesh glued
+  // along the periodic entities, and the partition topology is the same on all
+  // the copies of the periodic entities
+  periodicClasses classes;
+  if(CTX::instance()->mesh.partitionPeriodic) classes.build(model);
+  const periodicClasses *copies = classes.empty() ? nullptr : &classes;
+
   Graph graph(model);
   if(makeGraph(model, graph, -1)) return 1;
   graph.nparts(numPart);
-  if(partitionGraph(graph, true)) return 1;
+  if(partitionGraph(graph, true, copies)) return 1;
 
   std::vector<std::size_t> elmCount[TYPE_MAX_NUM + 1];
   for(int i = 0; i < TYPE_MAX_NUM + 1; i++) { elmCount[i].resize(numPart, 0); }
@@ -3182,7 +3827,10 @@ int PartitionMesh(GModel *model, int numPart)
   }
   model->setNumPartitions(graph.nparts());
 
-  createNewEntities(model, &graph);
+  if(copies)
+    createNewPeriodicEntities(model, graph, classes);
+  else
+    createNewEntities(model, &graph);
 
   for(std::size_t i = 0; i < TYPE_MAX_NUM + 1; i++) {
     std::vector<std::size_t> &count = elmCount[i];
@@ -3209,7 +3857,7 @@ int PartitionMesh(GModel *model, int numPart)
     Msg::StatusBar(true, "Creating partition topology...");
     std::vector<std::vector<MElement *> > boundaryElements =
       graph.getBoundaryElements();
-    createPartitionTopology(model, boundaryElements, graph);
+    createPartitionTopology(model, boundaryElements, graph, copies);
     boundaryElements.clear();
     double t3 = Cpu(), w3 = TimeOfDay();
     Msg::StatusBar(true, "Done creating partition topology (Wall %gs, CPU %gs)",
@@ -3219,13 +3867,12 @@ int PartitionMesh(GModel *model, int numPart)
   assignPhysicals(model);
   assignMeshVertices(model);
   fixEmbeddedVertices(model);
+  if(copies) setPeriodicPartitionEntities(model);
 
   if(CTX::instance()->mesh.partitionCreateGhostCells) {
     double t4 = Cpu(), w4 = TimeOfDay();
     Msg::StatusBar(true, "Creating ghost cells...");
-    graph.clearDualGraph();
-    graph.createDualGraph(true);
-    graph.assignGhostCells();
+    assignGhostCells(model, copies);
     double t5 = Cpu(), w5 = TimeOfDay();
     Msg::StatusBar(true, "Done creating ghost cells (Wall %gs, CPU %gs)",
                    w5 - w4, t5 - t4);
@@ -3306,10 +3953,6 @@ int UnpartitionMesh(GModel *model)
       model->remove(pedge);
       delete pedge;
     }
-    else if(edge->geomType() == GEntity::GhostCurve) {
-      model->remove(edge);
-      delete edge;
-    }
   }
 
   // Loop over surfaces
@@ -3338,10 +3981,6 @@ int UnpartitionMesh(GModel *model)
 
       model->remove(pface);
       delete pface;
-    }
-    else if(face->geomType() == GEntity::GhostSurface) {
-      model->remove(face);
-      delete face;
     }
     else if(face->geomType() == GEntity::OverlapSurface) {
       face->deleteMesh();
@@ -3392,10 +4031,6 @@ int UnpartitionMesh(GModel *model)
       model->remove(pregion);
       delete pregion;
     }
-    else if(region->geomType() == GEntity::GhostVolume) {
-      model->remove(region);
-      delete region;
-    }
     else if(region->geomType() == GEntity::OverlapVolume) {
       region->deleteMesh();
       model->remove(region);
@@ -3405,6 +4040,7 @@ int UnpartitionMesh(GModel *model)
 
   model->setNumPartitions(0);
   model->clearOverlaps();
+  model->getGhostCells().clear();
 
   std::map<std::pair<int, int>, std::string> physicalNames =
     model->getPhysicalNames();
@@ -3484,37 +4120,16 @@ int PartitionUsingThisSplit(GModel *model,
   assignMeshVertices(model);
   fixEmbeddedVertices(model);
 
-  if (!elmGhosts.empty()) {
+  // the ghost cells given (by their partition with a minus sign), or found
+  if(!elmGhosts.empty()) {
+    model->getGhostCells().clear();
     std::sort(elmGhosts.begin(), elmGhosts.end());
     auto last = std::unique(elmGhosts.begin(), elmGhosts.end());
     elmGhosts.erase(last, elmGhosts.end());
-    std::vector<GEntity *> ghostEntities = graph.createGhostEntities();
-    for (auto elmGhost : elmGhosts) {
-      MElement *el = elmGhost.first;
-      int part = elmGhost.second;
-      if(el->getDim() == graph.dim()) {
-        switch(graph.dim()) {
-          case 1:
-            static_cast<ghostEdge *>(ghostEntities[part - 1])
-              ->addElement(el, elmToPartition[el]);
-            break;
-          case 2:
-            static_cast<ghostFace *>(ghostEntities[part - 1])
-              ->addElement(el, elmToPartition[el]);
-            break;
-          case 3:
-            static_cast<ghostRegion *>(ghostEntities[part - 1])
-              ->addElement(el, elmToPartition[el]);
-            break;
-          default: break;
-        }
-      }
-    }
+    for(auto &g : elmGhosts) model->addGhostCells(g.first, g.second);
   }
   else if(CTX::instance()->mesh.partitionCreateGhostCells) {
-    graph.clearDualGraph();
-    graph.createDualGraph(true);
-    graph.assignGhostCells();
+    assignGhostCells(model, nullptr);
   }
   elmToPartition.clear();
 
@@ -3532,6 +4147,18 @@ int ConvertOldPartitioningToNewOne(GModel *model)
   std::set<int> partitions;
   std::vector<GEntity *> entities;
   model->getEntities(entities);
+  // converted already: partition entities made from partition entities would
+  // have them as parents, which unpartitioning deletes before their children
+  for(GEntity *ge : entities) {
+    if(ge->geomType() == GEntity::PartitionPoint ||
+       ge->geomType() == GEntity::PartitionCurve ||
+       ge->geomType() == GEntity::PartitionSurface ||
+       ge->geomType() == GEntity::PartitionVolume) {
+      Msg::Warning("The mesh has partition entities already: the old "
+                   "partitioning is not converted again");
+      return 1;
+    }
+  }
   for(std::size_t i = 0; i < entities.size(); i++) {
     for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
       MElement *e = entities[i]->getMeshElement(j);

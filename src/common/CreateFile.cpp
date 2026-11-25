@@ -8,6 +8,8 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GModel.h"
+#include "MPolygon.h"
+#include "MPolyhedron.h"
 #include "GmshDefines.h"
 #include "StringUtils.h"
 #include "Context.h"
@@ -15,6 +17,7 @@
 #include "OpenFile.h"
 #include "CreateFile.h"
 #include "OS.h"
+#include "scriptStringInterface.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
@@ -43,7 +46,6 @@
 #include "FlGui.h"
 #include "graphicWindow.h"
 #include "openglWindow.h"
-#include "visibilityWindow.h"
 #endif
 
 #if defined(HAVE_OPENGL)
@@ -362,7 +364,7 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
   if(!haveWindow()) return getOffscreenPixelBuffer(format, type);
 
 #if defined(HAVE_FLTK)
-  openglWindow *newg = nullptr;
+  openglWindow *newg = nullptr, *previous = nullptr;
 
   // a picture of any size is drawn into a buffer of its own (a window could
   // not be larger than the screen), and possibly at a multiple of its size,
@@ -401,11 +403,29 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
     newg->getDrawContext()->copyViewAttributes
       (FlGui::instance()->getCurrentOpenglWindow()->getDrawContext());
     newg->show();
+    // the window the picture comes from, handled again afterwards
+    previous = openglWindow::getLastHandled();
     openglWindow::setLastHandled(newg);
     // waiting for the OS to really make the window visible and to call the
     // draw() function on (some ?) linux; if we do not wait here, the window is
-    // not ready and the picture cannot be generated
-    while(!newg->valid()) Fl::wait();
+    // not ready and the picture cannot be generated (not forever: a window
+    // never shown, or the interface closed meanwhile, gives the picture of
+    // the window at its own size, or an offscreen one)
+    double start = TimeOfDay();
+    while(!newg->valid() && FlGui::available() && TimeOfDay() - start < 10.)
+      Fl::wait(0.1);
+    if(!newg->valid() || !FlGui::available()) {
+      Msg::Warning("Could not open a window of the size of the picture");
+      std::vector<openglWindow *> gls;
+      if(FlGui::available()) gls = FlGui::instance()->openglWindows();
+      if(std::find(gls.begin(), gls.end(), previous) == gls.end())
+        previous = nullptr;
+      openglWindow::setLastHandled(previous);
+      newg->hide();
+      delete newg;
+      newg = nullptr;
+      if(!FlGui::available()) return getOffscreenPixelBuffer(format, type);
+    }
   }
 
   PixelBuffer *buffer;
@@ -454,7 +474,12 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
   }
 
   if(newg){
-    openglWindow::setLastHandled(nullptr);
+    // unless it went while the window was waited for
+    std::vector<openglWindow *> gls;
+    if(FlGui::available()) gls = FlGui::instance()->openglWindows();
+    if(std::find(gls.begin(), gls.end(), previous) == gls.end())
+      previous = nullptr;
+    openglWindow::setLastHandled(previous);
     newg->hide();
     delete newg;
   }
@@ -631,6 +656,65 @@ static void writeViewsOnSeveralMeshes(
 }
 #endif
 
+// What becomes of the polygons and polyhedra of the mesh in a format that
+// cannot hold them: false if the file cannot be written.
+static bool checkPolytopes(int format)
+{
+  std::size_t polygons = 0, polyhedra = 0, given = 0;
+  GModel *m = GModel::current();
+  for(auto gf : m->getFaces()) {
+    polygons += gf->polygons.size();
+    for(auto p : gf->polygons) given += p->hasGivenTriangles();
+  }
+  for(auto gr : m->getRegions()) {
+    polyhedra += gr->polyhedra.size();
+    for(auto p : gr->polyhedra) given += p->hasGivenTetrahedra();
+  }
+  if(!polygons && !polyhedra) return true;
+  switch(format) {
+  case FORMAT_UNV:
+  case FORMAT_INP:
+  case FORMAT_NEU:
+  case FORMAT_MATLAB:
+  case FORMAT_IR3:
+    // (their groups would name elements that are not written, or the
+    // elements would be written as lists of nodes)
+    Msg::Error("Polygons and polyhedra cannot be saved in this format");
+    return false;
+  case FORMAT_STL:
+  case FORMAT_X3D:
+  case FORMAT_VRML:
+  case FORMAT_PLY2:
+  case FORMAT_TOCHNOG:
+  case FORMAT_MESH:
+  case FORMAT_MAIL:
+  case FORMAT_BDF:
+  case FORMAT_DIFF:
+  case FORMAT_KEY:
+  case FORMAT_RAD:
+  case FORMAT_CELUM:
+  case FORMAT_P3D:
+    Msg::Warning("%zu polygons and polyhedra are not saved in this format",
+                 polygons + polyhedra);
+    break;
+  case FORMAT_OBJ:
+  case FORMAT_OFF:
+    if(polyhedra)
+      Msg::Warning("%zu polyhedra are not saved in this format", polyhedra);
+    break;
+  case FORMAT_VTK:
+  case FORMAT_VTU:
+  case FORMAT_PVTU:
+  case FORMAT_MED:
+    if(given)
+      Msg::Warning("The triangles and tetrahedra given for %zu polygons and "
+                   "polyhedra, and the nodes only they use, are not saved in "
+                   "this format", given);
+    break;
+  }
+  return true;
+}
+
 void CreateOutputFile(const std::string &fileName, int format,
                       bool status)
 {
@@ -645,7 +729,9 @@ void CreateOutputFile(const std::string &fileName, int format,
   if(status)
     Msg::StatusBar(true, "Writing '%s'...", name.c_str());
 
-  switch (format) {
+  if(format != FORMAT_AUTO && !checkPolytopes(format))
+    error = true;
+  else switch (format) {
 
   case FORMAT_AUTO:
     {
@@ -1013,12 +1099,10 @@ void CreateOutputFile(const std::string &fileName, int format,
       Msg::Error("No Parasolid CAD data found for XMT export");
     break;
 
-#if defined(HAVE_FLTK)
   case FORMAT_VIS:
     UnlinkFile(name);
-    visibility_save(name);
+    scriptSaveVisibilityAndColors(name);
     break;
-#endif
 
 #if defined(HAVE_OPENGL)
   case FORMAT_PPM:

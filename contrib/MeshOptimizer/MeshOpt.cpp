@@ -39,9 +39,8 @@
 
 MeshOpt::MeshOpt(const std::map<MElement *, GEntity *> &element2entity,
                  const std::map<MElement *, GEntity *> &bndEl2Ent,
-                 const std::set<MElement *> &els, std::set<MVertex *> &toFix,
-                 const std::set<MElement *> &bndEls,
-                 const MeshOptParameters &par)
+                 const MElementSet &els, MVertexSet &toFix,
+                 const MElementSet &bndEls, const MeshOptParameters &par)
   : patch(element2entity, bndEl2Ent, els, toFix, bndEls, par.fixBndNodes),
     _verbose(0), _nCurses(1), _iPass(0), _iter(0), _intervDisplay(0),
     _initObj(0)
@@ -191,7 +190,9 @@ void MeshOpt::runOptim(std::vector<double> &x,
     nfev = result.functionEvaluations;
     terminationtype = result.terminationType;
   } catch(const std::exception &e) {
-    Msg::Error("%s", e.what());
+    // a warning: patches are optimized in parallel, where an error would throw
+    // out of the OpenMP region; the failure is reported for the whole mesh
+    Msg::Warning("%s", e.what());
   }
   // Evaluations at rejected trial points also update the mesh and objective.
   // Restore their state at the coordinates actually returned by the solver.
@@ -345,9 +346,9 @@ int MeshOpt::optimize(const MeshOptParameters &par)
     if(!failMeasures.empty()) {
       result = -1;
       if(_verbose > 2)
-        Msg::Error("Failed to reach critical value in pass %d "
-                   "for measure(s): %s",
-                   _iPass, failMeasures.c_str());
+        Msg::Warning("Failed to reach critical value in pass %d "
+                     "for measure(s): %s",
+                     _iPass, failMeasures.c_str());
     }
     if(_verbose > 2) {
       if(targetReached)

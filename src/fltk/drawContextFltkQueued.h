@@ -42,6 +42,7 @@ public:
   }
   void setFont(int fontid, int fontsize)
   {
+    fontsize = fontSizeInRange(fontsize);
     drawContextFltk::setFont(fontid, fontsize);
     _currentFontId = fontid;
     _currentFontSize = fontsize;

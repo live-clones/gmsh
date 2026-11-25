@@ -237,13 +237,16 @@ std::vector<std::pair<std::string, std::string> > GetMouseUsage()
   s.push_back(mp("Left button", "Rotate / Select an entity / Accept a lasso "
                  "zoom or a lasso selection"));
   s.push_back(mp("Ctrl+Left button", "Start a lasso zoom or a lasso "
-                 "(un)selection"));
+                 "(un)selection, of all the entities inside it"));
+  s.push_back(mp("Alt+Left button", "Accept a lasso (un)selection of the "
+                 "entities in front only"));
   s.push_back(mp("Middle button", "Zoom / Unselect an entity / Accept a lasso "
                  "zoom or a lasso unselection"));
   s.push_back(mp("Ctrl+Middle button", "Orthogonalize display"));
   s.push_back(mp("Right button", "Pan / Cancel a lasso zoom or a lasso "
                  "(un)selection / Pop-up menu on post-processing view button"));
   s.push_back(mp("Ctrl+Right button", "Reset to default viewpoint"));
+  s.push_back(mp("Ctrl+Alt+Left button", "Reset to default viewpoint"));
   return s;
 }
 
@@ -1152,6 +1155,9 @@ static bool GetOtherOption(const std::vector<std::string> &argv,
   else if(argv[i] == "-nopopup") {
     opt_general_nopopup(0, GMSH_SET, 1);
     i++;
+  }
+  else if(argv[i] == "-noenv" || argv[i] == "-nolocale") {
+    i++; // already handled in Msg::Initialize()
   }
   else if(argv[i] == "-shaders" || argv[i] == "-shader") {
     opt_general_shaders(0, GMSH_SET, 1);

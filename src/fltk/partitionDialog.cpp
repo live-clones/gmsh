@@ -8,7 +8,9 @@
 //   Anthony Royer
 //
 
+#include <algorithm>
 #include <limits>
+#include <string>
 #include <FL/Fl.H>
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Choice.H>
@@ -19,15 +21,12 @@
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Box.H>
 #include "GmshConfig.h"
-#include "GmshDefines.h"
-#include "GmshMessage.h"
 #include "FlGui.h"
 #include "paletteWindow.h"
 #include "GModel.h"
 #include "drawContext.h"
 #include "Options.h"
 #include "Context.h"
-#include "fileDialogs.h"
 #include "partitionDialog.h"
 
 #if defined(HAVE_MESH) && defined(HAVE_METIS)
@@ -35,11 +34,23 @@
 #include "meshPartition.h"
 
 // Forward declarations of some callbacks
-void partition_opt_num_partitions_cb(Fl_Widget *widget, void *data);
 void partition_defaults_cb(Fl_Widget *widget, void *data);
 void partition_partition_cb(Fl_Widget *widget, void *data);
 void partition_cancel_cb(Fl_Widget *widget, void *data);
 void partition_select_groups_cb(Fl_Widget *widget, void *data);
+
+// the weights of the elements for the load balancing, as laid out
+static const struct {
+  const char *label, *option;
+} weights[6] = {
+  {"Triangle", "PartitionTriWeight"},   {"Tetrahedron", "PartitionTetWeight"},
+  {"Prism", "PartitionPrismWeight"},    {"Quadrangle", "PartitionQuadWeight"},
+  {"Hexahedron", "PartitionHexWeight"}, {"Pyramid", "PartitionPyramidWeight"}};
+
+// the item of the Metis algorithm shown for an option value: Multithreaded
+// k-way (3) is shown as K-way without mt-metis
+static int metisItem(Fl_Choice *c, int algorithm)
+{ return std::max(0, std::min(algorithm, c->size() - 1) - 1); }
 
 void partitionWindow::write_all_options()
 {
@@ -49,64 +60,55 @@ void partitionWindow::write_all_options()
   CTX::instance()->mesh.partitionCreateGhostCells = setGhostCells->value();
   CTX::instance()->mesh.partitionCreateTopology = setTopology->value();
   CTX::instance()->mesh.partitionCreatePhysicals = setPhysical->value();
+  CTX::instance()->mesh.partitionPeriodic = setPeriodic->value();
 
-  // Group 1
-  CTX::instance()->mesh.metisAlgorithm = choiceMetisAlg->value() + 1;
+  // Group 1: the algorithm kept if its item was not changed
+  if(choiceMetisAlg->value() !=
+     metisItem(choiceMetisAlg, CTX::instance()->mesh.metisAlgorithm))
+    CTX::instance()->mesh.metisAlgorithm = choiceMetisAlg->value() + 1;
 
   // Group 2
   CTX::instance()->mesh.metisEdgeMatching = choiceEdgeMatch->value() + 1;
   CTX::instance()->mesh.metisRefinementAlgorithm = choiceRefineAlg->value() + 1;
 
-  CTX::instance()->mesh.partitionTriWeight = (int)inputTriWeight->value();
-  CTX::instance()->mesh.partitionQuaWeight = (int)inputQuaWeight->value();
-  CTX::instance()->mesh.partitionTetWeight = (int)inputTetWeight->value();
-  CTX::instance()->mesh.partitionPriWeight = (int)inputPriWeight->value();
-  CTX::instance()->mesh.partitionPyrWeight = (int)inputPyrWeight->value();
-  CTX::instance()->mesh.partitionHexWeight = (int)inputHexWeight->value();
+  for(int i = 0; i < 6; i++) {
+    double v = (int)inputWeight[i]->value();
+    NumberOption(GMSH_SET, "Mesh", 0, weights[i].option, v);
+  }
 }
 
-void partitionWindow::read_all_options()
+void partitionWindow::read_all_options(bool defaults)
 {
+  // the value of the option, or its default
+  auto value = [defaults](const char *name) {
+    double v = 0.;
+    NumberOption(defaults ? GMSH_GET_DEFAULT : GMSH_GET, "Mesh", 0, name, v);
+    return v;
+  };
+
   // Group 0
-  inputNumPartition->value(CTX::instance()->mesh.numPartitions);
-  setGhostCells->value(CTX::instance()->mesh.partitionCreateGhostCells);
-  setTopology->value(CTX::instance()->mesh.partitionCreateTopology);
-  setPhysical->value(CTX::instance()->mesh.partitionCreatePhysicals);
+  inputNumPartition->value(value("NbPartitions"));
+  setGhostCells->value((int)value("PartitionCreateGhostCells"));
+  setTopology->value((int)value("PartitionCreateTopology"));
+  setPhysical->value((int)value("PartitionCreatePhysicals"));
+  setPeriodic->value((int)value("PartitionPeriodic"));
+
+  // Group 1
+  choiceMetisAlg->value(
+    metisItem(choiceMetisAlg, (int)value("MetisAlgorithm")));
 
   // Group 2
-  choiceMetisAlg->value(CTX::instance()->mesh.metisAlgorithm - 1);
+  choiceEdgeMatch->value((int)value("MetisEdgeMatching") - 1);
+  choiceRefineAlg->value((int)value("MetisRefinementAlgorithm") - 1);
 
-  // Group 3
-  choiceEdgeMatch->value(CTX::instance()->mesh.metisEdgeMatching - 1);
-  choiceRefineAlg->value(CTX::instance()->mesh.metisRefinementAlgorithm - 1);
-
-  inputTriWeight->value(CTX::instance()->mesh.partitionTriWeight);
-  inputQuaWeight->value(CTX::instance()->mesh.partitionQuaWeight);
-  inputTetWeight->value(CTX::instance()->mesh.partitionTetWeight);
-  inputPriWeight->value(CTX::instance()->mesh.partitionPriWeight);
-  inputPyrWeight->value(CTX::instance()->mesh.partitionPyrWeight);
-  inputHexWeight->value(CTX::instance()->mesh.partitionHexWeight);
-
-  // Call all callbacks to ensure consistent options
-  partition_opt_num_partitions_cb(inputNumPartition, this);
-}
-
-// Match several locations that provide a partition number
-void partition_opt_num_partitions_cb(Fl_Widget *widget, void *data)
-{
-  partitionWindow *dlg = static_cast<partitionWindow *>(data);
-  unsigned val = 0;
-  if(widget == dlg->inputNumPartition) {
-    val = static_cast<unsigned>(dlg->inputNumPartition->value());
-  }
-
-  //dlg->choiceMetisAlg->value((val <= 8) ? 0 : 1);
+  for(int i = 0; i < 6; i++) inputWeight[i]->value(value(weights[i].option));
 }
 
 void partition_defaults_cb(Fl_Widget *widget, void *data)
 {
+  // the defaults shown, applied by Partition
   partitionWindow *dlg = static_cast<partitionWindow *>(data);
-  dlg->read_all_options();
+  dlg->read_all_options(true);
   partition_select_groups_cb(dlg->choicePartitioner, data);
 }
 
@@ -114,14 +116,18 @@ void partition_partition_cb(Fl_Widget *widget, void *data)
 {
   partitionWindow *dlg = static_cast<partitionWindow *>(data);
 
-  // Write all options
-  dlg->write_all_options();
+  // not during another operation on the model (nothing written then)
+  int ier;
+  {
+    modelLock lock(modelLock::ifFree);
+    if(!lock) return;
+    // Write all options, then partition the mesh
+    dlg->write_all_options();
+    ier = GModel::current()->partitionMesh(CTX::instance()->mesh.numPartitions);
+  }
 
-  // Partition the mesh
-  int ier =
-    GModel::current()->partitionMesh(CTX::instance()->mesh.numPartitions);
-
-  // Update the screen
+  // Update the screen, if still there
+  if(!FlGui::available()) return;
   if(!ier) {
     opt_mesh_zone_definition(0, GMSH_SET, 2.); // Define zone by partition
     opt_mesh_color_carousel(0, GMSH_SET | GMSH_GUI, 3.);
@@ -163,7 +169,7 @@ void partition_select_groups_cb(Fl_Widget *widget, void *data)
     g[2]->hide();
   }
 
-  // Reset the vertical position of all widgets in group 6
+  // Reset the vertical position of the termination group [3] and its widgets
   {
     int yG = y;
     g[3]->position(g[3]->x(), yG);
@@ -234,9 +240,6 @@ partitionWindow::partitionWindow(int deltaFontSize)
       choicePartitioner = o;
       o->menu(partitionTypeMenu);
       o->callback((Fl_Callback *)partition_select_groups_cb, this);
-#if !defined(HAVE_METIS)
-      o->mode(1, FL_MENU_INACTIVE);
-#endif
       o->align(FL_ALIGN_RIGHT);
     }
     y += BH + WB;
@@ -245,9 +248,9 @@ partitionWindow::partitionWindow(int deltaFontSize)
       Fl_Value_Input *const o =
         new Fl_Value_Input(WB, y, IW, BH, "Number of partitions");
       inputNumPartition = o;
+      o->tooltip("Mesh.NbPartitions");
       o->minimum(0);
       o->maximum(std::numeric_limits<unsigned short>::max());
-      o->callback((Fl_Callback *)partition_opt_num_partitions_cb, this);
       if(CTX::instance()->inputScrolling) o->step(1);
       o->align(FL_ALIGN_RIGHT);
     }
@@ -257,17 +260,26 @@ partitionWindow::partitionWindow(int deltaFontSize)
       Fl_Check_Button *const o = new Fl_Check_Button(2 * WB + 2 * BB, y, 2 * BB,
                                                      BH, "Create ghost cells");
       setGhostCells = o;
+      o->tooltip("Mesh.PartitionCreateGhostCells");
     }
     {
       Fl_Check_Button *const o =
         new Fl_Check_Button(WB, y, 2 * BB, BH, "Create partition topology");
       setTopology = o;
+      o->tooltip("Mesh.PartitionCreateTopology");
     }
     y += BH + WB;
     {
       Fl_Check_Button *const o =
         new Fl_Check_Button(WB, y, 2 * BB, BH, "Create physical groups");
       setPhysical = o;
+      o->tooltip("Mesh.PartitionCreatePhysicals");
+    }
+    {
+      Fl_Check_Button *const o = new Fl_Check_Button(
+        2 * WB + 2 * BB, y, 2 * BB, BH, "Make partitions periodic");
+      setPeriodic = o;
+      o->tooltip("Mesh.PartitionPeriodic");
     }
     y += BH + WB;
     // Box (line)
@@ -291,6 +303,7 @@ partitionWindow::partitionWindow(int deltaFontSize)
     {
       Fl_Choice *const o = new Fl_Choice(WB, y, BB, BH, "Algorithm");
       choiceMetisAlg = o;
+      o->tooltip("Mesh.MetisAlgorithm");
       o->menu(metisAlgMenu);
       o->align(FL_ALIGN_RIGHT);
     }
@@ -322,6 +335,7 @@ partitionWindow::partitionWindow(int deltaFontSize)
       Fl_Choice *const o =
         new Fl_Choice(WB, y, IW + 2 * FL_NORMAL_SIZE, BH, "Edge matching");
       choiceEdgeMatch = o;
+      o->tooltip("Mesh.MetisEdgeMatching");
       o->menu(metisEdgeMatchingMenu);
       o->align(FL_ALIGN_RIGHT);
     }
@@ -331,72 +345,28 @@ partitionWindow::partitionWindow(int deltaFontSize)
       Fl_Choice *const o = new Fl_Choice(WB, y, IW + 2 * FL_NORMAL_SIZE, BH,
                                          "Refinement algorithm");
       choiceRefineAlg = o;
+      o->tooltip("Mesh.MetisRefinementAlgorithm");
       o->menu(metisRefineAlgMenu);
       o->align(FL_ALIGN_RIGHT);
     }
     y += BH + WB;
-    // element weights - line 1, a row that widens as one
-    Fl_Group *row1 = new Fl_Group(WB, y, w - 2 * WB, BH);
-    {
-      Fl_Value_Input *const o =
-        new Fl_Value_Input(WB, y, BB / 2, BH, "Triangle");
-      inputTriWeight = o;
-      o->minimum(-1);
-      o->maximum(std::numeric_limits<int>::max());
-      if(CTX::instance()->inputScrolling) o->step(1);
-      o->align(FL_ALIGN_RIGHT);
+    // the element weights, in two rows of three that widen as one
+    for(int row = 0; row < 2; row++) {
+      Fl_Group *r = new Fl_Group(WB, y, w - 2 * WB, BH);
+      for(int col = 0; col < 3; col++) {
+        int i = 3 * row + col;
+        Fl_Value_Input *o = new Fl_Value_Input(
+          (col + 1) * WB + col * (w / 3 - WB), y, BB / 2, BH, weights[i].label);
+        inputWeight[i] = o;
+        o->copy_tooltip((std::string("Mesh.") + weights[i].option).c_str());
+        o->minimum(-1);
+        o->maximum(std::numeric_limits<int>::max());
+        if(CTX::instance()->inputScrolling) o->step(1);
+        o->align(FL_ALIGN_RIGHT);
+      }
+      r->end();
+      y += BH + WB;
     }
-    {
-      Fl_Value_Input *const o =
-        new Fl_Value_Input(2 * WB + (w / 3 - WB), y, BB / 2, BH, "Tetrahedron");
-      inputTetWeight = o;
-      o->minimum(-1);
-      o->maximum(std::numeric_limits<int>::max());
-      if(CTX::instance()->inputScrolling) o->step(1);
-      o->align(FL_ALIGN_RIGHT);
-    }
-    {
-      Fl_Value_Input *const o =
-        new Fl_Value_Input(3 * WB + 2 * (w / 3 - WB), y, BB / 2, BH, "Prism");
-      inputPriWeight = o;
-      o->minimum(-1);
-      o->maximum(std::numeric_limits<int>::max());
-      if(CTX::instance()->inputScrolling) o->step(1);
-      o->align(FL_ALIGN_RIGHT);
-    }
-    row1->end();
-    y += BH + WB;
-    // element weights - line 2
-    Fl_Group *row2 = new Fl_Group(WB, y, w - 2 * WB, BH);
-    {
-      Fl_Value_Input *const o =
-        new Fl_Value_Input(WB, y, BB / 2, BH, "Quadrangle");
-      inputQuaWeight = o;
-      o->minimum(-1);
-      o->maximum(std::numeric_limits<int>::max());
-      if(CTX::instance()->inputScrolling) o->step(1);
-      o->align(FL_ALIGN_RIGHT);
-    }
-    {
-      Fl_Value_Input *const o =
-        new Fl_Value_Input(2 * WB + (w / 3 - WB), y, BB / 2, BH, "Hexahedron");
-      inputHexWeight = o;
-      o->minimum(-1);
-      o->maximum(std::numeric_limits<int>::max());
-      if(CTX::instance()->inputScrolling) o->step(1);
-      o->align(FL_ALIGN_RIGHT);
-    }
-    {
-      Fl_Value_Input *const o =
-        new Fl_Value_Input(3 * WB + 2 * (w / 3 - WB), y, BB / 2, BH, "Pyramid");
-      inputPyrWeight = o;
-      o->minimum(-1);
-      o->maximum(std::numeric_limits<int>::max());
-      if(CTX::instance()->inputScrolling) o->step(1);
-      o->align(FL_ALIGN_RIGHT);
-    }
-    row2->end();
-    y += BH + WB;
     g->end();
     g->hide();
   }

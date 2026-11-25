@@ -4,6 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <vector>
+#include "GmshConfig.h"
 #include "Context.h"
 #include "GModel.h"
 #include "CGNSCommon.h"
@@ -21,7 +22,6 @@
 // CGNS files based on different conventions.
 
 // Unstructured meshes (CGNS{Read,Write}.cpp)
-// ==========================================
 
 // With this in mind and considering the constraints of CGNS, the unstructured
 // CGNS writer in Gmsh is designed to export as much information from Gmsh as
@@ -56,7 +56,6 @@
 // information.
 
 // Structured meshes (CGNSWriteStruct.cpp)
-// =======================================
 
 // The structured CGNS writer follows ICEM-like conventions, which are
 // significantly different from those used in the unstructured CGNS writer:

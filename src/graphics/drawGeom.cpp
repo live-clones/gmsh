@@ -87,14 +87,16 @@ static glyphList *geomGlyphs(drawContext *ctx)
   return &_geomGlyphs;
 }
 
-// is this entity drawn by the pass? Not when hidden, and never the discrete,
-// partition and boundary layer entities, which only carry a mesh
+// is this entity drawn by the pass? Not when hidden, and never the partition
+// and boundary layer entities, which only carry a mesh, nor the discrete
+// curves without a geometry (a discretization)
 static bool geomDrawn(drawContext *ctx, GEntity *e)
 {
   if(!ctx->passWants(geometryEntityIsTransparent(e)) || !e->getVisibility()) return false;
   switch(e->geomType()) {
-  case GEntity::BoundaryLayerPoint:
   case GEntity::DiscreteCurve:
+    return static_cast<GEdge *>(e)->haveParametrization();
+  case GEntity::BoundaryLayerPoint:
   case GEntity::PartitionCurve:
   case GEntity::BoundaryLayerCurve:
   case GEntity::PartitionSurface:
@@ -231,8 +233,11 @@ static std::vector<double> keptToken(drawContext *ctx, int dim, bool pick)
     tok.push_back(c->entityColorsStamp);
     tok.push_back(c->color.geom.point);
   }
-  else if(dim == 2)
+  else if(dim == 2) {
     tok.push_back(c->entityColorsStamp);
+    // (the wireframe holds the edges of the triangles)
+    tok.push_back(c->geom.surfaceType == 1);
+  }
   else if(dim == 1) {
     std::vector<double> more = {(double)c->entityColorsStamp,
                                 (double)c->geom.numSubEdges,
@@ -269,7 +274,9 @@ static keptArray &getKept(drawContext *ctx, GModel *m, int dim, bool pick)
   keptArray &ka = pick ? km.picked[dim] : km.shown[ctx->transparencyPass][dim];
   if(ka.va && keptToken(ctx, dim, pick) == ka.token) return ka;
   delete ka.va;
-  ka.va = new VertexArray(dim + 1, dim ? 1000 : (int)m->getNumVertices() + 1);
+  bool wire = (dim == 2 && c->geom.surfaceType == 1);
+  ka.va = new VertexArray(wire ? 2 : dim + 1,
+                          dim ? 1000 : (int)m->getNumVertices() + 1);
   ka.tags.clear();
   ka.start.clear();
   ka.base = 0;
@@ -279,8 +286,11 @@ static keptArray &getKept(drawContext *ctx, GModel *m, int dim, bool pick)
   forKeptEntities(ctx, m, dim, [&](GEntity *e) {
     GFace *f = (dim == 2) ? static_cast<GFace *>(e) : nullptr;
     if(f) {
-      f->fillVertexArray();
-      if(!f->va_geom_triangles) {
+      if(wire)
+        f->fillLineVertexArray();
+      else
+        f->fillVertexArray();
+      if(!(wire ? f->va_geom_lines : f->va_geom_triangles)) {
         ka.incomplete = true;
         return;
       }
@@ -303,7 +313,7 @@ static keptArray &getKept(drawContext *ctx, GModel *m, int dim, bool pick)
       });
     }
     else
-      ka.va->merge(f->va_geom_triangles,
+      ka.va->merge(wire ? f->va_geom_lines : f->va_geom_triangles,
                    pick ? (const unsigned char *)black : nullptr);
   });
   ka.start.push_back(ka.va->getNumVertices());
@@ -401,13 +411,16 @@ static bool drawKept(drawContext *ctx, GModel *m, int dim)
   gl2psPointSize((float)(c->geom.pointSize * c->print.epsPointSizeFactor));
   gmshLineWidth((float)width);
   gl2psLineWidth((float)(width * c->print.epsLineWidthFactor));
-  if(dim == 2) gmshPolygonFill(c->geom.surfaceType > 1);
-  GLenum type = (dim == 0) ? GL_POINTS : (dim == 1) ? GL_LINES : GL_TRIANGLES;
+  // (a wireframe is drawn from the edges of the triangles)
+  GLenum type = GL_TRIANGLES;
+  if(dim == 0)
+    type = GL_POINTS;
+  else if(dim == 1 || c->geom.surfaceType == 1)
+    type = GL_LINES;
   int flags = pick ? GMSH_DRAW_IDENTIFIERS : GMSH_DRAW_COLORS;
   if(dim == 2 && !pick && c->geom.light) flags |= GMSH_DRAW_LIGHT;
   if(dim == 2 && c->polygonOffset) flags |= GMSH_DRAW_OFFSET;
   drawVertexArray(ka.va, type, flags, pick ? &runs : nullptr);
-  if(dim == 2) gmshPolygonFill(true);
   return true;
 }
 
@@ -446,12 +459,13 @@ static void drawGeomCurve(drawContext *ctx, GEdge *e, bool sel, double width)
 {
   CTX *c = CTX::instance();
   // already in the kept curves, unless selected: then drawn again on top,
-  // which needs the depth test to accept equal depths
+  // pulled just towards the viewer since at another width its depths are not
+  // quite those of the kept line, which would show through in patches
   bool merged = _kept && c->geom.curves;
   bool drawIt = (c->geom.curves || e->getSelection() == GEntity::SelectShow) &&
                 (!merged || sel);
   if(drawIt) {
-    if(merged) glDepthFunc(GL_LEQUAL);
+    if(merged) gmshDepthOffset(true, 1e-5);
     std::vector<SPoint3> pts;
     curvePoints(ctx, e, pts);
     if(c->geom.curveType > 0) {
@@ -472,10 +486,7 @@ static void drawGeomCurve(drawContext *ctx, GEdge *e, bool sel, double width)
       for(auto &p : pts) gmshVertex3d(p.x(), p.y(), p.z());
       gmshEnd();
     }
-    if(merged) {
-      glImmediate::flush();
-      glDepthFunc(GL_LESS);
-    }
+    if(merged) gmshDepthOffset(false);
   }
 
   Range<double> t_bounds = e->parBounds(0);
@@ -509,12 +520,14 @@ static void drawGeomSurface(drawContext *ctx, GFace *f, bool sel)
   bool shown = c->geom.surfaces || f->getSelection() == GEntity::SelectShow;
   // wireframe and solid need a triangulation, which a surface of the
   // built-in kernel only has once it is meshed: a cross until then
-  bool filled = shown && c->geom.surfaceType > 0 && f->fillVertexArray();
+  bool solid = c->geom.surfaceType > 1;
+  bool filled = shown && c->geom.surfaceType > 0 &&
+                (solid ? f->fillVertexArray() : f->fillLineVertexArray());
   if((shown && !filled) || c->geom.surfaceLabels || c->geom.normals)
     f->buildRepresentationCross();
 
   if(shown) {
-    VertexArray *va = f->va_geom_triangles;
+    VertexArray *va = solid ? f->va_geom_triangles : f->va_geom_lines;
     if(filled) {
       // already in the merged array, unless selected: then drawn again on
       // top, which needs the depth test to accept equal depths
@@ -528,14 +541,11 @@ static void drawGeomSurface(drawContext *ctx, GFace *f, bool sel)
         }
         // a picking pass draws the surface as it is shown, wireframe or
         // solid: what is visible is what is picked
-        bool solid = c->geom.surfaceType > 1;
         gmshLightTwoSide(solid && c->geom.lightTwoSide);
-        gmshPolygonFill(solid);
-        drawVertexArray(va, GL_TRIANGLES,
-                            (c->geom.light ? GMSH_DRAW_LIGHT : 0) |
-                              (colors ? GMSH_DRAW_COLORS : 0) |
-                              (c->polygonOffset ? GMSH_DRAW_OFFSET : 0));
-        gmshPolygonFill(true);
+        drawVertexArray(va, solid ? GL_TRIANGLES : GL_LINES,
+                        (c->geom.light ? GMSH_DRAW_LIGHT : 0) |
+                          (colors ? GMSH_DRAW_COLORS : 0) |
+                          (c->polygonOffset ? GMSH_DRAW_OFFSET : 0));
         if(merged) glDepthFunc(GL_LESS);
       }
     }
@@ -603,14 +613,14 @@ static const SBoundingBox3d &volumeBounds(GRegion *r)
   return v.bb;
 }
 
-// size: that of a point, the marker being twice as large
+// size: that of a point, the marker being three times as large
 static void drawGeomVolume(drawContext *ctx, GRegion *r, double size)
 {
   CTX *c = CTX::instance();
   bool shown = c->geom.volumes || r->getSelection() == GEntity::SelectShow;
   bool label = c->geom.volumeLabels || r->getSelection() == GEntity::SelectShow;
   if(!shown && !label) return;
-  size *= 2.;
+  size *= 3.;
   const SBoundingBox3d &bb = volumeBounds(r);
   double x = bb.center().x(), y = bb.center().y(), z = bb.center().z();
   double d = bb.diag() / 50.;
@@ -618,9 +628,9 @@ static void drawGeomVolume(drawContext *ctx, GRegion *r, double size)
   if(shown) {
     if(c->geom.volumeType == 0) {
       if(glyphList *g = geomGlyphs(ctx))
-        g->addSphere(ctx, size, x, y, z, glyphCurrentColor());
+        g->addSphere(ctx, size, x, y, z, glyphCurrentColor(), true);
       else
-        ctx->drawSphere(size, x, y, z, c->geom.light);
+        ctx->drawSphere(size, x, y, z, c->geom.light, true);
     }
     else {
       // three squares in the planes of the axes
@@ -724,8 +734,6 @@ void drawContext::drawGeom()
     return;
   if(transparencyPass == TRANSPARENCY_TRANSPARENT && !geometryIsTransparent())
     return;
-  if(!CTX::instance()->geom.draw) return;
-
   // draw any transient geometry stuff
   if(drawGeomTransient) (*drawGeomTransient)(this);
 
@@ -737,6 +745,10 @@ void drawContext::drawGeom()
   bool pick = (render_mode == GMSH_SELECT);
   for(std::size_t i = 0; i < GModel::list.size(); i++) {
     GModel *m = GModel::list[i];
+    // not the model a file is being read into (see MergeFile()), the others
+    // still: results read into models of their own while a solver runs would
+    // make the geometry blink
+    if(!c->geom.draw && m == GModel::current()) continue;
     if(m->getVisibility() && isVisible(m)) {
       // Each dimension is drawn from what is kept of it - for the picture,
       // or with the identifiers for a picking pass - and entity by entity

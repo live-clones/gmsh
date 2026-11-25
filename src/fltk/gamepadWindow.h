@@ -70,7 +70,11 @@ public:
 
 public:
   gamepadWindow();
-  double frequency;
+  ~gamepadWindow();
+  void show();
+  // the buttons and axes of the gamepad as they are now, while the window is
+  // shown (see FlGui.cpp)
+  void update();
 };
 
 #endif

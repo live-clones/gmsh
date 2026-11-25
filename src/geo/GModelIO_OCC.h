@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <map>
+#include <tuple>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GModel.h"
@@ -27,9 +28,12 @@ class ExtrudeParams;
 #include <NCollection_IndexedMap.hxx>
 #include <NCollection_DataMap.hxx>
 #include <TopTools_ShapeMapHasher.hxx>
+#include <Standard_Handle.hxx>
+class ShapeBuild_ReShape;
 
 class BRepSweep_Prism;
 class BRepSweep_Revol;
+class BRepBuilderAPI_MakeShape;
 class BRepBuilderAPI_Transform;
 class BRepBuilderAPI_GTransform;
 class OCCAttributesRTree;
@@ -71,6 +75,22 @@ private:
   // unbound during boolean operations
   std::set<std::pair<int, int> > _toPreserve;
 
+  // what the entities (dim, tag) become through the operations made since the
+  // last synchronization, which gives their attributes to the model entities
+  // that replace them:
+  // - shape is the shape given their tag through the history of an operation
+  //   (see _bindFromHistory): if the tag is still bound to it, the model entity
+  //   keeps its physical groups and mesh constraints;
+  // - tags are the entities into which they are split, merged or renumbered
+  //   (see _recordSplits; by boolean operations with
+  //   Geometry.OCCBooleanPreserveNumbering = 2 and by healing), which get
+  //   their physical groups and periodicity
+  struct replacement {
+    TopoDS_Shape shape;
+    std::vector<int> tags;
+  };
+  std::map<std::pair<int, int>, replacement> _replacedBy;
+
   // mesh attributes
   OCCAttributesRTree *_attributes;
 
@@ -109,6 +129,44 @@ private:
                   bool returnHighestDimOnly, bool recursive = false,
                   bool returnNewOnly = false);
 
+  // the bound shapes of all dimensions in a shape, with their dimension and
+  // tag, before an operation replaces them
+  void _getBoundShapes(const TopoDS_Shape &shape,
+                       std::vector<std::tuple<int, int, TopoDS_Shape>> &bound);
+
+  // the compound of the volumes to fillet, chamfer or defeature: with
+  // Geometry.OCCAutoFix, ShapeFix_Solid makes sure they are finite, which can
+  // rebuild some of their faces (e.g. those with holes); the replacements are
+  // recorded in fixed, so that the operation and its history use the new shapes
+  bool _fixedVolumes(const std::vector<int> &volumeTags, TopoDS_Compound &c,
+                     const Handle(ShapeBuild_ReShape) & fixed);
+
+  // once the operation on these volumes has succeeded, unbind them and return
+  // the shapes bound on their boundary (see _getBoundShapes), as replaced in
+  // fixed
+  void
+  _unbindFixedVolumes(const std::vector<int> &volumeTags,
+                      const Handle(ShapeBuild_ReShape) & fixed,
+                      std::vector<std::tuple<int, int, TopoDS_Shape>> &bound);
+
+  // give the shapes of the result of an operation the free tags of the shapes
+  // they come from (see _getBoundShapes): a shape left unchanged or modified
+  // into a single one keeps its tag; the others get new tags. If split is
+  // given, return in it the bound shapes that do not keep their tag, with the
+  // shapes of the result they are modified into
+  void _bindFromHistory(
+    const std::vector<std::tuple<int, int, TopoDS_Shape>> &bound,
+    BRepBuilderAPI_MakeShape &op, const TopoDS_Shape &result,
+    std::vector<std::pair<std::pair<int, int>, std::vector<TopoDS_Shape>>>
+      *split = nullptr);
+
+  // the entities (dim, tag) of the keys become the entities (dim, tags) of the
+  // values in an operation (a tag can be both, for an old and a new entity):
+  // replace them in the physical groups, and give the new ones their physical
+  // groups and periodicity at the next synchronization (see _replacedBy)
+  void
+  _recordSplits(const std::map<std::pair<int, int>, std::vector<int>> &splits);
+
   // is the entity of a given dimension and tag bound?
   bool _isBound(int dim, int tag);
 
@@ -131,9 +189,12 @@ private:
   void _addShapeToMaps(const TopoDS_Shape &shape);
 
   // apply various healing algorithms to try to fix the shape
-  void _healShape(TopoDS_Shape &myshape, double tolerance, bool fixDegenerated,
-                  bool fixSmallEdges, bool fixSmallFaces, bool sewFaces,
-                  bool makeSolids, double scaling = 0.0);
+  // heal a shape, recording the replacements in the context (if any)
+  void
+  _healShape(TopoDS_Shape &myshape, double tolerance, bool fixDegenerated,
+             bool fixSmallEdges, bool fixSmallFaces, bool sewFaces,
+             bool makeSolids, bool fixTolerances, double scaling = 1.0,
+             const opencascade::handle<ShapeBuild_ReShape> &context = nullptr);
 
   // apply a geometrical transformation
   bool _transform(const std::vector<std::pair<int, int> > &inDimTags,
@@ -414,10 +475,11 @@ public:
   bindShapes(const std::map<std::pair<int, int>, TopoDS_Shape> &dimTagShape);
 
   // apply various healing algorithms to try to fix the shapes
-  bool healShapes(const std::vector<std::pair<int, int> > &inDimTags,
-                  std::vector<std::pair<int, int> > &outDimTags,
+  bool healShapes(const std::vector<std::pair<int, int>> &inDimTags,
+                  std::vector<std::pair<int, int>> &outDimTags,
                   double tolerance, bool fixDegenerated, bool fixSmallEdges,
-                  bool fixSmallFaces, bool sewFaces, bool makeSolids);
+                  bool fixSmallFaces, bool sewFaces, bool makeSolids,
+                  bool fixTolerances);
 
   // convert shapes to NURBS
   bool convertToNURBS(const std::vector<std::pair<int, int> > &dimTags);
@@ -854,10 +916,11 @@ public:
   {
     return _error("import shape");
   }
-  bool healShapes(const std::vector<std::pair<int, int> > &inDimTags,
-                  std::vector<std::pair<int, int> > &outDimTags,
+  bool healShapes(const std::vector<std::pair<int, int>> &inDimTags,
+                  std::vector<std::pair<int, int>> &outDimTags,
                   double tolerance, bool fixDegenerated, bool fixSmallEdges,
-                  bool fixSmallFaces, bool sewFaces, bool makeSolids)
+                  bool fixSmallFaces, bool sewFaces, bool makeSolids,
+                  bool fixTolerances)
   {
     return _error("heal shapes");
   }

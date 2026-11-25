@@ -6,6 +6,7 @@
 #ifndef DRAW_CONTEXT_OFFSCREEN_H
 #define DRAW_CONTEXT_OFFSCREEN_H
 
+#include <functional>
 #include "drawContext.h"
 
 class stbStrings;
@@ -49,6 +50,10 @@ public:
   // when it is made
   void resetView() { _viewFromOptions = true; }
   drawContext *getDrawContext() { return _ctx; }
+  // called with the size of the picture right after the 3D scene is drawn
+  // (the web page's scene adds its phlogiston there, see
+  // sceneView::releasePhlogiston())
+  std::function<void(int width, int height)> afterScene;
   int getFontSize();
   void setFont(int fontid, int fontsize);
   double getStringWidth(const char *str);

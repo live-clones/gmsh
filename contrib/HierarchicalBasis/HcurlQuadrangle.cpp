@@ -26,9 +26,10 @@ HcurlQuadrangle::HcurlQuadrangle(int order) : _order(order), _h1(order + 1)
   _numBubbleFunction = 0;
 }
 
-void HcurlQuadrangle::functions(const Dual *x, std::vector<Vec> &vertex,
-                                std::vector<Vec> &edge, std::vector<Vec> &face,
-                                std::vector<Vec> &bubble)
+void HcurlQuadrangle::functions(const Dual *x, std::vector<DualVector> &vertex,
+                                std::vector<DualVector> &edge,
+                                std::vector<DualVector> &face,
+                                std::vector<DualVector> &bubble)
 {
   const Dual &u = x[0], &v = x[1];
   Dual a1 = 0.5 * (1. + u), a2 = 0.5 * (1. - u), a3 = 0.5 * (1. + v),
@@ -46,7 +47,7 @@ void HcurlQuadrangle::functions(const Dual *x, std::vector<Vec> &vertex,
 
 void HcurlQuadrangle::faceFunctions(const Dual *x, int flag1, int flag2,
                                     int flag3, int faceNumber,
-                                    std::vector<Vec> &face)
+                                    std::vector<DualVector> &face)
 {
   Dual s, t;
   quadrangleCoordinates(x[0], x[1], flag1, flag2, flag3, s, t);

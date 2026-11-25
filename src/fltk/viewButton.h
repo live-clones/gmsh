@@ -17,17 +17,16 @@ private:
   Fl_Check_Button *_toggle;
   Fl_Button *_butt;
   Fl_Menu_Button *_popup;
-  char _tooltip[256];
 
 public:
   viewButton(int x, int y, int w, int h, int num, Fl_Color col);
   double value() { return _toggle->value(); }
   void value(double val) { _toggle->value(val); }
   void copy_label(const std::string &label)
-  {
-    _toggle->copy_label(label.c_str());
-  }
-  std::string label() { return _toggle->label(); }
+  { _toggle->copy_label(label.c_str()); }
 };
+
+// the view of the given index saved in a file chosen in a dialog
+void saveView(int index);
 
 #endif

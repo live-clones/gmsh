@@ -12,6 +12,7 @@
 #include <map>
 #include <set>
 #include <sstream>
+#include <unordered_set>
 #include <unordered_map>
 #include "meshUntangling.h"
 #include "WinslowUntangler.h"
@@ -84,18 +85,21 @@ bool buildTrianglesAndTargetsFromElements(
   return true;
 }
 
+// the vertices of the elements and those of their boundary, each once, in the
+// order in which they are met (hash sets for the membership: a patch can grow
+// to the whole surface)
 static void getVertices(std::vector<MElement *> &es,
                         std::vector<MVertex *> &vall,
                         std::vector<MVertex *> &vbound)
 {
   vall.clear();
   vbound.clear();
+  std::unordered_set<MVertex *> inAll, inBound;
   std::set<MEdge, MEdgeLessThan> edges;
   for(auto e : es) {
     for(size_t i = 0; i < e->getNumVertices(); i++) {
       MVertex *v = e->getVertex(i);
-      if(std::find(vall.begin(), vall.end(), v) == vall.end())
-        vall.push_back(v);
+      if(inAll.insert(v).second) vall.push_back(v);
     }
     for(int i = 0; i < e->getNumEdges(); i++) {
       MEdge ed = e->getEdge(i);
@@ -108,8 +112,7 @@ static void getVertices(std::vector<MElement *> &es,
   for(auto ed : edges) {
     for(size_t i = 0; i < 2; i++) {
       MVertex *v = ed.getVertex(i);
-      if(std::find(vbound.begin(), vbound.end(), v) == vbound.end())
-        vbound.push_back(v);
+      if(inBound.insert(v).second) vbound.push_back(v);
     }
   }
 }
@@ -119,6 +122,7 @@ static bool untangleGFaceMeanPlane(GFace *gf, std::vector<MElement *> &els,
 {
   std::vector<MVertex *> vall, vbound;
   getVertices(els, vall, vbound);
+  const std::unordered_set<MVertex *> onBoundary(vbound.begin(), vbound.end());
 
   std::vector<vec2> points;
   std::vector<bool> locked;
@@ -138,8 +142,7 @@ static bool untangleGFaceMeanPlane(GFace *gf, std::vector<MElement *> &els,
     double X = dot(t1, D);
     double Y = dot(t2, D);
     points.push_back({X, Y});
-    if(std::find(vbound.begin(), vbound.end(), v) == vbound.end() &&
-       v->onWhat()->dim() == 2)
+    if(!onBoundary.count(v) && v->onWhat()->dim() == 2)
       locked.push_back(false);
     else
       locked.push_back(true);
@@ -254,11 +257,10 @@ bool untangleGFaceMeshConstrained(GFace *gf)
     if(tooFarFromPlane(vall, mp, threshold * L)) continue;
     while(1) {
       std::vector<MElement *> esNew = es;
+      std::unordered_set<MElement *> inNew(es.begin(), es.end());
       for(auto b : vbound) {
-        std::vector<MElement *> eb = v2e[b];
-        for(auto el : eb)
-          if(std::find(esNew.begin(), esNew.end(), el) == esNew.end())
-            esNew.push_back(el);
+        for(auto el : v2e[b])
+          if(inNew.insert(el).second) esNew.push_back(el);
       }
       if(esNew.size() <= es.size()) break;
       getVertices(esNew, vall, vbound);
@@ -266,9 +268,10 @@ bool untangleGFaceMeshConstrained(GFace *gf)
       if(tooFarFromPlane(vall, mp, threshold * L)) break;
       es = esNew;
     }
+    const std::unordered_set<MVertex *> onBoundary(vbound.begin(),
+                                                   vbound.end());
     for(auto vv : vall)
-      if(std::find(vbound.begin(), vbound.end(), vv) == vbound.end())
-        touched.insert(vv);
+      if(!onBoundary.count(vv)) touched.insert(vv);
     untangleGFaceMeanPlane(gf, es, mp, iter);
   }
   return true;
@@ -319,31 +322,50 @@ namespace {
     return tets;
   }
 
-  const std::array<std::array<double, 3>, 4> tet_ideal_shape = {
-    array<double, 3>{.5, 0, -1. / (2. * std::sqrt(2.))},
-    array<double, 3>{-.5, 0, -1. / (2. * std::sqrt(2.))},
-    array<double, 3>{0, .5, 1. / (2. * std::sqrt(2.))},
-    array<double, 3>{0, -.5, 1. / (2. * std::sqrt(2.))},
+  // 1 / sqrt(2), 1 / (2 sqrt(2)) and sqrt(3) / 2, written out (std::sqrt is
+  // not constexpr)
+  constexpr double inv_sqrt2 = 0.7071067811865475;
+  constexpr double inv_2sqrt2 = 0.35355339059327373;
+  constexpr double sqrt3_2 = 0.8660254037844386;
+
+  constexpr std::array<std::array<double, 3>, 4> tet_ideal_shape = {
+    array<double, 3>{.5, 0, -inv_2sqrt2},
+    array<double, 3>{-.5, 0, -inv_2sqrt2},
+    array<double, 3>{0, .5, inv_2sqrt2},
+    array<double, 3>{0, -.5, inv_2sqrt2},
   };
 
-  const std::vector<std::array<double, 3>> unit_cube = {
-    {0., 0., 0.}, {1., 0., 0.}, {1., 1., 0.}, {0., 1., 0.},
-    {0., 0., 1.}, {1., 0., 1.}, {1., 1., 1.}, {0., 1., 1.}};
-
-  const std::vector<std::array<double, 3>> unit_pyr = {
+  constexpr std::array<std::array<double, 3>, 8> unit_cube = {{
     {0., 0., 0.},
     {1., 0., 0.},
     {1., 1., 0.},
     {0., 1., 0.},
-    {0.5, 0.5, 1. / std::sqrt(2.)}};
+    {0., 0., 1.},
+    {1., 0., 1.},
+    {1., 1., 1.},
+    {0., 1., 1.},
+  }};
 
-  const std::vector<std::array<double, 3>> unit_prism = {
-    {0., 0., 0.}, {1., 0., 0.}, {0.5, std::sqrt(3.) / 2., 0.},
-    {0., 0., 1.}, {1., 0., 1.}, {0.5, std::sqrt(3.) / 2., 1.}};
+  constexpr std::array<std::array<double, 3>, 5> unit_pyr = {{
+    {0., 0., 0.},
+    {1., 0., 0.},
+    {1., 1., 0.},
+    {0., 1., 0.},
+    {0.5, 0.5, inv_sqrt2},
+  }};
 
-  std::vector<std::array<std::array<double, 3>, 4>> tetsFromHexTargetShape(
-    HexDcp dcp = TO_32TETS,
-    const std::vector<std::array<double, 3>> &target = unit_cube)
+  constexpr std::array<std::array<double, 3>, 6> unit_prism = {{
+    {0., 0., 0.},
+    {1., 0., 0.},
+    {0.5, sqrt3_2, 0.},
+    {0., 0., 1.},
+    {1., 0., 1.},
+    {0.5, sqrt3_2, 1.},
+  }};
+
+  template <class Target>
+  std::vector<std::array<std::array<double, 3>, 4>>
+  tetsFromHexTargetShape(HexDcp dcp, const Target &target)
   {
     if(target.size() != 8) {
       Msg::Error("target shape, wrong size, expects 8 and not %li",

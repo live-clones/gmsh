@@ -8,6 +8,7 @@
 //   François Henrotte
 
 #include <fstream>
+#include "GmshConfig.h"
 #include "GModel.h"
 #include "BackgroundMesh.h"
 #include "meshGFaceDelaunay.h"

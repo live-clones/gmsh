@@ -6,6 +6,7 @@
 #ifndef VOROMETAL_H
 #define VOROMETAL_H
 
+#include <fstream>
 #include <vector>
 #include "Plugin.h"
 

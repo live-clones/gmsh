@@ -434,7 +434,8 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
   // tag the vertices according to which boundary entity they belong to (note
   // that we use a brute force approach here, so that we can deal with models
   // with incomplete topology)
-  std::vector<std::list<int> > vertexTags(numVertices);
+  // (by node number, which is the index here: the nodes are not renumbered)
+  std::vector<std::list<int> > vertexTags(getMaxVertexNumber());
   std::list<int> boundaryIndicators;
   for(std::size_t ient = 0; ient < entities.size(); ient++) {
     GEntity *ge = entities[ient];
@@ -464,7 +465,7 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
   }
   boundaryIndicators.sort();
   boundaryIndicators.unique();
-  for(int i = 0; i < numVertices; i++) {
+  for(std::size_t i = 0; i < vertexTags.size(); i++) {
     vertexTags[i].sort();
     vertexTags[i].unique();
   }

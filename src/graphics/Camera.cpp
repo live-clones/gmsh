@@ -52,6 +52,15 @@ void Camera::alongAxis(int axis)
   update();
 }
 
+void Camera::isometric(bool opposite)
+{
+  const double s = opposite ? -1. : 1.;
+  front.set(-s / sqrt(3.), -s / sqrt(3.), -1. / sqrt(3.));
+  up.set(-s / sqrt(6.), -s / sqrt(6.), 2. / sqrt(6.));
+  position = target - distance * front;
+  update();
+}
+
 // Up turned to an axis: to its positive end, unless it is already exactly
 // there, in which case it turns over and takes the right hand with it. The
 // camera then looks along what the two span.

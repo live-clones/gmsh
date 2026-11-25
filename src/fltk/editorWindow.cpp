@@ -1,0 +1,438 @@
+// Gmsh - Copyright (C) 1997-2026 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+
+#include <cctype>
+#include <cstdlib>
+#include <functional>
+#include <fstream>
+#include <map>
+#include <sstream>
+#include <vector>
+#include <FL/Fl.H>
+#include <FL/Fl_Box.H>
+#include <FL/Fl_Button.H>
+#include <FL/Fl_Double_Window.H>
+#include <FL/Fl_Input.H>
+#include <FL/Fl_Return_Button.H>
+#include <FL/Fl_Text_Buffer.H>
+#include <FL/Fl_Text_Editor.H>
+#include <FL/fl_ask.H>
+#include <FL/fl_draw.H>
+#include "FlGui.h"
+#include "hintInput.h"
+#include "graphicWindow.h"
+#include "paletteWindow.h"
+#include "editorWindow.h"
+#include "fileActions.h"
+#include "Context.h"
+#include "GmshMessage.h"
+#include "OS.h"
+#include "StringUtils.h"
+#include "ScriptStyles.h"
+
+// a help text with the key of a shortcut, as this platform names it
+static std::string withKey(const char *text, char key)
+{
+#if defined(__APPLE__)
+  return std::string(text) + " (Cmd+" + key + ")";
+#else
+  return std::string(text) + " (Ctrl+" + key + ")";
+#endif
+}
+
+// the window of an editor, which tells it when it is activated, and closes
+// with Cmd+W (Ctrl+W); its offset and its size are kept in the options
+class editorFrame : public gmshWindow {
+public:
+  std::function<void()> activated;
+  editorFrame(int w, int h)
+    : gmshWindow(w, h, false, nullptr, CTX::instance()->editorOffset,
+                 &CTX::instance()->editorSize[0],
+                 &CTX::instance()->editorSize[1])
+  {
+  }
+  void show() override { _showOnDesktop(); }
+  int handle(int event) override
+  {
+    if((event == FL_FOCUS || event == FL_ENTER) && activated) activated();
+    // closed as the tools are (not by Escape, which would be easy to press
+    // while typing)
+    if(event == FL_SHORTCUT && Fl::test_shortcut(FL_COMMAND | 'w')) {
+      do_callback();
+      return 1;
+    }
+    return gmshWindow::handle(event);
+  }
+};
+
+class editorWindow {
+private:
+  std::string _fileName;
+  editorFrame *_win;
+  Fl_Text_Editor *_editor;
+  Fl_Text_Buffer *_text, *_style;
+  hintInput *_find, *_line;
+  bool _modified;
+  // the file as it was last read or written here
+  std::string _read;
+  // the colors of the styles, those of the light or the dark scheme
+  Fl_Text_Display::Style_Table_Entry _styles[6];
+  void _title()
+  {
+    std::string name =
+      SplitFileName(_fileName)[1] + SplitFileName(_fileName)[2];
+    _win->copy_label((name + (_modified ? " *" : "")).c_str());
+  }
+  // The styles of the whole text computed again (a comment or a string opened
+  // by the edit changes those of what follows), and replaced where they
+  // changed: that span is selected in the style buffer, from which the
+  // display takes what it redraws beyond the edited lines (see
+  // Fl_Text_Display::extend_range_for_styles()). This runs before the
+  // display's own modify callback, FLTK calling the last added first.
+  void _restyle()
+  {
+    char *text = _text->text();
+    std::string now = GetScriptStyles(_fileName, text);
+    free(text);
+    char *was = _style->text();
+    int n = _style->length(), m = (int)now.size(), a = 0, b = 0;
+    while(a < n && a < m && was[a] == now[a]) a++;
+    while(b < n - a && b < m - a && was[n - 1 - b] == now[m - 1 - b]) b++;
+    free(was);
+    _style->replace(a, n - b, now.substr(a, m - a - b).c_str());
+    if(a < m - b)
+      _style->select(a, m - b);
+    else
+      _style->unselect();
+  }
+  static void _modified_cb(int pos, int inserted, int deleted, int restyled,
+                           const char *deletedText, void *data)
+  {
+    editorWindow *e = (editorWindow *)data;
+    if(!inserted && !deleted) return;
+    e->_restyle();
+    if(!e->_modified) {
+      e->_modified = true;
+      e->_title();
+    }
+  }
+  static void _save_cb(Fl_Widget *w, void *data)
+  { ((editorWindow *)data)->save(); }
+  static void _reload_cb(Fl_Widget *w, void *data)
+  {
+    editorWindow *e = (editorWindow *)data;
+    if(!e->save()) return;
+    reloadScript();
+  }
+  // a field focused by its shortcut, its text selected
+  static void _focus(Fl_Input *field)
+  {
+    field->take_focus();
+    field->insert_position(0, field->size());
+  }
+  static void _find_cb(Fl_Widget *w, void *data)
+  {
+    editorWindow *e = (editorWindow *)data;
+    if(w != e->_find) { // the shortcut
+      _focus(e->_find);
+      return;
+    }
+    // the next one on Enter; as the text is typed, the first one from the
+    // match being extended
+    bool enter = Fl::event() == FL_KEYBOARD && (Fl::event_key() == FL_Enter ||
+                                                Fl::event_key() == FL_KP_Enter);
+    e->find(!enter);
+  }
+  static void _line_cb(Fl_Widget *w, void *data)
+  {
+    editorWindow *e = (editorWindow *)data;
+    if(w != e->_line) { // the shortcut
+      _focus(e->_line);
+      return;
+    }
+    e->goToLine(atoi(e->_line->value()));
+  }
+  static void _close_cb(Fl_Widget *w, void *data)
+  {
+    ((editorWindow *)data)->close();
+  }
+
+public:
+  editorWindow(const std::string &fileName)
+    : _fileName(fileName), _modified(false)
+  {
+    int width = 48 * FL_NORMAL_SIZE, height = 36 * FL_NORMAL_SIZE;
+    Fl_Group::current(nullptr);
+    _win = new editorFrame(width, height);
+    _win->activated = [this] { refresh(); };
+    _win->box(GMSH_WINDOW_BOX);
+    _win->callback(_close_cb, this);
+
+    // the fields to find a text and to go to a line at the top right, the
+    // space before them taking what the width of the window adds, as the tool
+    // bar of the messages
+    int bh = BH - 4, wb = WB / 2, top = bh + 2 * wb;
+    int lw = (int)(1.3 * BB), sw = 2 * BB;
+    int lx = width - wb - lw, sx = lx - WB - sw;
+    Fl_Group *bar = new Fl_Group(0, 0, width, top);
+    bar->box(GMSH_SIMPLE_TOP_BOX);
+    Fl_Box *space = new Fl_Box(wb, wb, std::max(1, sx - WB - wb), bh);
+    static std::string findHelp =
+      withKey("Find the text: the first one as it is typed, the next one on "
+              "Enter",
+              'F');
+    _find = searchBox(sx, wb, sw, bh, "Find", findHelp.c_str(), _find_cb);
+    _find->user_data(this);
+    _find->textsize(FL_NORMAL_SIZE - 1);
+    _line = new hintInput(lx, wb, lw, bh, nullptr, "Go to line");
+    _line->box(FL_DOWN_BOX);
+    _line->textsize(FL_NORMAL_SIZE - 1);
+    _line->copy_tooltip(
+      withKey("Go to the line, as an error gives it", 'L').c_str());
+    _line->when(FL_WHEN_ENTER_KEY_ALWAYS);
+    _line->callback(_line_cb, this);
+    // (the shortcuts of the fields)
+    Fl_Button *find = new Fl_Button(0, 0, 0, 0);
+    find->shortcut(FL_COMMAND | 'f');
+    find->callback(_find_cb, this);
+    Fl_Button *line = new Fl_Button(0, 0, 0, 0);
+    line->shortcut(FL_COMMAND | 'l');
+    line->callback(_line_cb, this);
+    bar->resizable(space);
+    bar->end();
+
+    // the buttons at the bottom right, as in the other dialogs: Save, and
+    // Save and reload on Return - only for a .geo script, which is what the
+    // geometry module reads (a .pro, or a program of the API, is only saved)
+    std::string ext = SplitFileName(_fileName)[2];
+    bool geo = (ext == ".geo" || ext == ".GEO");
+    fl_font(FL_HELVETICA, FL_NORMAL_SIZE);
+    // (the label, and the arrow of the Return button, as wide as it is high)
+    int rw = std::max(BB, (int)fl_width("Save and reload") + BH + 4 * WB);
+    int bottom = BH + 2 * WB, by = height - bottom + WB;
+    int bx = width - WB - (geo ? rw + WB : 0) - BB;
+    Fl_Group *buttons = new Fl_Group(0, height - bottom, width, bottom);
+    buttons->box(GMSH_SIMPLE_TOP_BOX);
+    Fl_Box *rest = new Fl_Box(WB, by, std::max(1, bx - 2 * WB), BH);
+    Fl_Button *save = new Fl_Button(bx, by, BB, BH, "Save");
+    save->shortcut(FL_COMMAND | 's');
+    save->copy_tooltip(withKey("Save the file", 'S').c_str());
+    save->callback(_save_cb, this);
+    if(geo) {
+      Fl_Button *reload =
+        new Fl_Return_Button(bx + BB + WB, by, rw, BH, "Save and reload");
+      reload->copy_tooltip(
+        withKey("Save the file, then read the model again", 'R').c_str());
+      reload->callback(_reload_cb, this);
+      // (Cmd+R too)
+      Fl_Button *reloadKey = new Fl_Button(0, 0, 0, 0);
+      reloadKey->shortcut(FL_COMMAND | 'r');
+      reloadKey->callback(_reload_cb, this);
+    }
+    buttons->resizable(rest);
+    buttons->end();
+
+    _text = new Fl_Text_Buffer();
+    _style = new Fl_Text_Buffer();
+    _text->tab_distance(4);
+    _editor = new Fl_Text_Editor(0, top, width, height - top - bottom);
+    _editor->box(GMSH_SIMPLE_TOP_BOX);
+    _editor->buffer(_text);
+    _editor->tab_nav(0); // Tab inserts a tab
+    _editor->highlight_data(_style, _styles, 6, StylePlain, nullptr, nullptr);
+    _text->add_modify_callback(_modified_cb, this);
+    _win->resizable(_editor);
+    // (not narrower than the fields or the buttons, which keep their width)
+    int minW = std::max(wb + WB + sw + WB + lw + wb, width - bx + WB);
+    int minH = 4 * BH + bottom;
+    _win->size_range(minW, minH);
+    _win->end();
+    // the size the user left the editor at, if any
+    int *size = CTX::instance()->editorSize;
+    if(size[0] > 0 || size[1] > 0)
+      _win->size(size[0] > 0 ? std::max(size[0], minW) : width,
+                 size[1] > 0 ? std::max(size[1], minH) : height);
+    colors();
+    load();
+  }
+  // the colors of the light or the dark scheme, the font of the text
+  void colors()
+  {
+#if defined(WIN32) // FL_SCREEN seems to be too tiny on most Windows setups
+    Fl_Font font = FL_COURIER, bold = FL_COURIER_BOLD;
+#else
+    Fl_Font font = FL_SCREEN, bold = FL_SCREEN_BOLD;
+#endif
+    Fl_Fontsize size = FL_NORMAL_SIZE;
+    bool dark = CTX::instance()->guiDark;
+    Fl_Color comment =
+      dark ? fl_rgb_color(0x6a, 0x99, 0x55) : fl_rgb_color(0x00, 0x80, 0x00);
+    Fl_Color string =
+      dark ? fl_rgb_color(0xce, 0x91, 0x78) : fl_rgb_color(0xa3, 0x15, 0x15);
+    Fl_Color number =
+      dark ? fl_rgb_color(0xb5, 0xce, 0xa8) : fl_rgb_color(0x09, 0x86, 0x58);
+    Fl_Color word =
+      dark ? fl_rgb_color(0x56, 0x9c, 0xd6) : fl_rgb_color(0x00, 0x50, 0xc0);
+    Fl_Color option =
+      dark ? fl_rgb_color(0xc5, 0x86, 0xc0) : fl_rgb_color(0x8a, 0x3f, 0xb0);
+    Fl_Text_Display::Style_Table_Entry styles[6] = {
+      {FL_FOREGROUND_COLOR, font, size},
+      {comment, font, size},
+      {string, font, size},
+      {number, font, size},
+      {word, bold, size},
+      {option, font, size}};
+    for(int i = 0; i < 6; i++) _styles[i] = styles[i];
+    _editor->textfont(font);
+    _editor->textsize(size);
+    _editor->color(FL_BACKGROUND2_COLOR);
+    _editor->textcolor(FL_FOREGROUND_COLOR);
+    _editor->cursor_color(FL_FOREGROUND_COLOR);
+    _editor->linenumber_font(font);
+    _editor->linenumber_size(size - 2);
+    _editor->linenumber_bgcolor(FL_BACKGROUND_COLOR);
+    _editor->linenumber_fgcolor(FL_INACTIVE_COLOR);
+    fl_font(font, size - 2);
+    _editor->linenumber_width((int)fl_width("00000") + 4);
+    _editor->redraw();
+  }
+  // the file read again if it changed on disk (the FLTK interface adds to the
+  // scripts) and not here
+  void refresh()
+  {
+    if(!_modified && onDisk() != _read) load();
+  }
+  // the file as it is on disk
+  std::string onDisk() const
+  {
+    std::ifstream in(_fileName, std::ios::binary);
+    std::stringstream s;
+    if(in) s << in.rdbuf();
+    return s.str();
+  }
+  // the file read again, the cursor where it was
+  void load()
+  {
+    int pos = _editor->insert_position();
+    _read = onDisk();
+    _text->text(_read.c_str());
+    _editor->insert_position(std::min(pos, _text->length()));
+    // (an undo would not go before what was read)
+    _text->canUndo(0);
+    _text->canUndo(1);
+    _modified = false;
+    _title();
+  }
+  // the window closed, its changes saved or discarded as the user chooses:
+  // false if it stays open (the user cancelled, or the file was not saved)
+  bool close()
+  {
+    if(_modified) {
+      _win->show();
+      switch(fl_choice("Save the changes to '%s'?", "Cancel", "Save", "Discard",
+                       _fileName.c_str())) {
+      case 0: return false;
+      case 1:
+        if(!save()) return false;
+        break;
+      default: load(); break;
+      }
+    }
+    _win->hide();
+    return true;
+  }
+  // the file written: false if it could not be, or if it changed on disk
+  // since it was read (as when the FLTK interface added to a script) and is
+  // not to be overwritten
+  bool save()
+  {
+    if(!_modified) return true;
+    if(onDisk() != _read &&
+       fl_choice("'%s' changed on disk since it was read here: overwrite it "
+                 "with the text of the editor?",
+                 "Cancel", "Overwrite", nullptr, _fileName.c_str()) != 1)
+      return false;
+    std::ofstream out(_fileName, std::ios::binary);
+    char *text = _text->text();
+    if(out) out << text;
+    std::string written(text);
+    free(text);
+    if(!out) {
+      Msg::Error("Could not write file '%s'", _fileName.c_str());
+      return false;
+    }
+    _read = written;
+    _modified = false;
+    _title();
+    return true;
+  }
+  // the next place of the text of the field after the cursor, or from the
+  // start of the selection (the match being extended) if again; from the
+  // start once the end is reached
+  void find(bool again)
+  {
+    const char *what = _find->value();
+    if(!what[0]) return;
+    int found, pos = _editor->insert_position(), start, end;
+    if(again && _text->selection_position(&start, &end)) pos = start;
+    if(!_text->search_forward(pos, what, &found) &&
+       !_text->search_forward(0, what, &found)) {
+      fl_beep();
+      return;
+    }
+    end = found + (int)strlen(what);
+    _text->select(found, end);
+    _editor->insert_position(end);
+    _editor->show_insert_position();
+  }
+  // the cursor at the start of a line, the line selected
+  void goToLine(int line)
+  {
+    if(line < 1) return;
+    int start = _text->skip_lines(0, line - 1);
+    _text->select(start, _text->line_end(start));
+    _editor->insert_position(start);
+    _editor->show_insert_position();
+    _editor->take_focus();
+  }
+  void show()
+  {
+    _win->show();
+    _editor->take_focus();
+  }
+};
+
+// one window for each file, kept
+static std::map<std::string, editorWindow *> &editors()
+{
+  static std::map<std::string, editorWindow *> e;
+  return e;
+}
+
+void editFile(const std::string &fileName)
+{
+  std::string prog = CTX::instance()->editor;
+  if(!prog.empty()) {
+    // (the name quoted: it may have spaces)
+    std::string file = "\"" + FixWindowsPath(fileName) + "\"";
+    SystemCall(ReplaceSubString("%s", file, FixWindowsPath(prog)));
+    return;
+  }
+  editorWindow *&e = editors()[fileName];
+  if(!e)
+    e = new editorWindow(fileName);
+  else {
+    e->colors();
+    e->refresh();
+  }
+  e->show();
+}
+
+bool closeEditors()
+{
+  for(auto &e : editors())
+    if(!e.second->close()) return false;
+  return true;
+}

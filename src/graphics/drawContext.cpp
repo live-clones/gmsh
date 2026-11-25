@@ -15,6 +15,7 @@
 #include "glShader.h"
 #include "Trackball.h"
 #include "Context.h"
+#include "OpenFile.h"
 #include "Numeric.h"
 #include "GModel.h"
 #include "MElement.h"
@@ -44,10 +45,9 @@ void drawContext::setDrawGeomTransientFunction(void (*fct)(void *))
   drawGeomTransient = fct;
 }
 
-drawContext::drawContext(drawTransform *transform)
-  : _transform(transform), _highResolutionPixelFactor(1.), _pickColor(false)
+void drawContext::initView()
 {
-  // initialize from temp values in global context
+  // from the temporary values of the global context (the view of the options)
   for(int i = 0; i < 3; i++) {
     r[i] = CTX::instance()->tmpRotation[i];
     t[i] = CTX::instance()->tmpTranslation[i];
@@ -56,6 +56,13 @@ drawContext::drawContext(drawTransform *transform)
   for(int i = 0; i < 4; i++) {
     quaternion[i] = CTX::instance()->tmpQuaternion[i];
   }
+  _pickCacheValid = false;
+}
+
+drawContext::drawContext(drawTransform *transform)
+  : _transform(transform), _highResolutionPixelFactor(1.), _pickColor(false)
+{
+  initView();
   viewport[0] = viewport[1] = 0;
   viewport[2] = CTX::instance()->glSize[0];
   viewport[3] = CTX::instance()->glSize[1];
@@ -542,13 +549,14 @@ static bool meshUsesEntityColors()
 bool meshColorsAreTransparent()
 {
   CTX *ctx = CTX::instance();
-  unsigned int c[30] = {
+  unsigned int c[32] = {
     ctx->color.mesh.line,       ctx->color.mesh.triangle,
     ctx->color.mesh.quadrangle, ctx->color.mesh.tetrahedron,
     ctx->color.mesh.hexahedron, ctx->color.mesh.prism,
     ctx->color.mesh.pyramid,    ctx->color.mesh.trihedron,
+    ctx->color.mesh.polygon,    ctx->color.mesh.polyhedron,
     ctx->color.fg,              ctx->color.geom.selection};
-  int n = 10;
+  int n = 12;
   int carousel = ctx->mesh.colorCarousel;
   if(carousel >= 1 && carousel <= 3)
     for(int i = 0; i < 20; i++) c[n++] = ctx->color.mesh.carousel[i];
@@ -575,9 +583,7 @@ bool meshEntityIsTransparent(GEntity *e)
 static void dashDistances(VertexArray *va, int first, int count,
                           std::vector<float> &dash)
 {
-  GLint glvp[4];
-  glGetIntegerv(GL_VIEWPORT, glvp);
-  int viewport[4] = {glvp[0], glvp[1], glvp[2], glvp[3]};
+  const int *viewport = gmshViewport();
   const double *modelview = glImmediate::matrix(GMSH_MODELVIEW);
   const double *projection = glImmediate::matrix(GMSH_PROJECTION);
   dash.assign(first + count, 0.f);
@@ -752,6 +758,10 @@ static std::size_t stringsInFrame()
 
 void drawContext::draw3d()
 {
+  // the blending and viewport kept by glImmediate, as the host or another
+  // window may have changed OpenGL's
+  glImmediate::syncState();
+
   checkClipPlanesChanged();
 
   deleteOrphanVertexArrayBuffers();
@@ -831,8 +841,8 @@ void drawContext::draw3d()
       // no summing buffers: blend in drawing order. The geometry and the
       // mesh are not sorted, so they must not write depth, or a face in
       // front would hide what is behind it.
-      glEnable(GL_BLEND);
-      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      gmshBlend(true);
+      gmshBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
       gmshDepthMask(false);
     }
     glImmediate::alphaScale(geomScale, geomFilled);
@@ -848,7 +858,7 @@ void drawContext::draw3d()
     if(summed)
       glShader::endTransparent();
     else
-      glDisable(GL_BLEND);
+      gmshBlend(false);
     transparencyPass = TRANSPARENCY_ALL;
   }
 
@@ -1183,8 +1193,8 @@ void drawContext::drawStudioFloor()
   n[up] = 1.;
 
   gmshShadingModel(2);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  gmshBlend(true);
+  gmshBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   // hidden by the model, but hiding nothing itself: whatever hangs below
   // it (glyphs, a view raised further than its data) stays visible
   gmshDepthMask(false);
@@ -1195,7 +1205,7 @@ void drawContext::drawStudioFloor()
   gmshEnd();
   gmshShadingModel(1);
   gmshDepthMask(true);
-  glDisable(GL_BLEND);
+  gmshBlend(false);
 }
 
 void drawContext::draw2d()
@@ -1308,8 +1318,8 @@ void drawContext::drawTextBox(const std::string &text, double x, double y,
   // they are kept in an atlas and drawn at the end of the frame otherwise,
   // which would put the labels of a colour scale over the box.
   global()->flushString();
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  gmshBlend(true);
+  gmshBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   // the tint, when there is one, so that the box is told at a glance from a
   // box that has none; and it hides what it is on rather than taking the
   // colour of it, as a note stuck on the picture would
@@ -1346,7 +1356,7 @@ void drawContext::drawTextBox(const std::string &text, double x, double y,
   gmshVertex2d(x, yb);
   gmshEnd();
   glImmediate::flush();
-  glDisable(GL_BLEND);
+  gmshBlend(false);
 
   // the text, a line at a time from the top, with no halo: the box is its
   // contrast
@@ -1543,8 +1553,8 @@ void drawContext::drawBackgroundImage(bool threeD)
 
   Msg::Debug("Background image: x=%g y=%g w=%g h=%g", x, y, w, h);
 
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  gmshBlend(true);
+  gmshBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   gmshTexture(_bgImageTexture, GMSH_TEXTURE_IMAGE);
   gmshBegin(GL_QUADS);
   if(threeD) {
@@ -1574,7 +1584,7 @@ void drawContext::drawBackgroundImage(bool threeD)
   }
   gmshEnd();
   gmshTexture(0); // draws what is waiting, as the texture is going away
-  glDisable(GL_BLEND);
+  gmshBlend(false);
 }
 
 void drawContext::initProjection()
@@ -1632,7 +1642,13 @@ void drawContext::initProjection()
 
   double clip_near, clip_far;
   if(CTX::instance()->ortho) {
-    clip_near = -zmax * s[2] * CTX::instance()->clipFactor;
+    // (at least as deep as the window is wide: zoomed out, what it shows far
+    // around the model, as the grid of the work plane of a shape being
+    // placed, is not cut by the planes; the depth of an orthographic view
+    // being linear, its resolution is ample)
+    double w = std::max(std::max(fabs(vxmin), fabs(vxmax)),
+                        std::max(fabs(vymin), fabs(vymax)));
+    clip_near = -std::max(zmax * s[2], w) * CTX::instance()->clipFactor;
     clip_far = -clip_near;
   }
   else {
@@ -1750,6 +1766,17 @@ bool drawContext::drawStudioFrames(int from, int width, int height,
     if(budget > 0.) glFinish();
   }
   return true;
+}
+
+void drawContext::setClearColor()
+{
+  CTX *ctx = CTX::instance();
+  if(ctx->printing && !ctx->print.background)
+    glClearColor(1.0F, 1.0F, 1.0F, 0.0F);
+  else
+    glClearColor((GLclampf)(ctx->unpackRed(ctx->color.bg) / 255.),
+                 (GLclampf)(ctx->unpackGreen(ctx->color.bg) / 255.),
+                 (GLclampf)(ctx->unpackBlue(ctx->color.bg) / 255.), 0.0F);
 }
 
 void drawContext::initCameraMatrices(double view[16])
@@ -1882,6 +1909,114 @@ void drawContext::initRenderModel()
   gmshLighting(false);
 }
 
+double drawContext::fitScale()
+{
+  const double vw = viewport[2] - viewport[0], vh = viewport[3] - viewport[1];
+  if(vw <= 0. || vh <= 0.) return 1.;
+  CTX *c = CTX::instance();
+  // what initProjection() shows at scale 1, without its margins, which hold at
+  // any scale
+  const double w = std::max(c->max[0] - c->min[0],
+                            (c->max[1] - c->min[1]) * vw / vh);
+  const double h = w * vh / vw;
+  // how far from the center of the window the corners of the box go, placed
+  // as in initPosition()
+  buildRotationMatrix();
+  const double *cg = c->cg;
+  const double *rc = c->rotationCenterCg ? cg : c->rotationCenter;
+  double xm = 0., ym = 0.;
+  for(int i = 0; i < 8; i++) {
+    double p[3];
+    for(int j = 0; j < 3; j++)
+      p[j] = ((i >> j) & 1 ? c->max[j] : c->min[j]) - rc[j];
+    xm = std::max(xm, fabs(rot[0] * p[0] + rot[4] * p[1] + rot[8] * p[2] +
+                           rc[0] - cg[0]));
+    ym = std::max(ym, fabs(rot[1] * p[0] + rot[5] * p[1] + rot[9] * p[2] +
+                           rc[1] - cg[1]));
+  }
+  // infinite along a direction in which the box has no size
+  const double s = 0.5 * std::min(w / xm, h / ym);
+  return (s > 0. && std::isfinite(s)) ? s : 1.;
+}
+
+void drawContext::pointOfView(const std::string &which, bool other)
+{
+  if(which == "r") {
+    double axis[3] = {0., 0., 1.};
+    addQuaternionFromAxisAndAngle(axis, other ? 90. : -90.);
+    if(CTX::instance()->camera) {
+      if(other)
+        camera.tiltHeadLeft();
+      else
+        camera.tiltHeadRight();
+    }
+  }
+  else if(which == "1:1") {
+    if(other) SetBoundingBox(true);
+    standardView(which, false);
+  }
+  else
+    standardView(which, other);
+}
+
+void drawContext::standardView(const std::string &which, bool opposite)
+{
+  bool cam = CTX::instance()->camera;
+  // Euler angles for an axis pointing out of the screen, or into it
+  auto setAngles = [this](double r0, double r1, double r2) {
+    r[0] = r0;
+    r[1] = r1;
+    r[2] = r2;
+    setQuaternionFromEulerAngles();
+  };
+  if(which == "x") {
+    if(cam)
+      camera.alongX();
+    else
+      setAngles(-90., 0., opposite ? 90. : -90.);
+  }
+  else if(which == "y") {
+    if(cam)
+      camera.alongY();
+    else
+      setAngles(-90., 0., opposite ? 0. : 180.);
+  }
+  else if(which == "z") {
+    if(cam)
+      camera.alongZ();
+    else
+      setAngles(0., opposite ? 180. : 0., 0.);
+  }
+  else if(which == "3d") {
+    // X to the left and Y to the right, or the other way round, the axes
+    // equally foreshortened
+    if(cam)
+      camera.isometric(opposite);
+    else {
+      setAngles(-54.7356, 0., opposite ? 45. : -135.);
+      t[0] = t[1] = t[2] = 0.;
+      s[0] = s[1] = s[2] = fitScale();
+    }
+  }
+  else if(which == "1:1") {
+    if(cam)
+      camera.lookAtCg();
+    else {
+      t[0] = t[1] = t[2] = 0.;
+      s[0] = s[1] = s[2] = fitScale();
+    }
+  }
+  else if(which == "reset") {
+    if(cam)
+      camera.init();
+    else {
+      t[0] = t[1] = t[2] = 0.;
+      s[0] = s[1] = s[2] = 1.;
+      setAngles(0., 0., 0.);
+    }
+  }
+}
+
 void drawContext::initPosition(bool saveMatrices)
 {
   // NB: Those operations are applied to the model in the view coordinates
@@ -1961,11 +2096,13 @@ void drawContext::unproject(double winx, double winy, double p[3], double d[3])
   // draw2d
   double onNear[3] = {0., 0., 0.}, onFar[3] = {0., 0., 0.};
   double win[3] = {winx, winy, 0.};
+  // (fails harmlessly in a pane not drawn yet, e.g. on a pointer event sent
+  // while widgets are deleted: no warning, which would process the events)
   if(!glMatrix::unProject(win, model, proj, vp, onNear))
-    Msg::Warning("unproject1 failed");
+    Msg::Debug("unproject1 failed");
   win[2] = 1.;
   if(!glMatrix::unProject(win, model, proj, vp, onFar))
-    Msg::Warning("unproject2 failed");
+    Msg::Debug("unproject2 failed");
 
   p[0] = onNear[0];
   p[1] = onNear[1];
@@ -1982,18 +2119,14 @@ void drawContext::unproject(double winx, double winy, double p[3], double d[3])
 // the current matrices are ours (a core profile has no matrix stack)
 void drawContext::viewport2World(double vp[3], double xyz[3])
 {
-  GLint glvp[4];
-  glGetIntegerv(GL_VIEWPORT, glvp);
-  int viewport[4] = {glvp[0], glvp[1], glvp[2], glvp[3]};
+  const int *viewport = gmshViewport();
   glMatrix::unProject(vp, glImmediate::matrix(GMSH_MODELVIEW),
                       glImmediate::matrix(GMSH_PROJECTION), viewport, xyz);
 }
 
 void drawContext::world2Viewport(double xyz[3], double vp[3])
 {
-  GLint glvp[4];
-  glGetIntegerv(GL_VIEWPORT, glvp);
-  int viewport[4] = {glvp[0], glvp[1], glvp[2], glvp[3]};
+  const int *viewport = gmshViewport();
   glMatrix::project(xyz, glImmediate::matrix(GMSH_MODELVIEW),
                     glImmediate::matrix(GMSH_PROJECTION), viewport, vp);
 }

@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include <set>
 #include <map>
-#include <fstream>
 #include "SPoint2.h"
 #include "SPoint3.h"
 #include "MVertexBoundaryLayerData.h"

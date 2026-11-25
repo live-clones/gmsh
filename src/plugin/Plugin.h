@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 #include <functional>
-#include "Options.h"
+#include "OptionEntries.h"
 #include "GmshMessage.h"
 #include "PView.h"
 #include "PViewDataList.h"

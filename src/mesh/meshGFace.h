@@ -16,7 +16,8 @@ class GEdge;
 class GFace;
 class MVertex;
 
-// Create the mesh of the face
+// Create the mesh of the face (r: the curve meshes may be subdivided when
+// their recovery fails, if Mesh.RepairSelfIntersecting1DMesh allows it too)
 class meshGFace {
   const bool repairSelfIntersecting1dMesh;
 

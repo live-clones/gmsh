@@ -112,7 +112,9 @@ GEntity::GeomType gmshEdge::geomType() const
 
 bool gmshEdge::haveParametrization()
 {
-  return geomType() != BoundaryLayerCurve;
+  // (a discrete curve of the built-in kernel, e.g. the copy of a discrete
+  // curve made by an extrusion, has a mesh but no geometry)
+  return geomType() != BoundaryLayerCurve && geomType() != DiscreteCurve;
 }
 
 std::string gmshEdge::getAdditionalInfoString(bool multline)

@@ -263,6 +263,20 @@ def _ivectorvectordouble(os):
 def _iargcargv(o):
     return c_int(len(o)), (c_char_p * len(o))(*(s.encode() for s in o))
 
+def _imetric(m):
+    # the 6 components of a metric given as a mesh size, 6 components or a
+    # 3x3 matrix
+    try:
+        n = len(m)
+    except TypeError:
+        return [1. / m**2, 0., 1. / m**2, 0., 0., 1. / m**2]
+    if n == 3:
+        return [m[0][0], m[1][0], m[1][1], m[2][0], m[2][1], m[2][2]]
+    if n != 6:
+        raise ValueError("Invalid metric: expected a mesh size, 6 components "
+                         "or a 3x3 matrix")
+    return m
+
 # Gmsh Python API begins here
 
 def initialize(argv=[], readConfigFiles=True, run=False, interruptible=True):
@@ -1105,8 +1119,11 @@ class model:
         entities (if `combined' is false) or the boundary of the combined
         geometrical shape formed by all input entities (if `combined' is true).
         Return tags multiplied by the sign of the boundary entity if `oriented' is
-        true. Apply the boundary operator recursively down to dimension 0 (i.e. to
-        points) if `recursive' is true.
+        true: for a surface, positive if the curve is oriented counterclockwise
+        around the normal of the surface; for a volume, the sign of the surface in
+        the volume (with the OpenCASCADE kernel, positive if the normal of the
+        surface points out of the volume). Apply the boundary operator recursively
+        down to dimension 0 (i.e. to points) if `recursive' is true.
 
         Return `outDimTags'.
 
@@ -2473,10 +2490,12 @@ class model:
             smoother, "HighOrderFastCurving" for fast curving algorithm, "Laplace2D"
             for Laplace smoothing, "Relocate2D" and "Relocate3D" for node relocation,
             "UntangleMeshGeometry" for untangling, "HXT" for tetrahedral optimisation).
-            If `force' is set apply the optimization also to discrete entities. If
-            `dimTags' (given as a vector of (dim, tag) pairs) is given, only apply the
-            optimizer to the given entities. For HXT optimizer, the `quality' argument
-            should be specified
+            The methods other than the high-order ones optimize the first order mesh:
+            the high-order elements are then recreated, and optimized according to the
+            `Mesh.HighOrderOptimize' option. If `force' is set apply the optimization
+            also to discrete entities. If `dimTags' (given as a vector of (dim, tag)
+            pairs) is given, only apply the optimizer to the given entities. For HXT
+            optimizer, the `quality' argument should be specified
 
             Types:
             - `method': string
@@ -2839,9 +2858,11 @@ class model:
             gmsh.model.mesh.setNode(nodeTag, coord, parametricCoord)
 
             Set the coordinates and the parametric coordinates (if any) of the node
-            with tag `tag'. This function relies on an internal cache (a vector in case
-            of dense node numbering, a map otherwise); for large meshes accessing nodes
-            in bulk is often preferable.
+            with tag `tag'. The simplices computed for the polygons and polyhedra using
+            the node are not computed again: reset them if need be with
+            `setPolytopeSimplices', giving 0 simplices. This function relies on an
+            internal cache (a vector in case of dense node numbering, a map otherwise);
+            for large meshes accessing nodes in bulk is often preferable.
 
             Types:
             - `nodeTag': size
@@ -3090,7 +3111,13 @@ class model:
             entry is a vector of length equal to the number of elements of the given
             type times the number N of nodes for this type of element, that contains
             the node tags of all the elements of the given type, concatenated: [e1n1,
-            e1n2, ..., e1nN, e2n1, ...].
+            e1n2, ..., e1nN, e2n1, ...]. For polygons and polyhedra (types 34 and 35)
+            the number of nodes differs from one element to the next: the nodes of an
+            element are its boundary nodes (the nodes returned by `getPolygons', in the
+            same order; each node of the faces returned by `getPolyhedra', once),
+            followed by the nodes that only its sub-simplices use, if they were given
+            (see `getPolytopeSimplices'). The number of nodes of each element thus
+            follows from `getPolygons' or `getPolyhedra', and `getPolytopeSimplices'.
 
             Return `elementTypes', `elementTags', `nodeTags'.
 
@@ -3366,7 +3393,9 @@ class model:
             (`localNodeCoord' vector, of length `dim' times `numNodes') and number of
             primary (first order) nodes (`numPrimaryNodes'). Polygons and polyhedra
             have no reference element and a variable number of nodes: `numNodes' and
-            `numPrimaryNodes' are -1 and `localNodeCoord' is empty.
+            `numPrimaryNodes' are -1 and `localNodeCoord' is empty. Trihedra (type
+            140), which link a quadrangle to two triangles in hex-dominant meshes, have
+            4 nodes and no reference element: `localNodeCoord' is empty.
 
             Return `elementName', `dim', `order', `numNodes', `localNodeCoord', `numPrimaryNodes'.
 
@@ -3417,9 +3446,16 @@ class model:
             elements of the corresponding type. `nodeTags' is a vector of length equal
             to the number of elements of the given type times the number N of nodes for
             this type of element, that contains the node tags of all the elements of
-            the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...]. If
-            `numTasks' > 1, only compute and return the part of the data indexed by
-            `task' (for C++ only; output vectors must be preallocated).
+            the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...]. For
+            polygons and polyhedra (types 34 and 35) the number of nodes differs from
+            one element to the next: the nodes of an element are its boundary nodes
+            (the nodes returned by `getPolygons', in the same order; each node of the
+            faces returned by `getPolyhedra', once), followed by the nodes that only
+            its sub-simplices use, if they were given (see `getPolytopeSimplices'). The
+            number of nodes of each element thus follows from `getPolygons' or
+            `getPolyhedra', and `getPolytopeSimplices'. If `numTasks' > 1, only compute
+            and return the part of the data indexed by `task' (for C++ only; output
+            vectors must be preallocated).
 
             Return `elementTags', `nodeTags'.
 
@@ -3661,9 +3697,12 @@ class model:
             Add polyhedra classified on the volume `tag'. `elementTags' contains the
             tags (unique, strictly positive identifiers) of the polyhedra; if empty,
             new tags are assigned automatically. `numFaces' contains the number of
-            faces of each polyhedron, `faceSizes' the number of nodes of each face, and
-            `nodeTags' the tags of the nodes of all the faces, concatenated. A sub-
-            tetrahedralization can be given with `setPolytopeSimplices'.
+            faces of each polyhedron: [nf1, nf2, ...]; `faceSizes' the number of nodes
+            of each face, polyhedron by polyhedron: [e1f1N, ..., e1f(nf1)N, e2f1N,
+            ...], of length sum(numFaces); and `nodeTags' the tags of the nodes of all
+            the faces, in the same order: [e1f1n1, ..., e1f1nN, e1f2n1, ..., e2f1n1,
+            ...], of length sum(faceSizes). A sub-tetrahedralization can be given with
+            `setPolytopeSimplices'.
 
             Types:
             - `tag': integer
@@ -3693,11 +3732,13 @@ class model:
             """
             gmsh.model.mesh.getPolyhedra(tag=-1)
 
-            Get the polyhedra classified on the volume `tag': their tags `elementTags',
-            the number of faces `numFaces' of each polyhedron, the number of nodes
-            `faceSizes' of each face, and the tags of the nodes of all the faces
-            concatenated in `nodeTags'. If `tag' < 0, get the polyhedra of all the
-            volumes.
+            Get the polyhedra classified on the volume `tag': their tags `elementTags':
+            [e1, e2, ...], the number of faces `numFaces' of each polyhedron: [nf1,
+            nf2, ...], the number of nodes `faceSizes' of each face, polyhedron by
+            polyhedron: [e1f1N, ..., e1f(nf1)N, e2f1N, ...], and the tags of the nodes
+            of all the faces in the same order in `nodeTags': [e1f1n1, ..., e1f1nN,
+            e1f2n1, ..., e2f1n1, ...]. This is the layout taken by `addPolyhedra'. If
+            `tag' < 0, get the polyhedra of all the volumes.
 
             Return `elementTags', `numFaces', `faceSizes', `nodeTags'.
 
@@ -4627,10 +4668,18 @@ class model:
             on the entity of tag `tag'. `nodeTags' contains the node tags of the edges
             for all the elements: [e1a1n1, e1a1n2, e1a2n1, ...]. Data is returned by
             element, with elements in the same order as in `getElements' and
-            `getElementsByType'. If `primary' is set, only the primary (begin/end)
-            nodes of the edges are returned. If `tag' < 0, get the edge nodes for all
-            entities. If `numTasks' > 1, only compute and return the part of the data
-            indexed by `task' (for C++ only; output vector must be preallocated).
+            `getElementsByType'. Except for polygons and polyhedra, the number of edges
+            is the same for all the elements of a given type (e.g. 3 for triangles, 6
+            for tetrahedra, 12 for hexahedra), and is equal to the number of edges
+            returned divided by the number of elements. A polygon has as many edges as
+            nodes: use `getPolygons' to get the number of nodes of each polygon. A
+            polyhedron has half as many edges as the sum of the sizes of its faces,
+            each edge being shared by two faces: use `getPolyhedra' to get the sizes of
+            the faces of each polyhedron. If `primary' is set, only the primary
+            (begin/end) nodes of the edges are returned. If `tag' < 0, get the edge
+            nodes for all entities. If `numTasks' > 1, only compute and return the part
+            of the data indexed by `task' (for C++ only; output vector must be
+            preallocated).
 
             Return `nodeTags'.
 
@@ -4667,11 +4716,16 @@ class model:
             for all elements: [e1f1n1, ..., e1f1nN, e1f2n1, ...], and `faceSizes' the
             number of nodes of each face: [e1f1N, e1f2N, ...]. Faces are returned for
             each element in their canonical order, with elements in the same order as
-            in `getElements' and `getElementsByType'. If `primary' is set, only the
-            primary (corner) nodes of the faces are returned. If `tag' < 0, get the
-            face nodes for all entities. If `numTasks' > 1, only compute and return the
-            part of the data indexed by `task' (for C++ only; output vectors must be
-            preallocated).
+            in `getElements' and `getElementsByType'. Except for polyhedra, the number
+            of faces is the same for all the elements of a given type (e.g. 4 for
+            tetrahedra, 5 for prisms, 6 for hexahedra, 1 for polygons), and is equal to
+            the length of `faceSizes' divided by the number of elements; faces of
+            different sizes (e.g. triangles and quadrangles for prisms and pyramids)
+            are thus returned in a single call. Use `getPolyhedra' to get the number of
+            faces of each polyhedron. If `primary' is set, only the primary (corner)
+            nodes of the faces are returned. If `tag' < 0, get the face nodes for all
+            entities. If `numTasks' > 1, only compute and return the part of the data
+            indexed by `task' (for C++ only; output vectors must be preallocated).
 
             Return `nodeTags', `faceSizes'.
 
@@ -4748,18 +4802,20 @@ class model:
         get_element_face_nodes_by_type = getElementFaceNodesByType
 
         @staticmethod
-        def getGhostElements(dim, tag):
+        def getGhostElements(partition):
             """
-            gmsh.model.mesh.getGhostElements(dim, tag)
+            gmsh.model.mesh.getGhostElements(partition)
 
-            Get the ghost elements `elementTags' and their associated `partitions'
-            stored in the ghost entity of dimension `dim' and tag `tag'.
+            Get the tags `elementTags' of the ghost elements of the partition
+            `partition', i.e. of the elements of other partitions that share a node
+            with its elements (see the `Mesh.PartitionCreateGhostCells' option), and
+            the partitions `partitions' they belong to (0 for an element of an entity
+            shared by several partitions).
 
             Return `elementTags', `partitions'.
 
             Types:
-            - `dim': integer
-            - `tag': integer
+            - `partition': integer
             - `elementTags': vector of sizes
             - `partitions': vector of integers
             """
@@ -4767,8 +4823,7 @@ class model:
             api_partitions_, api_partitions_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetGhostElements(
-                c_int(dim),
-                c_int(tag),
+                c_int(partition),
                 byref(api_elementTags_), byref(api_elementTags_n_),
                 byref(api_partitions_), byref(api_partitions_n_),
                 byref(ierr))
@@ -4901,6 +4956,61 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
         remove_size_callback = removeSizeCallback
+
+        @staticmethod
+        def setMetricCallback(callback):
+            """
+            gmsh.model.mesh.setMetricCallback(callback)
+
+            Set a mesh metric callback for the current model. The callback function
+            should take seven arguments as input (`dim', `tag', `x', `y', `z', `lc' and
+            `metric'). The first two integer arguments correspond to the dimension
+            `dim' and tag `tag' of the entity being meshed. The next four double
+            precision arguments correspond to the coordinates `x', `y' and `z' around
+            which to prescribe the metric and to the (smallest) mesh size `lc' that
+            would be prescribed if the callback had not been called. The last argument
+            `metric' contains the 6 components of the symmetric metric tensor that
+            would be prescribed if the callback had not been called, given as [m11,
+            m21, m22, m31, m32, m33]. The callback function should modify `metric' in
+            place; in Python, Julia and JavaScript it can also return the desired
+            metric, as 6 components, a 3x3 matrix or a single mesh size. The metric
+            callback is called after the mesh size callback; meshing algorithms that do
+            not support anisotropic mesh sizes use the smallest size prescribed by the
+            metric.
+
+            Types:
+            - `callback': 
+            """
+            global api_metric_callback_type_
+            api_metric_callback_type_ = CFUNCTYPE(None, c_int, c_int, c_double, c_double, c_double, c_double, POINTER(c_double), c_void_p)
+            def api_metric_callback_wrapper_(dim, tag, x, y, z, lc, metric, _):
+                m = [metric[i] for i in range(6)]
+                r = callback(dim, tag, x, y, z, lc, m)
+                for i, v in enumerate(_imetric(m if r is None else r)):
+                    metric[i] = v
+            global api_metric_callback_
+            api_metric_callback_ = api_metric_callback_type_(api_metric_callback_wrapper_)
+            ierr = c_int()
+            lib.gmshModelMeshSetMetricCallback(
+                api_metric_callback_, None,
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        set_metric_callback = setMetricCallback
+
+        @staticmethod
+        def removeMetricCallback():
+            """
+            gmsh.model.mesh.removeMetricCallback()
+
+            Remove the mesh metric callback from the current model.
+            """
+            ierr = c_int()
+            lib.gmshModelMeshRemoveMetricCallback(
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        remove_metric_callback = removeMetricCallback
 
         @staticmethod
         def setTransfiniteCurve(tag, numNodes, meshType="Progression", coef=1.):
@@ -5163,8 +5273,8 @@ class model:
 
             Set meshing constraints on the bounding surfaces of the volume of tag `tag'
             so that all surfaces are oriented with outward pointing normals; and if a
-            mesh already exists, reorient it. Currently only available with the
-            OpenCASCADE kernel, as it relies on the STL triangulation.
+            mesh already exists, reorient it. The orientation is computed from the
+            surface mesh, for any CAD kernel.
 
             Types:
             - `tag': integer
@@ -5513,8 +5623,16 @@ class model:
             basis functions for sorting purposes. For the hierarchical function spaces,
             the elements must be oriented with `periodic' set in
             `getBasisFunctionsOrientation': the basis function of each key is then the
-            basis function of its master key. On surfaces, the keys of "HdivLegendre"
-            function spaces are those of the face functions of the 3D elements.
+            basis function of its master key. The master keys are at the end of the
+            chains of periodic entities, so that they are never periodic themselves:
+            e.g. for a cell periodic in x and y, the master keys of the edges along the
+            corner x = 1, y = 1 are those of the edges along x = 0, y = 0, and not
+            those along x = 0, y = 1, which are periodic in y. Such a master key may
+            lie off the master entity `tagMaster': the location of its key (`coord') is
+            then that of the master key (`coordMaster') moved by a composition of the
+            periodic transformations (e.g. the sum of the translations in x and y). On
+            surfaces, the keys of "HdivLegendre" function spaces are those of the face
+            functions of the 3D elements.
 
             Return `tagMaster', `typeKeys', `typeKeysMaster', `entityKeys', `entityKeysMaster', `coord', `coordMaster'.
 
@@ -6507,9 +6625,11 @@ class model:
             by the curves `curveTags'. `curveTags' should contain (signed) tags of
             model entities of dimension 1 forming a closed loop: a negative tag
             signifies that the underlying curve is considered with reversed
-            orientation. If `tag' is positive, set the tag explicitly; otherwise a new
-            tag is selected automatically. If `reorient' is set, automatically reorient
-            the curves if necessary. Return the tag of the curve loop.
+            orientation. The curves can be given in any order, but their orientations
+            must be consistent, unless `reorient' is set: in that case the curves are
+            automatically reoriented if necessary. The curve loop is oriented according
+            to its first curve. If `tag' is positive, set the tag explicitly; otherwise
+            a new tag is selected automatically. Return the tag of the curve loop.
 
             Return an integer.
 
@@ -7869,10 +7989,12 @@ class model:
             gmsh.model.occ.addWire(curveTags, tag=-1, checkClosed=False)
 
             Add a wire (open or closed) in the OpenCASCADE CAD representation, formed
-            by the curves `curveTags'. Note that an OpenCASCADE wire can be made of
-            curves that share geometrically identical (but topologically different)
-            points. If `tag' is positive, set the tag explicitly; otherwise a new tag
-            is selected automatically. Return the tag of the wire.
+            by the curves `curveTags', given in any order and orientation: the wire is
+            oriented according to the orientation of its first curve, reversed if its
+            tag is negative. Note that an OpenCASCADE wire can be made of curves that
+            share geometrically identical (but topologically different) points. If
+            `tag' is positive, set the tag explicitly; otherwise a new tag is selected
+            automatically. Return the tag of the wire.
 
             Return an integer.
 
@@ -7900,13 +8022,13 @@ class model:
 
             Add a curve loop (a closed wire) in the OpenCASCADE CAD representation,
             formed by the curves `curveTags'. `curveTags' should contain tags of curves
-            forming a closed loop. Negative tags can be specified for compatibility
-            with the built-in kernel, but are simply ignored: the wire is oriented
-            according to the orientation of its first curve. Note that an OpenCASCADE
-            curve loop can be made of curves that share geometrically identical (but
-            topologically different) points. If `tag' is positive, set the tag
-            explicitly; otherwise a new tag is selected automatically. Return the tag
-            of the curve loop.
+            forming a closed loop, in any order and orientation: the curve loop is
+            oriented according to the orientation of its first curve, reversed if its
+            tag is negative (the signs of the other tags are ignored). Note that an
+            OpenCASCADE curve loop can be made of curves that share geometrically
+            identical (but topologically different) points. If `tag' is positive, set
+            the tag explicitly; otherwise a new tag is selected automatically. Return
+            the tag of the curve loop.
 
             Return an integer.
 
@@ -8792,7 +8914,11 @@ class model:
             "DiscreteTrihedron", "CorrectedFrenet", "Fixed", "Frenet",
             "ConstantNormal", "Darboux", "GuideAC", "GuidePlan", "GuideACWithContact",
             "GuidePlanWithContact"). If `trihedron' is not provided,
-            "DiscreteTrihedron" is assumed. Return the pipe in `outDimTags'.
+            "DiscreteTrihedron" is assumed. Return the pipe in `outDimTags', as for
+            `extrude': for each entity, the entity at the end of the wire, the swept
+            entity and the lateral entities (if `Geometry.ExtrudeReturnLateralEntities'
+            is set). For a curve or a point along a wire of several curves, only the
+            swept entities are returned.
 
             Return `outDimTags'.
 
@@ -9268,13 +9394,12 @@ class model:
             vectors of (dim, tag) pairs) in the OpenCASCADE CAD representation, making
             all interfaces conformal. When applied to entities of different dimensions,
             the lower dimensional entities will be automatically embedded in the higher
-            dimensional entities if they are not on their boundary. In order to
-            preserve entity tags, entities should be provided in ascending dimension
-            order. Return the resulting entities in `outDimTags', and the
-            correspondance between input and resulting entities in `outDimTagsMap'. If
-            `tag' is positive, try to set the tag explicitly (only valid if the boolean
-            operation results in a single entity). Remove the object if `removeObject'
-            is set. Remove the tool if `removeTool' is set.
+            dimensional entities if they are not on their boundary. Return the
+            resulting entities in `outDimTags', and the correspondance between input
+            and resulting entities in `outDimTagsMap'. If `tag' is positive, try to set
+            the tag explicitly (only valid if the boolean operation results in a single
+            entity). Remove the object if `removeObject' is set. Remove the tool if
+            `removeTool' is set.
 
             Return `outDimTags', `outDimTagsMap'.
 
@@ -9547,14 +9672,20 @@ class model:
         remove_all_duplicates = removeAllDuplicates
 
         @staticmethod
-        def healShapes(dimTags=[], tolerance=1e-8, fixDegenerated=True, fixSmallEdges=True, fixSmallFaces=True, sewFaces=True, makeSolids=True):
+        def healShapes(dimTags=[], tolerance=1e-8, fixDegenerated=True, fixSmallEdges=True, fixSmallFaces=True, sewFaces=True, makeSolids=True, fixTolerances=True):
             """
-            gmsh.model.occ.healShapes(dimTags=[], tolerance=1e-8, fixDegenerated=True, fixSmallEdges=True, fixSmallFaces=True, sewFaces=True, makeSolids=True)
+            gmsh.model.occ.healShapes(dimTags=[], tolerance=1e-8, fixDegenerated=True, fixSmallEdges=True, fixSmallFaces=True, sewFaces=True, makeSolids=True, fixTolerances=True)
 
             Apply various healing procedures to the entities `dimTags' (given as a
             vector of (dim, tag) pairs), or to all the entities in the model if
-            `dimTags' is empty, in the OpenCASCADE CAD representation. Return the
-            healed entities in `outDimTags'.
+            `dimTags' is empty, in the OpenCASCADE CAD representation: recompute the
+            tolerances to the smallest ones the geometry needs (if `fixTolerances' is
+            set), fix the degenerated curves and surfaces, the small curves and the
+            small surfaces, sew the surfaces sharing geometrically identical curves
+            (with tolerance `tolerance'), and make volumes from the closed shells of
+            surfaces bounding no volume. The entities are healed together, the changes
+            applied to the rest of the model, and the entities keep their tag unless
+            they are removed or merged. Return the healed entities in `outDimTags'.
 
             Return `outDimTags'.
 
@@ -9567,6 +9698,7 @@ class model:
             - `fixSmallFaces': boolean
             - `sewFaces': boolean
             - `makeSolids': boolean
+            - `fixTolerances': boolean
             """
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
@@ -9580,6 +9712,7 @@ class model:
                 c_int(bool(fixSmallFaces)),
                 c_int(bool(sewFaces)),
                 c_int(bool(makeSolids)),
+                c_int(bool(fixTolerances)),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
@@ -10027,6 +10160,615 @@ class model:
                 if ierr.value != 0:
                     raise Exception(logger.getLastError())
             set_size = setSize
+
+
+    class discrete:
+        """
+        Discrete CAD modeler functions
+        """
+
+        @staticmethod
+        def addBox(x, y, z, dx, dy, dz, tag=-1):
+            """
+            gmsh.model.discrete.addBox(x, y, z, dx, dy, dz, tag=-1)
+
+            Add a parallelepipedic box in the discrete CAD representation, defined by a
+            point (`x', `y', `z') and the extents along the x-, y- and z-axes. Its 6
+            surfaces are triangulated exactly, with 2 triangles each. If `tag' is
+            positive, set the tag explicitly; otherwise a new tag is selected
+            automatically. Return the tag of the box.
+
+            Return an integer.
+
+            Types:
+            - `x': double
+            - `y': double
+            - `z': double
+            - `dx': double
+            - `dy': double
+            - `dz': double
+            - `tag': integer
+            """
+            ierr = c_int()
+            api_result_ = lib.gmshModelDiscreteAddBox(
+                c_double(x),
+                c_double(y),
+                c_double(z),
+                c_double(dx),
+                c_double(dy),
+                c_double(dz),
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return api_result_
+        add_box = addBox
+
+        @staticmethod
+        def addSphere(xc, yc, zc, radius, tag=-1, tolerance=-1.):
+            """
+            gmsh.model.discrete.addSphere(xc, yc, zc, radius, tag=-1, tolerance=-1.)
+
+            Add a sphere of center (`xc', `yc', `zc') and radius `radius' in the
+            discrete CAD representation. Its 2 surfaces, the hemispheres, are
+            triangulated at most `tolerance' away from the exact sphere
+            (`Geometry.DiscreteTolerance' times the radius if `tolerance' is not
+            positive). If `tag' is positive, set the tag explicitly; otherwise a new
+            tag is selected automatically. Return the tag of the sphere.
+
+            Return an integer.
+
+            Types:
+            - `xc': double
+            - `yc': double
+            - `zc': double
+            - `radius': double
+            - `tag': integer
+            - `tolerance': double
+            """
+            ierr = c_int()
+            api_result_ = lib.gmshModelDiscreteAddSphere(
+                c_double(xc),
+                c_double(yc),
+                c_double(zc),
+                c_double(radius),
+                c_int(tag),
+                c_double(tolerance),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return api_result_
+        add_sphere = addSphere
+
+        @staticmethod
+        def addRectangle(x, y, z, dx, dy, tag=-1):
+            """
+            gmsh.model.discrete.addRectangle(x, y, z, dx, dy, tag=-1)
+
+            Add a rectangle in the discrete CAD representation, defined by a point
+            (`x', `y', `z') and the extents along the x- and y-axes, triangulated
+            exactly with 2 triangles. If `tag' is positive, set the tag explicitly;
+            otherwise a new tag is selected automatically. Return the tag of the
+            rectangle.
+
+            Return an integer.
+
+            Types:
+            - `x': double
+            - `y': double
+            - `z': double
+            - `dx': double
+            - `dy': double
+            - `tag': integer
+            """
+            ierr = c_int()
+            api_result_ = lib.gmshModelDiscreteAddRectangle(
+                c_double(x),
+                c_double(y),
+                c_double(z),
+                c_double(dx),
+                c_double(dy),
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return api_result_
+        add_rectangle = addRectangle
+
+        @staticmethod
+        def addDisk(xc, yc, zc, rx, ry, tag=-1, zAxis=[], xAxis=[], tolerance=-1.):
+            """
+            gmsh.model.discrete.addDisk(xc, yc, zc, rx, ry, tag=-1, zAxis=[], xAxis=[], tolerance=-1.)
+
+            Add a disk in the discrete CAD representation, defined by the center (`xc',
+            `yc', `zc') and the radius `rx' along the x-axis and `ry' along the y-axis.
+            If a vector `zAxis' of size 3 is provided, use it as the normal to the
+            disk; if a vector `xAxis' of size 3 is provided, use it to define the
+            x-axis. Its boundary, split into 2 arcs, is at most `tolerance' away from
+            the exact ellipse (`Geometry.DiscreteTolerance' times the largest radius if
+            `tolerance' is not positive). If `tag' is positive, set the tag explicitly;
+            otherwise a new tag is selected automatically. Return the tag of the disk.
+
+            Return an integer.
+
+            Types:
+            - `xc': double
+            - `yc': double
+            - `zc': double
+            - `rx': double
+            - `ry': double
+            - `tag': integer
+            - `zAxis': vector of doubles
+            - `xAxis': vector of doubles
+            - `tolerance': double
+            """
+            api_zAxis_, api_zAxis_n_ = _ivectordouble(zAxis)
+            api_xAxis_, api_xAxis_n_ = _ivectordouble(xAxis)
+            ierr = c_int()
+            api_result_ = lib.gmshModelDiscreteAddDisk(
+                c_double(xc),
+                c_double(yc),
+                c_double(zc),
+                c_double(rx),
+                c_double(ry),
+                c_int(tag),
+                api_zAxis_, api_zAxis_n_,
+                api_xAxis_, api_xAxis_n_,
+                c_double(tolerance),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return api_result_
+        add_disk = addDisk
+
+        @staticmethod
+        def addCylinder(x, y, z, dx, dy, dz, r, tag=-1, tolerance=-1.):
+            """
+            gmsh.model.discrete.addCylinder(x, y, z, dx, dy, dz, r, tag=-1, tolerance=-1.)
+
+            Add a cylinder in the discrete CAD representation, defined by the center
+            (`x', `y', `z') of its first circular face, the 3 components (`dx', `dy',
+            `dz') of the vector defining its axis and its radius `r'. Its 3 surfaces,
+            the lateral surface and the 2 disks, are triangulated at most `tolerance'
+            away from the exact cylinder (`Geometry.DiscreteTolerance' times `r' if
+            `tolerance' is not positive). If `tag' is positive, set the tag explicitly;
+            otherwise a new tag is selected automatically. Return the tag of the
+            cylinder.
+
+            Return an integer.
+
+            Types:
+            - `x': double
+            - `y': double
+            - `z': double
+            - `dx': double
+            - `dy': double
+            - `dz': double
+            - `r': double
+            - `tag': integer
+            - `tolerance': double
+            """
+            ierr = c_int()
+            api_result_ = lib.gmshModelDiscreteAddCylinder(
+                c_double(x),
+                c_double(y),
+                c_double(z),
+                c_double(dx),
+                c_double(dy),
+                c_double(dz),
+                c_double(r),
+                c_int(tag),
+                c_double(tolerance),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return api_result_
+        add_cylinder = addCylinder
+
+        @staticmethod
+        def addCone(x, y, z, dx, dy, dz, r1, r2, tag=-1, tolerance=-1.):
+            """
+            gmsh.model.discrete.addCone(x, y, z, dx, dy, dz, r1, r2, tag=-1, tolerance=-1.)
+
+            Add a cone in the discrete CAD representation, defined by the center (`x',
+            `y', `z') of its first circular face, the 3 components of the vector (`dx',
+            `dy', `dz') defining its axis and the two radii `r1' and `r2' of the faces
+            (one of them can be zero, giving an apex). Its surfaces, the lateral
+            surface (holding the apex, if any) and the disks, are triangulated at most
+            `tolerance' away from the exact cone (`Geometry.DiscreteTolerance' times
+            the largest radius if `tolerance' is not positive). If `tag' is positive,
+            set the tag explicitly; otherwise a new tag is selected automatically.
+            Return the tag of the cone.
+
+            Return an integer.
+
+            Types:
+            - `x': double
+            - `y': double
+            - `z': double
+            - `dx': double
+            - `dy': double
+            - `dz': double
+            - `r1': double
+            - `r2': double
+            - `tag': integer
+            - `tolerance': double
+            """
+            ierr = c_int()
+            api_result_ = lib.gmshModelDiscreteAddCone(
+                c_double(x),
+                c_double(y),
+                c_double(z),
+                c_double(dx),
+                c_double(dy),
+                c_double(dz),
+                c_double(r1),
+                c_double(r2),
+                c_int(tag),
+                c_double(tolerance),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return api_result_
+        add_cone = addCone
+
+        @staticmethod
+        def addTorus(x, y, z, r1, r2, tag=-1, zAxis=[], tolerance=-1.):
+            """
+            gmsh.model.discrete.addTorus(x, y, z, r1, r2, tag=-1, zAxis=[], tolerance=-1.)
+
+            Add a torus in the discrete CAD representation, defined by its center (`x',
+            `y', `z') and its 2 radii `r1' (of its center circle) and `r2' (of its
+            section), with r2 < r1. If a vector `zAxis' of size 3 is provided, use it
+            as the axis of the torus (instead of the z-axis). Its 2 surfaces, the
+            halves on either side of its equatorial plane bounded by its outer and
+            inner equators, are triangulated at most `tolerance' away from the exact
+            torus (`Geometry.DiscreteTolerance' times `r2' if `tolerance' is not
+            positive). If `tag' is positive, set the tag explicitly; otherwise a new
+            tag is selected automatically. Return the tag of the torus.
+
+            Return an integer.
+
+            Types:
+            - `x': double
+            - `y': double
+            - `z': double
+            - `r1': double
+            - `r2': double
+            - `tag': integer
+            - `zAxis': vector of doubles
+            - `tolerance': double
+            """
+            api_zAxis_, api_zAxis_n_ = _ivectordouble(zAxis)
+            ierr = c_int()
+            api_result_ = lib.gmshModelDiscreteAddTorus(
+                c_double(x),
+                c_double(y),
+                c_double(z),
+                c_double(r1),
+                c_double(r2),
+                c_int(tag),
+                api_zAxis_, api_zAxis_n_,
+                c_double(tolerance),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return api_result_
+        add_torus = addTorus
+
+        @staticmethod
+        def fuse(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True):
+            """
+            gmsh.model.discrete.fuse(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True)
+
+            Compute the boolean union (the fusion) of the volumes `objectDimTags' and
+            `toolDimTags' (vectors of (dim, tag) pairs) in the discrete CAD
+            representation, exactly on their triangulations. The surfaces of the result
+            keep the parameters of those they come from. Return the resulting volumes
+            in `outDimTags', and the correspondance between input and resulting
+            entities in `outDimTagsMap'. If `tag' is positive, try to set the tag
+            explicitly (only valid if the boolean operation results in a single
+            entity). Remove the object if `removeObject' is set. Remove the tool if
+            `removeTool' is set.
+
+            Return `outDimTags', `outDimTagsMap'.
+
+            Types:
+            - `objectDimTags': vector of pairs of integers
+            - `toolDimTags': vector of pairs of integers
+            - `outDimTags': vector of pairs of integers
+            - `outDimTagsMap': vector of vectors of pairs of integers
+            - `tag': integer
+            - `removeObject': boolean
+            - `removeTool': boolean
+            """
+            api_objectDimTags_, api_objectDimTags_n_ = _ivectorpair(objectDimTags)
+            api_toolDimTags_, api_toolDimTags_n_ = _ivectorpair(toolDimTags)
+            api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
+            api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_ = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelDiscreteFuse(
+                api_objectDimTags_, api_objectDimTags_n_,
+                api_toolDimTags_, api_toolDimTags_n_,
+                byref(api_outDimTags_), byref(api_outDimTags_n_),
+                byref(api_outDimTagsMap_), byref(api_outDimTagsMap_n_), byref(api_outDimTagsMap_nn_),
+                c_int(tag),
+                c_int(bool(removeObject)),
+                c_int(bool(removeTool)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return (
+                _ovectorpair(api_outDimTags_, api_outDimTags_n_.value),
+                _ovectorvectorpair(api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_))
+
+        @staticmethod
+        def intersect(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True):
+            """
+            gmsh.model.discrete.intersect(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True)
+
+            Compute the boolean intersection (the common parts) of the volumes
+            `objectDimTags' and `toolDimTags' (vectors of (dim, tag) pairs) in the
+            discrete CAD representation, exactly on their triangulations. The surfaces
+            of the result keep the parameters of those they come from. Return the
+            resulting volumes in `outDimTags', and the correspondance between input and
+            resulting entities in `outDimTagsMap'. If `tag' is positive, try to set the
+            tag explicitly (only valid if the boolean operation results in a single
+            entity). Remove the object if `removeObject' is set. Remove the tool if
+            `removeTool' is set.
+
+            Return `outDimTags', `outDimTagsMap'.
+
+            Types:
+            - `objectDimTags': vector of pairs of integers
+            - `toolDimTags': vector of pairs of integers
+            - `outDimTags': vector of pairs of integers
+            - `outDimTagsMap': vector of vectors of pairs of integers
+            - `tag': integer
+            - `removeObject': boolean
+            - `removeTool': boolean
+            """
+            api_objectDimTags_, api_objectDimTags_n_ = _ivectorpair(objectDimTags)
+            api_toolDimTags_, api_toolDimTags_n_ = _ivectorpair(toolDimTags)
+            api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
+            api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_ = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelDiscreteIntersect(
+                api_objectDimTags_, api_objectDimTags_n_,
+                api_toolDimTags_, api_toolDimTags_n_,
+                byref(api_outDimTags_), byref(api_outDimTags_n_),
+                byref(api_outDimTagsMap_), byref(api_outDimTagsMap_n_), byref(api_outDimTagsMap_nn_),
+                c_int(tag),
+                c_int(bool(removeObject)),
+                c_int(bool(removeTool)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return (
+                _ovectorpair(api_outDimTags_, api_outDimTags_n_.value),
+                _ovectorvectorpair(api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_))
+
+        @staticmethod
+        def cut(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True):
+            """
+            gmsh.model.discrete.cut(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True)
+
+            Compute the boolean difference between the volumes `objectDimTags' and
+            `toolDimTags' (vectors of (dim, tag) pairs) in the discrete CAD
+            representation, exactly on their triangulations. The surfaces of the result
+            keep the parameters of those they come from. Return the resulting volumes
+            in `outDimTags', and the correspondance between input and resulting
+            entities in `outDimTagsMap'. If `tag' is positive, try to set the tag
+            explicitly (only valid if the boolean operation results in a single
+            entity). Remove the object if `removeObject' is set. Remove the tool if
+            `removeTool' is set.
+
+            Return `outDimTags', `outDimTagsMap'.
+
+            Types:
+            - `objectDimTags': vector of pairs of integers
+            - `toolDimTags': vector of pairs of integers
+            - `outDimTags': vector of pairs of integers
+            - `outDimTagsMap': vector of vectors of pairs of integers
+            - `tag': integer
+            - `removeObject': boolean
+            - `removeTool': boolean
+            """
+            api_objectDimTags_, api_objectDimTags_n_ = _ivectorpair(objectDimTags)
+            api_toolDimTags_, api_toolDimTags_n_ = _ivectorpair(toolDimTags)
+            api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
+            api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_ = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelDiscreteCut(
+                api_objectDimTags_, api_objectDimTags_n_,
+                api_toolDimTags_, api_toolDimTags_n_,
+                byref(api_outDimTags_), byref(api_outDimTags_n_),
+                byref(api_outDimTagsMap_), byref(api_outDimTagsMap_n_), byref(api_outDimTagsMap_nn_),
+                c_int(tag),
+                c_int(bool(removeObject)),
+                c_int(bool(removeTool)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return (
+                _ovectorpair(api_outDimTags_, api_outDimTags_n_.value),
+                _ovectorvectorpair(api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_))
+
+        @staticmethod
+        def fillet(volumeTags, curveTags, radii, removeVolume=True):
+            """
+            gmsh.model.discrete.fillet(volumeTags, curveTags, radii, removeVolume=True)
+
+            Fillet the volumes `volumeTags' on the curves `curveTags' with radii
+            `radii' in the discrete CAD representation. The `radii' vector can either
+            contain a single radius or as many radii as `curveTags'. The curves
+            continuing the given ones tangentially are filleted too. The ball rolling
+            on the two surfaces of each curve removes the solid between it and a convex
+            curve, and fills the space between it and a concave one, exactly on the
+            triangulations; three fillets of the same radius and kind meeting at a
+            point are joined by the part of the ball touching their three surfaces. The
+            fillets on a cylinder, a torus or a sphere get its exact geometry. Return
+            the filleted volumes in `outDimTags' as a vector of (dim, tag) pairs.
+            Remove the original volume if `removeVolume' is set.
+
+            Return `outDimTags'.
+
+            Types:
+            - `volumeTags': vector of integers
+            - `curveTags': vector of integers
+            - `radii': vector of doubles
+            - `outDimTags': vector of pairs of integers
+            - `removeVolume': boolean
+            """
+            api_volumeTags_, api_volumeTags_n_ = _ivectorint(volumeTags)
+            api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
+            api_radii_, api_radii_n_ = _ivectordouble(radii)
+            api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelDiscreteFillet(
+                api_volumeTags_, api_volumeTags_n_,
+                api_curveTags_, api_curveTags_n_,
+                api_radii_, api_radii_n_,
+                byref(api_outDimTags_), byref(api_outDimTags_n_),
+                c_int(bool(removeVolume)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
+
+        @staticmethod
+        def importShapes(fileName, angle, curveAngle=pi, tolerance=-1.):
+            """
+            gmsh.model.discrete.importShapes(fileName, angle, curveAngle=pi, tolerance=-1.)
+
+            Import the triangulations of the surfaces of the mesh file `fileName' (STL,
+            MSH, OBJ, PLY, OFF, VTK or MESH format) in the discrete CAD representation,
+            and build their topology: the surfaces are the triangles of the same
+            surface of the file connected across edges shared by two triangles whose
+            normals make an angle smaller than `angle' (in radians), the curves are
+            along the edges between two surfaces, the boundary edges (of one triangle),
+            the non-manifold edges (of more than two triangles) and the sharp edges
+            inside a surface (embedded in it), split where more or less than two of
+            them meet and, if `curveAngle' is less than Pi, where they turn by more
+            than `curveAngle', and the volumes are the cells of space bounded by the
+            surfaces (the cells of a connected piece of the triangulation inside a cell
+            of another one are volumes if its triangles point out of them, holes if
+            they point into them, as STL normals point out of solids). Each surface is
+            oriented outwards of a volume whose outer boundary it is on, if any (the
+            included volume for the boundary of an inclusion). The surfaces whose nodes
+            are at most `tolerance' away from a plane, a sphere, a cylinder, a cone or
+            a torus (`Geometry.DiscreteTolerance' times the size of the triangulation
+            if `tolerance' is not positive) are recognized as such and get the
+            parameters of the corresponding primitives (with a seam, or split in two
+            halves, where needed); the others are split into their pieces on such
+            surfaces up to the precision of the coordinates of their nodes (for a part
+            whose faces meet tangentially), the rest into pieces that a single map can
+            parametrize. Return the volumes and the surfaces bounding no volume in
+            `outDimTags'.
+
+            Return `outDimTags'.
+
+            Types:
+            - `fileName': string
+            - `angle': double
+            - `outDimTags': vector of pairs of integers
+            - `curveAngle': double
+            - `tolerance': double
+            """
+            api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelDiscreteImportShapes(
+                c_char_p(fileName.encode()),
+                c_double(angle),
+                byref(api_outDimTags_), byref(api_outDimTags_n_),
+                c_double(curveAngle),
+                c_double(tolerance),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
+        import_shapes = importShapes
+
+        @staticmethod
+        def addTriangulation(coord, triangles, angle, curveAngle=pi, tolerance=-1.):
+            """
+            gmsh.model.discrete.addTriangulation(coord, triangles, angle, curveAngle=pi, tolerance=-1.)
+
+            Add the triangulation given by the coordinates `coord' of its nodes
+            (concatenated: [n1x, n1y, n1z, n2x, ...]) and its triangles `triangles'
+            (the indices of their 3 nodes, from 0, concatenated) in the discrete CAD
+            representation, and build its topology as `importShapes'. Return the
+            volumes and the surfaces bounding no volume in `outDimTags'.
+
+            Return `outDimTags'.
+
+            Types:
+            - `coord': vector of doubles
+            - `triangles': vector of sizes
+            - `angle': double
+            - `outDimTags': vector of pairs of integers
+            - `curveAngle': double
+            - `tolerance': double
+            """
+            api_coord_, api_coord_n_ = _ivectordouble(coord)
+            api_triangles_, api_triangles_n_ = _ivectorsize(triangles)
+            api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelDiscreteAddTriangulation(
+                api_coord_, api_coord_n_,
+                api_triangles_, api_triangles_n_,
+                c_double(angle),
+                byref(api_outDimTags_), byref(api_outDimTags_n_),
+                c_double(curveAngle),
+                c_double(tolerance),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
+        add_triangulation = addTriangulation
+
+        @staticmethod
+        def remove(dimTags, recursive=False):
+            """
+            gmsh.model.discrete.remove(dimTags, recursive=False)
+
+            Remove the volumes, and the surfaces that bound no volume, among the
+            entities `dimTags' (given as a vector of (dim, tag) pairs) in the discrete
+            CAD representation; the other entities are left alone. If `recursive' is
+            true, also remove the surfaces of the removed volumes that no other volume
+            uses. The curves and the points are removed with the last surface that uses
+            them.
+
+            Types:
+            - `dimTags': vector of pairs of integers
+            - `recursive': boolean
+            """
+            api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
+            ierr = c_int()
+            lib.gmshModelDiscreteRemove(
+                api_dimTags_, api_dimTags_n_,
+                c_int(bool(recursive)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+
+        @staticmethod
+        def synchronize():
+            """
+            gmsh.model.discrete.synchronize()
+
+            Synchronize the discrete CAD representation with the current Gmsh model:
+            its points, curves, surfaces and volumes become discrete entities of the
+            model, whose geometry is their polylines and triangulations, and replace
+            the entities of the previous synchronization. Without synchronization the
+            entities in the discrete CAD representation are not available to any
+            function outside of the discrete CAD modeler functions.
+            """
+            ierr = c_int()
+            lib.gmshModelDiscreteSynchronize(
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
 
 
 class view:
@@ -10865,7 +11607,8 @@ class algorithm:
         pairs of u, v coordinates, with (optional) constrained edges given in the
         `edges' vector as pairs of indexes (with numbering starting at 1), and
         return the triangles as concatenated triplets of point indexes (with
-        numbering starting at 1) in `triangles'.
+        numbering starting at 1), oriented counterclockwise in the (u, v) plane, in
+        `triangles'.
 
         Return `triangles'.
 
@@ -10896,8 +11639,13 @@ class algorithm:
         triplets of x, y, z coordinates, with (optional) constrained triangles
         given in the `triangles' vector as triplets of indexes (with numbering
         starting at 1), and return the tetrahedra as concatenated quadruplets of
-        point indexes (with numbering starting at 1) in `tetrahedra'. Steiner
-        points might be added in the `steiner' vector.
+        point indexes (with numbering starting at 1) in `tetrahedra'. The
+        tetrahedra fill the convex hull of the points; a point with the coordinates
+        of another is in no tetrahedron. The points are tetrahedralized with the
+        Delaunay, parallel Delaunay or HXT algorithm depending on the
+        `Mesh.Algorithm3D' option. Steiner points might be added in the `steiner'
+        vector to recover the constrained triangles: they are numbered after the
+        given points.
 
         Return `tetrahedra', `steiner'.
 
@@ -11206,8 +11954,9 @@ class fltk:
         Run the event loop of the graphical user interface, i.e. repeatedly call
         `wait()'. First automatically create the user interface if it has not yet
         been initialized. If an `optionFileName' is given, load it before entering
-        the loop, and save all options and visibility information into it after
-        exiting the loop. Can only be called in the main thread.
+        the loop, and save all options, and the visibility and colors of the
+        entities, into it after exiting the loop. Can only be called in the main
+        thread.
 
         Types:
         - `optionFileName': string

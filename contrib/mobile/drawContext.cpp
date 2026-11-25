@@ -399,6 +399,9 @@ void drawContext::drawPView(PView *p)
 
   drawArray(p->va_lines, GL_LINES, true);
 
+  glLineWidth((GLfloat)opt->outlineWidth);
+  drawArray(p->va_outlines, GL_LINES, true);
+
   glEnable(GL_LIGHTING);
   drawArray(p->va_triangles, GL_TRIANGLES, true, true);
   glDisable(GL_LIGHTING);

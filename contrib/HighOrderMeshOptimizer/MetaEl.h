@@ -28,6 +28,7 @@
 #define METAEL_H
 
 #include <string>
+#include <iostream>
 #include "MElement.h"
 #include "fullMatrix.h"
 

@@ -77,3 +77,21 @@ double discreteVertex::z() const
   Msg::Warning("No coordinate in discrete point %d", tag());
   return 0.;
 }
+
+SPoint2 discreteVertex::reparamOnFace(const GFace *gf, int dir) const
+{
+  const std::vector<GEdge *> &l = gf->edges();
+  GEdge *edge = nullptr;
+  for(GEdge *ge : l_edges) {
+    if(std::find(l.begin(), l.end(), ge) == l.end()) continue;
+    if(!edge || ge->isSeam(gf)) edge = ge;
+  }
+  if(edge) {
+    const Range<double> range = edge->parBounds(0);
+    if(edge->getBeginVertex() == this)
+      return edge->reparamOnFace(gf, range.low(), dir);
+    if(edge->getEndVertex() == this)
+      return edge->reparamOnFace(gf, range.high(), dir);
+  }
+  return GVertex::reparamOnFace(gf, dir);
+}

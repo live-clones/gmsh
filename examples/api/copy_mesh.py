@@ -39,7 +39,8 @@ for e in sorted(m):
 view = gmsh.view.add('bgView')
 nodes = gmsh.model.mesh.getNodes()
 gmsh.view.addHomogeneousModelData(view, 0, 'model2', 'NodeData',
-                                  nodes[0], nodes[1][::3]/10.+0.01)
+                                  nodes[0],
+                                  [x / 10. + 0.01 for x in nodes[1][::3]])
 
 # 5) we create the mesh size field for model1, based on the view based on model2
 gmsh.model.setCurrent('model1')

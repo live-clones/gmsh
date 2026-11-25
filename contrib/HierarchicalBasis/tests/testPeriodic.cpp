@@ -7,10 +7,13 @@
 // basis function on a slave curve equals the basis function of its master key
 // (given by getPeriodicKeys()) at the corresponding point of the master curve
 // (value for H1, tangential component for H(curl)), the elements being oriented
-// with their master nodes. Periodic surfaces are checked by
+// with their master nodes. The master keys are at the end of the chains of
+// periodic entities (the corners of the square), so that they are never
+// periodic themselves. Periodic surfaces are checked by
 // examples/api/periodic_keys.py.
 
 #include <cmath>
+#include <map>
 #include "gmsh.h"
 #include "basisTest.h"
 
@@ -95,10 +98,36 @@ namespace bt {
     for(int p = 1; p <= 4; p++) fss.push_back("H1Legendre" + std::to_string(p));
     for(int p = 0; p <= 4; p++)
       fss.push_back("HcurlLegendre" + std::to_string(p));
-    for(auto &c : cases) {
-      std::vector<std::size_t> tags, nodes;
-      gmsh::model::mesh::getElementsByType(1, tags, nodes, c.slave);
-      for(auto &fs : fss) {
+    typedef std::pair<int, std::size_t> Key;
+    for(auto &fs : fss) {
+      // the master keys of the keys of both slave curves: at the end of the
+      // chains of periodic entities, e.g. the corner (1, 1), periodic in x on
+      // the corner (0, 1), itself periodic in y, has its master on (0, 0)
+      std::map<Key, Key> masterKey;
+      for(auto &c : cases) {
+        int master;
+        std::vector<int> tk, tkm;
+        std::vector<std::size_t> ek, ekm;
+        std::vector<double> x, xm;
+        gmsh::model::mesh::getPeriodicKeys(1, fs, c.slave, master, tk, tkm, ek,
+                                           ekm, x, xm, false);
+        for(std::size_t j = 0; j < tk.size(); j++)
+          masterKey[{tk[j], ek[j]}] = {tkm[j], ekm[j]};
+      }
+      int periodicMasters = 0;
+      for(auto &p : masterKey)
+        if(masterKey.count(p.second)) periodicMasters++;
+      check(!periodicMasters, "%s: %d master keys are periodic", fs.c_str(),
+            periodicMasters);
+      // the master key of a key, or the key itself if it is not periodic
+      auto masterOf = [&](const Key &k) {
+        auto it = masterKey.find(k);
+        return it == masterKey.end() ? k : it->second;
+      };
+
+      for(auto &c : cases) {
+        std::vector<std::size_t> tags, nodes;
+        gmsh::model::mesh::getElementsByType(1, tags, nodes, c.slave);
         int master;
         std::vector<int> tk, tkm;
         std::vector<std::size_t> ek, ekm;
@@ -114,9 +143,19 @@ namespace bt {
         double coordError = 0., valueError = 0., scale = 1.;
         int unmatched = 0;
         for(std::size_t j = 0; j < tk.size(); j++) {
-          for(int k = 0; k < 3; k++)
-            coordError = std::max(
-              coordError, std::abs(xm[3 * j + k] + c.shift[k] - x[3 * j + k]));
+          // x is the image of xm by the shift of the curve, or, at the end of
+          // a chain, by the shifts of both curves
+          double error = 1e300;
+          for(auto &o : cases) {
+            Vec s = c.shift;
+            if(&o != &c)
+              for(int k = 0; k < 3; k++) s[k] += o.shift[k];
+            double e = 0.;
+            for(int k = 0; k < 3; k++)
+              e = std::max(e, std::abs(xm[3 * j + k] + s[k] - x[3 * j + k]));
+            error = std::min(error, e);
+          }
+          coordError = std::max(coordError, error);
           if(fs == "Lagrange") continue;
           // a point of the slave element and the corresponding master point
           std::size_t e = tags[j / nk];
@@ -131,9 +170,10 @@ namespace bt {
           std::vector<double> mc;
           if(em)
             gmsh::model::mesh::getKeysForElement(em, fs, mtk, mek, mc, false);
+          // the function of the master element with the same master key
           int fm = -1;
           for(std::size_t i = 0; i < mtk.size(); i++)
-            if(mtk[i] == tkm[j] && mek[i] == ekm[j]) fm = i;
+            if(masterOf({mtk[i], mek[i]}) == Key(tkm[j], ekm[j])) fm = i;
           if(fm < 0) {
             unmatched++;
             continue;

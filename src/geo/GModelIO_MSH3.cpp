@@ -6,6 +6,7 @@
 #include <sstream>
 #include <iomanip>
 #include <ctime>
+#include "GmshConfig.h"
 #include "GModel.h"
 #include "OS.h"
 #include "Context.h"
@@ -619,7 +620,7 @@ void writeMSHEntities(FILE *fp, GModel *gm) // also used in MSH2
   }
   for(auto it = gm->firstFace(); it != gm->lastFace(); ++it) {
     std::vector<GEdge *> const &edges = (*it)->edges();
-    std::vector<int> const &ori = (*it)->edgeOrientations();
+    std::vector<int> const ori = (*it)->boundaryOrientations();
     fprintf(fp, "%d %d ", (*it)->tag(), (int)edges.size());
     std::vector<int> tags;
     for(auto ite = edges.begin(); ite != edges.end(); ite++)
@@ -673,7 +674,7 @@ static void writeElementMSH(FILE *fp, GModel *model, MElement *ele, bool binary,
 {
   if(model->getGhostCells().size()) {
     std::vector<short> ghosts;
-    auto itp = model->getGhostCells().equal_range(ele);
+    auto itp = model->getGhostCells().equal_range(ele->getNum());
     for(auto it = itp.first; it != itp.second; it++)
       ghosts.push_back(it->second);
     ele->writeMSH3(fp, binary, elementary, &ghosts);

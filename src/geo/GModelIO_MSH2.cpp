@@ -10,6 +10,7 @@
 #include <sstream>
 #include <cassert>
 #include <iomanip>
+#include "GmshConfig.h"
 #include "GModel.h"
 #include "OS.h"
 #include "GmshDefines.h"
@@ -27,12 +28,10 @@
 #include "GmshMessage.h"
 #include "Context.h"
 #include "OS.h"
-#include "ghostEdge.h"
-#include "ghostFace.h"
-#include "ghostRegion.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
+#include "PViewDataGModel.h"
 #endif
 
 // periodic nodes and entities backported from MSH3 format
@@ -116,6 +115,8 @@ int GModel::_readMSH2(const std::string &name)
   std::map<int, std::map<int, std::string> > physicals[4];
   std::map<std::size_t, MVertex *> vertexMap;
   std::vector<MVertex *> vertexVector;
+  // whether the file has data sections (read in views)
+  bool hasData = false;
   int minVertex = 0;
   std::size_t oldNumPartitions = getNumPartitions();
 
@@ -458,7 +459,7 @@ int GModel::_readMSH2(const std::string &name)
           elemreg[num] = elementary;
           elemphy[num] = physical;
           for(std::size_t j = 0; j < ghosts.size(); j++)
-            _ghostCells.insert(std::pair<MElement *, short>(e, ghosts[j]));
+            addGhostCells(e, ghosts[j]);
           if(numElements > 100000)
             Msg::ProgressMeter(i + 1, true, "Reading elements");
         }
@@ -542,8 +543,7 @@ int GModel::_readMSH2(const std::string &name)
             elemphy[num] = physical;
             if(numPartitions > 1)
               for(int j = 0; j < numPartitions - 1; j++)
-                _ghostCells.insert(
-                  std::pair<MElement *, short>(e, -data[5 + j]));
+                addGhostCells(e, -data[5 + j]);
             if(numElements > 100000)
               Msg::ProgressMeter(numElementsPartial + i + 1, true,
                                  "Reading elements");
@@ -607,6 +607,7 @@ int GModel::_readMSH2(const std::string &name)
         else
           _vertexMapCache = vertexMap;
       }
+      hasData = true;
       if(!PView::readMSHViewData(name, fp, binary, swap, &str[1], version)) {
         fclose(fp);
         return 0;
@@ -651,6 +652,17 @@ int GModel::_readMSH2(const std::string &name)
     _storeVerticesInEntities(vertexVector);
   else
     _storeVerticesInEntities(vertexMap);
+
+#if defined(HAVE_POST)
+  // the views of the data sections were read before the vertices were stored:
+  // their bounding boxes are those of the model now
+  if(hasData) {
+    for(PView *p : PView::list) {
+      PViewDataGModel *d = dynamic_cast<PViewDataGModel *>(p->getData());
+      if(d) d->updateBoundingBoxes(this);
+    }
+  }
+#endif
 
   // store the physical tags
   for(int i = 0; i < 4; i++) _storePhysicalTagsInEntities(i, physicals[i]);
@@ -711,15 +723,9 @@ static void writeElementMSH(FILE *fp, GModel *model, GEntity *ge, T *ele,
      ge->getParentEntity()->dim() > ge->dim())
     return; // ignore partition boundaries
 
-  if(CTX::instance()->mesh.partitionOldStyleMsh2 &&
-     (ge->geomType() == GEntity::GhostCurve ||
-      ge->geomType() == GEntity::GhostSurface ||
-      ge->geomType() == GEntity::GhostVolume))
-    return; // ignore ghost entities
-
   std::vector<short> ghosts;
   if(model->getGhostCells().size()) {
-    auto itp = model->getGhostCells().equal_range(ele);
+    auto itp = model->getGhostCells().equal_range(ele->getNum());
     for(auto it = itp.first; it != itp.second; it++)
       ghosts.push_back(it->second);
   }
@@ -749,12 +755,6 @@ static void writeElementsMSH(FILE *fp, GModel *model, GEntity *ge,
   if(CTX::instance()->mesh.partitionOldStyleMsh2 && ge->getParentEntity() &&
      ge->getParentEntity()->dim() > ge->dim())
     return; // ignore partition boundaries
-
-  if(CTX::instance()->mesh.partitionOldStyleMsh2 &&
-     (ge->geomType() == GEntity::GhostCurve ||
-      ge->geomType() == GEntity::GhostSurface ||
-      ge->geomType() == GEntity::GhostVolume))
-    return; // ignore ghost entities
 
   // Hack to save each partition as a separate physical entity
   if(saveSinglePartition < 0) {
@@ -796,12 +796,6 @@ static int getNumElementsMSH(GEntity *ge, bool saveAll, int saveSinglePartition)
   if(CTX::instance()->mesh.partitionOldStyleMsh2 && ge->getParentEntity() &&
      ge->getParentEntity()->dim() > ge->dim())
     return 0; // ignore partition boundaries
-
-  if(CTX::instance()->mesh.partitionOldStyleMsh2 &&
-     (ge->geomType() == GEntity::GhostCurve ||
-      ge->geomType() == GEntity::GhostSurface ||
-      ge->geomType() == GEntity::GhostVolume))
-    return 0; // ignore ghost entities
 
   int n = 0, p = saveAll ? 1 : ge->physicals.size();
 
@@ -1105,7 +1099,8 @@ int GModel::_writePartitionedMSH2(const std::string &baseName, bool binary,
     FILE *fp = Fopen("ghosts.pos", "w");
     fprintf(fp, "View \"ghosts\"{\n");
     for(auto it = _ghostCells.begin(); it != _ghostCells.end(); it++)
-      it->first->writePOS(fp, false, true, false, false, false, false);
+      if(MElement *e = getMeshElementByTag(it->first))
+        e->writePOS(fp, false, true, false, false, false, false);
     fprintf(fp, "};\n");
     fclose(fp);
   }

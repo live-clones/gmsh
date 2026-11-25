@@ -3,14 +3,9 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#include <string>
-#include <sstream>
-#include <map>
 #include <vector>
-#include <string.h>
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Box.H>
-#include <FL/Fl_Return_Button.H>
 #include <FL/Fl_Value_Input.H>
 #include "GmshConfig.h"
 #include "FlGui.h"
@@ -18,7 +13,6 @@
 #include "drawContext.h"
 #include "highOrderToolsWindow.h"
 #include "paletteWindow.h"
-#include "GmshMessage.h"
 #include "GModel.h"
 #include "MElement.h"
 #include "Context.h"
@@ -36,19 +30,19 @@
 
 static void highordertools_runp_cb(Fl_Widget *w, void *data)
 {
+  modelLock lock(modelLock::ifFree);
+  if(!lock) return;
   highOrderToolsWindow *o = FlGui::instance()->highordertools;
 
-  int order = (int)o->value[0]->value();
+  // at least 1, the order of no mesh being -1
+  int order = std::max(1, (int)o->value[0]->value());
   bool linear = !(bool)o->butt[2]->value();
   bool incomplete = (bool)o->butt[0]->value();
   bool onlyVisible = (bool)o->butt[1]->value();
 
-  if(order == 1)
-    SetOrder1(GModel::current());
-  else
-    SetOrderN(GModel::current(), order, linear, incomplete, onlyVisible);
-
-  FixPeriodicMesh(GModel::current());
+  // (as the API and the SetOrder command: also fixes periodic meshes and
+  // renumbers)
+  GModel::current()->setOrderN(order, linear, incomplete, onlyVisible);
 
   /*
   distanceFromMeshToGeometry_t dist;
@@ -60,83 +54,35 @@ static void highordertools_runp_cb(Fl_Widget *w, void *data)
   */
 
   CTX::instance()->meshChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
+  // the GUI may have been closed while the mesh was changed
+  if(!FlGui::available()) return;
   drawContext::global()->draw();
 }
 
+// the fields of the algorithm chosen: all of them for the optimization (the
+// last three only with its second strategy), the number of layers (value[2])
+// for fast curving, none for the elastic analogy
 static void chooseopti_cb(Fl_Widget *w, void *data)
 {
   highOrderToolsWindow *o = FlGui::instance()->highordertools;
-  const int algo = o->choice[2]->value();
-
-  switch(algo) {
-  case 0: { // Optimization
-    o->choice[0]->activate();
-    o->choice[3]->activate();
-    o->value[1]->activate();
-    o->value[2]->activate();
-    o->value[3]->activate();
-    o->value[4]->activate();
-    o->value[5]->activate();
-    o->value[7]->activate();
-    o->value[8]->activate();
-    if(o->choice[3]->value() == 0) {
-      o->value[9]->deactivate();
-      o->value[10]->deactivate();
-      o->value[11]->deactivate();
-    }
-    else {
-      o->value[9]->activate();
-      o->value[10]->activate();
-      o->value[11]->activate();
-    }
-    break;
-  }
-  case 1: { // Elastic analogy
-    o->choice[0]->deactivate();
-    o->choice[3]->deactivate();
-    o->value[1]->deactivate();
-    o->value[2]->deactivate();
-    o->value[3]->deactivate();
-    o->value[4]->deactivate();
-    o->value[5]->deactivate();
-    o->value[7]->deactivate();
-    o->value[8]->deactivate();
-    o->value[9]->deactivate();
-    o->value[10]->deactivate();
-    o->value[11]->deactivate();
-    break;
-  }
-  case 2: { // Fast curving
-    o->choice[0]->deactivate();
-    o->choice[3]->deactivate();
-    o->value[1]->deactivate();
-    o->value[2]->activate();
-    o->value[3]->deactivate();
-    o->value[4]->deactivate();
-    o->value[5]->deactivate();
-    o->value[7]->deactivate();
-    o->value[8]->deactivate();
-    o->value[9]->deactivate();
-    o->value[10]->deactivate();
-    o->value[11]->deactivate();
-    break;
-  }
-  case 3: { // Fast curving 2
-    o->choice[0]->deactivate();
-    o->choice[3]->deactivate();
-    o->value[1]->deactivate();
-    o->value[2]->activate();
-    o->value[3]->deactivate();
-    o->value[4]->deactivate();
-    o->value[5]->deactivate();
-    o->value[7]->deactivate();
-    o->value[8]->deactivate();
-    o->value[9]->deactivate();
-    o->value[10]->deactivate();
-    o->value[11]->deactivate();
-    break;
-  }
-  }
+  int algo = o->choice[2]->value();
+  bool optimization = (algo == 0);
+  bool fastCurving = (algo == 2 || algo == 3);
+  bool strategy = optimization && o->choice[3]->value() == 1;
+  auto set = [](Fl_Widget *w, bool on) {
+    if(on)
+      w->activate();
+    else
+      w->deactivate();
+  };
+  set(o->choice[0], optimization && o->CAD);
+  for(Fl_Widget *w : {(Fl_Widget *)o->choice[3],
+                      (Fl_Widget *)o->value[1], (Fl_Widget *)o->value[3],
+                      (Fl_Widget *)o->value[4], (Fl_Widget *)o->value[5],
+                      (Fl_Widget *)o->value[7], (Fl_Widget *)o->value[8]})
+    set(w, optimization);
+  set(o->value[2], optimization || fastCurving);
+  for(int i = 9; i <= 11; i++) set(o->value[i], strategy);
 }
 
 static void chooseopti_strategy(Fl_Widget *w, void *data)
@@ -150,6 +96,8 @@ static void chooseopti_strategy(Fl_Widget *w, void *data)
 
 static void highordertools_runopti_cb(Fl_Widget *w, void *data)
 {
+  modelLock lock(modelLock::ifFree);
+  if(!lock) return;
   highOrderToolsWindow *o = FlGui::instance()->highordertools;
 
   if(o->butt[3]->value()) FlGui::instance()->graph[0]->showMessages();
@@ -233,6 +181,8 @@ static void highordertools_runopti_cb(Fl_Widget *w, void *data)
   FixPeriodicMesh(GModel::current());
 
   CTX::instance()->meshChanged(ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
+  // the GUI may have been closed while the mesh was changed
+  if(!FlGui::available()) return;
   drawContext::global()->draw();
 }
 
@@ -271,9 +221,7 @@ static void getMeshInfoForHighOrder(GModel *gm, int &meshOrder, bool &complete,
 
 highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
 {
-#if defined(HAVE_MESH)
   getMeshInfoForHighOrder(GModel::current(), meshOrder, complete, CAD);
-#endif
 
   FL_NORMAL_SIZE -= deltaFontSize;
 
@@ -297,14 +245,12 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   butt[1] =
     new Fl_Check_Button(x, y, width - 4 * WB, BH,
                         "Only apply high-order tools to visible entities");
-  butt[1]->type(FL_TOGGLE_BUTTON);
   butt[1]->value(1);
 
   y += BH;
 
   butt[3] =
     new Fl_Check_Button(x, y, width - 4 * WB, BH, "Show detailed log messages");
-  butt[3]->type(FL_TOGGLE_BUTTON);
   butt[3]->value(0);
 
   {
@@ -328,13 +274,12 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   value[0]->maximum(10);
   if(CTX::instance()->inputScrolling) value[0]->step(1);
   value[0]->align(FL_ALIGN_RIGHT);
-  value[0]->value(meshOrder);
+  value[0]->value(std::max(1, meshOrder));
 
   y += BH;
 
   butt[0] = new Fl_Check_Button(x, y, width - 4 * WB, BH,
                                 "Generate incomplete elements");
-  butt[0]->type(FL_TOGGLE_BUTTON);
   butt[0]->value(!complete);
   // AJ: This is bad a design. Add a proper Fl_Button to toggle between
   // completeness if needed. Plus: only 2d version implemented for now
@@ -344,7 +289,6 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
 
   butt[2] = new Fl_Check_Button(x, y, width - 4 * WB, BH,
                                 "Use CAD model to curve mesh");
-  butt[2]->type(FL_TOGGLE_BUTTON);
   butt[2]->value(1);
 
   y += BH;
@@ -495,8 +439,11 @@ void highOrderToolsWindow::show(bool redrawOnly)
   if(win->shown() && redrawOnly)
     win->redraw();
   else {
-    value[0]->value(meshOrder);
+    value[0]->value(std::max(1, meshOrder));
     butt[0]->value(!complete);
+    // the fields of the algorithm, and the boundary nodes only with a CAD
+    // model (which a model loaded since may have brought)
+    chooseopti_cb(nullptr, nullptr);
     if(CAD) {
       box->label("CAD model is available");
       choice[0]->value(CTX::instance()->mesh.hoFixBndNodes ? 0 : 1);
@@ -507,17 +454,6 @@ void highOrderToolsWindow::show(bool redrawOnly)
     }
     win->show();
   }
-}
-
-void highordertools_cb(Fl_Widget *w, void *data)
-{
-  // get the visibility info from the model, and update the browser
-  // accordingly
-  const char *str = (const char *)data;
-  if(str && !strcmp(str, "redraw_only"))
-    FlGui::instance()->highordertools->show(true);
-  else
-    FlGui::instance()->highordertools->show(false);
 }
 
 #else // HAVE_MESH
@@ -546,10 +482,6 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
 }
 
 void highOrderToolsWindow::show(bool redrawOnly)
-{
-}
-
-void highordertools_cb(Fl_Widget *w, void *data)
 {
 }
 

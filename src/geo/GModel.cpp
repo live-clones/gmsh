@@ -4,6 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <algorithm>
+#include <atomic>
 #include <limits>
 #include <stdlib.h>
 #include <sstream>
@@ -67,20 +68,29 @@
 #include "PViewDataGModel.h"
 #endif
 
+#if defined(HAVE_DISCRETECAD)
+#include "DiscreteCADModeler.h"
+#endif
+
 std::vector<GModel *> GModel::list;
 int GModel::_current = -1;
 
 GModel::GModel(const std::string &name)
   : _name(name), _visible(1), _elementOctree(nullptr), _geo_internals(nullptr),
     _occ_internals(nullptr), _acis_internals(nullptr),
-    _parasolid_internals(nullptr), _fields(nullptr),
+    _parasolid_internals(nullptr), _discreteCAD_internals(nullptr),
+    _fields(nullptr),
     _currentMeshEntity(nullptr), _numPartitions(0), normals(nullptr),
-    lcCallback(nullptr)
+    lcCallback(nullptr), metricCallback(nullptr)
 {
+  static std::atomic<std::size_t> numModels(0);
+  _serial = ++numModels;
   _maxVertexNum = CTX::instance()->mesh.firstNodeTag - 1;
   _maxElementNum = CTX::instance()->mesh.firstElementTag - 1;
   _checkPointedMaxVertexNum = _maxVertexNum;
   _checkPointedMaxElementNum = _maxElementNum;
+  for(int dim = 0; dim < 4; dim++)
+    _maxNonOCCTag[dim] = CTX::instance()->geom.firstEntityTag - 1;
 
   // hide all other models
   for(std::size_t i = 0; i < list.size(); i++) list[i]->setVisibility(0);
@@ -119,6 +129,7 @@ GModel::~GModel()
   deleteOCCInternals();
   deleteACISInternals();
   deleteParasolidInternals();
+  deleteDiscreteCADInternals();
 #if defined(HAVE_MESH)
   delete _fields;
 #endif
@@ -171,7 +182,7 @@ GModel *GModel::findByName(const std::string &name, const std::string &fileName)
 
 void GModel::destroy(bool keepName)
 {
-  CTX::instance()->geomChanged();
+  CTX::instance()->entitiesChanged();
   Msg::Debug("Destroying model %s", getName().c_str());
 
   if(!keepName) {
@@ -183,6 +194,8 @@ void GModel::destroy(bool keepName)
   _maxElementNum = CTX::instance()->mesh.firstElementTag - 1;
   _checkPointedMaxVertexNum = _maxVertexNum;
   _checkPointedMaxElementNum = _maxElementNum;
+  for(int dim = 0; dim < 4; dim++)
+    _maxNonOCCTag[dim] = CTX::instance()->geom.firstEntityTag - 1;
   _currentMeshEntity = nullptr;
   _numPartitions = 0;
   _lastMeshEntityError.clear();
@@ -209,10 +222,12 @@ void GModel::destroy(bool keepName)
 
   // The overlap managers point into the entities deleted above
   clearOverlaps();
+  _ghostCells.clear();
 
   destroyMeshCaches();
 
   resetOCCInternals();
+  resetDiscreteCADInternals();
 
   if(normals) delete normals;
   normals = nullptr;
@@ -228,6 +243,11 @@ void GModel::destroyMeshCaches(bool keepVertexCaches)
   // this is called in GEntity::deleteMesh()
 #pragma omp critical(destroyMeshCaches)
   {
+    // elements and nodes are deleted or replaced: what keeps pointers to them
+    // compares the elements stamp (see modelStamps), what draws them the
+    // content stamp
+    CTX::instance()->meshElementsStamp++;
+    CTX::instance()->meshContentStamp++;
     if(!keepVertexCaches) {
       _vertexVectorCache.clear();
       std::vector<MVertex *>().swap(_vertexVectorCache);
@@ -252,6 +272,7 @@ void GModel::deleteMesh()
   for(auto it = firstEdge(); it != lastEdge(); ++it) (*it)->deleteMesh();
   for(auto it = firstVertex(); it != lastVertex(); ++it) (*it)->deleteMesh();
   destroyMeshCaches();
+  _ghostCells.clear();
   _meshEdges.clear();
   _meshFaces.clear();
   _currentMeshEntity = nullptr;
@@ -515,33 +536,68 @@ std::vector<int> GModel::getTagsForPhysicalName(int dim,
   return tags;
 }
 
+void GModel::_keepNonOCCTag(GEntity *e)
+{
+  if(e->getNativeType() != GEntity::OpenCascadeModel)
+    _maxNonOCCTag[e->dim()] = std::max(_maxNonOCCTag[e->dim()], e->tag());
+}
+
 bool GModel::add(GRegion *r)
 {
-  CTX::instance()->geomChanged();
+  CTX::instance()->entitiesChanged();
+  _keepNonOCCTag(r);
   return regions.insert(r).second;
 }
 
 bool GModel::add(GFace *f)
 {
-  CTX::instance()->geomChanged();
+  CTX::instance()->entitiesChanged();
+  _keepNonOCCTag(f);
   return faces.insert(f).second;
 }
 
 bool GModel::add(GEdge *e)
 {
-  CTX::instance()->geomChanged();
+  CTX::instance()->entitiesChanged();
+  _keepNonOCCTag(e);
   return edges.insert(e).second;
 }
 
 bool GModel::add(GVertex *v)
 {
-  CTX::instance()->geomChanged();
+  CTX::instance()->entitiesChanged();
+  _keepNonOCCTag(v);
   return vertices.insert(v).second;
+}
+
+void GModel::_forgetParent(GEntity *e)
+{
+  if(!getNumPartitions()) return;
+  // (a partition entity is the parent of none)
+  switch(e->geomType()) {
+  case GEntity::PartitionPoint:
+  case GEntity::PartitionCurve:
+  case GEntity::PartitionSurface:
+  case GEntity::PartitionVolume: return;
+  default: break;
+  }
+  for(GVertex *v : vertices)
+    if(v->geomType() == GEntity::PartitionPoint && v->getParentEntity() == e)
+      static_cast<partitionVertex *>(v)->setParentEntity(nullptr);
+  for(GEdge *ed : edges)
+    if(ed->geomType() == GEntity::PartitionCurve && ed->getParentEntity() == e)
+      static_cast<partitionEdge *>(ed)->setParentEntity(nullptr);
+  for(GFace *f : faces)
+    if(f->geomType() == GEntity::PartitionSurface && f->getParentEntity() == e)
+      static_cast<partitionFace *>(f)->setParentEntity(nullptr);
+  for(GRegion *r : regions)
+    if(r->geomType() == GEntity::PartitionVolume && r->getParentEntity() == e)
+      static_cast<partitionRegion *>(r)->setParentEntity(nullptr);
 }
 
 bool GModel::remove(GRegion *r)
 {
-  CTX::instance()->geomChanged();
+  CTX::instance()->entitiesChanged();
   // the container is sorted by tag, so look the entity up instead of scanning
   // (this is O(#entities) per removal otherwise, which dominates on models
   // with many partition entities); fall back to a scan in case a tag was
@@ -551,6 +607,7 @@ bool GModel::remove(GRegion *r)
     it = std::find(regions.begin(), regions.end(), r);
   if(it != regions.end()) {
     regions.erase(it);
+    _forgetParent(r);
     std::vector<GFace *> f = r->faces();
     for(auto it = f.begin(); it != f.end(); it++) (*it)->delRegion(r);
     return true;
@@ -562,7 +619,7 @@ bool GModel::remove(GRegion *r)
 
 bool GModel::remove(GFace *f)
 {
-  CTX::instance()->geomChanged();
+  CTX::instance()->entitiesChanged();
   // the container is sorted by tag, so look the entity up instead of scanning
   // (this is O(#entities) per removal otherwise, which dominates on models
   // with many partition entities); fall back to a scan in case a tag was
@@ -572,6 +629,7 @@ bool GModel::remove(GFace *f)
     it = std::find(faces.begin(), faces.end(), f);
   if(it != faces.end()) {
     faces.erase(it);
+    _forgetParent(f);
     std::vector<GEdge *> const &e = f->edges();
     for(auto it = e.begin(); it != e.end(); it++) (*it)->delFace(f);
     return true;
@@ -583,7 +641,7 @@ bool GModel::remove(GFace *f)
 
 bool GModel::remove(GEdge *e)
 {
-  CTX::instance()->geomChanged();
+  CTX::instance()->entitiesChanged();
   // the container is sorted by tag, so look the entity up instead of scanning
   // (this is O(#entities) per removal otherwise, which dominates on models
   // with many partition entities); fall back to a scan in case a tag was
@@ -593,6 +651,7 @@ bool GModel::remove(GEdge *e)
     it = std::find(edges.begin(), edges.end(), e);
   if(it != edges.end()) {
     edges.erase(it);
+    _forgetParent(e);
     if(e->getBeginVertex()) e->getBeginVertex()->delEdge(e);
     if(e->getEndVertex()) e->getEndVertex()->delEdge(e);
     return true;
@@ -604,7 +663,7 @@ bool GModel::remove(GEdge *e)
 
 bool GModel::remove(GVertex *v)
 {
-  CTX::instance()->geomChanged();
+  CTX::instance()->entitiesChanged();
   // the container is sorted by tag, so look the entity up instead of scanning
   // (this is O(#entities) per removal otherwise, which dominates on models
   // with many partition entities); fall back to a scan in case a tag was
@@ -614,6 +673,7 @@ bool GModel::remove(GVertex *v)
     it = std::find(vertices.begin(), vertices.end(), v);
   if(it != vertices.end()) {
     vertices.erase(it);
+    _forgetParent(v);
     return true;
   }
   else {
@@ -894,7 +954,7 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int>> &inDimTags,
         }
         else {
           std::vector<GEdge *> const &edges = gf->edges();
-          std::vector<int> orientations(gf->edgeOrientations());
+          std::vector<int> orientations(gf->boundaryOrientations());
           auto ito = orientations.begin();
           for(auto it = edges.begin(); it != edges.end(); it++) {
             int t = (*it)->tag();
@@ -1305,10 +1365,15 @@ SBoundingBox3d GModel::bounds(bool aroundVisible)
   return bb;
 }
 
-int GModel::mesh(int dimension)
+int GModel::mesh(int dimension, bool nested)
 {
 #if defined(HAVE_MESH)
-  GenerateMesh(this, dimension);
+  // not during another operation, which processes events of the GUI; locked
+  // until the mesh is renumbered and its homology computed, whose messages
+  // process them too
+  if(!nested && modelBusy()) return false;
+  modelLock lock;
+  GenerateMesh(this, dimension, true);
   if(CTX::instance()->mesh.renumber) {
     renumberMeshVertices();
     renumberMeshElements();
@@ -1732,14 +1797,20 @@ int GModel::getMeshStatus(bool countDiscrete)
     if(countDiscrete && numEle3D) return 3;
   }
   if(numEle3D) {
-    bool toMesh3D = false;
-    for(auto it = firstRegion(); it != lastRegion() && !toMesh3D; ++it) {
+    // (volumes keep no mesh status: one to mesh without elements, e.g. added
+    // since, makes the mesh incomplete)
+    bool toMesh3D = false, meshDone3D = true;
+    for(auto it = firstRegion(); it != lastRegion(); ++it) {
       GRegion *gr = *it;
       if(gr->geomType() != GEntity::DiscreteVolume &&
-         gr->meshAttributes.method != MESH_NONE)
+         gr->meshAttributes.method != MESH_NONE) {
         toMesh3D = true;
+        if(!gr->getNumMeshElements() &&
+           (!onlyVisible || (onlyVisible && gr->getVisibility())))
+          meshDone3D = false;
+      }
     }
-    if(toMesh3D) return 3;
+    if(toMesh3D && meshDone3D) return 3;
   }
 
   std::size_t numEle2D = 0;
@@ -1837,17 +1908,20 @@ static void createEdgesOrFaces(const std::vector<GEntity *> &entities, Set &set,
   typedef typename Set::key_type K;
   // the elements, and where the keys of each start
   std::vector<MElement *> elements;
-  std::vector<std::size_t> start(1, 0);
-  for(GEntity *ge : entities) {
-    for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
-      MElement *e = ge->getMeshElement(j);
-      elements.push_back(e);
-      start.push_back(start.back() + countOf(e));
-    }
-  }
-  std::size_t total = start.back(), numElements = elements.size();
+  for(GEntity *ge : entities)
+    for(std::size_t j = 0; j < ge->getNumMeshElements(); j++)
+      elements.push_back(ge->getMeshElement(j));
+  std::size_t numElements = elements.size();
+  // (counted by several threads: a polyhedron builds its edges to count them)
+  std::vector<std::size_t> start(numElements + 1, 0);
+  int nthreads = CTX::instance()->numThreadsFor(numElements, 20000);
+#pragma omp parallel for schedule(static) num_threads(nthreads)
+  for(std::size_t i = 0; i < numElements; i++)
+    start[i + 1] = countOf(elements[i]);
+  for(std::size_t i = 0; i < numElements; i++) start[i + 1] += start[i];
+  std::size_t total = start.back();
   if(!total) return;
-  int nthreads = CTX::instance()->numThreadsFor(total, 100000);
+  nthreads = CTX::instance()->numThreadsFor(total, 100000);
   if(nthreads == 1) { // (the same numbering, in one pass)
     std::vector<K> keys;
     for(auto e : elements) {
@@ -2016,7 +2090,8 @@ void GModel::getMaxMeshNumbersInUse(std::size_t &maxVertex,
 }
 
 void GModel::renumberMeshCanonically(std::size_t maxVertexBefore,
-                                     std::size_t maxElementBefore)
+                                     std::size_t maxElementBefore,
+                                     bool curvesInOrder)
 {
   destroyMeshCaches();
   std::vector<GEntity *> entities;
@@ -2058,9 +2133,22 @@ void GModel::renumberMeshCanonically(std::size_t maxVertexBefore,
   };
   std::vector<std::size_t> first(entities.size());
   std::vector<MVertex *> order;
+  // with curvesInOrder the nodes of a curve are listed along it, and stay so:
+  // the new ones (those of a curve split by the surface mesher are among the
+  // old ones) are numbered where they are
+  std::map<std::size_t, std::vector<MVertex *>> onCurve;
   for(std::size_t i = 0; i < entities.size(); i++) {
     GEntity *ge = entities[i];
     std::vector<MVertex *> &list = ge->mesh_vertices;
+    if(curvesInOrder && ge->dim() == 1) {
+      first[i] = list.size();
+      for(MVertex *v : list) {
+        if(!pending(v, i)) continue;
+        owner[v->getNum() - minNum] = 0;
+        onCurve[i].push_back(v);
+      }
+      continue;
+    }
     order.clear();
     for(MVertex *v : list)
       if(v->getNum() <= maxVertexBefore) order.push_back(v);
@@ -2084,6 +2172,9 @@ void GModel::renumberMeshCanonically(std::size_t maxVertexBefore,
   for(std::size_t i = 0; i < entities.size(); i++) {
     std::vector<MVertex *> &list = entities[i]->mesh_vertices;
     for(std::size_t j = first[i]; j < list.size(); j++) list[j]->forceNum(++nv);
+    auto it = onCurve.find(i);
+    if(it != onCurve.end())
+      for(MVertex *v : it->second) v->forceNum(++nv);
   }
   resetMaxVertexNumber(nv);
   resetMaxElementNumber(ne);
@@ -2217,6 +2308,11 @@ void GModel::renumberMeshVertices(
 #endif
 }
 
+void GModel::addGhostCells(MElement *elm, short partition)
+{
+  _ghostCells.insert(std::make_pair(elm->getNum(), partition));
+}
+
 void GModel::renumberMeshElements(
   const std::map<std::size_t, std::size_t> &mapping)
 {
@@ -2224,6 +2320,20 @@ void GModel::renumberMeshElements(
   setMaxElementNumber(CTX::instance()->mesh.firstElementTag - 1);
   std::vector<GEntity *> entities;
   getEntities(entities);
+
+  // the ghost cells, which follow their elements
+  std::vector<std::pair<MElement *, short> > ghosts;
+  if(!_ghostCells.empty()) {
+    for(auto ge : entities) {
+      for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
+        MElement *e = ge->getMeshElement(j);
+        auto r = _ghostCells.equal_range(e->getNum());
+        for(auto it = r.first; it != r.second; it++)
+          ghosts.push_back({e, it->second});
+      }
+    }
+    _ghostCells.clear();
+  }
 
   std::map<MElement *, int> old, remap;
   std::size_t npost = 0;
@@ -2307,6 +2417,8 @@ void GModel::renumberMeshElements(
       }
     }
   }
+
+  for(auto &g : ghosts) addGhostCells(g.first, g.second);
 
 #if defined(HAVE_POST)
   // renumber any dependent element post-processing datasets
@@ -2560,98 +2672,89 @@ void GModel::setMeshElementIndex(MElement *e, int index)
   _elementIndexCache[e->getNum()] = index;
 }
 
-template <class T>
-static std::size_t removeInvisible(std::vector<T *> &elements, bool all)
+// each list of mesh elements of the model, with its entity, given to f
+template <class F> static void forEachElementList(GModel *m, F f)
 {
-  std::vector<T *> tmp;
-  std::size_t n = elements.size();
-  for(std::size_t i = 0; i < n; i++) {
-    if(all || !elements[i]->getVisibility())
-      delete elements[i];
-    else
-      tmp.push_back(elements[i]);
+  for(auto it = m->firstRegion(); it != m->lastRegion(); ++it) {
+    f(*it, (*it)->tetrahedra);
+    f(*it, (*it)->hexahedra);
+    f(*it, (*it)->prisms);
+    f(*it, (*it)->pyramids);
+    f(*it, (*it)->trihedra);
+    f(*it, (*it)->polyhedra);
   }
-  elements.clear();
-  elements = tmp;
-  return n - elements.size();
+  for(auto it = m->firstFace(); it != m->lastFace(); ++it) {
+    f(*it, (*it)->triangles);
+    f(*it, (*it)->quadrangles);
+    f(*it, (*it)->polygons);
+  }
+  for(auto it = m->firstEdge(); it != m->lastEdge(); ++it) f(*it, (*it)->lines);
+}
+
+// the elements of the model for which pick(entity, element) is true deleted
+// (reverse = false) or reversed
+template <class P>
+static std::size_t removeOrReverse(GModel *m, bool reverse, P pick)
+{
+  std::size_t n = 0;
+  forEachElementList(m, [&](GEntity *ge, auto &elements) {
+    std::size_t kept = 0;
+    for(std::size_t i = 0; i < elements.size(); i++) {
+      if(!pick(ge, elements[i])) {
+        elements[kept++] = elements[i];
+        continue;
+      }
+      n++;
+      if(reverse) {
+        elements[i]->reverse();
+        elements[kept++] = elements[i];
+      }
+      else
+        delete elements[i];
+    }
+    elements.resize(kept);
+    ge->deleteVertexArrays();
+  });
+  m->destroyMeshCaches();
+  Msg::Info("%s %zu elements", reverse ? "Reversed" : "Removed", n);
+  return n;
 }
 
 std::size_t GModel::removeInvisibleElements()
 {
-  std::size_t n = 0;
-  for(auto it = firstRegion(); it != lastRegion(); ++it) {
-    bool all = !(*it)->getVisibility();
-    n += removeInvisible((*it)->tetrahedra, all);
-    n += removeInvisible((*it)->hexahedra, all);
-    n += removeInvisible((*it)->prisms, all);
-    n += removeInvisible((*it)->pyramids, all);
-    n += removeInvisible((*it)->trihedra, all);
-    n += removeInvisible((*it)->polyhedra, all);
-    (*it)->deleteVertexArrays();
-  }
-  for(auto it = firstFace(); it != lastFace(); ++it) {
-    bool all = !(*it)->getVisibility();
-    n += removeInvisible((*it)->triangles, all);
-    n += removeInvisible((*it)->quadrangles, all);
-    n += removeInvisible((*it)->polygons, all);
-    (*it)->deleteVertexArrays();
-  }
-  for(auto it = firstEdge(); it != lastEdge(); ++it) {
-    bool all = !(*it)->getVisibility();
-    n += removeInvisible((*it)->lines, all);
-    (*it)->deleteVertexArrays();
-  }
-  destroyMeshCaches();
-  Msg::Info("Removed %zu elements", n);
-  return n;
-}
-
-template <class T>
-static std::size_t reverseInvisible(std::vector<T *> &elements, bool all)
-{
-  std::size_t n = 0;
-  std::vector<T *> tmp;
-  for(std::size_t i = 0; i < elements.size(); i++) {
-    if(all || !elements[i]->getVisibility()) {
-      elements[i]->reverse();
-      elements[i]->setVisibility(1);
-      n++;
-    }
-  }
-  return n;
+  return removeOrReverse(this, false, [](GEntity *ge, MElement *e) {
+    return !ge->getVisibility() || !e->getVisibility();
+  });
 }
 
 std::size_t GModel::reverseInvisibleElements()
 {
-  std::size_t n = 0;
-  for(auto it = firstRegion(); it != lastRegion(); ++it) {
-    bool all = !(*it)->getVisibility();
-    n += reverseInvisible((*it)->tetrahedra, all);
-    n += reverseInvisible((*it)->hexahedra, all);
-    n += reverseInvisible((*it)->prisms, all);
-    n += reverseInvisible((*it)->pyramids, all);
-    n += reverseInvisible((*it)->trihedra, all);
-    n += reverseInvisible((*it)->polyhedra, all);
-    (*it)->deleteVertexArrays();
-    if(all) (*it)->setVisibility(1);
-  }
-  for(auto it = firstFace(); it != lastFace(); ++it) {
-    bool all = !(*it)->getVisibility();
-    n += reverseInvisible((*it)->triangles, all);
-    n += reverseInvisible((*it)->quadrangles, all);
-    n += reverseInvisible((*it)->polygons, all);
-    (*it)->deleteVertexArrays();
-    if(all) (*it)->setVisibility(1);
-  }
-  for(auto it = firstEdge(); it != lastEdge(); ++it) {
-    bool all = !(*it)->getVisibility();
-    n += reverseInvisible((*it)->lines, all);
-    (*it)->deleteVertexArrays();
-    if(all) (*it)->setVisibility(1);
-  }
-  destroyMeshCaches();
-  Msg::Info("Reversed %zu elements", n);
+  // (what is reversed is shown again)
+  std::size_t n = removeOrReverse(this, true, [](GEntity *ge, MElement *e) {
+    if(ge->getVisibility() && e->getVisibility()) return false;
+    e->setVisibility(1);
+    return true;
+  });
+  forEachElementList(this, [](GEntity *ge, auto &) {
+    if(!ge->getVisibility()) ge->setVisibility(1);
+  });
   return n;
+}
+
+std::size_t GModel::removeElements(const std::set<GEntity *> &entities,
+                                   const std::set<MElement *> &elements)
+{
+  return removeOrReverse(this, false, [&](GEntity *ge, MElement *e) {
+    return entities.count(ge) || elements.count(e);
+  });
+}
+
+std::size_t GModel::reverseElements(const std::set<GEntity *> &entities,
+                                    const std::set<MElement *> &elements)
+{
+  return removeOrReverse(this, true, [&](GEntity *ge, MElement *e) {
+    return entities.count(ge) || elements.count(e);
+  });
 }
 
 std::size_t GModel::indexMeshVertices(bool all, int singlePartition,
@@ -3335,11 +3438,22 @@ int GModel::removeDuplicateMeshVertices(double tolerance,
     return 0;
   }
 
-  for(std::size_t i = 0; i < entities.size(); i++) {
-    GEntity *ge = entities[i];
-    // clear list of vertices owned by entity
-    ge->mesh_vertices.clear();
-    // replace vertices in element
+  // the duplicates can be used by the elements of all the entities (e.g. by the
+  // volumes on both sides of a surface whose nodes are merged), and by their
+  // periodic node correspondences, not only by the entities given
+  auto replace = [&](std::map<MVertex *, MVertex *> &corrVtcs) {
+    std::map<MVertex *, MVertex *> tmp;
+    for(auto &c : corrVtcs) {
+      auto t = duplicates.find(c.first), s = duplicates.find(c.second);
+      tmp[t == duplicates.end() ? c.first : t->second] =
+        (s == duplicates.end() ? c.second : s->second);
+    }
+    corrVtcs.swap(tmp);
+  };
+  for(auto ge : entities) ge->mesh_vertices.clear();
+  std::vector<GEntity *> all;
+  getEntities(all);
+  for(auto ge : all) {
     for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
       MElement *e = ge->getMeshElement(j);
       for(std::size_t k = 0; k < e->getNumVertices(); k++) {
@@ -3347,33 +3461,14 @@ int GModel::removeDuplicateMeshVertices(double tolerance,
         if(it != duplicates.end()) e->setVertex(k, it->second);
       }
     }
-    // replace vertices in periodic copies
-    std::map<MVertex *, MVertex *> &corrVtcs = ge->correspondingVertices;
-    if(corrVtcs.size()) {
-      std::map<MVertex *, MVertex *>::iterator cIter;
-      for(cIter = duplicates.begin(); cIter != duplicates.end(); ++cIter) {
-        MVertex *oldTgt = cIter->first;
-        MVertex *newTgt = cIter->second;
-        auto cvIter = corrVtcs.find(oldTgt);
-        if(cvIter != corrVtcs.end()) {
-          MVertex *src = cvIter->second;
-          corrVtcs.erase(cvIter);
-          corrVtcs[newTgt] = src;
-        }
-      }
-      for(cIter = corrVtcs.begin(); cIter != corrVtcs.end(); ++cIter) {
-        MVertex *oldSrc = cIter->second;
-        auto nIter = duplicates.find(oldSrc);
-        if(nIter != duplicates.end()) {
-          MVertex *tgt = cIter->first;
-          MVertex *newSrc = nIter->second;
-          corrVtcs[tgt] = newSrc;
-        }
-      }
-    }
+    replace(ge->correspondingVertices);
+    replace(ge->correspondingHighOrderVertices);
   }
 
   destroyMeshCaches();
+  // (the numbered mesh edges and faces refer to the nodes deleted below)
+  _meshEdges.clear();
+  _meshFaces.clear();
   _associateEntityWithMeshVertices();
   _storeVerticesInEntities(vertices);
 
@@ -3736,6 +3831,11 @@ void GModel::makeDiscreteRegionsSimplyConnected()
             }
           }
         }
+        if(e->getType() == TYPE_POLYH) {
+          // moved as it is: the nodes alone do not make a polyhedron
+          r->polyhedra.push_back((MPolyhedron *)e);
+          continue;
+        }
         MElementFactory factory;
         MElement *e2 = factory.create(e->getTypeForMSH(), verts, e->getNum(),
                                       e->getPartition());
@@ -3794,6 +3894,11 @@ void GModel::makeDiscreteFacesSimplyConnected()
             }
           }
         }
+        if(e->getType() == TYPE_POLYG) {
+          // moved as it is: the nodes alone do not make a polygon
+          f->polygons.push_back((MPolygon *)e);
+          continue;
+        }
         MElementFactory factory;
         MElement *e2 = factory.create(e->getTypeForMSH(), verts, e->getNum(),
                                       e->getPartition());
@@ -3834,6 +3939,7 @@ int GModel::readGEO(const std::string &name)
   // that should also be applied to entities from OCC_Internals
   if(GModel::current()->getOCCInternals())
     GModel::current()->getOCCInternals()->synchronize(GModel::current());
+  GModel::current()->synchronizeDiscreteCADInternals();
   GModel::current()->getGEOInternals()->synchronize(GModel::current());
   return 1;
 }
@@ -3854,14 +3960,26 @@ void GModel::setPhysicalNumToEntitiesInBox(int EntityDimension,
                                            std::vector<double> p2)
 {
   if(p1.size() != 3 || p2.size() != 3) return;
-  SBoundingBox3d box(p1[0], p1[2], p1[2], p2[0], p2[1], p2[3]);
+  SBoundingBox3d box(p1[0], p1[1], p1[2], p2[0], p2[1], p2[2]);
   setPhysicalNumToEntitiesInBox(EntityDimension, PhysicalNumber, box);
+}
+
+// The classification only keeps the triangles.
+static void warnNonTriangles(GModel *m)
+{
+  std::size_t n = 0;
+  for(auto gf : m->getFaces())
+    n += gf->quadrangles.size() + gf->polygons.size();
+  if(n)
+    Msg::Warning("Only triangles are classified: %zu quadrangles and polygons "
+                 "are removed", n);
 }
 
 void GModel::classifySurfaces(double angleThreshold, bool includeBoundary,
                               bool forReparametrization,
                               double curveAngleThreshold)
 {
+  warnNonTriangles(this);
   auto splitMap = std::map<int, std::vector<int>>();
   classifyFaces(this, angleThreshold, includeBoundary, forReparametrization,
                 curveAngleThreshold, splitMap);
@@ -3872,6 +3990,7 @@ void GModel::classifySurfaces(double angleThreshold, bool includeBoundary,
                               double curveAngleThreshold,
                               std::map<int, std::vector<int>> &splitMap)
 {
+  warnNonTriangles(this);
   classifyFaces(this, angleThreshold, includeBoundary, forReparametrization,
                 curveAngleThreshold, splitMap);
 }
@@ -4058,3 +4177,36 @@ int GModel::writeParasolidSTEP(const std::string &fn)
 }
 
 #endif
+
+void GModel::createDiscreteCADInternals()
+{
+#if defined(HAVE_DISCRETECAD)
+  if(_discreteCAD_internals) delete _discreteCAD_internals;
+  _discreteCAD_internals = new DiscreteCAD_Internals;
+#else
+  Msg::Error("Gmsh requires the discrete CAD modeler (DISCRETECAD)");
+#endif
+}
+
+void GModel::deleteDiscreteCADInternals()
+{
+#if defined(HAVE_DISCRETECAD)
+  if(_discreteCAD_internals) delete _discreteCAD_internals;
+#endif
+  _discreteCAD_internals = nullptr;
+}
+
+void GModel::resetDiscreteCADInternals()
+{
+#if defined(HAVE_DISCRETECAD)
+  if(_discreteCAD_internals) _discreteCAD_internals->reset();
+#endif
+}
+
+void GModel::synchronizeDiscreteCADInternals()
+{
+#if defined(HAVE_DISCRETECAD)
+  if(_discreteCAD_internals && _discreteCAD_internals->getChanged())
+    _discreteCAD_internals->synchronize(this);
+#endif
+}

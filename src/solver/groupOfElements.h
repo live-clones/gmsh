@@ -6,6 +6,7 @@
 #ifndef GROUPOFELEMENTS_H
 #define GROUPOFELEMENTS_H
 
+#include <iostream>
 #include <set>
 #include "GFace.h"
 #include "MElement.h"

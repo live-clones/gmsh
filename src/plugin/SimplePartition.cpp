@@ -7,6 +7,7 @@
 #include "GmshConfig.h"
 #include <algorithm>
 #include "SimplePartition.h"
+#include "Options.h"
 #include "partitionFace.h"
 #include "partitionEdge.h"
 #include "MElement.h"

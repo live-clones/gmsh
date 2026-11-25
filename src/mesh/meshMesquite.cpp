@@ -1,3 +1,4 @@
+#include <iostream>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "meshMesquite.h"

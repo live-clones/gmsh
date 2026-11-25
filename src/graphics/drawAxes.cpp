@@ -4,7 +4,9 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <string>
+#include <vector>
 #include "drawContext.h"
+#include "axisTicks.h"
 #include "glMatrix.h"
 #include "GModel.h"
 #include "Context.h"
@@ -14,109 +16,168 @@
 
 #define SQU(a) ((a) * (a))
 
-static int drawTicks(drawContext *ctx, int comp, double n, std::string &format,
-                    std::string &label, double p1[3], double p2[3],
-                    double perp[3], double pixelfact,
-                    double value_p1[3], double value_p2[3])
-{
-  // draws n tick marks (in direction perp) and labels along the line p1->p2
+// The labels of the axis from p1 to p2, whose values go from value_p1 to
+// value_p2 (a ruler, comp -1, is labelled with the distance from p1): about
+// n of them, at round values with the automatic format (the ticks of the 2D
+// graphs and the colour scales, see axisTicks.h), or n equal steps printed
+// with the format given, and the power of ten they share
+struct axisLabels {
+  std::vector<axisTick> ticks;
+  std::string multiplier;
+};
 
-  double t[3] = {p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]};
-  double l = norme(t);
+static axisLabels makeTicks(drawContext *ctx, int comp, double n,
+                            const std::string &format, double p1[3],
+                            double p2[3], double value_p1[3],
+                            double value_p2[3])
+{
+  axisLabels l;
+  // (View.AxesTicks 0 is what hides the ticks; a ruler always has its ends)
+  if(n < 2. && comp >= 0) return l;
   double value_t[3] = {value_p2[0] - value_p1[0], value_p2[1] - value_p1[1],
                        value_p2[2] - value_p1[2]};
-  double value_l = norme(value_t);
-  double w = 10 * pixelfact; // tick marks are 10 pixels long
-  double w2 = w * 1.25; // distance to labels
-
-  // draw label at the end of the axis
-  ctx->drawString(label, p2[0] + t[0] * w2, p2[1] + t[1] * w2,
-                  p2[2] + t[2] * w2);
-
-  // return number of ticks in special cases
-  if(n < 2.) return 0;
-  // with no format of the user's, the automatic one (View.AxesTics 0 is
-  // what hides the ticks)
-  std::string fmt = format.empty() ? "%.3g" : format;
-
-  // select perp direction automatically if it is not provided
-  double lp = norme(perp);
-  if(!lp) {
-    switch(comp) {
-    case 0: perp[1] = -1.; break;
-    case 1: perp[0] = -1.; break;
-    case 2: perp[0] = 1.; break;
-    default: break;
-    }
-  }
-
-  // reduce number of ticks depending on font size and length of axis on
-  // screen; world2Viewport is in true pixels, the font metrics in those of the
-  // window
+  double vmin = (comp < 0) ? 0. : value_p1[comp];
+  double vmax = (comp < 0) ? norme(value_t) : value_p2[comp];
+  // the length of the axis on screen and the font in the pixels of the
+  // window (world2Viewport is in true pixels), the labels side by side along
+  // an axis that leans more than it stands
   double hr = ctx->highResolutionPixelFactor();
   drawContext::global()->setFont(CTX::instance()->glFontEnum,
                                  CTX::instance()->glFontSize);
-  char tmp[256];
-  snprintf(tmp, sizeof(tmp), fmt.c_str(), -M_PI * 1.e4);
   double win1[3], win2[3];
   ctx->world2Viewport(p1, win1);
   ctx->world2Viewport(p2, win2);
-  double winl = sqrt(SQU(win2[0] - win1[0]) + SQU(win2[1] - win1[1]));
-  double strl = hr * drawContext::global()->getStringWidth(tmp);
-  if((n - 1) * strl > winl) n = (int)(winl / strl) + 1;
-  if(n <= 1) {
-    if(comp < 0) // ruler
-      n = 2;
-    else
-      return 0;
+  double winl = sqrt(SQU(win2[0] - win1[0]) + SQU(win2[1] - win1[1])) / hr;
+  bool horizontal = fabs(win2[0] - win1[0]) >= fabs(win2[1] - win1[1]);
+  // (the ends are not labelled: the box of a model is its size plus a
+  // tolerance, which would print as -1e-07)
+  makeAxisTicks(vmin, vmax, winl, drawContext::global()->getStringHeight(),
+                horizontal, format, std::max(1, (int)n - 1), false, l.ticks,
+                l.multiplier);
+  return l;
+}
+
+// The place a string takes in the window, to keep the labels of the axes
+// from overlapping
+struct labelBox {
+  double x0, y0, x1, y1;
+};
+
+// A string drawn next to a point of the window (in true pixels, its depth
+// kept), on the side of the direction (nx, ny) from it: on the left of the
+// point when the direction goes right, centred when it goes up or down, and
+// so on. Unless `always', a string that would overlap one drawn before (in
+// boxes) is left out; returns whether it was drawn.
+static bool placeString(drawContext *ctx, const std::string &str,
+                        const double win[3], double nx, double ny,
+                        std::vector<labelBox> &boxes, bool always = false)
+{
+  if(str.empty()) return false;
+  double hr = ctx->highResolutionPixelFactor();
+  double w = hr * drawContext::global()->getStringWidth(str.c_str());
+  double h = hr * drawContext::global()->getStringHeight();
+  // where the baseline starts, the text taking about 0.2 h below it and
+  // 0.8 h above
+  double x = win[0], y = win[1];
+  if(nx < -0.3)
+    x -= w;
+  else if(nx <= 0.3)
+    x -= w / 2.;
+  if(ny < -0.3)
+    y -= 0.8 * h;
+  else if(ny <= 0.3)
+    y -= h / 3.;
+  else
+    y += 0.2 * h;
+  labelBox b = {x, y - 0.2 * h, x + w, y + 0.8 * h};
+  if(!always) {
+    for(const labelBox &o : boxes)
+      if(b.x0 < o.x1 && o.x0 < b.x1 && b.y0 < o.y1 && o.y0 < b.y1)
+        return false;
+  }
+  boxes.push_back(b);
+  double r[3] = {x, y, win[2]}, xyz[3];
+  ctx->viewport2World(r, xyz);
+  ctx->drawString(str, xyz[0], xyz[1], xyz[2]);
+  return true;
+}
+
+// The tick marks and the labels of the axis from p1 to p2, on the side of
+// the axis on screen away from `centre' (the centre of the box of the axes):
+// the labels of two axes meeting at a corner go to different sides of it, as
+// on a 2D plot, and a label that would still overlap one drawn before (in
+// boxes) is left out. The label of the axis goes after p2, with the power of
+// ten of the ticks. Returns where the ticks fall along the axis, 0 at p1 and
+// 1 at p2.
+static std::vector<double> drawTicks(drawContext *ctx, const axisLabels &labels,
+                                     const std::string &label, double p1[3],
+                                     double p2[3], double centre[3],
+                                     std::vector<labelBox> &boxes)
+{
+  std::vector<double> positions;
+  drawContext::global()->setFont(CTX::instance()->glFontEnum,
+                                 CTX::instance()->glFontSize);
+  double hr = ctx->highResolutionPixelFactor();
+  double tick = 10 * hr, gap = 2.5 * hr; // in true pixels
+
+  // the axis on screen, its direction (dx, dy), and the normal (nx, ny) to
+  // it that points away from the centre: down and to the left when the axis
+  // passes through the centre (a ruler, an axis seen end on)
+  double w1[3], w2[3], wc[3];
+  ctx->world2Viewport(p1, w1);
+  ctx->world2Viewport(p2, w2);
+  ctx->world2Viewport(centre, wc);
+  double dx = w2[0] - w1[0], dy = w2[1] - w1[1];
+  double dl = sqrt(dx * dx + dy * dy);
+  double nx = 0., ny = -1.;
+  if(dl > 1.) {
+    dx /= dl;
+    dy /= dl;
+    nx = -dy;
+    ny = dx;
+    double side = nx * (0.5 * (w1[0] + w2[0]) - wc[0]) +
+                  ny * (0.5 * (w1[1] + w2[1]) - wc[1]);
+    if(side < -1. || (fabs(side) <= 1. && (ny > 0. || (ny == 0. && nx > 0.)))) {
+      nx = -nx;
+      ny = -ny;
+    }
+  }
+  else {
+    dx = 1.;
+    dy = 0.;
   }
 
-  // draw n ticks
-  double step = l / (double)(n - 1);
-  double value_step = value_l / (double)(n - 1);
+  std::string end = label;
+  if(labels.multiplier.size())
+    end += (end.empty() ? "" : " ") + labels.multiplier;
+  double we[3] = {w2[0] + dx * (tick + gap), w2[1] + dy * (tick + gap), w2[2]};
+  placeString(ctx, end, we, dx, dy, boxes, true);
 
-  for(int i = 0; i < n; i++) {
-    double d = i * step;
-    double p[3] = {p1[0] + t[0] * d, p1[1] + t[1] * d, p1[2] + t[2] * d};
-    double q[3] = {p[0] + perp[0] * w, p[1] + perp[1] * w, p[2] + perp[2] * w};
-    double r[3] = {p[0] + perp[0] * w2, p[1] + perp[1] * w2,
-                   p[2] + perp[2] * w2};
-
-    double value_d = i * value_step;
-    double value_p[3] = {value_p1[0] + value_t[0] * value_d,
-                         value_p1[1] + value_t[1] * value_d,
-                         value_p1[2] + value_t[2] * value_d};
-
+  for(const axisTick &tk : labels.ticks) {
+    positions.push_back(tk.t);
+    double p[3] = {p1[0] + tk.t * (p2[0] - p1[0]), p1[1] + tk.t * (p2[1] - p1[1]),
+                   p1[2] + tk.t * (p2[2] - p1[2])};
+    double wp[3], wq[3], q[3];
+    ctx->world2Viewport(p, wp);
+    for(int i = 0; i < 3; i++) wq[i] = wp[i];
+    wq[0] += nx * tick;
+    wq[1] += ny * tick;
+    ctx->viewport2World(wq, q);
     gmshBegin(GL_LINES);
     gmshVertex3d(p[0], p[1], p[2]);
     gmshVertex3d(q[0], q[1], q[2]);
     gmshEnd();
-
-    // draw tick labels
-    if(comp < 0) // display the length value (ruler-mode, starting at 0)
-      snprintf(tmp, sizeof(tmp), fmt.c_str(), value_d);
-    else // display the coordinate value
-      snprintf(tmp, sizeof(tmp), fmt.c_str(), value_p[comp]);
-    double winp[3], winr[3];
-    ctx->world2Viewport(p, winp);
-    ctx->world2Viewport(r, winr);
-    if(fabs(winr[0] - winp[0]) < 2.) // center align
-      winr[0] -= hr * drawContext::global()->getStringWidth(tmp) / 2.;
-    else if(winr[0] < winp[0]) // right align
-      winr[0] -= hr * drawContext::global()->getStringWidth(tmp);
-    if(fabs(winr[1] - winp[1]) < 2.) // center align
-      winr[1] -= hr * drawContext::global()->getStringHeight() / 3.;
-    else if(winr[1] < winp[1]) // top align
-      winr[1] -= hr * drawContext::global()->getStringHeight();
-    ctx->viewport2World(winr, r);
-    ctx->drawString(tmp, r[0], r[1], r[2]);
+    double wl[3] = {wp[0] + nx * (tick + gap), wp[1] + ny * (tick + gap), wp[2]};
+    placeString(ctx, tk.label, wl, nx, ny, boxes);
   }
-
-  return n;
+  return positions;
 }
 
-static void drawGridStipple(int n1, int n2, double p1[3], double p2[3],
-                            double p3[3])
+// the lines of a grid between the ticks of its two axes (at t1 along p1->p2
+// and t2 along p1->p3), the ends left out
+static void drawGridStipple(const std::vector<double> &t1s,
+                            const std::vector<double> &t2s, double p1[3],
+                            double p2[3], double p3[3])
 {
   double t1[3] = {p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]};
   double t2[3] = {p3[0] - p1[0], p3[1] - p1[1], p3[2] - p1[2]};
@@ -127,14 +188,16 @@ static void drawGridStipple(int n1, int n2, double p1[3], double p2[3],
   gl2psEnable(GL2PS_LINE_STIPPLE);
   gmshBegin(GL_LINES);
 
-  for(int i = 1; i < n1 - 1; i++) {
-    double d = (double)i / (double)(n1 - 1) * l1;
+  for(double t : t1s) {
+    if(t <= 0. || t >= 1.) continue;
+    double d = t * l1;
     gmshVertex3d(p1[0] + t1[0] * d, p1[1] + t1[1] * d, p1[2] + t1[2] * d);
     gmshVertex3d(p1[0] + t1[0] * d + t2[0] * l2, p1[1] + t1[1] * d + t2[1] * l2,
                p1[2] + t1[2] * d + t2[2] * l2);
   }
-  for(int i = 1; i < n2 - 1; i++) {
-    double d = (double)i / (double)(n2 - 1) * l2;
+  for(double t : t2s) {
+    if(t <= 0. || t >= 1.) continue;
+    double d = t * l2;
     gmshVertex3d(p1[0] + t2[0] * d, p1[1] + t2[1] * d, p1[2] + t2[2] * d);
     gmshVertex3d(p1[0] + t2[0] * d + t1[0] * l1, p1[1] + t2[1] * d + t1[1] * l1,
                p1[2] + t2[2] * d + t1[2] * l1);
@@ -145,26 +208,36 @@ static void drawGridStipple(int n1, int n2, double p1[3], double p2[3],
   gl2psDisable(GL2PS_LINE_STIPPLE);
 }
 
+// an axis, as a line, or as Mikado sticks: each interval between its ticks
+// (at ticks along it, 0 at the start and 1 at the end) in mikado segments of
+// alternating colours
 void drawContext::drawAxis(double xmin, double ymin, double zmin, double xmax,
-                           double ymax, double zmax, int ntics, int mikado)
+                           double ymax, double zmax,
+                           const std::vector<double> &ticks, int mikado)
 {
   if(mikado) {
-    ntics = (ntics - 1) * mikado;
-    if(ntics < 1) ntics = 1;
-    double dd[3] = {(xmax - xmin) / ntics, (ymax - ymin) / ntics,
-                    (zmax - zmin) / ntics};
+    // the sticks from end to end, cut at the ticks
+    std::vector<double> t = {0.};
+    for(double v : ticks)
+      if(v > 0. && v < 1.) t.push_back(v);
+    t.push_back(1.);
     // the axis colour, which the ticks alternate with white (a core profile
     // has no current colour to query)
     unsigned int axeColor = glyphCurrentColor();
     const unsigned int white = 0xffffffffu;
     glyphList g;
-    g.reserve(GLYPH_CYLINDER, ntics);
+    g.reserve(GLYPH_CYLINDER, (t.size() - 1) * mikado);
     double radius = 3.5 * pixel_equiv_x / s[0];
-    for(int i = 1; i <= ntics; i++) {
-      double cx[2] = {xmin + (i - 1) * dd[0], xmin + i * dd[0]};
-      double cy[2] = {ymin + (i - 1) * dd[1], ymin + i * dd[1]};
-      double cz[2] = {zmin + (i - 1) * dd[2], zmin + i * dd[2]};
-      g.addCylinder(cx, cy, cz, radius, radius, (i % 2) ? axeColor : white);
+    int k = 0;
+    for(std::size_t i = 1; i < t.size(); i++) {
+      for(int j = 0; j < mikado; j++, k++) {
+        double a = t[i - 1] + (t[i] - t[i - 1]) * j / mikado;
+        double b = t[i - 1] + (t[i] - t[i - 1]) * (j + 1) / mikado;
+        double cx[2] = {xmin + a * (xmax - xmin), xmin + b * (xmax - xmin)};
+        double cy[2] = {ymin + a * (ymax - ymin), ymin + b * (ymax - ymin)};
+        double cz[2] = {zmin + a * (zmax - zmin), zmin + b * (zmax - zmin)};
+        g.addCylinder(cx, cy, cz, radius, radius, (k % 2) ? white : axeColor);
+      }
     }
     g.draw(this, 1);
     gmshColor4ubv((const void *)&axeColor);
@@ -200,27 +273,19 @@ void drawContext::drawAxes(int mode, double ticks[3], std::string format[3],
   double value_zmin = value_bb[4], value_zmax = value_bb[5];
   double value_orig[3] = {value_xmin, value_ymin, value_zmin};
 
-  double pixelfact = pixel_equiv_x / s[0];
+  // the labels go away from the centre of the box, and none overlaps another
+  double centre[3] = {0.5 * (xmin + xmax), 0.5 * (ymin + ymax),
+                      0.5 * (zmin + zmax)};
+  std::vector<labelBox> boxes;
 
   if(mode == 5) { // draw ruler from xyz_min to xyz_max
     double end[3] = {xmax, ymax, zmax};
-    double dir[3] = {xmax - xmin, ymax - ymin, zmax - zmin};
-    double perp[3];
-    if((fabs(dir[0]) >= fabs(dir[1]) && fabs(dir[0]) >= fabs(dir[2])) ||
-       (fabs(dir[1]) >= fabs(dir[0]) && fabs(dir[1]) >= fabs(dir[2]))) {
-      perp[0] = dir[1];
-      perp[1] = -dir[0];
-      perp[2] = 0.;
-    }
-    else {
-      perp[0] = 0.;
-      perp[1] = dir[2];
-      perp[2] = -dir[1];
-    }
     double value_end[3] = {value_xmax, value_ymax, value_zmax};
-    drawTicks(this, -1, ticks[0], format[0], label[0], orig, end, perp, pixelfact,
-             value_orig, value_end);
-    drawAxis(xmin, ymin, zmin, xmax, ymax, zmax, ticks[0], mikado);
+    axisLabels l =
+      makeTicks(this, -1, ticks[0], format[0], orig, end, value_orig, value_end);
+    std::vector<double> t =
+      drawTicks(this, l, label[0], orig, end, centre, boxes);
+    drawAxis(xmin, ymin, zmin, xmax, ymax, zmax, t, mikado);
     return;
   }
   double xx[3] = {xmax, ymin, zmin};
@@ -229,22 +294,21 @@ void drawContext::drawAxes(int mode, double ticks[3], std::string format[3],
   double value_xx[3] = {value_xmax, value_ymin, value_zmin};
   double value_yy[3] = {value_xmin, value_ymax, value_zmin};
   double value_zz[3] = {value_xmin, value_ymin, value_zmax};
-  double dxm[3] = {0., (ymin != ymax) ? -1. : 0., (zmin != zmax) ? -1. : 0.};
-  double dym[3] = {(xmin != xmax) ? -1. : 0., 0., (zmin != zmax) ? -1. : 0.};
-  double dzm[3] = {(xmin != xmax) ? -1. : 0., (ymin != ymax) ? -1. : 0., 0.};
-
-  int nx = (xmin != xmax) ?
-             drawTicks(this, 0, ticks[0], format[0], label[0], orig, xx, dxm,
-                      pixelfact, value_orig, value_xx) :
-             0;
-  int ny = (ymin != ymax) ?
-             drawTicks(this, 1, ticks[1], format[1], label[1], orig, yy, dym,
-                      pixelfact, value_orig, value_yy) :
-             0;
-  int nz = (zmin != zmax) ?
-             drawTicks(this, 2, ticks[2], format[2], label[2], orig, zz, dzm,
-                      pixelfact, value_orig, value_zz) :
-             0;
+  // the three axes from the corner they share, X first: at the corner the
+  // label of an axis that would overlap one of X is left out
+  std::vector<double> nx, ny, nz;
+  if(xmin != xmax)
+    nx = drawTicks(this, makeTicks(this, 0, ticks[0], format[0], orig, xx,
+                                   value_orig, value_xx),
+                   label[0], orig, xx, centre, boxes);
+  if(ymin != ymax)
+    ny = drawTicks(this, makeTicks(this, 1, ticks[1], format[1], orig, yy,
+                                   value_orig, value_yy),
+                   label[1], orig, yy, centre, boxes);
+  if(zmin != zmax)
+    nz = drawTicks(this, makeTicks(this, 2, ticks[2], format[2], orig, zz,
+                                   value_orig, value_zz),
+                   label[2], orig, zz, centre, boxes);
 
   drawAxis(xmin, ymin, zmin, xmax, ymin, zmin, nx, mikado);
   drawAxis(xmin, ymin, zmin, xmin, ymax, zmin, ny, mikado);

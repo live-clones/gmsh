@@ -36,63 +36,62 @@ namespace {
     typedef std::unordered_map<Key, Value> _;
   };
 
-  const hashMap<std::string, unsigned>::_::value_type rawData[] = {
-    hashMap<std::string, unsigned>::_::value_type("UNSPECIFIED", 0),
-    hashMap<std::string, unsigned>::_::value_type("AXIS", 1),
-    hashMap<std::string, unsigned>::_::value_type("CONJUGATE", 2),
-    hashMap<std::string, unsigned>::_::value_type("CONVECTION", 3),
-    hashMap<std::string, unsigned>::_::value_type("CYCLIC", 4),
-    hashMap<std::string, unsigned>::_::value_type("DEAD", 5),
-    hashMap<std::string, unsigned>::_::value_type("ELEMENT_SID", 6),
-    hashMap<std::string, unsigned>::_::value_type("ESPECIES", 7),
-    hashMap<std::string, unsigned>::_::value_type("EXHAUST_FAN", 8),
-    hashMap<std::string, unsigned>::_::value_type("FAN", 9),
-    hashMap<std::string, unsigned>::_::value_type("FREE_SURFACE", 10),
-    hashMap<std::string, unsigned>::_::value_type("GAP", 11),
-    hashMap<std::string, unsigned>::_::value_type("INFLOW", 12),
-    hashMap<std::string, unsigned>::_::value_type("INLET", 13),
-    hashMap<std::string, unsigned>::_::value_type("INLET_VENT", 14),
-    hashMap<std::string, unsigned>::_::value_type("INTAKE_FAN", 15),
-    hashMap<std::string, unsigned>::_::value_type("INTERFACE", 16),
-    hashMap<std::string, unsigned>::_::value_type("INTERIOR", 17),
-    hashMap<std::string, unsigned>::_::value_type("INTERNAL", 18),
-    hashMap<std::string, unsigned>::_::value_type("LIVE", 19),
-    hashMap<std::string, unsigned>::_::value_type("MASS_FLOW_INLET", 20),
-    hashMap<std::string, unsigned>::_::value_type("MELT", 21),
-    hashMap<std::string, unsigned>::_::value_type("MELT_INTERFACE", 22),
-    hashMap<std::string, unsigned>::_::value_type("MOVING_BOUNDARY", 23),
-    hashMap<std::string, unsigned>::_::value_type("NODE", 24),
-    hashMap<std::string, unsigned>::_::value_type("OUTFLOW", 25),
-    hashMap<std::string, unsigned>::_::value_type("OUTLET", 26),
-    hashMap<std::string, unsigned>::_::value_type("OUTLET_VENT", 27),
-    hashMap<std::string, unsigned>::_::value_type("PERIODIC", 28),
-    hashMap<std::string, unsigned>::_::value_type("PLOT", 29),
-    hashMap<std::string, unsigned>::_::value_type("POROUS", 30),
-    hashMap<std::string, unsigned>::_::value_type("POROUS_JUMP", 31),
-    hashMap<std::string, unsigned>::_::value_type("PRESSURE", 32),
-    hashMap<std::string, unsigned>::_::value_type("PRESSURE_FAR_FIELD", 33),
-    hashMap<std::string, unsigned>::_::value_type("PRESSURE_INFLOW", 34),
-    hashMap<std::string, unsigned>::_::value_type("PRESSURE_INLET", 35),
-    hashMap<std::string, unsigned>::_::value_type("PRESSURE_OUTFLOW", 36),
-    hashMap<std::string, unsigned>::_::value_type("PRESSURE_OUTLET", 37),
-    hashMap<std::string, unsigned>::_::value_type("RADIATION", 38),
-    hashMap<std::string, unsigned>::_::value_type("RADIATOR", 39),
-    hashMap<std::string, unsigned>::_::value_type("RECIRCULATION_INLET", 40),
-    hashMap<std::string, unsigned>::_::value_type("RECIRCULATION_OUTLET", 41),
-    hashMap<std::string, unsigned>::_::value_type("SLIP", 42),
-    hashMap<std::string, unsigned>::_::value_type("SREACTION", 43),
-    hashMap<std::string, unsigned>::_::value_type("SURFACE", 44),
-    hashMap<std::string, unsigned>::_::value_type("SYMMETRY", 45),
-    hashMap<std::string, unsigned>::_::value_type("TRACTION", 46),
-    hashMap<std::string, unsigned>::_::value_type("TRAJECTORY", 47),
-    hashMap<std::string, unsigned>::_::value_type("VELOCITY", 48),
-    hashMap<std::string, unsigned>::_::value_type("VELOCITY_INLET", 49),
-    hashMap<std::string, unsigned>::_::value_type("VENT", 50),
-    hashMap<std::string, unsigned>::_::value_type("WALL", 51),
-    hashMap<std::string, unsigned>::_::value_type("SPRING", 52),
+  // the boundary codes of the NEU (Gambit) format: the code is the index
+  constexpr const char *boundaryCodes[] = {
+    "UNSPECIFIED",
+    "AXIS",
+    "CONJUGATE",
+    "CONVECTION",
+    "CYCLIC",
+    "DEAD",
+    "ELEMENT_SID",
+    "ESPECIES",
+    "EXHAUST_FAN",
+    "FAN",
+    "FREE_SURFACE",
+    "GAP",
+    "INFLOW",
+    "INLET",
+    "INLET_VENT",
+    "INTAKE_FAN",
+    "INTERFACE",
+    "INTERIOR",
+    "INTERNAL",
+    "LIVE",
+    "MASS_FLOW_INLET",
+    "MELT",
+    "MELT_INTERFACE",
+    "MOVING_BOUNDARY",
+    "NODE",
+    "OUTFLOW",
+    "OUTLET",
+    "OUTLET_VENT",
+    "PERIODIC",
+    "PLOT",
+    "POROUS",
+    "POROUS_JUMP",
+    "PRESSURE",
+    "PRESSURE_FAR_FIELD",
+    "PRESSURE_INFLOW",
+    "PRESSURE_INLET",
+    "PRESSURE_OUTFLOW",
+    "PRESSURE_OUTLET",
+    "RADIATION",
+    "RADIATOR",
+    "RECIRCULATION_INLET",
+    "RECIRCULATION_OUTLET",
+    "SLIP",
+    "SREACTION",
+    "SURFACE",
+    "SYMMETRY",
+    "TRACTION",
+    "TRAJECTORY",
+    "VELOCITY",
+    "VELOCITY_INLET",
+    "VENT",
+    "WALL",
+    "SPRING",
   };
-  static const hashMap<std::string, unsigned>::_
-    boundaryCodeMap(rawData, rawData + (sizeof rawData / sizeof rawData[0]));
 
   // Gambit numbers its faces slightly differently
   static const unsigned GAMBIT_FACE_TET_MAP[4] = {1, 2, 4, 3};
@@ -103,8 +102,10 @@ namespace {
   unsigned const gambitBoundaryCode(std::string name)
   {
     std::transform(name.begin(), name.end(), name.begin(), ::toupper);
-    auto code = boundaryCodeMap.find(name);
-    return code == boundaryCodeMap.end() ? 0 : code->second;
+    auto it =
+      std::find(std::begin(boundaryCodes), std::end(boundaryCodes), name);
+    // an unknown name gets 0, the code of UNSPECIFIED
+    return it == std::end(boundaryCodes) ? 0 : it - std::begin(boundaryCodes);
   }
 
   typedef std::pair<unsigned, unsigned> FacePair;

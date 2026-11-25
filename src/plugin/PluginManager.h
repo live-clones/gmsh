@@ -6,11 +6,13 @@
 #ifndef PLUGIN_MANAGER_H
 #define PLUGIN_MANAGER_H
 
+#include <functional>
 #include <map>
 #include <string>
 #include <vector>
 
 class GMSH_Plugin;
+class PView;
 
 class PluginManager {
 private:
@@ -52,6 +54,14 @@ public:
 
   // Find a plugin named pluginName
   GMSH_Plugin *find(const std::string &pluginName);
+
+  // run plugin p as the interfaces do: a post-processing plugin on each view
+  // of the list (their indices; an empty list, or an index past the views: on
+  // the view its View option gives), with that option set to each view in
+  // turn; a failure is reported, and the next views still run. after, if
+  // given, is called after each run on a view (nullptr: no view)
+  void runOnViews(GMSH_Plugin *p, const std::vector<int> &views,
+                  const std::function<void(PView *)> &after = nullptr);
 
   // Perform an action on the plugin. Default action are Run and
   // Save. Other plugins may perform other actions.

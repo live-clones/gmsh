@@ -9,6 +9,7 @@
 #ifndef CGNS_ZONE_STRUCT_H
 #define CGNS_ZONE_STRUCT_H
 
+#include "GmshConfig.h"
 #include "CGNSZone.h"
 
 #if defined(HAVE_LIBCGNS)

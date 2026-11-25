@@ -303,6 +303,12 @@ int HOPatchDefParameters::inPatch(const SPoint3 &badBary, double limDist,
 void HighOrderMeshOptimizer(std::vector<GEntity *> &entities,
                             OptHomParameters &p)
 {
+  // the Jacobian of the patches is only defined for surfaces and volumes
+  if(p.dim != 2 && p.dim != 3) {
+    Msg::Warning("High-order mesh optimization needs a 2D or 3D mesh");
+    return;
+  }
+
   Msg::StatusBar(true, "Optimizing high-order mesh...");
 
   bool order1 = false;

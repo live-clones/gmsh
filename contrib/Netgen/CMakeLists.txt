@@ -57,5 +57,9 @@ if(MSVC)
   target_compile_definitions(netgen PRIVATE NOMINMAX _CRT_SECURE_NO_WARNINGS)
   target_compile_options(netgen PRIVATE /bigobj)
 endif()
+if(EMSCRIPTEN)
+  # as Netgen's own build: its sources test EMSCRIPTEN, not __EMSCRIPTEN__
+  target_compile_definitions(netgen PRIVATE EMSCRIPTEN)
+endif()
 
 set(GMSH_SRC ${GMSH_SRC};$<TARGET_OBJECTS:netgen> PARENT_SCOPE)

@@ -112,13 +112,18 @@ Default value: @code{3}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.CurveType
-Display curves as solid color segments (0) or 3D cylinders (1)@*
+Curve display type (0: Color segment, 1: 3D cylinder)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.CurveWidth
 Display width of lines (in pixels)@*
 Default value: @code{2}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.DiscreteTolerance
+Maximum distance between the triangulations of the discrete CAD modeler and the exact surfaces, relative to the size of the primitive, when no tolerance is given@*
+Default value: @code{0.001}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.DoubleClickedEntityTag
@@ -157,7 +162,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.LabelType
-Type of entity label (0: description, 1: elementary entity tag, 2: physical group tag, 3: elementary name, 4: physical name, 5: coordinates)@*
+Type of entity label (0: Description, 1: Elementary tag, 2: Physical tag(s), 3: Elementary name, 4: Physical name(s), 5: Coordinates)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -222,7 +227,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCBooleanPreserveNumbering
-Try to preserve the numbering of entities through OpenCASCADE boolean operations@*
+Preserve the numbering of entities through OpenCASCADE boolean operations (0: no, 1: for the arguments left unchanged or modified into a single entity, 2: also for the entities on their boundary, and the pieces of split entities get their physical groups and periodicity)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -261,13 +266,18 @@ Fix small faces when importing STEP, IGES and BREP models with the OpenCASCADE k
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.OCCFixTolerances
+Recompute the tolerances (to the smallest ones the geometry needs) when importing STEP, IGES and BREP models with the OpenCASCADE kernel@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.OCCExportOnlyVisible
 Only consider visible shapes when exporting STEP or BREP models with the OpenCASCADE kernel@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCImportLabels
-Import labels and colors when importing STEP models with the OpenCASCADE kernel (0: no, 1: yes, 2: use slow workaround for bad shape locations)@*
+Import labels and colors when importing STEP models with the OpenCASCADE kernel@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -277,7 +287,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCWriteSTEPNonManifold
-Enable non-manifold STEP exports with the OpenCASCADE kernel@*
+Enable non-manifold STEP exports with the OpenCASCADE kernel, in which the volumes and the surfaces keep the surfaces and the curves they share@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -357,7 +367,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OpacityMode
-Apply Geometry.Opacity to (0: filled surfaces only; 1: everything)@*
+What Geometry.Opacity applies to (0: Surfaces, 1: Everything)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -387,7 +397,7 @@ Default value: @code{8}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.PointType
-Display points as solid color dots (0) or 3D spheres (1)@*
+Point display type (0: Color dot, 1: 3D sphere)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -432,7 +442,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.SurfaceType
-Surface display type (0: cross, 1: wireframe, 2: solid). A surface of the built-in geometry kernel is drawn as a cross until it is meshed.@*
+Surface display type; a surface of the built-in geometry kernel is drawn as a cross until it is meshed (0: Cross, 1: Wireframe, 2: Solid)@*
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -452,7 +462,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.Transform
-Transform model display coordinates (0: no, 1: scale)@*
+Transform model display coordinates (0: None, 1: Scaling)@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
@@ -512,7 +522,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.VolumeType
-Volume display type (0: sphere, 1: diamond)@*
+Volume display type (0: Sphere, 1: Diamond)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

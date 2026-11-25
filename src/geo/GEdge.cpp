@@ -86,6 +86,23 @@ void GEdge::setMeshMaster(GEdge *ge, int ori)
   }
 }
 
+int GEdge::closedMasterOrientation(GEdge *ge,
+                                   const std::vector<double> &tfo) const
+{
+  // compare the point at a quarter of the curve with the transformed points at
+  // a quarter and at three quarters of the master
+  Range<double> r = parBounds(0), mr = ge->parBounds(0);
+  GPoint q = point(0.75 * r.low() + 0.25 * r.high());
+  GPoint q1 = ge->point(0.75 * mr.low() + 0.25 * mr.high());
+  GPoint q3 = ge->point(0.25 * mr.low() + 0.75 * mr.high());
+  if(!q.succeeded() || !q1.succeeded() || !q3.succeeded()) return 1;
+  SPoint3 p(q.x(), q.y(), q.z());
+  SPoint3 p1(q1.x(), q1.y(), q1.z()), p3(q3.x(), q3.y(), q3.z());
+  p1.transform(tfo);
+  p3.transform(tfo);
+  return (p.distance(p1) <= p.distance(p3)) ? 1 : -1;
+}
+
 void GEdge::setMeshMaster(GEdge *ge, const std::vector<double> &tfo)
 {
   if(!getBeginVertex() || !ge->getBeginVertex() || !getEndVertex() ||
@@ -111,7 +128,10 @@ void GEdge::setMeshMaster(GEdge *ge, const std::vector<double> &tfo)
 
   if((d00.norm() < tol) && (d11.norm() < tol)) {
     GEntity::setMeshMaster(ge, tfo);
-    masterOrientation = 1;
+    // the end points do not give the orientation of a closed curve
+    const bool closed = getBeginVertex() == getEndVertex() &&
+                        ge->getBeginVertex() == ge->getEndVertex();
+    masterOrientation = closed ? closedMasterOrientation(ge, tfo) : 1;
     vertexCounterparts[getBeginVertex()] = ge->getBeginVertex();
     vertexCounterparts[getEndVertex()] = ge->getEndVertex();
     getBeginVertex()->setMeshMaster(ge->getBeginVertex(), tfo);
@@ -860,6 +880,8 @@ static bool recreateConsecutiveElements(GEdge *ge)
 
   if(!SortEdgeConsecutive(ed, vs))
     Msg::Warning("Line elements on curve %d cannot be ordered", ge->tag());
+  // (no chain at all, e.g. of degenerate elements: nothing to recreate)
+  if(vs.empty() || vs[0].size() < 2) return false;
 
   if(vs.size() != 1)
     Msg::Warning("Mesh of curve %d is mutiply connected", ge->tag());
@@ -911,17 +933,26 @@ static void meshCompound(GEdge *ge)
     de->meshAttributes.typeTransfinite = ge->meshAttributes.typeTransfinite;
   }
 
-  std::vector<int> phys;
   for(std::size_t i = 0; i < ge->compound.size(); i++) {
     auto *c = (GEdge *)ge->compound[i];
     de->lines.insert(de->lines.end(), c->lines.begin(), c->lines.end());
+  }
+
+  // recreate a 1D mesh with consecutive elements (this creates new MLines);
+  // when the elements make no chain the curves stay meshed on their own
+  if(!recreateConsecutiveElements(de)) {
+    Msg::Warning("Cannot mesh the curves of compound %d as one", ge->tag());
+    de->lines.clear();
+    return;
+  }
+
+  std::vector<int> phys;
+  for(std::size_t i = 0; i < ge->compound.size(); i++) {
+    auto *c = (GEdge *)ge->compound[i];
     c->compoundCurve = de;
     phys.insert(phys.end(), c->physicals.begin(), c->physicals.end());
     c->physicals.clear();
   }
-
-  // recreate a 1D mesh with consecutive elements (this creates new MLines)
-  recreateConsecutiveElements(de);
   // create the geometry
   de->createGeometry();
   // delete the MLines just created above
@@ -937,9 +968,8 @@ static void meshCompound(GEdge *ge)
 void GEdge::mesh(bool verbose)
 {
 #if defined(HAVE_MESH)
-  //  WHAT IS THAT ??
-  //  if(compound.size())
-  //    meshAttributes.meshSizeFactor = CTX::instance()->mesh.compoundLcFactor;
+  if(compound.size())
+    meshAttributes.meshSizeFactor = CTX::instance()->mesh.compoundLcFactor;
 
   meshGEdge mesher;
   mesher(this);

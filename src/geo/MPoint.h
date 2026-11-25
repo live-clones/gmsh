@@ -18,11 +18,11 @@ protected:
   MVertex *_v[1];
 
 public:
-  MPoint(MVertex *v0, int num = 0, int part = 0) : MElement(num, part)
+  MPoint(MVertex *v0, std::size_t num = 0, int part = 0) : MElement(num, part)
   {
     _v[0] = v0;
   }
-  MPoint(const std::vector<MVertex *> &v, int num = 0, int part = 0)
+  MPoint(const std::vector<MVertex *> &v, std::size_t num = 0, int part = 0)
     : MElement(num, part)
   {
     _v[0] = v[0];
@@ -75,6 +75,7 @@ public:
     if(fabs(u) > tol || fabs(v) > tol || fabs(w) > tol) return false;
     return true;
   }
+  virtual bool hasStaticIntegrationPoints() const { return true; }
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
   {
     static IntPt GQL[1];

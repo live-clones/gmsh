@@ -6,12 +6,13 @@
 #ifndef HINT_INPUT_H
 #define HINT_INPUT_H
 
+#include <algorithm>
+#include <cctype>
 #include <regex>
 #include <string>
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Input.H>
 #include <FL/fl_draw.H>
-#include "gmshScheme.h"
 #include "icons.h"
 
 // an input that says what it is for while it is empty
@@ -36,10 +37,12 @@ public:
 
 // what a search box asks for: a regular expression, compiled once and matched
 // without case; one that does not parse yet is shown in red and lets
-// everything through, as an empty box does
+// everything through, as an empty box does. Plain text (no character special
+// to a regular expression) is looked for as is, much faster.
 class searchFilter {
 private:
   std::regex _regex;
+  std::string _text; // plain text, in lower case, if it is
   bool _active, _valid;
 
 public:
@@ -50,7 +53,11 @@ public:
     std::string s = box->value();
     _active = !s.empty();
     _valid = true;
-    if(_active) {
+    _text.clear();
+    if(_active && s.find_first_of(".[]{}()\\*+?^$|") == std::string::npos) {
+      for(char c : s) _text += (char)std::tolower((unsigned char)c);
+    }
+    else if(_active) {
       try {
         _regex = std::regex(s, std::regex_constants::icase);
       } catch(...) {
@@ -63,7 +70,15 @@ public:
   // nothing is filtered out
   bool empty() const { return !_active || !_valid; }
   bool matches(const std::string &text) const
-  { return empty() || std::regex_search(text, _regex); }
+  {
+    if(empty()) return true;
+    if(_text.size())
+      return std::search(text.begin(), text.end(), _text.begin(), _text.end(),
+                         [](char a, char b) {
+                           return std::tolower((unsigned char)a) == b;
+                         }) != text.end();
+    return std::regex_search(text, _regex);
+  }
 };
 
 // a search field in a frame with the magnifier on its left, the frame added
@@ -76,9 +91,8 @@ inline hintInput *searchBox(int x, int y, int w, int h, const char *hint,
   o->tooltip(tooltip);
   o->box(FL_DOWN_BOX);
   o->color(FL_BACKGROUND2_COLOR);
-  hintInput *s =
-    new hintInput(x + h, y + 2, w - h - 2, h - 4, "@gmsh_search", hint);
-  if(gmshScheme()) gmshIcon(s, "search", FL_NORMAL_SIZE);
+  hintInput *s = new hintInput(x + h, y + 2, w - h - 2, h - 4, nullptr, hint);
+  gmshIcon(s, "search", FL_NORMAL_SIZE);
   s->box(FL_FLAT_BOX);
   s->callback(cb);
   s->when(FL_WHEN_CHANGED | FL_WHEN_ENTER_KEY_ALWAYS);

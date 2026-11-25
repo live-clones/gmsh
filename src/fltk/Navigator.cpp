@@ -5,7 +5,6 @@
 //
 // Contributed by Gilles Marckmann <gilles.marckmann@ec-nantes.fr>
 
-#include <string>
 #include <iostream>
 #include <stdio.h>
 #include <algorithm>
@@ -29,25 +28,6 @@ Navigator::Navigator(double _freq, drawContext *_ctx)
 
 Navigator::~Navigator(){};
 
-void Navigator::setDrawContext(drawContext *_ctx)
-{
-  ctx = _ctx;
-  ctx->camera.init();
-}
-
-void Navigator::setFrequency(double _freq)
-{
-  frequency = _freq;
-  reference_angle = 3.14 * frequency / 5.;
-  reference_speed = 1.5 * frequency * (ctx->camera.Lc) / 100.;
-}
-
-void Navigator::setResponseFrequency(double _freq)
-{
-  reference_angle = 3.14 * frequency / 5. * (_freq / .01);
-  reference_speed = 1.5 * frequency * (ctx->camera.Lc) / 100. * (_freq / .01);
-}
-
 void Navigator::drawIcons()
 {
   double l = CTX::instance()->smallAxesSize;
@@ -64,8 +44,8 @@ void Navigator::drawIcons()
   gmshColor4ubv((GLubyte *)&CTX::instance()->color.smallAxes);
 
   double scale = l / 100.;
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  gmshBlend(true);
+  gmshBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glEnable(GL_LINE_SMOOTH);
 
   switch(mode) {
@@ -598,7 +578,7 @@ void Navigator::drawIcons()
   default: break;
   }
 
-  glDisable(GL_BLEND);
+  gmshBlend(false);
   glDisable(GL_LINE_SMOOTH);
   gmshPopMatrix();
 }
@@ -617,8 +597,9 @@ void Navigator::move()
     ctx->camera.lookAtCg();
     reference_speed = 1.5 * frequency * (ctx->camera.Lc) / 100.;
   }
-  // change the plane
+  // look at the centre of gravity (1:1)
   if(pad->toggle(pad->button_map[0])) ctx->camera.lookAtCg();
+  // change the plane: the next axis
   if(pad->toggle(pad->button_map[1])) {
     switch(along) {
     case AXE_X:

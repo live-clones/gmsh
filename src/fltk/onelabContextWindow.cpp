@@ -4,6 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <stdlib.h>
+#include <set>
 #include <FL/Fl_Box.H>
 #include "GModel.h"
 #include "Context.h"
@@ -12,6 +13,8 @@
 #include "paletteWindow.h"
 #include "onelab.h"
 #include "onelabGroup.h"
+#include "onelabActions.h"
+#include "onelabParameters.h"
 #include "onelabContextWindow.h"
 #include "drawContext.h"
 
@@ -118,7 +121,7 @@ void onelabContextWindow::_addOnelabWidget(
       ww = w3;
     }
     Fl_Widget *w = addParameterWidget(n, xx, yy, ww, BH, 1., n.getName(),
-                                      highlight, c, win->color(), _toFree);
+                                      highlight, c, win->color(), _strings);
     w->copy_label(n.getShortName().c_str());
     std::string help = n.getHelp();
     if(help.empty()) help = n.getLabel();
@@ -137,20 +140,20 @@ static void onelab_context_resized_cb(void *data)
 
 static void choice_cb(Fl_Widget *w, void *data)
 {
-  FlGui::instance()->onelabContext->rebuild(false);
+  FlGui::instance()->onelabContext->rebuild();
   FlGui::instance()->onelabContext->highlightSelection();
   // allow the solver code to react to the selection of the elementary or
   // physical group
   if(CTX::instance()->solver.autoCheck)
-     onelab_cb(nullptr, (void *)"check");
+     onelabCheck();
 }
 
 onelabContextWindow::onelabContextWindow(int deltaFontSize)
+  : _alive(std::make_shared<bool>(true))
 {
   FL_NORMAL_SIZE -= deltaFontSize;
 
   _dim = _tag = -1;
-  _entity = nullptr;
 
   // as narrow as the option window, wider as the window is widened
   _width = TW;
@@ -172,50 +175,42 @@ onelabContextWindow::onelabContextWindow(int deltaFontSize)
   FL_NORMAL_SIZE += deltaFontSize;
 }
 
-onelabContextWindow::~onelabContextWindow() { Fl::delete_widget(win); }
+onelabContextWindow::~onelabContextWindow()
+{
+  *_alive = false;
+  // the widgets are the window's
+  Fl::delete_widget(win);
+}
 
 void onelabContextWindow::show(int dim, int tag)
 {
-  FlGui::instance()->lastContextWindow = 4;
 
   _dim = dim;
   _tag = tag;
   _name = GModel::current()->getElementaryName(dim, tag);
-  _entity = GModel::current()->getEntityByTag(dim, tag);
+  GEntity *entity = GModel::current()->getEntityByTag(dim, tag);
   _physicalGroups.clear();
-  _physicalGroupEntities.clear();
-  if(_entity) {
-    std::map<int, std::vector<GEntity *> > groups;
-    GModel::current()->getPhysicalGroups(_dim, groups);
-    for(auto &p : _entity->physicals) {
+  if(entity) {
+    for(auto &p : entity->physicals) {
       int n = std::abs(p); // can be < 0 to switch orientation
       _physicalGroups.push_back(
         std::make_pair(n, GModel::current()->getPhysicalName(dim, n)));
-      _physicalGroupEntities.push_back(groups[n]);
     }
   }
 
   // create menu with possible entities (elementary and all associated
   // physicals)
   std::vector<Fl_Menu_Item> menu;
-  static std::vector<char *> toFree;
-  for(std::size_t i = 0; i < toFree.size(); i++) free(toFree[i]);
-  toFree.clear();
-  {
-    std::string label = getDimName(_dim) + " " + std::to_string(_tag);
-    if(_name.size()) label += ": " + _name;
-    char *str = strdup(label.c_str());
-    Fl_Menu_Item item = {str, 0, nullptr, nullptr, 0};
-    toFree.push_back(str);
-    menu.push_back(item);
-  }
+  _labels.clear();
+  _labels.push_back(getDimName(_dim) + " " + std::to_string(_tag));
+  if(_name.size()) _labels.back() += ": " + _name;
   for(auto &p : _physicalGroups) {
-    std::string label =
-      "Physical " + getDimName(_dim) + " " + std::to_string(p.first);
-    if(p.second.size()) label += ": " + p.second;
-    char *str = strdup(label.c_str());
-    Fl_Menu_Item item = {str, 0, nullptr, nullptr, 0};
-    toFree.push_back(str);
+    _labels.push_back("Physical " + getDimName(_dim) + " " +
+                      std::to_string(p.first));
+    if(p.second.size()) _labels.back() += ": " + p.second;
+  }
+  for(auto &l : _labels) {
+    Fl_Menu_Item item = {l.c_str(), 0, nullptr, nullptr, 0};
     menu.push_back(item);
   }
   Fl_Menu_Item item = {nullptr};
@@ -224,7 +219,9 @@ void onelabContextWindow::show(int dim, int tag)
 
   if(menu.size() > 1) _choice->value(menu.size() - 2); // last physical
 
-  rebuild(true);
+  std::shared_ptr<bool> alive = _alive;
+  rebuild();
+  if(!*alive) return;
   highlightSelection();
 
   if(!win->shown()) win->show();
@@ -233,25 +230,47 @@ void onelabContextWindow::show(int dim, int tag)
 
 void onelabContextWindow::hide() { win->hide(); }
 
-void onelabContextWindow::rebuild(bool deleteWidgets)
+void onelabContextWindow::rebuild()
 {
-  if(!_entity) return; // no entity selected
+  // only in the thread of the GUI, as the tree (see onelabGroup::rebuildTree())
+  if(!FlGui::onMainThread()) return;
+  // this window may be gone after the callbacks run (the GUI closed)
+  std::shared_ptr<bool> alive = _alive;
+  _rebuilds.run([&] {
+    _rebuild();
+    return *alive;
+  });
+}
 
-  // hide old widgets and record if one had the focus
+// (run at each rebuild of the tree, see FlGui::rebuildTree())
+void onelabContextWindow::_rebuild()
+{
+  // no entity selected, or not any more: its parameters go with it
+  if(!GModel::current()->getEntityByTag(_dim, _tag)) {
+    win->hide();
+    return;
+  }
+
+  // the widgets to delete, but those an event being handled was sent to,
+  // retired (see FlGui::retireInEvent()); the strings of the others freed
+  // when the rebuild is over
+  std::vector<Fl_Widget *> old = _onelabWidgets;
+  std::list<std::string> oldStrings;
+  oldStrings.swap(_strings);
+  std::vector<Fl_Widget *> del = FlGui::retireInEvent(old, oldStrings);
+
+  // hide old widgets and record if one had the focus; hiding an edited input
+  // runs its callback, which may rebuild (see rebuild()) or close the GUI
   std::string focus;
-  for(auto &w : _onelabWidgets) {
-    if(w == Fl::focus()) focus = w->label();
+  std::shared_ptr<bool> alive = _alive;
+  for(auto w : old) {
+    if(w == Fl::focus() && w->label()) focus = w->label();
     w->hide();
+    if(!*alive) return;
   }
 
-  // delete widgets if requested (as this is called every time the main ONELAB
-  // tree is rebuilt)
-  if(deleteWidgets) {
-    for(auto &w : _onelabWidgets) Fl::delete_widget(w);
-    _onelabWidgets.clear();
-    for(std::size_t i = 0; i < _toFree.size(); i++) free(_toFree[i]);
-    _toFree.clear();
-  }
+  for(auto w : del) Fl::delete_widget(w);
+  _onelabWidgets.clear();
 
   // get all ONELAB parameters
   std::vector<onelab::number> pn, fpn;
@@ -335,16 +354,20 @@ int onelabContextWindow::place(int w)
 
 void onelabContextWindow::highlightSelection()
 {
-  if(!_entity) return;
+  GEntity *entity = GModel::current()->getEntityByTag(_dim, _tag);
+  if(!entity) return;
 
   GModel::current()->setSelection(0);
   if(_choice->value() == 0) { // elementary
-    _entity->setVisibility(1);
-    _entity->setSelection(2);
+    entity->setVisibility(1);
+    entity->setSelection(2);
   }
   else { // physical
-    if(_choice->value() - 1 < (int)_physicalGroupEntities.size()) {
-      for(auto e : _physicalGroupEntities[_choice->value() - 1]) {
+    int i = _choice->value() - 1;
+    if(i < (int)_physicalGroups.size()) {
+      std::map<int, std::vector<GEntity *>> groups;
+      GModel::current()->getPhysicalGroups(_dim, groups);
+      for(auto e : groups[_physicalGroups[i].first]) {
         e->setVisibility(1);
         e->setSelection(2);
       }

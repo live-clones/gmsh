@@ -3,11 +3,16 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <sstream>
 #include <stdlib.h>
+#include <algorithm>
 #include <cmath>
 #include <limits>
 #include <atomic>
+#include <memory>
 #include <mutex>
+#include <map>
+#include <tuple>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GModel.h"
@@ -608,11 +613,97 @@ SPoint3 MElement::barycenterUVW() const
   return p;
 }
 
+namespace {
+
+  // Shape functions and gradients at the quadrature points of a rule, evaluated
+  // once with the regular basis code and reused by all elements with the same
+  // function spaces, element type and rule order.
+  struct quadratureBasisData {
+    int npts = 0;
+    int nsf = 0; // row stride of sf, >= number of shape functions
+    int ngrad = 0; // row stride of gsf, >= number of shape functions
+    std::vector<IntPt> pts; // quadrature points and weights
+    std::vector<double> sf; // npts * nsf shape function values
+    // npts * ngrad rows of double[3], the type getGradShapeFunctions() fills
+    std::unique_ptr<double[][3]> gsf;
+    const double *sfRow(int i) const
+    { return &sf[static_cast<std::size_t>(i) * nsf]; }
+    const double (*gsfRow(int i) const)[3]
+    { return &gsf[static_cast<std::size_t>(i) * ngrad]; }
+  };
+
+  // One cache per thread, so lookups need no lock, by the MSH tags of the
+  // function spaces of the interpolated values and of the geometry, the
+  // element type and the rule order. The keys are MSH tags, not basis
+  // pointers: BasisFactory::clearAll() deletes the bases at finalize and a
+  // re-initialize can recycle their addresses.
+  thread_local std::map<std::tuple<int, int, int, int>, quadratureBasisData>
+    quadratureBasisCache;
+
+  // Callers choose the rule order, so the key set is not closed. A sweep that
+  // grows the cache past this size drops it, and entries are rebuilt on demand.
+  constexpr std::size_t maxQuadratureBasisCacheSize = 256;
+
+  const quadratureBasisData *
+  _getQuadratureBasisCache(MElement *e, int ruleOrder, int sfOrder)
+  {
+    const nodalBasis *gradSpace = e->getFunctionSpace();
+    const nodalBasis *sfSpace = e->getFunctionSpace(sfOrder);
+    if(!gradSpace || !sfSpace) return nullptr;
+
+    const auto key =
+      std::make_tuple(sfSpace->type, gradSpace->type, e->getType(), ruleOrder);
+    auto it = quadratureBasisCache.find(key);
+    if(it != quadratureBasisCache.end()) return &it->second;
+
+    int npts;
+    IntPt *pts;
+    e->getIntegrationPoints(ruleOrder, &npts, &pts);
+    if(npts <= 0 || !pts) return nullptr;
+
+    if(quadratureBasisCache.size() > maxQuadratureBasisCacheSize)
+      quadratureBasisCache.clear();
+
+    quadratureBasisData &data = quadratureBasisCache[key];
+    data.npts = npts;
+    const int nsfElement = static_cast<int>(e->getNumShapeFunctions());
+    data.nsf = std::max(sfSpace->getNumShapeFunctions(), nsfElement);
+    data.ngrad = std::max(gradSpace->getNumShapeFunctions(), nsfElement);
+    data.pts.assign(pts, pts + npts);
+    data.sf.assign(static_cast<std::size_t>(npts) * data.nsf, 0.);
+    data.gsf = std::make_unique<double[][3]>(static_cast<std::size_t>(npts) *
+                                             data.ngrad);
+    for(int i = 0; i < npts; i++) {
+      double u = pts[i].pt[0], v = pts[i].pt[1], w = pts[i].pt[2];
+      // through the virtual calls, so that element overrides still apply
+      const std::size_t row = static_cast<std::size_t>(i);
+      e->getShapeFunctions(u, v, w, &data.sf[row * data.nsf], sfOrder);
+      e->getGradShapeFunctions(u, v, w, &data.gsf[row * data.ngrad]);
+    }
+    return &data;
+  }
+
+} // namespace
+
 double MElement::getVolume()
 {
+  const int ruleOrder = getPolynomialOrder() + 3;
+  if(hasStaticIntegrationPoints()) {
+    const quadratureBasisData *data =
+      _getQuadratureBasisCache(this, ruleOrder, -1);
+    if(data) {
+      double vol = 0.;
+      for(int i = 0; i < data->npts; i++) {
+        double jac[3][3];
+        vol +=
+          _jacobianFromGradients(data->gsfRow(i), jac) * data->pts[i].weight;
+      }
+      return vol;
+    }
+  }
   int npts;
   IntPt *pts;
-  getIntegrationPoints(getPolynomialOrder() + 3, &npts, &pts);
+  getIntegrationPoints(ruleOrder, &npts, &pts);
   double vol = 0.;
   for(int i = 0; i < npts; i++) {
     vol += getJacobianDeterminant(pts[i].pt[0], pts[i].pt[1], pts[i].pt[2]) *
@@ -886,27 +977,49 @@ static double _computeDeterminantAndRegularize(const MElement *ele, double *jac)
   return dJ;
 }
 
-double MElement::getJacobian(double u, double v, double w,
-                             double jac[3][3]) const
+double MElement::_jacobianFromGradients(const double (*gsf)[3],
+                                        double jac[3][3]) const
 {
   jac[0][0] = jac[0][1] = jac[0][2] = 0.;
   jac[1][0] = jac[1][1] = jac[1][2] = 0.;
   jac[2][0] = jac[2][1] = jac[2][2] = 0.;
   if(getDim() > 3) return 0;
-
-  double gsf[1256][3];
-  getGradShapeFunctions(u, v, w, gsf);
   for(std::size_t i = 0; i < getNumShapeFunctions(); i++) {
     const MVertex *ver = getShapeFunctionNode(i);
-    double *gg = gsf[i];
+    const double *gg = gsf[i];
     for(int j = 0; j < getDim(); j++) {
       jac[j][0] += ver->x() * gg[j];
       jac[j][1] += ver->y() * gg[j];
       jac[j][2] += ver->z() * gg[j];
     }
   }
-
   return _computeDeterminantAndRegularize(this, jac);
+}
+
+// The shape functions (or their gradients) of an element: on the stack, except
+// for the polygons and polyhedra with more nodes than any other element.
+namespace {
+  template <class T> class ShapeBuffer {
+    T _stack[1256], *_heap;
+
+  public:
+    ShapeBuffer(const MElement *e) : _heap(nullptr)
+    {
+      if(e->getNumShapeFunctions() > 1256)
+        _heap = new T[e->getNumShapeFunctions()];
+    }
+    ~ShapeBuffer() { delete[] _heap; }
+    T *get() { return _heap ? _heap : _stack; }
+  };
+  typedef double Gradient[3];
+} // namespace
+
+double MElement::getJacobian(double u, double v, double w,
+                             double jac[3][3]) const
+{
+  double gsf[1256][3];
+  getGradShapeFunctions(u, v, w, gsf);
+  return _jacobianFromGradients(gsf, jac);
 }
 
 double MElement::getJacobian(const fullMatrix<double> &gsf,
@@ -987,7 +1100,8 @@ double MElement::getPrimaryJacobian(double u, double v, double w,
   jac[1][0] = jac[1][1] = jac[1][2] = 0.;
   jac[2][0] = jac[2][1] = jac[2][2] = 0.;
 
-  double gsf[1256][3];
+  ShapeBuffer<Gradient> buffer(this);
+  Gradient *gsf = buffer.get();
   getGradShapeFunctions(u, v, w, gsf, 1);
   for(std::size_t i = 0; i < getNumPrimaryShapeFunctions(); i++) {
     const MVertex *v = getShapeFunctionNode(i);
@@ -1158,7 +1272,8 @@ void MElement::pnt(const std::vector<double> &sf, SPoint3 &p) const
 void MElement::primaryPnt(double u, double v, double w, SPoint3 &p)
 {
   double x = 0., y = 0., z = 0.;
-  double sf[1256];
+  ShapeBuffer<double> buffer(this);
+  double *sf = buffer.get();
   getShapeFunctions(u, v, w, sf, 1);
   for(std::size_t j = 0; j < getNumPrimaryShapeFunctions(); j++) {
     const MVertex *v = getShapeFunctionNode(j);
@@ -1257,13 +1372,12 @@ void MElement::movePointFromElementSpaceToParentSpace(double &u, double &v,
   w = uvwP[2];
 }
 
-double MElement::interpolate(double val[], double u, double v, double w,
-                             int stride, int order)
+double MElement::_interpolateFromShapeFunctions(const double *sf,
+                                                const double *val,
+                                                int stride) const
 {
   double sum = 0;
   int j = 0;
-  double sf[1256];
-  getShapeFunctions(u, v, w, sf, order);
   for(std::size_t i = 0; i < getNumShapeFunctions(); i++) {
     sum += val[j] * sf[i];
     j += stride;
@@ -1271,27 +1385,46 @@ double MElement::interpolate(double val[], double u, double v, double w,
   return sum;
 }
 
-void MElement::interpolateGrad(double val[], double u, double v, double w,
-                               double f[], int stride, double invjac[3][3],
-                               int order)
+double MElement::interpolate(double val[], double u, double v, double w,
+                             int stride, int order)
+{
+  ShapeBuffer<double> buffer(this);
+  double *sf = buffer.get();
+  getShapeFunctions(u, v, w, sf, order);
+  return _interpolateFromShapeFunctions(sf, val, stride);
+}
+
+void MElement::_interpolateGradFromGradients(const double (*gsf)[3],
+                                             const double *val, double f[],
+                                             int stride,
+                                             double invjac[3][3]) const
 {
   double dfdu[3] = {0., 0., 0.};
   int j = 0;
-  double gsf[1256][3];
-  getGradShapeFunctions(u, v, w, gsf, order);
   for(std::size_t i = 0; i < getNumShapeFunctions(); i++) {
     dfdu[0] += val[j] * gsf[i][0];
     dfdu[1] += val[j] * gsf[i][1];
     dfdu[2] += val[j] * gsf[i][2];
     j += stride;
   }
-  if(invjac) { matvec(invjac, dfdu, f); }
-  else {
-    double jac[3][3], inv[3][3];
+  matvec(invjac, dfdu, f);
+}
+
+void MElement::interpolateGrad(double val[], double u, double v, double w,
+                               double f[], int stride, double invjac[3][3],
+                               int order)
+{
+  ShapeBuffer<Gradient> buffer(this);
+  Gradient *gsf = buffer.get();
+  getGradShapeFunctions(u, v, w, gsf, order);
+  double inv[3][3];
+  if(!invjac) {
+    double jac[3][3];
     getJacobian(u, v, w, jac);
     inv3x3(jac, inv);
-    matvec(inv, dfdu, f);
+    invjac = inv;
   }
+  _interpolateGradFromGradients(gsf, val, f, stride, invjac);
 }
 
 void MElement::interpolateCurl(double val[], double u, double v, double w,
@@ -1300,9 +1433,12 @@ void MElement::interpolateCurl(double val[], double u, double v, double w,
   double fx[3], fy[3], fz[3], jac[3][3], inv[3][3];
   getJacobian(u, v, w, jac);
   inv3x3(jac, inv);
-  interpolateGrad(&val[0], u, v, w, fx, stride, inv, order);
-  interpolateGrad(&val[1], u, v, w, fy, stride, inv, order);
-  interpolateGrad(&val[2], u, v, w, fz, stride, inv, order);
+  ShapeBuffer<Gradient> buffer(this);
+  Gradient *gsf = buffer.get();
+  getGradShapeFunctions(u, v, w, gsf, order);
+  _interpolateGradFromGradients(gsf, &val[0], fx, stride, inv);
+  _interpolateGradFromGradients(gsf, &val[1], fy, stride, inv);
+  _interpolateGradFromGradients(gsf, &val[2], fz, stride, inv);
   f[0] = fz[1] - fy[2];
   f[1] = -(fz[0] - fx[2]);
   f[2] = fy[0] - fx[1];
@@ -1314,14 +1450,31 @@ double MElement::interpolateDiv(double val[], double u, double v, double w,
   double fx[3], fy[3], fz[3], jac[3][3], inv[3][3];
   getJacobian(u, v, w, jac);
   inv3x3(jac, inv);
-  interpolateGrad(&val[0], u, v, w, fx, stride, inv, order);
-  interpolateGrad(&val[1], u, v, w, fy, stride, inv, order);
-  interpolateGrad(&val[2], u, v, w, fz, stride, inv, order);
+  ShapeBuffer<Gradient> buffer(this);
+  Gradient *gsf = buffer.get();
+  getGradShapeFunctions(u, v, w, gsf, order);
+  _interpolateGradFromGradients(gsf, &val[0], fx, stride, inv);
+  _interpolateGradFromGradients(gsf, &val[1], fy, stride, inv);
+  _interpolateGradFromGradients(gsf, &val[2], fz, stride, inv);
   return fx[0] + fy[1] + fz[2];
 }
 
 double MElement::integrate(double val[], int pOrder, int stride, int order)
 {
+  if(hasStaticIntegrationPoints()) {
+    const quadratureBasisData *data =
+      _getQuadratureBasisCache(this, pOrder, order);
+    if(data) {
+      double sum = 0;
+      for(int i = 0; i < data->npts; i++) {
+        double jac[3][3];
+        double detuvw = _jacobianFromGradients(data->gsfRow(i), jac);
+        sum += _interpolateFromShapeFunctions(data->sfRow(i), val, stride) *
+               data->pts[i].weight * detuvw;
+      }
+      return sum;
+    }
+  }
   int npts;
   IntPt *gp;
   getIntegrationPoints(pOrder, &npts, &gp);

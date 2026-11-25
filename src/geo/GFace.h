@@ -105,7 +105,22 @@ public:
     std::vector<GEntity *> entities(l_edges.begin(), l_edges.end());
     return entities;
   }
+  // the orientations of the bounding curves with respect to the
+  // parametrization of the surface (as used to mesh it in the parametric
+  // plane)
   virtual std::vector<int> const &edgeOrientations() const { return l_dirs; }
+  // the orientation (1 or -1) of the normal of the surface, and of its mesh,
+  // with respect to the normal of its parametrization (du x dv)
+  virtual int normalOrientation() const { return 1; }
+  // the orientations of the bounding curves with respect to the normal of the
+  // surface: the curves turn counterclockwise around the normal
+  std::vector<int> boundaryOrientations() const
+  {
+    std::vector<int> o(edgeOrientations());
+    if(normalOrientation() < 0)
+      for(auto &s : o) s = -s;
+    return o;
+  }
   void set(const std::vector<GEdge *> &f) { l_edges = f; }
   void setOrientations(const std::vector<int> &f) { l_dirs = f; }
   void setEdge(GEdge *const f, int const orientation)
@@ -258,6 +273,8 @@ public:
 
   // fill the vertex array using an STL triangulation
   bool fillVertexArray(bool force = false);
+  // fill the vertex array of the edges of that triangulation (the wireframe)
+  bool fillLineVertexArray();
 
   // store the STL triangulation as the mesh of the surface
   bool storeSTLAsMesh();
@@ -387,8 +404,8 @@ public:
   bool stl_from_mesh;
 
   // a vertex array containing a geometrical representation of the
-  // surface
-  VertexArray *va_geom_triangles;
+  // surface, and one of its edges
+  VertexArray *va_geom_triangles, *va_geom_lines;
 
   // a array for accessing the transfinite vertices using a pair of
   // indices

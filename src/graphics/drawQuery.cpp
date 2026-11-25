@@ -61,9 +61,11 @@ static std::string range(double min, double max, const char *format)
 // The node of the mesh closest to a point: the nodes of the elements around
 // it, as the node a click is on often belongs to a neighbour of the element
 // the pick returned (the point is on the node as it is drawn, a sphere or a
-// square of a few pixels, rather than inside that element).
-static MVertex *closestNode(const double xyz[3], MElement *element,
-                            double &dist)
+// square of a few pixels, rather than inside that element). None if it is
+// further than tol (in the units of the model: a number of pixels times the
+// size of one), unless tol is negative.
+MVertex *closestNode(const double xyz[3], MElement *element, double &dist,
+                     double tol)
 {
   SPoint3 p(xyz[0], xyz[1], xyz[2]);
   std::vector<MElement *> around =
@@ -82,6 +84,7 @@ static MVertex *closestNode(const double xyz[3], MElement *element,
       }
     }
   }
+  if(v && tol >= 0. && dist > tol) return nullptr;
   return v;
 }
 
@@ -259,13 +262,13 @@ std::vector<std::string> queryPoint(const double xyz[3], GEntity *entity,
     lines.push_back("  SIGE: " + range(sigeMin, sigeMax, full));
   }
 
-  double dist = 0.;
-  MVertex *node = closestNode(xyz, element, dist);
   // a node of the element under the point is named however far it is; with
   // no element there, only a node the point is on (nodes are drawn a few
   // pixels wide)
-  if(node && !element && dist > (CTX::instance()->mesh.nodeSize + 10.) * pixel)
-    node = nullptr;
+  double dist = 0.;
+  MVertex *node = closestNode(
+    xyz, element, dist,
+    element ? -1. : (CTX::instance()->mesh.nodeSize + 10.) * pixel);
   if(node) {
     lines.push_back("");
     lines.push_back("Node: " + std::to_string(node->getNum()) + ", " +
@@ -338,8 +341,8 @@ static unsigned int markColor()
                       (int)(shade * c->unpackBlue(c->color.query)), 255);
 }
 
-// a cross of fourteen pixels and a sphere half again the size of a point, so
-// that the point is visible whatever is drawn around it
+// a cross of fourteen pixels and a sphere twice the size of a point, so that
+// the point is visible whatever is drawn around it
 void drawContext::drawMark(const double xyz[3], bool sphere)
 {
   double d = 14 * pixel_equiv_x / s[0];
@@ -351,8 +354,8 @@ void drawContext::drawMark(const double xyz[3], bool sphere)
   gmshVertex3d(xyz[0], xyz[1], xyz[2] - d);
   gmshVertex3d(xyz[0], xyz[1], xyz[2] + d);
   gmshEnd();
-  if(sphere) drawSphere(1.5 * CTX::instance()->pointSize, xyz[0], xyz[1],
-                        xyz[2], 1);
+  if(sphere)
+    drawSphere(2. * CTX::instance()->pointSize, xyz[0], xyz[1], xyz[2], 1);
 }
 
 void drawContext::drawMarks()

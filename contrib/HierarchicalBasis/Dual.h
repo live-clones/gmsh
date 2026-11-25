@@ -122,10 +122,10 @@ inline Dual kernel(int n, const Dual &x)
 
 // A vector field whose components are dual numbers, which gives its curl and
 // its divergence.
-struct Vec {
+struct DualVector {
   Dual c[3];
-  Vec() {}
-  Vec(const Dual &x, const Dual &y, const Dual &z) : c{x, y, z} {}
+  DualVector() {}
+  DualVector(const Dual &x, const Dual &y, const Dual &z) : c{x, y, z} {}
   double curl(int i) const
   {
     int j = (i + 1) % 3, k = (i + 2) % 3;
@@ -134,37 +134,38 @@ struct Vec {
   double div() const { return c[0].d[0] + c[1].d[1] + c[2].d[2]; }
 };
 
-inline Vec operator+(const Vec &a, const Vec &b)
-{ return Vec(a.c[0] + b.c[0], a.c[1] + b.c[1], a.c[2] + b.c[2]); }
-inline Vec operator-(const Vec &a, const Vec &b)
-{ return Vec(a.c[0] - b.c[0], a.c[1] - b.c[1], a.c[2] - b.c[2]); }
-inline Vec operator*(const Dual &a, const Vec &b)
-{ return Vec(a * b.c[0], a * b.c[1], a * b.c[2]); }
-inline Vec operator*(double s, const Vec &b)
-{ return Vec(s * b.c[0], s * b.c[1], s * b.c[2]); }
+inline DualVector operator+(const DualVector &a, const DualVector &b)
+{ return DualVector(a.c[0] + b.c[0], a.c[1] + b.c[1], a.c[2] + b.c[2]); }
+inline DualVector operator-(const DualVector &a, const DualVector &b)
+{ return DualVector(a.c[0] - b.c[0], a.c[1] - b.c[1], a.c[2] - b.c[2]); }
+inline DualVector operator*(const Dual &a, const DualVector &b)
+{ return DualVector(a * b.c[0], a * b.c[1], a * b.c[2]); }
+inline DualVector operator*(double s, const DualVector &b)
+{ return DualVector(s * b.c[0], s * b.c[1], s * b.c[2]); }
 
 // The gradient of a, and its rotation (d/dv, -d/du, 0) in the plane, as
 // vector fields. Their second derivatives are dropped: this keeps the curl of
 // f * grad(g) and the divergence of f * rot(g) exact, since the Hessian of g
 // is symmetric, but not the divergence of the former or the curl of the
 // latter, which the H(curl) and H(div) spaces do not need.
-inline Vec grad(const Dual &a)
-{ return Vec(Dual(a.d[0]), Dual(a.d[1]), Dual(a.d[2])); }
-inline Vec rot(const Dual &a)
-{ return Vec(Dual(a.d[1]), Dual(-a.d[0]), Dual(0.)); }
+inline DualVector grad(const Dual &a)
+{ return DualVector(Dual(a.d[0]), Dual(a.d[1]), Dual(a.d[2])); }
+inline DualVector rot(const Dual &a)
+{ return DualVector(Dual(a.d[1]), Dual(-a.d[0]), Dual(0.)); }
 
 // The cross product of two vector fields. With factors from grad(), the second
 // derivatives are dropped: this keeps the divergence of f * (grad(a) x
 // grad(b)) exact, since grad(a) x grad(b) is divergence free.
-inline Vec cross(const Vec &a, const Vec &b)
+inline DualVector cross(const DualVector &a, const DualVector &b)
 {
-  return Vec(a.c[1] * b.c[2] - a.c[2] * b.c[1],
-             a.c[2] * b.c[0] - a.c[0] * b.c[2],
-             a.c[0] * b.c[1] - a.c[1] * b.c[0]);
+  return DualVector(a.c[1] * b.c[2] - a.c[2] * b.c[1],
+                    a.c[2] * b.c[0] - a.c[0] * b.c[2],
+                    a.c[0] * b.c[1] - a.c[1] * b.c[0]);
 }
 
 // The rotation (v_y, -v_x, 0) of a vector field in the plane, which maps
 // H(curl) to H(div) functions in 2D
-inline Vec rotate(const Vec &v) { return Vec(v.c[1], -v.c[0], Dual(0.)); }
+inline DualVector rotate(const DualVector &v)
+{ return DualVector(v.c[1], -v.c[0], Dual(0.)); }
 
 #endif

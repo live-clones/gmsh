@@ -624,8 +624,8 @@ void delaunayMeshIn3DParallel(std::vector<MVertex *> &v,
                               std::vector<MTetrahedron *> &tets);
 
 // mesh the volumes of a group of connected regions with the parallel mesher;
-// returns 0 on success, 2 if the input is not supported (the caller may fall
-// back to another algorithm), 1 on error
+// returns 0 on success, 2 if the input is not supported and 1 on failure, with
+// warnings: the caller falls back to another algorithm, or reports the error
 int meshGRegionParallelDelaunay(std::vector<GRegion *> &regions);
 // mesh the region with the points xyz (3 coordinates each) inserted inside,
 // without refinement: the points stay where they are, the mesh being only

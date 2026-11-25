@@ -21,7 +21,6 @@
 #include "paletteWindow.h"
 #include "CommandLine.h"
 #include "StringUtils.h"
-#include "OS.h"
 #include "Options.h"
 #include "Context.h"
 #include "drawContext.h"
@@ -48,27 +47,8 @@ static const char *help_link(Fl_Widget *w, const char *uri)
   return nullptr;
 }
 
-struct opt_data {
-  std::string category;
-  int index;
-  std::string name;
-};
-
-static void interactive_cb(Fl_Widget *w, void *data)
-{
-  if(!data) return;
-  inputValueFloat *v = (inputValueFloat *)w;
-  opt_data *d = (opt_data *)data;
-  double val = v->value();
-  NumberOption(GMSH_SET | GMSH_GUI, d->category.c_str(), d->index,
-               d->name.c_str(), val);
-  drawContext::global()->draw();
-}
-
 double numberOrStringOptionChooser(const std::string &category, int index,
-                                   const std::string &name, bool isNumber,
-                                   const std::string &title, bool isInteractive,
-                                   double minimum, double maximum, double step)
+                                   const std::string &name, bool isNumber)
 {
   double valn = 0.;
   std::string vals = "";
@@ -77,11 +57,10 @@ double numberOrStringOptionChooser(const std::string &category, int index,
   else
     StringOption(GMSH_GET, category.c_str(), index, name.c_str(), vals);
 
-  int nn = (isInteractive ? 2 : 3);
+  int nn = 3;
   int width = nn * BB + (nn + 1) * WB, height = 2 * BH + 3 * WB;
-  std::string t = title;
-  if(t.empty()) t = (isNumber ? "Number Chooser" : "String Chooser");
-  Fl_Window *win = new paletteWindow(width, height, false, t.c_str());
+  Fl_Window *win = new paletteWindow(
+    width, height, false, isNumber ? "Number Chooser" : "String Chooser");
   win->set_modal();
   win->hotspot(win);
   inputValueFloat *number = nullptr;
@@ -89,17 +68,6 @@ double numberOrStringOptionChooser(const std::string &category, int index,
   if(isNumber) {
     number = new inputValueFloat(WB, WB, width - 2 * WB, BH);
     number->value(valn);
-    if(isInteractive) {
-      static opt_data d;
-      d.category = category;
-      d.index = index;
-      d.name = name;
-      number->minimum(minimum);
-      number->maximum(maximum);
-      if(CTX::instance()->inputScrolling) number->step(step, 1);
-      number->callback(interactive_cb, (void *)&d);
-      number->when(FL_WHEN_RELEASE);
-    }
   }
   else {
     string = new Fl_Input(WB, WB, width - 2 * WB, BH);
@@ -109,9 +77,8 @@ double numberOrStringOptionChooser(const std::string &category, int index,
     new Fl_Return_Button(width - nn * BB - nn * WB, 2 * WB + BH, BB, BH, "OK");
   Fl_Button *def = new Fl_Button(width - (nn - 1) * BB - (nn - 1) * WB,
                                  2 * WB + BH, BB, BH, "Default");
-  Fl_Button *cancel = nullptr;
-  if(!isInteractive)
-    cancel = new Fl_Button(width - BB - WB, 2 * WB + BH, BB, BH, "Cancel");
+  Fl_Button *cancel =
+    new Fl_Button(width - BB - WB, 2 * WB + BH, BB, BH, "Cancel");
   win->end();
   win->show();
   if(number) number->take_focus();
@@ -146,7 +113,6 @@ double numberOrStringOptionChooser(const std::string &category, int index,
           NumberOption(GMSH_GET_DEFAULT, category.c_str(), index, name.c_str(),
                        valn);
           number->value(valn);
-          if(isInteractive) number->do_callback();
         }
         else {
           StringOption(GMSH_GET_DEFAULT, category.c_str(), index, name.c_str(),
@@ -390,11 +356,22 @@ static std::string aboutText()
                                     std::to_string(MED_NUM_RELEASE)));
 #endif
   rows.push_back(std::make_pair("Packaged by", GetGmshPackager()));
-  rows.push_back(std::make_pair("Build options", GetGmshBuildOptions()));
+  // the one-line rows in a single row of the table, as Fl_Help_View spaces
+  // its rows widely, then the build options, which wrap
+  std::string labels, values;
+  for(std::size_t i = 0; i < rows.size(); i++) {
+    labels +=
+      (i ? "<br>" : "") + ReplaceSubString(" ", "&nbsp;", rows[i].first);
+    values +=
+      (i ? "<br>" : "") + ReplaceSubString(" ", "&nbsp;", rows[i].second);
+  }
+  rows.clear();
+  rows.push_back(std::make_pair(labels, values));
+  rows.push_back(std::make_pair("Build&nbsp;options", GetGmshBuildOptions()));
   for(std::size_t i = 0; i < rows.size(); i++)
     sstream << "<tr><td><font color=\"" << mutedColor() << "\">"
-            << ReplaceSubString(" ", "&nbsp;", rows[i].first)
-            << "</font></td><td>" << rows[i].second << "</td></tr>";
+            << rows[i].first << "</font></td><td>" << rows[i].second
+            << "</td></tr>";
   sstream << "</table>";
   return sstream.str();
 }
@@ -449,12 +426,23 @@ void helpWindow::resetText()
 {
   aboutView->value(aboutText().c_str());
   basicView->value(usageText(usageFilter).c_str());
+  // the About window as tall as its text (the fonts may have changed), which
+  // a wider window wraps less, within the screen; the text scrolls when the
+  // window is made smaller; not while shown
+  if(about->shown()) return;
+  int textHeight = aboutView->size() + 2 * WB;
+  textHeight = std::min(textHeight, Fl::h() * 4 / 5 - aboutView->y());
+  about->resizable(nullptr);
+  aboutView->size(aboutView->w(), textHeight);
+  about->size(about->w(), aboutView->y() + textHeight);
+  about->resizable(aboutView);
 }
 
 helpWindow::helpWindow()
 {
   {
-    int width = 30 * FL_NORMAL_SIZE;
+    // the height is fitted to the text below
+    int width = 36 * FL_NORMAL_SIZE;
     int logo = 7 * FL_NORMAL_SIZE;
     int height = 23 * BH + logo + 2 * WB;
 
@@ -469,7 +457,7 @@ helpWindow::helpWindow()
     Fl_Box *logoBox = new Fl_Box(0, 3 * WB, width, logo);
     Fl_SVG_Image *logoImage = new Fl_SVG_Image(nullptr, logoSvg);
     logoImage->resize(logo, logo);
-    logoBox->image(logoImage);
+    logoBox->bind_image(logoImage); // deleted with the box
 
     aboutView = new Fl_Help_View(2 * WB, logo + 3 * WB, width - 4 * WB,
                                  height - logo - 3 * WB);
@@ -520,12 +508,10 @@ helpWindow::helpWindow()
     int BW = (width - 4 * WB) / 3;
 
     modified = new Fl_Check_Button(WB, WB, BW, BH, "Only show modified");
-    modified->type(FL_TOGGLE_BUTTON);
     modified->callback(help_options_cb);
     modified->tooltip("Show only values different from defaults");
 
     showhelp = new Fl_Check_Button(2 * WB + BW, WB, BW, BH, "Show help");
-    showhelp->type(FL_TOGGLE_BUTTON);
     showhelp->callback(help_options_cb);
     showhelp->tooltip("Show help strings");
 
@@ -534,8 +520,7 @@ helpWindow::helpWindow()
                 "Show only the options and variables matching the regular\n"
                 "expression, whatever the case",
                 help_options_cb);
-    // search->take_focus(); cannot call this here - it triggers show() on Linux
-    // in fltk 1.3.3
+    // (no search->take_focus() here: it shows the window on Linux)
 
     browser = new Fl_Browser(0, BH + 2 * WB, width, height - 2 * BH - 4 * WB);
     browser->box(GMSH_SIMPLE_TOP_BOX);

@@ -17,6 +17,8 @@ gmsh.initialize(sys.argv)
 # Let's create a simple CAD model by fusing a sphere and a cube, then mesh the
 # surfaces:
 gmsh.model.add("x5")
+# boundary entities keep their tags through boolean operations
+gmsh.option.setNumber("Geometry.OCCBooleanPreserveNumbering", 2)
 s = gmsh.model.occ.addSphere(0, 0, 0, 1)
 b = gmsh.model.occ.addBox(0.5, 0, 0, 1.3, 2, 3)
 gmsh.model.occ.fuse([(3, s)], [(3, b)])
@@ -75,15 +77,15 @@ gmsh.view.addListData(vc, "SP", len(curvatures) // 4, curvatures)
 gmsh.view.option.setNumber(vc, 'ShowScale', 0)
 
 # We can also retrieve the parametrization bounds of model entities, e.g. of
-# curve 5, and evaluate the parametrization for several parameter values:
-bounds = gmsh.model.getParametrizationBounds(1, 5)
+# curve 19, and evaluate the parametrization for several parameter values:
+bounds = gmsh.model.getParametrizationBounds(1, 19)
 N = 20
 t = [bounds[0][0] + i * (bounds[1][0] - bounds[0][0]) / N for i in range(N)]
-xyz1 = gmsh.model.getValue(1, 5, t)
+xyz1 = gmsh.model.getValue(1, 19, t)
 
-# We can also reparametrize curve 5 on surface 1, and evaluate the points in the
-# parametric plane of the surface:
-uv = gmsh.model.reparametrizeOnSurface(1, 5, t, 1)
+# We can also reparametrize curve 19 on surface 1, and evaluate the points in
+# the parametric plane of the surface:
+uv = gmsh.model.reparametrizeOnSurface(1, 19, t, 1)
 xyz2 = gmsh.model.getValue(2, 1, uv)
 
 # Hopefully we get the same x, y, z coordinates!

@@ -6,6 +6,7 @@
 #ifndef CGNS_WRITE_STRUCT_H
 #define CGNS_WRITE_STRUCT_H
 
+#include "GmshConfig.h"
 #include "CGNSCommon.h"
 
 #if defined(HAVE_LIBCGNS)

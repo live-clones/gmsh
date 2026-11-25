@@ -38,7 +38,8 @@ static void coordinates(const Dual *x, Dual *L)
 // The functions of a face, from the H(curl) functions c of the face (of order
 // order + 1): the Whitney 2-form w, then by increasing order l the curls of the
 // l + 1 rotational H(curl) functions of order l + 1, after the l gradients
-static void faceBlock(const Vec &w, const Vec *c, int order, Vec *f)
+static void faceBlock(const DualVector &w, const DualVector *c, int order,
+                      DualVector *f)
 {
   int n = 0, nc = 0;
   f[n++] = w;
@@ -48,13 +49,14 @@ static void faceBlock(const Vec &w, const Vec *c, int order, Vec *f)
   }
 }
 
-void HdivTetrahedron::functions(const Dual *x, std::vector<Vec> &vertex,
-                                std::vector<Vec> &edge, std::vector<Vec> &face,
-                                std::vector<Vec> &bubble)
+void HdivTetrahedron::functions(const Dual *x, std::vector<DualVector> &vertex,
+                                std::vector<DualVector> &edge,
+                                std::vector<DualVector> &face,
+                                std::vector<DualVector> &bubble)
 {
   Dual L[4];
   coordinates(x, L);
-  std::vector<Vec> cv, ce, cf, cb;
+  std::vector<DualVector> cv, ce, cf, cb;
   hcurlFunctions(_hcurl, x, cv, ce, cf, cb);
   const int perFace = (_order + 1) * (_order + 2) / 2,
             perCurlFace = _order * (_order + 2);
@@ -64,7 +66,7 @@ void HdivTetrahedron::functions(const Dual *x, std::vector<Vec> &vertex,
               &face[f * perFace]);
   }
   // the Whitney 2-forms of the faces opposite to L0, L1 and L2
-  Vec opposite[3];
+  DualVector opposite[3];
   for(int i = 0; i < 3; i++) {
     const int *v = tetrahedronFaces[3 - i];
     opposite[i] = whitney2(L[v[0]], L[v[1]], L[v[2]]);
@@ -89,11 +91,11 @@ void HdivTetrahedron::functions(const Dual *x, std::vector<Vec> &vertex,
 
 void HdivTetrahedron::faceFunctions(const Dual *x, int flag1, int flag2,
                                     int flag3, int faceNumber,
-                                    std::vector<Vec> &face)
+                                    std::vector<DualVector> &face)
 {
   Dual L[4];
   coordinates(x, L);
-  std::vector<Vec> cf;
+  std::vector<DualVector> cf;
   hcurlFaceFunctions(_hcurl, x, flag1, flag2, flag3, faceNumber, cf);
   const int *v = tetrahedronFaces[faceNumber], *r = triangleRoles(flag1, flag2);
   const int perFace = (_order + 1) * (_order + 2) / 2,

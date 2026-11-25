@@ -43,7 +43,7 @@ protected:
 
 public:
   MHexahedron(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
-              MVertex *v5, MVertex *v6, MVertex *v7, int num = 0, int part = 0)
+              MVertex *v5, MVertex *v6, MVertex *v7, std::size_t num = 0, int part = 0)
     : MElement(num, part)
   {
     _v[0] = v0;
@@ -55,7 +55,7 @@ public:
     _v[6] = v6;
     _v[7] = v7;
   }
-  MHexahedron(const std::vector<MVertex *> &v, int num = 0, int part = 0)
+  MHexahedron(const std::vector<MVertex *> &v, std::size_t num = 0, int part = 0)
     : MElement(num, part)
   {
     for(int i = 0; i < 8; i++) _v[i] = v[i];
@@ -197,6 +197,7 @@ public:
       return false;
     return true;
   }
+  virtual bool hasStaticIntegrationPoints() const { return true; }
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
   static int edges_hexa(const int edge, const int vert)
   {
@@ -267,7 +268,7 @@ public:
                 MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, MVertex *v9,
                 MVertex *v10, MVertex *v11, MVertex *v12, MVertex *v13,
                 MVertex *v14, MVertex *v15, MVertex *v16, MVertex *v17,
-                MVertex *v18, MVertex *v19, int num = 0, int part = 0)
+                MVertex *v18, MVertex *v19, std::size_t num = 0, int part = 0)
     : MHexahedron(v0, v1, v2, v3, v4, v5, v6, v7, num, part)
   {
     _vs[0] = v8;
@@ -284,7 +285,7 @@ public:
     _vs[11] = v19;
     for(int i = 0; i < 12; i++) _vs[i]->setPolynomialOrder(2);
   }
-  MHexahedron20(const std::vector<MVertex *> &v, int num = 0, int part = 0)
+  MHexahedron20(const std::vector<MVertex *> &v, std::size_t num = 0, int part = 0)
     : MHexahedron(v, num, part)
   {
     for(int i = 0; i < 12; i++) _vs[i] = v[8 + i];
@@ -431,7 +432,7 @@ public:
                 MVertex *v14, MVertex *v15, MVertex *v16, MVertex *v17,
                 MVertex *v18, MVertex *v19, MVertex *v20, MVertex *v21,
                 MVertex *v22, MVertex *v23, MVertex *v24, MVertex *v25,
-                MVertex *v26, int num = 0, int part = 0)
+                MVertex *v26, std::size_t num = 0, int part = 0)
     : MHexahedron(v0, v1, v2, v3, v4, v5, v6, v7, num, part)
   {
     _vs[0] = v8;
@@ -455,7 +456,7 @@ public:
     _vs[18] = v26;
     for(int i = 0; i < 19; i++) _vs[i]->setPolynomialOrder(2);
   }
-  MHexahedron27(const std::vector<MVertex *> &v, int num = 0, int part = 0)
+  MHexahedron27(const std::vector<MVertex *> &v, std::size_t num = 0, int part = 0)
     : MHexahedron(v, num, part)
   {
     for(int i = 0; i < 19; i++) _vs[i] = v[8 + i];
@@ -621,7 +622,7 @@ protected:
 public:
   MHexahedronN(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
                MVertex *v5, MVertex *v6, MVertex *v7,
-               const std::vector<MVertex *> &v, char order, int num = 0,
+               const std::vector<MVertex *> &v, char order, std::size_t num = 0,
                int part = 0)
     : MHexahedron(v0, v1, v2, v3, v4, v5, v6, v7, num, part), _order(order),
       _vs(v)
@@ -629,7 +630,7 @@ public:
     for(std::size_t i = 0; i < _vs.size(); i++)
       _vs[i]->setPolynomialOrder(_order);
   }
-  MHexahedronN(const std::vector<MVertex *> &v, char order, int num = 0,
+  MHexahedronN(const std::vector<MVertex *> &v, char order, std::size_t num = 0,
                int part = 0)
     : MHexahedron(v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], num, part),
       _order(order)

@@ -42,7 +42,7 @@ static void coordinates(const Dual *x, Dual *L)
 // grad(v_j)) w_k, then (k w_k grad(v_j) - j v_j grad(w_k)) u_i, i + j + k = l
 // + 1, i >= 2, j, k >= 1, by increasing i, then j. Like the face functions,
 // they belong to the Nedelec space of the first kind of order l.
-static int rotationalBubbles(const Dual *L, int l, Vec *f)
+static int rotationalBubbles(const Dual *L, int l, DualVector *f)
 {
   const Dual &a = L[0], &b = L[1], &c = L[2], &d = L[3];
   Dual s = a + b + c, all = s + d;
@@ -64,9 +64,10 @@ static int rotationalBubbles(const Dual *L, int l, Vec *f)
   return n;
 }
 
-void HcurlTetrahedron::functions(const Dual *x, std::vector<Vec> &vertex,
-                                 std::vector<Vec> &edge, std::vector<Vec> &face,
-                                 std::vector<Vec> &bubble)
+void HcurlTetrahedron::functions(const Dual *x, std::vector<DualVector> &vertex,
+                                 std::vector<DualVector> &edge,
+                                 std::vector<DualVector> &face,
+                                 std::vector<DualVector> &bubble)
 {
   Dual L[4];
   coordinates(x, L);
@@ -99,7 +100,7 @@ void HcurlTetrahedron::functions(const Dual *x, std::vector<Vec> &vertex,
 
 void HcurlTetrahedron::faceFunctions(const Dual *x, int flag1, int flag2,
                                      int flag3, int faceNumber,
-                                     std::vector<Vec> &face)
+                                     std::vector<DualVector> &face)
 {
   Dual L[4];
   coordinates(x, L);

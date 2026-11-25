@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <iostream>
 #include <limits>
 #include <cmath>
 #include <algorithm>
@@ -105,48 +106,6 @@ namespace ClosureGen {
       double tmp = uO;
       uO = vO;
       vO = tmp;
-    }
-  }
-
-  void rotatePyr(int iFace, int iRot, int iSign, double uI, double vI,
-                 double &uO, double &vO, double &wO)
-  {
-    if(iSign < 0) {
-      double tmp = uI;
-      uI = vI;
-      vI = tmp;
-    }
-    for(int i = 0; i < iRot; i++) {
-      double tmp = uI;
-      uI = -vI;
-      vI = tmp;
-    }
-    switch(iFace) {
-    case 0:
-      uO = uI;
-      vO = vI - 1;
-      wO = vI;
-      break;
-    case 1:
-      uO = vI - 1;
-      vO = -uI;
-      wO = vI;
-      break;
-    case 2:
-      uO = 1 - vI;
-      vO = uI;
-      wO = vI;
-      break;
-    case 3:
-      uO = -uI;
-      vO = 1 - vI;
-      wO = vI;
-      break;
-    case 4:
-      uO = vI;
-      vO = uI;
-      wO = 0;
-      break;
     }
   }
 
@@ -696,9 +655,109 @@ namespace ClosureGen {
         prismFullClosureFromCorners(closureFull[i], points);
   }
 
+  // the node of the element closest to a point
+  int closestNode(const fullMatrix<double> &points, const double x[3])
+  {
+    int J = 0;
+    double D = std::numeric_limits<double>::max();
+    for(int jNode = 0; jNode < points.size1(); ++jNode) {
+      const double d = pow2(points(jNode, 0) - x[0]) +
+                       pow2(points(jNode, 1) - x[1]) +
+                       pow2(points(jNode, 2) - x[2]);
+      if(d < D) {
+        J = jNode;
+        D = d;
+      }
+    }
+    return J;
+  }
+
+  // The closure of a face from its n corners, in the order the sign and the
+  // rotation give them: each node of the basis of the face is the node of the
+  // element at the image of its point by the (bi)linear map of the corners
+  void faceClosureFromCorners(nodalBasis::closure &cl, const int corner[4],
+                              int n, const nodalBasis *fsFace,
+                              const fullMatrix<double> &points)
+  {
+    cl.type = fsFace->type;
+    cl.resize(fsFace->points.size1());
+    for(std::size_t iNode = 0; iNode < cl.size(); ++iNode) {
+      const double u = fsFace->points(iNode, 0), v = fsFace->points(iNode, 1);
+      double f[4];
+      if(n == 3) {
+        f[0] = 1. - u - v;
+        f[1] = u;
+        f[2] = v;
+      }
+      else {
+        f[0] = (1. - u) * (1. - v) / 4.;
+        f[1] = (1. + u) * (1. - v) / 4.;
+        f[2] = (1. + u) * (1. + v) / 4.;
+        f[3] = (1. - u) * (1. + v) / 4.;
+      }
+      double x[3] = {0., 0., 0.};
+      for(int k = 0; k < n; k++)
+        for(int j = 0; j < 3; j++) x[j] += f[k] * points(corner[k], j);
+      cl[iNode] = closestNode(points, x);
+    }
+  }
+
+  // The closures of the faces of a serendipity element, whose faces are
+  // serendipity faces: from the closures of the element of order 1, which
+  // give the corners of each face for each sign and rotation
+  void generateFaceClosureSerendip(nodalBasis::clCont &closure,
+                                   const nodalBasis::clCont &closure1,
+                                   int order,
+                                   const fullMatrix<double> &points)
+  {
+    closure.clear();
+    const nodalBasis *fsFace[2] = {
+      BasisFactory::getNodalBasis(ElementType::getType(TYPE_TRI, order, true)),
+      BasisFactory::getNodalBasis(ElementType::getType(TYPE_QUA, order, true))};
+    for(const nodalBasis::closure &cl1 : closure1) {
+      nodalBasis::closure cl;
+      const int n = (int)cl1.size();
+      if(n == 3 || n == 4) {
+        int corner[4] = {0, 0, 0, 0};
+        for(int i = 0; i < n; i++) corner[i] = cl1[i];
+        faceClosureFromCorners(cl, corner, n, fsFace[n - 3], points);
+      }
+      closure.push_back(cl);
+    }
+  }
+
+  // The full closures of a serendipity tetrahedron: each symmetry of the
+  // tetrahedron, given for the corners by the full closure of order 1, is
+  // affine and sends each node on a node
+  void generateFaceClosureTetFullSerendip(nodalBasis::clCont &closureFull,
+                                          std::vector<int> &closureRef,
+                                          const fullMatrix<double> &points)
+  {
+    generateFaceClosureTetFull(closureFull, closureRef, 1, false);
+    for(nodalBasis::closure &full : closureFull) {
+      const std::vector<int> corner(full.begin(), full.end());
+      full.resize(points.size1());
+      for(int iNode = 0; iNode < points.size1(); ++iNode) {
+        const double u = points(iNode, 0), v = points(iNode, 1),
+                     w = points(iNode, 2);
+        const double f[4] = {1. - u - v - w, u, v, w};
+        double x[3] = {0., 0., 0.};
+        for(int k = 0; k < 4; k++)
+          for(int j = 0; j < 3; j++) x[j] += f[k] * points(corner[k], j);
+        full[iNode] = closestNode(points, x);
+      }
+    }
+  }
+
+  // The closures of the faces of a pyramid of any order: the corners of the
+  // face are ordered by the sign and the rotation as reorderFaceClosure()
+  // orders them. A triangular face has three rotations: the closures of the
+  // fourth one are empty.
   void generateFaceClosurePyr(nodalBasis::clCont &closure, int order,
                               bool serendip, const fullMatrix<double> &points)
   {
+    static const int faces[5][4] = {
+      {0, 1, 4, -1}, {3, 0, 4, -1}, {1, 2, 4, -1}, {2, 3, 4, -1}, {0, 3, 2, 1}};
     closure.clear();
     const int typeTri = ElementType::getType(TYPE_TRI, order, serendip);
     const int typeQua = ElementType::getType(TYPE_QUA, order, serendip);
@@ -708,32 +767,80 @@ namespace ClosureGen {
     for(int iRotate = 0; iRotate < 4; iRotate++) {
       for(int iSign = 1; iSign >= -1; iSign -= 2) {
         for(int iFace = 0; iFace < 5; iFace++) {
-          const nodalBasis *fsFace;
-          if(iFace < 4)
-            fsFace = fsFaceTri;
-          else
-            fsFace = fsFaceQua;
           nodalBasis::closure cl;
-          cl.type = fsFace->type;
-          cl.resize(fsFace->points.size1());
-          for(std::size_t iNode = 0; iNode < cl.size(); ++iNode) {
-            double u, v, w;
-            rotatePyr(iFace, iRotate, iSign, fsFace->points(iNode, 0),
-                      fsFace->points(iNode, 1), u, v, w);
-            cl[iNode] = 0;
-            double D = std::numeric_limits<double>::max();
-            for(int jNode = 0; jNode < points.size1(); ++jNode) {
-              double d = pow2(points(jNode, 0) - u) +
-                         pow2(points(jNode, 1) - v) +
-                         pow2(points(jNode, 2) - w);
-              if(d < D) {
-                cl[iNode] = jNode;
-                D = d;
-              }
-            }
+          const int n = (iFace < 4) ? 3 : 4;
+          if(n == 3 && iRotate > 2) {
+            closure.push_back(cl);
+            continue;
           }
+          int corner[4];
+          for(int i = 0; i < n; i++)
+            corner[i] = faces[iFace][(n + i * iSign + iRotate) % n];
+          faceClosureFromCorners(cl, corner, n,
+                                 (n == 3) ? fsFaceTri : fsFaceQua, points);
           closure.push_back(cl);
         }
+      }
+    }
+  }
+
+  // The full closures of a pyramid of any order: the symmetry of the pyramid
+  // that sends the reference face (the first triangle, or the base) on the
+  // face of the closure sends each node on a node. The apex stays where it is
+  // in the 8 symmetries of the pyramid, so that a triangular face rotated in a
+  // way that moves the apex has no full closure: these are left empty, with a
+  // reference of -1.
+  void generateFaceClosurePyrFull(nodalBasis::clCont &closureFull,
+                                  std::vector<int> &closureRef,
+                                  const nodalBasis::clCont &closure,
+                                  const fullMatrix<double> &points)
+  {
+    closureFull.clear();
+    closureFull.resize(closure.size());
+    closureRef.clear();
+    closureRef.resize(closure.size(), -1);
+    const int refTri = 0, refQua = 4;
+    for(std::size_t i = 0; i < closure.size(); i++) {
+      const nodalBasis::closure &cl = closure[i];
+      if(cl.empty()) continue;
+      const int n = ((i % 5) < 4) ? 3 : 4;
+      const nodalBasis::closure &ref = closure[(n == 3) ? refTri : refQua];
+      // where the symmetry sends two consecutive corners of the base
+      int from[2] = {-1, -1}, to[2] = {-1, -1}, k = 0;
+      bool apex = true;
+      for(int j = 0; j < n; j++) {
+        if(ref[j] == 4 || cl[j] == 4) {
+          if(ref[j] != cl[j]) apex = false;
+        }
+        else if(k < 2) {
+          from[k] = ref[j];
+          to[k] = cl[j];
+          k++;
+        }
+      }
+      if(!apex) continue;
+      // a rotation or a reflection of the base
+      int corner[5] = {0, 0, 0, 0, 4};
+      const bool rotation =
+        ((from[1] - from[0] + 4) % 4) == ((to[1] - to[0] + 4) % 4);
+      for(int c = 0; c < 4; c++)
+        corner[c] = rotation ? (c + to[0] - from[0] + 4) % 4 :
+                               (to[0] + from[0] - c + 8) % 4;
+      closureRef[i] = (n == 3) ? refTri : refQua;
+      nodalBasis::closure &full = closureFull[i];
+      full.resize(points.size1());
+      for(int iNode = 0; iNode < points.size1(); ++iNode) {
+        // the symmetry is affine: from the images of corners 0, 1, 3 and 4
+        const double w = points(iNode, 2);
+        const double a = (points(iNode, 0) + 1. - w) / 2.,
+                     b = (points(iNode, 1) + 1. - w) / 2.;
+        double x[3];
+        for(int j = 0; j < 3; j++)
+          x[j] = points(corner[0], j) +
+                 a * (points(corner[1], j) - points(corner[0], j)) +
+                 b * (points(corner[3], j) - points(corner[0], j)) +
+                 w * (points(corner[4], j) - points(corner[0], j));
+        full[iNode] = closestNode(points, x);
       }
     }
   }
@@ -822,6 +929,13 @@ nodalBasis::nodalBasis(int tag)
       generateClosureOrder0(fullClosures, 24);
       closureRef.resize(24, 0);
     }
+    else if(serendip && order > 2) {
+      // (up to order 2 the serendipity tetrahedron is the complete one)
+      clCont closures1;
+      generateFaceClosureTet(closures1, 1);
+      generateFaceClosureSerendip(closures, closures1, order, points);
+      generateFaceClosureTetFullSerendip(fullClosures, closureRef, points);
+    }
     else {
       generateFaceClosureTet(closures, order);
       generateFaceClosureTetFull(fullClosures, closureRef, order, serendip);
@@ -836,7 +950,13 @@ nodalBasis::nodalBasis(int tag)
       closureRef.resize(48, 0);
     }
     else {
-      generateFaceClosurePrism(closures, order);
+      if(serendip && order > 1) {
+        clCont closures1;
+        generateFaceClosurePrism(closures1, 1);
+        generateFaceClosureSerendip(closures, closures1, order, points);
+      }
+      else
+        generateFaceClosurePrism(closures, order);
       generateFaceClosurePrismFull(fullClosures, closureRef, order, points);
     }
     break;
@@ -851,6 +971,7 @@ nodalBasis::nodalBasis(int tag)
     numFaces = 5;
     points = gmshGeneratePointsPyramid(order, serendip);
     generateFaceClosurePyr(closures, order, serendip, points);
+    generateFaceClosurePyrFull(fullClosures, closureRef, closures, points);
     break;
   }
 }

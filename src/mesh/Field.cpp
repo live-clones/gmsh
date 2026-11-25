@@ -73,7 +73,7 @@ void FieldManager::reset()
 {
   for(auto it = begin(); it != end(); it++) { delete it->second; }
   clear();
-  _guidingField = 0;
+  _guidingField = -1;
 }
 
 Field *FieldManager::get(int id)
@@ -142,7 +142,7 @@ void FieldManager::deleteField(int id)
   }
   delete it->second;
   erase(it);
-  if(id == _guidingField) _guidingField = 0;
+  if(id == _guidingField) _guidingField = -1;
   // the fields that refer to others by id resolve them again
   for(auto &f : *this) f.second->updateNeeded = true;
 }
@@ -1054,21 +1054,33 @@ public:
   double evaluate(double x, double y, double z, GEntity *ge)
   {
     if(!_f) return MAX_LC;
-    std::vector<double> values(3 + _fields.size()), res(1);
+    // the values of the fields this one depends on first: they can be
+    // MathEval fields too, which use the buffers of this thread below
+    double local[16];
+    std::vector<double> more;
+    double *fv = local;
+    if(_fields.size() > 16) {
+      more.resize(_fields.size());
+      fv = more.data();
+    }
+    int i = 0;
+    for(auto it = _fields.begin(); it != _fields.end(); it++) {
+      Field *field = GModel::current()->getFields()->get(*it);
+      if(field) { fv[i++] = (*field)(x, y, z, ge); }
+      else {
+        Msg::Warning("Unknown Field %i in MathEval", *it);
+        fv[i++] = MAX_LC;
+      }
+    }
+    // (allocating the vectors at each evaluation costs more than evaluating
+    // a simple expression)
+    static thread_local std::vector<double> values, res;
+    values.resize(3 + _fields.size());
+    res.resize(1);
     values[0] = x;
     values[1] = y;
     values[2] = z;
-    int i = 3;
-    for(auto it = _fields.begin(); it != _fields.end(); it++) {
-      Field *field = GModel::current()->getFields()->get(*it);
-      if(field) {
-        values[i++] = (*field)(x, y, z, ge);
-      }
-      else {
-        Msg::Warning("Unknown Field %i in MathEval", *it);
-        values[i++] = MAX_LC;
-      }
-    }
+    for(std::size_t j = 0; j < _fields.size(); j++) values[3 + j] = fv[j];
     if(_f->eval(values, res))
       return res[0];
     else
@@ -3289,7 +3301,7 @@ FieldManager::FieldManager()
   mapTypeName["AutomaticMeshSizeField"] = new FieldFactoryT<OctreeSizeField>();
 #endif
   _backgroundField = -1;
-  _guidingField = 0;
+  _guidingField = -1;
 }
 
 void FieldManager::initialize()
@@ -3380,7 +3392,7 @@ void FieldManager::setGuidingField(int iView)
 void FieldManager::clearGuidingField()
 {
   if(get(_guidingField)) deleteField(_guidingField);
-  _guidingField = 0;
+  _guidingField = -1;
 }
 
 Field *FieldManager::getDirectionField()
@@ -3399,6 +3411,12 @@ void FieldManager::setBackgroundMesh(int iView)
   int id = newId();
   Field *f = newField(id, "PostView");
   f->options["ViewIndex"]->numericalValue(iView);
+#if defined(HAVE_POST)
+  // the view itself, by its tag, not its position, which changes when views
+  // are sorted or removed
+  if(iView >= 0 && iView < (int)PView::list.size())
+    f->options["ViewTag"]->numericalValue(PView::list[iView]->getTag());
+#endif
   (*this)[id] = f;
   _backgroundField = id;
 }

@@ -41,7 +41,7 @@ protected:
   void projectInMeanPlane(double *xn, double *yn);
 
 public:
-  MQuadrangle(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, int num = 0,
+  MQuadrangle(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, std::size_t num = 0,
               int part = 0)
     : MElement(num, part)
   {
@@ -50,7 +50,7 @@ public:
     _v[2] = v2;
     _v[3] = v3;
   }
-  MQuadrangle(const std::vector<MVertex *> &v, int num = 0, int part = 0)
+  MQuadrangle(const std::vector<MVertex *> &v, std::size_t num = 0, int part = 0)
     : MElement(num, part)
   {
     for(int i = 0; i < 4; i++) _v[i] = v[i];
@@ -168,6 +168,7 @@ public:
       return false;
     return true;
   }
+  virtual bool hasStaticIntegrationPoints() const { return true; }
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
   virtual double angleShapeMeasure();
   // Computes the minimum inradius of the all the circles tangents to
@@ -212,7 +213,7 @@ protected:
 
 public:
   MQuadrangle8(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
-               MVertex *v5, MVertex *v6, MVertex *v7, int num = 0, int part = 0)
+               MVertex *v5, MVertex *v6, MVertex *v7, std::size_t num = 0, int part = 0)
     : MQuadrangle(v0, v1, v2, v3, num, part)
   {
     _vs[0] = v4;
@@ -221,7 +222,7 @@ public:
     _vs[3] = v7;
     for(int i = 0; i < 4; i++) _vs[i]->setPolynomialOrder(2);
   }
-  MQuadrangle8(const std::vector<MVertex *> &v, int num = 0, int part = 0)
+  MQuadrangle8(const std::vector<MVertex *> &v, std::size_t num = 0, int part = 0)
     : MQuadrangle(v, num, part)
   {
     for(int i = 0; i < 4; i++) _vs[i] = v[4 + i];
@@ -333,7 +334,7 @@ protected:
 
 public:
   MQuadrangle9(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
-               MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, int num = 0,
+               MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, std::size_t num = 0,
                int part = 0)
     : MQuadrangle(v0, v1, v2, v3, num, part)
   {
@@ -344,7 +345,7 @@ public:
     _vs[4] = v8;
     for(int i = 0; i < 5; i++) _vs[i]->setPolynomialOrder(2);
   }
-  MQuadrangle9(const std::vector<MVertex *> &v, int num = 0, int part = 0)
+  MQuadrangle9(const std::vector<MVertex *> &v, std::size_t num = 0, int part = 0)
     : MQuadrangle(v, num, part)
   {
     for(int i = 0; i < 5; i++) _vs[i] = v[4 + i];
@@ -460,14 +461,14 @@ protected:
 
 public:
   MQuadrangleN(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3,
-               const std::vector<MVertex *> &v, char order, int num = 0,
+               const std::vector<MVertex *> &v, char order, std::size_t num = 0,
                int part = 0)
     : MQuadrangle(v0, v1, v2, v3, num, part), _vs(v), _order(order)
   {
     for(std::size_t i = 0; i < _vs.size(); i++)
       _vs[i]->setPolynomialOrder(_order);
   }
-  MQuadrangleN(const std::vector<MVertex *> &v, char order, int num = 0,
+  MQuadrangleN(const std::vector<MVertex *> &v, char order, std::size_t num = 0,
                int part = 0)
     : MQuadrangle(v[0], v[1], v[2], v[3], num, part), _order(order)
   {

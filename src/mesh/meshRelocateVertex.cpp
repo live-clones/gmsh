@@ -13,6 +13,8 @@
 #include "MPyramid.h"
 #include "MPrism.h"
 #include "MHexahedron.h"
+#include "MPolygon.h"
+#include "MPolyhedron.h"
 #include "Context.h"
 #include "meshGFaceOptimize.h"
 #include "qualityMeasures.h"
@@ -55,16 +57,22 @@ inline double tet_volume(vec3 a, vec3 b, vec3 c, vec3 d)
   return dot((a - d), cross(b - d, c - d)) / 6.;
 }
 
+// the gamma quality of a tet, and its volume
+static double tetGamma(MElement *e, double &V)
+{
+  return qmTetrahedron::gamma(
+    e->getVertex(0)->x(), e->getVertex(0)->y(), e->getVertex(0)->z(),
+    e->getVertex(1)->x(), e->getVertex(1)->y(), e->getVertex(1)->z(),
+    e->getVertex(2)->x(), e->getVertex(2)->y(), e->getVertex(2)->z(),
+    e->getVertex(3)->x(), e->getVertex(3)->y(), e->getVertex(3)->z(), &V);
+}
+
 // the quality of an element in the objective functions below
 static double elementQuality(MElement *e, bool onlytet, bool signedQuality)
 {
   if(e->getNumVertices() == 4) {
     double V;
-    double Q = qmTetrahedron::gamma(
-      e->getVertex(0)->x(), e->getVertex(0)->y(), e->getVertex(0)->z(),
-      e->getVertex(1)->x(), e->getVertex(1)->y(), e->getVertex(1)->z(),
-      e->getVertex(2)->x(), e->getVertex(2)->y(), e->getVertex(2)->z(),
-      e->getVertex(3)->x(), e->getVertex(3)->y(), e->getVertex(3)->z(), &V);
+    const double Q = tetGamma(e, V);
     return V > 0 ? -Q : Q;
   }
   if(onlytet) return 1.0;
@@ -124,17 +132,23 @@ static double elementQuality(const ElementAroundVertex &a, bool signedQuality)
   return (signedQuality ? q : std::abs(q)) * .2;
 }
 
+// the same, as elementQuality(MElement *, ...)
+static double elementQuality(const ElementAroundVertex &a, bool onlytet,
+                             bool signedQuality)
+{
+  return onlytet ? elementQuality(a.e, true, signedQuality) :
+                   elementQuality(a, signedQuality);
+}
+
+// lt: MElement pointers, or ElementAroundVertex of ver, the moving vertex.
 // signedQuality: the SICN of the elements other than tets keeps its sign, so
 // that inverted ones stay penalized (the hex-dominant meshes); without it its
-// absolute value is taken, as del3d needs for its pyramid apexes. The
-// minimum is no longer computed once it is at most stopAt: the value
-// returned is then at most stopAt
+// absolute value is taken, as del3d needs for its pyramid apexes
 template <class Elements>
 static double objective_function(double xi, MVertex *ver, double xTarget,
                                  double yTarget, double zTarget,
                                  const Elements &lt, bool onlytet = false,
-                                 bool signedQuality = false,
-                                 double stopAt = -1.e22)
+                                 bool signedQuality = false)
 {
   double x = ver->x();
   double y = ver->y();
@@ -143,32 +157,8 @@ static double objective_function(double xi, MVertex *ver, double xTarget,
   ver->y() = (1. - xi) * ver->y() + xi * yTarget;
   ver->z() = (1. - xi) * ver->z() + xi * zTarget;
   double minQual = 1.0;
-  for(std::size_t i = 0; i < lt.size() && minQual > stopAt; i++)
+  for(std::size_t i = 0; i < lt.size(); i++)
     minQual = std::min(elementQuality(lt[i], onlytet, signedQuality), minQual);
-  ver->x() = x;
-  ver->y() = y;
-  ver->z() = z;
-  return minQual;
-}
-
-// the same, ver being the moving vertex of the elements
-static double objective_function(double xi, MVertex *ver, double xTarget,
-                                 double yTarget, double zTarget,
-                                 const std::vector<ElementAroundVertex> &lt,
-                                 bool onlytet, bool signedQuality,
-                                 double stopAt = -1.e22)
-{
-  double x = ver->x();
-  double y = ver->y();
-  double z = ver->z();
-  ver->x() = (1. - xi) * ver->x() + xi * xTarget;
-  ver->y() = (1. - xi) * ver->y() + xi * yTarget;
-  ver->z() = (1. - xi) * ver->z() + xi * zTarget;
-  double minQual = 1.0;
-  for(std::size_t i = 0; i < lt.size() && minQual > stopAt; i++)
-    minQual = std::min(onlytet ? elementQuality(lt[i].e, true, signedQuality) :
-                                 elementQuality(lt[i], signedQuality),
-                       minQual);
   ver->x() = x;
   ver->y() = y;
   ver->z() = z;
@@ -233,12 +223,10 @@ static bool Stopping_Rule(double const x0, double const x1, double const tol)
   return std::abs(x1 - x0) < tol;
 }
 
-template <class Elements>
-static double Maximize_Quality_Golden_Section(MVertex *ver, double xTarget,
-                                              double yTarget, double zTarget,
-                                              const Elements &lt,
-                                              double const tol, double &q,
-                                              bool signedQuality = false)
+static double Maximize_Quality_Golden_Section(
+  MVertex *ver, double xTarget, double yTarget, double zTarget,
+  const std::vector<ElementAroundVertex> &lt, double const tol, double &q,
+  bool signedQuality = false)
 {
   const double lambda = 0.5 * (std::sqrt(5.0) - 1.0);
   const double mu = 0.5 * (3.0 - std::sqrt(5.0)); // = 1 - lambda
@@ -254,11 +242,8 @@ static double Maximize_Quality_Golden_Section(MVertex *ver, double xTarget,
                                     false, signedQuality);
     return fx1 > fx2 ? x1 : x2;
   }
-  // A new value is only compared to the other one: x2 is dropped once fx2 <=
-  // fx1, and x1 once fx1 < fx2, so their exact values are then not needed
-  // (the values of the points kept are exact)
   double fx2 = objective_function(x2, ver, xTarget, yTarget, zTarget, lt, false,
-                                  signedQuality, fx1);
+                                  signedQuality);
 
   while(!Stopping_Rule(a, b, tol)) {
     // printf("GOLDEN : %g %g (%12.5E,%12.5E)\n",a,b,fa,fb);
@@ -269,7 +254,7 @@ static double Maximize_Quality_Golden_Section(MVertex *ver, double xTarget,
       fx1 = fx2;
       x2 = b - mu * (b - a);
       fx2 = objective_function(x2, ver, xTarget, yTarget, zTarget, lt, false,
-                               signedQuality, fx1);
+                               signedQuality);
     }
     else {
       b = x2;
@@ -278,7 +263,7 @@ static double Maximize_Quality_Golden_Section(MVertex *ver, double xTarget,
       fx2 = fx1;
       x1 = a + mu * (b - a);
       fx1 = objective_function(x1, ver, xTarget, yTarget, zTarget, lt, false,
-                               signedQuality, std::nextafter(fx2, -1.e22));
+                               signedQuality);
     }
   }
   // printf("finally : %g %g (%12.5E,%12.5E)\n",a,b,fa,fb);
@@ -432,8 +417,7 @@ void relocateVertexOfPyramid(MVertex *ver, const std::vector<MElement *> &lt,
 }
 
 template <class Elements>
-static void relocateVertexGolden(MVertex *ver, const Elements &lt,
-                                 double relax, double tol,
+static void relocateVertexGolden(MVertex *ver, const Elements &lt, double tol,
                                  bool signedQuality = false)
 {
   if(ver->onWhat()->dim() != 3) return;
@@ -453,24 +437,17 @@ static void relocateVertexGolden(MVertex *ver, const Elements &lt,
     N += lt[i]->getNumVertices();
   }
 
-  // the elements by increasing quality: the worst ones decide the minimum
-  // first, which the golden section search does not always need exactly
-  std::vector<std::pair<double, ElementAroundVertex> > byQuality(lt.size());
+  // the elements around the vertex, and the quality of the worst one where
+  // it is
+  std::vector<ElementAroundVertex> around(lt.size());
+  double NO_MOVE_OBJ = 1.0;
   for(std::size_t i = 0; i < lt.size(); i++) {
-    const ElementAroundVertex a = elementAroundVertex(lt[i], ver);
-    byQuality[i] = {elementQuality(a, signedQuality), a};
+    around[i] = elementAroundVertex(lt[i], ver);
+    NO_MOVE_OBJ =
+      std::min(NO_MOVE_OBJ, elementQuality(around[i], signedQuality));
   }
-  std::sort(byQuality.begin(), byQuality.end(),
-            [](const std::pair<double, ElementAroundVertex> &a,
-               const std::pair<double, ElementAroundVertex> &b) {
-              return a.first < b.first;
-            });
-  std::vector<ElementAroundVertex> sorted(lt.size());
-  for(std::size_t i = 0; i < lt.size(); i++) sorted[i] = byQuality[i].second;
-
-  double NO_MOVE_OBJ = lt.size() ? std::min(1.0, byQuality[0].first) : 1.0;
   double FULL_MOVE_OBJ = objective_function(1.0, ver, x / N, y / N, z / N,
-                                            sorted, false, signedQuality);
+                                            around, false, signedQuality);
   if(FULL_MOVE_OBJ > NO_MOVE_OBJ) {
     // the search below, between the barycenter and itself, would leave it
     // there
@@ -482,7 +459,7 @@ static void relocateVertexGolden(MVertex *ver, const Elements &lt,
 
   double q;
   double xi = Maximize_Quality_Golden_Section(ver, x / N, y / N, z / N,
-                                              sorted, tol, q, signedQuality);
+                                              around, tol, q, signedQuality);
   ver->x() = (1. - xi) * ver->x() + xi * x / N;
   ver->y() = (1. - xi) * ver->y() + xi * y / N;
   ver->z() = (1. - xi) * ver->z() + xi * z / N;
@@ -565,8 +542,13 @@ void RelocateVertices(GFace *gf, int niter, double tol)
   if(!niter) return;
   Msg::Debug("relocate vertices (face %i)", gf->tag());
 
+  // the nodes that do not move: those of the boundary layers, and those of
+  // the polygons, whose shape is not looked at
   std::set<MVertex *> vs;
   getAllBoundaryLayerVertices(gf, vs);
+  for(auto p : gf->polygons)
+    for(std::size_t i = 0; i < p->getNumVertices(); i++)
+      vs.insert(p->getVertex(i));
 
   VertexToElementCSR adj;
   adj.add(gf->triangles);
@@ -598,11 +580,7 @@ static bool goodElements(const Elements &lt, double qTet, double qOther)
     MElement *e = lt[i];
     if(e->getNumVertices() == 4) {
       double V;
-      const double q = qmTetrahedron::gamma(
-        e->getVertex(0)->x(), e->getVertex(0)->y(), e->getVertex(0)->z(),
-        e->getVertex(1)->x(), e->getVertex(1)->y(), e->getVertex(1)->z(),
-        e->getVertex(2)->x(), e->getVertex(2)->y(), e->getVertex(2)->z(),
-        e->getVertex(3)->x(), e->getVertex(3)->y(), e->getVertex(3)->z(), &V);
+      const double q = tetGamma(e, V);
       if(V > 0 || q < qTet) return false;
     }
     else if(e->minSICNShapeMeasure() < qOther)
@@ -617,10 +595,8 @@ void RelocateVertices(GRegion *region, int niter, double tol, int nthreads,
   if(!niter) return;
 
   if(nthreads <= 0)
-    nthreads = CTX::instance()->mesh.maxNumThreads3D > 0 ?
-                 CTX::instance()->mesh.maxNumThreads3D :
-                 CTX::instance()->numThreadsFor(region->getNumMeshElements(),
-                                                1000);
+    nthreads =
+      region->getNumMeshElements() < 1000 ? 1 : CTX::instance()->numThreads3D();
 
   // the elements around each vertex, the vertices by increasing number and
   // the elements in the order of the lists below (as a v2t_cont)
@@ -631,13 +607,19 @@ void RelocateVertices(GRegion *region, int niter, double tol, int nthreads,
   adj.add(region->hexahedra);
   adj.finalize();
 
+  // the nodes of the polyhedra do not move: their shape is not looked at
+  std::set<MVertex *> fixed;
+  for(auto p : region->polyhedra)
+    for(std::size_t i = 0; i < p->getNumVertices(); i++)
+      fixed.insert(p->getVertex(i));
+
   // the vertices that move (inside the region), numbered in MVertex::_index
   // (-1 for the others)
   std::vector<MVertex *> vertices;
   std::vector<ElementSpan> elements;
   for(std::size_t k = 0; k < adj.numVertices(); k++) {
     MVertex *v = adj.vertex(k);
-    if(v->onWhat()->dim() != 3) {
+    if(v->onWhat()->dim() != 3 || fixed.count(v)) {
       v->setIndex(-1);
       continue;
     }
@@ -703,7 +685,6 @@ void RelocateVertices(GRegion *region, int niter, double tol, int nthreads,
   const double qTet = 0.5, qOther = 0.9;
   std::vector<char> active(n, 1), moved(n, 0);
   for(int pass = 0; pass < niter + 2; pass++) {
-    double relax = std::min((double)(pass + 1) / niter, 1.0);
     for(int c = 0; c < nbColors; c++) {
       const std::vector<int> &list = byColor[c];
 #pragma omp parallel for schedule(dynamic, 64) num_threads(nthreads)
@@ -713,7 +694,7 @@ void RelocateVertices(GRegion *region, int niter, double tol, int nthreads,
         if(skipGoodVertices && goodElements(elements[i], qTet, qOther))
           continue;
         const SPoint3 before = vertices[i]->point();
-        relocateVertexGolden(vertices[i], elements[i], relax, tol, true);
+        relocateVertexGolden(vertices[i], elements[i], tol, true);
         moved[i] = before.distance(vertices[i]->point()) > 1.e-3 * length[i];
       }
     }
@@ -1097,10 +1078,9 @@ void RelocateVerticesOfPyramids(GRegion *region, int niter, double tol)
 
   for(int i = 0; i < niter + 2; i++) {
     auto it = adj.begin();
-    double relax = std::min((double)(i + 1) / niter, 1.0);
     while(it != adj.end()) {
       if(_vts.find(it->first) != _vts.end())
-        relocateVertexGolden(it->first, it->second, relax, tol);
+        relocateVertexGolden(it->first, it->second, tol);
       ++it;
     }
   }

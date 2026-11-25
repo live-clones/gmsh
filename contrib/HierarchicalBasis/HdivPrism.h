@@ -19,11 +19,11 @@
 
 // H(div) basis on the prism of base (0, 0), (1, 0), (0, 1) and height w in
 // [-1, 1], with the affine coordinates L0 = 1 - u - v, L1 = u, L2 = v of the
-// triangle, B = (1 - w) / 2 and T = (1 + w) / 2: the space D_p x P_p(w) + P_p x
-// P_p+1(w) e_w, D_p being the H(div) space of the triangle (HdivTriangle), so
-// that its normal traces are those of HdivTetrahedron on the triangular faces
-// and of HdivHexahedron on the quadrilateral faces, and its divergences span
-// P_p x P_p (L2Legendre):
+// triangle, B = (1 - w) / 2 and T = (1 + w) / 2: the Raviart-Thomas space
+// RT_p x P_p(w) + P_p x P_p+1(w) e_w, RT_p being that of the triangle, so that
+// its normal traces are those of HdivTetrahedron on the triangular faces and
+// of HdivHexahedron on the quadrilateral faces, and its divergences span P_p x
+// P_p (L2Legendre), with a commuting interpolation:
 // - on the quadrilateral faces, as on the faces of the hexahedron, the lowest
 //   order function, then the curls of the rotational H(curl) functions of the
 //   face (see HcurlPrism) by increasing order;
@@ -31,9 +31,11 @@
 //   fields whose normal traces are those of the faces of HdivTetrahedron: the
 //   Whitney 2-form of the face, then the curls of its rotational H(curl)
 //   functions of order l + 1 (see hcurlTriangleRotational), for the orders l;
-// - in the interior, the face functions d of HdivTriangle times L_k(w), and the
-//   products q of Legendre polynomials of degree at most p of 2 u - 1 and 2 v -
-//   1 times l_k(w) e_w, by increasing order;
+// - in the interior, the face functions d of HdivTriangle of order p + 1 that
+//   belong to RT_p (its rotated gradients of order at most p and its rotated
+//   rotational functions), times L_k(w), and the products q of Legendre
+//   polynomials of degree at most p of 2 u - 1 and 2 v - 1 times l_k(w) e_w,
+//   by increasing order;
 // where L_k are the Legendre polynomials and l_k the Lobatto polynomials. The
 // divergence-free functions of this space are not all curls of H(curl)
 // functions of the same order, nor local to one face, so the space is not
@@ -42,11 +44,11 @@ class HdivPrism : public HierarchicalBasis {
 public:
   HdivPrism(int order);
   void functionInfo(std::vector<FunctionInfo> &info) override;
-  void functions(const Dual *x, std::vector<Vec> &vertex,
-                 std::vector<Vec> &edge, std::vector<Vec> &face,
-                 std::vector<Vec> &bubble) override;
+  void functions(const Dual *x, std::vector<DualVector> &vertex,
+                 std::vector<DualVector> &edge, std::vector<DualVector> &face,
+                 std::vector<DualVector> &bubble) override;
   void faceFunctions(const Dual *x, int flag1, int flag2, int flag3,
-                     int faceNumber, std::vector<Vec> &face) override;
+                     int faceNumber, std::vector<DualVector> &face) override;
 
 private:
   int _order;
@@ -55,10 +57,10 @@ private:
   // the functions of quadrilateral face f, from its H(curl) functions c, in
   // the orientation given by the flags
   void _quadrangle(const Dual *x, int f, int flag1, int flag2, int flag3,
-                   const Vec *c, Vec *out);
+                   const DualVector *c, DualVector *out);
   // the functions of triangular face f (0 for the bottom, 1 for the top), the
   // roles of its vertices given by r
-  void _triangleFace(const Dual *x, int f, const int *r, Vec *out);
+  void _triangleFace(const Dual *x, int f, const int *r, DualVector *out);
 };
 
 #endif

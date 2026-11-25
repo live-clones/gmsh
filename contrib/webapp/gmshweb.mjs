@@ -1,0 +1,137 @@
+// Gmsh web app - Copyright (C) 2026 C. Geuzaine and J.-F. Remacle
+//
+// This program is free software: you can redistribute it and/or modify it under
+// the terms of the GNU Affero General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more
+// details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+// What the page calls in Gmsh besides its API: the functions of webApp.cpp
+// (gmshWeb*, see the comments there), each as a function of web
+import {Module, log, setStatus} from './app.mjs';
+
+// a C++ exception or a trap out of one of them goes to the messages and the
+// status bar before it is thrown on; after a trap the module is dead, and the
+// page says to reload it
+let dead = false;
+function call(name, ret, types, args) {
+  if(dead) throw new Error('Gmsh has stopped');
+  try {
+    return Module.ccall('gmshWeb' + name, ret, types, args);
+  } catch(e) {
+    dead = e instanceof WebAssembly.RuntimeError;
+    const what = `Error   : ${e && e.message ? e.message : e} (in gmshWeb${name})`;
+    log(what);
+    setStatus(dead ? 'Gmsh has stopped after an internal error: reload the page' : what, true);
+    throw e;
+  }
+}
+// (a pointer is given as 'pointer', which ccall converts for a wasm64 module,
+// whose functions take pointers as BigInt)
+const N = 'number', S = 'string', P = 'pointer';
+// a function of webApp.cpp that writes doubles in a buffer: the values, or
+// null if it returned 0
+function doubles(name, count) {
+  const xy = Module._malloc(8 * count);
+  const ok = call(name, N, [P], [xy]);
+  const v = ok ? Array.from(Module.HEAPF64.subarray(xy / 8, xy / 8 + count)) : null;
+  Module._free(xy);
+  return v;
+}
+
+export const web = {
+  // the scene (see scene.mjs)
+  draw: (w, h, dpr) => call('Draw', N, [N, N, N], [w, h, dpr]),
+  drawStudio: (w, h, dpr, budget) => call('DrawStudio', N, [N, N, N, N], [w, h, dpr, budget]),
+  mouse: (kind, x, y, w, h, button, wheel, mods) =>
+    call('Mouse', N, [N, N, N, N, N, N, N, N], [kind, x, y, w, h, button, wheel, mods]),
+  pinch: (kind, x, y, d) => call('Pinch', N, [N, N, N, N], [kind, x, y, d]),
+  magnify: (x, y, factor) => call('Magnify', N, [N, N, N], [x, y, factor]),
+  mouseLeft: () => call('MouseLeft', null, [], []),
+  // what the pointer is over, and where the box hangs: [text, x, y]
+  hoverText: () => {
+    const xy = Module._malloc(2 * 8);
+    const text = call('HoverText', S, [P], [xy]);
+    const a = Module.HEAPF64.subarray(xy / 8, xy / 8 + 2);
+    const r = [text, a[0], a[1]];
+    Module._free(xy);
+    return r;
+  },
+  crossCursor: () => call('CrossCursor', N, [], []),
+  // the lasso being drawn: [x0, y0, x1, y1], or null
+  lasso: () => doubles('Lasso', 4),
+  stopLasso: () => call('StopLasso', N, [], []),
+  resetView: () => call('ResetView', null, [], []),
+  view: (action, mods) => call('View', N, [S, N], [action, mods]),
+  colorScheme: (dark) => call('ColorScheme', N, [N], [dark]),
+  // the tools and the operations (see tools.mjs)
+  tool: (t) => call('Tool', N, [N], [t]),
+  // the tool under way ("" if none: a tool of one click ends by itself)
+  toolName: () => call('ToolName', S, [], []),
+  // the placing of a shape (see shapePlacement): started with the values of
+  // its fields, stopped, its state ({changes, values, locked, plane}, or null),
+  // a field typed, a lock, the work plane, the shape added (1 if it was not)
+  placementStart: (name, values) =>
+    call('PlacementStart', N, [S, S], [name, values.join('\n')]),
+  placementStop: () => call('PlacementStop', null, [], []),
+  placement: () => {
+    const s = call('Placement', S, [], []);
+    return s ? JSON.parse(s) : null;
+  },
+  placementSet: (i, value) => call('PlacementSet', null, [N, S], [i, value]),
+  placementLock: (i, on) => call('PlacementLock', null, [N, N], [i, on ? 1 : 0]),
+  placementPlane: (plane) => call('PlacementPlane', null, [N], [plane]),
+  placementAdd: () => call('PlacementAdd', N, [], []),
+  measuring: () => call('Measuring', N, [], []),
+  notes: () => call('Notes', S, [], []),
+  operation: (name) => call('Operation', S, [S], [name]),
+  operationValue: (name, value) => call('OperationValue', null, [S, S], [name, value]),
+  operationKey: (key) => call('OperationKey', null, [N], [key]),
+  operationState: () => call('OperationState', S, [], []),
+  // the action registry, the shapes and the script (see actions.mjs, editor.mjs)
+  actions: () => call('Actions', S, [], []),
+  action: (id, view) => call('Action', N, [N, N], [id, view]),
+  actionCheck: (id) => call('ActionCheck', N, [N], [id]),
+  shapes: () => call('Shapes', S, [], []),
+  addShape: (shape, values) => call('AddShape', N, [S, S], [shape, values]),
+  scriptProgram: (name) => call('ScriptProgram', S, [S], [name]),
+  scriptStyles: (file, text) => call('ScriptStyles', S, [S, S], [file, text]),
+  // the options, the views and the colours (see options.mjs, views.mjs,
+  // parameters.mjs)
+  optionPages: () => call('OptionPages', S, [], []),
+  optionChoices: (option) => call('OptionChoices', S, [S], [option]),
+  optionRange: (option) => call('OptionRange', S, [S], [option]),
+  viewContent: (i) => call('ViewContent', N, [N], [i]),
+  color: (name) => call('Color', N, [S], [name]),
+  readableColor: (rgb, bg, fg, dark, what) =>
+    call('ReadableColor', N, [N, N, N, N, N], [rgb, bg, fg, dark, what]),
+  // the ONELAB loop (see solverClient.mjs)
+  onelabSet: (json) => call('OnelabSet', N, [S], [json]),
+  onelabMacro: (name) => call('OnelabMacro', N, [S], [name]),
+  // the plugins (see plugins.mjs): their list and options, the sliders of
+  // their options for a view, the preview of an option being edited (a
+  // negative option removes it; 1 if the scene is to be drawn again), a run
+  plugins: () => JSON.parse(call('Plugins', S, [], [])),
+  pluginRanges: (name, view) => JSON.parse(call('PluginRanges', S, [S, N], [name, view])),
+  pluginPreview: (name, option, value = 0, text = null) =>
+    call('PluginPreview', N, [S, N, N, S], [name, option, value, text]),
+  pluginRun: (name, views) => call('PluginRun', null, [S, S], [name, views.join(',')]),
+  onelabStart: (action) => call('OnelabStart', null, [S], [action]),
+  onelabGmsh: (pass) => call('OnelabGmsh', S, [S], [pass]),
+  onelabNext: (goOn) => call('OnelabNext', N, [N], [goOn ? 1 : 0]),
+  onelabMerge: (name) => call('OnelabMerge', null, [S], [name]),
+  onelabUpdateGraphs: () => call('OnelabUpdateGraphs', null, [], []),
+  onelabForgetSolvers: () => call('OnelabForgetSolvers', null, [], []),
+  errorCount: () => call('ErrorCount', N, [], []),
+  // the strokes of an icon (see IconStrokes.h), for the status bar
+  icon: (name) => call('Icon', S, [S], [name]),
+  // the files (see models.mjs)
+  unzip: (zip, dir) => call('Unzip', null, [S, S], [zip, dir]),
+};

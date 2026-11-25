@@ -12,6 +12,7 @@
 #include <utility>
 #include <vector>
 #include "SBoundingBox3d.h"
+#include "scenePicks.h"
 #include "SPoint2.h"
 #include "Camera.h"
 #include "glApi.h"
@@ -26,6 +27,7 @@ class GEdge;
 class GFace;
 class GRegion;
 class MElement;
+class MVertex;
 class PView;
 
 #if defined(HAVE_VISUDEV)
@@ -218,6 +220,11 @@ std::vector<std::string> queryPoint(const double xyz[3], GEntity *entity,
 // The mesh element a query reports at a point when the pick found none there,
 // in the mesh that is drawn (see drawQuery.cpp)
 MElement *queryElement(const double xyz[3], double pixel);
+// The mesh node closest to a point, among the nodes of the elements around it
+// and of the element given (if any), and how far it is: none if further than
+// tol (a number of pixels times the size of one), unless tol is negative
+MVertex *closestNode(const double xyz[3], MElement *element, double &dist,
+                     double tol = -1.);
 // What a measurement says of the two points it was given (see drawQuery.cpp)
 std::vector<std::string> measurePoints(const double a[3], const double b[3]);
 // Whether the point of the model behind what was drawn of a view at xyz is
@@ -331,9 +338,29 @@ private:
       return type == o.type && ient == o.ient && type2 == o.type2 &&
              ient2 == o.ient2;
     }
+    bool operator<(const pickKey &o) const
+    {
+      if(type != o.type) return type < o.type;
+      if(ient != o.ient) return ient < o.ient;
+      if(type2 != o.type2) return type2 < o.type2;
+      return ient2 < o.ient2;
+    }
   };
-  // the entities stepped past, and the last one a pick chose
+  // the entities stepped past (or found by the passes of a box before, see
+  // select()), and the last one a pick chose; the keys are also kept sorted,
+  // as every object of a pass is looked up among them
   std::vector<pickKey> _pickSkip;
+  std::multiset<pickKey> _pickSkipSet;
+  void _skipPush(const pickKey &k)
+  {
+    _pickSkip.push_back(k);
+    _pickSkipSet.insert(k);
+  }
+  void _skipPop()
+  {
+    _pickSkipSet.erase(_pickSkipSet.find(_pickSkip.back()));
+    _pickSkip.pop_back();
+  }
   pickKey _pickLast;
   bool _pickLastValid = false;
   int _pickCandidates = 0;
@@ -359,7 +386,7 @@ private:
   // for initPosition()
   double _projection[16], _modelBase[16];
   void drawAxis(double xmin, double ymin, double zmin, double xmax, double ymax,
-                double zmax, int nticks, int mikado);
+                double zmax, const std::vector<double> &ticks, int mikado);
   bool generateTextureForImage(const std::string &name, int page,
                                GLuint &imageTexture, GLuint &imageW,
                                GLuint &imageH);
@@ -392,12 +419,8 @@ private:
   // same as _pickColor, but reachable from the free drawing functions
   static bool _pickColorActive;
   bool _selectColor(int type, bool multiple, bool mesh, bool post, int x, int y,
-                    int w, int h, std::vector<GVertex *> &vertices,
-                    std::vector<GEdge *> &edges, std::vector<GFace *> &faces,
-                    std::vector<GRegion *> &regions,
-                    std::vector<MElement *> &elements,
-                    std::vector<SPoint2> &points,
-                    std::vector<PView *> &views);
+                    int w, int h, scenePicks &picks,
+                    std::vector<pickKey> *seen = nullptr);
 public:
   // true during a colour buffer picking pass, where the drawing code must
   // use the colour set by setPickColor() instead of its own
@@ -506,6 +529,8 @@ public:
   void setPickColorFor(GEntity *e, bool front = false);
   static bool pickColorActive() { return _pickColorActive; }
   drawContext(drawTransform *transform = nullptr);
+  // the view (rotation, translation, scale) of the options
+  void initView();
   // factor between the true size in pixels and the size reported by the OS
   // (e.g. 2 on an Apple "retina" display); refreshed by the GUI before each
   // draw, as it changes when a window moves across displays
@@ -569,7 +594,23 @@ public:
   // shifted for a studio frame) and the modelview (the camera looking at
   // its target), which `view' comes back with
   void initCameraMatrices(double view[16]);
+  // the colour a frame starts from: the background, or white for a print
+  // without its background
+  static void setClearColor();
   void initPosition(bool saveMatrices);
+  // the scale that fits the bounding box in the viewport, without translation,
+  // as it is currently rotated, with the margin it has at scale 1 along Z
+  double fitScale();
+  // a standard point of view: "x", "y" or "z" for that axis pointing out of
+  // the screen (into it when opposite), "3d" for the isometric view with Z up
+  // (seen from the other side when opposite), "1:1" to fit the model without
+  // translation, "reset" for no rotation, translation or scaling
+  void standardView(const std::string &which, bool opposite);
+  // the point of view of the buttons of the status bar and of their keys:
+  // as standardView() for "x", "y", "z" and "3d", "1:1" first fitting the
+  // bounding box to what is visible if other, and "r" a quarter turn about the
+  // axis out of the screen, clockwise (counterclockwise if other)
+  void pointOfView(const std::string &which, bool other);
   void unproject(double winx, double winy, double p[3], double d[3]);
   // where a point of the model is in the window, in its units and with the
   // matrices of the frame, as unproject() reads them back: false when the
@@ -582,12 +623,11 @@ public:
   // that set them (see world2Window() above)
   void viewport2World(double vp[3], double xyz[3]);
   void world2Viewport(double xyz[3], double vp[3]);
+  // a pick on a mesh gives its element (the query): set by the scene for its
+  // picking pass (see sceneView::beginSelection())
+  bool pickElements = false;
   bool select(int type, bool multiple, bool mesh, bool post, int x, int y,
-              int w, int h, std::vector<GVertex *> &vertices,
-              std::vector<GEdge *> &edges, std::vector<GFace *> &faces,
-              std::vector<GRegion *> &regions,
-              std::vector<MElement *> &elements, std::vector<SPoint2> &points,
-              std::vector<PView *> &views);
+              int w, int h, scenePicks &picks, bool through = true);
   void recenterForRotationCenterChange(SPoint3 newRotationCenter);
   int fix2dCoordinates(double *x, double *y);
   void draw3d();
@@ -622,9 +662,12 @@ public:
                   double style, int line_num = 0);
   void drawImage(const std::string &s, double x, double y, double z,
                  int align = 0);
+  // (wire: the edges of its triangles)
   void drawSphere(double R, double x, double y, double z, int n1, int n2,
-                  int light);
-  void drawSphere(double size, double x, double y, double z, int light);
+                  int light, bool wire = false);
+  // a sphere of a point size, or a marker (see GLYPH_MARKER)
+  void drawSphere(double size, double x, double y, double z, int light,
+                  bool marker = false);
   void drawCylinder(double width, double *x, double *y, double *z, int light);
   // update the glyph shapes to the options; they are only read afterwards,
   // possibly by several threads at once

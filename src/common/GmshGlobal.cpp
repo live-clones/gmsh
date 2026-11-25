@@ -6,11 +6,7 @@
 #include <string>
 #include <time.h>
 #include "GmshConfig.h"
-#if !defined(HAVE_NO_STDINT_H)
-#include <stdint.h>
-#elif defined(HAVE_NO_INTPTR_T)
-typedef unsigned long intptr_t;
-#endif
+#include <cstdint>
 #include "GmshVersion.h"
 #include "GmshMessage.h"
 #include "GmshDefines.h"
@@ -58,11 +54,12 @@ typedef unsigned long intptr_t;
 #endif
 #endif
 
+#include "GuiListener.h"
 #if defined(HAVE_FLTK)
 #include "FlGui.h"
 #include "graphicWindow.h"
 #include "drawContext.h"
-#include "onelabGroup.h"
+#include "onelabActions.h"
 
 #endif
 
@@ -76,7 +73,10 @@ int GmshInitialize(int argc, char **argv, bool readConfigFiles,
 
 #if defined(HAVE_FLTK)
   RedirectIOToConsole();
+  // the engines that draw text, whether or not the interface runs
+  SetFontEngineMaker(fltkFontEngine);
 #endif
+  SetCrashReport(true);
 
   // we need at least one model during option parsing
   GModel *dummy = nullptr;
@@ -233,8 +233,26 @@ int GmshMergeFile(const std::string &fileName, bool errorIfMissing)
   return MergeFile(fileName, errorIfMissing);
 }
 
+// the last file merged by GmshMergePostProcessingFile(), which GetDP calls when
+// it runs in the program: both for the files it reads (GmshRead) and for those
+// it asks to show, which it follows with Msg::RequestRender() (a web worker
+// running GetDP sends that one to its page then, see contrib/webapp), with
+// the position in PView::list of the first view it added
+static std::string _lastMergedPostProcessingFile;
+static std::size_t _lastMergedFirstView = 0;
+
+const std::string &GmshLastMergedPostProcessingFile(std::size_t *firstView)
+{
+  if(firstView) *firstView = _lastMergedFirstView;
+  return _lastMergedPostProcessingFile;
+}
+
 int GmshMergePostProcessingFile(const std::string &fileName)
 {
+  _lastMergedPostProcessingFile = fileName;
+#if defined(HAVE_POST)
+  _lastMergedFirstView = PView::list.size();
+#endif
   return MergePostProcessingFile(
     fileName, CTX::instance()->solver.autoShowViews,
     CTX::instance()->solver.autoShowLastStep, true);
@@ -248,6 +266,20 @@ int GmshWriteFile(const std::string &fileName)
 
 int GmshFinalize()
 {
+#if defined(HAVE_FLTK)
+  // the GUI shows the models, views, fields and plugins deleted below, and
+  // would point to them after a new initialization: it goes first, from its
+  // own thread only (from another, nothing is deleted under it)
+  if(FlGui::available()) {
+    if(!FlGui::onMainThread()) {
+      Msg::Error("Cannot finalize outside the thread of the graphical "
+                 "interface");
+      return 0;
+    }
+    FlGui::destroy();
+  }
+#endif
+
   // delete all models and views
   DeleteAllModelsAndViews();
 
@@ -267,6 +299,7 @@ int GmshFinalize()
   }
 #endif
   Msg::Finalize();
+  SetCrashReport(false);
   isInitialized = false;
   return 1;
 }
@@ -415,7 +448,7 @@ int GmshFLTK(int argc, char **argv)
 {
 #if defined(HAVE_FLTK) && defined(HAVE_POST)
   // create the GUI
-  FlGui::instance(argc, argv);
+  FlGui::create(argc, argv);
 
   StartupMessage();
 
@@ -451,7 +484,7 @@ int GmshFLTK(int argc, char **argv)
   if(CTX::instance()->post.combineTime) {
     PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig,
                    CTX::instance()->post.combineCopyOptions);
-    FlGui::instance()->updateViews(true, true);
+    FlGui::instance()->updateViews(true);
   }
 
   // init first context
@@ -493,7 +526,7 @@ int GmshFLTK(int argc, char **argv)
   }
 
   // launch solver (if requested) and fill onelab tree
-  solver_cb(nullptr, (void *)(intptr_t)CTX::instance()->launchSolverAtStartup);
+  selectSolver(CTX::instance()->launchSolverAtStartup);
 
   // loop
   return FlGui::instance()->run();

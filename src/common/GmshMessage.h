@@ -123,6 +123,17 @@ public:
   static void PrintErrorCounter(const char *title);
   static int GetWarningCount();
   static int GetErrorCount();
+  // errors reported and counted, not thrown, while it lives, whatever
+  // General.AbortOnError says: for the code of a graphical interface, which
+  // expects errors to return (the entries of the web page, as the desktop
+  // interface, see Msg::Error())
+  class NoThrow {
+    int _abortOnError;
+
+  public:
+    NoThrow();
+    ~NoThrow();
+  };
   static std::string GetFirstWarning();
   static std::string GetFirstError();
   static std::string GetLastError();

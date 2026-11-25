@@ -7,7 +7,8 @@
 #include "MPolygon.h"
 #include "GmshMessage.h"
 
-MPolygon::MPolygon(const std::vector<MVertex *> &vertices, int num, int part)
+MPolygon::MPolygon(const std::vector<MVertex *> &vertices, std::size_t num,
+                   int part)
   : MElement(num, part), _vertices(vertices),
     _numBoundary((int)vertices.size()), _givenTriangles(false)
 {
@@ -104,8 +105,13 @@ void MPolygon::_ensureTriangles() const
       if(cr < 0.) continue; // reflex
       bool ok = true;
       for(int j = 0; j < n && ok; j++) {
+        // (a node repeated in the boundary, as on the bridge to a hole, is
+        // not in the way of the ears at its other occurrences)
         int p = ring[j];
-        if(p != a && p != b && p != c && inside(p, a, b, c)) ok = false;
+        MVertex *vp = _vertices[p];
+        if(p != a && p != b && p != c && vp != _vertices[a] &&
+           vp != _vertices[b] && vp != _vertices[c] && inside(p, a, b, c))
+          ok = false;
       }
       if(ok) ear = i;
     }
@@ -224,6 +230,25 @@ bool MPolygon::isInside(double u, double v, double w, double tol) const
   // out of the plane: compare with the size of the triangle
   MTriangle t = getTriangle(i);
   return dist <= tol * t.maxEdge();
+}
+
+double MPolygon::integrate(double val[], int pOrder, int stride, int order)
+{
+  double sum = 0.;
+  for(int i = 0; i < getNumTriangles(); i++) {
+    std::array<int, 3> t = getTriangleIndices(i);
+    MVertex *v[3] = {_vertices[t[0]], _vertices[t[1]], _vertices[t[2]]};
+    double a[3] = {v[1]->x() - v[0]->x(), v[1]->y() - v[0]->y(),
+                   v[1]->z() - v[0]->z()};
+    double b[3] = {v[2]->x() - v[0]->x(), v[2]->y() - v[0]->y(),
+                   v[2]->z() - v[0]->z()};
+    double n[3] = {a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2],
+                   a[0] * b[1] - a[1] * b[0]};
+    double area = 0.5 * std::sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
+    sum += area *
+           (val[stride * t[0]] + val[stride * t[1]] + val[stride * t[2]]) / 3.;
+  }
+  return sum;
 }
 
 void MPolygon::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)

@@ -44,11 +44,11 @@ class HcurlPrism : public HierarchicalBasis {
 public:
   HcurlPrism(int order);
   void functionInfo(std::vector<FunctionInfo> &info) override;
-  void functions(const Dual *x, std::vector<Vec> &vertex,
-                 std::vector<Vec> &edge, std::vector<Vec> &face,
-                 std::vector<Vec> &bubble) override;
+  void functions(const Dual *x, std::vector<DualVector> &vertex,
+                 std::vector<DualVector> &edge, std::vector<DualVector> &face,
+                 std::vector<DualVector> &bubble) override;
   void faceFunctions(const Dual *x, int flag1, int flag2, int flag3,
-                     int faceNumber, std::vector<Vec> &face) override;
+                     int faceNumber, std::vector<DualVector> &face) override;
 
 protected:
   bool hasParts() const override { return true; }
@@ -59,7 +59,7 @@ private:
   // the functions of quadrilateral face f, from the H1 functions h of the
   // face, in the orientation given by the flags
   int _quadrangle(const Dual *x, int f, int flag1, int flag2, int flag3,
-                  const Dual *h, Vec *out);
+                  const Dual *h, DualVector *out);
 };
 
 #endif

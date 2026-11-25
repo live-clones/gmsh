@@ -3,15 +3,11 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#include "GmshConfig.h"
-#if !defined(HAVE_NO_STDINT_H)
-#include <stdint.h>
-#elif defined(HAVE_NO_INTPTR_T)
-typedef unsigned long intptr_t;
-#endif
+#include <cstdint>
 #include <algorithm>
+#include <functional>
 #include <vector>
-#include <string.h>
+#include <set>
 #include <FL/Fl_Return_Button.H>
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Value_Input.H>
@@ -30,9 +26,7 @@ typedef unsigned long intptr_t;
 #include "PluginManager.h"
 #include "Plugin.h"
 #include "GModel.h"
-#include "MVertex.h"
 #include "Context.h"
-#include "scriptStringInterface.h"
 #include "StringUtils.h"
 #include "OS.h"
 
@@ -44,11 +38,6 @@ public:
   Fl_Value_Input *value[MAX_PLUGIN_OPTIONS];
   Fl_Input *input[MAX_PLUGIN_OPTIONS];
 };
-
-void plugin_cb(Fl_Widget *w, void *data)
-{
-  FlGui::instance()->plugins->show((intptr_t)data);
-}
 
 // the field of an option changed: tell the plugin, which may preview it
 static void plugin_input_value_cb(Fl_Widget *w, void *data)
@@ -178,51 +167,15 @@ static void plugin_run_cb(Fl_Widget *w, void *data)
     sxn->def = p->dialogBox->value[i]->value();
   }
 
-  if(p->getType() == GMSH_Plugin::GMSH_POST_PLUGIN) {
-    GMSH_PostPlugin *pp = (GMSH_PostPlugin *)p;
-    // run on all selected views
-    bool no_view_selected = true;
-    Fl_Multi_Browser *views = FlGui::instance()->plugins->views->browser;
-    for(int i = 1; i <= views->size(); i++) {
-      if(views->selected(i)) {
-        no_view_selected = false;
-        try {
-          if(i - 1 >= 0 && i - 1 < (int)PView::list.size()) {
-            PView *view = PView::list[i - 1];
-            if(view->getData()->isRemote())
-              pp->executeRemote(view);
-            else {
-              // run on the selected view, whatever the View option says
-              StringXNumber *opt = nullptr;
-              for(int j = 0; j < pp->getNbOptions(); j++)
-                if(std::string(pp->getOption(j)->str) == "View")
-                  opt = pp->getOption(j);
-              double old = opt ? opt->def : 0.;
-              if(opt) opt->def = view->getIndex();
-              pp->execute(view);
-              add_scripting(pp, view);
-              if(opt) opt->def = old;
-            }
-          }
-          else {
-            pp->execute(nullptr);
-            add_scripting(pp, nullptr);
-          }
-        } catch(const std::exception &e) {
-          Msg::Error("Plugin(%s) failed: %s", pp->getName().c_str(), e.what());
-        }
-      }
-    }
-    if(no_view_selected) {
-      pp->execute(nullptr);
-      add_scripting(pp, nullptr);
-    }
-  }
-  else {
-    p->run();
-  }
-
-  FlGui::instance()->updateViews(true, true);
+  // the views chosen (none: the one the View option gives)
+  std::vector<int> chosen;
+  Fl_Multi_Browser *views = FlGui::instance()->plugins->views->browser;
+  for(int i = 1; i <= views->size(); i++)
+    if(views->selected(i)) chosen.push_back(i - 1);
+  PluginManager::instance()->runOnViews(p, chosen, [p](PView *view) {
+    add_scripting((GMSH_PostPlugin *)p, view);
+  });
+  FlGui::instance()->updateViews(true);
   GMSH_Plugin::preview = nullptr;
   drawContext::global()->draw();
 }
@@ -239,18 +192,23 @@ static void plugin_views_cb(Fl_Widget *w, void *data)
   plugin_browser_cb(nullptr, nullptr);
 }
 
+pluginWindow::~pluginWindow()
+{
+  // the dialog boxes of the plugins: the one shown is in the scroll, deleted
+  // with the window; the others belong to no window
+  for(auto it = PluginManager::instance()->begin();
+      it != PluginManager::instance()->end(); ++it) {
+    GMSH_Plugin *p = it->second;
+    if(!p->dialogBox) continue;
+    if(p != _shown) delete p->dialogBox->group;
+    delete p->dialogBox;
+    p->dialogBox = nullptr;
+  }
+  Fl::delete_widget(win);
+}
+
 static void plugin_resized_cb(void *data)
 { FlGui::instance()->plugins->layout(); }
-
-// the height of the label of a box wrapped on lines w wide, as FLTK draws a
-// label inside its box, plus a border below
-static int wrappedHeight(Fl_Box *b, int w)
-{
-  fl_font(b->labelfont(), b->labelsize());
-  int tw = w - 6, th = 0;
-  fl_measure(b->label(), tw, th, 0);
-  return th + WB;
-}
 
 void pluginWindow::_createDialogBox(GMSH_Plugin *p)
 {
@@ -258,11 +216,13 @@ void pluginWindow::_createDialogBox(GMSH_Plugin *p)
   PluginDialogBox *d = p->dialogBox = new PluginDialogBox;
   d->group = new Fl_Group(0, 0, 10 * BH, 10 * BH);
 
-  d->title = new Fl_Box(0, 0, IW, BH, strdup(p->getName().c_str()));
+  d->title = new Fl_Box(0, 0, IW, BH);
+  d->title->copy_label(p->getName().c_str());
   d->title->labelfont(FL_BOLD);
   d->title->labelsize(FL_NORMAL_SIZE + 3);
   d->title->align(FL_ALIGN_INSIDE | FL_ALIGN_LEFT);
-  d->about = new Fl_Box(0, 0, IW, BH, strdup(p->getShortHelp().c_str()));
+  d->about = new Fl_Box(0, 0, IW, BH);
+  d->about->copy_label(p->getShortHelp().c_str());
   d->about->align(FL_ALIGN_WRAP | FL_ALIGN_TOP | FL_ALIGN_LEFT |
                   FL_ALIGN_INSIDE);
 
@@ -339,7 +299,9 @@ pluginWindow::pluginWindow(int deltaFontSize)
 
   win = new paletteWindow(width, height,
                           CTX::instance()->nonModalWindows ? true : false,
-                          "Plugins", CTX::instance()->pluginOffset);
+                          "Plugins", CTX::instance()->pluginOffset,
+                          &CTX::instance()->pluginSize[0],
+                          &CTX::instance()->pluginSize[1]);
   win->box(GMSH_WINDOW_BOX);
 
   search = searchBox(
@@ -395,7 +357,6 @@ pluginWindow::pluginWindow(int deltaFontSize)
   views->browser->callback(plugin_browser_cb);
 
   record = new Fl_Check_Button(WB, height - BH - WB, BB, BH, "Record");
-  record->type(FL_TOGGLE_BUTTON);
   record->tooltip(
     "Append scripting command to file options when plugin is run");
   run = new Fl_Return_Button(width - BB - WB, height - BH - WB, BB, BH, "Run");
@@ -446,11 +407,6 @@ void pluginWindow::toggleHelp()
 {
   _helpOpen = !_helpOpen;
   layout();
-  // the help opened is shown, from its header down
-  if(_helpOpen) {
-    int most = std::max(0, help->y() + help->h() - scroll->y() - scroll->h());
-    scroll->scroll_to(0, std::min(helpHeader->y() - scroll->y(), most));
-  }
 }
 
 void pluginWindow::updateCount()
@@ -523,7 +479,7 @@ void pluginWindow::layout()
     help->show();
   }
   else {
-    // out of the way too: FLTK 1.3 scrolls over hidden children
+    // and of zero height, out of the way
     help->hide();
     help->resize(WB, y, w, 0);
   }
@@ -548,14 +504,17 @@ void pluginWindow::show(int viewIndex)
 
 void pluginWindow::resetViewBrowser()
 {
-  // keep what was selected
+  // keep what was selected, by view tag (each line keeps the tag of its
+  // view): the views before may have gone
   Fl_Multi_Browser *b = views->browser;
-  std::vector<int> state;
-  for(int i = 0; i < b->size(); i++) state.push_back(b->selected(i + 1));
+  std::set<int> tags;
+  for(int i = 1; i <= b->size(); i++)
+    if(b->selected(i)) tags.insert((int)(intptr_t)b->data(i));
   b->clear();
   for(std::size_t i = 0; i < PView::list.size(); i++) {
-    b->add(targetList::viewName(i).c_str());
-    if(i < state.size() && state[i]) b->select(i + 1);
+    int tag = PView::list[i]->getTag();
+    b->add(targetList::viewName(i).c_str(), (void *)(intptr_t)tag);
+    if(tags.count(tag)) b->select(i + 1);
   }
   plugin_browser_cb(nullptr, nullptr);
 }

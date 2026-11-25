@@ -3,7 +3,10 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <optional>
+#include <sstream>
 #include <limits>
+#include <memory>
 #include <stdlib.h>
 #include <algorithm>
 #include <cstdio>
@@ -47,10 +50,11 @@
 #include "meshQuadQuasiStructured.h"
 #include "meshGFaceBipartiteLabelling.h"
 #include "sizeField.h"
-
 #include "meshCombine3D.h"
-
 #include "meshQuantize2.h"
+#include "meshUntangling.h"
+#include "meshMesquite.h"
+#include "meshDuplicateVertices.h"
 
 #if defined(HAVE_DOMHEX)
 #include "pointInsertionFlat.h"
@@ -61,10 +65,6 @@
 #include "HighOrderMeshElasticAnalogy.h"
 #include "HighOrderMeshFastCurving.h"
 #endif
-
-#include "meshUntangling.h"
-
-#include "meshMesquite.h"
 
 #if defined(HAVE_QUADMESHINGTOOLS)
 #include "cppUtils.h"
@@ -92,8 +92,6 @@ static QuadOpt::Options quadOptOptions()
   return options;
 }
 #endif
-
-#include "meshDuplicateVertices.h"
 
 class EmbeddedCompatibilityTest {
 public:
@@ -584,6 +582,14 @@ static void addRemainingStageTime(const std::string &stage, std::size_t first,
   AddMeshStageTime(stage, std::max(w, 0.), std::max(c, 0.));
 }
 
+static std::size_t countTrihedra(GModel *m)
+{
+  std::size_t n = 0;
+  for(auto it = m->firstRegion(); it != m->lastRegion(); ++it)
+    n += (*it)->trihedra.size();
+  return n;
+}
+
 // the minimum SICN of the volume elements of a hex-dominant mesh, by type,
 // and the times of the stages of its generation
 static void PrintHexDominantMeshQuality(GModel *m, double wall, double cpu)
@@ -617,9 +623,7 @@ static void PrintHexDominantMeshQuality(GModel *m, double wall, double cpu)
     Msg::Info("  %-10s %9zu   min %.3f   mean %.3f   %ld below 0.1", names[k],
               e.size(), qmin, sum / e.size(), bad);
   }
-  std::size_t nbTrihedra = 0;
-  for(auto it = m->firstRegion(); it != m->lastRegion(); ++it)
-    nbTrihedra += (*it)->trihedra.size();
+  const std::size_t nbTrihedra = countTrihedra(m);
   if(nbTrihedra) Msg::Info("  %-10s %9zu", "trihedra", nbTrihedra);
   Msg::Info("Timings:                    Wall (s)    CPU (s)");
   for(auto &s : meshStageTimes)
@@ -690,10 +694,7 @@ static void Mesh1D(GModel *m)
       }
       if(!nIter) Msg::ProgressMeter(localPending, false, "Meshing 1D...");
     }
-    if(exceptions) {
-      CTX::instance()->lock = 0;
-      throw std::runtime_error(Msg::GetLastError());
-    }
+    if(exceptions) throw std::runtime_error(Msg::GetLastError());
     if(!nPending) break;
     if(nIter++ > CTX::instance()->mesh.maxRetries) break;
   }
@@ -701,7 +702,7 @@ static void Mesh1D(GModel *m)
   Msg::StopProgressMeter();
 
   // numbered as the threads created them: renumber canonically
-  m->renumberMeshCanonically(maxVertexBefore, maxElementBefore);
+  m->renumberMeshCanonically(maxVertexBefore, maxElementBefore, true);
   CheckEmptyMesh(m, 1);
   double t2 = Cpu(), w2 = TimeOfDay();
   CTX::instance()->mesh.timer[0] = w2 - w1;
@@ -805,6 +806,22 @@ static void Mesh2D(GModel *m)
   Msg::StatusBar(true, "Meshing 2D...");
   double t1 = Cpu(), w1 = TimeOfDay();
 
+  // QuadQS makes its initial quad-dominant meshes with PACK (see
+  // meshGenerator() in meshGFace.cpp): switch Mesh.Algorithm once, while the
+  // faces are meshed, and not in each face, which races between the threads
+  // meshing them in parallel; restored before the QuadQS steps below, or if
+  // meshing throws
+  struct UsePackForQuadqs {
+    int algo2d = CTX::instance()->mesh.algo2d;
+    UsePackForQuadqs()
+    {
+      if(algo2d == ALGO_2D_QUAD_QUASI_STRUCT)
+        CTX::instance()->mesh.algo2d = ALGO_2D_PACK_PRLGRMS;
+    }
+    ~UsePackForQuadqs() { CTX::instance()->mesh.algo2d = algo2d; }
+  };
+  std::optional<UsePackForQuadqs> usePack(std::in_place);
+
   int nthreads = CTX::instance()->numThreads;
   if(CTX::instance()->mesh.maxNumThreads2D > 0)
     nthreads = CTX::instance()->mesh.maxNumThreads2D;
@@ -890,21 +907,23 @@ static void Mesh2D(GModel *m)
 #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
       for(size_t K = 0; K < temp.size(); K++) meshOne(temp[K]);
       for(GFace *gf : members) meshOne(gf);
-      if(exceptions) {
-        CTX::instance()->lock = 0;
-        throw std::runtime_error(Msg::GetLastError());
-      }
+      if(exceptions) throw std::runtime_error(Msg::GetLastError());
       if(!nPending) break;
       // iter == 2 is for meshing re-parametrized surfaces; after that, we
-      // serialize (self-intersections of 1D meshes are not thread safe)!
-      if(nIter > 2) nthreads = 1;
-      if(nIter++ > CTX::instance()->mesh.maxRetries) break;
+      // serialize (self-intersections of 1D meshes are not thread safe)! The
+      // surfaces left for the serial passes get one at least, whatever the
+      // number of retries
+      const bool last = (nIter > CTX::instance()->mesh.maxRetries);
+      if(last && nthreads == 1) break;
+      if(last || nIter > 2) nthreads = 1;
+      nIter++;
     }
 
     Msg::StopProgressMeter();
   }
+  usePack.reset();
   MatchPeriodicNodes(m);
-  m->renumberMeshCanonically(maxVertexBefore, maxElementBefore);
+  m->renumberMeshCanonically(maxVertexBefore, maxElementBefore, true);
 
   if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
     replaceBadQuadDominantMeshes(m);
@@ -917,18 +936,47 @@ static void Mesh2D(GModel *m)
     RefineMeshWithBackgroundMeshProjection(m);
 
     OptimizeMesh(m, "QuadQuasiStructured");
+
+    // the extruded curves and surfaces were made from the meshes of their
+    // sources before these were subdivided and optimized: they are made again
+    // from the final ones, those extruded from a point or a curve first, then
+    // the copies (the tops of the extrusions); by the extruded meshers
+    // directly, as the four-sided ones were marked as transfinite meanwhile
+    auto extruded = [](GEntity *ge, bool copy) {
+      ExtrudeParams *ep = (ge->dim() == 1) ?
+        static_cast<GEdge *>(ge)->meshAttributes.extrude :
+        static_cast<GFace *>(ge)->meshAttributes.extrude;
+      return ep && ep->mesh.ExtrudeMesh &&
+             (ep->geo.Mode == COPIED_ENTITY) == copy;
+    };
+    for(int copy = 0; copy < 2; copy++) {
+      for(GEdge *ge : m->getEdges()) {
+        if(!extruded(ge, copy)) continue;
+        deMeshGEdge dem;
+        dem(ge);
+        MeshExtrudedCurve(ge);
+      }
+    }
+    for(int copy = 0; copy < 2; copy++) {
+      for(GFace *gf : m->getFaces()) {
+        if(!extruded(gf, copy)) continue;
+        deMeshGFace dem;
+        dem(gf);
+        MeshExtrudedSurface(gf);
+      }
+    }
+    m->renumberMeshCanonically(maxVertexBefore, maxElementBefore, true);
   }
 
+  // not on the surfaces of hex-dominant meshes: PACK placed their points in
+  // 3D for the combination
 #if defined(HAVE_QUADOPTIMIZER)
-  // Skip the pattern-based/cleanup quad finalization pass when a 3D
-  // hex-combine (RTREE) is requested: it re-touches surface mesh sizes
-  // and point positions that PACK placed in 3D specifically for the
-  // combine step, breaking them.
   if(CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS &&
-     CTX::instance()->mesh.algo3d != ALGO_3D_RTREE)
+     !CTX::instance()->mesh.hexDominant())
     QuadOpt::finishPackMesh(m, quadOptOptions());
 #else
-  if(CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS) {
+  if(CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS &&
+     !CTX::instance()->mesh.hexDominant()) {
     for(GFace *gf : m->getFaces()) {
       if(gf->meshStatistics.status == GFace::DONE) {
         gf->meshStatistics.status = GFace::PENDING;
@@ -1121,7 +1169,7 @@ static void Mesh3D(GModel *m)
 
 #if defined(HAVE_DOMHEX) && defined(HAVE_HXT)
     // the flat filler tetrahedralizes its regions itself
-    const bool fillerAlone = CTX::instance()->mesh.algo3d == ALGO_3D_RTREE;
+    const bool fillerAlone = CTX::instance()->mesh.hexDominant();
 #else
     const bool fillerAlone = false;
 #endif
@@ -1132,20 +1180,16 @@ static void Mesh3D(GModel *m)
     // by new HXT-based code
     for(std::size_t j = 0; j < connected[i].size(); j++) {
       GRegion *gr = connected[i][j];
-      if(CTX::instance()->mesh.algo3d != ALGO_3D_RTREE) continue;
+      if(!CTX::instance()->mesh.hexDominant()) continue;
       CombineFrames frames;
       fillRegionFlat(gr, &frames);
       if(CTX::instance()->mesh.recombine3DAll ||
          gr->meshAttributes.recombine3D) {
         hexDominant = true;
         meshCombine3D(gr, &frames);
-        // all the cores, as the combination, unless Mesh.MaxNumThreads3D
         const double tSmoothing = TimeOfDay(), cSmoothing = Cpu();
         RelocateVertices(gr, CTX::instance()->mesh.recombine3DSmoothing, 1.e-2,
-                         CTX::instance()->mesh.maxNumThreads3D > 0 ?
-                           CTX::instance()->mesh.maxNumThreads3D :
-                           Msg::GetMaxThreads(),
-                         true);
+                         0, true);
         AddMeshStageTime("smoothing", TimeOfDay() - tSmoothing,
                          Cpu() - cSmoothing);
         // again: the smoothing moves the vertices of the faces; then the
@@ -1167,11 +1211,8 @@ static void Mesh3D(GModel *m)
     const double tTrihedra = TimeOfDay(), cTrihedra = Cpu();
     MakeHybridHexTetMeshConformalThroughTriHedron(m);
     AddMeshStageTime("trihedra", TimeOfDay() - tTrihedra, Cpu() - cTrihedra);
-    std::size_t nbTrihedra = 0;
-    for(auto it = m->firstRegion(); it != m->lastRegion(); ++it)
-      nbTrihedra += (*it)->trihedra.size();
     Msg::Info("%zu trihedra on the unmatched quadrangular faces (Wall %gs)",
-              nbTrihedra, TimeOfDay() - tTrihedra);
+              countTrihedra(m), TimeOfDay() - tTrihedra);
   }
 
   // ensure that all volume Jacobians are positive
@@ -1191,6 +1232,39 @@ static void Mesh3D(GModel *m)
   CTX::instance()->mesh.timer[2] = w2 - w1;
   Msg::StatusBar(true, "Done meshing 3D (Wall %gs, CPU %gs)",
                  CTX::instance()->mesh.timer[2], t2 - t1);
+}
+
+// A 3D mesh would keep nodes that a change of the 2D mesh deletes (a
+// recombination, a quad topology optimization), and would not match the new 2D
+// mesh: it is deleted, as when meshing in 2D again
+static void deleteVolumeMeshBefore(GModel *m, const char *what)
+{
+  for(auto it = m->firstRegion(); it != m->lastRegion(); ++it) {
+    if((*it)->getNumMeshElements()) {
+      Msg::Warning("Deleting the 3D mesh, which %s would invalidate", what);
+      std::for_each(m->firstRegion(), m->lastRegion(), deMeshGRegion());
+      return;
+    }
+  }
+}
+
+// Create the elements of order `order' and optimize them as set by the options
+static void MeshHighOrder(GModel *m, int order)
+{
+  SetOrderN(m, order, CTX::instance()->mesh.secondOrderLinear,
+            CTX::instance()->mesh.secondOrderIncomplete,
+            CTX::instance()->mesh.meshOnlyVisible);
+
+  if(CTX::instance()->mesh.hoOptimize == 2 ||
+     CTX::instance()->mesh.hoOptimize == 3)
+    OptimizeMesh(m, "HighOrderElastic");
+
+  if(CTX::instance()->mesh.hoOptimize == 1 ||
+     CTX::instance()->mesh.hoOptimize == 2)
+    OptimizeMesh(m, "HighOrder");
+
+  if(CTX::instance()->mesh.hoOptimize == 4)
+    OptimizeMesh(m, "HighOrderFastCurving");
 }
 
 void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter,
@@ -1223,6 +1297,26 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter,
   else
     Msg::StatusBar(true, "Optimizing mesh (%s)...", how.c_str());
   double t1 = Cpu(), w1 = TimeOfDay();
+
+  // the methods other than the high-order ones handle first order elements
+  // (some silently made the mesh linear or tangled it): optimize the first
+  // order mesh, then recreate the high-order elements
+  int order = 1;
+  if(how.compare(0, 9, "HighOrder")) {
+    std::vector<GEntity *> entities;
+    m->getEntities(entities);
+    for(auto ge : entities) {
+      if(!force && ge->isFullyDiscrete()) continue;
+      for(std::size_t i = 0; i < ge->getNumMeshElements(); i++)
+        order = std::max(order, ge->getMeshElement(i)->getPolynomialOrder());
+    }
+    if(order > 1) {
+      Msg::Info("Optimizing the first order mesh, then recreating the order "
+                "%d elements",
+                order);
+      SetOrder1(m, false, !force);
+    }
+  }
 
   if(how == "" || how == "Gmsh" || how == "Optimize") {
     for(auto it = m->firstRegion(); it != m->lastRegion(); it++) {
@@ -1344,6 +1438,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter,
     }
   }
   else if(how == "QuadCavityRemeshing") {
+    deleteVolumeMeshBefore(m, "optimizing the quad topology");
     for(GFace *gf : m->getFaces()) {
       if(gf->meshStatistics.status == GFace::DONE) {
         gf->meshStatistics.status = GFace::PENDING;
@@ -1358,6 +1453,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter,
     }
   }
   else if(how == "QuadQuasiStructured") {
+    deleteVolumeMeshBefore(m, "optimizing the quad topology");
     // The following methods only act on faces whose status is PENDING
     for(GFace *gf : m->getFaces()) {
       if(gf->meshStatistics.status == GFace::DONE) {
@@ -1395,7 +1491,6 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter,
   else if(how == "HXT" || how =="HXT_FlipOnly") {
 #ifndef HAVE_HXT
     Msg::Error("Optimizing using HXT requires the HXT module");
-    return;
 #else
     if(how == "HXT_FlipOnly")
       optimizeMeshHXT(m, quality, true);
@@ -1408,6 +1503,11 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter,
   if(Msg::GetVerbosity() > 98)
     std::for_each(m->firstRegion(), m->lastRegion(),
                   EmbeddedCompatibilityTest());
+
+  // elements were deleted or replaced
+  m->destroyMeshCaches();
+
+  if(order > 1) MeshHighOrder(m, order);
 
   double t2 = Cpu(), w2 = TimeOfDay();
   Msg::StatusBar(true, "Done optimizing mesh (Wall %gs, CPU %gs)", w2 - w1,
@@ -1424,6 +1524,9 @@ void AdaptMesh(GModel *m)
   for(int i = 0; i < 10; i++)
     std::for_each(m->firstRegion(), m->lastRegion(), adaptMeshGRegion());
 
+  // elements were deleted or replaced
+  m->destroyMeshCaches();
+
   double t2 = Cpu(), w2 = TimeOfDay();
   Msg::StatusBar(true, "Done adaptating 3D mesh (Wall %gs, CPU %gs)", w2 - w1,
                  t2 - t1);
@@ -1435,6 +1538,8 @@ void RecombineMesh(GModel *m)
 
   Msg::StatusBar(true, "Recombining 2D mesh...");
   double t1 = Cpu(), w1 = TimeOfDay();
+
+  deleteVolumeMeshBefore(m, "recombining the 2D mesh");
 
   for(auto it = m->firstFace(); it != m->lastFace(); ++it) {
     GFace *gf = *it;
@@ -1450,6 +1555,9 @@ void RecombineMesh(GModel *m)
       recombineIntoQuads(gf, blossom, topo, repos, minqual);
     }
   }
+
+  // elements were deleted or replaced
+  m->destroyMeshCaches();
 
   double t2 = Cpu(), w2 = TimeOfDay();
   Msg::StatusBar(true, "Done recombining 2D mesh (Wall %gs, CPU %gs)", w2 - w1,
@@ -1521,19 +1629,30 @@ static void relocateSlaveVertices(GEdge *slave,
 static void relocateSlaveVertices(std::vector<GEntity *> &entities,
                                   bool useClosestPoint)
 {
-  std::multimap<GEntity *, GEntity *> master2slave;
+  // a master can be the slave of another entity (e.g. a corner curve of a
+  // domain periodic in two directions): relocate the slaves in the order of
+  // their depth in such chains, so that each one is relocated after its
+  // master, and not in the order of the masters in memory
+  std::vector<std::pair<int, GEntity *>> slaves;
   for(std::size_t i = 0; i < entities.size(); ++i) {
     if(entities[i]->dim() == 0) continue;
-    GEntity *master = entities[i]->getMeshMaster();
-    if(master != entities[i]) {
-      master2slave.insert(std::make_pair(master, entities[i]));
-    }
+    int depth = 0;
+    for(GEntity *e = entities[i]; e->getMeshMaster() != e && depth <= 100;
+        e = e->getMeshMaster())
+      depth++;
+    if(depth) slaves.push_back(std::make_pair(depth, entities[i]));
   }
+  std::stable_sort(
+    slaves.begin(), slaves.end(),
+    [](const std::pair<int, GEntity *> &a, const std::pair<int, GEntity *> &b) {
+      return a.first < b.first;
+    });
 
-  for(auto it = master2slave.begin(); it != master2slave.end(); ++it) {
-    if(it->first->dim() == 2) {
-      GFace *master = dynamic_cast<GFace *>(it->first);
-      GFace *slave = dynamic_cast<GFace *>(it->second);
+  for(auto &s : slaves) {
+    GEntity *slaveEntity = s.second, *masterEntity = s.second->getMeshMaster();
+    if(masterEntity->dim() == 2) {
+      GFace *master = dynamic_cast<GFace *>(masterEntity);
+      GFace *slave = dynamic_cast<GFace *>(slaveEntity);
       if(slave->affineTransform.size() < 16) continue;
       Msg::Info("Relocating nodes of slave surface %i using master %i%s",
                 slave->tag(), master->tag(),
@@ -1543,9 +1662,9 @@ static void relocateSlaveVertices(std::vector<GEntity *> &entities,
       relocateSlaveVertices(slave, slave->correspondingHighOrderVertices,
                             useClosestPoint);
     }
-    else if(it->first->dim() == 1) {
-      GEdge *master = dynamic_cast<GEdge *>(it->first);
-      GEdge *slave = dynamic_cast<GEdge *>(it->second);
+    else if(masterEntity->dim() == 1) {
+      GEdge *master = dynamic_cast<GEdge *>(masterEntity);
+      GEdge *slave = dynamic_cast<GEdge *>(slaveEntity);
       if(slave->affineTransform.size() < 16) continue;
       Msg::Info("Relocating nodes of slave curve %i using master %i%s",
                 slave->tag(), master->tag(),
@@ -1811,9 +1930,8 @@ class PackDiscreteLoops {
   }
 
 public:
-  PackDiscreteLoops()
+  PackDiscreteLoops(GModel *model)
   {
-    GModel *model = GModel::current();
     if(!model || CTX::instance()->mesh.algo2d != ALGO_2D_PACK_PRLGRMS) return;
     for(GFace *face : model->getFaces()) {
       if(face->geomType() != GEntity::DiscreteSurface) continue;
@@ -1840,14 +1958,12 @@ public:
   }
 };
 
-void GenerateMesh(GModel *m, int ask)
+bool GenerateMesh(GModel *m, int ask, bool nested)
 {
   // ProfilerStart("gmsh.prof");
-  if(CTX::instance()->lock) {
-    Msg::Info("I'm busy! Ask me that later...");
-    return;
-  }
-  CTX::instance()->lock = 1;
+  if(!nested && modelBusy()) return false;
+  // released however this ends, e.g. by an exception thrown by Msg::Error
+  modelLock lock;
 
   // the stage times of the outermost generation (the background mesh of the
   // quad meshers is generated inside)
@@ -1866,7 +1982,7 @@ void GenerateMesh(GModel *m, int ask)
   // Initialize pseudo random mesh generator with the same seed
   srand(CTX::instance()->mesh.randomSeed);
 
-  PackDiscreteLoops packDiscreteLoops;
+  PackDiscreteLoops packDiscreteLoops(m);
 
   // Change any high order elements back into first order ones (but skip
   // discrete entities)
@@ -1875,7 +1991,7 @@ void GenerateMesh(GModel *m, int ask)
 
   // Some meshing algorithms require a global background mesh
   // and a guiding field (e.g. cross field + size map)
-  QuadqsContextUpdater *qqs = nullptr;
+  std::unique_ptr<QuadqsContextUpdater> qqs;
   if(CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS ||
      CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
     int old = m->getMeshStatus(false);
@@ -1910,9 +2026,8 @@ void GenerateMesh(GModel *m, int ask)
       if(BuildBackgroundMeshAndGuidingField(m, overwriteGModelMesh,
                                            deleteGModelMeshAfter,
                                            overwriteField) != 0) {
-        CTX::instance()->lock = 0;
         Msg::Error("Could not build background guiding field; meshing aborted");
-        return;
+        return false;
       }
       addRemainingStageTime("guiding field", first, w, c);
     }
@@ -1929,7 +2044,7 @@ void GenerateMesh(GModel *m, int ask)
       // note: the creation of QuadqsContextUpdater modifies many meshing
       // parameters; current parameter values are saved and will be restored at
       // the destruction of qqs
-      qqs = new QuadqsContextUpdater();
+      qqs.reset(new QuadqsContextUpdater());
     }
 
     if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
@@ -1987,8 +2102,12 @@ void GenerateMesh(GModel *m, int ask)
   // the geometrical entities and/or the user orientation constraints
   if(m->getMeshStatus() >= 1)
     std::for_each(m->firstEdge(), m->lastEdge(), orientMeshGEdge());
-  if(m->getMeshStatus() >= 2)
+  if(m->getMeshStatus() >= 2) {
     std::for_each(m->firstFace(), m->lastFace(), orientMeshGFace());
+    for(GRegion *gr : m->getRegions())
+      if(gr->meshAttributes.outwardOrientation)
+        gr->orientSurfaceMeshesOutwards();
+  }
 
   // Optimize quality of 3D tet mesh
   const double wallOptimize = TimeOfDay(), cpuOptimize = Cpu();
@@ -2022,23 +2141,7 @@ void GenerateMesh(GModel *m, int ask)
     BarycentricRefineMesh(m);
 
   if(m->getMeshStatus() && CTX::instance()->mesh.order > 1) {
-    // Create high order elements
-    SetOrderN(m, CTX::instance()->mesh.order,
-              CTX::instance()->mesh.secondOrderLinear,
-              CTX::instance()->mesh.secondOrderIncomplete,
-              CTX::instance()->mesh.meshOnlyVisible);
-
-    // Optimize high order elements
-    if(CTX::instance()->mesh.hoOptimize == 2 ||
-       CTX::instance()->mesh.hoOptimize == 3)
-      OptimizeMesh(m, "HighOrderElastic");
-
-    if(CTX::instance()->mesh.hoOptimize == 1 ||
-       CTX::instance()->mesh.hoOptimize == 2)
-      OptimizeMesh(m, "HighOrder");
-
-    if(CTX::instance()->mesh.hoOptimize == 4)
-      OptimizeMesh(m, "HighOrderFastCurving");
+    MeshHighOrder(m, CTX::instance()->mesh.order);
   }
 
   // make sure periodic meshes are actually periodic and store periodic node
@@ -2056,13 +2159,13 @@ void GenerateMesh(GModel *m, int ask)
 
   Msg::PrintErrorCounter("Mesh generation error summary");
 
-  if(qqs != nullptr) delete qqs;
+  qqs.reset();
 
   // FIXME TEST
   if(backgroundMeshAndGuidingFieldExists(m)) {
     removeAllMeshEntitiesThatHaveSmallEdges();
   }
 
-  CTX::instance()->lock = 0;
   // ProfilerStop();
+  return true;
 }

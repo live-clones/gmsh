@@ -127,16 +127,23 @@ unsigned int PViewOptions::getColor(int i, int nb)
   return colorTable.table[index];
 }
 
+// (an empty custom range, which a view gets when it is created with a custom
+// range type, e.g. from View.RangeType = 2 in the option file, is the range of
+// its values)
 void PViewOptions::getRange(PViewData *data, double &min, double &max)
 {
-  if(rangeType == Custom) {
+  // the range stored in the data is the one of the Von Mises stress for
+  // tensors: the one of the eigenvalues has to be computed
+  int tensorRep = (tensorType == MaxEigenValue) ? 1 :
+                  (tensorType == MinEigenValue) ? 2 : 0;
+  if(rangeType == Custom && customMin != customMax) {
     min = customMin;
     max = customMax;
   }
-  else if(forceNumComponents) {
+  else if(forceNumComponents || tensorRep) {
     std::vector<double> key = {(double)(std::size_t)data,
                                (double)data->getStamp(), (double)rangeType,
-                               (double)forceNumComponents};
+                               (double)forceNumComponents, (double)tensorRep};
     if(rangeType == PerTimeStep) key.push_back(timeStep);
     for(int i = 0; i < forceNumComponents && i < 9; i++)
       key.push_back(componentMap[i]);
@@ -146,10 +153,10 @@ void PViewOptions::getRange(PViewData *data, double &min, double &max)
       for(int step = 0; step < data->getNumTimeSteps(); step++) {
         if(rangeType == PerTimeStep && step != timeStep) continue;
         if(!data->hasTimeStep(step)) continue;
-        _forcedMin = std::min(_forcedMin, data->getMin(step, false, 0,
+        _forcedMin = std::min(_forcedMin, data->getMin(step, false, tensorRep,
                                                        forceNumComponents,
                                                        componentMap));
-        _forcedMax = std::max(_forcedMax, data->getMax(step, false, 0,
+        _forcedMax = std::max(_forcedMax, data->getMax(step, false, tensorRep,
                                                        forceNumComponents,
                                                        componentMap));
       }

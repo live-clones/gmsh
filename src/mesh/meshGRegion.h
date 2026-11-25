@@ -54,6 +54,11 @@ public:
 
 void MeshDelaunayVolume(std::vector<GRegion *> &delaunay);
 
+// Warn if the surface mesh bounding the volume is open, i.e. has edges in a
+// single element, with the curves they are on: no tetrahedron can be told to
+// be inside such a volume. Returns the number of such edges.
+std::size_t warnIfBoundaryIsOpen(GRegion *gr);
+
 // The boundary recovery works on a single region: this gives regions[0] the
 // surfaces and embedded entities of the whole group of connected regions
 // (compound surfaces replacing their members when they are not reclassified),

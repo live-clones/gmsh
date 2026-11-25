@@ -27,7 +27,6 @@ public:
   Fl_Tree *tree;
   Fl_Button *tree_create;
   Fl_Check_Button *butt[2];
-  Fl_Button *push[2];
   Fl_Input *input[10];
   Fl_Input *search;
   searchFilter filter;
@@ -36,10 +35,15 @@ public:
   visibilityWindow(int deltaFontSize = 0);
   ~visibilityWindow() { Fl::delete_widget(win); }
   void show(bool redrawOnly);
-  void updatePerWindow(bool force = false);
+  // the list of what the current graphic window shows
+  void updatePerWindow();
 };
 
-void visibility_cb(Fl_Widget *w, void *data);
-void visibility_save(const std::string &fileName);
+// the visibility window shown, with the entities of the model as they are;
+// updated where it is (not raised); or shown with its list only made again
+// (after a change of what it lists or of its sorting)
+void showVisibility();
+void updateVisibility();
+void updateVisibilityList();
 
 #endif

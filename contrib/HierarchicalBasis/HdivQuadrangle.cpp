@@ -26,9 +26,10 @@ HdivQuadrangle::HdivQuadrangle(int order) : _order(order), _hcurl(order)
   _numBubbleFunction = 0;
 }
 
-void HdivQuadrangle::functions(const Dual *x, std::vector<Vec> &vertex,
-                               std::vector<Vec> &edge, std::vector<Vec> &face,
-                               std::vector<Vec> &bubble)
+void HdivQuadrangle::functions(const Dual *x, std::vector<DualVector> &vertex,
+                               std::vector<DualVector> &edge,
+                               std::vector<DualVector> &face,
+                               std::vector<DualVector> &bubble)
 {
   _hcurl.functions(x, vertex, edge, face, bubble);
   for(auto &f : edge) f = -1. * rotate(f);
@@ -37,7 +38,7 @@ void HdivQuadrangle::functions(const Dual *x, std::vector<Vec> &vertex,
 
 void HdivQuadrangle::faceFunctions(const Dual *x, int flag1, int flag2,
                                    int flag3, int faceNumber,
-                                   std::vector<Vec> &face)
+                                   std::vector<DualVector> &face)
 {
   // the functions of the only face of the element
   _hcurl.faceFunctions(x, flag1, flag2, flag3, faceNumber, face);

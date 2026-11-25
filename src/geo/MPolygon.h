@@ -50,7 +50,8 @@ private:
                     double &dist) const;
 
 public:
-  MPolygon(const std::vector<MVertex *> &vertices, int num = 0, int part = 0);
+  MPolygon(const std::vector<MVertex *> &vertices, std::size_t num = 0,
+           int part = 0);
   ~MPolygon() {}
 
   virtual int getDim() const { return 2; }
@@ -61,6 +62,7 @@ public:
   }
   virtual MVertex *getVertex(int num) { return _vertices[num]; }
   virtual const MVertex *getVertex(int num) const { return _vertices[num]; }
+  virtual void setVertex(int num, MVertex *v) { _vertices[num] = v; }
 
   virtual int getNumEdges() const { return _numBoundary; }
   std::array<int, 2> getEdgeIndices(int num) const
@@ -135,8 +137,10 @@ public:
   }
   MTriangle getTriangle(int num) const
   {
+    // with a tag given: a temporary must not take a new one from the model
     std::array<int, 3> is = getTriangleIndices(num);
-    return MTriangle(_vertices[is[0]], _vertices[is[1]], _vertices[is[2]]);
+    return MTriangle(_vertices[is[0]], _vertices[is[1]], _vertices[is[2]], 1,
+                     getPartition());
   }
   // unit normal of the boundary (Newell's method: exact for planar polygons,
   // and an average for the others)
@@ -165,6 +169,10 @@ public:
   using MElement::isInside;
   virtual bool isInside(double u, double v, double w, double tol) const;
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
+  // exact for the fields P1 on the triangles (the area of each times the mean
+  // of its nodal values): no point to locate
+  virtual double integrate(double val[], int pOrder, int stride = 1,
+                           int order = -1);
 
   // no nodal basis: the shape functions are P1 on the triangle holding the
   // point (or the closest one), and zero on the other nodes

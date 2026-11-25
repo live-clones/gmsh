@@ -8,7 +8,6 @@
 
 #include "MVertex.h"
 #include "SVector3.h"
-#include <iostream>
 
 // A mesh edge.
 class MEdge {

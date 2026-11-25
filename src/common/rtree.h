@@ -1359,10 +1359,17 @@ void RTREE_QUAL::ChoosePartition(PartitionVars* a_parVars, int a_minFill)
        && (a_parVars->m_count[1] < (a_parVars->m_total - a_parVars->m_minFill)))
   {
     biggestDiff = (ELEMTYPEREAL) -1;
+    chosen = -1; // (the first free one, even when no difference compares,
+                 // e.g. not a number: Gmsh)
     for(int index=0; index<a_parVars->m_total; ++index)
     {
       if(!a_parVars->m_taken[index])
       {
+        if(chosen < 0)
+        {
+          chosen = index;
+          betterGroup = 0;
+        }
         Rect* curRect = &a_parVars->m_branchBuf[index].m_rect;
         Rect rect0 = CombineRect(curRect, &a_parVars->m_cover[0]);
         Rect rect1 = CombineRect(curRect, &a_parVars->m_cover[1]);
@@ -1476,6 +1483,9 @@ void RTREE_QUAL::PickSeeds(PartitionVars* a_parVars)
   }
 
   worst = -a_parVars->m_coverSplitArea - 1;
+  // (seeds even when no waste compares, e.g. not a number: Gmsh)
+  seed0 = 0;
+  seed1 = 1;
   for(int indexA=0; indexA < a_parVars->m_total-1; ++indexA)
   {
     for(int indexB = indexA+1; indexB < a_parVars->m_total; ++indexB)

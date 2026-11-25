@@ -3283,8 +3283,8 @@ namespace pdel3d {
       std::set<std::uint32_t> s(volumes[i].begin(), volumes[i].end());
       complete(s);
       if(volumeOfSurfaces.count(s)) {
-        Msg::Error("Volumes %zu and %u are bounded by the same surfaces", i,
-                   volumeOfSurfaces[s]);
+        Msg::Warning("Volumes %zu and %u are bounded by the same surfaces", i,
+                     volumeOfSurfaces[s]);
         return false;
       }
       volumeOfSurfaces[s] = (std::uint32_t)i;
@@ -3319,10 +3319,10 @@ namespace pdel3d {
         }
       }
       if(!found[i]) {
-        Msg::Error("Volume %zu was not found in the tetrahedralization (its "
-                   "bounding surfaces "
-                   "do not enclose a single connected component)",
-                   i);
+        Msg::Warning("Volume %zu was not found in the tetrahedralization (its "
+                     "bounding surfaces "
+                     "do not enclose a single connected component)",
+                     i);
         ok = false;
       }
     }
@@ -3654,15 +3654,6 @@ namespace pdel3d {
 
 } // namespace pdel3d
 
-static int numThreads3D()
-{
-  int n = CTX::instance()->numThreads;
-  if(CTX::instance()->mesh.maxNumThreads3D > 0)
-    n = CTX::instance()->mesh.maxNumThreads3D;
-  if(!n) n = Msg::GetMaxThreads();
-  return n;
-}
-
 void delaunayMeshIn3DParallel(std::vector<MVertex *> &v,
                               std::vector<MTetrahedron *> &tets)
 {
@@ -3681,7 +3672,7 @@ void delaunayMeshIn3DParallel(std::vector<MVertex *> &v,
   std::iota(toInsert.begin(), toInsert.end(), 0);
   std::vector<std::uint8_t> status;
   pdel3d::DelaunayOptions opt;
-  opt.numThreads = numThreads3D();
+  opt.numThreads = CTX::instance()->numThreads3D();
   opt.reorderVertices = true; // toInsert[i] = original index of vertex i
   opt.verbosity = Msg::GetVerbosity() > 5 ? 2 : 1;
   pdel3d::DelaunayStats stats;
@@ -4011,7 +4002,8 @@ namespace {
     // without a size field or a callback the size is a constant per volume
     // (its own size, the global one): no evaluation per point
     GModel *gm = regions.empty() ? nullptr : regions[0]->model();
-    if(gm && gm->getFields()->getBackgroundField() <= 0 && !gm->lcCallback) {
+    if(gm && gm->getFields()->getBackgroundField() <= 0 && !gm->lcCallback &&
+       !gm->metricCallback) {
       std::vector<double> lc(regions.size());
       for(std::size_t r = 0; r < regions.size(); r++)
         lc[r] = std::min(lcGlob, regions[r]->getMeshSize());
@@ -4110,7 +4102,7 @@ namespace {
     }
     gr->tetrahedra.clear();
     if(flat) {
-      Msg::Error("%zu flat tet(s) in the recovered mesh", flat);
+      Msg::Warning("%zu flat tet(s) in the recovered mesh", flat);
       return false;
     }
     // adjacencies through the sorted facets
@@ -4172,7 +4164,7 @@ namespace {
               });
     for(std::size_t i = 0; i + 1 < edges.size(); i += 2) {
       if(edges[i].a != edges[i + 1].a || edges[i].b != edges[i + 1].b) {
-        Msg::Error("Hull edge without two hull facets in the recovered mesh");
+        Msg::Warning("Hull edge without two hull facets in the recovered mesh");
         return false;
       }
       m.neigh[edges[i].ref] = edges[i + 1].ref;
@@ -4977,12 +4969,7 @@ static int meshRegions(std::vector<GRegion *> &regions, splitQuadRecovery &sqr,
                        bool optimizeTopology = false)
 {
   const double t0 = TimeOfDay();
-  // with given points (the hex-dominant meshes): all the cores, as the
-  // combination that follows, unless Mesh.MaxNumThreads3D
-  const int nthreads = !points ? numThreads3D() :
-                       CTX::instance()->mesh.maxNumThreads3D > 0 ?
-                                 CTX::instance()->mesh.maxNumThreads3D :
-                                 Msg::GetMaxThreads();
+  const int nthreads = CTX::instance()->numThreads3D();
   const int verbosity = Msg::GetVerbosity() > 5 ? 2 : 1;
   SurfaceMesh s;
   if(!collectSurfaceMesh(regions, s, sqr)) return 2;
@@ -5095,13 +5082,13 @@ static int meshRegions(std::vector<GRegion *> &regions, splitQuadRecovery &sqr,
       Msg::Info("Most triangles are missing: global boundary recovery");
     if(!local) {
       if(!recoverBoundary(m, s, regions, sqr, sizeFactor)) {
-        Msg::Error("Boundary recovery failed");
+        Msg::Warning("Boundary recovery failed");
         return 1;
       }
       remap();
     }
     if(missing || missingLines) {
-      Msg::Error(
+      Msg::Warning(
         "%zu triangle(s) and %zu line(s) still missing after boundary recovery",
         missing, missingLines);
       return 1;
@@ -5154,7 +5141,7 @@ static int meshRegions(std::vector<GRegion *> &regions, splitQuadRecovery &sqr,
     opt.verbosity = verbosity;
     pdel3d::refine(m, opt);
     if(sd.failed) {
-      Msg::Error("Mesh size evaluation failed");
+      Msg::Warning("Mesh size evaluation failed");
       return 1;
     }
   }
@@ -5202,16 +5189,25 @@ static int meshRegions(std::vector<GRegion *> &regions, splitQuadRecovery &sqr,
   return 0;
 }
 
-int meshGRegionParallelDelaunay(std::vector<GRegion *> &regions)
+// the same with the quadrangles of the boundary split for the recovery, and
+// pyramids put on them on success (the pyramid apexes only go to the
+// volumes then)
+static int meshRegionsWithPyramids(std::vector<GRegion *> &regions,
+                                   const std::vector<double> *points,
+                                   std::vector<MVertex *> *pointVertices,
+                                   bool optimizeTopology)
 {
   if(regions.empty()) return 0;
   splitQuadRecovery sqr(CTX::instance()->mesh.optimizePyramids >= -2);
-  const int ret = meshRegions(regions, sqr);
-  // the pyramid apexes only go to the volumes on success
+  const int ret =
+    meshRegions(regions, sqr, points, pointVertices, optimizeTopology);
   if(ret)
     for(auto &q : sqr.getQuad()) delete q.second;
   return ret;
 }
+
+int meshGRegionParallelDelaunay(std::vector<GRegion *> &regions)
+{ return meshRegionsWithPyramids(regions, nullptr, nullptr, false); }
 
 int meshGRegionParallelDelaunayWithPoints(GRegion *gr,
                                           const std::vector<double> &xyz,
@@ -5219,10 +5215,5 @@ int meshGRegionParallelDelaunayWithPoints(GRegion *gr,
                                           bool optimizeTopology)
 {
   std::vector<GRegion *> regions(1, gr);
-  splitQuadRecovery sqr(CTX::instance()->mesh.optimizePyramids >= -2);
-  const int ret =
-    meshRegions(regions, sqr, &xyz, &vertices, optimizeTopology);
-  if(ret)
-    for(auto &q : sqr.getQuad()) delete q.second;
-  return ret;
+  return meshRegionsWithPyramids(regions, &xyz, &vertices, optimizeTopology);
 }

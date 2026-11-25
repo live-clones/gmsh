@@ -13,6 +13,9 @@
 void SwapBytes(char *array, int size, int n);
 std::string ExtractDoubleQuotedString(const char *str, int len);
 std::string SanitizeTeXString(const char *in, int equation);
+// a string as a JSON string: quoted, with the quotes, the backslashes and the
+// control characters escaped
+std::string JsonString(const std::string &in);
 std::string FixWindowsPath(const std::string &in);
 std::string FixRelativePath(const std::string &reference,
                             const std::string &in);

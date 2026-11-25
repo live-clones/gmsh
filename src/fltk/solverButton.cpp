@@ -3,17 +3,13 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#include "GmshConfig.h"
-#if !defined(HAVE_NO_STDINT_H)
-#include <stdint.h>
-#elif defined(HAVE_NO_INTPTR_T)
-typedef unsigned long intptr_t;
-#endif
+#include <cstdint>
 #include <FL/fl_ask.H>
 #include "GmshMessage.h"
 #include "FlGui.h"
 #include "Options.h"
 #include "onelabGroup.h"
+#include "onelabActions.h"
 #include "solverButton.h"
 #include "fileDialogs.h"
 
@@ -32,7 +28,7 @@ static void solver_rename_cb(Fl_Widget *w, void *data)
     std::string host = opt_solver_remote_login(num, GMSH_GET, "");
     // this will remove the old client if the new name is different
     FlGui::instance()->onelab->addSolver(n, exe, host, num);
-    onelab_cb(nullptr, (void *)"reset");
+    onelabReset();
   }
 }
 
@@ -60,7 +56,7 @@ static void solver_change_exe_cb(Fl_Widget *w, void *data)
       if(it != onelab::server::instance()->lastClient()) delete *it;
       std::string host = opt_solver_remote_login(num, GMSH_GET, "");
       FlGui::instance()->onelab->addSolver(name, exe, host, num);
-      onelab_cb(nullptr, (void *)"reset");
+      onelabReset();
     }
   }
 }
@@ -93,14 +89,15 @@ solverButton::solverButton(int x, int y, int w, int h, int num, Fl_Color col)
   _butt[0]->box(FL_FLAT_BOX);
   _butt[0]->color(col);
   _butt[0]->selection_color(col);
-  _butt[0]->callback(solver_cb, (void *)(intptr_t)num);
+  _butt[0]->callback(
+    [](Fl_Widget *, void *data) { selectSolver((intptr_t)data); },
+    (void *)(intptr_t)num);
   _butt[0]->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
 
   std::string name = opt_solver_name(num, GMSH_GET, "");
   _butt[0]->copy_label(name.c_str());
   std::string exe = opt_solver_executable(num, GMSH_GET, "");
-  strcpy(_tooltip, exe.c_str());
-  _butt[0]->tooltip(_tooltip);
+  _butt[0]->copy_tooltip(exe.c_str());
 
   _butt[1] = new Fl_Button(x + w - popw, y, popw, h, "@>");
   _butt[1]->align(FL_ALIGN_RIGHT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);

@@ -8,23 +8,121 @@
 
 #include <algorithm>
 #include <string>
+#include <vector>
 #include <FL/Fl.H>
 #include <FL/Fl_Double_Window.H>
 #include "windowPlacement.h"
 #include "widthRules.h"
+#include "gmshScheme.h"
+#include "sceneTool.h"
 
-// Derive special windows from Fl_Double_Window to correctly process
-// the OS-specific shorcuts (Esc & Cmd-w on Mac, Alt+F4 on Windows)
-class paletteWindow : public Fl_Double_Window {
+class paletteWindow;
+
+// The main window, which docks the tool windows (see graphicWindow::
+// setDocking()): the tool windows, the main window and the dock reach it
+// through paletteWindow::host, null while the main window does not dock its
+// tools
+class graphicWindow;
+
+// a tool shown on the desktop while the main window docks its tools, and a
+// floating tool docked once the click that asked for it is over (see
+// toolDock.cpp)
+void floatingToolShown(paletteWindow *w);
+void dockToolLater(paletteWindow *w);
+
+// The windows of the FLTK graphical user interface, main and tool windows:
+// placed on the desktop at their offset from the main graphic window (see
+// windowPlacement.h), with the title bar and the widgets in the style of the
+// theme. The options that give a window its offset and its size are also
+// where storeAll() puts them back, when the options are saved
+class gmshWindow : public Fl_Double_Window {
 private:
+  // every window, and when each was last shown on the desktop (0: never)
+  inline static std::vector<gmshWindow *> _all;
+  inline static unsigned _shows = 0;
+  unsigned _shownAt = 0;
+  // the options keeping the width and the height, if any
+  int *_keptW, *_keptH;
+
+protected:
   // position relative to the main graphic window, applied when shown
   int *_offset;
+  void _showOnDesktop()
+  {
+    if(_offset) placeWindow(this, _offset);
+    _shownAt = ++_shows;
+    if(non_modal() && !shown()) Fl_Double_Window::show(); // fix ordering
+    Fl_Double_Window::show();
+    titleBarColor(this);
+  }
+  // the key that closes a window: Cmd-W on macOS, Alt+F4 on Windows, Ctrl-W
+  // otherwise
+  static bool _closeKey()
+  {
+#if defined(__APPLE__)
+    return Fl::test_shortcut(FL_META + 'w');
+#elif defined(WIN32)
+    return Fl::test_shortcut(FL_ALT + FL_F + 4);
+#else
+    return Fl::test_shortcut(FL_CTRL + 'w');
+#endif
+  }
+
+public:
+  // offset, keptW and keptH: the options that keep the offset, the width and
+  // the height (any of them may be null)
+  gmshWindow(int w, int h, bool nonModal, const char *l, int *offset,
+             int *keptW = nullptr, int *keptH = nullptr)
+    : Fl_Double_Window(w, h, l), _keptW(keptW), _keptH(keptH), _offset(offset)
+  {
+    if(nonModal) set_non_modal();
+    _all.push_back(this);
+  }
+  ~gmshWindow()
+  {
+    forgetWindow(this);
+    _all.erase(std::find(_all.begin(), _all.end(), this));
+  }
+  // the size on the desktop (see paletteWindow, which can be docked)
+  virtual int desktopW() const { return w(); }
+  virtual int desktopH() const { return h(); }
+  // the offset and the size of every window shown on the desktop, put back in
+  // their options; of the windows sharing an option, the one shown last
+  static void storeAll()
+  {
+    std::vector<gmshWindow *> shown;
+    for(gmshWindow *w : _all)
+      if(w->_shownAt) shown.push_back(w);
+    std::sort(shown.begin(), shown.end(), [](gmshWindow *a, gmshWindow *b) {
+      return a->_shownAt < b->_shownAt;
+    });
+    for(gmshWindow *w : shown) {
+      if(w->_offset) storeWindowOffset(w, w->_offset);
+      if(w->_keptW) *w->_keptW = w->desktopW();
+      if(w->_keptH) *w->_keptH = w->desktopH();
+    }
+  }
+  virtual void draw()
+  {
+    gmshStyleWidgets(this);
+    Fl_Double_Window::draw();
+  }
+};
+
+// The tool windows: on the desktop or in the dock of the main window (see
+// paletteWindow::host), with the sizes their rules allow, and the shortcuts
+// that close them (Escape, and the key that closes a window)
+class paletteWindow : public gmshWindow {
+private:
+  // the selection this window is for being ended by its closing (see hide())
+  bool _endingTool = false;
   // the widgets that follow the width of the window, laid out at _width
   widthRules _rules;
   int _width;
   void (*_resized)(void *);
   void *_resizedData;
-  // the least and greatest sizes, kept here as FLTK 1.3 cannot give them back
+  // the least and greatest sizes, kept here for the const accessors below
+  // (Fl_Window::get_size_range() is not const in FLTK 1.4)
   int _minW, _minH, _maxW, _maxH;
   // a tool window, docked in the main window while it has a dock, unless it
   // was dragged out of the dock: then it stays on the desktop until dragged
@@ -45,17 +143,8 @@ private:
   void *_revealedData;
 
 public:
-  // set by the main window while it has a dock: docks a window and shows it
-  inline static void (*dockHook)(paletteWindow *w) = nullptr;
-  // called when a docked window is hidden, or resized
-  inline static void (*hiddenHook)(paletteWindow *w) = nullptr;
-  inline static void (*resizedHook)(paletteWindow *w) = nullptr;
-  // called when a floating tool window is moved on the desktop
-  inline static void (*movedHook)(paletteWindow *w) = nullptr;
-  // called when a floating tool window is dragged to the dock by a tab or
-  // its background: an FLTK drag and drop, the one drag the application can
-  // follow under Wayland, which hides where the windows are
-  inline static void (*dragHook)(paletteWindow *w) = nullptr;
+  // the main window while it has a dock
+  inline static graphicWindow *host = nullptr;
   // the tool window being so dragged, until it is dropped: the main window
   // takes the drop over the dock (see graphicWindow::toolDrop())
   inline static paletteWindow *dragged = nullptr;
@@ -80,23 +169,24 @@ public:
     return r;
   }
   paletteWindow(int w, int h, bool nonModal, const char *l = nullptr,
-                int *offset = nullptr)
-    : Fl_Double_Window(w, h, l), _offset(offset), _width(w), _resized(nullptr),
-      _resizedData(nullptr), _minW(0), _minH(0), _maxW(0), _maxH(0),
+                int *offset = nullptr, int *keptW = nullptr,
+                int *keptH = nullptr)
+    : gmshWindow(w, h, nonModal, l, offset, keptW, keptH), _width(w),
+      _resized(nullptr), _resizedData(nullptr), _minW(0), _minH(0), _maxW(0),
+      _maxH(0),
       _dockable(false), _floating(false), _pushed(false), _desktopBorder(true),
       _desktopNonModal(false), _desktopW(w), _desktopH(h), _revealed(nullptr),
       _revealedData(nullptr)
   {
-    if(nonModal) set_non_modal();
   }
   void dockable(bool d) { _dockable = d; }
   bool dockable() const { return _dockable; }
   void floating(bool f) { _floating = f; }
   bool floating() const { return _floating; }
-  void dragToDock()
-  {
-    if(!parent() && _dockable && dragHook) dragHook(this);
-  }
+  void dragToDock();
+  // a double click on a tab or on the background of a floating tool docks it:
+  // true if it does
+  bool dockByDoubleClick();
   // on the desktop, or in the dock (where a folded or covered window is not
   // shown)
   bool isOpen()
@@ -118,8 +208,8 @@ public:
     forgetWindow(this);
   }
   // the size on the desktop, also while docked
-  int desktopW() const { return parent() ? _desktopW : w(); }
-  int desktopH() const { return parent() ? _desktopH : h(); }
+  virtual int desktopW() const { return parent() ? _desktopW : w(); }
+  virtual int desktopH() const { return parent() ? _desktopH : h(); }
   // docked, the window is shown again (its tab chosen, unfolded): a tool
   // refreshes there what it skips while hidden
   void whenRevealed(void (*cb)(void *), void *data)
@@ -138,7 +228,6 @@ public:
     size(std::max(_desktopW, _minW),
          fixedHeight() ? _minH : std::max(_desktopH, _minH));
   }
-  ~paletteWindow() { forgetWindow(this); }
   // the widgets as placed now follow a wider window (see widthRules.h)
   void followWidth(int mid, int right)
   {
@@ -180,88 +269,12 @@ public:
     _resized = cb;
     _resizedData = data;
   }
-  virtual void resize(int x, int y, int w, int h)
-  {
-    bool sized = (w != this->w() || h != this->h());
-    Fl_Double_Window::resize(x, y, w, h);
-    if(!sized) { // only moved
-      if(!parent() && _dockable && _floating && movedHook) movedHook(this);
-      return;
-    }
-    if(!_rules.empty()) {
-      _rules.apply(w - _width);
-      init_sizes();
-    }
-    if(_resized) _resized(_resizedData);
-    if(parent() && resizedHook) resizedHook(this);
-  }
-  virtual int handle(int event)
-  {
-    int up = dragEventUp(this, event);
-    if(up >= 0) return up;
-    switch(event) {
-    case FL_PUSH:
-      dragged = nullptr; // a drag that ended elsewhere, which Wayland hides
-      if(Fl_Double_Window::handle(event)) return 1;
-      if(Fl::event_button() != FL_LEFT_MOUSE || parent() || !_dockable)
-        return 0;
-      _pushed = true;
-      _pushX = Fl::event_x();
-      _pushY = Fl::event_y();
-      return 1;
-    case FL_DRAG:
-      if(!_pushed) break;
-      if(abs(Fl::event_x() - _pushX) > 4 || abs(Fl::event_y() - _pushY) > 4) {
-        _pushed = false;
-        dragToDock();
-      }
-      return 1;
-    case FL_RELEASE:
-      if(!_pushed) break;
-      _pushed = false;
-      return 1;
-    case FL_SHORTCUT:
-    case FL_KEYBOARD:
-      // docked, only when the focus is inside: the main window has its own
-      if(parent() && !contains(Fl::focus())) break;
-#if defined(__APPLE__)
-      if(Fl::test_shortcut(FL_META + 'w') || Fl::test_shortcut(FL_Escape)) {
-#elif defined(WIN32)
-      if(Fl::test_shortcut(FL_ALT + FL_F + 4) || Fl::test_shortcut(FL_Escape)) {
-#else
-      if(Fl::test_shortcut(FL_CTRL + 'w') || Fl::test_shortcut(FL_Escape)) {
-#endif
-        do_callback();
-        return 1;
-      }
-      break;
-    }
-    return Fl_Double_Window::handle(event);
-  }
-  virtual void show()
-  {
-    if(_dockable && !_floating && dockHook) {
-      dockHook(this);
-      return;
-    }
-    if(parent()) { // docked
-      Fl_Double_Window::show();
-      return;
-    }
-    if(_offset) placeWindow(this, _offset);
-    if(non_modal() && !shown()) Fl_Double_Window::show(); // fix ordering
-    Fl_Double_Window::show();
-    titleBarColor(this);
-    watchMoves(this);
-  }
-  virtual void hide()
-  {
-    // FLTK also hides the subwindows of a window it hides: not a close
-    if(parent() && hiddenHook && top_window()->shown())
-      hiddenHook(this);
-    else
-      Fl_Double_Window::hide();
-  }
+  void resize(int x, int y, int w, int h) override;
+  int handle(int event) override;
+  void show() override;
+  // what a tool started for this window gives as its owner (see sceneTool)
+  const void *ownerId() const { return (const Fl_Window *)this; }
+  void hide() override;
 };
 
 #endif

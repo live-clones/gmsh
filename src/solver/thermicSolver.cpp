@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <iostream>
 #include <string.h>
 #include "GmshConfig.h"
 #include "thermicSolver.h"

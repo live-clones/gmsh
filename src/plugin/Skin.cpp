@@ -299,34 +299,45 @@ PView *GMSH_SkinPlugin::execute(PView *v)
   // the values are only read for what is left
   PView *v2 = new PView();
   PViewDataList *data2 = getDataList(v2);
+  std::vector<std::vector<int> > triangles;
   for(auto &b : skin) {
     const element &e = elements[b.first];
     boundary bd = boundaryOf(e);
     int numComp = data1->getNumComponents(step0, e.ent, e.ele);
-    forEachSimplex(
-      bd.nodes + bd.offset[b.second],
-      bd.offset[b.second + 1] - bd.offset[b.second],
-      [&](const int *nodes, int numNodes) {
-        const int types[5] = {0, 0, TYPE_LIN, TYPE_TRI, TYPE_QUA};
-        std::vector<double> *list =
-          data2->incrementList(numComp, types[numNodes]);
-        if(!list) return;
-        double xyz[4][3];
+    auto add = [&](const int *nodes, int numNodes) {
+      const int types[5] = {0, 0, TYPE_LIN, TYPE_TRI, TYPE_QUA};
+      std::vector<double> *list =
+        data2->incrementList(numComp, types[numNodes]);
+      if(!list) return;
+      double xyz[4][3];
+      for(int j = 0; j < numNodes; j++)
+        data1->getNode(step0, e.ent, e.ele, nodes[j], xyz[j][0], xyz[j][1],
+                       xyz[j][2]);
+      for(int k = 0; k < 3; k++)
+        for(int j = 0; j < numNodes; j++) list->push_back(xyz[j][k]);
+      for(int step = 0; step < data1->getNumTimeSteps(); step++) {
+        if(!data1->hasTimeStep(step)) continue;
         for(int j = 0; j < numNodes; j++)
-          data1->getNode(step0, e.ent, e.ele, nodes[j], xyz[j][0], xyz[j][1],
-                         xyz[j][2]);
-        for(int k = 0; k < 3; k++)
-          for(int j = 0; j < numNodes; j++) list->push_back(xyz[j][k]);
-        for(int step = 0; step < data1->getNumTimeSteps(); step++) {
-          if(!data1->hasTimeStep(step)) continue;
-          for(int j = 0; j < numNodes; j++)
-            for(int comp = 0; comp < numComp; comp++) {
-              double val;
-              data1->getValue(step, e.ent, e.ele, nodes[j], comp, val);
-              list->push_back(val);
-            }
-        }
-      });
+          for(int comp = 0; comp < numComp; comp++) {
+            double val;
+            data1->getValue(step, e.ent, e.ele, nodes[j], comp, val);
+            list->push_back(val);
+          }
+      }
+    };
+    MPolyhedron *p = nullptr;
+    if(e.type == TYPE_POLYH)
+      p = static_cast<MPolyhedron *>(data1->getElement(step0, e.ent, e.ele));
+    if(p && p->hasGivenTetrahedra()) {
+      // the triangles the given tetrahedra have on the face, which carry the
+      // values of the nodes inside it
+      p->getFaceTriangles(triangles);
+      const std::vector<int> &t = triangles[b.second];
+      for(std::size_t i = 0; i + 2 < t.size(); i += 3) add(&t[i], 3);
+    }
+    else
+      forEachSimplex(bd.nodes + bd.offset[b.second],
+                     bd.offset[b.second + 1] - bd.offset[b.second], add);
   }
 
   for(int i = 0; i < data1->getNumTimeSteps(); i++)

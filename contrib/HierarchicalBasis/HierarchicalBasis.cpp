@@ -247,9 +247,10 @@ void HierarchicalBasis::functions(const Dual *, std::vector<Dual> &,
                                   std::vector<Dual> &)
 {
 }
-void HierarchicalBasis::functions(const Dual *, std::vector<Vec> &,
-                                  std::vector<Vec> &, std::vector<Vec> &,
-                                  std::vector<Vec> &)
+void HierarchicalBasis::functions(const Dual *, std::vector<DualVector> &,
+                                  std::vector<DualVector> &,
+                                  std::vector<DualVector> &,
+                                  std::vector<DualVector> &)
 {
 }
 void HierarchicalBasis::faceFunctions(const Dual *, int, int, int, int,
@@ -257,7 +258,7 @@ void HierarchicalBasis::faceFunctions(const Dual *, int, int, int, int,
 {
 }
 void HierarchicalBasis::faceFunctions(const Dual *, int, int, int, int,
-                                      std::vector<Vec> &)
+                                      std::vector<DualVector> &)
 {
 }
 
@@ -295,7 +296,7 @@ void HierarchicalBasis::_store(const Dual &f, double *out) const
   }
 }
 
-void HierarchicalBasis::_store(const Vec &f, double *out) const
+void HierarchicalBasis::_store(const DualVector &f, double *out) const
 {
   if(_space == DIV_HDIV) { out[0] = f.div(); }
   else if(_space == CURL_HCURL) {
@@ -397,7 +398,7 @@ void HierarchicalBasis::evaluate(const std::vector<double> &uvw,
     if(_space == H1 || _space == GRAD_H1 || _space == L2)
       _generate<Dual>(p, v, e, f, b, qf, tf);
     else
-      _generate<Vec>(p, v, e, f, b, qf, tf);
+      _generate<DualVector>(p, v, e, f, b, qf, tf);
   }
   const int perEdge = _numEdge ? nE / _numEdge : 0;
   std::vector<int> signs(nE);

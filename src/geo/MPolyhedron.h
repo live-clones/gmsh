@@ -40,16 +40,18 @@
 //   pure topology once tetrahedra exist (they need not be planar).
 //
 // What is recomputed rather than stored: the triangles that draw the faces
-// (fans from the first node of each face), the normal of an edge (that of the
-// first face holding it), the integration points (the rules of the
-// tetrahedra, in a shared buffer), and the edges, which are cached in _edges
-// the first time they are asked for (drawing, the API, plugins), as pairs of
+// (the boundary of the given tetrahedra, which is the actual surface of the
+// polyhedron, cached in _repTriangles; fans from the first node of each face
+// otherwise), the normal of an edge (that of the first face holding it), the
+// integration points (the rules of the tetrahedra, in a shared buffer), and
+// the edges, which are cached in _edges the first time they are asked for
+// (drawing, the API, plugins), as pairs of
 // node indices with each edge once whatever the orientation of the faces.
 class MPolyhedron : public MElement {
 private:
   std::vector<MVertex *> _vertices;
   mutable std::vector<int> _data; // mutable: the computed tetrahedra
-  mutable std::vector<int> _edges;
+  mutable std::vector<int> _edges, _repTriangles;
   int _numBoundary, _numFaces, _tetOffset;
   mutable bool _givenTetrahedra;
 
@@ -57,21 +59,22 @@ private:
   // build the edge cache, or the fan tetrahedra, if not there yet
   void _ensureEdges() const;
   void _ensureTetrahedra() const;
+  // the triangles on the boundary of the given tetrahedra, oriented outwards
+  void _ensureRepTriangles() const;
   int _findTetrahedron(double x, double y, double z, double bary[4]) const;
 
 public:
-  MPolyhedron(const std::vector<MVertex *> &vertices, int num = 0,
+  MPolyhedron(const std::vector<MVertex *> &vertices, std::size_t num = 0,
               int part = 0);
   ~MPolyhedron() {}
 
   virtual int getDim() const { return 3; }
   virtual std::size_t getNumVertices() const { return _vertices.size(); }
   virtual int getNumVolumeVertices() const
-  {
-    return (int)_vertices.size() - _numBoundary;
-  }
+  { return (int)_vertices.size() - _numBoundary; }
   virtual MVertex *getVertex(int num) { return _vertices[num]; }
   virtual const MVertex *getVertex(int num) const { return _vertices[num]; }
+  virtual void setVertex(int num, MVertex *v) { _vertices[num] = v; }
 
   virtual int getNumEdges() const
   {
@@ -95,18 +98,25 @@ public:
   }
   virtual int getNumEdgesRep(bool curved) { return getNumEdges(); }
   std::array<int, 2> getEdgeRepIndices(bool curved, int num) const
-  {
-    return getEdgeIndices(num);
-  }
+  { return getEdgeIndices(num); }
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z,
                           SVector3 *n);
 
   virtual int getNumFaces() { return _numFaces; }
   virtual MFace getFace(int num) const
   {
-    std::vector<MVertex *> v;
-    getFaceVertices(num, v);
-    return MFace(v);
+    // (the nodes in a buffer on the stack, for the usual faces)
+    const int *f = _faceIndices() + _data[num];
+    int n = _data[num + 1] - _data[num];
+    MVertex *few[16] = {}; // (initialized for GCC's maybe-uninitialized)
+    std::vector<MVertex *> many;
+    MVertex **v = few;
+    if(n > 16) {
+      many.resize(n);
+      v = many.data();
+    }
+    for(int i = 0; i < n; i++) v[i] = _vertices[f[i]];
+    return MFace(v, n);
   }
   virtual void getFaceVertices(const int num, std::vector<MVertex *> &v) const
   {
@@ -125,9 +135,7 @@ public:
   virtual int getTypeForMSH() const { return MSH_POLYH_; }
   virtual void reverse();
   virtual int numCommonNodesInDualGraph(const MElement *const other) const
-  {
-    return 1;
-  }
+  { return 1; }
 
   // set the faces, as a flat list of vertices plus the offset of each face in
   // it (numFaces + 1 entries), and the given sub-tetrahedralization, as
@@ -152,12 +160,15 @@ public:
     _ensureTetrahedra();
     _givenTetrahedra = true;
   }
+  // the triangles the sub-tetrahedra have on each face, as 3 indices in the
+  // nodes per triangle: the fields being linear on each tetrahedron, they are
+  // what shows a field on a face. They may use nodes inside the face (its
+  // centre, say), which are not among the nodes of the face.
+  void getFaceTriangles(std::vector<std::vector<int> > &triangles) const;
   int getNumPolygons() const { return _numFaces; }
   int getPolygonStart(int i) const { return _data[i]; }
   MVertex *getPolygonVertex(int i) const
-  {
-    return _vertices[_faceIndices()[i]];
-  }
+  { return _vertices[_faceIndices()[i]]; }
   int getPolygonVertexIndex(int i) const { return _faceIndices()[i]; }
   int getNumTetrahedra() const
   {
@@ -171,9 +182,10 @@ public:
   }
   MTetrahedron getTetrahedron(int num) const
   {
+    // with a tag given: a temporary must not take a new one from the model
     std::array<int, 4> is = getTetrahedronIndices(num);
     return MTetrahedron(_vertices[is[0]], _vertices[is[1]], _vertices[is[2]],
-                        _vertices[is[3]]);
+                        _vertices[is[3]], 1, getPartition());
   }
 
   // geometry: the reference coordinates are the physical coordinates, and the
@@ -181,9 +193,7 @@ public:
   // volumes of the tetrahedra)
   virtual double getVolume();
   virtual void pnt(double u, double v, double w, SPoint3 &p) const
-  {
-    p = SPoint3(u, v, w);
-  }
+  { p = SPoint3(u, v, w); }
   virtual void pnt(double u, double v, double w, double *p) const
   {
     p[0] = u;
@@ -199,18 +209,18 @@ public:
   using MElement::isInside;
   virtual bool isInside(double u, double v, double w, double tol) const;
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
+  // exact for the fields P1 on the tetrahedra (the volume of each times the
+  // mean of its nodal values): no point to locate
+  virtual double integrate(double val[], int pOrder, int stride = 1,
+                           int order = -1);
 
   // no nodal basis: the shape functions are P1 on the tetrahedron holding the
   // point (or the closest one), and zero on the other nodes
   virtual const nodalBasis *getFunctionSpace(int order = -1,
                                              bool serendip = false) const
-  {
-    return nullptr;
-  }
+  { return nullptr; }
   virtual const JacobianBasis *getJacobianFuncSpace(int orderElement = -1) const
-  {
-    return nullptr;
-  }
+  { return nullptr; }
   virtual void getShapeFunctions(double u, double v, double w, double s[],
                                  int order = -1) const;
   virtual void getGradShapeFunctions(double u, double v, double w,

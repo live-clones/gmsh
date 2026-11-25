@@ -371,7 +371,21 @@ bool EndCurve(Curve *c)
       sys[1][1] = y3 * y3;
       rhs[0] = 1;
       rhs[1] = 1;
-      sys2x2(sys, rhs, sol);
+      // the two end points do not give the two radii when they are symmetric
+      // with respect to an axis (they give the same equation twice): the
+      // major axis point is then taken to be on the ellipse
+      double det = sys[0][0] * sys[1][1] - sys[1][0] * sys[0][1];
+      double scale = sys[0][0] * sys[1][1] + sys[1][0] * sys[0][1];
+      if(scale && fabs(det) < 1.e-10 * scale) {
+        double a2 = v3.Pos.X * v3.Pos.X + v3.Pos.Y * v3.Pos.Y;
+        sol[0] = a2 ? 1. / a2 : 0.;
+        if(y1 * y1 >= y3 * y3)
+          sol[1] = y1 ? (1. - x1 * x1 * sol[0]) / (y1 * y1) : 0.;
+        else
+          sol[1] = (1. - x3 * x3 * sol[0]) / (y3 * y3);
+      }
+      else
+        sys2x2(sys, rhs, sol);
       if(sol[0] <= 0 || sol[1] <= 0) {
         Msg::Error("Ellipse with tag %d is wrong", c->Num);
         ok = false;
@@ -3008,6 +3022,19 @@ int ExtrudeSurface(int type, int is, double T0, double T1, double T2, double A0,
   }
 
   if(!ps && !gf) return 0;
+
+  // a discrete surface whose boundary the built-in kernel does not know (as
+  // after a mesh is read) would be extruded without lateral surfaces
+  if(ps && ps->Typ == MSH_SURF_DISCRETE && !List_Nbr(ps->Generatrices)) {
+    GFace *f = GModel::current()->getFaceByTag(std::abs(is));
+    if(f && f->edges().size() &&
+       !GModel::current()->exportDiscreteGEOBoundary(std::abs(is))) {
+      Msg::Error("The boundary of discrete surface %d is not known by the "
+                 "built-in kernel: use CreateTopology before the extrusion",
+                 std::abs(is));
+      return 0;
+    }
+  }
 
   Msg::Debug("Extrude Surface %d", is);
 

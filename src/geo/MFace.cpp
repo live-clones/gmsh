@@ -53,20 +53,24 @@ static void sortVertices(MVertex *const *v, int n, char *s)
     return;
   }
 
-  std::vector<MVertex *> sorted(v, v + n);
-  std::sort(sorted.begin(), sorted.end(), compare);
-  for(int i = 0; i < n; i++)
-    s[i] = std::distance(v, std::find(v, v + n, sorted[i]));
+  for(int i = 0; i < n; i++) s[i] = i;
+  std::sort(s, s + n,
+            [v](char a, char b) { return compare(v[int(a)], v[int(b)]); });
+}
+
+static void sortVertices(MVertex *const *v, int n, int *s)
+{
+  for(int i = 0; i < n; i++) s[i] = i;
+  std::sort(s, s + n, [v](int a, int b) { return compare(v[a], v[b]); });
 }
 
 void MFace::_initialize(MVertex *const *v, int n)
 {
   _n = n;
-  if(n > 4) { // polygonal face of a cut element: allocate
-    _p = new polygon;
-    _p->v.assign(v, v + n);
-    _p->si.resize(n);
-    sortVertices(_p->v.data(), n, _p->si.data());
+  if(n > 4) { // polygonal face of a cut element or a polyhedron: allocate
+    _p = _alloc(n);
+    std::copy(v, v + n, _p);
+    sortVertices(_p, n, _psi());
     // keep the inline storage well-defined, it is copied around unconditionally
     for(int i = 0; i < 4; i++) {
       _v[i] = nullptr;
@@ -86,7 +90,12 @@ void MFace::_initialize(MVertex *const *v, int n)
 void MFace::_copy(const MFace &f)
 {
   _copyInline(f);
-  _p = f._p ? new polygon(*f._p) : nullptr;
+  _p = nullptr;
+  if(f._p) {
+    _p = _alloc(_n);
+    std::copy(f._p, f._p + _n, _p);
+    std::copy(f._psi(), f._psi() + _n, _psi());
+  }
 }
 
 MFace::MFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3)

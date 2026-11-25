@@ -107,10 +107,10 @@ namespace glShader {
   // put the average of what accumulate() summed (count frames) back on the
   // window, as it left it; false if there is no such sum at that size
   bool showAccumulation(int width, int height, int count);
-  // Flames over what is drawn, licking up from every pixel of it, at a
-  // level from 0 to 1 (and taller beyond) and flickering with the time (in
-  // seconds). False if it cannot be done.
-  bool fire(int width, int height, double level, double time);
+  // The phlogiston given off by what is drawn, rising from every pixel of
+  // it, at a level from 0 to 1 (and taller beyond) and flickering with the
+  // time (in seconds). False if it cannot be done.
+  bool phlogiston(int width, int height, double level, double time);
   // is what is drawn next lit, and are its back faces lit as well?
   void setLighting(bool on, bool twoSide);
   // clip plane i, in eye coordinates; setClipPlaneOff() stops clipping with it

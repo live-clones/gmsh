@@ -229,12 +229,6 @@ bool gmshLineStippleEnabled();
 int gmshLineStippleFactor();
 unsigned short gmshLineStipplePattern();
 
-inline void gmshPolygonFill(bool fill)
-{
-  if(glShader::enabled()) glImmediate::flush();
-  glPolygonMode(GL_FRONT_AND_BACK, fill ? GL_FILL : GL_LINE);
-}
-
 // The depth test, and whether it writes. What is waiting was collected to be
 // drawn the way it was when it was collected: turning the test off with
 // glDisable() alone leaves the queue for later, under whatever state is in
@@ -250,26 +244,38 @@ inline void gmshDepthTest(bool on)
     glDisable(GL_DEPTH_TEST);
 }
 // The depths the next primitives are written and tested at, pulled towards
-// the viewer by a thousandth of the range: what is drawn on a surface (the
-// mark of a query, the line of a measurement) is then not left to z-fighting
-// with it. Like the depth test, it applies to what is waiting.
-inline void gmshDepthOffset(bool on)
+// the viewer by a part of the range: what is drawn on a surface (the mark of a
+// query, the line of a measurement) is then not left to z-fighting with it.
+// With perspective a thousandth is a good part of the model. Like the depth
+// test, it applies to what is waiting.
+inline void gmshDepthOffset(bool on, double amount = 1e-3)
 {
   if(glShader::enabled()) glImmediate::flush();
-  glDepthRange(0., on ? 0.999 : 1.);
+  glDepthRange(0., on ? 1. - amount : 1.);
 }
 inline void gmshDepthMask(bool on)
 {
   if(glShader::enabled()) glImmediate::flush();
   glDepthMask(on ? GL_TRUE : GL_FALSE);
 }
-inline bool gmshPolygonFilled()
-{
-  // a compatibility profile answers with two values (front and back), a
-  // core profile with one
-  GLint mode[2] = {GL_FILL, GL_FILL};
-  glGetIntegerv(GL_POLYGON_MODE, mode);
-  return mode[0] == GL_FILL;
+// The blending and the viewport, kept by us as well as by OpenGL: the
+// collector compares the blending at every primitive, and asking OpenGL for
+// it is a round trip to another process with WebGL (Firefox). They must be
+// set through these calls; glImmediate::syncState() reads them back from
+// OpenGL, for a frame drawn after code that set them directly. The blending
+// is collected with the primitives, so changing it does not flush.
+void gmshBlend(bool on);
+bool gmshBlendEnabled();
+void gmshBlendFunc(GLenum src, GLenum dst);
+// the colour's and the alpha's factors; the colour's alone without separate
+// blending (OpenGL 1.4)
+void gmshBlendFuncSeparate(GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha,
+                           GLenum dstAlpha);
+void gmshGetBlendFunc(GLint src[2], GLint dst[2]);
+void gmshViewport(int x, int y, int w, int h);
+const int *gmshViewport();
+namespace glImmediate {
+  void syncState();
 }
 
 // The projection and modelview matrices and their stacks, kept by us as a

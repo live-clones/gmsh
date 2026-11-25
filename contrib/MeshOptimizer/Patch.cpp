@@ -24,6 +24,7 @@
 //
 // Contributors: Thomas Toulorge, Jonathan Lambrechts
 
+#include <iostream>
 #include "GmshMessage.h"
 #include "GFace.h"
 #include "BasisFactory.h"
@@ -38,8 +39,8 @@
 
 Patch::Patch(const std::map<MElement *, GEntity *> &element2entity,
              const std::map<MElement *, GEntity *> &bndEl2Ent,
-             const std::set<MElement *> &els, std::set<MVertex *> &toFix,
-             const std::set<MElement *> &bndEls, int fixBndNodes)
+             const MElementSet &els, MVertexSet &toFix,
+             const MElementSet &bndEls, int fixBndNodes)
   : _typeLengthScale(LS_NONE), _invLengthScaleSq(0.)
 {
   _dim = (*els.begin())->getDim();
@@ -186,7 +187,7 @@ int Patch::addVert(MVertex *vert)
 }
 
 int Patch::addFreeVert(MVertex *vert, const int iV, const int nPCV,
-                       VertexCoord *param, std::set<MVertex *> &toFix)
+                       VertexCoord *param, MVertexSet &toFix)
 {
   auto itVert = find(_freeVert.begin(), _freeVert.end(), vert);
   if(itVert == _freeVert.end()) {
@@ -322,6 +323,13 @@ void Patch::initScaledNodeDispSq(LengthScaling scaling)
       }
       break;
     }
+    }
+    // straight elements have no distance to straight: fall back on their size
+    if(maxDSq == 0.) {
+      for(int iEl = 0; iEl < nEl(); iEl++) {
+        const double d = _el[iEl]->maxEdge(), dd = d * d;
+        if(dd > maxDSq) maxDSq = dd;
+      }
     }
     _invLengthScaleSq = 1. / maxDSq;
   }

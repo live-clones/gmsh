@@ -27,6 +27,7 @@
 #include <string>
 #include <vector>
 #include <typeinfo>
+#include <FL/Fl_Menu_Button.H>
 #include <FL/Fl.H>
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Menu_Window.H>
@@ -102,6 +103,7 @@ int main(int argc, char **argv)
   outdir = argc > 1 ? argv[1] : "."; scene = getenv("SCENE") ? getenv("SCENE") : "gui";
   gmsh::initialize(0, nullptr, false);
   gmsh::option::setNumber("General.FltkColorScheme", 0);
+  gmsh::option::setNumber("General.ColorScheme", 1);
   gmsh::option::setNumber("General.SystemMenuBar", 0);
   gmsh::option::setNumber("General.GraphicsWidth", 940);
   gmsh::option::setNumber("General.GraphicsHeight", 512);
@@ -120,9 +122,11 @@ int main(int argc, char **argv)
   pump(20);
   if(scene == "gui") { captureAll("gui"); }
   else if(scene == "rectangle") {
-    for(const char *n : {"0Modules/Geometry", "0Modules/Geometry/Elementary entities", "0Modules/Geometry/Elementary entities/Add"}) g->onelab->openTreeItem(n);
+    g->onelab->openTreeItem("0Modules/Geometry");
     pump(10);
-    Fl_Widget *r = findLabel(m, "Rectangle"); printf("Rectangle button: %d\n", r != nullptr);
+    Fl_Menu_Button *add = dynamic_cast<Fl_Menu_Button *>(findLabel(m, "Add"));
+    const Fl_Menu_Item *r = add ? add->find_item("Rectangle") : nullptr;
+    printf("Rectangle item: %d\n", r != nullptr);
     if(!r) return 1;
     Fl::add_timeout(1.5, [](void *) { // inside the add loop: the pointer on the picture, then the capture
       openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
@@ -130,7 +134,7 @@ int main(int argc, char **argv)
       Fl::e_x = gl->w() * 0.40; Fl::e_y = gl->h() * 0.62; Fl::e_x_root = m->x() + gl->x() + Fl::e_x; Fl::e_y_root = m->y() + gl->y() + Fl::e_y; Fl::e_state = 0;
       Fl_Widget *glw = gl; glw->handle(FL_ENTER); glw->handle(FL_MOVE); pump(10);
       captureAll("gui_add_rectangle"); gmsh::finalize(); exit(0); });
-    r->do_callback(); // runs the add loop until a key
+    r->do_callback(add); // runs the add loop until a key
   }
   else if(scene == "mesh") {
     g->onelab->openTreeItem("0Modules/Mesh"); pump(10);

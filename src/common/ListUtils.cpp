@@ -8,11 +8,7 @@
 //
 
 #include "GmshConfig.h"
-#if !defined(HAVE_NO_STDINT_H)
-#include <stdint.h>
-#elif defined(HAVE_NO_INTPTR_T)
-typedef unsigned long intptr_t;
-#endif
+#include <cstdint>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -165,11 +161,6 @@ void *List_Pointer_NoChange(List_T *liste, int index)
     Msg::Error("Wrong list index (pointer)");
     index = 0;
   }
-  return (&liste->array[(size_t)index * liste->size]);
-}
-
-void *List_Pointer_Fast(List_T *liste, int index)
-{
   return (&liste->array[(size_t)index * liste->size]);
 }
 

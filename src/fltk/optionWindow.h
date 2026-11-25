@@ -61,7 +61,7 @@ private:
   int _current, _rowHeight, _width, _buttonWidth;
   std::vector<Fl_Widget *> _hiddenBySearch;
   searchFilter _filter;
-  void _makeSections(int category);
+  void _finishSections(int category);
   bool _searching();
 
 public:
@@ -72,70 +72,52 @@ public:
   Fl_Return_Button *redraw;
   gamepadWindow *gmpdoption;
 
+  // The pages, from the table of OptionPages.h: the widgets bound to an
+  // option are reached by its name (see widget()); here the others
   struct {
     Fl_Group *group;
-    std::vector<Fl_Check_Button *> butt;
-    std::vector<Fl_Button *> push;
-    std::vector<Fl_Value_Input *> value;
-    std::vector<Fl_Button *> color;
-    std::vector<Fl_Input *> input;
-    std::vector<Fl_Choice *> choice;
-    Fl_Button *gamepadconfig;
+    // the buttons that act on other options, and the ball of the light
+    Fl_Button *selectRotationCenter, *fitAxes, *gamepadconfig;
     spherePositionWidget *sphere;
   } general;
   struct {
     Fl_Group *group;
-    std::vector<Fl_Check_Button *> butt;
-    std::vector<Fl_Value_Input *> value;
-    std::vector<Fl_Button *> color;
-    std::vector<Fl_Choice *> choice;
-  } geo;
+  } geo, mesh, solver, post;
   struct {
+    int index; // the view shown
+    bool hasElements; // the view shown has elements: its range applies
     Fl_Group *group;
-    std::vector<Fl_Check_Button *> butt;
-    std::vector<Fl_Return_Button *> retbutt;
-    std::vector<Fl_Input *> input;
-    std::vector<Fl_Value_Input *> value;
-    std::vector<Fl_Button *> color;
-    std::vector<Fl_Choice *> choice;
-    Fl_Menu_Button *menu;
-  } mesh;
-  struct {
-    Fl_Group *group;
-    std::vector<Fl_Check_Button *> butt;
-    std::vector<Fl_Value_Input *> value;
-    std::vector<Fl_Input *> input;
-  } solver;
-  struct {
-    Fl_Group *group;
-    std::vector<Fl_Check_Button *> butt;
-    std::vector<Fl_Value_Input *> value;
-    std::vector<Fl_Choice *> choice;
-  } post;
-  struct {
-    int index;
-    Fl_Group *group, *range;
-    std::vector<Fl_Check_Button *> butt;
-    std::vector<Fl_Value_Input *> value;
-    std::vector<Fl_Input *> input;
-    std::vector<Fl_Button *> push;
-    std::vector<Fl_Choice *> choice;
-    std::vector<Fl_Button *> color;
-    std::vector<Fl_Box *> label;
-    std::vector<Fl_Menu_Button *> menu;
+    // the range taken from the values
+    Fl_Button *rangeMin, *rangeMax;
+    // the views to choose from, listed as they come
+    Fl_Choice *externalView, *generalizedRaiseView;
+    Fl_Choice *colormap;
     colorbarWindow *colorbar;
-    Fl_Return_Button *ok;
   } view;
 
 public:
   optionWindow(int deltaFontSize = 0);
-  ~optionWindow() { Fl::delete_widget(win); }
+  ~optionWindow()
+  {
+    delete gmpdoption;
+    Fl::delete_widget(win);
+  }
   void showGroup(int num, bool showWindow = true,
                  bool allowMultipleSelections = false);
   void resetBrowser();
   void resetExternalViewList();
   void updateViewGroup(int index);
-  void activate(const char *what);
+  // the widget bound to an option (the first, if several), or null
+  Fl_Widget *widget(const std::string &option) const;
+  // the widgets bound to an option show its value at once (an option of the
+  // views: only for the view shown, num)
+  void showOption(const std::string &category, int num,
+                  const std::string &name);
+  // all the widgets show the values of their options (only those of the
+  // category shown, and not the one being edited, if shownOnly)
+  void showOptions(bool shownOnly = false);
+  // the widgets active or not as the options they depend on are set
+  void updateActive();
   void toggleSection(int category, int section);
   // the tab clicked
   void categoryChosen();
@@ -145,16 +127,24 @@ public:
   void layout(bool keepPosition);
 };
 
-void options_cb(Fl_Widget *w, void *data);
+// the value a check button gives an option that may hold more than 0 and 1
+// (as General.SaveOptions = 2): the value it has while the button shows it as
+// it is, on or off
+double checkValue(Fl_Button *b, double value);
+// the range of a value from the table of the ranges of its option (see
+// GetOptionRange()), and the step of its scrolling (when
+// General.InputScrolling is set)
+void optionRange(Fl_Valuator *v, const std::string &option);
+// the items of a choice from the table of the choices of its option (see
+// GetOptionChoices()), and their values; none if the option has no table
+std::vector<double> choiceItems(Fl_Choice *c, const std::string &option);
+
 void options_restore_defaults_cb(Fl_Widget *w, void *data);
-void general_options_cb(Fl_Widget *w, void *data);
-void geometry_options_cb(Fl_Widget *w, void *data);
-void mesh_options_cb(Fl_Widget *w, void *data);
-void solver_options_cb(Fl_Widget *w, void *data);
-void post_options_cb(Fl_Widget *w, void *data);
-void view_options_cb(Fl_Widget *w, void *data);
+// the options of the view of index num shown (of the view shown last, or
+// the first, if num is negative)
+void showViewOptions(int num);
 void general_gmpdcf_cb(Fl_Widget *w, void *data);
-void general_options_ok_cb(Fl_Widget *w, void *data);
+void general_rotation_center_cg_cb(Fl_Widget *w, void *data);
 void general_options_rotation_center_select_cb(Fl_Widget *w, void *data);
 void general_options_axes_fit_cb(Fl_Widget *w, void *data);
 

@@ -29,18 +29,6 @@ drawContextOffscreen::~drawContextOffscreen()
   delete _strings;
 }
 
-// the colour a frame starts from: white for a print without its background
-static void setClearColor()
-{
-  CTX *ctx = CTX::instance();
-  if(ctx->printing && !ctx->print.background)
-    glClearColor(1.0F, 1.0F, 1.0F, 0.0F);
-  else
-    glClearColor((GLclampf)(ctx->unpackRed(ctx->color.bg) / 255.),
-                 (GLclampf)(ctx->unpackGreen(ctx->color.bg) / 255.),
-                 (GLclampf)(ctx->unpackBlue(ctx->color.bg) / 255.), 0.0F);
-}
-
 bool drawContextOffscreen::begin(int width, int height, double scale,
                                  bool screen)
 {
@@ -62,12 +50,15 @@ bool drawContextOffscreen::begin(int width, int height, double scale,
   _screen = screen;
   // the view of the options (a window takes it from them when it is made);
   // with the context current, as what the previous view holds (images) goes
-  // with it
-  if(!screen || !_ctx || _viewFromOptions) {
+  // with it. On the screen the view is reset in place: the scene of the web
+  // page keeps a pointer to it
+  if(!screen || !_ctx) {
     delete _ctx;
     _ctx = new drawContext();
-    _viewFromOptions = false;
   }
+  else if(_viewFromOptions)
+    _ctx->initView();
+  _viewFromOptions = false;
   // line widths and point sizes in pixels of the screen, as on the desktop;
   // scaled in a picture
   glImmediate::pixelScale(screen ? 1. : scale);
@@ -76,7 +67,7 @@ bool drawContextOffscreen::begin(int width, int height, double scale,
   setPixelFactor(scale);
   // gl2ps takes the background of its page from the clear colour, before any
   // frame is drawn
-  setClearColor();
+  drawContext::setClearColor();
   return true;
 }
 
@@ -106,10 +97,10 @@ void drawContextOffscreen::drawCurrentOpenglWindow(bool make_current,
   _ctx->viewport[2] = (int)(_width / _scale + 0.5);
   _ctx->viewport[3] = (int)(_height / _scale + 0.5);
   _ctx->setHighResolutionPixelFactor(_scale);
-  glViewport(0, 0, _width, _height);
+  gmshViewport(0, 0, _width, _height);
   setPixelFactor(_scale);
 
-  setClearColor();
+  drawContext::setClearColor();
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
   if(ctx->camera) {
@@ -120,6 +111,7 @@ void drawContextOffscreen::drawCurrentOpenglWindow(bool make_current,
     _ctx->draw3d();
     memcpy(_frameView, _ctx->model, sizeof(_frameView));
   }
+  if(afterScene) afterScene(_width, _height);
   _ctx->draw2d();
   // all the frames of the studio shading, as a print of a window has them; on
   // the screen, they are added a few at a time (see drawStudioFrames())
@@ -140,7 +132,7 @@ bool drawContextOffscreen::drawStudioFrames(double budget)
   if(!_ctx || !_screen || !glShader::enabled() || ctx->shading < 1) return false;
   int n = ctx->studioSamples;
   if(_ctx->studioSample + 1 >= n) return false;
-  glViewport(0, 0, _width, _height);
+  gmshViewport(0, 0, _width, _height);
   setPixelFactor(_scale);
   if(!_ctx->drawStudioFrames(_ctx->studioSample + 1, _width, _height,
                              _frameView, budget))

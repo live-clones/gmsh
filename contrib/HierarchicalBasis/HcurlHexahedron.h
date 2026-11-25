@@ -31,11 +31,11 @@ class HcurlHexahedron : public HierarchicalBasis {
 public:
   HcurlHexahedron(int order);
   void functionInfo(std::vector<FunctionInfo> &info) override;
-  void functions(const Dual *x, std::vector<Vec> &vertex,
-                 std::vector<Vec> &edge, std::vector<Vec> &face,
-                 std::vector<Vec> &bubble) override;
+  void functions(const Dual *x, std::vector<DualVector> &vertex,
+                 std::vector<DualVector> &edge, std::vector<DualVector> &face,
+                 std::vector<DualVector> &bubble) override;
   void faceFunctions(const Dual *x, int flag1, int flag2, int flag3,
-                     int faceNumber, std::vector<Vec> &face) override;
+                     int faceNumber, std::vector<DualVector> &face) override;
 
 protected:
   bool hasParts() const override { return true; }

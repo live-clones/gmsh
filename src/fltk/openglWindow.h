@@ -21,19 +21,22 @@ int openglWindowMode();
 void resetOpenglMode();
 
 // An Fl_Gl_Window showing a scene: it draws the frames (the studio
-// accumulation, the prints, the fire), and hands the events of FLTK to the
+// accumulation, the prints, the phlogiston), and hands the events of FLTK to the
 // interaction it inherits from sceneView, whose host it is.
 class openglWindow : public Fl_Gl_Window, public sceneView {
 private:
   static openglWindow *_lastHandled;
-  static void _setLastHandled(openglWindow *);
   // some drawing routines can create data (STL triangulations, etc.), which
-  // can fire draw() while we are already drawing, e.g. due to an impromptu
-  // Fl::check(); the same lock keeps the picking passes out of the frames
+  // can fire draw() while we are already drawing, through an Fl::check() or
+  // Fl::wait() of FLTK itself (FlGui::check() refuses while drawing); the
+  // same lock keeps the picking passes out of the frames
   bool _lock;
+  // which also says to FlGui that a window draws (see FlGui::drawing)
+  void _setLock(bool on);
   bool _drawn;
   void _drawScreenMessage();
   void _drawBorder();
+  void _drawLasso();
   // The accumulation of the studio frames: whether the timer asked for the
   // next draw, whether this draw is one of them, the modelview of this
   // frame, and the modelview and window size the last one was drawn with.
@@ -56,26 +59,22 @@ private:
   void _cameraMatrices();
   void _studioFrame();
   static void _studioSampleCb(void *data);
-  // the fire lit by spinning the model (see sceneView), drawn over the scene;
+  // the phlogiston a spun model gives off (see sceneView), drawn over the scene;
   // sameFrame: the other eye of a stereo pair, drawn at the level the first
   // of them left
-  void _burn(bool sameFrame = false);
-  static void _fireCb(void *data);
+  void _releasePhlogiston(bool sameFrame = false);
+  static void _phlogistonCb(void *data);
 
 protected:
   void draw();
   int handle(int);
   // what the interaction asks of its window
   void hostRedraw();
-  void hostClicked();
+  bool hostClicked();
   void hostViewChanged();
   void hostCursor(bool cross);
   bool hostBeginGL();
   void hostEndGL();
-  bool hostQueryMode();
-  bool hostMeasureMode();
-  bool hostFrozenCoordinate(int coord);
-  void hostPointMoved(const double p[3], int mode);
   bool hostHasOnelabContext();
   void hostShowOnelabContext(int dim, int tag);
   void hostQuickAccess();
@@ -89,30 +88,26 @@ public:
     _studioAsked = false;
     Fl_Gl_Window::redraw();
   }
-  time_t rawtime, prev_rawtime;
-  double response_frequency;
   openglWindow(int x, int y, int w, int h);
   ~openglWindow();
-  void show();
   // draw into a picture of the given size (pixels) instead of the window,
   // at supersampling times the scale of the window; false if it cannot be
   // done
   bool printTo(int width, int height, int supersampling, unsigned int format,
                unsigned int type, void *pixels);
-  // wait for a selection (see sceneView::selectionStep() for what is
-  // returned)
-  char selectEntity(int type, std::vector<GVertex *> &vertices,
-                    std::vector<GEdge *> &edges, std::vector<GFace *> &faces,
-                    std::vector<GRegion *> &regions,
-                    std::vector<MElement *> &elements,
-                    std::vector<SPoint2> &points, std::vector<PView *> &views);
+  // wait for a selection, of mesh elements if asked (see
+  // sceneView::selectionStep() for what is returned): for the API only
+  char selectEntity(int type, bool pickElements, scenePicks &picks);
   static openglWindow *getLastHandled() { return _lastHandled; }
   // the next draw is the same picture as the last one (see
   // PixelBuffer::fill): the studio frames that one accumulated are put back
   // rather than drawn again
   void setAgain(bool again) { _again = again; }
-  static void setLastHandled(openglWindow *w) { _lastHandled = w; }
-  double frequency;
+  // which also brings the per-window visibility list up to date
+  static void setLastHandled(openglWindow *w);
+  // a step of the gamepad (see FlGui.cpp): the navigator made while the pad
+  // is active, which moves the camera, and deleted when it is not
+  void gamepadStep();
   void moveWithGamepad();
   Navigator *Nautilus;
 };

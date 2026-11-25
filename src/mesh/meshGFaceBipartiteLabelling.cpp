@@ -7,6 +7,7 @@
 
 #include <queue>
 #include <unordered_map>
+#include "GmshConfig.h"
 #include "meshTriangulation.h"
 #include "SVector3.h"
 #include "GModel.h"

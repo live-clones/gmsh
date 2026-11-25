@@ -369,6 +369,11 @@ public:
   // get MElement (if view supports it)
   virtual MElement *getElement(int step, int entity, int element);
 
+  // the unit normal of a surface element whose nodes are at xyz: from its
+  // first three nodes, or by Newell's method over the boundary nodes of a
+  // polygon, whose first nodes can be aligned
+  void getNormal(int step, int ent, int ele, double **xyz, double n[3]);
+
   // find coordinates of closest node to point (xn, yn, zn), with a kdtree
   double findClosestNode(double &xn, double &yn, double &zn, int step);
 

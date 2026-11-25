@@ -28,7 +28,11 @@ void List_Put(List_T *liste, int index, void *data);
 void List_Pop(List_T *liste);
 void *List_Pointer(List_T *liste, int index);
 void *List_Pointer_NoChange(List_T *liste, int index);
-void *List_Pointer_Fast(List_T *liste, int index);
+// (the index not checked, inlined for the loops that read lists)
+inline void *List_Pointer_Fast(List_T *liste, int index)
+{
+  return &liste->array[(size_t)index * liste->size];
+}
 void List_Sort(List_T *liste, int (*fcmp)(const void *a, const void *b));
 void List_Unique(List_T *liste, int (*fcmp)(const void *a, const void *b));
 int List_Search(List_T *liste, void *data,

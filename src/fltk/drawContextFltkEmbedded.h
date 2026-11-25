@@ -19,6 +19,7 @@ public:
   drawContextFltkEmbedded() : drawContextFltkQueued(new stbStrings) {}
   void setFont(int fontid, int fontsize)
   {
+    fontsize = fontSizeInRange(fontsize);
     drawContextFltkQueued::setFont(fontid, fontsize);
     _stb()->setFont(fontid, fontsize);
   }

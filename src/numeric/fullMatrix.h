@@ -11,23 +11,11 @@
 #include <cmath>
 #include <cstdio>
 #include <complex>
-#include <iostream>
 
-#if defined(HAVE_EIGEN)
-#ifdef Success // in X11 header X.h
-#undef Success
-#endif
-#include <sstream>
-#include <Eigen/Dense>
-#endif
-
-// GCC 14 sees the AVX stores of Eigen's vectorized assignment into the small
-// vectors below (e.g. of size 3) without the run-time size checks that keep
-// them in bounds
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Warray-bounds"
-#endif
+// With Eigen, the operations that use it are defined in fullMatrix.cpp, so
+// that Eigen is not parsed and its products not compiled in every file that
+// includes this header; its solvers (luSolve, invert, invertInPlace,
+// determinant, eig, svd) are only there for double
 
 template <class scalar> class fullMatrix;
 
@@ -42,10 +30,6 @@ private:
   scalar *_data; // pointer on the first element
   bool _ownData;
   friend class fullMatrix<scalar>;
-
-#if defined(HAVE_EIGEN)
-  typedef Eigen::Map<Eigen::Matrix<scalar, Eigen::Dynamic, 1> > EigenVec;
-#endif
 
 public:
   // Instantiate a zero size fullVector
@@ -149,63 +133,45 @@ public:
     _r = r;
     _data = data;
   }
-  inline void scale(const scalar s)
+  void scale(const scalar s)
+#if !defined(HAVE_EIGEN)
   {
-#if defined(HAVE_EIGEN)
-    EigenVec vv(_data, _r);
-    vv *= s;
-#else
     if(s == scalar(0.))
       for(int i = 0; i < _r; ++i) _data[i] = scalar(0.);
     else if(s == -1.)
       for(int i = 0; i < _r; ++i) _data[i] = -_data[i];
     else
       for(int i = 0; i < _r; ++i) _data[i] *= s;
-#endif
   }
-  inline void setAll(const scalar &m)
+#endif
+  ;
+  void setAll(const scalar &m)
+#if !defined(HAVE_EIGEN)
   {
-#if defined(HAVE_EIGEN)
-    EigenVec vv(_data, _r);
-    vv.setConstant(m);
-#else
     for(int i = 0; i < _r; i++) set(i, m);
+  }
 #endif
-  }
+  ;
   void setAll(const fullVector<scalar> &m)
-#if defined(HAVE_EIGEN)
-  {
-    EigenVec vv(_data, _r);
-    EigenVec vm(m._data, m._r);
-    vv = vm;
-  }
-#elif !defined(HAVE_BLAS)
+#if !defined(HAVE_EIGEN) && !defined(HAVE_BLAS)
   {
     for(int i = 0; i < _r; i++) _data[i] = m._data[i];
   }
 #endif
   ;
   // Scalar product
-  inline scalar operator*(const fullVector<scalar> &other)
+  scalar operator*(const fullVector<scalar> &other)
+#if !defined(HAVE_EIGEN)
   {
-#if defined(HAVE_EIGEN)
-    EigenVec vv(_data, _r), vother(other._data, other._r);
-    scalar s = vv.dot(vother);
-    return s;
-#else
     scalar s = 0.;
     for(int i = 0; i < _r; ++i) s += _data[i] * other._data[i];
     return s;
-#endif
   }
+#endif
+  ;
   // v(i) = v(i) + alpha * x(i)
   void axpy(const fullVector<scalar> &x, scalar alpha = 1.)
-#if defined(HAVE_EIGEN)
-  {
-    EigenVec vv(_data, _r), vx(x._data, x._r);
-    vv.noalias() += alpha * vx;
-  }
-#elif !defined(HAVE_BLAS)
+#if !defined(HAVE_EIGEN) && !defined(HAVE_BLAS)
   {
     for(int i = 0; i < _r; i++) _data[i] += alpha * x._data[i];
   }
@@ -235,11 +201,6 @@ private:
   int _r, _c; // size of the matrix
   scalar *_data; // pointer on the first element
   friend class fullVector<scalar>;
-
-#if defined(HAVE_EIGEN)
-  typedef Eigen::Map<Eigen::Matrix<scalar, Eigen::Dynamic, Eigen::Dynamic> > EigenMat;
-  typedef Eigen::Map<Eigen::Matrix<scalar, Eigen::Dynamic, 1> > EigenVec;
-#endif
 
 public:
   fullMatrix(scalar *original, int r, int c)
@@ -440,22 +401,15 @@ public:
     int cind = _c * ind;
     for(int i = 0; i < _r; i++) _data[cind + i] = x(i);
   }
-  inline void setAll(const scalar &m)
+  void setAll(const scalar &m)
+#if !defined(HAVE_EIGEN)
   {
-#if defined(HAVE_EIGEN)
-    EigenMat ma(_data, _r, _c);
-    ma.setConstant(m);
-#else
     for(int i = 0; i < _r * _c; i++) _data[i] = m;
+  }
 #endif
-  }
+  ;
   void setAll(const fullMatrix<scalar> &m)
-#if defined(HAVE_EIGEN)
-  {
-    EigenMat ma(_data, _r, _c), mm(m._data, m._r, m._c);
-    ma = mm;
-  }
-#elif !defined(HAVE_BLAS)
+#if !defined(HAVE_EIGEN) && !defined(HAVE_BLAS)
   {
     if(_r != m._r || _c != m._c) {
       Msg::Error("Dense matrix sizes do not match in setAll");
@@ -466,12 +420,7 @@ public:
 #endif
   ;
   void scale(const scalar s)
-#if defined(HAVE_EIGEN)
-  {
-    EigenMat ma(_data, _r, _c);
-    ma *= s;
-  }
-#elif !defined(HAVE_BLAS)
+#if !defined(HAVE_EIGEN) && !defined(HAVE_BLAS)
   {
     if(s == 0.) // this is not really correct nan*0 (or inf*0) is expected to
                 // give nan
@@ -485,34 +434,24 @@ public:
   {
     for(int i = 0; i < _r * _c; ++i) _data[i] += a;
   }
-  inline void add(const fullMatrix<scalar> &m)
+  void add(const fullMatrix<scalar> &m)
+#if !defined(HAVE_EIGEN)
   {
-#if defined(HAVE_EIGEN)
-    EigenMat ma(_data, _r, _c), mm(m._data, m._r, m._c);
-    ma.noalias() += mm;
-#else
     for(int i = 0; i < _r; i++)
       for(int j = 0; j < _c; j++) (*this)(i, j) += m(i, j);
-#endif
   }
-  inline void add(const fullMatrix<scalar> &m, const scalar &a)
+#endif
+  ;
+  void add(const fullMatrix<scalar> &m, const scalar &a)
+#if !defined(HAVE_EIGEN)
   {
-#if defined(HAVE_EIGEN)
-    EigenMat ma(_data, _r, _c), mm(m._data, m._r, m._c);
-    ma.noalias() += a * mm;
-#else
     for(int i = 0; i < _r; i++)
       for(int j = 0; j < _c; j++) (*this)(i, j) += a * m(i, j);
+  }
 #endif
-  }
+  ;
   void mult(const fullVector<scalar> &x, fullVector<scalar> &y) const
-#if defined(HAVE_EIGEN)
-  {
-    EigenMat ma(_data, _r, _c);
-    EigenVec vx(x._data, x._r), vy(y._data, y._r);
-    vy = ma * vx;
-  }
-#elif !defined(HAVE_BLAS)
+#if !defined(HAVE_EIGEN) && !defined(HAVE_BLAS)
   {
     y.scale(scalar(0.));
     for(int i = 0; i < _r; i++)
@@ -521,13 +460,7 @@ public:
 #endif
   ;
   void multAddy(const fullVector<scalar> &x, fullVector<scalar> &y) const
-#if defined(HAVE_EIGEN)
-  {
-    EigenMat ma(_data, _r, _c);
-    EigenVec vx(x._data, x._r), vy(y._data, y._r);
-    vy += ma * vx;
-  }
-#elif !defined(HAVE_BLAS)
+#if !defined(HAVE_EIGEN) && !defined(HAVE_BLAS)
   {
     for(int i = 0; i < _r; i++)
       for(int j = 0; j < _c; j++) y._data[i] += (*this)(i, j) * x(j);
@@ -535,12 +468,7 @@ public:
 #endif
   ;
   void mult(const fullMatrix<scalar> &b, fullMatrix<scalar> &c) const
-#if defined(HAVE_EIGEN)
-  {
-    EigenMat ma(_data, _r, _c), mb(b._data, b._r, b._c), mc(c._data, c._r, c._c);
-    mc.noalias() = ma * mb;
-  }
-#elif !defined(HAVE_BLAS)
+#if !defined(HAVE_EIGEN) && !defined(HAVE_BLAS)
   {
     c.scale(scalar(0.));
     for(int i = 0; i < _r; i++)
@@ -622,20 +550,7 @@ public:
 #endif
   ;
   bool luSolve(const fullVector<scalar> &rhs, fullVector<scalar> &result)
-#if defined(HAVE_EIGEN)
-  {
-    if(_r != _c || _r != rhs._r || _r != result._r) {
-      Msg::Error("Wrong sizes for dense linear system solve (size = %d %d, "
-                 "%d, %d)", _r, _c, result._r, rhs._r);
-      return false;
-    }
-    EigenMat ma(_data, _r, _c);
-    EigenVec vb(rhs._data, rhs._r);
-    EigenVec vx(result._data, result._r);
-    vx = ma.colPivHouseholderQr().solve(vb);
-    return true;
-  }
-#elif !defined(HAVE_LAPACK)
+#if !defined(HAVE_EIGEN) && !defined(HAVE_LAPACK)
   {
     Msg::Error("LU factorization and substitution requires Eigen or LAPACK");
     return false;
@@ -660,20 +575,7 @@ public:
 #endif
   ;
   bool invert(fullMatrix<scalar> &result) const
-#if defined(HAVE_EIGEN)
-  {
-    if(_r != _c) {
-      Msg::Error("Dense matrix inverse requires square matrix (size = %d %d)",
-                 _r, _c);
-      return false;
-    }
-    result.resize(_r, _c);
-    EigenMat ma(_data, _r, _c);
-    EigenMat mi(result._data, _r, _c);
-    mi = ma.inverse();
-    return true;
-  }
-#elif !defined(HAVE_LAPACK)
+#if !defined(HAVE_EIGEN) && !defined(HAVE_LAPACK)
   {
     Msg::Error("Matrix inversion requires Eigen or LAPACK");
     return false;
@@ -681,18 +583,7 @@ public:
 #endif
   ;
   bool invertInPlace()
-#if defined(HAVE_EIGEN)
-  {
-    if(_r != _c) {
-      Msg::Error("Dense matrix inversion requires square matrix (size = %d %d)",
-                 _r, _c);
-      return false;
-    }
-    EigenMat ma(_data, _r, _c);
-    ma = ma.inverse();
-    return true;
-  }
-#elif !defined(HAVE_LAPACK)
+#if !defined(HAVE_EIGEN) && !defined(HAVE_LAPACK)
   {
     Msg::Error("Dense matrix inversion requires LAPACK");
     return false;
@@ -700,12 +591,7 @@ public:
 #endif
   ;
   scalar determinant() const
-#if defined(HAVE_EIGEN)
-  {
-    EigenMat ma(_data, _r, _c);
-    return ma.determinant();
-  }
-#elif !defined(HAVE_LAPACK)
+#if !defined(HAVE_EIGEN) && !defined(HAVE_LAPACK)
   {
     Msg::Error("Dense matrix inversion requires Eigen or LAPACK");
     return false;
@@ -748,30 +634,7 @@ public:
   bool eig(fullVector<double> &eigenValReal, fullVector<double> &eigenValImag,
            fullMatrix<scalar> &leftEigenVect, fullMatrix<scalar> &rightEigenVect,
            bool sortRealPart = false)
-#if defined(HAVE_EIGEN)
-  {
-    EigenMat ma(_data, _r, _c);
-    Eigen::EigenSolver<Eigen::Matrix<scalar, Eigen::Dynamic, Eigen::Dynamic> > es(ma);
-    if(es.info() != Eigen::Success) {
-      Msg::Warning("Eigen could not compute eigenvalues/eigenvectors");
-      return false;
-    }
-    EigenVec vr(eigenValReal._data, eigenValReal._r);
-    vr = es.eigenvalues().real();
-    EigenVec vi(eigenValImag._data, eigenValImag._r);
-    vi = es.eigenvalues().imag();
-    EigenMat mr(rightEigenVect._data, rightEigenVect._r, rightEigenVect._c);
-    mr = es.eigenvectors().real();
-    EigenMat ml(leftEigenVect._data, leftEigenVect._r, leftEigenVect._c);
-    // FIXME: only true for symmetric matrices - compute the true left eigenvectors!
-    ml = mr;
-
-    if(sortRealPart)
-      eigSort(_r, eigenValReal._data, eigenValImag._data,
-              leftEigenVect._data, rightEigenVect._data);
-    return true;
-  }
-#elif !defined(HAVE_LAPACK)
+#if !defined(HAVE_EIGEN) && !defined(HAVE_LAPACK)
   {
     Msg::Error("Eigenvalue computation of dense matrices requires Eigen or "
                "LAPACK");
@@ -780,20 +643,7 @@ public:
 #endif
   ;
   bool svd(fullMatrix<scalar> &V, fullVector<scalar> &S)
-#if defined(HAVE_EIGEN)
-  {
-    EigenMat ma(_data, _r, _c);
-    EigenMat mv(V._data, V._r, V._c);
-    EigenVec vs(S._data, S._r);
-    Eigen::BDCSVD
-      <Eigen::Matrix<scalar, Eigen::Dynamic, Eigen::Dynamic> >
-      svd(ma, Eigen::ComputeThinU | Eigen::ComputeThinV);
-    ma = svd.matrixU();
-    mv = svd.matrixV();
-    vs = svd.singularValues();
-    return true;
-  }
-#elif !defined(HAVE_LAPACK)
+#if !defined(HAVE_EIGEN) && !defined(HAVE_LAPACK)
   {
     Msg::Error("Singular value decomposition of dense matrices requires "
                "Eigen or LAPACK");
@@ -811,9 +661,5 @@ public:
   bool getOwnData() const { return _ownData; };
   void setOwnData(bool ownData) { _ownData = ownData; };
 };
-
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic pop
-#endif
 
 #endif

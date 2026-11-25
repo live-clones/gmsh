@@ -265,6 +265,22 @@ static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
   gmshLighting(false);
 }
 
+// the outlines of the elements, at their own width and as lines, whatever the
+// lines of the field are drawn with
+static void drawOutlineArray(PView *p, VertexArray *va, bool light)
+{
+  if(!va || !va->getNumVertices()) return;
+  PViewOptions *opt = p->getOptions();
+  double factor = CTX::instance()->print.epsLineWidthFactor;
+  gmshLineWidth((float)opt->outlineWidth);
+  gl2psLineWidth((float)(opt->outlineWidth * factor));
+  drawVertexArray(va, GL_LINES,
+                  (light ? GMSH_DRAW_LIGHT : 0) | GMSH_DRAW_COLORS);
+  gmshLighting(false);
+  gmshLineWidth((float)opt->lineWidth);
+  gl2psLineWidth((float)(opt->lineWidth * factor));
+}
+
 // the ellipse or ellipsoid of the tensor at one point (thread safe: only
 // reads the view)
 static void addEllipseFor(drawContext *ctx, PViewOptions *opt, VertexArray *va,
@@ -529,8 +545,8 @@ static void drawNumberGlyphs(drawContext *ctx, PView *p, int numNodes,
   }
 }
 
-static void drawNormalVectorGlyphs(drawContext *ctx, PView *p, int numNodes,
-                                   double **xyz)
+static void drawNormalVectorGlyphs(drawContext *ctx, PView *p, int ent,
+                                   int ele, int numNodes, double **xyz)
 {
   PViewOptions *opt = p->getOptions();
 
@@ -539,12 +555,8 @@ static void drawNormalVectorGlyphs(drawContext *ctx, PView *p, int numNodes,
     pc += SPoint3(xyz[i][0], xyz[i][1], xyz[i][2]);
   pc /= (double)numNodes;
 
-  SVector3 t1(xyz[1][0] - xyz[0][0], xyz[1][1] - xyz[0][1],
-              xyz[1][2] - xyz[0][2]);
-  SVector3 t2(xyz[2][0] - xyz[0][0], xyz[2][1] - xyz[0][1],
-              xyz[2][2] - xyz[0][2]);
-  SVector3 n = crossprod(t1, t2);
-  n.normalize();
+  double n[3];
+  p->getData(true)->getNormal(opt->timeStep, ent, ele, xyz, n);
 
   for(int i = 0; i < 3; i++)
     n[i] *= opt->normals * ctx->pixel_equiv_x / ctx->s[i];
@@ -637,7 +649,7 @@ static void drawGlyphs(drawContext *ctx, PView *p)
         if(numbersNow)
           drawNumberGlyphs(ctx, p, el.numNodes, el.numComp, el.xyz, el.val);
         if(normal)
-          drawNormalVectorGlyphs(ctx, p, el.numNodes, el.xyz);
+          drawNormalVectorGlyphs(ctx, p, el.ent, el.ele, el.numNodes, el.xyz);
         else if(tangent)
           drawTangentVectorGlyphs(ctx, p, el.numNodes, el.xyz);
       }
@@ -716,17 +728,18 @@ public:
     gl2psLineWidth(
       (float)(opt->lineWidth * CTX::instance()->print.epsLineWidthFactor));
 
-    if(opt->axes) {
+    int axes = opt->getAxes();
+    if(axes) {
       gmshColor4ubv((const void *)&opt->color.axes);
       gmshLineWidth((float)CTX::instance()->lineWidth);
       gl2psLineWidth((float)(CTX::instance()->lineWidth *
                              CTX::instance()->print.epsLineWidthFactor));
       if(!opt->axesAutoPosition)
-        _ctx->drawAxes(opt->axes, opt->axesTicks, opt->axesFormat,
+        _ctx->drawAxes(axes, opt->axesTicks, opt->axesFormat,
                        opt->axesLabel, opt->axesPosition, opt->axesMikado,
                        opt->axesPosition);
       else if(!opt->tmpBBox.empty())
-        _ctx->drawAxes(opt->axes, opt->axesTicks, opt->axesFormat,
+        _ctx->drawAxes(axes, opt->axesTicks, opt->axesFormat,
                        opt->axesLabel, opt->tmpBBox, opt->axesMikado,
                        opt->tmpBBox);
     }
@@ -745,8 +758,8 @@ public:
     // pass sums it in any order with its own blending
     bool blend = viewIsTransparent(p) && !glShader::transparentPass();
     if(blend) {
-      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-      glEnable(GL_BLEND);
+      gmshBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      gmshBlend(true);
       if(p->va_triangles && p->va_triangles->getNumVertices() &&
          eyeChanged(_ctx, p)) {
         Msg::Debug("Sorting View[%d] for transparency", p->getIndex());
@@ -766,12 +779,14 @@ public:
 
     drawArrays(_ctx, p, p->va_points, GL_POINTS, false);
     drawArrays(_ctx, p, p->va_lines, GL_LINES, opt->light && opt->lightLines);
+    drawOutlineArray(p, p->va_outlines, opt->light && opt->lightLines);
 
-    // the outlines of the cut elements, on the side the planes cut off; in
-    // capping mode those of the section, clipped like everything else
+    // the lines and outlines of the cut elements, on the side the planes cut
+    // off; in capping mode those of the section, clipped like everything else
     if(whole) setViewClipOutside(opt, true);
     drawArrays(_ctx, p, p->va_clip_lines, GL_LINES,
                opt->light && opt->lightLines, true);
+    drawOutlineArray(p, p->va_clip_outlines, opt->light && opt->lightLines);
     if(whole) setViewClipOutside(opt, false);
 
     if(opt->lightTwoSide) gmshLightTwoSide(true);
@@ -804,7 +819,7 @@ public:
     }
 
     if(blend) {
-      glDisable(GL_BLEND);
+      gmshBlend(false);
       gmshDepthTest(true);
     }
 

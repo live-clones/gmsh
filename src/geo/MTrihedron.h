@@ -52,7 +52,7 @@ protected:
   }
 
 public:
-  MTrihedron(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, int num = 0,
+  MTrihedron(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, std::size_t num = 0,
              int part = 0)
     : MElement(num, part)
   {
@@ -61,7 +61,7 @@ public:
     _v[2] = v2;
     _v[3] = v3;
   }
-  MTrihedron(const std::vector<MVertex *> &v, int num = 0, int part = 0)
+  MTrihedron(const std::vector<MVertex *> &v, std::size_t num = 0, int part = 0)
     : MElement(num, part)
   {
     for(int i = 0; i < 4; i++) _v[i] = v[i];

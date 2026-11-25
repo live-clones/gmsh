@@ -25,6 +25,7 @@
 
 #include <time.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string>
 #include <vector>
 #include <set>
@@ -34,6 +35,8 @@
 #include <sstream>
 #include <mutex>
 #include <regex>
+#include <limits>
+#include <cmath>
 
 #include "GmshSocket.h"
 
@@ -204,6 +207,22 @@ namespace onelab {
     static double maxNumber() { return 1e200; }
     static std::string version() { return "1.3"; }
     static int defaultChangedValue() { return 31; }
+    // the shortest representation of v that reads back to v
+    static std::string numberToString(double v)
+    {
+      char buf[32];
+      for(int prec = 15; prec <= 17; prec++) {
+        snprintf(buf, sizeof(buf), "%.*g", prec, v);
+        if(strtod(buf, nullptr) == v) break;
+      }
+      return buf;
+    }
+    // JSON has no NaN or infinity: write them as null
+    static std::string numberToJSON(double v)
+    {
+      if(!std::isfinite(v)) return "null";
+      return numberToString(v);
+    }
     static std::string getNextToken(const std::string &msg,
                                     std::string::size_type &first,
                                     char separator = charSep())
@@ -331,8 +350,27 @@ namespace onelab {
     }
     std::string sanitizeJSON(const std::string &in) const
     {
-      // FIXME: replace \n with \\n, \t with \\t, etc.
-      return in;
+      // escape what a JSON string cannot hold as such (e.g. the newlines and
+      // backslashes of labels and help strings)
+      std::string out;
+      for(char c : in) {
+        switch(c) {
+        case '"': out += "\\\""; break;
+        case '\\': out += "\\\\"; break;
+        case '\n': out += "\\n"; break;
+        case '\r': out += "\\r"; break;
+        case '\t': out += "\\t"; break;
+        default:
+          if((unsigned char)c < 0x20) {
+            char tmp[8];
+            snprintf(tmp, sizeof(tmp), "\\u%04x", c);
+            out += tmp;
+          }
+          else
+            out += c;
+        }
+      }
+      return out;
     }
     virtual std::string toJSON() const
     {
@@ -514,13 +552,9 @@ namespace onelab {
       setVisible(p.getVisible());
       setReadOnly(p.getReadOnly());
       setAttributes(p.getAttributes());
-      bool changed = false;
-      for(std::size_t i = 0; i < p.getValues().size(); i++) {
-        if(p.getValues()[i] != getValues()[i]) {
-          changed = true;
-          break;
-        }
-      }
+      // an empty list of values leaves the stored ones alone; any other list
+      // replaces them if it differs, whatever its length
+      bool changed = p.getValues().size() && p.getValues() != getValues();
       if(changed) {
         setValues(p.getValues());
         setChanged(getChangedValue());
@@ -536,17 +570,18 @@ namespace onelab {
     std::string toChar() const
     {
       std::ostringstream sstream;
-      sstream.precision(16);
       sstream << parameter::toChar() << _values.size() << charSep();
       for(std::size_t i = 0; i < _values.size(); i++)
-        sstream << _values[i] << charSep();
-      sstream << _min << charSep() << _max << charSep() << _step << charSep()
-              << _index << charSep() << _choices.size() << charSep();
+        sstream << numberToString(_values[i]) << charSep();
+      sstream << numberToString(_min) << charSep() << numberToString(_max)
+              << charSep() << numberToString(_step) << charSep() << _index
+              << charSep() << _choices.size() << charSep();
       for(std::size_t i = 0; i < _choices.size(); i++)
-        sstream << _choices[i] << charSep();
+        sstream << numberToString(_choices[i]) << charSep();
       sstream << _valueLabels.size() << charSep();
       for(auto it = _valueLabels.begin(); it != _valueLabels.end(); it++) {
-        sstream << it->first << charSep() << sanitize(it->second) << charSep();
+        sstream << numberToString(it->first) << charSep()
+                << sanitize(it->second) << charSep();
       }
       return sstream.str();
     }
@@ -574,20 +609,21 @@ namespace onelab {
     std::string toJSON() const
     {
       std::ostringstream sstream;
-      sstream.precision(16);
       sstream << "{ " << parameter::toJSON() << ", \"values\":[ ";
       for(std::size_t i = 0; i < _values.size(); i++) {
         if(i) sstream << ", ";
-        sstream << _values[i];
+        sstream << numberToJSON(_values[i]);
       }
       sstream << " ]"
-              << ", \"min\":" << _min << ", \"max\":" << _max
-              << ", \"step\":" << _step << ", \"index\":" << _index;
+              << ", \"min\":" << numberToJSON(_min)
+              << ", \"max\":" << numberToJSON(_max)
+              << ", \"step\":" << numberToJSON(_step)
+              << ", \"index\":" << _index;
       if(_choices.size()) {
         sstream << ", \"choices\":[ ";
         for(std::size_t i = 0; i < _choices.size(); i++) {
           if(i) sstream << ", ";
-          sstream << _choices[i];
+          sstream << numberToJSON(_choices[i]);
         }
         sstream << " ]";
       }
@@ -595,7 +631,8 @@ namespace onelab {
         sstream << ", \"valueLabels\":{ ";
         for(auto it = _valueLabels.begin(); it != _valueLabels.end(); it++) {
           if(it != _valueLabels.begin()) sstream << ", ";
-          sstream << "\"" << sanitizeJSON(it->second) << "\":" << it->first;
+          sstream << "\"" << sanitizeJSON(it->second)
+                  << "\":" << numberToJSON(it->first);
         }
         sstream << " }";
       }
@@ -620,30 +657,41 @@ namespace onelab {
       return false;
     }
 #if defined(HAVE_PICOJSON)
+    // a number, or null for the values JSON cannot hold (see numberToJSON)
+    static bool jsonToNumber(const picojson::value &v, double &d)
+    {
+      if(v.is<double>())
+        d = v.get<double>();
+      else if(v.is<picojson::null>())
+        d = std::numeric_limits<double>::quiet_NaN();
+      else
+        return false;
+      return true;
+    }
     bool fromJSON(const picojson::value::object &par)
     {
       if(!parameter::fromJSON(par)) return false;
+      double d;
       for(auto it = par.begin(); it != par.end(); ++it) {
         if(it->first == "values") {
           if(!it->second.is<picojson::array>()) return false;
           const picojson::value::array &arr = it->second.get<picojson::array>();
           _values.resize(arr.size());
           for(std::size_t i = 0; i < arr.size(); i++) {
-            if(!arr[i].is<double>()) return false;
-            _values[i] = arr[i].get<double>();
+            if(!jsonToNumber(arr[i], _values[i])) return false;
           }
         }
         else if(it->first == "min") {
-          if(!it->second.is<double>()) return false;
-          setMin(it->second.get<double>());
+          if(!jsonToNumber(it->second, d)) return false;
+          setMin(d);
         }
         else if(it->first == "max") {
-          if(!it->second.is<double>()) return false;
-          setMax(it->second.get<double>());
+          if(!jsonToNumber(it->second, d)) return false;
+          setMax(d);
         }
         else if(it->first == "step") {
-          if(!it->second.is<double>()) return false;
-          setStep(it->second.get<double>());
+          if(!jsonToNumber(it->second, d)) return false;
+          setStep(d);
         }
         else if(it->first == "index") {
           if(!it->second.is<double>()) return false;
@@ -654,8 +702,7 @@ namespace onelab {
           const picojson::value::array &arr = it->second.get<picojson::array>();
           _choices.resize(arr.size());
           for(std::size_t i = 0; i < arr.size(); i++) {
-            if(!arr[i].is<double>()) return false;
-            _choices[i] = arr[i].get<double>();
+            if(!jsonToNumber(arr[i], _choices[i])) return false;
           }
         }
         else if(it->first == "valueLabels") {
@@ -663,8 +710,8 @@ namespace onelab {
           const picojson::value::object &obj =
             it->second.get<picojson::object>();
           for(auto i = obj.begin(); i != obj.end(); ++i) {
-            if(!i->second.is<double>()) return false;
-            _valueLabels[i->second.get<double>()] = i->first;
+            if(!jsonToNumber(i->second, d)) return false;
+            _valueLabels[d] = i->first;
           }
         }
       }
@@ -723,13 +770,9 @@ namespace onelab {
       setVisible(p.getVisible());
       setReadOnly(p.getReadOnly());
       setAttributes(p.getAttributes());
-      bool changed = false;
-      for(std::size_t i = 0; i < p.getValues().size(); i++) {
-        if(p.getValues()[i] != getValues()[i]) {
-          changed = true;
-          break;
-        }
-      }
+      // an empty list of values leaves the stored ones alone; any other list
+      // replaces them if it differs, whatever its length
+      bool changed = p.getValues().size() && p.getValues() != getValues();
       if(changed) {
         setValues(p.getValues());
         setChanged(getChangedValue());
@@ -843,7 +886,10 @@ namespace onelab {
   private:
     std::set<number *, parameterLessThan> _numbers;
     std::set<string *, parameterLessThan> _strings;
-    std::mutex _mutex;
+    // every public function locks it, as the parameters are set and read from
+    // several threads (e.g. those of an API program while the GUI's thread
+    // rebuilds its tree); recursive, as some call others
+    mutable std::recursive_mutex _mutex;
 
     // delete a parameter from the parameter space
     template <class T>
@@ -878,14 +924,11 @@ namespace onelab {
       return false;
     }
     // set a parameter in the parameter space; if it already exists, update it
-    // (adding new clients if necessary). This would need to be locked to avoid
-    // race conditions when several clients try to set a parameter at the same
-    // time.
+    // (adding new clients if necessary)
     template <class T>
     bool _set(const T &p, const std::string &client,
               std::set<T *, parameterLessThan> &ps)
     {
-      _mutex.lock();
       auto it = ps.find((T *)&p);
       if(it != ps.end()) {
         (*it)->update(p);
@@ -898,13 +941,12 @@ namespace onelab {
           newp->addClient(client, parameter::defaultChangedValue());
         ps.insert(newp);
       }
-      _mutex.unlock();
       return true;
     }
     // get the parameter matching the given name, or all the parameters in the
     // category if no name is given. If we find a given parameter by name, we
     // add the client requesting the parameter to the list of clients for this
-    // parameter. This would also need to be locked.
+    // parameter
     template <class T>
     bool _get(std::vector<T> &p, const std::string &name,
               const std::string &client, std::set<T *, parameterLessThan> &ps)
@@ -917,11 +959,8 @@ namespace onelab {
         T tmp(name);
         auto it = ps.find(&tmp);
         if(it != ps.end()) {
-          if(client.size()) {
-            _mutex.lock();
+          if(client.size())
             (*it)->addClient(client, parameter::defaultChangedValue());
-            _mutex.unlock();
-          }
           p.push_back(**it);
         }
       }
@@ -929,16 +968,13 @@ namespace onelab {
     }
     template <class T>
     T *_getPtr(std::string name, const std::string client,
-               std::set<T *, parameterLessThan> ps)
+               std::set<T *, parameterLessThan> &ps)
     {
       T tmp(name);
       auto it = ps.find(&tmp);
       if(it != ps.end()) {
-        if(client.size()) {
-          _mutex.lock();
+        if(client.size())
           (*it)->addClient(client, parameter::defaultChangedValue());
-          _mutex.unlock();
-        }
         return *it;
       }
       return nullptr;
@@ -949,6 +985,7 @@ namespace onelab {
     ~parameterSpace() { clear(); }
     void clear(const std::string &name = "", const std::string &client = "")
     {
+      std::lock_guard<std::recursive_mutex> guard(_mutex);
       if(name.empty() && client.empty()) {
         std::set<parameter *, parameterLessThan> ps;
         getAllParameters(ps);
@@ -963,41 +1000,53 @@ namespace onelab {
     }
     bool set(const number &p, const std::string &client = "")
     {
+      std::lock_guard<std::recursive_mutex> guard(_mutex);
       return _set(p, client, _numbers);
     }
     bool set(const string &p, const std::string &client = "")
     {
+      std::lock_guard<std::recursive_mutex> guard(_mutex);
       return _set(p, client, _strings);
     }
     bool get(std::vector<number> &ps, const std::string &name = "",
              const std::string &client = "")
     {
+      std::lock_guard<std::recursive_mutex> guard(_mutex);
       return _get(ps, name, client, _numbers);
     }
     bool get(std::vector<string> &ps, const std::string &name = "",
              const std::string &client = "")
     {
+      std::lock_guard<std::recursive_mutex> guard(_mutex);
       return _get(ps, name, client, _strings);
     }
     void getPtr(number **ptr, const std::string &name,
                 const std::string &client = "")
     {
+      std::lock_guard<std::recursive_mutex> guard(_mutex);
       *ptr = _getPtr(name, client, _numbers);
     }
     void getPtr(string **ptr, const std::string &name,
                 const std::string &client = "")
     {
+      std::lock_guard<std::recursive_mutex> guard(_mutex);
       *ptr = _getPtr(name, client, _strings);
     }
     void getAllParameters(std::set<parameter *, parameterLessThan> &ps) const
     {
+      std::lock_guard<std::recursive_mutex> guard(_mutex);
       ps.insert(_numbers.begin(), _numbers.end());
       ps.insert(_strings.begin(), _strings.end());
     }
-    int getNumParameters() { return (int)(_numbers.size() + _strings.size()); }
+    int getNumParameters()
+    {
+      std::lock_guard<std::recursive_mutex> guard(_mutex);
+      return (int)(_numbers.size() + _strings.size());
+    }
     void getParameterNames(std::vector<std::string> &names,
                            const std::string &search = "") const
     {
+      std::lock_guard<std::recursive_mutex> guard(_mutex);
       names.clear();
       if(search.empty()) {
         for(auto &p : _numbers) names.push_back(p->getName());
@@ -1020,6 +1069,7 @@ namespace onelab {
     // check if at least one parameter depends on the given client
     bool hasClient(const std::string &client) const
     {
+      std::lock_guard<std::recursive_mutex> guard(_mutex);
       std::set<parameter *, parameterLessThan> ps;
       getAllParameters(ps);
       for(auto it = ps.begin(); it != ps.end(); it++)
@@ -1030,6 +1080,7 @@ namespace onelab {
     // parameters that depend on a given client)
     int getChanged(const std::string &client = "") const
     {
+      std::lock_guard<std::recursive_mutex> guard(_mutex);
       std::set<parameter *, parameterLessThan> ps;
       getAllParameters(ps);
       int changed = 0;
@@ -1042,13 +1093,38 @@ namespace onelab {
     // client (or for all parameters if no client name is provided)
     void setChanged(int changed, const std::string &client = "")
     {
+      std::lock_guard<std::recursive_mutex> guard(_mutex);
       std::set<parameter *, parameterLessThan> ps;
       getAllParameters(ps);
       for(auto it = ps.begin(); it != ps.end(); it++)
         (*it)->setChanged(changed, client);
     }
+    // the level of change of each parameter for a client, to put back after
+    // an operation that must not change them
+    std::map<std::string, int> getChangedLevels(const std::string &client) const
+    {
+      std::lock_guard<std::recursive_mutex> guard(_mutex);
+      std::set<parameter *, parameterLessThan> ps;
+      getAllParameters(ps);
+      std::map<std::string, int> levels;
+      for(auto p : ps)
+        if(p->hasClient(client)) levels[p->getName()] = p->getChanged(client);
+      return levels;
+    }
+    void setChangedLevels(const std::map<std::string, int> &levels,
+                          const std::string &client)
+    {
+      std::lock_guard<std::recursive_mutex> guard(_mutex);
+      std::set<parameter *, parameterLessThan> ps;
+      getAllParameters(ps);
+      for(auto p : ps) {
+        auto it = levels.find(p->getName());
+        if(it != levels.end()) p->setChanged(it->second, client);
+      }
+    }
     void thresholdChanged(int threshold, const std::string &client = "")
     {
+      std::lock_guard<std::recursive_mutex> guard(_mutex);
       std::set<parameter *, parameterLessThan> ps;
       getAllParameters(ps);
       for(auto it = ps.begin(); it != ps.end(); it++) {
@@ -1060,6 +1136,7 @@ namespace onelab {
     // that depend on the given client)
     std::vector<std::string> toChar(const std::string &client = "") const
     {
+      std::lock_guard<std::recursive_mutex> guard(_mutex);
       std::vector<std::string> s;
       std::set<parameter *, parameterLessThan> ps;
       getAllParameters(ps);
@@ -1074,6 +1151,7 @@ namespace onelab {
     bool fromChar(const std::vector<std::string> &msg,
                   const std::string &client = "")
     {
+      std::lock_guard<std::recursive_mutex> guard(_mutex);
       for(std::size_t i = 0; i < msg.size(); i++) {
         std::string version, type, name;
         onelab::parameter::getInfoFromChar(msg[i], version, type, name);
@@ -1096,6 +1174,7 @@ namespace onelab {
     bool toJSON(std::string &json, const std::string &creator = "",
                 const std::string &client = "") const
     {
+      std::lock_guard<std::recursive_mutex> guard(_mutex);
       time_t now;
       time(&now);
       std::string t(ctime(&now));
@@ -1108,19 +1187,20 @@ namespace onelab {
       json += "  \"parameters\":[\n";
       std::set<parameter *, parameterLessThan> ps;
       getAllParameters(ps);
+      bool first = true;
       for(auto it = ps.begin(); it != ps.end(); it++) {
-        if(it != ps.begin()) json += ",\n";
-        if(client.empty() || (*it)->hasClient(client)) {
-          if((*it)->getAttribute("NotInDb") != "True") {
-            json += "    " + (*it)->toJSON();
-          }
-        }
+        if(!client.empty() && !(*it)->hasClient(client)) continue;
+        if((*it)->getAttribute("NotInDb") == "True") continue;
+        if(!first) json += ",\n";
+        json += "    " + (*it)->toJSON();
+        first = false;
       }
       json += "\n  ] }\n}\n";
       return true;
     }
     bool fromJSON(const std::string &json, const std::string &client = "")
     {
+      std::lock_guard<std::recursive_mutex> guard(_mutex);
 #if defined(HAVE_PICOJSON)
       picojson::value v;
       std::string err = picojson::parse(v, json);
@@ -1295,11 +1375,17 @@ namespace onelab {
   class server {
   private:
     // the unique server (singleton behaviour due to the "static" specifier)
-    static server *_server;
+    static inline server *_server = nullptr;
     // the address of the server
     std::string _address;
-    // the connected clients
-    std::set<client *> _clients;
+    // the connected clients, in the order they registered (their ids, never
+    // reused, give the order: not their addresses)
+    struct clientOrder {
+      bool operator()(client *a, client *b) const
+      { return a->getId() < b->getId(); }
+    };
+    std::set<client *, clientOrder> _clients;
+    int _lastClientId = 0;
     // the parameter space
     parameterSpace _parameterSpace;
 
@@ -1326,7 +1412,7 @@ namespace onelab {
     {
       return _parameterSpace.get(ps, name, client);
     }
-    typedef std::set<client *>::iterator citer;
+    typedef std::set<client *, clientOrder>::iterator citer;
     citer firstClient() { return _clients.begin(); }
     citer lastClient() { return _clients.end(); }
     int getNumClients() { return (int)_clients.size(); };
@@ -1338,8 +1424,8 @@ namespace onelab {
     }
     void registerClient(client *c)
     {
+      c->setId(++_lastClientId);
       _clients.insert(c);
-      c->setId((int)_clients.size());
     }
     void unregisterClient(client *c) { _clients.erase(c); }
     void setChanged(int changed, const std::string &client = "")
@@ -1350,6 +1436,11 @@ namespace onelab {
     {
       return _parameterSpace.getChanged(client);
     }
+    std::map<std::string, int> getChangedLevels(const std::string &client) const
+    { return _parameterSpace.getChangedLevels(client); }
+    void setChangedLevels(const std::map<std::string, int> &levels,
+                          const std::string &client)
+    { _parameterSpace.setChangedLevels(levels, client); }
     void thresholdChanged(int value, const std::string &client = "")
     {
       _parameterSpace.thresholdChanged(value, client);
@@ -1379,10 +1470,9 @@ namespace onelab {
       if(parameter::fromFile(msg, fp)) return fromChar(msg, client);
       return false;
     }
-    bool toJSON(std::string &json, const std::string &client = "")
-    {
-      return _parameterSpace.toJSON(json, client);
-    }
+    bool toJSON(std::string &json, const std::string &creator = "",
+                const std::string &client = "")
+    { return _parameterSpace.toJSON(json, creator, client); }
     bool fromJSON(const std::string &json, const std::string &client = "")
     {
       return _parameterSpace.fromJSON(json, client);
@@ -1427,24 +1517,28 @@ namespace onelab {
     }
     virtual bool setAndAppendChoices(const number &p)
     {
+      // the values appended to the choices the parameter has on the server
+      // (e.g. the history of an output), as the server does for a network
+      // client (GMSH_PARAMETER_WITHOUT_CHOICES)
       std::vector<number> ps;
-      _get(ps, _name);
+      _get(ps, p.getName());
       std::vector<double> choices;
       if(ps.size()) choices = ps[0].getChoices();
-      choices.insert(choices.end(), p.getChoices().begin(),
-                     p.getChoices().end());
+      choices.insert(choices.end(), p.getValues().begin(), p.getValues().end());
       number p2(p);
       p2.setChoices(choices);
       return _set(p2);
     }
     virtual bool setAndAppendChoices(const string &p)
     {
+      // the values appended to the choices the parameter has on the server
+      // (e.g. the history of an output), as the server does for a network
+      // client (GMSH_PARAMETER_WITHOUT_CHOICES)
       std::vector<string> ps;
-      _get(ps, _name);
+      _get(ps, p.getName());
       std::vector<std::string> choices;
       if(ps.size()) choices = ps[0].getChoices();
-      choices.insert(choices.end(), p.getChoices().begin(),
-                     p.getChoices().end());
+      choices.insert(choices.end(), p.getValues().begin(), p.getValues().end());
       string p2(p);
       p2.setChoices(choices);
       return _set(p2);

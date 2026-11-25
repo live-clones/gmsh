@@ -53,13 +53,13 @@ void OCCRegion::_setup()
       }
       else {
         l_faces.push_back(f);
-        // face.orientation() contains the orientation of the TopoDS_Face
-        // w.r.t. the underlying Geom_Surface, and the value is multiplied by
-        // the orientation of the shell
-        if(face.Orientation() == TopAbs_REVERSED)
-          l_dirs.push_back(-1);
-        else
-          l_dirs.push_back(1);
+        // face.Orientation() is the orientation of the face in the volume
+        // with respect to the underlying Geom_Surface (with the orientation
+        // of the shell); the sign is with respect to the normal of the
+        // surface, which can be reversed with respect to the Geom_Surface: 1
+        // if the normal points out of the volume
+        const int o = (face.Orientation() == TopAbs_REVERSED) ? -1 : 1;
+        l_dirs.push_back(o * f->normalOrientation());
         f->addRegion(this);
       }
     }

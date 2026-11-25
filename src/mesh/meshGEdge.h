@@ -7,6 +7,7 @@
 #define MESH_GEDGE_H
 
 class GEdge;
+class GEntity;
 
 // Create the mesh of the edge
 struct meshGEdge {
@@ -28,6 +29,12 @@ struct orientMeshGEdge {
 };
 
 int MeshExtrudedCurve(GEdge *ge);
+
+// whether the mesh of an entity can be extruded or copied by an extrusion:
+// not if it is of high order (the extrusion makes first-order elements from
+// all the nodes), nor if it is the mesh of a curve read without its elements
+// (the nodes are copied in the order of the elements); an error says why
+bool extrudableMesh(GEntity *from);
 
 // compute the target number of points on the curve considering all meshing
 // options, counting the boundary vertices

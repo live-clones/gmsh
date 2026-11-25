@@ -259,13 +259,6 @@ private:
   std::vector<unsigned char> _state;
 };
 
-void setIdentity(double m[9])
-{
-  m[0] = 1.; m[1] = 0.; m[2] = 0.;
-  m[3] = 0.; m[4] = 1.; m[5] = 0.;
-  m[6] = 0.; m[7] = 0.; m[8] = 1.;
-}
-
 // near receives the 2 nearest points of the boundary frame field; hint, those
 // of a nearby point, bounds the search (same result)
 void metricAt(double x, double y, double z, double m[9], std::size_t near[2],

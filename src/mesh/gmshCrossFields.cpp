@@ -381,10 +381,8 @@ struct cross2dPtrLessThan {
   }
 };
 
-// ---------------------------------------------
 // TODO : MAKE IT PARALLEL AND SUPERFAST
 //        DO IT ON SURFACES
-// ---------------------------------------------
 
 static void closest(const cross2d &c1, const cross2d &c2, double &a2,
                     double &diff)
@@ -3702,6 +3700,14 @@ static void findPhysicalGroupsForSingularities(GModel *gm,
 static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
                                  std::vector<int> &tags, bool layout = true)
 {
+  // the cross field is computed on the triangles of the surface meshes
+  std::size_t numTriangles = 0;
+  for(auto gf : f) numTriangles += gf->triangles.size();
+  if(!numTriangles) {
+    Msg::Error("Cross field computation requires a triangle mesh of the "
+               "surfaces");
+    return -1;
+  }
   quadLayoutData qLayout(gm, f, gm->getName());
   std::map<MVertex *, int> temp;
   std::map<int, std::vector<double> > dataH;

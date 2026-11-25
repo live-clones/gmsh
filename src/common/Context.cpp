@@ -37,14 +37,23 @@ void CTX::init()
   char *byte = (char*)&word;
   bigEndian = (byte[0] ? 0 : 1);
 
-  if(homeDir.empty()) homeDir = GetEnvironmentVar("GMSH_HOME");
+  // on Windows don't accept the top directory or anything partially expanded
+  // like Settings\%USERPROFILE%
+  auto dir = [](const char *var) {
+    std::string d = GetEnvironmentVar(var);
 #if defined(WIN32)
-  if(homeDir.empty()) homeDir = GetEnvironmentVar("APPDATA");
-#else
-  if(homeDir.empty()) homeDir = GetEnvironmentVar("HOME");
+    if(d == "/" || d.find_first_of("%$") != std::string::npos) d.clear();
 #endif
-  if(homeDir.empty()) homeDir = GetEnvironmentVar("TMP");
-  if(homeDir.empty()) homeDir = GetEnvironmentVar("TEMP");
+    return d;
+  };
+  if(homeDir.empty()) homeDir = dir("GMSH_HOME");
+#if defined(WIN32)
+  if(homeDir.empty()) homeDir = dir("APPDATA");
+#else
+  if(homeDir.empty()) homeDir = dir("HOME");
+#endif
+  if(homeDir.empty()) homeDir = dir("TMP");
+  if(homeDir.empty()) homeDir = dir("TEMP");
   int len = homeDir.size();
   if(len && homeDir[len - 1] != '/') homeDir += "/";
 
@@ -63,7 +72,6 @@ void CTX::init()
   mesh.timer[0] = mesh.timer[1] = mesh.timer[2] = 0.;
   mesh.minQuality = mesh.avgQuality = 0.;
   drawRotationCenter = 0;
-  pickElements = 0;
   geom.draw = 1;
   mesh.draw = 1;
   post.draw = 1;
@@ -90,6 +98,7 @@ void CTX::init()
   for(int d = 0; d < 4; d++) mesh.stamp[d] = 0;
   for(int d = 0; d < 4; d++) geom.stamp[d] = 0;
   entityColorsStamp = entityVisibilityStamp = meshContentStamp = 0;
+  entitiesStamp = meshElementsStamp = 0;
   mesh.qualityInf = mesh.qualitySup = mesh.qualityType = 0;
   mesh.radiusInf = mesh.radiusSup = 0;
   mesh.lines = mesh.triangles = mesh.tetrahedra = mesh.quadrangles = 0;
@@ -180,4 +189,17 @@ int CTX::numThreadsFor(std::size_t num, std::size_t worthIt) const
 {
   if(num < worthIt) return 1;
   return numThreads ? numThreads : Msg::GetMaxThreads();
+}
+
+int CTX::numThreads3D() const
+{
+  if(mesh.maxNumThreads3D > 0) return mesh.maxNumThreads3D;
+  return numThreads ? numThreads : Msg::GetMaxThreads();
+}
+
+bool modelBusy()
+{
+  if(!CTX::instance()->lock) return false;
+  Msg::Info("I'm busy! Ask me that later...");
+  return true;
 }

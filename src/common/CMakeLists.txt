@@ -11,6 +11,12 @@ set(SRC
   Options.cpp
   CommandLine.cpp
   Shortcuts.cpp
+  ColorContrast.cpp
+  ScriptStyles.cpp
+  Actions.cpp
+  IconStrokes.cpp
+  OptionPages.cpp
+  GuiListener.cpp
   OS.cpp
   OpenFile.cpp
   CreateFile.cpp

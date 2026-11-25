@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <algorithm>
 #include <stack>
 #include <cmath>
 #include <stdio.h>
@@ -405,6 +406,10 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, bool &_fatal,
 
   Msg::Debug("Edge %d %d has to be recovered", num1, num2);
 
+  // each swap should remove one of the intersections, of which there can be
+  // as many as edges, e.g. for the degenerate edge at the pole of a thin
+  // spherical cap, which spans the whole parametric domain
+  const int maxSwaps = std::max(300, (int)edges.size());
   int ix = 0;
   double x[2];
   while(1) {
@@ -442,7 +447,7 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, bool &_fatal,
 
     if(selfIntersection) return nullptr;
 
-    if(!intersected.size() || ix > 300) {
+    if(!intersected.size() || ix > maxSwaps) {
       BDS_Edge *eee = find_edge(num1, num2);
       if(!eee) {
         if(Msg::GetVerbosity() > 98) {

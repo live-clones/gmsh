@@ -7,9 +7,9 @@
 //   Jonathan Lambrechts
 //
 
+#include <cstdlib>
 #include <sstream>
 #include <FL/Fl_Input.H>
-#include <FL/Fl_Tabs.H>
 #include <FL/Fl_Return_Button.H>
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Round_Button.H>
@@ -17,9 +17,7 @@
 #include <algorithm>
 #include <FL/fl_draw.H>
 #include "GmshConfig.h"
-#include "GmshDefines.h"
 #include "FlGui.h"
-#include "accentTabs.h"
 #include "drawContext.h"
 #include "fieldWindow.h"
 #include "paletteWindow.h"
@@ -29,25 +27,28 @@
 #include "GmshMessage.h"
 #include "scriptStringInterface.h"
 #include "StringUtils.h"
-#include "Options.h"
 #include "Context.h"
 
 #if defined(HAVE_MESH)
 #include "Field.h"
 #endif
 
-void field_cb(Fl_Widget *w, void *data)
+void fieldWindow::show()
 {
-  FlGui::instance()->fields->win->show();
-  FlGui::instance()->fields->editField(nullptr);
+  win->show();
+  // (the field being edited, whose values may not be applied yet, kept)
+  if(editedField())
+    loadFieldList();
+  else
+    editField(nullptr);
 }
 
 #if defined(HAVE_MESH)
 
 static void field_delete_cb(Fl_Widget *w, void *data)
 {
-  Field *f = (Field *)FlGui::instance()->fields->editor_group->user_data();
-  scriptDeleteField(f->id, GModel::current()->getFileName());
+  Field *f = FlGui::instance()->fields->editedField();
+  if(f) scriptDeleteField(f->id, GModel::current()->getFileName());
   FlGui::instance()->fields->editField(nullptr);
 }
 
@@ -57,7 +58,10 @@ static void field_new_cb(Fl_Widget *w, void *data)
   FieldManager *fields = GModel::current()->getFields();
   int id = fields->newId();
   scriptAddField(id, mb->text(), GModel::current()->getFileName());
-  if((*fields)[id]) FlGui::instance()->fields->editField((*fields)[id]);
+  // the script may not have created it (model busy, cancelled, parse error):
+  // look it up without inserting a null field
+  Field *f = GModel::current()->getFields()->get(id);
+  if(f) FlGui::instance()->fields->editField(f);
 }
 
 static void field_apply_cb(Fl_Widget *w, void *data)
@@ -68,43 +72,61 @@ static void field_apply_cb(Fl_Widget *w, void *data)
 static void field_browser_cb(Fl_Widget *w, void *data)
 {
   int selected = FlGui::instance()->fields->browser->value();
-  if(!selected) { FlGui::instance()->fields->editField(nullptr); }
-  Field *f = (Field *)FlGui::instance()->fields->browser->data(selected);
+  Field *f = nullptr;
+  if(selected) { // the lines hold the ids of the fields
+    int id = (int)(intptr_t)FlGui::instance()->fields->browser->data(selected);
+    f = GModel::current()->getFields()->get(id);
+  }
   FlGui::instance()->fields->editField(f);
 }
 
 static void field_put_on_view_cb(Fl_Widget *w, void *data)
 {
   Fl_Menu_Button *mb = ((Fl_Menu_Button *)w);
-  Field *field = (Field *)FlGui::instance()->fields->editor_group->user_data();
+  Field *field = FlGui::instance()->fields->editedField();
+  if(!field) return;
   field->update();
   if(mb->value() == 0)
     field->putOnNewView();
   else if(mb->value() - 1 < (int)PView::list.size())
     field->putOnView(PView::list[mb->value() - 1]);
-  FlGui::instance()->updateViews(mb->value() == 0, true);
+  FlGui::instance()->updateViews(mb->value() == 0);
   drawContext::global()->draw();
 }
 
+// an action of the field edited, by the name on its button
 static void field_callback_cb(Fl_Widget *w, void *data)
 {
-  FieldCallback *cb = (FieldCallback *)data;
-  cb->run();
+  Field *f = FlGui::instance()->fields->editedField();
+  if(!f || !w->label()) return;
+  auto it = f->callbacks.find(w->label());
+  if(it != f->callbacks.end()) it->second->run();
 }
 
 static void field_select_file_cb(Fl_Widget *w, void *data)
 {
   Fl_Input *input = (Fl_Input *)data;
+  // (the chooser processes events: a model read meanwhile rebuilds the
+  // options of the field, the input with them)
+  Fl_Widget_Tracker tracker(input);
   int ret = fileChooser(FILE_CHOOSER_SINGLE, "Choose", "", input->value());
+  if(tracker.deleted()) return;
   if(ret) {
-    input->value(fileChooserGetName(0).c_str());
+    input->value(fileChooserGetName(1).c_str());
     input->set_changed();
   }
 }
 
+static void field_help_cb(Fl_Widget *w, void *data)
+{ FlGui::instance()->fields->toggleHelp(); }
+
+static void field_resized_cb(void *data)
+{ FlGui::instance()->fields->layout(); }
+
 #endif
 
-fieldWindow::fieldWindow(int deltaFontSize) : _deltaFontSize(deltaFontSize)
+fieldWindow::fieldWindow(int deltaFontSize)
+  : _deltaFontSize(deltaFontSize), _helpOpen(false), selected_id(-1)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
 
@@ -116,7 +138,9 @@ fieldWindow::fieldWindow(int deltaFontSize) : _deltaFontSize(deltaFontSize)
 
   win = new paletteWindow(width, height,
                           CTX::instance()->nonModalWindows ? true : false,
-                          "Size fields", CTX::instance()->fieldOffset);
+                          "Size fields", CTX::instance()->fieldOffset,
+                          &CTX::instance()->fieldSize[0],
+                          &CTX::instance()->fieldSize[1]);
   win->box(GMSH_WINDOW_BOX);
 
 #if defined(HAVE_MESH)
@@ -155,48 +179,42 @@ fieldWindow::fieldWindow(int deltaFontSize) : _deltaFontSize(deltaFontSize)
   title = new Fl_Box(x, y, w, BH, "field_name");
   title->labelfont(FL_BOLD);
   title->labelsize(FL_NORMAL_SIZE + 3);
+  title->align(FL_ALIGN_INSIDE | FL_ALIGN_LEFT);
 
   y += BH + WB;
   h -= BH + WB;
-  Fl_Tabs *tabs = new accentTabs(x, y, w, h);
-  y += BH;
-  h -= BH;
-  x += WB;
-  w -= 2 * WB;
-
-  Fl_Group *options_tab = new Fl_Group(x, y, w, h, "Options");
-
-  options_scroll = new Fl_Scroll(x, y + WB, w, h - BH - 3 * WB);
+  options_scroll = new Fl_Scroll(x, y, w, h - BH - WB);
+  options_scroll->type(Fl_Scroll::VERTICAL);
+  options_group = new Fl_Group(x, y, w, 0);
+  options_group->end();
+  help_header = new Fl_Button(x, y, w, BH);
+  help_header->box(FL_FLAT_BOX);
+  help_header->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+  help_header->labelfont(FL_BOLD);
+  help_header->clear_visible_focus();
+  help_header->callback(field_help_cb);
+  // in full, in the flow of the options
+  help = new Fl_Box(x, y, w, BH);
+  help->align(FL_ALIGN_WRAP | FL_ALIGN_TOP | FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+  help->hide();
   options_scroll->end();
 
   Fl_Button *apply_btn =
-    new Fl_Return_Button(x + w - BB, y + h - BH - WB, BB, BH, "Apply");
+    new Fl_Return_Button(x + w - BB, y + h - BH, BB, BH, "Apply");
   apply_btn->callback(field_apply_cb, this);
 
-  background_btn = new Fl_Round_Button(x, y + h - BH - WB, w - BB - WB, BH,
+  background_btn = new Fl_Round_Button(x, y + h - BH, w - BB - WB, BH,
                                        "Set as background field");
 
   // the options take the room, Apply stays at the bottom right
-  options_tab->resizable(
-    new Fl_Box(x + IW, y + WB, w - IW - BB - WB, h - BH - 3 * WB));
-  options_tab->end();
-
-  Fl_Group *help_tab = new Fl_Group(x, y, w, h, "Help");
-  help_display = new Fl_Help_View(x, y + WB, w, h - 2 * WB);
-  help_display->textfont(FL_HELVETICA);
-  help_display->textsize(FL_NORMAL_SIZE);
-  help_tab->end();
-
-  tabs->end();
-  tabs->resizable(options_tab);
-
+  editor_group->resizable(new Fl_Box(x + IW, y, w - IW - BB - WB, h - BH - WB));
   editor_group->end();
-  editor_group->resizable(tabs);
 
   // the buttons and the list widen, the editor takes the height
-  win->resizable(new Fl_Box(2 * WB, y, width - 4 * WB, h - BH));
+  win->resizable(new Fl_Box(2 * WB, y, width - 4 * WB, h - BH - WB));
   // the least height leaves three rows of field options
-  ((paletteWindow *)win)->sizeRange(width0, 9 * WB + 7 * BH + hb);
+  ((paletteWindow *)win)->sizeRange(width0, 7 * WB + 6 * BH + hb);
+  ((paletteWindow *)win)->whenResized(field_resized_cb, nullptr);
 
 #endif
 
@@ -208,12 +226,48 @@ fieldWindow::fieldWindow(int deltaFontSize) : _deltaFontSize(deltaFontSize)
   editField(nullptr);
 }
 
+void fieldWindow::toggleHelp()
+{
+  _helpOpen = !_helpOpen;
+  layout();
+}
+
+void fieldWindow::layout()
+{
+#if defined(HAVE_MESH)
+  // the help under the options, kept where it was scrolled to
+  Fl_Scroll *s = options_scroll;
+  int ypos = s->yposition();
+  s->scroll_to(0, 0);
+  int x = s->x(), w = s->w() - Fl::scrollbar_size() - WB;
+  int y = options_group->y() + options_group->h();
+  help_header->copy_label(_helpOpen ? "@-22> Help" : "@-2> Help");
+  help_header->resize(x, y, w, BH);
+  if(_helpOpen) {
+    help->resize(x, y + BH, w, wrappedHeight(help, w));
+    help->show();
+  }
+  else {
+    help->hide();
+    help->resize(x, y, w, 0);
+  }
+  int end = help->visible() ? help->y() + help->h() : y + BH;
+  s->scroll_to(0, std::min(ypos, std::max(0, end - s->y() - s->h())));
+  s->init_sizes();
+  s->redraw();
+#endif
+}
+
 void fieldWindow::loadFieldViewList()
 {
 #if defined(HAVE_MESH)
   put_on_view_btn->clear();
   put_on_view_btn->add("Create new view");
-  put_on_view_btn->activate();
+  // only for a field being edited
+  if(editedField())
+    put_on_view_btn->activate();
+  else
+    put_on_view_btn->deactivate();
   for(std::size_t i = 0; i < PView::list.size(); i++) {
     std::ostringstream s;
     s << "Put on View [" << i << "]";
@@ -226,7 +280,6 @@ void fieldWindow::loadFieldList()
 {
 #if defined(HAVE_MESH)
   FieldManager &fields = *GModel::current()->getFields();
-  Field *selected_field = (Field *)editor_group->user_data();
   browser->clear();
   int i_entry = 0;
   for(auto it = fields.begin(); it != fields.end(); it++) {
@@ -235,31 +288,86 @@ void fieldWindow::loadFieldList()
     std::ostringstream sstream;
     if(it->first == fields.getBackgroundField()) sstream << "@b";
     sstream << it->first << " " << field->getName();
-    browser->add(sstream.str().c_str(), field);
-    if(it->second == selected_field) browser->select(i_entry);
+    browser->add(sstream.str().c_str(), (void *)(intptr_t)it->first);
+    if(it->first == selected_id) browser->select(i_entry);
   }
 #endif
 }
 
+#if defined(HAVE_MESH)
+// a string as the .geo language reads it, which has no escapes: in double
+// quotes, or single ones if it has double quotes; false if it has both
+static bool geoString(const std::string &s, std::string &out)
+{
+  if(s.find('"') == std::string::npos)
+    out = "\"" + s + "\"";
+  else if(s.find('\'') == std::string::npos)
+    out = "'" + s + "'";
+  else
+    return false;
+  return true;
+}
+
+// the numbers of a list typed in, separated by commas or spaces, braces
+// allowed: false if one is not a number (or not an integer)
+static bool geoList(const std::string &text, bool integers, std::string &out)
+{
+  std::string s(text);
+  for(char &c : s)
+    if(c == ',' || c == '{' || c == '}') c = ' ';
+  std::istringstream in(s);
+  std::ostringstream o;
+  o.precision(17);
+  std::string token;
+  o << "{";
+  for(int n = 0; in >> token; n++) {
+    char *end;
+    double d = strtod(token.c_str(), &end);
+    if(*end || (integers && d != (int)d)) return false;
+    if(n) o << ", ";
+    if(integers)
+      o << (int)d;
+    else
+      o << d;
+  }
+  o << "}";
+  out = o.str();
+  return true;
+}
+#endif
+
 void fieldWindow::saveFieldOptions()
 {
 #if defined(HAVE_MESH)
+  Field *f = editedField();
+  if(!f) {
+    editField(nullptr);
+    return;
+  }
+  // the changed options read first, then written: a script command may read
+  // the project again (see scriptAddCommand()), its fields and this window
+  // with it
+  int id = f->id;
+  struct change {
+    std::string name, value;
+    int type;
+  };
+  std::vector<change> changes;
   auto input = options_widget.begin();
-  Field *f = (Field *)editor_group->user_data();
   std::ostringstream sstream;
-  int i;
-  char a;
-  double d;
-  sstream.precision(16);
+  sstream.precision(17);
   for(auto it = f->options.begin(); it != f->options.end(); it++) {
     FieldOption *option = it->second;
     if(!option) continue;
     if(option->isDeprecated()) continue;
     sstream.str("");
+    bool valid = true;
+    std::string text;
     switch(option->getType()) {
     case FIELD_OPTION_STRING:
     case FIELD_OPTION_PATH:
-      sstream << "\"" << ((Fl_Input *)*input)->value() << "\"";
+      valid = geoString(((Fl_Input *)*input)->value(), text);
+      sstream << text;
       break;
     case FIELD_OPTION_INT:
       sstream << (int)((Fl_Value_Input *)*input)->value();
@@ -270,51 +378,35 @@ void fieldWindow::saveFieldOptions()
     case FIELD_OPTION_BOOL:
       sstream << (bool)((Fl_Check_Button *)*input)->value();
       break;
-    case FIELD_OPTION_LIST: {
-      sstream << "{";
-      std::istringstream istream(((Fl_Input *)*input)->value());
-      while(istream >> i) {
-        sstream << i;
-        if(istream >> a) {
-          if(a != ',')
-            Msg::Error("Unexpected character \'%c\' while parsing option "
-                       "'%s' of field \'%d\'",
-                       a, it->first.c_str(), f->id);
-          sstream << ", ";
-        }
-      }
-      sstream << "}";
-    } break;
-    case FIELD_OPTION_LIST_DOUBLE: {
-      sstream << "{";
-      std::istringstream istream(((Fl_Input *)*input)->value());
-      while(istream >> d) {
-        sstream << d;
-        if(istream >> a) {
-          if(a != ',')
-            Msg::Error("Unexpected character \'%c\' while parsing option "
-                       "'%s' of field \'%d\'",
-                       a, it->first.c_str(), f->id);
-          sstream << ", ";
-        }
-      }
-      sstream << "}";
-    } break;
+    case FIELD_OPTION_LIST:
+    case FIELD_OPTION_LIST_DOUBLE:
+      valid = geoList(((Fl_Input *)*input)->value(),
+                      option->getType() == FIELD_OPTION_LIST, text);
+      sstream << text;
+      break;
     }
-    if((*input)->changed()) {
-      scriptAddFieldOption(f->id, it->first, sstream.str(), option->getType(),
-                           GModel::current()->getFileName());
+    if(!valid && (*input)->changed()) {
+      // (not written: the field keeps the value it had)
+      Msg::Error("Invalid value '%s' for option '%s' of field %d",
+                 ((Fl_Input *)*input)->value(), it->first.c_str(), f->id);
+      (*input)->clear_changed();
+    }
+    else if((*input)->changed()) {
+      changes.push_back({it->first, sstream.str(), option->getType()});
       (*input)->clear_changed();
     }
     input++;
   }
   int is_bg_field = background_btn->value();
+  for(auto &c : changes)
+    scriptAddFieldOption(id, c.name, c.value, c.type,
+                         GModel::current()->getFileName());
   FieldManager &fields = *GModel::current()->getFields();
-  if(is_bg_field && fields.getBackgroundField() != f->id) {
-    scriptSetBackgroundField(f->id, GModel::current()->getFileName());
+  if(is_bg_field && fields.getBackgroundField() != id) {
+    scriptSetBackgroundField(id, GModel::current()->getFileName());
     loadFieldList();
   }
-  if(!is_bg_field && fields.getBackgroundField() == f->id) {
+  if(!is_bg_field && fields.getBackgroundField() == id) {
     scriptSetBackgroundField(-1, GModel::current()->getFileName());
     loadFieldList();
   }
@@ -324,7 +416,8 @@ void fieldWindow::saveFieldOptions()
 void fieldWindow::loadFieldOptions()
 {
 #if defined(HAVE_MESH)
-  Field *f = (Field *)editor_group->user_data();
+  Field *f = editedField();
+  if(!f) return;
   auto input = options_widget.begin();
   for(auto it = f->options.begin(); it != f->options.end(); it++) {
     FieldOption *option = it->second;
@@ -353,7 +446,7 @@ void fieldWindow::loadFieldOptions()
       break;
     case FIELD_OPTION_LIST_DOUBLE:
       vstr.str("");
-      vstr.precision(16);
+      vstr.precision(17);
       for(auto it = option->listdouble().begin(); it != option->listdouble().end();
           it++) {
         if(it != option->listdouble().begin()) vstr << ", ";
@@ -383,10 +476,19 @@ void fieldWindow::loadFieldOptions()
 #endif
 }
 
+Field *fieldWindow::editedField()
+{
+#if defined(HAVE_MESH)
+  if(selected_id < 0) return nullptr;
+  Field *f = GModel::current()->getFields()->get(selected_id);
+  if(f && f->getName() == _editedType) return f;
+#endif
+  return nullptr;
+}
+
 void fieldWindow::editField(Field *f)
 {
 #if defined(HAVE_MESH)
-  editor_group->user_data(f);
   put_on_view_btn->deactivate();
   delete_btn->deactivate();
   if(f == nullptr) {
@@ -400,28 +502,26 @@ void fieldWindow::editField(Field *f)
   FL_NORMAL_SIZE -= _deltaFontSize;
 
   selected_id = f->id;
+  _editedType = f->getName();
   empty_message->hide();
   editor_group->show();
-  editor_group->user_data(f);
   title->label(f->getName());
-  options_scroll->clear();
+  options_scroll->scroll_to(0, 0);
+  options_group->clear();
   options_widget.clear();
-  options_scroll->begin();
-  int xx = options_scroll->x();
-  int yy = options_scroll->y();
+  options_group->begin();
+  int xx = options_group->x() + WB;
+  int yy = options_group->y();
 
-  std::string help = f->getDescription();
-  ConvertToHTML(help);
-  if(!f->options.empty())
-    help += std::string("<p><center><b>Options</b></center>");
+  std::string str = f->getDescription();
+  if(!f->options.empty()) str += "\n\nOptions:";
   for(auto it = f->options.begin(); it != f->options.end(); it++) {
     FieldOption *option = it->second;
     if(!option) continue;
     if(option->isDeprecated()) continue;
     Fl_Widget *input;
-    help += std::string("<p><b>") + it->first + "</b>";
-    help += " (<em>" + option->getTypeName() + "</em>): ";
-    help += option->getDescription();
+    str += "\n\n" + it->first + " (" + option->getTypeName() +
+           "): " + option->getDescription();
     switch(option->getType()) {
     case FIELD_OPTION_INT:
     case FIELD_OPTION_DOUBLE:
@@ -430,7 +530,6 @@ void fieldWindow::editField(Field *f)
       break;
     case FIELD_OPTION_BOOL:
       input = new Fl_Check_Button(xx, yy, 2 * BB, BH, it->first.c_str());
-      input->type(FL_TOGGLE_BUTTON);
       break;
     case FIELD_OPTION_PATH: {
       input = new Fl_Input(xx, yy, IW, BH, it->first.c_str());
@@ -450,26 +549,33 @@ void fieldWindow::editField(Field *f)
       input->align(FL_ALIGN_RIGHT);
       break;
     }
+    // the name is the field's, which may go before the widget
+    input->copy_label(it->first.c_str());
     options_widget.push_back(input);
     yy += BH;
   }
-  if(!f->callbacks.empty())
-    help += std::string("<p><center><b>Actions</b></center>");
+  if(!f->callbacks.empty()) str += "\n\nActions:";
   for(auto it = f->callbacks.begin(); it != f->callbacks.end(); it++) {
     Fl_Widget *btn;
-    help += std::string("<p><b>") + it->first + "</b>: ";
-    help += it->second->getDescription();
-    btn = new Fl_Button(xx, yy, IW, BH, it->first.c_str());
-    btn->callback(field_callback_cb, it->second);
+    str += "\n\n" + it->first + ": " + it->second->getDescription();
+    btn = new Fl_Button(xx, yy, IW, BH);
+    btn->copy_label(it->first.c_str());
+    btn->callback(field_callback_cb);
     yy += BH;
   }
-  help_display->value(help.c_str());
-  options_scroll->end();
+  options_group->end();
+  // its children are placed: only the box of the group changes
+  options_group->Fl_Widget::resize(options_group->x(), options_group->y(),
+                                   options_group->w(),
+                                   yy - options_group->y() + WB);
+  // a label, where '@' would start a symbol
+  ReplaceSubStringInPlace("@", "@@", str);
+  help->copy_label(str.c_str());
 
   FL_NORMAL_SIZE += _deltaFontSize;
 
   loadFieldOptions();
-  options_scroll->damage(1);
+  layout();
   put_on_view_btn->activate();
   delete_btn->activate();
   loadFieldList();

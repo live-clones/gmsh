@@ -118,13 +118,15 @@ RUN cd ${SLEPC_DIR} && ./configure && make
 
 RUN git clone --branch V8_0_1 --single-branch https://github.com/Open-Cascade-SAS/OCCT.git && cd OCCT && mkdir build && cd build && CXXFLAGS="-fPIC -DIGNORE_NO_ATOMICS" /tmp/cmake/bin/cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_LIBRARY_TYPE=Static -DBUILD_MODULE_Draw=0 -DBUILD_MODULE_Visualization=0 -DBUILD_MODULE_ApplicationFramework=0 .. && make -i -j 4 install && cd ../.. && rm -rf OCCT
 
-RUN apt-get remove -y libssl-dev && rm -rf /tmp/cmake
-
 # -----------------------
 # FLTK
 # -----------------------
 
-RUN git clone --branch release-1.4.5 --single-branch https://github.com/fltk/fltk.git && cd fltk && make makeinclude && ./configure --enable-localpng=no --enable-localzlib=no --enable-localjpeg=no && make -j 4 && make install && cd ../.. && rm -rf fltk
+# RUN git clone --branch release-1.4.5 --single-branch https://github.com/fltk/fltk.git && cd fltk && make makeinclude && ./configure --enable-localpng=no --enable-localzlib=no --enable-localjpeg=no && make -j 4 && make install && cd ../.. && rm -rf fltk
+
+RUN git clone https://github.com/fltk/fltk.git && cd fltk && /tmp/cmake/bin/cmake -B build -DCMAKE_PREFIX_PATH=/usr/local -DCMAKE_INSTALL_PREFIX=/usr/local -DCMAKE_BUILD_TYPE=Release -DFLTK_USE_SYSTEM_ZLIB=ON -DFLTK_USE_SYSTEM_LIBPNG=ON -DFLTK_USE_SYSTEM_LIBJPEG=ON -DFLTK_BUILD_TEST=OFF && /tmp/cmake/bin/cmake --build build -j4 && /tmp/cmake/bin/cmake --install build && cd .. && rm -rf fltk
+
+RUN apt-get remove -y libssl-dev && rm -rf /tmp/cmake
 
 # -----------------------
 # MMG

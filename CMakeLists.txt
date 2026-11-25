@@ -44,7 +44,9 @@ opt(BUILD_IOS "Enable iOS library target (experimental)" OFF)
 opt(CGNS "Enable CGNS import/export (experimental)" ${DEFAULT})
 opt(CGNS_CPEX0045 "Enable high-order CGNS import/export following CPEX0045 (experimental)" OFF)
 opt(COVERAGE "Enable code coverage instrumentation (GCC/Clang only)" OFF)
+opt(DISCRETECAD "Enable the discrete CAD modeler" ${DEFAULT})
 opt(DOMHEX "Enable experimental DOMHEX code" ${DEFAULT})
+opt(DUAL_MESH "Enable dual mesh plugin" ${DEFAULT})
 opt(EIGEN "Enable Eigen for linear algebra (instead of Blas/Lapack)" ON)
 opt(FFMPEG "Enable FFmpeg for MP4 movie export" ${DEFAULT})
 opt(FLTK "Enable FLTK graphical user interface (requires mesh/post)" ${DEFAULT})
@@ -67,6 +69,7 @@ opt(MSVC_STATIC_RUNTIME "Enable static Visual C++ runtime" OFF)
 opt(MUMPS "Enable MUMPS sparse direct linear solver" OFF)
 opt(NETGEN "Enable Netgen 3D frontal mesh generator" ${DEFAULT})
 opt(NII2MESH "Enable 3D voxel image to a triangulated mesh" ${DEFAULT})
+opt(NONCONFORMAL_REFINEMENT "Enable non-conformal refinement plugin" ${DEFAULT})
 opt(NUMPY "Enable fullMatrix and numpy array conversion for private API" OFF)
 opt(PETSC4PY "Enable petsc4py wrappers for petsc matrices for private API" OFF)
 opt(OCC "Enable OpenCASCADE CAD kernel" ${DEFAULT})
@@ -75,7 +78,6 @@ opt(OCC_STATIC "Link OpenCASCADE static instead of dynamic libraries (requires E
 opt(OCC_TBB "Add TBB libraries in list of OCC libraries" OFF)
 opt(OCTREE_SIZE_FIELD "Enable the octree-based automatic mesh size field" ${DEFAULT})
 opt(ONELAB "Enable ONELAB solver interface" ${DEFAULT})
-opt(ONELAB_METAMODEL "Enable ONELAB metamodels (experimental)" ${DEFAULT})
 opt(OPENACC "Enable OpenACC" OFF)
 opt(OPENMP "Enable OpenMP" ${DEFAULT})
 opt(OPTHOM "Enable high-order mesh optimization tools" ${DEFAULT})
@@ -98,6 +100,7 @@ opt(SOLVER "Enable built-in finite element solvers (required for reparametrizati
 opt(SYSTEM_CONTRIB "Use system versions of contrib libraries, when possible" OFF)
 opt(TCMALLOC "Enable libtcmalloc (fast malloc that does not release memory)" OFF)
 opt(TESTS "Enable tests" ${DEFAULT})
+opt(GUI_TESTS "Enable the tests of the graphical user interface, which open windows (benchmarks/gui)" OFF)
 opt(TINYOBJLOADER "Enable TibyObjLoader for reading Wavefront files)" ON)
 opt(TINYXML2 "Enable TinyXML2 parser (used by XAO reader)" ${DEFAULT})
 opt(VISUDEV "Enable additional visualization capabilities for development purposes" OFF)
@@ -157,6 +160,11 @@ if(ENABLE_PRIVATE_API)
        src/graphics/*.h
        contrib/HighOrderMeshOptimizer/*.h contrib/MeshOptimizer/*.h
        contrib/MeshQualityOptimizer/*.h)
+  # (not recursive: without the headers of its tests)
+  if(ENABLE_HIERARCHICAL_BASIS)
+    file(GLOB HIERARCHICAL_HEADERS contrib/HierarchicalBasis/*.h)
+    list(APPEND HEADERS ${HIERARCHICAL_HEADERS})
+  endif()
   set(GMSH_PRIVATE_API ${CMAKE_CURRENT_BINARY_DIR}/src/common/GmshConfig.h
       ${CMAKE_CURRENT_BINARY_DIR}/src/common/GmshVersion.h ${HEADERS})
   get_property(IAMCHILD DIRECTORY PROPERTY PARENT_DIRECTORY)
@@ -170,7 +178,7 @@ if(ENABLE_PRIVATE_API)
   endif()
 endif()
 
-set(ONELAB_PY contrib/onelab/python/onelab.py)
+set(ONELAB_PY utils/solvers/python/onelab.py)
 set(GMSH_PY api/gmsh.py)
 set(GMSH_JL api/gmsh.jl)
 
@@ -709,14 +717,7 @@ endif()
 
 if(ENABLE_ONELAB)
   set_config_option(HAVE_ONELAB "ONELAB")
-  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/onelab)
-    if(ENABLE_ONELAB_METAMODEL)
-      add_subdirectory(contrib/onelab)
-      include_directories(contrib/onelab)
-      set_config_option(HAVE_ONELAB_METAMODEL "ONELABMetamodel")
-    endif()
-    file(COPY ${ONELAB_PY} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-  endif()
+  file(COPY ${ONELAB_PY} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 endif()
 
 if(ENABLE_BUILD_IOS)
@@ -950,6 +951,19 @@ if(HAVE_MESH)
     set_config_option(HAVE_BOUNDARY_LAYERS "BoundaryLayers")
   endif()
 
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/DualMesh AND ENABLE_DUAL_MESH)
+    add_subdirectory(contrib/DualMesh)
+    include_directories(contrib/DualMesh)
+    set_config_option(HAVE_DUAL_MESH "DualMesh")
+  endif()
+
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/NonConformalRefinement
+     AND ENABLE_NONCONFORMAL_REFINEMENT)
+    add_subdirectory(contrib/NonConformalRefinement)
+    include_directories(contrib/NonConformalRefinement)
+    set_config_option(HAVE_NONCONFORMAL_REFINEMENT "NonConformalRefinement")
+  endif()
+
   if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/OctreeSizeField
      AND ENABLE_OCTREE_SIZE_FIELD)
     add_subdirectory(contrib/OctreeSizeField)
@@ -968,6 +982,13 @@ if(HAVE_MESH)
     add_subdirectory(contrib/domhex)
     include_directories(contrib/domhex)
     set_config_option(HAVE_DOMHEX "DomHex")
+  endif()
+
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/discreteCADModeler AND
+     ENABLE_DISCRETECAD)
+    add_subdirectory(contrib/discreteCADModeler)
+    include_directories(contrib/discreteCADModeler)
+    set_config_option(HAVE_DISCRETECAD "DiscreteCAD")
   endif()
 
   if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadTri AND ENABLE_QUADTRI)
@@ -1462,6 +1483,9 @@ if(ENABLE_ZIPPER)
   if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/zipper AND HAVE_LIBZ)
     add_subdirectory(contrib/zipper)
     include_directories(contrib/zipper)
+    # no password-protected archives: their code takes zlib's CRC table for
+    # longs, which does not compile where both are 32 bits (WebAssembly)
+    add_definitions(-DNOCRYPT)
     set_config_option(HAVE_ZIPPER "Zipper")
   endif()
 endif()
@@ -1522,18 +1546,6 @@ check_type_size(socklen_t SOCKLEN_T_SIZE)
 set(CMAKE_EXTRA_INCLUDE_FILES)
 if(NOT SOCKLEN_T_SIZE AND NOT ENABLE_BUILD_IOS AND NOT ENABLE_BUILD_ANDROID)
   set_config_option(HAVE_NO_SOCKLEN_T "NoSocklenT")
-endif()
-
-check_include_file(stdint.h HAVE_STDINT_H)
-if(HAVE_STDINT_H)
-  set(CMAKE_EXTRA_INCLUDE_FILES stdint.h)
-else()
-  set_config_option(HAVE_NO_STDINT_H "NoStdintH")
-endif()
-check_type_size(intptr_t INTPTR_T_SIZE)
-set(CMAKE_EXTRA_INCLUDE_FILES)
-if(NOT INTPTR_T_SIZE AND NOT ENABLE_BUILD_IOS AND NOT ENABLE_BUILD_ANDROID)
-  set_config_option(HAVE_NO_INTPTR_T "NoIntptrT")
 endif()
 
 check_include_file(dlfcn.h DLFCN_H)
@@ -1604,8 +1616,19 @@ endif()
 # don't issue warnings for contributed libraries and for autogenerated files
 check_cxx_compiler_flag("-w" NOWARN)
 if(NOWARN)
-  file(GLOB_RECURSE NOWARN_SRC contrib/*.cpp contrib/*.cc contrib/*.cxx
-       contrib/*.c src/parser/Gmsh.*.cpp)
+  # (not in contrib/webapp, Gmsh's own code, whose build directories hold the
+  # sources of its dependencies: hundreds of thousands of files, 13 s of
+  # globbing)
+  file(GLOB CONTRIB_DIRS LIST_DIRECTORIES true contrib/*)
+  list(REMOVE_ITEM CONTRIB_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/webapp)
+  file(GLOB NOWARN_SRC src/parser/Gmsh.*.cpp)
+  foreach(DIR ${CONTRIB_DIRS})
+    if(IS_DIRECTORY ${DIR})
+      file(GLOB_RECURSE DIR_SRC ${DIR}/*.cpp ${DIR}/*.cc ${DIR}/*.cxx
+           ${DIR}/*.c)
+      list(APPEND NOWARN_SRC ${DIR_SRC})
+    endif()
+  endforeach()
   set_compile_flags(NOWARN_SRC "-w")
 endif()
 
@@ -1657,6 +1680,27 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/common/GmshConfig.h.in
                ${CMAKE_CURRENT_BINARY_DIR}/src/common/GmshConfig.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/common/GmshVersion.h.in
                ${CMAKE_CURRENT_BINARY_DIR}/src/common/GmshVersion.h)
+
+# the words the lexer of the .geo language knows, for the editors (see
+# src/common/ScriptWords.h.in); CMake runs again when the lexer changes
+file(STRINGS ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/Gmsh.l GEO_LEXER
+     REGEX "^[A-Za-z_][A-Za-z0-9_]*[ \t]+return")
+set(GEO_WORDS_LIST "")
+foreach(LINE ${GEO_LEXER})
+  if(LINE MATCHES "^([A-Za-z_][A-Za-z0-9_]*)[ \t]+return")
+    list(APPEND GEO_WORDS_LIST ${CMAKE_MATCH_1})
+  endif()
+endforeach()
+list(REMOVE_DUPLICATES GEO_WORDS_LIST)
+list(SORT GEO_WORDS_LIST)
+set(GEO_WORDS "")
+foreach(WORD ${GEO_WORDS_LIST})
+  set(GEO_WORDS "${GEO_WORDS}\"${WORD}\", ")
+endforeach()
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/common/ScriptWords.h.in
+               ${CMAKE_CURRENT_BINARY_DIR}/src/common/ScriptWords.h)
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+             ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/Gmsh.l)
 
 # the texi version file is modified in the source directory (not
 # ideal for version.texi, but since git tracks the contents of the file this is
@@ -1879,11 +1923,17 @@ elseif(EMSCRIPTEN)
   # WebAssembly build: the virtual filesystem, and memory limits increased to
   # handle OpenCASCADE models
   set(FLAGS "-sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=268435456")
-  set(FLAGS "${FLAGS} -sMAXIMUM_MEMORY=4294967296 -sSTACK_SIZE=5242880")
+  if(CMAKE_CXX_FLAGS MATCHES "-m64|MEMORY64")
+    # wasm64 (Memory64: -m64, or -sMEMORY64=1, in the compile flags): up to
+    # 16 GB
+    set(FLAGS "${FLAGS} -sMAXIMUM_MEMORY=17179869184 -sSTACK_SIZE=5242880")
+  else()
+    set(FLAGS "${FLAGS} -sMAXIMUM_MEMORY=4294967296 -sSTACK_SIZE=5242880")
+  endif()
   # (all the symbols are exported, as the JavaScript API calls them by name,
   # with the allocation functions of the C library it hands arguments with)
   set(FLAGS "${FLAGS} -sFILESYSTEM=1 -sEXPORT_ALL=1")
-  set(FLAGS "${FLAGS} -sENVIRONMENT=web,node")
+  set(FLAGS "${FLAGS} -sENVIRONMENT=web,worker,node")
   # the program (gmsh.js, gmsh.wasm), whose main() runs when it is loaded,
   # with the runtime methods needed to drive it from JavaScript
   set_target_properties(gmsh PROPERTIES LINK_FLAGS
@@ -1893,6 +1943,20 @@ elseif(EMSCRIPTEN)
   # reads and writes its memory and adds the callbacks to its function table
   add_executable(libgmsh EXCLUDE_FROM_ALL ${GMSH_SRC})
   target_link_libraries(libgmsh ${LINK_LIBRARIES})
+  # with the functions the pages of the web app call (to draw the scene on
+  # their canvas, run the ONELAB loop...), and, when GetDP is given (built as a
+  # static library with its solvers, see contrib/webapp/build.sh), GetDP run
+  # in-process as the ONELAB solver
+  if(HAVE_OPENGL)
+    target_sources(libgmsh PRIVATE contrib/webapp/webApp.cpp)
+  endif()
+  if(WEBAPP_GETDP_INC AND WEBAPP_GETDP_LIBS)
+    message(STATUS "Linking the web app with GetDP: ${WEBAPP_GETDP_LIBS}")
+    set_source_files_properties(contrib/webapp/webApp.cpp PROPERTIES
+                                COMPILE_DEFINITIONS HAVE_WEBAPP_GETDP)
+    target_include_directories(libgmsh PRIVATE ${WEBAPP_GETDP_INC})
+    target_link_libraries(libgmsh ${WEBAPP_GETDP_LIBS})
+  endif()
   set(LIBFLAGS "${FLAGS} --no-entry -sMODULARIZE=1 -sEXPORT_ES6=1")
   set(LIBFLAGS "${LIBFLAGS} -sEXPORTED_FUNCTIONS=_malloc,_free")
   set(LIBFLAGS "${LIBFLAGS} -sEXPORT_NAME=createLibgmsh -sALLOW_TABLE_GROWTH=1")
@@ -2092,7 +2156,7 @@ if(ENABLE_BUILD_LIB OR ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
   export(EXPORT gmshTargets FILE "${CMAKE_CURRENT_BINARY_DIR}/gmshTargets.cmake")
 endif()
 
-if(ENABLE_ONELAB AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/onelab)
+if(ENABLE_ONELAB)
   install(FILES ${ONELAB_PY} DESTINATION ${GMSH_BIN})
 endif()
 if(ENABLE_BUILD_LIB OR ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
@@ -2262,6 +2326,8 @@ else()
   set(CPACK_STRIP_FILES FALSE)
 endif()
 set(CPACK_SOURCE_GENERATOR TGZ)
+# write a .sha256 file next to each package
+set(CPACK_PACKAGE_CHECKSUM SHA256)
 set(CPACK_SOURCE_IGNORE_FILES "${CMAKE_CURRENT_BINARY_DIR}" "/CVS/" "/.svn" "/.git"
     "~$" "DS_Store$" "GmshConfig.h$" "GmshVersion.h$" "/benchmarks/" "/tmp/"
     "/bin/" "/lib/" "/nightly/" "GPATH" "GRTAGS" "GSYMS" "GTAGS" "/HTML/"
@@ -2327,6 +2393,10 @@ macro(filter_tests IN OUT)
       file(STRINGS ${FILE} BAD2 REGEX ".*occ.*synchronize.*")
       file(STRINGS ${FILE} BAD3 REGEX ".*[mM]erge.*brep.*")
     endif()
+    # discrete CAD modeler
+    if(NOT HAVE_DISCRETECAD AND NOT BAD1 AND NOT BAD2 AND NOT BAD3)
+      file(STRINGS ${FILE} BAD1 REGEX "^SetFactory.*Discrete.*")
+    endif()
     # Metis
     if(NOT HAVE_METIS AND NOT BAD1 AND NOT BAD2 AND NOT BAD3)
       file(STRINGS ${FILE} BAD1 REGEX ".*PartitionMesh.*")
@@ -2345,15 +2415,20 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
   include(CTest)
   file(GLOB_RECURSE ALLFILES
        tutorials/*.geo examples/*.geo benchmarks/?d/*.geo benchmarks/extrude/*.geo
-       benchmarks/occ/*.geo benchmarks/hexdom/*.geo
+       benchmarks/occ/*.geo benchmarks/discreteCADModel/*.geo
+       # benchmarks/hexdom/*.geo # fails on windows and macos
        benchmarks/io_msh/polytopes.geo
        benchmarks/io_msh/read_back.geo benchmarks/io_msh/faces.geo
-       benchmarks/io_msh/views.geo
+       benchmarks/io_msh/views.geo benchmarks/io_msh/seam.geo
        benchmarks/io_vtk/*.geo)
   # fails on the CI machines, not understood yet:
   list(FILTER ALLFILES EXCLUDE REGEX "io_vtk/vtu_roundtrip.geo$")
   # calls Mesh 3 explicitly:
   list(FILTER ALLFILES EXCLUDE REGEX "occ/mmg3d_multidomain_bgmesh.geo$")
+  # written for the quasi-structured quad algorithm (Mesh.Algorithm = 11),
+  # which cannot be selected anymore; PACK, used instead, does not mesh the
+  # extruded entities again after its second pass:
+  list(FILTER ALLFILES EXCLUDE REGEX "extrude/quasi_structured.geo$")
   # the self-checking quad cases, which need PACK and its optimizer (the other
   # cases of benchmarks/quads read large CAD files: see run_all.sh there)
   if(HAVE_QUADOPTIMIZER)
@@ -2371,6 +2446,9 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
   # test c++ and c api tutorials with dynamic builds
   if(ENABLE_BUILD_DYNAMIC)
     file(GLOB_RECURSE ALLFILES tutorials/c++/*.cpp tutorials/c/*.c)
+    if(HAVE_OCC AND HAVE_METIS)
+      list(APPEND ALLFILES ${CMAKE_CURRENT_SOURCE_DIR}/examples/api/seam_brep.cpp)
+    endif()
     filter_tests("${ALLFILES}" TESTFILES)
     foreach(TESTFILE ${TESTFILES})
       get_filename_component(TEST ${TESTFILE} NAME)
@@ -2388,25 +2466,90 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
       endif()
       add_test(${TEST} ${TEST} -nopopup)
     endforeach()
+    if(HAVE_OCC AND HAVE_METIS)
+      add_test(seam_brep_partition seam_brep_cpp --partition -nopopup)
+    endif()
+    # the programs written for General.ScriptingLanguages compile (with the
+    # compilers of the build, syntax only); the test calls internal functions,
+    # which the shared library only exports with the private API
+    if(NOT WIN32 AND ENABLE_PRIVATE_API)
+      add_executable(script_programs benchmarks/misc/script_programs.cpp)
+      target_link_libraries(script_programs shared)
+      target_compile_definitions(script_programs PRIVATE
+        TEST_CC="${CMAKE_C_COMPILER}" TEST_CXX="${CMAKE_CXX_COMPILER}"
+        TEST_API_DIR="${CMAKE_CURRENT_SOURCE_DIR}/api")
+      add_test(NAME script_programs COMMAND script_programs)
+      set_tests_properties(script_programs PROPERTIES SKIP_RETURN_CODE 77)
+    endif()
     #if(HAVE_HIERARCHICAL_BASIS AND HAVE_EIGEN)
     #  add_subdirectory(contrib/HierarchicalBasis/tests)
     #endif()
   endif()
-  # enable this once we have worked out the path issues on the build machines
-  if(0 AND ENABLE_BUILD_DYNAMIC)
-    find_package(PythonInterp)
-    if(PYTHONINTERP_FOUND)
-      file(GLOB_RECURSE ALLFILES tutorials/python/*.py examples/api/*.py)
+  # the tests of the graphical user interface (see benchmarks/gui/README.txt),
+  # which open windows: only when asked
+  if(ENABLE_GUI_TESTS AND HAVE_FLTK AND ENABLE_BUILD_DYNAMIC)
+    file(GLOB GUITESTFILES benchmarks/gui/*.cpp)
+    foreach(TESTFILE ${GUITESTFILES})
+      get_filename_component(TEST ${TESTFILE} NAME_WE)
+      set(TEST gui_${TEST})
+      add_executable(${TEST} ${TESTFILE})
+      target_link_libraries(${TEST} shared)
+      add_test(NAME ${TEST} COMMAND ${TEST} -nopopup)
+      set_tests_properties(${TEST} PROPERTIES LABELS gui SKIP_RETURN_CODE 77)
+    endforeach()
+  endif()
+  # test the Python tutorials, examples and tests with dynamic
+  # builds, if a Python interpreter runs on this machine. The Python module is
+  # copied next to the library, where it looks for it first whatever the name
+  # of the build directory; a test is skipped, not failed, when the module
+  # cannot load the library or when a module the test needs is missing (see
+  # utils/misc/ctest_python.py)
+  if(ENABLE_BUILD_DYNAMIC)
+    if(CMAKE_VERSION VERSION_LESS 3.12)
+      find_package(PythonInterp 3)
+      set(PYTHON ${PYTHON_EXECUTABLE})
+    else()
+      find_package(Python3 COMPONENTS Interpreter)
+      set(PYTHON ${Python3_EXECUTABLE})
+    endif()
+    set(PYTHON_FAILED 1)
+    if(PYTHON)
+      execute_process(COMMAND ${PYTHON} -c "import ctypes, runpy"
+                      RESULT_VARIABLE PYTHON_FAILED OUTPUT_QUIET ERROR_QUIET)
+    endif()
+    if(PYTHON_FAILED)
+      message(STATUS "No operational Python interpreter: skipping Python tests")
+    else()
+      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/api/gmsh.py
+                     ${CMAKE_CURRENT_BINARY_DIR}/gmsh.py COPYONLY)
+      file(GLOB ALLFILES tutorials/python/*.py examples/api/*.py
+           benchmarks/misc/*.py benchmarks/occ/*.py benchmarks/step/*.py
+           benchmarks/io_msh/wrong_counts.py
+           benchmarks/extrude/extrude_merged_mesh.py
+           benchmarks/discreteCADModel/failed_operations.py)
+      # need an external solver:
+      list(FILTER ALLFILES EXCLUDE REGEX "api/onelab_run.*.py$")
+      # writes its file in the source directory:
+      list(FILTER ALLFILES EXCLUDE REGEX "api/step_header_data.py$")
+      # measures speed, and takes a minute on slow machines:
+      list(FILTER ALLFILES EXCLUDE REGEX "api/import_perf.py$")
+      # needs graphics and the path of the executable:
+      list(FILTER ALLFILES EXCLUDE REGEX "misc/tiny_model.py$")
+      # needs a module that is not part of Gmsh:
+      list(FILTER ALLFILES EXCLUDE REGEX "misc/testPyramidalBasis.py$")
+      if(NOT HAVE_MMG)
+        list(FILTER ALLFILES EXCLUDE REGEX "occ/mmg3d_multidomain_bgmesh_check.py$")
+      endif()
       filter_tests("${ALLFILES}" TESTFILES)
       foreach(TESTFILE ${TESTFILES})
         get_filename_component(TEST ${TESTFILE} NAME)
         string(REPLACE "\." "_" TEST ${TEST})
-        add_test(NAME ${TEST} COMMAND ${PYTHON_EXECUTABLE} ${TESTFILE} -nopopup)
-        set_property(TEST ${TEST} APPEND PROPERTY ENVIRONMENT
-                     "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/api")
-        set_property(TEST ${TEST} APPEND PROPERTY ENVIRONMENT
-                     "LD_LIBRARY_PATH=${CMAKE_CURRENT_BINARY_DIR}")
-        endforeach()
+        add_test(NAME ${TEST} COMMAND ${PYTHON}
+                 ${CMAKE_CURRENT_SOURCE_DIR}/utils/misc/ctest_python.py
+                 ${TESTFILE} -nopopup)
+        set_tests_properties(${TEST} PROPERTIES SKIP_RETURN_CODE 77 ENVIRONMENT
+                             "PYTHONPATH=${CMAKE_CURRENT_BINARY_DIR}")
+      endforeach()
     endif()
   endif()
 endif()

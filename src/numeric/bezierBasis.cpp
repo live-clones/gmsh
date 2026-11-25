@@ -847,6 +847,8 @@ int bezierCoeff::getIdxCornerCoeff(int i) const
 {
   const int order = _funcSpaceData.getSpaceOrder();
   switch(_funcSpaceData.getType()) {
+  case TYPE_PNT: return 0;
+  case TYPE_LIN: return i ? _r - 1 : 0;
   case TYPE_TRI:
     switch(i) {
     case 0: return 0;
@@ -943,6 +945,10 @@ void bezierCoeff::subdivide(std::vector<bezierCoeff *> &subCoeff) const
   }
 
   switch(_funcSpaceData.getType()) {
+  case TYPE_LIN:
+    for(int i = 0; i < 2; ++i) subCoeff.push_back(new bezierCoeff(*this));
+    _subdivideLine(*this, subCoeff);
+    return;
   case TYPE_TRI:
     for(int i = 0; i < 4; ++i) subCoeff.push_back(new bezierCoeff(*this));
     _subdivideTriangle(*this, 0, subCoeff);
@@ -1244,6 +1250,21 @@ void bezierCoeff::_subdivideTetrahedron(const bezierCoeff &coeff,
   _subdivideTet(node3CrossEdge12, n, sub7);
   _subdivideTet(node0CrossEdge12, n, sub8);
   // node 3 cross edge 1-2
+}
+
+void bezierCoeff::_subdivideLine(const bezierCoeff &coeff,
+                                 std::vector<bezierCoeff *> &subCoeff)
+{
+  const int n = coeff.getPolynomialOrder() + 1;
+  const int N = 2 * n - 1;
+  const int dim = coeff._c;
+  _sub.resize(N, dim, false);
+  for(int i = 0; i < n; ++i) {
+    for(int k = 0; k < dim; ++k) { _sub(2 * i, k) = coeff(i, k); }
+  }
+  _subdivide(_sub, n, 0);
+  _copyLine(_sub, n, 0, *subCoeff[0]);
+  _copyLine(_sub, n, n - 1, *subCoeff[1]);
 }
 
 void bezierCoeff::_subdivideQuadrangle(const bezierCoeff &coeff,

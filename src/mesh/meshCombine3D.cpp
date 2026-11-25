@@ -29,35 +29,19 @@
 #include "SVector3.h"
 #include "meshGRegion.h"
 #include "meshCombine3D.h"
+#include "MeshKeys.h"
 #include "qualityMeasures.h"
 #include "robustPredicates.h"
 
 namespace {
-  // a face by its vertices sorted by address (3 or 4, the 4th null for a
-  // triangle)
-  struct SortedFace {
-    MVertex *v[4];
-    bool operator==(const SortedFace &o) const
-    {
-      return v[0] == o.v[0] && v[1] == o.v[1] && v[2] == o.v[2] &&
-             v[3] == o.v[3];
-    }
-  };
-  struct SortedFaceHash {
-    std::size_t operator()(const SortedFace &f) const
-    {
-      std::size_t h = 0;
-      for(int i = 0; i < 4; i++)
-        h = h * 0x9E3779B97F4A7C15ull + (std::size_t)f.v[i] / sizeof(void *);
-      return h ^ (h >> 29);
-    }
-  };
+  // a face by its vertices sorted by address (see MeshKeys.h)
+  typedef meshKeys::FaceKey SortedFace;
+  typedef meshKeys::FaceHash SortedFaceHash;
   SortedFace sortedFace(MVertex *a, MVertex *b, MVertex *c,
                         MVertex *d = nullptr)
   {
-    SortedFace f = {{a, b, c, d}};
-    std::sort(f.v, f.v + (d ? 4 : 3));
-    return f;
+    MVertex *v[4] = {a, b, c, d};
+    return SortedFace(v, d ? 4 : 3);
   }
 } // namespace
 
@@ -829,7 +813,7 @@ static double hexVolume(const MHexahedron *h)
 
 // The vertices numbered in the order in which the tets first reach them, the
 // number kept in MVertex::_index (-1 for the vertices of the region that no
-// tet reaches, if any, and 0 in the triangles for the ones of the boundary)
+// tet reaches, if any: the boundary triangles with one are skipped)
 static void createMeshStore(GRegion *gr, HXTCombine::MeshStore &ms,
                             std::vector<MVertex *> &c2v)
 {
@@ -870,14 +854,23 @@ static void createMeshStore(GRegion *gr, HXTCombine::MeshStore &ms,
         ms.tetCorners[4 * t + i] = tets[t]->getVertex(i)->getIndex();
   }
 
+  std::size_t skipped = 0;
   for(auto gf : faces) {
     for(auto t : gf->triangles) {
+      if(t->getVertex(0)->getIndex() < 0 || t->getVertex(1)->getIndex() < 0 ||
+         t->getVertex(2)->getIndex() < 0) {
+        skipped++;
+        continue;
+      }
       ms.triangleColors.push_back(gf->tag());
       for(std::size_t i = 0; i < 3; i++)
-        ms.triangleCorners.push_back(
-          std::max(t->getVertex(i)->getIndex(), 0L));
+        ms.triangleCorners.push_back(t->getVertex(i)->getIndex());
     }
   }
+  if(skipped)
+    Msg::Warning("Skipping %zu boundary triangles of region %d with nodes "
+                 "that no tetrahedron reaches",
+                 skipped, gr->tag());
   computeTetAdjacencies(ms);
 }
 
@@ -917,6 +910,11 @@ int meshCombine3D(GRegion *gr, const CombineFrames *frames)
                gr->tag());
     return -1;
   }
+
+  // the combination runs its loops on the default OpenMP thread count: set
+  // it for its duration (restored at the end)
+  const int defaultNumThreads = Msg::GetMaxThreads();
+  Msg::SetNumThreads(CTX::instance()->numThreads3D());
 
   const double tStart = TimeOfDay(), cStart = Cpu();
   Msg::Debug("Creating Mesh Wrapper for region %d", gr->tag());
@@ -1000,122 +998,71 @@ int meshCombine3D(GRegion *gr, const CombineFrames *frames)
     return true;
   };
 
+  // a quad face of a new cell made of 2 triangles of a surface mesh, split
+  // along either diagonal, replaces them by a quadrangle
+  auto recombineBoundaryQuad = [&](const MFace &f) {
+    MVertex *v0 = f.getVertex(0), *v1 = f.getVertex(1), *v2 = f.getVertex(2),
+            *v3 = f.getVertex(3);
+    const MFace split[2][2] = {{MFace(v0, v1, v2), MFace(v2, v3, v0)},
+                               {MFace(v0, v1, v3), MFace(v3, v1, v2)}};
+    for(int d = 0; d < 2; d++) {
+      GFace *gf1 = findInFaceSearchStructure(split[d][0], search);
+      GFace *gf2 = findInFaceSearchStructure(split[d][1], search);
+      if(gf1 && gf2 && gf1 == gf2) {
+        gf1->quadrangles.push_back(new MQuadrangle(v0, v1, v2, v3));
+        faceToDelete.insert(split[d][0]);
+        faceToDelete.insert(split[d][1]);
+        return;
+      }
+    }
+  };
+
   // the vertices of the elements, by their number (MVertex::_index)
   std::vector<char> used(c2v.size(), 0);
 
   for(size_t k = 0; k < ccs.hexes().size(); k++) {
     if(ccs.selectedHexes()[k]) {
-      MVertex *v0 = c2v[ccs.hexes()[k].vertexes[0]];
-      MVertex *v1 = c2v[ccs.hexes()[k].vertexes[1]];
-      MVertex *v2 = c2v[ccs.hexes()[k].vertexes[2]];
-      MVertex *v3 = c2v[ccs.hexes()[k].vertexes[3]];
-      MVertex *v4 = c2v[ccs.hexes()[k].vertexes[4]];
-      MVertex *v5 = c2v[ccs.hexes()[k].vertexes[5]];
-      MVertex *v6 = c2v[ccs.hexes()[k].vertexes[6]];
-      MVertex *v7 = c2v[ccs.hexes()[k].vertexes[7]];
-      used[v0->getIndex()] = 1;
-      used[v1->getIndex()] = 1;
-      used[v2->getIndex()] = 1;
-      used[v3->getIndex()] = 1;
-      used[v4->getIndex()] = 1;
-      used[v5->getIndex()] = 1;
-      used[v6->getIndex()] = 1;
-      used[v7->getIndex()] = 1;
-      MHexahedron *h = new MHexahedron(v0, v1, v2, v3, v4, v5, v6, v7);
+      MVertex *v[8];
+      for(int i = 0; i < 8; i++) {
+        v[i] = c2v[ccs.hexes()[k].vertexes[i]];
+        used[v[i]->getIndex()] = 1;
+      }
+      MHexahedron *h =
+        new MHexahedron(v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7]);
       volHex += hexVolume(h);
       numHex++;
       gr->hexahedra.push_back(h);
-      for(int l = 0; l < 6; l++) {
-        if(!faceOnBoundary(ccs.hexes()[k], MHexahedron::faces_hexa, l))
-          continue;
-        MFace f = h->getFace(l);
-        MFace f012(f.getVertex(0), f.getVertex(1), f.getVertex(2));
-        MFace f230(f.getVertex(2), f.getVertex(3), f.getVertex(0));
-        GFace *gfound012 = findInFaceSearchStructure(f012, search);
-        GFace *gfound230 = findInFaceSearchStructure(f230, search);
-        if(gfound012 && gfound230 && gfound012 == gfound230) {
-          gfound012->quadrangles.push_back(new MQuadrangle(
-            f.getVertex(0), f.getVertex(1), f.getVertex(2), f.getVertex(3)));
-          faceToDelete.insert(f012);
-          faceToDelete.insert(f230);
-        }
-        else {
-          MFace f013(f.getVertex(0), f.getVertex(1), f.getVertex(3));
-          MFace f312(f.getVertex(3), f.getVertex(1), f.getVertex(2));
-          GFace *gfound013 = findInFaceSearchStructure(f013, search);
-          GFace *gfound312 = findInFaceSearchStructure(f312, search);
-          if(gfound013 && gfound312 && gfound013 == gfound312) {
-            gfound013->quadrangles.push_back(new MQuadrangle(
-              f.getVertex(0), f.getVertex(1), f.getVertex(2), f.getVertex(3)));
-            faceToDelete.insert(f013);
-            faceToDelete.insert(f312);
-          }
-        }
-      }
+      for(int l = 0; l < 6; l++)
+        if(faceOnBoundary(ccs.hexes()[k], MHexahedron::faces_hexa, l))
+          recombineBoundaryQuad(h->getFace(l));
     }
   }
   if(enablePrisms) {
     for(size_t k = 0; k < ccs.prisms().size(); k++) {
       if(!ccs.selectedPrisms()[k]) continue;
-      MVertex *v0 = c2v[ccs.prisms()[k].vertexes[0]];
-      MVertex *v1 = c2v[ccs.prisms()[k].vertexes[1]];
-      MVertex *v2 = c2v[ccs.prisms()[k].vertexes[2]];
-      MVertex *v3 = c2v[ccs.prisms()[k].vertexes[3]];
-      MVertex *v4 = c2v[ccs.prisms()[k].vertexes[4]];
-      MVertex *v5 = c2v[ccs.prisms()[k].vertexes[5]];
-      used[v0->getIndex()] = 1;
-      used[v1->getIndex()] = 1;
-      used[v2->getIndex()] = 1;
-      used[v3->getIndex()] = 1;
-      used[v4->getIndex()] = 1;
-      used[v5->getIndex()] = 1;
-      MPrism *p = new MPrism(v0, v1, v2, v3, v4, v5);
-      gr->prisms.push_back(p);
-      // Faces 0 and 1 are the 2 triangular caps: they coincide with
-      // existing surface triangles already in place, nothing to
-      // reconcile. Faces 2-4 are the 3 quad facets: same
-      // diagonal-pair-of-triangles-to-quadrangle reconciliation as for
-      // hexahedra above.
-      for(int l = 2; l < 5; l++) {
-        if(!faceOnBoundary(ccs.prisms()[k], MPrism::faces_prism, l)) continue;
-        MFace f = p->getFace(l);
-        MFace f012(f.getVertex(0), f.getVertex(1), f.getVertex(2));
-        MFace f230(f.getVertex(2), f.getVertex(3), f.getVertex(0));
-        GFace *gfound012 = findInFaceSearchStructure(f012, search);
-        GFace *gfound230 = findInFaceSearchStructure(f230, search);
-        if(gfound012 && gfound230 && gfound012 == gfound230) {
-          gfound012->quadrangles.push_back(new MQuadrangle(
-            f.getVertex(0), f.getVertex(1), f.getVertex(2), f.getVertex(3)));
-          faceToDelete.insert(f012);
-          faceToDelete.insert(f230);
-        }
-        else {
-          MFace f013(f.getVertex(0), f.getVertex(1), f.getVertex(3));
-          MFace f312(f.getVertex(3), f.getVertex(1), f.getVertex(2));
-          GFace *gfound013 = findInFaceSearchStructure(f013, search);
-          GFace *gfound312 = findInFaceSearchStructure(f312, search);
-          if(gfound013 && gfound312 && gfound013 == gfound312) {
-            gfound013->quadrangles.push_back(new MQuadrangle(
-              f.getVertex(0), f.getVertex(1), f.getVertex(2), f.getVertex(3)));
-            faceToDelete.insert(f013);
-            faceToDelete.insert(f312);
-          }
-        }
+      MVertex *v[6];
+      for(int i = 0; i < 6; i++) {
+        v[i] = c2v[ccs.prisms()[k].vertexes[i]];
+        used[v[i]->getIndex()] = 1;
       }
+      MPrism *p = new MPrism(v[0], v[1], v[2], v[3], v[4], v[5]);
+      gr->prisms.push_back(p);
+      // faces 0 and 1 are the triangular caps, already surface triangles if
+      // on the boundary; faces 2-4 the quads
+      for(int l = 2; l < 5; l++)
+        if(faceOnBoundary(ccs.prisms()[k], MPrism::faces_prism, l))
+          recombineBoundaryQuad(p->getFace(l));
     }
   }
 
   for(unsigned int k = 0; k < ms.tetCorners.size() / 4; k++) {
     if(ccs.selectedTets()[k]) {
-      MVertex *v0 = c2v[ms.tetCorners[4 * k]];
-      MVertex *v1 = c2v[ms.tetCorners[4 * k + 1]];
-      MVertex *v2 = c2v[ms.tetCorners[4 * k + 2]];
-      MVertex *v3 = c2v[ms.tetCorners[4 * k + 3]];
-      used[v0->getIndex()] = 1;
-      used[v1->getIndex()] = 1;
-      used[v2->getIndex()] = 1;
-      used[v3->getIndex()] = 1;
-      MTetrahedron *tet = new MTetrahedron(v0, v1, v2, v3);
+      MVertex *v[4];
+      for(int i = 0; i < 4; i++) {
+        v[i] = c2v[ms.tetCorners[4 * k + i]];
+        used[v[i]->getIndex()] = 1;
+      }
+      MTetrahedron *tet = new MTetrahedron(v[0], v[1], v[2], v[3]);
       gr->tetrahedra.push_back(tet);
       volTet += tet->getVolume();
       numTet++;
@@ -1174,6 +1121,7 @@ int meshCombine3D(GRegion *gr, const CombineFrames *frames)
             gr->prisms.size(), gr->pyramids.size(), gr->tetrahedra.size(),
             TimeOfDay() - tStart);
 
+  Msg::SetNumThreads(defaultNumThreads);
   return 0;
 }
 #else

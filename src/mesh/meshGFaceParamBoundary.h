@@ -6,15 +6,19 @@
 #ifndef MESH_GFACE_PARAM_BOUNDARY_H
 #define MESH_GFACE_PARAM_BOUNDARY_H
 
+#include <map>
 #include <vector>
 #include "SPoint2.h"
 
 class GFace;
+class GEdge;
 
 // Sample the boundary curves of a face in its parametric space, as a flat list
 // of segment endpoints (bnd[2i], bnd[2i+1]). Seam curves are sampled on both
-// sides.
-void trueBoundary(GFace *gf, std::vector<SPoint2> &bnd, int debug);
+// sides, except those given in oneSide with the only side (1 or -1, as for
+// GEdge::reparamOnFace) on which they bound the face.
+void trueBoundary(GFace *gf, std::vector<SPoint2> &bnd, int debug,
+                  const std::map<GEdge *, int> *oneSide = nullptr);
 
 // Test whether p lies inside the parametric domain bounded by bnd, by counting
 // the crossings of the segment from p to a point out known to be outside. N

@@ -5,6 +5,7 @@
 //
 // Contributor(s): Matti Pellikka (initial implementation)
 
+#include <sstream>
 #include "Chain.h"
 #include "MLine.h"
 #include "MTriangle.h"
@@ -14,15 +15,11 @@
 #include "MHexahedron.h"
 #include "MPrism.h"
 
-#if defined(HAVE_FLTK)
-#include "FlGui.h"
-#endif
+#include "GuiListener.h"
 
 void updateFltk()
 {
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
-#endif
+  Gui()->viewsChanged(true);
 }
 
 std::string convertInt(int number)

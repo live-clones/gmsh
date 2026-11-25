@@ -10,13 +10,16 @@
 #include <utility>
 #include <vector>
 
-// The keyboard shortcuts of the GUI, said once: the keys the GUI handles, the
-// shortcuts its menus show and the list of the help window and of the
-// documentation are all read from this table, so that they cannot drift
-// apart. The table knows no toolkit: the GUI maps its keys and runs its
-// actions by name. The titles of the menus must not carry a mnemonic (an
-// "&" letter) that an Alt shortcut below uses: the menu bar opens the menu
-// before the shortcut is seen.
+// The keyboard shortcuts of the interfaces. A key is declared on the item it
+// runs, in the menus of Actions.cpp (action(...).key('2'), see Actions.h): the
+// keys the interfaces handle, the shortcuts shown in their menus, and the lists
+// in the help window and in the documentation are all read from the items, so
+// that they cannot drift apart. Nothing here depends on a toolkit: each
+// interface translates the keys and runs the items by their names, in snake
+// case ("mesh_2d").
+// The titles of the menus must not have a mnemonic (an "&" letter) used by an
+// Alt shortcut, because the menu bar would open the menu before the shortcut
+// is seen.
 
 // the keys that are not a character
 enum ShortcutKey {
@@ -32,7 +35,8 @@ enum ShortcutKey {
 };
 
 // the modifiers: Command is Control, or Command on macOS; AnyModifiers matches
-// whatever is held
+// whatever is held, after the keys with their exact modifiers (Shift+Escape
+// before Escape)
 enum ShortcutModifier {
   ModCommand = 1 << 0,
   ModShift = 1 << 1,
@@ -40,39 +44,43 @@ enum ShortcutModifier {
   AnyModifiers = 1 << 3
 };
 
+// how a key is handled: not in the macOS system menu bar (where Cmd+H hides
+// the application)
+enum ShortcutFlag { KeyInWindowBarOnly = 1 << 1 };
+
 struct Shortcut {
   int key; // a lower case letter, a digit, a mark, or a ShortcutKey
   unsigned mods;
-  Shortcut(int k = KeyNone, unsigned m = 0) : key(k), mods(m) {}
-  // "Alt+Shift+Ctrl+x", with command the name of the Command key ("Ctrl+"),
-  // or the one of this platform when empty
+  unsigned flags;
+  Shortcut(int k = KeyNone, unsigned m = 0, unsigned f = 0)
+    : key(k), mods(m), flags(f)
+  {
+  }
+  // the shortcut as text, e.g. "Alt+Shift+Ctrl+x"; command is the name of the
+  // Command key ("Ctrl+"), the one of this platform if empty
   std::string label(const std::string &command = "") const;
 };
 
+// a key and what it does: the name of its item, and the help of the item
 struct ShortcutEntry {
-  const char *action; // what the GUI does with it, by name
+  std::string action;
   Shortcut shortcut;
-  const char *help;
-  // the key is also left to what is under the mouse (the keys of a selection)
-  bool passOn;
-  // not bound on the macOS system menu bar, where Cmd+H hides the application
-  bool inWindowBarOnly;
-  ShortcutEntry(const char *a, Shortcut s, const char *h, bool pass = false,
-                bool inWindow = false)
-    : action(a), shortcut(s), help(h), passOn(pass), inWindowBarOnly(inWindow)
-  {
-  }
+  std::string help;
 };
 
-// the table, in the order of the documentation
+// all the keys, from the items (see Actions.cpp), in the order of the
+// documentation: the keys of an item together, the items by the modifiers of
+// their first key (none, Shift, Command, Command+Shift, Alt, Alt+Shift,
+// Alt+Command), then by that key
 const std::vector<ShortcutEntry> &GetShortcuts();
 
-// the shortcuts of an action: several keys may do the same
+// the shortcuts of an action (several keys may do the same)
 std::vector<Shortcut> GetShortcutsOf(const std::string &action);
 
-// each shortcut (keys that do the same joined with "or") and what it does, for
-// the help window and the documentation; see Shortcut::label() for command
-std::vector<std::pair<std::string, std::string> >
+// each shortcut and what it does, for the help window and the documentation
+// (the keys that do the same are joined with "or"; see Shortcut::label() for
+// command)
+std::vector<std::pair<std::string, std::string>>
 GetShortcutsUsage(const std::string &command = "");
 
 #endif

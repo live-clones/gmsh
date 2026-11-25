@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include "GmshMessage.h"
 #include "GModel.h"
+#include "GEdge.h"
 
 using namespace std;
 
@@ -245,26 +246,26 @@ Solution compute_weighted_even_faces(const vector<int>& N,
     return {n, true, flips, bestCost};
 }
 
-// ------------- Example main -------------
+// Example main
 
 
 // Remplit `faces` (faces -> indices de courbes [0..m-1]) et `N` (#elts 1D par courbe)
 void quantizeCurvesForEvenSurfaceSubdivision ( vector<int> &curveTags, vector<int> &N) {
     // --- 1. Lister toutes les surfaces (dim=2) et toutes les courbes (dim=1)
   vector<vector<int>> faces;
-  // the model itself rather than the API: gmsh::initialize() would read the
-  // option files again and make every later error throw an exception
-  GModel *model = GModel::current();
-  vector<GEntity *> surfaces, curves;
-  model->getEntities(surfaces, 2);
-  model->getEntities(curves, 1);
+  GModel *m = GModel::current();
+  vector<pair<int,int>> surfaces, curves;
+  for(auto it = m->firstFace(); it != m->lastFace(); ++it)
+    surfaces.push_back({2, (*it)->tag()});
+  for(auto it = m->firstEdge(); it != m->lastEdge(); ++it)
+    curves.push_back({1, (*it)->tag()});
 
   //    printf("%lu %lu\n",surfaces.size(),curves.size());
 
   // --- 2. Map tag de courbe -> index compact [0..m-1]
   //  vector<int> curveTags;
   curveTags.reserve(curves.size());
-  for (GEntity *c : curves) curveTags.push_back(c->tag());
+  for (const auto &c : curves) curveTags.push_back(c.second);
 
   unordered_map<int,int> tag2idx;
   tag2idx.reserve(curveTags.size());
@@ -273,10 +274,10 @@ void quantizeCurvesForEvenSurfaceSubdivision ( vector<int> &curveTags, vector<in
   // --- 3. faces: pour chaque surface, récupérer le bord "courbes" (dim=1)
   faces.clear();
   faces.reserve(surfaces.size());
-  for (GEntity *s : surfaces) {
+  for (const auto &s : surfaces) {
     vector<pair<int,int>> boundary;
     // combined=true (pas de doublons), oriented=false, recursive=false
-    model->getBoundaryTags({{2, s->tag()}}, boundary, true, true, false);
+    m->getBoundaryTags({s}, boundary, true, true, false);
     //    printf("face %d %lu bnd\n",s.second,boundary.size());
     vector<int> f;
     f.reserve(boundary.size());
@@ -294,8 +295,14 @@ void quantizeCurvesForEvenSurfaceSubdivision ( vector<int> &curveTags, vector<in
   // NB: on additionne tous les types 1D retournés (2-node, 3-node, 4-node lines, etc.)
   N.assign((int)curveTags.size(), 0);
 
-  for (size_t i = 0; i < curveTags.size(); ++i)
-    N[i] = static_cast<int>(curves[i]->getNumMeshElements());
+  for (size_t i = 0; i < curveTags.size(); ++i) {
+    int ctag = curveTags[i];
+
+    GEdge *ge = m->getEdgeByTag(ctag);
+    std::size_t count = ge ? ge->getNumMeshElements() : 0;
+
+    N[i] = static_cast<int>(count);
+  }
 
   //  for (auto l : faces){
   //    for (auto e : l){

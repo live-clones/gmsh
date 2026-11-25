@@ -5,20 +5,16 @@
 
 #include <FL/Fl.H>
 #include <FL/Fl_Tabs.H>
-#include <FL/Fl_Return_Button.H>
 #include <algorithm>
 #include "FlGui.h"
 #include "accentTabs.h"
 #include "drawContext.h"
 #include "clippingWindow.h"
 #include "paletteWindow.h"
-#include "GmshDefines.h"
 #include "PView.h"
 #include "PViewOptions.h"
 #include "GModel.h"
 #include "Context.h"
-
-void clip_cb(Fl_Widget *w, void *data) { FlGui::instance()->clipping->show(); }
 
 static void clip_num_cb(Fl_Widget *w, void *data)
 {
@@ -65,6 +61,7 @@ static void clip_update_cb(Fl_Widget *w, void *data)
 
 static void clip_update(bool adjusting)
 {
+  if(!FlGui::available()) return; // a timer firing after the GUI is gone
   if(FlGui::instance()->clipping->group[0]->visible()) { // plane tab
     int idx = FlGui::instance()->clipping->choice->value();
     CTX::instance()->geom.clip &= ~(1 << idx);
@@ -181,8 +178,26 @@ static void clip_update(bool adjusting)
                     Fl::event() == FL_DRAG ? clip_drag_cb : clip_settle_cb);
 
   FlGui::instance()->clipping->updateCount();
-  CTX::instance()->drawBBox = adjusting ? 1 : 0;
+  // the bounding box shown while a value is adjusted, then as
+  // General.DrawBoundingBoxes has it
+  static int saved = -1;
+  if(adjusting) {
+    if(saved < 0) saved = CTX::instance()->drawBBox;
+    CTX::instance()->drawBBox = 1;
+  }
+  else if(saved >= 0) {
+    CTX::instance()->drawBBox = saved;
+    saved = -1;
+  }
   drawContext::global()->draw();
+}
+
+// another tab: shown, not applied (the box would rewrite the six planes, the
+// planes tab one of them), until a value or a target is changed there
+static void clip_tab_cb(Fl_Widget *w, void *data)
+{
+  FlGui::instance()->clipping->fillBoxValuesFromPlaneValues();
+  FlGui::instance()->clipping->updateCount();
 }
 
 static void clip_targets_cb(Fl_Widget *w, void *data)
@@ -210,7 +225,7 @@ static void clip_reset_cb(Fl_Widget *w, void *data)
   // Warning: for consistency these reset values should match the
   // default values for the associated options
   for(int i = 0; i < 6; i++)
-    for(int j = 0; j < 4; j++) CTX::instance()->clipPlane[0][0] = 0.;
+    for(int j = 0; j < 4; j++) CTX::instance()->clipPlane[i][j] = 0.;
   CTX::instance()->clipPlane[0][0] = 1.;
   CTX::instance()->clipPlane[1][1] = 1.;
   CTX::instance()->clipPlane[2][2] = 1.;
@@ -320,7 +335,7 @@ clippingWindow::clippingWindow(int deltaFontSize)
 
     group[1]->end();
   }
-  o->callback(clip_update_cb); // force update when we switch tabs
+  o->callback(clip_tab_cb);
   o->end();
 
   // two columns: the volume-only options, active together, on the right
@@ -337,10 +352,7 @@ clippingWindow::clippingWindow(int deltaFontSize)
                                 "Only clip volume elements");
   butt[3]->tooltip("General.ClipOnlyVolume");
 
-  for(int i = 0; i < 4; i++) {
-    butt[i]->type(FL_TOGGLE_BUTTON);
-    butt[i]->callback(clip_update_cb);
-  }
+  for(int i = 0; i < 4; i++) butt[i]->callback(clip_update_cb);
 
   {
     Fl_Button *o =

@@ -8,7 +8,10 @@
 #include <string.h>
 #include <assert.h>
 #include <sstream>
+#include <array>
+#include <algorithm>
 #include "GmshConfig.h"
+#include "GmshMessage.h"
 #include "meshGRegionBoundaryRecovery.h"
 
 #if defined(HAVE_TETGENBR)
@@ -28,18 +31,14 @@
 #include "Context.h"
 #include "ExtrudeParams.h"
 #include "OS.h"
-#if !defined(HAVE_NO_STDINT_H)
-#include <stdint.h>
-#elif defined(HAVE_NO_INTPTR_T)
-typedef unsigned long intptr_t;
-#endif
+#include <cstdint>
 
 #if defined(HAVE_POST)
 #include "PView.h"
 #endif
 
-#if defined(HAVE_FLTK)
-#include "FlGui.h"
+#include "GuiListener.h"
+#if defined(HAVE_OPENGL)
 #include "drawContext.h"
 #endif
 
@@ -138,8 +137,20 @@ namespace tetgenBR {
 #define TETLIBRARY
 #endif
   // TetGen's messages: at their natural level, or as debug output when the
-  // caller does not want them (a failed local recovery is not an error)
+  // caller does not want them (a failed local recovery is not an error). TetGen
+  // prints some lines in several pieces (e.g. a PLC error and then the point
+  // where it occurs): the pieces are joined until the end of the line
   static bool tetgenQuiet = false;
+  static std::string tetgenLine;
+  static void tetgenFlush()
+  {
+    if(tetgenLine.empty()) return;
+    if(tetgenQuiet)
+      Msg::Debug("%s", tetgenLine.c_str());
+    else
+      Msg::Auto("%s", tetgenLine.c_str());
+    tetgenLine.clear();
+  }
   static void tetgenPrintf(const char *fmt, ...)
   {
     char str[5000];
@@ -147,10 +158,12 @@ namespace tetgenBR {
     va_start(args, fmt);
     vsnprintf(str, sizeof(str), fmt, args);
     va_end(args);
-    if(tetgenQuiet)
-      Msg::Debug("%s", str);
-    else
-      Msg::Auto("%s", str);
+    for(const char *c = str; *c; c++) {
+      if(*c == '\n')
+        tetgenFlush();
+      else
+        tetgenLine += *c;
+    }
   }
 #define printf tetgenPrintf
 #include "tetgenBR.h"
@@ -946,6 +959,7 @@ namespace tetgenBR {
           }
       }
     }
+    tetgenBR::tetgenFlush();
     delete m->in;
     delete m->b;
     delete m;
@@ -959,6 +973,10 @@ namespace tetgenBR {
     std::vector<MVertex *> _vertices;
     // Get the set of vertices from GRegion.
     {
+      // with a negative Mesh.OptimizePyramids, the apex is pushed into this
+      // (tetrahedral) volume, whichever way the quadrangles are oriented
+      std::map<GFace *, int> inward;
+      bool oriented = false, orientFailed = false;
       std::set<MVertex *, MVertexPtrLessThan> all;
       std::vector<GFace *> const &f = gr->faces();
       for(auto it = f.begin(); it != f.end(); ++it) {
@@ -990,7 +1008,18 @@ namespace tetgenBR {
               if(CTX::instance()->mesh.optimizePyramids < 0) {
                 // push the vertex along the face normal by fact * diam_face:
                 double fact = std::abs(CTX::instance()->mesh.optimizePyramids);
+                if(!oriented) {
+                  oriented = true;
+                  if(!orientRegionBoundary(gr, inward)) {
+                    orientFailed = true;
+                    Msg::Warning("Cannot orient the boundary mesh of volume %d: "
+                                 "pyramid apices are pushed along the "
+                                 "quadrangle normals",
+                                 gr->tag());
+                  }
+                }
                 SVector3 n = mf.normal();
+                if(!orientFailed && inward.count(gf)) n *= (double)inward[gf];
                 double diam = v0->distance(v2);
                 p = (p + fact * diam * n);
               }
@@ -1040,9 +1069,11 @@ namespace tetgenBR {
         originalCoordinates[v] = v->point();
       }
       std::vector<MTetrahedron *> tets;
-      // will add 8 MVertices at the end of _vertices
+      // will add 8 MVertices at the end of _vertices; none if there are fewer
+      // than 4 points (not the error count, which an error in another volume
+      // of the same meshing run would have set)
       delaunayMeshIn3D(_vertices, tets, false, &in.tetNeighbors);
-      if(Msg::GetErrorCount()) return false;
+      if(tets.empty()) return false;
       for(std::size_t i = 0; i < _vertices.size(); i++)
         _vertices[i]->setIndex((long)i);
       in.tetNode.resize(4 * tets.size());
@@ -1140,7 +1171,7 @@ namespace tetgenBR {
       _vertices.resize(nv - 8);
       std::vector<MTetrahedron *> tets;
       delaunayMeshIn3D(_vertices, tets, false, &in.tetNeighbors);
-      if(Msg::GetErrorCount()) break;
+      if(tets.empty()) break;
       for(std::size_t i = 0; i < nv; i++) _vertices[i]->setIndex((long)i);
       in.tetNode.resize(4 * tets.size());
       for(std::size_t i = 0; i < tets.size(); i++) {
@@ -1235,6 +1266,8 @@ namespace tetgenBR {
     else if(err == 3) {
         std::map<int, MVertex *> all;
         std::vector<GFace *> f = gr->faces();
+        f.insert(f.end(), gr->embeddedFaces().begin(),
+                 gr->embeddedFaces().end());
         for(auto it = f.begin(); it != f.end(); ++it) {
           GFace *gf = *it;
           for(std::size_t i = 0; i < gf->triangles.size(); i++) {
@@ -1295,50 +1328,79 @@ namespace tetgenBR {
            tetgenBR::sevent.f_vertices2[2]}};
         int ftags[2] = {tetgenBR::sevent.f_marker1, tetgenBR::sevent.f_marker2};
         int etags[2] = {tetgenBR::sevent.s_marker1, tetgenBR::sevent.s_marker2};
-        std::ostringstream pb;
+        std::vector<GEntity *> ents;
+        auto addEntity = [&](GEntity *ge) {
+          if(!ge || std::find(ents.begin(), ents.end(), ge) != ents.end())
+            return;
+          ents.push_back(ge);
+          gr->model()->addLastMeshEntityError(ge);
+        };
         std::vector<double> x, y, z, val;
         for(int f = 0; f < 2; f++) {
+          bool tagged = false;
           if(ftags[f] > 0) {
             GFace *gf = gr->model()->getFaceByTag(ftags[f]);
             if(gf) {
-              gr->model()->addLastMeshEntityError(gf);
-              pb << " surface " << ftags[f];
+              addEntity(gf);
+              tagged = true;
             }
           }
           if(etags[f] > 0) {
             GEdge *ge = gr->model()->getEdgeByTag(etags[f]);
             if(ge) {
-              gr->model()->addLastMeshEntityError(ge);
-              pb << " curve " << etags[f];
+              addEntity(ge);
+              tagged = true;
             }
           }
           for(int i = 0; i < 3; i++) {
-            MVertex *v = all[vtags[f][i]];
-            if(v) {
-              gr->model()->addLastMeshVertexError(v);
-              x.push_back(v->x());
-              y.push_back(v->y());
-              z.push_back(v->z());
-              val.push_back(f);
-            }
+            auto it = all.find(vtags[f][i]);
+            if(it == all.end()) continue;
+            MVertex *v = it->second;
+            gr->model()->addLastMeshVertexError(v);
+            x.push_back(v->x());
+            y.push_back(v->y());
+            z.push_back(v->z());
+            val.push_back(f);
+            // segments created by TetGen from the edges of the triangles have
+            // no tag: use the entities of their nodes
+            if(!tagged && v->onWhat() && v->onWhat()->dim() > 0)
+              addEntity(v->onWhat());
           }
+        }
+        std::ostringstream pb;
+        for(std::size_t i = 0; i < ents.size(); i++) {
+          pb << (!i                    ? " on " :
+                 (i + 1 < ents.size()) ? ", " :
+                                         " and ")
+             << (ents[i]->dim() == 2 ? "surface " : "curve ") << ents[i]->tag();
         }
         if(pnt) {
           double px = tetgenBR::sevent.int_point[0];
           double py = tetgenBR::sevent.int_point[1];
           double pz = tetgenBR::sevent.int_point[2];
-          pb << ", intersection (" << px << "," << py << "," << pz << ")";
+          pb << ", at (" << px << "," << py << "," << pz << ")";
           x.push_back(px);
           y.push_back(py);
           z.push_back(pz);
           val.push_back(3.);
         }
-        Msg::Error("Invalid boundary mesh (%s) on%s", what.c_str(),
+        else if(!x.empty()) {
+          // no single point for overlaps: give the center of their nodes
+          double cx = 0., cy = 0., cz = 0.;
+          for(std::size_t i = 0; i < x.size(); i++) {
+            cx += x[i];
+            cy += y[i];
+            cz += z[i];
+          }
+          pb << ", near (" << cx / x.size() << "," << cy / x.size() << ","
+             << cz / x.size() << ")";
+        }
+        Msg::Error("Invalid boundary mesh (%s)%s", what.c_str(),
                    pb.str().c_str());
 #if defined(HAVE_POST)
         new PView("Boundary mesh issue", x, y, z, val);
-#if defined(HAVE_FLTK)
-        if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+        Gui()->viewsChanged(true);
+#if defined(HAVE_OPENGL)
         drawContext::global()->draw();
 #endif
 #endif
@@ -1367,6 +1429,100 @@ namespace tetgenBR {
                                       boundaryRecoveryOutput &out)
   {
     return runCore(in, out);
+  }
+
+  bool recoverTrianglesInTetrahedra(std::vector<MVertex *> &v,
+                                    std::vector<MTetrahedron *> &tets,
+                                    const std::vector<MTriangle> &triangles)
+  {
+    boundaryRecoveryInput in;
+    in.carve = false; // the convex hull is kept
+    in.postprocess = false; // the tets are not optimized
+    in.verbose = false;
+    const std::size_t nv = v.size(), nt = tets.size();
+    in.xyz.resize(3 * nv);
+    for(std::size_t i = 0; i < nv; i++) {
+      v[i]->setIndex((long)i);
+      in.xyz[3 * i] = v[i]->x();
+      in.xyz[3 * i + 1] = v[i]->y();
+      in.xyz[3 * i + 2] = v[i]->z();
+    }
+    in.tetNode.resize(4 * nt);
+    for(std::size_t t = 0; t < nt; t++)
+      for(int k = 0; k < 4; k++)
+        in.tetNode[4 * t + k] = (std::uint32_t)tets[t]->getVertex(k)->getIndex();
+    // the neighbors, through the sorted facets (opposite to each node)
+    struct facet {
+      std::array<std::uint32_t, 3> n;
+      std::size_t ref; // 4 * tet + position
+      bool operator<(const facet &o) const { return n < o.n; }
+    };
+    std::vector<facet> facets(4 * nt);
+    for(std::size_t t = 0; t < nt; t++) {
+      for(int k = 0; k < 4; k++) {
+        facet &f = facets[4 * t + k];
+        for(int j = 0, i = 0; j < 4; j++)
+          if(j != k) f.n[i++] = in.tetNode[4 * t + j];
+        std::sort(f.n.begin(), f.n.end());
+        f.ref = 4 * t + k;
+      }
+    }
+    std::sort(facets.begin(), facets.end());
+    in.tetNeighbors.assign(4 * nt, -1);
+    for(std::size_t i = 0; i + 1 < facets.size(); i++) {
+      if(facets[i].n != facets[i + 1].n) continue;
+      in.tetNeighbors[facets[i].ref] = (std::int64_t)(facets[i + 1].ref / 4);
+      in.tetNeighbors[facets[i + 1].ref] = (std::int64_t)(facets[i].ref / 4);
+      i++;
+    }
+    // the triangles; a vertex in no tet has the place of another, which
+    // stands for it (the tetrahedralizations leave duplicates out)
+    std::vector<char> used(nv, 0);
+    for(std::uint32_t n : in.tetNode) used[n] = 1;
+    std::map<std::array<double, 3>, std::uint32_t> place;
+    for(std::size_t i = 0; i < nv; i++)
+      if(used[i]) place[{v[i]->x(), v[i]->y(), v[i]->z()}] = (std::uint32_t)i;
+    for(const MTriangle &t : triangles) {
+      for(int k = 0; k < 3; k++) {
+        const MVertex *tv = t.getVertex(k);
+        std::uint32_t n = (std::uint32_t)tv->getIndex();
+        if(!used[n]) {
+          auto it = place.find({tv->x(), tv->y(), tv->z()});
+          if(it != place.end()) n = it->second;
+        }
+        in.triNode.push_back(n);
+      }
+      in.triTag.push_back(1);
+    }
+
+    boundaryRecoveryOutput out;
+    const int err = runCore(in, out);
+    if(err) {
+      Msg::Error("Could not recover the %zu triangles in the "
+                 "tetrahedralization (error %d)", triangles.size(), err);
+      return false;
+    }
+    // the Steiner points after the vertices, and the new tets, with a
+    // positive volume
+    for(std::size_t k = 0; k < out.steinerXYZ.size() / 3; k++) {
+      MVertex *sv = new MVertex(out.steinerXYZ[3 * k], out.steinerXYZ[3 * k + 1],
+                                out.steinerXYZ[3 * k + 2]);
+      sv->setIndex((long)v.size());
+      v.push_back(sv);
+    }
+    for(MTetrahedron *t : tets) delete t;
+    tets.clear();
+    tets.reserve(out.tetNode.size() / 4);
+    for(std::size_t t = 0; t < out.tetNode.size() / 4; t++) {
+      MVertex *n[4];
+      for(int k = 0; k < 4; k++) n[k] = v[out.tetNode[4 * t + k]];
+      // (orient3d is robustPredicates::orient3d in this file)
+      if(orient3d(n[0]->point().data(), n[1]->point().data(),
+                  n[2]->point().data(), n[3]->point().data()) > 0)
+        std::swap(n[2], n[3]);
+      tets.push_back(new MTetrahedron(n[0], n[1], n[2], n[3]));
+    }
+    return true;
   }
 
   MVertex *newSteinerVertex(const boundaryRecoveryOutput &out, std::size_t k,
@@ -1418,6 +1574,14 @@ int meshGRegionBoundaryRecoveryFlat(const boundaryRecoveryInput &in,
                                     boundaryRecoveryOutput &out)
 {
   return -1;
+}
+
+bool recoverTrianglesInTetrahedra(std::vector<MVertex *> &v,
+                                  std::vector<MTetrahedron *> &tets,
+                                  const std::vector<MTriangle> &triangles)
+{
+  Msg::Error("Recovering triangles requires TetGen's boundary recovery");
+  return false;
 }
 
 MVertex *newSteinerVertex(const boundaryRecoveryOutput &out, std::size_t k,

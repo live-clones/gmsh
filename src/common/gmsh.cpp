@@ -5,6 +5,8 @@
 
 #include <sstream>
 #include <regex>
+#include <unordered_map>
+#include <unordered_set>
 
 #include "GmshConfig.h"
 #include "GmshDefines.h"
@@ -13,6 +15,9 @@
 #include "GModel.h"
 #include "GModelIO_GEO.h"
 #include "GModelIO_OCC.h"
+#if defined(HAVE_DISCRETECAD)
+#include "DiscreteCADModeler.h"
+#endif
 #include "GVertex.h"
 #include "GEdge.h"
 #include "GFace.h"
@@ -25,9 +30,6 @@
 #include "partitionEdge.h"
 #include "partitionFace.h"
 #include "partitionRegion.h"
-#include "ghostEdge.h"
-#include "ghostFace.h"
-#include "ghostRegion.h"
 #include "gmshSurface.h"
 #include "MVertex.h"
 #include "MPoint.h"
@@ -60,8 +62,10 @@
 #include "Field.h"
 #include "meshGFace.h"
 #include "meshGFaceDelaunay.h"
+#include "robustPredicates.h"
 #include "meshGFaceOptimize.h"
 #include "meshGRegionDelaunay.h"
+#include "meshGRegionBoundaryRecovery.h"
 #include "meshGRegionHxt.h"
 #include "meshGRegionParallelDelaunay.h"
 #include "gmshCrossFields.h"
@@ -106,8 +110,11 @@ extern "C" {
 }
 
 static int _initialized = 0;
+// copies of the arguments given to initialize(): the caller's go when it
+// returns (Python's are temporaries), and the GUI reads them when created
 static int _argc = 0;
 static char **_argv = nullptr;
+static std::vector<std::string> _argvStrings;
 
 static bool _checkInit()
 {
@@ -140,8 +147,10 @@ GMSH_API void gmsh::initialize(int argc, char **argv,
   if(GmshInitialize(argc, argv, readConfigFiles, false)) {
     _initialized = 1;
     _argc = argc;
+    _argvStrings.assign(argv, argv + argc);
     _argv = new char *[_argc + 1];
-    for(int i = 0; i < argc; i++) _argv[i] = argv[i];
+    for(int i = 0; i < argc; i++) _argv[i] = &_argvStrings[i][0];
+    _argv[_argc] = nullptr;
 
 #if defined(HAVE_FLTK)
     // if the GUI is already running (rare case, but could happen), we're done
@@ -179,6 +188,7 @@ GMSH_API void gmsh::finalize()
     _argc = 0;
     if(_argv) delete[] _argv;
     _argv = nullptr;
+    _argvStrings.clear();
     _initialized = 0;
     return;
   }
@@ -301,8 +311,14 @@ GMSH_API void gmsh::option::restoreDefaults()
 {
   UnlinkFile(CTX::instance()->homeDir + CTX::instance()->sessionFileName);
   UnlinkFile(CTX::instance()->homeDir + CTX::instance()->optionsFileName);
+  // what initialize() set for the API (exceptions on errors, messages on the
+  // terminal) is not an option to restore
+  int abortOnError = CTX::instance()->abortOnError;
+  int terminal = CTX::instance()->terminal;
   ReInitOptions(0);
   InitOptionsGUI(0);
+  CTX::instance()->abortOnError = abortOnError;
+  CTX::instance()->terminal = terminal;
 }
 
 // gmsh::model
@@ -814,12 +830,6 @@ GMSH_API void gmsh::model::getPartitions(const int dim, const int tag,
     p = static_cast<partitionFace *>(ge)->getPartitions();
   else if(ge->geomType() == GEntity::PartitionVolume)
     p = static_cast<partitionRegion *>(ge)->getPartitions();
-  else if(ge->geomType() == GEntity::GhostCurve)
-    p.push_back(static_cast<ghostEdge *>(ge)->getPartition());
-  else if(ge->geomType() == GEntity::GhostSurface)
-    p.push_back(static_cast<ghostFace *>(ge)->getPartition());
-  else if(ge->geomType() == GEntity::GhostVolume)
-    p.push_back(static_cast<ghostRegion *>(ge)->getPartition());
 
   for(std::size_t i = 0; i < p.size(); i++) partitions.push_back(p[i]);
 }
@@ -1264,6 +1274,8 @@ GMSH_API void gmsh::model::setVisibilityPerWindow(const int value,
 {
   if(!_checkInit()) return;
 #if defined(HAVE_FLTK)
+  // (the windows are those of the GUI: none without it)
+  if(!FlGui::available()) return;
   FlGui::instance()->setCurrentOpenglWindow(windowIndex);
   drawContext *ctx = FlGui::instance()->getCurrentDrawContext();
   GModel *m = GModel::current();
@@ -2045,6 +2057,15 @@ gmsh::model::mesh::affineTransform(const std::vector<double> &affineTransform,
                    _getEntityName(ge->dim(), ge->tag()).c_str());
     }
   }
+  // the sub-simplices computed for the polygons and polyhedra depend on the
+  // positions of the nodes (a mirrored tetrahedron is negative): compute them
+  // again when needed
+  for(auto gf : GModel::current()->getFaces())
+    for(auto p : gf->polygons)
+      if(!p->hasGivenTriangles()) p->setTriangles({});
+  for(auto gr : GModel::current()->getRegions())
+    for(auto p : gr->polyhedra)
+      if(!p->hasGivenTetrahedra()) p->setTetrahedra({});
   // the nodes moved: what is drawn of the mesh is built again
   CTX::instance()->meshChanged();
 }
@@ -2368,6 +2389,19 @@ GMSH_API void gmsh::model::mesh::getMaxNodeTag(std::size_t &maxTag)
   maxTag = GModel::current()->getMaxVertexNumber();
 }
 
+// explicit node or element tags must be strictly positive: a tag 0 would be
+// replaced by a new tag, possibly one given to another node or element
+static bool _checkTags(const std::vector<std::size_t> &tags, const char *what)
+{
+  for(auto t : tags) {
+    if(!t) {
+      Msg::Error("%s tags must be strictly positive (tag 0 given)", what);
+      return false;
+    }
+  }
+  return true;
+}
+
 GMSH_API void gmsh::model::mesh::addNodes(
   const int dim, const int tag, const std::vector<std::size_t> &nodeTags,
   const std::vector<double> &coord, const std::vector<double> &parametricCoord)
@@ -2394,6 +2428,7 @@ GMSH_API void gmsh::model::mesh::addNodes(
     }
     param = true;
   }
+  if(!_checkTags(nodeTags, "Node")) return;
   for(int i = 0; i < numNodes; i++) {
     std::size_t tag = (numNodeTags ? nodeTags[i] : 0); // 0 = automatic tag
     double x = coord[3 * i];
@@ -2664,6 +2699,7 @@ static void _addElements(int dim, int tag, GEntity *ge, int type,
     Msg::Error("Wrong number of node tags for element type %d", type);
     return;
   }
+  if(!_checkTags(elementTags, "Element")) return;
   std::vector<MElement *> elements(numEle);
   std::vector<MVertex *> nodes(numNodesPerEle);
   for(std::size_t j = 0; j < numEle; j++) {
@@ -2814,21 +2850,27 @@ GMSH_API void gmsh::model::mesh::addPolygons(
     return;
   }
   std::size_t n = 0;
-  for(auto m : numNodes) n += m;
+  for(auto m : numNodes) {
+    if(m < 3) {
+      Msg::Error("A polygon needs at least 3 nodes");
+      return;
+    }
+    n += m;
+  }
   if(n != nodeTags.size() ||
      (!elementTags.empty() && elementTags.size() != numNodes.size())) {
     Msg::Error("Wrong number of node tags or element tags for polygons");
     return;
   }
+  if(!_checkTags(elementTags, "Element")) return;
   std::vector<MElement *> elements;
   std::vector<MVertex *> nodes;
   std::size_t idx = 0;
   for(std::size_t i = 0; i < numNodes.size(); i++) {
-    if(numNodes[i] < 3) {
-      Msg::Error("A polygon needs at least 3 nodes");
+    if(!_getNodes(nodeTags, idx, numNodes[i], nodes)) {
+      for(auto e : elements) delete e;
       return;
     }
-    if(!_getNodes(nodeTags, idx, numNodes[i], nodes)) return;
     idx += numNodes[i];
     elements.push_back(
       new MPolygon(nodes, elementTags.empty() ? 0 : elementTags[i]));
@@ -2867,22 +2909,31 @@ GMSH_API void gmsh::model::mesh::addPolyhedra(
     return;
   }
   std::size_t nf = 0, nn = 0;
-  for(auto m : numFaces) nf += m;
-  for(auto m : faceSizes) nn += m;
+  for(auto m : numFaces) {
+    if(m < 4) {
+      Msg::Error("A polyhedron needs at least 4 faces");
+      return;
+    }
+    nf += m;
+  }
+  for(auto m : faceSizes) {
+    if(m < 3) {
+      Msg::Error("A face of a polyhedron needs at least 3 nodes");
+      return;
+    }
+    nn += m;
+  }
   if(nf != faceSizes.size() || nn != nodeTags.size() ||
      (!elementTags.empty() && elementTags.size() != numFaces.size())) {
     Msg::Error("Wrong number of face sizes, node tags or element tags for "
                "polyhedra");
     return;
   }
+  if(!_checkTags(elementTags, "Element")) return;
   std::vector<MElement *> elements;
   std::vector<MVertex *> nodes;
   std::size_t face = 0, idx = 0;
   for(std::size_t i = 0; i < numFaces.size(); i++) {
-    if(numFaces[i] < 4) {
-      Msg::Error("A polyhedron needs at least 4 faces");
-      return;
-    }
     std::vector<int> offsets = {0};
     std::size_t n = 0;
     for(int j = 0; j < numFaces[i]; j++) {
@@ -2890,7 +2941,10 @@ GMSH_API void gmsh::model::mesh::addPolyhedra(
       offsets.push_back((int)n);
     }
     face += numFaces[i];
-    if(!_getNodes(nodeTags, idx, n, nodes)) return;
+    if(!_getNodes(nodeTags, idx, n, nodes)) {
+      for(auto e : elements) delete e;
+      return;
+    }
     idx += n;
     MPolyhedron *p =
       new MPolyhedron(nodes, elementTags.empty() ? 0 : elementTags[i]);
@@ -2975,34 +3029,43 @@ GMSH_API void gmsh::model::mesh::setPolytopeSimplices(
     return;
   }
   std::vector<MVertex *> nodes;
-  std::size_t idx = 0;
-  for(std::size_t i = 0; i < elementTags.size(); i++) {
-    MElement *e = GModel::current()->getMeshElementByTag(elementTags[i]);
-    if(!e) {
-      Msg::Error("Unknown element %zu", elementTags[i]);
-      return;
+  // everything is checked first, so that an error leaves the mesh as it was
+  for(int pass = 0; pass < 2; pass++) {
+    std::size_t idx = 0;
+    for(std::size_t i = 0; i < elementTags.size(); i++) {
+      MElement *e = GModel::current()->getMeshElementByTag(elementTags[i]);
+      if(!e) {
+        Msg::Error("Unknown element %zu", elementTags[i]);
+        return;
+      }
+      int k = (e->getType() == TYPE_POLYG) ? 3 :
+              (e->getType() == TYPE_POLYH) ? 4 :
+                                             0;
+      if(!k) {
+        Msg::Error("Element %zu is not a polytope", elementTags[i]);
+        return;
+      }
+      if(numSimplices[i] < 0) {
+        Msg::Error("Negative number of simplices for polytope %zu",
+                   elementTags[i]);
+        return;
+      }
+      std::size_t n = (std::size_t)numSimplices[i] * k;
+      if(idx + n > nodeTags.size()) {
+        Msg::Error("Not enough node tags for the simplices of the polytopes");
+        return;
+      }
+      if(!_getNodes(nodeTags, idx, n, nodes)) return;
+      idx += n;
+      if(!pass) continue;
+      if(e->getType() == TYPE_POLYG)
+        static_cast<MPolygon *>(e)->setTriangles(nodes);
+      else
+        static_cast<MPolyhedron *>(e)->setTetrahedra(nodes);
     }
-    int k = (e->getType() == TYPE_POLYG) ? 3 :
-            (e->getType() == TYPE_POLYH) ? 4 :
-                                           0;
-    if(!k) {
-      Msg::Error("Element %zu is not a polytope", elementTags[i]);
-      return;
-    }
-    std::size_t n = numSimplices[i] * k;
-    if(idx + n > nodeTags.size()) {
-      Msg::Error("Not enough node tags for the simplices of the polytopes");
-      return;
-    }
-    if(!_getNodes(nodeTags, idx, n, nodes)) return;
-    idx += n;
-    if(e->getType() == TYPE_POLYG)
-      static_cast<MPolygon *>(e)->setTriangles(nodes);
-    else
-      static_cast<MPolyhedron *>(e)->setTetrahedra(nodes);
+    if(pass && idx != nodeTags.size())
+      Msg::Warning("Too many node tags for the simplices of the polytopes");
   }
-  if(idx != nodeTags.size())
-    Msg::Warning("Too many node tags for the simplices of the polytopes");
   GModel::current()->destroyMeshCaches();
 }
 
@@ -3083,6 +3146,13 @@ GMSH_API void gmsh::model::mesh::getElementProperties(
     numNodes = numPrimaryNodes = -1;
     return;
   }
+  if(parentType == TYPE_TRIH) {
+    // no basis: a trihedron only links a quadrangle to two triangles
+    dim = 3;
+    order = 1;
+    numNodes = numPrimaryNodes = 4;
+    return;
+  }
   nodalBasis *basis = nullptr;
   if(parentType == TYPE_PYR)
     basis = new pyramidalBasis(elementType);
@@ -3095,6 +3165,7 @@ GMSH_API void gmsh::model::mesh::getElementProperties(
     ElementType::getNumVertices(ElementType::getPrimaryType(elementType));
   if(numNodes != ElementType::getNumVertices(elementType)) {
     Msg::Error("Size of basis incompatible with element type");
+    delete basis;
     return;
   }
   for(int i = 0; i < basis->points.size1(); i++)
@@ -3343,7 +3414,21 @@ GMSH_API void gmsh::model::mesh::getJacobians(
                          coord, tag);
   }
   // get data
-  {
+  if(familyType == TYPE_POLYG || familyType == TYPE_POLYH) {
+    // the reference coordinates of polygons and polyhedra are the physical
+    // ones
+    const size_t begin = (task * numElements) / numTasks;
+    const size_t end = ((task + 1) * numElements) / numTasks;
+    for(size_t idx = begin * numPoints; idx < end * numPoints; idx++) {
+      if(haveDeterminants) determinants[idx] = 1.;
+      if(haveJacobians)
+        for(int k = 0; k < 9; k++) jacobians[9 * idx + k] = (k % 4) ? 0. : 1.;
+      if(havePoints)
+        for(int k = 0; k < 3; k++)
+          coord[3 * idx + k] = localCoord[3 * (idx % numPoints) + k];
+    }
+  }
+  else {
     const size_t begin = (task * numElements) / numTasks;
     const size_t end = ((task + 1) * numElements) / numTasks;
     if(haveDeterminants && haveJacobians && havePoints) {
@@ -3586,6 +3671,16 @@ GMSH_API void gmsh::model::mesh::getJacobian(
   jacobians.resize(9 * numPoints);
   determinants.resize(numPoints);
   coord.resize(3 * numPoints);
+  if(e->getType() == TYPE_POLYG || e->getType() == TYPE_POLYH) {
+    // the reference coordinates of polygons and polyhedra are the physical
+    // ones
+    for(int k = 0; k < numPoints; k++) {
+      determinants[k] = 1.;
+      for(int l = 0; l < 9; l++) jacobians[9 * k + l] = (l % 4) ? 0. : 1.;
+      for(int l = 0; l < 3; l++) coord[3 * k + l] = localCoord[3 * k + l];
+    }
+    return;
+  }
   for(int k = 0; k < numPoints; k++) {
     double value[1256][3];
     e->getGradShapeFunctions(localCoord[3 * k], localCoord[3 * k + 1],
@@ -3712,6 +3807,11 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
 
   const std::size_t numberOfGaussPoints = localCoord.size() / 3;
   const int familyType = ElementType::getParentType(elementType);
+  if(familyType == TYPE_POLYG || familyType == TYPE_POLYH) {
+    Msg::Error("No basis functions for polygons and polyhedra (see "
+               "getPolytopeSimplices)");
+    return;
+  }
 
   if(fsName == "Lagrange" || fsName == "GradLagrange") { // Lagrange type
     if(!_checkWantedOrientations(wantedOrientations, 1, fsName, familyType))
@@ -3823,21 +3923,33 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
   }
 }
 
+// the longest chain of periodic entities followed: a longer one would be a
+// cycle, which the meshing does not allow
+static const int MAX_PERIODIC_CHAIN = 1000;
+
+// the master node of the node v of the periodic entity ge, or nullptr
+static MVertex *_getMasterNode(GEntity *ge, MVertex *v)
+{
+  auto it = ge->correspondingVertices.find(v);
+  if(it != ge->correspondingVertices.end()) return it->second;
+  it = ge->correspondingHighOrderVertices.find(v);
+  if(it != ge->correspondingHighOrderVertices.end()) return it->second;
+  return nullptr;
+}
+
 // the master node of a node on a periodic entity, following the chains of
 // periodic entities (the node itself if it is not on a periodic entity)
 static MVertex *_masterNode(MVertex *v)
 {
-  for(int depth = 0; depth < 10; depth++) { // (no cycles)
+  for(int i = 0; i < MAX_PERIODIC_CHAIN; i++) {
     GEntity *ge = v->onWhat();
-    if(!ge || ge->getMeshMaster() == ge) break;
-    auto it = ge->correspondingVertices.find(v);
-    if(it == ge->correspondingVertices.end()) {
-      it = ge->correspondingHighOrderVertices.find(v);
-      if(it == ge->correspondingHighOrderVertices.end()) break;
-    }
-    if(it->second == v) break;
-    v = it->second;
+    MVertex *m =
+      (ge && ge->getMeshMaster() != ge) ? _getMasterNode(ge, v) : nullptr;
+    if(!m || m == v) return v;
+    v = m;
   }
+  Msg::Warning("Chain of periodic entities longer than %d from node %zu",
+               MAX_PERIODIC_CHAIN, v->getNum());
   return v;
 }
 
@@ -4081,7 +4193,13 @@ GMSH_API void gmsh::model::mesh::getFaces(
   faceTags.clear();
   orientations.clear();
   std::size_t numFaces = faceSizes.size(), numNodes = 0;
-  for(auto n : faceSizes) numNodes += n;
+  for(auto n : faceSizes) {
+    if(n < 3) {
+      Msg::Error("A face needs at least 3 nodes");
+      return;
+    }
+    numNodes += n;
+  }
   if(numNodes != nodeTags.size()) {
     Msg::Error("Face sizes do not match the number of face nodes");
     return;
@@ -4200,7 +4318,13 @@ gmsh::model::mesh::addFaces(const std::vector<std::size_t> &faceTags,
 {
   if(!_checkInit()) return;
   std::size_t numNodes = 0;
-  for(auto n : faceSizes) numNodes += n;
+  for(auto n : faceSizes) {
+    if(n < 3) {
+      Msg::Error("A face needs at least 3 nodes");
+      return;
+    }
+    numNodes += n;
+  }
   if(faceTags.size() != faceSizes.size() || numNodes != faceNodes.size()) {
     Msg::Error("Wrong number of face sizes or face nodes");
     return;
@@ -4269,22 +4393,98 @@ static void _addLagrangeKeys(MElement *e, std::vector<int> &typeKeys,
 static int _typeKey(const HierarchicalBasis::Function &f)
 { return 4 * f.position + f.type; }
 
+// The master of the elements of a periodic entity, to key their functions as
+// those of the master entity: the master node of each node of an element, the
+// master entity, and, on surfaces, the curve of each mesh line of the model and,
+// if some curves have no mesh lines, the edges on the boundary of the mesh of
+// the (slave) entity
+struct periodicMaster {
+  std::map<MVertex *, MVertex *> nodes;
+  GEntity *entity;
+  std::unordered_map<MEdge, GEdge *, MEdgeHash, MEdgeEqual> curves;
+  std::unordered_set<MEdge, MEdgeHash, MEdgeEqual> boundary;
+};
+
+// The curve on which lies the mesh edge (a, b) of the master entity, or
+// nullptr: the curve of which it is a mesh line or, if the curves have no mesh
+// lines (e.g. in a mesh read from a file in which only the elements of the
+// physical groups were saved) and the edge is on the boundary of the mesh of
+// the entity, the curve given by the entities of its nodes: the curve on which
+// one of them lies, or else the curve of the master entity without inner nodes
+// joining their points
+static GEdge *_curveOfEdge(MVertex *a, MVertex *b, const periodicMaster &master,
+                           bool boundary)
+{
+  GEntity *ea = a->onWhat(), *eb = b->onWhat();
+  if(!ea || !eb || ea->dim() > 1 || eb->dim() > 1) return nullptr;
+  auto it = master.curves.find(MEdge(a, b));
+  if(it != master.curves.end()) return it->second;
+  if(!boundary) return nullptr;
+  if(ea->dim() == 0) std::swap(ea, eb);
+  if(ea->dim() == 1) // a boundary edge with a node inside a curve is on it
+    return (eb == ea || eb->dim() == 0) ? static_cast<GEdge *>(ea) : nullptr;
+  for(auto c : master.entity->edges()) {
+    GVertex *v0 = c->getBeginVertex(), *v1 = c->getEndVertex();
+    if(c->mesh_vertices.empty() &&
+       ((v0 == ea && v1 == eb) || (v0 == eb && v1 == ea)))
+      return c;
+  }
+  return nullptr;
+}
+
+// Follow the chains of periodic entities from the mesh edge or face given by
+// its nodes, of an element of the master entity: while the entity it lies on
+// (the curve on which it lies for an edge, see _curveOfEdge, the master entity
+// otherwise) is periodic, its nodes are replaced by their master nodes on that
+// entity, so that it ends on an entity which is not periodic. E.g. for a cell
+// periodic in x and y, an edge along the corner x = 1, y = 1 has its master on
+// the curve x = 0, y = 1, which is itself periodic in y: the edge reached is on
+// the curve x = 0, y = 0. Stops at the last entity whose master nodes are all
+// known. boundary: whether the edge is on the boundary of the mesh of the
+// entity
+static void _followPeriodicChains(std::vector<MVertex *> &nodes,
+                                  const periodicMaster &master,
+                                  bool boundary = false)
+{
+  GEntity *e = master.entity;
+  if(nodes.size() == 2) {
+    GEdge *c = _curveOfEdge(nodes[0], nodes[1], master, boundary);
+    if(c) e = c;
+  }
+  std::vector<MVertex *> m(nodes.size());
+  for(int i = 0; e->getMeshMaster() != e; i++) {
+    if(i == MAX_PERIODIC_CHAIN) {
+      Msg::Warning("Chain of periodic entities longer than %d from %s",
+                   MAX_PERIODIC_CHAIN,
+                   _getEntityName(e->dim(), e->tag()).c_str());
+      return;
+    }
+    for(std::size_t k = 0; k < nodes.size(); k++) {
+      m[k] = _getMasterNode(e, nodes[k]);
+      if(!m[k]) return;
+    }
+    nodes = m;
+    e = e->getMeshMaster();
+  }
+}
+
 // the keys of the given functions of a hierarchical basis of element e: the
 // vertex functions keyed by their node, the functions of each edge and face by
 // the global number of the edge or the face, the bubble functions by the
 // element; if master is given, the keys of the corresponding functions of the
-// master entities, the nodes being replaced by their master nodes, and the
-// edges and faces by those of the master nodes
+// master entity at the end of the chains of periodic entities, the nodes, the
+// edges and the faces being replaced by those of the master nodes (see
+// _masterNode and _followPeriodicChains)
 static void _addHierarchicalKeys(
   MElement *e, const std::vector<HierarchicalBasis::Function> &functions,
   std::vector<int> &typeKeys, std::vector<std::size_t> &entityKeys,
   std::vector<double> &coord, bool returnCoord,
-  const std::map<MVertex *, MVertex *> *master = nullptr)
+  const periodicMaster *master = nullptr)
 {
   auto node = [&](MVertex *v) {
     if(!master) return v;
-    auto it = master->find(v);
-    return (it == master->end()) ? v : it->second;
+    auto it = master->nodes.find(v);
+    return (it == master->nodes.end()) ? v : it->second;
   };
   // the global number and the barycenter of each edge and face of the element
   // with functions, computed once
@@ -4296,6 +4496,7 @@ static void _addHierarchicalKeys(
     double *xyz = nullptr, nodeXyz[3];
     if(f.type == 0) {
       MVertex *v = node(e->getVertex(f.entity));
+      if(master) v = _masterNode(v);
       key = v->getNum();
       nodeXyz[0] = v->x();
       nodeXyz[1] = v->y();
@@ -4305,8 +4506,13 @@ static void _addHierarchicalKeys(
     else if(f.type == 1) {
       if(!edgeDone[f.entity]) {
         MEdge edge = e->getEdge(f.entity);
-        if(master)
-          edge = MEdge(node(edge.getVertex(0)), node(edge.getVertex(1)));
+        if(master) {
+          bool boundary = master->boundary.count(edge) > 0;
+          std::vector<MVertex *> n = {node(edge.getVertex(0)),
+                                      node(edge.getVertex(1))};
+          _followPeriodicChains(n, *master, boundary);
+          edge = MEdge(n[0], n[1]);
+        }
         if(returnCoord) {
           MVertex *v[2] = {edge.getVertex(0), edge.getVertex(1)};
           _barycenter(v, 2, edgeXyz[f.entity]);
@@ -4324,6 +4530,7 @@ static void _addHierarchicalKeys(
           std::vector<MVertex *> v(face.getNumVertices());
           for(std::size_t k = 0; k < v.size(); k++)
             v[k] = node(face.getVertex(k));
+          _followPeriodicChains(v, *master);
           face = MFace(v);
         }
         if(returnCoord) {
@@ -4482,6 +4689,10 @@ gmsh::model::mesh::getNumberOfKeys(const int elementType,
       int newType = ElementType::getType(familyType, basisOrder, false);
       basis = BasisFactory::getNodalBasis(newType);
     }
+    if(!basis) {
+      Msg::Error("No Lagrange basis for elements of type %d", elementType);
+      return 0;
+    }
     numberOfKeys = basis->getNumShapeFunctions();
   }
   else {
@@ -4533,6 +4744,10 @@ GMSH_API void gmsh::model::mesh::getKeysInformation(
     else {
       int newType = ElementType::getType(familyType, basisOrder, false);
       basis = BasisFactory::getNodalBasis(newType);
+    }
+    if(!basis) {
+      Msg::Error("No Lagrange basis for elements of type %d", elementType);
+      return;
     }
     std::size_t numberOfKeys = basis->getNumShapeFunctions();
     std::size_t numberOfBubble = basis->getNumBubbleShapeFunctions();
@@ -4754,20 +4969,39 @@ GMSH_API void gmsh::model::mesh::getElementEdgeNodes(
     return;
   }
   if(!numElements || !numEdgesPerEle || !numNodesPerEdge) return;
-  if(numEdgesPerEle * numNodesPerEdge * numElements != nodeTags.size()) {
+  // the number of edges is fixed for a given element type, except for polygons
+  // and polyhedra, for which the edges are counted element by element
+  bool variable = (familyType == TYPE_POLYG || familyType == TYPE_POLYH);
+  std::vector<std::size_t> nePrefix;
+  if(variable) {
+    nePrefix.reserve(numElements + 1);
+    nePrefix.push_back(0);
+    for(std::size_t i = 0; i < entities.size(); i++) {
+      GEntity *ge = entities[i];
+      for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType); j++)
+        nePrefix.push_back(
+          nePrefix.back() +
+          ge->getMeshElementByType(familyType, j)->getNumEdges());
+    }
+  }
+  std::size_t numEdges =
+    variable ? nePrefix.back() : numEdgesPerEle * numElements;
+  if(numEdges * numNodesPerEdge != nodeTags.size()) {
     if(numTasks > 1)
       Msg::Warning("Nodes should be preallocated if numTasks > 1");
-    nodeTags.resize(numEdgesPerEle * numNodesPerEdge * numElements);
+    nodeTags.resize(numEdges * numNodesPerEdge);
   }
   const size_t begin = (task * numElements) / numTasks;
   const size_t end = ((task + 1) * numElements) / numTasks;
   size_t o = 0;
-  size_t idx = numEdgesPerEle * numNodesPerEdge * begin;
+  size_t idx =
+    numNodesPerEdge * (variable ? nePrefix[begin] : numEdgesPerEle * begin);
   for(std::size_t i = 0; i < entities.size(); i++) {
     GEntity *ge = entities[i];
     for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType); j++) {
       if(o >= begin && o < end) {
         MElement *e = ge->getMeshElementByType(familyType, j);
+        if(variable) numEdgesPerEle = e->getNumEdges();
         for(int k = 0; k < numEdgesPerEle; k++) {
           std::vector<MVertex *> v;
           // we could use e->getHighOrderEdge() here if we decide to remove
@@ -4819,7 +5053,8 @@ GMSH_API void gmsh::model::mesh::getElementFaceNodes(
   };
 
   // the numbers of faces and of face nodes are fixed for a given element type,
-  // except for polyhedra, for which they are counted element by element
+  // except for polygons and polyhedra, for which they are counted element by
+  // element
   std::size_t numElements = 0;
   for(std::size_t i = 0; i < entities.size(); i++)
     numElements += entities[i]->getNumMeshElementsByType(familyType);
@@ -4828,7 +5063,7 @@ GMSH_API void gmsh::model::mesh::getElementFaceNodes(
     return;
   }
   if(!numElements) return;
-  bool variable = (familyType == TYPE_POLYH);
+  bool variable = (familyType == TYPE_POLYG || familyType == TYPE_POLYH);
   std::size_t nfConst = 0, nnConst = 0;
   std::vector<std::size_t> nfPrefix, nnPrefix;
   if(variable) {
@@ -4932,7 +5167,7 @@ GMSH_API void gmsh::model::mesh::getElementFaceNodesByType(
     return;
   }
   if(!numElements) return;
-  bool variable = (familyType == TYPE_POLYH);
+  bool variable = (familyType == TYPE_POLYG || familyType == TYPE_POLYH);
   std::size_t nnConst = 0;
   std::vector<std::size_t> nnPrefix;
   if(variable) {
@@ -4987,29 +5222,24 @@ GMSH_API void gmsh::model::mesh::getElementFaceNodesByType(
 }
 
 GMSH_API void
-gmsh::model::mesh::getGhostElements(const int dim, const int tag,
+gmsh::model::mesh::getGhostElements(const int partition,
                                     std::vector<std::size_t> &elementTags,
                                     std::vector<int> &partitions)
 {
   if(!_checkInit()) return;
   elementTags.clear();
   partitions.clear();
-  GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
-  if(!ge) {
-    Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
-    return;
+  std::vector<std::pair<std::size_t, int>> ghosts;
+  for(auto &g : GModel::current()->getGhostCells()) {
+    if(g.second != partition) continue;
+    // (not an element any more if the mesh was changed after partitioning)
+    MElement *e = GModel::current()->getMeshElementByTag(g.first);
+    if(e) ghosts.push_back(std::make_pair(g.first, e->getPartition()));
   }
-  std::map<MElement *, int, MElementPtrLessThan> ghostCells;
-  if(ge->geomType() == GEntity::GhostCurve)
-    ghostCells = static_cast<ghostEdge *>(ge)->getGhostCells();
-  else if(ge->geomType() == GEntity::GhostSurface)
-    ghostCells = static_cast<ghostFace *>(ge)->getGhostCells();
-  else if(ge->geomType() == GEntity::GhostVolume)
-    ghostCells = static_cast<ghostRegion *>(ge)->getGhostCells();
-
-  for(auto it = ghostCells.begin(); it != ghostCells.end(); it++) {
-    elementTags.push_back(it->first->getNum());
-    partitions.push_back(it->second);
+  std::sort(ghosts.begin(), ghosts.end());
+  for(auto &g : ghosts) {
+    elementTags.push_back(g.first);
+    partitions.push_back(g.second);
   }
 }
 
@@ -5067,6 +5297,20 @@ GMSH_API void gmsh::model::mesh::removeSizeCallback()
 {
   if(!_checkInit()) return;
   GModel::current()->lcCallback = nullptr;
+}
+
+GMSH_API void gmsh::model::mesh::setMetricCallback(
+  std::function<void(int, int, double, double, double, double, double *)>
+    callback)
+{
+  if(!_checkInit()) return;
+  GModel::current()->metricCallback = callback;
+}
+
+GMSH_API void gmsh::model::mesh::removeMetricCallback()
+{
+  if(!_checkInit()) return;
+  GModel::current()->metricCallback = nullptr;
 }
 
 GMSH_API void
@@ -5692,16 +5936,6 @@ GMSH_API void gmsh::model::mesh::getPeriodicNodes(
   }
 }
 
-// the master node of the node v of the periodic entity ge, or nullptr
-static MVertex *_getMasterNode(GEntity *ge, MVertex *v)
-{
-  auto it = ge->correspondingVertices.find(v);
-  if(it != ge->correspondingVertices.end()) return it->second;
-  it = ge->correspondingHighOrderVertices.find(v);
-  if(it != ge->correspondingHighOrderVertices.end()) return it->second;
-  return nullptr;
-}
-
 GMSH_API void gmsh::model::mesh::getPeriodicKeys(
   const int elementType, const std::string &functionSpaceType, const int tag,
   int &tagMaster, std::vector<int> &typeKeys, std::vector<int> &typeKeysMaster,
@@ -5753,6 +5987,9 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
                      entityKeys[i]);
         continue;
       }
+      // a master node on a periodic entity (e.g. at a corner of a cell periodic
+      // in several directions): the end of the chain of periodic entities
+      m = _masterNode(m);
       entityKeysMaster[i] = m->getNum();
       if(returnCoord) {
         coordMaster[3 * i] = m->x();
@@ -5765,7 +6002,8 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
 
 #if defined(HAVE_HIERARCHICAL_BASIS)
   // the keys of the elements of the entity, and the same keys with the master
-  // nodes, edges and faces: the elements being oriented with the master nodes
+  // nodes, edges and faces, following the chains of periodic entities: the
+  // elements being oriented with the master nodes at the end of these chains
   // (see _orientation), the basis functions are the same
   if(dim != 1 && dim != 2) {
     Msg::Error("Periodic keys of hierarchical function spaces are only "
@@ -5786,9 +6024,32 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
     if(!faces3D || (f.type == 2 && f.entity == 0)) functions.push_back(f);
   delete basis;
 
+  periodicMaster master;
+  master.entity = ge->getMeshMaster();
+  // (on a curve, the edges of the elements are its mesh lines)
+  if(dim == 2) {
+    GModel *m = GModel::current();
+    bool noLines = false;
+    for(auto it = m->firstEdge(); it != m->lastEdge(); ++it) {
+      if((*it)->lines.empty()) noLines = true;
+      for(auto l : (*it)->lines)
+        master.curves[MEdge(l->getVertex(0), l->getVertex(1))] = *it;
+    }
+    // the edges of a single element of the entity, if some curves have no mesh
+    // lines
+    if(noLines) {
+      std::unordered_map<MEdge, int, MEdgeHash, MEdgeEqual> count;
+      for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
+        MElement *e = ge->getMeshElement(j);
+        for(int k = 0; k < e->getNumEdges(); k++) count[e->getEdge(k)]++;
+      }
+      for(auto &c : count)
+        if(c.second == 1) master.boundary.insert(c.first);
+    }
+  }
   for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType); j++) {
     MElement *e = ge->getMeshElementByType(familyType, j);
-    std::map<MVertex *, MVertex *> master;
+    master.nodes.clear();
     for(std::size_t k = 0; k < e->getNumVertices(); k++) {
       MVertex *v = e->getVertex(k), *m = _getMasterNode(ge, v);
       // nodes on the boundary of the entity, with the master of their entity
@@ -5799,7 +6060,7 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
                      v->getNum());
         m = v;
       }
-      master[v] = m;
+      master.nodes[v] = m;
     }
     _addHierarchicalKeys(e, functions, typeKeys, entityKeys, coord,
                          returnCoord);
@@ -7390,14 +7651,14 @@ GMSH_API void gmsh::model::occ::removeAllDuplicates()
 GMSH_API void gmsh::model::occ::healShapes(
   vectorpair &outDimTags, const vectorpair &inDimTags, const double tolerance,
   const bool fixDegenerated, const bool fixSmallEdges, const bool fixSmallFaces,
-  const bool sewFaces, const bool makeSolids)
+  const bool sewFaces, const bool makeSolids, const bool fixTolerances)
 {
   if(!_checkInit()) return;
   _createOcc();
   outDimTags.clear();
   GModel::current()->getOCCInternals()->healShapes(
     inDimTags, outDimTags, tolerance, fixDegenerated, fixSmallEdges,
-    fixSmallFaces, sewFaces, makeSolids);
+    fixSmallFaces, sewFaces, makeSolids, fixTolerances);
 }
 
 GMSH_API void gmsh::model::occ::convertToNURBS(const vectorpair &inDimTags)
@@ -7542,6 +7803,256 @@ GMSH_API void gmsh::model::occ::mesh::setSize(const vectorpair &dimTags,
   }
 }
 
+// gmsh::model::discrete
+
+#if defined(HAVE_DISCRETECAD)
+static DiscreteCAD_Internals *_discreteCAD()
+{
+  if(!GModel::current()->getDiscreteCADInternals())
+    GModel::current()->createDiscreteCADInternals();
+  return GModel::current()->getDiscreteCADInternals();
+}
+#endif
+
+GMSH_API int gmsh::model::discrete::addBox(const double x, const double y,
+                                           const double z, const double dx,
+                                           const double dy, const double dz,
+                                           const int tag)
+{
+  if(!_checkInit()) return -1;
+#if defined(HAVE_DISCRETECAD)
+  int outTag = tag;
+  if(!_discreteCAD()->addBox(outTag, x, y, z, dx, dy, dz)) return -1;
+  return outTag;
+#else
+  Msg::Error("Discrete CAD modeler not available");
+  return -1;
+#endif
+}
+
+GMSH_API int gmsh::model::discrete::addSphere(const double xc,
+                                              const double yc,
+                                              const double zc,
+                                              const double radius,
+                                              const int tag,
+                                              const double tolerance)
+{
+  if(!_checkInit()) return -1;
+#if defined(HAVE_DISCRETECAD)
+  int outTag = tag;
+  if(!_discreteCAD()->addSphere(outTag, xc, yc, zc, radius, tolerance))
+    return -1;
+  return outTag;
+#else
+  Msg::Error("Discrete CAD modeler not available");
+  return -1;
+#endif
+}
+
+GMSH_API int gmsh::model::discrete::addRectangle(const double x,
+                                                 const double y,
+                                                 const double z,
+                                                 const double dx,
+                                                 const double dy,
+                                                 const int tag)
+{
+  if(!_checkInit()) return -1;
+#if defined(HAVE_DISCRETECAD)
+  int outTag = tag;
+  if(!_discreteCAD()->addRectangle(outTag, x, y, z, dx, dy)) return -1;
+  return outTag;
+#else
+  Msg::Error("Discrete CAD modeler not available");
+  return -1;
+#endif
+}
+
+GMSH_API int gmsh::model::discrete::addDisk(
+  const double xc, const double yc, const double zc, const double rx,
+  const double ry, const int tag, const std::vector<double> &zAxis,
+  const std::vector<double> &xAxis, const double tolerance)
+{
+  if(!_checkInit()) return -1;
+#if defined(HAVE_DISCRETECAD)
+  int outTag = tag;
+  if(!_discreteCAD()->addDisk(outTag, xc, yc, zc, rx, ry, zAxis, xAxis,
+                              tolerance))
+    return -1;
+  return outTag;
+#else
+  Msg::Error("Discrete CAD modeler not available");
+  return -1;
+#endif
+}
+
+GMSH_API int gmsh::model::discrete::addCylinder(
+  const double x, const double y, const double z, const double dx,
+  const double dy, const double dz, const double r, const int tag,
+  const double tolerance)
+{
+  if(!_checkInit()) return -1;
+#if defined(HAVE_DISCRETECAD)
+  int outTag = tag;
+  if(!_discreteCAD()->addCylinder(outTag, x, y, z, dx, dy, dz, r, tolerance))
+    return -1;
+  return outTag;
+#else
+  Msg::Error("Discrete CAD modeler not available");
+  return -1;
+#endif
+}
+
+GMSH_API int gmsh::model::discrete::addCone(
+  const double x, const double y, const double z, const double dx,
+  const double dy, const double dz, const double r1, const double r2,
+  const int tag, const double tolerance)
+{
+  if(!_checkInit()) return -1;
+#if defined(HAVE_DISCRETECAD)
+  int outTag = tag;
+  if(!_discreteCAD()->addCone(outTag, x, y, z, dx, dy, dz, r1, r2,
+                              tolerance))
+    return -1;
+  return outTag;
+#else
+  Msg::Error("Discrete CAD modeler not available");
+  return -1;
+#endif
+}
+
+GMSH_API int gmsh::model::discrete::addTorus(const double x, const double y,
+                                             const double z, const double r1,
+                                             const double r2, const int tag,
+                                             const std::vector<double> &zAxis,
+                                             const double tolerance)
+{
+  if(!_checkInit()) return -1;
+#if defined(HAVE_DISCRETECAD)
+  int outTag = tag;
+  if(!_discreteCAD()->addTorus(outTag, x, y, z, r1, r2, zAxis, tolerance))
+    return -1;
+  return outTag;
+#else
+  Msg::Error("Discrete CAD modeler not available");
+  return -1;
+#endif
+}
+
+static void _discreteBoolean(int op, const gmsh::vectorpair &objectDimTags,
+                             const gmsh::vectorpair &toolDimTags,
+                             gmsh::vectorpair &outDimTags,
+                             std::vector<gmsh::vectorpair> &outDimTagsMap,
+                             const int tag, const bool removeObject,
+                             const bool removeTool)
+{
+  outDimTags.clear();
+  outDimTagsMap.clear();
+#if defined(HAVE_DISCRETECAD)
+  _discreteCAD()->booleanOperation(op, objectDimTags, toolDimTags, outDimTags,
+                                   outDimTagsMap, tag, removeObject,
+                                   removeTool);
+#else
+  Msg::Error("Discrete CAD modeler not available");
+#endif
+}
+
+GMSH_API void gmsh::model::discrete::fuse(
+  const vectorpair &objectDimTags, const vectorpair &toolDimTags,
+  vectorpair &outDimTags, std::vector<vectorpair> &outDimTagsMap,
+  const int tag, const bool removeObject, const bool removeTool)
+{
+  if(!_checkInit()) return;
+  _discreteBoolean(0, objectDimTags, toolDimTags, outDimTags, outDimTagsMap,
+                   tag, removeObject, removeTool);
+}
+
+GMSH_API void gmsh::model::discrete::intersect(
+  const vectorpair &objectDimTags, const vectorpair &toolDimTags,
+  vectorpair &outDimTags, std::vector<vectorpair> &outDimTagsMap,
+  const int tag, const bool removeObject, const bool removeTool)
+{
+  if(!_checkInit()) return;
+  _discreteBoolean(1, objectDimTags, toolDimTags, outDimTags, outDimTagsMap,
+                   tag, removeObject, removeTool);
+}
+
+GMSH_API void gmsh::model::discrete::cut(
+  const vectorpair &objectDimTags, const vectorpair &toolDimTags,
+  vectorpair &outDimTags, std::vector<vectorpair> &outDimTagsMap,
+  const int tag, const bool removeObject, const bool removeTool)
+{
+  if(!_checkInit()) return;
+  _discreteBoolean(2, objectDimTags, toolDimTags, outDimTags, outDimTagsMap,
+                   tag, removeObject, removeTool);
+}
+
+GMSH_API void gmsh::model::discrete::fillet(const std::vector<int> &volumeTags,
+                                            const std::vector<int> &curveTags,
+                                            const std::vector<double> &radii,
+                                            vectorpair &outDimTags,
+                                            const bool removeVolume)
+{
+  if(!_checkInit()) return;
+  outDimTags.clear();
+#if defined(HAVE_DISCRETECAD)
+  _discreteCAD()->fillet(volumeTags, curveTags, radii, outDimTags,
+                         removeVolume);
+#else
+  Msg::Error("Discrete CAD modeler not available");
+#endif
+}
+
+GMSH_API void gmsh::model::discrete::importShapes(
+  const std::string &fileName, const double angle, vectorpair &outDimTags,
+  const double curveAngle, const double tolerance)
+{
+  if(!_checkInit()) return;
+  outDimTags.clear();
+#if defined(HAVE_DISCRETECAD)
+  _discreteCAD()->importShapes(fileName, angle, curveAngle, tolerance,
+                               outDimTags);
+#else
+  Msg::Error("Discrete CAD modeler not available");
+#endif
+}
+
+GMSH_API void gmsh::model::discrete::addTriangulation(
+  const std::vector<double> &coord, const std::vector<std::size_t> &triangles,
+  const double angle, vectorpair &outDimTags, const double curveAngle,
+  const double tolerance)
+{
+  if(!_checkInit()) return;
+  outDimTags.clear();
+#if defined(HAVE_DISCRETECAD)
+  _discreteCAD()->addTriangulation(coord, triangles, std::vector<int>(),
+                                   angle, curveAngle, tolerance, outDimTags);
+#else
+  Msg::Error("Discrete CAD modeler not available");
+#endif
+}
+
+GMSH_API void gmsh::model::discrete::remove(const vectorpair &dimTags,
+                                            const bool recursive)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_DISCRETECAD)
+  _discreteCAD()->remove(dimTags, recursive);
+#else
+  Msg::Error("Discrete CAD modeler not available");
+#endif
+}
+
+GMSH_API void gmsh::model::discrete::synchronize()
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_DISCRETECAD)
+  if(_discreteCAD()->getChanged())
+    _discreteCAD()->synchronize(GModel::current());
+#else
+  Msg::Error("Discrete CAD modeler not available");
+#endif
+}
+
 // gmsh::view
 
 GMSH_API int gmsh::view::add(const std::string &name, const int tag)
@@ -7551,7 +8062,7 @@ GMSH_API int gmsh::view::add(const std::string &name, const int tag)
   PView *view = new PView(tag);
   view->getData()->setName(name);
 #if defined(HAVE_FLTK)
-  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+  if(FlGui::available()) FlGui::instance()->updateViews(true);
 #endif
   return view->getTag();
 #else
@@ -7571,7 +8082,7 @@ GMSH_API void gmsh::view::remove(const int tag)
   }
   delete view;
 #if defined(HAVE_FLTK)
-  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+  if(FlGui::available()) FlGui::instance()->updateViews(true);
 #endif
 #else
   Msg::Error("Views require the post-processing module");
@@ -8188,7 +8699,7 @@ GMSH_API int gmsh::view::addAlias(const int refTag, const bool copyOptions,
   }
   PView *view = new PView(ref, copyOptions, tag);
 #if defined(HAVE_FLTK)
-  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+  if(FlGui::available()) FlGui::instance()->updateViews(true);
 #endif
   return view->getTag();
 #else
@@ -8207,7 +8718,7 @@ GMSH_API void gmsh::view::combine(const std::string &what,
   int ihow = (how == "all") ? 1 : (how == "name") ? 2 : 0; // "visible"
   PView::combine(time, ihow, remove, copyOptions);
 #if defined(HAVE_FLTK)
-  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+  if(FlGui::available()) FlGui::instance()->updateViews(true);
 #endif
 #else
   Msg::Error("Views require the post-processing module");
@@ -8318,6 +8829,8 @@ GMSH_API void gmsh::view::setVisibilityPerWindow(const int tag, const int value,
     return;
   }
 #if defined(HAVE_FLTK)
+  // (the windows are those of the GUI: none without it)
+  if(!FlGui::available()) return;
   FlGui::instance()->setCurrentOpenglWindow(windowIndex);
   drawContext *ctx = FlGui::instance()->getCurrentDrawContext();
   if(value)
@@ -8476,7 +8989,7 @@ GMSH_API void gmsh::view::option::copy(const int refTag, const int tag)
   view->setOptions(ref->getOptions());
   view->setChanged(true);
 #if defined(HAVE_FLTK)
-  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+  if(FlGui::available()) FlGui::instance()->updateViews(true);
 #endif
 #else
   Msg::Error("Views require the post-processing module");
@@ -8498,6 +9011,12 @@ gmsh::algorithm::triangulate(const std::vector<double> &coord,
   if(edges.size() % 2) {
     Msg::Error("Number of edges index should be even");
     return;
+  }
+  for(std::size_t e : edges) {
+    if(e < 1 || e > coord.size() / 2) {
+      Msg::Error("Unknown point %lu in edges to recover", e);
+      return;
+    }
   }
 #if defined(HAVE_MESH)
   SBoundingBox3d bbox;
@@ -8524,10 +9043,14 @@ gmsh::algorithm::triangulate(const std::vector<double> &coord,
     delaunayMeshIn2D(verts, tris, true, &edgesToRecover);
   }
 
-  if(tris.empty()) return;
   tri.resize(3 * tris.size());
   for(std::size_t i = 0; i < tris.size(); i++) {
     MTriangle *t = tris[i];
+    // counterclockwise in the (u, v) plane
+    SPoint3 p0 = t->getVertex(0)->point(), p1 = t->getVertex(1)->point(),
+            p2 = t->getVertex(2)->point();
+    if(robustPredicates::orient2d(p0.data(), p1.data(), p2.data()) < 0)
+      t->reverse();
     for(std::size_t j = 0; j < 3; j++)
       tri[3 * i + j] = t->getVertex(j)->getIndex() + 1; // start at 1
   }
@@ -8561,29 +9084,40 @@ GMSH_API void gmsh::algorithm::tetrahedralize(
     v->setIndex(j);
     verts[j++] = v;
   }
+  for(std::size_t i = 0; i < triangles.size(); i++) {
+    if(triangles[i] < 1 || triangles[i] > verts.size()) {
+      Msg::Error("Unknown point %zu in triangle %zu", triangles[i], i / 3 + 1);
+      for(std::size_t k = 0; k < verts.size(); k++) delete verts[k];
+      return;
+    }
+  }
   std::vector<MTriangle> trianglesToRecover;
   for(std::size_t i = 0; i < triangles.size(); i += 3)
     trianglesToRecover.emplace_back(verts[triangles[i] - 1],
                                     verts[triangles[i + 1] - 1],
                                     verts[triangles[i + 2] - 1]);
 
+  // the Delaunay tetrahedralization of the points by the 3D algorithm chosen,
+  // in which the triangles are then recovered (HXT does both)
   std::vector<MTetrahedron *> tets;
   if(CTX::instance()->mesh.algo3d == ALGO_3D_HXT) {
     delaunayMeshIn3DHxt(verts, tets, trianglesToRecover);
   }
-  else if(CTX::instance()->mesh.algo3d == ALGO_3D_PDEL3D) {
-    if(triangles.size() > 0)
-      Msg::Error("3D constrained delaunay tetrahedralization is currently only "
-                 "available using HXT");
-    delaunayMeshIn3DParallel(verts, tets);
-  }
   else {
-    if(triangles.size() > 0)
-      Msg::Error("3D constrained delaunay tetrahedralization is currently only "
-                 "available using HXT");
-    delaunayMeshIn3D(verts, tets, true);
+    if(CTX::instance()->mesh.algo3d == ALGO_3D_PDEL3D)
+      delaunayMeshIn3DParallel(verts, tets);
+    else
+      delaunayMeshIn3D(verts, tets, true);
+    if(tets.size() && trianglesToRecover.size() &&
+       !recoverTrianglesInTetrahedra(verts, tets, trianglesToRecover)) {
+      for(std::size_t i = 0; i < tets.size(); i++) delete tets[i];
+      tets.clear();
+    }
   }
-  if(tets.empty()) return;
+  if(tets.empty()) {
+    for(std::size_t i = 0; i < verts.size(); i++) delete verts[i];
+    return;
+  }
 
   if(verts.size() > coord.size() / 3) {
     // Steiner Points!
@@ -8706,8 +9240,7 @@ static void _errorHandlerFltk(const char *fmt, ...)
 
 static void _createFltk()
 {
-  if(!FlGui::available())
-    FlGui::instance(_argc, _argv, false, _errorHandlerFltk);
+  if(!FlGui::available()) FlGui::create(_argc, _argv, false, _errorHandlerFltk);
 }
 #endif
 
@@ -8782,7 +9315,7 @@ GMSH_API void gmsh::fltk::update()
   if(!_checkInit()) return;
 #if defined(HAVE_FLTK)
   _createFltk();
-  FlGui::instance()->updateViews(true, true);
+  FlGui::instance()->updateViews(true);
 #else
   Msg::Error("Fltk not available");
 #endif
@@ -8838,18 +9371,18 @@ GMSH_API int gmsh::fltk::selectEntities(vectorpair &dimTags, const int dim)
   default: ret = FlGui::instance()->selectEntity(ENT_ALL); break;
   }
   if(!FlGui::available()) return 0; // GUI closed during selection
-  for(std::size_t i = 0; i < FlGui::instance()->selectedVertices.size(); i++)
+  for(std::size_t i = 0; i < FlGui::instance()->selected.vertices.size(); i++)
     dimTags.push_back(
-      std::make_pair(0, FlGui::instance()->selectedVertices[i]->tag()));
-  for(std::size_t i = 0; i < FlGui::instance()->selectedEdges.size(); i++)
+      std::make_pair(0, FlGui::instance()->selected.vertices[i]->tag()));
+  for(std::size_t i = 0; i < FlGui::instance()->selected.edges.size(); i++)
     dimTags.push_back(
-      std::make_pair(1, FlGui::instance()->selectedEdges[i]->tag()));
-  for(std::size_t i = 0; i < FlGui::instance()->selectedFaces.size(); i++)
+      std::make_pair(1, FlGui::instance()->selected.edges[i]->tag()));
+  for(std::size_t i = 0; i < FlGui::instance()->selected.faces.size(); i++)
     dimTags.push_back(
-      std::make_pair(2, FlGui::instance()->selectedFaces[i]->tag()));
-  for(std::size_t i = 0; i < FlGui::instance()->selectedRegions.size(); i++)
+      std::make_pair(2, FlGui::instance()->selected.faces[i]->tag()));
+  for(std::size_t i = 0; i < FlGui::instance()->selected.regions.size(); i++)
     dimTags.push_back(
-      std::make_pair(3, FlGui::instance()->selectedRegions[i]->tag()));
+      std::make_pair(3, FlGui::instance()->selected.regions[i]->tag()));
   return selectionCode(ret);
 #else
   return 0;
@@ -8862,13 +9395,10 @@ GMSH_API int gmsh::fltk::selectElements(std::vector<std::size_t> &elementTags)
   elementTags.clear();
 #if defined(HAVE_FLTK)
   _createFltk();
-  int old = CTX::instance()->pickElements;
-  CTX::instance()->pickElements = 1;
-  char ret = FlGui::instance()->selectEntity(ENT_ALL);
-  CTX::instance()->pickElements = old;
+  char ret = FlGui::instance()->selectEntity(ENT_ALL, true);
   if(!FlGui::available()) return 0; // GUI closed during selection
-  for(std::size_t i = 0; i < FlGui::instance()->selectedElements.size(); i++)
-    elementTags.push_back(FlGui::instance()->selectedElements[i]->getNum());
+  for(std::size_t i = 0; i < FlGui::instance()->selected.elements.size(); i++)
+    elementTags.push_back(FlGui::instance()->selected.elements[i]->getNum());
   return selectionCode(ret);
 #else
   return 0;
@@ -8883,8 +9413,8 @@ GMSH_API int gmsh::fltk::selectViews(std::vector<int> &viewTags)
   _createFltk();
   char ret = FlGui::instance()->selectEntity(ENT_ALL);
   if(!FlGui::available()) return 0; // GUI closed during selection
-  for(std::size_t i = 0; i < FlGui::instance()->selectedViews.size(); i++)
-    viewTags.push_back(FlGui::instance()->selectedViews[i]->getTag());
+  for(std::size_t i = 0; i < FlGui::instance()->selected.views.size(); i++)
+    viewTags.push_back(FlGui::instance()->selected.views[i]->getTag());
   return selectionCode(ret);
 #else
   return 0;
@@ -8914,19 +9444,15 @@ GMSH_API int gmsh::fltk::pick(vectorpair &dimTags,
   case 3: type = ENT_VOLUME; break;
   default: break;
   }
-  int old = CTX::instance()->pickElements;
-  if(elements) CTX::instance()->pickElements = 1;
-  std::vector<GVertex *> vertices;
-  std::vector<GEdge *> edges;
-  std::vector<GFace *> faces;
-  std::vector<GRegion *> regions;
-  std::vector<MElement *> ele;
-  std::vector<SPoint2> points;
-  std::vector<PView *> views;
-  bool ret =
-    gl->pick(type, CTX::instance()->mesh.draw ? true : false, true, (int)x,
-             (int)y, w, h, vertices, edges, faces, regions, ele, points, views);
-  if(elements) CTX::instance()->pickElements = old;
+  scenePicks picks;
+  bool ret = gl->pick(type, CTX::instance()->mesh.draw ? true : false, true,
+                      (int)x, (int)y, w, h, picks, elements);
+  const std::vector<GVertex *> &vertices = picks.vertices;
+  const std::vector<GEdge *> &edges = picks.edges;
+  const std::vector<GFace *> &faces = picks.faces;
+  const std::vector<GRegion *> &regions = picks.regions;
+  const std::vector<MElement *> &ele = picks.elements;
+  const std::vector<PView *> &views = picks.views;
   for(std::size_t i = 0; i < vertices.size(); i++)
     dimTags.push_back(std::make_pair(0, vertices[i]->tag()));
   for(std::size_t i = 0; i < edges.size(); i++)

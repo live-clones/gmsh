@@ -37,9 +37,11 @@
 @c merge function index into type index
 @syncodeindex fn tp
 
-@c remove \Underfull \hbox warnings
+@c remove \Underfull \hbox warnings, and end a page short rather than
+@c stretch it when what follows does not fit (e.g. a large image)
 @tex
 \global\hbadness=10000
+\catcode`\@=11 \global\let\ifr@ggedbottom\iftrue \catcode`\@=0
 @end tex
 
 @c =========================================================================
@@ -55,6 +57,7 @@ post-processing facilities
 @noindent
 This is the @cite{Gmsh Reference Manual} for Gmsh @value{GMSH-VERSION}
 (@today{}).
+
 @noindent
 Copyright @value{COPYRIGHT}
 @end ifinfo
@@ -307,7 +310,8 @@ Entities can either be built in a @emph{bottom-up} manner (first points,
 then curves, surfaces and volumes) with the built-in and OpenCASCADE
 kernels, or in a @emph{top-down} constructive solid geometry fashion
 (solids on which boolean operations are performed) with the OpenCASCADE
-kernel. Both methodologies can also be combined. Finally, groups of
+kernel or the discrete CAD modeler. Both methodologies can also be
+combined. Finally, groups of
 model entities (called ``physical groups'') can be defined, based on the
 elementary geometric entities. (See @ref{Elementary entities vs physical
 groups}, for more information about how physical groups affect the way
@@ -348,10 +352,10 @@ that many features of the geometry module can be used interactively in
 the GUI (@pxref{Gmsh graphical user interface}), which is also a good
 way to learn about both Gmsh's scripting language and the API, as
 actions in the geometry module automatically append the related command
-in the input script file, and can optionally also generate input for the
-languages supported by the API (see the
-@code{General.ScriptingLanguages} option; this is still work-in-progress
-as of Gmsh 4.14.)
+in the input script file, and can optionally also write it, as the calls
+of the API it amounts to, in a runnable program for each of the languages
+supported by the API, next to the script file (see the
+@code{General.ScriptingLanguages} option, e.g. @code{"geo,py,cpp"}).
 
 In addition to CAD-type geometrical entities, whose geometry is provided
 by a CAD kernel, Gmsh also supports @emph{discrete} model entities,
@@ -364,6 +368,22 @@ and automatic pipeline based on reparametrization}. Journal of
 Computational Physics, 417, 109575, 2020.}. The parametrization is then
 used for meshing, in exactly the same way as for CAD entities. See
 @ref{t13} for an example.
+
+Gmsh also provides a @emph{discrete CAD modeler}, which represents
+shapes by triangulations instead of exact curves and surfaces. It
+creates primitives (boxes, spheres, cylinders, cones, tori, rectangles
+and disks), imports triangulations (e.g. STL files) whose planes,
+spheres, cylinders, cones and tori it recognizes, and performs boolean
+operations and fillets directly on the triangulations. The resulting
+entities are discrete entities that come with their parametrization, and
+with their exact geometry when they lie on such analytic surfaces. The
+discrete CAD modeler is selected with @code{SetFactory("Discrete")} in
+@file{.geo} scripts, and with the @code{discrete} prefix in the API
+(@pxref{Namespace gmsh/model/discrete}). See
+@url{@value{GITLAB-PREFIX}/benchmarks/discreteCADModel,benchmarks/discreteCADModel}
+and
+@url{@value{GITLAB-PREFIX}/examples/api/discrete_primitives.py,examples/api/discrete_primitives.py}
+for examples.
 
 @c -------------------------------------------------------------------------
 @c Mesh module
@@ -584,6 +604,13 @@ sizes}) are currently only supported by the ``Delaunay'', ``HXT'' and
 ``Parallel Delaunay'' algorithms. For large meshes, the ``HXT'' and
 ``Parallel Delaunay'' algorithms are much faster when several threads
 are used.
+
+Hex-dominant meshes are generated with @code{Mesh.Algorithm3D} set to
+9 (``R-tree'', @code{-algo rtree3d}), with the options that @code{-hybrid}
+sets on the command line. This algorithm also changes the surface
+meshes: they keep their cross-field directions, and the quadrangles of
+the ``Packing of parallelograms'' algorithm are matched for the
+combination of the tetrahedra into hexahedra.
 
 When Gmsh is configured with OpenMP support (@pxref{Compiling the source
 code}), most of the meshing steps can be performed in parallel:
@@ -1738,17 +1765,20 @@ desktop and follows its light or dark mode; see the
 
 To create a new geometrical model, use the `File->New' menu to create a
 new model file, and choose for example @file{mymodel.geo} as file
-name. Then in the tree menu, successively open the `Geometry',
-`Elementary entities' and `Add' submenus, and click for example on
-`Rectangle'. A context window with parameters will open, docked on the
+name. Then in the tree menu, open the `Geometry' module and choose for
+example `Rectangle' in its `Add' menu. A context window with parameters will open, docked on the
 right of the graphic area: you can enter some parameters in this window
-(e.g. the width and height of the rectangle) and move the mouse to place
-it on the canvas. If you don't
-want to place the rectangle with the mouse, select `X', `Y' and `Z
-freeze' in the window and enter the coordinates manually in the context
-window. Once you are done, either press @kbd{e} (see the status message
-on the top of the graphic window) or click on the `Add' button in the
-context window.
+(e.g. the width and height of the rectangle) and click in the graphic
+window to place it: on the model under the mouse, or else on the work plane
+chosen in the context window (the plane XY through the origin by default,
+whose grid is drawn), a mark showing where a click would put it. A
+coordinate typed in the context window stays as it is when clicking: it is
+locked, as the `X', `Y' and `Z lock' check boxes show (the keys @kbd{x},
+@kbd{y} and @kbd{z} toggle them), and the work plane goes through it. You
+can rotate, pan and zoom as usual meanwhile. Once you are done, either press
+@kbd{e} (see the status message on the top of the graphic window) or click
+on the `Add' button in the context window; press @kbd{Escape} to stop
+placing rectangles.
 
 @iftex
 @sp 1
@@ -1764,12 +1794,24 @@ SetFactory("OpenCASCADE");
 Rectangle(1) = @{0, 0, 0, 1, 0.5, 0@};
 @end example
 You can edit this script with any text editor; clicking on `Edit script'
-in the tree menu will launch the default text editor specified by the
-@code{General.Editor} option (@pxref{General options}). If you edit the
-script, you should click on `Reload script' in the tree menu to reload
-the modifications in the GUI. The @code{//+} line in the script is a
+in the tree menu opens it in the script editor of the GUI, or in the text
+editor given by the @code{General.TextEditor} option (@pxref{General
+options}). If you edit the script in another editor, click on `Reload
+script' in the tree menu to reload the modifications in the GUI. The @code{//+} line in the script is a
 comment that is used as a placemark between commands added by the GUI;
 see @ref{Gmsh scripting language} for the scripting language reference.
+
+Many commands act on entities you pick in the graphic window: for
+example `Plane surface' in the `Add' menu, the `Transform' and `Boolean'
+operations, `Delete', the physical groups, or the deletion of parts of the
+mesh. A click picks the entity under the mouse (a click with the middle
+button unpicks it; see @ref{Mouse actions}), @kbd{u} undoes the last pick and
+@kbd{e} ends the selection, which carries out the command; the status
+message on the top of the graphic window says what to pick and which keys
+apply. @kbd{Escape} stops the selection without doing anything (@kbd{q}
+does the same, for backward compatibility). @kbd{Shift+Escape} switches the
+mouse selection off and on, without stopping the selection, e.g. to move
+the view without picking what is under the mouse.
 
 Combining GUI actions and script file editing is a classical way of
 working with the Gmsh app. For example, it is often faster to define
@@ -1796,8 +1838,8 @@ name of the current active model, with an appended extension depending
 on the mesh format.  Note that most interactive commands have keyboard
 shortcuts: see @ref{Keyboard shortcuts}, or select `Help->Keyboard and
 Mouse Usage' in the menu (which has a search box to find them). For
-example, to quickly generate the 2D mesh
-and save a mesh, you can first press @kbd{2}, then @kbd{Ctrl+Shift+s}.
+example, to quickly generate the 2D mesh and save it, you can first
+press @kbd{2}, then @kbd{Ctrl+s}.
 
 A double-click in the graphic window will pop up a quick shortcut menu,
 which can be used e.g. to quickly toggle the visibility of mesh entities
@@ -1807,15 +1849,18 @@ display axes, or access the full module options (from the
 status bar give access to the same things: the first three show or hide
 the tree menu, select the active model and open the quick shortcut menu;
 `X', `Y', `Z' set viewports with the corresponding axis perpendicular to
-graphic plane; the rotation button rotates the view by 90 degrees; `1:1'
-resets the scale; and `S' switches the mouse selection on or off. The
+graphic plane; the cube button sets an isometric view; the rotation button
+rotates the view by 90 degrees; `1:1'
+fits the model in the window; and `S' switches the mouse selection on or
+off (as @kbd{Shift+Escape} does). The
 crosshair button switches `Query' on: every click then says what
 the model holds where it hit, i.e. the geometrical entity, the mesh element
 and the node there, and the value of every visible post-processing view.
 The ruler button next to it switches `Measure' on: two clicks then draw the
 line between the points they hit and give its length. Both stay on until you
-press @kbd{q} (@kbd{Escape} suspends the mouse selection instead, as
-everywhere else, to move the view without clicking on the model). (Both are
+press @kbd{Escape} (or @kbd{q}, for backward compatibility), or click their
+button again; @kbd{Shift+Escape} suspends the mouse selection instead, as
+everywhere else, to move the view without clicking on the model. (Both are
 also available in the quick shortcut menu.) The last four buttons step
 through the time steps of the post-processing views, when there are any.
 
@@ -1880,6 +1925,15 @@ options (and how to reset them to their default values), see @ref{Gmsh
 options}. A full list of options with their current values is also
 available using the `Help->Current Options' menu.
 
+The visibility and the colors of the entities, which mesh files do not
+store, are not options: they can be saved in the `Gmsh visibility'
+format in `File->Export' (or with @code{gmsh/write} in the API). A file
+with the same filename as the model and an extra @file{.vis} extension
+added is automatically loaded when the model is opened, after its
+@file{.opt} file: e.g. colors given to entities with
+@code{gmsh/model/setColor} are kept by saving both @file{model.msh} and
+@file{model.msh.vis}.
+
 Finally, note that the GUI can also be run (and modified) using the API:
 see @ref{Namespace gmsh/fltk} for details.
 
@@ -1920,7 +1974,10 @@ For a 1 button mouse, Middle button = Shift+Left button, Right button = Alt+Left
 @cindex Shortcuts, keyboard
 @cindex Bindings, keyboard
 
-(On macOS, @kbd{Ctrl} is replaced by @kbd{Cmd} in the shortcuts below.)
+(On macOS, @kbd{Ctrl} is replaced by @kbd{Cmd} in the shortcuts below.
+@kbd{Escape} stops the selection under way, e.g. a query, a measurement or
+an operation on the entities picked; @kbd{q} does the same, for backward
+compatibility.)
 
 @include shortcuts.texi
 
@@ -2419,14 +2476,6 @@ See @ref{t3}, for an example of the use of color expressions.
 @c .........................................................................
 @c Operators
 @c .........................................................................
-
-@menu
-* Operators::
-* Built-in functions::
-* User-defined macros::
-* Loops and conditionals::
-* Other general commands::
-@end menu
 
 @node Operators, Built-in functions, Color expressions, General scripting commands
 @subsection Operators
@@ -2978,6 +3027,19 @@ Merge a BREP, STEP or IGES file and return the tags of the
 highest-dimensional entities. Only available with the OpenCASCADE
 geometry kernel.
 
+@item ShapeFromFile( @var{string-expression}, @var{expression} <, @var{expression} <, @var{expression} > > );
+Import the triangulations of the surfaces of a mesh file (in STL, MSH,
+OBJ, PLY, OFF, VTK or MESH format) and build their topology. The
+surfaces are split along the edges where the normals of the triangles
+make an angle larger than the first @var{expression} (in radians). The
+curves along these edges are split where they turn by more than the
+second @var{expression} (Pi by default). The surfaces whose nodes are
+closer than the third @var{expression} to a plane, a sphere, a cylinder,
+a cone or a torus are recognized as such
+(@code{Geometry.DiscreteTolerance} times the size of the triangulation
+by default). Return the tags of the volumes, and of the surfaces
+bounding no volume. Only available with the Discrete geometry kernel.
+
 @item Draw;
 Redraw the scene.
 
@@ -3069,7 +3131,8 @@ Change the name of the current model.
 @item SetFactory(@var{string-expression});
 Change the current geometry kernel (i.e. determines the CAD kernel that
 is used for all subsequent geometrical commands). Currently available
-kernels: @code{"Built-in"} and @code{"OpenCASCADE"}.
+kernels: @code{"Built-in"}, @code{"OpenCASCADE"} and @code{"Discrete"}
+(the discrete CAD modeler).
 
 @item SyncModel;
 Force an immediate transfer from the old geometrical database into the
@@ -3099,7 +3162,14 @@ Both the built-in and the OpenCASCADE CAD kernels can be used in the
 scripting language, by specifying @code{SetFactory("Built-in")} or
 @code{SetFactory("OpenCASCADE")}, respectively, before geometrical
 scripting commands. If @code{SetFactory} is not specified, the built-in
-kernel is used.
+kernel is used. @code{SetFactory("Discrete")} selects the discrete CAD
+modeler, which provides the @code{Sphere}, @code{Box}, @code{Cylinder},
+@code{Cone}, @code{Torus}, @code{Rectangle} and @code{Disk} primitives,
+the @code{BooleanUnion}, @code{BooleanIntersection} and
+@code{BooleanDifference} operations, @code{Fillet}, and
+@code{ShapeFromFile} to import triangulations; see
+@url{@value{GITLAB-PREFIX}/benchmarks/discreteCADModel,benchmarks/discreteCADModel}
+for examples.
 
 A bottom-up boundary representation approach can be used by first
 defining points (using the @code{Point} command), then curves (using
@@ -3218,7 +3288,10 @@ optional next two the start and end angle.
 Create an ellipse arc. If four @var{expression}s are provided on the
 right-hand-side they define the start point, the center point, a point
 anywhere on the major axis and the end point. If the first point is a
-major axis point, the third expression can be omitted. With the
+major axis point, the third expression can be omitted. If the start and
+end points are symmetric with respect to an axis of the ellipse, they do
+not determine its radii: the major axis point is then taken to be on the
+ellipse. With the
 OpenCASCADE kernel, if between 5 and 7 expressions are provided, the
 first three define the coordinates of the center, the next two define
 the major (along the x-axis) and minor radii (along the y-axis), and the
@@ -3238,16 +3311,18 @@ Create an oriented loop of curves, i.e. a closed wire. The
 @var{expression} inside the parentheses is the curve loop's tag; the
 @var{expression-list} on the right hand side should contain the tags of
 all the curves that constitute the curve loop. A curve loop must be a
-closed loop. With the built-in geometry kernel, the curves should be
-ordered and oriented, using negative tags to specify reverse
-orientation. (If the orientation is correct, but the ordering is wrong,
-Gmsh will actually reorder the list internally to create a consistent
-loop; the built-in kernel also supports multiple curve loops (or
-subloops) in a single @code{Curve Loop} command, but this is not
-recommended). With the OpenCASCADE kernel the curve loop is always
-oriented according to the orientation of its first curve; negative tags
-can be specified for compatibility with the built-in kernel, but are
-simply ignored. Curve loops are used to create surfaces: see
+closed loop. With the built-in geometry kernel, the curves can be given
+in any order (Gmsh sorts them internally), but they must be oriented
+consistently: a negative tag specifies that the curve is traversed in
+the reverse direction, and the loop is oriented according to its
+first curve. (The built-in kernel also supports multiple curve loops
+(or subloops) in a single @code{Curve Loop} command, but this is not
+recommended; the @code{reorient} argument of @code{addCurveLoop} in the
+API can be used to orient the curves automatically.) With the
+OpenCASCADE kernel the curves can be given in any order and with any
+sign: the curve loop is always oriented according to the orientation
+of its first curve, reversed if its tag is negative; the other signs
+are ignored. Curve loops are used to create surfaces: see
 @ref{Surfaces}.
 
 @item Wire ( @var{expression} ) = @{ @var{expression-list} @};
@@ -3319,13 +3394,14 @@ available with the OpenCASCADE kernel.
 Create a disk. When four expressions are provided on the right hand
 side (3 coordinates of the center and the radius), the disk is circular.
 A fifth expression defines the radius along Y, leading to an ellipse.
-@code{Disk} is only available with the OpenCASCADE kernel.
+@code{Disk} is only available with the OpenCASCADE and Discrete kernels.
 
 @item Rectangle ( @var{expression} ) = @{ @var{expression-list} @};
 Create a rectangle. The 3 first expressions define the lower-left
 corner; the next 2 define the width and height. If a 6th expression is
 provided, it defines a radius to round the rectangle
-corners. @code{Rectangle} is only available with the OpenCASCADE kernel.
+corners. @code{Rectangle} is only available with the OpenCASCADE and
+Discrete kernels (without rounded corners with the latter).
 
 @item Surface Loop ( @var{expression} ) = @{ @var{expression-list} @} < Using Sewing >;
 Create a surface loop (a shell). The @var{expression} inside the
@@ -3387,29 +3463,33 @@ radius. Additional expressions define 3 angle limits. The first two
 optional arguments define the polar angle opening (from -Pi/2 to
 Pi/2). The optional `angle3' argument defines the azimuthal opening
 (from 0 to 2*Pi). @code{Sphere} is only available with the OpenCASCADE
-kernel.
+and Discrete kernels (without angle limits with the latter).
 
 @item Box ( @var{expression} ) = @{ @var{expression-list} @};
 Create a box, defined by the 3 coordinates of a point and the 3
-extents. @code{Box} is only available with the OpenCASCADE kernel.
+extents. @code{Box} is only available with the OpenCASCADE and Discrete
+kernels.
 
 @item Cylinder ( @var{expression} ) = @{ @var{expression-list} @};
 Create a cylinder, defined by the 3 coordinates of the center of the
 first circular face, the 3 components of the vector defining its axis
 and its radius. An additional expression defines the angular
-opening. @code{Cylinder} is only available with the OpenCASCADE kernel.
+opening. @code{Cylinder} is only available with the OpenCASCADE and
+Discrete kernels (without angular opening with the latter).
 
 @item Torus ( @var{expression} ) = @{ @var{expression-list} @};
 Create a torus, defined by the 3 coordinates of its center and 2 radii.
 An additional expression defines the angular opening. @code{Torus} is
-only available with the OpenCASCADE kernel.
+only available with the OpenCASCADE and Discrete kernels (without
+angular opening with the latter).
 
 @item Cone ( @var{expression} ) = @{ @var{expression-list} @};
 Create a cone, defined by the 3 coordinates of the center of the first
 circular face, the 3 components of the vector defining its axis and the
 two radii of the faces (these radii can be zero). An additional
 expression defines the angular opening. @code{Cone} is only available
-with the OpenCASCADE kernel.
+with the OpenCASCADE and Discrete kernels (without angular opening with
+the latter).
 
 @item Wedge ( @var{expression} ) = @{ @var{expression-list} @};
 Create a right angular wedge, defined by the 3 coordinates of the
@@ -3494,8 +3574,9 @@ Extrude entities in @var{extrude-list} using a translation along their
 normal. Only available with the built-in geometry kernel.
 
 @item Extrude @{ @var{extrude-list} @} Using Wire @{ @var{expression-list} @}
-Extrude entities in @var{extrude-list} along the given wire. Only
-available with the OpenCASCADE geometry kernel.
+Extrude entities in @var{extrude-list} along the given wire, returning the
+same entities as the other extrusions. Only available with the OpenCASCADE
+geometry kernel.
 
 @item ThruSections @{ @var{expression-list} @}
 Create surfaces through the given curve loops or
@@ -3512,7 +3593,12 @@ Fillet volumes (first list) on some curves (second list), using the
 provided radii (third list). The radius list can either contain a single
 radius, as many radii as curves, or twice as many as curves (in which
 case different radii are provided for the begin and end points of the
-curves). @code{Fillet} is only available with the OpenCASCADE kernel.
+curves). @code{Fillet} is only available with the OpenCASCADE and the
+Discrete kernels; with the Discrete kernel, the radius list contains a
+single radius or as many radii as curves, and the curves continuing the
+given ones tangentially are filleted too. With the OpenCASCADE kernel, the
+volumes keep their tags, as well as the entities on their boundary that are
+left unchanged or modified into a single one (as with @code{Chamfer}).
 
 @item Chamfer @{ @var{expression-list} @} @{ @var{expression-list} @} @{ @var{expression-list} @} @{ @var{expression-list} @}
 Chamfer volumes (first list) on some curves (second list), using the
@@ -3595,6 +3681,18 @@ with
 If @code{Delete} is specified in the @var{boolean-list}, the tool and/or
 the object is deleted.
 
+The arguments left unchanged or modified into a single entity keep their
+tags (unless the tag of the result is given explicitly, see below). With
+@code{Geometry.OCCBooleanPreserveNumbering} set to 2, the entities on the
+boundary of the deleted arguments keep their tags in the same way, so that
+physical groups and mesh constraints can be defined on them before the
+operation: see
+@url{@value{GITLAB-PREFIX}/examples/boolean/preserve_numbering.geo,preserve_numbering.geo}.
+The other entities get new tags; with the option set to 2, the pieces into
+which an entity is split get its physical groups, and the pieces of a
+periodic surface or curve are made periodic with the pieces of its master
+that they are the image of.
+
 As explained in @ref{Floating point expressions}, @var{boolean} can
 be used in an expression, in which case it returns the list of tags of
 the entities resulting from the boolean operation that are not on the
@@ -3624,7 +3722,10 @@ Again, see
 @url{@value{GITLAB-PREFIX}/examples/boolean/,examples/boolean}
 for examples.
 
-Boolean operations are only available with the OpenCASCADE geometry kernel.
+Boolean operations are only available with the OpenCASCADE and Discrete
+geometry kernels. With the Discrete kernel, only @code{BooleanUnion},
+@code{BooleanIntersection} and @code{BooleanDifference} are available,
+on volumes.
 
 @c .........................................................................
 @c Transformations
@@ -3643,7 +3744,11 @@ Boolean operations are only available with the OpenCASCADE geometry kernel.
 
 Geometrical transformations can be applied to elementary entities, or to
 copies of elementary entities (using the @code{Duplicata} command: see
-below). The syntax of the transformation commands is:
+below). The transformed entities keep their tags, as well as the entities on
+their boundary; with the OpenCASCADE kernel, an entity on the boundary of
+both a transformed entity and an entity that is not transformed stays with
+the latter, and the transformed entity gets a new one. The syntax of the
+transformation commands is:
 
 @var{transform}:
 @ftable @code
@@ -3757,10 +3862,11 @@ all operands.
 
 @item HealShapes;
 Apply the shape healing procedure(s), according to
-@code{Geometry.OCCFixDegenerated}, @code{Geometry.OCCFixSmallEdges},
-@code{Geometry.OCCFixSmallFaces}, @code{Geometry.OCCSewFaces},
-@code{Geometry.OCCMakeSolids}. Only available with the OpenCASCADE
-geometry kernel.
+@code{Geometry.OCCFixTolerances}, @code{Geometry.OCCFixDegenerated},
+@code{Geometry.OCCFixSmallEdges}, @code{Geometry.OCCFixSmallFaces},
+@code{Geometry.OCCSewFaces}, @code{Geometry.OCCMakeSolids}, to all the
+entities of the model. The entities keep their tag unless they are
+removed or merged. Only available with the OpenCASCADE geometry kernel.
 
 @item < Recursive > Delete @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
 Delete all elementary entities whose tags are given in
@@ -4092,7 +4198,10 @@ optimizer, @code{"HighOrderElastic"} for high-order elastic smoother,
 @code{"UntangleTets"} for untangling tetrahedral meshes,
 @code{"UntangleTris"} for untangling xy-planar triangular meshes,
 @code{"Laplace2D"} for Laplace smoothing, @code{"Relocate2D"} and
-@code{"Relocate3D"} for node relocation).
+@code{"Relocate3D"} for node relocation). The algorithms other than the
+high-order ones optimize the first order mesh: the high-order elements
+are then recreated, and optimized according to
+@code{Mesh.HighOrderOptimize}.
 
 @item AdaptMesh @{ @var{expression-list} @} @{ @var{expression-list} @} @{ @{ @var{expression-list} < , @dots{} >  @} @};
 Perform adaptive mesh generation. Documentation not yet available.
@@ -4238,9 +4347,9 @@ curve(s) or surface(s) during meshing. @value{SYNC}
 @item ReorientMesh Volume @{ @var{expression-list} @} ;
 Add a constraint to reorient the meshes (during mesh generation) of the
 bounding surfaces of the given volumes so that the normals point outward
-to the volumes; and if a mesh already exists, reorient it. Currently
-only available with the OpenCASCADE kernel, as it relies on the STL
-triangulation. @value{SYNC}
+to the volumes; and if a mesh already exists, reorient it. The
+orientation is computed from the surface mesh, for any CAD kernel.
+@value{SYNC}
 
 @item Save @var{string-expression};
 Save the current mesh in a file named @var{string-expression}, using the
@@ -4602,7 +4711,7 @@ respectively. The other top-level namespaces are @code{gmsh/option}
 (which handles all options), @code{gmsh/algorithm} (which handles raw
 algorithms), @code{gmsh/plugin} (which handles extensions to core Gmsh
 functionality), @code{gmsh/graphics} (which handles drawing),
-@code{gmsh/fltk} (which handles the graphical user interface),
+@code{gmsh/fltk} (which handles the FLTK graphical user interface),
 @code{gmsh/parser} (which handles the Gmsh parser), @code{gmsh/onelab}
 (which handles ONELAB parameters and communications with external codes)
 and @code{gmsh/logger} (which handles information logging).
@@ -4636,7 +4745,10 @@ generally, for functions outside of @code{gmsh/model/geo} or
 @code{gmsh/model/occ} to manipulate them. 1D and 2D meshing algorithms
 use the @emph{parametrization} of the underlying geometrical curve or
 surface to generate the mesh. Discrete entities can be remeshed provided
-that a parametrization is explicitly recomputed for them.
+that a parametrization is explicitly recomputed for them. The discrete
+CAD modeler (@code{gmsh/model/discrete} namespace) creates discrete
+entities that come with their parametrization; they must also be
+synchronized with the model.
 @item
 Mesh data is made of @emph{elements} (points, lines, triangles,
 quadrangles, tetrahedra, hexahedra, prisms, pyramids, ...), defined by
@@ -5350,7 +5462,20 @@ each block lists the tags of the elements of partition
 @code{partitionTag} that are ghosts in partition @code{ghostPartitionTag}
 (an element that is a ghost in several partitions appears in several
 blocks). @code{numGhostElements} is the total number of element tags in
-the blocks.
+the blocks. The ghost elements of a partition are the elements of the
+other partitions, of all dimensions, that share a node with its elements
+(@code{Mesh.PartitionCreateGhostCells}); the partition of an element is
+that of its partition entity (the first one for an entity of several
+partitions). In the file of a single partition
+(@code{Mesh.PartitionSplitMeshFiles}), the ghost elements of the
+partition are saved in their partition entities, with their nodes, and
+@code{$GhostElements} only has the blocks of the partition: reading
+that file gives the partition with the elements of the other partitions
+that touch it.
+Gmsh does not write ghost entities (@code{numGhostEntities} in
+@code{$PartitionedEntities} is 0); in files of older versions, they hold
+the ghost elements of each partition (of the highest dimension only),
+also given in @code{$GhostElements}.
 
 In the post-processing sections (@code{$NodeData}, @code{$ElementData},
 @code{$ElementNodeData}), the records (the tags of the nodes or elements
@@ -6586,7 +6711,9 @@ Gmsh-specific CMake options:
 Gmsh is written in C++, the scripting language is parsed using Lex and
 Yacc (actually, Flex and Bison), and the GUI relies on OpenGL for the 3D
 graphics and FLTK (@uref{http://www.fltk.org}) for the widgets (menus,
-buttons, etc.). Gmsh's build system is based on CMake
+buttons, etc.); the web app is the same code compiled to WebAssembly
+with Emscripten (@uref{https://emscripten.org}), with a page in
+JavaScript (@pxref{Graphical user interfaces}). Gmsh's build system is based on CMake
 (@uref{http://www.cmake.org}). Practical notes on how to compile Gmsh's
 source code are provided in @ref{Compiling the source code} (see also
 @ref{Frequently asked questions}).
@@ -6600,6 +6727,7 @@ requests.
 
 @menu
 * Source code structure::
+* Graphical user interfaces::
 * Coding style::
 * Adding a new option::
 @end menu
@@ -6608,7 +6736,7 @@ requests.
 @c Source code structure
 @c -------------------------------------------------------------------------
 
-@node Source code structure, Coding style, Information for developers, Information for developers
+@node Source code structure, Graphical user interfaces, Information for developers, Information for developers
 @section Source code structure
 
 Gmsh's code is structured in several subdirectories, roughly separated
@@ -6623,9 +6751,10 @@ associated utilities
 on one hand, and the graphics
 (@url{@value{GITLAB-PREFIX}/src/graphics,src/graphics})
 and interface
-(@url{@value{GITLAB-PREFIX}/src/fltk,src/fltk},
+(@url{@value{GITLAB-PREFIX}/api,api},
 @url{@value{GITLAB-PREFIX}/src/parser,src/parser},
-@url{@value{GITLAB-PREFIX}/api,api}) code on
+@url{@value{GITLAB-PREFIX}/src/fltk,src/fltk},
+@url{@value{GITLAB-PREFIX}/contrib/webapp,contrib/webapp}) code on
 the other.
 
 The geometry module is based on a model class
@@ -6680,11 +6809,126 @@ in which case the view is linked to one or more models, or list-based
 in which case all the relevant geometrical information is self-contained
 in the view.
 
+
+@c -------------------------------------------------------------------------
+@c Graphical user interfaces
+@c -------------------------------------------------------------------------
+
+@node Graphical user interfaces, Coding style, Source code structure, Information for developers
+@section Graphical user interfaces
+
+Gmsh has two graphical user interfaces: the FLTK graphical user
+interface (@url{@value{GITLAB-PREFIX}/src/fltk,src/fltk}), which is the
+Gmsh app, and the web app
+(@url{@value{GITLAB-PREFIX}/contrib/webapp,contrib/webapp}), a page that
+runs Gmsh compiled to WebAssembly. What they show and do is written
+once, in @url{@value{GITLAB-PREFIX}/src/common,src/common} and
+@url{@value{GITLAB-PREFIX}/src/graphics,src/graphics}; each interface
+adds its widgets and the things only it has.
+
+@itemize
+@item
+The @emph{action registry}
+(@url{@value{GITLAB-PREFIX}/src/common/Actions.cpp,src/common/Actions.cpp})
+holds the menus: the Geometry and Mesh modules (shown as rows of
+buttons), the menu of the scene (`Quick access'), the menu of a view,
+the menu bar and the status bar of the FLTK interface, and the actions
+that only have a key. An item has a label, a name (its key, e.g.
+@code{mesh_2d}), a help string, its keyboard shortcuts, and, for the
+things Gmsh does, its run. An @emph{operation} on entities picked in
+the scene (e.g. a boolean union) is written in
+@url{@value{GITLAB-PREFIX}/src/graphics/selectionDriver.cpp,src/graphics/selectionDriver.cpp},
+which says what it picks and what it writes in the script; a
+@emph{shape} added from the values of a form is written in
+@url{@value{GITLAB-PREFIX}/src/geo/scriptStringInterface.cpp,src/geo/scriptStringInterface.cpp}.
+@item
+Each interface builds its widgets from the registry and runs its items:
+the FLTK interface in
+@url{@value{GITLAB-PREFIX}/src/fltk/graphicWindow.cpp,src/fltk/graphicWindow.cpp}
+and @url{@value{GITLAB-PREFIX}/src/fltk/fltkActions.cpp,src/fltk/fltkActions.cpp},
+the web app in
+@url{@value{GITLAB-PREFIX}/contrib/webapp/actions.mjs,contrib/webapp/actions.mjs}
+(the page gets the registry as JSON from
+@url{@value{GITLAB-PREFIX}/contrib/webapp/webApp.cpp,contrib/webapp/webApp.cpp}).
+An item that an interface does itself (a window, a file chooser) has no
+run in the registry: each interface gives it one in a table of names,
+at the top of @file{fltkActions.cpp} and @code{pageActions} in
+@file{actions.mjs}. An interface without an entry for it does not show
+the item.
+@item
+A click on the `2D' button of the Mesh module thus goes: the button,
+made from the item @code{mesh_2d} of the registry, calls the
+interface's @code{runItem()} (in @file{fltkActions.cpp} or
+@file{actions.mjs}), which calls @code{RunItem()} in
+@file{Actions.cpp}, which runs the item: Gmsh meshes, and
+@code{RunItem()} returns what changed (the model, the views) for the
+interface to redraw the scene and update its trees. A key does the
+same: the shortcuts are declared on the items, listed by
+@code{GetShortcuts()}, and run the item of their name.
+@item
+The scene is drawn by @code{drawContext}
+(@url{@value{GITLAB-PREFIX}/src/graphics/drawContext.cpp,src/graphics/drawContext.cpp}),
+and what the mouse does in it is @code{sceneView}
+(@url{@value{GITLAB-PREFIX}/src/graphics/sceneView.cpp,src/graphics/sceneView.cpp}),
+which @file{openglWindow.cpp} and @file{scene.mjs} inherit or call. The
+picks of an operation do not wait for the user: they are tools stepped
+by the events (@code{sceneTool}).
+@item
+The ONELAB loop (check, compute) is one stepper,
+@code{onelabUtils::onelabLoop}
+(@url{@value{GITLAB-PREFIX}/src/common/onelabUtils.cpp,src/common/onelabUtils.cpp}),
+driven by the FLTK interface (@file{onelabActions.cpp}), the batch mode
+and the web app (@file{solverClient.mjs}), each adding its refreshes
+and its stop button.
+@item
+The core knows no toolkit. What an option changes in an interface, its
+function in @file{Options.cpp} tells through @code{guiListener}
+(@url{@value{GITLAB-PREFIX}/src/common/GuiListener.h,src/common/GuiListener.h}),
+a small set of notifications and questions (the scene of the current
+window, whether the desktop is dark) that the FLTK interface implements
+in @file{FlGui.cpp} and the web app in @file{webApp.cpp}.
+@item
+The option window is a table too
+(@url{@value{GITLAB-PREFIX}/src/common/OptionPages.cpp,src/common/OptionPages.cpp}):
+pages, sections and rows of entries, each bound to an option by name.
+The FLTK interface lays the rows out in @file{optionWindow.cpp}, where
+the widgets are bound to their options in both directions (@pxref{Adding
+a new option}); the web app shows the same rows in its Options tab
+(@file{options.mjs}).
+@end itemize
+
+In the FLTK interface, every event goes through @code{FlGui::_dispatch()},
+and callbacks run nested event loops (meshing and solvers handle events
+while they run, dialogs and menus have loops of their own): code that
+runs one checks afterwards that what it uses still exists, with
+@code{FlGui::available()} or an @code{Fl_Widget_Tracker}, and a widget
+that may still be running is retired, not deleted (see the comment at
+the top of @url{@value{GITLAB-PREFIX}/src/fltk/FlGui.cpp,src/fltk/FlGui.cpp}).
+
+Tests of the interfaces live in
+@url{@value{GITLAB-PREFIX}/benchmarks/gui,benchmarks/gui} (the
+registry, the menus, the ONELAB loop and the selection workflows of the
+FLTK interface; they open windows, so they are built only with the CMake
+option @code{ENABLE_GUI_TESTS}) and in
+@url{@value{GITLAB-PREFIX}/contrib/webapp/test,contrib/webapp/test}
+(the JavaScript API, the page's table of actions against the registry,
+and ONELAB models run under node).
+
+To add a menu item or a button of a module: an item in its menu in
+@file{Actions.cpp}, with what Gmsh does, and nothing else; if an
+interface does it, a line in the table of each interface that has it.
+To add a key: @code{.key()} on the item it runs. To add an operation or
+a shape: its definition in @file{selectionDriver.cpp} or
+@file{scriptStringInterface.cpp}, then its item. The comment at the top
+of @url{@value{GITLAB-PREFIX}/src/common/Actions.h,src/common/Actions.h}
+details each case; the one at the top of @file{FlGui.cpp} says where
+things are in the FLTK interface, and @file{main.mjs} in the web app.
+
 @c -------------------------------------------------------------------------
 @c Coding style
 @c -------------------------------------------------------------------------
 
-@node Coding style, Adding a new option, Source code structure, Information for developers
+@node Coding style, Adding a new option, Graphical user interfaces, Information for developers
 @section Coding style
 
 If you plan to contribute code to the Gmsh project, here are some easy rules
@@ -6728,25 +6972,63 @@ To add a new option in Gmsh:
 
 @enumerate
 @item
-create the option in the @code{CTX} class
-(@url{@value{GITLAB-PREFIX}/src/common/Context.h,src/common/Context.h})
-if it's a classical option, or in the @code{PViewOptions} class
+store its value: a member of the @code{CTX} class
+(@url{@value{GITLAB-PREFIX}/src/common/Context.h,src/common/Context.h}),
+or of the @code{PViewOptions} class
 (@url{@value{GITLAB-PREFIX}/src/post/PViewOptions.h,src/post/PViewOptions.h})
-if it's a post-processing view-dependent option;
+for an option of each post-processing view;
 @item
 in
 @url{@value{GITLAB-PREFIX}/src/common/DefaultOptions.h,src/common/DefaultOptions.h},
-give a name (for the parser to be able to access it), a reference to a
-handling routine (i.e. @code{opt_XXX}) and a default value for this
-option;
+add an entry to the table of its category and type (e.g.
+@code{MeshOptions_Number}), in alphabetical order: where it is saved
+(@code{O} in the option file, @code{S} in the session file, @code{F} in
+the full listing), its name (as the parser, the API and the interfaces
+call it, e.g. @code{Mesh.LightLines}), its handling routine
+@code{opt_XXX}, its default value and its help string;
 @item
-create the handling routine @code{opt_XXX} in
-@url{@value{GITLAB-PREFIX}/src/common/Options.cpp,src/common/Options.cpp}
-(and add the prototype in
-@url{@value{GITLAB-PREFIX}/src/common/Options.h,src/common/Options.h});
+write the handling routine @code{opt_XXX} in
+@url{@value{GITLAB-PREFIX}/src/common/Options.cpp,src/common/Options.cpp},
+and declare it in
+@url{@value{GITLAB-PREFIX}/src/common/Options.h,src/common/Options.h}:
+it sets the value when asked to (@code{action & GMSH_SET}) and returns
+it. If what is drawn depends on the option, it also says what changed
+(e.g. @code{CTX::instance()->meshOptionsChanged(...)}). It knows no
+toolkit and does not update the widgets: those bound to the option are
+refreshed by its name whenever it is set (see below). If an interface
+has more to do than refresh them (place a window, reset a list), the
+routine says what happened through the listener of the interface,
+@code{Gui()->...Changed()} (see
+@url{@value{GITLAB-PREFIX}/src/common/GuiListener.h,src/common/GuiListener.h}),
+and the FLTK interface acts on it in @file{FlGui.cpp};
 @item
-optional: create the associated widget in
-@url{@value{GITLAB-PREFIX}/src/fltk/optionWindow.cpp,src/fltk/optionWindow.cpp};
+if the option takes one of a few values, list them with their labels,
+in the order the menus should show them, in the @code{OptionChoices}
+table of
+@url{@value{GITLAB-PREFIX}/src/common/DefaultOptions.h,src/common/DefaultOptions.h}
+(rather than in the help string): the menus of the options window, the
+choices of the web page and the help are made from it. A number option
+with bounds gets its minimum, maximum and step in the
+@code{OptionRanges} table of the same file;
+@item
+optional: add an entry for it in the table of the option window
+(@url{@value{GITLAB-PREFIX}/src/common/OptionPages.cpp,src/common/OptionPages.cpp}),
+in a row of the section where it belongs: @code{check()},
+@code{number()}, @code{choice()} (its items come from
+@code{OptionChoices}, its range from @code{OptionRanges}) or
+@code{text()}, with its label; several entries can share a row (X, Y
+and Z with one label), and what no entry can say (a matrix, a button)
+is a custom row that the FLTK interface builds by name. Both interfaces
+show the entry: in the FLTK interface its widget is bound to the option
+by name in both directions (changing it sets the option, and setting
+the option in a script, through the API or with another widget updates
+it), with the key of the action that sets the option in its tooltip;
+the web app shows it in its Options tab, or under each view for an
+option of the views;
+@item
+regenerate the reference of the options (the files
+@file{opt_*.texi}) by running @code{gmsh -doc} in the
+@file{doc/texinfo} directory.
 @end enumerate
 
 @c =========================================================================

@@ -5,6 +5,7 @@
 //
 // Author: Maxence Reberol
 
+#include "GmshConfig.h"
 #include "qmtCrossField.h"
 
 /* System includes */
@@ -118,7 +119,8 @@ namespace QMT {
 #elif defined(HAVE_EIGEN)
     Eigen::VectorXd x, b;
     Eigen::SparseMatrix<double> A;
-    Eigen::SparseLU<Eigen::SparseMatrix<double> > solver;
+    // (the system is symmetric positive definite, see below)
+    Eigen::SimplicialLDLT<Eigen::SparseMatrix<double> > solver;
 #endif
 
   public:
@@ -147,7 +149,8 @@ namespace QMT {
       }
       Msg::Debug("Cross field linear solver: PETSc/MUMPS, %zu unknowns", N);
 #elif defined(HAVE_EIGEN)
-      Msg::Info("Cross field linear solver: Eigen SparseLU, %zu unknowns (PETSc/MUMPS unavailable)", N);
+      Msg::Debug("Cross field linear solver: Eigen SimplicialLDLT, %zu unknowns "
+                 "(PETSc/MUMPS unavailable)", N);
       Msg::Debug("Eigen call: initialize sparse matrix, vectors and solver");
       x.resize(N);
       x.fill(0.);
@@ -369,7 +372,7 @@ namespace QMT {
       x = solver.solve(b);
       if(solver.info() != Eigen::ComputationInfo::Success) {
         Msg::Warning(
-          "Eigen: failed to solve linear system with SparseLU (%li variables)",
+          "Eigen: failed to solve cross field linear system (%li variables)",
           N);
         return false;
       }

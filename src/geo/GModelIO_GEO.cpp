@@ -1010,6 +1010,7 @@ void GEO_Internals::resetPhysicalGroups()
   Tree_Action(PhysicalGroups, FreePhysicalGroup);
   Tree_Reset(PhysicalGroups);
   List_Action(DelPhysicalGroups, FreePhysicalGroup);
+  List_Reset(DelPhysicalGroups);
   _changed = true;
 }
 
@@ -1088,6 +1089,55 @@ bool GEO_Internals::modifyPhysicalGroup(int dim, int tag, int op,
   }
   _changed = true;
   return true;
+}
+
+void GEO_Internals::replaceInPhysicalGroups(
+  int dim, const std::map<int, std::vector<int> > &replace)
+{
+  const int types[4] = {MSH_PHYSICAL_POINT, MSH_PHYSICAL_LINE,
+                        MSH_PHYSICAL_SURFACE, MSH_PHYSICAL_VOLUME};
+  const char *names[4] = {"point", "curve", "surface", "volume"};
+  if(dim < 0 || dim > 3 || replace.empty() || !Tree_Nbr(PhysicalGroups))
+    return;
+  std::vector<int> emptied;
+  List_T *groups = Tree2List(PhysicalGroups);
+  for(int i = 0; i < List_Nbr(groups); i++) {
+    PhysicalGroup *p;
+    List_Read(groups, i, &p);
+    if(p->Typ != types[dim]) continue;
+    std::vector<int> entities;
+    bool found = false;
+    for(int j = 0; j < List_Nbr(p->Entities); j++) {
+      int num;
+      List_Read(p->Entities, j, &num);
+      auto it = replace.find(std::abs(num));
+      if(it == replace.end()) {
+        entities.push_back(num);
+        continue;
+      }
+      found = true;
+      // with oriented physical groups, the new entities keep the sign
+      for(auto t : it->second) entities.push_back(num < 0 ? -t : t);
+    }
+    if(!found) continue;
+    List_Reset(p->Entities);
+    std::set<int> added;
+    for(auto num : entities)
+      if(added.insert(num).second) List_Add(p->Entities, &num);
+    if(!List_Nbr(p->Entities)) emptied.push_back(p->Num);
+  }
+  List_Delete(groups);
+  // deleting the groups left empty frees their tags and their names
+  for(auto num : emptied) {
+    Msg::Info("Removing physical %s %d: its entities no longer exist",
+              names[dim], num);
+    switch(dim) {
+    case 0: DeletePhysicalPoint(num); break;
+    case 1: DeletePhysicalLine(num); break;
+    case 2: DeletePhysicalSurface(num); break;
+    case 3: DeletePhysicalVolume(num); break;
+    }
+  }
 }
 
 void GEO_Internals::removeAllDuplicates()
@@ -1554,6 +1604,15 @@ void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
   removed.clear();
   model->remove(toRemove, removed);
   Msg::Debug("Destroying %zu model entities during second pass", removed.size());
+  // these were on the boundary of entities that remain, whose mesh would keep
+  // their deleted nodes
+  for(std::size_t i = 0; i < removed.size(); i++) {
+    if(removed[i]->getNumMeshVertices()) {
+      Msg::Info("Deleting the mesh, whose boundary entities were removed");
+      model->deleteMesh();
+      break;
+    }
+  }
   for(std::size_t i = 0; i < removed.size(); i++) delete removed[i];
 
   // delete all physical groups before sync only if there is no mesh (if there
@@ -1792,7 +1851,7 @@ public:
     if(oldName.size())
       fprintf(geo, "(%s) = {", oldName.c_str());
     else if(newName.size())
-      fprintf(geo, "(\"%s\") = {", newName.c_str());
+      fprintf(geo, "(\"%s\", %d) = {", newName.c_str(), g.first);
     else
       fprintf(geo, "(%d) = {", g.first);
     for(std::size_t i = 0; i < g.second.size(); i++) {
@@ -1968,6 +2027,93 @@ int GModel::writePY(const std::string &name, bool printLabels,
   return 1;
 }
 
+// a discrete curve given to the built-in kernel, with its end points
+static void exportDiscreteCurve(GEO_Internals *geo, GEdge *ge)
+{
+  bool ok = true;
+  Curve *c = CreateCurve(ge->tag(), MSH_SEGM_DISCRETE, 1, nullptr, nullptr, -1,
+                         -1, 0., 1., ok);
+  c->Control_Points = List_Create(2, 1, sizeof(Vertex *));
+  GVertex *gvb = ge->getBeginVertex();
+  if(gvb) {
+    Vertex *v = FindPoint(gvb->tag());
+    if(v) {
+      List_Add(c->Control_Points, &v);
+      c->beg = v;
+    }
+    else {
+      Msg::Error("Unknown GEO point %d", gvb->tag());
+    }
+  }
+  else {
+    Msg::Warning("Discrete curve %d has no begin point", ge->tag());
+  }
+  GVertex *gve = ge->getEndVertex();
+  if(gve) {
+    Vertex *v = FindPoint(gve->tag());
+    if(v) {
+      List_Add(c->Control_Points, &v);
+      c->end = v;
+    }
+    else {
+      Msg::Error("Unknown GEO point %d", gve->tag());
+    }
+  }
+  else {
+    Msg::Warning("Discrete curve %d has no end point", ge->tag());
+  }
+  EndCurve(c);
+  Tree_Add(geo->Curves, &c);
+  CreateReversedCurve(c);
+}
+
+// the curves of a discrete surface given to the one the built-in kernel has
+static void exportDiscreteBoundary(Surface *s, GFace *gf)
+{
+  std::vector<GEdge *> const &edges = gf->edges();
+  s->Generatrices = List_Create(edges.size() + 1, 1, sizeof(Curve *));
+  for(auto ite = edges.begin(); ite != edges.end(); ite++) {
+    Curve *c = FindCurve((*ite)->tag());
+    if(c) { List_Add(s->Generatrices, &c); }
+    else {
+      Msg::Error("Unknown GEO curve %d", (*ite)->tag());
+    }
+  }
+  EndSurface(s);
+}
+
+bool GModel::exportDiscreteGEOBoundary(int surface)
+{
+  GFace *gf = getFaceByTag(surface);
+  Surface *s = FindSurface(surface);
+  if(!gf || !s || s->Typ != MSH_SURF_DISCRETE) return false;
+  if(List_Nbr(s->Generatrices)) return true;
+  for(GEdge *ge : gf->edges()) {
+    for(GVertex *gv : {ge->getBeginVertex(), ge->getEndVertex()}) {
+      if(!gv || FindPoint(gv->tag())) continue;
+      Vertex *v = CreateVertex(gv->tag(), gv->x(), gv->y(), gv->z(),
+                               gv->prescribedMeshSizeAtVertex(), 1.0);
+      Tree_Add(_geo_internals->Points, &v);
+    }
+    Curve *c = FindCurve(ge->tag());
+    if(!c) return false; // (not a curve of the built-in kernel)
+    if(c->Typ != MSH_SEGM_DISCRETE || c->beg || c->end ||
+       (!ge->getBeginVertex() && !ge->getEndVertex()))
+      continue;
+    // (made without its end points when the mesh was read, see discreteEdge)
+    Curve *r = FindCurve(-ge->tag());
+    Tree_Suppress(_geo_internals->Curves, &c);
+    FreeCurve(&c, nullptr);
+    if(r) {
+      Tree_Suppress(_geo_internals->Curves, &r);
+      FreeCurve(&r, nullptr);
+    }
+    exportDiscreteCurve(_geo_internals, ge);
+  }
+  exportDiscreteBoundary(s, gf);
+  return true;
+}
+
 int GModel::exportDiscreteGEOInternals()
 {
   if(_geo_internals) delete _geo_internals;
@@ -1980,58 +2126,14 @@ int GModel::exportDiscreteGEOInternals()
   }
 
   for(auto it = firstEdge(); it != lastEdge(); it++) {
-    if((*it)->geomType() == GEntity::DiscreteCurve) {
-      bool ok = true;
-      Curve *c = CreateCurve((*it)->tag(), MSH_SEGM_DISCRETE, 1, nullptr,
-                             nullptr, -1, -1, 0., 1., ok);
-      c->Control_Points = List_Create(2, 1, sizeof(Vertex *));
-      GVertex *gvb = (*it)->getBeginVertex();
-      if(gvb) {
-        Vertex *v = FindPoint(gvb->tag());
-        if(v) {
-          List_Add(c->Control_Points, &v);
-          c->beg = v;
-        }
-        else {
-          Msg::Error("Unknown GEO point %d", gvb->tag());
-        }
-      }
-      else {
-        Msg::Warning("Discrete curve %d has no begin point", (*it)->tag());
-      }
-      GVertex *gve = (*it)->getEndVertex();
-      if(gve) {
-        Vertex *v = FindPoint(gve->tag());
-        if(v) {
-          List_Add(c->Control_Points, &v);
-          c->end = v;
-        }
-        else {
-          Msg::Error("Unknown GEO point %d", gve->tag());
-        }
-      }
-      else {
-        Msg::Warning("Discrete curve %d has no end point", (*it)->tag());
-      }
-      EndCurve(c);
-      Tree_Add(_geo_internals->Curves, &c);
-      CreateReversedCurve(c);
-    }
+    if((*it)->geomType() == GEntity::DiscreteCurve)
+      exportDiscreteCurve(_geo_internals, *it);
   }
 
   for(auto it = firstFace(); it != lastFace(); it++) {
     if((*it)->geomType() == GEntity::DiscreteSurface) {
       Surface *s = CreateSurface((*it)->tag(), MSH_SURF_DISCRETE);
-      std::vector<GEdge *> const &edges = (*it)->edges();
-      s->Generatrices = List_Create(edges.size() + 1, 1, sizeof(Curve *));
-      for(auto ite = edges.begin(); ite != edges.end(); ite++) {
-        Curve *c = FindCurve((*ite)->tag());
-        if(c) { List_Add(s->Generatrices, &c); }
-        else {
-          Msg::Error("Unknown GEO curve %d", (*ite)->tag());
-        }
-      }
-      EndSurface(s);
+      exportDiscreteBoundary(s, *it);
       Tree_Add(_geo_internals->Surfaces, &s);
     }
   }

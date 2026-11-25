@@ -8,19 +8,23 @@
 // Copyright (C) 1990 - 1995 Bill Hibbard, Brian Paul, Dave Santek,
 // and Andre Battaiola.
 
+#include <vector>
 #include <FL/fl_draw.H>
 #include <FL/Fl_Input_.H>
 #include "colorbarWindow.h"
 #include "ColorTable.h"
 #include "Context.h"
+#include "PView.h"
+#include "PViewOptions.h"
 
 #define EPS 1.e-10
 
 colorbarWindow::colorbarWindow(int x, int y, int w, int h, const char *l)
   : Fl_Widget(x, y, w, h, l)
 {
+  _viewTag = -1;
   ct = nullptr;
-  label = nullptr;
+  viewchanged = nullptr;
   help_flag = 0;
   font_height = FL_NORMAL_SIZE - 1; // use slightly smaller font
   marker_height = font_height;
@@ -43,6 +47,8 @@ int colorbarWindow::x_to_index(int x)
 int colorbarWindow::index_to_x(int index)
 {
   int x;
+  // a table of one colour: its entry at the left edge (see redraw_range())
+  if(ct->size < 2) return 0;
   x = (int)(index * (double)w() / (double)(ct->size - 1));
   if(x >= w()) x = w() - 1;
   return x;
@@ -70,6 +76,29 @@ int colorbarWindow::intensity_to_y(int intensity)
   return y;
 }
 
+// the keys and buttons of the widget and what they do, shown by 'h'
+static const std::vector<std::pair<const char *, const char *>> &helpLines()
+{
+  static const std::vector<std::pair<const char *, const char *>> lines = {
+    {"0-9, Ctrl+0-9, F1-F7", "Select predefined colormap"},
+    {"Left button", "Draw red or hue channel"},
+    {"Middle button", "Draw green or saturation channel"},
+    {"Right button", "Draw blue or value channel"},
+    {"Ctrl+Left button", "Draw alpha channel"},
+    {"Ctrl+c, Ctrl+v", "Copy or paste colormap"},
+    {"m", "Toggle RGB/HSV mode"},
+    {"Left/Right arrow", "Translate abscissa"},
+    {"Ctrl+left, Ctrl+right", "Rotate abscissa"},
+    {"i, Ctrl+i", "Invert abscissa or ordinate"},
+    {"Up/Down arrow", "Modify color channel curvature"},
+    {"a, Ctrl+a", "Modify alpha coefficient"},
+    {"p, Ctrl+p", "Modify alpha channel power law"},
+    {"b, Ctrl+b", "Modify gamma correction"},
+    {"r", "Reset colormap modifications"},
+    {"h", "Toggle help message"}};
+  return lines;
+}
+
 void colorbarWindow::redraw_range(int a, int b)
 {
   int i;
@@ -85,6 +114,7 @@ void colorbarWindow::redraw_range(int a, int b)
   // calculate region to update
   x1 = index_to_x(a);
   x2 = index_to_x(b);
+  if(ct->size < 2) x2 = w() - 1; // a table of one colour fills the bar
   y1 = intensity_to_y(255);
   y2 = intensity_to_y(0);
 
@@ -188,55 +218,10 @@ void colorbarWindow::redraw_range(int a, int b)
   int fh = font_height + 1;
   int xx0 = ox + 6, xx1 = ox + 11 * fh, yy0 = oy + 6;
   if(help_flag) {
-    i = 0;
-    fl_draw("0-9, Ctrl+0-9, F1-F7", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Select predefined colormap", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("Left button", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Draw red or hue channel", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("Middle button", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Draw green or saturation channel", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("Right button", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Draw blue or value channel", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("Ctrl+Left button", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Draw alpha channel", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("Ctrl+c, Ctrl+v, r", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Copy, paste or reset colormap", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("m", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Toggle RGB/HSV mode", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("Left/Right arrow", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Translate abscissa", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("Ctrl+left, Ctrl+right", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Rotate abscissa", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("i, Ctrl+i", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Invert abscissa or ordinate", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("Up/Down arrow", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Modify color channel curvature", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("a, Ctrl+a", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Modify alpha coefficient", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("p, Ctrl+p", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Modify alpha channel power law", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("b, Ctrl+b", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Modify gamma correction", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("r", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Reset colormap modifications", xx1, yy0 + (i + 1) * fh);
-    i++;
-    fl_draw("h", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Toggle help message", xx1, yy0 + (i + 1) * fh);
-    i++;
+    for(std::size_t k = 0; k < helpLines().size(); k++) {
+      fl_draw(helpLines()[k].first, xx0, yy0 + (k + 1) * fh);
+      fl_draw(helpLines()[k].second, xx1, yy0 + (k + 1) * fh);
+    }
   }
   else {
     // the map and the mode
@@ -270,23 +255,33 @@ void colorbarWindow::redraw_marker()
 
   // draw marker value
   fl_font(FL_HELVETICA, font_height);
-  val =
-    minval + (maxval - minval) * ((double)marker_pos / (double)(ct->size - 1));
+  val = minval;
+  if(ct->size > 1)
+    val += (maxval - minval) * ((double)marker_pos / (double)(ct->size - 1));
   sprintf(str, "%g", val);
   fl_draw(str, ox + 10, oy + label_y);
 }
 
 int colorbarWindow::helpHeight() const
 {
-  // the 16 lines of the help, from 6 pixels below the top, then the wedge, the
+  // the lines of the help, from 6 pixels below the top, then the wedge, the
   // marker and its value
   int fh = font_height + 1;
-  return 6 + 16 * fh + fh / 2 + wedge_height + marker_height + font_height + 5;
+  return 6 + (int)helpLines().size() * fh + fh / 2 + wedge_height +
+         marker_height + font_height + 5;
+}
+
+bool colorbarWindow::lookup()
+{
+  PView *v = (_viewTag < 0) ? nullptr : PView::getViewByTag(_viewTag);
+  ct = v ? &v->getOptions()->colorTable : nullptr;
+  viewchanged = v ? &v->getChanged() : nullptr;
+  return ct && ct->size > 0;
 }
 
 void colorbarWindow::draw()
 {
-  if(!ct) return;
+  if(!lookup()) return;
 
   label_y = h() - 5;
   marker_y = label_y - marker_height - font_height;
@@ -302,12 +297,9 @@ void colorbarWindow::draw()
   fl_pop_clip();
 }
 
-void colorbarWindow::update(const char *name, double min, double max,
-                            GmshColorTable *table, bool *changed)
+void colorbarWindow::update(int viewTag, double min, double max)
 {
-  label = name;
-  ct = table;
-  viewchanged = changed;
+  _viewTag = viewTag;
   minval = min;
   maxval = max;
   redraw();
@@ -315,11 +307,14 @@ void colorbarWindow::update(const char *name, double min, double max,
 
 int colorbarWindow::handle(int event)
 {
-  if(!ct) return Fl_Widget::handle(event);
-
   static int p1 = 0, p2 = 0, p3 = 0, p4 = 0;
   static int pentry, move_marker;
-  int i, ibut, xpos, ypos, modify, entry, compute;
+  if(!lookup()) {
+    // the view gone during a drag: the next press starts afresh
+    if(event == FL_RELEASE) p1 = p2 = p3 = p4 = 0;
+    return Fl_Widget::handle(event);
+  }
+  int i, ibut, xpos, ypos, modify, entry, compute, map;
 
   modify = 0;
   compute = 0;
@@ -337,122 +332,18 @@ int colorbarWindow::handle(int event)
 
   case FL_SHORTCUT:
   case FL_KEYBOARD:
-    if(Fl::test_shortcut('0')) {
-      ColorTable_InitParam(0, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut('1')) {
-      ColorTable_InitParam(1, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut('2')) {
-      ColorTable_InitParam(2, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut('3')) {
-      ColorTable_InitParam(3, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut('4')) {
-      ColorTable_InitParam(4, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut('5')) {
-      ColorTable_InitParam(5, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut('6')) {
-      ColorTable_InitParam(6, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut('7')) {
-      ColorTable_InitParam(7, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut('8')) {
-      ColorTable_InitParam(8, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut('9')) {
-      ColorTable_InitParam(9, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut(FL_CTRL + '0') ||
-            Fl::test_shortcut(FL_META + '0')) {
-      ColorTable_InitParam(10, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut(FL_CTRL + '1') ||
-            Fl::test_shortcut(FL_META + '1')) {
-      ColorTable_InitParam(11, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut(FL_CTRL + '2') ||
-            Fl::test_shortcut(FL_META + '2')) {
-      ColorTable_InitParam(12, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut(FL_CTRL + '3') ||
-            Fl::test_shortcut(FL_META + '3')) {
-      ColorTable_InitParam(13, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut(FL_CTRL + '4') ||
-            Fl::test_shortcut(FL_META + '4')) {
-      ColorTable_InitParam(14, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut(FL_CTRL + '5') ||
-            Fl::test_shortcut(FL_META + '5')) {
-      ColorTable_InitParam(15, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut(FL_CTRL + '6') ||
-            Fl::test_shortcut(FL_META + '6')) {
-      ColorTable_InitParam(16, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut(FL_CTRL + '7') ||
-            Fl::test_shortcut(FL_META + '7')) {
-      ColorTable_InitParam(17, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut(FL_CTRL + '8') ||
-            Fl::test_shortcut(FL_META + '8')) {
-      ColorTable_InitParam(18, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut(FL_CTRL + '9') ||
-            Fl::test_shortcut(FL_META + '9')) {
-      ColorTable_InitParam(19, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut(FL_F + 1)) {
-      ColorTable_InitParam(20, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut(FL_F + 2)) {
-      ColorTable_InitParam(21, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut(FL_F + 3)) {
-      ColorTable_InitParam(22, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut(FL_F + 4)) {
-      ColorTable_InitParam(23, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut(FL_F + 5)) {
-      ColorTable_InitParam(24, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut(FL_F + 6)) {
-      ColorTable_InitParam(25, ct);
-      compute = 1;
-    }
-    else if(Fl::test_shortcut(FL_F + 7)) {
-      ColorTable_InitParam(26, ct);
+    // the colour maps: 0-9, Ctrl or Cmd + 0-9, then F1-F7
+    map = -1;
+    for(int k = 0; k < 10 && map < 0; k++)
+      if(Fl::test_shortcut('0' + k)) map = k;
+    for(int k = 0; k < 10 && map < 0; k++)
+      if(Fl::test_shortcut(FL_CTRL + '0' + k) ||
+         Fl::test_shortcut(FL_META + '0' + k))
+        map = 10 + k;
+    for(int k = 1; k <= 7 && map < 0; k++)
+      if(Fl::test_shortcut(FL_F + k)) map = 19 + k;
+    if(map >= 0) {
+      ColorTable_InitParam(map, ct);
       compute = 1;
     }
     else if(Fl::test_shortcut(FL_CTRL + 'c') ||
@@ -461,9 +352,12 @@ int colorbarWindow::handle(int event)
     }
     else if(Fl::test_shortcut(FL_CTRL + 'v') ||
             Fl::test_shortcut(FL_META + 'v')) {
+      // as computed below, but the table pasted as it is (its entries may have
+      // been edited by hand, which a recomputation from its parameters drops)
       ColorTable_Paste(ct);
       redraw();
       *viewchanged = true;
+      do_callback();
     }
     else if(Fl::test_shortcut('h')) {
       help_flag = !help_flag;

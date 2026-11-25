@@ -10,12 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <FL/Fl_Value_Slider.H>
-#include <FL/Fl_Menu_Window.H>
-#include <FL/Fl_Select_Browser.H>
-#include <FL/Fl_Toggle_Button.H>
-#include <FL/Fl_Round_Button.H>
 #include <FL/Fl_Return_Button.H>
-#include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Hold_Browser.H>
 #include <FL/Fl_Input_Choice.H>
 #include <FL/Fl_Box.H>
@@ -27,17 +22,43 @@
 #include <FL/Fl_Preferences.H>
 #include "FlGui.h"
 #include "paletteWindow.h"
-#include "GmshDefines.h"
-#include "OpenFile.h"
-#include "CreateFile.h"
 #include "Options.h"
 #include "drawContext.h"
 #include "GModel.h"
 #include "Context.h"
-#include "Options.h"
 #include "PView.h"
+#include "extraDialogs.h"
 
-// Arrow editor
+// Shows the dialog until OK, which calls apply() and returns 1, or Cancel or
+// the close button, which return 0; other(o) is told first of every widget
+// whose callback ran
+int runDialog(Fl_Window *window, Fl_Widget *ok, Fl_Widget *cancel,
+              const std::function<void()> &apply,
+              const std::function<void(Fl_Widget *)> &other)
+{
+  window->show();
+  while(window->shown()) {
+    Fl::wait();
+    for(;;) {
+      Fl_Widget *o = Fl::readqueue();
+      if(!o) break;
+      if(other) other(o);
+      if(o == ok) {
+        apply();
+        window->hide();
+        return 1;
+      }
+      if(o == window || o == cancel) {
+        window->hide();
+        return 0;
+      }
+    }
+  }
+  return 0;
+}
+
+// Arrow editor: its own loop, as Apply leaves the window open for the caller
+// (see optionWindow.cpp)
 
 int arrowEditor(const char *title, double &a, double &b, double &c)
 {
@@ -96,57 +117,6 @@ int arrowEditor(const char *title, double &a, double &b, double &c)
     }
   }
   return 0;
-}
-
-// Opacity chooser
-
-int opacityChooser(const char *title, const std::string &category,
-                        int index, const std::string &name)
-{
-  double val;
-  NumberOption(GMSH_GET, category.c_str(), index, name.c_str(), val);
-
-  paletteWindow win(BB + IW + 2 * WB, BH + 2 * WB,
-                    CTX::instance()->nonModalWindows ? true : false);
-  win.label(title);
-  win.hotspot(win);
-  Fl_Value_Slider slider(WB, WB, BB + IW, BH);
-  slider.type(FL_HOR_SLIDER);
-  slider.bounds(0., 1.);
-  slider.value(val);
-  slider.when(FL_WHEN_CHANGED | FL_WHEN_RELEASE);
-
-  struct Context {
-    const std::string &category;
-    int index;
-    const std::string &name;
-    bool done = false;
-  } ctx{category, index, name};
-  slider.callback(
-    [](Fl_Widget *w, void *data) {
-      auto *s = static_cast<Fl_Value_Slider *>(w);
-      auto *c = static_cast<Context *>(data);
-      double val = s->value();
-      NumberOption(GMSH_SET | GMSH_GUI, c->category.c_str(), c->index,
-                   c->name.c_str(), val);
-      drawContext::global()->draw();
-      if(Fl::event() == FL_RELEASE) { c->done = true; }
-    },
-    &ctx);
-  win.end();
-  win.show();
-  // the button can be released outside this window, where the slider never
-  // sees it: watch the button state itself, with a timeout
-  bool up = false, down = false;
-  while(!ctx.done && win.shown()) {
-    Fl::wait(0.1);
-    bool held = Fl::event_state(FL_BUTTONS) ? true : false;
-    if(!held) up = true; // not still holding the button that opened us
-    if(up && held) down = true;
-    if(down && !held) ctx.done = true;
-  }
-  win.hide();
-  return ctx.done ? 1 : 0;
 }
 
 // Connection and pattern choosers
@@ -215,6 +185,7 @@ public:
     Fl_Box *b3 = new Fl_Box(WB, h - WB - BB, WB, WB);
     b3->hide();
     window->resizable(b3);
+    window->end();
   }
   void save(Fl_Preferences &prefs)
   {
@@ -262,35 +233,20 @@ public:
     }
     else
       input->value(_defaultCommand.c_str());
-    window->show();
-    while(window->shown()) {
-      Fl::wait();
-      for(;;) {
-        Fl_Widget *o = Fl::readqueue();
-        if(!o) break;
-        if(o == ok) {
-          if(strlen(input->value())) {
-            // insert choosen value at the top of the history
-            for(int i = 0; i < browser->size(); i++) {
-              if(!strcmp(input->value(), browser->text(i + 1))) {
-                browser->remove(i + 1);
-                break;
-              }
-            }
-            browser->insert(1, input->value());
+    int chosen = runDialog(window, ok, cancel, [&]() {
+      if(strlen(input->value())) {
+        // the value chosen at the top of the history
+        for(int i = 0; i < browser->size(); i++) {
+          if(!strcmp(input->value(), browser->text(i + 1))) {
+            browser->remove(i + 1);
+            break;
           }
-          save(prefs);
-          window->hide();
-          return input->value();
         }
-        if(o == window || o == cancel) {
-          save(prefs);
-          window->hide();
-          return "";
-        }
+        browser->insert(1, input->value());
       }
-    }
-    return "";
+    });
+    save(prefs);
+    return chosen ? input->value() : "";
   }
 };
 
@@ -329,99 +285,6 @@ std::string patternChooser()
   return _patternChooser->run();
 }
 
-class cgnsImportDialog {
-private:
-  std::string _prefix, _label, _commandLabel, _defaultCommand, _okLabel;
-
-public:
-  Fl_Double_Window *window;
-  Fl_Return_Button *ok;
-  Fl_Input_Choice *input_choice;
-
-public:
-  cgnsImportDialog()
-  {
-    _prefix = "cgns";
-    int h = 3 * WB + 2 * BH, w = 3 * BB + 2 * WB;
-    window = new Fl_Double_Window(w, h);
-    window->set_modal();
-    window->label("CGNS import");
-
-    input_choice =
-      new Fl_Input_Choice(WB + 2 * BB, WB, 1 * BB, BH, "Import mesh as order");
-
-    ok = new Fl_Return_Button(w - WB - BB, h - WB - BH, BB, BH, "Import");
-  }
-
-  void save(Fl_Preferences &prefs)
-  {
-    int offset[2] = {0, 0};
-    storeWindowOffset(window, offset);
-    prefs.set((_prefix + "OffsetX").c_str(), offset[0]);
-    prefs.set((_prefix + "OffsetY").c_str(), offset[1]);
-    prefs.set((_prefix + "Width").c_str(), window->w());
-    prefs.set((_prefix + "Height").c_str(), window->h());
-  }
-  int run()
-  {
-    Fl_Preferences prefs(Fl_Preferences::USER, "fltk.org", "gmsh");
-    int offset[2] = {100, 100}, h = 3 * WB + 2 * BH, w = 3 * BB + 2 * WB;
-    prefs.get((_prefix + "OffsetX").c_str(), offset[0], offset[0]);
-    prefs.get((_prefix + "OffsetY").c_str(), offset[1], offset[1]);
-    prefs.get((_prefix + "Width").c_str(), w, w);
-    prefs.get((_prefix + "Height").c_str(), h, h);
-    window->size(w, h);
-    placeWindow(window, offset);
-
-    int order_max = CTX::instance()->mesh.cgnsImportOrder;
-    int order = 1;
-    input_choice->clear();
-    char text[128];
-    while(order < 5 && order <= order_max && order_max < 10 && order_max > 0) {
-      sprintf(text, "%d", order);
-      input_choice->add(text);
-      order *= 2;
-    }
-    input_choice->value(0);
-
-    window->show();
-    while(window->shown()) {
-      Fl::wait();
-      for(;;) {
-        Fl_Widget *o = Fl::readqueue();
-        if(!o) break;
-        if(o == ok) {
-          const char *str = input_choice->value();
-          int order = 1;
-          if(strcmp("2", str) == 0)
-            order = 2;
-          else if(strcmp("4", str) == 0)
-            order = 4;
-          // else if (strcmp("8", str) == 0)
-          //  order = 8;
-          save(prefs);
-          window->hide();
-          return order;
-        }
-        if(o == window) {
-          save(prefs);
-          window->hide();
-          return 1;
-        }
-      }
-    }
-    return 1;
-  }
-};
-
-static cgnsImportDialog *_cgnsImport = nullptr;
-
-int cgnsImport()
-{
-  if(!_cgnsImport) { _cgnsImport = new cgnsImportDialog(); }
-  return _cgnsImport->run();
-}
-
 // simple text display
 
 int simpleTextDisplay(const char *title, const std::string &text)
@@ -448,20 +311,7 @@ int simpleTextDisplay(const char *title, const std::string &text)
   display->window->label(title);
   display->buff->text(text.c_str());
   display->window->hotspot(display->window);
-  display->window->show();
-
-  while(display->window->shown()) {
-    Fl::wait();
-    for(;;) {
-      Fl_Widget *o = Fl::readqueue();
-      if(!o) break;
-      if(o == display->window) {
-        display->window->hide();
-        return 0;
-      }
-    }
-  }
-  return 0;
+  return runDialog(display->window, nullptr, nullptr, [] {});
 }
 
 int simpleTextEditor(const char *title, const std::string &help,
@@ -473,7 +323,6 @@ int simpleTextEditor(const char *title, const std::string &help,
     Fl_Text_Editor *edit;
     Fl_Button *apply, *cancel;
     Fl_Box *help;
-    char *help_text;
   };
   static _editor *editor = nullptr;
 
@@ -482,8 +331,7 @@ int simpleTextEditor(const char *title, const std::string &help,
     editor->window =
       new paletteWindow(4 * BB + 2 * WB, 7 * BH + 3 * WB,
                         CTX::instance()->nonModalWindows ? true : false);
-    editor->help_text = strdup(help.c_str());
-    editor->help = new Fl_Box(WB, WB / 2, 4 * BB, BH, editor->help_text);
+    editor->help = new Fl_Box(WB, WB / 2, 4 * BB, BH);
     editor->help->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
     editor->buff = new Fl_Text_Buffer();
     editor->edit = new Fl_Text_Editor(WB, WB + BH, 4 * BB, 5 * BH);
@@ -498,27 +346,12 @@ int simpleTextEditor(const char *title, const std::string &help,
     editor->window->resizable(resize);
   }
   editor->window->label(title);
+  editor->help->copy_label(help.c_str());
   editor->buff->text(text.c_str());
   editor->window->hotspot(editor->window);
-  editor->window->show();
-
-  while(editor->window->shown()) {
-    Fl::wait();
-    for(;;) {
-      Fl_Widget *o = Fl::readqueue();
-      if(!o) break;
-      if(o == editor->apply) {
-        char *t = editor->buff->text();
-        text = t;
-        free(t);
-        editor->window->hide();
-        return 1;
-      }
-      if(o == editor->window || o == editor->cancel) {
-        editor->window->hide();
-        return 0;
-      }
-    }
-  }
-  return 0;
+  return runDialog(editor->window, editor->apply, editor->cancel, [&]() {
+    char *t = editor->buff->text();
+    text = t;
+    free(t);
+  });
 }

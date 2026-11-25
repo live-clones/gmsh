@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <algorithm>
+#include <thread>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "VertexArray.h"
@@ -59,6 +60,8 @@ static inline void fillCornerKey(CornerKey<N> &k, double *x, double *y,
     for(int d = 0; d < 4; d++) k.c[4 * i + d] = c[i][d];
   }
 }
+
+void UniqueElementFilter::ShardLock::_yield() { std::this_thread::yield(); }
 
 // room for n keys at most half full, the keys already there hashed again
 void UniqueElementFilter::Shard::reserve(std::size_t n)
@@ -463,6 +466,40 @@ void VertexArray::fromChar(int length, const char *bytes, int swap)
     _colors.resize(cn); int cs = cn * sizeof(unsigned char);
     memcpy(&_colors[0], &bytes[index], cs); /* index += cs; */
   }
+}
+
+VertexArray *VertexArray::edges()
+{
+  VertexArray *va = new VertexArray(2, getNumVertices());
+  if(_numVerticesPerElement != 3) return va;
+  bool normals = hasNormals(), colors = hasColors();
+  const int ends[3][2] = {{0, 1}, {1, 2}, {2, 0}};
+  for(int t = 0; t + 2 < getNumVertices(); t += 3) {
+    for(int e = 0; e < 3; e++) {
+      int v[2] = {t + ends[e][0], t + ends[e][1]};
+      double x[2], y[2], z[2];
+      unsigned char c[4][2];
+      for(int i = 0; i < 2; i++) {
+        x[i] = _vertices[3 * v[i]];
+        y[i] = _vertices[3 * v[i] + 1];
+        z[i] = _vertices[3 * v[i] + 2];
+        for(int j = 0; j < 4; j++) c[j][i] = colors ? _colors[4 * v[i] + j] : 0;
+      }
+      if(va->getUniqueFilter(false)->isDuplicate(
+           2, x, y, z, colors ? c[0] : nullptr, colors ? c[1] : nullptr,
+           colors ? c[2] : nullptr, colors ? c[3] : nullptr))
+        continue;
+      for(int i = 0; i < 2; i++) {
+        va->_addVertex((float)x[i], (float)y[i], (float)z[i]);
+        if(normals)
+          for(int j = 0; j < 3; j++)
+            va->_normals.push_back(_normals[3 * v[i] + j]);
+        if(colors) va->_addColor(c[0][i], c[1][i], c[2][i], c[3][i]);
+      }
+    }
+  }
+  va->finalize();
+  return va;
 }
 
 void VertexArray::merge(VertexArray* va, const unsigned char *color)

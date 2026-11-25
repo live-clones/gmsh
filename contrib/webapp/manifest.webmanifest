@@ -1,0 +1,14 @@
+{
+  "name": "ONELAB",
+  "short_name": "ONELAB",
+  "description": "Gmsh and GetDP in the browser: mesh, solve and post-process finite element models on your device",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    {"src": "icons/onelab-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icons/onelab-512.png", "sizes": "512x512", "type": "image/png"}
+  ]
+}

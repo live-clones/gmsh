@@ -58,7 +58,9 @@ PView *GMSH_IntegratePlugin::execute(PView *v)
         for(int ele = 0; ele < data1->getNumElements(step, ent); ele++) {
           if(data1->skipElement(step, ent, ele, visible)) continue;
           int numComp = data1->getNumComponents(step, ent, ele);
-          int numEdges = data1->getNumEdges(step, ent, ele);
+          // (asked for vectors only: polyhedra build their edges for it)
+          int numEdges =
+            (numComp == 3) ? data1->getNumEdges(step, ent, ele) : 0;
           bool scalar = (numComp == 1);
           bool circulation = (numComp == 3 && numEdges == 1);
           bool flux = (numComp == 3 && (numEdges == 3 || numEdges == 4));

@@ -15,7 +15,7 @@
 // The tabs of the tools: under the gmsh theme the tab chosen carries a bar in
 // the selection colour along its top, as the editors mark it, the tabs of
 // FLTK telling it by its frame alone; a tab of a floating tool dragged off
-// the row takes the tool to the dock
+// the row takes the tool to the dock, as a double click on a tab does
 class accentTabs : public Fl_Tabs {
   Fl_Widget *_pushedTab; // the tab the button went down on
 protected:
@@ -39,7 +39,16 @@ public:
   virtual int handle(int event)
   {
     switch(event) {
-    case FL_PUSH: _pushedTab = which(Fl::event_x(), Fl::event_y()); break;
+    case FL_PUSH:
+      _pushedTab = which(Fl::event_x(), Fl::event_y());
+      if(_pushedTab) {
+        paletteWindow *pw = dynamic_cast<paletteWindow *>(window());
+        if(pw && pw->dockByDoubleClick()) {
+          _pushedTab = nullptr;
+          return 1;
+        }
+      }
+      break;
     case FL_DRAG:
       if(_pushedTab) {
         // off the row, at the top or the bottom, by more than its height

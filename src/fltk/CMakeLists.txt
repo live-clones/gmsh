@@ -9,6 +9,8 @@ set(SRC
     desktop.cpp
     icons.cpp
     graphicWindow.cpp
+    fltkActions.cpp
+    fileActions.cpp
       openglWindow.cpp
     optionWindow.cpp
       colorbarWindow.cpp
@@ -22,14 +24,18 @@ set(SRC
     clippingWindow.cpp
     manipWindow.cpp
     contextWindow.cpp
+    editorWindow.cpp
     onelabContextWindow.cpp
     onelabGroup.cpp
+    onelabActions.cpp
+    onelabParameters.cpp
     helpWindow.cpp
     fileDialogs.cpp
     extraDialogs.cpp
     windowPlacement.cpp
     widthRules.cpp
     toolDock.cpp
+    paletteWindow.cpp
     targetList.cpp
     classificationEditor.cpp
     partitionDialog.cpp

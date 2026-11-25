@@ -496,9 +496,17 @@ static void debugViews(BDS_Mesh *m, GFace *gf, const char *what)
 
 // Delete the faces that were not tagged as belonging to the face, then the
 // edges left without any face, classifying the surviving edges and their
-// endpoints. Finally drop the four fake points of the enclosing box.
-static void pruneAndCleanupBDS(BDS_Mesh *m, BDS_GeomEntity *CLASS_F)
+// endpoints. Finally drop the four fake points of the enclosing box. Returns
+// false if a face of the surface touches one of them: the boundary did not
+// separate the surface from the box, and the mesh is not that of the surface
+static bool pruneAndCleanupBDS(BDS_Mesh *m, BDS_GeomEntity *CLASS_F)
 {
+  for(BDS_Face *t : m->triangles) {
+    BDS_Point *n[4];
+    if(!t->deleted && t->g && t->getNodes(n) &&
+       (n[0]->iD < 0 || n[1]->iD < 0 || n[2]->iD < 0))
+      return false;
+  }
   {
     auto itt = m->triangles.begin();
     while(itt != m->triangles.end()) {
@@ -530,6 +538,7 @@ static void pruneAndCleanupBDS(BDS_Mesh *m, BDS_GeomEntity *CLASS_F)
   m->del_point(m->find_point(-2));
   m->del_point(m->find_point(-3));
   m->del_point(m->find_point(-4));
+  return true;
 }
 
 // Recombine the surface mesh into quadrangles, for the recombination
@@ -1164,7 +1173,9 @@ initialTriangulation(GFace *gf, BDS_Mesh *m, std::vector<BDS_Point *> &points,
 enum class EdgeRecovery {
   Recovered, // every model edge is now an edge of the triangulation
   Failed, // unrecoverable, the face is marked FAILED
-  Retry // the 1D mesh self-intersects; it has been refined, mesh again
+  Retry, // the 1D mesh self-intersects; it has been refined, mesh again
+  Deferred // the 1D mesh self-intersects; the face is left PENDING until the
+           // faces are meshed serially
 };
 
 // Force the edges of the 1D mesh into the initial triangulation. Curves whose
@@ -1173,6 +1184,15 @@ enum class EdgeRecovery {
 //
 // The caller owns the BDS mesh and must delete it unless the result is
 // Recovered.
+// why the curve meshes of a failed surface are not subdivided, if the user
+// asked for it
+static const char *noSubdivisionHint()
+{
+  return CTX::instance()->mesh.repairSelfIntersecting1dMesh ?
+           "" :
+           " (Mesh.RepairSelfIntersecting1DMesh=0)";
+}
+
 static EdgeRecovery
 recoverBoundaryEdges(GFace *gf, BDS_Mesh *m, std::vector<GEdge *> &edges,
                      std::vector<GEdge *> &emb_edges,
@@ -1217,26 +1237,37 @@ recoverBoundaryEdges(GFace *gf, BDS_Mesh *m, std::vector<GEdge *> &edges,
              edgesToRecover.size(), edgesNotRecovered.size());
 
   if(edgesNotRecovered.size() || gf->meshStatistics.refineAllEdges) {
-    if(!CTX::instance()->mesh.repairSelfIntersecting1dMesh) {
-      Msg::Warning("Surface %d: boundary recovery failed; keeping the 1D mesh "
-                   "without subdivision (Mesh.RepairSelfIntersecting1DMesh=0)",
-                   gf->tag());
-      gf->meshStatistics.status = GFace::FAILED;
-      return EdgeRecovery::Failed;
-    }
     std::ostringstream sstream;
     for(auto itr = edgesNotRecovered.begin(); itr != edgesNotRecovered.end();
         ++itr)
       sstream << " " << itr->ge->tag();
+    if(!repairSelfIntersecting1dMesh) {
+      Msg::Error("Surface %d: %d intersections in the 1D mesh (curves%s), "
+                 "not subdivided%s",
+                 gf->tag(), edgesNotRecovered.size(), sstream.str().c_str(),
+                 noSubdivisionHint());
+      gf->meshStatistics.status = GFace::FAILED;
+      return EdgeRecovery::Failed;
+    }
+    // splitting the curves is not thread safe: it replaces their meshes and
+    // deletes those of the adjacent surfaces, which other threads may be
+    // reading or building. As for periodic surfaces, leave the surface for the
+    // passes that Mesh2D() runs serially
+    if(Msg::GetNumThreads() != 1) {
+      gf->meshStatistics.status = GFace::PENDING;
+      Msg::Info("Surface %d has self-intersections in its 1D mesh: serializing "
+                "this one",
+                gf->tag());
+      return EdgeRecovery::Deferred;
+    }
     if(gf->meshStatistics.refineAllEdges) {
       Msg::Info("8-| Splitting all edges and trying again");
     }
     else {
       Msg::Info(":-( There are %d intersections in the 1D mesh (curves%s)",
                 edgesNotRecovered.size(), sstream.str().c_str());
-      if(repairSelfIntersecting1dMesh)
-        Msg::Info("8-| Splitting those edges and trying again - level %d",
-                  RECUR_ITER);
+      Msg::Info("8-| Splitting those edges and trying again - level %d",
+                RECUR_ITER);
     }
     if(debug) {
       char name[245];
@@ -1244,21 +1275,8 @@ recoverBoundaryEdges(GFace *gf, BDS_Mesh *m, std::vector<GEdge *> &edges,
               RECUR_ITER);
       gf->model()->writeMSH(name);
     }
-
-    if(repairSelfIntersecting1dMesh) {
-      remeshUnrecoveredEdges(recoverMapInv, edgesNotRecovered);
-      gf->meshStatistics.refineAllEdges = false;
-    }
-    else {
-      auto itr = edgesNotRecovered.begin();
-      for(; itr != edgesNotRecovered.end(); ++itr) {
-        int p1 = itr->p1;
-        int p2 = itr->p2;
-        int tag = itr->ge->tag();
-        Msg::Error("Edge not recovered: %d %d %d", p1, p2, tag);
-      }
-    }
-
+    remeshUnrecoveredEdges(recoverMapInv, edgesNotRecovered);
+    gf->meshStatistics.refineAllEdges = false;
     return EdgeRecovery::Retry;
   }
 
@@ -1536,6 +1554,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
     RECUR_ITER, repairSelfIntersecting1dMesh, debug);
   if(rec != EdgeRecovery::Recovered) {
     delete m;
+    if(rec == EdgeRecovery::Deferred) return true;
     if(rec == EdgeRecovery::Retry &&
        RECUR_ITER < CTX::instance()->mesh.maxRetries)
       return meshGenerator(gf, RECUR_ITER + 1, repairSelfIntersecting1dMesh,
@@ -1567,7 +1586,13 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
     computeSizeField(m, recoverMap);
   }
 
-  pruneAndCleanupBDS(m, &CLASS_F);
+  if(!pruneAndCleanupBDS(m, &CLASS_F)) {
+    Msg::Error("Surface %d: its boundary does not enclose it in the parametric "
+               "plane", gf->tag());
+    delete m;
+    gf->meshStatistics.status = GFace::FAILED;
+    return false;
+  }
 
   if(debug) debugViews(m, gf, "recovered");
 
@@ -1627,13 +1652,20 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
 
 // this function buils a list of BDS points that are consecutive in one given
 // edge loop, taking care of periodic surfaces with seams; it also fills the
-// recoverMap to link BDS points with mesh nodes
+// recoverMap to link BDS points with mesh nodes. If merged is given, the nodes
+// that cannot be told apart in the parametric plane are merged and the chains
+// of merged nodes returned, for restoreMergedBoundaryNodes. With reorder, a
+// curve that does not follow the previous one in the parametric plane is
+// exchanged with one further in the loop that does: the order of the loop is
+// only topological, and cannot tell apart the curves that leave a point
+// shared by more than two of them (e.g. the pole of a sphere cut there)
 
 static bool buildConsecutiveListOfVertices(
   GFace *gf, GEdgeLoop &gel, std::vector<BDS_Point *> &result,
   SBoundingBox3d &bbox, BDS_Mesh *m,
   std::map<BDS_Point *, MVertex *, PointLessThan> &recoverMap, int &count,
-  int countTot, double tol, bool seam_the_first = false)
+  int countTot, double tol, bool seam_the_first = false,
+  std::vector<std::vector<MVertex *>> *merged = nullptr, bool reorder = false)
 {
   result.clear();
   count = 0;
@@ -1650,6 +1682,31 @@ static bool buildConsecutiveListOfVertices(
   std::vector<GEdgeSigned> signedEdges(gel.begin(), gel.end());
   std::vector<SPoint2> coords;
   std::vector<MVertex *> verts;
+
+  // the side of each seam that the list went along already (1 or -1): when
+  // reordering, the second time has to be on the other one
+  std::map<GEdge *, int> side;
+
+  // does this curve start, by either of its ends, where the list ends?
+  auto follows = [&](GEdge *ge) {
+    Range<double> range = ge->parBoundsOnFace(gf);
+    bool seam = ge->isSeam(gf);
+    auto used = side.find(ge);
+    int done = (used != side.end()) ? used->second : 0;
+    for(int end = 0; end < 2; end++) {
+      GVertex *gv = end ? ge->getEndVertex() : ge->getBeginVertex();
+      if(!gv || gv->mesh_vertices.empty() ||
+         gv->mesh_vertices[0] != verts.back())
+        continue;
+      double t = end ? range.high() : range.low();
+      if((done != 1 &&
+          coords.back().distance(ge->reparamOnFace(gf, t, 1)) < tol) ||
+         (seam && done != -1 &&
+          coords.back().distance(ge->reparamOnFace(gf, t, -1)) < tol))
+        return true;
+    }
+    return false;
+  };
 
 #if 0 // for debugging - don't remove
   printf("curve loop for surface %d\n", gf->tag());
@@ -1677,6 +1734,21 @@ static bool buildConsecutiveListOfVertices(
 
   for(int initial_dir = 0; initial_dir < 2; initial_dir++) {
     if(coords.size()) break; // we succeeded with initial_dir == 0
+
+    signedEdges.assign(gel.begin(), gel.end());
+    side.clear();
+    std::vector<bool> exchanged(signedEdges.size(), false);
+    // put at position i a curve further in the loop that follows the list
+    auto exchange = [&](std::size_t i) {
+      if(!reorder || exchanged[i]) return false;
+      for(std::size_t j = i + 1; j < signedEdges.size(); j++) {
+        if(!follows(signedEdges[j].getEdge())) continue;
+        std::swap(signedEdges[i], signedEdges[j]);
+        exchanged[i] = true;
+        return true;
+      }
+      return false;
+    };
 
     for(std::size_t i = 0; i < signedEdges.size(); i++) {
       std::vector<SPoint2> p, p_alt, p_rev, p_alt_rev;
@@ -1731,6 +1803,7 @@ static bool buildConsecutiveListOfVertices(
             coords = p_rev;
           verts = v_rev;
         }
+        if(seam && reorder) side[ge] = seam_the_first ? -1 : 1;
       }
       else {
         // Preserve the topological junction before choosing the closest
@@ -1753,6 +1826,10 @@ static bool buildConsecutiveListOfVertices(
             coords.insert(coords.end(), p_rev.begin(), p_rev.end());
             verts.pop_back();
             verts.insert(verts.end(), v_rev.begin(), v_rev.end());
+          }
+          else if(exchange(i)) {
+            i--;
+            continue;
           }
           else {
             Msg::Debug("Distances (%g, %g) in parametric space larger than "
@@ -1777,11 +1854,19 @@ static bool buildConsecutiveListOfVertices(
                            coords.back().distance(p_alt.front()) : incompatible;
           double dist4 = verts.back() == v_rev.front() ?
                            coords.back().distance(p_alt_rev.front()) : incompatible;
+          auto used = side.find(ge);
+          if(used != side.end()) {
+            if(used->second == 1)
+              dist1 = dist2 = incompatible;
+            else
+              dist3 = dist4 = incompatible;
+          }
           if(dist1 < dist2 && dist1 < dist3 && dist1 < dist4 && dist1 < tol) {
             coords.pop_back();
             coords.insert(coords.end(), p.begin(), p.end());
             verts.pop_back();
             verts.insert(verts.end(), v.begin(), v.end());
+            if(reorder) side[ge] = 1;
           }
           else if(dist2 < dist1 && dist2 < dist3 && dist2 < dist4 &&
                   dist2 < tol) {
@@ -1789,6 +1874,7 @@ static bool buildConsecutiveListOfVertices(
             coords.insert(coords.end(), p_rev.begin(), p_rev.end());
             verts.pop_back();
             verts.insert(verts.end(), v_rev.begin(), v_rev.end());
+            if(reorder) side[ge] = 1;
           }
           else if(dist3 < dist1 && dist3 < dist2 && dist3 < dist4 &&
                   dist3 < tol) {
@@ -1796,6 +1882,7 @@ static bool buildConsecutiveListOfVertices(
             coords.insert(coords.end(), p_alt.begin(), p_alt.end());
             verts.pop_back();
             verts.insert(verts.end(), v.begin(), v.end());
+            if(reorder) side[ge] = -1;
           }
           else if(dist4 < dist1 && dist4 < dist2 && dist4 < dist3 &&
                   dist4 < tol) {
@@ -1803,6 +1890,11 @@ static bool buildConsecutiveListOfVertices(
             coords.insert(coords.end(), p_alt_rev.begin(), p_alt_rev.end());
             verts.pop_back();
             verts.insert(verts.end(), v_rev.begin(), v_rev.end());
+            if(reorder) side[ge] = -1;
+          }
+          else if(exchange(i)) {
+            i--;
+            continue;
           }
           else {
             Msg::Debug("Distances (%g, %g, %g, %g) in parametric space larger "
@@ -1847,6 +1939,43 @@ static bool buildConsecutiveListOfVertices(
                gf->tag(), verts.front()->getNum(), verts.back()->getNum(),
                dist, tol);
     return false;
+  }
+
+  // Merge the runs of consecutive nodes that fall within the tolerance of the
+  // first node of the run. The tolerance is the mismatch between the pcurves
+  // at the junctions of the curves: at that scale the pcurves of tiny curves
+  // fold over their neighbours, and the loop intersects itself
+  if(merged) {
+    std::size_t n = verts.size(), start = n;
+    for(std::size_t i = 0; i < n && start == n; i++)
+      if(coords[i].distance(coords[(i + n - 1) % n]) >= tol) start = i;
+    if(start < n) {
+      // start the loop on a node away from the previous one
+      std::rotate(coords.begin(), coords.begin() + start, coords.end());
+      std::rotate(verts.begin(), verts.begin() + start, verts.end());
+      std::vector<SPoint2> c;
+      std::vector<std::vector<MVertex *>> runs;
+      for(std::size_t i = 0; i < n; i++) {
+        if(i && coords[i].distance(c.back()) < tol)
+          runs.back().push_back(verts[i]);
+        else {
+          c.push_back(coords[i]);
+          runs.push_back({verts[i]});
+        }
+      }
+      coords = c;
+      verts.clear();
+      for(std::size_t i = 0; i < runs.size(); i++) {
+        verts.push_back(runs[i].front());
+        if(runs[i].size() > 1) {
+          Msg::Info("Surface %d: merging %zu boundary nodes closer than %g in "
+                    "the parametric plane",
+                    gf->tag(), runs[i].size(), tol);
+          merged->push_back(runs[i]);
+          merged->back().push_back(runs[(i + 1) % runs.size()].front());
+        }
+      }
+    }
   }
 
   std::map<BDS_Point *, MVertex *, PointLessThan> recoverMapLocal;
@@ -1920,6 +2049,42 @@ static GEdge *getGEdge(GFace *gf, MVertex *v1, MVertex *v2)
   return nullptr;
 }
 
+// Put back the boundary nodes merged by buildConsecutiveListOfVertices. Each
+// chain holds the node that was kept, the nodes that were removed and the node
+// that follows them in the loop: the triangle on the boundary edge from the
+// kept node to the following one is replaced by a fan from its third node
+static bool restoreMergedBoundaryNodes(
+  GFace *gf, const std::vector<std::vector<MVertex *>> &merged)
+{
+  for(auto &c : merged) {
+    MVertex *kept = c.front(), *next = c.back();
+    MTriangle *found = nullptr;
+    int n = 0, ik = 0, in = 0;
+    for(MTriangle *t : gf->triangles) {
+      int i = -1, j = -1;
+      for(int k = 0; k < 3; k++) {
+        if(t->getVertex(k) == kept) i = k;
+        if(t->getVertex(k) == next) j = k;
+      }
+      if(i < 0 || j < 0) continue;
+      found = t;
+      ik = i;
+      in = j;
+      n++;
+    }
+    if(n != 1) return false;
+    for(std::size_t k = 0; k + 2 < c.size(); k++) {
+      MVertex *v[3] = {found->getVertex(0), found->getVertex(1),
+                       found->getVertex(2)};
+      v[ik] = c[k];
+      v[in] = c[k + 1];
+      gf->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
+    }
+    found->setVertex(ik, c[c.size() - 2]);
+  }
+  return true;
+}
+
 static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
                                   bool repairSelfIntersecting1dMesh,
                                   bool debug = true)
@@ -1933,9 +2098,6 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
 
   std::map<BDS_Point *, MVertex *, PointLessThan> recoverMap;
   std::multimap<MVertex *, BDS_Point *> recoverMultiMapInv;
-
-  std::vector<SPoint2> true_boundary;
-  trueBoundary(gf, true_boundary, debug);
 
   Range<double> rangeU = gf->parBounds(0);
   Range<double> rangeV = gf->parBounds(1);
@@ -1952,6 +2114,11 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
   std::vector<std::vector<BDS_Point *>> edgeLoops_BDS;
   SBoundingBox3d bbox;
   int nbPointsTotal = 0;
+  // the boundary nodes are only merged once the 1D mesh was found to
+  // intersect itself
+  std::vector<std::vector<MVertex *>> merged;
+  std::vector<std::vector<MVertex *>> *toMerge =
+    (RECUR_ITER > 0) ? &merged : nullptr;
   {
     for(auto it = gf->edgeLoops.begin(); it != gf->edgeLoops.end(); it++) {
       std::vector<BDS_Point *> edgeLoop_BDS;
@@ -1961,17 +2128,24 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
       for(int i = 0; i < 6; i++) {
         if(buildConsecutiveListOfVertices(gf, *it, edgeLoop_BDS, bbox, m,
                                           recoverMap, nbPointsLocal,
-                                          nbPointsTotal, fact[i] * LC2D)) {
+                                          nbPointsTotal, fact[i] * LC2D, false,
+                                          toMerge)) {
           ok = true;
           break;
         }
         if(buildConsecutiveListOfVertices(
              gf, *it, edgeLoop_BDS, bbox, m, recoverMap, nbPointsLocal,
-             nbPointsTotal, fact[i] * LC2D, true)) {
+             nbPointsTotal, fact[i] * LC2D, true, toMerge)) {
           ok = true;
           break;
         }
       }
+      // last resort: let the parametric plane order the curves of the loop
+      for(int i = 0; i < 6 && !ok; i++)
+        for(int seamFirst = 0; seamFirst < 2 && !ok; seamFirst++)
+          ok = buildConsecutiveListOfVertices(
+            gf, *it, edgeLoop_BDS, bbox, m, recoverMap, nbPointsLocal,
+            nbPointsTotal, fact[i] * LC2D, seamFirst, toMerge, true);
       if(!ok) {
         gf->meshStatistics.status = GFace::FAILED;
         Msg::Error("The 1D mesh seems not to be forming a closed loop");
@@ -1997,6 +2171,48 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
       INV[it->second] = it->first;
     }
   }
+
+  // A seam that is only once in the loops bounds the surface on one side
+  // only, the other side being in a part of the periodic surface that was cut
+  // away (a torus cut through the crossing of its two seams): find that side
+  // from the first mesh edge of the seam in the loops, so that the other one
+  // is left out of the boundary used to tell if a point is in the surface
+  std::map<GEdge *, int> seamSide;
+  for(GEdge *ge : gf->edges()) {
+    if(!ge->isSeam(gf) || ge->lines.empty() || seamSide.count(ge)) continue;
+    int n = 0;
+    for(auto &loop : gf->edgeLoops) n += loop.count(ge);
+    if(n != 1) continue;
+    Range<double> range = ge->parBoundsOnFace(gf);
+    MVertex *v[2] = {ge->lines[0]->getVertex(0), ge->lines[0]->getVertex(1)};
+    double t[2];
+    for(int i = 0; i < 2; i++) {
+      if(v[i]->onWhat() == ge)
+        v[i]->getParameter(0, t[i]);
+      else
+        t[i] = (ge->getBeginVertex() &&
+                ge->getBeginVertex()->mesh_vertices[0] == v[i]) ?
+                 range.low() : range.high();
+    }
+    for(auto &loop : edgeLoops_BDS) {
+      for(std::size_t j = 0; j < loop.size(); j++) {
+        BDS_Point *p[2] = {loop[j], loop[(j + 1) % loop.size()]};
+        MVertex *w[2] = {recoverMap[p[0]], recoverMap[p[1]]};
+        if(w[0] == v[1] && w[1] == v[0]) std::swap(p[0], p[1]);
+        else if(w[0] != v[0] || w[1] != v[1]) continue;
+        double d[2] = {0., 0.};
+        for(int i = 0; i < 2; i++) {
+          SPoint2 uv(p[i]->u, p[i]->v);
+          d[0] += uv.distance(ge->reparamOnFace(gf, t[i], 1));
+          d[1] += uv.distance(ge->reparamOnFace(gf, t[i], -1));
+        }
+        seamSide[ge] = (d[0] <= d[1]) ? 1 : -1;
+      }
+    }
+  }
+
+  std::vector<SPoint2> true_boundary;
+  trueBoundary(gf, true_boundary, debug, &seamSide);
 
   if(nbPointsTotal < 3) {
     Msg::Warning("Mesh generation of surface %d skipped: only %d nodes on "
@@ -2079,12 +2295,22 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
   }
 
   if(doItAgain) {
-    // Stop before serialization or any change to shared curve meshes. In
-    // particular, do not invalidate already meshed neighboring surfaces.
-    if(!CTX::instance()->mesh.repairSelfIntersecting1dMesh) {
-      Msg::Warning("Surface %d: boundary recovery failed; keeping the 1D mesh "
-                   "without subdivision (Mesh.RepairSelfIntersecting1DMesh=0)",
-                   gf->tag());
+    std::ostringstream sstream;
+    for(auto itr = edgesNotRecovered.begin(); itr != edgesNotRecovered.end();
+        ++itr)
+      sstream << " " << itr->ge->tag() << "("
+              << (itr->ge->getBeginVertex() ? itr->ge->getBeginVertex()->tag() :
+                                              -1)
+              << ","
+              << (itr->ge->getEndVertex() ? itr->ge->getEndVertex()->tag() : -1)
+              << ")";
+    // before the serialization and any change to the curve meshes shared
+    // with the surfaces meshed already
+    if(!repairSelfIntersecting1dMesh) {
+      Msg::Error("Surface %d: %d intersections in the 1D mesh (curves%s), "
+                 "not subdivided%s",
+                 gf->tag(), edgesNotRecovered.size(), sstream.str().c_str(),
+                 noSubdivisionHint());
       gf->meshStatistics.status = GFace::FAILED;
       delete m;
       return false;
@@ -2100,42 +2326,41 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
       return true;
     }
 
-    if(!gf->meshStatistics.refineAllEdges) {
-      std::ostringstream sstream;
-      for(auto itr = edgesNotRecovered.begin(); itr != edgesNotRecovered.end();
-          ++itr)
-        sstream
-          << " " << itr->ge->tag() << "("
-          << (itr->ge->getBeginVertex() ? itr->ge->getBeginVertex()->tag() : -1)
-          << ","
-          << (itr->ge->getEndVertex() ? itr->ge->getEndVertex()->tag() : -1)
-          << ")";
+    // an edge that is on no curve (e.g. a degenerate edge at the pole of a
+    // sphere) cannot be split: trying again would fail the same way
+    if(edgesNotRecovered.empty() && !gf->meshStatistics.refineAllEdges) {
+      Msg::Error("Surface %d: could not recover a boundary edge in the "
+                 "initial mesh",
+                 gf->tag());
+      gf->meshStatistics.status = GFace::FAILED;
+      delete m;
+      return false;
+    }
+
+    if(!gf->meshStatistics.refineAllEdges)
       Msg::Info(":-( There are %d intersections in the 1D mesh (curves%s)",
                 edgesNotRecovered.size(), sstream.str().c_str());
-    }
-    if(repairSelfIntersecting1dMesh) {
-      Msg::Info("8-| Splitting those edges and trying again");
-      if(gf->meshStatistics.refineAllEdges) {
-        std::vector<GEdge *> eds = gf->edges();
-        edgesNotRecovered.clear();
-        for(size_t i = 0; i < eds.size(); i++) {
-          const std::size_t NN = eds[i]->lines.size() ? 1 : 0;
-          for(size_t j = 0; j < NN; j++) {
-            MVertex *v1 = eds[i]->lines[j]->getVertex(0);
-            MVertex *v2 = eds[i]->lines[j]->getVertex(1);
-            auto itp1 = recoverMultiMapInv.lower_bound(v1);
-            auto itp2 = recoverMultiMapInv.lower_bound(v2);
-            if(itp1 != recoverMultiMapInv.end() &&
-               itp2 != recoverMultiMapInv.end())
-              edgesNotRecovered.insert(
-                EdgeToRecover(itp1->second->iD, itp2->second->iD, eds[i]));
-          }
+    Msg::Info("8-| Splitting those edges and trying again");
+    if(gf->meshStatistics.refineAllEdges) {
+      std::vector<GEdge *> eds = gf->edges();
+      edgesNotRecovered.clear();
+      for(size_t i = 0; i < eds.size(); i++) {
+        const std::size_t NN = eds[i]->lines.size() ? 1 : 0;
+        for(size_t j = 0; j < NN; j++) {
+          MVertex *v1 = eds[i]->lines[j]->getVertex(0);
+          MVertex *v2 = eds[i]->lines[j]->getVertex(1);
+          auto itp1 = recoverMultiMapInv.lower_bound(v1);
+          auto itp2 = recoverMultiMapInv.lower_bound(v2);
+          if(itp1 != recoverMultiMapInv.end() &&
+             itp2 != recoverMultiMapInv.end())
+            edgesNotRecovered.insert(
+              EdgeToRecover(itp1->second->iD, itp2->second->iD, eds[i]));
         }
       }
-      remeshUnrecoveredEdges(recoverMultiMapInv, edgesNotRecovered,
-                             gf->meshStatistics.refineAllEdges);
-      gf->meshStatistics.refineAllEdges = false;
     }
+    remeshUnrecoveredEdges(recoverMultiMapInv, edgesNotRecovered,
+                           gf->meshStatistics.refineAllEdges);
+    gf->meshStatistics.refineAllEdges = false;
     // delete the mesh
     if(debug) {
       char name[245];
@@ -2160,7 +2385,13 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
 
   colorExteriorTriangles(m, &CLASS_F, &CLASS_EXTERIOR, false);
 
-  pruneAndCleanupBDS(m, &CLASS_F);
+  if(!pruneAndCleanupBDS(m, &CLASS_F)) {
+    Msg::Error("Surface %d: its boundary does not enclose it in the parametric "
+               "plane", gf->tag());
+    delete m;
+    gf->meshStatistics.status = GFace::FAILED;
+    return false;
+  }
 
   if(debug) debugViews(m, gf, "recovered");
 
@@ -2188,10 +2419,10 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     if(debug) debugViews(m, gf, "phase4");
 
     if(gf->meshStatistics.status == GFace::FAILED &&
-       !CTX::instance()->mesh.repairSelfIntersecting1dMesh) {
-      Msg::Warning("Surface %d: meshing failed; keeping the 1D mesh without "
-                   "subdivision (Mesh.RepairSelfIntersecting1DMesh=0)",
-                   gf->tag());
+       !repairSelfIntersecting1dMesh) {
+      Msg::Error("Surface %d: meshing failed, its bounding curves not "
+                 "subdivided%s",
+                 gf->tag(), noSubdivisionHint());
       delete m;
       return false;
     }
@@ -2301,7 +2532,16 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
   delete m;
 
   if(!repairDuplicateTriangles(gf)) {
-    Msg::Error("Surface %d has duplicate triangles", gf->tag());
+    Msg::Error("Surface %d has duplicate triangles: the mesh size is too "
+               "large for this periodic surface",
+               gf->tag());
+    gf->meshStatistics.status = GFace::FAILED;
+    return false;
+  }
+
+  if(!restoreMergedBoundaryNodes(gf, merged)) {
+    Msg::Error("Surface %d: could not restore the merged boundary nodes",
+               gf->tag());
     gf->meshStatistics.status = GFace::FAILED;
     return false;
   }
@@ -2390,9 +2630,7 @@ void meshGFace::operator()(GFace *gf, bool print)
   dem(gf);
 
   if(MeshTransfiniteSurface(gf)) {
-    if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE) {
-      directions_storage(gf);
-    }
+    if(CTX::instance()->mesh.hexDominant()) directions_storage(gf);
     return;
   }
   if(MeshExtrudedSurface(gf)) return;
@@ -2407,9 +2645,7 @@ void meshGFace::operator()(GFace *gf, bool print)
                 gf->getTypeString().c_str(), gf->getMeshMaster()->tag());
       copyMesh(gff, gf);
       gf->meshStatistics.status = GFace::DONE;
-      if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE) {
-        directions_storage(gf);
-      }
+      if(CTX::instance()->mesh.hexDominant()) directions_storage(gf);
       return;
     }
     else
@@ -2422,18 +2658,12 @@ void meshGFace::operator()(GFace *gf, bool print)
   // duration of the call: both generators and a good deal of the code they
   // call read Mesh.Algorithm directly rather than the algorithm of the face.
   //
-  // In practice this never fires when meshing through GenerateMesh(): it
-  // builds a QuadqsContextUpdater before meshing anything, and that already
-  // moves Mesh.Algorithm off QUAD_QUASI_STRUCT. Kept for the paths that reach
-  // a face some other way, but with the restore tied to the scope: doing it by
-  // hand at the end of the function leaked the changed value whenever the
-  // mesher threw.
-  //
-  // Note that this is not thread safe either way. Faces are meshed in parallel
-  // (the "omp parallel for" over faces in Generator.cpp), so a thread changing
-  // the option races with the others reading it. Passing the effective
-  // algorithm down instead would fix that, but it reaches well beyond this
-  // file.
+  // This never fires when meshing through GenerateMesh(): Mesh2D() in
+  // Generator.cpp switches the option once before meshing the faces in
+  // parallel, as a switch here in each face races between the threads. Kept
+  // for the paths that reach a face some other way, with the restore tied to
+  // the scope: doing it by hand at the end of the function leaked the changed
+  // value whenever the mesher threw.
   RestoreOptionAtEndOfScope restoreAlgo2d(&CTX::instance()->mesh.algo2d);
   if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT)
     CTX::instance()->mesh.algo2d = ALGO_2D_PACK_PRLGRMS;
@@ -2472,23 +2702,28 @@ void meshGFace::operator()(GFace *gf, bool print)
 
   quadMeshRemoveHalfOfOneDMesh halfmesh(gf, periodic);
 
+  // (the curve meshes are subdivided when their recovery fails, unless the
+  // caller or the user said not to)
+  const bool repair = repairSelfIntersecting1dMesh &&
+                      CTX::instance()->mesh.repairSelfIntersecting1dMesh;
+
   if(periodic) {
     // the generators turn debug output on themselves, from
     // CTX::instance()->debugSurface
-    if(!meshGeneratorPeriodic(gf, 0, repairSelfIntersecting1dMesh, false)) {
+    if(!meshGeneratorPeriodic(gf, 0, repair, false)) {
       Msg::Error("Impossible to mesh periodic surface %d", gf->tag());
       gf->meshStatistics.status = GFace::FAILED;
     }
   }
   else {
-    meshGenerator(gf, 0, repairSelfIntersecting1dMesh,
+    meshGenerator(gf, 0, repair,
                   (gf->getMeshingAlgo() == ALGO_2D_INITIAL_ONLY) ?
                     MeshExtent::InitialOnly :
                     MeshExtent::Full,
                   false, nullptr);
   }
 
-  if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE) { directions_storage(gf); }
+  if(CTX::instance()->mesh.hexDominant()) directions_storage(gf);
 
   Msg::Debug("Type %d %d triangles generated, %d internal nodes",
              gf->geomType(), gf->triangles.size(), gf->mesh_vertices.size());

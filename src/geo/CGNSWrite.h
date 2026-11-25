@@ -13,6 +13,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include "GmshConfig.h"
 #include "CGNSCommon.h"
 
 #if defined(HAVE_LIBCGNS)
