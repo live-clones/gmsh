@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include "gmsh.h"
+#include "core/MatTetInterior.h"
 
 class GModel;
 
@@ -21,9 +22,20 @@ struct Mesh {
 
 enum class Stage { Filtered, Projected, Extended };
 
+// Raw MAT. Legacy: dual faces whose circumcentres have a winding number above
+// the threshold, coincident circumcentres merged. Tet: dual faces of the
+// Delaunay edges surrounded by interior tetrahedra only (integer winding at
+// the barycentre), with a certificate of the boundary of their union.
+enum class RawMode { Legacy, Tet };
+// Legacy: branch classification by CAD patches. Collapse: erosion thickness
+// and homotopy-preserving collapse (needs RawMode::Tet). None: the raw MAT.
+enum class FilterMode { Legacy, Collapse, None };
+
 struct Options {
   double thickness = 1.;
   double windingThreshold = .5;
+  RawMode raw = RawMode::Legacy;
+  FilterMode filter = FilterMode::Legacy;
   bool project = false;
   bool legacyCleanup = true;
   Stage stopAfter = Stage::Filtered;
@@ -53,6 +65,7 @@ struct ExtensionReport {
 struct Result {
   Mesh skin, raw, filtered, projected, extended;
   Topology filteredTopology;
+  matgmsh::tet::Report tet; // RawMode::Tet only
   std::string projectionStatus = "disabled";
   std::string projectionMessage;
   ExtensionReport extension;

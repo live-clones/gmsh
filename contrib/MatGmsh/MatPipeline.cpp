@@ -64,9 +64,55 @@ struct MatNativeAccess {
     return mesh;
   }
 
-  static matgmsh_native::Mesh mesh(const matGmsh &mat)
+  // Interior tetrahedra, their unmerged dual complex and its certificate.
+  static matgmsh::tet::Report tetRaw(const matGmsh &mat, unsigned threads,
+                                     matgmsh::tet::Dual &dual)
+  {
+    const std::size_t sites = mat.del.seeds.size() / 3;
+    const std::vector<int> skin(mat.del.triangles.begin(), mat.del.triangles.end());
+    std::vector<int> tets(mat.del.tetrahedra.size());
+    for(std::size_t i = 0; i < tets.size(); ++i) tets[i] = int(mat.del.tetrahedra[i]) - 1;
+    const auto classification = matgmsh::tet::classify(mat.del.seeds, skin, tets, threads);
+    dual = matgmsh::tet::buildDual(tets, classification.interior, sites);
+    return matgmsh::tet::certify(skin, tets, classification, dual, sites);
+  }
+
+  // The polygons of the unmerged dual become the Voronoi faces, the kept ones
+  // (all if keep is null) coloured by sheet. Coincident circumcentres are
+  // merged in this copy only: the dual complex itself is never modified.
+  static void select(matGmsh &mat, const matgmsh::tet::Dual &dual,
+                     const std::vector<unsigned char> *keep)
+  {
+    mat.vor.faces.clear();
+    mat.vor.faces.reserve(dual.size());
+    std::vector<char> selected(dual.size(), 1);
+    for(std::size_t p = 0; p < dual.size(); ++p) {
+      std::vector<int> cycle(dual.cycles.begin() + dual.offsets[p],
+                             dual.cycles.begin() + dual.offsets[p + 1]);
+      mat.vor.faces.emplace_back(matGmshEdge(dual.sitePair[p][0], dual.sitePair[p][1]), cycle);
+      if(keep) selected[p] = (*keep)[p] != 0;
+    }
+    mat.colorSelectedVoronoiFaces(selected);
+  }
+
+  // With flat non-null, triangles of exactly zero area are counted there and
+  // left out instead of making the mesh invalid.
+  static matgmsh_native::Mesh mesh(const matGmsh &mat, std::size_t *flat = nullptr)
   {
     matgmsh_native::Mesh mesh;
+    const auto skip = [&](int a, int b, int c) {
+      if(!flat) return false;
+      const double *p = &mesh.xyz[3 * a], *q = &mesh.xyz[3 * b], *r = &mesh.xyz[3 * c];
+      double u[3], w[3], n2 = 0.;
+      for(int k = 0; k < 3; ++k) { u[k] = q[k] - p[k]; w[k] = r[k] - p[k]; }
+      for(int k = 0; k < 3; ++k) {
+        const double n = u[(k+1)%3] * w[(k+2)%3] - u[(k+2)%3] * w[(k+1)%3];
+        n2 += n * n;
+      }
+      if(std::isfinite(n2) && n2 != 0.) return false;
+      ++*flat;
+      return true;
+    };
     std::map<int, int> index;
     auto vertex = [&](int old) {
       auto p = index.emplace(old, static_cast<int>(mesh.xyz.size() / 3));
@@ -91,6 +137,7 @@ struct MatNativeAccess {
       std::vector<int> ids;
       for(int v : poly) ids.push_back(vertex(v));
       if(ids.size() == 3) {
+        if(skip(ids[0], ids[1], ids[2])) continue;
         mesh.triangles.insert(mesh.triangles.end(), ids.begin(), ids.end());
         mesh.branch.push_back(mat.vor.faceColors[f]);
         mesh.parent.push_back(f);
@@ -99,6 +146,7 @@ struct MatNativeAccess {
       const int c = mesh.xyz.size() / 3;
       mesh.xyz.insert(mesh.xyz.end(), center.begin(), center.end());
       for(std::size_t i = 0; i < ids.size(); ++i) {
+        if(skip(ids[i], ids[(i+1)%ids.size()], c)) continue;
         mesh.triangles.insert(mesh.triangles.end(), {ids[i], ids[(i+1)%ids.size()], c});
         mesh.branch.push_back(mat.vor.faceColors[f]);
         mesh.parent.push_back(f);
@@ -273,13 +321,35 @@ bool compute(GModel *source, const Options &options, Result &result, std::string
     std::vector<std::vector<std::size_t>> elementTags, nodeTags;
     gmsh::model::mesh::getElements(types, elementTags, nodeTags, 3);
     if(!types.empty()) throw std::runtime_error("Use a surface-only input mesh, without volume nodes");
+    const bool tetRaw = options.raw == RawMode::Tet;
+    if(options.filter == FilterMode::Collapse && !tetRaw)
+      throw std::runtime_error("The collapse filter needs the tetrahedron-based raw MAT");
+    if(options.filter == FilterMode::Legacy && tetRaw)
+      throw std::runtime_error("The legacy filter needs the legacy raw MAT");
     auto start = Clock::now();
     matGmsh mat;
-    mat.computeVoronoi();
-    mat.computeVoronoiWindingNumbersAtCircumcenters();
-    mat.colorVoronoiFaces(options.windingThreshold);
-    result.skin = MatNativeAccess::skin(mat);
-    result.raw = MatNativeAccess::mesh(mat);
+    matgmsh::tet::Dual dual;
+    std::size_t flat = 0;
+    if(tetRaw) {
+      double configured = 1.;
+      gmsh::option::getNumber("General.NumThreads", configured);
+      const unsigned threads = std::isfinite(configured) && configured >= 1. ?
+        static_cast<unsigned>(std::min(configured, 256.)) : 1u;
+      mat.computeVoronoi(false);
+      result.tet = MatNativeAccess::tetRaw(mat, threads, dual);
+      if(!result.tet.certified)
+        result.warnings.push_back("The certificate of the interior tetrahedra failed: the raw MAT may not have the topology of the solid. See \"tet\" in the report.");
+      MatNativeAccess::select(mat, dual, nullptr);
+      result.skin = MatNativeAccess::skin(mat);
+      result.raw = MatNativeAccess::mesh(mat, &flat);
+    }
+    else {
+      mat.computeVoronoi();
+      mat.computeVoronoiWindingNumbersAtCircumcenters();
+      mat.colorVoronoiFaces(options.windingThreshold);
+      result.skin = MatNativeAccess::skin(mat);
+      result.raw = MatNativeAccess::mesh(mat);
+    }
     result.rawSeconds = elapsed(start);
     start = Clock::now();
     CadSurfacePatchAnalyzer::Result patches;
@@ -299,12 +369,20 @@ bool compute(GModel *source, const Options &options, Result &result, std::string
       }
       result.warnings.push_back("Surface parametrization is unavailable: each source face is a separate support patch; normal-based filtering may retain additional MAT material.");
     }
-    MatNativeAccess::filter(mat, patches, options.legacyCleanup);
-    result.filtered = MatNativeAccess::mesh(mat);
+    if(options.filter == FilterMode::Legacy) {
+      MatNativeAccess::filter(mat, patches, options.legacyCleanup);
+      result.filtered = MatNativeAccess::mesh(mat);
+    }
+    else if(options.filter == FilterMode::Collapse)
+      throw std::runtime_error("The collapse filter is not available yet");
+    else
+      result.filtered = result.raw;
+    if(flat)
+      result.warnings.push_back(std::to_string(flat) + " triangles of zero area were left out of the MAT meshes.");
     if(!validateMesh(result.filtered, error)) return false;
     result.filteredTopology = topology(result.filtered);
     result.filterSeconds = elapsed(start);
-    if(options.legacyCleanup)
+    if(options.legacyCleanup && options.filter == FilterMode::Legacy)
       result.warnings.push_back("Legacy cleanup keeps the largest component and removes closed branch surfaces; use explicit keep-components policy to disable it.");
     if(options.stopAfter == Stage::Filtered) return true;
     start = Clock::now();

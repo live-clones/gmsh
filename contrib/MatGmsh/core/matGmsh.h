@@ -15,10 +15,16 @@ class matGmsh {
   friend struct MatNativeAccess;
 public:
   matGmsh() = default;
-  void computeVoronoi();
+  // Without dual faces only the sites, the Delaunay tetrahedra and their
+  // circumcentres are computed.
+  void computeVoronoi(bool dualFaces = true);
   void setVoronoiSurfaceMeshInput(const std::string &filename) { voronoiSurfaceMeshInput = filename; }
   void computeVoronoiWindingNumbersAtCircumcenters(int order = 2, float accuracyScale = 2.f, bool useDoublePrecision = false);
   void colorVoronoiFaces(double threshold);
+  // Merges the coincident circumcentres joined by an edge of the selected
+  // faces, then colours these faces by sheet (cut at edges of valence != 2).
+  // Faces left with fewer than three vertices are deselected.
+  void colorSelectedVoronoiFaces(std::vector<char> &selected);
   void rebuildFilteredTopology(bool preserveExistingBranches = true);
   void projectRegularBranchVerticesToLocalMidSurface(int iterations = 8, double relativeTolerance = 1.e-8, const std::map<int, std::set<int>> *patchesByCadFaceTag = nullptr, bool storeDiagnostics = true);
   void projectRegularBranchVerticesToLocalMidSurfacePasses(int passes, int iterations = 8, double relativeTolerance = 1.e-8, const std::map<int, std::set<int>> *patchesByCadFaceTag = nullptr, bool storeDiagnostics = true);

@@ -26,6 +26,16 @@ std::string quote(const std::string &s)
   }
   return out.str() + '"';
 }
+void writeSurface(std::ostream &out, const matgmsh::tet::Surface &s)
+{
+  out << "{\"vertices\":" << s.vertices << ",\"edges\":" << s.edges << ",\"faces\":" << s.faces
+      << ",\"components\":" << s.components << ",\"euler\":" << s.euler
+      << ",\"closed_manifold\":" << (s.closedManifold ? "true" : "false")
+      << ",\"oriented\":" << (s.oriented ? "true" : "false")
+      << ",\"bad_edges\":" << s.badEdges << ",\"bad_vertices\":" << s.badVertices
+      << ",\"bad_orientations\":" << s.badOrientations
+      << ",\"missing_sites\":" << s.missingSites << '}';
+}
 void writeTopology(std::ostream &out, const Topology &t)
 {
   out << "{\"vertices\":" << t.vertices << ",\"triangles\":" << t.triangles
@@ -123,7 +133,29 @@ bool writeReport(const Result &r, const Options &o, const std::string &filename,
     if(!first) f << ','; first = false;
     f << quote(item.first) << ':'; writeTopology(f, topology(*item.second));
   }
-  f << "},\n\"extension\":{\"complete\":" << (r.extension.complete ? "true" : "false")
+  f << "},\n\"raw_mode\":" << (o.raw == RawMode::Tet ? "\"tet\"" : "\"legacy\"")
+    << ",\n\"filter_mode\":" << (o.filter == FilterMode::Collapse ? "\"collapse\"" :
+                                  o.filter == FilterMode::None ? "\"none\"" : "\"legacy\"");
+  if(r.tet.computed) {
+    const auto &t = r.tet;
+    f << ",\n\"tet\":{\"certified\":" << (t.certified ? "true" : "false")
+      << ",\"sites\":" << t.sites << ",\"tetrahedra\":" << t.tetrahedra
+      << ",\"interior\":" << t.interior << ",\"zero_volume\":" << t.zeroVolume
+      << ",\"exact_contact\":" << t.exactContact
+      << ",\"numerical_contact\":" << t.numericalContact << ",\"unresolved\":" << t.unresolved
+      << ",\"polygons\":" << t.polygons << ",\"hull_edges\":" << t.hullEdges
+      << ",\"invalid_links\":" << t.invalidLinks
+      << ",\"boundary_faces_over_valence_two\":" << t.boundaryFacesOverValenceTwo
+      << ",\n\"skin\":";
+    writeSurface(f, t.skin);
+    f << ",\n\"boundary\":";
+    writeSurface(f, t.boundary);
+    f << ",\n\"dual\":{\"vertices\":" << t.dual.vertices << ",\"edges\":" << t.dual.edges
+      << ",\"faces\":" << t.dual.faces << ",\"components\":" << t.dual.components
+      << ",\"free_edges\":" << t.dual.freeEdges << ",\"junction_edges\":" << t.dual.junctionEdges
+      << ",\"euler\":" << t.dual.euler << "}}";
+  }
+  f << ",\n\"extension\":{\"complete\":" << (r.extension.complete ? "true" : "false")
     << ",\"message\":" << quote(r.extension.message)
     << ",\"added_triangles\":" << r.extension.addedTriangles << ",\"fronts\":[";
   first = true;

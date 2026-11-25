@@ -13,7 +13,8 @@ int main(int argc, char **argv)
       std::cerr << "Usage: gmshMat input.step|input.msh --thickness h --output directory\n"
                    "  [--stage filtered|projected|extended] [--project] [--mesh-size s]\n"
                    "  [--source-mesh cached.msh] [--keep-components] [--threads n]\n"
-                   "  [--extension-length L] [--extension-layers n]\n";
+                   "  [--extension-length L] [--extension-layers n]\n"
+                   "  [--raw legacy|tet] [--filter legacy|collapse|none]\n";
       return 1;
     }
     matgmsh_native::Options options;
@@ -32,6 +33,19 @@ int main(int argc, char **argv)
       else if(key == "--keep-components") options.legacyCleanup = false;
       else if(key == "--extension-length") options.extensionLength = std::stod(value());
       else if(key == "--extension-layers") options.extensionLayers = std::stoi(value());
+      else if(key == "--raw") {
+        const std::string mode = value();
+        if(mode == "legacy") options.raw = matgmsh_native::RawMode::Legacy;
+        else if(mode == "tet") options.raw = matgmsh_native::RawMode::Tet;
+        else throw std::runtime_error("Unknown raw mode " + mode);
+      }
+      else if(key == "--filter") {
+        const std::string mode = value();
+        if(mode == "legacy") options.filter = matgmsh_native::FilterMode::Legacy;
+        else if(mode == "collapse") options.filter = matgmsh_native::FilterMode::Collapse;
+        else if(mode == "none") options.filter = matgmsh_native::FilterMode::None;
+        else throw std::runtime_error("Unknown filter mode " + mode);
+      }
       else if(key == "--stage") {
         const std::string stage = value();
         if(stage == "filtered") options.stopAfter = matgmsh_native::Stage::Filtered;

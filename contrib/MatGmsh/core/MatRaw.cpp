@@ -611,6 +611,16 @@ void matGmsh::colorVoronoiFaces(double threshold)
     }
   }
 
+  colorSelectedVoronoiFaces(isInternal);
+}
+
+void matGmsh::colorSelectedVoronoiFaces(std::vector<char> &isInternal)
+{
+  const int nf = vor.faces.size();
+  if(isInternal.size() != vor.faces.size())
+    throw std::runtime_error("One selection flag per Voronoi face is expected");
+  vor.faceColors.assign(nf, -1);
+
   // Distinct Delaunay tetrahedra can have numerically identical
   // circumcentres.  Merge only endpoints of actual edges of the interior MAT
   // polygons: a global coordinate weld could join unrelated sheets that
@@ -738,7 +748,7 @@ void matGmsh::colorVoronoiFaces(double threshold)
   }
 
 }
-void matGmsh::computeVoronoi()
+void matGmsh::computeVoronoi(bool dualFaces)
 {
   ScopedTimer timer(*this, "computeVoronoi");
   vor.vertices.clear();
@@ -770,6 +780,11 @@ void matGmsh::computeVoronoi()
   canonicalizeTetrahedra(del.tetrahedra);
   orientSurfaceTriangles();
   computeVoronoiVertices();
+  if(!dualFaces) {
+    std::cout << "Gmsh Delaunay: points=" << del.seeds.size() / 3
+              << " tetrahedra=" << del.tetrahedra.size() / 4 << '\n';
+    return;
+  }
   const auto edgeToTetrahedra = buildEdgeToTet(del.tetrahedra);
   vor.faces.reserve(edgeToTetrahedra.size());
   std::size_t invalidDelaunayEdgeLinks = 0;
