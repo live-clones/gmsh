@@ -6,6 +6,8 @@
 #include "GFace.h"
 #include "Context.h"
 #include "MTriangle.h"
+#include "MLine.h"
+#include "GEdge.h"
 #include "GmshMessage.h"
 #include "DiscreteCADMeshBoolean.h"
 #include "DiscreteCADWinding.h"
@@ -16,6 +18,7 @@
 #include <map>
 #include <set>
 #include <stdexcept>
+#include <unordered_map>
 
 namespace {
 using Clock = std::chrono::steady_clock;
@@ -66,7 +69,8 @@ struct MatNativeAccess {
 
   // Interior tetrahedra, their unmerged dual complex and its certificate.
   static matgmsh::tet::Report tetRaw(const matGmsh &mat, unsigned threads,
-                                     matgmsh::tet::Dual &dual)
+                                     matgmsh::tet::Dual &dual,
+                                     std::vector<signed char> &skinSide)
   {
     const std::size_t sites = mat.del.seeds.size() / 3;
     const std::vector<int> skin(mat.del.triangles.begin(), mat.del.triangles.end());
@@ -74,7 +78,72 @@ struct MatNativeAccess {
     for(std::size_t i = 0; i < tets.size(); ++i) tets[i] = int(mat.del.tetrahedra[i]) - 1;
     const auto classification = matgmsh::tet::classify(mat.del.seeds, skin, tets, threads);
     dual = matgmsh::tet::buildDual(tets, classification.interior, sites);
+    skinSide = matgmsh::tet::skinSides(skin, tets, classification);
     return matgmsh::tet::certify(skin, tets, classification, dual, sites);
+  }
+
+  // Erosion thickness and collapse of the dual complex. The CAD enters through
+  // the patch of each skin triangle and site, and the mesh segments of the
+  // CAD curves (convex edges anchor the wings).
+  static matgmsh::tet::Filtered collapse(const matGmsh &mat, GModel *model,
+                                         const CadSurfacePatchAnalyzer::Result &patches,
+                                         const matgmsh::tet::Dual &dual,
+                                         const std::vector<signed char> &skinSide,
+                                         double thickness, double threshold)
+  {
+    const std::size_t sites = mat.del.nodeTags.size();
+    const std::vector<int> skin(mat.del.triangles.begin(), mat.del.triangles.end());
+    std::vector<int> tets(mat.del.tetrahedra.size());
+    for(std::size_t i = 0; i < tets.size(); ++i) tets[i] = int(mat.del.tetrahedra[i]) - 1;
+    matgmsh::tet::FilterInput in;
+    in.sites = &mat.del.seeds;
+    in.vertices = &mat.vor.vertices;
+    in.skin = &skin;
+    in.tetrahedra = &tets;
+    in.skinSide = skinSide;
+    in.thickness = thickness;
+    in.threshold = threshold;
+    const auto patchOf = [&](int face) {
+      const auto found = patches.patchByFaceTag.find(face);
+      return found == patches.patchByFaceTag.end() ? -1 : found->second;
+    };
+    in.patchOffsets.push_back(0);
+    for(std::size_t s = 0; s < sites; ++s) {
+      std::set<int> around;
+      for(int face : mat.del.seedFaces[s])
+        if(patchOf(face) >= 0) around.insert(patchOf(face));
+      in.patchValues.insert(in.patchValues.end(), around.begin(), around.end());
+      in.patchOffsets.push_back(in.patchValues.size());
+    }
+    std::unordered_map<std::size_t, int> siteOf;
+    for(std::size_t s = 0; s < sites; ++s) siteOf[mat.del.nodeTags[s]] = int(s);
+    const auto site = [&](const MVertex *vertex) {
+      const auto found = siteOf.find(vertex->getNum());
+      return found == siteOf.end() ? -1 : found->second;
+    };
+    // CAD face of each skin triangle; -1 for a triangle found on two faces.
+    std::map<std::array<int, 3>, int> faceOf;
+    for(auto face = model->firstFace(); face != model->lastFace(); ++face)
+      for(const MTriangle *triangle : (*face)->triangles) {
+        std::array<int, 3> key = {{site(triangle->getVertex(0)), site(triangle->getVertex(1)),
+                                   site(triangle->getVertex(2))}};
+        std::sort(key.begin(), key.end());
+        const auto inserted = faceOf.emplace(key, (*face)->tag());
+        if(!inserted.second && inserted.first->second != (*face)->tag()) inserted.first->second = -1;
+      }
+    in.trianglePatch.reserve(skin.size() / 3);
+    for(std::size_t t = 0; t < skin.size() / 3; ++t) {
+      std::array<int, 3> key = {{skin[3 * t], skin[3 * t + 1], skin[3 * t + 2]}};
+      std::sort(key.begin(), key.end());
+      const auto found = faceOf.find(key);
+      in.trianglePatch.push_back(found == faceOf.end() ? -1 : patchOf(found->second));
+    }
+    for(auto edge = model->firstEdge(); edge != model->lastEdge(); ++edge)
+      for(const MLine *line : (*edge)->lines) {
+        const int a = site(line->getVertex(0)), b = site(line->getVertex(1));
+        if(a >= 0 && b >= 0 && a != b) in.curves.push_back({{a, b}});
+      }
+    return matgmsh::tet::filter(dual, in);
   }
 
   // The polygons of the unmerged dual become the Voronoi faces, the kept ones
@@ -301,7 +370,8 @@ bool compute(GModel *source, const Options &options, Result &result, std::string
   if(!std::isfinite(options.thickness) || options.thickness <= 0. ||
      !std::isfinite(options.extensionLength) || options.extensionLength < 0. ||
      options.extensionLayers < 1 || !std::isfinite(options.windingThreshold) ||
-     options.windingThreshold <= 0. || options.windingThreshold >= 1.) {
+     options.windingThreshold <= 0. || options.windingThreshold >= 1. ||
+     !std::isfinite(options.collapseThreshold) || options.collapseThreshold < 0.) {
     error = "Invalid MAT thickness, winding threshold or extension settings"; return false;
   }
   try {
@@ -329,6 +399,7 @@ bool compute(GModel *source, const Options &options, Result &result, std::string
     auto start = Clock::now();
     matGmsh mat;
     matgmsh::tet::Dual dual;
+    std::vector<signed char> skinSide;
     std::size_t flat = 0;
     if(tetRaw) {
       double configured = 1.;
@@ -336,7 +407,7 @@ bool compute(GModel *source, const Options &options, Result &result, std::string
       const unsigned threads = std::isfinite(configured) && configured >= 1. ?
         static_cast<unsigned>(std::min(configured, 256.)) : 1u;
       mat.computeVoronoi(false);
-      result.tet = MatNativeAccess::tetRaw(mat, threads, dual);
+      result.tet = MatNativeAccess::tetRaw(mat, threads, dual, skinSide);
       if(!result.tet.certified)
         result.warnings.push_back("The certificate of the interior tetrahedra failed: the raw MAT may not have the topology of the solid. See \"tet\" in the report.");
       MatNativeAccess::select(mat, dual, nullptr);
@@ -373,8 +444,17 @@ bool compute(GModel *source, const Options &options, Result &result, std::string
       MatNativeAccess::filter(mat, patches, options.legacyCleanup);
       result.filtered = MatNativeAccess::mesh(mat);
     }
-    else if(options.filter == FilterMode::Collapse)
-      throw std::runtime_error("The collapse filter is not available yet");
+    else if(options.filter == FilterMode::Collapse) {
+      const auto kept = MatNativeAccess::collapse(mat, source, patches, dual, skinSide,
+                                                  options.thickness, options.collapseThreshold);
+      result.collapse = kept.report;
+      if(!kept.report.materialSide)
+        result.warnings.push_back("The material side of the skin is not known on every shell: there, convex edges are not identified and no wing is removed as such; only the erosion thickness filters the MAT.");
+      if(kept.report.wireEdges)
+        result.warnings.push_back(std::to_string(kept.report.wireEdges) + " edges of the collapsed MAT carry no surface: the retained surface alone does not have the topology of the solid.");
+      MatNativeAccess::select(mat, dual, &kept.keep);
+      result.filtered = MatNativeAccess::mesh(mat, &flat);
+    }
     else
       result.filtered = result.raw;
     if(flat)

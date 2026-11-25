@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 #include "gmsh.h"
-#include "core/MatTetInterior.h"
+#include "core/MatCollapse.h"
 
 class GModel;
 
@@ -36,6 +36,9 @@ struct Options {
   double windingThreshold = .5;
   RawMode raw = RawMode::Legacy;
   FilterMode filter = FilterMode::Legacy;
+  // FilterMode::Collapse: polygons with an erosion thickness below this
+  // fraction of the thickness are removed.
+  double collapseThreshold = .21;
   bool project = false;
   bool legacyCleanup = true;
   Stage stopAfter = Stage::Filtered;
@@ -65,7 +68,8 @@ struct ExtensionReport {
 struct Result {
   Mesh skin, raw, filtered, projected, extended;
   Topology filteredTopology;
-  matgmsh::tet::Report tet; // RawMode::Tet only
+  matgmsh::tet::Report tet;              // RawMode::Tet only
+  matgmsh::tet::CollapseReport collapse; // FilterMode::Collapse only
   std::string projectionStatus = "disabled";
   std::string projectionMessage;
   ExtensionReport extension;

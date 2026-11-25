@@ -608,6 +608,70 @@ ComplexTopology topology(const Dual &dual, const std::vector<unsigned char> *kee
   return r;
 }
 
+namespace {
+// A triangle under its sorted sites; the top bit of the last one records an
+// odd permutation of the oriented triangle.
+using Face = std::array<std::uint32_t, 3>;
+const std::uint32_t oddBit = 0x80000000u;
+Face sortedFace(std::uint32_t x, std::uint32_t y, std::uint32_t z)
+{
+  bool odd = false;
+  if(x > y) { std::swap(x, y); odd = !odd; }
+  if(y > z) { std::swap(y, z); odd = !odd; }
+  if(x > y) { std::swap(x, y); odd = !odd; }
+  return {{x, y, odd ? z | oddBit : z}};
+}
+bool faceLess(const Face &p, const Face &q)
+{
+  if(p[0] != q[0]) return p[0] < q[0];
+  if(p[1] != q[1]) return p[1] < q[1];
+  return (p[2] & ~oddBit) < (q[2] & ~oddBit);
+}
+// Faces of the interior tetrahedra used once, oriented away from the material
+// and sorted: the boundary of their union.
+std::vector<Face> boundaryFaces(const std::vector<int> &tets, const Classification &c,
+                                std::size_t &overValenceTwo)
+{
+  const std::size_t count = tets.size() / 4;
+  std::vector<Face> faces;
+  static const int corner[4][3] = {{1, 2, 3}, {0, 3, 2}, {0, 1, 3}, {0, 2, 1}};
+  for(std::size_t t = 0; t < count; ++t) {
+    if(!c.interior[t]) continue;
+    int a[4] = {tets[4 * t], tets[4 * t + 1], tets[4 * t + 2], tets[4 * t + 3]};
+    if(c.volumeSign[t] > 0) std::swap(a[0], a[1]);
+    for(const auto &f : corner) faces.push_back(sortedFace(a[f[0]], a[f[1]], a[f[2]]));
+  }
+  std::sort(faces.begin(), faces.end(), faceLess);
+  std::size_t kept = 0;
+  overValenceTwo = 0;
+  for(std::size_t i = 0, j = 0; i < faces.size(); i = j) {
+    for(j = i; j < faces.size() && !faceLess(faces[i], faces[j]); ++j) {}
+    overValenceTwo += j - i > 2;
+    if(j - i == 1) faces[kept++] = faces[i];
+  }
+  faces.resize(kept);
+  return faces;
+}
+} // namespace
+
+std::vector<signed char> skinSides(const std::vector<int> &skin, const std::vector<int> &tets,
+                                   const Classification &c)
+{
+  if(skin.size() % 3 || tets.size() % 4 || c.interior.size() != tets.size() / 4 ||
+     c.volumeSign.size() != tets.size() / 4)
+    throw std::runtime_error("MAT skin sides: inconsistent arrays");
+  std::size_t ignored = 0;
+  const std::vector<Face> faces = boundaryFaces(tets, c, ignored);
+  std::vector<signed char> side(skin.size() / 3, 0);
+  for(std::size_t t = 0; t < side.size(); ++t) {
+    const Face f = sortedFace(skin[3 * t], skin[3 * t + 1], skin[3 * t + 2]);
+    const auto found = std::lower_bound(faces.begin(), faces.end(), f, faceLess);
+    if(found == faces.end() || faceLess(f, *found)) continue;
+    side[t] = ((*found)[2] & oddBit) == (f[2] & oddBit) ? 1 : -1;
+  }
+  return side;
+}
+
 Report certify(const std::vector<int> &skin, const std::vector<int> &tets,
                const Classification &c, const Dual &dual, std::size_t sites)
 {
@@ -629,48 +693,16 @@ Report certify(const std::vector<int> &skin, const std::vector<int> &tets,
   r.polygons = dual.size();
   r.hullEdges = dual.hullEdges;
   r.invalidLinks = dual.invalidLinks;
-  // Outward faces of the interior tetrahedra under their sorted sites; the top
-  // bit of the last one records an odd permutation. A face used once is on
-  // the boundary of their union.
-  const std::uint32_t oddBit = 0x80000000u;
-  std::vector<std::array<std::uint32_t, 3> > faces;
-  faces.reserve(4 * r.interior);
-  static const int corner[4][3] = {{1, 2, 3}, {0, 3, 2}, {0, 1, 3}, {0, 2, 1}};
-  for(std::size_t t = 0; t < count; ++t) {
-    if(!c.interior[t]) continue;
-    int a[4] = {tets[4 * t], tets[4 * t + 1], tets[4 * t + 2], tets[4 * t + 3]};
-    if(c.volumeSign[t] > 0) std::swap(a[0], a[1]);
-    for(const auto &f : corner) {
-      std::uint32_t x = a[f[0]], y = a[f[1]], z = a[f[2]];
-      bool odd = false;
-      if(x > y) { std::swap(x, y); odd = !odd; }
-      if(y > z) { std::swap(y, z); odd = !odd; }
-      if(x > y) { std::swap(x, y); odd = !odd; }
-      faces.push_back({{x, y, odd ? z | oddBit : z}});
-    }
-  }
-  const auto same = [&](const std::array<std::uint32_t, 3> &p,
-                        const std::array<std::uint32_t, 3> &q) {
-    return p[0] == q[0] && p[1] == q[1] && (p[2] & ~oddBit) == (q[2] & ~oddBit);
-  };
-  std::sort(faces.begin(), faces.end(),
-            [&](const std::array<std::uint32_t, 3> &p, const std::array<std::uint32_t, 3> &q) {
-              if(p[0] != q[0]) return p[0] < q[0];
-              if(p[1] != q[1]) return p[1] < q[1];
-              return (p[2] & ~oddBit) < (q[2] & ~oddBit);
-            });
+  const std::vector<Face> faces = boundaryFaces(tets, c, r.boundaryFacesOverValenceTwo);
   std::vector<int> boundary;
-  for(std::size_t i = 0, j = 0; i < faces.size(); i = j) {
-    for(j = i; j < faces.size() && same(faces[j], faces[i]); ++j) {}
-    r.boundaryFacesOverValenceTwo += j - i > 2;
-    if(j - i != 1) continue;
-    const int x = int(faces[i][0]), y = int(faces[i][1]), z = int(faces[i][2] & ~oddBit);
-    if(faces[i][2] & oddBit)
+  boundary.reserve(3 * faces.size());
+  for(const Face &f : faces) {
+    const int x = int(f[0]), y = int(f[1]), z = int(f[2] & ~oddBit);
+    if(f[2] & oddBit)
       boundary.insert(boundary.end(), {x, z, y});
     else
       boundary.insert(boundary.end(), {x, y, z});
   }
-  faces = {};
   r.skin = certifySurface(skin, sites);
   r.boundary = certifySurface(boundary, sites);
   r.dual = topology(dual);

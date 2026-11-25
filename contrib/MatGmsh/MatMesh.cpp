@@ -36,6 +36,12 @@ void writeSurface(std::ostream &out, const matgmsh::tet::Surface &s)
       << ",\"bad_orientations\":" << s.badOrientations
       << ",\"missing_sites\":" << s.missingSites << '}';
 }
+void writeComplex(std::ostream &out, const matgmsh::tet::ComplexTopology &t)
+{
+  out << "{\"vertices\":" << t.vertices << ",\"edges\":" << t.edges << ",\"faces\":" << t.faces
+      << ",\"components\":" << t.components << ",\"free_edges\":" << t.freeEdges
+      << ",\"junction_edges\":" << t.junctionEdges << ",\"euler\":" << t.euler << '}';
+}
 void writeTopology(std::ostream &out, const Topology &t)
 {
   out << "{\"vertices\":" << t.vertices << ",\"triangles\":" << t.triangles
@@ -150,10 +156,26 @@ bool writeReport(const Result &r, const Options &o, const std::string &filename,
     writeSurface(f, t.skin);
     f << ",\n\"boundary\":";
     writeSurface(f, t.boundary);
-    f << ",\n\"dual\":{\"vertices\":" << t.dual.vertices << ",\"edges\":" << t.dual.edges
-      << ",\"faces\":" << t.dual.faces << ",\"components\":" << t.dual.components
-      << ",\"free_edges\":" << t.dual.freeEdges << ",\"junction_edges\":" << t.dual.junctionEdges
-      << ",\"euler\":" << t.dual.euler << "}}";
+    f << ",\n\"dual\":";
+    writeComplex(f, t.dual);
+    f << '}';
+  }
+  if(r.collapse.computed) {
+    const auto &c = r.collapse;
+    f << ",\n\"collapse\":{\"threshold\":" << c.threshold << ",\"thickness\":" << c.thickness
+      << ",\"material_side_known\":" << (c.materialSide ? "true" : "false")
+      << ",\"curve_segments\":" << c.curveSegments << ",\"convex_segments\":" << c.convexSegments
+      << ",\"zero_area_polygons\":" << c.zeroAreaPolygons
+      << ",\"unreached_polygons\":" << c.unreachedPolygons
+      << ",\"convex_polygons\":" << c.convexPolygons
+      << ",\"wing_components\":" << c.wingComponents
+      << ",\"anchored_wing_components\":" << c.anchoredWingComponents
+      << ",\"wing_polygons\":" << c.wingPolygons << ",\"eligible\":" << c.eligible
+      << ",\"removed\":" << c.removed << ",\"blocked\":" << c.blocked
+      << ",\"wings_blocked\":" << c.wingsBlocked << ",\"wire_edges\":" << c.wireEdges
+      << ",\n\"surface\":";
+    writeComplex(f, c.surface);
+    f << '}';
   }
   f << ",\n\"extension\":{\"complete\":" << (r.extension.complete ? "true" : "false")
     << ",\"message\":" << quote(r.extension.message)

@@ -88,6 +88,13 @@ GMSH_API Classification classify(const std::vector<double> &xyz, const std::vect
 GMSH_API Dual buildDual(const std::vector<int> &tetrahedra, const std::vector<unsigned char> &interior,
                std::size_t sites);
 
+// For each skin triangle: +1 if it is oriented away from the material, -1 if
+// towards it, 0 if it is not a boundary face of the interior tetrahedra (the
+// Delaunay triangulation may use the other diagonal of a flat quadrilateral).
+GMSH_API std::vector<signed char> skinSides(const std::vector<int> &skin,
+                                            const std::vector<int> &tetrahedra,
+                                            const Classification &classification);
+
 // Topology of the polygons selected by keep (all of them if null).
 GMSH_API ComplexTopology topology(const Dual &dual, const std::vector<unsigned char> *keep = nullptr);
 
