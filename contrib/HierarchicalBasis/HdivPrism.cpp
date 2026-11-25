@@ -16,7 +16,8 @@
 // the edges of the triangle under the quadrilateral faces s0, s1, s2
 static const int quadEdges[3][2] = {{0, 1}, {0, 2}, {1, 2}};
 
-HdivPrism::HdivPrism(int order) : _order(order), _hcurl(order), _triangle(order)
+HdivPrism::HdivPrism(int order)
+  : _order(order), _hcurl(order), _triangle(order + 1)
 {
   _numVertex = 6;
   _numEdge = 9;
@@ -27,7 +28,7 @@ HdivPrism::HdivPrism(int order) : _order(order), _hcurl(order), _triangle(order)
   _numQuadFaceFunction = 3 * (order + 1) * (order + 1);
   _numTriFaceFunction = (order + 1) * (order + 2);
   _numBubbleFunction =
-    order ? (order + 1) * (3 * order * order + 2 * order - 2) / 2 : 0;
+    (order + 1) * order * (3 * order + 4) / 2;
 }
 
 // the affine coordinates L0, L1, L2 of the triangle, and B and T
@@ -40,13 +41,16 @@ static void coordinates(const Dual *x, Dual *L, Dual &B, Dual &T)
   T = 0.5 * (1. + x[2]);
 }
 
-// the order of the i-th face function of HdivTriangle (of HcurlTriangle): l
-// for the (l - 1)^2 - 1-th to the l^2 - 2-th functions
+// the order of the i-th face function of HdivTriangle in the hierarchy of the
+// Raviart-Thomas spaces: the face functions of order l being the l - 1 rotated
+// gradients, then the l rotational functions, from the (l - 1)^2 - 1-th
+// function, the gradients are of order l and the rotational functions of order
+// l - 1 (RT_l-1 of the triangle containing them)
 static int triangleFaceOrder(int i)
 {
   int l = 2;
   while(l * l - 1 <= i) l++;
-  return l;
+  return (i - ((l - 1) * (l - 1) - 1) < l - 1) ? l : l - 1;
 }
 
 void HdivPrism::_quadrangle(const Dual *x, int f, int flag1, int flag2,
@@ -152,7 +156,7 @@ void HdivPrism::functionInfo(std::vector<FunctionInfo> &info)
     for(int l = 1; l <= p; l++)
       for(int k = 0; k < l + 1; k++) info.push_back({2, l, false});
   }
-  const int nd = p ? (p - 1) * (p + 1) : 0, nq = (p + 1) * (p + 2) / 2;
+  const int nd = p * (p + 2), nq = (p + 1) * (p + 2) / 2;
   for(int l = 1; l <= p; l++) {
     for(int i = 0; i < nd; i++)
       for(int k = 0; k <= p; k++)

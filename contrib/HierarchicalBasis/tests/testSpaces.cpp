@@ -16,8 +16,8 @@
 //   the null space of the curl (resp. divergence) has the dimension of H1 of
 //   order p+1 minus one, i.e. it is made of the gradients (resp. rotated
 //   gradients), and the null space of the divergence in 3D is made of the
-//   curls, and, on prisms, of p + 1 vertical fields (the hierarchy of the
-//   bases is checked by testHierarchy).
+//   curls, except on prisms, whose divergences span P_p x P_p (the hierarchy
+//   of the bases is checked by testHierarchy).
 
 #include <cmath>
 #include <functional>
@@ -52,7 +52,8 @@ namespace bt {
   //   Q_(p+1, p, p) e_u + ... in H(div);
   // - prisms: the space of the triangle times P_p+1(w) (H(curl)) or P_p(w)
   //   (H(div)) horizontally, P_p+1(u, v) x P_p(w) e_w (H(curl)) or P_p(u, v) x
-  //   P_p+1(w) e_w (H(div)) vertically.
+  //   P_p+1(w) e_w (H(div)) vertically, the space of the triangle being RT_p
+  //   in H(div).
   static Eigen::MatrixXd claimedSpace(const Element &e, Kind kind, int p,
                                       const std::vector<double> &uvw)
   {
@@ -116,13 +117,22 @@ namespace bt {
                                        x[2] * ec[0] - x[0] * ec[2],
                                        x[0] * ec[1] - x[1] * ec[0]};
         });
-    if(p == 0 && e.name == "prism")
-      for(int d = 0; d <= (curl ? 1 : 0); d++)
-        addField([curl, d](const double *x) {
+    if(p == 0 && e.name == "prism" && curl)
+      for(int d = 0; d <= 1; d++)
+        addField([d](const double *x) {
           double wd = d ? x[2] : 1.;
-          return curl ? std::array<double, 3>{-x[1] * wd, x[0] * wd, 0.} :
-                        std::array<double, 3>{x[0], x[1], 0.};
+          return std::array<double, 3>{-x[1] * wd, x[0] * wd, 0.};
         });
+    // (u, v) h(u, v) w^d with h homogeneous of degree p, d <= p: the fields of
+    // RT_p of the triangle not in P_p^2, times P_p(w)
+    if(e.name == "prism" && !curl)
+      for(int i = 0; i <= p; i++)
+        for(int d = 0; d <= p; d++)
+          addField([p, i, d](const double *x) {
+            double h = std::pow(x[0], i) * std::pow(x[1], p - i) *
+                       std::pow(x[2], d);
+            return std::array<double, 3>{x[0] * h, x[1] * h, 0.};
+          });
     Eigen::MatrixXd V(nq * dim, cols.size());
     for(std::size_t j = 0; j < cols.size(); j++)
       for(int i = 0; i < nq * dim; i++) V(i, j) = cols[j][i];
@@ -227,10 +237,11 @@ namespace bt {
                       "not reproduced (%g)",
                       n, f, o[i], q, res);
                 numKernel = rank(C);
-                // on prisms, also the vertical fields q(u, v) e_w with q
-                // homogeneous of degree p >= 1, which are not curls of H(curl)
+                // on prisms, the divergences span P_p x P_p, and the
+                // divergence-free functions are not all curls of H(curl)
                 // functions of order p
-                if(e.name == "prism" && p) numKernel += p + 1;
+                if(e.name == "prism")
+                  numKernel = nf - (p + 1) * (p + 1) * (p + 2) / 2;
               }
               else {
                 res = spanResidual(A, gradients(e, p + 1, uvw, s.kind == HDIV));
