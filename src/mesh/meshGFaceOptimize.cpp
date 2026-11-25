@@ -5,6 +5,7 @@
 
 #include <cstdint>
 #include <unordered_map>
+#include <unordered_set>
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -705,8 +706,9 @@ void getAllBoundaryLayerVertices(GFace *gf, std::set<MVertex *> &vs)
   }
 }
 
-static bool has_none_of(std::set<MVertex *> const &touched, MVertex *const v1,
-                        MVertex *const v2, MVertex *const v3, MVertex *const v4)
+static bool has_none_of(std::unordered_set<MVertex *> const &touched,
+                        MVertex *const v1, MVertex *const v2, MVertex *const v3,
+                        MVertex *const v4)
 {
   return touched.find(v1) == touched.end() &&
          touched.find(v2) == touched.end() &&
@@ -726,27 +728,39 @@ bool are_size_three(InputIterator iterator1, InputIterator iterator2)
   return iterator1->second.size() == 3 && iterator2->second.size() == 3;
 }
 
-static int _removeDiamonds(GFace *const gf)
-{
-  v2t_cont adj;
-  buildVertexToElement(gf->quadrangles, adj);
+// the quads around each corner, hashed by address since the diamond removal
+// only looks corners up and never iterates over them
+typedef std::unordered_map<MVertex *, std::vector<MElement *> > quadsAround;
 
+static void removeFrom(std::vector<MElement *> &e, MElement *q)
+{
+  e.erase(std::remove(e.begin(), e.end(), q), e.end());
+}
+
+// q is gone and v2 now merged into v1. The order of the lists may change,
+// which the collapse test ignores
+static void updateAfterCollapse(quadsAround &adj, MElement *q, MVertex *v1,
+                                MVertex *v2, MVertex *v3, MVertex *v4)
+{
+  std::vector<MElement *> &e1 = adj[v1];
+  removeFrom(e1, q);
+  auto it = adj.find(v2);
+  for(MElement *e : it->second)
+    if(e != q) e1.push_back(e);
+  adj.erase(it);
+  removeFrom(adj[v3], q);
+  removeFrom(adj[v4], q);
+}
+
+static int _removeDiamonds(GFace *const gf, quadsAround &adj,
+                           std::unordered_set<MVertex *> const &fixed)
+{
   std::vector<MElement *> diamonds;
-  std::set<MVertex *> touched;
+  std::unordered_set<MVertex *> touched;
   std::vector<MVertex *> deleted;
 
   std::vector<MQuadrangle *> quadrangles2;
   quadrangles2.reserve(gf->quadrangles.size());
-
-  for(std::size_t i = 0; i < gf->triangles.size(); i++) {
-    touched.insert(gf->triangles[i]->getVertex(0));
-    touched.insert(gf->triangles[i]->getVertex(1));
-    touched.insert(gf->triangles[i]->getVertex(2));
-  }
-
-  std::set<MVertex *> vs;
-  getAllBoundaryLayerVertices(gf, vs);
-  touched.insert(vs.begin(), vs.end());
 
   for(std::size_t i = 0; i < gf->quadrangles.size(); i++) {
     MQuadrangle *const q = gf->quadrangles[i];
@@ -756,7 +770,8 @@ static int _removeDiamonds(GFace *const gf)
     MVertex *const v3 = q->getVertex(2);
     MVertex *const v4 = q->getVertex(3);
 
-    if(has_none_of(touched, v1, v2, v3, v4)) {
+    if(has_none_of(fixed, v1, v2, v3, v4) &&
+       has_none_of(touched, v1, v2, v3, v4)) {
       auto it1 = adj.find(v1);
       auto it2 = adj.find(v2);
       auto it3 = adj.find(v3);
@@ -770,6 +785,7 @@ static int _removeDiamonds(GFace *const gf)
         touched.insert(v4);
 
         deleted.push_back(v3);
+        updateAfterCollapse(adj, q, v1, v3, v2, v4);
 
         diamonds.push_back(q);
       }
@@ -783,6 +799,7 @@ static int _removeDiamonds(GFace *const gf)
         touched.insert(v4);
 
         deleted.push_back(v4);
+        updateAfterCollapse(adj, q, v2, v4, v1, v3);
 
         diamonds.push_back(q);
       }
@@ -821,9 +838,23 @@ static int _removeDiamonds(GFace *const gf)
 
 int removeDiamonds(GFace *gf)
 {
+  // kept exact across passes, since a pass only reads the lists of corners it
+  // has not touched yet
+  quadsAround adj;
+  for(MQuadrangle *q : gf->quadrangles)
+    for(std::size_t k = 0; k < q->getNumVertices(); k++)
+      adj[q->getVertex(k)].push_back(q);
+
+  // the corners of triangles and boundary layers are never collapsed
+  std::set<MVertex *> bl;
+  getAllBoundaryLayerVertices(gf, bl);
+  std::unordered_set<MVertex *> fixed(bl.begin(), bl.end());
+  for(std::size_t i = 0; i < gf->triangles.size(); i++)
+    for(int k = 0; k < 3; k++) fixed.insert(gf->triangles[i]->getVertex(k));
+
   std::size_t nbRemove = 0;
   while(1) {
-    int x = _removeDiamonds(gf);
+    int x = _removeDiamonds(gf, adj, fixed);
     if(!x) break;
     nbRemove += x;
   }
