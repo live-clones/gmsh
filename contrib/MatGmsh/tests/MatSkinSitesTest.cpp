@@ -66,23 +66,9 @@ void unknownTriangleNodeIsRejected()
   check(rejected, "a triangle on an unknown node must be rejected");
 }
 
-// A plate, optionally with a construction curve inside the material that
-// bounds no face. Its 1D nodes belong to the model but to no skin triangle.
-Result plate(bool constructionCurve, std::size_t &unreferenced, std::size_t &referenced)
+// Nodes of the current model, and those used by its triangles.
+void countNodes(std::size_t &all, std::size_t &referenced)
 {
-  gmsh::clear();
-  gmsh::model::add(constructionCurve ? "plate_with_curve" : "plate");
-  gmsh::model::occ::addBox(0, 0, 0, 10, 6, 1);
-  if(constructionCurve) {
-    const int a = gmsh::model::occ::addPoint(2, 3, 0.5);
-    const int b = gmsh::model::occ::addPoint(8, 3, 0.5);
-    gmsh::model::occ::addLine(a, b);
-  }
-  gmsh::model::occ::synchronize();
-  gmsh::option::setNumber("Mesh.MeshSizeMin", 0.25);
-  gmsh::option::setNumber("Mesh.MeshSizeMax", 0.25);
-  gmsh::model::mesh::generate(2);
-
   std::vector<std::size_t> nodeTags;
   std::vector<double> coordinates, parametric;
   gmsh::model::mesh::getNodes(nodeTags, coordinates, parametric);
@@ -91,9 +77,12 @@ Result plate(bool constructionCurve, std::size_t &unreferenced, std::size_t &ref
   gmsh::model::mesh::getElements(types, elementTags, elementNodes, 2);
   std::set<std::size_t> used;
   for(const auto &nodes : elementNodes) used.insert(nodes.begin(), nodes.end());
+  all = nodeTags.size();
   referenced = used.size();
-  unreferenced = nodeTags.size() - used.size();
+}
 
+Result mat()
+{
   Options options;
   options.thickness = 1.;
   Result result;
@@ -102,17 +91,36 @@ Result plate(bool constructionCurve, std::size_t &unreferenced, std::size_t &ref
   return result;
 }
 
+// A plate with a construction curve inside the material that bounds no face:
+// its 1D nodes belong to the model but to no skin triangle. The MAT is
+// computed with them, then again on the very same skin once they are removed.
 void constructionCurveDoesNotChangeTheMat()
 {
-  std::size_t unreferenced = 0, referenced = 0;
-  const Result reference = plate(false, unreferenced, referenced);
-  check(unreferenced == 0, "the plain plate has no unreferenced node");
-  check(reference.skin.xyz.size() == 3 * referenced, "plain plate: sites are the skin nodes");
+  gmsh::clear();
+  gmsh::model::add("plate_with_curve");
+  gmsh::model::occ::addBox(0, 0, 0, 10, 6, 1);
+  const int a = gmsh::model::occ::addPoint(2, 3, 0.5);
+  const int b = gmsh::model::occ::addPoint(8, 3, 0.5);
+  const int curve = gmsh::model::occ::addLine(a, b);
+  gmsh::model::occ::synchronize();
+  gmsh::option::setNumber("Mesh.MeshSizeMin", 0.25);
+  gmsh::option::setNumber("Mesh.MeshSizeMax", 0.25);
+  gmsh::model::mesh::generate(2);
 
-  const Result result = plate(true, unreferenced, referenced);
-  check(unreferenced > 0, "the construction curve must carry nodes outside the skin");
+  std::size_t all = 0, referenced = 0;
+  countNodes(all, referenced);
+  check(all > referenced, "the construction curve must carry nodes outside the skin");
+  const Result result = mat();
   check(result.skin.xyz.size() == 3 * referenced,
         "the nodes of the construction curve must not be sites");
+
+  gmsh::model::mesh::clear({{1, curve}});
+  gmsh::model::mesh::clear({{0, a}, {0, b}});
+  std::size_t remaining = 0;
+  countNodes(all, remaining);
+  check(all == referenced && remaining == referenced,
+        "only the nodes of the construction curve must have been removed");
+  const Result reference = mat();
   check(result.skin.xyz == reference.skin.xyz && result.skin.triangles == reference.skin.triangles,
         "both skins must be identical for the comparison to be meaningful");
   check(result.raw.xyz == reference.raw.xyz && result.raw.triangles == reference.raw.triangles,
