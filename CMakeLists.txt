@@ -159,6 +159,11 @@ if(ENABLE_PRIVATE_API)
        src/graphics/*.h
        contrib/HighOrderMeshOptimizer/*.h contrib/MeshOptimizer/*.h
        contrib/MeshQualityOptimizer/*.h)
+  # (not recursive: without the headers of its tests)
+  if(ENABLE_HIERARCHICAL_BASIS)
+    file(GLOB HIERARCHICAL_HEADERS contrib/HierarchicalBasis/*.h)
+    list(APPEND HEADERS ${HIERARCHICAL_HEADERS})
+  endif()
   set(GMSH_PRIVATE_API ${CMAKE_CURRENT_BINARY_DIR}/src/common/GmshConfig.h
       ${CMAKE_CURRENT_BINARY_DIR}/src/common/GmshVersion.h ${HEADERS})
   get_property(IAMCHILD DIRECTORY PROPERTY PARENT_DIRECTORY)
