@@ -19,7 +19,10 @@ GMSH_MatGmshPlugin::GMSH_MatGmshPlugin()
        {GMSH_FULLRC, "ExtensionLength", nullptr, 0., ""},
        {GMSH_FULLRC, "ExtensionLayers", nullptr, 12., ""},
        {GMSH_FULLRC, "ShowStages", nullptr, 1., ""},
-       {GMSH_FULLRC, "LegacyCleanup", nullptr, 1., ""}},
+       {GMSH_FULLRC, "LegacyCleanup", nullptr, 1., ""},
+       {GMSH_FULLRC, "RawMode", nullptr, 0., ""},
+       {GMSH_FULLRC, "FilterMode", nullptr, 0., ""},
+       {GMSH_FULLRC, "CollapseThreshold", nullptr, .21, ""}},
       {{GMSH_FULLRC, "OutputPrefix", nullptr, "matgmsh", ""}})
 {
 }
@@ -40,6 +43,17 @@ std::string GMSH_MatGmshPlugin::getHelp() const
          "layers. Reaching this distance is not a successful contact: "
          "unresolved fronts are recorded in the report. `LegacyCleanup' "
          "preserves the historical filtered-MAT cleanup policy.\n\n"
+         "`RawMode' selects the raw MAT: 0 for the dual faces whose "
+         "circumcentres are inside the skin, 1 for the dual faces surrounded "
+         "by interior Delaunay tetrahedra only, with a certificate that the "
+         "union of these tetrahedra has the boundary of the solid. "
+         "`FilterMode' selects the filter: 0 for the classification of "
+         "branches by CAD patches (RawMode 0), 1 for the collapse by "
+         "erosion thickness, which keeps the topology of the raw MAT "
+         "(RawMode 1), 2 for no filter. With FilterMode 1, a polygon is "
+         "removed if its erosion thickness is below `CollapseThreshold' "
+         "times `Thickness' or if it belongs to the wing of a convex CAD "
+         "edge.\n\n"
          "The result is displayed in a new list-based view, colored by "
          "branch. With `ShowStages', earlier stages are also available "
          "as initially hidden views. These views do not replace the CAD. "
@@ -66,6 +80,12 @@ PView *GMSH_MatGmshPlugin::execute(PView *v)
                "between 1 and 10000 are required");
     return v;
   }
+  if((option(7) != 0. && option(7) != 1.) ||
+     (option(8) != 0. && option(8) != 1. && option(8) != 2.) || option(9) < 0.) {
+    Msg::Error("Plugin(MatGmsh): RawMode 0/1, FilterMode 0/1/2 and a "
+               "nonnegative CollapseThreshold are required");
+    return v;
+  }
   Options options;
   options.thickness = option(0);
   options.project = option(1) != 0.;
@@ -73,6 +93,10 @@ PView *GMSH_MatGmshPlugin::execute(PView *v)
   options.extensionLength = option(3);
   options.extensionLayers = static_cast<int>(option(4));
   options.legacyCleanup = option(6) != 0.;
+  options.raw = option(7) != 0. ? RawMode::Tet : RawMode::Legacy;
+  options.filter = option(8) == 1. ? FilterMode::Collapse :
+                   option(8) == 2. ? FilterMode::None : FilterMode::Legacy;
+  options.collapseThreshold = option(9);
   Result result;
   std::string error;
   try {
@@ -131,6 +155,16 @@ PView *GMSH_MatGmshPlugin::execute(PView *v)
       view->getOptions()->visible = final ? 1 : 0;
       last = view;
     }
+    if(result.tet.computed)
+      Msg::Info("Plugin(MatGmsh): %lu of %lu tetrahedra are interior, %lu raw "
+                "polygons; certificate %s",
+                result.tet.interior, result.tet.tetrahedra, result.tet.polygons,
+                result.tet.certified ? "passed" : "FAILED");
+    if(result.collapse.computed)
+      Msg::Info("Plugin(MatGmsh): collapse removed %lu polygons (%lu in convex "
+                "wings); %lu components, Euler characteristic %lld",
+                result.collapse.removed, result.collapse.wingPolygons,
+                result.collapse.surface.components, result.collapse.surface.euler);
     Msg::Info("Plugin(MatGmsh): %lu filtered triangles, projection %s",
               result.filtered.triangles.size() / 3, result.projectionStatus.c_str());
     if(options.stopAfter == Stage::Extended)

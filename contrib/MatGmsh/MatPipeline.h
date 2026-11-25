@@ -39,6 +39,9 @@ struct Options {
   // FilterMode::Collapse: polygons with an erosion thickness below this
   // fraction of the thickness are removed.
   double collapseThreshold = .21;
+  // RawMode::Tet: if nonempty, the dual complex and its attributes are written
+  // to this directory as NumPy arrays (see README.txt).
+  std::string complexDirectory;
   bool project = false;
   bool legacyCleanup = true;
   Stage stopAfter = Stage::Filtered;

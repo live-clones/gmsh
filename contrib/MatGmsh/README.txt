@@ -67,13 +67,66 @@ No independent reference midsurface or benchmark name enters these stages.
 The thickness option is a user-supplied scale, not an estimated measurement:
 it supplies the default surface mesh size (h/10) and extension bound (3 h).
 
+Tetrahedron-based raw MAT and collapse filter
+---------------------------------------------
+
+An alternative to stage 1, selected with --raw tet --filter collapse (driver)
+or RawMode 1, FilterMode 1 (plugin). The stages above remain the default.
+
+Sites. Only the nodes used by a skin triangle are sites (also true of the
+default stage 1): nodes of construction curves or points are ignored.
+
+Raw MAT. A Delaunay tetrahedron is interior if and only if its exact volume
+is nonzero and the integer winding number of the skin at its barycentre is
+odd (signed ray crossings with exact predicates, no tolerance). A barycentre
+in contact with the skin, exactly or within the roundoff of its own
+evaluation, makes the tetrahedron exterior; these cases are counted. A dual
+face is kept if and only if every tetrahedron around its Delaunay edge is
+interior. Coincident circumcentres are not merged in this complex; they are
+merged, and triangles of zero area left out, in the output meshes only.
+
+Certificate. The boundary of the union of the interior tetrahedra must be a
+closed oriented manifold through every site, with the Euler characteristic of
+the skin; every kept dual face must be a simple cycle; the dual complex must
+have half the Euler characteristic of the skin. report.json records all the
+counts under "tet", and "certified". A failed certificate does not stop the
+calculation: it adds a warning, and the result must not be trusted.
+
+Filter. The erosion thickness of a polygon is the time at which a fire lit on
+the free boundary of the raw MAT reaches it, minus its radius; an edge shared
+by k polygons lets the fire through once k - 1 of them have burned. A polygon
+with a free edge is removed, together with that edge, if its erosion
+thickness is below --collapse-threshold (default 0.21) times the thickness,
+or if it belongs to a convex wing: polygons whose nearest common CAD curve is
+a convex edge, connected to a free edge that touches that curve. These
+elementary collapses keep the homotopy type of the raw MAT. report.json
+records under "collapse" the wings, the removed and blocked polygons, the
+topology of the kept surface, and "wire_edges": edges left without surface,
+which mean that the kept surface alone has lost the topology of the solid.
+
+The convexity of a CAD edge needs the material side of the skin. It is taken,
+shell by shell, from the interior tetrahedra, so closed cavities and
+assemblies of several solids are handled.
+
+--complex writes the dual complex to <output>/complex as NumPy arrays (one
+.npy file per array, described by complex.json): sites, skin triangles,
+tetrahedra, circumcentres, polygons as cycles of tetrahedron ids with their
+site pair, CAD faces of each site and patch of each face; with the collapse
+filter also centroid, radius, area, erosion thickness over thickness, and the
+keep and wing flags of each polygon. All indices are zero-based.
+
+--filter none stops at the raw MAT. The legacy filter needs the legacy raw
+MAT and the collapse filter the tetrahedron-based one. Projection and
+extension (stages 2 and 3) accept either filtered MAT; they have only been
+validated on the legacy one.
+
 Build from the Gmsh root
 ------------------------
 
-  cmake -S . -B build-mat -DENABLE_MATGMSH=ON \
+  cmake -S . -B build -DENABLE_MATGMSH=ON \
     -DENABLE_DISCRETECAD=ON -DENABLE_HXT=ON -DENABLE_EIGEN=ON \
     -DENABLE_BUILD_SHARED=ON -DENABLE_BUILD_DYNAMIC=ON -DENABLE_TESTS=ON
-  cmake --build build-mat --target gmsh gmshMat -j 6
+  cmake --build build --target gmsh gmshMat -j 6
 
 ENABLE_MATGMSH defaults to OFF. Boost headers are needed for the certified
 circumcenter fallback. This module does not require libigl or CGAL. CAD input
@@ -83,10 +136,10 @@ The driver is built when a shared or static Gmsh library target is enabled.
 Driver
 ------
 
-  build-mat/gmshMat benchmarks/MAT/Doghouse.geo --thickness 4 \
+  build/gmshMat benchmarks/MAT/Doghouse.geo --thickness 4 \
     --project --stage projected --output doghouse-mat
 
-  build-mat/gmshMat benchmarks/MAT/Doghouse.stp --thickness 4 \
+  build/gmshMat benchmarks/MAT/Doghouse.stp --thickness 4 \
     --source-mesh doghouse-mat/source.msh --project --stage extended \
     --extension-length 12 --extension-layers 12 --output doghouse-extended
 
@@ -126,7 +179,9 @@ Gmsh plugin
 
 Mesh the current model's surfaces, then run Plugin(MatGmsh). Thickness,
 Project, Stage (0 filtered, 1 projected, 2 extended), ExtensionLength,
-ExtensionLayers, ShowStages and LegacyCleanup are numeric options.
+ExtensionLayers, ShowStages, LegacyCleanup, RawMode (0 legacy, 1 tetrahedra),
+FilterMode (0 legacy, 1 collapse, 2 none) and CollapseThreshold are numeric
+options.
 OutputPrefix sets optional checkpoint file output (empty disables it).
 The plugin creates branch-colored views for each stage and initially shows
 the last stage. The source CAD and surface mesh are retained. For example:
@@ -141,14 +196,15 @@ the last stage. The source CAD and surface mesh are retained. For example:
 Validation
 ----------
 
-  cmake --build build-mat --target MatProjectionTest MatExtensionTest \
+  cmake --build build --target MatProjectionTest MatExtensionTest \
     MatClassifierTest MatMixedFilterTest MatTerminalFilterTest \
-    MatCircumcenterTest MatIntersectionTest -j 6
-  ctest --test-dir build-mat -R '^mat_native_' --output-on-failure
+    MatCircumcenterTest MatIntersectionTest MatSkinSitesTest \
+    MatTetInteriorTest MatCollapseTest -j 6
+  ctest --test-dir build -R '^mat_native_' --output-on-failure
   python3 contrib/MatGmsh/tests/check_native_outputs.py doghouse-mat \
     --stage projected --project
   python3 contrib/MatGmsh/tests/check_app_plugin_smoke.py \
-    --gmsh build-mat/gmsh --output native-plugin-smoke
+    --gmsh build/gmsh --output native-plugin-smoke
 
 The Python checker uses only the standard library. It verifies topology,
 coordinates, provenance and stage contracts; it does not establish medial

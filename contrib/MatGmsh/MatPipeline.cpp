@@ -13,6 +13,9 @@
 #include "DiscreteCADWinding.h"
 #include <algorithm>
 #include <chrono>
+#include <cstdint>
+#include <filesystem>
+#include <fstream>
 #include <cmath>
 #include <iostream>
 #include <map>
@@ -52,6 +55,29 @@ struct ContextGuard {
     GModel::setCurrent(previous);
   }
 };
+}
+
+namespace {
+// One little-endian NumPy array (.npy, format 1.0) per file.
+template <class T>
+void writeArray(const std::filesystem::path &directory, const std::string &name,
+                const char *type, const std::vector<T> &data, std::size_t columns = 0)
+{
+  const std::size_t rows = columns ? data.size() / columns : data.size();
+  std::string header = std::string("{'descr': '") + type + "', 'fortran_order': False, 'shape': (" +
+                       std::to_string(rows) + (columns ? ", " + std::to_string(columns) : ",") +
+                       "), }";
+  header.resize((10 + header.size() + 1 + 63) / 64 * 64 - 10 - 1, ' ');
+  header += '\n';
+  std::ofstream file(directory / (name + ".npy"), std::ios::binary);
+  const unsigned char magic[10] = {0x93, 'N', 'U', 'M', 'P', 'Y', 1, 0,
+                                   static_cast<unsigned char>(header.size() & 0xff),
+                                   static_cast<unsigned char>(header.size() >> 8)};
+  file.write(reinterpret_cast<const char *>(magic), 10);
+  file.write(header.data(), header.size());
+  file.write(reinterpret_cast<const char *>(data.data()), data.size() * sizeof(T));
+  if(!file) throw std::runtime_error("Cannot write " + (directory / (name + ".npy")).string());
+}
 }
 
 // The bridge alone sees the extracted legacy storage. No GModel or MVertex
@@ -144,6 +170,62 @@ struct MatNativeAccess {
         if(a >= 0 && b >= 0 && a != b) in.curves.push_back({{a, b}});
       }
     return matgmsh::tet::filter(dual, in);
+  }
+
+  // The dual complex for external tools: one .npy file per array.
+  static void writeComplex(const matGmsh &mat, const CadSurfacePatchAnalyzer::Result &patches,
+                           const matgmsh::tet::Dual &dual, const matgmsh::tet::Filtered *kept,
+                           const matgmsh_native::Options &options, bool certified)
+  {
+    const std::filesystem::path directory(options.complexDirectory);
+    std::filesystem::create_directories(directory);
+    writeArray(directory, "site_xyz", "<f8", mat.del.seeds, 3);
+    writeArray(directory, "site_node_tag", "<u8",
+               std::vector<std::uint64_t>(mat.del.nodeTags.begin(), mat.del.nodeTags.end()));
+    writeArray(directory, "skin_triangles", "<i4",
+               std::vector<std::int32_t>(mat.del.triangles.begin(), mat.del.triangles.end()), 3);
+    std::vector<std::int32_t> tets(mat.del.tetrahedra.size());
+    for(std::size_t i = 0; i < tets.size(); ++i) tets[i] = std::int32_t(mat.del.tetrahedra[i]) - 1;
+    writeArray(directory, "tetrahedra", "<i4", tets, 4);
+    writeArray(directory, "vertex_xyz", "<f8", mat.vor.vertices, 3);
+    std::vector<std::int64_t> offsets(1, 0);
+    std::vector<std::int32_t> values;
+    for(const auto &faces : mat.del.seedFaces) {
+      values.insert(values.end(), faces.begin(), faces.end());
+      offsets.push_back(std::int64_t(values.size()));
+    }
+    writeArray(directory, "site_faces_offsets", "<i8", offsets);
+    writeArray(directory, "site_faces_values", "<i4", values);
+    values.clear();
+    for(const auto &entry : patches.patchByFaceTag) values.insert(values.end(), {entry.first, entry.second});
+    writeArray(directory, "face_patch", "<i4", values, 2);
+    values.clear();
+    for(const auto &pair : dual.sitePair) values.insert(values.end(), {pair[0], pair[1]});
+    writeArray(directory, "polygon_site_pair", "<i4", values, 2);
+    writeArray(directory, "cycle_offsets", "<i8",
+               std::vector<std::int64_t>(dual.offsets.begin(), dual.offsets.end()));
+    writeArray(directory, "cycle_vertices", "<i4",
+               std::vector<std::int32_t>(dual.cycles.begin(), dual.cycles.end()));
+    if(kept) {
+      writeArray(directory, "centroid", "<f8", kept->geometry.centroid, 3);
+      writeArray(directory, "radius", "<f8", kept->geometry.radius);
+      writeArray(directory, "area", "<f8", kept->geometry.area);
+      writeArray(directory, "erosion_over_thickness", "<f8", kept->erosionOverThickness);
+      writeArray(directory, "keep", "|u1", kept->keep);
+      writeArray(directory, "wing", "|u1", kept->wing);
+    }
+    std::ofstream manifest(directory / "complex.json");
+    manifest << "{\n\"format\":\"matgmsh-complex-1\",\n\"thickness\":" << options.thickness
+             << ",\n\"collapse_threshold\":" << options.collapseThreshold
+             << ",\n\"certified\":" << (certified ? "true" : "false")
+             << ",\n\"filtered\":" << (kept ? "true" : "false")
+             << ",\n\"sites\":" << mat.del.nodeTags.size()
+             << ",\n\"tetrahedra\":" << mat.del.tetrahedra.size() / 4
+             << ",\n\"polygons\":" << dual.size()
+             << ",\n\"indices\":\"zero-based; a polygon is a cycle of tetrahedron ids, "
+                "vertex_xyz holds one circumcentre per tetrahedron; polygons are sorted by site "
+                "pair\"\n}\n";
+    if(!manifest) throw std::runtime_error("Cannot write the MAT complex manifest");
   }
 
   // The polygons of the unmerged dual become the Voronoi faces, the kept ones
@@ -440,13 +522,14 @@ bool compute(GModel *source, const Options &options, Result &result, std::string
       }
       result.warnings.push_back("Surface parametrization is unavailable: each source face is a separate support patch; normal-based filtering may retain additional MAT material.");
     }
+    matgmsh::tet::Filtered kept;
     if(options.filter == FilterMode::Legacy) {
       MatNativeAccess::filter(mat, patches, options.legacyCleanup);
       result.filtered = MatNativeAccess::mesh(mat);
     }
     else if(options.filter == FilterMode::Collapse) {
-      const auto kept = MatNativeAccess::collapse(mat, source, patches, dual, skinSide,
-                                                  options.thickness, options.collapseThreshold);
+      kept = MatNativeAccess::collapse(mat, source, patches, dual, skinSide, options.thickness,
+                                       options.collapseThreshold);
       result.collapse = kept.report;
       if(!kept.report.materialSide)
         result.warnings.push_back("The material side of the skin is not known on every shell: there, convex edges are not identified and no wing is removed as such; only the erosion thickness filters the MAT.");
@@ -457,6 +540,10 @@ bool compute(GModel *source, const Options &options, Result &result, std::string
     }
     else
       result.filtered = result.raw;
+    if(tetRaw && !options.complexDirectory.empty())
+      MatNativeAccess::writeComplex(mat, patches, dual,
+                                    options.filter == FilterMode::Collapse ? &kept : nullptr,
+                                    options, result.tet.certified);
     if(flat)
       result.warnings.push_back(std::to_string(flat) + " triangles of zero area were left out of the MAT meshes.");
     if(!validateMesh(result.filtered, error)) return false;

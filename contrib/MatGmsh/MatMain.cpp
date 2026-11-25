@@ -14,13 +14,14 @@ int main(int argc, char **argv)
                    "  [--stage filtered|projected|extended] [--project] [--mesh-size s]\n"
                    "  [--source-mesh cached.msh] [--keep-components] [--threads n]\n"
                    "  [--extension-length L] [--extension-layers n]\n"
-                   "  [--raw legacy|tet] [--filter legacy|collapse|none]\n";
+                   "  [--raw legacy|tet] [--filter legacy|collapse|none]\n"
+                   "  [--collapse-threshold 0.21] [--complex]\n";
       return 1;
     }
     matgmsh_native::Options options;
     std::string input = argv[1], cached;
     std::filesystem::path output;
-    double meshSize = 0.; int threads = 1;
+    double meshSize = 0.; int threads = 1; bool complex = false;
     for(int i = 2; i < argc; ++i) {
       const std::string key = argv[i];
       auto value = [&]() { if(++i == argc) throw std::runtime_error("Missing value for " + key); return std::string(argv[i]); };
@@ -33,6 +34,8 @@ int main(int argc, char **argv)
       else if(key == "--keep-components") options.legacyCleanup = false;
       else if(key == "--extension-length") options.extensionLength = std::stod(value());
       else if(key == "--extension-layers") options.extensionLayers = std::stoi(value());
+      else if(key == "--collapse-threshold") options.collapseThreshold = std::stod(value());
+      else if(key == "--complex") complex = true;
       else if(key == "--raw") {
         const std::string mode = value();
         if(mode == "legacy") options.raw = matgmsh_native::RawMode::Legacy;
@@ -101,6 +104,7 @@ int main(int argc, char **argv)
     gmsh::option::setNumber("Mesh.MshFileVersion", 4.1);
     gmsh::option::setNumber("Mesh.Binary", 1);
     gmsh::write((output / "source.msh").string());
+    if(complex) options.complexDirectory = (output / "complex").string();
     matgmsh_native::Result result; std::string error;
     if(!matgmsh_native::computeCurrent(options, result, error)) throw std::runtime_error(error);
     for(const auto &item : std::vector<std::pair<std::string,const matgmsh_native::Mesh *>>{

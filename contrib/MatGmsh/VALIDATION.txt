@@ -315,3 +315,30 @@ error is 8.41e-13 (Sample4); all other cases have exactly equal aggregate
 areas in this audit. The termination-length fraction is a summary of the native
 front ledger, not an independent geometric-completeness certificate. Temporary
 OFF files were deleted; all eight comparison images were visually inspected.
+
+Tetrahedron-based raw MAT and collapse filter, 25 November 2026
+---------------------------------------------------------------
+Branch feature/matgmsh-core-b. The C++ follows the Python prototype validated
+on the synthetic corpus (topology exact on 199 of 200 cases); the comparison
+of the C++ with that prototype on the same cached skins has NOT been run yet.
+
+Unit tests (mat_native_skin_sites, mat_native_tet_interior,
+mat_native_collapse): sites restricted to the skin triangles; certificates of
+a cube, of a flipped, an open and a pinched surface; interior, exterior, flat
+and on-skin tetrahedra, with one and three threads; dual of one edge; plate,
+L bracket, holed plate and hollow box certified with the expected Euler
+characteristics; burn time of an inner polygon; elementary collapses of small
+complexes; convex edges of a cube; plate reduced to its mid-plane, T junction
+keeping its triple line, hollow box with convex outer and concave inner edges.
+
+Single runs, local macOS arm64, --raw tet --filter collapse:
+
+Case         Thickness  Mesh size  Sites  Certified  Components  Euler  Wire edges  Seconds
+TwistedDuct  1.2        0.24       12905  yes        1           -2     0           3.5
+Doghouse     4          0.4        81095  yes        1            0     0           13.2
+
+Two rules differ from the prototype, on skins with several shells only: a
+tetrahedron is interior when the winding number is odd (the prototype tested
+nonzero, which fills a cavity whose shell is oriented like the outer one),
+and the material side of each shell comes from the interior tetrahedra (the
+prototype identified no convex edge on such skins).
