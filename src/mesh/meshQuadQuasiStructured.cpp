@@ -54,7 +54,7 @@ constexpr int SizeMapCrossFieldAndSmallCad = 2;
 constexpr int SizeMapBackgroundMesh = 3;
 constexpr int SizeMapCrossFieldAndBMeshOnCurves = 4;
 
-const std::string BMESH_NAME = "bmesh_quadqs";
+const std::string BMESH_NAME = "bmesh_pack";
 
 
 /* scaling applied on integer values stored in view (background field),

@@ -184,13 +184,6 @@ namespace CppUtils {
       v1.insert(v1.end(),v2.begin(),v2.end());
     }
 
-  template <typename T>
-    bool inVector(const T& value, const std::vector<T> &vec) {
-      if (vec.size() == 0) return false;
-      auto it = std::find(vec.begin(), vec.end(), value);
-      return (it != vec.end()) ? true : false;
-    }
-
   template <typename T, size_t N>
     bool inArray(const T& value, const std::array<T,N> &vec) {
       if (vec.size() == 0) return false;
@@ -286,22 +279,6 @@ namespace CppUtils {
           pcomma + 1,
           std::forward<T>(rest)...);
     }
-
-  template <typename T>
-    class RestoreValueAtEndOfLife
-    {
-      public:
-        RestoreValueAtEndOfLife(T* ptr) {
-          _ptr = ptr;
-          _value = *ptr;
-        }
-        ~RestoreValueAtEndOfLife() {
-          *_ptr = _value;
-        }
-      protected:
-        T* _ptr;
-        T _value;
-    };
 
   void dummy();
 }

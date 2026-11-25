@@ -1567,98 +1567,6 @@ vec3 quad_opposite_right_angled_corner(vec3 pPrev, vec3 pCorner, vec3 pNext)
   return center + radius * dir;
 }
 
-bool quadMeshSpecialAcuteCornerOptimization(GFace *gf,
-                                            SurfaceProjector *sp = nullptr)
-{
-  std::unordered_map<MVertex *, int> bdrVal;
-  std::unordered_map<MVertex *, double> bdrAgl;
-  std::unordered_map<MVertex *, std::vector<MQuadrangle *> > corner2quads;
-  std::unordered_map<MVertex *, std::vector<MQuadrangle *> > v2quads;
-  for(MQuadrangle *q : gf->quadrangles) {
-    bool keep = false;
-    for(size_t lv = 0; lv < 4; ++lv) {
-      MVertex *v = q->getVertex(lv);
-      if(v->onWhat() != nullptr && v->onWhat()->dim() < 2) {
-        bdrVal[v] += 1;
-        MVertex *vp = q->getVertex((lv - 1 + 4) % 4);
-        MVertex *vn = q->getVertex((lv + 1) % 4);
-        double agl = std::abs(angle3Vertices(vp, v, vn));
-        bdrAgl[v] += agl;
-        if(v->onWhat()->dim() == 0) {
-          corner2quads[v].push_back(q);
-          keep = true;
-        }
-      }
-    }
-    if(keep) {
-      for(size_t lv = 0; lv < 4; ++lv) {
-        MVertex *v = q->getVertex(lv);
-        v2quads[v].push_back(q);
-      }
-    }
-  }
-
-  size_t nMoved = 0;
-  for(auto &kv : corner2quads)
-    if(kv.second.size() == 1) {
-      MVertex *v = kv.first;
-      MQuadrangle *q = kv.second[0];
-      double agl = bdrAgl[v];
-      if(agl * 180. / M_PI > 30) continue; // not acute corner
-      for(size_t lv = 0; lv < 4; ++lv) {
-        MVertex *vc = q->getVertex(lv);
-        if(vc != v) continue;
-        MVertex *vp = q->getVertex((lv - 1 + 4) % 4);
-        MVertex *vn = q->getVertex((lv + 1) % 4);
-        MVertex *vo = q->getVertex((lv + 2) % 4);
-        if(vo->onWhat() != nullptr && vo->onWhat()->dim() != 2) continue;
-
-        const bool BY_OPTIM = true;
-        bool oku = false;
-        if(BY_OPTIM) {
-          GFaceMeshPatch patch;
-          bool okp = patchFromQuads(gf, v2quads[vo], patch);
-          if(!okp) continue;
-          bool backupRestore = true;
-          GeometryOptimizer optu;
-          optu.initialize(patch);
-          bool projectOnCad = true;
-          size_t iter = 10;
-          GeometryOptimizer::PlanarMethod method =
-            GeometryOptimizer::PlanarMethod::MeanPlane;
-          oku = optu.smoothWithWinslowUntangler(method, iter, backupRestore,
-                                                projectOnCad);
-        }
-
-        if(!oku) {
-          double sige_before = q->minSIGEShapeMeasure();
-          SPoint3 backup = vc->point();
-          vec3 pp = vp->point();
-          vec3 pc = vc->point();
-          vec3 pn = vn->point();
-          vec3 po = quad_opposite_right_angled_corner(pp, pc, pn);
-          vo->setXYZ(po[0], po[1], po[2]);
-          if(sp) {
-            GPoint proj = sp->closestPoint(po.data(), false, false);
-            if(proj.succeeded()) { vo->setXYZ(proj.x(), proj.y(), proj.z()); }
-          }
-          double sige_after = q->minSIGEShapeMeasure();
-          if(sige_after < sige_before) {
-            vo->setXYZ(backup.x(), backup.y(), backup.z());
-          }
-          else {
-            nMoved += 1;
-          }
-        }
-      }
-    }
-  Msg::Debug(
-    "- acute corners, set right-angle position of %li interior vertices",
-    nMoved);
-
-  return true;
-}
-
 size_t nbVerticesOnBoundary(const GFaceMeshPatch &patch)
 {
   size_t n = 0;
@@ -2556,30 +2464,6 @@ bool GeometryOptimizer::smoothWithWinslowUntangler(PlanarMethod planar,
                patchPtr->elements.size(), sicnMin, sicnMinA, sicnAvg, sicnAvgA,
                t2 - t1);
     return false;
-  }
-
-  return true;
-}
-
-bool optimizeGeometryQuadqs(GModel *gm)
-{
-  Msg::Info("Optimize geometry of quad mesh ...");
-
-  vector<GFace *> faces = model_faces(gm);
-  for(size_t f = 0; f < faces.size(); ++f) {
-    GFace *gf = faces[f];
-    if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
-    if(CTX::instance()->debugSurface > 0 &&
-       gf->tag() != CTX::instance()->debugSurface)
-      continue;
-    if(gf->triangles.size() > 0 || gf->quadrangles.size() == 0) continue;
-
-    SurfaceProjector sp;
-    fillSurfaceProjector(gf, &sp);
-    double tMax = double(gf->mesh_vertices.size()) / 100.;
-    bool withBackup = true;
-    optimizeGeometryQuadMesh(gf, &sp, tMax, withBackup);
-    quadMeshSpecialAcuteCornerOptimization(gf, &sp);
   }
 
   return true;

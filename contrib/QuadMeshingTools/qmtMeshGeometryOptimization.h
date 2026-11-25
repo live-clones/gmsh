@@ -190,5 +190,3 @@ class GeometryOptimizer {
     std::unordered_map<MVertex*,uint32_t> old2new;
     size_t nFree =0;
 };
-
-bool optimizeGeometryQuadqs(GModel* gm);

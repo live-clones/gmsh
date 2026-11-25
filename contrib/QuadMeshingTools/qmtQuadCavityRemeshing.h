@@ -13,24 +13,6 @@ class SurfaceProjector;
 
 
 /**
- * @brief Apply iterative cavity remeshing to the face mesh
- *        to reduce the number of irregular vertices which
- *        are not matching cross field singularities.
- *        The quad patterns must be loaded before (see initQuadPatterns()).
- *
- * @param[in,out] gf The face containing the quad mesh to improve
- * @param[in] singularities Floating list of cross field singularities, specified by
- *                          their position and their index (-1 for valence 5, +1 for valence 3)
- * @param[in] invertNormalsForQuality The CAD normals are used to compute signed quality.
- *                                    This flag invert invert the CAD normals in the measure.
- *
- * @return 0 if success
- */
-int improveQuadMeshTopologyWithCavityRemeshing(GFace* gf,
-    const std::vector<std::pair<SPoint3,int> >& singularities,
-    bool invertNormalsForQuality);
-
-/**
  * @brief Consider the current face mesh as a global single cavity
  *        and try to mesh it with the exising patterns.
  *        The quad patterns must be loaded before (see initQuadPatterns()).
@@ -55,11 +37,6 @@ extern const size_t PATTERN_QUAD_CHORD_UTURN;
 extern const size_t PATTERN_2CORNERS;
 extern const size_t PATTERN_1CORNER;
 extern const size_t PATTERN_DISK;
-
-/**
- * @return the number of corners in the input pattern
- */
-size_t patternNumberOfCorners(size_t pId);
 
 /**
  * @brief Initialize the pattern datastructures from raw meshes.
@@ -104,9 +81,8 @@ struct QualityConstraints {
 };
 
 /**
- * @brief Look for the best topological disk quadrangulation remeshing
- *        which match the allowed valence ranges.
- *        Requires that the disk quadrangulation data is initialized, see initDiskQuadrangulations()
+ * @brief Remesh a patch with a quad pattern.
+ *        The quad patterns must be loaded before (see initQuadPatterns()).
  *        The GFace mesh is not changed, the changes are stored in the diff
  *        which can executed by the caller.
  *
