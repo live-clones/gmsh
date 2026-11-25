@@ -1291,7 +1291,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Algorithm" , opt_mesh_algo2d , ALGO_2D_FRONTAL ,
     "2D mesh algorithm (1: MeshAdapt, 2: Automatic, 3: Initial mesh only, "
     "5: Delaunay, 6: Frontal-Delaunay, 7: BAMG, 8: Frontal-Delaunay for Quads, "
-    "9: Packing of Parallelograms, 11: Quasi-structured Quad)" },
+    "9: Packing of Parallelograms)" },
   { F|O, "Algorithm3D" , opt_mesh_algo3d , ALGO_3D_DELAUNAY ,
     "3D mesh algorithm (1: Delaunay, 3: Initial mesh only, 4: Frontal, "
     "7: MMG3D, 9: R-tree, 10: HXT, 11: Parallel Delaunay)" },
@@ -1720,7 +1720,10 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Pyramids" , opt_mesh_pyramids , 1. ,
     "Display mesh pyramids?" },
 
-  { F|O, "QuadqsSizemapMethod" , opt_mesh_quadqs_sizemap_method, 3 ,
+  // the options of the quasi-structured quad flow, which cannot be selected
+  // anymore, are deprecated: they are still read, but neither documented nor
+  // saved
+  { F|O|D, "QuadqsSizemapMethod" , opt_mesh_quadqs_sizemap_method, 3 ,
     "Size map method in QuadQuasiStructured. 0: default, 1: cross-field,"
       "2: cross-field + CAD small features adaptation,"
       "3: from background mesh (e.g. sizes in current triangulation),"
@@ -1731,7 +1734,10 @@ StringXNumber MeshOptions_Number[] = {
     "Recombination of the triangulation of the packed points. 0: Blossom, "
       "1: Q-Morph (advancing fronts); the cavity optimizer follows in both cases" },
   { F|O, "PackSizemapMethod", opt_mesh_pack_sizemap_method, 3,
-    "Size map for the PACK guiding field (same methods as QuadqsSizemapMethod, configured independently)" },
+    "Size map for the PACK guiding field. 0: default, 1: cross-field, "
+      "2: cross-field + CAD small features adaptation, "
+      "3: from background mesh (e.g. sizes in current triangulation), "
+      "4: cross-field + CAD small features adaptation (clamped by background mesh)" },
   { F|O, "PackIntrinsicEdgeLengthFactor" ,
     opt_mesh_pack_intrinsic_edge_length_factor, 0. ,
     "Maximum intrinsic triangulation edge length divided by the local target "
@@ -1744,17 +1750,17 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "PackPatterns" , opt_mesh_pack_patterns, 1 ,
     "Remesh simple CAD faces with quad patterns after packing of "
       "parallelograms (regular, but the patterns do not follow the size map)" },
-  { F|O, "QuadqsTopologyOptimizationMethods" , opt_mesh_quadqs_topo_optim_methods, 0. ,
+  { F|O|D, "QuadqsTopologyOptimizationMethods" , opt_mesh_quadqs_topo_optim_methods, 0. ,
     "Topology optimization methods in QuadQuasiStructured. 0: default (all),"
       "100: pattern-based CAD faces,"
       "010: disk quadrangulation remeshing,"
       "001: cavity remeshing,"
       "xxx: combination of multiple methods (e.g. 111 for all)" },
-  { F|O, "QuadqsRemeshingBoldness" , opt_mesh_quadqs_remeshing_boldness, 0.66 ,
+  { F|O|D, "QuadqsRemeshingBoldness" , opt_mesh_quadqs_remeshing_boldness, 0.66 ,
     "Controls how much cavity remeshing is allowed to distort"
       " the quad mesh. From 0 (no quality decrease during remeshing) to 1"
       " (quality can tend to 0 during remeshing)." },
-  { F|O, "QuadqsScalingOnTriangulation" , opt_mesh_quadqs_scaling_on_triangulation, 0.75,
+  { F|O|D, "QuadqsScalingOnTriangulation" , opt_mesh_quadqs_scaling_on_triangulation, 0.75,
     "Ratio on the edge length between the triangulation and the quadrangulation."
       " Use a small ratio (e.g. 0.5) to get a background triangulation finer"
       " than the quad mesh. Useful to get a more accurate cross-field." },

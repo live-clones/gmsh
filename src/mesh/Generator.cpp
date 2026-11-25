@@ -1198,6 +1198,13 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter,
 {
   if(CTX::instance()->abortOnError && Msg::GetErrorCount()) return;
 
+  // the quasi-structured quad flow cannot be run anymore (its code is kept)
+  if(how == "QuadQuasiStructured" || how == "QuadCavityRemeshing") {
+    Msg::Error("Mesh optimization method '%s' is not available anymore",
+               how.c_str());
+    return;
+  }
+
   if(how != "" && how != "Gmsh" && how != "Optimize" && how != "Optimize2D" &&
      how != "MesquiteImprove3D" && how != "MesquiteImprove2D" &&
      how != "UntangleTris" && how != "UntangleTets" && how != "Netgen" &&

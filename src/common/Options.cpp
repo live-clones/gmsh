@@ -6516,9 +6516,18 @@ double opt_mesh_nb_smoothing(OPT_ARGS_NUM)
 double opt_mesh_algo2d(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
-    if(!(action & GMSH_SET_DEFAULT) && (int)val != CTX::instance()->mesh.algo2d)
+    int algo = (int)val;
+    if(algo == ALGO_2D_QUAD_QUASI_STRUCT) {
+      // the quasi-structured quad flow cannot be selected anymore: it started
+      // from a packing of parallelograms, which is what is used instead
+      Msg::Warning("Mesh.Algorithm = %d (Quasi-structured Quad) is not "
+                   "available anymore: using %d (Packing of Parallelograms)",
+                   ALGO_2D_QUAD_QUASI_STRUCT, ALGO_2D_PACK_PRLGRMS);
+      algo = ALGO_2D_PACK_PRLGRMS;
+    }
+    if(!(action & GMSH_SET_DEFAULT) && algo != CTX::instance()->mesh.algo2d)
       Msg::SetOnelabChanged(2);
-    CTX::instance()->mesh.algo2d = (int)val;
+    CTX::instance()->mesh.algo2d = algo;
   }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI)) {
@@ -6541,11 +6550,8 @@ double opt_mesh_algo2d(OPT_ARGS_NUM)
     case ALGO_2D_PACK_PRLGRMS:
       FlGui::instance()->options->mesh.choice[2]->value(6);
       break;
-    case ALGO_2D_QUAD_QUASI_STRUCT:
-      FlGui::instance()->options->mesh.choice[2]->value(7);
-      break;
     case ALGO_2D_INITIAL_ONLY:
-      FlGui::instance()->options->mesh.choice[2]->value(8);
+      FlGui::instance()->options->mesh.choice[2]->value(7);
       break;
     case ALGO_2D_AUTO:
     default: FlGui::instance()->options->mesh.choice[2]->value(0); break;
