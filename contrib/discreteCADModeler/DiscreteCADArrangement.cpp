@@ -18,6 +18,8 @@
 #include <cfloat>
 #include <cmath>
 #include <cstdint>
+#include <cstring>
+#include <limits>
 #include <deque>
 #include <map>
 #include <numeric>
@@ -106,6 +108,110 @@ namespace {
     double s = 0.;
     for(double c : e) s += c;
     return s;
+  }
+
+  // Same binary64 export rounding as the native Boolean kernel. Keep the
+  // internal approximate coordinates and the closed arrangement unchanged.
+  // Round an exact rational to the nearest double, with ties to even. Summed
+  // expansions give an initial estimate, refined by exact residuals before
+  // bracketing the quotient between adjacent floating-point numbers.
+  bool roundedQuotient(const Expansion &numerator, const Expansion &denominator,
+                       double &result)
+  {
+    static_assert(std::numeric_limits<double>::is_iec559 &&
+                  std::numeric_limits<double>::radix == 2 &&
+                  std::numeric_limits<double>::digits == 53,
+                  "IEEE 754 binary64 double required");
+    auto finite = [](const Expansion &e) {
+      return !e.empty() && std::all_of(e.begin(), e.end(),
+                                     [](double v) { return std::isfinite(v) &&
+                                       std::fpclassify(v) != FP_SUBNORMAL; });
+    };
+    if(!finite(numerator) || !finite(denominator)) return false;
+    const int denominatorSign = sign(denominator);
+    if(!denominatorSign) return false;
+    auto estimate = [](const Expansion &e) {
+      double value = 0.;
+      for(double component : e) value += component;
+      return value;
+    };
+    const double d = estimate(denominator);
+    if(!std::isfinite(d) || !d) return false;
+    double q = estimate(numerator) / d;
+    auto validQuotient = [&](double value) {
+      return std::isfinite(value) && std::fpclassify(value) != FP_SUBNORMAL &&
+        (value != 0. || sign(numerator) == 0);
+    };
+    if(!validQuotient(q)) return false;
+    auto residual = [&](double value, Expansion &r, int &side) {
+      // Shewchuk products require no underflow in their error components,
+      // and finite splitter intermediates. Fail closed outside that range.
+      if(value) {
+        constexpr int maximumSplitExponent = std::numeric_limits<double>::max_exponent -
+          (std::numeric_limits<double>::digits + 1) / 2 - 2;
+        constexpr int minimumProductExponent = std::numeric_limits<double>::min_exponent +
+          std::numeric_limits<double>::digits - 2;
+        constexpr int maximumProductExponent = std::numeric_limits<double>::max_exponent - 3;
+        const int e = std::ilogb(value);
+        if(e > maximumSplitExponent) return false;
+        for(double component : denominator) if(component) {
+          const int f = std::ilogb(component);
+          if(f > maximumSplitExponent || e + f < minimumProductExponent ||
+             e + f > maximumProductExponent) return false;
+        }
+      }
+      const Expansion p = scale(denominator, value);
+      if(!finite(p)) return false;
+      r = sub(numerator, p);
+      if(!finite(r)) return false;
+      side = sign(r) * denominatorSign;
+      return true;
+    };
+    Expansion r;
+    int side;
+    // Expansions need not be strongly normalized: their last components can
+    // give an estimate many ulps away. Sum first, then correct by the exact
+    // residual before looking at adjacent floating-point numbers.
+    for(int correction = 0; correction < 2; ++correction) {
+      if(!residual(q, r, side)) return false;
+      if(!side) { result = q; return true; }
+      const double corrected = q + estimate(r) / d;
+      if(!validQuotient(corrected)) return false;
+      if(corrected == q) break;
+      q = corrected;
+    }
+    if(!residual(q, r, side)) return false;
+    if(!side) { result = q; return true; }
+    for(int iteration = 0; iteration < 64; ++iteration) {
+      const double next = std::nextafter(
+        q, side > 0 ? std::numeric_limits<double>::infinity() :
+                      -std::numeric_limits<double>::infinity());
+      if(!validQuotient(next)) return false;
+      Expansion nextResidual;
+      int nextSide;
+      if(!residual(next, nextResidual, nextSide)) return false;
+      if(!nextSide) { result = next; return true; }
+      if(nextSide != side) {
+        // r + nextResidual = 2 numerator - (q + next) denominator,
+        // with no rounded midpoint and no premature factor-two overflow.
+        const Expansion midpoint = sum(r, nextResidual);
+        if(!finite(midpoint)) return false;
+        const int midpointSide = sign(midpoint) * denominatorSign;
+        const double lower = std::min(q, next), upper = std::max(q, next);
+        if(midpointSide) result = midpointSide < 0 ? lower : upper;
+        else {
+          std::uint64_t bits;
+          static_assert(sizeof(bits) == sizeof(lower), "binary64 double required");
+          std::memcpy(&bits, &lower, sizeof(bits));
+          result = bits & 1 ? upper : lower;
+        }
+        return true;
+      }
+      q = next;
+      r = std::move(nextResidual);
+      side = nextSide;
+    }
+    return false;
   }
 
   // a value with a bound of its error
@@ -306,14 +412,21 @@ namespace {
     std::string error;
 
     bool compute(const std::vector<double> &xyz, const std::vector<int> &tri,
-                 const std::vector<int> &label)
+                 const std::vector<int> &label,
+                 const std::vector<int> *cutTarget = nullptr)
     {
-      _setup(xyz, tri, label);
+      _setup(xyz, tri, label, cutTarget);
       if(error.empty()) _intersectAll();
       if(error.empty()) _sortEdges();
       if(error.empty()) _triangulateAll();
       return error.empty();
     }
+
+    // All descendants, including their multiplicity in coplanar overlaps.
+    // Unlike winding(), this does not require the inputs to enclose volumes.
+    bool triangulation(std::vector<double> &oxyz, std::vector<int> &otri,
+                       std::vector<int> &birth,
+                       std::vector<int> *inputVertex);
 
     // the inputs inside the cells on both sides of the triangles of the
     // arrangement (each one once), by the winding numbers of the inputs; the
@@ -359,7 +472,10 @@ namespace {
     // and their orientation in it
     std::vector<double> _x;
     int _nv = 0, _nt = 0;
+    std::vector<int> _inputVertex;
     std::vector<int> _tri, _birth, _label, _axis, _orientation;
+    // Auxiliary cutters name an original (not compacted) input triangle.
+    std::vector<int> _cutTarget;
     // the edges: their vertices, the smallest first; those of the triangles
     // (edge k from vertex k to vertex k + 1)
     std::vector<std::array<int, 2> > _edges;
@@ -649,7 +765,8 @@ namespace {
     // ---- the input ----
 
     void _setup(const std::vector<double> &xyz, const std::vector<int> &tri,
-                const std::vector<int> &label)
+                const std::vector<int> &label,
+                const std::vector<int> *cutTarget)
     {
       // the vertices, those at the same place one
       const int n = (int)xyz.size() / 3;
@@ -663,7 +780,8 @@ namespace {
         return false;
       };
       std::sort(order.begin(), order.end(), less);
-      std::vector<int> id(n, -1);
+      _inputVertex.assign(n, -1);
+      std::vector<int> &id = _inputVertex;
       for(int i = 0; i < n; i++) {
         const int v = order[i];
         if(i && !less(order[i - 1], v))
@@ -699,6 +817,7 @@ namespace {
         _tri.push_back(c);
         _birth.push_back(t);
         _label.push_back(label[t]);
+        _cutTarget.push_back(cutTarget ? (*cutTarget)[t] : -1);
         _axis.push_back(k);
         _orientation.push_back(o);
       }
@@ -1052,7 +1171,13 @@ namespace {
     {
       for(int t = 0; t < _nt && error.empty(); t++)
         _tree.query(_boxes[t], [&](int u) {
-          if(u > t && error.empty()) _pair(t, u);
+          if(u <= t || !error.empty()) return;
+          if(_cutTarget[t] >= 0) {
+            if(_cutTarget[u] >= 0 || _cutTarget[t] != _birth[u]) return;
+          }
+          else if(_cutTarget[u] >= 0 && _cutTarget[u] != _birth[t])
+            return;
+          _pair(t, u);
         });
     }
 
@@ -1782,6 +1907,11 @@ namespace {
       for(int t = 0; t < _nt; t++) groups[_root(t)].push_back(t);
       Triangulation T(*this);
       for(auto &g : groups) {
+        // A cutter supplies constraints and exact supporting planes, but its
+        // own triangulation is not part of the requested open surface.
+        if(std::none_of(g.second.begin(), g.second.end(),
+                         [&](int t) { return _cutTarget[t] < 0; }))
+          continue;
         if(g.second.size() < 2) {
           const int t = g.second[0];
           bool touched = !_inside[t].empty() || !_segments[t].empty();
@@ -1870,6 +2000,42 @@ namespace {
       return r;
     }
   };
+
+  bool Arrangement::triangulation(std::vector<double> &oxyz,
+                                  std::vector<int> &otri,
+                                  std::vector<int> &birth,
+                                  std::vector<int> *inputVertex)
+  {
+    // Predicate estimates may lie a few ulps off a supporting plane. Export
+    // each exact point rounded only once, particularly for incremental callers
+    // which will feed these doubles back as vertices in the next arrangement.
+    std::vector<double> coordinates(3 * _points.size());
+    for(std::size_t p = 0; p < _points.size(); p++) {
+      if(_points[p].type == VERTEX) {
+        for(int k = 0; k < 3; k++) coordinates[3 * p + k] = _points[p].x[k];
+      }
+      else {
+        const std::array<Expansion, 4> &h = _hom(int(p));
+        for(int k = 0; k < 3; k++)
+          if(!roundedQuotient(h[k], h[3], coordinates[3 * p + k])) {
+            error = "could not safely round exact co-refinement coordinates";
+            return false;
+          }
+      }
+    }
+    oxyz.swap(coordinates);
+    otri.clear();
+    birth.clear();
+    otri.reserve(3 * _faces.size());
+    birth.reserve(_faces.size());
+    for(std::size_t f = 0; f < _faces.size(); f++) {
+      if(_cutTarget[_faces[f].t] >= 0) continue;
+      for(int k = 0; k < 3; k++) otri.push_back(_faces[f].v[k]);
+      birth.push_back(_birth[_faces[f].t]);
+    }
+    if(inputVertex) *inputVertex = _inputVertex;
+    return true;
+  }
 
   bool Arrangement::winding(double thickness, std::vector<double> &oxyz,
                             std::vector<int> &otri, std::vector<int> &birth,
@@ -2289,6 +2455,57 @@ namespace {
 } // namespace
 
 bool haveMeshArrangement() { return true; }
+
+bool meshCoRefine(const std::vector<double> &xyz, const std::vector<int> &tri,
+                  std::vector<double> &oxyz, std::vector<int> &otri,
+                  std::vector<int> &birth, std::string &error,
+                  std::vector<int> *inputVertex,
+                  const std::vector<int> *cutTarget)
+{
+  error.clear();
+  if(xyz.size() % 3 || tri.size() % 3) {
+    error = "incomplete vertex or triangle in co-refinement input";
+    return false;
+  }
+  for(double x : xyz)
+    if(!std::isfinite(x)) {
+      error = "non-finite coordinate in co-refinement input";
+      return false;
+    }
+  for(int v : tri)
+    if(v < 0 || std::size_t(v) >= xyz.size() / 3) {
+      error = "vertex index out of range in co-refinement input";
+      return false;
+    }
+  if(cutTarget) {
+    if(cutTarget->size() != tri.size() / 3) {
+      error = "incorrect number of co-refinement cutter targets";
+      return false;
+    }
+    for(int target : *cutTarget) {
+      if(target < -1 || (target >= 0 &&
+                         std::size_t(target) >= cutTarget->size())) {
+        error = "co-refinement cutter target out of range";
+        return false;
+      }
+      if(target >= 0 && (*cutTarget)[target] != -1) {
+        error = "co-refinement cutter target is not a regular triangle";
+        return false;
+      }
+    }
+  }
+  Arrangement a;
+  const std::vector<int> label(tri.size() / 3, 0);
+  if(!a.compute(xyz, tri, label, cutTarget)) {
+    error = a.error;
+    return false;
+  }
+  if(!a.triangulation(oxyz, otri, birth, inputVertex)) {
+    error = a.error;
+    return false;
+  }
+  return true;
+}
 
 bool meshArrangement(const std::vector<double> &xyz,
                      const std::vector<int> &tri,

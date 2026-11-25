@@ -1,0 +1,191 @@
+{
+  "description": "Original CAD inputs for the MAT migration benchmarks.",
+  "parameter_note": "Thickness values are historical algorithm parameters, not independently measured maximum wall thicknesses.",
+  "cases": [
+    {
+      "name": "Doghouse",
+      "geometry": "Doghouse.stp",
+      "viewer": "Doghouse.geo",
+      "source_repository": "MatGmsh",
+      "source_path": "tests/Doghouse/Doghouse.stp",
+      "sha256": "3a000432882d4a8fa56ef053f9e68af6d8f3d615b7d713306a6a4e1d5274d8fb",
+      "bytes": 193280,
+      "historical_mat_parameters": {
+        "thickness": 4.0,
+        "curve_mesh_factor": 0.04,
+        "far_mesh_factor": 0.4,
+        "mat_source_refinement_passes": 0,
+        "review_mat_topology": true,
+        "stop_after": "filtered-mat"
+      },
+      "historical_campaign_date": "2026-11-19",
+      "current_surface_mesh_size": 0.3
+    },
+    {
+      "name": "Sample2",
+      "geometry": "Sample2.stp",
+      "viewer": "Sample2.geo",
+      "source_repository": "MatGmsh",
+      "source_path": "tests/Sample2/Sample2.stp",
+      "sha256": "4ba3cca6592d9bb4689bb5476b2f1cb26e310703a4235e478b59ca6a411f3ca3",
+      "bytes": 296753,
+      "historical_mat_parameters": {
+        "thickness": 4.5,
+        "curve_mesh_factor": 0.04,
+        "far_mesh_factor": 0.4,
+        "mat_source_refinement_passes": 0,
+        "review_mat_topology": true,
+        "stop_after": "filtered-mat"
+      },
+      "historical_campaign_date": "2026-11-19",
+      "current_surface_mesh_size": 0.3
+    },
+    {
+      "name": "Sample3",
+      "geometry": "Sample3.stp",
+      "viewer": "Sample3.geo",
+      "source_repository": "MatGmsh",
+      "source_path": "tests/Sample3/Sample3.stp",
+      "sha256": "9569cecd896b8d5a5ee552c194821cc024855d4ccf0ce4499c66c8c440ba187e",
+      "bytes": 933431,
+      "historical_mat_parameters": {
+        "thickness": 4.0,
+        "curve_mesh_factor": 0.04,
+        "far_mesh_factor": 0.4,
+        "mat_source_refinement_passes": 0,
+        "review_mat_topology": true,
+        "stop_after": "filtered-mat"
+      },
+      "historical_campaign_date": "2026-11-19",
+      "current_surface_mesh_size": 0.3
+    },
+    {
+      "name": "Sample4",
+      "geometry": "Sample4.stp",
+      "viewer": "Sample4.geo",
+      "source_repository": "MatGmsh",
+      "source_path": "tests/Sample4/Sample4.stp",
+      "sha256": "c9fe85f3d29a6b6f5f9e1a85961429ff74896d5d5eb91dab90a28bf899e6e609",
+      "bytes": 1590847,
+      "historical_mat_parameters": {
+        "thickness": 4.0,
+        "curve_mesh_factor": 0.04,
+        "far_mesh_factor": 0.4,
+        "mat_source_refinement_passes": 0,
+        "review_mat_topology": true,
+        "stop_after": "filtered-mat"
+      },
+      "historical_campaign_date": "2026-11-19",
+      "current_surface_mesh_size": 0.3
+    },
+    {
+      "name": "SteppedFilletedBracket",
+      "title": "Stepped wall thickness with fillets and windows",
+      "features": "Base thickness 0.6/1.0/1.4 mm; two tall ribs, a crossing rib, root fillets and ten holes.",
+      "geometry": "SteppedFilletedBracket.step",
+      "viewer": "SteppedFilletedBracket.geo",
+      "source_repository": "MatGmsh",
+      "source_path": "build/tests/complex_mat_dragon3_20261120/SteppedFilletedBracket/SteppedFilletedBracket.step",
+      "source_generator": "tests/complex_manufactured_mat_cases.py",
+      "historical_campaign_date": "2026-11-20",
+      "sha256": "b912353e10692527ac802e615d059414810fba89613066451fcbfabf5b504364",
+      "bytes": 196030,
+      "expected_cad_entities": {
+        "volumes": 1,
+        "faces": 56
+      },
+      "historical_mat_parameters": {
+        "thickness": 1.6,
+        "curve_mesh_factor": 0.04,
+        "far_mesh_factor": 0.4,
+        "mat_source_refinement_passes": 0,
+        "review_mat_topology": true,
+        "stop_after": "filtered-mat"
+      },
+      "current_surface_mesh_size": 0.175
+    },
+    {
+      "name": "FlangedPipeT",
+      "title": "Communicating pipe T with three flanges",
+      "features": "Intersecting unequal-radius tubes, a connected lumen and three annular junctions.",
+      "geometry": "FlangedPipeT.step",
+      "viewer": "FlangedPipeT.geo",
+      "source_repository": "MatGmsh",
+      "source_path": "build/tests/complex_mat_dragon3_20261120/FlangedPipeT/FlangedPipeT.step",
+      "source_generator": "tests/complex_manufactured_mat_cases.py",
+      "historical_campaign_date": "2026-11-20",
+      "sha256": "b3bc3d7ac3bf43fca14230141d61d4a7a9dd2af23b8673b17aa782eabd0e5739",
+      "bytes": 95045,
+      "expected_cad_entities": {
+        "volumes": 1,
+        "faces": 19
+      },
+      "historical_mat_parameters": {
+        "thickness": 1.2,
+        "curve_mesh_factor": 0.04,
+        "far_mesh_factor": 0.4,
+        "mat_source_refinement_passes": 0,
+        "review_mat_topology": true,
+        "stop_after": "filtered-mat"
+      },
+      "current_surface_mesh_size": 0.175
+    },
+    {
+      "name": "DoubleShellCage",
+      "title": "Double cylindrical shell with webs and ports",
+      "features": "Two coaxial shells, four radial webs, a middle ring and two radial ports.",
+      "geometry": "DoubleShellCage.step",
+      "viewer": "DoubleShellCage.geo",
+      "source_repository": "MatGmsh",
+      "source_path": "build/tests/complex_mat_dragon3_20261120/DoubleShellCage/DoubleShellCage.step",
+      "source_generator": "tests/complex_manufactured_mat_cases.py",
+      "historical_campaign_date": "2026-11-20",
+      "sha256": "78665a9cea9df65506abe36003c72bb05103600ed70a5c051d699e93ed755cc9",
+      "bytes": 291508,
+      "expected_cad_entities": {
+        "volumes": 1,
+        "faces": 69
+      },
+      "historical_mat_parameters": {
+        "thickness": 1.2,
+        "curve_mesh_factor": 0.04,
+        "far_mesh_factor": 0.4,
+        "mat_source_refinement_passes": 0,
+        "review_mat_topology": true,
+        "stop_after": "filtered-mat"
+      },
+      "current_surface_mesh_size": 0.175
+    },
+    {
+      "name": "TwistedDuct",
+      "title": "Tapered, twisted elliptical duct with windows",
+      "features": "Four rotated elliptical sections, nonuniform normal wall thickness and two side windows.",
+      "geometry": "TwistedDuct.step",
+      "viewer": "TwistedDuct.geo",
+      "source_repository": "MatGmsh",
+      "source_path": "build/tests/complex_mat_dragon3_20261120/TwistedDuct/TwistedDuct.step",
+      "source_generator": "tests/complex_manufactured_mat_cases.py",
+      "historical_campaign_date": "2026-11-20",
+      "sha256": "2d728df09d3b2d8107d5919f40eeff4f2202b719b7ad287a768d4c252cd58dbe",
+      "bytes": 98081,
+      "expected_cad_entities": {
+        "volumes": 1,
+        "faces": 12
+      },
+      "historical_mat_parameters": {
+        "thickness": 1.2,
+        "curve_mesh_factor": 0.04,
+        "far_mesh_factor": 0.4,
+        "mat_source_refinement_passes": 0,
+        "review_mat_topology": true,
+        "stop_after": "filtered-mat"
+      },
+      "current_surface_mesh_size": 0.175
+    }
+  ],
+  "historical_campaign_dates": [
+    "2026-11-19",
+    "2026-11-20"
+  ],
+  "surface_mesh_note": "current_surface_mesh_size is the current recommended first-order surface mesh size in CAD units, also set by each GEO wrapper; historical_mat_parameters remain unchanged."
+}

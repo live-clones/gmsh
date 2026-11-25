@@ -1,0 +1,35 @@
+{
+  "source_repository": "MatGmsh",
+  "source_directory": "src",
+  "source_files": {
+    "matBranchClassifier.cpp": "3fd1e0583dc861a38e48b92980c48e1788fe0e8a50538b1c5dfc7071188a6aea",
+    "matBranchClassifier.h": "a2a1d6728080222ff738a061a0ec89d7e2b5791e6e80d8e419056d162fe1c600",
+    "matBranchDecisionTree.h": "c38b600b919a35aafef343888501b2f369497417b531c773dc0a22a4b195da02",
+    "matCircumcenter.cpp": "290cccfa44854f2f727571b6b2f76965cea60c5fcd16a410963056e101d0edcc",
+    "matCircumcenter.h": "38d18d874653f7eace83cb9c73103b74b62ab31b504b0a6f091fa94d4ebf50ba",
+    "matClosureCapTopology.cpp": "476d639555f1978f8797d9df6acc5b9a92f87fab3832520fcbf4b297ce620e8a",
+    "matClosureCapTopology.h": "804de417be6f0dabedb54dd1965a8e02c28ce5b1d86763a2b25a99294d3d5fa0",
+    "matGmsh.cpp": "80ae54cf6254edb328b773cd1242954be83a5c6bb7a2c79b4843d8ec817c7110",
+    "matGmsh.h": "4c0c12ed1a7f9d9353e4f25e5ac0720468b14cfaf95aaf41d57c286d48dd2b88",
+    "matGmshEdge.h": "bb416f608471e7911c84ad77fe2409415ccadbbac4500aceea4749f6170318c9",
+    "matLargestConnectedComponent.cpp": "c22ce0a56bed8a77a56268316b003f069a0a0a93defc9a12e395febd5ac57e03",
+    "matLargestConnectedComponent.h": "91b601e49d92b4c0798338dc17fa4c6b652efb823b7948f3788a8a952a644ac8",
+    "matLocalMidSurfaceProjection.h": "9649e2f8a69e9e7374e01727a6cd03424ae7a83e4ef9989d40affd5b62b6a66e",
+    "matMixedBranchSegmentation.cpp": "30175584d78efe0a0f2e52cef76bebaf7e7d47bb3a2c7ec75e047150ae7db5a1",
+    "matPolygonFan.cpp": "26efd33e61a3796173e9016d83c4d69d8474dbca05fc3034510789b4e898fd1d",
+    "matPolygonFan.h": "9214b534c115fc4a53881b8a8da957198d7208749eecea84bc01e97f6995fca0",
+    "matTerminalBranchFilter.cpp": "6c2166a6014525307add97927a228f16ec43510bdd113deda62ac37c0cb9cc6d",
+    "matVoronoiVertexMerge.cpp": "acbf1d191797aeabe00227705749ec2a213b96a717d9ab4a385e82ac4c02ffb0",
+    "matVoronoiVertexMerge.h": "3a90a25a15303c1385683b522d8f3099d4a8dbe9f0eb15779e77cba272c80a75"
+  },
+  "omitted": "Legacy exporters, review model construction, alternative proximity/confidence filters, theta-HMA and diagnostics, parameterization and meshing. Uncalled triangulated-topology utilities, raw topology capture and preserve-raw-topology mode, post-projection vertex-merger wrapper, unused model/seed/topology state.",
+  "backend_changes": [
+    "DiscreteCADWinding at original circumcenters instead of libigl",
+    "Gmsh robustPredicates::orient3d; original interval certification and rational circumcenter fallback retained",
+    "Native winding parallel evaluation is bounded by Gmsh General.NumThreads; zero retains automatic thread count."
+  ],
+  "omitted_files": {
+    "matGmshTriangulatedTopology.cpp": "61f764421d6bce21dec17b48e35f0eb8376067b58888d77a4ba4ee720ef6b062",
+    "matGmshTriangulatedTopology.h": "59adbb550e3b6dc72ba5f9addd5ceb69077476a4cf0c2d2b76bc62b0f5b7b16e"
+  }
+}

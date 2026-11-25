@@ -81,6 +81,10 @@
 #include "DiscreteCADWindingPlugin.h"
 #endif
 
+#if defined(HAVE_MATGMSH) && defined(HAVE_DISCRETECAD)
+#include "MatGmshPlugin.h"
+#endif
+
 // HAVE_PLUGIN_LOADING is only defined when compiling the shared library with
 // the private API (which exports what plugins need) on a system with dlopen
 #if defined(HAVE_PLUGIN_LOADING)
@@ -236,6 +240,9 @@ void PluginManager::registerDefaultPlugins()
 #endif
 #if defined(HAVE_DISCRETECAD)
     add(new GMSH_WindingNumberPlugin());
+#endif
+#if defined(HAVE_MATGMSH) && defined(HAVE_DISCRETECAD)
+    add(new GMSH_MatGmshPlugin());
 #endif
   }
 

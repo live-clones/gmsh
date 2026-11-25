@@ -221,7 +221,7 @@ double DiscreteCADWinding::operator()(const double q[3]) const
 }
 
 void DiscreteCADWinding::evaluate(const std::vector<std::array<double, 3> > &q,
-                                  std::vector<double> &w) const
+                                  std::vector<double> &w, unsigned maxThreads) const
 {
   w.resize(q.size());
   // (in chunks taken in turn by the threads of the machine)
@@ -232,7 +232,8 @@ void DiscreteCADWinding::evaluate(const std::vector<std::array<double, 3> > &q,
       for(std::size_t j = i; j < std::min(q.size(), i + chunk); j++)
         w[j] = (*this)(q[j].data());
   };
-  const unsigned n = std::max(1u, std::thread::hardware_concurrency());
+  const unsigned available = std::max(1u, std::thread::hardware_concurrency());
+  const unsigned n = maxThreads ? std::min(available, maxThreads) : available;
   std::vector<std::thread> threads;
   for(unsigned t = 1; t < n && q.size() > chunk; t++) threads.emplace_back(work);
   work();

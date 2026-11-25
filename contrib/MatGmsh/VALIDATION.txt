@@ -1,0 +1,317 @@
+Native MatGmsh migration: validation snapshot, 23 November 2026
+================================================================
+
+Branch: feature/matgmsh-migration, based on Gmsh 07245da7b.
+Build: local macOS arm64, Release, HXT/OCC/discreteCADModeler enabled.
+This is an opt-in module. Extension remains experimental.
+
+Source scope
+------------
+C++ and headers, excluding tests: 12523 lines (10781 extracted core, 1742 integration).
+The former standalone production target contained 42,604 lines of C++ and
+headers. Quad meshing, fitting prototypes and the old application were not
+migrated. Some optional legacy classifier paths remain; this count is not an
+assertion that every branch executes in every run.
+
+Stage 1: controlled old/new comparison
+-------------------------------------
+The original replay and native pipeline both reloaded the same cached surface
+mesh. Plate, Doghouse, Sample2/3/4, SteppedFilletedBracket, FlangedPipeT,
+DoubleShellCage and TwistedDuct produced exactly the same retained polygon
+parents, triangle connectivity and branch labels. Coordinates agree to
+floating-point rounding. After final cleanup, plate, Doghouse and TwistedDuct
+were rerun; maximum coordinate difference was 3.18e-12. A two-plate test with
+keep-components preserves two components and matches the original policy.
+This establishes migration parity, not geometric correctness of the legacy
+filter or convergence to a true medial axis.
+
+Stage 2: guarded projection, final eight-case campaign
+-----------------------------------------------------
+Every case passes the output audit. An independent CGAL triangle-soup audit
+finds zero self-intersections and zero degenerate triangles in each saved
+output. Projection proposals must preserve topology, pass the native exact
+intersection check, and remain in the triangulated skin after co-refinement.
+Rejected proposals retain the filtered mesh exactly.
+
+Case                    Projection   Filtered triangles   Wall seconds*
+Doghouse                unchanged            294395        11.28
+Sample2                 applied              169207         6.28
+Sample3                 unchanged            282350         9.13
+Sample4                 unchanged            792971        36.38
+SteppedFilletedBracket  unchanged             88644         4.13
+FlangedPipeT            unchanged             73419         2.73
+DoubleShellCage         unchanged            116204         4.38
+TwistedDuct             unchanged             62512         3.59
+
+* Driver wall time: CAD import, cached mesh load, calculation and file output,
+  during concurrent validation jobs; not an isolated performance benchmark.
+  The independent Python/CGAL audits are additional time.
+
+Projection rejection reasons:
+  Doghouse: Projection rejected: self-intersection between triangles 25154 and 25166
+  Sample3: Projection rejected: self-intersection between triangles 6727 and 69174
+  Sample4: Projection rejected: triangle 78238 has a part outside the source skin
+  SteppedFilletedBracket: Projection rejected: triangle 37634 has a part outside the source skin
+  FlangedPipeT: Projection rejected: triangle 11251 has a part outside the source skin
+  DoubleShellCage: Projection rejected: triangle 0 has a part outside the source skin
+  TwistedDuct: Projection rejected: triangle 666 has a part outside the source skin
+
+Stage 3: extension
+------------------
+Plate (1,013 input triangles): 131/131 fronts reach the skin, one component,
+Euler characteristic 1, area 8 within 1.2e-14, no interior free boundary;
+extension 0.166 s. Independent output and CGAL audits pass.
+
+TwistedDuct, coarser skin (23,554 input triangles): 191/574 fronts completed,
+1,896 triangles added, one component, 383 unresolved fronts, about 11 s.
+The partial output preserves all original parent areas and passes independent
+output/CGAL audits. Folded bands, remaining internal free boundaries and
+rejected intermediate Boolean proposals prevent completion.
+
+Doghouse, coarser skin (80,553 input triangles): the final guard detects an
+intersection in the proposed extension. The complete proposal is rejected;
+the initial filtered MAT is retained exactly, all 1,479 fronts unresolved.
+About 100 s under concurrent validation. This is NOT a completed Doghouse
+extension. Boolean cost and robust continuation around difficult boundary
+configurations remain open work.
+
+Regression and integration checks
+---------------------------------
+All eight CTest groups pass: classifier, mixed-wing filter, terminal filter,
+circumcenters, projection helpers, extension, intersection/confinement and
+output-audit fixtures. Intersection/confinement has 14 fixtures, extension
+has six, and the Python audit has ten.
+
+Both shared-library API and actual Gmsh application plugin smoke tests pass.
+The native application test detects Gmsh diagnostics even when its process
+exit code is zero. Before/after binary source meshes are byte-identical.
+A standalone unparametrized MSH skips CAD projection explicitly; second-order
+triangles are rejected. A partial Physical Surface group does not truncate
+the source checkpoint: all six faces and coordinate bits survive binary MSH4
+with SaveAll. Existing CAD+MSH merge can duplicate physical-group memberships;
+it does not change source coordinates or connectivity in this check.
+General.NumThreads now limits the winding worker count; 1/2/auto results agree.
+MatGmsh-disabled configuration succeeds; enabling without Mesh fails clearly.
+
+Local evidence
+--------------
+Gmsh build/mat-native-tests/:
+  final-ctest.log
+  cases-final/summary.json (per-case reports and independent audits alongside)
+  native-app-plugin-smoke/app-plugin-smoke.json
+  plugin-smoke/plugin-smoke.json
+  physical-checkpoint/checkpoint-physical-smoke.json
+  plate-extension-global/report.json
+  TwistedDuct-extension-filtered-clean/report.json
+  Doghouse-extension-filtered-clean/report.json
+
+Original repository build/tests/native_migration_20261123/:
+  parity_summary.txt
+  post_pruning_parity_summary.json
+  run_cached_parity.py and original replay harness/provenance
+
+Connected-front extension prototype, 23 November 2026 (evening)
+-------------------------------------------------------------
+This supersedes the Stage 3 implementation/results above. Raw MAT, filtering
+and projection are unchanged: their coordinate/connectivity/provenance hashes
+match the preceding performance audit on identical cached source meshes.
+
+Short connected collars replace individually extrapolated long bands. Nearby
+triangles are co-refined together with the native open arrangement API. Finite
+contacts introduce selective characteristic-shadow cuts; coplanar competitors
+are partitioned by equal normal advance. Rejected self-intersecting collars
+are isolated spatially and the layer is retried, at most four times. Every
+accepted layer retains the original MAT and previously accepted geometry.
+The direction field has not been replaced by a new extrapolation method.
+
+Isolated Release measurements, Apple M3 Max, one thread, one warmup plus three
+measured repetitions. Same skin checkpoints/options as the previous audit:
+
+Case           MAT triangles   Old/new completed fronts   Old/new extension s
+Plate                  1013            131 / 131           0.211 / 0.191
+TwistedDuct           23554            191 / 202          10.976 / 1.964
+Doghouse              80553              0 / 1439         94.783 / 35.286
+
+Totals are 131, 574 and 1479 original fronts respectively. Plate completes;
+TwistedDuct and Doghouse remain partial. Different output coverage means these
+are not timings for geometrically identical results. Initial-boundary length
+fractions belonging to completed fronts are 100%, 33.7% and 93.3%; front counts
+are not surface-area coverage percentages.
+
+Doghouse accepts twelve layers, 42 local co-refinement calls and 8504 new
+triangles. It retains one component. Forty initial fronts remain unresolved:
+seven associated with local rejection, 33 with an interior free boundary at
+the end of the layer budget. TwistedDuct accepts one layer and 1859 new
+triangles; conflicts during the next layer still prevent further commitment.
+A layer that fails leaves earlier validated layers in place.
+
+All nine CTest groups pass. Extension has nine fixtures, open co-refinement
+and its containment envelope have 24, strict intersection/containment has 14.
+The new fixtures cover a finite contact split, its later completion, opposing
+coplanar fronts, a finite cavity, exact-coordinate export, selective cutters,
+coordinate-roundoff slivers, genuine protrusions, translations and subdivision.
+
+Independent saved-output audits pass all three cases. CGAL reports zero
+self-intersections and zero degenerate triangles. Every input MAT coordinate
+is present bit-exact in each result: 573/573, 12022/12022, 40716/40716. Original
+parent/branch sets agree; maximum relative parent-area change on Doghouse is
+3.68e-13 (the other two are exactly equal in this audit). This independent
+area check aggregates original Voronoi polygons, while construction also
+checks each fixed triangle's descendants. All four run hashes agree per case.
+
+Important numerical contract: exported binary64 contact coordinates cannot
+always lie exactly on an oblique binary64 skin. The extension uses explicit
+coordinate-roundoff containment, not a strict exact containment claim. Every
+positive-area outside descendant must fit in the rounding neighborhood of ONE
+common skin triangle; the radius is eight times the coordinate ULP norm. The
+outside-area allowance is capped per source triangle, independent of refinement.
+Coverage must retain descendants and satisfy its coordinate-perturbation area
+bound. No thickness-scaled geometric tolerance substitutes for this check.
+The stricter projection containment guard is unchanged. Diagnostic evidence
+shows why ignoring zero-area Boolean descendants alone is insufficient, and
+why collapsing Boolean cleanup is unsuitable for this preservation audit.
+
+Native Gmsh application Plugin(MatGmsh), Stage=2, also passes the smoke check:
+77/77 fronts complete, no error diagnostics, source before/after checkpoints
+byte-identical. The native application, shared library and static test library
+were rebuilt with the new implementation.
+
+Local evidence: build/mat-connected-fronts-20261123/
+  report/index.html, report/industrial-panels.png, report/simple-contacts.png
+  comparison.json, campaign-metadata.json, campaign-runs.json, run_campaign.py
+  {plate,TwistedDuct,Doghouse}/summary.json and run-0/ checkpoints/audits
+  independent-output-audit.json, ctest-final.log
+  app-extension-final/app-plugin-smoke.json
+  {twisted,doghouse}-containment-diagnostic.txt
+
+Limitations: incomplete industrial fronts, no unique-midsurface guarantee,
+no persistent event queue, and per-layer rebuilding of spatial/topology audits.
+The one-second industrial target has not been achieved. The remaining conflicts
+need local test cases and improved continuation/rounding behavior.
+
+Input-quality correction following visual review
+------------------------------------------------
+Doghouse still contains residual wings in the filtered MAT supplied to the
+extension. Since this prototype freezes every input face, those wings are
+retained and their free edges can also be continued. The 1439/1479 result
+measures termination of the supplied fronts; it does not validate wing removal
+or midsurface quality. The unchanged filter removed 157 zones (2505 Voronoi
+polygons), but does not measure remaining false positives. The branch classifier
+uses aggregate features, and the mixed post-filter only revisits retained
+branches touching a free edge of the raw MAT. Local visual branch/zone diagnosis
+is needed before attributing particular surviving wings to a specific rule.
+
+Dense input skins on all eight CAD benchmarks (2026-11-24)
+--------------------------------------------------------
+All eight benchmarks/MAT CADs were freshly meshed at half their previous fine
+edge size, with the same MAT classifier. Doghouse and Sample2/3/4 use 0.3
+(previously 0.6); the four manufactured audit CADs use 0.175 (previously 0.35).
+Their .geo files and current_surface_mesh_size manifest fields persist these
+settings; historical parameters and CADs are unchanged. The standalone driver
+now defaults to thickness/10 instead of 0.4*thickness. It preserves mesh-size
+bounds changed by opening the input GEO, unless a positive --mesh-size overrides
+them. An existing source mesh is reused as before.
+
+Case                      Skin triangles   Skin(s) HXT(s)  Raw(s) Filter(s)
+Doghouse                         282956      1.501   0.339  13.985   4.830
+Sample2                          172300      1.676   0.173   4.141   2.870
+Sample3                          272978      2.360   0.261   8.517   5.676
+Sample4                          723102      6.214   0.835  20.878  37.302
+SteppedFilletedBracket            107368      0.251   0.135   2.878   1.190
+FlangedPipeT                       71918      0.473   0.096   2.308   1.025
+DoubleShellCage                   113914      0.592   0.176   5.527   1.624
+TwistedDuct                        47992      1.117   0.049   1.213   0.903
+
+Protocol: Apple M3 Max, Release, one thread, one fresh mesh and one MAT run per
+case. Skin time includes curve and surface mesh generation, excluding CAD
+import and output. HXT is the median of three separate replays on the exact
+in-memory input sites after MAT computation, with unchanged point/tetrahedron
+counts checked against the embedded Delaunay. This is not an internal substage
+timer: raw MAT already includes its Delaunay and the replay time must not be
+added to or subtracted from raw time. Sample4 HXT samples are 0.774, 1.667 and
+0.835 s. No full-run repetition or projection/extension was performed here.
+All source mesh hashes and restored option checks pass.
+
+The new skins have 3.7-3.9 times as many triangles as the previous fine skins.
+All eight filtered MATs retain one component. Against its previous fine result,
+Doghouse changes area by -0.76%, free-boundary length by -1.91% and junction
+length by -0.78%. TwistedDuct's small junctions disappear. Some Doghouse terminal
+sheets and DoubleShellCage tips remain visible: density is not a wing-removal
+certificate. SteppedFilletedBracket Euler characteristic changes from -19 to -9;
+filter topology is not yet invariant under refinement. The earlier coarse
+extension closure counts do not apply to these new meshes.
+
+Independent saved-output native audits pass all eight dense filtered MATs.
+External CGAL reports zero intersection pairs and zero degenerate triangles
+across 7,094,792 triangles. These are mesh integrity checks, not a midsurface
+accuracy or completeness proof. All audit processes exit zero.
+
+Rebuilt gmshMat. Four CLI sizing smoke runs pass: GEO bounds, thickness/10
+default, explicit CLI override, and byte-identical reuse of a cached skin even
+when --mesh-size is specified. No changes to the core MAT/filter implementation
+were needed for this campaign.
+
+Local evidence: build/mat-dense-skin-20261124/
+  report/index.html, report/images/*-density.png
+  report/images/Doghouse-three-densities.png
+  campaign-metadata.json, campaign-runs.json, comparison.json
+  density-metrics.json, density-metrics.csv, independent-output-audit.json
+  cli-smoke/summary.json, build-driver.log
+  {case}/source.msh, summary.json, hxt-replay.json, pipeline.log
+  {case}/run-0/{skin,raw,filtered}.msh, report.json and independent audits
+  run_campaign.py, benchmark_dense.cpp, render_density.py, make_report.py
+
+Extension on all eight dense skins (2026-11-24)
+---------------------------------------------
+The extension stage was subsequently run on every dense cached skin from the
+campaign above. Algorithm/library unchanged; projection disabled, length 3h,
+12 layers, one sequential run per case and one thread. Times below measure
+only extension, not raw MAT/filtering, import, exports or independent audits.
+All eight produce partial outputs and retain one connected component.
+
+Case                     Completed / initial fronts   Added tris  Extension(s)
+Doghouse                         5784 / 5952              27810       71.277
+Sample2                          2387 / 2419              13552       51.703
+Sample3                           664 / 4448              10049       35.943
+Sample4                          1415 / 9399              21467      148.707
+SteppedFilletedBracket            1259 / 4506              13078       10.759
+FlangedPipeT                      2338 / 2344              13030       14.564
+DoubleShellCage                   1089 / 3814              12589       13.313
+TwistedDuct                       1331 / 1378               6648       40.577
+
+These are initial free-edge ledger counts, not area-completeness percentages.
+TwistedDuct commits ten layers; Doghouse, Sample2 and FlangedPipeT two; the
+remaining cases one. Doghouse's third layer fails a containment descendant
+preservation guard, leaving 168 fronts unresolved. Other stops include local
+self-intersections, degenerate co-refinement parents, and absence of a
+nonfolding proposal. Earlier accepted layers remain usable. The increased
+sampling does not by itself establish robust extension or wing elimination.
+The existing input wings are retained. Rebuilt global validations remain
+expensive on dense MATs.
+
+Replay qualification: source coordinates/connectivity are preserved. Seven
+filtered outputs are bit-identical to the prior fresh-mesh campaign. Doghouse
+has the same raw MAT but retains two additional tiny terminal triangles, total
+area approximately 2.91e-5. The source MSH checkpoints did not enable
+Mesh.SaveParametric: reloading loses CAD node parameters used by the terminal
+normal test. This is a filtering replay limitation, not HXT instability or
+geometry changed by extension. Conservation checks therefore compare each
+extension against its own exported filtered MAT. Exact future replay should
+also preserve and check CAD node parameters.
+
+Local evidence: build/mat-dense-extension-20261124/
+  report/index.html, report/images/*-extension.png
+  campaign-metadata.json, campaign-runs.json, comparison.json
+  {case}/run-0/{filtered,projected,extended}.msh and report.json
+  run_campaign.py, make_report.py, render_extension.py
+  audit_dense_extensions.py, independent-output-audit.json
+
+Independent dense-extension audits completed: all eight native checks pass.
+External CGAL reports zero self-intersections and zero degenerate triangles
+across 7,213,080 output triangles. All 3,559,757 original coordinates
+are preserved bit-exactly, projection-disabled snapshots equal filtered
+snapshots, and parent/branch area checks pass. The maximum relative parent-area
+error is 8.41e-13 (Sample4); all other cases have exactly equal aggregate
+areas in this audit. The termination-length fraction is a summary of the native
+front ledger, not an independent geometric-completeness certificate. Temporary
+OFF files were deleted; all eight comparison images were visually inspected.

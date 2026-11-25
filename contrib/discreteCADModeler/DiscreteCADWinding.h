@@ -38,9 +38,9 @@ public:
                      double beta = 2.);
   // the winding number at q
   double operator()(const double q[3]) const;
-  // the winding numbers at the points q
+  // the winding numbers at the points q; maxThreads=0 uses all available threads
   void evaluate(const std::vector<std::array<double, 3> > &q,
-                std::vector<double> &w) const;
+                std::vector<double> &w, unsigned maxThreads = 0) const;
   // the winding number at q summed over all the triangles (to check)
   double exact(const double q[3]) const;
 

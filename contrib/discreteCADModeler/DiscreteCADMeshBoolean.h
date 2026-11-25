@@ -17,6 +17,7 @@
 #define DISCRETE_CAD_MESH_BOOLEAN_H
 
 #include <string>
+#include <array>
 #include <vector>
 
 // The boolean operation op (0: union, 1: intersection, 2: difference A - B)
@@ -52,5 +53,16 @@ bool meshBoolean(int op, const std::vector<double> &xyzA,
                  const std::vector<int> &triB, std::vector<double> &xyz,
                  std::vector<int> &tri, std::vector<int> &birth,
                  std::string &error);
+
+// Pairs of input triangles that meet outside their common indexed vertex or
+// edge. Open and non-manifold meshes are allowed; duplicate triangles and
+// contacts between geometrically coincident but distinct vertices are reported.
+// Uses the same exact predicates and bounding-volume hierarchy as meshBoolean,
+// without moving, welding or retriangulating the input. False means malformed
+// or degenerate input. This tests the final configuration, not swept motion.
+bool meshSelfIntersections(const std::vector<double> &xyz,
+                           const std::vector<int> &tri,
+                           std::vector<std::array<int, 2> > &pairs,
+                           std::string &error, bool firstOnly = false);
 
 #endif

@@ -17,9 +17,11 @@
 #include <array>
 #include <cmath>
 #include <cstdint>
+#include <cstring>
 #include <deque>
 #include <functional>
 #include <iterator>
+#include <limits>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -73,6 +75,108 @@ namespace {
   }
 
   inline int sign(double a) { return a > 0. ? 1 : a < 0. ? -1 : 0; }
+
+  // Round an exact rational to the nearest double, with ties to even. Summed
+  // expansions give an initial estimate, refined by exact residuals before
+  // bracketing the quotient between adjacent floating-point numbers.
+  bool roundedQuotient(const Expansion &numerator, const Expansion &denominator,
+                       double &result)
+  {
+    static_assert(std::numeric_limits<double>::is_iec559 &&
+                  std::numeric_limits<double>::radix == 2 &&
+                  std::numeric_limits<double>::digits == 53,
+                  "IEEE 754 binary64 double required");
+    auto finite = [](const Expansion &e) {
+      return !e.empty() && std::all_of(e.begin(), e.end(),
+                                     [](double v) { return std::isfinite(v) &&
+                                       std::fpclassify(v) != FP_SUBNORMAL; });
+    };
+    if(!finite(numerator) || !finite(denominator)) return false;
+    const int denominatorSign = sign(denominator);
+    if(!denominatorSign) return false;
+    auto estimate = [](const Expansion &e) {
+      double value = 0.;
+      for(double component : e) value += component;
+      return value;
+    };
+    const double d = estimate(denominator);
+    if(!std::isfinite(d) || !d) return false;
+    double q = estimate(numerator) / d;
+    auto validQuotient = [&](double value) {
+      return std::isfinite(value) && std::fpclassify(value) != FP_SUBNORMAL &&
+        (value != 0. || sign(numerator) == 0);
+    };
+    if(!validQuotient(q)) return false;
+    auto residual = [&](double value, Expansion &r, int &side) {
+      // Shewchuk products require no underflow in their error components,
+      // and finite splitter intermediates. Fail closed outside that range.
+      if(value) {
+        constexpr int maximumSplitExponent = std::numeric_limits<double>::max_exponent -
+          (std::numeric_limits<double>::digits + 1) / 2 - 2;
+        constexpr int minimumProductExponent = std::numeric_limits<double>::min_exponent +
+          std::numeric_limits<double>::digits - 2;
+        constexpr int maximumProductExponent = std::numeric_limits<double>::max_exponent - 3;
+        const int e = std::ilogb(value);
+        if(e > maximumSplitExponent) return false;
+        for(double component : denominator) if(component) {
+          const int f = std::ilogb(component);
+          if(f > maximumSplitExponent || e + f < minimumProductExponent ||
+             e + f > maximumProductExponent) return false;
+        }
+      }
+      const Expansion p = scale(denominator, value);
+      if(!finite(p)) return false;
+      r = sub(numerator, p);
+      if(!finite(r)) return false;
+      side = sign(r) * denominatorSign;
+      return true;
+    };
+    Expansion r;
+    int side;
+    // Expansions need not be strongly normalized: their last components can
+    // give an estimate many ulps away. Sum first, then correct by the exact
+    // residual before looking at adjacent floating-point numbers.
+    for(int correction = 0; correction < 2; ++correction) {
+      if(!residual(q, r, side)) return false;
+      if(!side) { result = q; return true; }
+      const double corrected = q + estimate(r) / d;
+      if(!validQuotient(corrected)) return false;
+      if(corrected == q) break;
+      q = corrected;
+    }
+    if(!residual(q, r, side)) return false;
+    if(!side) { result = q; return true; }
+    for(int iteration = 0; iteration < 64; ++iteration) {
+      const double next = std::nextafter(
+        q, side > 0 ? std::numeric_limits<double>::infinity() :
+                      -std::numeric_limits<double>::infinity());
+      if(!validQuotient(next)) return false;
+      Expansion nextResidual;
+      int nextSide;
+      if(!residual(next, nextResidual, nextSide)) return false;
+      if(!nextSide) { result = next; return true; }
+      if(nextSide != side) {
+        // r + nextResidual = 2 numerator - (q + next) denominator,
+        // with no rounded midpoint and no premature factor-two overflow.
+        const Expansion midpoint = sum(r, nextResidual);
+        if(!finite(midpoint)) return false;
+        const int midpointSide = sign(midpoint) * denominatorSign;
+        const double lower = std::min(q, next), upper = std::max(q, next);
+        if(midpointSide) result = midpointSide < 0 ? lower : upper;
+        else {
+          std::uint64_t bits;
+          static_assert(sizeof(bits) == sizeof(lower), "binary64 double required");
+          std::memcpy(&bits, &lower, sizeof(bits));
+          result = bits & 1 ? upper : lower;
+        }
+        return true;
+      }
+      q = next;
+      r = std::move(nextResidual);
+      side = nextSide;
+    }
+    return false;
+  }
 
   // a value with a bound of its error
 
@@ -1632,6 +1736,72 @@ namespace {
     }
 
   public:
+    bool selfIntersections(const std::vector<double> &xyz,
+                           const std::vector<int> &tri,
+                           std::vector<std::array<int, 2> > &pairs,
+                           bool firstOnly)
+    {
+      pairs.clear();
+      if(xyz.size() % 3 || tri.size() % 3 ||
+         xyz.size() / 3 >= (1u << 30) || tri.size() >= (1u << 30)) {
+        error = "invalid or oversized self-intersection input arrays";
+        return false;
+      }
+      for(double x : xyz) if(!std::isfinite(x)) {
+        error = "nonfinite self-intersection input coordinate";
+        return false;
+      }
+      for(int v : tri) if(v < 0 || std::size_t(v) >= xyz.size() / 3) {
+        error = "self-intersection input references an unknown vertex";
+        return false;
+      }
+      if(tri.empty()) return true;
+      _op = 3;
+      if(!_setup(xyz, tri, {}, {})) return false;
+      std::vector<std::array<double, 6> > boxes(_nt);
+      std::vector<int> items(_nt);
+      for(int t = 0; t < _nt; ++t) {
+        if(_degenerate[t]) {
+          error = "degenerate self-intersection input triangle " + std::to_string(t);
+          return false;
+        }
+        items[t] = t;
+        for(int k = 0; k < 3; ++k) {
+          boxes[t][k] = boxes[t][3 + k] = X(_tri[3 * t])[k];
+          for(int j = 1; j < 3; ++j) {
+            boxes[t][k] = std::min(boxes[t][k], X(_tri[3 * t + j])[k]);
+            boxes[t][3 + k] = std::max(boxes[t][3 + k], X(_tri[3 * t + j])[k]);
+          }
+        }
+      }
+      BoxTree tree;
+      tree.build(boxes, items);
+      for(int ta = 0; ta < _nt && (!firstOnly || pairs.empty()); ++ta) {
+        tree.query(boxes[ta], [&](int tb) {
+          if(tb <= ta || (firstOnly && !pairs.empty())) return;
+          const int *a = &_tri[3 * ta], *b = &_tri[3 * tb];
+          int common = 0;
+          for(int i = 0; i < 3; ++i)
+            for(int j = 0; j < 3; ++j) common += a[i] == b[j];
+          bool crossing = common == 3; // duplicate indexed triangles
+          for(int k = 0; k < 6 && !crossing; ++k) {
+            uint64_t contacts[2];
+            const int count = k < 3 ? _intersect(_triEdges[3 * ta + k], tb, contacts) :
+                                    _intersect(_triEdges[3 * tb + k - 3], ta, contacts);
+            for(int i = 0; i < count; ++i) {
+              // Both triangles belong to the same input, so their vertex and
+              // edge simplex IDs agree exactly only on their shared topology.
+              const uint32_t source = static_cast<uint32_t>(contacts[i] >> 32);
+              const uint32_t target = static_cast<uint32_t>(contacts[i]);
+              if(source != target) crossing = true;
+            }
+          }
+          if(crossing) pairs.push_back({ta, tb});
+        });
+      }
+      return true;
+    }
+
     bool compute(int op, const std::vector<double> &xyzA,
                  const std::vector<int> &triA, const std::vector<double> &xyzB,
                  const std::vector<int> &triB, std::vector<double> &xyz,
@@ -1686,9 +1856,25 @@ namespace {
           for(int k = 0; k < 3; k++) {
             if(used[v[k]] < 0) {
               used[v[k]] = (int)xyz.size() / 3;
-              Approx c[3];
-              _coords(v[k], c);
-              for(int j = 0; j < 3; j++) xyz.push_back(c[j].v);
+              if(v[k] < _nv) {
+                for(int j = 0; j < 3; j++) xyz.push_back(X(v[k])[j]);
+              }
+              else {
+                // Approx coordinates can be deliberately coarse (even the
+                // midpoint of an edge) when its intersection is ill-conditioned.
+                // Predicates use exact homogeneous coordinates; export those
+                // coordinates too, rounded only once to binary64.
+                Expansion h[4];
+                _homogeneous(v[k], h);
+                for(int j = 0; j < 3; j++) {
+                  double coordinate;
+                  if(!roundedQuotient(h[j], h[3], coordinate)) {
+                    error = "could not safely round exact intersection coordinates";
+                    return false;
+                  }
+                  xyz.push_back(coordinate);
+                }
+              }
             }
             tri.push_back(used[v[k]]);
           }
@@ -1828,6 +2014,17 @@ bool meshBoolean(int op, const std::vector<double> &xyzA,
 {
   MeshBoolean m;
   const bool ok = m.compute(op, xyzA, triA, xyzB, triB, xyz, tri, birth);
+  error = m.error;
+  return ok;
+}
+
+bool meshSelfIntersections(const std::vector<double> &xyz,
+                           const std::vector<int> &tri,
+                           std::vector<std::array<int, 2> > &pairs,
+                           std::string &error, bool firstOnly)
+{
+  MeshBoolean m;
+  const bool ok = m.selfIntersections(xyz, tri, pairs, firstOnly);
   error = m.error;
   return ok;
 }

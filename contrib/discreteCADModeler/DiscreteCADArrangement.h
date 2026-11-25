@@ -23,6 +23,29 @@
 // Whether the mesh arrangements are available (always: they need nothing)
 bool haveMeshArrangement();
 
+// Cut all triangles where they meet, without classifying volumes. Open and
+// nonmanifold surfaces and self-intersections are allowed. The output vertices
+// are shared at exact intersections; their exact coordinates are rounded once
+// to nearest binary64 (ties to even). birth[i]
+// is the input triangle of output triangle i. All nonzero-area descendants are
+// kept, including one copy per source in coplanar overlaps, so callers can
+// select sheets without losing their provenance. Degenerate inputs are omitted.
+// If requested, inputVertex maps every input vertex to its output index (equal
+// input coordinates have the same index). Unused input vertices are retained.
+// With cutTarget, -1 denotes a regular triangle; a nonnegative entry denotes an
+// auxiliary cutter acting only on the regular input triangle with that index.
+// Regular triangles still intersect each other normally; cutters do not
+// intersect each other and their descendants are omitted. Points on shared
+// input edges also split the adjacent regular triangles to keep conformity.
+// Selective cutters must be applied after regular intersections have been
+// co-refined, so contacts crossed by cutters are already shared input edges.
+// Outputs are unchanged on failure; error contains the reason.
+bool meshCoRefine(const std::vector<double> &xyz, const std::vector<int> &tri,
+                  std::vector<double> &oxyz, std::vector<int> &otri,
+                  std::vector<int> &birth, std::string &error,
+                  std::vector<int> *inputVertex = nullptr,
+                  const std::vector<int> *cutTarget = nullptr);
+
 // The arrangement of closed triangulations, each one oriented outwards,
 // possibly with self-intersections, crossing or touching the others: all the
 // triangles cut where they meet, exactly, the points where three of them meet

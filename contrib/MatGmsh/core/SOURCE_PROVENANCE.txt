@@ -1,0 +1,25 @@
+Native MAT extraction, 23 November 2026
+
+Source: MatGmsh/src at the local migration baseline.
+Only raw dual construction, active branch classification/postfilters, topology
+and optional local projection are retained. There is no parameterization,
+quad meshing, old proximity/confidence filtering or standalone GUI/CLI here.
+
+MatRaw.cpp retains the production seed/dual ordering and replaces libigl
+winding by DiscreteCADWinding at circumcenters. The full solid-angle fallback
+is double arithmetic, not an exact predicate.
+matCircumcenter.cpp preserves the rational fallback and uses Gmsh's predicate
+implementation; Gmsh owns predicate initialization.
+MatFilter.cpp and the postfilter helpers initially preserve legacy decisions.
+Legacy global-largest and closed-sheet policies remain explicitly callable
+for behavior comparison; the pipeline chooses whether to apply them.
+
+Dormant theta-HMA and legacy POS/CSV diagnostic blocks have been removed from
+the mixed postfilter and classifier. Unsupported legacy modes fail explicitly;
+the production automatic policy and mixed-wing removal remain unchanged.
+
+A follow-up reachability audit removed the unused triangulated-topology utility,
+post-projection vertex-merger wrapper, raw topology snapshot and its never-called
+preserve-raw-topology rebuild mode. The active preserve-existing-branches BFS
+is unchanged. Empty legacy barrier state and unused seed adjacency/model-name
+fields were removed. General.NumThreads now bounds the native winding queries.
