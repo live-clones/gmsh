@@ -121,6 +121,8 @@ static void openCASCADE(const std::string &f)
   scriptAddRemovePhysicalGroup(f, "Volume", {cylinder}, "", 10, false, "Add");
   scriptSetColor(0x00ff00ff, {{3, cylinder}}, f);
   scriptDeleteEntities(f, {{2, disk}}, true);
+  // expressions, evaluated for the programs
+  scriptAddBox(f, "10", "2*3", "-1/4", "Sqrt(4)", "Cos(0)", "1");
 }
 
 static void discrete(const std::string &f)
@@ -196,6 +198,11 @@ int main(int argc, char **argv)
                    std::istreambuf_iterator<char>());
   check(text.find("\"plate \\$1\"") != std::string::npos,
         "built_in: the $ of a name is escaped in the Julia program");
+  std::ifstream py(scriptProgram(dir + "/occ.geo", "py").c_str());
+  text.assign(std::istreambuf_iterator<char>(py),
+              std::istreambuf_iterator<char>());
+  check(text.find("addBox(10, 6, -0.25, 2, 1, 1") != std::string::npos,
+        "occ: the expressions are evaluated in the Python program");
 
   gmsh::finalize();
   printf("%d failure(s)\n", fails);

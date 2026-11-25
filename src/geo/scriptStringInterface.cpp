@@ -255,6 +255,8 @@ namespace {
     std::string str;
     std::vector<int> ints;
     std::vector<std::string> exprs;
+    // the values of the expression or the expressions (see evaluateNumbers())
+    std::vector<double> values;
     std::vector<std::pair<int, int>> dimTags;
     // the default value, left out at the end of a call where the language
     // allows it
@@ -362,29 +364,80 @@ namespace {
     return "geo";
   }
 
-  // the value of an expression of the .geo language, in the model as read
-  double evaluate(const std::string &expr)
+  // The values of expressions of the .geo language, in the model as read: the
+  // numbers as they are, the others in a single parse, which does not
+  // synchronize the model (an expression does not change it); each one alone
+  // if that parse fails
+  std::vector<double> evaluate(const std::vector<std::string> &exprs)
   {
-    std::string e = expr;
-    e.erase(0, e.find_first_not_of(" \t"));
-    e.erase(e.find_last_not_of(" \t") + 1);
-    if(e.empty()) return 0.;
-    char *end;
-    double v = strtod(e.c_str(), &end);
-    if(*end == '\0') return v;
+    std::vector<double> v(exprs.size(), 0.);
+    std::vector<std::size_t> todo;
+    std::string list;
+    for(std::size_t i = 0; i < exprs.size(); i++) {
+      std::string e = exprs[i];
+      e.erase(0, e.find_first_not_of(" \t"));
+      e.erase(e.find_last_not_of(" \t") + 1);
+      if(e.empty()) continue;
+      char *end;
+      v[i] = strtod(e.c_str(), &end);
+      if(*end == '\0') continue;
+      todo.push_back(i);
+      list += (list.empty() ? "" : ", ") + e;
+    }
+    if(todo.empty()) return v;
 #if defined(HAVE_PARSER)
-    const std::string name = "__scriptValue__";
-    ParseString(name + " = " + e + ";");
+    const std::string name = "__scriptValues__";
+    const std::string tmp =
+      CTX::instance()->homeDir + CTX::instance()->tmpFileName;
+    if(FILE *fp = Fopen(tmp.c_str(), "w")) {
+      fprintf(fp, "%s = {%s};\n", name.c_str(), list.c_str());
+      fclose(fp);
+      ParseFile(tmp, true);
+      UnlinkFile(tmp);
+    }
     auto it = gmsh_yysymbols.find(name);
     if(it != gmsh_yysymbols.end()) {
-      v = it->second.value.empty() ? 0. : it->second.value[0];
+      std::vector<double> values = it->second.value;
       gmsh_yysymbols.erase(it);
+      if(values.size() == todo.size()) {
+        for(std::size_t k = 0; k < todo.size(); k++) v[todo[k]] = values[k];
+        return v;
+      }
+    }
+    if(todo.size() > 1) {
+      for(auto i : todo) v[i] = evaluate(std::vector<std::string>{exprs[i]})[0];
       return v;
     }
 #endif
-    Msg::Warning("Could not evaluate '%s' for the scripts, written as 0",
-                 expr.c_str());
-    return 0.;
+    for(auto i : todo)
+      Msg::Warning("Could not evaluate '%s' for the scripts, written as 0",
+                   exprs[i].c_str());
+    return v;
+  }
+  double evaluate(const std::string &expr)
+  { return evaluate(std::vector<std::string>{expr})[0]; }
+
+  // the values of the expressions of the arguments of calls, all evaluated
+  // at once, before the calls are written in each language
+  void evaluateNumbers(std::vector<apiCall> &calls)
+  {
+    std::vector<std::string> exprs;
+    for(auto &c : calls)
+      for(auto &a : c.args) {
+        if(a.kind == apiArg::Num) exprs.push_back(a.str);
+        if(a.kind == apiArg::Nums)
+          exprs.insert(exprs.end(), a.exprs.begin(), a.exprs.end());
+      }
+    std::vector<double> v = evaluate(exprs);
+    std::size_t k = 0;
+    for(auto &c : calls)
+      for(auto &a : c.args) {
+        if(a.kind == apiArg::Num) a.values = {v[k++]};
+        if(a.kind == apiArg::Nums) {
+          a.values.assign(v.begin() + k, v.begin() + k + a.exprs.size());
+          k += a.exprs.size();
+        }
+      }
   }
 
   // the numbers of a list of the .geo language ("{1, 2}", "1, 2" or "1")
@@ -534,7 +587,7 @@ namespace {
       const std::string &n = a->str;
       switch(a->kind) {
       case apiArg::Int: w.push_back(std::to_string(a->i)); break;
-      case apiArg::Num: w.push_back(number(evaluate(n), lang)); break;
+      case apiArg::Num: w.push_back(number(a->values[0], lang)); break;
       case apiArg::Str: w.push_back(quoted(n, lang)); break;
       case apiArg::Bool:
         if(lang == "py")
@@ -553,7 +606,7 @@ namespace {
       } break;
       case apiArg::Nums: {
         std::vector<std::string> v;
-        for(auto &e : a->exprs) v.push_back(number(evaluate(e), lang));
+        for(double x : a->values) v.push_back(number(x, lang));
         w.push_back(vector(v, true, lang));
       } break;
       case apiArg::DimTags: w.push_back(dimTags(a->dimTags, lang)); break;
@@ -916,6 +969,7 @@ static void scriptAdd(const std::string &geo, const std::string &fileName,
     _lastScript = geoFile;
   }
   c = synchronized(c);
+  evaluateNumbers(c);
   for(auto &lang : langs)
     addToProgram(geoFile, lang, commandText(geo, c, lang));
 }
