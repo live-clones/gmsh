@@ -2354,6 +2354,13 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
   list(FILTER ALLFILES EXCLUDE REGEX "io_vtk/vtu_roundtrip.geo$")
   # calls Mesh 3 explicitly:
   list(FILTER ALLFILES EXCLUDE REGEX "occ/mmg3d_multidomain_bgmesh.geo$")
+  # the self-checking quad cases, which need PACK and its optimizer (the other
+  # cases of benchmarks/quads read large CAD files: see run_all.sh there)
+  if(HAVE_QUADOPTIMIZER)
+    file(GLOB QUADFILES benchmarks/quads/analytic_*.geo
+         benchmarks/quads/quadqs_fallback_*.geo)
+    list(APPEND ALLFILES ${QUADFILES})
+  endif()
   filter_tests("${ALLFILES}" TESTFILES)
   foreach(TESTFILE ${TESTFILES})
     # use relative path for Cygwin/MinGW (the pure win exe built with the MinGW
