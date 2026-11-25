@@ -208,8 +208,8 @@ public:
     forgetWindow(this);
   }
   // the size on the desktop, also while docked
-  virtual int desktopW() const { return parent() ? _desktopW : w(); }
-  virtual int desktopH() const { return parent() ? _desktopH : h(); }
+  int desktopW() const override { return parent() ? _desktopW : w(); }
+  int desktopH() const override { return parent() ? _desktopH : h(); }
   // docked, the window is shown again (its tab chosen, unfolded): a tool
   // refreshes there what it skips while hidden
   void whenRevealed(void (*cb)(void *), void *data)
