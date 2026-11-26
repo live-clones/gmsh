@@ -3,6 +3,7 @@
 // implemented by the native pipeline that calls this optional stage.
 #include "matGmsh.h"
 #include "matLocalMidSurfaceProjection.h"
+#include "matMessage.h"
 
 #include <Eigen/Core>
 #include <Eigen/Eigenvalues>
@@ -220,8 +221,7 @@ void matGmsh::projectRegularBranchVerticesToLocalMidSurfacePasses(
         "local mid-surface projection needs at least one pass");
   ProjectionSharedContext shared;
   for(int pass = 0; pass < passes; ++pass) {
-    std::cout << "Local mid-surface projection pass " << (pass + 1)
-              << '/' << passes << '\n';
+    Msg::Info("Local mid-surface projection pass %d/%d", pass + 1, passes);
     projectRegularBranchVerticesToLocalMidSurfaceImpl(
         iterations, relativeTolerance, patchesByCadFaceTag,
         storeDiagnostics, &shared);
@@ -3187,7 +3187,7 @@ void matGmsh::projectRegularBranchVerticesToLocalMidSurfaceImpl(
     return std::chrono::duration<double>(second - first).count();
   };
 
-  std::cout
+  matInfo()
       << "MAT local mid-surface and triple-line projection: candidates="
       << candidates.size() << " projected=" << projected
       << " rejected=" << rejected
@@ -3332,7 +3332,7 @@ void matGmsh::projectRegularBranchVerticesToLocalMidSurfaceImpl(
     if(errors.targetGaps.empty()) continue;
     std::sort(errors.targetGaps.begin(), errors.targetGaps.end());
     const double count = static_cast<double>(errors.targetGaps.size());
-    std::cout << "MAT projection error: class=" << projectionClasses[group]
+    matInfo() << "MAT projection error: class=" << projectionClasses[group]
               << " vertices=" << errors.targetGaps.size()
               << " targetGapP95="
               << errors.targetGaps[static_cast<std::size_t>(0.95 * (count - 1))]
@@ -3344,7 +3344,7 @@ void matGmsh::projectRegularBranchVerticesToLocalMidSurfaceImpl(
               << '\n';
   }
 
-  std::cout
+  matInfo()
       << "MAT projection timings: connectivity="
       << elapsedSeconds(projectionStart, projectionConnectivityReady)
       << " connectivityBase="
@@ -3385,19 +3385,21 @@ void matGmsh::projectRegularBranchVerticesToLocalMidSurfaceImpl(
       << elapsedSeconds(projectionStart, projectionCompleted)
       << " diagnostics=" << (storeDiagnostics ? 1 : 0) << '\n';
 
-  std::cout << "Triple-edge generator dimension patterns:";
+  matInfo patterns;
+  patterns << "Triple-edge generator dimension patterns:";
   for(const auto &pattern : tripleEdgeGeneratorDimensionPatterns)
-    std::cout << " (" << pattern.first[0] << ',' << pattern.first[1]
-              << ',' << pattern.first[2] << ")=" << pattern.second;
-  std::cout << '\n';
+    patterns << " (" << pattern.first[0] << ',' << pattern.first[1]
+             << ',' << pattern.first[2] << ")=" << pattern.second;
+  patterns << '\n';
 
   if(!tripleEdgeCadCurvePairsWithoutSharedSupport.empty()) {
-    std::cout << "Triple CAD curve pairs without shared support patch:";
+    matInfo pairs;
+    pairs << "Triple CAD curve pairs without shared support patch:";
     for(const auto &example :
         tripleEdgeCadCurvePairsWithoutSharedSupport)
-      std::cout << " (curves " << example[0] << ',' << example[1]
-                << " face " << example[2] << ')';
-    std::cout << '\n';
+      pairs << " (curves " << example[0] << ',' << example[1]
+            << " face " << example[2] << ')';
+    pairs << '\n';
   }
 
 }

@@ -157,16 +157,16 @@ PView *GMSH_MatGmshPlugin::execute(PView *v)
       last = view;
     }
     if(result.tet.computed)
-      Msg::Info("Plugin(MatGmsh): %lu of %lu tetrahedra are interior, %lu raw "
+      Msg::Info("Plugin(MatGmsh): %zu of %zu tetrahedra are interior, %zu raw "
                 "polygons; certificate %s",
                 result.tet.interior, result.tet.tetrahedra, result.tet.polygons,
                 result.tet.certified ? "passed" : "FAILED");
     if(result.collapse.computed)
-      Msg::Info("Plugin(MatGmsh): collapse removed %lu polygons (%lu in convex "
-                "wings); %lu components, Euler characteristic %lld",
+      Msg::Info("Plugin(MatGmsh): collapse removed %zu polygons (%zu in convex "
+                "wings); %zu components, Euler characteristic %lld",
                 result.collapse.removed, result.collapse.wingPolygons,
                 result.collapse.surface.components, result.collapse.surface.euler);
-    Msg::Info("Plugin(MatGmsh): %lu filtered triangles, projection %s",
+    Msg::Info("Plugin(MatGmsh): %zu filtered triangles, projection %s",
               result.filtered.triangles.size() / 3, result.projectionStatus.c_str());
     if(options.stopAfter == Stage::Extended)
       Msg::Info("Plugin(MatGmsh): extension %s; %s",

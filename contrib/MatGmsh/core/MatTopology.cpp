@@ -1,6 +1,7 @@
 // Extracted from MatGmsh for the native Gmsh MAT pipeline.
 // See SOURCE_PROVENANCE.txt for the extraction boundary.
 #include "matGmsh.h"
+#include "matMessage.h"
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -174,7 +175,7 @@ matGmsh::rebuildConnectedComponentsPerColor(
   const matLargestConnectedComponent::MeshStatistics finalMeshStatistics =
       matLargestConnectedComponent::retainLargestMesh(
           faces, vor.vertices, vor.faceColors);
-  std::cout << "Post-filter MAT connected components: colors="
+  matInfo() << "Post-filter MAT connected components: colors="
             << statistics.retainedColorCount
             << " initialGlobalMeshes="
             << meshStatistics.connectedComponentCount
@@ -223,7 +224,7 @@ matGmsh::rebuildFinalSurfaceTopology(bool preserveNonOrientable)
   for(std::size_t face = 0; face < reversedFaces.size(); ++face)
     if(reversedFaces[face])
       std::reverse(vor.faces[face].verts.begin(), vor.faces[face].verts.end());
-  std::cout << "Final filtered MAT surface topology: inputColors="
+  matInfo() << "Final filtered MAT surface topology: inputColors="
             << statistics.retainedColorCount
             << " surfaces=" << statistics.connectedComponentCount
             << " mergedOrRecoloredFaces=" << statistics.recoloredFaceCount
@@ -316,16 +317,17 @@ std::size_t matGmsh::discardClosedRetainedSurfaces()
     if(closedColors.count(vor.faceColors[faceIndex]) != 0)
       vor.faceColors[faceIndex] = -1;
 
-  std::cout << "Discarded closed retained MAT surfaces: surfaces="
-            << closedColors.size() << " faces=" << discardedFaces
-            << " triangles=" << discardedTriangles << " colors=";
+  matInfo info;
+  info << "Discarded closed retained MAT surfaces: surfaces="
+       << closedColors.size() << " faces=" << discardedFaces
+       << " triangles=" << discardedTriangles << " colors=";
   bool first = true;
   for(const int color : closedColors) {
-    if(!first) std::cout << ',';
+    if(!first) info << ',';
     first = false;
-    std::cout << color;
+    info << color;
   }
-  std::cout << '\n';
+  info << '\n';
   return closedColors.size();
 }
 void matGmsh::rebuildFilteredTopology(bool preserveExistingBranches)

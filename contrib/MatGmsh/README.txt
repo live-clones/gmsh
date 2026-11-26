@@ -167,6 +167,14 @@ tags encode branch+1, and the MAT parent ElementData records the original
 Voronoi polygon (-1 denotes an extension triangle). report.json includes
 timings, topology, projection status and the extension front ledger.
 
+Every message of the module goes through Gmsh's message system (Msg::Info,
+Msg::Warning and Msg::Error in the library and the plugin, the API logger in
+gmshMat), so General.Verbosity, General.Terminal and the message console
+apply; nothing is written directly to standard output. The diagnostic lines
+with many fields are composed with the stream of core/matMessage.h, which
+sends each line to Msg::Info. Only the usage text of gmshMat, printed before
+Gmsh is initialized, goes to standard error.
+
 For controlled old/new comparisons, both runs must reload the same cached
 source.msh: even an ASCII coordinate round trip can change a nearly
 cospherical Delaunay triangulation. --source-mesh is merged with the CAD to

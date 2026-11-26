@@ -30,6 +30,7 @@
 #include "matSkinSites.h"
 #include "matVoronoiVertexMerge.h"
 #include "DiscreteCADWinding.h"
+#include "GmshMessage.h"
 void matGmsh::orientSurfaceTriangles()
 {
   ScopedTimer timer(*this, "orientSurfaceTriangles");
@@ -414,12 +415,12 @@ void matGmsh::computeVoronoiVertices()
         vor.vertices.push_back(cc[1]);
         vor.vertices.push_back(cc[2]);
     }
-    std::cout << "Circumcenter diagnostics: tetrahedra=" << nt
-              << " negativeDeterminants=" << negativeDeterminants
-              << " smallAbsoluteDeterminants=" << smallAbsoluteDeterminants
-              << " exactFallbacks=" << exactCircumcenters
-              << " certifiedDouble=" << nt - exactCircumcenters - barycenterFallbacks
-              << " barycenterFallbacks=" << barycenterFallbacks << "\n";
+    Msg::Info("Circumcenter diagnostics: tetrahedra=%zu negativeDeterminants=%zu "
+              "smallAbsoluteDeterminants=%zu exactFallbacks=%zu "
+              "certifiedDouble=%zu barycenterFallbacks=%zu",
+              nt, negativeDeterminants, smallAbsoluteDeterminants,
+              exactCircumcenters, nt - exactCircumcenters - barycenterFallbacks,
+              barycenterFallbacks);
 }
 
 void matGmsh::createVoronoiSeeds() {
@@ -489,10 +490,9 @@ void matGmsh::createVoronoiSeeds() {
       throw std::runtime_error(
           "External Voronoi surface mesh has no nodes or triangles");
     del.seedFaces.resize(del.nodeTags.size());
-    std::cout << "External Voronoi surface mesh: nodes="
-              << del.nodeTags.size()
-              << " triangles=" << del.triangles.size() / 3
-              << " file=" << voronoiSurfaceMeshInput << '\n';
+    Msg::Info("External Voronoi surface mesh: nodes=%zu triangles=%zu file=%s",
+              del.nodeTags.size(), del.triangles.size() / 3,
+              voronoiSurfaceMeshInput.c_str());
     return;
   }
 
@@ -669,13 +669,12 @@ void matGmsh::colorSelectedVoronoiFaces(std::vector<char> &isInternal)
     }
   }
   const auto &mergeStatistics = merger.statistics();
-  std::cout << "MAT Voronoi vertex merge: relativeTolerance=1e-12"
-            << " referenceLength=" << referenceLength
-            << " absoluteTolerance=" << mergeStatistics.absoluteTolerance
-            << " shortEdges=" << mergeStatistics.shortEdgeCount
-            << " mergedVertices=" << mergeStatistics.mergedVertexCount
-            << " removedFaceVertices=" << removedFaceVertices
-            << " degenerateFaces=" << degenerateFaces << '\n';
+  Msg::Info("MAT Voronoi vertex merge: relativeTolerance=1e-12 "
+            "referenceLength=%g absoluteTolerance=%g shortEdges=%zu "
+            "mergedVertices=%zu removedFaceVertices=%zu degenerateFaces=%zu",
+            referenceLength, mergeStatistics.absoluteTolerance,
+            mergeStatistics.shortEdgeCount, mergeStatistics.mergedVertexCount,
+            removedFaceVertices, degenerateFaces);
 
   // =========================
   // 2. valence des edges
@@ -765,9 +764,8 @@ void matGmsh::computeVoronoi(bool dualFaces)
   if(del.triangles.empty())
     throw std::runtime_error("The MAT needs a triangulated skin");
   if(!del.unreferencedNodeTags.empty())
-    std::cout << "MAT sites: ignored " << del.unreferencedNodeTags.size()
-              << " nodes used by no skin triangle; sites="
-              << del.nodeTags.size() << '\n';
+    Msg::Info("MAT sites: ignored %zu nodes used by no skin triangle; sites=%zu",
+              del.unreferencedNodeTags.size(), del.nodeTags.size());
 
   std::vector<double> steiner;
   gmsh::option::setNumber("Mesh.RandomFactor3D", 0.0);
@@ -781,8 +779,8 @@ void matGmsh::computeVoronoi(bool dualFaces)
   orientSurfaceTriangles();
   computeVoronoiVertices();
   if(!dualFaces) {
-    std::cout << "Gmsh Delaunay: points=" << del.seeds.size() / 3
-              << " tetrahedra=" << del.tetrahedra.size() / 4 << '\n';
+    Msg::Info("Gmsh Delaunay: points=%zu tetrahedra=%zu", del.seeds.size() / 3,
+              del.tetrahedra.size() / 4);
     return;
   }
   const auto edgeToTetrahedra = buildEdgeToTet(del.tetrahedra);
@@ -803,12 +801,10 @@ void matGmsh::computeVoronoi(bool dualFaces)
       ++invalidDelaunayEdgeLinks;
     }
   }
-  std::cout << "Gmsh Delaunay: points="
-            << del.seeds.size() / 3
-            << " tetrahedra=" << del.tetrahedra.size() / 4
-            << " voronoiFaces=" << vor.faces.size()
-            << " skippedInvalidEdgeLinks=" << invalidDelaunayEdgeLinks
-            << '\n';
+  Msg::Info("Gmsh Delaunay: points=%zu tetrahedra=%zu voronoiFaces=%zu "
+            "skippedInvalidEdgeLinks=%zu",
+            del.seeds.size() / 3, del.tetrahedra.size() / 4, vor.faces.size(),
+            invalidDelaunayEdgeLinks);
 }
 
 void matGmsh::computeVoronoiWindingNumbersAtCircumcenters(

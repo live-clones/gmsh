@@ -1,6 +1,7 @@
 #include "MatPipeline.h"
 #include "core/matGmsh.h"
 #include "core/matPolygonFan.h"
+#include "core/matMessage.h"
 #include "cadSurfacePatchAnalyzer.h"
 #include "GModel.h"
 #include "GFace.h"
@@ -311,13 +312,14 @@ struct MatNativeAccess {
   {
     const auto rawColors = mat.snapshotVoronoiFaceColors();
     std::map<int, int> classes, closure;
-    mat.filterVoronoiBranchesByClassification("", "", &std::cout, &classes,
+    matInfo report; // each line of the reports of the filter is a message
+    mat.filterVoronoiBranchesByClassification("", "", &report, &classes,
       matGmsh::BranchClassificationPolicy(false, false, false, true), &closure);
     std::map<int, std::set<int>> disjoint;
     for(const auto &entry : patches.patchByFaceTag) disjoint[entry.first].insert(entry.second);
-    mat.filterMixedBranchWings("", rawColors, disjoint, &std::cout);
-    const auto sewn = mat.restoreSewnClosureDisks(rawColors, &std::cout);
-    mat.filterSmallTerminalBranches(rawColors, &std::cout);
+    mat.filterMixedBranchWings("", rawColors, disjoint, &report);
+    const auto sewn = mat.restoreSewnClosureDisks(rawColors, &report);
+    mat.filterSmallTerminalBranches(rawColors, &report);
     for(const auto &entry : sewn) { closure[entry.first] = entry.second; classes[entry.first] = 1; }
     auto entities = rawColors;
     auto selected = mat.snapshotVoronoiFaceColors();

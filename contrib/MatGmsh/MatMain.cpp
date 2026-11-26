@@ -3,23 +3,39 @@
 #include <cmath>
 #include <filesystem>
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
+
+// Messages go through the Gmsh logger. An error raised by Gmsh is on the
+// terminal before its exception arrives here, and writing an error to the
+// logger throws in a session started through the API.
+static void reportError(const std::string &message)
+{
+  try {
+    std::string last;
+    gmsh::logger::getLastError(last);
+    if(last != message) gmsh::logger::write(message, "error");
+  }
+  catch(...) {
+  }
+}
 
 int main(int argc, char **argv)
 {
-  bool initialized = false;
+  if(argc < 2) {
+    std::cerr << "Usage: gmshMat input.step|input.msh --thickness h --output directory\n"
+                 "  [--stage filtered|projected|extended] [--project] [--mesh-size s]\n"
+                 "  [--source-mesh cached.msh] [--keep-components] [--threads n]\n"
+                 "  [--extension-length L] [--extension-layers n]\n"
+                 "  [--raw tet|legacy] [--filter collapse|legacy|none]\n"
+                 "  [--collapse-threshold 0.21] [--complex]\n"
+                 "The defaults are --raw tet --filter collapse; --raw legacy or\n"
+                 "--filter legacy alone selects the legacy raw MAT and filter.\n";
+    return 1;
+  }
+  gmsh::initialize();
+  int status = 1;
   try {
-    if(argc < 2) {
-      std::cerr << "Usage: gmshMat input.step|input.msh --thickness h --output directory\n"
-                   "  [--stage filtered|projected|extended] [--project] [--mesh-size s]\n"
-                   "  [--source-mesh cached.msh] [--keep-components] [--threads n]\n"
-                   "  [--extension-length L] [--extension-layers n]\n"
-                   "  [--raw tet|legacy] [--filter collapse|legacy|none]\n"
-                   "  [--collapse-threshold 0.21] [--complex]\n"
-                   "The defaults are --raw tet --filter collapse; --raw legacy or\n"
-                   "--filter legacy alone selects the legacy raw MAT and filter.\n";
-      return 1;
-    }
     matgmsh_native::Options options;
     std::string input = argv[1], cached;
     std::filesystem::path output;
@@ -79,7 +95,6 @@ int main(int argc, char **argv)
     if(!std::isfinite(options.extensionLength) || options.extensionLength < 0. ||
        options.extensionLayers < 1)
       throw std::runtime_error("Invalid extension length or number of layers");
-    gmsh::initialize(); initialized = true;
     gmsh::option::setNumber("General.NumThreads", threads);
     double initialMeshSizeMin, initialMeshSizeMax;
     gmsh::option::getNumber("Mesh.MeshSizeMin", initialMeshSizeMin);
@@ -104,8 +119,10 @@ int main(int argc, char **argv)
         policy = meshSize > 0. ? "--mesh-size" : "default h/10";
       }
       gmsh::option::setNumber("Mesh.ElementOrder", 1);
-      std::cout << "MAT surface mesh: min=" << inputMeshSizeMin
-                << " max=" << inputMeshSizeMax << " (" << policy << ")\n";
+      std::ostringstream sizes;
+      sizes << "MAT surface mesh: min=" << inputMeshSizeMin
+            << " max=" << inputMeshSizeMax << " (" << policy << ")";
+      gmsh::logger::write(sizes.str());
       gmsh::model::mesh::generate(2);
     }
     std::filesystem::create_directories(output);
@@ -127,13 +144,12 @@ int main(int argc, char **argv)
     }
     if(!matgmsh_native::writeReport(result, options, (output / "report.json").string(), error))
       throw std::runtime_error(error);
-    gmsh::finalize(); initialized = false;
-    std::cout << "MAT checkpoints: " << output << '\n';
-    return options.stopAfter == matgmsh_native::Stage::Extended && !result.extension.complete ? 2 : 0;
+    gmsh::logger::write("MAT checkpoints: " + output.string());
+    status = options.stopAfter == matgmsh_native::Stage::Extended && !result.extension.complete ? 2 : 0;
   }
-  catch(const std::exception &e) { std::cerr << "gmshMat: " << e.what() << '\n'; }
-  catch(const std::string &e) { std::cerr << "gmshMat: " << e << '\n'; }
-  catch(...) { std::cerr << "gmshMat: unknown failure\n"; }
-  if(initialized) gmsh::finalize();
-  return 1;
+  catch(const std::exception &e) { reportError(e.what()); }
+  catch(const std::string &e) { reportError(e); }
+  catch(...) { reportError("unknown failure"); }
+  gmsh::finalize();
+  return status;
 }
