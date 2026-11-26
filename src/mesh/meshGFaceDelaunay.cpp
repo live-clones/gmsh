@@ -8,6 +8,7 @@
 #include <map>
 #include <algorithm>
 #include <numeric>
+#include <functional>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "OS.h"
@@ -1286,10 +1287,14 @@ static double optimalPointFrontal(GFace *gf, MTri3 *worst, int active_edge,
    and the edge length
 */
 
-static bool optimalPointFrontalB(GFace *gf, MTri3 *worst, int active_edge,
-                                 bidimMeshData &data, double newPoint[2],
-                                 double metric[3])
+static bool optimalPointFrontalB(
+  GFace *gf, MTri3 *worst, int active_edge, bidimMeshData &data,
+  double newPoint[2], double metric[3],
+  const std::function<bool(double, double)> &inside = nullptr)
 {
+  // (true if the point is inside the parametric domain, when a test is given)
+  auto found = [&]() { return !inside || inside(newPoint[0], newPoint[1]); };
+
   // as a starting point, let us use the "fast algo"
   double d =
     optimalPointFrontal(gf, worst, active_edge, data, newPoint, metric);
@@ -1305,7 +1310,7 @@ static bool optimalPointFrontalB(GFace *gf, MTri3 *worst, int active_edge,
   SVector3 tmp(v3->x() - middle.x(), v3->y() - middle.y(),
                v3->z() - middle.z());
   SVector3 n1 = crossprod(v1v2, tmp);
-  if(n1.norm() < 1.e-12) return true;
+  if(n1.norm() < 1.e-12) return found();
 
   SVector3 n2 = crossprod(n1, v1v2);
   n1.normalize();
@@ -1320,25 +1325,20 @@ static bool optimalPointFrontalB(GFace *gf, MTri3 *worst, int active_edge,
     discreteFace *ddf = dynamic_cast<discreteFace *>(gf);
     if(ddf) {
       GPoint gp = ddf->intersectionWithCircle(n1, n2, middle, d, newPoint);
-      if(gp.succeeded()) return true;
+      if(gp.succeeded()) return found();
       return false;
     }
   }
 #endif
 
-  double uvt[3] = {newPoint[0], newPoint[1], 0.0};
-  curveFunctorCircle cc(n2, n1, middle, d);
-  surfaceFunctorGFace ss(gf);
-
-  if(intersectCurveSurface(cc, ss, uvt, d * 1.e-8)) {
-    // if(gf->containsParam(SPoint2(uvt[0], uvt[1]))) {
-    newPoint[0] = uvt[0];
-    newPoint[1] = uvt[1];
+  // (if no point is found, keep the estimate of the fast algo)
+  const int i1 = data.getIndex(v1), i2 = data.getIndex(v2);
+  const double uvMiddle[2] = {0.5 * (data.Us[i1] + data.Us[i2]),
+                              0.5 * (data.Vs[i1] + data.Vs[i2])};
+  if(intersectCircleSurface(gf, n2, n1, middle, uvMiddle, d, newPoint,
+                            inside))
     return true;
-    // }
-  }
-
-  return true;
+  return found();
 }
 
 void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
@@ -1371,6 +1371,14 @@ void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
   //  SPoint2 FAR(2 * RU.high(), 2 * RV.high());
   /// This is better !
   SPoint2 FAR(RU.high() + (RU.high()-RU.low()), RV.high() + (RV.high()-RV.low()));
+  // the parametric domain test of the new points
+  std::function<bool(double, double)> inside = nullptr;
+  if(true_boundary)
+    inside = [&](double u, double v) {
+      SPoint2 NP(u, v);
+      int nnnn;
+      return pointInsideParametricDomain(*true_boundary, NP, FAR, nnnn);
+    };
 
 
   // insert points
@@ -1398,13 +1406,10 @@ void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
         Msg::Debug("%7d points created -- Worst tri radius is %8.3f",
                    gf->mesh_vertices.size(), worst->getRadius());
       double newPoint[2], metric[3];
-      if(optimalPointFrontalB(gf, worst, active_edge, DATA, newPoint, metric)) {
-        SPoint2 NP(newPoint[0], newPoint[1]);
-        int nnnn;
-        if(!true_boundary ||
-           pointInsideParametricDomain(*true_boundary, NP, FAR, nnnn))
-          insertAPoint(gf, AllTris.end(), newPoint, metric, DATA, AllTris,
-                       &ActiveTris, worst, nullptr, testStarShapeness);
+      if(optimalPointFrontalB(gf, worst, active_edge, DATA, newPoint, metric,
+                              inside)) {
+        insertAPoint(gf, AllTris.end(), newPoint, metric, DATA, AllTris,
+                     &ActiveTris, worst, nullptr, testStarShapeness);
       }
       else {
         Msg::Debug("no point found");

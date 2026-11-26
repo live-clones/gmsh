@@ -9,6 +9,7 @@
 // Intersection of a curve and a surface using newton's method
 // FD are used to compute derivatives of the parametrizations
 #include <cmath>
+#include <functional>
 #include "SPoint3.h"
 #include "SVector3.h"
 #include "GFace.h"
@@ -93,5 +94,14 @@ public:
 // returns 0 --> NOT CONVERGED
 int intersectCurveSurface(curveFunctor &c, surfaceFunctor &s, double uvt[3],
                           double epsilon);
+
+// The point of the surface gf on the circle middle + d (a cos(t) + b sin(t))
+// near the surface point of parameters uv, a guess at a distance of about d
+// from middle (of parameters uvMiddle), and inside the parametric domain if
+// a test is given; uv is replaced by its parameters if one is found
+bool intersectCircleSurface(
+  GFace *gf, const SVector3 &a, const SVector3 &b, const SVector3 &middle,
+  const double uvMiddle[2], double d, double uv[2],
+  const std::function<bool(double, double)> &inside = nullptr);
 
 #endif
