@@ -6893,9 +6893,12 @@ gmsh::model::geo::mesh::setTransfiniteCurve(const int tag, const int nPoints,
   if(coef < 0) type = -type;
 
   // for compatibility with geo files, try both tag and -tag
+  bool found = false;
   for(int sig = -1; sig <= 1; sig += 2)
-    GModel::current()->getGEOInternals()->setTransfiniteLine(sig * tag, nPoints,
-                                                             type, c);
+    if(GModel::current()->getGEOInternals()->setTransfiniteLine(
+         sig * tag, nPoints, type, c))
+      found = true;
+  if(!found) Msg::Warning("Unknown GEO curve %d", tag);
 }
 
 GMSH_API void gmsh::model::geo::mesh::setTransfiniteSurface(
@@ -6909,8 +6912,9 @@ GMSH_API void gmsh::model::geo::mesh::setTransfiniteSurface(
           (arrangement == "AlternateLeft")  ? -2 :
           (arrangement == "Alternate")      ? 2 :
                                               -1;
-  GModel::current()->getGEOInternals()->setTransfiniteSurface(tag, t,
-                                                              cornerTags);
+  if(!GModel::current()->getGEOInternals()->setTransfiniteSurface(tag, t,
+                                                                  cornerTags))
+    Msg::Warning("Unknown GEO surface %d", tag);
 }
 
 GMSH_API void
@@ -6918,7 +6922,9 @@ gmsh::model::geo::mesh::setTransfiniteVolume(const int tag,
                                              const std::vector<int> &cornerTags)
 {
   if(!_checkInit()) return;
-  GModel::current()->getGEOInternals()->setTransfiniteVolume(tag, cornerTags);
+  if(!GModel::current()->getGEOInternals()->setTransfiniteVolume(tag,
+                                                                 cornerTags))
+    Msg::Warning("Unknown GEO volume %d", tag);
 }
 
 GMSH_API void gmsh::model::geo::mesh::setRecombine(const int dim, const int tag,

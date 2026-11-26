@@ -4320,17 +4320,21 @@ Constraints :
           double d;
           List_Read($3, i, &d);
           int j = (int)fabs(d);
+          bool found = false;
           for(int sig = -1; sig <= 1; sig += 2){
-            GModel::current()->getGEOInternals()->setTransfiniteLine
-              (sig * j, npoints, type * gmsh_sign(d), coef);
+            if(GModel::current()->getGEOInternals()->setTransfiniteLine
+               (sig * j, npoints, type * gmsh_sign(d), coef))
+              found = true;
             GEdge *ge = GModel::current()->getEdgeByTag(sig * j);
             if(ge){
+              found = true;
               ge->meshAttributes.method = MESH_TRANSFINITE;
               ge->meshAttributes.nbPointsTransfinite = npoints;
               ge->meshAttributes.typeTransfinite = type * gmsh_sign(d);
               ge->meshAttributes.coeffTransfinite = coef;
             }
           }
+          if(!found) yymsg(1, "Unknown curve %d", j);
         }
         List_Delete($3);
       }
@@ -4354,8 +4358,10 @@ Constraints :
           double d;
           List_Read($3, i, &d);
           int tag = (int)d;
-          GModel::current()->getGEOInternals()->setTransfiniteSurface(tag, $5, corners);
+          bool found = GModel::current()->getGEOInternals()->setTransfiniteSurface
+            (tag, $5, corners);
           GFace *gf = GModel::current()->getFaceByTag(tag);
+          if(!gf && !found) yymsg(1, "Unknown surface %d", tag);
           if(gf){
             gf->meshAttributes.method = MESH_TRANSFINITE;
             gf->meshAttributes.transfiniteArrangement = $5;
@@ -4396,8 +4402,10 @@ Constraints :
           double d;
           List_Read($3, i, &d);
           int tag = (int)d;
-          GModel::current()->getGEOInternals()->setTransfiniteVolume(tag, corners);
+          bool found = GModel::current()->getGEOInternals()->setTransfiniteVolume
+            (tag, corners);
           GRegion *gr = GModel::current()->getRegionByTag(tag);
+          if(!gr && !found) yymsg(1, "Unknown volume %d", tag);
           if(gr){
             gr->meshAttributes.method = MESH_TRANSFINITE;
             gr->meshAttributes.corners.clear();
