@@ -56,7 +56,7 @@ int SHOW = 0; // for debugging
 
 int  Triangles::counter = 0;
 
-Triangles * CurrentTh =0;
+thread_local Triangles * CurrentTh =0;
 
 int hinterpole=1;
 

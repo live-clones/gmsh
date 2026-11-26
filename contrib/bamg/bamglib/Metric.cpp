@@ -40,7 +40,7 @@ inline Real8 det3x3(Real8 A[3] ,Real8 B[3],Real8 C[3])
           + A[2] * ( B[0]*C[1]-B[1]*C[0]);
 }
 
-SaveMetricInterpole  LastMetricInterpole;
+thread_local SaveMetricInterpole LastMetricInterpole;
 
 void ReductionSimultanee( MetricAnIso M1,  MetricAnIso M2,double & l1,double & l2, D2xD2 & V) 
 {
@@ -1081,10 +1081,10 @@ Real8 LengthInterpole(const MetricAnIso Ma,const  MetricAnIso Mb, R2 AB)
 {
   Real8 k=1./2.;
   int level=0;
-  static int kkk=0;
-  static  Metric Ms1[32],Ms2[32];
-  static Real8 lMs1[32],lMs2[32];
-  static double K[32];
+  static thread_local int kkk=0;
+  static thread_local Metric Ms1[32],Ms2[32];
+  static thread_local Real8 lMs1[32],lMs2[32];
+  static thread_local double K[32];
   Real8 l=0,sss=0;
   Ms1[level]=Ma;
   Ms2[level]=Mb;

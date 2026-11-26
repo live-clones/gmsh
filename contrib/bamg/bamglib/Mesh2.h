@@ -1013,7 +1013,7 @@ public:
 
 inline Triangles::Triangles(Int4 i) :Gh(*new Geometry()),BTh(*this){PreInit(i);}
 
-extern Triangles * CurrentTh;
+extern thread_local Triangles * CurrentTh;
 
 TriangleAdjacent CloseBoundaryEdge(I2 ,Triangle *, double &,double &) ;
 TriangleAdjacent CloseBoundaryEdgeV2(I2 A,Triangle *t, double &a,double &b);

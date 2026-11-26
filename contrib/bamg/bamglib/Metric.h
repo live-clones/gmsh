@@ -208,7 +208,7 @@ class SaveMetricInterpole {
   Real8 L[1024],S[1024];
 };
 
-extern SaveMetricInterpole  LastMetricInterpole; // for optimization 
+extern thread_local SaveMetricInterpole LastMetricInterpole; // for optimization 
 
 
  Real8 LengthInterpole(const MetricAnIso Ma,const  MetricAnIso Mb, R2 AB);
