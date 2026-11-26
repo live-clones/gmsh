@@ -763,11 +763,18 @@ bool branchRibbon(const Mesh &mesh, int branch, double length, int layers, Ribbo
       if(loop) return chain[((i % n) + n) % n];
       return chain[std::min(n - 1, std::max(0, i))];
     };
+    // The boundary of a MAT zigzags at the scale of its polygons: tangents
+    // and folds are measured over a span of several edges, about a quarter of
+    // the length of the ribbon.
+    double chainLength = 0.;
+    for(int i = 1; i < n; ++i) chainLength += norm(sub(x[chain[i]], x[chain[i - 1]]));
+    const int span = std::max(2, std::min(std::max(2, n / 4),
+                                          int(std::lround(.25 * length * (n - 1) / std::max(chainLength, 1.e-300)))));
     // direction of the extension: tangent x normal, away from the branch
     std::vector<Vec> direction(n);
     double outward = 0.;
     for(int i = 0; i < n; ++i) {
-      Vec tangent = sub(x[at(i + 2)], x[at(i - 2)]);
+      Vec tangent = sub(x[at(i + span)], x[at(i - span)]);
       unit(tangent);
       direction[i] = cross(tangent, normal[chain[i]]);
       unit(direction[i]);
@@ -788,13 +795,85 @@ bool branchRibbon(const Mesh &mesh, int branch, double length, int layers, Ribbo
       }
       direction.swap(next);
     }
+    // The map (u, v) -> x(u) + v d(u) folds where the directions turn towards
+    // each other faster than the boundary advances: between two points of
+    // the boundary a span apart, where the far chord x' + (v d)' no longer
+    // runs like the near chord x' (in the plane, 1 - v k < 0 for normal
+    // directions, k the curvature of the boundary). Where it folds the
+    // directions are smoothed, over a neighbourhood that grows; where that is
+    // not enough (around a hole smaller than the length, no direction field
+    // avoids the fold) the ribbon is made shorter.
+    std::vector<double> reach(n, length);
+    {
+      const int edges = loop ? n : std::max(0, n - span);
+      const auto wrap = [&](int i) {
+        return loop ? ((i % n) + n) % n : std::min(n - 1, std::max(0, i));
+      };
+      const auto folded = [&](int i) {
+        const int j = wrap(i + span);
+        const Vec near = sub(x[chain[j]], x[chain[i]]);
+        Vec far = near;
+        for(int k = 0; k < 3; ++k) far[k] += reach[j] * direction[j][k] - reach[i] * direction[i][k];
+        return dot(far, near) <= .25 * dot(near, near);
+      };
+      std::vector<unsigned char> turned(n, 0), shortened(n, 0);
+      int passes = 0;
+      for(int round = 0; round < 40; ++round) {
+        std::vector<unsigned char> active(n, 0);
+        bool any = false;
+        for(int pass = 0; pass < 200; ++pass, ++passes) {
+          any = false;
+          for(int i = 0; i < edges; ++i)
+            if(folded(i)) {
+              for(int k = 0; k <= span; ++k) active[wrap(i + k)] = 1;
+              any = true;
+            }
+          if(!any) break;
+          std::vector<unsigned char> grown(active);
+          for(int i = 0; i < n; ++i)
+            if(active[i]) grown[wrap(i - 1)] = grown[wrap(i + 1)] = 1;
+          active.swap(grown);
+          std::vector<Vec> next(direction);
+          for(int i = 0; i < n; ++i) {
+            if(!active[i]) continue;
+            turned[i] = 1;
+            for(int o : {-1, 1})
+              for(int k = 0; k < 3; ++k) next[i][k] += direction[wrap(i + o)][k];
+            unit(next[i]);
+          }
+          direction.swap(next);
+        }
+        if(!any) break;
+        // still folding after 200 passes: shorter there, smoothly
+        std::vector<double> next(reach);
+        for(int i = 0; i < edges; ++i)
+          if(folded(i))
+            for(int k = 0; k <= span; ++k) {
+              next[wrap(i + k)] = std::min(next[wrap(i + k)], .8 * reach[wrap(i + k)]);
+              shortened[wrap(i + k)] = 1;
+            }
+        reach.swap(next);
+        for(int smooth = 0; smooth < span; ++smooth) {
+          std::vector<double> lower(reach);
+          for(int i = 0; i < n; ++i)
+            lower[i] = std::min(reach[i], (reach[wrap(i - 1)] + reach[i] + reach[wrap(i + 1)]) / 3.);
+          reach.swap(lower);
+        }
+      }
+      out.smoothingPasses = std::max(out.smoothingPasses, passes);
+      for(int i = 0; i < n; ++i) {
+        out.smoothedVertices += turned[i];
+        out.shortenedVertices += shortened[i];
+      }
+      for(int i = 0; i < edges; ++i) out.foldedEdges += folded(i);
+    }
     // the ribbon: u along the boundary, v away from it
     const int first = int(out.mesh.xyz.size() / 3);
     double u = 0.;
     for(int i = 0; i < n; ++i) {
       if(i) u += norm(sub(x[chain[i]], x[chain[i - 1]]));
       for(int j = 0; j <= layers; ++j) {
-        const double v = length * j / layers;
+        const double v = reach[i] * j / layers;
         for(int k = 0; k < 3; ++k) out.mesh.xyz.push_back(x[chain[i]][k] + v * direction[i][k]);
         out.u.push_back(u);
         out.v.push_back(v);

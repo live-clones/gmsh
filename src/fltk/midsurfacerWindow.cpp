@@ -97,6 +97,9 @@ void preview_cb(Fl_Widget *w, void *data)
 void extend_cb(Fl_Widget *w, void *data)
 { FlGui::instance()->midsurfacer->extendBranch(data != nullptr); }
 
+void undo_cb(Fl_Widget *w, void *data)
+{ FlGui::instance()->midsurfacer->undoExtension(data != nullptr); }
+
 // a view of a mesh, with one value per triangle
 PView *meshView(const matgmsh_native::Mesh &mesh, const std::string &name,
                 const std::function<double(std::size_t)> &value,
@@ -150,6 +153,8 @@ struct midsurfacerWindow::State {
   std::vector<matgmsh_native::BranchPlane> planes;
   int selected = -1;
   std::set<int> extended;
+  // the MAT and the branches extended before each of the last extensions
+  std::vector<std::pair<matgmsh_native::Mesh, std::set<int> > > history;
   State()
   {
     for(int i = 0; i < NumViews; i++) {
@@ -171,7 +176,7 @@ midsurfacerWindow::midsurfacerWindow(int deltaFontSize) : _state(new State)
 
   const int section = WB + 2 + BH; // a line, then a title
   int width = TW;
-  int height = 2 * WB + 22 * BH + 6 * section;
+  int height = 2 * WB + 23 * BH + 6 * section;
 
   win = new paletteWindow(width, height,
                           CTX::instance()->nonModalWindows ? true : false,
@@ -263,6 +268,9 @@ midsurfacerWindow::midsurfacerWindow(int deltaFontSize) : _state(new State)
     "where the wings were attached; a positive threshold erodes them "
     "further and notches these lines");
   branches->callback(branches_cb);
+  // the default of the window: wings go whole, and nothing else is eroded
+  branches->value(1);
+  threshold->value(0.);
   y += BH;
   angle = input("Angle of a wing, at most (degrees)", 135., 1., 180., 1.,
                 "A branch that touches the free boundary is a wing if half "
@@ -272,7 +280,6 @@ midsurfacerWindow::midsurfacerWindow(int deltaFontSize) : _state(new State)
                 "is filtered, a new value filters it again");
   angle->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
   angle->callback(update_cb);
-  angle->deactivate();
   angles = new Fl_Check_Button(x, y, full, BH, "Show the angle of the branches");
   angles->tooltip(
     "The raw medial axis colored by the angle of its branches that touch "
@@ -341,6 +348,13 @@ midsurfacerWindow::midsurfacerWindow(int deltaFontSize) : _state(new State)
   all->tooltip(
     "Extend every branch: the flat ones in their plane, largest first, "
     "then the others by ribbons");
+  y += BH;
+  undo = new Fl_Button(width - 2 * BB - 3 * WB, y, BB, BH, "Undo");
+  undo->callback(undo_cb, nullptr);
+  undo->tooltip("Take back the last extension (Extend, or the whole of Extend all)");
+  reset = new Fl_Button(width - BB - 2 * WB, y, BB, BH, "Reset");
+  reset->callback(undo_cb, (void *)1);
+  reset->tooltip("Take back every extension: back to the filtered medial axis");
   y += BH;
 
   title("Show");
@@ -461,6 +475,7 @@ void midsurfacerWindow::_listBranches(bool reset)
     s.hasWork = false;
     s.selected = -1;
     s.extended.clear();
+    s.history.clear();
     s.planes.clear();
   }
   browser->clear();
@@ -587,9 +602,12 @@ bool midsurfacerWindow::_extend(int branch, bool planar, bool apply,
       return false;
     }
     what = text("ribbon along %zu free edges of %zu, in %zu chains of "
-                "length %.6g",
+                "length %.6g; so that it does not fold, directions turned "
+                "at %zu vertices and ribbon shortened at %zu (%zu spans "
+                "still fold)",
                 ribbon.freeEdges, ribbon.boundaryEdges, ribbon.loops,
-                ribbon.boundaryLength);
+                ribbon.boundaryLength, ribbon.smoothedVertices,
+                ribbon.shortenedVertices, ribbon.foldedEdges);
     if(!apply)
       view = meshView(ribbon.mesh, "MAT ribbon", [&](std::size_t i) {
         return (ribbon.v[ribbon.mesh.triangles[3 * i]] +
@@ -673,6 +691,9 @@ void midsurfacerWindow::extendBranch(bool everyBranch)
     for(const matgmsh_native::BranchPlane &p : s.planes)
       if(p.deviation > flat && !s.extended.count(p.branch)) todo.push_back({p.branch, false});
   }
+  // what Undo gives back (the last 10 extensions)
+  s.history.push_back({s.work, s.extended});
+  if(s.history.size() > 10) s.history.erase(s.history.begin());
   std::size_t done = 0, failed = 0;
   std::string what;
   for(std::size_t i = 0; i < todo.size(); i++) {
@@ -697,6 +718,7 @@ void midsurfacerWindow::extendBranch(bool everyBranch)
       Msg::Warning("Midsurfacer, branch %d: %s", todo[i].first, what.c_str());
     }
   }
+  if(!done) s.history.pop_back();
   if(everyBranch)
     what = text("%zu branches extended, %zu not (see the messages)", done, failed);
   status[Extension]->copy_label(what.c_str());
@@ -1042,6 +1064,52 @@ void midsurfacerWindow::run(int target)
   }
 
   // 5. the extension has its own buttons (see extendBranch)
+}
+
+// Takes back the last extension, or all of them: the MAT being extended is
+// the one before, or the filtered (or projected) MAT again.
+void midsurfacerWindow::undoExtension(bool everything)
+{
+  modelLock lock(modelLock::ifFree);
+  if(!lock) return;
+  State &s = *_state;
+  if(!s.hasWork || s.history.empty()) {
+    Msg::Info("Midsurfacer: no extension to take back");
+    return;
+  }
+  const std::size_t back = everything ? s.history.size() : 1;
+  s.work = std::move(s.history[s.history.size() - back].first);
+  s.extended = std::move(s.history[s.history.size() - back].second);
+  s.history.resize(s.history.size() - back);
+  const bool filteredAgain = s.extended.empty();
+  for(int i : {(int)Selected, (int)Preview}) {
+    if(PView *v = s.view(i)) delete v;
+    s.tag[i] = -1;
+    s.data[i] = nullptr;
+  }
+  if(filteredAgain) {
+    if(PView *v = s.view(Extension)) delete v;
+    s.tag[Extension] = -1;
+    s.data[Extension] = nullptr;
+    visible[Extension]->value(0);
+    visible[Extension]->deactivate();
+  }
+  else
+    _view(Extension);
+  _listBranches(false);
+  const std::string what =
+    filteredAgain ? "Back to the filtered medial axis" :
+                    text("Last extension taken back (%zu left)", s.history.size());
+  status[Extension]->copy_label(what.c_str());
+  status[Extension]->copy_tooltip(what.c_str());
+  Msg::Info("Midsurfacer: %s", what.c_str());
+  FlGui::instance()->updateViews(true);
+  const int shown = filteredAgain ? (s.view(Projection) ? (int)Projection : (int)Filter) : (int)Extension;
+  for(int i = Raw; i < NumStages; i++) {
+    visible[i]->value(i == shown && s.view(i));
+    display(i, false);
+  }
+  drawContext::global()->draw();
 }
 
 #endif

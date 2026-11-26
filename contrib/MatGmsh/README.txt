@@ -301,15 +301,25 @@ By a ribbon (branchRibbon, extendBranchByRibbon), for any branch. The ribbon
 starts from the free boundary of the branch (the edges that no other triangle
 shares, nor shared in the MAT before its branches were extended) and goes, for
 the reach, in the direction tangent to the branch and normal to the boundary:
-u along the boundary, v away from it. Preview shows it before it is cut,
-colored by v. Extend cuts it by the skin, by the other branches and where it
-crosses itself, and adds to the branch the pieces that have an edge on its
-boundary.
+u along the boundary, v away from it. The map (u, v) -> x(u) + v d(u) folds
+where the directions d turn towards each other faster than the boundary
+advances (in a plane, with normal directions, where 1 - v k < 0, k being the
+curvature of the boundary): there the directions are smoothed along the
+boundary until nothing folds within the reach, and where no direction field
+can avoid the fold (around a hole smaller than the reach) the ribbon is made
+shorter. Preview shows the ribbon before it is cut, colored by v. Extend cuts
+it by the skin, by the other branches and where it crosses itself, and adds to
+the branch the pieces that have an edge on its boundary.
 
 Extend all does the flat branches in their plane, largest first, then the
 others by ribbons. The result is the view "MAT extended"; it is not made
 conforming along the junctions, and the earlier front-by-front extension
-(--stage extended of gmshMat) is no longer in the window.
+(--stage extended of gmshMat) is no longer in the window. Undo takes back the
+last extension (Extend, or the whole of Extend all; the last ten are kept) and
+Reset all of them: the filtered MAT again. In the window the box "Remove whole
+wing branches" is ticked by default, with a threshold of 0; gmshMat and the
+plugin keep the threshold of 0.21 without it, with which the corpus was
+scored.
 
 Stage by stage in C++
 ---------------------

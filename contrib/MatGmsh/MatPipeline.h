@@ -215,15 +215,22 @@ GMSH_API bool extendBranchInPlane(const Mesh &mesh, const Mesh &skin, const Bran
 // A ribbon along the free boundary of a branch (its edges that no other
 // triangle of the mesh shares): u is the length along the boundary and v the
 // distance from it, in the direction tangent to the branch and normal to the
-// boundary (tangent of the boundary x smoothed normal of the branch). The
-// ribbon is not cut by anything: it is what would be added if nothing stood in
-// its way.
+// boundary (tangent of the boundary x smoothed normal of the branch), turned
+// where needed so that neighbouring directions do not cross within the length
+// (see Ribbon::smoothedVertices). The ribbon is not cut by anything: it is
+// what would be added if nothing stood in its way.
 struct Ribbon {
   Mesh mesh;                // Mesh::branch is the number of the boundary chain
   std::vector<double> u, v; // one per vertex of mesh
   std::vector<int> source;  // the vertex of the MAT a vertex with v = 0 is, else -1
   std::size_t boundaryEdges = 0, freeEdges = 0, loops = 0;
   double boundaryLength = 0.;
+  // Where the ribbon would fold over itself its directions are smoothed, and
+  // where that is not enough it is made shorter: the vertices whose direction
+  // was changed, those where the ribbon is shorter than asked, the passes it
+  // took, and the spans of boundary that still fold.
+  std::size_t smoothedVertices = 0, shortenedVertices = 0, foldedEdges = 0;
+  int smoothingPasses = 0;
 };
 
 // With original (the MAT before any of its branches was extended, whose
