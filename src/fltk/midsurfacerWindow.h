@@ -40,6 +40,8 @@ public:
   Fl_Window *win;
   Fl_Value_Input *thickness, *meshSize, *threshold, *length, *layers;
   Fl_Choice *method;
+  // the filter removes the wing branches of the raw MAT whole
+  Fl_Check_Button *branches;
   Fl_Button *push[NumStages];
   Fl_Box *status[NumStages];
   Fl_Check_Button *visible[NumStages];

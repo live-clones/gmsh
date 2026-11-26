@@ -611,3 +611,27 @@ Euler characteristic 0). On the skin of size 0.135 (1 374 348 triangles),
 through the tool window, it leaves 29 pieces and 1533 edges without surface,
 where the threshold on the thickness gives one piece of Euler characteristic
 0. The option was removed.
+
+Whole wing branches on the Doghouse, 26 November 2026
+----------------------------------------------------
+
+The raw MAT of the Doghouse (skin of size 0.4) has 61 branches, 46 of at least
+0.5 mm^2. The 31 of these that touch its free boundary are all wings (median
+angle between the two contacts 86 to 100 degrees, 1592 mm^2); the 15 others
+have no free edge and are all mid-sheets (176 degrees or more, 4580 mm^2).
+With --wing-branches, 44 of the 61 branches are removed whole and none is
+blocked. Areas kept, in mm^2 (wing-like: polygons seen under less than 130
+degrees, which include the feet of the junctions; mid-sheets: more than 150
+degrees):
+
+  Filter                           Kept   Wing-like  Mid-sheets  Pieces, Euler
+  threshold only, thickness 1      4622         269        4019  1, 0
+  threshold only, thickness 4      4441         204        3904  1, 0
+  whole branches, thickness 1.35   4558         223        4000  1, 0
+  whole branches, thickness 4      4441         204        3904  1, 0
+
+With the thickness of the thin ribs (1.35) and whole branches, the wings of
+the thick walls are gone and 96 mm^2 more of the mid-sheets are kept than with
+the threshold of thickness 4. The option was checked on the Doghouse only,
+through gmshMat and through the tool window; its effect on the corpus verdicts
+is not measured, and it is off by default.

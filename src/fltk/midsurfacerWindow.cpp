@@ -75,7 +75,7 @@ struct midsurfacerWindow::State {
   // method of the raw MAT, the thickness and the threshold of the filter
   GModel *model = nullptr;
   modelStamps stamps;
-  int method = -1;
+  int method = -1, branches = -1;
   double thickness = 0., threshold = -1.;
   // the view of each stage: its tag, and its data, to tell it from a view
   // that took the tag since
@@ -104,7 +104,7 @@ midsurfacerWindow::midsurfacerWindow(int deltaFontSize) : _state(new State)
 
   const int section = WB + 2 + BH; // a line, then a title
   int width = TW;
-  int height = 2 * WB + 12 * BH + 6 * section;
+  int height = 2 * WB + 13 * BH + 6 * section;
 
   win = new paletteWindow(width, height,
                           CTX::instance()->nonModalWindows ? true : false,
@@ -148,7 +148,7 @@ midsurfacerWindow::midsurfacerWindow(int deltaFontSize) : _state(new State)
 
   // no default: the mesh size, the filter and the extension all follow it
   thickness =
-    input("Thickness (of the thickest wall)", 0., 0., 1.e22, .1,
+    input("Thickness (of the thickest wall)", 0., 0., 1.e22, .01,
           "The thickness of the thickest wall of the solid, with some "
           "margin (4 for walls of 3.5): the filter removes the wings whose "
           "erosion thickness is below the threshold times this value, so a "
@@ -184,6 +184,13 @@ midsurfacerWindow::midsurfacerWindow(int deltaFontSize) : _state(new State)
           "A sheet is removed where its erosion thickness is below this "
           "fraction of the thickness; the wings of the convex edges are "
           "removed too. The topology of the raw medial axis is kept");
+  branches = new Fl_Check_Button(x, y, full, BH, "Remove whole wing branches");
+  branches->tooltip(
+    "A branch of the raw medial axis (polygons connected through edges of "
+    "two polygons) that touches its free boundary and whose two contacts "
+    "with the skin are mostly seen under less than 135 degrees is a wing: "
+    "it is removed whole, whatever the threshold and the thickness");
+  y += BH;
   action(Filter, "Filter",
          "Filter the medial axis; the raw medial axis is not computed again");
 
@@ -193,7 +200,7 @@ midsurfacerWindow::midsurfacerWindow(int deltaFontSize) : _state(new State)
          "projection that fails its checks changes nothing");
 
   title("5. Extension");
-  length = input("Length (0: 3 x thickness)", 0., 0., 1.e22, .1,
+  length = input("Length (0: 3 x thickness)", 0., 0., 1.e22, .01,
                  "Largest distance covered by the extension; 0 for three "
                  "times the thickness");
   layers = input("Layers", 12., 1., 10000., 1., "Number of layers");
@@ -392,6 +399,7 @@ void midsurfacerWindow::run(int target)
   options.raw = legacy ? RawMode::Legacy : RawMode::Tet;
   options.filter = legacy ? FilterMode::Legacy : FilterMode::Collapse;
   options.collapseThreshold = threshold->value();
+  options.wingBranches = branches->value() != 0;
   options.extensionLength = length->value();
   options.extensionLayers = std::max(1, (int)layers->value());
   options.project = true;
@@ -484,7 +492,8 @@ void midsurfacerWindow::run(int target)
   // 3. the filter: kept, unless it is asked for or its parameters changed
   if(target == Filter || !s.session.hasFiltered() ||
      s.thickness != options.thickness ||
-     s.threshold != options.collapseThreshold) {
+     s.threshold != options.collapseThreshold ||
+     s.branches != (int)options.wingBranches) {
     _forget(Filter);
     viewsChanged = true;
     busy(Filter);
@@ -496,6 +505,7 @@ void midsurfacerWindow::run(int target)
     }
     s.thickness = options.thickness;
     s.threshold = options.collapseThreshold;
+    s.branches = options.wingBranches;
     const Result &r = s.session.result();
     const Topology &t = r.filteredTopology;
     std::string what =
@@ -504,11 +514,16 @@ void midsurfacerWindow::run(int target)
     if(r.collapse.computed && r.collapse.wireEdges)
       what += text(", %zu edges without surface", r.collapse.wireEdges);
     what += text(" (%.3g s)", r.filterSeconds);
-    _say(Filter, what,
-         text("%zu triangles in %zu piece%s, Euler characteristic %lld, %zu "
-              "free edges, %zu junction edges",
-              t.triangles, t.components, t.components == 1 ? "" : "s",
-              t.euler, t.freeEdges, t.junctionEdges));
+    std::string more =
+      text("%zu triangles in %zu piece%s, Euler characteristic %lld, %zu "
+           "free edges, %zu junction edges",
+           t.triangles, t.components, t.components == 1 ? "" : "s", t.euler,
+           t.freeEdges, t.junctionEdges);
+    if(options.wingBranches && r.collapse.computed)
+      more += text("; %zu of the %zu branches of the raw medial axis are "
+                   "wings",
+                   r.collapse.wingBranches, r.collapse.branches);
+    _say(Filter, what, more);
     _view(Filter);
     warn();
   }

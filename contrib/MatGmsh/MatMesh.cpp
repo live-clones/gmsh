@@ -173,6 +173,8 @@ bool writeReport(const Result &r, const Options &o, const std::string &filename,
       << ",\"wing_polygons\":" << c.wingPolygons << ",\"eligible\":" << c.eligible
       << ",\"removed\":" << c.removed << ",\"blocked\":" << c.blocked
       << ",\"wings_blocked\":" << c.wingsBlocked << ",\"wire_edges\":" << c.wireEdges
+      << ",\"branches\":" << c.branches << ",\"wing_branches\":" << c.wingBranches
+      << ",\"branch_wing_polygons\":" << c.branchWingPolygons
       << ",\n\"surface\":";
     writeComplex(f, c.surface);
     f << '}';

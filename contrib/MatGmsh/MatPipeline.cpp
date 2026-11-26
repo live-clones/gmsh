@@ -120,7 +120,8 @@ struct MatNativeAccess {
                                          const CadSurfacePatchAnalyzer::Result &patches,
                                          const matgmsh::tet::Dual &dual,
                                          const std::vector<signed char> &skinSide,
-                                         double thickness, double threshold)
+                                         double thickness, double threshold,
+                                         bool wingBranches)
   {
     const std::size_t sites = mat.del.nodeTags.size();
     const std::vector<int> skin(mat.del.triangles.begin(), mat.del.triangles.end());
@@ -134,6 +135,7 @@ struct MatNativeAccess {
     in.skinSide = skinSide;
     in.thickness = thickness;
     in.threshold = threshold;
+    in.wingBranches = wingBranches;
     const auto patchOf = [&](int face) {
       const auto found = patches.patchByFaceTag.find(face);
       return found == patches.patchByFaceTag.end() ? -1 : found->second;
@@ -222,6 +224,7 @@ struct MatNativeAccess {
     std::ofstream manifest(directory / "complex.json");
     manifest << "{\n\"format\":\"matgmsh-complex-1\",\n\"thickness\":" << options.thickness
              << ",\n\"collapse_threshold\":" << options.collapseThreshold
+             << ",\n\"wing_branches\":" << (options.wingBranches ? "true" : "false")
              << ",\n\"certified\":" << (certified ? "true" : "false")
              << ",\n\"filtered\":" << (kept ? "true" : "false")
              << ",\n\"sites\":" << mat.del.nodeTags.size()
@@ -675,7 +678,7 @@ bool Session::filter(GModel *source, const Options &options, std::string &error)
     }
     else if(options.filter == FilterMode::Collapse) {
       kept = MatNativeAccess::collapse(mat, source, d.patches, d.dual, d.skinSide, options.thickness,
-                                       options.collapseThreshold);
+                                       options.collapseThreshold, options.wingBranches);
       result.collapse = kept.report;
       if(!kept.report.materialSide)
         d.filterWarnings.push_back("The material side of the skin is not known on every shell: there, convex edges are not identified and no wing is removed as such; only the erosion thickness filters the MAT.");

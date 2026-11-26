@@ -28,7 +28,7 @@ int main(int argc, char **argv)
                  "  [--source-mesh cached.msh] [--keep-components] [--threads n]\n"
                  "  [--extension-length L] [--extension-layers n]\n"
                  "  [--raw tet|legacy] [--filter collapse|legacy|none]\n"
-                 "  [--collapse-threshold 0.21] [--complex]\n"
+                 "  [--collapse-threshold 0.21] [--wing-branches] [--complex]\n"
                  "The defaults are --raw tet --filter collapse; --raw legacy or\n"
                  "--filter legacy alone selects the legacy raw MAT and filter.\n";
     return 1;
@@ -54,6 +54,7 @@ int main(int argc, char **argv)
       else if(key == "--extension-length") options.extensionLength = std::stod(value());
       else if(key == "--extension-layers") options.extensionLayers = std::stoi(value());
       else if(key == "--collapse-threshold") options.collapseThreshold = std::stod(value());
+      else if(key == "--wing-branches") options.wingBranches = true;
       else if(key == "--complex") complex = true;
       else if(key == "--raw") {
         const std::string mode = value();

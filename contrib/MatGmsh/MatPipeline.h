@@ -42,6 +42,10 @@ struct Options {
   // FilterMode::Collapse: polygons with an erosion thickness below this
   // fraction of the thickness are removed.
   double collapseThreshold = .21;
+  // FilterMode::Collapse: the branches of the raw MAT that touch its free
+  // boundary and are wings (see matgmsh::tet::branchWings) are removed whole,
+  // whatever their erosion thickness.
+  bool wingBranches = false;
   // RawMode::Tet: if nonempty, the dual complex and its attributes are written
   // to this directory as NumPy arrays (see README.txt).
   std::string complexDirectory;

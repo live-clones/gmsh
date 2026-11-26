@@ -312,6 +312,60 @@ Wings wings(const Dual &dual, const Adjacency &graph, const Geometry &geometry,
   return w;
 }
 
+BranchWings branchWings(const Dual &dual, const Adjacency &graph, const Geometry &geometry,
+                        const std::vector<double> &sites, double angle)
+{
+  const std::size_t count = dual.size();
+  BranchWings b;
+  b.wing.assign(count, 0);
+  // Union of the polygons across the edges of valence two.
+  std::vector<int> parent(count);
+  std::iota(parent.begin(), parent.end(), 0);
+  const auto find = [&](int p) {
+    while(parent[p] != p) p = parent[p] = parent[parent[p]];
+    return p;
+  };
+  for(std::size_t e = 0; e < graph.edges(); ++e) {
+    if(graph.valence(e) != 2) continue;
+    const int first = find(graph.edgePolygons[graph.edgeOffsets[e]]);
+    const int second = find(graph.edgePolygons[graph.edgeOffsets[e] + 1]);
+    if(first != second) parent[std::max(first, second)] = std::min(first, second);
+  }
+  std::vector<unsigned char> free(count, 0);
+  for(std::size_t e = 0; e < graph.edges(); ++e)
+    if(graph.valence(e) == 1) free[find(graph.edgePolygons[graph.edgeOffsets[e]])] = 1;
+  // Area of each branch, and of its polygons seen under a small angle.
+  const double limit = std::cos(angle * 3.14159265358979323846 / 180.);
+  std::vector<double> area(count, 0.), narrow(count, 0.);
+  for(std::size_t p = 0; p < count; ++p) {
+    const double a = geometry.area[p];
+    if(!(a > 0.)) continue;
+    const double *c = &geometry.centroid[3 * p];
+    const double *s0 = &sites[3 * std::size_t(dual.sitePair[p][0])];
+    const double *s1 = &sites[3 * std::size_t(dual.sitePair[p][1])];
+    double u[3], v[3];
+    for(int k = 0; k < 3; ++k) {
+      u[k] = s0[k] - c[k];
+      v[k] = s1[k] - c[k];
+    }
+    const double norm = std::sqrt(dot(u, u) * dot(v, v));
+    if(!(norm > 0.) || !std::isfinite(norm)) continue;
+    const int branch = find(int(p));
+    area[branch] += a;
+    if(dot(u, v) / norm > limit) narrow[branch] += a;
+  }
+  for(std::size_t p = 0; p < count; ++p) {
+    if(parent[p] != int(p)) continue;
+    ++b.branches;
+    if(free[p] && area[p] > 0. && 2. * narrow[p] >= area[p]) {
+      ++b.wingBranches;
+      free[p] = 2;
+    }
+  }
+  for(std::size_t p = 0; p < count; ++p) b.wing[p] = free[find(int(p))] == 2;
+  return b;
+}
+
 Collapse collapse(const Dual &dual, const Adjacency &graph, const std::vector<double> &et,
                   const std::vector<unsigned char> &wing, double threshold)
 {
@@ -436,6 +490,16 @@ Filtered filter(const Dual &dual, const FilterInput &in)
   for(std::size_t p = 0; p < dual.size(); ++p) {
     r.convexPolygons += w.convex[p];
     r.wingPolygons += w.wing[p];
+  }
+  if(in.wingBranches) {
+    const BranchWings b = branchWings(dual, graph, f.geometry, *in.sites, in.branchAngle);
+    r.branches = b.branches;
+    r.wingBranches = b.wingBranches;
+    for(std::size_t p = 0; p < dual.size(); ++p)
+      if(b.wing[p] && !w.wing[p]) {
+        w.wing[p] = 1;
+        ++r.branchWingPolygons;
+      }
   }
   Collapse c = collapse(dual, graph, f.erosionOverThickness, w.wing, in.threshold);
   r.eligible = c.eligible;

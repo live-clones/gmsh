@@ -50,6 +50,23 @@ GMSH_API Wings wings(const Dual &dual, const Adjacency &graph, const Geometry &g
                      const std::vector<int> &patchValues, const std::vector<Segment> &segments,
                      const std::vector<int> &tetrahedra);
 
+// Branches of the complex: sets of polygons connected through edges shared by
+// exactly two polygons. A wing branch touches the free boundary of the complex
+// (it has an edge of a single polygon), and at least half of its area is made
+// of polygons whose two sites are seen from the centroid under less than
+// `angle` degrees: the sheet that runs from a convex edge of the solid into
+// the material (90 degrees for a right-angled edge), as opposed to the
+// mid-sheet of two facing walls (180 degrees), which also has a free boundary
+// when it ends on a rounded edge.
+struct BranchWings {
+  std::vector<unsigned char> wing; // one flag per polygon
+  std::size_t branches = 0, wingBranches = 0;
+};
+
+GMSH_API BranchWings branchWings(const Dual &dual, const Adjacency &graph,
+                                 const Geometry &geometry, const std::vector<double> &sites,
+                                 double angle = 135.);
+
 struct Collapse {
   std::vector<unsigned char> keep; // one flag per polygon
   std::size_t eligible = 0, removed = 0, blocked = 0, wingsBlocked = 0;
@@ -74,6 +91,10 @@ struct FilterInput {
   std::vector<std::size_t> patchOffsets;
   std::vector<int> patchValues;
   double thickness = 1., threshold = .21;
+  // The polygons of the wing branches (see branchWings) are removed like the
+  // convex wings, whatever their erosion thickness.
+  bool wingBranches = false;
+  double branchAngle = 135.;
 };
 
 struct CollapseReport {
@@ -83,6 +104,9 @@ struct CollapseReport {
   std::size_t zeroAreaPolygons = 0, unreachedPolygons = 0;
   std::size_t convexPolygons = 0, wingComponents = 0, anchoredWingComponents = 0;
   std::size_t wingPolygons = 0, eligible = 0, removed = 0, blocked = 0, wingsBlocked = 0;
+  // with FilterInput::wingBranches: the branches of the raw MAT, those that
+  // are wings, and their polygons that the convex wings did not hold already
+  std::size_t branches = 0, wingBranches = 0, branchWingPolygons = 0;
   std::size_t wireEdges = 0;
   ComplexTopology surface; // the kept polygons
 };

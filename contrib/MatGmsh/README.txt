@@ -119,6 +119,17 @@ stay; the price is that thinner walls lose a band of their own mid-surface
 along their free edges (see VALIDATION.txt for the Doghouse). gmshMat, the
 plugin and the tool window have no default thickness.
 
+Whole wing branches (--wing-branches, the box "Remove whole wing branches" of
+the tool window; off by default, not yet run on the corpus). A branch of the
+raw MAT is a set of polygons connected through edges of exactly two polygons.
+A branch that touches the free boundary of the raw MAT, and at least half of
+whose area is made of polygons whose two sites are seen from the centroid
+under less than 135 degrees, is a wing: all its polygons are removed like the
+convex wings, whatever their erosion thickness, by the same collapses. The
+mid-sheet of two facing walls is seen under 180 degrees and is kept even when
+it has a free boundary (rounded edges). report.json records "branches",
+"wing_branches" and "branch_wing_polygons".
+
 The convexity of a CAD edge needs the material side of the skin. It is taken,
 shell by shell, from the interior tetrahedra, so closed cavities and
 assemblies of several solids are handled.
