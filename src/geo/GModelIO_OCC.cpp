@@ -3489,8 +3489,8 @@ void OCC_Internals::_copyExtrudedAttributes(TopoDS_Edge edge, GEdge *ge)
     e->geo.Source = _getFuzzyTag(1, sourceShape);
     // detect degenerate extrusions or cycles
     ExtrudeParams *p = e;
-    int recur = 0;
-    while(++recur < CTX::instance()->mesh.maxRetries) {
+    std::set<int> visited;
+    while(visited.insert(p->geo.Source).second) {
       if(ge->tag() == p->geo.Source) {
         Msg::Info("Extrusion layer cycle detected for curve %d", ge->tag());
         e = nullptr;
@@ -3523,8 +3523,8 @@ void OCC_Internals::_copyExtrudedAttributes(TopoDS_Face face, GFace *gf)
     e->geo.Source = _getFuzzyTag(2, sourceShape);
     // detect degenerate extrusions or cycles
     ExtrudeParams *p = e;
-    int recur = 0;
-    while(++recur < CTX::instance()->mesh.maxRetries) {
+    std::set<int> visited;
+    while(visited.insert(p->geo.Source).second) {
       if(gf->tag() == p->geo.Source) {
         Msg::Info("Extrusion layer cycle detected for surface %d", gf->tag());
         e = nullptr;
