@@ -895,8 +895,22 @@ without wire edge, and the flange and the web extended in their planes are
 their whole mid-planes (60 and 21 to 0.05). It fails without the margins (the
 flange has 51.2 for 60). 12 of 12 mat_native tests pass.
 
-Not checked: Sample3 beyond the filter (its two large branches are curved:
-ribbons only); Sample2 and Sample4; the corpus beyond the twelve cases, and
-the library defaults (threshold 0.21 without this rule), which are unchanged.
+Extend all on Sample3.stp in the tool window (thickness 4, defaults). The
+filtered MAT has 12 branches: the panel (2940 mm^2) and the stiffener (1001),
+both curved; five of 6 to 99 mm^2; and five specks of 4e-5 to 0.007 mm^2. The
+specks were extended in "their" plane into sheets of 82 to 97 mm^2 each, or
+not closed by the skin (567 mm^2 for 8e-5), and three of them went through the
+other branches along 1, 5 and 13 mm (branches_through.py). Extend all now
+leaves the branches under a hundredth of the thickness squared as they are: 7
+branches extended, none refused, 5 left, in 5.1 s for 7.6 s. Two places remain where a
+branch goes through another one: the tab of 6 mm^2, extended in its plane to
+61 mm^2, through the stiffener along 3.3 mm, and another branch along 0.6 mm.
+No truth for this part: the extension is not scored. Doghouse.stp is
+unchanged (8 branches extended, none that small).
+
+Not checked: the extension of Sample3 beyond these counts (its two large
+branches are curved: ribbons only); Sample2 and Sample4; the corpus beyond the
+twelve cases, and the library defaults (threshold 0.21 without this rule),
+which are unchanged.
 The constants (one and a half, a quarter, nine tenths) come from Sample3, the
 Doghouse and the T junction only.

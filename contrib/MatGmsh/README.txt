@@ -388,7 +388,11 @@ another branch, or less than half its length after on one that faces it (a
 wall the branch ends on). The message gives the number of rows stopped.
 
 Extend all does the flat branches in their plane, largest first, then the
-others by ribbons. The result is the view "MAT extended"; it is not made
+others by ribbons. It leaves as they are the branches of less than a hundredth
+of the thickness squared: specks left by the filter, a few triangles that hang
+on the rest by an edge and have no plane of their own (extended, each gives a
+sheet in any direction through the others). They stay in the list and can be
+extended one by one. The result is the view "MAT extended"; it is not made
 conforming along the junctions, and the earlier front-by-front extension
 (--stage extended of gmshMat) is no longer in the window. Undo takes back the
 last extension (Extend, or the whole of Extend all; the last ten are kept) and

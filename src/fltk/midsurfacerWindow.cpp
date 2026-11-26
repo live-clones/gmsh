@@ -697,6 +697,7 @@ void midsurfacerWindow::extendBranch(bool everyBranch)
   // the branches to extend, with how: one, or the flat ones in their plane
   // then the others by ribbons
   std::vector<std::pair<int, bool> > todo;
+  std::size_t specks = 0;
   if(!everyBranch) {
     if(s.selected < 0) {
       Msg::Warning("Midsurfacer: choose a branch in the list first");
@@ -705,10 +706,20 @@ void midsurfacerWindow::extendBranch(bool everyBranch)
     todo.push_back({s.selected, how->value() == 0});
   }
   else {
+    // A branch of less than a hundredth of the thickness squared is a speck
+    // left by the filter, a few triangles that hang on the rest by an edge:
+    // it has no plane of its own, and extended it gives a sheet in any
+    // direction through the others. Extend all leaves it as it is (it can
+    // still be chosen in the list and extended alone).
+    const double speck = .01 * thickness->value() * thickness->value();
     for(const matgmsh_native::BranchPlane &p : s.planes)
-      if(p.deviation <= flat && !s.extended.count(p.branch)) todo.push_back({p.branch, true});
+      specks += p.area < speck && !s.extended.count(p.branch);
     for(const matgmsh_native::BranchPlane &p : s.planes)
-      if(p.deviation > flat && !s.extended.count(p.branch)) todo.push_back({p.branch, false});
+      if(p.area >= speck && p.deviation <= flat && !s.extended.count(p.branch))
+        todo.push_back({p.branch, true});
+    for(const matgmsh_native::BranchPlane &p : s.planes)
+      if(p.area >= speck && p.deviation > flat && !s.extended.count(p.branch))
+        todo.push_back({p.branch, false});
   }
   // what Undo gives back (the last 10 extensions)
   s.history.push_back({s.work, s.extended});
@@ -738,8 +749,13 @@ void midsurfacerWindow::extendBranch(bool everyBranch)
     }
   }
   if(!done) s.history.pop_back();
-  if(everyBranch)
+  if(everyBranch) {
     what = text("%zu branches extended, %zu not (see the messages)", done, failed);
+    if(specks)
+      what += text("; %zu branches of less than %.3g (a hundredth of the "
+                   "thickness squared) left as they are",
+                   specks, .01 * thickness->value() * thickness->value());
+  }
   status[Extension]->copy_label(what.c_str());
   status[Extension]->copy_tooltip(what.c_str());
   // the MAT with its branches extended, alone
