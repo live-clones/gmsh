@@ -1369,17 +1369,24 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter,
     Msg::Error("High-order mesh optimization requires the OPTHOM module");
 #endif
   }
-  else if(how == "Laplace2D") {
+  else if(how == "Laplace2D" || how == "Relocate2D") {
+    // both move the nodes in the parametric plane of the surfaces
+    std::vector<int> skipped;
     for(auto it = m->firstFace(); it != m->lastFace(); ++it) {
       GFace *gf = *it;
-      laplaceSmoothing(gf, niter);
+      if(!gf->haveParametrization()) {
+        if(gf->getNumMeshElements()) skipped.push_back(gf->tag());
+        continue;
+      }
+      if(how == "Laplace2D")
+        laplaceSmoothing(gf, niter);
+      else
+        RelocateVertices(gf, niter);
     }
-  }
-  else if(how == "Relocate2D") {
-    for(auto it = m->firstFace(); it != m->lastFace(); ++it) {
-      GFace *gf = *it;
-      RelocateVertices(gf, niter);
-    }
+    if(skipped.size())
+      Msg::Warning("%s skipped %zu surface(s) without parametrization (e.g. "
+                   "surface %d): create one with createGeometry() first",
+                   how.c_str(), skipped.size(), skipped[0]);
   }
   else if(how == "Relocate3D") {
     for(auto it = m->firstRegion(); it != m->lastRegion(); ++it) {
