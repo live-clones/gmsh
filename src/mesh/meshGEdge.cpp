@@ -1043,7 +1043,6 @@ void meshGEdge::operator()(GEdge *ge)
   }
 
   if(CTX::instance()->mesh.algo2d != ALGO_2D_BAMG &&
-     CTX::instance()->mesh.algo2d != ALGO_2D_QUAD_QUASI_STRUCT &&
      CTX::instance()->mesh.algo2d != ALGO_2D_PACK_PRLGRMS)
     if(_addBegin.empty() && _addEnd.empty())
       filterPoints(ge, filterMinimumN - 2);

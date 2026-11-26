@@ -92,6 +92,7 @@ opt(PRIVATE_API "Enable private API" OFF)
 opt(PRO "Enable PRO extensions" ${DEFAULT})
 opt(PROFILE "Enable profiling compiler flags" OFF)
 opt(QUADMESHINGTOOLS "Enable QuadMeshingTools extensions" ${DEFAULT})
+opt(QUADOPTIMIZER "Enable local quadrilateral cavity optimizer (requires QuadMeshingTools)" ${DEFAULT})
 opt(QUADTRI "Enable QuadTri structured meshing extensions" ${DEFAULT})
 opt(RPATH "Use RPATH in dynamically linked targets" ON)
 opt(SLEPC "Enable SLEPc eigensolvers" OFF)
@@ -1079,6 +1080,17 @@ if(HAVE_MESH)
     set_config_option(HAVE_QUADMESHINGTOOLS "QuadMeshingTools")
     add_subdirectory(contrib/QuadMeshingTools)
     include_directories(BEFORE contrib/QuadMeshingTools)
+  endif()
+
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadOpt
+     AND ENABLE_QUADOPTIMIZER)
+    if(HAVE_QUADMESHINGTOOLS)
+      set_config_option(HAVE_QUADOPTIMIZER "QuadOpt")
+      add_subdirectory(contrib/QuadOpt)
+      include_directories(BEFORE contrib/QuadOpt)
+    else()
+      message(WARNING "Disabling QuadOpt (QuadMeshingTools not enabled)")
+    endif()
   endif()
 endif()
 
@@ -2416,6 +2428,12 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
   list(FILTER ALLFILES EXCLUDE REGEX "io_vtk/vtu_roundtrip.geo$")
   # calls Mesh 3 explicitly:
   list(FILTER ALLFILES EXCLUDE REGEX "occ/mmg3d_multidomain_bgmesh.geo$")
+  # the self-checking quad cases, which need PACK and its optimizer
+  if(HAVE_QUADOPTIMIZER)
+    file(GLOB QUADFILES benchmarks/quads/analytic_*.geo
+         benchmarks/quads/quadqs_fallback_*.geo)
+    list(APPEND ALLFILES ${QUADFILES})
+  endif()
   filter_tests("${ALLFILES}" TESTFILES)
   foreach(TESTFILE ${TESTFILES})
     # use relative path for Cygwin/MinGW (the pure win exe built with the MinGW

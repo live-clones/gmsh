@@ -1794,9 +1794,7 @@ int fillSizemapFromScalarBackgroundField(
 
 static int meshCompoundMakeQuads(GFace *gf)
 {
-  if(gf->meshAttributes.algorithm != ALGO_2D_PACK_PRLGRMS &&
-     gf->meshAttributes.algorithm != ALGO_2D_QUAD_QUASI_STRUCT)
-    return 0;
+  if(gf->meshAttributes.algorithm != ALGO_2D_PACK_PRLGRMS) return 0;
 
   // recombineIntoQuads(gf, false, 2, true, .01);
 
@@ -1806,9 +1804,7 @@ static int meshCompoundMakeQuads(GFace *gf)
 
 static int meshCompoundComputeCrossFieldWithHeatEquation(GFace *gf)
 {
-  if(gf->meshAttributes.algorithm != ALGO_2D_PACK_PRLGRMS &&
-     gf->meshAttributes.algorithm != ALGO_2D_QUAD_QUASI_STRUCT)
-    return 0;
+  if(gf->meshAttributes.algorithm != ALGO_2D_PACK_PRLGRMS) return 0;
 
 #if defined(HAVE_QUADMESHINGTOOLS)
 

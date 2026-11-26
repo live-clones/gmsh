@@ -13,7 +13,7 @@ class SPoint2;
 class SVector3;
 
 // The direction at a node of a surface mesh from the scaled cross field
-// guiding it (PACK, QuadQS): the field vector projected on the tangent plane
+// guiding it (PACK): the field vector projected on the tangent plane
 // (t1, unit), the unit normal and the size (the norm of the field vector),
 // with the parameter of the node. False if one of them is degenerate.
 bool crossFieldDirection(GFace *gf, Field *crossField, MVertex *vertex,
@@ -22,7 +22,7 @@ bool crossFieldDirection(GFace *gf, Field *crossField, MVertex *vertex,
 
 // Store, for every node of the surface mesh, the cross field directions and
 // the mesh size in GFace::storage1..storage4: those of the scaled cross field
-// guiding the surface mesh if any (PACK, QuadQS), else of the background
+// guiding the surface mesh if any (PACK), else of the background
 // mesh of the surface. Only called when
 // Mesh.Algorithm3D is the R-tree (hex-dominant) algorithm; the data is
 // consumed by contrib/domhex (directions3D.cpp).

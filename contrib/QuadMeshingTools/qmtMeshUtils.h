@@ -67,9 +67,6 @@ void sicnQuality(const GFaceMeshPatch& patch, double& sicnMin, double& sicnAvg);
 
 bool patchIsTopologicallyValid(const GFaceMeshPatch& patch);
 
-bool getConnectedComponents(const std::vector<MElement*>& elements,
-    std::vector<std::vector<MElement*> >& components);
-
 bool setVertexGFaceUV(GFace* gf, MVertex* v, double uv[2]);
 
 MVertex* centerOfElements(const std::vector<MElement*>& elements);
@@ -108,14 +105,6 @@ bool fillGFaceInfo(GFace* gf, GFaceInfo& info);
 bool isTopologicalDisk(const GFaceInfo& info);
 bool haveConcaveCorners(const GFaceInfo& info);
 
-bool faceOrderedSideLoops(GFace* gf, const GFaceInfo& info,
-    std::vector<std::vector<std::vector<std::pair<GEdge*,bool> > > >& loopSideEdgesAndInv);
-
-bool appendCADStatistics(GModel* gm, std::unordered_map<std::string,double>& stats, const std::string& prefix = "CAD_");
-bool appendQuadMeshStatistics(GModel* gm, std::unordered_map<std::string,double>& stats, const std::string& prefix = "Mesh_");
-void printStatistics(const std::unordered_map<std::string,double>& stats, const std::string& title = "Statistics:");
-void writeStatistics(const std::unordered_map<std::string,double>& stats, const std::string& path); /* json format */
-
 void computeSICNquality(const std::vector<MElement*>& elements, double& sicnMin, double& sicnAvg);
 void computeSICNquality(GFace* gf, double& sicnMin, double& sicnAvg);
 void computeSICNquality(GRegion* gr, double& sicnMin, double& sicnAvg);
@@ -123,7 +112,6 @@ void computeSICNquality(GRegion* gr, double& sicnMin, double& sicnAvg);
 void errorAndAbortIfNegativeElement(GFace* gf, const std::vector<MElement*>& elts, const std::string& msg = "");
 void errorAndAbortIfInvalidVertexInElements(const std::vector<MElement*>& elts, const std::string& msg = "");
 void errorAndAbortIfInvalidVertexInModel(GModel* gm, const std::string& msg = "");
-void errorAndAbortIfInvalidSurfaceMesh(GFace* gf, const std::string& msg = "");
 
 std::string randomIdentifier();
 

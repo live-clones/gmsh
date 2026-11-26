@@ -1750,27 +1750,33 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Pyramids" , opt_mesh_pyramids , 1. ,
     "Display mesh pyramids?" },
 
-  { F|O, "QuadqsSizemapMethod" , opt_mesh_quadqs_sizemap_method, 3 ,
-    "Size map method in QuadQuasiStructured. 0: default, 1: cross-field,"
-      "2: cross-field + CAD small features adaptation,"
-      "3: from background mesh (e.g. sizes in current triangulation),"
-      "4: cross-field + CAD small features adaptation (clamped by background mesh)" },
+  // the options of the former quasi-structured quad mesher do nothing: they
+  // are still accepted, but neither documented nor saved
+  { F|O|D, "QuadqsSizemapMethod" , opt_mesh_quadqs_sizemap_method, 3 ,
+    "[Deprecated]" },
+  { F|O, "PackCleanupMethod" , opt_mesh_pack_cleanup_method, 1 ,
+    "Cavity optimizer after packing of parallelograms. 1: enabled (0 is also "
+      "accepted for compatibility), 2: disabled" },
   { F|O, "PackSizemapMethod", opt_mesh_pack_sizemap_method, 3,
-    "Size map for the PACK guiding field (same methods as QuadqsSizemapMethod, configured independently)" },
-  { F|O, "QuadqsTopologyOptimizationMethods" , opt_mesh_quadqs_topo_optim_methods, 0. ,
-    "Topology optimization methods in QuadQuasiStructured. 0: default (all),"
-      "100: pattern-based CAD faces,"
-      "010: disk quadrangulation remeshing,"
-      "001: cavity remeshing,"
-      "xxx: combination of multiple methods (e.g. 111 for all)" },
-  { F|O, "QuadqsRemeshingBoldness" , opt_mesh_quadqs_remeshing_boldness, 0.66 ,
-    "Controls how much cavity remeshing is allowed to distort"
-      " the quad mesh. From 0 (no quality decrease during remeshing) to 1"
-      " (quality can tend to 0 during remeshing)." },
-  { F|O, "QuadqsScalingOnTriangulation" , opt_mesh_quadqs_scaling_on_triangulation, 0.75,
-    "Ratio on the edge length between the triangulation and the quadrangulation."
-      " Use a small ratio (e.g. 0.5) to get a background triangulation finer"
-      " than the quad mesh. Useful to get a more accurate cross-field." },
+    "Size map for the PACK guiding field. 0: default, 1: cross-field, "
+      "2: cross-field + CAD small features adaptation, "
+      "3: from background mesh (e.g. sizes in current triangulation), "
+      "4: cross-field + CAD small features adaptation (clamped by background mesh)" },
+  { F|O, "PackIntrinsicEdgeLengthFactor" ,
+    opt_mesh_pack_intrinsic_edge_length_factor, 0. ,
+    "Maximum intrinsic triangulation edge length divided by the local target "
+      "size before local splitting and Delaunay legalization. Opt-in refinement: "
+      "inserted midpoints do not obey the packing exclusion or cross field "
+      "(non-positive: preserve packed points, no intrinsic long-edge splitting)" },
+  { F|O, "PackPatterns" , opt_mesh_pack_patterns, 1 ,
+    "Remesh simple CAD faces with quad patterns after packing of "
+      "parallelograms (regular, but the patterns do not follow the size map)" },
+  { F|O|D, "QuadqsTopologyOptimizationMethods" , opt_mesh_quadqs_topo_optim_methods, 0. ,
+    "[Deprecated]" },
+  { F|O|D, "QuadqsRemeshingBoldness" , opt_mesh_quadqs_remeshing_boldness, 0.66 ,
+    "[Deprecated]" },
+  { F|O|D, "QuadqsScalingOnTriangulation" , opt_mesh_quadqs_scaling_on_triangulation, 0.75,
+    "[Deprecated]" },
   { F|O, "Quadrangles" , opt_mesh_quadrangles , 1. ,
     "Display mesh quadrangles?" },
   { F|O, "QualityInf" , opt_mesh_quality_inf , 0.0 ,
@@ -2810,7 +2816,6 @@ OptionChoices = {
     {ALGO_2D_BAMG, "BAMG"},
     {ALGO_2D_FRONTAL_QUAD, "Frontal-Delaunay for Quads (experimental)"},
     {ALGO_2D_PACK_PRLGRMS, "Packing of parallelograms (experimental)"},
-    {ALGO_2D_QUAD_QUASI_STRUCT, "Quasi-Structured Quad (experimental)"},
     {ALGO_2D_INITIAL_ONLY, "Initial Mesh Only"}}},
   {"Mesh.Algorithm3D",
    {{ALGO_3D_DELAUNAY, "Delaunay"}, {ALGO_3D_PDEL3D, "Parallel Delaunay"},
@@ -2906,9 +2911,6 @@ std::vector<std::pair<std::string, double> > UnlistedOptionChoices = {
   {"Mesh.Algorithm3D", ALGO_3D_RTREE},
 #if !defined(HAVE_BAMG)
   {"Mesh.Algorithm", ALGO_2D_BAMG},
-#endif
-#if !defined(HAVE_QUADMESHINGTOOLS)
-  {"Mesh.Algorithm", ALGO_2D_QUAD_QUASI_STRUCT},
 #endif
 #if !defined(HAVE_HXT)
   {"Mesh.Algorithm3D", ALGO_3D_HXT},

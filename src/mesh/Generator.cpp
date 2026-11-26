@@ -3,10 +3,8 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#include <optional>
 #include <sstream>
 #include <limits>
-#include <memory>
 #include <stdlib.h>
 #include <algorithm>
 #include <cstdio>
@@ -71,13 +69,24 @@
 #include "qmtMeshUtils.h"
 #include "qmtCrossField.h"
 #include "qmtSizeMap.h"
-#include "qmtCurveQuantization.h"
 #include "qmtQuadCavityRemeshing.h"
 #include "qmtMeshGeometryOptimization.h"
 #include "arrayGeometry.h"
 #include "geolog.h"
 #endif
 
+#if defined(HAVE_QUADOPTIMIZER)
+#include "qoOptimizer.h"
+#include "qoPack.h"
+
+static QuadOpt::Options quadOptOptions()
+{
+  QuadOpt::Options options;
+  options.patterns = CTX::instance()->mesh.packPatterns;
+  options.optimize = CTX::instance()->mesh.packCleanupMethod != 2;
+  return options;
+}
+#endif
 
 class EmbeddedCompatibilityTest {
 public:
@@ -792,22 +801,6 @@ static void Mesh2D(GModel *m)
   Msg::StatusBar(true, "Meshing 2D...");
   double t1 = Cpu(), w1 = TimeOfDay();
 
-  // QuadQS makes its initial quad-dominant meshes with PACK (see
-  // meshGenerator() in meshGFace.cpp): switch Mesh.Algorithm once, while the
-  // faces are meshed, and not in each face, which races between the threads
-  // meshing them in parallel; restored before the QuadQS steps below, or if
-  // meshing throws
-  struct UsePackForQuadqs {
-    int algo2d = CTX::instance()->mesh.algo2d;
-    UsePackForQuadqs()
-    {
-      if(algo2d == ALGO_2D_QUAD_QUASI_STRUCT)
-        CTX::instance()->mesh.algo2d = ALGO_2D_PACK_PRLGRMS;
-    }
-    ~UsePackForQuadqs() { CTX::instance()->mesh.algo2d = algo2d; }
-  };
-  std::optional<UsePackForQuadqs> usePack(std::in_place);
-
   int nthreads = CTX::instance()->numThreads;
   if(CTX::instance()->mesh.maxNumThreads2D > 0)
     nthreads = CTX::instance()->mesh.maxNumThreads2D;
@@ -830,8 +823,7 @@ static void Mesh2D(GModel *m)
     // Compound surfaces can compute a fresh cross field inside GFace::mesh.
     // PETSc/MUMPS must run on the host thread that initialized MPI.
     if(crossFieldHeatSolverUsesMumps() && !(*it)->compound.empty() &&
-       ((*it)->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS ||
-        (*it)->getMeshingAlgo() == ALGO_2D_QUAD_QUASI_STRUCT))
+       (*it)->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS)
       nthreads = 1;
 #endif
 
@@ -907,55 +899,16 @@ static void Mesh2D(GModel *m)
 
     Msg::StopProgressMeter();
   }
-  usePack.reset();
   MatchPeriodicNodes(m);
   m->renumberMeshCanonically(maxVertexBefore, maxElementBefore, true);
 
-  if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
-    replaceBadQuadDominantMeshes(m);
-
-    // In the quasi-structured pipeline, the quad-dominant mesh is subdivided
-    // into a full quad mesh. TODO: 1) a faster CAD projection approach (from
-    // uv) and 2) verify quality during projection
-
-    // bool linear = false; RefineMesh(m, linear, true, false);
-    RefineMeshWithBackgroundMeshProjection(m);
-
-    OptimizeMesh(m, "QuadQuasiStructured");
-
-    // the extruded curves and surfaces were made from the meshes of their
-    // sources before these were subdivided and optimized: they are made again
-    // from the final ones, those extruded from a point or a curve first, then
-    // the copies (the tops of the extrusions); by the extruded meshers
-    // directly, as the four-sided ones were marked as transfinite meanwhile
-    auto extruded = [](GEntity *ge, bool copy) {
-      ExtrudeParams *ep = (ge->dim() == 1) ?
-        static_cast<GEdge *>(ge)->meshAttributes.extrude :
-        static_cast<GFace *>(ge)->meshAttributes.extrude;
-      return ep && ep->mesh.ExtrudeMesh &&
-             (ep->geo.Mode == COPIED_ENTITY) == copy;
-    };
-    for(int copy = 0; copy < 2; copy++) {
-      for(GEdge *ge : m->getEdges()) {
-        if(!extruded(ge, copy)) continue;
-        deMeshGEdge dem;
-        dem(ge);
-        MeshExtrudedCurve(ge);
-      }
-    }
-    for(int copy = 0; copy < 2; copy++) {
-      for(GFace *gf : m->getFaces()) {
-        if(!extruded(gf, copy)) continue;
-        deMeshGFace dem;
-        dem(gf);
-        MeshExtrudedSurface(gf);
-      }
-    }
-    m->renumberMeshCanonically(maxVertexBefore, maxElementBefore, true);
-  }
-
   // not on the surfaces of hex-dominant meshes: PACK placed their points in
   // 3D for the combination
+#if defined(HAVE_QUADOPTIMIZER)
+  if(CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS &&
+     !CTX::instance()->mesh.hexDominant())
+    QuadOpt::finishPackMesh(m, quadOptOptions());
+#else
   if(CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS &&
      !CTX::instance()->mesh.hexDominant()) {
     for(GFace *gf : m->getFaces()) {
@@ -966,19 +919,7 @@ static void Mesh2D(GModel *m)
     bool debug = (Msg::GetVerbosity() == 99);
 
     transferSeamGEdgesVerticesToGFace(m);
-    //quadMeshingOfSimpleFacesWithPatterns(m, .02);
     if(debug) m->writeMSH("opti1.msh");
-    //    if(debug) m->writeMSH("opti2.msh");
-    //    optimizeTopologyWithCavityRemeshing(m);
-
-    if(Msg::GetVerbosity() == 99) {
-      std::vector<std::pair<SPoint3, int>> singularities;
-      for(GFace *gf : m->getFaces()) {
-#if defined(HAVE_QUADMESHINGTOOLS)
-        improveQuadMeshTopologyWithCavityRemeshing(gf, singularities, false);
-#endif
-      }
-    }
 
     OptimizeMesh(m, "UntangleTris");
     if(debug) m->writeMSH("opti4.msh");
@@ -989,6 +930,8 @@ static void Mesh2D(GModel *m)
       }
     }
   }
+
+#endif
 
   CheckEmptyMesh(m, 2);
 
@@ -1245,13 +1188,20 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter,
 {
   if(CTX::instance()->abortOnError && Msg::GetErrorCount()) return;
 
+  // the methods of the former quasi-structured quad mesher
+  if(how == "QuadQuasiStructured" || how == "QuadCavityRemeshing") {
+    Msg::Error("Mesh optimization method '%s' is not available anymore",
+               how.c_str());
+    return;
+  }
+
   if(how != "" && how != "Gmsh" && how != "Optimize" && how != "Optimize2D" &&
      how != "MesquiteImprove3D" && how != "MesquiteImprove2D" &&
      how != "UntangleTris" && how != "UntangleTets" && how != "Netgen" &&
      how != "HighOrder" && how != "HighOrderElastic" &&
      how != "HighOrderFastCurving" && how != "Laplace2D" &&
      how != "Relocate2D" && how != "Relocate3D" &&
-     how != "QuadCavityRemeshing" && how != "QuadQuasiStructured" &&
+     how != "OptimizeQuads" && how != "OptimizeQuadsFast" &&
      how != "UntangleMeshGeometry" && how != "HXT" && how != "HXT_FlipOnly") {
     Msg::Error("Unknown mesh optimization method '%s'", how.c_str());
     return;
@@ -1310,6 +1260,13 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter,
   }
   else if(how == "UntangleTris") {
     for(GFace *gf : m->getFaces()) untangleGFaceMeshConstrained(gf);
+  }
+  else if(how == "OptimizeQuads" || how == "OptimizeQuadsFast") {
+#if defined(HAVE_QUADOPTIMIZER)
+    QuadOpt::optimizeQuads(m);
+#else
+    Msg::Error("%s requires QUADOPTIMIZER", how.c_str());
+#endif
   }
   else if(how == "MesquiteImprove2D") {
     for(auto it = m->firstFace(); it != m->lastFace(); it++) {
@@ -1392,39 +1349,6 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter,
     for(auto it = m->firstRegion(); it != m->lastRegion(); ++it) {
       GRegion *gr = *it;
       RelocateVertices(gr, niter);
-    }
-  }
-  else if(how == "QuadCavityRemeshing") {
-    deleteVolumeMeshBefore(m, "optimizing the quad topology");
-    for(GFace *gf : m->getFaces()) {
-      if(gf->meshStatistics.status == GFace::DONE) {
-        gf->meshStatistics.status = GFace::PENDING;
-      }
-    }
-    transferSeamGEdgesVerticesToGFace(m);
-    optimizeTopologyWithCavityRemeshing(m);
-    for(GFace *gf : m->getFaces()) {
-      if(gf->meshStatistics.status == GFace::PENDING) {
-        gf->meshStatistics.status = GFace::DONE;
-      }
-    }
-  }
-  else if(how == "QuadQuasiStructured") {
-    deleteVolumeMeshBefore(m, "optimizing the quad topology");
-    // The following methods only act on faces whose status is PENDING
-    for(GFace *gf : m->getFaces()) {
-      if(gf->meshStatistics.status == GFace::DONE) {
-        gf->meshStatistics.status = GFace::PENDING;
-      }
-    }
-    transferSeamGEdgesVerticesToGFace(m);
-    quadMeshingOfSimpleFacesWithPatterns(m);
-    //    optimizeTopologyWithDiskQuadrangulationRemeshing(m);
-    optimizeTopologyWithCavityRemeshing(m);
-    for(GFace *gf : m->getFaces()) {
-      if(gf->meshStatistics.status == GFace::PENDING) {
-        gf->meshStatistics.status = GFace::DONE;
-      }
     }
   }
   else if(how == "UntangleMeshGeometry") {
@@ -1948,9 +1872,7 @@ bool GenerateMesh(GModel *m, int ask, bool nested)
 
   // Some meshing algorithms require a global background mesh
   // and a guiding field (e.g. cross field + size map)
-  std::unique_ptr<QuadqsContextUpdater> qqs;
-  if(CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS ||
-     CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
+  if(CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS) {
     int old = m->getMeshStatus(false);
     bool doIt = (ask >= 1 && ask <= 3);
     bool exists = backgroundMeshAndGuidingFieldExists(m);
@@ -1987,29 +1909,6 @@ bool GenerateMesh(GModel *m, int ask, bool nested)
         return false;
       }
       addRemainingStageTime("guiding field", first, w, c);
-    }
-
-    if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT && old == 2 &&
-       exists && (ask == 1 || ask == 2)) {
-      // transferSeamGEdgesVerticesToGFace() called by quadqs remove the 1D
-      // meshes of the seam GEdge, so 2D initial meshing does not work without
-      // first remeshing the seam GEdge. We delete the whole mesh by security
-      m->deleteMesh();
-    }
-
-    if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
-      // note: the creation of QuadqsContextUpdater modifies many meshing
-      // parameters; current parameter values are saved and will be restored at
-      // the destruction of qqs
-      qqs.reset(new QuadqsContextUpdater());
-    }
-
-    if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
-      std::set<GFace *> faces;
-      for(GFace *gf : m->getFaces())
-        if(gf->edges().size() == 4) { faces.insert(gf); }
-      double maxDiffRel = 0.34; // do not deviate more than 34% from size map
-      MeshSetTransfiniteFacesAutomatic(faces, 2.35, true, maxDiffRel);
     }
   }
 
@@ -2115,8 +2014,6 @@ bool GenerateMesh(GModel *m, int ask, bool nested)
              CTX::instance()->mesh.avgQuality);
 
   Msg::PrintErrorCounter("Mesh generation error summary");
-
-  qqs.reset();
 
   // FIXME TEST
   if(backgroundMeshAndGuidingFieldExists(m)) {

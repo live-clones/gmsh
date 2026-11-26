@@ -5245,9 +5245,18 @@ double opt_mesh_nb_smoothing(OPT_ARGS_NUM)
 double opt_mesh_algo2d(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
-    if(!(action & GMSH_SET_DEFAULT) && (int)val != CTX::instance()->mesh.algo2d)
+    int algo = (int)val;
+    if(algo == ALGO_2D_QUAD_QUASI_STRUCT) {
+      // the quasi-structured quad mesher is gone: it started from a packing
+      // of parallelograms, which is what is used instead
+      Msg::Warning("Mesh.Algorithm = %d (Quasi-structured Quad) is not "
+                   "available anymore: using %d (Packing of Parallelograms)",
+                   ALGO_2D_QUAD_QUASI_STRUCT, ALGO_2D_PACK_PRLGRMS);
+      algo = ALGO_2D_PACK_PRLGRMS;
+    }
+    if(!(action & GMSH_SET_DEFAULT) && algo != CTX::instance()->mesh.algo2d)
       Msg::SetOnelabChanged(2);
-    CTX::instance()->mesh.algo2d = (int)val;
+    CTX::instance()->mesh.algo2d = algo;
   }
   return CTX::instance()->mesh.algo2d;
 }
@@ -6060,6 +6069,25 @@ double opt_mesh_quadqs_sizemap_method(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.quadqsSizemapMethod = (int)val;
   return CTX::instance()->mesh.quadqsSizemapMethod;
+}
+
+double opt_mesh_pack_cleanup_method(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.packCleanupMethod = (int)val;
+  return CTX::instance()->mesh.packCleanupMethod;
+}
+
+double opt_mesh_pack_intrinsic_edge_length_factor(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.packIntrinsicEdgeLengthFactor = val;
+  return CTX::instance()->mesh.packIntrinsicEdgeLengthFactor;
+}
+
+double opt_mesh_pack_patterns(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.packPatterns = (int)val;
+  return CTX::instance()->mesh.packPatterns;
 }
 
 double opt_mesh_quadqs_remeshing_boldness(OPT_ARGS_NUM)

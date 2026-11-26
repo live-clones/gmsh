@@ -653,6 +653,15 @@ static void recombineSurfaceMesh(GFace *gf)
       int topo = CTX::instance()->mesh.recombineOptimizeTopology;
       int repos = CTX::instance()->mesh.recombineNodeRepositioning;
       double minqual = CTX::instance()->mesh.recombineMinimumQuality;
+#if defined(HAVE_QUADOPTIMIZER)
+      // PACK performs its Winslow/cavity cleanup after all faces have been
+      // recombined. Keep every quad until that optimization has had a chance
+      // to repair it. Match the finalization path in Generator.cpp; other
+      // pipelines must retain the recombination quality threshold.
+      if(CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS &&
+         CTX::instance()->mesh.algo3d != ALGO_3D_RTREE)
+        minqual = std::min(0., minqual);
+#endif
       recombineIntoQuads(gf, blossom, topo, repos, minqual);
     }
   }
@@ -695,7 +704,7 @@ setupBackgroundMesh(GFace *gf, bool allowBuild,
   else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS ||
           gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR) {
     infty = true;
-    /* New version of PACK / QUADQS use a different background mesh */
+    /* PACK uses a different background mesh */
   }
   return infty;
 }
@@ -2582,26 +2591,6 @@ static bool isMeshValid(GFace *gf)
   return false;
 }
 
-namespace {
-  // Restore a global meshing option when leaving the scope. meshGFace has to
-  // change Mesh.Algorithm while it meshes a face; doing it by hand leaks the
-  // changed value if the mesher throws, and the 2D meshing loop in
-  // Generator.cpp does catch exceptions and carry on, so the leak is
-  // reachable.
-  struct RestoreOptionAtEndOfScope {
-    int *_option, _initial;
-    RestoreOptionAtEndOfScope(int *option) : _option(option), _initial(*option)
-    {
-    }
-    // write only when changed: faces meshed in parallel run this destructor
-    // concurrently, and an unconditional write races with their reads
-    ~RestoreOptionAtEndOfScope()
-    {
-      if(*_option != _initial) *_option = _initial;
-    }
-  };
-} // namespace
-
 void meshGFace::operator()(GFace *gf, bool print)
 {
   gf->model()->setCurrentMeshEntity(gf);
@@ -2637,21 +2626,6 @@ void meshGFace::operator()(GFace *gf, bool print)
       Msg::Warning("Unknown mesh master surface %d",
                    gf->getMeshMaster()->tag());
   }
-
-  // ALGO_2D_QUAD_QUASI_STRUCT generates its initial quad-dominant mesh with
-  // ALGO_2D_PACK_PRLGRMS, and says so by changing the global option for the
-  // duration of the call: both generators and a good deal of the code they
-  // call read Mesh.Algorithm directly rather than the algorithm of the face.
-  //
-  // This never fires when meshing through GenerateMesh(): Mesh2D() in
-  // Generator.cpp switches the option once before meshing the faces in
-  // parallel, as a switch here in each face races between the threads. Kept
-  // for the paths that reach a face some other way, with the restore tied to
-  // the scope: doing it by hand at the end of the function leaked the changed
-  // value whenever the mesher threw.
-  RestoreOptionAtEndOfScope restoreAlgo2d(&CTX::instance()->mesh.algo2d);
-  if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT)
-    CTX::instance()->mesh.algo2d = ALGO_2D_PACK_PRLGRMS;
 
   const char *algo = "Unknown";
 

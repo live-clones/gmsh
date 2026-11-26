@@ -2102,14 +2102,13 @@ tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for
 direct high-order mesh optimizer, "HighOrderElastic" for high-order elastic
 smoother, "HighOrderFastCurving" for fast curving algorithm, "Laplace2D" for
 Laplace smoothing, "Relocate2D" and "Relocate3D" for node relocation,
-"QuadQuasiStructured" for quad mesh optimization, "UntangleMeshGeometry" for
-untangling, "HXT" for tetrahedral optimisation). The methods other than the
-high-order ones optimize the first order mesh: the high-order elements are then
-recreated, and optimized according to the `Mesh.HighOrderOptimize` option. If
-`force` is set apply the optimization also to discrete entities. If `dimTags`
-(given as a vector of (dim, tag) pairs) is given, only apply the optimizer to
-the given entities. For HXT optimizer, the `quality` argument should be
-specified
+"UntangleMeshGeometry" for untangling, "HXT" for tetrahedral optimisation). The
+methods other than the high-order ones optimize the first order mesh: the high-
+order elements are then recreated, and optimized according to the
+`Mesh.HighOrderOptimize` option. If `force` is set apply the optimization also
+to discrete entities. If `dimTags` (given as a vector of (dim, tag) pairs) is
+given, only apply the optimizer to the given entities. For HXT optimizer, the
+`quality` argument should be specified
 
 Types:
  - `method`: string

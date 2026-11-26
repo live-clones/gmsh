@@ -117,7 +117,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-save_topology", "Save model topology (Mesh.SaveTopology)"));
   s.push_back(mp("-save_views", "Save all views with the mesh (Mesh.SaveViews)"));
   s.push_back(mp("-algo string", "Select mesh algorithm: auto, meshadapt, del2d, "
-                 "front2d, delquad, quadqs, initial2d, del3d, pdel3d, front3d, "
+                 "front2d, delquad, initial2d, del3d, pdel3d, front3d, "
                  "mmg3d, hxt, initial3d (Mesh.Algorithm and Mesh.Algorithm3D)"));
   s.push_back(mp("-smooth int", "Set number of mesh smoothing steps "
                  "(Mesh.Smoothing)"));

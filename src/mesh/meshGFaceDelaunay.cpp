@@ -27,6 +27,9 @@
 #include "intersectCurveSurface.h"
 #include "HilbertCurve.h"
 #include "fullMatrix.h"
+#if defined(HAVE_QUADOPTIMIZER)
+#include "intrinsicTriangulation.h"
+#endif
 
 #if defined(HAVE_DOMHEX)
 #include "surfaceFiller.h"
@@ -1746,7 +1749,8 @@ void bowyerWatsonParallelograms(
            !std::isfinite(metric[2]) || !std::isfinite(determinant) ||
            !(metric[0] > 0.) || !(determinant > 0.)) {
           // This metric selects a UV Delaunay cavity; it does not place or
-          // space the points. PACK has already done that in XYZ. A singular
+          // space the points. PACK has already done that in XYZ, and the
+          // following intrinsic pass uses physical edge lengths. A singular
           // inverse chart must not replace the known finite XYZ candidate.
           metric[0] = metric[2] = 1.;
           metric[1] = 0.;
@@ -1796,6 +1800,16 @@ void bowyerWatsonParallelograms(
   }
 
   transferDataStructure(gf, AllTris, DATA);
+
+  // The intrinsic metric belongs to the progressive/MVC chart of a discrete
+  // face. Native CAD faces already have their own valid parametrization: a
+  // UV midpoint there is generally not the geometric midpoint of an edge and
+  // repeatedly splitting it can refine away from the intended location.
+#if defined(HAVE_QUADOPTIMIZER)
+  if(gf->geomType() == GEntity::DiscreteSurface)
+    QuadOpt::intrinsicDelaunayizePackedSurface(
+      gf, DATA, CTX::instance()->mesh.packIntrinsicEdgeLengthFactor);
+#endif
 
   backgroundMesh::unset();
 

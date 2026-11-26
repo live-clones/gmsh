@@ -606,11 +606,6 @@ static actionItem meshModule()
     //            computeCrossField(m, tags);
     //          });
     //        }),
-    action("Optimize quad topology", "mesh_optimize_quads", "",
-           [](int, drawContext *) {
-             meshOperation(
-               [](GModel *m) { m->optimizeMesh("QuadQuasiStructured"); });
-           }),
   };
   std::vector<actionItem> partitioning = {
     guiAction("Partition", "mesh_partition"),
