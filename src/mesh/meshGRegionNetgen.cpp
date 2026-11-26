@@ -355,6 +355,14 @@ void optimizeMeshGRegionNetgen::operator()(GRegion *gr, bool always)
     return;
   }
 
+  // the nodes and triangles of embedded entities are not given to Netgen
+  if(gr->embeddedFaces().size() || gr->embeddedEdges().size() ||
+     gr->embeddedVertices().size()) {
+    Msg::Info("Skipping Netgen optimizer for volume %d with embedded entities",
+              gr->tag());
+    return;
+  }
+
 #if !defined(HAVE_NETGEN)
   Msg::Error("Netgen optimizer is not compiled in this version of Gmsh");
 #else
