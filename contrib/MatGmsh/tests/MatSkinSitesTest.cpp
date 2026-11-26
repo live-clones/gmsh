@@ -319,6 +319,67 @@ void ribStopsAtItsEnds()
     work = extension.result;
   }
 }
+// A rib against a wall, both on a plate. Once the plate is replaced by its
+// plane, the sheet of the wall ends in the plane of the rib about where the
+// plane of the plate is, not exactly on it: the foot of the rib, inside the
+// plate, must stop on the mid-surface of the wall all the same, and not go
+// around the end of its sheet to the far face of the wall.
+void ribStopsOnTheWall()
+{
+  gmsh::clear();
+  gmsh::model::add("rib and wall");
+  const int plate = gmsh::model::occ::addBox(0, 0, 0, 20, 12, 1);
+  const int wall = gmsh::model::occ::addBox(9.5, 0, 1, 1, 12, 5);
+  const int rib = gmsh::model::occ::addBox(10.5, 5.5, 1, 3, 1, 4);
+  gmsh::vectorpair fused;
+  std::vector<gmsh::vectorpair> map;
+  gmsh::model::occ::fuse({{3, plate}}, {{3, wall}, {3, rib}}, fused, map);
+  gmsh::model::occ::synchronize();
+  gmsh::option::setNumber("Mesh.MeshSizeMin", 0.2);
+  gmsh::option::setNumber("Mesh.MeshSizeMax", 0.2);
+  gmsh::model::mesh::generate(2);
+  Options options;
+  options.thickness = 1.;
+  options.wingBranches = true;
+  options.collapseThreshold = 0.;
+  Result result;
+  std::string error;
+  check(computeCurrent(options, result, error), "pipeline failed: " + error);
+  Mesh work = result.filtered;
+  // the plate (its largest part), then the rib: the wall is left as it is
+  for(int pass = 0; pass < 2; ++pass) {
+    const BranchPlane *found = nullptr;
+    const std::vector<BranchPlane> planes = branchPlanes(work);
+    for(const BranchPlane &candidate : planes) {
+      if(candidate.deviation > .1) continue;
+      const double length = std::sqrt(candidate.normal[0] * candidate.normal[0] +
+                                      candidate.normal[1] * candidate.normal[1] +
+                                      candidate.normal[2] * candidate.normal[2]);
+      if(std::abs(candidate.normal[pass == 0 ? 2 : 1]) > .99 * length && (!found || candidate.area > found->area))
+        found = &candidate;
+    }
+    check(found != nullptr, pass == 0 ? "the plate must be a flat branch" : "the rib must be a flat branch");
+    PlaneExtension extension;
+    check(extendBranchInPlane(work, result.skin, *found, .1, .25, 2., extension, error),
+          "extension in the plane failed: " + error);
+    check(!extension.reachesFrame, "the skin must close the fragment");
+    work = extension.result;
+    if(pass == 0) continue;
+    // from the sheet of the wall to the end of the rib, and from the
+    // mid-surface of the plate to the top of the rib: 15.75 if the sheet of
+    // the wall were its mid-plane x = 10 (next to the rib the medial axis of
+    // a T is an eighth of the thickness nearer); 16 with the foot going on to
+    // the far face of the wall
+    check(extension.closures >= 1, "the sheet of the wall must be prolonged to the plane of the plate");
+    check(extension.addedArea > 15. && extension.addedArea < 15.8,
+          "the rib must stop on the wall: area " + std::to_string(extension.addedArea));
+    double least = 1.e300;
+    for(std::size_t t = 0; t < work.triangles.size() / 3; ++t)
+      if(work.branch[t] == found->branch)
+        for(int k = 0; k < 3; ++k) least = std::min(least, work.xyz[3 * std::size_t(work.triangles[3 * t + k])]);
+    check(least > 9.9, "the rib must not go through the wall: it starts at x = " + std::to_string(least));
+  }
+}
 } // namespace
 
 int main()
@@ -334,8 +395,9 @@ int main()
     sessionRunsTheStagesOneAtATime();
     plateIsExtendedToItsEdges();
     ribStopsAtItsEnds();
+    ribStopsOnTheWall();
     gmsh::finalize();
-    std::cout << "MatSkinSites: 7 tests passed\n";
+    std::cout << "MatSkinSites: 8 tests passed\n";
     return 0;
   }
   catch(const std::exception &e) {

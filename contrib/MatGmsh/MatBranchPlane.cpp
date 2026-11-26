@@ -423,20 +423,37 @@ private:
 // Of the two faces of a corner, the one that bounds the branch is prolonged,
 // not the one the branch stands on: a fence is made only if it meets the
 // sheet of another branch within the reach (the mid-surface of the wall, one
-// of the segments of crossings, in the plane), and if less than a tenth of it
-// until there runs on a sheet of the MAT lying in the plane (onSheet). It is
+// of the lines below, in the plane), and if less than a tenth of it until
+// there runs on a sheet of the MAT lying in the plane (onSheet). It is
 // not made either if the sheet of another branch runs along it within half
 // the reach, on the side of the other face of the corner: the branch ends on
 // a wall there, and has to reach its mid-surface. It stops a little after the
 // sheet it meets. Returns the number of fences.
+//
+// The sheets of the other branches are given by where they cross the plane:
+// points (traceNode) joined by segments (traceSegment). Where such a line
+// ends just short of another one or of the skin (the branch it ended on was
+// replaced by its plane, which is not exactly where its sheet was), the
+// fragment of the branch would go around its end, across that surface. The
+// line is prolonged straight to the first sheet or face of the skin it meets
+// within twice the tolerance, in the material and with less than a tenth of
+// the way on a sheet lying in the plane: closures counts these. (Prolonged
+// further, to anything within the reach, the lines of the sheets of a
+// junction with fillets cut the plane under the junction from the branch.)
 std::size_t reentrantFences(const Mesh &skin, const Frame &frame, double reach, double tolerance,
                             const std::function<bool(const std::array<double, 2> &)> &onSheet,
-                            const std::vector<std::array<double, 4> > &crossings,
-                            std::size_t &corners, std::vector<double> &xyz,
-                            std::vector<int> &triangles)
+                            const std::vector<std::array<double, 2> > &traceNode,
+                            const std::vector<std::array<int, 2> > &traceSegment,
+                            std::size_t &corners, std::size_t &closures,
+                            std::vector<double> &xyz, std::vector<int> &triangles)
 {
-  corners = 0;
-  if(!(reach > 0.) || crossings.empty()) return 0;
+  corners = closures = 0;
+  if(!(reach > 0.) || traceSegment.empty()) return 0;
+  std::vector<std::array<double, 4> > crossings(traceSegment.size());
+  for(std::size_t i = 0; i < traceSegment.size(); ++i) {
+    const std::array<double, 2> &a = traceNode[traceSegment[i][0]], &b = traceNode[traceSegment[i][1]];
+    crossings[i] = {a[0], a[1], b[0], b[1]};
+  }
   const std::size_t count = skin.triangles.size() / 3;
   // nodes: the edges of the skin that cross the plane; each triangle that
   // crosses it joins two of them
@@ -497,8 +514,7 @@ std::size_t reentrantFences(const Mesh &skin, const Frame &frame, double reach, 
   std::vector<std::vector<std::array<double, 2> > > outline(lines.size());
   for(std::size_t l = 0; l < lines.size(); ++l)
     for(const Vec &q : lines[l]) outline[l].push_back(frame.uv(q));
-  const auto inMaterial = [&](const Vec &point3) {
-    const std::array<double, 2> q = frame.uv(point3);
+  const auto inMaterialAt = [&](const std::array<double, 2> &q) {
     bool in = false;
     for(const auto &loop : outline)
       for(std::size_t i = 0, j = loop.size() - 1; i < loop.size(); j = i++)
@@ -508,6 +524,7 @@ std::size_t reentrantFences(const Mesh &skin, const Frame &frame, double reach, 
           in = !in;
     return in;
   };
+  const auto inMaterial = [&](const Vec &point3) { return inMaterialAt(frame.uv(point3)); };
   const auto strip = [&](const Vec &a, const Vec &b) {
     const int first = int(xyz.size() / 3);
     for(const Vec *end : {&a, &b})
@@ -520,17 +537,48 @@ std::size_t reentrantFences(const Mesh &skin, const Frame &frame, double reach, 
   std::vector<std::array<double, 4> > made;
   // where the half-line from o along d first meets the sheet of another
   // branch
-  const auto meeting = [&](const std::array<double, 2> &o, const std::array<double, 2> &d) {
+  const auto meetingSegment = [](const std::array<double, 2> &o, const std::array<double, 2> &d,
+                                 const std::array<double, 2> &a, const std::array<double, 2> &b,
+                                 double after, double &meets) {
+    const double ex = b[0] - a[0], ey = b[1] - a[1];
+    const double det = d[0] * ey - d[1] * ex;
+    if(det == 0.) return;
+    const double ax = a[0] - o[0], ay = a[1] - o[1];
+    const double s = (ax * ey - ay * ex) / det, r = (ax * d[1] - ay * d[0]) / det;
+    if(r >= 0. && r <= 1. && s > after && s < meets) meets = s;
+  };
+  const auto meeting = [&](const std::array<double, 2> &o, const std::array<double, 2> &d,
+                           double after = 0.) {
     double meets = std::numeric_limits<double>::infinity();
-    for(const std::array<double, 4> &c : crossings) {
-      const double ex = c[2] - c[0], ey = c[3] - c[1];
-      const double det = d[0] * ey - d[1] * ex;
-      if(det == 0.) continue;
-      const double ax = c[0] - o[0], ay = c[1] - o[1];
-      const double s = (ax * ey - ay * ex) / det, r = (ax * d[1] - ay * d[0]) / det;
-      if(r >= 0. && r <= 1. && s > 0. && s < meets) meets = s;
-    }
+    for(const std::array<double, 4> &c : crossings)
+      meetingSegment(o, d, {c[0], c[1]}, {c[2], c[3]}, after, meets);
     return meets;
+  };
+  // (the same with the skin)
+  const auto meetingSkin = [&](const std::array<double, 2> &o, const std::array<double, 2> &d,
+                               double after) {
+    double meets = std::numeric_limits<double>::infinity();
+    for(const auto &loop : outline)
+      for(std::size_t i = 0, j = loop.size() - 1; i < loop.size(); j = i++)
+        meetingSegment(o, d, loop[j], loop[i], after, meets);
+    return meets;
+  };
+  // whether more than a tenth of the way from o along d, over the length
+  // given, runs on a sheet lying in the plane: with the sheet on its two
+  // sides, the border of a sheet does not count
+  const auto runsOnSheet = [&](const std::array<double, 2> &o, const std::array<double, 2> &d,
+                               double length) {
+    const int samples = 16;
+    const double aside = .25 * tolerance;
+    int count = 0;
+    for(int i = 0; i < samples; ++i) {
+      const double s = (i + .5) * length / samples;
+      const std::array<double, 2> q = {o[0] + s * d[0], o[1] + s * d[1]};
+      if(onSheet({q[0] - aside * d[1], q[1] + aside * d[0]}) &&
+         onSheet({q[0] + aside * d[1], q[1] - aside * d[0]}))
+        ++count;
+    }
+    return 10 * count > samples;
   };
   const auto fence = [&](const Vec &inVoid, const Vec &from, const Vec &direction,
                          const Vec &otherFace) {
@@ -538,13 +586,7 @@ std::size_t reentrantFences(const Mesh &skin, const Frame &frame, double reach, 
     const std::array<double, 2> d = {dot(direction, frame.u), dot(direction, frame.v)};
     const double meets = meeting(o, d);
     if(!(meets <= reach)) return;
-    const int samples = 16;
-    int count = 0;
-    for(int i = 0; i < samples; ++i) {
-      const double s = (i + .5) * meets / samples;
-      if(onSheet({o[0] + s * d[0], o[1] + s * d[1]})) ++count;
-    }
-    if(10 * count > samples) return;
+    if(runsOnSheet(o, d, meets)) return;
     // a sheet along it, on the side of the other face
     std::array<double, 2> side = {dot(otherFace, frame.u), dot(otherFace, frame.v)};
     const double along = side[0] * d[0] + side[1] * d[1];
@@ -669,6 +711,53 @@ std::size_t reentrantFences(const Mesh &skin, const Frame &frame, double reach, 
     };
     cornersBetween(tolerance, -1., tolerance);
     cornersBetween(.5 * reach, tolerance, 2. * reach);
+  }
+
+  // The ends of the lines of the other sheets.
+  {
+    std::vector<std::vector<int> > beside(traceNode.size());
+    for(const std::array<int, 2> &segment : traceSegment) {
+      beside[segment[0]].push_back(segment[1]);
+      beside[segment[1]].push_back(segment[0]);
+    }
+    const auto between = [&](int a, int b) {
+      return std::hypot(traceNode[a][0] - traceNode[b][0], traceNode[a][1] - traceNode[b][1]);
+    };
+    for(std::size_t end = 0; end < traceNode.size(); ++end) {
+      if(beside[end].size() != 1) continue;
+      // its direction, over twice the tolerance of the line at least
+      int previous = int(end), current = beside[end][0];
+      double length = between(previous, current);
+      while(length < 2. * tolerance && beside[current].size() == 2) {
+        const int following = beside[current][0] != previous ? beside[current][0] : beside[current][1];
+        length += between(current, following);
+        previous = current;
+        current = following;
+      }
+      if(length < 2. * tolerance) continue;
+      const std::array<double, 2> o = traceNode[end];
+      std::array<double, 2> d = {o[0] - traceNode[current][0], o[1] - traceNode[current][1]};
+      const double dLength = std::hypot(d[0], d[1]);
+      if(!(dLength > 0.)) continue;
+      for(double &c : d) c /= dLength;
+      const double after = 1.e-9 * reach;
+      const double meets = std::min(meeting(o, d, after), meetingSkin(o, d, after));
+      if(!(meets <= 2. * tolerance)) continue;
+      if(!inMaterialAt({o[0] + .5 * meets * d[0], o[1] + .5 * meets * d[1]})) continue;
+      if(runsOnSheet(o, d, meets)) continue;
+      // a bar across the line a little before its end, and a stem across the
+      // bar to a little after what is met: the line and the stem both cross
+      // the bar (a stem that started on the bar could stop just short of it,
+      // and leave a way around the end of the line)
+      const double back = std::min(.5 * tolerance, .25 * length);
+      const std::array<double, 2> middle = {o[0] - back * d[0], o[1] - back * d[1]};
+      strip(frame.at(middle[0] + back * d[1], middle[1] - back * d[0]),
+            frame.at(middle[0] - back * d[1], middle[1] + back * d[0]));
+      const double to = meets + tolerance;
+      strip(frame.at(middle[0] - .5 * back * d[0], middle[1] - .5 * back * d[1]),
+            frame.at(o[0] + to * d[0], o[1] + to * d[1]));
+      ++closures;
+    }
   }
   return made.size();
 }
@@ -851,40 +940,49 @@ bool extendBranchInPlane(const Mesh &mesh, const Mesh &skin, const BranchPlane &
       }
       return sheets.holds(q);
     };
-    // where the sheets of the other branches cross the plane
-    std::vector<std::array<double, 4> > crossings;
-    for(std::size_t t = 0; t < count; ++t) {
-      const int b = t < mesh.branch.size() ? mesh.branch[t] : 0;
-      if(b == plane.branch || together.count(b)) continue;
-      Vec corner[3];
-      double d[3];
-      for(int k = 0; k < 3; ++k) {
-        corner[k] = point(mesh, mesh.triangles[3 * t + k]);
-        d[k] = frame.distance(corner[k]);
+    // where the sheets of the other branches cross the plane: the points
+    // where their edges cross it, joined across their triangles
+    std::vector<std::array<double, 2> > traceNode;
+    std::vector<std::array<int, 2> > traceSegment;
+    {
+      std::unordered_map<std::uint64_t, int> nodeOf;
+      for(std::size_t t = 0; t < count; ++t) {
+        const int b = t < mesh.branch.size() ? mesh.branch[t] : 0;
+        if(b == plane.branch || together.count(b)) continue;
+        Vec corner[3];
+        double d[3];
+        for(int k = 0; k < 3; ++k) {
+          corner[k] = point(mesh, mesh.triangles[3 * t + k]);
+          d[k] = frame.distance(corner[k]);
+        }
+        int ends[2], found = 0;
+        for(int k = 0; k < 3 && found < 2; ++k) {
+          const int l = (k + 1) % 3;
+          if((d[k] >= 0.) == (d[l] >= 0.)) continue;
+          const auto inserted = nodeOf.emplace(
+            edgeKey(mesh.triangles[3 * t + k], mesh.triangles[3 * t + l]), int(traceNode.size()));
+          if(inserted.second) {
+            const double w = d[k] / (d[k] - d[l]);
+            traceNode.push_back(frame.uv({corner[k][0] + w * (corner[l][0] - corner[k][0]),
+                                          corner[k][1] + w * (corner[l][1] - corner[k][1]),
+                                          corner[k][2] + w * (corner[l][2] - corner[k][2])}));
+          }
+          ends[found++] = inserted.first->second;
+        }
+        if(found == 2 && ends[0] != ends[1]) traceSegment.push_back({ends[0], ends[1]});
       }
-      std::array<double, 2> ends[2];
-      int found = 0;
-      for(int k = 0; k < 3 && found < 2; ++k) {
-        const int l = (k + 1) % 3;
-        if((d[k] >= 0.) == (d[l] >= 0.)) continue;
-        const double w = d[k] / (d[k] - d[l]);
-        ends[found++] = frame.uv({corner[k][0] + w * (corner[l][0] - corner[k][0]),
-                                  corner[k][1] + w * (corner[l][1] - corner[k][1]),
-                                  corner[k][2] + w * (corner[l][2] - corner[k][2])});
-      }
-      if(found == 2) crossings.push_back({ends[0][0], ends[0][1], ends[1][0], ends[1][1]});
     }
     const std::size_t before = cutterTriangles.size();
-    out.fences = reentrantFences(skin, frame, reach, tolerance, onSheet, crossings, out.corners,
-                                 cutterXyz, cutterTriangles);
-    if(out.fences) {
+    out.fences = reentrantFences(skin, frame, reach, tolerance, onSheet, traceNode, traceSegment,
+                                 out.corners, out.closures, cutterXyz, cutterTriangles);
+    if(out.fences + out.closures) {
       const PlaneCut without = cut;
       const std::map<int, std::size_t> keptWithout = kept;
       const std::vector<int> mergedWithout = out.merged;
       if(!firstPass()) {
         // (the fences are given up rather than the extension)
         cutterTriangles.resize(before);
-        out.fences = 0;
+        out.fences = out.closures = 0;
         cut = without;
         kept = keptWithout;
         out.merged = mergedWithout;

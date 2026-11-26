@@ -316,9 +316,24 @@ like the skin does, when the three conditions hold:
     of the other face: there the branch ends on a wall and has to reach its
     mid-surface.
 
+Nothing is kept across another surface. The sheets of the other branches cut
+the rectangle along the lines where they cross the plane; such a line can end
+just short of the line or of the face of the skin it should end on, when the
+branch it ended on has been replaced by its plane, which is not exactly where
+its sheet was (the sheet of a wall, 0.07 short of the plane of the base in
+Doghouse.stp). The fragment would then go around the end of the line: the foot
+of a rib, inside the base, went on through the mid-surface of the wall to its
+far face. The end of such a line is prolonged straight to the first line or
+face of the skin within twice the tolerance, under the same condition on the
+sheets of the branch (running along the border of a sheet does not count as
+running on it). Prolonging these lines further, to anything within the reach,
+was tried and is not done: next to a junction with fillets it cuts the plane
+under the junction from the branch (see VALIDATION.txt).
+
 What is still kept beyond is limited to what is within the reach of the
-branch, as before. The message of the extension gives the number of corners
-and of fences. Limits: a step of the edge of the branch lower than half its
+branch, as before. The message of the extension gives the number of corners,
+of fences and of lines prolonged. tools/topology/branches_through.py reads the
+file written by Save... and lists where a branch goes through another one. Limits: a step of the edge of the branch lower than half its
 thickness, next to another wall, can lose a strip of that height; where the
 sheet of the wall under the branch is not flat (junction with fillets, not
 yet replaced by its plane), the branch stops on it and not on the mid-plane.

@@ -191,6 +191,10 @@ struct PlaneExtension {
   // the reentrant corners of the section of the skin by the plane, and the
   // faces prolonged there into the material to bound the fragments
   std::size_t corners = 0, fences = 0;
+  // the sheets of other branches that ended in the plane just short of a
+  // sheet or of the skin, prolonged to it: the fragments do not go around
+  // their end
+  std::size_t closures = 0;
   // by a ribbon: the rows that did not end on the skin and were stopped by
   // the face of the skin that stops their neighbours, prolonged
   std::size_t stoppedRows = 0;
@@ -218,6 +222,9 @@ struct PlaneExtension {
 // itself or along a sheet that faces them, so that a fragment stops where the
 // faces of the branch stop; and only the part of the kept fragments about
 // that close to the branch (and to the branches merged with it) replaces it.
+// The sheet of another branch that ends in the plane just short of another
+// sheet or of the skin (within twice the tolerance) is prolonged to it as
+// well: what is across another surface is not kept.
 GMSH_API bool extendBranchInPlane(const Mesh &mesh, const Mesh &skin, const BranchPlane &plane,
                                   double tolerance, double size, double reach,
                                   PlaneExtension &out, std::string &error);

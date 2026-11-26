@@ -582,9 +582,11 @@ bool midsurfacerWindow::_extend(int branch, bool planar, bool apply,
     what = text("%zu fragments of the plane, %zu kept; area %.6g for %.6g "
                 "(%.6g before the reach), %zu triangles, %zu other branches "
                 "in the same plane, %zu faces prolonged at the %zu reentrant "
-                "corners of the section (%.2g s)",
+                "corners of the section, %zu sheets of other branches "
+                "prolonged to what they stop short of (%.2g s)",
                 e.fragments, e.keptFragments, e.addedArea, p->area, e.keptArea,
-                e.addedTriangles, e.merged.size(), e.fences, e.corners, e.seconds);
+                e.addedTriangles, e.merged.size(), e.fences, e.corners,
+                e.closures, e.seconds);
     if(e.reachesFrame) {
       what = "the skin does not close the fragment of the plane around "
              "this branch: " + what;

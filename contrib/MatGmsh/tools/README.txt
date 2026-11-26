@@ -69,3 +69,9 @@ contrib/MatGmsh/tools/topology/ (written for this tree, 26 November 2026)
                        MAT (an MSH file of gmshMat) and of the truth
                        mid-surface meshed by Gmsh, by the same code. Used for
                        the topology tables of VALIDATION.txt.
+  branches_through.py  Where a branch of the mid-surface saved by the
+                       Midsurfacer window (Save..., one surface per branch)
+                       goes through another one: edges of two triangles of a
+                       branch lying on a triangle of another branch, with the
+                       two triangles on its two sides. An extended branch
+                       must stop on the sheets it meets.

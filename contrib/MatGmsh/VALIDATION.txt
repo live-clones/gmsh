@@ -789,3 +789,55 @@ Not checked: the corpus beyond these twelve cases; parts where a tall wall
 ends on a lower one with their faces flush (the third condition of the fences
 and the last one of the rows are there for that case, no test case has it);
 the graphical interface with a mouse.
+
+Nothing kept across another surface, 26 November 2026
+-----------------------------------------------------
+
+Seen in the tool window on Doghouse.stp after the change above: at the foot of
+a rib, inside the base, a piece of the rib on the far side of the wall it
+stands against. Cause: the base is extended first and replaced by its plane;
+the sheet of the wall then ends, in the plane of the rib, 0.066 short of the
+plane of the base (it ended on the sheet of the base, which is not exactly its
+plane), and the fragment of the rib went around that end, up to the far face
+of the wall prolonged. The lines where the other sheets cross the plane are
+now prolonged at their ends to what they stop just short of (twice the
+tolerance at most, see README.txt).
+
+Doghouse.stp, thickness 4, skin 0.4, defaults of the window, Extend all, the
+file of Save... read by tools/topology/branches_through.py (1e-6, 0.02):
+
+                           Before                              After
+  ribs, mm^2               102.5 102.5 96.7 96.7 94.7 94.7     101.1 101.1 95.1 95.1 93.3 93.3
+  branches through one     4 ribs through the walls, along     none
+  another                  1.47 to 1.61 mm each
+
+Every rib loses 1.4 to 1.6 mm^2: the piece of 0.8 by 1.7 beyond the wall (the
+check sees it for four of the six ribs; next to the two others the wall has
+no triangle there). Each rib plane has 1 or 2 lines prolonged. Extend all:
+3.7 s for 3.6 s.
+
+The first version of the stem that closes a gap started on the bar that
+crosses the line: computed apart, it could stop 1e-16 short of the bar and
+leave the way around open (one rib of the six kept its piece). The stem now
+crosses the bar.
+
+The twelve cases of the section above, same protocol: the seven perfect cases
+stay perfect; ribbed_plate_2_r2 (0.00 / 14.33), bracket (12.58 / 8.49),
+channel_gusset_r2 (15.25 / 26.42) and t_junction_h40_r5 (23.06 / 29.81) are
+unchanged; waffle_3_r2 has missing area 44.18 for 44.08 and area off the truth
+89.26 for 86.27 t^2 (review).
+
+Tried and not kept: prolonging the lines to anything within the reach (twice
+the thickness). The lines of the sheets of a junction with fillets then cut
+the plane of a flange under the junction, where it has no sheet of its own:
+missing area 15.25 to 26.46 t^2 in channel_gusset_r2, 23.06 to 30.61 in
+t_junction_h40_r5 and 44.08 to 125.78 in waffle_3_r2.
+
+mat_native_skin_sites has an eighth test: a rib against a wall, both on a
+plate; after the plate, the rib extended in its plane starts on the sheet of
+the wall (x > 9.9 for a wall from 9.5 to 10.5), with at least one line
+prolonged. 12 of 12 mat_native tests pass.
+
+Not checked: the corpus beyond these twelve cases; gaps larger than twice the
+tolerance (a sheet that stops further from the plane that replaced its
+neighbour is not prolonged, and the fragment can still go around its end).
