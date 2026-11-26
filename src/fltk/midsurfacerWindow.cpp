@@ -262,33 +262,35 @@ midsurfacerWindow::midsurfacerWindow(int deltaFontSize) : _state(new State)
           "removed too. The topology of the raw medial axis is kept");
   threshold->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
   threshold->callback(update_cb);
-  branches = new Fl_Check_Button(x, y, full, BH, "Remove whole wing branches");
+  branches = new Fl_Check_Button(x, y, full, BH, "Remove the wings by their angle");
   branches->tooltip(
-    "A branch of the raw medial axis (polygons connected through edges of "
-    "two polygons) that touches its free boundary and whose two contacts "
-    "with the skin are mostly seen under less than 135 degrees is a wing: "
-    "it is removed whole, whatever the threshold and the thickness. The "
-    "threshold is then set to 0, so that the mid-sheets end on the lines "
-    "where the wings were attached; a positive threshold erodes them "
-    "further and notches these lines");
+    "A polygon of the raw medial axis that sees its two contacts with the "
+    "skin under less than the angle below is a wing if it burns from the "
+    "free boundary like the bisector of a wedge does, or if it belongs to a "
+    "branch made of such polygons (nine tenths of its area) that touches "
+    "the free boundary: it is removed, whatever the threshold and the "
+    "thickness. The strip of a mid-sheet along a junction, seen under a "
+    "small angle too, stays. The threshold is then set to 0, so that the "
+    "mid-sheets end where the wings were attached; a positive threshold "
+    "erodes them further and notches these lines");
   branches->callback(branches_cb);
   // the default of the window: wings go whole, and nothing else is eroded
   branches->value(1);
   threshold->value(0.);
   y += BH;
   angle = input("Angle of a wing, at most (degrees)", 135., 1., 180., 1.,
-                "A branch that touches the free boundary is a wing if half "
-                "of its area sees its two contacts with the skin under less "
-                "than this angle: 90 degrees for the wing of a right-angled "
-                "edge, 180 between two facing walls. Once the medial axis "
-                "is filtered, a new value filters it again");
+                "The angle under which a polygon of the medial axis sees "
+                "its two contacts with the skin: 90 degrees on the wing of "
+                "a right-angled edge, 180 between two facing walls. Once "
+                "the medial axis is filtered, a new value filters it again");
   angle->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
   angle->callback(update_cb);
-  angles = new Fl_Check_Button(x, y, full, BH, "Show the angle of the branches");
+  angles = new Fl_Check_Button(x, y, full, BH, "Show the angle of the wings");
   angles->tooltip(
-    "The raw medial axis colored by the angle of its branches that touch "
-    "the free boundary (180 for the others, which are never removed): what "
-    "is below the angle above is removed. Available once filtered");
+    "The raw medial axis colored by the angle under which its polygons see "
+    "their two contacts, where they burn like a wing or belong to a wing "
+    "branch (180 for the others, which are never removed): what is below "
+    "the angle above is removed. Available once filtered");
   angles->callback(angles_cb);
   y += BH;
   action(Filter, "Filter",
@@ -790,9 +792,9 @@ void midsurfacerWindow::showAngles()
     drawContext::global()->draw();
     return;
   }
-  if(!_state->session.hasFiltered() || r.branchAngle.empty()) {
+  if(!_state->session.hasFiltered() || r.contactAngle.empty()) {
     Msg::Warning("Midsurfacer: filter the medial axis first (method "
-                 "Tetrahedra) to see the angle of its branches");
+                 "Tetrahedra) to see the angle of its wings");
     angles->value(0);
     return;
   }
@@ -806,16 +808,17 @@ void midsurfacerWindow::showAngles()
         for(int corner = 0; corner < 3; corner++)
           values->push_back(
             mesh.xyz[3 * mesh.triangles[3 * t + corner] + component]);
-      // 180 for what is never removed: no free boundary, or no area
+      // 180 for what is never removed: it does not burn like a wing, or it
+      // has no area
       double a = 180.;
       const int p = t < mesh.parent.size() ? mesh.parent[t] : -1;
-      if(p >= 0 && (std::size_t)p < r.branchAngle.size() &&
-         r.branchBoundary[p] && r.branchAngle[p] == r.branchAngle[p])
-        a = r.branchAngle[p];
+      if(p >= 0 && (std::size_t)p < r.contactAngle.size() &&
+         r.wingCandidate[p] && r.contactAngle[p] == r.contactAngle[p])
+        a = r.contactAngle[p];
       values->insert(values->end(), {a, a, a});
     }
-    data->setName("MAT branch angle");
-    data->setFileName("mat_branch_angle.pos");
+    data->setName("MAT wing angle");
+    data->setFileName("mat_wing_angle.pos");
     data->finalize();
     PView *view = new PView(data);
     PViewOptions *o = view->getOptions();

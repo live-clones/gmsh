@@ -119,20 +119,41 @@ stay; the price is that thinner walls lose a band of their own mid-surface
 along their free edges (see VALIDATION.txt for the Doghouse). gmshMat, the
 plugin and the tool window have no default thickness.
 
-Whole wing branches (--wing-branches, the box "Remove whole wing branches" of
-the tool window; off by default, not yet run on the corpus). A branch of the
-raw MAT is a set of polygons connected through edges of exactly two polygons.
-A branch that touches the free boundary of the raw MAT, and at least half of
-whose area is made of polygons whose two sites are seen from the centroid
-under less than an angle (--wing-angle, 135 degrees by default), is a wing:
-all its polygons are removed like the convex wings, whatever their erosion
-thickness, by the same collapses. The mid-sheet of two facing walls is seen
-under 180 degrees and is kept even when it has a free boundary (rounded
-edges). report.json records "branches", "wing_branches" and
-"branch_wing_polygons". Use it with --collapse-threshold 0 (the tool window
-does so when the box is ticked): the mid-sheets then end exactly on the lines
+Wings by their angle (--wing-branches, the box "Remove the wings by their
+angle" of the tool window; off by default, not run on the corpus). Each
+polygon of the raw MAT sees its two sites from its centroid under an angle:
+90 degrees on the sheet that runs from a right-angled convex edge into the
+material, 180 between two facing walls. A polygon under the angle given
+(--wing-angle, 135 degrees by default) is a wing, removed like the convex
+wings, whatever its erosion thickness and by the same collapses, in two cases:
+
+  - it burns like the bisector of a wedge: its erosion thickness is at most
+    one and a half times R (1 - cos(a/2)) / cos(a/2), the value on the
+    bisector of a wedge where it is seen under the angle a, plus its own
+    size. The strip of a mid-sheet along a junction is seen under a small
+    angle too, but it burns late, from far away, and stays; near the ends of
+    the junction it burns early, so the margins of the walls are left out:
+    the sets of polygons under the angle, connected through the edges of two
+    polygons, that touch polygons over the angle across such an edge and have
+    less than a quarter of the length of their boundary free;
+  - it belongs to a wing branch. A branch is a set of polygons connected
+    through edges of exactly two polygons; it is a wing if it touches the
+    free boundary of the raw MAT and nine tenths of its area is under the
+    angle.
+
+The mid-sheet of two facing walls is seen under 180 degrees and is kept even
+when it has a free boundary (rounded edges). report.json records "branches",
+"wing_branches", "wedge_polygons" (the first case) and "branch_wing_polygons"
+(what the two cases add to the convex wings). Use it with --collapse-threshold
+0 (the tool window does so when the box is ticked): the mid-sheets then end
 where the wings were attached, whereas a positive threshold also removes
 polygons of the mid-sheets along these lines and notches them.
+
+Until 26 November 2026 a branch was a wing as soon as half of its area was
+under the angle, and only whole branches were removed. A branch can hold a
+wall and the wings that go on from it without a junction: on Sample3.stp the
+web of the stiffener was removed with them, or the wings kept with it,
+depending on the mesh size (VALIDATION.txt).
 
 The convexity of a CAD edge needs the material side of the skin. It is taken,
 shell by shell, from the interior tetrahedra, so closed cavities and
@@ -254,13 +275,15 @@ tools. It runs the pipeline one stage at a time, on the current model:
   5. Extension    branch by branch (see below): the list of the branches,
                   Preview, Extend and Extend all
 
-The Filter stage has, besides the threshold, the box "Remove whole wing
-branches" with its angle, and the box "Show the angle of the branches". Once
+The Filter stage has, besides the threshold, the box "Remove the wings by
+their angle" with its angle, and the box "Show the angle of the wings". Once
 the medial axis is filtered, a change of the threshold, of the box or of the
 angle filters it again at once (the raw MAT is kept) and shows the result.
-"Show the angle of the branches" shows instead the raw MAT colored, in bands
-of 15 degrees, by the angle of each branch that touches its free boundary (180
-for the others): what is below the angle given is what the box removes.
+"Show the angle of the wings" shows instead the raw MAT colored, in bands of
+15 degrees, by the angle under which each polygon sees its two contacts, where
+it burns like a wing or belongs to a wing branch (180 for the others): what is
+below the angle given is what the box removes, except the margins of the walls
+along the junctions.
 
 A button first runs the earlier stages that are missing or out of date: with a
 CAD model just opened, Filter meshes the skin, computes the raw MAT and
@@ -369,8 +392,8 @@ others by ribbons. The result is the view "MAT extended"; it is not made
 conforming along the junctions, and the earlier front-by-front extension
 (--stage extended of gmshMat) is no longer in the window. Undo takes back the
 last extension (Extend, or the whole of Extend all; the last ten are kept) and
-Reset all of them: the filtered MAT again. In the window the box "Remove whole
-wing branches" is ticked by default, with a threshold of 0; gmshMat and the
+Reset all of them: the filtered MAT again. In the window the box "Remove the
+wings by their angle" is ticked by default, with a threshold of 0; gmshMat and the
 plugin keep the threshold of 0.21 without it, with which the corpus was
 scored.
 

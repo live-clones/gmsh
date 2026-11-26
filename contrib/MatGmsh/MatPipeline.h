@@ -42,12 +42,13 @@ struct Options {
   // FilterMode::Collapse: polygons with an erosion thickness below this
   // fraction of the thickness are removed.
   double collapseThreshold = .21;
-  // FilterMode::Collapse: the branches of the raw MAT that touch its free
-  // boundary and are wings (see matgmsh::tet::branchWings) are removed whole,
-  // whatever their erosion thickness.
+  // FilterMode::Collapse: the wings of the raw MAT found from the angle under
+  // which its polygons see their two contacts (see
+  // matgmsh::tet::branchWings: the polygons that burn like a wing, and the
+  // branches made of them) are removed, whatever their erosion thickness.
   bool wingBranches = false;
-  // the angle (degrees) under which the contacts of a wing branch are seen,
-  // at most: 90 for the wing of a right-angled edge, 180 between two walls
+  // the angle (degrees) under which a wing sees its contacts, at most: 90
+  // for the wing of a right-angled edge, 180 between two walls
   double branchAngle = 135.;
   // RawMode::Tet: if nonempty, the dual complex and its attributes are written
   // to this directory as NumPy arrays (see README.txt).
@@ -84,11 +85,11 @@ struct Result {
   matgmsh::tet::Report tet;              // RawMode::Tet only
   matgmsh::tet::CollapseReport collapse; // FilterMode::Collapse only
   // FilterMode::Collapse, for each polygon of the raw MAT (Mesh::parent of
-  // raw), of its branch: whether it touches the free boundary of the raw MAT,
-  // and the angle below which half of its area is seen (see
+  // raw): whether it can be removed as a wing for some angle, and the angle
+  // under which it sees its two contacts with the skin, in degrees (see
   // matgmsh::tet::BranchWings)
-  std::vector<unsigned char> branchBoundary;
-  std::vector<double> branchAngle;
+  std::vector<unsigned char> wingCandidate;
+  std::vector<double> contactAngle;
   std::string projectionStatus = "disabled";
   std::string projectionMessage;
   ExtensionReport extension;

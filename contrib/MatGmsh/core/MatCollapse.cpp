@@ -313,9 +313,12 @@ Wings wings(const Dual &dual, const Adjacency &graph, const Geometry &geometry,
 }
 
 BranchWings branchWings(const Dual &dual, const Adjacency &graph, const Geometry &geometry,
-                        const std::vector<double> &sites, double angle)
+                        const std::vector<double> &sites, const std::vector<double> &vertices,
+                        const std::vector<double> &burnTimes, double angle)
 {
   const std::size_t count = dual.size();
+  if(burnTimes.size() != count)
+    throw std::runtime_error("MAT wings: one burn time per polygon");
   BranchWings b;
   b.wing.assign(count, 0);
   // Union of the polygons across the edges of valence two.
@@ -334,12 +337,14 @@ BranchWings branchWings(const Dual &dual, const Adjacency &graph, const Geometry
   std::vector<unsigned char> free(count, 0);
   for(std::size_t e = 0; e < graph.edges(); ++e)
     if(graph.valence(e) == 1) free[find(graph.edgePolygons[graph.edgeOffsets[e]])] = 1;
-  // Area of each branch, and of its polygons seen under a small angle.
+  // The angle under which each polygon is seen (NaN if it has no area),
+  // whether it burns like the wing of a wedge of that angle, and the area of
+  // each branch, with the part of it under the angle.
   const double pi = 3.14159265358979323846;
-  const double limit = std::cos(angle * pi / 180.);
+  const double slack = 1.5, pure = .9;
   std::vector<double> area(count, 0.), narrow(count, 0.);
-  // angle under which each polygon is seen, NaN if it has no area
-  std::vector<double> seen(count, std::numeric_limits<double>::quiet_NaN());
+  b.angle.assign(count, std::numeric_limits<double>::quiet_NaN());
+  b.candidate.assign(count, 0);
   for(std::size_t p = 0; p < count; ++p) {
     const double a = geometry.area[p];
     if(!(a > 0.)) continue;
@@ -355,47 +360,73 @@ BranchWings branchWings(const Dual &dual, const Adjacency &graph, const Geometry
     if(!(norm > 0.) || !std::isfinite(norm)) continue;
     const int branch = find(int(p));
     area[branch] += a;
-    const double cosine = dot(u, v) / norm;
-    if(cosine > limit) narrow[branch] += a;
-    seen[p] = std::acos(std::min(1., std::max(-1., cosine))) * 180. / pi;
-  }
-  // The angle below which half of the area of each branch is seen.
-  std::vector<int> order;
-  for(std::size_t p = 0; p < count; ++p)
-    if(!std::isnan(seen[p])) order.push_back(int(p));
-  std::sort(order.begin(), order.end(), [&](int p, int q) {
-    const int bp = find(p), bq = find(q);
-    if(bp != bq) return bp < bq;
-    if(seen[p] != seen[q]) return seen[p] < seen[q];
-    return p < q;
-  });
-  std::vector<double> median(count, std::numeric_limits<double>::quiet_NaN());
-  for(std::size_t i = 0; i < order.size();) {
-    const int branch = find(order[i]);
-    double sum = 0.;
-    std::size_t j = i;
-    for(; j < order.size() && find(order[j]) == branch; ++j) {
-      sum += geometry.area[order[j]];
-      if(std::isnan(median[branch]) && 2. * sum >= area[branch]) median[branch] = seen[order[j]];
-    }
-    i = j;
-  }
-  b.boundary.assign(count, 0);
-  b.angle.assign(count, std::numeric_limits<double>::quiet_NaN());
-  for(std::size_t p = 0; p < count; ++p) {
-    const int branch = find(int(p));
-    b.boundary[p] = free[branch] != 0;
-    b.angle[p] = median[branch];
+    const double seen = std::acos(std::min(1., std::max(-1., dot(u, v) / norm)));
+    b.angle[p] = seen * 180. / pi;
+    if(b.angle[p] < angle) narrow[branch] += a;
+    const double radius = geometry.radius[p], half = std::cos(.5 * seen);
+    if(std::isfinite(burnTimes[p]) && std::isfinite(radius) && half > 0.)
+      b.candidate[p] =
+        burnTimes[p] - radius <= slack * radius * (1. - half) / half + std::sqrt(a);
   }
   for(std::size_t p = 0; p < count; ++p) {
     if(parent[p] != int(p)) continue;
     ++b.branches;
-    if(free[p] && area[p] > 0. && 2. * narrow[p] >= area[p]) {
+    if(free[p] && area[p] > 0. && narrow[p] >= pure * area[p]) {
       ++b.wingBranches;
       free[p] = 2;
     }
   }
-  for(std::size_t p = 0; p < count; ++p) b.wing[p] = free[find(int(p))] == 2;
+  // The margins of the walls: sets of polygons under the angle, connected
+  // through the edges of two polygons, that touch polygons over the angle
+  // across such an edge and have less than a quarter of their boundary free.
+  const auto under = [&](int p) { return b.angle[p] < angle; };
+  std::vector<int> set(count);
+  std::iota(set.begin(), set.end(), 0);
+  const auto setOf = [&](int p) {
+    while(set[p] != p) p = set[p] = set[set[p]];
+    return p;
+  };
+  for(std::size_t e = 0; e < graph.edges(); ++e) {
+    if(graph.valence(e) != 2) continue;
+    const int p = graph.edgePolygons[graph.edgeOffsets[e]],
+              q = graph.edgePolygons[graph.edgeOffsets[e] + 1];
+    if(!under(p) || !under(q)) continue;
+    const int first = setOf(p), second = setOf(q);
+    if(first != second) set[std::max(first, second)] = std::min(first, second);
+  }
+  std::vector<double> freeLength(count, 0.), boundary(count, 0.), beside(count, 0.);
+  for(std::size_t e = 0; e < graph.edges(); ++e) {
+    const double *v0 = &vertices[3 * std::size_t(graph.edgeVertices[e][0])];
+    const double *v1 = &vertices[3 * std::size_t(graph.edgeVertices[e][1])];
+    const double d[3] = {v1[0] - v0[0], v1[1] - v0[1], v1[2] - v0[2]};
+    const double length = std::sqrt(dot(d, d));
+    if(!std::isfinite(length)) continue;
+    const std::size_t valence = graph.valence(e);
+    const int *polygons = &graph.edgePolygons[graph.edgeOffsets[e]];
+    if(valence == 2 && under(polygons[0]) == under(polygons[1])) {
+      if(!under(polygons[0])) continue;
+      // (inside a set, unless the two polygons are in two of them)
+      if(setOf(polygons[0]) == setOf(polygons[1])) continue;
+    }
+    for(std::size_t i = 0; i < valence; ++i) {
+      if(!under(polygons[i])) continue;
+      const int s = setOf(polygons[i]);
+      boundary[s] += length;
+      if(valence == 1) freeLength[s] += length;
+      if(valence == 2 && !under(polygons[1 - i])) beside[s] += length;
+    }
+  }
+  for(std::size_t p = 0; p < count; ++p) {
+    const bool branch = free[find(int(p))] == 2;
+    bool wedge = b.candidate[p] && under(int(p));
+    if(wedge) {
+      const int s = setOf(int(p));
+      if(beside[s] > 0. && freeLength[s] < .25 * boundary[s]) wedge = false;
+    }
+    b.wedgePolygons += wedge;
+    b.wing[p] = wedge || branch;
+    if(branch) b.candidate[p] = 1;
+  }
   return b;
 }
 
@@ -525,12 +556,14 @@ Filtered filter(const Dual &dual, const FilterInput &in)
     r.wingPolygons += w.wing[p];
   }
   {
-    BranchWings b = branchWings(dual, graph, f.geometry, *in.sites, in.branchAngle);
-    f.branchBoundary = std::move(b.boundary);
-    f.branchAngle = std::move(b.angle);
+    BranchWings b =
+      branchWings(dual, graph, f.geometry, *in.sites, *in.vertices, times, in.branchAngle);
+    f.wingCandidate = std::move(b.candidate);
+    f.contactAngle = std::move(b.angle);
     if(in.wingBranches) {
       r.branches = b.branches;
       r.wingBranches = b.wingBranches;
+      r.wedgePolygons = b.wedgePolygons;
       for(std::size_t p = 0; p < dual.size(); ++p)
         if(b.wing[p] && !w.wing[p]) {
           w.wing[p] = 1;

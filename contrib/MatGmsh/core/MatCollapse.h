@@ -50,28 +50,49 @@ GMSH_API Wings wings(const Dual &dual, const Adjacency &graph, const Geometry &g
                      const std::vector<int> &patchValues, const std::vector<Segment> &segments,
                      const std::vector<int> &tetrahedra);
 
-// Branches of the complex: sets of polygons connected through edges shared by
-// exactly two polygons. A wing branch touches the free boundary of the complex
-// (it has an edge of a single polygon), and at least half of its area is made
-// of polygons whose two sites are seen from the centroid under less than
-// `angle` degrees: the sheet that runs from a convex edge of the solid into
-// the material (90 degrees for a right-angled edge), as opposed to the
-// mid-sheet of two facing walls (180 degrees), which also has a free boundary
-// when it ends on a rounded edge.
+// The wings of the complex beyond those of the convex CAD curves, from the
+// angle under which each polygon sees its two sites from its centroid: 90
+// degrees on the sheet that runs from a right-angled convex edge of the solid
+// into the material, 180 between two facing walls. A polygon under `angle`
+// degrees is a wing when one of the two holds:
+//
+//   - it burns like the wing of a wedge. On the bisector sheet of a wedge, at
+//     the place seen under the angle a, the erosion thickness (burn time
+//     minus radius) is R (1 - cos(a/2)) / cos(a/2); the polygon qualifies up
+//     to one and a half times that, plus its own size. The strip of a
+//     mid-sheet along a junction is also seen under a small angle, but it
+//     burns late, from far away: it stays. Near the ends of the junction it
+//     does burn early: the margins of the walls are left out, that is the
+//     sets of polygons under the angle (connected through the edges of two
+//     polygons) that touch polygons over the angle across such an edge and
+//     have less than a quarter of the length of their boundary free. A wing
+//     that goes on from a wall touches it too, with about half of its
+//     boundary free.
+//   - it belongs to a wing branch. A branch is a set of polygons connected
+//     through edges shared by exactly two polygons; a wing branch touches the
+//     free boundary of the complex (it has an edge of a single polygon) and
+//     at least nine tenths of its area is under the angle. All its polygons
+//     are wings, whatever they burn like and their own angle.
+//
+// (A branch can hold a wall and the wings that go on from it without a
+// junction: with half of the area for a wing branch, the wall was removed with
+// them, or the wings kept with it, depending on the mesh.)
 struct BranchWings {
   std::vector<unsigned char> wing; // one flag per polygon
-  // For each polygon, of its branch: whether it touches the free boundary,
-  // and the angle (degrees) below which half of its area is seen, NaN for a
-  // branch without area. A branch is a wing if it touches the free boundary
-  // and this angle is below the limit.
-  std::vector<unsigned char> boundary;
+  // For each polygon: whether it can be removed as a wing for some angle (it
+  // burns like one, or its branch is a wing branch), and the angle under
+  // which it sees its sites, in degrees (NaN without area).
+  std::vector<unsigned char> candidate;
   std::vector<double> angle;
-  std::size_t branches = 0, wingBranches = 0;
+  std::size_t branches = 0, wingBranches = 0, wedgePolygons = 0;
 };
 
+// vertices: of the dual, three coordinates per tetrahedron; burnTimes: one
+// per polygon (see burnTimes).
 GMSH_API BranchWings branchWings(const Dual &dual, const Adjacency &graph,
                                  const Geometry &geometry, const std::vector<double> &sites,
-                                 double angle = 135.);
+                                 const std::vector<double> &vertices,
+                                 const std::vector<double> &burnTimes, double angle = 135.);
 
 struct Collapse {
   std::vector<unsigned char> keep; // one flag per polygon
@@ -97,8 +118,8 @@ struct FilterInput {
   std::vector<std::size_t> patchOffsets;
   std::vector<int> patchValues;
   double thickness = 1., threshold = .21;
-  // The polygons of the wing branches (see branchWings) are removed like the
-  // convex wings, whatever their erosion thickness.
+  // The wings found from the angle of the polygons (see branchWings) are
+  // removed like the convex wings, whatever their erosion thickness.
   bool wingBranches = false;
   double branchAngle = 135.;
 };
@@ -111,17 +132,18 @@ struct CollapseReport {
   std::size_t convexPolygons = 0, wingComponents = 0, anchoredWingComponents = 0;
   std::size_t wingPolygons = 0, eligible = 0, removed = 0, blocked = 0, wingsBlocked = 0;
   // with FilterInput::wingBranches: the branches of the raw MAT, those that
-  // are wings, and their polygons that the convex wings did not hold already
-  std::size_t branches = 0, wingBranches = 0, branchWingPolygons = 0;
+  // are wings, the polygons that burn like a wing under the angle, and the
+  // polygons of both kinds that the convex wings did not hold already
+  std::size_t branches = 0, wingBranches = 0, wedgePolygons = 0, branchWingPolygons = 0;
   std::size_t wireEdges = 0;
   ComplexTopology surface; // the kept polygons
 };
 
 struct Filtered {
   std::vector<unsigned char> keep, wing;
-  // of the branch of each polygon, see BranchWings
-  std::vector<unsigned char> branchBoundary;
-  std::vector<double> branchAngle;
+  // of each polygon, see BranchWings
+  std::vector<unsigned char> wingCandidate;
+  std::vector<double> contactAngle;
   std::vector<double> erosionOverThickness;
   Geometry geometry;
   CollapseReport report;

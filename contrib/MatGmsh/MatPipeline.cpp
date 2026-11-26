@@ -638,8 +638,8 @@ bool Session::filter(GModel *source, const Options &options, std::string &error)
   result.filtered = Mesh{};
   result.filteredTopology = Topology{};
   result.collapse = matgmsh::tet::CollapseReport{};
-  result.branchBoundary.clear();
-  result.branchAngle.clear();
+  result.wingCandidate.clear();
+  result.contactAngle.clear();
   result.filterSeconds = 0.;
   d.filterWarnings.clear();
   d.filtered = false;
@@ -687,8 +687,8 @@ bool Session::filter(GModel *source, const Options &options, std::string &error)
                                        options.collapseThreshold, options.wingBranches,
                                        options.branchAngle);
       result.collapse = kept.report;
-      result.branchBoundary = kept.branchBoundary;
-      result.branchAngle = kept.branchAngle;
+      result.wingCandidate = kept.wingCandidate;
+      result.contactAngle = kept.contactAngle;
       if(!kept.report.materialSide)
         d.filterWarnings.push_back("The material side of the skin is not known on every shell: there, convex edges are not identified and no wing is removed as such; only the erosion thickness filters the MAT.");
       if(kept.report.wireEdges)

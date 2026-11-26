@@ -380,6 +380,60 @@ void ribStopsOnTheWall()
     check(least > 9.9, "the rib must not go through the wall: it starts at x = " + std::to_string(least));
   }
 }
+// A web on a flange, over its whole length. The sheet of the web sees its two
+// contacts under a small angle along the junction, like a wing, and near the
+// two ends of the junction it also burns early, like a wing: it must stay,
+// or the flange no longer closes the plane of the web, which then goes
+// through it to its far face.
+void webStopsOnTheFlange()
+{
+  gmsh::clear();
+  gmsh::model::add("web");
+  const int flange = gmsh::model::occ::addBox(0, 0, 0, 10, 6, 1);
+  const int web = gmsh::model::occ::addBox(4.5, 0, 1, 1, 6, 3);
+  gmsh::vectorpair fused;
+  std::vector<gmsh::vectorpair> map;
+  gmsh::model::occ::fuse({{3, flange}}, {{3, web}}, fused, map);
+  gmsh::model::occ::synchronize();
+  // (a tenth of the thickness: with a coarser skin the ends of the junction
+  // are not resolved)
+  gmsh::option::setNumber("Mesh.MeshSizeMin", 0.1);
+  gmsh::option::setNumber("Mesh.MeshSizeMax", 0.1);
+  gmsh::model::mesh::generate(2);
+  Options options;
+  options.thickness = 1.;
+  options.wingBranches = true;
+  options.collapseThreshold = 0.;
+  Result result;
+  std::string error;
+  check(computeCurrent(options, result, error), "pipeline failed: " + error);
+  check(result.collapse.surface.components == 1 && result.collapse.wireEdges == 0,
+        "the filtered MAT of a T must be one piece, without wire edge");
+  Mesh work = result.filtered;
+  // the flange (its two halves go together), then the web
+  for(int pass = 0; pass < 2; ++pass) {
+    const BranchPlane *found = nullptr;
+    const std::vector<BranchPlane> planes = branchPlanes(work);
+    for(const BranchPlane &candidate : planes) {
+      if(candidate.deviation > .1) continue;
+      const double length = std::sqrt(candidate.normal[0] * candidate.normal[0] +
+                                      candidate.normal[1] * candidate.normal[1] +
+                                      candidate.normal[2] * candidate.normal[2]);
+      if(std::abs(candidate.normal[pass == 0 ? 2 : 0]) > .99 * length && (!found || candidate.area > found->area))
+        found = &candidate;
+    }
+    check(found != nullptr, pass == 0 ? "the flange must be a flat branch" : "the web must be a flat branch");
+    PlaneExtension extension;
+    check(extendBranchInPlane(work, result.skin, *found, .1, .25, 2., extension, error),
+          "extension in the plane failed: " + error);
+    check(!extension.reachesFrame, "the skin must close the fragment");
+    const double expected = pass == 0 ? 60. : 21.; // 6 long, from the mid-plane of the flange to the top
+    check(std::abs(extension.addedArea - expected) < .05,
+          std::string(pass == 0 ? "the flange" : "the web") + " must be its whole mid-plane: area " +
+            std::to_string(extension.addedArea) + " for " + std::to_string(expected));
+    work = extension.result;
+  }
+}
 } // namespace
 
 int main()
@@ -396,8 +450,9 @@ int main()
     plateIsExtendedToItsEdges();
     ribStopsAtItsEnds();
     ribStopsOnTheWall();
+    webStopsOnTheFlange();
     gmsh::finalize();
-    std::cout << "MatSkinSites: 8 tests passed\n";
+    std::cout << "MatSkinSites: 9 tests passed\n";
     return 0;
   }
   catch(const std::exception &e) {
