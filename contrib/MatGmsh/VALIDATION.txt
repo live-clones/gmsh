@@ -483,3 +483,99 @@ partial with 5883 triangles added); Compute again removes the views of the
 later stages; the legacy method and a new skin mesh go through the same
 buttons. The buttons were not clicked with a mouse in this check, and the
 window was tried on macOS only.
+
+Topology of the filtered MAT on the corpus, 26 November 2026
+-----------------------------------------------------------
+
+tools/topology/surface_topology.py was run on the filtered.msh of the 220
+corpus cases of the campaign of 25 November (tetrahedron-based MAT, collapse
+at 0.21, skin at t/10) and on the truth mid-surface of each case meshed by
+Gmsh at t/3. A sheet is a set of triangles connected through edges of exactly
+two triangles; the reference for the components and the Euler characteristic
+is the solid (one component, half the Euler characteristic of the skin).
+
+  Level   Cases  Certified  Solid's topology  As many sheets >= 1 t^2
+                                              as the truth
+  1          40         40                40                       40
+  2          28         28                25                       28
+  3          26         26                21                       26
+  4           9          9                 9                        8
+  5           4          4                 3                        4
+  6         100         99                90                       96
+  7           9          8                 1                        8
+  8           4          4                 2                        2
+  all       220        218               191                      212
+
+Solid's topology: the filtered surface as written has one component and the
+Euler characteristic of the solid. In 23 of the 29 other cases the only
+difference is one or several detached slivers (pieces below 0.01 t^2 that the
+collapse left hanging by edges without surface); without them the surface has
+the topology of the solid. In the 6 others (hat_holes, ligament_edge_gap2,
+ligament_edge_gap4, ligament_holes_gap2, ligament_holes_gap4, crossmember) a
+ligament narrower than the thickness is reduced to edges without surface and
+the surface loses a connection or a hole.
+
+Sheets: 1801 sheets of at least 1 t^2 in the MATs, 1813 in the truths. The 8
+cases that differ: assembly_007, 066, 089 and 096 (two gussets fall below 1
+t^2), trim_strip_000 and 001 (25 sheets for 27), panel_019 (37 for 36) and
+flush_step_6_2, whose truth is in two pieces. The MATs also carry 4876 sheets
+below 0.1 t^2 in 153 cases (typically one triangle of nearly zero area held by
+a vertex) and 516 sheets between 0.1 and 1 t^2 in 28 cases (up to 115 on a
+panel, 12 on doghouse_r0, none on doghouse_r1); the truths have none. Together
+they are 190 t^2 of the 888 640 t^2 of MAT.
+
+The truth is not a reference for the Euler characteristic: in 24 cases it does
+not have the topology of the solid (reliefs at the corners of the gussets of
+the assemblies, a truth in two pieces).
+
+On the inputs without truth, same measure on the MATs of the table of the
+default switch above: Doghouse has one component, the Euler characteristic of
+the solid (0), 8 sheets of at least 1 t^2 and one sliver; the three extra
+pieces of Sample4 are detached slivers.
+
+Results: topo/<case>.json in the dragon3 folder of the campaign
+(claude_core_b_20261125).
+
+Native extension scored on the corpus, 26 November 2026
+------------------------------------------------------
+
+gmshMat --stage extended (default length and layers) on the cached skins of
+the 109 cases of levels 1 to 5 plus doghouse_r0 and doghouse_r1, with the new
+filtered MAT (--raw tet --filter collapse) and with the legacy one;
+extended.msh scored alone, without walls, by the frozen evaluator, and
+measured by surface_topology.py. 108 cases ran with both filters
+(ribbed_plate_t2_to_6 was still running with the legacy filter when this was
+written). Good or perfect verdicts, next to those of the walls (the delivered
+chain) and of the chain of October (extended MAT of the MatGmsh repository
+plus walls) on the same cases:
+
+  Level   Cases  New filter   Legacy filter   Walls   October
+                 + extension  + extension
+  1          40           38             40      40        39
+  2          28            8             12       7        24
+  3          26           11             16      17        24
+  4           8            0              0       2         7
+  5           4            0              0       0         1
+  8           2            0              0       0         0
+  all       108           57             68      66        95
+
+The extension is complete in one case with each filter and partial in all the
+others; most unresolved fronts stop on "degenerate co-refinement parent" or on
+a collar rejected after a self-intersection. It keeps the Euler characteristic
+of its input in 85 of the 108 cases with the legacy filter and in 23 with the
+new one: 61 and 13 cases are both good or perfect and of unchanged Euler
+characteristic. The evaluator does not see this: pipe_R20 with the new filter
+is scored perfect with an Euler characteristic of -138 for 0. Missing area
+over the 109 cases with the new filter: 5500 t^2 before the extension, 1909
+after; area off the truth 729 and 777 t^2.
+
+doghouse_r0: missing area 106 t^2 before the extension, 14.5 after with the
+legacy filter and 17.6 with the new one (4.4 with the walls); the extension
+changes the Euler characteristic from -1 to -109 with the new filter and keeps
+it with the legacy one. doghouse_r1: 193 t^2 before, 102 after with either
+filter (90 with the walls).
+
+For reference, over the 220 cases: missing area 34 616 t^2 for the filtered
+MAT alone, 5 298 with the walls, 364 for the chain of October; area off the
+truth 3 143, 3 145 and 306 t^2. Results: ext/<case>/{tet,legacy}/ in the same
+dragon3 folder.

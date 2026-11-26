@@ -61,3 +61,11 @@ aae6203feceacf3dc1f2db5742c0063567bfc90a02aa795f4f0f0dfccd0c0613  facepair/steps
 64c437748f8d5930d9ba4d086c8cc5dfa150c1020ab3aad8512c15a4489f071a  tools/evaluation/projected_quality.py
 53e988c9450303c8d88cf17528916255cdd432e0bcaae79669ef0a60514f6c35  tools/evaluation/run_corpus.py
 a54b48f72765bf4482342a1195b06514bcdfdd865f062bef99fa9e43de889817  tools/evaluation/tessellate.cpp
+
+contrib/MatGmsh/tools/topology/ (written for this tree, 26 November 2026)
+
+  surface_topology.py  Components, Euler characteristic, sheets, junction
+                       networks and free boundaries of a filtered or extended
+                       MAT (an MSH file of gmshMat) and of the truth
+                       mid-surface meshed by Gmsh, by the same code. Used for
+                       the topology tables of VALIDATION.txt.
