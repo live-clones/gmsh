@@ -17,6 +17,7 @@
 #include <vector>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Group.H>
+#include <functional>
 #include "FlGui.h"
 #include "paletteWindow.h"
 #include "graphicWindow.h"
@@ -87,6 +88,39 @@ void update_cb(Fl_Widget *w, void *data)
 void angles_cb(Fl_Widget *w, void *data)
 { FlGui::instance()->midsurfacer->showAngles(); }
 
+void select_cb(Fl_Widget *w, void *data)
+{ FlGui::instance()->midsurfacer->selectBranch(); }
+
+void preview_cb(Fl_Widget *w, void *data)
+{ FlGui::instance()->midsurfacer->previewBranch(); }
+
+void extend_cb(Fl_Widget *w, void *data)
+{ FlGui::instance()->midsurfacer->extendBranch(data != nullptr); }
+
+// a view of a mesh, with one value per triangle
+PView *meshView(const matgmsh_native::Mesh &mesh, const std::string &name,
+                const std::function<double(std::size_t)> &value,
+                const std::function<bool(std::size_t)> &shown = nullptr)
+{
+  PViewDataList *data = new PViewDataList();
+  for(std::size_t t = 0; t < mesh.triangles.size() / 3; t++) {
+    if(shown && !shown(t)) continue;
+    std::vector<double> *values = data->incrementList(1, TYPE_TRI);
+    for(int component = 0; component < 3; component++)
+      for(int corner = 0; corner < 3; corner++)
+        values->push_back(
+          mesh.xyz[3 * mesh.triangles[3 * t + corner] + component]);
+    const double v = value(t);
+    values->insert(values->end(), {v, v, v});
+  }
+  data->setName(name);
+  data->setFileName(name + ".pos");
+  data->finalize();
+  PView *view = new PView(data);
+  view->getOptions()->visible = 0;
+  return view;
+}
+
 void display_cb(Fl_Widget *w, void *data)
 { FlGui::instance()->midsurfacer->display((int)(intptr_t)data, true); }
 } // namespace
@@ -108,6 +142,14 @@ struct midsurfacerWindow::State {
   PViewData *data[NumViews];
   // the warnings of the stages already said for this raw MAT
   std::set<std::string> said;
+  // the MAT being extended (the filtered or projected one, then with the
+  // branches extended so far), its branches as listed, the one selected and
+  // those already extended
+  matgmsh_native::Mesh work;
+  bool hasWork = false;
+  std::vector<matgmsh_native::BranchPlane> planes;
+  int selected = -1;
+  std::set<int> extended;
   State()
   {
     for(int i = 0; i < NumViews; i++) {
@@ -129,7 +171,7 @@ midsurfacerWindow::midsurfacerWindow(int deltaFontSize) : _state(new State)
 
   const int section = WB + 2 + BH; // a line, then a title
   int width = TW;
-  int height = 2 * WB + 15 * BH + 6 * section;
+  int height = 2 * WB + 22 * BH + 6 * section;
 
   win = new paletteWindow(width, height,
                           CTX::instance()->nonModalWindows ? true : false,
@@ -246,14 +288,60 @@ midsurfacerWindow::midsurfacerWindow(int deltaFontSize) : _state(new State)
          "Project the filtered medial axis onto the local mid-surface; a "
          "projection that fails its checks changes nothing");
 
-  title("5. Extension");
-  length = input("Length (0: 3 x thickness)", 0., 0., 1.e22, .01,
-                 "Largest distance covered by the extension; 0 for three "
-                 "times the thickness");
-  layers = input("Layers", 12., 1., 10000., 1., "Number of layers");
+  title("5. Extension, branch by branch");
+  {
+    static int widths[] = {0, 0, 0};
+    widths[0] = full / 4;
+    widths[1] = full / 3;
+    browser = new Fl_Hold_Browser(x, y, full, 5 * BH);
+    browser->column_widths(widths);
+    browser->callback(select_cb);
+    browser->tooltip(
+      "The branches of the filtered medial axis, largest first: number, "
+      "area, and how far 95% of the area is from the plane of the branch. "
+      "A branch chosen here is shown alone");
+    y += 5 * BH;
+  }
+  static Fl_Menu_Item hows[] = {{"In its plane", 0, nullptr, nullptr},
+                                {"Ribbon", 0, nullptr, nullptr},
+                                {nullptr}};
+  how = new Fl_Choice(x, y, IW, BH, "How the branch is extended");
+  how->menu(hows);
+  how->align(FL_ALIGN_RIGHT);
+  how->tooltip(
+    "In its plane, for a flat branch: a rectangle of the plane around the "
+    "whole part is cut by the skin and by the other branches, and the "
+    "fragments that hold a triangle of the branch replace it (with the "
+    "other branches lying in the same plane inside them). Ribbon, for any "
+    "branch: a ribbon is drawn from its free boundary, tangent to the "
+    "branch and normal to the boundary, then cut by the skin, by the other "
+    "branches and where it crosses itself; the pieces attached to the "
+    "boundary are added");
+  y += BH;
+  length = input("Reach (0: 2 x thickness)", 0., 0., 1.e22, .01,
+                 "How far a branch is extended: the length of the ribbon, and "
+                 "in its plane the distance to the branch beyond which the "
+                 "fragments are dropped");
+  layers = input("Layers of the ribbon", 4., 1., 100., 1.,
+                 "Number of rows of triangles across the ribbon");
   action(Extension, "Extend",
-         "Extend the free boundaries of the mid-surface to the skin "
-         "(experimental: the fronts that do not reach it are reported)");
+         "Extend the selected branch: the result replaces it in the view "
+         "\"MAT extended\"");
+  push[Extension]->callback(extend_cb, nullptr);
+  preview = new Fl_Button(width - 2 * BB - 3 * WB, y - BH, BB, BH, "Preview");
+  preview->callback(preview_cb);
+  preview->tooltip(
+    "Show what would extend the selected branch, without changing "
+    "anything: the fragments of its plane (0 on those kept), or its ribbon "
+    "before it is cut, colored by the distance to the boundary");
+  // the status of this stage goes on its own line, under the buttons
+  status[Extension]->resize(x, y, full - BB - WB, BH);
+  all = new Fl_Button(width - BB - 2 * WB, y, BB, BH, "Extend all");
+  all->callback(extend_cb, (void *)1);
+  all->tooltip(
+    "Extend every branch: the flat ones in their plane, largest first, "
+    "then the others by ribbons");
+  y += BH;
 
   title("Show");
   {
@@ -324,6 +412,9 @@ void midsurfacerWindow::_forget(int fromStage)
     visible[i]->value(0);
     visible[i]->deactivate();
   }
+  // the branches listed are those of the filtered or projected MAT
+  if(fromStage <= Projection) _listBranches(true);
+  if(fromStage > Projection && fromStage <= Extension) status[Extension]->copy_label("");
   // the angles of the branches are those of the raw MAT
   if(fromStage <= Raw) {
     if(PView *v = _state->view(Angles)) delete v;
@@ -340,26 +431,290 @@ void midsurfacerWindow::_view(int stage)
   const matgmsh_native::Mesh &mesh = stage == Raw ? r.raw :
                                      stage == Filter ? r.filtered :
                                      stage == Projection ? r.projected :
-                                                           r.extended;
+                                                           _state->work;
   if(mesh.triangles.empty()) return;
-  PViewDataList *data = new PViewDataList();
-  for(std::size_t t = 0; t < mesh.triangles.size() / 3; t++) {
-    std::vector<double> *values = data->incrementList(1, TYPE_TRI);
-    for(int component = 0; component < 3; component++)
-      for(int corner = 0; corner < 3; corner++)
-        values->push_back(
-          mesh.xyz[3 * mesh.triangles[3 * t + corner] + component]);
-    const double sheet = t < mesh.branch.size() ? mesh.branch[t] : 0.;
-    values->insert(values->end(), {sheet, sheet, sheet});
-  }
-  data->setName(std::string("MAT ") + stageName[stage]);
-  data->setFileName(std::string("mat_") + stageName[stage] + ".pos");
-  data->finalize();
-  PView *view = new PView(data);
-  view->getOptions()->visible = 0;
+  if(PView *old = _state->view(stage)) delete old;
+  PView *view =
+    meshView(mesh, std::string("MAT ") + stageName[stage], [&](std::size_t t) {
+      return t < mesh.branch.size() ? (double)mesh.branch[t] : 0.;
+    });
   _state->tag[stage] = view->getTag();
-  _state->data[stage] = data;
+  _state->data[stage] = view->getData();
   visible[stage]->activate();
+}
+
+// The branches of the MAT being extended: forgotten (reset without a filtered
+// MAT), taken again from the filtered or projected MAT (reset), or listed
+// again after an extension.
+void midsurfacerWindow::_listBranches(bool reset)
+{
+  State &s = *_state;
+  if(reset) {
+    for(int i : {(int)Selected, (int)Preview, (int)Extension}) {
+      if(PView *v = s.view(i)) delete v;
+      s.tag[i] = -1;
+      s.data[i] = nullptr;
+    }
+    visible[Extension]->value(0);
+    visible[Extension]->deactivate();
+    s.work = matgmsh_native::Mesh{};
+    s.hasWork = false;
+    s.selected = -1;
+    s.extended.clear();
+    s.planes.clear();
+  }
+  browser->clear();
+  if(!s.hasWork) return;
+  s.planes = matgmsh_native::branchPlanes(s.work);
+  const double flat = .1 * thickness->value();
+  int line = 0, chosen = 0;
+  for(const matgmsh_native::BranchPlane &p : s.planes) {
+    line++;
+    browser->add(text("%d\t%.6g\t%s (%.2g)%s", p.branch, p.area,
+                      p.deviation <= flat ? "flat" : "curved", p.deviation,
+                      s.extended.count(p.branch) ? ", extended" : "")
+                   .c_str());
+    if(p.branch == s.selected) chosen = line;
+  }
+  if(chosen)
+    browser->value(chosen);
+  else
+    s.selected = -1;
+}
+
+void midsurfacerWindow::selectBranch()
+{
+  State &s = *_state;
+  for(int i : {(int)Selected, (int)Preview}) {
+    if(PView *v = s.view(i)) delete v;
+    s.tag[i] = -1;
+    s.data[i] = nullptr;
+  }
+  const int line = browser->value();
+  if(line < 1 || line > (int)s.planes.size()) {
+    s.selected = -1;
+    FlGui::instance()->updateViews(true);
+    drawContext::global()->draw();
+    return;
+  }
+  const matgmsh_native::BranchPlane &p = s.planes[line - 1];
+  s.selected = p.branch;
+  const bool flat = p.deviation <= .1 * thickness->value();
+  how->value(flat ? 0 : 1);
+  PView *view = meshView(
+    s.work, "MAT branch", [](std::size_t) { return 1.; },
+    [&](std::size_t t) { return t < s.work.branch.size() && s.work.branch[t] == p.branch; });
+  view->getOptions()->showScale = 0;
+  s.tag[Selected] = view->getTag();
+  s.data[Selected] = view->getData();
+  // the branch alone
+  for(int i = Raw; i < NumStages; i++) {
+    visible[i]->value(0);
+    display(i, false);
+  }
+  angles->value(0);
+  if(PView *v = s.view(Angles))
+    opt_view_visible(v->getIndex(), GMSH_SET | GMSH_GUI, 0);
+  FlGui::instance()->updateViews(true);
+  opt_view_visible(view->getIndex(), GMSH_SET | GMSH_GUI, 1);
+  status[Extension]->copy_label(
+    text("Branch %d: area %.6g, %s (95%% within %.2g of its plane)", p.branch,
+         p.area, flat ? "flat" : "curved", p.deviation)
+      .c_str());
+  drawContext::global()->draw();
+}
+
+// What extends a branch, in the view Preview; applied to the MAT being
+// extended if asked. A ribbon that is only shown is not cut.
+bool midsurfacerWindow::_extend(int branch, bool planar, bool apply,
+                                std::string &what)
+{
+  using namespace matgmsh_native;
+  State &s = *_state;
+  const Result &r = s.session.result();
+  const double t = thickness->value();
+  const BranchPlane *p = nullptr;
+  for(const BranchPlane &candidate : s.planes)
+    if(candidate.branch == branch) p = &candidate;
+  if(!p) {
+    what = "this branch is no longer there";
+    return false;
+  }
+  if(PView *v = s.view(Preview)) delete v;
+  s.tag[Preview] = -1;
+  s.data[Preview] = nullptr;
+  std::string error;
+  PView *view = nullptr;
+  if(planar) {
+    PlaneExtension e;
+    const double reach = length->value() > 0. ? length->value() : 2. * t;
+    if(!extendBranchInPlane(s.work, r.skin, *p, .1 * t, .25 * t, reach, e, error)) {
+      what = error;
+      return false;
+    }
+    what = text("%zu fragments of the plane, %zu kept; area %.6g for %.6g "
+                "(%.6g before the reach), %zu triangles, %zu other branches "
+                "in the same plane (%.2g s)",
+                e.fragments, e.keptFragments, e.addedArea, p->area, e.keptArea,
+                e.addedTriangles, e.merged.size(), e.seconds);
+    if(e.reachesFrame) {
+      what = "the skin does not close the fragment of the plane around "
+             "this branch: " + what;
+      apply = false;
+    }
+    view = meshView(e.plane, "MAT plane fragments", [&](std::size_t i) {
+      return (double)e.plane.branch[i];
+    });
+    if(apply) {
+      s.work = std::move(e.result);
+      s.extended.insert(branch);
+      for(int merged : e.merged) s.extended.erase(merged);
+    }
+    else if(e.reachesFrame) {
+      s.tag[Preview] = view->getTag();
+      s.data[Preview] = view->getData();
+      return false;
+    }
+  }
+  else {
+    Ribbon ribbon;
+    const double l = length->value() > 0. ? length->value() : 2. * t;
+    const Mesh &original =
+      s.session.hasProjected() && r.projectionStatus == "applied" ? r.projected : r.filtered;
+    if(!branchRibbon(s.work, branch, l, std::max(1, (int)layers->value()),
+                     ribbon, error, &original)) {
+      what = error;
+      return false;
+    }
+    what = text("ribbon along %zu free edges of %zu, in %zu chains of "
+                "length %.6g",
+                ribbon.freeEdges, ribbon.boundaryEdges, ribbon.loops,
+                ribbon.boundaryLength);
+    if(!apply)
+      view = meshView(ribbon.mesh, "MAT ribbon", [&](std::size_t i) {
+        return (ribbon.v[ribbon.mesh.triangles[3 * i]] +
+                ribbon.v[ribbon.mesh.triangles[3 * i + 1]] +
+                ribbon.v[ribbon.mesh.triangles[3 * i + 2]]) / 3.;
+      });
+    else {
+      PlaneExtension e;
+      if(!extendBranchByRibbon(s.work, r.skin, branch, ribbon, e, error)) {
+        what = error;
+        return false;
+      }
+      what += text(": %zu fragments, %zu kept (area %.6g, %zu triangles)%s "
+                   "(%.2g s)",
+                   e.fragments, e.keptFragments, e.keptArea, e.addedTriangles,
+                   e.reachesFrame ? ", some reach the end of the ribbon" : "",
+                   e.seconds);
+      view = meshView(e.plane, "MAT ribbon pieces", [&](std::size_t i) {
+        return (double)e.plane.branch[i];
+      });
+      s.work = std::move(e.result);
+      s.extended.insert(branch);
+    }
+  }
+  s.tag[Preview] = view->getTag();
+  s.data[Preview] = view->getData();
+  return true;
+}
+
+void midsurfacerWindow::previewBranch()
+{
+  modelLock lock(modelLock::ifFree);
+  if(!lock) return;
+  State &s = *_state;
+  if(s.selected < 0) {
+    Msg::Warning("Midsurfacer: choose a branch in the list first");
+    return;
+  }
+  std::string what;
+  const bool planar = how->value() == 0;
+  const bool ok = _extend(s.selected, planar, false, what);
+  status[Extension]->copy_label(what.c_str());
+  status[Extension]->copy_tooltip(what.c_str());
+  if(ok)
+    Msg::Info("Midsurfacer, branch %d: %s", s.selected, what.c_str());
+  else
+    Msg::Warning("Midsurfacer, branch %d: %s", s.selected, what.c_str());
+  FlGui::instance()->updateViews(true);
+  // the fragments of the plane lie on the branch: they are shown without it
+  if(PView *v = s.view(Selected))
+    opt_view_visible(v->getIndex(), GMSH_SET | GMSH_GUI, planar && s.view(Preview) ? 0 : 1);
+  if(PView *v = s.view(Preview))
+    opt_view_visible(v->getIndex(), GMSH_SET | GMSH_GUI, 1);
+  drawContext::global()->draw();
+}
+
+void midsurfacerWindow::extendBranch(bool everyBranch)
+{
+  State &s = *_state;
+  if(!s.session.hasFiltered()) run(Filter);
+  modelLock lock(modelLock::ifFree);
+  if(!lock) return;
+  if(!s.hasWork) {
+    Msg::Warning("Midsurfacer: filter the medial axis first");
+    return;
+  }
+  const double flat = .1 * thickness->value();
+  // the branches to extend, with how: one, or the flat ones in their plane
+  // then the others by ribbons
+  std::vector<std::pair<int, bool> > todo;
+  if(!everyBranch) {
+    if(s.selected < 0) {
+      Msg::Warning("Midsurfacer: choose a branch in the list first");
+      return;
+    }
+    todo.push_back({s.selected, how->value() == 0});
+  }
+  else {
+    for(const matgmsh_native::BranchPlane &p : s.planes)
+      if(p.deviation <= flat && !s.extended.count(p.branch)) todo.push_back({p.branch, true});
+    for(const matgmsh_native::BranchPlane &p : s.planes)
+      if(p.deviation > flat && !s.extended.count(p.branch)) todo.push_back({p.branch, false});
+  }
+  std::size_t done = 0, failed = 0;
+  std::string what;
+  for(std::size_t i = 0; i < todo.size(); i++) {
+    if(everyBranch) {
+      status[Extension]->copy_label(
+        text("Branch %d (%zu of %zu)...", todo[i].first, i + 1, todo.size()).c_str());
+      win->redraw();
+      FlGui::check();
+      if(!FlGui::available()) return;
+    }
+    // a branch can have gone with another one lying in the same plane
+    bool there = false;
+    for(const matgmsh_native::BranchPlane &p : s.planes) there = there || p.branch == todo[i].first;
+    if(!there) continue;
+    if(_extend(todo[i].first, todo[i].second, true, what)) {
+      done++;
+      Msg::Info("Midsurfacer, branch %d: %s", todo[i].first, what.c_str());
+      s.planes = matgmsh_native::branchPlanes(s.work);
+    }
+    else {
+      failed++;
+      Msg::Warning("Midsurfacer, branch %d: %s", todo[i].first, what.c_str());
+    }
+  }
+  if(everyBranch)
+    what = text("%zu branches extended, %zu not (see the messages)", done, failed);
+  status[Extension]->copy_label(what.c_str());
+  status[Extension]->copy_tooltip(what.c_str());
+  // the MAT with its branches extended, alone
+  if(PView *v = s.view(Selected)) delete v;
+  s.tag[Selected] = -1;
+  s.data[Selected] = nullptr;
+  _view(Extension);
+  _listBranches(false);
+  FlGui::instance()->updateViews(true);
+  if(PView *v = s.view(Preview))
+    opt_view_visible(v->getIndex(), GMSH_SET | GMSH_GUI, 0);
+  for(int i = Raw; i < NumStages; i++) {
+    visible[i]->value(i == Extension && s.view(Extension));
+    display(i, false);
+  }
+  drawContext::global()->draw();
 }
 
 // the result of a stage alone in the scene: the other stages hidden, and the
@@ -652,6 +1007,9 @@ void midsurfacerWindow::run(int target)
     _say(Filter, what, more);
     _view(Filter);
     warn();
+    s.work = r.filtered;
+    s.hasWork = true;
+    _listBranches(false);
   }
   if(target == Filter) {
     done(Filter);
@@ -676,35 +1034,14 @@ void midsurfacerWindow::run(int target)
               r.projectionSeconds),
          r.projectionMessage);
     if(applied) _view(Projection);
+    s.work = applied ? r.projected : r.filtered;
+    s.hasWork = true;
+    _listBranches(false);
     done(applied ? Projection : Filter);
     return;
   }
 
-  // 5. the extension, of the projected MAT if there is one
-  _forget(Extension);
-  viewsChanged = true;
-  busy(Extension);
-  bool ok = s.session.extend(model, options, error);
-  if(!FlGui::available()) return;
-  if(!ok) {
-    failed(Extension, error);
-    return;
-  }
-  const Result &r = s.session.result();
-  std::size_t closed = 0;
-  for(const FrontStatus &f : r.extension.fronts)
-    if(f.status != "unresolved") closed++;
-  _say(Extension,
-       text("%s, %zu triangles added (%.3g s)",
-            r.extension.complete ? "Complete" : "Partial",
-            r.extension.addedTriangles, r.extensionSeconds),
-       text("%zu of the %zu free edges of the input reach the skin or "
-            "another sheet. ",
-            closed, r.extension.fronts.size()) +
-         r.extension.message);
-  _view(Extension);
-  warn();
-  done(Extension);
+  // 5. the extension has its own buttons (see extendBranch)
 }
 
 #endif

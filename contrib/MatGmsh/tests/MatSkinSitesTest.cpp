@@ -1,6 +1,7 @@
 #include "MatPipeline.h"
 #include "matSkinSites.h"
 #include "gmsh.h"
+#include <cmath>
 #include <cstring>
 #include <iostream>
 #include <set>
@@ -212,6 +213,59 @@ void sessionRunsTheStagesOneAtATime()
           error.find("has changed") != std::string::npos && !session.hasFiltered(),
         "a filter on another surface mesh must be refused");
 }
+
+double areaOf(const Mesh &mesh)
+{
+  double area = 0.;
+  for(std::size_t t = 0; t < mesh.triangles.size() / 3; ++t) {
+    const double *a = &mesh.xyz[3 * mesh.triangles[3 * t]], *b = &mesh.xyz[3 * mesh.triangles[3 * t + 1]],
+                 *c = &mesh.xyz[3 * mesh.triangles[3 * t + 2]];
+    const double u[3] = {b[0] - a[0], b[1] - a[1], b[2] - a[2]}, v[3] = {c[0] - a[0], c[1] - a[1], c[2] - a[2]};
+    const double n[3] = {u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]};
+    area += .5 * std::sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
+  }
+  return area;
+}
+
+// The filtered MAT of a plate of 10 by 6 stops half a thickness short of its
+// edges. Extended in its plane, cut by the skin, it is the whole mid-plane,
+// of area 60; a ribbon along its boundary, cut by the skin, gives the same
+// area.
+void plateIsExtendedToItsEdges()
+{
+  gmsh::clear();
+  gmsh::model::add("plate");
+  gmsh::model::occ::addBox(0, 0, 0, 10, 6, 1);
+  gmsh::model::occ::synchronize();
+  gmsh::option::setNumber("Mesh.MeshSizeMin", 0.25);
+  gmsh::option::setNumber("Mesh.MeshSizeMax", 0.25);
+  gmsh::model::mesh::generate(2);
+  Options options;
+  options.thickness = 1.;
+  options.wingBranches = true;
+  options.collapseThreshold = 0.;
+  Result result;
+  std::string error;
+  check(computeCurrent(options, result, error), "pipeline failed: " + error);
+  const std::vector<BranchPlane> planes = branchPlanes(result.filtered);
+  check(planes.size() == 1 && planes[0].deviation < 1.e-6 && std::abs(planes[0].area - 45.) < 2.,
+        "the filtered MAT of a plate is one flat branch, half a thickness short of the edges");
+  PlaneExtension inPlane;
+  check(extendBranchInPlane(result.filtered, result.skin, planes[0], .1, .25, 2., inPlane, error),
+        "extension in the plane failed: " + error);
+  check(!inPlane.reachesFrame && inPlane.keptFragments == 1 && std::abs(inPlane.addedArea - 60.) < 1.e-6 &&
+          std::abs(areaOf(inPlane.result) - 60.) < 1.e-6,
+        "the plate extended in its plane must be its whole mid-plane");
+  Ribbon ribbon;
+  check(branchRibbon(result.filtered, planes[0].branch, 2., 4, ribbon, error), "ribbon failed: " + error);
+  check(ribbon.loops == 1 && ribbon.freeEdges == ribbon.boundaryEdges && ribbon.freeEdges > 0,
+        "the boundary of the MAT of a plate is one free loop");
+  PlaneExtension byRibbon;
+  check(extendBranchByRibbon(result.filtered, result.skin, planes[0].branch, ribbon, byRibbon, error),
+        "extension by a ribbon failed: " + error);
+  check(std::abs(areaOf(byRibbon.result) - 60.) < .3,
+        "the plate extended by a ribbon must reach its edges");
+}
 } // namespace
 
 int main()
@@ -225,8 +279,9 @@ int main()
     gmsh::option::setNumber("General.NumThreads", 1);
     constructionCurveDoesNotChangeTheMat();
     sessionRunsTheStagesOneAtATime();
+    plateIsExtendedToItsEdges();
     gmsh::finalize();
-    std::cout << "MatSkinSites: 5 tests passed\n";
+    std::cout << "MatSkinSites: 6 tests passed\n";
     return 0;
   }
   catch(const std::exception &e) {

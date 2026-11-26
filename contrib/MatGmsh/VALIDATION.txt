@@ -659,3 +659,46 @@ are 176 degrees or more on its mid-sheets. In the tool window, with the box
 ticked, a new angle filters again in about 0.9 s and the view "MAT branch
 angle" shows these angles; checked by calling the callbacks of the widgets,
 not with a mouse.
+
+Extension branch by branch, 26 November 2026
+--------------------------------------------
+
+Filtered MAT with whole wing branches and threshold 0, skin at a tenth of the
+thickness, then every flat branch (95% of its area within a tenth of the
+thickness of its plane) extended in its plane, largest first, and the others
+by ribbons of twice the thickness; the result scored alone, without walls, by
+the evaluator of the tree (macOS, one thread). Ten cases of levels 1 to 3,
+with their verdict with the walls:
+
+  Case                 Walls     Branch by branch   Missing  Off truth  Seconds
+  plate_hole_r10       perfect   perfect               0.00       0.00      0.6
+  x_junction_r0        good      perfect               0.00       0.00      1.7
+  t_junction_h20_r2    review    perfect               0.00       0.00      1.1
+  corner_joint_r0      review    perfect               0.01       0.00      1.8
+  partial_rib_r2       review    review                0.00       1.74      2.3
+  ribbed_plate_2_r2    review    review                0.00      14.35      3.9
+  bracket              review    review                7.41      16.71     18.3
+  channel_gusset_r2    review    review               15.24      26.41      2.5
+  t_junction_h40_r5    review    review               23.06      29.82      2.0
+  waffle_3_r2          review    review               43.83     105.98      7.9
+
+plate_60x40 and t_junction_h20_r0 are perfect too (planes only: the plate is
+its whole mid-plane, of area 2400; the two halves of the flange become one
+face of 4800 and the web one of 1200, each in 0.1 to 0.3 s). Seconds are the
+sum of the extensions of the case, not the MAT. Where it stays in review: the
+area off the truth grows in bracket, channel_gusset_r2, t_junction_h40_r5 and
+waffle_3_r2; in partial_rib_r2 it is 3.70 t^2 without the reach and 1.74 with
+it. The sheets next to fillets of radius 5 are not flat within the tolerance
+and get ribbons only, which do not correct junctions. On corner_joint_r0 the
+result has two small holes (Euler characteristic -1 for 1, two more boundary
+loops, shorter than the thickness).
+
+Doghouse.stp through the tool window (thickness 1.35, skin 0.4, calling the
+callbacks of the widgets): 8 branches, 7 flat; Extend all takes 3 s. The base
+goes from 2273 to 2615 mm^2 in its plane, the six ribs from 72-82 to 130-150
+mm^2 (372-383 before the reach of 2.7; two ribs lying in one plane become one
+branch), and the curved branch of the walls and the roof gets 140 mm^2 from a
+ribbon along 909 of its 1564 boundary edges, part of which reaches the end of
+the ribbon without meeting the skin. No truth: these are areas, not scores.
+mat_native_skin_sites has a sixth test: a plate of 10 by 6 extended in its
+plane has area 60 to 1e-6, and by a ribbon to 0.3.

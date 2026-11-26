@@ -163,6 +163,83 @@ GMSH_API bool writeMesh(const Mesh &mesh, const std::string &filename,
 GMSH_API bool writeReport(const Result &result, const Options &options,
                  const std::string &filename, std::string &error);
 
+// A branch of a MAT mesh (the triangles with one value of Mesh::branch) and
+// its least-squares plane: area, the distance to the plane below which 95% of
+// its area lies, and the largest one.
+struct BranchPlane {
+  int branch = -1;
+  std::size_t triangles = 0;
+  double area = 0.;
+  double origin[3] = {0., 0., 0.}, normal[3] = {0., 0., 1.};
+  double deviation = 0., maxDeviation = 0.;
+};
+
+// The branches of the mesh, largest first.
+GMSH_API std::vector<BranchPlane> branchPlanes(const Mesh &mesh);
+
+struct PlaneExtension {
+  // The rectangle of the plane around the skin, cut by the skin and by the
+  // other branches: Mesh::branch is 0 on the fragments kept, then 1, 2... by
+  // decreasing area on the others.
+  Mesh plane;
+  // The MAT with the branch replaced by the kept fragments, under the same
+  // branch number, and without the branches in `merged`.
+  Mesh result;
+  // The other branches that lay in the plane inside a kept fragment.
+  std::vector<int> merged;
+  std::size_t cutters = 0, fragments = 0, keptFragments = 0, addedTriangles = 0;
+  // the spacing of the grid the kept fragments are meshed with, 0 if they are
+  // made of the triangles of the cut of two large triangles
+  double keptArea = 0., gridSize = 0., seconds = 0.;
+  // the area of the triangles that replace the branch (less than keptArea if
+  // the fragments go beyond the reach)
+  double addedArea = 0.;
+  // A kept fragment reaches the rectangle: the skin does not close it.
+  bool reachesFrame = false;
+};
+
+// Extends a branch in its plane: a rectangle of the plane around the whole
+// skin is cut by the skin and by the triangles of the other branches that
+// reach the plane (those lying in it, within the tolerance, excepted), and the
+// fragments that hold a triangle of the branch replace it. Nothing else is
+// changed and the result is not made conforming with the other branches. If
+// size is positive the kept fragments are meshed with a grid of that spacing
+// (larger for a fragment more than 400 times as long), cut the same way. If
+// reach is positive, only the part of the kept fragments about that close to
+// the branch (and to the branches merged with it) replaces it: a fragment
+// goes on inside the walls the branch stands on.
+GMSH_API bool extendBranchInPlane(const Mesh &mesh, const Mesh &skin, const BranchPlane &plane,
+                                  double tolerance, double size, double reach,
+                                  PlaneExtension &out, std::string &error);
+
+// A ribbon along the free boundary of a branch (its edges that no other
+// triangle of the mesh shares): u is the length along the boundary and v the
+// distance from it, in the direction tangent to the branch and normal to the
+// boundary (tangent of the boundary x smoothed normal of the branch). The
+// ribbon is not cut by anything: it is what would be added if nothing stood in
+// its way.
+struct Ribbon {
+  Mesh mesh;                // Mesh::branch is the number of the boundary chain
+  std::vector<double> u, v; // one per vertex of mesh
+  std::vector<int> source;  // the vertex of the MAT a vertex with v = 0 is, else -1
+  std::size_t boundaryEdges = 0, freeEdges = 0, loops = 0;
+  double boundaryLength = 0.;
+};
+
+// With original (the MAT before any of its branches was extended, whose
+// vertices keep their numbers in mesh), an edge that was shared there is not
+// free, even if the branch on its other side has been replaced since.
+GMSH_API bool branchRibbon(const Mesh &mesh, int branch, double length, int layers, Ribbon &out,
+                           std::string &error, const Mesh *original = nullptr);
+
+// Cuts the ribbon by the skin, by the other branches and where it crosses
+// itself, and adds to the branch the fragments that have an edge on its
+// boundary. In `out`, plane holds the pieces of the ribbon (0 kept, 1 not),
+// result the MAT with the kept pieces added; reachesFrame says that a kept
+// fragment holds the far end of the ribbon: it met nothing on its way.
+GMSH_API bool extendBranchByRibbon(const Mesh &mesh, const Mesh &skin, int branch,
+                                   const Ribbon &ribbon, PlaneExtension &out, std::string &error);
+
 // Optional stages propose changes to a copy. On failure their input remains
 // usable. A partial extension is reported explicitly for every original front.
 GMSH_API bool extend(const Mesh &input, const Mesh &skin, const Options &options,

@@ -18,6 +18,7 @@
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Choice.H>
+#include <FL/Fl_Hold_Browser.H>
 #include <FL/Fl_Value_Input.H>
 
 // The mid-surface of a thin-walled solid, one stage of the pipeline of
@@ -27,7 +28,8 @@
 //   2. medial axis the raw MAT, with its certificate
 //   3. filter      the MAT without its wings and its thin sheets
 //   4. projection  (optional) onto the local mid-surface
-//   5. extension   of the free boundaries to the skin
+//   5. extension   branch by branch: a flat branch in its plane, any branch
+//                  by a ribbon along its free boundary
 //
 // Each stage has its parameters, a button that runs it, a line that says what
 // it gave and a view of its result. A button also runs the earlier stages
@@ -37,11 +39,17 @@
 class midsurfacerWindow {
 public:
   enum { Skin, Raw, Filter, Projection, Extension, NumStages };
-  // one more view: the raw MAT colored by the angle of its branches
-  enum { Angles = NumStages, NumViews };
+  // more views: the raw MAT colored by the angle of its branches, the branch
+  // selected, and what would extend it (the fragments of its plane, or its
+  // ribbon before it is cut)
+  enum { Angles = NumStages, Selected, Preview, NumViews };
   Fl_Window *win;
   Fl_Value_Input *thickness, *meshSize, *threshold, *length, *layers;
   Fl_Choice *method;
+  // the branches of the MAT being extended, and how the selected one is
+  Fl_Hold_Browser *browser;
+  Fl_Choice *how;
+  Fl_Button *preview, *all;
   // the filter removes the wing branches of the raw MAT whole: the branches
   // that touch its free boundary and are seen under less than the angle
   Fl_Check_Button *branches, *angles;
@@ -62,6 +70,13 @@ public:
   // shows the raw MAT colored by the angle of its branches, or the filtered
   // MAT again, as the box says
   void showAngles();
+  // the branch chosen in the list is shown alone
+  void selectBranch();
+  // shows what would extend the selected branch, without changing the MAT
+  void previewBranch();
+  // extends the selected branch, or all of them (the flat ones in their
+  // plane, largest first, then the others by ribbons)
+  void extendBranch(bool all);
 
 private:
   struct State;
@@ -69,6 +84,8 @@ private:
   bool _skin();
   void _say(int stage, const std::string &text, const std::string &more = "");
   void _view(int stage);
+  void _listBranches(bool reset);
+  bool _extend(int branch, bool planar, bool apply, std::string &what);
   void _forget(int fromStage);
   void _showOnly(int stage);
 };

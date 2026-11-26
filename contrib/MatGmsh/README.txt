@@ -251,8 +251,8 @@ tools. It runs the pipeline one stage at a time, on the current model:
                   filter, with the legacy method)
   4. Projection   Project: optional; a projection that fails its checks
                   changes nothing
-  5. Extension    Extend: of the projected MAT if there is one, of the
-                  filtered one otherwise
+  5. Extension    branch by branch (see below): the list of the branches,
+                  Preview, Extend and Extend all
 
 The Filter stage has, besides the threshold, the box "Remove whole wing
 branches" with its angle, and the box "Show the angle of the branches". Once
@@ -275,6 +275,41 @@ Filter again does not compute the tetrahedrization again (Doghouse, thickness
 4, mesh size 0.4, one thread: 6.1 s for the raw MAT, then 0.8 s for each
 filter). It is computed again when asked for, and when the model, its surface
 mesh or the method has changed.
+
+Extension branch by branch
+--------------------------
+
+A branch is the set of triangles of a MAT mesh with one sheet number. The
+window lists the branches of the filtered MAT, largest first, with their area
+and their flatness (the distance to the least-squares plane below which 95% of
+the area lies; "flat" under a tenth of the thickness). A branch chosen in the
+list is shown alone. It is extended in one of two ways (MatBranchPlane.cpp,
+declared in MatPipeline.h):
+
+In its plane (extendBranchInPlane), for a flat branch. A rectangle of the
+plane around the whole skin is cut, by an exact co-refinement, by the
+triangles of the skin and of the other branches that reach the plane; the
+fragments that hold a triangle of the branch replace the branch, together with
+the other branches lying in the same plane inside them (the two halves of a
+flange under a web). The fragments are found with two triangles, then meshed
+with a grid of a quarter of the thickness cut the same way. A fragment goes on
+inside the walls the branch stands on, along them: only what is within the
+reach of the branch is kept. Preview shows the fragments (0 on those kept)
+without changing anything.
+
+By a ribbon (branchRibbon, extendBranchByRibbon), for any branch. The ribbon
+starts from the free boundary of the branch (the edges that no other triangle
+shares, nor shared in the MAT before its branches were extended) and goes, for
+the reach, in the direction tangent to the branch and normal to the boundary:
+u along the boundary, v away from it. Preview shows it before it is cut,
+colored by v. Extend cuts it by the skin, by the other branches and where it
+crosses itself, and adds to the branch the pieces that have an edge on its
+boundary.
+
+Extend all does the flat branches in their plane, largest first, then the
+others by ribbons. The result is the view "MAT extended"; it is not made
+conforming along the junctions, and the earlier front-by-front extension
+(--stage extended of gmshMat) is no longer in the window.
 
 Stage by stage in C++
 ---------------------
