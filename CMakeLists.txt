@@ -655,7 +655,10 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/fltk AND ENABLE_FLTK)
     execute_process(COMMAND ${FLTK_CONFIG_SCRIPT} --api-version
                     OUTPUT_VARIABLE FLTK_VERSION)
     string(STRIP "${FLTK_VERSION}" FLTK_VERSION)
-    if(FLTK_VERSION VERSION_LESS "1.4.0")
+    if(NOT FLTK_VERSION)
+      # e.g. a shell script that CMake cannot run on Windows (MSYS2)
+      message(STATUS "Could not run ${FLTK_CONFIG_SCRIPT}: trying FindFLTK")
+    elseif(FLTK_VERSION VERSION_LESS "1.4.0")
       message(FATAL_ERROR "Gmsh requires FLTK 1.4.0 or higher (found FLTK "
         "${FLTK_VERSION}); set ENABLE_FLTK=0 to build without the GUI")
     else()
