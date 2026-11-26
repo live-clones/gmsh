@@ -92,6 +92,7 @@
 #if defined(HAVE_FLTK)
 #include "FlGui.h"
 #include "openglWindow.h"
+#include "onelabActions.h"
 #endif
 
 #if defined(HAVE_PARSER)
@@ -9336,6 +9337,10 @@ GMSH_API void gmsh::fltk::run(const std::string &optionFileName)
   if(!_checkInit()) return;
 #if defined(HAVE_FLTK)
   _createFltk();
+  // launch the solver of a .pro file opened or merged before, as the
+  // standalone graphical user interface does
+  if(CTX::instance()->launchSolverAtStartup >= 0)
+    selectSolver(CTX::instance()->launchSolverAtStartup);
   FlGui::instance()->run(optionFileName); // this calls draw() once
 #else
   Msg::Error("Fltk not available");
