@@ -33,6 +33,8 @@
 #include <FL/Fl_Box.H>
 #include <FL/fl_ask.H>
 #include <FL/Fl_Menu_Button.H>
+#include <FL/Fl_Tooltip.H>
+#include <FL/fl_draw.H>
 #include "FlGui.h"
 #include "Shortcuts.h"
 #include "mainWindow.h"
@@ -597,6 +599,43 @@ public:
   }
 };
 
+// the tooltip of a control of the status bar, entered when the pointer enters
+// it (FLTK then keeps it). FLTK puts a tooltip under its control and only keeps
+// it on the whole screen, which on macOS includes the Dock: in a window as high
+// as the screen, the tooltip of the bar falls on the Dock, macOS moves it onto
+// the pointer, which hides it, and it flashes. So it goes above the control
+// when it does not fit under it in the work area of the screen
+static void enterStatusTooltip(Fl_Widget *w)
+{
+  const char *tip = w->tooltip();
+  if(!tip || !*tip || !Fl_Tooltip::enabled()) return;
+  // the top of the control on the screen, as FLTK adds it up
+  int top = 0;
+  for(Fl_Widget *p = w; p; p = p->window()) top += p->y();
+  fl_font(Fl_Tooltip::font(), Fl_Tooltip::size());
+  int tw = Fl_Tooltip::wrap_width(), th = 0;
+  fl_measure(tip, tw, th, 0);
+  th += 2 * Fl_Tooltip::margin_height();
+  int sx, sy, sw, sh;
+  Fl::screen_work_area(sx, sy, sw, sh, Fl::event_x_root(), Fl::event_y_root());
+  // (an area of no height: FLTK puts the tooltip 2 pixels under it)
+  int y = w->h();
+  if(top + y + 2 + th > sy + sh) y = -th - 4;
+  Fl_Tooltip::enter_area(w, 0, y, w->w(), 0, tip);
+}
+
+// a button of the status bar, its tooltip kept on the screen
+class statusBarButton : public Fl_Button {
+public:
+  statusBarButton(int x, int y, int w, int h) : Fl_Button(x, y, w, h) {}
+  int handle(int event)
+  {
+    int ret = Fl_Button::handle(event);
+    if(event == FL_ENTER) enterStatusTooltip(this);
+    return ret;
+  }
+};
+
 // the message of the status bar, a progress bar while something runs; a click
 // on it shows or hides the message console, and it is tinted under the
 // pointer like the other controls of the bar (the theme does not take a
@@ -616,7 +655,7 @@ public:
   int handle(int event)
   {
     switch(event) {
-    case FL_ENTER:
+    case FL_ENTER: redraw(); enterStatusTooltip(this); return 1;
     case FL_LEAVE: redraw(); return 1;
     case FL_PUSH:
       if(FlGui::available()) {
@@ -872,7 +911,8 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
       // (a label of several letters, "1:1", takes a wider button)
       bool wide = item.label.size() > 1;
       int bw = wide ? 2 * FL_NORMAL_SIZE : sw;
-      Fl_Button *b = new Fl_Button(x, mh + glheight + mheight + 2, bw, sht);
+      Fl_Button *b =
+        new statusBarButton(x, mh + glheight + mheight + 2, bw, sht);
       b->copy_label(item.label.c_str());
       b->callback(status_item_cb, (void *)&item);
       b->copy_tooltip(statusTooltip(item).c_str());
