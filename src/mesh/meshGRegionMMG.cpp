@@ -248,12 +248,14 @@ static void updateSizes(GRegion *gr, MMG5_pMesh mmg, MMG5_pSol sol,
   MMG3D_Get_meshSize(mmg, &np, nullptr, nullptr, nullptr, nullptr, nullptr);
   for(int k = 1; k <= np; k++) {
     double cx, cy, cz;
-    if(MMG3D_Get_vertex(mmg, &cx, &cy, &cz, nullptr, nullptr, nullptr) != 1)
+    int ref = 0;
+    if(MMG3D_Get_vertex(mmg, &cx, &cy, &cz, &ref, nullptr, nullptr) != 1)
       Msg::Error("Mmg3d: unable to get vertex %d", k);
 
     SMetric3 m = BGM_MeshMetric(gr, 0, 0, cx, cy, cz);
 
-    auto it = mmg2gmsh.find(k);
+    // (the reference of a vertex is the number of its Gmsh node)
+    auto it = mmg2gmsh.find(ref);
 
     if(it != mmg2gmsh.end() && Extend2dMeshIn3dVolumes()) {
       auto itv = LCS.find(it->second);
@@ -359,6 +361,45 @@ void refineMeshMMG(GRegion *gr)
                  MMG5_ARG_end);
 }
 
+// The coordinates of the np vertices of the Mmg mesh (numbered from 1), and
+// the boundary node of mmg2gmsh each one is, or nullptr. Unlike
+// tetrahedra/triangles, Mmg vertex refs here are the *original gmsh vertex
+// numbers* (set in gmsh2MMGGroup), not a region tag, so the region of a newly
+// inserted interior point can only be determined from the region-tagged
+// tetrahedra that use it.
+static void getVerticesGroup(MMG5_pMesh mmg, int np,
+                             std::map<int, MVertex *> &mmg2gmsh,
+                             std::vector<std::array<double, 3>> &xyz,
+                             std::vector<MVertex *> &nodes)
+{
+  xyz.assign(np + 1, {0., 0., 0.});
+  nodes.assign(np + 1, nullptr);
+  for(int k = 1; k <= np; k++) {
+    int ref;
+    if(MMG3D_Get_vertex(mmg, &xyz[k][0], &xyz[k][1], &xyz[k][2], &ref,
+                        nullptr, nullptr) != 1) {
+      Msg::Error("Mmg3d: unable to get vertex %d", k);
+      continue;
+    }
+    auto it = mmg2gmsh.find(ref);
+    if(it != mmg2gmsh.end()) nodes[k] = it->second;
+  }
+
+  // Mmg can overwrite a boundary vertex's smuggled ref (the original gmsh
+  // vertex number) with the region reference of an adjacent tetrahedron,
+  // for points sitting on an internal multi-material interface -- even
+  // though their position is preserved exactly. Fall back to matching by
+  // coordinate for anything the ref-based lookup above missed.
+  std::map<std::array<double, 3>, MVertex *> coordToGmsh;
+  for(auto &p : mmg2gmsh)
+    coordToGmsh[{p.second->x(), p.second->y(), p.second->z()}] = p.second;
+  for(int k = 1; k <= np; k++) {
+    if(nodes[k]) continue;
+    auto cit = coordToGmsh.find(xyz[k]);
+    if(cit != coordToGmsh.end()) nodes[k] = cit->second;
+  }
+}
+
 static void MMG2gmshGroup(std::vector<GRegion *> &regions, MMG5_pMesh mmg,
                           std::map<int, MVertex *> &mmg2gmsh)
 {
@@ -371,45 +412,12 @@ static void MMG2gmshGroup(std::vector<GRegion *> &regions, MMG5_pMesh mmg,
   for(GRegion *gr : regions) tagToRegion[gr->tag()] = gr;
 
   // Read back all vertex coordinates first. Vertex creation is deferred to
-  // the tetrahedron loop below: unlike tetrahedra/triangles, Mmg vertex refs
-  // here are the *original gmsh vertex numbers* (set in gmsh2MMGGroup), not
-  // a region tag, so a newly-inserted interior point's owning region can
-  // only be determined from the region-tagged tetrahedron that first uses
-  // it (same approach as Hxt2Gmsh in meshGRegionHxt.cpp).
-  std::vector<double> vx(np + 1), vy(np + 1), vz(np + 1);
-  std::vector<int> vref(np + 1);
-  for(int k = 1; k <= np; k++) {
-    double cx, cy, cz;
-    int ref;
-    if(MMG3D_Get_vertex(mmg, &cx, &cy, &cz, &ref, nullptr, nullptr) != 1) {
-      Msg::Error("Mmg3d: unable to get vertex %d", k);
-      continue;
-    }
-    vx[k] = cx;
-    vy[k] = cy;
-    vz[k] = cz;
-    vref[k] = ref;
-  }
-
-  std::map<int, MVertex *> kToMVertex;
-  for(int k = 1; k <= np; k++) {
-    auto it = mmg2gmsh.find(vref[k]);
-    if(it != mmg2gmsh.end()) kToMVertex[k] = it->second;
-  }
-
-  // Mmg can overwrite a boundary vertex's smuggled ref (the original gmsh
-  // vertex number) with the region reference of an adjacent tetrahedron,
-  // for points sitting on an internal multi-material interface -- even
-  // though their position is preserved exactly. Fall back to matching by
-  // coordinate for anything the ref-based lookup above missed.
-  std::map<std::array<double, 3>, MVertex *> coordToGmsh;
-  for(auto &p : mmg2gmsh)
-    coordToGmsh[{p.second->x(), p.second->y(), p.second->z()}] = p.second;
-  for(int k = 1; k <= np; k++) {
-    if(kToMVertex.count(k)) continue;
-    auto cit = coordToGmsh.find({vx[k], vy[k], vz[k]});
-    if(cit != coordToGmsh.end()) kToMVertex[k] = cit->second;
-  }
+  // the tetrahedron loop below, which gives a new point the region of the
+  // first tetrahedron using it (same approach as Hxt2Gmsh in
+  // meshGRegionHxt.cpp).
+  std::vector<std::array<double, 3>> xyz;
+  std::vector<MVertex *> kToMVertex;
+  getVerticesGroup(mmg, np, mmg2gmsh, xyz, kToMVertex);
 
   // A vertex not recognized above as an existing boundary/interface vertex
   // gets created fresh, attached to whichever region's tetrahedron uses it
@@ -453,12 +461,10 @@ static void MMG2gmshGroup(std::vector<GRegion *> &regions, MMG5_pMesh mmg,
 
     MVertex *v[4];
     for(int j = 0; j < 4; j++) {
-      auto vit = kToMVertex.find(vmmg[j]);
-      if(vit != kToMVertex.end()) {
-        v[j] = vit->second;
-      }
+      if(kToMVertex[vmmg[j]]) { v[j] = kToMVertex[vmmg[j]]; }
       else {
-        MVertex *nv = new MVertex(vx[vmmg[j]], vy[vmmg[j]], vz[vmmg[j]], gr);
+        const std::array<double, 3> &p = xyz[vmmg[j]];
+        MVertex *nv = new MVertex(p[0], p[1], p[2], gr);
         gr->mesh_vertices.push_back(nv);
         kToMVertex[vmmg[j]] = nv;
         v[j] = nv;
@@ -648,27 +654,50 @@ static void updateSizesGroup(std::vector<GRegion *> &regions,
     }
   }
 
-  int np;
+  int np, ne;
 
-  MMG3D_Get_meshSize(mmg, &np, nullptr, nullptr, nullptr, nullptr, nullptr);
+  MMG3D_Get_meshSize(mmg, &np, &ne, nullptr, nullptr, nullptr, nullptr);
+  std::vector<std::array<double, 3>> xyz;
+  std::vector<MVertex *> nodes;
+  getVerticesGroup(mmg, np, mmg2gmsh, xyz, nodes);
+
+  // the region of each vertex, from a tetrahedron using it, for the sizes
+  // that depend on the region (a Restrict field, a size callback)
+  std::map<int, GRegion *> tagToRegion;
+  for(GRegion *gr : regions) tagToRegion[gr->tag()] = gr;
+  std::vector<GRegion *> vertexRegion(np + 1, regions[0]);
+  for(int k = 1; k <= ne; k++) {
+    int v[4], ref;
+    if(MMG3D_Get_tetrahedron(mmg, &v[0], &v[1], &v[2], &v[3], &ref,
+                             nullptr) != 1) {
+      Msg::Error("Mmg3d: unable to get tetrahedron %d", k);
+      continue;
+    }
+    auto rit = tagToRegion.find(ref);
+    if(rit == tagToRegion.end()) continue;
+    for(int j = 0; j < 4; j++)
+      if(v[j] >= 1 && v[j] <= np) vertexRegion[v[j]] = rit->second;
+  }
+
   for(int k = 1; k <= np; k++) {
-    double cx, cy, cz;
-    if(MMG3D_Get_vertex(mmg, &cx, &cy, &cz, nullptr, nullptr, nullptr) != 1)
-      Msg::Error("Mmg3d: unable to get vertex %d", k);
+    // a boundary node is evaluated on its own entity, as in gmsh2MMGGroup
+    MVertex *v = nodes[k];
+    SMetric3 m;
+    if(v && v->onWhat()) {
+      double U = 0, V = 0;
+      if(v->onWhat()->dim() == 1) { v->getParameter(0, U); }
+      else if(v->onWhat()->dim() == 2) {
+        v->getParameter(0, U);
+        v->getParameter(1, V);
+      }
+      m = BGM_MeshMetric(v->onWhat(), U, V, v->x(), v->y(), v->z());
+    }
+    else
+      m = BGM_MeshMetric(vertexRegion[k], 0, 0, xyz[k][0], xyz[k][1],
+                         xyz[k][2]);
 
-    // There is no cheap way, mid-iteration, to know which of the group's
-    // regions a newly-inserted interior point falls into (see
-    // MMG2gmshGroup): query the background field through the first region
-    // of the group. This only matters for a field restricted to a subset of
-    // the group's regions (e.g. the "Restrict" field), which does not
-    // preserve anisotropy correctly yet regardless of this combined-call
-    // path.
-    SMetric3 m = BGM_MeshMetric(regions[0], 0, 0, cx, cy, cz);
-
-    auto it = mmg2gmsh.find(k);
-
-    if(it != mmg2gmsh.end() && Extend2dMeshIn3dVolumes()) {
-      auto itv = LCS.find(it->second);
+    if(v && Extend2dMeshIn3dVolumes()) {
+      auto itv = LCS.find(v);
       if(itv != LCS.end()) {
         double LL = itv->second.first / itv->second.second;
         SMetric3 l4(1. / (LL * LL));
