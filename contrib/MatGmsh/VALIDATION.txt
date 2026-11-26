@@ -629,9 +629,18 @@ degrees):
   threshold only, thickness 4      4441         204        3904  1, 0
   whole branches, thickness 1.35   4558         223        4000  1, 0
   whole branches, thickness 4      4441         204        3904  1, 0
+  whole branches, threshold 0      4580         226        4019  1, 0
 
 With the thickness of the thin ribs (1.35) and whole branches, the wings of
 the thick walls are gone and 96 mm^2 more of the mid-sheets are kept than with
 the threshold of thickness 4. The option was checked on the Doghouse only,
 through gmshMat and through the tool window; its effect on the corpus verdicts
 is not measured, and it is off by default.
+
+With whole branches and a threshold of 0 the kept MAT is exactly the 17
+branches that are not wings (4580 mm^2): no polygon of a mid-sheet is removed,
+and the free boundary (4240 edges) follows the lines where the wings were
+attached. A positive threshold removes polygons of the mid-sheets along these
+lines, 22.6 mm^2 with thickness 1.35 and 138.7 mm^2 with thickness 4, here and
+there, which notches them; the tool window therefore sets the threshold to 0
+when the box is ticked.

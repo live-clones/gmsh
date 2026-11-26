@@ -128,7 +128,11 @@ under less than 135 degrees, is a wing: all its polygons are removed like the
 convex wings, whatever their erosion thickness, by the same collapses. The
 mid-sheet of two facing walls is seen under 180 degrees and is kept even when
 it has a free boundary (rounded edges). report.json records "branches",
-"wing_branches" and "branch_wing_polygons".
+"wing_branches" and "branch_wing_polygons". Use it with --collapse-threshold 0
+(the tool window does so when the box is ticked): the mid-sheets then end
+exactly on the lines where the wings were attached, whereas a positive
+threshold also removes polygons of the mid-sheets along these lines and
+notches them.
 
 The convexity of a CAD edge needs the material side of the skin. It is taken,
 shell by shell, from the interior tetrahedra, so closed cavities and

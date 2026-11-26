@@ -62,6 +62,21 @@ void countSkin(GModel *model, std::size_t &faces, std::size_t &meshed,
 void run_cb(Fl_Widget *w, void *data)
 { FlGui::instance()->midsurfacer->run((int)(intptr_t)data); }
 
+// With the wing branches removed whole the mid-sheets end on the lines where
+// the wings were attached, and a positive threshold would notch these lines:
+// ticking the box sets the threshold to 0, unticking it puts it back.
+void branches_cb(Fl_Widget *w, void *data)
+{
+  static double before = .21;
+  midsurfacerWindow *m = FlGui::instance()->midsurfacer;
+  if(m->branches->value()) {
+    if(m->threshold->value() > 0.) before = m->threshold->value();
+    m->threshold->value(0.);
+  }
+  else if(m->threshold->value() == 0.)
+    m->threshold->value(before);
+}
+
 void display_cb(Fl_Widget *w, void *data)
 { FlGui::instance()->midsurfacer->display((int)(intptr_t)data, true); }
 } // namespace
@@ -189,7 +204,11 @@ midsurfacerWindow::midsurfacerWindow(int deltaFontSize) : _state(new State)
     "A branch of the raw medial axis (polygons connected through edges of "
     "two polygons) that touches its free boundary and whose two contacts "
     "with the skin are mostly seen under less than 135 degrees is a wing: "
-    "it is removed whole, whatever the threshold and the thickness");
+    "it is removed whole, whatever the threshold and the thickness. The "
+    "threshold is then set to 0, so that the mid-sheets end on the lines "
+    "where the wings were attached; a positive threshold erodes them "
+    "further and notches these lines");
+  branches->callback(branches_cb);
   y += BH;
   action(Filter, "Filter",
          "Filter the medial axis; the raw medial axis is not computed again");
