@@ -15,6 +15,11 @@ Mesh.RandomSeed = 1;
 Mesh.SaveAll = 1;
 Mesh.SaveParametric = 1;
 
+// A curve may be meshed with a single edge: the defaults impose at least two
+// edges on a general curve and one per 60 degrees of a circle arc.
+Mesh.MinCurveNodes = 2;
+Mesh.MinCircleNodes = 2;
+
 // Flow: 0 = PACK, Blossom, cavity optimizer      run with   gmsh t_junction_t2_6.geo -2
 //       1 = Frontal-Delaunay, Q-Morph            run with   gmsh t_junction_t2_6.geo -
 //       2 = PACK, Q-Morph, cavity optimizer      run with   gmsh t_junction_t2_6.geo -2

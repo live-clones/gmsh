@@ -44,3 +44,8 @@ Mesh.Smoothing = 3;
 Mesh.SaveAll = 1;
 // Save node coordinates in the CAD curves' and surfaces' parameter spaces.
 Mesh.SaveParametric = 1;
+
+// A curve may be meshed with a single edge: the defaults impose at least two
+// edges on a general curve and one per 60 degrees of a circle arc.
+Mesh.MinCurveNodes = 2;
+Mesh.MinCircleNodes = 2;

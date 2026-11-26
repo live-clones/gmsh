@@ -21,6 +21,11 @@ Mesh.RandomSeed = 1;
 Mesh.SaveAll = 1;
 Mesh.SaveParametric = 1;
 
+// A curve may be meshed with a single edge: the defaults impose at least two
+// edges on a general curve and one per 60 degrees of a circle arc.
+Mesh.MinCurveNodes = 2;
+Mesh.MinCircleNodes = 2;
+
 Mesh.Algorithm = 9; // PACK
 Mesh.PackSizemapMethod = 3;
 Mesh.PackPatterns = 1;
