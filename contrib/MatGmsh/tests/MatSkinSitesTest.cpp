@@ -266,6 +266,59 @@ void plateIsExtendedToItsEdges()
   check(std::abs(areaOf(byRibbon.result) - 60.) < .3,
         "the plate extended by a ribbon must reach its edges");
 }
+// A rib that stands on a plate over a part of its length: in the plane of
+// the rib, the fragment around it goes on inside the plate, between its face
+// and its mid-surface, beyond the two ends of the rib. The end faces of the
+// rib are prolonged into the plate: the rib stops at its ends.
+void ribStopsAtItsEnds()
+{
+  gmsh::clear();
+  gmsh::model::add("rib");
+  const int plate = gmsh::model::occ::addBox(0, 0, 0, 20, 12, 1);
+  const int rib = gmsh::model::occ::addBox(6, 5.5, 1, 8, 1, 4);
+  gmsh::vectorpair fused;
+  std::vector<gmsh::vectorpair> map;
+  gmsh::model::occ::fuse({{3, plate}}, {{3, rib}}, fused, map);
+  gmsh::model::occ::synchronize();
+  gmsh::option::setNumber("Mesh.MeshSizeMin", 0.2);
+  gmsh::option::setNumber("Mesh.MeshSizeMax", 0.2);
+  gmsh::model::mesh::generate(2);
+  Options options;
+  options.thickness = 1.;
+  options.wingBranches = true;
+  options.collapseThreshold = 0.;
+  Result result;
+  std::string error;
+  check(computeCurrent(options, result, error), "pipeline failed: " + error);
+  Mesh work = result.filtered;
+  // the plate first, then the rib: the flat branch whose plane is across y
+  for(int pass = 0; pass < 2; ++pass) {
+    const BranchPlane *found = nullptr;
+    const std::vector<BranchPlane> planes = branchPlanes(work);
+    for(const BranchPlane &candidate : planes) {
+      if(candidate.deviation > .1) continue;
+      const double length = std::sqrt(candidate.normal[0] * candidate.normal[0] +
+                                      candidate.normal[1] * candidate.normal[1] +
+                                      candidate.normal[2] * candidate.normal[2]);
+      if(std::abs(candidate.normal[pass == 0 ? 2 : 1]) > .99 * length && (!found || candidate.area > found->area))
+        found = &candidate;
+    }
+    check(found != nullptr, pass == 0 ? "the plate must be a flat branch" : "the rib must be a flat branch");
+    PlaneExtension extension;
+    check(extendBranchInPlane(work, result.skin, *found, .1, .25, 2., extension, error),
+          "extension in the plane failed: " + error);
+    check(!extension.reachesFrame, "the skin must close the fragment");
+    if(pass == 0)
+      check(std::abs(extension.addedArea - 240.) < 1.e-6, "the plate must be its whole mid-plane");
+    else {
+      // 8 long, from the mid-surface of the plate to the top of the rib
+      check(extension.fences >= 2, "the two end faces of the rib must be prolonged into the plate");
+      check(std::abs(extension.addedArea - 36.) < .05,
+            "the rib must stop at its ends: area " + std::to_string(extension.addedArea) + " for 36");
+    }
+    work = extension.result;
+  }
+}
 } // namespace
 
 int main()
@@ -280,8 +333,9 @@ int main()
     constructionCurveDoesNotChangeTheMat();
     sessionRunsTheStagesOneAtATime();
     plateIsExtendedToItsEdges();
+    ribStopsAtItsEnds();
     gmsh::finalize();
-    std::cout << "MatSkinSites: 6 tests passed\n";
+    std::cout << "MatSkinSites: 7 tests passed\n";
     return 0;
   }
   catch(const std::exception &e) {

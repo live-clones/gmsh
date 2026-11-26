@@ -705,3 +705,87 @@ ribbon along 909 of its 1564 boundary edges, part of which reaches the end of
 the ribbon without meeting the skin. No truth: these are areas, not scores.
 mat_native_skin_sites has a sixth test: a plate of 10 by 6 extended in its
 plane has area 60 to 1e-6, and by a ribbon to 0.3.
+
+Extension that stops where the branch stops, 26 November 2026
+-------------------------------------------------------------
+
+Same protocol as the section above (filtered MAT with whole wing branches and
+threshold 0, thickness 4, skin 0.4, flat branches in their plane, largest
+first, then ribbons; scored alone by the evaluator of the tree, macOS, one
+thread), with the faces of the part prolonged at the reentrant corners of the
+section (planes) and the rows of the ribbons stopped (see README.txt). "Before"
+is the same build with the fences off, for bracket and waffle_3_r2, and the
+table of the section above for the others:
+
+  Case                 Before                    After
+                       missing  off truth        missing  off truth  verdict
+  plate_60x40             0.00       0.00           0.00       0.00  perfect
+  t_junction_h20_r0       0.00       0.00           0.00       0.00  perfect
+  plate_hole_r10          0.00       0.00           0.00       0.00  perfect
+  x_junction_r0           0.00       0.00           0.00       0.00  perfect
+  t_junction_h20_r2       0.00       0.00           0.00       0.00  perfect
+  corner_joint_r0         0.01       0.00           0.01       0.00  perfect
+  partial_rib_r2          0.00       1.74           0.00       0.00  perfect
+  ribbed_plate_2_r2       0.00      14.35           0.00      14.33  review
+  bracket                 7.41      16.71          12.58       8.49  review
+  channel_gusset_r2      15.24      26.41          15.25      26.42  review
+  t_junction_h40_r5      23.06      29.82          23.06      29.81  review
+  waffle_3_r2            43.85     105.86          44.08      86.27  review
+
+partial_rib_r2 becomes perfect: the rib has area 1500.0 for 1500 (1581.7
+before the reach and 1541.7 after it, without the fences); two corners, two
+fences. In bracket the gusset loses the strips inside the two flanges beyond
+its ends (area off the truth 16.71 to 8.49 t^2) and what it held under the
+junction with them: the sheet of the flanges under the gusset is the junction
+with fillets, one unit above their mid-plane, and without the fences the
+fragment went around its end and covered the whole thickness of the flange
+under the gusset; missing area 7.41 to 12.58 t^2. No verdict is lost; the
+cases in review stay there for the reasons of the section above. The fences
+add 0.0 to 0.4 s to a branch (waffle_3_r2: 0.55 s for a plate, 0.7 to 1.2 s
+for a rib with 8 fences).
+
+Doghouse.stp through the tool window (thickness 4, skin 0.4, defaults of the
+window, calling the callbacks of the widgets): 8 branches, 7 flat. Same build
+with the fences off and on, areas in mm^2:
+
+  Branches                      Before the extension   Fences off    Fences on
+  two ribs of one plane (2, 5)         81.6 and 81.6   369.7 (one)   102.5 each
+  two ribs of one plane (3, 4)         72.3 and 72.3   358.6 (one)    94.7 each
+  rib 1                                         74.5         186.1         96.7
+  rib 6                                         74.4         159.2         96.7
+
+With the fences off the two ribs of a plane are joined into one branch
+through the roof, and every rib has strips inside the base beyond its feet,
+limited by the reach of 8 only. With them the section of the skin by the
+plane of a pair of ribs has 8 reentrant corners and gives 9 or 12 fences (4
+corners and 6 fences for a rib alone in its plane), among them the end of the
+low ridge that a rib leaves on the roof, 0.8 high; each rib is one fragment,
+that the reach does not shorten any more. The ribbon of the curved branch
+(walls and roof) adds 130.7 mm^2 for 151.1: two rows that started inside the
+base, at the foot of the open ends of the wall, are stopped by the end face of
+the wall prolonged, and no piece reaches the end of the ribbon any more.
+Extend all: 3.6 s for 2.6 s. No truth for this part: areas and pictures, not
+scores.
+
+A flaw found on the way: a piece of the cut plane whose three vertices became
+the same point after rounding held every point (the test of a point in a
+triangle is not strict), so all the triangles of a branch could be located in
+the fragment of that piece, here the one that touches the rectangle ("the skin
+does not close the fragment"). Pieces without area are now skipped when a
+point is located.
+
+Save... on the same run: the filtered MAT gives 8 surfaces, 506 edges on the
+skin, 3732 inside, 1695 at junctions and 2 along another branch; after Extend
+all, 5069 on the skin, 68 inside, none at junctions and 3287 along another
+branch (the junctions, not conforming after the extension). Gmsh reads both
+files back with these physical groups.
+
+mat_native_skin_sites has a seventh test: a rib of 8 by 4 on a plate of 20 by
+12, thickness 1, extended in its plane after the plate has area 36 to 0.05
+(8 long, from the mid-surface of the plate to the top), with at least two
+fences. 12 of 12 mat_native tests pass.
+
+Not checked: the corpus beyond these twelve cases; parts where a tall wall
+ends on a lower one with their faces flush (the third condition of the fences
+and the last one of the rows are there for that case, no test case has it);
+the graphical interface with a mouse.

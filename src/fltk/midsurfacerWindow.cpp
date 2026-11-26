@@ -33,6 +33,7 @@
 #include "PViewDataList.h"
 #include "PViewOptions.h"
 #include "MatPipeline.h"
+#include "fileDialogs.h"
 
 namespace {
 const char *const stageName[midsurfacerWindow::NumStages] = {
@@ -99,6 +100,9 @@ void extend_cb(Fl_Widget *w, void *data)
 
 void undo_cb(Fl_Widget *w, void *data)
 { FlGui::instance()->midsurfacer->undoExtension(data != nullptr); }
+
+void save_cb(Fl_Widget *w, void *data)
+{ FlGui::instance()->midsurfacer->save(); }
 
 // a view of a mesh, with one value per triangle
 PView *meshView(const matgmsh_native::Mesh &mesh, const std::string &name,
@@ -349,6 +353,14 @@ midsurfacerWindow::midsurfacerWindow(int deltaFontSize) : _state(new State)
     "Extend every branch: the flat ones in their plane, largest first, "
     "then the others by ribbons");
   y += BH;
+  saveAs = new Fl_Button(x, y, BB, BH, "Save...");
+  saveAs->callback(save_cb);
+  saveAs->tooltip(
+    "Save the medial axis as it is now (filtered, with the branches extended "
+    "so far) as an MSH file: one surface per branch, and its edges in four "
+    "groups of lines: on the skin, inside the part, junctions, and along "
+    "another branch (where an extended branch stops on a sheet without "
+    "sharing its vertices)");
   undo = new Fl_Button(width - 2 * BB - 3 * WB, y, BB, BH, "Undo");
   undo->callback(undo_cb, nullptr);
   undo->tooltip("Take back the last extension (Extend, or the whole of Extend all)");
@@ -569,9 +581,10 @@ bool midsurfacerWindow::_extend(int branch, bool planar, bool apply,
     }
     what = text("%zu fragments of the plane, %zu kept; area %.6g for %.6g "
                 "(%.6g before the reach), %zu triangles, %zu other branches "
-                "in the same plane (%.2g s)",
+                "in the same plane, %zu faces prolonged at the %zu reentrant "
+                "corners of the section (%.2g s)",
                 e.fragments, e.keptFragments, e.addedArea, p->area, e.keptArea,
-                e.addedTriangles, e.merged.size(), e.seconds);
+                e.addedTriangles, e.merged.size(), e.fences, e.corners, e.seconds);
     if(e.reachesFrame) {
       what = "the skin does not close the fragment of the plane around "
              "this branch: " + what;
@@ -620,9 +633,11 @@ bool midsurfacerWindow::_extend(int branch, bool planar, bool apply,
         what = error;
         return false;
       }
-      what += text(": %zu fragments, %zu kept (area %.6g, %zu triangles)%s "
-                   "(%.2g s)",
-                   e.fragments, e.keptFragments, e.keptArea, e.addedTriangles,
+      what += text(": %zu rows stopped by the face that stops their "
+                   "neighbours; %zu fragments, %zu kept (area %.6g, %zu "
+                   "triangles)%s (%.2g s)",
+                   e.stoppedRows, e.fragments, e.keptFragments, e.keptArea,
+                   e.addedTriangles,
                    e.reachesFrame ? ", some reach the end of the ribbon" : "",
                    e.seconds);
       view = meshView(e.plane, "MAT ribbon pieces", [&](std::size_t i) {
@@ -1110,6 +1125,37 @@ void midsurfacerWindow::undoExtension(bool everything)
     display(i, false);
   }
   drawContext::global()->draw();
+}
+
+// The MAT being extended, or the filtered one before any extension, with its
+// branches and its classified edges.
+void midsurfacerWindow::save(const std::string &name)
+{
+  State &s = *_state;
+  if(!s.hasWork) {
+    Msg::Warning("Midsurfacer: filter the medial axis first");
+    return;
+  }
+  std::string file = name;
+  if(file.empty()) {
+    if(!fileChooser(FILE_CHOOSER_CREATE, "Save the mid-surface", "*.msh")) return;
+    file = fileChooserGetName(1);
+  }
+  if(file.empty()) return;
+  if(file.size() < 4 || file.compare(file.size() - 4, 4, ".msh")) file += ".msh";
+  matgmsh_native::ClassifiedEdges c;
+  std::string error;
+  if(!matgmsh_native::writeClassifiedMesh(s.work, s.session.result().skin, file, c, error)) {
+    Msg::Error("Midsurfacer: %s", error.c_str());
+    return;
+  }
+  const std::string what =
+    text("Saved %zu branches; edges: %zu on the skin, %zu inside, %zu at junctions, "
+         "%zu along another branch",
+         c.branches, c.onSkin, c.inside, c.junction, c.along);
+  status[Extension]->copy_label(what.c_str());
+  status[Extension]->copy_tooltip((what + " (" + file + ")").c_str());
+  Msg::Info("Midsurfacer: %s, in '%s'", what.c_str(), file.c_str());
 }
 
 #endif

@@ -49,7 +49,7 @@ public:
   // the branches of the MAT being extended, and how the selected one is
   Fl_Hold_Browser *browser;
   Fl_Choice *how;
-  Fl_Button *preview, *all, *undo, *reset;
+  Fl_Button *preview, *all, *undo, *reset, *saveAs;
   // the filter removes the wing branches of the raw MAT whole: the branches
   // that touch its free boundary and are seen under less than the angle
   Fl_Check_Button *branches, *angles;
@@ -79,6 +79,9 @@ public:
   void extendBranch(bool all);
   // takes back the last extension, or all of them (the filtered MAT again)
   void undoExtension(bool everything);
+  // saves the MAT as it is now, with its branches and classified edges, in the
+  // file given or in one asked for
+  void save(const std::string &name = "");
 
 private:
   struct State;

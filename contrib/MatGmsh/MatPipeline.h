@@ -188,6 +188,12 @@ struct PlaneExtension {
   // The other branches that lay in the plane inside a kept fragment.
   std::vector<int> merged;
   std::size_t cutters = 0, fragments = 0, keptFragments = 0, addedTriangles = 0;
+  // the reentrant corners of the section of the skin by the plane, and the
+  // faces prolonged there into the material to bound the fragments
+  std::size_t corners = 0, fences = 0;
+  // by a ribbon: the rows that did not end on the skin and were stopped by
+  // the face of the skin that stops their neighbours, prolonged
+  std::size_t stoppedRows = 0;
   // the spacing of the grid the kept fragments are meshed with, 0 if they are
   // made of the triangles of the cut of two large triangles
   double keptArea = 0., gridSize = 0., seconds = 0.;
@@ -205,9 +211,13 @@ struct PlaneExtension {
 // changed and the result is not made conforming with the other branches. If
 // size is positive the kept fragments are meshed with a grid of that spacing
 // (larger for a fragment more than 400 times as long), cut the same way. If
-// reach is positive, only the part of the kept fragments about that close to
-// the branch (and to the branches merged with it) replaces it: a fragment
-// goes on inside the walls the branch stands on.
+// reach is positive, the faces of the part are prolonged into the material
+// at the reentrant corners of its section by the plane (the end face of a rib
+// where it meets the wall it stands on) up to the first sheet of another
+// branch within that length, except where they would run on the branch
+// itself or along a sheet that faces them, so that a fragment stops where the
+// faces of the branch stop; and only the part of the kept fragments about
+// that close to the branch (and to the branches merged with it) replaces it.
 GMSH_API bool extendBranchInPlane(const Mesh &mesh, const Mesh &skin, const BranchPlane &plane,
                                   double tolerance, double size, double reach,
                                   PlaneExtension &out, std::string &error);
@@ -243,9 +253,31 @@ GMSH_API bool branchRibbon(const Mesh &mesh, int branch, double length, int laye
 // itself, and adds to the branch the fragments that have an edge on its
 // boundary. In `out`, plane holds the pieces of the ribbon (0 kept, 1 not),
 // result the MAT with the kept pieces added; reachesFrame says that a kept
-// fragment holds the far end of the ribbon: it met nothing on its way.
+// fragment holds the far end of the ribbon: it met nothing on its way. A row
+// of the ribbon (the points away from one vertex of the boundary) that does
+// not end on the skin is first stopped where it crosses the plane of the
+// face of the skin that stops the nearest row that does (within its own
+// length along the boundary), unless it ends shortly after on a sheet of
+// another branch that faces it: next to the foot of a wall the ribbon would
+// go on inside the wall it stands on.
 GMSH_API bool extendBranchByRibbon(const Mesh &mesh, const Mesh &skin, int branch,
                                    const Ribbon &ribbon, PlaneExtension &out, std::string &error);
+
+// The mid-surface as an MSH 2.2 file: one surface and one physical group
+// "branch <n>" per branch, and its edges classified in four physical groups
+// of lines: "junction" (edge of three triangles or more, or of two triangles
+// of different branches), and for the edges of one triangle, "boundary along
+// another branch" (a triangle of another branch within half the usual edge
+// length of the skin from its middle: where an extended branch stops on a
+// sheet without sharing its vertices), "boundary on the skin" (a node of the
+// skin within one and a half usual edge lengths) and "boundary inside the
+// part" (the others). One curve per kind and branch. Only the nodes in use
+// are written.
+struct ClassifiedEdges {
+  std::size_t branches = 0, onSkin = 0, inside = 0, junction = 0, along = 0;
+};
+GMSH_API bool writeClassifiedMesh(const Mesh &mesh, const Mesh &skin, const std::string &filename,
+                                  ClassifiedEdges &counts, std::string &error);
 
 // Optional stages propose changes to a copy. On failure their input remains
 // usable. A partial extension is reported explicitly for every original front.

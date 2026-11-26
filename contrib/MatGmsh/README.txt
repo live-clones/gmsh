@@ -292,10 +292,36 @@ triangles of the skin and of the other branches that reach the plane; the
 fragments that hold a triangle of the branch replace the branch, together with
 the other branches lying in the same plane inside them (the two halves of a
 flange under a web). The fragments are found with two triangles, then meshed
-with a grid of a quarter of the thickness cut the same way. A fragment goes on
-inside the walls the branch stands on, along them: only what is within the
-reach of the branch is kept. Preview shows the fragments (0 on those kept)
-without changing anything.
+with a grid of a quarter of the thickness cut the same way. Preview shows the
+fragments (0 on those kept) without changing anything.
+
+A fragment goes on inside the walls the branch stands on, along them, between
+their face and their mid-surface: beyond the two ends of a rib that stands on
+a plate over a part of its length, for instance. To stop it where the branch
+stops, the faces of the part are prolonged into the material. The section of
+the skin by the plane is a set of closed lines; a face is a stretch of a line
+that keeps its direction within 5 degrees, and a corner is where two faces
+that follow each other make 40 to 135 degrees with the void inside the turn
+(faces as short as the tolerance when they touch; faces of half the reach or
+more when a fillet is between them). At a corner each of the two faces is
+prolonged by a fence, a small strip across the plane that cuts the rectangle
+like the skin does, when the three conditions hold:
+
+  - it meets the sheet of another branch within the reach (the mid-surface of
+    the wall it enters), and stops a tenth of the thickness after it;
+  - less than a tenth of it runs on a sheet of the branch, or of a branch that
+    goes with it: of the end face of a rib and of the face of the plate, the
+    first one is prolonged, the second one would cut the rib from its foot;
+  - no sheet of another branch runs along it within half the reach on the side
+    of the other face: there the branch ends on a wall and has to reach its
+    mid-surface.
+
+What is still kept beyond is limited to what is within the reach of the
+branch, as before. The message of the extension gives the number of corners
+and of fences. Limits: a step of the edge of the branch lower than half its
+thickness, next to another wall, can lose a strip of that height; where the
+sheet of the wall under the branch is not flat (junction with fillets, not
+yet replaced by its plane), the branch stops on it and not on the mid-plane.
 
 By a ribbon (branchRibbon, extendBranchByRibbon), for any branch. The ribbon
 starts from the free boundary of the branch (the edges that no other triangle
@@ -311,6 +337,18 @@ shorter. Preview shows the ribbon before it is cut, colored by v. Extend cuts
 it by the skin, by the other branches and where it crosses itself, and adds to
 the branch the pieces that have an edge on its boundary.
 
+A row of the ribbon is the set of its points away from one vertex of the
+boundary. Before the cut, a row that ends on the skin is shortened to a little
+after the farthest of its end and of the ends of the rows beside it (beyond,
+it is outside the part, or back in it further on). A row that does not end on
+the skin (it meets nothing, or the sheet of another branch) is stopped where
+it crosses the plane of the face of the skin that stops the nearest row that
+does, if one is within its own length along the boundary: at the foot of a
+wall that ends on a plate, the rows that start inside the plate would go on
+inside it, along it. It is not stopped if it ends before on the sheet of
+another branch, or less than half its length after on one that faces it (a
+wall the branch ends on). The message gives the number of rows stopped.
+
 Extend all does the flat branches in their plane, largest first, then the
 others by ribbons. The result is the view "MAT extended"; it is not made
 conforming along the junctions, and the earlier front-by-front extension
@@ -320,6 +358,26 @@ Reset all of them: the filtered MAT again. In the window the box "Remove whole
 wing branches" is ticked by default, with a threshold of 0; gmshMat and the
 plugin keep the threshold of 0.21 without it, with which the corpus was
 scored.
+
+Save... writes the MAT as it is in the window (filtered, with the branches
+extended so far) as an MSH 2.2 file (writeClassifiedMesh): one surface and one
+physical group "branch <n>" per branch, and the edges in four physical groups
+of lines, one curve per group and branch:
+
+  junction                       edge of three triangles or more, or of two
+                                 triangles of different branches
+  boundary along another branch  edge of one triangle, with a triangle of
+                                 another branch within half the usual edge
+                                 length of the skin from its middle: where an
+                                 extended branch stops on a sheet without
+                                 sharing its vertices
+  boundary on the skin           edge of one triangle, with a node of the
+                                 skin within one and a half usual edge
+                                 lengths from its middle
+  boundary inside the part       the other edges of one triangle
+
+After the extension the junctions of the filtered MAT are found in the second
+group: the mesh is not conforming along them.
 
 Stage by stage in C++
 ---------------------
