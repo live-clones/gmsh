@@ -37,11 +37,15 @@
 class midsurfacerWindow {
 public:
   enum { Skin, Raw, Filter, Projection, Extension, NumStages };
+  // one more view: the raw MAT colored by the angle of its branches
+  enum { Angles = NumStages, NumViews };
   Fl_Window *win;
   Fl_Value_Input *thickness, *meshSize, *threshold, *length, *layers;
   Fl_Choice *method;
-  // the filter removes the wing branches of the raw MAT whole
-  Fl_Check_Button *branches;
+  // the filter removes the wing branches of the raw MAT whole: the branches
+  // that touch its free boundary and are seen under less than the angle
+  Fl_Check_Button *branches, *angles;
+  Fl_Value_Input *angle;
   Fl_Button *push[NumStages];
   Fl_Box *status[NumStages];
   Fl_Check_Button *visible[NumStages];
@@ -53,6 +57,11 @@ public:
   void run(int stage);
   // shows or hides the skin mesh or the view of a stage, as its box says
   void display(int stage, bool draw = true);
+  // a parameter of the filter changed: filters again if it was filtered
+  void update();
+  // shows the raw MAT colored by the angle of its branches, or the filtered
+  // MAT again, as the box says
+  void showAngles();
 
 private:
   struct State;

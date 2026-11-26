@@ -46,6 +46,9 @@ struct Options {
   // boundary and are wings (see matgmsh::tet::branchWings) are removed whole,
   // whatever their erosion thickness.
   bool wingBranches = false;
+  // the angle (degrees) under which the contacts of a wing branch are seen,
+  // at most: 90 for the wing of a right-angled edge, 180 between two walls
+  double branchAngle = 135.;
   // RawMode::Tet: if nonempty, the dual complex and its attributes are written
   // to this directory as NumPy arrays (see README.txt).
   std::string complexDirectory;
@@ -80,6 +83,12 @@ struct Result {
   Topology filteredTopology;
   matgmsh::tet::Report tet;              // RawMode::Tet only
   matgmsh::tet::CollapseReport collapse; // FilterMode::Collapse only
+  // FilterMode::Collapse, for each polygon of the raw MAT (Mesh::parent of
+  // raw), of its branch: whether it touches the free boundary of the raw MAT,
+  // and the angle below which half of its area is seen (see
+  // matgmsh::tet::BranchWings)
+  std::vector<unsigned char> branchBoundary;
+  std::vector<double> branchAngle;
   std::string projectionStatus = "disabled";
   std::string projectionMessage;
   ExtensionReport extension;

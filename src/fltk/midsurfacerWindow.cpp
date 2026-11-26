@@ -72,10 +72,20 @@ void branches_cb(Fl_Widget *w, void *data)
   if(m->branches->value()) {
     if(m->threshold->value() > 0.) before = m->threshold->value();
     m->threshold->value(0.);
+    m->angle->activate();
   }
-  else if(m->threshold->value() == 0.)
-    m->threshold->value(before);
+  else {
+    if(m->threshold->value() == 0.) m->threshold->value(before);
+    m->angle->deactivate();
+  }
+  m->update();
 }
+
+void update_cb(Fl_Widget *w, void *data)
+{ FlGui::instance()->midsurfacer->update(); }
+
+void angles_cb(Fl_Widget *w, void *data)
+{ FlGui::instance()->midsurfacer->showAngles(); }
 
 void display_cb(Fl_Widget *w, void *data)
 { FlGui::instance()->midsurfacer->display((int)(intptr_t)data, true); }
@@ -91,16 +101,16 @@ struct midsurfacerWindow::State {
   GModel *model = nullptr;
   modelStamps stamps;
   int method = -1, branches = -1;
-  double thickness = 0., threshold = -1.;
+  double thickness = 0., threshold = -1., angle = -1.;
   // the view of each stage: its tag, and its data, to tell it from a view
   // that took the tag since
-  int tag[NumStages];
-  PViewData *data[NumStages];
+  int tag[NumViews];
+  PViewData *data[NumViews];
   // the warnings of the stages already said for this raw MAT
   std::set<std::string> said;
   State()
   {
-    for(int i = 0; i < NumStages; i++) {
+    for(int i = 0; i < NumViews; i++) {
       tag[i] = -1;
       data[i] = nullptr;
     }
@@ -119,7 +129,7 @@ midsurfacerWindow::midsurfacerWindow(int deltaFontSize) : _state(new State)
 
   const int section = WB + 2 + BH; // a line, then a title
   int width = TW;
-  int height = 2 * WB + 13 * BH + 6 * section;
+  int height = 2 * WB + 15 * BH + 6 * section;
 
   win = new paletteWindow(width, height,
                           CTX::instance()->nonModalWindows ? true : false,
@@ -199,6 +209,8 @@ midsurfacerWindow::midsurfacerWindow(int deltaFontSize) : _state(new State)
           "A sheet is removed where its erosion thickness is below this "
           "fraction of the thickness; the wings of the convex edges are "
           "removed too. The topology of the raw medial axis is kept");
+  threshold->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
+  threshold->callback(update_cb);
   branches = new Fl_Check_Button(x, y, full, BH, "Remove whole wing branches");
   branches->tooltip(
     "A branch of the raw medial axis (polygons connected through edges of "
@@ -209,6 +221,22 @@ midsurfacerWindow::midsurfacerWindow(int deltaFontSize) : _state(new State)
     "where the wings were attached; a positive threshold erodes them "
     "further and notches these lines");
   branches->callback(branches_cb);
+  y += BH;
+  angle = input("Angle of a wing, at most (degrees)", 135., 1., 180., 1.,
+                "A branch that touches the free boundary is a wing if half "
+                "of its area sees its two contacts with the skin under less "
+                "than this angle: 90 degrees for the wing of a right-angled "
+                "edge, 180 between two facing walls. Once the medial axis "
+                "is filtered, a new value filters it again");
+  angle->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
+  angle->callback(update_cb);
+  angle->deactivate();
+  angles = new Fl_Check_Button(x, y, full, BH, "Show the angle of the branches");
+  angles->tooltip(
+    "The raw medial axis colored by the angle of its branches that touch "
+    "the free boundary (180 for the others, which are never removed): what "
+    "is below the angle above is removed. Available once filtered");
+  angles->callback(angles_cb);
   y += BH;
   action(Filter, "Filter",
          "Filter the medial axis; the raw medial axis is not computed again");
@@ -296,6 +324,13 @@ void midsurfacerWindow::_forget(int fromStage)
     visible[i]->value(0);
     visible[i]->deactivate();
   }
+  // the angles of the branches are those of the raw MAT
+  if(fromStage <= Raw) {
+    if(PView *v = _state->view(Angles)) delete v;
+    _state->tag[Angles] = -1;
+    _state->data[Angles] = nullptr;
+    angles->value(0);
+  }
 }
 
 // the view of a stage, colored by sheet
@@ -338,6 +373,75 @@ void midsurfacerWindow::_showOnly(int stage)
     visible[i]->value(on);
     display(i, false);
   }
+  angles->value(0);
+  if(PView *v = _state->view(Angles))
+    opt_view_visible(v->getIndex(), GMSH_SET | GMSH_GUI, 0);
+}
+
+void midsurfacerWindow::update()
+{
+  if(_state->session.hasFiltered()) run(Filter);
+}
+
+void midsurfacerWindow::showAngles()
+{
+  const matgmsh_native::Result &r = _state->session.result();
+  if(!angles->value()) {
+    if(PView *v = _state->view(Angles))
+      opt_view_visible(v->getIndex(), GMSH_SET | GMSH_GUI, 0);
+    if(_state->view(Filter)) {
+      visible[Filter]->value(1);
+      display(Filter, false);
+    }
+    drawContext::global()->draw();
+    return;
+  }
+  if(!_state->session.hasFiltered() || r.branchAngle.empty()) {
+    Msg::Warning("Midsurfacer: filter the medial axis first (method "
+                 "Tetrahedra) to see the angle of its branches");
+    angles->value(0);
+    return;
+  }
+  bool created = false;
+  if(!_state->view(Angles)) {
+    const matgmsh_native::Mesh &mesh = r.raw;
+    PViewDataList *data = new PViewDataList();
+    for(std::size_t t = 0; t < mesh.triangles.size() / 3; t++) {
+      std::vector<double> *values = data->incrementList(1, TYPE_TRI);
+      for(int component = 0; component < 3; component++)
+        for(int corner = 0; corner < 3; corner++)
+          values->push_back(
+            mesh.xyz[3 * mesh.triangles[3 * t + corner] + component]);
+      // 180 for what is never removed: no free boundary, or no area
+      double a = 180.;
+      const int p = t < mesh.parent.size() ? mesh.parent[t] : -1;
+      if(p >= 0 && (std::size_t)p < r.branchAngle.size() &&
+         r.branchBoundary[p] && r.branchAngle[p] == r.branchAngle[p])
+        a = r.branchAngle[p];
+      values->insert(values->end(), {a, a, a});
+    }
+    data->setName("MAT branch angle");
+    data->setFileName("mat_branch_angle.pos");
+    data->finalize();
+    PView *view = new PView(data);
+    PViewOptions *o = view->getOptions();
+    o->intervalsType = PViewOptions::Discrete;
+    o->nbIso = 12; // bands of 15 degrees
+    o->rangeType = PViewOptions::Custom;
+    o->customMin = 0.;
+    o->customMax = 180.;
+    _state->tag[Angles] = view->getTag();
+    _state->data[Angles] = data;
+    created = true;
+  }
+  for(int i = Raw; i < NumStages; i++) {
+    visible[i]->value(0);
+    display(i, false);
+  }
+  if(created) FlGui::instance()->updateViews(true);
+  if(PView *v = _state->view(Angles))
+    opt_view_visible(v->getIndex(), GMSH_SET | GMSH_GUI, 1);
+  drawContext::global()->draw();
 }
 
 void midsurfacerWindow::display(int stage, bool draw)
@@ -419,6 +523,7 @@ void midsurfacerWindow::run(int target)
   options.filter = legacy ? FilterMode::Legacy : FilterMode::Collapse;
   options.collapseThreshold = threshold->value();
   options.wingBranches = branches->value() != 0;
+  options.branchAngle = std::min(180., std::max(1., angle->value()));
   options.extensionLength = length->value();
   options.extensionLayers = std::max(1, (int)layers->value());
   options.project = true;
@@ -512,7 +617,8 @@ void midsurfacerWindow::run(int target)
   if(target == Filter || !s.session.hasFiltered() ||
      s.thickness != options.thickness ||
      s.threshold != options.collapseThreshold ||
-     s.branches != (int)options.wingBranches) {
+     s.branches != (int)options.wingBranches ||
+     s.angle != options.branchAngle) {
     _forget(Filter);
     viewsChanged = true;
     busy(Filter);
@@ -525,6 +631,7 @@ void midsurfacerWindow::run(int target)
     s.thickness = options.thickness;
     s.threshold = options.collapseThreshold;
     s.branches = options.wingBranches;
+    s.angle = options.branchAngle;
     const Result &r = s.session.result();
     const Topology &t = r.filteredTopology;
     std::string what =

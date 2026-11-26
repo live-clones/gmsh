@@ -60,6 +60,12 @@ GMSH_API Wings wings(const Dual &dual, const Adjacency &graph, const Geometry &g
 // when it ends on a rounded edge.
 struct BranchWings {
   std::vector<unsigned char> wing; // one flag per polygon
+  // For each polygon, of its branch: whether it touches the free boundary,
+  // and the angle (degrees) below which half of its area is seen, NaN for a
+  // branch without area. A branch is a wing if it touches the free boundary
+  // and this angle is below the limit.
+  std::vector<unsigned char> boundary;
+  std::vector<double> angle;
   std::size_t branches = 0, wingBranches = 0;
 };
 
@@ -113,6 +119,9 @@ struct CollapseReport {
 
 struct Filtered {
   std::vector<unsigned char> keep, wing;
+  // of the branch of each polygon, see BranchWings
+  std::vector<unsigned char> branchBoundary;
+  std::vector<double> branchAngle;
   std::vector<double> erosionOverThickness;
   Geometry geometry;
   CollapseReport report;

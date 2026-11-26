@@ -643,3 +643,19 @@ attached. A positive threshold removes polygons of the mid-sheets along these
 lines, 22.6 mm^2 with thickness 1.35 and 138.7 mm^2 with thickness 4, here and
 there, which notches them; the tool window therefore sets the threshold to 0
 when the box is ticked.
+
+Angle of the wing branches (--wing-angle, threshold 0), same skin: the result
+does not depend on the angle between 100 and 180 degrees.
+
+  Angle       Wing branches  Kept polygons  Pieces, Euler, edges w/o surface
+  60                14 of 61         136696  2, 1, 8
+  85                17               136102  1, 0, 0
+  95                31               136025  1, 0, 0
+  100 to 180        44               135947  1, 0, 0
+
+The angles of the branches, measured from the sites of the skin and not from
+the exact contacts, go from 75 to 120 degrees on the wings of this part and
+are 176 degrees or more on its mid-sheets. In the tool window, with the box
+ticked, a new angle filters again in about 0.9 s and the view "MAT branch
+angle" shows these angles; checked by calling the callbacks of the widgets,
+not with a mouse.

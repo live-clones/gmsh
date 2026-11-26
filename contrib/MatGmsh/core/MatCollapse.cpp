@@ -335,8 +335,11 @@ BranchWings branchWings(const Dual &dual, const Adjacency &graph, const Geometry
   for(std::size_t e = 0; e < graph.edges(); ++e)
     if(graph.valence(e) == 1) free[find(graph.edgePolygons[graph.edgeOffsets[e]])] = 1;
   // Area of each branch, and of its polygons seen under a small angle.
-  const double limit = std::cos(angle * 3.14159265358979323846 / 180.);
+  const double pi = 3.14159265358979323846;
+  const double limit = std::cos(angle * pi / 180.);
   std::vector<double> area(count, 0.), narrow(count, 0.);
+  // angle under which each polygon is seen, NaN if it has no area
+  std::vector<double> seen(count, std::numeric_limits<double>::quiet_NaN());
   for(std::size_t p = 0; p < count; ++p) {
     const double a = geometry.area[p];
     if(!(a > 0.)) continue;
@@ -352,7 +355,37 @@ BranchWings branchWings(const Dual &dual, const Adjacency &graph, const Geometry
     if(!(norm > 0.) || !std::isfinite(norm)) continue;
     const int branch = find(int(p));
     area[branch] += a;
-    if(dot(u, v) / norm > limit) narrow[branch] += a;
+    const double cosine = dot(u, v) / norm;
+    if(cosine > limit) narrow[branch] += a;
+    seen[p] = std::acos(std::min(1., std::max(-1., cosine))) * 180. / pi;
+  }
+  // The angle below which half of the area of each branch is seen.
+  std::vector<int> order;
+  for(std::size_t p = 0; p < count; ++p)
+    if(!std::isnan(seen[p])) order.push_back(int(p));
+  std::sort(order.begin(), order.end(), [&](int p, int q) {
+    const int bp = find(p), bq = find(q);
+    if(bp != bq) return bp < bq;
+    if(seen[p] != seen[q]) return seen[p] < seen[q];
+    return p < q;
+  });
+  std::vector<double> median(count, std::numeric_limits<double>::quiet_NaN());
+  for(std::size_t i = 0; i < order.size();) {
+    const int branch = find(order[i]);
+    double sum = 0.;
+    std::size_t j = i;
+    for(; j < order.size() && find(order[j]) == branch; ++j) {
+      sum += geometry.area[order[j]];
+      if(std::isnan(median[branch]) && 2. * sum >= area[branch]) median[branch] = seen[order[j]];
+    }
+    i = j;
+  }
+  b.boundary.assign(count, 0);
+  b.angle.assign(count, std::numeric_limits<double>::quiet_NaN());
+  for(std::size_t p = 0; p < count; ++p) {
+    const int branch = find(int(p));
+    b.boundary[p] = free[branch] != 0;
+    b.angle[p] = median[branch];
   }
   for(std::size_t p = 0; p < count; ++p) {
     if(parent[p] != int(p)) continue;
@@ -491,15 +524,19 @@ Filtered filter(const Dual &dual, const FilterInput &in)
     r.convexPolygons += w.convex[p];
     r.wingPolygons += w.wing[p];
   }
-  if(in.wingBranches) {
-    const BranchWings b = branchWings(dual, graph, f.geometry, *in.sites, in.branchAngle);
-    r.branches = b.branches;
-    r.wingBranches = b.wingBranches;
-    for(std::size_t p = 0; p < dual.size(); ++p)
-      if(b.wing[p] && !w.wing[p]) {
-        w.wing[p] = 1;
-        ++r.branchWingPolygons;
-      }
+  {
+    BranchWings b = branchWings(dual, graph, f.geometry, *in.sites, in.branchAngle);
+    f.branchBoundary = std::move(b.boundary);
+    f.branchAngle = std::move(b.angle);
+    if(in.wingBranches) {
+      r.branches = b.branches;
+      r.wingBranches = b.wingBranches;
+      for(std::size_t p = 0; p < dual.size(); ++p)
+        if(b.wing[p] && !w.wing[p]) {
+          w.wing[p] = 1;
+          ++r.branchWingPolygons;
+        }
+    }
   }
   Collapse c = collapse(dual, graph, f.erosionOverThickness, w.wing, in.threshold);
   r.eligible = c.eligible;

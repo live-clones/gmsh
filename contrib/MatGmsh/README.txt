@@ -124,15 +124,15 @@ the tool window; off by default, not yet run on the corpus). A branch of the
 raw MAT is a set of polygons connected through edges of exactly two polygons.
 A branch that touches the free boundary of the raw MAT, and at least half of
 whose area is made of polygons whose two sites are seen from the centroid
-under less than 135 degrees, is a wing: all its polygons are removed like the
-convex wings, whatever their erosion thickness, by the same collapses. The
-mid-sheet of two facing walls is seen under 180 degrees and is kept even when
-it has a free boundary (rounded edges). report.json records "branches",
-"wing_branches" and "branch_wing_polygons". Use it with --collapse-threshold 0
-(the tool window does so when the box is ticked): the mid-sheets then end
-exactly on the lines where the wings were attached, whereas a positive
-threshold also removes polygons of the mid-sheets along these lines and
-notches them.
+under less than an angle (--wing-angle, 135 degrees by default), is a wing:
+all its polygons are removed like the convex wings, whatever their erosion
+thickness, by the same collapses. The mid-sheet of two facing walls is seen
+under 180 degrees and is kept even when it has a free boundary (rounded
+edges). report.json records "branches", "wing_branches" and
+"branch_wing_polygons". Use it with --collapse-threshold 0 (the tool window
+does so when the box is ticked): the mid-sheets then end exactly on the lines
+where the wings were attached, whereas a positive threshold also removes
+polygons of the mid-sheets along these lines and notches them.
 
 The convexity of a CAD edge needs the material side of the skin. It is taken,
 shell by shell, from the interior tetrahedra, so closed cavities and
@@ -253,6 +253,14 @@ tools. It runs the pipeline one stage at a time, on the current model:
                   changes nothing
   5. Extension    Extend: of the projected MAT if there is one, of the
                   filtered one otherwise
+
+The Filter stage has, besides the threshold, the box "Remove whole wing
+branches" with its angle, and the box "Show the angle of the branches". Once
+the medial axis is filtered, a change of the threshold, of the box or of the
+angle filters it again at once (the raw MAT is kept) and shows the result.
+"Show the angle of the branches" shows instead the raw MAT colored, in bands
+of 15 degrees, by the angle of each branch that touches its free boundary (180
+for the others): what is below the angle given is what the box removes.
 
 A button first runs the earlier stages that are missing or out of date: with a
 CAD model just opened, Filter meshes the skin, computes the raw MAT and

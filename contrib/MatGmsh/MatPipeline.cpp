@@ -121,7 +121,7 @@ struct MatNativeAccess {
                                          const matgmsh::tet::Dual &dual,
                                          const std::vector<signed char> &skinSide,
                                          double thickness, double threshold,
-                                         bool wingBranches)
+                                         bool wingBranches, double branchAngle)
   {
     const std::size_t sites = mat.del.nodeTags.size();
     const std::vector<int> skin(mat.del.triangles.begin(), mat.del.triangles.end());
@@ -136,6 +136,7 @@ struct MatNativeAccess {
     in.thickness = thickness;
     in.threshold = threshold;
     in.wingBranches = wingBranches;
+    in.branchAngle = branchAngle;
     const auto patchOf = [&](int face) {
       const auto found = patches.patchByFaceTag.find(face);
       return found == patches.patchByFaceTag.end() ? -1 : found->second;
@@ -225,6 +226,7 @@ struct MatNativeAccess {
     manifest << "{\n\"format\":\"matgmsh-complex-1\",\n\"thickness\":" << options.thickness
              << ",\n\"collapse_threshold\":" << options.collapseThreshold
              << ",\n\"wing_branches\":" << (options.wingBranches ? "true" : "false")
+             << ",\n\"wing_angle\":" << options.branchAngle
              << ",\n\"certified\":" << (certified ? "true" : "false")
              << ",\n\"filtered\":" << (kept ? "true" : "false")
              << ",\n\"sites\":" << mat.del.nodeTags.size()
@@ -463,9 +465,11 @@ bool validOptions(const Options &options)
          std::isfinite(options.extensionLength) && options.extensionLength >= 0. &&
          options.extensionLayers >= 1 && std::isfinite(options.windingThreshold) &&
          options.windingThreshold > 0. && options.windingThreshold < 1. &&
-         std::isfinite(options.collapseThreshold) && options.collapseThreshold >= 0.;
+         std::isfinite(options.collapseThreshold) && options.collapseThreshold >= 0. &&
+         std::isfinite(options.branchAngle) && options.branchAngle > 0. &&
+         options.branchAngle <= 180.;
 }
-const char *const invalidOptions = "Invalid MAT thickness, winding threshold or extension settings";
+const char *const invalidOptions = "Invalid MAT thickness, winding threshold, wing angle or extension settings";
 const char *const meshChanged = "The surface mesh of the model has changed since the raw MAT was computed";
 
 // What the stages after the raw MAT read again from the model: the nodes of
@@ -634,6 +638,8 @@ bool Session::filter(GModel *source, const Options &options, std::string &error)
   result.filtered = Mesh{};
   result.filteredTopology = Topology{};
   result.collapse = matgmsh::tet::CollapseReport{};
+  result.branchBoundary.clear();
+  result.branchAngle.clear();
   result.filterSeconds = 0.;
   d.filterWarnings.clear();
   d.filtered = false;
@@ -678,8 +684,11 @@ bool Session::filter(GModel *source, const Options &options, std::string &error)
     }
     else if(options.filter == FilterMode::Collapse) {
       kept = MatNativeAccess::collapse(mat, source, d.patches, d.dual, d.skinSide, options.thickness,
-                                       options.collapseThreshold, options.wingBranches);
+                                       options.collapseThreshold, options.wingBranches,
+                                       options.branchAngle);
       result.collapse = kept.report;
+      result.branchBoundary = kept.branchBoundary;
+      result.branchAngle = kept.branchAngle;
       if(!kept.report.materialSide)
         d.filterWarnings.push_back("The material side of the skin is not known on every shell: there, convex edges are not identified and no wing is removed as such; only the erosion thickness filters the MAT.");
       if(kept.report.wireEdges)
