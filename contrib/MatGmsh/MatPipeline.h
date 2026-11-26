@@ -4,6 +4,7 @@
 #define GMSH_MAT_PIPELINE_H
 
 #include <cstddef>
+#include <memory>
 #include <string>
 #include <vector>
 #include "gmsh.h"
@@ -89,6 +90,51 @@ GMSH_API bool compute(GModel *source, const Options &options, Result &result,
              std::string &error);
 GMSH_API bool computeCurrent(const Options &options, Result &result,
                             std::string &error);
+// The current model, for the callers that only see the API.
+GMSH_API GModel *currentModel();
+
+// The pipeline one stage at a time, for interactive use. The raw MAT is kept
+// between the calls: the filter can be run again with another threshold, and
+// the projection and the extension run or run again, without a new Delaunay
+// tetrahedrization. compute() is these stages in a row.
+//
+// Each stage needs the ones before it, and running a stage again discards
+// the results of the later ones. filter() and project() refuse a model whose
+// surface mesh is not the one given to raw().
+class GMSH_API Session {
+public:
+  Session();
+  ~Session();
+  Session(const Session &) = delete;
+  Session &operator=(const Session &) = delete;
+  // Raw MAT of the first-order triangular surface mesh of the model
+  // (options: thickness, raw, windingThreshold).
+  bool raw(GModel *source, const Options &options, std::string &error);
+  // Filtered MAT (options: thickness, filter, collapseThreshold,
+  // legacyCleanup, complexDirectory). The legacy filter changes the raw MAT
+  // in place: running it again computes the raw MAT again.
+  bool filter(GModel *source, const Options &options, std::string &error);
+  // Projection of the filtered MAT if options.project is set; a projection
+  // that is refused keeps the filtered MAT, and says why in the result.
+  bool project(GModel *source, const Options &options, std::string &error);
+  // Extension of the projected MAT (of the filtered one if project() was not
+  // called) to the skin (options: thickness, extensionLength,
+  // extensionLayers). A failed extension keeps its input and is reported in
+  // the result.
+  bool extend(GModel *source, const Options &options, std::string &error);
+  bool hasRaw() const;
+  bool hasFiltered() const;
+  bool hasProjected() const;
+  bool hasExtended() const;
+  // The meshes and reports of the stages available.
+  const Result &result() const;
+  // The same, moved out of the session, which is left empty.
+  Result take();
+
+private:
+  struct Data;
+  std::unique_ptr<Data> data_;
+};
 
 GMSH_API Topology topology(const Mesh &mesh);
 GMSH_API bool validateMesh(const Mesh &mesh, std::string &error);

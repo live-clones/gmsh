@@ -94,6 +94,10 @@ struct MatNativeAccess {
     return mesh;
   }
 
+  // The vertices of the MAT, which a projection moves.
+  static const std::vector<double> &vertices(const matGmsh &mat) { return mat.vor.vertices; }
+  static void setVertices(matGmsh &mat, const std::vector<double> &xyz) { mat.vor.vertices = xyz; }
+
   // Interior tetrahedra, their unmerged dual complex and its certificate.
   static matgmsh::tet::Report tetRaw(const matGmsh &mat, unsigned threads,
                                      matgmsh::tet::Dual &dual,
@@ -447,20 +451,111 @@ bool validateContainedInSkin(const Mesh &mesh, const Mesh &skin, std::string &er
 bool computeCurrent(const Options &options, Result &result, std::string &error)
 { return compute(GModel::current(), options, result, error); }
 
-bool compute(GModel *source, const Options &options, Result &result, std::string &error)
+GModel *currentModel() { return GModel::current(); }
+
+namespace {
+bool validOptions(const Options &options)
 {
-  error.clear(); result = Result{};
-  if(!source) { error = "No source GModel"; return false; }
-  if(!std::isfinite(options.thickness) || options.thickness <= 0. ||
-     !std::isfinite(options.extensionLength) || options.extensionLength < 0. ||
-     options.extensionLayers < 1 || !std::isfinite(options.windingThreshold) ||
-     options.windingThreshold <= 0. || options.windingThreshold >= 1. ||
-     !std::isfinite(options.collapseThreshold) || options.collapseThreshold < 0.) {
-    error = "Invalid MAT thickness, winding threshold or extension settings"; return false;
+  return std::isfinite(options.thickness) && options.thickness > 0. &&
+         std::isfinite(options.extensionLength) && options.extensionLength >= 0. &&
+         options.extensionLayers >= 1 && std::isfinite(options.windingThreshold) &&
+         options.windingThreshold > 0. && options.windingThreshold < 1. &&
+         std::isfinite(options.collapseThreshold) && options.collapseThreshold >= 0.;
+}
+const char *const invalidOptions = "Invalid MAT thickness, winding threshold or extension settings";
+const char *const meshChanged = "The surface mesh of the model has changed since the raw MAT was computed";
+
+// What the stages after the raw MAT read again from the model: the nodes of
+// the triangles of its faces, by tag and position.
+std::uint64_t skinStamp(GModel *model)
+{
+  std::uint64_t h = 1469598103934665603ull;
+  const auto mix = [&h](const void *data, std::size_t size) {
+    const unsigned char *bytes = static_cast<const unsigned char *>(data);
+    for(std::size_t i = 0; i < size; ++i) { h ^= bytes[i]; h *= 1099511628211ull; }
+  };
+  for(auto face = model->firstFace(); face != model->lastFace(); ++face) {
+    const int tag = (*face)->tag();
+    mix(&tag, sizeof(tag));
+    for(const auto *triangle : (*face)->triangles)
+      for(int i = 0; i < 3; ++i) {
+        const MVertex *vertex = triangle->getVertex(i);
+        const std::size_t number = vertex->getNum();
+        const double xyz[3] = {vertex->x(), vertex->y(), vertex->z()};
+        mix(&number, sizeof(number));
+        mix(xyz, sizeof(xyz));
+      }
   }
+  return h;
+}
+}
+
+struct Session::Data {
+  std::unique_ptr<matGmsh> mat;
+  matgmsh::tet::Dual dual;
+  std::vector<signed char> skinSide;
+  CadSurfacePatchAnalyzer::Result patches;
+  // the vertices of the MAT before a projection moved them
+  std::vector<double> vertices;
+  bool haveSurfaceParametrization = true, patchesReady = false;
+  // moved: a projection changed the vertices; consumed: the legacy filter
+  // changed the raw MAT in place; reselected: a filter chose among the
+  // polygons of the tetrahedron-based raw MAT
+  bool tetRaw = true, moved = false, consumed = false, reselected = false;
+  bool raw = false, filtered = false, projected = false, extended = false;
+  std::uint64_t stamp = 0;
+  std::size_t flatRaw = 0;
+  std::vector<std::string> rawWarnings, filterWarnings, extensionWarnings;
+  Result result;
+  void setWarnings()
+  {
+    result.warnings = rawWarnings;
+    result.warnings.insert(result.warnings.end(), filterWarnings.begin(), filterWarnings.end());
+    result.warnings.insert(result.warnings.end(), extensionWarnings.begin(), extensionWarnings.end());
+  }
+  void dropProjection()
+  {
+    result.projected = Mesh{};
+    result.projectionStatus = "disabled";
+    result.projectionMessage.clear();
+    result.projectionSeconds = 0.;
+    projected = false;
+  }
+  void dropExtension()
+  {
+    result.extended = Mesh{};
+    result.extension = ExtensionReport{};
+    result.extensionSeconds = 0.;
+    extensionWarnings.clear();
+    extended = false;
+  }
+};
+
+Session::Session() : data_(new Data) {}
+Session::~Session() = default;
+bool Session::hasRaw() const { return data_->raw; }
+bool Session::hasFiltered() const { return data_->filtered; }
+bool Session::hasProjected() const { return data_->projected; }
+bool Session::hasExtended() const { return data_->extended; }
+const Result &Session::result() const { return data_->result; }
+
+Result Session::take()
+{
+  Result result = std::move(data_->result);
+  data_.reset(new Data);
+  return result;
+}
+
+bool Session::raw(GModel *source, const Options &options, std::string &error)
+{
+  error.clear();
+  data_.reset(new Data); // everything is computed again
+  Data &d = *data_;
+  Result &result = d.result;
+  if(!source) { error = "No source GModel"; return false; }
+  if(!validOptions(options)) { error = invalidOptions; return false; }
   try {
     ContextGuard guard(source);
-    bool haveSurfaceParametrization = true;
     for(auto face = source->firstFace(); face != source->lastFace(); ++face) {
       if((*face)->triangles.empty() || !(*face)->quadrangles.empty())
         throw std::runtime_error("MAT needs a complete first-order triangular skin; face " +
@@ -469,34 +564,33 @@ bool compute(GModel *source, const Options &options, Result &result, std::string
         if(triangle->getNumVertices() != 3)
           throw std::runtime_error("MAT needs first-order triangles; face " +
                                    std::to_string((*face)->tag()) + " contains higher-order triangles");
-      haveSurfaceParametrization = haveSurfaceParametrization && (*face)->haveParametrization();
+      d.haveSurfaceParametrization = d.haveSurfaceParametrization && (*face)->haveParametrization();
     }
     std::vector<int> types;
     std::vector<std::vector<std::size_t>> elementTags, nodeTags;
     gmsh::model::mesh::getElements(types, elementTags, nodeTags, 3);
     if(!types.empty()) throw std::runtime_error("Use a surface-only input mesh, without volume nodes");
-    const bool tetRaw = options.raw == RawMode::Tet;
-    if(options.filter == FilterMode::Collapse && !tetRaw)
+    d.tetRaw = options.raw == RawMode::Tet;
+    // a filter that cannot follow is refused before the raw MAT is computed
+    if(options.filter == FilterMode::Collapse && !d.tetRaw)
       throw std::runtime_error("The collapse filter needs the tetrahedron-based raw MAT (--raw tet, RawMode 1); for the legacy pipeline select the legacy filter as well (--filter legacy, FilterMode 0)");
-    if(options.filter == FilterMode::Legacy && tetRaw)
+    if(options.filter == FilterMode::Legacy && d.tetRaw)
       throw std::runtime_error("The legacy filter needs the legacy raw MAT (--raw legacy, RawMode 0)");
     auto start = Clock::now();
-    matGmsh mat;
-    matgmsh::tet::Dual dual;
-    std::vector<signed char> skinSide;
-    std::size_t flat = 0;
-    if(tetRaw) {
+    d.mat.reset(new matGmsh);
+    matGmsh &mat = *d.mat;
+    if(d.tetRaw) {
       double configured = 1.;
       gmsh::option::getNumber("General.NumThreads", configured);
       const unsigned threads = std::isfinite(configured) && configured >= 1. ?
         static_cast<unsigned>(std::min(configured, 256.)) : 1u;
       mat.computeVoronoi(false);
-      result.tet = MatNativeAccess::tetRaw(mat, threads, dual, skinSide);
+      result.tet = MatNativeAccess::tetRaw(mat, threads, d.dual, d.skinSide);
       if(!result.tet.certified)
-        result.warnings.push_back("The certificate of the interior tetrahedra failed: the raw MAT may not have the topology of the solid. See \"tet\" in the report.");
-      MatNativeAccess::select(mat, dual, nullptr);
+        d.rawWarnings.push_back("The certificate of the interior tetrahedra failed: the raw MAT may not have the topology of the solid. See \"tet\" in the report.");
+      MatNativeAccess::select(mat, d.dual, nullptr);
       result.skin = MatNativeAccess::skin(mat);
-      result.raw = MatNativeAccess::mesh(mat, &flat);
+      result.raw = MatNativeAccess::mesh(mat, &d.flatRaw);
     }
     else {
       mat.computeVoronoi();
@@ -506,64 +600,147 @@ bool compute(GModel *source, const Options &options, Result &result, std::string
       result.raw = MatNativeAccess::mesh(mat);
     }
     result.rawSeconds = elapsed(start);
-    start = Clock::now();
-    CadSurfacePatchAnalyzer::Result patches;
-    if(haveSurfaceParametrization) {
-      patches = CadSurfacePatchAnalyzer().analyzeCurrentModel();
+    d.vertices = MatNativeAccess::vertices(mat);
+    d.stamp = skinStamp(source);
+    d.raw = true;
+    d.setWarnings();
+    return true;
+  }
+  catch(const std::exception &e) { error = e.what(); }
+  catch(const std::string &e) { error = e; }
+  catch(...) { error = "Unknown error in native MAT pipeline"; }
+  data_.reset(new Data);
+  return false;
+}
+
+bool Session::filter(GModel *source, const Options &options, std::string &error)
+{
+  error.clear();
+  if(!source) { error = "No source GModel"; return false; }
+  if(!validOptions(options)) { error = invalidOptions; return false; }
+  if(!data_->raw) { error = "The raw MAT has not been computed"; return false; }
+  if(options.filter == FilterMode::Collapse && !data_->tetRaw) { error = "The collapse filter needs the tetrahedron-based raw MAT (--raw tet, RawMode 1); for the legacy pipeline select the legacy filter as well (--filter legacy, FilterMode 0)"; return false; }
+  if(options.filter == FilterMode::Legacy && data_->tetRaw) { error = "The legacy filter needs the legacy raw MAT (--raw legacy, RawMode 0)"; return false; }
+  if(data_->consumed) {
+    Options again = options;
+    again.raw = RawMode::Legacy;
+    if(!raw(source, again, error)) return false;
+  }
+  Data &d = *data_;
+  Result &result = d.result;
+  result.filtered = Mesh{};
+  result.filteredTopology = Topology{};
+  result.collapse = matgmsh::tet::CollapseReport{};
+  result.filterSeconds = 0.;
+  d.filterWarnings.clear();
+  d.filtered = false;
+  d.dropProjection();
+  d.dropExtension();
+  d.setWarnings();
+  try {
+    ContextGuard guard(source);
+    if(skinStamp(source) != d.stamp) throw std::runtime_error(meshChanged);
+    matGmsh &mat = *d.mat;
+    if(d.moved) {
+      MatNativeAccess::setVertices(mat, d.vertices);
+      d.moved = false;
     }
-    else {
-      // A loaded surface mesh can preserve entity tags without carrying CAD
-      // parametrizations. Keep those entities as distinct support patches;
-      // inverse CAD evaluation cannot establish tangency between them.
-      int patch = 0;
-      for(auto face = source->firstFace(); face != source->lastFace(); ++face, ++patch) {
-        const int tag = (*face)->tag();
-        patches.patchByFaceTag[tag] = patch;
-        patches.patchesByFaceTag[tag].insert(patch);
-        patches.faceTagsByPatch.push_back({tag});
+    auto start = Clock::now();
+    if(!d.patchesReady) {
+      if(d.haveSurfaceParametrization) {
+        d.patches = CadSurfacePatchAnalyzer().analyzeCurrentModel();
       }
-      result.warnings.push_back("Surface parametrization is unavailable: each source face is a separate support patch; normal-based filtering may retain additional MAT material.");
+      else {
+        // A loaded surface mesh can preserve entity tags without carrying CAD
+        // parametrizations. Keep those entities as distinct support patches;
+        // inverse CAD evaluation cannot establish tangency between them.
+        int patch = 0;
+        for(auto face = source->firstFace(); face != source->lastFace(); ++face, ++patch) {
+          const int tag = (*face)->tag();
+          d.patches.patchByFaceTag[tag] = patch;
+          d.patches.patchesByFaceTag[tag].insert(patch);
+          d.patches.faceTagsByPatch.push_back({tag});
+        }
+      }
+      d.patchesReady = true;
     }
+    if(!d.haveSurfaceParametrization)
+      d.filterWarnings.push_back("Surface parametrization is unavailable: each source face is a separate support patch; normal-based filtering may retain additional MAT material.");
+    std::size_t flat = d.flatRaw;
     matgmsh::tet::Filtered kept;
     if(options.filter == FilterMode::Legacy) {
-      MatNativeAccess::filter(mat, patches, options.legacyCleanup);
+      d.consumed = true;
+      MatNativeAccess::filter(mat, d.patches, options.legacyCleanup);
       result.filtered = MatNativeAccess::mesh(mat);
     }
     else if(options.filter == FilterMode::Collapse) {
-      kept = MatNativeAccess::collapse(mat, source, patches, dual, skinSide, options.thickness,
+      kept = MatNativeAccess::collapse(mat, source, d.patches, d.dual, d.skinSide, options.thickness,
                                        options.collapseThreshold);
       result.collapse = kept.report;
       if(!kept.report.materialSide)
-        result.warnings.push_back("The material side of the skin is not known on every shell: there, convex edges are not identified and no wing is removed as such; only the erosion thickness filters the MAT.");
+        d.filterWarnings.push_back("The material side of the skin is not known on every shell: there, convex edges are not identified and no wing is removed as such; only the erosion thickness filters the MAT.");
       if(kept.report.wireEdges)
-        result.warnings.push_back(std::to_string(kept.report.wireEdges) + " edges of the collapsed MAT carry no surface: the retained surface alone does not have the topology of the solid.");
-      MatNativeAccess::select(mat, dual, &kept.keep);
+        d.filterWarnings.push_back(std::to_string(kept.report.wireEdges) + " edges of the collapsed MAT carry no surface: the retained surface alone does not have the topology of the solid.");
+      MatNativeAccess::select(mat, d.dual, &kept.keep);
+      d.reselected = true;
       result.filtered = MatNativeAccess::mesh(mat, &flat);
     }
-    else
+    else {
+      if(d.reselected) {
+        MatNativeAccess::select(mat, d.dual, nullptr);
+        d.reselected = false;
+      }
       result.filtered = result.raw;
-    if(tetRaw && !options.complexDirectory.empty())
-      MatNativeAccess::writeComplex(mat, patches, dual,
+    }
+    if(d.tetRaw && !options.complexDirectory.empty())
+      MatNativeAccess::writeComplex(mat, d.patches, d.dual,
                                     options.filter == FilterMode::Collapse ? &kept : nullptr,
                                     options, result.tet.certified);
     if(flat)
-      result.warnings.push_back(std::to_string(flat) + " triangles of zero area were left out of the MAT meshes.");
+      d.filterWarnings.push_back(std::to_string(flat) + " triangles of zero area were left out of the MAT meshes.");
+    d.setWarnings();
     if(!validateMesh(result.filtered, error)) return false;
     result.filteredTopology = topology(result.filtered);
     result.filterSeconds = elapsed(start);
     if(options.legacyCleanup && options.filter == FilterMode::Legacy)
-      result.warnings.push_back("Legacy cleanup keeps the largest component and removes closed branch surfaces; use explicit keep-components policy to disable it.");
-    if(options.stopAfter == Stage::Filtered) return true;
-    start = Clock::now();
+      d.filterWarnings.push_back("Legacy cleanup keeps the largest component and removes closed branch surfaces; use explicit keep-components policy to disable it.");
+    d.vertices = MatNativeAccess::vertices(mat);
+    d.filtered = true;
+    d.setWarnings();
+    return true;
+  }
+  catch(const std::exception &e) { error = e.what(); }
+  catch(const std::string &e) { error = e; }
+  catch(...) { error = "Unknown error in native MAT pipeline"; }
+  return false;
+}
+
+bool Session::project(GModel *source, const Options &options, std::string &error)
+{
+  error.clear();
+  Data &d = *data_;
+  Result &result = d.result;
+  if(!source) { error = "No source GModel"; return false; }
+  if(!d.filtered) { error = "The filtered MAT has not been computed"; return false; }
+  d.dropProjection();
+  d.dropExtension();
+  d.setWarnings();
+  try {
+    ContextGuard guard(source);
+    auto start = Clock::now();
     result.projected = result.filtered;
-    if(options.project && !haveSurfaceParametrization) {
+    if(options.project && !d.haveSurfaceParametrization) {
       result.projectionStatus = "unchanged";
       result.projectionMessage = "Projection skipped because source surface parametrization is unavailable; the filtered MAT is retained exactly.";
     }
     else if(options.project) {
+      if(skinStamp(source) != d.stamp) throw std::runtime_error(meshChanged);
+      matGmsh &mat = *d.mat;
+      if(d.moved) MatNativeAccess::setVertices(mat, d.vertices);
+      d.moved = true; // a projection that is refused puts them back itself
       Mesh proposal;
       std::string why;
-      if(MatNativeAccess::project(mat, patches, result.skin, proposal, why) &&
+      if(MatNativeAccess::project(mat, d.patches, result.skin, proposal, why) &&
          proposal.triangles == result.filtered.triangles &&
          proposal.branch == result.filtered.branch && proposal.parent == result.filtered.parent) {
         result.projectionStatus = proposal.xyz == result.filtered.xyz ? "unchanged" : "applied";
@@ -576,21 +753,60 @@ bool compute(GModel *source, const Options &options, Result &result, std::string
       }
     }
     result.projectionSeconds = elapsed(start);
-    if(options.stopAfter == Stage::Projected) return true;
-    start = Clock::now();
-    std::string why;
-    if(!extend(result.projected, result.skin, options, result.extended, result.extension, why)) {
-      result.extended = result.projected;
-      result.extension.complete = false;
-      result.extension.message = why;
-      result.warnings.push_back("Extension failed; the prior MAT is retained: " + why);
-    }
-    result.extensionSeconds = elapsed(start);
+    d.projected = true;
     return true;
   }
   catch(const std::exception &e) { error = e.what(); }
   catch(const std::string &e) { error = e; }
   catch(...) { error = "Unknown error in native MAT pipeline"; }
+  d.dropProjection();
   return false;
+}
+
+bool Session::extend(GModel *source, const Options &options, std::string &error)
+{
+  error.clear();
+  Data &d = *data_;
+  Result &result = d.result;
+  if(!source) { error = "No source GModel"; return false; }
+  if(!validOptions(options)) { error = invalidOptions; return false; }
+  if(!d.filtered) { error = "The filtered MAT has not been computed"; return false; }
+  d.dropExtension();
+  if(!d.projected) {
+    d.dropProjection();
+    result.projected = result.filtered;
+    d.projected = true;
+  }
+  try {
+    ContextGuard guard(source);
+    auto start = Clock::now();
+    std::string why;
+    if(!matgmsh_native::extend(result.projected, result.skin, options, result.extended, result.extension, why)) {
+      result.extended = result.projected;
+      result.extension.complete = false;
+      result.extension.message = why;
+      d.extensionWarnings.push_back("Extension failed; the prior MAT is retained: " + why);
+    }
+    result.extensionSeconds = elapsed(start);
+    d.extended = true;
+    d.setWarnings();
+    return true;
+  }
+  catch(const std::exception &e) { error = e.what(); }
+  catch(const std::string &e) { error = e; }
+  catch(...) { error = "Unknown error in native MAT pipeline"; }
+  d.dropExtension();
+  d.setWarnings();
+  return false;
+}
+
+bool compute(GModel *source, const Options &options, Result &result, std::string &error)
+{
+  Session session;
+  bool ok = session.raw(source, options, error) && session.filter(source, options, error);
+  if(ok && options.stopAfter != Stage::Filtered) ok = session.project(source, options, error);
+  if(ok && options.stopAfter == Stage::Extended) ok = session.extend(source, options, error);
+  result = session.take();
+  return ok;
 }
 } // namespace matgmsh_native

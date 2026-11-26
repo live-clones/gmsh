@@ -142,6 +142,76 @@ void constructionCurveDoesNotChangeTheMat()
   check(results[0].tet.computed && results[0].tet.certified && results[0].collapse.computed &&
           !results[1].tet.computed, "the default raw MAT is the certified tetrahedron-based one");
 }
+
+bool same(const Mesh &a, const Mesh &b)
+{
+  return a.xyz == b.xyz && a.triangles == b.triangles && a.branch == b.branch && a.parent == b.parent;
+}
+
+// The stages run one at a time give what compute() gives; a filter run again
+// gives the same MAT without a new raw MAT, and discards the later stages;
+// the legacy filter, which changes the raw MAT in place, can be run again
+// too; a surface mesh that is not the one of the raw MAT is refused.
+void sessionRunsTheStagesOneAtATime()
+{
+  const auto plate = [](double size) {
+    gmsh::clear();
+    gmsh::model::add("plate");
+    gmsh::model::occ::addBox(0, 0, 0, 10, 6, 1);
+    gmsh::model::occ::synchronize();
+    gmsh::option::setNumber("Mesh.MeshSizeMin", size);
+    gmsh::option::setNumber("Mesh.MeshSizeMax", size);
+    gmsh::model::mesh::generate(2);
+  };
+  plate(0.25);
+  const Result reference = mat(false), legacyReference = mat(true);
+  Options options;
+  options.thickness = 1.;
+  Session session;
+  std::string error;
+  check(!session.filter(currentModel(), options, error) && !error.empty(),
+        "a filter without a raw MAT must be refused");
+  check(session.raw(currentModel(), options, error), "raw stage failed: " + error);
+  check(session.hasRaw() && !session.hasFiltered() && same(session.result().raw, reference.raw),
+        "the raw MAT of the session must be that of compute()");
+  check(session.filter(currentModel(), options, error), "filter stage failed: " + error);
+  check(session.hasFiltered() && same(session.result().filtered, reference.filtered) &&
+          session.result().warnings == reference.warnings,
+        "the filtered MAT of the session must be that of compute()");
+
+  Options wide = options;
+  wide.collapseThreshold = 1.;
+  check(session.filter(currentModel(), wide, error), "second filter failed: " + error);
+  check(!session.result().filtered.triangles.empty() &&
+          session.result().filtered.triangles.size() < reference.filtered.triangles.size(),
+        "a larger threshold must remove more of the MAT");
+  check(same(session.result().raw, reference.raw), "the raw MAT must be kept between the filters");
+  check(session.extend(currentModel(), wide, error) && session.hasExtended() && session.hasProjected(),
+        "extension stage failed: " + error);
+  check(session.filter(currentModel(), options, error) && !session.hasProjected() &&
+          !session.hasExtended() && session.result().extended.triangles.empty(),
+        "a filter run again must discard the later stages");
+  check(same(session.result().filtered, reference.filtered),
+        "a filter run again with the first threshold must give the first MAT");
+
+  Options legacy = options;
+  legacy.raw = RawMode::Legacy;
+  legacy.filter = FilterMode::Legacy;
+  check(!session.filter(currentModel(), legacy, error), "the legacy filter needs the legacy raw MAT");
+  check(session.raw(currentModel(), legacy, error) && session.filter(currentModel(), legacy, error),
+        "legacy stages failed: " + error);
+  check(same(session.result().filtered, legacyReference.filtered),
+        "the legacy MAT of the session must be that of compute()");
+  check(session.filter(currentModel(), legacy, error) &&
+          same(session.result().filtered, legacyReference.filtered),
+        "the legacy filter run again must give the same MAT");
+
+  check(session.raw(currentModel(), options, error), "raw stage failed: " + error);
+  plate(0.3);
+  check(!session.filter(currentModel(), options, error) &&
+          error.find("has changed") != std::string::npos && !session.hasFiltered(),
+        "a filter on another surface mesh must be refused");
+}
 } // namespace
 
 int main()
@@ -154,8 +224,9 @@ int main()
     gmsh::option::setNumber("General.Terminal", 0);
     gmsh::option::setNumber("General.NumThreads", 1);
     constructionCurveDoesNotChangeTheMat();
+    sessionRunsTheStagesOneAtATime();
     gmsh::finalize();
-    std::cout << "MatSkinSites: 4 tests passed\n";
+    std::cout << "MatSkinSites: 5 tests passed\n";
     return 0;
   }
   catch(const std::exception &e) {
