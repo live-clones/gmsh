@@ -291,6 +291,20 @@ int GModel::readMED(const std::string &name)
   return ret;
 }
 
+// the physical group of dimension dim for the MED group of the given name
+// (MED_TAILLE_LNOM characters, padded with spaces), created if it does not
+// exist yet: a group spans several families
+static int groupPhysical(GModel *m, const char *groupName, int dim)
+{
+  std::string name(groupName, strnlen(groupName, MED_TAILLE_LNOM));
+  name.erase(name.find_last_not_of(' ') + 1);
+  int num = m->getPhysicalNumber(dim, name);
+  if(num != -1) return num;
+  // don't use same physical number across dimensions, as e.g. getdp does not
+  // support this
+  return m->setPhysicalName(name, dim, m->getMaxPhysicalNumber(-1) + 1);
+}
+
 // the nodes and the elements of a model whose tag another node elsewhere or
 // another element has (files merged in a model can repeat a tag for the same
 // node or element, e.g. the ghosts of a domain decomposition, but no other)
@@ -728,13 +742,8 @@ int GModel::readMED(const std::string &name, int meshIndex)
       setElementaryName(ge->dim(), -familyNum, familyName);
       if(numGroups > 0) {
         for(int j = 0; j < numGroups; j++) {
-          char tmp[MED_TAILLE_LNOM + 1];
-          strncpy(tmp, &groupNames[j * MED_TAILLE_LNOM], MED_TAILLE_LNOM);
-          tmp[MED_TAILLE_LNOM] = '\0';
-          // don't use same physical number across dimensions, as e.g. getdp
-          // does not support this
-          int pnum =
-            setPhysicalName(tmp, ge->dim(), getMaxPhysicalNumber(-1) + 1);
+          int pnum = groupPhysical(this, &groupNames[j * MED_TAILLE_LNOM],
+                                   ge->dim());
           if(std::find(ge->physicals.begin(), ge->physicals.end(), pnum) ==
              ge->physicals.end())
             ge->physicals.push_back(pnum);
@@ -765,12 +774,8 @@ int GModel::readMED(const std::string &name, int meshIndex)
       }
       if(numGroups > 0) {
         for(int j = 0; j < numGroups; j++) {
-          char tmp[MED_TAILLE_LNOM + 1];
-          strncpy(tmp, &groupNames[j * MED_TAILLE_LNOM], MED_TAILLE_LNOM);
-          tmp[MED_TAILLE_LNOM] = '\0';
-          // don't use same physical number across dimensions, as e.g. getdp
-          // does not support this
-          int pnum = setPhysicalName(tmp, 0, getMaxPhysicalNumber(-1) + 1);
+          int pnum =
+            groupPhysical(this, &groupNames[j * MED_TAILLE_LNOM], 0);
           for(std::size_t k = 0; k < newPoints.size(); k++)
             newPoints[k]->physicals.push_back(pnum);
         }
@@ -948,9 +953,8 @@ int GModel::writeMED(const std::string &name, bool saveAll,
           }
           else
             groupName += tmp;
-          // this is not ideal (cf. #2427), as the group names are all 80 char
-          // long, but I don't know how to associate multiple group names to a
-          // family otherwise
+          // MED stores the groups of a family as one string, each name padded
+          // to MED_TAILLE_LNOM characters (unpadded, they run together: #2427)
           groupName.resize((j + 1) * MED_TAILLE_LNOM, ' ');
         }
 #if(MED_MAJOR_NUM >= 3)
