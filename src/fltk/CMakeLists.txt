@@ -22,6 +22,7 @@ set(SRC
     highOrderToolsWindow.cpp
     clippingWindow.cpp
     manipWindow.cpp
+    midsurfacerWindow.cpp
     contextWindow.cpp
     editorWindow.cpp
     onelabContextWindow.cpp

@@ -48,6 +48,7 @@
 #include "visibilityWindow.h"
 #include "clippingWindow.h"
 #include "manipWindow.h"
+#include "midsurfacerWindow.h"
 #include "pluginWindow.h"
 #include "helpWindow.h"
 #include "windowPlacement.h"
@@ -805,6 +806,9 @@ const std::map<std::string, fltkAction> &menuBarActions()
     {"manipulator", call(manip_cb)},
 #if defined(HAVE_3M)
     {"window_3m", call(window3M_cb)},
+#endif
+#if defined(HAVE_MIDSURFACER)
+    {"midsurfacer", call(midsurfacer_cb)},
 #endif
     {"statistics", call(statistics_cb)},
     {"console", call(show_hide_message_cb)},

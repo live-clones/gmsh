@@ -892,7 +892,10 @@ static actionItem menuBar()
       guiAction("Clipping", "clipping"),
       guiAction("Manipulator", "manipulator"),
     }),
-    group({guiAction("3M", "window_3m")}),
+    group({
+      guiAction("3M", "window_3m"),
+      guiAction("Midsurfacer", "midsurfacer"),
+    }),
     group({
       guiAction("Statistics", "statistics"),
       guiAction("Message Console", "console"),

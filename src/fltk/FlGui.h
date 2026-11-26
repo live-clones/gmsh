@@ -51,6 +51,7 @@ class clippingWindow;
 class partitionWindow;
 class classificationEditor;
 class manipWindow;
+class midsurfacerWindow;
 class elementaryContextWindow;
 class transformContextWindow;
 class meshContextWindow;
@@ -130,6 +131,8 @@ public:
   void dockTools(bool dock);
   void toggleCurrentTool();
   manipWindow *manip;
+  // null without the MatGmsh module
+  midsurfacerWindow *midsurfacer;
   elementaryContextWindow *elementaryContext;
   transformContextWindow *transformContext;
   meshContextWindow *meshContext;

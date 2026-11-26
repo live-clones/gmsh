@@ -452,3 +452,34 @@ legacy filter.
 benchmarks/MAT/Doghouse_mat.geo runs the plugin on the Doghouse at mesh size
 0.3 (141 478 sites): certificate passed, one piece, Euler characteristic 0,
 19 s in batch mode with four threads.
+
+Stages one at a time and Midsurfacer window, 26 November 2026
+------------------------------------------------------------
+
+compute() is now the stages of matgmsh_native::Session in a row. With the
+build before and after this change, gmshMat gives byte-identical skin, raw,
+filtered, projected and extended meshes, and reports identical apart from the
+timings, on t_junction_h20_r0 of the corpus (thickness 4, default mesh size)
+in three runs: --raw tet --filter collapse --stage extended, --raw legacy
+--filter legacy --stage extended, and --raw legacy --project --stage
+projected. The 12 mat_native tests pass; mat_native_skin_sites has a fifth
+test, on a plate: the stages one at a time give the meshes and warnings of
+compute(), a filter run again with the first threshold gives the first MAT
+again without a new raw MAT, a later stage is discarded when an earlier one is
+run again, the legacy filter can be run twice, and a filter on another surface
+mesh is refused.
+
+The Midsurfacer tool window (Tools > Midsurfacer) was driven without a user by
+a program linked with the objects of the gmsh executable, which calls the
+functions of its buttons and renders the windows offscreen. On plate_60x40 and
+t_junction_h20_r0 of the corpus (thickness 4) and on Doghouse.stp (thickness
+4): the window docks in the main window; Filter on an unmeshed model meshes
+the skin, computes the raw MAT and filters it; Filter with another threshold
+keeps the raw MAT (Doghouse: 6.1 s for the raw MAT, 0.65 to 0.8 s for each
+filter; threshold 1 gives 165 edges without surface and the warning, threshold
+0.21 again gives one piece of Euler characteristic 0 as the first time);
+Project and Extend add their views (T junction: projection applied, extension
+partial with 5883 triangles added); Compute again removes the views of the
+later stages; the legacy method and a new skin mesh go through the same
+buttons. The buttons were not clicked with a mouse in this check, and the
+window was tried on macOS only.

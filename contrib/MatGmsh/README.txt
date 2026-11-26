@@ -207,6 +207,52 @@ the last stage. The source CAD and surface mesh are retained. For example:
   Plugin(MatGmsh).OutputPrefix = "doghouse";
   Plugin(MatGmsh).Run;
 
+Midsurfacer tool window
+-----------------------
+
+In the graphical interface, Tools > Midsurfacer opens a tool window
+(src/fltk/midsurfacerWindow.cpp) that docks in the main window like the other
+tools. It runs the pipeline one stage at a time, on the current model:
+
+  Thickness       the thickness parameter, common to all the stages
+  1. Skin         Mesh: first-order surface mesh of the given size (0 for a
+                  tenth of the thickness); the next stages use the surface
+                  mesh of the model, whoever made it
+  2. Medial axis  Compute: the raw MAT; method Tetrahedra (the default, with
+                  its certificate) or Legacy
+  3. Filter       Filter: collapse with the given threshold (or the legacy
+                  filter, with the legacy method)
+  4. Projection   Project: optional; a projection that fails its checks
+                  changes nothing
+  5. Extension    Extend: of the projected MAT if there is one, of the
+                  filtered one otherwise
+
+A button first runs the earlier stages that are missing or out of date: with a
+CAD model just opened, Filter meshes the skin, computes the raw MAT and
+filters it. Each stage says what it gave on its line (details in its tooltip
+and in the messages) and leaves a view, "MAT raw", "MAT filtered", "MAT
+projected" or "MAT extended", colored by sheet. The boxes of the Show row show
+and hide these views and the skin mesh; a stage that has just run is shown
+alone, without the skin that would hide it.
+
+The raw MAT is kept between the stages: changing the threshold and pressing
+Filter again does not compute the tetrahedrization again (Doghouse, thickness
+4, mesh size 0.4, one thread: 6.1 s for the raw MAT, then 0.8 s for each
+filter). It is computed again when asked for, and when the model, its surface
+mesh or the method has changed.
+
+Stage by stage in C++
+---------------------
+
+matgmsh_native::Session (MatPipeline.h) is what the window drives: raw(),
+filter(), project() and extend() on a model, each needing the ones before it;
+a stage run again discards the results of the later ones, and filter() and
+project() refuse a model whose surface mesh is not the one given to raw().
+compute() runs these stages in a row and gives the same meshes and report as
+before (byte-identical files on the cases checked, see VALIDATION.txt). The
+legacy filter changes the raw MAT in place, so the session computes the legacy
+raw MAT again when that filter is run a second time.
+
 Validation
 ----------
 

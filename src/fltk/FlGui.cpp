@@ -41,6 +41,7 @@
 #include "paletteWindow.h"
 #include "classificationEditor.h"
 #include "manipWindow.h"
+#include "midsurfacerWindow.h"
 #include "contextWindow.h"
 #include "onelabContextWindow.h"
 #include "onelabGroup.h"
@@ -519,6 +520,11 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   partition = new partitionWindow(CTX::instance()->deltaFontSize);
   classify = new classificationEditor(CTX::instance()->deltaFontSize);
   manip = new manipWindow(CTX::instance()->deltaFontSize);
+#if defined(HAVE_MIDSURFACER)
+  midsurfacer = new midsurfacerWindow(CTX::instance()->deltaFontSize);
+#else
+  midsurfacer = nullptr;
+#endif
   elementaryContext =
     new elementaryContextWindow(CTX::instance()->deltaFontSize);
   transformContext = new transformContextWindow(CTX::instance()->deltaFontSize);
@@ -556,6 +562,14 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
     p->name(t.second);
     _tools.push_back(p);
   }
+#if defined(HAVE_MIDSURFACER)
+  {
+    paletteWindow *p = (paletteWindow *)midsurfacer->win;
+    p->dockable(true);
+    p->name("midsurfacer");
+    _tools.push_back(p);
+  }
+#endif
   applyFloatingTools();
   // what docked tools skip while hidden, refreshed when shown again
   ((paletteWindow *)visibility->win)
