@@ -543,26 +543,25 @@ gmshMat --stage extended (default length and layers) on the cached skins of
 the 109 cases of levels 1 to 5 plus doghouse_r0 and doghouse_r1, with the new
 filtered MAT (--raw tet --filter collapse) and with the legacy one;
 extended.msh scored alone, without walls, by the frozen evaluator, and
-measured by surface_topology.py. 108 cases ran with both filters
-(ribbed_plate_t2_to_6 was still running with the legacy filter when this was
-written). Good or perfect verdicts, next to those of the walls (the delivered
-chain) and of the chain of October (extended MAT of the MatGmsh repository
-plus walls) on the same cases:
+measured by surface_topology.py. All 109 cases ran with both filters. Good or
+perfect verdicts, next to those of the walls (the delivered chain) and of the
+chain of October (extended MAT of the MatGmsh repository plus walls) on the
+same cases:
 
   Level   Cases  New filter   Legacy filter   Walls   October
                  + extension  + extension
   1          40           38             40      40        39
   2          28            8             12       7        24
   3          26           11             16      17        24
-  4           8            0              0       2         7
+  4           9            0              0       2         8
   5           4            0              0       0         1
   8           2            0              0       0         0
-  all       108           57             68      66        95
+  all       109           57             68      66        96
 
 The extension is complete in one case with each filter and partial in all the
 others; most unresolved fronts stop on "degenerate co-refinement parent" or on
 a collar rejected after a self-intersection. It keeps the Euler characteristic
-of its input in 85 of the 108 cases with the legacy filter and in 23 with the
+of its input in 85 of the 109 cases with the legacy filter and in 23 with the
 new one: 61 and 13 cases are both good or perfect and of unchanged Euler
 characteristic. The evaluator does not see this: pipe_R20 with the new filter
 is scored perfect with an Euler characteristic of -138 for 0. Missing area
