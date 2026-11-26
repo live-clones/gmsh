@@ -190,6 +190,25 @@ static void syncCAD(bool geo = true)
     m->getGEOInternals()->synchronize(m);
 }
 
+// the center of the sphere of a built-in surface filling: {-2, center} for
+// "In Sphere", or a single point (as "In Sphere" was parsed before)
+static int surfaceSphereCenter(List_T *constraints)
+{
+  double d;
+  int n = List_Nbr(constraints);
+  if(n == 2) {
+    List_Read(constraints, 0, &d);
+    if(d != -2) return -1;
+    List_Read(constraints, 1, &d);
+    return (int)d;
+  }
+  if(n == 1) {
+    List_Read(constraints, 0, &d);
+    return (int)d;
+  }
+  return -1;
+}
+
 %}
 
 %union {
@@ -1522,8 +1541,10 @@ SurfaceConstraints :
     }
   | tIn tSphere '{' FExpr '}'
     {
-      $$ = List_Create(1, 1, sizeof(double));
-      double p = $4;
+      // {-2, center}
+      $$ = List_Create(2, 1, sizeof(double));
+      double t = -2, p = $4;
+      List_Add($$, &t);
       List_Add($$, &p);
     }
   | tUsing tPoint '{' RecursiveListOfDouble '}'
@@ -1860,7 +1881,11 @@ Shape :
         else{
           std::vector<int> constraints; ListOfDouble2Vector($7, constraints);
           std::vector<int> points, surfaces, continuity;
-          if(constraints.size() >= 3 && constraints[0] < 0){
+          if(constraints.size() == 2 && constraints[0] == -2){
+            yymsg(1, "In Sphere is only available with the built-in kernel: "
+                  "ignored");
+          }
+          else if(constraints.size() >= 3 && constraints[0] < 0){
             // {-1, type, ent, type, ent, ...}
             for(std::size_t i = 2; i < constraints.size(); i+=2){
               int type = constraints[i - 1];
@@ -1884,11 +1909,7 @@ Shape :
         }
       }
       else{
-        int sphereCenter = -1;
-        if(List_Nbr($7) == 1){
-          double d; List_Read($7, 0, &d);
-          sphereCenter = (int)d;
-        }
+        int sphereCenter = surfaceSphereCenter($7);
         r = GModel::current()->getGEOInternals()->addSurfaceFilling
           (num, wires, sphereCenter);
       }
@@ -1903,11 +1924,7 @@ Shape :
       yymsg(2, "'Ruled Surface' command is deprecated: use 'Surface' instead");
       int num = (int)$4;
       std::vector<int> wires; ListOfDouble2Vector($7, wires);
-      int sphereCenter = -1;
-      if(List_Nbr($8) == 1){
-        double d; List_Read($8, 0, &d);
-        sphereCenter = (int)d;
-      }
+      int sphereCenter = surfaceSphereCenter($8);
       bool r = GModel::current()->getGEOInternals()->addSurfaceFilling
         (num, wires, sphereCenter);
       if(!r) yymsg(0, "Could not add surface");
