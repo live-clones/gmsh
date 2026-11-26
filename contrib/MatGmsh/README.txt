@@ -108,6 +108,17 @@ records under "collapse" the wings, the removed and blocked polygons, the
 topology of the kept surface, and "wire_edges": edges left without surface,
 which mean that the kept surface alone has lost the topology of the solid.
 
+Which thickness to give. A convex wing is recognized as such only when the two
+contacts of its polygons lie on two patches of CAD faces that share a sharp
+convex curve. The other wings (rounded edges, free-form faces, contacts on CAD
+curves) are removed by the erosion rule alone, whose threshold is a fraction
+of the thickness given: the wing of a right-angled edge of a wall of thickness
+e has an erosion thickness of up to 0.207 e. The thickness must therefore be
+that of the thickest wall, with some margin, or the wings of the thicker walls
+stay; the price is that thinner walls lose a band of their own mid-surface
+along their free edges (see VALIDATION.txt for the Doghouse). gmshMat, the
+plugin and the tool window have no default thickness.
+
 The convexity of a CAD edge needs the material side of the skin. It is taken,
 shell by shell, from the interior tetrahedra, so closed cavities and
 assemblies of several solids are handled.
@@ -214,7 +225,8 @@ In the graphical interface, Tools > Midsurfacer opens a tool window
 (src/fltk/midsurfacerWindow.cpp) that docks in the main window like the other
 tools. It runs the pipeline one stage at a time, on the current model:
 
-  Thickness       the thickness parameter, common to all the stages
+  Thickness       of the thickest wall, common to all the stages; it has
+                  no default
   1. Skin         Mesh: first-order surface mesh of the given size (0 for a
                   tenth of the thickness); the next stages use the surface
                   mesh of the model, whoever made it

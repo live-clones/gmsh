@@ -13,7 +13,7 @@
 
 GMSH_MatGmshPlugin::GMSH_MatGmshPlugin()
   : GMSH_PostPlugin(
-      {{GMSH_FULLRC, "Thickness", nullptr, 1., ""},
+      {{GMSH_FULLRC, "Thickness", nullptr, 0., ""},
        {GMSH_FULLRC, "Project", nullptr, 0., ""},
        {GMSH_FULLRC, "Stage", nullptr, 0., ""},
        {GMSH_FULLRC, "ExtensionLength", nullptr, 0., ""},
@@ -33,7 +33,8 @@ std::string GMSH_MatGmshPlugin::getHelp() const
          "the existing first-order triangular surface mesh of the current "
          "model. Mesh the source surfaces before running the plugin. The "
          "source CAD and its surface mesh are retained.\n\n"
-         "`Thickness' is the maximum-thickness parameter. `Stage' selects "
+         "`Thickness' is the thickness of the thickest wall, with some "
+         "margin; it has no default and must be set. `Stage' selects "
          "the last stage: 0 for filtered MAT, 1 for optional projection, "
          "2 for free-boundary extension. `Project' enables local "
          "mid-surface projection; a rejected projection retains its input. "

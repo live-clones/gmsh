@@ -40,11 +40,11 @@ int main(int argc, char **argv)
     std::string input = argv[1], cached;
     std::filesystem::path output;
     double meshSize = 0.; int threads = 1; bool complex = false;
-    bool rawGiven = false, filterGiven = false;
+    bool rawGiven = false, filterGiven = false, thicknessGiven = false;
     for(int i = 2; i < argc; ++i) {
       const std::string key = argv[i];
       auto value = [&]() { if(++i == argc) throw std::runtime_error("Missing value for " + key); return std::string(argv[i]); };
-      if(key == "--thickness") options.thickness = std::stod(value());
+      if(key == "--thickness") { options.thickness = std::stod(value()); thicknessGiven = true; }
       else if(key == "--output") output = value();
       else if(key == "--project") options.project = true;
       else if(key == "--mesh-size") meshSize = std::stod(value());
@@ -85,6 +85,7 @@ int main(int argc, char **argv)
       options.filter = matgmsh_native::FilterMode::Legacy;
     if(filterGiven && !rawGiven && options.filter == matgmsh_native::FilterMode::Legacy)
       options.raw = matgmsh_native::RawMode::Legacy;
+    if(!thicknessGiven) throw std::runtime_error("--thickness is required");
     if(output.empty()) throw std::runtime_error("--output is required");
     if(std::filesystem::exists(output)) throw std::runtime_error("Output directory already exists; choose a new checkpoint directory");
     if(threads < 1) throw std::runtime_error("--threads must be positive");

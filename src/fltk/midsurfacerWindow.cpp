@@ -146,8 +146,15 @@ midsurfacerWindow::midsurfacerWindow(int deltaFontSize) : _state(new State)
     y += BH;
   };
 
-  thickness = input("Thickness", 1., 0., 1.e22, .1,
-                    "The largest thickness of the walls of the solid");
+  // no default: the mesh size, the filter and the extension all follow it
+  thickness =
+    input("Thickness (of the thickest wall)", 0., 0., 1.e22, .1,
+          "The thickness of the thickest wall of the solid, with some "
+          "margin (4 for walls of 3.5): the filter removes the wings whose "
+          "erosion thickness is below the threshold times this value, so a "
+          "smaller value leaves the wings of the thicker walls. It also "
+          "gives the default mesh size and the default length of the "
+          "extension");
 
   title("1. Skin");
   meshSize = input("Mesh size (0: thickness / 10)", 0., 0., 1.e22, .01,
@@ -378,7 +385,7 @@ void midsurfacerWindow::run(int target)
   Options options;
   options.thickness = thickness->value();
   if(!(options.thickness > 0.)) {
-    Msg::Error("Midsurfacer: the thickness must be positive");
+    Msg::Error("Midsurfacer: give the thickness of the thickest wall first");
     return;
   }
   const bool legacy = method->value() == 1;

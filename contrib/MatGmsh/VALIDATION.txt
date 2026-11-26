@@ -579,3 +579,35 @@ For reference, over the 220 cases: missing area 34 616 t^2 for the filtered
 MAT alone, 5 298 with the walls, 364 for the chain of October; area off the
 truth 3 143, 3 145 and 306 t^2. Results: ext/<case>/{tet,legacy}/ in the same
 dragon3 folder.
+
+Thickness given to the filter on the Doghouse, 26 November 2026
+--------------------------------------------------------------
+
+Doghouse.stp, skin of size 0.4 (81 095 sites), tetrahedron-based MAT and
+collapse at 0.21, with three values of the thickness. Twice the radius of the
+kept MAT, weighted by area, has its median at 3.50 and its 5% quantile at
+1.35: the walls are 3.5 thick and the ribs about 1.35. Areas in mm^2:
+
+  Thickness  Removed as    Removed by   Kept   Kept on the   Pieces, Euler,
+  given      convex wings  erosion             thin ribs     edges w/o surface
+  1                 1530           20   4622          1396   1, 0, 0
+  3.5               1530          168   4475          1312   2, 1, 1
+  4                 1530          201   4441          1300   1, 0, 0
+
+The wings recognized from the CAD (1530 mm^2) do not depend on the thickness.
+With 1, 181 mm^2 more are kept than with 4: wings of the walls of 3.5 that the
+CAD rule does not recognize (their contacts are on B-spline faces, 36 mm^2, on
+a cylinder and a CAD curve, 32, or on two CAD curves, 32) and, for 76 mm^2,
+the band along the free edges of the thin ribs that the threshold of 4 removes
+beyond their own wings. With 3.5 the threshold (0.735) is next to the erosion
+thickness of the wings of the walls (0.207 x 3.5 = 0.72) and one sliver is
+left hanging by an edge without surface: hence the margin.
+
+Tried and not kept: a threshold that follows the local thickness (0.21 times
+the larger of the thickness given and of the diameter of the medial ball of
+the polygon). With 1.35 on the skin of size 0.4 it does what is wanted (the
+wings of the walls of 3.5 removed, 1376 mm^2 kept on the ribs, one piece,
+Euler characteristic 0). On the skin of size 0.135 (1 374 348 triangles),
+through the tool window, it leaves 29 pieces and 1533 edges without surface,
+where the threshold on the thickness gives one piece of Euler characteristic
+0. The option was removed.
