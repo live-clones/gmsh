@@ -1227,6 +1227,18 @@ bool MeshSetTransfiniteFacesAutomatic(std::set<GFace *> &candidate_faces,
   Msg::Debug("transfinite automatic: assigning number of points ...");
   std::size_t ne = 0;
   for(std::set<GEdge *> &chord : chords) {
+    // leave alone the chords with a curve already transfinite, i.e. set by
+    // the user (the quasi-structured algorithm restores the attributes of the
+    // curves after meshing)
+    bool user = false;
+    for(GEdge *ge : chord)
+      if(ge->meshAttributes.method == MESH_TRANSFINITE) user = true;
+    if(user) {
+      Msg::Debug("- chord with %li edges left alone, already transfinite",
+                 chord.size());
+      continue;
+    }
+
     double avgNbPoints = 0;
     for(GEdge *ge : chord) {
       int n = meshGEdgeTargetNumberOfPoints(ge);
