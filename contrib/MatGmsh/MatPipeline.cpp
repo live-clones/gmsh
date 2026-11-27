@@ -279,12 +279,17 @@ struct MatNativeAccess {
       ++*flat;
       return true;
     };
-    std::map<int, int> index;
+    // the vertices numbered in the order they are met
+    std::vector<int> index(mat.vor.vertices.size() / 3, -1);
     auto vertex = [&](int old) {
-      auto p = index.emplace(old, static_cast<int>(mesh.xyz.size() / 3));
-      if(p.second) mesh.xyz.insert(mesh.xyz.end(),
-        mat.vor.vertices.begin() + 3 * old, mat.vor.vertices.begin() + 3 * old + 3);
-      return p.first->second;
+      if(std::size_t(old) >= index.size())
+        throw std::runtime_error("A MAT polygon has an unknown vertex");
+      if(index[old] < 0) {
+        index[old] = static_cast<int>(mesh.xyz.size() / 3);
+        mesh.xyz.insert(mesh.xyz.end(),
+          mat.vor.vertices.begin() + 3 * old, mat.vor.vertices.begin() + 3 * old + 3);
+      }
+      return index[old];
     };
     for(std::size_t f = 0; f < mat.vor.faces.size(); ++f) {
       if(mat.vor.faceColors[f] < 0) continue;
@@ -592,10 +597,12 @@ bool Session::raw(GModel *source, const Options &options, std::string &error)
     d.mat.reset(new matGmsh);
     matGmsh &mat = *d.mat;
     if(d.tetRaw) {
+      // General.NumThreads threads, every core if it is 0 (as for the mesh)
       double configured = 1.;
       gmsh::option::getNumber("General.NumThreads", configured);
       const unsigned threads = std::isfinite(configured) && configured >= 1. ?
-        static_cast<unsigned>(std::min(configured, 256.)) : 1u;
+        static_cast<unsigned>(std::min(configured, 256.)) :
+        static_cast<unsigned>(std::max(1, std::min(Msg::GetMaxThreads(), 256)));
       mat.computeVoronoi(false, false);
       result.tet = MatNativeAccess::tetRaw(mat, threads, d.dual, d.skinSide);
       if(!result.tet.certified)

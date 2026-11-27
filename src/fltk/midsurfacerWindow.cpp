@@ -820,7 +820,7 @@ bool midsurfacerWindow::_extendTogether(std::string &what)
   std::string error;
   if(!extendAllBranches(s.work, r.skin, .1 * t, .25 * t, reach,
                         std::max(1, (int)layers->value()), .01 * t * t,
-                        s.extended, g, error, &original)) {
+                        s.extended, g, error, &original, &s.planes)) {
     what = error;
     return false;
   }
@@ -1025,6 +1025,17 @@ void midsurfacerWindow::run(int target)
   if(!lock) return;
   State &s = *_state;
   GModel *model = GModel::current();
+  // The mesh of the skin and the classification of the tetrahedra on every
+  // core, unless General.NumThreads asks for another number of threads than
+  // the default one (0 is every core for Gmsh as well).
+  struct EveryCore {
+    const int saved = CTX::instance()->numThreads;
+    EveryCore()
+    {
+      if(saved == 1) CTX::instance()->numThreads = 0;
+    }
+    ~EveryCore() { CTX::instance()->numThreads = saved; }
+  } everyCore;
 
   Options options;
   options.thickness = thickness->value();
@@ -1056,10 +1067,15 @@ void midsurfacerWindow::run(int target)
     FlGui::instance()->updateViews(true);
     drawContext::global()->draw();
   };
+  // A stage is shown as soon as it is computed, the later ones included: a
+  // click on Extend all in a model without mesh shows the skin, the raw MAT
+  // and the filtered MAT one after the other before the extension.
   auto done = [&](int stage) {
+    if(!FlGui::available()) return;
     _showOnly(stage);
     if(viewsChanged) FlGui::instance()->updateViews(true);
-    drawContext::global()->draw();
+    viewsChanged = false;
+    drawContext::global()->draw(false);
   };
   // the warnings of the stages, each said once for a raw MAT
   auto warn = [&]() {
@@ -1081,11 +1097,9 @@ void midsurfacerWindow::run(int target)
       }
       return;
     }
-  }
-  if(target == Skin) {
     done(Skin);
-    return;
   }
+  if(target == Skin) return;
 
   // 2. the raw MAT: kept, unless it is asked for, or the model, its mesh or
   // the method changed
@@ -1121,11 +1135,9 @@ void midsurfacerWindow::run(int target)
                      r.rawSeconds));
     _view(Raw);
     warn();
-  }
-  if(target == Raw) {
     done(Raw);
-    return;
   }
+  if(target == Raw) return;
 
   // 3. the filter: kept, unless it is asked for or its parameters changed
   if(target == Filter || !s.session.hasFiltered() ||
@@ -1169,11 +1181,9 @@ void midsurfacerWindow::run(int target)
     s.work = r.filtered;
     s.hasWork = true;
     _listBranches(false);
-  }
-  if(target == Filter) {
     done(Filter);
-    return;
   }
+  if(target == Filter) return;
 
   // 4. the projection, when asked for
   if(target == Projection) {

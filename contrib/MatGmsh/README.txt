@@ -203,6 +203,10 @@ Driver
     --source-mesh doghouse-mat/source.msh --project --stage extended \
     --extension-length 12 --extension-layers 12 --output doghouse-extended
 
+--threads is the number of threads of the skin mesh and of the
+classification of the tetrahedra (General.NumThreads); 0, the default, is
+every core (or OMP_NUM_THREADS). The results do not depend on it.
+
 For newly generated skins, a positive --mesh-size overrides the input sizing.
 Otherwise the driver preserves Mesh.MeshSizeMin/Max when opening the input
 changes either bound; without such settings, both bounds default to h/10.
@@ -299,13 +303,17 @@ filters it. Each stage says what it gave on its line (details in its tooltip
 and in the messages) and leaves a view, "MAT raw", "MAT filtered", "MAT
 projected" or "MAT extended", colored by sheet. The boxes of the Show row show
 and hide these views and the skin mesh; a stage that has just run is shown
-alone, without the skin that would hide it.
+alone, without the skin that would hide it, as soon as it has run: Extend all
+pressed on a CAD model just opened shows the skin mesh, then the raw MAT, then
+the filtered MAT, each while the next stage runs, then the extended MAT.
 
 The raw MAT is kept between the stages: changing the threshold and pressing
 Filter again does not compute the tetrahedrization again (Doghouse, thickness
-4, mesh size 0.4, one thread: 6.1 s for the raw MAT, then 0.8 s for each
-filter). It is computed again when asked for, and when the model, its surface
-mesh or the method has changed.
+4, mesh size 0.4: 2.2 s for Filter on a CAD model just opened, then 0.4 s for
+each filter). It is computed again when asked for, and when the model, its
+surface mesh or the method has changed. The skin mesh and the classification
+of the tetrahedra run on every core, unless General.NumThreads asks for
+another number of threads than its default, 1.
 
 Extension branch by branch
 --------------------------

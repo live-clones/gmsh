@@ -1,6 +1,7 @@
 #include "MatTetInterior.h"
 #include "robustPredicates.h"
 #include <algorithm>
+#include <atomic>
 #include <cmath>
 #include <limits>
 #include <numeric>
@@ -441,13 +442,18 @@ Classification classify(const std::vector<double> &xyz, const std::vector<int> &
   if(threads == 1)
     work(0, count);
   else {
-    // Every tetrahedron is an independent query writing its own entries.
+    // Every tetrahedron is an independent query writing its own entries. The
+    // threads take blocks of tetrahedra in turn, so that the cores that are
+    // slower (or busy) take fewer.
+    const std::size_t block = 4096;
+    std::atomic<std::size_t> next(0);
     std::vector<std::thread> pool;
     std::vector<std::string> failures(threads);
     for(unsigned i = 0; i < threads; ++i)
       pool.emplace_back([&, i] {
         try {
-          work(count * i / threads, count * (i + 1) / threads);
+          for(std::size_t begin; (begin = next.fetch_add(block)) < count;)
+            work(begin, std::min(count, begin + block));
         }
         catch(const std::exception &e) {
           failures[i] = e.what();

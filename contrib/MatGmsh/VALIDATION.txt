@@ -1047,3 +1047,66 @@ million triangles at 0.4) take about 0.75 GB, 1.53 GB in all after Filter and
 yet: maps replaced by sorted arrays in the faces and the topology (about
 0.9 s at 0.4, 3.8 s at 0.2), all the cores for the skin mesh and the
 classification, lighter views.
+
+The maps, the cores and the planes, 27 November 2026
+----------------------------------------------------
+
+The hotspots left after the circumcentres, in the same conditions:
+
+  - the faces around each edge of the MAT (colorSelectedVoronoiFaces, run for
+    the raw and for the filtered MAT), the topology of a MAT mesh, the
+    numbering of the vertices of the MAT meshes: std::map and std::set
+    replaced by arrays sorted at each vertex;
+  - the orientation of the skin from the tetrahedra (orientSurfaceTriangles):
+    the four faces of every tetrahedron went into a std::map (2.5 million at
+    0.4); only those that are triangles of the skin are now looked for, at
+    their smallest vertex;
+  - every core for the skin mesh and the classification of the tetrahedra:
+    gmshMat --threads 0 (the default, every core), the tool window likewise
+    unless General.NumThreads asks for more than one thread; the threads of
+    the classification take blocks of 4096 tetrahedra in turn;
+  - the weighted quantiles of the planes of the branches by selection instead
+    of a full sort (the same values on 160 000 random sets, ties and equal
+    weights included), and the planes listed by the window passed to the
+    extension instead of being fitted again.
+
+Doghouse.stp (--wing-branches --collapse-threshold 0 --extend-all --complex):
+the 26 files written, the complex included, identical byte for byte before
+and after, with one thread and with every core (the times in the JSON files
+aside). The twelve mat_native_ tests pass. Time:
+
+  Size  Stage                 Morning   One thread   Every core (14)
+  0.4   skin mesh               0.95       0.97          0.37
+        raw MAT                 2.75       2.06          1.21
+        filter                  0.91       0.36          0.36
+        list of the branches    0.14       0.03          0.03
+        extension               1.53       1.44          1.46
+        save                    0.25       0.25          0.25
+        total                   6.29       4.87          3.43
+  0.2   skin mesh               3.38       3.45          1.37
+        raw MAT                12.61       9.18          5.17
+        filter                  4.04       1.59          1.59
+        list of the branches    0.56       0.12          0.12
+        extension               4.27       3.89          3.88
+        save                    0.95       0.96          0.96
+        total                  24.86      18.23         12.13
+
+In the tool window (0.4): Filter on the CAD model just opened 2.2 s (5.0 in
+the morning), Extend all 1.5 s (1.7), Filter again after a change of the
+threshold 0.43 s (1.2), Save 0.28 s. Extend all pressed first shows the skin,
+the raw MAT and the filtered MAT one after the other, 4.8 s in all.
+
+Memory of the window (0.4, one thread, physical footprint; in brackets the
+heap in use): 0.72 GB before anything (0.09), 1.28 after Filter (0.60), 1.42
+after Extend all (0.69), against 0.72, 1.03 and 1.46 in the morning. After
+Filter it is higher because the skin mesh and the raw MAT are now drawn while
+the next stages run, and their drawing data built then (in the morning they
+were built later, when shown: the total after Extend all includes them and is
+a little lower now). The footprint varies by about 0.1 GB from one run to the
+next; the figures of the previous section for the views (0.75 GB) came from
+the resident memory, which varies more, and overstate them.
+
+Left: the ribbons of the extension (hash maps, about 1.7 s at 0.2), the cut
+(1.7 s at 0.2), the circumcentres on one thread (0.5 s at 0.2), the sorts of
+the certificate, of the dual and of the sides of the skin (1.4 s at 0.2 in
+all), the save in ASCII (1 s at 0.2).

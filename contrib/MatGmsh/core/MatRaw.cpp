@@ -72,17 +72,53 @@ void matGmsh::orientSurfaceTriangles()
     if(vol6 < 0.0) std::swap(tet[0], tet[1]);
   };
 
-  std::map<matGmshEdge, std::vector<int>> edge2tri;
+  const std::size_t nv = del.seeds.size() / 3;
+  for(int t = 0; t < nt; ++t)
+    for(int k = 0; k < 3; ++k)
+      if(del.triangles[3*t+k] >= nv)
+        throw std::runtime_error("A skin triangle has an unknown vertex");
 
-  for(int t=0;t<nt;++t){
-    auto v = getTri(t);
-
-    edge2tri[matGmshEdge(v[0],v[1])].push_back(t);
-    edge2tri[matGmshEdge(v[1],v[2])].push_back(t);
-    edge2tri[matGmshEdge(v[2],v[0])].push_back(t);
+  // The triangles of each edge, in increasing order (a triangle that has the
+  // edge twice is there twice): listed at the smaller vertex of the edge,
+  // with the other one.
+  std::vector<std::size_t> edgeStart(nv + 1, 0);
+  for(int t = 0; t < nt; ++t) {
+    const auto v = getTri(t);
+    for(int k = 0; k < 3; ++k) ++edgeStart[std::min(v[k], v[(k+1)%3]) + 1];
   }
+  for(std::size_t v = 0; v < nv; ++v) edgeStart[v + 1] += edgeStart[v];
+  std::vector<std::pair<int,int>> edgeTriangles(edgeStart[nv]); // (other vertex, triangle)
+  {
+    std::vector<std::size_t> fill(edgeStart.begin(), edgeStart.end() - 1);
+    for(int t = 0; t < nt; ++t) {
+      const auto v = getTri(t);
+      for(int k = 0; k < 3; ++k) {
+        const int a = std::min(v[k], v[(k+1)%3]), b = std::max(v[k], v[(k+1)%3]);
+        edgeTriangles[fill[a]++] = {b, t};
+      }
+    }
+  }
+  auto forTrianglesOf = [&](const matGmshEdge &e, const std::function<void(int)> &visit) {
+    for(std::size_t i = edgeStart[e.a]; i < edgeStart[e.a + 1]; ++i)
+      if(edgeTriangles[i].first == e.b) visit(edgeTriangles[i].second);
+  };
 
-  std::map<std::array<int,3>, std::array<int,3>> tetFaceOrientation;
+  // The orientation of a skin triangle as the face of a positive
+  // tetrahedron, the last one that has it: the triangles listed at their
+  // smallest vertex, the faces of the tetrahedra looked for there.
+  std::vector<std::size_t> faceStart(nv + 1, 0);
+  for(int t = 0; t < nt; ++t) ++faceStart[sortedTri(getTri(t))[0] + 1];
+  for(std::size_t v = 0; v < nv; ++v) faceStart[v + 1] += faceStart[v];
+  std::vector<std::array<int,3>> skinFaces(faceStart[nv]); // (second, third, triangle)
+  {
+    std::vector<std::size_t> fill(faceStart.begin(), faceStart.end() - 1);
+    for(int t = 0; t < nt; ++t) {
+      const auto key = sortedTri(getTri(t));
+      skinFaces[fill[key[0]]++] = {key[1], key[2], t};
+    }
+  }
+  std::vector<std::array<int,3>> faceOrientation(nt);
+  std::vector<unsigned char> isFace(nt, 0);
   const int nTet = static_cast<int>(del.tetrahedra.size() / 4);
   for(int t = 0; t < nTet; ++t) {
     std::array<int,4> tet = {
@@ -91,6 +127,9 @@ void matGmsh::orientSurfaceTriangles()
       int(del.tetrahedra[4*t+2]-1),
       int(del.tetrahedra[4*t+3]-1)
     };
+    for(int k = 0; k < 4; ++k)
+      if(tet[k] < 0 || std::size_t(tet[k]) >= nv)
+        throw std::runtime_error("A tetrahedron has an unknown vertex");
     orientTetPositive(tet);
 
     const std::array<std::array<int,3>,4> faces = {{
@@ -100,7 +139,12 @@ void matGmsh::orientSurfaceTriangles()
       {tet[0], tet[2], tet[1]}
     }};
     for(const auto &f : faces) {
-      tetFaceOrientation[sortedTri(f)] = f;
+      const auto key = sortedTri(f);
+      for(std::size_t i = faceStart[key[0]]; i < faceStart[key[0] + 1]; ++i)
+        if(skinFaces[i][0] == key[1] && skinFaces[i][1] == key[2]) {
+          faceOrientation[skinFaces[i][2]] = f;
+          isFace[skinFaces[i][2]] = 1;
+        }
     }
   }
 
@@ -122,12 +166,10 @@ void matGmsh::orientSurfaceTriangles()
 
       for(int e=0;e<3;++e){
 
-        auto &adj = edge2tri[edges[e]];
+        forTrianglesOf(edges[e], [&](int t2){
 
-        for(int t2 : adj){
-
-          if(t2 == t) continue;
-          if(visited[t2]) continue;
+          if(t2 == t) return;
+          if(visited[t2]) return;
 
           auto v2 = getTri(t2);
 
@@ -153,28 +195,17 @@ void matGmsh::orientSurfaceTriangles()
 
           visited[t2] = 1;
           Q.push(t2);
-        }
+        });
       }
     }
   };
 
+  // (a second pass would find nothing more: a triangle not visited here is
+  // the face of no tetrahedron)
   for(int seed = 0; seed < nt; ++seed) {
     if(visited[seed]) continue;
-
-    auto v = getTri(seed);
-    auto it = tetFaceOrientation.find(sortedTri(v));
-    if(it == tetFaceOrientation.end()) continue;
-    setTri(seed, it->second);
-    runBfsFromSeed(seed);
-  }
-
-  for(int seed = 0; seed < nt; ++seed) {
-    if(visited[seed]) continue;
-
-    auto v = getTri(seed);
-    auto it = tetFaceOrientation.find(sortedTri(v));
-    if(it == tetFaceOrientation.end()) continue;
-    setTri(seed, it->second);
+    if(!isFace[seed]) continue;
+    setTri(seed, faceOrientation[seed]);
     runBfsFromSeed(seed);
   }
 
@@ -686,35 +717,68 @@ void matGmsh::colorSelectedVoronoiFaces(std::vector<char> &isInternal)
             removedFaceVertices, degenerateFaces);
 
   // =========================
-  // 2. valence des edges
+  // 2. the faces around each edge
   // =========================
-  std::map<matGmshEdge,int> valence;
-  std::map<matGmshEdge,std::vector<int>> edge2faces;
-
+  // Each side of a selected face is a slot. The slots are listed at the
+  // smaller vertex of their edge, sorted by the other vertex and then by
+  // slot: an edge is a run of slots there, its faces in increasing order, as
+  // many as its valence (a face that has an edge twice counts twice).
+  const std::size_t nv = vor.vertices.size() / 3;
+  std::vector<std::size_t> firstSlot(nf + 1, 0);
+  for(int f = 0; f < nf; ++f)
+    firstSlot[f + 1] = firstSlot[f] + (isInternal[f] ? vor.faces[f].verts.size() : 0);
+  const std::size_t slots = firstSlot[nf];
+  std::vector<int> slotFace(slots, -1);
+  std::vector<std::size_t> start(nv + 1, 0);
+  const auto ends = [&](int f, std::size_t i, int &v0, int &v1) {
+    const std::vector<int> &verts = vor.faces[f].verts;
+    v0 = verts[i];
+    v1 = verts[(i + 1) % verts.size()];
+    if(v0 < 0 || v1 < 0) return false;
+    if(std::size_t(v0) >= nv || std::size_t(v1) >= nv)
+      throw std::runtime_error("A Voronoi face has an unknown vertex");
+    if(v0 > v1) std::swap(v0, v1);
+    return true;
+  };
   for(int f = 0; f < nf; ++f) {
-
     if(!isInternal[f]) continue;
-
-    const auto& face = vor.faces[f];
-    int n = face.verts.size();
-
-    for(int i=0;i<n;++i) {
-
-      int v0 = face.verts[i];
-      int v1 = face.verts[(i+1)%n];
-
-      if(v0 < 0 || v1 < 0) continue;
-
-      matGmshEdge e(v0,v1);
-
-      valence[e]++;
-      edge2faces[e].push_back(f);
+    for(std::size_t i = 0; i < vor.faces[f].verts.size(); ++i) {
+      int v0, v1;
+      slotFace[firstSlot[f] + i] = f;
+      if(ends(f, i, v0, v1)) ++start[v0 + 1];
+    }
+  }
+  for(std::size_t v = 0; v < nv; ++v) start[v + 1] += start[v];
+  // (other vertex, slot) at the smaller vertex
+  std::vector<std::pair<int, std::size_t>> around(start[nv]);
+  {
+    std::vector<std::size_t> fill(start.begin(), start.end() - 1);
+    for(int f = 0; f < nf; ++f) {
+      if(!isInternal[f]) continue;
+      for(std::size_t i = 0; i < vor.faces[f].verts.size(); ++i) {
+        int v0, v1;
+        if(ends(f, i, v0, v1)) around[fill[v0]++] = {v1, firstSlot[f] + i};
+      }
+    }
+  }
+  // the run of its edge for each slot (none for a side without an end)
+  std::vector<std::size_t> runOf(slots, std::numeric_limits<std::size_t>::max());
+  std::vector<std::size_t> runStart(1, 0);
+  for(std::size_t v = 0; v < nv; ++v) {
+    std::sort(around.begin() + start[v], around.begin() + start[v + 1]);
+    for(std::size_t i = start[v]; i < start[v + 1];) {
+      std::size_t j = i;
+      for(; j < start[v + 1] && around[j].first == around[i].first; ++j)
+        runOf[around[j].second] = runStart.size() - 1;
+      runStart.push_back(j);
+      i = j;
     }
   }
 
   // =========================
   // 3. BFS sur les faces
   // =========================
+  // across the edges of valence 2 only
   int currentColor = 0;
 
   for(int f0 = 0; f0 < nf; ++f0) {
@@ -728,23 +792,12 @@ void matGmsh::colorSelectedVoronoiFaces(std::vector<char> &isInternal)
 
     while(!Q.empty()) {
       int f = Q.front(); Q.pop();
-      const auto& face = vor.faces[f];
-      int n = face.verts.size();
-
-      for(int i=0;i<n;++i) {
-
-        int v0 = face.verts[i];
-        int v1 = face.verts[(i+1)%n];
-
-        if(v0 < 0 || v1 < 0) continue;
-
-        matGmshEdge e(v0,v1);
-
-        if(valence[e] != 2)
-          continue;
-
-        for(int f2 : edge2faces[e]) {
-
+      for(std::size_t s = firstSlot[f]; s < firstSlot[f + 1]; ++s) {
+        const std::size_t run = runOf[s];
+        if(run == std::numeric_limits<std::size_t>::max()) continue;
+        if(runStart[run + 1] - runStart[run] != 2) continue;
+        for(std::size_t k = runStart[run]; k < runStart[run + 1]; ++k) {
+          const int f2 = slotFace[around[k].second];
           if(vor.faceColors[f2] == -1) {
             vor.faceColors[f2] = currentColor;
             Q.push(f2);

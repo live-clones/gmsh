@@ -81,23 +81,47 @@ bool validateMesh(const Mesh &m, std::string &error)
 Topology topology(const Mesh &m)
 {
   Topology r; r.triangles = m.triangles.size()/3;
-  std::map<Edge, int> uses;
-  std::vector<int> parent(m.xyz.size()/3);
+  const std::size_t nv = m.xyz.size()/3;
+  std::vector<int> parent(nv);
   std::iota(parent.begin(), parent.end(), 0);
   auto find = [&](int v) { while(parent[v] != v) { parent[v] = parent[parent[v]]; v = parent[v]; } return v; };
-  std::set<int> used;
+  std::vector<unsigned char> used(nv, 0);
+  // the edges listed at their smaller vertex: an edge is a run of equal
+  // other vertices there, as long as the number of its triangles
+  std::vector<std::size_t> start(nv + 1, 0);
+  for(std::size_t f = 0; f < r.triangles; ++f)
+    for(int k = 0; k < 3; ++k) {
+      const Edge e = edge(m.triangles[3*f+k], m.triangles[3*f+(k+1)%3]);
+      ++start[e.first + 1];
+    }
+  for(std::size_t v = 0; v < nv; ++v) start[v + 1] += start[v];
+  std::vector<int> other(start[nv]);
+  std::vector<std::size_t> fill(start.begin(), start.end() - 1);
   for(std::size_t f = 0; f < r.triangles; ++f) {
     for(int k = 0; k < 3; ++k) {
       const int a = m.triangles[3*f+k], b = m.triangles[3*f+(k+1)%3];
-      ++uses[edge(a,b)]; used.insert(a);
+      const Edge e = edge(a, b);
+      other[fill[e.first]++] = e.second;
+      used[a] = 1;
       parent[find(b)] = find(a);
     }
   }
-  std::set<int> components;
-  for(int v : used) components.insert(find(v));
-  for(const auto &e : uses) { r.freeEdges += e.second == 1; r.junctionEdges += e.second > 2; }
-  r.vertices = used.size(); r.components = components.size();
-  r.euler = static_cast<long long>(r.vertices) - static_cast<long long>(uses.size()) +
+  std::size_t edges = 0;
+  for(std::size_t v = 0; v < nv; ++v) {
+    std::sort(other.begin() + start[v], other.begin() + start[v + 1]);
+    for(std::size_t i = start[v]; i < start[v + 1];) {
+      std::size_t j = i + 1;
+      while(j < start[v + 1] && other[j] == other[i]) ++j;
+      ++edges;
+      r.freeEdges += j - i == 1;
+      r.junctionEdges += j - i > 2;
+      i = j;
+    }
+  }
+  // a root is a vertex used, the root of its piece
+  for(std::size_t v = 0; v < nv; ++v)
+    if(used[v]) { ++r.vertices; r.components += find(int(v)) == int(v); }
+  r.euler = static_cast<long long>(r.vertices) - static_cast<long long>(edges) +
             static_cast<long long>(r.triangles);
   return r;
 }

@@ -63,17 +63,35 @@ double triangle(const Mesh &m, std::size_t t, Vec &centroid, Vec *normal = nullp
 }
 
 // the value below which the given fraction of the weight lies
+// The smallest value at which the weights of the values up to it reach the
+// fraction of their total. By selection: the half that has it is kept until a
+// few values are left, which are sorted (the values are reordered).
 double quantile(std::vector<std::pair<double, double> > &valueWeight, double fraction)
 {
   if(valueWeight.empty()) return 0.;
-  std::sort(valueWeight.begin(), valueWeight.end());
-  double total = 0., sum = 0.;
+  double total = 0.;
   for(const auto &x : valueWeight) total += x.second;
-  for(const auto &x : valueWeight) {
-    sum += x.second;
-    if(sum >= fraction * total) return x.first;
+  const double target = fraction * total;
+  auto first = valueWeight.begin(), last = valueWeight.end();
+  double before = 0.; // the weight of the values before first
+  while(last - first > 32) {
+    const auto middle = first + (last - first) / 2;
+    std::nth_element(first, middle, last);
+    double upTo = before;
+    for(auto x = first; x <= middle; ++x) upTo += x->second;
+    if(upTo >= target)
+      last = middle + 1;
+    else {
+      before = upTo;
+      first = middle + 1;
+    }
   }
-  return valueWeight.back().first;
+  std::sort(first, last);
+  for(auto x = first; x != last; ++x) {
+    before += x->second;
+    if(before >= target) return x->first;
+  }
+  return (last - 1)->first;
 }
 
 std::uint64_t edgeKey(int a, int b)
@@ -1917,7 +1935,8 @@ double planeOfTheFlatPart(const Mesh &mesh, const std::vector<std::size_t> &tria
 
 bool extendAllBranches(const Mesh &mesh, const Mesh &skin, double tolerance, double size,
                        double reach, int layers, double minArea, const std::set<int> &fixed,
-                       GlobalExtension &out, std::string &error, const Mesh *original)
+                       GlobalExtension &out, std::string &error, const Mesh *original,
+                       const std::vector<BranchPlane> *planes)
 {
   const auto start = std::chrono::steady_clock::now();
   out = GlobalExtension{};
@@ -2012,7 +2031,8 @@ bool extendAllBranches(const Mesh &mesh, const Mesh &skin, double tolerance, dou
         }
     return false;
   };
-  for(const BranchPlane &listed : branchPlanes(mesh)) { // largest first
+  const std::vector<BranchPlane> computed = planes ? std::vector<BranchPlane>() : branchPlanes(mesh);
+  for(const BranchPlane &listed : planes ? *planes : computed) { // largest first
     BranchPlane p = listed;
     if(fixed.count(p.branch)) continue;
     if(p.area < minArea) {

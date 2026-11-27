@@ -36,7 +36,10 @@ int main(int argc, char **argv)
                  "--extend-all extends every branch of the filtered (or projected)\n"
                  "MAT at once and writes extended_all.msh, its classified edges\n"
                  "and extended_all.json; --extension-length is its reach (twice\n"
-                 "the thickness if 0).\n";
+                 "the thickness if 0).\n"
+                 "--threads is the number of threads of the skin mesh and of the\n"
+                 "classification of the tetrahedra: 0, the default, is every core\n"
+                 "(or OMP_NUM_THREADS).\n";
     return 1;
   }
   gmsh::initialize();
@@ -45,7 +48,7 @@ int main(int argc, char **argv)
     matgmsh_native::Options options;
     std::string input = argv[1], cached;
     std::filesystem::path output;
-    double meshSize = 0.; int threads = 1; bool complex = false, extendAll = false;
+    double meshSize = 0.; int threads = 0; bool complex = false, extendAll = false;
     bool reachGiven = false;
     bool rawGiven = false, filterGiven = false, thicknessGiven = false;
     for(int i = 2; i < argc; ++i) {
@@ -98,7 +101,7 @@ int main(int argc, char **argv)
     if(!thicknessGiven) throw std::runtime_error("--thickness is required");
     if(output.empty()) throw std::runtime_error("--output is required");
     if(std::filesystem::exists(output)) throw std::runtime_error("Output directory already exists; choose a new checkpoint directory");
-    if(threads < 1) throw std::runtime_error("--threads must be positive");
+    if(threads < 0) throw std::runtime_error("--threads must be nonnegative");
     if(!std::isfinite(options.thickness) || options.thickness <= 0.)
       throw std::runtime_error("--thickness must be finite and positive");
     if(!std::isfinite(meshSize) || meshSize < 0.)

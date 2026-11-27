@@ -300,7 +300,8 @@ GMSH_API bool extendBranchByRibbon(const Mesh &mesh, const Mesh &skin, int branc
 // flat and have no free boundary. In `out`: surfaces is what extends the
 // branches before the cut and pieces what the cut makes of it (Mesh::branch is
 // the number of the branch, -1 in pieces for what is not kept), result the MAT
-// with every branch extended.
+// with every branch extended. `planes`, when given, is branchPlanes(mesh)
+// already computed (the list of the branches of the window).
 struct ExtensionSurface {
   int branch = 0;            // the largest of the branches it extends
   std::vector<int> branches; // all of them
@@ -332,7 +333,8 @@ struct GlobalExtension {
 GMSH_API bool extendAllBranches(const Mesh &mesh, const Mesh &skin, double tolerance,
                                 double size, double reach, int layers, double minArea,
                                 const std::set<int> &fixed, GlobalExtension &out,
-                                std::string &error, const Mesh *original = nullptr);
+                                std::string &error, const Mesh *original = nullptr,
+                                const std::vector<BranchPlane> *planes = nullptr);
 
 // The mid-surface as an MSH 2.2 file: one surface and one physical group
 // "branch <n>" per branch, and its edges classified in four physical groups
