@@ -1109,6 +1109,10 @@ namespace {
 // free to shrink
 static const double layerSizeWeight = 10.;
 static const double outsideSizeWeight = 0.01;
+// The untangling stops when the elements are valid and the energy decreases by
+// less than this fraction in an outer iteration: going further only polishes
+// the shape of the elements, at several times the cost
+static const double untangleTolerance = 1.e-3;
 
 // Target thickness of the layers
 //
@@ -1798,6 +1802,7 @@ static bool inflateLayers(GFace *gf, LayerData &data, std::size_t numRings,
 
   WinslowUntangler::Options options;
   options.strictFailures = true;
+  options.energyTolerance = untangleTolerance;
   options.numThreads = CTX::instance()->numThreadsFor(triangles.size(), 5000);
   options.elementLambda = &sizeWeight;
   bool ok =
@@ -1980,6 +1985,7 @@ static bool inflateLayers(GRegion *gr, LayerData &data, std::size_t numRings,
   double tUntangle = TimeOfDay();
   WinslowUntangler::Options options;
   options.strictFailures = true;
+  options.energyTolerance = untangleTolerance;
   options.numThreads = CTX::instance()->numThreadsFor(tets.size(), 5000);
   options.elementLambda = &sizeWeight;
   bool ok =

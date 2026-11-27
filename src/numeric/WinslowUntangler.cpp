@@ -656,7 +656,7 @@ namespace WinslowUntangler {
                    "min(detJ) %g, invalid %zu, inner %d, term %d",
                    iter, data.eps, data.energy, dErel, data.JDetMin,
                    data.nbInvalid, result.iterations, term);
-        if(data.JDetMin > 0. && dErel < 1.e-5) {
+        if(data.JDetMin > 0. && dErel < options.energyTolerance) {
           converged = true;
           break;
         }
