@@ -1114,6 +1114,19 @@ static const double outsideSizeWeight = 0.01;
 // the shape of the elements, at several times the cost
 static const double untangleTolerance = 1.e-3;
 
+// With lockLayers the untangling only repairs the elements around layers that
+// are already in place: shorter runs and a looser stopping test are enough
+static void setUntangleOptions(WinslowUntangler::Options &options,
+                               bool lockLayers)
+{
+  options.strictFailures = true;
+  options.energyTolerance = untangleTolerance;
+  if(lockLayers) {
+    options.energyTolerance = 10. * untangleTolerance;
+    options.maxInnerIterations = 100;
+  }
+}
+
 // Target thickness of the layers
 //
 // Each wall node has a target thickness: the requested one, reduced where
@@ -1718,11 +1731,97 @@ static bool idealLayerShape(GFace *gf, MElement *e, const LayerData &data,
   return true;
 }
 
+// Start the inflation of the layers from columns that have their target
+// thickness: each node spawned in the volume (or on the surface) is moved
+// along the mean normal of the wall elements around its wall node, further
+// where these normals diverge so that the layer has its thickness above each
+// of them. The elements around may end up tangled: the untangling takes care
+// of them, from a much better start than layers without thickness.
+struct ColumnTop {
+  MVertex *wall = nullptr;
+  SVector3 normal; // sum of the normals of the wall elements
+  int numNormals = 0;
+
+  // where the top of the column goes
+  bool target(const LayerData &data, SPoint3 &p) const
+  {
+    double length = normal.norm();
+    if(length <= 0.) return false;
+    // norm of the mean normal: 1 on a smooth wall, the cosine of the angle
+    // between the column and the walls on a concave edge
+    double spread = std::max(length / numNormals, 0.3);
+    double thickness = data.thicknessAt(wall, 0.);
+    p = wall->point() + normal * (thickness / spread / length);
+    return true;
+  }
+};
+
+static void placeColumnTops(GRegion *gr, const LayerData &data)
+{
+  std::map<MVertex *, ColumnTop, MVertexPtrLessThan> tops;
+  bool positive = isPositive(gr);
+  for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
+    MElement *e = gr->getMeshElement(i);
+    if(!data.has(e)) continue;
+    LayerColumns lc;
+    SVector3 normal;
+    if(!getLayerColumns(e, data, lc) || !wallNormal(lc, positive, normal))
+      continue;
+    for(std::size_t j = 0; j < lc.n; j++) {
+      if(!lc.top[j] || lc.top[j]->onWhat() != gr) continue;
+      ColumnTop &top = tops[lc.top[j]];
+      top.wall = lc.wall[j];
+      top.normal += normal;
+      top.numNormals++;
+    }
+  }
+  for(auto &t : tops) {
+    SPoint3 p;
+    if(t.second.target(data, p)) t.first->setXYZ(p.x(), p.y(), p.z());
+  }
+}
+
+// On a surface the target is projected on it
+static void placeColumnTops(GFace *gf, const LayerData &data)
+{
+  std::map<MVertex *, ColumnTop, MVertexPtrLessThan> tops;
+  double orientation = meshOrientation(gf, data);
+  for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
+    MElement *e = gf->getMeshElement(i);
+    if(!data.has(e)) continue;
+    LayerColumns lc;
+    SVector3 normal, surfaceNormal;
+    if(!getLayerColumns(e, data, lc) ||
+       !wallNormal(gf, lc, orientation, normal, surfaceNormal))
+      continue;
+    for(std::size_t j = 0; j < lc.n; j++) {
+      if(!lc.top[j] || lc.top[j]->onWhat() != gf) continue;
+      ColumnTop &top = tops[lc.top[j]];
+      top.wall = lc.wall[j];
+      top.normal += normal;
+      top.numNormals++;
+    }
+  }
+  for(auto &t : tops) {
+    SPoint3 p;
+    SPoint2 param;
+    if(!t.second.target(data, p) || !reparamOnFace(t.second.wall, gf, param))
+      continue;
+    double guess[2] = {param.x(), param.y()};
+    GPoint gp = gf->closestPoint(p, guess);
+    if(!gp.succeeded()) continue;
+    t.first->setXYZ(gp.x(), gp.y(), gp.z());
+    t.first->setParameter(0, gp.u());
+    t.first->setParameter(1, gp.v());
+  }
+}
+
 // Inflate the layers of a surface, in its parametric plane. With lockLayers
 // the layers stay in place and only the elements around them are untangled.
 static bool inflateLayers(GFace *gf, LayerData &data, std::size_t numRings,
                           bool lockLayers = false)
 {
+  if(!lockLayers) placeColumnTops(gf, data);
   UntangleSet set;
   buildUntangleSet(gf, 2, data, numRings, lockLayers, set);
 
@@ -1801,8 +1900,7 @@ static bool inflateLayers(GFace *gf, LayerData &data, std::size_t numRings,
   }
 
   WinslowUntangler::Options options;
-  options.strictFailures = true;
-  options.energyTolerance = untangleTolerance;
+  setUntangleOptions(options, lockLayers);
   options.numThreads = CTX::instance()->numThreadsFor(triangles.size(), 5000);
   options.elementLambda = &sizeWeight;
   bool ok =
@@ -1846,50 +1944,6 @@ static int getSubTets(MElement *e, const int (*&sub)[4])
   case MSH_HEX_8: sub = hexSubTets; return 6;
   case MSH_PYR_5: sub = pyramidSubTets; return 4;
   default: sub = nullptr; return 0;
-  }
-}
-
-// Start the inflation of the layers of a volume from columns that have their
-// target thickness: each node spawned in the volume is moved along the mean
-// normal of the wall elements around its wall node, further where these
-// normals diverge so that the layer has its thickness above each of them. The
-// elements around may end up tangled: the untangling takes care of them, from
-// a much better start than layers without thickness.
-static void placeColumnTops(GRegion *gr, const LayerData &data)
-{
-  struct Top {
-    MVertex *wall = nullptr;
-    SVector3 normal;
-    int numNormals = 0;
-  };
-  std::map<MVertex *, Top, MVertexPtrLessThan> tops;
-  bool positive = isPositive(gr);
-  for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
-    MElement *e = gr->getMeshElement(i);
-    auto it = data.elements.find(e);
-    if(it == data.elements.end()) continue;
-    LayerColumns lc;
-    SVector3 normal;
-    if(!getLayerColumns(e, data, lc) || !wallNormal(lc, positive, normal))
-      continue;
-    for(std::size_t j = 0; j < lc.n; j++) {
-      if(!lc.top[j] || lc.top[j]->onWhat() != gr) continue;
-      Top &top = tops[lc.top[j]];
-      top.wall = lc.wall[j];
-      top.normal += normal;
-      top.numNormals++;
-    }
-  }
-  for(auto &t : tops) {
-    const Top &top = t.second;
-    double length = top.normal.norm();
-    if(length <= 0.) continue;
-    // norm of the mean normal: 1 on a smooth wall, the cosine of the angle
-    // between the column and the walls on a concave edge
-    double spread = std::max(length / top.numNormals, 0.3);
-    double thickness = data.thicknessAt(top.wall, 0.);
-    SPoint3 p = top.wall->point() + top.normal * (thickness / spread / length);
-    t.first->setXYZ(p.x(), p.y(), p.z());
   }
 }
 
@@ -1984,8 +2038,7 @@ static bool inflateLayers(GRegion *gr, LayerData &data, std::size_t numRings,
 
   double tUntangle = TimeOfDay();
   WinslowUntangler::Options options;
-  options.strictFailures = true;
-  options.energyTolerance = untangleTolerance;
+  setUntangleOptions(options, lockLayers);
   options.numThreads = CTX::instance()->numThreadsFor(tets.size(), 5000);
   options.elementLambda = &sizeWeight;
   bool ok =
