@@ -40,9 +40,10 @@ class midsurfacerWindow {
 public:
   enum { Skin, Raw, Filter, Projection, Extension, NumStages };
   // more views: the raw MAT colored by the angle of its branches, the branch
-  // selected, and what would extend it (the fragments of its plane, or its
-  // ribbon before it is cut)
-  enum { Angles = NumStages, Selected, Preview, NumViews };
+  // selected, what would extend it (the fragments of its plane, or its
+  // ribbon before it is cut), and of the last Extend all at once the surfaces
+  // that extend the branches before they are cut and their pieces after
+  enum { Angles = NumStages, Selected, Preview, Surfaces, Pieces, NumViews };
   Fl_Window *win;
   Fl_Value_Input *thickness, *meshSize, *threshold, *length, *layers;
   Fl_Choice *method;
@@ -53,6 +54,8 @@ public:
   // the filter removes the wing branches of the raw MAT whole: the branches
   // that touch its free boundary and are seen under less than the angle
   Fl_Check_Button *branches, *angles;
+  // Extend all cuts the surfaces of all the branches together, once
+  Fl_Check_Button *together;
   Fl_Value_Input *angle;
   Fl_Button *push[NumStages];
   Fl_Box *status[NumStages];
@@ -91,6 +94,7 @@ private:
   void _view(int stage);
   void _listBranches(bool reset);
   bool _extend(int branch, bool planar, bool apply, std::string &what);
+  bool _extendTogether(std::string &what);
   void _forget(int fromStage);
   void _showOnly(int stage);
 };

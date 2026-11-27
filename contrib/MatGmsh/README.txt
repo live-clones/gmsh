@@ -272,8 +272,8 @@ tools. It runs the pipeline one stage at a time, on the current model:
                   filter, with the legacy method)
   4. Projection   Project: optional; a projection that fails its checks
                   changes nothing
-  5. Extension    branch by branch (see below): the list of the branches,
-                  Preview, Extend and Extend all
+  5. Extension    branch by branch or all at once (see below): the list of
+                  the branches, Preview, Extend and Extend all
 
 The Filter stage has, besides the threshold, the box "Remove the wings by
 their angle" with its angle, and the box "Show the angle of the wings". Once
@@ -387,12 +387,54 @@ inside it, along it. It is not stopped if it ends before on the sheet of
 another branch, or less than half its length after on one that faces it (a
 wall the branch ends on). The message gives the number of rows stopped.
 
-Extend all does the flat branches in their plane, largest first, then the
-others by ribbons. It leaves as they are the branches of less than a hundredth
-of the thickness squared: specks left by the filter, a few triangles that hang
-on the rest by an edge and have no plane of their own (extended, each gives a
+Extend all, with the box "Extend all at once" ticked (the default), extends
+every branch in one cut (extendAllBranches):
+
+  1. each branch gets the surface that extends it, not cut by anything: the
+     flat branches lying in one plane get the part of that plane within the
+     reach of them, as a grid of a quarter of the thickness; another branch
+     gets the ribbon along its free boundary (its rows stopped as above).
+     View "MAT surfaces before the cut", colored by branch;
+  2. these surfaces, the skin, the sheets of the branches that are not
+     replaced (the branches that are not flat keep their sheet) and the faces
+     of the part prolonged at its reentrant corners (those of a plane cut
+     that plane only) are cut where they meet, all together, once;
+  3. of each surface are kept the pieces attached to its branches (those that
+     hold a triangle of them for a plane, those along the boundary for a
+     ribbon) without crossing the skin, a sheet, or a kept piece of another
+     surface. What the others keep is not known beforehand: the pieces are
+     first found with every piece of the other surfaces taken as kept, then
+     again with those that were kept, until nothing changes. With more cuts a
+     surface keeps less, so the rounds 0, 2, 4... grow, the rounds 1, 3, 5...
+     shrink, the first ones inside the second ones; when they end on two sets
+     that give each other, the smaller one is taken (it never crosses a kept
+     piece) and the message says so. View "MAT pieces after the cut", -1 on
+     what is dropped.
+
+The result does not depend on an order, a branch stops exactly on the surfaces
+of the others, and the kept pieces share their vertices along the lines where
+they meet (edges of three triangles: junctions again, where both branches are
+extended; a branch that keeps its sheet is still not re-meshed).
+
+A branch is also flat, here, when half of its area is within an eighth of the
+tolerance of a plane (really flat: a curved sheet has little of its area that
+close to any plane), the rest no further than half the reach from it and,
+beyond the tolerance, within the reach of a junction of the MAT: a wall with
+the cusps its sheet has along its junctions, where fillets put the junction
+away from its mid-plane. Its plane is fitted on its flattest part, and it is
+replaced whole, cusps included, by its plane: the other walls then stop on
+that plane and not on the cusp.
+
+With the box not ticked, Extend all does the flat branches in their plane,
+largest first, then the others by ribbons, each one cut by the MAT as it is
+then (the two ways one by one, repeated).
+
+In both cases it leaves as they are the branches of less than a hundredth of
+the thickness squared: specks left by the filter, a few triangles that hang on
+the rest by an edge and have no plane of their own (extended, each gives a
 sheet in any direction through the others). They stay in the list and can be
-extended one by one. The result is the view "MAT extended"; it is not made
+extended one by one; all at once they do not cut either. The branches already
+extended one by one stay as they are, and cut. The result is the view "MAT extended"; it is not made
 conforming along the junctions, and the earlier front-by-front extension
 (--stage extended of gmshMat) is no longer in the window. Undo takes back the
 last extension (Extend, or the whole of Extend all; the last ten are kept) and

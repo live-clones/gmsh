@@ -407,6 +407,42 @@ private:
   std::vector<int> _large;
 };
 
+// Where triangles cross a plane (those that skip leaves out): the points
+// where their edges cross it, joined across the triangles. The lines of a
+// second set of triangles can be added to those of a first one.
+void planeTraces(const std::vector<double> &xyz, const std::vector<int> &triangles,
+                 const Frame &frame, const std::function<bool(std::size_t)> &skip,
+                 std::vector<std::array<double, 2> > &node,
+                 std::vector<std::array<int, 2> > &segment)
+{
+  std::unordered_map<std::uint64_t, int> nodeOf;
+  for(std::size_t t = 0; t < triangles.size() / 3; ++t) {
+    if(skip(t)) continue;
+    Vec corner[3];
+    double d[3];
+    for(int k = 0; k < 3; ++k) {
+      const double *q = &xyz[3 * std::size_t(triangles[3 * t + k])];
+      corner[k] = {q[0], q[1], q[2]};
+      d[k] = frame.distance(corner[k]);
+    }
+    int ends[2], found = 0;
+    for(int k = 0; k < 3 && found < 2; ++k) {
+      const int l = (k + 1) % 3;
+      if((d[k] >= 0.) == (d[l] >= 0.)) continue;
+      const auto inserted =
+        nodeOf.emplace(edgeKey(triangles[3 * t + k], triangles[3 * t + l]), int(node.size()));
+      if(inserted.second) {
+        const double w = d[k] / (d[k] - d[l]);
+        node.push_back(frame.uv({corner[k][0] + w * (corner[l][0] - corner[k][0]),
+                                 corner[k][1] + w * (corner[l][1] - corner[k][1]),
+                                 corner[k][2] + w * (corner[l][2] - corner[k][2])}));
+      }
+      ends[found++] = inserted.first->second;
+    }
+    if(found == 2 && ends[0] != ends[1]) segment.push_back({ends[0], ends[1]});
+  }
+}
+
 // The section of the skin by the plane is made of closed lines. At a
 // reentrant corner of one of them (two faces of the part with the void inside
 // the turn: the end face of a rib and the face of the wall it stands on), the
@@ -445,7 +481,8 @@ std::size_t reentrantFences(const Mesh &skin, const Frame &frame, double reach, 
                             const std::vector<std::array<double, 2> > &traceNode,
                             const std::vector<std::array<int, 2> > &traceSegment,
                             std::size_t &corners, std::size_t &closures,
-                            std::vector<double> &xyz, std::vector<int> &triangles)
+                            std::vector<double> &xyz, std::vector<int> &triangles,
+                            bool prolongLines = true, bool atCorners = true)
 {
   corners = closures = 0;
   if(!(reach > 0.) || traceSegment.empty()) return 0;
@@ -607,7 +644,7 @@ std::size_t reentrantFences(const Mesh &skin, const Frame &frame, double reach, 
          m[2] * d[0] + m[3] * d[1] > 1. - 1.e-9)
         return;
     made.push_back({o[0], o[1], d[0], d[1]});
-    const double length = std::min(reach, meets + tolerance);
+    const double length = std::min(reach, meets + 2. * tolerance);
     strip(inVoid, from);
     strip(from, {from[0] + length * direction[0], from[1] + length * direction[1],
                  from[2] + length * direction[2]});
@@ -616,7 +653,7 @@ std::size_t reentrantFences(const Mesh &skin, const Frame &frame, double reach, 
   const double degree = 3.14159265358979323846 / 180.;
   for(const std::vector<Vec> &line : lines) {
     const int n = int(line.size());
-    if(n < 4) continue;
+    if(n < 4 || !atCorners) continue;
     const auto at = [&](int i) -> const Vec & { return line[((i % n) + n) % n]; };
     // segment i goes from node i to node i + 1; the line starts after its
     // sharpest turn, so that no face is split there
@@ -714,7 +751,7 @@ std::size_t reentrantFences(const Mesh &skin, const Frame &frame, double reach, 
   }
 
   // The ends of the lines of the other sheets.
-  {
+  if(prolongLines) {
     std::vector<std::vector<int> > beside(traceNode.size());
     for(const std::array<int, 2> &segment : traceSegment) {
       beside[segment[0]].push_back(segment[1]);
@@ -940,38 +977,14 @@ bool extendBranchInPlane(const Mesh &mesh, const Mesh &skin, const BranchPlane &
       }
       return sheets.holds(q);
     };
-    // where the sheets of the other branches cross the plane: the points
-    // where their edges cross it, joined across their triangles
     std::vector<std::array<double, 2> > traceNode;
     std::vector<std::array<int, 2> > traceSegment;
-    {
-      std::unordered_map<std::uint64_t, int> nodeOf;
-      for(std::size_t t = 0; t < count; ++t) {
-        const int b = t < mesh.branch.size() ? mesh.branch[t] : 0;
-        if(b == plane.branch || together.count(b)) continue;
-        Vec corner[3];
-        double d[3];
-        for(int k = 0; k < 3; ++k) {
-          corner[k] = point(mesh, mesh.triangles[3 * t + k]);
-          d[k] = frame.distance(corner[k]);
-        }
-        int ends[2], found = 0;
-        for(int k = 0; k < 3 && found < 2; ++k) {
-          const int l = (k + 1) % 3;
-          if((d[k] >= 0.) == (d[l] >= 0.)) continue;
-          const auto inserted = nodeOf.emplace(
-            edgeKey(mesh.triangles[3 * t + k], mesh.triangles[3 * t + l]), int(traceNode.size()));
-          if(inserted.second) {
-            const double w = d[k] / (d[k] - d[l]);
-            traceNode.push_back(frame.uv({corner[k][0] + w * (corner[l][0] - corner[k][0]),
-                                          corner[k][1] + w * (corner[l][1] - corner[k][1]),
-                                          corner[k][2] + w * (corner[l][2] - corner[k][2])}));
-          }
-          ends[found++] = inserted.first->second;
-        }
-        if(found == 2 && ends[0] != ends[1]) traceSegment.push_back({ends[0], ends[1]});
-      }
-    }
+    planeTraces(mesh.xyz, mesh.triangles, frame,
+                [&](std::size_t t) {
+                  const int b = t < mesh.branch.size() ? mesh.branch[t] : 0;
+                  return b == plane.branch || together.count(b) != 0;
+                },
+                traceNode, traceSegment);
     const std::size_t before = cutterTriangles.size();
     out.fences = reentrantFences(skin, frame, reach, tolerance, onSheet, traceNode, traceSegment,
                                  out.corners, out.closures, cutterXyz, cutterTriangles);
@@ -1421,17 +1434,26 @@ bool branchRibbon(const Mesh &mesh, int branch, double length, int layers, Ribbo
   return true;
 }
 
-bool extendBranchByRibbon(const Mesh &mesh, const Mesh &skin, int branch, const Ribbon &ribbon,
-                          PlaneExtension &out, std::string &error)
+namespace {
+
+// A ribbon ready to be cut: its vertices, with the rows shortened, then those
+// of the triangles of the skin and of the other branches near it.
+struct RibbonCut {
+  std::vector<double> xyz;
+  std::vector<int> triangles; // of the ribbon first
+  std::size_t cutters = 0, stoppedRows = 0;
+  std::vector<int> rowStart; // rows + 1 entries
+  std::vector<unsigned char> shortened; // one per row
+};
+
+void prepareRibbon(const Mesh &mesh, const Mesh &skin, int branch, const Ribbon &ribbon,
+                   RibbonCut &ready)
 {
-  const auto start = std::chrono::steady_clock::now();
-  out = PlaneExtension{};
-  error.clear();
   const std::size_t own = ribbon.mesh.triangles.size() / 3;
-  if(!own) {
-    error = "The ribbon is empty";
-    return false;
-  }
+  std::vector<double> &xyz = ready.xyz;
+  std::vector<int> &triangles = ready.triangles;
+  std::vector<int> &rowStart = ready.rowStart;
+  std::vector<unsigned char> &shortened = ready.shortened;
   // Boxes of the triangles of the ribbon, in a grid: only the triangles of the
   // skin and of the other branches near one of them can cut it.
   double lo[3] = {std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity(),
@@ -1469,8 +1491,8 @@ bool extendBranchByRibbon(const Mesh &mesh, const Mesh &skin, int branch, const 
       for(int j = cellOf(bl[1], 1); j <= cellOf(bh[1], 1); ++j)
         for(int k = cellOf(bl[2], 2); k <= cellOf(bh[2], 2); ++k) occupied.insert(cellKey(i, j, k));
   }
-  std::vector<double> xyz = ribbon.mesh.xyz;
-  std::vector<int> triangles = ribbon.mesh.triangles;
+  xyz = ribbon.mesh.xyz;
+  triangles = ribbon.mesh.triangles;
   const auto cutters = [&](const Mesh &m, bool otherBranchesOnly) {
     std::vector<int> index(m.xyz.size() / 3, -1);
     for(std::size_t t = 0; t < m.triangles.size() / 3; ++t) {
@@ -1494,11 +1516,11 @@ bool extendBranchByRibbon(const Mesh &mesh, const Mesh &skin, int branch, const 
         }
         triangles.push_back(index[vertex]);
       }
-      ++out.cutters;
+      ++ready.cutters;
     }
   };
   cutters(skin, false);
-  const std::size_t skinCutters = out.cutters;
+  const std::size_t skinCutters = ready.cutters;
   cutters(mesh, true);
 
   // A row of the ribbon that does not end on the skin may go on inside a wall
@@ -1508,12 +1530,12 @@ bool extendBranchByRibbon(const Mesh &mesh, const Mesh &skin, int branch, const 
   // the plane of that face, unless it ends before on the sheet of another
   // branch, or shortly after on one that faces it (a wall the branch ends on:
   // the row has to reach its mid-surface).
-  std::vector<int> rowStart;
+  rowStart.clear();
   for(std::size_t i = 0; i < ribbon.source.size(); ++i)
     if(ribbon.source[i] >= 0) rowStart.push_back(int(i));
   const int rows = int(rowStart.size());
   rowStart.push_back(int(ribbon.source.size()));
-  std::vector<unsigned char> shortened(rows, 0);
+  shortened.assign(rows, 0);
   {
     const auto at = [&](int vertex) {
       return Vec{xyz[3 * std::size_t(vertex)], xyz[3 * std::size_t(vertex) + 1],
@@ -1656,7 +1678,7 @@ bool extendBranchByRibbon(const Mesh &mesh, const Mesh &skin, int branch, const 
       }
       end[r] = s * length[r];
       stopped[r] = 1;
-      ++out.stoppedRows;
+      ++ready.stoppedRows;
     }
     // A row that ends on the skin is cut a little after the farthest of its
     // end and of the ends of the rows beside it: what is beyond is outside
@@ -1679,6 +1701,31 @@ bool extendBranchByRibbon(const Mesh &mesh, const Mesh &skin, int branch, const 
       shortened[r] = 1;
     }
   }
+
+}
+
+} // namespace
+
+bool extendBranchByRibbon(const Mesh &mesh, const Mesh &skin, int branch, const Ribbon &ribbon,
+                          PlaneExtension &out, std::string &error)
+{
+  const auto start = std::chrono::steady_clock::now();
+  out = PlaneExtension{};
+  error.clear();
+  const std::size_t own = ribbon.mesh.triangles.size() / 3;
+  if(!own) {
+    error = "The ribbon is empty";
+    return false;
+  }
+  RibbonCut prepared;
+  prepareRibbon(mesh, skin, branch, ribbon, prepared);
+  out.cutters = prepared.cutters;
+  out.stoppedRows = prepared.stoppedRows;
+  const std::vector<double> &xyz = prepared.xyz;
+  const std::vector<int> &triangles = prepared.triangles;
+  const std::vector<int> &rowStart = prepared.rowStart;
+  const std::vector<unsigned char> &shortened = prepared.shortened;
+  const int rows = int(rowStart.size()) - 1;
 
   std::vector<double> oxyz;
   std::vector<int> otri, birth, inputVertex;
@@ -1785,6 +1832,760 @@ bool extendBranchByRibbon(const Mesh &mesh, const Mesh &skin, int branch, const 
               b = {oxyz[3 * t[1]], oxyz[3 * t[1] + 1], oxyz[3 * t[1] + 2]},
               c = {oxyz[3 * t[2]], oxyz[3 * t[2] + 1], oxyz[3 * t[2] + 2]};
     out.keptArea += .5 * norm(cross(sub(b, a), sub(c, a)));
+  }
+  out.seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
+  return true;
+}
+
+// ---------------------------------------------------------------------------
+// All the branches at once.
+
+namespace {
+
+// The plane of a branch fitted on its triangles that are within the tolerance
+// of it only, starting from the plane given: the branch of a wall with the
+// cusps it has along its junctions (its sheet leaves its mid-plane there, to
+// meet the sheets of the other walls where the fillets put the junction).
+// Returns the share of its area within the tolerance of the plane found, with
+// the share within an eighth of it (the flat part itself: a curved sheet has
+// little of its area that close to any plane) and the largest distance to it.
+double planeOfTheFlatPart(const Mesh &mesh, const std::vector<std::size_t> &triangles,
+                          double tolerance, BranchPlane &plane, double &flatShare,
+                          double &farthest)
+{
+  flatShare = farthest = 0.;
+  std::vector<double> area(triangles.size());
+  std::vector<Vec> centroid(triangles.size());
+  double all = 0.;
+  for(std::size_t i = 0; i < triangles.size(); ++i) {
+    area[i] = triangle(mesh, triangles[i], centroid[i]);
+    all += area[i];
+  }
+  if(!(all > 0.)) return 0.;
+  Vec origin = {plane.origin[0], plane.origin[1], plane.origin[2]};
+  Vec normal = {plane.normal[0], plane.normal[1], plane.normal[2]};
+  const double length = norm(normal);
+  for(double &x : normal) x /= length;
+  // Fitted on what is within the tolerance, then within a half, a quarter and
+  // an eighth of it (as long as that is a third of the area): the start of a
+  // cusp is within the tolerance too, and tilts the plane towards it.
+  double within = tolerance;
+  for(int pass = 0; pass < 6; ++pass) {
+    double weight = 0.;
+    Vec mean = {0., 0., 0.};
+    for(std::size_t i = 0; i < triangles.size(); ++i) {
+      if(std::abs(dot(sub(centroid[i], origin), normal)) > within) continue;
+      weight += area[i];
+      for(int k = 0; k < 3; ++k) mean[k] += area[i] * centroid[i][k];
+    }
+    if(3. * weight < all) {
+      if(pass == 0) return 0.;
+      break;
+    }
+    for(double &x : mean) x /= weight;
+    Eigen::Matrix3d covariance = Eigen::Matrix3d::Zero();
+    for(std::size_t i = 0; i < triangles.size(); ++i) {
+      if(std::abs(dot(sub(centroid[i], origin), normal)) > within) continue;
+      const Vec d = sub(centroid[i], mean);
+      for(int r = 0; r < 3; ++r)
+        for(int c = 0; c < 3; ++c) covariance(r, c) += area[i] * d[r] * d[c];
+    }
+    const Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> solver(covariance);
+    const Eigen::Vector3d smallest = solver.eigenvectors().col(0);
+    origin = mean;
+    normal = {smallest[0], smallest[1], smallest[2]};
+    if(pass >= 2 && within > .2 * tolerance) within *= .5;
+  }
+  double in = 0., flat = 0.;
+  for(std::size_t i = 0; i < triangles.size(); ++i) {
+    const double distance = std::abs(dot(sub(centroid[i], origin), normal));
+    if(distance <= tolerance) in += area[i];
+    if(distance <= .125 * tolerance) flat += area[i];
+  }
+  flatShare = flat / all;
+  farthest = 0.;
+  for(std::size_t i = 0; i < triangles.size(); ++i)
+    farthest = std::max(farthest, std::abs(dot(sub(centroid[i], origin), normal)));
+  for(int k = 0; k < 3; ++k) {
+    plane.origin[k] = origin[k];
+    plane.normal[k] = normal[k];
+  }
+  return in / all;
+}
+
+} // namespace
+
+bool extendAllBranches(const Mesh &mesh, const Mesh &skin, double tolerance, double size,
+                       double reach, int layers, double minArea, const std::set<int> &fixed,
+                       GlobalExtension &out, std::string &error, const Mesh *original)
+{
+  const auto start = std::chrono::steady_clock::now();
+  out = GlobalExtension{};
+  error.clear();
+  if(!(tolerance > 0.) || !(size > 0.) || !(reach > 0.) || layers < 1 || !std::isfinite(tolerance) ||
+     !std::isfinite(size) || !std::isfinite(reach)) {
+    error = "The tolerance, the size and the reach must be positive, with at least one layer";
+    return false;
+  }
+  if(skin.triangles.empty() || mesh.triangles.empty()) {
+    error = "A skin and a MAT are needed";
+    return false;
+  }
+  const std::size_t count = mesh.triangles.size() / 3;
+  const auto branchOf = [&](std::size_t t) { return t < mesh.branch.size() ? mesh.branch[t] : 0; };
+  std::map<int, std::vector<std::size_t> > trianglesOf;
+  for(std::size_t t = 0; t < count; ++t) trianglesOf[branchOf(t)].push_back(t);
+  const double parallel = std::cos(15. * 3.14159265358979323846 / 180.);
+  // whether a triangle of the MAT lies in a plane
+  const auto lies = [&](const Frame &frame, std::size_t t) {
+    Vec centroid, normal;
+    const double area = triangle(mesh, t, centroid, &normal);
+    return area > 0. && std::abs(frame.distance(centroid)) <= tolerance &&
+           std::abs(dot(normal, frame.n)) >= parallel * 2. * area;
+  };
+
+  // The surfaces: one per plane, for the flat branches lying in it, and one
+  // per other branch with a free boundary.
+  struct Surface {
+    bool planar = true;
+    int branch = 0;
+    std::vector<int> members;
+    BranchPlane plane;
+    Ribbon ribbon;
+    std::vector<int> rowStart;
+    std::vector<unsigned char> shortened;
+    std::size_t firstVertex = 0, firstTriangle = 0, triangles = 0;
+    std::vector<std::array<double, 2> > seeds;
+    std::vector<int> seedBranch;
+    std::vector<int> pieces; // of the cut
+    ExtensionSurface report;
+  };
+  std::vector<Surface> surfaces;
+  std::map<int, int> planeOf; // of a flat branch
+  std::set<int> speck, curved;
+  // The vertices of the junctions of the MAT (edges of three triangles or
+  // more, or of two branches), in cells of the size of the reach: the cusp of
+  // a wall is along one of them.
+  std::unordered_map<std::uint64_t, std::vector<int> > junctionCells;
+  bool junctionsFound = false;
+  const Mesh &whole = original ? *original : mesh;
+  const auto cell3 = [&](const Vec &q, int di, int dj, int dk) {
+    const std::int64_t i = std::int64_t(std::floor(q[0] / reach)) + di,
+                       j = std::int64_t(std::floor(q[1] / reach)) + dj,
+                       k = std::int64_t(std::floor(q[2] / reach)) + dk;
+    return (std::uint64_t(i & 0x1fffff) << 42) | (std::uint64_t(j & 0x1fffff) << 21) |
+           std::uint64_t(k & 0x1fffff);
+  };
+  const auto nearJunction = [&](const Vec &q) {
+    if(!junctionsFound) {
+      junctionsFound = true;
+      std::unordered_map<std::uint64_t, std::pair<int, int> > seen; // triangles, first branch (-2: several)
+      const std::size_t n = whole.triangles.size() / 3;
+      seen.reserve(3 * n / 2);
+      for(std::size_t t = 0; t < n; ++t) {
+        const int b = t < whole.branch.size() ? whole.branch[t] : 0;
+        for(int c = 0; c < 3; ++c) {
+          std::pair<int, int> &e =
+            seen.emplace(edgeKey(whole.triangles[3 * t + c], whole.triangles[3 * t + (c + 1) % 3]),
+                         std::make_pair(0, b)).first->second;
+          if(e.second != b) e.second = -2;
+          ++e.first;
+        }
+      }
+      std::vector<unsigned char> marked(whole.xyz.size() / 3, 0);
+      for(const auto &e : seen) {
+        if(e.second.first < 3 && e.second.second != -2) continue;
+        for(const int v : {int(e.first >> 32), int(e.first & 0xffffffffu)}) {
+          if(marked[v]) continue;
+          marked[v] = 1;
+          junctionCells[cell3(point(whole, v), 0, 0, 0)].push_back(v);
+        }
+      }
+    }
+    for(int di = -1; di <= 1; ++di)
+      for(int dj = -1; dj <= 1; ++dj)
+        for(int dk = -1; dk <= 1; ++dk) {
+          const auto found = junctionCells.find(cell3(q, di, dj, dk));
+          if(found == junctionCells.end()) continue;
+          for(int v : found->second)
+            if(norm(sub(point(whole, v), q)) <= reach) return true;
+        }
+    return false;
+  };
+  for(const BranchPlane &listed : branchPlanes(mesh)) { // largest first
+    BranchPlane p = listed;
+    if(fixed.count(p.branch)) continue;
+    if(p.area < minArea) {
+      speck.insert(p.branch);
+      ++out.specks;
+      continue;
+    }
+    // Flat, or flat but for the cusps it has along its junctions: at least
+    // half of its area within an eighth of the tolerance of a plane (really
+    // flat: a curved sheet does not have that), nothing further from it than
+    // half the reach, and what is off the plane within the reach of a
+    // junction of the MAT. Such a branch is replaced whole by its plane.
+    bool flat = p.deviation <= tolerance;
+    double cusps = 0.;
+    if(!flat) {
+      double farthest = 0., flatShare = 0.;
+      BranchPlane fitted = p;
+      planeOfTheFlatPart(mesh, trianglesOf[p.branch], tolerance, fitted, flatShare, farthest);
+      if(flatShare >= .5 && farthest <= .5 * reach) {
+        const Frame frame(fitted);
+        flat = true;
+        for(std::size_t t : trianglesOf[p.branch]) {
+          Vec centroid;
+          const double area = triangle(mesh, t, centroid);
+          if(!(area > 0.) || std::abs(frame.distance(centroid)) <= tolerance) continue;
+          cusps += area;
+          if(!nearJunction(centroid)) {
+            flat = false;
+            break;
+          }
+        }
+        if(flat) p = fitted;
+      }
+    }
+    if(flat) {
+      // (the plane of another branch already there, if its flat part lies in it)
+      int joined = -1;
+      const Frame own(p);
+      for(std::size_t s = 0; s < surfaces.size() && joined < 0; ++s) {
+        if(!surfaces[s].planar) continue;
+        const Frame frame(surfaces[s].plane);
+        double all = 0., in = 0.;
+        for(std::size_t t : trianglesOf[p.branch]) {
+          Vec centroid;
+          const double area = triangle(mesh, t, centroid);
+          if(std::abs(own.distance(centroid)) > tolerance) continue;
+          all += area;
+          if(lies(frame, t)) in += area;
+        }
+        if(all > 0. && in >= .9 * all) joined = int(s);
+      }
+      if(joined < 0) {
+        joined = int(surfaces.size());
+        surfaces.emplace_back();
+        surfaces.back().plane = p;
+        surfaces.back().branch = p.branch;
+      }
+      surfaces[joined].members.push_back(p.branch);
+      surfaces[joined].report.area += p.area;
+      surfaces[joined].report.cusps += cusps;
+      planeOf[p.branch] = joined;
+    }
+    else {
+      Surface s;
+      s.planar = false;
+      s.branch = p.branch;
+      s.members = {p.branch};
+      s.report.area = p.area;
+      std::string why;
+      if(!branchRibbon(mesh, p.branch, reach, layers, s.ribbon, why, original)) {
+        ++out.unextended; // no free boundary: nothing to extend
+        continue;
+      }
+      curved.insert(p.branch);
+      surfaces.push_back(std::move(s));
+    }
+  }
+  if(surfaces.empty()) {
+    error = "No branch to extend";
+    return false;
+  }
+  const int surfaceCount = int(surfaces.size());
+
+  // What is cut together: triangles with their kind and their owner (the
+  // surface of a patch, of a ribbon or of a fence; the branch of a sheet).
+  enum Kind { Skin, Sheet, Patch, Strip, Fence };
+  std::vector<double> in;
+  std::vector<int> tri, kind, owner;
+  const auto add = [&](const std::vector<double> &xyz, const std::vector<int> &triangles, int k,
+                       int o) {
+    const int first = int(in.size() / 3);
+    in.insert(in.end(), xyz.begin(), xyz.end());
+    for(int v : triangles) tri.push_back(first + v);
+    kind.insert(kind.end(), triangles.size() / 3, k);
+    owner.insert(owner.end(), triangles.size() / 3, o);
+    return first;
+  };
+  for(int s = 0; s < surfaceCount; ++s) {
+    Surface &f = surfaces[s];
+    f.report.branch = f.branch;
+    f.report.branches = f.members;
+    f.report.planar = f.planar;
+    std::vector<double> xyz;
+    std::vector<int> triangles;
+    if(!f.planar) {
+      RibbonCut ready;
+      prepareRibbon(mesh, skin, f.branch, f.ribbon, ready);
+      xyz.assign(ready.xyz.begin(), ready.xyz.begin() + f.ribbon.mesh.xyz.size());
+      triangles = f.ribbon.mesh.triangles;
+      f.rowStart = std::move(ready.rowStart);
+      f.shortened = std::move(ready.shortened);
+      f.report.stoppedRows = ready.stoppedRows;
+    }
+    else {
+      // The part of the plane within the reach of its branches, and the
+      // triangles of the branches that the kept pieces have to hold.
+      const Frame frame(f.plane);
+      std::unordered_set<std::uint64_t> near;
+      const auto cellOf = [&](const std::array<double, 2> &q, int di, int dj) {
+        const std::int64_t i = std::int64_t(std::floor(q[0] / reach)) + di,
+                           j = std::int64_t(std::floor(q[1] / reach)) + dj;
+        return (std::uint64_t(std::uint32_t(i)) << 32) | std::uint32_t(j);
+      };
+      double lo[2] = {std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity()};
+      double hi[2] = {-lo[0], -lo[1]};
+      for(int b : f.members) {
+        std::vector<std::size_t> inPlane;
+        for(std::size_t t : trianglesOf[b]) {
+          Vec centroid;
+          if(!(triangle(mesh, t, centroid) > 0.) || std::abs(frame.distance(centroid)) > tolerance)
+            continue;
+          inPlane.push_back(t);
+          const std::array<double, 2> q = frame.uv(centroid);
+          for(int c = 0; c < 2; ++c) {
+            lo[c] = std::min(lo[c], q[c]);
+            hi[c] = std::max(hi[c], q[c]);
+          }
+          for(int di = -1; di <= 1; ++di)
+            for(int dj = -1; dj <= 1; ++dj) near.insert(cellOf(q, di, dj));
+        }
+        const std::size_t step = std::max<std::size_t>(1, inPlane.size() / 200);
+        for(std::size_t i = step / 2; i < inPlane.size(); i += step) {
+          Vec centroid;
+          triangle(mesh, inPlane[i], centroid);
+          f.seeds.push_back(frame.uv(centroid));
+          f.seedBranch.push_back(b);
+        }
+      }
+      if(f.seeds.empty()) continue; // (nothing of it in its plane: left as it is)
+      const double spacing = std::max(size, std::max(hi[0] - lo[0], hi[1] - lo[1]) / 400.);
+      for(int c = 0; c < 2; ++c) {
+        lo[c] -= 2. * reach + spacing;
+        hi[c] += 2. * reach + spacing;
+      }
+      const int nx = std::max(1, int(std::ceil((hi[0] - lo[0]) / spacing))),
+                ny = std::max(1, int(std::ceil((hi[1] - lo[1]) / spacing)));
+      std::unordered_map<std::uint64_t, int> vertexOf;
+      const auto vertex = [&](int i, int j) {
+        const auto inserted =
+          vertexOf.emplace((std::uint64_t(std::uint32_t(i)) << 32) | std::uint32_t(j), int(xyz.size() / 3));
+        if(inserted.second) {
+          const Vec q = frame.at(lo[0] + i * spacing, lo[1] + j * spacing);
+          xyz.insert(xyz.end(), q.begin(), q.end());
+        }
+        return inserted.first->second;
+      };
+      for(int j = 0; j < ny; ++j)
+        for(int i = 0; i < nx; ++i) {
+          if(!near.count(cellOf({lo[0] + (i + .5) * spacing, lo[1] + (j + .5) * spacing}, 0, 0)))
+            continue;
+          const int a = vertex(i, j), b = vertex(i + 1, j), c = vertex(i + 1, j + 1),
+                    d = vertex(i, j + 1);
+          if((i + j) % 2 == 0)
+            triangles.insert(triangles.end(), {a, b, c, a, c, d});
+          else
+            triangles.insert(triangles.end(), {a, b, d, b, c, d});
+        }
+    }
+    f.firstTriangle = tri.size() / 3;
+    f.triangles = triangles.size() / 3;
+    f.firstVertex = std::size_t(add(xyz, triangles, f.planar ? Patch : Strip, s));
+    // (for the view of the surfaces before the cut)
+    const int first = int(out.surfaces.xyz.size() / 3);
+    out.surfaces.xyz.insert(out.surfaces.xyz.end(), xyz.begin(), xyz.end());
+    for(int v : triangles) out.surfaces.triangles.push_back(first + v);
+    out.surfaces.branch.insert(out.surfaces.branch.end(), triangles.size() / 3, f.branch);
+    out.surfaces.parent.insert(out.surfaces.parent.end(), triangles.size() / 3, -1);
+  }
+  const std::size_t surfaceTriangles = tri.size() / 3;
+  if(!surfaceTriangles) {
+    error = "No branch to extend";
+    return false;
+  }
+  // The faces of the part prolonged at its reentrant corners, for each plane.
+  for(int s = 0; s < surfaceCount; ++s) {
+    Surface &f = surfaces[s];
+    if(!f.planar || !f.triangles) continue;
+    const Frame frame(f.plane);
+    const std::set<int> members(f.members.begin(), f.members.end());
+    Footprint sheets(.125 * reach);
+    bool sheetsFound = false;
+    const auto onSheet = [&](const std::array<double, 2> &q) {
+      if(!sheetsFound) {
+        sheetsFound = true;
+        for(int b : f.members)
+          for(std::size_t t : trianglesOf[b])
+            if(lies(frame, t))
+              sheets.add(frame.uv(point(mesh, mesh.triangles[3 * t])),
+                         frame.uv(point(mesh, mesh.triangles[3 * t + 1])),
+                         frame.uv(point(mesh, mesh.triangles[3 * t + 2])));
+      }
+      return sheets.holds(q);
+    };
+    std::vector<double> xyz;
+    std::vector<int> triangles;
+    {
+      // the faces, prolonged to the sheets of the other branches as the MAT
+      // has them
+      std::vector<std::array<double, 2> > traceNode;
+      std::vector<std::array<int, 2> > traceSegment;
+      planeTraces(mesh.xyz, mesh.triangles, frame,
+                  [&](std::size_t t) {
+                    const int b = branchOf(t);
+                    return members.count(b) != 0 || speck.count(b) != 0;
+                  },
+                  traceNode, traceSegment);
+      std::size_t none = 0;
+      f.report.fences = reentrantFences(skin, frame, reach, tolerance, onSheet, traceNode,
+                                        traceSegment, f.report.corners, none, xyz, triangles,
+                                        false, true);
+    }
+    {
+      // The sheets that stay end a little short of the planes that replace
+      // the branches they ended on: the lines of what cuts the plane in the
+      // end (these sheets and the surfaces of the other branches) are
+      // prolonged where they stop just short of each other.
+      std::vector<std::array<double, 2> > traceNode;
+      std::vector<std::array<int, 2> > traceSegment;
+      planeTraces(mesh.xyz, mesh.triangles, frame,
+                  [&](std::size_t t) {
+                    const int b = branchOf(t);
+                    return planeOf.count(b) != 0 || speck.count(b) != 0;
+                  },
+                  traceNode, traceSegment);
+      planeTraces(in, tri, frame,
+                  [&](std::size_t t) { return (kind[t] != Patch && kind[t] != Strip) || owner[t] == s; },
+                  traceNode, traceSegment);
+      std::size_t none = 0;
+      reentrantFences(skin, frame, reach, tolerance, onSheet, traceNode, traceSegment, none,
+                      f.report.closures, xyz, triangles, true, false);
+    }
+    if(!triangles.empty()) add(xyz, triangles, Fence, s);
+  }
+  // The triangles of the skin, and of the sheets that stay, near the surfaces
+  // (the sheets lying in one of the planes left out, like the specks).
+  {
+    double lo[3] = {std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity(),
+                    std::numeric_limits<double>::infinity()};
+    double hi[3] = {-lo[0], -lo[1], -lo[2]};
+    for(std::size_t i = 0; i < in.size(); ++i) {
+      lo[i % 3] = std::min(lo[i % 3], in[i]);
+      hi[i % 3] = std::max(hi[i % 3], in[i]);
+    }
+    double cell = 0.;
+    for(int k = 0; k < 3; ++k) cell = std::max(cell, hi[k] - lo[k]);
+    cell = std::max(cell / 128., 1.e-12);
+    const auto cellOf = [&](double value, int k) { return int(std::floor((value - lo[k]) / cell)); };
+    const auto cellKey = [](int i, int j, int k) {
+      return (std::uint64_t(std::uint32_t(i) & 0x1fffff) << 42) |
+             (std::uint64_t(std::uint32_t(j) & 0x1fffff) << 21) | (std::uint32_t(k) & 0x1fffff);
+    };
+    std::unordered_set<std::uint64_t> occupied;
+    for(std::size_t t = 0; t < surfaceTriangles; ++t) {
+      int cl[3], ch[3];
+      for(int k = 0; k < 3; ++k) {
+        double least = std::numeric_limits<double>::infinity(), most = -least;
+        for(int c = 0; c < 3; ++c) {
+          least = std::min(least, in[3 * std::size_t(tri[3 * t + c]) + k]);
+          most = std::max(most, in[3 * std::size_t(tri[3 * t + c]) + k]);
+        }
+        cl[k] = cellOf(least, k);
+        ch[k] = cellOf(most, k);
+      }
+      for(int i = cl[0]; i <= ch[0]; ++i)
+        for(int j = cl[1]; j <= ch[1]; ++j)
+          for(int k = cl[2]; k <= ch[2]; ++k) occupied.insert(cellKey(i, j, k));
+    }
+    const auto cutters = [&](const Mesh &m, bool sheets) {
+      std::vector<int> index(m.xyz.size() / 3, -1);
+      for(std::size_t t = 0; t < m.triangles.size() / 3; ++t) {
+        int b = -1;
+        if(sheets) {
+          b = branchOf(t);
+          if(planeOf.count(b) || speck.count(b)) continue;
+          bool inPlane = false;
+          for(int s = 0; s < surfaceCount && !inPlane; ++s)
+            inPlane = surfaces[s].planar && surfaces[s].triangles && lies(Frame(surfaces[s].plane), t);
+          if(inPlane) continue;
+        }
+        bool near = true;
+        int cl[3], ch[3];
+        for(int k = 0; k < 3; ++k) {
+          double least = std::numeric_limits<double>::infinity(), most = -least;
+          for(int c = 0; c < 3; ++c) {
+            least = std::min(least, m.xyz[3 * std::size_t(m.triangles[3 * t + c]) + k]);
+            most = std::max(most, m.xyz[3 * std::size_t(m.triangles[3 * t + c]) + k]);
+          }
+          near = near && most >= lo[k] && least <= hi[k];
+          cl[k] = cellOf(least, k);
+          ch[k] = cellOf(most, k);
+        }
+        if(!near) continue;
+        near = false;
+        for(int i = cl[0]; i <= ch[0] && !near; ++i)
+          for(int j = cl[1]; j <= ch[1] && !near; ++j)
+            for(int k = cl[2]; k <= ch[2] && !near; ++k) near = occupied.count(cellKey(i, j, k)) != 0;
+        if(!near) continue;
+        for(int c = 0; c < 3; ++c) {
+          const int vertex = m.triangles[3 * t + c];
+          if(index[vertex] < 0) {
+            index[vertex] = int(in.size() / 3);
+            in.insert(in.end(), m.xyz.begin() + 3 * std::size_t(vertex),
+                      m.xyz.begin() + 3 * std::size_t(vertex) + 3);
+          }
+          tri.push_back(index[vertex]);
+        }
+        kind.push_back(sheets ? Sheet : Skin);
+        owner.push_back(b);
+        ++out.cutters;
+      }
+    };
+    cutters(skin, false);
+    cutters(mesh, true);
+  }
+
+  // One cut of it all.
+  std::vector<double> oxyz;
+  std::vector<int> otri, birth, inputVertex;
+  {
+    const auto before = std::chrono::steady_clock::now();
+    if(!meshCoRefine(in, tri, oxyz, otri, birth, error, &inputVertex)) return false;
+    out.cutSeconds =
+      std::chrono::duration<double>(std::chrono::steady_clock::now() - before).count();
+  }
+  const std::size_t pieces = otri.size() / 3;
+  const auto at = [&](int v) {
+    return Vec{oxyz[3 * std::size_t(v)], oxyz[3 * std::size_t(v) + 1], oxyz[3 * std::size_t(v) + 2]};
+  };
+  const auto areaOf = [&](std::size_t t) {
+    const Vec a = at(otri[3 * t]);
+    return .5 * norm(cross(sub(at(otri[3 * t + 1]), a), sub(at(otri[3 * t + 2]), a)));
+  };
+  // The pieces of each surface, and on each of their edges what else is there.
+  struct OnEdge {
+    std::vector<int> pieces; // of the surfaces
+    std::vector<int> sheets, fences; // their branches, their surfaces
+    bool skin = false;
+  };
+  std::unordered_map<std::uint64_t, OnEdge> edges;
+  std::vector<int> surfaceOf(pieces, -1), localOf(pieces, -1);
+  for(std::size_t t = 0; t < pieces; ++t) {
+    const int k = kind[birth[t]];
+    if(k != Patch && k != Strip) continue;
+    Surface &f = surfaces[owner[birth[t]]];
+    surfaceOf[t] = owner[birth[t]];
+    localOf[t] = int(f.pieces.size());
+    f.pieces.push_back(int(t));
+    for(int c = 0; c < 3; ++c)
+      edges[edgeKey(otri[3 * t + c], otri[3 * t + (c + 1) % 3])].pieces.push_back(int(t));
+  }
+  for(std::size_t t = 0; t < pieces; ++t) {
+    const int k = kind[birth[t]], o = owner[birth[t]];
+    if(k == Patch || k == Strip) continue;
+    for(int c = 0; c < 3; ++c) {
+      const auto found = edges.find(edgeKey(otri[3 * t + c], otri[3 * t + (c + 1) % 3]));
+      if(found == edges.end()) continue;
+      OnEdge &e = found->second;
+      if(k == Skin)
+        e.skin = true;
+      else {
+        std::vector<int> &list = k == Sheet ? e.sheets : e.fences;
+        if(std::find(list.begin(), list.end(), o) == list.end()) list.push_back(o);
+      }
+    }
+  }
+  // Where the triangles of the branches of each plane are, and the vertices
+  // of each ribbon on the boundary of its branch and at its far end.
+  std::vector<std::vector<int> > seedPiece(surfaceCount);
+  std::vector<std::unordered_set<int> > onBoundary(surfaceCount), farEnd(surfaceCount);
+  for(int s = 0; s < surfaceCount; ++s) {
+    Surface &f = surfaces[s];
+    if(f.planar) {
+      const Frame frame(f.plane);
+      std::vector<std::array<std::array<double, 2>, 3> > uv(f.pieces.size());
+      std::vector<unsigned char> flat(f.pieces.size(), 0);
+      for(std::size_t i = 0; i < f.pieces.size(); ++i) {
+        for(int c = 0; c < 3; ++c) uv[i][c] = frame.uv(at(otri[3 * std::size_t(f.pieces[i]) + c]));
+        flat[i] = !(std::abs((uv[i][1][0] - uv[i][0][0]) * (uv[i][2][1] - uv[i][0][1]) -
+                             (uv[i][1][1] - uv[i][0][1]) * (uv[i][2][0] - uv[i][0][0])) > 0.);
+      }
+      seedPiece[s].assign(f.seeds.size(), -1);
+      for(std::size_t q = 0; q < f.seeds.size(); ++q)
+        for(std::size_t i = 0; i < f.pieces.size(); ++i)
+          if(!flat[i] && inside(f.seeds[q], uv[i][0], uv[i][1], uv[i][2])) {
+            seedPiece[s][q] = f.pieces[i];
+            break;
+          }
+    }
+    else {
+      const int rows = int(f.rowStart.size()) - 1;
+      for(int r = 0; r < rows; ++r) {
+        onBoundary[s].insert(inputVertex[f.firstVertex + f.rowStart[r]]);
+        if(!f.shortened[r]) farEnd[s].insert(inputVertex[f.firstVertex + f.rowStart[r + 1] - 1]);
+      }
+    }
+  }
+  // The kept pieces: first with every piece of the other surfaces as a cut,
+  // then with those that were kept, until they stop changing.
+  // (With more cuts a surface keeps less, so the sets of the rounds 0, 2, 4...
+  // grow and those of the rounds 1, 3, 5... shrink, the first ones inside the
+  // second ones: they meet, or end on two sets that give each other. The
+  // smaller one is then taken: it never crosses a kept piece.)
+  std::vector<unsigned char> kept(pieces, 1), next(pieces, 0), older;
+  std::vector<int> pieceBranch(pieces, -1), nextBranch(pieces, -1);
+  std::vector<ExtensionSurface> previousReport(surfaceCount);
+  const int maxRounds = 12;
+  bool done = false;
+  for(out.rounds = 0; out.rounds < maxRounds && !done; ++out.rounds) {
+    std::fill(next.begin(), next.end(), 0);
+    std::fill(nextBranch.begin(), nextBranch.end(), -1);
+    for(int s = 0; s < surfaceCount; ++s) {
+      Surface &f = surfaces[s];
+      std::vector<int> parent(f.pieces.size());
+      std::iota(parent.begin(), parent.end(), 0);
+      const auto find = [&](int i) {
+        while(parent[i] != i) i = parent[i] = parent[parent[i]];
+        return i;
+      };
+      f.report.reachesEnd = false;
+      std::vector<unsigned char> border(f.pieces.size(), 0);
+      for(std::size_t i = 0; i < f.pieces.size(); ++i) {
+        const int t = f.pieces[i];
+        for(int c = 0; c < 3; ++c) {
+          const OnEdge &e = edges[edgeKey(otri[3 * std::size_t(t) + c], otri[3 * std::size_t(t) + (c + 1) % 3])];
+          bool cut = e.skin;
+          int same = 0, other = -1;
+          for(int q : e.pieces) {
+            if(surfaceOf[q] == s) {
+              ++same;
+              if(q != t) other = q;
+            }
+            else if(kept[q])
+              cut = true;
+          }
+          for(int b : e.sheets) cut = cut || f.planar || b != f.branch;
+          for(int o : e.fences) cut = cut || o == s;
+          if(same == 1 && !cut) border[i] = 1; // the end of the surface itself
+          if(same != 2 || cut || other < 0) continue;
+          const int a = find(int(i)), b = find(localOf[other]);
+          if(a != b) parent[std::max(a, b)] = std::min(a, b);
+        }
+      }
+      std::map<int, std::map<int, int> > votes; // of the kept fragments: branch, triangles of it held
+      if(f.planar) {
+        for(std::size_t q = 0; q < f.seeds.size(); ++q)
+          if(seedPiece[s][q] >= 0) ++votes[find(localOf[seedPiece[s][q]])][f.seedBranch[q]];
+      }
+      else {
+        for(std::size_t i = 0; i < f.pieces.size(); ++i) {
+          int on = 0;
+          for(int c = 0; c < 3; ++c) on += onBoundary[s].count(otri[3 * std::size_t(f.pieces[i]) + c]) != 0;
+          if(on >= 2) ++votes[find(int(i))][f.branch];
+        }
+      }
+      std::set<int> all;
+      for(std::size_t i = 0; i < f.pieces.size(); ++i) {
+        const int fragment = find(int(i));
+        all.insert(fragment);
+        const auto found = votes.find(fragment);
+        if(found == votes.end()) continue;
+        const int t = f.pieces[i];
+        next[t] = 1;
+        int best = f.branch, most = -1;
+        for(const auto &vote : found->second)
+          if(vote.second > most) {
+            most = vote.second;
+            best = vote.first;
+          }
+        nextBranch[t] = best;
+        if(f.planar)
+          f.report.reachesEnd = f.report.reachesEnd || border[i];
+        else
+          for(int c = 0; c < 3; ++c)
+            f.report.reachesEnd = f.report.reachesEnd || farEnd[s].count(otri[3 * std::size_t(t) + c]) != 0;
+      }
+      f.report.fragments = all.size();
+      f.report.keptFragments = votes.size();
+    }
+    if(out.rounds > 0 && next == kept)
+      out.settled = done = true;
+    else if(out.rounds > 1 && next == older)
+      done = true;
+    if(done && !out.settled && out.rounds % 2 == 1) {
+      // the last round gave the larger set again: the one before stays
+      for(int s = 0; s < surfaceCount; ++s) surfaces[s].report = previousReport[s];
+      continue;
+    }
+    for(int s = 0; s < surfaceCount; ++s) previousReport[s] = surfaces[s].report;
+    older = kept;
+    kept.swap(next);
+    pieceBranch.swap(nextBranch);
+  }
+
+  // The MAT with its branches extended: the sheets that stay, then the kept
+  // pieces, which share their vertices where they meet.
+  std::set<int> replaced;
+  for(int s = 0; s < surfaceCount; ++s) {
+    Surface &f = surfaces[s];
+    bool any = false;
+    for(int t : f.pieces) any = any || kept[t];
+    if(!any) continue;
+    for(int b : f.members) {
+      if(f.planar) replaced.insert(b);
+      out.extended.push_back(b);
+    }
+  }
+  out.result.xyz = mesh.xyz;
+  for(std::size_t t = 0; t < count; ++t) {
+    if(replaced.count(branchOf(t))) continue;
+    for(int c = 0; c < 3; ++c) out.result.triangles.push_back(mesh.triangles[3 * t + c]);
+    out.result.branch.push_back(branchOf(t));
+    out.result.parent.push_back(t < mesh.parent.size() ? mesh.parent[t] : -1);
+  }
+  std::vector<int> added(oxyz.size() / 3, -1), shown(oxyz.size() / 3, -1);
+  for(int s = 0; s < surfaceCount; ++s) {
+    const Surface &f = surfaces[s];
+    if(f.planar) continue;
+    // the vertices of a ribbon on the boundary are those of its branch
+    for(std::size_t i = 0; i < f.ribbon.source.size(); ++i)
+      if(f.ribbon.source[i] >= 0) added[inputVertex[f.firstVertex + i]] = f.ribbon.source[i];
+  }
+  for(int s = 0; s < surfaceCount; ++s) {
+    Surface &f = surfaces[s];
+    for(int t : f.pieces) {
+      const int *v = &otri[3 * std::size_t(t)];
+      if(v[0] == v[1] || v[1] == v[2] || v[0] == v[2]) continue;
+      const double area = areaOf(std::size_t(t));
+      if(!(area > 0.)) continue;
+      for(int c = 0; c < 3; ++c) {
+        if(shown[v[c]] < 0) {
+          shown[v[c]] = int(out.pieces.xyz.size() / 3);
+          out.pieces.xyz.insert(out.pieces.xyz.end(), oxyz.begin() + 3 * std::size_t(v[c]),
+                                oxyz.begin() + 3 * std::size_t(v[c]) + 3);
+        }
+        out.pieces.triangles.push_back(shown[v[c]]);
+      }
+      out.pieces.branch.push_back(kept[t] ? pieceBranch[t] : -1);
+      out.pieces.parent.push_back(-1);
+      if(!kept[t]) continue;
+      for(int c = 0; c < 3; ++c) {
+        if(added[v[c]] < 0) {
+          added[v[c]] = int(out.result.xyz.size() / 3);
+          out.result.xyz.insert(out.result.xyz.end(), oxyz.begin() + 3 * std::size_t(v[c]),
+                                oxyz.begin() + 3 * std::size_t(v[c]) + 3);
+        }
+        out.result.triangles.push_back(added[v[c]]);
+      }
+      out.result.branch.push_back(pieceBranch[t]);
+      out.result.parent.push_back(-1);
+      ++f.report.addedTriangles;
+      f.report.addedArea += area;
+    }
+    out.report.push_back(f.report);
   }
   out.seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
   return true;

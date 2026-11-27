@@ -5,6 +5,7 @@
 
 #include <cstddef>
 #include <memory>
+#include <set>
 #include <string>
 #include <vector>
 #include "gmsh.h"
@@ -270,6 +271,68 @@ GMSH_API bool branchRibbon(const Mesh &mesh, int branch, double length, int laye
 // go on inside the wall it stands on.
 GMSH_API bool extendBranchByRibbon(const Mesh &mesh, const Mesh &skin, int branch,
                                    const Ribbon &ribbon, PlaneExtension &out, std::string &error);
+
+// All the branches at once. Each branch first gets the surface that extends
+// it, not cut by anything: for the flat branches lying in one plane (within
+// the tolerance), the part of that plane within the reach of them, as a grid
+// of the size given (a branch is also flat when half of its area is within
+// an eighth of the tolerance of a plane, the rest no further than half the
+// reach from it and, beyond the tolerance, within the reach of a junction of
+// the MAT: the wall with the cusps its sheet has along its junctions, which
+// are replaced with it); for another branch, the ribbon along its free boundary
+// (branchRibbon with the reach as length, its rows stopped as in
+// extendBranchByRibbon). These surfaces, the skin, the sheets of the branches
+// that are not replaced and the faces of the part prolonged at its reentrant
+// corners (one set per plane, which cuts that plane only) are then cut where
+// they meet, all together and once. Of each surface are kept the pieces
+// attached to its branches (those that hold one of their triangles for a
+// plane, those along the boundary for a ribbon) without crossing the skin, a
+// sheet, or a kept piece of another surface: first with every piece of the
+// others taken as kept, then again with what was kept, until nothing changes
+// (or until the kept pieces alternate between two sets: the smaller one is
+// taken, settled is false).
+// The result does not depend on an order, a branch stops exactly on the
+// surfaces of the others, and the kept pieces share their vertices along the
+// lines where they meet.
+//
+// Left as they are: the branches of area under minArea (specks of the filter,
+// which do not cut either), those of `fixed`, and the branches that are not
+// flat and have no free boundary. In `out`: surfaces is what extends the
+// branches before the cut and pieces what the cut makes of it (Mesh::branch is
+// the number of the branch, -1 in pieces for what is not kept), result the MAT
+// with every branch extended.
+struct ExtensionSurface {
+  int branch = 0;            // the largest of the branches it extends
+  std::vector<int> branches; // all of them
+  bool planar = true;
+  std::size_t corners = 0, fences = 0, closures = 0; // of a plane, see PlaneExtension
+  std::size_t stoppedRows = 0;         // of a ribbon
+  std::size_t fragments = 0, keptFragments = 0, addedTriangles = 0;
+  // of the branches before; of what replaces them (plane) or is added (ribbon)
+  double area = 0., addedArea = 0.;
+  // of a plane: the area of its branches off it, the cusps they have along
+  // their junctions, replaced with them
+  double cusps = 0.;
+  // a kept piece reaches the border of the part of the plane, or the far end
+  // of the ribbon: nothing stopped it
+  bool reachesEnd = false;
+};
+
+struct GlobalExtension {
+  Mesh surfaces, pieces, result;
+  std::vector<ExtensionSurface> report;
+  std::vector<int> extended; // the branches extended
+  std::size_t specks = 0, unextended = 0, cutters = 0;
+  // the times the kept pieces were found, and whether they stopped changing
+  int rounds = 0;
+  bool settled = false;
+  double seconds = 0., cutSeconds = 0.;
+};
+
+GMSH_API bool extendAllBranches(const Mesh &mesh, const Mesh &skin, double tolerance,
+                                double size, double reach, int layers, double minArea,
+                                const std::set<int> &fixed, GlobalExtension &out,
+                                std::string &error, const Mesh *original = nullptr);
 
 // The mid-surface as an MSH 2.2 file: one surface and one physical group
 // "branch <n>" per branch, and its edges classified in four physical groups

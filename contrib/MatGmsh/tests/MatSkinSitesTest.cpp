@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstring>
 #include <iostream>
+#include <map>
 #include <set>
 #include <stdexcept>
 #include <string>
@@ -434,6 +435,77 @@ void webStopsOnTheFlange()
     work = extension.result;
   }
 }
+// A web on a flange with fillets of one thickness: the sheet of the flange
+// leaves its mid-plane under the web (a cusp, to meet the sheet of the web
+// where the fillets put the junction), so it is not flat, and one branch after
+// the other the web stops on that cusp. All at once, the two halves of the
+// flange are a wall with a cusp along its junction, replaced by its plane; the
+// web stops on that plane, and the pieces share their vertices where they
+// meet.
+void filletedWebAndFlangeAtOnce()
+{
+  gmsh::clear();
+  gmsh::model::add("filleted web");
+  const int flange = gmsh::model::occ::addBox(0, 0, 0, 10, 6, 1);
+  const int web = gmsh::model::occ::addBox(4.5, 0, 1, 1, 6, 3);
+  gmsh::vectorpair fused;
+  std::vector<gmsh::vectorpair> map;
+  gmsh::model::occ::fuse({{3, flange}}, {{3, web}}, fused, map);
+  gmsh::model::occ::synchronize();
+  // the two edges where the web meets the flange
+  std::vector<int> edges;
+  for(const double x : {4.5, 5.5}) {
+    gmsh::vectorpair found;
+    gmsh::model::getEntitiesInBoundingBox(x - .01, -.01, .99, x + .01, 6.01, 1.01, found, 1);
+    for(const auto &e : found) edges.push_back(e.second);
+  }
+  check(edges.size() == 2, "the two edges of the junction must be found");
+  std::vector<int> solids;
+  for(const auto &e : fused) solids.push_back(e.second);
+  gmsh::vectorpair filleted;
+  gmsh::model::occ::fillet(solids, edges, {1.}, filleted);
+  gmsh::model::occ::synchronize();
+  gmsh::option::setNumber("Mesh.MeshSizeMin", 0.1);
+  gmsh::option::setNumber("Mesh.MeshSizeMax", 0.1);
+  gmsh::model::mesh::generate(2);
+  Options options;
+  options.thickness = 1.;
+  options.wingBranches = true;
+  options.collapseThreshold = 0.;
+  Result result;
+  std::string error;
+  check(computeCurrent(options, result, error), "pipeline failed: " + error);
+  GlobalExtension all;
+  check(extendAllBranches(result.filtered, result.skin, .1, .25, 2., 4, .01, {}, all, error,
+                          &result.filtered),
+        "extension all at once failed: " + error);
+  std::size_t planes = 0;
+  double cusps = 0.;
+  for(const ExtensionSurface &surface : all.report) {
+    planes += surface.planar;
+    cusps += surface.cusps;
+    check(!surface.reachesEnd, "nothing must reach the end of its plane");
+  }
+  check(all.report.size() == 2 && planes == 2, "a T with fillets is two planes: the flange and the web");
+  check(cusps > 1., "the flange must have a cusp under the web");
+  check(all.settled, "the kept pieces must settle");
+  // the flange, 10 by 6, and the web, 6 long from the mid-plane of the
+  // flange to its top
+  const double area = areaOf(all.result);
+  check(std::abs(area - 81.) < .1, "flange and web must be their whole mid-planes: area " +
+                                     std::to_string(area) + " for 81");
+  // the web and the two sides of the flange share the edges of their junction
+  std::map<std::pair<int, int>, int> uses;
+  for(std::size_t t = 0; t < all.result.triangles.size() / 3; ++t)
+    for(int k = 0; k < 3; ++k) {
+      const int a = all.result.triangles[3 * t + k], b = all.result.triangles[3 * t + (k + 1) % 3];
+      ++uses[{std::min(a, b), std::max(a, b)}];
+    }
+  std::size_t junction = 0;
+  for(const auto &edge : uses) junction += edge.second == 3;
+  check(junction >= 20, "the junction must be made of edges of three triangles: " +
+                          std::to_string(junction) + " found");
+}
 } // namespace
 
 int main()
@@ -451,8 +523,9 @@ int main()
     ribStopsAtItsEnds();
     ribStopsOnTheWall();
     webStopsOnTheFlange();
+    filletedWebAndFlangeAtOnce();
     gmsh::finalize();
-    std::cout << "MatSkinSites: 9 tests passed\n";
+    std::cout << "MatSkinSites: 10 tests passed\n";
     return 0;
   }
   catch(const std::exception &e) {

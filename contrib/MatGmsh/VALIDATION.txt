@@ -914,3 +914,79 @@ twelve cases, and the library defaults (threshold 0.21 without this rule),
 which are unchanged.
 The constants (one and a half, a quarter, nine tenths) come from Sample3, the
 Doghouse and the T junction only.
+
+Extension of all the branches at once, 27 November 2026
+-------------------------------------------------------
+
+extendAllBranches (README.txt): the surface that extends each branch first,
+not cut; one cut of all of them with the skin; the pieces each one keeps found
+in rounds. Same protocol as the sections above for the twelve corpus cases
+(filtered MAT with the wings removed by their angle and threshold 0,
+thickness 4, skin 0.4, tolerance 0.4, grid 1, reach 8, scored alone by the
+evaluator of the tree, macOS, one thread). Missing area / area off the truth,
+in t^2:
+
+  Case                 One by one               All at once
+  plate_60x40          0.00 /  0.00  perfect     0.00 /  0.00  perfect
+  t_junction_h20_r0    0.00 /  0.00  perfect     0.00 /  0.00  perfect
+  plate_hole_r10       0.00 /  0.00  perfect     0.00 /  0.00  perfect
+  x_junction_r0        0.00 /  0.00  perfect     0.00 /  0.00  perfect
+  t_junction_h20_r2    0.00 /  0.00  perfect     0.00 /  0.00  perfect
+  corner_joint_r0      0.01 /  0.00  perfect     0.01 /  0.00  perfect
+  partial_rib_r2       0.00 /  0.00  perfect     0.00 /  0.00  perfect
+  ribbed_plate_2_r2    0.00 / 14.33  review      0.00 /  0.00  perfect
+  t_junction_h40_r5   23.06 / 29.81  review      0.00 /  0.00  perfect
+  waffle_3_r2         44.18 / 89.26  review      0.00 /  0.00  perfect
+  bracket             12.58 /  8.49  review     12.58 /  8.49  review
+  channel_gusset_r2   15.25 / 26.42  review     26.46 / 17.65  review
+
+Ten perfect for seven. The three that become perfect have fillets at their
+junctions: the walls there (the two halves of a flange, the plate between two
+ribs, the cells of the waffle) have a cusp along the junction and were not
+flat (ribbons only, and the others stopped on the cusp); they are now walls
+with cusps, replaced by their plane (290 mm^2 of cusps in ribbed_plate_2_r2).
+The two left have a bent wall with a gusset: a branch that is not flat keeps
+its sheet, cusps included, and the gusset stops on it. channel_gusset_r2 is
+one of the cases where the kept pieces alternate between two sets (6 rounds;
+2 everywhere else); the smaller one loses 11 t^2 more than one by one, where
+the gusset reached further by going around the end of the cusp, and has 9 t^2
+less off the truth. The whole extension takes 0.4 to 4.5 s per case (the cut
+itself 0.3 to 1.7 s). The results have junctions again: 241 edges of three
+triangles in the T junctions, 802 in ribbed_plate_2_r2, 1445 in waffle_3_r2
+(122 specks of the filter left as they are there).
+
+Without the walls with cusps, all at once was worse than one by one on the
+fillets (t_junction_h40_r5 30.61 / 25.81, ribbed_plate_2_r2 11.33 / 14.33):
+one by one, a wall reached the mid-plane under a junction by going around the
+ends of the cusps; all at once nothing goes around anything.
+
+Doghouse.stp in the tool window (thickness 4, skin 0.4, defaults, Extend all
+with the box "Extend all at once" ticked): 8 branches, 6 surfaces (the base,
+two pairs of ribs lying in one plane, two ribs, the ribbon of the walls and
+roof) cut together in 2.1 s for 3.7 s one by one, kept pieces found in 2
+rounds. The ribs have 95.1, 95.1, 101.3 (twice) and 93.6 (twice) mm^2, for
+95.1, 95.1, 101.1 and 93.3 one by one; no branch goes through another one
+(branches_through.py); 114 edges are junctions again, 3199 lie along another
+branch (the walls and roof keep their sheet). The lines of the sheets that
+stay are prolonged to the planes that replace their neighbours as before:
+without that, three ribs went through the walls along 0.7 to 1.5 mm.
+
+Sample3.stp in the tool window (thickness 4, defaults): 7 surfaces cut
+together in 3 s; the panel and the stiffener get 413 and 71 mm^2 from their
+ribbons. Not right there: two small flat branches of 31 and 14 mm^2, next to
+the thick edge of the panel, are extended to 146 and 77 mm^2 and reach the end
+of their plane (nothing closes it within the reach), and one of them goes
+through another branch along 2.8 mm. No truth for these two parts.
+
+mat_native_skin_sites has a tenth test: a web on a flange with fillets of one
+thickness, all at once: two planes, the flange with a cusp, area 81 to 0.1
+(60 and 21), kept pieces settled, at least 20 edges of three triangles. 12 of
+12 mat_native tests pass. Tried on the way: half of the area within the
+tolerance of a plane was not enough to call a branch a wall with cusps (a
+curved piece of 99 mm^2 of the panel of Sample3 passed and became a plane of
+474 mm^2); the flat part must be within an eighth of the tolerance.
+
+Not checked: the corpus beyond these twelve cases; branches that are bent or
+curved and have cusps (bracket, channel_gusset_r2, Sample3); the graphical
+interface with a mouse (the callbacks of the widgets are called by a
+program).

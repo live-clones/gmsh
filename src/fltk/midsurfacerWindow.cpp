@@ -180,7 +180,7 @@ midsurfacerWindow::midsurfacerWindow(int deltaFontSize) : _state(new State)
 
   const int section = WB + 2 + BH; // a line, then a title
   int width = TW;
-  int height = 2 * WB + 23 * BH + 6 * section;
+  int height = 2 * WB + 24 * BH + 6 * section;
 
   win = new paletteWindow(width, height,
                           CTX::instance()->nonModalWindows ? true : false,
@@ -352,8 +352,22 @@ midsurfacerWindow::midsurfacerWindow(int deltaFontSize) : _state(new State)
   all = new Fl_Button(width - BB - 2 * WB, y, BB, BH, "Extend all");
   all->callback(extend_cb, (void *)1);
   all->tooltip(
-    "Extend every branch: the flat ones in their plane, largest first, "
-    "then the others by ribbons");
+    "Extend every branch (those already extended one by one stay as they "
+    "are), all at once or one after the other, as the box below says");
+  y += BH;
+  together = new Fl_Check_Button(x, y, full, BH, "Extend all at once");
+  together->value(1);
+  together->tooltip(
+    "Ticked: every branch first gets the surface that extends it, not cut "
+    "(the plane of the flat branches, a ribbon for the others; view \"MAT "
+    "surfaces before the cut\"), then all these surfaces and the skin are "
+    "cut together, once, and each branch keeps the pieces attached to it "
+    "(view \"MAT pieces after the cut\", -1 on what is dropped). The "
+    "result does not depend on an order, the branches stop exactly on each "
+    "other and share their vertices where they meet; a wall with cusps "
+    "along its junctions is replaced by its plane. Not ticked: the flat "
+    "branches in their plane, largest first, then the others by ribbons, "
+    "each one cut by the MAT as it is then");
   y += BH;
   saveAs = new Fl_Button(x, y, BB, BH, "Save...");
   saveAs->callback(save_cb);
@@ -441,7 +455,14 @@ void midsurfacerWindow::_forget(int fromStage)
     visible[i]->deactivate();
   }
   // the branches listed are those of the filtered or projected MAT
-  if(fromStage <= Projection) _listBranches(true);
+  if(fromStage <= Projection) {
+    for(int i : {(int)Surfaces, (int)Pieces}) {
+      if(PView *v = _state->view(i)) delete v;
+      _state->tag[i] = -1;
+      _state->data[i] = nullptr;
+    }
+    _listBranches(true);
+  }
   if(fromStage > Projection && fromStage <= Extension) status[Extension]->copy_label("");
   // the angles of the branches are those of the raw MAT
   if(fromStage <= Raw) {
@@ -726,7 +747,18 @@ void midsurfacerWindow::extendBranch(bool everyBranch)
   if(s.history.size() > 10) s.history.erase(s.history.begin());
   std::size_t done = 0, failed = 0;
   std::string what;
-  for(std::size_t i = 0; i < todo.size(); i++) {
+  const bool atOnce = everyBranch && together->value();
+  if(atOnce) {
+    status[Extension]->copy_label("Extending all the branches at once...");
+    win->redraw();
+    FlGui::check();
+    if(!FlGui::available()) return;
+    if(_extendTogether(what))
+      done = 1;
+    else
+      Msg::Warning("Midsurfacer: %s", what.c_str());
+  }
+  for(std::size_t i = 0; i < todo.size() && !atOnce; i++) {
     if(everyBranch) {
       status[Extension]->copy_label(
         text("Branch %d (%zu of %zu)...", todo[i].first, i + 1, todo.size()).c_str());
@@ -749,7 +781,7 @@ void midsurfacerWindow::extendBranch(bool everyBranch)
     }
   }
   if(!done) s.history.pop_back();
-  if(everyBranch) {
+  if(everyBranch && !atOnce) {
     what = text("%zu branches extended, %zu not (see the messages)", done, failed);
     if(specks)
       what += text("; %zu branches of less than %.3g (a hundredth of the "
@@ -772,6 +804,75 @@ void midsurfacerWindow::extendBranch(bool everyBranch)
     display(i, false);
   }
   drawContext::global()->draw();
+}
+
+// every branch at once: the surfaces that extend them, one cut, the pieces
+// that each one keeps
+bool midsurfacerWindow::_extendTogether(std::string &what)
+{
+  using namespace matgmsh_native;
+  State &s = *_state;
+  const Result &r = s.session.result();
+  const double t = thickness->value();
+  const double reach = length->value() > 0. ? length->value() : 2. * t;
+  const Mesh &original = s.session.hasProjected() ? r.projected : r.filtered;
+  GlobalExtension g;
+  std::string error;
+  if(!extendAllBranches(s.work, r.skin, .1 * t, .25 * t, reach,
+                        std::max(1, (int)layers->value()), .01 * t * t,
+                        s.extended, g, error, &original)) {
+    what = error;
+    return false;
+  }
+  for(const ExtensionSurface &e : g.report) {
+    std::string members;
+    for(std::size_t i = 1; i < e.branches.size(); i++)
+      members += text("%s%d", i > 1 ? ", " : " with ", e.branches[i]);
+    if(e.planar)
+      Msg::Info("Midsurfacer, branch %d%s: in its plane, %zu pieces of %zu "
+                "kept, area %.6g for %.6g (%.6g of it in cusps along the "
+                "junctions), %zu triangles, %zu faces prolonged at %zu "
+                "reentrant corners%s",
+                e.branch, members.c_str(), e.keptFragments, e.fragments,
+                e.addedArea, e.area, e.cusps, e.addedTriangles, e.fences,
+                e.corners,
+                e.reachesEnd ? "; a kept piece reaches the end of the plane" : "");
+    else
+      Msg::Info("Midsurfacer, branch %d: ribbon, %zu rows stopped by the "
+                "face that stops their neighbours, %zu pieces of %zu kept, "
+                "area %.6g added to %.6g, %zu triangles%s",
+                e.branch, e.stoppedRows, e.keptFragments, e.fragments,
+                e.addedArea, e.area, e.addedTriangles,
+                e.reachesEnd ? "; a kept piece reaches the end of the ribbon" : "");
+  }
+  what = text("%zu branches extended at once: %zu surfaces cut together "
+              "(%.2g s), kept pieces found in %d rounds%s",
+              g.extended.size(), g.report.size(), g.seconds, g.rounds,
+              g.settled ? "" : " (they alternate between two sets: the smaller one is taken)");
+  if(g.specks)
+    what += text("; %zu branches of less than %.3g left as they are", g.specks, .01 * t * t);
+  if(g.unextended)
+    what += text("; %zu branches neither flat nor with a free boundary left as they are",
+                 g.unextended);
+  Msg::Info("Midsurfacer: %s", what.c_str());
+  // the views of what happened: the surfaces before the cut, the pieces after
+  const struct {
+    int slot;
+    const Mesh *mesh;
+    const char *name;
+  } views[] = {{Surfaces, &g.surfaces, "MAT surfaces before the cut"},
+               {Pieces, &g.pieces, "MAT pieces after the cut"}};
+  for(const auto &v : views) {
+    if(PView *old = s.view(v.slot)) delete old;
+    PView *view = meshView(*v.mesh, v.name, [&](std::size_t i) {
+      return (double)v.mesh->branch[i];
+    });
+    s.tag[v.slot] = view->getTag();
+    s.data[v.slot] = view->getData();
+  }
+  s.work = std::move(g.result);
+  for(int b : g.extended) s.extended.insert(b);
+  return true;
 }
 
 // the result of a stage alone in the scene: the other stages hidden, and the
