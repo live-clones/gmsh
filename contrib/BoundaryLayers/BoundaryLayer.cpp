@@ -1231,20 +1231,26 @@ static void limitThicknessToGaps(const WallData &wall, double maxThickness,
   for(std::size_t i = 0; i < wall.samples.size(); i++)
     grid[cellOf(wall.samples[i].v->point())].push_back(i);
 
-  auto visit = [&](const BoundaryPiece &piece,
-                   const std::vector<std::size_t> &ids) {
+  // position of each sample, and its entry in the thickness map
+  std::vector<SPoint3> position(wall.samples.size());
+  std::vector<double *> current(wall.samples.size(), nullptr);
+  for(std::size_t i = 0; i < wall.samples.size(); i++) {
+    position[i] = wall.samples[i].v->point();
+    auto it = thickness.find(wall.samples[i].v);
+    if(it != thickness.end()) current[i] = &it->second;
+  }
+
+  // centre and radius of a sphere around the piece
+  auto visit = [&](const BoundaryPiece &piece, const SPoint3 &centre,
+                   double radius, const std::vector<std::size_t> &ids) {
     for(auto id : ids) {
+      if(!current[id]) continue;
       const WallSample &sample = wall.samples[id];
-      SPoint3 p = sample.v->point();
-      SPoint3 q =
-        (piece.n == 3) ?
-          closestPointOnTriangle(piece.p[0], piece.p[1], piece.p[2], p) :
-          closestPointOnSegment(piece.p[0], piece.p[1], p);
-      SVector3 d(p, q);
-      double dist = d.norm();
-      if(dist < 1.e-12 * R || dist > R) continue;
-      double dn = dot(d, sample.normal);
-      if(dn < 1.e-6 * dist) continue;
+      const SPoint3 &p = position[id];
+      // the gap is at least the distance to the piece: farther than this the
+      // piece cannot reduce the thickness the node already has
+      double reach = std::min(R, *current[id] / gapFractionFacingWall);
+      if(p.distance(centre) - radius > reach) continue;
       SVector3 pieceNormal = piece.dir;
       if(piece.n == 2) {
         pieceNormal = crossprod(sample.surfaceNormal, piece.dir);
@@ -1253,15 +1259,29 @@ static void limitThicknessToGaps(const WallData &wall, double maxThickness,
         pieceNormal *= 1. / l;
       }
       if(std::abs(dot(pieceNormal, sample.normal)) < 0.5) continue;
+      SPoint3 q =
+        (piece.n == 3) ?
+          closestPointOnTriangle(piece.p[0], piece.p[1], piece.p[2], p) :
+          closestPointOnSegment(piece.p[0], piece.p[1], p);
+      SVector3 d(p, q);
+      double dist = d.norm();
+      if(dist < 1.e-12 * R || dist > reach) continue;
+      double dn = dot(d, sample.normal);
+      if(dn < 1.e-6 * dist) continue;
       double gap = dist * dist / dn;
       double limit =
         gap * (piece.wall ? gapFractionFacingWall : gapFractionFacingOther);
-      auto it = thickness.find(sample.v);
-      if(it != thickness.end() && limit < it->second) it->second = limit;
+      if(limit < *current[id]) *current[id] = limit;
     }
   };
 
   for(const auto &piece : wall.pieces) {
+    SPoint3 centre(0., 0., 0.);
+    for(int i = 0; i < piece.n; i++) centre += piece.p[i];
+    centre *= 1. / piece.n;
+    double radius = 0.;
+    for(int i = 0; i < piece.n; i++)
+      radius = std::max(radius, centre.distance(piece.p[i]));
     SPoint3 lo = piece.p[0], hi = piece.p[0];
     for(int i = 1; i < piece.n; i++)
       for(int k = 0; k < 3; k++) {
@@ -1282,7 +1302,7 @@ static void limitThicknessToGaps(const WallData &wall, double maxThickness,
         if(c.i < c0.i || c.i > c1.i || c.j < c0.j || c.j > c1.j || c.k < c0.k ||
            c.k > c1.k)
           continue;
-        visit(piece, cell.second);
+        visit(piece, centre, radius, cell.second);
       }
     }
     else {
@@ -1290,7 +1310,7 @@ static void limitThicknessToGaps(const WallData &wall, double maxThickness,
         for(long j = c0.j; j <= c1.j; j++)
           for(long k = c0.k; k <= c1.k; k++) {
             auto it = grid.find(Cell{i, j, k});
-            if(it != grid.end()) visit(piece, it->second);
+            if(it != grid.end()) visit(piece, centre, radius, it->second);
           }
     }
   }
