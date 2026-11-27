@@ -429,6 +429,19 @@ With the box not ticked, Extend all does the flat branches in their plane,
 largest first, then the others by ribbons, each one cut by the MAT as it is
 then (the two ways one by one, repeated).
 
+From the command line, gmshMat --extend-all does the same on the filtered MAT
+(or on the projected one with --project), after the stages asked for:
+
+  gmshMat part.step --thickness T --wing-branches --collapse-threshold 0 \
+    --extend-all --output DIR
+
+writes DIR/extended_all.msh, DIR/extended_all_classified.msh (the file of
+Save...) and DIR/extended_all.json (surfaces, rounds, and for each surface
+its areas, pieces, corners and fences). The tolerance is a tenth of the
+thickness, the grid a quarter, the reach twice (or --extension-length), the
+ribbons have --extension-layers rows. This is not --stage extended, the
+earlier front-by-front extension.
+
 In both cases it leaves as they are the branches of less than a hundredth of
 the thickness squared: specks left by the filter, a few triangles that hang on
 the rest by an edge and have no plane of their own (extended, each gives a
