@@ -61,6 +61,7 @@ namespace WinslowUntangler {
     struct Data {
       int dim = 0;
       double lambda = 1.;
+      const std::vector<double> *elementLambda = nullptr;
       double eps = 0.;
       double energy = 0.;
       double JDetMin = DBL_MAX;
@@ -333,10 +334,12 @@ namespace WinslowUntangler {
           const double traceJtJ = J00 * J00 + J10 * J10 + J01 * J01 + J11 * J11;
           const double fEps = traceJtJ / chi;
           const double gEps = (det * det + 1.) / chi;
-          w.elementEnergy[t] = fEps + w.lambda * gEps;
+          const double lambda =
+            w.elementLambda ? (*w.elementLambda)[t] : w.lambda;
+          w.elementEnergy[t] = fEps + lambda * gEps;
 
           const double coeff =
-            fEps * chip - 2. * w.lambda * det + w.lambda * gEps * chip;
+            fEps * chip - 2. * lambda * det + lambda * gEps * chip;
           const double scaleA = 2. / chi;
           const double scaleB = coeff / chi;
           const double d00 = scaleA * J00 - scaleB * J11;
@@ -454,10 +457,12 @@ namespace WinslowUntangler {
                                   J02 * J02 + J12 * J12 + J22 * J22;
           const double fEps = traceJtJ / chi23;
           const double gEps = (det * det + 1.) / chi;
-          w.elementEnergy[t] = fEps + w.lambda * gEps;
+          const double lambda =
+            w.elementLambda ? (*w.elementLambda)[t] : w.lambda;
+          w.elementEnergy[t] = fEps + lambda * gEps;
 
-          const double coeff = 2. / 3. * fEps * chip - 2. * w.lambda * det +
-                               w.lambda * gEps * chip;
+          const double coeff = 2. / 3. * fEps * chip - 2. * lambda * det +
+                               lambda * gEps * chip;
           const double scaleA = 2. / chi23;
           const double scaleB = coeff / chi;
 
@@ -680,6 +685,9 @@ namespace WinslowUntangler {
     const double t0 = TimeOfDay();
     Data data;
     data.lambda = options.lambda;
+    if(options.elementLambda &&
+       options.elementLambda->size() == triangles.size())
+      data.elementLambda = options.elementLambda;
     data.numThreads = options.numThreads;
     if(!prepareData2D(points, locked, triangles, idealShapes, data))
       return false;
@@ -714,6 +722,8 @@ namespace WinslowUntangler {
     const double t0 = TimeOfDay();
     Data data;
     data.lambda = options.lambda;
+    if(options.elementLambda && options.elementLambda->size() == tets.size())
+      data.elementLambda = options.elementLambda;
     data.numThreads = options.numThreads;
     if(!prepareData3D(points, locked, tets, idealShapes, data)) return false;
 

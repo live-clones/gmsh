@@ -24,6 +24,10 @@ namespace WinslowUntangler {
   struct Options {
     // Weight of the volume term
     double lambda = 1.;
+    // Weight of the volume term of each element, replacing lambda if given:
+    // an element with a small weight keeps its shape but is free to change
+    // size
+    const std::vector<double> *elementLambda = nullptr;
     int maxOuterIterations = 100;
     // L-BFGS iterations per outer iteration
     int maxInnerIterations = 300;
