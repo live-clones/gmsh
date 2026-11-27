@@ -3208,7 +3208,19 @@ void GModel::pruneMeshVertexAssociations()
   std::vector<MVertex *> vertices;
   getEntities(entities);
   std::size_t maxNum = 0;
+  // the nodes of the model points, which keep them even without a point
+  // element (e.g. in a mesh file saved without them, where the curves would
+  // otherwise take their end nodes, and remeshing the points would leave the
+  // curves that are not remeshed with deleted nodes - cf. #3189)
+  std::vector<std::pair<MVertex *, GEntity *>> pointNodes;
   for(std::size_t i = 0; i < entities.size(); i++) {
+    if(entities[i]->dim() == 0) {
+      for(MVertex *v : entities[i]->mesh_vertices) {
+        pointNodes.push_back(std::make_pair(v, entities[i]));
+        if(v->getNum() > maxNum) maxNum = v->getNum();
+        vertices.push_back(v);
+      }
+    }
     for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
       MElement *e = entities[i]->getMeshElement(j);
       for(std::size_t k = 0; k < e->getNumVertices(); k++) {
@@ -3248,6 +3260,7 @@ void GModel::pruneMeshVertexAssociations()
       vertices.end());
   }
   _associateEntityWithMeshVertices();
+  for(auto &p : pointNodes) p.first->setEntity(p.second);
   // associate mesh nodes primarily with chain entities
   for(auto it = _chainRegions.begin(); it != _chainRegions.end(); ++it) {
     _associateEntityWithElementVertices(*it, (*it)->tetrahedra, true);
