@@ -2053,6 +2053,40 @@ static void ReplaceDuplicatePoints(std::map<int, int> *v_report = nullptr)
   if(!success) ReplaceDuplicatePointsNew();
 }
 
+// When Coherence removes the top of an extrusion (a copy of its source, with
+// COPIED_ENTITY extrusion parameters) as a duplicate of an existing entity
+// without extrusion parameters (e.g. a Duplicata extruded next), the existing
+// entity takes them over, so that its mesh is still copied (#2519) - unless
+// the chain of copies leads back to it, i.e. it is where the chain starts
+static bool copyChainReaches(int dim, int source, int target)
+{
+  std::set<int> visited;
+  while(visited.insert(std::abs(source)).second) {
+    if(std::abs(source) == std::abs(target)) return true;
+    ExtrudeParams *e = nullptr;
+    if(dim == 1) {
+      Curve *c = FindCurve(std::abs(source));
+      if(c) e = c->Extrude;
+    }
+    else {
+      Surface *s = FindSurface(std::abs(source));
+      if(s) e = s->Extrude;
+    }
+    if(!e || e->geo.Mode != COPIED_ENTITY) return false;
+    source = e->geo.Source;
+  }
+  return false;
+}
+
+static void transferExtrusion(int dim, ExtrudeParams *from, int source,
+                              int keptNum, ExtrudeParams *&kept)
+{
+  if(!from || from->geo.Mode != COPIED_ENTITY || kept) return;
+  if(copyChainReaches(dim, source, keptNum)) return;
+  kept = new ExtrudeParams(*from);
+  kept->geo.Source = source;
+}
+
 static void ReplaceDuplicateCurves(std::map<int, int> *c_report = nullptr)
 {
   Curve *c, *c2, **pc, **pc2;
@@ -2147,6 +2181,21 @@ static void ReplaceDuplicateCurves(std::map<int, int> *c_report = nullptr)
           c->Extrude->geo.Source = (*pc2)->Num;
       }
     }
+  }
+  List_Delete(All);
+
+  // the removed tops of extrusions hand their parameters over, once all the
+  // sources are the kept curves
+  All = Tree2List(curves2delete);
+  for(int i = 0; i < List_Nbr(All); i++) {
+    List_Read(All, i, &c);
+    if(!c->Extrude || c->Extrude->geo.Mode != COPIED_ENTITY) continue;
+    if(!(pc = (Curve **)Tree_PQuery(allNonDuplicatedCurves, &c))) continue;
+    int source = c->Extrude->geo.Source;
+    if((c2 = FindCurve(std::abs(source), curves2delete)) &&
+       (pc2 = (Curve **)Tree_PQuery(allNonDuplicatedCurves, &c2)))
+      source = (*pc2)->Num;
+    transferExtrusion(1, c->Extrude, source, (*pc)->Num, (*pc)->Extrude);
   }
   List_Delete(All);
 
@@ -2456,6 +2505,22 @@ static void ReplaceDuplicateSurfaces(std::map<int, int> *s_report = nullptr)
           s->Extrude->geo.Source = (*ps2)->Num;
       }
     }
+  }
+  List_Delete(All);
+
+  // the removed tops of extrusions hand their parameters over, once all the
+  // sources are the kept surfaces
+  All = Tree2List(surfaces2delete);
+  for(int i = 0; i < List_Nbr(All); i++) {
+    List_Read(All, i, &s);
+    if(!s->Extrude || s->Extrude->geo.Mode != COPIED_ENTITY) continue;
+    if(!(ps = (Surface **)Tree_PQuery(allNonDuplicatedSurfaces, &s)))
+      continue;
+    int source = s->Extrude->geo.Source;
+    if((s2 = FindSurface(std::abs(source), surfaces2delete)) &&
+       (ps2 = (Surface **)Tree_PQuery(allNonDuplicatedSurfaces, &s2)))
+      source = (*ps2)->Num;
+    transferExtrusion(2, s->Extrude, source, (*ps)->Num, (*ps)->Extrude);
   }
   List_Delete(All);
 
