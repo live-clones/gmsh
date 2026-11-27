@@ -68,16 +68,8 @@ public:
   void deleteGeometryVertexArrays();
 
   // add/delete regions that are bounded by the face
-  void addRegion(GRegion *r)
-  {
-    if(r == r1 || r == r2) return;
-    r1 ? r2 = r : r1 = r;
-  }
-  void delRegion(GRegion *r)
-  {
-    if(r1 == r) r1 = r2;
-    r2 = nullptr;
-  }
+  void addRegion(GRegion *r);
+  void delRegion(GRegion *r);
   GRegion *getRegion(int const num) const { return num == 0 ? r1 : r2; }
 
   // get number of regions
