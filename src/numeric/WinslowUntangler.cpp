@@ -461,8 +461,8 @@ namespace WinslowUntangler {
             w.elementLambda ? (*w.elementLambda)[t] : w.lambda;
           w.elementEnergy[t] = fEps + lambda * gEps;
 
-          const double coeff = 2. / 3. * fEps * chip - 2. * lambda * det +
-                               lambda * gEps * chip;
+          const double coeff =
+            2. / 3. * fEps * chip - 2. * lambda * det + lambda * gEps * chip;
           const double scaleA = 2. / chi23;
           const double scaleB = coeff / chi;
 
@@ -607,6 +607,15 @@ namespace WinslowUntangler {
     {
       const size_t n = x.size();
       const std::vector<double> backup(points, points + n);
+      // The minimization only sees the coordinates of the vertices that are
+      // not locked: the others have a zero gradient and never move, but would
+      // cost as much in each of its vector operations.
+      std::vector<size_t> freeDofs;
+      for(size_t i = 0; i < n; ++i)
+        if(!data.locked[i / data.dim]) freeDofs.push_back(i);
+      if(freeDofs.empty()) return data.JDetMin > 0.;
+      std::vector<double> xFree(freeDofs.size()), gradFull(n);
+      for(size_t i = 0; i < freeDofs.size(); ++i) xFree[i] = x[freeDofs[i]];
       bool converged = false;
       int nFail = 0;
       const double t0 = Cpu();
@@ -626,9 +635,14 @@ namespace WinslowUntangler {
         LBFGS::Result result;
         try {
           result = LBFGS::minimize(
-            x,
-            [&data](const std::vector<double> &xe, std::vector<double> &grad) {
-              return evaluate(data, xe, grad);
+            xFree,
+            [&](const std::vector<double> &xe, std::vector<double> &grad) {
+              for(size_t i = 0; i < freeDofs.size(); ++i)
+                x[freeDofs[i]] = xe[i];
+              const double f = evaluate(data, x, gradFull);
+              for(size_t i = 0; i < freeDofs.size(); ++i)
+                grad[i] = gradFull[freeDofs[i]];
+              return f;
             },
             lbfgs);
         } catch(const std::exception &e) {
@@ -636,12 +650,11 @@ namespace WinslowUntangler {
           std::copy(backup.begin(), backup.end(), points);
           return false;
         }
-        // After a failed line search the last evaluation is at a rejected
-        // trial point: restore the energy and determinants of the solution
-        if(result.terminationType == -2) {
-          std::vector<double> grad(n);
-          evaluate(data, x, grad);
-        }
+        // the last evaluation may be at a rejected trial point
+        for(size_t i = 0; i < freeDofs.size(); ++i) x[freeDofs[i]] = xFree[i];
+        // After a failed line search, restore the energy and determinants of
+        // the solution as well
+        if(result.terminationType == -2) evaluate(data, x, gradFull);
         std::copy(x.begin(), x.end(), points);
 
         const double dErel =

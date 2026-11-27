@@ -2646,6 +2646,12 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
   // insert the layers, with zero thickness; sets of entities are ordered by
   // tag, not by address, so that the result does not change from one run to
   // the next
+  double t0 = TimeOfDay();
+  auto timing = [&t0](const char *what) {
+    double t = TimeOfDay();
+    Msg::Debug("Boundary layer: %s in %g s", what, t - t0);
+    t0 = t;
+  };
   LayerData data;
   std::vector<GFace *> sideSurfaces;
   std::vector<GEntity *> domains;
@@ -2666,6 +2672,7 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
                "pinched layers: keeping order 1");
     highOrder = 1;
   }
+  timing("layers inserted");
 
   // the surfaces whose layers are inflated in their parametric plane
   const std::vector<GFace *> &inflatedSurfaces = is3D ? sideSurfaces : surfaces;
@@ -2676,6 +2683,7 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
     computeWallThickness(volumes, surfaces, thickness, data);
   else
     computeWallThickness(surfaces, curves, thickness, data);
+  timing("target thickness computed");
 
   // inflate the layers: on the curves, then on the surfaces, then in the
   // volumes
@@ -2683,7 +2691,9 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
   std::size_t numCut = 0;
   for(auto gf : inflatedSurfaces)
     numCut += inflateAndCutBack(gf, data, numRings);
+  timing("layers inflated on curves and surfaces");
   for(auto gr : volumes) numCut += inflateAndCutBack(gr, data, numRings);
+  if(is3D) timing("layers inflated in volumes");
   if(numCut)
     Msg::Info("Boundary layer: %zu of %zu columns cut back to their target "
               "thickness",
@@ -2701,6 +2711,8 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
     else
       splitLayers(surfaces, data, law);
   }
+
+  timing("columns split");
 
   for(auto gr : volumes) {
     std::size_t numInvalid = countInvalidElements(gr);
