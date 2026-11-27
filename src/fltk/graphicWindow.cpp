@@ -345,6 +345,9 @@ static int exportFile(const char *name, int format)
     return genericMeshFileDialog(name, "VTK Options", format, true, false);
   case FORMAT_TOCHNOG:
     return genericMeshFileDialog(name, "Tochnog Options", format, true, false);
+#if defined(HAVE_MATGMSH)
+  case FORMAT_PERMAS: return permasFileDialog(name);
+#endif
   case FORMAT_DIFF:
     return genericMeshFileDialog(name, "Diffpack Options", format, true, false);
   case FORMAT_MESH:
@@ -452,6 +455,9 @@ static void file_export_cb(Fl_Widget *w, void *data)
     {"Mesh - VRML Surface\t*.wrl", FORMAT_VRML},
     {"Mesh - VTK\t*.vtk", FORMAT_VTK},
     {"Mesh - VTK XML Unstructured Grid\t*.vtu", FORMAT_VTU},
+#if defined(HAVE_MATGMSH)
+    {"Mesh - PERMAS with thickness groups\t*.dat", FORMAT_PERMAS},
+#endif
     {"Mesh - Tochnog\t*.dat", FORMAT_TOCHNOG},
     {"Mesh - PLY2 Surface\t*.ply2", FORMAT_PLY2},
     {"Mesh - SU2\t*.su2", FORMAT_SU2},

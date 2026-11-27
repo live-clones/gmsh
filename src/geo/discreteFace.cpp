@@ -12,6 +12,7 @@
 #include "GModelIO_GEO.h"
 #include "Geo.h"
 #include "Context.h"
+#include "GmshDefines.h"
 #include "MElementOctree.h"
 #include "GModelParametrize.h"
 #include "intersectCurveSurface.h"
@@ -400,7 +401,14 @@ bool discreteFace::containsParam(const SPoint2 &pt)
 
 SBoundingBox3d discreteFace::bounds(bool fast)
 {
-  if(_param.empty()) return GFace::bounds(fast);
+  if(_param.empty()) {
+    // without parametrization, its triangulation (see
+    // DiscreteCAD_Internals::Surface::unparametrized), or else its mesh
+    if(stl_vertices_xyz.empty()) return GFace::bounds(fast);
+    SBoundingBox3d bbox;
+    for(const SPoint3 &p : stl_vertices_xyz) bbox += p;
+    return bbox;
+  }
   return _param.bbox;
 }
 
@@ -806,7 +814,11 @@ void discreteFace::_createGeometryFromSTL(bool planar)
 
 void discreteFace::mesh(bool verbose)
 {
-  if(_param.empty()) return;
+  // without parametrization, only the Frontal-Delaunay algorithm on the
+  // triangulation (Mesh.Algorithm 12) meshes it, on its triangulation
+  if(_param.empty() &&
+     (getMeshingAlgo() != ALGO_2D_FRONTAL_SCAFFOLD || stl_triangles.empty()))
+    return;
   GFace::mesh(verbose);
 }
 

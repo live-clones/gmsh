@@ -538,6 +538,110 @@ void midSurfaceModelOfTwoBranches()
   for(double t : thickness) check(std::abs(t - 3.) < 1e-12, "the thickness is twice the radius");
 }
 
+// A T: a plate (branch 0) and a flap standing on it along the junction A-D.
+// The flap held by a node 1e-5 above the middle N of the junction, joined to
+// it by two slivers, as the cut of the extension leaves some: that node is
+// merged into N, the slivers left out, and the model is that of the clean T.
+// Without minArea, no node merged.
+void junctionNodesMicrometresApart()
+{
+  auto build = [](bool perturbed, double minArea, MidSurfaceModel &mid) {
+    Mesh m;
+    m.xyz = {-10, 0, 0, 0, 0, 0, 10, 0, 0, -10, 10, 0, 0, 10, 0, 10, 10, 0,
+             0, 5, 0, -5, 5, 0, 5, 5, 0, 0, 10, 10, 0, 0, 10, 0, 5, 10};
+    const int P1 = 0, A = 1, P2 = 2, P3 = 3, D = 4, P4 = 5, N = 6, L = 7, R = 8, E = 9,
+              F = 10, G = 11;
+    int above = N;
+    if(perturbed) {
+      m.xyz.insert(m.xyz.end(), {0, 5, 1e-5});
+      above = 12;
+    }
+    m.triangles = {P1, A, L, A, N, L, N, D, L, D, P3, L, P3, P1, L,
+                   A, P2, R, P2, P4, R, P4, D, R, D, N, R, N, A, R,
+                   A, above, G, A, G, F, above, D, G, D, E, G};
+    m.branch.assign(10, 0);
+    m.branch.resize(14, 1);
+    if(perturbed) {
+      m.triangles.insert(m.triangles.end(), {A, N, above, N, D, above});
+      m.branch.insert(m.branch.end(), {1, 1});
+    }
+    m.parent.assign(m.branch.size(), -1);
+    m.radius.assign(m.xyz.size() / 3, 1.5);
+    std::string error;
+    check(buildMidSurfaceModel(m, "junction", M_PI, M_PI, minArea, mid, error),
+          "mid-surface model of the T: " + error);
+  };
+  MidSurfaceModel clean, merged, kept;
+  build(false, .01, clean);
+  build(true, .01, merged);
+  build(true, 0., kept);
+  check(!clean.merged && !kept.merged, "no node merged in the clean T, nor without minArea");
+  check(merged.merged == 1 && merged.removed == 2,
+        "the node 1e-5 from the junction merged, the two slivers left out");
+  check(merged.surfaces == clean.surfaces && merged.curves == clean.curves &&
+          merged.points == clean.points,
+        "the model of the clean T");
+  std::string error;
+  check(meshMidSurfaceModel(merged, 2., error) && merged.triangles > 0 && !merged.failed,
+        "mesh of the T: " + error);
+}
+
+// A plate of square cells with a round hole, its boundary a staircase (edges
+// along and across the boundary, notches and teeth): the band from the hole,
+// longer than its radius, fills it exactly (the area of the cells left out),
+// every triangle turned alike and no edge with more than two triangles: no
+// fold, no overlap, no gap. The band around the plate does not fold either.
+void bandWithoutFolds()
+{
+  const int cells = 80;
+  const double size = .25, radius = 5.;
+  Mesh m;
+  for(int j = 0; j <= cells; ++j)
+    for(int i = 0; i <= cells; ++i) m.xyz.insert(m.xyz.end(), {i * size, j * size, 0.});
+  int left = 0;
+  for(int j = 0; j < cells; ++j)
+    for(int i = 0; i < cells; ++i) {
+      const double x = (i + .5) * size - 10., y = (j + .5) * size - 10.;
+      if(x * x + y * y < radius * radius) {
+        ++left;
+        continue;
+      }
+      const int a = j * (cells + 1) + i, b = a + 1, c = b + cells + 1, d = a + cells + 1;
+      m.triangles.insert(m.triangles.end(), {a, b, c, a, c, d});
+      for(int k = 0; k < 2; ++k) {
+        m.branch.push_back(0);
+        m.parent.push_back(-1);
+      }
+    }
+  Ribbon rows, band;
+  std::string error;
+  check(branchRibbon(m, 0, 6., 1, rows, error), "rows of the plate: " + error);
+  check(rows.chainStart.size() == 2, "two chains: the plate and its hole");
+  check(extendFront(rows, 6., 4, nullptr, band), "band of the plate");
+  check(band.foldedEdges == 0, "every triangle of the band can be made");
+  double area[2] = {0., 0.}, sign[2] = {0., 0.};
+  std::map<std::pair<int, int>, int> uses;
+  for(std::size_t t = 0; t < band.mesh.triangles.size() / 3; ++t) {
+    const int *v = &band.mesh.triangles[3 * t];
+    const double *a = &band.mesh.xyz[3 * v[0]], *b = &band.mesh.xyz[3 * v[1]], *c = &band.mesh.xyz[3 * v[2]];
+    const double z = .5 * ((b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]));
+    const int chain = band.mesh.branch[t];
+    check(z != 0., "no flat triangle in the band");
+    if(sign[chain] == 0.) sign[chain] = z;
+    check(z * sign[chain] > 0., "the triangles of a chain are turned alike");
+    area[chain] += std::abs(z);
+    for(int k = 0; k < 3; ++k) ++uses[std::minmax(v[k], v[(k + 1) % 3])];
+  }
+  for(const auto &u : uses) check(u.second <= 2, "no edge of the band with more than two triangles");
+  const double hole = left * size * size;
+  const int inner = std::abs(area[0] - hole) < std::abs(area[1] - hole) ? 0 : 1;
+  check(std::abs(area[inner] - hole) < 1.e-8, "the band of the hole fills it exactly");
+  check(area[1 - inner] > 480., "the band around the plate is six wide");
+  std::size_t far = 0;
+  for(unsigned char f : band.far) far += f;
+  check(far > 0, "the band around the plate reaches its full length");
+}
+
 int main()
 {
   try {
@@ -555,8 +659,10 @@ int main()
     webStopsOnTheFlange();
     filletedWebAndFlangeAtOnce();
     midSurfaceModelOfTwoBranches();
+    junctionNodesMicrometresApart();
+    bandWithoutFolds();
     gmsh::finalize();
-    std::cout << "MatSkinSites: 11 tests passed\n";
+    std::cout << "MatSkinSites: 13 tests passed\n";
     return 0;
   }
   catch(const std::exception &e) {

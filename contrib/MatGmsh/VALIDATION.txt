@@ -1153,3 +1153,191 @@ thread), extended_all.msh and extended_all_classified.msh up to their new
 $NodeData. Test: mat_native_skin_sites, two branches at a right angle with a
 slit (one surface each, the slit closed, a junction curve, every surface
 meshed, the thickness twice the radius).
+
+Mesh of the mid-surface: no parametrization, the ribs joined, 27 November 2026
+------------------------------------------------------------------------------
+
+The user found the mesh and the discrete model of the Doghouse very slow at
+thickness 3, and the ribs not joined to the curved wall. Diagnosis (each run
+stopped at two minutes):
+
+  - the mesh: the curved wall (465 000 triangles) had a 1D element of 0.007;
+    the mesher took the sizes of the 1D mesh into the surface, which refined
+    its triangulation to 2.3 million nodes (6.5 GB in 19 s). The sizes of the
+    1D mesh are no longer extended into the surfaces of the mid-surface;
+  - a curve of zero length on a rib, from two points moved onto the same
+    exact intersection of the recognized planes (two surfaces left without
+    triangles at thickness 4): no analytic surface is recognized any more;
+  - the model: 81 % of its time in the discrete CAD modeler, a quarter of it
+    in the harmonic parametrization of each surface (the LU of MUMPS for the
+    curved wall), which the mesher (Mesh.Algorithm 12) does not use. The
+    modeler takes a flag (addTriangulation(..., parametrize), default true,
+    Surface::unparametrized): without it, no parameters, the surfaces given
+    to the model as their triangulations; discreteFace::mesh meshes such a
+    surface with Mesh.Algorithm 12. Model built in 1.6 s instead of 4.4
+    (thickness 4), 2.9 s instead of 7.7 (thickness 3); midsurface_mesh.msh
+    of 0.6 to 0.8 MB instead of 21;
+  - the ribs: in the extended MAT they shared no edge with the curved wall
+    (each of them 23 to 28 with the base): the wall, a sheet that stays, was
+    a cutter of the cut of the extension, cut there, but kept whole in the
+    result. Its pieces now replace its triangles that were cut: junction
+    edges 114 -> 2604, edges along another branch 3214 -> 760 (thickness 4);
+    each rib shares 364 to 598 edges with the wall. The remaining ones are
+    mostly between the walls and the base, 0.01 to 0.1 mm apart.
+
+Result: one surface per branch, the triple lines of the ribs embedded in the
+curved wall; thickness 4: 1034 triangles in 0.6 s; thickness 3: 1685
+triangles in 1.2 s; no surface without triangles; the mesh is one piece. In
+the window, Mesh pressed on the CAD model just opened, thickness 3: every
+stage shown, 12.8 s in all. The twelve mat_native_ tests pass.
+
+Then, in the window, nothing was shown once the mid-surface was meshed: the
+box of the scene was infinite. The discrete CAD modeler sets it at the end of
+synchronize, from the bounds of the model; a surface without parametrization
+and not yet meshed had empty bounds, and GModel::bounds added that empty box,
+whose two corners (+DBL_MAX and -DBL_MAX) went in as points. Fixed in
+discreteFace::bounds (without parametrization, the box of its triangulation)
+and in GModel::bounds (an empty box is no longer added). The curves are not
+split at their corners (curve angle 180 degrees): at 60 degrees the jagged
+free boundaries of the MAT gave 148 curves instead of 46 and 282 triangles of
+quality under 0.3 instead of 60 (thickness 4); the price is the corners of the
+base cut by the 1D mesh, to be handled otherwise.
+
+"The filtered MAT is connected, the extension seems to disconnect
+everything": the extended MAT of the Doghouse (thickness 4) had Euler
+characteristic -35 and 36 boundary loops, for 0 and 9 in the filtered MAT.
+Three causes, three changes of extendAllBranches:
+  - the walls, a sheet that stays, were cut along the ribs but kept whole in
+    the result (see above): their pieces replace them;
+  - the walls ended 0.01 to 0.1 mm above the plane that replaces the base:
+    prolonged across it by a strip from their junction with the base, cut
+    with the rest, the part beyond the plane left out (edges along another
+    branch 760 -> 88);
+  - 27 slits, holes of zero area between a triangle of a sheet kept whole
+    (lying in the plane of a rib) and its neighbour, cut, with a node on
+    their common edge: closed by closeSlits.
+Thickness 4: Euler characteristic -18, 19 boundary loops (9 of the filtered
+MAT and 10 holes of 0.01 to 1.2 at the corners where a rib, a wall and the
+base meet); the mesh of the mid-surface one piece, 12 boundary loops, the
+walls sharing 27 nodes with the base. Thickness 3: -16 and 21; the mesh 14
+loops, 38 nodes shared. Left: those corners; the circle of the roof meshed
+as an octagon at size 3 (radius 3.5), the size map of Gmsh as it is.
+
+A band without folds in place of the ribbon, 27 November 2026
+--------------------------------------------------------------
+
+The mesh of the mid-surface of the Doghouse stayed broken around the hole of
+its roof: short curves from the circle into the roof, which the mesh followed
+as spikes. Cause: the ribbon, one row per node of the boundary. Where the
+boundary of the MAT has an edge along the direction of the extension, two
+rows nearly coincide and cross; cut by the cylinder of the hole they left two
+layers one on the other (edges of four triangles, which the discrete model
+makes curves) and slivers a micrometre wide. Collapsing short edges
+afterwards was tried and dropped (up to 411 folded edges at thickness 3).
+
+extendFront (README.txt) builds the band by advancing the boundary as a
+front. Test, mat_native_skin_sites: a plate of 80 x 80 cells with a round
+hole of radius 5, its boundary a staircase, band of length 6: the band of
+the hole fills it exactly (the area of the cells left out to 1e-8), every
+triangle turned alike, no edge with more than two triangles.
+
+Doghouse.stp, mid-surface meshed at size 1:
+                                        thickness 4       thickness 3
+  curved sheet, edges of 4 triangles     5 -> 2            5 -> 2
+  curved sheet, Euler / boundary loops   1 / 4 -> 0 / 2    1 / 4 -> 0 / 2
+  roof within 6 of the axis of the hole,
+    triangles of quality under 0.3       5 -> 0            up to 67 -> 0
+  edges along another branch             88 -> 27          71 -> 27
+  slits and holes repaired in the model  18 and 0 -> 0     22 and 2 -> 0
+  the band, all branches                 0.3 ms            0.5 ms
+The two edges of four triangles left are at the bottom of the front ends of
+the walls (the strips that join them to the base), not in a band. The whole
+extension takes 2.2 s (thickness 4) and 3.6 s (thickness 3): more than this
+morning (1.5 s at 4), from the changes of the day around the cut (the strips
+of the walls, the vertices and triangles found twice, the slits), not from
+the band. The twelve mat_native_ tests pass.
+
+PERMAS export (.dat) with thickness groups, 27 November 2026
+------------------------------------------------------------
+
+The export of write_mesh_dat (thicknesses.py) in C++ (MatPermas,
+README.txt), .dat in Gmsh only with MatGmsh. Its layout checked against a
+manual mesh of the pipeline (not in the tree) by a script
+reading both (columns of the nodes, of the elements, of $GEODAT and $ELPROP;
+the sequence of the keywords): the same, the material block aside (no
+material data to write).
+
+Doghouse.stp, thickness 4, gmshMat --extend-all --mesh-midsurface 2: 1216
+nodes, 2161 TRIA3 in 26 sets from 1.2 to 3.9 (step 0.1); with --dat-step 0.5
+--dat-material PP_EPDM_T20, 6 sets from 1.5 to 4 and their $ELPROP lines. The
+same file, but for the last digits of the coordinates (16 digits in the
+.msh), from gmsh::write of midsurface_mesh.msh read back (thickness of its
+view "MAT local thickness") and from gmsh -save -o x.dat; the elements and
+the sets identical. In the window (driven): Mesh, then the export of a .dat,
+thickness of the view "MAT mid-surface thickness", now node data on the model
+of the mid-surface, shown as before.
+
+The manual mesh read (6471 nodes, 226 TRIA3, 6211 QUAD4, 14
+element sets as physical surfaces, the thickness of the 6437 elements as a
+view) and written again: the $COOR block identical byte for byte, every
+element with its thickness. Its thicknesses are floats (1.100000023841858):
+rounded up as in thicknesses.py they went to the next set (1.2); hence the
+tolerance of 1e-6 relative.
+
+New test mat_native_permas: two triangles and a quadrangle, thickness at the
+nodes, the sets 1.1 (a float), 1.2 and 2; the lines of a node (1.E-7) and of
+an element, the order of the blocks, the end; the material; the same file
+from gmsh::write and a view of node data; read back. The thirteen
+mat_native_ tests pass. The core files changed compile without MatGmsh
+(-fsyntax-only, HAVE_MATGMSH undefined).
+
+The points of the discrete model micrometres apart, 27 November 2026
+--------------------------------------------------------------------
+
+Reported by the user: points 5 and 9 of the model of the mid-surface at the
+same place, on a triple line. Doghouse.stp, thickness 4, the window's filter
+(--wing-branches --collapse-threshold 0): points 5 and 9 1.0e-4 apart at
+(406.4, -861.7, -1437.74), where a rib (branch 1), the curved wall (0) and
+the base (7) meet; also 5 and 6 (1.7e-4), 1 and 3 (6.5e-6) at the twin corner
+of the other rib, 7 and 8 (0.008), 21 and 23 (0.02); curves of 0 to 1e-4,
+closed curves of 1e-4 and 0.005. Not in the filtered MAT: within 0.3 of that
+corner it has 15 nodes, no two closer than 1e-3, and the rib and the wall
+meet only the base there (triple edges of 0.015 to 0.27). The cut of the
+extension makes it: 67 nodes, 110 pairs closer than 1e-3, a junction rib/wall
+of 5 edges of which 4 under 1e-3, nodes 1e-13 apart, triangles of area
+1e-18, two edges of four triangles of the wall.
+
+Merging the nodes joined by an edge shorter than t/100 (README.txt), Doghouse
+mid-surface meshed at size 1:
+                                            before        after
+  points / curves of the model, t = 4       36 / 44       26 / 32
+  closest points, t = 4                     6.5e-6        0.078
+  curves shorter than 0.5, t = 4            13            2
+  edges of 3+ triangles of one branch       2             0
+  folds (two triangles of a branch turned
+    against each other across an edge)      48            1
+  Euler characteristic, base / rib 1        0 / 0         1 / 1
+  area                                      5179.02       5178.27
+  model built in                            1.23 s        1.13 s
+(Before, the base had a hole of perimeter 0.0067 at the corner and the
+boundary of rib 1 was pinched there; every branch is a disk now, but the wall
+with the hole of the roof, 0.) Thickness 3: 29 points, 35 curves, closest
+0.063, same checks. The two short
+curves left at t = 4 (0.078, 0.2, at the foot of rib 3 on the base) were
+there before: the boundary of the rib touches the wall at three nodes
+without a common edge (the junctions that are not conforming). Corpus
+x_junction_r0 and t_junction_h20_r0 (t = 4, mesh of size t): 10 points and
+13 curves (a stray edge of three sheets at the end of the four-sheet line
+merged), 6 points and 8 curves, nothing under 0.05. Three steps were needed:
+without the condition on pinched sheets, a plain region of the wall got an
+edge of three triangles and a hole; with the link condition everywhere the
+corners were not cleaned (their tiny edges make triangles without a triangle
+inside); keeping only the preferred node, the end of the X junction kept two
+points 1.8e-3 apart (a triangle turned over that way).
+
+gmshMat with its default filter (threshold 0.21, no wing removal) still
+leaves surface 1 of the Doghouse without triangles ("not manifold"): its
+branch 0 has edges of three and four triangles of its own, from the filter,
+not from the cut. New test in mat_native_skin_sites: a T whose flap holds on
+a node 1e-5 above the junction by two slivers gives the model of the clean
+T, 1 node merged, 2 triangles left out. The thirteen mat_native_ tests pass.

@@ -1,3 +1,4 @@
+#include "MatPermas.h"
 #include "MatPipeline.h"
 #include "gmsh.h"
 #include <cmath>
@@ -31,6 +32,7 @@ int main(int argc, char **argv)
                  "  [--raw tet|legacy] [--filter collapse|legacy|none]\n"
                  "  [--collapse-threshold 0.21] [--wing-branches]\n"
                  "  [--wing-angle 135] [--complex] [--extend-all] [--mesh-midsurface s]\n"
+                 "  [--dat-step 0.1] [--dat-material name] [--verbosity n]\n"
                  "The defaults are --raw tet --filter collapse; --raw legacy or\n"
                  "--filter legacy alone selects the legacy raw MAT and filter.\n"
                  "--extend-all extends every branch of the filtered (or projected)\n"
@@ -39,7 +41,11 @@ int main(int argc, char **argv)
                  "the thickness if 0).\n"
                  "--mesh-midsurface s puts the result of --extend-all in a discrete\n"
                  "model and meshes it (Mesh.Algorithm 12, triangles of at most s, the\n"
-                 "thickness if 0): midsurface_mesh.msh and midsurface_mesh.json;\n"
+                 "thickness if 0): midsurface_mesh.msh, midsurface_mesh.json and\n"
+                 "midsurface_mesh.dat, the PERMAS input of a shell model: its\n"
+                 "elements in sets of equal thickness, the MAT local thickness rounded\n"
+                 "up to a multiple of --dat-step, with the material --dat-material\n"
+                 "(defined elsewhere) if given;\n"
                  "--midsurface-angle (180) and --midsurface-curve-angle (180), in\n"
                  "degrees, split its surfaces at sharp edges and its curves at corners.\n"
                  "--threads is the number of threads of the skin mesh and of the\n"
@@ -55,6 +61,8 @@ int main(int argc, char **argv)
     std::filesystem::path output;
     double meshSize = 0.; int threads = 0; bool complex = false, extendAll = false;
     double midSize = -1., midAngle = 180., midCurveAngle = 180.;
+    std::string midTriangulation, datMaterial;
+    double datStep = .1;
     bool reachGiven = false;
     bool rawGiven = false, filterGiven = false, thicknessGiven = false;
     for(int i = 2; i < argc; ++i) {
@@ -75,8 +83,12 @@ int main(int argc, char **argv)
       else if(key == "--complex") complex = true;
       else if(key == "--extend-all") extendAll = true;
       else if(key == "--mesh-midsurface") midSize = std::stod(value());
+      else if(key == "--verbosity") gmsh::option::setNumber("General.Verbosity", std::stod(value()));
+      else if(key == "--midsurface-triangulation") midTriangulation = value();
       else if(key == "--midsurface-angle") midAngle = std::stod(value());
       else if(key == "--midsurface-curve-angle") midCurveAngle = std::stod(value());
+      else if(key == "--dat-step") datStep = std::stod(value());
+      else if(key == "--dat-material") datMaterial = value();
       else if(key == "--raw") {
         const std::string mode = value();
         if(mode == "legacy") options.raw = matgmsh_native::RawMode::Legacy;
@@ -114,6 +126,7 @@ int main(int argc, char **argv)
     if(midSize >= 0. && !extendAll) throw std::runtime_error("--mesh-midsurface needs --extend-all");
     if(!(midAngle > 0. && midAngle <= 180. && midCurveAngle > 0. && midCurveAngle <= 180.))
       throw std::runtime_error("The angles of the mid-surface model are in ]0, 180]");
+    if(!std::isfinite(datStep) || datStep <= 0.) throw std::runtime_error("--dat-step must be finite and positive");
     if(!std::isfinite(options.thickness) || options.thickness <= 0.)
       throw std::runtime_error("--thickness must be finite and positive");
     if(!std::isfinite(meshSize) || meshSize < 0.)
@@ -197,7 +210,8 @@ int main(int argc, char **argv)
            << ",\"specks\":" << all.specks << ",\"unextended\":" << all.unextended
            << ",\"cutters\":" << all.cutters << ",\"rounds\":" << all.rounds
            << ",\"settled\":" << (all.settled ? "true" : "false") << ",\"seconds\":" << all.seconds
-           << ",\"cut_seconds\":" << all.cutSeconds << ",\"reach\":" << reach
+           << ",\"cut_seconds\":" << all.cutSeconds << ",\"band_seconds\":" << all.bandSeconds
+           << ",\"band_triangles_not_made\":" << all.unfolded << ",\"reach\":" << reach
            << ",\n\"edges\":{\"branches\":" << edges.branches << ",\"on_skin\":" << edges.onSkin
            << ",\"inside\":" << edges.inside << ",\"junction\":" << edges.junction
            << ",\"along_another_branch\":" << edges.along << "},\n\"report\":[";
@@ -228,6 +242,23 @@ int main(int argc, char **argv)
         if(!matgmsh_native::buildMidSurfaceModel(all.result, "MAT mid-surface", midAngle * degree,
                                                  midCurveAngle * degree, .01 * t * t, mid, error))
           throw std::runtime_error("Mid-surface model: " + error);
+        if(!midTriangulation.empty()) {
+          // the triangulation given to the discrete CAD modeler, one surface
+          // per branch (MSH 2.2), as read by ShapeFromFile of the Discrete
+          // factory
+          const matgmsh_native::Mesh &g = mid.triangulation;
+          std::ofstream f(midTriangulation);
+          f.precision(17);
+          f << "$MeshFormat\n2.2 0 8\n$EndMeshFormat\n$Nodes\n" << g.xyz.size() / 3 << '\n';
+          for(std::size_t v = 0; v < g.xyz.size() / 3; ++v)
+            f << v + 1 << ' ' << g.xyz[3 * v] << ' ' << g.xyz[3 * v + 1] << ' ' << g.xyz[3 * v + 2] << '\n';
+          f << "$EndNodes\n$Elements\n" << g.triangles.size() / 3 << '\n';
+          for(std::size_t e = 0; e < g.triangles.size() / 3; ++e)
+            f << e + 1 << " 2 2 " << g.branch[e] + 1 << ' ' << g.branch[e] + 1 << ' ' << g.triangles[3 * e] + 1
+              << ' ' << g.triangles[3 * e + 1] + 1 << ' ' << g.triangles[3 * e + 2] + 1 << '\n';
+          f << "$EndElements\n";
+          if(!f) throw std::runtime_error("Cannot write " + midTriangulation);
+        }
         const bool meshed = matgmsh_native::meshMidSurfaceModel(mid, midSize > 0. ? midSize : t, error);
         std::vector<std::size_t> midNodes;
         std::vector<double> midThickness;
@@ -235,18 +266,33 @@ int main(int argc, char **argv)
         if(meshed && !matgmsh_native::writeMidSurfaceMesh(mid, (output / "midsurface_mesh.msh").string(), error,
                                                           &midNodes, &midThickness, thicknessName))
           throw std::runtime_error(error);
+        // the same mesh for PERMAS, in sets of equal thickness
+        matgmsh_native::PermasReport dat;
+        if(meshed) {
+          matgmsh_native::PermasOptions permas;
+          permas.step = datStep;
+          permas.material = datMaterial;
+          permas.saveAll = true;
+          if(!matgmsh_native::writePermas(mid.model, (output / "midsurface_mesh.dat").string(),
+                                          matgmsh_native::nodalThickness(midNodes, midThickness), permas,
+                                          dat, error))
+            throw std::runtime_error("PERMAS export: " + error);
+        }
         std::ofstream info(output / "midsurface_mesh.json");
         info.precision(17);
         info << "{\"size\":" << (midSize > 0. ? midSize : t) << ",\"angle\":" << midAngle
              << ",\"curve_angle\":" << midCurveAngle << ",\"branches\":" << mid.branches
              << ",\"surfaces\":" << mid.surfaces << ",\"curves\":" << mid.curves
              << ",\"points\":" << mid.points << ",\"volumes\":" << mid.volumes
+             << ",\"merged_nodes\":" << mid.merged << ",\"merge_length\":" << mid.mergeLength
              << ",\"slits\":" << mid.slits << ",\"holes\":" << mid.holes << ",\"specks\":" << mid.specks
              << ",\"speck_area\":" << mid.speckArea << ",\"junction_curves\":" << mid.junctions << ",\"boundary_curves\":" << mid.boundaries
              << ",\"meshed\":" << (meshed ? "true" : "false") << ",\"triangles\":" << mid.triangles
              << ",\"nodes\":" << mid.nodes << ",\"surfaces_without_triangles\":" << mid.failed
              << ",\"build_seconds\":" << mid.buildSeconds << ",\"mesh_seconds\":" << mid.meshSeconds
-             << "}\n";
+             << ",\"dat_step\":" << datStep << ",\"dat_sets\":" << dat.sets
+             << ",\"dat_min_thickness\":" << dat.minThickness << ",\"dat_max_thickness\":" << dat.maxThickness
+             << ",\"dat_without_thickness\":" << dat.withoutThickness << "}\n";
         if(!meshed) throw std::runtime_error("Mesh of the mid-surface: " + error);
         std::ostringstream line;
         line << "Mid-surface model: " << mid.surfaces << " surfaces (" << mid.branches << " branches), "

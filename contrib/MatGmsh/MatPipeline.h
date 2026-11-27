@@ -258,6 +258,15 @@ struct Ribbon {
   // took, and the spans of boundary that still fold.
   std::size_t smoothedVertices = 0, shortenedVertices = 0, foldedEdges = 0;
   int smoothingPasses = 0;
+  // The chains of the free boundary, one row of vertices per node (the first
+  // row of each chain, rows + 1 entries are not kept: the last chain ends
+  // with the rows), whether each chain is a loop, the sign of its direction
+  // (direction = sign x tangent x normal) and the normal of the branch at
+  // each row; of extendFront, the vertices at the full length.
+  std::vector<int> chainStart;
+  std::vector<unsigned char> chainClosed;
+  std::vector<double> chainSign, normal;
+  std::vector<unsigned char> far;
 };
 
 // With original (the MAT before any of its branches was extended, whose
@@ -265,6 +274,40 @@ struct Ribbon {
 // free, even if the branch on its other side has been replaced since.
 GMSH_API bool branchRibbon(const Mesh &mesh, int branch, double length, int layers, Ribbon &out,
                            std::string &error, const Mesh *original = nullptr);
+
+// The band that extends a branch from its free boundary without folding: the
+// chains of `rows' (a ribbon of branchRibbon, of which only the boundary, its
+// normals and the side of the extension are used) advanced as fronts, layer
+// by layer, up to `length'.
+//  - A layer is the strip between a front and its offset: the front smoothed,
+//    moved along tangent x normal by the step (beyond its own bumps), and
+//    sampled again at a spacing that grows with the step. The steps double
+//    from twice the edge length of the boundary up to length / layers, so
+//    that the triangles keep their shape and the zigzag of the boundary of a
+//    MAT is absorbed by the first, thin, layers.
+//  - The strip is triangulated by walking along both lines at once; a
+//    triangle is only made if it is turned like the surface (its normal
+//    along that of the branch), which is tested for each one: a strip of
+//    triangles all turned alike between two lines that do not cross does not
+//    fold or overlap.
+//  - The notches of the boundary narrower than the first step (a left turn
+//    of more than 30 degrees) are filled first, by ears.
+//  - Where the offset turns back (the front curves towards the outside
+//    faster than the step: a hole closing, an inner corner) its points are
+//    left out and the strip fans onto its neighbours; a loop that closes is
+//    filled from its centre.
+//  - A point of the offset closer to another part of the free boundary of
+//    the branch than nine tenths of its own distance is beyond the middle of
+//    a gap: the front ends there (no part of the band runs over another one,
+//    or over the branch).
+// The cost is linear in the number of nodes of the boundary. `limit', if
+// given, is how far each row may go (one per row of `rows'). In `out': the
+// mesh (Mesh::branch the chain), source (the vertex of the MAT of a boundary
+// vertex, else -1), v the distance, far the vertices at the full length, and
+// foldedEdges the triangles that could not be made (0 unless the boundary
+// itself overlaps).
+GMSH_API bool extendFront(const Ribbon &rows, double length, int layers,
+                          const std::vector<double> *limit, Ribbon &out);
 
 // Cuts the ribbon by the skin, by the other branches and where it crosses
 // itself, and adds to the branch the fragments that have an edge on its
@@ -332,6 +375,15 @@ struct GlobalExtension {
   std::vector<ExtensionSurface> report;
   std::vector<int> extended; // the branches extended
   std::size_t specks = 0, unextended = 0, cutters = 0;
+  // the edges of the sheets that stay prolonged to the planes that replace
+  // the branches they ended on
+  std::size_t prolonged = 0;
+  // the slits of the result closed (see closeSlits), the triangles found
+  // twice left once
+  std::size_t slits = 0, duplicates = 0;
+  // the triangles the bands could not make without folding (see extendFront)
+  std::size_t unfolded = 0;
+  double bandSeconds = 0.; // in extendFront
   // the times the kept pieces were found, and whether they stopped changing
   int rounds = 0;
   bool settled = false;
@@ -343,6 +395,13 @@ GMSH_API bool extendAllBranches(const Mesh &mesh, const Mesh &skin, double toler
                                 const std::set<int> &fixed, GlobalExtension &out,
                                 std::string &error, const Mesh *original = nullptr,
                                 const std::vector<BranchPlane> *planes = nullptr);
+
+// The slits of a mesh closed: an edge of one triangle with nodes on it that
+// are joined, from one end to the other, by edges of one triangle (a hole of
+// zero area: a node of a cut on the edge of the triangle next to the one cut,
+// not on its own), the triangle split as a fan from its third node at these
+// nodes. Returns how many.
+GMSH_API std::size_t closeSlits(Mesh &mesh);
 
 // The mid-surface as an MSH 2.2 file: one surface and one physical group
 // "branch <n>" per branch, and its edges classified in four physical groups
@@ -371,13 +430,21 @@ GMSH_API bool writeClassifiedMesh(const Mesh &mesh, const Mesh &skin, const std:
 // a branch connected across edges of two triangles that are not sharp (angle
 // between their normals below `angle'), its curves along the junctions, the
 // boundaries and the sharp edges, split where they turn by more than
-// `curveAngle', the nodes at the same coordinates merged, the flat surfaces
-// recognized as planes; one physical group of surfaces "branch <n>" per
+// `curveAngle' (a triple line that does not reach the boundary of a surface
+// embedded in it), the nodes at the same coordinates merged; no
+// parametrization and no analytic surface: the surfaces are their
+// triangulations; one physical group of surfaces "branch <n>" per
 // branch, and two of curves, "junction" (between surfaces of different
 // branches, or of more than two surfaces) and "boundary" (of one surface).
 // Its surfaces are meshed by the Frontal-Delaunay algorithm on their
 // triangulation (Mesh.Algorithm 12, set on each surface), with the size map
-// of Gmsh. Before: the slits of the mesh closed (a hole of three edges, of
+// of Gmsh, the sizes of the 1D mesh not extended into them. Before: the
+// nodes joined by an edge shorter than a tenth of the square root of minArea
+// made one (the node on more junction and boundary edges kept in place, no
+// triangle that is not flat turned over, the triangles left without area and
+// those found twice left out: the cut of the extension leaves nodes
+// micrometres apart where it crosses the MAT near a junction, which would be
+// points of the model as close), the slits of the mesh closed (a hole of three edges, of
 // zero area: the triangle along it split at its node off its edge, as the
 // cut of the extension leaves some), the holes of area under minArea filled
 // (a few micrometres wide, also left by the cut); after: the surfaces of area
@@ -387,10 +454,15 @@ struct MidSurfaceModel {
   GModel *model = nullptr; // in GModel::list, deleted by its owner
   std::size_t branches = 0, surfaces = 0, curves = 0, points = 0, volumes = 0;
   std::size_t junctions = 0, boundaries = 0; // curves of each group
-  // the slits closed, the surfaces under minArea left out and their area
-  std::size_t slits = 0, holes = 0, specks = 0;
-  double speckArea = 0.;
+  // the nodes merged into a neighbor closer than mergeLength and the
+  // triangles then left out, the slits closed, the surfaces under minArea
+  // left out and their area
+  std::size_t merged = 0, removed = 0, slits = 0, holes = 0, specks = 0;
+  double mergeLength = 0., speckArea = 0.;
   std::map<int, int> branchOfSurface; // surface tag -> branch
+  // the triangulation given to the discrete CAD modeler, repaired (branch:
+  // the piece of each triangle)
+  Mesh triangulation;
   // of the last mesh: its triangles and nodes, the surfaces left without
   // triangles
   std::size_t triangles = 0, nodes = 0, failed = 0;
@@ -404,9 +476,7 @@ GMSH_API bool buildMidSurfaceModel(const Mesh &mesh, const std::string &name, do
 // other options ask for (Mesh.MeshSizeMin, Mesh.MeshSizeFromCurvature, the
 // fields of the model) apply. The current model is left as it was.
 GMSH_API bool meshMidSurfaceModel(MidSurfaceModel &m, double size, std::string &error);
-// MSH 4.1, the elements of the physical groups and the discrete model (its
-// curves and surfaces with their triangulations, in $Parametrizations: the
-// file can be read again and meshed again), and the values at nodes, if
+// MSH 4.1, the elements of the physical groups, and the values at nodes, if
 // given, as $NodeData `name'
 GMSH_API bool writeMidSurfaceMesh(const MidSurfaceModel &m, const std::string &filename,
                                   std::string &error,

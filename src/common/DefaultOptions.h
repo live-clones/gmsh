@@ -1709,6 +1709,13 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "PartitionConvertMsh2" , opt_mesh_partition_convert_msh2 , 1 ,
     "When reading partitioned meshes in MSH2 format, create new partition "
     "entities"},
+#if defined(HAVE_MATGMSH)
+  { F|O, "PermasThicknessStep" , opt_mesh_permas_thickness_step , 0.1 ,
+    "Thickness step of the PERMAS export (.dat): the thickness of an element "
+    "(the mean of the first view of node or element data on the model, its "
+    "first one whose name holds \"thickness\") is rounded up to a multiple "
+    "of the step, which names its element set" },
+#endif
   { F|O|D, "Points" , opt_mesh_nodes , 0. ,
     "[Deprecated]" },
   { F|O|D, "PointNumbers" , opt_mesh_node_labels , 0. ,
@@ -2928,6 +2935,9 @@ std::map<std::string, OptionRange> OptionRanges = {
   {"Mesh.Normals", {0, 500, 1}},
   {"Mesh.NumSubEdges", {1, 10, 1}},
   {"Mesh.Opacity", {0.0, 1.0, 0.01}},
+#if defined(HAVE_MATGMSH)
+  {"Mesh.PermasThicknessStep", {0.001, 100, 0.1}},
+#endif
   {"Mesh.PointSize", {0.1, 50, 0.1}},
   {"Mesh.QualityInf", {0, 1, 0.01}},
   {"Mesh.QualitySup", {0, 1, 0.01}},

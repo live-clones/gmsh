@@ -963,6 +963,22 @@ int bdfFileDialog(const char *name)
   return dialog->run(nullptr, [&]() { CreateOutputFile(name, FORMAT_BDF); });
 }
 
+// PERMAS mesh dialog (the shell elements in sets of equal thickness)
+
+int permasFileDialog(const char *name)
+{
+#if defined(HAVE_MATGMSH)
+  static optionDialog *dialog = nullptr;
+  if(!dialog)
+    dialog = new optionDialog("PERMAS Options", BB + 16,
+                              {{Value, "Thickness step", "Mesh.PermasThicknessStep"},
+                               {Check, "Save all elements", "Mesh.SaveAll"}});
+  return dialog->run(nullptr, [&]() { CreateOutputFile(name, FORMAT_PERMAS); });
+#else
+  return 0;
+#endif
+}
+
 // Generic mesh dialog
 
 int stlFileDialog(const char *name)

@@ -55,6 +55,10 @@
 #include "3M.h"
 #endif
 
+#if defined(HAVE_MATGMSH)
+#include "MatPermas.h"
+#endif
+
 #define SQU(a) ((a) * (a))
 
 static void FinishUpBoundingBox()
@@ -442,6 +446,11 @@ int MergeFile(const std::string &fileName, bool errorIfMissing,
     status=GModel::current()->readNEU(fileName);
   }
   else if(ext == ".dat" || ext == ".DAT") {
+#if defined(HAVE_MATGMSH)
+    if(matgmsh_native::isPermasFile(fileName))
+      status = matgmsh_native::readPermasFile(GModel::current(), fileName);
+    else
+#endif
     if(!strncmp(header, "BEGIN ACTRAN", 12))
       status = GModel::current()->readACTRAN(fileName);
     else if(!strncmp(header, "!", 1) || !strncmp(header, ";ECHO", 5) ||

@@ -1346,8 +1346,12 @@ SBoundingBox3d GModel::bounds(bool aroundVisible)
     // modeler, not only their vertices before they are meshed: the default
     // mesh size is a tenth of this box)
     if(entities[i]->getNativeType() == GEntity::OpenCascadeModel ||
-       entities[i]->getNativeType() == GEntity::DiscreteCADModel)
-      bb += entities[i]->bounds();
+       entities[i]->getNativeType() == GEntity::DiscreteCADModel) {
+      // (an empty box added would make it infinite: its two corners are
+      // added as points)
+      SBoundingBox3d b = entities[i]->bounds();
+      if(!b.empty()) bb += b;
+    }
     else if(entities[i]->dim() == 0)
       bb += static_cast<GVertex *>(entities[i])->xyz();
     else {

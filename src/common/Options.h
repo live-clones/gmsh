@@ -497,6 +497,7 @@ double opt_mesh_num_sub_edges(OPT_ARGS_NUM);
 double opt_mesh_tangents(OPT_ARGS_NUM);
 double opt_mesh_explode(OPT_ARGS_NUM);
 double opt_mesh_scaling_factor(OPT_ARGS_NUM);
+double opt_mesh_permas_thickness_step(OPT_ARGS_NUM);
 double opt_mesh_lc_min(OPT_ARGS_NUM);
 double opt_mesh_lc_max(OPT_ARGS_NUM);
 double opt_mesh_tolerance_edge_length(OPT_ARGS_NUM);

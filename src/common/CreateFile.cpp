@@ -16,6 +16,10 @@
 #include "CreateFile.h"
 #include "OS.h"
 
+#if defined(HAVE_MATGMSH)
+#include "MatPermas.h"
+#endif
+
 #if defined(HAVE_POST)
 #include "PView.h"
 #include "PViewData.h"
@@ -93,7 +97,12 @@ int GetFileFormatFromExtension(const std::string &ext, double *version)
   else if(ext == ".vtu")      return FORMAT_VTU;
   else if(ext == ".pvd")      return FORMAT_VTU;
   else if(ext == ".m")        return FORMAT_MATLAB;
+#if defined(HAVE_MATGMSH)
+  // (the PERMAS shell meshes with thickness groups; Tochnog by its format)
+  else if(ext == ".dat")      return FORMAT_PERMAS;
+#else
   else if(ext == ".dat")      return FORMAT_TOCHNOG;
+#endif
   else if(ext == ".txt")      return FORMAT_TXT;
   else if(ext == ".stl")      return FORMAT_STL;
   else if(ext == ".cgns")     return FORMAT_CGNS;
@@ -167,6 +176,9 @@ std::string GetDefaultFileExtension(int format, bool onlyMeshFormats)
   case FORMAT_VTU:     name = ".vtu"; mesh = true; break;
   case FORMAT_MATLAB:  name = ".m"; mesh = true; break;
   case FORMAT_TOCHNOG: name = ".dat"; mesh = true; break;
+#if defined(HAVE_MATGMSH)
+  case FORMAT_PERMAS:  name = ".dat"; mesh = true; break;
+#endif
   case FORMAT_STL:     name = ".stl"; mesh = true; break;
   case FORMAT_CGNS:    name = ".cgns"; mesh = true; break;
   case FORMAT_MED:     name = ".med"; mesh = true; break;
@@ -808,6 +820,12 @@ void CreateOutputFile(const std::string &fileName, int format,
       (name, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.saveGroupsOfNodes,
        CTX::instance()->mesh.scalingFactor);
     break;
+
+#if defined(HAVE_MATGMSH)
+  case FORMAT_PERMAS:
+    matgmsh_native::writePermasFile(GModel::current(), name);
+    break;
+#endif
 
   case FORMAT_VTK:
     GModel::current()->writeVTK

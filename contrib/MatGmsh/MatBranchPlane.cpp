@@ -28,6 +28,7 @@
 #include <iomanip>
 #include <limits>
 #include <map>
+#include <set>
 #include <numeric>
 #include <unordered_map>
 #include <unordered_set>
@@ -1422,6 +1423,12 @@ bool branchRibbon(const Mesh &mesh, int branch, double length, int layers, Ribbo
       }
       for(int i = 0; i < edges; ++i) out.foldedEdges += folded(i);
     }
+    // (the chain, for extendFront)
+    out.chainStart.push_back(int(out.normal.size() / 3));
+    out.chainClosed.push_back(loop ? 1 : 0);
+    out.chainSign.push_back(outward < 0. ? -1. : 1.);
+    for(int i = 0; i < n; ++i)
+      for(int k = 0; k < 3; ++k) out.normal.push_back(normal[chain[i]][k]);
     // the ribbon: u along the boundary, v away from it
     const int first = int(out.mesh.xyz.size() / 3);
     double u = 0.;
@@ -1447,6 +1454,349 @@ bool branchRibbon(const Mesh &mesh, int branch, double length, int layers, Ribbo
           out.mesh.parent.push_back(-1);
         }
       }
+    }
+  }
+  return true;
+}
+
+bool extendFront(const Ribbon &rows, double length, int layers, const std::vector<double> *limit,
+                 Ribbon &out)
+{
+  out = Ribbon{};
+  out.boundaryEdges = rows.boundaryEdges;
+  out.freeEdges = rows.freeEdges;
+  out.loops = rows.loops;
+  out.boundaryLength = rows.boundaryLength;
+  std::vector<int> base;
+  for(std::size_t i = 0; i < rows.source.size(); ++i)
+    if(rows.source[i] >= 0) base.push_back(int(i));
+  const int chains = int(rows.chainStart.size());
+  if(!(length > 0.) || layers < 1 || !chains || rows.normal.size() != 3 * base.size() ||
+     (limit && limit->size() != base.size()))
+    return false;
+  const auto unit = [](Vec a) {
+    const double l = norm(a);
+    if(l > 0.)
+      for(double &c : a) c /= l;
+    return a;
+  };
+  const auto along = [](const Vec &a, const Vec &d, double s) {
+    return Vec{a[0] + s * d[0], a[1] + s * d[1], a[2] + s * d[2]};
+  };
+  const double hmax = length / layers, full = length * (1. - 1.e-9);
+
+  // the nodes of the free boundary, in cells, for the distance to it
+  const double cell = length / 4.;
+  const auto cellOf = [&](double x) { return std::int64_t(std::floor(x / cell)); };
+  const auto cellKey = [](std::int64_t i, std::int64_t j, std::int64_t k) {
+    return (std::uint64_t(i & 0x1fffff) << 42) | (std::uint64_t(j & 0x1fffff) << 21) |
+           std::uint64_t(k & 0x1fffff);
+  };
+  std::vector<Vec> boundary(base.size());
+  std::unordered_map<std::uint64_t, std::vector<int> > grid;
+  for(std::size_t r = 0; r < base.size(); ++r) {
+    boundary[r] = point(rows.mesh, base[r]);
+    grid[cellKey(cellOf(boundary[r][0]), cellOf(boundary[r][1]), cellOf(boundary[r][2]))].push_back(int(r));
+  }
+  const auto tooClose = [&](const Vec &q, double radius) {
+    const double r2 = radius * radius;
+    for(std::int64_t i = cellOf(q[0] - radius); i <= cellOf(q[0] + radius); ++i)
+      for(std::int64_t j = cellOf(q[1] - radius); j <= cellOf(q[1] + radius); ++j)
+        for(std::int64_t k = cellOf(q[2] - radius); k <= cellOf(q[2] + radius); ++k) {
+          const auto found = grid.find(cellKey(i, j, k));
+          if(found == grid.end()) continue;
+          for(int r : found->second) {
+            const Vec d = sub(boundary[r], q);
+            if(dot(d, d) < r2) return true;
+          }
+        }
+    return false;
+  };
+
+  struct Node {
+    Vec p, n;
+    int id;
+    double lim;
+  };
+  struct Front {
+    std::vector<Node> nodes;
+    bool closed;
+    double D, h, orient;
+    int chain;
+  };
+  const auto vertex = [&](const Vec &p, int source, double u, double v) {
+    const int id = int(out.mesh.xyz.size() / 3);
+    out.mesh.xyz.insert(out.mesh.xyz.end(), p.begin(), p.end());
+    out.u.push_back(u);
+    out.v.push_back(v);
+    out.source.push_back(source);
+    out.far.push_back(0);
+    return id;
+  };
+  const auto triangle = [&](int a, int b, int c, int chain) {
+    out.mesh.triangles.insert(out.mesh.triangles.end(), {a, b, c});
+    out.mesh.branch.push_back(chain);
+    out.mesh.parent.push_back(-1);
+  };
+  std::vector<Front> work;
+  for(int c = 0; c < chains; ++c) {
+    const int first = rows.chainStart[c],
+              last = c + 1 < chains ? rows.chainStart[c + 1] : int(base.size());
+    Front f;
+    f.closed = rows.chainClosed[c] != 0;
+    f.D = 0.;
+    f.chain = c;
+    f.orient = -rows.chainSign[c];
+    double u = 0.;
+    for(int r = first; r < last; ++r) {
+      if(r > first) u += norm(sub(boundary[r], boundary[r - 1]));
+      Node node;
+      node.p = boundary[r];
+      node.n = unit(Vec{rows.normal[3 * r], rows.normal[3 * r + 1], rows.normal[3 * r + 2]});
+      node.lim = limit ? std::min((*limit)[r], length) : length;
+      node.id = vertex(node.p, rows.source[base[r]], u, 0.);
+      f.nodes.push_back(node);
+    }
+    const int n = int(f.nodes.size());
+    if(n < 2) continue;
+    f.h = std::min(hmax, std::max(2. * u / (n - 1), length / 64.));
+    work.push_back(std::move(f));
+  }
+
+  while(!work.empty()) {
+    Front f = std::move(work.back());
+    work.pop_back();
+    const double o = f.orient;
+    // turned like the surface: the triangle of an edge of the front and a
+    // point on the side of the extension
+    const auto valid = [&](const Node &x, const Node &y, const Node &z) {
+      const Vec e1 = sub(y.p, x.p), e2 = sub(z.p, x.p);
+      const Vec m = {x.n[0] + z.n[0], x.n[1] + z.n[1], x.n[2] + z.n[2]};
+      return o * dot(cross(e1, e2), m) > 1.e-9 * norm(e1) * norm(e2) * norm(m);
+    };
+    double h = std::min(f.h, length - f.D);
+    if(length - f.D - h < .25 * h) h = length - f.D;
+    // the notches of the boundary narrower than the step, filled by ears
+    if(f.D == 0.) {
+      std::vector<Node> kept;
+      for(const Node &w : f.nodes) {
+        while(kept.size() >= 2) {
+          const Node &u = kept[kept.size() - 2], &v = kept.back();
+          const Vec e1 = sub(v.p, u.p), e2 = sub(w.p, v.p);
+          const double l = norm(e1) * norm(e2);
+          const double sine = o * dot(cross(e1, e2), v.n), cosine = dot(e1, e2);
+          if(!(sine > 1.e-9 * l && cosine < .866 * l) || norm(sub(w.p, u.p)) >= h) break;
+          triangle(u.id, v.id, w.id, f.chain);
+          kept.pop_back();
+        }
+        kept.push_back(w);
+      }
+      f.nodes.swap(kept);
+    }
+    const int n = int(f.nodes.size());
+    if(n < 2 || (f.closed && n < 3)) continue;
+    const auto wrap = [&](int i) {
+      return f.closed ? ((i % n) + n) % n : std::min(n - 1, std::max(0, i));
+    };
+    // the front smoothed, over half the step
+    double total = 0.;
+    for(int i = 0; i + 1 < n; ++i) total += norm(sub(f.nodes[i + 1].p, f.nodes[i].p));
+    const double mean = total / (n - 1);
+    const int w = std::max(1, std::min(std::max(1, n / 6), int(.5 * h / std::max(mean, 1.e-300) + .5)));
+    std::vector<Vec> S(n);
+    for(int i = 0; i < n; ++i) S[i] = f.nodes[i].p;
+    for(int pass = 0; pass < 2; ++pass) {
+      std::vector<Vec> next(S);
+      for(int i = 0; i < n; ++i) {
+        const int reach = f.closed ? w : std::min(w, std::min(i, n - 1 - i));
+        if(!reach) continue;
+        Vec sum = {0., 0., 0.};
+        for(int k = -reach; k <= reach; ++k)
+          for(int c = 0; c < 3; ++c) sum[c] += S[wrap(i + k)][c];
+        for(int c = 0; c < 3; ++c) next[i][c] = sum[c] / (2 * reach + 1);
+      }
+      S.swap(next);
+    }
+    // its offset, beyond its own bumps; the points at their limit, or closer
+    // to another part of the boundary than to their own, end their part of
+    // the front
+    std::vector<Vec> O(n);
+    std::vector<unsigned char> state(n, 0); // 1 turned back (left out), 2 ended
+    bool anyEnded = false;
+    for(int i = 0; i < n; ++i) {
+      const double remain = f.nodes[i].lim - f.D;
+      if(remain < .25 * h) {
+        state[i] = 2;
+        anyEnded = true;
+        continue;
+      }
+      const double step = std::min(h, remain);
+      Vec d = unit(cross(sub(S[wrap(i + 1)], S[wrap(i - 1)]), f.nodes[i].n));
+      for(double &c : d) c *= -o;
+      double bump = 0.;
+      for(int k = -w - 1; k <= w + 1; ++k) {
+        const int j = wrap(i + k);
+        bump = std::max(bump, dot(sub(f.nodes[j].p, S[j]), d));
+      }
+      O[i] = along(S[i], d, step + bump);
+      if(tooClose(O[i], .9 * (f.D + step))) {
+        state[i] = 2;
+        anyEnded = true;
+      }
+    }
+    const bool loop = f.closed && !anyEnded;
+    int start = 0;
+    if(f.closed && anyEnded)
+      for(int i = 0; i < n; ++i)
+        if(state[i] == 2) {
+          start = (i + 1) % n;
+          break;
+        }
+    for(int at = 0; at < n;) {
+      if(state[(start + at) % n] == 2) {
+        ++at;
+        continue;
+      }
+      int end = at;
+      while(end + 1 < n && state[(start + end + 1) % n] != 2) ++end;
+      std::vector<int> R;
+      for(int k = at; k <= end; ++k) R.push_back((start + k) % n);
+      at = end + 1;
+      const int nA = int(R.size());
+      if(nA < 2) continue;
+      // where the offset turns back, its points are left out
+      bool drop = false;
+      for(bool changed = true; changed && !drop;) {
+        changed = false;
+        int prev = -1;
+        for(int k = 0; k < nA + (loop ? 1 : 0) && !drop; ++k) {
+          const int i = R[k % nA];
+          if(state[i]) continue;
+          if(prev >= 0 && prev != i) {
+            const Vec cs = sub(S[i], S[prev]), co = sub(O[i], O[prev]);
+            if(dot(co, cs) <= .1 * dot(cs, cs)) {
+              const bool ep = !loop && (prev == R.front() || prev == R.back()),
+                         ei = !loop && (i == R.front() || i == R.back());
+              if(ep && ei)
+                drop = true;
+              else {
+                if(!ep) state[prev] = 1;
+                if(!ei) state[i] = 1;
+                changed = true;
+              }
+            }
+          }
+          prev = state[i] ? (state[prev < 0 ? i : prev] ? -1 : prev) : i;
+        }
+      }
+      if(loop) { // from a point of the offset that stays
+        int first = 0;
+        while(first < nA && state[R[first]]) ++first;
+        if(first < nA) std::rotate(R.begin(), R.begin() + first, R.end());
+      }
+      std::vector<int> live;
+      for(int k = 0; k < nA; ++k)
+        if(!state[R[k]]) live.push_back(k);
+      const auto A = [&](int k) -> const Node & { return f.nodes[R[k % nA]]; };
+      // a loop that closes: filled from its centre
+      const auto fan = [&]() {
+        Node c;
+        c.p = {0., 0., 0.};
+        c.n = {0., 0., 0.};
+        for(int k = 0; k < nA; ++k)
+          for(int x = 0; x < 3; ++x) {
+            c.p[x] += A(k).p[x] / nA;
+            c.n[x] += A(k).n[x];
+          }
+        c.n = unit(c.n);
+        for(int k = 0; k < nA; ++k)
+          if(!valid(A(k), A(k + 1), c)) return;
+        c.id = vertex(c.p, -1, 0., f.D + h);
+        for(int k = 0; k < nA; ++k) triangle(A(k).id, A(k + 1).id, c.id, f.chain);
+      };
+      const int q = int(live.size());
+      if(drop || q < (loop ? 3 : 2)) {
+        if(loop && !drop) fan();
+        continue;
+      }
+      // the parameters of the nodes along the smoothed front, and the new
+      // front: the offset sampled again
+      std::vector<double> sA(nA + 1, 0.);
+      for(int k = 1; k < nA; ++k) sA[k] = sA[k - 1] + norm(sub(S[R[k]], S[R[k - 1]]));
+      sA[nA] = sA[nA - 1] + norm(sub(S[R[0]], S[R[nA - 1]]));
+      const int segments = loop ? q : q - 1;
+      std::vector<double> tO(1, 0.);
+      for(int e = 0; e < segments; ++e)
+        tO.push_back(tO.back() + norm(sub(O[R[live[(e + 1) % q]]], O[R[live[e]]])));
+      const double lengthO = tO.back();
+      if(!(lengthO > 1.e-12 * length)) {
+        if(loop) fan();
+        continue;
+      }
+      const double spacing = std::max(mean, std::min(h, .5 * hmax));
+      const int m = loop ? std::max(3, int(lengthO / spacing + .5)) :
+                           std::max(2, int(lengthO / spacing + .5) + 1);
+      std::vector<Node> B(m);
+      std::vector<double> uB(m + 1, 0.);
+      for(int j = 0, e = 0; j < m; ++j) {
+        const double t = loop ? lengthO * j / m : lengthO * j / (m - 1);
+        while(e + 1 < segments && tO[e + 1] < t) ++e;
+        const int ka = live[e], kb = live[(e + 1) % q];
+        const double span = tO[e + 1] - tO[e], x = span > 0. ? std::min(1., (t - tO[e]) / span) : 0.;
+        const Node &a = f.nodes[R[ka]], &b = f.nodes[R[kb]];
+        Node node;
+        for(int c = 0; c < 3; ++c) {
+          node.p[c] = (1. - x) * O[R[ka]][c] + x * O[R[kb]][c];
+          node.n[c] = (1. - x) * a.n[c] + x * b.n[c];
+        }
+        node.n = unit(node.n);
+        node.lim = std::min(a.lim, b.lim);
+        const double pa = sA[ka], pb = (loop && e + 1 == q) ? sA[nA] : sA[kb];
+        uB[j] = pa + x * (pb - pa);
+        node.id = vertex(node.p, -1, uB[j], f.D + h);
+        B[j] = node;
+      }
+      uB[m] = loop ? uB[0] + sA[nA] : uB[m - 1];
+      // the strip: along both lines at once, each triangle turned like the
+      // surface
+      const auto Bn = [&](int k) -> const Node & { return B[k % m]; };
+      const int endA = loop ? nA : nA - 1, endB = loop ? m : m - 1;
+      for(int i = 0, j = 0; i < endA || j < endB;) {
+        const bool canA = i < endA, canB = j < endB;
+        const bool vA = canA && valid(A(i), A(i + 1), Bn(j));
+        const bool vB = canB && valid(A(i), Bn(j + 1), Bn(j));
+        bool takeA, made = true;
+        if(vA != vB)
+          takeA = vA;
+        else if(vA) // (the edge of the front first if the next point no longer sees it)
+          takeA = !valid(A(i), A(i + 1), Bn(j + 1)) || sA[i + 1] <= uB[j + 1];
+        else {
+          made = false;
+          takeA = canA && (!canB || sA[i + 1] <= uB[j + 1]);
+          ++out.foldedEdges;
+        }
+        if(takeA) {
+          if(made) triangle(A(i).id, A(i + 1).id, Bn(j).id, f.chain);
+          ++i;
+        }
+        else {
+          if(made) triangle(A(i).id, Bn(j + 1).id, Bn(j).id, f.chain);
+          ++j;
+        }
+      }
+      Front g;
+      g.nodes = std::move(B);
+      g.closed = loop;
+      g.D = f.D + h;
+      g.h = std::min(2. * f.h, hmax);
+      g.orient = o;
+      g.chain = f.chain;
+      if(g.D >= full) {
+        for(const Node &b : g.nodes)
+          if(b.lim >= full) out.far[b.id] = 1;
+      }
+      else
+        work.push_back(std::move(g));
     }
   }
   return true;
@@ -2102,7 +2452,9 @@ bool extendAllBranches(const Mesh &mesh, const Mesh &skin, double tolerance, dou
       s.members = {p.branch};
       s.report.area = p.area;
       std::string why;
-      if(!branchRibbon(mesh, p.branch, reach, layers, s.ribbon, why, original)) {
+      // (its rows, one layer: where each one is stopped; the band is made
+      // from them below)
+      if(!branchRibbon(mesh, p.branch, reach, 1, s.ribbon, why, original)) {
         ++out.unextended; // no free boundary: nothing to extend
         continue;
       }
@@ -2121,6 +2473,16 @@ bool extendAllBranches(const Mesh &mesh, const Mesh &skin, double tolerance, dou
   enum Kind { Skin, Sheet, Patch, Strip, Fence };
   std::vector<double> in;
   std::vector<int> tri, kind, owner;
+  // of a sheet that is cut: its triangle in the mesh, by its index in tri,
+  // and its vertices in the mesh, by their index in in
+  std::unordered_map<int, int> sheetTriangle, sheetVertex;
+  // the strips that prolong a sheet to a plane, by their index in tri: the
+  // surface of the plane, and the side of it the sheet is on
+  struct Prolonged {
+    int surface;
+    double side;
+  };
+  std::unordered_map<int, Prolonged> stripOf;
   const auto add = [&](const std::vector<double> &xyz, const std::vector<int> &triangles, int k,
                        int o) {
     const int first = int(in.size() / 3);
@@ -2140,10 +2502,28 @@ bool extendAllBranches(const Mesh &mesh, const Mesh &skin, double tolerance, dou
     if(!f.planar) {
       RibbonCut ready;
       prepareRibbon(mesh, skin, f.branch, f.ribbon, ready);
-      xyz.assign(ready.xyz.begin(), ready.xyz.begin() + f.ribbon.mesh.xyz.size());
+      // the band that extends the branch without folds, each row as far as
+      // it was stopped
+      const int rows = int(ready.rowStart.size()) - 1;
+      std::vector<double> limit(rows, reach);
+      for(int r = 0; r < rows; ++r) {
+        if(!ready.shortened[r]) continue;
+        const std::size_t a = std::size_t(ready.rowStart[r]), b = std::size_t(ready.rowStart[r + 1]) - 1;
+        limit[r] = norm(sub(Vec{ready.xyz[3 * b], ready.xyz[3 * b + 1], ready.xyz[3 * b + 2]},
+                            Vec{ready.xyz[3 * a], ready.xyz[3 * a + 1], ready.xyz[3 * a + 2]}));
+      }
+      Ribbon band;
+      const auto before = std::chrono::steady_clock::now();
+      const bool made = extendFront(f.ribbon, reach, layers, &limit, band);
+      out.bandSeconds += std::chrono::duration<double>(std::chrono::steady_clock::now() - before).count();
+      if(!made) {
+        error = "The band of branch " + std::to_string(f.branch) + " could not be made";
+        return false;
+      }
+      out.unfolded += band.foldedEdges;
+      f.ribbon = std::move(band);
+      xyz = f.ribbon.mesh.xyz;
       triangles = f.ribbon.mesh.triangles;
-      f.rowStart = std::move(ready.rowStart);
-      f.shortened = std::move(ready.shortened);
       f.report.stoppedRows = ready.stoppedRows;
     }
     else {
@@ -2358,11 +2738,118 @@ bool extendAllBranches(const Mesh &mesh, const Mesh &skin, double tolerance, dou
                       m.xyz.begin() + 3 * std::size_t(vertex) + 3);
           }
           tri.push_back(index[vertex]);
+          if(sheets) sheetVertex[index[vertex]] = vertex;
         }
+        if(sheets) sheetTriangle[int(kind.size())] = int(t);
         kind.push_back(sheets ? Sheet : Skin);
         owner.push_back(b);
         ++out.cutters;
       }
+      if(!sheets) return;
+      // A sheet that stays ends a little short of (or beyond) the plane that
+      // replaces the branch it ended on: the walls of the Doghouse 0.01 to 0.1
+      // above the plane of its base, so that they share nothing with it. It is
+      // prolonged there by a strip across the plane, from the edges of its
+      // boundary that were a junction with that branch, along it (the
+      // tolerance beyond the plane); the cut gives their common line, and the
+      // part of the strip beyond the plane is left out (see stripOf).
+      std::unordered_map<std::uint64_t, std::vector<std::size_t> > around;
+      for(std::size_t t = 0; t < m.triangles.size() / 3; ++t)
+        for(int c = 0; c < 3; ++c)
+          around[edgeKey(m.triangles[3 * t + c], m.triangles[3 * t + (c + 1) % 3])].push_back(t);
+      struct Edge {
+        int a, b, surface;
+        Vec out;
+        double side, length;
+        int branch;
+      };
+      std::vector<Edge> edges;
+      for(const auto &e : around) {
+        int sheet = -1, plane = -1;
+        std::size_t of = 0, onSheet = 0;
+        for(std::size_t t : e.second) {
+          const int b = branchOf(t);
+          if(speck.count(b)) continue;
+          const auto p = planeOf.find(b);
+          if(p != planeOf.end())
+            plane = p->second;
+          else {
+            ++onSheet;
+            sheet = b;
+            of = t;
+          }
+        }
+        // (an edge of the boundary of the sheet, on a branch replaced)
+        if(onSheet != 1 || plane < 0 || !surfaces[plane].planar || !surfaces[plane].triangles) continue;
+        const int a = int(e.first >> 32), b = int(e.first & 0xffffffffu);
+        int c = -1;
+        for(int k = 0; k < 3; ++k) {
+          const int v = m.triangles[3 * of + k];
+          if(v != a && v != b) c = v;
+        }
+        if(c < 0) continue;
+        const Vec pa = point(m, a), pb = point(m, b), pc = point(m, c);
+        const Vec normal = cross(sub(pb, pa), sub(pc, pa));
+        Vec out = cross(sub(pb, pa), normal);
+        const double length = norm(out);
+        if(!(length > 0.)) continue;
+        for(double &x : out) x /= length;
+        if(dot(out, sub(pc, pa)) > 0.)
+          for(double &x : out) x = -x;
+        const Frame frame(surfaces[plane].plane);
+        const double da = frame.distance(pa), db = frame.distance(pb);
+        const double far = std::max(std::abs(da), std::abs(db));
+        const double rate = dot(out, frame.n);
+        const double side = std::abs(da) > std::abs(db) ? da : db;
+        // near the plane, and going to it
+        if(far > tolerance || !(side != 0.) || side * rate >= 0. || std::abs(rate) < .2) continue;
+        edges.push_back({a, b, plane, out, side > 0. ? 1. : -1., std::min(reach, (far + tolerance) / std::abs(rate)),
+                         sheet});
+      }
+      // the strips, a vertex across the plane for each vertex of their edges
+      // (the directions of its edges averaged, the longest length)
+      std::map<std::pair<int, int>, std::pair<Vec, double> > across; // (vertex, surface)
+      for(const Edge &e : edges)
+        for(int v : {e.a, e.b}) {
+          auto &x = across[{v, e.surface}];
+          for(int k = 0; k < 3; ++k) x.first[k] += e.out[k];
+          x.second = std::max(x.second, e.length);
+        }
+      std::map<std::pair<int, int>, int> acrossIndex;
+      const auto inIndex = [&](int v) {
+        if(index[v] < 0) {
+          index[v] = int(in.size() / 3);
+          in.insert(in.end(), m.xyz.begin() + 3 * std::size_t(v), m.xyz.begin() + 3 * std::size_t(v) + 3);
+          sheetVertex[index[v]] = v;
+        }
+        return index[v];
+      };
+      const auto acrossOf = [&](int v, int surface) {
+        const auto found = acrossIndex.find({v, surface});
+        if(found != acrossIndex.end()) return found->second;
+        const auto &x = across[{v, surface}];
+        Vec d = x.first;
+        const double l = norm(d);
+        if(l > 0.)
+          for(double &y : d) y /= l;
+        const Vec p = point(m, v);
+        const int i = int(in.size() / 3);
+        for(int k = 0; k < 3; ++k) in.push_back(p[k] + x.second * d[k]);
+        acrossIndex[{v, surface}] = i;
+        return i;
+      };
+      for(const Edge &e : edges) {
+        const int a = inIndex(e.a), b = inIndex(e.b), a2 = acrossOf(e.a, e.surface),
+                  b2 = acrossOf(e.b, e.surface);
+        for(const std::array<int, 3> &t : {std::array<int, 3>{a, b, b2}, std::array<int, 3>{a, b2, a2}}) {
+          stripOf[int(kind.size())] = {e.surface, e.side};
+          tri.insert(tri.end(), t.begin(), t.end());
+          kind.push_back(Sheet);
+          owner.push_back(e.branch);
+          ++out.cutters;
+        }
+      }
+      out.prolonged += edges.size();
     };
     cutters(skin, false);
     cutters(mesh, true);
@@ -2442,10 +2929,9 @@ bool extendAllBranches(const Mesh &mesh, const Mesh &skin, double tolerance, dou
           }
     }
     else {
-      const int rows = int(f.rowStart.size()) - 1;
-      for(int r = 0; r < rows; ++r) {
-        onBoundary[s].insert(inputVertex[f.firstVertex + f.rowStart[r]]);
-        if(!f.shortened[r]) farEnd[s].insert(inputVertex[f.firstVertex + f.rowStart[r + 1] - 1]);
+      for(std::size_t i = 0; i < f.ribbon.source.size(); ++i) {
+        if(f.ribbon.source[i] >= 0) onBoundary[s].insert(inputVertex[f.firstVertex + i]);
+        if(f.ribbon.far[i]) farEnd[s].insert(inputVertex[f.firstVertex + i]);
       }
     }
   }
@@ -2547,7 +3033,10 @@ bool extendAllBranches(const Mesh &mesh, const Mesh &skin, double tolerance, dou
   }
 
   // The MAT with its branches extended: the sheets that stay, then the kept
-  // pieces, which share their vertices where they meet.
+  // pieces, which share their vertices where they meet. A triangle of a sheet
+  // that was cut is replaced by its pieces: the branches that stop on it share
+  // their vertices with it (a junction along the line where they meet,
+  // instead of a branch that stops on a sheet without being joined to it).
   std::set<int> replaced;
   for(int s = 0; s < surfaceCount; ++s) {
     Surface &f = surfaces[s];
@@ -2559,14 +3048,64 @@ bool extendAllBranches(const Mesh &mesh, const Mesh &skin, double tolerance, dou
       out.extended.push_back(b);
     }
   }
+  std::vector<unsigned char> cutSheet(count, 0);
+  for(std::size_t t = 0; t < pieces; ++t) {
+    if(kind[birth[t]] != Sheet) continue;
+    const auto found = sheetTriangle.find(birth[t]);
+    if(found != sheetTriangle.end()) cutSheet[found->second] = 1;
+  }
   out.result.xyz = mesh.xyz;
   for(std::size_t t = 0; t < count; ++t) {
-    if(replaced.count(branchOf(t))) continue;
+    if(replaced.count(branchOf(t)) || cutSheet[t]) continue;
     for(int c = 0; c < 3; ++c) out.result.triangles.push_back(mesh.triangles[3 * t + c]);
     out.result.branch.push_back(branchOf(t));
     out.result.parent.push_back(t < mesh.parent.size() ? mesh.parent[t] : -1);
   }
   std::vector<int> added(oxyz.size() / 3, -1), shown(oxyz.size() / 3, -1);
+  // the vertices of the sheets are theirs in the mesh, and their pieces go
+  // in their place
+  for(const auto &v : sheetVertex) added[inputVertex[v.first]] = v.second;
+  // the pieces of the strips that prolong the sheets, on the side of the
+  // plane the sheet is on
+  for(std::size_t t = 0; t < pieces; ++t) {
+    const auto found = stripOf.find(birth[t]);
+    if(found == stripOf.end()) continue;
+    const int *v = &otri[3 * t];
+    if(v[0] == v[1] || v[1] == v[2] || v[0] == v[2] || !(areaOf(t) > 0.)) continue;
+    const Frame frame(surfaces[found->second.surface].plane);
+    const Vec g = {(oxyz[3 * std::size_t(v[0])] + oxyz[3 * std::size_t(v[1])] + oxyz[3 * std::size_t(v[2])]) / 3.,
+                   (oxyz[3 * std::size_t(v[0]) + 1] + oxyz[3 * std::size_t(v[1]) + 1] + oxyz[3 * std::size_t(v[2]) + 1]) / 3.,
+                   (oxyz[3 * std::size_t(v[0]) + 2] + oxyz[3 * std::size_t(v[1]) + 2] + oxyz[3 * std::size_t(v[2]) + 2]) / 3.};
+    if(frame.distance(g) * found->second.side <= 0.) continue;
+    for(int c = 0; c < 3; ++c) {
+      if(added[v[c]] < 0) {
+        added[v[c]] = int(out.result.xyz.size() / 3);
+        out.result.xyz.insert(out.result.xyz.end(), oxyz.begin() + 3 * std::size_t(v[c]),
+                              oxyz.begin() + 3 * std::size_t(v[c]) + 3);
+      }
+      out.result.triangles.push_back(added[v[c]]);
+    }
+    out.result.branch.push_back(owner[birth[t]]);
+    out.result.parent.push_back(-1);
+  }
+  for(std::size_t t = 0; t < pieces; ++t) {
+    if(kind[birth[t]] != Sheet) continue;
+    const auto found = sheetTriangle.find(birth[t]);
+    if(found == sheetTriangle.end() || replaced.count(branchOf(std::size_t(found->second)))) continue;
+    const int *v = &otri[3 * t];
+    if(v[0] == v[1] || v[1] == v[2] || v[0] == v[2] || !(areaOf(t) > 0.)) continue;
+    for(int c = 0; c < 3; ++c) {
+      if(added[v[c]] < 0) {
+        added[v[c]] = int(out.result.xyz.size() / 3);
+        out.result.xyz.insert(out.result.xyz.end(), oxyz.begin() + 3 * std::size_t(v[c]),
+                              oxyz.begin() + 3 * std::size_t(v[c]) + 3);
+      }
+      out.result.triangles.push_back(added[v[c]]);
+    }
+    const std::size_t m = std::size_t(found->second);
+    out.result.branch.push_back(branchOf(m));
+    out.result.parent.push_back(m < mesh.parent.size() ? mesh.parent[m] : -1);
+  }
   for(int s = 0; s < surfaceCount; ++s) {
     const Surface &f = surfaces[s];
     if(f.planar) continue;
@@ -2607,8 +3146,130 @@ bool extendAllBranches(const Mesh &mesh, const Mesh &skin, double tolerance, dou
     }
     out.report.push_back(f.report);
   }
+  // A ribbon that runs back over the sheet of its branch (from a notch of its
+  // boundary, which zigzags) gives, cut with it, the same triangles twice:
+  // the first one is kept, that of the sheet (added first).
+  {
+    Mesh &r = out.result;
+    // (the vertices at the same coordinates first made one, as the discrete
+    // CAD modeler does: a piece of the cut and a vertex of the mesh can be
+    // the same point under two numbers)
+    {
+      std::map<std::array<double, 3>, int> first;
+      std::vector<int> same(r.xyz.size() / 3);
+      for(std::size_t v = 0; v < same.size(); ++v)
+        same[v] = first.insert({{r.xyz[3 * v], r.xyz[3 * v + 1], r.xyz[3 * v + 2]}, int(v)}).first->second;
+      for(int &v : r.triangles) v = same[std::size_t(v)];
+    }
+    std::set<std::array<int, 3> > seen;
+    std::size_t kept = 0;
+    for(std::size_t t = 0; t < r.triangles.size() / 3; ++t) {
+      std::array<int, 3> key = {r.triangles[3 * t], r.triangles[3 * t + 1], r.triangles[3 * t + 2]};
+      std::sort(key.begin(), key.end());
+      if(key[0] == key[1] || key[1] == key[2]) continue; // (made degenerate)
+      if(!seen.insert(key).second) {
+        ++out.duplicates;
+        continue;
+      }
+      for(int c = 0; c < 3; ++c) r.triangles[3 * kept + c] = r.triangles[3 * t + c];
+      r.branch[kept] = r.branch[t];
+      r.parent[kept] = r.parent[t];
+      ++kept;
+    }
+    r.triangles.resize(3 * kept);
+    r.branch.resize(kept);
+    r.parent.resize(kept);
+  }
+  // (the sheets kept whole, those lying in a plane, next to those cut: a node
+  // of the cut on the edge of the one, not of the other)
+  out.slits = closeSlits(out.result);
   out.seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
   return true;
+}
+
+std::size_t closeSlits(Mesh &mesh)
+{
+  std::size_t closed = 0;
+  const auto at = [&](int v) { return point(mesh, v); };
+  for(int pass = 0; pass < 10; ++pass) {
+    const std::size_t count = mesh.triangles.size() / 3;
+    std::unordered_map<std::uint64_t, std::vector<std::size_t> > uses;
+    for(std::size_t t = 0; t < count; ++t)
+      for(int c = 0; c < 3; ++c)
+        uses[edgeKey(mesh.triangles[3 * t + c], mesh.triangles[3 * t + (c + 1) % 3])].push_back(t);
+    std::unordered_map<int, std::vector<int> > boundary;
+    for(const auto &u : uses)
+      if(u.second.size() == 1) {
+        const int a = int(u.first >> 32), b = int(u.first & 0xffffffffu);
+        boundary[a].push_back(b);
+        boundary[b].push_back(a);
+      }
+    std::vector<unsigned char> split(count, 0);
+    std::size_t now = 0;
+    for(const auto &u : uses) {
+      if(u.second.size() != 1 || split[u.second[0]]) continue;
+      const int a = int(u.first >> 32), b = int(u.first & 0xffffffffu);
+      const Vec pa = at(a), ab = sub(at(b), pa);
+      const double l2 = dot(ab, ab);
+      if(!(l2 > 0.)) continue;
+      // the nodes on the edge, from a to b along other edges of one triangle
+      const auto along = [&](int v, double &s) {
+        const Vec d = sub(at(v), pa);
+        s = dot(d, ab) / l2;
+        const Vec h = {d[0] - s * ab[0], d[1] - s * ab[1], d[2] - s * ab[2]};
+        // (within a hundredth of its length: a slit along a circle cut, its
+        // nodes on the arc, the sagitta L^2 / 8R from the chord)
+        return s > 0. && s < 1. && dot(h, h) <= 1e-4 * l2;
+      };
+      std::vector<int> chain(1, a);
+      double last = 0.;
+      bool reached = false;
+      for(int step = 0; step < 64 && !reached; ++step) {
+        int next = -1;
+        double best = 2.;
+        for(int w : boundary[chain.back()]) {
+          if(w == b && chain.size() > 1) {
+            reached = true;
+            break;
+          }
+          double sw;
+          if(w != a && w != b && along(w, sw) && sw > last && sw < best) {
+            best = sw;
+            next = w;
+          }
+        }
+        if(reached || next < 0) break;
+        chain.push_back(next);
+        last = best;
+      }
+      if(!reached) continue;
+      // the triangle along the edge, as a fan from its third node
+      const std::size_t t = u.second[0];
+      int *w = &mesh.triangles[3 * t];
+      int i = 0;
+      while(i < 3 && !((w[i] == a && w[(i + 1) % 3] == b) || (w[i] == b && w[(i + 1) % 3] == a))) ++i;
+      if(i == 3) continue;
+      const int from = w[i], to = w[(i + 1) % 3], d = w[(i + 2) % 3];
+      if(from == b) std::reverse(chain.begin() + 1, chain.end());
+      chain.push_back(to);
+      chain[0] = from;
+      split[t] = 1;
+      const int branch = t < mesh.branch.size() ? mesh.branch[t] : 0;
+      const int parent = t < mesh.parent.size() ? mesh.parent[t] : -1;
+      w[0] = chain[0];
+      w[1] = chain[1];
+      w[2] = d;
+      for(std::size_t k = 1; k + 1 < chain.size(); ++k) {
+        mesh.triangles.insert(mesh.triangles.end(), {chain[k], chain[k + 1], d});
+        mesh.branch.push_back(branch);
+        mesh.parent.push_back(parent);
+      }
+      ++now;
+    }
+    closed += now;
+    if(!now) break;
+  }
+  return closed;
 }
 
 // ---------------------------------------------------------------------------

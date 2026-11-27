@@ -8,6 +8,8 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <functional>
+#include <iterator>
 #include <limits>
 #include <map>
 #include <memory>
@@ -130,6 +132,265 @@ bool buildMidSurfaceModel(const Mesh &mesh, const std::string &name, double angl
     }
   }
   out.branches = branches.size();
+  // The nodes joined by an edge shorter than a tenth of the square root of
+  // minArea (a hundredth of the thickness in the window and gmshMat) made
+  // one. Where the cut of the extension crosses the MAT near a junction it
+  // leaves nodes micrometres apart (Doghouse, a rib on the curved wall by the
+  // base: 110 pairs closer than 1e-3 within 0.3 of the corner, none in the
+  // filtered MAT), which the modeler makes points as close and curves as
+  // short. The edges in order of length; of their two nodes, the one on more
+  // edges of junctions and boundaries (edges not of two triangles of one
+  // branch) stays where it is and takes the other one, unless a triangle
+  // that is not flat would turn over, or the nodes it holds would be farther
+  // than that length from it; then the triangles left without area, and
+  // those found twice, left out.
+  {
+    const double merge = .1 * std::sqrt(std::max(0., minArea));
+    const std::size_t nt = triangles.size() / 3;
+    auto key = [](std::size_t a, std::size_t b) {
+      if(a > b) std::swap(a, b);
+      return (std::uint64_t(a) << 32) | std::uint64_t(b);
+    };
+    auto x = [&](std::size_t n) { return &mesh.xyz[3 * n]; };
+    auto distance = [&](std::size_t a, std::size_t b) {
+      const double *p = x(a), *q = x(b);
+      return std::sqrt((p[0] - q[0]) * (p[0] - q[0]) + (p[1] - q[1]) * (p[1] - q[1]) +
+                       (p[2] - q[2]) * (p[2] - q[2]));
+    };
+    std::vector<std::pair<double, std::uint64_t> > shortEdges;
+    std::vector<std::uint32_t> rank;
+    if(merge > 0.) {
+      std::vector<std::pair<std::uint64_t, std::size_t> > uses;
+      uses.reserve(3 * nt);
+      for(std::size_t t = 0; t < nt; ++t)
+        for(int k = 0; k < 3; ++k)
+          uses.push_back({key(triangles[3 * t + k], triangles[3 * t + (k + 1) % 3]), t});
+      std::sort(uses.begin(), uses.end());
+      rank.assign(nodes, 0);
+      for(std::size_t i = 0; i < uses.size();) {
+        std::size_t j = i;
+        bool mixed = false;
+        while(j < uses.size() && uses[j].first == uses[i].first) {
+          mixed = mixed || pieces[uses[j].second] != pieces[uses[i].second];
+          ++j;
+        }
+        const std::size_t a = uses[i].first >> 32, b = uses[i].first & 0xffffffffu;
+        if(j - i != 2 || mixed) {
+          ++rank[a];
+          ++rank[b];
+        }
+        const double l = distance(a, b);
+        if(l < merge) shortEdges.push_back({l, uses[i].first});
+        i = j;
+      }
+      std::sort(shortEdges.begin(), shortEdges.end());
+    }
+    if(!shortEdges.empty()) {
+      // the triangles of each node
+      std::vector<std::size_t> first(nodes + 1, 0), incident(3 * nt);
+      for(std::size_t n : triangles) ++first[n + 1];
+      for(std::size_t n = 0; n < nodes; ++n) first[n + 1] += first[n];
+      {
+        std::vector<std::size_t> next(first.begin(), first.end() - 1);
+        for(std::size_t t = 0; t < nt; ++t)
+          for(int k = 0; k < 3; ++k) incident[next[triangles[3 * t + k]]++] = t;
+      }
+      std::vector<std::size_t> rep(nodes);
+      for(std::size_t n = 0; n < nodes; ++n) rep[n] = n;
+      auto find = [&](std::size_t n) {
+        while(rep[n] != n) {
+          rep[n] = rep[rep[n]];
+          n = rep[n];
+        }
+        return n;
+      };
+      // the nodes each node kept holds, and how far they are from it
+      std::unordered_map<std::size_t, std::vector<std::size_t> > held;
+      std::unordered_map<std::size_t, double> reach;
+      auto normal = [&](std::size_t a, std::size_t b, std::size_t c, double n[3], double &l2) {
+        const double *p = x(a), *q = x(b), *r = x(c);
+        const double u[3] = {q[0] - p[0], q[1] - p[1], q[2] - p[2]},
+                     v[3] = {r[0] - p[0], r[1] - p[1], r[2] - p[2]},
+                     w[3] = {r[0] - q[0], r[1] - q[1], r[2] - q[2]};
+        n[0] = u[1] * v[2] - u[2] * v[1];
+        n[1] = u[2] * v[0] - u[0] * v[2];
+        n[2] = u[0] * v[1] - u[1] * v[0];
+        l2 = std::max({u[0] * u[0] + u[1] * u[1] + u[2] * u[2], v[0] * v[0] + v[1] * v[1] + v[2] * v[2],
+                       w[0] * w[0] + w[1] * w[1] + w[2] * w[2]});
+      };
+      // the triangles of the nodes of a node kept (itself and those it holds)
+      auto around = [&](std::size_t root, const std::function<void(std::size_t)> &f) {
+        auto visit = [&](std::size_t n) {
+          for(std::size_t i = first[n]; i < first[n + 1]; ++i) f(incident[i]);
+        };
+        visit(root);
+        auto h = held.find(root);
+        if(h != held.end())
+          for(std::size_t n : h->second) visit(n);
+      };
+      // whether k can take r: the nodes of r not farther than the length from
+      // k, and none of the triangles of r that is not flat turned over
+      auto canTake = [&](std::size_t k, std::size_t r, double &farthest) {
+        farthest = distance(k, r) + (reach.count(r) ? reach[r] : 0.);
+        if(!(farthest < merge)) return false;
+        bool turns = false;
+        around(r, [&](std::size_t t) {
+          if(turns) return;
+          std::size_t v[3] = {find(triangles[3 * t]), find(triangles[3 * t + 1]),
+                              find(triangles[3 * t + 2])};
+          if(v[0] == v[1] || v[1] == v[2] || v[2] == v[0]) return;
+          if(v[0] == k || v[1] == k || v[2] == k) return; // (left without area)
+          double before[3], after[3], l2, l2After;
+          normal(v[0], v[1], v[2], before, l2);
+          const double size2 = before[0] * before[0] + before[1] * before[1] + before[2] * before[2];
+          if(!(size2 > 1e-12 * l2 * l2)) return; // flat already
+          for(std::size_t &w : v)
+            if(w == r) w = k;
+          normal(v[0], v[1], v[2], after, l2After);
+          if(before[0] * after[0] + before[1] * after[1] + before[2] * after[2] <= 0.) turns = true;
+        });
+        if(turns) return false;
+        // nor more edges with three triangles of one branch around them (a
+        // sheet pinched; a slit closed is two triangles of a branch on an edge)
+        std::vector<std::size_t> ts;
+        around(k, [&](std::size_t t) { ts.push_back(t); });
+        around(r, [&](std::size_t t) { ts.push_back(t); });
+        std::sort(ts.begin(), ts.end());
+        ts.erase(std::unique(ts.begin(), ts.end()), ts.end());
+        auto pinched = [&](bool contracted) {
+          std::vector<std::array<std::size_t, 4> > uses; // edge, branch, triangle
+          std::set<std::array<std::size_t, 3> > seen;
+          for(std::size_t t : ts) {
+            std::array<std::size_t, 3> v = {find(triangles[3 * t]), find(triangles[3 * t + 1]),
+                                            find(triangles[3 * t + 2])};
+            if(contracted)
+              for(std::size_t &w : v)
+                if(w == r) w = k;
+            if(v[0] == v[1] || v[1] == v[2] || v[2] == v[0]) continue;
+            std::array<std::size_t, 3> s = v;
+            std::sort(s.begin(), s.end());
+            if(!seen.insert(s).second) continue;
+            for(int i = 0; i < 3; ++i) {
+              std::size_t a = v[i], b = v[(i + 1) % 3];
+              if(a != k && a != r && b != k && b != r) continue;
+              if(a > b) std::swap(a, b);
+              uses.push_back({a, b, std::size_t(pieces[t]), t});
+            }
+          }
+          std::sort(uses.begin(), uses.end());
+          std::size_t count = 0;
+          for(std::size_t i = 0; i < uses.size();) {
+            std::size_t j = i;
+            while(j < uses.size() && uses[j][0] == uses[i][0] && uses[j][1] == uses[i][1] &&
+                  uses[j][2] == uses[i][2])
+              ++j;
+            if(j - i >= 3) ++count;
+            i = j;
+          }
+          return count;
+        };
+        return pinched(true) <= pinched(false);
+      };
+      std::size_t merged = 0;
+      for(const auto &e : shortEdges) {
+        std::size_t k = find(e.second >> 32), r = find(e.second & 0xffffffffu);
+        if(k == r) continue;
+        const std::size_t degreeK = first[k + 1] - first[k], degreeR = first[r + 1] - first[r];
+        if(rank[r] > rank[k] || (rank[r] == rank[k] && degreeR > degreeK)) std::swap(k, r);
+        // (the other way round if that one turns a triangle over: it is a
+        // preference, both are within the length)
+        double farthest = 0.;
+        if(!canTake(k, r, farthest)) {
+          std::swap(k, r);
+          if(!canTake(k, r, farthest)) continue;
+        }
+        // away from the junctions and the boundaries, an edge of two
+        // triangles of one branch: the two nodes have no other neighbor in
+        // common than the third nodes of these triangles (or the sheet would
+        // be pinched, an edge of three triangles and a hole). Not along them:
+        // where the cut leaves nodes micrometres apart, their edges make
+        // triangles without a triangle inside, which have to go.
+        if(!rank[k] && !rank[r]) {
+          std::vector<std::size_t> nk, nr, opposite, on;
+          auto neighbors = [&](std::size_t self, std::vector<std::size_t> &list) {
+            around(self, [&](std::size_t t) {
+              const std::size_t v[3] = {find(triangles[3 * t]), find(triangles[3 * t + 1]),
+                                        find(triangles[3 * t + 2])};
+              if(v[0] == v[1] || v[1] == v[2] || v[2] == v[0]) return;
+              const bool both = (v[0] == k || v[1] == k || v[2] == k) &&
+                                (v[0] == r || v[1] == r || v[2] == r);
+              for(std::size_t w : v) {
+                if(w == k || w == r) continue;
+                list.push_back(w);
+                if(both) opposite.push_back(w);
+              }
+              if(both) on.push_back(t);
+            });
+            std::sort(list.begin(), list.end());
+            list.erase(std::unique(list.begin(), list.end()), list.end());
+          };
+          neighbors(k, nk);
+          neighbors(r, nr);
+          std::sort(on.begin(), on.end());
+          on.erase(std::unique(on.begin(), on.end()), on.end());
+          if(on.size() == 2 && pieces[on[0]] == pieces[on[1]]) {
+            std::sort(opposite.begin(), opposite.end());
+            opposite.erase(std::unique(opposite.begin(), opposite.end()), opposite.end());
+            std::vector<std::size_t> common;
+            std::set_intersection(nk.begin(), nk.end(), nr.begin(), nr.end(),
+                                  std::back_inserter(common));
+            if(common != opposite) continue;
+          }
+        }
+        rep[r] = k;
+        rank[k] = std::max(rank[k], rank[r]);
+        std::vector<std::size_t> &h = held[k];
+        h.push_back(r);
+        auto other = held.find(r);
+        if(other != held.end()) {
+          h.insert(h.end(), other->second.begin(), other->second.end());
+          held.erase(other);
+        }
+        reach[k] = std::max(reach.count(k) ? reach[k] : 0., farthest);
+        ++merged;
+      }
+      if(merged) {
+        // the triangles on the nodes kept: those without area, and the second
+        // of two on the same nodes, left out
+        std::vector<std::pair<std::array<std::size_t, 3>, std::size_t> > sorted;
+        sorted.reserve(nt);
+        std::vector<char> keep(nt, 0);
+        for(std::size_t t = 0; t < nt; ++t) {
+          std::array<std::size_t, 3> v = {find(triangles[3 * t]), find(triangles[3 * t + 1]),
+                                          find(triangles[3 * t + 2])};
+          for(int k = 0; k < 3; ++k) triangles[3 * t + k] = v[k];
+          if(v[0] == v[1] || v[1] == v[2] || v[2] == v[0]) continue;
+          std::sort(v.begin(), v.end());
+          sorted.push_back({v, t});
+        }
+        std::sort(sorted.begin(), sorted.end());
+        for(std::size_t i = 0; i < sorted.size(); ++i)
+          if(!i || sorted[i].first != sorted[i - 1].first) keep[sorted[i].second] = 1;
+        std::vector<std::size_t> kept;
+        std::vector<int> keptPieces;
+        kept.reserve(triangles.size());
+        for(std::size_t t = 0; t < nt; ++t) {
+          if(!keep[t]) continue;
+          kept.insert(kept.end(), {triangles[3 * t], triangles[3 * t + 1], triangles[3 * t + 2]});
+          keptPieces.push_back(pieces[t]);
+        }
+        out.removed = nt - keptPieces.size();
+        triangles.swap(kept);
+        pieces.swap(keptPieces);
+      }
+      out.merged = merged;
+      out.mergeLength = merge;
+      if(merged)
+        Msg::Info("Mid-surface model: %zu nodes merged into a neighbor closer than %g, "
+                  "%zu triangles left without area or found twice",
+                  merged, merge, out.removed);
+    }
+  }
   // The slits closed: a hole bounded by three edges of one triangle each,
   // not a triangle, whose third node is on the longest edge (within a
   // hundredth of its length; the cut of the extension leaves some, 1e-14
@@ -318,6 +579,10 @@ bool buildMidSurfaceModel(const Mesh &mesh, const std::string &name, double angl
       Msg::Info("Mid-surface model: %zu holes of less than %g filled", filled, minArea);
   }
 
+  out.triangulation.xyz = mesh.xyz;
+  out.triangulation.triangles.assign(triangles.begin(), triangles.end());
+  out.triangulation.branch = pieces;
+  out.triangulation.parent.assign(pieces.size(), -1);
   KeepCurrent keep;
   GModel *m = new GModel(name);
   GModel::setCurrent(m); // (the nodes are numbered in the current model)
@@ -326,7 +591,14 @@ bool buildMidSurfaceModel(const Mesh &mesh, const std::string &name, double angl
     m->createDiscreteCADInternals();
     DiscreteCAD_Internals *cad = m->getDiscreteCADInternals();
     std::vector<std::pair<int, int> > outDimTags;
-    ok = cad->addTriangulation(mesh.xyz, triangles, pieces, angle, curveAngle, -1., outDimTags);
+    // No parametrization: the surfaces are their triangulations, which the
+    // Frontal-Delaunay algorithm on the triangulation meshes (Mesh.Algorithm
+    // 12). Nor analytic surface recognized: the nodes of the curves between
+    // two of them, and the points where three meet, would be moved onto their
+    // exact intersections, and two points near the same corner made one (a
+    // curve of zero length, which the mesher refuses).
+    ok = cad->addTriangulation(mesh.xyz, triangles, pieces, angle, curveAngle, -1.,
+                               outDimTags, false);
     if(ok) cad->synchronize(m);
     // the surfaces under minArea (specks: folds and needles left by the cut
     // of the extension) removed, with their curves and points that no other
@@ -403,6 +675,11 @@ bool buildMidSurfaceModel(const Mesh &mesh, const std::string &name, double angl
         for(int b : found->second) ++votes[b];
       }
     gf->setMeshingAlgo(ALGO_2D_FRONTAL_SCAFFOLD);
+    // the sizes of the 1D mesh not extended into the surface: the curves of
+    // the mid-surface come from the MAT, and a short one is no size asked for
+    // (a 1D element of 0.007 made the Doghouse surface, of size 3, refine its
+    // triangulation to 2.3 million nodes)
+    gf->setMeshSizeFromBoundary(0);
     if(votes.empty()) {
       ++unknown;
       continue;
@@ -424,16 +701,26 @@ bool buildMidSurfaceModel(const Mesh &mesh, const std::string &name, double angl
     m->setPhysicalName("branch " + std::to_string(s.first), 2, s.first + 1);
   }
   // the curves between surfaces of different branches, or of more than two
-  // surfaces, and those of one surface (not a seam of it)
+  // surfaces, those inside a surface counted with it (the triple lines that
+  // do not reach its boundary: embedded in it), and the curves of one
+  // surface (not a seam of it)
+  std::map<GEdge *, std::vector<GFace *> > facesOf;
+  for(auto it = m->firstEdge(); it != m->lastEdge(); ++it) facesOf[*it] = (*it)->faces();
+  for(auto it = m->firstFace(); it != m->lastFace(); ++it)
+    for(GEdge *ge : (*it)->getEmbeddedEdges()) {
+      std::vector<GFace *> &f = facesOf[ge];
+      if(std::find(f.begin(), f.end(), *it) == f.end()) f.push_back(*it);
+    }
   std::vector<int> junctions, boundaries;
-  for(auto it = m->firstEdge(); it != m->lastEdge(); ++it) {
-    GEdge *ge = *it;
-    const std::vector<GFace *> faces = ge->faces();
+  for(const auto &c : facesOf) {
+    GEdge *ge = c.first;
+    const std::vector<GFace *> &faces = c.second;
     std::set<int> of;
     for(GFace *gf : faces) of.insert(branchOf.count(gf) ? branchOf[gf] : -1);
     if(faces.size() > 2 || of.size() > 1)
       junctions.push_back(ge->tag());
-    else if(faces.size() == 1 && !ge->isSeam(faces[0]))
+    else if(faces.size() == 1 && !ge->isSeam(faces[0]) &&
+            ge->faces().size() == 1) // (not a crease inside it)
       boundaries.push_back(ge->tag());
   }
   if(!junctions.empty()) {
@@ -555,6 +842,10 @@ bool meshMidSurfaceModel(MidSurfaceModel &m, double size, std::string &error)
   contextMeshOptions &o = CTX::instance()->mesh;
   const double lcMax = o.lcMax;
   if(size > 0.) o.lcMax = size;
+  // a surface that fails does not stop the others (the API makes an error
+  // throw): it is counted
+  const int abortOnError = CTX::instance()->abortOnError;
+  CTX::instance()->abortOnError = 0;
   bool ok = true;
   try {
     m.model->deleteMesh();
@@ -566,11 +857,23 @@ bool meshMidSurfaceModel(MidSurfaceModel &m, double size, std::string &error)
     ok = false;
   }
   o.lcMax = lcMax;
+  CTX::instance()->abortOnError = abortOnError;
   CTX::instance()->meshChanged();
   m.triangles = m.failed = 0;
   for(auto it = m.model->firstFace(); it != m.model->lastFace(); ++it) {
     m.triangles += (*it)->triangles.size();
-    m.failed += (*it)->triangles.empty();
+    if(!(*it)->triangles.empty()) continue;
+    ++m.failed;
+    const std::vector<SPoint3> &x = (*it)->stl_vertices_xyz;
+    const std::vector<int> &tri = (*it)->stl_triangles;
+    double area = 0.;
+    for(std::size_t i = 0; i + 2 < tri.size(); i += 3)
+      area += .5 * crossprod(SVector3(x[tri[i]], x[tri[i + 1]]), SVector3(x[tri[i]], x[tri[i + 2]])).norm();
+    auto b = m.branchOfSurface.find((*it)->tag());
+    Msg::Warning("Mid-surface model: surface %d (branch %d, area %g, %zu triangles, %zu "
+                 "curves) left without triangles",
+                 (*it)->tag(), b == m.branchOfSurface.end() ? -1 : b->second, area,
+                 tri.size() / 3, (*it)->edges().size());
   }
   m.nodes = m.model->getNumMeshVertices();
   m.meshSeconds = since(start);

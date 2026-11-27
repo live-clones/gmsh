@@ -67,6 +67,11 @@ public:
     DiscreteCADAnalyticMap analytic;
     bool raw = false;
     bool classified = false;
+    // its geometry is its triangulation, without parameters (see
+    // addTriangulation): synchronize gives it to the model as it is, to be
+    // meshed by the Frontal-Delaunay algorithm on the triangulation
+    // (Mesh.Algorithm 12)
+    bool unparametrized = false;
     double angle = 0., curveAngle = 0.;
   };
   // a closed shell of surfaces, a negative tag for a surface used reversed,
@@ -281,7 +286,8 @@ private:
               Fit *fit = nullptr,
               const std::map<int, std::vector<std::array<std::array<double, 2>,
                                                          3> > > *charts =
-                nullptr);
+                nullptr,
+              bool parametrize = true);
   // the triangles of the surfaces of a mesh file, each surface a piece (see
   // importShapes)
   bool _readTriangulations(const std::string &fileName,
@@ -415,11 +421,15 @@ public:
   // surfaces up to the precision of the coordinates (see segmentSurface), the
   // rest parametrized as they are, cut open into a disk along seams if they
   // are not one. The volumes and the surfaces bounding none in outDimTags.
+  // Without parametrize, no analytic surface is recognized and no parameter
+  // computed: the surfaces are their triangulations (see
+  // Surface::unparametrized).
   bool addTriangulation(const std::vector<double> &coord,
                         const std::vector<std::size_t> &triangles,
                         const std::vector<int> &pieces, double angle,
                         double curveAngle, double tolerance,
-                        std::vector<std::pair<int, int> > &outDimTags);
+                        std::vector<std::pair<int, int> > &outDimTags,
+                        bool parametrize = true);
   // the triangulations of the surfaces of a mesh file (STL, MSH, OBJ, PLY,
   // OFF, VTK, MESH), each surface of the file a piece, and their topology
   // (see addTriangulation)

@@ -69,6 +69,7 @@ struct contextMeshOptions {
   // mesh IO
   int fileFormat, firstElementTag, firstNodeTag;
   double mshFileVersion, medFileMinorVersion, scalingFactor;
+  double permasThicknessStep;
   int medImportGroupsOfNodes, medSingleModel;
   int saveAll, saveViews, saveGroupsOfNodes, saveGroupsOfElements;
   int readGroupsOfElements;

@@ -3846,7 +3846,8 @@ bool DiscreteCAD_Internals::_build(
   double curveAngle, double tolerance, bool recognize,
   std::vector<std::pair<int, int> > &outDimTags, Fit *fit,
   const std::map<int, std::vector<std::array<std::array<double, 2>, 3> > >
-    *charts)
+    *charts,
+  bool parametrize)
 {
   const std::size_t nt = tri.size();
   const std::set<std::pair<int, int> > &sharp = barrier;
@@ -4046,8 +4047,8 @@ bool DiscreteCAD_Internals::_build(
   // the parameters of the other surfaces, those of charts for a label left
   // whole, or else computed on their triangulations as createGeometry would,
   // each one cut open into a disk along seams if it is not one (see cutOpen;
-  // the boolean operations then interpolate them)
-  {
+  // the boolean operations then interpolate them); none without parametrize
+  if(parametrize) {
     TemporaryModel tmp;
     std::map<int, std::vector<std::size_t> > trianglesOf;
     for(std::size_t i = 0; i < nt; i++)
@@ -4150,6 +4151,7 @@ bool DiscreteCAD_Internals::_build(
   _addTopology(tri, label, uv, hasUV, creases, curveAngle, surfaceOf);
   for(std::size_t i = 0; i < nt; i++) {
     Surface &sf = _surfaces[surfaceOf[i]];
+    if(!parametrize) sf.unparametrized = true;
     if(mapOf[i] >= 0) sf.analytic = maps[mapOf[i]];
     if(recognize) continue;
     sf.classified = true;
@@ -4247,7 +4249,8 @@ bool DiscreteCAD_Internals::_build(
 bool DiscreteCAD_Internals::addTriangulation(
   const std::vector<double> &coord, const std::vector<std::size_t> &triangles,
   const std::vector<int> &pieces, double angle, double curveAngle,
-  double tolerance, std::vector<std::pair<int, int> > &outDimTags)
+  double tolerance, std::vector<std::pair<int, int> > &outDimTags,
+  bool parametrize)
 {
   outDimTags.clear();
   std::vector<std::array<int, 3> > tri;
@@ -4257,8 +4260,8 @@ bool DiscreteCAD_Internals::addTriangulation(
     return false;
   std::set<std::pair<int, int> > barrier;
   _patches(tri, piece, angle, label, barrier);
-  return _build(tri, label, barrier, angle, curveAngle, tolerance, true,
-                outDimTags);
+  return _build(tri, label, barrier, angle, curveAngle, tolerance, parametrize,
+                outDimTags, nullptr, nullptr, parametrize);
 }
 
 bool DiscreteCAD_Internals::_readTriangulations(
@@ -5456,6 +5459,7 @@ void DiscreteCAD_Internals::synchronize(GModel *model)
     return true;
   };
   std::vector<GEntity *> created;
+  std::set<int> bare; // the unparametrized surfaces, given as they are
   for(auto &it : _vertices) {
     if(taken(0, it.first)) continue;
     const std::array<double, 3> &x = position(it.second.node);
@@ -5514,8 +5518,22 @@ void DiscreteCAD_Internals::synchronize(GModel *model)
     }
     gf->setNativeType(GEntity::DiscreteCADModel);
     model->add(gf);
-    // without parameters, the parametrization is computed from the mesh
-    if(it.second.uv.empty())
+    // without parameters, the parametrization is computed from the mesh;
+    // unparametrized, its triangulation is its geometry, as it is
+    if(it.second.uv.empty() && it.second.unparametrized) {
+      std::map<int, int> local;
+      for(auto &t : it.second.triangles)
+        for(int n : t) {
+          auto l = local.insert({n, (int)gf->stl_vertices_xyz.size()});
+          if(l.second) {
+            const std::array<double, 3> &x = position(n);
+            gf->stl_vertices_xyz.push_back(SPoint3(x[0], x[1], x[2]));
+          }
+          gf->stl_triangles.push_back(l.first->second);
+        }
+      bare.insert(it.first);
+    }
+    else if(it.second.uv.empty())
       for(auto &t : it.second.triangles)
         gf->triangles.push_back(
           new MTriangle(node(t[0], gf), node(t[1], gf), node(t[2], gf)));
@@ -5539,7 +5557,12 @@ void DiscreteCAD_Internals::synchronize(GModel *model)
     created.push_back(gr);
   }
   for(GEntity *e : created) _synchronized.push_back({e->dim(), e->tag()});
-  model->createGeometryOfDiscreteEntities(_synchronized);
+  {
+    std::vector<std::pair<int, int> > geometry;
+    for(auto &dt : _synchronized)
+      if(dt.first != 2 || !bare.count(dt.second)) geometry.push_back(dt);
+    model->createGeometryOfDiscreteEntities(geometry);
+  }
   std::map<std::pair<int, int>,
            std::vector<const DiscreteCADAnalyticSurface *> >
     segments;

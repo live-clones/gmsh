@@ -528,33 +528,115 @@ again, an extension, Undo or Reset delete it.
 
 The model is made by the discrete CAD modeler from the triangles of the MAT,
 each branch a piece (DiscreteCAD_Internals::addTriangulation, then
-synchronize): its surfaces are the triangles of a branch connected across
-edges of two triangles, its curves along the junctions and the boundaries,
-the flat surfaces recognized as planes; one physical group of surfaces
-"branch <n>" per branch, and two of curves, "junction" and "boundary". Before,
-the triangulation is repaired where the cut of the extension leaves defects
-that the 1D mesh would follow (a 1D element 1e-9 long, whose size the surface
-mesh took: 5 GB in seconds): the nodes at the same coordinates merged, the
-slits closed (a hole of three edges and zero area: the triangle along its
-long edge split at its third node), the holes of less than a hundredth of the
-thickness squared filled; after, the surfaces of less than that removed
-(folds and needles). Its surfaces are meshed by the Frontal-Delaunay algorithm
-on their triangulation (Mesh.Algorithm 12, set on each surface: no
-parametrization), with the size map of Gmsh: the size of the section (the
-thickness if 0) is Mesh.MeshSizeMax for this mesh, the smaller sizes the other
-options ask for apply.
+synchronize), without parametrization: no parameters are computed and no
+analytic surface is recognized, the surfaces are their triangulations, which
+the mesher works on. Its surfaces are the triangles of a branch connected
+across edges of two triangles, its curves along the junctions and the
+boundaries; a triple line that does not reach the boundary of a surface (a
+rib on a wall) is a curve embedded in it, so that its mesh follows it. One
+physical group of surfaces "branch <n>" per branch, and two of curves,
+"junction" (between surfaces of different branches, embedded curves counted
+with their surface) and "boundary". Before, the triangulation is repaired
+where the cut of the extension leaves defects that the 1D mesh would follow:
+the nodes at the same coordinates merged; the nodes joined by an edge
+shorter than a hundredth of the thickness (a tenth of the square root of the
+area of the specks) made one, the edges in order of length, the node on more
+junction and boundary edges kept where it is unless that turns a triangle
+over (then the other one), never a node farther than that length from where
+it was, no triangle that is not flat turned over, no sheet pinched (an edge
+with three triangles of one branch more around them; away from the
+junctions and boundaries, two nodes with no other common neighbor than the
+third nodes of their two triangles), the triangles left without area or
+found twice left out; the slits closed (a hole of three
+edges and zero area: the triangle along its long edge split at its third
+node), the holes of less than a hundredth of the thickness squared filled;
+after, the surfaces of less than that removed (folds and needles). Its
+surfaces are meshed by the Frontal-Delaunay algorithm on their triangulation
+(Mesh.Algorithm 12, set on each surface), with the size map of Gmsh: the size
+of the section (the thickness if 0) is Mesh.MeshSizeMax for this mesh, the
+smaller sizes the other options ask for apply, but the sizes of the 1D mesh
+are not extended into the surfaces (Mesh.MeshSizeExtendFromBoundary 0 on each
+surface): a short curve of the MAT is no size asked for, and one 1D element of
+0.007 made a surface of size 3 refine its triangulation to 2.3 million nodes.
+
+The junctions are conforming where the extension makes them so
+(extendAllBranches): a sheet that stays (not replaced by its plane) is cut
+where the extended branches stop on it, its pieces in place of its triangles,
+so that a rib shares its vertices with the wall it stops on; a sheet that
+stays and ended on a branch now replaced by its plane (the walls of the
+Doghouse on its base, 0.01 to 0.1 mm above that plane) is prolonged across
+the plane by a strip from the edges of that junction, cut with the rest, its
+part beyond the plane left out; and the slits of the result are closed
+(closeSlits: a triangle kept whole next to one that was cut, a node of the
+cut on their common edge on one side only).
+
+A branch that is not flat is extended by a band from its free boundary that
+does not fold (extendFront, MatPipeline.h): the boundary advanced as a front,
+layer by layer, each layer the strip between the front and its smoothed
+offset, triangulated by walking along both lines with every triangle tested
+to be turned like the surface; the steps double from twice the edge length of
+the boundary up to the reach over the number of layers; the notches of the
+boundary are filled first, the points where the offset turns back are left
+out, a loop that closes is filled, and a front ends where it comes closer to
+another part of the boundary than to its own. It replaces, in Extend all at
+once and in gmshMat --extend-all, the ribbon of one row per node of the
+boundary (branchRibbon), whose rows crossed where the boundary of the MAT
+zigzags; the rows are still computed, one layer, for where each one is
+stopped. Preview and Extend, one branch at a time, still use the ribbon.
 
 From the command line, gmshMat ... --extend-all --mesh-midsurface s does the
 same (s the size, the thickness if 0) and writes DIR/midsurface_mesh.msh (MSH
-4.1: the mesh, the physical groups, the local thickness, and the discrete
-model with its triangulations, which make most of its size: it can be read
-again and meshed again) and DIR/midsurface_mesh.json.
+4.1: the mesh, the physical groups and the local thickness; the surfaces have
+no parametrization to write, so the file is the mesh only: the model is meshed
+again in the session), DIR/midsurface_mesh.json and DIR/midsurface_mesh.dat
+(PERMAS, see below).
 
-Doghouse.stp, thickness 4: 8 surfaces (8 branches), 23 curves, 9 or 10 slits
-closed, 3 holes filled, 4 surfaces of 4e-5 left out; 1341 triangles of size
-4 in 0.6 s, the model built in 3.7 s. The branches share no curve: where a
-branch stops on another one the extension does not share its vertices (the
-edges "along another branch"), so their meshes are not connected there.
+Doghouse.stp: one surface per branch (8), 46 curves of which 18 to 23 at
+junctions (the triple lines of the six ribs on the curved wall, embedded in
+it, and on the base); thickness 4: 1034 triangles, the model built in 1.6 s
+and meshed in 0.6 s; thickness 3: 1685 triangles, 2.9 s and 1.2 s. The mesh is
+one piece: the ribs share 9 to 12 nodes with the curved wall and 3 with the
+base; the walls and the base, 0.01 to 0.1 mm apart, share none.
+
+PERMAS export (.dat)
+--------------------
+
+MatPermas.{h,cpp} write a shell mesh as the PERMAS input of an industrial
+pipeline, as write_mesh_dat of thicknesses.py does, in the layout of its
+manual meshes (the same columns): the corner
+nodes of the elements ($COOR, their Gmsh numbers), the quadrangles (QUAD4)
+then the triangles (TRIA3) by element set, each element with its Gmsh number
+before its nodes, then $GEODAT SHELL with the thickness of each set, $ELPROP
+if a material is given, $END SYSTEM, $EXIT COMPONENT and $FIN. The thickness
+of an element is the mean of the thickness at its corners (the MAT local
+thickness), rounded up to a multiple of the step (Mesh.PermasThicknessStep,
+0.1 by default as range_size in thicknesses.py): the set thick_1.300 holds
+the elements of thickness in ]1.2, 1.3] and has the thickness 1.3. A
+multiple of the step up to 1e-6 relative stays in its set (the 1.1 of a
+float, 1.100000024, is not rounded up to 1.2). One set per thickness, the
+triangles and quadrangles together (thicknesses.py made one per element
+type). What thicknesses.py did not write and PERMAS needs: the number of
+each element (without it the first node is read as the number), $END
+STRUCTURE and the end keywords.
+
+With MatGmsh, .dat is this format in Gmsh (File > Export, gmsh::write, gmsh
+-o, -format dat); Tochnog stays available by choosing "Mesh - Tochnog" in
+the list of formats. The thickness is that of a view of node or element data
+on the model: the first one whose name holds "thickness", or else the first
+one; without one every element has the thickness 1, with a warning. The
+Midsurfacer makes "MAT mid-surface thickness" such a view (node data on the
+model "MAT mid-surface"), and midsurface_mesh.msh holds "MAT local
+thickness" as $NodeData, so that
+
+  gmsh midsurface_mesh.msh -save -o part.dat -setnumber Mesh.PermasThicknessStep 0.1
+
+writes the same file as gmshMat ... --mesh-midsurface s, which writes
+DIR/midsurface_mesh.dat (--dat-step, 0.1 by default; --dat-material NAME
+adds the $ELPROP lines, the material being defined in another file). A .dat
+whose first keyword is $ENTER, $STRUCTURE or $SYSTEM is read as PERMAS
+(readPermasFile): a discrete surface and a physical surface per element set,
+and a view of element data "PERMAS thickness" from $GEODAT SHELL; the other
+.dat files are read as before (ACTRAN, SAMCEF, BDF).
 
 Stage by stage in C++
 ---------------------
@@ -574,7 +656,7 @@ Validation
   cmake --build build --target MatProjectionTest MatExtensionTest \
     MatClassifierTest MatMixedFilterTest MatTerminalFilterTest \
     MatCircumcenterTest MatIntersectionTest MatSkinSitesTest \
-    MatTetInteriorTest MatCollapseTest -j 6
+    MatPermasTest MatTetInteriorTest MatCollapseTest -j 6
   ctest --test-dir build -R '^mat_native_' --output-on-failure
   python3 contrib/MatGmsh/tests/check_native_outputs.py doghouse-mat \
     --stage projected --project

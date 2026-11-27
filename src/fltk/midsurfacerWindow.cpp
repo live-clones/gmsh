@@ -1504,30 +1504,18 @@ void midsurfacerWindow::meshMidSurface()
   const bool meshed = meshMidSurfaceModel(s.mid, size, error);
   if(!FlGui::available()) return;
   if(!meshed) Msg::Error("Midsurfacer: %s", error.c_str());
-  // the local thickness at its nodes
+  // the local thickness at its nodes: node data on the model of the
+  // mid-surface, the thickness of its export as a PERMAS .dat
   std::vector<std::size_t> nodes;
   std::vector<double> values;
   midSurfaceThickness(s.mid, s.session.result().filtered, nodes, values);
-  {
-    std::map<std::size_t, std::size_t> index;
-    for(std::size_t i = 0; i < nodes.size(); i++) index[nodes[i]] = i;
-    std::vector<double> xyz;
-    std::vector<std::size_t> triangles;
-    std::vector<double> at;
-    std::map<MVertex *, std::size_t> local;
-    for(auto it = s.mid.model->firstFace(); it != s.mid.model->lastFace(); ++it)
-      for(MTriangle *tr : (*it)->triangles)
-        for(int k = 0; k < 3; k++) {
-          MVertex *v = tr->getVertex(k);
-          auto found = local.insert({v, xyz.size() / 3});
-          if(found.second) {
-            xyz.insert(xyz.end(), {v->x(), v->y(), v->z()});
-            auto i = index.find(v->getNum());
-            at.push_back(i == index.end() ? std::nan("") : values[i->second]);
-          }
-          triangles.push_back(found.first->second);
-        }
-    PView *view = nodeView(xyz, triangles, at, "MAT mid-surface thickness");
+  std::map<int, std::vector<double> > thicknessAt;
+  for(std::size_t i = 0; i < nodes.size() && i < values.size(); i++)
+    if(std::isfinite(values[i])) thicknessAt[(int)nodes[i]] = {values[i]};
+  if(!thicknessAt.empty()) {
+    PView *view = new PView("MAT mid-surface thickness", "NodeData", s.mid.model,
+                            thicknessAt, 0., 1);
+    view->getOptions()->visible = 0;
     s.tag[MeshThickness] = view->getTag();
     s.data[MeshThickness] = view->getData();
   }
@@ -1537,11 +1525,13 @@ void midsurfacerWindow::meshMidSurface()
                           size, m.surfaces, m.buildSeconds + m.meshSeconds);
   std::string more =
     text("The discrete model \"MAT mid-surface\": %zu surfaces of %zu branches, %zu "
-         "curves (%zu at junctions, %zu on the boundary), built in %.3g s; %zu slits "
+         "curves (%zu at junctions, %zu on the boundary), built in %.3g s; %zu nodes "
+         "merged into a neighbor closer than %.3g, %zu slits "
          "closed, %zu holes and %zu surfaces of less than %.3g filled and left out; "
          "meshed in %.3g s: %zu triangles, %zu nodes, %zu surfaces without triangles",
          m.surfaces, m.branches, m.curves, m.junctions, m.boundaries, m.buildSeconds,
-         m.slits, m.holes, m.specks, .01 * t * t, m.meshSeconds, m.triangles, m.nodes,
+         m.merged, m.mergeLength, m.slits, m.holes, m.specks, .01 * t * t, m.meshSeconds,
+         m.triangles, m.nodes,
          m.failed);
   if(m.branches > 1 && !m.junctions)
     more += ". The branches share no curve: where one stops on another, their "

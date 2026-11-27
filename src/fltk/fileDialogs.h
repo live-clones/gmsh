@@ -44,6 +44,7 @@ void format_cb(Fl_Widget *widget, void *data);
 int unvinpFileDialog(const char *filename, const char *title, int format);
 int keyRadFileDialog(const char *filename, const char *title, int format);
 int bdfFileDialog(const char *filename);
+int permasFileDialog(const char *filename);
 int latexFileDialog(const char *filename);
 
 #endif

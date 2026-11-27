@@ -4789,6 +4789,17 @@ double opt_mesh_scaling_factor(OPT_ARGS_NUM)
   return CTX::instance()->mesh.scalingFactor;
 }
 
+double opt_mesh_permas_thickness_step(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    if(val > 0.)
+      CTX::instance()->mesh.permasThicknessStep = val;
+    else
+      Msg::Warning("The thickness step of the PERMAS export must be positive");
+  }
+  return CTX::instance()->mesh.permasThicknessStep;
+}
+
 double opt_mesh_lc_factor(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
