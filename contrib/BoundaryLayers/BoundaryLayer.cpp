@@ -54,10 +54,33 @@ GMSH_BoundaryLayerPlugin::GMSH_BoundaryLayerPlugin()
 
 std::string GMSH_BoundaryLayerPlugin::getHelp() const
 {
-  return "Plugin(BoundaryLayer) performs magic.";
+  return "Plugin(BoundaryLayer) inserts boundary layers in an existing mesh: "
+         "layers of quadrangles along curves in a 2D mesh, or of prisms and "
+         "hexahedra along surfaces in a 3D mesh. The elements around the "
+         "layers are moved to make room for them.\n\n"
+         "In 3D the walls are the surfaces `Surfaces' of the volumes "
+         "`Volumes'. If `Volumes' is empty the mesh is 2D, and the walls are "
+         "the curves `Curves' of the surfaces `Surfaces'. A wall can be on "
+         "the boundary, between two volumes (or surfaces) or embedded: in the "
+         "last two cases it gets layers on both sides.\n\n"
+         "`Size' is the height of the first layer, `Ratio' the ratio between "
+         "the heights of two successive layers and `Thickness' the total "
+         "thickness. The thickness is reduced where the layers would not "
+         "fit, e.g. in a gap between two walls, and is never exceeded. The "
+         "first `NumExactLayers' layers keep the requested heights as long "
+         "as the reduced thickness allows (if negative, that fraction of the "
+         "layers: -2 for half of them); the others are reduced.\n\n"
+         "`SmoothingLayers' is the number of rings of elements around the "
+         "layers that are moved.\n\n"
+         "If `HighOrder' is larger than 1 the layers are curved to that "
+         "order (only order 2 for now): with `HighOrderStrategy' = 1 the "
+         "layers are split then curved, with 2 they are curved then split; "
+         "`HighOrderPostSplitUntangle' untangles the volume mesh again after "
+         "the split.\n\n"
+         "`Points' is not used yet.";
 }
 
-static double triangle_area_2d(std::array<double, 2> a, std::array<double, 2> b,
+static double triangleArea2D(std::array<double, 2> a, std::array<double, 2> b,
                                std::array<double, 2> c)
 {
   return .5 * ((b[1] - a[1]) * (b[0] + a[0]) + (c[1] - b[1]) * (c[0] + b[0]) +
@@ -83,7 +106,7 @@ inline std::array<double, 3> cross(const std::array<double, 3> &u,
           u[0] * v[1] - u[1] * v[0]};
 }
 
-inline double tet_volume(const std::array<double, 3> &a,
+inline double tetVolume(const std::array<double, 3> &a,
                          const std::array<double, 3> &b,
                          const std::array<double, 3> &c,
                          const std::array<double, 3> &d)
@@ -152,11 +175,49 @@ struct LayerColumns {
 // the order of their nodes
 typedef std::map<MElement *, LayerColumns> PinchMap;
 
-static bool getLayerColumns(MElement *e, const PinchMap &pinched,
+// A column of the layers, from a wall node to its spawned node. The cosine is
+// the largest one between the column and the normals of the wall elements
+// around it, so that the height of the column above the wall is its length
+// times the cosine.
+struct Column {
+  MVertex *wall = nullptr;
+  double cosine = 0.;
+};
+
+// Everything known about the layers while they are built
+struct LayerData {
+  // the layer elements, with the thickness requested when they were inserted,
+  // then the height of their layer once the columns are split
+  std::map<MElement *, double> elements;
+  // those that lost nodes, and the wall nodes without any spawned node
+  PinchMap pinched;
+  std::set<MVertex *> pinchedNodes;
+  // target thickness of each wall node
+  std::map<MVertex *, double> wallThickness;
+  // the columns, by the node at their top
+  std::map<MVertex *, Column> columns;
+  // nodes moved so far: the elements around them must be untangled
+  std::set<MVertex *> moved;
+  // shape of the elements before the insertion, which the elements outside
+  // the layers try to keep: in the parametric plane of their surface (and
+  // mirrored if the mesh of the surface is negative there) or in space
+  std::map<MElement *, std::array<std::array<double, 2>, 4>> shapes2D;
+  std::map<MElement *, std::array<std::array<double, 3>, 8>> shapes3D;
+
+  bool has(MElement *e) const { return elements.find(e) != elements.end(); }
+  double thicknessAt(MVertex *v, double defaultValue) const
+  {
+    auto it = wallThickness.find(v);
+    return it != wallThickness.end() ? it->second : defaultValue;
+  }
+};
+
+
+static bool getLayerColumns(MElement *e, const LayerData &data,
                             LayerColumns &lc)
 {
-  auto it = pinched.find(e);
-  if(it != pinched.end()) {
+  auto it = data.pinched.find(e);
+  if(it != data.pinched.end()) {
     lc = it->second;
     return true;
   }
@@ -256,21 +317,20 @@ static MElement *addLayerElement(GRegion *gr, const LayerColumns &lc)
 }
 
 static void addLayerElement(GEntity *ge, const LayerColumns &lc, double thickness,
-                            std::map<MElement *, double> &layers,
-                            PinchMap &pinched)
+                            LayerData &data)
 {
   MElement *e = (lc.n == 2) ? addLayerElement(static_cast<GFace *>(ge), lc) :
                               addLayerElement(static_cast<GRegion *>(ge), lc);
   if(!e) return;
-  layers[e] = thickness;
-  if(lc.numTops() < lc.n) pinched[e] = lc;
+  data.elements[e] = thickness;
+  if(lc.numTops() < lc.n) data.pinched[e] = lc;
 }
 
 // Split a pinched triangle along its only column, given from the wall
 // outwards: a fan of triangles around the pinched node
 static void splitPinchedTriangle(GFace *gf, MElement *t,
                                  const std::vector<MVertex *> &column,
-                                 std::map<MElement *, double> &layers,
+                                 LayerData &data,
                                  const std::vector<double> &widths)
 {
   int k = 0;
@@ -293,14 +353,14 @@ static void splitPinchedTriangle(GFace *gf, MElement *t,
       gf->triangles.push_back(new MTriangle(apex, a, b));
       e = gf->triangles.back();
     }
-    layers[e] = s < widths.size() ? widths[s] : widths.back();
+    data.elements[e] = s < widths.size() ? widths[s] : widths.back();
   }
 }
 
 static void
-replaceFaces(GModel *gm,
+splitSideElements(GModel *gm,
              std::map<MEdge, std::vector<MVertex *>, MEdgeLessThan> &split,
-             std::map<MElement *, double> &layers,
+             LayerData &data,
              const std::vector<double> &widths)
 {
   for(GModel::fiter fit = gm->firstFace(); fit != gm->lastFace(); ++fit) {
@@ -309,11 +369,11 @@ replaceFaces(GModel *gm,
     // pinched layer elements
     std::vector<MTriangle *> triangles = gf->triangles;
     for(auto t : triangles) {
-      if(layers.find(t) == layers.end()) continue;
+      if(data.elements.find(t) == data.elements.end()) continue;
       for(int i = 0; i < 3; i++) {
         auto it = split.find(t->getEdge(i));
         if(it == split.end()) continue;
-        splitPinchedTriangle(gf, t, it->second, layers, widths);
+        splitPinchedTriangle(gf, t, it->second, data, widths);
         break;
       }
     }
@@ -321,7 +381,7 @@ replaceFaces(GModel *gm,
     std::vector<MQuadrangle *> newVec;
     for(auto q : gf->quadrangles) {
       bool found = false;
-      auto itLayer = layers.find(q);
+      auto itLayer = data.elements.find(q);
       // edges i and i + 2 are opposite: i = 2 and 3 would split the quad again,
       // reversed
       for(size_t i = 0; i < 2 && !found; i++) {
@@ -344,14 +404,14 @@ replaceFaces(GModel *gm,
               new MQuadrangle(c0[j], c1[j], c1[j + 1], c0[j + 1]);
             for(int k = 0; k < 4; ++k) classifyVertexOnFace(gf, nq->getVertex(k));
             newVec.push_back(nq);
-            if(itLayer != layers.end())
-              layers[nq] = j < widths.size() ? widths[j] : itLayer->second;
+            if(itLayer != data.elements.end())
+              data.elements[nq] = j < widths.size() ? widths[j] : itLayer->second;
           }
           found = true;
         }
       }
       if(found) {
-        if(itLayer != layers.end()) layers.erase(itLayer);
+        if(itLayer != data.elements.end()) data.elements.erase(itLayer);
         delete q;
       }
       else
@@ -362,7 +422,7 @@ replaceFaces(GModel *gm,
 }
 
 static void
-replaceEdges(GModel *gm,
+splitSideLines(GModel *gm,
              std::map<MEdge, std::vector<MVertex *>, MEdgeLessThan> &split)
 {
   for(GModel::eiter eit = gm->firstEdge(); eit != gm->lastEdge(); ++eit) {
@@ -376,8 +436,6 @@ replaceEdges(GModel *gm,
     auto it1 = split.find(m1);
 
     if(it0 != split.end()) {
-      //      printf("coucou %d
-      //      %d\n",ge->tag(),l0->getVertex(0)->onWhat()->dim());
       std::vector<MLine *> old = ge->lines;
       ge->lines.clear();
       for(size_t j = 0; j < it0->second.size() - 1; j++)
@@ -386,8 +444,6 @@ replaceEdges(GModel *gm,
       delete old.front();
     }
     if(it1 != split.end()) {
-      //      	printf("poucou %d
-      //      %d\n",ge->tag(),l1->getVertex(0)->onWhat()->dim());
       // the last line goes from the spawned node to the model point: the
       // split nodes are stored from the model point outwards
       size_t s = it1->second.size();
@@ -520,9 +576,8 @@ namespace {
 static bool insertLayers(GModel *m, int dim, const std::vector<GEntity *> &domains,
                          const std::set<GEntity *, GEntityPtrLessThan> &walls,
                          double thickness,
-                         std::map<MElement *, double> &layers,
-                         std::vector<GFace *> &sideSurfaces, PinchMap &pinched,
-                         std::set<MVertex *> &pinchedNodes)
+                         LayerData &data,
+                         std::vector<GFace *> &sideSurfaces)
 {
   // facets, nodes and (in 3D) edges of the walls
   std::map<FacetKey, MElement *> wallFacets;
@@ -937,10 +992,10 @@ static bool insertLayers(GModel *m, int dim, const std::vector<GEntity *> &domai
         spawned[c.v] = false;
     }
     for(const auto &sp : spawned)
-      if(!sp.second) pinchedNodes.insert(sp.first);
-    if(!pinchedNodes.empty())
+      if(!sp.second) data.pinchedNodes.insert(sp.first);
+    if(!data.pinchedNodes.empty())
       Msg::Info("Boundary layer: layers pinched at %zu wall node(s)",
-                pinchedNodes.size());
+                data.pinchedNodes.size());
   }
   for(auto gf : sharedSurfaces)
     Msg::Warning("Boundary layer: the layers end on surface %d, shared with a "
@@ -975,9 +1030,9 @@ static bool insertLayers(GModel *m, int dim, const std::vector<GEntity *> &domai
     }
   }
   for(auto &ne : newElements)
-    addLayerElement(ne.ge, ne.lc, thickness, layers, pinched);
+    addLayerElement(ne.ge, ne.lc, thickness, data);
   for(auto &ne : newSideElements) {
-    addLayerElement(ne.ge, ne.lc, thickness, layers, pinched);
+    addLayerElement(ne.ge, ne.lc, thickness, data);
     GFace *gf = static_cast<GFace *>(ne.ge);
     if(std::find(sideSurfaces.begin(), sideSurfaces.end(), gf) ==
        sideSurfaces.end())
@@ -1001,10 +1056,9 @@ namespace {
   static void
   buildUntangleSets(GEntityT *ge,
                     int targetDim, // 2 for faces, 3 for regions
-                    const std::map<MElement *, double> &layers,
+                    const LayerData &data,
                     size_t nRings, // how many adjacency expansions
                     // nodes already moved on lower-dimensional entities
-                    const std::set<MVertex *> &moved,
                     std::set<MElement *, MElementPtrLessThan> &toProcess,
                     std::set<MVertex *, MVertexPtrLessThan> &fixed)
   {
@@ -1014,10 +1068,10 @@ namespace {
     // were moved on the boundary: the elements around them must follow
     for(std::size_t i = 0; i < ge->getNumMeshElements(); ++i) {
       MElement *e = ge->getMeshElement(i);
-      bool inLayer = (layers.find(e) != layers.end());
+      bool inLayer = (data.elements.find(e) != data.elements.end());
       for(size_t j = 0; j < e->getNumVertices(); ++j) {
         MVertex *v = e->getVertex(j);
-        if(inLayer || moved.find(v) != moved.end()) touched.insert(v);
+        if(inLayer || data.moved.find(v) != data.moved.end()) touched.insert(v);
       }
     }
 
@@ -1050,6 +1104,42 @@ namespace {
       for(size_t j = 0; j < e->getNumVertices(); ++j) {
         MVertex *v = e->getVertex(j);
         if(v->onWhat()->dim() != targetDim) fixed.insert(v);
+      }
+    }
+  }
+
+  // The part of the mesh of a surface or of a volume that is untangled: the
+  // layers and the rings of elements around them
+  struct UntangleSet {
+    std::set<MElement *, MElementPtrLessThan> elements;
+    std::vector<MVertex *> nodes; // node i has index i
+    std::vector<bool> locked;
+  };
+
+  template <class GEntityT>
+  static void buildUntangleSet(GEntityT *ge, int dim, const LayerData &data,
+                               std::size_t numRings, bool lockLayers,
+                               UntangleSet &set)
+  {
+    std::set<MVertex *, MVertexPtrLessThan> fixed;
+    buildUntangleSets(ge, dim, data, numRings, set.elements, fixed);
+
+    std::set<MVertex *, MVertexPtrLessThan> nodes;
+    for(auto e : set.elements)
+      for(std::size_t j = 0; j < e->getNumVertices(); j++)
+        nodes.insert(e->getVertex(j));
+    for(auto v : nodes) {
+      v->setIndex((int)set.nodes.size());
+      set.nodes.push_back(v);
+      set.locked.push_back(fixed.find(v) != fixed.end());
+    }
+    // second pass, once the columns have been cut back: the layers stay in
+    // place and only the elements around them are untangled
+    if(lockLayers) {
+      for(auto e : set.elements) {
+        if(!data.has(e)) continue;
+        for(std::size_t j = 0; j < e->getNumVertices(); j++)
+          set.locked[e->getVertex(j)->getIndex()] = true;
       }
     }
   }
@@ -1264,8 +1354,8 @@ static bool isPositive(GRegion *gr)
     std::array<double, 3> p[4];
     for(int k = 0; k < 4; k++)
       p[k] = {t->getVertex(k)->x(), t->getVertex(k)->y(), t->getVertex(k)->z()};
-    // tet_volume() has the sign of the untangler, opposite to the one of Gmsh
-    volume -= tet_volume(p[0], p[1], p[2], p[3]);
+    // tetVolume() has the sign of the untangler, opposite to the one of Gmsh
+    volume -= tetVolume(p[0], p[1], p[2], p[3]);
   }
   return volume >= 0.;
 }
@@ -1298,11 +1388,11 @@ static SVector3 parametricNormal(GFace *gf, const SPoint2 &param)
 
 // +1 if the elements of the surface are oriented as its normal, -1 otherwise
 static double meshOrientation(GFace *gf,
-                              const std::map<MElement *, double> &layers)
+                              const LayerData &data)
 {
   for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
     MElement *e = gf->getMeshElement(i);
-    if(e->getDim() != 2 || layers.find(e) != layers.end()) continue;
+    if(e->getDim() != 2 || data.elements.find(e) != data.elements.end()) continue;
     SVector3 n = crossprod(
       SVector3(e->getVertex(0)->point(), e->getVertex(1)->point()),
       SVector3(e->getVertex(0)->point(), e->getVertex(2)->point()));
@@ -1331,16 +1421,15 @@ static bool wallNormal(GFace *gf, const LayerColumns &lc, double orientation,
 }
 
 static void addWallElements(GRegion *gr,
-                            const std::map<MElement *, double> &layers,
-                            const PinchMap &pinched, WallData &wall)
+                            const LayerData &data, WallData &wall)
 {
   bool positive = isPositive(gr);
   for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
     MElement *e = gr->getMeshElement(i);
-    if(layers.find(e) == layers.end()) continue;
+    if(data.elements.find(e) == data.elements.end()) continue;
     LayerColumns lc;
     SVector3 normal;
-    if(!getLayerColumns(e, pinched, lc) || !wallNormal(lc, positive, normal))
+    if(!getLayerColumns(e, data, lc) || !wallNormal(lc, positive, normal))
       continue;
     for(std::size_t j = 0; j < lc.n; j++) {
       wall.samples.push_back({lc.wall[j], normal, SVector3()});
@@ -1374,16 +1463,15 @@ static void addBoundaryPieces(GFace *gf, bool isWall, WallData &wall)
 }
 
 static void addWallElements(GFace *gf,
-                            const std::map<MElement *, double> &layers,
-                            const PinchMap &pinched, WallData &wall)
+                            const LayerData &data, WallData &wall)
 {
-  double orientation = meshOrientation(gf, layers);
+  double orientation = meshOrientation(gf, data);
   for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
     MElement *e = gf->getMeshElement(i);
-    if(layers.find(e) == layers.end()) continue;
+    if(data.elements.find(e) == data.elements.end()) continue;
     LayerColumns lc;
     SVector3 normal, surfaceNormal;
-    if(!getLayerColumns(e, pinched, lc) ||
+    if(!getLayerColumns(e, data, lc) ||
        !wallNormal(gf, lc, orientation, normal, surfaceNormal))
       continue;
     for(int j = 0; j < 2; j++)
@@ -1412,28 +1500,27 @@ static void addBoundaryPieces(GEdge *ge, bool isWall, WallData &wall)
 // for now: a thickness depending on the position, e.g. proportional to the
 // size of the wall elements, only has to be set here.
 static void computeWallThickness(const WallData &wall, double thickness,
-                                 const std::set<MVertex *> &pinchedNodes,
-                                 std::map<MVertex *, double> &wallThickness)
+                                 LayerData &data)
 {
-  for(const auto &sample : wall.samples) wallThickness[sample.v] = thickness;
+  for(const auto &sample : wall.samples) data.wallThickness[sample.v] = thickness;
   double maxThickness = 0.;
-  for(const auto &t : wallThickness)
+  for(const auto &t : data.wallThickness)
     maxThickness = std::max(maxThickness, t.second);
 
-  limitThicknessToGaps(wall, maxThickness, wallThickness);
-  for(auto &t : wallThickness)
+  limitThicknessToGaps(wall, maxThickness, data.wallThickness);
+  for(auto &t : data.wallThickness)
     t.second = std::max(t.second, thicknessFloor * thickness);
   // no thickness where the layers are pinched: the smoothing tapers the
   // layers towards those nodes
-  for(auto v : pinchedNodes) {
-    auto it = wallThickness.find(v);
-    if(it != wallThickness.end()) it->second = 0.;
+  for(auto v : data.pinchedNodes) {
+    auto it = data.wallThickness.find(v);
+    if(it != data.wallThickness.end()) it->second = 0.;
   }
-  smoothThickness(wall, wallThickness);
+  smoothThickness(wall, data.wallThickness);
 
   std::size_t numReduced = 0;
   double minThickness = maxThickness;
-  for(const auto &t : wallThickness) {
+  for(const auto &t : data.wallThickness) {
     if(t.second <= 0.) continue;
     if(t.second < thickness * (1. - 1.e-9)) numReduced++;
     minThickness = std::min(minThickness, t.second);
@@ -1441,14 +1528,7 @@ static void computeWallThickness(const WallData &wall, double thickness,
   if(numReduced)
     Msg::Info("Boundary layer: thickness reduced on %zu of %zu wall nodes, in "
               "gaps or towards pinched nodes (smallest: %g)",
-              numReduced, wallThickness.size(), minThickness);
-}
-
-static double thicknessAt(const std::map<MVertex *, double> &wallThickness,
-                          MVertex *v, double defaultValue)
-{
-  auto it = wallThickness.find(v);
-  return it != wallThickness.end() ? it->second : defaultValue;
+              numReduced, data.wallThickness.size(), minThickness);
 }
 
 // Move node top at the given fraction of the column going from the wall node
@@ -1485,22 +1565,13 @@ static void moveOnColumn(MVertex *wallNode, MVertex *top, double fraction)
   }
 }
 
-// A column of the layers, from a wall node to its spawned node. The cosine is
-// the largest one between the column and the normals of the wall elements
-// around it, so that the height of the column above the wall is its length
-// times the cosine.
-struct Column {
-  MVertex *wall = nullptr;
-  double cosine = 0.;
-};
-
-static void addColumn(std::map<MVertex *, Column> &columns, MVertex *wallNode,
+static void addColumn(LayerData &data, MVertex *wallNode,
                       MVertex *top, const SVector3 &normal)
 {
   SVector3 d(wallNode->point(), top->point());
   double l = d.norm();
   double c = (l > 0.) ? std::abs(dot(d, normal)) / l : 1.;
-  Column &column = columns[top];
+  Column &column = data.columns[top];
   column.wall = wallNode;
   column.cosine = std::max(column.cosine, c);
 }
@@ -1508,21 +1579,19 @@ static void addColumn(std::map<MVertex *, Column> &columns, MVertex *wallNode,
 // Cut back the columns classified on the entity that are higher than the
 // target thickness of their wall node. Return the number of columns cut.
 static std::size_t
-clampColumns(GEntity *ge, std::map<MVertex *, Column> &columns,
-             const std::map<MVertex *, double> &wallThickness,
-             std::set<MVertex *> &moved)
+clampColumns(GEntity *ge, LayerData &data)
 {
   std::size_t numClamped = 0;
-  for(auto &c : columns) {
+  for(auto &c : data.columns) {
     MVertex *top = c.first;
     if(top->onWhat() != ge) continue;
-    auto it = wallThickness.find(c.second.wall);
-    if(it == wallThickness.end()) continue;
+    auto it = data.wallThickness.find(c.second.wall);
+    if(it == data.wallThickness.end()) continue;
     double l = top->distance(c.second.wall);
     double maxLength = it->second / std::max(c.second.cosine, 0.1);
     if(l > maxLength * (1. + 1.e-6)) {
       moveOnColumn(c.second.wall, top, maxLength / l);
-      moved.insert(top);
+      data.moved.insert(top);
       numClamped++;
     }
   }
@@ -1530,39 +1599,35 @@ clampColumns(GEntity *ge, std::map<MVertex *, Column> &columns,
 }
 
 static void collectColumns(GRegion *gr,
-                           const std::map<MElement *, double> &layers,
-                           const PinchMap &pinched,
-                           std::map<MVertex *, Column> &columns)
+                           LayerData &data)
 {
   bool positive = isPositive(gr);
   for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
     MElement *e = gr->getMeshElement(i);
-    if(layers.find(e) == layers.end()) continue;
+    if(data.elements.find(e) == data.elements.end()) continue;
     LayerColumns lc;
     SVector3 normal;
-    if(!getLayerColumns(e, pinched, lc) || !wallNormal(lc, positive, normal))
+    if(!getLayerColumns(e, data, lc) || !wallNormal(lc, positive, normal))
       continue;
     for(std::size_t j = 0; j < lc.n; j++)
-      if(lc.top[j]) addColumn(columns, lc.wall[j], lc.top[j], normal);
+      if(lc.top[j]) addColumn(data, lc.wall[j], lc.top[j], normal);
   }
 }
 
 static void collectColumns(GFace *gf,
-                           const std::map<MElement *, double> &layers,
-                           const PinchMap &pinched,
-                           std::map<MVertex *, Column> &columns)
+                           LayerData &data)
 {
-  double orientation = meshOrientation(gf, layers);
+  double orientation = meshOrientation(gf, data);
   for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
     MElement *e = gf->getMeshElement(i);
-    if(layers.find(e) == layers.end()) continue;
+    if(data.elements.find(e) == data.elements.end()) continue;
     LayerColumns lc;
     SVector3 normal, surfaceNormal;
-    if(!getLayerColumns(e, pinched, lc) ||
+    if(!getLayerColumns(e, data, lc) ||
        !wallNormal(gf, lc, orientation, normal, surfaceNormal))
       continue;
     for(int j = 0; j < 2; j++)
-      if(lc.top[j]) addColumn(columns, lc.wall[j], lc.top[j], normal);
+      if(lc.top[j]) addColumn(data, lc.wall[j], lc.top[j], normal);
   }
 }
 
@@ -1644,285 +1709,206 @@ struct LayerLaw {
   }
 };
 
-static bool expandBL(
-  GFace *gf,
-  std::map<MElement *, std::array<std::array<double, 2>, 4>> &perfectShapes,
-  std::map<MElement *, double> &layers, std::vector<GFace *> &inSurfaces,
-  size_t nRings, std::set<MVertex *> &moved,
-  const std::map<MVertex *, double> &wallThickness, const PinchMap &pinched,
-  bool lockLayers = false)
+// ---------------------------------------------------------------------------
+// Inflation of the layers
+//
+// The layers and the rings of elements around them are untangled: the ideal
+// shape of a layer element has the target thickness of its wall nodes, the
+// ideal shape of the other elements is their initial one. The nodes on the
+// boundary of the surface or of the volume do not move: curves are done
+// first, then surfaces, then volumes.
+// ---------------------------------------------------------------------------
+
+// Ideal position, in the parametric plane of the surface, of the two wall
+// nodes of a layer element and of the nodes at the top of their columns. For a
+// plane surface a local frame is used, with the wall edge along the first
+// axis.
+struct LayerCorners {
+  std::array<double, 2> wall[2], top[2];
+};
+
+static LayerCorners idealLayerCorners(GFace *gf, double area, MVertex *w0,
+                                      MVertex *w1, double thickness0,
+                                      double thickness1)
 {
-  //  printf("layer size %zu\n",layers.size());
-  //  std::vector<double> areas;
+  LayerCorners c;
+  double dx = distance(w0, w1);
+  c.wall[0] = {0., 0.};
+  c.wall[1] = {dx, 0.};
+  c.top[1] = {dx, thickness1};
+  c.top[0] = {0., thickness0};
+  if(gf->geomType() == GEntity::Plane) return c;
 
-  std::set<MElement *, MElementPtrLessThan> toProcess;
-  std::set<MVertex *, MVertexPtrLessThan> fixed;
-  buildUntangleSets(gf, /*targetDim=*/2, layers, nRings, moved, toProcess, fixed);
-
-  // nodes, and orientation of the elements in the parametric plane
-  std::vector<std::array<double, 2>> points;
-  std::vector<std::array<uint32_t, 3>> triangles;
-  std::vector<bool> locked;
-  std::set<MVertex *, MVertexPtrLessThan> verts;
-
-  for(auto e : toProcess) {
-    for(size_t j = 0; j < e->getNumVertices(); j++)
-      verts.insert(e->getVertex(j));
+  SPoint2 param0, param1;
+  if(!reparamOnFace(w0, gf, param0) || !reparamOnFace(w1, gf, param1)) return c;
+  SPoint3 point0 = w0->point();
+  SPoint3 point1 = w1->point();
+  SVector3 edgeDirection(point0, point1);
+  if(edgeDirection.norm() <= 0.) return c;
+  edgeDirection.normalize();
+  SVector3 layerDirection0 = crossprod(gf->normal(param0), edgeDirection);
+  SVector3 layerDirection1 = crossprod(gf->normal(param1), edgeDirection);
+  if(layerDirection0.norm() <= 0. || layerDirection1.norm() <= 0.) return c;
+  layerDirection0.normalize();
+  layerDirection1.normalize();
+  // the layer lies on the side of the wall that gives the element the
+  // orientation of the other elements in the parametric plane, whatever the
+  // orientation of the normal
+  for(double side : {1., -1.}) {
+    SPoint3 query0 = point0 + layerDirection0 * (side * thickness0);
+    SPoint3 query1 = point1 + layerDirection1 * (side * thickness1);
+    double guess0[2] = {param0.x(), param0.y()};
+    double guess1[2] = {param1.x(), param1.y()};
+    GPoint closest0 = gf->closestPoint(query0, guess0);
+    GPoint closest1 = gf->closestPoint(query1, guess1);
+    c.wall[0] = {param0.x(), param0.y()};
+    c.wall[1] = {param1.x(), param1.y()};
+    c.top[1] = {closest1.u(), closest1.v()};
+    c.top[0] = {closest0.u(), closest0.v()};
+    if(triangleArea2D(c.wall[0], c.wall[1], c.top[1]) * area > 0.) break;
   }
+  return c;
+}
 
-  int index = 0;
-  for(auto v : verts) {
-    v->setIndex(index++);
-    if(fixed.find(v) == fixed.end())
-      locked.push_back(false);
+// When three nodes of a layer quad are on the boundary of the surface, its
+// ideal shape is the parallelogram they define
+static void useBoundaryParallelogram(GFace *gf, MElement *e, LayerCorners &c)
+{
+  // the nodes of the quad, in order
+  std::array<double, 2> *corner[4] = {&c.wall[0], &c.wall[1], &c.top[1],
+                                      &c.top[0]};
+  std::array<double, 2> boundaryParam[4];
+  int numBoundaryVertices = 0, freeVertex = -1;
+  for(int j = 0; j < 4; j++) {
+    if(e->getVertex(j)->onWhat()->dim() < 2) {
+      SPoint2 param;
+      if(reparamOnFace(e->getVertex(j), gf, param)) {
+        boundaryParam[j] = {param.x(), param.y()};
+        numBoundaryVertices++;
+      }
+    }
     else
-      locked.push_back(true);
+      freeVertex = j;
+  }
+  if(numBoundaryVertices != 3 || freeVertex < 0) return;
+  for(int j = 0; j < 4; j++)
+    if(j != freeVertex) *corner[j] = boundaryParam[j];
+  // the free corner closes the parallelogram: next + previous - opposite
+  const std::array<double, 2> &next = *corner[(freeVertex + 1) % 4];
+  const std::array<double, 2> &opposite = *corner[(freeVertex + 2) % 4];
+  const std::array<double, 2> &previous = *corner[(freeVertex + 3) % 4];
+  *corner[freeVertex] = {next[0] + previous[0] - opposite[0],
+                         next[1] + previous[1] - opposite[1]};
+}
 
+// Ideal shape of a layer element of a surface, positively oriented: mirrored,
+// as the nodes of the elements are, when the mesh of the surface is negative
+// in the parametric plane
+static bool idealLayerShape(GFace *gf, MElement *e, const LayerData &data,
+                            double area, double thickness,
+                            std::array<std::array<double, 2>, 4> &vs)
+{
+  LayerColumns lc;
+  if(!getLayerColumns(e, data, lc) || lc.n != 2) {
+    Msg::Error("Boundary layer: unknown layer element %zu", e->getNum());
+    return false;
+  }
+  LayerCorners c =
+    idealLayerCorners(gf, area, lc.wall[0], lc.wall[1],
+                      data.thicknessAt(lc.wall[0], thickness),
+                      data.thicknessAt(lc.wall[1], thickness));
+  if(e->getNumVertices() == 4) {
+    useBoundaryParallelogram(gf, e, c);
+    vs = {c.wall[0], c.wall[1], c.top[1], c.top[0]};
+    if(triangleArea2D(vs[0], vs[1], vs[2]) < 0.) {
+      std::swap(vs[0], vs[1]);
+      std::swap(vs[2], vs[3]);
+    }
+  }
+  else {
+    // pinched: the quad it would have been, without the node missing at the
+    // top of one of its columns
+    for(int k = 0; k < 3; k++) {
+      MVertex *v = e->getVertex(k);
+      vs[k] = (v == lc.wall[0]) ? c.wall[0] :
+              (v == lc.wall[1]) ? c.wall[1] :
+              (v == lc.top[0])  ? c.top[0] :
+                                  c.top[1];
+    }
+    double a = triangleArea2D(vs[0], vs[1], vs[2]);
+    if((area > 0) ? (a < 0) : (a > 0))
+      for(int k = 0; k < 3; k++) vs[k][0] = -vs[k][0];
+    if(area <= 0) std::swap(vs[0], vs[1]);
+  }
+  return true;
+}
+
+// Inflate the layers of a surface, in its parametric plane. With lockLayers
+// the layers stay in place and only the elements around them are untangled.
+static bool inflateLayers(GFace *gf, LayerData &data, std::size_t numRings,
+                          bool lockLayers = false)
+{
+  UntangleSet set;
+  buildUntangleSet(gf, 2, data, numRings, lockLayers, set);
+
+  std::vector<std::array<double, 2>> points;
+  for(auto v : set.nodes) {
     SPoint2 param;
     reparamOnFace(v, gf, param);
     points.push_back({param.x(), param.y()});
   }
-  // second pass, once the columns have been cut back: the layers stay in
-  // place and only the elements around them are untangled
-  if(lockLayers) {
-    for(auto e : toProcess) {
-      if(layers.find(e) == layers.end()) continue;
-      for(size_t j = 0; j < e->getNumVertices(); j++)
-        locked[e->getVertex(j)->getIndex()] = true;
-    }
-  }
-  // int tricount = 0;
+
+  // orientation of the elements in the parametric plane
   double area = 0.0;
-  for(auto e : toProcess) {
-    uint32_t a = (uint32_t)e->getVertex(0)->getIndex();
-    uint32_t b = (uint32_t)e->getVertex(1)->getIndex();
-    uint32_t c = (uint32_t)e->getVertex(2)->getIndex();
-    std::array<double, 2> pa = points[a];
-    std::array<double, 2> pb = points[b];
-    std::array<double, 2> pc = points[c];
-    area += triangle_area_2d(pa, pb, pc);
-    if(e->getNumVertices() == 4) {
-      uint32_t d = (uint32_t)e->getVertex(3)->getIndex();
-      std::array<double, 2> pd = points[d];
-      area += triangle_area_2d(pa, pc, pd);
-    }
+  for(auto e : set.elements) {
+    const std::array<double, 2> &pa = points[e->getVertex(0)->getIndex()];
+    const std::array<double, 2> &pb = points[e->getVertex(1)->getIndex()];
+    const std::array<double, 2> &pc = points[e->getVertex(2)->getIndex()];
+    area += triangleArea2D(pa, pb, pc);
+    if(e->getNumVertices() == 4)
+      area += triangleArea2D(pa, pc, points[e->getVertex(3)->getIndex()]);
   }
 
-  // Ideal position, in the parametric plane, of the two wall nodes of a layer
-  // element and of the nodes at the top of their columns
-  auto layerCorners = [&](MVertex *w0, MVertex *w1, double thickness0,
-                          double thickness1,
-                          std::array<double, 2> &perfectEdge0,
-                          std::array<double, 2> &perfectEdge1,
-                          std::array<double, 2> &perfectLayer1,
-                          std::array<double, 2> &perfectLayer0) {
-    double dx = distance(w0, w1);
-    perfectEdge0 = {0., 0.};
-    perfectEdge1 = {dx, 0.};
-    perfectLayer1 = {dx, thickness1};
-    perfectLayer0 = {0., thickness0};
-
-    if(gf->geomType() != GEntity::Plane) {
-      SPoint2 paramEdge0, paramEdge1;
-      bool haveParamEdge0 =
-        reparamOnFace(w0, gf, paramEdge0);
-      bool haveParamEdge1 =
-        reparamOnFace(w1, gf, paramEdge1);
-      if(haveParamEdge0 && haveParamEdge1) {
-        SPoint3 pointEdge0 = w0->point();
-        SPoint3 pointEdge1 = w1->point();
-        SVector3 edgeDirection(pointEdge0, pointEdge1);
-        double edgeLength = edgeDirection.norm();
-        if(edgeLength > 0.) {
-          edgeDirection.normalize();
-          SVector3 normalAtEdge0 = gf->normal(paramEdge0);
-          SVector3 normalAtEdge1 = gf->normal(paramEdge1);
-          SVector3 layerDirection0 =
-            crossprod(normalAtEdge0, edgeDirection);
-          SVector3 layerDirection1 =
-            crossprod(normalAtEdge1, edgeDirection);
-          if(layerDirection0.norm() > 0. && layerDirection1.norm() > 0.) {
-            layerDirection0.normalize();
-            layerDirection1.normalize();
-            // the layer lies on the side of the wall that gives the quad
-            // the orientation of the other elements in the parametric
-            // plane, whatever the orientation of the normal
-            for(double side : {1., -1.}) {
-              SPoint3 queryLayer0 =
-                pointEdge0 + layerDirection0 * (side * thickness0);
-              SPoint3 queryLayer1 =
-                pointEdge1 + layerDirection1 * (side * thickness1);
-              double guess0[2] = {paramEdge0.x(), paramEdge0.y()};
-              double guess1[2] = {paramEdge1.x(), paramEdge1.y()};
-              GPoint closestLayer0 = gf->closestPoint(queryLayer0, guess0);
-              GPoint closestLayer1 = gf->closestPoint(queryLayer1, guess1);
-              perfectEdge0 = {paramEdge0.x(), paramEdge0.y()};
-              perfectEdge1 = {paramEdge1.x(), paramEdge1.y()};
-              perfectLayer1 = {closestLayer1.u(), closestLayer1.v()};
-              perfectLayer0 = {closestLayer0.u(), closestLayer0.v()};
-              if(triangle_area_2d(perfectEdge0, perfectEdge1,
-                                  perfectLayer1) * area > 0.)
-                break;
-            }
-          }
-        }
-      }
-    }
-  };
-
-  std::vector<std::array<std::array<double, 2>, 3>> sh;
-  for(auto e : toProcess) {
-    //    printf("%zu %zu\n",i,gf->getNumMeshElements());
-    //    MElement *e = gf->getMeshElement(i);
-
+  // The ideal shape of each element and its nodes are split in the same
+  // triangles (a double covering for quads), positive for the untangler: the
+  // first two nodes are swapped when the mesh is negative.
+  std::vector<std::array<std::array<double, 2>, 3>> ideal;
+  std::vector<std::array<uint32_t, 3>> triangles;
+  std::vector<double> sizeWeight;
+  for(auto e : set.elements) {
     std::array<std::array<double, 2>, 4> vs;
-
-    auto it = layers.find(e);
-
-    if(e->getNumVertices() == 3) {
-      if(it != layers.end()) {
-        // pinched layer element: the quad it would have been, without the
-        // node missing at the top of one of its columns
-        LayerColumns lc;
-        if(!getLayerColumns(e, pinched, lc) || lc.n != 2) {
-          Msg::Error("Boundary layer: unknown layer triangle %zu", e->getNum());
-          return false;
-        }
-        std::array<double, 2> edge0, edge1, layer1, layer0;
-        layerCorners(lc.wall[0], lc.wall[1],
-                     thicknessAt(wallThickness, lc.wall[0], it->second),
-                     thicknessAt(wallThickness, lc.wall[1], it->second), edge0,
-                     edge1, layer1, layer0);
-        for(int k = 0; k < 3; k++) {
-          MVertex *v = e->getVertex(k);
-          vs[k] = (v == lc.wall[0]) ? edge0 :
-                  (v == lc.wall[1]) ? edge1 :
-                  (v == lc.top[0])  ? layer0 :
-                                      layer1;
-        }
-        // ideal shapes are positive: mirror the triangle as its nodes are
-        // when the surface is negative in the parametric plane
-        double a = triangle_area_2d(vs[0], vs[1], vs[2]);
-        if((area > 0) ? (a < 0) : (a > 0))
-          for(int k = 0; k < 3; k++) vs[k][0] = -vs[k][0];
-        if(area <= 0) std::swap(vs[0], vs[1]);
-      }
-      else {
-        auto it2 = perfectShapes.find(e);
-        if(it2 != perfectShapes.end())
-          vs = it2->second;
-        else
-          Msg::Error("Argh");
-      }
-      sh.push_back({vs[0], vs[1], vs[2]});
+    auto it = data.elements.find(e);
+    if(it != data.elements.end()) {
+      if(!idealLayerShape(gf, e, data, area, it->second, vs)) return false;
     }
     else {
-      if(it != layers.end()) {
-        double thickness = it->second;
-        // assume here zero size quads have been generated such as nodes 0 and 1
-        // are along the curve ... nodes 1 and 2 are at the same position, same
-        // for 0 and 3
-        std::array<double, 2> perfectEdge0;
-        std::array<double, 2> perfectEdge1;
-        std::array<double, 2> perfectLayer1;
-        std::array<double, 2> perfectLayer0;
-        const double thickness0 =
-          thicknessAt(wallThickness, e->getVertex(0), thickness);
-        const double thickness1 =
-          thicknessAt(wallThickness, e->getVertex(1), thickness);
-        layerCorners(e->getVertex(0), e->getVertex(1), thickness0, thickness1,
-                     perfectEdge0, perfectEdge1, perfectLayer1, perfectLayer0);
-
-        int numBoundaryVertices = 0;
-        int freeVertex = -1;
-        std::array<std::array<double, 2>, 4> boundaryParam;
-        bool haveBoundaryParam[4] = {false, false, false, false};
-        for(int j = 0; j < 4; j++) {
-          if(e->getVertex(j)->onWhat()->dim() < 2) {
-            SPoint2 param;
-            if(reparamOnFace(e->getVertex(j), gf, param)) {
-              boundaryParam[j] = {param.x(), param.y()};
-              haveBoundaryParam[j] = true;
-              numBoundaryVertices++;
-            }
-          }
-          else
-            freeVertex = j;
-        }
-        bool haveBoundaryParallelogram = false;
-        if(numBoundaryVertices == 3 && freeVertex >= 0) {
-          for(int j = 0; j < 4; j++) {
-            if(haveBoundaryParam[j]) {
-              if(j == 0)
-                perfectEdge0 = boundaryParam[j];
-              else if(j == 1)
-                perfectEdge1 = boundaryParam[j];
-              else if(j == 2)
-                perfectLayer1 = boundaryParam[j];
-              else if(j == 3)
-                perfectLayer0 = boundaryParam[j];
-            }
-          }
-          if(freeVertex == 0)
-            perfectEdge0 = {
-              perfectEdge1[0] + perfectLayer0[0] - perfectLayer1[0],
-              perfectEdge1[1] + perfectLayer0[1] - perfectLayer1[1]};
-          else if(freeVertex == 1)
-            perfectEdge1 = {
-              perfectEdge0[0] + perfectLayer1[0] - perfectLayer0[0],
-              perfectEdge0[1] + perfectLayer1[1] - perfectLayer0[1]};
-          else if(freeVertex == 2)
-            perfectLayer1 = {
-              perfectEdge1[0] + perfectLayer0[0] - perfectEdge0[0],
-              perfectEdge1[1] + perfectLayer0[1] - perfectEdge0[1]};
-          else
-            perfectLayer0 = {
-              perfectEdge0[0] + perfectLayer1[0] - perfectEdge1[0],
-              perfectEdge0[1] + perfectLayer1[1] - perfectEdge1[1]};
-          haveBoundaryParallelogram = true;
-        }
-
-        // ideal shapes are positive: mirror the quad as the nodes of the
-        // elements are when the surface is negative in the parametric plane
-        if(triangle_area_2d(perfectEdge0, perfectEdge1, perfectLayer1) < 0.) {
-          std::swap(perfectEdge0, perfectEdge1);
-          std::swap(perfectLayer0, perfectLayer1);
-        }
-
-        sh.push_back({perfectEdge0, perfectEdge1, perfectLayer1});
-        sh.push_back({perfectLayer1, perfectLayer0, perfectEdge0});
-        sh.push_back({perfectEdge0, perfectEdge1, perfectLayer0});
-        sh.push_back({perfectEdge1, perfectLayer1, perfectLayer0});
-        //	printf(" %g %g %g %g %g %g\n",dx,thickness, triangle_area_2d(p0, p1,
-        // p2), triangle_area_2d(p2, p3, p0), 	       triangle_area_2d(p0, p1,
-        // p3),triangle_area_2d(p1, p2, p3));
+      auto it2 = data.shapes2D.find(e);
+      if(it2 == data.shapes2D.end()) {
+        Msg::Error("Boundary layer: no initial shape for element %zu",
+                   e->getNum());
+        return false;
       }
-      else {
-        auto it2 = perfectShapes.find(e);
-        if(it2 != perfectShapes.end())
-          vs = it2->second;
-        else
-          Msg::Error("Argh -- perfect shapes cannot be found ...");
-        sh.push_back({vs[0], vs[1], vs[2]});
-        sh.push_back({vs[2], vs[3], vs[0]});
-        sh.push_back({vs[0], vs[1], vs[3]});
-        sh.push_back({vs[1], vs[2], vs[3]});
-      }
+      vs = it2->second;
     }
-  }
-
-  for(auto e : toProcess) {
-    uint32_t a = (uint32_t)e->getVertex(0)->getIndex();
-    uint32_t b = (uint32_t)e->getVertex(1)->getIndex();
-    uint32_t c = (uint32_t)e->getVertex(2)->getIndex();
+    const uint32_t a = (uint32_t)e->getVertex(0)->getIndex();
+    const uint32_t b = (uint32_t)e->getVertex(1)->getIndex();
+    const uint32_t c = (uint32_t)e->getVertex(2)->getIndex();
+    const double weight =
+      (it != data.elements.end()) ? layerSizeWeight : outsideSizeWeight;
     if(e->getNumVertices() == 3) {
+      ideal.push_back({vs[0], vs[1], vs[2]});
       if(area > 0)
         triangles.push_back({a, b, c});
       else
         triangles.push_back({b, a, c});
+      sizeWeight.push_back(weight);
     }
     else {
-      uint32_t d = (uint32_t)e->getVertex(3)->getIndex();
+      const uint32_t d = (uint32_t)e->getVertex(3)->getIndex();
+      ideal.push_back({vs[0], vs[1], vs[2]});
+      ideal.push_back({vs[2], vs[3], vs[0]});
+      ideal.push_back({vs[0], vs[1], vs[3]});
+      ideal.push_back({vs[1], vs[2], vs[3]});
       if(area > 0) {
         triangles.push_back({a, b, c});
         triangles.push_back({c, d, a});
@@ -1935,37 +1921,30 @@ static bool expandBL(
         triangles.push_back({b, a, c});
         triangles.push_back({a, d, c});
       }
+      sizeWeight.insert(sizeWeight.end(), 4, weight);
     }
   }
-  printf("face %d: %zu vertices, %zu triangles\n", gf->tag(), points.size(),
-         triangles.size());
+
   WinslowUntangler::Options options;
   options.strictFailures = true;
   options.numThreads = CTX::instance()->numThreadsFor(triangles.size(), 5000);
-  std::vector<double> sizeWeight;
-  for(auto e : toProcess) {
-    double w = (layers.find(e) != layers.end()) ? layerSizeWeight :
-                                                  outsideSizeWeight;
-    sizeWeight.insert(sizeWeight.end(), e->getNumVertices() == 3 ? 1 : 4, w);
-  }
   options.elementLambda = &sizeWeight;
-  bool ok =
-    WinslowUntangler::untangle2D(points, locked, triangles, sh, options);
+  bool ok = WinslowUntangler::untangle2D(points, set.locked, triangles, ideal,
+                                         options);
   if(!ok)
     Msg::Warning("Boundary layer: untangling of surface %d did not converge",
                  gf->tag());
 
-  for(auto v : verts) {
-    int i = v->getIndex();
-    if(!locked[i]) {
-      GPoint gp = gf->point(points[i][0], points[i][1]);
-      moved.insert(v);
-      v->x() = gp.x();
-      v->y() = gp.y();
-      v->z() = gp.z();
-      v->setParameter(0, gp.u());
-      v->setParameter(1, gp.v());
-    }
+  for(std::size_t i = 0; i < set.nodes.size(); i++) {
+    if(set.locked[i]) continue;
+    MVertex *v = set.nodes[i];
+    GPoint gp = gf->point(points[i][0], points[i][1]);
+    data.moved.insert(v);
+    v->x() = gp.x();
+    v->y() = gp.y();
+    v->z() = gp.z();
+    v->setParameter(0, gp.u());
+    v->setParameter(1, gp.v());
   }
   return ok;
 }
@@ -1981,61 +1960,41 @@ static const int hexSubTets[6][4] = {{0, 1, 2, 6}, {0, 2, 3, 6}, {0, 3, 7, 6},
 static const int pyramidSubTets[4][4] = {
   {0, 1, 2, 4}, {0, 2, 3, 4}, {0, 1, 3, 4}, {1, 2, 3, 4}};
 
-static bool expandBL3D(
-  GRegion *gr,
-  std::map<MElement *, std::array<std::array<double, 3>, 8>> &perfectShapes3D,
-  std::map<MElement *, double> &layers, size_t nRings,
-  const std::set<MVertex *> &moved,
-  const std::map<MVertex *, double> &wallThickness, const PinchMap &pinched,
-  bool lockLayers = false)
+// The sub-tetrahedra of an element, and their number (0 if the type of the
+// element is not handled)
+static int getSubTets(MElement *e, const int (*&sub)[4])
 {
-  std::set<MElement *, MElementPtrLessThan> toProcess;
-  std::set<MVertex *, MVertexPtrLessThan> fixed;
-  buildUntangleSets(gr, /*targetDim=*/3, layers, nRings, moved, toProcess, fixed);
+  switch(e->getTypeForMSH()) {
+  case MSH_TET_4: sub = tetSubTets; return 1;
+  case MSH_PRI_6: sub = prismSubTets; return 6;
+  case MSH_HEX_8: sub = hexSubTets; return 6;
+  case MSH_PYR_5: sub = pyramidSubTets; return 4;
+  default: sub = nullptr; return 0;
+  }
+}
+
+// Inflate the layers of a volume. With lockLayers the layers stay in place and
+// only the elements around them are untangled.
+static bool inflateLayers(GRegion *gr, LayerData &data, std::size_t numRings,
+                          bool lockLayers = false)
+{
+  UntangleSet set;
+  buildUntangleSet(gr, 3, data, numRings, lockLayers, set);
 
   std::vector<std::array<double, 3>> points;
-  std::vector<bool> locked;
-  std::set<MVertex *, MVertexPtrLessThan> verts;
-
-  for(auto e : toProcess) {
-    for(size_t j = 0; j < e->getNumVertices(); j++)
-      verts.insert(e->getVertex(j));
-  }
-
-  int index = 0;
-  for(auto v : verts) {
-    v->setIndex(index++);
-    locked.push_back(fixed.find(v) != fixed.end());
-    points.push_back({v->x(), v->y(), v->z()});
-  }
-
-  // second pass, once the columns have been cut back: the layers stay in
-  // place and only the elements around them are untangled
-  if(lockLayers) {
-    for(auto e : toProcess) {
-      if(layers.find(e) == layers.end()) continue;
-      for(size_t j = 0; j < e->getNumVertices(); j++)
-        locked[e->getVertex(j)->getIndex()] = true;
-    }
-  }
+  for(auto v : set.nodes) points.push_back({v->x(), v->y(), v->z()});
 
   // orientation of the elements of the volume: the layer elements are flat,
   // and were created with the orientation of the other elements
   double volume = 0.0;
-  for(auto e : toProcess) {
-    int type = e->getTypeForMSH();
-    if(type != MSH_TET_4 && type != MSH_PRI_6 && type != MSH_HEX_8 &&
-       type != MSH_PYR_5)
-      continue;
-    const int *t = (type == MSH_TET_4) ? tetSubTets[0] :
-                   (type == MSH_PRI_6) ? prismSubTets[0] :
-                   (type == MSH_HEX_8) ? hexSubTets[0] :
-                                         pyramidSubTets[0];
-    // tet_volume() has the sign of the untangler, opposite to the one of Gmsh
-    volume -= tet_volume(points[e->getVertex(t[0])->getIndex()],
-                         points[e->getVertex(t[1])->getIndex()],
-                         points[e->getVertex(t[2])->getIndex()],
-                         points[e->getVertex(t[3])->getIndex()]);
+  for(auto e : set.elements) {
+    const int (*sub)[4];
+    if(!getSubTets(e, sub)) continue;
+    // tetVolume() has the sign of the untangler, opposite to the one of Gmsh
+    volume -= tetVolume(points[e->getVertex(sub[0][0])->getIndex()],
+                        points[e->getVertex(sub[0][1])->getIndex()],
+                        points[e->getVertex(sub[0][2])->getIndex()],
+                        points[e->getVertex(sub[0][3])->getIndex()]);
   }
   const bool positive = (volume > 0);
 
@@ -2043,24 +2002,18 @@ static bool expandBL3D(
   // sub-tetrahedra. The untangler wants left-handed tetrahedra, i.e. negative
   // ones for Gmsh, hence the swap of the first two nodes of each of them when
   // the elements are positive.
-  std::vector<std::array<std::array<double, 3>, 4>> sh;
+  std::vector<std::array<std::array<double, 3>, 4>> ideal;
   std::vector<std::array<uint32_t, 4>> tets;
   std::vector<double> sizeWeight;
-  for(auto e : toProcess) {
-    int type = e->getTypeForMSH();
-    const int (*sub)[4] = nullptr;
-    int numSub = 0;
-    if(type == MSH_TET_4) { sub = tetSubTets; numSub = 1; }
-    else if(type == MSH_PRI_6) { sub = prismSubTets; numSub = 6; }
-    else if(type == MSH_HEX_8) { sub = hexSubTets; numSub = 6; }
-    else if(type == MSH_PYR_5) { sub = pyramidSubTets; numSub = 4; }
-    else
-      continue;
+  for(auto e : set.elements) {
+    const int (*sub)[4];
+    const int numSub = getSubTets(e, sub);
+    if(!numSub) continue;
 
     std::array<std::array<double, 3>, 8> vs = {};
-    auto it = layers.find(e);
+    auto it = data.elements.find(e);
     LayerColumns lc;
-    if(it != layers.end() && getLayerColumns(e, pinched, lc) && lc.n >= 3) {
+    if(it != data.elements.end() && getLayerColumns(e, data, lc) && lc.n >= 3) {
       // the wall face of the element, each node extruded along the normal of
       // the face by its thickness, towards the inside of the volume; a
       // pinched element is the same without the nodes it lost
@@ -2077,7 +2030,7 @@ static bool expandBL3D(
           if(v == w)
             vs[k] = {w->x(), w->y(), w->z()};
           else if(v == lc.top[j]) {
-            const double t = thicknessAt(wallThickness, w, it->second);
+            const double t = data.thicknessAt(w, it->second);
             vs[k] = {w->x() + normal.x() * t, w->y() + normal.y() * t,
                      w->z() + normal.z() * t};
           }
@@ -2085,9 +2038,9 @@ static bool expandBL3D(
       }
     }
     else {
-      auto it2 = perfectShapes3D.find(e);
-      if(it2 == perfectShapes3D.end()) {
-        Msg::Error("Boundary layer: no ideal shape for element %zu",
+      auto it2 = data.shapes3D.find(e);
+      if(it2 == data.shapes3D.end()) {
+        Msg::Error("Boundary layer: no initial shape for element %zu",
                    e->getNum());
         return false;
       }
@@ -2097,13 +2050,13 @@ static bool expandBL3D(
     for(int j = 0; j < numSub; j++) {
       int k[4] = {sub[j][0], sub[j][1], sub[j][2], sub[j][3]};
       if(positive) std::swap(k[0], k[1]);
-      sh.push_back({vs[k[0]], vs[k[1]], vs[k[2]], vs[k[3]]});
-      sizeWeight.push_back(it != layers.end() ? layerSizeWeight :
-                                                outsideSizeWeight);
+      ideal.push_back({vs[k[0]], vs[k[1]], vs[k[2]], vs[k[3]]});
       tets.push_back({(uint32_t)e->getVertex(k[0])->getIndex(),
                       (uint32_t)e->getVertex(k[1])->getIndex(),
                       (uint32_t)e->getVertex(k[2])->getIndex(),
                       (uint32_t)e->getVertex(k[3])->getIndex()});
+      sizeWeight.push_back(it != data.elements.end() ? layerSizeWeight :
+                                                       outsideSizeWeight);
     }
   }
 
@@ -2113,20 +2066,17 @@ static bool expandBL3D(
   options.laplacianPresmoothing = !lockLayers;
   options.numThreads = CTX::instance()->numThreadsFor(tets.size(), 5000);
   options.elementLambda = &sizeWeight;
-  bool ok = WinslowUntangler::untangle3D(points, locked, tets, sh, options);
+  bool ok =
+    WinslowUntangler::untangle3D(points, set.locked, tets, ideal, options);
   if(!ok)
     Msg::Warning("Boundary layer: untangling of volume %d did not converge",
                  gr->tag());
-  Msg::Info("Boundary layer 3D untangling done in %g s",
+  Msg::Info("Boundary layer: volume %d untangled in %g s", gr->tag(),
             TimeOfDay() - tUntangle);
 
-  for(auto v : verts) {
-    int i = v->getIndex();
-    if(!locked[i]) {
-      v->x() = points[i][0];
-      v->y() = points[i][1];
-      v->z() = points[i][2];
-    }
+  for(std::size_t i = 0; i < set.nodes.size(); i++) {
+    if(set.locked[i]) continue;
+    set.nodes[i]->setXYZ(points[i][0], points[i][1], points[i][2]);
   }
   return ok;
 }
@@ -2138,15 +2088,9 @@ static std::size_t countInvalidElements(GRegion *gr)
   std::size_t numPositive = 0, numNegative = 0, numFlat = 0;
   for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
     MElement *e = gr->getMeshElement(i);
-    int type = e->getTypeForMSH();
-    const int (*sub)[4] = nullptr;
-    int numSub = 0;
-    if(type == MSH_TET_4) { sub = tetSubTets; numSub = 1; }
-    else if(type == MSH_PRI_6) { sub = prismSubTets; numSub = 6; }
-    else if(type == MSH_HEX_8) { sub = hexSubTets; numSub = 6; }
-    else if(type == MSH_PYR_5) { sub = pyramidSubTets; numSub = 4; }
-    else
-      continue;
+    const int (*sub)[4];
+    const int numSub = getSubTets(e, sub);
+    if(!numSub) continue;
     bool pos = true, neg = true;
     for(int j = 0; j < numSub; j++) {
       std::array<double, 3> p[4];
@@ -2154,7 +2098,7 @@ static std::size_t countInvalidElements(GRegion *gr)
         MVertex *v = e->getVertex(sub[j][k]);
         p[k] = {v->x(), v->y(), v->z()};
       }
-      double vol = -tet_volume(p[0], p[1], p[2], p[3]);
+      double vol = -tetVolume(p[0], p[1], p[2], p[3]);
       if(vol <= 0.) pos = false;
       if(vol >= 0.) neg = false;
     }
@@ -2170,17 +2114,17 @@ static std::size_t countInvalidElements(GRegion *gr)
 
 // Split the column going from a wall node to its spawned node in layers
 static std::vector<MVertex *>
-splitedge(MEdge me,
+splitColumn(MEdge me,
           std::map<MEdge, std::vector<MVertex *>, MEdgeLessThan> &split,
-          const LayerLaw &law, const std::map<MVertex *, Column> &columns)
+          const LayerLaw &law, const LayerData &data)
 {
   auto it = split.find(me);
   if(it != split.end()) return it->second;
 
   // height of the column above the wall
   double height = me.length();
-  auto itc = columns.find(me.getVertex(1));
-  if(itc != columns.end()) height *= itc->second.cosine;
+  auto itc = data.columns.find(me.getVertex(1));
+  if(itc != data.columns.end()) height *= itc->second.cosine;
   std::vector<double> t = law.fractions(height);
 
   std::vector<MVertex *> vs;
@@ -2225,10 +2169,9 @@ splitedge(MEdge me,
 }
 
 // Split the layer elements of the volumes in layers along their columns
-void splitounette3D(std::vector<GRegion *> &r,
-                    std::map<MElement *, double> &layers, PinchMap &pinched,
-                    const LayerLaw &law,
-                    const std::map<MVertex *, Column> &columns)
+static void splitLayers(std::vector<GRegion *> &r,
+                    LayerData &data,
+                    const LayerLaw &law)
 {
   std::map<MEdge, std::vector<MVertex *>, MEdgeLessThan> split;
   const std::vector<double> &widths = law.widths;
@@ -2237,20 +2180,20 @@ void splitounette3D(std::vector<GRegion *> &r,
   for(auto gr : r) {
     std::vector<MElement *> elements;
     for(size_t i = 0; i < gr->getNumMeshElements(); ++i)
-      if(layers.find(gr->getMeshElement(i)) != layers.end())
+      if(data.elements.find(gr->getMeshElement(i)) != data.elements.end())
         elements.push_back(gr->getMeshElement(i));
 
     std::set<MElement *> replaced;
     for(auto e : elements) {
       LayerColumns lc;
-      if(!getLayerColumns(e, pinched, lc) || lc.n < 3) continue;
+      if(!getLayerColumns(e, data, lc) || lc.n < 3) continue;
       // the nodes of each column, from the wall outwards; a pinched column
       // stays on its wall node
       std::vector<MVertex *> column[4];
       for(std::size_t j = 0; j < lc.n; j++) {
         if(lc.top[j])
           column[j] =
-            splitedge(MEdge(lc.wall[j], lc.top[j]), split, law, columns);
+            splitColumn(MEdge(lc.wall[j], lc.top[j]), split, law, data);
         else
           column[j].assign(numLayers + 1, lc.wall[j]);
       }
@@ -2261,11 +2204,11 @@ void splitounette3D(std::vector<GRegion *> &r,
           slab.wall[j] = column[j][s];
           slab.top[j] = lc.top[j] ? column[j][s + 1] : nullptr;
         }
-        addLayerElement(gr, slab, widths[s], layers, pinched);
+        addLayerElement(gr, slab, widths[s], data);
       }
       replaced.insert(e);
-      layers.erase(e);
-      pinched.erase(e);
+      data.elements.erase(e);
+      data.pinched.erase(e);
     }
 
     auto isReplaced = [&](MElement *e) {
@@ -2286,13 +2229,11 @@ void splitounette3D(std::vector<GRegion *> &r,
     for(auto e : replaced) delete e;
   }
 
-  replaceEdges(r[0]->model(), split);
-  replaceFaces(r[0]->model(), split, layers, widths);
+  splitSideLines(r[0]->model(), split);
+  splitSideElements(r[0]->model(), split, data, widths);
 }
 
-void splitounette(std::vector<GFace *> &f, std::map<MElement *, double> &layers,
-                  const PinchMap &pinched, const LayerLaw &law,
-                  const std::map<MVertex *, Column> &columns)
+static void splitLayers(std::vector<GFace *> &f, LayerData &data, const LayerLaw &law)
 {
   std::map<MEdge, std::vector<MVertex *>, MEdgeLessThan> split;
   const std::vector<double> &widths = law.widths;
@@ -2303,23 +2244,23 @@ void splitounette(std::vector<GFace *> &f, std::map<MElement *, double> &layers,
       temp.push_back(gf->getMeshElement(i));
 
     for(size_t i = 0; i < temp.size(); i++) {
-      if(layers.find(temp[i]) != layers.end()) {
+      if(data.elements.find(temp[i]) != data.elements.end()) {
         if(temp[i]->getNumEdges() == 3) {
           // pinched layer element: split along its only column
           LayerColumns lc;
-          if(!getLayerColumns(temp[i], pinched, lc) || lc.n != 2) continue;
+          if(!getLayerColumns(temp[i], data, lc) || lc.n != 2) continue;
           int j = lc.top[0] ? 0 : 1;
           std::vector<MVertex *> column =
-            splitedge(MEdge(lc.wall[j], lc.top[j]), split, law, columns);
-          splitPinchedTriangle(gf, temp[i], column, layers, widths);
+            splitColumn(MEdge(lc.wall[j], lc.top[j]), split, law, data);
+          splitPinchedTriangle(gf, temp[i], column, data, widths);
         }
         else if(temp[i]->getNumEdges() == 4) {
           MEdge m03 = MEdge(temp[i]->getVertex(0), temp[i]->getVertex(3));
           MEdge m12 = MEdge(temp[i]->getVertex(1), temp[i]->getVertex(2));
           std::vector<MVertex *> p03 =
-            splitedge(m03, split, law, columns);
+            splitColumn(m03, split, law, data);
           std::vector<MVertex *> p12 =
-            splitedge(m12, split, law, columns);
+            splitColumn(m12, split, law, data);
           for(size_t j = 0; j < p03.size() - 1; j++) {
             MVertex *v0 = p03[j];
             MVertex *v1 = p12[j];
@@ -2330,87 +2271,69 @@ void splitounette(std::vector<GFace *> &f, std::map<MElement *, double> &layers,
               temp[i]->setVertex(1, v1);
               temp[i]->setVertex(2, v2);
               temp[i]->setVertex(3, v3);
-              layers[temp[i]] = widths[j];
+              data.elements[temp[i]] = widths[j];
             }
             else {
               MQuadrangle *q = new MQuadrangle(v0, v1, v2, v3);
               gf->quadrangles.push_back(q);
-              layers[q] = widths[j];
+              data.elements[q] = widths[j];
             }
           }
         }
       }
     }
   }
-  if(!f.empty()) replaceEdges(f[0]->model(), split);
+  if(!f.empty()) splitSideLines(f[0]->model(), split);
 }
 
-void computePerfectShapes(
-  std::vector<GFace *> &f,
-  std::map<MElement *, std::array<std::array<double, 2>, 4>> &perfectShapes)
+// ---------------------------------------------------------------------------
+// Driver
+// ---------------------------------------------------------------------------
+
+// Store the shape of the elements of the surfaces in their parametric plane
+static void storeInitialShapes(const std::vector<GFace *> &surfaces,
+                               LayerData &data)
 {
-  // printf("COMPUTE PERFECT SHAPES for %lu\n", f.size());
-  for(auto gf : f) {
-    //      std::map<MVertex*,SPoint2> ivp;
+  for(auto gf : surfaces) {
+    const std::size_t numElements = gf->getNumMeshElements();
+    std::vector<std::array<std::array<double, 2>, 4>> shapes(numElements);
     double area = 0.0;
-    for(size_t i = 0; i < gf->getNumMeshElements(); i++) {
-      std::vector<SPoint2> pts;
-      for(size_t j = 0; j < gf->getMeshElement(i)->getNumVertices(); j++) {
+    for(std::size_t i = 0; i < numElements; i++) {
+      MElement *e = gf->getMeshElement(i);
+      const std::size_t n = std::min<std::size_t>(e->getNumVertices(), 4);
+      std::array<std::array<double, 2>, 4> &vs = shapes[i];
+      for(std::size_t j = 0; j < n; j++) {
         SPoint2 param;
-        reparamOnFace(gf->getMeshElement(i)->getVertex(j), gf, param);
-        pts.push_back(param);
+        reparamOnFace(e->getVertex(j), gf, param);
+        vs[j] = {param.x(), param.y()};
       }
-      if(pts.size() == 3) {
-        std::array<double, 2> vs0 = {pts[0].x(), pts[0].y()};
-        std::array<double, 2> vs1 = {pts[1].x(), pts[1].y()};
-        std::array<double, 2> vs2 = {pts[2].x(), pts[2].y()};
-        area += triangle_area_2d(vs0, vs1, vs2);
+      if(n == 3) {
+        vs[3] = vs[2];
+        area += triangleArea2D(vs[0], vs[1], vs[2]);
       }
-      else if(pts.size() == 4) {
-        std::array<double, 2> vs0 = {pts[0].x(), pts[0].y()};
-        std::array<double, 2> vs1 = {pts[1].x(), pts[1].y()};
-        std::array<double, 2> vs2 = {pts[2].x(), pts[2].y()};
-        std::array<double, 2> vs3 = {pts[3].x(), pts[3].y()};
-        area += triangle_area_2d(vs0, vs1, vs2);
-        area += triangle_area_2d(vs0, vs2, vs3);
+      else if(n == 4) {
+        area += triangleArea2D(vs[0], vs[1], vs[2]);
+        area += triangleArea2D(vs[0], vs[2], vs[3]);
       }
     }
-
-    printf("area (%d) = %g\n", gf->tag(), area);
-
-    for(size_t i = 0; i < gf->getNumMeshElements(); i++) {
-      std::vector<SPoint2> pts;
-      for(size_t j = 0; j < gf->getMeshElement(i)->getNumVertices(); j++) {
-        SPoint2 param;
-        reparamOnFace(gf->getMeshElement(i)->getVertex(j), gf, param);
-        pts.push_back(param);
+    // mirrored if the mesh of the surface is negative in the parametric plane
+    for(std::size_t i = 0; i < numElements; i++) {
+      MElement *e = gf->getMeshElement(i);
+      std::array<std::array<double, 2>, 4> &vs = shapes[i];
+      if(area <= 0) {
+        std::swap(vs[0], vs[1]);
+        if(e->getNumVertices() != 3) std::swap(vs[2], vs[3]);
       }
-      std::array<double, 2> vs0 = {pts[0].x(), pts[0].y()};
-      std::array<double, 2> vs1 = {pts[1].x(), pts[1].y()};
-      std::array<double, 2> vs2 = {pts[2].x(), pts[2].y()};
-      if(pts.size() == 3) {
-        if(area > 0)
-          perfectShapes[gf->getMeshElement(i)] = {vs0, vs1, vs2, vs2};
-        else
-          perfectShapes[gf->getMeshElement(i)] = {vs1, vs0, vs2, vs2};
-      }
-      else {
-        std::array<double, 2> vs3 = {pts[3].x(), pts[3].y()};
-        if(area > 0)
-          perfectShapes[gf->getMeshElement(i)] = {vs0, vs1, vs2, vs3};
-        else
-          perfectShapes[gf->getMeshElement(i)] = {vs1, vs0, vs3, vs2};
-      }
+      data.shapes2D[e] = vs;
     }
   }
 }
 
-// The ideal shape of the elements outside the layers is their initial shape
-void computePerfectShapes(
-  std::vector<GRegion *> &r,
-  std::map<MElement *, std::array<std::array<double, 3>, 8>> &perfectShapes)
+// Store the shape of the elements of the volumes
+static void storeInitialShapes(const std::vector<GRegion *> &volumes,
+                               LayerData &data)
 {
-  for(auto gr : r) {
+  for(auto gr : volumes) {
     for(size_t i = 0; i < gr->getNumMeshElements(); i++) {
       MElement *e = gr->getMeshElement(i);
       if(e->getNumVertices() > 8) continue;
@@ -2419,154 +2342,72 @@ void computePerfectShapes(
         MVertex *v = e->getVertex(j);
         vs[j] = {v->x(), v->y(), v->z()};
       }
-      perfectShapes[e] = vs;
+      data.shapes3D[e] = vs;
     }
   }
 }
 
-PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
+// As many layers as needed to reach the thickness: the last ones are reduced
+// in each column to end exactly on it
+static LayerLaw layerLaw(double size, double ratio, double thickness,
+                         double numExactLayers)
 {
-  GModel *m = GModel::current();
-
-  // the tags of the points, curves, surfaces and volumes
-  std::vector<std::vector<int>> entities(4);
-  for(int dim = 0; dim < 4; dim++)
-    if(!optionIntList(3 - dim, entities[dim])) return v;
-
-  std::vector<GVertex *> vv;
-  for(auto v : entities[0]) {
-    GVertex *gv = m->getVertexByTag(v);
-    if(gv) vv.push_back(gv);
-  }
-  std::vector<GEdge *> e;
-  for(auto c : entities[1]) {
-    GEdge *ge = m->getEdgeByTag(c);
-    if(ge) e.push_back(ge);
-  }
-  std::vector<GFace *> f;
-  for(auto s : entities[2]) {
-    GFace *gf = m->getFaceByTag(s);
-    if(gf) f.push_back(gf);
-  }
-  std::vector<GRegion *> r;
-  for(auto e : entities[3]) {
-    GRegion *gr = m->getRegionByTag(e);
-    if(gr) r.push_back(gr);
-  }
-
-  double thickness = option(0);
-  double size = option(1);
-  double ratio = option(2);
-  int numLayers = (int)option(3);
-  double numExactLayers = option(4);
-  int highOrder = (int)option(5);
-  int highOrderStrategy = (int)option(6);
-  int highOrderPostSplitUntangle = (int)option(7);
-  if(numLayers < 1) {
-    Msg::Warning("Hey ! at least one smoothing layer dude ...");
-    numLayers = 1;
-  }
-  if(highOrder < 1) highOrder = 1;
-  if(highOrderStrategy < 0) highOrderStrategy = 0;
-
-  std::map<MElement *, double> layers;
-
-  //  printf("perfectshapes = %zu\n",perfectShapes.size());
-
-  double ww = 0.0;
-  std::vector<double> ws;
-  double hwall = size;
-  // as many layers as needed to reach the thickness: the last ones are
-  // reduced in each column to end exactly on it
-  if(size <= 0. || thickness <= 0. || ratio < 1.) {
-    Msg::Error("Boundary layer: Size and Thickness must be positive and Ratio "
-               "at least 1");
-    return v;
-  }
-  while(1) {
-    ws.push_back(hwall);
-    ww += hwall;
-    if(ww >= thickness * (1. - 1.e-12) || ws.size() >= 1000) break;
-    hwall *= ratio;
-  }
   LayerLaw law;
-  law.widths = ws;
   law.ratio = ratio;
-  law.numExact = (numExactLayers > 0) ? (int)numExactLayers :
-                 (numExactLayers < 0) ? (int)(ws.size() / (-numExactLayers)) :
-                                        0;
-
-  //  printf("ww = %12.5E\n",ww);
-  //  double h = 0.;
-  //  for (auto wid  : ws){
-  //    h += wid;
-  //    printf("h = %g y = %g\n",wid,h);
-  //  }
-
-  std::vector<GFace *> toExpand;
-
-  PinchMap pinched;
-  std::set<MVertex *> pinchedNodes;
-  bool inserted;
-  if(r.empty()) {
-    std::vector<GEntity *> domains(f.begin(), f.end());
-    // sets of entities are ordered by tag, not by address, so that the result
-    // does not change from one run to the next
-    std::set<GEntity *, GEntityPtrLessThan> walls(e.begin(), e.end());
-    inserted = insertLayers(m, 2, domains, walls, thickness, layers, toExpand,
-                            pinched, pinchedNodes);
+  double height = size, total = 0.;
+  while(1) {
+    law.widths.push_back(height);
+    total += height;
+    if(total >= thickness * (1. - 1.e-12) || law.widths.size() >= 1000) break;
+    height *= ratio;
   }
-  else {
-    std::vector<GEntity *> domains(r.begin(), r.end());
-    std::set<GEntity *, GEntityPtrLessThan> walls(f.begin(), f.end());
-    inserted = insertLayers(m, 3, domains, walls, thickness, layers, toExpand,
-                            pinched, pinchedNodes);
-  }
-  if(!inserted) return v;
-  if(highOrder > 1 && !pinched.empty()) {
-    Msg::Error("Boundary layer: high-order layers are not available with "
-               "pinched layers: keeping order 1");
-    highOrder = 1;
-  }
+  law.numExact =
+    (numExactLayers > 0) ? (int)numExactLayers :
+    (numExactLayers < 0) ? (int)(law.widths.size() / (-numExactLayers)) :
+                           0;
+  return law;
+}
 
-  std::map<MElement *, std::array<std::array<double, 2>, 4>> perfectShapes;
-  std::map<MElement *, std::array<std::array<double, 3>, 8>> perfectShapes3D;
-  if(r.empty()) { computePerfectShapes(f, perfectShapes); }
-  else {
-    computePerfectShapes(r, perfectShapes3D);
-    computePerfectShapes(toExpand, perfectShapes);
-  }
-
-  // target thickness of each wall node
+// The target thickness of the wall nodes of a 2D mesh
+static void computeWallThickness(const std::vector<GFace *> &surfaces,
+                                 const std::vector<GEdge *> &wallCurves,
+                                 double thickness, LayerData &data)
+{
   WallData wall;
-  if(r.empty()) {
-    std::set<GEdge *> wallCurves(e.begin(), e.end());
-    std::set<GEdge *, GEntityPtrLessThan> curves;
-    for(auto gf : f) {
-      addWallElements(gf, layers, pinched, wall);
-      for(auto ge : gf->edges()) curves.insert(ge);
-      for(auto ge : gf->embeddedEdges()) curves.insert(ge);
-    }
-    for(auto ge : curves)
-      addBoundaryPieces(ge, wallCurves.find(ge) != wallCurves.end(), wall);
+  std::set<GEdge *> walls(wallCurves.begin(), wallCurves.end());
+  std::set<GEdge *, GEntityPtrLessThan> curves;
+  for(auto gf : surfaces) {
+    addWallElements(gf, data, wall);
+    for(auto ge : gf->edges()) curves.insert(ge);
+    for(auto ge : gf->embeddedEdges()) curves.insert(ge);
   }
-  else {
-    std::set<GFace *> wallSurfaces(f.begin(), f.end());
-    std::set<GFace *, GEntityPtrLessThan> surfaces;
-    for(auto gr : r) {
-      addWallElements(gr, layers, pinched, wall);
-      for(auto gf : gr->faces()) surfaces.insert(gf);
-      for(auto gf : gr->embeddedFaces()) surfaces.insert(gf);
-    }
-    for(auto gf : surfaces)
-      addBoundaryPieces(gf, wallSurfaces.find(gf) != wallSurfaces.end(), wall);
-  }
-  std::map<MVertex *, double> wallThickness;
-  computeWallThickness(wall, thickness, pinchedNodes, wallThickness);
+  for(auto ge : curves)
+    addBoundaryPieces(ge, walls.find(ge) != walls.end(), wall);
+  computeWallThickness(wall, thickness, data);
+}
 
-  // the nodes moved on the curves, then on the surfaces: the elements of the
-  // surfaces and of the volumes around them are untangled as well
-  std::set<MVertex *> moved;
+// The target thickness of the wall nodes of a 3D mesh
+static void computeWallThickness(const std::vector<GRegion *> &volumes,
+                                 const std::vector<GFace *> &wallSurfaces,
+                                 double thickness, LayerData &data)
+{
+  WallData wall;
+  std::set<GFace *> walls(wallSurfaces.begin(), wallSurfaces.end());
+  std::set<GFace *, GEntityPtrLessThan> surfaces;
+  for(auto gr : volumes) {
+    addWallElements(gr, data, wall);
+    for(auto gf : gr->faces()) surfaces.insert(gf);
+    for(auto gf : gr->embeddedFaces()) surfaces.insert(gf);
+  }
+  for(auto gf : surfaces)
+    addBoundaryPieces(gf, walls.find(gf) != walls.end(), wall);
+  computeWallThickness(wall, thickness, data);
+}
+
+// Move the nodes spawned on the curves at their target thickness from the
+// wall, and redistribute the other nodes of these curves
+static void inflateLayersOnCurves(GModel *m, LayerData &data)
+{
   for(GModel::eiter eit = m->firstEdge(); eit != m->lastEdge(); ++eit) {
     GEdge *ge = *eit;
     // the layers at both ends of a curve take at most a third of it each
@@ -2576,81 +2417,147 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
     for(int i = 0; i < 2; i++) {
       if(!gv[i] || gv[i]->mesh_vertices.empty()) continue;
       width[i] =
-        std::min(thicknessAt(wallThickness, gv[i]->mesh_vertices[0], 0.),
-                 maxWidth);
+        std::min(data.thicknessAt(gv[i]->mesh_vertices[0], 0.), maxWidth);
     }
     std::vector<SPoint3> before;
     for(auto mv : ge->mesh_vertices) before.push_back(mv->point());
     meshGEdgeInsertBoundaryLayer(ge, width[0], width[1]);
     for(std::size_t i = 0; i < before.size(); i++)
       if(before[i].distance(ge->mesh_vertices[i]->point()) > 0.)
-        moved.insert(ge->mesh_vertices[i]);
+        data.moved.insert(ge->mesh_vertices[i]);
+  }
+}
+
+// Inflate the layers of a surface or of a volume, then cut back the columns
+// that exceed their target and untangle again around them. Return the number
+// of columns cut.
+template <class GEntityT>
+static std::size_t inflateAndCutBack(GEntityT *ge, LayerData &data,
+                                     std::size_t numRings)
+{
+  inflateLayers(ge, data, numRings);
+  collectColumns(ge, data);
+  std::size_t numCut = clampColumns(ge, data);
+  if(numCut) inflateLayers(ge, data, numRings, true);
+  return numCut;
+}
+
+PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
+{
+  GModel *m = GModel::current();
+
+  // the volumes, surfaces, curves and points
+  std::vector<int> tags[4];
+  for(int i = 0; i < 4; i++)
+    if(!optionIntList(i, tags[i])) return v;
+  std::vector<GRegion *> volumes;
+  for(auto tag : tags[0]) {
+    GRegion *gr = m->getRegionByTag(tag);
+    if(gr)
+      volumes.push_back(gr);
+    else
+      Msg::Warning("Boundary layer: unknown volume %d", tag);
+  }
+  std::vector<GFace *> surfaces;
+  for(auto tag : tags[1]) {
+    GFace *gf = m->getFaceByTag(tag);
+    if(gf)
+      surfaces.push_back(gf);
+    else
+      Msg::Warning("Boundary layer: unknown surface %d", tag);
+  }
+  std::vector<GEdge *> curves;
+  for(auto tag : tags[2]) {
+    GEdge *ge = m->getEdgeByTag(tag);
+    if(ge)
+      curves.push_back(ge);
+    else
+      Msg::Warning("Boundary layer: unknown curve %d", tag);
+  }
+  if(!tags[3].empty())
+    Msg::Warning("Boundary layer: Points is not used yet");
+  const bool is3D = !volumes.empty();
+  if(is3D && !curves.empty())
+    Msg::Warning("Boundary layer: Curves is not used in 3D");
+
+  const double thickness = option(0);
+  const double size = option(1);
+  const double ratio = option(2);
+  int numRings = (int)option(3);
+  const double numExactLayers = option(4);
+  int highOrder = std::max(1, (int)option(5));
+  const int highOrderStrategy = std::max(0, (int)option(6));
+  const bool highOrderPostSplitUntangle = ((int)option(7) != 0);
+  if(numRings < 1) {
+    Msg::Warning("Boundary layer: SmoothingLayers must be at least 1");
+    numRings = 1;
+  }
+  if(size <= 0. || thickness <= 0. || ratio < 1.) {
+    Msg::Error("Boundary layer: Size and Thickness must be positive and Ratio "
+               "at least 1");
+    return v;
+  }
+  const LayerLaw law = layerLaw(size, ratio, thickness, numExactLayers);
+
+  // insert the layers, with zero thickness; sets of entities are ordered by
+  // tag, not by address, so that the result does not change from one run to
+  // the next
+  LayerData data;
+  std::vector<GFace *> sideSurfaces;
+  std::vector<GEntity *> domains;
+  std::set<GEntity *, GEntityPtrLessThan> walls;
+  if(is3D) {
+    domains.assign(volumes.begin(), volumes.end());
+    walls.insert(surfaces.begin(), surfaces.end());
+  }
+  else {
+    domains.assign(surfaces.begin(), surfaces.end());
+    walls.insert(curves.begin(), curves.end());
+  }
+  if(!insertLayers(m, is3D ? 3 : 2, domains, walls, thickness, data,
+                   sideSurfaces))
+    return v;
+  if(highOrder > 1 && !data.pinched.empty()) {
+    Msg::Error("Boundary layer: high-order layers are not available with "
+               "pinched layers: keeping order 1");
+    highOrder = 1;
   }
 
-  // inflate the layers on the surfaces then in the volumes, and cut back the
-  // columns that exceed their target
-  std::map<MVertex *, Column> columns;
-  std::size_t numClamped = 0;
-  std::vector<GFace *> &surfacesToExpand = r.empty() ? f : toExpand;
-  for(auto gf : surfacesToExpand) {
-    expandBL(gf, perfectShapes, layers, surfacesToExpand, numLayers, moved,
-             wallThickness, pinched);
-    collectColumns(gf, layers, pinched, columns);
-    std::size_t n = clampColumns(gf, columns, wallThickness, moved);
-    if(n)
-      expandBL(gf, perfectShapes, layers, surfacesToExpand, numLayers, moved,
-               wallThickness, pinched, true);
-    numClamped += n;
-  }
-  for(auto gr : r) {
-    expandBL3D(gr, perfectShapes3D, layers, numLayers, moved, wallThickness,
-               pinched);
-    collectColumns(gr, layers, pinched, columns);
-    std::size_t n = clampColumns(gr, columns, wallThickness, moved);
-    if(n)
-      expandBL3D(gr, perfectShapes3D, layers, numLayers, moved, wallThickness,
-                 pinched, true);
-    numClamped += n;
-  }
-  if(numClamped)
+  // the surfaces whose layers are inflated in their parametric plane
+  const std::vector<GFace *> &inflatedSurfaces = is3D ? sideSurfaces : surfaces;
+  if(is3D) storeInitialShapes(volumes, data);
+  storeInitialShapes(inflatedSurfaces, data);
+
+  if(is3D)
+    computeWallThickness(volumes, surfaces, thickness, data);
+  else
+    computeWallThickness(surfaces, curves, thickness, data);
+
+  // inflate the layers: on the curves, then on the surfaces, then in the
+  // volumes
+  inflateLayersOnCurves(m, data);
+  std::size_t numCut = 0;
+  for(auto gf : inflatedSurfaces) numCut += inflateAndCutBack(gf, data, numRings);
+  for(auto gr : volumes) numCut += inflateAndCutBack(gr, data, numRings);
+  if(numCut)
     Msg::Info("Boundary layer: %zu of %zu columns cut back to their target "
               "thickness",
-              numClamped, columns.size());
+              numCut, data.columns.size());
 
-  if(r.empty()) {
-    if(highOrder <= 1 || highOrderStrategy == 1) {
-      if(ws.size() > 1) {
-        if(highOrder > 1)
-          Msg::Info("Boundary layer high-order mode: splitting %zu low-order "
-                    "layers before P%d untangling",
-                    ws.size(), highOrder);
-        splitounette(f, layers, pinched, law, columns);
-      }
-    }
-    else if(ws.size() > 1) {
-      Msg::Info("Boundary layer high-order mode: delaying layer splitting to "
-                "high-order strategy %d",
+  // split the columns in layers. In 3D the elements of the side surfaces are
+  // split along with those of the volumes, on nodes already in place.
+  if(law.widths.size() > 1) {
+    if(highOrder > 1 && highOrderStrategy != 1)
+      Msg::Info("Boundary layer: layers will be split by high-order strategy "
+                "%d",
                 highOrderStrategy);
-    }
-  }
-  else if(ws.size() > 1) {
-    if(highOrder <= 1 || highOrderStrategy == 1) {
-      if(highOrder > 1)
-        Msg::Info("Boundary layer high-order mode: splitting %zu low-order "
-                  "volume layers before P%d untangling",
-                  ws.size(), highOrder);
-      // the side quads are split along with the volume elements, on nodes
-      // already in place: the adjacent surfaces need no further untangling
-      splitounette3D(r, layers, pinched, law, columns);
-    }
-    else {
-      Msg::Info("Boundary layer high-order mode: delaying volume layer "
-                "splitting to high-order strategy %d",
-                highOrderStrategy);
-    }
+    else if(is3D)
+      splitLayers(volumes, data, law);
+    else
+      splitLayers(surfaces, data, law);
   }
 
-  for(auto gr : r) {
+  for(auto gr : volumes) {
     std::size_t numInvalid = countInvalidElements(gr);
     if(numInvalid)
       Msg::Error("Boundary layer: %zu flat or inverted elements in volume %d",
@@ -2660,26 +2567,15 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
   if(highOrder > 1) {
     std::set<MElement *, MElementPtrLessThan> toProcess;
     std::set<MVertex *, MVertexPtrLessThan> fixed;
-    if(r.empty()) {
-      for(auto gf : f)
-        buildUntangleSets(gf, /*targetDim=*/2, layers, numLayers, moved,
-                          toProcess, fixed);
-    }
-    else {
-      for(auto gf : toExpand)
-        buildUntangleSets(gf, /*targetDim=*/2, layers, numLayers, moved,
-                          toProcess, fixed);
-      for(auto gr : r)
-        buildUntangleSets(gr, /*targetDim=*/3, layers, numLayers, moved,
-                          toProcess, fixed);
-    }
-    untangleHighOrderBoundaryLayerPN(m, toProcess, fixed, highOrder, &layers,
-                                     &ws, highOrderStrategy,
-                                     highOrderPostSplitUntangle != 0);
+    for(auto gf : inflatedSurfaces)
+      buildUntangleSets(gf, 2, data, numRings, toProcess, fixed);
+    for(auto gr : volumes)
+      buildUntangleSets(gr, 3, data, numRings, toProcess, fixed);
+    untangleHighOrderBoundaryLayerPN(m, toProcess, fixed, highOrder,
+                                     &data.elements, &law.widths,
+                                     highOrderStrategy,
+                                     highOrderPostSplitUntangle);
   }
-
-  //  for (auto gf : f)
-  //    expandL(gf, perfectShapes, layers, f);
 
   CTX::instance()->meshChanged();
 
