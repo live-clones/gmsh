@@ -11744,6 +11744,32 @@ class plugin:
     set_number = setNumber
 
     @staticmethod
+    def setNumbers(name, option, values):
+        """
+        gmsh.plugin.setNumbers(name, option, values)
+
+        Set the option `option', a list of numbers, to `values' for plugin `name'.
+        Plugins available in the official Gmsh release are listed in the "Gmsh
+        plugins" chapter of the Gmsh reference manual
+        (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-plugins).
+
+        Types:
+        - `name': string
+        - `option': string
+        - `values': vector of doubles
+        """
+        api_values_, api_values_n_ = _ivectordouble(values)
+        ierr = c_int()
+        lib.gmshPluginSetNumbers(
+            c_char_p(name.encode()),
+            c_char_p(option.encode()),
+            api_values_, api_values_n_,
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+    set_numbers = setNumbers
+
+    @staticmethod
     def setString(name, option, value):
         """
         gmsh.plugin.setString(name, option, value)

@@ -1,3 +1,4 @@
+// Boundary layers on both sides of a closed spline in a rectangle
 //+
 SetFactory("OpenCASCADE");
 //+
@@ -34,3 +35,11 @@ Recursive Delete {
 MeshSize {1, 2, 3, 4, 5, 6, 7, 8, 9} = 0.02;
 //+
 MeshSize {13, 12, 11, 10} = 0.1;
+
+Mesh 2;
+
+Plugin(BoundaryLayer).Surfaces = {3, 4};
+Plugin(BoundaryLayer).Curves = {1};
+Plugin(BoundaryLayer).Thickness = 1e-2;
+Plugin(BoundaryLayer).Size = 1e-3;
+Plugin(BoundaryLayer).Run;

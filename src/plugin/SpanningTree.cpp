@@ -14,10 +14,11 @@
 #include "Context.h"
 
 GMSH_SpanningTreePlugin::GMSH_SpanningTreePlugin()
-  : GMSH_MeshPlugin({{GMSH_FULLRC, "OutputPhysical", nullptr, -1, ""}},
-                    {{GMSH_FULLRC, "PhysicalVolumes", nullptr, "", ""},
-                     {GMSH_FULLRC, "PhysicalSurfaces", nullptr, "", ""},
-                     {GMSH_FULLRC, "PhysicalCurves", nullptr, "", ""}})
+  : GMSH_MeshPlugin({{GMSH_FULLRC, "OutputPhysical", nullptr, -1, ""}}, {},
+                    // these lists were strings of numbers separated by commas
+                    {{GMSH_FULLRC, "PhysicalVolumes", {}, true},
+                     {GMSH_FULLRC, "PhysicalSurfaces", {}, true},
+                     {GMSH_FULLRC, "PhysicalCurves", {}, true}})
 {
 }
 
@@ -26,9 +27,7 @@ using namespace std;
 string GMSH_SpanningTreePlugin::getName() const { return "SpanningTree"; }
 
 string GMSH_SpanningTreePlugin::getShortHelp() const
-{
-  return "Builds a tree spanning every vertex of a mesh";
-}
+{ return "Builds a tree spanning every vertex of a mesh"; }
 
 string GMSH_SpanningTreePlugin::getHelp() const
 {
@@ -47,8 +46,6 @@ string GMSH_SpanningTreePlugin::getHelp() const
          "- OutputPhysical: physical tag of the generated tree "
          "(-1 will select a new tag automatically).\n"
          "\n"
-         "Note - Lists must be comma separated integers "
-         "and spaces are ignored.\n"
          "Remark - This plugin does not overwrite a physical group."
          "Therefore, if an existing physical tag is used in OutputPhysical, "
          "the edges of the tree will be /added/ to the specified group.";
@@ -61,15 +58,9 @@ int GMSH_SpanningTreePlugin::run()
   // Get data
   double time = Cpu(), w = TimeOfDay();
   int output = (int)option(0);
-  string volume = optionStr(0);
-  string surface = optionStr(1);
-  string curve = optionStr(2);
-
-  // Parse physical tags
-  vector<list<int> > physical(3);
-  curve = parse(curve, physical[0]);
-  surface = parse(surface, physical[1]);
-  volume = parse(volume, physical[2]);
+  // physical tags, by dimension
+  vector<vector<int>> physical = {optionIntList(2), optionIntList(1),
+                                  optionIntList(0)};
 
   // Dimensions
   int dim[3] = {1, 2, 3};
@@ -89,10 +80,9 @@ int GMSH_SpanningTreePlugin::run()
     return 0;
   }
 
-  // Display physicals (as [poorly] parsed)
-  Msg::Info("--> PhysicalVolumes:  %s", volume.c_str());
-  Msg::Info("--> PhysicalSurfaces: %s", surface.c_str());
-  Msg::Info("--> PhysicalCurves:   %s", curve.c_str());
+  Msg::Info("--> PhysicalVolumes:  %s", listToString(optionList(0)).c_str());
+  Msg::Info("--> PhysicalSurfaces: %s", listToString(optionList(1)).c_str());
+  Msg::Info("--> PhysicalCurves:   %s", listToString(optionList(2)).c_str());
   Msg::Info("--> OutputPhysical:   %d", output);
 
   // Get all edges from elements for each dimension
@@ -127,34 +117,10 @@ void GMSH_SpanningTreePlugin::spanningTree(EdgeSet &edge, DSU &vertex,
   }
 }
 
-string GMSH_SpanningTreePlugin::parse(string str, list<int> &physical)
-{
-  // Remove spaces
-  str.erase(remove(str.begin(), str.end(), ' '), str.end());
-
-  // Replace commas by spaces
-  replace(str.begin(), str.end(), ',', ' ');
-
-  // Init string stream
-  stringstream stream;
-  stream << str;
-
-  // Parse stream for integers
-  int tag;
-  string tmp;
-  while(!stream.eof()) {
-    stream >> tmp; // Take next 'word'
-    if(sscanf(tmp.c_str(), "%d", &tag) > 0) physical.push_back(tag);
-  }
-
-  // Return modified string
-  return str;
-}
-
 void GMSH_SpanningTreePlugin::getAllMElement(GModel &model, int physical,
                                              int dim, ElementSet &element)
 {
-  std::map<int, std::vector<GEntity *> > group;
+  std::map<int, std::vector<GEntity *>> group;
 
   // Get groups
   model.getPhysicalGroups(dim, group);
@@ -195,7 +161,8 @@ void GMSH_SpanningTreePlugin::addToModel(GModel &model, Tree &tree, int tag)
     line[i] = new MLine(model.getMeshVertexByTag(it->first + 1),
                         model.getMeshVertexByTag(it->second + 1));
 
-  // Add Elements as a Chain in GModel (see Chain::addToModel in src/geo/Chain.h)
+  // Add Elements as a Chain in GModel (see Chain::addToModel in
+  // src/geo/Chain.h)
 
   std::string name = "";
   int entityNum;
@@ -216,7 +183,7 @@ void GMSH_SpanningTreePlugin::addToModel(GModel &model, Tree &tree, int tag)
   }
 
   // Add MLines to new entity
-  std::map<int, std::vector<MElement *> > entityMap;
+  std::map<int, std::vector<MElement *>> entityMap;
   entityMap[entityNum] = line;
 
   // Name new physical
@@ -224,7 +191,7 @@ void GMSH_SpanningTreePlugin::addToModel(GModel &model, Tree &tree, int tag)
   physicalInfo[physicalNum] = name;
 
   // Add new physical to new entity
-  std::map<int, std::map<int, std::string> > physicalMap;
+  std::map<int, std::map<int, std::string>> physicalMap;
   physicalMap[entityNum] = physicalInfo;
 
   // Add in GModel

@@ -10,6 +10,7 @@
 // options, apart from Options.h so that the plugins need not include it
 
 #include <string>
+#include <vector>
 
 #define GMSH_SET (1 << 0)
 #define GMSH_GET (1 << 1)
@@ -48,6 +49,17 @@ typedef struct {
   double def;
   const char *help;
 } StringXNumber;
+
+// a list of numbers: an option of a plugin
+struct StringXNumbers {
+  int level;
+  const char *str;
+  std::vector<double> def;
+  // the option was a string of numbers separated by commas before lists
+  // existed: such a string is still accepted, with a warning
+  bool wasString = false;
+  const char *help = nullptr;
+};
 
 typedef struct {
   int level;

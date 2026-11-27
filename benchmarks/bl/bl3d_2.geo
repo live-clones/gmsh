@@ -1,11 +1,12 @@
-//+
-SetFactory("OpenCASCADE");
-Cylinder(1) = {-0.5, -0, 0, 1, 0, 0, 0.25, 2*Pi};
-//+
-Sphere(2) = {-0.5, 0, 0, 0.25, -Pi/2, Pi/2, 2*Pi};
-//+
-BooleanUnion{ Volume{2}; Delete; }{ Volume{1}; Delete; }
-//+
-Box(2) = {-1.1, -.5, -.5, 2, 1, 1};
-//+
-BooleanDifference{ Volume{2}; Delete; }{ Volume{1}; Delete; }
+// Boundary layers on a capsule (a cylinder and a sphere) in a box
+Merge "bl3d_2.brep";
+
+Mesh.MeshSizeFactor = 0.1;
+
+Mesh 3;
+
+Plugin(BoundaryLayer).Volumes = {1};
+Plugin(BoundaryLayer).Surfaces = {7, 8, 9};
+Plugin(BoundaryLayer).Thickness = 1/40;
+Plugin(BoundaryLayer).Size = 1/400;
+Plugin(BoundaryLayer).Run;

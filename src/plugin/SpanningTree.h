@@ -37,7 +37,7 @@ private:
 
   typedef std::set<const MElement *, MElementPtrLessThan> ElementSet;
   typedef std::set<std::pair<int, int>, Sort> EdgeSet;
-  typedef std::list<std::pair<int, int> > Tree;
+  typedef std::list<std::pair<int, int>> Tree;
 
 public:
   GMSH_SpanningTreePlugin();
@@ -52,7 +52,6 @@ public:
 private:
   static void spanningTree(EdgeSet &edge, DSU &vertex, Tree &tree);
 
-  static std::string parse(std::string str, std::list<int> &physical);
   static void getAllMElement(GModel &model, int physical, int dim,
                              ElementSet &element);
   static void getAllMEdge(ElementSet &element, EdgeSet &edge);

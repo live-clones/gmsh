@@ -9181,6 +9181,22 @@ GMSH_API void gmsh::plugin::setNumber(const std::string &name,
 #endif
 }
 
+GMSH_API void gmsh::plugin::setNumbers(const std::string &name,
+                                       const std::string &option,
+                                       const std::vector<double> &values)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_PLUGINS)
+  try {
+    PluginManager::instance()->setPluginOption(name, option, values);
+  } catch(const std::runtime_error &e) {
+    Msg::Error("%s", e.what());
+  }
+#else
+  Msg::Error("Views require the post-processing and plugin modules");
+#endif
+}
+
 GMSH_API void gmsh::plugin::setString(const std::string &name,
                                       const std::string &option,
                                       const std::string &value)

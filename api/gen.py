@@ -1198,6 +1198,9 @@ plugin = gmsh.add_module('plugin', 'plugin functions')
 doc = '''Set the numerical option `option' to the value `value' for plugin `name'. Plugins available in the official Gmsh release are listed in the "Gmsh plugins" chapter of the Gmsh reference manual (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-plugins).'''
 plugin.add('setNumber', doc, None, istring('name'), istring('option'), idouble('value'))
 
+doc = '''Set the option `option', a list of numbers, to `values' for plugin `name'. Plugins available in the official Gmsh release are listed in the "Gmsh plugins" chapter of the Gmsh reference manual (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-plugins).'''
+plugin.add('setNumbers', doc, None, istring('name'), istring('option'), ivectordouble('values'))
+
 doc = '''Set the string option `option' to the value `value' for plugin `name'. Plugins available in the official Gmsh release are listed in the "Gmsh plugins" chapter of the Gmsh reference manual (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-plugins).'''
 plugin.add('setString', doc, None, istring('name'), istring('option'), istring('value'))
 

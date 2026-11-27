@@ -1186,7 +1186,13 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebPlugins()
     GMSH_Plugin *p = it->second;
     bool post = p->getType() == GMSH_Plugin::GMSH_POST_PLUGIN;
     if(!post && p->getType() != GMSH_Plugin::GMSH_MESH_PLUGIN) continue;
-    std::string num, str;
+    std::string num, str, list;
+    for(int i = 0; i < p->getNbOptionsList(); i++)
+      list += std::string(i ? "," : "") +
+              "{\"name\":" + JsonString(p->getOptionList(i)->str) +
+              ",\"value\":" +
+              JsonString(GMSH_Plugin::listToString(p->getOptionList(i)->def)) +
+              "}";
     for(int i = 0; i < p->getNbOptions(); i++)
       num += std::string(i ? "," : "") +
              "{\"name\":" + JsonString(p->getOption(i)->str) +
@@ -1201,7 +1207,8 @@ EMSCRIPTEN_KEEPALIVE const char *gmshWebPlugins()
             ",\"short\":" + JsonString(p->getShortHelp()) +
             ",\"help\":" + JsonString(p->getHelp()) +
             ",\"author\":" + JsonString(p->getAuthor()) +
-            ",\"num\":[" + num + "],\"str\":[" + str + "]}";
+            ",\"num\":[" + num + "],\"str\":[" + str + "],\"list\":[" +
+            list + "]}";
   }
 #endif
   json += "]";

@@ -37,6 +37,7 @@ public:
   Fl_Box *title, *about;
   Fl_Value_Input *value[MAX_PLUGIN_OPTIONS];
   Fl_Input *input[MAX_PLUGIN_OPTIONS];
+  Fl_Input *list[MAX_PLUGIN_OPTIONS]; // numbers separated by commas
 };
 
 // the field of an option changed: tell the plugin, which may preview it
@@ -73,6 +74,9 @@ static void plugin_browser_cb(Fl_Widget *w, void *data)
     GMSH_Plugin::preview = nullptr; // the preview of the previous plugin
     for(int i = 0; i < std::min(p->getNbOptionsStr(), MAX_PLUGIN_OPTIONS); i++)
       p->dialogBox->input[i]->value(p->getOptionStr(i)->def.c_str());
+    for(int i = 0; i < std::min(p->getNbOptionsList(), MAX_PLUGIN_OPTIONS); i++)
+      p->dialogBox->list[i]->value(
+        GMSH_Plugin::listToString(p->getOptionList(i)->def).c_str());
     for(int i = 0; i < std::min(p->getNbOptions(), MAX_PLUGIN_OPTIONS); i++)
       p->dialogBox->value[i]->value(p->getOption(i)->def);
     shown = p;
@@ -162,6 +166,15 @@ static void plugin_run_cb(Fl_Widget *w, void *data)
     StringXString *sxs = p->getOptionStr(i);
     sxs->def = p->dialogBox->input[i]->value();
   }
+  for(int i = 0; i < std::min(p->getNbOptionsList(), MAX_PLUGIN_OPTIONS); i++) {
+    StringXNumbers *sxl = p->getOptionList(i);
+    if(!GMSH_Plugin::stringToList(p->dialogBox->list[i]->value(), sxl->def)) {
+      Msg::Error("Option '%s' of Plugin(%s) is a list of numbers separated by "
+                 "commas",
+                 sxl->str, p->getName().c_str());
+      return;
+    }
+  }
   for(int i = 0; i < n; i++) {
     StringXNumber *sxn = p->getOption(i);
     sxn->def = p->dialogBox->value[i]->value();
@@ -172,9 +185,8 @@ static void plugin_run_cb(Fl_Widget *w, void *data)
   Fl_Multi_Browser *views = FlGui::instance()->plugins->views->browser;
   for(int i = 1; i <= views->size(); i++)
     if(views->selected(i)) chosen.push_back(i - 1);
-  PluginManager::instance()->runOnViews(p, chosen, [p](PView *view) {
-    add_scripting((GMSH_PostPlugin *)p, view);
-  });
+  PluginManager::instance()->runOnViews(
+    p, chosen, [p](PView *view) { add_scripting((GMSH_PostPlugin *)p, view); });
   FlGui::instance()->updateViews(true);
   GMSH_Plugin::preview = nullptr;
   drawContext::global()->draw();
@@ -234,6 +246,13 @@ void pluginWindow::_createDialogBox(GMSH_Plugin *p)
     d->input[i]->align(FL_ALIGN_RIGHT);
     d->input[i]->value(sxs->def.c_str());
   }
+  for(int i = 0; i < std::min(p->getNbOptionsList(), MAX_PLUGIN_OPTIONS); i++) {
+    StringXNumbers *sxl = p->getOptionList(i);
+    d->list[i] = new Fl_Input(0, 0, IW, BH, sxl->str);
+    d->list[i]->align(FL_ALIGN_RIGHT);
+    d->list[i]->value(GMSH_Plugin::listToString(sxl->def).c_str());
+    d->list[i]->tooltip("Numbers separated by commas");
+  }
   for(int i = 0; i < n; i++) {
     StringXNumber *sxn = p->getOption(i);
     d->value[i] = new Fl_Value_Input(0, 0, IW, BH, sxn->str);
@@ -258,6 +277,9 @@ int pluginWindow::_placeDialogBox(GMSH_Plugin *p, int x, int y, int w)
   int n = std::min(p->getNbOptions(), MAX_PLUGIN_OPTIONS);
   for(int i = 0; i < m; i++, yy += bh)
     d->input[i]->resize(x + WB, yy, _fieldWidth, bh);
+  for(int i = 0; i < std::min(p->getNbOptionsList(), MAX_PLUGIN_OPTIONS);
+      i++, yy += bh)
+    d->list[i]->resize(x + WB, yy, _fieldWidth, bh);
   for(int i = 0; i < n; i++, yy += bh)
     d->value[i]->resize(x + WB, yy, _fieldWidth, bh);
   // its children are placed: only the box of the group changes
@@ -297,11 +319,10 @@ pluginWindow::pluginWindow(int deltaFontSize)
   int width = std::max(CTX::instance()->pluginSize[0], width0);
   int height = std::max(CTX::instance()->pluginSize[1], height0);
 
-  win = new paletteWindow(width, height,
-                          CTX::instance()->nonModalWindows ? true : false,
-                          "Plugins", CTX::instance()->pluginOffset,
-                          &CTX::instance()->pluginSize[0],
-                          &CTX::instance()->pluginSize[1]);
+  win = new paletteWindow(
+    width, height, CTX::instance()->nonModalWindows ? true : false, "Plugins",
+    CTX::instance()->pluginOffset, &CTX::instance()->pluginSize[0],
+    &CTX::instance()->pluginSize[1]);
   win->box(GMSH_WINDOW_BOX);
 
   search = searchBox(

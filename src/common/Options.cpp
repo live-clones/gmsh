@@ -822,6 +822,18 @@ void PrintOptionsDoc()
         }
         fprintf(file, "@end table\n");
       }
+      int l = p->getNbOptionsList();
+      if(l) {
+        fprintf(file, "List options:\n");
+        fprintf(file, "@table @code\n");
+        for(int i = 0; i < l; i++) {
+          StringXNumbers *sxl = p->getOptionList(i);
+          fprintf(file, "@item %s\n", sxl->str);
+          fprintf(file, "Default value: @code{@{%s@}}\n",
+                  GMSH_Plugin::listToString(sxl->def).c_str());
+        }
+        fprintf(file, "@end table\n");
+      }
       int n = p->getNbOptions();
       if(n) {
         fprintf(file, "Numeric options:\n");

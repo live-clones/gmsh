@@ -176,6 +176,8 @@ module gmsh
     contains
     procedure, nopass :: setNumber => &
         gmshPluginSetNumber
+    procedure, nopass :: setNumbers => &
+        gmshPluginSetNumbers
     procedure, nopass :: setString => &
         gmshPluginSetString
     procedure, nopass :: run => &
@@ -16838,6 +16840,40 @@ module gmsh
          value=real(value, c_double), &
          ierr_=ierr)
   end subroutine gmshPluginSetNumber
+
+  !> Set the option `option', a list of numbers, to `values' for plugin `name'.
+  !! Plugins available in the official Gmsh release are listed in the "Gmsh
+  !! plugins" chapter of the Gmsh reference manual
+  !! (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-plugins).
+  subroutine gmshPluginSetNumbers(name, &
+                                  option, &
+                                  values, &
+                                  ierr)
+    interface
+    subroutine C_API(name, &
+                     option, &
+                     api_values_, &
+                     api_values_n_, &
+                     ierr_) &
+      bind(C, name="gmshPluginSetNumbers")
+      use, intrinsic :: iso_c_binding
+      character(len=1, kind=c_char), dimension(*), intent(in) :: name
+      character(len=1, kind=c_char), dimension(*), intent(in) :: option
+      real(c_double), dimension(*) :: api_values_
+      integer(c_size_t), value, intent(in) :: api_values_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    character(len=*), intent(in) :: name
+    character(len=*), intent(in) :: option
+    real(c_double), dimension(:), intent(in) :: values
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(name=istring_(name), &
+         option=istring_(option), &
+         api_values_=values, &
+         api_values_n_=size_gmsh_double(values), &
+         ierr_=ierr)
+  end subroutine gmshPluginSetNumbers
 
   !> Set the string option `option' to the value `value' for plugin `name'.
   !! Plugins available in the official Gmsh release are listed in the "Gmsh

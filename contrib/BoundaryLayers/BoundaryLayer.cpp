@@ -46,10 +46,11 @@ GMSH_BoundaryLayerPlugin::GMSH_BoundaryLayerPlugin()
                      {GMSH_FULLRC, "HighOrder", nullptr, 1.},
                      {GMSH_FULLRC, "HighOrderStrategy", nullptr, 2.},
                      {GMSH_FULLRC, "HighOrderPostSplitUntangle", nullptr, 0.}},
-                    {{GMSH_FULLRC, "Volumes", nullptr, ""},
-                     {GMSH_FULLRC, "Surfaces", nullptr, ""},
-                     {GMSH_FULLRC, "Curves", nullptr, ""},
-                     {GMSH_FULLRC, "Points", nullptr, ""}})
+                    {},
+                    {{GMSH_FULLRC, "Volumes", {}},
+                     {GMSH_FULLRC, "Surfaces", {}},
+                     {GMSH_FULLRC, "Curves", {}},
+                     {GMSH_FULLRC, "Points", {}}})
 {
 }
 
@@ -61,8 +62,8 @@ std::string GMSH_BoundaryLayerPlugin::getHelp() const
          "a 3D mesh. The mesh is generated first, without layers; the plugin "
          "then moves the elements next to the walls to make room for "
          "them.\n\n"
-         "`Volumes', `Surfaces' and `Curves' are comma-separated lists of "
-         "tags. For a 3D mesh, `Volumes' gives the volumes that receive the "
+         "`Volumes', `Surfaces' and `Curves' are lists of tags. For a 3D mesh, "
+         "`Volumes' gives the volumes that receive the "
          "layers and `Surfaces' the walls. For a 2D mesh, `Volumes' is "
          "empty, `Surfaces' gives the surfaces that receive the layers and "
          "`Curves' the walls. A wall on the boundary gets layers on one "
@@ -2666,8 +2667,7 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
 
   // the volumes, surfaces, curves and points
   std::vector<int> tags[4];
-  for(int i = 0; i < 4; i++)
-    if(!optionIntList(i, tags[i])) return v;
+  for(int i = 0; i < 4; i++) tags[i] = optionIntList(i);
   std::vector<GRegion *> volumes;
   for(auto tag : tags[0]) {
     GRegion *gr = m->getRegionByTag(tag);

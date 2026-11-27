@@ -16,14 +16,14 @@ Physical Curve("hole", 2) = {5, 6, 7, 8};
 Physical Surface("domain", 3) = {1};
 Mesh 2;
 
-Plugin(HomologyComputation).DomainPhysicalGroups = "3";
+Plugin(HomologyComputation).DomainPhysicalGroups = {3};
 Plugin(HomologyComputation).ComputeCohomology = 1;
-Plugin(HomologyComputation).DimensionOfChainsToSave = "1";
+Plugin(HomologyComputation).DimensionOfChainsToSave = {1};
 Plugin(HomologyComputation).Run; // H1 and H^1: one generator each
-Plugin(HomologyComputation).SubdomainPhysicalGroups = "1, 2";
+Plugin(HomologyComputation).SubdomainPhysicalGroups = {1, 2};
 Plugin(HomologyComputation).HomologyPhysicalGroupsBegin = 100;
 Plugin(HomologyComputation).CohomologyPhysicalGroupsBegin = 200;
-Plugin(HomologyComputation).DimensionOfChainsToSave = "0, 1, 2";
+Plugin(HomologyComputation).DimensionOfChainsToSave = {0, 1, 2};
 Plugin(HomologyComputation).Filename = "relative.msh";
 Plugin(HomologyComputation).Run; // relative to the boundary
 
@@ -42,15 +42,15 @@ Physical Surface("ends", 1) = {1, e[0]};
 Physical Volume("solid", 3) = {e[1]};
 Mesh 3;
 
-Plugin(HomologyComputation).DomainPhysicalGroups = "3";
-Plugin(HomologyComputation).SubdomainPhysicalGroups = "";
+Plugin(HomologyComputation).DomainPhysicalGroups = {3};
+Plugin(HomologyComputation).SubdomainPhysicalGroups = {};
 Plugin(HomologyComputation).HomologyPhysicalGroupsBegin = -1;
 Plugin(HomologyComputation).CohomologyPhysicalGroupsBegin = -1;
-Plugin(HomologyComputation).DimensionOfChainsToSave = "1, 2";
+Plugin(HomologyComputation).DimensionOfChainsToSave = {1, 2};
 Plugin(HomologyComputation).Filename = "";
 Plugin(HomologyComputation).Run;
-Plugin(HomologyComputation).SubdomainPhysicalGroups = "1";
-Plugin(HomologyComputation).ReductionImmunePhysicalGroups = "1";
+Plugin(HomologyComputation).SubdomainPhysicalGroups = {1};
+Plugin(HomologyComputation).ReductionImmunePhysicalGroups = {1};
 Plugin(HomologyComputation).ReductionCombine = 1;
 Plugin(HomologyComputation).PostProcessSimplify = 0;
 Plugin(HomologyComputation).ReductionHeuristic = 0;

@@ -1198,17 +1198,27 @@ Affectation :
 
   // Plugins
 
-  | tPlugin '(' tSTRING ')' '.' tSTRING_Reserved tAFFECT FExpr tEND
+  | tPlugin '(' tSTRING ')' '.' tSTRING_Reserved tAFFECT ListOfDouble tEND
     {
 #if defined(HAVE_PLUGINS)
+      // a number, or a list of numbers for the options that take one
       try {
-	PluginManager::instance()->setPluginOption($3, $6, $8);
+        if(List_Nbr($8) == 1) {
+          double d;
+          List_Read($8, 0, &d);
+          PluginManager::instance()->setPluginOption($3, $6, d);
+        }
+        else {
+          std::vector<double> v(List_Nbr($8));
+          for(int i = 0; i < List_Nbr($8); i++) List_Read($8, i, &v[i]);
+          PluginManager::instance()->setPluginOption($3, $6, v);
+        }
       }
-      catch (...) {
-	yymsg(0, "Unknown option '%s' or plugin '%s'", $6, $3);
+      catch (const std::exception &e) {
+	yymsg(0, "%s", e.what());
       }
 #endif
-      Free($3); Free($6);
+      Free($3); Free($6); List_Delete($8);
     }
   | tPlugin '(' tSTRING ')' '.' tSTRING_Reserved tAFFECT StringExpr tEND
     {
@@ -1216,8 +1226,8 @@ Affectation :
       try {
 	PluginManager::instance()->setPluginOption($3, $6, $8);
       }
-      catch (...) {
-	yymsg(0, "Unknown option '%s' or plugin '%s'", $6, $3);
+      catch (const std::exception &e) {
+	yymsg(0, "%s", e.what());
       }
 #endif
       Free($3); Free($6); Free($8);

@@ -22,39 +22,39 @@ Physical Curve("holes", 2) = {holes[]};
 Physical Surface("domain", 3) = {1};
 Mesh 2;
 
-Plugin(HomologyComputation).DomainPhysicalGroups = "3";
+Plugin(HomologyComputation).DomainPhysicalGroups = {3};
 Plugin(HomologyComputation).ComputeCohomology = 1;
-Plugin(HomologyComputation).DimensionOfChainsToSave = "1";
+Plugin(HomologyComputation).DimensionOfChainsToSave = {1};
 Plugin(HomologyComputation).HomologyPhysicalGroupsBegin = 100; // 100, 101
 Plugin(HomologyComputation).CohomologyPhysicalGroupsBegin = 200; // 200, 201
 Plugin(HomologyComputation).CreatePostProcessingViews = 0;
 Plugin(HomologyComputation).Run;
-Plugin(HomologyComputation).SubdomainPhysicalGroups = "1, 2";
+Plugin(HomologyComputation).SubdomainPhysicalGroups = {1, 2};
 Plugin(HomologyComputation).ComputeCohomology = 0;
-Plugin(HomologyComputation).DimensionOfChainsToSave = "2";
+Plugin(HomologyComputation).DimensionOfChainsToSave = {2};
 Plugin(HomologyComputation).HomologyPhysicalGroupsBegin = 300; // 300
 Plugin(HomologyComputation).Run;
 
 Plugin(HomologyPostProcessing).TransformationMatrix = "1, 1; 0, 1";
-Plugin(HomologyPostProcessing).PhysicalGroupsOfOperatedChains = "100, 101";
+Plugin(HomologyPostProcessing).PhysicalGroupsOfOperatedChains = {100, 101};
 Plugin(HomologyPostProcessing).NameForResultChains = "sum";
 Plugin(HomologyPostProcessing).Run;
 Plugin(HomologyPostProcessing).TransformationMatrix = "1, -1";
 Plugin(HomologyPostProcessing).NameForResultChains = "difference";
 Plugin(HomologyPostProcessing).Run; // one row: a single chain
 Plugin(HomologyPostProcessing).TransformationMatrix = "I";
-Plugin(HomologyPostProcessing).PhysicalGroupsOfOperatedChains2 = "200, 201";
+Plugin(HomologyPostProcessing).PhysicalGroupsOfOperatedChains2 = {200, 201};
 Plugin(HomologyPostProcessing).NameForResultChains = "dual";
 Plugin(HomologyPostProcessing).Run;
-Plugin(HomologyPostProcessing).PhysicalGroupsOfOperatedChains = "300";
-Plugin(HomologyPostProcessing).PhysicalGroupsOfOperatedChains2 = "";
+Plugin(HomologyPostProcessing).PhysicalGroupsOfOperatedChains = {300};
+Plugin(HomologyPostProcessing).PhysicalGroupsOfOperatedChains2 = {};
 Plugin(HomologyPostProcessing).ApplyBoundaryOperatorToResults = 1;
 Plugin(HomologyPostProcessing).NameForResultChains = "boundary";
 Plugin(HomologyPostProcessing).Run;
-Plugin(HomologyPostProcessing).PhysicalGroupsToTraceResults = "2";
+Plugin(HomologyPostProcessing).PhysicalGroupsToTraceResults = {2};
 Plugin(HomologyPostProcessing).NameForResultChains = "traced";
 Plugin(HomologyPostProcessing).Run;
-Plugin(HomologyPostProcessing).PhysicalGroupsToTraceResults = "";
-Plugin(HomologyPostProcessing).PhysicalGroupsToProjectResults = "2";
+Plugin(HomologyPostProcessing).PhysicalGroupsToTraceResults = {};
+Plugin(HomologyPostProcessing).PhysicalGroupsToProjectResults = {2};
 Plugin(HomologyPostProcessing).NameForResultChains = "projected";
 Plugin(HomologyPostProcessing).Run;

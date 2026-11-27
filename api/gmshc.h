@@ -4061,6 +4061,15 @@ GMSH_API void gmshPluginSetNumber(const char * name,
                                   const double value,
                                   int * ierr);
 
+/* Set the option `option', a list of numbers, to `values' for plugin `name'.
+ * Plugins available in the official Gmsh release are listed in the "Gmsh
+ * plugins" chapter of the Gmsh reference manual
+ * (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-plugins). */
+GMSH_API void gmshPluginSetNumbers(const char * name,
+                                   const char * option,
+                                   const double * values, const size_t values_n,
+                                   int * ierr);
+
 /* Set the string option `option' to the value `value' for plugin `name'.
  * Plugins available in the official Gmsh release are listed in the "Gmsh
  * plugins" chapter of the Gmsh reference manual

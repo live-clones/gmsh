@@ -1,3 +1,5 @@
+// Boundary layers on a profile made of two splines, with a sharp corner, and
+// on the circle around it
 //+
 SetFactory("OpenCASCADE");
 Circle(1) = {-0, 0, 0, 2, 0, 2*Pi};
@@ -76,3 +78,12 @@ MeshSize {2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21
 //+
 MeshSize {1} = 0.3;
 MeshSize {30} = 1.e-2;
+
+Mesh 2;
+
+Plugin(BoundaryLayer).Surfaces = {1};
+Plugin(BoundaryLayer).Curves = {1, 2, 3};
+Plugin(BoundaryLayer).Thickness = 0.04;
+Plugin(BoundaryLayer).Size = 0.0001;
+Plugin(BoundaryLayer).Ratio = 1.5;
+Plugin(BoundaryLayer).Run;
