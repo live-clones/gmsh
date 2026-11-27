@@ -481,15 +481,44 @@ GPoint OCCFace::closestPointFromTrustedGuess(
   return GFace::closestPoint(qp, initialGuess);
 }
 
+// the size of the surface (the diagonal of its bounding box), computed once
+double OCCFace::_size() const
+{
+  double diag = _diag;
+  if(diag < 0.) {
+    diag = 0.;
+    try {
+      Bnd_Box b;
+      BRepBndLib::Add(_s, b, false);
+      if(!b.IsVoid()) diag = sqrt(b.SquareExtent());
+    } catch(Standard_Failure &err) {
+      Msg::Debug("OpenCASCADE exception %s", err.GetMessageString());
+    }
+    _diag = diag;
+  }
+  return diag;
+}
+
 SPoint2 OCCFace::parFromPoint(const SPoint3 &qp, bool onSurface,
                               bool convTestXYZ) const
 {
   // less robust but can be much faster
   if(CTX::instance()->geom.occUseGenericClosestPoint)
     return GFace::parFromPoint(qp, onSurface, convTestXYZ);
-  double uv[2];
-  if(_project(qp.data(), uv, nullptr))
+  double uv[2], xyz[3];
+  if(_project(qp.data(), uv, xyz)) {
+    // the point is meant to be on the surface: OpenCASCADE can miss it when
+    // the model is small, e.g. on an extruded B-spline a few millimetres long
+    // (#2421) - then try the generic inversion, and keep the closest result
+    const double d = qp.distance(SPoint3(xyz[0], xyz[1], xyz[2]));
+    if(!onSurface || d <= _tolerance || d <= 1e-6 * _size())
+      return SPoint2(uv[0], uv[1]);
+    SPoint2 uv2 = GFace::parFromPoint(qp, true, true);
+    GPoint p2 = point(uv2.x(), uv2.y());
+    if(p2.succeeded() && qp.distance(SPoint3(p2.x(), p2.y(), p2.z())) < d)
+      return uv2;
     return SPoint2(uv[0], uv[1]);
+  }
   else // fallback: force convergence test in XYZ coordinates
     return GFace::parFromPoint(qp, true, true);
 }
