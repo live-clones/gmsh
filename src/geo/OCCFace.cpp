@@ -135,7 +135,11 @@ void OCCFace::_setup()
       el.recompute(edges);
     }
     if(!el.check()) {
-      Msg::Error("Could not fix wire in surface %d", tag());
+      // the surface is kept (meshing it will fail with its own error): don't
+      // abort the import of the rest of the model (#3090)
+      Msg::Warning("Could not fix wire in surface %d (healing the shapes, "
+                   "e.g. with Geometry.OCCFixDegenerated, may help)",
+                   tag());
       el.print();
     }
 
