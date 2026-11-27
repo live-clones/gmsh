@@ -324,14 +324,23 @@ void findTransfiniteCorners(GRegion *gr, std::vector<MVertex *> &corners)
       }
       findTransfiniteCorners(gf, corners);
       std::size_t N = corners.size();
+      // the opposite corner of each corner of the starting face is at the
+      // other end of a curve leaving it, which is not a corner of the starting
+      // face itself (in a defective model, two curves can join the same two
+      // corners of a face, and one of them is then not in gf->edges(), #2918)
+      auto onStartFace = [&](MVertex *v) {
+        return std::find(corners.begin(), corners.begin() + N, v) !=
+               corners.begin() + N;
+      };
       for(std::size_t i = 0; i < N; i++) {
         for(auto it = redges.begin(); it != redges.end(); it++) {
-          if((*it)->getBeginVertex()->mesh_vertices[0] == corners[i]) {
-            corners.push_back((*it)->getEndVertex()->mesh_vertices[0]);
-            break;
-          }
-          else if((*it)->getEndVertex()->mesh_vertices[0] == corners[i]) {
-            corners.push_back((*it)->getBeginVertex()->mesh_vertices[0]);
+          MVertex *v0 = (*it)->getBeginVertex()->mesh_vertices[0];
+          MVertex *v1 = (*it)->getEndVertex()->mesh_vertices[0];
+          MVertex *other = (v0 == corners[i]) ? v1 :
+                           (v1 == corners[i]) ? v0 :
+                                                nullptr;
+          if(other && !onStartFace(other)) {
+            corners.push_back(other);
             break;
           }
         }
