@@ -973,13 +973,6 @@ if(HAVE_MESH)
     set_config_option(HAVE_OCTREE_SIZE_FIELD "OctreeSizeField")
   endif()
 
-  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/HierarchicalBasis
-     AND ENABLE_HIERARCHICAL_BASIS)
-    add_subdirectory(contrib/HierarchicalBasis)
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/contrib/HierarchicalBasis)
-    set_config_option(HAVE_HIERARCHICAL_BASIS "HierarchicalBasis")
-  endif()
-
   if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/domhex AND ENABLE_DOMHEX)
     add_subdirectory(contrib/domhex)
     include_directories(contrib/domhex)
@@ -1080,6 +1073,14 @@ if(HAVE_MESH)
     add_subdirectory(contrib/QuadMeshingTools)
     include_directories(BEFORE contrib/QuadMeshingTools)
   endif()
+endif()
+
+# (the basis functions only need the mesh elements, not the mesh generators)
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/HierarchicalBasis
+   AND ENABLE_HIERARCHICAL_BASIS)
+  add_subdirectory(contrib/HierarchicalBasis)
+  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/contrib/HierarchicalBasis)
+  set_config_option(HAVE_HIERARCHICAL_BASIS "HierarchicalBasis")
 endif()
 
 if(ENABLE_MED OR ENABLE_CGNS)
