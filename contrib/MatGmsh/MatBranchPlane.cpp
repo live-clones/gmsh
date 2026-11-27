@@ -2615,7 +2615,8 @@ bool extendAllBranches(const Mesh &mesh, const Mesh &skin, double tolerance, dou
 // The mid-surface as a mesh with its branches and its classified edges.
 
 bool writeClassifiedMesh(const Mesh &mesh, const Mesh &skin, const std::string &filename,
-                         ClassifiedEdges &counts, std::string &error)
+                         ClassifiedEdges &counts, std::string &error,
+                         const std::vector<double> *nodeData, const std::string &dataName)
 {
   counts = ClassifiedEdges{};
   error.clear();
@@ -2804,6 +2805,15 @@ bool writeClassifiedMesh(const Mesh &mesh, const Mesh &skin, const std::string &
       << node[mesh.triangles[3 * t + 1]] << ' ' << node[mesh.triangles[3 * t + 2]] << '\n';
   }
   f << "$EndElements\n";
+  // the values at the nodes written, the finite ones
+  if(nodeData && nodeData->size() == node.size()) {
+    std::size_t finite = 0;
+    for(std::size_t v = 0; v < node.size(); ++v) finite += node[v] && std::isfinite((*nodeData)[v]);
+    f << "$NodeData\n1\n\"" << dataName << "\"\n1\n0\n3\n0\n1\n" << finite << '\n';
+    for(std::size_t v = 0; v < node.size(); ++v)
+      if(node[v] && std::isfinite((*nodeData)[v])) f << node[v] << ' ' << (*nodeData)[v] << '\n';
+    f << "$EndNodeData\n";
+  }
   if(!f) {
     error = "Failed to write " + filename;
     return false;

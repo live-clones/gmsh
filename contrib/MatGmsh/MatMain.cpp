@@ -30,13 +30,18 @@ int main(int argc, char **argv)
                  "  [--extension-length L] [--extension-layers n]\n"
                  "  [--raw tet|legacy] [--filter collapse|legacy|none]\n"
                  "  [--collapse-threshold 0.21] [--wing-branches]\n"
-                 "  [--wing-angle 135] [--complex] [--extend-all]\n"
+                 "  [--wing-angle 135] [--complex] [--extend-all] [--mesh-midsurface s]\n"
                  "The defaults are --raw tet --filter collapse; --raw legacy or\n"
                  "--filter legacy alone selects the legacy raw MAT and filter.\n"
                  "--extend-all extends every branch of the filtered (or projected)\n"
                  "MAT at once and writes extended_all.msh, its classified edges\n"
                  "and extended_all.json; --extension-length is its reach (twice\n"
                  "the thickness if 0).\n"
+                 "--mesh-midsurface s puts the result of --extend-all in a discrete\n"
+                 "model and meshes it (Mesh.Algorithm 12, triangles of at most s, the\n"
+                 "thickness if 0): midsurface_mesh.msh and midsurface_mesh.json;\n"
+                 "--midsurface-angle (180) and --midsurface-curve-angle (180), in\n"
+                 "degrees, split its surfaces at sharp edges and its curves at corners.\n"
                  "--threads is the number of threads of the skin mesh and of the\n"
                  "classification of the tetrahedra: 0, the default, is every core\n"
                  "(or OMP_NUM_THREADS).\n";
@@ -49,6 +54,7 @@ int main(int argc, char **argv)
     std::string input = argv[1], cached;
     std::filesystem::path output;
     double meshSize = 0.; int threads = 0; bool complex = false, extendAll = false;
+    double midSize = -1., midAngle = 180., midCurveAngle = 180.;
     bool reachGiven = false;
     bool rawGiven = false, filterGiven = false, thicknessGiven = false;
     for(int i = 2; i < argc; ++i) {
@@ -68,6 +74,9 @@ int main(int argc, char **argv)
       else if(key == "--wing-angle") options.branchAngle = std::stod(value());
       else if(key == "--complex") complex = true;
       else if(key == "--extend-all") extendAll = true;
+      else if(key == "--mesh-midsurface") midSize = std::stod(value());
+      else if(key == "--midsurface-angle") midAngle = std::stod(value());
+      else if(key == "--midsurface-curve-angle") midCurveAngle = std::stod(value());
       else if(key == "--raw") {
         const std::string mode = value();
         if(mode == "legacy") options.raw = matgmsh_native::RawMode::Legacy;
@@ -102,6 +111,9 @@ int main(int argc, char **argv)
     if(output.empty()) throw std::runtime_error("--output is required");
     if(std::filesystem::exists(output)) throw std::runtime_error("Output directory already exists; choose a new checkpoint directory");
     if(threads < 0) throw std::runtime_error("--threads must be nonnegative");
+    if(midSize >= 0. && !extendAll) throw std::runtime_error("--mesh-midsurface needs --extend-all");
+    if(!(midAngle > 0. && midAngle <= 180. && midCurveAngle > 0. && midCurveAngle <= 180.))
+      throw std::runtime_error("The angles of the mid-surface model are in ]0, 180]");
     if(!std::isfinite(options.thickness) || options.thickness <= 0.)
       throw std::runtime_error("--thickness must be finite and positive");
     if(!std::isfinite(meshSize) || meshSize < 0.)
@@ -168,11 +180,16 @@ int main(int argc, char **argv)
       if(!matgmsh_native::extendAllBranches(base, result.skin, .1 * t, .25 * t, reach,
                                             options.extensionLayers, .01 * t * t, {}, all, error, &base))
         throw std::runtime_error("Extension of all the branches at once: " + error);
-      if(!matgmsh_native::writeMesh(all.result, (output / "extended_all.msh").string(), error))
+      // the local thickness of the MAT at the nodes of the extended MAT
+      const std::vector<double> thickness = matgmsh_native::localThickness(all.result, result.filtered);
+      const std::string thicknessName = "MAT local thickness";
+      if(!matgmsh_native::writeMesh(all.result, (output / "extended_all.msh").string(), error,
+                                    &thickness, thicknessName))
         throw std::runtime_error(error);
       matgmsh_native::ClassifiedEdges edges;
       if(!matgmsh_native::writeClassifiedMesh(all.result, result.skin,
-                                              (output / "extended_all_classified.msh").string(), edges, error))
+                                              (output / "extended_all_classified.msh").string(), edges, error,
+                                              &thickness, thicknessName))
         throw std::runtime_error(error);
       std::ostringstream json;
       json.precision(17);
@@ -204,6 +221,39 @@ int main(int argc, char **argv)
            << " surfaces cut together in " << all.seconds << " s, kept pieces found in " << all.rounds
            << " rounds" << (all.settled ? "" : " (two alternating sets: the smaller one)");
       gmsh::logger::write(said.str());
+      if(midSize >= 0.) {
+        // the mid-surface in a discrete model of its own, meshed by Gmsh
+        matgmsh_native::MidSurfaceModel mid;
+        const double degree = M_PI / 180.;
+        if(!matgmsh_native::buildMidSurfaceModel(all.result, "MAT mid-surface", midAngle * degree,
+                                                 midCurveAngle * degree, .01 * t * t, mid, error))
+          throw std::runtime_error("Mid-surface model: " + error);
+        const bool meshed = matgmsh_native::meshMidSurfaceModel(mid, midSize > 0. ? midSize : t, error);
+        std::vector<std::size_t> midNodes;
+        std::vector<double> midThickness;
+        if(meshed) matgmsh_native::midSurfaceThickness(mid, result.filtered, midNodes, midThickness);
+        if(meshed && !matgmsh_native::writeMidSurfaceMesh(mid, (output / "midsurface_mesh.msh").string(), error,
+                                                          &midNodes, &midThickness, thicknessName))
+          throw std::runtime_error(error);
+        std::ofstream info(output / "midsurface_mesh.json");
+        info.precision(17);
+        info << "{\"size\":" << (midSize > 0. ? midSize : t) << ",\"angle\":" << midAngle
+             << ",\"curve_angle\":" << midCurveAngle << ",\"branches\":" << mid.branches
+             << ",\"surfaces\":" << mid.surfaces << ",\"curves\":" << mid.curves
+             << ",\"points\":" << mid.points << ",\"volumes\":" << mid.volumes
+             << ",\"slits\":" << mid.slits << ",\"holes\":" << mid.holes << ",\"specks\":" << mid.specks
+             << ",\"speck_area\":" << mid.speckArea << ",\"junction_curves\":" << mid.junctions << ",\"boundary_curves\":" << mid.boundaries
+             << ",\"meshed\":" << (meshed ? "true" : "false") << ",\"triangles\":" << mid.triangles
+             << ",\"nodes\":" << mid.nodes << ",\"surfaces_without_triangles\":" << mid.failed
+             << ",\"build_seconds\":" << mid.buildSeconds << ",\"mesh_seconds\":" << mid.meshSeconds
+             << "}\n";
+        if(!meshed) throw std::runtime_error("Mesh of the mid-surface: " + error);
+        std::ostringstream line;
+        line << "Mid-surface model: " << mid.surfaces << " surfaces (" << mid.branches << " branches), "
+             << mid.curves << " curves, built in " << mid.buildSeconds << " s; mesh: " << mid.triangles
+             << " triangles, " << mid.failed << " surfaces without triangles, in " << mid.meshSeconds << " s";
+        gmsh::logger::write(line.str()); // (the model goes with gmsh::finalize)
+      }
     }
     gmsh::logger::write("MAT checkpoints: " + output.string());
     status = options.stopAfter == matgmsh_native::Stage::Extended && !result.extension.complete ? 2 : 0;

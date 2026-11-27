@@ -8,6 +8,7 @@
 #if defined(HAVE_MIDSURFACER)
 
 #include <algorithm>
+#include <cmath>
 #include <cstdarg>
 #include <cstdint>
 #include <cstdio>
@@ -17,6 +18,7 @@
 #include <vector>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Group.H>
+#include <FL/Fl_Scroll.H>
 #include <functional>
 #include "FlGui.h"
 #include "paletteWindow.h"
@@ -37,7 +39,7 @@
 
 namespace {
 const char *const stageName[midsurfacerWindow::NumStages] = {
-  "skin", "raw", "filtered", "projected", "extended"};
+  "skin", "raw", "filtered", "projected", "extended", "mesh"};
 
 std::string text(const char *fmt, ...)
 {
@@ -104,6 +106,60 @@ void undo_cb(Fl_Widget *w, void *data)
 void save_cb(Fl_Widget *w, void *data)
 { FlGui::instance()->midsurfacer->save(); }
 
+void mesh_cb(Fl_Widget *w, void *data)
+{ FlGui::instance()->midsurfacer->meshMidSurface(); }
+
+void thickness_cb(Fl_Widget *w, void *data)
+{
+  midsurfacerWindow *m = FlGui::instance()->midsurfacer;
+  m->display(midsurfacerWindow::Extension, false);
+  m->display(midsurfacerWindow::Mesh, true);
+}
+
+bool inList(const GModel *m)
+{
+  return m && std::find(GModel::list.begin(), GModel::list.end(), m) != GModel::list.end();
+}
+
+// The mesh of the skin, the classification of the tetrahedra and the mesh of
+// the mid-surface on every core, unless General.NumThreads asks for another
+// number of threads than the default one (0 is every core for Gmsh as well).
+struct EveryCore {
+  const int saved = CTX::instance()->numThreads;
+  EveryCore()
+  {
+    if(saved == 1) CTX::instance()->numThreads = 0;
+  }
+  ~EveryCore() { CTX::instance()->numThreads = saved; }
+};
+
+// a view of a mesh with one value per node
+PView *nodeView(const std::vector<double> &xyz, const std::vector<std::size_t> &triangles,
+                const std::vector<double> &values, const std::string &name)
+{
+  PViewDataList *data = new PViewDataList();
+  for(std::size_t t = 0; t + 2 < triangles.size(); t += 3) {
+    double v[3];
+    bool known = true;
+    for(int k = 0; k < 3; k++) {
+      v[k] = values[triangles[t + k]];
+      known = known && std::isfinite(v[k]);
+    }
+    if(!known) continue;
+    std::vector<double> *list = data->incrementList(1, TYPE_TRI);
+    for(int component = 0; component < 3; component++)
+      for(int corner = 0; corner < 3; corner++)
+        list->push_back(xyz[3 * triangles[t + corner] + component]);
+    list->insert(list->end(), {v[0], v[1], v[2]});
+  }
+  data->setName(name);
+  data->setFileName(name + ".pos");
+  data->finalize();
+  PView *view = new PView(data);
+  view->getOptions()->visible = 0;
+  return view;
+}
+
 // a view of a mesh, with one value per triangle
 PView *meshView(const matgmsh_native::Mesh &mesh, const std::string &name,
                 const std::function<double(std::size_t)> &value,
@@ -159,6 +215,16 @@ struct midsurfacerWindow::State {
   std::set<int> extended;
   // the MAT and the branches extended before each of the last extensions
   std::vector<std::pair<matgmsh_native::Mesh, std::set<int> > > history;
+  // the mid-surface in a discrete model of its own, and its mesh
+  matgmsh_native::MidSurfaceModel mid;
+  GModel *midModel() const { return inList(mid.model) ? mid.model : nullptr; }
+  // the model of the part (the current one, unless it is the mid-surface)
+  GModel *source() const
+  {
+    if(inList(model)) return model;
+    GModel *m = GModel::current();
+    return m == midModel() ? nullptr : m;
+  }
   State()
   {
     for(int i = 0; i < NumViews; i++) {
@@ -180,12 +246,20 @@ midsurfacerWindow::midsurfacerWindow(int deltaFontSize) : _state(new State)
 
   const int section = WB + 2 + BH; // a line, then a title
   int width = TW;
-  int height = 2 * WB + 24 * BH + 6 * section;
+  int height = 2 * WB + 27 * BH + 7 * section;
 
-  win = new paletteWindow(width, height,
+  // The widgets in a scroll, laid out for the width TW, the scrollbar to
+  // their right: the window takes the height the dock leaves it (it is too
+  // tall for a screen of a laptop, where the dock folds a window of fixed
+  // height that does not fit), and scrolls when it is shorter than them.
+  const int bar = Fl::scrollbar_size();
+  win = new paletteWindow(width + bar, height,
                           CTX::instance()->nonModalWindows ? true : false,
                           "Midsurfacer");
   win->box(GMSH_WINDOW_BOX);
+  Fl_Scroll *scroll = new Fl_Scroll(0, 0, width + bar, height);
+  scroll->type(Fl_Scroll::VERTICAL);
+  scroll->box(GMSH_WINDOW_BOX);
 
   int x = 2 * WB, y = WB;
   const int full = width - 4 * WB;
@@ -385,25 +459,53 @@ midsurfacerWindow::midsurfacerWindow(int deltaFontSize) : _state(new State)
   reset->tooltip("Take back every extension: back to the filtered medial axis");
   y += BH;
 
+  title("6. Mesh of the mid-surface");
+  surfaceSize = input("Mesh size (0: thickness)", 0., 0., 1.e22, .01,
+                      "The largest size of the triangles of the mesh of the "
+                      "mid-surface (Mesh.MeshSizeMax for this mesh); the "
+                      "smaller sizes asked for by the other mesh size options "
+                      "of Gmsh apply. 0 for the thickness");
+  action(Mesh, "Mesh",
+         "Put the MAT as it is now (extended: Extend all first if no branch is) in "
+         "a discrete model of its own, \"MAT mid-surface\", made current: one "
+         "surface per branch (and per piece of it), its curves along its "
+         "boundary, the planes recognized; and mesh it with the Frontal-Delaunay "
+         "algorithm on the triangulation (Mesh.Algorithm 12) and the size map "
+         "of Gmsh. The menus of Gmsh then act on it (mesh it again, save it)");
+  push[Mesh]->callback(mesh_cb);
+
   title("Show");
   {
     static const char *labels[NumStages] = {"Skin", "Raw", "Filtered",
-                                            "Projected", "Extended"};
-    // twentieths of the row, for labels of unequal lengths
-    static const int share[NumStages + 1] = {0, 3, 6, 10, 15, 20};
+                                            "Projected", "Extended", "Mesh"};
+    // twenty-fourths of the row, for labels of unequal lengths
+    static const int share[NumStages + 1] = {0, 3, 6, 10, 15, 20, 24};
     Fl_Group *row = new Fl_Group(x, y, full, BH);
     for(int i = 0; i < NumStages; i++) {
-      int x0 = x + share[i] * full / 20, x1 = x + share[i + 1] * full / 20;
+      int x0 = x + share[i] * full / 24, x1 = x + share[i + 1] * full / 24;
       visible[i] = new Fl_Check_Button(x0, y, x1 - x0, BH, labels[i]);
       visible[i]->callback(display_cb, (void *)(intptr_t)i);
       if(i) visible[i]->deactivate();
     }
     row->end();
+    y += BH;
   }
+  byThickness = new Fl_Check_Button(x, y, full, BH, "Color by the local thickness");
+  byThickness->value(1);
+  byThickness->callback(thickness_cb);
+  byThickness->tooltip(
+    "The extended MAT and the mesh of the mid-surface colored by the local "
+    "thickness of the MAT: at each point twice the radius of the ball of the "
+    "MAT at the nearest node of the filtered MAT in the same branch (on what "
+    "extends a branch, its thickness where it ends). Not ticked: by branch");
+  y += BH;
 
+  scroll->end();
+  win->resizable(scroll);
   win->end();
-  // of fixed height, as narrow as the option window, wider as one likes
-  ((paletteWindow *)win)->fixedLayout(width, height, 2 * WB);
+  // as narrow as the option window, wider as one likes; of any height
+  ((paletteWindow *)win)->followWidth(width / 2, width - 2 * WB);
+  ((paletteWindow *)win)->sizeRange(width + bar, std::min(height, 12 * BH));
   FL_NORMAL_SIZE += deltaFontSize;
 }
 
@@ -417,7 +519,9 @@ void midsurfacerWindow::show()
 {
   // the skin as it is now, whoever meshed it
   std::size_t faces, meshed, triangles;
-  countSkin(GModel::current(), faces, meshed, triangles);
+  GModel *model = _state->source();
+  if(!model) model = GModel::current();
+  countSkin(model, faces, meshed, triangles);
   if(!faces)
     status[Skin]->copy_label("No surface in the model");
   else if(!triangles)
@@ -445,6 +549,7 @@ void midsurfacerWindow::_say(int stage, const std::string &what,
 // the stages from this one on are to be computed again: their views go
 void midsurfacerWindow::_forget(int fromStage)
 {
+  _dropMid();
   for(int i = std::max(fromStage, (int)Raw); i < NumStages; i++) {
     if(PView *v = _state->view(i)) delete v;
     _state->tag[i] = -1;
@@ -499,7 +604,8 @@ void midsurfacerWindow::_listBranches(bool reset)
 {
   State &s = *_state;
   if(reset) {
-    for(int i : {(int)Selected, (int)Preview, (int)Extension}) {
+    _dropMid();
+    for(int i : {(int)Selected, (int)Preview, (int)Extension, (int)Thickness}) {
       if(PView *v = s.view(i)) delete v;
       s.tag[i] = -1;
       s.data[i] = nullptr;
@@ -632,7 +738,7 @@ bool midsurfacerWindow::_extend(int branch, bool planar, bool apply,
   else {
     Ribbon ribbon;
     const double l = length->value() > 0. ? length->value() : 2. * t;
-    const Mesh &original =
+    const matgmsh_native::Mesh &original =
       s.session.hasProjected() && r.projectionStatus == "applied" ? r.projected : r.filtered;
     if(!branchRibbon(s.work, branch, l, std::max(1, (int)layers->value()),
                      ribbon, error, &original)) {
@@ -742,6 +848,7 @@ void midsurfacerWindow::extendBranch(bool everyBranch)
       if(p.area >= speck && p.deviation > flat && !s.extended.count(p.branch))
         todo.push_back({p.branch, false});
   }
+  _dropMid();
   // what Undo gives back (the last 10 extensions)
   s.history.push_back({s.work, s.extended});
   if(s.history.size() > 10) s.history.erase(s.history.begin());
@@ -795,6 +902,7 @@ void midsurfacerWindow::extendBranch(bool everyBranch)
   s.tag[Selected] = -1;
   s.data[Selected] = nullptr;
   _view(Extension);
+  _thicknessView();
   _listBranches(false);
   FlGui::instance()->updateViews(true);
   if(PView *v = s.view(Preview))
@@ -815,7 +923,7 @@ bool midsurfacerWindow::_extendTogether(std::string &what)
   const Result &r = s.session.result();
   const double t = thickness->value();
   const double reach = length->value() > 0. ? length->value() : 2. * t;
-  const Mesh &original = s.session.hasProjected() ? r.projected : r.filtered;
+  const matgmsh_native::Mesh &original = s.session.hasProjected() ? r.projected : r.filtered;
   GlobalExtension g;
   std::string error;
   if(!extendAllBranches(s.work, r.skin, .1 * t, .25 * t, reach,
@@ -858,7 +966,7 @@ bool midsurfacerWindow::_extendTogether(std::string &what)
   // the views of what happened: the surfaces before the cut, the pieces after
   const struct {
     int slot;
-    const Mesh *mesh;
+    const matgmsh_native::Mesh *mesh;
     const char *name;
   } views[] = {{Surfaces, &g.surfaces, "MAT surfaces before the cut"},
                {Pieces, &g.pieces, "MAT pieces after the cut"}};
@@ -881,7 +989,8 @@ void midsurfacerWindow::_showOnly(int stage)
 {
   for(int i = 0; i < NumStages; i++) {
     bool on = (i == stage);
-    if(i != Skin && !_state->view(i)) on = false;
+    if(i == Mesh && !_state->midModel()) on = false;
+    if(i != Skin && i != Mesh && !_state->view(i)) on = false;
     if(i == Skin && stage == Skin) on = true;
     visible[i]->value(on);
     display(i, false);
@@ -961,13 +1070,81 @@ void midsurfacerWindow::showAngles()
 void midsurfacerWindow::display(int stage, bool draw)
 {
   int on = visible[stage]->value() ? 1 : 0;
-  if(stage == Skin) {
-    opt_mesh_surface_edges(0, GMSH_SET | GMSH_GUI, on);
-    if(!on) opt_mesh_surface_faces(0, GMSH_SET | GMSH_GUI, 0);
+  if(stage == Skin || stage == Mesh)
+    _showModels();
+  else if(stage == Extension) {
+    // the extended MAT colored by branch, or by the local thickness
+    PView *t = _state->view(Thickness);
+    const bool thick = t && byThickness->value();
+    if(PView *v = _state->view(Extension))
+      opt_view_visible(v->getIndex(), GMSH_SET | GMSH_GUI, on && !thick);
+    if(t) opt_view_visible(t->getIndex(), GMSH_SET | GMSH_GUI, on && thick);
   }
   else if(PView *v = _state->view(stage))
     opt_view_visible(v->getIndex(), GMSH_SET | GMSH_GUI, on);
   if(draw) drawContext::global()->draw();
+}
+
+// The mesh options are those of all the models: the model of the part is
+// hidden when the mesh of the mid-surface is shown without the skin, and the
+// mid-surface model is current while it is shown, so that the menus of Gmsh
+// act on it.
+void midsurfacerWindow::_showModels()
+{
+  State &s = *_state;
+  GModel *mid = s.midModel(), *source = s.source();
+  const bool skin = visible[Skin]->value(), mesh = mid && visible[Mesh]->value();
+  if(mid) mid->setVisibility(mesh);
+  if(source) source->setVisibility(skin || !mesh);
+  opt_mesh_surface_edges(0, GMSH_SET | GMSH_GUI, skin || mesh);
+  if(!skin && !mesh) opt_mesh_surface_faces(0, GMSH_SET | GMSH_GUI, 0);
+  if(PView *v = s.view(MeshThickness))
+    opt_view_visible(v->getIndex(), GMSH_SET | GMSH_GUI, mesh && byThickness->value());
+  GModel *current = mesh ? mid : source;
+  if(current && current != GModel::current()) {
+    GModel::setCurrent(current);
+    FlGui::instance()->rebuildTree();
+  }
+}
+
+void midsurfacerWindow::_dropMid()
+{
+  State &s = *_state;
+  if(PView *v = s.view(MeshThickness)) delete v;
+  s.tag[MeshThickness] = -1;
+  s.data[MeshThickness] = nullptr;
+  if(GModel *mid = s.midModel()) {
+    // (deleting it changes the stamps of the models, not the part)
+    const bool clean = !s.stamps.changed();
+    GModel *source = s.source();
+    if(source) {
+      GModel::setCurrent(source);
+      source->setVisibility(1);
+    }
+    delete mid;
+    if(clean) s.stamps.record();
+    FlGui::instance()->rebuildTree();
+  }
+  s.mid = matgmsh_native::MidSurfaceModel{};
+  status[Mesh]->copy_label("");
+  status[Mesh]->copy_tooltip("");
+  visible[Mesh]->value(0);
+  visible[Mesh]->deactivate();
+}
+
+void midsurfacerWindow::_thicknessView()
+{
+  State &s = *_state;
+  if(PView *v = s.view(Thickness)) delete v;
+  s.tag[Thickness] = -1;
+  s.data[Thickness] = nullptr;
+  if(!s.hasWork || s.work.triangles.empty() || !s.session.hasFiltered()) return;
+  const std::vector<double> t =
+    matgmsh_native::localThickness(s.work, s.session.result().filtered);
+  std::vector<std::size_t> triangles(s.work.triangles.begin(), s.work.triangles.end());
+  PView *view = nodeView(s.work.xyz, triangles, t, "MAT local thickness");
+  s.tag[Thickness] = view->getTag();
+  s.data[Thickness] = view->getData();
 }
 
 // meshes the skin again, at the size asked for (the model is locked by the
@@ -1024,18 +1201,13 @@ void midsurfacerWindow::run(int target)
   modelLock lock(modelLock::ifFree);
   if(!lock) return;
   State &s = *_state;
+  // the part, current again if the mid-surface was
+  if(GModel::current() == s.midModel() && s.source()) {
+    GModel::setCurrent(s.source());
+    FlGui::instance()->rebuildTree();
+  }
   GModel *model = GModel::current();
-  // The mesh of the skin and the classification of the tetrahedra on every
-  // core, unless General.NumThreads asks for another number of threads than
-  // the default one (0 is every core for Gmsh as well).
-  struct EveryCore {
-    const int saved = CTX::instance()->numThreads;
-    EveryCore()
-    {
-      if(saved == 1) CTX::instance()->numThreads = 0;
-    }
-    ~EveryCore() { CTX::instance()->numThreads = saved; }
-  } everyCore;
+  EveryCore everyCore;
 
   Options options;
   options.thickness = thickness->value();
@@ -1224,6 +1396,7 @@ void midsurfacerWindow::undoExtension(bool everything)
     Msg::Info("Midsurfacer: no extension to take back");
     return;
   }
+  _dropMid();
   const std::size_t back = everything ? s.history.size() : 1;
   s.work = std::move(s.history[s.history.size() - back].first);
   s.extended = std::move(s.history[s.history.size() - back].second);
@@ -1235,14 +1408,18 @@ void midsurfacerWindow::undoExtension(bool everything)
     s.data[i] = nullptr;
   }
   if(filteredAgain) {
-    if(PView *v = s.view(Extension)) delete v;
-    s.tag[Extension] = -1;
-    s.data[Extension] = nullptr;
+    for(int i : {(int)Extension, (int)Thickness}) {
+      if(PView *v = s.view(i)) delete v;
+      s.tag[i] = -1;
+      s.data[i] = nullptr;
+    }
     visible[Extension]->value(0);
     visible[Extension]->deactivate();
   }
-  else
+  else {
     _view(Extension);
+    _thicknessView();
+  }
   _listBranches(false);
   const std::string what =
     filteredAgain ? "Back to the filtered medial axis" :
@@ -1277,7 +1454,11 @@ void midsurfacerWindow::save(const std::string &name)
   if(file.size() < 4 || file.compare(file.size() - 4, 4, ".msh")) file += ".msh";
   matgmsh_native::ClassifiedEdges c;
   std::string error;
-  if(!matgmsh_native::writeClassifiedMesh(s.work, s.session.result().skin, file, c, error)) {
+  const std::vector<double> thickness =
+    s.session.hasFiltered() ? matgmsh_native::localThickness(s.work, s.session.result().filtered) :
+                              std::vector<double>();
+  if(!matgmsh_native::writeClassifiedMesh(s.work, s.session.result().skin, file, c, error,
+                                          &thickness, "MAT local thickness")) {
     Msg::Error("Midsurfacer: %s", error.c_str());
     return;
   }
@@ -1288,6 +1469,90 @@ void midsurfacerWindow::save(const std::string &name)
   status[Extension]->copy_label(what.c_str());
   status[Extension]->copy_tooltip((what + " (" + file + ")").c_str());
   Msg::Info("Midsurfacer: %s, in '%s'", what.c_str(), file.c_str());
+}
+
+void midsurfacerWindow::meshMidSurface()
+{
+  using namespace matgmsh_native;
+  State &s = *_state;
+  // the earlier stages first: the filter if it is missing or out of date,
+  // then every branch extended if none is
+  if(!s.session.hasFiltered() || s.stamps.changed()) run(Filter);
+  if(!s.hasWork || !FlGui::available()) return;
+  if(!s.view(Extension)) extendBranch(true);
+  if(!s.view(Extension) || !FlGui::available()) return;
+  modelLock lock(modelLock::ifFree);
+  if(!lock) return;
+  EveryCore everyCore;
+  _dropMid();
+  const double t = thickness->value();
+  const double size = surfaceSize->value() > 0. ? surfaceSize->value() : t;
+  std::string error;
+  status[Mesh]->copy_label("Building the discrete model...");
+  win->redraw();
+  FlGui::check();
+  if(!buildMidSurfaceModel(s.work, "MAT mid-surface", M_PI, M_PI, .01 * t * t, s.mid, error)) {
+    Msg::Error("Midsurfacer: %s", error.c_str());
+    status[Mesh]->copy_label("Failed (see the messages)");
+    status[Mesh]->copy_tooltip(error.c_str());
+    s.stamps.record();
+    return;
+  }
+  status[Mesh]->copy_label("Meshing...");
+  win->redraw();
+  FlGui::check();
+  const bool meshed = meshMidSurfaceModel(s.mid, size, error);
+  if(!FlGui::available()) return;
+  if(!meshed) Msg::Error("Midsurfacer: %s", error.c_str());
+  // the local thickness at its nodes
+  std::vector<std::size_t> nodes;
+  std::vector<double> values;
+  midSurfaceThickness(s.mid, s.session.result().filtered, nodes, values);
+  {
+    std::map<std::size_t, std::size_t> index;
+    for(std::size_t i = 0; i < nodes.size(); i++) index[nodes[i]] = i;
+    std::vector<double> xyz;
+    std::vector<std::size_t> triangles;
+    std::vector<double> at;
+    std::map<MVertex *, std::size_t> local;
+    for(auto it = s.mid.model->firstFace(); it != s.mid.model->lastFace(); ++it)
+      for(MTriangle *tr : (*it)->triangles)
+        for(int k = 0; k < 3; k++) {
+          MVertex *v = tr->getVertex(k);
+          auto found = local.insert({v, xyz.size() / 3});
+          if(found.second) {
+            xyz.insert(xyz.end(), {v->x(), v->y(), v->z()});
+            auto i = index.find(v->getNum());
+            at.push_back(i == index.end() ? std::nan("") : values[i->second]);
+          }
+          triangles.push_back(found.first->second);
+        }
+    PView *view = nodeView(xyz, triangles, at, "MAT mid-surface thickness");
+    s.tag[MeshThickness] = view->getTag();
+    s.data[MeshThickness] = view->getData();
+  }
+  s.stamps.record();
+  const MidSurfaceModel &m = s.mid;
+  std::string what = text("%zu triangles of size %g on %zu surfaces (%.3g s)", m.triangles,
+                          size, m.surfaces, m.buildSeconds + m.meshSeconds);
+  std::string more =
+    text("The discrete model \"MAT mid-surface\": %zu surfaces of %zu branches, %zu "
+         "curves (%zu at junctions, %zu on the boundary), built in %.3g s; %zu slits "
+         "closed, %zu holes and %zu surfaces of less than %.3g filled and left out; "
+         "meshed in %.3g s: %zu triangles, %zu nodes, %zu surfaces without triangles",
+         m.surfaces, m.branches, m.curves, m.junctions, m.boundaries, m.buildSeconds,
+         m.slits, m.holes, m.specks, .01 * t * t, m.meshSeconds, m.triangles, m.nodes,
+         m.failed);
+  if(m.branches > 1 && !m.junctions)
+    more += ". The branches share no curve: where one stops on another, their "
+            "meshes are not connected (the edges \"along another branch\" of "
+            "Save...)";
+  if(m.failed) what += text(", %zu surfaces without triangles", m.failed);
+  _say(Mesh, what, more);
+  visible[Mesh]->activate();
+  FlGui::instance()->updateViews(true);
+  _showOnly(Mesh);
+  drawContext::global()->draw();
 }
 
 #endif

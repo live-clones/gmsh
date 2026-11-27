@@ -1110,3 +1110,46 @@ Left: the ribbons of the extension (hash maps, about 1.7 s at 0.2), the cut
 (1.7 s at 0.2), the circumcentres on one thread (0.5 s at 0.2), the sorts of
 the certificate, of the dual and of the sides of the skin (1.4 s at 0.2 in
 all), the save in ASCII (1 s at 0.2).
+
+Mesh of the mid-surface and local thickness, 27 November 2026
+--------------------------------------------------------------
+
+The extended MAT in a discrete model of its own, made by the discrete CAD
+modeler (one piece per branch), meshed by Gmsh with Mesh.Algorithm 12
+(README.txt, "Mesh of the mid-surface"). On Doghouse.stp (thickness 4, the
+defaults of the window), what had to be repaired first:
+
+  - with the edges sharper than 40 degrees as curves, 100 surfaces, 86 of
+    them of 0.01 to 1 mm: the surfaces are now split only between branches
+    (and where they fold back on themselves);
+  - a 1D element 8e-10 long on five closed curves of three polyline sides:
+    slits, holes of zero area between an edge and a node on it (0.0526 =
+    0.0331 + 0.0195), left by the cut of the extension; the surface took
+    that size from its boundary and the mesh reached 5 GB in seconds.
+    Closed by splitting the triangle along the edge (9 or 10);
+  - merging the nodes closer than Geometry.Tolerance times the size was
+    tried and dropped: it made a curve 9.5e-7 long and 92 degenerate
+    triangles;
+  - holes a few micrometres wide (curves of 3e-4 to 1e-3, 1D elements of
+    3e-6): filled when under a hundredth of the thickness squared (3);
+  - surfaces under that area, needles and folds (2e-4 mm2 or less): removed
+    after the model is built (4 or 5).
+
+Result: 8 surfaces, 23 curves, 1341 triangles of size 4 in 0.6 s, no surface
+without triangles; 3 warnings of the mesher (a folded triangle on two
+surfaces). The model is built in 3.7 s. The window, pressing Mesh on the CAD
+model just opened, shows the five stages one after the other, 10 s in all;
+five runs, on one core and on all of them, end the same. The branches share
+no curve: the junctions are not conforming (3214 edges along another branch
+in the classified mesh), so the meshes of the branches are not connected
+there.
+
+The local thickness (twice the radius of the ball of the MAT at the nearest
+node of the same branch of the filtered MAT): 1.07 to 4.25 on the extended
+MAT, 1.07 to 4.14 on the mesh of the mid-surface, median 3.51 (walls of 3.5),
+fifth percentile 1.32 (ribs of 1.35), the maxima along the junctions. The
+other files of gmshMat are unchanged byte for byte (with --complex, one
+thread), extended_all.msh and extended_all_classified.msh up to their new
+$NodeData. Test: mat_native_skin_sites, two branches at a right angle with a
+slit (one surface each, the slit closed, a junction curve, every surface
+meshed, the thickness twice the radius).

@@ -126,7 +126,8 @@ Topology topology(const Mesh &m)
   return r;
 }
 
-bool writeMesh(const Mesh &m, const std::string &filename, std::string &error)
+bool writeMesh(const Mesh &m, const std::string &filename, std::string &error,
+               const std::vector<double> *nodeData, const std::string &dataName)
 {
   if(!validateMesh(m, error)) return false;
   std::ofstream f(filename);
@@ -141,6 +142,14 @@ bool writeMesh(const Mesh &m, const std::string &filename, std::string &error)
   f << "$EndElements\n$ElementData\n1\n\"MAT parent\"\n1\n0\n3\n0\n1\n" << m.parent.size() << '\n';
   for(std::size_t t = 0; t < m.parent.size(); ++t) f << t+1 << ' ' << m.parent[t] << '\n';
   f << "$EndElementData\n";
+  if(nodeData && nodeData->size() == m.xyz.size()/3) {
+    std::size_t finite = 0;
+    for(double x : *nodeData) finite += std::isfinite(x);
+    f << "$NodeData\n1\n\"" << dataName << "\"\n1\n0\n3\n0\n1\n" << finite << '\n';
+    for(std::size_t v = 0; v < nodeData->size(); ++v)
+      if(std::isfinite((*nodeData)[v])) f << v+1 << ' ' << (*nodeData)[v] << '\n';
+    f << "$EndNodeData\n";
+  }
   if(!f) { error = "Failed to write " + filename; return false; }
   return true;
 }

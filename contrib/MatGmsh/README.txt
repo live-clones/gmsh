@@ -286,6 +286,8 @@ tools. It runs the pipeline one stage at a time, on the current model:
                   changes nothing
   5. Extension    branch by branch or all at once (see below): the list of
                   the branches, Preview, Extend and Extend all
+  6. Mesh         the extended MAT in a discrete model of its own, meshed by
+                  Gmsh (see "Mesh of the mid-surface" below)
 
 The Filter stage has, besides the threshold, the box "Remove the wings by
 their angle" with its angle, and the box "Show the angle of the wings". Once
@@ -490,7 +492,69 @@ of lines, one curve per group and branch:
   boundary inside the part       the other edges of one triangle
 
 After the extension the junctions of the filtered MAT are found in the second
-group: the mesh is not conforming along them.
+group: the mesh is not conforming along them. With the MAT filtered, the file
+also has the local thickness at its nodes ($NodeData "MAT local thickness",
+see below).
+
+Local thickness
+---------------
+
+At a node of a MAT mesh (raw, filtered) the radius of the ball of the MAT
+centred there is its distance to the two sites of the Voronoi polygon it is
+on (Mesh::radius). The local thickness at a point of a branch is twice the
+radius at the nearest node of that branch in the filtered MAT (a kd-tree per
+branch): on what extends a branch, the thickness where the branch ends
+(localThickness). After an extension the window shows the view "MAT local
+thickness" on the extended MAT (the box "Color by the local thickness"; not
+ticked, the branches), and on the mesh of the mid-surface "MAT mid-surface
+thickness"; Save..., extended_all.msh and extended_all_classified.msh of
+gmshMat --extend-all, and midsurface_mesh.msh have it as $NodeData "MAT local
+thickness". On Doghouse.stp (walls 3.5, ribs 1.35): 3.51 at the median node of
+the mesh of the mid-surface, 1.32 at the fifth percentile, up to 4.1 to 4.25
+along the junctions, where the ball of the MAT grows into the other wall.
+
+Mesh of the mid-surface
+-----------------------
+
+Mesh, in the section 6 of the window, puts the MAT as it is (extended; Extend
+all is run first if no branch is) in a discrete model of its own, "MAT
+mid-surface" (buildMidSurfaceModel), made current, and meshes it
+(meshMidSurfaceModel): the menus of Gmsh then act on it (mesh it again with
+other options, save it). Pressed on a CAD model just opened, it shows the skin,
+the raw MAT, the filtered MAT, the extended MAT, then the mesh. The box Mesh
+of the Show row shows it (the model of the part is hidden when the skin is
+not shown, the mesh options being those of all the models); a stage run
+again, an extension, Undo or Reset delete it.
+
+The model is made by the discrete CAD modeler from the triangles of the MAT,
+each branch a piece (DiscreteCAD_Internals::addTriangulation, then
+synchronize): its surfaces are the triangles of a branch connected across
+edges of two triangles, its curves along the junctions and the boundaries,
+the flat surfaces recognized as planes; one physical group of surfaces
+"branch <n>" per branch, and two of curves, "junction" and "boundary". Before,
+the triangulation is repaired where the cut of the extension leaves defects
+that the 1D mesh would follow (a 1D element 1e-9 long, whose size the surface
+mesh took: 5 GB in seconds): the nodes at the same coordinates merged, the
+slits closed (a hole of three edges and zero area: the triangle along its
+long edge split at its third node), the holes of less than a hundredth of the
+thickness squared filled; after, the surfaces of less than that removed
+(folds and needles). Its surfaces are meshed by the Frontal-Delaunay algorithm
+on their triangulation (Mesh.Algorithm 12, set on each surface: no
+parametrization), with the size map of Gmsh: the size of the section (the
+thickness if 0) is Mesh.MeshSizeMax for this mesh, the smaller sizes the other
+options ask for apply.
+
+From the command line, gmshMat ... --extend-all --mesh-midsurface s does the
+same (s the size, the thickness if 0) and writes DIR/midsurface_mesh.msh (MSH
+4.1: the mesh, the physical groups, the local thickness, and the discrete
+model with its triangulations, which make most of its size: it can be read
+again and meshed again) and DIR/midsurface_mesh.json.
+
+Doghouse.stp, thickness 4: 8 surfaces (8 branches), 23 curves, 9 or 10 slits
+closed, 3 holes filled, 4 surfaces of 4e-5 left out; 1341 triangles of size
+4 in 0.6 s, the model built in 3.7 s. The branches share no curve: where a
+branch stops on another one the extension does not share its vertices (the
+edges "along another branch"), so their meshes are not connected there.
 
 Stage by stage in C++
 ---------------------

@@ -30,6 +30,8 @@
 //   4. projection  (optional) onto the local mid-surface
 //   5. extension   branch by branch: a flat branch in its plane, any branch
 //                  by a ribbon along its free boundary
+//   6. mesh        the extended MAT in a discrete model of its own, meshed by
+//                  Gmsh (Mesh.Algorithm 12, on its triangulation)
 //
 // Each stage has its parameters, a button that runs it, a line that says what
 // it gave and a view of its result. A button also runs the earlier stages
@@ -38,14 +40,25 @@
 // extension run again without a new tetrahedrization.
 class midsurfacerWindow {
 public:
-  enum { Skin, Raw, Filter, Projection, Extension, NumStages };
+  enum { Skin, Raw, Filter, Projection, Extension, Mesh, NumStages };
   // more views: the raw MAT colored by the angle of its branches, the branch
   // selected, what would extend it (the fragments of its plane, or its
-  // ribbon before it is cut), and of the last Extend all at once the surfaces
-  // that extend the branches before they are cut and their pieces after
-  enum { Angles = NumStages, Selected, Preview, Surfaces, Pieces, NumViews };
+  // ribbon before it is cut), of the last Extend all at once the surfaces
+  // that extend the branches before they are cut and their pieces after, and
+  // the local thickness of the MAT on the extended MAT and on the mesh of the
+  // mid-surface
+  enum {
+    Angles = NumStages,
+    Selected,
+    Preview,
+    Surfaces,
+    Pieces,
+    Thickness,
+    MeshThickness,
+    NumViews
+  };
   Fl_Window *win;
-  Fl_Value_Input *thickness, *meshSize, *threshold, *length, *layers;
+  Fl_Value_Input *thickness, *meshSize, *threshold, *length, *layers, *surfaceSize;
   Fl_Choice *method;
   // the branches of the MAT being extended, and how the selected one is
   Fl_Hold_Browser *browser;
@@ -56,6 +69,9 @@ public:
   Fl_Check_Button *branches, *angles;
   // Extend all cuts the surfaces of all the branches together, once
   Fl_Check_Button *together;
+  // the extended MAT and the mesh of the mid-surface colored by the local
+  // thickness of the MAT (twice the radius of its ball), or by branch
+  Fl_Check_Button *byThickness;
   Fl_Value_Input *angle;
   Fl_Button *push[NumStages];
   Fl_Box *status[NumStages];
@@ -85,6 +101,9 @@ public:
   // saves the MAT as it is now, with its branches and classified edges, in the
   // file given or in one asked for
   void save(const std::string &name = "");
+  // puts the MAT as it is now (extended, all at once, first if it is not) in
+  // a discrete model of its own, made current, and meshes it
+  void meshMidSurface();
 
 private:
   struct State;
@@ -97,6 +116,12 @@ private:
   bool _extendTogether(std::string &what);
   void _forget(int fromStage);
   void _showOnly(int stage);
+  // the mid-surface model deleted (its mesh is that of a MAT gone)
+  void _dropMid();
+  // the skin and the mesh of the mid-surface shown as their boxes say
+  void _showModels();
+  // the view of the local thickness on the MAT being extended
+  void _thicknessView();
 };
 
 void midsurfacer_cb(Fl_Widget *w, void *data);

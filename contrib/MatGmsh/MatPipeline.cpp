@@ -19,6 +19,7 @@
 #include <fstream>
 #include <cmath>
 #include <iostream>
+#include <limits>
 #include <map>
 #include <set>
 #include <stdexcept>
@@ -279,8 +280,18 @@ struct MatNativeAccess {
       ++*flat;
       return true;
     };
-    // the vertices numbered in the order they are met
+    // the vertices numbered in the order they are met, with the radius of
+    // their ball: the distance to the first site of their polygon
     std::vector<int> index(mat.vor.vertices.size() / 3, -1);
+    int site = -1;
+    auto ball = [&](const double *x) {
+      const std::size_t s = std::size_t(site);
+      if(site < 0 || 3 * s + 2 >= mat.del.seeds.size())
+        return std::numeric_limits<double>::quiet_NaN();
+      const double *a = &mat.del.seeds[3 * s];
+      return std::sqrt((x[0] - a[0]) * (x[0] - a[0]) + (x[1] - a[1]) * (x[1] - a[1]) +
+                       (x[2] - a[2]) * (x[2] - a[2]));
+    };
     auto vertex = [&](int old) {
       if(std::size_t(old) >= index.size())
         throw std::runtime_error("A MAT polygon has an unknown vertex");
@@ -288,12 +299,14 @@ struct MatNativeAccess {
         index[old] = static_cast<int>(mesh.xyz.size() / 3);
         mesh.xyz.insert(mesh.xyz.end(),
           mat.vor.vertices.begin() + 3 * old, mat.vor.vertices.begin() + 3 * old + 3);
+        mesh.radius.push_back(ball(&mat.vor.vertices[3 * old]));
       }
       return index[old];
     };
     for(std::size_t f = 0; f < mat.vor.faces.size(); ++f) {
       if(mat.vor.faceColors[f] < 0) continue;
       const auto &poly = mat.vor.faces[f].verts;
+      site = mat.vor.faces[f].edge.a;
       if(poly.size() < 3) throw std::runtime_error("Retained MAT polygon has fewer than three vertices");
       std::vector<matgmsh::polygon_fan::Point> points;
       std::array<double, 3> center{{0., 0., 0.}};
@@ -316,6 +329,7 @@ struct MatNativeAccess {
       }
       const int c = mesh.xyz.size() / 3;
       mesh.xyz.insert(mesh.xyz.end(), center.begin(), center.end());
+      mesh.radius.push_back(ball(center.data()));
       for(std::size_t i = 0; i < ids.size(); ++i) {
         if(skip(ids[i], ids[(i+1)%ids.size()], c)) continue;
         mesh.triangles.insert(mesh.triangles.end(), {ids[i], ids[(i+1)%ids.size()], c});

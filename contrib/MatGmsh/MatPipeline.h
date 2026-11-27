@@ -4,6 +4,7 @@
 #define GMSH_MAT_PIPELINE_H
 
 #include <cstddef>
+#include <map>
 #include <memory>
 #include <set>
 #include <string>
@@ -20,6 +21,10 @@ struct Mesh {
   std::vector<int> triangles;
   std::vector<int> branch; // one branch per triangle
   std::vector<int> parent; // original polygon/triangle, -1 for new material
+  // of the MAT meshes (raw, filtered), one per node: the radius of the ball
+  // of the MAT centred there (the distance to the two sites of the Voronoi
+  // polygon it is on); empty for the other meshes
+  std::vector<double> radius;
 };
 
 enum class Stage { Filtered, Projected, Extended };
@@ -160,8 +165,11 @@ GMSH_API bool validateNoSelfIntersections(const Mesh &mesh, std::string &error);
 // inside, with its area preserved. The input mesh is never changed.
 GMSH_API bool validateContainedInSkin(const Mesh &mesh, const Mesh &skin,
                                     std::string &error);
+// With nodeData (one value per node), its finite values as $NodeData
+// `dataName'.
 GMSH_API bool writeMesh(const Mesh &mesh, const std::string &filename,
-               std::string &error);
+               std::string &error, const std::vector<double> *nodeData = nullptr,
+               const std::string &dataName = "");
 GMSH_API bool writeReport(const Result &result, const Options &options,
                  const std::string &filename, std::string &error);
 
@@ -349,8 +357,77 @@ GMSH_API bool extendAllBranches(const Mesh &mesh, const Mesh &skin, double toler
 struct ClassifiedEdges {
   std::size_t branches = 0, onSkin = 0, inside = 0, junction = 0, along = 0;
 };
+// With nodeData (one value per node of the mesh), its finite values as
+// $NodeData `dataName'.
 GMSH_API bool writeClassifiedMesh(const Mesh &mesh, const Mesh &skin, const std::string &filename,
-                                  ClassifiedEdges &counts, std::string &error);
+                                  ClassifiedEdges &counts, std::string &error,
+                                  const std::vector<double> *nodeData = nullptr,
+                                  const std::string &dataName = "");
+
+// The mid-surface as a discrete model of Gmsh, to be meshed by Gmsh: a new
+// model (GModel), named `name', made by the discrete CAD modeler from the
+// triangles of the mesh, each branch a piece (see
+// DiscreteCAD_Internals::addTriangulation): its surfaces are the triangles of
+// a branch connected across edges of two triangles that are not sharp (angle
+// between their normals below `angle'), its curves along the junctions, the
+// boundaries and the sharp edges, split where they turn by more than
+// `curveAngle', the nodes at the same coordinates merged, the flat surfaces
+// recognized as planes; one physical group of surfaces "branch <n>" per
+// branch, and two of curves, "junction" (between surfaces of different
+// branches, or of more than two surfaces) and "boundary" (of one surface).
+// Its surfaces are meshed by the Frontal-Delaunay algorithm on their
+// triangulation (Mesh.Algorithm 12, set on each surface), with the size map
+// of Gmsh. Before: the slits of the mesh closed (a hole of three edges, of
+// zero area: the triangle along it split at its node off its edge, as the
+// cut of the extension leaves some), the holes of area under minArea filled
+// (a few micrometres wide, also left by the cut); after: the surfaces of area
+// under minArea (folds and needles of the cut) removed. The current model and the
+// visibility of the others are left as they were, the new model hidden.
+struct MidSurfaceModel {
+  GModel *model = nullptr; // in GModel::list, deleted by its owner
+  std::size_t branches = 0, surfaces = 0, curves = 0, points = 0, volumes = 0;
+  std::size_t junctions = 0, boundaries = 0; // curves of each group
+  // the slits closed, the surfaces under minArea left out and their area
+  std::size_t slits = 0, holes = 0, specks = 0;
+  double speckArea = 0.;
+  std::map<int, int> branchOfSurface; // surface tag -> branch
+  // of the last mesh: its triangles and nodes, the surfaces left without
+  // triangles
+  std::size_t triangles = 0, nodes = 0, failed = 0;
+  double buildSeconds = 0., meshSeconds = 0.;
+};
+GMSH_API bool buildMidSurfaceModel(const Mesh &mesh, const std::string &name, double angle,
+                                   double curveAngle, double minArea, MidSurfaceModel &out,
+                                   std::string &error);
+// The 2D mesh of the model, its triangles at most `size' (Mesh.MeshSizeMax,
+// for this mesh only; Gmsh's size options alone if 0): the smaller sizes the
+// other options ask for (Mesh.MeshSizeMin, Mesh.MeshSizeFromCurvature, the
+// fields of the model) apply. The current model is left as it was.
+GMSH_API bool meshMidSurfaceModel(MidSurfaceModel &m, double size, std::string &error);
+// MSH 4.1, the elements of the physical groups and the discrete model (its
+// curves and surfaces with their triangulations, in $Parametrizations: the
+// file can be read again and meshed again), and the values at nodes, if
+// given, as $NodeData `name'
+GMSH_API bool writeMidSurfaceMesh(const MidSurfaceModel &m, const std::string &filename,
+                                  std::string &error,
+                                  const std::vector<std::size_t> *nodes = nullptr,
+                                  const std::vector<double> *values = nullptr,
+                                  const std::string &name = "");
+
+// The local thickness of the MAT: at a point of a branch, twice the radius of
+// the ball of the MAT at the nearest node of that branch in `original' (a MAT
+// mesh with its radii: the filtered MAT), or of any branch if it has none
+// (NaN without radii). For the extended parts, the thickness at the nearest
+// point of the branch they extend. Of the points xyz of the branches given:
+GMSH_API void localThickness(const Mesh &original, const std::vector<double> &xyz,
+                             const std::vector<int> &branch, std::vector<double> &thickness);
+// of the nodes of a mesh (NaN for those of no triangle; a node of several
+// branches takes that of its first triangle)
+GMSH_API std::vector<double> localThickness(const Mesh &mesh, const Mesh &original);
+// of the nodes of the mesh of the mid-surface model (by their numbers)
+GMSH_API void midSurfaceThickness(const MidSurfaceModel &m, const Mesh &original,
+                                  std::vector<std::size_t> &nodes,
+                                  std::vector<double> &thickness);
 
 // Optional stages propose changes to a copy. On failure their input remains
 // usable. A partial extension is reported explicitly for every original front.

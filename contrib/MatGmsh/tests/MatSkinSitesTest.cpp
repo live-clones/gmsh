@@ -508,6 +508,36 @@ void filletedWebAndFlangeAtOnce()
 }
 } // namespace
 
+// Two square branches at a right angle sharing an edge; the first one with a
+// slit (a node in the middle of its diagonal on one side only). The model has
+// one surface per branch and a junction curve between them, the slit closed;
+// its mesh (Mesh.Algorithm 12) covers every surface; the local thickness is
+// twice the radius given.
+void midSurfaceModelOfTwoBranches()
+{
+  Mesh m;
+  m.xyz = {0, 0, 0,  10, 0, 0,  10, 10, 0,  0, 10, 0,  5, 5, 0,  0, 10, 10,  0, 0, 10};
+  //       A 0       B 1        C 2         D 3        M 4       E 5          F 6
+  m.triangles = {0, 1, 2,  0, 4, 3,  4, 2, 3,  0, 3, 5,  0, 5, 6};
+  m.branch = {0, 0, 0, 1, 1};
+  m.parent = {0, 1, 2, 3, 4};
+  m.radius.assign(7, 1.5);
+  MidSurfaceModel mid;
+  std::string error;
+  check(buildMidSurfaceModel(m, "test mid-surface", M_PI, M_PI, .01, mid, error),
+        "mid-surface model: " + error);
+  check(mid.branches == 2 && mid.surfaces == 2, "one surface per branch");
+  check(mid.slits == 1, "the slit is closed");
+  check(mid.junctions >= 1 && mid.boundaries >= 1, "a junction curve and boundary curves");
+  check(meshMidSurfaceModel(mid, 2., error), "mesh of the mid-surface: " + error);
+  check(mid.triangles > 0 && !mid.failed, "every surface meshed");
+  std::vector<std::size_t> nodes;
+  std::vector<double> thickness;
+  midSurfaceThickness(mid, m, nodes, thickness);
+  check(!nodes.empty() && nodes.size() == thickness.size(), "a thickness at each node");
+  for(double t : thickness) check(std::abs(t - 3.) < 1e-12, "the thickness is twice the radius");
+}
+
 int main()
 {
   try {
@@ -524,8 +554,9 @@ int main()
     ribStopsOnTheWall();
     webStopsOnTheFlange();
     filletedWebAndFlangeAtOnce();
+    midSurfaceModelOfTwoBranches();
     gmsh::finalize();
-    std::cout << "MatSkinSites: 10 tests passed\n";
+    std::cout << "MatSkinSites: 11 tests passed\n";
     return 0;
   }
   catch(const std::exception &e) {
