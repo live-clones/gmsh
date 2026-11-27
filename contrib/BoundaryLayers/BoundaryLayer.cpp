@@ -1,4 +1,5 @@
-// Gmsh Boundary Layer Plugin - Copyright (C) 2025-2026 C. Geuzaine and J.-F. Remacle
+// Gmsh Boundary Layer Plugin - Copyright (C) 2025-2026 C. Geuzaine and J.-F.
+// Remacle
 //
 // This program is free software: you can redistribute it and/or modify it under
 // the terms of the GNU Affero General Public License as published by the Free
@@ -16,8 +17,8 @@
 #include <vector>
 #include <cmath>
 #include <algorithm>
-#include <stdexcept>
-#include <sstream>
+#include <array>
+#include <map>
 #include <set>
 #include "GModel.h"
 #include "GRegion.h"
@@ -81,7 +82,7 @@ std::string GMSH_BoundaryLayerPlugin::getHelp() const
 }
 
 static double triangleArea2D(std::array<double, 2> a, std::array<double, 2> b,
-                               std::array<double, 2> c)
+                             std::array<double, 2> c)
 {
   return .5 * ((b[1] - a[1]) * (b[0] + a[0]) + (c[1] - b[1]) * (c[0] + b[0]) +
                (a[1] - c[1]) * (a[0] + c[0]));
@@ -89,15 +90,11 @@ static double triangleArea2D(std::array<double, 2> a, std::array<double, 2> b,
 
 inline std::array<double, 3> sub(const std::array<double, 3> &x,
                                  const std::array<double, 3> &y)
-{
-  return {x[0] - y[0], x[1] - y[1], x[2] - y[2]};
-}
+{ return {x[0] - y[0], x[1] - y[1], x[2] - y[2]}; }
 
 inline double dot(const std::array<double, 3> &u,
                   const std::array<double, 3> &v)
-{
-  return u[0] * v[0] + u[1] * v[1] + u[2] * v[2];
-}
+{ return u[0] * v[0] + u[1] * v[1] + u[2] * v[2]; }
 
 inline std::array<double, 3> cross(const std::array<double, 3> &u,
                                    const std::array<double, 3> &v)
@@ -107,12 +104,10 @@ inline std::array<double, 3> cross(const std::array<double, 3> &u,
 }
 
 inline double tetVolume(const std::array<double, 3> &a,
-                         const std::array<double, 3> &b,
-                         const std::array<double, 3> &c,
-                         const std::array<double, 3> &d)
-{
-  return dot(sub(a, d), cross(sub(b, d), sub(c, d))) / 6.0;
-}
+                        const std::array<double, 3> &b,
+                        const std::array<double, 3> &c,
+                        const std::array<double, 3> &d)
+{ return dot(sub(a, d), cross(sub(b, d), sub(c, d))) / 6.0; }
 
 // Parametric coordinates of a node on a surface. A node on a curve lying on
 // the seam of a periodic surface has two sets of coordinates: return the one
@@ -127,31 +122,17 @@ static bool reparamOnFace(MVertex *v, GFace *gf, SPoint2 &param)
     if(period <= 0.) continue;
     Range<double> bounds = gf->parBounds(i);
     double tol = 1.e-6 * period;
-    while(param[i] > bounds.high() + tol && param[i] - period > bounds.low() - tol)
+    while(param[i] > bounds.high() + tol &&
+          param[i] - period > bounds.low() - tol)
       param[i] -= period;
-    while(param[i] < bounds.low() - tol && param[i] + period < bounds.high() + tol)
+    while(param[i] < bounds.low() - tol &&
+          param[i] + period < bounds.high() + tol)
       param[i] += period;
   }
   return true;
 }
 
-static void
-classifyVertexOnFace(GFace *gf, MVertex *v)
-{
-  if(!gf || !v || !v->onWhat() || v->onWhat()->dim() <= 2) return;
-
-  SPoint3 p = v->point();
-  SPoint2 param = gf->parFromPoint(p);
-  double guess[2] = {param.x(), param.y()};
-  GPoint gp = gf->closestPoint(p, guess);
-  v->x() = gp.x();
-  v->y() = gp.y();
-  v->z() = gp.z();
-  v->setParameter(0, gp.u());
-  v->setParameter(1, gp.v());
-  v->setEntity(gf);
-  gf->mesh_vertices.push_back(v);
-}
+// Layer elements
 
 // A layer element, described by its columns: column j goes from wall node j to
 // the node spawned from it. Where no node could be spawned the layer is
@@ -211,7 +192,6 @@ struct LayerData {
     return it != wallThickness.end() ? it->second : defaultValue;
   }
 };
-
 
 static bool getLayerColumns(MElement *e, const LayerData &data,
                             LayerColumns &lc)
@@ -288,8 +268,10 @@ static MElement *addLayerElement(GRegion *gr, const LayerColumns &lc)
       return gr->pyramids.back();
     }
     if(num == 1) {
-      gr->tetrahedra.push_back(
-        new MTetrahedron(w[0], w[1], w[2], t[0] ? t[0] : t[1] ? t[1] : t[2]));
+      gr->tetrahedra.push_back(new MTetrahedron(w[0], w[1], w[2],
+                                                t[0] ? t[0] :
+                                                t[1] ? t[1] :
+                                                       t[2]));
       return gr->tetrahedra.back();
     }
   }
@@ -316,8 +298,8 @@ static MElement *addLayerElement(GRegion *gr, const LayerColumns &lc)
   return nullptr;
 }
 
-static void addLayerElement(GEntity *ge, const LayerColumns &lc, double thickness,
-                            LayerData &data)
+static void addLayerElement(GEntity *ge, const LayerColumns &lc,
+                            double thickness, LayerData &data)
 {
   MElement *e = (lc.n == 2) ? addLayerElement(static_cast<GFace *>(ge), lc) :
                               addLayerElement(static_cast<GRegion *>(ge), lc);
@@ -326,136 +308,6 @@ static void addLayerElement(GEntity *ge, const LayerColumns &lc, double thicknes
   if(lc.numTops() < lc.n) data.pinched[e] = lc;
 }
 
-// Split a pinched triangle along its only column, given from the wall
-// outwards: a fan of triangles around the pinched node
-static void splitPinchedTriangle(GFace *gf, MElement *t,
-                                 const std::vector<MVertex *> &column,
-                                 LayerData &data,
-                                 const std::vector<double> &widths)
-{
-  int k = 0;
-  while(k < 3 && (t->getVertex(k) == column.front() ||
-                  t->getVertex(k) == column.back()))
-    k++;
-  if(k == 3) return;
-  MVertex *apex = t->getVertex(k);
-  bool outwards = (t->getVertex((k + 1) % 3) == column.front());
-  for(std::size_t s = 0; s + 1 < column.size(); s++) {
-    MVertex *a = outwards ? column[s] : column[s + 1];
-    MVertex *b = outwards ? column[s + 1] : column[s];
-    MElement *e = t;
-    if(s == 0) {
-      t->setVertex(0, apex);
-      t->setVertex(1, a);
-      t->setVertex(2, b);
-    }
-    else {
-      gf->triangles.push_back(new MTriangle(apex, a, b));
-      e = gf->triangles.back();
-    }
-    data.elements[e] = s < widths.size() ? widths[s] : widths.back();
-  }
-}
-
-static void
-splitSideElements(GModel *gm,
-             std::map<MEdge, std::vector<MVertex *>, MEdgeLessThan> &split,
-             LayerData &data,
-             const std::vector<double> &widths)
-{
-  for(GModel::fiter fit = gm->firstFace(); fit != gm->lastFace(); ++fit) {
-    GFace *gf = (*fit);
-
-    // pinched layer elements
-    std::vector<MTriangle *> triangles = gf->triangles;
-    for(auto t : triangles) {
-      if(data.elements.find(t) == data.elements.end()) continue;
-      for(int i = 0; i < 3; i++) {
-        auto it = split.find(t->getEdge(i));
-        if(it == split.end()) continue;
-        splitPinchedTriangle(gf, t, it->second, data, widths);
-        break;
-      }
-    }
-
-    std::vector<MQuadrangle *> newVec;
-    for(auto q : gf->quadrangles) {
-      bool found = false;
-      auto itLayer = data.elements.find(q);
-      // edges i and i + 2 are opposite: i = 2 and 3 would split the quad again,
-      // reversed
-      for(size_t i = 0; i < 2 && !found; i++) {
-        MEdge ei = q->getEdge(i);
-        MEdge ei2 = q->getEdge((i + 2) % 4);
-        auto it0 = split.find(ei);
-        auto it1 = split.find(ei2);
-        if(it0 != split.end() && it1 != split.end()) {
-          // both columns are stored from the wall outwards: keep the
-          // orientation of the quad, with nodes 0 and 1 along the wall as in
-          // the quads created by the boundary layer
-          const std::vector<MVertex *> &c0 =
-            (it0->second.front() == q->getVertex(i)) ? it1->second :
-                                                       it0->second;
-          const std::vector<MVertex *> &c1 =
-            (it0->second.front() == q->getVertex(i)) ? it0->second :
-                                                       it1->second;
-          for(size_t j = 0; j < c0.size() - 1; j++) {
-            MQuadrangle *nq =
-              new MQuadrangle(c0[j], c1[j], c1[j + 1], c0[j + 1]);
-            for(int k = 0; k < 4; ++k) classifyVertexOnFace(gf, nq->getVertex(k));
-            newVec.push_back(nq);
-            if(itLayer != data.elements.end())
-              data.elements[nq] = j < widths.size() ? widths[j] : itLayer->second;
-          }
-          found = true;
-        }
-      }
-      if(found) {
-        if(itLayer != data.elements.end()) data.elements.erase(itLayer);
-        delete q;
-      }
-      else
-        newVec.push_back(q);
-    }
-    gf->quadrangles = newVec;
-  }
-}
-
-static void
-splitSideLines(GModel *gm,
-             std::map<MEdge, std::vector<MVertex *>, MEdgeLessThan> &split)
-{
-  for(GModel::eiter eit = gm->firstEdge(); eit != gm->lastEdge(); ++eit) {
-    GEdge *ge = (*eit);
-    if(ge->lines.empty()) continue;
-    MLine *l0 = ge->lines.front();
-    MLine *l1 = ge->lines.back();
-    MEdge m0 = MEdge(l0->getVertex(0), l0->getVertex(1));
-    MEdge m1 = MEdge(l1->getVertex(0), l1->getVertex(1));
-    auto it0 = split.find(m0);
-    auto it1 = split.find(m1);
-
-    if(it0 != split.end()) {
-      std::vector<MLine *> old = ge->lines;
-      ge->lines.clear();
-      for(size_t j = 0; j < it0->second.size() - 1; j++)
-        ge->lines.push_back(new MLine(it0->second[j], it0->second[j + 1]));
-      for(size_t j = 1; j < old.size(); j++) ge->lines.push_back(old[j]);
-      delete old.front();
-    }
-    if(it1 != split.end()) {
-      // the last line goes from the spawned node to the model point: the
-      // split nodes are stored from the model point outwards
-      size_t s = it1->second.size();
-      ge->lines.back()->setVertex(1, it1->second[s - 2]);
-      for(size_t j = 2; j < s; j++)
-        ge->lines.push_back(
-          new MLine(it1->second[s - j], it1->second[s - j - 1]));
-    }
-  }
-}
-
-// ---------------------------------------------------------------------------
 // Insertion of the layers
 //
 // The layers are inserted with zero thickness, by duplicating the nodes of the
@@ -483,7 +335,6 @@ splitSideLines(GModel *gm,
 //   spawns, on each side of the wall that has elements; and on the surfaces
 //   along which the layers leave the wall, a quad between each wall edge and
 //   its copy.
-// ---------------------------------------------------------------------------
 
 namespace {
 
@@ -566,6 +417,554 @@ namespace {
     MVertex *spawn = nullptr;
   };
 
+  // The insertion of the layers along the walls (surfaces in 3D, curves in 2D)
+  // of the domains (volumes in 3D, surfaces in 2D), in steps. Nothing is
+  // changed in the mesh before the last step, apply().
+  class LayerInsertion {
+  public:
+    LayerInsertion(GModel *m, int dim, const std::vector<GEntity *> &domains,
+                   const std::set<GEntity *, GEntityPtrLessThan> &walls)
+      : m(m), dim(dim), domains(domains), walls(walls)
+    {
+    }
+
+    bool run(double thickness, LayerData &data,
+             std::vector<GFace *> &sideSurfaces)
+    {
+      if(!collectWalls() || !collectStar()) return false;
+      buildComponents();
+      collectLinesAndSurfaceElements();
+      spawnNodes();
+      createLayerElements();
+      createSideElements();
+      if(!check(data)) return false;
+      apply(thickness, data, sideSurfaces);
+      return true;
+    }
+
+  private:
+    struct NodeLine {
+      GEdge *ge;
+      MLine *line;
+    };
+    struct NodeFacet {
+      GFace *gf;
+      MElement *e;
+    };
+    struct NewVertex {
+      GEntity *ge;
+      MVertex *v;
+      bool front;
+    };
+    struct LineEdit {
+      GEdge *ge;
+      bool begin;
+      MVertex *v, *spawn;
+    };
+    struct NewElement {
+      GEntity *ge;
+      LayerColumns lc;
+    };
+    struct NodeEdit {
+      MElement *e;
+      int index;
+      MVertex *spawn;
+    };
+
+    GModel *m;
+    int dim;
+    const std::vector<GEntity *> &domains;
+    const std::set<GEntity *, GEntityPtrLessThan> &walls;
+
+    // facets, elements, nodes and (in 3D) edges of the walls
+    std::map<FacetKey, MElement *> wallFacets;
+    std::vector<MElement *> wallElements;
+    std::set<MVertex *, MVertexPtrLessThan> wallNodes;
+    std::set<std::pair<std::size_t, std::size_t>> wallEdges;
+    // elements of the domains around the wall nodes: those around each node,
+    // and the (at most two) elements on each of their facets
+    std::vector<StarElement> star;
+    std::map<MVertex *, std::vector<int>> starOf;
+    std::map<FacetKey, std::array<int, 2>> facetMap;
+    std::vector<Facet> facets;
+    // components of the star of each wall node, and the component of each
+    // (node, element)
+    std::vector<Component> components;
+    std::map<std::pair<std::size_t, int>, int> componentOf;
+    // the lines of the curves starting at a wall node without being in the
+    // wall, and in 3D the elements of the other surfaces around it
+    std::map<MVertex *, std::vector<NodeLine>> linesAt;
+    std::map<MVertex *, std::vector<NodeFacet>> surfaceElementsAt;
+    std::vector<NodeFacet> surfaceElements; // with at least one wall node
+    // the changes to apply
+    std::vector<NewVertex> newVertices;
+    std::vector<LineEdit> lineEdits;
+    std::vector<NewElement> newElements;
+    std::vector<NodeEdit> nodeEdits;
+    std::vector<NewElement> newSideElements;
+    std::set<GFace *, GEntityPtrLessThan> sharedSurfaces;
+    std::size_t numUnsupported = 0;
+
+    static std::pair<std::size_t, std::size_t> edgeKey(MVertex *a, MVertex *b)
+    {
+      return std::make_pair(std::min(a->getNum(), b->getNum()),
+                            std::max(a->getNum(), b->getNum()));
+    }
+
+    bool isWallNode(MVertex *v) const
+    { return wallNodes.find(v) != wallNodes.end(); }
+
+    int componentAt(MVertex *v, int element) const
+    {
+      auto it = componentOf.find(std::make_pair(v->getNum(), element));
+      return it == componentOf.end() ? -1 : it->second;
+    }
+
+    MVertex *spawnAt(MVertex *v, int element) const
+    {
+      int c = componentAt(v, element);
+      return c < 0 ? nullptr : components[c].spawn;
+    }
+
+    // the element of the domains a surface element is a facet of, or -1
+    int elementOn(MElement *surfaceElement) const
+    {
+      auto it = facetMap.find(facetKey(surfaceElement));
+      return it == facetMap.end() ? -1 : it->second[0];
+    }
+
+    bool collectWalls()
+    {
+      for(auto w : walls) {
+        for(std::size_t i = 0; i < w->getNumMeshElements(); i++) {
+          MElement *e = w->getMeshElement(i);
+          if(e->getDim() != dim - 1) continue;
+          if(e->getPolynomialOrder() != 1) {
+            Msg::Error("Boundary layer: the mesh must be of order 1");
+            return false;
+          }
+          if(!wallFacets.insert(std::make_pair(facetKey(e), e)).second)
+            continue;
+          wallElements.push_back(e);
+          std::size_t n = e->getNumPrimaryVertices();
+          for(std::size_t j = 0; j < n; j++) {
+            wallNodes.insert(e->getVertex(j));
+            if(dim == 3)
+              wallEdges.insert(
+                edgeKey(e->getVertex(j), e->getVertex((j + 1) % n)));
+          }
+        }
+      }
+      if(wallElements.empty()) {
+        Msg::Warning("Boundary layer: no mesh on the %s to create layers on",
+                     dim == 3 ? "surfaces" : "curves");
+        return false;
+      }
+      return true;
+    }
+
+    // elements of the domains around the wall nodes, and their facets
+    bool collectStar()
+    {
+      for(auto domain : domains) {
+        for(std::size_t i = 0; i < domain->getNumMeshElements(); i++) {
+          MElement *e = domain->getMeshElement(i);
+          if(e->getDim() != dim) continue;
+          bool inStar = false;
+          for(std::size_t j = 0; j < e->getNumVertices(); j++) {
+            if(!isWallNode(e->getVertex(j))) continue;
+            if(!inStar) {
+              if(e->getPolynomialOrder() != 1) {
+                Msg::Error("Boundary layer: the mesh must be of order 1");
+                return false;
+              }
+              star.push_back({e, domain});
+              inStar = true;
+            }
+            starOf[e->getVertex(j)].push_back((int)star.size() - 1);
+          }
+          if(!inStar) continue;
+          getFacets(e, dim, facets);
+          for(const auto &facet : facets) {
+            auto it = facetMap
+                        .insert(std::make_pair(facetKey(facet.v, facet.n),
+                                               std::array<int, 2>{-1, -1}))
+                        .first;
+            if(it->second[0] < 0)
+              it->second[0] = (int)star.size() - 1;
+            else if(it->second[1] < 0)
+              it->second[1] = (int)star.size() - 1;
+          }
+        }
+      }
+      return true;
+    }
+
+    // components of the star of each wall node
+    void buildComponents()
+    {
+      for(auto v : wallNodes) {
+        auto its = starOf.find(v);
+        if(its == starOf.end()) continue;
+        const std::vector<int> &elements = its->second;
+        const int n = (int)elements.size();
+        std::map<int, int> local;
+        for(int i = 0; i < n; i++) local[elements[i]] = i;
+        std::vector<int> parent(n);
+        for(int i = 0; i < n; i++) parent[i] = i;
+        auto find = [&](int i) {
+          while(parent[i] != i) i = parent[i] = parent[parent[i]];
+          return i;
+        };
+        std::vector<bool> onWall(n, false);
+        std::vector<std::pair<FacetKey, int>> wallHits;
+        for(int i = 0; i < n; i++) {
+          getFacets(star[elements[i]].e, dim, facets);
+          for(const auto &facet : facets) {
+            bool hasV = false;
+            for(std::size_t k = 0; k < facet.n; k++)
+              if(facet.v[k] == v) hasV = true;
+            if(!hasV) continue;
+            FacetKey key = facetKey(facet.v, facet.n);
+            if(wallFacets.find(key) != wallFacets.end()) {
+              onWall[i] = true;
+              wallHits.push_back(std::make_pair(key, i));
+              continue;
+            }
+            auto itf = facetMap.find(key);
+            if(itf == facetMap.end()) continue;
+            for(int other : itf->second) {
+              if(other < 0 || other == elements[i]) continue;
+              auto itl = local.find(other);
+              if(itl != local.end()) parent[find(i)] = find(itl->second);
+            }
+          }
+        }
+        std::map<int, int> rootToComponent;
+        for(int i = 0; i < n; i++) {
+          int root = find(i);
+          auto itr = rootToComponent.find(root);
+          if(itr == rootToComponent.end()) {
+            itr = rootToComponent
+                    .insert(std::make_pair(root, (int)components.size()))
+                    .first;
+            components.push_back(Component());
+            components.back().v = v;
+          }
+          Component &c = components[itr->second];
+          c.elements.push_back(elements[i]);
+          if(onWall[i]) c.onWall = true;
+          componentOf[std::make_pair(v->getNum(), elements[i])] = itr->second;
+        }
+        // a wall element with both its sides in the same component: v is on the
+        // free edge of a wall with layers on both sides
+        std::map<std::pair<int, FacetKey>, int> sides;
+        for(const auto &hit : wallHits) {
+          int root = find(hit.second);
+          if(++sides[std::make_pair(root, hit.first)] > 1)
+            components[rootToComponent[root]].pinched = true;
+        }
+      }
+    }
+
+    void collectLinesAndSurfaceElements()
+    {
+      for(auto it = m->firstEdge(); it != m->lastEdge(); ++it) {
+        GEdge *ge = *it;
+        if(dim == 2 && walls.find(ge) != walls.end()) continue;
+        for(auto line : ge->lines) {
+          MVertex *a = line->getVertex(0), *b = line->getVertex(1);
+          if(dim == 3 && wallEdges.find(edgeKey(a, b)) != wallEdges.end())
+            continue;
+          if(isWallNode(a)) linesAt[a].push_back({ge, line});
+          if(isWallNode(b)) linesAt[b].push_back({ge, line});
+        }
+      }
+      if(dim == 3) {
+        for(auto it = m->firstFace(); it != m->lastFace(); ++it) {
+          GFace *gf = *it;
+          if(walls.find(gf) != walls.end()) continue;
+          for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
+            MElement *e = gf->getMeshElement(i);
+            if(e->getDim() != 2) continue;
+            bool any = false;
+            for(std::size_t j = 0; j < e->getNumPrimaryVertices(); j++) {
+              if(!isWallNode(e->getVertex(j))) continue;
+              surfaceElementsAt[e->getVertex(j)].push_back({gf, e});
+              any = true;
+            }
+            if(any) surfaceElements.push_back({gf, e});
+          }
+        }
+      }
+    }
+
+    // spawn the nodes
+    void spawnNodes()
+    {
+      for(std::size_t ic = 0; ic < components.size(); ic++) {
+        Component &c = components[ic];
+        if(!c.onWall || c.pinched) continue;
+        MVertex *v = c.v;
+
+        // curves along which the component leaves the wall
+        std::vector<NodeLine> lines;
+        auto itl = linesAt.find(v);
+        if(itl != linesAt.end()) {
+          for(const auto &nl : itl->second) {
+            MVertex *other = (nl.line->getVertex(0) == v) ?
+                               nl.line->getVertex(1) :
+                               nl.line->getVertex(0);
+            for(int element : c.elements) {
+              if(elementHasVertex(star[element].e, other)) {
+                lines.push_back(nl);
+                break;
+              }
+            }
+          }
+        }
+
+        if(lines.size() > 1) {
+          c.pinched = true;
+          continue;
+        }
+        if(lines.size() == 1) {
+          GEdge *ge = lines[0].ge;
+          MLine *line = lines[0].line;
+          bool begin = !ge->lines.empty() && line == ge->lines.front() &&
+                       line->getVertex(0) == v;
+          bool end = !ge->lines.empty() && line == ge->lines.back() &&
+                     line->getVertex(1) == v;
+          double param;
+          if((!begin && !end) || !reparamMeshVertexOnEdge(v, ge, param)) {
+            c.pinched = true;
+            continue;
+          }
+          double lc = line->getLength();
+          if(!ge->mesh_vertices.empty()) {
+            MEdgeVertex *neighbour = dynamic_cast<MEdgeVertex *>(
+              begin ? ge->mesh_vertices.front() : ge->mesh_vertices.back());
+            if(neighbour) lc = neighbour->getLc();
+          }
+          c.spawn = new MEdgeVertex(v->x(), v->y(), v->z(), ge, param, 0, lc);
+          newVertices.push_back({ge, c.spawn, begin});
+          lineEdits.push_back({ge, begin, v, c.spawn});
+          continue;
+        }
+
+        // surface along which the component leaves the wall
+        GFace *gf = nullptr;
+        bool severalSurfaces = false;
+        if(dim == 3) {
+          auto itf = surfaceElementsAt.find(v);
+          if(itf != surfaceElementsAt.end()) {
+            for(const auto &nf : itf->second) {
+              auto ite = facetMap.find(facetKey(nf.e));
+              if(ite == facetMap.end()) continue;
+              bool inComponent = false;
+              for(int element : ite->second)
+                if(element >= 0 && componentAt(v, element) == (int)ic)
+                  inComponent = true;
+              if(!inComponent) continue;
+              if(gf && gf != nf.gf) severalSurfaces = true;
+              gf = nf.gf;
+            }
+          }
+        }
+        else
+          gf = static_cast<GFace *>(star[c.elements[0]].domain);
+        if(severalSurfaces) {
+          c.pinched = true;
+          continue;
+        }
+        if(gf) {
+          SPoint2 param;
+          if(!reparamOnFace(v, gf, param)) {
+            c.pinched = true;
+            continue;
+          }
+          c.spawn =
+            new MFaceVertex(v->x(), v->y(), v->z(), gf, param.x(), param.y());
+          newVertices.push_back({gf, c.spawn, false});
+        }
+        else {
+          GEntity *domain = star[c.elements[0]].domain;
+          c.spawn = new MVertex(v->x(), v->y(), v->z(), domain);
+          newVertices.push_back({domain, c.spawn, false});
+        }
+      }
+    }
+
+    // the layer elements, between each wall element and its spawn on each
+    // side
+    void createLayerElements()
+    {
+      for(auto wallElement : wallElements) {
+        auto itf = facetMap.find(facetKey(wallElement));
+        if(itf == facetMap.end()) continue;
+        for(int element : itf->second) {
+          if(element < 0) continue;
+          MElement *e = star[element].e;
+          NewElement ne;
+          ne.ge = star[element].domain;
+          LayerColumns &lc = ne.lc;
+          lc.n = wallElement->getNumPrimaryVertices();
+          for(std::size_t j = 0; j < lc.n; j++) {
+            lc.wall[j] = wallElement->getVertex(j);
+            lc.top[j] = spawnAt(lc.wall[j], element);
+          }
+          if(!lc.numTops()) continue;
+          bool reversed;
+          if(dim == 3) {
+            // the volume lies behind the wall element if the face of its
+            // element has the same orientation
+            int ithFace = 0, sign = 0, rot = 0;
+            e->getFaceInfo(wallElement->getFace(0), ithFace, sign, rot);
+            reversed = (sign > 0);
+          }
+          else {
+            // the layer element is oriented as the element, which runs along
+            // the wall line in the same direction
+            reversed = true;
+            for(int k = 0; k < e->getNumEdges(); k++) {
+              MEdge edge = e->getEdge(k);
+              if(edge.getVertex(0) == lc.wall[0] &&
+                 edge.getVertex(1) == lc.wall[1])
+                reversed = false;
+            }
+          }
+          if(reversed) {
+            const std::size_t i = (dim == 2) ? 0 : 1, j = lc.n - 1;
+            std::swap(lc.wall[i], lc.wall[j]);
+            std::swap(lc.top[i], lc.top[j]);
+          }
+          if(!isSupported(lc)) {
+            numUnsupported++;
+            continue;
+          }
+          newElements.push_back(ne);
+        }
+      }
+    }
+
+    // in 3D, the surfaces along which the layers leave the wall: their
+    // elements move to the spawned nodes, and a layer element is created on
+    // each wall edge
+    void createSideElements()
+    {
+      std::set<GEntity *> domainSet(domains.begin(), domains.end());
+      for(const auto &se : surfaceElements) {
+        int element = elementOn(se.e);
+        if(element < 0) continue;
+        const std::size_t n = se.e->getNumPrimaryVertices();
+        MVertex *spawns[4] = {nullptr, nullptr, nullptr, nullptr};
+        bool any = false;
+        for(std::size_t j = 0; j < n; j++) {
+          MVertex *v = se.e->getVertex(j);
+          if(!isWallNode(v)) continue;
+          spawns[j] = spawnAt(v, element);
+          if(!spawns[j]) continue;
+          nodeEdits.push_back({se.e, (int)j, spawns[j]});
+          any = true;
+        }
+        if(!any) continue;
+        for(auto gr : se.gf->regions())
+          if(domainSet.find(gr) == domainSet.end())
+            sharedSurfaces.insert(se.gf);
+        for(std::size_t j = 0; j < n; j++) {
+          std::size_t k = (j + 1) % n;
+          MVertex *a = se.e->getVertex(j), *b = se.e->getVertex(k);
+          if(!spawns[j] && !spawns[k]) continue;
+          if(wallEdges.find(edgeKey(a, b)) == wallEdges.end()) continue;
+          NewElement ne;
+          ne.ge = se.gf;
+          ne.lc.n = 2;
+          ne.lc.wall[0] = a;
+          ne.lc.wall[1] = b;
+          ne.lc.top[0] = spawns[j];
+          ne.lc.top[1] = spawns[k];
+          newSideElements.push_back(ne);
+        }
+      }
+    }
+
+    // give up if a layer element cannot be created, and find the wall nodes
+    // without any spawned node
+    bool check(LayerData &data)
+    {
+      if(numUnsupported) {
+        Msg::Error(
+          "Boundary layer: %zu hexahedra of the layers would be pinched "
+          "in a way that leaves no valid element: mesh left unchanged",
+          numUnsupported);
+        for(auto &nv : newVertices) delete nv.v;
+        return false;
+      }
+      // the wall nodes without any spawned node
+      {
+        std::map<MVertex *, bool, MVertexPtrLessThan> spawned;
+        for(const auto &c : components) {
+          if(!c.onWall) continue;
+          if(c.spawn)
+            spawned[c.v] = true;
+          else if(spawned.find(c.v) == spawned.end())
+            spawned[c.v] = false;
+        }
+        for(const auto &sp : spawned)
+          if(!sp.second) data.pinchedNodes.insert(sp.first);
+        if(!data.pinchedNodes.empty())
+          Msg::Info("Boundary layer: layers pinched at %zu wall node(s)",
+                    data.pinchedNodes.size());
+      }
+      for(auto gf : sharedSurfaces)
+        Msg::Warning(
+          "Boundary layer: the layers end on surface %d, shared with a "
+          "volume without layers: the mesh will not be conforming "
+          "across it",
+          gf->tag());
+      return true;
+    }
+
+    void apply(double thickness, LayerData &data,
+               std::vector<GFace *> &sideSurfaces)
+    {
+      for(auto &nv : newVertices) {
+        if(nv.front)
+          nv.ge->mesh_vertices.insert(nv.ge->mesh_vertices.begin(), nv.v);
+        else
+          nv.ge->mesh_vertices.push_back(nv.v);
+      }
+      for(auto &c : components) {
+        if(!c.spawn) continue;
+        for(int element : c.elements) {
+          MElement *e = star[element].e;
+          for(std::size_t j = 0; j < e->getNumVertices(); j++)
+            if(e->getVertex(j) == c.v) e->setVertex(j, c.spawn);
+        }
+      }
+      for(auto &ne : nodeEdits) ne.e->setVertex(ne.index, ne.spawn);
+      for(auto &le : lineEdits) {
+        if(le.begin) {
+          le.ge->lines.front()->setVertex(0, le.spawn);
+          le.ge->lines.insert(le.ge->lines.begin(), new MLine(le.v, le.spawn));
+        }
+        else {
+          le.ge->lines.back()->setVertex(1, le.spawn);
+          le.ge->lines.push_back(new MLine(le.spawn, le.v));
+        }
+      }
+      for(auto &ne : newElements)
+        addLayerElement(ne.ge, ne.lc, thickness, data);
+      for(auto &ne : newSideElements) {
+        addLayerElement(ne.ge, ne.lc, thickness, data);
+        GFace *gf = static_cast<GFace *>(ne.ge);
+        if(std::find(sideSurfaces.begin(), sideSurfaces.end(), gf) ==
+           sideSurfaces.end())
+          sideSurfaces.push_back(gf);
+      }
+    }
+  };
+
 } // namespace
 
 // Insert zero-thickness layers along the walls (surfaces in 3D, curves in 2D)
@@ -573,472 +972,14 @@ namespace {
 // surfaces that received layer elements in 3D, in pinched the layer elements
 // that lost a node and in pinchedNodes the wall nodes without any spawned
 // node. Nothing is changed if the layers cannot be inserted.
-static bool insertLayers(GModel *m, int dim, const std::vector<GEntity *> &domains,
+static bool insertLayers(GModel *m, int dim,
+                         const std::vector<GEntity *> &domains,
                          const std::set<GEntity *, GEntityPtrLessThan> &walls,
-                         double thickness,
-                         LayerData &data,
+                         double thickness, LayerData &data,
                          std::vector<GFace *> &sideSurfaces)
 {
-  // facets, nodes and (in 3D) edges of the walls
-  std::map<FacetKey, MElement *> wallFacets;
-  std::vector<MElement *> wallElements;
-  std::set<MVertex *, MVertexPtrLessThan> wallNodes;
-  std::set<std::pair<std::size_t, std::size_t>> wallEdges;
-  auto edgeKey = [](MVertex *a, MVertex *b) {
-    return std::make_pair(std::min(a->getNum(), b->getNum()),
-                          std::max(a->getNum(), b->getNum()));
-  };
-  for(auto w : walls) {
-    for(std::size_t i = 0; i < w->getNumMeshElements(); i++) {
-      MElement *e = w->getMeshElement(i);
-      if(e->getDim() != dim - 1) continue;
-      if(e->getPolynomialOrder() != 1) {
-        Msg::Error("Boundary layer: the mesh must be of order 1");
-        return false;
-      }
-      if(!wallFacets.insert(std::make_pair(facetKey(e), e)).second) continue;
-      wallElements.push_back(e);
-      std::size_t n = e->getNumPrimaryVertices();
-      for(std::size_t j = 0; j < n; j++) {
-        wallNodes.insert(e->getVertex(j));
-        if(dim == 3)
-          wallEdges.insert(edgeKey(e->getVertex(j), e->getVertex((j + 1) % n)));
-      }
-    }
-  }
-  if(wallElements.empty()) {
-    Msg::Warning("Boundary layer: no mesh on the %s to create layers on",
-                 dim == 3 ? "surfaces" : "curves");
-    return false;
-  }
-  auto isWallNode = [&](MVertex *v) {
-    return wallNodes.find(v) != wallNodes.end();
-  };
-
-  // elements of the domains around the wall nodes, and their facets
-  std::vector<StarElement> star;
-  std::map<MVertex *, std::vector<int>> starOf;
-  std::map<FacetKey, std::array<int, 2>> facetMap;
-  std::vector<Facet> facets;
-  for(auto domain : domains) {
-    for(std::size_t i = 0; i < domain->getNumMeshElements(); i++) {
-      MElement *e = domain->getMeshElement(i);
-      if(e->getDim() != dim) continue;
-      bool inStar = false;
-      for(std::size_t j = 0; j < e->getNumVertices(); j++) {
-        if(!isWallNode(e->getVertex(j))) continue;
-        if(!inStar) {
-          if(e->getPolynomialOrder() != 1) {
-            Msg::Error("Boundary layer: the mesh must be of order 1");
-            return false;
-          }
-          star.push_back({e, domain});
-          inStar = true;
-        }
-        starOf[e->getVertex(j)].push_back((int)star.size() - 1);
-      }
-      if(!inStar) continue;
-      getFacets(e, dim, facets);
-      for(const auto &facet : facets) {
-        auto it = facetMap
-                    .insert(std::make_pair(facetKey(facet.v, facet.n),
-                                           std::array<int, 2>{-1, -1}))
-                    .first;
-        if(it->second[0] < 0)
-          it->second[0] = (int)star.size() - 1;
-        else if(it->second[1] < 0)
-          it->second[1] = (int)star.size() - 1;
-      }
-    }
-  }
-
-  // components of the star of each wall node
-  std::vector<Component> components;
-  std::map<std::pair<std::size_t, int>, int> componentOf;
-  for(auto v : wallNodes) {
-    auto its = starOf.find(v);
-    if(its == starOf.end()) continue;
-    const std::vector<int> &elements = its->second;
-    const int n = (int)elements.size();
-    std::map<int, int> local;
-    for(int i = 0; i < n; i++) local[elements[i]] = i;
-    std::vector<int> parent(n);
-    for(int i = 0; i < n; i++) parent[i] = i;
-    auto find = [&](int i) {
-      while(parent[i] != i) i = parent[i] = parent[parent[i]];
-      return i;
-    };
-    std::vector<bool> onWall(n, false);
-    std::vector<std::pair<FacetKey, int>> wallHits;
-    for(int i = 0; i < n; i++) {
-      getFacets(star[elements[i]].e, dim, facets);
-      for(const auto &facet : facets) {
-        bool hasV = false;
-        for(std::size_t k = 0; k < facet.n; k++)
-          if(facet.v[k] == v) hasV = true;
-        if(!hasV) continue;
-        FacetKey key = facetKey(facet.v, facet.n);
-        if(wallFacets.find(key) != wallFacets.end()) {
-          onWall[i] = true;
-          wallHits.push_back(std::make_pair(key, i));
-          continue;
-        }
-        auto itf = facetMap.find(key);
-        if(itf == facetMap.end()) continue;
-        for(int other : itf->second) {
-          if(other < 0 || other == elements[i]) continue;
-          auto itl = local.find(other);
-          if(itl != local.end()) parent[find(i)] = find(itl->second);
-        }
-      }
-    }
-    std::map<int, int> rootToComponent;
-    for(int i = 0; i < n; i++) {
-      int root = find(i);
-      auto itr = rootToComponent.find(root);
-      if(itr == rootToComponent.end()) {
-        itr = rootToComponent
-                .insert(std::make_pair(root, (int)components.size()))
-                .first;
-        components.push_back(Component());
-        components.back().v = v;
-      }
-      Component &c = components[itr->second];
-      c.elements.push_back(elements[i]);
-      if(onWall[i]) c.onWall = true;
-      componentOf[std::make_pair(v->getNum(), elements[i])] = itr->second;
-    }
-    // a wall element with both its sides in the same component: v is on the
-    // free edge of a wall with layers on both sides
-    std::map<std::pair<int, FacetKey>, int> sides;
-    for(const auto &hit : wallHits) {
-      int root = find(hit.second);
-      if(++sides[std::make_pair(root, hit.first)] > 1)
-        components[rootToComponent[root]].pinched = true;
-    }
-  }
-  auto componentAt = [&](MVertex *v, int element) {
-    auto it = componentOf.find(std::make_pair(v->getNum(), element));
-    return it == componentOf.end() ? -1 : it->second;
-  };
-  auto spawnAt = [&](MVertex *v, int element) -> MVertex * {
-    int c = componentAt(v, element);
-    return c < 0 ? nullptr : components[c].spawn;
-  };
-
-  // the lines of the curves starting at a wall node without being in the wall,
-  // and in 3D the elements of the other surfaces around it
-  struct NodeLine {
-    GEdge *ge;
-    MLine *line;
-  };
-  struct NodeFacet {
-    GFace *gf;
-    MElement *e;
-  };
-  std::map<MVertex *, std::vector<NodeLine>> linesAt;
-  std::map<MVertex *, std::vector<NodeFacet>> surfaceElementsAt;
-  for(auto it = m->firstEdge(); it != m->lastEdge(); ++it) {
-    GEdge *ge = *it;
-    if(dim == 2 && walls.find(ge) != walls.end()) continue;
-    for(auto line : ge->lines) {
-      MVertex *a = line->getVertex(0), *b = line->getVertex(1);
-      if(dim == 3 && wallEdges.find(edgeKey(a, b)) != wallEdges.end()) continue;
-      if(isWallNode(a)) linesAt[a].push_back({ge, line});
-      if(isWallNode(b)) linesAt[b].push_back({ge, line});
-    }
-  }
-  std::vector<NodeFacet> surfaceElements; // with at least one wall node
-  if(dim == 3) {
-    for(auto it = m->firstFace(); it != m->lastFace(); ++it) {
-      GFace *gf = *it;
-      if(walls.find(gf) != walls.end()) continue;
-      for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
-        MElement *e = gf->getMeshElement(i);
-        if(e->getDim() != 2) continue;
-        bool any = false;
-        for(std::size_t j = 0; j < e->getNumPrimaryVertices(); j++) {
-          if(!isWallNode(e->getVertex(j))) continue;
-          surfaceElementsAt[e->getVertex(j)].push_back({gf, e});
-          any = true;
-        }
-        if(any) surfaceElements.push_back({gf, e});
-      }
-    }
-  }
-  // the element of the domains a surface element is a facet of, or -1
-  auto elementOn = [&](MElement *surfaceElement) {
-    auto it = facetMap.find(facetKey(surfaceElement));
-    return it == facetMap.end() ? -1 : it->second[0];
-  };
-
-  // spawn the nodes: nothing is changed in the mesh until all are known
-  struct NewVertex {
-    GEntity *ge;
-    MVertex *v;
-    bool front;
-  };
-  struct LineEdit {
-    GEdge *ge;
-    bool begin;
-    MVertex *v, *spawn;
-  };
-  std::vector<NewVertex> newVertices;
-  std::vector<LineEdit> lineEdits;
-  std::size_t numUnsupported = 0;
-
-  for(std::size_t ic = 0; ic < components.size(); ic++) {
-    Component &c = components[ic];
-    if(!c.onWall || c.pinched) continue;
-    MVertex *v = c.v;
-
-    // curves along which the component leaves the wall
-    std::vector<NodeLine> lines;
-    auto itl = linesAt.find(v);
-    if(itl != linesAt.end()) {
-      for(const auto &nl : itl->second) {
-        MVertex *other = (nl.line->getVertex(0) == v) ? nl.line->getVertex(1) :
-                                                        nl.line->getVertex(0);
-        for(int element : c.elements) {
-          if(elementHasVertex(star[element].e, other)) {
-            lines.push_back(nl);
-            break;
-          }
-        }
-      }
-    }
-
-    if(lines.size() > 1) {
-      c.pinched = true;
-      continue;
-    }
-    if(lines.size() == 1) {
-      GEdge *ge = lines[0].ge;
-      MLine *line = lines[0].line;
-      bool begin = !ge->lines.empty() && line == ge->lines.front() &&
-                   line->getVertex(0) == v;
-      bool end = !ge->lines.empty() && line == ge->lines.back() &&
-                 line->getVertex(1) == v;
-      double param;
-      if((!begin && !end) || !reparamMeshVertexOnEdge(v, ge, param)) {
-        c.pinched = true;
-        continue;
-      }
-      double lc = line->getLength();
-      if(!ge->mesh_vertices.empty()) {
-        MEdgeVertex *neighbour = dynamic_cast<MEdgeVertex *>(
-          begin ? ge->mesh_vertices.front() : ge->mesh_vertices.back());
-        if(neighbour) lc = neighbour->getLc();
-      }
-      c.spawn = new MEdgeVertex(v->x(), v->y(), v->z(), ge, param, 0, lc);
-      newVertices.push_back({ge, c.spawn, begin});
-      lineEdits.push_back({ge, begin, v, c.spawn});
-      continue;
-    }
-
-    // surface along which the component leaves the wall
-    GFace *gf = nullptr;
-    bool severalSurfaces = false;
-    if(dim == 3) {
-      auto itf = surfaceElementsAt.find(v);
-      if(itf != surfaceElementsAt.end()) {
-        for(const auto &nf : itf->second) {
-          auto ite = facetMap.find(facetKey(nf.e));
-          if(ite == facetMap.end()) continue;
-          bool inComponent = false;
-          for(int element : ite->second)
-            if(element >= 0 && componentAt(v, element) == (int)ic)
-              inComponent = true;
-          if(!inComponent) continue;
-          if(gf && gf != nf.gf) severalSurfaces = true;
-          gf = nf.gf;
-        }
-      }
-    }
-    else
-      gf = static_cast<GFace *>(star[c.elements[0]].domain);
-    if(severalSurfaces) {
-      c.pinched = true;
-      continue;
-    }
-    if(gf) {
-      SPoint2 param;
-      if(!reparamOnFace(v, gf, param)) {
-        c.pinched = true;
-        continue;
-      }
-      c.spawn =
-        new MFaceVertex(v->x(), v->y(), v->z(), gf, param.x(), param.y());
-      newVertices.push_back({gf, c.spawn, false});
-    }
-    else {
-      GEntity *domain = star[c.elements[0]].domain;
-      c.spawn = new MVertex(v->x(), v->y(), v->z(), domain);
-      newVertices.push_back({domain, c.spawn, false});
-    }
-  }
-
-  // the layer elements, between each wall element and its spawn on each side
-  struct NewElement {
-    GEntity *ge;
-    LayerColumns lc;
-  };
-  std::vector<NewElement> newElements;
-  for(auto wallElement : wallElements) {
-    auto itf = facetMap.find(facetKey(wallElement));
-    if(itf == facetMap.end()) continue;
-    for(int element : itf->second) {
-      if(element < 0) continue;
-      MElement *e = star[element].e;
-      NewElement ne;
-      ne.ge = star[element].domain;
-      LayerColumns &lc = ne.lc;
-      lc.n = wallElement->getNumPrimaryVertices();
-      for(std::size_t j = 0; j < lc.n; j++) {
-        lc.wall[j] = wallElement->getVertex(j);
-        lc.top[j] = spawnAt(lc.wall[j], element);
-      }
-      if(!lc.numTops()) continue;
-      bool reversed;
-      if(dim == 3) {
-        // the volume lies behind the wall element if the face of its element
-        // has the same orientation
-        int ithFace = 0, sign = 0, rot = 0;
-        e->getFaceInfo(wallElement->getFace(0), ithFace, sign, rot);
-        reversed = (sign > 0);
-      }
-      else {
-        // the layer element is oriented as the element, which runs along the
-        // wall line in the same direction
-        reversed = true;
-        for(int k = 0; k < e->getNumEdges(); k++) {
-          MEdge edge = e->getEdge(k);
-          if(edge.getVertex(0) == lc.wall[0] && edge.getVertex(1) == lc.wall[1])
-            reversed = false;
-        }
-      }
-      if(reversed) {
-        const std::size_t i = (dim == 2) ? 0 : 1, j = lc.n - 1;
-        std::swap(lc.wall[i], lc.wall[j]);
-        std::swap(lc.top[i], lc.top[j]);
-      }
-      if(!isSupported(lc)) {
-        numUnsupported++;
-        continue;
-      }
-      newElements.push_back(ne);
-    }
-  }
-
-  // in 3D, the surfaces along which the layers leave the wall: their elements
-  // move to the spawned nodes, and a quad is created on each wall edge
-  struct NodeEdit {
-    MElement *e;
-    int index;
-    MVertex *spawn;
-  };
-  std::vector<NodeEdit> nodeEdits;
-  std::vector<NewElement> newSideElements;
-  std::set<GEntity *> domainSet(domains.begin(), domains.end());
-  std::set<GFace *, GEntityPtrLessThan> sharedSurfaces;
-  for(const auto &se : surfaceElements) {
-    int element = elementOn(se.e);
-    if(element < 0) continue;
-    const std::size_t n = se.e->getNumPrimaryVertices();
-    MVertex *spawns[4] = {nullptr, nullptr, nullptr, nullptr};
-    bool any = false;
-    for(std::size_t j = 0; j < n; j++) {
-      MVertex *v = se.e->getVertex(j);
-      if(!isWallNode(v)) continue;
-      spawns[j] = spawnAt(v, element);
-      if(!spawns[j]) continue;
-      nodeEdits.push_back({se.e, (int)j, spawns[j]});
-      any = true;
-    }
-    if(!any) continue;
-    for(auto gr : se.gf->regions())
-      if(domainSet.find(gr) == domainSet.end()) sharedSurfaces.insert(se.gf);
-    for(std::size_t j = 0; j < n; j++) {
-      std::size_t k = (j + 1) % n;
-      MVertex *a = se.e->getVertex(j), *b = se.e->getVertex(k);
-      if(!spawns[j] && !spawns[k]) continue;
-      if(wallEdges.find(edgeKey(a, b)) == wallEdges.end()) continue;
-      NewElement ne;
-      ne.ge = se.gf;
-      ne.lc.n = 2;
-      ne.lc.wall[0] = a;
-      ne.lc.wall[1] = b;
-      ne.lc.top[0] = spawns[j];
-      ne.lc.top[1] = spawns[k];
-      newSideElements.push_back(ne);
-    }
-  }
-
-  if(numUnsupported) {
-    Msg::Error("Boundary layer: %zu hexahedra of the layers would be pinched "
-               "in a way that leaves no valid element: mesh left unchanged",
-               numUnsupported);
-    for(auto &nv : newVertices) delete nv.v;
-    return false;
-  }
-  // the wall nodes without any spawned node
-  {
-    std::map<MVertex *, bool, MVertexPtrLessThan> spawned;
-    for(const auto &c : components) {
-      if(!c.onWall) continue;
-      if(c.spawn)
-        spawned[c.v] = true;
-      else if(spawned.find(c.v) == spawned.end())
-        spawned[c.v] = false;
-    }
-    for(const auto &sp : spawned)
-      if(!sp.second) data.pinchedNodes.insert(sp.first);
-    if(!data.pinchedNodes.empty())
-      Msg::Info("Boundary layer: layers pinched at %zu wall node(s)",
-                data.pinchedNodes.size());
-  }
-  for(auto gf : sharedSurfaces)
-    Msg::Warning("Boundary layer: the layers end on surface %d, shared with a "
-                 "volume without layers: the mesh will not be conforming "
-                 "across it",
-                 gf->tag());
-
-  // apply the changes
-  for(auto &nv : newVertices) {
-    if(nv.front)
-      nv.ge->mesh_vertices.insert(nv.ge->mesh_vertices.begin(), nv.v);
-    else
-      nv.ge->mesh_vertices.push_back(nv.v);
-  }
-  for(auto &c : components) {
-    if(!c.spawn) continue;
-    for(int element : c.elements) {
-      MElement *e = star[element].e;
-      for(std::size_t j = 0; j < e->getNumVertices(); j++)
-        if(e->getVertex(j) == c.v) e->setVertex(j, c.spawn);
-    }
-  }
-  for(auto &ne : nodeEdits) ne.e->setVertex(ne.index, ne.spawn);
-  for(auto &le : lineEdits) {
-    if(le.begin) {
-      le.ge->lines.front()->setVertex(0, le.spawn);
-      le.ge->lines.insert(le.ge->lines.begin(), new MLine(le.v, le.spawn));
-    }
-    else {
-      le.ge->lines.back()->setVertex(1, le.spawn);
-      le.ge->lines.push_back(new MLine(le.spawn, le.v));
-    }
-  }
-  for(auto &ne : newElements)
-    addLayerElement(ne.ge, ne.lc, thickness, data);
-  for(auto &ne : newSideElements) {
-    addLayerElement(ne.ge, ne.lc, thickness, data);
-    GFace *gf = static_cast<GFace *>(ne.ge);
-    if(std::find(sideSurfaces.begin(), sideSurfaces.end(), gf) ==
-       sideSurfaces.end())
-      sideSurfaces.push_back(gf);
-  }
-  return true;
+  return LayerInsertion(m, dim, domains, walls)
+    .run(thickness, data, sideSurfaces);
 }
 
 namespace {
@@ -1152,7 +1093,6 @@ namespace {
 static const double layerSizeWeight = 10.;
 static const double outsideSizeWeight = 0.01;
 
-// ---------------------------------------------------------------------------
 // Target thickness of the layers
 //
 // Each wall node has a target thickness: the requested one, reduced where
@@ -1161,7 +1101,6 @@ static const double outsideSizeWeight = 0.01;
 // target, the columns are then cut back where they exceed it, and split in
 // layers of the requested first height and growth ratio as far as their final
 // height allows.
-// ---------------------------------------------------------------------------
 
 // Fraction of a gap a layer may fill, when the boundary across the gap carries
 // layers as well and when it does not
@@ -1233,9 +1172,8 @@ static SPoint3 closestPointOnTriangle(const SPoint3 &a, const SPoint3 &b,
 // that touches the boundary at the point at d from the node. Only the pieces
 // of the boundary roughly parallel to the wall element count: around a concave
 // corner the layers of both walls share a column and do not collide.
-static void
-limitThicknessToGaps(const WallData &wall, double maxThickness,
-                     std::map<MVertex *, double> &thickness)
+static void limitThicknessToGaps(const WallData &wall, double maxThickness,
+                                 std::map<MVertex *, double> &thickness)
 {
   if(wall.samples.empty() || maxThickness <= 0.) return;
   // nothing farther than this can reduce the thickness
@@ -1259,13 +1197,15 @@ limitThicknessToGaps(const WallData &wall, double maxThickness,
   for(std::size_t i = 0; i < wall.samples.size(); i++)
     grid[cellOf(wall.samples[i].v->point())].push_back(i);
 
-  auto visit = [&](const BoundaryPiece &piece, const std::vector<std::size_t> &ids) {
+  auto visit = [&](const BoundaryPiece &piece,
+                   const std::vector<std::size_t> &ids) {
     for(auto id : ids) {
       const WallSample &sample = wall.samples[id];
       SPoint3 p = sample.v->point();
-      SPoint3 q = (piece.n == 3) ?
-        closestPointOnTriangle(piece.p[0], piece.p[1], piece.p[2], p) :
-        closestPointOnSegment(piece.p[0], piece.p[1], p);
+      SPoint3 q =
+        (piece.n == 3) ?
+          closestPointOnTriangle(piece.p[0], piece.p[1], piece.p[2], p) :
+          closestPointOnSegment(piece.p[0], piece.p[1], p);
       SVector3 d(p, q);
       double dist = d.norm();
       if(dist < 1.e-12 * R || dist > R) continue;
@@ -1280,8 +1220,8 @@ limitThicknessToGaps(const WallData &wall, double maxThickness,
       }
       if(std::abs(dot(pieceNormal, sample.normal)) < 0.5) continue;
       double gap = dist * dist / dn;
-      double limit = gap * (piece.wall ? gapFractionFacingWall :
-                                         gapFractionFacingOther);
+      double limit =
+        gap * (piece.wall ? gapFractionFacingWall : gapFractionFacingOther);
       auto it = thickness.find(sample.v);
       if(it != thickness.end() && limit < it->second) it->second = limit;
     }
@@ -1305,8 +1245,8 @@ limitThicknessToGaps(const WallData &wall, double maxThickness,
       // a large piece: go through the cells holding samples instead
       for(const auto &cell : grid) {
         const Cell &c = cell.first;
-        if(c.i < c0.i || c.i > c1.i || c.j < c0.j || c.j > c1.j ||
-           c.k < c0.k || c.k > c1.k)
+        if(c.i < c0.i || c.i > c1.i || c.j < c0.j || c.j > c1.j || c.k < c0.k ||
+           c.k > c1.k)
           continue;
         visit(piece, cell.second);
       }
@@ -1387,15 +1327,15 @@ static SVector3 parametricNormal(GFace *gf, const SPoint2 &param)
 }
 
 // +1 if the elements of the surface are oriented as its normal, -1 otherwise
-static double meshOrientation(GFace *gf,
-                              const LayerData &data)
+static double meshOrientation(GFace *gf, const LayerData &data)
 {
   for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
     MElement *e = gf->getMeshElement(i);
-    if(e->getDim() != 2 || data.elements.find(e) != data.elements.end()) continue;
-    SVector3 n = crossprod(
-      SVector3(e->getVertex(0)->point(), e->getVertex(1)->point()),
-      SVector3(e->getVertex(0)->point(), e->getVertex(2)->point()));
+    if(e->getDim() != 2 || data.elements.find(e) != data.elements.end())
+      continue;
+    SVector3 n =
+      crossprod(SVector3(e->getVertex(0)->point(), e->getVertex(1)->point()),
+                SVector3(e->getVertex(0)->point(), e->getVertex(2)->point()));
     SPoint2 param;
     if(n.norm() <= 0. || !reparamOnFace(e->getVertex(0), gf, param)) continue;
     return dot(n, parametricNormal(gf, param)) >= 0. ? 1. : -1.;
@@ -1420,8 +1360,7 @@ static bool wallNormal(GFace *gf, const LayerColumns &lc, double orientation,
   return true;
 }
 
-static void addWallElements(GRegion *gr,
-                            const LayerData &data, WallData &wall)
+static void addWallElements(GRegion *gr, const LayerData &data, WallData &wall)
 {
   bool positive = isPositive(gr);
   for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
@@ -1433,8 +1372,7 @@ static void addWallElements(GRegion *gr,
       continue;
     for(std::size_t j = 0; j < lc.n; j++) {
       wall.samples.push_back({lc.wall[j], normal, SVector3()});
-      wall.edges.push_back(
-        std::make_pair(lc.wall[j], lc.wall[(j + 1) % lc.n]));
+      wall.edges.push_back(std::make_pair(lc.wall[j], lc.wall[(j + 1) % lc.n]));
     }
   }
 }
@@ -1462,8 +1400,7 @@ static void addBoundaryPieces(GFace *gf, bool isWall, WallData &wall)
   }
 }
 
-static void addWallElements(GFace *gf,
-                            const LayerData &data, WallData &wall)
+static void addWallElements(GFace *gf, const LayerData &data, WallData &wall)
 {
   double orientation = meshOrientation(gf, data);
   for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
@@ -1502,7 +1439,8 @@ static void addBoundaryPieces(GEdge *ge, bool isWall, WallData &wall)
 static void computeWallThickness(const WallData &wall, double thickness,
                                  LayerData &data)
 {
-  for(const auto &sample : wall.samples) data.wallThickness[sample.v] = thickness;
+  for(const auto &sample : wall.samples)
+    data.wallThickness[sample.v] = thickness;
   double maxThickness = 0.;
   for(const auto &t : data.wallThickness)
     maxThickness = std::max(maxThickness, t.second);
@@ -1565,8 +1503,8 @@ static void moveOnColumn(MVertex *wallNode, MVertex *top, double fraction)
   }
 }
 
-static void addColumn(LayerData &data, MVertex *wallNode,
-                      MVertex *top, const SVector3 &normal)
+static void addColumn(LayerData &data, MVertex *wallNode, MVertex *top,
+                      const SVector3 &normal)
 {
   SVector3 d(wallNode->point(), top->point());
   double l = d.norm();
@@ -1578,8 +1516,7 @@ static void addColumn(LayerData &data, MVertex *wallNode,
 
 // Cut back the columns classified on the entity that are higher than the
 // target thickness of their wall node. Return the number of columns cut.
-static std::size_t
-clampColumns(GEntity *ge, LayerData &data)
+static std::size_t clampColumns(GEntity *ge, LayerData &data)
 {
   std::size_t numClamped = 0;
   for(auto &c : data.columns) {
@@ -1598,8 +1535,7 @@ clampColumns(GEntity *ge, LayerData &data)
   return numClamped;
 }
 
-static void collectColumns(GRegion *gr,
-                           LayerData &data)
+static void collectColumns(GRegion *gr, LayerData &data)
 {
   bool positive = isPositive(gr);
   for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
@@ -1614,8 +1550,7 @@ static void collectColumns(GRegion *gr,
   }
 }
 
-static void collectColumns(GFace *gf,
-                           LayerData &data)
+static void collectColumns(GFace *gf, LayerData &data)
 {
   double orientation = meshOrientation(gf, data);
   for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
@@ -1631,85 +1566,6 @@ static void collectColumns(GFace *gf,
   }
 }
 
-// The layers of a column: the requested heights when the column is as high as
-// their sum, and otherwise
-// - the first numExact layers at their requested height, and the others
-//   growing from there with a smaller ratio, as long as that ratio is not
-//   below 1;
-// - below that, each layer at its requested height or at a common height
-//   limit, whichever is smaller: the number of exact layers decreases with the
-//   height of the column, and the layers end up uniform.
-// The layers depend continuously on the height of the column, so that they
-// stay smooth along the wall, and no layer is ever higher than requested.
-struct LayerLaw {
-  std::vector<double> widths; // requested heights
-  double ratio = 1.;
-  int numExact = 0;
-
-  // heights of the layers of a column of the given height, cumulated and
-  // divided by the height
-  std::vector<double> fractions(double height) const
-  {
-    const int N = (int)widths.size();
-    std::vector<double> h(widths);
-    double total = 0.;
-    for(double w : widths) total += w;
-    if(height < total) {
-      int n = std::max(0, std::min(numExact, N - 1));
-      double exact = 0.;
-      for(int k = 0; k < n; k++) exact += widths[k];
-      double base = n ? widths[n - 1] : widths[0] / ratio;
-      double rest = height - exact;
-      int m = N - n;
-      auto tail = [&](double r) {
-        double sum = 0., w = base;
-        for(int k = 0; k < m; k++) {
-          w *= r;
-          sum += w;
-        }
-        return sum;
-      };
-      if(rest >= m * base && ratio > 1.) {
-        double lo = 1., hi = ratio;
-        for(int iter = 0; iter < 100; iter++) {
-          double mid = 0.5 * (lo + hi);
-          if(tail(mid) > rest)
-            hi = mid;
-          else
-            lo = mid;
-        }
-        double r = 0.5 * (lo + hi), w = base;
-        for(int k = n; k < N; k++) {
-          w *= r;
-          h[k] = w;
-        }
-      }
-      else {
-        double below = 0.;
-        for(int k = 0; k < N; k++) {
-          double limit = (height - below) / (N - k);
-          if(limit <= widths[k]) {
-            for(int j = k; j < N; j++) h[j] = limit;
-            break;
-          }
-          below += widths[k];
-        }
-      }
-    }
-    double sum = 0.;
-    for(double w : h) sum += w;
-    std::vector<double> t(N);
-    double c = 0.;
-    for(int k = 0; k < N; k++) {
-      c += h[k];
-      t[k] = (sum > 0.) ? c / sum : double(k + 1) / N;
-    }
-    t[N - 1] = 1.;
-    return t;
-  }
-};
-
-// ---------------------------------------------------------------------------
 // Inflation of the layers
 //
 // The layers and the rings of elements around them are untangled: the ideal
@@ -1717,7 +1573,6 @@ struct LayerLaw {
 // ideal shape of the other elements is their initial one. The nodes on the
 // boundary of the surface or of the volume do not move: curves are done
 // first, then surfaces, then volumes.
-// ---------------------------------------------------------------------------
 
 // Ideal position, in the parametric plane of the surface, of the two wall
 // nodes of a layer element and of the nodes at the top of their columns. For a
@@ -1813,10 +1668,9 @@ static bool idealLayerShape(GFace *gf, MElement *e, const LayerData &data,
     Msg::Error("Boundary layer: unknown layer element %zu", e->getNum());
     return false;
   }
-  LayerCorners c =
-    idealLayerCorners(gf, area, lc.wall[0], lc.wall[1],
-                      data.thicknessAt(lc.wall[0], thickness),
-                      data.thicknessAt(lc.wall[1], thickness));
+  LayerCorners c = idealLayerCorners(gf, area, lc.wall[0], lc.wall[1],
+                                     data.thicknessAt(lc.wall[0], thickness),
+                                     data.thicknessAt(lc.wall[1], thickness));
   if(e->getNumVertices() == 4) {
     useBoundaryParallelogram(gf, e, c);
     vs = {c.wall[0], c.wall[1], c.top[1], c.top[0]};
@@ -1929,8 +1783,8 @@ static bool inflateLayers(GFace *gf, LayerData &data, std::size_t numRings,
   options.strictFailures = true;
   options.numThreads = CTX::instance()->numThreadsFor(triangles.size(), 5000);
   options.elementLambda = &sizeWeight;
-  bool ok = WinslowUntangler::untangle2D(points, set.locked, triangles, ideal,
-                                         options);
+  bool ok =
+    WinslowUntangler::untangle2D(points, set.locked, triangles, ideal, options);
   if(!ok)
     Msg::Warning("Boundary layer: untangling of surface %d did not converge",
                  gf->tag());
@@ -2112,11 +1966,239 @@ static std::size_t countInvalidElements(GRegion *gr)
   return numFlat + std::min(numPositive, numNegative);
 }
 
+// Split of the columns in layers
+
+// The layers of a column: the requested heights when the column is as high as
+// their sum, and otherwise
+// - the first numExact layers at their requested height, and the others
+//   growing from there with a smaller ratio, as long as that ratio is not
+//   below 1;
+// - below that, each layer at its requested height or at a common height
+//   limit, whichever is smaller: the number of exact layers decreases with the
+//   height of the column, and the layers end up uniform.
+// The layers depend continuously on the height of the column, so that they
+// stay smooth along the wall, and no layer is ever higher than requested.
+struct LayerLaw {
+  std::vector<double> widths; // requested heights
+  double ratio = 1.;
+  int numExact = 0;
+
+  // heights of the layers of a column of the given height, cumulated and
+  // divided by the height
+  std::vector<double> fractions(double height) const
+  {
+    const int N = (int)widths.size();
+    std::vector<double> h(widths);
+    double total = 0.;
+    for(double w : widths) total += w;
+    if(height < total) {
+      int n = std::max(0, std::min(numExact, N - 1));
+      double exact = 0.;
+      for(int k = 0; k < n; k++) exact += widths[k];
+      double base = n ? widths[n - 1] : widths[0] / ratio;
+      double rest = height - exact;
+      int m = N - n;
+      auto tail = [&](double r) {
+        double sum = 0., w = base;
+        for(int k = 0; k < m; k++) {
+          w *= r;
+          sum += w;
+        }
+        return sum;
+      };
+      if(rest >= m * base && ratio > 1.) {
+        double lo = 1., hi = ratio;
+        for(int iter = 0; iter < 100; iter++) {
+          double mid = 0.5 * (lo + hi);
+          if(tail(mid) > rest)
+            hi = mid;
+          else
+            lo = mid;
+        }
+        double r = 0.5 * (lo + hi), w = base;
+        for(int k = n; k < N; k++) {
+          w *= r;
+          h[k] = w;
+        }
+      }
+      else {
+        double below = 0.;
+        for(int k = 0; k < N; k++) {
+          double limit = (height - below) / (N - k);
+          if(limit <= widths[k]) {
+            for(int j = k; j < N; j++) h[j] = limit;
+            break;
+          }
+          below += widths[k];
+        }
+      }
+    }
+    double sum = 0.;
+    for(double w : h) sum += w;
+    std::vector<double> t(N);
+    double c = 0.;
+    for(int k = 0; k < N; k++) {
+      c += h[k];
+      t[k] = (sum > 0.) ? c / sum : double(k + 1) / N;
+    }
+    t[N - 1] = 1.;
+    return t;
+  }
+};
+
+// Classify on the surface a node created in the volume
+static void classifyVertexOnFace(GFace *gf, MVertex *v)
+{
+  if(!gf || !v || !v->onWhat() || v->onWhat()->dim() <= 2) return;
+
+  SPoint3 p = v->point();
+  SPoint2 param = gf->parFromPoint(p);
+  double guess[2] = {param.x(), param.y()};
+  GPoint gp = gf->closestPoint(p, guess);
+  v->x() = gp.x();
+  v->y() = gp.y();
+  v->z() = gp.z();
+  v->setParameter(0, gp.u());
+  v->setParameter(1, gp.v());
+  v->setEntity(gf);
+  gf->mesh_vertices.push_back(v);
+}
+
+// Split a pinched triangle along its only column, given from the wall
+// outwards: a fan of triangles around the pinched node
+static void splitPinchedTriangle(GFace *gf, MElement *t,
+                                 const std::vector<MVertex *> &column,
+                                 LayerData &data,
+                                 const std::vector<double> &widths)
+{
+  int k = 0;
+  while(k < 3 &&
+        (t->getVertex(k) == column.front() || t->getVertex(k) == column.back()))
+    k++;
+  if(k == 3) return;
+  MVertex *apex = t->getVertex(k);
+  bool outwards = (t->getVertex((k + 1) % 3) == column.front());
+  for(std::size_t s = 0; s + 1 < column.size(); s++) {
+    MVertex *a = outwards ? column[s] : column[s + 1];
+    MVertex *b = outwards ? column[s + 1] : column[s];
+    MElement *e = t;
+    if(s == 0) {
+      t->setVertex(0, apex);
+      t->setVertex(1, a);
+      t->setVertex(2, b);
+    }
+    else {
+      gf->triangles.push_back(new MTriangle(apex, a, b));
+      e = gf->triangles.back();
+    }
+    data.elements[e] = s < widths.size() ? widths[s] : widths.back();
+  }
+}
+
+static void
+splitSideElements(GModel *gm,
+                  std::map<MEdge, std::vector<MVertex *>, MEdgeLessThan> &split,
+                  LayerData &data, const std::vector<double> &widths)
+{
+  for(GModel::fiter fit = gm->firstFace(); fit != gm->lastFace(); ++fit) {
+    GFace *gf = (*fit);
+
+    // pinched layer elements
+    std::vector<MTriangle *> triangles = gf->triangles;
+    for(auto t : triangles) {
+      if(data.elements.find(t) == data.elements.end()) continue;
+      for(int i = 0; i < 3; i++) {
+        auto it = split.find(t->getEdge(i));
+        if(it == split.end()) continue;
+        splitPinchedTriangle(gf, t, it->second, data, widths);
+        break;
+      }
+    }
+
+    std::vector<MQuadrangle *> newVec;
+    for(auto q : gf->quadrangles) {
+      bool found = false;
+      auto itLayer = data.elements.find(q);
+      // edges i and i + 2 are opposite: i = 2 and 3 would split the quad again,
+      // reversed
+      for(size_t i = 0; i < 2 && !found; i++) {
+        MEdge ei = q->getEdge(i);
+        MEdge ei2 = q->getEdge((i + 2) % 4);
+        auto it0 = split.find(ei);
+        auto it1 = split.find(ei2);
+        if(it0 != split.end() && it1 != split.end()) {
+          // both columns are stored from the wall outwards: keep the
+          // orientation of the quad, with nodes 0 and 1 along the wall as in
+          // the quads created by the boundary layer
+          const std::vector<MVertex *> &c0 =
+            (it0->second.front() == q->getVertex(i)) ? it1->second :
+                                                       it0->second;
+          const std::vector<MVertex *> &c1 =
+            (it0->second.front() == q->getVertex(i)) ? it0->second :
+                                                       it1->second;
+          for(size_t j = 0; j < c0.size() - 1; j++) {
+            MQuadrangle *nq =
+              new MQuadrangle(c0[j], c1[j], c1[j + 1], c0[j + 1]);
+            for(int k = 0; k < 4; ++k)
+              classifyVertexOnFace(gf, nq->getVertex(k));
+            newVec.push_back(nq);
+            if(itLayer != data.elements.end())
+              data.elements[nq] =
+                j < widths.size() ? widths[j] : itLayer->second;
+          }
+          found = true;
+        }
+      }
+      if(found) {
+        if(itLayer != data.elements.end()) data.elements.erase(itLayer);
+        delete q;
+      }
+      else
+        newVec.push_back(q);
+    }
+    gf->quadrangles = newVec;
+  }
+}
+
+static void
+splitSideLines(GModel *gm,
+               std::map<MEdge, std::vector<MVertex *>, MEdgeLessThan> &split)
+{
+  for(GModel::eiter eit = gm->firstEdge(); eit != gm->lastEdge(); ++eit) {
+    GEdge *ge = (*eit);
+    if(ge->lines.empty()) continue;
+    MLine *l0 = ge->lines.front();
+    MLine *l1 = ge->lines.back();
+    MEdge m0 = MEdge(l0->getVertex(0), l0->getVertex(1));
+    MEdge m1 = MEdge(l1->getVertex(0), l1->getVertex(1));
+    auto it0 = split.find(m0);
+    auto it1 = split.find(m1);
+
+    if(it0 != split.end()) {
+      std::vector<MLine *> old = ge->lines;
+      ge->lines.clear();
+      for(size_t j = 0; j < it0->second.size() - 1; j++)
+        ge->lines.push_back(new MLine(it0->second[j], it0->second[j + 1]));
+      for(size_t j = 1; j < old.size(); j++) ge->lines.push_back(old[j]);
+      delete old.front();
+    }
+    if(it1 != split.end()) {
+      // the last line goes from the spawned node to the model point: the
+      // split nodes are stored from the model point outwards
+      size_t s = it1->second.size();
+      ge->lines.back()->setVertex(1, it1->second[s - 2]);
+      for(size_t j = 2; j < s; j++)
+        ge->lines.push_back(
+          new MLine(it1->second[s - j], it1->second[s - j - 1]));
+    }
+  }
+}
+
 // Split the column going from a wall node to its spawned node in layers
 static std::vector<MVertex *>
 splitColumn(MEdge me,
-          std::map<MEdge, std::vector<MVertex *>, MEdgeLessThan> &split,
-          const LayerLaw &law, const LayerData &data)
+            std::map<MEdge, std::vector<MVertex *>, MEdgeLessThan> &split,
+            const LayerLaw &law, const LayerData &data)
 {
   auto it = split.find(me);
   if(it != split.end()) return it->second;
@@ -2169,9 +2251,8 @@ splitColumn(MEdge me,
 }
 
 // Split the layer elements of the volumes in layers along their columns
-static void splitLayers(std::vector<GRegion *> &r,
-                    LayerData &data,
-                    const LayerLaw &law)
+static void splitLayers(std::vector<GRegion *> &r, LayerData &data,
+                        const LayerLaw &law)
 {
   std::map<MEdge, std::vector<MVertex *>, MEdgeLessThan> split;
   const std::vector<double> &widths = law.widths;
@@ -2214,18 +2295,18 @@ static void splitLayers(std::vector<GRegion *> &r,
     auto isReplaced = [&](MElement *e) {
       return replaced.find(e) != replaced.end();
     };
-    gr->tetrahedra.erase(std::remove_if(gr->tetrahedra.begin(),
-                                        gr->tetrahedra.end(), isReplaced),
-                         gr->tetrahedra.end());
+    gr->tetrahedra.erase(
+      std::remove_if(gr->tetrahedra.begin(), gr->tetrahedra.end(), isReplaced),
+      gr->tetrahedra.end());
     gr->pyramids.erase(
       std::remove_if(gr->pyramids.begin(), gr->pyramids.end(), isReplaced),
       gr->pyramids.end());
     gr->prisms.erase(
       std::remove_if(gr->prisms.begin(), gr->prisms.end(), isReplaced),
       gr->prisms.end());
-    gr->hexahedra.erase(std::remove_if(gr->hexahedra.begin(),
-                                       gr->hexahedra.end(), isReplaced),
-                        gr->hexahedra.end());
+    gr->hexahedra.erase(
+      std::remove_if(gr->hexahedra.begin(), gr->hexahedra.end(), isReplaced),
+      gr->hexahedra.end());
     for(auto e : replaced) delete e;
   }
 
@@ -2233,7 +2314,8 @@ static void splitLayers(std::vector<GRegion *> &r,
   splitSideElements(r[0]->model(), split, data, widths);
 }
 
-static void splitLayers(std::vector<GFace *> &f, LayerData &data, const LayerLaw &law)
+static void splitLayers(std::vector<GFace *> &f, LayerData &data,
+                        const LayerLaw &law)
 {
   std::map<MEdge, std::vector<MVertex *>, MEdgeLessThan> split;
   const std::vector<double> &widths = law.widths;
@@ -2257,10 +2339,8 @@ static void splitLayers(std::vector<GFace *> &f, LayerData &data, const LayerLaw
         else if(temp[i]->getNumEdges() == 4) {
           MEdge m03 = MEdge(temp[i]->getVertex(0), temp[i]->getVertex(3));
           MEdge m12 = MEdge(temp[i]->getVertex(1), temp[i]->getVertex(2));
-          std::vector<MVertex *> p03 =
-            splitColumn(m03, split, law, data);
-          std::vector<MVertex *> p12 =
-            splitColumn(m12, split, law, data);
+          std::vector<MVertex *> p03 = splitColumn(m03, split, law, data);
+          std::vector<MVertex *> p12 = splitColumn(m12, split, law, data);
           for(size_t j = 0; j < p03.size() - 1; j++) {
             MVertex *v0 = p03[j];
             MVertex *v1 = p12[j];
@@ -2286,9 +2366,7 @@ static void splitLayers(std::vector<GFace *> &f, LayerData &data, const LayerLaw
   if(!f.empty()) splitSideLines(f[0]->model(), split);
 }
 
-// ---------------------------------------------------------------------------
 // Driver
-// ---------------------------------------------------------------------------
 
 // Store the shape of the elements of the surfaces in their parametric plane
 static void storeInitialShapes(const std::vector<GFace *> &surfaces,
@@ -2474,8 +2552,7 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
     else
       Msg::Warning("Boundary layer: unknown curve %d", tag);
   }
-  if(!tags[3].empty())
-    Msg::Warning("Boundary layer: Points is not used yet");
+  if(!tags[3].empty()) Msg::Warning("Boundary layer: Points is not used yet");
   const bool is3D = !volumes.empty();
   if(is3D && !curves.empty())
     Msg::Warning("Boundary layer: Curves is not used in 3D");
@@ -2537,7 +2614,8 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
   // volumes
   inflateLayersOnCurves(m, data);
   std::size_t numCut = 0;
-  for(auto gf : inflatedSurfaces) numCut += inflateAndCutBack(gf, data, numRings);
+  for(auto gf : inflatedSurfaces)
+    numCut += inflateAndCutBack(gf, data, numRings);
   for(auto gr : volumes) numCut += inflateAndCutBack(gr, data, numRings);
   if(numCut)
     Msg::Info("Boundary layer: %zu of %zu columns cut back to their target "
@@ -2571,10 +2649,9 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
       buildUntangleSets(gf, 2, data, numRings, toProcess, fixed);
     for(auto gr : volumes)
       buildUntangleSets(gr, 3, data, numRings, toProcess, fixed);
-    untangleHighOrderBoundaryLayerPN(m, toProcess, fixed, highOrder,
-                                     &data.elements, &law.widths,
-                                     highOrderStrategy,
-                                     highOrderPostSplitUntangle);
+    untangleHighOrderBoundaryLayerPN(
+      m, toProcess, fixed, highOrder, &data.elements, &law.widths,
+      highOrderStrategy, highOrderPostSplitUntangle);
   }
 
   CTX::instance()->meshChanged();
