@@ -89,6 +89,27 @@ inline double tet_volume(const std::array<double, 3> &a,
   return dot(sub(a, d), cross(sub(b, d), sub(c, d))) / 6.0;
 }
 
+// Parametric coordinates of a node on a surface. A node on a curve lying on
+// the seam of a periodic surface has two sets of coordinates: return the one
+// inside the parametric bounds of the surface, so that a surface that does not
+// span the whole period gets a single-valued parametrization.
+static bool reparamOnFace(MVertex *v, GFace *gf, SPoint2 &param)
+{
+  if(!reparamMeshVertexOnFace(v, gf, param, true, false)) return false;
+  for(int i = 0; i < 2; i++) {
+    if(!gf->periodic(i)) continue;
+    double period = gf->period(i);
+    if(period <= 0.) continue;
+    Range<double> bounds = gf->parBounds(i);
+    double tol = 1.e-6 * period;
+    while(param[i] > bounds.high() + tol && param[i] - period > bounds.low() - tol)
+      param[i] -= period;
+    while(param[i] < bounds.low() - tol && param[i] + period < bounds.high() + tol)
+      param[i] += period;
+  }
+  return true;
+}
+
 /*
     nodes at start (s) and end (e) of GEdge ge
     that does NOT belong tho the list of BL edges
@@ -230,8 +251,8 @@ namespace {
   static double elementSideInFace(GFace *gf, MLine *line, MElement *element)
   {
     SPoint2 p0, p1;
-    if(!reparamMeshVertexOnFace(line->getVertex(0), gf, p0) ||
-       !reparamMeshVertexOnFace(line->getVertex(1), gf, p1))
+    if(!reparamOnFace(line->getVertex(0), gf, p0) ||
+       !reparamOnFace(line->getVertex(1), gf, p1))
       return 0.;
     SPoint3 b = element->barycenter(true);
     SPoint2 pb = gf->parFromPoint(b, false);
@@ -259,7 +280,7 @@ namespace {
   static MFaceVertex *createMFaceVertex(MVertex *v, GFace *gf)
   {
     SPoint2 param;
-    if(!reparamMeshVertexOnFace(v, gf, param)) return nullptr;
+    if(!reparamOnFace(v, gf, param)) return nullptr;
     MFaceVertex *newv =
       new MFaceVertex(v->x(), v->y(), v->z(), gf, param.x(), param.y());
     gf->mesh_vertices.push_back(newv);
@@ -368,6 +389,29 @@ namespace {
     layers[gf->quadrangles.back()] = thickness;
   }
 
+  // Create the prism or the hexahedron between a wall element (vs) and its
+  // spawn (bs), reversed if the volume lies behind the wall element, so that
+  // the layer elements are oriented as the other elements of the volume
+  static void addLayerElement(GRegion *gr, std::size_t n, MVertex **vs,
+                              MVertex **bs, bool reversed, double thickness,
+                              std::map<MElement *, double> &layers)
+  {
+    if(reversed) {
+      std::swap(vs[1], vs[n - 1]);
+      std::swap(bs[1], bs[n - 1]);
+    }
+    if(n == 3) {
+      gr->prisms.push_back(
+        new MPrism(vs[0], vs[1], vs[2], bs[0], bs[1], bs[2]));
+      layers[gr->prisms.back()] = thickness;
+    }
+    else {
+      gr->hexahedra.push_back(new MHexahedron(vs[0], vs[1], vs[2], vs[3], bs[0],
+                                              bs[1], bs[2], bs[3]));
+      layers[gr->hexahedra.back()] = thickness;
+    }
+  }
+
   static void addEmbeddedFaceRegionElement(
     GRegion *gr, MElement *embeddedElement,
     const std::map<MVertex *, EmbeddedVertexSpawns> &vertexSpawns, int side,
@@ -387,16 +431,9 @@ namespace {
       if(!bs[i]) return;
     }
 
-    if(type == MSH_TRI_3) {
-      gr->prisms.push_back(
-        new MPrism(vs[0], vs[1], vs[2], bs[0], bs[1], bs[2]));
-      layers[gr->prisms.back()] = thickness;
-    }
-    else {
-      gr->hexahedra.push_back(new MHexahedron(vs[0], vs[1], vs[2], vs[3], bs[0],
-                                              bs[1], bs[2], bs[3]));
-      layers[gr->hexahedra.back()] = thickness;
-    }
+    // side 0 holds the volume elements whose face has the orientation of the
+    // embedded element, i.e. those lying behind it
+    addLayerElement(gr, n, vs, bs, side == 0, thickness, layers);
   }
 
   static void buildEmbeddedElementSideData(
@@ -494,6 +531,50 @@ classifyVertexOnFace(GFace *gf, MVertex *v)
   gf->mesh_vertices.push_back(v);
 }
 
+// The entities on which the spawn of a wall node used by the elements of a
+// surface or of a volume can be classified: the entity itself, and the entities
+// on its boundary or embedded in it
+static std::set<GEntity *> entityClosure(GFace *gf)
+{
+  std::set<GEntity *> closure;
+  closure.insert(gf);
+  for(auto ge : gf->edges()) closure.insert(ge);
+  for(auto ge : gf->embeddedEdges()) closure.insert(ge);
+  return closure;
+}
+
+static std::set<GEntity *> entityClosure(GRegion *gr)
+{
+  std::set<GEntity *> closure;
+  closure.insert(gr);
+  for(auto gf : gr->faces()) {
+    std::set<GEntity *> c = entityClosure(gf);
+    closure.insert(c.begin(), c.end());
+  }
+  for(auto gf : gr->embeddedFaces()) {
+    std::set<GEntity *> c = entityClosure(gf);
+    closure.insert(c.begin(), c.end());
+  }
+  for(auto ge : gr->embeddedEdges()) closure.insert(ge);
+  return closure;
+}
+
+// The spawn of wall node v classified in the given closure, or nullptr. A node
+// has one spawn per entity it is pushed into, e.g. one in each of the two
+// volumes sharing a wall, so the choice cannot be left to the order in which
+// the spawns were created.
+static MVertex *
+findSpawn(const std::map<MVertex *, std::vector<MVertex *>> &spawned, MVertex *v,
+          const std::set<GEntity *> &closure)
+{
+  auto it = spawned.find(v);
+  if(it == spawned.end()) return nullptr;
+  MVertex *found = nullptr;
+  for(auto sp : it->second)
+    if(closure.find(sp->onWhat()) != closure.end()) found = sp;
+  return found;
+}
+
 static void
 replaceFaces(GModel *gm,
              std::map<MEdge, std::vector<MVertex *>, MEdgeLessThan> &split,
@@ -515,11 +596,18 @@ replaceFaces(GModel *gm,
         auto it0 = split.find(ei);
         auto it1 = split.find(ei2);
         if(it0 != split.end() && it1 != split.end()) {
-          for(size_t j = 0; j < it0->second.size() - 1; j++) {
-            MQuadrangle *nq = new MQuadrangle(it0->second[j],
-                                              it0->second[j + 1],
-                                              it1->second[j + 1],
-                                              it1->second[j]);
+          // both columns are stored from the wall outwards: keep the
+          // orientation of the quad, with nodes 0 and 1 along the wall as in
+          // the quads created by the boundary layer
+          const std::vector<MVertex *> &c0 =
+            (it0->second.front() == q->getVertex(i)) ? it1->second :
+                                                       it0->second;
+          const std::vector<MVertex *> &c1 =
+            (it0->second.front() == q->getVertex(i)) ? it0->second :
+                                                       it1->second;
+          for(size_t j = 0; j < c0.size() - 1; j++) {
+            MQuadrangle *nq =
+              new MQuadrangle(c0[j], c1[j], c1[j + 1], c0[j + 1]);
             for(int k = 0; k < 4; ++k) classifyVertexOnFace(gf, nq->getVertex(k));
             newVec.push_back(nq);
             if(itLayer != layers.end())
@@ -566,8 +654,10 @@ replaceEdges(GModel *gm,
     if(it1 != split.end()) {
       //      	printf("poucou %d
       //      %d\n",ge->tag(),l1->getVertex(0)->onWhat()->dim());
+      // the last line goes from the spawned node to the model point: the
+      // split nodes are stored from the model point outwards
       size_t s = it1->second.size();
-      ge->lines.back()->setVertex(0, it1->second[s - 2]);
+      ge->lines.back()->setVertex(1, it1->second[s - 2]);
       for(size_t j = 2; j < s; j++)
         ge->lines.push_back(
           new MLine(it1->second[s - j], it1->second[s - j - 1]));
@@ -684,8 +774,10 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
           ge->lines.back()->setVertex(1, newv);
           ge->lines.push_back(new MLine(newv, v));
         }
-        else
-          ge->lines.insert(ge->lines.begin(), new MLine(newv, v));
+        else {
+          ge->lines.front()->setVertex(0, newv);
+          ge->lines.insert(ge->lines.begin(), new MLine(v, newv));
+        }
       }
       else {
         Msg::Warning("Could not compute parametric coordinates of node on "
@@ -720,7 +812,7 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
     for(auto gf : toinsert2) {
       MVertex *v = gv->mesh_vertices[0];
       SPoint2 param;
-      if(reparamMeshVertexOnFace(v, gf, param)) {
+      if(reparamOnFace(v, gf, param)) {
         MFaceVertex *newv =
           new MFaceVertex(v->x(), v->y(), v->z(), gf, param.x(), param.y());
         gf->mesh_vertices.push_back(newv);
@@ -769,7 +861,7 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
 
           for(auto ev : ge->mesh_vertices) {
             SPoint2 param;
-            reparamMeshVertexOnFace(ev, f2ge, param);
+            reparamOnFace(ev, f2ge, param);
             MFaceVertex *newv = new MFaceVertex(ev->x(), ev->y(), ev->z(), f2ge,
                                                 param.x(), param.y());
             f2ge->mesh_vertices.push_back(newv);
@@ -791,10 +883,10 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
 
   for(auto gf : onSurfaces) {
     std::map<MVertex *, MVertex *> v2v;
-    auto eds = gf->edges();
     auto vol = gf->regions();
     for(auto gr : vol) {
       if(inVolumesSet.find(gr) == inVolumesSet.end()) continue;
+      std::set<GEntity *> closure = entityClosure(gr);
       for(auto v : gf->mesh_vertices) {
         MVertex *newv = new MVertex(v->x(), v->y(), v->z(), gr);
         gr->mesh_vertices.push_back(newv);
@@ -811,41 +903,16 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
         for(size_t i = 0; i < n; i++) {
           vs[i] = e->getVertex(i);
           std::map<MVertex *, MVertex *>::iterator it = v2v.find(vs[i]);
-          std::map<MVertex *, std::vector<MVertex *>>::iterator its =
-            spawned.find(vs[i]);
           if(it != v2v.end())
             bs[i] = it->second;
-          else if(its != spawned.end() && its->second.size()) {
-            // printf("vertex %p has %d spawns\n",vs[i],its->second.size());
-            for(auto vv : its->second) {
-              if(vv->onWhat() == gr) { bs[i] = vv; }
-              if(vv->onWhat() == gf) { bs[i] = vv; }
-              if(std::find(eds.begin(), eds.end(), vv->onWhat()) == eds.end()) {
-                bs[i] = vv;
-              }
-            }
-          }
+          else
+            bs[i] = findSpawn(spawned, vs[i], closure);
           if(!bs[i]) {
             bs[i] = new MVertex(vs[i]->x(), vs[i]->y(), vs[i]->z(), gr);
             gr->mesh_vertices.push_back(bs[i]);
             spawned[vs[i]].push_back(bs[i]);
             // Msg::Error("no counterpart vertex for %d",vs[i]->getNum());
           }
-        }
-      }
-    }
-  }
-
-  for(auto gf : onSurfacesSet) {
-    auto vs = gf->regions();
-    for(auto vol : vs) {
-      if(inVolumesSet.find(vol) != inVolumesSet.end()) {
-        for(auto vv : gf->mesh_vertices) {
-          MVertex *newv = new MVertex(vv->x(), vv->y(), vv->z(), vol);
-          vol->mesh_vertices.push_back(newv);
-          spawned[vv].push_back(newv);
-          //  printf("Spawned node %zu in volume %d from surface %d\n",
-          //                 newv->getNum(), vol->tag(), gf->tag());
         }
       }
     }
@@ -890,7 +957,7 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
                gf->tag());
       MVertex *v = v2f.first->mesh_vertices[0];
       SPoint2 param;
-      if(reparamMeshVertexOnFace(v, gf, param)) {
+      if(reparamOnFace(v, gf, param)) {
         MFaceVertex *newv =
           new MFaceVertex(v->x(), v->y(), v->z(), gf, param.x(), param.y());
         gf->mesh_vertices.push_back(newv);
@@ -1039,16 +1106,41 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
 
   // Create Elements
 
+  // orientation of the wall elements with respect to the volume elements,
+  // looked up before the volume elements are moved to the spawned nodes
+  std::map<std::pair<GRegion *, MElement *>, bool> wallReversed;
   for(auto gr : inVolumes) {
+    std::map<MFace, MElement *, MFaceLessThan> wall;
+    for(auto gf : gr->faces()) {
+      if(onSurfacesSet.find(gf) == onSurfacesSet.end()) continue;
+      for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
+        MElement *e = gf->getMeshElement(i);
+        if(e->getDim() == 2) wall[e->getFace(0)] = e;
+      }
+    }
+    for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
+      MElement *e = gr->getMeshElement(i);
+      int numOnBoundary = 0;
+      for(std::size_t j = 0; j < e->getNumVertices(); j++)
+        if(e->getVertex(j)->onWhat()->dim() < 3) numOnBoundary++;
+      if(numOnBoundary < 3) continue;
+      for(int k = 0; k < e->getNumFaces(); k++) {
+        auto it = wall.find(e->getFace(k));
+        if(it == wall.end()) continue;
+        int ithFace = 0, sign = 0, rot = 0;
+        if(e->getFaceInfo(it->first, ithFace, sign, rot))
+          wallReversed[std::make_pair(gr, it->second)] = (sign > 0);
+      }
+    }
+  }
+
+  for(auto gr : inVolumes) {
+    std::set<GEntity *> closure = entityClosure(gr);
     for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
       MElement *e = gr->getMeshElement(i);
       for(std::size_t j = 0; j < e->getNumVertices(); j++) {
-        auto sp = spawned[e->getVertex(j)];
-        for(auto v : sp) {
-          if(v->onWhat() == gr || v->onWhat()->dim() < 3) {
-            e->setVertex(j, v);
-          }
-        }
+        MVertex *v = findSpawn(spawned, e->getVertex(j), closure);
+        if(v) e->setVertex(j, v);
       }
     }
   }
@@ -1077,15 +1169,12 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
 
   for(auto gf : surfacesAdjacentToVolumesForBoundaryLayer) {
     if(onSurfacesSet.find(gf) != onSurfacesSet.end()) continue;
+    std::set<GEntity *> closure = entityClosure(gf);
     for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
       MElement *e = gf->getMeshElement(i);
       for(std::size_t j = 0; j < e->getNumVertices(); j++) {
-        auto sp = spawned[e->getVertex(j)];
-        for(auto v : sp) {
-          if(v->onWhat() == gf || v->onWhat()->dim() == 1) {
-            e->setVertex(j, v);
-          }
-        }
+        MVertex *v = findSpawn(spawned, e->getVertex(j), closure);
+        if(v) e->setVertex(j, v);
       }
     }
   }
@@ -1140,6 +1229,7 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
     std::vector<GFace *> connectedSurfaces = ge->faces();
     for(auto gf : connectedSurfaces) {
       std::set<MEdge, MEdgeLessThan> edges_of_elements;
+      std::set<GEntity *> closure = entityClosure(gf);
       for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
         MElement *e = gf->getMeshElement(i);
         for(int j = 0; j < e->getNumEdges(); j++)
@@ -1165,13 +1255,9 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
         else {
           std::vector<MVertex *> V0, V1;
           for(auto V : sp0)
-            if(V->onWhat() == gf || V->onWhat()->dim() == 1) {
-              V0.push_back(V);
-            }
+            if(closure.find(V->onWhat()) != closure.end()) V0.push_back(V);
           for(auto V : sp1)
-            if(V->onWhat() == gf || V->onWhat()->dim() == 1) {
-              V1.push_back(V);
-            }
+            if(closure.find(V->onWhat()) != closure.end()) V1.push_back(V);
           // There can be several vertices for the same face -- in case of
           // embedded edges. Assume that points are spawned on one side and then
           // on the other in the same order.
@@ -1204,11 +1290,10 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
   ///---------------------------------------------------------
 
   for(auto gf : onSurfaces) {
-    std::map<MVertex *, MVertex *> v2v;
-    auto eds = gf->edges();
     auto vol = gf->regions();
     for(auto gr : vol) {
       if(inVolumesSet.find(gr) == inVolumesSet.end()) continue;
+      std::set<GEntity *> closure = entityClosure(gr);
       for(std::size_t j = 0; j < gf->getNumMeshElements(); j++) {
         MElement *e = gf->getMeshElement(j);
         int type = e->getTypeForMSH();
@@ -1218,32 +1303,18 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
         MVertex *bs[4] = {nullptr, nullptr, nullptr, nullptr};
         for(size_t i = 0; i < n; i++) {
           vs[i] = e->getVertex(i);
-          std::map<MVertex *, MVertex *>::iterator it = v2v.find(vs[i]);
-          std::map<MVertex *, std::vector<MVertex *>>::iterator its =
-            spawned.find(vs[i]);
-          if(it != v2v.end())
-            bs[i] = it->second;
-          else if(its != spawned.end() && its->second.size()) {
-            // printf("vertex %p has %d spawns\n",vs[i],its->second.size());
-            for(auto vv : its->second) {
-              if(vv->onWhat() == gr) { bs[i] = vv; }
-              if(vv->onWhat() == gf) { bs[i] = vv; }
-              if(std::find(eds.begin(), eds.end(), vv->onWhat()) == eds.end()) {
-                bs[i] = vv;
-              }
-            }
-          }
+          bs[i] = findSpawn(spawned, vs[i], closure);
         }
 
-        if(type == MSH_TRI_3 && bs[0] && bs[1] && bs[2]) {
-          gr->prisms.push_back(
-            new MPrism(vs[0], vs[1], vs[2], bs[0], bs[1], bs[2]));
-          layers[gr->prisms.back()] = thickness;
-        }
-        else if(type == MSH_QUA_4 && bs[0] && bs[1] && bs[2] && bs[3]) {
-          gr->hexahedra.push_back(new MHexahedron(vs[0], vs[1], vs[2], vs[3],
-                                                  bs[0], bs[1], bs[2], bs[3]));
-          layers[gr->hexahedra.back()] = thickness;
+        if(bs[0] && bs[1] && bs[2] && (n == 3 || bs[3])) {
+          auto itr = wallReversed.find(std::make_pair(gr, e));
+          if(itr == wallReversed.end())
+            Msg::Warning("No element of volume %d on element %zu of surface "
+                         "%d: orientation of boundary layer element unknown",
+                         gr->tag(), e->getNum(), gf->tag());
+          addLayerElement(gr, n, vs, bs,
+                          itr != wallReversed.end() && itr->second, thickness,
+                          layers);
         }
         else {
           Msg::Error("Impossible to create %zu-node element in BL (%d,%d) "
@@ -1314,7 +1385,7 @@ bool bl(GModel *m, std::vector<GVertex *> &onPoints,
         if(inSurfacesSet.find(gf) != inSurfacesSet.end()) {
           MVertex *v = gv->mesh_vertices[0];
           SPoint2 param;
-          if(reparamMeshVertexOnFace(v, gf, param)) {
+          if(reparamOnFace(v, gf, param)) {
             MVertex *newv =
               new MFaceVertex(v->x(), v->y(), v->z(), gf, param.x(), param.y());
             gf->mesh_vertices.push_back(newv);
@@ -1362,8 +1433,10 @@ bool bl(GModel *m, std::vector<GVertex *> &onPoints,
             ge->lines.back()->setVertex(1, newv);
             ge->lines.push_back(new MLine(newv, v));
           }
-          else
-            ge->lines.insert(ge->lines.begin(), new MLine(newv, v));
+          else {
+            ge->lines.front()->setVertex(0, newv);
+            ge->lines.insert(ge->lines.begin(), new MLine(v, newv));
+          }
         }
         else {
           Msg::Warning("Could not compute parametric coordinates of node on "
@@ -1381,7 +1454,7 @@ bool bl(GModel *m, std::vector<GVertex *> &onPoints,
       if(inSurfacesSet.find(gf) == inSurfacesSet.end()) continue;
       for(auto v : ge->mesh_vertices) {
         SPoint2 param;
-        if(reparamMeshVertexOnFace(v, gf, param)) {
+        if(reparamOnFace(v, gf, param)) {
           MVertex *newv =
             new MFaceVertex(v->x(), v->y(), v->z(), gf, param.x(), param.y());
           gf->mesh_vertices.push_back(newv);
@@ -1473,15 +1546,12 @@ bool bl(GModel *m, std::vector<GVertex *> &onPoints,
     for(auto v : vv.second) modified.insert(v->onWhat());
 
   for(auto gf : inSurfaces) {
+    std::set<GEntity *> closure = entityClosure(gf);
     for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
       MElement *e = gf->getMeshElement(i);
       for(std::size_t j = 0; j < e->getNumVertices(); j++) {
-        auto sp = spawned[e->getVertex(j)];
-        for(auto v : sp) {
-          if(v->onWhat() == gf || v->onWhat()->dim() == 1) {
-            e->setVertex(j, v);
-          }
-        }
+        MVertex *v = findSpawn(spawned, e->getVertex(j), closure);
+        if(v) e->setVertex(j, v);
       }
     }
   }
@@ -1530,6 +1600,7 @@ bool bl(GModel *m, std::vector<GVertex *> &onPoints,
     std::vector<GFace *> connectedSurfaces = ge->faces();
     for(auto gf : connectedSurfaces) {
       std::set<MEdge, MEdgeLessThan> edges_of_elements;
+      std::set<GEntity *> closure = entityClosure(gf);
       for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
         MElement *e = gf->getMeshElement(i);
         for(int j = 0; j < e->getNumEdges(); j++)
@@ -1549,13 +1620,9 @@ bool bl(GModel *m, std::vector<GVertex *> &onPoints,
         else {
           std::vector<MVertex *> V0, V1;
           for(auto V : sp0)
-            if(V->onWhat() == gf || V->onWhat()->dim() == 1) {
-              V0.push_back(V);
-            }
+            if(closure.find(V->onWhat()) != closure.end()) V0.push_back(V);
           for(auto V : sp1)
-            if(V->onWhat() == gf || V->onWhat()->dim() == 1) {
-              V1.push_back(V);
-            }
+            if(closure.find(V->onWhat()) != closure.end()) V1.push_back(V);
           // There can be several vertices for the same face -- in case of
           // embedded edges. Assume that points are spawned on one side and then
           // on the other in the same order.
@@ -1603,17 +1670,22 @@ namespace {
                     int targetDim, // 2 for faces, 3 for regions
                     const std::map<MElement *, double> &layers,
                     size_t nRings, // how many adjacency expansions
+                    // nodes already moved on lower-dimensional entities
+                    const std::set<MVertex *> &moved,
                     std::set<MElement *, MElementPtrLessThan> &toProcess,
                     std::set<MVertex *, MVertexPtrLessThan> &fixed)
   {
     std::set<MVertex *, MVertexPtrLessThan> touched;
 
-    // 1) seed touched with vertices of BL elements
+    // 1) seed touched with vertices of BL elements, and with the nodes that
+    // were moved on the boundary: the elements around them must follow
     for(std::size_t i = 0; i < ge->getNumMeshElements(); ++i) {
       MElement *e = ge->getMeshElement(i);
-      if(layers.find(e) == layers.end()) continue;
-      for(size_t j = 0; j < e->getNumVertices(); ++j)
-        touched.insert(e->getVertex(j));
+      bool inLayer = (layers.find(e) != layers.end());
+      for(size_t j = 0; j < e->getNumVertices(); ++j) {
+        MVertex *v = e->getVertex(j);
+        if(inLayer || moved.find(v) != moved.end()) touched.insert(v);
+      }
     }
 
     // 2) expand neighborhood by nRings
@@ -1651,18 +1723,58 @@ namespace {
 
 } // namespace
 
-static void expandBL(
+static bool expandBL(
   GFace *gf,
   std::map<MElement *, std::array<std::array<double, 2>, 4>> &perfectShapes,
   std::map<MElement *, double> &layers, std::vector<GFace *> &inSurfaces,
-  size_t nRings)
+  size_t nRings, std::set<MVertex *> &moved)
 {
   //  printf("layer size %zu\n",layers.size());
   //  std::vector<double> areas;
 
   std::set<MElement *, MElementPtrLessThan> toProcess;
   std::set<MVertex *, MVertexPtrLessThan> fixed;
-  buildUntangleSets(gf, /*targetDim=*/2, layers, nRings, toProcess, fixed);
+  buildUntangleSets(gf, /*targetDim=*/2, layers, nRings, moved, toProcess, fixed);
+
+  // nodes, and orientation of the elements in the parametric plane
+  std::vector<std::array<double, 2>> points;
+  std::vector<std::array<uint32_t, 3>> triangles;
+  std::vector<bool> locked;
+  std::set<MVertex *> verts;
+
+  for(auto e : toProcess) {
+    for(size_t j = 0; j < e->getNumVertices(); j++)
+      verts.insert(e->getVertex(j));
+  }
+
+  int index = 0;
+  for(auto v : verts) {
+    v->setIndex(index++);
+    if(fixed.find(v) == fixed.end())
+      locked.push_back(false);
+    else
+      locked.push_back(true);
+
+    SPoint2 param;
+    reparamOnFace(v, gf, param);
+    points.push_back({param.x(), param.y()});
+  }
+  // int tricount = 0;
+  double area = 0.0;
+  for(auto e : toProcess) {
+    uint32_t a = (uint32_t)e->getVertex(0)->getIndex();
+    uint32_t b = (uint32_t)e->getVertex(1)->getIndex();
+    uint32_t c = (uint32_t)e->getVertex(2)->getIndex();
+    std::array<double, 2> pa = points[a];
+    std::array<double, 2> pb = points[b];
+    std::array<double, 2> pc = points[c];
+    area += triangle_area_2d(pa, pb, pc);
+    if(e->getNumVertices() == 4) {
+      uint32_t d = (uint32_t)e->getVertex(3)->getIndex();
+      std::array<double, 2> pd = points[d];
+      area += triangle_area_2d(pa, pc, pd);
+    }
+  }
 
   std::vector<std::array<std::array<double, 2>, 3>> sh;
   for(auto e : toProcess) {
@@ -1713,9 +1825,9 @@ static void expandBL(
         if(gf->geomType() != GEntity::Plane) {
           SPoint2 paramEdge0, paramEdge1;
           bool haveParamEdge0 =
-            reparamMeshVertexOnFace(e->getVertex(0), gf, paramEdge0);
+            reparamOnFace(e->getVertex(0), gf, paramEdge0);
           bool haveParamEdge1 =
-            reparamMeshVertexOnFace(e->getVertex(1), gf, paramEdge1);
+            reparamOnFace(e->getVertex(1), gf, paramEdge1);
           if(haveParamEdge0 && haveParamEdge1) {
             SPoint3 pointEdge0 = e->getVertex(0)->point();
             SPoint3 pointEdge1 = e->getVertex(1)->point();
@@ -1732,16 +1844,26 @@ static void expandBL(
               if(layerDirection0.norm() > 0. && layerDirection1.norm() > 0.) {
                 layerDirection0.normalize();
                 layerDirection1.normalize();
-                SPoint3 queryLayer0 = pointEdge0 + layerDirection0 * thickness;
-                SPoint3 queryLayer1 = pointEdge1 + layerDirection1 * thickness;
-                double guess0[2] = {paramEdge0.x(), paramEdge0.y()};
-                double guess1[2] = {paramEdge1.x(), paramEdge1.y()};
-                GPoint closestLayer0 = gf->closestPoint(queryLayer0, guess0);
-                GPoint closestLayer1 = gf->closestPoint(queryLayer1, guess1);
-                perfectEdge0 = {paramEdge0.x(), paramEdge0.y()};
-                perfectEdge1 = {paramEdge1.x(), paramEdge1.y()};
-                perfectLayer1 = {closestLayer1.u(), closestLayer1.v()};
-                perfectLayer0 = {closestLayer0.u(), closestLayer0.v()};
+                // the layer lies on the side of the wall that gives the quad
+                // the orientation of the other elements in the parametric
+                // plane, whatever the orientation of the normal
+                for(double side : {1., -1.}) {
+                  SPoint3 queryLayer0 =
+                    pointEdge0 + layerDirection0 * (side * thickness);
+                  SPoint3 queryLayer1 =
+                    pointEdge1 + layerDirection1 * (side * thickness);
+                  double guess0[2] = {paramEdge0.x(), paramEdge0.y()};
+                  double guess1[2] = {paramEdge1.x(), paramEdge1.y()};
+                  GPoint closestLayer0 = gf->closestPoint(queryLayer0, guess0);
+                  GPoint closestLayer1 = gf->closestPoint(queryLayer1, guess1);
+                  perfectEdge0 = {paramEdge0.x(), paramEdge0.y()};
+                  perfectEdge1 = {paramEdge1.x(), paramEdge1.y()};
+                  perfectLayer1 = {closestLayer1.u(), closestLayer1.v()};
+                  perfectLayer0 = {closestLayer0.u(), closestLayer0.v()};
+                  if(triangle_area_2d(perfectEdge0, perfectEdge1,
+                                      perfectLayer1) * area > 0.)
+                    break;
+                }
               }
             }
           }
@@ -1754,7 +1876,7 @@ static void expandBL(
         for(int j = 0; j < 4; j++) {
           if(e->getVertex(j)->onWhat()->dim() < 2) {
             SPoint2 param;
-            if(reparamMeshVertexOnFace(e->getVertex(j), gf, param)) {
+            if(reparamOnFace(e->getVertex(j), gf, param)) {
               boundaryParam[j] = {param.x(), param.y()};
               haveBoundaryParam[j] = true;
               numBoundaryVertices++;
@@ -1796,8 +1918,9 @@ static void expandBL(
           haveBoundaryParallelogram = true;
         }
 
-        if(haveBoundaryParallelogram &&
-           triangle_area_2d(perfectEdge0, perfectEdge1, perfectLayer1) < 0.) {
+        // ideal shapes are positive: mirror the quad as the nodes of the
+        // elements are when the surface is negative in the parametric plane
+        if(triangle_area_2d(perfectEdge0, perfectEdge1, perfectLayer1) < 0.) {
           std::swap(perfectEdge0, perfectEdge1);
           std::swap(perfectLayer0, perfectLayer1);
         }
@@ -1823,46 +1946,6 @@ static void expandBL(
       }
     }
   }
-
-  std::vector<std::array<double, 2>> points;
-  std::vector<std::array<uint32_t, 3>> triangles;
-  std::vector<bool> locked;
-  std::set<MVertex *> verts;
-
-  for(auto e : toProcess) {
-    for(size_t j = 0; j < e->getNumVertices(); j++)
-      verts.insert(e->getVertex(j));
-  }
-
-  int index = 0;
-  for(auto v : verts) {
-    v->setIndex(index++);
-    if(fixed.find(v) == fixed.end())
-      locked.push_back(false);
-    else
-      locked.push_back(true);
-
-    SPoint2 param;
-    reparamMeshVertexOnFace(v, gf, param);
-    points.push_back({param.x(), param.y()});
-  }
-  // int tricount = 0;
-  double area = 0.0;
-  for(auto e : toProcess) {
-    uint32_t a = (uint32_t)e->getVertex(0)->getIndex();
-    uint32_t b = (uint32_t)e->getVertex(1)->getIndex();
-    uint32_t c = (uint32_t)e->getVertex(2)->getIndex();
-    std::array<double, 2> pa = points[a];
-    std::array<double, 2> pb = points[b];
-    std::array<double, 2> pc = points[c];
-    area += triangle_area_2d(pa, pb, pc);
-    if(e->getNumVertices() == 4) {
-      uint32_t d = (uint32_t)e->getVertex(3)->getIndex();
-      std::array<double, 2> pd = points[d];
-      area += triangle_area_2d(pa, pc, pd);
-    }
-  }
-  //  printf("->area(%d) = %g\n",gf->tag(),area);
 
   for(auto e : toProcess) {
     uint32_t a = (uint32_t)e->getVertex(0)->getIndex();
@@ -1895,12 +1978,17 @@ static void expandBL(
   WinslowUntangler::Options options;
   options.strictFailures = true;
   options.numThreads = CTX::instance()->numThreadsFor(triangles.size(), 5000);
-  WinslowUntangler::untangle2D(points, locked, triangles, sh, options);
+  bool ok =
+    WinslowUntangler::untangle2D(points, locked, triangles, sh, options);
+  if(!ok)
+    Msg::Warning("Boundary layer: untangling of surface %d did not converge",
+                 gf->tag());
 
   for(auto v : verts) {
     int i = v->getIndex();
     if(!locked[i]) {
       GPoint gp = gf->point(points[i][0], points[i][1]);
+      moved.insert(v);
       v->x() = gp.x();
       v->y() = gp.y();
       v->z() = gp.z();
@@ -1908,106 +1996,31 @@ static void expandBL(
       v->setParameter(1, gp.v());
     }
   }
+  return ok;
 }
 
-static void expandBL3D(
+// Sub-tetrahedra measuring each type of element, positively oriented when the
+// element is (a double covering for prisms)
+static const int tetSubTets[1][4] = {{0, 1, 2, 3}};
+static const int prismSubTets[6][4] = {{0, 1, 2, 3}, {0, 1, 2, 4},
+                                       {0, 1, 2, 5}, {4, 3, 5, 0},
+                                       {4, 3, 5, 1}, {4, 3, 5, 2}};
+static const int hexSubTets[6][4] = {{0, 1, 2, 6}, {0, 2, 3, 6}, {0, 3, 7, 6},
+                                     {0, 7, 4, 6}, {0, 4, 5, 6}, {0, 5, 1, 6}};
+static const int pyramidSubTets[4][4] = {
+  {0, 1, 2, 4}, {0, 2, 3, 4}, {0, 1, 3, 4}, {1, 2, 3, 4}};
+
+static bool expandBL3D(
   GRegion *gr,
   std::map<MElement *, std::array<std::array<double, 3>, 8>> &perfectShapes3D,
-  std::map<MElement *, double> &layers, size_t nRings)
+  std::map<MElement *, double> &layers, size_t nRings,
+  const std::set<MVertex *> &moved)
 {
-  //  printf("layer size %zu\n",layers.size());
-  //  std::vector<double> areas;
-
   std::set<MElement *, MElementPtrLessThan> toProcess;
   std::set<MVertex *, MVertexPtrLessThan> fixed;
-  buildUntangleSets(gr, /*targetDim=*/3, layers, nRings, toProcess, fixed);
+  buildUntangleSets(gr, /*targetDim=*/3, layers, nRings, moved, toProcess, fixed);
 
-  std::vector<std::array<std::array<double, 3>, 4>> sh;
-  for(auto e : toProcess) {
-    std::array<std::array<double, 3>, 8> vs = {};
-
-    auto it = layers.find(e);
-
-    // TETRAHEDRA NOT IN BL !!
-    int type = e->getTypeForMSH();
-    if(type == MSH_TET_4) {
-      auto it2 = perfectShapes3D.find(e);
-      if(it2 != perfectShapes3D.end())
-        vs = it2->second;
-      else
-        Msg::Error("Argh");
-      sh.push_back({vs[0], vs[1], vs[2], vs[3]});
-    }
-    else if(type == MSH_PRI_6) {
-      if(it != layers.end()) {
-        double tk = it->second;
-        //	printf("tk = %12.5E\n",tk);
-        SVector3 t1 = e->getVertex(1)->point() - e->getVertex(0)->point();
-        SVector3 t2 = e->getVertex(2)->point() - e->getVertex(0)->point();
-        SVector3 n = crossprod(t2, t1);
-        n.normalize();
-        vs[0] = {e->getVertex(0)->x(), e->getVertex(0)->y(),
-                 e->getVertex(0)->z()};
-        vs[1] = {e->getVertex(1)->x(), e->getVertex(1)->y(),
-                 e->getVertex(1)->z()};
-        vs[2] = {e->getVertex(2)->x(), e->getVertex(2)->y(),
-                 e->getVertex(2)->z()};
-        vs[3] = {e->getVertex(0)->x() + n.x() * tk,
-                 e->getVertex(0)->y() + n.y() * tk,
-                 e->getVertex(0)->z() + n.z() * tk};
-        vs[4] = {e->getVertex(1)->x() + n.x() * tk,
-                 e->getVertex(1)->y() + n.y() * tk,
-                 e->getVertex(1)->z() + n.z() * tk};
-        vs[5] = {e->getVertex(2)->x() + n.x() * tk,
-                 e->getVertex(2)->y() + n.y() * tk,
-                 e->getVertex(2)->z() + n.z() * tk};
-        int pp[6][4] = {{0, 1, 2, 3}, {0, 1, 2, 4}, {0, 1, 2, 5},
-                        {4, 3, 5, 0}, {4, 3, 5, 1}, {4, 3, 5, 2}};
-        for(size_t j = 0; j < 6; j++)
-          sh.push_back(
-            {vs[pp[j][0]], vs[pp[j][1]], vs[pp[j][2]], vs[pp[j][3]]});
-      }
-    }
-    else if(type == MSH_HEX_8) {
-      if(it != layers.end()) {
-        double tk = it->second;
-        SVector3 t1 = e->getVertex(1)->point() - e->getVertex(0)->point();
-        SVector3 t2 = e->getVertex(3)->point() - e->getVertex(0)->point();
-        SVector3 n = crossprod(t2, t1);
-        n.normalize();
-        for(size_t j = 0; j < 4; j++) {
-          vs[j] = {e->getVertex(j)->x(), e->getVertex(j)->y(),
-                   e->getVertex(j)->z()};
-          vs[j + 4] = {e->getVertex(j)->x() + n.x() * tk,
-                       e->getVertex(j)->y() + n.y() * tk,
-                       e->getVertex(j)->z() + n.z() * tk};
-        }
-      }
-      else {
-        auto it2 = perfectShapes3D.find(e);
-        if(it2 != perfectShapes3D.end())
-          vs = it2->second;
-        else
-          Msg::Error("Argh");
-      }
-      int pp[6][4] = {{0, 1, 2, 6}, {0, 2, 3, 6}, {0, 3, 7, 6},
-                      {0, 7, 4, 6}, {0, 4, 5, 6}, {0, 5, 1, 6}};
-      for(size_t j = 0; j < 6; j++)
-        sh.push_back({vs[pp[j][0]], vs[pp[j][1]], vs[pp[j][2]], vs[pp[j][3]]});
-    }
-    else if(type == MSH_PYR_5) {
-      auto it2 = perfectShapes3D.find(e);
-      if(it2 != perfectShapes3D.end())
-        vs = it2->second;
-      else
-        Msg::Error("Argh");
-      int pp[4][4] = {{0, 1, 2, 4}, {0, 2, 3, 4}, {0, 1, 3, 4}, {1, 2, 3, 4}};
-      for(size_t j = 0; j < 4; j++)
-        sh.push_back({vs[pp[j][0]], vs[pp[j][1]], vs[pp[j][2]], vs[pp[j][3]]});
-    }
-  }
   std::vector<std::array<double, 3>> points;
-  std::vector<std::array<uint32_t, 4>> tets;
   std::vector<bool> locked;
   std::set<MVertex *> verts;
 
@@ -2019,125 +2032,95 @@ static void expandBL3D(
   int index = 0;
   for(auto v : verts) {
     v->setIndex(index++);
-    if(fixed.find(v) == fixed.end())
-      locked.push_back(false);
-    else
-      locked.push_back(true);
+    locked.push_back(fixed.find(v) != fixed.end());
     points.push_back({v->x(), v->y(), v->z()});
   }
 
+  // orientation of the elements of the volume: the layer elements are flat,
+  // and were created with the orientation of the other elements
   double volume = 0.0;
   for(auto e : toProcess) {
     int type = e->getTypeForMSH();
-    if(type == MSH_TET_4) {
-      uint32_t a = (uint32_t)e->getVertex(0)->getIndex();
-      uint32_t b = (uint32_t)e->getVertex(1)->getIndex();
-      uint32_t c = (uint32_t)e->getVertex(2)->getIndex();
-      uint32_t d = (uint32_t)e->getVertex(3)->getIndex();
-      std::array<double, 3> pa = points[a];
-      std::array<double, 3> pb = points[b];
-      std::array<double, 3> pc = points[c];
-      std::array<double, 3> pd = points[d];
-      volume += tet_volume(pa, pb, pc, pd);
-    }
-    else if(type == MSH_PRI_6) {
-      uint32_t a = (uint32_t)e->getVertex(0)->getIndex();
-      uint32_t b = (uint32_t)e->getVertex(1)->getIndex();
-      uint32_t c = (uint32_t)e->getVertex(2)->getIndex();
-      uint32_t d = (uint32_t)e->getVertex(3)->getIndex();
-      volume += tet_volume(points[a], points[b], points[c], points[d]);
-    }
-    else if(type == MSH_HEX_8) {
-      uint32_t a = (uint32_t)e->getVertex(0)->getIndex();
-      uint32_t b = (uint32_t)e->getVertex(1)->getIndex();
-      uint32_t c = (uint32_t)e->getVertex(3)->getIndex();
-      uint32_t d = (uint32_t)e->getVertex(4)->getIndex();
-      volume += tet_volume(points[a], points[b], points[c], points[d]);
-    }
-    else if(type == MSH_PYR_5) {
-      uint32_t a = (uint32_t)e->getVertex(0)->getIndex();
-      uint32_t b = (uint32_t)e->getVertex(1)->getIndex();
-      uint32_t c = (uint32_t)e->getVertex(3)->getIndex();
-      uint32_t d = (uint32_t)e->getVertex(4)->getIndex();
-      volume += tet_volume(points[a], points[b], points[c], points[d]);
-    }
+    if(type != MSH_TET_4 && type != MSH_PRI_6 && type != MSH_HEX_8 &&
+       type != MSH_PYR_5)
+      continue;
+    const int *t = (type == MSH_TET_4) ? tetSubTets[0] :
+                   (type == MSH_PRI_6) ? prismSubTets[0] :
+                   (type == MSH_HEX_8) ? hexSubTets[0] :
+                                         pyramidSubTets[0];
+    // tet_volume() has the sign of the untangler, opposite to the one of Gmsh
+    volume -= tet_volume(points[e->getVertex(t[0])->getIndex()],
+                         points[e->getVertex(t[1])->getIndex()],
+                         points[e->getVertex(t[2])->getIndex()],
+                         points[e->getVertex(t[3])->getIndex()]);
   }
+  const bool positive = (volume > 0);
 
-  printf("VOLUME = %12.5E\n", volume);
-
+  // The ideal shape of each element and its nodes are split with the same
+  // sub-tetrahedra. The untangler wants left-handed tetrahedra, i.e. negative
+  // ones for Gmsh, hence the swap of the first two nodes of each of them when
+  // the elements are positive.
+  std::vector<std::array<std::array<double, 3>, 4>> sh;
+  std::vector<std::array<uint32_t, 4>> tets;
   for(auto e : toProcess) {
     int type = e->getTypeForMSH();
-    uint32_t nn[8] = {(uint32_t)e->getVertex(0)->getIndex(),
-                      (uint32_t)e->getVertex(1)->getIndex(),
-                      (uint32_t)e->getVertex(2)->getIndex(),
-                      (uint32_t)e->getVertex(3)->getIndex(),
-                      0,
-                      0,
-                      0,
-                      0};
-    if(type == MSH_TET_4) {
-      if(volume > 0)
-        tets.push_back({nn[0], nn[1], nn[2], nn[3]});
-      else
-        tets.push_back({nn[1], nn[0], nn[2], nn[3]});
+    const int (*sub)[4] = nullptr;
+    int numSub = 0;
+    if(type == MSH_TET_4) { sub = tetSubTets; numSub = 1; }
+    else if(type == MSH_PRI_6) { sub = prismSubTets; numSub = 6; }
+    else if(type == MSH_HEX_8) { sub = hexSubTets; numSub = 6; }
+    else if(type == MSH_PYR_5) { sub = pyramidSubTets; numSub = 4; }
+    else
+      continue;
+
+    std::array<std::array<double, 3>, 8> vs = {};
+    auto it = layers.find(e);
+    if(it != layers.end() && (type == MSH_PRI_6 || type == MSH_HEX_8)) {
+      // the wall face of the element, extruded along its normal by the
+      // thickness of the layer, towards the inside of the volume
+      const std::size_t n = (type == MSH_PRI_6) ? 3 : 4;
+      double tk = it->second;
+      SVector3 t1 = e->getVertex(1)->point() - e->getVertex(0)->point();
+      SVector3 t2 = e->getVertex(n - 1)->point() - e->getVertex(0)->point();
+      SVector3 normal = positive ? crossprod(t1, t2) : crossprod(t2, t1);
+      normal.normalize();
+      for(std::size_t j = 0; j < n; j++) {
+        MVertex *v = e->getVertex(j);
+        vs[j] = {v->x(), v->y(), v->z()};
+        vs[j + n] = {v->x() + normal.x() * tk, v->y() + normal.y() * tk,
+                     v->z() + normal.z() * tk};
+      }
     }
-    else if(type == MSH_PRI_6) {
-      int ppi[6][4] = {{0, 1, 2, 3}, {0, 1, 2, 4}, {0, 1, 2, 5},
-                       {4, 3, 5, 0}, {4, 3, 5, 1}, {4, 3, 5, 2}};
-      int pp[6][4] = {{1, 0, 2, 3}, {1, 0, 2, 4}, {1, 0, 2, 5},
-                      {3, 4, 5, 0}, {3, 4, 5, 1}, {3, 4, 5, 2}};
-      nn[4] = (uint32_t)e->getVertex(4)->getIndex();
-      nn[5] = (uint32_t)e->getVertex(5)->getIndex();
-      if(volume > 0)
-        for(size_t j = 0; j < 6; j++)
-          tets.push_back(
-            {nn[pp[j][0]], nn[pp[j][1]], nn[pp[j][2]], nn[pp[j][3]]});
-      else
-        for(size_t j = 0; j < 6; j++)
-          tets.push_back(
-            {nn[ppi[j][0]], nn[ppi[j][1]], nn[ppi[j][2]], nn[ppi[j][3]]});
+    else {
+      auto it2 = perfectShapes3D.find(e);
+      if(it2 == perfectShapes3D.end()) {
+        Msg::Error("Boundary layer: no ideal shape for element %zu",
+                   e->getNum());
+        return false;
+      }
+      vs = it2->second;
     }
-    else if(type == MSH_HEX_8) {
-      int ppi[6][4] = {{0, 1, 2, 6}, {0, 2, 3, 6}, {0, 3, 7, 6},
-                       {0, 7, 4, 6}, {0, 4, 5, 6}, {0, 5, 1, 6}};
-      int pp[6][4] = {{1, 0, 2, 6}, {2, 0, 3, 6}, {3, 0, 7, 6},
-                      {7, 0, 4, 6}, {4, 0, 5, 6}, {5, 0, 1, 6}};
-      nn[4] = (uint32_t)e->getVertex(4)->getIndex();
-      nn[5] = (uint32_t)e->getVertex(5)->getIndex();
-      nn[6] = (uint32_t)e->getVertex(6)->getIndex();
-      nn[7] = (uint32_t)e->getVertex(7)->getIndex();
-      if(volume > 0)
-        for(size_t j = 0; j < 6; j++)
-          tets.push_back(
-            {nn[pp[j][0]], nn[pp[j][1]], nn[pp[j][2]], nn[pp[j][3]]});
-      else
-        for(size_t j = 0; j < 6; j++)
-          tets.push_back(
-            {nn[ppi[j][0]], nn[ppi[j][1]], nn[ppi[j][2]], nn[ppi[j][3]]});
-    }
-    else if(type == MSH_PYR_5) {
-      int ppi[4][4] = {{0, 1, 2, 4}, {0, 2, 3, 4}, {0, 1, 3, 4}, {1, 2, 3, 4}};
-      int pp[4][4] = {{1, 0, 2, 4}, {2, 0, 3, 4}, {1, 0, 3, 4}, {2, 1, 3, 4}};
-      nn[4] = (uint32_t)e->getVertex(4)->getIndex();
-      // computePerfectShapes() already reverses pyramids when the region
-      // volume is negative. Use the opposite tet orientation here so that the
-      // actual tets and the ideal double covering have consistent signs.
-      if(volume < 0)
-        for(size_t j = 0; j < 4; j++)
-          tets.push_back(
-            {nn[pp[j][0]], nn[pp[j][1]], nn[pp[j][2]], nn[pp[j][3]]});
-      else
-        for(size_t j = 0; j < 4; j++)
-          tets.push_back(
-            {nn[ppi[j][0]], nn[ppi[j][1]], nn[ppi[j][2]], nn[ppi[j][3]]});
+
+    for(int j = 0; j < numSub; j++) {
+      int k[4] = {sub[j][0], sub[j][1], sub[j][2], sub[j][3]};
+      if(positive) std::swap(k[0], k[1]);
+      sh.push_back({vs[k[0]], vs[k[1]], vs[k[2]], vs[k[3]]});
+      tets.push_back({(uint32_t)e->getVertex(k[0])->getIndex(),
+                      (uint32_t)e->getVertex(k[1])->getIndex(),
+                      (uint32_t)e->getVertex(k[2])->getIndex(),
+                      (uint32_t)e->getVertex(k[3])->getIndex()});
     }
   }
+
   double tUntangle = TimeOfDay();
   WinslowUntangler::Options options;
   options.strictFailures = true;
   options.laplacianPresmoothing = true;
   options.numThreads = CTX::instance()->numThreadsFor(tets.size(), 5000);
-  WinslowUntangler::untangle3D(points, locked, tets, sh, options);
+  bool ok = WinslowUntangler::untangle3D(points, locked, tets, sh, options);
+  if(!ok)
+    Msg::Warning("Boundary layer: untangling of volume %d did not converge",
+                 gr->tag());
   Msg::Info("Boundary layer 3D untangling done in %g s",
             TimeOfDay() - tUntangle);
 
@@ -2149,6 +2132,44 @@ static void expandBL3D(
       v->z() = points[i][2];
     }
   }
+  return ok;
+}
+
+// Number of elements of the volume that are flat or inverted with respect to
+// the others
+static std::size_t countInvalidElements(GRegion *gr)
+{
+  std::size_t numPositive = 0, numNegative = 0, numFlat = 0;
+  for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
+    MElement *e = gr->getMeshElement(i);
+    int type = e->getTypeForMSH();
+    const int (*sub)[4] = nullptr;
+    int numSub = 0;
+    if(type == MSH_TET_4) { sub = tetSubTets; numSub = 1; }
+    else if(type == MSH_PRI_6) { sub = prismSubTets; numSub = 6; }
+    else if(type == MSH_HEX_8) { sub = hexSubTets; numSub = 6; }
+    else if(type == MSH_PYR_5) { sub = pyramidSubTets; numSub = 4; }
+    else
+      continue;
+    bool pos = true, neg = true;
+    for(int j = 0; j < numSub; j++) {
+      std::array<double, 3> p[4];
+      for(int k = 0; k < 4; k++) {
+        MVertex *v = e->getVertex(sub[j][k]);
+        p[k] = {v->x(), v->y(), v->z()};
+      }
+      double vol = -tet_volume(p[0], p[1], p[2], p[3]);
+      if(vol <= 0.) pos = false;
+      if(vol >= 0.) neg = false;
+    }
+    if(pos)
+      numPositive++;
+    else if(neg)
+      numNegative++;
+    else
+      numFlat++;
+  }
+  return numFlat + std::min(numPositive, numNegative);
 }
 
 static std::vector<MVertex *>
@@ -2269,8 +2290,8 @@ splitedge(MEdge me,
   else if(me.getVertex(1)->onWhat()->dim() == 2) {
     SPoint2 p0, p1;
     GFace *gf = static_cast<GFace *>(me.getVertex(1)->onWhat());
-    reparamMeshVertexOnFace(me.getVertex(0), gf, p0);
-    reparamMeshVertexOnFace(me.getVertex(1), gf, p1);
+    reparamOnFace(me.getVertex(0), gf, p0);
+    reparamOnFace(me.getVertex(1), gf, p1);
     for(size_t i = 0; i < t.size() - 1; i++) {
       SPoint2 p = p0 + (p1 - p0) * t[i];
       GPoint gp = gf->point(p.x(), p.y());
@@ -2532,36 +2553,8 @@ void splitounette(std::vector<GFace *> &f, std::map<MElement *, double> &layers,
         }
       }
     }
-    auto edges = gf->edges();
-    for(auto ge : edges) {
-      MLine *l0 = ge->lines.front();
-      MLine *l1 = ge->lines.back();
-      MEdge m0 = MEdge(l0->getVertex(0), l0->getVertex(1));
-      MEdge m1 = MEdge(l1->getVertex(0), l1->getVertex(1));
-      auto it0 = split.find(m0);
-      auto it1 = split.find(m1);
-
-      if(it0 != split.end()) {
-        //	printf("coucou %d
-        //%d\n",ge->tag(),l0->getVertex(0)->onWhat()->dim());
-        std::vector<MLine *> old = ge->lines;
-        ge->lines.clear();
-        for(size_t j = 0; j < it0->second.size() - 1; j++)
-          ge->lines.push_back(new MLine(it0->second[j], it0->second[j + 1]));
-        for(size_t j = 1; j < old.size(); j++) ge->lines.push_back(old[j]);
-        delete old.front();
-      }
-      if(it1 != split.end()) {
-        //	printf("poucou %d
-        //%d\n",ge->tag(),l1->getVertex(0)->onWhat()->dim());
-        size_t s = it1->second.size();
-        ge->lines.back()->setVertex(0, it1->second[s - 2]);
-        for(size_t j = 2; j < s; j++)
-          ge->lines.push_back(
-            new MLine(it1->second[s - j], it1->second[s - j - 1]));
-      }
-    }
   }
+  if(!f.empty()) replaceEdges(f[0]->model(), split);
 }
 
 void computePerfectShapes(
@@ -2576,7 +2569,7 @@ void computePerfectShapes(
       std::vector<SPoint2> pts;
       for(size_t j = 0; j < gf->getMeshElement(i)->getNumVertices(); j++) {
         SPoint2 param;
-        reparamMeshVertexOnFace(gf->getMeshElement(i)->getVertex(j), gf, param);
+        reparamOnFace(gf->getMeshElement(i)->getVertex(j), gf, param);
         pts.push_back(param);
       }
       if(pts.size() == 3) {
@@ -2601,7 +2594,7 @@ void computePerfectShapes(
       std::vector<SPoint2> pts;
       for(size_t j = 0; j < gf->getMeshElement(i)->getNumVertices(); j++) {
         SPoint2 param;
-        reparamMeshVertexOnFace(gf->getMeshElement(i)->getVertex(j), gf, param);
+        reparamOnFace(gf->getMeshElement(i)->getVertex(j), gf, param);
         pts.push_back(param);
       }
       std::array<double, 2> vs0 = {pts[0].x(), pts[0].y()};
@@ -2624,55 +2617,21 @@ void computePerfectShapes(
   }
 }
 
+// The ideal shape of the elements outside the layers is their initial shape
 void computePerfectShapes(
   std::vector<GRegion *> &r,
   std::map<MElement *, std::array<std::array<double, 3>, 8>> &perfectShapes)
 {
   for(auto gr : r) {
-    double volume = 0.0;
-    //      std::map<MVertex*,SPoint2> ivp;
     for(size_t i = 0; i < gr->getNumMeshElements(); i++) {
       MElement *e = gr->getMeshElement(i);
+      if(e->getNumVertices() > 8) continue;
       std::array<std::array<double, 3>, 8> vs = {};
       for(size_t j = 0; j < e->getNumVertices(); j++) {
         MVertex *v = e->getVertex(j);
         vs[j] = {v->x(), v->y(), v->z()};
       }
-      int type = e->getTypeForMSH();
-      if(type == MSH_TET_4 || type == MSH_PRI_6)
-        volume += tet_volume(vs[0], vs[1], vs[2], vs[3]);
-      else if(type == MSH_HEX_8 || type == MSH_PYR_5)
-        volume += tet_volume(vs[0], vs[1], vs[3], vs[4]);
-    }
-
-    printf("Volume of region %d = %12.5E\n", gr->tag(), volume);
-
-    for(size_t i = 0; i < gr->getNumMeshElements(); i++) {
-      MElement *e = gr->getMeshElement(i);
-      std::array<std::array<double, 3>, 8> vs = {};
-      for(size_t j = 0; j < e->getNumVertices(); j++) {
-        MVertex *v = e->getVertex(j);
-        vs[j] = {v->x(), v->y(), v->z()};
-      }
-      int type = e->getTypeForMSH();
-      if(type != MSH_TET_4 && type != MSH_PRI_6 && type != MSH_HEX_8 &&
-         type != MSH_PYR_5)
-        continue;
-      if(volume > 0)
-        perfectShapes[e] = {vs[0], vs[1], vs[2], vs[3],
-                            vs[4], vs[5], vs[6], vs[7]};
-      else if(type == MSH_TET_4)
-        perfectShapes[e] = {vs[1], vs[0], vs[2], vs[3],
-                            vs[4], vs[5], vs[6], vs[7]};
-      else if(type == MSH_PRI_6)
-        perfectShapes[e] = {vs[1], vs[0], vs[2], vs[4],
-                            vs[3], vs[5], vs[6], vs[7]};
-      else if(type == MSH_HEX_8)
-        perfectShapes[e] = {vs[2], vs[1], vs[0], vs[3],
-                            vs[6], vs[5], vs[4], vs[7]};
-      else if(type == MSH_PYR_5)
-        perfectShapes[e] = {vs[2], vs[1], vs[0], vs[3],
-                            vs[4], vs[5], vs[6], vs[7]};
+      perfectShapes[e] = vs;
     }
   }
 }
@@ -2758,17 +2717,27 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
     computePerfectShapes(toExpand, perfectShapes);
   }
 
-  for(GModel::eiter eit = m->firstEdge(); eit != m->lastEdge(); ++eit)
-    meshGEdgeInsertBoundaryLayer(*eit, ww);
+  // the nodes moved on the curves, then on the surfaces: the elements of the
+  // surfaces and of the volumes around them are untangled as well
+  std::set<MVertex *> moved;
+  for(GModel::eiter eit = m->firstEdge(); eit != m->lastEdge(); ++eit) {
+    GEdge *ge = *eit;
+    std::vector<SPoint3> before;
+    for(auto mv : ge->mesh_vertices) before.push_back(mv->point());
+    meshGEdgeInsertBoundaryLayer(ge, ww);
+    for(std::size_t i = 0; i < before.size(); i++)
+      if(before[i].distance(ge->mesh_vertices[i]->point()) > 0.)
+        moved.insert(ge->mesh_vertices[i]);
+  }
 
   if(r.empty()) {
-    for(auto gf : f) expandBL(gf, perfectShapes, layers, f, numLayers);
+    for(auto gf : f) expandBL(gf, perfectShapes, layers, f, numLayers, moved);
   }
   else {
     for(auto gf : toExpand) {
-      expandBL(gf, perfectShapes, layers, toExpand, numLayers);
+      expandBL(gf, perfectShapes, layers, toExpand, numLayers, moved);
     }
-    for(auto gr : r) { expandBL3D(gr, perfectShapes3D, layers, numLayers); }
+    for(auto gr : r) expandBL3D(gr, perfectShapes3D, layers, numLayers, moved);
   }
 
   if(r.empty()) {
@@ -2793,13 +2762,9 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
         Msg::Info("Boundary layer high-order mode: splitting %zu low-order "
                   "volume layers before P%d untangling",
                   ws.size(), highOrder);
+      // the side quads are split along with the volume elements, on nodes
+      // already in place: the adjacent surfaces need no further untangling
       splitounette3D(r, layers, ws, size, ratio, numExactLayers);
-      // The split creates the individual side quads, which must be pushed in
-      // the adjacent surfaces with their own layer width.
-      perfectShapes.clear();
-      computePerfectShapes(toExpand, perfectShapes);
-      for(auto gf : toExpand)
-        expandBL(gf, perfectShapes, layers, toExpand, numLayers);
     }
     else {
       Msg::Info("Boundary layer high-order mode: delaying volume layer "
@@ -2808,21 +2773,28 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
     }
   }
 
+  for(auto gr : r) {
+    std::size_t numInvalid = countInvalidElements(gr);
+    if(numInvalid)
+      Msg::Error("Boundary layer: %zu flat or inverted elements in volume %d",
+                 numInvalid, gr->tag());
+  }
+
   if(highOrder > 1) {
     std::set<MElement *, MElementPtrLessThan> toProcess;
     std::set<MVertex *, MVertexPtrLessThan> fixed;
     if(r.empty()) {
       for(auto gf : f)
-        buildUntangleSets(gf, /*targetDim=*/2, layers, numLayers, toProcess,
-                          fixed);
+        buildUntangleSets(gf, /*targetDim=*/2, layers, numLayers, moved,
+                          toProcess, fixed);
     }
     else {
       for(auto gf : toExpand)
-        buildUntangleSets(gf, /*targetDim=*/2, layers, numLayers, toProcess,
-                          fixed);
+        buildUntangleSets(gf, /*targetDim=*/2, layers, numLayers, moved,
+                          toProcess, fixed);
       for(auto gr : r)
-        buildUntangleSets(gr, /*targetDim=*/3, layers, numLayers, toProcess,
-                          fixed);
+        buildUntangleSets(gr, /*targetDim=*/3, layers, numLayers, moved,
+                          toProcess, fixed);
     }
     untangleHighOrderBoundaryLayerPN(m, toProcess, fixed, highOrder, &layers,
                                      &ws, highOrderStrategy,
