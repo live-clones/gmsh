@@ -518,7 +518,8 @@ namespace {
 // that lost a node and in pinchedNodes the wall nodes without any spawned
 // node. Nothing is changed if the layers cannot be inserted.
 static bool insertLayers(GModel *m, int dim, const std::vector<GEntity *> &domains,
-                         const std::set<GEntity *> &walls, double thickness,
+                         const std::set<GEntity *, GEntityPtrLessThan> &walls,
+                         double thickness,
                          std::map<MElement *, double> &layers,
                          std::vector<GFace *> &sideSurfaces, PinchMap &pinched,
                          std::set<MVertex *> &pinchedNodes)
@@ -884,7 +885,7 @@ static bool insertLayers(GModel *m, int dim, const std::vector<GEntity *> &domai
   std::vector<NodeEdit> nodeEdits;
   std::vector<NewElement> newSideElements;
   std::set<GEntity *> domainSet(domains.begin(), domains.end());
-  std::set<GFace *> sharedSurfaces;
+  std::set<GFace *, GEntityPtrLessThan> sharedSurfaces;
   for(const auto &se : surfaceElements) {
     int element = elementOn(se.e);
     if(element < 0) continue;
@@ -2509,13 +2510,15 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
   bool inserted;
   if(r.empty()) {
     std::vector<GEntity *> domains(f.begin(), f.end());
-    std::set<GEntity *> walls(e.begin(), e.end());
+    // sets of entities are ordered by tag, not by address, so that the result
+    // does not change from one run to the next
+    std::set<GEntity *, GEntityPtrLessThan> walls(e.begin(), e.end());
     inserted = insertLayers(m, 2, domains, walls, thickness, layers, toExpand,
                             pinched, pinchedNodes);
   }
   else {
     std::vector<GEntity *> domains(r.begin(), r.end());
-    std::set<GEntity *> walls(f.begin(), f.end());
+    std::set<GEntity *, GEntityPtrLessThan> walls(f.begin(), f.end());
     inserted = insertLayers(m, 3, domains, walls, thickness, layers, toExpand,
                             pinched, pinchedNodes);
   }
@@ -2538,7 +2541,7 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
   WallData wall;
   if(r.empty()) {
     std::set<GEdge *> wallCurves(e.begin(), e.end());
-    std::set<GEdge *> curves;
+    std::set<GEdge *, GEntityPtrLessThan> curves;
     for(auto gf : f) {
       addWallElements(gf, layers, pinched, wall);
       for(auto ge : gf->edges()) curves.insert(ge);
@@ -2549,7 +2552,7 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
   }
   else {
     std::set<GFace *> wallSurfaces(f.begin(), f.end());
-    std::set<GFace *> surfaces;
+    std::set<GFace *, GEntityPtrLessThan> surfaces;
     for(auto gr : r) {
       addWallElements(gr, layers, pinched, wall);
       for(auto gf : gr->faces()) surfaces.insert(gf);
