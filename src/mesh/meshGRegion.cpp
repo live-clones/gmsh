@@ -535,7 +535,8 @@ void optimizeMeshGRegion::operator()(GRegion *gr, bool always)
 }
 
 bool buildFaceSearchStructure(GModel *model, fs_cont &search,
-                              bool onlyTriangles)
+                              bool onlyTriangles,
+                              std::map<GFace *, GFace *> *duplicates)
 {
   search.clear();
 
@@ -551,7 +552,13 @@ bool buildFaceSearchStructure(GModel *model, fs_cont &search,
   while(fit != faces_to_consider.end()) {
     for(std::size_t i = 0; i < (*fit)->getNumMeshElements(); i++) {
       MFace ff = (*fit)->getMeshElement(i)->getFace(0);
-      if(!onlyTriangles || ff.getNumVertices() == 3) search[ff] = *fit;
+      if(onlyTriangles && ff.getNumVertices() != 3) continue;
+      GFace *&gf = search[ff];
+      if(duplicates && gf && gf != *fit) {
+        (*duplicates)[gf] = *fit;
+        (*duplicates)[*fit] = gf;
+      }
+      gf = *fit;
     }
     ++fit;
   }

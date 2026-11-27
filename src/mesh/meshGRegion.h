@@ -89,8 +89,12 @@ GFace *findInFaceSearchStructure(MVertex *p1, MVertex *p2, MVertex *p3,
 GFace *findInFaceSearchStructure(const MFace &f, const fs_cont &search);
 GEdge *findInEdgeSearchStructure(MVertex *p1, MVertex *p2,
                                  const es_cont &search);
-bool buildFaceSearchStructure(GModel *model, fs_cont &search,
-                              bool onlyTriangles = false);
+// (duplicates, if given, receives the pairs of surfaces with a mesh element on
+// the same nodes, e.g. the copies of a surface between two volumes that were
+// not fragmented; the last surface is the one kept in search)
+bool buildFaceSearchStructure(
+  GModel *model, fs_cont &search, bool onlyTriangles = false,
+  std::map<GFace *, GFace *> *duplicates = nullptr);
 bool buildEdgeSearchStructure(GModel *model, es_cont &search);
 
 // Orientation of the boundary mesh of a region: inward[gf] is 1 when the
