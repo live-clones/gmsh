@@ -16,8 +16,9 @@ class matGmsh {
 public:
   matGmsh() = default;
   // Without dual faces only the sites, the Delaunay tetrahedra and their
-  // circumcentres are computed.
-  void computeVoronoi(bool dualFaces = true);
+  // circumcentres are computed; without circumcentres either, the caller
+  // computes those it needs (computeVoronoiVertices).
+  void computeVoronoi(bool dualFaces = true, bool circumcentres = true);
   void setVoronoiSurfaceMeshInput(const std::string &filename) { voronoiSurfaceMeshInput = filename; }
   void computeVoronoiWindingNumbersAtCircumcenters(int order = 2, float accuracyScale = 2.f, bool useDoublePrecision = false);
   void colorVoronoiFaces(double threshold);
@@ -117,7 +118,9 @@ private:
       localMidSurfaceProjectionDiagnostics;
 
   void createVoronoiSeeds();
-  void computeVoronoiVertices();
+  // the circumcentres of the tetrahedra flagged (all of them if null), NaN
+  // for the others
+  void computeVoronoiVertices(const std::vector<unsigned char> *only = nullptr);
   void orientSurfaceTriangles();
   void projectRegularBranchVerticesToLocalMidSurfaceImpl(int iterations, double relativeTolerance, const std::map<int, std::set<int>> *patchesByCadFaceTag, bool storeDiagnostics, void *sharedContext);
 };

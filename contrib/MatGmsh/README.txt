@@ -180,8 +180,16 @@ Build from the Gmsh root
     -DENABLE_BUILD_SHARED=ON -DENABLE_BUILD_DYNAMIC=ON -DENABLE_TESTS=ON
   cmake --build build --target gmsh gmshMat -j 6
 
-ENABLE_MATGMSH defaults to OFF. Boost headers are needed for the certified
-circumcenter fallback. This module does not require libigl or CGAL. CAD input
+ENABLE_MATGMSH defaults to OFF. It needs nothing beyond Gmsh (HXT, the
+discrete CAD modeler, Eigen): no Boost, libigl or CGAL. The exact fallback of
+the circumcentres (core/matCircumcenter.cpp) works on integers of any size
+(core/matExactInteger.h): the twelve coordinates times a common power of two
+are integers, the cofactor formula is exact on them, and each coordinate is
+the double nearest to a quotient (ties to even), found from an estimate
+checked exactly against the midpoints. It gives the same doubles, bit for
+bit, as the Boost rationals it replaces. The tetrahedron-based raw MAT only
+computes the circumcentres of the interior tetrahedra (vertex_xyz of
+--complex is NaN for the others); the legacy raw MAT computes them all. CAD input
 and CAD projection require the corresponding Gmsh CAD backend, normally OCC.
 The driver is built when a shared or static Gmsh library target is enabled.
 

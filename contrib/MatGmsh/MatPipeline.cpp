@@ -98,8 +98,11 @@ struct MatNativeAccess {
   static const std::vector<double> &vertices(const matGmsh &mat) { return mat.vor.vertices; }
   static void setVertices(matGmsh &mat, const std::vector<double> &xyz) { mat.vor.vertices = xyz; }
 
-  // Interior tetrahedra, their unmerged dual complex and its certificate.
-  static matgmsh::tet::Report tetRaw(const matGmsh &mat, unsigned threads,
+  // Interior tetrahedra, their circumcentres (the vertices of the dual: the
+  // others are not needed, and most of the exact constructions are those of
+  // exterior tetrahedra, flat ones on the faces of the part), their unmerged
+  // dual complex and its certificate.
+  static matgmsh::tet::Report tetRaw(matGmsh &mat, unsigned threads,
                                      matgmsh::tet::Dual &dual,
                                      std::vector<signed char> &skinSide)
   {
@@ -108,6 +111,7 @@ struct MatNativeAccess {
     std::vector<int> tets(mat.del.tetrahedra.size());
     for(std::size_t i = 0; i < tets.size(); ++i) tets[i] = int(mat.del.tetrahedra[i]) - 1;
     const auto classification = matgmsh::tet::classify(mat.del.seeds, skin, tets, threads);
+    mat.computeVoronoiVertices(&classification.interior);
     dual = matgmsh::tet::buildDual(tets, classification.interior, sites);
     skinSide = matgmsh::tet::skinSides(skin, tets, classification);
     return matgmsh::tet::certify(skin, tets, classification, dual, sites);
@@ -233,7 +237,8 @@ struct MatNativeAccess {
              << ",\n\"tetrahedra\":" << mat.del.tetrahedra.size() / 4
              << ",\n\"polygons\":" << dual.size()
              << ",\n\"indices\":\"zero-based; a polygon is a cycle of tetrahedron ids, "
-                "vertex_xyz holds one circumcentre per tetrahedron; polygons are sorted by site "
+                "vertex_xyz holds one circumcentre per tetrahedron (NaN for the tetrahedra that "
+                "are not interior: they are not computed); polygons are sorted by site "
                 "pair\"\n}\n";
     if(!manifest) throw std::runtime_error("Cannot write the MAT complex manifest");
   }
@@ -591,7 +596,7 @@ bool Session::raw(GModel *source, const Options &options, std::string &error)
       gmsh::option::getNumber("General.NumThreads", configured);
       const unsigned threads = std::isfinite(configured) && configured >= 1. ?
         static_cast<unsigned>(std::min(configured, 256.)) : 1u;
-      mat.computeVoronoi(false);
+      mat.computeVoronoi(false, false);
       result.tet = MatNativeAccess::tetRaw(mat, threads, d.dual, d.skinSide);
       if(!result.tet.certified)
         d.rawWarnings.push_back("The certificate of the interior tetrahedra failed: the raw MAT may not have the topology of the solid. See \"tet\" in the report.");

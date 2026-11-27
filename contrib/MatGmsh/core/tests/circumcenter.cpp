@@ -1,6 +1,6 @@
 #include "matCircumcenter.h"
 
-#include <boost/multiprecision/cpp_int.hpp>
+#include "matExactInteger.h"
 #include "robustPredicates.h"
 
 #include <algorithm>
@@ -15,7 +15,31 @@
 namespace cc = matgmsh::circumcenter;
 using Point = std::array<double, 3>;
 using Tet = std::array<Point, 4>;
-using Rational = boost::multiprecision::cpp_rational;
+using matgmsh::exact::Integer;
+
+// Exact rationals for the reference, without normalization: numerator and a
+// positive denominator.
+struct Rational {
+  Integer n, d{Integer(1)};
+  Rational() : n(Integer(0)) {}
+  explicit Rational(const Integer &value) : n(value) {}
+  Rational(const Integer &num, const Integer &den) : n(num), d(den)
+  {
+    if(d.sign() < 0) {
+      n = -n;
+      d = -d;
+    }
+  }
+  bool isZero() const { return n.isZero(); }
+};
+static Rational operator+(const Rational &a, const Rational &b) { return {a.n * b.d + b.n * a.d, a.d * b.d}; }
+static Rational operator-(const Rational &a, const Rational &b) { return {a.n * b.d - b.n * a.d, a.d * b.d}; }
+static Rational operator*(const Rational &a, const Rational &b) { return {a.n * b.n, a.d * b.d}; }
+static Rational operator/(const Rational &a, const Rational &b) { return {a.n * b.d, a.d * b.n}; }
+static bool largerMagnitude(const Rational &a, const Rational &b)
+{
+  return compareMagnitude(a.n * b.d, b.n * a.d) > 0;
+}
 
 static void require(bool condition, const char *message)
 {
@@ -29,34 +53,44 @@ static cc::Result compute(const Tet &p)
 
 // Independent reference: exact Gaussian elimination of the three equidistance
 // equations, with pivoting. It does not use the production cofactor formula.
+// The coordinates are scaled by a common power of two to be integers.
 static Point reference(const Tet &p)
 {
+  int shift = 0;
+  bool any = false;
+  for(const auto &point : p)
+    for(double x : point)
+      if(x != 0.) {
+        shift = any ? std::max(shift, Integer::scaleOf(x)) : Integer::scaleOf(x);
+        any = true;
+      }
   Rational matrix[3][4];
   for(int i = 0; i < 3; ++i) {
     for(int j = 0; j < 3; ++j) {
-      const Rational edge = Rational(p[i][j]) - Rational(p[3][j]);
-      matrix[i][j] = 2 * edge;
-      matrix[i][3] += edge * edge;
+      const Rational edge(Integer::fromDouble(p[i][j], shift) - Integer::fromDouble(p[3][j], shift));
+      matrix[i][j] = edge + edge;
+      matrix[i][3] = matrix[i][3] + edge * edge;
     }
   }
   for(int k = 0; k < 3; ++k) {
     int pivot = k;
     for(int i = k + 1; i < 3; ++i)
-      if(abs(matrix[i][k]) > abs(matrix[pivot][k])) pivot = i;
-    require(matrix[pivot][k] != 0, "Singular reference system");
+      if(largerMagnitude(matrix[i][k], matrix[pivot][k])) pivot = i;
+    require(!matrix[pivot][k].isZero(), "Singular reference system");
     for(int j = k; j < 4; ++j) std::swap(matrix[k][j], matrix[pivot][j]);
     const Rational diagonal = matrix[k][k];
-    for(int j = k; j < 4; ++j) matrix[k][j] /= diagonal;
+    for(int j = k; j < 4; ++j) matrix[k][j] = matrix[k][j] / diagonal;
     for(int i = 0; i < 3; ++i) {
       if(i == k) continue;
       const Rational factor = matrix[i][k];
-      for(int j = k; j < 4; ++j) matrix[i][j] -= factor * matrix[k][j];
+      for(int j = k; j < 4; ++j) matrix[i][j] = matrix[i][j] - factor * matrix[k][j];
     }
   }
+  // the solution is the center minus the last point, times 2^shift
   Point result;
   for(int j = 0; j < 3; ++j) {
-    const Rational coordinate = matrix[j][3] + Rational(p[3][j]);
-    result[j] = coordinate.convert_to<double>();
+    const Rational coordinate = matrix[j][3] + Rational(Integer::fromDouble(p[3][j], shift));
+    result[j] = matgmsh::exact::divide(coordinate.n, coordinate.d, -shift);
   }
   return result;
 }

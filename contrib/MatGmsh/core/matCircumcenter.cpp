@@ -1,6 +1,6 @@
 #include "matCircumcenter.h"
 
-#include <boost/multiprecision/cpp_int.hpp>
+#include "matExactInteger.h"
 #include "robustPredicates.h"
 
 #include <algorithm>
@@ -116,52 +116,67 @@ bool certified(const double *a, const double *b, const double *c,
   return true;
 }
 
+// The center from the input doubles exactly, rounded once: the twelve
+// coordinates times a common power of two are integers, on which the
+// cofactor formula is exact; each coordinate is then the double nearest to
+// a quotient of two integers.
 Result exact(const double *a, const double *b, const double *c,
              const double *d)
 {
-  using Rational = boost::multiprecision::cpp_rational;
-  Rational A[3], B[3], C[3];
+  using matgmsh::exact::Integer;
+  int shift = 0;
+  bool any = false;
+  for(const double *p : {a, b, c, d})
+    for(int k = 0; k < 3; ++k)
+      if(p[k] != 0.) {
+        const int s = Integer::scaleOf(p[k]);
+        shift = any ? std::max(shift, s) : s;
+        any = true;
+      }
+  Integer P[4][3];
+  const double *points[] = {a, b, c, d};
+  for(int i = 0; i < 4; ++i)
+    for(int k = 0; k < 3; ++k) P[i][k] = Integer::fromDouble(points[i][k], shift);
+  Integer A[3], B[3], C[3];
   for(int k = 0; k < 3; ++k) {
-    A[k] = Rational(a[k]) - Rational(d[k]);
-    B[k] = Rational(b[k]) - Rational(d[k]);
-    C[k] = Rational(c[k]) - Rational(d[k]);
+    A[k] = P[0][k] - P[3][k];
+    B[k] = P[1][k] - P[3][k];
+    C[k] = P[2][k] - P[3][k];
   }
-  const Rational det =
-      A[0] * (B[1] * C[2] - B[2] * C[1]) -
-      A[1] * (B[0] * C[2] - B[2] * C[0]) +
-      A[2] * (B[0] * C[1] - B[1] * C[0]);
+  // (all the integers below are the real values times 2^shift, 2^(2 shift)...)
+  const Integer det = A[0] * (B[1] * C[2] - B[2] * C[1]) -
+                      A[1] * (B[0] * C[2] - B[2] * C[0]) +
+                      A[2] * (B[0] * C[1] - B[1] * C[0]);
   Result result;
-  result.determinant = det.convert_to<double>();
-  if(det == 0) {
+  result.determinant = matgmsh::exact::divide(det, Integer(1), -3 * shift);
+  if(det.isZero()) {
     result.status = Status::Degenerate;
     for(int k = 0; k < 3; ++k) {
       // Preserve the old substitute bit for bit where representable, but do
       // not overflow an otherwise representable average at extreme scales.
       result.center[k] = (a[k] + b[k] + c[k] + d[k]) * .25;
-      if(!std::isfinite(result.center[k])) {
-        const Rational average =
-            (Rational(a[k]) + Rational(b[k]) + Rational(c[k]) + Rational(d[k])) / 4;
-        result.center[k] = average.convert_to<double>();
-      }
+      if(!std::isfinite(result.center[k]))
+        result.center[k] = matgmsh::exact::divide(P[0][k] + P[1][k] + P[2][k] + P[3][k],
+                                                  Integer(4), -shift);
     }
     return result;
   }
-  const Rational a2 = A[0] * A[0] + A[1] * A[1] + A[2] * A[2];
-  const Rational b2 = B[0] * B[0] + B[1] * B[1] + B[2] * B[2];
-  const Rational c2 = C[0] * C[0] + C[1] * C[1] + C[2] * C[2];
-  const Rational x = Rational(d[0]) +
-      (a2 * (B[1] * C[2] - B[2] * C[1]) -
-       b2 * (A[1] * C[2] - A[2] * C[1]) +
-       c2 * (A[1] * B[2] - A[2] * B[1])) / (2 * det);
-  const Rational y = Rational(d[1]) -
-      (a2 * (B[0] * C[2] - B[2] * C[0]) -
-       b2 * (A[0] * C[2] - A[2] * C[0]) +
-       c2 * (A[0] * B[2] - A[2] * B[0])) / (2 * det);
-  const Rational z = Rational(d[2]) +
-      (a2 * (B[0] * C[1] - B[1] * C[0]) -
-       b2 * (A[0] * C[1] - A[1] * C[0]) +
-       c2 * (A[0] * B[1] - A[1] * B[0])) / (2 * det);
-  result.center = {x.convert_to<double>(), y.convert_to<double>(), z.convert_to<double>()};
+  const Integer a2 = A[0] * A[0] + A[1] * A[1] + A[2] * A[2];
+  const Integer b2 = B[0] * B[0] + B[1] * B[1] + B[2] * B[2];
+  const Integer c2 = C[0] * C[0] + C[1] * C[1] + C[2] * C[2];
+  const Integer twice = det + det;
+  // center = d + N / (2 det), N scaled by 2^(4 shift), det by 2^(3 shift)
+  const Integer x = P[3][0] * twice +
+                    (a2 * (B[1] * C[2] - B[2] * C[1]) - b2 * (A[1] * C[2] - A[2] * C[1]) +
+                     c2 * (A[1] * B[2] - A[2] * B[1]));
+  const Integer y = P[3][1] * twice -
+                    (a2 * (B[0] * C[2] - B[2] * C[0]) - b2 * (A[0] * C[2] - A[2] * C[0]) +
+                     c2 * (A[0] * B[2] - A[2] * B[0]));
+  const Integer z = P[3][2] * twice +
+                    (a2 * (B[0] * C[1] - B[1] * C[0]) - b2 * (A[0] * C[1] - A[1] * C[0]) +
+                     c2 * (A[0] * B[1] - A[1] * B[0]));
+  result.center = {matgmsh::exact::divide(x, twice, -shift), matgmsh::exact::divide(y, twice, -shift),
+                   matgmsh::exact::divide(z, twice, -shift)};
   result.status = Status::Exact;
   return result;
 }

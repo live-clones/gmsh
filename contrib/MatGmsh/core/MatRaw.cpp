@@ -365,7 +365,7 @@ static void canonicalizeTetrahedra(std::vector<size_t> &tetrahedra)
     for(int i = 0; i < 4; ++i) tetrahedra[4 * t + i] = tets[t][i];
 }
 }
-void matGmsh::computeVoronoiVertices()
+void matGmsh::computeVoronoiVertices(const std::vector<unsigned char> *only)
 {
     ScopedTimer timer(*this, "computeVoronoiVertices");
     vor.vertices.clear();
@@ -374,14 +374,23 @@ void matGmsh::computeVoronoiVertices()
     const std::vector<size_t> &tets = del.tetrahedra;
 
     size_t nt = tets.size() / 4;
+    if(only && only->size() != nt)
+      throw std::runtime_error("One flag per tetrahedron is expected for the circumcentres");
 
     vor.vertices.reserve(3 * nt);
     std::size_t negativeDeterminants = 0;
     std::size_t smallAbsoluteDeterminants = 0;
     std::size_t barycenterFallbacks = 0;
     std::size_t exactCircumcenters = 0;
+    std::size_t computed = 0;
 
     for(size_t t = 0; t < nt; ++t) {
+        if(only && !(*only)[t]) {
+          const double none = std::numeric_limits<double>::quiet_NaN();
+          vor.vertices.insert(vor.vertices.end(), {none, none, none});
+          continue;
+        }
+        ++computed;
 
         int i0 = tets[4*t + 0] - 1;
         int i1 = tets[4*t + 1] - 1;
@@ -415,11 +424,11 @@ void matGmsh::computeVoronoiVertices()
         vor.vertices.push_back(cc[1]);
         vor.vertices.push_back(cc[2]);
     }
-    Msg::Info("Circumcenter diagnostics: tetrahedra=%zu negativeDeterminants=%zu "
+    Msg::Info("Circumcenter diagnostics: tetrahedra=%zu computed=%zu negativeDeterminants=%zu "
               "smallAbsoluteDeterminants=%zu exactFallbacks=%zu "
               "certifiedDouble=%zu barycenterFallbacks=%zu",
-              nt, negativeDeterminants, smallAbsoluteDeterminants,
-              exactCircumcenters, nt - exactCircumcenters - barycenterFallbacks,
+              nt, computed, negativeDeterminants, smallAbsoluteDeterminants,
+              exactCircumcenters, computed - exactCircumcenters - barycenterFallbacks,
               barycenterFallbacks);
 }
 
@@ -747,7 +756,7 @@ void matGmsh::colorSelectedVoronoiFaces(std::vector<char> &isInternal)
   }
 
 }
-void matGmsh::computeVoronoi(bool dualFaces)
+void matGmsh::computeVoronoi(bool dualFaces, bool circumcentres)
 {
   ScopedTimer timer(*this, "computeVoronoi");
   vor.vertices.clear();
@@ -777,7 +786,7 @@ void matGmsh::computeVoronoi(bool dualFaces)
   }
   canonicalizeTetrahedra(del.tetrahedra);
   orientSurfaceTriangles();
-  computeVoronoiVertices();
+  if(circumcentres) computeVoronoiVertices();
   if(!dualFaces) {
     Msg::Info("Gmsh Delaunay: points=%zu tetrahedra=%zu", del.seeds.size() / 3,
               del.tetrahedra.size() / 4);

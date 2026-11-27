@@ -990,3 +990,60 @@ Not checked: the corpus beyond these twelve cases; branches that are bent or
 curved and have cusps (bracket, channel_gusset_r2, Sample3); the graphical
 interface with a mouse (the callbacks of the widgets are called by a
 program).
+
+Performance, and the circumcentres without Boost, 27 November 2026
+------------------------------------------------------------------
+
+Doghouse.stp, thickness 4, the defaults of the tool window (skin of size 0.4,
+one thread), MacBook Pro M3 Max. The stages of the window timed by a program
+that runs the same calls, with the main thread sampled every millisecond.
+
+  Stage                          Seconds  Where
+  skin mesh                         0.9
+  raw MAT                           6.0   circumcentres 3.8 (exact fallback
+                                          3.6 for 180 304 of 620 593
+                                          tetrahedra, 20 us each),
+                                          interior/exterior 0.9, orientation
+                                          of the skin 0.4, faces 0.3,
+                                          Delaunay 0.2
+  filter                            0.8   topology 0.3, faces 0.26, the
+                                          collapse itself 0.2
+  extension of all the branches     1.4   cut 0.9, ribbons 0.25
+  save of the classified mesh       0.24
+
+180 275 of the 180 304 exact circumcentres were those of exterior
+tetrahedra (flat ones on the faces of the part, and on the convex hull),
+which the tetrahedron-based raw MAT does not use: the circumcentres of the
+interior tetrahedra took 0.13 s. The exact fallback used the rationals of
+Boost, the only use of Boost in the module, which the configuration
+required. Both are gone:
+
+  - the raw MAT computes the circumcentres of the interior tetrahedra only,
+    after their classification;
+  - the exact fallback works on integers of any size (README.txt). Compared
+    with the Boost version on every tetrahedron of Doghouse.stp at the sizes
+    0.4 and 0.2 and of Sample3.stp at 0.4 (3 673 700 tetrahedra, 1 095 045
+    exact fallbacks): the same centres, statuses and determinants bit for
+    bit, in 0.70 s for 4.01 s, 3.12 for 19.31 and 0.33 for 1.23. Its
+    rounding agrees with a long division on 20 000 random quotients.
+  - mat_native_circumcenter keeps its independent reference (Gaussian
+    elimination with pivoting on exact rationals), now on the same integers.
+
+Doghouse.stp, the files of the skin, the raw, filtered and extended MAT, the
+surfaces and pieces of the extension and the classified mesh: identical byte
+for byte before and after. Time, one thread:
+
+  Size  Nodes of the skin  Raw MAT before  after   Total before  after
+  0.4         81 095          6.0 s       2.75 s      9.2 s     6.3 s
+  0.2        314 856         29.0 s       12.5 s     40.6 s    24.7 s
+
+Measured before the change, for the record: with 10 threads instead of 1 the
+total goes from 9.2 to 8.4 s (0.4) and from 40.6 to 32.8 s (0.2), the skin
+mesh and the classification of the tetrahedra being the only parallel parts;
+the memory grows by about 7 kB per node of the skin (0.63 GB at 0.4, 2.2 GB
+at 0.2); in the tool window the views of the raw and the filtered MAT (1.44
+million triangles at 0.4) take about 0.75 GB, 1.53 GB in all after Filter and
+2.10 GB after Extend all, while drawing them takes 1.3 to 2.9 ms. Not done
+yet: maps replaced by sorted arrays in the faces and the topology (about
+0.9 s at 0.4, 3.8 s at 0.2), all the cores for the skin mesh and the
+classification, lighter views.
