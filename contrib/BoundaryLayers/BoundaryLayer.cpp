@@ -55,30 +55,42 @@ GMSH_BoundaryLayerPlugin::GMSH_BoundaryLayerPlugin()
 
 std::string GMSH_BoundaryLayerPlugin::getHelp() const
 {
-  return "Plugin(BoundaryLayer) inserts boundary layers in an existing mesh: "
-         "layers of quadrangles along curves in a 2D mesh, or of prisms and "
-         "hexahedra along surfaces in a 3D mesh. The elements around the "
-         "layers are moved to make room for them.\n\n"
-         "In 3D the walls are the surfaces `Surfaces' of the volumes "
-         "`Volumes'. If `Volumes' is empty the mesh is 2D, and the walls are "
-         "the curves `Curves' of the surfaces `Surfaces'. A wall can be on "
-         "the boundary, between two volumes (or surfaces) or embedded: in the "
-         "last two cases it gets layers on both sides.\n\n"
-         "`Size' is the height of the first layer, `Ratio' the ratio between "
-         "the heights of two successive layers and `Thickness' the total "
-         "thickness. The thickness is reduced where the layers would not "
-         "fit, e.g. in a gap between two walls, and is never exceeded. The "
-         "first `NumExactLayers' layers keep the requested heights as long "
-         "as the reduced thickness allows (if negative, that fraction of the "
-         "layers: -2 for half of them); the others are reduced.\n\n"
+  return "Plugin(BoundaryLayer) inserts boundary layers in the current mesh, "
+         "which must be of order 1: layers of quadrangles along curves in a "
+         "2D mesh, or of prisms (hexahedra on quadrangles) along surfaces in "
+         "a 3D mesh. The mesh is generated first, without layers; the plugin "
+         "then moves the elements next to the walls to make room for "
+         "them.\n\n"
+         "`Volumes', `Surfaces' and `Curves' are comma-separated lists of "
+         "tags. For a 3D mesh, `Volumes' gives the volumes that receive the "
+         "layers and `Surfaces' the walls. For a 2D mesh, `Volumes' is "
+         "empty, `Surfaces' gives the surfaces that receive the layers and "
+         "`Curves' the walls. A wall on the boundary gets layers on one "
+         "side; a wall between two of the volumes (or surfaces), or embedded "
+         "in one of them, gets layers on both sides. Where a wall ends on "
+         "another surface or curve the layers end on it as well, and its "
+         "mesh is modified accordingly.\n\n"
+         "`Size' is the height of the first layer, `Ratio' the ratio "
+         "between the heights of two successive layers and `Thickness' the "
+         "total thickness: there are as many layers as needed for their "
+         "heights to add up to `Thickness'. These values are never exceeded, "
+         "but the thickness is reduced where the layers do not fit: between "
+         "two walls closer than about three times the thickness, and down "
+         "to zero along the free edge of a wall with layers on both sides. "
+         "Where the thickness is reduced, the first `NumExactLayers' layers "
+         "keep their height as long as possible and the others are reduced "
+         "first; a negative value -n stands for one n-th of the "
+         "layers.\n\n"
          "`SmoothingLayers' is the number of rings of elements around the "
-         "layers that are moved.\n\n"
+         "layers that are moved to make room for them: it should be "
+         "increased when the layers are thick compared with the elements "
+         "next to the walls.\n\n"
          "If `HighOrder' is larger than 1 the layers are curved to that "
-         "order (only order 2 for now): with `HighOrderStrategy' = 1 the "
-         "layers are split then curved, with 2 they are curved then split; "
-         "`HighOrderPostSplitUntangle' untangles the volume mesh again after "
-         "the split.\n\n"
-         "`Points' is not used yet.";
+         "order (experimental, order 2 only): they are split then curved if "
+         "`HighOrderStrategy' is 1, curved then split if it is 2, and "
+         "`HighOrderPostSplitUntangle' untangles the volume mesh once more "
+         "after the split.\n\n"
+         "`Points' is not used.";
 }
 
 static double triangleArea2D(std::array<double, 2> a, std::array<double, 2> b,
@@ -179,11 +191,12 @@ struct LayerData {
   std::map<MVertex *, Column> columns;
   // nodes moved so far: the elements around them must be untangled
   std::set<MVertex *> moved;
-  // shape of the elements before the insertion, which the elements outside
-  // the layers try to keep: in the parametric plane of their surface (and
-  // mirrored if the mesh of the surface is negative there) or in space
+  // shape of the elements before the inflation, which the elements outside
+  // the layers try to keep: for those of the surfaces, in the parametric
+  // plane (and mirrored if the mesh of the surface is negative there); for
+  // those of the volumes, the position of their nodes
   std::map<MElement *, std::array<std::array<double, 2>, 4>> shapes2D;
-  std::map<MElement *, std::array<std::array<double, 3>, 8>> shapes3D;
+  std::vector<std::array<double, 3>> positions; // of the nodes, by number
 
   bool has(MElement *e) const { return elements.find(e) != elements.end(); }
   double thicknessAt(MVertex *v, double defaultValue) const
@@ -984,69 +997,73 @@ static bool insertLayers(GModel *m, int dim,
 
 namespace {
 
-  inline bool
-  elementTouchesVertexSet(MElement *e,
-                          std::set<MVertex *, MVertexPtrLessThan> &touched)
-  {
-    for(size_t j = 0; j < e->getNumVertices(); ++j)
-      if(touched.find(e->getVertex(j)) != touched.end()) return true;
-    return false;
-  }
-
+  // The elements of a surface or of a volume to untangle, and the nodes that
+  // stay in place. The elements are the layers and numRings rings of elements
+  // around them, and around the nodes already moved on the boundary. The fixed
+  // nodes are those of the other elements and those on the boundary (not
+  // classified on an entity of dimension dim).
   template <class GEntityT>
   static void
-  buildUntangleSets(GEntityT *ge,
-                    int targetDim, // 2 for faces, 3 for regions
-                    const LayerData &data,
-                    size_t nRings, // how many adjacency expansions
-                    // nodes already moved on lower-dimensional entities
+  buildUntangleSets(GEntityT *ge, int dim, const LayerData &data,
+                    std::size_t numRings,
                     std::set<MElement *, MElementPtrLessThan> &toProcess,
                     std::set<MVertex *, MVertexPtrLessThan> &fixed)
   {
-    std::set<MVertex *, MVertexPtrLessThan> touched;
+    const std::size_t numElements = ge->getNumMeshElements();
+    std::vector<MElement *> elements(numElements);
+    std::size_t maxNum = 0;
+    for(std::size_t i = 0; i < numElements; i++) {
+      elements[i] = ge->getMeshElement(i);
+      for(std::size_t j = 0; j < elements[i]->getNumVertices(); j++)
+        maxNum = std::max(maxNum, elements[i]->getVertex(j)->getNum());
+    }
 
-    // 1) seed touched with vertices of BL elements, and with the nodes that
-    // were moved on the boundary: the elements around them must follow
-    for(std::size_t i = 0; i < ge->getNumMeshElements(); ++i) {
-      MElement *e = ge->getMeshElement(i);
-      bool inLayer = (data.elements.find(e) != data.elements.end());
-      for(size_t j = 0; j < e->getNumVertices(); ++j) {
+    // flags by node number
+    std::vector<char> touched(maxNum + 1, 0);
+    for(auto e : elements) {
+      bool inLayer = data.has(e);
+      for(std::size_t j = 0; j < e->getNumVertices(); j++) {
         MVertex *v = e->getVertex(j);
-        if(inLayer || data.moved.find(v) != data.moved.end()) touched.insert(v);
+        if(inLayer || data.moved.find(v) != data.moved.end())
+          touched[v->getNum()] = 1;
       }
     }
 
-    // 2) expand neighborhood by nRings
-    for(size_t ring = 0; ring < nRings; ++ring) {
-      std::set<MVertex *, MVertexPtrLessThan> newlyTouched;
-
-      for(std::size_t i = 0; i < ge->getNumMeshElements(); ++i) {
-        MElement *e = ge->getMeshElement(i);
-        if(!elementTouchesVertexSet(e, touched)) continue;
-
-        toProcess.insert(e);
-        for(size_t j = 0; j < e->getNumVertices(); ++j)
-          newlyTouched.insert(e->getVertex(j));
+    // a ring: the elements with a touched node, whose nodes are touched for
+    // the next ring
+    std::vector<char> processed(numElements, 0);
+    for(std::size_t ring = 0; ring < numRings; ring++) {
+      std::vector<std::size_t> newlyTouched;
+      for(std::size_t i = 0; i < numElements; i++) {
+        if(processed[i]) continue;
+        MElement *e = elements[i];
+        bool touches = false;
+        for(std::size_t j = 0; j < e->getNumVertices() && !touches; j++)
+          touches = touched[e->getVertex(j)->getNum()];
+        if(!touches) continue;
+        processed[i] = 1;
+        for(std::size_t j = 0; j < e->getNumVertices(); j++)
+          newlyTouched.push_back(e->getVertex(j)->getNum());
       }
-
-      touched.insert(newlyTouched.begin(), newlyTouched.end());
+      for(auto num : newlyTouched) touched[num] = 1;
     }
 
-    // 3) build fixed = vertices of elements not processed + vertices not
-    // classified on targetDim
-    for(std::size_t i = 0; i < ge->getNumMeshElements(); ++i) {
-      MElement *e = ge->getMeshElement(i);
-
-      if(toProcess.find(e) == toProcess.end()) {
-        for(size_t j = 0; j < e->getNumVertices(); ++j)
-          fixed.insert(e->getVertex(j));
-      }
-
-      for(size_t j = 0; j < e->getNumVertices(); ++j) {
+    std::vector<MElement *> processedElements;
+    std::vector<MVertex *> fixedNodes;
+    for(std::size_t i = 0; i < numElements; i++) {
+      MElement *e = elements[i];
+      if(processed[i]) processedElements.push_back(e);
+      for(std::size_t j = 0; j < e->getNumVertices(); j++) {
         MVertex *v = e->getVertex(j);
-        if(v->onWhat()->dim() != targetDim) fixed.insert(v);
+        if(!processed[i] || v->onWhat()->dim() != dim) fixedNodes.push_back(v);
       }
     }
+    // sorted, the sets are built in linear time
+    std::sort(processedElements.begin(), processedElements.end(),
+              MElementPtrLessThan());
+    std::sort(fixedNodes.begin(), fixedNodes.end(), MVertexPtrLessThan());
+    toProcess.insert(processedElements.begin(), processedElements.end());
+    fixed.insert(fixedNodes.begin(), fixedNodes.end());
   }
 
   // The part of the mesh of a surface or of a volume that is untangled: the
@@ -1827,11 +1844,56 @@ static int getSubTets(MElement *e, const int (*&sub)[4])
   }
 }
 
+// Start the inflation of the layers of a volume from columns that have their
+// target thickness: each node spawned in the volume is moved along the mean
+// normal of the wall elements around its wall node, further where these
+// normals diverge so that the layer has its thickness above each of them. The
+// elements around may end up tangled: the untangling takes care of them, from
+// a much better start than layers without thickness.
+static void placeColumnTops(GRegion *gr, const LayerData &data)
+{
+  struct Top {
+    MVertex *wall = nullptr;
+    SVector3 normal;
+    int numNormals = 0;
+  };
+  std::map<MVertex *, Top, MVertexPtrLessThan> tops;
+  bool positive = isPositive(gr);
+  for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
+    MElement *e = gr->getMeshElement(i);
+    auto it = data.elements.find(e);
+    if(it == data.elements.end()) continue;
+    LayerColumns lc;
+    SVector3 normal;
+    if(!getLayerColumns(e, data, lc) || !wallNormal(lc, positive, normal))
+      continue;
+    for(std::size_t j = 0; j < lc.n; j++) {
+      if(!lc.top[j] || lc.top[j]->onWhat() != gr) continue;
+      Top &top = tops[lc.top[j]];
+      top.wall = lc.wall[j];
+      top.normal += normal;
+      top.numNormals++;
+    }
+  }
+  for(auto &t : tops) {
+    const Top &top = t.second;
+    double length = top.normal.norm();
+    if(length <= 0.) continue;
+    // norm of the mean normal: 1 on a smooth wall, the cosine of the angle
+    // between the column and the walls on a concave edge
+    double spread = std::max(length / top.numNormals, 0.3);
+    double thickness = data.thicknessAt(top.wall, 0.);
+    SPoint3 p = top.wall->point() + top.normal * (thickness / spread / length);
+    t.first->setXYZ(p.x(), p.y(), p.z());
+  }
+}
+
 // Inflate the layers of a volume. With lockLayers the layers stay in place and
 // only the elements around them are untangled.
 static bool inflateLayers(GRegion *gr, LayerData &data, std::size_t numRings,
                           bool lockLayers = false)
 {
+  if(!lockLayers) placeColumnTops(gr, data);
   UntangleSet set;
   buildUntangleSet(gr, 3, data, numRings, lockLayers, set);
 
@@ -1892,13 +1954,14 @@ static bool inflateLayers(GRegion *gr, LayerData &data, std::size_t numRings,
       }
     }
     else {
-      auto it2 = data.shapes3D.find(e);
-      if(it2 == data.shapes3D.end()) {
-        Msg::Error("Boundary layer: no initial shape for element %zu",
-                   e->getNum());
-        return false;
+      for(std::size_t k = 0; k < e->getNumVertices(); k++) {
+        const std::size_t num = e->getVertex(k)->getNum();
+        if(num >= data.positions.size()) {
+          Msg::Error("Boundary layer: no initial position for node %zu", num);
+          return false;
+        }
+        vs[k] = data.positions[num];
       }
-      vs = it2->second;
     }
 
     for(int j = 0; j < numSub; j++) {
@@ -1917,7 +1980,6 @@ static bool inflateLayers(GRegion *gr, LayerData &data, std::size_t numRings,
   double tUntangle = TimeOfDay();
   WinslowUntangler::Options options;
   options.strictFailures = true;
-  options.laplacianPresmoothing = !lockLayers;
   options.numThreads = CTX::instance()->numThreadsFor(tets.size(), 5000);
   options.elementLambda = &sizeWeight;
   bool ok =
@@ -2407,20 +2469,19 @@ static void storeInitialShapes(const std::vector<GFace *> &surfaces,
   }
 }
 
-// Store the shape of the elements of the volumes
+// Store the position of the nodes of the volumes
 static void storeInitialShapes(const std::vector<GRegion *> &volumes,
                                LayerData &data)
 {
   for(auto gr : volumes) {
     for(size_t i = 0; i < gr->getNumMeshElements(); i++) {
       MElement *e = gr->getMeshElement(i);
-      if(e->getNumVertices() > 8) continue;
-      std::array<std::array<double, 3>, 8> vs = {};
       for(size_t j = 0; j < e->getNumVertices(); j++) {
         MVertex *v = e->getVertex(j);
-        vs[j] = {v->x(), v->y(), v->z()};
+        if(v->getNum() >= data.positions.size())
+          data.positions.resize(v->getNum() + 1);
+        data.positions[v->getNum()] = {v->x(), v->y(), v->z()};
       }
-      data.shapes3D[e] = vs;
     }
   }
 }

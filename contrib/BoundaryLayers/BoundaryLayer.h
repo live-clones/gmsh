@@ -1,4 +1,5 @@
-// Gmsh Boundary Layer Plugin - Copyright (C) 2025-2026 C. Geuzaine and J.-F. Remacle
+// Gmsh Boundary Layer Plugin - Copyright (C) 2025-2026 C. Geuzaine and J.-F.
+// Remacle
 //
 // This program is free software: you can redistribute it and/or modify it under
 // the terms of the GNU Affero General Public License as published by the Free
@@ -23,7 +24,8 @@ class GMSH_BoundaryLayerPlugin : public GMSH_PostPlugin {
 public:
   GMSH_BoundaryLayerPlugin();
   std::string getName() const { return "BoundaryLayer"; }
-  std::string getShortHelp() const { return "Create boundary layer meshes"; }
+  std::string getShortHelp() const
+  { return "Insert boundary layers in a mesh"; }
   std::string getHelp() const;
   PView *execute(PView *);
 };
