@@ -10421,6 +10421,29 @@ end
 const set_number = setNumber
 
 """
+    gmsh.plugin.setNumbers(name, option, values)
+
+Set the option `option`, a list of numbers, to `values` for plugin `name`.
+Plugins available in the official Gmsh release are listed in the "Gmsh plugins"
+chapter of the Gmsh reference manual
+(https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-plugins).
+
+Types:
+ - `name`: string
+ - `option`: string
+ - `values`: vector of doubles
+"""
+function setNumbers(name, option, values)
+    ierr = Ref{Cint}()
+    ccall((:gmshPluginSetNumbers, gmsh.lib), Cvoid,
+          (Ptr{Cchar}, Ptr{Cchar}, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
+          name, option, convert(Vector{Cdouble}, values), length(values), ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const set_numbers = setNumbers
+
+"""
     gmsh.plugin.setString(name, option, value)
 
 Set the string option `option` to the value `value` for plugin `name`. Plugins

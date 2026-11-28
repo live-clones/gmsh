@@ -9041,6 +9041,28 @@ export function wrapGmsh(Module) {
   };
 
   /**
+   * gmsh.plugin.setNumbers(name, option, values)
+   *
+   * Set the option `option', a list of numbers, to `values' for plugin
+   * `name'. Plugins available in the official Gmsh release are listed in the
+   * "Gmsh plugins" chapter of the Gmsh reference manual
+   * (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-plugins).
+   */
+  gmsh.plugin.setNumbers = function(name, option, values) {
+    const tmp = [];
+    try {
+      const api_name_ = _istring(name, tmp);
+      const api_option_ = _istring(option, tmp);
+      const [api_values_, api_values_n] = _ivector(values, 'double', tmp);
+      M._gmshPluginSetNumbers(_P(api_name_), _P(api_option_), _P(api_values_), _S(api_values_n), _P(ierr));
+      _check();
+    }
+    finally {
+      tmp.forEach((p) => M._free(p));
+    }
+  };
+
+  /**
    * gmsh.plugin.setString(name, option, value)
    *
    * Set the string option `option' to the value `value' for plugin `name'.

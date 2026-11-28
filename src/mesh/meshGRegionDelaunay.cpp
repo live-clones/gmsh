@@ -2128,6 +2128,24 @@ static GRegion *getRegionFromBoundingFaces(GModel *model,
   return nullptr;
 }
 
+// tets bounded by a surface with the same mesh as another one, and found in no
+// volume, come from volumes that are not conformal (e.g. two volumes touching
+// along a surface that was not fragmented): the boundary mesh is not valid
+static void reportDuplicateFaces(const std::set<GFace *> &faces_bound,
+                                 const std::map<GFace *, GFace *> &duplicates)
+{
+  for(GFace *gf : faces_bound) {
+    auto it = duplicates.find(gf);
+    if(it == duplicates.end()) continue;
+    Msg::Error("Invalid boundary mesh: surfaces %d and %d have the same mesh, "
+               "the volumes they bound are not conformal (fragment them so "
+               "that they share one surface)",
+               std::min(gf->tag(), it->second->tag()),
+               std::max(gf->tag(), it->second->tag()));
+    return;
+  }
+}
+
 static void non_recursive_classify(MTet4 *t, std::list<MTet4 *> &theRegion,
                                    std::set<GFace *> &faces_bound,
                                    GRegion *bidon, GModel *model,
@@ -2295,7 +2313,9 @@ void classifyTetrahedraInRegions(std::vector<GRegion *> &regions,
   connectTets(allTets.begin(), allTets.end());
 
   fs_cont search;
-  buildFaceSearchStructure(gr->model(), search, true); // only triangles
+  std::map<GFace *, GFace *> duplicates;
+  buildFaceSearchStructure(gr->model(), search, true, // only triangles
+                           &duplicates);
   if(sqr) search.insert(sqr->getTri().begin(), sqr->getTri().end());
 
   // Track every region a Steiner point gets claimed by below: a point
@@ -2348,6 +2368,7 @@ void classifyTetrahedraInRegions(std::vector<GRegion *> &regions,
       }
       else {
         // the tets are in the void
+        reportDuplicateFaces(faces_bound, duplicates);
         for(auto it2 = theRegion.begin(); it2 != theRegion.end(); ++it2)
           (*it2)->setDeleted(true);
       }
@@ -2504,7 +2525,9 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
 
   if(_classify) {
     fs_cont search;
-    buildFaceSearchStructure(gr->model(), search, true); // only triangles
+    std::map<GFace *, GFace *> duplicates;
+    buildFaceSearchStructure(gr->model(), search, true, // only triangles
+                             &duplicates);
     if(sqr) search.insert(sqr->getTri().begin(), sqr->getTri().end());
 
     for(auto it = tets0.begin(); it != tets0.end(); ++it) {
@@ -2543,6 +2566,7 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
         else {
           // the tets are in the void
           Msg::Info("Found void region");
+          reportDuplicateFaces(faces_bound, duplicates);
           for(auto it2 = theRegion.begin(); it2 != theRegion.end(); ++it2)
             (*it2)->setDeleted(true);
         }

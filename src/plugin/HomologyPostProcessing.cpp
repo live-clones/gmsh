@@ -22,12 +22,13 @@ GMSH_HomologyPostProcessingPlugin::GMSH_HomologyPostProcessingPlugin()
       {{GMSH_FULLRC, "ApplyBoundaryOperatorToResults", nullptr, 0}},
       {
         {GMSH_FULLRC, "TransformationMatrix", nullptr, "1, 0; 0, 1"},
-        {GMSH_FULLRC, "PhysicalGroupsOfOperatedChains", nullptr, "1, 2"},
-        {GMSH_FULLRC, "PhysicalGroupsOfOperatedChains2", nullptr, ""},
-        {GMSH_FULLRC, "PhysicalGroupsToTraceResults", nullptr, ""},
-        {GMSH_FULLRC, "PhysicalGroupsToProjectResults", nullptr, ""},
         {GMSH_FULLRC, "NameForResultChains", nullptr, "c"},
-      })
+      },
+      // these lists were strings of numbers separated by commas
+      {{GMSH_FULLRC, "PhysicalGroupsOfOperatedChains", {1, 2}, true},
+       {GMSH_FULLRC, "PhysicalGroupsOfOperatedChains2", {}, true},
+       {GMSH_FULLRC, "PhysicalGroupsToTraceResults", {}, true},
+       {GMSH_FULLRC, "PhysicalGroupsToProjectResults", {}, true}})
 {
 }
 
@@ -89,19 +90,18 @@ bool GMSH_HomologyPostProcessingPlugin::invertIntegerMatrix(
 
   // integer entries for a unimodular matrix: round, not truncate
   for(int i = 0; i < n; i++)
-    for(int j = 0; j < n; j++)
-      matrix.at(i * n + j) = (int)std::lround(m(i, j));
+    for(int j = 0; j < n; j++) matrix.at(i * n + j) = (int)std::lround(m(i, j));
   return true;
 }
 
 PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
 {
   std::string matrixString = optionStr(0);
-  std::string opString1 = optionStr(1);
-  std::string opString2 = optionStr(2);
-  std::string cname = optionStr(5);
-  std::string traceString = optionStr(3);
-  std::string projectString = optionStr(4);
+  std::string cname = optionStr(1);
+  std::string opString1 = listToString(optionList(0));
+  std::string opString2 = listToString(optionList(1));
+  std::string traceString = listToString(optionList(2));
+  std::string projectString = listToString(optionList(3));
   int bd = (int)option(0);
 
   GModel *m = GModel::current();
@@ -150,10 +150,8 @@ PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
     }
   }
 
-  std::vector<int> basisPhysicals;
-  if(!optionIntList(1, basisPhysicals)) return nullptr;
-  std::vector<int> basisPhysicals2;
-  if(!optionIntList(2, basisPhysicals2)) return nullptr;
+  std::vector<int> basisPhysicals = optionIntList(0);
+  std::vector<int> basisPhysicals2 = optionIntList(1);
 
   if(matrixString != "I" && (int)basisPhysicals.size() != cols &&
      basisPhysicals2.empty()) {
@@ -176,12 +174,10 @@ PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
     return nullptr;
   }
 
-  std::vector<int> tracePhysicals;
-  if(!optionIntList(3, tracePhysicals)) return nullptr;
-  std::vector<int> projectPhysicals;
-  if(!optionIntList(4, projectPhysicals)) return nullptr;
+  std::vector<int> tracePhysicals = optionIntList(2);
+  std::vector<int> projectPhysicals = optionIntList(3);
 
-  std::vector<Chain<int> > curBasis;
+  std::vector<Chain<int>> curBasis;
   for(std::size_t i = 0; i < basisPhysicals.size(); i++) {
     curBasis.push_back(Chain<int>(m, basisPhysicals.at(i)));
   }
@@ -191,7 +187,7 @@ PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
   }
   int dim = curBasis.at(0).getDim();
 
-  std::vector<Chain<int> > curBasis2;
+  std::vector<Chain<int>> curBasis2;
   for(std::size_t i = 0; i < basisPhysicals2.size(); i++) {
     curBasis2.push_back(Chain<int>(m, basisPhysicals2.at(i)));
   }
@@ -213,7 +209,7 @@ PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
     for(int j = 0; j < cols; j++)
       Msg::Debug("(%d, %d) = %d", i, j, matrix.at(i * cols + j));
 
-  std::vector<Chain<int> > newBasis(rows, Chain<int>());
+  std::vector<Chain<int>> newBasis(rows, Chain<int>());
   if(!curBasis2.empty()) {
     Msg::Info("Computing new basis %d-chains such that the incidence matrix of "
               "%d-chain bases %s and %s is the indentity matrix",

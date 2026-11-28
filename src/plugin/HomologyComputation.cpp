@@ -30,11 +30,12 @@ GMSH_HomologyComputationPlugin::GMSH_HomologyComputationPlugin()
        {GMSH_FULLRC, "PeriodicIdentification", nullptr, 0.},
        {GMSH_FULLRC, "PeriodicSlavePhysicalGroup", nullptr, -1.},
        {GMSH_FULLRC, "PeriodicMasterPhysicalGroup", nullptr, -1.}},
-      {{GMSH_FULLRC, "DomainPhysicalGroups", nullptr, ""},
-       {GMSH_FULLRC, "SubdomainPhysicalGroups", nullptr, ""},
-       {GMSH_FULLRC, "ReductionImmunePhysicalGroups", nullptr, ""},
-       {GMSH_FULLRC, "DimensionOfChainsToSave", nullptr, "0, 1, 2, 3"},
-       {GMSH_FULLRC, "Filename", nullptr, ""}})
+      {{GMSH_FULLRC, "Filename", nullptr, ""}},
+      // these lists were strings of numbers separated by commas
+      {{GMSH_FULLRC, "DomainPhysicalGroups", {}, true},
+       {GMSH_FULLRC, "SubdomainPhysicalGroups", {}, true},
+       {GMSH_FULLRC, "ReductionImmunePhysicalGroups", {}, true},
+       {GMSH_FULLRC, "DimensionOfChainsToSave", {0, 1, 2, 3}, true}})
 {
 }
 
@@ -55,7 +56,7 @@ std::string GMSH_HomologyComputationPlugin::getHelp() const
 
 PView *GMSH_HomologyComputationPlugin::execute(PView *v)
 {
-  std::string fileName = optionStr(4);
+  std::string fileName = optionStr(0);
   int hom = (int)option(0);
   int coh = (int)option(1);
   int hompg = (int)option(2);
@@ -69,14 +70,10 @@ PView *GMSH_HomologyComputationPlugin::execute(PView *v)
   int perslave = (int)option(10);
   int permaster = (int)option(11);
 
-  std::vector<int> domain;
-  std::vector<int> subdomain;
-  std::vector<int> imdomain;
-  std::vector<int> dimsave;
-  if(!optionIntList(0, domain)) return nullptr;
-  if(!optionIntList(1, subdomain)) return nullptr;
-  if(!optionIntList(2, imdomain)) return nullptr;
-  if(!optionIntList(3, dimsave)) return nullptr;
+  std::vector<int> domain = optionIntList(0);
+  std::vector<int> subdomain = optionIntList(1);
+  std::vector<int> imdomain = optionIntList(2);
+  std::vector<int> dimsave = optionIntList(3);
 
   // a negative physical group means no restriction on that side
   std::vector<int> perslaves;
@@ -111,7 +108,7 @@ PView *GMSH_HomologyComputationPlugin::execute(PView *v)
   // FIXME GModel::computeHomology() calls pruneMeshVertexAssociations(), but it
   // breaks existing scripts:
 
-  //m->pruneMeshVertexAssociations();
+  // m->pruneMeshVertexAssociations();
 
   if(fileName.size()) {
     homology->setFileName(fileName);

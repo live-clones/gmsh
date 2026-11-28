@@ -1108,7 +1108,43 @@ static void assign(GEdge *ge, double t, MVertex *v)
   v->setParameter(0, gp.u());
 }
 
-int meshGEdgeInsertBoundaryLayer(GEdge *ge, double width)
+// Find the parameter of the point of the curve at the given distance from its
+// end point t0, going towards t1, by marching then bisection (t1 if the curve
+// is too short)
+static double parameterAtDistance(GEdge *ge, double t0, double t1, double width)
+{
+  GPoint g0 = ge->point(t0);
+  SPoint3 p0(g0.x(), g0.y(), g0.z());
+  auto dist = [&](double t) {
+    GPoint g = ge->point(t);
+    return SPoint3(g.x(), g.y(), g.z()).distance(p0);
+  };
+  const int numSteps = 100;
+  const double dt = (t1 - t0) / numSteps;
+  double ta = t0, tb = t0;
+  int i = 0;
+  for(; i < numSteps; i++) {
+    tb = t0 + (i + 1) * dt;
+    if(dist(tb) > width) break;
+    ta = tb;
+  }
+  if(i == numSteps) return t1;
+  for(int iter = 0; iter < 100; iter++) {
+    double tm = 0.5 * (ta + tb);
+    double d = dist(tm);
+    if(std::abs(d - width) < 1.e-8 * width) return tm;
+    if(d > width)
+      tb = tm;
+    else
+      ta = tm;
+  }
+  return 0.5 * (ta + tb);
+}
+
+// Move the node spawned by a boundary layer at the beginning and/or at the end
+// of the curve (recognized by its zero-length line) at the given distance from
+// the end point, and redistribute the other nodes in between
+int meshGEdgeInsertBoundaryLayer(GEdge *ge, double widthBegin, double widthEnd)
 {
   Range<double> bounds = ge->parBounds(0);
   double t_begin = bounds.low();
@@ -1116,105 +1152,27 @@ int meshGEdgeInsertBoundaryLayer(GEdge *ge, double width)
 
   double t_left = t_begin;
   double t_right = t_end;
-  double dt = (t_end - t_begin) / 100;
 
-  if(ge->lines.size() < 2) return 0;
+  if(ge->lines.size() < 2 || ge->mesh_vertices.empty()) return 0;
 
   MLine *l0 = ge->lines.front();
   MLine *ln = ge->lines.back();
 
-  double eps = width * 1.e-8;
   int diff = 0;
 
   size_t start = 0;
   size_t end = ge->mesh_vertices.size() - 1;
 
-  // if(ge->tag() == 2) {
-  //   printf("GEdge %d -- end line lengths %12.5E %12.5E\n", ge->tag(),
-  //          l0->getLength(), ln->getLength());
-  //   for(std::size_t i = 0; i < ge->lines.size(); i++) {
-  //     MLine *l = ge->lines[i];
-  //     printf("  line %zu: %ld %ld\n", i, l->getVertex(0)->getNum(),
-  //            l->getVertex(1)->getNum());
-  //   }
-  // }
-
-  if(l0->getLength() < 1.e-12) {
-    for(auto v : ge->mesh_vertices) {
-      double p;
-      v->getParameter(0, p);
-      // printf(" %12.5E ", p);
-    }
-    // printf("\n");
-
+  if(l0->getLength() < 1.e-12 && widthBegin > 0.) {
     diff++;
-    GPoint g_left = ge->point(t_left);
-    SPoint3 p0(g_left.x(), g_left.y(), g_left.z()),p1;
-
-    while(1) {
-      t_left += dt;
-      g_left = ge->point(t_left);
-      SPoint3 p1(g_left.x(), g_left.y(), g_left.z());
-      if(p1.distance(p0) > width) break;
-    }
-
-    double t0 = t_left - dt;
-    double t1 = t_left;
-
-    // if(ge->tag() == 2) {
-    //   printf("dt %12.5E --> first guess %12.5E %12.5E %12.5E %12.5E %12.5E\n",
-    //          dt, t_left, t0, t1, p1.distance(p0), width);
-    // }
-
-    while(1) {
-      double t_mid = (t0 + t1) * .5;
-      g_left = ge->point(t_mid);
-      SPoint3 p1(g_left.x(), g_left.y(), g_left.z());
-      double d = p1.distance(p0);
-      // printf("%12.5E %12.5E %12.5E %12.5E %12.5E\n",
-      //        t0, t1, t_mid, d, width);
-      if(fabs(d - width) < eps) {
-        t_left = t_mid;
-        break;
-      }
-      if(d > width)
-        t1 = t_mid;
-      else
-        t0 = t_mid;
-    }
+    t_left = parameterAtDistance(ge, t_begin, t_end, widthBegin);
     assign(ge, t_left, ge->mesh_vertices[start]);
     start++;
   }
 
-  if(ln->getLength() < 1.e-12) {
-    // printf("GEdge %d -- end line lengths %12.5E %12.5E\n",
-    //        ge->tag(), l0->getLength(), ln->getLength());
+  if(ln->getLength() < 1.e-12 && widthEnd > 0. && end >= start) {
     diff++;
-    GPoint g_right = ge->point(t_right);
-    SPoint3 p0(g_right.x(), g_right.y(), g_right.z());
-    while(1) {
-      t_right -= dt;
-      g_right = ge->point(t_right);
-      SPoint3 p1(g_right.x(), g_right.y(), g_right.z());
-      if(p1.distance(p0) > width) break;
-    }
-
-    double t0 = t_right;
-    double t1 = t_right + dt;
-    while(1) {
-      double t_mid = (t0 + t1) * .5;
-      g_right = ge->point(t_mid);
-      SPoint3 p1(g_right.x(), g_right.y(), g_right.z());
-      double d = p1.distance(p0);
-      if(fabs(d - width) < eps) {
-        t_right = t_mid;
-        break;
-      }
-      if(d > width)
-        t0 = t_mid;
-      else
-        t1 = t_mid;
-    }
+    t_right = parameterAtDistance(ge, t_end, t_begin, widthEnd);
     assign(ge, t_right, ge->mesh_vertices[end]);
     end--;
   }
@@ -1234,7 +1192,8 @@ int meshGEdgeInsertBoundaryLayer(GEdge *ge, double width)
   {
     int count = 1, NUMP = 1;
     const double b = a / static_cast<double>(N - 1);
-    while(NUMP < N - 1) {
+    while(NUMP < N - 1 && count < (int)Points.size() &&
+          start < ge->mesh_vertices.size()) {
       auto P1 = Points[count - 1];
       auto P2 = Points[count];
       // printf("count %d %g -- (%12.5E %12.5E) (%12.5E %12.5E)\n",

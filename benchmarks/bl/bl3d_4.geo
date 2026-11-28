@@ -1,7 +1,13 @@
-//+
-SetFactory("OpenCASCADE");
-Box(1) = {-0.5, -0.5, 0, 1, 1, 1};
-//+
-Box(2) = {-0.25, -0.25, -0.25, .5, .5, .5};
-//+
-BooleanDifference{ Volume{1}; Delete; }{ Volume{2}; Delete; }
+// Boundary layers on a box-shaped notch in a box
+Merge "bl3d_4.brep";
+
+Mesh.MeshSizeFactor = 0.4;
+
+Mesh 3;
+
+Plugin(BoundaryLayer).Volumes = {1};
+Plugin(BoundaryLayer).Surfaces = {7:11};
+Plugin(BoundaryLayer).Thickness = 1/40;
+Plugin(BoundaryLayer).Size = 1/40000;
+Plugin(BoundaryLayer).Ratio = 1.4;
+Plugin(BoundaryLayer).Run;

@@ -47,6 +47,29 @@ GFace::GFace(GModel *model, int tag)
   GFace::resetMeshAttributes();
 }
 
+void GFace::addRegion(GRegion *r)
+{
+  if(r == r1 || r == r2) return;
+  if(!r1)
+    r1 = r;
+  else if(!r2)
+    r2 = r;
+  else // e.g. a boundary layer on both sides, or a volume defined twice
+    Msg::Info("Surface %d already bounds volumes %d and %d: volume %d not "
+              "recorded",
+              tag(), r1->tag(), r2->tag(), r->tag());
+}
+
+void GFace::delRegion(GRegion *r)
+{
+  if(r == r1) {
+    r1 = r2;
+    r2 = nullptr;
+  }
+  else if(r == r2)
+    r2 = nullptr;
+}
+
 GFace::~GFace()
 {
   for(auto ge : l_edges) ge->delFace(this);

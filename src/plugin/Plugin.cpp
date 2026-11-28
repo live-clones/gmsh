@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <cmath>
 #include <sstream>
 #include <stdio.h>
 #include <string.h>
@@ -21,9 +22,11 @@
 GMSH_Plugin *GMSH_Plugin::preview = nullptr;
 
 GMSH_Plugin::GMSH_Plugin(const std::vector<StringXNumber> &numOptions,
-                         const std::vector<StringXString> &strOptions)
+                         const std::vector<StringXString> &strOptions,
+                         const std::vector<StringXNumbers> &listOptions)
   : dialogBox(nullptr), _numOptions(numOptions), _numDefaults(numOptions),
-    _strOptions(strOptions), _strDefaults(strOptions)
+    _strOptions(strOptions), _strDefaults(strOptions),
+    _listOptions(listOptions), _listDefaults(listOptions)
 {
 }
 
@@ -45,6 +48,15 @@ StringXString *GMSH_Plugin::findOptionStr(const std::string &name)
   return nullptr;
 }
 
+StringXNumbers *GMSH_Plugin::findOptionList(const std::string &name)
+{
+  auto it = _aliases.find(name);
+  const std::string &n = (it == _aliases.end()) ? name : it->second;
+  for(int i = 0; i < getNbOptionsList(); i++)
+    if(n == getOptionList(i)->str) return getOptionList(i);
+  return nullptr;
+}
+
 void GMSH_Plugin::addOptionAlias(const std::string &alias,
                                  const std::string &name)
 { _aliases[alias] = name; }
@@ -53,6 +65,7 @@ void GMSH_Plugin::resetOptions()
 {
   _numOptions = _numDefaults;
   _strOptions = _strDefaults;
+  _listOptions = _listDefaults;
 }
 
 bool GMSH_Plugin::optionCallback(int iopt, int num, int action, double &value)
@@ -73,21 +86,11 @@ bool GMSH_Plugin::optionStrCallback(int iopt, int num, int action,
   return true;
 }
 
-bool GMSH_Plugin::optionIntList(int iopt, std::vector<int> &list)
+std::vector<int> GMSH_Plugin::optionIntList(int iopt)
 {
-  list.clear();
-  int n;
-  char a;
-  std::istringstream ss(optionStr(iopt));
-  while(ss >> n) {
-    list.push_back(n);
-    if(ss >> a && a != ',') {
-      Msg::Error("Unexpected character '%c' while parsing '%s'", a,
-                 getOptionStr(iopt)->str);
-      return false;
-    }
-  }
-  return true;
+  std::vector<int> list;
+  for(double v : optionList(iopt)) list.push_back((int)std::round(v));
+  return list;
 }
 
 bool GMSH_Plugin::sliderOption(int iopt, int action, double &value, double step,
@@ -123,12 +126,39 @@ void GMSH_Plugin::setPreview(GMSH_Plugin *p)
 #endif
 }
 
+std::string GMSH_Plugin::listToString(const std::vector<double> &list)
+{
+  std::ostringstream sstream;
+  sstream.precision(16);
+  for(std::size_t i = 0; i < list.size(); i++)
+    sstream << (i ? ", " : "") << list[i];
+  return sstream.str();
+}
+
+bool GMSH_Plugin::stringToList(const std::string &str,
+                               std::vector<double> &list)
+{
+  list.clear();
+  std::istringstream ss(str);
+  double x;
+  char c;
+  while(ss >> x) {
+    list.push_back(x);
+    if(ss >> c && c != ',') return false;
+  }
+  return ss.eof();
+}
+
 std::string GMSH_Plugin::serialize()
 {
   std::ostringstream sstream;
   for(int i = 0; i < getNbOptionsStr(); i++)
     sstream << "Plugin(" << getName() << ")." << getOptionStr(i)->str << "= \""
             << getOptionStr(i)->def << "\";\n";
+  for(int i = 0; i < getNbOptionsList(); i++) {
+    sstream << "Plugin(" << getName() << ")." << getOptionList(i)->str << "={"
+            << listToString(getOptionList(i)->def) << "};\n";
+  }
   for(int i = 0; i < getNbOptions(); i++)
     sstream << "Plugin(" << getName() << ")." << getOption(i)->str << "="
             << getOption(i)->def << ";\n";
@@ -336,7 +366,7 @@ void GMSH_PostPlugin::createListData(
   PViewData *data, const std::vector<PViewDataList *> &out,
   const std::function<int(const PluginElement &e)> &numComp,
   const std::function<bool(const PluginElement &e, int step,
-                           std::vector<std::vector<double> > &res)> &values)
+                           std::vector<std::vector<double>> &res)> &values)
   const
 {
   int step0 = data->getFirstNonEmptyTimeStep();
@@ -344,7 +374,7 @@ void GMSH_PostPlugin::createListData(
   for(int step = step0; step < data->getNumTimeSteps(); step++)
     if(data->hasTimeStep(step)) steps.push_back(step);
 
-  std::vector<std::vector<double> > res(out.size()), all(out.size());
+  std::vector<std::vector<double>> res(out.size()), all(out.size());
   for(int ent = 0; ent < data->getNumEntities(step0); ent++) {
     for(int ele = 0; ele < data->getNumElements(step0, ent); ele++) {
       if(data->skipElement(step0, ent, ele)) continue;
@@ -380,8 +410,8 @@ void GMSH_PostPlugin::createListData(
         for(std::size_t i = 0; i < out.size(); i++) {
           if((int)res[i].size() != e.numNodes * nc) {
             Msg::Error("Plugin(%s) gave %d values for %d nodes and %d "
-                       "components", getName().c_str(), (int)res[i].size(),
-                       e.numNodes, nc);
+                       "components",
+                       getName().c_str(), (int)res[i].size(), e.numNodes, nc);
             return;
           }
           all[i].insert(all[i].end(), res[i].begin(), res[i].end());

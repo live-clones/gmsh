@@ -5203,6 +5203,18 @@ GMSH_API void gmshPluginSetNumber(const char * name, const char * option, const 
   }
 }
 
+GMSH_API void gmshPluginSetNumbers(const char * name, const char * option, const double * values, const size_t values_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_values_(values, values + values_n);
+    gmsh::plugin::setNumbers(name, option, api_values_);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshPluginSetString(const char * name, const char * option, const char * value, int * ierr)
 {
   if(ierr) *ierr = 0;

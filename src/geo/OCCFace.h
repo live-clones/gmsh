@@ -10,6 +10,7 @@
 #include "GFace.h"
 #include "GModel.h"
 #include "Range.h"
+#include <atomic>
 
 #if defined(HAVE_OCC)
 
@@ -43,6 +44,9 @@ private:
   mutable std::vector<IntTools_FClass2d *> _classifiers;
   double _projectorBounds[4];
   double _tolerance;
+  // (computed on demand, possibly by several threads)
+  mutable std::atomic<double> _diag{-1.};
+  double _size() const;
   GeomAPI_ProjectPointOnSurf &_projector(GeomAPI_ProjectPointOnSurf &fallback)
     const;
   const Handle(ShapeAnalysis_Surface) & _localProjector() const;

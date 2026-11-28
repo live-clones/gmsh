@@ -61,6 +61,7 @@ namespace WinslowUntangler {
     struct Data {
       int dim = 0;
       double lambda = 1.;
+      const std::vector<double> *elementLambda = nullptr;
       double eps = 0.;
       double energy = 0.;
       double JDetMin = DBL_MAX;
@@ -333,10 +334,12 @@ namespace WinslowUntangler {
           const double traceJtJ = J00 * J00 + J10 * J10 + J01 * J01 + J11 * J11;
           const double fEps = traceJtJ / chi;
           const double gEps = (det * det + 1.) / chi;
-          w.elementEnergy[t] = fEps + w.lambda * gEps;
+          const double lambda =
+            w.elementLambda ? (*w.elementLambda)[t] : w.lambda;
+          w.elementEnergy[t] = fEps + lambda * gEps;
 
           const double coeff =
-            fEps * chip - 2. * w.lambda * det + w.lambda * gEps * chip;
+            fEps * chip - 2. * lambda * det + lambda * gEps * chip;
           const double scaleA = 2. / chi;
           const double scaleB = coeff / chi;
           const double d00 = scaleA * J00 - scaleB * J11;
@@ -454,10 +457,12 @@ namespace WinslowUntangler {
                                   J02 * J02 + J12 * J12 + J22 * J22;
           const double fEps = traceJtJ / chi23;
           const double gEps = (det * det + 1.) / chi;
-          w.elementEnergy[t] = fEps + w.lambda * gEps;
+          const double lambda =
+            w.elementLambda ? (*w.elementLambda)[t] : w.lambda;
+          w.elementEnergy[t] = fEps + lambda * gEps;
 
-          const double coeff = 2. / 3. * fEps * chip - 2. * w.lambda * det +
-                               w.lambda * gEps * chip;
+          const double coeff =
+            2. / 3. * fEps * chip - 2. * lambda * det + lambda * gEps * chip;
           const double scaleA = 2. / chi23;
           const double scaleB = coeff / chi;
 
@@ -602,6 +607,15 @@ namespace WinslowUntangler {
     {
       const size_t n = x.size();
       const std::vector<double> backup(points, points + n);
+      // The minimization only sees the coordinates of the vertices that are
+      // not locked: the others have a zero gradient and never move, but would
+      // cost as much in each of its vector operations.
+      std::vector<size_t> freeDofs;
+      for(size_t i = 0; i < n; ++i)
+        if(!data.locked[i / data.dim]) freeDofs.push_back(i);
+      if(freeDofs.empty()) return data.JDetMin > 0.;
+      std::vector<double> xFree(freeDofs.size()), gradFull(n);
+      for(size_t i = 0; i < freeDofs.size(); ++i) xFree[i] = x[freeDofs[i]];
       bool converged = false;
       int nFail = 0;
       const double t0 = Cpu();
@@ -621,9 +635,14 @@ namespace WinslowUntangler {
         LBFGS::Result result;
         try {
           result = LBFGS::minimize(
-            x,
-            [&data](const std::vector<double> &xe, std::vector<double> &grad) {
-              return evaluate(data, xe, grad);
+            xFree,
+            [&](const std::vector<double> &xe, std::vector<double> &grad) {
+              for(size_t i = 0; i < freeDofs.size(); ++i)
+                x[freeDofs[i]] = xe[i];
+              const double f = evaluate(data, x, gradFull);
+              for(size_t i = 0; i < freeDofs.size(); ++i)
+                grad[i] = gradFull[freeDofs[i]];
+              return f;
             },
             lbfgs);
         } catch(const std::exception &e) {
@@ -631,12 +650,11 @@ namespace WinslowUntangler {
           std::copy(backup.begin(), backup.end(), points);
           return false;
         }
-        // After a failed line search the last evaluation is at a rejected
-        // trial point: restore the energy and determinants of the solution
-        if(result.terminationType == -2) {
-          std::vector<double> grad(n);
-          evaluate(data, x, grad);
-        }
+        // the last evaluation may be at a rejected trial point
+        for(size_t i = 0; i < freeDofs.size(); ++i) x[freeDofs[i]] = xFree[i];
+        // After a failed line search, restore the energy and determinants of
+        // the solution as well
+        if(result.terminationType == -2) evaluate(data, x, gradFull);
         std::copy(x.begin(), x.end(), points);
 
         const double dErel =
@@ -651,7 +669,7 @@ namespace WinslowUntangler {
                    "min(detJ) %g, invalid %zu, inner %d, term %d",
                    iter, data.eps, data.energy, dErel, data.JDetMin,
                    data.nbInvalid, result.iterations, term);
-        if(data.JDetMin > 0. && dErel < 1.e-5) {
+        if(data.JDetMin > 0. && dErel < options.energyTolerance) {
           converged = true;
           break;
         }
@@ -680,6 +698,9 @@ namespace WinslowUntangler {
     const double t0 = TimeOfDay();
     Data data;
     data.lambda = options.lambda;
+    if(options.elementLambda &&
+       options.elementLambda->size() == triangles.size())
+      data.elementLambda = options.elementLambda;
     data.numThreads = options.numThreads;
     if(!prepareData2D(points, locked, triangles, idealShapes, data))
       return false;
@@ -714,6 +735,8 @@ namespace WinslowUntangler {
     const double t0 = TimeOfDay();
     Data data;
     data.lambda = options.lambda;
+    if(options.elementLambda && options.elementLambda->size() == tets.size())
+      data.elementLambda = options.elementLambda;
     data.numThreads = options.numThreads;
     if(!prepareData3D(points, locked, tets, idealShapes, data)) return false;
 

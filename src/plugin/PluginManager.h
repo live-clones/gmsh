@@ -36,21 +36,21 @@ public:
   bool addPlugin(const std::string &fileName);
   void addPlugins(const std::string &dirs);
 
-  // Set an option to a value in plugin named pluginName
+  // Set an option to a value in plugin named pluginName. A list option also
+  // takes a number, as a list of one; and if it used to be a string option, a
+  // string of numbers separated by commas, with a warning.
   void setPluginOption(const std::string &pluginName, const std::string &option,
                        double value);
   void setPluginOption(const std::string &pluginName, const std::string &option,
                        const std::string &value);
+  void setPluginOption(const std::string &pluginName, const std::string &option,
+                       const std::vector<double> &value);
 
   // Iterator on plugins
   std::map<std::string, GMSH_Plugin *>::iterator begin()
-  {
-    return allPlugins.begin();
-  }
+  { return allPlugins.begin(); }
   std::map<std::string, GMSH_Plugin *>::iterator end()
-  {
-    return allPlugins.end();
-  }
+  { return allPlugins.end(); }
 
   // Find a plugin named pluginName
   GMSH_Plugin *find(const std::string &pluginName);

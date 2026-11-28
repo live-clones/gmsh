@@ -7440,6 +7440,23 @@ namespace gmsh { // Top-level functions
       if(ierr) throwLastError();
     }
 
+    // gmsh::plugin::setNumbers
+    //
+    // Set the option `option', a list of numbers, to `values' for plugin `name'.
+    // Plugins available in the official Gmsh release are listed in the "Gmsh
+    // plugins" chapter of the Gmsh reference manual
+    // (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-plugins).
+    inline void setNumbers(const std::string & name,
+                           const std::string & option,
+                           const std::vector<double> & values)
+    {
+      int ierr = 0;
+      double *api_values_; size_t api_values_n_; vector2ptr(values, &api_values_, &api_values_n_);
+      gmshPluginSetNumbers(name.c_str(), option.c_str(), api_values_, api_values_n_, &ierr);
+      if(ierr) throwLastError();
+      gmshFree(api_values_);
+    }
+
     // gmsh::plugin::setString
     //
     // Set the string option `option' to the value `value' for plugin `name'.

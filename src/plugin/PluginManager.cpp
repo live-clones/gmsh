@@ -176,6 +176,22 @@ void PluginManager::runOnViews(GMSH_Plugin *p, const std::vector<int> &views,
   }
 }
 
+// the option is unknown, or is not of the type of the value given
+static void throwUnknownOption(GMSH_Plugin *plugin,
+                               const std::string &pluginName,
+                               const std::string &option)
+{
+  const char *type = plugin->findOption(option)     ? "a number" :
+                     plugin->findOptionStr(option)  ? "a string" :
+                     plugin->findOptionList(option) ? "a list of numbers" :
+                                                      nullptr;
+  if(type)
+    throw std::runtime_error("Option '" + option + "' of Plugin(" + pluginName +
+                             ") is " + type);
+  throw std::runtime_error("Unknown option '" + option + "' of Plugin(" +
+                           pluginName + ")");
+}
+
 void PluginManager::setPluginOption(const std::string &pluginName,
                                     const std::string &option,
                                     const std::string &value)
@@ -188,8 +204,36 @@ void PluginManager::setPluginOption(const std::string &pluginName,
     sxs->def = value;
     return;
   }
-  throw std::runtime_error("Unknown option '" + option + "' of Plugin(" +
-                           pluginName + ")");
+  // a list option that used to be a string of numbers separated by commas
+  StringXNumbers *sxl = plugin->findOptionList(option);
+  if(sxl && sxl->wasString) {
+    std::vector<double> list;
+    if(!GMSH_Plugin::stringToList(value, list))
+      throw std::runtime_error("Could not read the value '" + value +
+                               "' of option '" + option + "' of Plugin(" +
+                               pluginName + ") as a list of numbers");
+    Msg::Warning("Option '%s' of Plugin(%s) is now a list of numbers: giving "
+                 "it as a string is deprecated",
+                 option.c_str(), pluginName.c_str());
+    sxl->def = list;
+    return;
+  }
+  throwUnknownOption(plugin, pluginName, option);
+}
+
+void PluginManager::setPluginOption(const std::string &pluginName,
+                                    const std::string &option,
+                                    const std::vector<double> &value)
+{
+  GMSH_Plugin *plugin = find(pluginName);
+  if(!plugin) throw std::runtime_error("Unknown plugin '" + pluginName + "'");
+
+  StringXNumbers *sxl = plugin->findOptionList(option);
+  if(sxl) {
+    sxl->def = value;
+    return;
+  }
+  throwUnknownOption(plugin, pluginName, option);
 }
 
 void PluginManager::setPluginOption(const std::string &pluginName,
@@ -204,8 +248,12 @@ void PluginManager::setPluginOption(const std::string &pluginName,
     sxn->def = value;
     return;
   }
-  throw std::runtime_error("Unknown option '" + option + "' of Plugin(" +
-                           pluginName + ")");
+  StringXNumbers *sxl = plugin->findOptionList(option);
+  if(sxl) {
+    sxl->def = {value};
+    return;
+  }
+  throwUnknownOption(plugin, pluginName, option);
 }
 
 PluginManager *PluginManager::instance()
@@ -354,14 +402,15 @@ bool PluginManager::addPlugin(const std::string &fileName)
   if(!version || !create) {
     Msg::Error("'%s' is not a Gmsh plugin (it does not define "
                "GMSH_PluginApiVersion() and GMSH_RegisterPlugin(), which "
-               "GMSH_PLUGIN() in Plugin.h defines)", fileName.c_str());
+               "GMSH_PLUGIN() in Plugin.h defines)",
+               fileName.c_str());
     dlclose(lib);
     return false;
   }
   if(version() != GMSH_PLUGIN_API_VERSION) {
     Msg::Error("Plugin '%s' was built for version %d of the plugin interface, "
-               "this Gmsh has version %d: rebuild it", fileName.c_str(),
-               version(), GMSH_PLUGIN_API_VERSION);
+               "this Gmsh has version %d: rebuild it",
+               fileName.c_str(), version(), GMSH_PLUGIN_API_VERSION);
     dlclose(lib);
     return false;
   }

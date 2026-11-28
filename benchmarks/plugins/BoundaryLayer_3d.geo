@@ -8,8 +8,8 @@ Curve Loop(1) = {1, 2, 3, 4};
 Plane Surface(1) = {1};
 Extrude {0, 0, 1} { Surface{1}; }
 Mesh 3;
-Plugin(BoundaryLayer).Volumes = "1";
-Plugin(BoundaryLayer).Surfaces = "26";
+Plugin(BoundaryLayer).Volumes = {1};
+Plugin(BoundaryLayer).Surfaces = {26};
 Plugin(BoundaryLayer).Thickness = 0.05;
 Plugin(BoundaryLayer).Size = 0.01;
 Plugin(BoundaryLayer).Ratio = 1.5;

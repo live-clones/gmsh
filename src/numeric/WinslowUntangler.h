@@ -24,11 +24,18 @@ namespace WinslowUntangler {
   struct Options {
     // Weight of the volume term
     double lambda = 1.;
+    // Weight of the volume term of each element, replacing lambda if given:
+    // an element with a small weight keeps its shape but is free to change
+    // size
+    const std::vector<double> *elementLambda = nullptr;
     int maxOuterIterations = 100;
     // L-BFGS iterations per outer iteration
     int maxInnerIterations = 300;
     // Stop after more than maxFailures failed outer iterations
     int maxFailures = 10;
+    // Stop when the mesh is untangled and the energy decreased by less than
+    // this fraction during the last outer iteration
+    double energyTolerance = 1.e-5;
     // CPU time budget, in seconds
     double timeMax = 9999.;
     int numThreads = 1;

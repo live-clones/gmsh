@@ -14,7 +14,7 @@
 
 // the version of the plugin interface of this file: a plugin loaded from a
 // shared library must have been built with the same
-#define GMSH_PLUGIN_API_VERSION 2
+#define GMSH_PLUGIN_API_VERSION 3
 
 #include <map>
 #include <set>
@@ -55,9 +55,11 @@ public:
   // a dialog box for the user interface
   PluginDialogBox *dialogBox;
 
-  // the numeric and string options of the plugin, with their default values
+  // the numeric, string and list (of numbers) options of the plugin, with
+  // their default values
   GMSH_Plugin(const std::vector<StringXNumber> &numOptions = {},
-              const std::vector<StringXString> &strOptions = {});
+              const std::vector<StringXString> &strOptions = {},
+              const std::vector<StringXNumbers> &listOptions = {});
   virtual ~GMSH_Plugin() {}
 
   // return plugin type, name and info
@@ -67,20 +69,21 @@ public:
   virtual std::string getHelp() const = 0;
   virtual std::string getAuthor() const { return "C. Geuzaine, J.-F. Remacle"; }
   virtual std::string getCopyright() const
-  {
-    return "C. Geuzaine, J.-F. Remacle";
-  }
+  { return "C. Geuzaine, J.-F. Remacle"; }
 
   // the options
   int getNbOptions() const { return (int)_numOptions.size(); }
   StringXNumber *getOption(int iopt) { return &_numOptions[iopt]; }
   int getNbOptionsStr() const { return (int)_strOptions.size(); }
   StringXString *getOptionStr(int iopt) { return &_strOptions[iopt]; }
+  int getNbOptionsList() const { return (int)_listOptions.size(); }
+  StringXNumbers *getOptionList(int iopt) { return &_listOptions[iopt]; }
 
   // the option of the given name, or of a former name given to
   // addOptionAlias(); nullptr if there is none
   StringXNumber *findOption(const std::string &name);
   StringXString *findOptionStr(const std::string &name);
+  StringXNumbers *findOptionList(const std::string &name);
   void addOptionAlias(const std::string &alias, const std::string &name);
 
   // set the options to the values given to the constructor
@@ -102,6 +105,10 @@ public:
 
   // serialize plugin options into a string
   std::string serialize();
+  // a list of numbers as text, separated by commas, and back; false if the
+  // text holds anything else
+  static std::string listToString(const std::vector<double> &list);
+  static bool stringToList(const std::string &str, std::vector<double> &list);
 
   // run the plugin
   virtual int run() = 0;
@@ -112,9 +119,9 @@ protected:
   double option(int iopt) const
   { return const_cast<GMSH_Plugin *>(this)->getOption(iopt)->def; }
   std::string &optionStr(int iopt) { return getOptionStr(iopt)->def; }
-  // the integers of string option iopt, separated by commas; false (with an
-  // error) if it holds anything else
-  bool optionIntList(int iopt, std::vector<int> &list);
+  // the value of list option iopt, and the same as integers
+  std::vector<double> &optionList(int iopt) { return getOptionList(iopt)->def; }
+  std::vector<int> optionIntList(int iopt);
   // optionCallback() for a numeric option edited with a slider going from min
   // to max by step, whose changes are previewed
   bool sliderOption(int iopt, int action, double &value, double step,
@@ -123,6 +130,7 @@ protected:
 private:
   std::vector<StringXNumber> _numOptions, _numDefaults;
   std::vector<StringXString> _strOptions, _strDefaults;
+  std::vector<StringXNumbers> _listOptions, _listDefaults;
   std::map<std::string, std::string> _aliases;
 };
 
@@ -135,9 +143,7 @@ private:
 public:
   using GMSH_Plugin::GMSH_Plugin;
   inline GMSH_PLUGIN_TYPE getType() const
-  {
-    return GMSH_Plugin::GMSH_POST_PLUGIN;
-  }
+  { return GMSH_Plugin::GMSH_POST_PLUGIN; }
   // run the plugin
   virtual int run()
   {
@@ -170,10 +176,10 @@ public:
   // elements and its steps), with the first non-empty step, through the
   // elements of dimension dim only if dim >= 0; Gauss point data, whose points
   // are not nodes, is skipped
-  void forEachNode(PViewData *data,
-                   const std::function<void(int step, int ent, int ele,
-                                            int nod)> &f,
-                   int dim = -1) const;
+  void
+  forEachNode(PViewData *data,
+              const std::function<void(int step, int ent, int ele, int nod)> &f,
+              int dim = -1) const;
   // create list data from the elements of a view: for each element with data,
   // numComp(e) gives the number of components of its values in the outputs
   // (1, 3 or 9; 0 skips the element), and values(e, step, res) computes them
@@ -184,16 +190,16 @@ public:
     PViewData *data, const std::vector<PViewDataList *> &out,
     const std::function<int(const PluginElement &e)> &numComp,
     const std::function<bool(const PluginElement &e, int step,
-                             std::vector<std::vector<double> > &res)> &values)
+                             std::vector<std::vector<double>> &res)> &values)
     const;
   // call f once for each value of the given step of a view, with the
   // coordinates it is given at: a node shared by elements (node data) once,
   // one value per element (element data) once, at the barycenter of the
   // element
-  void forEachValue(PViewData *data, int step,
-                    const std::function<void(int ent, int ele, int nod,
-                                             double x, double y, double z)> &f)
-    const;
+  void
+  forEachValue(PViewData *data, int step,
+               const std::function<void(int ent, int ele, int nod, double x,
+                                        double y, double z)> &f) const;
   // for an adaptive view, which elements of the subdivisions of an element to
   // keep: those visible in the tree whose root is given, with its vertices
   // placed in the model (and their values if valuesNeeded()); keepsNothing()
@@ -202,9 +208,7 @@ public:
   virtual bool valuesNeeded() const { return true; }
   virtual bool keepsNothing(adaptiveElement *root,
                             const std::set<adaptiveVertex> &vertices) const
-  {
-    return false;
-  }
+  { return false; }
   // may anything be kept of an element within this sphere (centre and
   // radius)? (asked first, so that the others are not read)
   virtual bool mayKeep(const float *sphere) const { return true; }
@@ -214,9 +218,7 @@ class GMSH_MeshPlugin : public GMSH_Plugin {
 public:
   using GMSH_Plugin::GMSH_Plugin;
   inline GMSH_PLUGIN_TYPE getType() const
-  {
-    return GMSH_Plugin::GMSH_MESH_PLUGIN;
-  }
+  { return GMSH_Plugin::GMSH_MESH_PLUGIN; }
   virtual int run() { return 0; }
 };
 
@@ -230,12 +232,8 @@ public:
 #endif
 #define GMSH_PLUGIN(className)                                                 \
   GMSH_PLUGIN_EXPORT int GMSH_PluginApiVersion()                               \
-  {                                                                            \
-    return GMSH_PLUGIN_API_VERSION;                                            \
-  }                                                                            \
+  { return GMSH_PLUGIN_API_VERSION; }                                          \
   GMSH_PLUGIN_EXPORT GMSH_Plugin *GMSH_RegisterPlugin()                        \
-  {                                                                            \
-    return new className();                                                    \
-  }
+  { return new className(); }
 
 #endif

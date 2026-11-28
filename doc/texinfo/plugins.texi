@@ -96,17 +96,27 @@ Default value: @code{0}
 @end table
 
 @item Plugin(BoundaryLayer)
-Plugin(BoundaryLayer) performs magic.
-String options:
+Plugin(BoundaryLayer) inserts boundary layers in the current mesh, which must be of order 1: layers of quadrangles along curves in a 2D mesh, or of prisms (hexahedra on quadrangles) along surfaces in a 3D mesh. The mesh is generated first, without layers; the plugin then moves the elements next to the walls to make room for them.@*
+@*
+`Volumes', `Surfaces' and `Curves' are lists of tags. For a 3D mesh, `Volumes' gives the volumes that receive the layers and `Surfaces' the walls. For a 2D mesh, `Volumes' is empty, `Surfaces' gives the surfaces that receive the layers and `Curves' the walls. A wall on the boundary gets layers on one side; a wall between two of the volumes (or surfaces), or embedded in one of them, gets layers on both sides. Where a wall ends on another surface or curve the layers end on it as well, and its mesh is modified accordingly.@*
+@*
+`Size' is the height of the first layer, `Ratio' the ratio between the heights of two successive layers and `Thickness' the total thickness: there are as many layers as needed for their heights to add up to `Thickness'. These values are never exceeded, but the thickness is reduced where the layers do not fit: between two walls closer than about three times the thickness, and down to zero along the free edge of a wall with layers on both sides. Where the thickness is reduced, the first `NumExactLayers' layers keep their height as long as possible and the others are reduced first; a negative value -n stands for one n-th of the layers.@*
+@*
+`SmoothingLayers' is the number of rings of elements around the layers that are moved to make room for them: it should be increased when the layers are thick compared with the elements next to the walls.@*
+@*
+If `HighOrder' is larger than 1 the layers are curved to that order (experimental, order 2 only): they are split then curved if `HighOrderStrategy' is 1, curved then split if it is 2, and `HighOrderPostSplitUntangle' untangles the volume mesh once more after the split.@*
+@*
+`Points' is not used.
+List options:
 @table @code
 @item Volumes
-Default value: @code{""}
+Default value: @code{@{@}}
 @item Surfaces
-Default value: @code{""}
+Default value: @code{@{@}}
 @item Curves
-Default value: @code{""}
+Default value: @code{@{@}}
 @item Points
-Default value: @code{""}
+Default value: @code{@{@}}
 @end table
 Numeric options:
 @table @code
@@ -591,16 +601,19 @@ Define physical groups in order to specify the computation domain and the relati
 Plugin(HomologyComputation) creates new views, one for each basis element. If `Filename' is provided, the plugin saves the resulting basis chains of desired dimension along with the mesh.
 String options:
 @table @code
-@item DomainPhysicalGroups
-Default value: @code{""}
-@item SubdomainPhysicalGroups
-Default value: @code{""}
-@item ReductionImmunePhysicalGroups
-Default value: @code{""}
-@item DimensionOfChainsToSave
-Default value: @code{"0, 1, 2, 3"}
 @item Filename
 Default value: @code{""}
+@end table
+List options:
+@table @code
+@item DomainPhysicalGroups
+Default value: @code{@{@}}
+@item SubdomainPhysicalGroups
+Default value: @code{@{@}}
+@item ReductionImmunePhysicalGroups
+Default value: @code{@{@}}
+@item DimensionOfChainsToSave
+Default value: @code{@{0, 1, 2, 3@}}
 @end table
 Numeric options:
 @table @code
@@ -653,16 +666,19 @@ String options:
 @table @code
 @item TransformationMatrix
 Default value: @code{"1, 0; 0, 1"}
-@item PhysicalGroupsOfOperatedChains
-Default value: @code{"1, 2"}
-@item PhysicalGroupsOfOperatedChains2
-Default value: @code{""}
-@item PhysicalGroupsToTraceResults
-Default value: @code{""}
-@item PhysicalGroupsToProjectResults
-Default value: @code{""}
 @item NameForResultChains
 Default value: @code{"c"}
+@end table
+List options:
+@table @code
+@item PhysicalGroupsOfOperatedChains
+Default value: @code{@{1, 2@}}
+@item PhysicalGroupsOfOperatedChains2
+Default value: @code{@{@}}
+@item PhysicalGroupsToTraceResults
+Default value: @code{@{@}}
+@item PhysicalGroupsToProjectResults
+Default value: @code{@{@}}
 @end table
 Numeric options:
 @table @code
@@ -1302,16 +1318,15 @@ Parameters@*
 - PhysicalCurves: list of the physical curves upon which the tree must be built.@*
 - OutputPhysical: physical tag of the generated tree (-1 will select a new tag automatically).@*
 @*
-Note - Lists must be comma separated integers and spaces are ignored.@*
 Remark - This plugin does not overwrite a physical group.Therefore, if an existing physical tag is used in OutputPhysical, the edges of the tree will be /added/ to the specified group.
-String options:
+List options:
 @table @code
 @item PhysicalVolumes
-Default value: @code{""}
+Default value: @code{@{@}}
 @item PhysicalSurfaces
-Default value: @code{""}
+Default value: @code{@{@}}
 @item PhysicalCurves
-Default value: @code{""}
+Default value: @code{@{@}}
 @end table
 Numeric options:
 @table @code

@@ -1054,12 +1054,36 @@ static int partitionGraph(Graph &graph, bool verbose,
     default: Msg::Error("METIS error"); return 1;
     }
 
-    // Check that all partitions have at least one element
-    std::vector<int> emptyPartitions;
-    std::vector<int> partitionCount(numPart, 0);
-    for(std::size_t i = 0; i < epart.size(); i++) { partitionCount[epart[i]]++; }
-    for(std::size_t i = 0; i < partitionCount.size(); i++) {
-      if(partitionCount[i] == 0) emptyPartitions.push_back(i + 1);
+    // the partitions without elements
+    auto emptyParts = [numPart](const std::vector<idx_t> &part) {
+      std::vector<int> empty, count(numPart, 0);
+      for(std::size_t i = 0; i < part.size(); i++) count[part[i]]++;
+      for(std::size_t i = 0; i < count.size(); i++)
+        if(count[i] == 0) empty.push_back(i + 1);
+      return empty;
+    };
+    std::vector<int> emptyPartitions = emptyParts(epart);
+
+    // K-way can leave partitions empty on a very small graph (e.g. 2
+    // triangles in 2 partitions): use recursive bisection if it does not
+    if(!emptyPartitions.empty() &&
+       metisOptions[METIS_OPTION_PTYPE] == METIS_PTYPE_KWAY) {
+      metisOptions[METIS_OPTION_PTYPE] = METIS_PTYPE_RB;
+      metisOptions[METIS_OPTION_CONTIG] = -1;
+      std::vector<idx_t> epartRB(ne);
+      idx_t objvalRB;
+      if(METIS_PartGraphRecursive(&ne, &ncon, xadj, adjncy, graph.vwgt(),
+                                  nullptr, nullptr, &numPart, nullptr, nullptr,
+                                  metisOptions, &objvalRB,
+                                  &epartRB[0]) == METIS_OK &&
+         emptyParts(epartRB).empty()) {
+        if(verbose)
+          Msg::Info("K-way left %d partitions empty: using recursive "
+                    "bisection", (int)emptyPartitions.size());
+        epart.swap(epartRB);
+        objval = objvalRB;
+        emptyPartitions.clear();
+      }
     }
 
     if(!emptyPartitions.empty()) {

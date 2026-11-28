@@ -199,6 +199,16 @@ function showOptions(box) {
     });
     box.append(row(o.name, input));
   });
+  // lists of numbers, typed separated by commas
+  p.list.forEach((o) => {
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.spellcheck = false;
+    input.value = o.value;
+    input.title = 'Numbers separated by commas';
+    input.addEventListener('change', () => { o.value = input.value; });
+    box.append(row(o.name, input));
+  });
 }
 
 function runChosen() {
@@ -206,6 +216,15 @@ function runChosen() {
   for(const o of p.num)
     if(shown(p, o)) gmsh.plugin.setNumber(p.name, o.name, o.value);
   for(const o of p.str) gmsh.plugin.setString(p.name, o.name, o.value);
+  for(const o of p.list) {
+    const values = o.value.split(',').map((t) => t.trim()).filter((t) => t)
+      .map(Number);
+    if(values.some(Number.isNaN)) {
+      setStatus(`Option ${o.name} is a list of numbers separated by commas`);
+      return;
+    }
+    gmsh.plugin.setNumbers(p.name, o.name, values);
+  }
   const tags = viewTags();
   const views = p.post ? tags.map((t, i) => chosenViews.has(t) ? i : -1)
     .filter((i) => i >= 0) : [];

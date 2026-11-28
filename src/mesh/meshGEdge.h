@@ -41,6 +41,6 @@ bool extrudableMesh(GEntity *from);
 int meshGEdgeTargetNumberOfPoints(GEdge *);
 
 // add one point on ends of an edge at a given distance
-int meshGEdgeInsertBoundaryLayer(GEdge *ge, double width);
+int meshGEdgeInsertBoundaryLayer(GEdge *ge, double widthBegin, double widthEnd);
 
 #endif

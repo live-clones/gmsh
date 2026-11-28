@@ -1199,9 +1199,10 @@ void GEO_Internals::setDegenerated(int dim, int tag)
   _changed = true;
 }
 
-void GEO_Internals::setTransfiniteLine(int tag, int nPoints, int type,
+bool GEO_Internals::setTransfiniteLine(int tag, int nPoints, int type,
                                        double coef)
 {
+  bool found = true;
   if(!tag) {
     List_T *tmp = Tree2List(Curves);
     for(int i = 0; i < List_Nbr(tmp); i++) {
@@ -1222,13 +1223,16 @@ void GEO_Internals::setTransfiniteLine(int tag, int nPoints, int type,
       c->typeTransfinite = type;
       c->coeffTransfinite = coef;
     }
+    found = (c != nullptr);
   }
   _changed = true;
+  return found;
 }
 
-void GEO_Internals::setTransfiniteSurface(int tag, int arrangement,
+bool GEO_Internals::setTransfiniteSurface(int tag, int arrangement,
                                           const std::vector<int> &cornerTags)
 {
+  bool found = true;
   if(!tag) {
     List_T *tmp = Tree2List(Surfaces);
     for(int i = 0; i < List_Nbr(tmp); i++) {
@@ -1260,13 +1264,16 @@ void GEO_Internals::setTransfiniteSurface(int tag, int arrangement,
         Msg::Error("Transfinite surface requires 3 or 4 corner points");
       }
     }
+    found = (s != nullptr);
   }
   _changed = true;
+  return found;
 }
 
-void GEO_Internals::setTransfiniteVolume(int tag,
+bool GEO_Internals::setTransfiniteVolume(int tag,
                                          const std::vector<int> &cornerTags)
 {
+  bool found = true;
   if(!tag) {
     List_T *tmp = Tree2List(Volumes);
     for(int i = 0; i < List_Nbr(tmp); i++) {
@@ -1293,8 +1300,10 @@ void GEO_Internals::setTransfiniteVolume(int tag,
         }
       }
     }
+    found = (v != nullptr);
   }
   _changed = true;
+  return found;
 }
 
 void GEO_Internals::setTransfiniteVolumeQuadTri(int tag)

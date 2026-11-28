@@ -40,6 +40,7 @@
 #include <algorithm>
 #include <limits>
 #include <numeric>
+#include <functional>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "robustPredicates.h"
@@ -1406,17 +1407,21 @@ double optimalPointFrontal(GFace *gf, std::size_t worst, int active_edge,
    and the edge length
 */
 
-bool optimalPointFrontalB(GFace *gf, std::size_t worst, int active_edge,
-                          const flatMeshData &data,
-                          double newPoint[2], double metric[3])
+bool optimalPointFrontalB(
+  GFace *gf, std::size_t worst, int active_edge, const flatMeshData &data,
+  double newPoint[2], double metric[3],
+  const std::function<bool(double, double)> &inside = nullptr)
 {
+  // (true if the point is inside the parametric domain, when a test is given)
+  auto found = [&]() { return !inside || inside(newPoint[0], newPoint[1]); };
+
   // as a starting point, let us use the "fast algo"
   double d =
     optimalPointFrontal(gf, worst, active_edge, data, newPoint, metric);
 
   // fast mode: on a plane the parametric optimal point IS the surface point,
   // so skip the 3D frame and the circle/surface Newton projection
-  if(data.fastCircles && data.planar) return true;
+  if(data.fastCircles && data.planar) return found();
 
   const std::array<std::size_t, 3> &base = data.triangles[worst];
   int ip1 = (active_edge + 2) % 3;
@@ -1430,7 +1435,7 @@ bool optimalPointFrontalB(GFace *gf, std::size_t worst, int active_edge,
   SVector3 v1v2(a2[0] - a1[0], a2[1] - a1[1], a2[2] - a1[2]);
   SVector3 tmp(a3[0] - middle.x(), a3[1] - middle.y(), a3[2] - middle.z());
   SVector3 n1 = crossprod(v1v2, tmp);
-  if(n1.norm() < 1.e-12) return true;
+  if(n1.norm() < 1.e-12) return found();
 
   SVector3 n2 = crossprod(n1, v1v2);
   n1.normalize();
@@ -1444,22 +1449,18 @@ bool optimalPointFrontalB(GFace *gf, std::size_t worst, int active_edge,
     GPoint gp =
       data.discrete->intersectionWithCircleSpatial(n1, n2, middle, d,
                                                    newPoint);
-    if(gp.succeeded()) return true;
+    if(gp.succeeded()) return found();
     return false;
   }
 #endif
 
-  double uvt[3] = {newPoint[0], newPoint[1], 0.0};
-  curveFunctorCircle cc(n2, n1, middle, d);
-  surfaceFunctorGFace ss(gf);
-
-  if(intersectCurveSurface(cc, ss, uvt, d * 1.e-8)) {
-    newPoint[0] = uvt[0];
-    newPoint[1] = uvt[1];
+  // (if no point is found, keep the estimate of the fast algo)
+  const double uvMiddle[2] = {0.5 * (data.Us[base[ip1]] + data.Us[base[ip2]]),
+                              0.5 * (data.Vs[base[ip1]] + data.Vs[base[ip2]])};
+  if(intersectCircleSurface(gf, n2, n1, middle, uvMiddle, d, newPoint,
+                            inside))
     return true;
-  }
-
-  return true;
+  return found();
 }
 
 // Same as computeEquivalences (meshGFaceOptimize.cpp), which takes the shared
@@ -1695,6 +1696,15 @@ void bowyerWatsonFrontalFlat(
   Range<double> RV = gf->parBounds(1);
   SPoint2 FAR(RU.high() + (RU.high() - RU.low()),
               RV.high() + (RV.high() - RV.low()));
+  // the parametric domain test of the new points
+  std::function<bool(double, double)> inside = nullptr;
+  if(true_boundary)
+    inside = [&](double u, double v) {
+      SPoint2 NP(u, v);
+      int nIntersections;
+      return pointInsideParametricDomain(*true_boundary, NP, FAR,
+                                         nIntersections);
+    };
 
   // insert points
   while(!ActiveTris.empty()) {
@@ -1708,12 +1718,9 @@ void bowyerWatsonFrontalFlat(
                    DATA.vertices.size() - DATA.numBoundary,
                    DATA.circumRadius[worst]);
       double newPoint[2], metric[3];
-      if(optimalPointFrontalB(gf, worst, active_edge, DATA, newPoint, metric)) {
-        SPoint2 NP(newPoint[0], newPoint[1]);
-        int nIntersections;
-        if(!true_boundary ||
-           pointInsideParametricDomain(*true_boundary, NP, FAR, nIntersections))
-          insertAPoint(gf, newPoint, metric, DATA, ActiveTris, worst);
+      if(optimalPointFrontalB(gf, worst, active_edge, DATA, newPoint, metric,
+                              inside)) {
+        insertAPoint(gf, newPoint, metric, DATA, ActiveTris, worst);
       }
       else {
         Msg::Debug("no point found");

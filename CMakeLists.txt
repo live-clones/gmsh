@@ -974,13 +974,6 @@ if(HAVE_MESH)
     set_config_option(HAVE_OCTREE_SIZE_FIELD "OctreeSizeField")
   endif()
 
-  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/HierarchicalBasis
-     AND ENABLE_HIERARCHICAL_BASIS)
-    add_subdirectory(contrib/HierarchicalBasis)
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/contrib/HierarchicalBasis)
-    set_config_option(HAVE_HIERARCHICAL_BASIS "HierarchicalBasis")
-  endif()
-
   if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/domhex AND ENABLE_DOMHEX)
     add_subdirectory(contrib/domhex)
     include_directories(contrib/domhex)
@@ -1092,6 +1085,14 @@ if(HAVE_MESH)
       message(WARNING "Disabling QuadOpt (QuadMeshingTools not enabled)")
     endif()
   endif()
+endif()
+
+# (the basis functions only need the mesh elements, not the mesh generators)
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/HierarchicalBasis
+   AND ENABLE_HIERARCHICAL_BASIS)
+  add_subdirectory(contrib/HierarchicalBasis)
+  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/contrib/HierarchicalBasis)
+  set_config_option(HAVE_HIERARCHICAL_BASIS "HierarchicalBasis")
 endif()
 
 if(ENABLE_MED OR ENABLE_CGNS)
@@ -1855,7 +1856,9 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
       list(APPEND LINK_LIBRARIES "-Wl,--exclude-libs,ALL")
     endif()
   endif()
-  target_link_libraries(shared ${LINK_LIBRARIES})
+  # private: programs linking to the shared library only need the library
+  # itself, not the libraries it was built with (#3532)
+  target_link_libraries(shared PRIVATE ${LINK_LIBRARIES})
   # plugins loaded from shared libraries link to the shared Gmsh library, which
   # must export what they use (the private API)
   if(ENABLE_PRIVATE_API AND DLFCN_H)
